@@ -4,9 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TEST</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.8;
+    }
+    .article-box {
+      background: #f5f5f5;
+      border-left: 4px solid #333;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 16px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello！ 🎉</h1>
+  <h1>Hello！</h1>
   <p>1st page</p>
+  <div class="article-box" id="article"></div>
+  <button onclick="showArticle()">換一篇</button>
+
+  <script>
+    const articles = [
+      "秋天的午後，金色陽光灑落在寬闊的田野上。風輕輕吹過，稻穗隨之搖曳，發出沙沙的聲響。遠處的山巒輪廓清晰，天空湛藍如洗。農人們在田間忙碌，收割著一年辛勞的果實，臉上掛著滿足的笑容。",
+      "城市的夜晚燈火通明，霓虹閃爍。街道上人來人往，每個人都有自己的故事與目的地。咖啡館裡飄出陣陣香氣，音樂聲隱隱傳來。在這喧囂之中，有人找到孤獨，有人感受溫暖，生活就這樣悄悄流逝。",
+      "海浪一波接著一波拍打著礁石，濺起白色的泡沫。海鷗在空中盤旋鳴叫，夕陽將天邊染成橙紅。漁船緩緩駛回港口，帶著一天的收穫。站在岸邊的孩子睜大眼睛，望著那片無盡的蔚藍，心中充滿了好奇。",
+      "圖書館裡靜悄悄的，只有翻書的聲音。書架上排列著各種書籍，承載著無數人的智慧與夢想。陽光透過玻璃窗照進來，映在書頁上泛著溫柔的光。一位老者戴著眼鏡，專注地閱讀，沉浸在文字的世界裡。",
+      "春雨細細地落下，打濕了路邊的花瓣。泥土散發出清新的氣息，樹葉上掛著晶瑩的水珠。孩子們打著雨傘踏水玩耍，笑聲在小巷中迴盪。雨後的天空漸漸放晴，一道彩虹悄悄出現在雲層之間，美麗而短暫。",
+    ];
+
+    function showArticle() {
+      const idx = Math.floor(Math.random() * articles.length);
+      document.getElementById("article").textContent = articles[idx];
+    }
+
+    showArticle();
+  </script>
 </body>
 </html>
