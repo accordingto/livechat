@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Icebreaker Game</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    a.back {
+      align-self: flex-start;
+      color: #aaa;
+      text-decoration: none;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    a.back:hover { color: #fff; }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 6px;
+      color: #e94560;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 40px;
+    }
+
+    .cards {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      flex: 1;
+      min-width: 260px;
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 16px;
+      padding: 28px 22px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      text-align: center;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: border-color 0.3s, transform 0.3s;
+      cursor: default;
+    }
+
+    .card.highlight {
+      border-color: #e94560;
+      transform: scale(1.03);
+    }
+
+    .card .label {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #e94560;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 3px 14px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .card .placeholder {
+      color: #444;
+      font-size: 0.95rem;
+    }
+
+    .vs {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #e94560;
+      align-self: center;
+      flex: 0;
+    }
+
+    .draw-btn {
+      background: #e94560;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 48px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .draw-btn:hover { background: #c73652; }
+    .draw-btn:active { transform: scale(0.97); }
+    .draw-btn:disabled { background: #555; cursor: not-allowed; }
+
+    .hint {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* slot machine roll animation */
+    @keyframes roll {
+      0%   { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .card.rolling {
+      animation: roll 0.08s ease infinite alternate;
+    }
+    .card.landed {
+      animation: none;
+    }
+  </style>
+</head>
+<body>
+  <a class="back" href="index.html">← Back</a>
+  <h1>🎲 Icebreaker!</h1>
+  <p class="subtitle">Draw two questions — pick one to answer!</p>
+
+  <div class="cards">
+    <div class="card" id="cardA">
+      <span class="label">Question A</span>
+      <span class="placeholder">Press Draw to start</span>
+    </div>
+    <div class="vs">VS</div>
+    <div class="card" id="cardB">
+      <span class="label">Question B</span>
+      <span class="placeholder">Press Draw to start</span>
+    </div>
+  </div>
+
+  <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
+  <p class="hint" id="hint">Click Draw to randomly pick two questions</p>
+
+  <script>
+    const questions = [
+      "Would you rather travel to the past or the future?",
+      "Would you rather be able to fly or be invisible?",
+      "Would you rather live in the city or the countryside?",
+      "Would you rather speak every language or play every instrument?",
+      "Would you rather have a rewind button or a pause button for your life?",
+      "Would you rather eat only sweet food or only savory food forever?",
+      "Would you rather be the funniest person in the room or the smartest?",
+      "Would you rather lose your phone or lose your wallet?",
+      "Would you rather have a pet dragon or a pet unicorn?",
+      "Would you rather always be 10 minutes late or 2 hours early?",
+      "Would you rather live without music or without movies?",
+      "Would you rather be famous but poor or rich but unknown?",
+      "Would you rather fight one horse-sized duck or 100 duck-sized horses?",
+      "Would you rather have super strength or super speed?",
+      "Would you rather be the best player on a losing team or the worst on a winning team?",
+      "Would you rather live in a world without the internet or without cars?",
+      "Would you rather always have to sing instead of speak or dance instead of walk?",
+      "Would you rather know when you'll die or how you'll die?",
+      "Would you rather have the power to heal others or to read minds?",
+      "Would you rather only be able to whisper or only be able to shout?",
+      "Would you rather explore the deep ocean or outer space?",
+      "Would you rather be 4 feet tall or 8 feet tall?",
+      "Would you rather never be cold again or never be hot again?",
+      "Would you rather have a dog that talks or a cat that understands you?",
+      "Would you rather give up social media or give up coffee for a year?",
+      "Would you rather live in a treehouse or a houseboat?",
+      "Would you rather always know the truth or always be happy?",
+      "Would you rather meet your great-great-grandparents or your great-great-grandchildren?",
+      "Would you rather have a personal chef or a personal driver?",
+      "Would you rather work four 10-hour days or five 8-hour days?",
+      "Would you rather lose your sense of taste or your sense of smell?",
+      "Would you rather always feel like it's Monday morning or always feel like it's Sunday night?",
+      "Would you rather be able to talk to animals or speak all human languages?",
+      "Would you rather be an Olympic athlete or a Nobel Prize winner?",
+      "Would you rather have unlimited money but no free time or free time but very little money?",
+      "Would you rather be able to teleport or time travel?",
+      "Would you rather forget who you are or forget everyone you love?",
+      "Would you rather have legs as long as your fingers or fingers as long as your legs?",
+      "Would you rather live in a world of constant rain or constant sunshine?",
+      "Would you rather eat pizza every day or never eat pizza again?",
+      "Would you rather be able to pause time or rewind time?",
+      "Would you rather have to eat the same meal every day or never eat your favorite food again?",
+      "Would you rather be a superhero with a useless power or a villain with an awesome power?",
+      "Would you rather be the main character of a reality show or a documentary?",
+      "Would you rather have Wi-Fi anywhere but pay for everything or have everything free but no internet?",
+      "Would you rather always have to tell the truth or always be able to get away with lying?",
+      "Would you rather be incredibly lucky or incredibly skilled?",
+      "Would you rather live in a horror movie or an action movie?",
+      "Would you rather have unlimited battery on your phone or unlimited fuel for your car?",
+      "Would you rather be the best in the world at something nobody cares about or average at something everyone loves?",
+      "Would you rather wake up as a different person every day or stay exactly as you are forever?",
+      "Would you rather have a photographic memory or the ability to forget anything you want?",
+      "Would you rather speak at a packed stadium or perform a song to your whole school?",
+      "Would you rather be completely alone for a year or never be alone for a year?",
+      "Would you rather live without hot showers or without air conditioning forever?",
+      "Would you rather always have spinach in your teeth or always have a bad hair day?",
+      "Would you rather be able to stop time or slow time down by half?",
+      "Would you rather have a job you love with low pay or a job you hate with high pay?",
+      "Would you rather go back to age 10 knowing what you know now or jump forward to age 60?",
+      "Would you rather be the world's greatest chef or the world's greatest musician?",
+      "Would you rather communicate only through emojis or only through GIFs?",
+      "Would you rather have a free round-the-world trip alone or a free trip anywhere with your best friends?",
+      "Would you rather be able to run at 100mph or swim like a dolphin?",
+      "Would you rather live in the 1800s or the year 2200?",
+      "Would you rather never need sleep or never feel hungry?",
+      "Would you rather have every day feel exciting but exhausting or calm but a little boring?",
+      "Would you rather be great at sports or great at art?",
+      "Would you rather only communicate by writing or only by speaking?",
+      "Would you rather be stranded on a desert island with friends or in a luxury hotel alone?",
+      "Would you rather know every secret about your friends or have them know every secret about you?",
+      "Would you rather have summer all year or winter all year?",
+      "Would you rather be the oldest sibling or the youngest?",
+      "Would you rather win an Oscar or win a Grammy?",
+      "Would you rather have a magic wand or a genie with three wishes?",
+      "Would you rather travel for free everywhere but stay in hostels or pay full price but stay in 5-star hotels?",
+      "Would you rather be able to breathe underwater or survive in space?",
+      "Would you rather age in reverse after 30 or stay exactly your current age?",
+      "Would you rather have your dream job but work 80 hours a week or an OK job with 20 hours a week?",
+      "Would you rather always say what you're thinking or never be able to speak again?",
+      "Would you rather be a famous YouTuber or a published bestselling author?",
+      "Would you rather have a lifetime supply of your favorite snack or your favorite drink?",
+      "Would you rather live on the moon or under the sea?",
+      "Would you rather be a master of disguise or a master of escape?",
+      "Would you rather know every historical fact or every scientific formula?",
+      "Would you rather have hands for feet or feet for hands?",
+      "Would you rather only eat food that's white or only eat food that's green?",
+      "Would you rather be able to see one minute into the future or one year?",
+      "Would you rather have a robot best friend or a robot assistant?",
+      "Would you rather always be surrounded by people who laugh too loud or people who never laugh?",
+      "Would you rather have the ability to make anyone laugh or make anyone cry?",
+      "Would you rather be a professional gamer or a professional traveler?",
+      "Would you rather be able to control fire or control water?",
+      "Would you rather give up watching TV shows or give up listening to music?",
+      "Would you rather have unlimited data on your phone or free food for life?",
+      "Would you rather have a clone of yourself or a time machine?",
+      "Would you rather be famous for something embarrassing or completely unknown for something great?",
+      "Would you rather always find a parking spot instantly or never wait in line ever again?",
+      "Would you rather have the ability to fly but only at walking speed or run at airplane speed but stay on the ground?",
+    ];
+
+    let rolling = false;
+
+    function draw() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn = document.getElementById('drawBtn');
+      const hint = document.getElementById('hint');
+      const cardA = document.getElementById('cardA');
+      const cardB = document.getElementById('cardB');
+
+      btn.disabled = true;
+      hint.textContent = "Drawing...";
+
+      cardA.classList.add('rolling');
+      cardB.classList.add('rolling');
+
+      let ticks = 0;
+      const maxTicks = 28;
+      const interval = setInterval(() => {
+        const [i, j] = randomPair();
+        cardA.innerHTML = `<span class="label">Question A</span>${questions[i]}`;
+        cardB.innerHTML = `<span class="label">Question B</span>${questions[j]}`;
+        ticks++;
+        if (ticks >= maxTicks) {
+          clearInterval(interval);
+          const [fi, fj] = randomPair();
+          cardA.innerHTML = `<span class="label">Question A</span>${questions[fi]}`;
+          cardB.innerHTML = `<span class="label">Question B</span>${questions[fj]}`;
+          cardA.classList.remove('rolling');
+          cardB.classList.remove('rolling');
+          cardA.classList.add('highlight');
+          cardB.classList.add('highlight');
+          hint.textContent = "Pick one and share your answer with the group!";
+          btn.disabled = false;
+          rolling = false;
+          setTimeout(() => {
+            cardA.classList.remove('highlight');
+            cardB.classList.remove('highlight');
+          }, 1200);
+        }
+      }, 80);
+    }
+
+    function randomPair() {
+      const i = Math.floor(Math.random() * questions.length);
+      let j;
+      do { j = Math.floor(Math.random() * questions.length); } while (j === i);
+      return [i, j];
+    }
+  </script>
+</body>
+</html>
