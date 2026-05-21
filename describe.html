@@ -68,23 +68,21 @@
     .diff span { width: 8px; height: 8px; border-radius: 50%; background: #1e1e42; }
     .diff span.on { background: #22c55e; }
 
-    /* Fixed-size image container — the key to consistency */
+    /* Fixed 16:9 container — identical for every image */
     .img-wrap {
       position: relative;
       width: 100%;
-      height: 450px;          /* fixed height */
+      padding-top: 56.25%; /* 16:9 */
       overflow: hidden;
       background: #0a0a18;
-      display: flex; align-items: center; justify-content: center;
     }
-    @media (max-width: 600px) { .img-wrap { height: 240px; } }
 
     .scene-img {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;      /* always fills, never distorts */
+      object-fit: cover;
       object-position: center;
       opacity: 0;
       transition: opacity .5s ease;
@@ -92,14 +90,18 @@
     }
     .scene-img.loaded { opacity: 1; }
 
-    .img-placeholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 14px; color: #2a2a50; pointer-events: none;
+    .img-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
     }
-    .img-placeholder .ph-icon { font-size: 3rem; }
-    .img-placeholder p { font-size: .9rem; }
+
+    .ph-icon { font-size: 3rem; color: #2a2a50; }
+    .ph-text { font-size: .9rem; color: #2a2a50; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
@@ -210,10 +212,10 @@
       <span class="cat-pill" id="catPill">Scene</span>
       <div class="diff" id="diffDots"><span></span><span></span><span></span></div>
     </div>
-    <div class="img-wrap">
-      <div class="img-placeholder" id="placeholder">
+    <div class="img-wrap" id="imgWrap">
+      <div class="img-overlay" id="overlay">
         <span class="ph-icon">🖼️</span>
-        <p>Press Draw to load a scene</p>
+        <span class="ph-text">Press Draw to load a scene</span>
       </div>
       <img class="scene-img" id="sceneImg" alt="Scene to describe" />
       <div class="timesup-overlay" id="timesupOverlay">
@@ -252,77 +254,92 @@
 
   <script>
     /*
-     * Image source: source.unsplash.com/900x600/?{keywords}&sig={n}
-     * - Unsplash resizes to exactly 900×600 on their CDN before sending
-     * - Each unique sig value resolves to the same cached photo every time
-     * - Keywords ensure people + interaction are present
-     * - CC0-licensed, no attribution required for embedding
+     * Image source: Pexels CDN
+     * URL: https://images.pexels.com/photos/{ID}/pexels-photo-{ID}.jpeg
+     *      ?auto=compress&cs=tinysrgb&w=1280&h=720&fit=crop
+     * - Free to embed (Pexels license allows hotlinking)
+     * - Dimensions enforced by Pexels CDN (&fit=crop) for consistency
+     * - 16:9 padding-top container as an extra safety net
      */
-    const W = 900, H = 600;
-    const U = (kw, sig) => `https://source.unsplash.com/${W}x${H}/?${kw}&sig=${sig}`;
+    const CDN = id =>
+      `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg` +
+      `?auto=compress&cs=tinysrgb&w=1280&h=720&fit=crop`;
 
     const scenes = [
-      // ── Café & Coffee Shop ──────────────────────────────
-      { url: U('people,cafe,talking',          1),  cat:'Café',        diff:1, hints:['chatting','sipping','counter','cozy','casual','catching up'] },
-      { url: U('friends,coffee,laughing',       2),  cat:'Café',        diff:1, hints:['laughing','relaxed','table','leaning in','animated','cups'] },
-      { url: U('couple,cafe,date',              3),  cat:'Café',        diff:2, hints:['intimate','smiling at each other','across the table','warm lighting','drinks','conversation'] },
-      { url: U('barista,customer,coffee',       4),  cat:'Café',        diff:2, hints:['ordering','handing over','counter','service','eye contact','waiting'] },
+      // ── Café & Coffee Shop ─────────────────────────────
+      { id:302899,  cat:'Café',       diff:1, hints:['chatting','sitting across','cups of coffee','cozy','leaning in','casual conversation'] },
+      { id:1036623, cat:'Café',       diff:1, hints:['friends','laughing','coffee table','relaxed','catching up','warm atmosphere'] },
+      { id:1251175, cat:'Café',       diff:2, hints:['barista','serving','counter','customer','handing over','making coffee'] },
+      { id:1855214, cat:'Café',       diff:2, hints:['students','studying together','laptops','textbooks','focused','campus café'] },
 
-      // ── Restaurant ──────────────────────────────────────
-      { url: U('restaurant,friends,dining',     5),  cat:'Restaurant',  diff:1, hints:['seated','plates','menu','waiter','formal setting','talking'] },
-      { url: U('dinner,group,celebration',      6),  cat:'Restaurant',  diff:2, hints:['toasting','clinking glasses','laughter','sharing food','festive','gathered around'] },
-      { url: U('restaurant,couple,romantic',    7),  cat:'Restaurant',  diff:2, hints:['candlelit','wine','across the table','leaning forward','romantic','quiet'] },
+      // ── Restaurant & Dining ────────────────────────────
+      { id:262978,  cat:'Restaurant', diff:1, hints:['dining table','food on plates','waiter nearby','conversation','seated','evening meal'] },
+      { id:1267320, cat:'Restaurant', diff:2, hints:['group dinner','raising glasses','toasting','celebration','smiling','sharing dishes'] },
+      { id:3184338, cat:'Restaurant', diff:2, hints:['couple','candlelit','romantic dinner','wine glasses','leaning forward','intimate'] },
 
-      // ── Work & Meeting ───────────────────────────────────
-      { url: U('business,meeting,conference',   8),  cat:'Meeting',     diff:2, hints:['colleagues','conference table','documents','taking notes','discussing','boardroom'] },
-      { url: U('presentation,team,office',      9),  cat:'Work',        diff:2, hints:['presenter','whiteboard','audience','gesturing','explaining','listening'] },
-      { url: U('teamwork,collaboration,laptop', 10), cat:'Work',        diff:1, hints:['pointing at screen','side by side','focused','brainstorming','desk','together'] },
-      { url: U('job,interview,professional',    11), cat:'Interview',   diff:3, hints:['formal','candidate','interviewer','notepad','across the desk','attentive'] },
-      { url: U('video,conference,remote,work',  12), cat:'Video Call',  diff:2, hints:['screen','waving','online meeting','smiling at camera','headset','laptop'] },
-      { url: U('brainstorm,sticky,notes,team',  13), cat:'Workshop',    diff:2, hints:['sticky notes','wall covered','ideas','creative','standing','pointing'] },
+      // ── Work & Meeting ─────────────────────────────────
+      { id:3184291, cat:'Meeting',    diff:2, hints:['colleagues','conference table','documents','taking notes','discussion','boardroom'] },
+      { id:3184292, cat:'Meeting',    diff:2, hints:['team','office','gathered around table','professional','focused','planning'] },
+      { id:1181519, cat:'Work',       diff:1, hints:['laptops','open workspace','side by side','pointing at screen','collaboration','casual office'] },
+      { id:1181622, cat:'Work',       diff:2, hints:['desk','busy office','paperwork','colleagues nearby','focused','professional setting'] },
+      { id:3184339, cat:'Workshop',   diff:2, hints:['sticky notes','wall covered','standing','brainstorming','creative session','colourful'] },
+      { id:3184418, cat:'Work',       diff:1, hints:['team around laptop','leaning in','explaining','screen sharing','informal meeting','desk'] },
+      { id:3184465, cat:'Work',       diff:2, hints:['presenter','whiteboard','audience','gesturing','explaining','listening attentively'] },
+      { id:2422281, cat:'Video Call', diff:2, hints:['laptop screen','smiling at camera','remote meeting','headphones','home office','waving'] },
+      { id:3184357, cat:'Interview',  diff:3, hints:['formal setting','across the desk','notepad','eye contact','interviewer','candidate'] },
 
-      // ── Friends & Social ─────────────────────────────────
-      { url: U('friends,group,happy,diverse',   14), cat:'Friends',     diff:1, hints:['diverse group','smiling','arms around each other','outdoor','relaxed','posing'] },
-      { url: U('friends,laughing,candid',       15), cat:'Friends',     diff:1, hints:['genuine laughter','candid moment','joy','unposed','close','spontaneous'] },
-      { url: U('party,people,celebration',      16), cat:'Party',       diff:2, hints:['dancing','drinks','festive lights','crowd','energy','background music'] },
-      { url: U('travel,friends,sightseeing',    17), cat:'Travel',      diff:2, hints:['tourists','landmark','backpacks','excited','exploring','taking photos'] },
-      { url: U('friends,selfie,group',          18), cat:'Friends',     diff:1, hints:['selfie','close together','big smiles','phone camera','memory','squeezed in'] },
+      // ── Friends & Social ───────────────────────────────
+      { id:1438081, cat:'Friends',    diff:1, hints:['group of friends','smiling','arms around each other','outdoor','relaxed','sunny'] },
+      { id:3182812, cat:'Friends',    diff:1, hints:['diverse group','laughing together','candid moment','joy','natural','unposed'] },
+      { id:1267321, cat:'Friends',    diff:1, hints:['outdoor','walking together','backpacks','talking','side by side','path'] },
+      { id:2007647, cat:'Party',      diff:2, hints:['celebration','drinks','laughter','crowded','festive','background chatter'] },
+      { id:1456951, cat:'Friends',    diff:2, hints:['selfie','group photo','big smiles','close together','fun moment','phone camera'] },
 
-      // ── Family ───────────────────────────────────────────
-      { url: U('family,home,living,room',       19), cat:'Family',      diff:1, hints:['parents','children','warm light','sofa','relaxed','everyday life'] },
-      { url: U('family,dinner,kitchen,table',   20), cat:'Family',      diff:1, hints:['meal time','passing dishes','talking','seated','home-cooked','together'] },
-      { url: U('parent,child,cooking,kitchen',  21), cat:'Family',      diff:2, hints:['teaching','apron','mixing','helping out','watching','learning to cook'] },
-      { url: U('grandparent,grandchild,love',   22), cat:'Family',      diff:2, hints:['generations','elderly','young','bond','warmth','storytelling'] },
-      { url: U('children,playing,outdoor,yard', 23), cat:'Family',      diff:1, hints:['kids','running around','laughing','backyard','carefree','sunny day'] },
+      // ── Family ─────────────────────────────────────────
+      { id:3823488, cat:'Family',     diff:1, hints:['parents','children','living room','warm','bonding','everyday life'] },
+      { id:1128318, cat:'Family',     diff:1, hints:['family at table','meal time','passing food','conversation','home kitchen','together'] },
+      { id:3771074, cat:'Family',     diff:2, hints:['cooking together','apron','parent and child','mixing bowl','teaching','laughing'] },
+      { id:2253938, cat:'Family',     diff:2, hints:['grandparent','grandchild','generations','reading together','warmth','garden'] },
+      { id:1648374, cat:'Family',     diff:1, hints:['children playing','backyard','running','carefree','laughter','sunny afternoon'] },
 
-      // ── Market & Street ──────────────────────────────────
-      { url: U('market,vendor,customer',        24), cat:'Market',      diff:2, hints:['stall','produce','browsing','seller','transaction','colorful display'] },
-      { url: U('street,crowd,pedestrians,city', 25), cat:'Street',      diff:3, hints:['busy','crosswalk','rush hour','commuting','umbrellas','urban'] },
-      { url: U('street,food,vendor,people',     26), cat:'Street Food', diff:2, hints:['food stall','ordering','eating standing','queue','outdoor cooking','lively'] },
-      { url: U('community,volunteer,outdoor',   27), cat:'Community',   diff:3, hints:['gathered','working together','organized','public space','coordinating','diverse'] },
+      // ── Market & Street ────────────────────────────────
+      { id:1005638, cat:'Market',     diff:2, hints:['market stall','vendor','customer','fresh produce','browsing','transaction'] },
+      { id:374870,  cat:'Street',     diff:3, hints:['busy sidewalk','pedestrians','urban','crosswalk','rushing','city crowd'] },
+      { id:2291558, cat:'Street Food',diff:2, hints:['food stall','outdoor cooking','queue','ordering','street','aroma'] },
+      { id:1581339, cat:'Community',  diff:3, hints:['group outdoor','organized activity','working together','community','diverse','purposeful'] },
 
-      // ── Education ────────────────────────────────────────
-      { url: U('classroom,teacher,students',    28), cat:'Classroom',   diff:1, hints:['teacher at front','whiteboard','students seated','lesson','raising hand','attentive'] },
-      { url: U('library,students,studying',     29), cat:'Library',     diff:2, hints:['books','quiet','concentrated','desk lamp','research','spread out notes'] },
-      { url: U('students,group,discussion',     30), cat:'Study Group', diff:2, hints:['circular seating','laptops','debate','group work','whiteboard','engaged'] },
+      // ── Education ──────────────────────────────────────
+      { id:1560932, cat:'Classroom',  diff:1, hints:['students','teacher at front','whiteboard','lesson','attentive','seated in rows'] },
+      { id:3807571, cat:'Classroom',  diff:2, hints:['small group','discussion','engaged','leaning in','notes','classroom setting'] },
+      { id:5212345, cat:'Library',    diff:2, hints:['studying','books spread','concentration','desk','quiet','research'] },
+      { id:3184287, cat:'Study Group',diff:2, hints:['students together','laptops','debate','group work','campus','whiteboard nearby'] },
 
-      // ── Sport & Outdoor ──────────────────────────────────
-      { url: U('sport,team,victory,celebrate',  31), cat:'Sport',       diff:2, hints:['celebrating','group hug','victory','cheering','jerseys','arms in the air'] },
-      { url: U('coach,athlete,training,field',  32), cat:'Training',    diff:2, hints:['coach','instruction','gesturing','athlete listening','field','focused'] },
-      { url: U('hiking,friends,trail,nature',   33), cat:'Outdoor',     diff:1, hints:['trail','backpacks','leading the way','forest','resting','mid-hike chat'] },
-      { url: U('team,huddle,sport,pregame',     34), cat:'Sport',       diff:2, hints:['huddle','captain speaking','teammates','strategy','hands in','pre-game energy'] },
+      // ── Sport & Outdoor ────────────────────────────────
+      { id:3764568, cat:'Sport',      diff:2, hints:['team celebrating','arms up','victory','jerseys','cheering','group energy'] },
+      { id:1321909, cat:'Training',   diff:2, hints:['coach','instruction','athlete','gesturing','field','listening'] },
+      { id:2526878, cat:'Outdoor',    diff:1, hints:['hiking','trail','friends','nature','backpacks','resting and chatting'] },
+      { id:3621300, cat:'Sport',      diff:2, hints:['team huddle','pre-game','captain speaking','hands in','strategy','focus'] },
     ];
 
     const DURATION = 45, CIRC = 283;
-    let timeLeft = DURATION, ticker = null, idx = -1, order = [], round = 0, hintsOpen = false;
+    let timeLeft = DURATION, ticker = null;
+    let pool = [], failedIds = new Set();
+    let round = 0, hintsOpen = false;
+    let current = null, busy = false;
 
     function shuffle(arr) {
-      const a = [...arr.keys()];
+      const a = [...arr];
       for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [a[i], a[j]] = [a[j], a[i]];
       }
       return a;
+    }
+
+    function refillPool() {
+      const available = scenes.filter(s => !failedIds.has(s.id));
+      pool = shuffle(available.length ? available : scenes); // reset if all failed
+      if (!available.length) failedIds.clear();
     }
 
     function setDiff(n) {
@@ -378,8 +395,7 @@
           document.getElementById('timesupOverlay').classList.add('show');
           ph.textContent  = "Time's up!";
           sub.textContent = 'Everyone post your answer in the chat!';
-          document.getElementById('drawBtn').disabled = false;
-          document.getElementById('skipBtn').disabled = false;
+          setButtons(false);
         }
       }, 1000);
     }
@@ -390,20 +406,30 @@
       document.getElementById('hintsBody').classList.toggle('open', hintsOpen);
     }
 
-    function loadScene(scene) {
+    function setButtons(disabled) {
+      document.getElementById('drawBtn').disabled = disabled;
+      document.getElementById('skipBtn').disabled = disabled;
+    }
+
+    function setOverlay(html) {
+      const el = document.getElementById('overlay');
+      el.innerHTML = html;
+      el.style.display = 'flex';
+    }
+
+    function attemptLoad(scene) {
       const img  = document.getElementById('sceneImg');
-      const ph   = document.getElementById('placeholder');
       const card = document.getElementById('imgCard');
 
       img.classList.remove('loaded');
-      ph.innerHTML = '<div class="spinner"></div>';
-      ph.style.display = 'flex';
-      card.classList.remove('active');
       document.getElementById('timesupOverlay').classList.remove('show');
+      document.getElementById('imgCard').classList.remove('active');
+      document.getElementById('overlay').style.display = 'flex';
+      setOverlay('<div class="spinner"></div>');
+
       document.getElementById('catPill').textContent = scene.cat;
       setDiff(scene.diff);
 
-      // reset hints
       hintsOpen = false;
       document.getElementById('hintsToggle').classList.remove('open');
       document.getElementById('hintsBody').classList.remove('open');
@@ -411,40 +437,52 @@
         scene.hints.map(h => `<span class="hint-chip">${h}</span>`).join('');
 
       img.onload = () => {
-        ph.style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
         img.classList.add('loaded');
         card.classList.add('active');
         resetTimer(); startTimer();
-        document.getElementById('drawBtn').disabled = false;
-        document.getElementById('skipBtn').disabled = false;
+        setButtons(false);
+        busy = false;
       };
 
       img.onerror = () => {
-        ph.innerHTML = '<span class="ph-icon">⚠️</span><p>Image unavailable — press Skip</p>';
-        document.getElementById('drawBtn').disabled = false;
-        document.getElementById('skipBtn').disabled = false;
+        // This ID doesn't work — mark it and silently try the next one
+        failedIds.add(scene.id);
+        tryNext();
       };
 
-      img.src = scene.url;
+      img.src = CDN(scene.id);
     }
 
-    function nextScene() {
+    function tryNext() {
+      if (!pool.length) refillPool();
+      const scene = pool.pop();
+      current = scene;
+      attemptLoad(scene);
+    }
+
+    function draw() {
+      if (busy) return;
+      busy = true;
       stopTimer(); resetTimer();
-      document.getElementById('drawBtn').disabled = true;
-      document.getElementById('skipBtn').disabled = true;
+      setButtons(true);
       document.getElementById('phaseLabel').textContent  = 'Loading…';
       document.getElementById('phaseSub').textContent    = 'Getting your scene ready';
       document.getElementById('phaseLabel').classList.remove('warn');
-
-      idx++;
-      if (idx >= order.length) { order = shuffle(scenes); idx = 0; }
-      loadScene(scenes[order[idx]]);
+      round++;
+      document.getElementById('roundNum').textContent = round;
+      tryNext();
     }
 
-    function draw()  { round++; document.getElementById('roundNum').textContent = round; nextScene(); }
-    function skip()  { nextScene(); }
+    function skip() {
+      if (busy) return;
+      busy = true;
+      stopTimer(); resetTimer();
+      setButtons(true);
+      tryNext();
+    }
 
-    order = shuffle(scenes);
+    refillPool();
   </script>
 
 </body>
