@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Never Have I Ever</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px 60px;
+    }
+
+    .topbar {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    a.back {
+      color: #555;
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    a.back:hover { color: #eee; }
+
+    .counter {
+      font-size: 13px;
+      color: #444;
+    }
+    .counter span { color: #4f9eff; font-weight: bold; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #4f9eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    .header p { color: #666; font-size: 0.95rem; }
+
+    /* ── Card ── */
+    .card-wrap {
+      width: 100%;
+      max-width: 580px;
+      perspective: 800px;
+      margin-bottom: 36px;
+    }
+
+    .card {
+      background: #13132b;
+      border: 2px solid #1e1e50;
+      border-radius: 24px;
+      padding: 52px 36px;
+      text-align: center;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      transition: border-color 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card.active { border-color: #4f9eff; }
+
+    .card .prefix {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4f9eff;
+      font-weight: 600;
+    }
+
+    .card .statement {
+      font-size: clamp(1.1rem, 3vw, 1.35rem);
+      font-weight: 600;
+      line-height: 1.55;
+      min-height: 3em;
+      display: flex;
+      align-items: center;
+    }
+
+    .card .placeholder { color: #333; font-weight: 400; font-size: 1rem; }
+
+    /* ripple on draw */
+    @keyframes ripple {
+      from { transform: scale(0); opacity: 0.4; }
+      to   { transform: scale(4); opacity: 0; }
+    }
+    .ripple-el {
+      position: absolute;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: #4f9eff;
+      animation: ripple 0.6s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* roll flicker */
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .card.rolling .statement { animation: flicker 0.12s linear infinite; }
+
+    /* ── Reactions ── */
+    .reactions {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .react-btn {
+      background: #13132b;
+      border: 1px solid #1e1e50;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #eee;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .react-btn:hover { background: #1e1e42; border-color: #4f9eff; transform: scale(1.05); }
+    .react-btn .count {
+      background: rgba(79,158,255,0.15);
+      color: #4f9eff;
+      border-radius: 999px;
+      padding: 1px 8px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    /* ── Draw button ── */
+    .draw-btn {
+      background: #4f9eff;
+      color: #0d0d1a;
+      border: none;
+      border-radius: 999px;
+      padding: 17px 52px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .draw-btn:hover { background: #73b4ff; }
+    .draw-btn:active { transform: scale(0.97); }
+    .draw-btn:disabled { background: #2a2a4a; color: #555; cursor: not-allowed; }
+
+    .hint {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #3a3a6a;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="counter">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🙋 Never Have I Ever</h1>
+    <p>Draw a prompt — raise your hand if you've done it!</p>
+  </div>
+
+  <div class="card-wrap">
+    <div class="card" id="card">
+      <span class="prefix">Never have I ever…</span>
+      <span class="statement placeholder" id="statement">Press Draw to get a prompt</span>
+    </div>
+  </div>
+
+  <div class="reactions" id="reactions">
+    <button class="react-btn" onclick="react('done')">✋ I've done it <span class="count" id="cnt-done">0</span></button>
+    <button class="react-btn" onclick="react('nope')">🙅 Never! <span class="count" id="cnt-nope">0</span></button>
+    <button class="react-btn" onclick="react('lol')">😂 LOL <span class="count" id="cnt-lol">0</span></button>
+  </div>
+
+  <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
+  <p class="hint" id="hint">100 prompts ready to go</p>
+
+  <script>
+    const prompts = [
+      "eaten an entire pizza by myself",
+      "stayed up for more than 24 hours straight",
+      "traveled to a country where I didn't speak the language",
+      "cried at a movie in public",
+      "gone skinny dipping",
+      "pretended to be sick to skip school or work",
+      "sent a text to the wrong person",
+      "fallen asleep during a meeting or class",
+      "eaten food that fell on the floor",
+      "lied about my age",
+      "sung karaoke in front of strangers",
+      "been on a blind date",
+      "talked to myself in public",
+      "forgotten someone's name right after being introduced",
+      "gotten lost in a city I thought I knew",
+      "eaten sushi for breakfast",
+      "binge-watched an entire TV series in one day",
+      "pulled an all-nighter to finish a project",
+      "laughed so hard I cried",
+      "pretended to enjoy a gift I hated",
+      "learned a dance move from a social media trend",
+      "taken a selfie with a stranger",
+      "accidentally walked into the wrong bathroom",
+      "overslept and missed something important",
+      "cooked a meal that was completely inedible",
+      "gotten a parking ticket",
+      "run for a bus and just missed it",
+      "spoken to a celebrity",
+      "tried a sport and immediately regretted it",
+      "gone on a spontaneous road trip",
+      "eaten something spicy that made me sweat",
+      "re-gifted a present",
+      "laughed at my own joke before finishing it",
+      "called a teacher 'Mom' or 'Dad' by accident",
+      "used Google Translate to talk to someone",
+      "bought something expensive on impulse and regretted it",
+      "broken a phone screen",
+      "slept in a tent outdoors",
+      "eaten a food from a different country and loved it",
+      "worn mismatched socks on purpose",
+      "tried to cook a recipe and completely changed it halfway through",
+      "ridden a motorbike or scooter",
+      "gone a whole day without my phone",
+      "waved back at someone who was waving at the person behind me",
+      "had a dream so vivid I thought it was real",
+      "made up an excuse to leave a party early",
+      "googled the answer during a quiz or exam",
+      "eaten cereal without milk because there was none left",
+      "memorized a song in a language I don't speak",
+      "worn the same clothes two days in a row",
+      "snorted while laughing",
+      "introduced myself with the wrong name by accident",
+      "walked into a glass door",
+      "tried to open a door by pushing when it said pull",
+      "said 'you too' when a waiter said 'enjoy your meal'",
+      "waved at someone's phone thinking they were waving at me",
+      "called tech support and felt totally lost",
+      "ordered something in a restaurant and immediately regretted it",
+      "finished a book in one sitting",
+      "taken a long shower just to think",
+      "made a fake laugh convincingly",
+      "bought something just because it was on sale",
+      "had a song stuck in my head for more than a week",
+      "tried to fix something and made it worse",
+      "done a midnight grocery run",
+      "eaten dinner for breakfast",
+      "started a workout program and quit within a week",
+      "texted someone instead of calling because I was nervous",
+      "scrolled my phone for so long I forgot what I was looking for",
+      "ordered food delivery when the restaurant was walking distance away",
+      "stayed in my pajamas for an entire weekend",
+      "thought a movie was great, then re-watched it and changed my mind",
+      "tried to speak a language I barely know to impress someone",
+      "attempted to parallel park and given up",
+      "worn an outfit and immediately wished I'd chosen something else",
+      "forgotten a word in my own language mid-sentence",
+      "gone to the movies alone",
+      "rearranged furniture at midnight",
+      "mixed up twins after being told how to tell them apart",
+      "gotten so into a book I missed a stop on public transport",
+      "left a voicemail and immediately cringed",
+      "taken a photo of my food before eating it",
+      "created a playlist for a very specific mood",
+      "looked something up online, got distracted, and forgot what I was searching for",
+      "pretended not to see someone I know to avoid small talk",
+      "tried a food I swore I'd hate and ended up loving it",
+      "named an inanimate object I own",
+      "bought a book fully intending to read it but never did",
+      "gone to bed with wet hair",
+      "attempted a DIY project that totally failed",
+      "held a door open for someone who was too far away",
+      "apologized to a piece of furniture I bumped into",
+      "laughed at something no one else found funny",
+      "said 'I'm almost ready' when I hadn't started getting ready",
+      "confused 'your' and 'you're' in a formal message",
+      "zoned out completely during a conversation and nodded anyway",
+      "set multiple alarms and slept through all of them",
+      "said goodbye, then walked in the same direction as the other person",
+    ];
+
+    let round = 0;
+    let rolling = false;
+    const counts = { done: 0, nope: 0, lol: 0 };
+
+    function react(type) {
+      counts[type]++;
+      document.getElementById(`cnt-${type}`).textContent = counts[type];
+      const btn = event.currentTarget;
+      btn.style.transform = 'scale(1.15)';
+      setTimeout(() => btn.style.transform = '', 180);
+    }
+
+    function triggerRipple(card) {
+      const el = document.createElement('div');
+      el.className = 'ripple-el';
+      el.style.left = '50%'; el.style.top = '50%';
+      el.style.marginLeft = '-60px'; el.style.marginTop = '-60px';
+      card.appendChild(el);
+      setTimeout(() => el.remove(), 700);
+    }
+
+    function draw() {
+      if (rolling) return;
+      rolling = true;
+      counts.done = counts.nope = counts.lol = 0;
+      ['done','nope','lol'].forEach(k => document.getElementById(`cnt-${k}`).textContent = 0);
+
+      const btn = document.getElementById('drawBtn');
+      const card = document.getElementById('card');
+      const stmt = document.getElementById('statement');
+      const hint = document.getElementById('hint');
+
+      btn.disabled = true;
+      card.classList.add('rolling');
+      card.classList.remove('active');
+      stmt.className = 'statement';
+      hint.textContent = 'Drawing…';
+      triggerRipple(card);
+
+      const chosen = prompts[Math.floor(Math.random() * prompts.length)];
+
+      let ticks = 0;
+      const iv = setInterval(() => {
+        stmt.textContent = prompts[Math.floor(Math.random() * prompts.length)];
+        ticks++;
+        if (ticks >= 20) {
+          clearInterval(iv);
+          stmt.textContent = chosen;
+          card.classList.remove('rolling');
+          card.classList.add('active');
+          round++;
+          document.getElementById('roundNum').textContent = round;
+          hint.textContent = 'React below — how many have done this? 👇';
+          btn.disabled = false;
+          rolling = false;
+        }
+      }, 90);
+    }
+  </script>
+
+</body>
+</html>

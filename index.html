@@ -1,55 +1,176 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TEST</title>
+  <title>IceBreak Hub</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 0 20px;
-      line-height: 1.8;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .article-box {
-      background: #f5f5f5;
-      border-left: 4px solid #333;
-      padding: 16px 20px;
-      margin-top: 20px;
-      font-size: 16px;
+
+    /* ── Hero ── */
+    .hero {
+      width: 100%;
+      padding: 72px 24px 56px;
+      text-align: center;
+      background: linear-gradient(160deg, #1a1a3e 0%, #0d0d1a 60%);
+      border-bottom: 1px solid #1e1e40;
     }
-    button {
-      margin-top: 16px;
-      padding: 8px 16px;
+
+    .badge {
+      display: inline-block;
+      background: rgba(233,69,96,0.15);
+      color: #e94560;
+      border: 1px solid rgba(233,69,96,0.4);
+      border-radius: 999px;
+      padding: 5px 18px;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, #e94560);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 18px;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      color: #888;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── Games Grid ── */
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      padding: 56px 24px 80px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .game-card {
+      background: #13132b;
+      border: 1px solid #1e1e42;
+      border-radius: 20px;
+      padding: 36px 30px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
       cursor: pointer;
+    }
+    .game-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .game-card .icon {
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+
+    .game-card .tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+      align-self: flex-start;
+    }
+
+    .game-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .game-card p {
+      font-size: 0.93rem;
+      color: #777;
+      line-height: 1.65;
+    }
+
+    .game-card .cta {
+      margin-top: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding-top: 8px;
+    }
+    .game-card .cta::after { content: '→'; transition: transform 0.2s; }
+    .game-card:hover .cta::after { transform: translateX(4px); }
+
+    /* Card accent colours */
+    .card-red  { --accent: #e94560; }
+    .card-blue { --accent: #4f9eff; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: auto;
+      padding: 24px;
+      font-size: 12px;
+      color: #333;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Hello！</h1>
-  <p>1st page</p>
-  <div class="article-box" id="article"></div>
-  <button onclick="showArticle()">換一篇</button>
-  <div style="margin-top:32px;">
-    <a href="icebreaker.html" style="display:inline-block;background:#e94560;color:#fff;text-decoration:none;padding:12px 28px;border-radius:50px;font-size:15px;font-weight:bold;">🎲 English Icebreaker Game</a>
+
+  <section class="hero">
+    <div class="badge">🧊 Icebreaker Hub</div>
+    <h1>Break the Ice,<br>Start the Fun</h1>
+    <p>Quick, interactive games designed to warm up any online chat room and get everyone talking.</p>
+  </section>
+
+  <div class="games">
+
+    <a class="game-card card-red" href="icebreaker.html">
+      <div class="icon">🎲</div>
+      <span class="tag">2 players+</span>
+      <h2>Would You Rather</h2>
+      <p>Draw two random dilemmas and let your group debate which they'd choose. Spin again for endless fun.</p>
+      <span class="cta">Play now</span>
+    </a>
+
+    <a class="game-card card-blue" href="never.html">
+      <div class="icon">🙋</div>
+      <span class="tag">Group</span>
+      <h2>Never Have I Ever</h2>
+      <p>Draw a random "Never Have I Ever" prompt and see who in the chat has actually done it. Reactions guaranteed.</p>
+      <span class="cta">Play now</span>
+    </a>
+
   </div>
 
-  <script>
-    const articles = [
-      "秋天的午後，金色陽光灑落在寬闊的田野上。風輕輕吹過，稻穗隨之搖曳，發出沙沙的聲響。遠處的山巒輪廓清晰，天空湛藍如洗。農人們在田間忙碌，收割著一年辛勞的果實，臉上掛著滿足的笑容。",
-      "城市的夜晚燈火通明，霓虹閃爍。街道上人來人往，每個人都有自己的故事與目的地。咖啡館裡飄出陣陣香氣，音樂聲隱隱傳來。在這喧囂之中，有人找到孤獨，有人感受溫暖，生活就這樣悄悄流逝。",
-      "海浪一波接著一波拍打著礁石，濺起白色的泡沫。海鷗在空中盤旋鳴叫，夕陽將天邊染成橙紅。漁船緩緩駛回港口，帶著一天的收穫。站在岸邊的孩子睜大眼睛，望著那片無盡的蔚藍，心中充滿了好奇。",
-      "圖書館裡靜悄悄的，只有翻書的聲音。書架上排列著各種書籍，承載著無數人的智慧與夢想。陽光透過玻璃窗照進來，映在書頁上泛著溫柔的光。一位老者戴著眼鏡，專注地閱讀，沉浸在文字的世界裡。",
-      "春雨細細地落下，打濕了路邊的花瓣。泥土散發出清新的氣息，樹葉上掛著晶瑩的水珠。孩子們打著雨傘踏水玩耍，笑聲在小巷中迴盪。雨後的天空漸漸放晴，一道彩虹悄悄出現在雲層之間，美麗而短暫。",
-    ];
+  <footer>IceBreak Hub · All games are free &amp; no sign-up required</footer>
 
-    function showArticle() {
-      const idx = Math.floor(Math.random() * articles.length);
-      document.getElementById("article").textContent = articles[idx];
-    }
-
-    showArticle();
-  </script>
 </body>
 </html>
