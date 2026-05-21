@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hot Take Roulette</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 64px;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+    a.back {
+      color: #555;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color .2s;
+    }
+    a.back:hover { color: #eee; }
+    .round-badge {
+      font-size: 12px;
+      color: #444;
+    }
+    .round-badge span { color: #ff7043; font-weight: 700; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 44px; }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #ff7043);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    .header p { color: #666; font-size: .93rem; line-height: 1.6; max-width: 440px; margin: 0 auto; }
+
+    /* ── How to play strip ── */
+    .how {
+      width: 100%;
+      max-width: 700px;
+      background: rgba(255,112,67,.07);
+      border: 1px solid rgba(255,112,67,.2);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 36px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .how .bulb { font-size: 1.3rem; flex-shrink: 0; }
+    .how p { font-size: .85rem; color: #aaa; line-height: 1.6; }
+    .how strong { color: #ff9a7a; }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 700px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 24px;
+      padding: 52px 40px;
+      text-align: center;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .4s;
+    }
+    .card.active { border-color: #ff7043; }
+
+    .fire-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ff7043;
+      font-weight: 700;
+    }
+
+    .take-text {
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-weight: 600;
+      line-height: 1.55;
+    }
+    .take-text.placeholder { color: #333; font-weight: 400; font-size: 1rem; }
+
+    /* rolling flicker */
+    @keyframes flicker {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .25; }
+    }
+    .card.rolling .take-text { animation: flicker .1s linear infinite; }
+
+    /* ripple */
+    @keyframes ripple {
+      from { transform: scale(0); opacity: .35; }
+      to   { transform: scale(5); opacity: 0; }
+    }
+    .ripple-el {
+      position: absolute;
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: #ff7043;
+      pointer-events: none;
+      animation: ripple .7s ease-out forwards;
+    }
+
+    /* ── Prompt bar ── */
+    .prompt-bar {
+      width: 100%;
+      max-width: 700px;
+      background: #0f0f22;
+      border: 1px solid #1a1a38;
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 32px;
+      font-size: .88rem;
+      color: #555;
+      text-align: center;
+      min-height: 46px;
+      transition: color .3s;
+    }
+    .prompt-bar.active { color: #ff9a7a; }
+
+    /* ── Vote row ── */
+    .vote-row {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 36px;
+    }
+
+    .vote-btn {
+      flex: 1;
+      border: 2px solid;
+      border-radius: 16px;
+      padding: 20px 12px;
+      cursor: pointer;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: background .2s, transform .15s;
+      font-family: inherit;
+    }
+    .vote-btn:hover { transform: translateY(-3px); }
+    .vote-btn:active { transform: scale(.97); }
+    .vote-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    .vote-btn.agree  { border-color: #4caf50; color: #4caf50; }
+    .vote-btn.agree:hover:not(:disabled)  { background: rgba(76,175,80,.1); }
+    .vote-btn.disagree { border-color: #f44336; color: #f44336; }
+    .vote-btn.disagree:hover:not(:disabled) { background: rgba(244,67,54,.1); }
+
+    .vote-btn .emoji { font-size: 1.8rem; }
+    .vote-btn .label { font-size: .8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .vote-btn .count { font-size: 1.5rem; font-weight: 800; }
+
+    /* bar under count */
+    .vote-btn .bar-wrap {
+      width: 80%;
+      height: 4px;
+      background: rgba(255,255,255,.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .vote-btn .bar { height: 100%; border-radius: 4px; transition: width .4s; width: 0%; }
+    .vote-btn.agree   .bar { background: #4caf50; }
+    .vote-btn.disagree .bar { background: #f44336; }
+
+    /* ── Spin button ── */
+    .spin-btn {
+      background: #ff7043;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 17px 52px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: background .2s, transform .1s;
+    }
+    .spin-btn:hover { background: #ff8a65; }
+    .spin-btn:active { transform: scale(.97); }
+    .spin-btn:disabled { background: #2a2a4a; color: #555; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🔥 Hot Take Roulette</h1>
+    <p>Spin for a bold opinion — everyone votes at the same time, then defends their answer!</p>
+  </div>
+
+  <div class="how">
+    <span class="bulb">💡</span>
+    <p>
+      <strong>How to play:</strong> Spin the wheel. Everyone reads the hot take silently.
+      On the host's count of 3, everyone types <strong>AGREE</strong> or <strong>DISAGREE</strong> in the chat at the same time — no peeking at others first!
+      Then take turns sharing <em>why</em>.
+    </p>
+  </div>
+
+  <div class="card" id="card">
+    <span class="fire-label">🔥 Hot Take</span>
+    <span class="take-text placeholder" id="takeText">Press Spin to reveal a hot take</span>
+  </div>
+
+  <div class="prompt-bar" id="promptBar">Waiting for the next spin…</div>
+
+  <div class="vote-row">
+    <button class="vote-btn agree" id="btnAgree" disabled onclick="vote('agree')">
+      <span class="emoji">👍</span>
+      <span class="label">Agree</span>
+      <span class="count" id="cntAgree">0</span>
+      <div class="bar-wrap"><div class="bar" id="barAgree"></div></div>
+    </button>
+    <button class="vote-btn disagree" id="btnDisagree" disabled onclick="vote('disagree')">
+      <span class="emoji">👎</span>
+      <span class="label">Disagree</span>
+      <span class="count" id="cntDisagree">0</span>
+      <div class="bar-wrap"><div class="bar" id="barDisagree"></div></div>
+    </button>
+  </div>
+
+  <button class="spin-btn" id="spinBtn" onclick="spin()">🎡 Spin!</button>
+
+  <script>
+    const takes = [
+      "Pineapple on pizza is actually delicious.",
+      "Working from home is better than working in an office.",
+      "A short nap is better than a full night of bad sleep.",
+      "Mornings are better than evenings for getting things done.",
+      "Cats make better pets than dogs.",
+      "Social media has done more harm than good to society.",
+      "It is rude to be on your phone during a meal with others.",
+      "Learning a language as an adult is harder than as a child — and that is OK.",
+      "Online friendships can be just as real as in-person ones.",
+      "Grammar rules matter less than being understood.",
+      "Introverts make better leaders than extroverts.",
+      "It is fine to eat the same meal every day if you enjoy it.",
+      "Video games are a legitimate form of art.",
+      "Reading books is overrated compared to other ways of learning.",
+      "Money can buy happiness — up to a point.",
+      "Being fluent in English is more useful than any other language skill today.",
+      "It is okay to ghost someone you just met online.",
+      "Texting is better than calling for most conversations.",
+      "Accents make English more interesting, not harder to understand.",
+      "You do not need to finish a book you are not enjoying.",
+      "Listening to music with lyrics is distracting when you work.",
+      "Being early is just as rude as being late.",
+      "A messy desk is a sign of a creative mind.",
+      "Spelling mistakes in a professional email are inexcusable.",
+      "Small talk is a waste of time.",
+      "Emojis make written communication clearer.",
+      "Skipping breakfast is actually fine for most people.",
+      "Cold weather is better than hot weather.",
+      "Watching a film with subtitles is a better way to learn English.",
+      "Having a weekly routine makes life more boring, not more productive.",
+      "Making mistakes in English is something to be proud of, not embarrassed about.",
+      "Lunch breaks should be at least one hour long — no exceptions.",
+      "People who write in all caps are aggressive.",
+      "The Oxford comma is absolutely necessary.",
+      "Formal dress codes at work are outdated.",
+      "A person's handwriting says a lot about their personality.",
+      "Online meetings should have cameras off by default.",
+      "It is impolite to correct someone's English grammar mid-conversation.",
+      "Reading news every day causes more anxiety than awareness.",
+      "Every adult should know how to cook at least five meals.",
+      "Physical books are superior to e-books in every way.",
+      "Saying 'no' is one of the most important skills a person can develop.",
+      "Sleeping 8 hours is a luxury most people do not actually need.",
+      "Multitasking is a myth — nobody really does two things well at once.",
+      "A good sense of humor is more attractive than good looks.",
+      "Vacation is more important to productivity than working extra hours.",
+      "Typing speed should be taught in every school.",
+      "Most meetings could be replaced by an email.",
+      "Drinking coffee after noon is the reason so many people sleep badly.",
+      "Apologizing too often makes you seem less trustworthy.",
+      "The best way to improve your English is to think in English.",
+      "People who never travel are missing out on something essential.",
+      "Silence in a conversation is not awkward — it is comfortable.",
+      "Being a night owl is just as valid a lifestyle as being an early bird.",
+      "Telling someone their English is 'almost perfect' is a backhanded compliment.",
+      "Most people spend too much time on their phones during social activities.",
+      "A short message with warmth beats a long message with no personality.",
+      "Learning English from TV shows and movies is as valid as formal study.",
+      "Repeating yourself differently is better than saying 'I don't understand'.",
+      "Two-day weekends are not enough for a healthy work-life balance.",
+      "Comparing yourself to others on social media is unavoidable but always harmful.",
+      "It is rude to send a voice note without warning.",
+      "People respect you more when you admit you do not know something.",
+      "Using a translator app while chatting in English is perfectly acceptable.",
+      "There is no such thing as a 'universal' sense of humor.",
+      "Fast food gets a worse reputation than it deserves.",
+      "You can judge a lot about a person by what they order at a coffee shop.",
+      "Handwritten notes are more meaningful than typed ones.",
+      "Four-day work weeks would make everyone more productive.",
+      "It is okay to cancel plans if you need to recharge.",
+      "Binge-watching a show in one sitting is a totally valid leisure activity.",
+      "The phrase 'We should catch up sometime' almost never means it.",
+      "People who do not like reading have just not found the right book yet.",
+      "Spending a lot of money on experiences is wiser than spending it on things.",
+      "Learning by doing is always more effective than studying theory first.",
+      "It is better to over-communicate than to assume the other person understands.",
+      "Using 'they' as a singular pronoun is normal and should be accepted everywhere.",
+      "You can be perfectly fluent in English without losing your native accent.",
+      "Cities are better places to live than small towns or villages.",
+      "Feedback should always be direct, not wrapped in compliments.",
+      "Keeping a daily journal is one of the best habits a person can build.",
+      "Saying sorry does not always mean you were wrong — it shows maturity.",
+      "The best conversations happen after midnight.",
+      "You can tell if someone is a good communicator within the first minute of talking.",
+      "It is fine to mix languages in one conversation.",
+      "Asking 'how are you?' is meaningless if you do not want a real answer.",
+      "Learning grammar rules is less useful than learning to notice patterns.",
+      "People who reply with one-word answers are hard to have a conversation with.",
+      "Being misunderstood is always the speaker's fault, not the listener's.",
+      "Saying 'I will try' is usually just a polite way of saying no.",
+      "Confidence matters more than accuracy when speaking a foreign language.",
+      "Everyone secretly enjoys being complimented on how they speak English.",
+      "Keeping your camera on during online calls should not be mandatory.",
+      "A person's response time to messages reveals how much they respect you.",
+      "Sarcasm is one of the hardest things to master in a second language — and one of the most rewarding.",
+      "Knowing when NOT to speak is a communication skill as important as knowing what to say.",
+      "Online learning has permanently changed education for the better.",
+      "Most arguments online are just two people talking past each other.",
+    ];
+
+    let rolling = false;
+    let round = 0;
+    const votes = { agree: 0, disagree: 0 };
+    let voted = false;
+
+    function vote(side) {
+      if (voted) return;
+      voted = true;
+      votes[side]++;
+      updateBars();
+      document.getElementById('btnAgree').disabled = true;
+      document.getElementById('btnDisagree').disabled = true;
+    }
+
+    function updateBars() {
+      const total = votes.agree + votes.disagree || 1;
+      document.getElementById('cntAgree').textContent = votes.agree;
+      document.getElementById('cntDisagree').textContent = votes.disagree;
+      document.getElementById('barAgree').style.width = (votes.agree / total * 100) + '%';
+      document.getElementById('barDisagree').style.width = (votes.disagree / total * 100) + '%';
+    }
+
+    function triggerRipple() {
+      const card = document.getElementById('card');
+      const el = document.createElement('div');
+      el.className = 'ripple-el';
+      el.style.cssText = 'left:50%;top:50%;margin-left:-50px;margin-top:-50px;';
+      card.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    function spin() {
+      if (rolling) return;
+      rolling = true;
+      voted = false;
+      votes.agree = votes.disagree = 0;
+      updateBars();
+
+      const card    = document.getElementById('card');
+      const text    = document.getElementById('takeText');
+      const prompt  = document.getElementById('promptBar');
+      const spinBtn = document.getElementById('spinBtn');
+      const btnA    = document.getElementById('btnAgree');
+      const btnD    = document.getElementById('btnDisagree');
+
+      spinBtn.disabled = true;
+      btnA.disabled = btnD.disabled = true;
+      card.classList.remove('active');
+      card.classList.add('rolling');
+      text.className = 'take-text';
+      prompt.className = 'prompt-bar';
+      prompt.textContent = 'Spinning…';
+      triggerRipple();
+
+      const chosen = takes[Math.floor(Math.random() * takes.length)];
+      let ticks = 0;
+
+      const iv = setInterval(() => {
+        text.textContent = takes[Math.floor(Math.random() * takes.length)];
+        ticks++;
+        if (ticks >= 22) {
+          clearInterval(iv);
+          text.textContent = chosen;
+          text.className = 'take-text';
+          card.classList.remove('rolling');
+          card.classList.add('active');
+          round++;
+          document.getElementById('roundNum').textContent = round;
+          prompt.className = 'prompt-bar active';
+          prompt.textContent = '📢 Everyone: on the count of 3, type AGREE or DISAGREE in the chat — then explain why!';
+          btnA.disabled = btnD.disabled = false;
+          spinBtn.disabled = false;
+          rolling = false;
+        }
+      }, 85);
+    }
+  </script>
+</body>
+</html>
