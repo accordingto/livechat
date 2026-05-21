@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emoji Quiz</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #a78bfa; font-weight: 700; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 32px; }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    .header p { color: #666; font-size: .93rem; line-height: 1.6; }
+
+    /* ── How to play ── */
+    .how {
+      width: 100%;
+      max-width: 720px;
+      background: rgba(167,139,250,.07);
+      border: 1px solid rgba(167,139,250,.2);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .how .bulb { font-size: 1.3rem; flex-shrink: 0; }
+    .how p { font-size: .85rem; color: #aaa; line-height: 1.6; }
+    .how strong { color: #c4b5fd; }
+
+    /* ── Category tabs ── */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    .tab {
+      background: #13132b;
+      border: 1px solid #1e1e42;
+      border-radius: 999px;
+      padding: 7px 18px;
+      font-size: .82rem;
+      cursor: pointer;
+      color: #777;
+      transition: background .2s, border-color .2s, color .2s;
+      font-family: inherit;
+    }
+    .tab:hover { border-color: #a78bfa; color: #eee; }
+    .tab.active {
+      background: rgba(167,139,250,.15);
+      border-color: #a78bfa;
+      color: #a78bfa;
+      font-weight: 700;
+    }
+
+    /* ── Main card ── */
+    .card {
+      width: 100%;
+      max-width: 720px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 24px;
+      padding: 52px 36px 40px;
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .4s;
+      min-height: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+    }
+    .card.active { border-color: #a78bfa; }
+
+    .cat-pill {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: rgba(167,139,250,.12);
+      color: #a78bfa;
+    }
+
+    .emoji-row {
+      font-size: clamp(2.6rem, 8vw, 4rem);
+      letter-spacing: 6px;
+      line-height: 1.2;
+      min-height: 1.3em;
+    }
+    .emoji-row.placeholder { filter: grayscale(1); opacity: .2; font-size: 2.2rem; }
+
+    /* rolling */
+    @keyframes spin-flicker {
+      0%,100% { transform: scale(1);   opacity: 1; }
+      50%      { transform: scale(.9); opacity: .3; }
+    }
+    .card.rolling .emoji-row { animation: spin-flicker .12s linear infinite; }
+
+    /* ── Answer panel ── */
+    .answer-panel {
+      width: 100%;
+      max-width: 720px;
+      background: rgba(167,139,250,.08);
+      border: 1px solid rgba(167,139,250,.25);
+      border-radius: 16px;
+      padding: 20px 28px;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 70px;
+      justify-content: center;
+    }
+    .answer-panel .ans-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #555;
+    }
+    .answer-panel .ans-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #a78bfa;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .4s, transform .4s;
+    }
+    .answer-panel .ans-text.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .answer-panel .ans-hint {
+      font-size: .82rem;
+      color: #444;
+    }
+
+    /* ── Buttons row ── */
+    .btn-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 15px 38px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .4px;
+      transition: background .2s, transform .1s, opacity .2s;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    .btn-draw    { background: #a78bfa; color: #0d0d1a; }
+    .btn-draw:hover:not(:disabled) { background: #c4b5fd; }
+
+    .btn-reveal  { background: #13132b; color: #a78bfa; border: 2px solid #a78bfa; padding: 13px 38px; }
+    .btn-reveal:hover:not(:disabled) { background: rgba(167,139,250,.1); }
+
+    /* ripple */
+    @keyframes ripple { from{transform:scale(0);opacity:.3} to{transform:scale(5);opacity:0} }
+    .ripple-el {
+      position:absolute; width:80px; height:80px; border-radius:50%;
+      background:#a78bfa; pointer-events:none;
+      animation:ripple .7s ease-out forwards;
+      left:50%; top:50%; margin:-40px 0 0 -40px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🧩 Emoji Quiz</h1>
+    <p>Decode the emojis — type your guess in chat before the answer is revealed!</p>
+  </div>
+
+  <div class="how">
+    <span class="bulb">💡</span>
+    <p>
+      <strong>How to play:</strong> Host draws a puzzle. Everyone writes their guess privately.
+      On the count of 3, all players send their answer in chat at the same time.
+      Then the host clicks <strong>Reveal</strong> — closest answer wins the round!
+    </p>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="setCategory('all', this)">🌐 All</button>
+    <button class="tab" onclick="setCategory('movie', this)">🎬 Movies</button>
+    <button class="tab" onclick="setCategory('song', this)">🎵 Songs</button>
+    <button class="tab" onclick="setCategory('idiom', this)">💬 Idioms</button>
+    <button class="tab" onclick="setCategory('place', this)">🌍 Places</button>
+  </div>
+
+  <div class="card" id="card">
+    <span class="cat-pill" id="catPill">Category</span>
+    <div class="emoji-row placeholder" id="emojiRow">🧩 ❓ 🎯</div>
+  </div>
+
+  <div class="answer-panel">
+    <span class="ans-label">Answer</span>
+    <span class="ans-text" id="answerText">—</span>
+    <span class="ans-hint" id="answerHint"></span>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-draw"   id="drawBtn"   onclick="draw()">🎲 Draw</button>
+    <button class="btn btn-reveal" id="revealBtn" onclick="reveal()" disabled>👁 Reveal</button>
+  </div>
+
+  <script>
+    const all = [
+      // ── Movies ──
+      { e:'🌊🛳️🧊💔', a:'Titanic',                        h:'1997 James Cameron epic',            c:'movie' },
+      { e:'🦁👑🌍',    a:'The Lion King',                   h:'Hakuna Matata!',                     c:'movie' },
+      { e:'🐠🔍🌊',    a:'Finding Nemo',                    h:'Just keep swimming',                 c:'movie' },
+      { e:'🧙‍♂️⚡🏫',  a:'Harry Potter',                    h:'The boy who lived',                  c:'movie' },
+      { e:'🦕🌿🏝️',    a:'Jurassic Park',                   h:'Life finds a way',                   c:'movie' },
+      { e:'🕷️🧑🏙️',    a:'Spider-Man',                      h:'With great power comes great responsibility', c:'movie' },
+      { e:'❄️👸💎',    a:'Frozen',                          h:'Let it go!',                         c:'movie' },
+      { e:'🤖❤️🌱',    a:'WALL-E',                          h:'Pixar\'s love story in space',       c:'movie' },
+      { e:'🦍🏙️🌃',    a:'King Kong',                       h:'Big ape, big city',                  c:'movie' },
+      { e:'🃏🤡😈',    a:'Joker',                           h:'Why so serious?',                    c:'movie' },
+      { e:'💊🕶️👊',    a:'The Matrix',                      h:'Red pill or blue pill?',             c:'movie' },
+      { e:'🧜‍♀️🌊🐚',  a:'The Little Mermaid',              h:'Part of your world',                 c:'movie' },
+      { e:'👸🍎💤',    a:'Snow White',                      h:'Mirror, mirror on the wall',         c:'movie' },
+      { e:'🦈🏊‍♂️🩸',  a:'Jaws',                            h:'You\'re gonna need a bigger boat',   c:'movie' },
+      { e:'🦸‍♂️🔨⚡',  a:'Thor',                            h:'God of Thunder',                     c:'movie' },
+      { e:'🧑‍🚀🌌⏰',  a:'Interstellar',                    h:'Do not go gentle into that good night', c:'movie' },
+      { e:'👻🚌🎒',    a:'Ghostbusters',                    h:'Who ya gonna call?',                 c:'movie' },
+      { e:'🧟🌎🏃',    a:'World War Z',                     h:'Global zombie apocalypse',           c:'movie' },
+      { e:'🎪🎩🎭🎶',  a:'The Greatest Showman',            h:'Hugh Jackman as P.T. Barnum',        c:'movie' },
+      { e:'🏎️💨🔥',    a:'Fast & Furious',                  h:'Family. And cars.',                  c:'movie' },
+      { e:'🧁🍫🏭',    a:'Charlie and the Chocolate Factory', h:'Golden ticket!',                  c:'movie' },
+      { e:'🌙👽🚲✨',  a:'E.T.',                            h:'Phone home',                         c:'movie' },
+      { e:'🐻🍯🌲',    a:'Winnie the Pooh',                 h:'Oh bother',                          c:'movie' },
+      { e:'🐧❄️🎶',    a:'Happy Feet',                      h:'Dancing penguin in Antarctica',      c:'movie' },
+      { e:'🦅🏹🌲🏹',  a:'The Hunger Games',                h:'May the odds be ever in your favor', c:'movie' },
+
+      // ── Songs ──
+      { e:'🤠🐴🛣️',    a:'"Old Town Road" — Lil Nas X',    h:'I got the horses in the back',       c:'song' },
+      { e:'☀️🕶️😊',    a:'"Walking on Sunshine" — Katrina & The Waves', h:'Classic feel-good anthem', c:'song' },
+      { e:'💜🌧️🎸',    a:'"Purple Rain" — Prince',          h:'1984 classic',                       c:'song' },
+      { e:'🍋👑💃',     a:'"Lemonade" — Beyoncé',            h:'When life gives you lemons…',        c:'song' },
+      { e:'🌍🤝🎤',     a:'"We Are the World"',              h:'1985 charity supergroup anthem',     c:'song' },
+      { e:'😊🎵🙌',     a:'"Happy" — Pharrell Williams',     h:'Clap along if you feel…',            c:'song' },
+      { e:'🃏😏👄',     a:'"Poker Face" — Lady Gaga',        h:"Can't read my poker face",           c:'song' },
+      { e:'🌙🏨🎸',     a:'"Hotel California" — Eagles',     h:'You can check out any time you like…', c:'song' },
+      { e:'💃🕺🪩',     a:'"Dancing Queen" — ABBA',          h:'Young and sweet, only seventeen',    c:'song' },
+      { e:'🎂🎉🎁',     a:'"Happy Birthday to You"',         h:'The most sung song in the world',    c:'song' },
+      { e:'🌊🏄🌞',     a:'"Good Vibrations" — Beach Boys',  h:'California dreaming',                c:'song' },
+      { e:'👁️🐯🦁',    a:'"Eye of the Tiger" — Survivor',   h:'Rocky III theme',                    c:'song' },
+      { e:'🦋🌈✨',     a:'"Beautiful" — Christina Aguilera', h:'You are beautiful, no matter what they say', c:'song' },
+      { e:'🔥🕺👖',     a:'"Stayin\' Alive" — Bee Gees',    h:'Disco classic from Saturday Night Fever', c:'song' },
+      { e:'🎤🎵🌟',     a:'"My Heart Will Go On" — Celine Dion', h:'Titanic theme song',            c:'song' },
+      { e:'⬆️🎈🌤️',    a:'"Up" — from the Pixar movie',     h:'Adventure is out there!',            c:'song' },
+      { e:'🚀🌌💫',     a:'"Rocket Man" — Elton John',       h:'Burning out his fuse up here alone', c:'song' },
+      { e:'🎸🔥😈',     a:'"Highway to Hell" — AC/DC',       h:'Rock and roll classic',              c:'song' },
+
+      // ── Idioms ──
+      { e:'🌧️🐱🐶',    a:'"It\'s raining cats and dogs"',   h:'Heavy rain',                         c:'idiom' },
+      { e:'🍰',          a:'"Piece of cake"',                 h:'Something very easy',                c:'idiom' },
+      { e:'🐦🪨🪨',     a:'"Kill two birds with one stone"',  h:'Achieve two things at once',         c:'idiom' },
+      { e:'🐘🏠',        a:'"Elephant in the room"',          h:'An obvious problem no one mentions', c:'idiom' },
+      { e:'🐈🤐',        a:'"Let the cat out of the bag"',    h:'Accidentally reveal a secret',       c:'idiom' },
+      { e:'🌙🔵',        a:'"Once in a blue moon"',           h:'Very rarely',                        c:'idiom' },
+      { e:'🍋➡️🍋🍹',   a:'"Make lemonade from lemons"',     h:'Turn bad into good',                 c:'idiom' },
+      { e:'🐟🏜️',        a:'"Fish out of water"',             h:'Feel uncomfortable or out of place', c:'idiom' },
+      { e:'💤🐕',        a:'"Let sleeping dogs lie"',         h:'Don\'t stir up old problems',        c:'idiom' },
+      { e:'🔥🍳🔥',     a:'"Out of the frying pan, into the fire"', h:'From bad to worse',           c:'idiom' },
+      { e:'☁️9️⃣',       a:'"On cloud nine"',                 h:'Extremely happy',                    c:'idiom' },
+      { e:'🧠⚡',        a:'"Brainstorm"',                    h:'Think hard to generate ideas',       c:'idiom' },
+      { e:'🌊🚣',        a:'"Go with the flow"',              h:'Don\'t resist, just follow along',   c:'idiom' },
+      { e:'🦶👄',        a:'"Put your foot in your mouth"',   h:'Say something embarrassing',         c:'idiom' },
+      { e:'🐕🎾',        a:'"Back to square one"',            h:'Start over from the beginning',      c:'idiom' },
+      { e:'🔔❓',        a:'"Ring a bell"',                   h:'Sound familiar',                     c:'idiom' },
+      { e:'🌧️⬛🌈',     a:'"Every cloud has a silver lining"', h:'Every bad thing has a good side',  c:'idiom' },
+      { e:'🎯🔨',        a:'"Hit the nail on the head"',      h:'Be exactly correct',                 c:'idiom' },
+      { e:'🧣🐈',        a:'"Cat got your tongue?"',          h:'Why are you so quiet?',              c:'idiom' },
+      { e:'🥶🦆',        a:'"Cold turkey"',                   h:'Stop a habit suddenly',              c:'idiom' },
+
+      // ── Places ──
+      { e:'🗼🥐🍷',     a:'France / Paris',                  h:'City of Love',                       c:'place' },
+      { e:'🍕🛵🏛️',     a:'Italy / Rome',                    h:'When in Rome…',                      c:'place' },
+      { e:'🎎🍣🗻',     a:'Japan / Tokyo',                   h:'Land of the Rising Sun',             c:'place' },
+      { e:'🌵🌮🎸',     a:'Mexico',                          h:'Viva Mexico!',                       c:'place' },
+      { e:'🦘🐨🏄',     a:'Australia',                       h:'G\'day mate!',                       c:'place' },
+      { e:'🌷💎🚲',     a:'Netherlands / Amsterdam',         h:'Land of windmills and tulips',       c:'place' },
+      { e:'💃🎭🌞🥘',   a:'Spain',                           h:'Olé!',                               c:'place' },
+      { e:'🐉🏮🐼🧧',   a:'China / Beijing',                 h:'The Middle Kingdom',                 c:'place' },
+      { e:'🍺🏰⛪',     a:'Germany',                         h:'Oktoberfest nation',                 c:'place' },
+      { e:'🌅🏄🌺🌊',   a:'Hawaii',                          h:'Aloha!',                             c:'place' },
+      { e:'🎷🎺🦊🎭',   a:'New Orleans, USA',                h:'Jazz capital of the world',          c:'place' },
+      { e:'🏔️⌚🧀🍫',   a:'Switzerland',                     h:'Neutral and very punctual',          c:'place' },
+      { e:'🌊🏝️☀️🍹',   a:'Caribbean',                       h:'Island paradise',                    c:'place' },
+      { e:'🐘🌅🌍🦁',   a:'Kenya / Africa (Safari)',         h:'The great migration',                c:'place' },
+      { e:'🗽🍕🏙️🎭',   a:'New York City, USA',              h:'The city that never sleeps',         c:'place' },
+    ];
+
+    let pool      = [...all];
+    let current   = null;
+    let rolling   = false;
+    let round     = 0;
+    let revealed  = false;
+
+    function setCategory(cat, btn) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      pool = cat === 'all' ? [...all] : all.filter(q => q.c === cat);
+      resetCard();
+    }
+
+    function resetCard() {
+      current = null; revealed = false;
+      const card    = document.getElementById('card');
+      const emojiEl = document.getElementById('emojiRow');
+      const ansText = document.getElementById('answerText');
+      const ansHint = document.getElementById('answerHint');
+      const pill    = document.getElementById('catPill');
+      card.classList.remove('active');
+      emojiEl.textContent = '🧩 ❓ 🎯';
+      emojiEl.className = 'emoji-row placeholder';
+      ansText.textContent = '—';
+      ansText.classList.remove('visible');
+      ansHint.textContent = '';
+      pill.textContent = 'Category';
+      document.getElementById('revealBtn').disabled = true;
+    }
+
+    function catLabel(c) {
+      return { movie:'🎬 Movie', song:'🎵 Song', idiom:'💬 Idiom', place:'🌍 Place' }[c] || c;
+    }
+
+    function triggerRipple() {
+      const el = document.createElement('div');
+      el.className = 'ripple-el';
+      document.getElementById('card').appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    function draw() {
+      if (rolling || !pool.length) return;
+      rolling = true; revealed = false;
+
+      const card    = document.getElementById('card');
+      const emojiEl = document.getElementById('emojiRow');
+      const ansText = document.getElementById('answerText');
+      const ansHint = document.getElementById('answerHint');
+      const pill    = document.getElementById('catPill');
+      const drawBtn = document.getElementById('drawBtn');
+      const revBtn  = document.getElementById('revealBtn');
+
+      drawBtn.disabled = true;
+      revBtn.disabled  = true;
+      ansText.classList.remove('visible');
+      ansText.textContent = '—';
+      ansHint.textContent = '';
+      card.classList.remove('active');
+      card.classList.add('rolling');
+      emojiEl.className = 'emoji-row';
+      triggerRipple();
+
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      let ticks = 0;
+
+      const iv = setInterval(() => {
+        const r = pool[Math.floor(Math.random() * pool.length)];
+        emojiEl.textContent = r.e;
+        ticks++;
+        if (ticks >= 24) {
+          clearInterval(iv);
+          current = chosen;
+          emojiEl.textContent = chosen.e;
+          emojiEl.className = 'emoji-row';
+          pill.textContent = catLabel(chosen.c);
+          card.classList.remove('rolling');
+          card.classList.add('active');
+          round++;
+          document.getElementById('roundNum').textContent = round;
+          drawBtn.disabled = false;
+          revBtn.disabled  = false;
+          rolling = false;
+        }
+      }, 90);
+    }
+
+    function reveal() {
+      if (!current || revealed) return;
+      revealed = true;
+      const ansText = document.getElementById('answerText');
+      const ansHint = document.getElementById('answerHint');
+      ansText.textContent = current.a;
+      ansHint.textContent = current.h;
+      ansText.classList.add('visible');
+      document.getElementById('revealBtn').disabled = true;
+    }
+  </script>
+</body>
+</html>
