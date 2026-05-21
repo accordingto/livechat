@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Describe the Scene</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #22c55e; font-weight: 700; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    /* ── How to play ── */
+    .how {
+      width: 100%;
+      max-width: 820px;
+      background: rgba(34,197,94,.07);
+      border: 1px solid rgba(34,197,94,.2);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .how .bulb { font-size: 1.3rem; flex-shrink: 0; }
+    .how p { font-size: .85rem; color: #aaa; line-height: 1.7; }
+    .how strong { color: #86efac; }
+
+    /* ── Image card ── */
+    .img-card {
+      width: 100%;
+      max-width: 820px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      transition: border-color .4s;
+      position: relative;
+    }
+    .img-card.active { border-color: #22c55e; }
+
+    .img-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #1a1a38;
+    }
+    .cat-pill {
+      background: rgba(34,197,94,.12);
+      color: #22c55e;
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .diff {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .diff span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #1e1e42;
+    }
+    .diff span.on { background: #22c55e; }
+
+    .img-wrap {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      background: #0d0d1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    @media (max-width: 600px) { .img-wrap { height: 260px; } }
+
+    .scene-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity .6s ease;
+    }
+    .scene-img.loaded { opacity: 1; }
+
+    .img-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #2a2a50;
+    }
+    .img-placeholder .ph-icon { font-size: 3rem; }
+    .img-placeholder p { font-size: .9rem; }
+
+    /* time's up overlay */
+    .timesup-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,13,26,.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+    .timesup-overlay.show { opacity: 1; }
+    .timesup-overlay .go-text {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 900;
+      color: #22c55e;
+      letter-spacing: 2px;
+    }
+    .timesup-overlay .go-sub { font-size: 1rem; color: #aaa; }
+
+    /* ── Timer row ── */
+    .timer-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      margin-bottom: 20px;
+    }
+
+    .timer-wrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+    .timer-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .ring-bg { fill: none; stroke: #1e1e42; stroke-width: 8; }
+    .ring-progress {
+      fill: none;
+      stroke: #22c55e;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .3s;
+    }
+    .timer-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: #eee;
+    }
+    .timer-num.warn { color: #ef4444; }
+
+    .timer-label {
+      text-align: left;
+      max-width: 260px;
+    }
+    .timer-label .phase {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 4px;
+    }
+    .timer-label .phase.warn { color: #ef4444; }
+    .timer-label .phase-sub { font-size: .85rem; color: #555; line-height: 1.5; }
+
+    /* ── Vocab hints ── */
+    .hints-panel {
+      width: 100%;
+      max-width: 820px;
+      margin-bottom: 24px;
+    }
+    .hints-toggle {
+      width: 100%;
+      background: #13132b;
+      border: 1px solid #1e1e42;
+      border-radius: 12px;
+      padding: 13px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      color: #777;
+      font-size: .88rem;
+      font-family: inherit;
+      transition: border-color .2s, color .2s;
+    }
+    .hints-toggle:hover { border-color: #22c55e; color: #eee; }
+    .hints-toggle .arrow { transition: transform .25s; }
+    .hints-toggle.open .arrow { transform: rotate(180deg); }
+
+    .hints-body {
+      display: none;
+      padding: 16px 20px;
+      background: #0f0f22;
+      border: 1px solid #1e1e42;
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .hints-body.open { display: flex; }
+    .hint-chip {
+      background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.25);
+      color: #86efac;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: .85rem;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 15px 40px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s, transform .1s, opacity .2s;
+      letter-spacing: .3px;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    .btn-draw   { background: #22c55e; color: #0d0d1a; }
+    .btn-draw:hover:not(:disabled)  { background: #4ade80; }
+    .btn-skip   { background: #13132b; color: #555; border: 1px solid #1e1e42; padding: 14px 28px; }
+    .btn-skip:hover:not(:disabled)  { border-color: #555; color: #aaa; }
+
+    /* loading spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #1e1e42;
+      border-top-color: #22c55e;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🖼️ Describe the Scene</h1>
+    <p>Look at the photo — then describe what you see in English!</p>
+  </div>
+
+  <div class="how">
+    <span class="bulb">💡</span>
+    <p>
+      <strong>How to play:</strong> Host draws a photo. You have <strong>45 seconds</strong> to write
+      2–3 English sentences describing what's happening. When the buzzer sounds, everyone
+      pastes their answer in the chat at the same time. Then compare — who noticed the most?
+    </p>
+  </div>
+
+  <div class="img-card" id="imgCard">
+    <div class="img-meta">
+      <span class="cat-pill" id="catPill">Scene</span>
+      <div class="diff" id="diffDots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="img-wrap">
+      <div class="img-placeholder" id="placeholder">
+        <span class="ph-icon">🖼️</span>
+        <p>Press Draw to load a scene</p>
+      </div>
+      <img class="scene-img" id="sceneImg" alt="Scene to describe" />
+      <div class="timesup-overlay" id="timesupOverlay">
+        <div class="go-text">⏰ TIME'S UP!</div>
+        <div class="go-sub">Everyone post your answer in the chat now!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="timer-row">
+    <div class="timer-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="45"/>
+        <circle class="ring-progress" cx="50" cy="50" r="45" id="ringProgress"/>
+      </svg>
+      <div class="timer-num" id="timerNum">45</div>
+    </div>
+    <div class="timer-label">
+      <div class="phase" id="phaseLabel">Ready</div>
+      <div class="phase-sub" id="phaseSub">Draw a scene to start the round</div>
+    </div>
+  </div>
+
+  <div class="hints-panel">
+    <button class="hints-toggle" id="hintsToggle" onclick="toggleHints()">
+      <span>💡 Vocabulary Hints</span>
+      <span class="arrow">▼</span>
+    </button>
+    <div class="hints-body" id="hintsBody"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-draw" id="drawBtn" onclick="draw()">🎲 Draw Scene</button>
+    <button class="btn btn-skip" id="skipBtn" onclick="skipScene()" disabled>Skip</button>
+  </div>
+
+  <script>
+    const DURATION = 45;
+    const CIRCUMFERENCE = 283;
+
+    const scenes = [
+      // Café & Restaurant
+      { id:'1521590832906-b40c02c2e5e8', cat:'Café',       diff:1, hints:['ordering','counter','barista','menu','chatting','waiting'] },
+      { id:'1543269664-647163eb5260',    cat:'Café',       diff:1, hints:['friends','coffee','laughing','cozy','table','cups'] },
+      { id:'1414235077428-338989a2e8c0', cat:'Restaurant', diff:2, hints:['dining','couple','candlelit','conversation','date','wine'] },
+      { id:'1517248135467-4c7edcad34c4', cat:'Restaurant', diff:1, hints:['group meal','toasting','celebration','food','together','glasses'] },
+      { id:'1555396273-70eda6218de8',    cat:'Café',       diff:2, hints:['barista','serving','customer','coffee machine','latte','steam'] },
+      { id:'1525610553991-2bede1a236e2', cat:'Café',       diff:1, hints:['students','studying','laptop','books','focused','quiet'] },
+
+      // Work & Meeting
+      { id:'1521737604893-d14cc237f11d', cat:'Meeting',    diff:2, hints:['colleagues','discussion','office','professional','around the table','documents'] },
+      { id:'1517048676732-d65bc937f952', cat:'Meeting',    diff:2, hints:['presentation','whiteboard','team','brainstorm','conference','notes'] },
+      { id:'1522202176988-66273c2fd55f', cat:'Work',       diff:1, hints:['collaboration','laptop','teamwork','desk','pointing','screen'] },
+      { id:'1573496359142-b8d87734a5a2', cat:'Interview',  diff:3, hints:['one-on-one','formal','candidate','notepad','across the table','listening'] },
+      { id:'1531058020387-3be344556be6', cat:'Workshop',   diff:2, hints:['sticky notes','creative','wall','organizing','team','ideas'] },
+      { id:'1560472354-b33ff0ad5c6f',    cat:'Video Call', diff:2, hints:['screen','remote','waving','online meeting','laptop','chat'] },
+      { id:'1600880292203-757bb62b4baf', cat:'Office',     diff:2, hints:['celebrating','achievement','clapping','cheering','team win','smiling'] },
+
+      // Friends & Social
+      { id:'1529156069898-49953e39b3ac', cat:'Friends',    diff:1, hints:['group','diverse','smiling','outdoors','relaxed','hanging out'] },
+      { id:'1516726817505-f5ed825624d8', cat:'Friends',    diff:1, hints:['laughing','candid','joy','together','casual','genuine'] },
+      { id:'1541516160-89729e4faa8c',    cat:'Party',      diff:2, hints:['dancing','music','crowd','lights','having fun','nightlife'] },
+      { id:'1488646953279-85791f06f4c7', cat:'Travel',     diff:2, hints:['sightseeing','excited','camera','explore','backpack','landmark'] },
+      { id:'1576085898323-f6e71e7f60c4', cat:'Friends',    diff:1, hints:['selfie','group photo','smiling','close together','memory','fun'] },
+      { id:'1559827291-72416b9a8f2d',    cat:'Social',     diff:2, hints:['volunteers','community','working together','outdoors','helping','project'] },
+
+      // Family
+      { id:'1511895426328-dc8714191011', cat:'Family',     diff:1, hints:['parents','children','love','home','together','warm'] },
+      { id:'1474552226712-ac0f0961a954', cat:'Family',     diff:1, hints:['dinner table','meal','passing food','conversation','kitchen','together'] },
+      { id:'1536640712-4d4c36ff0e4e',    cat:'Family',     diff:2, hints:['cooking','kitchen','helping','learning','parent and child','apron'] },
+      { id:'1484665754804-74b091211472', cat:'Family',     diff:1, hints:['reading','bedtime story','cozy','cuddle','book','calm'] },
+      { id:'1581579438747-104c53d7b78b', cat:'Family',     diff:2, hints:['grandparents','generations','wisdom','warmth','heritage','elderly'] },
+      { id:'1476703993599-0035ddf41e8',  cat:'Family',     diff:1, hints:['playing','children','backyard','laughing','running','joy'] },
+
+      // Street & Market
+      { id:'1533227268428-f9ed0900fb3b', cat:'Market',     diff:2, hints:['vendor','customer','browsing','colorful','busy','stalls'] },
+      { id:'1519751138087-5bf79df62d7d', cat:'Street',     diff:3, hints:['crowd','urban','pedestrians','city','rush hour','crosswalk'] },
+      { id:'1566073771259-3be0d0100982', cat:'Market',     diff:2, hints:['fresh produce','outdoor stalls','seller','negotiating','vegetables','colorful'] },
+      { id:'1516483638261-f4dbaf036963', cat:'Street',     diff:2, hints:['café terrace','street','tables outside','people watching','European','cobblestone'] },
+      { id:'1477959858617-67f85cf4f1df', cat:'Street',     diff:3, hints:['city street','night','neon lights','pedestrians','busy','urban life'] },
+
+      // Education
+      { id:'1524178232363-1fb2b075b655', cat:'Classroom',  diff:1, hints:['teacher','students','explaining','attentive','front of class','whiteboard'] },
+      { id:'1509062522246-3755977927d7', cat:'Library',    diff:2, hints:['studying','books','quiet','concentrated','research','desk'] },
+      { id:'1427504494785-3a9ca7044f45', cat:'Classroom',  diff:1, hints:['raise hand','answer','engaged','curious','lesson','children'] },
+      { id:'1580582932707-520aed937b7b', cat:'Workshop',   diff:2, hints:['hands-on activity','group work','materials','creating','experimenting','focus'] },
+      { id:'1546410531-bb4951524813',    cat:'Classroom',  diff:2, hints:['group discussion','students','debate','ideas','circle','engaged'] },
+
+      // Sport & Outdoor
+      { id:'1526676037331-7da346a5b5c3', cat:'Sport',      diff:2, hints:['celebrating','team','victory','excited','high five','win'] },
+      { id:'1571019613454-1cb2f99b2d8b', cat:'Training',   diff:2, hints:['coach','athlete','instruction','focus','effort','training ground'] },
+      { id:'1461896836934-ffe607ba8211', cat:'Sport',      diff:1, hints:['running','race','competition','track','determination','crowd'] },
+      { id:'1544551763-46a013bb70d5',    cat:'Outdoor',    diff:1, hints:['hiking','trail','friends','nature','adventure','backpack'] },
+      { id:'1571008887538-b36bb32f4571', cat:'Sport',      diff:2, hints:['team huddle','strategy','captain','listening','pre-game','focus'] },
+    ];
+
+    let timeLeft   = DURATION;
+    let timerTick  = null;
+    let current    = null;
+    let loading    = false;
+    let round      = 0;
+    let hintsOpen  = false;
+    let usedIds    = new Set();
+
+    // ── Helpers ──────────────────────────────────────────
+    function setDiff(n) {
+      document.querySelectorAll('.diff span').forEach((el, i) => {
+        el.classList.toggle('on', i < n);
+      });
+    }
+
+    function stopTimer() {
+      clearInterval(timerTick);
+      timerTick = null;
+    }
+
+    function resetTimer() {
+      stopTimer();
+      timeLeft = DURATION;
+      const ring = document.getElementById('ringProgress');
+      ring.style.stroke = '#22c55e';
+      ring.style.strokeDashoffset = '0';
+      document.getElementById('timerNum').textContent = DURATION;
+      document.getElementById('timerNum').classList.remove('warn');
+      document.getElementById('phaseLabel').classList.remove('warn');
+    }
+
+    function playBeep() {
+      try {
+        const ctx  = new AudioContext();
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+      } catch (e) {}
+    }
+
+    function startTimer() {
+      const ring      = document.getElementById('ringProgress');
+      const numEl     = document.getElementById('timerNum');
+      const phaseEl   = document.getElementById('phaseLabel');
+      const phaseSubEl= document.getElementById('phaseSub');
+
+      phaseEl.textContent  = 'Describing…';
+      phaseSubEl.textContent = 'Write 2–3 sentences, then wait for the signal!';
+
+      timerTick = setInterval(() => {
+        timeLeft--;
+        numEl.textContent = timeLeft;
+        ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - timeLeft / DURATION);
+
+        if (timeLeft <= 10) {
+          ring.style.stroke = '#ef4444';
+          numEl.classList.add('warn');
+          phaseEl.classList.add('warn');
+          phaseEl.textContent = 'Almost done!';
+          phaseSubEl.textContent = 'Wrap up your sentences…';
+        }
+
+        if (timeLeft <= 0) {
+          stopTimer();
+          playBeep();
+          document.getElementById('timesupOverlay').classList.add('show');
+          phaseEl.textContent  = "Time's up!";
+          phaseSubEl.textContent = 'Everyone post your answer in the chat!';
+          document.getElementById('drawBtn').disabled  = false;
+          document.getElementById('skipBtn').disabled  = false;
+        }
+      }, 1000);
+    }
+
+    function toggleHints() {
+      hintsOpen = !hintsOpen;
+      document.getElementById('hintsToggle').classList.toggle('open', hintsOpen);
+      document.getElementById('hintsBody').classList.toggle('open', hintsOpen);
+    }
+
+    function renderHints(hints) {
+      const body = document.getElementById('hintsBody');
+      body.innerHTML = hints.map(h => `<span class="hint-chip">${h}</span>`).join('');
+    }
+
+    // ── Image loading ─────────────────────────────────────
+    function loadImage(scene) {
+      const img  = document.getElementById('sceneImg');
+      const ph   = document.getElementById('placeholder');
+      const card = document.getElementById('imgCard');
+
+      img.classList.remove('loaded');
+      ph.innerHTML = '<div class="spinner"></div>';
+      ph.style.display = 'flex';
+
+      img.onload = function() {
+        ph.style.display = 'none';
+        img.classList.add('loaded');
+        card.classList.add('active');
+        document.getElementById('timesupOverlay').classList.remove('show');
+        resetTimer();
+        startTimer();
+        document.getElementById('drawBtn').disabled = false;
+        document.getElementById('skipBtn').disabled = false;
+        loading = false;
+      };
+
+      img.onerror = function() {
+        // silently try next scene
+        usedIds.add(scene.id);
+        loadNextScene();
+      };
+
+      img.src = `https://images.unsplash.com/photo-${scene.id}?auto=format&fit=crop&w=900&q=80`;
+      document.getElementById('catPill').textContent = scene.cat;
+      setDiff(scene.diff);
+      renderHints(scene.hints);
+
+      // close hints panel on new draw
+      hintsOpen = false;
+      document.getElementById('hintsToggle').classList.remove('open');
+      document.getElementById('hintsBody').classList.remove('open');
+    }
+
+    function loadNextScene() {
+      const available = scenes.filter(s => !usedIds.has(s.id));
+      if (!available.length) {
+        usedIds.clear(); // reset if all used
+        loadNextScene();
+        return;
+      }
+      const scene = available[Math.floor(Math.random() * available.length)];
+      usedIds.add(scene.id);
+      current = scene;
+      loadImage(scene);
+    }
+
+    // ── Actions ───────────────────────────────────────────
+    function draw() {
+      if (loading) return;
+      loading = true;
+      stopTimer();
+      resetTimer();
+
+      document.getElementById('drawBtn').disabled = true;
+      document.getElementById('skipBtn').disabled = true;
+      document.getElementById('imgCard').classList.remove('active');
+      document.getElementById('phaseLabel').textContent   = 'Loading…';
+      document.getElementById('phaseSub').textContent     = 'Getting your scene ready';
+      document.getElementById('phaseLabel').classList.remove('warn');
+      document.getElementById('timerNum').classList.remove('warn');
+
+      round++;
+      document.getElementById('roundNum').textContent = round;
+
+      loadNextScene();
+    }
+
+    function skipScene() {
+      if (loading) return;
+      loading = true;
+      stopTimer();
+      resetTimer();
+      document.getElementById('drawBtn').disabled = true;
+      document.getElementById('skipBtn').disabled = true;
+      document.getElementById('imgCard').classList.remove('active');
+      loadNextScene();
+    }
+  </script>
+
+</body>
+</html>
