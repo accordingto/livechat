@@ -237,10 +237,10 @@
 
   <div class="tabs" id="tabs">
     <button class="tab active" onclick="setCategory('all', this)">🌐 All</button>
-    <button class="tab" onclick="setCategory('movie', this)">🎬 Movies</button>
-    <button class="tab" onclick="setCategory('song', this)">🎵 Songs</button>
     <button class="tab" onclick="setCategory('idiom', this)">💬 Idioms</button>
     <button class="tab" onclick="setCategory('place', this)">🌍 Places</button>
+    <button class="tab" onclick="setCategory('food',  this)">🍔 Food & Drinks</button>
+    <button class="tab" onclick="setCategory('sport', this)">⚽ Sports</button>
   </div>
 
   <div class="card" id="card">
@@ -261,91 +261,88 @@
 
   <script>
     const all = [
-      // ── Movies ──
-      { e:'🌊🛳️🧊💔', a:'Titanic',                        h:'1997 James Cameron epic',            c:'movie' },
-      { e:'🦁👑🌍',    a:'The Lion King',                   h:'Hakuna Matata!',                     c:'movie' },
-      { e:'🐠🔍🌊',    a:'Finding Nemo',                    h:'Just keep swimming',                 c:'movie' },
-      { e:'🧙‍♂️⚡🏫',  a:'Harry Potter',                    h:'The boy who lived',                  c:'movie' },
-      { e:'🦕🌿🏝️',    a:'Jurassic Park',                   h:'Life finds a way',                   c:'movie' },
-      { e:'🕷️🧑🏙️',    a:'Spider-Man',                      h:'With great power comes great responsibility', c:'movie' },
-      { e:'❄️👸💎',    a:'Frozen',                          h:'Let it go!',                         c:'movie' },
-      { e:'🤖❤️🌱',    a:'WALL-E',                          h:'Pixar\'s love story in space',       c:'movie' },
-      { e:'🦍🏙️🌃',    a:'King Kong',                       h:'Big ape, big city',                  c:'movie' },
-      { e:'🃏🤡😈',    a:'Joker',                           h:'Why so serious?',                    c:'movie' },
-      { e:'💊🕶️👊',    a:'The Matrix',                      h:'Red pill or blue pill?',             c:'movie' },
-      { e:'🧜‍♀️🌊🐚',  a:'The Little Mermaid',              h:'Part of your world',                 c:'movie' },
-      { e:'👸🍎💤',    a:'Snow White',                      h:'Mirror, mirror on the wall',         c:'movie' },
-      { e:'🦈🏊‍♂️🩸',  a:'Jaws',                            h:'You\'re gonna need a bigger boat',   c:'movie' },
-      { e:'🦸‍♂️🔨⚡',  a:'Thor',                            h:'God of Thunder',                     c:'movie' },
-      { e:'🧑‍🚀🌌⏰',  a:'Interstellar',                    h:'Do not go gentle into that good night', c:'movie' },
-      { e:'👻🚌🎒',    a:'Ghostbusters',                    h:'Who ya gonna call?',                 c:'movie' },
-      { e:'🧟🌎🏃',    a:'World War Z',                     h:'Global zombie apocalypse',           c:'movie' },
-      { e:'🎪🎩🎭🎶',  a:'The Greatest Showman',            h:'Hugh Jackman as P.T. Barnum',        c:'movie' },
-      { e:'🏎️💨🔥',    a:'Fast & Furious',                  h:'Family. And cars.',                  c:'movie' },
-      { e:'🧁🍫🏭',    a:'Charlie and the Chocolate Factory', h:'Golden ticket!',                  c:'movie' },
-      { e:'🌙👽🚲✨',  a:'E.T.',                            h:'Phone home',                         c:'movie' },
-      { e:'🐻🍯🌲',    a:'Winnie the Pooh',                 h:'Oh bother',                          c:'movie' },
-      { e:'🐧❄️🎶',    a:'Happy Feet',                      h:'Dancing penguin in Antarctica',      c:'movie' },
-      { e:'🦅🏹🌲🏹',  a:'The Hunger Games',                h:'May the odds be ever in your favor', c:'movie' },
-
-      // ── Songs ──
-      { e:'🤠🐴🛣️',    a:'"Old Town Road" — Lil Nas X',    h:'I got the horses in the back',       c:'song' },
-      { e:'☀️🕶️😊',    a:'"Walking on Sunshine" — Katrina & The Waves', h:'Classic feel-good anthem', c:'song' },
-      { e:'💜🌧️🎸',    a:'"Purple Rain" — Prince',          h:'1984 classic',                       c:'song' },
-      { e:'🍋👑💃',     a:'"Lemonade" — Beyoncé',            h:'When life gives you lemons…',        c:'song' },
-      { e:'🌍🤝🎤',     a:'"We Are the World"',              h:'1985 charity supergroup anthem',     c:'song' },
-      { e:'😊🎵🙌',     a:'"Happy" — Pharrell Williams',     h:'Clap along if you feel…',            c:'song' },
-      { e:'🃏😏👄',     a:'"Poker Face" — Lady Gaga',        h:"Can't read my poker face",           c:'song' },
-      { e:'🌙🏨🎸',     a:'"Hotel California" — Eagles',     h:'You can check out any time you like…', c:'song' },
-      { e:'💃🕺🪩',     a:'"Dancing Queen" — ABBA',          h:'Young and sweet, only seventeen',    c:'song' },
-      { e:'🎂🎉🎁',     a:'"Happy Birthday to You"',         h:'The most sung song in the world',    c:'song' },
-      { e:'🌊🏄🌞',     a:'"Good Vibrations" — Beach Boys',  h:'California dreaming',                c:'song' },
-      { e:'👁️🐯🦁',    a:'"Eye of the Tiger" — Survivor',   h:'Rocky III theme',                    c:'song' },
-      { e:'🦋🌈✨',     a:'"Beautiful" — Christina Aguilera', h:'You are beautiful, no matter what they say', c:'song' },
-      { e:'🔥🕺👖',     a:'"Stayin\' Alive" — Bee Gees',    h:'Disco classic from Saturday Night Fever', c:'song' },
-      { e:'🎤🎵🌟',     a:'"My Heart Will Go On" — Celine Dion', h:'Titanic theme song',            c:'song' },
-      { e:'⬆️🎈🌤️',    a:'"Up" — from the Pixar movie',     h:'Adventure is out there!',            c:'song' },
-      { e:'🚀🌌💫',     a:'"Rocket Man" — Elton John',       h:'Burning out his fuse up here alone', c:'song' },
-      { e:'🎸🔥😈',     a:'"Highway to Hell" — AC/DC',       h:'Rock and roll classic',              c:'song' },
-
       // ── Idioms ──
-      { e:'🌧️🐱🐶',    a:'"It\'s raining cats and dogs"',   h:'Heavy rain',                         c:'idiom' },
-      { e:'🍰',          a:'"Piece of cake"',                 h:'Something very easy',                c:'idiom' },
-      { e:'🐦🪨🪨',     a:'"Kill two birds with one stone"',  h:'Achieve two things at once',         c:'idiom' },
-      { e:'🐘🏠',        a:'"Elephant in the room"',          h:'An obvious problem no one mentions', c:'idiom' },
-      { e:'🐈🤐',        a:'"Let the cat out of the bag"',    h:'Accidentally reveal a secret',       c:'idiom' },
-      { e:'🌙🔵',        a:'"Once in a blue moon"',           h:'Very rarely',                        c:'idiom' },
-      { e:'🍋➡️🍋🍹',   a:'"Make lemonade from lemons"',     h:'Turn bad into good',                 c:'idiom' },
-      { e:'🐟🏜️',        a:'"Fish out of water"',             h:'Feel uncomfortable or out of place', c:'idiom' },
-      { e:'💤🐕',        a:'"Let sleeping dogs lie"',         h:'Don\'t stir up old problems',        c:'idiom' },
-      { e:'🔥🍳🔥',     a:'"Out of the frying pan, into the fire"', h:'From bad to worse',           c:'idiom' },
-      { e:'☁️9️⃣',       a:'"On cloud nine"',                 h:'Extremely happy',                    c:'idiom' },
-      { e:'🧠⚡',        a:'"Brainstorm"',                    h:'Think hard to generate ideas',       c:'idiom' },
-      { e:'🌊🚣',        a:'"Go with the flow"',              h:'Don\'t resist, just follow along',   c:'idiom' },
-      { e:'🦶👄',        a:'"Put your foot in your mouth"',   h:'Say something embarrassing',         c:'idiom' },
-      { e:'🐕🎾',        a:'"Back to square one"',            h:'Start over from the beginning',      c:'idiom' },
-      { e:'🔔❓',        a:'"Ring a bell"',                   h:'Sound familiar',                     c:'idiom' },
-      { e:'🌧️⬛🌈',     a:'"Every cloud has a silver lining"', h:'Every bad thing has a good side',  c:'idiom' },
-      { e:'🎯🔨',        a:'"Hit the nail on the head"',      h:'Be exactly correct',                 c:'idiom' },
-      { e:'🧣🐈',        a:'"Cat got your tongue?"',          h:'Why are you so quiet?',              c:'idiom' },
-      { e:'🥶🦆',        a:'"Cold turkey"',                   h:'Stop a habit suddenly',              c:'idiom' },
+      { e:'🌧️🐱🐶',   a:'"Raining cats and dogs"',              h:'Very heavy rain',                            c:'idiom' },
+      { e:'🍰',         a:'"Piece of cake"',                      h:'Something very easy to do',                  c:'idiom' },
+      { e:'🐘🏠',       a:'"Elephant in the room"',               h:'An obvious problem nobody talks about',       c:'idiom' },
+      { e:'🌙🔵',       a:'"Once in a blue moon"',                h:'Something that happens very rarely',          c:'idiom' },
+      { e:'🐟🏜️',       a:'"Fish out of water"',                  h:'Feeling uncomfortable in a new place',        c:'idiom' },
+      { e:'☁️9️⃣',      a:'"On cloud nine"',                      h:'Feeling extremely happy',                     c:'idiom' },
+      { e:'🌊🚣',       a:'"Go with the flow"',                   h:'Accept things as they happen',                c:'idiom' },
+      { e:'🎯🔨',       a:'"Hit the nail on the head"',           h:'Say or do something exactly right',           c:'idiom' },
+      { e:'🐦⏰🪱',     a:'"The early bird catches the worm"',    h:'Success comes to those who start early',      c:'idiom' },
+      { e:'🍎🩺',       a:'"An apple a day keeps the doctor away"', h:'Eat healthy to stay well',                  c:'idiom' },
+      { e:'🤞🍀',       a:'"Keep your fingers crossed"',          h:'Hope for good luck',                          c:'idiom' },
+      { e:'🔔❓',       a:'"Ring a bell"',                        h:'Does it sound familiar?',                     c:'idiom' },
+      { e:'💤🐕',       a:'"Let sleeping dogs lie"',              h:"Don't bring up old problems",                 c:'idiom' },
+      { e:'🐈🤐',       a:'"Cat got your tongue?"',               h:'Why are you so quiet?',                       c:'idiom' },
+      { e:'🌧️🌈',       a:'"Every cloud has a silver lining"',    h:'There is something good in every bad situation', c:'idiom' },
+      { e:'🐦🪨',       a:'"Kill two birds with one stone"',      h:'Solve two problems at the same time',         c:'idiom' },
+      { e:'🧠⚡',       a:'"Brainstorm"',                         h:'Think hard to generate lots of ideas',        c:'idiom' },
+      { e:'🥶🦆',       a:'"Cold turkey"',                        h:'Stop a bad habit suddenly',                   c:'idiom' },
+      { e:'🍋🍹',       a:'"Make lemonade from lemons"',          h:'Turn a bad situation into something positive', c:'idiom' },
+      { e:'🦶👄',       a:'"Put your foot in your mouth"',        h:'Say something embarrassing by accident',      c:'idiom' },
 
       // ── Places ──
-      { e:'🗼🥐🍷',     a:'France / Paris',                  h:'City of Love',                       c:'place' },
-      { e:'🍕🛵🏛️',     a:'Italy / Rome',                    h:'When in Rome…',                      c:'place' },
-      { e:'🎎🍣🗻',     a:'Japan / Tokyo',                   h:'Land of the Rising Sun',             c:'place' },
-      { e:'🌵🌮🎸',     a:'Mexico',                          h:'Viva Mexico!',                       c:'place' },
-      { e:'🦘🐨🏄',     a:'Australia',                       h:'G\'day mate!',                       c:'place' },
-      { e:'🌷💎🚲',     a:'Netherlands / Amsterdam',         h:'Land of windmills and tulips',       c:'place' },
-      { e:'💃🎭🌞🥘',   a:'Spain',                           h:'Olé!',                               c:'place' },
-      { e:'🐉🏮🐼🧧',   a:'China / Beijing',                 h:'The Middle Kingdom',                 c:'place' },
-      { e:'🍺🏰⛪',     a:'Germany',                         h:'Oktoberfest nation',                 c:'place' },
-      { e:'🌅🏄🌺🌊',   a:'Hawaii',                          h:'Aloha!',                             c:'place' },
-      { e:'🎷🎺🦊🎭',   a:'New Orleans, USA',                h:'Jazz capital of the world',          c:'place' },
-      { e:'🏔️⌚🧀🍫',   a:'Switzerland',                     h:'Neutral and very punctual',          c:'place' },
-      { e:'🌊🏝️☀️🍹',   a:'Caribbean',                       h:'Island paradise',                    c:'place' },
-      { e:'🐘🌅🌍🦁',   a:'Kenya / Africa (Safari)',         h:'The great migration',                c:'place' },
-      { e:'🗽🍕🏙️🎭',   a:'New York City, USA',              h:'The city that never sleeps',         c:'place' },
+      { e:'🗼🥐🍷',    a:'Paris, France',                        h:'City of Love and the Eiffel Tower',           c:'place' },
+      { e:'🍕🏛️🤌',    a:'Italy / Rome',                         h:'Home of pizza, pasta and ancient ruins',      c:'place' },
+      { e:'🍣🗻🌸',    a:'Japan / Tokyo',                        h:'Land of the Rising Sun and cherry blossoms',  c:'place' },
+      { e:'🌵🌮🎉',    a:'Mexico',                               h:'¡Viva México! Tacos and fiestas',             c:'place' },
+      { e:'🦘🐨🌞',    a:'Australia',                            h:"G'day mate! Land of kangaroos",               c:'place' },
+      { e:'💃🌞🥘',    a:'Spain',                                h:'Olé! Home of flamenco and paella',            c:'place' },
+      { e:'🐉🏮🐼',    a:'China / Beijing',                      h:'The Great Wall and giant pandas',             c:'place' },
+      { e:'🗽🏙️🍕',    a:'New York City, USA',                   h:'The city that never sleeps',                  c:'place' },
+      { e:'🌷🚲💨',    a:'Netherlands / Amsterdam',              h:'Famous for tulips and bicycles',              c:'place' },
+      { e:'🍺🏰⛪',    a:'Germany',                              h:'Home of Oktoberfest and fairy-tale castles',  c:'place' },
+      { e:'🌺🏄🌊',    a:'Hawaii, USA',                          h:'Aloha! Tropical paradise in the Pacific',     c:'place' },
+      { e:'🏔️🧀⌚',    a:'Switzerland',                          h:'Famous for cheese, chocolate and watches',    c:'place' },
+      { e:'🦁🌍🐘',    a:'Kenya / Africa (Safari)',              h:'Home of lions, elephants and the Big Five',   c:'place' },
+      { e:'🍁🏒❄️',    a:'Canada',                               h:'Maple syrup, hockey and polar bears',         c:'place' },
+      { e:'🌉🌁🚃',    a:'San Francisco, USA',                   h:'Golden Gate Bridge and cable cars',           c:'place' },
+
+      // ── Food & Drinks ──
+      { e:'🍕🧀🍅',    a:'Pizza',                                h:'Italian flatbread with cheese and toppings',  c:'food' },
+      { e:'🍣🐟🍚',    a:'Sushi',                                h:'Japanese rice and raw fish',                  c:'food' },
+      { e:'🍔🍟🥤',    a:'Burger and Fries',                     h:'The classic fast food combo',                 c:'food' },
+      { e:'🍜🥢🍲',    a:'Noodles / Ramen',                      h:'Popular Asian noodle soup',                   c:'food' },
+      { e:'🥐☕🥛',    a:'Coffee and Croissant',                 h:'Classic European breakfast',                  c:'food' },
+      { e:'🌮🌯🫔',    a:'Tacos',                                h:'Mexican tortilla with fillings',              c:'food' },
+      { e:'🥗🥬🥦',    a:'Salad',                                h:'Fresh vegetables in a bowl',                  c:'food' },
+      { e:'🎂🕯️🎉',    a:'Birthday Cake',                        h:'Sweet dessert for special celebrations',      c:'food' },
+      { e:'🍦🍧🍨',    a:'Ice Cream',                            h:'Cold and sweet frozen dessert',               c:'food' },
+      { e:'🥞🍁🍯',    a:'Pancakes with Maple Syrup',            h:'Fluffy stacked breakfast treat',              c:'food' },
+      { e:'🫖🍵🌿',    a:'Tea',                                  h:'Hot drink made from dried leaves',            c:'food' },
+      { e:'🍷🧀🥖',    a:'Wine, Cheese and Bread',               h:'Classic French evening snack',                c:'food' },
+      { e:'🥩🔥🌽',    a:'Barbecue / BBQ',                       h:'Grilling meat and veggies outdoors',          c:'food' },
+      { e:'🍩🍪🧁',    a:'Bakery Treats',                        h:'Sweet pastries and baked goods',              c:'food' },
+      { e:'🍉🍓🍇',    a:'Fruit Salad',                          h:'A bowl of mixed fresh fruits',                c:'food' },
+      { e:'🥚🍳🥓',    a:'Full Breakfast',                       h:'Eggs, bacon and toast — English breakfast',   c:'food' },
+      { e:'🧋🐄🫧',    a:'Bubble Tea / Boba',                    h:'Taiwanese drink with chewy tapioca pearls',   c:'food' },
+      { e:'🍫🥛🍪',    a:'Milk and Cookies',                     h:'Classic comfort snack before bed',            c:'food' },
+      { e:'🌭🧅🟡',    a:'Hot Dog',                              h:'Sausage in a bun with mustard',               c:'food' },
+      { e:'🥨🍺🇩🇪',  a:'Pretzel and Beer',                     h:'German Oktoberfest snack',                    c:'food' },
+
+      // ── Sports ──
+      { e:'⚽🥅🏃',    a:'Football / Soccer',                    h:'Most popular sport in the world',             c:'sport' },
+      { e:'🏀🏟️🤸',    a:'Basketball',                           h:'Throw the ball through the hoop',             c:'sport' },
+      { e:'🎾🏓🎯',    a:'Tennis',                               h:'Racket sport played on a court',              c:'sport' },
+      { e:'🏊💦🏅',    a:'Swimming',                             h:'Race through the water in a pool',            c:'sport' },
+      { e:'🚴🏔️💨',    a:'Cycling',                              h:'Pedal-powered racing sport',                  c:'sport' },
+      { e:'⛷️🏔️❄️',    a:'Skiing',                               h:'Slide down a snowy mountain on two skis',    c:'sport' },
+      { e:'🥊🥋🔔',    a:'Boxing',                               h:'Punch your opponent in a ring',               c:'sport' },
+      { e:'🏋️💪🏅',    a:'Weightlifting',                        h:'Lift as heavy as you can',                    c:'sport' },
+      { e:'🏄🌊🏖️',    a:'Surfing',                              h:'Ride ocean waves standing on a board',        c:'sport' },
+      { e:'⛳🏌️🌿',    a:'Golf',                                 h:'Hit a small white ball into a tiny hole',     c:'sport' },
+      { e:'🎳🎱⬛',    a:'Bowling',                              h:'Roll a heavy ball to knock down ten pins',    c:'sport' },
+      { e:'🏸🪶🏟️',    a:'Badminton',                            h:'Hit a feathered shuttlecock over a net',      c:'sport' },
+      { e:'🤸🌟🎪',    a:'Gymnastics',                           h:'Flips, splits and balance routines',          c:'sport' },
+      { e:'🧗🪨🏔️',    a:'Rock Climbing',                        h:'Scale a wall or cliff using your hands',      c:'sport' },
+      { e:'🎣🐟🏞️',    a:'Fishing',                              h:'Cast a line and wait for a bite',             c:'sport' },
+      { e:'🏇🐴🏆',    a:'Horse Racing',                         h:"They're off! Race on horseback",              c:'sport' },
+      { e:'🏉🦘🏟️',    a:'Rugby',                                h:'Carry or kick the oval-shaped ball',          c:'sport' },
+      { e:'🥋🙏🏯',    a:'Martial Arts / Karate',                h:'Disciplined combat sport from Asia',          c:'sport' },
+      { e:'🥌❄️🎯',    a:'Curling',                              h:'Slide a stone on ice and sweep the path',     c:'sport' },
+      { e:'🏹🎯🌲',    a:'Archery',                              h:'Shoot arrows at a target',                    c:'sport' },
     ];
 
     let pool      = [...all];
@@ -379,7 +376,7 @@
     }
 
     function catLabel(c) {
-      return { movie:'🎬 Movie', song:'🎵 Song', idiom:'💬 Idiom', place:'🌍 Place' }[c] || c;
+      return { idiom:'💬 Idiom', place:'🌍 Place', food:'🍔 Food & Drinks', sport:'⚽ Sport' }[c] || c;
     }
 
     function triggerRipple() {
