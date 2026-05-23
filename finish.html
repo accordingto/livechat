@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finish the Sentence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    .topbar {
+      width: 100%; max-width: 720px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 36px;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #06b6d4; font-weight: 700; }
+
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    .how {
+      width: 100%; max-width: 720px;
+      background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.2);
+      border-radius: 14px; padding: 14px 20px; margin-bottom: 32px;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .how .bulb { font-size: 1.3rem; flex-shrink: 0; }
+    .how p { font-size: .85rem; color: #aaa; line-height: 1.7; }
+    .how strong { color: #67e8f9; }
+
+    /* ── Sentence card ── */
+    .sentence-card {
+      width: 100%; max-width: 720px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 24px;
+      padding: 52px 40px;
+      text-align: center;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .4s;
+    }
+    .sentence-card.active { border-color: #06b6d4; }
+
+    .card-tag {
+      font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; color: #06b6d4; font-weight: 700;
+    }
+
+    .sentence-text {
+      font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+      font-weight: 700;
+      line-height: 1.5;
+      color: #eee;
+    }
+    .sentence-text.placeholder { color: #2a2a50; font-weight: 400; font-size: 1rem; }
+
+    .dots {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: #06b6d4;
+      letter-spacing: 6px;
+      font-weight: 900;
+    }
+    .dots.hidden { opacity: 0; }
+
+    /* rolling flicker */
+    @keyframes flicker {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .2; }
+    }
+    .sentence-card.rolling .sentence-text { animation: flicker .1s linear infinite; }
+
+    /* ripple */
+    @keyframes ripple { from{transform:scale(0);opacity:.3} to{transform:scale(5);opacity:0} }
+    .ripple-el {
+      position:absolute; width:80px; height:80px; border-radius:50%;
+      background:#06b6d4; pointer-events:none;
+      animation:ripple .7s ease-out forwards;
+      left:50%; top:50%; margin:-40px 0 0 -40px;
+    }
+
+    /* ── Timer ── */
+    .timer-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 28px; margin-bottom: 28px;
+    }
+    .timer-wrap { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
+    .timer-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: #1e1e42; stroke-width: 8; }
+    .ring-progress {
+      fill: none; stroke: #06b6d4; stroke-width: 8; stroke-linecap: round;
+      stroke-dasharray: 283; stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .3s;
+    }
+    .timer-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; font-weight: 900; color: #eee;
+    }
+    .timer-num.warn { color: #ef4444; }
+    .timer-label { text-align: left; max-width: 280px; }
+    .timer-label .phase { font-size: 1rem; font-weight: 700; color: #06b6d4; margin-bottom: 4px; }
+    .timer-label .phase.warn { color: #ef4444; }
+    .timer-label .phase-sub { font-size: .85rem; color: #555; line-height: 1.5; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn {
+      border: none; border-radius: 999px; padding: 16px 44px;
+      font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s, opacity .2s; letter-spacing: .3px;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-draw { background: #06b6d4; color: #0d0d1a; }
+    .btn-draw:hover:not(:disabled) { background: #22d3ee; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>✍️ Finish the Sentence</h1>
+    <p>Complete the sentence — everyone answers at the same time!</p>
+  </div>
+
+  <div class="how">
+    <span class="bulb">💡</span>
+    <p>
+      <strong>How to play:</strong> A sentence starter appears. Everyone writes their own
+      ending privately. When the buzzer sounds, all players post their answer in the chat
+      at the same time. Compare — whose ending is the funniest, most honest, or most creative?
+    </p>
+  </div>
+
+  <div class="sentence-card" id="card">
+    <span class="card-tag">Complete this sentence</span>
+    <span class="sentence-text placeholder" id="sentenceText">Press Draw to get a sentence starter</span>
+    <span class="dots hidden" id="dots">• • •</span>
+  </div>
+
+  <div class="timer-row">
+    <div class="timer-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="45"/>
+        <circle class="ring-progress" cx="50" cy="50" r="45" id="ringProgress"/>
+      </svg>
+      <div class="timer-num" id="timerNum">30</div>
+    </div>
+    <div class="timer-label">
+      <div class="phase" id="phaseLabel">Ready</div>
+      <div class="phase-sub" id="phaseSub">Press Draw to start a round</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-draw" id="drawBtn" onclick="draw()">🎲 Draw!</button>
+  </div>
+
+  <script>
+    const DURATION = 30, CIRC = 283;
+
+    const sentences = [
+      "The most embarrassing thing I've ever done is…",
+      "If I could have any superpower, I would choose…",
+      "The best piece of advice I've ever received is…",
+      "My perfect weekend would include…",
+      "If I could live anywhere in the world, I would choose…",
+      "The one thing I can't start my day without is…",
+      "If I won the lottery tomorrow, the first thing I'd do is…",
+      "The skill I wish I had learned earlier in life is…",
+      "My go-to comfort food when I'm stressed is…",
+      "If I could have dinner with anyone in history, it would be…",
+      "The thing that always makes me laugh is…",
+      "If I could go back and change one thing, I would…",
+      "The best movie I've ever watched is… because…",
+      "When nobody is watching, I always…",
+      "My biggest pet peeve is…",
+      "The most adventurous thing I've ever done is…",
+      "If I could only eat one food for the rest of my life, it would be…",
+      "The app I use the most on my phone is…",
+      "If I had a time machine, I would go to…",
+      "The one thing people always get wrong about me is…",
+      "My hidden talent is…",
+      "If I could swap lives with anyone for a day, it would be…",
+      "The weirdest dream I've ever had was…",
+      "If I could instantly learn any language, I'd pick…",
+      "The thing I'm most proud of is…",
+      "My morning routine would shock people because…",
+      "If animals could talk, I think my pet would say…",
+      "The first thing I notice about a person is…",
+      "If I could only keep three things from my house, I'd keep…",
+      "The song that always gets stuck in my head is…",
+      "If I could be famous for one thing, I'd want it to be…",
+      "My worst habit is…",
+      "The thing I miss most about being a child is…",
+      "If I could have one do-over in my life, it would be…",
+      "The most interesting place I've ever visited is…",
+      "If I could ban one thing from the world, it would be…",
+      "My most used phrase in daily life is…",
+      "The last time I was really surprised was when…",
+      "If I could only watch one TV show forever, it would be…",
+      "Something I've never told anyone is…",
+      "The strangest food I've ever tried is…",
+      "If I could redesign school, I would change…",
+      "The best gift I've ever received is…",
+      "If I could master one instrument, it would be…",
+      "My friends would describe me as…",
+      "The thing that always motivates me is…",
+      "If I ran my own restaurant, it would serve…",
+      "The one rule I wish everyone followed is…",
+      "If I became invisible for a day, I would…",
+      "The most useful thing I own is…",
+      "If I had to describe myself in three words, they'd be…",
+      "The thing I always forget to do is…",
+      "If social media didn't exist, I would spend my time…",
+      "The habit I'm proudest of building is…",
+      "If I could speak to my younger self, I'd say…",
+      "The moment I felt most alive was when…",
+      "If I could change one thing about how I grew up, it would be…",
+      "The last thing that made me really happy was…",
+      "If my life were a movie, the title would be…",
+      "The job I would never want to do is…",
+      "If I could only read one book for the rest of my life, it would be…",
+      "My biggest fear that I've never told anyone is…",
+      "The last time I did something for the first time was when…",
+      "If I could be an expert in anything overnight, I'd choose…",
+      "The one thing I always carry with me is…",
+      "If I had an extra hour every day, I'd use it to…",
+      "The compliment that meant the most to me was…",
+      "If I could travel to space, the first thing I'd do is…",
+      "My favourite childhood memory is…",
+      "If I could only use one social media platform, it would be…",
+      "The thing I do when no one else is home is…",
+      "If I had to eat at one restaurant every day, it would be…",
+      "My most controversial opinion about everyday life is…",
+      "The thing I'm secretly really good at is…",
+      "If I could change one thing about the internet, it would be…",
+      "The activity that makes me lose track of time is…",
+      "If I could have any animal as a pet, I'd choose…",
+      "The last time I laughed until I cried was…",
+      "If I could add one subject to school, it would be…",
+      "The smell that instantly brings back a memory for me is…",
+      "If I could redo my last vacation, I would…",
+      "The person who influenced me the most is…",
+      "If I could only listen to one genre of music forever, it'd be…",
+      "The best decision I ever made was…",
+      "If I could have one wish granted right now, it would be…",
+    ];
+
+    let rolling = false, round = 0;
+    let timeLeft = DURATION, ticker = null;
+    let usedIdx = new Set();
+
+    function rand() {
+      if (usedIdx.size >= sentences.length) usedIdx.clear();
+      let i;
+      do { i = Math.floor(Math.random() * sentences.length); } while (usedIdx.has(i));
+      usedIdx.add(i);
+      return sentences[i];
+    }
+
+    function stopTimer() { clearInterval(ticker); ticker = null; }
+
+    function resetTimer() {
+      stopTimer();
+      timeLeft = DURATION;
+      const ring = document.getElementById('ringProgress');
+      ring.style.stroke = '#06b6d4';
+      ring.style.strokeDashoffset = '0';
+      const num = document.getElementById('timerNum');
+      num.textContent = DURATION;
+      num.classList.remove('warn');
+      document.getElementById('phaseLabel').classList.remove('warn');
+    }
+
+    function playBeep() {
+      try {
+        const ctx = new AudioContext(), osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.frequency.value = 880;
+        g.gain.setValueAtTime(0.4, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.start(); osc.stop(ctx.currentTime + 0.6);
+      } catch(e) {}
+    }
+
+    function startTimer() {
+      const ring = document.getElementById('ringProgress');
+      const num  = document.getElementById('timerNum');
+      const ph   = document.getElementById('phaseLabel');
+      const sub  = document.getElementById('phaseSub');
+      ph.textContent  = 'Writing…';
+      sub.textContent = 'Finish the sentence — don\'t share yet!';
+
+      ticker = setInterval(() => {
+        timeLeft--;
+        num.textContent = timeLeft;
+        ring.style.strokeDashoffset = CIRC * (1 - timeLeft / DURATION);
+        if (timeLeft <= 8) {
+          ring.style.stroke = '#ef4444';
+          num.classList.add('warn');
+          ph.classList.add('warn');
+          ph.textContent  = 'Almost!';
+          sub.textContent = 'Get ready to post…';
+        }
+        if (timeLeft <= 0) {
+          stopTimer(); playBeep();
+          ph.textContent  = "Time's up!";
+          sub.textContent = 'Everyone post your ending now!';
+          document.getElementById('drawBtn').disabled = false;
+        }
+      }, 1000);
+    }
+
+    function triggerRipple() {
+      const el = document.createElement('div');
+      el.className = 'ripple-el';
+      document.getElementById('card').appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    function draw() {
+      if (rolling) return;
+      rolling = true;
+      stopTimer(); resetTimer();
+
+      const btn  = document.getElementById('drawBtn');
+      const card = document.getElementById('card');
+      const text = document.getElementById('sentenceText');
+      const dots = document.getElementById('dots');
+      const ph   = document.getElementById('phaseLabel');
+      const sub  = document.getElementById('phaseSub');
+
+      btn.disabled = true;
+      card.classList.remove('active');
+      card.classList.add('rolling');
+      dots.classList.add('hidden');
+      ph.textContent  = 'Drawing…';
+      sub.textContent = 'Getting your sentence starter';
+      ph.classList.remove('warn');
+      triggerRipple();
+
+      const chosen = rand();
+      let ticks = 0;
+
+      const iv = setInterval(() => {
+        text.className = 'sentence-text';
+        text.textContent = rand();
+        ticks++;
+        if (ticks >= 22) {
+          clearInterval(iv);
+          text.textContent = chosen;
+          card.classList.remove('rolling');
+          card.classList.add('active');
+          dots.classList.remove('hidden');
+          round++;
+          document.getElementById('roundNum').textContent = round;
+          startTimer();
+          rolling = false;
+        }
+      }, 85);
+    }
+  </script>
+
+</body>
+</html>
