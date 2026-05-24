@@ -234,6 +234,25 @@
       text-align: center;
     }
 
+    /* ── Coming Soon card ── */
+    .game-card.coming-soon {
+      pointer-events: none;
+      cursor: default;
+      opacity: .45;
+      filter: grayscale(.6);
+    }
+    .game-card.coming-soon .card-arrow { display: none; }
+    .coming-soon-badge {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
     /* ── Mobile ── */
     @media (max-width: 520px) {
       .card-icon-col { width: 76px; }
@@ -349,18 +368,17 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a class="game-card card-pink" href="truths.html">
+    <div class="game-card card-pink coming-soon">
       <div class="card-icon-col"><span class="icon">🤥</span></div>
       <div class="card-body">
         <div class="card-meta">
           <span class="tag">Social</span>
-          <div class="difficulty"><span class="stars">★★☆☆☆</span><span class="diff-label">Easy</span></div>
+          <span class="coming-soon-badge">Coming Soon</span>
         </div>
         <h2>Two Truths &amp; a Lie</h2>
         <p>Three statements — two are true, one is a lie. Can your group sniff out the deception?</p>
       </div>
-      <div class="card-arrow">→</div>
-    </a>
+    </div>
 
   </div>
 
