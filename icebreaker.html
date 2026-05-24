@@ -3,156 +3,246 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Icebreaker Game</title>
+  <title>Would You Rather</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #1a1a2e;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
       color: #eee;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 20px;
+      padding: 28px 20px 72px;
     }
 
-    a.back {
-      align-self: flex-start;
-      color: #aaa;
-      text-decoration: none;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-    a.back:hover { color: #fff; }
-
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 6px;
-      color: #e94560;
-    }
-    .subtitle {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 40px;
-    }
-
-    .cards {
-      display: flex;
-      gap: 20px;
-      width: 100%;
-      max-width: 800px;
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 860px;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 36px;
-      flex-wrap: wrap;
-      justify-content: center;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #e94560; font-weight: 700; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 {
+      font-size: clamp(2rem, 5vw, 3rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #e94560);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    /* ── How to play ── */
+    .how {
+      width: 100%; max-width: 860px;
+      background: rgba(233,69,96,.07); border: 1px solid rgba(233,69,96,.2);
+      border-radius: 14px; padding: 14px 20px; margin-bottom: 40px;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .how .bulb { font-size: 1.3rem; flex-shrink: 0; }
+    .how p { font-size: .85rem; color: #aaa; line-height: 1.7; }
+    .how strong { color: #fca5a5; }
+
+    /* ── Arena ── */
+    .arena {
+      width: 100%; max-width: 860px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-bottom: 36px;
     }
 
-    .card {
+    /* ── Option cards ── */
+    .option-card {
       flex: 1;
-      min-width: 260px;
-      background: #16213e;
-      border: 2px solid #0f3460;
-      border-radius: 16px;
-      padding: 28px 22px;
-      font-size: 1.1rem;
-      line-height: 1.6;
-      text-align: center;
-      min-height: 160px;
+      background: linear-gradient(150deg, #13132b 0%, #0f0f22 100%);
+      border: 2px solid #1e1e42;
+      border-radius: 24px;
+      padding: 52px 32px 40px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      text-align: center;
+      min-height: 260px;
       position: relative;
-      transition: border-color 0.3s, transform 0.3s;
-      cursor: default;
+      overflow: hidden;
+      transition: border-color .5s, box-shadow .5s, transform .3s;
     }
 
-    .card.highlight {
-      border-color: #e94560;
-      transform: scale(1.03);
-    }
-
-    .card .label {
+    /* large faded letter watermark */
+    .option-card::before {
+      content: attr(data-letter);
       position: absolute;
-      top: -14px;
-      left: 50%;
+      font-size: 16rem;
+      font-weight: 900;
+      color: rgba(233,69,96,.045);
+      right: -24px;
+      bottom: -48px;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      transition: color .5s;
+    }
+
+    .option-card.active {
+      border-color: #e94560;
+      box-shadow: 0 0 48px rgba(233,69,96,.14), inset 0 0 48px rgba(233,69,96,.04);
+    }
+    .option-card.active::before { color: rgba(233,69,96,.08); }
+
+    /* top label tab */
+    .opt-label {
+      position: absolute;
+      top: 0; left: 50%;
       transform: translateX(-50%);
       background: #e94560;
       color: #fff;
-      font-size: 12px;
-      font-weight: bold;
-      padding: 3px 14px;
-      border-radius: 20px;
-      letter-spacing: 1px;
+      font-size: 10px; font-weight: 900;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      padding: 6px 22px;
+      border-radius: 0 0 14px 14px;
+      white-space: nowrap;
     }
 
-    .card .placeholder {
-      color: #444;
-      font-size: 0.95rem;
+    .question-text {
+      font-size: clamp(1rem, 2.4vw, 1.2rem);
+      font-weight: 700;
+      line-height: 1.65;
+      color: #eee;
+      position: relative;
+      z-index: 1;
+      transition: opacity .15s;
+    }
+    .question-text.placeholder { color: #252545; font-weight: 400; font-size: .95rem; }
+
+    /* rolling flicker */
+    @keyframes flicker {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .25; }
+    }
+    .option-card.rolling .question-text { animation: flicker .1s linear infinite; }
+
+    /* landing pulse */
+    @keyframes pulse-border {
+      0%   { box-shadow: 0 0 0   rgba(233,69,96,0); }
+      40%  { box-shadow: 0 0 60px rgba(233,69,96,.35); }
+      100% { box-shadow: 0 0 48px rgba(233,69,96,.14); }
+    }
+    .option-card.landed { animation: pulse-border .6s ease forwards; }
+
+    /* ripple */
+    @keyframes ripple { from{transform:scale(0);opacity:.35} to{transform:scale(6);opacity:0} }
+    .ripple-el {
+      position: absolute; width: 60px; height: 60px; border-radius: 50%;
+      background: #e94560; pointer-events: none;
+      animation: ripple .8s ease-out forwards;
+      left: 50%; top: 50%; margin: -30px 0 0 -30px; z-index: 0;
     }
 
-    .vs {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #e94560;
-      align-self: center;
-      flex: 0;
+    /* ── VS divider ── */
+    .vs-wrap {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 20px; z-index: 2;
+    }
+    .vs-badge {
+      width: 64px; height: 64px;
+      background: radial-gradient(circle at 38% 38%, #e94560, #8b1a2e);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 900; color: #fff; letter-spacing: 1px;
+      box-shadow: 0 0 28px rgba(233,69,96,.45), 0 0 8px rgba(233,69,96,.2);
+      border: 2px solid rgba(233,69,96,.4);
+      flex-shrink: 0;
     }
 
-    .draw-btn {
-      background: #e94560;
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 16px 48px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: background 0.2s, transform 0.1s;
+    /* ── Status ── */
+    .status {
+      width: 100%; max-width: 860px;
+      text-align: center;
+      font-size: .9rem; color: #555;
+      margin-bottom: 28px; min-height: 1.4em;
+      transition: color .3s;
     }
-    .draw-btn:hover { background: #c73652; }
-    .draw-btn:active { transform: scale(0.97); }
-    .draw-btn:disabled { background: #555; cursor: not-allowed; }
+    .status.ready { color: #e94560; font-weight: 600; }
 
-    .hint {
-      margin-top: 18px;
-      font-size: 13px;
-      color: #666;
+    /* ── Button ── */
+    .btn-row { display: flex; gap: 12px; justify-content: center; }
+    .btn {
+      border: none; border-radius: 999px; padding: 18px 56px;
+      font-size: 1.05rem; font-weight: 800; cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s, box-shadow .2s; letter-spacing: .5px;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-draw {
+      background: #e94560; color: #fff;
+      box-shadow: 0 6px 28px rgba(233,69,96,.35);
+    }
+    .btn-draw:hover:not(:disabled) {
+      background: #f0617a;
+      box-shadow: 0 8px 36px rgba(233,69,96,.5);
     }
 
-    /* slot machine roll animation */
-    @keyframes roll {
-      0%   { opacity: 0; transform: translateY(-10px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .card.rolling {
-      animation: roll 0.08s ease infinite alternate;
-    }
-    .card.landed {
-      animation: none;
+    /* ── Mobile ── */
+    @media (max-width: 560px) {
+      .arena { flex-direction: column; gap: 0; }
+      .vs-wrap { padding: 14px 0; }
+      .option-card { min-height: 180px; }
+      .option-card::before { font-size: 10rem; }
     }
   </style>
 </head>
 <body>
-  <a class="back" href="index.html">← Back to Hub</a>
-  <h1>🎲 Icebreaker!</h1>
-  <p class="subtitle">Draw two questions — pick one to answer!</p>
 
-  <div class="cards">
-    <div class="card" id="cardA">
-      <span class="label">Question A</span>
-      <span class="placeholder">Press Draw to start</span>
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🎲 Would You Rather?</h1>
+    <p>Two choices. No right answer. Debate away!</p>
+  </div>
+
+  <div class="how">
+    <span class="bulb">💡</span>
+    <p>
+      <strong>How to play:</strong> Host clicks Draw to reveal two dilemmas.
+      Everyone picks <strong>Option A</strong> or <strong>Option B</strong> privately, then types their choice
+      in the chat at the same time. Reveal — then debate why!
+    </p>
+  </div>
+
+  <div class="arena">
+    <div class="option-card" id="cardA" data-letter="A">
+      <span class="opt-label">Option A</span>
+      <span class="question-text placeholder" id="textA">Press Draw to start</span>
     </div>
-    <div class="vs">VS</div>
-    <div class="card" id="cardB">
-      <span class="label">Question B</span>
-      <span class="placeholder">Press Draw to start</span>
+
+    <div class="vs-wrap">
+      <div class="vs-badge">VS</div>
+    </div>
+
+    <div class="option-card" id="cardB" data-letter="B">
+      <span class="opt-label">Option B</span>
+      <span class="question-text placeholder" id="textB">Press Draw to start</span>
     </div>
   </div>
 
-  <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
-  <p class="hint" id="hint">Click Draw to randomly pick two questions</p>
+  <div class="status" id="status">Click Draw to reveal two dilemmas</div>
+
+  <div class="btn-row">
+    <button class="btn btn-draw" id="drawBtn" onclick="draw()">🎲 Draw!</button>
+  </div>
 
   <script>
     const questions = [
@@ -197,7 +287,7 @@
       "Would you rather live in a world of constant rain or constant sunshine?",
       "Would you rather eat pizza every day or never eat pizza again?",
       "Would you rather be able to pause time or rewind time?",
-      "Would you rather have to eat the same meal every day or never eat your favorite food again?",
+      "Would you rather have to eat the same meal every day or never eat your favourite food again?",
       "Would you rather be a superhero with a useless power or a villain with an awesome power?",
       "Would you rather be the main character of a reality show or a documentary?",
       "Would you rather have Wi-Fi anywhere but pay for everything or have everything free but no internet?",
@@ -236,7 +326,7 @@
       "Would you rather have your dream job but work 80 hours a week or an OK job with 20 hours a week?",
       "Would you rather always say what you're thinking or never be able to speak again?",
       "Would you rather be a famous YouTuber or a published bestselling author?",
-      "Would you rather have a lifetime supply of your favorite snack or your favorite drink?",
+      "Would you rather have a lifetime supply of your favourite snack or your favourite drink?",
       "Would you rather live on the moon or under the sea?",
       "Would you rather be a master of disguise or a master of escape?",
       "Would you rather know every historical fact or every scientific formula?",
@@ -246,7 +336,7 @@
       "Would you rather have a robot best friend or a robot assistant?",
       "Would you rather always be surrounded by people who laugh too loud or people who never laugh?",
       "Would you rather have the ability to make anyone laugh or make anyone cry?",
-      "Would you rather be a professional gamer or a professional traveler?",
+      "Would you rather be a professional gamer or a professional traveller?",
       "Would you rather be able to control fire or control water?",
       "Would you rather give up watching TV shows or give up listening to music?",
       "Would you rather have unlimited data on your phone or free food for life?",
@@ -256,56 +346,80 @@
       "Would you rather have the ability to fly but only at walking speed or run at airplane speed but stay on the ground?",
     ];
 
-    let rolling = false;
+    let rolling = false, round = 0;
+    let usedA = -1, usedB = -1;
+
+    function randomPair() {
+      let i, j;
+      do { i = Math.floor(Math.random() * questions.length); } while (i === usedA || i === usedB);
+      do { j = Math.floor(Math.random() * questions.length); } while (j === i || j === usedA || j === usedB);
+      return [i, j];
+    }
+
+    function triggerRipple(card) {
+      const el = document.createElement('div');
+      el.className = 'ripple-el';
+      card.appendChild(el);
+      setTimeout(() => el.remove(), 900);
+    }
 
     function draw() {
       if (rolling) return;
       rolling = true;
 
-      const btn = document.getElementById('drawBtn');
-      const hint = document.getElementById('hint');
+      const btn   = document.getElementById('drawBtn');
       const cardA = document.getElementById('cardA');
       const cardB = document.getElementById('cardB');
+      const tA    = document.getElementById('textA');
+      const tB    = document.getElementById('textB');
+      const status = document.getElementById('status');
 
       btn.disabled = true;
-      hint.textContent = "Drawing...";
-
+      cardA.classList.remove('active', 'landed');
+      cardB.classList.remove('active', 'landed');
       cardA.classList.add('rolling');
       cardB.classList.add('rolling');
+      tA.className = 'question-text';
+      tB.className = 'question-text';
+      status.className = 'status';
+      status.textContent = 'Drawing…';
 
+      triggerRipple(cardA);
+      setTimeout(() => triggerRipple(cardB), 140);
+
+      const [fi, fj] = randomPair();
       let ticks = 0;
-      const maxTicks = 28;
-      const interval = setInterval(() => {
-        const [i, j] = randomPair();
-        cardA.innerHTML = `<span class="label">Question A</span>${questions[i]}`;
-        cardB.innerHTML = `<span class="label">Question B</span>${questions[j]}`;
-        ticks++;
-        if (ticks >= maxTicks) {
-          clearInterval(interval);
-          const [fi, fj] = randomPair();
-          cardA.innerHTML = `<span class="label">Question A</span>${questions[fi]}`;
-          cardB.innerHTML = `<span class="label">Question B</span>${questions[fj]}`;
-          cardA.classList.remove('rolling');
-          cardB.classList.remove('rolling');
-          cardA.classList.add('highlight');
-          cardB.classList.add('highlight');
-          hint.textContent = "Pick one and share your answer with the group!";
-          btn.disabled = false;
-          rolling = false;
-          setTimeout(() => {
-            cardA.classList.remove('highlight');
-            cardB.classList.remove('highlight');
-          }, 1200);
-        }
-      }, 80);
-    }
 
-    function randomPair() {
-      const i = Math.floor(Math.random() * questions.length);
-      let j;
-      do { j = Math.floor(Math.random() * questions.length); } while (j === i);
-      return [i, j];
+      const iv = setInterval(() => {
+        const [i, j] = randomPair();
+        tA.textContent = questions[i];
+        tB.textContent = questions[j];
+        ticks++;
+
+        if (ticks >= 26) {
+          clearInterval(iv);
+          usedA = fi; usedB = fj;
+          round++;
+          document.getElementById('roundNum').textContent = round;
+
+          tA.textContent = questions[fi];
+          cardA.classList.remove('rolling');
+          cardA.classList.add('active', 'landed');
+
+          setTimeout(() => {
+            tB.textContent = questions[fj];
+            cardB.classList.remove('rolling');
+            cardB.classList.add('active', 'landed');
+
+            status.textContent = 'Pick A or B — type your choice in chat at the same time!';
+            status.className = 'status ready';
+            btn.disabled = false;
+            rolling = false;
+          }, 180);
+        }
+      }, 82);
     }
   </script>
+
 </body>
 </html>
