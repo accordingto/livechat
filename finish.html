@@ -105,29 +105,13 @@
       left:50%; top:50%; margin:-40px 0 0 -40px;
     }
 
-    /* ── Timer ── */
-    .timer-row {
-      display: flex; align-items: center; justify-content: center;
-      gap: 28px; margin-bottom: 28px;
+    /* ── Status ── */
+    .status {
+      width: 100%; max-width: 720px;
+      text-align: center; font-size: .9rem; color: #555;
+      margin-bottom: 28px; min-height: 1.4em; transition: color .3s;
     }
-    .timer-wrap { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
-    .timer-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .ring-bg { fill: none; stroke: #1e1e42; stroke-width: 8; }
-    .ring-progress {
-      fill: none; stroke: #06b6d4; stroke-width: 8; stroke-linecap: round;
-      stroke-dasharray: 283; stroke-dashoffset: 0;
-      transition: stroke-dashoffset 1s linear, stroke .3s;
-    }
-    .timer-num {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.6rem; font-weight: 900; color: #eee;
-    }
-    .timer-num.warn { color: #ef4444; }
-    .timer-label { text-align: left; max-width: 280px; }
-    .timer-label .phase { font-size: 1rem; font-weight: 700; color: #06b6d4; margin-bottom: 4px; }
-    .timer-label .phase.warn { color: #ef4444; }
-    .timer-label .phase-sub { font-size: .85rem; color: #555; line-height: 1.5; }
+    .status.active { color: #06b6d4; font-weight: 600; }
 
     /* ── Buttons ── */
     .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
@@ -158,7 +142,7 @@
     <span class="bulb">💡</span>
     <p>
       <strong>How to play:</strong> A sentence starter appears. Everyone writes their own
-      ending privately. When the buzzer sounds, all players post their answer in the chat
+      ending privately. When everyone is ready, all players post their answer in the chat
       at the same time. Compare — whose ending is the funniest, most honest, or most creative?
     </p>
   </div>
@@ -169,27 +153,13 @@
     <span class="dots hidden" id="dots">• • •</span>
   </div>
 
-  <div class="timer-row">
-    <div class="timer-wrap">
-      <svg viewBox="0 0 100 100">
-        <circle class="ring-bg" cx="50" cy="50" r="45"/>
-        <circle class="ring-progress" cx="50" cy="50" r="45" id="ringProgress"/>
-      </svg>
-      <div class="timer-num" id="timerNum">30</div>
-    </div>
-    <div class="timer-label">
-      <div class="phase" id="phaseLabel">Ready</div>
-      <div class="phase-sub" id="phaseSub">Press Draw to start a round</div>
-    </div>
-  </div>
+  <div class="status" id="status">Press Draw to get a sentence starter</div>
 
   <div class="btn-row">
     <button class="btn btn-draw" id="drawBtn" onclick="draw()">🎲 Draw!</button>
   </div>
 
   <script>
-    const DURATION = 30, CIRC = 283;
-
     const sentences = [
       "The most embarrassing thing I've ever done is…",
       "If I could have any superpower, I would choose…",
@@ -279,7 +249,6 @@
     ];
 
     let rolling = false, round = 0;
-    let timeLeft = DURATION, ticker = null;
     let usedIdx = new Set();
 
     function rand() {
@@ -288,59 +257,6 @@
       do { i = Math.floor(Math.random() * sentences.length); } while (usedIdx.has(i));
       usedIdx.add(i);
       return sentences[i];
-    }
-
-    function stopTimer() { clearInterval(ticker); ticker = null; }
-
-    function resetTimer() {
-      stopTimer();
-      timeLeft = DURATION;
-      const ring = document.getElementById('ringProgress');
-      ring.style.stroke = '#06b6d4';
-      ring.style.strokeDashoffset = '0';
-      const num = document.getElementById('timerNum');
-      num.textContent = DURATION;
-      num.classList.remove('warn');
-      document.getElementById('phaseLabel').classList.remove('warn');
-    }
-
-    function playBeep() {
-      try {
-        const ctx = new AudioContext(), osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.connect(g); g.connect(ctx.destination);
-        osc.frequency.value = 880;
-        g.gain.setValueAtTime(0.4, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        osc.start(); osc.stop(ctx.currentTime + 0.6);
-      } catch(e) {}
-    }
-
-    function startTimer() {
-      const ring = document.getElementById('ringProgress');
-      const num  = document.getElementById('timerNum');
-      const ph   = document.getElementById('phaseLabel');
-      const sub  = document.getElementById('phaseSub');
-      ph.textContent  = 'Writing…';
-      sub.textContent = 'Finish the sentence — don\'t share yet!';
-
-      ticker = setInterval(() => {
-        timeLeft--;
-        num.textContent = timeLeft;
-        ring.style.strokeDashoffset = CIRC * (1 - timeLeft / DURATION);
-        if (timeLeft <= 8) {
-          ring.style.stroke = '#ef4444';
-          num.classList.add('warn');
-          ph.classList.add('warn');
-          ph.textContent  = 'Almost!';
-          sub.textContent = 'Get ready to post…';
-        }
-        if (timeLeft <= 0) {
-          stopTimer(); playBeep();
-          ph.textContent  = "Time's up!";
-          sub.textContent = 'Everyone post your ending now!';
-          document.getElementById('drawBtn').disabled = false;
-        }
-      }, 1000);
     }
 
     function triggerRipple() {
@@ -353,22 +269,19 @@
     function draw() {
       if (rolling) return;
       rolling = true;
-      stopTimer(); resetTimer();
 
-      const btn  = document.getElementById('drawBtn');
-      const card = document.getElementById('card');
-      const text = document.getElementById('sentenceText');
-      const dots = document.getElementById('dots');
-      const ph   = document.getElementById('phaseLabel');
-      const sub  = document.getElementById('phaseSub');
+      const btn    = document.getElementById('drawBtn');
+      const card   = document.getElementById('card');
+      const text   = document.getElementById('sentenceText');
+      const dots   = document.getElementById('dots');
+      const status = document.getElementById('status');
 
       btn.disabled = true;
       card.classList.remove('active');
       card.classList.add('rolling');
       dots.classList.add('hidden');
-      ph.textContent  = 'Drawing…';
-      sub.textContent = 'Getting your sentence starter';
-      ph.classList.remove('warn');
+      status.className = 'status';
+      status.textContent = 'Drawing…';
       triggerRipple();
 
       const chosen = rand();
@@ -386,7 +299,9 @@
           dots.classList.remove('hidden');
           round++;
           document.getElementById('roundNum').textContent = round;
-          startTimer();
+          status.textContent = '✏️ Write your ending — share when everyone is ready!';
+          status.className = 'status active';
+          btn.disabled = false;
           rolling = false;
         }
       }, 85);
