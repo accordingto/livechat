@@ -128,23 +128,6 @@
       animation: ripple .7s ease-out forwards;
     }
 
-    /* ── Prompt bar ── */
-    .prompt-bar {
-      width: 100%;
-      max-width: 700px;
-      background: #0f0f22;
-      border: 1px solid #1a1a38;
-      border-radius: 14px;
-      padding: 14px 20px;
-      margin-bottom: 32px;
-      font-size: .88rem;
-      color: #555;
-      text-align: center;
-      min-height: 46px;
-      transition: color .3s;
-    }
-    .prompt-bar.active { color: #ff9a7a; }
-
     /* ── Vote row ── */
     .vote-row {
       display: flex;
@@ -237,7 +220,6 @@
     <span class="take-text placeholder" id="takeText">Press Spin to reveal a hot take</span>
   </div>
 
-  <div class="prompt-bar" id="promptBar">Waiting for the next spin…</div>
 
   <div class="vote-row">
     <button class="vote-btn agree" id="btnAgree" disabled onclick="vote('agree')">
@@ -398,7 +380,6 @@
 
       const card    = document.getElementById('card');
       const text    = document.getElementById('takeText');
-      const prompt  = document.getElementById('promptBar');
       const spinBtn = document.getElementById('spinBtn');
       const btnA    = document.getElementById('btnAgree');
       const btnD    = document.getElementById('btnDisagree');
@@ -408,8 +389,6 @@
       card.classList.remove('active');
       card.classList.add('rolling');
       text.className = 'take-text';
-      prompt.className = 'prompt-bar';
-      prompt.textContent = 'Spinning…';
       triggerRipple();
 
       const chosen = takes[Math.floor(Math.random() * takes.length)];
@@ -426,8 +405,6 @@
           card.classList.add('active');
           round++;
           document.getElementById('roundNum').textContent = round;
-          prompt.className = 'prompt-bar active';
-          prompt.textContent = '📢 Everyone: on the count of 3, type AGREE or DISAGREE in the chat — then explain why!';
           btnA.disabled = btnD.disabled = false;
           spinBtn.disabled = false;
           rolling = false;
