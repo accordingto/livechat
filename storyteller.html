@@ -16,19 +16,54 @@
       flex-direction: column;
       align-items: center;
       padding: 28px 20px 72px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Atmosphere orb ── */
+    @keyframes orbDrift {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(24px); }
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,158,11,.07) 0%, transparent 70%);
+      pointer-events: none;
+      animation: orbDrift 8s ease-in-out infinite;
+    }
+
+    /* ── Fade-up entrance animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .topbar {
       width: 100%; max-width: 900px;
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 36px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s ease both;
+      animation-delay: 0s;
     }
     a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
     a.back:hover { color: #eee; }
     .round-badge { font-size: 12px; color: #444; }
     .round-badge span { color: #f59e0b; font-weight: 700; }
 
-    .header { text-align: center; margin-bottom: 28px; }
+    .header {
+      text-align: center; margin-bottom: 28px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s ease both;
+      animation-delay: .1s;
+    }
     .header h1 {
       font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, #f59e0b);
@@ -45,13 +80,15 @@
       gap: 16px;
       width: 100%; max-width: 900px;
       margin-bottom: 36px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s ease both;
+      animation-delay: .2s;
     }
     @media (max-width: 600px) {
       .cards { grid-template-columns: 1fr; }
     }
 
     .card {
-      background: #13132b;
       border: 2px solid #1e1e42;
       border-radius: 20px;
       padding: 28px 20px 24px;
@@ -62,12 +99,49 @@
       min-height: 180px;
       justify-content: center;
       position: relative;
-      transition: border-color .4s, transform .3s;
+      overflow: hidden;
+      transition: border-color .4s, transform .3s, box-shadow .4s;
     }
-    .card.active {
-      border-color: var(--accent);
+
+    /* ── Card gradients per type ── */
+    .card-char   { background: linear-gradient(160deg, #1a1400 0%, #13132b 100%); }
+    .card-action { background: linear-gradient(160deg, #110d1a 0%, #13132b 100%); }
+    .card-place  { background: linear-gradient(160deg, #001a0d 0%, #13132b 100%); }
+
+    /* ── Card watermarks ── */
+    .card::before {
+      position: absolute;
+      font-size: 10rem;
+      opacity: .03;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      -webkit-text-fill-color: initial;
+    }
+    .card-char::before   { content: '👤'; }
+    .card-action::before { content: '⚡'; }
+    .card-place::before  { content: '📍'; }
+
+    /* ── Active card glows per type ── */
+    .card-char.active {
+      box-shadow: 0 0 40px rgba(245,158,11,.2), inset 0 0 30px rgba(245,158,11,.04);
+      border-color: #f59e0b;
       transform: translateY(-4px);
     }
+    .card-action.active {
+      box-shadow: 0 0 40px rgba(129,140,248,.2), inset 0 0 30px rgba(129,140,248,.04);
+      border-color: #818cf8;
+      transform: translateY(-4px);
+    }
+    .card-place.active {
+      box-shadow: 0 0 40px rgba(52,211,153,.2), inset 0 0 30px rgba(52,211,153,.04);
+      border-color: #34d399;
+      transform: translateY(-4px);
+    }
+
+    /* ── Card hover (non-active) ── */
+    .card:hover:not(.active) { transform: translateY(-3px); }
 
     .card-label {
       position: absolute;
@@ -80,9 +154,10 @@
       font-weight: 900;
       letter-spacing: 2px;
       text-transform: uppercase;
-      padding: 3px 14px;
+      padding: 4px 16px;
       border-radius: 999px;
       white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
     }
 
     .card-icon { font-size: 2.2rem; line-height: 1; }
@@ -111,6 +186,10 @@
     .card.rolling .card-text { animation: roll .1s ease infinite alternate; }
 
     /* ── Status bar ── */
+    @keyframes statusPop {
+      from { opacity: 0; transform: scale(.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
     .status {
       width: 100%; max-width: 900px;
       text-align: center;
@@ -119,20 +198,40 @@
       margin-bottom: 32px;
       min-height: 1.4em;
       transition: color .3s;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s ease both;
+      animation-delay: .3s;
     }
-    .status.ready { color: #f59e0b; font-weight: 600; }
+    .status.ready {
+      color: #f59e0b;
+      font-weight: 600;
+      animation: statusPop .3s ease both;
+    }
 
     /* ── Buttons ── */
-    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn-row {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s ease both;
+      animation-delay: .4s;
+    }
     .btn {
       border: none; border-radius: 999px; padding: 16px 44px;
       font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit;
-      transition: background .2s, transform .1s, opacity .2s; letter-spacing: .3px;
+      transition: background .2s, transform .1s, opacity .2s, box-shadow .2s; letter-spacing: .3px;
     }
     .btn:active { transform: scale(.97); }
     .btn:disabled { opacity: .35; cursor: not-allowed; }
-    .btn-draw { background: #f59e0b; color: #0d0d1a; }
-    .btn-draw:hover:not(:disabled) { background: #fbbf24; }
+    .btn-draw {
+      background: #f59e0b;
+      color: #0d0d1a;
+      box-shadow: 0 4px 24px rgba(245,158,11,.35);
+    }
+    .btn-draw:hover:not(:disabled) {
+      background: #fbbf24;
+      box-shadow: 0 4px 24px rgba(245,158,11,.55);
+      transform: translateY(-2px);
+    }
   </style>
 </head>
 <body>

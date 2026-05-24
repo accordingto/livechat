@@ -16,173 +16,167 @@
       flex-direction: column;
       align-items: center;
       padding: 30px 20px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20%; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(79,158,255,.07) 0%, transparent 70%);
+      pointer-events: none;
+      animation: orbDrift 8s ease-in-out infinite;
+      z-index: 0;
+    }
+    @keyframes orbDrift {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(40px); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .topbar {
-      width: 100%;
-      max-width: 680px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      width: 100%; max-width: 680px;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 40px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s 0s ease both;
     }
     a.back {
-      color: #555;
-      text-decoration: none;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      color: #555; text-decoration: none; font-size: 14px;
+      display: flex; align-items: center; gap: 6px;
       transition: color 0.2s;
     }
     a.back:hover { color: #eee; }
-
-    .counter {
-      font-size: 13px;
-      color: #444;
-    }
+    .counter { font-size: 13px; color: #444; }
     .counter span { color: #4f9eff; font-weight: bold; }
 
-    /* ── Header ── */
     .header {
-      text-align: center;
-      margin-bottom: 48px;
+      text-align: center; margin-bottom: 40px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s .1s ease both;
     }
     .header h1 {
-      font-size: clamp(1.8rem, 5vw, 2.6rem);
-      font-weight: 800;
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, #4f9eff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 10px;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
     }
     .header p { color: #666; font-size: 0.95rem; }
 
-    /* ── Card ── */
     .card-wrap {
-      width: 100%;
-      max-width: 580px;
-      perspective: 800px;
-      margin-bottom: 36px;
+      width: 100%; max-width: 580px;
+      margin-bottom: 32px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s .2s ease both;
     }
 
     .card {
-      background: #13132b;
+      background: linear-gradient(160deg, #13132b 0%, #0f0f24 100%);
       border: 2px solid #1e1e50;
       border-radius: 24px;
       padding: 52px 36px;
       text-align: center;
       min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-      transition: border-color 0.4s;
-      position: relative;
-      overflow: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      transition: border-color .4s, box-shadow .4s;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: '🙋';
+      position: absolute;
+      font-size: 14rem; line-height: 1;
+      opacity: .025;
+      pointer-events: none;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      -webkit-text-fill-color: initial;
     }
 
-    .card.active { border-color: #4f9eff; }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 48px rgba(79,158,255,.18), inset 0 0 48px rgba(79,158,255,.04); }
+      50%       { box-shadow: 0 0 72px rgba(79,158,255,.35), inset 0 0 64px rgba(79,158,255,.08); }
+    }
+    .card.active {
+      border-color: #4f9eff;
+      animation: pulse-glow 2.5s ease-in-out infinite;
+    }
 
     .card .prefix {
-      font-size: 12px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #4f9eff;
-      font-weight: 600;
+      font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: #4f9eff; font-weight: 700; position: relative; z-index: 1;
     }
-
     .card .statement {
-      font-size: clamp(1.1rem, 3vw, 1.35rem);
-      font-weight: 600;
-      line-height: 1.55;
-      min-height: 3em;
-      display: flex;
-      align-items: center;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-weight: 700; line-height: 1.55;
+      min-height: 3em; display: flex; align-items: center;
+      position: relative; z-index: 1;
     }
+    .card .placeholder { color: #2a2a50; font-weight: 400; font-size: 1rem; }
 
-    .card .placeholder { color: #333; font-weight: 400; font-size: 1rem; }
-
-    /* ripple on draw */
-    @keyframes ripple {
-      from { transform: scale(0); opacity: 0.4; }
-      to   { transform: scale(4); opacity: 0; }
-    }
+    @keyframes ripple { from { transform: scale(0); opacity: .4; } to { transform: scale(4); opacity: 0; } }
     .ripple-el {
-      position: absolute;
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      background: #4f9eff;
-      animation: ripple 0.6s ease-out forwards;
-      pointer-events: none;
+      position: absolute; width: 120px; height: 120px; border-radius: 50%;
+      background: #4f9eff; animation: ripple .65s ease-out forwards; pointer-events: none;
     }
+    @keyframes flicker { 0%,100% { opacity:1; } 50% { opacity:.25; } }
+    .card.rolling .statement { animation: flicker .12s linear infinite; }
 
-    /* roll flicker */
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    .card.rolling .statement { animation: flicker 0.12s linear infinite; }
-
-    /* ── Reactions ── */
     .reactions {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-      justify-content: center;
+      display: flex; gap: 14px; margin-bottom: 36px;
+      flex-wrap: wrap; justify-content: center;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s .3s ease both;
     }
-
     .react-btn {
-      background: #13132b;
-      border: 1px solid #1e1e50;
-      border-radius: 999px;
-      padding: 10px 22px;
-      font-size: 1rem;
-      cursor: pointer;
-      color: #eee;
-      transition: background 0.2s, border-color 0.2s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      background: linear-gradient(160deg, #13132b 0%, #0f0f24 100%);
+      border: 1.5px solid #1e1e50;
+      border-radius: 20px;
+      padding: 18px 22px;
+      font-size: 1rem; cursor: pointer; color: #eee;
+      font-family: inherit;
+      transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      min-width: 110px;
     }
-    .react-btn:hover { background: #1e1e42; border-color: #4f9eff; transform: scale(1.05); }
-    .react-btn .count {
-      background: rgba(79,158,255,0.15);
-      color: #4f9eff;
-      border-radius: 999px;
-      padding: 1px 8px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      min-width: 24px;
-      text-align: center;
+    .react-btn .r-emoji { font-size: 1.9rem; }
+    .react-btn .r-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; }
+    .react-btn .r-count { font-size: 1.5rem; font-weight: 900; color: #4f9eff; min-width: 1.5ch; text-align: center; }
+    .react-btn:hover {
+      background: #1a1a3a; border-color: #4f9eff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(79,158,255,.2);
     }
+    .react-btn:active { transform: scale(.95); }
 
-    /* ── Draw button ── */
-    .draw-btn {
-      background: #4f9eff;
-      color: #0d0d1a;
-      border: none;
-      border-radius: 999px;
-      padding: 17px 52px;
-      font-size: 1.05rem;
-      font-weight: 800;
-      cursor: pointer;
-      letter-spacing: 0.5px;
-      transition: background 0.2s, transform 0.1s;
+    .btn-wrap {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      animation: fadeUp .5s .4s ease both;
     }
-    .draw-btn:hover { background: #73b4ff; }
-    .draw-btn:active { transform: scale(0.97); }
-    .draw-btn:disabled { background: #2a2a4a; color: #555; cursor: not-allowed; }
+    .draw-btn {
+      background: #4f9eff; color: #0d0d1a;
+      border: none; border-radius: 999px;
+      padding: 18px 56px; font-size: 1.05rem; font-weight: 900;
+      cursor: pointer; letter-spacing: .5px; font-family: inherit;
+      transition: background .2s, transform .1s, box-shadow .2s;
+      box-shadow: 0 4px 24px rgba(79,158,255,.35);
+    }
+    .draw-btn:hover { background: #73b4ff; box-shadow: 0 6px 40px rgba(79,158,255,.6); transform: translateY(-2px); }
+    .draw-btn:active { transform: scale(.97); }
+    .draw-btn:disabled { background: #1e1e42; color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
 
     .hint {
-      margin-top: 14px;
-      font-size: 13px;
-      color: #3a3a6a;
-      text-align: center;
+      margin-top: 14px; font-size: 13px; color: #333; text-align: center;
+      transition: color .3s;
     }
+    .hint.active { color: #4f9eff; }
   </style>
 </head>
 <body>
@@ -205,13 +199,27 @@
   </div>
 
   <div class="reactions" id="reactions">
-    <button class="react-btn" onclick="react('done')">✋ I've done it <span class="count" id="cnt-done">0</span></button>
-    <button class="react-btn" onclick="react('nope')">🙅 Never! <span class="count" id="cnt-nope">0</span></button>
-    <button class="react-btn" onclick="react('lol')">😂 LOL <span class="count" id="cnt-lol">0</span></button>
+    <button class="react-btn" onclick="react('done')">
+      <span class="r-emoji">✋</span>
+      <span class="r-label">Done it</span>
+      <span class="r-count" id="cnt-done">0</span>
+    </button>
+    <button class="react-btn" onclick="react('nope')">
+      <span class="r-emoji">🙅</span>
+      <span class="r-label">Never!</span>
+      <span class="r-count" id="cnt-nope">0</span>
+    </button>
+    <button class="react-btn" onclick="react('lol')">
+      <span class="r-emoji">😂</span>
+      <span class="r-label">LOL</span>
+      <span class="r-count" id="cnt-lol">0</span>
+    </button>
   </div>
 
-  <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
-  <p class="hint" id="hint">100 prompts ready to go</p>
+  <div class="btn-wrap">
+    <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
+    <p class="hint" id="hint">100 prompts ready to go</p>
+  </div>
 
   <script>
     const prompts = [
@@ -323,8 +331,10 @@
       counts[type]++;
       document.getElementById(`cnt-${type}`).textContent = counts[type];
       const btn = event.currentTarget;
-      btn.style.transform = 'scale(1.15)';
-      setTimeout(() => btn.style.transform = '', 180);
+      btn.style.transform = 'scale(1.15) translateY(-4px)';
+      btn.style.boxShadow = '0 12px 36px rgba(79,158,255,.3)';
+      btn.style.borderColor = '#4f9eff';
+      setTimeout(() => { btn.style.transform = ''; btn.style.boxShadow = ''; btn.style.borderColor = ''; }, 250);
     }
 
     function triggerRipple(card) {
@@ -342,7 +352,7 @@
       counts.done = counts.nope = counts.lol = 0;
       ['done','nope','lol'].forEach(k => document.getElementById(`cnt-${k}`).textContent = 0);
 
-      const btn = document.getElementById('drawBtn');
+      const btn  = document.getElementById('drawBtn');
       const card = document.getElementById('card');
       const stmt = document.getElementById('statement');
       const hint = document.getElementById('hint');
@@ -352,15 +362,15 @@
       card.classList.remove('active');
       stmt.className = 'statement';
       hint.textContent = 'Drawing…';
+      hint.classList.remove('active');
       triggerRipple(card);
 
       const chosen = prompts[Math.floor(Math.random() * prompts.length)];
-
       let ticks = 0;
       const iv = setInterval(() => {
         stmt.textContent = prompts[Math.floor(Math.random() * prompts.length)];
         ticks++;
-        if (ticks >= 20) {
+        if (ticks >= 22) {
           clearInterval(iv);
           stmt.textContent = chosen;
           card.classList.remove('rolling');
@@ -368,10 +378,11 @@
           round++;
           document.getElementById('roundNum').textContent = round;
           hint.textContent = 'React below — how many have done this? 👇';
+          hint.classList.add('active');
           btn.disabled = false;
           rolling = false;
         }
-      }, 90);
+      }, 85);
     }
   </script>
 
