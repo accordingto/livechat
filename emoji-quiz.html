@@ -20,28 +20,7 @@
       overflow-x: hidden;
     }
 
-    /* 1. Atmosphere orb */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background: rgba(167, 139, 250, .07);
-      pointer-events: none;
-      animation: orbDrift 8s ease-in-out infinite;
-      z-index: 0;
-    }
-
-    @keyframes orbDrift {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
-      50%       { transform: translateX(-50%) translateY(30px); }
-    }
-
-    /* 2. fadeUp */
+    /* fadeUp */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
