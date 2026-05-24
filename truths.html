@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Truths &amp; a Lie</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 64px;
+      overflow-x: hidden;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes bounceIn {
+      0%   { transform: scale(.82); opacity: 0; }
+      60%  { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      animation: fadeUp .45s ease both;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #ec4899; font-weight: 700; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+      animation: fadeUp .45s .08s ease both;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .9rem; line-height: 1.65; max-width: 460px; margin: 0 auto; }
+
+    /* ── Screens ── */
+    .screen { width: 100%; max-width: 760px; display: none; }
+    .screen.active { display: block; }
+
+    /* ═══════════════════════════════
+       SETUP SCREEN
+    ═══════════════════════════════ */
+    .setup-card {
+      background: linear-gradient(160deg, #13132b 0%, #100f25 100%);
+      border: 1px solid #1e1e42;
+      border-radius: 22px;
+      padding: 34px 38px;
+      animation: fadeUp .4s .15s ease both;
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ec4899;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .field { margin-bottom: 22px; }
+    .field > label {
+      display: block;
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 8px;
+      letter-spacing: .4px;
+    }
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: #eee;
+      font-size: .97rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .field input:focus { border-color: #ec4899; }
+    .field input::placeholder { color: #2e2e4e; }
+
+    .stmt-rows { display: flex; flex-direction: column; gap: 10px; }
+
+    .stmt-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stmt-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #555;
+      flex-shrink: 0;
+    }
+    .stmt-row input {
+      flex: 1;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: #eee;
+      font-size: .95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .stmt-row input:focus { border-color: #ec4899; }
+    .stmt-row input::placeholder { color: #2e2e4e; }
+
+    .lie-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid #282840;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: border-color .2s, background .2s, transform .15s;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+    }
+    .lie-btn:hover { border-color: #ec4899; transform: scale(1.1); }
+    .lie-btn.selected {
+      border-color: #ec4899;
+      background: rgba(236,72,153,.18);
+      box-shadow: 0 0 10px rgba(236,72,153,.3);
+    }
+
+    .lie-hint {
+      font-size: 12px;
+      color: #383858;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+    .lie-hint em { color: #ec4899; font-style: normal; }
+
+    .setup-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      flex: 1;
+      background: #ec4899;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 15px 28px;
+      font-size: .97rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .4px;
+      transition: background .2s, transform .1s, box-shadow .2s;
+      box-shadow: 0 4px 22px rgba(236,72,153,.35);
+    }
+    .btn-primary:hover {
+      background: #f472b6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 32px rgba(236,72,153,.5);
+    }
+    .btn-primary:active { transform: scale(.97); }
+    .btn-primary:disabled {
+      background: #252540;
+      color: #555;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #888;
+      border: 1px solid #2a2a44;
+      border-radius: 999px;
+      padding: 15px 24px;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-outline:hover { border-color: #555; color: #ccc; }
+
+    /* ═══════════════════════════════
+       VOTING SCREEN
+    ═══════════════════════════════ */
+    .player-banner {
+      text-align: center;
+      margin-bottom: 30px;
+      animation: fadeUp .4s ease both;
+    }
+    .pb-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 8px;
+    }
+    .pb-name {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      color: #eee;
+    }
+    .pb-question {
+      font-size: .88rem;
+      color: #444;
+      margin-top: 8px;
+    }
+    .pb-question em { color: #ec4899; font-style: normal; font-weight: 700; }
+
+    /* ── Statement cards ── */
+    .stmt-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+    .stmt-card {
+      background: linear-gradient(160deg, #13132b 0%, #100f25 100%);
+      border: 2px solid #1a1a38;
+      border-radius: 18px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color .35s, background .35s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sc-num {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 800; color: #666;
+      flex-shrink: 0;
+    }
+    .sc-text {
+      flex: 1;
+      font-size: clamp(.93rem, 2.4vw, 1.08rem);
+      line-height: 1.6;
+      font-weight: 500;
+    }
+    .sc-badge {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      display: none;
+    }
+
+    /* vote controls */
+    .vc-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .vc-num {
+      font-size: 1.5rem;
+      font-weight: 800;
+      min-width: 2ch;
+      text-align: center;
+      color: #eee;
+      transition: transform .15s;
+    }
+    .vc-num.bump { animation: bump .2s ease; }
+    @keyframes bump {
+      0%   { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+    .vc-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid #252540;
+      background: transparent;
+      color: #666;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+      line-height: 1;
+    }
+    .vc-btn.plus:hover  { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.1); }
+    .vc-btn.minus:hover { border-color: #444; color: #aaa; background: rgba(255,255,255,.05); }
+    .vc-btn:active { transform: scale(.9); }
+
+    /* Reveal state */
+    .stmt-card.is-lie {
+      border-color: #ef4444;
+      background: linear-gradient(160deg, rgba(239,68,68,.12) 0%, #100f25 65%);
+      animation: bounceIn .5s ease both;
+    }
+    .stmt-card.is-truth {
+      border-color: #22c55e;
+      background: linear-gradient(160deg, rgba(34,197,94,.1) 0%, #100f25 65%);
+      animation: bounceIn .5s ease both;
+    }
+    .stmt-card.is-lie  .sc-badge { display: inline-block; background: rgba(239,68,68,.18); color: #ef4444; }
+    .stmt-card.is-truth .sc-badge { display: inline-block; background: rgba(34,197,94,.18); color: #22c55e; }
+
+    /* ── Result banner ── */
+    .result-banner {
+      background: linear-gradient(160deg, #13132b 0%, #100f25 100%);
+      border: 1px solid #1e1e42;
+      border-radius: 18px;
+      padding: 24px 32px;
+      text-align: center;
+      margin-bottom: 24px;
+      display: none;
+      animation: fadeIn .5s ease both;
+    }
+    .result-banner.show { display: block; }
+    .result-big {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ec4899, #f9a8d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .result-sub { font-size: .92rem; color: #555; }
+    .result-sub strong { color: #888; }
+
+    /* ── Vote hint ── */
+    .vote-hint {
+      text-align: center;
+      font-size: 12px;
+      color: #333;
+      margin-bottom: 20px;
+      letter-spacing: .5px;
+    }
+
+    /* ── Action bar ── */
+    .action-bar { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .action-bar .btn-primary { flex: 0 0 auto; min-width: 200px; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🤥 Two Truths &amp; a Lie</h1>
+    <p>Three statements — two are true, one is a lie. Can your group sniff out the deception?</p>
+  </div>
+
+  <!-- ═══ SETUP SCREEN ═══ -->
+  <div class="screen active" id="screenSetup">
+    <div class="setup-card">
+      <div class="section-label">🎯 Round Setup</div>
+
+      <div class="field">
+        <label>Player's Name</label>
+        <input type="text" id="playerName" placeholder="e.g. Sarah" maxlength="30" />
+      </div>
+
+      <div class="field">
+        <label>Three Statements &nbsp;<span style="color:#333;font-size:12px">— tap 🤥 on the one that is the lie (only you will know)</span></label>
+        <div class="stmt-rows">
+          <div class="stmt-row">
+            <div class="stmt-num">1</div>
+            <input type="text" id="s1" placeholder="First statement…" maxlength="140" />
+            <button class="lie-btn" id="lb1" onclick="selectLie(1)" title="Mark as lie">🤥</button>
+          </div>
+          <div class="stmt-row">
+            <div class="stmt-num">2</div>
+            <input type="text" id="s2" placeholder="Second statement…" maxlength="140" />
+            <button class="lie-btn" id="lb2" onclick="selectLie(2)" title="Mark as lie">🤥</button>
+          </div>
+          <div class="stmt-row">
+            <div class="stmt-num">3</div>
+            <input type="text" id="s3" placeholder="Third statement…" maxlength="140" />
+            <button class="lie-btn" id="lb3" onclick="selectLie(3)" title="Mark as lie">🤥</button>
+          </div>
+        </div>
+        <div class="lie-hint">🔒 The lie marker is <em>only visible to you</em> in this setup screen — it won't appear when the voting screen is shown.</div>
+      </div>
+
+      <div class="setup-actions">
+        <button class="btn-outline" onclick="loadExample()">📋 Load Example</button>
+        <button class="btn-primary" onclick="startRound()">▶ Start Round</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VOTING / REVEAL SCREEN ═══ -->
+  <div class="screen" id="screenVoting">
+
+    <div class="player-banner">
+      <div class="pb-label">Now presenting</div>
+      <div class="pb-name" id="displayName">—</div>
+      <div class="pb-question">Which statement is the <em>lie</em>? Discuss, then the host records your votes below.</div>
+    </div>
+
+    <div class="stmt-list" id="stmtList">
+      <!-- rendered by JS -->
+    </div>
+
+    <div class="vote-hint" id="voteHint">Tap <strong>+</strong> to record each voice vote · tap <strong>−</strong> to undo</div>
+
+    <div class="result-banner" id="resultBanner">
+      <div class="result-big" id="resultBig">—</div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-outline" id="btnReveal" onclick="reveal()">🎯 Reveal the Lie</button>
+      <button class="btn-primary" id="btnNext" style="display:none" onclick="nextRound()">Next Round →</button>
+    </div>
+
+  </div>
+
+  <script>
+    let round = 0;
+    let lieIdx = 0;   // 1-based
+    let votes = [0, 0, 0];
+    let isRevealed = false;
+
+    const examples = [
+      { name: 'Alex', stmts: ["I once fell asleep at the gate and missed my flight.", "I have visited more than 15 different countries.", "I learned to ride a bike when I was 18 years old."], lie: 2 },
+      { name: 'Jamie', stmts: ["I can solve a Rubik's Cube in under two minutes.", "I have never broken a bone in my body.", "I once appeared on a local TV news segment."], lie: 1 },
+      { name: 'Taylor', stmts: ["I ate the exact same lunch every day for an entire month.", "I accidentally sent a very embarrassing message to the wrong group chat.", "I once won a pub trivia night competition."], lie: 3 },
+      { name: 'Morgan', stmts: ["I once held a tarantula for a dare.", "I speak three languages fluently.", "I have read the same novel at least five times."], lie: 2 },
+      { name: 'Jordan', stmts: ["I have sung karaoke in front of over 200 strangers.", "I have never watched a single episode of Game of Thrones.", "I once ran a half-marathon with zero training."], lie: 1 },
+    ];
+    let exIdx = 0;
+
+    function loadExample() {
+      const ex = examples[exIdx % examples.length];
+      exIdx++;
+      document.getElementById('playerName').value = ex.name;
+      document.getElementById('s1').value = ex.stmts[0];
+      document.getElementById('s2').value = ex.stmts[1];
+      document.getElementById('s3').value = ex.stmts[2];
+      selectLie(ex.lie);
+    }
+
+    function selectLie(n) {
+      lieIdx = n;
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('lb' + i).classList.toggle('selected', i === n);
+      }
+    }
+
+    function startRound() {
+      const name = document.getElementById('playerName').value.trim();
+      const s = [
+        document.getElementById('s1').value.trim(),
+        document.getElementById('s2').value.trim(),
+        document.getElementById('s3').value.trim(),
+      ];
+
+      if (!name || s.some(x => !x)) {
+        alert("Please fill in the player name and all three statements.");
+        return;
+      }
+      if (!lieIdx) {
+        alert("Please tap 🤥 to mark which statement is the lie.");
+        return;
+      }
+
+      round++;
+      votes = [0, 0, 0];
+      isRevealed = false;
+      document.getElementById('roundNum').textContent = round;
+      document.getElementById('displayName').textContent = name;
+
+      const list = document.getElementById('stmtList');
+      list.innerHTML = '';
+      s.forEach((text, i) => {
+        const n = i + 1;
+        const card = document.createElement('div');
+        card.className = 'stmt-card';
+        card.id = 'sc' + n;
+        card.style.animationDelay = (i * .07) + 's';
+        card.innerHTML =
+          '<div class="sc-num">' + n + '</div>' +
+          '<div class="sc-text">' + esc(text) + '</div>' +
+          '<span class="sc-badge" id="badge' + n + '"></span>' +
+          '<div class="vc-wrap">' +
+            '<button class="vc-btn minus" onclick="chgVote(' + n + ',-1)">−</button>' +
+            '<div class="vc-num" id="vc' + n + '">0</div>' +
+            '<button class="vc-btn plus" onclick="chgVote(' + n + ',1)">+</button>' +
+          '</div>';
+        list.appendChild(card);
+      });
+
+      document.getElementById('voteHint').style.display = 'block';
+      document.getElementById('resultBanner').classList.remove('show');
+      document.getElementById('btnReveal').style.display = 'inline-block';
+      document.getElementById('btnReveal').disabled = false;
+      document.getElementById('btnNext').style.display = 'none';
+      showScreen('screenVoting');
+    }
+
+    function chgVote(n, delta) {
+      if (isRevealed) return;
+      const i = n - 1;
+      votes[i] = Math.max(0, votes[i] + delta);
+      const el = document.getElementById('vc' + n);
+      el.textContent = votes[i];
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
+
+    function reveal() {
+      isRevealed = true;
+      document.getElementById('btnReveal').disabled = true;
+      document.getElementById('voteHint').style.display = 'none';
+
+      for (let i = 1; i <= 3; i++) {
+        const card  = document.getElementById('sc' + i);
+        const badge = document.getElementById('badge' + i);
+        if (i === lieIdx) {
+          card.classList.add('is-lie');
+          badge.textContent = '🤥 THE LIE';
+        } else {
+          card.classList.add('is-truth');
+          badge.textContent = '✓ TRUTH';
+        }
+        card.style.animationDelay = (i - 1) * .1 + 's';
+        // disable vote buttons
+        card.querySelectorAll('.vc-btn').forEach(b => { b.disabled = true; b.style.opacity = '.3'; });
+      }
+
+      const correct = votes[lieIdx - 1];
+      const total   = votes.reduce((a, b) => a + b, 0);
+      document.getElementById('resultBig').textContent = correct + ' / ' + total;
+      document.getElementById('resultSub').innerHTML =
+        'votes correctly identified the lie' +
+        (total === 0 ? ' — no votes recorded' : '');
+      document.getElementById('resultBanner').classList.add('show');
+      document.getElementById('btnNext').style.display = 'inline-block';
+    }
+
+    function nextRound() {
+      ['playerName','s1','s2','s3'].forEach(id => { document.getElementById(id).value = ''; });
+      lieIdx = 0;
+      for (let i = 1; i <= 3; i++) document.getElementById('lb' + i).classList.remove('selected');
+      showScreen('screenSetup');
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function esc(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
