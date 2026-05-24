@@ -250,12 +250,9 @@
 
   <!-- ── STUDY ── -->
   <div class="phase" id="phaseStudy">
-    <div class="study-header">
-      <div class="study-title">📚 Memorize these 4 idioms!</div>
-      <div class="study-sub">Take your time — press Ready when you've memorized them.</div>
-    </div>
     <div class="idiom-list" id="idiomList"></div>
     <div class="btn-row">
+      <button class="btn btn-secondary" onclick="redraw()">🔀 Redraw</button>
       <button class="btn btn-primary" onclick="showQuestion()">✅ I'm Ready — Start Quiz</button>
     </div>
   </div>
@@ -366,6 +363,22 @@
       });
 
       showPhase('phaseStudy');
+    }
+
+    function redraw() {
+      currentRound = pickRound();
+      const list = document.getElementById('idiomList');
+      list.innerHTML = '';
+      currentRound.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'idiom-row';
+        row.innerHTML = `<div class="idiom-emoji">${item.e}</div>
+          <div class="idiom-info">
+            <div class="idiom-text">${item.a}</div>
+            <div class="idiom-hint">${item.h}</div>
+          </div>`;
+        list.appendChild(row);
+      });
     }
 
     function buildDots() {
