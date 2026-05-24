@@ -20,26 +20,6 @@
       overflow-x: hidden;
     }
 
-    /* ── Background atmosphere orb ── */
-    @keyframes orbDrift {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
-      50%       { transform: translateX(-50%) translateY(40px); }
-    }
-    body::before {
-      content: '';
-      position: fixed;
-      top: -180px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background: rgba(255, 112, 67, .07);
-      pointer-events: none;
-      animation: orbDrift 8s ease-in-out infinite;
-      z-index: 0;
-    }
-
     /* ── Fade-up entrance animation ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(22px); }
