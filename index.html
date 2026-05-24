@@ -21,55 +21,53 @@
 
     /* ── Hero ── */
     .hero {
-      padding: 64px 24px 52px;
-      text-align: center;
-      background: linear-gradient(160deg, #1a1a3e 0%, #0d0d1a 65%);
-      border-bottom: 1px solid #1a1a38;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -40%; left: 50%; transform: translateX(-50%);
-      width: 700px; height: 700px;
-      background: radial-gradient(circle, rgba(233,69,96,.08) 0%, transparent 65%);
-      pointer-events: none;
+      padding: 28px 24px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 820px;
+      margin: 0 auto;
+      gap: 16px;
     }
 
-    .badge {
-      display: inline-block;
-      background: rgba(233,69,96,.14);
-      color: #e94560;
-      border: 1px solid rgba(233,69,96,.35);
-      border-radius: 999px;
-      padding: 5px 18px;
-      font-size: 11px;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      margin-bottom: 20px;
-      position: relative;
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(233,69,96,.6));
     }
 
     .hero h1 {
-      font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+      font-size: 1.35rem;
       font-weight: 800;
-      line-height: 1.1;
-      background: linear-gradient(135deg, #fff 35%, #e94560);
+      letter-spacing: -.3px;
+      background: linear-gradient(135deg, #fff 40%, #e94560);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 16px;
-      position: relative;
+      white-space: nowrap;
     }
 
-    .hero p {
-      font-size: .98rem;
-      color: #666;
-      max-width: 400px;
-      margin: 0 auto;
-      line-height: 1.75;
-      position: relative;
+    .hero-sub {
+      font-size: .72rem;
+      color: #2e2e50;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #1e1e40 20%, #1e1e40 80%, transparent);
+      max-width: 820px;
+      margin: 0 20px;
     }
 
     /* ── Game List ── */
@@ -78,7 +76,7 @@
       flex-direction: column;
       gap: 14px;
       max-width: 820px;
-      margin: 44px auto 64px;
+      margin: 24px auto 64px;
       padding: 0 20px;
     }
 
@@ -247,11 +245,14 @@
 </head>
 <body>
 
-  <section class="hero">
-    <div class="badge">🧊 Icebreaker Hub</div>
-    <h1>Break the Ice,<br>Start the Fun</h1>
-    <p>Quick, interactive games designed to warm up any online chat and get everyone talking.</p>
-  </section>
+  <header class="hero">
+    <div class="hero-brand">
+      <span class="hero-icon">🧊</span>
+      <h1>IceBreak Hub</h1>
+    </div>
+    <span class="hero-sub">7 games · no sign-up</span>
+  </header>
+  <div class="divider"></div>
 
   <div class="game-list">
 
