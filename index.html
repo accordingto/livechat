@@ -82,7 +82,7 @@
       color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
       cursor: pointer;
     }
@@ -120,6 +120,25 @@
       line-height: 1.65;
     }
 
+    /* ── Difficulty ── */
+    .game-card .difficulty {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .game-card .stars {
+      color: var(--accent);
+      font-size: .88rem;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+    .game-card .diff-label {
+      font-size: .72rem;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     .game-card .cta {
       margin-top: auto;
       display: inline-flex;
@@ -128,7 +147,7 @@
       color: var(--accent);
       font-size: 0.9rem;
       font-weight: 600;
-      padding-top: 8px;
+      padding-top: 4px;
     }
     .game-card .cta::after { content: '→'; transition: transform 0.2s; }
     .game-card:hover .cta::after { transform: translateX(4px); }
@@ -137,6 +156,7 @@
     .card-red    { --accent: #e94560; }
     .card-blue   { --accent: #4f9eff; }
     .card-orange { --accent: #ff7043; }
+    .card-purple { --accent: #a78bfa; }
     .card-green  { --accent: #22c55e; }
     .card-amber  { --accent: #f59e0b; }
     .card-cyan   { --accent: #06b6d4; }
@@ -167,6 +187,10 @@
       <span class="tag">2 players+</span>
       <h2>Would You Rather</h2>
       <p>Draw two random dilemmas and let your group debate which they'd choose. Spin again for endless fun.</p>
+      <div class="difficulty">
+        <span class="stars">★☆☆☆☆</span>
+        <span class="diff-label">Beginner</span>
+      </div>
       <span class="cta">Play now</span>
     </a>
 
@@ -175,6 +199,10 @@
       <span class="tag">Group</span>
       <h2>Never Have I Ever</h2>
       <p>Draw a random "Never Have I Ever" prompt and see who in the chat has actually done it. Reactions guaranteed.</p>
+      <div class="difficulty">
+        <span class="stars">★☆☆☆☆</span>
+        <span class="diff-label">Beginner</span>
+      </div>
       <span class="cta">Play now</span>
     </a>
 
@@ -183,38 +211,10 @@
       <span class="tag">Online-first</span>
       <h2>Hot Take Roulette</h2>
       <p>Spin for a bold opinion. On the count of 3, everyone types AGREE or DISAGREE in the chat at the same time — then defends their answer.</p>
-      <span class="cta">Play now</span>
-    </a>
-
-    <a class="game-card card-purple" href="emoji-quiz.html">
-      <div class="icon">🧩</div>
-      <span class="tag">Guess it</span>
-      <h2>Emoji Quiz</h2>
-      <p>Decode emoji puzzles — movies, songs, idioms, and places. Type your guess in chat, then the host reveals the answer!</p>
-      <span class="cta">Play now</span>
-    </a>
-
-    <a class="game-card card-green" href="describe.html">
-      <div class="icon">🖼️</div>
-      <span class="tag">Creative</span>
-      <h2>Describe the Scene</h2>
-      <p>A real photo appears with a 45-second timer. Write 2–3 sentences in English describing what you see, then share at the same time!</p>
-      <span class="cta">Play now</span>
-    </a>
-
-    <a class="game-card card-amber" href="storyteller.html">
-      <div class="icon">📖</div>
-      <span class="tag">Storytelling</span>
-      <h2>Story Teller</h2>
-      <p>Draw a random character, action, and location. You have 90 seconds to weave them into a story — then share and vote for the best one!</p>
-      <span class="cta">Play now</span>
-    </a>
-
-    <a class="game-card card-pink" href="caption.html">
-      <div class="icon">🖼️</div>
-      <span class="tag">Creative</span>
-      <h2>Caption Contest</h2>
-      <p>A funny photo appears and the 60-second timer starts. Write the wittiest caption privately — then everyone posts at the same time and votes for the best!</p>
+      <div class="difficulty">
+        <span class="stars">★★☆☆☆</span>
+        <span class="diff-label">Easy</span>
+      </div>
       <span class="cta">Play now</span>
     </a>
 
@@ -223,6 +223,58 @@
       <span class="tag">Creative</span>
       <h2>Finish the Sentence</h2>
       <p>A sentence starter appears — you have 30 seconds to write your ending privately. Everyone posts at the same time. Compare and laugh!</p>
+      <div class="difficulty">
+        <span class="stars">★★☆☆☆</span>
+        <span class="diff-label">Easy</span>
+      </div>
+      <span class="cta">Play now</span>
+    </a>
+
+    <a class="game-card card-pink" href="caption.html">
+      <div class="icon">🖼️</div>
+      <span class="tag">Creative</span>
+      <h2>Caption Contest</h2>
+      <p>A funny photo appears and the 60-second timer starts. Write the wittiest caption privately — then everyone posts at the same time and votes for the best!</p>
+      <div class="difficulty">
+        <span class="stars">★★★☆☆</span>
+        <span class="diff-label">Medium</span>
+      </div>
+      <span class="cta">Play now</span>
+    </a>
+
+    <a class="game-card card-green" href="describe.html">
+      <div class="icon">🖼️</div>
+      <span class="tag">Writing</span>
+      <h2>Describe the Scene</h2>
+      <p>A real photo appears with a 45-second timer. Write 2–3 sentences in English describing what you see, then share at the same time!</p>
+      <div class="difficulty">
+        <span class="stars">★★★☆☆</span>
+        <span class="diff-label">Medium</span>
+      </div>
+      <span class="cta">Play now</span>
+    </a>
+
+    <a class="game-card card-amber" href="storyteller.html">
+      <div class="icon">📖</div>
+      <span class="tag">Storytelling</span>
+      <h2>Story Teller</h2>
+      <p>Draw a random character, action, and location. Weave them into a short story — then share and vote for the most creative one!</p>
+      <div class="difficulty">
+        <span class="stars">★★★★☆</span>
+        <span class="diff-label">Hard</span>
+      </div>
+      <span class="cta">Play now</span>
+    </a>
+
+    <a class="game-card card-purple" href="emoji-quiz.html">
+      <div class="icon">🧩</div>
+      <span class="tag">Memory</span>
+      <h2>Emoji Idioms</h2>
+      <p>Study 5 idioms for 30 seconds, then they vanish! Guess each one from its emojis alone — type your answer in chat and see who remembered!</p>
+      <div class="difficulty">
+        <span class="stars">★★★★★</span>
+        <span class="diff-label">Expert</span>
+      </div>
       <span class="cta">Play now</span>
     </a>
 

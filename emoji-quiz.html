@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Emoji Quiz</title>
+  <title>Emoji Idioms</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,13 +18,9 @@
       padding: 28px 20px 72px;
     }
 
-    /* ── Top bar ── */
     .topbar {
-      width: 100%;
-      max-width: 720px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      width: 100%; max-width: 720px;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 36px;
     }
     a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
@@ -32,186 +28,144 @@
     .round-badge { font-size: 12px; color: #444; }
     .round-badge span { color: #a78bfa; font-weight: 700; }
 
-    /* ── Header ── */
-    .header { text-align: center; margin-bottom: 32px; }
+    .header { text-align: center; margin-bottom: 28px; }
     .header h1 {
-      font-size: clamp(1.8rem, 5vw, 2.6rem);
-      font-weight: 800;
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 10px;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
     }
-    .header p { color: #666; font-size: .93rem; line-height: 1.6; }
+    .header p { color: #666; font-size: .93rem; }
 
-    /* ── How to play ── */
     .how {
-      width: 100%;
-      max-width: 720px;
-      background: rgba(167,139,250,.07);
-      border: 1px solid rgba(167,139,250,.2);
-      border-radius: 14px;
-      padding: 14px 20px;
-      margin-bottom: 32px;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
+      width: 100%; max-width: 720px;
+      background: rgba(167,139,250,.07); border: 1px solid rgba(167,139,250,.2);
+      border-radius: 14px; padding: 14px 20px; margin-bottom: 32px;
+      display: flex; gap: 10px; align-items: flex-start;
     }
     .how .bulb { font-size: 1.3rem; flex-shrink: 0; }
-    .how p { font-size: .85rem; color: #aaa; line-height: 1.6; }
+    .how p { font-size: .85rem; color: #aaa; line-height: 1.7; }
     .how strong { color: #c4b5fd; }
 
-    /* ── Category tabs ── */
-    .tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 32px;
-    }
-    .tab {
-      background: #13132b;
-      border: 1px solid #1e1e42;
-      border-radius: 999px;
-      padding: 7px 18px;
-      font-size: .82rem;
-      cursor: pointer;
-      color: #777;
-      transition: background .2s, border-color .2s, color .2s;
-      font-family: inherit;
-    }
-    .tab:hover { border-color: #a78bfa; color: #eee; }
-    .tab.active {
-      background: rgba(167,139,250,.15);
-      border-color: #a78bfa;
-      color: #a78bfa;
-      font-weight: 700;
-    }
+    /* ── Phase containers ── */
+    .phase { width: 100%; max-width: 720px; display: none; flex-direction: column; }
+    .phase.active { display: flex; }
 
-    /* ── Main card ── */
-    .card {
-      width: 100%;
-      max-width: 720px;
-      background: #13132b;
-      border: 2px solid #1e1e42;
-      border-radius: 24px;
-      padding: 52px 36px 40px;
-      text-align: center;
-      margin-bottom: 24px;
-      position: relative;
-      overflow: hidden;
-      transition: border-color .4s;
-      min-height: 260px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 22px;
+    /* ── IDLE ── */
+    .idle-box {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 24px;
+      padding: 56px 36px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
     }
-    .card.active { border-color: #a78bfa; }
+    .idle-box .big-emoji { font-size: 4rem; }
+    .idle-box p { color: #555; font-size: .95rem; line-height: 1.8; max-width: 380px; }
 
-    .cat-pill {
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 700;
-      padding: 4px 14px;
-      border-radius: 999px;
-      background: rgba(167,139,250,.12);
-      color: #a78bfa;
+    /* ── STUDY ── */
+    .study-header { text-align: center; margin-bottom: 18px; }
+    .study-title { font-size: 1.05rem; font-weight: 700; color: #a78bfa; margin-bottom: 4px; }
+    .study-sub   { font-size: .82rem; color: #555; }
+
+    .idiom-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+
+    .idiom-row {
+      background: #13132b; border: 1px solid #1e1e42; border-radius: 14px;
+      padding: 14px 20px; display: flex; align-items: center; gap: 16px;
+      animation: slideIn .3s ease both;
     }
-
-    .emoji-row {
-      font-size: clamp(2.6rem, 8vw, 4rem);
-      letter-spacing: 6px;
-      line-height: 1.2;
-      min-height: 1.3em;
+    .idiom-row:nth-child(1) { animation-delay: .00s; }
+    .idiom-row:nth-child(2) { animation-delay: .06s; }
+    .idiom-row:nth-child(3) { animation-delay: .12s; }
+    .idiom-row:nth-child(4) { animation-delay: .18s; }
+    .idiom-row:nth-child(5) { animation-delay: .24s; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    .emoji-row.placeholder { filter: grayscale(1); opacity: .2; font-size: 2.2rem; }
+    .idiom-emoji { font-size: 1.7rem; flex-shrink: 0; min-width: 80px; text-align: center; letter-spacing: 3px; }
+    .idiom-info { flex: 1; }
+    .idiom-text { font-size: .95rem; font-weight: 700; color: #eee; margin-bottom: 3px; }
+    .idiom-hint { font-size: .78rem; color: #555; }
 
-    /* rolling */
-    @keyframes spin-flicker {
-      0%,100% { transform: scale(1);   opacity: 1; }
-      50%      { transform: scale(.9); opacity: .3; }
+    /* timer shared */
+    .timer-row {
+      display: flex; align-items: center; justify-content: center; gap: 20px;
     }
-    .card.rolling .emoji-row { animation: spin-flicker .12s linear infinite; }
+    .timer-wrap { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+    .timer-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: #1e1e42; stroke-width: 8; }
+    .ring-progress {
+      fill: none; stroke: #a78bfa; stroke-width: 8; stroke-linecap: round;
+      stroke-dasharray: 283; stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .3s;
+    }
+    .timer-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; color: #eee;
+    }
+    .timer-num.warn { color: #ef4444; }
+    .t-label { text-align: left; }
+    .t-phase { font-size: .95rem; font-weight: 700; color: #a78bfa; margin-bottom: 3px; }
+    .t-phase.warn { color: #ef4444; }
+    .t-sub { font-size: .8rem; color: #555; line-height: 1.5; }
 
-    /* ── Answer panel ── */
+    /* ── QUIZ ── */
+    .progress-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .progress-label { font-size: .85rem; color: #555; }
+    .progress-dots { display: flex; gap: 7px; }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%; background: #1e1e42;
+      transition: background .3s, box-shadow .3s;
+    }
+    .dot.done    { background: #a78bfa; }
+    .dot.current { background: #c4b5fd; box-shadow: 0 0 7px #a78bfa; }
+
+    .quiz-card {
+      background: #13132b; border: 2px solid #a78bfa; border-radius: 24px;
+      padding: 52px 36px 40px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      margin-bottom: 22px;
+    }
+    .quiz-tag { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a78bfa; font-weight: 700; }
+    .quiz-emoji { font-size: clamp(2.8rem, 9vw, 4.4rem); letter-spacing: 8px; line-height: 1.3; }
+
     .answer-panel {
-      width: 100%;
-      max-width: 720px;
-      background: rgba(167,139,250,.08);
-      border: 1px solid rgba(167,139,250,.25);
-      border-radius: 16px;
-      padding: 20px 28px;
-      margin-bottom: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-height: 70px;
-      justify-content: center;
-    }
-    .answer-panel .ans-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #555;
-    }
-    .answer-panel .ans-text {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #a78bfa;
-      opacity: 0;
-      transform: translateY(6px);
+      background: rgba(167,139,250,.08); border: 1px solid rgba(167,139,250,.25);
+      border-radius: 14px; padding: 20px 24px; margin-bottom: 24px;
+      opacity: 0; transform: translateY(8px);
       transition: opacity .4s, transform .4s;
     }
-    .answer-panel .ans-text.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .answer-panel .ans-hint {
-      font-size: .82rem;
-      color: #444;
-    }
+    .answer-panel.visible { opacity: 1; transform: translateY(0); }
+    .ans-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #555; margin-bottom: 8px; }
+    .ans-text  { font-size: 1.2rem; font-weight: 700; color: #a78bfa; margin-bottom: 5px; }
+    .ans-hint  { font-size: .82rem; color: #444; }
 
-    /* ── Buttons row ── */
-    .btn-row {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 12px;
+    /* ── DONE ── */
+    .done-box {
+      background: #13132b; border: 2px solid #a78bfa; border-radius: 24px;
+      padding: 56px 36px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
     }
+    .done-box .big-emoji { font-size: 3.5rem; }
+    .done-box h2 { font-size: 1.6rem; font-weight: 800; color: #a78bfa; }
+    .done-box p { color: #555; font-size: .9rem; }
 
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
     .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 15px 38px;
-      font-size: 1rem;
-      font-weight: 800;
-      cursor: pointer;
-      letter-spacing: .4px;
-      transition: background .2s, transform .1s, opacity .2s;
-      font-family: inherit;
+      border: none; border-radius: 999px; padding: 16px 44px;
+      font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s, opacity .2s; letter-spacing: .3px;
     }
     .btn:active { transform: scale(.97); }
     .btn:disabled { opacity: .35; cursor: not-allowed; }
-
-    .btn-draw    { background: #a78bfa; color: #0d0d1a; }
-    .btn-draw:hover:not(:disabled) { background: #c4b5fd; }
-
-    .btn-reveal  { background: #13132b; color: #a78bfa; border: 2px solid #a78bfa; padding: 13px 38px; }
-    .btn-reveal:hover:not(:disabled) { background: rgba(167,139,250,.1); }
-
-    /* ripple */
-    @keyframes ripple { from{transform:scale(0);opacity:.3} to{transform:scale(5);opacity:0} }
-    .ripple-el {
-      position:absolute; width:80px; height:80px; border-radius:50%;
-      background:#a78bfa; pointer-events:none;
-      animation:ripple .7s ease-out forwards;
-      left:50%; top:50%; margin:-40px 0 0 -40px;
-    }
+    .btn-primary   { background: #a78bfa; color: #0d0d1a; }
+    .btn-primary:hover:not(:disabled) { background: #c4b5fd; }
+    .btn-secondary { background: #13132b; color: #a78bfa; border: 2px solid #a78bfa; padding: 14px 44px; }
+    .btn-secondary:hover:not(:disabled) { background: rgba(167,139,250,.1); }
   </style>
 </head>
 <body>
@@ -222,236 +176,233 @@
   </div>
 
   <div class="header">
-    <h1>🧩 Emoji Quiz</h1>
-    <p>Decode the emojis — type your guess in chat before the answer is revealed!</p>
+    <h1>🧩 Emoji Idioms</h1>
+    <p>Memorize the idioms, then guess them from emojis alone!</p>
   </div>
 
   <div class="how">
     <span class="bulb">💡</span>
     <p>
-      <strong>How to play:</strong> Host draws a puzzle. Everyone writes their guess privately.
-      On the count of 3, all players send their answer in chat at the same time.
-      Then the host clicks <strong>Reveal</strong> — closest answer wins the round!
+      <strong>How to play:</strong> 5 idioms appear — study them for 30 seconds.
+      Then they disappear and the emojis appear one by one.
+      Everyone types the idiom in chat at the same time.
+      Host clicks <strong>Reveal</strong> to check the answer!
     </p>
   </div>
 
-  <div class="tabs" id="tabs">
-    <button class="tab active" onclick="setCategory('all', this)">🌐 All</button>
-    <button class="tab" onclick="setCategory('idiom', this)">💬 Idioms</button>
-    <button class="tab" onclick="setCategory('place', this)">🌍 Places</button>
-    <button class="tab" onclick="setCategory('food',  this)">🍔 Food & Drinks</button>
-    <button class="tab" onclick="setCategory('sport', this)">⚽ Sports</button>
+  <!-- ── IDLE ── -->
+  <div class="phase active" id="phaseIdle">
+    <div class="idle-box">
+      <div class="big-emoji">🧠</div>
+      <p>5 idioms will appear for 30 seconds. Memorize them — then you'll be quizzed on them one by one from their emojis!</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startRound()">🎮 Start Round</button>
+      </div>
+    </div>
   </div>
 
-  <div class="card" id="card">
-    <span class="cat-pill" id="catPill">Category</span>
-    <div class="emoji-row placeholder" id="emojiRow">🧩 ❓ 🎯</div>
+  <!-- ── STUDY ── -->
+  <div class="phase" id="phaseStudy">
+    <div class="study-header">
+      <div class="study-title">📚 Memorize these 5 idioms!</div>
+      <div class="study-sub">They disappear when the timer ends…</div>
+    </div>
+    <div class="idiom-list" id="idiomList"></div>
+    <div class="timer-row">
+      <div class="timer-wrap">
+        <svg viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="45"/>
+          <circle class="ring-progress" cx="50" cy="50" r="45" id="studyRing"/>
+        </svg>
+        <div class="timer-num" id="studyNum">30</div>
+      </div>
+      <div class="t-label">
+        <div class="t-phase" id="studyPhase">Memorizing…</div>
+        <div class="t-sub" id="studySub">Quiz starts when the timer ends</div>
+      </div>
+    </div>
   </div>
 
-  <div class="answer-panel">
-    <span class="ans-label">Answer</span>
-    <span class="ans-text" id="answerText">—</span>
-    <span class="ans-hint" id="answerHint"></span>
+  <!-- ── QUIZ ── -->
+  <div class="phase" id="phaseQuiz">
+    <div class="progress-row">
+      <div class="progress-label">Question <span id="qNum">1</span> of 5</div>
+      <div class="progress-dots" id="progressDots"></div>
+    </div>
+    <div class="quiz-card">
+      <span class="quiz-tag">What's the idiom?</span>
+      <div class="quiz-emoji" id="quizEmoji"></div>
+    </div>
+    <div class="answer-panel" id="answerPanel">
+      <div class="ans-label">Answer</div>
+      <div class="ans-text" id="ansText"></div>
+      <div class="ans-hint" id="ansHint"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="revealBtn" onclick="revealAnswer()">👁 Reveal</button>
+      <button class="btn btn-primary"   id="nextBtn"   onclick="nextQuestion()" style="display:none">Next →</button>
+    </div>
   </div>
 
-  <div class="btn-row">
-    <button class="btn btn-draw"   id="drawBtn"   onclick="draw()">🎲 Draw</button>
-    <button class="btn btn-reveal" id="revealBtn" onclick="reveal()" disabled>👁 Reveal</button>
+  <!-- ── DONE ── -->
+  <div class="phase" id="phaseDone">
+    <div class="done-box">
+      <div class="big-emoji">🎉</div>
+      <h2>Round Complete!</h2>
+      <p>How did everyone do? Ready for another round?</p>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="startRound()">🔄 New Round</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const all = [
-      // ── Idioms ──
-      { e:'🌧️🐱🐶',   a:'"Raining cats and dogs"',              h:'Very heavy rain',                            c:'idiom' },
-      { e:'🍰',         a:'"Piece of cake"',                      h:'Something very easy to do',                  c:'idiom' },
-      { e:'🐘🏠',       a:'"Elephant in the room"',               h:'An obvious problem nobody talks about',       c:'idiom' },
-      { e:'🌙🔵',       a:'"Once in a blue moon"',                h:'Something that happens very rarely',          c:'idiom' },
-      { e:'🐟🏜️',       a:'"Fish out of water"',                  h:'Feeling uncomfortable in a new place',        c:'idiom' },
-      { e:'☁️9️⃣',      a:'"On cloud nine"',                      h:'Feeling extremely happy',                     c:'idiom' },
-      { e:'🌊🚣',       a:'"Go with the flow"',                   h:'Accept things as they happen',                c:'idiom' },
-      { e:'🎯🔨',       a:'"Hit the nail on the head"',           h:'Say or do something exactly right',           c:'idiom' },
-      { e:'🐦⏰🪱',     a:'"The early bird catches the worm"',    h:'Success comes to those who start early',      c:'idiom' },
-      { e:'🍎🩺',       a:'"An apple a day keeps the doctor away"', h:'Eat healthy to stay well',                  c:'idiom' },
-      { e:'🤞🍀',       a:'"Keep your fingers crossed"',          h:'Hope for good luck',                          c:'idiom' },
-      { e:'🔔❓',       a:'"Ring a bell"',                        h:'Does it sound familiar?',                     c:'idiom' },
-      { e:'💤🐕',       a:'"Let sleeping dogs lie"',              h:"Don't bring up old problems",                 c:'idiom' },
-      { e:'🐈🤐',       a:'"Cat got your tongue?"',               h:'Why are you so quiet?',                       c:'idiom' },
-      { e:'🌧️🌈',       a:'"Every cloud has a silver lining"',    h:'There is something good in every bad situation', c:'idiom' },
-      { e:'🐦🪨',       a:'"Kill two birds with one stone"',      h:'Solve two problems at the same time',         c:'idiom' },
-      { e:'🧠⚡',       a:'"Brainstorm"',                         h:'Think hard to generate lots of ideas',        c:'idiom' },
-      { e:'🥶🦆',       a:'"Cold turkey"',                        h:'Stop a bad habit suddenly',                   c:'idiom' },
-      { e:'🍋🍹',       a:'"Make lemonade from lemons"',          h:'Turn a bad situation into something positive', c:'idiom' },
-      { e:'🦶👄',       a:'"Put your foot in your mouth"',        h:'Say something embarrassing by accident',      c:'idiom' },
-      { e:'🥚🧺',       a:'"Don\'t put all your eggs in one basket"', h:'Don\'t risk everything on one option',    c:'idiom' },
-      { e:'☁️💭',       a:'"Head in the clouds"',                h:'Daydreaming or out of touch with reality',    c:'idiom' },
-      { e:'⏰✈️',       a:'"Time flies"',                         h:'Time passes very quickly',                    c:'idiom' },
-      { e:'🐢🐇🏁',     a:'"Slow and steady wins the race"',      h:'Being careful and consistent beats rushing',  c:'idiom' },
-      { e:'🐺🐑',       a:'"Wolf in sheep\'s clothing"',          h:'Someone dangerous pretending to be harmless', c:'idiom' },
-      { e:'❄️🤝',       a:'"Break the ice"',                      h:'Say something to ease tension with new people', c:'idiom' },
-      { e:'🦶🧊',       a:'"Get cold feet"',                      h:'Feel too nervous to go through with something', c:'idiom' },
-      { e:'🔥⚔️🔥',     a:'"Fight fire with fire"',               h:'Use the same tactics as your opponent',       c:'idiom' },
-      { e:'💧🌊🤏',     a:'"A drop in the ocean"',                h:'A tiny amount compared to what is needed',    c:'idiom' },
-      { e:'💰👄',       a:'"Put your money where your mouth is"', h:'Back up your words with real action',         c:'idiom' },
+    const STUDY_TIME = 30, ROUND_SIZE = 5, CIRC = 283;
 
-      // ── Places ──
-      { e:'🗼🥐🍷',    a:'Paris, France',                        h:'City of Love and the Eiffel Tower',           c:'place' },
-      { e:'🍕🏛️🤌',    a:'Italy / Rome',                         h:'Home of pizza, pasta and ancient ruins',      c:'place' },
-      { e:'🍣🗻🌸',    a:'Japan / Tokyo',                        h:'Land of the Rising Sun and cherry blossoms',  c:'place' },
-      { e:'🌵🌮🎉',    a:'Mexico',                               h:'¡Viva México! Tacos and fiestas',             c:'place' },
-      { e:'🦘🐨🌞',    a:'Australia',                            h:"G'day mate! Land of kangaroos",               c:'place' },
-      { e:'💃🌞🥘',    a:'Spain',                                h:'Olé! Home of flamenco and paella',            c:'place' },
-      { e:'🐉🏮🐼',    a:'China / Beijing',                      h:'The Great Wall and giant pandas',             c:'place' },
-      { e:'🗽🏙️🍕',    a:'New York City, USA',                   h:'The city that never sleeps',                  c:'place' },
-      { e:'🌷🚲💨',    a:'Netherlands / Amsterdam',              h:'Famous for tulips and bicycles',              c:'place' },
-      { e:'🍺🏰⛪',    a:'Germany',                              h:'Home of Oktoberfest and fairy-tale castles',  c:'place' },
-      { e:'🌺🏄🌊',    a:'Hawaii, USA',                          h:'Aloha! Tropical paradise in the Pacific',     c:'place' },
-      { e:'🏔️🧀⌚',    a:'Switzerland',                          h:'Famous for cheese, chocolate and watches',    c:'place' },
-      { e:'🦁🌍🐘',    a:'Kenya / Africa (Safari)',              h:'Home of lions, elephants and the Big Five',   c:'place' },
-      { e:'🍁🏒❄️',    a:'Canada',                               h:'Maple syrup, hockey and polar bears',         c:'place' },
-      { e:'🌉🌁🚃',    a:'San Francisco, USA',                   h:'Golden Gate Bridge and cable cars',           c:'place' },
-
-      // ── Food & Drinks ──
-      { e:'🍕🧀🍅',    a:'Pizza',                                h:'Italian flatbread with cheese and toppings',  c:'food' },
-      { e:'🍣🐟🍚',    a:'Sushi',                                h:'Japanese rice and raw fish',                  c:'food' },
-      { e:'🍔🍟🥤',    a:'Burger and Fries',                     h:'The classic fast food combo',                 c:'food' },
-      { e:'🍜🥢🍲',    a:'Noodles / Ramen',                      h:'Popular Asian noodle soup',                   c:'food' },
-      { e:'🥐☕🥛',    a:'Coffee and Croissant',                 h:'Classic European breakfast',                  c:'food' },
-      { e:'🌮🌯🫔',    a:'Tacos',                                h:'Mexican tortilla with fillings',              c:'food' },
-      { e:'🥗🥬🥦',    a:'Salad',                                h:'Fresh vegetables in a bowl',                  c:'food' },
-      { e:'🎂🕯️🎉',    a:'Birthday Cake',                        h:'Sweet dessert for special celebrations',      c:'food' },
-      { e:'🍦🍧🍨',    a:'Ice Cream',                            h:'Cold and sweet frozen dessert',               c:'food' },
-      { e:'🥞🍁🍯',    a:'Pancakes with Maple Syrup',            h:'Fluffy stacked breakfast treat',              c:'food' },
-      { e:'🫖🍵🌿',    a:'Tea',                                  h:'Hot drink made from dried leaves',            c:'food' },
-      { e:'🍷🧀🥖',    a:'Wine, Cheese and Bread',               h:'Classic French evening snack',                c:'food' },
-      { e:'🥩🔥🌽',    a:'Barbecue / BBQ',                       h:'Grilling meat and veggies outdoors',          c:'food' },
-      { e:'🍩🍪🧁',    a:'Bakery Treats',                        h:'Sweet pastries and baked goods',              c:'food' },
-      { e:'🍉🍓🍇',    a:'Fruit Salad',                          h:'A bowl of mixed fresh fruits',                c:'food' },
-      { e:'🥚🍳🥓',    a:'Full Breakfast',                       h:'Eggs, bacon and toast — English breakfast',   c:'food' },
-      { e:'🧋🐄🫧',    a:'Bubble Tea / Boba',                    h:'Taiwanese drink with chewy tapioca pearls',   c:'food' },
-      { e:'🍫🥛🍪',    a:'Milk and Cookies',                     h:'Classic comfort snack before bed',            c:'food' },
-      { e:'🌭🧅🟡',    a:'Hot Dog',                              h:'Sausage in a bun with mustard',               c:'food' },
-      { e:'🥨🍺🇩🇪',  a:'Pretzel and Beer',                     h:'German Oktoberfest snack',                    c:'food' },
-
-      // ── Sports ──
-      { e:'⚽🥅🏃',    a:'Football / Soccer',                    h:'Most popular sport in the world',             c:'sport' },
-      { e:'🏀🏟️🤸',    a:'Basketball',                           h:'Throw the ball through the hoop',             c:'sport' },
-      { e:'🎾🏓🎯',    a:'Tennis',                               h:'Racket sport played on a court',              c:'sport' },
-      { e:'🏊💦🏅',    a:'Swimming',                             h:'Race through the water in a pool',            c:'sport' },
-      { e:'🚴🏔️💨',    a:'Cycling',                              h:'Pedal-powered racing sport',                  c:'sport' },
-      { e:'⛷️🏔️❄️',    a:'Skiing',                               h:'Slide down a snowy mountain on two skis',    c:'sport' },
-      { e:'🥊🥋🔔',    a:'Boxing',                               h:'Punch your opponent in a ring',               c:'sport' },
-      { e:'🏋️💪🏅',    a:'Weightlifting',                        h:'Lift as heavy as you can',                    c:'sport' },
-      { e:'🏄🌊🏖️',    a:'Surfing',                              h:'Ride ocean waves standing on a board',        c:'sport' },
-      { e:'⛳🏌️🌿',    a:'Golf',                                 h:'Hit a small white ball into a tiny hole',     c:'sport' },
-      { e:'🎳🎱⬛',    a:'Bowling',                              h:'Roll a heavy ball to knock down ten pins',    c:'sport' },
-      { e:'🏸🪶🏟️',    a:'Badminton',                            h:'Hit a feathered shuttlecock over a net',      c:'sport' },
-      { e:'🤸🌟🎪',    a:'Gymnastics',                           h:'Flips, splits and balance routines',          c:'sport' },
-      { e:'🧗🪨🏔️',    a:'Rock Climbing',                        h:'Scale a wall or cliff using your hands',      c:'sport' },
-      { e:'🎣🐟🏞️',    a:'Fishing',                              h:'Cast a line and wait for a bite',             c:'sport' },
-      { e:'🏇🐴🏆',    a:'Horse Racing',                         h:"They're off! Race on horseback",              c:'sport' },
-      { e:'🏉🦘🏟️',    a:'Rugby',                                h:'Carry or kick the oval-shaped ball',          c:'sport' },
-      { e:'🥋🙏🏯',    a:'Martial Arts / Karate',                h:'Disciplined combat sport from Asia',          c:'sport' },
-      { e:'🥌❄️🎯',    a:'Curling',                              h:'Slide a stone on ice and sweep the path',     c:'sport' },
-      { e:'🏹🎯🌲',    a:'Archery',                              h:'Shoot arrows at a target',                    c:'sport' },
+    const idioms = [
+      { e:'🌧️🐱🐶',   a:'"Raining cats and dogs"',                    h:'Very heavy rain' },
+      { e:'🍰',         a:'"Piece of cake"',                            h:'Something very easy to do' },
+      { e:'🐘🏠',       a:'"Elephant in the room"',                     h:'An obvious problem nobody talks about' },
+      { e:'🌙🔵',       a:'"Once in a blue moon"',                      h:'Something that happens very rarely' },
+      { e:'🐟🏜️',       a:'"Fish out of water"',                        h:'Feeling uncomfortable in a new place' },
+      { e:'☁️9️⃣',      a:'"On cloud nine"',                            h:'Feeling extremely happy' },
+      { e:'🌊🚣',       a:'"Go with the flow"',                         h:'Accept things as they happen' },
+      { e:'🎯🔨',       a:'"Hit the nail on the head"',                 h:'Say or do something exactly right' },
+      { e:'🐦⏰🪱',     a:'"The early bird catches the worm"',          h:'Success comes to those who start early' },
+      { e:'🍎🩺',       a:'"An apple a day keeps the doctor away"',     h:'Eat healthy to stay well' },
+      { e:'🤞🍀',       a:'"Keep your fingers crossed"',                h:'Hope for good luck' },
+      { e:'🔔❓',       a:'"Ring a bell"',                              h:'Does it sound familiar?' },
+      { e:'💤🐕',       a:'"Let sleeping dogs lie"',                    h:"Don't bring up old problems" },
+      { e:'🐈🤐',       a:'"Cat got your tongue?"',                     h:'Why are you so quiet?' },
+      { e:'🌧️🌈',       a:'"Every cloud has a silver lining"',          h:'Something good in every bad situation' },
+      { e:'🐦🪨',       a:'"Kill two birds with one stone"',            h:'Solve two problems at the same time' },
+      { e:'🧠⚡',       a:'"Brainstorm"',                               h:'Think hard to generate lots of ideas' },
+      { e:'🥶🦆',       a:'"Cold turkey"',                              h:'Stop a bad habit suddenly' },
+      { e:'🍋🍹',       a:'"Make lemonade from lemons"',                h:'Turn a bad situation into something positive' },
+      { e:'🦶👄',       a:'"Put your foot in your mouth"',              h:'Say something embarrassing by accident' },
+      { e:'🥚🧺',       a:'"Don\'t put all your eggs in one basket"',   h:"Don't risk everything on one option" },
+      { e:'☁️💭',       a:'"Head in the clouds"',                       h:'Daydreaming or out of touch with reality' },
+      { e:'⏰✈️',       a:'"Time flies"',                               h:'Time passes very quickly' },
+      { e:'🐢🐇🏁',     a:'"Slow and steady wins the race"',            h:'Being careful and consistent beats rushing' },
+      { e:'🐺🐑',       a:'"Wolf in sheep\'s clothing"',                h:'Someone dangerous pretending to be harmless' },
+      { e:'❄️🤝',       a:'"Break the ice"',                            h:'Say something to ease tension with new people' },
+      { e:'🦶🧊',       a:'"Get cold feet"',                            h:'Feel too nervous to go through with something' },
+      { e:'🔥⚔️🔥',     a:'"Fight fire with fire"',                     h:'Use the same tactics as your opponent' },
+      { e:'💧🌊🤏',     a:'"A drop in the ocean"',                      h:'A tiny amount compared to what is needed' },
+      { e:'💰👄',       a:'"Put your money where your mouth is"',       h:'Back up your words with real action' },
     ];
 
-    let pool      = [...all];
-    let current   = null;
-    let rolling   = false;
-    let round     = 0;
-    let revealed  = false;
+    let round = 0, questionIdx = 0;
+    let currentRound = [];
+    let usedSet = new Set();
+    let studyTicker = null, studyTimeLeft = STUDY_TIME;
 
-    function setCategory(cat, btn) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      pool = cat === 'all' ? [...all] : all.filter(q => q.c === cat);
-      resetCard();
+    function showPhase(id) {
+      document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
     }
 
-    function resetCard() {
-      current = null; revealed = false;
-      const card    = document.getElementById('card');
-      const emojiEl = document.getElementById('emojiRow');
-      const ansText = document.getElementById('answerText');
-      const ansHint = document.getElementById('answerHint');
-      const pill    = document.getElementById('catPill');
-      card.classList.remove('active');
-      emojiEl.textContent = '🧩 ❓ 🎯';
-      emojiEl.className = 'emoji-row placeholder';
-      ansText.textContent = '—';
-      ansText.classList.remove('visible');
-      ansHint.textContent = '';
-      pill.textContent = 'Category';
-      document.getElementById('revealBtn').disabled = true;
+    function pickRound() {
+      if (usedSet.size + ROUND_SIZE > idioms.length) usedSet.clear();
+      const avail = idioms.map((_, i) => i).filter(i => !usedSet.has(i))
+                          .sort(() => Math.random() - 0.5).slice(0, ROUND_SIZE);
+      avail.forEach(i => usedSet.add(i));
+      return avail.map(i => idioms[i]);
     }
 
-    function catLabel(c) {
-      return { idiom:'💬 Idiom', place:'🌍 Place', food:'🍔 Food & Drinks', sport:'⚽ Sport' }[c] || c;
-    }
+    function startRound() {
+      clearInterval(studyTicker);
+      currentRound = pickRound();
+      questionIdx  = 0;
+      round++;
+      document.getElementById('roundNum').textContent = round;
 
-    function triggerRipple() {
-      const el = document.createElement('div');
-      el.className = 'ripple-el';
-      document.getElementById('card').appendChild(el);
-      setTimeout(() => el.remove(), 800);
-    }
+      const list = document.getElementById('idiomList');
+      list.innerHTML = '';
+      currentRound.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'idiom-row';
+        row.innerHTML = `<div class="idiom-emoji">${item.e}</div>
+          <div class="idiom-info">
+            <div class="idiom-text">${item.a}</div>
+            <div class="idiom-hint">${item.h}</div>
+          </div>`;
+        list.appendChild(row);
+      });
 
-    function draw() {
-      if (rolling || !pool.length) return;
-      rolling = true; revealed = false;
+      studyTimeLeft = STUDY_TIME;
+      const ring = document.getElementById('studyRing');
+      const num  = document.getElementById('studyNum');
+      ring.style.stroke = '#a78bfa';
+      ring.style.strokeDashoffset = '0';
+      num.textContent = STUDY_TIME;
+      num.classList.remove('warn');
+      document.getElementById('studyPhase').classList.remove('warn');
+      document.getElementById('studyPhase').textContent = 'Memorizing…';
+      document.getElementById('studySub').textContent   = 'Quiz starts when the timer ends';
 
-      const card    = document.getElementById('card');
-      const emojiEl = document.getElementById('emojiRow');
-      const ansText = document.getElementById('answerText');
-      const ansHint = document.getElementById('answerHint');
-      const pill    = document.getElementById('catPill');
-      const drawBtn = document.getElementById('drawBtn');
-      const revBtn  = document.getElementById('revealBtn');
+      showPhase('phaseStudy');
 
-      drawBtn.disabled = true;
-      revBtn.disabled  = true;
-      ansText.classList.remove('visible');
-      ansText.textContent = '—';
-      ansHint.textContent = '';
-      card.classList.remove('active');
-      card.classList.add('rolling');
-      emojiEl.className = 'emoji-row';
-      triggerRipple();
-
-      const chosen = pool[Math.floor(Math.random() * pool.length)];
-      let ticks = 0;
-
-      const iv = setInterval(() => {
-        const r = pool[Math.floor(Math.random() * pool.length)];
-        emojiEl.textContent = r.e;
-        ticks++;
-        if (ticks >= 24) {
-          clearInterval(iv);
-          current = chosen;
-          emojiEl.textContent = chosen.e;
-          emojiEl.className = 'emoji-row';
-          pill.textContent = catLabel(chosen.c);
-          card.classList.remove('rolling');
-          card.classList.add('active');
-          round++;
-          document.getElementById('roundNum').textContent = round;
-          drawBtn.disabled = false;
-          revBtn.disabled  = false;
-          rolling = false;
+      studyTicker = setInterval(() => {
+        studyTimeLeft--;
+        num.textContent = studyTimeLeft;
+        ring.style.strokeDashoffset = CIRC * (1 - studyTimeLeft / STUDY_TIME);
+        if (studyTimeLeft <= 8) {
+          ring.style.stroke = '#ef4444';
+          num.classList.add('warn');
+          document.getElementById('studyPhase').classList.add('warn');
+          document.getElementById('studyPhase').textContent = 'Almost!';
+          document.getElementById('studySub').textContent   = 'Get ready…';
         }
-      }, 90);
+        if (studyTimeLeft <= 0) {
+          clearInterval(studyTicker);
+          showQuestion();
+        }
+      }, 1000);
     }
 
-    function reveal() {
-      if (!current || revealed) return;
-      revealed = true;
-      const ansText = document.getElementById('answerText');
-      const ansHint = document.getElementById('answerHint');
-      ansText.textContent = current.a;
-      ansHint.textContent = current.h;
-      ansText.classList.add('visible');
+    function buildDots() {
+      const c = document.getElementById('progressDots');
+      c.innerHTML = '';
+      for (let i = 0; i < ROUND_SIZE; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i < questionIdx ? ' done' : i === questionIdx ? ' current' : '');
+        c.appendChild(d);
+      }
+    }
+
+    function showQuestion() {
+      const item = currentRound[questionIdx];
+      document.getElementById('qNum').textContent = questionIdx + 1;
+      document.getElementById('quizEmoji').textContent = item.e;
+      document.getElementById('answerPanel').classList.remove('visible');
+      document.getElementById('ansText').textContent = '';
+      document.getElementById('ansHint').textContent = '';
+      document.getElementById('revealBtn').disabled = false;
+      document.getElementById('revealBtn').style.display = '';
+      document.getElementById('nextBtn').style.display = 'none';
+      buildDots();
+      showPhase('phaseQuiz');
+    }
+
+    function revealAnswer() {
+      const item = currentRound[questionIdx];
+      document.getElementById('ansText').textContent = item.a;
+      document.getElementById('ansHint').textContent = item.h;
+      document.getElementById('answerPanel').classList.add('visible');
       document.getElementById('revealBtn').disabled = true;
+      document.getElementById('revealBtn').style.display = 'none';
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.textContent = questionIdx === ROUND_SIZE - 1 ? '🎉 Finish Round' : 'Next →';
+      nextBtn.style.display = '';
+    }
+
+    function nextQuestion() {
+      questionIdx++;
+      if (questionIdx >= ROUND_SIZE) showPhase('phaseDone');
+      else showQuestion();
     }
   </script>
+
 </body>
 </html>
