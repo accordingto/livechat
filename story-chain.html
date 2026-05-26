@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Story Chain · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Story Chain">
+  <meta name="theme-color" content="#0d0d1a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .55; }
+    }
+    @keyframes opGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(132,204,22,0); }
+      50%       { box-shadow: 0 0 40px rgba(132,204,22,.28); }
+    }
+    @keyframes connGlow {
+      0%, 100% { box-shadow: 0 0 0 var(--glow, transparent); }
+      50%       { box-shadow: 0 0 40px var(--glow, transparent); }
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 720px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 36px;
+      animation: fadeUp .5s ease both;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .turn-badge { font-size: 12px; color: #444; }
+    .turn-badge span { color: #84cc16; font-weight: 700; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 32px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #84cc16);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    /* ── Opening card ── */
+    .opening-card {
+      width: 100%; max-width: 720px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 22px;
+      padding: 28px 30px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .4s;
+      animation: fadeUp .5s .2s ease both;
+      min-height: 140px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .opening-card.rolling { border-color: #84cc16; animation: flicker .13s infinite; }
+    .opening-card.landed  { border-color: #84cc16; animation: opGlow 2.8s ease infinite; }
+    .opening-card::before {
+      content: '📖';
+      position: absolute; font-size: 8rem; opacity: .03;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .op-placeholder {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px; text-align: center;
+      min-height: 100px;
+    }
+    .op-placeholder .big-emoji { font-size: 2.5rem; }
+    .op-placeholder p { color: #333; font-size: .9rem; }
+    .op-content { display: none; flex-direction: column; gap: 8px; }
+    .op-content.show { display: flex; }
+    .op-label {
+      font-size: .72rem; text-transform: uppercase;
+      letter-spacing: .13em; color: #84cc16; font-weight: 700;
+    }
+    .op-text { font-size: 1.9rem; color: #eee; line-height: 1.5; }
+
+    /* ── Connector card ── */
+    .conn-card {
+      width: 100%; max-width: 720px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 22px;
+      padding: 36px 30px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .3s;
+      min-height: 190px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      gap: 14px;
+    }
+    .conn-card.rolling { animation: flicker .13s infinite; }
+    .conn-card.landed  { animation: connGlow 2.8s ease infinite; }
+    .conn-bg-emoji {
+      position: absolute; font-size: 9rem; opacity: .04;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .conn-placeholder {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px; min-height: 130px;
+    }
+    .conn-placeholder .big-emoji { font-size: 2.5rem; }
+    .conn-placeholder p { color: #333; font-size: .9rem; }
+    .conn-content { display: none; flex-direction: column; align-items: center; gap: 10px; }
+    .conn-content.show { display: flex; }
+    .conn-cat {
+      font-size: .78rem; text-transform: uppercase;
+      letter-spacing: .14em; font-weight: 700;
+    }
+    .conn-word {
+      font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800;
+      line-height: 1.2;
+    }
+
+    /* ── History dots ── */
+    .history-row {
+      width: 100%; max-width: 720px;
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 16px;
+      min-height: 20px;
+      animation: fadeUp .5s .35s ease both;
+    }
+    .hdot {
+      width: 20px; height: 20px; border-radius: 50%;
+    }
+    .hdot.cur {
+      transform: scale(1.35);
+      filter: brightness(1.3);
+    }
+
+    /* ── Buttons ── */
+    .btn-opening {
+      width: 100%; max-width: 720px;
+      background: #84cc16; color: #0d0d1a; border: none;
+      border-radius: 14px; padding: 18px;
+      font-size: 1.1rem; font-weight: 800;
+      cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .1s;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .btn-opening:hover { opacity: .88; }
+    .btn-opening:active { transform: scale(.98); }
+    .btn-opening:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-row {
+      width: 100%; max-width: 720px;
+      display: flex; gap: 12px;
+      animation: fadeUp .5s .4s ease both;
+    }
+    .btn-new {
+      flex: 1;
+      background: transparent; color: #84cc16; border: 2px solid #84cc16;
+      border-radius: 14px; padding: 16px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+    }
+    .btn-new:hover { background: rgba(132,204,22,.1); }
+    .btn-new:active { transform: scale(.98); }
+    .btn-new:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-draw {
+      flex: 2;
+      background: #84cc16; color: #0d0d1a; border: none;
+      border-radius: 14px; padding: 16px;
+      font-size: 1.05rem; font-weight: 800;
+      cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-draw:hover { opacity: .88; }
+    .btn-draw:active { transform: scale(.98); }
+    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="turn-badge">Turn <span id="turn-num">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>📖 Story Chain</h1>
+    <p>Draw an opening — then keep the story going with a random connector!</p>
+  </div>
+
+  <!-- Opening card -->
+  <div class="opening-card" id="op-card">
+    <div class="op-placeholder" id="op-ph">
+      <div class="big-emoji">📖</div>
+      <p>Press <strong>Draw Opening</strong> to begin your story</p>
+    </div>
+    <div class="op-content" id="op-ct">
+      <div class="op-label">📖 Opening</div>
+      <div class="op-text" id="op-text"></div>
+    </div>
+  </div>
+
+  <!-- Connector card (hidden until game starts) -->
+  <div class="conn-card" id="conn-card" style="display:none">
+    <div class="conn-bg-emoji" id="conn-bg">🔗</div>
+    <div class="conn-placeholder" id="conn-ph">
+      <div class="big-emoji">🔗</div>
+      <p>Press <strong>Draw Connector</strong> to continue the story</p>
+    </div>
+    <div class="conn-content" id="conn-ct">
+      <div class="conn-cat" id="conn-cat"></div>
+      <div class="conn-word" id="conn-word"></div>
+    </div>
+  </div>
+
+  <!-- History dots -->
+  <div class="history-row" id="history-row"></div>
+
+  <!-- Initial draw opening button -->
+  <button class="btn-opening" id="btn-opening" onclick="drawOpening()">🎲 Draw Opening</button>
+
+  <!-- Game buttons (shown after opening drawn) -->
+  <div class="btn-row" id="btn-row" style="display:none">
+    <button class="btn-new" id="btn-new" onclick="newStory()">🔁 New Story</button>
+    <button class="btn-draw" id="btn-draw" onclick="drawConnector()">🎲 Draw Connector</button>
+  </div>
+
+  <script>
+    const openings = [
+      "A zookeeper woke up one morning to find that all the animals had learned to speak English overnight.",
+      "A small-town baker discovered that her cookies had the power to make people tell the truth.",
+      "An astronaut on a routine spacewalk noticed a tiny door floating in the middle of space.",
+      "A librarian found a book that predicted exactly what would happen the following day.",
+      "A chef accidentally invented a soup that made everyone who ate it completely fearless.",
+      "Two strangers got stuck in an elevator together for what seemed like forever.",
+      "A student found a glowing pen in the school cafeteria that could write on its own.",
+      "A detective was called to solve the mystery of a dog that had vanished — from the 30th floor.",
+      "A scientist discovered that plants could hear conversations and were keeping secrets.",
+      "A postman delivered a letter addressed simply to 'The Bravest Person in Town.'",
+      "One morning, gravity stopped working for exactly one hour.",
+      "A taxi driver picked up a passenger who claimed to be from 200 years in the future.",
+      "A little girl found a door at the back of her wardrobe that led to a giant shopping mall.",
+      "A fisherman caught a fish that spoke perfect English and offered him three wishes.",
+      "Everyone in the city woke up one day speaking only in rhyme — including the news anchor.",
+      "A boy accidentally sent a text to the wrong number and received the most important advice of his life.",
+      "A museum security guard noticed that the paintings changed positions every single night.",
+      "A weather forecaster predicted sunshine — but what fell from the sky was something very different.",
+      "An inventor created glasses that could see what people were actually thinking.",
+      "A barista discovered that one specific coffee order gave customers the ability to fly.",
+      "A teenager received a mysterious package in the mail addressed to their future self.",
+      "A robot was hired as a school teacher and nobody noticed anything unusual — at first.",
+      "The last bookshop in town had a secret room that only appeared on rainy days.",
+      "A group of friends on a camping trip found a map that seemed to draw itself.",
+      "The town clock started running backwards, and very strange things began to happen.",
+    ];
+
+    const connectors = [
+      { word: 'But',               cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'However',           cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'On the other hand', cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Yet',               cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Even so',           cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Nevertheless',      cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'And so',            cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: "What's more",       cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'On top of that',    cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'Not only that',     cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'Moreover',          cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'Therefore',         cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'As a result',       cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: "That's why",        cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'Because of this',   cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'Suddenly',          cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Meanwhile',         cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'The next morning',  cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'At that moment',    cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Eventually',        cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Surprisingly',      cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Strangely enough',  cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Out of nowhere',    cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Believe it or not', cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Admittedly',        cat: 'Concession',     emoji: '🤝', color: '#9ca3af' },
+      { word: 'To be fair',        cat: 'Concession',     emoji: '🤝', color: '#9ca3af' },
+      { word: 'Of course',         cat: 'Concession',     emoji: '🤝', color: '#9ca3af' },
+      { word: 'Granted',           cat: 'Concession',     emoji: '🤝', color: '#9ca3af' },
+    ];
+
+    let turnIdx  = 0;
+    let history  = [];
+    let rolling  = false;
+    let usedOp   = [];
+    let usedConn = [];
+
+    function hexToRgba(hex, alpha) {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function drawOpening() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn  = document.getElementById('btn-opening');
+      const card = document.getElementById('op-card');
+      const ph   = document.getElementById('op-ph');
+      const ct   = document.getElementById('op-ct');
+      const txt  = document.getElementById('op-text');
+
+      btn.disabled = true;
+      card.classList.add('rolling');
+      ph.style.display = 'none';
+      ct.classList.add('show');
+
+      let avail = openings.map((_, i) => i).filter(i => !usedOp.includes(i));
+      if (!avail.length) { usedOp = []; avail = openings.map((_, i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      usedOp.push(fi);
+
+      let ticks = 0;
+      const iv = setInterval(() => {
+        txt.textContent = openings[Math.floor(Math.random() * openings.length)];
+        if (++ticks >= 22) {
+          clearInterval(iv);
+          txt.textContent = openings[fi];
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+
+          btn.style.display = 'none';
+          document.getElementById('conn-card').style.display = 'flex';
+          document.getElementById('btn-row').style.display   = 'flex';
+          rolling = false;
+        }
+      }, 82);
+    }
+
+    function drawConnector() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn    = document.getElementById('btn-draw');
+      const btnNew = document.getElementById('btn-new');
+      const card   = document.getElementById('conn-card');
+      const ph     = document.getElementById('conn-ph');
+      const ct     = document.getElementById('conn-ct');
+      const catEl  = document.getElementById('conn-cat');
+      const wordEl = document.getElementById('conn-word');
+      const bgEl   = document.getElementById('conn-bg');
+
+      btn.disabled    = true;
+      btnNew.disabled = true;
+      ph.style.display = 'none';
+      ct.classList.add('show');
+      card.classList.remove('landed');
+      card.classList.add('rolling');
+      card.style.removeProperty('--glow');
+
+      let avail = connectors.map((_, i) => i).filter(i => !usedConn.includes(i));
+      if (!avail.length) { usedConn = []; avail = connectors.map((_, i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      usedConn.push(fi);
+
+      let ticks = 0;
+      const iv = setInterval(() => {
+        const tmp = connectors[Math.floor(Math.random() * connectors.length)];
+        catEl.textContent      = tmp.emoji + ' ' + tmp.cat;
+        catEl.style.color      = tmp.color;
+        wordEl.textContent     = tmp.word;
+        wordEl.style.color     = tmp.color;
+        bgEl.textContent       = tmp.emoji;
+        card.style.borderColor = tmp.color;
+
+        if (++ticks >= 22) {
+          clearInterval(iv);
+          const sc = connectors[fi];
+          catEl.textContent      = sc.emoji + ' ' + sc.cat;
+          catEl.style.color      = sc.color;
+          wordEl.textContent     = sc.word;
+          wordEl.style.color     = sc.color;
+          bgEl.textContent       = sc.emoji;
+          card.style.borderColor = sc.color;
+          card.style.setProperty('--glow', hexToRgba(sc.color, 0.32));
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+
+          turnIdx++;
+          history.push(sc);
+          document.getElementById('turn-num').textContent = turnIdx;
+          renderHistory();
+
+          btn.disabled    = false;
+          btnNew.disabled = false;
+          rolling = false;
+        }
+      }, 82);
+    }
+
+    function renderHistory() {
+      const row = document.getElementById('history-row');
+      row.innerHTML = '';
+      history.forEach((h, i) => {
+        const d = document.createElement('div');
+        d.className   = 'hdot' + (i === history.length - 1 ? ' cur' : '');
+        d.style.background = h.color;
+        d.title       = h.word;
+        row.appendChild(d);
+      });
+    }
+
+    function newStory() {
+      if (rolling) return;
+
+      turnIdx  = 0;
+      history  = [];
+      usedConn = [];
+
+      const opCard = document.getElementById('op-card');
+      opCard.classList.remove('rolling', 'landed');
+      document.getElementById('op-ph').style.display = '';
+      document.getElementById('op-ct').classList.remove('show');
+
+      const connCard = document.getElementById('conn-card');
+      connCard.style.display = 'none';
+      connCard.style.borderColor = '';
+      connCard.style.removeProperty('--glow');
+      connCard.classList.remove('rolling', 'landed');
+      document.getElementById('conn-ph').style.display = '';
+      document.getElementById('conn-ct').classList.remove('show');
+      document.getElementById('conn-bg').textContent = '🔗';
+
+      document.getElementById('history-row').innerHTML = '';
+      document.getElementById('turn-num').textContent  = '0';
+
+      const btnOp = document.getElementById('btn-opening');
+      btnOp.style.display = '';
+      btnOp.disabled = false;
+      document.getElementById('btn-row').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
