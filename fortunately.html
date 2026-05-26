@@ -351,9 +351,9 @@
       const strip = document.getElementById('dots-strip');
       strip.innerHTML = '';
       for (let i = 0; i <= turnIdx; i++) {
+        const isFort = startFort ? (i % 2 === 0) : (i % 2 === 1);
         const d = document.createElement('div');
-        const isUnfort = i % 2 === 0;
-        d.className = 'hdot ' + (isUnfort ? 'u' : 'f') + (i === turnIdx ? ' cur' : '');
+        d.className = 'hdot ' + (isFort ? 'f' : 'u') + (i === turnIdx ? ' cur' : '');
         strip.appendChild(d);
       }
     }
