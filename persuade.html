@@ -12,1009 +12,304 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-text-size-adjust: 100%; }
 
-    :root {
-      --accent: #d946ef;
-      --accent-dim: rgba(217,70,239,.13);
-      --bg: #0d0d1a;
-      --surface: #12122a;
-      --border: #1e1e42;
-      --text: #eee;
-      --muted: #555;
-    }
-
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: #0d0d1a;
+      color: #eee;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 28px 20px 72px;
     }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
+      from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes pulseGlow {
-      0%,100% { box-shadow: 0 0 0 rgba(217,70,239,0); }
-      50%      { box-shadow: 0 0 36px rgba(217,70,239,.28); }
-    }
     @keyframes flicker {
-      0%,100% { opacity:1; }
-      50%      { opacity:.65; }
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .55; }
     }
-    @keyframes ripple {
-      from { transform: translate(-50%,-50%) scale(0); opacity:.4; }
-      to   { transform: translate(-50%,-50%) scale(4); opacity:0; }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(217,70,239,0); }
+      50%       { box-shadow: 0 0 40px rgba(217,70,239,.28); }
     }
-    @keyframes popIn {
-      from { opacity:0; transform: scale(.9); }
-      to   { opacity:1; transform: scale(1); }
-    }
-
-    /* ── Screens ── */
-    .screen {
-      display: none;
-      width: 100%;
-      max-width: 700px;
-      padding: 0 max(22px, env(safe-area-inset-right)) max(60px, calc(env(safe-area-inset-bottom) + 24px)) max(22px, env(safe-area-inset-left));
-      flex-direction: column;
-      animation: fadeUp .4s ease both;
-    }
-    .screen.active { display: flex; }
 
     /* ── Topbar ── */
     .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: max(22px, env(safe-area-inset-top)) 0 16px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 30px;
+      width: 100%; max-width: 720px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 36px;
       animation: fadeUp .5s ease both;
+      position: relative; z-index: 1;
     }
-    .back {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: .9rem;
-      transition: color .2s;
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-family: inherit;
-      padding: 0;
-    }
-    .back:hover { color: var(--text); }
-    .topbadge {
-      font-size: .78rem;
-      color: var(--muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 3px 13px;
-    }
-    .topbadge span { color: var(--accent); font-weight: 700; }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #d946ef; font-weight: 700; }
 
-    /* ── Game header ── */
-    .game-header {
-      text-align: center;
-      margin-bottom: 34px;
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 32px;
       animation: fadeUp .5s .1s ease both;
+      position: relative; z-index: 1;
     }
-    .game-header h1 {
-      font-size: clamp(1.9rem, 5vw, 2.6rem);
-      font-weight: 800;
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, #d946ef);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       margin-bottom: 8px;
     }
-    .game-header p { color: #666; font-size: .94rem; }
+    .header p { color: #666; font-size: .93rem; }
 
-    /* ── Setup sections ── */
-    .setup-block {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 22px 24px;
-      margin-bottom: 18px;
-      animation: fadeUp .5s ease both;
-    }
-    .setup-block:nth-child(1) { animation-delay: .15s; }
-    .setup-block:nth-child(2) { animation-delay: .22s; }
-    .setup-block:nth-child(3) { animation-delay: .29s; }
-
-    .block-label {
-      font-size: .72rem;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: var(--accent);
-      font-weight: 700;
-      margin-bottom: 14px;
-    }
-
-    .chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .chip {
-      background: var(--bg);
-      color: var(--muted);
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 18px;
-      font-size: .92rem;
-      cursor: pointer;
-      transition: all .2s;
-      font-family: inherit;
-    }
-    .chip:hover { border-color: var(--accent); color: var(--text); }
-    .chip.sel {
-      background: var(--accent-dim);
-      border-color: var(--accent);
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    /* Player name inputs */
-    .names-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 480px) { .names-grid { grid-template-columns: 1fr; } }
-    .name-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .name-num { font-size: .8rem; color: var(--muted); width: 22px; text-align: right; flex-shrink: 0; }
-    .name-input {
-      flex: 1;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
-      color: var(--text);
-      font-size: .88rem;
-      font-family: inherit;
-      transition: border-color .2s;
-    }
-    .name-input:focus { outline: none; border-color: var(--accent); }
-    .name-input::placeholder { color: #333; }
-
-    /* Start button */
-    .btn-start {
-      width: 100%;
-      background: linear-gradient(135deg, #d946ef, #9a12b8);
-      color: white;
-      border: none;
-      border-radius: 14px;
-      padding: 18px;
-      font-size: 1.1rem;
-      font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      transition: transform .15s, box-shadow .15s;
-      margin-top: 6px;
-      animation: fadeUp .5s .36s ease both;
-    }
-    .btn-start:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(217,70,239,.45);
-    }
-    .btn-start:active { transform: none; }
-
-    /* ── GAME SCREEN ── */
-
-    /* Scenario card */
+    /* ── Scenario card ── */
     .scenario-card {
-      background: var(--surface);
-      border: 2px solid var(--border);
+      width: 100%; max-width: 720px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
       border-radius: 22px;
       padding: 28px 30px;
-      min-height: 230px;
-      position: relative;
-      overflow: hidden;
-      margin-bottom: 18px;
-      transition: border-color .4s, box-shadow .4s;
-      animation: fadeUp .5s .15s ease both;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .4s;
+      animation: fadeUp .5s .2s ease both;
+      min-height: 200px;
+      display: flex; flex-direction: column; justify-content: center;
     }
-    .scenario-card.rolling {
-      border-color: var(--accent);
-      animation: flicker .14s infinite;
-    }
-    .scenario-card.landed {
-      border-color: var(--accent);
-      animation: pulseGlow 2.8s ease infinite;
-    }
+    .scenario-card.rolling { border-color: #d946ef; animation: flicker .13s infinite; }
+    .scenario-card.landed  { border-color: #d946ef; animation: pulseGlow 2.8s ease infinite; }
     .scenario-card::before {
       content: '🎭';
-      position: absolute;
-      font-size: 10rem;
-      opacity: .025;
-      top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
+      position: absolute; font-size: 10rem; opacity: .025;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
       pointer-events: none;
     }
 
-    .scenario-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 174px;
-      color: #2a2a50;
-      text-align: center;
-      gap: 12px;
+    /* Placeholder */
+    .sc-placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 12px; text-align: center;
+      min-height: 160px;
     }
-    .placeholder-icon { font-size: 3rem; }
-    .placeholder-text { font-size: 1rem; color: #333; }
+    .sc-placeholder .big-emoji { font-size: 3rem; }
+    .sc-placeholder p { color: #333; font-size: .95rem; }
 
-    .scenario-body { display: none; flex-direction: column; gap: 18px; }
-    .scenario-body.show { display: flex; }
+    /* Content */
+    .sc-content { display: none; flex-direction: column; gap: 18px; }
+    .sc-content.show { display: flex; }
 
     .sc-field { display: flex; flex-direction: column; gap: 5px; }
     .sc-label {
-      font-size: .7rem;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-      color: var(--accent);
-      font-weight: 700;
+      font-size: .72rem; text-transform: uppercase;
+      letter-spacing: .13em; color: #d946ef; font-weight: 700;
     }
-    .sc-value {
-      font-size: 1.05rem;
-      color: var(--text);
-      line-height: 1.55;
-    }
-    .sc-value.big { font-size: 1.2rem; font-weight: 700; }
-    .sc-value.dim { color: #ccc; }
-    .sc-divider { height: 1px; background: var(--border); }
+    .sc-judge    { font-size: 1.3rem; font-weight: 700; color: #eee; }
+    .sc-situation{ font-size: 1rem; color: #ccc; line-height: 1.6; }
+    .sc-persuader{ font-size: 1rem; color: #eee; }
+    .sc-divider  { height: 1px; background: #1e1e42; }
 
-    /* Draw button */
+    /* ── Redraw button ── */
     .btn-draw {
-      width: 100%;
-      background: var(--surface);
-      color: var(--accent);
-      border: 2px solid var(--accent);
-      border-radius: 14px;
-      padding: 15px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
+      width: 100%; max-width: 720px;
+      background: #13132b; color: #d946ef; border: 2px solid #d946ef;
+      border-radius: 14px; padding: 16px;
+      font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
       transition: background .2s, transform .1s;
-      margin-bottom: 18px;
-      animation: fadeUp .5s .22s ease both;
-      position: relative;
-      overflow: hidden;
+      animation: fadeUp .5s .3s ease both;
+      position: relative; z-index: 1;
     }
-    .btn-draw:hover { background: var(--accent-dim); }
+    .btn-draw:hover { background: rgba(217,70,239,.1); }
     .btn-draw:active { transform: scale(.98); }
-    .btn-draw:disabled { opacity: .45; cursor: not-allowed; }
-
-    /* Panel */
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px 22px;
-      margin-bottom: 16px;
-      animation: fadeUp .5s ease both;
-    }
-    .panel:nth-of-type(1) { animation-delay: .28s; }
-    .panel:nth-of-type(2) { animation-delay: .34s; }
-    .panel:nth-of-type(3) { animation-delay: .40s; }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .panel-label {
-      font-size: .72rem;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: var(--muted);
-      font-weight: 700;
-    }
-    .progress-chip {
-      font-size: .78rem;
-      color: var(--muted);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 2px 11px;
-    }
-    .progress-chip span { color: var(--accent); font-weight: 700; }
-
-    .player-name-display {
-      font-size: clamp(1.4rem, 4vw, 1.8rem);
-      font-weight: 800;
-      color: var(--accent);
-      margin-bottom: 16px;
-    }
-
-    /* Timer */
-    .timer-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .timer-digits {
-      font-size: 2rem;
-      font-weight: 800;
-      font-variant-numeric: tabular-nums;
-      min-width: 86px;
-      transition: color .3s;
-    }
-    .timer-digits.ok      { color: #22c55e; }
-    .timer-digits.warn    { color: #f59e0b; }
-    .timer-digits.danger  { color: #ef4444; }
-    .timer-digits.done    { color: #ef4444; opacity: .6; }
-    .timer-digits.nolimit { color: var(--muted); font-size: 1.5rem; }
-
-    .timer-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      padding: 8px 18px;
-      font-size: .9rem;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all .2s;
-    }
-    .timer-btn:hover   { border-color: var(--accent); color: var(--accent); }
-    .timer-btn.running { background: rgba(239,68,68,.12); border-color: #ef4444; color: #ef4444; }
-    .timer-btn:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* Stars */
-    .stars-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .star-btn {
-      font-size: 2rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: transform .15s;
-      line-height: 1;
-      padding: 2px;
-    }
-    .star-btn:hover  { transform: scale(1.25); }
-    .star-btn.lit    { transform: scale(1.1); }
-
-    /* Next / confirm button */
-    .btn-next {
-      width: 100%;
-      background: linear-gradient(135deg, #d946ef, #9a12b8);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 1rem;
-      font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      transition: transform .15s, box-shadow .15s;
-    }
-    .btn-next:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(217,70,239,.35); }
-    .btn-next:active { transform: none; }
-    .btn-next:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    /* Mini scoreboard */
-    .score-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: .9rem;
-    }
-    .score-row:last-child { border-bottom: none; }
-    .score-name { color: var(--text); display: flex; align-items: center; gap: 8px; }
-    .score-name.current { color: var(--accent); font-weight: 700; }
-    .score-name.done    { color: var(--muted); }
-    .turn-arrow { font-size: .7rem; }
-    .score-pts  { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
-    .score-stars { color: #f59e0b; letter-spacing: 1px; font-size: .85rem; }
-
-    /* ── RESULTS SCREEN ── */
-    .trophy-hero {
-      text-align: center;
-      margin-bottom: 30px;
-      animation: fadeUp .5s .1s ease both;
-    }
-    .trophy-emoji { font-size: 4rem; margin-bottom: 10px; }
-    .trophy-hero h2 {
-      font-size: clamp(1.8rem, 4.5vw, 2.4rem);
-      font-weight: 800;
-      background: linear-gradient(135deg, #fff 30%, #d946ef);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .result-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 20px;
-      margin-bottom: 12px;
-      animation: popIn .4s ease both;
-    }
-    .result-card:nth-child(1) { animation-delay: .15s; border-color: rgba(255,215,0,.3); }
-    .result-card:nth-child(2) { animation-delay: .22s; }
-    .result-card:nth-child(3) { animation-delay: .29s; }
-    .result-card:nth-child(n+4) { animation-delay: .36s; }
-
-    .result-rank { font-size: 1.7rem; width: 40px; text-align: center; flex-shrink: 0; }
-    .result-info { flex: 1; min-width: 0; }
-    .result-name {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .result-card:nth-child(1) .result-name { color: #ffd700; }
-    .result-card:nth-child(2) .result-name { color: #c0c0c0; }
-    .result-card:nth-child(3) .result-name { color: #cd7f32; }
-    .result-stars { color: #f59e0b; font-size: 1rem; margin-top: 3px; }
-    .result-pts { font-size: 1.05rem; color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
-
-    .action-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 10px;
-      animation: fadeUp .5s .5s ease both;
-    }
-    .btn-ghost {
-      flex: 1;
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      font-size: .95rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: border-color .2s, color .2s;
-    }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-solid {
-      flex: 1;
-      background: linear-gradient(135deg, #d946ef, #9a12b8);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: .95rem;
-      font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      transition: transform .15s, box-shadow .15s;
-    }
-    .btn-solid:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(217,70,239,.38); }
-
-    @media (max-width: 520px) {
-      .star-btn { font-size: 1.7rem; }
-      .timer-digits { font-size: 1.6rem; min-width: 70px; }
-      .scenario-card { padding: 22px 18px; }
-    }
+    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════ SETUP SCREEN ═══════════════ -->
-<div id="screen-setup" class="screen active">
   <div class="topbar">
-    <a href="index.html" class="back">← Back to Hub</a>
-    <span class="topbadge">⚙️ Setup</span>
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="round-num">0</span></div>
   </div>
 
-  <div class="game-header">
+  <div class="header">
     <h1>🎭 Persuade Me!</h1>
-    <p>One judge, everyone else takes turns making their best case</p>
-  </div>
-
-  <div class="setup-block">
-    <div class="block-label">Number of Persuaders</div>
-    <div class="chip-row" id="count-row">
-      <button class="chip" onclick="selCount(2)">2</button>
-      <button class="chip sel" onclick="selCount(3)">3</button>
-      <button class="chip" onclick="selCount(4)">4</button>
-      <button class="chip" onclick="selCount(5)">5</button>
-      <button class="chip" onclick="selCount(6)">6</button>
-      <button class="chip" onclick="selCount(7)">7</button>
-      <button class="chip" onclick="selCount(8)">8</button>
-    </div>
-  </div>
-
-  <div class="setup-block">
-    <div class="block-label">Time per Turn</div>
-    <div class="chip-row" id="timer-row">
-      <button class="chip" data-t="30"  onclick="selTimer(this)">30 s</button>
-      <button class="chip sel" data-t="60" onclick="selTimer(this)">60 s</button>
-      <button class="chip" data-t="90"  onclick="selTimer(this)">90 s</button>
-      <button class="chip" data-t="0"   onclick="selTimer(this)">∞ No limit</button>
-    </div>
-  </div>
-
-  <div class="setup-block">
-    <div class="block-label">Player Names <span style="color:#333;font-size:.85em;text-transform:none;letter-spacing:0">(optional)</span></div>
-    <div class="names-grid" id="names-grid"></div>
-  </div>
-
-  <button class="btn-start" onclick="startGame()">🎬 Start Game</button>
-</div>
-
-<!-- ═══════════════ GAME SCREEN ═══════════════ -->
-<div id="screen-game" class="screen">
-  <div class="topbar">
-    <button class="back" onclick="goSetup()">← Setup</button>
-    <span class="topbadge">Round <span id="round-num">1</span></span>
+    <p>Draw a scenario — then take turns convincing the judge!</p>
   </div>
 
   <!-- Scenario card -->
   <div class="scenario-card" id="sc-card">
-    <div class="scenario-placeholder" id="sc-placeholder">
-      <div class="placeholder-icon">🎭</div>
-      <div class="placeholder-text">Press <strong>Draw Scenario</strong> to reveal the scene</div>
+    <div class="sc-placeholder" id="sc-placeholder">
+      <div class="big-emoji">🎭</div>
+      <p>Press <strong>Draw</strong> to reveal the scene</p>
     </div>
-    <div class="scenario-body" id="sc-body">
+    <div class="sc-content" id="sc-content">
       <div class="sc-field">
         <div class="sc-label">👨‍⚖️ Judge's Role</div>
-        <div class="sc-value big" id="sc-judge"></div>
+        <div class="sc-judge" id="sc-judge"></div>
       </div>
       <div class="sc-divider"></div>
       <div class="sc-field">
         <div class="sc-label">🎯 The Situation</div>
-        <div class="sc-value dim" id="sc-situation"></div>
+        <div class="sc-situation" id="sc-situation"></div>
       </div>
       <div class="sc-divider"></div>
       <div class="sc-field">
         <div class="sc-label">🗣️ Persuader Plays</div>
-        <div class="sc-value" id="sc-persuader"></div>
+        <div class="sc-persuader" id="sc-persuader"></div>
       </div>
     </div>
   </div>
 
-  <button class="btn-draw" id="draw-btn" onclick="drawScenario()">🎰 Draw Scenario</button>
+  <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
 
-  <!-- Current player + timer -->
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-label">Now Persuading</span>
-      <span class="progress-chip"><span id="player-idx">1</span> of <span id="player-total">3</span></span>
-    </div>
-    <div class="player-name-display" id="player-name">Player 1</div>
-    <div class="timer-row">
-      <div class="timer-digits ok" id="timer-display">1:00</div>
-      <button class="timer-btn" id="timer-toggle" onclick="toggleTimer()">▶ Start</button>
-      <button class="timer-btn" id="timer-reset" onclick="resetTimer()">↺ Reset</button>
-    </div>
-  </div>
+  <script>
+    const scenarios = [
+      // School
+      { judge:'Teacher', emoji:'🧑‍🏫',
+        persuader:'A student who forgot their homework',
+        situation:'You forgot to bring your homework today. Convince the teacher not to give you a zero.' },
+      { judge:'Teacher', emoji:'🧑‍🏫',
+        persuader:'A student who got a bad grade',
+        situation:'You got 40% on your test. Convince the teacher to let you retake it.' },
+      { judge:'Teacher', emoji:'🧑‍🏫',
+        persuader:'A student who was late to class',
+        situation:'You walked into class 15 minutes late. Convince the teacher not to mark you absent.' },
+      { judge:'Teacher', emoji:'🧑‍🏫',
+        persuader:'A student who wants special treatment',
+        situation:'You want to sit next to your best friend in class. Your teacher said no. Convince them to change their mind.' },
+      { judge:'Teacher', emoji:'🧑‍🏫',
+        persuader:'A student who needs more time',
+        situation:'The essay is due today but you only finished half of it. Convince the teacher to give you one more day.' },
+      // Work
+      { judge:'Boss', emoji:'💼',
+        persuader:'An employee who wants to leave early',
+        situation:'You want to leave work one hour early today. Convince your boss to say yes.' },
+      { judge:'Boss', emoji:'💼',
+        persuader:'An employee who was late to work',
+        situation:'You arrived at work 30 minutes late. Convince your boss it will never happen again — and that you still deserve a raise.' },
+      { judge:'Boss', emoji:'💼',
+        persuader:'An employee who wants to work from home',
+        situation:'You want to work from home every Friday. Convince your boss it is a great idea.' },
+      { judge:'Boss', emoji:'💼',
+        persuader:'An employee who broke something',
+        situation:'You accidentally broke the office coffee machine. Convince your boss it was not your fault.' },
+      // Relationships
+      { judge:'Girlfriend / Boyfriend', emoji:'💑',
+        persuader:'A partner who forgot to call',
+        situation:'You forgot to call your partner last night. Convince them you had a good reason and you are sorry.' },
+      { judge:'Girlfriend / Boyfriend', emoji:'💑',
+        persuader:'A partner who forgot the date',
+        situation:'You forgot your partner\'s birthday. Convince them to forgive you.' },
+      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
+        persuader:'A child who wants to stay up late',
+        situation:'You want to stay up until midnight on a school night. Convince your parent to say yes.' },
+      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
+        persuader:'A child who wants a pet',
+        situation:'You want to get a dog. Your parent says the house is too small. Convince them it is a great idea.' },
+      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
+        persuader:'A teenager who wants more pocket money',
+        situation:'You want double your weekly allowance. Convince your parent you really need it.' },
+      // Friends
+      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
+        persuader:'A friend who was very late',
+        situation:'You were 30 minutes late to meet your friend at a café. Convince them not to be angry.' },
+      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
+        persuader:'A friend who owes money',
+        situation:'You borrowed $20 from your friend last month and forgot to pay them back. Convince them to wait one more week.' },
+      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
+        persuader:'A friend who told a secret',
+        situation:'You accidentally told another person a secret your friend shared with you. Convince your friend you had a good reason.' },
+      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
+        persuader:'A friend who cancelled plans',
+        situation:'You cancelled plans with your friend at the last minute. Convince them to not be upset and to make new plans.' },
+      // Shopping & Services
+      { judge:'Shop Owner', emoji:'🛍️',
+        persuader:'A customer without a receipt',
+        situation:'You want to return a shirt but you lost the receipt. Convince the shop owner to give you a refund.' },
+      { judge:'Barista', emoji:'☕',
+        persuader:'A customer who wants a deal',
+        situation:'The café only has small cups left, but you want a large coffee at the small price. Convince the barista to help you.' },
+      { judge:'Restaurant Manager', emoji:'🍽️',
+        persuader:'A customer who wants a discount',
+        situation:'Your food was a little cold when it arrived. Convince the manager to give you a 50% discount.' },
+      { judge:'Gym Receptionist', emoji:'💪',
+        persuader:'A member who never comes',
+        situation:'You have not been to the gym for 6 months. Convince the receptionist to give you a full refund for your membership.' },
+      // Daily Life
+      { judge:'Roommate', emoji:'🏠',
+        persuader:'A roommate who ate the food',
+        situation:'You ate your roommate\'s food from the fridge by mistake. Convince them it is not a big deal and you are still a great roommate.' },
+      { judge:'Bus Driver', emoji:'🚌',
+        persuader:'A passenger without exact change',
+        situation:'You only have a big bill and the bus does not give change. Convince the driver to let you ride for free today.' },
+      { judge:'Librarian', emoji:'📚',
+        persuader:'A student who wants to eat inside',
+        situation:'You want to eat your sandwich in the library. There is a "No Food" sign. Convince the librarian to make an exception.' },
+      { judge:'Neighbour', emoji:'🏡',
+        persuader:'A neighbour who plays music too loud',
+        situation:'Your neighbour complained that your music is too loud at night. Convince them it is not a problem.' },
+      // Fun & Silly
+      { judge:'Mom or Dad', emoji:'😄',
+        persuader:'A child who broke something',
+        situation:'You accidentally broke your parent\'s favourite mug. Convince them not to be angry and that everything is fine.' },
+      { judge:'Friend', emoji:'😂',
+        persuader:'A friend who needs convincing',
+        situation:'Convince your friend to try a very strange food that you love — like spicy ice cream or cheese-flavoured candy.' },
+      { judge:'Boss', emoji:'😄',
+        persuader:'An employee with a big idea',
+        situation:'You want the company to have a "bring your pet to work" day every Friday. Convince your boss it will make everyone happier and more productive.' },
+      { judge:'Teacher', emoji:'😄',
+        persuader:'A very confident student',
+        situation:'Convince your teacher to cancel homework for the whole class for one week. You must give at least three good reasons.' },
+    ];
 
-  <!-- Rating -->
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-label">Judge's Rating</span>
-    </div>
-    <div class="stars-row" id="stars-row">
-      <button class="star-btn" onclick="rate(1)">☆</button>
-      <button class="star-btn" onclick="rate(2)">☆</button>
-      <button class="star-btn" onclick="rate(3)">☆</button>
-      <button class="star-btn" onclick="rate(4)">☆</button>
-      <button class="star-btn" onclick="rate(5)">☆</button>
-    </div>
-    <button class="btn-next" id="next-btn" onclick="nextPlayer()">Next Player →</button>
-  </div>
+    let round = 0;
+    let used  = [];
+    let rolling = false;
 
-  <!-- Scoreboard -->
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-label">Scores</span>
-    </div>
-    <div id="scores-list"></div>
-  </div>
-</div>
+    function draw() {
+      if (rolling) return;
+      rolling = true;
 
-<!-- ═══════════════ RESULTS SCREEN ═══════════════ -->
-<div id="screen-results" class="screen">
-  <div class="topbar">
-    <button class="back" onclick="goSetup()">← Menu</button>
-    <span class="topbadge">🏆 Results</span>
-  </div>
-  <div class="trophy-hero">
-    <div class="trophy-emoji">🏆</div>
-    <h2>Round Complete!</h2>
-  </div>
-  <div id="results-list"></div>
-  <div class="action-row">
-    <button class="btn-ghost" onclick="goSetup()">🏠 Menu</button>
-    <button class="btn-solid" onclick="newRound()">🔄 New Round</button>
-  </div>
-</div>
+      const btn  = document.getElementById('draw-btn');
+      const card = document.getElementById('sc-card');
+      const ph   = document.getElementById('sc-placeholder');
+      const ct   = document.getElementById('sc-content');
 
-<script>
-// ── Scenarios ──────────────────────────────────────────────
-const scenarios = [
-  // School
-  { judge:'Teacher', emoji:'🧑‍🏫',
-    persuader:'A student who forgot their homework',
-    situation:'You forgot to bring your homework today. Convince the teacher not to give you a zero.' },
-  { judge:'Teacher', emoji:'🧑‍🏫',
-    persuader:'A student who got a bad grade',
-    situation:'You got 40% on your test. Convince the teacher to let you retake it.' },
-  { judge:'Teacher', emoji:'🧑‍🏫',
-    persuader:'A student who was late to class',
-    situation:'You walked into class 15 minutes late. Convince the teacher not to mark you absent.' },
-  { judge:'Teacher', emoji:'🧑‍🏫',
-    persuader:'A student who wants special treatment',
-    situation:'You want to sit next to your best friend in class. Your teacher said no. Convince them to change their mind.' },
-  { judge:'Teacher', emoji:'🧑‍🏫',
-    persuader:'A student who needs more time',
-    situation:'The essay is due today but you only finished half of it. Convince the teacher to give you one more day.' },
+      btn.disabled = true;
+      card.classList.remove('landed');
+      card.classList.add('rolling');
+      ph.style.display = 'none';
+      ct.classList.add('show');
 
-  // Work
-  { judge:'Boss', emoji:'💼',
-    persuader:'An employee who wants to leave early',
-    situation:'You want to leave work one hour early today. Convince your boss to say yes.' },
-  { judge:'Boss', emoji:'💼',
-    persuader:'An employee who was late to work',
-    situation:'You arrived at work 30 minutes late. Convince your boss it will never happen again — and that you still deserve a raise.' },
-  { judge:'Boss', emoji:'💼',
-    persuader:'An employee who wants to work from home',
-    situation:'You want to work from home every Friday. Convince your boss it is a great idea.' },
-  { judge:'Boss', emoji:'💼',
-    persuader:'An employee who broke something',
-    situation:'You accidentally broke the office coffee machine. Convince your boss it was not your fault.' },
+      let avail = scenarios.map((_,i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = scenarios.map((_,i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      used.push(fi);
 
-  // Relationships
-  { judge:'Girlfriend / Boyfriend', emoji:'💑',
-    persuader:'A partner who forgot to call',
-    situation:'You forgot to call your partner last night. Convince them you had a good reason and you are sorry.' },
-  { judge:'Girlfriend / Boyfriend', emoji:'💑',
-    persuader:'A partner who forgot the date',
-    situation:'You forgot your partner\'s birthday. Convince them to forgive you.' },
-  { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-    persuader:'A child who wants to stay up late',
-    situation:'You want to stay up until midnight on a school night. Convince your parent to say yes.' },
-  { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-    persuader:'A child who wants a pet',
-    situation:'You want to get a dog. Your parent says the house is too small. Convince them it is a great idea.' },
-  { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-    persuader:'A teenager who wants more pocket money',
-    situation:'You want double your weekly allowance. Convince your parent you really need it.' },
-
-  // Friends
-  { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-    persuader:'A friend who was very late',
-    situation:'You were 30 minutes late to meet your friend at a café. Convince them not to be angry.' },
-  { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-    persuader:'A friend who owes money',
-    situation:'You borrowed $20 from your friend last month and forgot to pay them back. Convince them to wait one more week.' },
-  { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-    persuader:'A friend who told a secret',
-    situation:'You accidentally told another person a secret your friend shared with you. Convince your friend you had a good reason.' },
-  { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-    persuader:'A friend who cancelled plans',
-    situation:'You cancelled plans with your friend at the last minute. Convince them to not be upset and to make new plans.' },
-
-  // Shopping & Services
-  { judge:'Shop Owner', emoji:'🛍️',
-    persuader:'A customer without a receipt',
-    situation:'You want to return a shirt but you lost the receipt. Convince the shop owner to give you a refund.' },
-  { judge:'Barista', emoji:'☕',
-    persuader:'A customer who wants a deal',
-    situation:'The café only has small cups left, but you want a large coffee at the small price. Convince the barista to help you.' },
-  { judge:'Restaurant Manager', emoji:'🍽️',
-    persuader:'A customer who wants a discount',
-    situation:'Your food was a little cold when it arrived. Convince the manager to give you a 50% discount.' },
-  { judge:'Gym Receptionist', emoji:'💪',
-    persuader:'A member who never comes',
-    situation:'You have not been to the gym for 6 months. Convince the receptionist to give you a full refund for your membership.' },
-
-  // Daily Life
-  { judge:'Roommate', emoji:'🏠',
-    persuader:'A roommate who ate the food',
-    situation:'You ate your roommate\'s food from the fridge by mistake. Convince them it is not a big deal and you are still a great roommate.' },
-  { judge:'Bus Driver', emoji:'🚌',
-    persuader:'A passenger without exact change',
-    situation:'You only have a big bill and the bus does not give change. Convince the driver to let you ride for free today.' },
-  { judge:'Librarian', emoji:'📚',
-    persuader:'A student who wants to eat inside',
-    situation:'You want to eat your sandwich in the library. There is a "No Food" sign. Convince the librarian to make an exception.' },
-  { judge:'Neighbour', emoji:'🏡',
-    persuader:'A neighbour who plays music too loud',
-    situation:'Your neighbour complained that your music is too loud at night. Convince them it is not a problem.' },
-
-  // Fun & Silly
-  { judge:'Mom or Dad', emoji:'😄',
-    persuader:'A child who broke something',
-    situation:'You accidentally broke your parent\'s favourite mug. Convince them not to be angry and that everything is fine.' },
-  { judge:'Friend', emoji:'😂',
-    persuader:'A friend who needs convincing',
-    situation:'Convince your friend to try a very strange food that you love — like spicy ice cream or cheese-flavoured candy.' },
-  { judge:'Boss', emoji:'😄',
-    persuader:'An employee with a big idea',
-    situation:'You want the company to have a "bring your pet to work" day every Friday. Convince your boss it will make everyone happier and more productive.' },
-  { judge:'Teacher', emoji:'😄',
-    persuader:'A very confident student',
-    situation:'Convince your teacher to cancel homework for the whole class for one week. You must give at least three good reasons.' },
-];
-
-// ── State ──────────────────────────────────────────────────
-let playerCount  = 3;
-let timerSecs    = 60;
-let players      = [];
-let playerIdx    = 0;
-let roundNum     = 1;
-let usedIdxs     = [];
-let currentRating = 0;
-let timerLeft    = 60;
-let timerRunning = false;
-let timerIv      = null;
-let rolling      = false;
-
-// ── Setup helpers ──────────────────────────────────────────
-function selCount(n) {
-  playerCount = n;
-  document.querySelectorAll('#count-row .chip').forEach((c, i) => {
-    c.classList.toggle('sel', i + 2 === n);
-  });
-  renderNames();
-}
-
-function selTimer(btn) {
-  timerSecs = Number(btn.dataset.t);
-  document.querySelectorAll('#timer-row .chip').forEach(c => c.classList.remove('sel'));
-  btn.classList.add('sel');
-}
-
-function renderNames() {
-  const grid = document.getElementById('names-grid');
-  grid.innerHTML = '';
-  for (let i = 0; i < playerCount; i++) {
-    grid.innerHTML += `
-      <div class="name-row">
-        <span class="name-num">P${i+1}</span>
-        <input class="name-input" type="text" id="n${i}"
-          placeholder="Player ${i+1}" maxlength="20" autocomplete="off">
-      </div>`;
-  }
-}
-
-function startGame() {
-  players = [];
-  for (let i = 0; i < playerCount; i++) {
-    const inp = document.getElementById(`n${i}`);
-    players.push({ name: inp?.value.trim() || `Player ${i+1}`, score: 0 });
-  }
-  playerIdx  = 0;
-  roundNum   = 1;
-  usedIdxs   = [];
-  resetScenarioCard();
-  resetTimer();
-  currentRating = 0;
-  rate(0);
-  showScreen('game');
-  refreshGameUI();
-}
-
-// ── Scenario ───────────────────────────────────────────────
-function drawScenario() {
-  if (rolling) return;
-  rolling = true;
-
-  const card   = document.getElementById('sc-card');
-  const ph     = document.getElementById('sc-placeholder');
-  const body   = document.getElementById('sc-body');
-  const drawBtn = document.getElementById('draw-btn');
-
-  drawBtn.disabled = true;
-  card.classList.remove('landed');
-  card.classList.add('rolling');
-  ph.style.display  = 'none';
-  body.classList.add('show');
-
-  let avail = scenarios.map((_,i) => i).filter(i => !usedIdxs.includes(i));
-  if (avail.length === 0) { usedIdxs = []; avail = scenarios.map((_,i) => i); }
-  const finalIdx = avail[Math.floor(Math.random() * avail.length)];
-  usedIdxs.push(finalIdx);
-
-  let ticks = 0;
-  const iv = setInterval(() => {
-    const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
-    document.getElementById('sc-judge').textContent     = tmp.emoji + ' ' + tmp.judge;
-    document.getElementById('sc-situation').textContent = tmp.situation;
-    document.getElementById('sc-persuader').textContent = tmp.persuader;
-    ticks++;
-    if (ticks >= 26) {
-      clearInterval(iv);
-      const sc = scenarios[finalIdx];
-      document.getElementById('sc-judge').textContent     = sc.emoji + ' ' + sc.judge;
-      document.getElementById('sc-situation').textContent = sc.situation;
-      document.getElementById('sc-persuader').textContent = sc.persuader;
-      card.classList.remove('rolling');
-      card.classList.add('landed');
-      drawBtn.disabled   = false;
-      drawBtn.textContent = '🔁 Redraw';
-      rolling = false;
+      let ticks = 0;
+      const iv = setInterval(() => {
+        const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
+        document.getElementById('sc-judge').textContent     = tmp.emoji + ' ' + tmp.judge;
+        document.getElementById('sc-situation').textContent = tmp.situation;
+        document.getElementById('sc-persuader').textContent = tmp.persuader;
+        if (++ticks >= 24) {
+          clearInterval(iv);
+          const sc = scenarios[fi];
+          document.getElementById('sc-judge').textContent     = sc.emoji + ' ' + sc.judge;
+          document.getElementById('sc-situation').textContent = sc.situation;
+          document.getElementById('sc-persuader').textContent = sc.persuader;
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+          round++;
+          document.getElementById('round-num').textContent = round;
+          btn.textContent  = '🔁 Redraw';
+          btn.disabled     = false;
+          rolling = false;
+        }
+      }, 82);
     }
-  }, 82);
-}
-
-function resetScenarioCard() {
-  const card = document.getElementById('sc-card');
-  card.classList.remove('rolling', 'landed');
-  document.getElementById('sc-placeholder').style.display = 'flex';
-  document.getElementById('sc-body').classList.remove('show');
-  document.getElementById('draw-btn').textContent = '🎰 Draw Scenario';
-  document.getElementById('draw-btn').disabled = false;
-}
-
-// ── Timer ──────────────────────────────────────────────────
-function toggleTimer() {
-  if (timerSecs === 0) return;
-  const btn = document.getElementById('timer-toggle');
-  if (timerRunning) {
-    clearInterval(timerIv);
-    timerRunning = false;
-    btn.textContent = '▶ Resume';
-    btn.classList.remove('running');
-  } else {
-    if (timerLeft <= 0) return;
-    timerRunning = true;
-    btn.textContent = '⏸ Pause';
-    btn.classList.add('running');
-    timerIv = setInterval(() => {
-      timerLeft--;
-      updateTimerDisplay();
-      if (timerLeft <= 0) {
-        clearInterval(timerIv);
-        timerRunning = false;
-        btn.textContent = "⏰ Time's up!";
-        btn.classList.remove('running');
-        btn.disabled = true;
-      }
-    }, 1000);
-  }
-}
-
-function resetTimer() {
-  clearInterval(timerIv);
-  timerRunning = false;
-  timerLeft = timerSecs;
-  updateTimerDisplay();
-  const btn = document.getElementById('timer-toggle');
-  if (btn) {
-    btn.textContent = '▶ Start';
-    btn.classList.remove('running');
-    btn.disabled = (timerSecs === 0);
-  }
-  const resetBtn = document.getElementById('timer-reset');
-  if (resetBtn) resetBtn.disabled = (timerSecs === 0);
-}
-
-function updateTimerDisplay() {
-  const el = document.getElementById('timer-display');
-  if (!el) return;
-  if (timerSecs === 0) {
-    el.textContent = '∞';
-    el.className   = 'timer-digits nolimit';
-    return;
-  }
-  const m = Math.floor(timerLeft / 60);
-  const s = timerLeft % 60;
-  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-  const ratio = timerLeft / timerSecs;
-  el.className = 'timer-digits ' + (timerLeft <= 0 ? 'done' : ratio <= .2 ? 'danger' : ratio <= .4 ? 'warn' : 'ok');
-}
-
-// ── Rating ─────────────────────────────────────────────────
-function rate(n) {
-  currentRating = n;
-  document.querySelectorAll('.star-btn').forEach((btn, i) => {
-    btn.textContent = i < n ? '★' : '☆';
-    btn.classList.toggle('lit', i < n);
-  });
-}
-
-// ── Player flow ────────────────────────────────────────────
-function nextPlayer() {
-  players[playerIdx].score += currentRating;
-  resetTimer();
-  rate(0);
-  playerIdx++;
-  if (playerIdx >= players.length) {
-    showResults();
-  } else {
-    refreshGameUI();
-  }
-}
-
-function refreshGameUI() {
-  document.getElementById('round-num').textContent  = roundNum;
-  document.getElementById('player-idx').textContent = playerIdx + 1;
-  document.getElementById('player-total').textContent = players.length;
-  document.getElementById('player-name').textContent  = players[playerIdx].name;
-  timerLeft = timerSecs;
-  updateTimerDisplay();
-  const tBtn = document.getElementById('timer-toggle');
-  if (tBtn) { tBtn.textContent = '▶ Start'; tBtn.classList.remove('running'); tBtn.disabled = (timerSecs === 0); }
-  const rBtn = document.getElementById('timer-reset');
-  if (rBtn) rBtn.disabled = (timerSecs === 0);
-  renderMiniScores();
-}
-
-function renderMiniScores() {
-  document.getElementById('scores-list').innerHTML = players.map((p, i) => {
-    const cls = i === playerIdx ? 'current' : i < playerIdx ? 'done' : '';
-    const arrow = i === playerIdx ? '<span class="turn-arrow">▶</span>' : '';
-    return `<div class="score-row">
-      <span class="score-name ${cls}">${arrow} ${p.name}</span>
-      <span class="score-pts">${p.score} pts</span>
-    </div>`;
-  }).join('');
-}
-
-// ── Results ────────────────────────────────────────────────
-function showResults() {
-  showScreen('results');
-  const sorted = [...players].map((p,i) => ({...p, orig:i}))
-                             .sort((a,b) => b.score - a.score);
-  const medals = ['🥇','🥈','🥉'];
-  document.getElementById('results-list').innerHTML = sorted.map((p, i) => {
-    const stars = '★'.repeat(Math.min(p.score,5)) + '☆'.repeat(Math.max(0, 5-p.score));
-    return `<div class="result-card">
-      <div class="result-rank">${medals[i] || (i+1)+'.'}</div>
-      <div class="result-info">
-        <div class="result-name">${p.name}</div>
-        <div class="result-stars">${stars}</div>
-      </div>
-      <div class="result-pts">${p.score} pts</div>
-    </div>`;
-  }).join('');
-}
-
-function newRound() {
-  roundNum++;
-  playerIdx = 0;
-  players.forEach(p => p.score = 0);
-  resetScenarioCard();
-  resetTimer();
-  rate(0);
-  showScreen('game');
-  refreshGameUI();
-}
-
-// ── Navigation ─────────────────────────────────────────────
-function goSetup() {
-  clearInterval(timerIv);
-  timerRunning = false;
-  showScreen('setup');
-  renderNames();
-}
-
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
-  window.scrollTo(0, 0);
-}
-
-// ── Init ───────────────────────────────────────────────────
-renderNames();
-</script>
+  </script>
 </body>
 </html>
