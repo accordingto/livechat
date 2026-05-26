@@ -2,20 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Describe the Scene</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: #0d0d1a;
       color: #eee;
-      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 28px 20px 72px;
+      padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(72px, calc(env(safe-area-inset-bottom) + 24px)) max(20px, env(safe-area-inset-left));
       position: relative;
       overflow-x: hidden;
     }
