@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Plot Twist · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Plot Twist">
+  <meta name="theme-color" content="#0d0d1a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .55; }
+    }
+    @keyframes cardGlow {
+      0%, 100% { box-shadow: 0 0 0 var(--glow, transparent); }
+      50%       { box-shadow: 0 0 40px var(--glow, transparent); }
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 720px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 36px;
+      animation: fadeUp .5s ease both;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .step-badge { font-size: 12px; color: #444; }
+    .step-badge span { color: #6366f1; font-weight: 700; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 32px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #6366f1);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    /* ── Opening card ── */
+    .opening-card {
+      width: 100%; max-width: 720px;
+      background: #13132b; border: 2px solid #1e1e42;
+      border-radius: 22px; padding: 28px 30px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .4s;
+      animation: fadeUp .5s .2s ease both;
+      min-height: 140px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .opening-card.rolling { border-color: #6366f1; animation: flicker .13s infinite; }
+    .opening-card.landed  { border-color: #6366f1; --glow: rgba(99,102,241,.25); animation: cardGlow 2.8s ease infinite; }
+    .opening-card::before {
+      content: '📖';
+      position: absolute; font-size: 8rem; opacity: .03;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .op-ph {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px; text-align: center; min-height: 100px;
+    }
+    .op-ph .big-emoji { font-size: 2.5rem; }
+    .op-ph p { color: #333; font-size: .9rem; }
+    .op-ct { display: none; flex-direction: column; gap: 8px; }
+    .op-ct.show { display: flex; }
+    .op-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .13em; color: #6366f1; font-weight: 700; }
+    .op-text { font-size: 1.9rem; color: #eee; line-height: 1.5; }
+
+    /* ── Start choice ── */
+    .start-choice {
+      width: 100%; max-width: 720px;
+      display: flex; gap: 12px;
+      margin-bottom: 16px;
+      animation: fadeUp .4s ease both;
+    }
+    .btn-fort {
+      flex: 1; background: #13132b; color: #22c55e; border: 2px solid #22c55e;
+      border-radius: 14px; padding: 16px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+    }
+    .btn-fort:hover { background: rgba(34,197,94,.1); }
+    .btn-fort:active { transform: scale(.98); }
+    .btn-unfort {
+      flex: 1; background: #13132b; color: #ef4444; border: 2px solid #ef4444;
+      border-radius: 14px; padding: 16px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+    }
+    .btn-unfort:hover { background: rgba(239,68,68,.1); }
+    .btn-unfort:active { transform: scale(.98); }
+
+    /* ── Main card ── */
+    .main-card {
+      width: 100%; max-width: 720px;
+      background: #13132b; border: 2px solid #1e1e42;
+      border-radius: 22px; padding: 40px 30px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .3s;
+      min-height: 210px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; gap: 14px;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .main-card.rolling { animation: flicker .13s infinite; }
+    .main-card.landed  { animation: cardGlow 2.8s ease infinite; }
+    .card-bg {
+      position: absolute; font-size: 10rem; opacity: .04;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+
+    /* Placeholder */
+    .card-ph {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 10px; min-height: 140px;
+    }
+    .card-ph .big-emoji { font-size: 2.5rem; }
+    .card-ph p { color: #333; font-size: .9rem; }
+
+    /* F/U section */
+    .fu-ct { display: none; flex-direction: column; align-items: center; gap: 10px; }
+    .fu-ct.show { display: flex; }
+    .fu-step-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; }
+    .fu-word { font-size: clamp(1.8rem, 6vw, 3.2rem); font-weight: 900; letter-spacing: .02em; line-height: 1.2; }
+
+    /* Connector section */
+    .conn-ct { display: none; flex-direction: column; align-items: center; gap: 10px; }
+    .conn-ct.show { display: flex; }
+    .conn-cat { font-size: .78rem; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; }
+    .conn-word { font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800; line-height: 1.2; }
+
+    /* Ending section */
+    .end-ct { display: none; flex-direction: column; align-items: center; gap: 10px; }
+    .end-ct.show { display: flex; }
+    .end-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; color: #fbbf24; }
+    .end-word { font-size: clamp(2rem, 7vw, 3.5rem); font-weight: 800; color: #fbbf24; line-height: 1.2; }
+
+    /* ── Story done ── */
+    .story-done {
+      width: 100%; max-width: 720px;
+      background: linear-gradient(110deg, rgba(251,191,36,.1), rgba(99,102,241,.1));
+      border: 2px solid #fbbf24;
+      border-radius: 18px; padding: 20px 24px;
+      text-align: center;
+      font-size: 1.3rem; font-weight: 700; color: #fbbf24;
+      margin-bottom: 16px;
+      animation: fadeUp .4s ease both;
+    }
+
+    /* ── History dots ── */
+    .history-row {
+      width: 100%; max-width: 720px;
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 16px; min-height: 20px;
+      animation: fadeUp .5s .35s ease both;
+    }
+    .hdot { width: 20px; height: 20px; border-radius: 50%; }
+    .hdot.cur { transform: scale(1.35); filter: brightness(1.3); }
+
+    /* ── Buttons ── */
+    .btn-opening {
+      width: 100%; max-width: 720px;
+      background: #6366f1; color: #fff; border: none;
+      border-radius: 14px; padding: 18px;
+      font-size: 1.1rem; font-weight: 800;
+      cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .1s;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .btn-opening:hover { opacity: .88; }
+    .btn-opening:active { transform: scale(.98); }
+    .btn-opening:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-row {
+      width: 100%; max-width: 720px;
+      display: flex; gap: 12px;
+    }
+    .btn-new {
+      flex: 1;
+      background: transparent; color: #6366f1; border: 2px solid #6366f1;
+      border-radius: 14px; padding: 16px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+    }
+    .btn-new:hover { background: rgba(99,102,241,.1); }
+    .btn-new:active { transform: scale(.98); }
+    .btn-new:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-draw {
+      flex: 2;
+      background: #6366f1; color: #fff; border: none;
+      border-radius: 14px; padding: 16px;
+      font-size: 1.05rem; font-weight: 800;
+      cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-draw:hover { opacity: .88; }
+    .btn-draw:active { transform: scale(.98); }
+    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="step-badge">Step <span id="step-num">0</span> / 10</div>
+  </div>
+
+  <div class="header">
+    <h1>🎬 Plot Twist</h1>
+    <p>Fortunately… Unfortunately… and then a twist! 10 steps to a wild story.</p>
+  </div>
+
+  <!-- Opening card -->
+  <div class="opening-card" id="op-card">
+    <div class="op-ph" id="op-ph">
+      <div class="big-emoji">📖</div>
+      <p>Press <strong>Draw Opening</strong> to begin your story</p>
+    </div>
+    <div class="op-ct" id="op-ct">
+      <div class="op-label">📖 Opening</div>
+      <div class="op-text" id="op-text"></div>
+    </div>
+  </div>
+
+  <!-- Start choice (shown after opening drawn) -->
+  <div class="start-choice" id="start-choice" style="display:none">
+    <button class="btn-fort" onclick="beginPlay(true)">🍀 Start FORTUNATELY</button>
+    <button class="btn-unfort" onclick="beginPlay(false)">💔 Start UNFORTUNATELY</button>
+  </div>
+
+  <!-- Main game card (shown after start choice) -->
+  <div class="main-card" id="main-card" style="display:none">
+    <div class="card-bg" id="card-bg">🎬</div>
+
+    <div class="card-ph" id="card-ph">
+      <div class="big-emoji">🎬</div>
+      <p>Press <strong>Draw</strong> for the next step</p>
+    </div>
+
+    <div class="fu-ct" id="fu-ct">
+      <div class="fu-step-label" id="fu-step-label"></div>
+      <div class="fu-word" id="fu-word"></div>
+    </div>
+
+    <div class="conn-ct" id="conn-ct">
+      <div class="conn-cat" id="conn-cat"></div>
+      <div class="conn-word" id="conn-word"></div>
+    </div>
+
+    <div class="end-ct" id="end-ct">
+      <div class="end-label">🏁 Final Step</div>
+      <div class="end-word" id="end-word"></div>
+    </div>
+  </div>
+
+  <!-- Story done banner -->
+  <div class="story-done" id="story-done" style="display:none">
+    🎬 The End! — Great story, everyone!
+  </div>
+
+  <!-- History dots -->
+  <div class="history-row" id="history-row"></div>
+
+  <!-- Initial button -->
+  <button class="btn-opening" id="btn-opening" onclick="drawOpening()">🎲 Draw Opening</button>
+
+  <!-- Game buttons -->
+  <div class="btn-row" id="btn-row" style="display:none">
+    <button class="btn-new" id="btn-new" onclick="newStory()">🔁 New Story</button>
+    <button class="btn-draw" id="btn-draw" onclick="drawNext()">🎲 Draw</button>
+  </div>
+
+  <script>
+    const openings = [
+      "A zookeeper woke up one morning to find that all the animals had learned to speak English overnight.",
+      "A small-town baker discovered that her cookies had the power to make people tell the truth.",
+      "An astronaut on a routine spacewalk noticed a tiny door floating in the middle of space.",
+      "A librarian found a book that predicted exactly what would happen the following day.",
+      "A chef accidentally invented a soup that made everyone who ate it completely fearless.",
+      "Two strangers got stuck in an elevator together for what seemed like forever.",
+      "A student found a glowing pen in the school cafeteria that could write on its own.",
+      "A detective was called to solve the mystery of a dog that had vanished — from the 30th floor.",
+      "A scientist discovered that plants could hear conversations and were keeping secrets.",
+      "A postman delivered a letter addressed simply to 'The Bravest Person in Town.'",
+      "One morning, gravity stopped working for exactly one hour.",
+      "A taxi driver picked up a passenger who claimed to be from 200 years in the future.",
+      "A little girl found a door at the back of her wardrobe that led to a giant shopping mall.",
+      "A fisherman caught a fish that spoke perfect English and offered him three wishes.",
+      "Everyone in the city woke up one day speaking only in rhyme — including the news anchor.",
+      "A boy accidentally sent a text to the wrong number and received the most important advice of his life.",
+      "A museum security guard noticed that the paintings changed positions every single night.",
+      "A weather forecaster predicted sunshine — but what fell from the sky was something very different.",
+      "An inventor created glasses that could see what people were actually thinking.",
+      "A barista discovered that one specific coffee order gave customers the ability to fly.",
+      "A teenager received a mysterious package in the mail addressed to their future self.",
+      "A robot was hired as a school teacher and nobody noticed anything unusual — at first.",
+      "The last bookshop in town had a secret room that only appeared on rainy days.",
+      "A group of friends on a camping trip found a map that seemed to draw itself.",
+      "The town clock started running backwards, and very strange things began to happen.",
+    ];
+
+    const connectors = [
+      { word: 'But',                  cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'However',              cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'On the other hand',    cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Yet',                  cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Still',                cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Despite that',         cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'And so',               cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: "What's more",          cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'On top of that',       cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'Not only that',        cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'Plus',                 cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'Therefore',            cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'As a result',          cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: "That's why",           cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'Because of this',      cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'Suddenly',             cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Meanwhile',            cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'The next morning',     cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'At that moment',       cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Surprisingly',         cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Little did they know', cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Out of nowhere',       cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Believe it or not',    cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+    ];
+
+    const endings = [
+      'Finally',
+      'In the end',
+      'At last',
+      'From that day on',
+      'After all that',
+      'And that was how',
+      'And so, at last',
+      'Needless to say',
+    ];
+
+    let step      = 0;
+    let startFort = true;
+    let history   = [];
+    let rolling   = false;
+    let usedOp    = [];
+    let usedConn  = [];
+    let usedEnd   = [];
+
+    function hexToRgba(hex, alpha) {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function getStepType(s) {
+      if (s === 10) return 'ending';
+      const mod = (s - 1) % 3;
+      if (mod === 2) return 'connector';
+      if (mod === 0) return startFort ? 'fort' : 'unfort';
+      return startFort ? 'unfort' : 'fort';
+    }
+
+    function drawOpening() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn  = document.getElementById('btn-opening');
+      const card = document.getElementById('op-card');
+      const ph   = document.getElementById('op-ph');
+      const ct   = document.getElementById('op-ct');
+      const txt  = document.getElementById('op-text');
+
+      btn.disabled = true;
+      card.classList.add('rolling');
+      ph.style.display = 'none';
+      ct.classList.add('show');
+
+      let avail = openings.map((_, i) => i).filter(i => !usedOp.includes(i));
+      if (!avail.length) { usedOp = []; avail = openings.map((_, i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      usedOp.push(fi);
+
+      let ticks = 0;
+      const iv = setInterval(() => {
+        txt.textContent = openings[Math.floor(Math.random() * openings.length)];
+        if (++ticks >= 22) {
+          clearInterval(iv);
+          txt.textContent = openings[fi];
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+          btn.style.display = 'none';
+          document.getElementById('start-choice').style.display = 'flex';
+          rolling = false;
+        }
+      }, 82);
+    }
+
+    function beginPlay(isFort) {
+      startFort = isFort;
+      document.getElementById('start-choice').style.display = 'none';
+      document.getElementById('main-card').style.display    = 'flex';
+      document.getElementById('btn-row').style.display      = 'flex';
+    }
+
+    function drawNext() {
+      if (rolling) return;
+      rolling = true;
+
+      step++;
+      document.getElementById('step-num').textContent = step;
+
+      const type   = getStepType(step);
+      const btn    = document.getElementById('btn-draw');
+      const btnNew = document.getElementById('btn-new');
+      const card   = document.getElementById('main-card');
+      const bgEl   = document.getElementById('card-bg');
+
+      btn.disabled    = true;
+      btnNew.disabled = true;
+      document.getElementById('card-ph').style.display = 'none';
+      document.getElementById('fu-ct').classList.remove('show');
+      document.getElementById('conn-ct').classList.remove('show');
+      document.getElementById('end-ct').classList.remove('show');
+      card.classList.remove('landed');
+      card.classList.add('rolling');
+      card.style.removeProperty('--glow');
+
+      if (type === 'fort' || type === 'unfort') {
+        const fuEl    = document.getElementById('fu-word');
+        const stepLbl = document.getElementById('fu-step-label');
+        document.getElementById('fu-ct').classList.add('show');
+
+        const final      = type === 'fort' ? 'FORTUNATELY' : 'UNFORTUNATELY';
+        const finalColor = type === 'fort' ? '#22c55e' : '#ef4444';
+        bgEl.textContent = type === 'fort' ? '🍀' : '💔';
+
+        let ticks = 0;
+        const iv = setInterval(() => {
+          const isF = Math.random() > .5;
+          fuEl.textContent   = isF ? 'FORTUNATELY' : 'UNFORTUNATELY';
+          fuEl.style.color   = isF ? '#22c55e' : '#ef4444';
+          card.style.borderColor = isF ? '#22c55e' : '#ef4444';
+          if (++ticks >= 22) {
+            clearInterval(iv);
+            fuEl.textContent       = final;
+            fuEl.style.color       = finalColor;
+            stepLbl.textContent    = type === 'fort' ? '🍀 Fortunately…' : '💔 Unfortunately…';
+            stepLbl.style.color    = finalColor;
+            card.style.borderColor = finalColor;
+            card.style.setProperty('--glow', hexToRgba(finalColor, .28));
+            card.classList.remove('rolling');
+            card.classList.add('landed');
+            history.push({ color: finalColor });
+            renderHistory();
+            btn.disabled    = false;
+            btnNew.disabled = false;
+            rolling = false;
+          }
+        }, 82);
+
+      } else if (type === 'connector') {
+        const catEl  = document.getElementById('conn-cat');
+        const wordEl = document.getElementById('conn-word');
+        document.getElementById('conn-ct').classList.add('show');
+
+        let avail = connectors.map((_, i) => i).filter(i => !usedConn.includes(i));
+        if (!avail.length) { usedConn = []; avail = connectors.map((_, i) => i); }
+        const fi = avail[Math.floor(Math.random() * avail.length)];
+        usedConn.push(fi);
+
+        let ticks = 0;
+        const iv = setInterval(() => {
+          const tmp = connectors[Math.floor(Math.random() * connectors.length)];
+          catEl.textContent      = tmp.emoji + ' ' + tmp.cat;
+          catEl.style.color      = tmp.color;
+          wordEl.textContent     = tmp.word;
+          wordEl.style.color     = tmp.color;
+          bgEl.textContent       = tmp.emoji;
+          card.style.borderColor = tmp.color;
+          if (++ticks >= 22) {
+            clearInterval(iv);
+            const sc = connectors[fi];
+            catEl.textContent      = sc.emoji + ' ' + sc.cat;
+            catEl.style.color      = sc.color;
+            wordEl.textContent     = sc.word;
+            wordEl.style.color     = sc.color;
+            bgEl.textContent       = sc.emoji;
+            card.style.borderColor = sc.color;
+            card.style.setProperty('--glow', hexToRgba(sc.color, .28));
+            card.classList.remove('rolling');
+            card.classList.add('landed');
+            history.push({ color: sc.color });
+            renderHistory();
+            btn.disabled    = false;
+            btnNew.disabled = false;
+            rolling = false;
+          }
+        }, 82);
+
+      } else {
+        // ending
+        const endEl = document.getElementById('end-word');
+        document.getElementById('end-ct').classList.add('show');
+        bgEl.textContent = '🏁';
+
+        let avail = endings.map((_, i) => i).filter(i => !usedEnd.includes(i));
+        if (!avail.length) { usedEnd = []; avail = endings.map((_, i) => i); }
+        const fi = avail[Math.floor(Math.random() * avail.length)];
+        usedEnd.push(fi);
+
+        const gold = '#fbbf24';
+        let ticks = 0;
+        const iv = setInterval(() => {
+          endEl.textContent      = endings[Math.floor(Math.random() * endings.length)];
+          card.style.borderColor = gold;
+          if (++ticks >= 22) {
+            clearInterval(iv);
+            endEl.textContent = endings[fi];
+            card.style.borderColor = gold;
+            card.style.setProperty('--glow', hexToRgba(gold, .28));
+            card.classList.remove('rolling');
+            card.classList.add('landed');
+            history.push({ color: gold });
+            renderHistory();
+            btn.style.display = 'none';
+            document.getElementById('story-done').style.display = 'block';
+            btnNew.disabled = false;
+            rolling = false;
+          }
+        }, 82);
+      }
+    }
+
+    function renderHistory() {
+      const row = document.getElementById('history-row');
+      row.innerHTML = '';
+      history.forEach((h, i) => {
+        const d = document.createElement('div');
+        d.className        = 'hdot' + (i === history.length - 1 ? ' cur' : '');
+        d.style.background = h.color;
+        row.appendChild(d);
+      });
+    }
+
+    function newStory() {
+      if (rolling) return;
+      step     = 0;
+      history  = [];
+      usedConn = [];
+      rolling  = false;
+
+      document.getElementById('step-num').textContent = '0';
+
+      const opCard = document.getElementById('op-card');
+      opCard.classList.remove('rolling', 'landed');
+      document.getElementById('op-ph').style.display = '';
+      document.getElementById('op-ct').classList.remove('show');
+
+      document.getElementById('start-choice').style.display = 'none';
+
+      const mainCard = document.getElementById('main-card');
+      mainCard.style.display = 'none';
+      mainCard.style.borderColor = '';
+      mainCard.style.removeProperty('--glow');
+      mainCard.classList.remove('rolling', 'landed');
+      document.getElementById('card-ph').style.display = '';
+      document.getElementById('fu-ct').classList.remove('show');
+      document.getElementById('conn-ct').classList.remove('show');
+      document.getElementById('end-ct').classList.remove('show');
+      document.getElementById('card-bg').textContent = '🎬';
+
+      document.getElementById('story-done').style.display = 'none';
+      document.getElementById('history-row').innerHTML    = '';
+
+      const btnOp = document.getElementById('btn-opening');
+      btnOp.style.display = '';
+      btnOp.disabled = false;
+
+      const btnDraw = document.getElementById('btn-draw');
+      btnDraw.style.display = '';
+      btnDraw.disabled = false;
+
+      document.getElementById('btn-row').style.display = 'none';
+      document.getElementById('btn-new').disabled = false;
+    }
+  </script>
+</body>
+</html>
