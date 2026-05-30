@@ -89,7 +89,7 @@
     .btn-draw:hover { background:rgba(20,184,166,.12); }
     .btn-draw:disabled { opacity:.4; cursor:not-allowed; }
     .btn-redraw {
-      flex:1; display:none;
+      flex:1;
       background:transparent; color:#555; border:2px solid #2a2a4a;
       border-radius:14px; padding:15px; font-size:1rem; font-weight:700;
       cursor:pointer; font-family:inherit; transition:background .2s, color .2s, border-color .2s;
@@ -206,7 +206,7 @@
 
   <!-- Draw / Redraw / Start row -->
   <div class="opening-btn-row">
-    <button class="btn-redraw" id="redraw-btn" onclick="redrawOpening()">🔀 Redraw</button>
+    <button class="btn-redraw" id="redraw-btn" onclick="redrawOpening()" style="display:none">🔀 Redraw</button>
     <button class="btn-draw"   id="draw-btn"   onclick="handleDrawBtn()">🎲 Draw Opening</button>
   </div>
 
