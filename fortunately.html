@@ -73,18 +73,29 @@
     .op-text  { font-size:1.9rem; color:#444; font-style:italic; line-height:1.4; transition:color .3s; }
     .op-text.loaded { color:#ccc; }
 
-    /* ── Draw / Start button ── */
-    .btn-draw {
+    /* ── Draw / Redraw / Start row ── */
+    .opening-btn-row {
       width:100%; max-width:720px;
-      background:#13132b; color:#14b8a6; border:2px solid #14b8a6;
-      border-radius:14px; padding:15px; font-size:1.05rem; font-weight:700;
-      cursor:pointer; font-family:inherit; transition:background .2s;
-      margin-bottom:22px;
+      display:flex; gap:12px; margin-bottom:22px;
       animation:fadeUp .5s .3s ease both;
       position:relative; z-index:1;
     }
+    .btn-draw {
+      flex:2;
+      background:#13132b; color:#14b8a6; border:2px solid #14b8a6;
+      border-radius:14px; padding:15px; font-size:1.05rem; font-weight:700;
+      cursor:pointer; font-family:inherit; transition:background .2s;
+    }
     .btn-draw:hover { background:rgba(20,184,166,.12); }
     .btn-draw:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-redraw {
+      flex:1; display:none;
+      background:transparent; color:#555; border:2px solid #2a2a4a;
+      border-radius:14px; padding:15px; font-size:1rem; font-weight:700;
+      cursor:pointer; font-family:inherit; transition:background .2s, color .2s, border-color .2s;
+    }
+    .btn-redraw:hover { background:rgba(20,184,166,.08); color:#14b8a6; border-color:#14b8a6; }
+    .btn-redraw:disabled { opacity:.4; cursor:not-allowed; }
 
     /* ── Start choice buttons ── */
     .btn-start-fort, .btn-start-unfort {
@@ -193,8 +204,11 @@
     </div>
   </div>
 
-  <!-- Draw / Start button -->
-  <button class="btn-draw" id="draw-btn" onclick="handleDrawBtn()">🎲 Draw Opening</button>
+  <!-- Draw / Redraw / Start row -->
+  <div class="opening-btn-row">
+    <button class="btn-redraw" id="redraw-btn" onclick="redrawOpening()">🔀 Redraw</button>
+    <button class="btn-draw"   id="draw-btn"   onclick="handleDrawBtn()">🎲 Draw Opening</button>
+  </div>
 
   <!-- Start choice (shown after drawing) -->
   <div id="start-choice" style="display:none; width:100%; max-width:720px; display:none; gap:12px; margin-bottom:22px;">
@@ -293,6 +307,7 @@
           box.className    = 'opening-box set';
           btn.disabled     = false;
           btn.textContent  = '▶ Start Story';
+          document.getElementById('redraw-btn').style.display = '';
           rolling = false;
           started = true;
         }
@@ -303,6 +318,7 @@
       startFort = fort;
       turnIdx   = 0;
       document.getElementById('start-choice').style.display = 'none';
+      document.getElementById('redraw-btn').style.display   = 'none';
       document.getElementById('new-btn').disabled  = false;
       document.getElementById('next-btn').disabled = false;
       renderCard();
@@ -328,6 +344,7 @@
       drawBtn.textContent  = '🎲 Draw Opening';
       drawBtn.style.display = '';
       drawBtn.disabled     = false;
+      document.getElementById('redraw-btn').style.display = 'none';
       document.getElementById('new-btn').disabled  = true;
       document.getElementById('next-btn').disabled = true;
       document.getElementById('start-choice').style.display = 'none';
@@ -356,6 +373,15 @@
         d.className = 'hdot ' + (isFort ? 'f' : 'u') + (i === turnIdx ? ' cur' : '');
         strip.appendChild(d);
       }
+    }
+
+    function redrawOpening() {
+      if (rolling) return;
+      started = false;
+      document.getElementById('redraw-btn').style.display = 'none';
+      const btn = document.getElementById('draw-btn');
+      btn.textContent = '🎲 Draw Opening';
+      drawOpening();
     }
 
     function updateTurnNum() {
