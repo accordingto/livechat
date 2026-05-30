@@ -219,18 +219,32 @@
     .hdot.cur { transform: scale(1.35); filter: brightness(1.3); }
 
     /* ── Buttons ── */
-    .btn-opening {
+    .btn-opening-row {
       width: 100%; max-width: 720px;
+      display: flex; gap: 12px;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .btn-opening {
+      flex: 2;
       background: #6366f1; color: #fff; border: none;
       border-radius: 14px; padding: 18px;
       font-size: 1.1rem; font-weight: 800;
       cursor: pointer; font-family: inherit;
       transition: opacity .2s, transform .1s;
-      animation: fadeUp .5s .3s ease both;
     }
     .btn-opening:hover { opacity: .88; }
     .btn-opening:active { transform: scale(.98); }
     .btn-opening:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-redraw-op {
+      flex: 1;
+      background: transparent; color: #555; border: 2px solid #2a2a4a;
+      border-radius: 14px; padding: 18px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .btn-redraw-op:hover { background: rgba(99,102,241,.08); color: #6366f1; border-color: #6366f1; }
+    .btn-redraw-op:disabled { opacity: .4; cursor: not-allowed; }
 
     .btn-row {
       width: 100%; max-width: 720px;
@@ -318,8 +332,11 @@
   <!-- History dots -->
   <div class="history-row" id="history-row"></div>
 
-  <!-- Initial button -->
-  <button class="btn-opening" id="btn-opening" onclick="drawOpening()">🎲 Draw Opening</button>
+  <!-- Initial button row -->
+  <div class="btn-opening-row" id="btn-opening-row">
+    <button class="btn-redraw-op" id="btn-redraw-op" onclick="redrawOpeningPT()" style="display:none">🔀 Redraw</button>
+    <button class="btn-opening"   id="btn-opening"   onclick="drawOpening()">🎲 Draw Opening</button>
+  </div>
 
   <!-- Game buttons -->
   <div class="btn-row" id="btn-row" style="display:none">
@@ -469,11 +486,32 @@
           txt.classList.add('text-landed');
           card.classList.remove('rolling');
           card.classList.add('landed');
-          btn.style.display = 'none';
-          beginPlay(Math.random() > .5);
+          document.getElementById('btn-redraw-op').style.display = '';
+          btn.textContent = '▶ Begin Story';
+          btn.onclick = beginStory;
           rolling = false;
         }
       );
+    }
+
+    function beginStory() {
+      document.getElementById('btn-redraw-op').style.display = 'none';
+      document.getElementById('btn-opening').style.display   = 'none';
+      beginPlay(Math.random() > .5);
+    }
+
+    function redrawOpeningPT() {
+      if (rolling) return;
+      const btn = document.getElementById('btn-opening');
+      btn.textContent = '🎲 Draw Opening';
+      btn.onclick = drawOpening;
+      document.getElementById('btn-redraw-op').style.display = 'none';
+      const card = document.getElementById('op-card');
+      card.classList.remove('landed');
+      clearTextAnim('op-text');
+      document.getElementById('op-ph').style.display = '';
+      document.getElementById('op-ct').classList.remove('show');
+      drawOpening();
     }
 
     function beginPlay(isFort) {
@@ -669,6 +707,9 @@
       const btnOp = document.getElementById('btn-opening');
       btnOp.style.display = '';
       btnOp.disabled = false;
+      btnOp.textContent = '🎲 Draw Opening';
+      btnOp.onclick = drawOpening;
+      document.getElementById('btn-redraw-op').style.display = 'none';
 
       const btnDraw = document.getElementById('btn-draw');
       btnDraw.style.display = '';
