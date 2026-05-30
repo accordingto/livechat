@@ -27,13 +27,42 @@
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: .55; }
+
+    /* Scan beam sweeping up the card */
+    @keyframes scanBeam {
+      0%   { transform: translateY(110%); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { transform: translateY(-110%); opacity: 0; }
     }
+
+    /* Text blur-squish while rolling */
+    @keyframes textRoll {
+      0%, 100% { filter: blur(0px);   transform: scaleY(1)    translateY(0);   opacity: 1; }
+      40%       { filter: blur(3px);   transform: scaleY(0.82) translateY(-3px); opacity: 0.45; }
+      60%       { filter: blur(2px);   transform: scaleY(0.88) translateY(3px);  opacity: 0.6; }
+    }
+
+    /* Bounce-in on land */
+    @keyframes landBounce {
+      0%   { transform: scale(0.72) translateY(14px); opacity: 0; filter: blur(8px); }
+      52%  { transform: scale(1.1)  translateY(-4px); opacity: 1; filter: blur(0); }
+      72%  { transform: scale(0.96) translateY(1px); }
+      88%  { transform: scale(1.02); }
+      100% { transform: scale(1)    translateY(0); }
+    }
+
+    /* Glow burst on land */
+    @keyframes glowBurst {
+      0%   { box-shadow: 0 0 0   transparent; }
+      18%  { box-shadow: 0 0 80px var(--glow, transparent), 0 0 140px var(--glow, transparent); }
+      100% { box-shadow: 0 0 28px var(--glow, transparent); }
+    }
+
+    /* Gentle pulse after landing */
     @keyframes cardGlow {
-      0%, 100% { box-shadow: 0 0 0 var(--glow, transparent); }
-      50%       { box-shadow: 0 0 40px var(--glow, transparent); }
+      0%, 100% { box-shadow: 0 0 28px var(--glow, transparent); }
+      50%       { box-shadow: 0 0 50px var(--glow, transparent); }
     }
 
     /* ── Topbar ── */
@@ -68,13 +97,24 @@
       border-radius: 22px; padding: 28px 30px;
       margin-bottom: 16px;
       position: relative; overflow: hidden;
-      transition: border-color .4s;
+      transition: border-color .3s;
       animation: fadeUp .5s .2s ease both;
       min-height: 140px;
       display: flex; flex-direction: column; justify-content: center;
     }
-    .opening-card.rolling { border-color: #6366f1; animation: flicker .13s infinite; }
-    .opening-card.landed  { border-color: #6366f1; --glow: rgba(99,102,241,.25); animation: cardGlow 2.8s ease infinite; }
+    .opening-card.rolling { border-color: #6366f1; }
+    .opening-card.rolling::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(to top, transparent 0%, rgba(99,102,241,.18) 50%, transparent 100%);
+      animation: scanBeam .55s linear infinite;
+      pointer-events: none;
+    }
+    .opening-card.landed {
+      border-color: #6366f1;
+      --glow: rgba(99,102,241,.38);
+      animation: glowBurst .65s ease forwards, cardGlow 2.8s .65s ease infinite;
+    }
     .opening-card::before {
       content: '📖';
       position: absolute; font-size: 8rem; opacity: .03;
@@ -125,19 +165,34 @@
       border-radius: 22px; padding: 40px 30px;
       margin-bottom: 16px;
       position: relative; overflow: hidden;
-      transition: border-color .3s;
+      transition: border-color .25s;
       min-height: 210px;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       text-align: center; gap: 14px;
       animation: fadeUp .5s .3s ease both;
     }
-    .main-card.rolling { animation: flicker .13s infinite; }
-    .main-card.landed  { animation: cardGlow 2.8s ease infinite; }
+    .main-card.rolling::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(to top, transparent 0%, rgba(255,255,255,.07) 50%, transparent 100%);
+      animation: scanBeam .5s linear infinite;
+      pointer-events: none;
+    }
+    .main-card.landed { animation: glowBurst .65s ease forwards, cardGlow 2.8s .65s ease infinite; }
     .card-bg {
       position: absolute; font-size: 10rem; opacity: .04;
       top: 50%; left: 50%; transform: translate(-50%,-50%);
       pointer-events: none;
+    }
+
+    /* Text animation states */
+    .text-rolling {
+      animation: textRoll .22s ease-in-out infinite;
+      will-change: transform, filter;
+    }
+    .text-landed {
+      animation: landBounce .6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
 
     /* Placeholder */
@@ -384,6 +439,30 @@
       return `rgba(${r},${g},${b},${alpha})`;
     }
 
+    /* Slot-machine roll: decelerates from fast → slow, then calls onLand */
+    function rollTicks(onTick, onLand, totalTicks = 20) {
+      let tick = 0;
+      function next() {
+        if (tick < totalTicks) {
+          onTick(tick);
+          // quadratic ease-out: starts ~55ms, ends ~265ms
+          const delay = Math.round(55 + 210 * Math.pow((tick + 1) / totalTicks, 2.4));
+          tick++;
+          setTimeout(next, delay);
+        } else {
+          onLand();
+        }
+      }
+      next();
+    }
+
+    function clearTextAnim(...ids) {
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('text-rolling', 'text-landed');
+      });
+    }
+
     function getStepType(s) {
       if (s === 10) return 'ending';
       const mod = (s - 1) % 3;
@@ -406,25 +485,26 @@
       card.classList.add('rolling');
       ph.style.display = 'none';
       ct.classList.add('show');
+      txt.classList.add('text-rolling');
 
       let avail = openings.map((_, i) => i).filter(i => !usedOp.includes(i));
       if (!avail.length) { usedOp = []; avail = openings.map((_, i) => i); }
       const fi = avail[Math.floor(Math.random() * avail.length)];
       usedOp.push(fi);
 
-      let ticks = 0;
-      const iv = setInterval(() => {
-        txt.textContent = openings[Math.floor(Math.random() * openings.length)];
-        if (++ticks >= 22) {
-          clearInterval(iv);
+      rollTicks(
+        () => { txt.textContent = openings[Math.floor(Math.random() * openings.length)]; },
+        () => {
+          txt.classList.remove('text-rolling');
           txt.textContent = openings[fi];
+          txt.classList.add('text-landed');
           card.classList.remove('rolling');
           card.classList.add('landed');
           btn.style.display = 'none';
           document.getElementById('start-choice').style.display = 'flex';
           rolling = false;
         }
-      }, 82);
+      );
     }
 
     function beginPlay(isFort) {
@@ -453,6 +533,7 @@
       document.getElementById('fu-ct').classList.remove('show');
       document.getElementById('conn-ct').classList.remove('show');
       document.getElementById('end-ct').classList.remove('show');
+      clearTextAnim('fu-word', 'conn-word', 'end-word');
       card.classList.remove('landed');
       card.classList.add('rolling');
       card.style.removeProperty('--glow');
@@ -465,21 +546,24 @@
         const final      = type === 'fort' ? 'FORTUNATELY' : 'UNFORTUNATELY';
         const finalColor = type === 'fort' ? '#22c55e' : '#ef4444';
         bgEl.textContent = type === 'fort' ? '🍀' : '💔';
+        fuEl.classList.add('text-rolling');
 
-        let ticks = 0;
-        const iv = setInterval(() => {
-          const isF = Math.random() > .5;
-          fuEl.textContent   = isF ? 'FORTUNATELY' : 'UNFORTUNATELY';
-          fuEl.style.color   = isF ? '#22c55e' : '#ef4444';
-          card.style.borderColor = isF ? '#22c55e' : '#ef4444';
-          if (++ticks >= 22) {
-            clearInterval(iv);
+        rollTicks(
+          () => {
+            const isF = Math.random() > .5;
+            fuEl.textContent       = isF ? 'FORTUNATELY' : 'UNFORTUNATELY';
+            fuEl.style.color       = isF ? '#22c55e' : '#ef4444';
+            card.style.borderColor = isF ? '#22c55e' : '#ef4444';
+          },
+          () => {
+            fuEl.classList.remove('text-rolling');
             fuEl.textContent       = final;
             fuEl.style.color       = finalColor;
+            fuEl.classList.add('text-landed');
             stepLbl.textContent    = type === 'fort' ? '🍀 Fortunately…' : '💔 Unfortunately…';
             stepLbl.style.color    = finalColor;
             card.style.borderColor = finalColor;
-            card.style.setProperty('--glow', hexToRgba(finalColor, .28));
+            card.style.setProperty('--glow', hexToRgba(finalColor, .35));
             card.classList.remove('rolling');
             card.classList.add('landed');
             history.push({ color: finalColor });
@@ -488,7 +572,7 @@
             btnNew.disabled = false;
             rolling = false;
           }
-        }, 82);
+        );
 
       } else if (type === 'connector') {
         const catEl  = document.getElementById('conn-cat');
@@ -499,26 +583,29 @@
         if (!avail.length) { usedConn = []; avail = connectors.map((_, i) => i); }
         const fi = avail[Math.floor(Math.random() * avail.length)];
         usedConn.push(fi);
+        wordEl.classList.add('text-rolling');
 
-        let ticks = 0;
-        const iv = setInterval(() => {
-          const tmp = connectors[Math.floor(Math.random() * connectors.length)];
-          catEl.textContent      = tmp.emoji + ' ' + tmp.cat;
-          catEl.style.color      = tmp.color;
-          wordEl.textContent     = tmp.word;
-          wordEl.style.color     = tmp.color;
-          bgEl.textContent       = tmp.emoji;
-          card.style.borderColor = tmp.color;
-          if (++ticks >= 22) {
-            clearInterval(iv);
+        rollTicks(
+          () => {
+            const tmp = connectors[Math.floor(Math.random() * connectors.length)];
+            catEl.textContent      = tmp.emoji + ' ' + tmp.cat;
+            catEl.style.color      = tmp.color;
+            wordEl.textContent     = tmp.word;
+            wordEl.style.color     = tmp.color;
+            bgEl.textContent       = tmp.emoji;
+            card.style.borderColor = tmp.color;
+          },
+          () => {
             const sc = connectors[fi];
+            wordEl.classList.remove('text-rolling');
             catEl.textContent      = sc.emoji + ' ' + sc.cat;
             catEl.style.color      = sc.color;
             wordEl.textContent     = sc.word;
             wordEl.style.color     = sc.color;
+            wordEl.classList.add('text-landed');
             bgEl.textContent       = sc.emoji;
             card.style.borderColor = sc.color;
-            card.style.setProperty('--glow', hexToRgba(sc.color, .28));
+            card.style.setProperty('--glow', hexToRgba(sc.color, .35));
             card.classList.remove('rolling');
             card.classList.add('landed');
             history.push({ color: sc.color });
@@ -527,7 +614,7 @@
             btnNew.disabled = false;
             rolling = false;
           }
-        }, 82);
+        );
 
       } else {
         // ending
@@ -541,15 +628,19 @@
         usedEnd.push(fi);
 
         const gold = '#fbbf24';
-        let ticks = 0;
-        const iv = setInterval(() => {
-          endEl.textContent      = endings[Math.floor(Math.random() * endings.length)];
-          card.style.borderColor = gold;
-          if (++ticks >= 22) {
-            clearInterval(iv);
-            endEl.textContent = endings[fi];
+        endEl.classList.add('text-rolling');
+
+        rollTicks(
+          () => {
+            endEl.textContent      = endings[Math.floor(Math.random() * endings.length)];
             card.style.borderColor = gold;
-            card.style.setProperty('--glow', hexToRgba(gold, .28));
+          },
+          () => {
+            endEl.classList.remove('text-rolling');
+            endEl.textContent = endings[fi];
+            endEl.classList.add('text-landed');
+            card.style.borderColor = gold;
+            card.style.setProperty('--glow', hexToRgba(gold, .35));
             card.classList.remove('rolling');
             card.classList.add('landed');
             history.push({ color: gold });
@@ -559,7 +650,7 @@
             btnNew.disabled = false;
             rolling = false;
           }
-        }, 82);
+        );
       }
     }
 
@@ -585,8 +676,10 @@
 
       const opCard = document.getElementById('op-card');
       opCard.classList.remove('rolling', 'landed');
+      opCard.style.animation = '';
       document.getElementById('op-ph').style.display = '';
       document.getElementById('op-ct').classList.remove('show');
+      clearTextAnim('op-text');
 
       document.getElementById('start-choice').style.display = 'none';
 
@@ -600,6 +693,7 @@
       document.getElementById('conn-ct').classList.remove('show');
       document.getElementById('end-ct').classList.remove('show');
       document.getElementById('card-bg').textContent = '🎬';
+      clearTextAnim('fu-word', 'conn-word', 'end-word');
 
       document.getElementById('story-done').style.display = 'none';
       document.getElementById('history-row').innerHTML    = '';
