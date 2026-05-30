@@ -298,34 +298,38 @@
     ];
 
     const connectors = [
-      { word: 'Oddly enough',           cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
-      { word: "To everyone's shock",    cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
-      { word: 'Out of the blue',        cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
-      { word: "Who would've thought",   cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
-      { word: 'Even so',                cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
-      { word: 'Despite everything',     cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
-      { word: 'On the contrary',        cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
-      { word: 'Then again',             cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
-      { word: 'Regardless',             cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
-      { word: 'After all',              cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
-      { word: 'Along with that',        cat: 'Addition',       emoji: '➕', color: '#22c55e' },
-      { word: 'To make it worse',       cat: 'Addition',       emoji: '➕', color: '#22c55e' },
-      { word: 'To make it better',      cat: 'Addition',       emoji: '➕', color: '#22c55e' },
-      { word: 'Amazingly',              cat: 'Addition',       emoji: '➕', color: '#22c55e' },
-      { word: 'Sure enough',            cat: 'Addition',       emoji: '➕', color: '#22c55e' },
-      { word: 'Naturally',              cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
-      { word: 'As a consequence',       cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
-      { word: 'This caused',            cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
-      { word: 'So of course',           cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
-      { word: "That's exactly why",     cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
-      { word: 'Just then',              cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: 'By that evening',        cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: 'Hours later',            cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: 'Shortly after',          cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: 'Without warning',        cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: 'In the meantime',        cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: "That's when",            cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
-      { word: 'Right at that moment',   cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'But',               cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'However',           cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Even so',           cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'That said',         cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'Then again',        cat: 'Contrast',       emoji: '⚡', color: '#ef4444' },
+      { word: 'And so',            cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: "What's more",       cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'On top of that',    cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'To make it worse',  cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'To make it better', cat: 'Addition',       emoji: '➕', color: '#22c55e' },
+      { word: 'As a result',       cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'Because of this',   cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: "That's why",        cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'So of course',      cat: 'Cause & Effect', emoji: '🔗', color: '#f59e0b' },
+      { word: 'Just then',         cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Meanwhile',         cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Later',             cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'The next day',      cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Shortly after',     cat: 'Time',           emoji: '⏱️', color: '#4f9eff' },
+      { word: 'Suddenly',          cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Out of the blue',   cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Believe it or not', cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+      { word: 'Oddly enough',      cat: 'Surprise',       emoji: '✨', color: '#a78bfa' },
+    ];
+
+    const endings = [
+      { word: 'Finally',          cat: 'Ending', emoji: '🏁', color: '#fbbf24' },
+      { word: 'In the end',       cat: 'Ending', emoji: '🏁', color: '#fbbf24' },
+      { word: 'Eventually',       cat: 'Ending', emoji: '🏁', color: '#fbbf24' },
+      { word: 'At last',          cat: 'Ending', emoji: '🏁', color: '#fbbf24' },
+      { word: 'From that day on', cat: 'Ending', emoji: '🏁', color: '#fbbf24' },
+      { word: 'And so, at last',  cat: 'Ending', emoji: '🏁', color: '#fbbf24' },
     ];
 
     let turnIdx  = 0;
@@ -420,14 +424,21 @@
       card.classList.add('rolling');
       card.style.removeProperty('--glow');
 
-      let avail = connectors.map((_, i) => i).filter(i => !usedConn.includes(i));
-      if (!avail.length) { usedConn = []; avail = connectors.map((_, i) => i); }
-      const fi = avail[Math.floor(Math.random() * avail.length)];
-      usedConn.push(fi);
+      const isEnding = turnIdx === 9;
+      let fi;
+      if (isEnding) {
+        fi = Math.floor(Math.random() * endings.length);
+      } else {
+        let avail = connectors.map((_, i) => i).filter(i => !usedConn.includes(i));
+        if (!avail.length) { usedConn = []; avail = connectors.map((_, i) => i); }
+        fi = avail[Math.floor(Math.random() * avail.length)];
+        usedConn.push(fi);
+      }
 
       let ticks = 0;
       const iv = setInterval(() => {
-        const tmp = connectors[Math.floor(Math.random() * connectors.length)];
+        const pool = isEnding ? endings : connectors;
+        const tmp = pool[Math.floor(Math.random() * pool.length)];
         catEl.textContent      = tmp.emoji + ' ' + tmp.cat;
         catEl.style.color      = tmp.color;
         wordEl.textContent     = tmp.word;
@@ -437,7 +448,7 @@
 
         if (++ticks >= 22) {
           clearInterval(iv);
-          const sc = connectors[fi];
+          const sc = isEnding ? endings[fi] : connectors[fi];
           catEl.textContent      = sc.emoji + ' ' + sc.cat;
           catEl.style.color      = sc.color;
           wordEl.textContent     = sc.word;
