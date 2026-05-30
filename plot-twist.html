@@ -133,31 +133,6 @@
     .op-text { font-size: 1.9rem; color: #eee; line-height: 1.5; }
 
     /* ── Start choice ── */
-    .start-choice {
-      width: 100%; max-width: 720px;
-      display: flex; gap: 12px;
-      margin-bottom: 16px;
-      animation: fadeUp .4s ease both;
-    }
-    .btn-fort {
-      flex: 1; background: #13132b; color: #22c55e; border: 2px solid #22c55e;
-      border-radius: 14px; padding: 16px;
-      font-size: 1rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: background .2s, transform .1s;
-    }
-    .btn-fort:hover { background: rgba(34,197,94,.1); }
-    .btn-fort:active { transform: scale(.98); }
-    .btn-unfort {
-      flex: 1; background: #13132b; color: #ef4444; border: 2px solid #ef4444;
-      border-radius: 14px; padding: 16px;
-      font-size: 1rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: background .2s, transform .1s;
-    }
-    .btn-unfort:hover { background: rgba(239,68,68,.1); }
-    .btn-unfort:active { transform: scale(.98); }
-
     /* ── Main card ── */
     .main-card {
       width: 100%; max-width: 720px;
@@ -310,13 +285,7 @@
     </div>
   </div>
 
-  <!-- Start choice (shown after opening drawn) -->
-  <div class="start-choice" id="start-choice" style="display:none">
-    <button class="btn-fort" onclick="beginPlay(true)">🍀 Start FORTUNATELY</button>
-    <button class="btn-unfort" onclick="beginPlay(false)">💔 Start UNFORTUNATELY</button>
-  </div>
-
-  <!-- Main game card (shown after start choice) -->
+  <!-- Main game card -->
   <div class="main-card" id="main-card" style="display:none">
     <div class="card-bg" id="card-bg">🎬</div>
 
@@ -501,7 +470,7 @@
           card.classList.remove('rolling');
           card.classList.add('landed');
           btn.style.display = 'none';
-          document.getElementById('start-choice').style.display = 'flex';
+          beginPlay(Math.random() > .5);
           rolling = false;
         }
       );
