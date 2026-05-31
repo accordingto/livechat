@@ -244,6 +244,12 @@
     </div>
   </div>
 
+  <!-- Action buttons (right below choices) -->
+  <div class="btn-row">
+    <button class="btn btn-new"  id="new-btn"  onclick="newStory()" disabled>🔁 New Story</button>
+    <button class="btn btn-next" id="next-btn" onclick="nextTurn()" disabled>Next Round →</button>
+  </div>
+
   <!-- Turn history dots -->
   <div class="dots-strip" id="dots-strip"></div>
 
@@ -252,12 +258,6 @@
     <div class="wc-emoji" id="wc-emoji"></div>
     <div class="wc-word"  id="wc-word"></div>
     <div class="wc-turn"  id="wc-turn"></div>
-  </div>
-
-  <!-- Bottom buttons -->
-  <div class="btn-row">
-    <button class="btn btn-new"  id="new-btn"  onclick="newStory()" disabled>🔁 New Story</button>
-    <button class="btn btn-next" id="next-btn" onclick="nextTurn()" disabled>Next Round →</button>
   </div>
 
   <script>
