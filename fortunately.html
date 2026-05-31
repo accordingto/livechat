@@ -341,15 +341,18 @@
         return [pool[0], pool[1]];
       }
 
-      // Rounds 2–9: one is the opposite polarity, one is a random connector
-      const lastType    = history[history.length - 1].type;
-      const lastWord    = history[history.length - 1].word;
-      const oppPool     = lastType === 'fort' ? POOL_UNFORT : POOL_FORT;
-      const opposite    = rand(oppPool);
+      // Rounds 2–9: one is always the canonical opposite, one is random
+      const lastType = history[history.length - 1].type;
+      const lastWord = history[history.length - 1].word;
 
-      const allMiddle   = [...POOL_FORT, ...POOL_UNFORT];
-      const others      = allMiddle.filter(c => c.word !== opposite.word && c.word !== lastWord);
-      const random      = rand(others);
+      // The opposite is always the direct counterpart, never a random synonym
+      const opposite = lastType === 'fort'
+        ? { word: 'UNFORTUNATELY', emoji: '💔', type: 'unfort' }
+        : { word: 'FORTUNATELY',   emoji: '🍀', type: 'fort'   };
+
+      const allMiddle = [...POOL_FORT, ...POOL_UNFORT];
+      const others    = allMiddle.filter(c => c.word !== opposite.word && c.word !== lastWord);
+      const random    = rand(others);
 
       return Math.random() < 0.5 ? [opposite, random] : [random, opposite];
     }
