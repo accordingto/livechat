@@ -224,6 +224,8 @@
     .spin-wrap {
       display: flex;
       justify-content: center;
+      align-items: center;
+      gap: 12px;
       position: relative;
       z-index: 1;
       animation: fadeUp .5s .4s ease both;
@@ -250,6 +252,23 @@
     }
     .spin-btn:active { transform: scale(.97); }
     .spin-btn:disabled { background: #2a2a4a; color: #555; cursor: not-allowed; box-shadow: none; transform: none; }
+
+    /* ── Reset button ── */
+    .reset-btn {
+      background: transparent;
+      color: #555;
+      border: 2px solid #2a2a4a;
+      border-radius: 999px;
+      padding: 17px 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s, color .2s, border-color .2s, transform .1s;
+    }
+    .reset-btn:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
+    .reset-btn:active { transform: scale(.97); }
+    .reset-btn:disabled { opacity: .3; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -294,6 +313,7 @@
 
   <div class="spin-wrap">
     <button class="spin-btn" id="spinBtn" onclick="spin()">🎡 Spin!</button>
+    <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled>↺ Reset</button>
   </div>
 
   <script>
@@ -440,6 +460,7 @@
       const btnD    = document.getElementById('btnDisagree');
 
       spinBtn.disabled = true;
+      document.getElementById('resetBtn').disabled = true;
       btnA.disabled = btnM.disabled = btnD.disabled = true;
       card.classList.remove('active');
       card.classList.add('rolling');
@@ -462,9 +483,15 @@
           document.getElementById('roundNum').textContent = round;
           btnA.disabled = btnM.disabled = btnD.disabled = false;
           spinBtn.disabled = false;
+          document.getElementById('resetBtn').disabled = false;
           rolling = false;
         }
       }, 85);
+    }
+
+    function resetVotes() {
+      votes.agree = votes.middle = votes.disagree = 0;
+      updateBars();
     }
   </script>
 </body>
