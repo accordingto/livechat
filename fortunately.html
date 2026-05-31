@@ -235,6 +235,12 @@
     <button class="btn-draw"   id="draw-btn"   onclick="handleDrawBtn()">🎲 Draw Opening</button>
   </div>
 
+  <!-- Action buttons -->
+  <div class="btn-row">
+    <button class="btn btn-new"  id="new-btn"  onclick="newStory()" disabled>🔁 New Story</button>
+    <button class="btn btn-next" id="next-btn" onclick="nextTurn()" disabled>Next Round →</button>
+  </div>
+
   <!-- Choice Panel (shown each round) -->
   <div class="choice-panel" id="choice-panel">
     <div class="choice-label" id="choice-label"></div>
@@ -242,12 +248,6 @@
       <button class="btn-choice" id="choice-a"></button>
       <button class="btn-choice" id="choice-b"></button>
     </div>
-  </div>
-
-  <!-- Action buttons (right below choices) -->
-  <div class="btn-row">
-    <button class="btn btn-new"  id="new-btn"  onclick="newStory()" disabled>🔁 New Story</button>
-    <button class="btn btn-next" id="next-btn" onclick="nextTurn()" disabled>Next Round →</button>
   </div>
 
   <!-- Turn history dots -->
