@@ -116,28 +116,16 @@
     .choice-btns { display:flex; gap:12px; }
 
     .btn-choice {
-      flex:1; border:2px solid; border-radius:16px;
+      flex:1; border:2px solid #14b8a6; border-radius:16px;
       padding:22px 14px;
       font-size:clamp(.9rem,2.3vw,1.1rem); font-weight:800;
       cursor:pointer; font-family:inherit;
+      background:rgba(20,184,166,.1); color:#5eead4;
       transition:transform .15s, box-shadow .15s, background .15s;
       line-height:1.35; text-align:center;
     }
-    .btn-choice:hover  { transform:translateY(-3px); }
+    .btn-choice:hover  { background:rgba(20,184,166,.22); box-shadow:0 8px 24px rgba(20,184,166,.25); transform:translateY(-3px); }
     .btn-choice:active { transform:scale(.97); }
-
-    .btn-choice-fort {
-      background:rgba(34,197,94,.15); color:#4ade80; border-color:#22c55e;
-    }
-    .btn-choice-fort:hover  { background:rgba(34,197,94,.25); box-shadow:0 8px 24px rgba(34,197,94,.3); }
-    .btn-choice-unfort {
-      background:rgba(239,68,68,.15); color:#f87171; border-color:#ef4444;
-    }
-    .btn-choice-unfort:hover { background:rgba(239,68,68,.25); box-shadow:0 8px 24px rgba(239,68,68,.3); }
-    .btn-choice-end {
-      background:rgba(245,158,11,.15); color:#fbbf24; border-color:#f59e0b;
-    }
-    .btn-choice-end:hover    { background:rgba(245,158,11,.25); box-shadow:0 8px 24px rgba(245,158,11,.3); }
 
     /* ── Turn dots history ── */
     .dots-strip {
@@ -432,7 +420,7 @@
       [document.getElementById('choice-a'), document.getElementById('choice-b')].forEach((btn, i) => {
         const c      = choices[i];
         btn.textContent = c.emoji + '  ' + c.word;
-        btn.className   = 'btn-choice btn-choice-' + c.type;
+        btn.className   = 'btn-choice';
         btn.onclick     = () => selectConnector(c);
       });
 
