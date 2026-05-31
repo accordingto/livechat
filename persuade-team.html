@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Persuade Together! · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Persuade Together">
+  <meta name="theme-color" content="#0d0d1a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .55; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(6,182,212,0); }
+      50%       { box-shadow: 0 0 40px rgba(6,182,212,.28); }
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 720px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 36px;
+      animation: fadeUp .5s ease both;
+      position: relative; z-index: 1;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #06b6d4; font-weight: 700; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 32px;
+      animation: fadeUp .5s .1s ease both;
+      position: relative; z-index: 1;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    /* ── Scenario card ── */
+    .scenario-card {
+      width: 100%; max-width: 720px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 22px;
+      padding: 28px 30px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .4s;
+      animation: fadeUp .5s .2s ease both;
+      min-height: 200px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .scenario-card.rolling { border-color: #06b6d4; animation: flicker .13s infinite; }
+    .scenario-card.landed  { border-color: #06b6d4; animation: pulseGlow 2.8s ease infinite; }
+    .scenario-card::before {
+      content: '🤝';
+      position: absolute; font-size: 10rem; opacity: .025;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+
+    /* Placeholder */
+    .sc-placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 12px; text-align: center;
+      min-height: 160px;
+    }
+    .sc-placeholder .big-emoji { font-size: 3rem; }
+    .sc-placeholder p { color: #333; font-size: .95rem; }
+
+    /* Content */
+    .sc-content { display: none; flex-direction: column; gap: 18px; }
+    .sc-content.show { display: flex; }
+
+    .sc-field { display: flex; flex-direction: column; gap: 5px; }
+    .sc-label {
+      font-size: .72rem; text-transform: uppercase;
+      letter-spacing: .13em; color: #06b6d4; font-weight: 700;
+    }
+    .sc-team     { font-size: 1.95rem; font-weight: 700; color: #eee; }
+    .sc-situation{ font-size: 1.95rem; color: #ccc; line-height: 1.5; }
+    .sc-judge    { font-size: 1.95rem; font-weight: 700; color: #eee; }
+    .sc-divider  { height: 1px; background: #1e1e42; }
+
+    /* ── Draw button ── */
+    .btn-draw {
+      width: 100%; max-width: 720px;
+      background: #13132b; color: #06b6d4; border: 2px solid #06b6d4;
+      border-radius: 14px; padding: 16px;
+      font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+      animation: fadeUp .5s .3s ease both;
+      position: relative; z-index: 1;
+    }
+    .btn-draw:hover { background: rgba(6,182,212,.1); }
+    .btn-draw:active { transform: scale(.98); }
+    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="round-num">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🤝 Persuade Together!</h1>
+    <p>One judge, everyone else teams up — convince them together!</p>
+  </div>
+
+  <!-- Scenario card -->
+  <div class="scenario-card" id="sc-card">
+    <div class="sc-placeholder" id="sc-placeholder">
+      <div class="big-emoji">🤝</div>
+      <p>Press <strong>Draw</strong> to reveal the scene</p>
+    </div>
+    <div class="sc-content" id="sc-content">
+      <div class="sc-field">
+        <div class="sc-label">👥 Your Team Plays</div>
+        <div class="sc-team" id="sc-team"></div>
+      </div>
+      <div class="sc-divider"></div>
+      <div class="sc-field">
+        <div class="sc-label">🎯 The Situation</div>
+        <div class="sc-situation" id="sc-situation"></div>
+      </div>
+      <div class="sc-divider"></div>
+      <div class="sc-field">
+        <div class="sc-label">👨‍⚖️ The Judge</div>
+        <div class="sc-judge" id="sc-judge"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
+
+  <script>
+    const scenarios = [
+      // School
+      { judge: 'Teacher', emoji: '🧑‍🏫',
+        team: 'Students who think the exam is too soon',
+        situation: 'Your whole class feels the upcoming exam is too soon. Convince the teacher to postpone it by one week.' },
+      { judge: 'Principal', emoji: '🏫',
+        team: 'The student council who wants to change the uniform rule',
+        situation: 'The entire student council believes the school uniform policy is outdated. Convince the principal to let students wear casual clothes on Fridays.' },
+      { judge: 'Teacher', emoji: '🧑‍🏫',
+        team: 'Students who think the homework is unfair',
+        situation: 'Your group believes this week\'s homework assignment is too long and completely unfair. Convince the teacher to cancel it entirely.' },
+      { judge: 'University Professor', emoji: '👨‍🏫',
+        team: 'Students who all missed the deadline',
+        situation: 'Half the class missed the project deadline because the instructions were confusing. Convince the professor to allow a one-week extension for everyone.' },
+      { judge: 'Teacher', emoji: '🧑‍🏫',
+        team: 'Students with a creative proposal',
+        situation: 'The whole class wants to replace the final exam with a group performance or creative project. Convince the teacher it will still demonstrate learning — and be much more fun.' },
+
+      // Workplace
+      { judge: 'Manager', emoji: '💼',
+        team: 'Employees who want to work from home',
+        situation: 'Your entire team wants to work from home every Friday. Convince the manager that productivity will not drop and everyone will actually be happier.' },
+      { judge: 'CEO', emoji: '🏢',
+        team: 'Department staff who want a bigger budget',
+        situation: 'Your department feels underfunded compared to others. Convince the CEO to double your budget for the next quarter.' },
+      { judge: 'HR Manager', emoji: '📋',
+        team: 'Employees who want better office perks',
+        situation: 'The whole team wants free lunch on Fridays and a nap room in the office. Convince the HR manager this will boost morale and productivity.' },
+      { judge: 'Boss', emoji: '👔',
+        team: 'Employees who hate the early meeting',
+        situation: 'Everyone hates the 8am Monday team meeting. Convince the boss to move it to Wednesday at 11am instead.' },
+      { judge: 'Boss', emoji: '😄',
+        team: 'Employees with a fun idea',
+        situation: 'The whole team wants a "Bring Your Pet to Work" day every month. Convince the boss it will reduce stress and improve team bonding.' },
+
+      // Community
+      { judge: 'Mayor', emoji: '🏛️',
+        team: 'Residents who want a community garden',
+        situation: 'Your neighbourhood group wants to turn the abandoned lot on Main Street into a community garden and playground. Convince the mayor to approve the project.' },
+      { judge: 'Landlord', emoji: '🏠',
+        team: 'Tenants who want better living conditions',
+        situation: 'All tenants in the building want the landlord to fix the broken elevator, add free WiFi, and allow pets. Convince the landlord to agree to all three.' },
+      { judge: 'School Principal', emoji: '🏫',
+        team: 'Parents who want a new school policy',
+        situation: 'A group of parents wants the school to ban smartphones completely during school hours. Convince the principal to implement this rule starting next month.' },
+
+      // Family
+      { judge: 'Mom & Dad', emoji: '👨‍👩‍👧‍👦',
+        team: 'All the kids who want to go to a theme park',
+        situation: 'All the children want to go to a theme park for the family holiday instead of visiting relatives. Convince your parents it will be far more fun and memorable.' },
+      { judge: 'Grandma', emoji: '👵',
+        team: 'Grandchildren who want grandma to use a smartphone',
+        situation: 'The whole family wants grandma to get a smartphone so everyone can video-call her. Convince her it is easy to use and will keep the family much closer.' },
+      { judge: 'Mom & Dad', emoji: '👨‍👩‍👦',
+        team: 'Siblings who want a gaming console',
+        situation: 'All the siblings are united — they want a new gaming console. Convince your parents it promotes teamwork, and they promise to set a strict time limit.' },
+      { judge: 'Dad', emoji: '👨',
+        team: 'Kids who desperately want a family pet',
+        situation: 'All the children desperately want a dog. Convince dad that everyone will share the responsibility and the whole family will benefit.' },
+      { judge: 'Mom & Dad', emoji: '😄',
+        team: 'Kids who want to stay up for New Year\'s',
+        situation: 'All the children want to stay up past midnight to celebrate New Year\'s Eve. Convince the parents this is a once-a-year event and everyone will survive the next day.' },
+
+      // Friends / Social
+      { judge: 'One reluctant friend', emoji: '🤷',
+        team: 'Friends who need everyone on the trip',
+        situation: 'Your whole friend group has planned a trip, but one person keeps saying no. Convince them to come — you genuinely need everyone there to make it perfect.' },
+      { judge: 'The friend who planned everything', emoji: '🗓️',
+        team: 'Group members who want to change the destination',
+        situation: 'The group originally planned to go to the mountains, but almost everyone now wants to go to the beach instead. Convince the trip organiser to change the plan.' },
+      { judge: 'One friend who wants to leave early', emoji: '🌙',
+        team: 'Friends who want to keep the party going',
+        situation: 'It is only 9pm and one friend is already suggesting everyone go home. Convince them to stay at least two more hours — the fun is just getting started.' },
+      { judge: 'The one friend who always refuses karaoke', emoji: '🎤',
+        team: 'Friends who love karaoke',
+        situation: 'Everyone wants to go to karaoke but one person refuses every single time. Convince them that this time will be completely different — and they will actually enjoy it.' },
+
+      // Sports / Competition
+      { judge: 'Coach', emoji: '🏆',
+        team: 'Players who want a lighter training schedule',
+        situation: 'The whole team thinks training six days a week is too intense and people are getting injured. Convince the coach to reduce it to four days without losing performance.' },
+      { judge: 'Referee', emoji: '🟨',
+        team: 'Players who disagree with a call',
+        situation: 'Your team believes the referee made a wrong call that could cost you the game. Convince the referee to reconsider the decision before the final whistle.' },
+
+      // Consumer / Travel
+      { judge: 'Restaurant Manager', emoji: '🍽️',
+        team: 'A group of diners who had a terrible experience',
+        situation: 'Your entire table received cold food, waited over an hour, and experienced rude service. Convince the restaurant manager to give your whole group a full refund.' },
+      { judge: 'Hotel Manager', emoji: '🏨',
+        team: 'A group of guests who arrived to problems',
+        situation: 'Your group booked three rooms but they were not ready on arrival — two hours late with no apology. Convince the hotel manager to upgrade everyone to suites at no extra cost.' },
+      { judge: 'Airline Customer Service', emoji: '✈️',
+        team: 'Passengers who missed a connecting flight',
+        situation: 'Your whole group missed a connecting flight because of the airline\'s own delay. Convince customer service to rebook everyone for free and provide a meal voucher.' },
+    ];
+
+    let round   = 0;
+    let used    = [];
+    let rolling = false;
+
+    function draw() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn  = document.getElementById('draw-btn');
+      const card = document.getElementById('sc-card');
+      const ph   = document.getElementById('sc-placeholder');
+      const ct   = document.getElementById('sc-content');
+
+      btn.disabled = true;
+      card.classList.remove('landed');
+      card.classList.add('rolling');
+      ph.style.display = 'none';
+      ct.classList.add('show');
+
+      let avail = scenarios.map((_, i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = scenarios.map((_, i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      used.push(fi);
+
+      let ticks = 0;
+      const iv = setInterval(() => {
+        const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
+        document.getElementById('sc-team').textContent      = tmp.team;
+        document.getElementById('sc-situation').textContent = tmp.situation;
+        document.getElementById('sc-judge').textContent     = tmp.emoji + ' ' + tmp.judge;
+        if (++ticks >= 24) {
+          clearInterval(iv);
+          const sc = scenarios[fi];
+          document.getElementById('sc-team').textContent      = sc.team;
+          document.getElementById('sc-situation').textContent = sc.situation;
+          document.getElementById('sc-judge').textContent     = sc.emoji + ' ' + sc.judge;
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+          round++;
+          document.getElementById('round-num').textContent = round;
+          btn.textContent = '🔁 Redraw';
+          btn.disabled    = false;
+          rolling         = false;
+        }
+      }, 82);
+    }
+  </script>
+</body>
+</html>
