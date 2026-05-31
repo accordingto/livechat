@@ -196,6 +196,12 @@
       box-shadow: 0 6px 28px rgba(244,67,54,.25);
       transform: translateY(-3px);
     }
+    .vote-btn.middle { border-color: #f59e0b; color: #f59e0b; }
+    .vote-btn.middle:hover:not(:disabled) {
+      background: rgba(245,158,11,.1);
+      box-shadow: 0 6px 28px rgba(245,158,11,.25);
+      transform: translateY(-3px);
+    }
 
     .vote-btn .emoji { font-size: 1.4rem; }
     .vote-btn .label { font-size: .75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
@@ -212,6 +218,7 @@
     .vote-btn .bar { height: 100%; border-radius: 4px; transition: width .4s; width: 0%; }
     .vote-btn.agree   .bar { background: #4caf50; }
     .vote-btn.disagree .bar { background: #f44336; }
+    .vote-btn.middle   .bar { background: #f59e0b; }
 
     /* ── Spin wrap ── */
     .spin-wrap {
@@ -270,6 +277,12 @@
       <span class="label">Agree</span>
       <span class="count" id="cntAgree">0</span>
       <div class="bar-wrap"><div class="bar" id="barAgree"></div></div>
+    </button>
+    <button class="vote-btn middle" id="btnMiddle" disabled onclick="vote('middle')">
+      <span class="emoji">🤷</span>
+      <span class="label">It Depends</span>
+      <span class="count" id="cntMiddle">0</span>
+      <div class="bar-wrap"><div class="bar" id="barMiddle"></div></div>
     </button>
     <button class="vote-btn disagree" id="btnDisagree" disabled onclick="vote('disagree')">
       <span class="emoji">👎</span>
@@ -387,7 +400,7 @@
 
     let rolling = false;
     let round = 0;
-    const votes = { agree: 0, disagree: 0 };
+    const votes = { agree: 0, middle: 0, disagree: 0 };
 
     function vote(side) {
       votes[side]++;
@@ -395,10 +408,12 @@
     }
 
     function updateBars() {
-      const total = votes.agree + votes.disagree || 1;
-      document.getElementById('cntAgree').textContent = votes.agree;
+      const total = votes.agree + votes.middle + votes.disagree || 1;
+      document.getElementById('cntAgree').textContent    = votes.agree;
+      document.getElementById('cntMiddle').textContent   = votes.middle;
       document.getElementById('cntDisagree').textContent = votes.disagree;
-      document.getElementById('barAgree').style.width = (votes.agree / total * 100) + '%';
+      document.getElementById('barAgree').style.width    = (votes.agree   / total * 100) + '%';
+      document.getElementById('barMiddle').style.width   = (votes.middle  / total * 100) + '%';
       document.getElementById('barDisagree').style.width = (votes.disagree / total * 100) + '%';
     }
 
@@ -414,17 +429,18 @@
     function spin() {
       if (rolling) return;
       rolling = true;
-      votes.agree = votes.disagree = 0;
+      votes.agree = votes.middle = votes.disagree = 0;
       updateBars();
 
       const card    = document.getElementById('card');
       const text    = document.getElementById('takeText');
       const spinBtn = document.getElementById('spinBtn');
       const btnA    = document.getElementById('btnAgree');
+      const btnM    = document.getElementById('btnMiddle');
       const btnD    = document.getElementById('btnDisagree');
 
       spinBtn.disabled = true;
-      btnA.disabled = btnD.disabled = true;
+      btnA.disabled = btnM.disabled = btnD.disabled = true;
       card.classList.remove('active');
       card.classList.add('rolling');
       text.className = 'take-text';
@@ -444,7 +460,7 @@
           card.classList.add('active');
           round++;
           document.getElementById('roundNum').textContent = round;
-          btnA.disabled = btnD.disabled = false;
+          btnA.disabled = btnM.disabled = btnD.disabled = false;
           spinBtn.disabled = false;
           rolling = false;
         }
