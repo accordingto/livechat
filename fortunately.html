@@ -139,22 +139,6 @@
     }
     .btn-choice-end:hover    { background:rgba(245,158,11,.25); box-shadow:0 8px 24px rgba(245,158,11,.3); }
 
-    /* ── Turn dots history ── */
-    .dots-strip {
-      width:100%; max-width:720px;
-      display:flex; align-items:center; gap:7px; flex-wrap:wrap;
-      margin-bottom:16px; min-height:18px;
-      position:relative; z-index:1;
-    }
-    .hdot { width:11px; height:11px; border-radius:50%; flex-shrink:0; transition:box-shadow .3s; }
-    .hdot.f   { background:#22c55e; }
-    .hdot.u   { background:#ef4444; }
-    .hdot.e   { background:#f59e0b; }
-    .hdot.cur { width:15px; height:15px; }
-    .hdot.f.cur { box-shadow:0 0 10px #22c55e; }
-    .hdot.u.cur { box-shadow:0 0 10px #ef4444; }
-    .hdot.e.cur { box-shadow:0 0 10px #f59e0b; }
-
     /* ── WORD CARD ── */
     .word-card {
       width:100%; max-width:720px;
@@ -411,7 +395,6 @@
       document.getElementById('redraw-btn').style.display = 'none';
       document.getElementById('new-btn').disabled         = false;
       document.getElementById('next-btn').disabled        = true;
-      document.getElementById('dots-strip').innerHTML     = '';
       document.getElementById('word-card').className      = 'word-card';
       updateTurnNum();
       showChoicePanel();
@@ -445,7 +428,6 @@
       history.push(connector);
       document.getElementById('choice-panel').className = 'choice-panel';
       renderCard(connector);
-      renderDots();
 
       const isLast = turnIdx === MAX_TURNS - 1;
       const nb     = document.getElementById('next-btn');
@@ -466,17 +448,6 @@
       document.getElementById('wc-emoji').textContent = connector.emoji;
       document.getElementById('wc-word').textContent  = connector.word;
       document.getElementById('wc-turn').textContent  = 'Round ' + (turnIdx + 1) + ' / ' + MAX_TURNS;
-    }
-
-    function renderDots() {
-      const strip = document.getElementById('dots-strip');
-      strip.innerHTML = '';
-      history.forEach((c, i) => {
-        const d = document.createElement('div');
-        const tc = c.type === 'fort' ? 'f' : c.type === 'unfort' ? 'u' : 'e';
-        d.className = 'hdot ' + tc + (i === history.length - 1 ? ' cur' : '');
-        strip.appendChild(d);
-      });
     }
 
     function redrawOpening() {
@@ -507,7 +478,6 @@
       document.getElementById('next-btn').textContent       = 'Next Round →';
       document.getElementById('choice-panel').className     = 'choice-panel';
       document.getElementById('word-card').className        = 'word-card';
-      document.getElementById('dots-strip').innerHTML       = '';
       document.getElementById('turn-num').textContent       = '—';
     }
 
