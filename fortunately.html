@@ -21,12 +21,13 @@
       padding: 28px 20px 72px;
     }
 
-    @keyframes fadeUp  { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:.55} }
-    @keyframes glowGreen { 0%,100%{box-shadow:0 0 0 rgba(34,197,94,0)}  50%{box-shadow:0 0 50px rgba(34,197,94,.35)} }
-    @keyframes glowRed   { 0%,100%{box-shadow:0 0 0 rgba(239,68,68,0)}  50%{box-shadow:0 0 50px rgba(239,68,68,.35)} }
-    @keyframes popIn   { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
-    @keyframes slideDown { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes flicker   { 0%,100%{opacity:1} 50%{opacity:.55} }
+    @keyframes glowGreen { 0%,100%{box-shadow:0 0 0 rgba(34,197,94,0)}   50%{box-shadow:0 0 50px rgba(34,197,94,.35)} }
+    @keyframes glowRed   { 0%,100%{box-shadow:0 0 0 rgba(239,68,68,0)}   50%{box-shadow:0 0 50px rgba(239,68,68,.35)} }
+    @keyframes glowGold  { 0%,100%{box-shadow:0 0 0 rgba(245,158,11,0)}  50%{box-shadow:0 0 50px rgba(245,158,11,.35)} }
+    @keyframes popIn     { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
 
     /* ── Topbar ── */
     .topbar {
@@ -68,12 +69,12 @@
     }
     .opening-box.rolling { border-color:#14b8a6; animation:flicker .13s infinite; }
     .opening-box.set     { border-color:#14b8a6; box-shadow:0 0 24px rgba(20,184,166,.18); }
-    .op-icon { font-size:1.9rem; flex-shrink:0; }
+    .op-icon  { font-size:1.9rem; flex-shrink:0; }
     .op-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; color:#14b8a6; margin-bottom:6px; font-weight:700; }
     .op-text  { font-size:1.9rem; color:#444; font-style:italic; line-height:1.4; transition:color .3s; }
     .op-text.loaded { color:#ccc; }
 
-    /* ── Draw / Redraw / Start row ── */
+    /* ── Draw / Redraw row ── */
     .opening-btn-row {
       width:100%; max-width:720px;
       display:flex; gap:12px; margin-bottom:22px;
@@ -97,20 +98,62 @@
     .btn-redraw:hover { background:rgba(20,184,166,.08); color:#14b8a6; border-color:#14b8a6; }
     .btn-redraw:disabled { opacity:.4; cursor:not-allowed; }
 
-    /* ── Start choice buttons ── */
-    .btn-start-fort, .btn-start-unfort {
-      flex:1; border:none; border-radius:14px; padding:15px 12px;
-      font-size:1rem; font-weight:700; cursor:pointer; font-family:inherit;
-      transition:transform .15s, box-shadow .15s;
+    /* ── Choice Panel ── */
+    .choice-panel {
+      width:100%; max-width:720px;
+      display:none; flex-direction:column; gap:12px;
+      margin-bottom:22px;
+      position:relative; z-index:1;
     }
-    .btn-start-fort {
-      background:rgba(34,197,94,.15); color:#4ade80; border:2px solid #22c55e;
+    .choice-panel.visible {
+      display:flex;
+      animation:slideDown .3s ease both;
     }
-    .btn-start-fort:hover { background:rgba(34,197,94,.25); transform:translateY(-2px); box-shadow:0 6px 20px rgba(34,197,94,.3); }
-    .btn-start-unfort {
-      background:rgba(239,68,68,.15); color:#f87171; border:2px solid #ef4444;
+    .choice-label {
+      font-size:.8rem; text-transform:uppercase; letter-spacing:.1em;
+      color:#444; font-weight:700; text-align:center;
     }
-    .btn-start-unfort:hover { background:rgba(239,68,68,.25); transform:translateY(-2px); box-shadow:0 6px 20px rgba(239,68,68,.3); }
+    .choice-btns { display:flex; gap:12px; }
+
+    .btn-choice {
+      flex:1; border:2px solid; border-radius:16px;
+      padding:22px 14px;
+      font-size:clamp(.9rem,2.3vw,1.1rem); font-weight:800;
+      cursor:pointer; font-family:inherit;
+      transition:transform .15s, box-shadow .15s, background .15s;
+      line-height:1.35; text-align:center;
+    }
+    .btn-choice:hover  { transform:translateY(-3px); }
+    .btn-choice:active { transform:scale(.97); }
+
+    .btn-choice-fort {
+      background:rgba(34,197,94,.15); color:#4ade80; border-color:#22c55e;
+    }
+    .btn-choice-fort:hover  { background:rgba(34,197,94,.25); box-shadow:0 8px 24px rgba(34,197,94,.3); }
+    .btn-choice-unfort {
+      background:rgba(239,68,68,.15); color:#f87171; border-color:#ef4444;
+    }
+    .btn-choice-unfort:hover { background:rgba(239,68,68,.25); box-shadow:0 8px 24px rgba(239,68,68,.3); }
+    .btn-choice-end {
+      background:rgba(245,158,11,.15); color:#fbbf24; border-color:#f59e0b;
+    }
+    .btn-choice-end:hover    { background:rgba(245,158,11,.25); box-shadow:0 8px 24px rgba(245,158,11,.3); }
+
+    /* ── Turn dots history ── */
+    .dots-strip {
+      width:100%; max-width:720px;
+      display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+      margin-bottom:16px; min-height:18px;
+      position:relative; z-index:1;
+    }
+    .hdot { width:11px; height:11px; border-radius:50%; flex-shrink:0; transition:box-shadow .3s; }
+    .hdot.f   { background:#22c55e; }
+    .hdot.u   { background:#ef4444; }
+    .hdot.e   { background:#f59e0b; }
+    .hdot.cur { width:15px; height:15px; }
+    .hdot.f.cur { box-shadow:0 0 10px #22c55e; }
+    .hdot.u.cur { box-shadow:0 0 10px #ef4444; }
+    .hdot.e.cur { box-shadow:0 0 10px #f59e0b; }
 
     /* ── WORD CARD ── */
     .word-card {
@@ -123,35 +166,17 @@
       position:relative; z-index:1;
     }
     .word-card.visible { opacity:1; pointer-events:auto; }
-    .word-card.fort {
-      background:rgba(34,197,94,.13); border:2px solid #22c55e;
-      animation:popIn .35s ease both, glowGreen 2.8s ease infinite;
-    }
-    .word-card.unfort {
-      background:rgba(239,68,68,.13); border:2px solid #ef4444;
-      animation:popIn .35s ease both, glowRed 2.8s ease infinite;
-    }
+    .word-card.fort   { background:rgba(34,197,94,.13);  border:2px solid #22c55e; animation:popIn .35s ease both, glowGreen 2.8s ease infinite; }
+    .word-card.unfort { background:rgba(239,68,68,.13);  border:2px solid #ef4444; animation:popIn .35s ease both, glowRed   2.8s ease infinite; }
+    .word-card.end    { background:rgba(245,158,11,.13); border:2px solid #f59e0b; animation:popIn .35s ease both, glowGold  2.8s ease infinite; }
     .wc-emoji { font-size:1.8rem; }
     .wc-word  {
       font-size:clamp(1.3rem,4vw,2rem); font-weight:900; letter-spacing:.01em; line-height:1.2;
     }
     .word-card.fort   .wc-word { color:#4ade80; }
     .word-card.unfort .wc-word { color:#f87171; }
-    .wc-dots { font-size:.9rem; color:#333; margin-top:2px; }
-
-    /* ── Turn dots history ── */
-    .dots-strip {
-      width:100%; max-width:720px;
-      display:flex; align-items:center; gap:7px; flex-wrap:wrap;
-      margin-bottom:16px; min-height:18px;
-      position:relative; z-index:1;
-    }
-    .hdot { width:11px; height:11px; border-radius:50%; flex-shrink:0; transition:box-shadow .3s; }
-    .hdot.f { background:#22c55e; }
-    .hdot.u { background:#ef4444; }
-    .hdot.cur { width:15px; height:15px; }
-    .hdot.f.cur { box-shadow:0 0 10px #22c55e; }
-    .hdot.u.cur { box-shadow:0 0 10px #ef4444; }
+    .word-card.end    .wc-word { color:#fbbf24; }
+    .wc-turn { font-size:.82rem; color:#555; margin-top:4px; }
 
     /* ── Action buttons ── */
     .btn-row {
@@ -187,7 +212,7 @@
 
   <div class="topbar">
     <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Turn <span id="turn-num">—</span></div>
+    <div class="round-badge">Round <span id="turn-num">—</span> / 10</div>
   </div>
 
   <div class="header">
@@ -204,16 +229,19 @@
     </div>
   </div>
 
-  <!-- Draw / Redraw / Start row -->
+  <!-- Draw / Redraw row -->
   <div class="opening-btn-row">
     <button class="btn-redraw" id="redraw-btn" onclick="redrawOpening()" style="display:none">🔀 Redraw</button>
     <button class="btn-draw"   id="draw-btn"   onclick="handleDrawBtn()">🎲 Draw Opening</button>
   </div>
 
-  <!-- Start choice (shown after drawing) -->
-  <div id="start-choice" style="display:none; width:100%; max-width:720px; display:none; gap:12px; margin-bottom:22px;">
-    <button class="btn-start-fort"  onclick="beginPlay(true)">🍀 Start with FORTUNATELY</button>
-    <button class="btn-start-unfort" onclick="beginPlay(false)">💔 Start with UNFORTUNATELY</button>
+  <!-- Choice Panel (shown each round) -->
+  <div class="choice-panel" id="choice-panel">
+    <div class="choice-label" id="choice-label"></div>
+    <div class="choice-btns">
+      <button class="btn-choice" id="choice-a"></button>
+      <button class="btn-choice" id="choice-b"></button>
+    </div>
   </div>
 
   <!-- Turn history dots -->
@@ -223,13 +251,13 @@
   <div class="word-card" id="word-card">
     <div class="wc-emoji" id="wc-emoji"></div>
     <div class="wc-word"  id="wc-word"></div>
-    <div class="wc-dots">. . .</div>
+    <div class="wc-turn"  id="wc-turn"></div>
   </div>
 
-  <!-- Buttons -->
+  <!-- Bottom buttons -->
   <div class="btn-row">
     <button class="btn btn-new"  id="new-btn"  onclick="newStory()" disabled>🔁 New Story</button>
-    <button class="btn btn-next" id="next-btn" onclick="nextTurn()" disabled>Next Turn →</button>
+    <button class="btn btn-next" id="next-btn" onclick="nextTurn()" disabled>Next Round →</button>
   </div>
 
   <script>
@@ -266,34 +294,96 @@
       "A chef served the last dish at a sold-out dinner — and then all the lights went out...",
     ];
 
-    let turnIdx   = -1;
-    let usedIdx   = [];
-    let rolling   = false;
-    let started   = false;
-    let startFort = false;
+    const POOL_FORT = [
+      { word: 'FORTUNATELY',           emoji: '🍀', type: 'fort' },
+      { word: 'LUCKILY',               emoji: '🌟', type: 'fort' },
+      { word: 'AMAZINGLY',             emoji: '✨', type: 'fort' },
+      { word: 'THANKFULLY',            emoji: '🙏', type: 'fort' },
+      { word: 'HAPPILY',               emoji: '😊', type: 'fort' },
+      { word: 'MIRACULOUSLY',          emoji: '🎉', type: 'fort' },
+      { word: 'TO THEIR RELIEF',       emoji: '😅', type: 'fort' },
+      { word: 'AS LUCK WOULD HAVE IT', emoji: '🍀', type: 'fort' },
+    ];
+
+    const POOL_UNFORT = [
+      { word: 'UNFORTUNATELY',         emoji: '💔', type: 'unfort' },
+      { word: 'SADLY',                 emoji: '😢', type: 'unfort' },
+      { word: 'TO MAKE MATTERS WORSE', emoji: '😱', type: 'unfort' },
+      { word: 'STRANGELY',             emoji: '🙃', type: 'unfort' },
+      { word: 'SHOCKINGLY',            emoji: '⚡', type: 'unfort' },
+      { word: 'UNEXPECTEDLY',          emoji: '😬', type: 'unfort' },
+      { word: 'OF ALL THINGS',         emoji: '🤦', type: 'unfort' },
+      { word: 'WORSE STILL',           emoji: '😰', type: 'unfort' },
+    ];
+
+    const POOL_ENDING = [
+      { word: 'IN THE END',            emoji: '🏁', type: 'end' },
+      { word: 'FINALLY',               emoji: '🎯', type: 'end' },
+      { word: 'EVENTUALLY',            emoji: '⏰', type: 'end' },
+      { word: 'AFTER ALL THAT',        emoji: '🌅', type: 'end' },
+      { word: 'AT LAST',               emoji: '✅', type: 'end' },
+      { word: 'IN THE LONG RUN',       emoji: '🏃', type: 'end' },
+      { word: 'AND SO',                emoji: '📖', type: 'end' },
+      { word: 'TO WRAP IT ALL UP',     emoji: '🎀', type: 'end' },
+    ];
+
+    const MAX_TURNS = 10;
+
+    let turnIdx  = -1;
+    let started  = false;
+    let rolling  = false;
+    let history  = [];   // [{word, emoji, type}, ...]
+    let usedIdx  = [];
+
+    function rand(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    /* Returns the two connector objects to show for a given turn index (0-based). */
+    function getChoices(idx) {
+      if (idx === 0) {
+        return [
+          { word: 'FORTUNATELY',   emoji: '🍀', type: 'fort'   },
+          { word: 'UNFORTUNATELY', emoji: '💔', type: 'unfort' },
+        ];
+      }
+
+      if (idx === MAX_TURNS - 1) {
+        const pool = [...POOL_ENDING].sort(() => Math.random() - 0.5);
+        return [pool[0], pool[1]];
+      }
+
+      // Rounds 2–9: one is the opposite polarity, one is a random connector
+      const lastType    = history[history.length - 1].type;
+      const lastWord    = history[history.length - 1].word;
+      const oppPool     = lastType === 'fort' ? POOL_UNFORT : POOL_FORT;
+      const opposite    = rand(oppPool);
+
+      const allMiddle   = [...POOL_FORT, ...POOL_UNFORT];
+      const others      = allMiddle.filter(c => c.word !== opposite.word && c.word !== lastWord);
+      const random      = rand(others);
+
+      return Math.random() < 0.5 ? [opposite, random] : [random, opposite];
+    }
+
+    /* ── Game flow ── */
 
     function handleDrawBtn() {
       if (!started) { drawOpening(); }
-      else          { showStartChoice(); }
-    }
-
-    function showStartChoice() {
-      document.getElementById('draw-btn').style.display = 'none';
-      const sc = document.getElementById('start-choice');
-      sc.style.display = 'flex';
+      else          { beginPlay();   }
     }
 
     function drawOpening() {
       if (rolling) return;
       rolling = true;
-      const btn  = document.getElementById('draw-btn');
-      const box  = document.getElementById('opening-box');
-      const txt  = document.getElementById('op-text');
-      btn.disabled = true;
-      box.className = 'opening-box rolling';
+      const btn = document.getElementById('draw-btn');
+      const box = document.getElementById('opening-box');
+      const txt = document.getElementById('op-text');
+      btn.disabled    = true;
+      box.className   = 'opening-box rolling';
 
-      let avail = openings.map((_,i)=>i).filter(i => !usedIdx.includes(i));
-      if (!avail.length) { usedIdx = []; avail = openings.map((_,i)=>i); }
+      let avail = openings.map((_, i) => i).filter(i => !usedIdx.includes(i));
+      if (!avail.length) { usedIdx = []; avail = openings.map((_, i) => i); }
       const fi = avail[Math.floor(Math.random() * avail.length)];
       usedIdx.push(fi);
 
@@ -303,10 +393,10 @@
         txt.className   = 'op-text loaded';
         if (++ticks >= 22) {
           clearInterval(iv);
-          txt.textContent  = openings[fi];
-          box.className    = 'opening-box set';
-          btn.disabled     = false;
-          btn.textContent  = '▶ Start Story';
+          txt.textContent = openings[fi];
+          box.className   = 'opening-box set';
+          btn.disabled    = false;
+          btn.textContent = '▶ Start Story';
           document.getElementById('redraw-btn').style.display = '';
           rolling = false;
           started = true;
@@ -314,28 +404,95 @@
       }, 85);
     }
 
-    function beginPlay(fort) {
-      startFort = fort;
-      turnIdx   = 0;
-      document.getElementById('start-choice').style.display = 'none';
-      document.getElementById('redraw-btn').style.display   = 'none';
-      document.getElementById('new-btn').disabled  = false;
-      document.getElementById('next-btn').disabled = false;
-      renderCard();
-      renderDots();
+    function beginPlay() {
+      turnIdx = 0;
+      history = [];
+      document.getElementById('draw-btn').style.display   = 'none';
+      document.getElementById('redraw-btn').style.display = 'none';
+      document.getElementById('new-btn').disabled         = false;
+      document.getElementById('next-btn').disabled        = true;
+      document.getElementById('dots-strip').innerHTML     = '';
+      document.getElementById('word-card').className      = 'word-card';
       updateTurnNum();
+      showChoicePanel();
+    }
+
+    function showChoicePanel() {
+      const choices = getChoices(turnIdx);
+      const label   = document.getElementById('choice-label');
+
+      if (turnIdx === 0) {
+        label.textContent = '🎬 Round 1 — How does the story begin?';
+      } else if (turnIdx === MAX_TURNS - 1) {
+        label.textContent = '🏁 Final Round — Time to wrap up the story!';
+      } else {
+        label.textContent = `Round ${turnIdx + 1} — Pick a connector:`;
+      }
+
+      [document.getElementById('choice-a'), document.getElementById('choice-b')].forEach((btn, i) => {
+        const c      = choices[i];
+        btn.textContent = c.emoji + '  ' + c.word;
+        btn.className   = 'btn-choice btn-choice-' + c.type;
+        btn.onclick     = () => selectConnector(c);
+      });
+
+      document.getElementById('choice-panel').className = 'choice-panel visible';
+      document.getElementById('word-card').className    = 'word-card';
+      document.getElementById('next-btn').disabled      = true;
+    }
+
+    function selectConnector(connector) {
+      history.push(connector);
+      document.getElementById('choice-panel').className = 'choice-panel';
+      renderCard(connector);
+      renderDots();
+
+      const isLast = turnIdx === MAX_TURNS - 1;
+      const nb     = document.getElementById('next-btn');
+      nb.disabled    = isLast;
+      nb.textContent = isLast ? '🎉 Story Complete!' : 'Next Round →';
     }
 
     function nextTurn() {
+      if (turnIdx >= MAX_TURNS - 1) return;
       turnIdx++;
-      renderCard();
-      renderDots();
       updateTurnNum();
+      showChoicePanel();
+    }
+
+    function renderCard(connector) {
+      const card = document.getElementById('word-card');
+      card.className = 'word-card visible ' + connector.type;
+      document.getElementById('wc-emoji').textContent = connector.emoji;
+      document.getElementById('wc-word').textContent  = connector.word;
+      document.getElementById('wc-turn').textContent  = 'Round ' + (turnIdx + 1) + ' / ' + MAX_TURNS;
+    }
+
+    function renderDots() {
+      const strip = document.getElementById('dots-strip');
+      strip.innerHTML = '';
+      history.forEach((c, i) => {
+        const d = document.createElement('div');
+        const tc = c.type === 'fort' ? 'f' : c.type === 'unfort' ? 'u' : 'e';
+        d.className = 'hdot ' + tc + (i === history.length - 1 ? ' cur' : '');
+        strip.appendChild(d);
+      });
+    }
+
+    function redrawOpening() {
+      if (rolling) return;
+      started = false;
+      document.getElementById('redraw-btn').style.display = 'none';
+      const btn = document.getElementById('draw-btn');
+      btn.style.display = '';
+      btn.textContent   = '🎲 Draw Opening';
+      drawOpening();
     }
 
     function newStory() {
-      turnIdx  = -1;
-      started  = false;
+      turnIdx = -1;
+      started = false;
+      history = [];
       const box = document.getElementById('opening-box');
       box.className = 'opening-box';
       document.getElementById('op-text').textContent = 'Press Draw to reveal the opening scenario';
@@ -344,44 +501,14 @@
       drawBtn.textContent  = '🎲 Draw Opening';
       drawBtn.style.display = '';
       drawBtn.disabled     = false;
-      document.getElementById('redraw-btn').style.display = 'none';
-      document.getElementById('new-btn').disabled  = true;
-      document.getElementById('next-btn').disabled = true;
-      document.getElementById('start-choice').style.display = 'none';
-      const card = document.getElementById('word-card');
-      card.className = 'word-card';
-      document.getElementById('dots-strip').innerHTML = '';
-      document.getElementById('turn-num').textContent = '—';
-    }
-
-    function renderCard() {
-      // startFort=true  → even turns = Fortunately, odd = Unfortunately
-      // startFort=false → even turns = Unfortunately, odd = Fortunately
-      const isFort = startFort ? (turnIdx % 2 === 0) : (turnIdx % 2 === 1);
-      const card = document.getElementById('word-card');
-      card.className = 'word-card visible ' + (isFort ? 'fort' : 'unfort');
-      document.getElementById('wc-emoji').textContent = isFort ? '🍀' : '💔';
-      document.getElementById('wc-word').textContent  = isFort ? 'FORTUNATELY' : 'UNFORTUNATELY';
-    }
-
-    function renderDots() {
-      const strip = document.getElementById('dots-strip');
-      strip.innerHTML = '';
-      for (let i = 0; i <= turnIdx; i++) {
-        const isFort = startFort ? (i % 2 === 0) : (i % 2 === 1);
-        const d = document.createElement('div');
-        d.className = 'hdot ' + (isFort ? 'f' : 'u') + (i === turnIdx ? ' cur' : '');
-        strip.appendChild(d);
-      }
-    }
-
-    function redrawOpening() {
-      if (rolling) return;
-      started = false;
-      document.getElementById('redraw-btn').style.display = 'none';
-      const btn = document.getElementById('draw-btn');
-      btn.textContent = '🎲 Draw Opening';
-      drawOpening();
+      document.getElementById('redraw-btn').style.display   = 'none';
+      document.getElementById('new-btn').disabled           = true;
+      document.getElementById('next-btn').disabled          = true;
+      document.getElementById('next-btn').textContent       = 'Next Round →';
+      document.getElementById('choice-panel').className     = 'choice-panel';
+      document.getElementById('word-card').className        = 'word-card';
+      document.getElementById('dots-strip').innerHTML       = '';
+      document.getElementById('turn-num').textContent       = '—';
     }
 
     function updateTurnNum() {
