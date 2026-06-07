@@ -3,25 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Persuade! · IceBreak Hub</title>
+  <title>Persuade Together! · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Persuade!">
+  <meta name="apple-mobile-web-app-title" content="Persuade Together">
   <meta name="theme-color" content="#0d0d1a">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-text-size-adjust: 100%; }
-
-    :root {
-      --accent: #06b6d4;
-      --accent-rgb: 6,182,212;
-      --card-emoji: '🤝';
-    }
-    :root.solo {
-      --accent: #d946ef;
-      --accent-rgb: 217,70,239;
-      --card-emoji: '🎭';
-    }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -43,8 +32,8 @@
       50%       { opacity: .55; }
     }
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 0 rgba(var(--accent-rgb),0); }
-      50%       { box-shadow: 0 0 40px rgba(var(--accent-rgb),.28); }
+      0%, 100% { box-shadow: 0 0 0 rgba(6,182,212,0); }
+      50%       { box-shadow: 0 0 40px rgba(6,182,212,.28); }
     }
 
     /* ── Topbar ── */
@@ -58,49 +47,21 @@
     a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
     a.back:hover { color: #eee; }
     .round-badge { font-size: 12px; color: #444; }
-    .round-badge span { color: var(--accent); font-weight: 700; transition: color .3s; }
+    .round-badge span { color: #06b6d4; font-weight: 700; }
 
     /* ── Header ── */
     .header {
-      text-align: center; margin-bottom: 24px;
+      text-align: center; margin-bottom: 32px;
       animation: fadeUp .5s .1s ease both;
       position: relative; z-index: 1;
     }
     .header h1 {
       font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
-      background: linear-gradient(135deg, #fff 30%, var(--accent));
+      background: linear-gradient(135deg, #fff 30%, #06b6d4);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       margin-bottom: 8px;
-      transition: background .3s;
     }
-    .header p { color: #555; font-size: .93rem; transition: opacity .2s; }
-
-    /* ── Mode Toggle ── */
-    .mode-toggle {
-      width: 100%; max-width: 720px;
-      display: flex; gap: 8px;
-      background: #13132b;
-      border: 1px solid #1e1e42;
-      border-radius: 14px;
-      padding: 5px;
-      margin-bottom: 24px;
-      animation: fadeUp .5s .15s ease both;
-      position: relative; z-index: 1;
-    }
-    .mode-btn {
-      flex: 1; padding: 11px 16px;
-      border-radius: 10px; border: none;
-      background: transparent; color: #444;
-      cursor: pointer; font-weight: 700; font-size: .95rem;
-      font-family: inherit;
-      transition: background .25s, color .25s, transform .1s;
-    }
-    .mode-btn:hover:not(.active) { color: #888; }
-    .mode-btn:active { transform: scale(.97); }
-    .mode-btn.active {
-      background: var(--accent);
-      color: #0d0d1a;
-    }
+    .header p { color: #555; font-size: .93rem; }
 
     /* ── Scenario card ── */
     .scenario-card {
@@ -116,10 +77,10 @@
       min-height: 200px;
       display: flex; flex-direction: column; justify-content: center;
     }
-    .scenario-card.rolling { border-color: var(--accent); animation: flicker .13s infinite; }
-    .scenario-card.landed  { border-color: var(--accent); animation: pulseGlow 2.8s ease infinite; }
+    .scenario-card.rolling { border-color: #06b6d4; animation: flicker .13s infinite; }
+    .scenario-card.landed  { border-color: #06b6d4; animation: pulseGlow 2.8s ease infinite; }
     .scenario-card::before {
-      content: var(--card-emoji);
+      content: '🤝';
       position: absolute; font-size: 10rem; opacity: .025;
       top: 50%; left: 50%; transform: translate(-50%,-50%);
       pointer-events: none;
@@ -141,10 +102,9 @@
     .sc-field { display: flex; flex-direction: column; gap: 5px; }
     .sc-label {
       font-size: .72rem; text-transform: uppercase;
-      letter-spacing: .13em; color: var(--accent); font-weight: 700;
-      transition: color .3s;
+      letter-spacing: .13em; color: #06b6d4; font-weight: 700;
     }
-    .sc-role      { font-size: 1.95rem; font-weight: 700; color: #eee; line-height: 1.3; }
+    .sc-team      { font-size: 1.95rem; font-weight: 700; color: #eee; line-height: 1.3; }
     .sc-situation { font-size: 1.95rem; color: #ccc; line-height: 1.5; }
     .sc-judge     { font-size: 1.95rem; font-weight: 700; color: #eee; }
     .sc-divider   { height: 1px; background: #1e1e42; }
@@ -152,23 +112,22 @@
     /* ── Draw button ── */
     .btn-draw {
       width: 100%; max-width: 720px;
-      background: #13132b; color: var(--accent); border: 2px solid var(--accent);
+      background: #13132b; color: #06b6d4; border: 2px solid #06b6d4;
       border-radius: 14px; padding: 16px;
       font-size: 1.05rem; font-weight: 700;
       cursor: pointer; font-family: inherit;
-      transition: background .2s, color .3s, border-color .3s, transform .1s;
+      transition: background .2s, transform .1s;
       animation: fadeUp .5s .3s ease both;
       position: relative; z-index: 1;
     }
-    .btn-draw:hover { background: rgba(var(--accent-rgb),.1); }
+    .btn-draw:hover { background: rgba(6,182,212,.1); }
     .btn-draw:active { transform: scale(.98); }
     .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* ── Scenario counter ── */
-    .scenario-counter {
+    /* ── Counter ── */
+    .sc-counter {
       width: 100%; max-width: 720px;
-      text-align: center;
-      font-size: .8rem; color: #2a2a50;
+      text-align: center; font-size: .8rem; color: #2a2a50;
       margin-top: 12px;
       animation: fadeUp .5s .35s ease both;
     }
@@ -182,26 +141,20 @@
   </div>
 
   <div class="header">
-    <h1 id="page-title">🤝 Persuade!</h1>
-    <p id="page-sub">One judge, everyone else teams up — convince them together!</p>
-  </div>
-
-  <!-- Mode toggle -->
-  <div class="mode-toggle">
-    <button class="mode-btn" id="btn-solo" onclick="setMode('solo')">🎭 Solo Mode</button>
-    <button class="mode-btn active" id="btn-team" onclick="setMode('team')">🤝 Team Mode</button>
+    <h1>🤝 Persuade Together!</h1>
+    <p>One judge, everyone else teams up — convince them together!</p>
   </div>
 
   <!-- Scenario card -->
   <div class="scenario-card" id="sc-card">
     <div class="sc-placeholder" id="sc-placeholder">
-      <div class="big-emoji" id="ph-emoji">🤝</div>
+      <div class="big-emoji">🤝</div>
       <p>Press <strong>Draw</strong> to reveal the scene</p>
     </div>
     <div class="sc-content" id="sc-content">
       <div class="sc-field">
-        <div class="sc-label" id="role-label">👥 Your Team Plays</div>
-        <div class="sc-role" id="sc-role"></div>
+        <div class="sc-label">👥 Your Team Plays</div>
+        <div class="sc-team" id="sc-team"></div>
       </div>
       <div class="sc-divider"></div>
       <div class="sc-field">
@@ -210,400 +163,348 @@
       </div>
       <div class="sc-divider"></div>
       <div class="sc-field">
-        <div class="sc-label" id="judge-label">👨‍⚖️ The Judge</div>
+        <div class="sc-label">👨‍⚖️ The Judge</div>
         <div class="sc-judge" id="sc-judge"></div>
       </div>
     </div>
   </div>
 
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
-  <div class="scenario-counter" id="sc-counter"></div>
+  <div class="sc-counter" id="sc-counter">100 scenarios</div>
 
   <script>
-    const soloScenarios = [
-      // School
+    const scenarios = [
+      // ── School (12) ──
       { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'A student who forgot their homework',
-        situation:'You forgot to bring your homework today. Convince the teacher not to give you a zero.' },
-      { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'A student who got a bad grade',
-        situation:'You got 40% on your test. Convince the teacher to let you retake it.' },
-      { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'A student who was late to class',
-        situation:'You walked into class 15 minutes late. Convince the teacher not to mark you absent.' },
-      { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'A student who wants a different seat',
-        situation:'You want to sit next to your best friend in class. Your teacher said no. Convince them to change their mind.' },
-      { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'A student who needs more time',
-        situation:'The essay is due today but you only finished half of it. Convince the teacher to give you one more day.' },
-      { judge:'Security Guard', emoji:'💂',
-        role:'A student who lost their school ID',
-        situation:'You lost your school ID card and cannot get into the building. Convince the security guard to let you in.' },
-      // Work
-      { judge:'Boss', emoji:'💼',
-        role:'An employee who wants to leave early',
-        situation:'You want to leave work one hour early today. Convince your boss to say yes.' },
-      { judge:'Boss', emoji:'💼',
-        role:'An employee who was late to work',
-        situation:'You arrived at work 30 minutes late. Convince your boss it will never happen again — and that you still deserve a raise.' },
-      { judge:'Boss', emoji:'💼',
-        role:'An employee who wants to work from home',
-        situation:'You want to work from home every Friday. Convince your boss it is a great idea.' },
-      { judge:'Boss', emoji:'💼',
-        role:'An employee who broke something',
-        situation:'You accidentally broke the office coffee machine. Convince your boss it was not your fault.' },
-      { judge:'Boss', emoji:'💼',
-        role:'An employee who wants a long lunch',
-        situation:'You want a 2-hour lunch break every day this week. Convince your boss you have a very good reason.' },
-      { judge:'Boss', emoji:'💼',
-        role:'An employee in a very awkward situation',
-        situation:'You accidentally sent a very embarrassing email to the entire company. Convince your boss it is not a big deal and everything is under control.' },
-      { judge:'Boss', emoji:'💼',
-        role:'An employee who needs time off',
-        situation:'You want to take a 2-week vacation during the busiest month of the year. Convince your boss to approve it anyway.' },
-      // Relationships & Family
-      { judge:'Girlfriend / Boyfriend', emoji:'💑',
-        role:'A partner who forgot to call',
-        situation:'You forgot to call your partner last night. Convince them you had a good reason and you are truly sorry.' },
-      { judge:'Girlfriend / Boyfriend', emoji:'💑',
-        role:'A partner who forgot the birthday',
-        situation:'You forgot your partner\'s birthday. Convince them to forgive you.' },
-      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-        role:'A child who wants to stay up late',
-        situation:'You want to stay up until midnight on a school night. Convince your parent to say yes.' },
-      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-        role:'A child who wants a pet',
-        situation:'You want to get a dog. Your parent says the house is too small. Convince them it is a wonderful idea.' },
-      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-        role:'A teenager who wants more pocket money',
-        situation:'You want double your weekly allowance. Convince your parent you really need it.' },
-      { judge:'Girlfriend / Boyfriend', emoji:'💑',
-        role:'A partner who wants an expensive gadget',
-        situation:'You want to spend $500 on a new gadget your partner thinks is unnecessary. Convince them it is totally worth it.' },
-      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-        role:'A teenager who wants to go on a road trip',
-        situation:'You want to go on a 3-day road trip with your friends. Your parent thinks it is dangerous. Convince them it will be completely safe.' },
-      { judge:'Mom or Dad', emoji:'👨‍👩‍👦',
-        role:'A teenager who came home very late',
-        situation:'You came home two hours past your curfew. Convince your parent not to ground you.' },
-      // Friends
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A friend who was very late',
-        situation:'You were 30 minutes late to meet your friend at a café. Convince them not to be angry.' },
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A friend who owes money',
-        situation:'You borrowed $20 from your friend last month and forgot to pay them back. Convince them to wait one more week.' },
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A friend who told a secret',
-        situation:'You accidentally told someone else a secret your friend shared with you. Convince your friend you had a very good reason.' },
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A friend who cancelled plans',
-        situation:'You cancelled plans with your friend at the last minute. Convince them not to be upset and to make new plans.' },
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A friend who needs a big favour',
-        situation:'You want to borrow your friend\'s car for the whole weekend. Convince them it is completely safe and they will not regret it.' },
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A friend who needs an alibi',
-        situation:'You need your friend to cover for you by telling your parents you were studying together. Convince them to help you out.' },
-      { judge:'Friend', emoji:'🧑‍🤝‍🧑',
-        role:'A foodie friend on a mission',
-        situation:'Convince your friend to try a brand new restaurant instead of always going to the same place. They love their routine!' },
-      // Shopping & Services
-      { judge:'Shop Owner', emoji:'🛍️',
-        role:'A customer without a receipt',
-        situation:'You want to return a shirt but you lost the receipt. Convince the shop owner to give you a full refund.' },
-      { judge:'Barista', emoji:'☕',
-        role:'A customer who wants a deal',
-        situation:'The café only has small cups left, but you want a large coffee at the small price. Convince the barista to make it work.' },
-      { judge:'Restaurant Manager', emoji:'🍽️',
-        role:'A customer who wants a discount',
-        situation:'Your food was cold when it arrived. Convince the manager to give you a 50% discount.' },
-      { judge:'Gym Receptionist', emoji:'💪',
-        role:'A member who never comes',
-        situation:'You have not been to the gym for 6 months. Convince the receptionist to give you a full refund for your membership.' },
-      { judge:'Hotel Reception', emoji:'🏨',
-        role:'A guest who wants a late checkout',
-        situation:'Your checkout time is 11am but your flight is at 9pm. Convince the hotel to let you stay in your room until 6pm for free.' },
-      { judge:'Mechanic', emoji:'🔧',
-        role:'A customer who thinks the price is too high',
-        situation:'The mechanic quoted you $800 for a repair. You think that is way too expensive. Convince them to cut the price in half.' },
-      // Daily Life
-      { judge:'Roommate', emoji:'🏠',
-        role:'A roommate who ate the food',
-        situation:'You ate your roommate\'s food from the fridge by mistake. Convince them it is not a big deal and you are still a great roommate.' },
-      { judge:'Bus Driver', emoji:'🚌',
-        role:'A passenger without exact change',
-        situation:'You only have a big bill and the bus does not give change. Convince the driver to let you ride for free today.' },
-      { judge:'Librarian', emoji:'📚',
-        role:'A student who wants to eat inside',
-        situation:'You want to eat your sandwich in the library. There is a "No Food" sign. Convince the librarian to make an exception.' },
-      { judge:'Neighbour', emoji:'🏡',
-        role:'A neighbour who plays loud music',
-        situation:'Your neighbour complained that your music is too loud at night. Convince them it is not a problem.' },
-      { judge:'Parking Officer', emoji:'🚗',
-        role:'A driver who got a ticket',
-        situation:'You got a parking ticket but you were only 5 minutes late returning to your car. Convince the parking officer to cancel it.' },
-      { judge:'Librarian', emoji:'📚',
-        role:'A reader with an overdue book',
-        situation:'You returned a library book 3 weeks late. Convince the librarian to waive the fine completely.' },
-      // Fun & Silly
-      { judge:'Mom or Dad', emoji:'😄',
-        role:'A child who broke something',
-        situation:'You accidentally broke your parent\'s favourite mug. Convince them not to be angry and that everything is completely fine.' },
-      { judge:'Friend', emoji:'😂',
-        role:'A friend on a taste adventure',
-        situation:'Convince your friend to try a very strange food that you love — like spicy ice cream or cheese-flavoured candy.' },
-      { judge:'Boss', emoji:'😄',
-        role:'An employee with a big idea',
-        situation:'You want the company to have a "bring your pet to work" day every Friday. Convince your boss it will make everyone happier and more productive.' },
-      { judge:'Teacher', emoji:'😄',
-        role:'A very confident student',
-        situation:'Convince your teacher to cancel homework for the whole class for one entire week. You need at least three good reasons.' },
-      { judge:'Roommate', emoji:'😄',
-        role:'A roommate with a great excuse',
-        situation:'The kitchen is a complete mess and your roommate is blaming you. Convince them you definitely did not make the mess.' },
-      { judge:'Teacher', emoji:'🐱',
-        role:'A creative student with an unusual excuse',
-        situation:'Your cat walked on your keyboard and deleted your entire assignment. Convince your teacher this is the honest truth and you need more time.' },
-      { judge:'Neighbour', emoji:'🏊',
-        role:'A neighbour who wants pool access',
-        situation:'Your neighbour has a beautiful pool they rarely use. Convince them to let you use it every Sunday afternoon.' },
-      { judge:'Restaurant Host', emoji:'🍴',
-        role:'A dog owner at a fancy restaurant',
-        situation:'You want to bring your very well-behaved dog into a fancy restaurant. Convince the host to make a special exception.' },
-      { judge:'Security Guard', emoji:'🛡️',
-        role:'A cyclist in a shopping mall',
-        situation:'You rode your bicycle into the shopping mall by accident and the security guard stopped you. Convince them it was an emergency and to let you stay.' },
-      { judge:'Hotel Reception', emoji:'🏨',
-        role:'A very eager early guest',
-        situation:'You arrived at the hotel 6 hours before the official check-in time. Convince the reception to let you check in right now for free.' },
-    ];
-
-    const teamScenarios = [
-      // School
-      { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'Students who think the exam is too soon',
-        situation:'Your whole class feels the upcoming exam is too soon. Convince the teacher to postpone it by one week.' },
+        team:'Students who want more time for the exam',
+        situation:'Your whole class thinks the exam is too soon. Convince the teacher to move it to next week.' },
       { judge:'Principal', emoji:'🏫',
-        role:'The student council who wants to change the uniform rule',
-        situation:'The entire student council believes the school uniform policy is outdated. Convince the principal to let students wear casual clothes on Fridays.' },
+        team:'Student council who wants to change the uniform rule',
+        situation:'The whole student council thinks the school uniform is old and boring. Convince the principal to let students wear casual clothes every Friday.' },
       { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'Students who think the homework is unfair',
-        situation:'Your group believes this week\'s homework assignment is too long and completely unfair. Convince the teacher to cancel it entirely.' },
-      { judge:'University Professor', emoji:'👨‍🏫',
-        role:'Students who all missed the deadline',
-        situation:'Half the class missed the project deadline because the instructions were confusing. Convince the professor to allow a one-week extension for everyone.' },
+        team:'Students who think the homework is not fair',
+        situation:'Your whole class thinks this week\'s homework is too long and not fair. Convince the teacher to cancel it completely.' },
+      { judge:'Professor', emoji:'👨‍🏫',
+        team:'Students who all missed the deadline',
+        situation:'Many students missed the project deadline because the instructions were not clear. Convince the professor to give everyone one more week.' },
       { judge:'Teacher', emoji:'🧑‍🏫',
-        role:'Students with a creative proposal',
-        situation:'The whole class wants to replace the final exam with a group performance or creative project. Convince the teacher it will still demonstrate learning — and be much more fun.' },
+        team:'Students who want to do something creative',
+        situation:'The whole class wants to replace the final exam with a fun group project or show. Convince the teacher it is a great way to learn.' },
       { judge:'Principal', emoji:'🏫',
-        role:'Students who want a gaming lounge',
-        situation:'A group of students wants to turn an unused classroom into a gaming and relaxation lounge. Convince the principal it will improve student focus and wellbeing.' },
+        team:'Students who want a game room at school',
+        situation:'A group of students wants to turn an empty room into a place to play games and relax. Convince the principal it will help students do better in class.' },
       { judge:'Teacher', emoji:'🌳',
-        role:'Students who want class outside',
-        situation:'It is a beautiful sunny day and the whole class wants to have the lesson outside in the garden. Convince the teacher to ditch the classroom just this once.' },
+        team:'Students who want class outside today',
+        situation:'It is a beautiful sunny day and everyone wants to have class outside in the garden. Convince the teacher to leave the classroom just this one time.' },
       { judge:'Cafeteria Manager', emoji:'🥗',
-        role:'Students campaigning for better food',
-        situation:'The student group wants the school cafeteria to replace junk food with healthy and delicious options. Convince the cafeteria manager to overhaul the entire menu.' },
-      // Workplace
+        team:'Students who want better school food',
+        situation:'The whole student group thinks the school food is boring and not healthy. Convince the cafeteria manager to change the menu and make it better.' },
+      { judge:'Principal', emoji:'⏰',
+        team:'Students who want a longer lunch break',
+        situation:'Everyone feels the lunch break is too short. Convince the principal to make it 30 minutes longer every day.' },
+      { judge:'Principal', emoji:'🚌',
+        team:'Students who want a school trip',
+        situation:'The whole class wants to go on a school trip instead of normal classes for a week. Convince the principal it is a great way to learn outside the classroom.' },
+      { judge:'Principal', emoji:'😴',
+        team:'Students who want school to start later',
+        situation:'Everyone in the school is very tired in the morning. Convince the principal to start school one hour later every day.' },
+      { judge:'Principal', emoji:'📅',
+        team:'Students who want a no-test week',
+        situation:'Students are very stressed by all the tests. Convince the principal to have one "no test" week every month so everyone can breathe and enjoy learning.' },
+
+      // ── Workplace (12) ──
       { judge:'Manager', emoji:'💼',
-        role:'Employees who want to work from home',
-        situation:'Your entire team wants to work from home every Friday. Convince the manager that productivity will not drop and everyone will actually be happier.' },
+        team:'Employees who want to work from home',
+        situation:'Your whole team wants to work from home every Friday. Convince the manager that the work will still get done and everyone will be happier.' },
       { judge:'CEO', emoji:'🏢',
-        role:'Department staff who want a bigger budget',
-        situation:'Your department feels underfunded compared to others. Convince the CEO to double your budget for the next quarter.' },
+        team:'Team members who want more money for projects',
+        situation:'Your team does not have enough money to do their work well. Convince the CEO to give the team twice as much money for the next three months.' },
       { judge:'HR Manager', emoji:'📋',
-        role:'Employees who want better office perks',
-        situation:'The whole team wants free lunch on Fridays and a nap room in the office. Convince the HR manager this will boost morale and productivity.' },
+        team:'Employees who want free lunch and a rest room',
+        situation:'The whole team wants free lunch every Friday and a quiet room to rest during the day. Convince the HR manager it will make the team work much better.' },
       { judge:'Boss', emoji:'👔',
-        role:'Employees who hate the early meeting',
-        situation:'Everyone hates the 8am Monday team meeting. Convince the boss to move it to Wednesday at 11am instead.' },
+        team:'Employees who hate the early morning meeting',
+        situation:'Nobody likes the 8am Monday meeting. Convince the boss to move it to Wednesday at 11am instead.' },
       { judge:'Boss', emoji:'🐾',
-        role:'Employees with a fun idea',
-        situation:'The whole team wants a "Bring Your Pet to Work" day every month. Convince the boss it will reduce stress and improve team bonding.' },
-      { judge:'CEO', emoji:'🏢',
-        role:'Employees who want a 4-day work week',
-        situation:'The entire company wants to switch to a 4-day work week with the same pay. Convince the CEO the company will actually become more productive and profitable.' },
-      { judge:'HR Manager', emoji:'📋',
-        role:'Employees campaigning for mental health days',
-        situation:'Your team wants the company to officially recognise two paid "mental health days" per year for every employee. Convince HR it is good for the whole company.' },
+        team:'Employees who want a "bring your pet" day',
+        situation:'The whole team wants to bring their pets to the office once a month. Convince the boss it will make everyone less stressed and more friendly with each other.' },
+      { judge:'CEO', emoji:'📅',
+        team:'Employees who want a 4-day work week',
+        situation:'Everyone in the company wants to work only 4 days a week but get the same pay. Convince the CEO the company will do better and people will work harder.' },
+      { judge:'HR Manager', emoji:'🧘',
+        team:'Employees who want extra rest days',
+        situation:'Your team wants the company to give everyone two extra paid "rest days" per year. Convince the HR manager it is good for everyone.' },
       { judge:'CEO', emoji:'🎮',
-        role:'Employees who want a game room',
-        situation:'A group of employees wants to install a game room and comfortable relaxation space in the office. Convince the CEO it will attract talent and boost creativity.' },
+        team:'Employees who want a fun room in the office',
+        situation:'A group of workers wants to build a game room and a relaxing area in the office. Convince the CEO it will help the team think more clearly and work better.' },
       { judge:'HR Manager', emoji:'👨‍👩‍👦',
-        role:'Employees who want family days',
-        situation:'Your team wants to invite employees\' families into the office on the last Friday of every month. Convince HR it will strengthen company culture and employee loyalty.' },
-      // Community
-      { judge:'Mayor', emoji:'🏛️',
-        role:'Residents who want a community garden',
-        situation:'Your neighbourhood group wants to turn the abandoned lot on Main Street into a community garden and playground. Convince the mayor to approve the project.' },
+        team:'Employees who want family visit days',
+        situation:'The team wants to invite their families to the office on the last Friday of every month. Convince the HR manager it will make workers feel happier and more connected.' },
+      { judge:'HR Manager', emoji:'🪑',
+        team:'Employees who need better chairs and desks',
+        situation:'Many people in the office have back pain from the old chairs. Convince the HR manager to buy new, comfortable chairs and desks for everyone.' },
+      { judge:'Manager', emoji:'👕',
+        team:'Employees who want a casual dress code',
+        situation:'Everyone is tired of wearing formal clothes to the office every day. Convince the manager to change the dress code to casual clothes from Monday to Friday.' },
+      { judge:'Boss', emoji:'✈️',
+        team:'Employees who want a company trip',
+        situation:'The whole team wants to go on a company trip together instead of getting a cash bonus. Convince the boss this will bring everyone closer and be more fun.' },
+
+      // ── Community (10) ──
+      { judge:'Mayor', emoji:'🌱',
+        team:'Residents who want a community garden',
+        situation:'Your group wants to turn the empty land on Main Street into a garden and playground for everyone. Convince the mayor to say yes and help pay for it.' },
       { judge:'Landlord', emoji:'🏠',
-        role:'Tenants who want better living conditions',
-        situation:'All tenants in the building want the landlord to fix the broken elevator, add free WiFi, and allow pets. Convince the landlord to agree to all three.' },
-      { judge:'School Principal', emoji:'🏫',
-        role:'Parents who want a new school policy',
-        situation:'A group of parents wants the school to ban smartphones completely during school hours. Convince the principal to implement this rule starting next month.' },
+        team:'Tenants who want better living conditions',
+        situation:'All the people in the building want the landlord to fix the broken lift, add free WiFi, and allow pets. Convince the landlord to agree to all three.' },
+      { judge:'School Principal', emoji:'📵',
+        team:'Parents who want a no-phone rule at school',
+        situation:'A group of parents wants the school to not allow phones during school hours. Convince the principal to start this rule next month.' },
       { judge:'City Council', emoji:'🛹',
-        role:'Teenagers who want a skate park',
-        situation:'A group of teenagers wants the city to build a free skate park and outdoor sports area. Convince the city council this will keep young people active and off the streets.' },
+        team:'Young people who want a skate park',
+        situation:'A group of young people wants the city to build a free skate park and sports area. Convince the city council it will keep young people active and happy.' },
       { judge:'Library Director', emoji:'📚',
-        role:'Residents who want longer library hours',
-        situation:'A community group wants the local library to stay open until midnight. Convince the library director this will benefit students and night-owl readers across the city.' },
+        team:'Residents who want longer library hours',
+        situation:'People in the area want the library to stay open until midnight. Convince the director this will help students and people who like to read at night.' },
       { judge:'Mayor', emoji:'🚲',
-        role:'Residents who want car-free Sundays',
-        situation:'Your neighbourhood association wants to close the main street to cars every Sunday so residents can walk and cycle freely. Convince the mayor to trial this idea.' },
+        team:'Residents who want car-free Sundays',
+        situation:'Your group wants to close the main street to cars every Sunday so people can walk and ride bikes freely. Convince the mayor to try this idea.' },
       { judge:'City Council', emoji:'🎉',
-        role:'Residents who want a street festival',
-        situation:'Your community group wants to host a big free street festival with food, music, and activities. Convince the city council to grant permission and a small budget.' },
-      // Family
-      { judge:'Mom & Dad', emoji:'👨‍👩‍👧‍👦',
-        role:'All the kids who want to go to a theme park',
-        situation:'All the children want to go to a theme park for the family holiday instead of visiting relatives. Convince your parents it will be far more fun and memorable.' },
-      { judge:'Grandma', emoji:'👵',
-        role:'Grandchildren who want grandma to use a smartphone',
-        situation:'The whole family wants grandma to get a smartphone so everyone can video-call her. Convince her it is easy to use and will keep the family much closer.' },
-      { judge:'Mom & Dad', emoji:'👨‍👦‍👦',
-        role:'Siblings who want a gaming console',
-        situation:'All the siblings are united — they want a new gaming console. Convince your parents it promotes teamwork, and they promise to set a strict time limit.' },
-      { judge:'Dad', emoji:'👨',
-        role:'Kids who desperately want a family pet',
-        situation:'All the children desperately want a dog. Convince dad that everyone will share the responsibility and the whole family will benefit.' },
-      { judge:'Mom & Dad', emoji:'🎆',
-        role:'Kids who want to stay up for New Year\'s',
-        situation:'All the children want to stay up past midnight to celebrate New Year\'s Eve. Convince the parents this is a once-a-year event and everyone will survive the next day.' },
-      { judge:'Mom & Dad', emoji:'🚗',
-        role:'Kids who want a spontaneous road trip',
-        situation:'All the children want to skip school on Friday for a spontaneous 3-day road trip. Convince your parents it will be the best family memory ever made.' },
-      { judge:'Grandparents', emoji:'🏕️',
-        role:'Family members who want to go camping',
-        situation:'The whole family wants to go camping in the forest instead of the usual formal dinner at a fancy restaurant. Convince the grandparents this will be a much more fun tradition.' },
-      { judge:'Mom & Dad', emoji:'📺',
-        role:'Kids who want a bigger TV',
-        situation:'Everyone in the house wants to replace the old small TV with a massive smart TV. Convince your parents it is a worthwhile investment for the whole family.' },
-      { judge:'Mom & Dad', emoji:'📱',
-        role:'Siblings who all want smartphones',
-        situation:'All the siblings feel they are the only kids without a smartphone. Convince your parents that having phones is necessary, safe, and completely manageable with rules.' },
-      // Friends / Social
-      { judge:'One reluctant friend', emoji:'🤷',
-        role:'Friends who need everyone on the trip',
-        situation:'Your whole friend group has planned a trip, but one person keeps saying no. Convince them to come — you genuinely need everyone there to make it perfect.' },
-      { judge:'The friend who planned everything', emoji:'🗓️',
-        role:'Group members who want to change the destination',
-        situation:'The group originally planned to go to the mountains, but almost everyone now wants to go to the beach instead. Convince the trip organiser to change the plan.' },
-      { judge:'One friend who wants to leave early', emoji:'🌙',
-        role:'Friends who want to keep the party going',
-        situation:'It is only 9pm and one friend is already suggesting everyone go home. Convince them to stay at least two more hours — the fun is just getting started.' },
-      { judge:'The one friend who always refuses karaoke', emoji:'🎤',
-        role:'Friends who love karaoke',
-        situation:'Everyone wants to go to karaoke but one person refuses every single time. Convince them that this time will be completely different — and they will actually enjoy it.' },
-      { judge:'The most skeptical friend', emoji:'💪',
-        role:'Friends on a fitness mission',
-        situation:'The whole group wants to start a 30-day fitness challenge together. Convince the most skeptical friend that it will be fun, achievable, and worth it for everyone.' },
-      { judge:'The most hesitant friend', emoji:'🐛',
-        role:'The adventurous group who wants to try insect cuisine',
-        situation:'Your group has found an amazing restaurant that only serves insect-based dishes. Convince the most hesitant friend to give it a fair try — it might change their life.' },
-      { judge:'The friend who planned the house party', emoji:'🏕️',
-        role:'Friends who want to go camping instead',
-        situation:'Your friend worked hard to organise a house party, but the rest of the group now wants to go camping in the woods instead. Convince the organiser to change the plan.' },
-      { judge:'The shyest member of the group', emoji:'🎸',
-        role:'Friends who want to start a band',
-        situation:'Your friend group has decided to start a band and perform at the school talent show. Convince the shyest member to be the lead singer — the whole band needs their voice.' },
-      // Sports
-      { judge:'Coach', emoji:'🏆',
-        role:'Players who want a lighter training schedule',
-        situation:'The whole team thinks training six days a week is too intense and people are getting injured. Convince the coach to reduce it to four days without losing performance.' },
-      { judge:'Referee', emoji:'🟨',
-        role:'Players who disagree with a call',
-        situation:'Your team believes the referee made a wrong call that could cost you the game. Convince the referee to reconsider the decision before the final whistle.' },
-      { judge:'Coach / Sponsor', emoji:'👕',
-        role:'Players who want to design their own jersey',
-        situation:'The whole team is tired of the boring standard jersey. Convince the coach and sponsor to let the players design a unique team jersey for the next season.' },
-      { judge:'Team Captain', emoji:'🥂',
-        role:'Players who want a fancy end-of-season party',
-        situation:'The whole squad wants to celebrate the end of the season at a five-star rooftop restaurant instead of the usual pub. Convince the team captain to upgrade the plan.' },
-      // Consumer / Travel
-      { judge:'Restaurant Manager', emoji:'🍽️',
-        role:'A group of diners who had a terrible experience',
-        situation:'Your entire table received cold food, waited over an hour, and experienced rude service. Convince the restaurant manager to give your whole group a full refund.' },
-      { judge:'Hotel Manager', emoji:'🏨',
-        role:'A group of guests who arrived to problems',
-        situation:'Your group booked three rooms but they were not ready on arrival — two hours late with no apology. Convince the hotel manager to upgrade everyone to suites at no extra cost.' },
-      { judge:'Airline Customer Service', emoji:'✈️',
-        role:'Passengers who missed a connecting flight',
-        situation:'Your whole group missed a connecting flight because of the airline\'s own delay. Convince customer service to rebook everyone for free and provide a meal voucher.' },
-      { judge:'Museum Tour Coordinator', emoji:'🏛️',
-        role:'A group desperate to see a special exhibition',
-        situation:'The special exhibition at the museum is fully booked for two months. Convince the tour coordinator to squeeze your group in for a private after-hours visit.' },
-      { judge:'Event Manager', emoji:'🎪',
-        role:'A group of passionate fans',
-        situation:'The music festival has sold out and your group is standing outside. Convince the event manager that letting your group in will only make the atmosphere better for everyone.' },
+        team:'Residents who want a street party',
+        situation:'Your group wants to hold a big free street party with food, music, and fun activities. Convince the city council to say yes and give a small amount of money.' },
       { judge:'City Planner', emoji:'🌳',
-        role:'Residents who want a park instead of a parking lot',
-        situation:'The city plans to build a large parking lot in the middle of your neighbourhood. Convince the city planner to turn the space into a green park with trees and benches instead.' },
+        team:'Residents who want a park instead of a car park',
+        situation:'The city wants to build a big car park in your area. Convince the city planner to turn that space into a nice green park with trees and seats instead.' },
+      { judge:'City Council', emoji:'🚴',
+        team:'Residents who want more bike lanes',
+        situation:'Your group thinks the city needs more safe paths for people on bikes. Convince the city council to build new bike lanes on the main roads.' },
+      { judge:'Building Manager', emoji:'🌿',
+        team:'Residents who want a rooftop garden',
+        situation:'The people in the apartment building want to turn the empty rooftop into a garden where everyone can grow plants and relax. Convince the building manager it is a great idea.' },
+
+      // ── Family (12) ──
+      { judge:'Mom & Dad', emoji:'🎢',
+        team:'All the kids who want to go to a theme park',
+        situation:'All the children want to go to a theme park for the family holiday instead of visiting family. Convince your parents it will be much more fun and a memory they will never forget.' },
+      { judge:'Grandma', emoji:'👵',
+        team:'Grandchildren who want grandma to get a smartphone',
+        situation:'The whole family wants grandma to get a smartphone so everyone can video call her. Convince her it is easy to use and will help keep the family close.' },
+      { judge:'Mom & Dad', emoji:'🎮',
+        team:'Siblings who want a new games console',
+        situation:'All the brothers and sisters want a new games console. Convince your parents it helps with teamwork and everyone will set a time limit.' },
+      { judge:'Dad', emoji:'🐶',
+        team:'Kids who really want a family dog',
+        situation:'All the children want a dog. Convince dad that everyone will help look after it and the whole family will be happier.' },
+      { judge:'Mom & Dad', emoji:'🎆',
+        team:'Kids who want to stay up for New Year\'s Eve',
+        situation:'All the children want to stay up past midnight for New Year\'s Eve. Convince the parents this only happens once a year and everyone will be fine the next day.' },
+      { judge:'Mom & Dad', emoji:'🚗',
+        team:'Kids who want a surprise road trip',
+        situation:'The children want to skip school on Friday for a 3-day road trip with the family. Convince your parents it will be the best family memory ever.' },
+      { judge:'Grandparents', emoji:'🏕️',
+        team:'Family members who want to go camping',
+        situation:'Everyone wants to go camping in the forest instead of the usual big formal dinner at a restaurant. Convince the grandparents that camping will be much more fun and something to remember.' },
+      { judge:'Mom & Dad', emoji:'📺',
+        team:'Kids who want a bigger TV',
+        situation:'Everyone at home wants to change the old small TV for a big new smart TV. Convince your parents it is a good thing to buy for the whole family.' },
+      { judge:'Mom & Dad', emoji:'📱',
+        team:'Siblings who all want their own phone',
+        situation:'All the brothers and sisters feel they are the only kids without a phone. Convince your parents that phones are useful, safe, and easy to manage with some rules.' },
+      { judge:'Mom & Dad', emoji:'🎨',
+        team:'Kids who want to change their room',
+        situation:'All the children want to give their rooms a new look with different colours and new things on the walls. Convince your parents to let everyone give their room a fresh new style.' },
+      { judge:'Mom & Dad', emoji:'🐱',
+        team:'Kids who want another family pet',
+        situation:'The family already has one pet but all the children want another one. Convince your parents that two pets are better than one and everyone will help.' },
+      { judge:'Mom & Dad', emoji:'🤸',
+        team:'Kids who want a trampoline in the garden',
+        situation:'All the children want a big trampoline in the garden. Convince your parents it is great for exercise and much more fun than sitting inside all day.' },
+
+      // ── Friends & Social (14) ──
+      { judge:'One friend who doesn\'t want to go', emoji:'🤷',
+        team:'Friends who need everyone on the trip',
+        situation:'The whole group has planned a trip but one person keeps saying no. Convince them to come — you really need everyone there to make it the best trip ever.' },
+      { judge:'The friend who planned everything', emoji:'🗓️',
+        team:'Group members who want to go to the beach instead',
+        situation:'The group first planned to go to the mountains, but now almost everyone wants to go to the beach. Convince the person who planned it to change the place.' },
+      { judge:'One friend who wants to go home early', emoji:'🌙',
+        team:'Friends who want to stay at the party',
+        situation:'It is only 9pm and one friend already wants everyone to go home. Convince them to stay at least two more hours — the fun is just starting.' },
+      { judge:'The one friend who always says no to karaoke', emoji:'🎤',
+        team:'Friends who love karaoke',
+        situation:'Everyone wants to go to karaoke but one person says no every single time. Convince them that this time will be different — and they will really enjoy it.' },
+      { judge:'The laziest friend in the group', emoji:'💪',
+        team:'Friends who want to do a fitness challenge',
+        situation:'The whole group wants to do a 30-day fitness challenge together. Convince the laziest friend that it will be fun and not as hard as they think.' },
+      { judge:'The friend who is not sure about the food', emoji:'🍽️',
+        team:'The group who wants to try a very different restaurant',
+        situation:'Your group wants to eat at a restaurant that serves very unusual food. Convince the most careful eater in the group to give it a try — they might love it.' },
+      { judge:'The friend who organised the house party', emoji:'🏕️',
+        team:'Friends who want to go camping instead',
+        situation:'Your friend worked hard to plan a house party, but now everyone wants to go camping instead. Convince the organiser to change the plan.' },
+      { judge:'The shyest person in the group', emoji:'🎸',
+        team:'Friends who want to start a band',
+        situation:'The group wants to start a band and play at the school show. Convince the shyest person to be the lead singer — the band really needs their voice.' },
+      { judge:'The friend who thinks it\'s too much work', emoji:'🎂',
+        team:'Friends who want to plan a surprise party',
+        situation:'The group wants to plan a big surprise party for a close friend. Convince the one who thinks it is too much work that it will be easy, fun, and totally worth it.' },
+      { judge:'The friend who never wants to go out', emoji:'🌞',
+        team:'Friends who want a picnic in the park',
+        situation:'The group wants to go to the park for a picnic on a sunny day, but one friend always wants to stay home. Convince them that fresh air and good food with friends is the best plan.' },
+      { judge:'The most resistant friend', emoji:'🎨',
+        team:'Friends who want to try a new hobby',
+        situation:'The whole group wants to try pottery or painting together. Convince the most resistant friend that it will be a fun and relaxing way to spend time together.' },
+      { judge:'The friend who hates running', emoji:'🏃',
+        team:'Friends who want to do a charity run',
+        situation:'The whole group wants to sign up for a charity run together. Convince the friend who hates running that it is for a good cause — and they do not need to run fast.' },
+      { judge:'The friend who is always on their phone', emoji:'📵',
+        team:'Friends who want a no-phone day',
+        situation:'The group wants to spend a whole day together without looking at their phones. Convince the most phone-addicted friend to join in and enjoy the day.' },
+      { judge:'The friend who doesn\'t like to travel', emoji:'🏙️',
+        team:'Friends who want a weekend trip to a new city',
+        situation:'The group wants to visit a new city for the weekend. Convince the friend who never wants to travel that it will be a great time and they will love it.' },
+
+      // ── Sports (10) ──
+      { judge:'Coach', emoji:'🏆',
+        team:'Players who want fewer training days',
+        situation:'The whole team thinks training six days a week is too much and people are getting hurt. Convince the coach to cut it down to four days and keep the team strong.' },
+      { judge:'Referee', emoji:'🟨',
+        team:'Players who think the call was wrong',
+        situation:'Your team thinks the referee made a bad call that could cost you the game. Convince the referee to change the decision before the final whistle.' },
+      { judge:'Coach & Sponsor', emoji:'👕',
+        team:'Players who want to design their own team shirt',
+        situation:'The whole team is tired of the boring old team shirt. Convince the coach and the sponsor to let the players make their own new design for next season.' },
+      { judge:'Team Captain', emoji:'🥂',
+        team:'Players who want a special end-of-season party',
+        situation:'Everyone on the team wants to celebrate the end of the season at a nice restaurant instead of the usual pub. Convince the team captain to go for the better option.' },
+      { judge:'Coach', emoji:'📣',
+        team:'Players who want a fun team cheer',
+        situation:'The whole team wants to make a fun cheer to do together before every game. Convince the coach it will make the team feel closer and more ready to play.' },
+      { judge:'Coach', emoji:'🌙',
+        team:'Players who want to practise at a later time',
+        situation:'Everyone on the team finds it hard to come to morning practice. Convince the coach to move all training to the evening instead.' },
+      { judge:'Coach', emoji:'⭐',
+        team:'Players who want a special guest at training',
+        situation:'The whole team wants to invite a famous player to come and train with them for one day. Convince the coach to make it happen.' },
+      { judge:'Sponsor', emoji:'📸',
+        team:'Players who want a team photo and video',
+        situation:'The whole team wants a proper photo shoot and a short video to share online. Convince the sponsor to pay for it.' },
+      { judge:'Gym Manager', emoji:'🏋️',
+        team:'Members who want the gym to stay open later',
+        situation:'Many gym members can only work out late at night. Convince the gym manager to keep the gym open until midnight from Monday to Friday.' },
+      { judge:'The most old-fashioned player', emoji:'🏄',
+        team:'Team members who want to try something new',
+        situation:'The whole team wants to try a completely different sport for just one day as a fun activity. Convince the most old-fashioned player on the team to join in.' },
+
+      // ── Travel & Consumer (10) ──
+      { judge:'Restaurant Manager', emoji:'🍽️',
+        team:'A group who had a very bad dinner experience',
+        situation:'Your whole group got cold food, waited over an hour, and had rude service. Convince the restaurant manager to give everyone a full refund.' },
+      { judge:'Hotel Manager', emoji:'🏨',
+        team:'Guests who had problems at check-in',
+        situation:'Your group booked three rooms but they were not ready when you arrived — two hours late with no sorry. Convince the hotel manager to give everyone a better room for free.' },
+      { judge:'Airline Staff', emoji:'✈️',
+        team:'Passengers who missed their next flight',
+        situation:'Your whole group missed a flight because the airline\'s first flight was late. Convince the airline staff to put everyone on a new flight for free and give a food voucher.' },
+      { judge:'Museum Staff', emoji:'🏛️',
+        team:'A group who wants to see a special show',
+        situation:'The special show at the museum is fully booked for two months. Convince the museum staff to let your group in for a private visit after the museum closes.' },
+      { judge:'Event Manager', emoji:'🎪',
+        team:'A group of fans outside a sold-out event',
+        situation:'The event is sold out and your group is standing outside. Convince the event manager that letting your group in will only make the atmosphere even better.' },
+      { judge:'Theme Park Manager', emoji:'🎢',
+        team:'A large group who wants a discount',
+        situation:'Your whole group wants to visit the theme park but the tickets are very expensive. Convince the manager to give the whole group a big discount for coming together.' },
+      { judge:'Hotel Manager', emoji:'🏊',
+        team:'Guests who want the pool to stay open late',
+        situation:'Your group wants to swim in the hotel pool at night, but it closes at 8pm. Convince the hotel manager to keep the pool open until 11pm just for your group tonight.' },
+      { judge:'Tour Guide', emoji:'🗺️',
+        team:'Tourists who want one more stop on the tour',
+        situation:'Your group loves the tour but wants to add one more interesting place before it ends. Convince the tour guide to take you there — even if it is a little extra time.' },
+      { judge:'Hotel Reception', emoji:'🛎️',
+        team:'Guests who want a much later checkout',
+        situation:'Your group\'s flights are in the evening but checkout is at 11am. Convince the hotel reception to let everyone stay in their rooms until 6pm without paying more.' },
+      { judge:'Restaurant Manager', emoji:'🎊',
+        team:'A group who wants a private area for a party',
+        situation:'Your group wants to have a birthday dinner at the restaurant and needs a private area. Convince the manager to set it up for free as a special treat for such a big group.' },
+
+      // ── Fun & Silly (20) ──
+      { judge:'Mom & Dad', emoji:'🎮',
+        team:'Kids who want to skip school for a gaming day',
+        situation:'Everyone wants to skip school on Friday to stay home and play video games all day together. Convince your parents that one day off will not hurt and it will be an amazing memory.' },
+      { judge:'Teacher', emoji:'💨',
+        team:'Students with a very creative excuse',
+        situation:'Nobody in the class did their homework. Convince the teacher that a strong wind came through the window and blew everyone\'s homework away before they could hand it in.' },
+      { judge:'Boss', emoji:'😴',
+        team:'Employees who want to wear pyjamas on Fridays',
+        situation:'The whole team wants to wear their pyjamas to the office every Friday. Convince the boss that everyone will be more relaxed and do better work in comfortable clothes.' },
+      { judge:'Grandparents', emoji:'🌶️',
+        team:'Grandchildren who want a spicy food challenge',
+        situation:'The whole family wants to do a very spicy food challenge together at dinner. Convince the grandparents to join in — it will be the funniest family moment ever.' },
+      { judge:'Principal', emoji:'🐾',
+        team:'Students who want a "bring your pet" day',
+        situation:'The whole school wants one special day where students can bring their pets to school. Convince the principal it will make everyone very happy and be a day no one forgets.' },
+      { judge:'Librarian', emoji:'🍪',
+        team:'Students who want a snack break in the library',
+        situation:'Everyone studying in the library is hungry and tired. Convince the librarian to allow a short snack break in the middle of study time — just 10 quiet minutes.' },
+      { judge:'Mom & Dad', emoji:'🌙',
+        team:'Kids who want an all-night movie night',
+        situation:'Everyone wants to stay up all night watching films together. Convince your parents to join in and make it a big, fun family night that nobody will ever forget.' },
+      { judge:'Coach', emoji:'💦',
+        team:'Players who want a water fight instead of training',
+        situation:'It is very hot and nobody wants to do normal training today. Convince the coach to let the whole team have a water fight instead — it is still a team activity!' },
+      { judge:'Neighbour', emoji:'🍖',
+        team:'A group who wants to use the neighbour\'s garden',
+        situation:'Your group wants to have a big BBQ party but needs more space. Convince your neighbour to let everyone use their garden for the afternoon.' },
+      { judge:'Restaurant Owner', emoji:'🎵',
+        team:'A group with no money but lots of talent',
+        situation:'Your group has eaten a great meal but has no money to pay. Convince the restaurant owner to let everyone pay with a song and a short dance instead of money.' },
+      { judge:'Teacher', emoji:'🛏️',
+        team:'Students who want a pillow fight as a class activity',
+        situation:'The class wants to have a big pillow fight as a "team activity". Convince the teacher this is a real way to build friendship and have a lot of fun together.' },
+      { judge:'Mom & Dad', emoji:'🍰',
+        team:'Kids who want a snacks-only dinner',
+        situation:'Nobody wants real food tonight. Convince your parents to let everyone eat only snacks and sweet things for dinner — just this one time as a special treat.' },
+      { judge:'Boss', emoji:'🎲',
+        team:'Employees who want an afternoon off to play games',
+        situation:'It has been a very hard week and the whole team is tired. Convince the boss to cancel all work for one afternoon so everyone can relax and play board games together.' },
+      { judge:'Principal', emoji:'🏫',
+        team:'Students who want to teach the classes for one day',
+        situation:'The whole class wants to be the teachers for one day and teach their own lessons. Convince the principal this is a fun and creative way to learn.' },
+      { judge:'Hotel Manager', emoji:'🏰',
+        team:'Guests who want to build a fort in the lobby',
+        situation:'Your group wants to use the hotel sofas and blankets to build a giant fort in the lobby for the evening. Convince the hotel manager it will be harmless and very fun for everyone.' },
+      { judge:'Park Manager', emoji:'🫧',
+        team:'A group who wants a bubble contest in the park',
+        situation:'Your group wants to have a big bubble-blowing contest in the park. Convince the manager to let you use a small area — and maybe even join in.' },
+      { judge:'Mom & Dad', emoji:'🐐',
+        team:'Kids who want a pet goat',
+        situation:'Everyone in the family wants to get a pet goat for the garden. Convince your parents that a goat is a great pet, easy to look after, and will make the garden much more fun.' },
+      { judge:'Teacher', emoji:'🏊',
+        team:'Students who want class in the swimming pool',
+        situation:'The whole class wants to move today\'s lesson to the school swimming pool. Convince the teacher it is still a proper class — just with more water.' },
+      { judge:'Mom & Dad', emoji:'🤡',
+        team:'Kids who want a matching funny costume day',
+        situation:'All the children want the whole family to put on matching funny costumes and spend the whole day out in town. Convince your parents it will be the most fun family day ever.' },
+      { judge:'Café Owner', emoji:'🎶',
+        team:'A group who wants to stay after closing time',
+        situation:'Your group is having such a great time at the café but it is closing time. Convince the owner to let everyone stay for a short singing competition before leaving.' },
     ];
 
-    let currentMode = 'team';
-    let round = 0;
-    let used  = [];
+    let round   = 0;
+    let used    = [];
     let rolling = false;
 
-    function setMode(m) {
-      if (m === currentMode) return;
-      currentMode = m;
-      round = 0;
-      used  = [];
-      rolling = false;
-
-      document.getElementById('round-num').textContent = '0';
-      document.getElementById('draw-btn').textContent  = '🎲 Draw';
-      document.getElementById('draw-btn').disabled     = false;
-
-      const card = document.getElementById('sc-card');
-      card.classList.remove('rolling','landed');
-
-      const ph = document.getElementById('sc-placeholder');
-      const ct = document.getElementById('sc-content');
-      ph.style.display = '';
-      ct.classList.remove('show');
-
-      const html = document.documentElement;
-
-      if (m === 'solo') {
-        html.classList.add('solo');
-        document.getElementById('btn-solo').classList.add('active');
-        document.getElementById('btn-team').classList.remove('active');
-        document.getElementById('page-title').textContent   = '🎭 Persuade!';
-        document.getElementById('page-sub').textContent     = 'Take turns — one at a time, convince the judge!';
-        document.getElementById('ph-emoji').textContent     = '🎭';
-        document.getElementById('role-label').textContent   = '🗣️ Persuader Plays';
-        document.getElementById('judge-label').textContent  = '👨‍⚖️ Judge\'s Role';
-      } else {
-        html.classList.remove('solo');
-        document.getElementById('btn-team').classList.add('active');
-        document.getElementById('btn-solo').classList.remove('active');
-        document.getElementById('page-title').textContent   = '🤝 Persuade!';
-        document.getElementById('page-sub').textContent     = 'One judge, everyone else teams up — convince them together!';
-        document.getElementById('ph-emoji').textContent     = '🤝';
-        document.getElementById('role-label').textContent   = '👥 Your Team Plays';
-        document.getElementById('judge-label').textContent  = '👨‍⚖️ The Judge';
-      }
-
-      updateCounter();
-    }
-
     function updateCounter() {
-      const pool  = currentMode === 'solo' ? soloScenarios : teamScenarios;
-      const left  = pool.length - used.length;
+      const left = scenarios.length - used.length;
       document.getElementById('sc-counter').textContent =
-        left < pool.length ? left + ' scenarios left' : pool.length + ' scenarios';
+        left < scenarios.length ? left + ' scenarios left' : scenarios.length + ' scenarios';
     }
 
     function draw() {
       if (rolling) return;
       rolling = true;
 
-      const pool = currentMode === 'solo' ? soloScenarios : teamScenarios;
       const btn  = document.getElementById('draw-btn');
       const card = document.getElementById('sc-card');
       const ph   = document.getElementById('sc-placeholder');
@@ -615,21 +516,21 @@
       ph.style.display = 'none';
       ct.classList.add('show');
 
-      let avail = pool.map((_,i) => i).filter(i => !used.includes(i));
-      if (!avail.length) { used = []; avail = pool.map((_,i) => i); }
+      let avail = scenarios.map((_, i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = scenarios.map((_, i) => i); }
       const fi = avail[Math.floor(Math.random() * avail.length)];
       used.push(fi);
 
       let ticks = 0;
       const iv = setInterval(() => {
-        const tmp = pool[Math.floor(Math.random() * pool.length)];
-        document.getElementById('sc-role').textContent      = tmp.role;
+        const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
+        document.getElementById('sc-team').textContent      = tmp.team;
         document.getElementById('sc-situation').textContent = tmp.situation;
         document.getElementById('sc-judge').textContent     = tmp.emoji + ' ' + tmp.judge;
         if (++ticks >= 24) {
           clearInterval(iv);
-          const sc = pool[fi];
-          document.getElementById('sc-role').textContent      = sc.role;
+          const sc = scenarios[fi];
+          document.getElementById('sc-team').textContent      = sc.team;
           document.getElementById('sc-situation').textContent = sc.situation;
           document.getElementById('sc-judge').textContent     = sc.emoji + ' ' + sc.judge;
           card.classList.remove('rolling');
