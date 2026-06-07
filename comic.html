@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Story Comic · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Story Comic">
+  <meta name="theme-color" content="#0d0d1a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 64px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: scale(.82); }
+      65%  { transform: scale(1.04); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 900px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+      animation: fadeUp .5s ease both;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 24px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #f59e0b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #555; font-size: .93rem; }
+
+    /* ── Comic Grid ── */
+    .comic-grid {
+      width: 100%; max-width: 900px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      background: #111;
+      border: 5px solid #111;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      animation: fadeUp .5s .2s ease both;
+    }
+
+    /* ── Single Panel ── */
+    .panel {
+      background: #fffef5;
+      display: flex;
+      flex-direction: column;
+      min-height: 350px;
+    }
+
+    /* Panel header bar */
+    .panel-hdr {
+      padding: 9px 14px;
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-hdr .num-badge {
+      background: rgba(255,255,255,.22);
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 900;
+    }
+    .hdr-1 { background: #2563eb; }
+    .hdr-2 { background: #dc2626; }
+    .hdr-3 { background: #d97706; }
+    .hdr-4 { background: #16a34a; }
+
+    /* Panel body */
+    .panel-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 14px 12px;
+      gap: 10px;
+    }
+
+    /* Placeholder state */
+    .ph {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+    .ph-n {
+      font-size: 5rem;
+      font-weight: 900;
+      color: #ddd;
+      line-height: 1;
+    }
+    .ph-t { font-size: .75rem; color: #bbb; font-weight: 600; }
+
+    /* Content state */
+    .pc {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 10px;
+    }
+    .pc.show {
+      display: flex;
+      animation: popIn .4s ease both;
+    }
+
+    /* Emoji characters */
+    .pc-chars { font-size: 4.2rem; line-height: 1; text-align: center; }
+
+    /* Speech bubble */
+    .bubble {
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 14px;
+      padding: 9px 13px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #111;
+      text-align: center;
+      line-height: 1.4;
+      position: relative;
+    }
+    .bubble::before {
+      content: '';
+      position: absolute;
+      top: -13px; left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-bottom-color: #111;
+    }
+    .bubble::after {
+      content: '';
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-bottom-color: #fff;
+    }
+
+    /* Caption */
+    .caption {
+      font-size: .82rem;
+      color: #666;
+      font-style: italic;
+      text-align: center;
+      line-height: 1.45;
+      padding: 0 4px;
+    }
+
+    /* Panel button */
+    .panel-btn {
+      padding: 11px;
+      background: #111;
+      color: #fff;
+      border: none;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s, transform .1s;
+      letter-spacing: .02em;
+      flex-shrink: 0;
+    }
+    .panel-btn:active { transform: scale(.98); }
+    .btn-1:hover { background: #1d4ed8; }
+    .btn-2:hover { background: #b91c1c; }
+    .btn-3:hover { background: #b45309; }
+    .btn-4:hover { background: #15803d; }
+
+    /* ── Bottom controls ── */
+    .controls {
+      width: 100%; max-width: 900px;
+      display: flex; gap: 12px;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .ctrl-btn {
+      flex: 1;
+      padding: 15px;
+      border-radius: 14px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+      border: 2px solid;
+    }
+    .ctrl-btn:active { transform: scale(.98); }
+    .ctrl-draw {
+      background: #13132b; color: #f59e0b; border-color: #f59e0b;
+    }
+    .ctrl-draw:hover { background: rgba(245,158,11,.1); }
+    .ctrl-reset {
+      background: #13132b; color: #555; border-color: #333;
+    }
+    .ctrl-reset:hover { background: #1a1a2e; color: #888; }
+
+    /* Mobile */
+    @media (max-width: 500px) {
+      .panel { min-height: 270px; }
+      .pc-chars { font-size: 3rem; }
+      .bubble { font-size: .82rem; }
+      .caption { font-size: .72rem; }
+      .ph-n { font-size: 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+  </div>
+
+  <div class="header">
+    <h1>📖 Story Comic</h1>
+    <p>Draw each panel one by one — build a random story together!</p>
+  </div>
+
+  <div class="comic-grid">
+
+    <!-- Panel 1 : Scene -->
+    <div class="panel">
+      <div class="panel-hdr hdr-1"><span class="num-badge">1</span>📍 Scene</div>
+      <div class="panel-body">
+        <div class="ph" id="ph1"><div class="ph-n">1</div><div class="ph-t">Press to draw</div></div>
+        <div class="pc" id="pc1">
+          <div class="pc-chars"  id="ch1"></div>
+          <div class="bubble"    id="sp1"></div>
+          <div class="caption"   id="ca1"></div>
+        </div>
+      </div>
+      <button class="panel-btn btn-1" onclick="drawPanel(1)">🎲 Draw Panel 1</button>
+    </div>
+
+    <!-- Panel 2 : Problem -->
+    <div class="panel">
+      <div class="panel-hdr hdr-2"><span class="num-badge">2</span>⚡ Problem</div>
+      <div class="panel-body">
+        <div class="ph" id="ph2"><div class="ph-n">2</div><div class="ph-t">Press to draw</div></div>
+        <div class="pc" id="pc2">
+          <div class="pc-chars"  id="ch2"></div>
+          <div class="bubble"    id="sp2"></div>
+          <div class="caption"   id="ca2"></div>
+        </div>
+      </div>
+      <button class="panel-btn btn-2" onclick="drawPanel(2)">🎲 Draw Panel 2</button>
+    </div>
+
+    <!-- Panel 3 : Reaction -->
+    <div class="panel">
+      <div class="panel-hdr hdr-3"><span class="num-badge">3</span>😮 Reaction</div>
+      <div class="panel-body">
+        <div class="ph" id="ph3"><div class="ph-n">3</div><div class="ph-t">Press to draw</div></div>
+        <div class="pc" id="pc3">
+          <div class="pc-chars"  id="ch3"></div>
+          <div class="bubble"    id="sp3"></div>
+          <div class="caption"   id="ca3"></div>
+        </div>
+      </div>
+      <button class="panel-btn btn-3" onclick="drawPanel(3)">🎲 Draw Panel 3</button>
+    </div>
+
+    <!-- Panel 4 : Ending -->
+    <div class="panel">
+      <div class="panel-hdr hdr-4"><span class="num-badge">4</span>🎬 Ending</div>
+      <div class="panel-body">
+        <div class="ph" id="ph4"><div class="ph-n">4</div><div class="ph-t">Press to draw</div></div>
+        <div class="pc" id="pc4">
+          <div class="pc-chars"  id="ch4"></div>
+          <div class="bubble"    id="sp4"></div>
+          <div class="caption"   id="ca4"></div>
+        </div>
+      </div>
+      <button class="panel-btn btn-4" onclick="drawPanel(4)">🎲 Draw Panel 4</button>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn ctrl-draw"  onclick="drawAll()">🎲 Draw All Panels</button>
+    <button class="ctrl-btn ctrl-reset" onclick="resetAll()">↺ New Story</button>
+  </div>
+
+  <script>
+    const pools = {
+      1: [
+        { ch:'👩‍🚀🌕',  sp:'"Another quiet day on the moon..."',               ca:'Two explorers on the moon had big plans today.' },
+        { ch:'🧙‍♂️🐉',  sp:'"Good morning, my old friend."',                    ca:'The wizard and his dragon started the day together.' },
+        { ch:'🦁👑',    sp:'"Today I will be the greatest king ever."',          ca:'The lion king woke up feeling very confident.' },
+        { ch:'👩‍🍳🦞',  sp:'"This will be my best dish ever!"',                  ca:'Chef Rosa had a very unusual helper in the kitchen.' },
+        { ch:'🤖🐱',    sp:'"Beep boop. Coffee is ready."',                      ca:'The robot and the cat shared a cosy apartment.' },
+        { ch:'🦸‍♀️☕',  sp:'"No saving the world before coffee."',               ca:'Even the greatest superhero needed a slow morning.' },
+        { ch:'🧑‍🔬🔬',  sp:'"This experiment will change everything!"',          ca:'Professor Kim was very excited in the lab.' },
+        { ch:'🐻🍯',    sp:'"I just need ONE jar of honey."',                    ca:'Bear set out on a very important mission.' },
+        { ch:'🐧🌋',    sp:'"Hmm, this does not look like the beach."',          ca:'The penguin had taken a very wrong turn.' },
+        { ch:'🕵️🍕',   sp:'"Something very suspicious is going on here."',      ca:'Detective Dan was working on his strangest case ever.' },
+        { ch:'🦊🎩',    sp:'"Ladies and gentlemen, watch closely..."',           ca:'The fox magician was ready to amaze the crowd.' },
+        { ch:'👩‍⚕️🦕',  sp:'"Please open wide and say ahh."',                   ca:"Dr. Lee's first patient of the day was... unexpected." },
+        { ch:'🧑‍🎨🖼️',  sp:'"My greatest work starts today!"',                   ca:'The artist arrived at the gallery full of big ideas.' },
+        { ch:'🐼🎋',    sp:'"Today is a perfect day for doing nothing."',        ca:'The panda had very ambitious plans to do absolutely nothing.' },
+        { ch:'🧜‍♀️🐠',  sp:'"I wonder what is up on land today..."',             ca:'The mermaid was curious about the world above the sea.' },
+        { ch:'🚀👾',    sp:'"Captain, we are very, very lost."',                 ca:'The spaceship crew had no idea where they were.' },
+        { ch:'🦄🌈',    sp:'"Every day is perfect when you are me."',            ca:'The unicorn woke up feeling absolutely wonderful.' },
+        { ch:'👴🦯',    sp:'"Back in my day, this never happened."',             ca:'Grandpa set off on his daily walk around the neighbourhood.' },
+        { ch:'🐊🎒',    sp:'"First day at school. No big deal."',                ca:'The alligator was trying very hard to fit in today.' },
+        { ch:'🧑‍🚒🚒',  sp:'"This is going to be an interesting day."',          ca:'The firefighter arrived at the station and saw the news.' },
+      ],
+      2: [
+        { ch:'💥😱',    sp:'"THAT was not supposed to happen!"',                  ca:'Suddenly, a huge explosion changed everything.' },
+        { ch:'🌧️🏠',   sp:'"Why is it raining... inside?!"',                    ca:'Rain started falling, but they were still indoors.' },
+        { ch:'🐘🚪',    sp:'"Excuse me, is this the right address?"',             ca:'A very large elephant walked through the front door.' },
+        { ch:'👻✨',    sp:'"Hello! I just need one small favour."',              ca:'A very friendly ghost appeared from nowhere.' },
+        { ch:'🛸🍽️',   sp:'"We come in peace. And also hunger."',               ca:'A tiny UFO landed right on the dinner table.' },
+        { ch:'🎵🎶',    sp:'"WHY AM I SINGING EVERYTHING?! 🎵"',                 ca:'Nobody could stop singing — even when they really tried.' },
+        { ch:'⏰🔄',    sp:'"Did that minute just go backwards?"',                ca:'Time started moving in completely the wrong direction.' },
+        { ch:'🐝🌪️',   sp:'"There are about one million bees outside."',         ca:'A huge cloud of bees was heading directly their way.' },
+        { ch:'🧁💬',    sp:'"Excuse me. I have feelings too, you know."',         ca:'The food started talking back. Very loudly.' },
+        { ch:'🕳️😦',   sp:'"There was no hole there this morning..."',           ca:'A giant hole appeared right in the middle of the floor.' },
+        { ch:'🔥📋',    sp:'"The plan is on fire. The actual plan."',             ca:'The important plan was now, literally, on fire.' },
+        { ch:'🐍📬',    sp:'"There is a snake. In the post box."',               ca:'Nobody had expected to find that in the morning post.' },
+        { ch:'🎩✨',    sp:'"Everything I touch keeps disappearing!"',            ca:'The magic hat was definitely not working as planned.' },
+        { ch:'📱😳',    sp:'"I just got the most unusual text message."',         ca:'The phone showed a message nobody was prepared for.' },
+        { ch:'🌊🏄',    sp:'"WHERE DID THIS WAVE COME FROM?!"',                  ca:'A giant wave appeared in a place that had no sea.' },
+        { ch:'🍌🦧',    sp:'"Give it back! Give it BACK!"',                      ca:'A monkey stole the most important thing they had.' },
+        { ch:'🎈💨',    sp:'"Oh no. Oh no no no."',                              ca:'The balloon flew away, taking something very important with it.' },
+        { ch:'🧲🔩',    sp:'"Why is everything sticking to me?!"',               ca:'A strange force was pulling all metal objects toward them.' },
+        { ch:'🦩🎺',    sp:'"I did not know flamingos could do that."',           ca:'The flamingo had a very unusual and very loud talent.' },
+        { ch:'🌋💼',    sp:'"The volcano is... inside the office building."',     ca:'Nobody had read the safety instructions carefully enough.' },
+      ],
+      3: [
+        { ch:'😱🏃',    sp:'"RUN! Then we will think about it!"',                 ca:'They screamed and ran in circles for quite some time.' },
+        { ch:'🤔💭',    sp:'"OK. Let us think about this very carefully."',        ca:'They sat down and thought as hard as they possibly could.' },
+        { ch:'📞😅',    sp:'"Hello? Yes, this is an emergency. Kind of."',         ca:'They called everyone they knew — but nobody answered.' },
+        { ch:'🍕💤',    sp:'"We should eat first. Then fix it."',                  ca:'They ordered pizza and waited for a good idea to come.' },
+        { ch:'📖🧐',    sp:'"The answer must be in this very old book."',          ca:'They found the oldest book they could and read everything.' },
+        { ch:'🎸🎤',    sp:'"♪ We do not know what to do! ♪"',                   ca:'They turned their problem into a song. It did not help.' },
+        { ch:'🛒🏎️',   sp:'"To the shops! We need supplies!"',                   ca:'They ran to the shops to buy things they probably did not need.' },
+        { ch:'🤝😬',    sp:'"We made a deal. A very unusual deal."',               ca:'They shook hands on an agreement nobody fully understood.' },
+        { ch:'💤😴',    sp:'"Maybe if we sleep, it will fix itself?"',             ca:'They decided a quick nap was the best first step.' },
+        { ch:'🗣️👂',   sp:'"I SAID it would happen! — No you did NOT!"',         ca:'A very loud argument started about whose fault it was.' },
+        { ch:'🎭🙂',    sp:'"Just act normal. Nobody will notice."',               ca:'They put on costumes and pretended everything was fine.' },
+        { ch:'🧪⚗️',   sp:'"If we mix THESE together... maybe it works?"',        ca:'They started mixing random things in the hope of a solution.' },
+        { ch:'📸🤳',    sp:'"Wait — selfie first. THEN we handle it."',            ca:'They stopped everything to take a group photo.' },
+        { ch:'🙏🚶',    sp:'"Excuse me, stranger. We need your help."',            ca:'They asked the nearest stranger on the street for advice.' },
+        { ch:'🗺️✏️',   sp:'"I have a plan. It involves a very big map."',         ca:'They drew a long and complicated plan on the floor.' },
+        { ch:'🎂🕯️',   sp:'"Let us celebrate the problem. Maybe it will leave."', ca:'They lit candles and threw a small party for the problem.' },
+        { ch:'🤸‍♀️🧘', sp:'"Breathe. Stretch. Focus. We have got this."',         ca:'They did breathing exercises before doing anything else.' },
+        { ch:'🐕🎯',    sp:'"The dog will know what to do. Dogs always know."',    ca:'They decided to follow the dog and see where it led them.' },
+        { ch:'🧹🪣',    sp:'"First we clean. Everything is better after cleaning."',ca:'Somehow, nobody could act before the place was completely tidy.' },
+        { ch:'👒🪄',    sp:'"Stand back. I have a wild idea."',                    ca:'One person stepped forward with a very unusual plan.' },
+      ],
+      4: [
+        { ch:'🎉🏆',    sp:'"We did it! We have no idea how, but we did!"',        ca:'Somehow, against all odds, everything worked out perfectly.' },
+        { ch:'😴💭',    sp:'"...And then I woke up."',                             ca:'It was all a dream. Probably. Maybe. Who knows.' },
+        { ch:'📰📸',    sp:'"You will not believe what was on the front page."',   ca:'The whole story made the next day\'s newspaper.' },
+        { ch:'👽🤝',    sp:'"Actually, we planned this all along. You are welcome."', ca:'The aliens admitted they had organised everything from the start.' },
+        { ch:'💰😲',    sp:'"Wait — we are RICH because of this?"',                ca:'By some miracle, the whole adventure made them very wealthy.' },
+        { ch:'🌈✨',    sp:'"A rainbow just... fixed everything."',                ca:'A rainbow appeared and, somehow, everything was okay again.' },
+        { ch:'🤷😂',    sp:'"Nobody could ever explain what happened. Ever."',     ca:'It remained the biggest mystery in the history of the town.' },
+        { ch:'🔮🧙',    sp:'"I predicted this 200 years ago. Page 47."',           ca:'An old fortune teller had written about this exact day long ago.' },
+        { ch:'🌙🌍',    sp:'"By nighttime, nothing was the same anymore."',        ca:'The world was different now, and everyone had to accept it.' },
+        { ch:'🚀👋',    sp:'"We have decided to move to a different planet."',     ca:'They packed their bags and moved somewhere much safer.' },
+        { ch:'🎓📜',    sp:'"We learned one very, very important lesson."',        ca:'The experience taught them something they would never forget.' },
+        { ch:'🍀😊',    sp:'"That was the luckiest day of my entire life."',       ca:'In the end, it turned out to be the absolute best day ever.' },
+        { ch:'🔄😅',    sp:'"OK so... almost everything is back to normal."',      ca:'Everything returned to normal. Almost, but not quite, everything.' },
+        { ch:'👏🥹',    sp:'"I am just really glad we are all still here."',       ca:'They hugged, laughed, and promised never to tell anyone.' },
+        { ch:'📱💬',    sp:'"And THIS is why I now have three million followers."',ca:'The whole thing went viral and made them all very famous.' },
+        { ch:'🐢🏁',    sp:'"Slow and steady. That is the real lesson here."',     ca:'The slowest, most careful plan had won in the end. Somehow.' },
+        { ch:'🎪🎠',    sp:'"I say we do it all again tomorrow."',                 ca:'It was so fun that everyone wanted to do the exact same thing again.' },
+        { ch:'🫶🌟',    sp:'"Together, we can handle absolutely anything."',       ca:'They realised that as a team, nothing was impossible.' },
+        { ch:'🗝️🚪',   sp:'"The door was open the whole time. We just never checked."', ca:'The simplest solution had been there from the very beginning.' },
+        { ch:'🧃🍪',    sp:'"I think we deserve a snack after all that."',         ca:'Nobody argued. They sat down and had a very nice snack.' },
+      ]
+    };
+
+    const used = { 1:[], 2:[], 3:[], 4:[] };
+
+    function pick(n) {
+      const pool = pools[n];
+      let avail = pool.map((_,i) => i).filter(i => !used[n].includes(i));
+      if (!avail.length) { used[n] = []; avail = pool.map((_,i) => i); }
+      const idx = avail[Math.floor(Math.random() * avail.length)];
+      used[n].push(idx);
+      return pool[idx];
+    }
+
+    function drawPanel(n) {
+      const item = pick(n);
+      const ph = document.getElementById('ph' + n);
+      const pc = document.getElementById('pc' + n);
+
+      ph.style.display = 'none';
+
+      // force re-animation
+      pc.classList.remove('show');
+      void pc.offsetWidth;
+
+      document.getElementById('ch' + n).textContent = item.ch;
+      document.getElementById('sp' + n).textContent = item.sp;
+      document.getElementById('ca' + n).textContent = item.ca;
+
+      pc.classList.add('show');
+
+      const btn = document.querySelector('.btn-' + n);
+      btn.textContent = '🔁 Redraw Panel ' + n;
+    }
+
+    function drawAll() {
+      [1,2,3,4].forEach((n, i) => setTimeout(() => drawPanel(n), i * 200));
+    }
+
+    function resetAll() {
+      [1,2,3,4].forEach(n => {
+        document.getElementById('ph' + n).style.display = '';
+        document.getElementById('pc' + n).classList.remove('show');
+        document.querySelector('.btn-' + n).textContent = '🎲 Draw Panel ' + n;
+      });
+    }
+  </script>
+</body>
+</html>
