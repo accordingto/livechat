@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>What Will You Do? · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="What Will You Do">
+  <meta name="theme-color" content="#0d0d1a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .5; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
+      50%       { box-shadow: 0 0 48px rgba(245,158,11,.25); }
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 740px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 36px;
+      animation: fadeUp .5s ease both;
+    }
+    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
+    a.back:hover { color: #eee; }
+    .round-badge { font-size: 12px; color: #444; }
+    .round-badge span { color: #f59e0b; font-weight: 700; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center; margin-bottom: 32px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #f59e0b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 8px;
+    }
+    .header p { color: #666; font-size: .93rem; }
+
+    /* ── Card ── */
+    .sc-card {
+      width: 100%; max-width: 740px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 22px;
+      padding: 32px 34px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .4s;
+      animation: fadeUp .5s .2s ease both;
+      min-height: 260px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .sc-card.rolling { border-color: #f59e0b; animation: flicker .14s infinite; }
+    .sc-card.landed  { border-color: #f59e0b; animation: pulseGlow 2.8s ease infinite; }
+    .sc-card::before {
+      content: '🤔';
+      position: absolute; font-size: 11rem; opacity: .022;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+
+    /* Placeholder */
+    .sc-placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; text-align: center;
+      min-height: 200px;
+    }
+    .sc-placeholder .big-emoji { font-size: 3.2rem; }
+    .sc-placeholder p { color: #333; font-size: .95rem; }
+
+    /* Content wrapper */
+    .sc-content { display: none; flex-direction: column; gap: 20px; }
+    .sc-content.show { display: flex; }
+
+    /* Situation */
+    .sc-label {
+      font-size: .72rem; text-transform: uppercase;
+      letter-spacing: .13em; color: #f59e0b; font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .sc-situation {
+      font-size: 1.55rem; color: #eee;
+      line-height: 1.55; font-weight: 600;
+    }
+
+    /* Divider */
+    .sc-divider { height: 1px; background: #1e1e42; }
+
+    /* Options section */
+    .options-section { display: flex; flex-direction: column; gap: 10px; }
+    .options-section.pop { animation: slideDown .35s ease both; }
+
+    .opt {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: rgba(255,255,255,.03);
+      border-radius: 14px; padding: 15px 18px;
+      border: 1.5px solid rgba(255,255,255,.06);
+    }
+    .opt-badge {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.05rem; flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .opt-a .opt-badge { background: #2563eb; color: #fff; }
+    .opt-b .opt-badge { background: #dc2626; color: #fff; }
+    .opt-c .opt-badge { background: #16a34a; color: #fff; }
+
+    .opt-text { font-size: 1.08rem; color: #ccc; line-height: 1.55; padding-top: 6px; }
+    .opt-c .opt-text { color: #86efac; font-style: italic; }
+
+    /* ── Draw button ── */
+    .btn-draw {
+      width: 100%; max-width: 740px;
+      background: #13132b; color: #f59e0b; border: 2px solid #f59e0b;
+      border-radius: 14px; padding: 17px;
+      font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .btn-draw:hover { background: rgba(245,158,11,.1); }
+    .btn-draw:active { transform: scale(.98); }
+    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
+
+    @media (max-width: 520px) {
+      .sc-card { padding: 22px 20px; }
+      .sc-situation { font-size: 1.2rem; }
+      .opt-text { font-size: .95rem; }
+      .opt-badge { width: 32px; height: 32px; font-size: .9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="round-num">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🤔 What Will You Do?</h1>
+    <p>Draw a tough situation — pick A, B, or come up with your own answer!</p>
+  </div>
+
+  <div class="sc-card" id="sc-card">
+
+    <div class="sc-placeholder" id="sc-placeholder">
+      <div class="big-emoji">🤔</div>
+      <p>Press <strong>Draw</strong> to reveal the situation</p>
+    </div>
+
+    <div class="sc-content" id="sc-content">
+
+      <div>
+        <div class="sc-label">🎯 The Situation</div>
+        <div class="sc-situation" id="sc-situation"></div>
+      </div>
+
+      <div class="sc-divider" id="sc-divider" style="display:none"></div>
+
+      <div class="options-section" id="options-section" style="display:none">
+        <div class="opt opt-a">
+          <div class="opt-badge">A</div>
+          <div class="opt-text" id="opt-a-text"></div>
+        </div>
+        <div class="opt opt-b">
+          <div class="opt-badge">B</div>
+          <div class="opt-text" id="opt-b-text"></div>
+        </div>
+        <div class="opt opt-c">
+          <div class="opt-badge">C</div>
+          <div class="opt-text">Something else — come up with your own answer and share it with the group!</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
+
+  <script>
+    const scenarios = [
+      {
+        situation: 'You find a wallet on the street. It has $500 cash inside but no ID or name.',
+        a: 'Keep the money and leave the wallet where you found it.',
+        b: 'Hand everything in to the police and wait for the owner to come forward.',
+      },
+      {
+        situation: 'Your best friend asks you to lie to their partner about where they were last night.',
+        a: 'Lie for them — they are your best friend and you always have their back.',
+        b: 'Refuse and tell the truth if anyone asks you directly.',
+      },
+      {
+        situation: 'You see someone shoplifting a small item in a store.',
+        a: 'Say nothing and walk away — it is not your problem.',
+        b: 'Tell the store staff immediately.',
+      },
+      {
+        situation: 'You accidentally send an embarrassing private message to the wrong person.',
+        a: 'Pretend it never happened and say absolutely nothing.',
+        b: 'Call them right away and explain the mistake fully.',
+      },
+      {
+        situation: 'You are offered your dream job in another country, but your family really needs you at home.',
+        a: 'Take the job — your career and future come first.',
+        b: 'Stay home — no job is more important than family.',
+      },
+      {
+        situation: 'You accidentally see your neighbour\'s Wi-Fi password written on a note by their door.',
+        a: 'Use it for free — they will never find out.',
+        b: 'Tell your neighbour what happened straight away.',
+      },
+      {
+        situation: 'You find out your colleague earns much more than you for exactly the same work.',
+        a: 'Say nothing and keep working hard — things will improve eventually.',
+        b: 'Go to your boss immediately and demand equal pay.',
+      },
+      {
+        situation: 'You break something valuable at a friend\'s house and they do not notice.',
+        a: 'Leave quietly and hope they never find out.',
+        b: 'Tell your friend straight away and offer to replace it.',
+      },
+      {
+        situation: 'You overhear your boss saying very negative things about you to another manager.',
+        a: 'Confront your boss about it directly.',
+        b: 'Say nothing and quietly start looking for a new job.',
+      },
+      {
+        situation: 'The shop gives you too much change by mistake.',
+        a: 'Keep it — big shops make plenty of money anyway.',
+        b: 'Point out the mistake and return the extra money immediately.',
+      },
+      {
+        situation: 'A friend wants to post a photo of you online that you really hate.',
+        a: 'Let them post it — it is just a photo, do not be so serious.',
+        b: 'Ask them firmly not to post it and explain how you feel.',
+      },
+      {
+        situation: 'Your friend asks to borrow a large amount of money and you are not sure they will repay you.',
+        a: 'Lend it anyway — you cannot risk losing the friendship.',
+        b: 'Refuse clearly and explain that you simply cannot afford to right now.',
+      },
+      {
+        situation: 'You notice the person next to you on the train is reading your private messages over your shoulder.',
+        a: 'Ignore it and carry on — it is a public place after all.',
+        b: 'Turn to them and ask them to stop, directly and calmly.',
+      },
+      {
+        situation: 'You get a perfect score on a test, but later realise the teacher made a marking mistake in your favour.',
+        a: 'Say nothing — you deserve a reward sometimes.',
+        b: 'Tell the teacher about the mistake right away.',
+      },
+      {
+        situation: 'Someone cuts in line in front of you when you have been waiting for a long time.',
+        a: 'Say nothing — it is not worth the stress.',
+        b: 'Tell them loudly and clearly to go to the back of the line.',
+      },
+      {
+        situation: 'The waiter brings you the wrong dish, but it looks much better than what you ordered.',
+        a: 'Say nothing and enjoy the better meal.',
+        b: 'Tell the waiter and ask for the correct order.',
+      },
+      {
+        situation: 'You know for certain that your best friend\'s partner is cheating on them.',
+        a: 'Tell your friend everything you know immediately.',
+        b: 'Stay completely out of it — it is their relationship, not yours.',
+      },
+      {
+        situation: 'You are already late for a very important meeting when you see an elderly person struggling to cross the road.',
+        a: 'Stop and help — the meeting can wait.',
+        b: 'Keep walking — you absolutely cannot be any later.',
+      },
+      {
+        situation: 'Your boss asks you to do something that is fully legal but feels morally wrong to you.',
+        a: 'Do it anyway — you need this job and cannot afford to lose it.',
+        b: 'Refuse, even if it could cost you your position.',
+      },
+      {
+        situation: 'You see a young child crying alone in a shopping mall. They seem completely lost.',
+        a: 'Call security and stay with the child until help arrives.',
+        b: 'Keep walking — there are plenty of other people around who will help.',
+      },
+      {
+        situation: 'During an exam, you clearly see the person next to you copying your answers.',
+        a: 'Cover your paper and say nothing to the teacher.',
+        b: 'Report it to the teacher during the exam, even if it causes a scene.',
+      },
+      {
+        situation: 'Your flatmate never cleans the shared areas of your apartment and you are very tired of it.',
+        a: 'Just clean it yourself silently — arguing is not worth the trouble.',
+        b: 'Have a serious and honest conversation about shared responsibilities.',
+      },
+      {
+        situation: 'You see your co-worker regularly taking office supplies home in their bag.',
+        a: 'Say nothing — it does not affect you directly.',
+        b: 'Report it to your manager.',
+      },
+      {
+        situation: 'A stranger sends you a message online offering a job that pays triple your current salary.',
+        a: 'Apply immediately — you could get very lucky.',
+        b: 'Ignore it completely — it is almost certainly a scam.',
+      },
+      {
+        situation: 'You are offered a very high salary for a job that is completely boring and requires almost no effort.',
+        a: 'Take it — money is what matters most.',
+        b: 'Turn it down and keep searching for work you actually enjoy.',
+      },
+      {
+        situation: 'Your close friend tells you a secret and asks you to promise not to tell anyone. But the secret could be putting them in real danger.',
+        a: 'Keep the promise no matter what — you made a commitment.',
+        b: 'Break the promise to protect your friend, even if they get angry.',
+      },
+      {
+        situation: 'You wake up and realise your phone, wallet, and keys have all disappeared.',
+        a: 'Panic immediately and call everyone you know.',
+        b: 'Stay completely calm and carefully retrace your steps from the night before.',
+      },
+      {
+        situation: 'You are the only witness to a minor car accident. The driver who caused it begs you not to report it.',
+        a: 'Stay quiet — nobody was seriously hurt and it is a small matter.',
+        b: 'Give your contact details to the other driver as an honest witness.',
+      },
+      {
+        situation: 'You find out that the company you work for is doing something dishonest, but not breaking any laws.',
+        a: 'Stay quiet and keep your job — it is not your responsibility.',
+        b: 'Speak up about it, even if it puts your own position at risk.',
+      },
+      {
+        situation: 'You have a real chance to cheat on a very important exam with absolutely no risk of being caught.',
+        a: 'Cheat — the result is what matters, not how you got it.',
+        b: 'Do your honest best — a grade you did not earn is worthless.',
+      },
+    ];
+
+    let round   = 0;
+    let used    = [];
+    let rolling = false;
+
+    function draw() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn  = document.getElementById('draw-btn');
+      const card = document.getElementById('sc-card');
+      const ph   = document.getElementById('sc-placeholder');
+      const ct   = document.getElementById('sc-content');
+      const div  = document.getElementById('sc-divider');
+      const opts = document.getElementById('options-section');
+
+      btn.disabled = true;
+      card.classList.remove('landed');
+      card.classList.add('rolling');
+
+      ph.style.display  = 'none';
+      div.style.display = 'none';
+      opts.style.display = 'none';
+      ct.classList.add('show');
+
+      let avail = scenarios.map((_,i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = scenarios.map((_,i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      used.push(fi);
+
+      let ticks = 0;
+      const iv = setInterval(() => {
+        const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
+        document.getElementById('sc-situation').textContent = tmp.situation;
+
+        if (++ticks >= 22) {
+          clearInterval(iv);
+
+          const sc = scenarios[fi];
+          document.getElementById('sc-situation').textContent = sc.situation;
+          document.getElementById('opt-a-text').textContent   = sc.a;
+          document.getElementById('opt-b-text').textContent   = sc.b;
+
+          div.style.display  = '';
+          opts.style.display = 'flex';
+          opts.classList.remove('pop');
+          void opts.offsetWidth;
+          opts.classList.add('pop');
+
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+
+          round++;
+          document.getElementById('round-num').textContent = round;
+          btn.textContent = '🔁 Next Situation';
+          btn.disabled    = false;
+          rolling = false;
+        }
+      }, 85);
+    }
+  </script>
+</body>
+</html>
