@@ -33,6 +33,7 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
+    /* ── Topbar ── */
     .topbar {
       width: 100%; max-width: 900px;
       display: flex; justify-content: space-between; align-items: center;
@@ -42,6 +43,7 @@
     a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
     a.back:hover { color: #eee; }
 
+    /* ── Header ── */
     .header {
       text-align: center; margin-bottom: 24px;
       animation: fadeUp .5s .1s ease both;
@@ -54,6 +56,7 @@
     }
     .header p { color: #555; font-size: .93rem; }
 
+    /* ── Comic Grid ── */
     .comic-grid {
       width: 100%; max-width: 900px;
       display: grid;
@@ -67,6 +70,7 @@
       animation: fadeUp .5s .2s ease both;
     }
 
+    /* ── Single Panel ── */
     .panel {
       background: #fffef5;
       display: flex;
@@ -74,12 +78,17 @@
       min-height: 350px;
     }
 
+    /* Panel header bar */
     .panel-hdr {
       padding: 9px 14px;
       color: #fff;
-      font-size: .78rem; font-weight: 800;
-      letter-spacing: .09em; text-transform: uppercase;
-      display: flex; align-items: center; gap: 8px;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .panel-hdr .num-badge {
       background: rgba(255,255,255,.22);
@@ -92,60 +101,102 @@
     .hdr-3 { background: #d97706; }
     .hdr-4 { background: #16a34a; }
 
+    /* Panel body */
     .panel-body {
       flex: 1;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       padding: 18px 14px 12px;
       gap: 10px;
     }
 
+    /* Placeholder state */
     .ph {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
       pointer-events: none;
     }
-    .ph-n { font-size: 5rem; font-weight: 900; color: #ddd; line-height: 1; }
+    .ph-n {
+      font-size: 5rem;
+      font-weight: 900;
+      color: #ddd;
+      line-height: 1;
+    }
     .ph-t { font-size: .75rem; color: #bbb; font-weight: 600; }
 
+    /* Content state */
     .pc {
-      display: none; flex-direction: column;
-      align-items: center; width: 100%; gap: 10px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 10px;
     }
-    .pc.show { display: flex; animation: popIn .4s ease both; }
+    .pc.show {
+      display: flex;
+      animation: popIn .4s ease both;
+    }
 
+    /* Emoji characters */
     .pc-chars { font-size: 4.2rem; line-height: 1; text-align: center; }
 
+    /* Speech bubble */
     .bubble {
-      background: #fff; border: 2.5px solid #111;
-      border-radius: 14px; padding: 9px 13px;
-      font-size: .95rem; font-weight: 700; color: #111;
-      text-align: center; line-height: 1.4;
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 14px;
+      padding: 9px 13px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #111;
+      text-align: center;
+      line-height: 1.4;
       position: relative;
     }
     .bubble::before {
-      content: ''; position: absolute;
-      top: -13px; left: 50%; transform: translateX(-50%);
-      border: 6px solid transparent; border-bottom-color: #111;
+      content: '';
+      position: absolute;
+      top: -13px; left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-bottom-color: #111;
     }
     .bubble::after {
-      content: ''; position: absolute;
-      top: -8px; left: 50%; transform: translateX(-50%);
-      border: 5px solid transparent; border-bottom-color: #fff;
+      content: '';
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-bottom-color: #fff;
     }
 
+    /* Caption */
     .caption {
-      font-size: .82rem; color: #666;
-      font-style: italic; text-align: center;
-      line-height: 1.45; padding: 0 4px;
+      font-size: .82rem;
+      color: #666;
+      font-style: italic;
+      text-align: center;
+      line-height: 1.45;
+      padding: 0 4px;
     }
 
+    /* Panel button */
     .panel-btn {
-      padding: 11px; background: #111; color: #fff;
-      border: none; font-size: .85rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
+      padding: 11px;
+      background: #111;
+      color: #fff;
+      border: none;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
       transition: background .2s, transform .1s;
-      letter-spacing: .02em; flex-shrink: 0;
+      letter-spacing: .02em;
+      flex-shrink: 0;
     }
     .panel-btn:active { transform: scale(.98); }
     .btn-1:hover { background: #1d4ed8; }
@@ -153,23 +204,32 @@
     .btn-3:hover { background: #b45309; }
     .btn-4:hover { background: #15803d; }
 
+    /* ── Bottom controls ── */
     .controls {
       width: 100%; max-width: 900px;
       display: flex; gap: 12px;
       animation: fadeUp .5s .3s ease both;
     }
     .ctrl-btn {
-      flex: 1; padding: 15px; border-radius: 14px;
+      flex: 1;
+      padding: 15px;
+      border-radius: 14px;
       font-size: 1rem; font-weight: 700;
       cursor: pointer; font-family: inherit;
-      transition: background .2s, transform .1s; border: 2px solid;
+      transition: background .2s, transform .1s;
+      border: 2px solid;
     }
     .ctrl-btn:active { transform: scale(.98); }
-    .ctrl-draw { background: #13132b; color: #f59e0b; border-color: #f59e0b; }
+    .ctrl-draw {
+      background: #13132b; color: #f59e0b; border-color: #f59e0b;
+    }
     .ctrl-draw:hover { background: rgba(245,158,11,.1); }
-    .ctrl-reset { background: #13132b; color: #555; border-color: #333; }
+    .ctrl-reset {
+      background: #13132b; color: #555; border-color: #333;
+    }
     .ctrl-reset:hover { background: #1a1a2e; color: #888; }
 
+    /* Mobile */
     @media (max-width: 500px) {
       .panel { min-height: 270px; }
       .pc-chars { font-size: 3rem; }
@@ -192,53 +252,57 @@
 
   <div class="comic-grid">
 
+    <!-- Panel 1 : Scene -->
     <div class="panel">
       <div class="panel-hdr hdr-1"><span class="num-badge">1</span>📍 Scene</div>
       <div class="panel-body">
         <div class="ph" id="ph1"><div class="ph-n">1</div><div class="ph-t">Press to draw</div></div>
         <div class="pc" id="pc1">
-          <div class="pc-chars" id="ch1"></div>
-          <div class="bubble"   id="sp1"></div>
-          <div class="caption"  id="ca1"></div>
+          <div class="pc-chars"  id="ch1"></div>
+          <div class="bubble"    id="sp1"></div>
+          <div class="caption"   id="ca1"></div>
         </div>
       </div>
       <button class="panel-btn btn-1" onclick="drawPanel(1)">🎲 Draw Panel 1</button>
     </div>
 
+    <!-- Panel 2 : Problem -->
     <div class="panel">
       <div class="panel-hdr hdr-2"><span class="num-badge">2</span>⚡ Problem</div>
       <div class="panel-body">
         <div class="ph" id="ph2"><div class="ph-n">2</div><div class="ph-t">Press to draw</div></div>
         <div class="pc" id="pc2">
-          <div class="pc-chars" id="ch2"></div>
-          <div class="bubble"   id="sp2"></div>
-          <div class="caption"  id="ca2"></div>
+          <div class="pc-chars"  id="ch2"></div>
+          <div class="bubble"    id="sp2"></div>
+          <div class="caption"   id="ca2"></div>
         </div>
       </div>
       <button class="panel-btn btn-2" onclick="drawPanel(2)">🎲 Draw Panel 2</button>
     </div>
 
+    <!-- Panel 3 : Reaction -->
     <div class="panel">
       <div class="panel-hdr hdr-3"><span class="num-badge">3</span>😮 Reaction</div>
       <div class="panel-body">
         <div class="ph" id="ph3"><div class="ph-n">3</div><div class="ph-t">Press to draw</div></div>
         <div class="pc" id="pc3">
-          <div class="pc-chars" id="ch3"></div>
-          <div class="bubble"   id="sp3"></div>
-          <div class="caption"  id="ca3"></div>
+          <div class="pc-chars"  id="ch3"></div>
+          <div class="bubble"    id="sp3"></div>
+          <div class="caption"   id="ca3"></div>
         </div>
       </div>
       <button class="panel-btn btn-3" onclick="drawPanel(3)">🎲 Draw Panel 3</button>
     </div>
 
+    <!-- Panel 4 : Ending -->
     <div class="panel">
       <div class="panel-hdr hdr-4"><span class="num-badge">4</span>🎬 Ending</div>
       <div class="panel-body">
         <div class="ph" id="ph4"><div class="ph-n">4</div><div class="ph-t">Press to draw</div></div>
         <div class="pc" id="pc4">
-          <div class="pc-chars" id="ch4"></div>
-          <div class="bubble"   id="sp4"></div>
-          <div class="caption"  id="ca4"></div>
+          <div class="pc-chars"  id="ch4"></div>
+          <div class="bubble"    id="sp4"></div>
+          <div class="caption"   id="ca4"></div>
         </div>
       </div>
       <button class="panel-btn btn-4" onclick="drawPanel(4)">🎲 Draw Panel 4</button>
@@ -253,221 +317,94 @@
 
   <script>
     const pools = {
-      // ── Pool 1 : SCENE (50) ─────────────────────────────────────────────
       1: [
-        { ch:'👩‍🍳👨‍🍳', sp:'"Today we will make the greatest meal in history."',           ca:'Two chefs were ready to begin their biggest challenge yet.' },
-        { ch:'🧑‍🏫📚',   sp:'"Good morning, class. Today will be very different."',         ca:'The teacher arrived with an unusual plan for the day.' },
-        { ch:'👩‍⚕️🏥',   sp:'"Let us get started. It is going to be a long day."',          ca:'The doctor arrived at the hospital bright and early.' },
-        { ch:'👷‍♂️🏗️',   sp:'"This building will be finished by Friday. I promise."',       ca:'The builder made a very confident plan for the week.' },
-        { ch:'🕵️🔍',    sp:'"Something does not add up about this case."',                  ca:'The detective stared at the clues and thought very hard.' },
-        { ch:'👩‍🎨🖌️',   sp:'"This painting will change the art world forever."',           ca:'The artist stood before a blank canvas, full of ideas.' },
-        { ch:'👨‍🚒🚒',   sp:'"Stay calm. We are trained for exactly this."',                ca:'The firefighter arrived and found a very unusual situation.' },
-        { ch:'👩‍💼💼',   sp:'"I have a plan. Everyone will love this plan."',               ca:'The manager walked into the office ready to take charge.' },
-        { ch:'🧑‍🔬⚗️',   sp:'"I am very close to a major discovery. Very close."',          ca:'The scientist had been working in the lab for three days.' },
-        { ch:'👮‍♀️🚔',   sp:'"All quiet this morning. Just how I like it."',               ca:'The officer started her patrol on a very peaceful morning.' },
-        { ch:'👩‍✈️✈️',   sp:'"Good morning, passengers. It is a beautiful day to fly."',   ca:'The pilot prepared for what she hoped was a normal flight.' },
-        { ch:'🧑‍🎤🎵',   sp:'"I was born for this moment."',                               ca:'The singer stood backstage and listened to the crowd.' },
-        { ch:'👨‍🎓🎓',   sp:'"Today is the first day of the rest of my life."',            ca:'The graduate stood outside the doors, diploma in hand.' },
-        { ch:'🧑‍💻💻',   sp:'"Just one more hour and this app will be perfect."',          ca:'The programmer had been coding for twelve straight hours.' },
-        { ch:'👩‍🌾🌻',   sp:'"The biggest pumpkin at the market. Guaranteed."',            ca:'The farmer arrived at the market with great confidence.' },
-        { ch:'🧑‍⚖️⚖️',   sp:'"Order in the court! This will be a quick case."',           ca:'The judge sat down and looked at a very interesting file.' },
-        { ch:'👩‍🚀🚀',   sp:'"Houston, we are ready. Everything looks perfect."',          ca:'The astronaut checked her instruments for the last time.' },
-        { ch:'🏋️‍♂️🏆',  sp:'"Today I break the world record. I can feel it."',            ca:'The athlete warmed up and stared at the finish line.' },
-        { ch:'🧑‍🔧🔧',   sp:'"I can fix anything. Give me ten minutes."',                  ca:'The mechanic arrived at the garage with great confidence.' },
-        { ch:'👩‍🍳🍰',   sp:'"This cake will make people cry with happiness."',            ca:'The baker began her most ambitious creation early in the morning.' },
-        { ch:'👨‍🏫📝',   sp:'"Today we cover something very important. Pay attention."',   ca:'The professor walked in with a very thick stack of papers.' },
-        { ch:'👷‍♀️📐',   sp:'"The client will love this design. Absolutely love it."',     ca:'The architect unrolled her plans and smiled with pride.' },
-        { ch:'🕵️‍♀️📷',  sp:'"This story is going to make the front page."',              ca:'The journalist had been following the same lead for three weeks.' },
-        { ch:'👨‍🍳🌮',   sp:'"Best tacos in the city. Best tacos in the world."',          ca:'The street food chef set up his stall on a busy Saturday.' },
-        { ch:'🧑‍🎓📖',   sp:'"University will be the best years of my life."',             ca:'The student arrived on his very first day with a huge smile.' },
-        { ch:'👩‍🏋️🥋',  sp:'"My team is ready. We have trained for this moment."',        ca:'The coach gave her team one last speech before the game.' },
-        { ch:'👴👵',    sp:'"We have seen everything. Nothing can surprise us now."',       ca:'The grandparents prepared for what they thought was a normal day.' },
-        { ch:'👨‍👩‍👧‍👦', sp:'"This will be the best family holiday ever!"',              ca:'The family loaded the car and set off with very high hopes.' },
-        { ch:'👩‍🦳🧳',  sp:'"I have my map, my guidebook, and my good shoes."',           ca:'The tourist arrived in a new city, ready for adventure.' },
-        { ch:'🧑‍🎤🎸',   sp:'"We are on in five minutes. This is our moment."',            ca:'The band huddled together before walking on stage.' },
-        { ch:'👨‍💼📊',   sp:'"This meeting will get us the biggest deal in company history."', ca:'The CEO practised his speech one more time in the mirror.' },
-        { ch:'👩‍🔬🧬',   sp:'"The data is almost ready. Just ten more minutes."',          ca:'The researcher stared at her screen with wide eyes.' },
-        { ch:'👩‍🏫🏫',   sp:'"I am the substitute teacher. Let us have a great day."',    ca:'The substitute walked in and introduced herself to the class.' },
-        { ch:'👨‍🎨🖼️',   sp:'"The gallery opens in one hour. I just need to finish one painting."', ca:'The painter looked at the clock and then at his unfinished canvas.' },
-        { ch:'🧑‍💼📋',   sp:'"Day one of my new job. Everything will go perfectly."',     ca:'The new employee arrived at the office fifteen minutes early.' },
-        { ch:'👩‍⚖️📜',   sp:'"I have never lost a case. This one will be no different."', ca:'The lawyer straightened her jacket and walked into court.' },
-        { ch:'🏊‍♂️🥇',  sp:'"Four years of training. Everything comes down to this race."', ca:'The swimmer stood at the edge of the pool, focused and ready.' },
-        { ch:'👨‍🍳🍜',   sp:'"Lights, camera, and a perfect bowl of soup. Let us go."',   ca:'The celebrity chef smiled at the camera and began cooking.' },
-        { ch:'🧑‍🔬💡',   sp:'"I have an idea that will change the whole industry."',       ca:'The inventor had not slept in two days and was very excited.' },
-        { ch:'👨‍📚📚',   sp:'"A quiet Tuesday in the library. Just as it should be."',    ca:'The librarian arranged the books and waited for the day to begin.' },
-        { ch:'🧑‍🌾🌱',   sp:'"My tomatoes will win the prize this year. I am certain."',  ca:'The gardener arrived at the show early with great confidence.' },
-        { ch:'👩‍💼🗂️',   sp:'"I have meetings from 8am to 8pm. No problem at all."',     ca:'The HR manager opened her schedule and took a deep breath.' },
-        { ch:'🧑‍🎨🏛️',   sp:'"The opening night of my exhibition. All my life has led here."', ca:'The artist stood in her gallery and waited for the first guests.' },
-        { ch:'👩‍🍳🎂',   sp:'"Five-tier wedding cake. Six hours. I was born ready."',     ca:'The pastry chef prepared for the most important cake of her career.' },
-        { ch:'🧑‍🚒👩‍🚒',  sp:'"Every emergency is different. But we are always ready."',  ca:'The two firefighters checked their equipment before the shift.' },
-        { ch:'👮‍♂️👮‍♀️',  sp:'"Night shift. Should be quiet. Always is on a Tuesday."',  ca:'The two officers drove slowly through the empty streets.' },
-        { ch:'🧙‍♂️✨',   sp:'"Just another ordinary day of spells and mild chaos."',       ca:'The wizard opened his book and prepared for another normal day.' },
-        { ch:'👩‍🎭🎭',   sp:'"The curtain goes up in ten minutes. I was born for this."', ca:'The actress took one last look in the mirror before the show.' },
-        { ch:'👨‍🦼🏘️',   sp:'"I know everyone on this street. Nothing unusual here."',   ca:'The neighbourhood watch officer began his evening rounds.' },
-        { ch:'🧑‍🎓🏫',   sp:'"I studied for this exam for an entire month. I am ready."', ca:'The student sat down at their desk full of calm confidence.' },
+        { ch:'👩‍🚀🌕',  sp:'"Another quiet day on the moon..."',               ca:'Two explorers on the moon had big plans today.' },
+        { ch:'🧙‍♂️🐉',  sp:'"Good morning, my old friend."',                    ca:'The wizard and his dragon started the day together.' },
+        { ch:'🦁👑',    sp:'"Today I will be the greatest king ever."',          ca:'The lion king woke up feeling very confident.' },
+        { ch:'👩‍🍳🦞',  sp:'"This will be my best dish ever!"',                  ca:'Chef Rosa had a very unusual helper in the kitchen.' },
+        { ch:'🤖🐱',    sp:'"Beep boop. Coffee is ready."',                      ca:'The robot and the cat shared a cosy apartment.' },
+        { ch:'🦸‍♀️☕',  sp:'"No saving the world before coffee."',               ca:'Even the greatest superhero needed a slow morning.' },
+        { ch:'🧑‍🔬🔬',  sp:'"This experiment will change everything!"',          ca:'Professor Kim was very excited in the lab.' },
+        { ch:'🐻🍯',    sp:'"I just need ONE jar of honey."',                    ca:'Bear set out on a very important mission.' },
+        { ch:'🐧🌋',    sp:'"Hmm, this does not look like the beach."',          ca:'The penguin had taken a very wrong turn.' },
+        { ch:'🕵️🍕',   sp:'"Something very suspicious is going on here."',      ca:'Detective Dan was working on his strangest case ever.' },
+        { ch:'🦊🎩',    sp:'"Ladies and gentlemen, watch closely..."',           ca:'The fox magician was ready to amaze the crowd.' },
+        { ch:'👩‍⚕️🦕',  sp:'"Please open wide and say ahh."',                   ca:"Dr. Lee's first patient of the day was... unexpected." },
+        { ch:'🧑‍🎨🖼️',  sp:'"My greatest work starts today!"',                   ca:'The artist arrived at the gallery full of big ideas.' },
+        { ch:'🐼🎋',    sp:'"Today is a perfect day for doing nothing."',        ca:'The panda had very ambitious plans to do absolutely nothing.' },
+        { ch:'🧜‍♀️🐠',  sp:'"I wonder what is up on land today..."',             ca:'The mermaid was curious about the world above the sea.' },
+        { ch:'🚀👾',    sp:'"Captain, we are very, very lost."',                 ca:'The spaceship crew had no idea where they were.' },
+        { ch:'🦄🌈',    sp:'"Every day is perfect when you are me."',            ca:'The unicorn woke up feeling absolutely wonderful.' },
+        { ch:'👴🦯',    sp:'"Back in my day, this never happened."',             ca:'Grandpa set off on his daily walk around the neighbourhood.' },
+        { ch:'🐊🎒',    sp:'"First day at school. No big deal."',                ca:'The alligator was trying very hard to fit in today.' },
+        { ch:'🧑‍🚒🚒',  sp:'"This is going to be an interesting day."',          ca:'The firefighter arrived at the station and saw the news.' },
       ],
-
-      // ── Pool 2 : PROBLEM (50) ────────────────────────────────────────────
       2: [
-        { ch:'👷‍♂️😱',   sp:'"Someone built the wrong wall in the wrong place."',           ca:'A terrible mistake had been made. A very large one.' },
-        { ch:'👩‍💼📧',   sp:'"I just sent that email to the wrong person. The very wrong person."', ca:'The accidental email had been opened by one thousand people.' },
-        { ch:'👨‍🍳🔥',   sp:'"The kitchen is on fire. And also the dining room."',          ca:'Something had gone very wrong with the main course.' },
-        { ch:'🧑‍💻💥',   sp:'"I deleted the entire project. All three years of it."',       ca:'One wrong click had removed everything from the screen.' },
-        { ch:'👩‍🏫😤',   sp:'"The whole class has the exact same wrong answer."',           ca:'The teacher stared at thirty identical mistakes and sighed deeply.' },
-        { ch:'👮‍♀️🚗',   sp:'"The traffic jam goes all the way to the next city."',         ca:'Something had blocked every single road in town at once.' },
-        { ch:'🕵️📦',    sp:'"The key piece of evidence has gone missing."',                 ca:'The detective looked at the empty box and felt very uneasy.' },
-        { ch:'👩‍⚕️💊',   sp:'"We mixed up the patients. All forty-seven of them."',         ca:'The hospital had a very complicated mix-up on a very busy day.' },
-        { ch:'🏋️‍♂️🏟️',  sp:'"The stadium is full but there is no food and no water."',    ca:'Someone had forgotten the most important things for the event.' },
-        { ch:'👩‍✈️📻',   sp:'"The navigation system has gone completely blank."',           ca:'The pilot looked at her instruments and found them all off.' },
-        { ch:'👨‍🎤🎙️',   sp:'"The microphone is broken. And five thousand people are waiting."', ca:'The performer found the sound system completely dead.' },
-        { ch:'🧑‍⚖️📜',   sp:'"The key witness has forgotten absolutely everything."',       ca:'The entire case depended on one person who remembered nothing.' },
-        { ch:'👩‍🔬🧪',   sp:'"The experiment is growing. Much faster than expected."',      ca:'The scientist stepped back as the test tube bubbled aggressively.' },
-        { ch:'👷‍♀️🌉',   sp:'"The bridge looks shorter than the plans say it should be."', ca:'The engineer measured it twice and felt very worried both times.' },
-        { ch:'👨‍🍳😤',   sp:'"Someone has eaten the competition dish. Before the competition."', ca:'The chef looked at the empty plate and took a very long breath.' },
-        { ch:'👩‍💼🎤',   sp:'"My speech notes are completely blank. Every single page."',  ca:'The manager stood at the podium and stared at empty paper.' },
-        { ch:'🧑‍🎓📖',   sp:'"I studied the completely wrong subject for the exam."',       ca:'The student opened the exam paper with great confidence.' },
-        { ch:'👩‍🌾🌧️',   sp:'"Someone moved the market indoors. Nobody told the farmers."', ca:'The market had changed location and nobody got the message.' },
-        { ch:'🕵️‍♀️🔑',  sp:'"I have locked myself out of the room with all the evidence."', ca:'The detective stood at the locked door with empty pockets.' },
-        { ch:'👮‍♂️🎈',   sp:'"The crime scene is covered in birthday party decorations."', ca:'Someone had booked the same location for two very different events.' },
-        { ch:'👩‍🏫📺',   sp:'"The projector is showing the wrong video. A very wrong video."', ca:'The teacher hit play and immediately tried to turn it off.' },
-        { ch:'🏊‍♂️🏅',  sp:'"My competitor trained with exactly the same secret technique."', ca:'The athlete had no advantage left, thirty seconds before the race.' },
-        { ch:'🧙‍♂️✨',   sp:'"The spell worked. On the wrong person."',                     ca:'The wizard looked at the result and knew an apology was needed.' },
-        { ch:'👩‍🍳🎂',   sp:'"The wedding cake has been delivered to the wrong wedding."', ca:'The baker received a very confused phone call two hours later.' },
-        { ch:'🧑‍🚒🏠',   sp:'"It is not a fire. It is just a very enthusiastic candle."',  ca:'The whole street had called the fire service for the same tiny flame.' },
-        { ch:'👨‍💼📊',   sp:'"The numbers in this report are not from our company."',       ca:'The CEO squinted at the slides and realised the wrong file was used.' },
-        { ch:'👩‍🎭🎭',   sp:'"The lead actor has forgotten every single line."',            ca:'The play started and the audience waited. And waited.' },
-        { ch:'🧑‍🔬🔭',   sp:'"The telescope has been pointed the completely wrong way."',   ca:'They had been studying the wrong part of the sky for six months.' },
-        { ch:'👷‍♂️🚧',   sp:'"The road we just built leads directly into a lake."',         ca:'The builders stood at the edge and looked at each other quietly.' },
-        { ch:'👩‍💻🖥️',   sp:'"The update made every button do the opposite of what it should."', ca:'The developer stared at her screen and quietly said a bad word.' },
-        { ch:'🕵️🗺️',    sp:'"The map is upside down. It has been upside down the whole time."', ca:'The detective had been walking in completely the wrong direction.' },
-        { ch:'👨‍🍳🧂',   sp:'"I used sugar instead of salt. In every dish. All evening."', ca:"The chef's face went pale when the first customer came back." },
-        { ch:'👩‍🚀🛰️',   sp:'"We are orbiting the wrong planet."',                          ca:'The astronaut looked outside and compared it to the map.' },
-        { ch:'🏋️‍♀️🏆',  sp:'"My coach has been training the other team by mistake."',      ca:'The athlete looked at the competition and recognised all her moves.' },
-        { ch:'🧑‍🎤🎶',   sp:'"I have been practising the wrong song for the whole tour."', ca:'The singer checked the set list and felt the blood leave her face.' },
-        { ch:'👨‍🏫📚',   sp:'"I have written the wrong date on the board for three weeks."', ca:'The professor looked up and saw thirty students with wrong notes.' },
-        { ch:'👩‍🦳🧳',   sp:'"I packed for the beach. The conference is in the mountains."', ca:'The tourist opened her suitcase and found only swimwear inside.' },
-        { ch:'🧑‍⚖️⚖️',   sp:'"The judge has fallen asleep. Right now. In court."',          ca:'The courtroom went very quiet and nobody knew what to do.' },
-        { ch:'👷‍♀️🧱',   sp:'"We have put the lift in the wrong building."',                ca:'The construction manager did a slow walk-through and said nothing.' },
-        { ch:'👮‍♀️🔦',   sp:'"The power has gone out across the entire city."',             ca:'The officer looked around and saw total darkness everywhere.' },
-        { ch:'🧑‍🎓📝',   sp:'"I have written my name on someone else\'s exam paper."',      ca:'The student looked at the top of the page and turned slightly pink.' },
-        { ch:'👨‍🍳🍝',   sp:'"I have cooked dinner for two hundred people. For a party of eight."', ca:'The tables went from floor to ceiling with food.' },
-        { ch:'🧑‍💼📅',   sp:'"The big meeting is today. I thought it was next week."',      ca:'The employee arrived in casual clothes and froze at the door.' },
-        { ch:'👨‍🎨🖼️',   sp:'"Someone has painted over my painting. Completely."',           ca:'The artist arrived at the gallery and stood in silence for a long time.' },
-        { ch:'🧑‍🚒🚿',   sp:'"The sprinklers turned on. Inside the office. On purpose."',  ca:'Someone had set them off and nobody was admitting to anything.' },
-        { ch:'👩‍💼🗝️',   sp:'"The office is locked and nobody has the key."',              ca:'Forty people stood outside and looked at each other on Monday morning.' },
-        { ch:'🕵️‍♀️📸',  sp:'"The only photo of the suspect shows the back of my own head."', ca:'The detective looked at the photo and sat down very slowly.' },
-        { ch:'🧑‍🎓🚌',   sp:'"I got on the wrong bus. The completely wrong bus."',           ca:'The student arrived somewhere very unexpected at a very important time.' },
-        { ch:'👩‍🏫📋',   sp:'"Someone has swapped all the test papers around. All of them."', ca:'Every student was holding the wrong exam and nobody knew whose was whose.' },
-        { ch:'👨‍💼📞',   sp:'"I have told two clients the exact opposite thing. Both in writing."', ca:'The manager stared at both emails and considered his options carefully.' },
+        { ch:'💥😱',    sp:'"THAT was not supposed to happen!"',                  ca:'Suddenly, a huge explosion changed everything.' },
+        { ch:'🌧️🏠',   sp:'"Why is it raining... inside?!"',                    ca:'Rain started falling, but they were still indoors.' },
+        { ch:'🐘🚪',    sp:'"Excuse me, is this the right address?"',             ca:'A very large elephant walked through the front door.' },
+        { ch:'👻✨',    sp:'"Hello! I just need one small favour."',              ca:'A very friendly ghost appeared from nowhere.' },
+        { ch:'🛸🍽️',   sp:'"We come in peace. And also hunger."',               ca:'A tiny UFO landed right on the dinner table.' },
+        { ch:'🎵🎶',    sp:'"WHY AM I SINGING EVERYTHING?! 🎵"',                 ca:'Nobody could stop singing — even when they really tried.' },
+        { ch:'⏰🔄',    sp:'"Did that minute just go backwards?"',                ca:'Time started moving in completely the wrong direction.' },
+        { ch:'🐝🌪️',   sp:'"There are about one million bees outside."',         ca:'A huge cloud of bees was heading directly their way.' },
+        { ch:'🧁💬',    sp:'"Excuse me. I have feelings too, you know."',         ca:'The food started talking back. Very loudly.' },
+        { ch:'🕳️😦',   sp:'"There was no hole there this morning..."',           ca:'A giant hole appeared right in the middle of the floor.' },
+        { ch:'🔥📋',    sp:'"The plan is on fire. The actual plan."',             ca:'The important plan was now, literally, on fire.' },
+        { ch:'🐍📬',    sp:'"There is a snake. In the post box."',               ca:'Nobody had expected to find that in the morning post.' },
+        { ch:'🎩✨',    sp:'"Everything I touch keeps disappearing!"',            ca:'The magic hat was definitely not working as planned.' },
+        { ch:'📱😳',    sp:'"I just got the most unusual text message."',         ca:'The phone showed a message nobody was prepared for.' },
+        { ch:'🌊🏄',    sp:'"WHERE DID THIS WAVE COME FROM?!"',                  ca:'A giant wave appeared in a place that had no sea.' },
+        { ch:'🍌🦧',    sp:'"Give it back! Give it BACK!"',                      ca:'A monkey stole the most important thing they had.' },
+        { ch:'🎈💨',    sp:'"Oh no. Oh no no no."',                              ca:'The balloon flew away, taking something very important with it.' },
+        { ch:'🧲🔩',    sp:'"Why is everything sticking to me?!"',               ca:'A strange force was pulling all metal objects toward them.' },
+        { ch:'🦩🎺',    sp:'"I did not know flamingos could do that."',           ca:'The flamingo had a very unusual and very loud talent.' },
+        { ch:'🌋💼',    sp:'"The volcano is... inside the office building."',     ca:'Nobody had read the safety instructions carefully enough.' },
       ],
-
-      // ── Pool 3 : REACTION (50) ───────────────────────────────────────────
       3: [
-        { ch:'😱🏃',    sp:'"RUN! Then we will think about it!"',                          ca:'They screamed and ran in circles for quite some time.' },
-        { ch:'🤔💭',    sp:'"OK. Let us think about this very carefully."',                ca:'They sat down and thought as hard as they possibly could.' },
-        { ch:'📞😅',    sp:'"Hello? Yes, this is an emergency. Kind of."',                 ca:'They called everyone they knew — but nobody answered.' },
-        { ch:'🍕💤',    sp:'"We should eat first. Then fix it."',                          ca:'They ordered pizza and waited for a good idea to arrive.' },
-        { ch:'📖🧐',    sp:'"The answer must be in this very old book."',                  ca:'They found the oldest book they could and read everything.' },
-        { ch:'🎸🎤',    sp:'"♪ We do not know what to do! ♪"',                           ca:'They turned their problem into a song. It did not help at all.' },
-        { ch:'🛒🏎️',   sp:'"To the shops! We need supplies!"',                           ca:'They ran to buy things they probably did not actually need.' },
-        { ch:'🤝😬',    sp:'"We made a deal. A very unusual deal."',                       ca:'They shook hands on an agreement nobody fully understood.' },
-        { ch:'💤😴',    sp:'"Maybe if we sleep, it will fix itself?"',                     ca:'They decided a quick nap was probably the best first step.' },
-        { ch:'🗣️👂',   sp:'"I SAID it would happen! — No you did NOT!"',                 ca:'A very loud argument started about whose fault it was.' },
-        { ch:'🎭🙂',    sp:'"Just act normal. Nobody will notice."',                       ca:'They put on costumes and pretended everything was completely fine.' },
-        { ch:'🧪⚗️',   sp:'"If we mix THESE together... maybe it works?"',                ca:'They started mixing random things in the hope of a solution.' },
-        { ch:'📸🤳',    sp:'"Wait — selfie first. THEN we handle it."',                    ca:'They stopped everything to take a group photograph.' },
-        { ch:'🙏🚶',    sp:'"Excuse me, stranger. We really need your help."',             ca:'They asked the nearest stranger on the street for advice.' },
-        { ch:'🗺️✏️',   sp:'"I have a plan. It involves a very big map."',                 ca:'They drew a long and complicated plan on the floor.' },
-        { ch:'🎂🕯️',   sp:'"Let us celebrate the problem. Maybe it will leave."',         ca:'They lit candles and threw a small party for the problem.' },
-        { ch:'🧘‍♀️🤸', sp:'"Breathe. Stretch. Focus. We have got this."',                 ca:'They did breathing exercises before doing anything else.' },
-        { ch:'👒🪄',    sp:'"Stand back. I have a very wild idea."',                       ca:'One person stepped forward with a plan that surprised everyone.' },
-        { ch:'🧹🪣',    sp:'"First, we clean. Everything is better after cleaning."',      ca:'Somehow, nobody could act before the place was completely tidy.' },
-        { ch:'📋✍️',    sp:'"I am writing a full report about this. Everything."',         ca:'They began writing the most detailed report ever written.' },
-        { ch:'👩‍💼🙅',  sp:'"Let us all just pretend this is not happening."',            ca:'They all agreed to look the other way and hope for the best.' },
-        { ch:'👩‍💼📢',  sp:'"I am calling a meeting. An emergency meeting. Right now."',  ca:'Twelve people sat in a circle and talked for three hours.' },
-        { ch:'🧑‍🔬🔍',  sp:'"We need data. More data. Even more data."',                  ca:'They measured, counted, and recorded everything very carefully.' },
-        { ch:'🎯🏹',    sp:'"I know exactly what to do. Trust me completely."',            ca:'Everyone looked nervous but decided to follow the plan anyway.' },
-        { ch:'🗑️🔥',   sp:'"In my opinion, we should just start completely from scratch."', ca:'They threw everything away and began the whole thing again.' },
-        { ch:'📣🏃',    sp:'"Tell everyone! Run door to door if you have to!"',            ca:'They split up and spread the news to the entire neighbourhood.' },
-        { ch:'🤷‍♀️😂', sp:'"Honestly, this is kind of funny now that I think about it."', ca:'They started laughing and could not stop for several minutes.' },
-        { ch:'💡🔦',    sp:'"I just had the most brilliant idea of my entire career."',    ca:'Everyone leaned in to hear it. The idea was very unexpected.' },
-        { ch:'🧑‍🍳🍲',  sp:'"I do my best thinking when I cook. Let me make something."', ca:'While everyone panicked, one person went quietly to the kitchen.' },
-        { ch:'📺📰',    sp:'"We should tell the press. Make it a big story."',             ca:'Someone picked up the phone and called the local television station.' },
-        { ch:'🏃‍♀️🚪', sp:'"I will go and get help. Wait here. Do not move."',            ca:'They ran out the door and did not come back for quite some time.' },
-        { ch:'🤫🔒',    sp:'"Nobody says anything to anyone. We handle this ourselves."',  ca:'They all nodded seriously and agreed to keep it completely quiet.' },
-        { ch:'📱💬',    sp:'"I am posting this online. I need advice from strangers."',    ca:'The post got fifty thousand replies in under ten minutes.' },
-        { ch:'👔💬',    sp:'"I will make a speech. A very inspiring speech."',             ca:'Everyone sat down and the speech turned out to be quite long.' },
-        { ch:'🧑‍🎨📝',  sp:'"We need a diagram. A very big, very colourful diagram."',    ca:'They covered an entire wall with drawings to explain the situation.' },
-        { ch:'🏋️‍♀️💪', sp:'"This is a test of character. We are going to pass it."',     ca:'They pushed up their sleeves and got to work with great energy.' },
-        { ch:'🕵️‍♂️🔎', sp:'"Someone is responsible for this. I will find them."',        ca:'The investigation began and everyone looked slightly guilty.' },
-        { ch:'👩‍🏫🖊️',  sp:'"I am going to write a list. A very, very long list."',       ca:'The list took thirty minutes and filled both sides of the page.' },
-        { ch:'😤🚶‍♂️', sp:'"Fine. I will handle it myself. I always do."',               ca:'They walked off confidently and came back for help twenty minutes later.' },
-        { ch:'🧑‍💻🖥️',  sp:'"There must be an app for this. Let me look."',              ca:'They searched online for fourteen minutes and found nothing useful.' },
-        { ch:'📞👨‍👩‍👦', sp:'"Call the whole family. We need everyone here."',           ca:'Within an hour, twelve relatives arrived with food and opinions.' },
-        { ch:'🤔🪑',    sp:'"Let us sit down and think about how we got here."',           ca:'A long and very honest conversation began about what went wrong.' },
-        { ch:'👩‍🔬🧬',  sp:'"The science says we should do this. So we are doing it."',   ca:'Nobody understood the science but everyone nodded confidently.' },
-        { ch:'🎲🪙',    sp:'"Let us flip a coin. The coin will know what to do."',         ca:'They flipped the coin, disagreed with the result, and flipped again.' },
-        { ch:'🧑‍🚒🔧',  sp:'"We fix it now and ask questions later."',                    ca:'They grabbed the nearest tools and got to work immediately.' },
-        { ch:'👩‍🎤🎼',  sp:'"I will write a song about this. A very long, sad song."',    ca:'The song was forty-five minutes long and made three people cry.' },
-        { ch:'🤝👥',    sp:'"We vote. Majority wins. No arguments."',                      ca:'The vote ended in a perfect tie and the argument got louder.' },
-        { ch:'🧑‍🎓📓',  sp:'"I have studied exactly this situation. In theory."',         ca:'They opened a textbook and read the relevant chapter out loud.' },
-        { ch:'🧑‍⚕️🩺',  sp:'"I am going to need everyone to stay very, very calm."',      ca:'The doctor took charge immediately, and nobody felt calm at all.' },
-        { ch:'👩‍🦳🪑',  sp:'"I have seen this before. Sit down and let me think."',       ca:'The most experienced person in the room took a long, slow breath.' },
+        { ch:'😱🏃',    sp:'"RUN! Then we will think about it!"',                 ca:'They screamed and ran in circles for quite some time.' },
+        { ch:'🤔💭',    sp:'"OK. Let us think about this very carefully."',        ca:'They sat down and thought as hard as they possibly could.' },
+        { ch:'📞😅',    sp:'"Hello? Yes, this is an emergency. Kind of."',         ca:'They called everyone they knew — but nobody answered.' },
+        { ch:'🍕💤',    sp:'"We should eat first. Then fix it."',                  ca:'They ordered pizza and waited for a good idea to come.' },
+        { ch:'📖🧐',    sp:'"The answer must be in this very old book."',          ca:'They found the oldest book they could and read everything.' },
+        { ch:'🎸🎤',    sp:'"♪ We do not know what to do! ♪"',                   ca:'They turned their problem into a song. It did not help.' },
+        { ch:'🛒🏎️',   sp:'"To the shops! We need supplies!"',                   ca:'They ran to the shops to buy things they probably did not need.' },
+        { ch:'🤝😬',    sp:'"We made a deal. A very unusual deal."',               ca:'They shook hands on an agreement nobody fully understood.' },
+        { ch:'💤😴',    sp:'"Maybe if we sleep, it will fix itself?"',             ca:'They decided a quick nap was the best first step.' },
+        { ch:'🗣️👂',   sp:'"I SAID it would happen! — No you did NOT!"',         ca:'A very loud argument started about whose fault it was.' },
+        { ch:'🎭🙂',    sp:'"Just act normal. Nobody will notice."',               ca:'They put on costumes and pretended everything was fine.' },
+        { ch:'🧪⚗️',   sp:'"If we mix THESE together... maybe it works?"',        ca:'They started mixing random things in the hope of a solution.' },
+        { ch:'📸🤳',    sp:'"Wait — selfie first. THEN we handle it."',            ca:'They stopped everything to take a group photo.' },
+        { ch:'🙏🚶',    sp:'"Excuse me, stranger. We need your help."',            ca:'They asked the nearest stranger on the street for advice.' },
+        { ch:'🗺️✏️',   sp:'"I have a plan. It involves a very big map."',         ca:'They drew a long and complicated plan on the floor.' },
+        { ch:'🎂🕯️',   sp:'"Let us celebrate the problem. Maybe it will leave."', ca:'They lit candles and threw a small party for the problem.' },
+        { ch:'🤸‍♀️🧘', sp:'"Breathe. Stretch. Focus. We have got this."',         ca:'They did breathing exercises before doing anything else.' },
+        { ch:'🐕🎯',    sp:'"The dog will know what to do. Dogs always know."',    ca:'They decided to follow the dog and see where it led them.' },
+        { ch:'🧹🪣',    sp:'"First we clean. Everything is better after cleaning."',ca:'Somehow, nobody could act before the place was completely tidy.' },
+        { ch:'👒🪄',    sp:'"Stand back. I have a wild idea."',                    ca:'One person stepped forward with a very unusual plan.' },
       ],
-
-      // ── Pool 4 : ENDING (50) ─────────────────────────────────────────────
       4: [
-        { ch:'🎉🏆',    sp:'"We did it! We have no idea how, but we did it!"',             ca:'Somehow, against all odds, everything worked out perfectly.' },
-        { ch:'😴💭',    sp:'"...And then I woke up."',                                     ca:'It was all a dream. Probably. Maybe. Who knows.' },
-        { ch:'📰📸',    sp:'"You will not believe what made the front page."',             ca:'The whole story made the next day\'s newspaper.' },
-        { ch:'💰😲',    sp:'"Wait — we are rich because of this?"',                        ca:'By some miracle, the whole adventure made them very wealthy.' },
-        { ch:'🤷😂',    sp:'"Nobody could ever explain what happened. Ever."',             ca:'It remained the biggest mystery in the history of the town.' },
-        { ch:'🌙🌍',    sp:'"By nighttime, nothing was the same anymore."',               ca:'The world was different now, and everyone had to accept it.' },
-        { ch:'🎓📜',    sp:'"We learned one very, very important lesson."',               ca:'The experience taught them something they would never forget.' },
-        { ch:'🍀😊',    sp:'"That was the luckiest day of my entire life."',              ca:'In the end, it turned out to be the absolute best day ever.' },
-        { ch:'🔄😅',    sp:'"OK so... almost everything is back to normal."',             ca:'Everything returned to normal. Almost, but not quite, everything.' },
-        { ch:'👏🥹',    sp:'"I am just really glad we are all still here."',              ca:'They hugged, laughed, and promised never to tell anyone.' },
-        { ch:'📱💬',    sp:'"And THIS is why I now have three million followers."',       ca:'The whole thing went viral and made them all very famous.' },
-        { ch:'🐢🏁',    sp:'"Slow and steady. That is the real lesson here."',            ca:'The slowest, most careful plan had won in the end. Somehow.' },
-        { ch:'🎪🎠',    sp:'"I say we do it all again tomorrow."',                        ca:'It was so good that everyone wanted to repeat the exact same thing.' },
-        { ch:'🫶🌟',    sp:'"Together, we can handle absolutely anything."',              ca:'They realised that as a team, nothing was impossible.' },
-        { ch:'🗝️🚪',   sp:'"The door was open the whole time. We just never checked."',  ca:'The simplest solution had been there from the very beginning.' },
-        { ch:'🧃🍪',    sp:'"I think we deserve a snack after all that."',               ca:'Nobody argued. They sat down and had a very nice snack.' },
-        { ch:'👴📖',    sp:'"When I was young, this happened to me too. Exactly like this."', ca:'Grandpa sat down and told a story that explained everything.' },
-        { ch:'🏅🎖️',   sp:'"They gave us a prize. For THIS?"',                          ca:'The award ceremony was short but completely unexpected.' },
-        { ch:'📜✍️',    sp:'"I am writing a book about today. A very long book."',       ca:'The author signed a contract the very next morning.' },
-        { ch:'🌅😌',    sp:'"Tomorrow it will all seem much simpler."',                  ca:'They went to bed and woke up with a completely different view.' },
-        { ch:'🤝🌍',    sp:'"Two strangers became best friends because of this."',       ca:'The strangest friendship began from the strangest of days.' },
-        { ch:'😤➡️😊',  sp:'"I was angry. Now I am mostly just impressed."',             ca:'The person most upset ended up being the most changed.' },
-        { ch:'🏠❤️',    sp:'"There is no place like home. And this time I really mean it."', ca:'After everything, coming home felt like the greatest thing in the world.' },
-        { ch:'🗞️📺',   sp:'"Three news channels showed up. Three."',                   ca:'What started as a small problem became a national news story.' },
-        { ch:'🧑‍🎤🎵', sp:'"Somebody turned the whole thing into a pop song."',         ca:'The song reached number one in four countries.' },
-        { ch:'🏆🥇',    sp:'"Nobody believed we would win. Nobody. Including us."',     ca:'The victory was real but it still did not feel real.' },
-        { ch:'🥲😮',    sp:'"It was not perfect. But it was exactly what we needed."',  ca:'They looked at the result and felt a complicated mix of feelings.' },
-        { ch:'🧑‍🔬🔭', sp:'"Scientists are still trying to explain what happened."',    ca:'A research paper was published but raised even more questions.' },
-        { ch:'🎭👏',    sp:'"The audience gave a standing ovation. For eleven minutes."', ca:'Nobody left the room and nobody knew quite why they were clapping.' },
-        { ch:'👩‍💼📋',  sp:'"We are writing a new rule because of this. For everyone."', ca:'The situation changed official policy at the highest level.' },
-        { ch:'🏡🌻',    sp:'"In the end, we stayed home and had a perfectly nice evening."', ca:'The simplest plan was the one that actually worked.' },
-        { ch:'📦🎀',    sp:'"Someone sent us a gift in the post. No name, no explanation."', ca:'The package arrived and made everyone even more confused.' },
-        { ch:'🧑‍🏫✏️', sp:'"This will be on the exam next year. I can promise you that."', ca:'The teacher used the whole incident as a lesson for future classes.' },
-        { ch:'👩‍⚕️💉',  sp:'"Medically speaking, nobody can explain it. But everyone is fine."', ca:'The doctors shook their heads, smiled, and sent everyone home.' },
-        { ch:'🌧️☀️',   sp:'"After the rain, everything looked much brighter."',         ca:'They stepped outside and the world looked completely different.' },
-        { ch:'🤫🗺️',   sp:'"We agreed never to speak of this. But we kept the map."',   ca:'The map stayed in the drawer for many years, just in case.' },
-        { ch:'🍽️👨‍🍳', sp:'"Someone made dinner. Nobody asked. It was delicious."',    ca:'While everyone was busy, one quiet person solved hunger, at least.' },
-        { ch:'👩‍💻📲',  sp:'"The app update fixed it. Everything. Automatically."',     ca:'The problem disappeared overnight and nobody knew quite why.' },
-        { ch:'🎤👏',    sp:'"Someone gave a speech. Three minutes. It changed everything."', ca:'The room went quiet and then everyone started talking at once.' },
-        { ch:'👩‍🎨🖼️',  sp:'"Somebody painted a picture of the whole thing. It sold for a fortune."', ca:'The painting now hangs in a very important building in the city.' },
-        { ch:'🌙⭐',    sp:'"Under the stars, everything made a lot more sense."',       ca:'They stayed outside and talked until it was almost morning.' },
-        { ch:'🧑‍🦳🤗', sp:'"Nobody was hurt. That was the main thing."',               ca:'They counted their luck and agreed the important parts were all fine.' },
-        { ch:'📸🗓️',   sp:'"Every year on this date, they meet again to remember."',    ca:'The annual reunion became a tradition that lasted for decades.' },
-        { ch:'💌📬',    sp:'"A letter arrived the following week that explained everything."', ca:'The mystery had a simple answer. It had just taken time to arrive.' },
-        { ch:'👨‍💼🎤',  sp:'"The boss gave a speech. It was surprisingly good."',       ca:'Everyone agreed it was the best speech the company had ever heard.' },
-        { ch:'🤣😭',    sp:'"At the time it was terrible. Looking back, it is the best story."', ca:"Years later, it was everyone's favourite thing to talk about." },
-        { ch:'🏠🔑',    sp:'"The key was in the other pocket. The whole time."',         ca:'The solution had been there from the very beginning. As always.' },
-        { ch:'🌈🌦️',   sp:'"Somehow, it all came together at exactly the right moment."', ca:'Everything lined up perfectly and nobody questioned their luck.' },
-        { ch:'🧑‍🚀🌌', sp:'"They went home. But they looked at the sky differently after that."', ca:'Something about the day had changed their whole way of seeing things.' },
-        { ch:'🎓🤝',    sp:'"We came as strangers. We left as a team."',                 ca:'Nobody expected the day to end this way, but everyone was glad it did.' },
-      ],
+        { ch:'🎉🏆',    sp:'"We did it! We have no idea how, but we did!"',        ca:'Somehow, against all odds, everything worked out perfectly.' },
+        { ch:'😴💭',    sp:'"...And then I woke up."',                             ca:'It was all a dream. Probably. Maybe. Who knows.' },
+        { ch:'📰📸',    sp:'"You will not believe what was on the front page."',   ca:'The whole story made the next day\'s newspaper.' },
+        { ch:'👽🤝',    sp:'"Actually, we planned this all along. You are welcome."', ca:'The aliens admitted they had organised everything from the start.' },
+        { ch:'💰😲',    sp:'"Wait — we are RICH because of this?"',                ca:'By some miracle, the whole adventure made them very wealthy.' },
+        { ch:'🌈✨',    sp:'"A rainbow just... fixed everything."',                ca:'A rainbow appeared and, somehow, everything was okay again.' },
+        { ch:'🤷😂',    sp:'"Nobody could ever explain what happened. Ever."',     ca:'It remained the biggest mystery in the history of the town.' },
+        { ch:'🔮🧙',    sp:'"I predicted this 200 years ago. Page 47."',           ca:'An old fortune teller had written about this exact day long ago.' },
+        { ch:'🌙🌍',    sp:'"By nighttime, nothing was the same anymore."',        ca:'The world was different now, and everyone had to accept it.' },
+        { ch:'🚀👋',    sp:'"We have decided to move to a different planet."',     ca:'They packed their bags and moved somewhere much safer.' },
+        { ch:'🎓📜',    sp:'"We learned one very, very important lesson."',        ca:'The experience taught them something they would never forget.' },
+        { ch:'🍀😊',    sp:'"That was the luckiest day of my entire life."',       ca:'In the end, it turned out to be the absolute best day ever.' },
+        { ch:'🔄😅',    sp:'"OK so... almost everything is back to normal."',      ca:'Everything returned to normal. Almost, but not quite, everything.' },
+        { ch:'👏🥹',    sp:'"I am just really glad we are all still here."',       ca:'They hugged, laughed, and promised never to tell anyone.' },
+        { ch:'📱💬',    sp:'"And THIS is why I now have three million followers."',ca:'The whole thing went viral and made them all very famous.' },
+        { ch:'🐢🏁',    sp:'"Slow and steady. That is the real lesson here."',     ca:'The slowest, most careful plan had won in the end. Somehow.' },
+        { ch:'🎪🎠',    sp:'"I say we do it all again tomorrow."',                 ca:'It was so fun that everyone wanted to do the exact same thing again.' },
+        { ch:'🫶🌟',    sp:'"Together, we can handle absolutely anything."',       ca:'They realised that as a team, nothing was impossible.' },
+        { ch:'🗝️🚪',   sp:'"The door was open the whole time. We just never checked."', ca:'The simplest solution had been there from the very beginning.' },
+        { ch:'🧃🍪',    sp:'"I think we deserve a snack after all that."',         ca:'Nobody argued. They sat down and had a very nice snack.' },
+      ]
     };
 
     const used = { 1:[], 2:[], 3:[], 4:[] };
@@ -487,6 +424,8 @@
       const pc = document.getElementById('pc' + n);
 
       ph.style.display = 'none';
+
+      // force re-animation
       pc.classList.remove('show');
       void pc.offsetWidth;
 
@@ -495,7 +434,9 @@
       document.getElementById('ca' + n).textContent = item.ca;
 
       pc.classList.add('show');
-      document.querySelector('.btn-' + n).textContent = '🔁 Redraw Panel ' + n;
+
+      const btn = document.querySelector('.btn-' + n);
+      btn.textContent = '🔁 Redraw Panel ' + n;
     }
 
     function drawAll() {
