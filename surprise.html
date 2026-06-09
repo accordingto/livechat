@@ -384,6 +384,7 @@
       card.style.padding     = '';
       card.style.minHeight   = '';
       card.style.gap         = '';
+      card.style.overflow    = '';
       card.setAttribute('data-icon', '🎰');
       return card;
     }
@@ -473,9 +474,10 @@
       card.style.borderColor = 'transparent';
       card.style.background  = 'transparent';
       card.style.boxShadow   = 'none';
-      card.style.padding     = '0';
+      card.style.padding     = '14px 0 0';   // top breathing room for pill labels
       card.style.minHeight   = 'auto';
       card.style.gap         = '0';
+      card.style.overflow    = 'visible';    // allow pill labels to protrude above
 
       card.innerHTML = `
         <div class="st-cards">
