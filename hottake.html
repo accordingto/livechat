@@ -316,89 +316,9 @@
     <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled>↺ Reset</button>
   </div>
 
+  <script src="game-data.js"></script>
   <script>
-    const takes = [
-      // Food & Drink
-      "Pineapple on pizza is not the real problem — the real problem is people who hate it.",
-      "Breakfast food tastes better at dinner than at actual breakfast.",
-      "Adding cheese to almost anything makes it better.",
-      "Spicy food is not really about taste — it is about proving something.",
-      "Ordering the same thing every time at a restaurant is a sign of self-awareness, not boring taste.",
-      "Sharing food off someone else's plate without asking is completely unacceptable.",
-      "Instant noodles deserve way more respect than they get.",
-      "If the food is good enough, the atmosphere of a restaurant does not matter at all.",
-      "The person who finishes their meal first should have to sit in silence while others catch up.",
-      "Drinks are always better with ice, even in winter.",
-      "Dessert should come before the main course — life is short.",
-      "People who say they 'don't have a favourite food' are lying.",
-
-      // Relationships & Social
-      "Ghosting someone you barely know is perfectly acceptable.",
-      "Long-distance relationships almost never truly work out.",
-      "You can fall genuinely in love with someone you have never met in person.",
-      "People who arrive exactly on time are more annoying than people who are five minutes late.",
-      "Crying in front of others is a sign of strength, not weakness.",
-      "Complimenting a stranger is almost always welcome, not awkward.",
-      "The best friendships need no explanation after a long silence.",
-      "Being liked by everyone is a red flag.",
-      "You cannot truly know someone until you have travelled with them.",
-      "Most people are far lonelier than they are willing to admit.",
-      "A person's true character is revealed by how they treat waiters and cashiers.",
-      "The phrase 'We should catch up sometime' almost never actually means it.",
-      "Being early to everything is a form of social anxiety, not politeness.",
-      "A person who has never been heartbroken has never truly been in love.",
-
-      // Tech & Social Media
-      "TikTok has done more damage to attention spans than any drug ever did.",
-      "Replying with just 'K' to a message is passive-aggressive, no matter the context.",
-      "Reacting to someone's message with 👍 is the digital equivalent of a dismissive nod.",
-      "Voice notes should require the other person's permission before you send one.",
-      "Checking your phone first thing every morning is one of the worst habits a person can have.",
-      "Social media makes people more lonely, not less.",
-      "Everyone performs a different version of themselves online — and that is perfectly fine.",
-      "Deleting all social media for a month would make most people genuinely happier.",
-      "Online arguments almost never actually change anyone's mind.",
-      "A person's texting style tells you more about them than their CV.",
-
-      // Work & School
-      "The most productive people are rarely the busiest ones.",
-      "Homework should be banned for everyone under 14.",
-      "A university degree is no longer worth the time or money for most careers.",
-      "Most job interviews tell you almost nothing useful about how someone will actually perform.",
-      "You should always try to negotiate your salary — no exceptions.",
-      "Passion for your work is overrated. Decent pay and good hours matter far more.",
-      "Open-plan offices are one of the worst ideas in modern workplace history.",
-      "Arriving 10 minutes early to a meeting you did not call is just unpaid work.",
-      "The best meetings are the ones that could have been a short email.",
-      "Four-day work weeks would make most people more productive, not less.",
-
-      // Life & People
-      "People who say 'I don't care what others think' usually care the most.",
-      "Being bored is actually essential for creativity.",
-      "Success in life is mostly about luck, not skill or hard work.",
-      "Most adults are not nearly as grown-up as they pretend to be.",
-      "Having two or three real friends is far better than having twenty casual ones.",
-      "It is more important to be interesting than to be nice.",
-      "People change over time, but not nearly as much as they like to claim.",
-      "Regret teaches you more than success ever does.",
-      "Everyone secretly has at least one truly terrible opinion they will never admit to.",
-      "Saying sorry too often actually makes people trust you less, not more.",
-      "Small talk is not a waste of time — it is how trust gets built.",
-      "The funniest people in the room are almost always hiding something painful.",
-      "People who walk slowly in the middle of a crowded pavement are the real villains of society.",
-
-      // Pop Culture & Entertainment
-      "Movie sequels are almost always worse than the original — no exceptions.",
-      "Spoilers actually make a story more enjoyable to experience, not less.",
-      "The best music was almost certainly made before you were born.",
-      "Horror films are far more effective watched alone than with a group of friends.",
-      "Celebrities do not owe their fans any explanation about their private lives.",
-      "Reboots and remakes are completely lazy — and yet we watch every single one.",
-      "Silence in a good conversation is not awkward — it means both people are comfortable.",
-      "Cats are smarter than dogs. Dogs are just more emotionally needy.",
-      "Bad weather makes people more creative and productive, not less.",
-      "The last piece of shared food should always go to whoever ate the least.",
-    ];
+    const takes = GAME_DATA.hottake;
 
     let rolling = false;
     let round = 0;
