@@ -380,6 +380,10 @@
       card.innerHTML = '<span class="result-label" id="resultLabel">…</span><span class="result-text" id="resultText">…</span>';
       card.style.borderColor = '';
       card.style.boxShadow   = '';
+      card.style.background  = '';
+      card.style.padding     = '';
+      card.style.minHeight   = '';
+      card.style.gap         = '';
       card.setAttribute('data-icon', '🎰');
       return card;
     }
@@ -463,8 +467,17 @@
       const char   = rand(GAME_DATA.storyteller.characters);
       const action = rand(GAME_DATA.storyteller.actions);
       const place  = rand(GAME_DATA.storyteller.locations);
+
+      // Strip outer card visuals — the three sub-cards are the display
+      card.classList.remove('active');
+      card.style.borderColor = 'transparent';
+      card.style.background  = 'transparent';
+      card.style.boxShadow   = 'none';
+      card.style.padding     = '0';
+      card.style.minHeight   = 'auto';
+      card.style.gap         = '0';
+
       card.innerHTML = `
-        <span class="result-label" style="color:${cfg.color}">📖 STORY TELLER</span>
         <div class="st-cards">
           <div class="st-card st-char active">
             <span class="st-pill">👤 Character</span>
