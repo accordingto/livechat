@@ -276,32 +276,44 @@
 
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+    function hexRgba(hex, a) {
+      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function resetCard() {
+      const card = document.getElementById('resultCard');
+      card.innerHTML = '<span class="result-label" id="resultLabel">…</span><span class="result-text" id="resultText">…</span>';
+      card.style.borderColor = '';
+      card.style.boxShadow   = '';
+      card.setAttribute('data-icon', '🎰');
+      return card;
+    }
+
     function go() {
       if (rolling) return;
       rolling = true;
 
-      const goBtn      = document.getElementById('goBtn');
-      const badge      = document.getElementById('gameBadge');
-      const resultCard = document.getElementById('resultCard');
-      const resultText = document.getElementById('resultText');
+      const goBtn  = document.getElementById('goBtn');
+      const badge  = document.getElementById('gameBadge');
+
+      // Always restore the card to a known state before roll
+      const resultCard  = resetCard();
       const resultLabel = document.getElementById('resultLabel');
+      const resultText  = document.getElementById('resultText');
 
       goBtn.disabled = true;
       badge.style.visibility = 'hidden';
       badge.className = 'game-badge';
       resultCard.classList.remove('active');
       resultCard.classList.add('rolling');
-      resultCard.setAttribute('data-icon', '🎰');
 
-      // Pick the winning game + scenario before the animation
       const gameKey = GAMES[Math.floor(Math.random() * GAMES.length)];
       const cfg     = CONFIGS[gameKey];
 
-      // During roll: flicker random game names
       let ticks = 0;
       const iv = setInterval(() => {
-        const rk = GAMES[Math.floor(Math.random() * GAMES.length)];
-        const rc = CONFIGS[rk];
+        const rc = CONFIGS[GAMES[Math.floor(Math.random() * GAMES.length)]];
         resultLabel.textContent = rc.icon + ' ' + rc.name.toUpperCase();
         resultText.textContent  = '…';
         resultText.className    = 'result-text';
@@ -323,65 +335,38 @@
       card.style.borderColor = cfg.color;
       card.classList.add('active');
 
-      badge.innerHTML = cfg.icon + ' ' + cfg.name;
-      badge.style.visibility = 'visible';
-      badge.style.color = cfg.color;
-      badge.style.borderColor = cfg.color.replace(')', ',.4)').replace('rgb', 'rgba');
-      badge.style.background  = cfg.color.replace(')', ',.1)').replace('rgb', 'rgba');
+      badge.innerHTML         = cfg.icon + ' ' + cfg.name;
+      badge.style.visibility  = 'visible';
+      badge.style.color       = cfg.color;
+      badge.style.borderColor = hexRgba(cfg.color, 0.5);
+      badge.style.background  = hexRgba(cfg.color, 0.12);
       badge.className = 'game-badge visible';
 
-      const wrap = document.getElementById('resultWrap');
-
       if (gameKey === 'never') {
-        const prompt = rand(GAME_DATA.never);
         label.textContent = 'NEVER HAVE I EVER…';
         text.className    = 'result-text';
-        text.textContent  = prompt;
-        restoreSimpleCard(wrap, card, label, text);
+        text.textContent  = rand(GAME_DATA.never);
 
       } else if (gameKey === 'hottake') {
-        const take = rand(GAME_DATA.hottake);
         label.textContent = '🔥 HOT TAKE';
         text.className    = 'result-text';
-        text.textContent  = take;
-        restoreSimpleCard(wrap, card, label, text);
+        text.textContent  = rand(GAME_DATA.hottake);
 
       } else if (gameKey === 'storyteller') {
-        label.textContent = '📖 STORY TELLER';
-        text.textContent  = '';
-        renderStoryteller(wrap, card, cfg);
+        renderStoryteller(card, cfg);
 
       } else if (gameKey === 'sophies') {
-        const sc = rand(GAME_DATA.sophies);
-        label.textContent = "🎯 THE SITUATION";
-        text.className    = 'result-text';
-        text.textContent  = sc.situation;
-        renderSophies(wrap, card, label, text, sc);
+        renderSophies(card, rand(GAME_DATA.sophies));
 
       } else if (gameKey === 'persuade') {
-        const sc = rand(GAME_DATA.persuade);
-        label.textContent = '🎯 THE SITUATION';
-        text.className    = 'result-text';
-        text.textContent  = sc.situation;
-        renderPersuade(wrap, card, label, text, sc);
+        renderPersuade(card, rand(GAME_DATA.persuade));
       }
     }
 
-    function restoreSimpleCard(wrap, card, label, text) {
-      // Remove any previously injected extra elements
-      const extras = wrap.querySelectorAll('.st-cards, .option-row, .p-row, .divider');
-      extras.forEach(e => e.remove());
-      card.innerHTML = '';
-      card.appendChild(label);
-      card.appendChild(text);
-    }
-
-    function renderStoryteller(wrap, card, cfg) {
+    function renderStoryteller(card, cfg) {
       const char   = rand(GAME_DATA.storyteller.characters);
       const action = rand(GAME_DATA.storyteller.actions);
       const place  = rand(GAME_DATA.storyteller.locations);
-
-      // Replace card content with three sub-cards
       card.innerHTML = `
         <span class="result-label" style="color:${cfg.color}">📖 STORY TELLER</span>
         <div class="st-cards">
@@ -400,10 +385,7 @@
         </div>`;
     }
 
-    function renderSophies(wrap, card, label, text, sc) {
-      const extras = wrap.querySelectorAll('.option-row, .divider');
-      extras.forEach(e => e.remove());
-
+    function renderSophies(card, sc) {
       card.innerHTML = `
         <span class="result-label">🎯 THE SITUATION</span>
         <span class="result-text">${sc.situation}</span>
@@ -415,7 +397,7 @@
         </div>`;
     }
 
-    function renderPersuade(wrap, card, label, text, sc) {
+    function renderPersuade(card, sc) {
       card.innerHTML = `
         <span class="result-label" style="color:#06b6d4">${sc.emoji || '🤝'} ${sc.cat ? sc.cat.toUpperCase() : 'PERSUADE TOGETHER'}</span>
         <span class="result-text">${sc.situation}</span>
