@@ -129,11 +129,10 @@
 
     /* ── Storyteller 3-card layout ── */
     .st-cards {
-      display: grid; grid-template-columns: repeat(3, 1fr);
+      display: grid; grid-template-columns: 1fr;
       gap: 14px; width: 100%;
       position: relative; z-index: 1;
     }
-    @media (max-width: 520px) { .st-cards { grid-template-columns: 1fr; } }
     .st-card {
       border-radius: 16px; padding: 20px 14px;
       border: 2px solid #1e1e42;

@@ -58,16 +58,13 @@
     /* ── Three cards ── */
     .cards {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr;
       gap: 16px;
-      width: 100%; max-width: 900px;
+      width: 100%; max-width: 560px;
       margin-bottom: 36px;
       position: relative; z-index: 1;
       animation: fadeUp .5s ease both;
       animation-delay: .2s;
-    }
-    @media (max-width: 600px) {
-      .cards { grid-template-columns: 1fr; }
     }
 
     .card {
