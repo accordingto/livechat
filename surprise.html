@@ -127,90 +127,7 @@
     }
     .result-placeholder { color: #2a2050; font-size: 1rem; font-weight: 400; }
 
-    /* ── Storyteller 3-card layout ── */
-    .st-cards {
-      display: grid; grid-template-columns: 1fr;
-      gap: 14px; width: 100%;
-      position: relative; z-index: 1;
-    }
-    .st-card {
-      border-radius: 16px; padding: 20px 14px;
-      border: 2px solid #1e1e42;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      min-height: 130px; justify-content: center; text-align: center;
-      position: relative;
-    }
-    .st-card::before {
-      position: absolute; font-size: 7rem; opacity: .04;
-      top: 50%; left: 50%; transform: translate(-50%,-50%);
-      -webkit-text-fill-color: initial; pointer-events: none;
-    }
-    .st-char   { background: linear-gradient(160deg, #1a1400, #13132b); --sc:#f59e0b; }
-    .st-action { background: linear-gradient(160deg, #110d1a, #13132b); --sc:#818cf8; }
-    .st-place  { background: linear-gradient(160deg, #001a0d, #13132b); --sc:#34d399; }
-    .st-char::before   { content:'👤'; }
-    .st-action::before { content:'⚡'; }
-    .st-place::before  { content:'📍'; }
-    .st-card.active { border-color: var(--sc); }
-    .st-pill {
-      font-size: 9px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      background: var(--sc); color: #0d0d1a;
-      border-radius: 999px; padding: 3px 12px;
-      position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
-    }
-    .st-text { font-size: clamp(1.25rem, 3vw, 1.55rem); font-weight: 600; color: #eee; line-height: 1.5; }
-    .st-text.placeholder { color: #2a2a50; font-weight: 400; }
-
-    /* ── Sophie's Choice option rows ── */
-    .option-row {
-      width: 100%; display: flex; gap: 10px; flex-direction: column;
-      position: relative; z-index: 1;
-    }
-    .opt {
-      border-radius: 14px; padding: 14px 20px;
-      display: flex; align-items: flex-start; gap: 14px;
-      border: 1.5px solid transparent;
-    }
-    .opt-a { background: rgba(79,158,255,.1); border-color: rgba(79,158,255,.3); }
-    .opt-b { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); }
-    .opt-c { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.3); }
-    .opt-key {
-      font-size: .75rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 3px 10px; border-radius: 999px; flex-shrink: 0; margin-top: 2px;
-    }
-    .opt-a .opt-key { background: #4f9eff; color: #0d0d1a; }
-    .opt-b .opt-key { background: #ef4444; color: #fff; }
-    .opt-c .opt-key { background: #22c55e; color: #0d0d1a; }
-    .opt-text { font-size: clamp(1.05rem, 2.5vw, 1.2rem); line-height: 1.55; }
-
-    /* ── Persuade team/judge rows ── */
-    .p-row {
-      width: 100%;
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .p-chip {
-      border-radius: 14px; padding: 16px 16px;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 6px;
-      text-align: center;
-      border: 1.5px solid transparent;
-    }
-    .p-team  { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.35); }
-    .p-judge { background: rgba(232,121,249,.08); border-color: rgba(232,121,249,.35); }
-    .p-chip-label {
-      font-size: .65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555;
-    }
-    .p-chip-val {
-      font-weight: 700;
-      font-size: clamp(1rem, 2.5vw, 1.15rem);
-      line-height: 1.4;
-    }
-    .p-team  .p-chip-val { color: #06b6d4; }
-    .p-judge .p-chip-val { color: #e879f9; }
-
-    /* ── Divider ── */
+    /* ── Divider (kept for result-card inner use) ── */
     .divider { width: 100%; height: 1px; background: #1e1e3a; margin: 4px 0; }
 
     /* ── Buttons ── */
@@ -387,7 +304,9 @@
   </div>
 
   <script src="game-data.js"></script>
+  <script src="game-render.js"></script>
   <script>
+    GAME_RENDER.injectCSS();
     const GAMES = ['never', 'hottake', 'storyteller', 'sophies', 'persuade'];
     const CONFIGS = {
       never:       { name: 'Never Have I Ever', icon: '🙋', color: '#4f9eff' },
@@ -446,7 +365,7 @@
 
     function resetCard() {
       const card = document.getElementById('resultCard');
-      card.innerHTML = '<span class="result-label" id="resultLabel">…</span><span class="result-text" id="resultText">…</span>';
+      card.innerHTML = '<span class="gr-label" id="rollLabel" style="color:#e879f9">…</span><span class="gr-text" id="rollText">…</span>';
       card.style.borderColor = '';
       card.style.boxShadow   = '';
       card.style.background  = '';
@@ -462,21 +381,17 @@
       if (rolling) return;
       rolling = true;
 
-      const goBtn  = document.getElementById('goBtn');
-      const badge  = document.getElementById('gameBadge');
-
-      // Always restore the card to a known state before roll
-      const resultCard  = resetCard();
-      const resultLabel = document.getElementById('resultLabel');
-      const resultText  = document.getElementById('resultText');
+      const goBtn = document.getElementById('goBtn');
+      const badge = document.getElementById('gameBadge');
+      const card  = resetCard();
 
       goBtn.disabled = true;
       badge.style.visibility = 'hidden';
       badge.className = 'game-badge';
       neverShowReact(false);
       htShowVote(false);
-      resultCard.classList.remove('active');
-      resultCard.classList.add('rolling');
+      card.classList.remove('active');
+      card.classList.add('rolling');
 
       const pool    = GAMES.filter(g => g !== lastGame);
       const gameKey = pool[Math.floor(Math.random() * pool.length)];
@@ -486,14 +401,13 @@
       let ticks = 0;
       const iv = setInterval(() => {
         const rc = CONFIGS[GAMES[Math.floor(Math.random() * GAMES.length)]];
-        resultLabel.textContent = rc.icon + ' ' + rc.name.toUpperCase();
-        resultText.textContent  = '…';
-        resultText.className    = 'result-text';
+        document.getElementById('rollLabel').textContent = rc.icon + ' ' + rc.name.toUpperCase();
+        document.getElementById('rollText').textContent  = '…';
         ticks++;
         if (ticks >= 24) {
           clearInterval(iv);
-          resultCard.classList.remove('rolling');
-          showResult(gameKey, cfg, resultCard, resultLabel, resultText, badge);
+          card.classList.remove('rolling');
+          showResult(gameKey, cfg, card, null, null, badge);
           round++;
           document.getElementById('roundNum').textContent = round;
           goBtn.disabled = false;
@@ -503,10 +417,6 @@
     }
 
     function showResult(gameKey, cfg, card, label, text, badge) {
-      card.setAttribute('data-icon', cfg.icon);
-      card.style.borderColor = cfg.color;
-      card.classList.add('active');
-
       badge.innerHTML         = cfg.icon + ' ' + cfg.name;
       badge.style.visibility  = 'visible';
       badge.style.color       = cfg.color;
@@ -514,88 +424,46 @@
       badge.style.background  = hexRgba(cfg.color, 0.12);
       badge.className = 'game-badge visible';
 
-      if (gameKey === 'never') {
-        label.textContent = 'NEVER HAVE I EVER…';
-        text.className    = 'result-text';
-        text.textContent  = rand(GAME_DATA.never);
+      if (gameKey === 'storyteller') {
+        card.classList.remove('active');
+        card.style.borderColor = 'transparent';
+        card.style.background  = 'transparent';
+        card.style.boxShadow   = 'none';
+        card.style.padding     = '14px 0 0';
+        card.style.minHeight   = 'auto';
+        card.style.gap         = '0';
+        card.style.overflow    = 'visible';
+        GAME_RENDER.storyteller(card,
+          rand(GAME_DATA.storyteller.characters),
+          rand(GAME_DATA.storyteller.actions),
+          rand(GAME_DATA.storyteller.locations));
+
+      } else if (gameKey === 'sophies') {
+        card.setAttribute('data-icon', cfg.icon);
+        card.style.borderColor = cfg.color;
+        card.classList.add('active');
+        GAME_RENDER.sophies(card, rand(GAME_DATA.sophies));
+
+      } else if (gameKey === 'persuade') {
+        card.setAttribute('data-icon', cfg.icon);
+        card.style.borderColor = cfg.color;
+        card.classList.add('active');
+        GAME_RENDER.persuade(card, rand(GAME_DATA.persuade));
+
+      } else if (gameKey === 'never') {
+        card.setAttribute('data-icon', cfg.icon);
+        card.style.borderColor = cfg.color;
+        card.classList.add('active');
+        GAME_RENDER.never(card, rand(GAME_DATA.never));
         neverShowReact(true);
 
       } else if (gameKey === 'hottake') {
-        label.textContent = '🔥 HOT TAKE';
-        text.className    = 'result-text';
-        text.textContent  = rand(GAME_DATA.hottake);
+        card.setAttribute('data-icon', cfg.icon);
+        card.style.borderColor = cfg.color;
+        card.classList.add('active');
+        GAME_RENDER.hottake(card, rand(GAME_DATA.hottake));
         htShowVote(true);
-
-      } else if (gameKey === 'storyteller') {
-        renderStoryteller(card, cfg);
-
-      } else if (gameKey === 'sophies') {
-        renderSophies(card, rand(GAME_DATA.sophies));
-
-      } else if (gameKey === 'persuade') {
-        renderPersuade(card, rand(GAME_DATA.persuade));
       }
-    }
-
-    function renderStoryteller(card, cfg) {
-      const char   = rand(GAME_DATA.storyteller.characters);
-      const action = rand(GAME_DATA.storyteller.actions);
-      const place  = rand(GAME_DATA.storyteller.locations);
-
-      // Strip outer card visuals — the three sub-cards are the display
-      card.classList.remove('active');
-      card.style.borderColor = 'transparent';
-      card.style.background  = 'transparent';
-      card.style.boxShadow   = 'none';
-      card.style.padding     = '14px 0 0';   // top breathing room for pill labels
-      card.style.minHeight   = 'auto';
-      card.style.gap         = '0';
-      card.style.overflow    = 'visible';    // allow pill labels to protrude above
-
-      card.innerHTML = `
-        <div class="st-cards">
-          <div class="st-card st-char active">
-            <span class="st-pill">👤 Character</span>
-            <span class="st-text">${char}</span>
-          </div>
-          <div class="st-card st-action active">
-            <span class="st-pill">⚡ Action</span>
-            <span class="st-text">${action}</span>
-          </div>
-          <div class="st-card st-place active">
-            <span class="st-pill">📍 Location</span>
-            <span class="st-text">${place}</span>
-          </div>
-        </div>`;
-    }
-
-    function renderSophies(card, sc) {
-      card.innerHTML = `
-        <span class="result-label">🎯 THE SITUATION</span>
-        <span class="result-text">${sc.situation}</span>
-        <div class="divider"></div>
-        <div class="option-row">
-          <div class="opt opt-a"><span class="opt-key">A</span><span class="opt-text">${sc.a}</span></div>
-          <div class="opt opt-b"><span class="opt-key">B</span><span class="opt-text">${sc.b}</span></div>
-          <div class="opt opt-c"><span class="opt-key">C</span><span class="opt-text">Something else! Tell us your own answer.</span></div>
-        </div>`;
-    }
-
-    function renderPersuade(card, sc) {
-      card.innerHTML = `
-        <span class="result-label" style="color:#06b6d4">${sc.emoji || '🤝'} ${sc.cat ? sc.cat.toUpperCase() : 'PERSUADE TOGETHER'}</span>
-        <span class="result-text">${sc.situation}</span>
-        <div class="divider"></div>
-        <div class="p-row">
-          <div class="p-chip p-team">
-            <span class="p-chip-label">Team</span>
-            <span class="p-chip-val">${sc.team}</span>
-          </div>
-          <div class="p-chip p-judge">
-            <span class="p-chip-label">Judge</span>
-            <span class="p-chip-val">${sc.judge}</span>
-          </div>
-        </div>`;
     }
   </script>
 

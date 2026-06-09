@@ -209,7 +209,9 @@
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
 
   <script src="game-data.js"></script>
+  <script src="game-render.js"></script>
   <script>
+    GAME_RENDER.injectCSS();
     const scenarios = GAME_DATA.sophies;
 
     let round   = 0;

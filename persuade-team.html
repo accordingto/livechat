@@ -187,7 +187,9 @@
   <div class="sc-counter" id="sc-counter">100 scenarios</div>
 
   <script src="game-data.js"></script>
+  <script src="game-render.js"></script>
   <script>
+    GAME_RENDER.injectCSS();
     const scenarios = GAME_DATA.persuade;
 
     let round   = 0;
