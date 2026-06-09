@@ -357,18 +357,19 @@
       updateBars();
 
       const card    = document.getElementById('card');
-      const text    = document.getElementById('takeText');
       const spinBtn = document.getElementById('spinBtn');
       const btnA    = document.getElementById('btnAgree');
       const btnM    = document.getElementById('btnMiddle');
       const btnD    = document.getElementById('btnDisagree');
+
+      card.innerHTML = '<span class="fire-label">🔥 Hot Take</span><span class="take-text" id="takeText">Drawing…</span>';
+      const text = document.getElementById('takeText');
 
       spinBtn.disabled = true;
       document.getElementById('resetBtn').disabled = true;
       btnA.disabled = btnM.disabled = btnD.disabled = true;
       card.classList.remove('active');
       card.classList.add('rolling');
-      text.className = 'take-text';
       triggerRipple();
 
       const chosen = takes[Math.floor(Math.random() * takes.length)];
@@ -379,10 +380,9 @@
         ticks++;
         if (ticks >= 22) {
           clearInterval(iv);
-          text.textContent = chosen;
-          text.className = 'take-text';
           card.classList.remove('rolling');
           card.classList.add('active');
+          GAME_RENDER.hottake(card, chosen);
           round++;
           document.getElementById('roundNum').textContent = round;
           btnA.disabled = btnM.disabled = btnD.disabled = false;

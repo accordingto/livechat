@@ -215,6 +215,7 @@
       card.classList.remove('landed');
       card.classList.add('rolling');
       ph.style.display = 'none';
+      ct.innerHTML = '<span class="gr-text" id="sc-roll-text">Drawing…</span>';
       ct.classList.add('show');
 
       let avail = scenarios.map((_, i) => i).filter(i => !used.includes(i));
@@ -225,17 +226,11 @@
       let ticks = 0;
       const iv = setInterval(() => {
         const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
-        document.getElementById('sc-category').textContent  = tmp.cat;
-        document.getElementById('sc-team').textContent      = tmp.team;
-        document.getElementById('sc-situation').textContent = tmp.situation;
-        document.getElementById('sc-judge').textContent     = tmp.emoji + ' ' + tmp.judge;
+        document.getElementById('sc-roll-text').textContent = tmp.situation;
         if (++ticks >= 24) {
           clearInterval(iv);
           const sc = scenarios[fi];
-          document.getElementById('sc-category').textContent  = sc.cat;
-          document.getElementById('sc-team').textContent      = sc.team;
-          document.getElementById('sc-situation').textContent = sc.situation;
-          document.getElementById('sc-judge').textContent     = sc.emoji + ' ' + sc.judge;
+          GAME_RENDER.persuade(ct, sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
           round++;

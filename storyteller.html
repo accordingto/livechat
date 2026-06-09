@@ -260,10 +260,28 @@
     let rolling = false, round = 0;
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    function setCard(id, text, isPlaceholder) {
+    function setCard(id, text) {
       const el = document.getElementById(id);
-      el.className = isPlaceholder ? 'card-text placeholder' : 'card-text';
-      el.textContent = text;
+      if (el) el.textContent = text;
+    }
+
+    function resetCards() {
+      document.getElementById('cards').innerHTML = `
+        <div class="card card-char" id="cardChar">
+          <span class="card-label">👤 Character</span>
+          <span class="card-icon">🧑</span>
+          <span class="card-text" id="textChar">Drawing…</span>
+        </div>
+        <div class="card card-action" id="cardAction">
+          <span class="card-label">⚡ Action</span>
+          <span class="card-icon">🎬</span>
+          <span class="card-text" id="textAction">Drawing…</span>
+        </div>
+        <div class="card card-place" id="cardPlace">
+          <span class="card-label">📍 Location</span>
+          <span class="card-icon">🗺️</span>
+          <span class="card-text" id="textPlace">Drawing…</span>
+        </div>`;
     }
 
     function draw() {
@@ -274,42 +292,32 @@
       document.getElementById('status').className = 'status';
       document.getElementById('status').textContent = 'Drawing…';
 
+      resetCards();
+
       const finalChar   = rand(characters);
       const finalAction = rand(actions);
       const finalPlace  = rand(locations);
 
       const pools   = [characters, actions, locations];
       const textIds = ['textChar', 'textAction', 'textPlace'];
-      const finals  = [finalChar, finalAction, finalPlace];
       const cardIds = ['cardChar', 'cardAction', 'cardPlace'];
 
-      cardIds.forEach(id => {
-        document.getElementById(id).classList.add('rolling');
-        document.getElementById(id).classList.remove('active');
-      });
+      cardIds.forEach(id => document.getElementById(id).classList.add('rolling'));
 
       let ticks = 0;
       const iv = setInterval(() => {
-        textIds.forEach((tid, i) => setCard(tid, rand(pools[i]), false));
+        textIds.forEach((tid, i) => setCard(tid, rand(pools[i])));
         ticks++;
         if (ticks >= 28) {
           clearInterval(iv);
-          finals.forEach((val, i) => {
-            setTimeout(() => {
-              setCard(textIds[i], val, false);
-              document.getElementById(cardIds[i]).classList.remove('rolling');
-              document.getElementById(cardIds[i]).classList.add('active');
-              if (i === 2) {
-                round++;
-                document.getElementById('roundNum').textContent = round;
-                const st = document.getElementById('status');
-                st.textContent = '✨ Now tell your story using all three!';
-                st.className = 'status ready';
-                document.getElementById('drawBtn').disabled = false;
-                rolling = false;
-              }
-            }, i * 200);
-          });
+          GAME_RENDER.storyteller(document.getElementById('cards'), finalChar, finalAction, finalPlace);
+          round++;
+          document.getElementById('roundNum').textContent = round;
+          const st = document.getElementById('status');
+          st.textContent = '✨ Now tell your story using all three!';
+          st.className = 'status ready';
+          document.getElementById('drawBtn').disabled = false;
+          rolling = false;
         }
       }, 80);
     }

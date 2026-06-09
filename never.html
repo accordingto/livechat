@@ -243,13 +243,14 @@
 
       const btn  = document.getElementById('drawBtn');
       const card = document.getElementById('card');
-      const stmt = document.getElementById('statement');
       const hint = document.getElementById('hint');
+
+      card.innerHTML = '<span class="prefix">Never have I ever…</span><span class="statement" id="statement">Drawing…</span>';
+      const stmt = document.getElementById('statement');
 
       btn.disabled = true;
       card.classList.add('rolling');
       card.classList.remove('active');
-      stmt.className = 'statement';
       hint.textContent = 'Drawing…';
       hint.classList.remove('active');
       triggerRipple(card);
@@ -261,9 +262,9 @@
         ticks++;
         if (ticks >= 22) {
           clearInterval(iv);
-          stmt.textContent = chosen;
           card.classList.remove('rolling');
           card.classList.add('active');
+          GAME_RENDER.never(card, chosen);
           round++;
           document.getElementById('roundNum').textContent = round;
           hint.textContent = 'React below — how many have done this? 👇';

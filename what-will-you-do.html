@@ -226,16 +226,12 @@
       const card = document.getElementById('sc-card');
       const ph   = document.getElementById('sc-placeholder');
       const ct   = document.getElementById('sc-content');
-      const div  = document.getElementById('sc-divider');
-      const opts = document.getElementById('options-section');
 
       btn.disabled = true;
       card.classList.remove('landed');
       card.classList.add('rolling');
-
-      ph.style.display  = 'none';
-      div.style.display = 'none';
-      opts.style.display = 'none';
+      ph.style.display = 'none';
+      ct.innerHTML = '<span class="gr-text" id="sc-roll-text">Drawing…</span>';
       ct.classList.add('show');
 
       let avail = scenarios.map((_,i) => i).filter(i => !used.includes(i));
@@ -246,25 +242,14 @@
       let ticks = 0;
       const iv = setInterval(() => {
         const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
-        document.getElementById('sc-situation').textContent = tmp.situation;
+        document.getElementById('sc-roll-text').textContent = tmp.situation;
 
         if (++ticks >= 22) {
           clearInterval(iv);
-
           const sc = scenarios[fi];
-          document.getElementById('sc-situation').textContent = sc.situation;
-          document.getElementById('opt-a-text').textContent   = sc.a;
-          document.getElementById('opt-b-text').textContent   = sc.b;
-
-          div.style.display  = '';
-          opts.style.display = 'flex';
-          opts.classList.remove('pop');
-          void opts.offsetWidth;
-          opts.classList.add('pop');
-
+          GAME_RENDER.sophies(ct, sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
-
           round++;
           document.getElementById('round-num').textContent = round;
           btn.textContent = '🔁 Next Situation';
