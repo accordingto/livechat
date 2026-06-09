@@ -274,6 +274,37 @@
       transition: background .2s, color .2s, border-color .2s;
     }
     .vote-reset:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
+
+    /* ── Never Have I Ever reaction buttons ── */
+    .react-section {
+      width: 100%; max-width: 680px;
+      margin-bottom: 20px;
+      display: none;
+      gap: 14px;
+      flex-wrap: wrap; justify-content: center;
+      animation: fadeUp .35s ease both;
+    }
+    .react-section.visible { display: flex; }
+    .react-btn {
+      background: linear-gradient(160deg, #13132b 0%, #0f0f24 100%);
+      border: 1.5px solid #1e1e50;
+      border-radius: 20px;
+      padding: 18px 22px;
+      font-size: 1rem; cursor: pointer; color: #eee;
+      font-family: inherit;
+      transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      min-width: 110px;
+    }
+    .react-btn .r-emoji { font-size: 1.9rem; }
+    .react-btn .r-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; }
+    .react-btn .r-count { font-size: 1.5rem; font-weight: 900; color: #4f9eff; min-width: 1.5ch; text-align: center; }
+    .react-btn:hover {
+      background: #1a1a3a; border-color: #4f9eff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(79,158,255,.2);
+    }
+    .react-btn:active { transform: scale(.95); }
   </style>
 </head>
 <body>
@@ -299,6 +330,25 @@
       <span class="result-label" id="resultLabel">SURPRISE ME!</span>
       <span class="result-text result-placeholder" id="resultText">Press Go! to draw a random game &amp; scenario</span>
     </div>
+  </div>
+
+  <!-- Never Have I Ever reactions — hidden unless never is drawn -->
+  <div class="react-section" id="reactSection">
+    <button class="react-btn" onclick="neverReact('done')">
+      <span class="r-emoji">✋</span>
+      <span class="r-label">Done it</span>
+      <span class="r-count" id="rCntDone">0</span>
+    </button>
+    <button class="react-btn" onclick="neverReact('nope')">
+      <span class="r-emoji">🙅</span>
+      <span class="r-label">Never!</span>
+      <span class="r-count" id="rCntNope">0</span>
+    </button>
+    <button class="react-btn" onclick="neverReact('lol')">
+      <span class="r-emoji">😂</span>
+      <span class="r-label">LOL</span>
+      <span class="r-count" id="rCntLol">0</span>
+    </button>
   </div>
 
   <!-- Hot Take vote area — hidden unless hottake is drawn -->
@@ -345,6 +395,20 @@
     const htVotes = { agree: 0, middle: 0, disagree: 0 };
 
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    const neverCounts = { done: 0, nope: 0, lol: 0 };
+    function neverReact(type) {
+      neverCounts[type]++;
+      const ids = { done: 'rCntDone', nope: 'rCntNope', lol: 'rCntLol' };
+      document.getElementById(ids[type]).textContent = neverCounts[type];
+    }
+    function neverShowReact(enabled) {
+      const sec = document.getElementById('reactSection');
+      if (!enabled) { sec.classList.remove('visible'); return; }
+      neverCounts.done = neverCounts.nope = neverCounts.lol = 0;
+      ['rCntDone','rCntNope','rCntLol'].forEach(id => document.getElementById(id).textContent = 0);
+      sec.classList.add('visible');
+    }
 
     function htVote(side) {
       htVotes[side]++;
@@ -403,6 +467,7 @@
       goBtn.disabled = true;
       badge.style.visibility = 'hidden';
       badge.className = 'game-badge';
+      neverShowReact(false);
       htShowVote(false);
       resultCard.classList.remove('active');
       resultCard.classList.add('rolling');
@@ -447,6 +512,7 @@
         label.textContent = 'NEVER HAVE I EVER…';
         text.className    = 'result-text';
         text.textContent  = rand(GAME_DATA.never);
+        neverShowReact(true);
 
       } else if (gameKey === 'hottake') {
         label.textContent = '🔥 HOT TAKE';
