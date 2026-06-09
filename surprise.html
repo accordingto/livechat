@@ -342,7 +342,7 @@
       persuade:    { name: 'Persuade Together',  icon: '🤝', color: '#06b6d4' },
     };
 
-    let round = 0, rolling = false;
+    let round = 0, rolling = false, lastGame = null;
     const htVotes = { agree: 0, middle: 0, disagree: 0 };
 
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -408,7 +408,9 @@
       resultCard.classList.remove('active');
       resultCard.classList.add('rolling');
 
-      const gameKey = GAMES[Math.floor(Math.random() * GAMES.length)];
+      const pool    = GAMES.filter(g => g !== lastGame);
+      const gameKey = pool[Math.floor(Math.random() * pool.length)];
+      lastGame = gameKey;
       const cfg     = CONFIGS[gameKey];
 
       let ticks = 0;
