@@ -163,16 +163,17 @@
     }
     .hint.active { color: #4f9eff; }
 
-    .reset-react {
-      margin-top: 10px;
-      background: transparent; color: #444;
-      border: 2px solid #1e1e42; border-radius: 999px;
-      padding: 9px 24px; font-size: .9rem; font-weight: 700;
+    .draw-row { display: flex; gap: 12px; align-items: center; justify-content: center; }
+    .reset-btn {
+      background: transparent; color: #555;
+      border: 2px solid #2a2a4a; border-radius: 999px;
+      padding: 18px 28px; font-size: 1rem; font-weight: 700;
       cursor: pointer; font-family: inherit;
-      transition: background .2s, color .2s, border-color .2s;
+      transition: background .2s, color .2s, border-color .2s, transform .1s;
     }
-    .reset-react:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
-    .reset-react:active { transform: scale(.97); }
+    .reset-btn:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
+    .reset-btn:active { transform: scale(.97); }
+    .reset-btn:disabled { opacity: .3; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -211,10 +212,11 @@
       <span class="r-count" id="cnt-lol">0</span>
     </button>
   </div>
-  <button class="reset-react" onclick="resetCounts()">↺ Reset votes</button>
-
   <div class="btn-wrap">
-    <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
+    <div class="draw-row">
+      <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
+      <button class="reset-btn" onclick="resetCounts()">↺ Reset</button>
+    </div>
     <p class="hint" id="hint">100 prompts ready to go</p>
   </div>
 
