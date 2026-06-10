@@ -82,13 +82,8 @@ const GAME_RENDER = (() => {
       .gr-opt-text { font-size: clamp(1.05rem, 2.5vw, 1.2rem); line-height: 1.55; }
 
       /* ── Persuade Together roles ── */
-      .gr-roles {
-        width: 100%;
-        display: grid; grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
       .gr-role-chip {
-        border-radius: 14px; padding: 16px;
+        width: 100%; border-radius: 14px; padding: 14px 20px;
         display: flex; flex-direction: column;
         align-items: center; gap: 6px;
         text-align: center;
@@ -102,7 +97,7 @@ const GAME_RENDER = (() => {
       }
       .gr-role-val {
         font-weight: 700;
-        font-size: clamp(1rem, 2.5vw, 1.15rem);
+        font-size: clamp(1.05rem, 2.5vw, 1.25rem);
         line-height: 1.4;
       }
       .gr-role-team  .gr-role-val { color: #06b6d4; }
@@ -160,18 +155,17 @@ const GAME_RENDER = (() => {
   /* ── persuade ── */
   function persuade(el, sc) {
     el.innerHTML = `
-      <span class="gr-label" style="color:#06b6d4">${sc.emoji || '🤝'} ${sc.cat ? sc.cat.toUpperCase() : 'PERSUADE TOGETHER'}</span>
+      <div class="gr-role-chip gr-role-team">
+        <span class="gr-role-label">👥 Your Team Plays</span>
+        <span class="gr-role-val">${sc.team}</span>
+      </div>
+      <div class="gr-divider"></div>
+      <span class="gr-label" style="color:#06b6d4">${sc.emoji || '🤝'} ${sc.cat ? sc.cat.toUpperCase() : 'THE SITUATION'}</span>
       <span class="gr-text">${sc.situation}</span>
       <div class="gr-divider"></div>
-      <div class="gr-roles">
-        <div class="gr-role-chip gr-role-team">
-          <span class="gr-role-label">Team</span>
-          <span class="gr-role-val">${sc.team}</span>
-        </div>
-        <div class="gr-role-chip gr-role-judge">
-          <span class="gr-role-label">Judge</span>
-          <span class="gr-role-val">${sc.judge}</span>
-        </div>
+      <div class="gr-role-chip gr-role-judge">
+        <span class="gr-role-label">👨‍⚖️ The Judge</span>
+        <span class="gr-role-val">${sc.judge}</span>
       </div>`;
   }
 
