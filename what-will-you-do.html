@@ -8,29 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Sophie's Choice">
   <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-text-size-adjust: 100%; }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0d0d1a;
-      color: #eee;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 28px 20px 72px;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: .5; }
-    }
     @keyframes pulseGlow {
       0%, 100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
       50%       { box-shadow: 0 0 48px rgba(245,158,11,.25); }
@@ -39,31 +18,6 @@
       from { opacity: 0; transform: translateY(-10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
-    /* ── Topbar ── */
-    .topbar {
-      width: 100%; max-width: 740px;
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 36px;
-      animation: fadeUp .5s ease both;
-    }
-    a.back { color: #555; text-decoration: none; font-size: 14px; transition: color .2s; }
-    a.back:hover { color: #eee; }
-    .round-badge { font-size: 12px; color: #444; }
-    .round-badge span { color: #f59e0b; font-weight: 700; }
-
-    /* ── Header ── */
-    .header {
-      text-align: center; margin-bottom: 32px;
-      animation: fadeUp .5s .1s ease both;
-    }
-    .header h1 {
-      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
-      background: linear-gradient(135deg, #fff 30%, #f59e0b);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      margin-bottom: 8px;
-    }
-    .header p { color: #666; font-size: .93rem; }
 
     /* ── Card ── */
     .sc-card {
@@ -152,6 +106,8 @@
     .btn-draw:active { transform: scale(.98); }
     .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
 
+    .round-badge span { color: #f59e0b; }
+
     @media (max-width: 520px) {
       .sc-card { padding: 22px 20px; }
       .sc-situation { font-size: 1.2rem; }
@@ -164,11 +120,11 @@
 
   <div class="topbar">
     <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="round-num">0</span></div>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
-    <h1>🤔 Sophie's Choice</h1>
+    <h1 style="background: linear-gradient(135deg, #fff 30%, #f59e0b);">🤔 Sophie's Choice</h1>
     <p>Draw a tough situation — pick A, B, or come up with your own answer!</p>
   </div>
 
@@ -239,24 +195,21 @@
       const fi = avail[Math.floor(Math.random() * avail.length)];
       used.push(fi);
 
-      let ticks = 0;
-      const iv = setInterval(() => {
-        const tmp = scenarios[Math.floor(Math.random() * scenarios.length)];
-        document.getElementById('sc-roll-text').textContent = tmp.situation;
-
-        if (++ticks >= 22) {
-          clearInterval(iv);
+      GAME_RENDER.drawTick(
+        scenarios,
+        tick => { document.getElementById('sc-roll-text').textContent = tick.situation; },
+        () => {
           const sc = scenarios[fi];
           GAME_RENDER.sophies(ct, sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
           round++;
-          document.getElementById('round-num').textContent = round;
+          document.getElementById('roundNum').textContent = round;
           btn.textContent = '🔁 Next Situation';
           btn.disabled    = false;
           rolling = false;
         }
-      }, 85);
+      );
     }
   </script>
 </body>
