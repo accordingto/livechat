@@ -162,6 +162,17 @@
       transition: color .3s;
     }
     .hint.active { color: #4f9eff; }
+
+    .reset-react {
+      margin-top: 10px;
+      background: transparent; color: #444;
+      border: 2px solid #1e1e42; border-radius: 999px;
+      padding: 9px 24px; font-size: .9rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .reset-react:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
+    .reset-react:active { transform: scale(.97); }
   </style>
 </head>
 <body>
@@ -200,6 +211,7 @@
       <span class="r-count" id="cnt-lol">0</span>
     </button>
   </div>
+  <button class="reset-react" onclick="resetCounts()">↺ Reset votes</button>
 
   <div class="btn-wrap">
     <button class="draw-btn" id="drawBtn" onclick="draw()">🎰 Draw!</button>
@@ -215,6 +227,11 @@
     let round = 0;
     let rolling = false;
     const counts = { done: 0, nope: 0, lol: 0 };
+
+    function resetCounts() {
+      counts.done = counts.nope = counts.lol = 0;
+      ['done','nope','lol'].forEach(k => document.getElementById(`cnt-${k}`).textContent = 0);
+    }
 
     function react(type) {
       counts[type]++;
