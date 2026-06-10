@@ -4,56 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Never Have I Ever</title>
+  <link rel="stylesheet" href="shared.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-text-size-adjust: 100%; }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0d0d1a;
-      color: #eee;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: max(30px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(60px, calc(env(safe-area-inset-bottom) + 24px)) max(20px, env(safe-area-inset-left));
-      position: relative;
-      overflow-x: hidden;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(22px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .topbar {
-      width: 100%; max-width: 680px;
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 40px;
-      position: relative; z-index: 1;
-      animation: fadeUp .5s 0s ease both;
-    }
-    a.back {
-      color: #555; text-decoration: none; font-size: 14px;
-      display: flex; align-items: center; gap: 6px;
-      transition: color 0.2s;
-    }
-    a.back:hover { color: #eee; }
-    .counter { font-size: 13px; color: #444; }
-    .counter span { color: #4f9eff; font-weight: bold; }
-
-    .header {
-      text-align: center; margin-bottom: 40px;
-      position: relative; z-index: 1;
-      animation: fadeUp .5s .1s ease both;
-    }
-    .header h1 {
-      font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
-      background: linear-gradient(135deg, #fff 30%, #4f9eff);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      margin-bottom: 8px;
-    }
-    .header p { color: #666; font-size: 0.95rem; }
-
     .card-wrap {
       width: 100%; max-width: 580px;
       margin-bottom: 32px;
@@ -110,7 +62,6 @@
       position: absolute; width: 120px; height: 120px; border-radius: 50%;
       background: #4f9eff; animation: ripple .65s ease-out forwards; pointer-events: none;
     }
-    @keyframes flicker { 0%,100% { opacity:1; } 50% { opacity:.25; } }
     .card.rolling .statement { animation: flicker .12s linear infinite; }
 
     .reactions {
@@ -157,34 +108,20 @@
     .draw-btn:active { transform: scale(.97); }
     .draw-btn:disabled { background: #1e1e42; color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
 
-    .hint {
-      margin-top: 14px; font-size: 13px; color: #333; text-align: center;
-      transition: color .3s;
-    }
     .hint.active { color: #4f9eff; }
 
-    .draw-row { display: flex; gap: 12px; align-items: center; justify-content: center; }
-    .reset-btn {
-      background: transparent; color: #555;
-      border: 2px solid #2a2a4a; border-radius: 999px;
-      padding: 18px 28px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: background .2s, color .2s, border-color .2s, transform .1s;
-    }
-    .reset-btn:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
-    .reset-btn:active { transform: scale(.97); }
-    .reset-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .round-badge span { color: #4f9eff; }
   </style>
 </head>
 <body>
 
   <div class="topbar">
     <a class="back" href="index.html">← Back to Hub</a>
-    <div class="counter">Round <span id="roundNum">0</span></div>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
-    <h1>🙋 Never Have I Ever</h1>
+    <h1 style="background: linear-gradient(135deg, #fff 30%, #4f9eff);">🙋 Never Have I Ever</h1>
     <p>Draw a prompt — raise your hand if you've done it!</p>
   </div>
 
@@ -275,23 +212,18 @@
       triggerRipple(card);
 
       const chosen = prompts[Math.floor(Math.random() * prompts.length)];
-      let ticks = 0;
-      const iv = setInterval(() => {
-        stmt.textContent = prompts[Math.floor(Math.random() * prompts.length)];
-        ticks++;
-        if (ticks >= 22) {
-          clearInterval(iv);
-          card.classList.remove('rolling');
-          card.classList.add('active');
-          GAME_RENDER.never(card, chosen);
-          round++;
-          document.getElementById('roundNum').textContent = round;
-          hint.textContent = 'React below — how many have done this? 👇';
-          hint.classList.add('active');
-          btn.disabled = false;
-          rolling = false;
-        }
-      }, 85);
+
+      GAME_RENDER.drawTick(prompts, tick => { stmt.textContent = tick; }, () => {
+        card.classList.remove('rolling');
+        card.classList.add('active');
+        GAME_RENDER.never(card, chosen);
+        round++;
+        document.getElementById('roundNum').textContent = round;
+        hint.textContent = 'React below — how many have done this? 👇';
+        hint.classList.add('active');
+        btn.disabled = false;
+        rolling = false;
+      });
     }
   </script>
 

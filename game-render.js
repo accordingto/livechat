@@ -175,5 +175,14 @@ const GAME_RENDER = (() => {
       </div>`;
   }
 
-  return { injectCSS, never, hottake, storyteller, sophies, persuade };
+  /* ── drawTick: slot-machine animation helper ── */
+  function drawTick(pool, onTick, onDone, { count = 22, ms = 85 } = {}) {
+    let n = 0;
+    const iv = setInterval(() => {
+      onTick(pool[Math.floor(Math.random() * pool.length)]);
+      if (++n >= count) { clearInterval(iv); onDone(); }
+    }, ms);
+  }
+
+  return { injectCSS, never, hottake, storyteller, sophies, persuade, drawTick };
 })();
