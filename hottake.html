@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
+  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Hot Take Roulette</title>
   <link rel="stylesheet" href="shared.css">
@@ -185,6 +187,18 @@
     .spin-btn:disabled { background: #2a2a4a; color: #555; cursor: not-allowed; box-shadow: none; transform: none; }
 
     .round-badge span { color: #ff7043; }
+
+    /* ── Soft theme ── */
+    [data-theme="soft"] .card {
+      background: var(--surface);
+      border-color: var(--border);
+      box-shadow: 0 4px 24px rgba(100,60,20,.08);
+    }
+    [data-theme="soft"] .card.active { border-color: #ff7043; }
+    [data-theme="soft"] .take-text { color: var(--text); }
+    [data-theme="soft"] .take-text.placeholder { color: var(--text-faint); }
+    [data-theme="soft"] .vote-btn .bar-wrap { background: rgba(0,0,0,.06); }
+    [data-theme="soft"] .spin-btn:disabled { background: var(--border); color: var(--text-muted); box-shadow: none; }
   </style>
 </head>
 <body>

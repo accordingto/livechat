@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
+  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Sophie's Choice · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -115,6 +117,16 @@
       .opt-text { font-size: .95rem; }
       .opt-badge { width: 32px; height: 32px; font-size: .9rem; }
     }
+
+    /* ── Soft theme ── */
+    [data-theme="soft"] .sc-card {
+      background: var(--surface);
+      border-color: var(--border);
+      box-shadow: 0 4px 24px rgba(100,60,20,.08);
+    }
+    [data-theme="soft"] .sc-card.landed { border-color: #f59e0b; }
+    [data-theme="soft"] .btn-draw { background: var(--surface); border-color: #f59e0b; color: #92400e; }
+    [data-theme="soft"] .btn-draw:hover { background: #fffbeb; }
   </style>
 </head>
 <body>

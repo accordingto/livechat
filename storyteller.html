@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
+  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Story Teller</title>
   <link rel="stylesheet" href="shared.css">
@@ -164,6 +166,21 @@
     }
 
     .round-badge span { color: #f59e0b; }
+
+    /* ── Soft theme ── */
+    [data-theme="soft"] .card {
+      background: var(--surface);
+      border-color: var(--border);
+      box-shadow: 0 4px 16px rgba(100,60,20,.08);
+    }
+    [data-theme="soft"] .card-char   { background: linear-gradient(160deg, #fffbeb, var(--surface)); }
+    [data-theme="soft"] .card-action { background: linear-gradient(160deg, #f5f3ff, var(--surface)); }
+    [data-theme="soft"] .card-place  { background: linear-gradient(160deg, #ecfdf5, var(--surface)); }
+    [data-theme="soft"] .card-text { color: var(--text); }
+    [data-theme="soft"] .card-text.placeholder { color: var(--text-faint); }
+    [data-theme="soft"] .card-label { color: #1a0a00; }
+    [data-theme="soft"] .status { color: var(--text-muted); }
+    [data-theme="soft"] .status.ready { color: #d97706; }
   </style>
 </head>
 <body>

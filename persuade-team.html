@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
+  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Persuade Together! · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -98,6 +100,17 @@
     }
 
     .round-badge span { color: #06b6d4; }
+
+    /* ── Soft theme ── */
+    [data-theme="soft"] .scenario-card {
+      background: var(--surface);
+      border-color: var(--border);
+      box-shadow: 0 4px 24px rgba(100,60,20,.08);
+    }
+    [data-theme="soft"] .scenario-card.landed { border-color: #06b6d4; }
+    [data-theme="soft"] .btn-draw { background: var(--surface); border-color: #06b6d4; color: #0e7490; }
+    [data-theme="soft"] .btn-draw:hover { background: #ecfeff; }
+    [data-theme="soft"] .sc-counter { color: var(--text-muted); }
   </style>
 </head>
 <body>

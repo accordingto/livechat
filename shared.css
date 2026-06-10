@@ -1,12 +1,38 @@
 /* shared.css — loaded by every game page (not index.html) */
 
+/* ── Theme tokens ── */
+:root {
+  --bg: #0d0d1a;
+  --surface: #13132b;
+  --surface-b: #100f25;
+  --border: #1e1e42;
+  --border-dim: rgba(255,255,255,.06);
+  --text: #eee;
+  --text-dim: #666;
+  --text-muted: #555;
+  --text-faint: #2a2a50;
+  --divider: #1e1e3a;
+}
+[data-theme="soft"] {
+  --bg: #faf7f3;
+  --surface: #ffffff;
+  --surface-b: #fff8f0;
+  --border: #ddd0c4;
+  --border-dim: rgba(0,0,0,.06);
+  --text: #2d1f14;
+  --text-dim: #9a7f6f;
+  --text-muted: #b09080;
+  --text-faint: #d0b8a8;
+  --divider: #ead8c8;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #0d0d1a;
-  color: #eee;
+  background: var(--bg);
+  color: var(--text);
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -17,6 +43,7 @@ body {
            max(20px, env(safe-area-inset-left));
   overflow-x: hidden;
   position: relative;
+  transition: background .3s, color .3s;
 }
 
 @keyframes fadeUp {
@@ -36,11 +63,11 @@ body {
   position: relative; z-index: 1;
 }
 a.back {
-  color: #555; text-decoration: none; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; font-size: 14px;
   transition: color .2s;
 }
-a.back:hover { color: #eee; }
-.round-badge { font-size: 13px; color: #444; }
+a.back:hover { color: var(--text); }
+.round-badge { font-size: 13px; color: var(--text-muted); }
 .round-badge span { font-weight: 700; }
 
 .header {
@@ -52,25 +79,49 @@ a.back:hover { color: #eee; }
   font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
   margin-bottom: 8px;
 }
-.header p { color: #666; font-size: .93rem; }
+.header p { color: var(--text-dim); font-size: .93rem; }
+
+/* Gradient text doesn't work on light bg — replace with plain colour */
+[data-theme="soft"] .header h1 {
+  background: none;
+  -webkit-text-fill-color: var(--text);
+  color: var(--text);
+}
 
 .draw-row { display: flex; gap: 12px; align-items: center; justify-content: center; }
 
 .reset-btn {
-  background: transparent; color: #555;
-  border: 2px solid #2a2a4a; border-radius: 999px;
+  background: transparent; color: var(--text-muted);
+  border: 2px solid var(--border); border-radius: 999px;
   padding: 16px 28px; font-size: 1rem; font-weight: 700;
   cursor: pointer; font-family: inherit;
   transition: background .2s, color .2s, border-color .2s, transform .1s;
 }
-.reset-btn:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
+.reset-btn:hover { background: var(--border-dim); color: var(--text); border-color: var(--text-muted); }
 .reset-btn:active { transform: scale(.97); }
 .reset-btn:disabled { opacity: .3; cursor: not-allowed; }
 
 .hint {
-  margin-top: 14px; font-size: 13px; color: #555;
+  margin-top: 14px; font-size: 13px; color: var(--text-muted);
   text-align: center; transition: color .3s;
 }
+
+/* ── Soft theme: game-render.js class overrides ── */
+[data-theme="soft"] .gr-divider { background: var(--divider); }
+[data-theme="soft"] .gr-story-card { border-color: var(--border); }
+[data-theme="soft"] .gr-sc-char   { background: linear-gradient(160deg, #fffbeb, var(--surface)); --gr-sc: #d97706; }
+[data-theme="soft"] .gr-sc-action { background: linear-gradient(160deg, #f5f3ff, var(--surface)); --gr-sc: #7c3aed; }
+[data-theme="soft"] .gr-sc-place  { background: linear-gradient(160deg, #ecfdf5, var(--surface)); --gr-sc: #059669; }
+[data-theme="soft"] .gr-story-text { color: var(--text); }
+[data-theme="soft"] .gr-opt-text  { color: var(--text); }
+[data-theme="soft"] .gr-opt-a { background: rgba(59,130,246,.07); border-color: rgba(59,130,246,.3); }
+[data-theme="soft"] .gr-opt-b { background: rgba(239,68,68,.07);  border-color: rgba(239,68,68,.3); }
+[data-theme="soft"] .gr-opt-c { background: rgba(22,163,74,.07);  border-color: rgba(22,163,74,.3); }
+[data-theme="soft"] .gr-role-label { color: var(--text-dim); }
+[data-theme="soft"] .gr-role-team  { background: rgba(6,182,212,.06);   border-color: rgba(6,182,212,.3); }
+[data-theme="soft"] .gr-role-judge { background: rgba(217,70,239,.06); border-color: rgba(217,70,239,.3); }
+[data-theme="soft"] .gr-role-team  .gr-role-val { color: #0e7490; }
+[data-theme="soft"] .gr-role-judge .gr-role-val { color: #a21caf; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
