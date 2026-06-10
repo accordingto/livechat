@@ -152,6 +152,15 @@
       box-shadow: 0 6px 40px rgba(232,121,249,.6);
       transform: translateY(-2px);
     }
+    .btn-reset {
+      background: transparent; color: #555;
+      border: 2px solid #2a2a4a; border-radius: 999px;
+      padding: 16px 28px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, color .2s, border-color .2s, transform .1s;
+    }
+    .btn-reset:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
+    .btn-reset:active { transform: scale(.97); }
 
     /* ── Hot Take vote row ── */
     .vote-section {
@@ -344,11 +353,11 @@
         <div class="bar-wrap"><div class="bar" id="vBarDisagree"></div></div>
       </button>
     </div>
-    <button class="vote-reset" onclick="htResetVotes()">↺ Reset votes</button>
   </div>
 
   <div class="btn-row">
     <button class="btn btn-go" id="goBtn" onclick="go()">🎰 Go!</button>
+    <button class="btn-reset" id="resetBtn" onclick="resetCurrent()" style="display:none">↺ Reset</button>
   </div>
 
   <script src="game-data.js"></script>
@@ -364,7 +373,7 @@
       persuade:    { name: 'Persuade Together',  icon: '🤝', color: '#06b6d4' },
     };
 
-    let round = 0, rolling = false, lastGame = null;
+    let round = 0, rolling = false, lastGame = null, currentGame = null;
     const htVotes = { agree: 0, middle: 0, disagree: 0 };
 
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -398,6 +407,15 @@
         document.getElementById('vBar' + k[0].toUpperCase() + k.slice(1)).style.width = (htVotes[k] / total * 100) + '%';
       });
     }
+    function resetCurrent() {
+      if (currentGame === 'never') {
+        neverCounts.done = neverCounts.nope = neverCounts.lol = 0;
+        ['rCntDone','rCntNope','rCntLol'].forEach(id => document.getElementById(id).textContent = 0);
+      } else if (currentGame === 'hottake') {
+        htResetVotes();
+      }
+    }
+
     function htShowVote(enabled) {
       const sec = document.getElementById('voteSection');
       if (!enabled) { sec.classList.remove('visible'); return; }
@@ -458,6 +476,8 @@
       neverShowReact(false);
       htShowVote(false);
       card.classList.remove('active', 'landing');
+      document.getElementById('resetBtn').style.display = 'none';
+      currentGame = null;
 
       const pool    = GAMES.filter(g => g !== lastGame);
       const gameKey = pool[Math.floor(Math.random() * pool.length)];
@@ -594,6 +614,10 @@
         GAME_RENDER.hottake(card, rand(GAME_DATA.hottake));
         htShowVote(true);
       }
+
+      currentGame = gameKey;
+      const resetBtn = document.getElementById('resetBtn');
+      resetBtn.style.display = (gameKey === 'never' || gameKey === 'hottake') ? '' : 'none';
     }
   </script>
 
