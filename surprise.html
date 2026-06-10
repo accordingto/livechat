@@ -228,6 +228,73 @@
       box-shadow: 0 8px 28px rgba(79,158,255,.2);
     }
     .react-btn:active { transform: scale(.95); }
+
+    /* ── Slot-machine reel ── */
+    .reel-surround { width: 100%; position: relative; }
+    .reel-window {
+      width: 100%; height: 160px;
+      overflow: hidden; position: relative;
+    }
+    .reel-fade {
+      position: absolute; left: 0; right: 0; height: 50px;
+      z-index: 3; pointer-events: none;
+    }
+    .reel-fade.top { top: 0;    background: linear-gradient(to bottom, #16112a 30%, transparent); }
+    .reel-fade.bot { bottom: 0; background: linear-gradient(to top,   #0f0f24 30%, transparent); }
+    .reel-sel {
+      position: absolute; left: 10%; right: 10%; height: 1px;
+      background: rgba(255,255,255,.2); z-index: 4;
+    }
+    .reel-sel.top { top: 0; }
+    .reel-sel.bot { bottom: 0; }
+    .reel-track { display: flex; flex-direction: column; }
+    @keyframes reelScroll {
+      from { transform: translateY(0); }
+      to   { transform: translateY(var(--reel-end)); }
+    }
+    .reel-item {
+      height: 160px; flex-shrink: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .reel-item-icon { font-size: 3.6rem; line-height: 1; }
+    .reel-item-name {
+      font-size: 1rem; font-weight: 800;
+      letter-spacing: 2.5px; text-transform: uppercase;
+    }
+
+    /* ── Particle burst ── */
+    @keyframes particleFly {
+      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+    }
+    .burst-dot {
+      position: absolute; border-radius: 50%;
+      animation: particleFly .9s ease-out forwards;
+      pointer-events: none; z-index: 20;
+    }
+
+    /* ── Card land bounce ── */
+    @keyframes cardLandBounce {
+      0%   { transform: scale(1); }
+      28%  { transform: scale(1.08); }
+      58%  { transform: scale(0.96); }
+      78%  { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+    .result-card.landing { animation: cardLandBounce .6s cubic-bezier(.36,.07,.19,.97) both; }
+
+    /* ── Reel spin — rainbow border cycling all 5 game colours ── */
+    @keyframes rainbowSpin {
+      0%   { border-color: #4f9eff; box-shadow: 0 0 48px rgba(79,158,255,.45); }
+      20%  { border-color: #ff7043; box-shadow: 0 0 48px rgba(255,112,67,.45); }
+      40%  { border-color: #f59e0b; box-shadow: 0 0 48px rgba(245,158,11,.45); }
+      60%  { border-color: #a78bfa; box-shadow: 0 0 48px rgba(167,139,250,.45); }
+      80%  { border-color: #06b6d4; box-shadow: 0 0 48px rgba(6,182,212,.45); }
+      100% { border-color: #4f9eff; box-shadow: 0 0 48px rgba(79,158,255,.45); }
+    }
+    .result-card.spinning { animation: rainbowSpin .55s linear infinite; }
   </style>
 </head>
 <body>
@@ -363,18 +430,27 @@
       return `rgba(${r},${g},${b},${a})`;
     }
 
-    function resetCard() {
-      const card = document.getElementById('resultCard');
-      card.innerHTML = '<span class="gr-label" id="rollLabel" style="color:#e879f9">…</span><span class="gr-text" id="rollText">…</span>';
-      card.style.borderColor = '';
-      card.style.boxShadow   = '';
-      card.style.background  = '';
-      card.style.padding     = '';
-      card.style.minHeight   = '';
-      card.style.gap         = '';
-      card.style.overflow    = '';
-      card.setAttribute('data-icon', '🎰');
-      return card;
+    const REEL_H = 160;
+
+    function spawnParticles(card, color) {
+      const w = card.offsetWidth, h = card.offsetHeight;
+      for (let i = 0; i < 32; i++) {
+        const d     = document.createElement('div');
+        d.className = 'burst-dot';
+        const size  = 5 + Math.random() * 9;
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = 60 + Math.random() * 140;
+        d.style.cssText = [
+          `width:${size}px`, `height:${size}px`,
+          `background:${color}`,
+          `left:${w/2}px`, `top:${h/2}px`,
+          `margin-left:-${size/2}px`, `margin-top:-${size/2}px`,
+          `--tx:${(Math.cos(angle)*dist).toFixed(1)}px`,
+          `--ty:${(Math.sin(angle)*dist).toFixed(1)}px`,
+        ].join(';');
+        card.appendChild(d);
+        setTimeout(() => d.remove(), 1100);
+      }
     }
 
     function go() {
@@ -383,37 +459,93 @@
 
       const goBtn = document.getElementById('goBtn');
       const badge = document.getElementById('gameBadge');
-      const card  = resetCard();
+      const card  = document.getElementById('resultCard');
+
+      /* Reset card to reel state */
+      card.style.borderColor = '';
+      card.style.boxShadow   = '';
+      card.style.background  = '';
+      card.style.padding     = '0';
+      card.style.minHeight   = '220px';
+      card.style.gap         = '0';
+      card.style.overflow    = 'hidden';
+      card.setAttribute('data-icon', '🎰');
 
       goBtn.disabled = true;
       badge.style.visibility = 'hidden';
       badge.className = 'game-badge';
       neverShowReact(false);
       htShowVote(false);
-      card.classList.remove('active');
-      card.classList.add('rolling');
+      card.classList.remove('active', 'landing');
+      card.classList.add('spinning');
 
       const pool    = GAMES.filter(g => g !== lastGame);
       const gameKey = pool[Math.floor(Math.random() * pool.length)];
       lastGame = gameKey;
       const cfg     = CONFIGS[gameKey];
 
-      let ticks = 0;
-      const iv = setInterval(() => {
-        const rc = CONFIGS[GAMES[Math.floor(Math.random() * GAMES.length)]];
-        document.getElementById('rollLabel').textContent = rc.icon + ' ' + rc.name.toUpperCase();
-        document.getElementById('rollText').textContent  = '…';
-        ticks++;
-        if (ticks >= 24) {
-          clearInterval(iv);
-          card.classList.remove('rolling');
+      /* Build reel — N items, last is the winner */
+      const N     = 28;
+      const items = Array.from({length: N}, (_, i) =>
+        i === N - 1 ? gameKey : GAMES[Math.floor(Math.random() * GAMES.length)]);
+
+      card.innerHTML = `
+        <div class="reel-surround">
+          <div class="reel-window">
+            <div class="reel-fade top"></div>
+            <div class="reel-sel top"></div>
+            <div class="reel-track" id="reelTrack">
+              ${items.map(k => `
+                <div class="reel-item" style="color:${CONFIGS[k].color}">
+                  <div class="reel-item-icon">${CONFIGS[k].icon}</div>
+                  <div class="reel-item-name">${CONFIGS[k].name}</div>
+                </div>`).join('')}
+            </div>
+            <div class="reel-sel bot"></div>
+            <div class="reel-fade bot"></div>
+          </div>
+        </div>`;
+
+      const track = document.getElementById('reelTrack');
+      track.style.setProperty('--reel-end', `${-(N - 1) * REEL_H}px`);
+
+      /* Double rAF so layout is committed before animation starts */
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        track.style.animation = 'reelScroll 2.8s cubic-bezier(0.1, 0.65, 0.32, 1) forwards';
+      }));
+
+      track.addEventListener('animationend', () => {
+        card.classList.remove('spinning');
+
+        /* Particle burst + border flash */
+        spawnParticles(card, cfg.color);
+        card.style.borderColor = cfg.color;
+        card.style.boxShadow   = `0 0 90px ${hexRgba(cfg.color, 0.6)}`;
+        card.classList.add('landing');
+
+        /* Badge */
+        badge.innerHTML         = cfg.icon + ' ' + cfg.name;
+        badge.style.visibility  = 'visible';
+        badge.style.color       = cfg.color;
+        badge.style.borderColor = hexRgba(cfg.color, 0.5);
+        badge.style.background  = hexRgba(cfg.color, 0.12);
+        badge.className         = 'game-badge visible';
+
+        /* Show actual result after bounce settles */
+        setTimeout(() => {
+          card.classList.remove('landing');
+          card.style.padding   = '';
+          card.style.gap       = '';
+          card.style.overflow  = '';
+          card.style.minHeight = '';
+          card.style.boxShadow = '';
           showResult(gameKey, cfg, card, null, null, badge);
           round++;
           document.getElementById('roundNum').textContent = round;
           goBtn.disabled = false;
           rolling = false;
-        }
-      }, 90);
+        }, 700);
+      }, { once: true });
     }
 
     function showResult(gameKey, cfg, card, label, text, badge) {
