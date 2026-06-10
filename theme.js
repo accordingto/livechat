@@ -1,13 +1,12 @@
-/* theme.js — IceBreak Hub five-theme switcher */
+/* theme.js — IceBreak Hub four-theme switcher */
 (function () {
   const KEY = 'ib-theme';
-  const THEMES = ['space','soft','sunset','forest','candy'];
+  const THEMES = ['space','soft','sunset','forest'];
   const LABELS = {
     space:  '🌸 Soft',
     soft:   '🌅 Sunset',
     sunset: '🌲 Forest',
-    forest: '🍬 Candy',
-    candy:  '🌌 Space'
+    forest: '🌌 Space'
   };
 
   function apply(t) {
@@ -48,11 +47,6 @@
       box-shadow: 0 4px 16px rgba(0,0,0,.45);
     }
     [data-theme="forest"] .ib-theme-fab:hover { color: #e8f2e0; border-color: #3a7040; transform: translateY(-2px); }
-    [data-theme="candy"] .ib-theme-fab {
-      background: #fff; color: #8a5080; border-color: #f2c0df;
-      box-shadow: 0 4px 16px rgba(200,80,160,.12);
-    }
-    [data-theme="candy"] .ib-theme-fab:hover { color: #28102a; border-color: #d080b8; transform: translateY(-2px); }
     .ib-theme-fab:active { transform: scale(.95) !important; }
   `;
   document.head.appendChild(s);
