@@ -156,7 +156,7 @@ const GAME_RENDER = (() => {
   function persuade(el, sc) {
     el.innerHTML = `
       <div class="gr-role-chip gr-role-team">
-        <span class="gr-role-label">👥 Your Team Plays</span>
+        <span class="gr-role-label">👥 Persuader Team</span>
         <span class="gr-role-val">${sc.team}</span>
       </div>
       <div class="gr-divider"></div>
