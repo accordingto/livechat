@@ -50,7 +50,6 @@ a.back:hover { color: #eee; }
 }
 .header h1 {
   font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   margin-bottom: 8px;
 }
 .header p { color: #666; font-size: .93rem; }
