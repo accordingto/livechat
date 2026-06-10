@@ -31,11 +31,11 @@
       position: relative; overflow: hidden;
       transition: border-color .4s;
       animation: fadeUp .5s .2s ease both;
-      min-height: 260px;
+      min-height: 220px;
       display: flex; flex-direction: column; justify-content: center;
     }
     .sc-card.rolling { border-color: #f59e0b; animation: flicker .14s infinite; }
-    .sc-card.landed  { border-color: #f59e0b; animation: pulseGlow 2.8s ease infinite; }
+    .sc-card.landed  { border-color: #f59e0b; animation: pulseGlow 2.5s ease infinite; }
     .sc-card::before {
       content: '🤔';
       position: absolute; font-size: 11rem; opacity: .022;
@@ -97,7 +97,7 @@
     .btn-draw {
       width: 100%; max-width: 740px;
       background: #13132b; color: #f59e0b; border: 2px solid #f59e0b;
-      border-radius: 14px; padding: 17px;
+      border-radius: 14px; padding: 16px;
       font-size: 1.05rem; font-weight: 700;
       cursor: pointer; font-family: inherit;
       transition: background .2s, transform .1s;

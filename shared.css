@@ -68,7 +68,7 @@ a.back:hover { color: #eee; }
 .reset-btn:disabled { opacity: .3; cursor: not-allowed; }
 
 .hint {
-  margin-top: 14px; font-size: 13px; color: #333;
+  margin-top: 14px; font-size: 13px; color: #555;
   text-align: center; transition: color .3s;
 }
 

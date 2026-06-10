@@ -101,7 +101,7 @@
     .draw-btn {
       background: #4f9eff; color: #0d0d1a;
       border: none; border-radius: 999px;
-      padding: 18px 56px; font-size: 1.05rem; font-weight: 900;
+      padding: 16px 48px; font-size: 1.05rem; font-weight: 900;
       cursor: pointer; letter-spacing: .5px; font-family: inherit;
       transition: background .2s, transform .1s, box-shadow .2s;
       box-shadow: 0 4px 24px rgba(79,158,255,.35);
@@ -223,6 +223,7 @@
         document.getElementById('roundNum').textContent = round;
         hint.textContent = 'React below — how many have done this? 👇';
         hint.classList.add('active');
+        btn.textContent = '🔁 Draw Again';
         btn.disabled = false;
         rolling = false;
       });

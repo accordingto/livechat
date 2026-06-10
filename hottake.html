@@ -22,7 +22,7 @@
       border-radius: 24px;
       padding: 52px 40px;
       text-align: center;
-      min-height: 200px;
+      min-height: 220px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -51,7 +51,7 @@
 
     .card.active {
       border-color: #ff7043;
-      animation: fadeUp .5s .2s ease both, pulse-glow 2.4s ease-in-out infinite;
+      animation: fadeUp .5s .2s ease both, pulse-glow 2.5s ease-in-out infinite;
     }
 
     .fire-label {
@@ -168,7 +168,7 @@
       color: #fff;
       border: none;
       border-radius: 999px;
-      padding: 17px 52px;
+      padding: 16px 48px;
       font-size: 1.05rem;
       font-weight: 800;
       cursor: pointer;
@@ -297,6 +297,7 @@
         round++;
         document.getElementById('roundNum').textContent = round;
         btnA.disabled = btnM.disabled = btnD.disabled = false;
+        spinBtn.textContent = '🔁 Spin Again';
         spinBtn.disabled = false;
         document.getElementById('resetBtn').disabled = false;
         rolling = false;
