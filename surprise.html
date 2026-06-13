@@ -154,37 +154,6 @@
     }
     .vote-reset:hover { background: rgba(255,255,255,.05); color: #aaa; border-color: #444; }
 
-    /* ── Never Have I Ever reaction buttons ── */
-    .react-section {
-      width: 100%; max-width: 680px;
-      margin-bottom: 20px;
-      display: none;
-      gap: 14px;
-      flex-wrap: wrap; justify-content: center;
-      animation: fadeUp .35s ease both;
-    }
-    .react-section.visible { display: flex; }
-    .react-btn {
-      background: linear-gradient(160deg, #13132b 0%, #0f0f24 100%);
-      border: 1.5px solid #1e1e50;
-      border-radius: 20px;
-      padding: 18px 22px;
-      font-size: 1rem; cursor: pointer; color: #eee;
-      font-family: inherit;
-      transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      min-width: 110px;
-    }
-    .react-btn .r-emoji { font-size: 1.9rem; }
-    .react-btn .r-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; }
-    .react-btn .r-count { font-size: 1.5rem; font-weight: 900; color: #4f9eff; min-width: 1.5ch; text-align: center; }
-    .react-btn:hover {
-      background: #1a1a3a; border-color: #4f9eff;
-      transform: translateY(-4px);
-      box-shadow: 0 8px 28px rgba(79,158,255,.2);
-    }
-    .react-btn:active { transform: scale(.95); }
-
     /* ── Slot-machine reel ── */
     .reel-surround { width: 100%; position: relative; }
     .reel-window {
@@ -243,9 +212,6 @@
     [data-theme="soft"] .divider { background: var(--divider); }
     [data-theme="soft"] .reel-fade.top { background: linear-gradient(to bottom, var(--surface), transparent); }
     [data-theme="soft"] .reel-fade.bot { background: linear-gradient(to top, var(--surface), transparent); }
-    [data-theme="soft"] .react-btn { background: var(--surface); border-color: var(--border); color: var(--text); }
-    [data-theme="soft"] .react-btn .r-label { color: var(--text-muted); }
-    [data-theme="soft"] .react-btn:hover { background: var(--surface-b); }
     [data-theme="soft"] .vote-btn .bar-wrap { background: rgba(0,0,0,.06); }
     [data-theme="soft"] .vote-reset { border-color: var(--border); color: var(--text-muted); }
     [data-theme="soft"] .vote-reset:hover { background: var(--border-dim); color: var(--text); }
@@ -253,16 +219,12 @@
     [data-theme="sunset"] .divider { background: var(--divider); }
     [data-theme="sunset"] .reel-fade.top { background: linear-gradient(to bottom, var(--surface), transparent); }
     [data-theme="sunset"] .reel-fade.bot { background: linear-gradient(to top, var(--surface-b), transparent); }
-    [data-theme="sunset"] .react-btn { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); color: var(--text); }
-    [data-theme="sunset"] .react-btn .r-label { color: var(--text-muted); }
     [data-theme="sunset"] .vote-btn .bar-wrap { background: rgba(255,255,255,.06); }
     [data-theme="sunset"] .vote-reset { border-color: var(--border); color: var(--text-muted); }
     [data-theme="forest"] .result-card { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); }
     [data-theme="forest"] .divider { background: var(--divider); }
     [data-theme="forest"] .reel-fade.top { background: linear-gradient(to bottom, var(--surface), transparent); }
     [data-theme="forest"] .reel-fade.bot { background: linear-gradient(to top, var(--surface-b), transparent); }
-    [data-theme="forest"] .react-btn { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); color: var(--text); }
-    [data-theme="forest"] .react-btn .r-label { color: var(--text-muted); }
     [data-theme="forest"] .vote-btn .bar-wrap { background: rgba(255,255,255,.06); }
     [data-theme="forest"] .vote-reset { border-color: var(--border); color: var(--text-muted); }
   </style>
@@ -290,25 +252,6 @@
       <span class="result-label" id="resultLabel">SURPRISE ME!</span>
       <span class="result-text result-placeholder" id="resultText">Press Go! to draw a random game &amp; scenario</span>
     </div>
-  </div>
-
-  <!-- Never Have I Ever reactions — hidden unless never is drawn -->
-  <div class="react-section" id="reactSection">
-    <button class="react-btn" onclick="neverReact('done')">
-      <span class="r-emoji">✋</span>
-      <span class="r-label">Done it</span>
-      <span class="r-count" id="rCntDone">0</span>
-    </button>
-    <button class="react-btn" onclick="neverReact('nope')">
-      <span class="r-emoji">🙅</span>
-      <span class="r-label">Never!</span>
-      <span class="r-count" id="rCntNope">0</span>
-    </button>
-    <button class="react-btn" onclick="neverReact('lol')">
-      <span class="r-emoji">😂</span>
-      <span class="r-label">LOL</span>
-      <span class="r-count" id="rCntLol">0</span>
-    </button>
   </div>
 
   <!-- Hot Take vote area — hidden unless hottake is drawn -->
@@ -344,9 +287,8 @@
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    const GAMES = ['never', 'hottake', 'storyteller', 'sophies', 'persuade'];
+    const GAMES = ['hottake', 'storyteller', 'sophies', 'persuade'];
     const CONFIGS = {
-      never:       { name: 'Never Have I Ever', icon: '🙋', color: '#4f9eff' },
       hottake:     { name: 'Hot Take Roulette',  icon: '🔥', color: '#ff7043' },
       storyteller: { name: 'Story Teller',       icon: '📖', color: '#f59e0b' },
       sophies:     { name: "Sophie's Choice",    icon: '🤔', color: '#a78bfa' },
@@ -357,20 +299,6 @@
     const htVotes = { agree: 0, middle: 0, disagree: 0 };
 
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-    const neverCounts = { done: 0, nope: 0, lol: 0 };
-    function neverReact(type) {
-      neverCounts[type]++;
-      const ids = { done: 'rCntDone', nope: 'rCntNope', lol: 'rCntLol' };
-      document.getElementById(ids[type]).textContent = neverCounts[type];
-    }
-    function neverShowReact(enabled) {
-      const sec = document.getElementById('reactSection');
-      if (!enabled) { sec.classList.remove('visible'); return; }
-      neverCounts.done = neverCounts.nope = neverCounts.lol = 0;
-      ['rCntDone','rCntNope','rCntLol'].forEach(id => document.getElementById(id).textContent = 0);
-      sec.classList.add('visible');
-    }
 
     function htVote(side) {
       htVotes[side]++;
@@ -388,10 +316,7 @@
       });
     }
     function resetCurrent() {
-      if (currentGame === 'never') {
-        neverCounts.done = neverCounts.nope = neverCounts.lol = 0;
-        ['rCntDone','rCntNope','rCntLol'].forEach(id => document.getElementById(id).textContent = 0);
-      } else if (currentGame === 'hottake') {
+      if (currentGame === 'hottake') {
         htResetVotes();
       }
     }
@@ -453,7 +378,6 @@
       goBtn.disabled = true;
       badge.style.visibility = 'hidden';
       badge.className = 'game-badge';
-      neverShowReact(false);
       htShowVote(false);
       card.classList.remove('active', 'landing');
       document.getElementById('resetBtn').style.display = 'none';
@@ -580,13 +504,6 @@
         card.classList.add('active');
         GAME_RENDER.persuade(card, rand(GAME_DATA.persuade));
 
-      } else if (gameKey === 'never') {
-        card.setAttribute('data-icon', cfg.icon);
-        card.style.borderColor = cfg.color;
-        card.classList.add('active');
-        GAME_RENDER.never(card, rand(GAME_DATA.never));
-        neverShowReact(true);
-
       } else if (gameKey === 'hottake') {
         card.setAttribute('data-icon', cfg.icon);
         card.style.borderColor = cfg.color;
@@ -597,7 +514,7 @@
 
       currentGame = gameKey;
       const resetBtn = document.getElementById('resetBtn');
-      resetBtn.style.display = (gameKey === 'never' || gameKey === 'hottake') ? '' : 'none';
+      resetBtn.style.display = gameKey === 'hottake' ? '' : 'none';
     }
   </script>
 
