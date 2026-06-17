@@ -270,17 +270,9 @@
     const ALL_COLORS  = ['a','b','c','d','e','f'];
     const ALL_LETTERS = ['A','B','C','D','E','F'];
 
-    /* Roles E and F are generic extras that work with any scenario */
-    const EXTRA_ROLES = [
-      { label: 'The Unexpected Newcomer',
-        hint: "You just arrived and have no idea what's going on. But somehow you're already very involved." },
-      { label: 'The Live Narrator',
-        hint: "You describe everything happening out loud, like a nature documentary. Nobody asked. You continue." },
-    ];
-
     function getRoleData(sc, index) {
-      const keys = ['a','b','c','d'];
-      return index < 4 ? sc[keys[index]] : EXTRA_ROLES[index - 4];
+      const keys = ['a','b','c','d','e','f'];
+      return sc[keys[index]];
     }
 
     function roleCardHTML(sc, index, extraDelay) {
