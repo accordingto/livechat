@@ -255,7 +255,13 @@ const GAME_RENDER = (() => {
       </div>
       <div class="gr-divider" id="gr-roles-sep" style="display:none"></div>
       <div class="gr-scene-roles-hdr" id="gr-roles-lbl" style="display:none">🎪 Your Roles — Pick one and play it!</div>
-      <div class="gr-scene-roles" id="gr-roles-grid"></div>`;
+      <div class="gr-scene-roles" id="gr-roles-grid" style="grid-template-columns:1fr 1fr">
+        <div class="gr-scene-role gr-sr-a">
+          <span class="gr-sr-key">A</span>
+          <div class="gr-sr-name">${sc.a.label}</div>
+          <div class="gr-sr-hint">${sc.a.hint}</div>
+        </div>
+      </div>`;
   }
 
   function setScenePlayers(n) {
