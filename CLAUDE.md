@@ -16,6 +16,28 @@
 
 ---
 
+## 專案結構（現役檔案）
+
+> ⚠️ **只讀取以下檔案。`_archive/` 資料夾內的所有檔案為舊版廢棄遊戲，除非使用者明確要求，否則永遠不要讀取或修改。**
+
+| 檔案 | 說明 |
+|------|------|
+| `index.html` | 主選單 / 遊戲入口頁 |
+| `surprise.html` | 🎰 Surprise Me!（隨機抽遊戲） |
+| `hottake.html` | 🔥 Hot Take Roulette |
+| `storyteller.html` | 📖 Story Teller |
+| `what-will-you-do.html` | 🤔 Sophie's Choice |
+| `persuade-team.html` | 🤝 Persuade Together! |
+| `scene.html` | 🎭 You're In The Scene |
+| `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
+| `theme.js` | 四色主題切換（space / soft / sunset / forest） |
+| `game-data.js` | 所有遊戲的題目資料（never / hottake / storyteller / sophies / persuade / scene） |
+| `game-render.js` | 共用渲染函式（GAME_RENDER） |
+
+**廢棄資料夾：** `_archive/`（comic, describe, emoji-quiz, finish, fortunately, icebreaker, never, persuade, plot-twist, story-chain, truths）— 請勿讀取。
+
+---
+
 ## 技術方向
 
 ### 展示方式
