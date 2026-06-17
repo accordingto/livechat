@@ -85,13 +85,34 @@
       margin-bottom: 20px;
     }
 
-    /* Roles header */
+    /* ── Player count selector ── */
+    .ps-wrap { margin-bottom: 20px; }
+    .ps-label {
+      font-size: .78rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #666; margin-bottom: 12px;
+    }
+    .ps-btns { display: flex; gap: 10px; }
+    .ps-btn {
+      flex: 1; border: 2px solid #1e1e42; border-radius: 12px;
+      padding: 13px 0; font-size: 1.15rem; font-weight: 800;
+      color: #444; background: transparent; cursor: pointer;
+      transition: border-color .18s, color .18s, background .18s, transform .1s;
+      font-family: inherit;
+    }
+    .ps-btn:hover  { border-color: #ec4899; color: #ec4899; }
+    .ps-btn:active { transform: scale(.95); }
+    .ps-btn.active {
+      border-color: #ec4899; color: #ec4899;
+      background: rgba(236,72,153,.13);
+    }
+
+    /* ── Roles header ── */
     .roles-header {
       font-size: .78rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
       color: #666; margin-bottom: 14px;
     }
 
-    /* Role grid */
+    /* ── Role grid ── */
     .roles-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -99,16 +120,25 @@
     }
 
     /* Role card */
+    @keyframes roleIn {
+      from { opacity: 0; transform: scale(.93) translateY(6px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
     .role-card {
       border-radius: 14px;
       padding: 18px 20px;
       border: 1.5px solid transparent;
       display: flex; flex-direction: column; gap: 6px;
+      animation: roleIn .28s ease both;
     }
+    .role-card.full-width { grid-column: 1 / -1; }
+
     .role-a { background: rgba(99,102,241,.12);  border-color: rgba(99,102,241,.4); }
     .role-b { background: rgba(236,72,153,.12);  border-color: rgba(236,72,153,.4); }
     .role-c { background: rgba(245,158,11,.12);  border-color: rgba(245,158,11,.4); }
     .role-d { background: rgba(6,182,212,.12);   border-color: rgba(6,182,212,.4); }
+    .role-e { background: rgba(163,230,53,.12);  border-color: rgba(163,230,53,.4); }
+    .role-f { background: rgba(217,70,239,.12);  border-color: rgba(217,70,239,.4); }
 
     .role-letter {
       font-size: .72rem; font-weight: 900; letter-spacing: 2px;
@@ -118,6 +148,8 @@
     .role-b .role-letter { color: #ec4899; }
     .role-c .role-letter { color: #f59e0b; }
     .role-d .role-letter { color: #22d3ee; }
+    .role-e .role-letter { color: #a3e635; }
+    .role-f .role-letter { color: #d946ef; }
 
     .role-name {
       font-size: clamp(1rem, 2.5vw, 1.15rem); font-weight: 700; color: #eee;
@@ -156,7 +188,19 @@
     @media (max-width: 560px) {
       .scene-card { padding: 22px 18px; }
       .roles-grid { grid-template-columns: 1fr; }
+      .role-card.full-width { grid-column: auto; }
     }
+
+    /* Soft theme ps-btn */
+    [data-theme="soft"] .ps-btn { border-color: var(--border); color: var(--text-muted); }
+    [data-theme="soft"] .ps-btn:hover  { border-color: #ec4899; color: #be185d; }
+    [data-theme="soft"] .ps-btn.active { border-color: #ec4899; color: #be185d; background: rgba(236,72,153,.08); }
+    [data-theme="soft"] .ps-label { color: var(--text-faint); }
+    [data-theme="soft"] .roles-header { color: var(--text-faint); }
+    [data-theme="sunset"] .ps-btn { border-color: var(--border); color: var(--text-muted); }
+    [data-theme="sunset"] .ps-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.13); }
+    [data-theme="forest"] .ps-btn { border-color: var(--border); color: var(--text-muted); }
+    [data-theme="forest"] .ps-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.13); }
 
     /* ── Theme overrides ── */
     [data-theme="soft"] .scene-card { background: var(--surface); border-color: var(--border); }
@@ -220,11 +264,41 @@
     let round   = 0;
     let used    = [];
     let rolling = false;
+    let currentScene = null;
+    let currentPlayers = 0;
 
-    const ROLE_COLORS = ['a','b','c','d'];
-    const ROLE_LETTERS = ['A','B','C','D'];
+    const ALL_COLORS  = ['a','b','c','d','e','f'];
+    const ALL_LETTERS = ['A','B','C','D','E','F'];
+
+    /* Roles E and F are generic extras that work with any scenario */
+    const EXTRA_ROLES = [
+      { label: 'The Unexpected Newcomer',
+        hint: "You just arrived and have no idea what's going on. But somehow you're already very involved." },
+      { label: 'The Live Narrator',
+        hint: "You describe everything happening out loud, like a nature documentary. Nobody asked. You continue." },
+    ];
+
+    function getRoleData(sc, index) {
+      const keys = ['a','b','c','d'];
+      return index < 4 ? sc[keys[index]] : EXTRA_ROLES[index - 4];
+    }
+
+    function roleCardHTML(sc, index, extraDelay) {
+      const role   = getRoleData(sc, index);
+      const letter = ALL_LETTERS[index];
+      const color  = ALL_COLORS[index];
+      const isOdd  = index % 2 !== 0;   // used to check if it's the last card and lonely
+      return `<div class="role-card role-${color}" style="animation-delay:${extraDelay}ms">
+        <div class="role-letter">${letter}</div>
+        <div class="role-name">${role.label}</div>
+        <div class="role-hint">${role.hint}</div>
+      </div>`;
+    }
 
     function renderScene(sc) {
+      currentScene  = sc;
+      currentPlayers = 0;
+
       const el = document.getElementById('sc-content');
       el.innerHTML = `
         <div class="situation-block">
@@ -233,19 +307,58 @@
           <div class="sc-situation">${sc.situation}</div>
         </div>
         <div class="sc-divider"></div>
-        <div class="roles-header">🎪 Your Roles — Pick one and play it!</div>
-        <div class="roles-grid">
-          ${ROLE_LETTERS.map((letter, i) => {
-            const role = sc[letter.toLowerCase()];
-            return `
-              <div class="role-card role-${ROLE_COLORS[i]}">
-                <div class="role-letter">${letter}</div>
-                <div class="role-name">${role.label}</div>
-                <div class="role-hint">${role.hint}</div>
-              </div>`;
-          }).join('')}
+        <div class="ps-wrap">
+          <div class="ps-label">How many players?</div>
+          <div class="ps-btns" id="ps-btns">
+            ${[2,3,4,5,6].map(n =>
+              `<button class="ps-btn" onclick="setPlayers(${n})">${n}</button>`
+            ).join('')}
+          </div>
+        </div>
+        <div class="sc-divider" id="roles-divider" style="display:none"></div>
+        <div class="roles-header" id="roles-header" style="display:none">
+          🎪 Your Roles — Pick one and play it!
+        </div>
+        <div class="roles-grid" id="roles-grid">
+          <div class="role-card role-a full-width">
+            <div class="role-letter">A</div>
+            <div class="role-name">${sc.a.label}</div>
+            <div class="role-hint">${sc.a.hint}</div>
+          </div>
         </div>`;
       el.classList.add('show');
+    }
+
+    function setPlayers(n) {
+      if (!currentScene) return;
+      currentPlayers = n;
+
+      /* Update active button */
+      document.querySelectorAll('.ps-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.textContent) === n);
+      });
+
+      /* Show roles divider + header */
+      document.getElementById('roles-divider').style.display = '';
+      document.getElementById('roles-header').style.display  = '';
+
+      /* Re-render roles grid */
+      const grid = document.getElementById('roles-grid');
+      grid.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        const isLastAndAlone = (n % 2 !== 0) && (i === n - 1);
+        const role   = getRoleData(currentScene, i);
+        const letter = ALL_LETTERS[i];
+        const color  = ALL_COLORS[i];
+        const div    = document.createElement('div');
+        div.className = `role-card role-${color}${isLastAndAlone ? ' full-width' : ''}`;
+        div.style.animationDelay = (i * 55) + 'ms';
+        div.innerHTML = `
+          <div class="role-letter">${letter}</div>
+          <div class="role-name">${role.label}</div>
+          <div class="role-hint">${role.hint}</div>`;
+        grid.appendChild(div);
+      }
     }
 
     function draw() {
@@ -286,7 +399,7 @@
           round++;
           document.getElementById('roundNum').textContent = round;
           btn.textContent = '🔁 Next Scene';
-          btn.disabled = false;
+          btn.disabled    = false;
           rolling = false;
         }
       }, 85);
