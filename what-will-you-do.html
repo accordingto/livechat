@@ -24,7 +24,7 @@
 
     /* ── Card ── */
     .sc-card {
-      width: 100%; max-width: 740px;
+      width: 100%; max-width: 1100px;
       background: #13132b;
       border: 2px solid #1e1e42;
       border-radius: 22px;
@@ -73,8 +73,13 @@
     .sc-divider { height: 1px; background: #1e1e42; }
 
     /* Options section */
-    .options-section { display: flex; flex-direction: column; gap: 10px; }
+    .options-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .options-section.pop { animation: slideDown .35s ease both; }
+    .opt-c { grid-column: 1 / -1; }
+    @media (max-width: 640px) {
+      .options-section { grid-template-columns: 1fr; }
+      .opt-c { grid-column: auto; }
+    }
 
     .opt {
       display: flex; align-items: flex-start; gap: 14px;
@@ -97,7 +102,7 @@
 
     /* ── Draw button ── */
     .btn-draw {
-      width: 100%; max-width: 740px;
+      width: 100%; max-width: 1100px;
       background: #13132b; color: #f59e0b; border: 2px solid #f59e0b;
       border-radius: 14px; padding: 16px;
       font-size: 1.05rem; font-weight: 700;

@@ -19,7 +19,7 @@
 
     /* ── Scene card ── */
     .scene-card {
-      width: 100%; max-width: 740px;
+      width: 100%; max-width: 1100px;
       background: #13132b;
       border: 2px solid #1e1e42;
       border-radius: 22px;
@@ -170,7 +170,7 @@
 
     /* Draw button */
     .btn-draw {
-      width: 100%; max-width: 740px;
+      width: 100%; max-width: 1100px;
       background: #13132b; color: #ec4899; border: 2px solid #ec4899;
       border-radius: 14px; padding: 16px;
       font-size: 1.05rem; font-weight: 700;
@@ -336,6 +336,7 @@
 
       /* Re-render roles grid */
       const grid = document.getElementById('roles-grid');
+      grid.style.gridTemplateColumns = (n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
       grid.innerHTML = '';
       for (let i = 0; i < n; i++) {
         const role   = getRoleData(currentScene, i);

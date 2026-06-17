@@ -68,7 +68,7 @@ body {
 }
 
 .topbar {
-  width: 100%; max-width: 700px;
+  width: 100%; max-width: 1100px;
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 36px;
   animation: fadeUp .45s ease both;
