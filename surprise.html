@@ -374,6 +374,7 @@
       card.style.minHeight   = '200px';
       card.style.gap         = '0';
       card.style.overflow    = 'hidden';
+      card.style.alignItems  = '';
       card.setAttribute('data-icon', '🎰');
 
       goBtn.disabled = true;
@@ -515,6 +516,7 @@
       } else if (gameKey === 'scene') {
         card.setAttribute('data-icon', cfg.icon);
         card.style.borderColor = cfg.color;
+        card.style.alignItems  = 'flex-start';
         card.classList.add('active');
         GAME_RENDER.scene(card, rand(GAME_DATA.scene));
       }

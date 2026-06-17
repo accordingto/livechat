@@ -103,36 +103,51 @@ const GAME_RENDER = (() => {
       .gr-role-team  .gr-role-val { color: #06b6d4; }
       .gr-role-judge .gr-role-val { color: #e879f9; }
 
-      /* ── You're In The Scene (compact, for Surprise Me) ── */
+      /* ── You're In The Scene (for Surprise Me) ── */
+      .gr-scene-title {
+        font-size: clamp(1.4rem, 3.5vw, 1.8rem); font-weight: 800; color: #fff;
+        line-height: 1.2; width: 100%; text-align: left;
+        position: relative; z-index: 1;
+      }
       .gr-scene-sit {
-        font-size: clamp(.95rem, 2.2vw, 1.1rem); color: #bbb;
-        line-height: 1.55; text-align: center;
+        font-size: clamp(1.1rem, 2.5vw, 1.35rem); color: #ccc;
+        line-height: 1.65; width: 100%; text-align: left;
+        position: relative; z-index: 1;
+      }
+      .gr-scene-roles-hdr {
+        font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+        color: #555; width: 100%; text-align: left;
         position: relative; z-index: 1;
       }
       .gr-scene-roles {
         width: 100%; display: grid;
-        grid-template-columns: 1fr 1fr; gap: 8px;
+        grid-template-columns: repeat(3, 1fr); gap: 10px;
         position: relative; z-index: 1;
       }
       .gr-scene-role {
-        border-radius: 12px; padding: 10px 14px;
-        display: flex; align-items: center; gap: 10px;
+        border-radius: 12px; padding: 14px 16px;
+        display: flex; flex-direction: column; gap: 5px;
         border: 1.5px solid transparent;
       }
-      .gr-sr-a { background: rgba(99,102,241,.1);  border-color: rgba(99,102,241,.35); }
-      .gr-sr-b { background: rgba(236,72,153,.1);  border-color: rgba(236,72,153,.35); }
-      .gr-sr-c { background: rgba(245,158,11,.1);  border-color: rgba(245,158,11,.35); }
-      .gr-sr-d { background: rgba(6,182,212,.1);   border-color: rgba(6,182,212,.35); }
+      .gr-sr-a { background: rgba(99,102,241,.12);  border-color: rgba(99,102,241,.4); }
+      .gr-sr-b { background: rgba(236,72,153,.12);  border-color: rgba(236,72,153,.4); }
+      .gr-sr-c { background: rgba(245,158,11,.12);  border-color: rgba(245,158,11,.4); }
+      .gr-sr-d { background: rgba(6,182,212,.12);   border-color: rgba(6,182,212,.4); }
+      .gr-sr-e { background: rgba(163,230,53,.12);  border-color: rgba(163,230,53,.4); }
+      .gr-sr-f { background: rgba(217,70,239,.12);  border-color: rgba(217,70,239,.4); }
       .gr-sr-key {
-        font-size: .62rem; font-weight: 900; letter-spacing: 1.5px;
-        padding: 2px 8px; border-radius: 999px; flex-shrink: 0;
-        text-transform: uppercase;
+        font-size: .65rem; font-weight: 900; letter-spacing: 2px;
+        padding: 2px 8px; border-radius: 999px; align-self: flex-start;
+        text-transform: uppercase; margin-bottom: 2px;
       }
       .gr-sr-a .gr-sr-key { background: #6366f1; color: #fff; }
       .gr-sr-b .gr-sr-key { background: #ec4899; color: #fff; }
       .gr-sr-c .gr-sr-key { background: #f59e0b; color: #0d0d1a; }
       .gr-sr-d .gr-sr-key { background: #06b6d4; color: #0d0d1a; }
-      .gr-sr-name { font-size: clamp(.88rem, 2vw, .98rem); font-weight: 600; line-height: 1.3; }
+      .gr-sr-e .gr-sr-key { background: #a3e635; color: #0d0d1a; }
+      .gr-sr-f .gr-sr-key { background: #d946ef; color: #fff; }
+      .gr-sr-name { font-size: clamp(.9rem, 2vw, 1rem); font-weight: 700; color: #eee; line-height: 1.3; }
+      .gr-sr-hint { font-size: clamp(.8rem, 1.7vw, .88rem); color: #888; line-height: 1.5; margin-top: 1px; }
     `;
     document.head.appendChild(s);
   }
@@ -209,19 +224,22 @@ const GAME_RENDER = (() => {
     }, ms);
   }
 
-  /* ── scene (compact for Surprise Me) ── */
+  /* ── scene (for Surprise Me) ── */
   function scene(el, sc) {
     el.innerHTML = `
       <span class="gr-label" style="color:#ec4899">🎭 YOU'RE IN THE SCENE</span>
-      <span class="gr-text">${sc.emoji} ${sc.title}</span>
+      <div class="gr-scene-title">${sc.emoji} ${sc.title}</div>
       <div class="gr-divider"></div>
-      <span class="gr-scene-sit">${sc.situation}</span>
+      <div class="gr-scene-sit">${sc.situation}</div>
       <div class="gr-divider"></div>
+      <div class="gr-scene-roles-hdr">🎪 Your Roles — Pick one and play it!</div>
       <div class="gr-scene-roles">
-        <div class="gr-scene-role gr-sr-a"><span class="gr-sr-key">A</span><span class="gr-sr-name">${sc.a.label}</span></div>
-        <div class="gr-scene-role gr-sr-b"><span class="gr-sr-key">B</span><span class="gr-sr-name">${sc.b.label}</span></div>
-        <div class="gr-scene-role gr-sr-c"><span class="gr-sr-key">C</span><span class="gr-sr-name">${sc.c.label}</span></div>
-        <div class="gr-scene-role gr-sr-d"><span class="gr-sr-key">D</span><span class="gr-sr-name">${sc.d.label}</span></div>
+        <div class="gr-scene-role gr-sr-a"><span class="gr-sr-key">A</span><div class="gr-sr-name">${sc.a.label}</div><div class="gr-sr-hint">${sc.a.hint}</div></div>
+        <div class="gr-scene-role gr-sr-b"><span class="gr-sr-key">B</span><div class="gr-sr-name">${sc.b.label}</div><div class="gr-sr-hint">${sc.b.hint}</div></div>
+        <div class="gr-scene-role gr-sr-c"><span class="gr-sr-key">C</span><div class="gr-sr-name">${sc.c.label}</div><div class="gr-sr-hint">${sc.c.hint}</div></div>
+        <div class="gr-scene-role gr-sr-d"><span class="gr-sr-key">D</span><div class="gr-sr-name">${sc.d.label}</div><div class="gr-sr-hint">${sc.d.hint}</div></div>
+        <div class="gr-scene-role gr-sr-e"><span class="gr-sr-key">E</span><div class="gr-sr-name">${sc.e.label}</div><div class="gr-sr-hint">${sc.e.hint}</div></div>
+        <div class="gr-scene-role gr-sr-f"><span class="gr-sr-key">F</span><div class="gr-sr-name">${sc.f.label}</div><div class="gr-sr-hint">${sc.f.hint}</div></div>
       </div>`;
   }
 
