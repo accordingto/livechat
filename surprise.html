@@ -296,10 +296,29 @@
       scene:       { name: "You're In The Scene",  icon: '🎭', color: '#ec4899' },
     };
 
-    let round = 0, rolling = false, lastGame = null, currentGame = null;
+    let round = 0, rolling = false, currentGame = null;
+    let _deck = [], _lastGame = null;
     const htVotes = { agree: 0, middle: 0, disagree: 0 };
 
     function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function nextGame() {
+      if (_deck.length === 0) {
+        _deck = [...GAMES];
+        // Fisher-Yates shuffle
+        for (let i = _deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [_deck[i], _deck[j]] = [_deck[j], _deck[i]];
+        }
+        // Avoid same game at cycle boundary (last of prev cycle = first of new)
+        if (_lastGame && _deck[_deck.length - 1] === _lastGame) {
+          const j = Math.floor(Math.random() * (_deck.length - 1));
+          [_deck[j], _deck[_deck.length - 1]] = [_deck[_deck.length - 1], _deck[j]];
+        }
+      }
+      _lastGame = _deck.pop();
+      return _lastGame;
+    }
 
     function htVote(side) {
       htVotes[side]++;
@@ -385,9 +404,7 @@
       document.getElementById('resetBtn').style.display = 'none';
       currentGame = null;
 
-      const pool    = GAMES.filter(g => g !== lastGame);
-      const gameKey = pool[Math.floor(Math.random() * pool.length)];
-      lastGame = gameKey;
+      const gameKey = nextGame();
       const cfg     = CONFIGS[gameKey];
 
       const N     = 28;
