@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
+  <script src="theme.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>You're In The Scene · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="In The Scene">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .header h1 {
+      background: linear-gradient(135deg, #fff 30%, #ec4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* ── Scene card ── */
+    .scene-card {
+      width: 100%; max-width: 740px;
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 22px;
+      padding: 32px 34px;
+      margin-bottom: 16px;
+      position: relative; overflow: hidden;
+      transition: border-color .4s;
+      animation: fadeUp .5s .2s ease both;
+    }
+    .scene-card.rolling { border-color: #ec4899; animation: flicker .14s infinite; }
+    .scene-card.landed  { border-color: #ec4899; animation: pulseGlow 2.5s ease infinite; }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(236,72,153,0); }
+      50%       { box-shadow: 0 0 52px rgba(236,72,153,.22); }
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Watermark */
+    .scene-card::before {
+      content: attr(data-emoji);
+      position: absolute; font-size: 11rem; opacity: .03;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+
+    /* Placeholder */
+    .sc-placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; text-align: center;
+      min-height: 280px;
+    }
+    .sc-placeholder .big-emoji { font-size: 3.2rem; }
+    .sc-placeholder p { color: #333; font-size: .95rem; }
+
+    /* Content */
+    .sc-content { display: none; flex-direction: column; gap: 0; }
+    .sc-content.show { display: flex; }
+
+    /* Situation block */
+    .situation-block { margin-bottom: 24px; }
+    .sc-theme-tag {
+      display: inline-block;
+      font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #ec4899;
+      margin-bottom: 10px;
+    }
+    .sc-title {
+      font-size: 1.6rem; font-weight: 800; color: #fff;
+      line-height: 1.2; margin-bottom: 12px;
+    }
+    .sc-situation {
+      font-size: 1.15rem; color: #bbb;
+      line-height: 1.6; font-weight: 500;
+    }
+
+    /* Divider */
+    .sc-divider {
+      height: 1px; background: #1e1e42;
+      margin-bottom: 20px;
+    }
+
+    /* Roles header */
+    .roles-header {
+      font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 14px;
+    }
+
+    /* Role grid */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Role card */
+    .role-card {
+      border-radius: 14px;
+      padding: 16px 18px;
+      border: 1.5px solid transparent;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .role-a { background: rgba(99,102,241,.1);  border-color: rgba(99,102,241,.35); }
+    .role-b { background: rgba(236,72,153,.1);  border-color: rgba(236,72,153,.35); }
+    .role-c { background: rgba(245,158,11,.1);  border-color: rgba(245,158,11,.35); }
+    .role-d { background: rgba(34,197,94,.1);   border-color: rgba(34,197,94,.35); }
+
+    .role-letter {
+      font-size: .65rem; font-weight: 900; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 2px;
+    }
+    .role-a .role-letter { color: #818cf8; }
+    .role-b .role-letter { color: #ec4899; }
+    .role-c .role-letter { color: #f59e0b; }
+    .role-d .role-letter { color: #22c55e; }
+
+    .role-name {
+      font-size: 1rem; font-weight: 700; color: #eee;
+      line-height: 1.3;
+    }
+    .role-hint {
+      font-size: .82rem; color: #555; line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    /* Rolling text */
+    .sc-roll-text {
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-weight: 700; color: #eee;
+      text-align: center; min-height: 280px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Draw button */
+    .btn-draw {
+      width: 100%; max-width: 740px;
+      background: #13132b; color: #ec4899; border: 2px solid #ec4899;
+      border-radius: 14px; padding: 16px;
+      font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .btn-draw:hover { background: rgba(236,72,153,.1); }
+    .btn-draw:active { transform: scale(.98); }
+    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
+
+    .round-badge span { color: #ec4899; }
+
+    /* Mobile */
+    @media (max-width: 560px) {
+      .scene-card { padding: 22px 18px; }
+      .sc-title { font-size: 1.3rem; }
+      .sc-situation { font-size: 1rem; }
+      .roles-grid { grid-template-columns: 1fr; }
+      .role-name { font-size: .95rem; }
+    }
+
+    /* ── Theme overrides ── */
+    [data-theme="soft"] .scene-card { background: var(--surface); border-color: var(--border); }
+    [data-theme="soft"] .scene-card.landed { border-color: #ec4899; }
+    [data-theme="soft"] .sc-situation { color: var(--text-dim); }
+    [data-theme="soft"] .sc-title { color: var(--text); }
+    [data-theme="soft"] .sc-divider { background: var(--divider); }
+    [data-theme="soft"] .role-name { color: var(--text); }
+    [data-theme="soft"] .roles-header { color: var(--text-faint); }
+    [data-theme="soft"] .btn-draw { background: var(--surface); }
+    [data-theme="soft"] .btn-draw:hover { background: rgba(236,72,153,.07); }
+
+    [data-theme="sunset"] .scene-card { background: var(--surface); border-color: var(--border); }
+    [data-theme="sunset"] .scene-card.landed { border-color: #ec4899; }
+    [data-theme="sunset"] .sc-situation { color: var(--text-dim); }
+    [data-theme="sunset"] .sc-title { color: var(--text); }
+    [data-theme="sunset"] .sc-divider { background: var(--divider); }
+    [data-theme="sunset"] .role-name { color: var(--text); }
+    [data-theme="sunset"] .btn-draw { background: var(--surface); }
+    [data-theme="sunset"] .btn-draw:hover { background: var(--border-dim); }
+
+    [data-theme="forest"] .scene-card { background: var(--surface); border-color: var(--border); }
+    [data-theme="forest"] .scene-card.landed { border-color: #ec4899; }
+    [data-theme="forest"] .sc-situation { color: var(--text-dim); }
+    [data-theme="forest"] .sc-title { color: var(--text); }
+    [data-theme="forest"] .sc-divider { background: var(--divider); }
+    [data-theme="forest"] .role-name { color: var(--text); }
+    [data-theme="forest"] .btn-draw { background: var(--surface); }
+    [data-theme="forest"] .btn-draw:hover { background: var(--border-dim); }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🎭 You're In The Scene</h1>
+    <p>Draw a scenario — everyone gets a role and jumps in. No script, just improv!</p>
+  </div>
+
+  <div class="scene-card" id="scene-card" data-emoji="🎭">
+
+    <div class="sc-placeholder" id="sc-placeholder">
+      <div class="big-emoji">🎭</div>
+      <p>Press <strong>Draw Scene</strong> to reveal your situation and roles</p>
+    </div>
+
+    <div class="sc-content" id="sc-content"></div>
+
+  </div>
+
+  <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw Scene</button>
+
+  <script src="game-data.js"></script>
+  <script>
+    const scenarios = GAME_DATA.scene;
+    let round   = 0;
+    let used    = [];
+    let rolling = false;
+
+    const ROLE_COLORS = ['a','b','c','d'];
+    const ROLE_LETTERS = ['A','B','C','D'];
+
+    function renderScene(sc) {
+      const el = document.getElementById('sc-content');
+      el.innerHTML = `
+        <div class="situation-block">
+          <div class="sc-theme-tag">🎭 The Scene</div>
+          <div class="sc-title">${sc.emoji} ${sc.title}</div>
+          <div class="sc-situation">${sc.situation}</div>
+        </div>
+        <div class="sc-divider"></div>
+        <div class="roles-header">🎪 Your Roles — Pick one and play it!</div>
+        <div class="roles-grid">
+          ${ROLE_LETTERS.map((letter, i) => {
+            const role = sc[letter.toLowerCase()];
+            return `
+              <div class="role-card role-${ROLE_COLORS[i]}">
+                <div class="role-letter">${letter}</div>
+                <div class="role-name">${role.label}</div>
+                <div class="role-hint">${role.hint}</div>
+              </div>`;
+          }).join('')}
+        </div>`;
+      el.classList.add('show');
+    }
+
+    function draw() {
+      if (rolling) return;
+      rolling = true;
+
+      const btn  = document.getElementById('draw-btn');
+      const card = document.getElementById('scene-card');
+      const ph   = document.getElementById('sc-placeholder');
+      const ct   = document.getElementById('sc-content');
+
+      btn.disabled = true;
+      card.classList.remove('landed');
+      card.classList.add('rolling');
+      ph.style.display = 'none';
+      ct.classList.remove('show');
+      ct.innerHTML = `<div class="sc-roll-text" id="roll-text">Drawing…</div>`;
+      ct.classList.add('show');
+
+      let avail = scenarios.map((_,i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = scenarios.map((_,i) => i); }
+      const fi = avail[Math.floor(Math.random() * avail.length)];
+      used.push(fi);
+
+      let n = 0, count = 22;
+      const iv = setInterval(() => {
+        const rnd = scenarios[Math.floor(Math.random() * scenarios.length)];
+        document.getElementById('roll-text').textContent = rnd.emoji + ' ' + rnd.title;
+        if (++n >= count) {
+          clearInterval(iv);
+          const sc = scenarios[fi];
+          card.setAttribute('data-emoji', sc.emoji);
+          ct.classList.remove('show');
+          ct.innerHTML = '';
+          renderScene(sc);
+          card.classList.remove('rolling');
+          card.classList.add('landed');
+          round++;
+          document.getElementById('roundNum').textContent = round;
+          btn.textContent = '🔁 Next Scene';
+          btn.disabled = false;
+          rolling = false;
+        }
+      }, 85);
+    }
+  </script>
+</body>
+</html>
