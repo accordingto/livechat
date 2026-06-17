@@ -102,6 +102,37 @@ const GAME_RENDER = (() => {
       }
       .gr-role-team  .gr-role-val { color: #06b6d4; }
       .gr-role-judge .gr-role-val { color: #e879f9; }
+
+      /* ── You're In The Scene (compact, for Surprise Me) ── */
+      .gr-scene-sit {
+        font-size: clamp(.95rem, 2.2vw, 1.1rem); color: #bbb;
+        line-height: 1.55; text-align: center;
+        position: relative; z-index: 1;
+      }
+      .gr-scene-roles {
+        width: 100%; display: grid;
+        grid-template-columns: 1fr 1fr; gap: 8px;
+        position: relative; z-index: 1;
+      }
+      .gr-scene-role {
+        border-radius: 12px; padding: 10px 14px;
+        display: flex; align-items: center; gap: 10px;
+        border: 1.5px solid transparent;
+      }
+      .gr-sr-a { background: rgba(99,102,241,.1);  border-color: rgba(99,102,241,.35); }
+      .gr-sr-b { background: rgba(236,72,153,.1);  border-color: rgba(236,72,153,.35); }
+      .gr-sr-c { background: rgba(245,158,11,.1);  border-color: rgba(245,158,11,.35); }
+      .gr-sr-d { background: rgba(6,182,212,.1);   border-color: rgba(6,182,212,.35); }
+      .gr-sr-key {
+        font-size: .62rem; font-weight: 900; letter-spacing: 1.5px;
+        padding: 2px 8px; border-radius: 999px; flex-shrink: 0;
+        text-transform: uppercase;
+      }
+      .gr-sr-a .gr-sr-key { background: #6366f1; color: #fff; }
+      .gr-sr-b .gr-sr-key { background: #ec4899; color: #fff; }
+      .gr-sr-c .gr-sr-key { background: #f59e0b; color: #0d0d1a; }
+      .gr-sr-d .gr-sr-key { background: #06b6d4; color: #0d0d1a; }
+      .gr-sr-name { font-size: clamp(.88rem, 2vw, .98rem); font-weight: 600; line-height: 1.3; }
     `;
     document.head.appendChild(s);
   }
@@ -178,5 +209,21 @@ const GAME_RENDER = (() => {
     }, ms);
   }
 
-  return { injectCSS, never, hottake, storyteller, sophies, persuade, drawTick };
+  /* ── scene (compact for Surprise Me) ── */
+  function scene(el, sc) {
+    el.innerHTML = `
+      <span class="gr-label" style="color:#ec4899">🎭 YOU'RE IN THE SCENE</span>
+      <span class="gr-text">${sc.emoji} ${sc.title}</span>
+      <div class="gr-divider"></div>
+      <span class="gr-scene-sit">${sc.situation}</span>
+      <div class="gr-divider"></div>
+      <div class="gr-scene-roles">
+        <div class="gr-scene-role gr-sr-a"><span class="gr-sr-key">A</span><span class="gr-sr-name">${sc.a.label}</span></div>
+        <div class="gr-scene-role gr-sr-b"><span class="gr-sr-key">B</span><span class="gr-sr-name">${sc.b.label}</span></div>
+        <div class="gr-scene-role gr-sr-c"><span class="gr-sr-key">C</span><span class="gr-sr-name">${sc.c.label}</span></div>
+        <div class="gr-scene-role gr-sr-d"><span class="gr-sr-key">D</span><span class="gr-sr-name">${sc.d.label}</span></div>
+      </div>`;
+  }
+
+  return { injectCSS, never, hottake, storyteller, sophies, persuade, scene, drawTick };
 })();

@@ -287,12 +287,13 @@
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    const GAMES = ['hottake', 'storyteller', 'sophies', 'persuade'];
+    const GAMES = ['hottake', 'storyteller', 'sophies', 'persuade', 'scene'];
     const CONFIGS = {
-      hottake:     { name: 'Hot Take Roulette',  icon: '🔥', color: '#ff7043' },
-      storyteller: { name: 'Story Teller',       icon: '📖', color: '#f59e0b' },
-      sophies:     { name: "Sophie's Choice",    icon: '🤔', color: '#a78bfa' },
-      persuade:    { name: 'Persuade Together',  icon: '🤝', color: '#06b6d4' },
+      hottake:     { name: 'Hot Take Roulette',    icon: '🔥', color: '#ff7043' },
+      storyteller: { name: 'Story Teller',         icon: '📖', color: '#f59e0b' },
+      sophies:     { name: "Sophie's Choice",      icon: '🤔', color: '#a78bfa' },
+      persuade:    { name: 'Persuade Together',    icon: '🤝', color: '#06b6d4' },
+      scene:       { name: "You're In The Scene",  icon: '🎭', color: '#ec4899' },
     };
 
     let round = 0, rolling = false, lastGame = null, currentGame = null;
@@ -510,6 +511,12 @@
         card.classList.add('active');
         GAME_RENDER.hottake(card, rand(GAME_DATA.hottake));
         htShowVote(true);
+
+      } else if (gameKey === 'scene') {
+        card.setAttribute('data-icon', cfg.icon);
+        card.style.borderColor = cfg.color;
+        card.classList.add('active');
+        GAME_RENDER.scene(card, rand(GAME_DATA.scene));
       }
 
       currentGame = gameKey;
