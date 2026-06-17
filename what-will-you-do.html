@@ -65,7 +65,7 @@
       margin-bottom: 10px;
     }
     .sc-situation {
-      font-size: 1.55rem; color: #eee;
+      font-size: clamp(1.15rem, 3vw, 1.45rem); color: #eee;
       line-height: 1.55; font-weight: 600;
     }
 
@@ -92,7 +92,7 @@
     .opt-b .opt-badge { background: #dc2626; color: #fff; }
     .opt-c .opt-badge { background: #16a34a; color: #fff; }
 
-    .opt-text { font-size: 1.08rem; color: #ccc; line-height: 1.55; padding-top: 6px; }
+    .opt-text { font-size: clamp(1rem, 2.5vw, 1.15rem); color: #ccc; line-height: 1.55; padding-top: 6px; }
     .opt-c .opt-text { color: #86efac; font-style: italic; }
 
     /* ── Draw button ── */
@@ -113,8 +113,6 @@
 
     @media (max-width: 520px) {
       .sc-card { padding: 22px 20px; }
-      .sc-situation { font-size: 1.2rem; }
-      .opt-text { font-size: .95rem; }
       .opt-badge { width: 32px; height: 32px; font-size: .9rem; }
     }
 
