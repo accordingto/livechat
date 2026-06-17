@@ -104,18 +104,26 @@ const GAME_RENDER = (() => {
       .gr-role-judge .gr-role-val { color: #e879f9; }
 
       /* ── You're In The Scene (for Surprise Me) ── */
+      .gr-scene-tag {
+        font-size: .78rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+        width: 100%; text-align: left; position: relative; z-index: 1;
+      }
       .gr-scene-title {
-        font-size: clamp(1.4rem, 3.5vw, 1.8rem); font-weight: 800; color: #fff;
+        font-size: clamp(1.5rem, 4vw, 1.9rem); font-weight: 800; color: #fff;
         line-height: 1.2; width: 100%; text-align: left;
         position: relative; z-index: 1;
       }
       .gr-scene-sit {
-        font-size: clamp(1.1rem, 2.5vw, 1.35rem); color: #ccc;
+        font-size: clamp(1.15rem, 3vw, 1.45rem); color: #ccc;
         line-height: 1.65; width: 100%; text-align: left;
         position: relative; z-index: 1;
       }
-      .gr-scene-roles-hdr {
+      .gr-scene-ps-label {
         font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+        color: #555; width: 100%; text-align: left; position: relative; z-index: 1;
+      }
+      .gr-scene-roles-hdr {
+        font-size: .78rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
         color: #555; width: 100%; text-align: left;
         position: relative; z-index: 1;
       }
@@ -136,7 +144,7 @@ const GAME_RENDER = (() => {
       .gr-sr-e { background: rgba(163,230,53,.12);  border-color: rgba(163,230,53,.4); }
       .gr-sr-f { background: rgba(217,70,239,.12);  border-color: rgba(217,70,239,.4); }
       .gr-sr-key {
-        font-size: .65rem; font-weight: 900; letter-spacing: 2px;
+        font-size: .72rem; font-weight: 900; letter-spacing: 2px;
         padding: 2px 8px; border-radius: 999px; align-self: flex-start;
         text-transform: uppercase; margin-bottom: 2px;
       }
@@ -146,8 +154,8 @@ const GAME_RENDER = (() => {
       .gr-sr-d .gr-sr-key { background: #06b6d4; color: #0d0d1a; }
       .gr-sr-e .gr-sr-key { background: #a3e635; color: #0d0d1a; }
       .gr-sr-f .gr-sr-key { background: #d946ef; color: #fff; }
-      .gr-sr-name { font-size: clamp(.9rem, 2vw, 1rem); font-weight: 700; color: #eee; line-height: 1.3; }
-      .gr-sr-hint { font-size: clamp(.8rem, 1.7vw, .88rem); color: #888; line-height: 1.5; margin-top: 1px; }
+      .gr-sr-name { font-size: clamp(1rem, 2.5vw, 1.15rem); font-weight: 700; color: #eee; line-height: 1.3; }
+      .gr-sr-hint { font-size: clamp(.88rem, 2vw, .98rem); color: #888; line-height: 1.5; margin-top: 1px; }
       /* player-count buttons inside Surprise Me scene card */
       .gr-ps-btns { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
       .gr-ps-btn {
@@ -244,12 +252,12 @@ const GAME_RENDER = (() => {
   function scene(el, sc) {
     _sceneData = sc;
     el.innerHTML = `
-      <span class="gr-label" style="color:#ec4899">🎭 YOU'RE IN THE SCENE</span>
+      <span class="gr-scene-tag" style="color:#ec4899">🎭 THE SCENE</span>
       <div class="gr-scene-title">${sc.emoji} ${sc.title}</div>
       <div class="gr-divider"></div>
       <div class="gr-scene-sit">${sc.situation}</div>
       <div class="gr-divider"></div>
-      <div class="gr-scene-roles-hdr">How many players?</div>
+      <div class="gr-scene-ps-label">How many players?</div>
       <div class="gr-ps-btns">
         ${[2,3,4,5,6].map(n => `<button class="gr-ps-btn" onclick="GAME_RENDER.setScenePlayers(${n})">${n}</button>`).join('')}
       </div>
