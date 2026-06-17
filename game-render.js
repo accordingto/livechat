@@ -148,6 +148,18 @@ const GAME_RENDER = (() => {
       .gr-sr-f .gr-sr-key { background: #d946ef; color: #fff; }
       .gr-sr-name { font-size: clamp(.9rem, 2vw, 1rem); font-weight: 700; color: #eee; line-height: 1.3; }
       .gr-sr-hint { font-size: clamp(.8rem, 1.7vw, .88rem); color: #888; line-height: 1.5; margin-top: 1px; }
+      /* player-count buttons inside Surprise Me scene card */
+      .gr-ps-btns { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+      .gr-ps-btn {
+        border: 1.5px solid #1e1e42; border-radius: 8px;
+        padding: 5px 18px; font-size: .88rem; font-weight: 700;
+        color: #555; background: transparent; cursor: pointer;
+        transition: border-color .18s, color .18s, background .18s, transform .1s;
+        font-family: inherit;
+      }
+      .gr-ps-btn:hover  { border-color: #ec4899; color: #ec4899; }
+      .gr-ps-btn:active { transform: scale(.95); }
+      .gr-ps-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.13); }
     `;
     document.head.appendChild(s);
   }
@@ -225,23 +237,53 @@ const GAME_RENDER = (() => {
   }
 
   /* ── scene (for Surprise Me) ── */
+  let _sceneData = null;
+  const SCENE_LETTERS = ['A','B','C','D','E','F'];
+  const SCENE_KEYS    = ['a','b','c','d','e','f'];
+
   function scene(el, sc) {
+    _sceneData = sc;
     el.innerHTML = `
       <span class="gr-label" style="color:#ec4899">🎭 YOU'RE IN THE SCENE</span>
       <div class="gr-scene-title">${sc.emoji} ${sc.title}</div>
       <div class="gr-divider"></div>
       <div class="gr-scene-sit">${sc.situation}</div>
       <div class="gr-divider"></div>
-      <div class="gr-scene-roles-hdr">🎪 Your Roles — Pick one and play it!</div>
-      <div class="gr-scene-roles">
-        <div class="gr-scene-role gr-sr-a"><span class="gr-sr-key">A</span><div class="gr-sr-name">${sc.a.label}</div><div class="gr-sr-hint">${sc.a.hint}</div></div>
-        <div class="gr-scene-role gr-sr-b"><span class="gr-sr-key">B</span><div class="gr-sr-name">${sc.b.label}</div><div class="gr-sr-hint">${sc.b.hint}</div></div>
-        <div class="gr-scene-role gr-sr-c"><span class="gr-sr-key">C</span><div class="gr-sr-name">${sc.c.label}</div><div class="gr-sr-hint">${sc.c.hint}</div></div>
-        <div class="gr-scene-role gr-sr-d"><span class="gr-sr-key">D</span><div class="gr-sr-name">${sc.d.label}</div><div class="gr-sr-hint">${sc.d.hint}</div></div>
-        <div class="gr-scene-role gr-sr-e"><span class="gr-sr-key">E</span><div class="gr-sr-name">${sc.e.label}</div><div class="gr-sr-hint">${sc.e.hint}</div></div>
-        <div class="gr-scene-role gr-sr-f"><span class="gr-sr-key">F</span><div class="gr-sr-name">${sc.f.label}</div><div class="gr-sr-hint">${sc.f.hint}</div></div>
-      </div>`;
+      <div class="gr-scene-roles-hdr">How many players?</div>
+      <div class="gr-ps-btns">
+        ${[2,3,4,5,6].map(n => `<button class="gr-ps-btn" onclick="GAME_RENDER.setScenePlayers(${n})">${n}</button>`).join('')}
+      </div>
+      <div class="gr-divider" id="gr-roles-sep" style="display:none"></div>
+      <div class="gr-scene-roles-hdr" id="gr-roles-lbl" style="display:none">🎪 Your Roles — Pick one and play it!</div>
+      <div class="gr-scene-roles" id="gr-roles-grid"></div>`;
   }
 
-  return { injectCSS, never, hottake, storyteller, sophies, persuade, scene, drawTick };
+  function setScenePlayers(n) {
+    if (!_sceneData) return;
+    const sc = _sceneData;
+
+    document.querySelectorAll('.gr-ps-btn').forEach(btn => {
+      btn.classList.toggle('active', +btn.textContent === n);
+    });
+
+    const sep = document.getElementById('gr-roles-sep');
+    const lbl = document.getElementById('gr-roles-lbl');
+    if (sep) sep.style.display = '';
+    if (lbl) lbl.style.display = '';
+
+    const grid = document.getElementById('gr-roles-grid');
+    if (!grid) return;
+    grid.style.gridTemplateColumns = (n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
+    grid.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const role = sc[SCENE_KEYS[i]];
+      const div  = document.createElement('div');
+      div.className = `gr-scene-role gr-sr-${SCENE_KEYS[i]}`;
+      div.style.animationDelay = (i * 50) + 'ms';
+      div.innerHTML = `<span class="gr-sr-key">${SCENE_LETTERS[i]}</span><div class="gr-sr-name">${role.label}</div><div class="gr-sr-hint">${role.hint}</div>`;
+      grid.appendChild(div);
+    }
+  }
+
+  return { injectCSS, never, hottake, storyteller, sophies, persuade, scene, setScenePlayers, drawTick };
 })();
