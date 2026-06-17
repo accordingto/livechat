@@ -947,7 +947,7 @@ const GAME_DATA = {
       a: { label: 'The Horror Fan', hint: "Every good movie is scary. If it's not scary, why are you watching it?" },
       b: { label: 'The Romance Fan', hint: "You want something happy. No blood. No monsters. Something that makes you cry in a good way." },
       c: { label: 'The Smart Movie Person', hint: "You want a documentary or a foreign film. Something with meaning." },
-      d: { label: 'The "I'm Fine With Anything" Person', hint: "You say you're okay with anything. But you say 'no' to every single suggestion." },
+      d: { label: 'The "Fine With Anything" Person', hint: "You say you're okay with anything. But you say 'no' to every single suggestion." },
     },
     {
       emoji: '🏨',
