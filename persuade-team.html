@@ -101,6 +101,44 @@
 
     .round-badge span { color: #06b6d4; }
 
+    /* ── Scenario browser ── */
+    .scenario-browser {
+      width: 100%; max-width: 1100px;
+      margin-top: 28px;
+    }
+    .scenario-browser-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 12px;
+    }
+    .scenario-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 8px;
+    }
+    .scenario-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: #13132b; border: 1.5px solid #1e1e42;
+      border-radius: 12px; padding: 12px 16px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .1s;
+      font-family: inherit; text-align: left;
+    }
+    .scenario-item:hover  { border-color: #06b6d4; background: rgba(6,182,212,.06); }
+    .scenario-item:active { transform: scale(.98); }
+    .scenario-item.active { border-color: #06b6d4; background: rgba(6,182,212,.1); }
+    .scenario-emoji { font-size: 1.3rem; flex-shrink: 0; line-height: 1; padding-top: 1px; }
+    .scenario-text  { font-size: .88rem; font-weight: 500; color: #aaa; line-height: 1.4; }
+
+    [data-theme="soft"]   .scenario-item { background: var(--surface); border-color: var(--border); }
+    [data-theme="soft"]   .scenario-item:hover  { border-color: #06b6d4; }
+    [data-theme="soft"]   .scenario-item.active { border-color: #06b6d4; background: rgba(6,182,212,.08); }
+    [data-theme="soft"]   .scenario-text { color: var(--text-muted); }
+    [data-theme="sunset"] .scenario-item { background: var(--surface); border-color: var(--border); }
+    [data-theme="sunset"] .scenario-item:hover  { border-color: #06b6d4; }
+    [data-theme="sunset"] .scenario-item.active { border-color: #06b6d4; }
+    [data-theme="forest"] .scenario-item { background: var(--surface); border-color: var(--border); }
+    [data-theme="forest"] .scenario-item:hover  { border-color: #06b6d4; }
+    [data-theme="forest"] .scenario-item.active { border-color: #06b6d4; }
+
     /* ── Soft theme ── */
     [data-theme="soft"] .scenario-card {
       background: var(--surface);
@@ -164,6 +202,11 @@
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
   <div class="sc-counter" id="sc-counter">100 scenarios</div>
 
+  <div class="scenario-browser">
+    <div class="scenario-browser-hdr">📋 All Scenarios (100) — click to load</div>
+    <div class="scenario-list" id="scenario-list"></div>
+  </div>
+
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
   <script>
@@ -178,6 +221,43 @@
       const left = scenarios.length - used.length;
       document.getElementById('sc-counter').textContent =
         left < scenarios.length ? left + ' scenarios left' : scenarios.length + ' scenarios';
+    }
+
+    /* ── Scenario browser ── */
+    (function buildList() {
+      const list = document.getElementById('scenario-list');
+      scenarios.forEach((sc, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'scenario-item';
+        btn.dataset.idx = i;
+        const preview = sc.situation.length > 80 ? sc.situation.slice(0, 78) + '…' : sc.situation;
+        btn.innerHTML = `<span class="scenario-emoji">${sc.emoji}</span><span class="scenario-text">${preview}</span>`;
+        btn.addEventListener('click', () => loadScenario(sc, i));
+        list.appendChild(btn);
+      });
+    })();
+
+    function loadScenario(sc, idx) {
+      const btn  = document.getElementById('draw-btn');
+      const card = document.getElementById('sc-card');
+      const ph   = document.getElementById('sc-placeholder');
+      const ct   = document.getElementById('sc-content');
+
+      ph.style.display = 'none';
+      card.classList.remove('rolling');
+      card.classList.add('landed');
+      GAME_RENDER.persuade(ct, sc);
+      ct.classList.add('show');
+      round++;
+      document.getElementById('roundNum').textContent = round;
+      btn.textContent = '🔁 Redraw';
+      used.push(idx);
+      updateCounter();
+
+      document.querySelectorAll('.scenario-item').forEach(el => {
+        el.classList.toggle('active', +el.dataset.idx === idx);
+      });
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function draw() {
@@ -215,6 +295,7 @@
           btn.disabled    = false;
           rolling         = false;
           updateCounter();
+          document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         },
         { count: 24, ms: 82 }
       );
