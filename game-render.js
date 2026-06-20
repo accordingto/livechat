@@ -189,19 +189,17 @@ const GAME_RENDER = (() => {
   /* ── storyteller ── */
   function storyteller(el, char, action, place) {
     el.innerHTML = `
-      <div class="gr-story-grid">
-        <div class="gr-story-card gr-sc-char gr-active">
-          <span class="gr-pill">👤 Character</span>
-          <span class="gr-story-text">${char}</span>
-        </div>
-        <div class="gr-story-card gr-sc-action gr-active">
-          <span class="gr-pill">⚡ Action</span>
-          <span class="gr-story-text">${action}</span>
-        </div>
-        <div class="gr-story-card gr-sc-place gr-active">
-          <span class="gr-pill">📍 Location</span>
-          <span class="gr-story-text">${place}</span>
-        </div>
+      <div class="gr-story-card gr-sc-char gr-active">
+        <span class="gr-pill">👤 Character</span>
+        <span class="gr-story-text">${char}</span>
+      </div>
+      <div class="gr-story-card gr-sc-action gr-active">
+        <span class="gr-pill">⚡ Action</span>
+        <span class="gr-story-text">${action}</span>
+      </div>
+      <div class="gr-story-card gr-sc-place gr-active">
+        <span class="gr-pill">📍 Location</span>
+        <span class="gr-story-text">${place}</span>
       </div>`;
   }
 
