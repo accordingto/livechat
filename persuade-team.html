@@ -133,6 +133,30 @@
       font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
       color: #555; margin-bottom: 12px;
     }
+    .filter-bar {
+      display: flex; flex-wrap: wrap; gap: 7px;
+      margin-bottom: 14px;
+    }
+    .filter-btn {
+      border: 1.5px solid #1e1e42; border-radius: 20px;
+      padding: 5px 14px; font-size: .8rem; font-weight: 700;
+      color: #555; background: transparent; cursor: pointer;
+      transition: border-color .18s, color .18s, background .18s, transform .1s;
+      font-family: inherit; white-space: nowrap;
+    }
+    .filter-btn:hover  { border-color: #06b6d4; color: #06b6d4; }
+    .filter-btn:active { transform: scale(.96); }
+    .filter-btn.active { border-color: #06b6d4; color: #06b6d4; background: rgba(6,182,212,.12); }
+
+    [data-theme="soft"]   .filter-btn { border-color: var(--border); color: var(--text-muted); }
+    [data-theme="soft"]   .filter-btn:hover  { border-color: #06b6d4; color: #0e7490; }
+    [data-theme="soft"]   .filter-btn.active { border-color: #06b6d4; color: #0e7490; background: rgba(6,182,212,.1); }
+    [data-theme="sunset"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
+    [data-theme="sunset"] .filter-btn:hover  { border-color: #06b6d4; color: #22d3ee; }
+    [data-theme="sunset"] .filter-btn.active { border-color: #06b6d4; color: #22d3ee; background: rgba(6,182,212,.12); }
+    [data-theme="forest"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
+    [data-theme="forest"] .filter-btn:hover  { border-color: #06b6d4; color: #22d3ee; }
+    [data-theme="forest"] .filter-btn.active { border-color: #06b6d4; color: #22d3ee; background: rgba(6,182,212,.12); }
     .scenario-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 8px;
@@ -210,6 +234,7 @@
 
   <div class="scenario-browser">
     <div class="scenario-browser-hdr">📋 All Scenarios (100) — click to load</div>
+    <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
 
@@ -251,12 +276,50 @@
     }
 
     /* ── Scenario browser ── */
+    let activeCat = '';
+
+    function filterBy(cat) {
+      activeCat = cat;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.cat === cat);
+      });
+      document.querySelectorAll('.scenario-item').forEach(item => {
+        item.style.display = (!cat || item.dataset.cat === cat) ? '' : 'none';
+      });
+    }
+
     (function buildList() {
+      const filterBar = document.getElementById('filter-bar');
       const list = document.getElementById('scenario-list');
+
+      /* Collect unique categories in order */
+      const cats = [];
+      scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
+
+      /* All button */
+      const allBtn = document.createElement('button');
+      allBtn.className = 'filter-btn active';
+      allBtn.textContent = 'All';
+      allBtn.dataset.cat = '';
+      allBtn.addEventListener('click', () => filterBy(''));
+      filterBar.appendChild(allBtn);
+
+      /* Category buttons */
+      cats.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.textContent = cat;
+        btn.dataset.cat = cat;
+        btn.addEventListener('click', () => filterBy(cat));
+        filterBar.appendChild(btn);
+      });
+
+      /* Scenario items */
       scenarios.forEach((sc, i) => {
         const btn = document.createElement('button');
         btn.className = 'scenario-item';
         btn.dataset.idx = i;
+        btn.dataset.cat = sc.cat || '';
         const preview = sc.situation.length > 80 ? sc.situation.slice(0, 78) + '…' : sc.situation;
         btn.innerHTML = `<span class="scenario-emoji">${sc.emoji}</span><span class="scenario-text">${preview}</span>`;
         btn.addEventListener('click', () => loadScenario(sc, i));
