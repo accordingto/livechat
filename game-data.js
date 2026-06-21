@@ -292,252 +292,252 @@ const GAME_DATA = {
 
   // ── Sophie's Choice ────────────────────────────────────────────────────────
   sophies: [
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your best friend has been cheating on their partner for six months. Their partner — who is also your friend — just told you they are planning to propose next week.',
       a: 'Stay silent. Your loyalty belongs to your best friend, and it is not your relationship.',
       b: 'Tell the partner the truth before the proposal happens. They deserve to know.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your father has just been diagnosed with a serious illness and needs daily care. The promotion you have worked eight years for was just announced — and it requires you to move abroad immediately.',
       a: 'Accept the promotion. Your father has other family who can help.',
       b: 'Turn it down and go home to care for your father. The career can wait.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'You discover your company has been knowingly selling a product that is dangerous to children. Your boss tells you that if you speak to anyone about it, you will be fired and blacklisted from the industry.',
       a: 'Stay quiet. You have a family to support and no other job lined up.',
       b: 'Report it to the authorities, even if it means losing everything you have built.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'You have been with your partner for five years and love them deeply. You just found a message on their phone showing they kissed someone else at a work event last month. They have been acting completely normal ever since.',
       a: 'Confront them directly. You need the truth, even if it destroys the relationship.',
       b: 'Say nothing. One mistake should not erase five years of love.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your younger sibling confesses that they caused a hit-and-run accident years ago that seriously injured someone. The victim spent a year in hospital and still walks with a limp. Your sibling has completely changed their life since then.',
       a: 'Encourage them to go to the police and confess. The victim deserves justice.',
       b: 'Keep their secret. What good does it do now to destroy your sibling\'s life?',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your closest friend has been in a relationship that has slowly become controlling and isolating. They refuse to see it as a problem. Their partner has never been violent — yet — but you are genuinely afraid of what may come.',
       a: 'Contact their family and explain your fears, even if it costs you the friendship.',
       b: 'Respect their wishes and stay available without pushing. It is their life.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'You are the best man at a wedding. The night before the ceremony, the groom privately tells you he is not sure he still loves the bride — but everything is paid for, and both families have flown in from across the world.',
       a: 'Tell him to call it off. A marriage built on doubt will only cause more pain.',
       b: 'Tell him cold feet are normal and push him to go through with it.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your elderly parent has just been diagnosed with terminal cancer and has about six months to live. They have no idea and are happily making plans for the future. The doctor asks you to decide whether they should be told.',
       a: 'Tell them the truth. They deserve to know and to say their goodbyes properly.',
       b: 'Let them stay happy and unaware for whatever time they have left.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'Your closest colleague confides that they have been secretly using drugs and it is affecting their work. They operate heavy machinery. Last week there was a near-accident that nobody else noticed. They beg you not to tell anyone.',
       a: 'Keep their secret and try to support them privately. Reporting will destroy their life.',
       b: 'Report it to management. Everyone\'s safety matters more than one person\'s secret.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'Your partner of three years says they will end the relationship if you take a once-in-a-lifetime opportunity — a year abroad that you have been dreaming about since childhood.',
       a: 'Give up the trip. This relationship is more important than any dream.',
       b: 'Go anyway. If the relationship cannot survive one year apart, it was never strong enough.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You are on a jury. The evidence clearly proves the defendant is guilty. But you learn they committed the crime to feed their starving children after every other option had failed. A guilty verdict means a long prison sentence.',
       a: 'Vote guilty. The law must be applied equally to everyone, no matter the circumstances.',
       b: 'Vote not guilty. No law should imprison a parent for feeding their children.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'A colleague you barely know has been falsely accused of something serious at work. You know the truth — but speaking up means admitting you were somewhere you were not supposed to be that day.',
       a: 'Come forward with the truth, even if it exposes where you really were.',
       b: 'Stay silent. You do not know this person well enough to risk your own reputation.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'You find your teenager\'s private diary left open on the table. You have been deeply worried about them for weeks — they have been withdrawn, sad, and distant.',
       a: 'Read it. You are their parent and their safety is more important than their privacy.',
       b: 'Put it back unopened. Trust is the foundation of your relationship with your child.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your best friend has spent three years writing a novel and asks for your honest opinion before sending it to publishers. In your view, the book is genuinely terrible and will certainly be rejected everywhere. They are clearly very proud of it.',
       a: 'Tell them the full truth now. Rejection letters from strangers will be far more painful.',
       b: 'Tell them it is wonderful and encourage them to try. Dreams are worth protecting.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You are walking alone late at night and see a man aggressively threatening a woman on an empty street. You have no phone signal and no weapon.',
       a: 'Step in immediately. You cannot walk past and do nothing.',
       b: 'Keep moving as fast as you can to find help. Getting yourself hurt helps nobody.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your parent asks directly whether you like their new partner. You believe the new partner is manipulative and possibly dangerous. Your parent seems genuinely happy for the first time in years.',
       a: 'Tell them the full truth, even if it creates distance between you.',
       b: 'Say you are happy for them. You might be wrong, and they deserve to feel joy.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'You discover on the morning of your wedding that your future spouse once committed a serious crime for which they were never caught. They were very young. They deeply regret it. The victim is someone you know.',
       a: 'Go ahead with the wedding. People can change, and you love who they are today.',
       b: 'Call it off. You cannot build a marriage on a secret of this size.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your brother calls from abroad in tears. He has done something illegal — nothing violent, but serious — and asks you to lie to the police if they contact you. He says the truth will send him to prison.',
       a: 'Lie for him. He is your brother and you will not be the one who sends him to prison.',
       b: 'Tell the truth. You will not commit a crime for anyone, even family.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your friend has been trying to have a baby through IVF for three years, with no success. They are about to spend their entire life savings on one final attempt. You genuinely believe it will not work.',
       a: 'Tell them exactly what you think, even if it destroys their last hope.',
       b: 'Say nothing. This is their decision and their hope to hold onto.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your ageing parent has started showing signs of memory loss and got lost on a familiar road last week. They become furious whenever driving is mentioned. Nothing has been officially diagnosed and their licence is still valid.',
       a: 'Report your concerns to their doctor and ask that the licence be reviewed.',
       b: 'Say nothing. Taking away their independence will break them. They deserve dignity.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'You are a journalist and have just found proof of a story that will make your career — but publishing it will destroy the reputation of an innocent person who happens to be connected to the real story.',
       a: 'Publish it. The public has a right to know and this is your job.',
       b: 'Bury the story. Some careers are not worth what they cost other people.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'You and your partner have been trying to have a child for years. You discover that the reason you cannot conceive is your partner\'s health. They do not know yet. Telling them will change everything.',
       a: 'Tell them immediately. They have an absolute right to know the truth about their own body.',
       b: 'Keep the information to yourself for now. You need time to figure out how to handle it.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'The mentor who gave you your first job — and changed your life — asks you to be a reference for a senior role. You have heard from a reliable source that they behaved very badly toward a former colleague. You were not there and cannot be certain.',
       a: 'Refuse to be a reference and explain your reason honestly.',
       b: 'Give the glowing reference. You owe this person everything, and you are not certain of the story.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your closest friend is going for the same promotion as you. You discover by accident that they lied on their application in a way that will almost certainly get them the position over you. Only you know.',
       a: 'Report the lie to HR. The position should go to whoever truly deserves it.',
       b: 'Stay silent. You will not betray a close friendship for your own career gain.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'You are in a job interview your family desperately needs you to get. The interviewer makes a discriminatory comment about a group you belong to — but cannot tell by looking at you. Speaking up will almost certainly end the interview.',
       a: 'Speak up immediately. You will not sit through discrimination for any salary.',
       b: 'Stay silent, get the job, and fight bigger battles from a position of strength.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your teenage child comes home shaken and admits they watched a classmate get seriously bullied and did nothing. The victim was badly hurt. The school is now investigating and asking all students what they saw.',
       a: 'Tell your child to go to the school and tell the full truth immediately.',
       b: 'Tell your child to say nothing. Protecting your own child comes before everything else.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You are deeply in debt and about to lose your home. A stranger drops a bag and disappears into a crowd. Inside you find $20,000 in cash — clearly not legally obtained — with no way to identify the owner.',
       a: 'Keep it. You need it more than whoever lost it, and they were clearly no saint.',
       b: 'Hand it in to the police. Money like this never comes without consequences.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You have lived in your adopted country for twenty years and built your entire life here. You discover that due to an old paperwork error, your citizenship is technically not valid. Nobody is looking for you.',
       a: 'Come forward immediately and try to correct it legally, whatever the cost.',
       b: 'Stay silent. You have earned your place here and nobody is coming for you.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your best friend is about to make a business investment that you are almost certain will fail and leave them bankrupt. They have not asked for your opinion and seem completely committed to the plan.',
       a: 'Tell them exactly what you think, even if they resent you for it.',
       b: 'Say nothing. They are an adult and it is not your place to interfere.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'You find proof that a very close family member has been lying to the entire family for years about something significant — money, identity, or the past. Revealing it will shatter everything. Staying silent means living with the lie.',
       a: 'Bring it into the open. The family deserves to know the truth, however painful.',
       b: 'Keep it to yourself. Some truths do more damage than the lies they replace.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your sibling has been in a serious accident and is brain-dead. The doctors say there is no chance of recovery. They could save five other lives if you agree to organ donation. Your parents are unreachable abroad and the doctors need an answer within the hour.',
       a: 'Give consent for the donation. Five lives matter more than keeping your sibling on a machine.',
       b: 'Wait for your parents, however long it takes. This decision is not yours alone to make.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'You work for a pharmaceutical company and discover that data in a major drug trial has been secretly altered to hide serious side effects. The drug is about to be approved and millions of people will use it. Speaking out will likely end your career and expose you to legal action.',
       a: 'Go public with the evidence. Millions of patients matter more than your career.',
       b: 'Resign quietly and say nothing. You cannot fight this system alone and you will lose.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'Your partner has been in a coma for nine months with no brain activity. The doctors say recovery is impossible. They are kept alive by machines. Your partner left no living will. Their parents want to keep the machines on indefinitely. You must make a final decision.',
       a: 'Make the decision to switch off the machines and let them go in peace.',
       b: 'Respect the parents\' wishes. You will not be the one who ends their child\'s life.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You are on an overloaded lifeboat after a disaster. There is room for exactly one more person. In the water you can see two people — a young mother holding a baby, and your own elderly parent. The boat cannot hold both.',
       a: 'Pull in the young mother and her baby. There is no other choice you can live with.',
       b: 'Pull in your parent. You cannot abandon the person who raised you.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your best friend confides that they have been having thoughts of harming themselves. They are not in immediate danger but the situation is serious. They beg you not to tell anyone — and say that if you break their trust they will never speak to you again.',
       a: 'Break their trust and contact their family or a professional immediately. Their life matters more.',
       b: 'Respect their wishes, stay as close as possible, and support them yourself.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You discover that the factory your entire town depends on for employment is secretly dumping toxic waste into the local river. Children downstream are getting sick. Reporting it will almost certainly shut the factory down and end the livelihoods of nearly everyone you know.',
       a: 'Report it to the authorities. The health of children comes before anyone\'s job.',
       b: 'Go to the factory owner privately first and demand they stop before you take any further action.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your parent has just died and you discover they secretly had a second family in another city for over twenty years. The other family does not know your parent has passed away. Their children are your half-siblings. They have a right to grieve — but the truth will shatter everything.',
       a: 'Contact the other family. They deserve to know the truth and to say goodbye.',
       b: 'Let them live without ever knowing. What they do not know cannot hurt them now.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You are reviewing applications for a life-changing scholarship. The top application is clearly the best — but several paragraphs are copied from an obscure old source that the rest of the committee would never find. The second-place applicant is also talented and genuinely deserving.',
       a: 'Disqualify the top application. Plagiarism is plagiarism, regardless of the circumstances.',
       b: 'Award it anyway. The copied lines were minor and the application is still far and away the best.',
     },
-    {
+    { cat: '💔 Relationships',
       situation: 'You find out you carry a genetic condition that your future children have a 50% chance of inheriting. It is serious but manageable. Your partner desperately wants children and has never asked about your family medical history. You have not told them.',
       a: 'Tell them immediately, even if it changes your entire future together.',
       b: 'Say nothing for now. Many people live full lives with this condition and it is your private health information.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your teenage child has been accepted into a prestigious sports academy that could lead to a professional career. But the training means leaving school, losing normal friendships, and enormous pressure from age 14. Your child is certain they want to go. You are not.',
       a: 'Support their dream fully. It is their life and you will back them completely.',
       b: 'Make them wait until 18 to choose. They are too young to give up a normal childhood.',
     },
-    {
+    { cat: '💼 Work & Ethics',
       situation: 'During a private conversation, your phone accidentally recorded your manager making comments that prove years of discrimination against a colleague who is about to be unfairly dismissed. You had no right to record the conversation. Using the recording could save your colleague\'s career.',
       a: 'Share the recording with HR. How you obtained it does not change what it proves.',
       b: 'Delete it. You had no right to that recording and using it will only turn everything against you.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'A stranger sits next to you on a long flight and, believing they will never see you again, confesses to something terrible they did years ago — something that caused great harm to a person you happen to know personally. The stranger does not know this connection.',
       a: 'Tell them exactly who you are and what their actions did to someone you love.',
       b: 'Say nothing. They will carry the weight of their own conscience without your help.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'Your child has been accepted into their dream university on a financial-need scholarship. You have just received an inheritance that technically disqualifies them — but nobody asked and you did not volunteer the information. The scholarship covers everything.',
       a: 'Contact the university and declare the inheritance. Your child must earn their place honestly.',
       b: 'Say nothing. The scholarship system is deeply imperfect and your child genuinely deserves this.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'A close friend who is a teacher has been having an inappropriate relationship with a 17-year-old student. The student appears willing. Your friend is about to get married and their partner is pregnant. You are the only one who knows.',
       a: 'Report it to the school and authorities without delay.',
       b: 'Confront your friend directly and give them the chance to end it before you act.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'You discover your 16-year-old child has been secretly sending money every month to a person they met online — someone you have never heard of, in another country. Your child refuses to discuss it and says you would not understand.',
       a: 'Cut off their access to money and report it to the police as a potential scam or worse.',
       b: 'Give them the chance to explain first. Cutting them off without listening will destroy their trust in you.',
     },
-    {
+    { cat: '⚖️ Justice',
       situation: 'You are a doctor in a crisis with one treatment left and two patients who critically need it tonight. One is a 78-year-old grandmother surrounded by family. The other is a 10-year-old child. Both will die without treatment. The decision falls entirely to you.',
       a: 'Give the treatment to the child. They have their whole life ahead of them.',
       b: 'Give it to the grandmother. She arrived first and every human life deserves equal value.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'You are on a hiking trip and your friend twists their ankle badly in a remote area. It will be dark in two hours. You can carry them slowly toward the road, or leave them sheltered and run for help alone — but the weather is changing fast and you are not sure which choice is safer.',
       a: 'Leave them in a safe spot and run for help. You can move faster alone and get back sooner.',
       b: 'Stay together no matter what. You will not leave your friend alone in the dark.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'Your friend has spent years convinced that their ex ended the relationship unfairly and treated them badly. You know the real story — your friend was controlling and unkind in ways they have never acknowledged. They are now in a new relationship and the same patterns are emerging.',
       a: 'Tell them the truth about why their last relationship really ended, even if it destroys your friendship.',
       b: 'Say nothing. People have to discover their own patterns in their own time.',
     },
-    {
+    { cat: '👨‍👩‍👦 Family',
       situation: 'You discover that your own parent — who you have always deeply respected — reported a neighbour to the authorities decades ago for political reasons, knowing the accusation was false. The neighbour lost everything. That neighbour\'s family still lives nearby.',
       a: 'Confront your parent and push them to make some form of amends, however late.',
       b: 'Let it stay in the past. Your parent is old. Nothing you do now will undo what happened.',
     },
-    {
+    { cat: '🤝 Friendship',
       situation: 'You find out your closest friend has been secretly in contact with your ex-partner — the one who hurt you deeply — for over a year. They say they were trying to protect you by keeping it quiet. You are not sure whether to believe them.',
       a: 'End the friendship. The secret alone is a betrayal, regardless of the reason.',
       b: 'Hear them out fully before deciding anything. People keep secrets for complicated reasons.',
@@ -851,6 +851,7 @@ const GAME_DATA = {
   // ── You're In The Scene ────────────────────────────────────────────────────
   scene: [
     {
+      cat: '🍕 Food & Dining',
       emoji: '☕',
       title: 'Coffee Shop Chaos',
       situation: "One customer can't decide what to order. The line is getting longer. Everyone has an opinion.",
@@ -862,6 +863,7 @@ const GAME_DATA = {
       f: { label: 'The Regular Customer', hint: "You come here every single day. You've never seen anything like this. You have strong opinions and you will share them." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎉',
       title: 'The Party Escape',
       situation: "One person is trying to leave the party. Their friend refuses to let them go.",
@@ -873,6 +875,7 @@ const GAME_DATA = {
       f: { label: 'The Person at the Door', hint: "You're trying to get in. A keeps bumping into you on the way out. This is very confusing for you." },
     },
     {
+      cat: '💼 Work & School',
       emoji: '💼',
       title: 'The Worst Interview',
       situation: "A job interview is happening — and things keep going wrong for everyone in the room.",
@@ -884,6 +887,7 @@ const GAME_DATA = {
       f: { label: 'The IT Person', hint: "You barge in to fix the projector right in the middle of A's most important answer. You take your time." },
     },
     {
+      cat: '✈️ Travel',
       emoji: '✈️',
       title: 'Flight Delay Madness',
       situation: "The flight is delayed. Nobody knows why. The gate keeps changing. People are getting upset.",
@@ -895,6 +899,7 @@ const GAME_DATA = {
       f: { label: 'The Child Traveling Alone', hint: "You ask A for help because A looks like they know what's going on. A does not know what's going on." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🏋️',
       title: 'Gym Day One',
       situation: "It's your first day at the gym. You have no idea what to do. Three people all want to help — sort of.",
@@ -906,6 +911,7 @@ const GAME_DATA = {
       f: { label: 'The Gym Influencer', hint: "You're filming everything for content. You just filmed A's most embarrassing moment. You haven't decided whether to post it." },
     },
     {
+      cat: '🍕 Food & Dining',
       emoji: '🍽️',
       title: 'Dinner Disaster',
       situation: "The host cooked for three hours. The food is… not great. Everyone is trying to react nicely.",
@@ -917,6 +923,7 @@ const GAME_DATA = {
       f: { label: 'The Delivery Driver', hint: "Someone secretly ordered real food as backup. It just arrived. You ring the doorbell at the worst possible moment." },
     },
     {
+      cat: '💼 Work & School',
       emoji: '📚',
       title: 'Library War',
       situation: "Someone is very noisy in a quiet library. The librarian is coming. Someone is trying to help — but making things worse.",
@@ -928,6 +935,7 @@ const GAME_DATA = {
       f: { label: 'The Library Security Guard', hint: "C called you in as backup. You arrive. You have a very long list of library rules to read out loud." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🏥',
       title: 'The Waiting Room',
       situation: "People are waiting at the doctor's office. Nobody knows how long the wait will be.",
@@ -939,6 +947,7 @@ const GAME_DATA = {
       f: { label: 'The Doctor', hint: "You poke your head out for one second, smile at everyone, then disappear back inside. No explanation at all." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🛒',
       title: 'One Item Left',
       situation: "There is ONE item left on the shelf. Two people grabbed it at the same time. Neither will let go.",
@@ -950,6 +959,7 @@ const GAME_DATA = {
       f: { label: 'The Store Manager', hint: "You announce there's one more in the back — but you'll only bring it out for the person with the best reason." },
     },
     {
+      cat: '✈️ Travel',
       emoji: '🚗',
       title: 'Lost on a Road Trip',
       situation: "You're in a car together. You're lost. The GPS is broken. Everyone has a different plan.",
@@ -961,6 +971,7 @@ const GAME_DATA = {
       f: { label: 'The Hitchhiker', hint: "A picked you up a few miles back. You claim to know the way perfectly. Your confidence is very high." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎬',
       title: 'Movie Night Fight',
       situation: "A group of friends want to watch a movie together. Nobody can agree on what to pick.",
@@ -972,6 +983,7 @@ const GAME_DATA = {
       f: { label: 'The Uninvited Guest', hint: "You just showed up. Nobody invited you. You have one specific movie recommendation and you will not leave until they agree." },
     },
     {
+      cat: '✈️ Travel',
       emoji: '🏨',
       title: 'Hotel Mix-Up',
       situation: "You arrive at the hotel. Your room isn't ready. Something went wrong with the booking.",
@@ -983,6 +995,7 @@ const GAME_DATA = {
       f: { label: 'The Hotel Manager', hint: "You have the power to fix everything. But you're on a personal call and keep waving everyone away." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🏪',
       title: 'Midnight Convenience Store',
       situation: "It's 2am. One person is buying very strange things. The cashier has a lot of questions.",
@@ -994,6 +1007,7 @@ const GAME_DATA = {
       f: { label: 'The Regular Night Customer', hint: "You come here every night at this hour. You've seen everything. You offer A very strange and specific life advice." },
     },
     {
+      cat: '💼 Work & School',
       emoji: '🎓',
       title: 'Group Project Disaster',
       situation: "One person did all the work. The presentation is in 10 minutes. The others just arrived.",
@@ -1005,6 +1019,7 @@ const GAME_DATA = {
       f: { label: 'The Other Group', hint: "You're practicing right next to them — loudly and very confidently. This makes D significantly more nervous." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎂',
       title: 'The Ruined Surprise Party',
       situation: "Someone planned a surprise party. The birthday person already knows. Nobody knows that they know.",
@@ -1016,6 +1031,7 @@ const GAME_DATA = {
       f: { label: 'The Hired Photographer', hint: "You were paid to capture A's genuine surprise reaction. You follow A everywhere with a camera. The pressure is building." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🧘',
       title: 'Wrong Yoga Class',
       situation: "Someone walked into the wrong yoga class. It's not for beginners. The class has already started.",
@@ -1027,6 +1043,7 @@ const GAME_DATA = {
       f: { label: 'The Studio Receptionist', hint: "You come in to confirm whether A is supposed to be in this class. You do this in front of everyone, very loudly." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🐶',
       title: 'Dog Park Chaos',
       situation: "One dog is causing trouble at the dog park. The owners all have very different reactions.",
@@ -1038,6 +1055,7 @@ const GAME_DATA = {
       f: { label: 'The Third Dog Owner', hint: "Your dog just joined the chaos. You pretend not to notice. You whistle casually and look at the sky." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎤',
       title: 'After the Karaoke Song',
       situation: "Someone just finished singing a very bad song. They think it was great. Everyone is trying to respond.",
@@ -1049,6 +1067,7 @@ const GAME_DATA = {
       f: { label: 'The Karaoke Bar Owner', hint: "You came over to check that the sound equipment is still in working order. Your face says a lot." },
     },
     {
+      cat: '🍕 Food & Dining',
       emoji: '🍕',
       title: 'The Pizza Order',
       situation: "The group needs to order one pizza. Nobody can agree. The delivery person is waiting on the phone.",
@@ -1060,6 +1079,7 @@ const GAME_DATA = {
       f: { label: 'The Wrong Pizza Driver', hint: "You arrive with a completely different pizza from a previous order. You suggest everyone just take it. It's here. It's hot." },
     },
     {
+      cat: '🏠 Home Life',
       emoji: '🚿',
       title: 'One Bathroom, No Time',
       situation: "Roommates share one bathroom. Everyone has to be somewhere by 8am. It's 7:45.",
@@ -1071,6 +1091,7 @@ const GAME_DATA = {
       f: { label: 'The Overnight Guest', hint: "You stayed over last night. You also quietly need to use the bathroom. You don't know how to bring this up." },
     },
     {
+      cat: '🏠 Home Life',
       emoji: '📦',
       title: 'Moving Day',
       situation: "Moving into a new place. The big sofa does not fit through the door. Everyone has a plan.",
@@ -1082,6 +1103,7 @@ const GAME_DATA = {
       f: { label: 'The Previous Tenant', hint: "You come back for something you left behind. You squeeze past the sofa situation. You make everything more complicated." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎮',
       title: 'Game Night Disaster',
       situation: "Board game night. One person is winning by a lot. One person has no idea what they're doing.",
@@ -1093,6 +1115,7 @@ const GAME_DATA = {
       f: { label: 'The Partner Who Wants to Leave', hint: "You came with one of the players. You're completely done. You keep tapping their shoulder every few minutes." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🚌',
       title: 'The Last Seat on the Bus',
       situation: "One seat left on a very crowded bus. Several people want it. The bus driver is watching.",
@@ -1104,6 +1127,7 @@ const GAME_DATA = {
       f: { label: 'The Elderly Person Who Just Boarded', hint: "You just got on the bus. Everyone is now looking at the seat, then at you, then back at the seat." },
     },
     {
+      cat: '🏠 Home Life',
       emoji: '🤒',
       title: 'The Sick Roommate',
       situation: "One roommate is sick at home. The others all react in very different ways.",
@@ -1115,6 +1139,7 @@ const GAME_DATA = {
       f: { label: 'The Doctor on Video Call', hint: "B made a video appointment without telling A. The doctor joins the call. They have a lot of questions and some concerning follow-ups." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎠',
       title: 'Theme Park Queue',
       situation: "A 2-hour line for a ride. People are bored. Someone just jumped the queue near the front.",
@@ -1126,6 +1151,7 @@ const GAME_DATA = {
       f: { label: 'The Accidental Bumper', hint: "You keep accidentally bumping into D while shuffling forward. Everyone thinks you're also jumping the queue. You're not." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🏠',
       title: 'Escape Room: 5 Minutes Left',
       situation: "Your group is stuck in an escape room. 5 minutes left. You still haven't solved the last puzzle.",
@@ -1137,6 +1163,7 @@ const GAME_DATA = {
       f: { label: 'The Staff Member', hint: "You walk in to reset a prop. You accidentally make eye contact with the answer to the final puzzle. Very awkward." },
     },
     {
+      cat: '🌳 Outdoors',
       emoji: '🏖️',
       title: 'Beach Day Gone Wrong',
       situation: "A relaxing beach day. Nothing is relaxing.",
@@ -1148,6 +1175,7 @@ const GAME_DATA = {
       f: { label: 'The Lifeguard', hint: "You are watching D from your chair very carefully. You are slowly standing up. You have a whistle. You are considering using it." },
     },
     {
+      cat: '✈️ Travel',
       emoji: '🗺️',
       title: 'Lost Tourist',
       situation: "A tourist is completely lost. They need help. Several people are trying to help — in very different ways.",
@@ -1159,6 +1187,7 @@ const GAME_DATA = {
       f: { label: 'The Local Police Officer', hint: "You notice the growing confused crowd and come to investigate. You also don't speak A's language." },
     },
     {
+      cat: '🍕 Food & Dining',
       emoji: '🥗',
       title: 'The Unhealthy Order',
       situation: "At a restaurant. One person ordered something very unhealthy. The others have opinions.",
@@ -1170,6 +1199,7 @@ const GAME_DATA = {
       f: { label: 'The Restaurant Owner', hint: "You come over to personally recommend even more indulgent dishes to A. You are immediately A's new best friend." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🌧️',
       title: 'One Umbrella, No Cover',
       situation: "It's suddenly raining very hard. One person has an umbrella. The others do not.",
@@ -1181,6 +1211,7 @@ const GAME_DATA = {
       f: { label: 'The Stranger With an Umbrella', hint: "You also have an umbrella but you're not sharing — you have plans for it. You walk past. You feel everyone's eyes on you." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🛗',
       title: 'Stuck in the Elevator',
       situation: "The elevator stopped between floors. Nobody knows how long it will take. The emergency button is making a strange sound.",
@@ -1192,6 +1223,7 @@ const GAME_DATA = {
       f: { label: 'The Person Taking the Stairs', hint: "You heard them, passed the door, and kept walking. You come back five minutes later with coffee. Just for yourself." },
     },
     {
+      cat: '💼 Work & School',
       emoji: '🏢',
       title: 'First Day at the Office',
       situation: "Someone is starting their first day. Nobody told them where to sit, what to do, or where the bathroom is.",
@@ -1203,6 +1235,7 @@ const GAME_DATA = {
       f: { label: 'The CEO', hint: "You think A is the new intern. You give A a coffee order. A is not the intern. A accepts the task anyway." },
     },
     {
+      cat: '🏠 Home Life',
       emoji: '🕯️',
       title: 'Power Outage',
       situation: "The power just went out. Nobody knows why. It's dark, nobody can find the candles, and everyone has a different theory.",
@@ -1214,6 +1247,7 @@ const GAME_DATA = {
       f: { label: 'The Power Company Hotline', hint: "C has been on hold for 40 minutes. You finally answer. You put them on hold again. You apologize very warmly." },
     },
     {
+      cat: '🎉 Social',
       emoji: '💒',
       title: 'The Wedding Speech',
       situation: "It's time for the speech. The person giving it is not ready. Nobody is stopping this.",
@@ -1225,6 +1259,7 @@ const GAME_DATA = {
       f: { label: 'The Catering Staff', hint: "You need to clear the tables. You were told to start right now. Speech or no speech, you begin collecting plates." },
     },
     {
+      cat: '☕ Everyday',
       emoji: '🦷',
       title: "Dentist's Waiting Room",
       situation: "Everyone is waiting to see the dentist. The room is very quiet. It doesn't stay quiet for long.",
@@ -1236,6 +1271,7 @@ const GAME_DATA = {
       f: { label: 'The Previous Patient', hint: "You walk out holding your jaw. You make direct eye contact with A. You say nothing at all. You leave." },
     },
     {
+      cat: '✈️ Travel',
       emoji: '✈️',
       title: 'Airport Security',
       situation: "The security line is long. Something has gone wrong at the scanner. Everyone is waiting.",
@@ -1247,6 +1283,7 @@ const GAME_DATA = {
       f: { label: 'The One Pulled Aside', hint: "It's D. You're taken to a separate area. There is one very specific item in your bag. You forgot about it completely." },
     },
     {
+      cat: '🌳 Outdoors',
       emoji: '⛺',
       title: 'The Camping Trip',
       situation: "The group arrived at the campsite. The tent isn't up. It's getting dark. Everyone is hungry and someone is trying to start a fire.",
@@ -1258,6 +1295,7 @@ const GAME_DATA = {
       f: { label: 'The Wildlife', hint: "Something got into the food bag. A said to hang it from a tree. A did not hang it from a tree. The food is gone now." },
     },
     {
+      cat: '🏠 Home Life',
       emoji: '🍳',
       title: 'The Cooking Disaster',
       situation: "Someone offered to cook dinner for the whole group. An hour later, it is not going well.",
@@ -1269,6 +1307,7 @@ const GAME_DATA = {
       f: { label: 'The Neighbor', hint: "Your smoke alarm went off because of what's happening next door. You came to check. You see the pizza. You are staying for dinner." },
     },
     {
+      cat: '🎉 Social',
       emoji: '🎵',
       title: 'The Concert Queue',
       situation: "The doors open in two hours. The line is long. Someone just walked straight to the front.",
@@ -1280,6 +1319,7 @@ const GAME_DATA = {
       f: { label: 'The Ticket Scalper', hint: "You have two extra tickets. You're walking the line slowly. You mention the price. Several people have strong feelings about the price." },
     },
     {
+      cat: '✈️ Travel',
       emoji: '🚕',
       title: 'Wrong Rideshare',
       situation: "The driver picked up the wrong passenger. Both of them are fifteen minutes into the ride before anyone notices.",
