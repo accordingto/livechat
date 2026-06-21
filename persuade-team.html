@@ -51,30 +51,53 @@
     .sc-placeholder p { color: #333; font-size: .95rem; }
 
     /* Content */
-    .sc-content { display: none; flex-direction: column; gap: 18px; }
+    .sc-content { display: none; flex-direction: column; gap: 0; }
     .sc-content.show { display: flex; }
 
-    /* Category badge */
-    .sc-category-badge {
-      display: inline-flex; align-items: center; gap: 5px;
+    /* ── Redesigned card layout ── */
+    .pt-cat {
+      display: inline-flex; align-items: center; gap: 6px;
       background: rgba(6,182,212,.12);
-      border: 1px solid rgba(6,182,212,.3);
+      border: 1px solid rgba(6,182,212,.28);
       color: #06b6d4;
-      font-size: .75rem; font-weight: 700;
+      font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
       padding: 4px 12px; border-radius: 20px;
-      letter-spacing: .05em;
       align-self: flex-start;
+      margin-bottom: 22px;
     }
+    .pt-block { margin-bottom: 20px; }
+    .pt-lbl {
+      font-size: .65rem; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .pt-lbl-team  { color: #06b6d4; }
+    .pt-lbl-sit   { color: #64748b; }
+    .pt-lbl-judge { color: #c084fc; }
+    .pt-team {
+      font-size: clamp(1.3rem, 4vw, 1.75rem); font-weight: 800; color: #fff;
+      line-height: 1.3;
+    }
+    .pt-sit {
+      font-size: clamp(1.05rem, 2.8vw, 1.3rem); color: #bbb;
+      line-height: 1.7; font-weight: 500;
+    }
+    .pt-judge {
+      font-size: clamp(1.3rem, 4vw, 1.75rem); font-weight: 800; color: #e9d5ff;
+      line-height: 1.3;
+    }
+    .pt-divider { height: 1px; background: #1e1e42; margin: 4px 0 22px; }
 
-    .sc-field { display: flex; flex-direction: column; gap: 5px; }
-    .sc-label {
-      font-size: .72rem; text-transform: uppercase;
-      letter-spacing: .13em; color: #06b6d4; font-weight: 700;
-    }
-    .sc-team      { font-size: clamp(1.3rem, 4vw, 1.75rem); font-weight: 700; color: #eee; line-height: 1.3; }
-    .sc-situation { font-size: clamp(1.15rem, 3vw, 1.45rem); color: #ccc; line-height: 1.55; }
-    .sc-judge     { font-size: clamp(1.3rem, 4vw, 1.75rem); font-weight: 700; color: #eee; }
-    .sc-divider   { height: 1px; background: #1e1e42; }
+    /* theme overrides for new layout */
+    [data-theme="soft"] .pt-team  { color: var(--text); }
+    [data-theme="soft"] .pt-sit   { color: var(--text-muted); }
+    [data-theme="soft"] .pt-judge { color: #7c3aed; }
+    [data-theme="soft"] .pt-divider { background: var(--divider); }
+    [data-theme="sunset"] .pt-team  { color: var(--text); }
+    [data-theme="sunset"] .pt-sit   { color: var(--text-dim); }
+    [data-theme="sunset"] .pt-divider { background: var(--divider); }
+    [data-theme="forest"] .pt-team  { color: var(--text); }
+    [data-theme="forest"] .pt-sit   { color: var(--text-dim); }
+    [data-theme="forest"] .pt-divider { background: var(--divider); }
 
     /* ── Draw button ── */
     .btn-draw {
@@ -179,24 +202,7 @@
       <div class="big-emoji">🤝</div>
       <p>Press <strong>Draw</strong> to reveal the scene</p>
     </div>
-    <div class="sc-content" id="sc-content">
-      <div class="sc-category-badge" id="sc-category"></div>
-      <div class="sc-divider"></div>
-      <div class="sc-field">
-        <div class="sc-label">👥 Your Team Plays</div>
-        <div class="sc-team" id="sc-team"></div>
-      </div>
-      <div class="sc-divider"></div>
-      <div class="sc-field">
-        <div class="sc-label">🎯 The Situation</div>
-        <div class="sc-situation" id="sc-situation"></div>
-      </div>
-      <div class="sc-divider"></div>
-      <div class="sc-field">
-        <div class="sc-label">👨‍⚖️ The Judge</div>
-        <div class="sc-judge" id="sc-judge"></div>
-      </div>
-    </div>
+    <div class="sc-content" id="sc-content"></div>
   </div>
 
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
@@ -216,6 +222,27 @@
     let round   = 0;
     let used    = [];
     let rolling = false;
+
+    function renderCard(sc) {
+      const ct = document.getElementById('sc-content');
+      ct.innerHTML = `
+        <span class="pt-cat">${sc.emoji} ${sc.cat || 'Scenario'}</span>
+        <div class="pt-block">
+          <div class="pt-lbl pt-lbl-team">👥 Your Team Plays</div>
+          <div class="pt-team">${sc.team}</div>
+        </div>
+        <div class="pt-divider"></div>
+        <div class="pt-block">
+          <div class="pt-lbl pt-lbl-sit">🎯 The Situation</div>
+          <div class="pt-sit">${sc.situation}</div>
+        </div>
+        <div class="pt-divider"></div>
+        <div class="pt-block" style="margin-bottom:0">
+          <div class="pt-lbl pt-lbl-judge">👨‍⚖️ The Judge</div>
+          <div class="pt-judge">${sc.judge}</div>
+        </div>`;
+      ct.classList.add('show');
+    }
 
     function updateCounter() {
       const left = scenarios.length - used.length;
@@ -246,8 +273,7 @@
       ph.style.display = 'none';
       card.classList.remove('rolling');
       card.classList.add('landed');
-      GAME_RENDER.persuade(ct, sc);
-      ct.classList.add('show');
+      renderCard(sc);
       round++;
       document.getElementById('roundNum').textContent = round;
       btn.textContent = '🔁 Redraw';
@@ -286,7 +312,7 @@
         tick => { document.getElementById('sc-roll-text').textContent = tick.situation; },
         () => {
           const sc = scenarios[fi];
-          GAME_RENDER.persuade(ct, sc);
+          renderCard(sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
           round++;
