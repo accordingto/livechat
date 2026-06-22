@@ -258,10 +258,13 @@
     <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled>↺ Reset</button>
   </div>
 
+  <script src="supabase-config.js"></script>
+  <script src="rating.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
+    GAME_RATING.render('hottake');
     const takes = GAME_DATA.hottake;
 
     let rolling = false;

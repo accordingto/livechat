@@ -242,10 +242,13 @@
     <button class="btn btn-draw" id="drawBtn" onclick="draw()">🎲 Draw!</button>
   </div>
 
+  <script src="supabase-config.js"></script>
+  <script src="rating.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
+    GAME_RATING.render('storyteller');
     const characters = GAME_DATA.storyteller.characters;
     const actions    = GAME_DATA.storyteller.actions;
     const locations  = GAME_DATA.storyteller.locations;
