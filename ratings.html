@@ -141,6 +141,29 @@
       font-family: 'Courier New', monospace;
     }
 
+    .sc-del {
+      flex-shrink: 0;
+      background: none;
+      border: 1.5px solid #2a1a1a;
+      border-radius: 8px;
+      color: #3a1a1a;
+      font-size: .85rem;
+      padding: 4px 9px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+      font-family: inherit;
+      align-self: center;
+    }
+    .sc-del:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background: rgba(239,68,68,.08);
+    }
+    .sc-del.deleting {
+      opacity: .4;
+      pointer-events: none;
+    }
+
     /* ── Loading / empty ── */
     .state-msg {
       max-width: 860px;
@@ -350,14 +373,15 @@ function render() {
       const mainHTML = info?.main  ? `<div class="sc-text">${info.main}</div>` : '';
       const detHTML  = info?.detail? `<div class="sc-detail">${info.detail}</div>` : '';
       const fallback = !info ? `<div class="sc-text" style="color:#444">(scenario #${item.scenarioId})</div>` : '';
+      const rowId    = `row-${item.gameId}-${item.scenarioId}`;
       return `
-        <div class="scenario-row ${tier}">
+        <div class="scenario-row ${tier}" id="${rowId}">
           <div class="sc-stars ${tier}">${starsHTML(item.avg)}<br>${avgFixed}</div>
           <div class="sc-body">
             ${mainHTML}${detHTML}${fallback}
             <div class="sc-meta"><strong>${item.ratings.length}</strong> vote${item.ratings.length > 1 ? 's' : ''}</div>
           </div>
-          <div class="sc-id">#${item.scenarioId}</div>
+          <button class="sc-del" onclick="deleteRatings('${item.gameId}','${item.scenarioId}','${rowId}')">🗑️</button>
         </div>`;
     }).join('');
 
@@ -372,6 +396,37 @@ function render() {
   });
 
   content.innerHTML = html;
+}
+
+/* ── 刪除某情境的所有評分 ── */
+async function deleteRatings(gameId, scenarioId, rowId) {
+  if (!confirm('Delete all ratings for this scenario?')) return;
+
+  const btn = document.querySelector(`#${CSS.escape(rowId)} .sc-del`);
+  if (btn) btn.classList.add('deleting');
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/game_ratings` +
+      `?game_id=eq.${encodeURIComponent(gameId)}` +
+      `&scenario_id=eq.${encodeURIComponent(scenarioId)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'apikey':        SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        }
+      }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    /* 從本地資料移除並重新 render */
+    allData = allData.filter(r => !(r.game_id === gameId && r.scenario_id === scenarioId));
+    render();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+    if (btn) btn.classList.remove('deleting');
+  }
 }
 
 /* Filter buttons */
