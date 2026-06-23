@@ -151,6 +151,30 @@
     }
     .state-msg .big { font-size: 2.5rem; margin-bottom: 12px; }
 
+    .sc-detail {
+      font-size: .82rem;
+      color: #666;
+      line-height: 1.6;
+      margin-top: 5px;
+    }
+    .detail-opt {
+      display: inline-block;
+      font-size: .65rem; font-weight: 900; letter-spacing: 1px;
+      padding: 1px 7px; border-radius: 999px; margin-right: 3px;
+    }
+    .opt-a { background: #4f9eff; color: #0d0d1a; }
+    .opt-b { background: #ef4444; color: #fff; }
+    .detail-tag {
+      font-size: .65rem; font-weight: 900; letter-spacing: 1px;
+      padding: 1px 7px; border-radius: 999px; margin-right: 3px;
+      background: rgba(255,255,255,.1); color: #aaa;
+    }
+    .tag-team   { background: rgba(6,182,212,.2);   color: #06b6d4; }
+    .tag-judge  { background: rgba(232,121,249,.2);  color: #e879f9; }
+    .tag-char   { background: rgba(245,158,11,.2);   color: #f59e0b; }
+    .tag-action { background: rgba(129,140,248,.2);  color: #818cf8; }
+    .tag-place  { background: rgba(52,211,153,.2);   color: #34d399; }
+
     /* ── No data badge ── */
     .no-data { color: #333; font-size: .85rem; padding: 8px 0; }
   </style>
@@ -184,22 +208,38 @@ const GAME_META = {
   storyteller: { name: 'Story Teller',         emoji: '📖' },
 };
 
-function getScenarioText(gameId, scenarioId) {
+/* Returns { main, detail } or null if scenario not found */
+function getScenarioDetail(gameId, scenarioId) {
+  if (!scenarioId) return null;
   const idx = parseInt(scenarioId);
+
   if (gameId === 'hottake') {
-    return GAME_DATA.hottake[idx] ?? null;
+    const text = GAME_DATA.hottake[idx];
+    return text ? { main: text, detail: null } : null;
   }
   if (gameId === 'sophies') {
     const sc = GAME_DATA.sophies[idx];
-    return sc ? sc.situation : null;
+    if (!sc) return null;
+    return {
+      main:   sc.situation,
+      detail: `<span class="detail-opt opt-a">A</span> ${sc.a} &nbsp; <span class="detail-opt opt-b">B</span> ${sc.b}`,
+    };
   }
   if (gameId === 'persuade') {
     const sc = GAME_DATA.persuade[idx];
-    return sc ? `${sc.team} → ${sc.situation}` : null;
+    if (!sc) return null;
+    return {
+      main:   sc.situation,
+      detail: `<span class="detail-tag tag-team">👥 Team</span> ${sc.team} &nbsp;·&nbsp; <span class="detail-tag tag-judge">⚖️ Judge</span> ${sc.judge}`,
+    };
   }
   if (gameId === 'scene') {
     const sc = GAME_DATA.scene[idx];
-    return sc ? `${sc.emoji} ${sc.title} — ${sc.situation}` : null;
+    if (!sc) return null;
+    return {
+      main:   `${sc.emoji} <strong>${sc.title}</strong>`,
+      detail: sc.situation,
+    };
   }
   if (gameId === 'storyteller') {
     const parts = scenarioId.split('-');
@@ -207,7 +247,10 @@ function getScenarioText(gameId, scenarioId) {
       const char   = GAME_DATA.storyteller.characters[parseInt(parts[0])];
       const action = GAME_DATA.storyteller.actions[parseInt(parts[1])];
       const place  = GAME_DATA.storyteller.locations[parseInt(parts[2])];
-      if (char && action && place) return `${char}  ·  ${action}  ·  ${place}`;
+      if (char && action && place) return {
+        main:   null,
+        detail: `<span class="detail-tag tag-char">👤</span> ${char} &nbsp;·&nbsp; <span class="detail-tag tag-action">⚡</span> ${action} &nbsp;·&nbsp; <span class="detail-tag tag-place">📍</span> ${place}`,
+      };
     }
     return null;
   }
@@ -234,9 +277,10 @@ function render() {
   const content = document.getElementById('content');
   const summary = document.getElementById('summary');
 
-  /* group by game_id + scenario_id */
+  /* group by game_id + scenario_id, skip rows with empty scenario_id */
   const map = {};
   allData.forEach(row => {
+    if (!row.scenario_id) return;
     const key = `${row.game_id}||${row.scenario_id}`;
     if (!map[key]) map[key] = { gameId: row.game_id, scenarioId: row.scenario_id, ratings: [] };
     map[key].ratings.push(row.rating);
@@ -287,14 +331,17 @@ function render() {
     const meta = GAME_META[gameId] || { name: gameId, emoji: '🎮' };
 
     const rowsHTML = gameItems.map(item => {
-      const text = getScenarioText(item.gameId, item.scenarioId);
-      const tier = item.tier;
+      const info     = getScenarioDetail(item.gameId, item.scenarioId);
+      const tier     = item.tier;
       const avgFixed = item.avg.toFixed(1);
+      const mainHTML = info?.main  ? `<div class="sc-text">${info.main}</div>` : '';
+      const detHTML  = info?.detail? `<div class="sc-detail">${info.detail}</div>` : '';
+      const fallback = !info ? `<div class="sc-text" style="color:#444">(scenario #${item.scenarioId})</div>` : '';
       return `
         <div class="scenario-row ${tier}">
-          <div class="sc-stars ${tier}">${starsHTML(item.avg)} ${avgFixed}</div>
+          <div class="sc-stars ${tier}">${starsHTML(item.avg)}<br>${avgFixed}</div>
           <div class="sc-body">
-            <div class="sc-text">${text ?? `(scenario #${item.scenarioId})`}</div>
+            ${mainHTML}${detHTML}${fallback}
             <div class="sc-meta"><strong>${item.ratings.length}</strong> vote${item.ratings.length > 1 ? 's' : ''}</div>
           </div>
           <div class="sc-id">#${item.scenarioId}</div>
