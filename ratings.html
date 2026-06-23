@@ -200,6 +200,66 @@
 
     /* ── No data badge ── */
     .no-data { color: #333; font-size: .85rem; padding: 8px 0; }
+
+    /* ── Bulk delete bar ── */
+    .bulk-row {
+      max-width: 860px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px 18px;
+      background: rgba(239,68,68,.04);
+      border: 1px solid rgba(239,68,68,.15);
+      border-radius: 12px;
+    }
+    .bulk-stars { display: flex; gap: 1px; }
+    .bulk-star {
+      background: none;
+      border: none;
+      font-size: 1.35rem;
+      color: #2a1010;
+      cursor: pointer;
+      padding: 2px 4px;
+      transition: color .1s, transform .1s;
+      font-family: inherit;
+      line-height: 1;
+    }
+    .bulk-star.active { color: #ef4444; }
+    .bulk-star:hover  { color: #f87171; transform: scale(1.15); }
+    .bulk-star:active { transform: scale(.88); }
+    .bulk-del-btn {
+      border: 1.5px solid rgba(239,68,68,.4);
+      border-radius: 999px;
+      background: transparent;
+      color: #ef4444;
+      font-size: .82rem;
+      font-weight: 700;
+      padding: 6px 18px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, border-color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bulk-del-btn:hover:not(:disabled) { background: rgba(239,68,68,.1); border-color: #ef4444; }
+    .bulk-del-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .bulk-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: rgba(239,68,68,.2);
+      color: #ef4444;
+      font-size: .68rem;
+      font-weight: 900;
+    }
+    .bulk-count:empty { display: none; }
   </style>
 </head>
 <body>
@@ -215,6 +275,21 @@
     <button class="filter-btn" data-filter="bad">⚠️ Low (≤ 3★)</button>
     <button class="filter-btn" data-filter="ok">Mid (3–4★)</button>
     <button class="filter-btn" data-filter="good">Top (≥ 4★)</button>
+  </div>
+
+  <div class="bulk-row" id="bulk-row">
+    <span class="filter-label">Bulk delete</span>
+    <div class="bulk-stars" id="bulk-stars">
+      <button class="bulk-star" data-n="1">★</button>
+      <button class="bulk-star" data-n="2">★</button>
+      <button class="bulk-star active" data-n="3">★</button>
+      <button class="bulk-star" data-n="4">★</button>
+      <button class="bulk-star" data-n="5">★</button>
+    </div>
+    <button class="bulk-del-btn" id="bulk-del-btn" onclick="bulkDelete()">
+      🗑️ Delete all ≤ <span id="bulk-n-label">3</span>★
+      <span class="bulk-count" id="bulk-count"></span>
+    </button>
   </div>
 
   <div class="summary" id="summary"></div>
@@ -396,6 +471,7 @@ function render() {
   });
 
   content.innerHTML = html;
+  updateBulkCount();
 }
 
 /* ── 刪除某情境的所有評分 ── */
@@ -438,6 +514,85 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     render();
   });
 });
+
+/* ── Bulk delete ── */
+let bulkN = 3;
+
+function getBulkTargets() {
+  const map = {};
+  allData.forEach(row => {
+    if (!row.scenario_id) return;
+    const key = `${row.game_id}||${row.scenario_id}`;
+    if (!map[key]) map[key] = { gameId: row.game_id, scenarioId: row.scenario_id, ratings: [] };
+    map[key].ratings.push(row.rating);
+  });
+  return Object.values(map)
+    .map(g => ({ ...g, avg: g.ratings.reduce((s,r) => s+r, 0) / g.ratings.length }))
+    .filter(g => g.avg <= bulkN);
+}
+
+function updateBulkCount() {
+  const targets = getBulkTargets();
+  const badge = document.getElementById('bulk-count');
+  if (badge) badge.textContent = targets.length || '';
+  const btn = document.getElementById('bulk-del-btn');
+  if (btn) btn.disabled = targets.length === 0;
+}
+
+/* initialise star highlights */
+(function initBulkStars() {
+  document.querySelectorAll('.bulk-star').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.n, 10) <= bulkN);
+  });
+})();
+
+document.querySelectorAll('.bulk-star').forEach(btn => {
+  btn.addEventListener('click', () => {
+    bulkN = parseInt(btn.dataset.n, 10);
+    document.querySelectorAll('.bulk-star').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.n, 10) <= bulkN);
+    });
+    document.getElementById('bulk-n-label').textContent = bulkN;
+    updateBulkCount();
+  });
+});
+
+async function bulkDelete() {
+  const targets = getBulkTargets();
+  if (!targets.length) return;
+  if (!confirm(`Delete ratings for ${targets.length} scenario${targets.length > 1 ? 's' : ''} rated ≤ ${bulkN}★?\n\nThis cannot be undone.`)) return;
+
+  const btn = document.getElementById('bulk-del-btn');
+  btn.disabled = true;
+  const origHTML = btn.innerHTML;
+  btn.innerHTML = '⏳ Deleting…';
+
+  let failed = 0;
+  for (const t of targets) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/game_ratings` +
+        `?game_id=eq.${encodeURIComponent(t.gameId)}` +
+        `&scenario_id=eq.${encodeURIComponent(t.scenarioId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'apikey':        SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          }
+        }
+      );
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      allData = allData.filter(r => !(r.game_id === t.gameId && r.scenario_id === t.scenarioId));
+    } catch (e) {
+      failed++;
+    }
+  }
+
+  if (failed) alert(`${failed} deletion${failed > 1 ? 's' : ''} failed. Reload to refresh.`);
+  render();
+  btn.innerHTML = origHTML;
+}
 
 /* Fetch from Supabase */
 async function load() {
