@@ -264,7 +264,7 @@
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    GAME_RATING.render('hottake');
+    GAME_RATING.init('hottake');
     const takes = GAME_DATA.hottake;
 
     let rolling = false;
@@ -317,7 +317,9 @@
       card.classList.add('rolling');
       triggerRipple();
 
-      const chosen = takes[Math.floor(Math.random() * takes.length)];
+      GAME_RATING.hide();
+      const drawnIdx = Math.floor(Math.random() * takes.length);
+      const chosen   = takes[drawnIdx];
 
       GAME_RENDER.drawTick(takes, tick => { text.textContent = tick; }, () => {
         card.classList.remove('rolling');
@@ -330,6 +332,7 @@
         spinBtn.disabled = false;
         document.getElementById('resetBtn').disabled = false;
         rolling = false;
+        GAME_RATING.showFor(drawnIdx);
       });
     }
 

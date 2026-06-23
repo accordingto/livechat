@@ -260,7 +260,7 @@
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    GAME_RATING.render('sophies');
+    GAME_RATING.init('sophies');
     const scenarios = GAME_DATA.sophies;
 
     let round   = 0;
@@ -359,6 +359,7 @@
       const fi = avail[Math.floor(Math.random() * avail.length)];
       used.push(fi);
 
+      GAME_RATING.hide();
       GAME_RENDER.drawTick(
         scenarios,
         tick => { document.getElementById('sc-roll-text').textContent = tick.situation; },
@@ -373,6 +374,7 @@
           btn.disabled    = false;
           rolling = false;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
+          GAME_RATING.showFor(fi);
         }
       );
     }

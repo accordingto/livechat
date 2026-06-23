@@ -1,5 +1,9 @@
-/* rating.js — 遊戲評分元件（1–5 顆星，透過 Supabase 儲存）
-   使用前須在同一頁先載入 supabase-config.js */
+/* rating.js — 情境評分元件（1–5 顆星，針對每個抽到的題目）
+   使用前須在同一頁先載入 supabase-config.js
+   API:
+     GAME_RATING.init(gameId)        — 頁面載入時呼叫一次，建立隱藏的評分條
+     GAME_RATING.showFor(scenarioId) — 題目揭曉後呼叫，顯示並重置評分條
+     GAME_RATING.hide()              — 新一輪開始時呼叫，隱藏評分條        */
 
 const GAME_RATING = (() => {
 
@@ -13,7 +17,7 @@ const GAME_RATING = (() => {
         position: fixed;
         bottom: 0; left: 0; right: 0;
         z-index: 999;
-        background: rgba(10, 10, 26, 0.92);
+        background: rgba(10, 10, 26, 0.94);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-top: 1px solid rgba(255,255,255,.08);
@@ -23,14 +27,14 @@ const GAME_RATING = (() => {
         justify-content: center;
         gap: 20px;
         flex-wrap: wrap;
-        animation: ratingSlideUp .4s ease both;
+        animation: ratingSlideUp .35s ease both;
       }
       @keyframes ratingSlideUp {
         from { transform: translateY(100%); opacity: 0; }
         to   { transform: translateY(0);    opacity: 1; }
       }
       .rating-label {
-        font-size: .8rem;
+        font-size: .78rem;
         font-weight: 700;
         letter-spacing: 1.5px;
         text-transform: uppercase;
@@ -39,26 +43,28 @@ const GAME_RATING = (() => {
       }
       .rating-stars {
         display: flex;
-        gap: 6px;
+        gap: 4px;
         align-items: center;
       }
       .rating-star {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
         cursor: pointer;
         transition: transform .12s, filter .12s;
         line-height: 1;
         -webkit-text-fill-color: initial;
         background: none;
         border: none;
-        padding: 4px 2px;
+        padding: 4px 3px;
         touch-action: manipulation;
       }
       .rating-star:hover,
       .rating-star.hover {
-        transform: scale(1.25);
-        filter: drop-shadow(0 0 6px rgba(245,158,11,.7));
+        transform: scale(1.28);
+        filter: drop-shadow(0 0 7px rgba(245,158,11,.8));
       }
-      .rating-star.filled { filter: drop-shadow(0 0 4px rgba(245,158,11,.5)); }
+      .rating-star.filled {
+        filter: drop-shadow(0 0 4px rgba(245,158,11,.5));
+      }
       .rating-avg {
         font-size: .82rem;
         color: #555;
@@ -73,12 +79,11 @@ const GAME_RATING = (() => {
         animation: ratingFadeIn .3s ease;
       }
       @keyframes ratingFadeIn {
-        from { opacity: 0; transform: scale(.8); }
+        from { opacity: 0; transform: scale(.85); }
         to   { opacity: 1; transform: scale(1); }
       }
-      /* Soft theme */
       [data-theme="soft"] .rating-bar {
-        background: rgba(250,247,243,.95);
+        background: rgba(250,247,243,.96);
         border-top-color: rgba(0,0,0,.08);
       }
       [data-theme="soft"] .rating-label { color: #b09080; }
@@ -87,8 +92,8 @@ const GAME_RATING = (() => {
     document.head.appendChild(s);
   }
 
-  /* ── Supabase REST API helpers ── */
-  function headers() {
+  /* ── Supabase REST API ── */
+  function apiHeaders() {
     return {
       'apikey':        SUPABASE_ANON_KEY,
       'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
@@ -97,18 +102,21 @@ const GAME_RATING = (() => {
     };
   }
 
-  async function submitRating(gameId, rating) {
+  async function submitRating(gameId, scenarioId, rating) {
     await fetch(`${SUPABASE_URL}/rest/v1/game_ratings`, {
       method:  'POST',
-      headers: headers(),
-      body:    JSON.stringify({ game_id: gameId, rating }),
+      headers: apiHeaders(),
+      body:    JSON.stringify({ game_id: gameId, scenario_id: String(scenarioId), rating }),
     });
   }
 
-  async function fetchStats(gameId) {
+  async function fetchStats(gameId, scenarioId) {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/game_ratings?game_id=eq.${encodeURIComponent(gameId)}&select=rating`,
-      { headers: headers() }
+      `${SUPABASE_URL}/rest/v1/game_ratings` +
+      `?game_id=eq.${encodeURIComponent(gameId)}` +
+      `&scenario_id=eq.${encodeURIComponent(scenarioId)}` +
+      `&select=rating`,
+      { headers: apiHeaders() }
     );
     if (!res.ok) return null;
     const rows = await res.json();
@@ -117,110 +125,114 @@ const GAME_RATING = (() => {
     return { avg: avg.toFixed(1), count: rows.length };
   }
 
-  /* ── 渲染評分條 ── */
-  function render(gameId) {
+  /* ── 內部狀態 ── */
+  let _gameId     = null;
+  let _scenarioId = null;
+  let _submitted  = false;
+  let _bar        = null;
+  let _starsWrap  = null;
+  let _avgEl      = null;
+  let _hovered    = 0;
+  let _starEls    = [];
+
+  /* ── 星星 ── */
+  const EMPTY = '☆', FULL = '★';
+
+  function buildStars() {
+    _starsWrap.innerHTML = '';
+    _starEls = [1,2,3,4,5].map(n => {
+      const btn = document.createElement('button');
+      btn.className = 'rating-star';
+      btn.setAttribute('aria-label', `${n} star${n > 1 ? 's' : ''}`);
+      btn.textContent = EMPTY;
+      btn.addEventListener('mouseenter', () => { if (_submitted) return; _hovered = n; refreshStars(); });
+      btn.addEventListener('mouseleave', () => { if (_submitted) return; _hovered = 0; refreshStars(); });
+      btn.addEventListener('click',      () => { if (_submitted) return; handleSubmit(n); });
+      _starsWrap.appendChild(btn);
+      return btn;
+    });
+  }
+
+  function refreshStars() {
+    _starEls.forEach((btn, i) => {
+      const n = i + 1;
+      btn.textContent = n <= _hovered ? FULL : EMPTY;
+      btn.classList.toggle('filled', n <= _hovered);
+      btn.classList.toggle('hover',  _hovered > 0 && n <= _hovered);
+    });
+  }
+
+  async function handleSubmit(rating) {
+    _submitted = true;
+    _starEls.forEach((btn, i) => {
+      btn.textContent = i + 1 <= rating ? FULL : EMPTY;
+      btn.classList.toggle('filled', i + 1 <= rating);
+      btn.style.cursor = 'default';
+    });
+
+    const thanks = document.createElement('span');
+    thanks.className = 'rating-thanks';
+    thanks.textContent = '✓ Saved!';
+    if (_avgEl.parentNode) _bar.replaceChild(thanks, _avgEl);
+
+    try {
+      await submitRating(_gameId, _scenarioId, rating);
+      const stats = await fetchStats(_gameId, _scenarioId);
+      if (stats) thanks.textContent = `✓ Saved!  Avg ${stats.avg}★ (${stats.count}×)`;
+    } catch (_) {}
+  }
+
+  /* ── 公開 API ── */
+
+  function init(gameId) {
     injectCSS();
+    _gameId = gameId;
 
-    const bar = document.createElement('div');
-    bar.className = 'rating-bar';
-    bar.id = 'rating-bar';
-
-    const EMPTY = '☆';
-    const FULL  = '★';
-    let hovered = 0;
-    let submitted = false;
-
-    function buildStars(filled) {
-      return [1,2,3,4,5].map(n => {
-        const btn = document.createElement('button');
-        btn.className = 'rating-star' + (n <= filled ? ' filled' : '');
-        btn.setAttribute('aria-label', `${n} star${n > 1 ? 's' : ''}`);
-        btn.textContent = n <= filled ? FULL : EMPTY;
-
-        btn.addEventListener('mouseenter', () => {
-          if (submitted) return;
-          hovered = n;
-          refreshStars();
-        });
-        btn.addEventListener('mouseleave', () => {
-          if (submitted) return;
-          hovered = 0;
-          refreshStars();
-        });
-        btn.addEventListener('click', () => {
-          if (submitted) return;
-          handleSubmit(n);
-        });
-        return btn;
-      });
-    }
+    _bar = document.createElement('div');
+    _bar.className = 'rating-bar';
+    _bar.id = 'rating-bar';
+    _bar.style.display = 'none';
 
     const label = document.createElement('span');
     label.className = 'rating-label';
-    label.textContent = 'Rate this game';
+    label.textContent = 'Rate this situation';
 
-    const starsWrap = document.createElement('div');
-    starsWrap.className = 'rating-stars';
+    _starsWrap = document.createElement('div');
+    _starsWrap.className = 'rating-stars';
 
-    const avgEl = document.createElement('span');
-    avgEl.className = 'rating-avg';
-    avgEl.textContent = '';
+    _avgEl = document.createElement('span');
+    _avgEl.className = 'rating-avg';
 
-    bar.appendChild(label);
-    bar.appendChild(starsWrap);
-    bar.appendChild(avgEl);
-    document.body.appendChild(bar);
+    _bar.appendChild(label);
+    _bar.appendChild(_starsWrap);
+    _bar.appendChild(_avgEl);
+    document.body.appendChild(_bar);
+  }
 
-    let currentFilled = 0;
-    let starEls = [];
+  function showFor(scenarioId) {
+    _scenarioId = String(scenarioId);
+    _submitted  = false;
+    _hovered    = 0;
 
-    function refreshStars() {
-      const display = hovered || currentFilled;
-      starEls.forEach((btn, i) => {
-        const n = i + 1;
-        btn.textContent = n <= display ? FULL : EMPTY;
-        btn.classList.toggle('filled', n <= display);
-        btn.classList.toggle('hover',  hovered > 0 && n <= hovered);
-      });
-    }
+    const thanks = _bar.querySelector('.rating-thanks');
+    if (thanks) _bar.replaceChild(_avgEl, thanks);
+    _avgEl.textContent = '';
 
-    function initStars() {
-      starsWrap.innerHTML = '';
-      starEls = buildStars(currentFilled);
-      starEls.forEach(btn => starsWrap.appendChild(btn));
-    }
+    buildStars();
 
-    async function handleSubmit(rating) {
-      submitted = true;
-      currentFilled = rating;
-      refreshStars();
-      starEls.forEach(btn => { btn.style.cursor = 'default'; });
+    _bar.style.animation = 'none';
+    _bar.style.display   = '';
+    requestAnimationFrame(() => { _bar.style.animation = ''; });
 
-      /* 樂觀 UI — 先顯示感謝，再等 API */
-      const thanks = document.createElement('span');
-      thanks.className = 'rating-thanks';
-      thanks.textContent = '✓ Thanks!';
-      bar.replaceChild(thanks, avgEl);
-
-      try {
-        await submitRating(gameId, rating);
-        /* 更新平均 */
-        const stats = await fetchStats(gameId);
-        if (stats) {
-          thanks.textContent = `✓ Saved! Avg ${stats.avg}★ (${stats.count} sessions)`;
-        }
-      } catch (_) { /* 離線也沒關係，感謝訊息已顯示 */ }
-    }
-
-    initStars();
-
-    /* 非同步載入平均分 */
-    fetchStats(gameId).then(stats => {
-      if (stats && !submitted) {
-        avgEl.innerHTML = `Avg <strong>${stats.avg}★</strong> · ${stats.count} session${stats.count > 1 ? 's' : ''}`;
-      }
+    fetchStats(_gameId, _scenarioId).then(stats => {
+      if (stats && !_submitted)
+        _avgEl.innerHTML = `Avg <strong>${stats.avg}★</strong> · ${stats.count}×`;
     }).catch(() => {});
   }
 
-  return { render };
+  function hide() {
+    if (_bar) _bar.style.display = 'none';
+  }
+
+  return { init, showFor, hide };
 })();

@@ -330,7 +330,7 @@
   <script src="rating.js"></script>
   <script src="game-data.js"></script>
   <script>
-    GAME_RATING.render('scene');
+    GAME_RATING.init('scene');
     const scenarios = GAME_DATA.scene;
     let round   = 0;
     let used    = [];
@@ -517,6 +517,7 @@
       const fi = avail[Math.floor(Math.random() * avail.length)];
       used.push(fi);
 
+      GAME_RATING.hide();
       let n = 0, count = 22;
       const iv = setInterval(() => {
         const rnd = scenarios[Math.floor(Math.random() * scenarios.length)];
@@ -536,6 +537,7 @@
           btn.disabled    = false;
           rolling = false;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
+          GAME_RATING.showFor(fi);
         }
       }, 85);
     }
