@@ -336,6 +336,7 @@
         el.classList.toggle('active', +el.dataset.idx === idx);
       });
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      GAME_RATING.showFor(idx);
     }
 
     function draw() {
