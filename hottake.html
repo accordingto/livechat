@@ -332,7 +332,7 @@
         spinBtn.disabled = false;
         document.getElementById('resetBtn').disabled = false;
         rolling = false;
-        GAME_RATING.showFor(drawnIdx);
+        GAME_RATING.showFor(GAME_RATING.hash(chosen));
       });
     }
 

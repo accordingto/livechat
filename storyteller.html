@@ -316,7 +316,7 @@
           st.className = 'status ready';
           document.getElementById('drawBtn').disabled = false;
           rolling = false;
-          GAME_RATING.showFor(`${charResult.idx}-${actionResult.idx}-${placeResult.idx}`);
+          GAME_RATING.showFor(GAME_RATING.hash(finalChar) + '-' + GAME_RATING.hash(finalAction) + '-' + GAME_RATING.hash(finalPlace));
         },
         { count: 28, ms: 80 }
       );

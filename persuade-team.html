@@ -350,7 +350,7 @@
         el.classList.toggle('active', +el.dataset.idx === idx);
       });
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      GAME_RATING.showFor(idx);
+      GAME_RATING.showFor(GAME_RATING.hash(sc.situation));
     }
 
     function draw() {
@@ -390,7 +390,7 @@
           rolling         = false;
           updateCounter();
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
-          GAME_RATING.showFor(fi);
+          GAME_RATING.showFor(GAME_RATING.hash(scenarios[fi].situation));
         },
         { count: 24, ms: 82 }
       );

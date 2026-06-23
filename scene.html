@@ -493,7 +493,7 @@
       });
 
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      GAME_RATING.showFor(idx);
+      GAME_RATING.showFor(GAME_RATING.hash(sc.title));
     }
 
     function draw() {
@@ -538,7 +538,7 @@
           btn.disabled    = false;
           rolling = false;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
-          GAME_RATING.showFor(fi);
+          GAME_RATING.showFor(GAME_RATING.hash(sc.title));
         }
       }, 85);
     }
