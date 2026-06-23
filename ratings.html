@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scenario Ratings · IceBreak Hub</title>
+  <script src="supabase-config.js"></script>
+  <script src="game-data.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d1a;
+      color: #eee;
+      min-height: 100dvh;
+      padding: 32px 20px 64px;
+    }
+    .page-header {
+      max-width: 860px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-title { font-size: 1.5rem; font-weight: 800; }
+    .page-title span { color: #f59e0b; }
+    a.back { color: #555; text-decoration: none; font-size: .9rem; transition: color .2s; }
+    a.back:hover { color: #eee; }
+
+    /* ── Filter bar ── */
+    .filter-row {
+      max-width: 860px;
+      margin: 0 auto 24px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-label { font-size: .75rem; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-right: 4px; }
+    .filter-btn {
+      border: 1.5px solid #1e1e42;
+      border-radius: 999px;
+      padding: 5px 16px;
+      font-size: .8rem;
+      font-weight: 700;
+      color: #555;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .18s, color .18s, background .18s;
+    }
+    .filter-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+    .filter-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.1); }
+
+    /* ── Summary bar ── */
+    .summary {
+      max-width: 860px;
+      margin: 0 auto 28px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .summary-chip {
+      background: #13132b;
+      border: 1px solid #1e1e42;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: .85rem;
+    }
+    .summary-chip strong { color: #f59e0b; font-size: 1.15rem; }
+
+    /* ── Game section ── */
+    .game-section { max-width: 860px; margin: 0 auto 36px; }
+    .game-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1e1e42;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .game-count {
+      font-size: .75rem;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 1px;
+    }
+
+    /* ── Scenario row ── */
+    .scenario-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      margin-bottom: 6px;
+      transition: background .15s;
+    }
+    .scenario-row:hover { background: rgba(255,255,255,.03); }
+    .scenario-row.bad  { border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.05); }
+    .scenario-row.bad:hover { background: rgba(239,68,68,.08); }
+    .scenario-row.ok   { border-color: rgba(245,158,11,.2); background: rgba(245,158,11,.04); }
+    .scenario-row.good { border-color: rgba(34,197,94,.18); background: rgba(34,197,94,.04); }
+
+    .sc-stars {
+      font-size: 1rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 88px;
+      padding-top: 2px;
+    }
+    .sc-stars.bad  { color: #ef4444; }
+    .sc-stars.ok   { color: #f59e0b; }
+    .sc-stars.good { color: #4ade80; }
+
+    .sc-body { flex: 1; min-width: 0; }
+    .sc-text {
+      font-size: .93rem;
+      line-height: 1.55;
+      color: #ccc;
+      word-break: break-word;
+    }
+    .sc-row-bad .sc-text { color: #fca5a5; }
+    .sc-meta {
+      font-size: .75rem;
+      color: #444;
+      margin-top: 3px;
+    }
+    .sc-meta strong { color: #666; }
+
+    .sc-id {
+      font-size: .72rem;
+      color: #333;
+      flex-shrink: 0;
+      padding-top: 4px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Loading / empty ── */
+    .state-msg {
+      max-width: 860px;
+      margin: 60px auto;
+      text-align: center;
+      color: #444;
+      font-size: 1rem;
+    }
+    .state-msg .big { font-size: 2.5rem; margin-bottom: 12px; }
+
+    /* ── No data badge ── */
+    .no-data { color: #333; font-size: .85rem; padding: 8px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <div class="page-title">📊 Scenario <span>Ratings</span></div>
+    <a class="back" href="index.html">← Back to Hub</a>
+  </div>
+
+  <div class="filter-row" id="filter-row">
+    <span class="filter-label">Show</span>
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="bad">⚠️ Low (≤ 3★)</button>
+    <button class="filter-btn" data-filter="ok">Mid (3–4★)</button>
+    <button class="filter-btn" data-filter="good">Top (≥ 4★)</button>
+  </div>
+
+  <div class="summary" id="summary"></div>
+  <div id="content">
+    <div class="state-msg"><div class="big">⏳</div>Loading ratings…</div>
+  </div>
+
+<script>
+const GAME_META = {
+  hottake:     { name: 'Hot Take Roulette',    emoji: '🔥' },
+  sophies:     { name: "Sophie's Choice",      emoji: '🤔' },
+  persuade:    { name: 'Persuade Together!',   emoji: '🤝' },
+  scene:       { name: "You're In The Scene",  emoji: '🎭' },
+  storyteller: { name: 'Story Teller',         emoji: '📖' },
+};
+
+function getScenarioText(gameId, scenarioId) {
+  const idx = parseInt(scenarioId);
+  if (gameId === 'hottake') {
+    return GAME_DATA.hottake[idx] ?? null;
+  }
+  if (gameId === 'sophies') {
+    const sc = GAME_DATA.sophies[idx];
+    return sc ? sc.situation : null;
+  }
+  if (gameId === 'persuade') {
+    const sc = GAME_DATA.persuade[idx];
+    return sc ? `${sc.team} → ${sc.situation}` : null;
+  }
+  if (gameId === 'scene') {
+    const sc = GAME_DATA.scene[idx];
+    return sc ? `${sc.emoji} ${sc.title} — ${sc.situation}` : null;
+  }
+  if (gameId === 'storyteller') {
+    const parts = scenarioId.split('-');
+    if (parts.length === 3) {
+      const char   = GAME_DATA.storyteller.characters[parseInt(parts[0])];
+      const action = GAME_DATA.storyteller.actions[parseInt(parts[1])];
+      const place  = GAME_DATA.storyteller.locations[parseInt(parts[2])];
+      if (char && action && place) return `${char}  ·  ${action}  ·  ${place}`;
+    }
+    return null;
+  }
+  return null;
+}
+
+function starsHTML(avg) {
+  const full  = Math.round(avg);
+  let s = '';
+  for (let i = 1; i <= 5; i++) s += i <= full ? '★' : '☆';
+  return s;
+}
+
+function tierClass(avg) {
+  if (avg <= 3) return 'bad';
+  if (avg < 4)  return 'ok';
+  return 'good';
+}
+
+let allData   = [];
+let activeFilter = 'all';
+
+function render() {
+  const content = document.getElementById('content');
+  const summary = document.getElementById('summary');
+
+  /* group by game_id + scenario_id */
+  const map = {};
+  allData.forEach(row => {
+    const key = `${row.game_id}||${row.scenario_id}`;
+    if (!map[key]) map[key] = { gameId: row.game_id, scenarioId: row.scenario_id, ratings: [] };
+    map[key].ratings.push(row.rating);
+  });
+
+  const items = Object.values(map).map(g => {
+    const avg = g.ratings.reduce((s,r) => s+r, 0) / g.ratings.length;
+    return { ...g, avg, tier: tierClass(avg) };
+  });
+
+  /* summary */
+  const totalItems  = items.length;
+  const badItems    = items.filter(i => i.avg <= 3).length;
+  const totalVotes  = allData.length;
+  summary.innerHTML = `
+    <div class="summary-chip">Scenarios rated <strong>${totalItems}</strong></div>
+    <div class="summary-chip">Total votes <strong>${totalVotes}</strong></div>
+    <div class="summary-chip">Low-rated (≤3★) <strong style="color:#ef4444">${badItems}</strong></div>
+  `;
+
+  /* filter */
+  const filtered = activeFilter === 'all'  ? items
+                 : activeFilter === 'bad'  ? items.filter(i => i.avg <= 3)
+                 : activeFilter === 'ok'   ? items.filter(i => i.avg > 3 && i.avg < 4)
+                 :                           items.filter(i => i.avg >= 4);
+
+  if (!filtered.length) {
+    content.innerHTML = `<div class="state-msg"><div class="big">🎉</div>No scenarios in this category yet.</div>`;
+    return;
+  }
+
+  /* group by game */
+  const byGame = {};
+  filtered.forEach(item => {
+    if (!byGame[item.gameId]) byGame[item.gameId] = [];
+    byGame[item.gameId].push(item);
+  });
+
+  /* sort each game's items by avg asc (worst first) */
+  Object.values(byGame).forEach(arr => arr.sort((a,b) => a.avg - b.avg));
+
+  const gameOrder = ['hottake','sophies','persuade','scene','storyteller'];
+  let html = '';
+
+  gameOrder.forEach(gameId => {
+    const gameItems = byGame[gameId];
+    if (!gameItems) return;
+    const meta = GAME_META[gameId] || { name: gameId, emoji: '🎮' };
+
+    const rowsHTML = gameItems.map(item => {
+      const text = getScenarioText(item.gameId, item.scenarioId);
+      const tier = item.tier;
+      const avgFixed = item.avg.toFixed(1);
+      return `
+        <div class="scenario-row ${tier}">
+          <div class="sc-stars ${tier}">${starsHTML(item.avg)} ${avgFixed}</div>
+          <div class="sc-body">
+            <div class="sc-text">${text ?? `(scenario #${item.scenarioId})`}</div>
+            <div class="sc-meta"><strong>${item.ratings.length}</strong> vote${item.ratings.length > 1 ? 's' : ''}</div>
+          </div>
+          <div class="sc-id">#${item.scenarioId}</div>
+        </div>`;
+    }).join('');
+
+    html += `
+      <div class="game-section">
+        <div class="game-title">
+          ${meta.emoji} ${meta.name}
+          <span class="game-count">${gameItems.length} scenario${gameItems.length > 1 ? 's' : ''}</span>
+        </div>
+        ${rowsHTML}
+      </div>`;
+  });
+
+  content.innerHTML = html;
+}
+
+/* Filter buttons */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    render();
+  });
+});
+
+/* Fetch from Supabase */
+async function load() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/game_ratings?select=game_id,scenario_id,rating&order=game_id`,
+      {
+        headers: {
+          'apikey':        SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        }
+      }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    allData = await res.json();
+
+    if (!allData.length) {
+      document.getElementById('content').innerHTML =
+        `<div class="state-msg"><div class="big">⭐</div>No ratings yet — go play some games!</div>`;
+      document.getElementById('summary').innerHTML = '';
+      return;
+    }
+    render();
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      `<div class="state-msg"><div class="big">⚠️</div>Could not load ratings.<br><small style="color:#333">${e.message}</small></div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
