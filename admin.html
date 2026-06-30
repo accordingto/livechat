@@ -73,11 +73,21 @@
     .toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: #fff; }
 
     /* ── Row actions ── */
-    .row-actions { display: flex; gap: 6px; }
-    .row-btn { background: transparent; border: 1px solid #222; border-radius: 6px; padding: 4px 10px; font-size: .8rem; cursor: pointer; color: #666; transition: all .15s; }
+    .row-actions { display: flex; gap: 5px; align-items: center; flex-wrap: nowrap; }
+    .row-btn { background: transparent; border: 1px solid #222; border-radius: 6px; padding: 4px 10px; font-size: .8rem; cursor: pointer; color: #666; transition: all .15s; white-space: nowrap; }
     .row-btn:hover { border-color: #555; color: #ccc; }
+    .row-btn:disabled { opacity: .2; cursor: default; pointer-events: none; }
     .row-btn.edit:hover  { border-color: #4f9eff; color: #4f9eff; }
     .row-btn.del:hover   { border-color: #ef4444; color: #ef4444; }
+    .row-btn.sort        { padding: 4px 8px; font-size: .9rem; }
+    .row-btn.sort:hover  { border-color: #a78bfa; color: #a78bfa; }
+    .row-sep { width: 1px; height: 20px; background: #1e1e42; margin: 0 2px; flex-shrink: 0; }
+
+    /* ── Toolbar separator ── */
+    .toolbar-sep { width: 1px; height: 28px; background: #1e1e42; align-self: center; flex-shrink: 0; }
+
+    /* ── Sort-disabled hint ── */
+    .sort-hint { font-size: .76rem; color: #444; font-style: italic; align-self: center; }
 
     /* ── Loading / Empty ── */
     .state-msg { text-align: center; padding: 60px 20px; color: #444; font-size: 1rem; }
@@ -143,7 +153,10 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <button class="btn btn-primary" onclick="openAddModal()">＋ Add New</button>
-    <button class="btn btn-success" id="seedBtn" onclick="seedGame()">⬇ Seed from game-data.js</button>
+    <button class="btn btn-success" id="seedBtn" onclick="seedGame()">⬇ Seed</button>
+    <span class="toolbar-sep"></span>
+    <button class="btn btn-ghost" onclick="setAllActive(true)" title="Set all scenarios to Active">✅ All Active</button>
+    <button class="btn btn-ghost" onclick="setAllActive(false)" title="Set all scenarios to Inactive">⛔ All Inactive</button>
     <input class="search-box" id="searchBox" type="text" placeholder="Search scenarios…" oninput="onSearch()">
     <span class="count-badge" id="countBadge"></span>
   </div>
@@ -331,6 +344,7 @@ function renderTable() {
     return (p.main + p.sub).toLowerCase().includes(q);
   });
 
+  const sortEnabled = !searchQuery;
   document.getElementById('countBadge').textContent = `${filtered.length} / ${allData.length} scenarios`;
 
   if (!filtered.length) {
@@ -339,18 +353,22 @@ function renderTable() {
   }
 
   const showSub = currentGame !== 'hottake' && currentGame !== 'never';
+  const sortHint = searchQuery ? '<span class="sort-hint">Clear search to sort</span>' : '';
 
   let html = `<table><thead><tr>
     <th>#</th>
     <th>Preview</th>
     ${showSub ? '<th>Tag / Type</th>' : ''}
     <th>Active</th>
-    <th>Actions</th>
+    <th>Actions ${sortHint}</th>
   </tr></thead><tbody>`;
 
   filtered.forEach((row, i) => {
     const p = getPreview(row);
     const checked = row.active ? 'checked' : '';
+    const globalIdx = allData.findIndex(r => r.id === row.id);
+    const disableUp   = (!sortEnabled || globalIdx === 0) ? 'disabled' : '';
+    const disableDown = (!sortEnabled || globalIdx === allData.length - 1) ? 'disabled' : '';
     html += `<tr>
       <td class="td-num">${i + 1}</td>
       <td class="td-preview">
@@ -366,6 +384,9 @@ function renderTable() {
       </td>
       <td>
         <div class="row-actions">
+          <button class="row-btn sort" onclick="moveRow('${row.id}','up')"   ${disableUp}>↑</button>
+          <button class="row-btn sort" onclick="moveRow('${row.id}','down')" ${disableDown}>↓</button>
+          <span class="row-sep"></span>
           <button class="row-btn edit" onclick="openEditModal('${row.id}')">✏️ Edit</button>
           <button class="row-btn del"  onclick="openDeleteModal('${row.id}')">🗑️</button>
         </div>
@@ -378,7 +399,7 @@ function renderTable() {
 }
 
 // ─────────────────────────────────────────────
-// Active toggle
+// Active toggle (single row)
 // ─────────────────────────────────────────────
 async function toggleActive(id, active) {
   await apiFetch(`game_scenarios?id=eq.${id}`, {
@@ -388,6 +409,67 @@ async function toggleActive(id, active) {
   });
   const row = allData.find(r => r.id === id);
   if (row) row.active = active;
+}
+
+// ─────────────────────────────────────────────
+// Bulk active toggle (all rows in current game)
+// ─────────────────────────────────────────────
+async function setAllActive(active) {
+  if (!allData.length) return;
+  const label = active ? 'activate' : 'deactivate';
+  if (!confirm(`${active ? 'Activate' : 'Deactivate'} all ${allData.length} scenarios for this game?`)) return;
+
+  const res = await apiFetch(
+    `game_scenarios?game_id=eq.${encodeURIComponent(currentGame)}`,
+    {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ active, updated_at: new Date().toISOString() })
+    }
+  );
+
+  if (res.ok) {
+    allData.forEach(r => r.active = active);
+    renderTable();
+  } else {
+    alert('Bulk update failed: HTTP ' + res.status);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Sort: move row up or down
+// ─────────────────────────────────────────────
+async function moveRow(id, direction) {
+  const idx = allData.findIndex(r => r.id === id);
+  const otherIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (otherIdx < 0 || otherIdx >= allData.length) return;
+
+  const rowA = allData[idx];       // row being moved
+  const rowB = allData[otherIdx];  // row it swaps with
+
+  // Swap in local array
+  allData[idx]      = rowB;
+  allData[otherIdx] = rowA;
+
+  // Assign sort_order based on new positions
+  rowA.sort_order = otherIdx;
+  rowB.sort_order = idx;
+
+  // Persist both updates in parallel
+  await Promise.all([
+    apiFetch(`game_scenarios?id=eq.${rowA.id}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ sort_order: otherIdx })
+    }),
+    apiFetch(`game_scenarios?id=eq.${rowB.id}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ sort_order: idx })
+    })
+  ]);
+
+  renderTable();
 }
 
 // ─────────────────────────────────────────────
