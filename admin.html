@@ -19,14 +19,6 @@
     .adm-header .back { font-size: .9rem; color: #666; border: 1px solid #333; border-radius: 8px; padding: 6px 14px; }
     .adm-header .back:hover { color: #aaa; text-decoration: none; border-color: #555; }
 
-    /* ── SQL Notice ── */
-    .sql-notice { background: #1a1a30; border: 1px solid #f59e0b; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
-    .sql-notice h3 { color: #f59e0b; margin-bottom: 8px; font-size: .95rem; }
-    .sql-notice p { font-size: .88rem; color: #888; line-height: 1.6; margin-bottom: 12px; }
-    .sql-box { background: #0a0a16; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; font-family: 'Courier New', monospace; font-size: .78rem; color: #aaa; white-space: pre; overflow-x: auto; margin-bottom: 10px; }
-    .btn-copy { background: #f59e0b; color: #0d0d1a; border: none; border-radius: 6px; padding: 6px 16px; font-size: .82rem; font-weight: 700; cursor: pointer; }
-    .btn-copy:hover { background: #fbbf24; }
-
     /* ── Tabs ── */
     .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
     .tab { background: #12122a; border: 1px solid #1e1e42; border-radius: 10px; padding: 8px 18px; font-size: .88rem; font-weight: 600; color: #666; cursor: pointer; transition: all .18s; }
@@ -39,7 +31,6 @@
     .btn:hover { opacity: .85; }
     .btn:active { transform: scale(.97); }
     .btn-primary   { background: #4f9eff; color: #0d0d1a; }
-    .btn-success   { background: #22c55e; color: #0d0d1a; }
     .btn-danger    { background: #ef4444; color: #fff; }
     .btn-ghost     { background: transparent; border: 1px solid #333; color: #888; }
     .btn-ghost:hover { border-color: #666; color: #ccc; }
@@ -130,8 +121,6 @@
     .confirm-box { max-width: 400px; }
     .confirm-box p { color: #aaa; font-size: .95rem; line-height: 1.6; margin-bottom: 20px; }
 
-    /* ── Progress ── */
-    .progress-msg { font-size: .85rem; color: #22c55e; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -142,15 +131,6 @@
   <div class="adm-header">
     <h1>🛠️ Game Admin</h1>
     <a class="back" href="index.html">← Back to Hub</a>
-    <button class="btn btn-ghost" onclick="showSqlModal()">📋 Setup SQL</button>
-  </div>
-
-  <!-- SQL Notice (shown on first visit / table missing) -->
-  <div class="sql-notice" id="sqlNotice" style="display:none">
-    <h3>⚠️ First-time setup required</h3>
-    <p>The <code>game_scenarios</code> table doesn't exist yet in Supabase. Run this SQL in your Supabase SQL Editor, then reload this page.</p>
-    <div class="sql-box" id="setupSql"></div>
-    <button class="btn-copy" onclick="copySql()">📋 Copy SQL</button>
   </div>
 
   <!-- Tabs -->
@@ -165,7 +145,6 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <button class="btn btn-primary" onclick="openAddModal()">＋ Add New</button>
-    <button class="btn btn-success" id="seedBtn" onclick="seedGame()">⬇ Seed</button>
     <span class="toolbar-sep"></span>
     <button class="btn btn-ghost" onclick="setAllActive(true)" title="Set all scenarios to Active">✅ All Active</button>
     <button class="btn btn-ghost" onclick="setAllActive(false)" title="Set all scenarios to Inactive">⛔ All Inactive</button>
@@ -210,36 +189,8 @@
   </div>
 </div>
 
-<!-- ── SQL Setup Modal ── -->
-<div class="modal-overlay" id="sqlModal">
-  <div class="modal-box" style="max-width:700px">
-    <h2>📋 Supabase Setup SQL</h2>
-    <p style="color:#888;font-size:.9rem;margin-bottom:14px">Run this once in your <a href="https://supabase.com/dashboard" target="_blank">Supabase SQL Editor</a>, then reload this page.</p>
-    <div class="sql-box" id="sqlModalContent"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('sqlModal')">Close</button>
-      <button class="btn btn-primary" onclick="copySqlModal()">📋 Copy SQL</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Seed Progress Modal ── -->
-<div class="modal-overlay" id="seedModal">
-  <div class="modal-box confirm-box" style="max-width:420px">
-    <h2 id="seedTitle">Seed from game-data.js</h2>
-    <p id="seedMsg" style="color:#aaa;line-height:1.6;margin-bottom:16px"></p>
-    <div class="progress-msg" id="seedProgress" style="display:none"></div>
-    <div class="modal-footer" id="seedFooter">
-      <button class="btn btn-ghost" onclick="closeModal('seedModal')">Cancel</button>
-      <button class="btn btn-success" id="seedConfirmBtn" onclick="doSeed()">Seed Now</button>
-    </div>
-  </div>
-</div>
-
-
 <!-- ── Dependencies ── -->
 <script src="supabase-config.js"></script>
-<script src="game-data.js"></script>
 <script>
 
 // ─────────────────────────────────────────────
@@ -252,28 +203,6 @@ const GAMES = [
   { id: 'persuade',   label: '🤝 Persuade Together' },
   { id: 'scene',      label: '🎭 You\'re In The Scene' },
 ];
-
-const SETUP_SQL = `-- Run this in Supabase SQL Editor (once)
-
-CREATE TABLE IF NOT EXISTS game_scenarios (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  game_id     TEXT NOT NULL,
-  subcategory TEXT,
-  content     JSONB NOT NULL,
-  active      BOOLEAN DEFAULT TRUE,
-  sort_order  INTEGER DEFAULT 0,
-  created_at  TIMESTAMPTZ DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_gs_game ON game_scenarios(game_id, active);
-
-ALTER TABLE game_scenarios ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "anon_select" ON game_scenarios FOR SELECT TO anon USING (true);
-CREATE POLICY "anon_insert" ON game_scenarios FOR INSERT TO anon WITH CHECK (true);
-CREATE POLICY "anon_update" ON game_scenarios FOR UPDATE TO anon USING (true);
-CREATE POLICY "anon_delete" ON game_scenarios FOR DELETE TO anon USING (true);`;
 
 // ─────────────────────────────────────────────
 // State
@@ -308,14 +237,8 @@ async function loadData() {
     const res = await apiFetch(
       `game_scenarios?game_id=eq.${encodeURIComponent(currentGame)}&order=sort_order.asc,created_at.asc`
     );
-    if (res.status === 404 || res.status === 401) {
-      showSqlNotice();
-      renderEmpty('Table not found. Run the Setup SQL first.');
-      return;
-    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     allData = await res.json();
-    hideSqlNotice();
     renderTable();
   } catch (e) {
     renderEmpty('Failed to load. Check Supabase connection.\n' + e.message);
@@ -673,99 +596,6 @@ async function confirmDelete() {
   }
   deleteTarget = null;
 }
-
-// ─────────────────────────────────────────────
-// Seed from game-data.js
-// ─────────────────────────────────────────────
-function buildSeedRows(gameId) {
-  const rows = [];
-  switch (gameId) {
-    case 'hottake':
-    case 'never':
-      (GAME_DATA[gameId] || []).forEach((text, i) => rows.push({ game_id: gameId, subcategory: null, content: { text }, active: true, sort_order: i }));
-      break;
-    case 'sophies':
-    case 'persuade':
-      (GAME_DATA[gameId] || []).forEach((item, i) => rows.push({ game_id: gameId, subcategory: null, content: item, active: true, sort_order: i }));
-      break;
-    case 'scene':
-      (GAME_DATA.scene || []).forEach((item, i) => rows.push({ game_id: gameId, subcategory: null, content: item, active: true, sort_order: i }));
-      break;
-    case 'storyteller':
-      ['characters','actions','locations'].forEach(sub => {
-        ((GAME_DATA.storyteller || {})[sub] || []).forEach((text, i) =>
-          rows.push({ game_id: gameId, subcategory: sub, content: { text }, active: true, sort_order: i })
-        );
-      });
-      break;
-  }
-  return rows;
-}
-
-let seedRowsCache = null;
-
-function seedGame() {
-  seedRowsCache = buildSeedRows(currentGame);
-  const existing = allData.length;
-  const gameName = GAMES.find(g=>g.id===currentGame)?.label || currentGame;
-  document.getElementById('seedTitle').textContent = `Seed — ${gameName}`;
-  document.getElementById('seedProgress').style.display = 'none';
-  document.getElementById('seedFooter').style.display = 'flex';
-  document.getElementById('seedConfirmBtn').disabled = false;
-
-  let msg = `This will insert <strong>${seedRowsCache.length}</strong> scenarios from game-data.js into Supabase.`;
-  if (existing > 0) msg += `<br><br>⚠️ The table already has <strong>${existing}</strong> scenarios for this game. Running seed again will create duplicates.`;
-
-  document.getElementById('seedMsg').innerHTML = msg;
-  openModal('seedModal');
-}
-
-async function doSeed() {
-  if (!seedRowsCache || !seedRowsCache.length) return;
-  const btn = document.getElementById('seedConfirmBtn');
-  btn.disabled = true;
-
-  const CHUNK = 50;
-  let done = 0;
-  const prog = document.getElementById('seedProgress');
-  prog.style.display = 'block';
-  document.getElementById('seedFooter').style.display = 'none';
-
-  for (let i = 0; i < seedRowsCache.length; i += CHUNK) {
-    const chunk = seedRowsCache.slice(i, i + CHUNK);
-    prog.textContent = `Inserting… ${Math.min(i + CHUNK, seedRowsCache.length)} / ${seedRowsCache.length}`;
-    const res = await apiFetch('game_scenarios', {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify(chunk)
-    });
-    if (!res.ok) { alert('Insert failed at row ' + i + ': HTTP ' + res.status); break; }
-    done += chunk.length;
-  }
-
-  prog.textContent = `✅ Seeded ${done} scenarios!`;
-  setTimeout(async () => {
-    closeModal('seedModal');
-    await loadData();
-  }, 1200);
-}
-
-// ─────────────────────────────────────────────
-// SQL modals
-// ─────────────────────────────────────────────
-function showSqlNotice() {
-  document.getElementById('sqlNotice').style.display = '';
-  document.getElementById('setupSql').textContent = SETUP_SQL;
-}
-function hideSqlNotice() {
-  document.getElementById('sqlNotice').style.display = 'none';
-}
-function showSqlModal() {
-  document.getElementById('sqlModalContent').textContent = SETUP_SQL;
-  openModal('sqlModal');
-}
-function copySql()      { navigator.clipboard.writeText(SETUP_SQL).then(() => alert('SQL copied!')); }
-function copySqlModal() { navigator.clipboard.writeText(SETUP_SQL).then(() => alert('SQL copied!')); }
 
 // ─────────────────────────────────────────────
 // Filters
