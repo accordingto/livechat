@@ -89,6 +89,18 @@
     /* ── Sort-disabled hint ── */
     .sort-hint { font-size: .76rem; color: #444; font-style: italic; align-self: center; }
 
+    /* ── Filter bar ── */
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; align-items: center; gap: 7px; }
+    .filter-label { font-size: .73rem; color: #555; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+    .filter-select { background: #12122a; border: 1px solid #1e1e42; border-radius: 8px; color: #ccc; font-size: .82rem; padding: 6px 10px; cursor: pointer; font-family: inherit; transition: border-color .15s; }
+    .filter-select:focus { outline: none; border-color: #4f9eff; }
+    .filter-select option { background: #12122a; }
+    .filter-select.is-set { border-color: #4f9eff; color: #4f9eff; }
+    .filter-sep { width: 1px; height: 20px; background: #1e1e42; flex-shrink: 0; }
+    .filter-clear { background: transparent; border: 1px solid #333; border-radius: 8px; padding: 6px 12px; font-size: .82rem; color: #666; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .filter-clear:hover { border-color: #ef4444; color: #ef4444; }
+
     /* ── Loading / Empty ── */
     .state-msg { text-align: center; padding: 60px 20px; color: #444; font-size: 1rem; }
     .state-msg .icon { font-size: 2.5rem; display: block; margin-bottom: 12px; }
@@ -160,6 +172,9 @@
     <input class="search-box" id="searchBox" type="text" placeholder="Search scenarios…" oninput="onSearch()">
     <span class="count-badge" id="countBadge"></span>
   </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar" id="filterBar"></div>
 
   <!-- Table -->
   <div class="tbl-wrap" id="tblWrap">
@@ -263,11 +278,12 @@ CREATE POLICY "anon_delete" ON game_scenarios FOR DELETE TO anon USING (true);`;
 // ─────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────
-let currentGame = 'hottake';
-let allData     = [];
-let searchQuery = '';
-let editingId   = null;
+let currentGame  = 'hottake';
+let allData      = [];
+let searchQuery  = '';
+let editingId    = null;
 let deleteTarget = null;
+let filters      = { active: 'all', subcategory: 'all', cat: 'all', judge: 'all' };
 
 // ─────────────────────────────────────────────
 // Supabase helpers
@@ -330,6 +346,8 @@ function getPreview(row) {
 function renderLoading() {
   document.getElementById('tblWrap').innerHTML = '<div class="state-msg"><span class="icon">⏳</span>Loading…</div>';
   document.getElementById('countBadge').textContent = '';
+  const bar = document.getElementById('filterBar');
+  if (bar) bar.innerHTML = '';
 }
 
 function renderEmpty(msg) {
@@ -338,13 +356,14 @@ function renderEmpty(msg) {
 }
 
 function renderTable() {
+  renderFilterBar();
   const q = searchQuery.toLowerCase();
-  const filtered = allData.filter(row => {
+  const filtered = applyFilters(allData).filter(row => {
     const p = getPreview(row);
     return (p.main + p.sub).toLowerCase().includes(q);
   });
 
-  const sortEnabled = !searchQuery;
+  const sortEnabled = !searchQuery && !hasActiveFilters();
   document.getElementById('countBadge').textContent = `${filtered.length} / ${allData.length} scenarios`;
 
   if (!filtered.length) {
@@ -353,7 +372,7 @@ function renderTable() {
   }
 
   const showSub = currentGame !== 'hottake' && currentGame !== 'never';
-  const sortHint = searchQuery ? '<span class="sort-hint">Clear search to sort</span>' : '';
+  const sortHint = (!sortEnabled) ? '<span class="sort-hint">Clear search/filters to sort</span>' : '';
 
   let html = `<table><thead><tr>
     <th>#</th>
@@ -749,6 +768,111 @@ function copySql()      { navigator.clipboard.writeText(SETUP_SQL).then(() => al
 function copySqlModal() { navigator.clipboard.writeText(SETUP_SQL).then(() => alert('SQL copied!')); }
 
 // ─────────────────────────────────────────────
+// Filters
+// ─────────────────────────────────────────────
+function hasActiveFilters() {
+  return filters.active !== 'all' || filters.subcategory !== 'all' || filters.cat !== 'all' || filters.judge !== 'all';
+}
+
+function applyFilters(rows) {
+  return rows.filter(row => {
+    if (filters.active !== 'all') {
+      if (row.active !== (filters.active === 'active')) return false;
+    }
+    if (filters.subcategory !== 'all' && currentGame === 'storyteller') {
+      if (row.subcategory !== filters.subcategory) return false;
+    }
+    if (filters.cat !== 'all') {
+      if ((row.content.cat || '') !== filters.cat) return false;
+    }
+    if (filters.judge !== 'all') {
+      if ((row.content.judge || '') !== filters.judge) return false;
+    }
+    return true;
+  });
+}
+
+function setFilter(key, val) {
+  filters[key] = val;
+  renderFilterBar();
+  renderTable();
+}
+
+function clearFilters() {
+  filters = { active: 'all', subcategory: 'all', cat: 'all', judge: 'all' };
+  renderFilterBar();
+  renderTable();
+}
+
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  if (!bar) return;
+
+  const uniqueVals = key => [...new Set(allData.map(r => (r.content && r.content[key]) || '').filter(Boolean))].sort();
+
+  const sel = (key, val, label) =>
+    `<option value="${escHtml(val)}" ${filters[key] === val ? 'selected' : ''}>${escHtml(label)}</option>`;
+
+  let html = '';
+
+  // Status (all games)
+  html += `<div class="filter-group">
+    <span class="filter-label">Status</span>
+    <select class="filter-select ${filters.active !== 'all' ? 'is-set' : ''}" onchange="setFilter('active',this.value)">
+      ${sel('active','all','All')}${sel('active','active','Active only')}${sel('active','inactive','Inactive only')}
+    </select>
+  </div>`;
+
+  // Type (storyteller only)
+  if (currentGame === 'storyteller') {
+    html += `<span class="filter-sep"></span>
+    <div class="filter-group">
+      <span class="filter-label">Type</span>
+      <select class="filter-select ${filters.subcategory !== 'all' ? 'is-set' : ''}" onchange="setFilter('subcategory',this.value)">
+        ${sel('subcategory','all','All Types')}${sel('subcategory','characters','👤 Characters')}${sel('subcategory','actions','⚡ Actions')}${sel('subcategory','locations','📍 Locations')}
+      </select>
+    </div>`;
+  }
+
+  // Category (sophies, persuade, scene)
+  if (['sophies','persuade','scene'].includes(currentGame)) {
+    const cats = uniqueVals('cat');
+    if (cats.length) {
+      html += `<span class="filter-sep"></span>
+      <div class="filter-group">
+        <span class="filter-label">Category</span>
+        <select class="filter-select ${filters.cat !== 'all' ? 'is-set' : ''}" onchange="setFilter('cat',this.value)">
+          <option value="all" ${filters.cat==='all'?'selected':''}>All Categories</option>
+          ${cats.map(c => `<option value="${escHtml(c)}" ${filters.cat===c?'selected':''}>${escHtml(c)}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+  }
+
+  // Judge (persuade only)
+  if (currentGame === 'persuade') {
+    const judges = uniqueVals('judge');
+    if (judges.length) {
+      html += `<span class="filter-sep"></span>
+      <div class="filter-group">
+        <span class="filter-label">Judge</span>
+        <select class="filter-select ${filters.judge !== 'all' ? 'is-set' : ''}" onchange="setFilter('judge',this.value)">
+          <option value="all" ${filters.judge==='all'?'selected':''}>All Judges</option>
+          ${judges.map(j => `<option value="${escHtml(j)}" ${filters.judge===j?'selected':''}>${escHtml(j)}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+  }
+
+  // Clear button
+  if (hasActiveFilters()) {
+    html += `<span class="filter-sep"></span><button class="filter-clear" onclick="clearFilters()">✕ Clear Filters</button>`;
+  }
+
+  bar.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────
 // Search
 // ─────────────────────────────────────────────
 function onSearch() {
@@ -765,6 +889,7 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.classList.add('active');
     currentGame = btn.dataset.game;
     searchQuery = '';
+    filters = { active: 'all', subcategory: 'all', cat: 'all', judge: 'all' };
     document.getElementById('searchBox').value = '';
     editingId = null;
     loadData();
