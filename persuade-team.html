@@ -233,7 +233,7 @@
   <div class="sc-counter" id="sc-counter">100 scenarios</div>
 
   <div class="scenario-browser">
-    <div class="scenario-browser-hdr">📋 All Scenarios (100) — click to load</div>
+    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (100) — click to load</div>
     <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
@@ -247,7 +247,7 @@
     GAME_RENDER.injectCSS();
     GAME_RATING.init('persuade');
     let scenarios = GAME_DATA.persuade;
-    GAME_LOADER.init('persuade').then(d => { if (d) scenarios = d; });
+    GAME_LOADER.init('persuade').then(d => { if (d) { scenarios = d; used = []; buildList(); updateCounter(); } });
 
     let round   = 0;
     let used    = [];
@@ -293,15 +293,17 @@
       });
     }
 
-    (function buildList() {
+    function buildList() {
       const filterBar = document.getElementById('filter-bar');
       const list = document.getElementById('scenario-list');
+      filterBar.innerHTML = '';
+      list.innerHTML = '';
+      activeCat = '';
+      document.getElementById('browser-hdr').textContent = `📋 All Scenarios (${scenarios.length}) — click to load`;
 
-      /* Collect unique categories in order */
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
 
-      /* All button */
       const allBtn = document.createElement('button');
       allBtn.className = 'filter-btn active';
       allBtn.textContent = 'All';
@@ -309,7 +311,6 @@
       allBtn.addEventListener('click', () => filterBy(''));
       filterBar.appendChild(allBtn);
 
-      /* Category buttons */
       cats.forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
@@ -319,7 +320,6 @@
         filterBar.appendChild(btn);
       });
 
-      /* Scenario items */
       scenarios.forEach((sc, i) => {
         const btn = document.createElement('button');
         btn.className = 'scenario-item';
@@ -330,7 +330,8 @@
         btn.addEventListener('click', () => loadScenario(sc, i));
         list.appendChild(btn);
       });
-    })();
+    }
+    buildList();
 
     function loadScenario(sc, idx) {
       const btn  = document.getElementById('draw-btn');

@@ -249,7 +249,7 @@
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
 
   <div class="scenario-browser">
-    <div class="scenario-browser-hdr">📋 All Scenarios (50) — click to load</div>
+    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (50) — click to load</div>
     <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
@@ -263,7 +263,7 @@
     GAME_RENDER.injectCSS();
     GAME_RATING.init('sophies');
     let scenarios = GAME_DATA.sophies;
-    GAME_LOADER.init('sophies').then(d => { if (d) scenarios = d; });
+    GAME_LOADER.init('sophies').then(d => { if (d) { scenarios = d; used = []; buildList(); } });
 
     let round   = 0;
     let used    = [];
@@ -282,9 +282,13 @@
       });
     }
 
-    (function buildList() {
+    function buildList() {
       const filterBar = document.getElementById('filter-bar');
       const list = document.getElementById('scenario-list');
+      filterBar.innerHTML = '';
+      list.innerHTML = '';
+      activeCat = '';
+      document.getElementById('browser-hdr').textContent = `📋 All Scenarios (${scenarios.length}) — click to load`;
 
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
@@ -315,7 +319,8 @@
         btn.addEventListener('click', () => loadScenario(sc, i));
         list.appendChild(btn);
       });
-    })();
+    }
+    buildList();
 
     function loadScenario(sc, idx) {
       const btn  = document.getElementById('draw-btn');

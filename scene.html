@@ -321,7 +321,7 @@
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw Scene</button>
 
   <div class="scenario-browser">
-    <div class="scenario-browser-hdr">📋 All Scenarios (40) — click to load</div>
+    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (40) — click to load</div>
     <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
@@ -333,7 +333,7 @@
   <script>
     GAME_RATING.init('scene');
     let scenarios = GAME_DATA.scene;
-    GAME_LOADER.init('scene').then(d => { if (d) scenarios = d; });
+    GAME_LOADER.init('scene').then(d => { if (d) { scenarios = d; used = []; buildList(); } });
     let round   = 0;
     let used    = [];
     let rolling = false;
@@ -439,9 +439,13 @@
       });
     }
 
-    (function buildList() {
+    function buildList() {
       const filterBar = document.getElementById('filter-bar');
       const list = document.getElementById('scenario-list');
+      filterBar.innerHTML = '';
+      list.innerHTML = '';
+      activeCat = '';
+      document.getElementById('browser-hdr').textContent = `📋 All Scenarios (${scenarios.length}) — click to load`;
 
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
@@ -471,7 +475,8 @@
         btn.addEventListener('click', () => loadScenario(sc, i));
         list.appendChild(btn);
       });
-    })();
+    }
+    buildList();
 
     function loadScenario(sc, idx) {
       const card = document.getElementById('scene-card');
