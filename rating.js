@@ -85,17 +85,6 @@ const GAME_RATING = (() => {
         from { opacity: 0; transform: scale(.88); }
         to   { opacity: 1; transform: scale(1); }
       }
-      [data-theme="soft"] .rating-fab {
-        background: rgba(250,247,243,.96);
-        border-color: rgba(0,0,0,.09);
-        box-shadow: 0 4px 20px rgba(100,60,20,.12);
-      }
-      [data-theme="soft"] .rating-star { color: #d0b8a8; }
-      [data-theme="soft"] .rating-star:hover,
-      [data-theme="soft"] .rating-star.hover { color: #d97706; }
-      [data-theme="soft"] .rating-star.filled { color: #d97706; }
-      [data-theme="soft"] .rating-avg { color: #b09080; }
-      [data-theme="soft"] .rating-sep { background: rgba(0,0,0,.08); }
     `;
     document.head.appendChild(s);
   }

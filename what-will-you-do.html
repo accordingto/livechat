@@ -2,8 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
-  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Sophie's Choice · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -134,15 +132,6 @@
     .filter-btn:hover  { border-color: #f59e0b; color: #f59e0b; }
     .filter-btn:active { transform: scale(.96); }
     .filter-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.12); }
-    [data-theme="soft"]   .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="soft"]   .filter-btn:hover  { border-color: #f59e0b; color: #92400e; }
-    [data-theme="soft"]   .filter-btn.active { border-color: #f59e0b; color: #92400e; background: rgba(245,158,11,.1); }
-    [data-theme="sunset"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="sunset"] .filter-btn:hover  { border-color: #f59e0b; color: #fbbf24; }
-    [data-theme="sunset"] .filter-btn.active { border-color: #f59e0b; color: #fbbf24; background: rgba(245,158,11,.12); }
-    [data-theme="forest"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="forest"] .filter-btn:hover  { border-color: #f59e0b; color: #fbbf24; }
-    [data-theme="forest"] .filter-btn.active { border-color: #f59e0b; color: #fbbf24; background: rgba(245,158,11,.12); }
 
     /* ── Scenario browser ── */
     .scenario-browser {
@@ -171,34 +160,7 @@
     .scenario-num  { font-size: .75rem; font-weight: 900; color: #f59e0b; flex-shrink: 0; padding-top: 2px; min-width: 22px; }
     .scenario-text { font-size: .88rem; font-weight: 500; color: #aaa; line-height: 1.4; }
 
-    [data-theme="soft"]   .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="soft"]   .scenario-item:hover  { border-color: #f59e0b; }
-    [data-theme="soft"]   .scenario-item.active { border-color: #f59e0b; background: rgba(245,158,11,.08); }
-    [data-theme="soft"]   .scenario-text { color: var(--text-muted); }
-    [data-theme="sunset"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="sunset"] .scenario-item:hover  { border-color: #f59e0b; }
-    [data-theme="sunset"] .scenario-item.active { border-color: #f59e0b; }
-    [data-theme="forest"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="forest"] .scenario-item:hover  { border-color: #f59e0b; }
-    [data-theme="forest"] .scenario-item.active { border-color: #f59e0b; }
 
-    /* ── Soft theme ── */
-    [data-theme="soft"] .sc-card {
-      background: var(--surface);
-      border-color: var(--border);
-      box-shadow: 0 4px 24px rgba(100,60,20,.08);
-    }
-    [data-theme="soft"] .sc-card.landed { border-color: #f59e0b; }
-    [data-theme="soft"] .btn-draw { background: var(--surface); border-color: #f59e0b; color: #92400e; }
-    [data-theme="soft"] .btn-draw:hover { background: #fffbeb; }
-    [data-theme="sunset"] .sc-card { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); }
-    [data-theme="sunset"] .sc-card.landed { border-color: #f59e0b; }
-    [data-theme="sunset"] .btn-draw { background: var(--surface); border-color: #f59e0b; color: var(--text); }
-    [data-theme="sunset"] .btn-draw:hover { background: var(--border); }
-    [data-theme="forest"] .sc-card { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); }
-    [data-theme="forest"] .sc-card.landed { border-color: #f59e0b; }
-    [data-theme="forest"] .btn-draw { background: var(--surface); border-color: #f59e0b; color: var(--text); }
-    [data-theme="forest"] .btn-draw:hover { background: var(--border); }
   </style>
 </head>
 <body>

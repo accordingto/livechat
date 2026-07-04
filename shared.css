@@ -13,30 +13,6 @@
   --text-faint: #2a2a50;
   --divider: #1e1e3a;
 }
-[data-theme="soft"] {
-  --bg: #faf7f3;
-  --surface: #ffffff;
-  --surface-b: #fff8f0;
-  --border: #ddd0c4;
-  --border-dim: rgba(0,0,0,.06);
-  --text: #2d1f14;
-  --text-dim: #9a7f6f;
-  --text-muted: #b09080;
-  --text-faint: #d0b8a8;
-  --divider: #ead8c8;
-}
-[data-theme="sunset"] {
-  --bg: #180c2a; --surface: #28123e; --surface-b: #22103a;
-  --border: #4a2265; --border-dim: rgba(255,120,60,.1);
-  --text: #f8ddc8; --text-dim: #b07890; --text-muted: #7a4862; --text-faint: #3e1e38;
-  --divider: #3a1a55;
-}
-[data-theme="forest"] {
-  --bg: #081410; --surface: #0e2018; --surface-b: #0b1c14;
-  --border: #1c3a22; --border-dim: rgba(60,150,60,.1);
-  --text: #e8f2e0; --text-dim: #78a860; --text-muted: #4e7040; --text-faint: #1a2e18;
-  --divider: #1c3520;
-}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
@@ -93,13 +69,6 @@ a.back:hover { color: var(--text); }
 }
 .header p { color: var(--text-dim); font-size: .93rem; }
 
-/* Gradient text doesn't work on light bg — replace with plain colour */
-[data-theme="soft"] .header h1 {
-  background: none;
-  -webkit-text-fill-color: var(--text);
-  color: var(--text);
-}
-
 .draw-row { display: flex; gap: 12px; align-items: center; justify-content: center; }
 
 .reset-btn {
@@ -119,49 +88,10 @@ a.back:hover { color: var(--text); }
 }
 
 /* ── Soft theme: game-render.js class overrides ── */
-[data-theme="soft"] .gr-divider { background: var(--divider); }
-[data-theme="soft"] .gr-story-card { border-color: var(--border); }
-[data-theme="soft"] .gr-sc-char   { background: linear-gradient(160deg, #fffbeb, var(--surface)); --gr-sc: #d97706; }
-[data-theme="soft"] .gr-sc-action { background: linear-gradient(160deg, #f5f3ff, var(--surface)); --gr-sc: #7c3aed; }
-[data-theme="soft"] .gr-sc-place  { background: linear-gradient(160deg, #ecfdf5, var(--surface)); --gr-sc: #059669; }
-[data-theme="soft"] .gr-story-text { color: var(--text); }
-[data-theme="soft"] .gr-opt-text  { color: var(--text); }
-[data-theme="soft"] .gr-opt-a { background: rgba(59,130,246,.07); border-color: rgba(59,130,246,.3); }
-[data-theme="soft"] .gr-opt-b { background: rgba(239,68,68,.07);  border-color: rgba(239,68,68,.3); }
-[data-theme="soft"] .gr-opt-c { background: rgba(22,163,74,.07);  border-color: rgba(22,163,74,.3); }
-[data-theme="soft"] .gr-role-label { color: var(--text-dim); }
-[data-theme="soft"] .gr-role-team  { background: rgba(6,182,212,.06);   border-color: rgba(6,182,212,.3); }
-[data-theme="soft"] .gr-role-judge { background: rgba(217,70,239,.06); border-color: rgba(217,70,239,.3); }
-[data-theme="soft"] .gr-role-team  .gr-role-val { color: #0e7490; }
-[data-theme="soft"] .gr-role-judge .gr-role-val { color: #a21caf; }
 
 /* ── Sunset theme: game-render.js class overrides ── */
-[data-theme="sunset"] .gr-divider { background: var(--divider); }
-[data-theme="sunset"] .gr-story-card { border-color: var(--border); }
-[data-theme="sunset"] .gr-sc-char   { background: linear-gradient(160deg, #2e1a10, var(--surface)); --gr-sc: #f59e0b; }
-[data-theme="sunset"] .gr-sc-action { background: linear-gradient(160deg, #2a1040, var(--surface)); --gr-sc: #e879f9; }
-[data-theme="sunset"] .gr-sc-place  { background: linear-gradient(160deg, #1a2040, var(--surface)); --gr-sc: #60a0ff; }
-[data-theme="sunset"] .gr-story-text { color: var(--text); }
-[data-theme="sunset"] .gr-opt-text  { color: var(--text); }
-[data-theme="sunset"] .gr-role-label { color: var(--text-dim); }
-[data-theme="sunset"] .gr-role-team  { background: rgba(6,182,212,.08);   border-color: rgba(6,182,212,.3); }
-[data-theme="sunset"] .gr-role-judge { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); }
-[data-theme="sunset"] .gr-role-team  .gr-role-val { color: #22d3ee; }
-[data-theme="sunset"] .gr-role-judge .gr-role-val { color: #f87171; }
 
 /* ── Forest theme: game-render.js class overrides ── */
-[data-theme="forest"] .gr-divider { background: var(--divider); }
-[data-theme="forest"] .gr-story-card { border-color: var(--border); }
-[data-theme="forest"] .gr-sc-char   { background: linear-gradient(160deg, #1a1a08, var(--surface)); --gr-sc: #a3e635; }
-[data-theme="forest"] .gr-sc-action { background: linear-gradient(160deg, #0a1a18, var(--surface)); --gr-sc: #34d399; }
-[data-theme="forest"] .gr-sc-place  { background: linear-gradient(160deg, #081808, var(--surface)); --gr-sc: #4ade80; }
-[data-theme="forest"] .gr-story-text { color: var(--text); }
-[data-theme="forest"] .gr-opt-text  { color: var(--text); }
-[data-theme="forest"] .gr-role-label { color: var(--text-dim); }
-[data-theme="forest"] .gr-role-team  { background: rgba(74,222,128,.08); border-color: rgba(74,222,128,.3); }
-[data-theme="forest"] .gr-role-judge { background: rgba(163,230,53,.08); border-color: rgba(163,230,53,.3); }
-[data-theme="forest"] .gr-role-team  .gr-role-val { color: #4ade80; }
-[data-theme="forest"] .gr-role-judge .gr-role-val { color: #a3e635; }
 
 
 @media (max-width: 520px) {

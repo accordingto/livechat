@@ -2,8 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
-  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>You're In The Scene · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -194,15 +192,6 @@
     }
 
     /* Soft theme ps-btn */
-    [data-theme="soft"] .ps-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="soft"] .ps-btn:hover  { border-color: #ec4899; color: #be185d; }
-    [data-theme="soft"] .ps-btn.active { border-color: #ec4899; color: #be185d; background: rgba(236,72,153,.08); }
-    [data-theme="soft"] .ps-label { color: var(--text-faint); }
-    [data-theme="soft"] .roles-header { color: var(--text-faint); }
-    [data-theme="sunset"] .ps-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="sunset"] .ps-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.13); }
-    [data-theme="forest"] .ps-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="forest"] .ps-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.13); }
 
     /* ── Filter bar ── */
     .filter-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
@@ -216,15 +205,6 @@
     .filter-btn:hover  { border-color: #ec4899; color: #ec4899; }
     .filter-btn:active { transform: scale(.96); }
     .filter-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.12); }
-    [data-theme="soft"]   .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="soft"]   .filter-btn:hover  { border-color: #ec4899; color: #be185d; }
-    [data-theme="soft"]   .filter-btn.active { border-color: #ec4899; color: #be185d; background: rgba(236,72,153,.08); }
-    [data-theme="sunset"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="sunset"] .filter-btn:hover  { border-color: #ec4899; color: #ec4899; }
-    [data-theme="sunset"] .filter-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.12); }
-    [data-theme="forest"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="forest"] .filter-btn:hover  { border-color: #ec4899; color: #ec4899; }
-    [data-theme="forest"] .filter-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.12); }
 
     /* ── Scenario browser ── */
     .scenario-browser {
@@ -253,48 +233,10 @@
     .scenario-emoji { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
     .scenario-title { font-size: .95rem; font-weight: 600; color: #ccc; line-height: 1.3; }
 
-    [data-theme="soft"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="soft"] .scenario-item:hover { border-color: #ec4899; }
-    [data-theme="soft"] .scenario-item.active { border-color: #ec4899; background: rgba(236,72,153,.08); }
-    [data-theme="soft"] .scenario-title { color: var(--text); }
-    [data-theme="sunset"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="sunset"] .scenario-item:hover { border-color: #ec4899; }
-    [data-theme="sunset"] .scenario-item.active { border-color: #ec4899; }
-    [data-theme="sunset"] .scenario-title { color: var(--text); }
-    [data-theme="forest"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="forest"] .scenario-item:hover { border-color: #ec4899; }
-    [data-theme="forest"] .scenario-item.active { border-color: #ec4899; }
-    [data-theme="forest"] .scenario-title { color: var(--text); }
 
     /* ── Theme overrides ── */
-    [data-theme="soft"] .scene-card { background: var(--surface); border-color: var(--border); }
-    [data-theme="soft"] .scene-card.landed { border-color: #ec4899; }
-    [data-theme="soft"] .sc-situation { color: var(--text-dim); }
-    [data-theme="soft"] .sc-title { color: var(--text); }
-    [data-theme="soft"] .sc-divider { background: var(--divider); }
-    [data-theme="soft"] .role-name { color: var(--text); }
-    [data-theme="soft"] .role-hint { color: var(--text-muted); }
-    [data-theme="soft"] .roles-header { color: var(--text-faint); }
-    [data-theme="soft"] .btn-draw { background: var(--surface); }
-    [data-theme="soft"] .btn-draw:hover { background: rgba(236,72,153,.07); }
 
-    [data-theme="sunset"] .scene-card { background: var(--surface); border-color: var(--border); }
-    [data-theme="sunset"] .scene-card.landed { border-color: #ec4899; }
-    [data-theme="sunset"] .sc-situation { color: var(--text-dim); }
-    [data-theme="sunset"] .sc-title { color: var(--text); }
-    [data-theme="sunset"] .sc-divider { background: var(--divider); }
-    [data-theme="sunset"] .role-name { color: var(--text); }
-    [data-theme="sunset"] .btn-draw { background: var(--surface); }
-    [data-theme="sunset"] .btn-draw:hover { background: var(--border-dim); }
 
-    [data-theme="forest"] .scene-card { background: var(--surface); border-color: var(--border); }
-    [data-theme="forest"] .scene-card.landed { border-color: #ec4899; }
-    [data-theme="forest"] .sc-situation { color: var(--text-dim); }
-    [data-theme="forest"] .sc-title { color: var(--text); }
-    [data-theme="forest"] .sc-divider { background: var(--divider); }
-    [data-theme="forest"] .role-name { color: var(--text); }
-    [data-theme="forest"] .btn-draw { background: var(--surface); }
-    [data-theme="forest"] .btn-draw:hover { background: var(--border-dim); }
   </style>
 </head>
 <body>

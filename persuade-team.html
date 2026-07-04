@@ -2,8 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
-  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Persuade Together! · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -88,16 +86,6 @@
     .pt-divider { height: 1px; background: #1e1e42; margin: 4px 0 22px; }
 
     /* theme overrides for new layout */
-    [data-theme="soft"] .pt-team  { color: var(--text); }
-    [data-theme="soft"] .pt-sit   { color: var(--text-muted); }
-    [data-theme="soft"] .pt-judge { color: #7c3aed; }
-    [data-theme="soft"] .pt-divider { background: var(--divider); }
-    [data-theme="sunset"] .pt-team  { color: var(--text); }
-    [data-theme="sunset"] .pt-sit   { color: var(--text-dim); }
-    [data-theme="sunset"] .pt-divider { background: var(--divider); }
-    [data-theme="forest"] .pt-team  { color: var(--text); }
-    [data-theme="forest"] .pt-sit   { color: var(--text-dim); }
-    [data-theme="forest"] .pt-divider { background: var(--divider); }
 
     /* ── Draw button ── */
     .btn-draw {
@@ -155,15 +143,6 @@
     .filter-btn:active { transform: scale(.96); }
     .filter-btn.active { border-color: #06b6d4; color: #06b6d4; background: rgba(6,182,212,.12); }
 
-    [data-theme="soft"]   .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="soft"]   .filter-btn:hover  { border-color: #06b6d4; color: #0e7490; }
-    [data-theme="soft"]   .filter-btn.active { border-color: #06b6d4; color: #0e7490; background: rgba(6,182,212,.1); }
-    [data-theme="sunset"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="sunset"] .filter-btn:hover  { border-color: #06b6d4; color: #22d3ee; }
-    [data-theme="sunset"] .filter-btn.active { border-color: #06b6d4; color: #22d3ee; background: rgba(6,182,212,.12); }
-    [data-theme="forest"] .filter-btn { border-color: var(--border); color: var(--text-muted); }
-    [data-theme="forest"] .filter-btn:hover  { border-color: #06b6d4; color: #22d3ee; }
-    [data-theme="forest"] .filter-btn.active { border-color: #06b6d4; color: #22d3ee; background: rgba(6,182,212,.12); }
     .scenario-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 8px;
@@ -182,37 +161,7 @@
     .scenario-emoji { font-size: 1.3rem; flex-shrink: 0; line-height: 1; padding-top: 1px; }
     .scenario-text  { font-size: .88rem; font-weight: 500; color: #aaa; line-height: 1.4; }
 
-    [data-theme="soft"]   .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="soft"]   .scenario-item:hover  { border-color: #06b6d4; }
-    [data-theme="soft"]   .scenario-item.active { border-color: #06b6d4; background: rgba(6,182,212,.08); }
-    [data-theme="soft"]   .scenario-text { color: var(--text-muted); }
-    [data-theme="sunset"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="sunset"] .scenario-item:hover  { border-color: #06b6d4; }
-    [data-theme="sunset"] .scenario-item.active { border-color: #06b6d4; }
-    [data-theme="forest"] .scenario-item { background: var(--surface); border-color: var(--border); }
-    [data-theme="forest"] .scenario-item:hover  { border-color: #06b6d4; }
-    [data-theme="forest"] .scenario-item.active { border-color: #06b6d4; }
 
-    /* ── Soft theme ── */
-    [data-theme="soft"] .scenario-card {
-      background: var(--surface);
-      border-color: var(--border);
-      box-shadow: 0 4px 24px rgba(100,60,20,.08);
-    }
-    [data-theme="soft"] .scenario-card.landed { border-color: #06b6d4; }
-    [data-theme="soft"] .btn-draw { background: var(--surface); border-color: #06b6d4; color: #0e7490; }
-    [data-theme="soft"] .btn-draw:hover { background: #ecfeff; }
-    [data-theme="soft"] .sc-counter { color: var(--text-muted); }
-    [data-theme="sunset"] .scenario-card { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); }
-    [data-theme="sunset"] .scenario-card.landed { border-color: #06b6d4; }
-    [data-theme="sunset"] .btn-draw { background: var(--surface); border-color: #06b6d4; color: #22d3ee; }
-    [data-theme="sunset"] .btn-draw:hover { background: var(--border); }
-    [data-theme="sunset"] .sc-counter { color: var(--text-muted); }
-    [data-theme="forest"] .scenario-card { background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%); border-color: var(--border); }
-    [data-theme="forest"] .scenario-card.landed { border-color: #06b6d4; }
-    [data-theme="forest"] .btn-draw { background: var(--surface); border-color: #06b6d4; color: #22d3ee; }
-    [data-theme="forest"] .btn-draw:hover { background: var(--border); }
-    [data-theme="forest"] .sc-counter { color: var(--text-muted); }
   </style>
 </head>
 <body>

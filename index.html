@@ -2,8 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>(function(){var t=localStorage.getItem('ib-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
-  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -266,91 +264,7 @@
       a.back, .round-badge { font-size: 15px; min-height: 44px; display: flex; align-items: center; }
     }
 
-    /* ── Soft theme ── */
-    [data-theme="soft"] body { background: #faf7f3; color: #2d1f14; }
-    [data-theme="soft"] .hero h1 {
-      background: linear-gradient(135deg, #3d1f0a 40%, #e94560);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    [data-theme="soft"] .hero-sub { color: #b09080; }
-    [data-theme="soft"] .divider {
-      background: linear-gradient(90deg, transparent, #e0cfc4 20%, #e0cfc4 80%, transparent);
-    }
-    [data-theme="soft"] .game-card {
-      border-color: rgba(0,0,0,.07);
-      box-shadow: 0 2px 12px rgba(100,60,20,.07);
-    }
-    [data-theme="soft"] .game-card:hover {
-      box-shadow: 0 12px 40px rgba(100,60,20,.14), 0 0 24px rgba(var(--accent-rgb),.1);
-    }
-    [data-theme="soft"] .card-red    { background: linear-gradient(110deg, rgba(233,69,96,.1)    0%, #fff 60%); }
-    [data-theme="soft"] .card-blue   { background: linear-gradient(110deg, rgba(79,158,255,.1)   0%, #fff 60%); }
-    [data-theme="soft"] .card-orange { background: linear-gradient(110deg, rgba(255,112,67,.1)   0%, #fff 60%); }
-    [data-theme="soft"] .card-cyan   { background: linear-gradient(110deg, rgba(6,182,212,.1)    0%, #fff 60%); }
-    [data-theme="soft"] .card-green  { background: linear-gradient(110deg, rgba(34,197,94,.1)    0%, #fff 60%); }
-    [data-theme="soft"] .card-amber  { background: linear-gradient(110deg, rgba(245,158,11,.1)   0%, #fff 60%); }
-    [data-theme="soft"] .card-purple { background: linear-gradient(110deg, rgba(167,139,250,.1)  0%, #fff 60%); }
-    [data-theme="soft"] .card-pink    { background: linear-gradient(110deg, rgba(236,72,153,.1)  0%, #fff 60%); }
-    [data-theme="soft"] .card-fuchsia { background: linear-gradient(110deg, rgba(217,70,239,.1)  0%, #fff 60%); }
-    [data-theme="soft"] .card-teal    { background: linear-gradient(110deg, rgba(20,184,166,.1)  0%, #fff 60%); }
-    [data-theme="soft"] .card-lime    { background: linear-gradient(110deg, rgba(132,204,22,.1)  0%, #fff 60%); }
-    [data-theme="soft"] .card-indigo  { background: linear-gradient(110deg, rgba(99,102,241,.1)  0%, #fff 60%); }
-    [data-theme="soft"] .card-body h2 { color: #2d1f14; }
-    [data-theme="soft"] .card-body p  { color: #8a7060; }
-    [data-theme="soft"] .card-icon-col { border-color: rgba(0,0,0,.05); }
-    [data-theme="soft"] .tag { background: rgba(0,0,0,.05); }
-    [data-theme="soft"] footer { color: #c0b0a0; }
-    [data-theme="soft"] .coming-soon-badge { border-color: rgba(0,0,0,.12); color: #9a8070; }
 
-    [data-theme="sunset"] body { background: #180c2a; color: #f8ddc8; }
-    [data-theme="sunset"] .hero h1 { background: linear-gradient(135deg, #f8ddc8 40%, #ff6040); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    [data-theme="sunset"] .hero-sub { color: #7a4862; }
-    [data-theme="sunset"] .divider { background: linear-gradient(90deg, transparent, #3a1a55 20%, #3a1a55 80%, transparent); }
-    [data-theme="sunset"] .game-card { border-color: rgba(255,255,255,.06); }
-    [data-theme="sunset"] .card-red    { background: linear-gradient(110deg, rgba(255,80,80,.2)    0%, #28123e 50%); }
-    [data-theme="sunset"] .card-blue   { background: linear-gradient(110deg, rgba(80,120,255,.2)   0%, #28123e 50%); }
-    [data-theme="sunset"] .card-orange { background: linear-gradient(110deg, rgba(255,120,60,.2)   0%, #28123e 50%); }
-    [data-theme="sunset"] .card-cyan   { background: linear-gradient(110deg, rgba(6,182,212,.2)    0%, #28123e 50%); }
-    [data-theme="sunset"] .card-green  { background: linear-gradient(110deg, rgba(34,197,94,.2)    0%, #28123e 50%); }
-    [data-theme="sunset"] .card-amber  { background: linear-gradient(110deg, rgba(245,158,11,.2)   0%, #28123e 50%); }
-    [data-theme="sunset"] .card-purple { background: linear-gradient(110deg, rgba(200,100,255,.2)  0%, #28123e 50%); }
-    [data-theme="sunset"] .card-pink    { background: linear-gradient(110deg, rgba(255,80,160,.2)  0%, #28123e 50%); }
-    [data-theme="sunset"] .card-fuchsia { background: linear-gradient(110deg, rgba(220,80,250,.2)  0%, #28123e 50%); }
-    [data-theme="sunset"] .card-teal    { background: linear-gradient(110deg, rgba(20,180,170,.2)  0%, #28123e 50%); }
-    [data-theme="sunset"] .card-lime    { background: linear-gradient(110deg, rgba(140,200,20,.2)  0%, #28123e 50%); }
-    [data-theme="sunset"] .card-indigo  { background: linear-gradient(110deg, rgba(120,100,250,.2) 0%, #28123e 50%); }
-    [data-theme="sunset"] .card-body h2 { color: #f8ddc8; }
-    [data-theme="sunset"] .card-body p  { color: #7a4862; }
-    [data-theme="sunset"] .card-icon-col { border-color: rgba(255,255,255,.05); }
-    [data-theme="sunset"] .tag { background: rgba(255,255,255,.07); }
-    [data-theme="sunset"] footer { color: #3e1a38; }
-    [data-theme="sunset"] .coming-soon-badge { border-color: rgba(255,255,255,.18); color: #7a4862; }
-
-    [data-theme="forest"] body { background: #081410; color: #e8f2e0; }
-    [data-theme="forest"] .hero h1 { background: linear-gradient(135deg, #e8f2e0 40%, #4ade80); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    [data-theme="forest"] .hero-sub { color: #4e7040; }
-    [data-theme="forest"] .divider { background: linear-gradient(90deg, transparent, #1c3a22 20%, #1c3a22 80%, transparent); }
-    [data-theme="forest"] .game-card { border-color: rgba(255,255,255,.06); }
-    [data-theme="forest"] .card-red    { background: linear-gradient(110deg, rgba(233,69,96,.2)    0%, #0e2018 50%); }
-    [data-theme="forest"] .card-blue   { background: linear-gradient(110deg, rgba(79,158,255,.2)   0%, #0e2018 50%); }
-    [data-theme="forest"] .card-orange { background: linear-gradient(110deg, rgba(255,112,67,.2)   0%, #0e2018 50%); }
-    [data-theme="forest"] .card-cyan   { background: linear-gradient(110deg, rgba(6,182,212,.2)    0%, #0e2018 50%); }
-    [data-theme="forest"] .card-green  { background: linear-gradient(110deg, rgba(34,197,94,.2)    0%, #0e2018 50%); }
-    [data-theme="forest"] .card-amber  { background: linear-gradient(110deg, rgba(245,158,11,.2)   0%, #0e2018 50%); }
-    [data-theme="forest"] .card-purple { background: linear-gradient(110deg, rgba(167,139,250,.2)  0%, #0e2018 50%); }
-    [data-theme="forest"] .card-pink    { background: linear-gradient(110deg, rgba(236,72,153,.2)  0%, #0e2018 50%); }
-    [data-theme="forest"] .card-fuchsia { background: linear-gradient(110deg, rgba(217,70,239,.2)  0%, #0e2018 50%); }
-    [data-theme="forest"] .card-teal    { background: linear-gradient(110deg, rgba(20,184,166,.2)  0%, #0e2018 50%); }
-    [data-theme="forest"] .card-lime    { background: linear-gradient(110deg, rgba(132,204,22,.2)  0%, #0e2018 50%); }
-    [data-theme="forest"] .card-indigo  { background: linear-gradient(110deg, rgba(99,102,241,.2)  0%, #0e2018 50%); }
-    [data-theme="forest"] .card-body h2 { color: #e8f2e0; }
-    [data-theme="forest"] .card-body p  { color: #4e7040; }
-    [data-theme="forest"] .card-icon-col { border-color: rgba(255,255,255,.05); }
-    [data-theme="forest"] .tag { background: rgba(255,255,255,.07); }
-    [data-theme="forest"] footer { color: #1a2e18; }
-    [data-theme="forest"] .coming-soon-badge { border-color: rgba(255,255,255,.18); color: #4e7040; }
   </style>
 </head>
 <body>
