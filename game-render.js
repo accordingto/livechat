@@ -168,6 +168,9 @@ const GAME_RENDER = (() => {
       .gr-ps-btn:hover  { border-color: #ec4899; color: #ec4899; }
       .gr-ps-btn:active { transform: scale(.95); }
       .gr-ps-btn.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,.13); }
+      @media (max-width: 520px) {
+        .gr-ps-btn { padding: 8px 16px; }
+      }
     `;
     document.head.appendChild(s);
   }
@@ -285,7 +288,8 @@ const GAME_RENDER = (() => {
 
     const grid = document.getElementById('gr-roles-grid');
     if (!grid) return;
-    grid.style.gridTemplateColumns = (n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
+    const narrow = window.innerWidth <= 520;
+    grid.style.gridTemplateColumns = (narrow || n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
     grid.innerHTML = '';
     for (let i = 0; i < n; i++) {
       const role = sc[SCENE_KEYS[i]];

@@ -187,8 +187,10 @@
     /* Mobile */
     @media (max-width: 560px) {
       .scene-card { padding: 22px 18px; }
-      .roles-grid { grid-template-columns: 1fr; }
-      .role-card.full-width { grid-column: auto; }
+      .sc-placeholder { min-height: 160px; }
+      .sc-placeholder .big-emoji { font-size: 2.5rem; }
+      .ps-btn { padding: 8px 16px; }
+      .filter-btn { padding: 8px 14px; }
     }
 
     /* Soft theme ps-btn */
@@ -409,7 +411,8 @@
 
       /* Re-render roles grid */
       const grid = document.getElementById('roles-grid');
-      grid.style.gridTemplateColumns = (n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
+      const narrow = window.innerWidth <= 560;
+      grid.style.gridTemplateColumns = (narrow || n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
       grid.innerHTML = '';
       for (let i = 0; i < n; i++) {
         const role   = getRoleData(currentScene, i);

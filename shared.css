@@ -164,6 +164,13 @@ a.back:hover { color: var(--text); }
 [data-theme="forest"] .gr-role-judge .gr-role-val { color: #a3e635; }
 
 
+@media (max-width: 520px) {
+  .topbar { margin-bottom: 24px; }
+  .header { margin-bottom: 22px; }
+  .header p { font-size: .83rem; }
+  .reset-btn { padding: 13px 20px; font-size: .92rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
