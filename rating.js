@@ -74,11 +74,15 @@ const GAME_RATING = (() => {
   }
 
   async function submitRating(gameId, scenarioId, rating) {
-    await fetch(`${SUPABASE_URL}/rest/v1/game_ratings`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/game_ratings`, {
       method:  'POST',
       headers: apiHeaders(),
       body:    JSON.stringify({ game_id: gameId, scenario_id: String(scenarioId), rating }),
     });
+    if (!res.ok) {
+      const msg = await res.text().catch(() => '');
+      console.warn('[rating] submit failed', res.status, msg);
+    }
   }
 
   async function fetchStats(gameId, scenarioId) {
@@ -91,9 +95,8 @@ const GAME_RATING = (() => {
     );
     if (!res.ok) return null;
     const rows = await res.json();
-    if (!rows.length) return null;
     const up   = rows.filter(r => r.rating > 0).length;
-    const down = rows.filter(r => r.rating < 0).length;
+    const down = rows.filter(r => r.rating <= 0).length;
     return { up, down };
   }
 
@@ -108,20 +111,28 @@ const GAME_RATING = (() => {
   async function handleVote(value) {
     if (_submitted) return;
     _submitted = true;
+
+    const upEl   = _upBtn.querySelector('.thumb-count');
+    const downEl = _downBtn.querySelector('.thumb-count');
+    let optUp   = parseInt(upEl.textContent)   || 0;
+    let optDown = parseInt(downEl.textContent) || 0;
+
     if (value > 0) {
       _upBtn.classList.add('voted');
       _downBtn.disabled = true;
+      upEl.textContent = ++optUp;
     } else {
       _downBtn.classList.add('voted');
       _upBtn.disabled = true;
+      downEl.textContent = ++optDown;
     }
 
     try {
       await submitRating(_gameId, _scenarioId, value);
       const stats = await fetchStats(_gameId, _scenarioId);
       if (stats) {
-        _upBtn.querySelector('.thumb-count').textContent   = stats.up;
-        _downBtn.querySelector('.thumb-count').textContent = stats.down;
+        upEl.textContent   = Math.max(stats.up,   optUp);
+        downEl.textContent = Math.max(stats.down, optDown);
       }
     } catch (_) {}
   }
@@ -147,7 +158,7 @@ const GAME_RATING = (() => {
     _downBtn.className = 'rating-thumb down';
     _downBtn.setAttribute('aria-label', 'Thumbs down');
     _downBtn.innerHTML = '<span class="thumb-label">NG</span><span class="thumb-count"></span>';
-    _downBtn.addEventListener('click', () => handleVote(-1));
+    _downBtn.addEventListener('click', () => handleVote(0));
 
     _bar.appendChild(_upBtn);
     _bar.appendChild(_downBtn);

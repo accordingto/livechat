@@ -352,7 +352,7 @@ function render() {
 
   const items = Object.values(map).map(g => {
     const up   = g.ratings.filter(r => r > 0).length;
-    const down = g.ratings.filter(r => r < 0).length;
+    const down = g.ratings.filter(r => r <= 0).length;
     const net  = up - down;
     const tier = net > 0 ? 'liked' : net < 0 ? 'disliked' : '';
     return { ...g, up, down, net, tier };
@@ -443,7 +443,7 @@ function updateBulkCount(items) {
     });
     items = Object.values(map).map(g => {
       const up   = g.ratings.filter(r => r > 0).length;
-      const down = g.ratings.filter(r => r < 0).length;
+      const down = g.ratings.filter(r => r <= 0).length;
       return { ...g, up, down, net: up - down };
     });
   }
@@ -506,7 +506,7 @@ async function bulkDelete() {
   const targets = Object.values(map)
     .map(g => {
       const up   = g.ratings.filter(r => r > 0).length;
-      const down = g.ratings.filter(r => r < 0).length;
+      const down = g.ratings.filter(r => r <= 0).length;
       return { ...g, up, down };
     })
     .filter(g => g.down > g.up);
