@@ -1,9 +1,9 @@
-/* rating.js — 情境評分元件（👍 / 👎）
+/* rating.js — 情境評分元件（👍 / 👎，inline 版本）
    使用前須在同一頁先載入 supabase-config.js
    API:
-     GAME_RATING.init(gameId)        — 頁面載入時呼叫一次，建立隱藏的評分條
-     GAME_RATING.showFor(scenarioId) — 題目揭曉後呼叫，顯示並重置評分條
-     GAME_RATING.hide()              — 新一輪開始時呼叫，隱藏評分條        */
+     GAME_RATING.init(gameId)        — 頁面載入時呼叫一次
+     GAME_RATING.showFor(scenarioId) — 題目揭曉後呼叫
+     GAME_RATING.hide()              — 新一輪開始時呼叫        */
 
 const GAME_RATING = (() => {
 
@@ -13,34 +13,25 @@ const GAME_RATING = (() => {
     const s = document.createElement('style');
     s.id = 'rating-styles';
     s.textContent = `
-      .rating-fab {
-        position: fixed;
-        bottom: max(20px, env(safe-area-inset-bottom));
-        right: 20px;
-        z-index: 999;
+      .rating-inline {
         display: flex;
+        justify-content: center;
         align-items: center;
-        gap: 6px;
-        background: rgba(13, 13, 26, 0.92);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255,255,255,.09);
-        border-radius: 14px;
-        padding: 7px 10px;
+        gap: 8px;
+        padding: 10px 0 2px;
         animation: ratingIn .3s ease both;
-        box-shadow: 0 4px 24px rgba(0,0,0,.4);
       }
       @keyframes ratingIn {
-        from { opacity: 0; transform: translateX(12px); }
-        to   { opacity: 1; transform: translateX(0); }
+        from { opacity: 0; transform: translateY(5px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
       .rating-thumb {
-        background: none;
+        background: rgba(255,255,255,.04);
         border: 1.5px solid rgba(255,255,255,.1);
         border-radius: 10px;
-        font-size: 1.1rem;
+        font-size: .95rem;
         cursor: pointer;
-        padding: 5px 10px;
+        padding: 5px 12px;
         transition: background .15s, border-color .15s, transform .1s;
         font-family: inherit;
         line-height: 1;
@@ -49,22 +40,20 @@ const GAME_RATING = (() => {
         align-items: center;
         gap: 5px;
         -webkit-text-fill-color: initial;
+        color: #888;
       }
-      .rating-thumb:hover:not(:disabled)      { transform: scale(1.1); }
-      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.15); border-color: #4ade80; }
-      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.15); border-color: #f87171; }
-      .rating-thumb.up.voted   { background: rgba(74,222,128,.2);  border-color: #4ade80; }
-      .rating-thumb.down.voted { background: rgba(248,113,113,.2); border-color: #f87171; }
+      .rating-thumb:hover:not(:disabled)      { transform: scale(1.08); }
+      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.12); border-color: #4ade80; color: #4ade80; }
+      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.12); border-color: #f87171; color: #f87171; }
+      .rating-thumb.up.voted   { background: rgba(74,222,128,.15);  border-color: #4ade80; color: #4ade80; }
+      .rating-thumb.down.voted { background: rgba(248,113,113,.15); border-color: #f87171; color: #f87171; }
       .rating-thumb:disabled   { opacity: .5; cursor: default; transform: none !important; }
       .rating-thumb .thumb-count {
         font-size: .72rem;
         font-weight: 700;
-        color: #555;
         min-width: 10px;
         text-align: left;
       }
-      .rating-thumb.up.voted   .thumb-count { color: #4ade80; }
-      .rating-thumb.down.voted .thumb-count { color: #f87171; }
     `;
     document.head.appendChild(s);
   }
@@ -136,7 +125,7 @@ const GAME_RATING = (() => {
     _gameId = gameId;
 
     _bar = document.createElement('div');
-    _bar.className = 'rating-fab';
+    _bar.className = 'rating-inline';
     _bar.id = 'rating-bar';
     _bar.style.display = 'none';
 
@@ -154,7 +143,11 @@ const GAME_RATING = (() => {
 
     _bar.appendChild(_upBtn);
     _bar.appendChild(_downBtn);
-    document.body.appendChild(_bar);
+
+    /* 插入到頁面指定錨點，若無則 fallback 到 body */
+    const anchor = document.getElementById('rating-anchor');
+    if (anchor) anchor.appendChild(_bar);
+    else document.body.appendChild(_bar);
   }
 
   function showFor(scenarioId) {
