@@ -131,7 +131,7 @@ const GAME_RATING = (() => {
     _upBtn = document.createElement('button');
     _upBtn.className = 'rating-thumb up';
     _upBtn.setAttribute('aria-label', 'Thumbs up');
-    _upBtn.innerHTML = '<span class="thumb-emoji">👍</span><span class="thumb-count"></span>';
+    _upBtn.innerHTML = '<span class="thumb-emoji">✅</span><span class="thumb-count"></span>';
     _upBtn.addEventListener('click', () => handleVote(1));
 
     _downBtn = document.createElement('button');
