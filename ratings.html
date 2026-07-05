@@ -250,13 +250,13 @@
     <span class="filter-label">Show</span>
     <button class="filter-btn active" data-filter="all">All</button>
     <button class="filter-btn" data-filter="liked">👍 Popular</button>
-    <button class="filter-btn" data-filter="disliked">👎 Disliked</button>
+    <button class="filter-btn" data-filter="disliked">❌ Disliked</button>
   </div>
 
   <div class="bulk-row" id="bulk-row">
     <span class="filter-label">Bulk delete</span>
     <button class="bulk-del-btn" id="bulk-del-btn" onclick="bulkDelete()">
-      🗑️ Delete all disliked (👎 &gt; 👍)
+      🗑️ Delete all disliked (❌ &gt; 👍)
       <span class="bulk-count" id="bulk-count"></span>
     </button>
   </div>
@@ -364,7 +364,7 @@ function render() {
   summary.innerHTML = `
     <div class="summary-chip">Scenarios rated <strong>${items.length}</strong></div>
     <div class="summary-chip">Total <strong class="up">👍 ${totalUp}</strong></div>
-    <div class="summary-chip">Total <strong class="down">👎 ${totalDown}</strong></div>
+    <div class="summary-chip">Total <strong class="down">❌ ${totalDown}</strong></div>
   `;
 
   /* filter */
@@ -407,7 +407,7 @@ function render() {
         <div class="scenario-row ${item.tier}" id="${rowId}">
           <div class="sc-thumbs">
             <span class="sc-thumb-up">👍<span class="sc-thumb-num">${item.up}</span></span>
-            <span class="sc-thumb-down">👎<span class="sc-thumb-num">${item.down}</span></span>
+            <span class="sc-thumb-down">❌<span class="sc-thumb-num">${item.down}</span></span>
           </div>
           <div class="sc-body">
             ${mainHTML}${detHTML}${fallback}
@@ -493,7 +493,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-/* ── Bulk delete (all where 👎 > 👍) ── */
+/* ── Bulk delete (all where ❌ > 👍) ── */
 async function bulkDelete() {
   /* find targets from allData */
   const map = {};
