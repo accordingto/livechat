@@ -45,6 +45,16 @@ const GAME_RATING = (() => {
       .rating-thumb:active:not(:disabled) { transform: scale(.97); }
       .rating-thumb:disabled   { opacity: .3; cursor: default; transform: none !important; }
       .rating-thumb .thumb-emoji { font-size: 1.15rem; line-height: 1; }
+      .rating-thumb .thumb-label {
+        font-size: .85rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        color: #888;
+      }
+      .rating-thumb.up.voted   .thumb-label { color: #4ade80; }
+      .rating-thumb.down.voted .thumb-label { color: #f87171; }
+      .rating-thumb.up:hover:not(:disabled)   .thumb-label { color: #4ade80; }
+      .rating-thumb.down:hover:not(:disabled) .thumb-label { color: #f87171; }
       .rating-thumb .thumb-count {
         font-size: .8rem;
         font-weight: 800;
@@ -131,13 +141,13 @@ const GAME_RATING = (() => {
     _upBtn = document.createElement('button');
     _upBtn.className = 'rating-thumb up';
     _upBtn.setAttribute('aria-label', 'Thumbs up');
-    _upBtn.innerHTML = '<span class="thumb-emoji">✅</span><span class="thumb-count"></span>';
+    _upBtn.innerHTML = '<span class="thumb-emoji">✅</span><span class="thumb-label">OK</span><span class="thumb-count"></span>';
     _upBtn.addEventListener('click', () => handleVote(1));
 
     _downBtn = document.createElement('button');
     _downBtn.className = 'rating-thumb down';
     _downBtn.setAttribute('aria-label', 'Thumbs down');
-    _downBtn.innerHTML = '<span class="thumb-emoji">❌</span><span class="thumb-count"></span>';
+    _downBtn.innerHTML = '<span class="thumb-emoji">❌</span><span class="thumb-label">NG</span><span class="thumb-count"></span>';
     _downBtn.addEventListener('click', () => handleVote(-1));
 
     _bar.appendChild(_upBtn);
