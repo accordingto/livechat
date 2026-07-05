@@ -27,33 +27,32 @@ const GAME_RATING = (() => {
         background: transparent;
         border: 2px solid rgba(255,255,255,.15);
         border-radius: 999px;
-        font-size: .95rem;
-        font-weight: 700;
         cursor: pointer;
-        padding: 14px 18px;
-        transition: background .15s, border-color .15s, color .15s, transform .1s;
+        padding: 13px 18px;
+        transition: background .15s, border-color .15s, transform .1s;
         font-family: inherit;
-        line-height: 1;
         touch-action: manipulation;
         display: flex;
         align-items: center;
         gap: 6px;
-        -webkit-text-fill-color: initial;
-        color: #555;
         white-space: nowrap;
       }
       .rating-thumb:hover:not(:disabled)      { transform: translateY(-1px); }
-      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.1); border-color: #4ade80; color: #4ade80; }
-      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.1); border-color: #f87171; color: #f87171; }
-      .rating-thumb.up.voted   { background: rgba(74,222,128,.12);  border-color: #4ade80; color: #4ade80; }
-      .rating-thumb.down.voted { background: rgba(248,113,113,.12); border-color: #f87171; color: #f87171; }
+      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.1);   border-color: #4ade80; }
+      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.1);  border-color: #f87171; }
+      .rating-thumb.up.voted   { background: rgba(74,222,128,.12);  border-color: #4ade80; }
+      .rating-thumb.down.voted { background: rgba(248,113,113,.12); border-color: #f87171; }
       .rating-thumb:active:not(:disabled) { transform: scale(.97); }
       .rating-thumb:disabled   { opacity: .3; cursor: default; transform: none !important; }
+      .rating-thumb .thumb-emoji { font-size: 1.15rem; line-height: 1; }
       .rating-thumb .thumb-count {
         font-size: .8rem;
         font-weight: 800;
+        color: #666;
         min-width: 10px;
       }
+      .rating-thumb.up.voted   .thumb-count { color: #4ade80; }
+      .rating-thumb.down.voted .thumb-count { color: #f87171; }
     `;
     document.head.appendChild(s);
   }
@@ -132,13 +131,13 @@ const GAME_RATING = (() => {
     _upBtn = document.createElement('button');
     _upBtn.className = 'rating-thumb up';
     _upBtn.setAttribute('aria-label', 'Thumbs up');
-    _upBtn.innerHTML = '👍 <span class="thumb-count"></span>';
+    _upBtn.innerHTML = '<span class="thumb-emoji">👍</span><span class="thumb-count"></span>';
     _upBtn.addEventListener('click', () => handleVote(1));
 
     _downBtn = document.createElement('button');
     _downBtn.className = 'rating-thumb down';
     _downBtn.setAttribute('aria-label', 'Thumbs down');
-    _downBtn.innerHTML = '👎 <span class="thumb-count"></span>';
+    _downBtn.innerHTML = '<span class="thumb-emoji">👎</span><span class="thumb-count"></span>';
     _downBtn.addEventListener('click', () => handleVote(-1));
 
     _bar.appendChild(_upBtn);
