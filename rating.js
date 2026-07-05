@@ -117,8 +117,8 @@ const GAME_RATING = (() => {
       await submitRating(_gameId, _scenarioId, value);
       const stats = await fetchStats(_gameId, _scenarioId);
       if (stats) {
-        _upBtn.querySelector('.thumb-count').textContent   = stats.up   || '';
-        _downBtn.querySelector('.thumb-count').textContent = stats.down || '';
+        _upBtn.querySelector('.thumb-count').textContent   = stats.up;
+        _downBtn.querySelector('.thumb-count').textContent = stats.down;
       }
     } catch (_) {}
   }
@@ -163,8 +163,8 @@ const GAME_RATING = (() => {
     _downBtn.disabled = false;
     _upBtn.classList.remove('voted');
     _downBtn.classList.remove('voted');
-    _upBtn.querySelector('.thumb-count').textContent   = '';
-    _downBtn.querySelector('.thumb-count').textContent = '';
+    _upBtn.querySelector('.thumb-count').textContent   = '0';
+    _downBtn.querySelector('.thumb-count').textContent = '0';
 
     _bar.style.animation = 'none';
     _bar.style.display   = '';
@@ -172,8 +172,8 @@ const GAME_RATING = (() => {
 
     fetchStats(_gameId, _scenarioId).then(stats => {
       if (stats && !_submitted) {
-        _upBtn.querySelector('.thumb-count').textContent   = stats.up   || '';
-        _downBtn.querySelector('.thumb-count').textContent = stats.down || '';
+        _upBtn.querySelector('.thumb-count').textContent   = stats.up;
+        _downBtn.querySelector('.thumb-count').textContent = stats.down;
       }
     }).catch(() => {});
   }
