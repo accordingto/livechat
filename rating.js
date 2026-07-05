@@ -15,44 +15,44 @@ const GAME_RATING = (() => {
     s.textContent = `
       .rating-inline {
         display: flex;
-        justify-content: center;
         align-items: center;
         gap: 8px;
-        padding: 10px 0 2px;
-        animation: ratingIn .3s ease both;
+        animation: ratingIn .25s ease both;
       }
       @keyframes ratingIn {
-        from { opacity: 0; transform: translateY(5px); }
+        from { opacity: 0; transform: translateY(4px); }
         to   { opacity: 1; transform: translateY(0); }
       }
       .rating-thumb {
-        background: rgba(255,255,255,.04);
-        border: 1.5px solid rgba(255,255,255,.1);
-        border-radius: 10px;
+        background: transparent;
+        border: 2px solid rgba(255,255,255,.15);
+        border-radius: 999px;
         font-size: .95rem;
+        font-weight: 700;
         cursor: pointer;
-        padding: 5px 12px;
-        transition: background .15s, border-color .15s, transform .1s;
+        padding: 14px 18px;
+        transition: background .15s, border-color .15s, color .15s, transform .1s;
         font-family: inherit;
         line-height: 1;
         touch-action: manipulation;
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
         -webkit-text-fill-color: initial;
-        color: #888;
+        color: #555;
+        white-space: nowrap;
       }
-      .rating-thumb:hover:not(:disabled)      { transform: scale(1.08); }
-      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.12); border-color: #4ade80; color: #4ade80; }
-      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.12); border-color: #f87171; color: #f87171; }
-      .rating-thumb.up.voted   { background: rgba(74,222,128,.15);  border-color: #4ade80; color: #4ade80; }
-      .rating-thumb.down.voted { background: rgba(248,113,113,.15); border-color: #f87171; color: #f87171; }
-      .rating-thumb:disabled   { opacity: .5; cursor: default; transform: none !important; }
+      .rating-thumb:hover:not(:disabled)      { transform: translateY(-1px); }
+      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.1); border-color: #4ade80; color: #4ade80; }
+      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.1); border-color: #f87171; color: #f87171; }
+      .rating-thumb.up.voted   { background: rgba(74,222,128,.12);  border-color: #4ade80; color: #4ade80; }
+      .rating-thumb.down.voted { background: rgba(248,113,113,.12); border-color: #f87171; color: #f87171; }
+      .rating-thumb:active:not(:disabled) { transform: scale(.97); }
+      .rating-thumb:disabled   { opacity: .3; cursor: default; transform: none !important; }
       .rating-thumb .thumb-count {
-        font-size: .72rem;
-        font-weight: 700;
+        font-size: .8rem;
+        font-weight: 800;
         min-width: 10px;
-        text-align: left;
       }
     `;
     document.head.appendChild(s);
