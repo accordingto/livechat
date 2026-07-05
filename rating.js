@@ -137,7 +137,7 @@ const GAME_RATING = (() => {
     _downBtn = document.createElement('button');
     _downBtn.className = 'rating-thumb down';
     _downBtn.setAttribute('aria-label', 'Thumbs down');
-    _downBtn.innerHTML = '<span class="thumb-emoji">👎</span><span class="thumb-count"></span>';
+    _downBtn.innerHTML = '<span class="thumb-emoji">❌</span><span class="thumb-count"></span>';
     _downBtn.addEventListener('click', () => handleVote(-1));
 
     _bar.appendChild(_upBtn);
