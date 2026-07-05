@@ -1,4 +1,4 @@
-/* rating.js — 情境評分元件（1–5 顆星，針對每個抽到的題目）
+/* rating.js — 情境評分元件（👍 / 👎）
    使用前須在同一頁先載入 supabase-config.js
    API:
      GAME_RATING.init(gameId)        — 頁面載入時呼叫一次，建立隱藏的評分條
@@ -20,13 +20,13 @@ const GAME_RATING = (() => {
         z-index: 999;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
         background: rgba(13, 13, 26, 0.92);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
         border: 1px solid rgba(255,255,255,.09);
         border-radius: 14px;
-        padding: 10px 14px;
+        padding: 7px 10px;
         animation: ratingIn .3s ease both;
         box-shadow: 0 4px 24px rgba(0,0,0,.4);
       }
@@ -34,57 +34,37 @@ const GAME_RATING = (() => {
         from { opacity: 0; transform: translateX(12px); }
         to   { opacity: 1; transform: translateX(0); }
       }
-      .rating-stars {
-        display: flex;
-        gap: 1px;
-        align-items: center;
-      }
-      .rating-star {
-        font-size: 1.45rem;
-        cursor: pointer;
-        transition: transform .1s, filter .1s;
-        line-height: 1;
-        -webkit-text-fill-color: initial;
+      .rating-thumb {
         background: none;
-        border: none;
-        padding: 4px 2px;
+        border: 1.5px solid rgba(255,255,255,.1);
+        border-radius: 10px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 5px 10px;
+        transition: background .15s, border-color .15s, transform .1s;
+        font-family: inherit;
+        line-height: 1;
         touch-action: manipulation;
-        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        -webkit-text-fill-color: initial;
       }
-      .rating-star:hover,
-      .rating-star.hover {
-        transform: scale(1.32);
-        filter: drop-shadow(0 0 6px rgba(245,158,11,.9));
-        color: #f59e0b;
-      }
-      .rating-star.filled {
-        color: #f59e0b;
-        filter: drop-shadow(0 0 3px rgba(245,158,11,.4));
-      }
-      .rating-sep {
-        width: 1px;
-        height: 18px;
-        background: rgba(255,255,255,.08);
-        flex-shrink: 0;
-      }
-      .rating-avg {
-        font-size: .75rem;
-        color: #444;
-        white-space: nowrap;
-        min-width: 54px;
-      }
-      .rating-avg strong { color: #f59e0b; }
-      .rating-thanks {
-        font-size: .78rem;
+      .rating-thumb:hover:not(:disabled)      { transform: scale(1.1); }
+      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.15); border-color: #4ade80; }
+      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.15); border-color: #f87171; }
+      .rating-thumb.up.voted   { background: rgba(74,222,128,.2);  border-color: #4ade80; }
+      .rating-thumb.down.voted { background: rgba(248,113,113,.2); border-color: #f87171; }
+      .rating-thumb:disabled   { opacity: .5; cursor: default; transform: none !important; }
+      .rating-thumb .thumb-count {
+        font-size: .72rem;
         font-weight: 700;
-        color: #4ade80;
-        white-space: nowrap;
-        animation: ratingFadeIn .25s ease;
+        color: #555;
+        min-width: 10px;
+        text-align: left;
       }
-      @keyframes ratingFadeIn {
-        from { opacity: 0; transform: scale(.88); }
-        to   { opacity: 1; transform: scale(1); }
-      }
+      .rating-thumb.up.voted   .thumb-count { color: #4ade80; }
+      .rating-thumb.down.voted .thumb-count { color: #f87171; }
     `;
     document.head.appendChild(s);
   }
@@ -118,8 +98,9 @@ const GAME_RATING = (() => {
     if (!res.ok) return null;
     const rows = await res.json();
     if (!rows.length) return null;
-    const avg = rows.reduce((s, r) => s + r.rating, 0) / rows.length;
-    return { avg: avg.toFixed(1), count: rows.length };
+    const up   = rows.filter(r => r.rating > 0).length;
+    const down = rows.filter(r => r.rating < 0).length;
+    return { up, down };
   }
 
   /* ── 內部狀態 ── */
@@ -127,58 +108,24 @@ const GAME_RATING = (() => {
   let _scenarioId = null;
   let _submitted  = false;
   let _bar        = null;
-  let _starsWrap  = null;
-  let _avgEl      = null;
-  let _sep        = null;
-  let _hovered    = 0;
-  let _starEls    = [];
+  let _upBtn      = null;
+  let _downBtn    = null;
 
-  /* ── 星星 ── */
-  const EMPTY = '☆', FULL = '★';
-
-  function buildStars() {
-    _starsWrap.innerHTML = '';
-    _starEls = [1,2,3,4,5].map(n => {
-      const btn = document.createElement('button');
-      btn.className = 'rating-star';
-      btn.setAttribute('aria-label', `${n} star${n > 1 ? 's' : ''}`);
-      btn.textContent = EMPTY;
-      btn.addEventListener('mouseenter', () => { if (_submitted) return; _hovered = n; refreshStars(); });
-      btn.addEventListener('mouseleave', () => { if (_submitted) return; _hovered = 0; refreshStars(); });
-      btn.addEventListener('click',      () => { if (_submitted) return; handleSubmit(n); });
-      _starsWrap.appendChild(btn);
-      return btn;
-    });
-  }
-
-  function refreshStars() {
-    _starEls.forEach((btn, i) => {
-      const n = i + 1;
-      btn.textContent = n <= _hovered ? FULL : EMPTY;
-      btn.classList.toggle('filled', n <= _hovered);
-      btn.classList.toggle('hover',  _hovered > 0 && n <= _hovered);
-    });
-  }
-
-  async function handleSubmit(rating) {
+  async function handleVote(value) {
+    if (_submitted) return;
     _submitted = true;
-    _starEls.forEach((btn, i) => {
-      btn.textContent = i + 1 <= rating ? FULL : EMPTY;
-      btn.classList.toggle('filled', i + 1 <= rating);
-      btn.style.cursor = 'default';
-    });
-
-    _sep.style.display = '';
-    _avgEl.style.display = '';
-    const thanks = document.createElement('span');
-    thanks.className = 'rating-thanks';
-    thanks.textContent = '✓';
-    _avgEl.replaceWith(thanks);
+    _upBtn.disabled   = true;
+    _downBtn.disabled = true;
+    if (value > 0) _upBtn.classList.add('voted');
+    else           _downBtn.classList.add('voted');
 
     try {
-      await submitRating(_gameId, _scenarioId, rating);
+      await submitRating(_gameId, _scenarioId, value);
       const stats = await fetchStats(_gameId, _scenarioId);
-      if (stats) thanks.textContent = `✓ ${stats.avg}★`;
+      if (stats) {
+        _upBtn.querySelector('.thumb-count').textContent   = stats.up   || '';
+        _downBtn.querySelector('.thumb-count').textContent = stats.down || '';
+      }
     } catch (_) {}
   }
 
@@ -193,34 +140,33 @@ const GAME_RATING = (() => {
     _bar.id = 'rating-bar';
     _bar.style.display = 'none';
 
-    _starsWrap = document.createElement('div');
-    _starsWrap.className = 'rating-stars';
+    _upBtn = document.createElement('button');
+    _upBtn.className = 'rating-thumb up';
+    _upBtn.setAttribute('aria-label', 'Thumbs up');
+    _upBtn.innerHTML = '👍 <span class="thumb-count"></span>';
+    _upBtn.addEventListener('click', () => handleVote(1));
 
-    _sep = document.createElement('div');
-    _sep.className = 'rating-sep';
+    _downBtn = document.createElement('button');
+    _downBtn.className = 'rating-thumb down';
+    _downBtn.setAttribute('aria-label', 'Thumbs down');
+    _downBtn.innerHTML = '👎 <span class="thumb-count"></span>';
+    _downBtn.addEventListener('click', () => handleVote(-1));
 
-    _avgEl = document.createElement('span');
-    _avgEl.className = 'rating-avg';
-
-    _bar.appendChild(_starsWrap);
-    _bar.appendChild(_sep);
-    _bar.appendChild(_avgEl);
+    _bar.appendChild(_upBtn);
+    _bar.appendChild(_downBtn);
     document.body.appendChild(_bar);
   }
 
   function showFor(scenarioId) {
     _scenarioId = String(scenarioId);
     _submitted  = false;
-    _hovered    = 0;
 
-    /* 還原 avg 元素（可能被 thanks span 替換過） */
-    const thanks = _bar.querySelector('.rating-thanks');
-    if (thanks) thanks.replaceWith(_avgEl);
-    _avgEl.textContent = '';
-    _sep.style.display = 'none';
-    _avgEl.style.display = 'none';
-
-    buildStars();
+    _upBtn.disabled   = false;
+    _downBtn.disabled = false;
+    _upBtn.classList.remove('voted');
+    _downBtn.classList.remove('voted');
+    _upBtn.querySelector('.thumb-count').textContent   = '';
+    _downBtn.querySelector('.thumb-count').textContent = '';
 
     _bar.style.animation = 'none';
     _bar.style.display   = '';
@@ -228,9 +174,8 @@ const GAME_RATING = (() => {
 
     fetchStats(_gameId, _scenarioId).then(stats => {
       if (stats && !_submitted) {
-        _avgEl.innerHTML = `Avg <strong>${stats.avg}★</strong>`;
-        _sep.style.display = '';
-        _avgEl.style.display = '';
+        _upBtn.querySelector('.thumb-count').textContent   = stats.up   || '';
+        _downBtn.querySelector('.thumb-count').textContent = stats.down || '';
       }
     }).catch(() => {});
   }

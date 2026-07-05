@@ -25,7 +25,7 @@
       flex-wrap: wrap;
     }
     .page-title { font-size: 1.5rem; font-weight: 800; }
-    .page-title span { color: #f59e0b; }
+    .page-title span { color: #4ade80; }
     a.back { color: #555; text-decoration: none; font-size: .9rem; transition: color .2s; }
     a.back:hover { color: #eee; }
 
@@ -51,8 +51,8 @@
       font-family: inherit;
       transition: border-color .18s, color .18s, background .18s;
     }
-    .filter-btn:hover { border-color: #f59e0b; color: #f59e0b; }
-    .filter-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.1); }
+    .filter-btn:hover { border-color: #4ade80; color: #4ade80; }
+    .filter-btn.active { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,.1); }
 
     /* ── Summary bar ── */
     .summary {
@@ -69,7 +69,54 @@
       padding: 10px 20px;
       font-size: .85rem;
     }
-    .summary-chip strong { color: #f59e0b; font-size: 1.15rem; }
+    .summary-chip strong { font-size: 1.15rem; }
+    .summary-chip .up   { color: #4ade80; }
+    .summary-chip .down { color: #f87171; }
+
+    /* ── Bulk delete bar ── */
+    .bulk-row {
+      max-width: 860px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px 18px;
+      background: rgba(239,68,68,.04);
+      border: 1px solid rgba(239,68,68,.15);
+      border-radius: 12px;
+    }
+    .bulk-del-btn {
+      border: 1.5px solid rgba(239,68,68,.4);
+      border-radius: 999px;
+      background: transparent;
+      color: #ef4444;
+      font-size: .82rem;
+      font-weight: 700;
+      padding: 6px 18px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, border-color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bulk-del-btn:hover:not(:disabled) { background: rgba(239,68,68,.1); border-color: #ef4444; }
+    .bulk-del-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .bulk-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: rgba(239,68,68,.2);
+      color: #ef4444;
+      font-size: .68rem;
+      font-weight: 900;
+    }
+    .bulk-count:empty { display: none; }
 
     /* ── Game section ── */
     .game-section { max-width: 860px; margin: 0 auto 36px; }
@@ -102,21 +149,24 @@
       transition: background .15s;
     }
     .scenario-row:hover { background: rgba(255,255,255,.03); }
-    .scenario-row.bad  { border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.05); }
-    .scenario-row.bad:hover { background: rgba(239,68,68,.08); }
-    .scenario-row.ok   { border-color: rgba(245,158,11,.2); background: rgba(245,158,11,.04); }
-    .scenario-row.good { border-color: rgba(34,197,94,.18); background: rgba(34,197,94,.04); }
+    .scenario-row.liked    { border-color: rgba(74,222,128,.2);  background: rgba(74,222,128,.04); }
+    .scenario-row.liked:hover { background: rgba(74,222,128,.07); }
+    .scenario-row.disliked { border-color: rgba(248,113,113,.25); background: rgba(248,113,113,.05); }
+    .scenario-row.disliked:hover { background: rgba(248,113,113,.08); }
 
-    .sc-stars {
-      font-size: 1rem;
-      white-space: nowrap;
+    .sc-thumbs {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
       flex-shrink: 0;
-      min-width: 88px;
+      min-width: 56px;
       padding-top: 2px;
+      font-size: .85rem;
+      line-height: 1.5;
     }
-    .sc-stars.bad  { color: #ef4444; }
-    .sc-stars.ok   { color: #f59e0b; }
-    .sc-stars.good { color: #4ade80; }
+    .sc-thumb-up   { color: #4ade80; font-weight: 700; }
+    .sc-thumb-down { color: #f87171; font-weight: 700; }
+    .sc-thumb-num  { margin-left: 4px; }
 
     .sc-body { flex: 1; min-width: 0; }
     .sc-text {
@@ -125,54 +175,12 @@
       color: #ccc;
       word-break: break-word;
     }
-    .sc-row-bad .sc-text { color: #fca5a5; }
     .sc-meta {
       font-size: .75rem;
       color: #444;
       margin-top: 3px;
     }
     .sc-meta strong { color: #666; }
-
-    .sc-id {
-      font-size: .72rem;
-      color: #333;
-      flex-shrink: 0;
-      padding-top: 4px;
-      font-family: 'Courier New', monospace;
-    }
-
-    .sc-del {
-      flex-shrink: 0;
-      background: none;
-      border: 1.5px solid #2a1a1a;
-      border-radius: 8px;
-      color: #3a1a1a;
-      font-size: .85rem;
-      padding: 4px 9px;
-      cursor: pointer;
-      transition: border-color .15s, color .15s, background .15s;
-      font-family: inherit;
-      align-self: center;
-    }
-    .sc-del:hover {
-      border-color: #ef4444;
-      color: #ef4444;
-      background: rgba(239,68,68,.08);
-    }
-    .sc-del.deleting {
-      opacity: .4;
-      pointer-events: none;
-    }
-
-    /* ── Loading / empty ── */
-    .state-msg {
-      max-width: 860px;
-      margin: 60px auto;
-      text-align: center;
-      color: #444;
-      font-size: 1rem;
-    }
-    .state-msg .big { font-size: 2.5rem; margin-bottom: 12px; }
 
     .sc-detail {
       font-size: .82rem;
@@ -198,68 +206,37 @@
     .tag-action { background: rgba(129,140,248,.2);  color: #818cf8; }
     .tag-place  { background: rgba(52,211,153,.2);   color: #34d399; }
 
-    /* ── No data badge ── */
-    .no-data { color: #333; font-size: .85rem; padding: 8px 0; }
-
-    /* ── Bulk delete bar ── */
-    .bulk-row {
-      max-width: 860px;
-      margin: 0 auto 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      padding: 12px 18px;
-      background: rgba(239,68,68,.04);
-      border: 1px solid rgba(239,68,68,.15);
-      border-radius: 12px;
-    }
-    .bulk-stars { display: flex; gap: 1px; }
-    .bulk-star {
+    .sc-del {
+      flex-shrink: 0;
       background: none;
-      border: none;
-      font-size: 1.35rem;
-      color: #2a1010;
+      border: 1.5px solid #2a1a1a;
+      border-radius: 8px;
+      color: #3a1a1a;
+      font-size: .85rem;
+      padding: 4px 9px;
       cursor: pointer;
-      padding: 2px 4px;
-      transition: color .1s, transform .1s;
+      transition: border-color .15s, color .15s, background .15s;
       font-family: inherit;
-      line-height: 1;
+      align-self: center;
     }
-    .bulk-star.active { color: #ef4444; }
-    .bulk-star:hover  { color: #f87171; transform: scale(1.15); }
-    .bulk-star:active { transform: scale(.88); }
-    .bulk-del-btn {
-      border: 1.5px solid rgba(239,68,68,.4);
-      border-radius: 999px;
-      background: transparent;
+    .sc-del:hover {
+      border-color: #ef4444;
       color: #ef4444;
-      font-size: .82rem;
-      font-weight: 700;
-      padding: 6px 18px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background .15s, border-color .15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      background: rgba(239,68,68,.08);
     }
-    .bulk-del-btn:hover:not(:disabled) { background: rgba(239,68,68,.1); border-color: #ef4444; }
-    .bulk-del-btn:disabled { opacity: .35; cursor: not-allowed; }
-    .bulk-count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 20px;
-      height: 16px;
-      padding: 0 5px;
-      border-radius: 999px;
-      background: rgba(239,68,68,.2);
-      color: #ef4444;
-      font-size: .68rem;
-      font-weight: 900;
+    .sc-del.deleting { opacity: .4; pointer-events: none; }
+
+    /* ── Loading / empty ── */
+    .state-msg {
+      max-width: 860px;
+      margin: 60px auto;
+      text-align: center;
+      color: #444;
+      font-size: 1rem;
     }
-    .bulk-count:empty { display: none; }
+    .state-msg .big { font-size: 2.5rem; margin-bottom: 12px; }
+
+    .no-data { color: #333; font-size: .85rem; padding: 8px 0; }
   </style>
 </head>
 <body>
@@ -272,22 +249,14 @@
   <div class="filter-row" id="filter-row">
     <span class="filter-label">Show</span>
     <button class="filter-btn active" data-filter="all">All</button>
-    <button class="filter-btn" data-filter="bad">⚠️ Low (≤ 3★)</button>
-    <button class="filter-btn" data-filter="ok">Mid (3–4★)</button>
-    <button class="filter-btn" data-filter="good">Top (≥ 4★)</button>
+    <button class="filter-btn" data-filter="liked">👍 Popular</button>
+    <button class="filter-btn" data-filter="disliked">👎 Disliked</button>
   </div>
 
   <div class="bulk-row" id="bulk-row">
     <span class="filter-label">Bulk delete</span>
-    <div class="bulk-stars" id="bulk-stars">
-      <button class="bulk-star" data-n="1">★</button>
-      <button class="bulk-star" data-n="2">★</button>
-      <button class="bulk-star active" data-n="3">★</button>
-      <button class="bulk-star" data-n="4">★</button>
-      <button class="bulk-star" data-n="5">★</button>
-    </div>
     <button class="bulk-del-btn" id="bulk-del-btn" onclick="bulkDelete()">
-      🗑️ Delete all ≤ <span id="bulk-n-label">3</span>★
+      🗑️ Delete all disliked (👎 &gt; 👍)
       <span class="bulk-count" id="bulk-count"></span>
     </button>
   </div>
@@ -347,10 +316,8 @@ const _charByHash = {}, _actionByHash = {}, _placeByHash = {};
   GAME_DATA.storyteller.locations.forEach(p =>  { _placeByHash[hash(p)]  = p; });
 })();
 
-/* ── 根據 hash 取得情境細節 ── */
 function getScenarioDetail(gameId, scenarioId) {
   if (!scenarioId) return null;
-
   if (gameId === 'storyteller') {
     const parts = scenarioId.split('-');
     if (parts.length === 3) {
@@ -364,31 +331,17 @@ function getScenarioDetail(gameId, scenarioId) {
     }
     return null;
   }
-
   return _byHash[scenarioId] ?? null;
 }
 
-function starsHTML(avg) {
-  const full  = Math.round(avg);
-  let s = '';
-  for (let i = 1; i <= 5; i++) s += i <= full ? '★' : '☆';
-  return s;
-}
-
-function tierClass(avg) {
-  if (avg <= 3) return 'bad';
-  if (avg < 4)  return 'ok';
-  return 'good';
-}
-
-let allData   = [];
+let allData      = [];
 let activeFilter = 'all';
 
 function render() {
   const content = document.getElementById('content');
   const summary = document.getElementById('summary');
 
-  /* group by game_id + scenario_id, skip rows with empty scenario_id */
+  /* group by game_id + scenario_id */
   const map = {};
   allData.forEach(row => {
     if (!row.scenario_id) return;
@@ -398,28 +351,30 @@ function render() {
   });
 
   const items = Object.values(map).map(g => {
-    const avg = g.ratings.reduce((s,r) => s+r, 0) / g.ratings.length;
-    return { ...g, avg, tier: tierClass(avg) };
+    const up   = g.ratings.filter(r => r > 0).length;
+    const down = g.ratings.filter(r => r < 0).length;
+    const net  = up - down;
+    const tier = net > 0 ? 'liked' : net < 0 ? 'disliked' : '';
+    return { ...g, up, down, net, tier };
   });
 
   /* summary */
-  const totalItems  = items.length;
-  const badItems    = items.filter(i => i.avg <= 3).length;
-  const totalVotes  = allData.length;
+  const totalUp    = items.reduce((s, i) => s + i.up, 0);
+  const totalDown  = items.reduce((s, i) => s + i.down, 0);
   summary.innerHTML = `
-    <div class="summary-chip">Scenarios rated <strong>${totalItems}</strong></div>
-    <div class="summary-chip">Total votes <strong>${totalVotes}</strong></div>
-    <div class="summary-chip">Low-rated (≤3★) <strong style="color:#ef4444">${badItems}</strong></div>
+    <div class="summary-chip">Scenarios rated <strong>${items.length}</strong></div>
+    <div class="summary-chip">Total <strong class="up">👍 ${totalUp}</strong></div>
+    <div class="summary-chip">Total <strong class="down">👎 ${totalDown}</strong></div>
   `;
 
   /* filter */
-  const filtered = activeFilter === 'all'  ? items
-                 : activeFilter === 'bad'  ? items.filter(i => i.avg <= 3)
-                 : activeFilter === 'ok'   ? items.filter(i => i.avg > 3 && i.avg < 4)
-                 :                           items.filter(i => i.avg >= 4);
+  const filtered = activeFilter === 'liked'    ? items.filter(i => i.net > 0)
+                 : activeFilter === 'disliked' ? items.filter(i => i.net < 0)
+                 :                               items;
 
   if (!filtered.length) {
     content.innerHTML = `<div class="state-msg"><div class="big">🎉</div>No scenarios in this category yet.</div>`;
+    updateBulkCount(items);
     return;
   }
 
@@ -430,8 +385,8 @@ function render() {
     byGame[item.gameId].push(item);
   });
 
-  /* sort each game's items by avg asc (worst first) */
-  Object.values(byGame).forEach(arr => arr.sort((a,b) => a.avg - b.avg));
+  /* sort: most disliked (lowest net) first */
+  Object.values(byGame).forEach(arr => arr.sort((a, b) => a.net - b.net));
 
   const gameOrder = ['hottake','sophies','persuade','scene','storyteller'];
   let html = '';
@@ -442,19 +397,21 @@ function render() {
     const meta = GAME_META[gameId] || { name: gameId, emoji: '🎮' };
 
     const rowsHTML = gameItems.map(item => {
-      const info     = getScenarioDetail(item.gameId, item.scenarioId);
-      const tier     = item.tier;
-      const avgFixed = item.avg.toFixed(1);
-      const mainHTML = info?.main  ? `<div class="sc-text">${info.main}</div>` : '';
-      const detHTML  = info?.detail? `<div class="sc-detail">${info.detail}</div>` : '';
+      const info    = getScenarioDetail(item.gameId, item.scenarioId);
+      const mainHTML = info?.main   ? `<div class="sc-text">${info.main}</div>` : '';
+      const detHTML  = info?.detail ? `<div class="sc-detail">${info.detail}</div>` : '';
       const fallback = !info ? `<div class="sc-text" style="color:#444">(scenario #${item.scenarioId})</div>` : '';
       const rowId    = `row-${item.gameId}-${item.scenarioId}`;
+      const votes    = item.up + item.down;
       return `
-        <div class="scenario-row ${tier}" id="${rowId}">
-          <div class="sc-stars ${tier}">${starsHTML(item.avg)}<br>${avgFixed}</div>
+        <div class="scenario-row ${item.tier}" id="${rowId}">
+          <div class="sc-thumbs">
+            <span class="sc-thumb-up">👍<span class="sc-thumb-num">${item.up}</span></span>
+            <span class="sc-thumb-down">👎<span class="sc-thumb-num">${item.down}</span></span>
+          </div>
           <div class="sc-body">
             ${mainHTML}${detHTML}${fallback}
-            <div class="sc-meta"><strong>${item.ratings.length}</strong> vote${item.ratings.length > 1 ? 's' : ''}</div>
+            <div class="sc-meta"><strong>${votes}</strong> vote${votes !== 1 ? 's' : ''}</div>
           </div>
           <button class="sc-del" onclick="deleteRatings('${item.gameId}','${item.scenarioId}','${rowId}')">🗑️</button>
         </div>`;
@@ -464,14 +421,37 @@ function render() {
       <div class="game-section">
         <div class="game-title">
           ${meta.emoji} ${meta.name}
-          <span class="game-count">${gameItems.length} scenario${gameItems.length > 1 ? 's' : ''}</span>
+          <span class="game-count">${gameItems.length} scenario${gameItems.length !== 1 ? 's' : ''}</span>
         </div>
         ${rowsHTML}
       </div>`;
   });
 
   content.innerHTML = html;
-  updateBulkCount();
+  updateBulkCount(items);
+}
+
+function updateBulkCount(items) {
+  if (!items) {
+    /* recompute from allData */
+    const map = {};
+    allData.forEach(row => {
+      if (!row.scenario_id) return;
+      const key = `${row.game_id}||${row.scenario_id}`;
+      if (!map[key]) map[key] = { gameId: row.game_id, scenarioId: row.scenario_id, ratings: [] };
+      map[key].ratings.push(row.rating);
+    });
+    items = Object.values(map).map(g => {
+      const up   = g.ratings.filter(r => r > 0).length;
+      const down = g.ratings.filter(r => r < 0).length;
+      return { ...g, up, down, net: up - down };
+    });
+  }
+  const targets = items.filter(i => i.down > i.up);
+  const badge = document.getElementById('bulk-count');
+  if (badge) badge.textContent = targets.length || '';
+  const btn = document.getElementById('bulk-del-btn');
+  if (btn) btn.disabled = targets.length === 0;
 }
 
 /* ── 刪除某情境的所有評分 ── */
@@ -495,8 +475,6 @@ async function deleteRatings(gameId, scenarioId, rowId) {
       }
     );
     if (!res.ok) throw new Error('HTTP ' + res.status);
-
-    /* 從本地資料移除並重新 render */
     allData = allData.filter(r => !(r.game_id === gameId && r.scenario_id === scenarioId));
     render();
   } catch (e) {
@@ -515,10 +493,9 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-/* ── Bulk delete ── */
-let bulkN = 3;
-
-function getBulkTargets() {
+/* ── Bulk delete (all where 👎 > 👍) ── */
+async function bulkDelete() {
+  /* find targets from allData */
   const map = {};
   allData.forEach(row => {
     if (!row.scenario_id) return;
@@ -526,41 +503,16 @@ function getBulkTargets() {
     if (!map[key]) map[key] = { gameId: row.game_id, scenarioId: row.scenario_id, ratings: [] };
     map[key].ratings.push(row.rating);
   });
-  return Object.values(map)
-    .map(g => ({ ...g, avg: g.ratings.reduce((s,r) => s+r, 0) / g.ratings.length }))
-    .filter(g => g.avg <= bulkN);
-}
+  const targets = Object.values(map)
+    .map(g => {
+      const up   = g.ratings.filter(r => r > 0).length;
+      const down = g.ratings.filter(r => r < 0).length;
+      return { ...g, up, down };
+    })
+    .filter(g => g.down > g.up);
 
-function updateBulkCount() {
-  const targets = getBulkTargets();
-  const badge = document.getElementById('bulk-count');
-  if (badge) badge.textContent = targets.length || '';
-  const btn = document.getElementById('bulk-del-btn');
-  if (btn) btn.disabled = targets.length === 0;
-}
-
-/* initialise star highlights */
-(function initBulkStars() {
-  document.querySelectorAll('.bulk-star').forEach(b => {
-    b.classList.toggle('active', parseInt(b.dataset.n, 10) <= bulkN);
-  });
-})();
-
-document.querySelectorAll('.bulk-star').forEach(btn => {
-  btn.addEventListener('click', () => {
-    bulkN = parseInt(btn.dataset.n, 10);
-    document.querySelectorAll('.bulk-star').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.n, 10) <= bulkN);
-    });
-    document.getElementById('bulk-n-label').textContent = bulkN;
-    updateBulkCount();
-  });
-});
-
-async function bulkDelete() {
-  const targets = getBulkTargets();
   if (!targets.length) return;
-  if (!confirm(`Delete ratings for ${targets.length} scenario${targets.length > 1 ? 's' : ''} rated ≤ ${bulkN}★?\n\nThis cannot be undone.`)) return;
+  if (!confirm(`Delete ratings for ${targets.length} disliked scenario${targets.length !== 1 ? 's' : ''}?\n\nThis cannot be undone.`)) return;
 
   const btn = document.getElementById('bulk-del-btn');
   btn.disabled = true;
@@ -589,7 +541,7 @@ async function bulkDelete() {
     }
   }
 
-  if (failed) alert(`${failed} deletion${failed > 1 ? 's' : ''} failed. Reload to refresh.`);
+  if (failed) alert(`${failed} deletion${failed !== 1 ? 's' : ''} failed. Reload to refresh.`);
   render();
   btn.innerHTML = origHTML;
 }
@@ -611,7 +563,7 @@ async function load() {
 
     if (!allData.length) {
       document.getElementById('content').innerHTML =
-        `<div class="state-msg"><div class="big">⭐</div>No ratings yet — go play some games!</div>`;
+        `<div class="state-msg"><div class="big">👍</div>No ratings yet — go play some games!</div>`;
       document.getElementById('summary').innerHTML = '';
       return;
     }
