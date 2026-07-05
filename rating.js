@@ -108,10 +108,13 @@ const GAME_RATING = (() => {
   async function handleVote(value) {
     if (_submitted) return;
     _submitted = true;
-    _upBtn.disabled   = true;
-    _downBtn.disabled = true;
-    if (value > 0) _upBtn.classList.add('voted');
-    else           _downBtn.classList.add('voted');
+    if (value > 0) {
+      _upBtn.classList.add('voted');
+      _downBtn.disabled = true;
+    } else {
+      _downBtn.classList.add('voted');
+      _upBtn.disabled = true;
+    }
 
     try {
       await submitRating(_gameId, _scenarioId, value);
