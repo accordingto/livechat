@@ -14,46 +14,41 @@ const GAME_RATING = (() => {
     s.id = 'rating-styles';
     s.textContent = `
       .rating-fab {
-        position: fixed;
-        bottom: max(20px, env(safe-area-inset-bottom));
-        right: 20px;
-        z-index: 999;
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 10px;
-        background: rgba(13, 13, 26, 0.92);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255,255,255,.09);
+        gap: 8px;
+        background: transparent;
+        border: 2px solid rgba(255,255,255,.12);
         border-radius: 14px;
-        padding: 10px 14px;
-        animation: ratingIn .3s ease both;
-        box-shadow: 0 4px 24px rgba(0,0,0,.4);
+        padding: 16px 14px;
+        animation: ratingIn .25s ease both;
+        flex-shrink: 0;
+        transition: border-color .2s;
       }
       @keyframes ratingIn {
-        from { opacity: 0; transform: translateX(12px); }
-        to   { opacity: 1; transform: translateX(0); }
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
       .rating-stars {
         display: flex;
-        gap: 1px;
+        gap: 0;
         align-items: center;
       }
       .rating-star {
-        font-size: 1.45rem;
+        font-size: 1.3rem;
         cursor: pointer;
-        transition: transform .1s, filter .1s;
+        transition: transform .1s, filter .1s, color .1s;
         line-height: 1;
         -webkit-text-fill-color: initial;
         background: none;
         border: none;
-        padding: 4px 2px;
+        padding: 2px 1px;
         touch-action: manipulation;
-        color: #333;
+        color: #3a3a5c;
       }
       .rating-star:hover,
       .rating-star.hover {
-        transform: scale(1.32);
+        transform: scale(1.28);
         filter: drop-shadow(0 0 6px rgba(245,158,11,.9));
         color: #f59e0b;
       }
@@ -63,19 +58,20 @@ const GAME_RATING = (() => {
       }
       .rating-sep {
         width: 1px;
-        height: 18px;
-        background: rgba(255,255,255,.08);
+        height: 16px;
+        background: rgba(255,255,255,.1);
         flex-shrink: 0;
+        margin: 0 4px;
       }
       .rating-avg {
-        font-size: .75rem;
-        color: #444;
+        font-size: .78rem;
+        color: #555;
         white-space: nowrap;
-        min-width: 54px;
+        min-width: 52px;
       }
       .rating-avg strong { color: #f59e0b; }
       .rating-thanks {
-        font-size: .78rem;
+        font-size: .8rem;
         font-weight: 700;
         color: #4ade80;
         white-space: nowrap;
@@ -85,17 +81,6 @@ const GAME_RATING = (() => {
         from { opacity: 0; transform: scale(.88); }
         to   { opacity: 1; transform: scale(1); }
       }
-      [data-theme="soft"] .rating-fab {
-        background: rgba(250,247,243,.96);
-        border-color: rgba(0,0,0,.09);
-        box-shadow: 0 4px 20px rgba(100,60,20,.12);
-      }
-      [data-theme="soft"] .rating-star { color: #d0b8a8; }
-      [data-theme="soft"] .rating-star:hover,
-      [data-theme="soft"] .rating-star.hover { color: #d97706; }
-      [data-theme="soft"] .rating-star.filled { color: #d97706; }
-      [data-theme="soft"] .rating-avg { color: #b09080; }
-      [data-theme="soft"] .rating-sep { background: rgba(0,0,0,.08); }
     `;
     document.head.appendChild(s);
   }
@@ -216,7 +201,10 @@ const GAME_RATING = (() => {
     _bar.appendChild(_starsWrap);
     _bar.appendChild(_sep);
     _bar.appendChild(_avgEl);
-    document.body.appendChild(_bar);
+
+    const anchor = document.getElementById('rating-anchor');
+    if (anchor) anchor.appendChild(_bar);
+    else document.body.appendChild(_bar);
   }
 
   function showFor(scenarioId) {
