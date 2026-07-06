@@ -69,8 +69,6 @@ a.back:hover { color: var(--text); }
 }
 .header p { color: var(--text-dim); font-size: .93rem; }
 
-.draw-row { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 1100px; }
-.draw-row .btn-draw { flex: 1; width: auto; max-width: none; }
 
 .reset-btn {
   background: transparent; color: var(--text-muted);

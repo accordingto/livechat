@@ -1,9 +1,9 @@
-/* rating.js — 情境評分元件（👍 / 👎，inline 版本）
+/* rating.js — 情境評分元件（1–5 顆星，針對每個抽到的題目）
    使用前須在同一頁先載入 supabase-config.js
    API:
-     GAME_RATING.init(gameId)        — 頁面載入時呼叫一次
-     GAME_RATING.showFor(scenarioId) — 題目揭曉後呼叫
-     GAME_RATING.hide()              — 新一輪開始時呼叫        */
+     GAME_RATING.init(gameId)        — 頁面載入時呼叫一次，建立隱藏的評分條
+     GAME_RATING.showFor(scenarioId) — 題目揭曉後呼叫，顯示並重置評分條
+     GAME_RATING.hide()              — 新一輪開始時呼叫，隱藏評分條        */
 
 const GAME_RATING = (() => {
 
@@ -13,52 +13,89 @@ const GAME_RATING = (() => {
     const s = document.createElement('style');
     s.id = 'rating-styles';
     s.textContent = `
-      .rating-inline {
+      .rating-fab {
+        position: fixed;
+        bottom: max(20px, env(safe-area-inset-bottom));
+        right: 20px;
+        z-index: 999;
         display: flex;
         align-items: center;
-        gap: 8px;
-        animation: ratingIn .25s ease both;
+        gap: 10px;
+        background: rgba(13, 13, 26, 0.92);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 14px;
+        padding: 10px 14px;
+        animation: ratingIn .3s ease both;
+        box-shadow: 0 4px 24px rgba(0,0,0,.4);
       }
       @keyframes ratingIn {
-        from { opacity: 0; transform: translateY(4px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateX(12px); }
+        to   { opacity: 1; transform: translateX(0); }
       }
-      .rating-thumb {
-        background: transparent;
-        border: 2px solid rgba(255,255,255,.15);
-        border-radius: 999px;
-        cursor: pointer;
-        padding: 13px 18px;
-        transition: background .15s, border-color .15s, transform .1s;
-        font-family: inherit;
-        touch-action: manipulation;
+      .rating-stars {
         display: flex;
+        gap: 1px;
         align-items: center;
-        gap: 6px;
+      }
+      .rating-star {
+        font-size: 1.45rem;
+        cursor: pointer;
+        transition: transform .1s, filter .1s;
+        line-height: 1;
+        -webkit-text-fill-color: initial;
+        background: none;
+        border: none;
+        padding: 4px 2px;
+        touch-action: manipulation;
+        color: #333;
+      }
+      .rating-star:hover,
+      .rating-star.hover {
+        transform: scale(1.32);
+        filter: drop-shadow(0 0 6px rgba(245,158,11,.9));
+        color: #f59e0b;
+      }
+      .rating-star.filled {
+        color: #f59e0b;
+        filter: drop-shadow(0 0 3px rgba(245,158,11,.4));
+      }
+      .rating-sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(255,255,255,.08);
+        flex-shrink: 0;
+      }
+      .rating-avg {
+        font-size: .75rem;
+        color: #444;
         white-space: nowrap;
+        min-width: 54px;
       }
-      .rating-thumb:hover:not(:disabled)      { transform: translateY(-1px); }
-      .rating-thumb.up:hover:not(:disabled)   { background: rgba(74,222,128,.1);   border-color: #4ade80; }
-      .rating-thumb.down:hover:not(:disabled) { background: rgba(248,113,113,.1);  border-color: #f87171; }
-      .rating-thumb.up.voted   { background: rgba(74,222,128,.12);  border-color: #4ade80; }
-      .rating-thumb.down.voted { background: rgba(248,113,113,.12); border-color: #f87171; }
-      .rating-thumb:active:not(:disabled) { transform: scale(.97); }
-      .rating-thumb:disabled   { opacity: .3; cursor: default; transform: none !important; }
-      .rating-thumb .thumb-label {
-        font-size: .9rem;
-        font-weight: 800;
-        letter-spacing: .06em;
+      .rating-avg strong { color: #f59e0b; }
+      .rating-thanks {
+        font-size: .78rem;
+        font-weight: 700;
+        color: #4ade80;
+        white-space: nowrap;
+        animation: ratingFadeIn .25s ease;
       }
-      .rating-thumb.up   .thumb-label { color: #4ade80; }
-      .rating-thumb.down .thumb-label { color: #f87171; }
-      .rating-thumb .thumb-count {
-        font-size: .8rem;
-        font-weight: 800;
-        color: #666;
-        min-width: 10px;
+      @keyframes ratingFadeIn {
+        from { opacity: 0; transform: scale(.88); }
+        to   { opacity: 1; transform: scale(1); }
       }
-      .rating-thumb.up.voted   .thumb-count { color: #4ade80; }
-      .rating-thumb.down.voted .thumb-count { color: #f87171; }
+      [data-theme="soft"] .rating-fab {
+        background: rgba(250,247,243,.96);
+        border-color: rgba(0,0,0,.09);
+        box-shadow: 0 4px 20px rgba(100,60,20,.12);
+      }
+      [data-theme="soft"] .rating-star { color: #d0b8a8; }
+      [data-theme="soft"] .rating-star:hover,
+      [data-theme="soft"] .rating-star.hover { color: #d97706; }
+      [data-theme="soft"] .rating-star.filled { color: #d97706; }
+      [data-theme="soft"] .rating-avg { color: #b09080; }
+      [data-theme="soft"] .rating-sep { background: rgba(0,0,0,.08); }
     `;
     document.head.appendChild(s);
   }
@@ -74,15 +111,11 @@ const GAME_RATING = (() => {
   }
 
   async function submitRating(gameId, scenarioId, rating) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/game_ratings`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/game_ratings`, {
       method:  'POST',
       headers: apiHeaders(),
       body:    JSON.stringify({ game_id: gameId, scenario_id: String(scenarioId), rating }),
     });
-    if (!res.ok) {
-      const msg = await res.text().catch(() => '');
-      console.warn('[rating] submit failed', res.status, msg);
-    }
   }
 
   async function fetchStats(gameId, scenarioId) {
@@ -95,9 +128,9 @@ const GAME_RATING = (() => {
     );
     if (!res.ok) return null;
     const rows = await res.json();
-    const up   = rows.filter(r => r.rating > 0).length;
-    const down = rows.filter(r => r.rating <= 0).length;
-    return { up, down };
+    if (!rows.length) return null;
+    const avg = rows.reduce((s, r) => s + r.rating, 0) / rows.length;
+    return { avg: avg.toFixed(1), count: rows.length };
   }
 
   /* ── 內部狀態 ── */
@@ -105,35 +138,58 @@ const GAME_RATING = (() => {
   let _scenarioId = null;
   let _submitted  = false;
   let _bar        = null;
-  let _upBtn      = null;
-  let _downBtn    = null;
+  let _starsWrap  = null;
+  let _avgEl      = null;
+  let _sep        = null;
+  let _hovered    = 0;
+  let _starEls    = [];
 
-  async function handleVote(value) {
-    if (_submitted) return;
+  /* ── 星星 ── */
+  const EMPTY = '☆', FULL = '★';
+
+  function buildStars() {
+    _starsWrap.innerHTML = '';
+    _starEls = [1,2,3,4,5].map(n => {
+      const btn = document.createElement('button');
+      btn.className = 'rating-star';
+      btn.setAttribute('aria-label', `${n} star${n > 1 ? 's' : ''}`);
+      btn.textContent = EMPTY;
+      btn.addEventListener('mouseenter', () => { if (_submitted) return; _hovered = n; refreshStars(); });
+      btn.addEventListener('mouseleave', () => { if (_submitted) return; _hovered = 0; refreshStars(); });
+      btn.addEventListener('click',      () => { if (_submitted) return; handleSubmit(n); });
+      _starsWrap.appendChild(btn);
+      return btn;
+    });
+  }
+
+  function refreshStars() {
+    _starEls.forEach((btn, i) => {
+      const n = i + 1;
+      btn.textContent = n <= _hovered ? FULL : EMPTY;
+      btn.classList.toggle('filled', n <= _hovered);
+      btn.classList.toggle('hover',  _hovered > 0 && n <= _hovered);
+    });
+  }
+
+  async function handleSubmit(rating) {
     _submitted = true;
+    _starEls.forEach((btn, i) => {
+      btn.textContent = i + 1 <= rating ? FULL : EMPTY;
+      btn.classList.toggle('filled', i + 1 <= rating);
+      btn.style.cursor = 'default';
+    });
 
-    const upEl   = _upBtn.querySelector('.thumb-count');
-    const downEl = _downBtn.querySelector('.thumb-count');
-    let optUp   = parseInt(upEl.textContent)   || 0;
-    let optDown = parseInt(downEl.textContent) || 0;
-
-    if (value > 0) {
-      _upBtn.classList.add('voted');
-      _downBtn.disabled = true;
-      upEl.textContent = ++optUp;
-    } else {
-      _downBtn.classList.add('voted');
-      _upBtn.disabled = true;
-      downEl.textContent = ++optDown;
-    }
+    _sep.style.display = '';
+    _avgEl.style.display = '';
+    const thanks = document.createElement('span');
+    thanks.className = 'rating-thanks';
+    thanks.textContent = '✓';
+    _avgEl.replaceWith(thanks);
 
     try {
-      await submitRating(_gameId, _scenarioId, value);
+      await submitRating(_gameId, _scenarioId, rating);
       const stats = await fetchStats(_gameId, _scenarioId);
-      if (stats) {
-        upEl.textContent   = Math.max(stats.up,   optUp);
-        downEl.textContent = Math.max(stats.down, optDown);
-      }
+      if (stats) thanks.textContent = `✓ ${stats.avg}★`;
     } catch (_) {}
   }
 
@@ -144,41 +200,38 @@ const GAME_RATING = (() => {
     _gameId = gameId;
 
     _bar = document.createElement('div');
-    _bar.className = 'rating-inline';
+    _bar.className = 'rating-fab';
     _bar.id = 'rating-bar';
     _bar.style.display = 'none';
 
-    _upBtn = document.createElement('button');
-    _upBtn.className = 'rating-thumb up';
-    _upBtn.setAttribute('aria-label', 'Thumbs up');
-    _upBtn.innerHTML = '<span class="thumb-label">OK</span><span class="thumb-count"></span>';
-    _upBtn.addEventListener('click', () => handleVote(1));
+    _starsWrap = document.createElement('div');
+    _starsWrap.className = 'rating-stars';
 
-    _downBtn = document.createElement('button');
-    _downBtn.className = 'rating-thumb down';
-    _downBtn.setAttribute('aria-label', 'Thumbs down');
-    _downBtn.innerHTML = '<span class="thumb-label">NG</span><span class="thumb-count"></span>';
-    _downBtn.addEventListener('click', () => handleVote(0));
+    _sep = document.createElement('div');
+    _sep.className = 'rating-sep';
 
-    _bar.appendChild(_upBtn);
-    _bar.appendChild(_downBtn);
+    _avgEl = document.createElement('span');
+    _avgEl.className = 'rating-avg';
 
-    /* 插入到頁面指定錨點，若無則 fallback 到 body */
-    const anchor = document.getElementById('rating-anchor');
-    if (anchor) anchor.appendChild(_bar);
-    else document.body.appendChild(_bar);
+    _bar.appendChild(_starsWrap);
+    _bar.appendChild(_sep);
+    _bar.appendChild(_avgEl);
+    document.body.appendChild(_bar);
   }
 
   function showFor(scenarioId) {
     _scenarioId = String(scenarioId);
     _submitted  = false;
+    _hovered    = 0;
 
-    _upBtn.disabled   = false;
-    _downBtn.disabled = false;
-    _upBtn.classList.remove('voted');
-    _downBtn.classList.remove('voted');
-    _upBtn.querySelector('.thumb-count').textContent   = '0';
-    _downBtn.querySelector('.thumb-count').textContent = '0';
+    /* 還原 avg 元素（可能被 thanks span 替換過） */
+    const thanks = _bar.querySelector('.rating-thanks');
+    if (thanks) thanks.replaceWith(_avgEl);
+    _avgEl.textContent = '';
+    _sep.style.display = 'none';
+    _avgEl.style.display = 'none';
+
+    buildStars();
 
     _bar.style.animation = 'none';
     _bar.style.display   = '';
@@ -186,8 +239,9 @@ const GAME_RATING = (() => {
 
     fetchStats(_gameId, _scenarioId).then(stats => {
       if (stats && !_submitted) {
-        _upBtn.querySelector('.thumb-count').textContent   = stats.up;
-        _downBtn.querySelector('.thumb-count').textContent = stats.down;
+        _avgEl.innerHTML = `Avg <strong>${stats.avg}★</strong>`;
+        _sep.style.display = '';
+        _avgEl.style.display = '';
       }
     }).catch(() => {});
   }
