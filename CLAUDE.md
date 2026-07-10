@@ -23,16 +23,16 @@
 | 檔案 | 說明 |
 |------|------|
 | `index.html` | 主選單 / 遊戲入口頁 |
-| `surprise.html` | 🎰 Surprise Me!（隨機抽遊戲） |
 | `hottake.html` | 🔥 Hot Take Roulette |
-| `storyteller.html` | 📖 Story Teller |
 | `what-will-you-do.html` | 🤔 Sophie's Choice |
 | `persuade-team.html` | 🤝 Persuade Together! |
 | `scene.html` | 🎭 You're In The Scene |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
-| `theme.js` | 四色主題切換（space / soft / sunset / forest） |
-| `game-data.js` | 所有遊戲的題目資料（never / hottake / storyteller / sophies / persuade / scene） |
+| `game-data.js` | 所有遊戲的題目資料（never / hottake / sophies / persuade / scene）— 遊戲題目唯一資料來源 |
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
+| `rating.js` | 五星評分 widget（存到 Supabase `game_ratings`） |
+| `ratings.html` | 評分結果總覽頁 |
+| `admin.html` | Supabase `game_scenarios` 管理頁（遊戲已改用 game-data.js，此頁僅維護資料庫） |
 
 **廢棄資料夾：** `_archive/`（comic, describe, emoji-quiz, finish, fortunately, icebreaker, never, persuade, plot-twist, story-chain, truths）— 請勿讀取。
 

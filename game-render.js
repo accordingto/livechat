@@ -21,44 +21,6 @@ const GAME_RENDER = (() => {
       }
       .gr-divider { width: 100%; height: 1px; background: #1e1e3a; margin: 4px 0; }
 
-      /* ── Story Teller 3-card grid ── */
-      .gr-story-grid {
-        display: grid; grid-template-columns: 1fr;
-        gap: 14px; width: 100%;
-        position: relative; z-index: 1;
-      }
-      .gr-story-card {
-        border-radius: 16px; padding: 20px 14px;
-        border: 2px solid #1e1e42;
-        display: flex; flex-direction: column; align-items: center; gap: 10px;
-        min-height: 130px; justify-content: center; text-align: center;
-        position: relative;
-        overflow: visible;
-      }
-      .gr-story-card::before {
-        position: absolute; font-size: 7rem; opacity: .04;
-        top: 50%; left: 50%; transform: translate(-50%,-50%);
-        -webkit-text-fill-color: initial; pointer-events: none;
-      }
-      .gr-sc-char   { background: linear-gradient(160deg, #1a1400, #13132b); --gr-sc:#f59e0b; }
-      .gr-sc-action { background: linear-gradient(160deg, #110d1a, #13132b); --gr-sc:#818cf8; }
-      .gr-sc-place  { background: linear-gradient(160deg, #001a0d, #13132b); --gr-sc:#34d399; }
-      .gr-sc-char::before   { content:'👤'; }
-      .gr-sc-action::before { content:'⚡'; }
-      .gr-sc-place::before  { content:'📍'; }
-      .gr-story-card.gr-active { border-color: var(--gr-sc); }
-      .gr-pill {
-        font-size: 9px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-        background: var(--gr-sc); color: #0d0d1a;
-        border-radius: 999px; padding: 3px 12px;
-        position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
-        white-space: nowrap;
-      }
-      .gr-story-text {
-        font-size: clamp(1.25rem, 3vw, 1.55rem);
-        font-weight: 600; color: #eee; line-height: 1.5;
-      }
-
       /* ── Sophie's Choice options ── */
       .gr-options {
         width: 100%; display: flex; gap: 10px; flex-direction: column;
@@ -189,23 +151,6 @@ const GAME_RENDER = (() => {
       <span class="gr-text">${take}</span>`;
   }
 
-  /* ── storyteller ── */
-  function storyteller(el, char, action, place) {
-    el.innerHTML = `
-      <div class="gr-story-card gr-sc-char gr-active">
-        <span class="gr-pill">👤 Character</span>
-        <span class="gr-story-text">${char}</span>
-      </div>
-      <div class="gr-story-card gr-sc-action gr-active">
-        <span class="gr-pill">⚡ Action</span>
-        <span class="gr-story-text">${action}</span>
-      </div>
-      <div class="gr-story-card gr-sc-place gr-active">
-        <span class="gr-pill">📍 Location</span>
-        <span class="gr-story-text">${place}</span>
-      </div>`;
-  }
-
   /* ── sophies ── */
   function sophies(el, sc) {
     el.innerHTML = `
@@ -301,5 +246,5 @@ const GAME_RENDER = (() => {
     }
   }
 
-  return { injectCSS, never, hottake, storyteller, sophies, persuade, scene, setScenePlayers, drawTick };
+  return { injectCSS, never, hottake, sophies, persuade, scene, setScenePlayers, drawTick };
 })();

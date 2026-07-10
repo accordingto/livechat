@@ -303,7 +303,6 @@ const GAME_META = {
   sophies:     { name: "Sophie's Choice",      emoji: '🤔' },
   persuade:    { name: 'Persuade Together!',   emoji: '🤝' },
   scene:       { name: "You're In The Scene",  emoji: '🎭' },
-  storyteller: { name: 'Story Teller',         emoji: '📖' },
 };
 
 /* ── 與 rating.js 相同的 hash 函式 ── */
@@ -318,7 +317,6 @@ function hash(str) {
 
 /* ── 建立 hash → 情境內容 的反查表 ── */
 const _byHash = {};
-const _charByHash = {}, _actionByHash = {}, _placeByHash = {};
 
 (function buildMaps() {
   GAME_DATA.hottake.forEach(text => {
@@ -342,29 +340,11 @@ const _charByHash = {}, _actionByHash = {}, _placeByHash = {};
       detail: sc.situation,
     };
   });
-  GAME_DATA.storyteller.characters.forEach(c => { _charByHash[hash(c)]   = c; });
-  GAME_DATA.storyteller.actions.forEach(a =>    { _actionByHash[hash(a)] = a; });
-  GAME_DATA.storyteller.locations.forEach(p =>  { _placeByHash[hash(p)]  = p; });
 })();
 
 /* ── 根據 hash 取得情境細節 ── */
 function getScenarioDetail(gameId, scenarioId) {
   if (!scenarioId) return null;
-
-  if (gameId === 'storyteller') {
-    const parts = scenarioId.split('-');
-    if (parts.length === 3) {
-      const char   = _charByHash[parts[0]];
-      const action = _actionByHash[parts[1]];
-      const place  = _placeByHash[parts[2]];
-      if (char && action && place) return {
-        main:   null,
-        detail: `<span class="detail-tag tag-char">👤</span> ${char} &nbsp;·&nbsp; <span class="detail-tag tag-action">⚡</span> ${action} &nbsp;·&nbsp; <span class="detail-tag tag-place">📍</span> ${place}`,
-      };
-    }
-    return null;
-  }
-
   return _byHash[scenarioId] ?? null;
 }
 
@@ -433,7 +413,7 @@ function render() {
   /* sort each game's items by avg asc (worst first) */
   Object.values(byGame).forEach(arr => arr.sort((a,b) => a.avg - b.avg));
 
-  const gameOrder = ['hottake','sophies','persuade','scene','storyteller'];
+  const gameOrder = ['hottake','sophies','persuade','scene'];
   let html = '';
 
   gameOrder.forEach(gameId => {

@@ -136,7 +136,6 @@
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" data-game="hottake">🔥 Hot Take</button>
-    <button class="tab" data-game="storyteller">📖 Story</button>
     <button class="tab" data-game="sophies">🤔 Sophie</button>
     <button class="tab" data-game="persuade">🤝 Persuade</button>
     <button class="tab" data-game="scene">🎭 Scene</button>
@@ -198,7 +197,6 @@
 // ─────────────────────────────────────────────
 const GAMES = [
   { id: 'hottake',    label: '🔥 Hot Take Roulette' },
-  { id: 'storyteller',label: '📖 Story Teller' },
   { id: 'sophies',    label: '🤔 Sophie\'s Choice' },
   { id: 'persuade',   label: '🤝 Persuade Together' },
   { id: 'scene',      label: '🎭 You\'re In The Scene' },
@@ -212,7 +210,7 @@ let allData      = [];
 let searchQuery  = '';
 let editingId    = null;
 let deleteTarget = null;
-let filters      = { active: 'all', subcategory: 'all', cat: 'all', judge: 'all' };
+let filters      = { active: 'all', cat: 'all', judge: 'all' };
 
 // ─────────────────────────────────────────────
 // Supabase helpers
@@ -254,8 +252,6 @@ function getPreview(row) {
     case 'hottake':
     case 'never':
       return { main: (c.text || '').slice(0, 120), sub: '' };
-    case 'storyteller':
-      return { main: c.text || '', sub: row.subcategory || '' };
     case 'sophies':
       return { main: (c.situation || '').slice(0, 100), sub: c.cat || '' };
     case 'persuade':
@@ -419,23 +415,12 @@ async function moveRow(id, direction) {
 // ─────────────────────────────────────────────
 function buildFormFields(gameId, row) {
   const c = row?.content || {};
-  const sub = row?.subcategory || 'characters';
 
   switch (gameId) {
     case 'hottake':
     case 'never':
       return `<div class="field"><label>Content</label>
         <textarea name="text" rows="5" required>${escHtml(c.text || '')}</textarea></div>`;
-
-    case 'storyteller':
-      return `<div class="field"><label>Type</label>
-        <select name="subcategory">
-          <option value="characters" ${sub==='characters'?'selected':''}>👤 Characters</option>
-          <option value="actions"    ${sub==='actions'   ?'selected':''}>⚡ Actions</option>
-          <option value="locations"  ${sub==='locations' ?'selected':''}>📍 Locations</option>
-        </select></div>
-        <div class="field"><label>Content</label>
-        <input type="text" name="text" value="${escHtml(c.text || '')}" required></div>`;
 
     case 'sophies':
       return `<div class="field"><label>Category</label>
@@ -523,10 +508,6 @@ async function saveScenario(e) {
     case 'never':
       content = { text: form.get('text').trim() };
       break;
-    case 'storyteller':
-      subcategory = form.get('subcategory');
-      content = { text: form.get('text').trim() };
-      break;
     case 'sophies':
       content = { cat: form.get('cat').trim(), situation: form.get('situation').trim(), a: form.get('a').trim(), b: form.get('b').trim() };
       break;
@@ -601,16 +582,13 @@ async function confirmDelete() {
 // Filters
 // ─────────────────────────────────────────────
 function hasActiveFilters() {
-  return filters.active !== 'all' || filters.subcategory !== 'all' || filters.cat !== 'all' || filters.judge !== 'all';
+  return filters.active !== 'all' || filters.cat !== 'all' || filters.judge !== 'all';
 }
 
 function applyFilters(rows) {
   return rows.filter(row => {
     if (filters.active !== 'all') {
       if (row.active !== (filters.active === 'active')) return false;
-    }
-    if (filters.subcategory !== 'all' && currentGame === 'storyteller') {
-      if (row.subcategory !== filters.subcategory) return false;
     }
     if (filters.cat !== 'all') {
       if ((row.content.cat || '') !== filters.cat) return false;
@@ -629,7 +607,7 @@ function setFilter(key, val) {
 }
 
 function clearFilters() {
-  filters = { active: 'all', subcategory: 'all', cat: 'all', judge: 'all' };
+  filters = { active: 'all', cat: 'all', judge: 'all' };
   renderFilterBar();
   renderTable();
 }
@@ -652,17 +630,6 @@ function renderFilterBar() {
       ${sel('active','all','All')}${sel('active','active','Active only')}${sel('active','inactive','Inactive only')}
     </select>
   </div>`;
-
-  // Type (storyteller only)
-  if (currentGame === 'storyteller') {
-    html += `<span class="filter-sep"></span>
-    <div class="filter-group">
-      <span class="filter-label">Type</span>
-      <select class="filter-select ${filters.subcategory !== 'all' ? 'is-set' : ''}" onchange="setFilter('subcategory',this.value)">
-        ${sel('subcategory','all','All Types')}${sel('subcategory','characters','👤 Characters')}${sel('subcategory','actions','⚡ Actions')}${sel('subcategory','locations','📍 Locations')}
-      </select>
-    </div>`;
-  }
 
   // Category (sophies, persuade, scene)
   if (['sophies','persuade','scene'].includes(currentGame)) {
@@ -719,7 +686,7 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.classList.add('active');
     currentGame = btn.dataset.game;
     searchQuery = '';
-    filters = { active: 'all', subcategory: 'all', cat: 'all', judge: 'all' };
+    filters = { active: 'all', cat: 'all', judge: 'all' };
     document.getElementById('searchBox').value = '';
     editingId = null;
     loadData();
