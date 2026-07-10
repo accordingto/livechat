@@ -185,25 +185,19 @@
     <div class="sc-content" id="sc-content"></div>
   </div>
 
-  <div class="draw-row">
-    <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
-    <div id="rating-anchor"></div>
-  </div>
-  <div class="sc-counter" id="sc-counter">100 scenarios</div>
+  <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
+  <div class="sc-counter" id="sc-counter">10 scenarios</div>
 
   <div class="scenario-browser">
-    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (100) — click to load</div>
+    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (10) — click to load</div>
     <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
 
-  <script src="supabase-config.js"></script>
-  <script src="rating.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    GAME_RATING.init('persuade');
     const scenarios = GAME_DATA.persuade;
 
     let round   = 0;
@@ -310,7 +304,6 @@
         el.classList.toggle('active', +el.dataset.idx === idx);
       });
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      GAME_RATING.showFor(GAME_RATING.hash(sc.situation));
     }
 
     function draw() {
@@ -334,7 +327,6 @@
       const fi = avail[Math.floor(Math.random() * avail.length)];
       used.push(fi);
 
-      GAME_RATING.hide();
       GAME_RENDER.drawTick(
         scenarios,
         tick => { document.getElementById('sc-roll-text').textContent = tick.situation; },
@@ -350,7 +342,6 @@
           rolling         = false;
           updateCounter();
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
-          GAME_RATING.showFor(GAME_RATING.hash(scenarios[fi].situation));
         },
         { count: 24, ms: 82 }
       );

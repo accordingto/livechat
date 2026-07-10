@@ -247,16 +247,12 @@
   <div class="spin-wrap">
     <button class="spin-btn" id="spinBtn" onclick="spin()">🎡 Spin!</button>
     <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled>↺ Reset</button>
-    <div id="rating-anchor"></div>
   </div>
 
-  <script src="supabase-config.js"></script>
-  <script src="rating.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    GAME_RATING.init('hottake');
     const takes = GAME_DATA.hottake;
 
     let rolling = false;
@@ -309,7 +305,6 @@
       card.classList.add('rolling');
       triggerRipple();
 
-      GAME_RATING.hide();
       const drawnIdx = Math.floor(Math.random() * takes.length);
       const chosen   = takes[drawnIdx];
 
@@ -324,7 +319,6 @@
         spinBtn.disabled = false;
         document.getElementById('resetBtn').disabled = false;
         rolling = false;
-        GAME_RATING.showFor(GAME_RATING.hash(chosen));
       });
     }
 

@@ -15,9 +15,7 @@ Online icebreaker games for English voice chat rooms and conversation classes. T
 
 - Screen-share friendly: large text, high contrast, clean layout
 - All game prompts stored locally in `game-data.js` — works fully offline
-- Five-star ratings per prompt stored in Supabase, with a results overview (`ratings.html`)
 
 ## Stack
 
 - Vanilla HTML / CSS / JavaScript — no build step
-- [Supabase](https://supabase.com) for ratings (REST API, no SDK)

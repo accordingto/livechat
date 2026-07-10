@@ -262,22 +262,16 @@
 
   </div>
 
-  <div class="draw-row">
-    <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw Scene</button>
-    <div id="rating-anchor"></div>
-  </div>
+  <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw Scene</button>
 
   <div class="scenario-browser">
-    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (40) — click to load</div>
+    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (10) — click to load</div>
     <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
 
-  <script src="supabase-config.js"></script>
-  <script src="rating.js"></script>
   <script src="game-data.js"></script>
   <script>
-    GAME_RATING.init('scene');
     const scenarios = GAME_DATA.scene;
     let round   = 0;
     let used    = [];
@@ -446,7 +440,6 @@
       });
 
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      GAME_RATING.showFor(GAME_RATING.hash(sc.title));
     }
 
     function draw() {
@@ -471,7 +464,6 @@
       const fi = avail[Math.floor(Math.random() * avail.length)];
       used.push(fi);
 
-      GAME_RATING.hide();
       let n = 0, count = 22;
       const iv = setInterval(() => {
         const rnd = scenarios[Math.floor(Math.random() * scenarios.length)];
@@ -491,7 +483,6 @@
           btn.disabled    = false;
           rolling = false;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
-          GAME_RATING.showFor(GAME_RATING.hash(sc.title));
         }
       }, 85);
     }
