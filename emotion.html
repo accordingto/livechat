@@ -65,37 +65,69 @@
       position: relative; z-index: 1;
     }
 
-    /* ── Player QR cards ── */
-    .qr-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 16px;
+    /* ── Player selector (host clicks to show one QR at a time) ── */
+    .player-select {
+      display: flex; flex-wrap: wrap; gap: 10px;
       width: 100%; max-width: 1100px;
+      margin-bottom: 18px;
+      position: relative; z-index: 1;
+    }
+    .select-btn {
+      flex: 1; min-width: 110px;
+      border: 2px solid #1e1e42; background: #13132b; color: #888;
+      border-radius: 14px; padding: 14px 10px;
+      font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      letter-spacing: .5px;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .select-btn:hover  { border-color: #d946ef; color: #d946ef; }
+    .select-btn:active { transform: scale(.96); }
+    .select-btn.active { border-color: #d946ef; color: #fff; background: rgba(217,70,239,.18); }
+    .select-btn.done   { border-color: #1e3a2a; color: #34d399; }
+    .select-btn.done::after { content: ' ✓'; }
+
+    /* ── QR stage: shows ONE selected player's QR ── */
+    .qr-stage {
+      width: 100%; max-width: 1100px;
+      min-height: 280px;
+      display: flex; align-items: center; justify-content: center;
       margin-bottom: 30px;
       position: relative; z-index: 1;
     }
+    .stage-hint {
+      color: #333; font-size: .95rem; text-align: center; line-height: 1.7;
+    }
     .qr-card {
       background: #13132b;
-      border: 2px solid #1e1e42;
-      border-radius: 18px;
-      padding: 18px 14px 16px;
+      border: 2px solid #d946ef;
+      border-radius: 20px;
+      padding: 22px 34px 20px;
       display: flex; flex-direction: column; align-items: center; gap: 12px;
-      animation: fadeUp .4s ease both;
-      transition: border-color .3s;
+      animation: fadeUp .3s ease both;
     }
-    .qr-card.revealed { border-color: #d946ef; }
     .qr-player {
-      font-size: .8rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      font-size: .95rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
       color: #d946ef;
     }
     .qr-box {
       background: #fff;
       border-radius: 12px;
-      padding: 10px;
+      padding: 12px;
       line-height: 0;
     }
-    .qr-box svg { width: 138px; height: 138px; display: block; }
-    .qr-hint { font-size: .72rem; color: #555; }
+    .qr-box svg { width: 190px; height: 190px; display: block; }
+    .qr-hint { font-size: .78rem; color: #555; }
+
+    /* ── Reveal grid (end of round) ── */
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      width: 100%; max-width: 1100px;
+      position: relative; z-index: 1;
+    }
+    .qr-grid .qr-card { border-color: #1e1e42; padding: 18px 14px 16px; }
+    .qr-grid .qr-card.revealed { border-color: #d946ef; }
 
     /* revealed face */
     .qr-emotion {
@@ -164,13 +196,15 @@
   <div class="placeholder" id="placeholder">
     <div class="big-emoji">🎴</div>
     <p>Pick the number of players, then press <strong>Deal Cards</strong>.<br>
-       Each player scans <strong>only their own</strong> QR code with their phone to secretly see their emotion.<br>
-       The 20-emotion pool below the cards is the guessing list for everyone.</p>
+       The host clicks a player's name to show <strong>one QR code at a time</strong> —<br>
+       that player scans it with their phone to secretly see their emotion.<br>
+       The 20-emotion pool below is the guessing list for everyone.</p>
   </div>
 
   <div id="game-area" style="display:none">
-    <div class="section-hdr">🔒 Player Cards — scan your own only!</div>
-    <div class="qr-grid" id="qr-grid"></div>
+    <div class="section-hdr">🔒 Player Cards — click a player to show their QR code</div>
+    <div class="player-select" id="player-select"></div>
+    <div class="qr-stage" id="qr-stage"></div>
 
     <div class="section-hdr">👀 Emotion Pool (20) — everyone can see this. Guess from here!</div>
     <div class="pool-grid" id="pool-grid"></div>
@@ -181,7 +215,8 @@
   <script>
     const EMOTIONS = GAME_DATA.emotion;
     let playerCount = 4;
-    let assigned = [];   // [{ idx, revealed }] per player
+    let assigned = [];        // [{ idx, shown }] per player
+    let selectedPlayer = null; // which player's QR is on the stage (null = hidden)
     let round = 0;
 
     /* ── player count buttons 2–6 ── */
@@ -223,7 +258,8 @@
       // 50 → 20 pool → N assigned
       const poolIdx  = shuffle(EMOTIONS.map((_, i) => i)).slice(0, 20);
       const dealtIdx = shuffle(poolIdx).slice(0, playerCount);
-      assigned = dealtIdx.map(idx => ({ idx, revealed: false }));
+      assigned = dealtIdx.map(idx => ({ idx, shown: false }));
+      selectedPlayer = null;
       round++;
 
       document.getElementById('roundNum').textContent = round;
@@ -231,19 +267,8 @@
       document.getElementById('game-area').style.display = 'block';
       document.getElementById('reveal-btn').classList.remove('hidden');
 
-      /* player QR cards */
-      const grid = document.getElementById('qr-grid');
-      grid.innerHTML = '';
-      assigned.forEach((card, i) => {
-        const div = document.createElement('div');
-        div.className = 'qr-card';
-        div.style.animationDelay = (i * 0.07) + 's';
-        div.innerHTML = `
-          <span class="qr-player">Player ${i + 1}</span>
-          <div class="qr-box">${qrSVG(cardURL(card.idx, i + 1))}</div>
-          <span class="qr-hint">📱 Scan with your phone</span>`;
-        grid.appendChild(div);
-      });
+      renderPlayerSelect();
+      renderStage();
 
       /* pool of 20 — sorted alphabetically so card order reveals nothing */
       const pool = document.getElementById('pool-grid');
@@ -260,18 +285,62 @@
         });
     }
 
-    /* flip all QR cards to show the emotions (end of round) */
+    /* host clicks a player → show only that player's QR; click again → hide */
+    function selectPlayer(i) {
+      selectedPlayer = (selectedPlayer === i) ? null : i;
+      if (selectedPlayer !== null) assigned[i].shown = true;
+      renderPlayerSelect();
+      renderStage();
+    }
+
+    function renderPlayerSelect() {
+      const wrap = document.getElementById('player-select');
+      wrap.innerHTML = '';
+      assigned.forEach((card, i) => {
+        const b = document.createElement('button');
+        b.className = 'select-btn'
+          + (selectedPlayer === i ? ' active' : '')
+          + (card.shown && selectedPlayer !== i ? ' done' : '');
+        b.textContent = `Player ${i + 1}`;
+        b.onclick = () => selectPlayer(i);
+        wrap.appendChild(b);
+      });
+    }
+
+    function renderStage() {
+      const stage = document.getElementById('qr-stage');
+      if (selectedPlayer === null) {
+        stage.innerHTML = `<div class="stage-hint">🙈 All QR codes are hidden.<br>Click a player above to show their code — one at a time, no mistakes.</div>`;
+        return;
+      }
+      const card = assigned[selectedPlayer];
+      stage.innerHTML = `
+        <div class="qr-card">
+          <span class="qr-player">Player ${selectedPlayer + 1}</span>
+          <div class="qr-box">${qrSVG(cardURL(card.idx, selectedPlayer + 1))}</div>
+          <span class="qr-hint">📱 Player ${selectedPlayer + 1} only — scan with your phone</span>
+        </div>`;
+    }
+
+    /* show all emotions on the stage (end of round) */
     function revealAll() {
-      const cards = document.querySelectorAll('.qr-card');
-      cards.forEach((div, i) => {
-        const e = EMOTIONS[assigned[i].idx];
-        div.classList.add('revealed');
+      selectedPlayer = null;
+      renderPlayerSelect();
+      const stage = document.getElementById('qr-stage');
+      stage.innerHTML = '<div class="qr-grid"></div>';
+      const grid = stage.firstElementChild;
+      assigned.forEach((card, i) => {
+        const e = EMOTIONS[card.idx];
+        const div = document.createElement('div');
+        div.className = 'qr-card revealed';
+        div.style.animationDelay = (i * 0.07) + 's';
         div.innerHTML = `
           <span class="qr-player">Player ${i + 1}</span>
           <div class="qr-emotion">
             <span class="emo-emoji">${e.emoji}</span>
             <span class="emo-word">${e.word}</span>
           </div>`;
+        grid.appendChild(div);
       });
     }
   </script>
