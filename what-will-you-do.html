@@ -223,13 +223,11 @@
   <script src="supabase-config.js"></script>
   <script src="rating.js"></script>
   <script src="game-data.js"></script>
-  <script src="game-loader.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
     GAME_RATING.init('sophies');
-    let scenarios = GAME_DATA.sophies;
-    GAME_LOADER.init('sophies').then(d => { if (d) { scenarios = d; used = []; buildList(); } });
+    const scenarios = GAME_DATA.sophies;
 
     let round   = 0;
     let used    = [];

@@ -221,15 +221,13 @@
   <script src="supabase-config.js"></script>
   <script src="rating.js"></script>
   <script src="game-data.js"></script>
-  <script src="game-loader.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
     GAME_RATING.init('storyteller');
-    let characters = GAME_DATA.storyteller.characters;
-    let actions    = GAME_DATA.storyteller.actions;
-    let locations  = GAME_DATA.storyteller.locations;
-    GAME_LOADER.init('storyteller').then(d => { if (d) { characters = d.characters; actions = d.actions; locations = d.locations; } });
+    const characters = GAME_DATA.storyteller.characters;
+    const actions    = GAME_DATA.storyteller.actions;
+    const locations  = GAME_DATA.storyteller.locations;
 
     let rolling = false, round = 0;
     function rand(arr) { const i = Math.floor(Math.random() * arr.length); return { item: arr[i], idx: i }; }
