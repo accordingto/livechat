@@ -7,22 +7,17 @@ Online icebreaker games for English voice chat rooms and conversation classes. T
 | Game | Description |
 |------|-------------|
 | 🔥 Hot Take Roulette | Spin for a bold opinion; room votes Agree / It Depends / Disagree and debates |
-| 📖 Story Teller | Draw a random character, action, and location — then improvise a story using all three |
 | 🤔 Sophie's Choice | Two tough options — pick one and defend your decision |
 | 🤝 Persuade Together! | Team debate scenarios where players argue both sides |
 | 🎭 You're In The Scene | Improv scene prompts with role assignments |
-| 🎰 Surprise Me! | Random game picker for when you can't decide |
 
 ## Features
 
 - Screen-share friendly: large text, high contrast, clean layout
-- Four colour themes: Space (default), Soft, Sunset, Forest
-- Supabase-backed scenarios with local fallback data
-- Star ratings per prompt stored in Supabase
-- Admin panel (`admin.html`) for managing scenarios and ratings
+- All game prompts stored locally in `game-data.js` — works fully offline
+- Five-star ratings per prompt stored in Supabase, with a results overview (`ratings.html`)
 
 ## Stack
 
 - Vanilla HTML / CSS / JavaScript — no build step
-- [Supabase](https://supabase.com) for scenario storage and ratings (REST API, no SDK)
-- Playwright for automated testing
+- [Supabase](https://supabase.com) for ratings (REST API, no SDK)

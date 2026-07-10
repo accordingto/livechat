@@ -32,7 +32,6 @@
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
 | `rating.js` | 五星評分 widget（存到 Supabase `game_ratings`） |
 | `ratings.html` | 評分結果總覽頁 |
-| `admin.html` | Supabase `game_scenarios` 管理頁（遊戲已改用 game-data.js，此頁僅維護資料庫） |
 
 **廢棄資料夾：** `_archive/`（comic, describe, emoji-quiz, finish, fortunately, icebreaker, never, persuade, plot-twist, story-chain, truths）— 請勿讀取。
 
