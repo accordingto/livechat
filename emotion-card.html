@@ -43,8 +43,12 @@
   <script src="game-data.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
-    const idx    = parseInt(params.get('c'), 10);
-    const player = parseInt(params.get('p'), 10);
+    let idx = NaN, player = NaN;
+    try {
+      const [idxStr, playerStr] = atob(params.get('t') || '').split(':');
+      idx = parseInt(idxStr, 10);
+      player = parseInt(playerStr, 10);
+    } catch (e) { /* invalid token falls through to error message */ }
     const emotion = GAME_DATA.emotion[idx];
     const el = document.getElementById('content');
 

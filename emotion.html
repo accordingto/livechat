@@ -221,10 +221,15 @@
 
     .round-badge span { color: #d946ef; }
 
+    #game-area { width: 100%; }
+
     @media (max-width: 520px) {
-      .qr-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .player-select { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+      .player-col { min-width: 130px; }
       .qr-box svg { width: 112px; height: 112px; }
       .player-btn { width: 40px; height: 40px; }
+      .lyrics-form input { flex-basis: 100%; }
+      .lyrics-form input#artist-input { flex-basis: 100%; }
     }
   </style>
 </head>
@@ -311,7 +316,8 @@
     }
 
     function cardURL(idx, player) {
-      return new URL(`emotion-card.html?c=${idx}&p=${player}`, location.href).href;
+      const token = btoa(`${idx}:${player}`);
+      return new URL(`emotion-card.html?t=${encodeURIComponent(token)}`, location.href).href;
     }
 
     function qrSVG(text) {
