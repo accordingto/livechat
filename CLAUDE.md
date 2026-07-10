@@ -27,9 +27,12 @@
 | `what-will-you-do.html` | 🤔 Sophie's Choice |
 | `persuade-team.html` | 🤝 Persuade Together! |
 | `scene.html` | 🎭 You're In The Scene |
+| `emotion.html` | 🎴 Emotion Cards（主持人頁：選 2–6 人、發牌、顯示 QR code） |
+| `emotion-card.html` | 🎴 玩家掃 QR 後看到自己情緒卡的頁面 |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
-| `game-data.js` | 所有遊戲的題目資料（hottake / sophies / persuade / scene，各 10 題）— 遊戲題目唯一資料來源 |
+| `game-data.js` | 所有遊戲的題目資料（hottake / sophies / persuade / scene 各 10 題；emotion 50 種情緒）— 遊戲題目唯一資料來源 |
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
+| `qrcode.js` | QR code 產生函式庫（vendored，qrcode-generator 1.4.4，MIT） |
 
 **廢棄資料夾：** `_archive/`（comic, describe, emoji-quiz, finish, fortunately, icebreaker, never, persuade, plot-twist, story-chain, truths）— 請勿讀取。
 

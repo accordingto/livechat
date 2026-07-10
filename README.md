@@ -10,6 +10,7 @@ Online icebreaker games for English voice chat rooms and conversation classes. T
 | 🤔 Sophie's Choice | Two tough options — pick one and defend your decision |
 | 🤝 Persuade Together! | Team debate scenarios where players argue both sides |
 | 🎭 You're In The Scene | Improv scene prompts with role assignments |
+| 🎴 Emotion Cards | Each player secretly draws an emotion via QR code, then the room guesses it |
 
 ## Features
 

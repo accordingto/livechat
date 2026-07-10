@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Emotion Cards · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Emotion Cards">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* ── Setup row: player count + deal ── */
+    .setup-row {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 14px;
+      width: 100%; max-width: 1100px;
+      margin-bottom: 28px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s .2s ease both;
+    }
+    .players-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555;
+    }
+    .player-btns { display: flex; gap: 8px; }
+    .player-btn {
+      width: 46px; height: 46px; border-radius: 12px;
+      border: 2px solid #1e1e42; background: #13132b; color: #888;
+      font-size: 1.05rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .player-btn:hover  { border-color: #d946ef; color: #d946ef; }
+    .player-btn:active { transform: scale(.94); }
+    .player-btn.active { border-color: #d946ef; color: #fff; background: rgba(217,70,239,.18); }
+
+    .btn-deal {
+      background: #13132b; color: #d946ef; border: 2px solid #d946ef;
+      border-radius: 14px; padding: 13px 34px;
+      font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background .2s, transform .1s;
+    }
+    .btn-deal:hover  { background: rgba(217,70,239,.1); }
+    .btn-deal:active { transform: scale(.98); }
+
+    .btn-reveal {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 14px; padding: 13px 24px;
+      font-size: .95rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .btn-reveal:hover  { border-color: #f59e0b; color: #f59e0b; }
+    .btn-reveal:active { transform: scale(.98); }
+    .btn-reveal.hidden { display: none; }
+
+    /* ── Section labels ── */
+    .section-hdr {
+      width: 100%; max-width: 1100px;
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin: 6px 0 14px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Player QR cards ── */
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      width: 100%; max-width: 1100px;
+      margin-bottom: 30px;
+      position: relative; z-index: 1;
+    }
+    .qr-card {
+      background: #13132b;
+      border: 2px solid #1e1e42;
+      border-radius: 18px;
+      padding: 18px 14px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      animation: fadeUp .4s ease both;
+      transition: border-color .3s;
+    }
+    .qr-card.revealed { border-color: #d946ef; }
+    .qr-player {
+      font-size: .8rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #d946ef;
+    }
+    .qr-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      line-height: 0;
+    }
+    .qr-box svg { width: 138px; height: 138px; display: block; }
+    .qr-hint { font-size: .72rem; color: #555; }
+
+    /* revealed face */
+    .qr-emotion {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; min-height: 158px;
+    }
+    .qr-emotion .emo-emoji { font-size: 3.4rem; line-height: 1; }
+    .qr-emotion .emo-word  { font-size: 1.3rem; font-weight: 800; color: #fff; }
+
+    /* ── Emotion pool (the 20) ── */
+    .pool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      width: 100%; max-width: 1100px;
+      margin-bottom: 40px;
+      position: relative; z-index: 1;
+    }
+    .pool-chip {
+      display: flex; align-items: center; gap: 9px;
+      background: #13132b; border: 1.5px solid #1e1e42;
+      border-radius: 12px; padding: 10px 14px;
+      animation: fadeUp .4s ease both;
+    }
+    .pool-chip .emoji { font-size: 1.25rem; line-height: 1; }
+    .pool-chip .word  { font-size: .95rem; font-weight: 600; color: #bbb; }
+
+    /* ── Placeholder before first deal ── */
+    .placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      color: #333; text-align: center; padding: 40px 20px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .placeholder .big-emoji { font-size: 3.2rem; }
+    .placeholder p { font-size: .95rem; line-height: 1.7; max-width: 560px; }
+
+    .round-badge span { color: #d946ef; }
+
+    @media (max-width: 520px) {
+      .qr-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .qr-box svg { width: 112px; height: 112px; }
+      .player-btn { width: 40px; height: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🎴 Emotion Cards</h1>
+    <p>Every player secretly gets an emotion — scan your own QR code to see it. Speak in your emotion and let the room guess!</p>
+  </div>
+
+  <div class="setup-row">
+    <span class="players-label">Players</span>
+    <div class="player-btns" id="player-btns"></div>
+    <button class="btn-deal" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>
+    <button class="btn-reveal hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
+  </div>
+
+  <div class="placeholder" id="placeholder">
+    <div class="big-emoji">🎴</div>
+    <p>Pick the number of players, then press <strong>Deal Cards</strong>.<br>
+       Each player scans <strong>only their own</strong> QR code with their phone to secretly see their emotion.<br>
+       The 20-emotion pool below the cards is the guessing list for everyone.</p>
+  </div>
+
+  <div id="game-area" style="display:none">
+    <div class="section-hdr">🔒 Player Cards — scan your own only!</div>
+    <div class="qr-grid" id="qr-grid"></div>
+
+    <div class="section-hdr">👀 Emotion Pool (20) — everyone can see this. Guess from here!</div>
+    <div class="pool-grid" id="pool-grid"></div>
+  </div>
+
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script>
+    const EMOTIONS = GAME_DATA.emotion;
+    let playerCount = 4;
+    let assigned = [];   // [{ idx, revealed }] per player
+    let round = 0;
+
+    /* ── player count buttons 2–6 ── */
+    (function buildPlayerBtns() {
+      const wrap = document.getElementById('player-btns');
+      for (let n = 2; n <= 6; n++) {
+        const b = document.createElement('button');
+        b.className = 'player-btn' + (n === playerCount ? ' active' : '');
+        b.textContent = n;
+        b.onclick = () => {
+          playerCount = n;
+          wrap.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', x === b));
+        };
+        wrap.appendChild(b);
+      }
+    })();
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function cardURL(idx, player) {
+      return new URL(`emotion-card.html?c=${idx}&p=${player}`, location.href).href;
+    }
+
+    function qrSVG(text) {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    }
+
+    function deal() {
+      // 50 → 20 pool → N assigned
+      const poolIdx  = shuffle(EMOTIONS.map((_, i) => i)).slice(0, 20);
+      const dealtIdx = shuffle(poolIdx).slice(0, playerCount);
+      assigned = dealtIdx.map(idx => ({ idx, revealed: false }));
+      round++;
+
+      document.getElementById('roundNum').textContent = round;
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('reveal-btn').classList.remove('hidden');
+
+      /* player QR cards */
+      const grid = document.getElementById('qr-grid');
+      grid.innerHTML = '';
+      assigned.forEach((card, i) => {
+        const div = document.createElement('div');
+        div.className = 'qr-card';
+        div.style.animationDelay = (i * 0.07) + 's';
+        div.innerHTML = `
+          <span class="qr-player">Player ${i + 1}</span>
+          <div class="qr-box">${qrSVG(cardURL(card.idx, i + 1))}</div>
+          <span class="qr-hint">📱 Scan with your phone</span>`;
+        grid.appendChild(div);
+      });
+
+      /* pool of 20 — sorted alphabetically so card order reveals nothing */
+      const pool = document.getElementById('pool-grid');
+      pool.innerHTML = '';
+      poolIdx
+        .map(i => EMOTIONS[i])
+        .sort((a, b) => a.word.localeCompare(b.word))
+        .forEach((e, i) => {
+          const chip = document.createElement('div');
+          chip.className = 'pool-chip';
+          chip.style.animationDelay = (0.3 + i * 0.03) + 's';
+          chip.innerHTML = `<span class="emoji">${e.emoji}</span><span class="word">${e.word}</span>`;
+          pool.appendChild(chip);
+        });
+    }
+
+    /* flip all QR cards to show the emotions (end of round) */
+    function revealAll() {
+      const cards = document.querySelectorAll('.qr-card');
+      cards.forEach((div, i) => {
+        const e = EMOTIONS[assigned[i].idx];
+        div.classList.add('revealed');
+        div.innerHTML = `
+          <span class="qr-player">Player ${i + 1}</span>
+          <div class="qr-emotion">
+            <span class="emo-emoji">${e.emoji}</span>
+            <span class="emo-word">${e.word}</span>
+          </div>`;
+      });
+    }
+  </script>
+
+</body>
+</html>
