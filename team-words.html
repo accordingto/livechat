@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Team Words · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Team Words">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .hidden { display: none; }
+
+    /* ── Shared control-card buttons ── */
+    .btn-primary {
+      background: #13132b; color: #3b82f6; border: 2px solid #3b82f6;
+      border-radius: 12px; padding: 12px 26px;
+      font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+      transition: background .2s, transform .1s;
+    }
+    .btn-primary:hover  { background: rgba(59,130,246,.1); }
+    .btn-primary:active { transform: scale(.98); }
+
+    .btn-secondary {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 12px; padding: 12px 22px;
+      font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .btn-secondary:hover  { border-color: #f43f5e; color: #f43f5e; }
+    .btn-secondary:active { transform: scale(.98); }
+
+    /* ── Control card: room code + player count + deal, grouped as one panel ── */
+    .control-card {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+      padding: 22px 26px;
+      display: flex; flex-direction: column; gap: 16px;
+      margin-bottom: 10px;
+      position: relative; z-index: 1;
+      animation: fadeUp .5s .2s ease both;
+    }
+    .control-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    }
+    .control-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; min-width: 58px;
+    }
+    .control-divider { height: 1px; background: #1e1e42; }
+    .control-note {
+      width: 100%; max-width: 1100px;
+      color: #444; font-size: .78rem; text-align: center; line-height: 1.6;
+      margin-bottom: 22px;
+      position: relative; z-index: 1;
+    }
+
+    .player-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .player-btn {
+      min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px;
+      border: 2px solid #1e1e42; background: #13132b; color: #888;
+      font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .player-btn:hover  { border-color: #3b82f6; color: #3b82f6; }
+    .player-btn:active { transform: scale(.94); }
+    .player-btn.active { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,.18); }
+
+    #room-code-input {
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #eee; font-family: inherit; font-size: .95rem; text-transform: uppercase;
+      padding: 11px 14px; width: 130px;
+      transition: border-color .2s;
+    }
+    #room-code-input::placeholder { color: #444; text-transform: none; }
+    #room-code-input:focus { outline: none; border-color: #3b82f6; }
+
+    /* ── Section labels ── */
+    .section-hdr {
+      width: 100%; max-width: 1100px;
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin: 6px 0 10px;
+      position: relative; z-index: 1;
+    }
+    .links-note {
+      width: 100%; max-width: 1100px;
+      color: #555; font-size: .82rem; text-align: center; line-height: 1.6;
+      margin: 0 0 16px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Reveal banner: shows both teams' words after Reveal ── */
+    .reveal-banner {
+      width: 100%; max-width: 1100px;
+      background: rgba(59,130,246,.1); border: 1.5px solid #3b82f6; color: #eee;
+      border-radius: 14px; padding: 14px 18px; font-size: .95rem; font-weight: 700; text-align: center;
+      margin-bottom: 20px; position: relative; z-index: 1;
+      animation: fadeUp .3s ease both;
+    }
+    .reveal-banner .team-a-text { color: #3b82f6; }
+    .reveal-banner .team-b-text { color: #f43f5e; }
+
+    /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
+    .player-links {
+      display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
+      width: 100%; max-width: 1100px;
+      margin-bottom: 40px;
+      position: relative; z-index: 1;
+    }
+    .link-col {
+      flex: 1; min-width: 160px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      animation: fadeUp .3s ease both;
+      transition: border-color .3s;
+    }
+    .link-col.team-a { border-color: #3b82f6; }
+    .link-col.team-b { border-color: #f43f5e; }
+    .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
+    .link-btn-row { display: flex; gap: 8px; width: 100%; }
+    .btn-copy {
+      flex: 1;
+      background: transparent; color: #3b82f6; border: 2px solid #3b82f6;
+      border-radius: 10px; padding: 9px 10px;
+      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn-copy:hover  { background: rgba(59,130,246,.1); }
+    .btn-copy:active { transform: scale(.97); }
+    .btn-qr-toggle {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 10px; padding: 9px 12px;
+      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-qr-toggle:hover { border-color: #f43f5e; color: #f43f5e; }
+    .qr-inline {
+      background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
+      width: 100%; max-width: 160px;
+      animation: fadeUp .25s ease both;
+    }
+    .qr-inline svg { width: 100%; height: auto; display: block; }
+
+    /* revealed word, shown under a player's link after "Reveal Teams" */
+    .link-word {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding-top: 10px; margin-top: 2px; border-top: 1px solid #1e1e42; width: 100%;
+      animation: fadeUp .3s ease both;
+    }
+    .link-word .lw-emoji { font-size: 2rem; line-height: 1; }
+    .link-word .lw-text  { font-size: .95rem; font-weight: 800; color: #34d399; }
+    .link-word .lw-tag   { font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+    .link-word .lw-tag.team-a { color: #3b82f6; }
+    .link-word .lw-tag.team-b { color: #f43f5e; }
+
+    /* Firebase-not-configured warning */
+    .fb-warning {
+      width: 100%; max-width: 1100px;
+      background: rgba(245,158,11,.1); border: 1.5px solid #f59e0b; color: #f59e0b;
+      border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
+      margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
+
+    .round-badge span { color: #3b82f6; }
+
+    @media (max-width: 520px) {
+      .link-col { min-width: 130px; }
+      .player-btn { height: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>⚔️ Team Words</h1>
+    <p>Split into Team A and Team B — your team shares one secret word, the other team has a different one. Trade clues and crack their word first!</p>
+  </div>
+
+  <div class="fb-warning hidden" id="fb-warning">
+    ⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
+  </div>
+
+  <div class="control-card">
+    <div class="control-row">
+      <span class="control-label">Room</span>
+      <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
+      <button class="btn-primary" onclick="loadRoomCode()">Load</button>
+      <button class="btn-secondary" onclick="newSession()">New Room</button>
+    </div>
+    <div class="control-divider"></div>
+    <div class="control-row">
+      <span class="control-label">Players</span>
+      <div class="player-btns" id="player-btns"></div>
+      <button class="btn-primary" id="deal-btn" onclick="deal()">⚔️ Deal Teams</button>
+      <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Teams</button>
+    </div>
+  </div>
+  <div class="control-note">Players are split evenly and randomly into Team A and Team B each round. Reopening this page resumes the same room automatically — type an older room code above to bring back a previous night's links.</div>
+
+  <div class="reveal-banner hidden" id="reveal-banner"></div>
+
+  <div class="section-hdr">🔗 Player Links</div>
+  <div class="links-note">Copy each link once and send it privately (e.g. a LINE DM) — everyone's team and word update automatically every round.</div>
+  <div class="player-links" id="player-links"></div>
+
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script>
+    const PAIRS = GAME_DATA.wordwolf; // reuse the same "A word / B word" pair bank as Word Wolf
+    const PLAYER_COUNTS = [4, 6, 8, 10, 12]; // even only, so teams split exactly in half
+    let playerCount = 6;
+    let assigned = [];    // [{ team, word, emoji }] per player — this round's deal
+    let currentPair = null;
+    let revealed = false; // end-of-round: show every player's team + word
+    let round = 0;
+
+    /* ── Firebase: lets each player's already-open link update live every round ── */
+    const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+    document.getElementById('fb-warning').classList.toggle('hidden', firebaseReady);
+    let db = null;
+    if (firebaseReady) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+    }
+
+    function generateSessionCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+      const bytes = new Uint8Array(6);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => chars[b % chars.length]).join('');
+    }
+
+    /* each player gets an unguessable random token instead of a sequential number —
+       otherwise anyone with one link could just edit the URL to see other players' cards */
+    function generateToken() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    /* remembers {sessionCode -> {tokens, playerCount}} in this browser only, so reopening
+       the page (or typing the same room code back in) resumes the same player links and
+       player count — tokens themselves stay truly random, never derived from the room code */
+    const STORAGE_PREFIX = 'teamwords-session-';
+    const LAST_SESSION_KEY = 'teamwords-last-session';
+
+    function saveSessionTokens() {
+      try {
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount }));
+        localStorage.setItem(LAST_SESSION_KEY, sessionCode);
+      } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
+    }
+
+    function loadSessionData(code) {
+      try {
+        const raw = localStorage.getItem(STORAGE_PREFIX + code);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    let sessionCode;
+    let playerTokens = [];
+
+    (function initSession() {
+      let lastCode = null;
+      try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
+      const saved = lastCode ? loadSessionData(lastCode) : null;
+      if (lastCode && saved && saved.tokens && saved.tokens.length) {
+        sessionCode = lastCode;
+        playerTokens = saved.tokens;
+        if (saved.playerCount) playerCount = saved.playerCount;
+      } else {
+        sessionCode = generateSessionCode();
+      }
+    })();
+
+    function updateRoomCodeInput() {
+      document.getElementById('room-code-input').value = sessionCode;
+    }
+
+    function ensureTokens(n) {
+      const before = playerTokens.length;
+      while (playerTokens.length < n) playerTokens.push(generateToken());
+      if (playerTokens.length !== before) saveSessionTokens();
+    }
+
+    /* type an existing room code to bring back its links and player count; unknown codes just start fresh under that label */
+    function loadRoomCode() {
+      const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
+      if (!typed) return;
+      sessionCode = typed;
+      const saved = loadSessionData(typed);
+      if (saved && saved.tokens && saved.tokens.length) {
+        playerTokens = saved.tokens;
+        if (saved.playerCount) setPlayerCount(saved.playerCount);
+      } else {
+        playerTokens = [];
+      }
+      ensureTokens(playerCount);
+      saveSessionTokens();
+      updateRoomCodeInput();
+      renderPlayerLinks();
+    }
+
+    /* start a brand-new room with a fresh code and fresh player tokens */
+    function newSession() {
+      sessionCode = generateSessionCode();
+      playerTokens = [];
+      ensureTokens(playerCount);
+      updateRoomCodeInput();
+      renderPlayerLinks();
+    }
+
+    /* ── player count buttons: even numbers only, so Team A / Team B split exactly in half ── */
+    function setPlayerCount(n) {
+      playerCount = n;
+      document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
+    }
+    (function buildPlayerBtns() {
+      const wrap = document.getElementById('player-btns');
+      PLAYER_COUNTS.forEach(n => {
+        const b = document.createElement('button');
+        b.className = 'player-btn' + (n === playerCount ? ' active' : '');
+        b.textContent = n;
+        b.onclick = () => {
+          setPlayerCount(n);
+          renderPlayerLinks();
+        };
+        wrap.appendChild(b);
+      });
+    })();
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    /* same link for a player all night — only the team/word behind it changes each round */
+    function cardURL(token) {
+      return new URL(`team-words-card.html?s=${sessionCode}&p=${token}`, location.href).href;
+    }
+
+    function qrSVG(text) {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    }
+
+    function copyLink(token, btn) {
+      const url = cardURL(token);
+      const done = () => {
+        const old = btn.textContent;
+        btn.textContent = '✅ Copied';
+        setTimeout(() => { btn.textContent = old; }, 1500);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
+      } else {
+        prompt('Copy this link:', url);
+      }
+    }
+
+    function toggleQR(token, col) {
+      const existing = col.querySelector('.qr-inline');
+      if (existing) { existing.remove(); return; }
+      const box = document.createElement('div');
+      box.className = 'qr-inline';
+      box.innerHTML = qrSVG(cardURL(token));
+      col.appendChild(box);
+    }
+
+    /* renders the persistent per-player link cards — safe to call any time.
+       Team is never shown here before Reveal — this screen is shared, so showing it
+       early would hand both teams' rosters to everyone before the round even starts. */
+    function renderPlayerLinks() {
+      ensureTokens(playerCount);
+      const wrap = document.getElementById('player-links');
+      wrap.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const p = assigned[i];
+        const teamClass = revealed && p ? (p.team === 'A' ? ' team-a' : ' team-b') : '';
+        const col = document.createElement('div');
+        col.className = 'link-col' + teamClass;
+
+        const label = document.createElement('div');
+        label.className = 'link-label';
+        label.textContent = `Player ${i + 1}`;
+        col.appendChild(label);
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'link-btn-row';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn-copy';
+        copyBtn.textContent = '📋 Copy Link';
+        copyBtn.onclick = () => copyLink(playerTokens[i], copyBtn);
+        btnRow.appendChild(copyBtn);
+
+        const qrBtn = document.createElement('button');
+        qrBtn.className = 'btn-qr-toggle';
+        qrBtn.textContent = 'QR';
+        qrBtn.onclick = () => toggleQR(playerTokens[i], col);
+        btnRow.appendChild(qrBtn);
+
+        col.appendChild(btnRow);
+
+        if (revealed && p) {
+          const face = document.createElement('div');
+          face.className = 'link-word';
+          face.innerHTML = `
+            <span class="lw-emoji">${p.emoji}</span>
+            <span class="lw-text">${p.word}</span>
+            <span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>`;
+          col.appendChild(face);
+        }
+
+        wrap.appendChild(col);
+      }
+    }
+    updateRoomCodeInput();
+    renderPlayerLinks();
+
+    function deal() {
+      const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
+      currentPair = pair;
+      const half = playerCount / 2;
+      const teams = shuffle([
+        ...Array(half).fill('A'),
+        ...Array(playerCount - half).fill('B'),
+      ]);
+      assigned = teams.map(team => ({
+        team,
+        word: team === 'A' ? pair.a : pair.b,
+        emoji: team === 'A' ? pair.emojiA : pair.emojiB,
+      }));
+      revealed = false;
+      round++;
+
+      document.getElementById('roundNum').textContent = round;
+      document.getElementById('reveal-btn').classList.remove('hidden');
+      document.getElementById('reveal-banner').classList.add('hidden');
+
+      // push this round's team + word to each player's link — their page updates live
+      ensureTokens(playerCount);
+      if (firebaseReady) {
+        assigned.forEach((p, i) => {
+          db.ref(`teamwords/${sessionCode}/players/${playerTokens[i]}`).set({
+            team: p.team, word: p.word, emoji: p.emoji, round, playerNum: i + 1,
+          });
+        });
+      }
+
+      renderPlayerLinks();
+    }
+
+    /* end of round: show every player's team + word, and reveal both teams' words */
+    function revealAll() {
+      revealed = true;
+      renderPlayerLinks();
+      const banner = document.getElementById('reveal-banner');
+      banner.classList.remove('hidden');
+      banner.innerHTML = `This round: <span class="team-a-text">Team A — ${currentPair.emojiA} ${currentPair.a}</span> &nbsp;vs&nbsp; <span class="team-b-text">Team B — ${currentPair.emojiB} ${currentPair.b}</span>`;
+    }
+  </script>
+
+</body>
+</html>

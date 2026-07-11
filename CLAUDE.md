@@ -31,9 +31,11 @@
 | `emotion-card.html` | 🎴 玩家開啟私人連結後看到自己情緒卡的頁面（透過 Firebase 即時同步，每輪自動更新） |
 | `word-wolf.html` | 🐺 Word Wolf（主持人頁：選 3–8 人、發牌，多數人拿到同一個字、一人拿到臥底字，架構仿照 emotion.html） |
 | `word-wolf-card.html` | 🐺 玩家開啟私人連結後看到自己秘密單字的頁面（同樣透過 Firebase 即時同步） |
-| `firebase-config.js` | Emotion Cards 與 Word Wolf 共用的 Firebase Realtime Database 設定（host 與玩家頁面共用，需自行申請免費專案並填入） |
+| `team-words.html` | ⚔️ Team Words（主持人頁：選雙數人數 4–12、發牌，隨機平分成 Team A / Team B，兩隊各拿一個相似詞，架構仿照 word-wolf.html，共用同一份 wordwolf 詞庫） |
+| `team-words-card.html` | ⚔️ 玩家開啟私人連結後看到自己隊伍與秘密單字的頁面（同樣透過 Firebase 即時同步） |
+| `firebase-config.js` | Emotion Cards / Word Wolf / Team Words 共用的 Firebase Realtime Database 設定（host 與玩家頁面共用，需自行申請免費專案並填入） |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
-| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 38 組臥底詞組；emotion 50 種情緒）— 遊戲題目唯一資料來源 |
+| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 200 組臥底詞組，Word Wolf 與 Team Words 共用；emotion 50 種情緒）— 遊戲題目唯一資料來源 |
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
 | `qrcode.js` | QR code 產生函式庫（vendored，qrcode-generator 1.4.4，MIT）— Emotion Cards 頁面選用性顯示連結的 QR code |
 
