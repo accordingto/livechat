@@ -358,23 +358,25 @@
       return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    /* remembers {sessionCode -> playerTokens} in this browser only, so reopening the
-       page (or typing the same room code back in) resumes the same player links —
-       tokens themselves stay truly random, never derived from the room code */
+    /* remembers {sessionCode -> {tokens, playerCount}} in this browser only, so reopening
+       the page (or typing the same room code back in) resumes the same player links and
+       player count — tokens themselves stay truly random, never derived from the room code */
     const STORAGE_PREFIX = 'emotion-session-';
     const LAST_SESSION_KEY = 'emotion-last-session';
 
     function saveSessionTokens() {
       try {
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(playerTokens));
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount }));
         localStorage.setItem(LAST_SESSION_KEY, sessionCode);
       } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
     }
 
-    function loadSessionTokens(code) {
+    function loadSessionData(code) {
       try {
         const raw = localStorage.getItem(STORAGE_PREFIX + code);
-        return raw ? JSON.parse(raw) : null;
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? { tokens: parsed, playerCount: parsed.length } : parsed; // old format fallback
       } catch (e) { return null; }
     }
 
@@ -384,10 +386,11 @@
     (function initSession() {
       let lastCode = null;
       try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
-      const saved = lastCode ? loadSessionTokens(lastCode) : null;
-      if (lastCode && saved && saved.length) {
+      const saved = lastCode ? loadSessionData(lastCode) : null;
+      if (lastCode && saved && saved.tokens && saved.tokens.length) {
         sessionCode = lastCode;
-        playerTokens = saved;
+        playerTokens = saved.tokens;
+        if (saved.playerCount) playerCount = saved.playerCount;
       } else {
         sessionCode = generateSessionCode();
       }
@@ -403,13 +406,18 @@
       if (playerTokens.length !== before) saveSessionTokens();
     }
 
-    /* type an existing room code to bring back its links; unknown codes just start fresh under that label */
+    /* type an existing room code to bring back its links and player count; unknown codes just start fresh under that label */
     function loadRoomCode() {
       const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
       if (!typed) return;
       sessionCode = typed;
-      const saved = loadSessionTokens(typed);
-      playerTokens = (saved && saved.length) ? saved : [];
+      const saved = loadSessionData(typed);
+      if (saved && saved.tokens && saved.tokens.length) {
+        playerTokens = saved.tokens;
+        if (saved.playerCount) setPlayerCount(saved.playerCount);
+      } else {
+        playerTokens = [];
+      }
       ensureTokens(playerCount);
       saveSessionTokens();
       updateRoomCodeInput();
@@ -426,6 +434,10 @@
     }
 
     /* ── player count buttons 2–6 ── */
+    function setPlayerCount(n) {
+      playerCount = n;
+      document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
+    }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-btns');
       for (let n = 2; n <= 6; n++) {
@@ -433,8 +445,7 @@
         b.className = 'player-btn' + (n === playerCount ? ' active' : '');
         b.textContent = n;
         b.onclick = () => {
-          playerCount = n;
-          wrap.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', x === b));
+          setPlayerCount(n);
           renderPlayerLinks();
         };
         wrap.appendChild(b);
