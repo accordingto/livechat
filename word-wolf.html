@@ -59,6 +59,12 @@
       margin-bottom: 22px;
       position: relative; z-index: 1;
     }
+    .count-note {
+      width: 100%; max-width: 1100px;
+      color: #f59e0b; font-size: .78rem; text-align: center; line-height: 1.6;
+      margin: -6px 0 16px;
+      position: relative; z-index: 1;
+    }
 
     .player-btns { display: flex; flex-wrap: wrap; gap: 8px; }
     .player-btn {
@@ -202,7 +208,8 @@
       <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">🐺 Reveal Wolf</button>
     </div>
   </div>
-  <div class="control-note">Reopening this page resumes the same room automatically — type an older room code above to bring back a previous night's links.</div>
+  <div class="control-note">Same Room Code and links work across Emotion Cards, Word Wolf and Team Words — reopening this page resumes the same room automatically.</div>
+  <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
 
@@ -217,6 +224,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
     const PAIRS = GAME_DATA.wordwolf;
+    const ALLOWED_COUNTS = [3, 4, 5, 6, 7, 8];
     let playerCount = 5;
     let assigned = [];    // [{ word, emoji, isWolf }] per player — this round's deal
     let currentPair = null;
@@ -249,9 +257,23 @@
 
     /* remembers {sessionCode -> {tokens, playerCount}} in this browser only, so reopening
        the page (or typing the same room code back in) resumes the same player links and
-       player count — tokens themselves stay truly random, never derived from the room code */
-    const STORAGE_PREFIX = 'wordwolf-session-';
-    const LAST_SESSION_KEY = 'wordwolf-last-session';
+       player count — tokens themselves stay truly random, never derived from the room code.
+       Shared across Emotion Cards / Word Wolf / Team Words so the SAME room code and SAME
+       player links keep working no matter which game the host switches to. */
+    const STORAGE_PREFIX = 'room-session-';
+    const LAST_SESSION_KEY = 'room-last-session';
+
+    function clampCount(n) {
+      if (ALLOWED_COUNTS.includes(n)) return n;
+      return ALLOWED_COUNTS.reduce((best, c) => Math.abs(c - n) < Math.abs(best - n) ? c : best);
+    }
+
+    function showCountNote(original, used) {
+      const note = document.getElementById('count-mismatch-note');
+      if (original === used) { note.classList.add('hidden'); return; }
+      note.textContent = `⚠️ This room was set up with ${original} players — using ${used} for Word Wolf instead.`;
+      note.classList.remove('hidden');
+    }
 
     function saveSessionTokens() {
       try {
@@ -277,7 +299,10 @@
       if (lastCode && saved && saved.tokens && saved.tokens.length) {
         sessionCode = lastCode;
         playerTokens = saved.tokens;
-        if (saved.playerCount) playerCount = saved.playerCount;
+        if (saved.playerCount) {
+          playerCount = clampCount(saved.playerCount);
+          showCountNote(saved.playerCount, playerCount);
+        }
       } else {
         sessionCode = generateSessionCode();
       }
@@ -301,9 +326,14 @@
       const saved = loadSessionData(typed);
       if (saved && saved.tokens && saved.tokens.length) {
         playerTokens = saved.tokens;
-        if (saved.playerCount) setPlayerCount(saved.playerCount);
+        if (saved.playerCount) {
+          const used = clampCount(saved.playerCount);
+          setPlayerCount(used);
+          showCountNote(saved.playerCount, used);
+        }
       } else {
         playerTokens = [];
+        showCountNote(0, 0);
       }
       ensureTokens(playerCount);
       saveSessionTokens();
@@ -315,6 +345,7 @@
     function newSession() {
       sessionCode = generateSessionCode();
       playerTokens = [];
+      showCountNote(0, 0);
       ensureTokens(playerCount);
       updateRoomCodeInput();
       renderPlayerLinks();
@@ -339,9 +370,10 @@
       }
     })();
 
-    /* same link for a player all night — only the word behind it changes each round */
+    /* same link for a player all night, and shared across every game — only the
+       content behind it changes each round (or when the host switches games) */
     function cardURL(token) {
-      return new URL(`word-wolf-card.html?s=${sessionCode}&p=${token}`, location.href).href;
+      return new URL(`play.html?s=${sessionCode}&p=${token}`, location.href).href;
     }
 
     function qrSVG(text) {
@@ -441,8 +473,8 @@
       ensureTokens(playerCount);
       if (firebaseReady) {
         assigned.forEach((p, i) => {
-          db.ref(`wordwolf/${sessionCode}/players/${playerTokens[i]}`).set({
-            word: p.word, emoji: p.emoji, isWolf: p.isWolf, round, playerNum: i + 1,
+          db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({
+            game: 'wordwolf', word: p.word, emoji: p.emoji, isWolf: p.isWolf, round, playerNum: i + 1,
           });
         });
       }
