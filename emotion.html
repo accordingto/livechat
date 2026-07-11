@@ -65,69 +65,63 @@
       position: relative; z-index: 1;
     }
 
-    /* ── Player columns: button + QR slot directly below it ── */
-    .player-select {
+    /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
+    .player-links {
       display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
       width: 100%; max-width: 1100px;
-      margin-bottom: 10px;
+      margin-bottom: 24px;
       position: relative; z-index: 1;
     }
-    .player-col {
-      flex: 1; min-width: 150px;
-      display: flex; flex-direction: column; align-items: center; gap: 12px;
-    }
-    .select-btn {
-      width: 100%;
-      border: 2px solid #1e1e42; background: #13132b; color: #888;
-      border-radius: 14px; padding: 14px 10px;
-      font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      letter-spacing: .5px;
-      transition: border-color .2s, color .2s, background .2s, transform .1s;
-    }
-    .select-btn:hover  { border-color: #d946ef; color: #d946ef; }
-    .select-btn:active { transform: scale(.96); }
-    .select-btn.active { border-color: #d946ef; color: #fff; background: rgba(217,70,239,.18); }
-    .select-btn.done   { border-color: #1e3a2a; color: #34d399; }
-    .select-btn.done::after { content: ' ✓'; }
-
-    /* QR card inside a player's slot */
-    .qr-card {
-      background: #13132b;
-      border: 2px solid #d946ef;
-      border-radius: 18px;
-      padding: 16px 14px 14px;
-      width: 100%;
+    .link-col {
+      flex: 1; min-width: 160px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 14px;
       display: flex; flex-direction: column; align-items: center; gap: 10px;
       animation: fadeUp .3s ease both;
     }
-    .qr-box {
-      background: #fff;
-      border-radius: 12px;
-      padding: 10px;
-      line-height: 0;
-      width: 100%; max-width: 200px;
+    .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
+    .link-btn-row { display: flex; gap: 8px; width: 100%; }
+    .btn-copy {
+      flex: 1;
+      background: transparent; color: #d946ef; border: 2px solid #d946ef;
+      border-radius: 10px; padding: 9px 10px;
+      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: background .2s, transform .1s;
     }
-    .qr-box svg { width: 100%; height: auto; display: block; }
-    .qr-hint { font-size: .72rem; color: #555; text-align: center; }
-
-    /* revealed emotion face inside a slot */
-    .qr-card.revealed { border-color: #34d399; }
-    .qr-emotion {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 10px; min-height: 120px;
+    .btn-copy:hover  { background: rgba(217,70,239,.1); }
+    .btn-copy:active { transform: scale(.97); }
+    .btn-qr-toggle {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 10px; padding: 9px 12px;
+      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s;
     }
-    .qr-emotion .emo-emoji { font-size: 3rem; line-height: 1; }
-    .qr-emotion .emo-word  { font-size: 1.2rem; font-weight: 800; color: #fff; text-align: center; }
+    .btn-qr-toggle:hover { border-color: #f59e0b; color: #f59e0b; }
+    .qr-inline {
+      background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
+      width: 100%; max-width: 160px;
+      animation: fadeUp .25s ease both;
+    }
+    .qr-inline svg { width: 100%; height: auto; display: block; }
 
-    /* hint shown when everything is hidden */
-    .stage-hint {
+    /* revealed emotion, shown under a player's link after "Reveal All" */
+    .link-emotion {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding-top: 10px; margin-top: 2px; border-top: 1px solid #1e1e42; width: 100%;
+      animation: fadeUp .3s ease both;
+    }
+    .link-emotion .emo-emoji { font-size: 2rem; line-height: 1; }
+    .link-emotion .emo-word  { font-size: .95rem; font-weight: 800; color: #34d399; }
+
+    /* Firebase-not-configured warning */
+    .fb-warning {
       width: 100%; max-width: 1100px;
-      color: #333; font-size: .9rem; text-align: center; line-height: 1.7;
-      padding: 14px 0 4px;
-      margin-bottom: 16px;
-      position: relative; z-index: 1;
+      background: rgba(245,158,11,.1); border: 1.5px solid #f59e0b; color: #f59e0b;
+      border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
+      margin-bottom: 20px; position: relative; z-index: 1;
     }
-    .stage-hint.hidden { display: none; }
+    .fb-warning.hidden { display: none; }
+    .fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
 
     /* ── Emotion pool (the 20) ── */
     .pool-grid {
@@ -224,9 +218,7 @@
     #game-area { width: 100%; }
 
     @media (max-width: 520px) {
-      .player-select { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
-      .player-col { min-width: 130px; }
-      .qr-box svg { width: 112px; height: 112px; }
+      .link-col { min-width: 130px; }
       .player-btn { width: 40px; height: 40px; }
       .lyrics-form input { flex-basis: 100%; }
       .lyrics-form input#artist-input { flex-basis: 100%; }
@@ -242,7 +234,11 @@
 
   <div class="header">
     <h1>🎴 Emotion Cards</h1>
-    <p>Every player secretly gets an emotion — scan your own QR code to see it. Speak in your emotion and let the room guess!</p>
+    <p>Every player secretly gets an emotion on their own private link. Speak in your emotion and let the room guess!</p>
+  </div>
+
+  <div class="fb-warning hidden" id="fb-warning">
+    ⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
   </div>
 
   <div class="setup-row">
@@ -252,19 +248,18 @@
     <button class="btn-reveal hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
   </div>
 
+  <div class="section-hdr">🔗 Player Links — copy each one and send it privately (e.g. a LINE DM) before Round 1</div>
+  <div class="player-links" id="player-links"></div>
+
   <div class="placeholder" id="placeholder">
     <div class="big-emoji">🎴</div>
-    <p>Pick the number of players, then press <strong>Deal Cards</strong>.<br>
-       The host clicks a player's name to show <strong>one QR code at a time</strong> —<br>
-       that player scans it with their phone to secretly see their emotion.<br>
-       The 20-emotion pool below is the guessing list for everyone.</p>
+    <p>Send each player their link above once, however you normally message them.<br>
+       They open it once and keep the tab — it updates <strong>automatically every round</strong>,<br>
+       no re-scanning, no switching apps mid-game.<br>
+       Press <strong>Deal Cards</strong> when everyone has their link.</p>
   </div>
 
   <div id="game-area" style="display:none">
-    <div class="section-hdr">🔒 Player Cards — click a player to show their QR code</div>
-    <div class="player-select" id="player-select"></div>
-    <div class="stage-hint" id="stage-hint">🙈 All QR codes are hidden.<br>Click a player above to show their code — one at a time, no mistakes.</div>
-
     <div class="section-hdr">🎵 Lyrics Finder — pick a song, then perform it in your emotion!</div>
     <div class="lyrics-wrap">
       <div class="lyrics-form">
@@ -283,13 +278,33 @@
 
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
     const EMOTIONS = GAME_DATA.emotion;
     let playerCount = 4;
-    let assigned = [];         // [{ idx, shown }] per player
-    let selectedPlayer = null; // whose QR is visible (null = all hidden)
-    let revealed = false;      // end-of-round: show all emotions
+    let assigned = [];    // [{ idx }] per player — this round's dealt emotions
+    let revealed = false; // end-of-round: show all emotions on the host screen
     let round = 0;
+
+    /* ── Firebase: lets each player's already-open link update live every round ── */
+    const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+    document.getElementById('fb-warning').classList.toggle('hidden', firebaseReady);
+    let db = null;
+    if (firebaseReady) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+    }
+
+    /* one random code per page load — players' links stay valid until you reload this page */
+    function generateSessionCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+      const bytes = new Uint8Array(6);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => chars[b % chars.length]).join('');
+    }
+    const sessionCode = generateSessionCode();
 
     /* ── player count buttons 2–6 ── */
     (function buildPlayerBtns() {
@@ -301,6 +316,7 @@
         b.onclick = () => {
           playerCount = n;
           wrap.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', x === b));
+          renderPlayerLinks();
         };
         wrap.appendChild(b);
       }
@@ -315,9 +331,9 @@
       return a;
     }
 
-    function cardURL(idx, player) {
-      const token = btoa(`${idx}:${player}`);
-      return new URL(`emotion-card.html?t=${encodeURIComponent(token)}`, location.href).href;
+    /* same link for a player all night — only the emotion behind it changes each round */
+    function cardURL(player) {
+      return new URL(`emotion-card.html?s=${sessionCode}&p=${player}`, location.href).href;
     }
 
     function qrSVG(text) {
@@ -327,12 +343,77 @@
       return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
     }
 
+    function copyLink(player, btn) {
+      const url = cardURL(player);
+      const done = () => {
+        const old = btn.textContent;
+        btn.textContent = '✅ Copied';
+        setTimeout(() => { btn.textContent = old; }, 1500);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
+      } else {
+        prompt('Copy this link:', url);
+      }
+    }
+
+    function toggleQR(i, col) {
+      const existing = col.querySelector('.qr-inline');
+      if (existing) { existing.remove(); return; }
+      const box = document.createElement('div');
+      box.className = 'qr-inline';
+      box.innerHTML = qrSVG(cardURL(i + 1));
+      col.appendChild(box);
+    }
+
+    /* renders the persistent per-player link cards — safe to call any time */
+    function renderPlayerLinks() {
+      const wrap = document.getElementById('player-links');
+      wrap.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const col = document.createElement('div');
+        col.className = 'link-col';
+
+        const label = document.createElement('div');
+        label.className = 'link-label';
+        label.textContent = `Player ${i + 1}`;
+        col.appendChild(label);
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'link-btn-row';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn-copy';
+        copyBtn.textContent = '📋 Copy Link';
+        copyBtn.onclick = () => copyLink(i + 1, copyBtn);
+        btnRow.appendChild(copyBtn);
+
+        const qrBtn = document.createElement('button');
+        qrBtn.className = 'btn-qr-toggle';
+        qrBtn.textContent = 'QR';
+        qrBtn.onclick = () => toggleQR(i, col);
+        btnRow.appendChild(qrBtn);
+
+        col.appendChild(btnRow);
+
+        if (revealed && assigned[i]) {
+          const e = EMOTIONS[assigned[i].idx];
+          const face = document.createElement('div');
+          face.className = 'link-emotion';
+          face.innerHTML = `<span class="emo-emoji">${e.emoji}</span><span class="emo-word">${e.word}</span>`;
+          col.appendChild(face);
+        }
+
+        wrap.appendChild(col);
+      }
+    }
+    renderPlayerLinks();
+
     function deal() {
       // 50 → 20 pool → N assigned
       const poolIdx  = shuffle(EMOTIONS.map((_, i) => i)).slice(0, 20);
       const dealtIdx = shuffle(poolIdx).slice(0, playerCount);
-      assigned = dealtIdx.map(idx => ({ idx, shown: false }));
-      selectedPlayer = null;
+      assigned = dealtIdx.map(idx => ({ idx }));
       revealed = false;
       round++;
 
@@ -341,7 +422,14 @@
       document.getElementById('game-area').style.display = 'block';
       document.getElementById('reveal-btn').classList.remove('hidden');
 
-      renderPlayers();
+      // push this round's assignment to each player's link — their page updates live
+      if (firebaseReady) {
+        assigned.forEach((card, i) => {
+          db.ref(`sessions/${sessionCode}/players/${i + 1}`).set({ idx: card.idx, round });
+        });
+      }
+
+      renderPlayerLinks();
 
       /* pool of 20 — sorted alphabetically so card order reveals nothing */
       const pool = document.getElementById('pool-grid');
@@ -358,61 +446,10 @@
         });
     }
 
-    /* host clicks a player → show only that player's QR under their button; click again → hide */
-    function selectPlayer(i) {
-      if (revealed) return;
-      selectedPlayer = (selectedPlayer === i) ? null : i;
-      if (selectedPlayer !== null) assigned[i].shown = true;
-      renderPlayers();
-    }
-
-    /* one column per player: button + QR slot right below it */
-    function renderPlayers() {
-      const wrap = document.getElementById('player-select');
-      wrap.innerHTML = '';
-      assigned.forEach((card, i) => {
-        const col = document.createElement('div');
-        col.className = 'player-col';
-
-        const b = document.createElement('button');
-        b.className = 'select-btn'
-          + (selectedPlayer === i ? ' active' : '')
-          + (card.shown && selectedPlayer !== i && !revealed ? ' done' : '');
-        b.textContent = `Player ${i + 1}`;
-        b.onclick = () => selectPlayer(i);
-        col.appendChild(b);
-
-        if (revealed) {
-          const e = EMOTIONS[card.idx];
-          const face = document.createElement('div');
-          face.className = 'qr-card revealed';
-          face.style.animationDelay = (i * 0.07) + 's';
-          face.innerHTML = `
-            <div class="qr-emotion">
-              <span class="emo-emoji">${e.emoji}</span>
-              <span class="emo-word">${e.word}</span>
-            </div>`;
-          col.appendChild(face);
-        } else if (selectedPlayer === i) {
-          const qr = document.createElement('div');
-          qr.className = 'qr-card';
-          qr.innerHTML = `
-            <div class="qr-box">${qrSVG(cardURL(card.idx, i + 1))}</div>
-            <span class="qr-hint">📱 Player ${i + 1} only — scan with your phone</span>`;
-          col.appendChild(qr);
-        }
-
-        wrap.appendChild(col);
-      });
-
-      document.getElementById('stage-hint').classList.toggle('hidden', selectedPlayer !== null || revealed);
-    }
-
-    /* end of round: show every player's emotion under their button */
+    /* end of round: show every player's emotion on the host screen for discussion */
     function revealAll() {
       revealed = true;
-      selectedPlayer = null;
-      renderPlayers();
+      renderPlayerLinks();
     }
 
     /* ── Lyrics finder (lrclib.net — free, no API key) ── */
