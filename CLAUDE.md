@@ -29,9 +29,11 @@
 | `scene.html` | 🎭 You're In The Scene |
 | `emotion.html` | 🎴 Emotion Cards（主持人頁：選 2–6 人、發牌、產生每位玩家的私人連結） |
 | `emotion-card.html` | 🎴 玩家開啟私人連結後看到自己情緒卡的頁面（透過 Firebase 即時同步，每輪自動更新） |
-| `firebase-config.js` | Emotion Cards 用的 Firebase Realtime Database 設定（host 與玩家頁面共用，需自行申請免費專案並填入） |
+| `word-wolf.html` | 🐺 Word Wolf（主持人頁：選 3–8 人、發牌，多數人拿到同一個字、一人拿到臥底字，架構仿照 emotion.html） |
+| `word-wolf-card.html` | 🐺 玩家開啟私人連結後看到自己秘密單字的頁面（同樣透過 Firebase 即時同步） |
+| `firebase-config.js` | Emotion Cards 與 Word Wolf 共用的 Firebase Realtime Database 設定（host 與玩家頁面共用，需自行申請免費專案並填入） |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
-| `game-data.js` | 所有遊戲的題目資料（hottake / sophies / persuade / scene 各 10 題；emotion 50 種情緒）— 遊戲題目唯一資料來源 |
+| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 38 組臥底詞組；emotion 50 種情緒）— 遊戲題目唯一資料來源 |
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
 | `qrcode.js` | QR code 產生函式庫（vendored，qrcode-generator 1.4.4，MIT）— Emotion Cards 頁面選用性顯示連結的 QR code |
 

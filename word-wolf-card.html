@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Your Secret Word</title>
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100dvh; padding: 24px;
+    }
+    .secret-card {
+      background: #13132b;
+      border: 2px solid #f59e0b;
+      border-radius: 26px;
+      padding: 48px 40px;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      text-align: center;
+      max-width: 420px; width: 100%;
+      box-shadow: 0 0 60px rgba(245,158,11,.18);
+      animation: fadeUp .5s ease both;
+    }
+    .player-tag {
+      font-size: .85rem; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase;
+      color: #f59e0b;
+    }
+    .word-emoji { font-size: 6rem; line-height: 1; }
+    .word-text  { font-size: 2.6rem; font-weight: 800; color: #fff; line-height: 1.1; }
+    .secret-hint {
+      font-size: .85rem; color: #555; line-height: 1.6;
+      border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
+    }
+    .error-msg { color: #666; font-size: 1rem; text-align: center; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+  <div id="content">⏳</div>
+
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script>
+    const params  = new URLSearchParams(location.search);
+    const session = params.get('s');
+    const token   = params.get('p'); // this player's private random token, not a guessable number
+    const el = document.getElementById('content');
+
+    function showCard(data) {
+      el.innerHTML = `
+        <div class="secret-card">
+          <span class="player-tag">🔒 Player ${data.playerNum || '?'} — your secret word</span>
+          <span class="word-emoji">${data.emoji}</span>
+          <span class="word-text">${data.word}</span>
+          <span class="secret-hint">🤫 Don't show this to anyone!<br>Describe it in one sentence without saying the word — never let on if you seem to be the only one with a different idea.</span>
+        </div>`;
+    }
+
+    function showError(html) {
+      el.innerHTML = `<div class="error-msg">${html}</div>`;
+    }
+
+    const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+
+    if (!firebaseReady) {
+      showError('⚙️ This game isn\'t fully set up yet.<br>Ask your host to finish the Firebase setup.');
+    } else if (!session || !token) {
+      showError('😵 This card link is not valid.<br>Please ask your host for the link again.');
+    } else {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      const db = firebase.database();
+      db.ref(`wordwolf/${session}/players/${token}`).on('value', snap => {
+        const data = snap.val();
+        if (!data) { showError('⏳ Waiting for the host to deal this round...'); return; }
+        showCard(data);
+      }, () => {
+        showError('⚠️ Could not connect — check your internet connection.');
+      });
+    }
+  </script>
+
+</body>
+</html>
