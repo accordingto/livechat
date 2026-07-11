@@ -233,7 +233,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
     const PAIRS = GAME_DATA.wordwolf;
-    const ALLOWED_COUNTS = [3, 4, 5, 6, 7, 8];
+    const ALLOWED_COUNTS = [3, 4, 5, 6];
     let playerCount = 5;
     let assigned = [];    // [{ word, emoji, isWolf }] per player — this round's deal
     let currentPair = null;
@@ -365,14 +365,14 @@
       renderPlayerLinks();
     }
 
-    /* ── player count buttons 3–8 (Word Wolf needs enough people for real deduction) ── */
+    /* ── player count buttons 3–6 (Word Wolf needs enough people for real deduction) ── */
     function setPlayerCount(n) {
       playerCount = n;
       document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
     }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-btns');
-      for (let n = 3; n <= 8; n++) {
+      for (let n = 3; n <= 6; n++) {
         const b = document.createElement('button');
         b.className = 'player-btn' + (n === playerCount ? ' active' : '');
         b.textContent = n;

@@ -28,7 +28,7 @@
 | `persuade-team.html` | 🤝 Persuade Together! |
 | `scene.html` | 🎭 You're In The Scene |
 | `emotion.html` | 🎴 Emotion Cards（主持人頁：選 2–6 人、發牌、產生每位玩家的私人連結） |
-| `word-wolf.html` | 🐺 Word Wolf（主持人頁：選 3–8 人、發牌，多數人拿到同一個字、一人拿到臥底字，架構仿照 emotion.html） |
+| `word-wolf.html` | 🐺 Word Wolf（主持人頁：選 3–6 人、發牌，多數人拿到同一個字、一人拿到臥底字，架構仿照 emotion.html） |
 | `team-words.html` | ⚔️ Team Words（主持人頁：選 2/4/6 人、發牌，隨機平分成 Team A / Team B，兩隊各拿一組不同詞組的字，架構仿照 word-wolf.html，共用同一份 wordwolf 詞庫） |
 | `play.html` | 🔗 三款遊戲（Emotion Cards / Word Wolf / Team Words）共用的玩家頁面：玩家開啟自己的私人連結後看到當下這局的內容，依 Firebase 資料中的 `game` 欄位自動切換樣式；同一個 Room Code + 同一批玩家連結可以在三款遊戲間直接切換使用，不用重新產生連結 |
 | `firebase-config.js` | Emotion Cards / Word Wolf / Team Words 共用的 Firebase Realtime Database 設定（host 與 play.html 共用，需自行申請免費專案並填入；三款遊戲共用同一個 `rooms/{roomCode}/players/{token}` 路徑） |
