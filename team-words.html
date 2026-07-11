@@ -222,7 +222,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
     const PAIRS = GAME_DATA.wordwolf; // reuse the same "A word / B word" pair bank as Word Wolf
-    const PLAYER_COUNTS = [4, 6, 8, 10, 12]; // even only, so teams split exactly in half
+    const PLAYER_COUNTS = [4, 6]; // even only, so teams split exactly in half
     let playerCount = 6;
     let assigned = [];    // [{ team, word, emoji }] per player — this round's deal
     let currentPair = null;
