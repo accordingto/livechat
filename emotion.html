@@ -279,13 +279,6 @@
     ⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
   </div>
 
-  <div class="setup-row">
-    <span class="players-label">Players</span>
-    <div class="player-btns" id="player-btns"></div>
-    <button class="btn-deal" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>
-    <button class="btn-reveal hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
-  </div>
-
   <div class="room-row">
     <span class="players-label">Room Code</span>
     <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
@@ -293,6 +286,13 @@
     <button class="btn-room-alt" onclick="newSession()">🔄 New Session</button>
   </div>
   <div class="room-hint">Reopening this page on this computer resumes the same room automatically. Type an older room code here to bring back links from a previous night — only works on the browser that originally created them.</div>
+
+  <div class="setup-row">
+    <span class="players-label">Players</span>
+    <div class="player-btns" id="player-btns"></div>
+    <button class="btn-deal" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>
+    <button class="btn-reveal hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
+  </div>
 
   <div class="section-hdr">🔗 Player Links — copy each one and send it privately (e.g. a LINE DM) before Round 1</div>
   <div class="player-links" id="player-links"></div>
