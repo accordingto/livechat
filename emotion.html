@@ -12,19 +12,54 @@
   <style>
     .header h1 { background: linear-gradient(135deg, #fff 30%, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-    /* ── Setup row: player count + deal ── */
-    .setup-row {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-      gap: 14px;
+    .hidden { display: none; }
+
+    /* ── Shared control-card buttons ── */
+    .btn-primary {
+      background: #13132b; color: #d946ef; border: 2px solid #d946ef;
+      border-radius: 12px; padding: 12px 26px;
+      font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+      transition: background .2s, transform .1s;
+    }
+    .btn-primary:hover  { background: rgba(217,70,239,.1); }
+    .btn-primary:active { transform: scale(.98); }
+
+    .btn-secondary {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 12px; padding: 12px 22px;
+      font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .btn-secondary:hover  { border-color: #f59e0b; color: #f59e0b; }
+    .btn-secondary:active { transform: scale(.98); }
+
+    /* ── Control card: room code + player count + deal, grouped as one panel ── */
+    .control-card {
       width: 100%; max-width: 1100px;
-      margin-bottom: 28px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+      padding: 22px 26px;
+      display: flex; flex-direction: column; gap: 16px;
+      margin-bottom: 10px;
       position: relative; z-index: 1;
       animation: fadeUp .5s .2s ease both;
     }
-    .players-label {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555;
+    .control-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
     }
+    .control-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; min-width: 58px;
+    }
+    .control-divider { height: 1px; background: #1e1e42; }
+    .control-note {
+      width: 100%; max-width: 1100px;
+      color: #444; font-size: .78rem; text-align: center; line-height: 1.6;
+      margin-bottom: 22px;
+      position: relative; z-index: 1;
+    }
+
     .player-btns { display: flex; gap: 8px; }
     .player-btn {
       width: 46px; height: 46px; border-radius: 12px;
@@ -36,70 +71,26 @@
     .player-btn:active { transform: scale(.94); }
     .player-btn.active { border-color: #d946ef; color: #fff; background: rgba(217,70,239,.18); }
 
-    .btn-deal {
-      background: #13132b; color: #d946ef; border: 2px solid #d946ef;
-      border-radius: 14px; padding: 13px 34px;
-      font-size: 1.05rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: background .2s, transform .1s;
-    }
-    .btn-deal:hover  { background: rgba(217,70,239,.1); }
-    .btn-deal:active { transform: scale(.98); }
-
-    .btn-reveal {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 14px; padding: 13px 24px;
-      font-size: .95rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: border-color .2s, color .2s, transform .1s;
-    }
-    .btn-reveal:hover  { border-color: #f59e0b; color: #f59e0b; }
-    .btn-reveal:active { transform: scale(.98); }
-    .btn-reveal.hidden { display: none; }
-
-    /* ── Room code row: resume a previous room so old links keep working ── */
-    .room-row {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-      gap: 10px;
-      width: 100%; max-width: 1100px;
-      margin-bottom: 10px;
-      position: relative; z-index: 1;
-    }
     #room-code-input {
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 12px;
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
       color: #eee; font-family: inherit; font-size: .95rem; text-transform: uppercase;
-      padding: 11px 14px; width: 140px;
+      padding: 11px 14px; width: 130px;
       transition: border-color .2s;
     }
     #room-code-input::placeholder { color: #444; text-transform: none; }
     #room-code-input:focus { outline: none; border-color: #d946ef; }
-    .btn-room, .btn-room-alt {
-      border-radius: 12px; padding: 11px 20px;
-      font-size: .88rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: background .2s, border-color .2s, color .2s, transform .1s;
-    }
-    .btn-room {
-      background: #13132b; color: #d946ef; border: 2px solid #d946ef;
-    }
-    .btn-room:hover  { background: rgba(217,70,239,.1); }
-    .btn-room:active { transform: scale(.97); }
-    .btn-room-alt {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-    }
-    .btn-room-alt:hover  { border-color: #f59e0b; color: #f59e0b; }
-    .btn-room-alt:active { transform: scale(.97); }
-    .room-hint {
-      width: 100%; max-width: 1100px;
-      color: #444; font-size: .78rem; text-align: center; line-height: 1.6;
-      margin-bottom: 24px;
-      position: relative; z-index: 1;
-    }
 
     /* ── Section labels ── */
     .section-hdr {
       width: 100%; max-width: 1100px;
       font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin: 6px 0 14px;
+      color: #555; margin: 6px 0 10px;
+      position: relative; z-index: 1;
+    }
+    .links-note {
+      width: 100%; max-width: 1100px;
+      color: #555; font-size: .82rem; text-align: center; line-height: 1.6;
+      margin: 0 0 16px;
       position: relative; z-index: 1;
     }
 
@@ -158,7 +149,6 @@
       border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
       margin-bottom: 20px; position: relative; z-index: 1;
     }
-    .fb-warning.hidden { display: none; }
     .fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
 
     /* ── Emotion pool (the 20) ── */
@@ -178,16 +168,6 @@
     }
     .pool-chip .emoji { font-size: 1.25rem; line-height: 1; }
     .pool-chip .word  { font-size: .95rem; font-weight: 600; color: #bbb; }
-
-    /* ── Placeholder before first deal ── */
-    .placeholder {
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
-      color: #333; text-align: center; padding: 40px 20px;
-      position: relative; z-index: 1;
-      animation: fadeUp .5s .3s ease both;
-    }
-    .placeholder .big-emoji { font-size: 3.2rem; }
-    .placeholder p { font-size: .95rem; line-height: 1.7; max-width: 560px; }
 
     /* ── Lyrics finder ── */
     .lyrics-wrap {
@@ -279,34 +259,29 @@
     ⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
   </div>
 
-  <div class="room-row">
-    <span class="players-label">Room Code</span>
-    <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
-    <button class="btn-room" onclick="loadRoomCode()">🔗 Load</button>
-    <button class="btn-room-alt" onclick="newSession()">🔄 New Session</button>
+  <div class="control-card">
+    <div class="control-row">
+      <span class="control-label">Room</span>
+      <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
+      <button class="btn-primary" onclick="loadRoomCode()">Load</button>
+      <button class="btn-secondary" onclick="newSession()">New Room</button>
+    </div>
+    <div class="control-divider"></div>
+    <div class="control-row">
+      <span class="control-label">Players</span>
+      <div class="player-btns" id="player-btns"></div>
+      <button class="btn-primary" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>
+      <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
+    </div>
   </div>
-  <div class="room-hint">Reopening this page on this computer resumes the same room automatically. Type an older room code here to bring back links from a previous night — only works on the browser that originally created them.</div>
+  <div class="control-note">Reopening this page resumes the same room automatically — type an older room code above to bring back a previous night's links.</div>
 
-  <div class="setup-row">
-    <span class="players-label">Players</span>
-    <div class="player-btns" id="player-btns"></div>
-    <button class="btn-deal" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>
-    <button class="btn-reveal hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
-  </div>
-
-  <div class="section-hdr">🔗 Player Links — copy each one and send it privately (e.g. a LINE DM) before Round 1</div>
+  <div class="section-hdr">🔗 Player Links</div>
+  <div class="links-note">Copy each link once and send it privately (e.g. a LINE DM) — it updates automatically every round.</div>
   <div class="player-links" id="player-links"></div>
 
-  <div class="placeholder" id="placeholder">
-    <div class="big-emoji">🎴</div>
-    <p>Send each player their link above once, however you normally message them.<br>
-       They open it once and keep the tab — it updates <strong>automatically every round</strong>,<br>
-       no re-scanning, no switching apps mid-game.<br>
-       Press <strong>Deal Cards</strong> when everyone has their link.</p>
-  </div>
-
   <div id="game-area" style="display:none">
-    <div class="section-hdr">🎵 Lyrics Finder — pick a song, then perform it in your emotion!</div>
+    <div class="section-hdr">🎵 Lyrics Finder</div>
     <div class="lyrics-wrap">
       <div class="lyrics-form">
         <input type="text" id="song-input" placeholder="Song title (e.g. Yesterday)" onkeydown="if(event.key==='Enter')searchLyrics()">
@@ -318,7 +293,7 @@
       <div class="lyrics-display" id="lyrics-display" style="display:none"></div>
     </div>
 
-    <div class="section-hdr">👀 Emotion Pool (20) — everyone can see this. Guess from here!</div>
+    <div class="section-hdr">👀 Emotion Pool (20)</div>
     <div class="pool-grid" id="pool-grid"></div>
   </div>
 
@@ -550,7 +525,6 @@
       round++;
 
       document.getElementById('roundNum').textContent = round;
-      document.getElementById('placeholder').style.display = 'none';
       document.getElementById('game-area').style.display = 'block';
       document.getElementById('reveal-btn').classList.remove('hidden');
 
