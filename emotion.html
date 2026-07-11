@@ -239,7 +239,10 @@
 
     .round-badge span { color: #d946ef; }
 
-    #game-area { width: 100%; }
+    #game-area {
+      width: 100%;
+      display: flex; flex-direction: column; align-items: center;
+    }
 
     @media (max-width: 520px) {
       .link-col { min-width: 130px; }
@@ -557,7 +560,7 @@
       round++;
 
       document.getElementById('roundNum').textContent = round;
-      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('game-area').style.display = 'flex';
       document.getElementById('reveal-btn').classList.remove('hidden');
 
       // push this round's assignment to each player's link — their page updates live
