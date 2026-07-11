@@ -126,6 +126,15 @@
     }
     .link-col.is-wolf { border-color: #f59e0b; }
     .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
+    .name-input {
+      width: 100%;
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
+      color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
+      padding: 8px 10px;
+      transition: border-color .2s;
+    }
+    .name-input::placeholder { color: #555; }
+    .name-input:focus { outline: none; border-color: #f59e0b; }
     .link-btn-row { display: flex; gap: 8px; width: 100%; }
     .btn-copy {
       flex: 1;
@@ -277,7 +286,7 @@
 
     function saveSessionTokens() {
       try {
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount }));
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount, names: playerNames }));
         localStorage.setItem(LAST_SESSION_KEY, sessionCode);
       } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
     }
@@ -291,6 +300,7 @@
 
     let sessionCode;
     let playerTokens = [];
+    let playerNames = []; // travels with the room across all three games
 
     (function initSession() {
       let lastCode = null;
@@ -299,6 +309,7 @@
       if (lastCode && saved && saved.tokens && saved.tokens.length) {
         sessionCode = lastCode;
         playerTokens = saved.tokens;
+        playerNames = saved.names || [];
         if (saved.playerCount) {
           playerCount = clampCount(saved.playerCount);
           showCountNote(saved.playerCount, playerCount);
@@ -326,6 +337,7 @@
       const saved = loadSessionData(typed);
       if (saved && saved.tokens && saved.tokens.length) {
         playerTokens = saved.tokens;
+        playerNames = saved.names || [];
         if (saved.playerCount) {
           const used = clampCount(saved.playerCount);
           setPlayerCount(used);
@@ -333,6 +345,7 @@
         }
       } else {
         playerTokens = [];
+        playerNames = [];
         showCountNote(0, 0);
       }
       ensureTokens(playerCount);
@@ -345,6 +358,7 @@
     function newSession() {
       sessionCode = generateSessionCode();
       playerTokens = [];
+      playerNames = [];
       showCountNote(0, 0);
       ensureTokens(playerCount);
       updateRoomCodeInput();
@@ -416,10 +430,14 @@
         const col = document.createElement('div');
         col.className = 'link-col' + (revealed && p && p.isWolf ? ' is-wolf' : '');
 
-        const label = document.createElement('div');
-        label.className = 'link-label';
-        label.textContent = `Player ${i + 1}`;
-        col.appendChild(label);
+        const nameInput = document.createElement('input');
+        nameInput.className = 'name-input';
+        nameInput.type = 'text';
+        nameInput.maxLength = 12;
+        nameInput.placeholder = `Player ${i + 1}`;
+        nameInput.value = playerNames[i] || '';
+        nameInput.oninput = () => { playerNames[i] = nameInput.value.trim(); saveSessionTokens(); };
+        col.appendChild(nameInput);
 
         const btnRow = document.createElement('div');
         btnRow.className = 'link-btn-row';
@@ -474,7 +492,7 @@
       if (firebaseReady) {
         assigned.forEach((p, i) => {
           db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({
-            game: 'wordwolf', word: p.word, emoji: p.emoji, isWolf: p.isWolf, round, playerNum: i + 1,
+            game: 'wordwolf', word: p.word, emoji: p.emoji, isWolf: p.isWolf, round, playerNum: i + 1, name: playerNames[i] || null,
           });
         });
       }

@@ -66,13 +66,22 @@
     const token   = params.get('p'); // this player's private random token, not a guessable number
     const el = document.getElementById('content');
 
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+
+    /* host can give each player a name — fall back to Player N when unnamed */
+    function playerLabel(data) {
+      return data.name ? esc(data.name) : `Player ${data.playerNum || '?'}`;
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
       if (data.game === 'wordwolf') {
         el.innerHTML = `
           <div class="secret-card theme-wordwolf">
-            <span class="player-tag">🔒 Player ${data.playerNum || '?'} — your secret word</span>
+            <span class="player-tag">🔒 ${playerLabel(data)} — your secret word</span>
             <span class="card-emoji">${data.emoji}</span>
             <span class="card-word">${data.word}</span>
             <span class="secret-hint">🤫 Don't show this to anyone!<br>Describe it in one sentence without saying the word — never let on if you seem to be the only one with a different idea.</span>
@@ -83,7 +92,7 @@
         const teamClass = data.team === 'B' ? 'theme-teamwords-b' : 'theme-teamwords-a';
         el.innerHTML = `
           <div class="secret-card ${teamClass}">
-            <span class="player-tag">🔒 Player ${data.playerNum || '?'}</span>
+            <span class="player-tag">🔒 ${playerLabel(data)}</span>
             <span class="team-tag">Team ${data.team}</span>
             <span class="card-emoji">${data.emoji}</span>
             <span class="card-word">${data.word}</span>
@@ -96,7 +105,7 @@
         if (!emotion) { showError('😵 This card link is not valid.<br>Please ask your host for the link again.'); return; }
         el.innerHTML = `
           <div class="secret-card">
-            <span class="player-tag">🔒 Player ${data.playerNum || '?'} — your secret emotion</span>
+            <span class="player-tag">🔒 ${playerLabel(data)} — your secret emotion</span>
             <span class="card-emoji">${emotion.emoji}</span>
             <span class="card-word">${emotion.word}</span>
             <span class="secret-hint">🤫 Don't show this to anyone!<br>Speak in this emotion — let the others guess it.</span>
