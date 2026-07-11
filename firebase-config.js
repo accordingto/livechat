@@ -24,8 +24,8 @@
 //   }
 
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
+  apiKey: "AIzaSyDojGHsk2N6EssSWrmEbfeN3abZ7lQt9wY",
+  authDomain: "livechat-92f66.firebaseapp.com",
+  databaseURL: "https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "livechat-92f66",
 };
