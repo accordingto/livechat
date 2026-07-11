@@ -28,13 +28,14 @@
     .secret-card.theme-teamwords-a { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
     .secret-card.theme-teamwords-b { border-color: #f43f5e; box-shadow: 0 0 60px rgba(244,63,94,.18); }
 
-    .player-tag {
-      font-size: .85rem; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase;
-      color: #d946ef;
+    /* big per-player name badge — every player gets their own vivid gradient,
+       so one glance at the color + name says "this card is mine" */
+    .name-banner {
+      font-size: 2rem; font-weight: 900; color: #fff; line-height: 1.2;
+      padding: 12px 34px; border-radius: 999px;
+      max-width: 100%; overflow-wrap: break-word;
+      box-shadow: 0 6px 24px rgba(0,0,0,.45);
     }
-    .theme-wordwolf    .player-tag { color: #f59e0b; }
-    .theme-teamwords-a .player-tag { color: #3b82f6; }
-    .theme-teamwords-b .player-tag { color: #f43f5e; }
 
     .team-tag {
       font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;
@@ -46,8 +47,9 @@
     .card-emoji { font-size: 6rem; line-height: 1; }
     .card-word  { font-size: 2.6rem; font-weight: 800; color: #fff; line-height: 1.1; }
     .secret-hint {
-      font-size: .85rem; color: #555; line-height: 1.6;
+      font-size: .85rem; color: #555;
       border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
+      width: 100%;
     }
     .error-msg { color: #666; font-size: 1rem; text-align: center; line-height: 1.7; }
   </style>
@@ -70,9 +72,22 @@
       return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     }
 
-    /* host can give each player a name — fall back to Player N when unnamed */
-    function playerLabel(data) {
-      return data.name ? esc(data.name) : `Player ${data.playerNum || '?'}`;
+    /* one vivid gradient per player number — the same player always sees the
+       same color all night, so their card is instantly recognizable as theirs */
+    const NAME_COLORS = [
+      ['#f59e0b', '#ef4444'], // amber -> red
+      ['#22c55e', '#14b8a6'], // green -> teal
+      ['#3b82f6', '#8b5cf6'], // blue -> violet
+      ['#ec4899', '#d946ef'], // pink -> fuchsia
+      ['#06b6d4', '#3b82f6'], // cyan -> blue
+      ['#a78bfa', '#6366f1'], // violet -> indigo
+    ];
+
+    /* big colored name badge — host can give each player a name, fall back to Player N */
+    function nameBanner(data) {
+      const label = data.name ? esc(data.name) : `Player ${data.playerNum || '?'}`;
+      const [c1, c2] = NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length];
+      return `<span class="name-banner" style="background:linear-gradient(135deg,${c1},${c2})">${label}</span>`;
     }
 
     /* one shared link per player works for every game — this page just renders
@@ -81,10 +96,10 @@
       if (data.game === 'wordwolf') {
         el.innerHTML = `
           <div class="secret-card theme-wordwolf">
-            <span class="player-tag">🔒 ${playerLabel(data)} — your secret word</span>
+            ${nameBanner(data)}
             <span class="card-emoji">${data.emoji}</span>
             <span class="card-word">${data.word}</span>
-            <span class="secret-hint">🤫 Don't show this to anyone!<br>Describe it in one sentence without saying the word — never let on if you seem to be the only one with a different idea.</span>
+            <span class="secret-hint">🤫 Keep it secret!</span>
           </div>`;
         return;
       }
@@ -92,11 +107,11 @@
         const teamClass = data.team === 'B' ? 'theme-teamwords-b' : 'theme-teamwords-a';
         el.innerHTML = `
           <div class="secret-card ${teamClass}">
-            <span class="player-tag">🔒 ${playerLabel(data)}</span>
+            ${nameBanner(data)}
             <span class="team-tag">Team ${data.team}</span>
             <span class="card-emoji">${data.emoji}</span>
             <span class="card-word">${data.word}</span>
-            <span class="secret-hint">🤫 Don't show this to anyone!<br>Give clues your teammates will understand, without saying the word — and listen closely to figure out the other team's word too.</span>
+            <span class="secret-hint">🤫 Keep it secret!</span>
           </div>`;
         return;
       }
@@ -105,10 +120,10 @@
         if (!emotion) { showError('😵 This card link is not valid.<br>Please ask your host for the link again.'); return; }
         el.innerHTML = `
           <div class="secret-card">
-            <span class="player-tag">🔒 ${playerLabel(data)} — your secret emotion</span>
+            ${nameBanner(data)}
             <span class="card-emoji">${emotion.emoji}</span>
             <span class="card-word">${emotion.word}</span>
-            <span class="secret-hint">🤫 Don't show this to anyone!<br>Speak in this emotion — let the others guess it.</span>
+            <span class="secret-hint">🤫 Keep it secret!</span>
           </div>`;
         return;
       }
