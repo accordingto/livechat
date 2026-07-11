@@ -411,8 +411,10 @@
       }
     }
 
+    /* only one QR code open at a time — opening a new one closes any other */
     function toggleQR(token, col) {
       const existing = col.querySelector('.qr-inline');
+      document.querySelectorAll('.qr-inline').forEach(el => { if (el !== existing) el.remove(); });
       if (existing) { existing.remove(); return; }
       const box = document.createElement('div');
       box.className = 'qr-inline';
