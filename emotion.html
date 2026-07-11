@@ -57,6 +57,44 @@
     .btn-reveal:active { transform: scale(.98); }
     .btn-reveal.hidden { display: none; }
 
+    /* ── Room code row: resume a previous room so old links keep working ── */
+    .room-row {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 10px;
+      width: 100%; max-width: 1100px;
+      margin-bottom: 10px;
+      position: relative; z-index: 1;
+    }
+    #room-code-input {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #eee; font-family: inherit; font-size: .95rem; text-transform: uppercase;
+      padding: 11px 14px; width: 140px;
+      transition: border-color .2s;
+    }
+    #room-code-input::placeholder { color: #444; text-transform: none; }
+    #room-code-input:focus { outline: none; border-color: #d946ef; }
+    .btn-room, .btn-room-alt {
+      border-radius: 12px; padding: 11px 20px;
+      font-size: .88rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .btn-room {
+      background: #13132b; color: #d946ef; border: 2px solid #d946ef;
+    }
+    .btn-room:hover  { background: rgba(217,70,239,.1); }
+    .btn-room:active { transform: scale(.97); }
+    .btn-room-alt {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+    }
+    .btn-room-alt:hover  { border-color: #f59e0b; color: #f59e0b; }
+    .btn-room-alt:active { transform: scale(.97); }
+    .room-hint {
+      width: 100%; max-width: 1100px;
+      color: #444; font-size: .78rem; text-align: center; line-height: 1.6;
+      margin-bottom: 24px;
+      position: relative; z-index: 1;
+    }
+
     /* ── Section labels ── */
     .section-hdr {
       width: 100%; max-width: 1100px;
@@ -248,6 +286,14 @@
     <button class="btn-reveal hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
   </div>
 
+  <div class="room-row">
+    <span class="players-label">Room Code</span>
+    <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
+    <button class="btn-room" onclick="loadRoomCode()">🔗 Load</button>
+    <button class="btn-room-alt" onclick="newSession()">🔄 New Session</button>
+  </div>
+  <div class="room-hint">Reopening this page on this computer resumes the same room automatically. Type an older room code here to bring back links from a previous night — only works on the browser that originally created them.</div>
+
   <div class="section-hdr">🔗 Player Links — copy each one and send it privately (e.g. a LINE DM) before Round 1</div>
   <div class="player-links" id="player-links"></div>
 
@@ -297,14 +343,12 @@
       db = firebase.database();
     }
 
-    /* one random code per page load — players' links stay valid until you reload this page */
     function generateSessionCode() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
       const bytes = new Uint8Array(6);
       crypto.getRandomValues(bytes);
       return Array.from(bytes, b => chars[b % chars.length]).join('');
     }
-    const sessionCode = generateSessionCode();
 
     /* each player gets an unguessable random token instead of a sequential number —
        otherwise anyone with one link could just edit the URL to see other players' cards */
@@ -313,9 +357,72 @@
       crypto.getRandomValues(bytes);
       return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
     }
+
+    /* remembers {sessionCode -> playerTokens} in this browser only, so reopening the
+       page (or typing the same room code back in) resumes the same player links —
+       tokens themselves stay truly random, never derived from the room code */
+    const STORAGE_PREFIX = 'emotion-session-';
+    const LAST_SESSION_KEY = 'emotion-last-session';
+
+    function saveSessionTokens() {
+      try {
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(playerTokens));
+        localStorage.setItem(LAST_SESSION_KEY, sessionCode);
+      } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
+    }
+
+    function loadSessionTokens(code) {
+      try {
+        const raw = localStorage.getItem(STORAGE_PREFIX + code);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    let sessionCode;
     let playerTokens = [];
+
+    (function initSession() {
+      let lastCode = null;
+      try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
+      const saved = lastCode ? loadSessionTokens(lastCode) : null;
+      if (lastCode && saved && saved.length) {
+        sessionCode = lastCode;
+        playerTokens = saved;
+      } else {
+        sessionCode = generateSessionCode();
+      }
+    })();
+
+    function updateRoomCodeInput() {
+      document.getElementById('room-code-input').value = sessionCode;
+    }
+
     function ensureTokens(n) {
+      const before = playerTokens.length;
       while (playerTokens.length < n) playerTokens.push(generateToken());
+      if (playerTokens.length !== before) saveSessionTokens();
+    }
+
+    /* type an existing room code to bring back its links; unknown codes just start fresh under that label */
+    function loadRoomCode() {
+      const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
+      if (!typed) return;
+      sessionCode = typed;
+      const saved = loadSessionTokens(typed);
+      playerTokens = (saved && saved.length) ? saved : [];
+      ensureTokens(playerCount);
+      saveSessionTokens();
+      updateRoomCodeInput();
+      renderPlayerLinks();
+    }
+
+    /* start a brand-new room with a fresh code and fresh player tokens */
+    function newSession() {
+      sessionCode = generateSessionCode();
+      playerTokens = [];
+      ensureTokens(playerCount);
+      updateRoomCodeInput();
+      renderPlayerLinks();
     }
 
     /* ── player count buttons 2–6 ── */
@@ -420,6 +527,7 @@
         wrap.appendChild(col);
       }
     }
+    updateRoomCodeInput();
     renderPlayerLinks();
 
     function deal() {
