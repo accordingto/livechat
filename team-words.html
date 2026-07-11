@@ -221,11 +221,12 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
-    const PAIRS = GAME_DATA.wordwolf; // reuse the same "A word / B word" pair bank as Word Wolf
-    const PLAYER_COUNTS = [4, 6]; // even only, so teams split exactly in half
+    const PAIRS = GAME_DATA.wordwolf; // reuse the Word Wolf word bank, but draw from two different pairs
+    const PLAYER_COUNTS = [2, 4, 6]; // even only, so teams split exactly in half
     let playerCount = 6;
     let assigned = [];    // [{ team, word, emoji }] per player — this round's deal
-    let currentPair = null;
+    let currentWordA = null; // { word, emoji } — never from the same pair as currentWordB
+    let currentWordB = null;
     let revealed = false; // end-of-round: show every player's team + word
     let round = 0;
 
@@ -440,9 +441,26 @@
     updateRoomCodeInput();
     renderPlayerLinks();
 
+    /* picks two words from two DIFFERENT pairs — Team A and Team B must never end up
+       with the two halves of the same pair, or the words would be suspiciously similar */
+    function pickTwoDistinctWords() {
+      const i1 = Math.floor(Math.random() * PAIRS.length);
+      let i2 = Math.floor(Math.random() * (PAIRS.length - 1));
+      if (i2 >= i1) i2++;
+      const pair1 = PAIRS[i1], pair2 = PAIRS[i2];
+      const wordA = Math.random() < 0.5
+        ? { word: pair1.a, emoji: pair1.emojiA }
+        : { word: pair1.b, emoji: pair1.emojiB };
+      const wordB = Math.random() < 0.5
+        ? { word: pair2.a, emoji: pair2.emojiA }
+        : { word: pair2.b, emoji: pair2.emojiB };
+      return { wordA, wordB };
+    }
+
     function deal() {
-      const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
-      currentPair = pair;
+      const { wordA, wordB } = pickTwoDistinctWords();
+      currentWordA = wordA;
+      currentWordB = wordB;
       const half = playerCount / 2;
       const teams = shuffle([
         ...Array(half).fill('A'),
@@ -450,8 +468,8 @@
       ]);
       assigned = teams.map(team => ({
         team,
-        word: team === 'A' ? pair.a : pair.b,
-        emoji: team === 'A' ? pair.emojiA : pair.emojiB,
+        word: team === 'A' ? wordA.word : wordB.word,
+        emoji: team === 'A' ? wordA.emoji : wordB.emoji,
       }));
       revealed = false;
       round++;
@@ -479,7 +497,7 @@
       renderPlayerLinks();
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
-      banner.innerHTML = `This round: <span class="team-a-text">Team A — ${currentPair.emojiA} ${currentPair.a}</span> &nbsp;vs&nbsp; <span class="team-b-text">Team B — ${currentPair.emojiB} ${currentPair.b}</span>`;
+      banner.innerHTML = `This round: <span class="team-a-text">Team A — ${currentWordA.emoji} ${currentWordA.word}</span> &nbsp;vs&nbsp; <span class="team-b-text">Team B — ${currentWordB.emoji} ${currentWordB.word}</span>`;
     }
   </script>
 
