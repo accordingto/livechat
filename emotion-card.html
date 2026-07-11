@@ -47,15 +47,15 @@
   <script>
     const params  = new URLSearchParams(location.search);
     const session = params.get('s');
-    const player  = parseInt(params.get('p'), 10);
+    const token   = params.get('p'); // this player's private random token, not a guessable number
     const el = document.getElementById('content');
 
-    function showCard(idx) {
-      const emotion = GAME_DATA.emotion[idx];
+    function showCard(data) {
+      const emotion = GAME_DATA.emotion[data.idx];
       if (!emotion) { showError('😵 This card link is not valid.<br>Please ask your host for the link again.'); return; }
       el.innerHTML = `
         <div class="secret-card">
-          <span class="player-tag">🔒 Player ${player} — your secret emotion</span>
+          <span class="player-tag">🔒 Player ${data.playerNum || '?'} — your secret emotion</span>
           <span class="emo-emoji">${emotion.emoji}</span>
           <span class="emo-word">${emotion.word}</span>
           <span class="secret-hint">🤫 Don't show this to anyone!<br>Speak in this emotion — let the others guess it.</span>
@@ -70,15 +70,15 @@
 
     if (!firebaseReady) {
       showError('⚙️ This game isn\'t fully set up yet.<br>Ask your host to finish the Firebase setup.');
-    } else if (!session || !player) {
+    } else if (!session || !token) {
       showError('😵 This card link is not valid.<br>Please ask your host for the link again.');
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       const db = firebase.database();
-      db.ref(`sessions/${session}/players/${player}`).on('value', snap => {
+      db.ref(`sessions/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();
         if (!data) { showError('⏳ Waiting for the host to deal this round...'); return; }
-        showCard(data.idx);
+        showCard(data);
       }, () => {
         showError('⚠️ Could not connect — check your internet connection.');
       });

@@ -10,14 +10,21 @@
 //      -> Add app -> Web (</>) -> register it (no hosting needed)
 //      -> copy the config values it shows you into FIREBASE_CONFIG below.
 //
-// Suggested Realtime Database rules (Database -> Rules tab) — scopes
-// read/write to only the /sessions path, no login required:
+// Required Realtime Database rules (Database -> Rules tab) — grants read/write
+// ONLY on the exact per-player token path, not on the session or players list.
+// This matters: each player's link contains a long random token (not a
+// guessable number), and these rules make sure knowing the token for your OWN
+// link never lets you read anyone else's node or list who else is in the game.
 //   {
 //     "rules": {
 //       "sessions": {
 //         "$sessionId": {
-//           ".read": true,
-//           ".write": true
+//           "players": {
+//             "$token": {
+//               ".read": true,
+//               ".write": true
+//             }
+//           }
 //         }
 //       }
 //     }

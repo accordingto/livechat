@@ -306,6 +306,18 @@
     }
     const sessionCode = generateSessionCode();
 
+    /* each player gets an unguessable random token instead of a sequential number —
+       otherwise anyone with one link could just edit the URL to see other players' cards */
+    function generateToken() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+    let playerTokens = [];
+    function ensureTokens(n) {
+      while (playerTokens.length < n) playerTokens.push(generateToken());
+    }
+
     /* ── player count buttons 2–6 ── */
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-btns');
@@ -332,8 +344,8 @@
     }
 
     /* same link for a player all night — only the emotion behind it changes each round */
-    function cardURL(player) {
-      return new URL(`emotion-card.html?s=${sessionCode}&p=${player}`, location.href).href;
+    function cardURL(token) {
+      return new URL(`emotion-card.html?s=${sessionCode}&p=${token}`, location.href).href;
     }
 
     function qrSVG(text) {
@@ -343,8 +355,8 @@
       return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
     }
 
-    function copyLink(player, btn) {
-      const url = cardURL(player);
+    function copyLink(token, btn) {
+      const url = cardURL(token);
       const done = () => {
         const old = btn.textContent;
         btn.textContent = '✅ Copied';
@@ -357,17 +369,18 @@
       }
     }
 
-    function toggleQR(i, col) {
+    function toggleQR(token, col) {
       const existing = col.querySelector('.qr-inline');
       if (existing) { existing.remove(); return; }
       const box = document.createElement('div');
       box.className = 'qr-inline';
-      box.innerHTML = qrSVG(cardURL(i + 1));
+      box.innerHTML = qrSVG(cardURL(token));
       col.appendChild(box);
     }
 
     /* renders the persistent per-player link cards — safe to call any time */
     function renderPlayerLinks() {
+      ensureTokens(playerCount);
       const wrap = document.getElementById('player-links');
       wrap.innerHTML = '';
       for (let i = 0; i < playerCount; i++) {
@@ -385,13 +398,13 @@
         const copyBtn = document.createElement('button');
         copyBtn.className = 'btn-copy';
         copyBtn.textContent = '📋 Copy Link';
-        copyBtn.onclick = () => copyLink(i + 1, copyBtn);
+        copyBtn.onclick = () => copyLink(playerTokens[i], copyBtn);
         btnRow.appendChild(copyBtn);
 
         const qrBtn = document.createElement('button');
         qrBtn.className = 'btn-qr-toggle';
         qrBtn.textContent = 'QR';
-        qrBtn.onclick = () => toggleQR(i, col);
+        qrBtn.onclick = () => toggleQR(playerTokens[i], col);
         btnRow.appendChild(qrBtn);
 
         col.appendChild(btnRow);
@@ -423,9 +436,10 @@
       document.getElementById('reveal-btn').classList.remove('hidden');
 
       // push this round's assignment to each player's link — their page updates live
+      ensureTokens(playerCount);
       if (firebaseReady) {
         assigned.forEach((card, i) => {
-          db.ref(`sessions/${sessionCode}/players/${i + 1}`).set({ idx: card.idx, round });
+          db.ref(`sessions/${sessionCode}/players/${playerTokens[i]}`).set({ idx: card.idx, round, playerNum: i + 1 });
         });
       }
 
