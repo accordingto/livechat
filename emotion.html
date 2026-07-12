@@ -312,7 +312,7 @@
       <div class="lyrics-display" id="lyrics-display" style="display:none"></div>
     </div>
 
-    <div class="section-hdr">👀 Emotion Pool (20)</div>
+    <div class="section-hdr">👀 Emotion Pool (10)</div>
     <div class="pool-grid" id="pool-grid"></div>
   </div>
 
@@ -572,8 +572,8 @@
     renderPlayerLinks();
 
     function deal() {
-      // 50 → 20 pool → N assigned
-      const poolIdx  = shuffle(EMOTIONS.map((_, i) => i)).slice(0, 20);
+      // 25 → 10 pool → N assigned
+      const poolIdx  = shuffle(EMOTIONS.map((_, i) => i)).slice(0, 10);
       const dealtIdx = shuffle(poolIdx).slice(0, playerCount);
       assigned = dealtIdx.map(idx => ({ idx }));
       revealed = false;
@@ -593,7 +593,7 @@
 
       renderPlayerLinks();
 
-      /* pool of 20 — sorted alphabetically so card order reveals nothing */
+      /* pool of 10 — sorted alphabetically so card order reveals nothing */
       const pool = document.getElementById('pool-grid');
       pool.innerHTML = '';
       poolIdx
