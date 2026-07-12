@@ -109,26 +109,6 @@
       animation: fadeUp .3s ease both;
     }
 
-    /* ── Dice banner: shows who was picked to speak next ── */
-    .dice-banner {
-      width: 100%; max-width: 1100px;
-      background: rgba(217,70,239,.1); border: 1.5px solid #d946ef;
-      border-radius: 14px; padding: 18px; text-align: center;
-      margin-bottom: 20px; position: relative; z-index: 1;
-    }
-    .dice-banner .dice-name {
-      font-size: 1.5rem; font-weight: 900; color: #d946ef;
-      display: inline-block;
-    }
-    .dice-banner.rolling .dice-name { animation: diceShake .35s ease; }
-    @keyframes diceShake {
-      0%, 100% { transform: translateX(0) scale(1); }
-      25% { transform: translateX(-4px) scale(1.05); }
-      75% { transform: translateX(4px) scale(1.05); }
-    }
-    .dice-progress {
-      font-size: .78rem; color: #666; margin-top: 6px;
-    }
 
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
     .player-links {
@@ -148,6 +128,7 @@
     .link-col.is-wolf { border-color: #f59e0b; }
     .link-col.is-picked { border-color: #d946ef; box-shadow: 0 0 24px rgba(217,70,239,.4); }
     .link-col.is-picked.pulse { animation: pickPulse .5s ease; }
+    .link-col.is-picked-done { border-color: #14b8a6; box-shadow: 0 0 14px rgba(20,184,166,.25); }
     @keyframes pickPulse {
       0%   { transform: scale(1); }
       30%  { transform: scale(1.05); }
@@ -246,18 +227,11 @@
       <button class="btn-secondary" id="dice-btn" onclick="pickSomeone()">🎲 Pick Someone</button>
     </div>
   </div>
-  <div class="control-note">Same Room Code and links work across Emotion Cards, Word Wolf and Team Words — reopening this page resumes the same room automatically.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
-
-  <div class="dice-banner hidden" id="dice-banner">
-    <span>🎲 It is</span> <span class="dice-name" id="dice-name"></span><span>'s turn!</span>
-    <div class="dice-progress" id="dice-progress"></div>
-  </div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
 
   <div class="section-hdr">🔗 Player Links</div>
-  <div class="links-note">Copy each link once and send it privately (e.g. a LINE DM) — everyone's word updates automatically every round.</div>
   <div class="player-links" id="player-links"></div>
 
   <script src="qrcode.js"></script>
@@ -279,11 +253,12 @@
     let pickOrder = [];
     let pickPos = 0;
     let currentPickIdx = null; // index of the player currently highlighted in Player Links
+    let pickedThisCycle = new Set(); // indices already drawn this cycle (shown dimmer than the current pick)
     function resetPickOrder() {
       pickOrder = [];
       pickPos = 0;
       currentPickIdx = null;
-      document.getElementById('dice-banner').classList.add('hidden');
+      pickedThisCycle = new Set();
     }
 
     /* ── Firebase: lets each player's already-open link update live every round ── */
@@ -490,6 +465,7 @@
         let stateClass = '';
         if (revealed && p && p.isWolf) stateClass = ' is-wolf';
         else if (currentPickIdx === i) stateClass = ' is-picked';
+        else if (pickedThisCycle.has(i)) stateClass = ' is-picked-done';
         const col = document.createElement('div');
         col.className = 'link-col' + stateClass;
 
@@ -574,24 +550,19 @@
     }
 
     /* draws the next player in the shuffled order — everyone gets picked once
-       before the cycle reshuffles and starts over */
+       before the cycle reshuffles and starts over. Shown entirely through the
+       Player Links boxes: current pick glows fuchsia, already-picked-this-cycle
+       players are marked green, no separate banner needed. */
     function pickSomeone() {
       if (playerCount < 1) return;
       if (pickOrder.length !== playerCount || pickPos >= pickOrder.length) {
         pickOrder = shuffle(Array.from({ length: playerCount }, (_, i) => i));
         pickPos = 0;
+        pickedThisCycle = new Set();
       }
       const idx = pickOrder[pickPos++];
-      const name = playerNames[idx] || `Player ${idx + 1}`;
       currentPickIdx = idx;
-
-      const banner = document.getElementById('dice-banner');
-      banner.classList.remove('hidden');
-      document.getElementById('dice-name').textContent = name;
-      document.getElementById('dice-progress').textContent = `Picked ${pickPos} of ${playerCount} this round — everyone gets a turn before repeats.`;
-      banner.classList.remove('rolling');
-      void banner.offsetWidth; // restart the shake animation even if picked again quickly
-      banner.classList.add('rolling');
+      pickedThisCycle.add(idx);
 
       renderPlayerLinks();
       const pickedCol = document.querySelectorAll('.link-col')[idx];
