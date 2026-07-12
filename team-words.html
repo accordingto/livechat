@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Team Words · IceBreak Hub</title>
+  <title>Forbidden Words · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Team Words">
+  <meta name="apple-mobile-web-app-title" content="Forbidden Words">
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -199,8 +199,8 @@
   </div>
 
   <div class="header">
-    <h1>⚔️ Team Words</h1>
-    <p>Split into Team A and Team B — your team shares one secret word, the other team has a different one. Trade clues and crack their word first!</p>
+    <h1>🤐 Forbidden Words</h1>
+    <p>Split into Team A and Team B — each team secretly gets one common word. Trick the OTHER team into saying your word out loud, without ever telling them what it is!</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -218,11 +218,11 @@
     <div class="control-row">
       <span class="control-label">Players</span>
       <div class="player-btns" id="player-btns"></div>
-      <button class="btn-primary" id="deal-btn" onclick="deal()">⚔️ Deal Teams</button>
-      <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Teams</button>
+      <button class="btn-primary" id="deal-btn" onclick="deal()">🤐 Deal Words</button>
+      <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Words</button>
     </div>
   </div>
-  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Same Room Code and links work across Emotion Cards, Word Wolf and Team Words.</div>
+  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Each team only knows their own word — the goal is to steer the conversation so the other team says it first. Same Room Code and links work across Emotion Cards, Word Wolf and Forbidden Words.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
@@ -287,7 +287,7 @@
     function showCountNote(original, used) {
       const note = document.getElementById('count-mismatch-note');
       if (original === used) { note.classList.add('hidden'); return; }
-      note.textContent = `⚠️ This room was set up with ${original} players — using ${used} for Team Words instead.`;
+      note.textContent = `⚠️ This room was set up with ${original} players — using ${used} for Forbidden Words instead.`;
       note.classList.remove('hidden');
     }
 
@@ -552,7 +552,7 @@
       renderPlayerLinks();
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
-      banner.innerHTML = `This round: <span class="team-a-text">Team A — ${currentWordA.emoji} ${currentWordA.word}</span> &nbsp;vs&nbsp; <span class="team-b-text">Team B — ${currentWordB.emoji} ${currentWordB.word}</span>`;
+      banner.innerHTML = `<span class="team-a-text">Team A's word: ${currentWordA.emoji} ${currentWordA.word}</span> &nbsp;·&nbsp; <span class="team-b-text">Team B's word: ${currentWordB.emoji} ${currentWordB.word}</span>`;
     }
   </script>
 
