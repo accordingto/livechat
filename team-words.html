@@ -237,7 +237,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
-    const PAIRS = GAME_DATA.wordwolf; // reuse the Word Wolf word bank, but draw from two different pairs
+    const WORDS = GAME_DATA.forbidden; // simple everyday words, easy to say naturally in conversation
     const PLAYER_COUNTS = [2, 3, 4, 5, 6]; // odd counts split into uneven teams (e.g. 3 vs 2)
     const ALLOWED_COUNTS = PLAYER_COUNTS;
     let playerCount = 6;
@@ -493,20 +493,12 @@
     updateRoomCodeInput();
     renderPlayerLinks();
 
-    /* picks two words from two DIFFERENT pairs — Team A and Team B must never end up
-       with the two halves of the same pair, or the words would be suspiciously similar */
+    /* picks two different words from the list — Team A and Team B must never get the same word */
     function pickTwoDistinctWords() {
-      const i1 = Math.floor(Math.random() * PAIRS.length);
-      let i2 = Math.floor(Math.random() * (PAIRS.length - 1));
+      const i1 = Math.floor(Math.random() * WORDS.length);
+      let i2 = Math.floor(Math.random() * (WORDS.length - 1));
       if (i2 >= i1) i2++;
-      const pair1 = PAIRS[i1], pair2 = PAIRS[i2];
-      const wordA = Math.random() < 0.5
-        ? { word: pair1.a, emoji: pair1.emojiA }
-        : { word: pair1.b, emoji: pair1.emojiB };
-      const wordB = Math.random() < 0.5
-        ? { word: pair2.a, emoji: pair2.emojiA }
-        : { word: pair2.b, emoji: pair2.emojiB };
-      return { wordA, wordB };
+      return { wordA: WORDS[i1], wordB: WORDS[i2] };
     }
 
     function deal() {
