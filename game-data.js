@@ -1,6 +1,6 @@
 const GAME_DATA = {
 
-  // ── Emotion Cards（50 種情緒）──────────────────────────────────────────────
+  // ── Emotion Cards（25 種情緒）──────────────────────────────────────────────
   emotion: [
     { word: 'Happy',             emoji: '😄' },
     { word: 'Sad',                emoji: '😢' },
@@ -27,31 +27,6 @@ const GAME_DATA = {
     { word: 'Relieved',           emoji: '😮‍💨' },
     { word: 'Confident',          emoji: '😎' },
     { word: 'Tired',              emoji: '😪' },
-    { word: 'Robot',              emoji: '🤖' },
-    { word: 'Superhero',          emoji: '🦸' },
-    { word: 'Villain',            emoji: '🦹' },
-    { word: 'Princess',           emoji: '👸' },
-    { word: 'Ghost',              emoji: '👻' },
-    { word: 'Pirate',             emoji: '🏴‍☠️' },
-    { word: 'Cowboy',             emoji: '🤠' },
-    { word: 'Chef',               emoji: '👨‍🍳' },
-    { word: 'Vampire',            emoji: '🧛' },
-    { word: 'Boss',               emoji: '👨‍💼' },
-    { word: 'Rich Man',           emoji: '🤑' },
-    { word: 'Pop Star',           emoji: '🎤' },
-    { word: 'Detective',          emoji: '🕵️' },
-    { word: 'Fortune Teller',     emoji: '🔮' },
-    { word: 'Baby',               emoji: '👶' },
-    { word: 'Won The Lottery',    emoji: '🎰' },
-    { word: 'Missed The Bus',     emoji: '🚌' },
-    { word: 'Stuck In Traffic',   emoji: '🚗' },
-    { word: 'Lost Your Phone',    emoji: '📱' },
-    { word: 'Caught In Rain',     emoji: '☔' },
-    { word: 'First Day At Work',  emoji: '🏢' },
-    { word: 'Eating Spicy Food',  emoji: '🌶️' },
-    { word: 'Taking A Test',      emoji: '📝' },
-    { word: 'Watching A Movie',   emoji: '🎬' },
-    { word: 'Playing A Game',     emoji: '🎮' },
   ],
 
   // ── Pick a Side! ───────────────────────────────────────────────────────────
