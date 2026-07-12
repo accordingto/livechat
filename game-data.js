@@ -54,7 +54,7 @@ const GAME_DATA = {
     { word: 'Shocked',      emoji: '⚡' },
   ],
 
-  // ── Hot Take Roulette ──────────────────────────────────────────────────────
+  // ── Pick a Side! ───────────────────────────────────────────────────────────
   hottake: [
     "Texting 'haha' when you didn't actually laugh is lying, and we all do it every day.",
     "Cold pizza the next morning tastes better than hot pizza the night before.",

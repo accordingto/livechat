@@ -6,7 +6,7 @@ Online icebreaker games for English voice chat rooms and conversation classes. T
 
 | Game | Description |
 |------|-------------|
-| 🔥 Hot Take Roulette | Spin for a bold opinion; room votes Agree / It Depends / Disagree and debates |
+| 🔥 Pick a Side! | Spin for a bold opinion; room votes Agree / It Depends / Disagree and debates |
 | 🤔 Sophie's Choice | Two tough options — pick one and defend your decision |
 | 🤝 Persuade Together! | Team debate scenarios where players argue both sides |
 | 🎭 You're In The Scene | Improv scene prompts with role assignments |

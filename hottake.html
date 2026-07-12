@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Hot Take Roulette · IceBreak Hub</title>
+  <title>Pick a Side! · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Hot Take">
+  <meta name="apple-mobile-web-app-title" content="Pick a Side!">
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -212,14 +212,14 @@
   </div>
 
   <div class="header">
-    <h1>🔥 Hot Take Roulette</h1>
+    <h1>🔥 Pick a Side!</h1>
     <p>Spin for a bold opinion — tap Agree or Disagree once per participant to tally the room, then debate!</p>
   </div>
 
 
   <div class="card" id="card">
-    <span class="fire-label">🔥 Hot Take</span>
-    <span class="take-text placeholder" id="takeText">Press Spin to reveal a hot take</span>
+    <span class="fire-label">🔥 Pick a Side</span>
+    <span class="take-text placeholder" id="takeText">Press Spin to reveal a bold opinion</span>
   </div>
 
 
@@ -295,7 +295,7 @@
       const btnM    = document.getElementById('btnMiddle');
       const btnD    = document.getElementById('btnDisagree');
 
-      card.innerHTML = '<span class="fire-label">🔥 Hot Take</span><span class="take-text" id="takeText">Drawing…</span>';
+      card.innerHTML = '<span class="fire-label">🔥 Pick a Side</span><span class="take-text" id="takeText">Drawing…</span>';
       const text = document.getElementById('takeText');
 
       spinBtn.disabled = true;

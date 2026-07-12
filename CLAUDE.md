@@ -23,7 +23,7 @@
 | 檔案 | 說明 |
 |------|------|
 | `index.html` | 主選單 / 遊戲入口頁 |
-| `hottake.html` | 🔥 Hot Take Roulette |
+| `hottake.html` | 🔥 Pick a Side! |
 | `what-will-you-do.html` | 🤔 Sophie's Choice |
 | `persuade-team.html` | 🤝 Persuade Together! |
 | `scene.html` | 🎭 You're In The Scene |
