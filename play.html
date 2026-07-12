@@ -45,7 +45,10 @@
     .theme-teamwords-b .team-tag { background: #f43f5e; }
 
     .card-emoji { font-size: 6rem; line-height: 1; }
-    .card-word  { font-size: 2.6rem; font-weight: 800; color: #fff; line-height: 1.1; }
+    .card-word  {
+      font-weight: 800; color: #fff; line-height: 1.15;
+      max-width: 100%; overflow-wrap: break-word;
+    }
     .secret-hint {
       font-size: .85rem; color: #555;
       border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
@@ -90,6 +93,20 @@
       return `<span class="name-banner" style="background:linear-gradient(135deg,${c1},${c2})">${label}</span>`;
     }
 
+    /* longer phrases (e.g. "Night Market Seller") get a smaller font so they
+       still fit in 1-2 lines instead of overflowing or wrapping to 3+ lines */
+    function wordFontSize(text) {
+      const len = String(text).length;
+      if (len <= 10) return '2.6rem';
+      if (len <= 16) return '2.1rem';
+      if (len <= 22) return '1.7rem';
+      return '1.4rem';
+    }
+
+    function wordSpan(text) {
+      return `<span class="card-word" style="font-size:${wordFontSize(text)}">${esc(text)}</span>`;
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -98,7 +115,7 @@
           <div class="secret-card theme-wordwolf">
             ${nameBanner(data)}
             <span class="card-emoji">${data.emoji}</span>
-            <span class="card-word">${data.word}</span>
+            ${wordSpan(data.word)}
             <span class="secret-hint">🤫 Keep it secret!</span>
           </div>`;
         return;
@@ -110,7 +127,7 @@
             ${nameBanner(data)}
             <span class="team-tag">Team ${data.team}</span>
             <span class="card-emoji">${data.emoji}</span>
-            <span class="card-word">${data.word}</span>
+            ${wordSpan(data.word)}
             <span class="secret-hint">🤫 Keep it secret!</span>
           </div>`;
         return;
@@ -122,7 +139,7 @@
           <div class="secret-card">
             ${nameBanner(data)}
             <span class="card-emoji">${emotion.emoji}</span>
-            <span class="card-word">${emotion.word}</span>
+            ${wordSpan(emotion.word)}
             <span class="secret-hint">🤫 Keep it secret!</span>
           </div>`;
         return;
