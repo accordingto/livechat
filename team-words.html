@@ -222,7 +222,7 @@
       <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Teams</button>
     </div>
   </div>
-  <div class="control-note">Players are split evenly and randomly into Team A and Team B each round. Same Room Code and links work across Emotion Cards, Word Wolf and Team Words.</div>
+  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Same Room Code and links work across Emotion Cards, Word Wolf and Team Words.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
@@ -238,7 +238,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
     const PAIRS = GAME_DATA.wordwolf; // reuse the Word Wolf word bank, but draw from two different pairs
-    const PLAYER_COUNTS = [2, 4, 6]; // even only, so teams split exactly in half
+    const PLAYER_COUNTS = [2, 3, 4, 5, 6]; // odd counts split into uneven teams (e.g. 3 vs 2)
     const ALLOWED_COUNTS = PLAYER_COUNTS;
     let playerCount = 6;
     let assigned = [];    // [{ team, word, emoji }] per player — this round's deal
@@ -372,7 +372,7 @@
       renderPlayerLinks();
     }
 
-    /* ── player count buttons: even numbers only, so Team A / Team B split exactly in half ── */
+    /* ── player count buttons 2–6 (odd counts split into uneven teams, e.g. 3 vs 2) ── */
     function setPlayerCount(n) {
       playerCount = n;
       document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
@@ -513,10 +513,13 @@
       const { wordA, wordB } = pickTwoDistinctWords();
       currentWordA = wordA;
       currentWordB = wordB;
-      const half = playerCount / 2;
+      // odd counts can't split evenly — randomize which team gets the extra player each round
+      const bigHalf = Math.ceil(playerCount / 2);
+      const smallHalf = playerCount - bigHalf;
+      const [countA, countB] = Math.random() < 0.5 ? [bigHalf, smallHalf] : [smallHalf, bigHalf];
       const teams = shuffle([
-        ...Array(half).fill('A'),
-        ...Array(playerCount - half).fill('B'),
+        ...Array(countA).fill('A'),
+        ...Array(countB).fill('B'),
       ]);
       assigned = teams.map(team => ({
         team,
