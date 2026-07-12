@@ -146,6 +146,13 @@
       transition: border-color .3s;
     }
     .link-col.is-wolf { border-color: #f59e0b; }
+    .link-col.is-picked { border-color: #d946ef; box-shadow: 0 0 24px rgba(217,70,239,.4); }
+    .link-col.is-picked.pulse { animation: pickPulse .5s ease; }
+    @keyframes pickPulse {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
     .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
     .name-input {
       width: 100%;
@@ -271,9 +278,11 @@
        repeats until everyone's had a turn, then reshuffles for the next cycle */
     let pickOrder = [];
     let pickPos = 0;
+    let currentPickIdx = null; // index of the player currently highlighted in Player Links
     function resetPickOrder() {
       pickOrder = [];
       pickPos = 0;
+      currentPickIdx = null;
       document.getElementById('dice-banner').classList.add('hidden');
     }
 
@@ -388,8 +397,8 @@
       ensureTokens(playerCount);
       saveSessionTokens();
       updateRoomCodeInput();
-      renderPlayerLinks();
       resetPickOrder();
+      renderPlayerLinks();
     }
 
     /* start a brand-new room with a fresh code and fresh player tokens */
@@ -400,8 +409,8 @@
       showCountNote(0, 0);
       ensureTokens(playerCount);
       updateRoomCodeInput();
-      renderPlayerLinks();
       resetPickOrder();
+      renderPlayerLinks();
     }
 
     function shuffle(arr) {
@@ -478,8 +487,11 @@
       wrap.innerHTML = '';
       for (let i = 0; i < playerCount; i++) {
         const p = assigned[i];
+        let stateClass = '';
+        if (revealed && p && p.isWolf) stateClass = ' is-wolf';
+        else if (currentPickIdx === i) stateClass = ' is-picked';
         const col = document.createElement('div');
-        col.className = 'link-col' + (revealed && p && p.isWolf ? ' is-wolf' : '');
+        col.className = 'link-col' + stateClass;
 
         const nameInput = document.createElement('input');
         nameInput.className = 'name-input';
@@ -571,6 +583,7 @@
       }
       const idx = pickOrder[pickPos++];
       const name = playerNames[idx] || `Player ${idx + 1}`;
+      currentPickIdx = idx;
 
       const banner = document.getElementById('dice-banner');
       banner.classList.remove('hidden');
@@ -579,6 +592,13 @@
       banner.classList.remove('rolling');
       void banner.offsetWidth; // restart the shake animation even if picked again quickly
       banner.classList.add('rolling');
+
+      renderPlayerLinks();
+      const pickedCol = document.querySelectorAll('.link-col')[idx];
+      if (pickedCol) {
+        pickedCol.classList.add('pulse');
+        pickedCol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   </script>
 
