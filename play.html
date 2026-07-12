@@ -24,18 +24,9 @@
       animation: fadeUp .5s ease both;
       transition: border-color .3s, box-shadow .3s;
     }
-    .secret-card.theme-wordwolf     { border-color: #f59e0b; box-shadow: 0 0 60px rgba(245,158,11,.18); }
-    .secret-card.theme-teamwords-a  { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
-    .secret-card.theme-teamwords-b  { border-color: #f43f5e; box-shadow: 0 0 60px rgba(244,63,94,.18); }
-    .secret-card.theme-teamwords-agent { border-color: #eab308; box-shadow: 0 0 60px rgba(234,179,8,.22); }
-
-    .agent-words { display: flex; gap: 16px; width: 100%; }
-    .agent-side { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .agent-side .agent-side-tag { font-size: .8rem; font-weight: 900; letter-spacing: 1.5px; }
-    .agent-side.side-a .agent-side-tag { color: #3b82f6; }
-    .agent-side.side-b .agent-side-tag { color: #f43f5e; }
-    .agent-side .card-emoji { font-size: 3.6rem; }
-    .agent-side .card-word { max-width: 100%; }
+    .secret-card.theme-wordwolf    { border-color: #f59e0b; box-shadow: 0 0 60px rgba(245,158,11,.18); }
+    .secret-card.theme-teamwords-a { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
+    .secret-card.theme-teamwords-b { border-color: #f43f5e; box-shadow: 0 0 60px rgba(244,63,94,.18); }
 
     /* big per-player name badge — every player gets their own vivid gradient,
        so one glance at the color + name says "this card is mine" */
@@ -116,20 +107,6 @@
       return `<span class="card-word" style="font-size:${wordFontSize(text)}">${esc(text)}</span>`;
     }
 
-    /* the Double Agent card shows two words side by side, so each column only
-       has ~half the width of a normal card — needs its own smaller size tiers */
-    function agentWordFontSize(text) {
-      const len = String(text).length;
-      if (len <= 8) return '1.4rem';
-      if (len <= 14) return '1.1rem';
-      if (len <= 20) return '.95rem';
-      return '.8rem';
-    }
-
-    function agentWordSpan(text) {
-      return `<span class="card-word" style="font-size:${agentWordFontSize(text)}">${esc(text)}</span>`;
-    }
-
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -140,27 +117,6 @@
             <span class="card-emoji">${data.emoji}</span>
             ${wordSpan(data.word)}
             <span class="secret-hint">🤫 Keep it secret!</span>
-          </div>`;
-        return;
-      }
-      if (data.game === 'teamwords' && data.isAgent) {
-        el.innerHTML = `
-          <div class="secret-card theme-teamwords-agent">
-            ${nameBanner(data)}
-            <span class="team-tag" style="background:#eab308">🕵️ Double Agent</span>
-            <div class="agent-words">
-              <div class="agent-side side-a">
-                <span class="agent-side-tag">TEAM A</span>
-                <span class="card-emoji">${data.emojiA}</span>
-                ${agentWordSpan(data.wordA)}
-              </div>
-              <div class="agent-side side-b">
-                <span class="agent-side-tag">TEAM B</span>
-                <span class="card-emoji">${data.emojiB}</span>
-                ${agentWordSpan(data.wordB)}
-              </div>
-            </div>
-            <span class="secret-hint">🤫 You know both secrets — help a side, mislead, or stay neutral!</span>
           </div>`;
         return;
       }

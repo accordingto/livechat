@@ -128,7 +128,6 @@
     }
     .link-col.team-a { border-color: #3b82f6; }
     .link-col.team-b { border-color: #f43f5e; }
-    .link-col.is-agent { border-color: #eab308; box-shadow: 0 0 22px rgba(234,179,8,.25); }
     .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
     .name-input {
       width: 100%;
@@ -174,13 +173,6 @@
     .link-word .lw-tag   { font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
     .link-word .lw-tag.team-a { color: #3b82f6; }
     .link-word .lw-tag.team-b { color: #f43f5e; }
-    .link-word .lw-tag.agent  { color: #eab308; }
-    .link-word .lw-agent-words { display: flex; gap: 18px; width: 100%; }
-    .link-word .lw-agent-words .lw-side { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .link-word .lw-agent-words .lw-text { max-width: 100%; overflow-wrap: break-word; }
-    .link-word .lw-agent-words .lw-side .lw-side-tag { font-size: .62rem; font-weight: 900; letter-spacing: 1px; }
-    .link-word .lw-agent-words .lw-side.side-a .lw-side-tag { color: #3b82f6; }
-    .link-word .lw-agent-words .lw-side.side-b .lw-side-tag { color: #f43f5e; }
 
     /* Firebase-not-configured warning */
     .fb-warning {
@@ -230,7 +222,7 @@
       <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Teams</button>
     </div>
   </div>
-  <div class="control-note">Players are split randomly into Team A and Team B each round. With an odd number, one random player becomes a 🕵️ Double Agent who secretly knows both words — help a side, mislead everyone, or stay neutral! Same Room Code and links work across Emotion Cards, Word Wolf and Team Words.</div>
+  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Same Room Code and links work across Emotion Cards, Word Wolf and Team Words.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
@@ -399,10 +391,6 @@
       });
     })();
 
-    function esc(s) {
-      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-    }
-
     function shuffle(arr) {
       const a = arr.slice();
       for (let i = a.length - 1; i > 0; i--) {
@@ -459,10 +447,9 @@
       wrap.innerHTML = '';
       for (let i = 0; i < playerCount; i++) {
         const p = assigned[i];
-        let stateClass = '';
-        if (revealed && p) stateClass = p.isAgent ? ' is-agent' : (p.team === 'A' ? ' team-a' : ' team-b');
+        const teamClass = revealed && p ? (p.team === 'A' ? ' team-a' : ' team-b') : '';
         const col = document.createElement('div');
-        col.className = 'link-col' + stateClass;
+        col.className = 'link-col' + teamClass;
 
         const nameInput = document.createElement('input');
         nameInput.className = 'name-input';
@@ -493,19 +480,10 @@
         if (revealed && p) {
           const face = document.createElement('div');
           face.className = 'link-word';
-          if (p.isAgent) {
-            face.innerHTML = `
-              <span class="lw-tag agent">🕵️ Double Agent</span>
-              <div class="lw-agent-words">
-                <div class="lw-side side-a"><span class="lw-side-tag">TEAM A</span><span class="lw-emoji">${p.wordA.emoji}</span><span class="lw-text">${p.wordA.word}</span></div>
-                <div class="lw-side side-b"><span class="lw-side-tag">TEAM B</span><span class="lw-emoji">${p.wordB.emoji}</span><span class="lw-text">${p.wordB.word}</span></div>
-              </div>`;
-          } else {
-            face.innerHTML = `
-              <span class="lw-emoji">${p.emoji}</span>
-              <span class="lw-text">${p.word}</span>
-              <span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>`;
-          }
+          face.innerHTML = `
+            <span class="lw-emoji">${p.emoji}</span>
+            <span class="lw-text">${p.word}</span>
+            <span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>`;
           col.appendChild(face);
         }
 
@@ -535,28 +513,19 @@
       const { wordA, wordB } = pickTwoDistinctWords();
       currentWordA = wordA;
       currentWordB = wordB;
-
-      if (playerCount % 2 === 1) {
-        // odd count: one random player becomes a Double Agent who secretly knows
-        // both words; everyone else splits evenly into Team A / Team B
-        const agentIndex = Math.floor(Math.random() * playerCount);
-        const half = (playerCount - 1) / 2;
-        const teams = shuffle([...Array(half).fill('A'), ...Array(half).fill('B')]);
-        let ti = 0;
-        assigned = Array.from({ length: playerCount }, (_, i) => {
-          if (i === agentIndex) return { isAgent: true, wordA, wordB };
-          const team = teams[ti++];
-          return { isAgent: false, team, word: team === 'A' ? wordA.word : wordB.word, emoji: team === 'A' ? wordA.emoji : wordB.emoji };
-        });
-      } else {
-        const half = playerCount / 2;
-        const teams = shuffle([...Array(half).fill('A'), ...Array(half).fill('B')]);
-        assigned = teams.map(team => ({
-          isAgent: false, team,
-          word: team === 'A' ? wordA.word : wordB.word,
-          emoji: team === 'A' ? wordA.emoji : wordB.emoji,
-        }));
-      }
+      // odd counts can't split evenly — randomize which team gets the extra player each round
+      const bigHalf = Math.ceil(playerCount / 2);
+      const smallHalf = playerCount - bigHalf;
+      const [countA, countB] = Math.random() < 0.5 ? [bigHalf, smallHalf] : [smallHalf, bigHalf];
+      const teams = shuffle([
+        ...Array(countA).fill('A'),
+        ...Array(countB).fill('B'),
+      ]);
+      assigned = teams.map(team => ({
+        team,
+        word: team === 'A' ? wordA.word : wordB.word,
+        emoji: team === 'A' ? wordA.emoji : wordB.emoji,
+      }));
       revealed = false;
       round++;
 
@@ -568,11 +537,8 @@
       ensureTokens(playerCount);
       if (firebaseReady) {
         assigned.forEach((p, i) => {
-          const payload = p.isAgent
-            ? { game: 'teamwords', isAgent: true, wordA: p.wordA.word, emojiA: p.wordA.emoji, wordB: p.wordB.word, emojiB: p.wordB.emoji }
-            : { game: 'teamwords', isAgent: false, team: p.team, word: p.word, emoji: p.emoji };
           db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({
-            ...payload, round, playerNum: i + 1, name: playerNames[i] || null,
+            game: 'teamwords', team: p.team, word: p.word, emoji: p.emoji, round, playerNum: i + 1, name: playerNames[i] || null,
           });
         });
       }
@@ -580,16 +546,13 @@
       renderPlayerLinks();
     }
 
-    /* end of round: show every player's team/agent status + word, and reveal both teams' words */
+    /* end of round: show every player's team + word, and reveal both teams' words */
     function revealAll() {
       revealed = true;
       renderPlayerLinks();
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
-      const agent = assigned.find(p => p.isAgent);
-      const agentIdx = assigned.indexOf(agent);
-      const agentNote = agent ? ` &nbsp;·&nbsp; 🕵️ Double Agent: <strong>${esc(playerNames[agentIdx] || ('Player ' + (agentIdx + 1)))}</strong>` : '';
-      banner.innerHTML = `This round: <span class="team-a-text">Team A — ${currentWordA.emoji} ${currentWordA.word}</span> &nbsp;vs&nbsp; <span class="team-b-text">Team B — ${currentWordB.emoji} ${currentWordB.word}</span>${agentNote}`;
+      banner.innerHTML = `This round: <span class="team-a-text">Team A — ${currentWordA.emoji} ${currentWordA.word}</span> &nbsp;vs&nbsp; <span class="team-b-text">Team B — ${currentWordB.emoji} ${currentWordB.word}</span>`;
     }
   </script>
 
