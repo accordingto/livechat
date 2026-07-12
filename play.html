@@ -49,6 +49,13 @@
       font-weight: 800; color: #fff; line-height: 1.15;
       max-width: 100%; overflow-wrap: break-word;
     }
+    .word-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .word-row {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      background: #0d0d1a; border-radius: 14px; padding: 14px;
+    }
+    .word-row .card-emoji { font-size: 2.4rem; }
+    .word-row .card-word { font-size: 1.5rem; }
     .secret-hint {
       font-size: .85rem; color: #555;
       border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
@@ -107,6 +114,23 @@
       return `<span class="card-word" style="font-size:${wordFontSize(text)}">${esc(text)}</span>`;
     }
 
+    /* Forbidden Words shows 3 words stacked in one row each — smaller tiers than
+       the single-word card since an emoji shares the row with the text */
+    function listWordFontSize(text) {
+      const len = String(text).length;
+      if (len <= 8) return '1.5rem';
+      if (len <= 12) return '1.2rem';
+      return '1rem';
+    }
+
+    function wordListHTML(words) {
+      return words.map(w => `
+        <div class="word-row">
+          <span class="card-emoji">${w.emoji}</span>
+          <span class="card-word" style="font-size:${listWordFontSize(w.word)}">${esc(w.word)}</span>
+        </div>`).join('');
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -126,9 +150,8 @@
           <div class="secret-card ${teamClass}">
             ${nameBanner(data)}
             <span class="team-tag">Team ${data.team}</span>
-            <span class="card-emoji">${data.emoji}</span>
-            ${wordSpan(data.word)}
-            <span class="secret-hint">🤐 Trick the other team into saying this!</span>
+            <div class="word-list">${wordListHTML(data.words)}</div>
+            <span class="secret-hint">🤐 Trick the other team into saying these!</span>
           </div>`;
         return;
       }

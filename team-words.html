@@ -168,11 +168,16 @@
       padding-top: 10px; margin-top: 2px; border-top: 1px solid #1e1e42; width: 100%;
       animation: fadeUp .3s ease both;
     }
-    .link-word .lw-emoji { font-size: 2rem; line-height: 1; }
-    .link-word .lw-text  { font-size: .95rem; font-weight: 800; color: #34d399; }
     .link-word .lw-tag   { font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
     .link-word .lw-tag.team-a { color: #3b82f6; }
     .link-word .lw-tag.team-b { color: #f43f5e; }
+    .link-word .lw-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .link-word .lw-item {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #0d0d1a; border-radius: 10px; padding: 6px 10px;
+    }
+    .link-word .lw-emoji { font-size: 1.4rem; line-height: 1; }
+    .link-word .lw-text  { font-size: .88rem; font-weight: 800; color: #34d399; }
 
     /* Firebase-not-configured warning */
     .fb-warning {
@@ -200,7 +205,7 @@
 
   <div class="header">
     <h1>🤐 Forbidden Words</h1>
-    <p>Split into Team A and Team B — each team secretly gets one common word. Trick the OTHER team into saying your word out loud, without ever telling them what it is!</p>
+    <p>Split into Team A and Team B — each team secretly gets three common words. Trick the OTHER team into saying your words out loud, without ever telling them what they are!</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -222,7 +227,7 @@
       <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Words</button>
     </div>
   </div>
-  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Each team only knows their own word — the goal is to steer the conversation so the other team says it first. Same Room Code and links work across Emotion Cards, Word Wolf and Forbidden Words.</div>
+  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Each team only knows their own 3 words — the goal is to steer the conversation so the other team says one first. Same Room Code and links work across Emotion Cards, Word Wolf and Forbidden Words.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
@@ -241,9 +246,9 @@
     const PLAYER_COUNTS = [2, 3, 4, 5, 6]; // odd counts split into uneven teams (e.g. 3 vs 2)
     const ALLOWED_COUNTS = PLAYER_COUNTS;
     let playerCount = 6;
-    let assigned = [];    // [{ team, word, emoji }] per player — this round's deal
-    let currentWordA = null; // { word, emoji } — never from the same pair as currentWordB
-    let currentWordB = null;
+    let assigned = [];    // [{ team, words: [{word,emoji} x3] }] per player — this round's deal
+    let currentWordsA = null; // [{ word, emoji } x3] — Team A's 3 secret words
+    let currentWordsB = null; // [{ word, emoji } x3] — Team B's 3 secret words
     let revealed = false; // end-of-round: show every player's team + word
     let round = 0;
 
@@ -481,9 +486,8 @@
           const face = document.createElement('div');
           face.className = 'link-word';
           face.innerHTML = `
-            <span class="lw-emoji">${p.emoji}</span>
-            <span class="lw-text">${p.word}</span>
-            <span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>`;
+            <span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>
+            <div class="lw-list">${wordListHTML(p.words)}</div>`;
           col.appendChild(face);
         }
 
@@ -493,18 +497,20 @@
     updateRoomCodeInput();
     renderPlayerLinks();
 
-    /* picks two different words from the list — Team A and Team B must never get the same word */
-    function pickTwoDistinctWords() {
-      const i1 = Math.floor(Math.random() * WORDS.length);
-      let i2 = Math.floor(Math.random() * (WORDS.length - 1));
-      if (i2 >= i1) i2++;
-      return { wordA: WORDS[i1], wordB: WORDS[i2] };
+    /* picks 6 distinct words from the list and splits them into two sets of 3 —
+       Team A and Team B must never share a word */
+    function pickWordSets() {
+      const indices = shuffle(Array.from({ length: WORDS.length }, (_, i) => i)).slice(0, 6);
+      return {
+        wordsA: indices.slice(0, 3).map(i => WORDS[i]),
+        wordsB: indices.slice(3, 6).map(i => WORDS[i]),
+      };
     }
 
     function deal() {
-      const { wordA, wordB } = pickTwoDistinctWords();
-      currentWordA = wordA;
-      currentWordB = wordB;
+      const { wordsA, wordsB } = pickWordSets();
+      currentWordsA = wordsA;
+      currentWordsB = wordsB;
       // odd counts can't split evenly — randomize which team gets the extra player each round
       const bigHalf = Math.ceil(playerCount / 2);
       const smallHalf = playerCount - bigHalf;
@@ -515,8 +521,7 @@
       ]);
       assigned = teams.map(team => ({
         team,
-        word: team === 'A' ? wordA.word : wordB.word,
-        emoji: team === 'A' ? wordA.emoji : wordB.emoji,
+        words: team === 'A' ? wordsA : wordsB,
       }));
       revealed = false;
       round++;
@@ -525,12 +530,12 @@
       document.getElementById('reveal-btn').classList.remove('hidden');
       document.getElementById('reveal-banner').classList.add('hidden');
 
-      // push this round's team + word to each player's link — their page updates live
+      // push this round's team + words to each player's link — their page updates live
       ensureTokens(playerCount);
       if (firebaseReady) {
         assigned.forEach((p, i) => {
           db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({
-            game: 'teamwords', team: p.team, word: p.word, emoji: p.emoji, round, playerNum: i + 1, name: playerNames[i] || null,
+            game: 'teamwords', team: p.team, words: p.words, round, playerNum: i + 1, name: playerNames[i] || null,
           });
         });
       }
@@ -538,13 +543,19 @@
       renderPlayerLinks();
     }
 
-    /* end of round: show every player's team + word, and reveal both teams' words */
+    function wordListHTML(words) {
+      return words.map(w => `<span class="lw-item"><span class="lw-emoji">${w.emoji}</span><span class="lw-text">${w.word}</span></span>`).join('');
+    }
+
+    /* end of round: show every player's team + words, and reveal both teams' word sets */
     function revealAll() {
       revealed = true;
       renderPlayerLinks();
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
-      banner.innerHTML = `<span class="team-a-text">Team A's word: ${currentWordA.emoji} ${currentWordA.word}</span> &nbsp;·&nbsp; <span class="team-b-text">Team B's word: ${currentWordB.emoji} ${currentWordB.word}</span>`;
+      const listA = currentWordsA.map(w => `${w.emoji} ${w.word}`).join(', ');
+      const listB = currentWordsB.map(w => `${w.emoji} ${w.word}`).join(', ');
+      banner.innerHTML = `<span class="team-a-text">Team A's words: ${listA}</span> &nbsp;·&nbsp; <span class="team-b-text">Team B's words: ${listB}</span>`;
     }
   </script>
 
