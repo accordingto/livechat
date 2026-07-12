@@ -109,6 +109,27 @@
       animation: fadeUp .3s ease both;
     }
 
+    /* ── Dice banner: shows who was picked to speak next ── */
+    .dice-banner {
+      width: 100%; max-width: 1100px;
+      background: rgba(217,70,239,.1); border: 1.5px solid #d946ef;
+      border-radius: 14px; padding: 18px; text-align: center;
+      margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .dice-banner .dice-name {
+      font-size: 1.5rem; font-weight: 900; color: #d946ef;
+      display: inline-block;
+    }
+    .dice-banner.rolling .dice-name { animation: diceShake .35s ease; }
+    @keyframes diceShake {
+      0%, 100% { transform: translateX(0) scale(1); }
+      25% { transform: translateX(-4px) scale(1.05); }
+      75% { transform: translateX(4px) scale(1.05); }
+    }
+    .dice-progress {
+      font-size: .78rem; color: #666; margin-top: 6px;
+    }
+
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
     .player-links {
       display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
@@ -215,10 +236,16 @@
       <div class="player-btns" id="player-btns"></div>
       <button class="btn-primary" id="deal-btn" onclick="deal()">🐺 Deal Words</button>
       <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">🐺 Reveal Wolf</button>
+      <button class="btn-secondary" id="dice-btn" onclick="pickSomeone()">🎲 Pick Someone</button>
     </div>
   </div>
   <div class="control-note">Same Room Code and links work across Emotion Cards, Word Wolf and Team Words — reopening this page resumes the same room automatically.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
+
+  <div class="dice-banner hidden" id="dice-banner">
+    <span>🎲 It is</span> <span class="dice-name" id="dice-name"></span><span>'s turn!</span>
+    <div class="dice-progress" id="dice-progress"></div>
+  </div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
 
@@ -239,6 +266,16 @@
     let currentPair = null;
     let revealed = false; // end-of-round: show every word + who the Wolf was
     let round = 0;
+
+    /* 🎲 Pick Someone: draws players one at a time in shuffled order with no
+       repeats until everyone's had a turn, then reshuffles for the next cycle */
+    let pickOrder = [];
+    let pickPos = 0;
+    function resetPickOrder() {
+      pickOrder = [];
+      pickPos = 0;
+      document.getElementById('dice-banner').classList.add('hidden');
+    }
 
     /* ── Firebase: lets each player's already-open link update live every round ── */
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
@@ -352,6 +389,7 @@
       saveSessionTokens();
       updateRoomCodeInput();
       renderPlayerLinks();
+      resetPickOrder();
     }
 
     /* start a brand-new room with a fresh code and fresh player tokens */
@@ -363,12 +401,23 @@
       ensureTokens(playerCount);
       updateRoomCodeInput();
       renderPlayerLinks();
+      resetPickOrder();
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
     /* ── player count buttons 3–6 (Word Wolf needs enough people for real deduction) ── */
     function setPlayerCount(n) {
       playerCount = n;
       document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
+      resetPickOrder();
     }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-btns');
@@ -488,6 +537,7 @@
       document.getElementById('roundNum').textContent = round;
       document.getElementById('reveal-btn').classList.remove('hidden');
       document.getElementById('reveal-banner').classList.add('hidden');
+      resetPickOrder();
 
       // push this round's word to each player's link — their page updates live
       ensureTokens(playerCount);
@@ -509,6 +559,26 @@
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
       banner.innerHTML = `This round: <strong>${currentPair.emojiA} ${currentPair.a}</strong> vs <strong>${currentPair.emojiB} ${currentPair.b}</strong>`;
+    }
+
+    /* draws the next player in the shuffled order — everyone gets picked once
+       before the cycle reshuffles and starts over */
+    function pickSomeone() {
+      if (playerCount < 1) return;
+      if (pickOrder.length !== playerCount || pickPos >= pickOrder.length) {
+        pickOrder = shuffle(Array.from({ length: playerCount }, (_, i) => i));
+        pickPos = 0;
+      }
+      const idx = pickOrder[pickPos++];
+      const name = playerNames[idx] || `Player ${idx + 1}`;
+
+      const banner = document.getElementById('dice-banner');
+      banner.classList.remove('hidden');
+      document.getElementById('dice-name').textContent = name;
+      document.getElementById('dice-progress').textContent = `Picked ${pickPos} of ${playerCount} this round — everyone gets a turn before repeats.`;
+      banner.classList.remove('rolling');
+      void banner.offsetWidth; // restart the shake animation even if picked again quickly
+      banner.classList.add('rolling');
     }
   </script>
 
