@@ -109,6 +109,16 @@
       animation: fadeUp .3s ease both;
     }
 
+    /* ── Vote tally: live "X / Y voted" progress, then full breakdown after Reveal ── */
+    .vote-tally {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 1.5px solid #1e1e42; color: #999;
+      border-radius: 14px; padding: 12px 18px; font-size: .85rem; text-align: center;
+      margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .vote-tally.hidden { display: none; }
+    .vote-tally .verdict { font-size: .95rem; font-weight: 800; color: #eee; margin-bottom: 4px; }
+
 
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
     .player-links {
@@ -230,6 +240,7 @@
   <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
+  <div class="vote-tally hidden" id="vote-tally"></div>
 
   <div class="section-hdr">🔗 Player Links</div>
   <div class="player-links" id="player-links"></div>
@@ -259,6 +270,64 @@
       pickPos = 0;
       currentPickIdx = null;
       pickedThisCycle = new Set();
+    }
+
+    /* 🗳️ vote tally: host already knows every player's token, so it can read each
+       player's own node individually (allowed by the same per-token rule players
+       use) without ever needing a broadly-readable "list everyone" path */
+    let votes = {};        // token -> playerNum they voted for (or null)
+    let voteListeners = []; // [{ ref, handler }] currently attached, so they can be detached cleanly
+
+    function detachVoteListeners() {
+      voteListeners.forEach(({ ref, handler }) => ref.off('value', handler));
+      voteListeners = [];
+      votes = {};
+    }
+
+    function attachVoteListeners() {
+      detachVoteListeners();
+      if (!firebaseReady) return;
+      for (let i = 0; i < playerCount; i++) {
+        const token = playerTokens[i];
+        const ref = db.ref(`rooms/${sessionCode}/players/${token}`);
+        const handler = snap => {
+          const data = snap.val();
+          votes[token] = data && data.vote != null ? data.vote : null;
+          renderVoteTally();
+        };
+        ref.on('value', handler);
+        voteListeners.push({ ref, handler });
+      }
+    }
+
+    /* live "X / Y voted" while the round is open; full breakdown + verdict after Reveal */
+    function renderVoteTally() {
+      const el = document.getElementById('vote-tally');
+      const cast = Object.values(votes).filter(v => v != null);
+      if (!round) { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+
+      if (!revealed) {
+        el.textContent = `🗳️ ${cast.length} / ${playerCount} players have voted`;
+        return;
+      }
+
+      if (!cast.length) { el.innerHTML = 'No votes were cast this round.'; return; }
+
+      const counts = {};
+      cast.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+      const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const lines = entries.map(([pnum, c]) => {
+        const idx = Number(pnum) - 1;
+        const name = playerNames[idx] || `Player ${pnum}`;
+        return `${name}: ${c} vote${c > 1 ? 's' : ''}`;
+      }).join(' &nbsp;·&nbsp; ');
+
+      const wolfIdx = assigned.findIndex(p => p.isWolf);
+      const topPnum = Number(entries[0][0]);
+      const correct = wolfIdx >= 0 && (topPnum - 1) === wolfIdx;
+      const verdict = correct ? '✅ Villagers caught the Wolf!' : '❌ The Wolf escaped detection!';
+      el.innerHTML = `<div class="verdict">${verdict}</div>${lines}`;
     }
 
     /* ── Firebase: lets each player's already-open link update live every round ── */
@@ -374,6 +443,7 @@
       updateRoomCodeInput();
       resetPickOrder();
       renderPlayerLinks();
+      attachVoteListeners();
     }
 
     /* start a brand-new room with a fresh code and fresh player tokens */
@@ -386,6 +456,7 @@
       updateRoomCodeInput();
       resetPickOrder();
       renderPlayerLinks();
+      attachVoteListeners();
     }
 
     function shuffle(arr) {
@@ -402,6 +473,8 @@
       playerCount = n;
       document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
       resetPickOrder();
+      ensureTokens(playerCount);
+      attachVoteListeners();
     }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-btns');
@@ -510,6 +583,7 @@
     }
     updateRoomCodeInput();
     renderPlayerLinks();
+    attachVoteListeners();
 
     function deal() {
       const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
@@ -527,7 +601,9 @@
       document.getElementById('reveal-banner').classList.add('hidden');
       resetPickOrder();
 
-      // push this round's word to each player's link — their page updates live
+      // push this round's word to each player's link — their page updates live.
+      // .set() replaces the whole node, so any leftover vote from last round is
+      // automatically cleared along with it.
       ensureTokens(playerCount);
       if (firebaseReady) {
         assigned.forEach((p, i) => {
@@ -535,6 +611,10 @@
             game: 'wordwolf', word: p.word, emoji: p.emoji, isWolf: p.isWolf, round, playerNum: i + 1, name: playerNames[i] || null,
           });
         });
+        // non-secret name roster — lets each player's card list who they can vote for
+        db.ref(`rooms/${sessionCode}/roster`).set(
+          Array.from({ length: playerCount }, (_, i) => ({ playerNum: i + 1, name: playerNames[i] || null }))
+        );
       }
 
       renderPlayerLinks();
@@ -547,6 +627,7 @@
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
       banner.innerHTML = `This round: <strong>${currentPair.emojiA} ${currentPair.a}</strong> vs <strong>${currentPair.emojiB} ${currentPair.b}</strong>`;
+      renderVoteTally();
     }
 
     /* draws the next player in the shuffled order — everyone gets picked once

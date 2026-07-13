@@ -20,6 +20,13 @@
 // link never lets you read anyone else's node or list who else is in the room.
 // All games share one "rooms" key so the SAME room code and SAME player links
 // keep working no matter which game the host switches to.
+//
+// "roster" is a separate, openly-readable path per room used only by Word
+// Wolf's voting feature — it holds nothing but each player's number and name
+// (which the host already shows on the shared screen anyway), so it's safe to
+// leave broadly readable/writable. It never contains secret words, votes, or
+// who is the Wolf — only the "players" leaf above holds that, and it stays
+// locked to the exact token.
 //   {
 //     "rules": {
 //       "rooms": {
@@ -29,6 +36,10 @@
 //               ".read": true,
 //               ".write": true
 //             }
+//           },
+//           "roster": {
+//             ".read": true,
+//             ".write": true
 //           }
 //         }
 //       }
