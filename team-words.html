@@ -205,7 +205,7 @@
 
   <div class="header">
     <h1>🤐 Forbidden Words</h1>
-    <p>Split into Team A and Team B — each team secretly gets three common words. Trick the OTHER team into saying your words out loud, without ever telling them what they are!</p>
+    <p>Split into Team A and Team B — each team secretly gets a set of common words. Trick the OTHER team into saying your words out loud, without ever telling them what they are!</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -225,9 +225,11 @@
       <div class="player-btns" id="player-btns"></div>
       <button class="btn-primary" id="deal-btn" onclick="deal()">🤐 Deal Words</button>
       <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Words</button>
+      <span class="control-label" style="margin-left:auto">Words</span>
+      <div class="player-btns" id="words-btns"></div>
     </div>
   </div>
-  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Each team only knows their own 3 words — the goal is to steer the conversation so the other team says one first. Same Room Code and links work across Emotion Cards, Word Wolf and Forbidden Words.</div>
+  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Each team only knows their own words — the goal is to steer the conversation so the other team says one first. Same Room Code and links work across Emotion Cards, Word Wolf and Forbidden Words.</div>
   <div class="count-note hidden" id="count-mismatch-note"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
@@ -245,10 +247,12 @@
     const WORDS = GAME_DATA.forbidden; // simple everyday words, easy to say naturally in conversation
     const PLAYER_COUNTS = [2, 3, 4, 5, 6]; // odd counts split into uneven teams (e.g. 3 vs 2)
     const ALLOWED_COUNTS = PLAYER_COUNTS;
+    const WORD_COUNTS = [1, 2, 3]; // how many secret words each team gets per round
     let playerCount = 6;
-    let assigned = [];    // [{ team, words: [{word,emoji} x3] }] per player — this round's deal
-    let currentWordsA = null; // [{ word, emoji } x3] — Team A's 3 secret words
-    let currentWordsB = null; // [{ word, emoji } x3] — Team B's 3 secret words
+    let wordsPerTeam = 3;
+    let assigned = [];    // [{ team, words: [{word,emoji} x N] }] per player — this round's deal
+    let currentWordsA = null; // [{ word, emoji } x N] — Team A's secret words
+    let currentWordsB = null; // [{ word, emoji } x N] — Team B's secret words
     let revealed = false; // end-of-round: show every player's team + word
     let round = 0;
 
@@ -296,9 +300,14 @@
       note.classList.remove('hidden');
     }
 
+    function clampWordsCount(n) {
+      if (WORD_COUNTS.includes(n)) return n;
+      return WORD_COUNTS.reduce((best, c) => Math.abs(c - n) < Math.abs(best - n) ? c : best);
+    }
+
     function saveSessionTokens() {
       try {
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount, names: playerNames }));
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount, names: playerNames, wordsPerTeam }));
         localStorage.setItem(LAST_SESSION_KEY, sessionCode);
       } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
     }
@@ -326,6 +335,7 @@
           playerCount = clampCount(saved.playerCount);
           showCountNote(saved.playerCount, playerCount);
         }
+        if (saved.wordsPerTeam) wordsPerTeam = clampWordsCount(saved.wordsPerTeam);
       } else {
         sessionCode = generateSessionCode();
       }
@@ -355,6 +365,7 @@
           setPlayerCount(used);
           showCountNote(saved.playerCount, used);
         }
+        if (saved.wordsPerTeam) setWordsPerTeam(clampWordsCount(saved.wordsPerTeam));
       } else {
         playerTokens = [];
         playerNames = [];
@@ -380,7 +391,7 @@
     /* ── player count buttons 2–6 (odd counts split into uneven teams, e.g. 3 vs 2) ── */
     function setPlayerCount(n) {
       playerCount = n;
-      document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
+      document.querySelectorAll('#player-btns .player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
     }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-btns');
@@ -392,6 +403,23 @@
           setPlayerCount(n);
           renderPlayerLinks();
         };
+        wrap.appendChild(b);
+      });
+    })();
+
+    /* ── words-per-team buttons 1–3 ── */
+    function setWordsPerTeam(n) {
+      wordsPerTeam = n;
+      document.querySelectorAll('#words-btns .player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
+      saveSessionTokens();
+    }
+    (function buildWordBtns() {
+      const wrap = document.getElementById('words-btns');
+      WORD_COUNTS.forEach(n => {
+        const b = document.createElement('button');
+        b.className = 'player-btn' + (n === wordsPerTeam ? ' active' : '');
+        b.textContent = n;
+        b.onclick = () => setWordsPerTeam(n);
         wrap.appendChild(b);
       });
     })();
@@ -500,10 +528,11 @@
     /* picks 6 distinct words from the list and splits them into two sets of 3 —
        Team A and Team B must never share a word */
     function pickWordSets() {
-      const indices = shuffle(Array.from({ length: WORDS.length }, (_, i) => i)).slice(0, 6);
+      const total = wordsPerTeam * 2;
+      const indices = shuffle(Array.from({ length: WORDS.length }, (_, i) => i)).slice(0, total);
       return {
-        wordsA: indices.slice(0, 3).map(i => WORDS[i]),
-        wordsB: indices.slice(3, 6).map(i => WORDS[i]),
+        wordsA: indices.slice(0, wordsPerTeam).map(i => WORDS[i]),
+        wordsB: indices.slice(wordsPerTeam, total).map(i => WORDS[i]),
       };
     }
 
