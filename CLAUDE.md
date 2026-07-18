@@ -30,11 +30,11 @@
 | `emotion.html` | 🎴 Emotion Cards（主持人頁：選 2–6 人、發牌、產生每位玩家的私人連結） |
 | `word-wolf.html` | 🐺 Word Wolf（主持人頁：選 3–6 人、發牌，多數人拿到同一個字、一人拿到臥底字，架構仿照 emotion.html） |
 | `team-words.html` | 🤐 Forbidden Words（主持人頁：選 2–6 人、發牌，隨機分成 Team A / Team B，兩隊各拿一個常見單字，目標是誘導對方隊伍說出自己這隊的字、同時避免說出對方的字，架構仿照 word-wolf.html，共用同一份 wordwolf 詞庫） |
-| `conquest.html` | 🏰 Trivia Conquest（主持人單頁、不需 Firebase：選 2–6 人、8×4 寬螢幕比例 board 外圍 20 格路徑，輪流擲骰子、移動棋子，停在格子上需答對英文常識題才能佔領該地，答對也能從對手手中搶地，4 個角落為安全格不觸發問題，骰子與回合資訊獨立顯示在 board 上方的控制列，board 正中央專門顯示題目卡，全數佔領或手動結束後顯示贏家） |
+| `conquest.html` | 🏰 Dare Conquest（主持人單頁、不需 Firebase：選 2–6 人、8×4 寬螢幕比例 board 外圍 20 格路徑，輪流擲骰子、移動棋子，停在格子上需完成有趣的互動挑戰（跟其他玩家告白、唱指定歌曲、說笑話、講繞口令、吐槽某人等）才能佔領該地，做到也能從對手手中搶地，地圖格子不顯示題型、只有通用圖示，4 個角落為安全格不觸發挑戰，骰子與回合資訊獨立顯示在 board 上方的控制列，board 正中央專門顯示挑戰卡，全數佔領或手動結束後顯示贏家，頁面最下方列出完整題庫供主持人瀏覽） |
 | `play.html` | 🔗 三款遊戲（Emotion Cards / Word Wolf / Forbidden Words）共用的玩家頁面：玩家開啟自己的私人連結後看到當下這局的內容，依 Firebase 資料中的 `game` 欄位自動切換樣式；同一個 Room Code + 同一批玩家連結可以在三款遊戲間直接切換使用，不用重新產生連結 |
 | `firebase-config.js` | Emotion Cards / Word Wolf / Forbidden Words 共用的 Firebase Realtime Database 設定（host 與 play.html 共用，需自行申請免費專案並填入；三款遊戲共用同一個 `rooms/{roomCode}/players/{token}` 路徑） |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
-| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 200 組臥底詞組，Word Wolf 與 Forbidden Words 共用；emotion 25 種情緒；conquest 48 題英文常識問答，供 Trivia Conquest 使用）— 遊戲題目唯一資料來源 |
+| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 200 組臥底詞組，Word Wolf 與 Forbidden Words 共用；emotion 25 種情緒；conquest 40 則互動挑戰指令，供 Dare Conquest 使用，`{player}` 會被隨機替換成另一位玩家的名字）— 遊戲題目唯一資料來源 |
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
 | `qrcode.js` | QR code 產生函式庫（vendored，qrcode-generator 1.4.4，MIT）— Emotion Cards 頁面選用性顯示連結的 QR code |
 

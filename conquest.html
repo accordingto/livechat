@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Trivia Conquest · IceBreak Hub</title>
+  <title>Dare Conquest · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Trivia Conquest">
+  <meta name="apple-mobile-web-app-title" content="Dare Conquest">
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -146,8 +146,7 @@
       transition: background .35s, border-color .35s;
     }
     .tile.corner { background: #171730; border-color: #2a2a4a; }
-    .tile-icon { font-size: 1.3rem; line-height: 1; }
-    .tile-cat { font-size: .58rem; color: #555; text-align: center; line-height: 1.2; margin-top: 3px; padding: 0 2px; }
+    .tile-icon { font-size: 1.4rem; line-height: 1; }
     .tile-corner-label { font-size: .6rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
     .tile-owner-icon { position: absolute; top: 4px; right: 5px; font-size: .85rem; }
     .tile-tokens {
@@ -182,21 +181,8 @@
       color: #22c55e; font-size: .7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
       padding: 4px 14px; border-radius: 20px;
     }
-    .q-text { font-size: clamp(1.15rem, 2.4vw, 1.5rem); font-weight: 700; text-align: center; line-height: 1.5; }
-    .q-choices { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .q-choice {
-      display: flex; align-items: center; gap: 10px;
-      background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 12px;
-      padding: 11px 16px; font-size: .92rem; font-weight: 600; color: #ccc;
-      transition: border-color .3s, background .3s, color .3s;
-    }
-    .q-choice .qk {
-      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
-      background: #1e1e42; color: #999; font-size: .74rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .q-choice.correct-reveal { border-color: #22c55e; background: rgba(34,197,94,.1); color: #fff; }
-    .q-choice.correct-reveal .qk { background: #22c55e; color: #0d0d1a; }
+    .q-text { font-size: clamp(1.1rem, 2.3vw, 1.4rem); font-weight: 700; text-align: center; line-height: 1.6; max-width: 640px; }
+    .q-text .q-player { white-space: nowrap; }
     .q-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
     .btn-judge {
       border-radius: 12px; padding: 11px 24px; font-size: .9rem; font-weight: 800;
@@ -222,10 +208,34 @@
 
     .controls-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
 
+    /* ── Browse all prompts ── */
+    .prompt-browser {
+      width: 100%; max-width: 1100px;
+      margin: 12px 0 40px;
+    }
+    .prompt-browser-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 12px;
+    }
+    .prompt-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .prompt-item {
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .prompt-item .pi-cat {
+      font-size: .68rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      color: #22c55e; margin-bottom: 5px;
+    }
+    .prompt-item .pi-text { font-size: .86rem; color: #aaa; line-height: 1.55; }
+    .prompt-item .pi-text em { color: #666; font-style: normal; }
+
     @media (max-width: 640px) {
       .control-bar { flex-wrap: wrap; justify-content: center; text-align: center; }
-      .tile-cat, .tile-corner-label { display: none; }
-      .tile-icon { font-size: 1.05rem; }
+      .tile-corner-label { display: none; }
+      .tile-icon { font-size: 1.1rem; }
     }
   </style>
 </head>
@@ -237,8 +247,8 @@
   </div>
 
   <div class="header">
-    <h1>🏰 Trivia Conquest</h1>
-    <p>Roll the dice, move around the board, and answer an English trivia question to claim the land — landing on someone else's territory? Answer right and steal it!</p>
+    <h1>🏰 Dare Conquest</h1>
+    <p>Roll the dice, move around the board, and pull off a silly dare — confess your feelings, sing a song, tell a joke — to claim the land. Landing on someone else's territory? Do it and steal it!</p>
   </div>
 
   <!-- ── Setup ── -->
@@ -250,7 +260,7 @@
     <div class="name-grid" id="name-grid"></div>
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
-      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → answer a trivia question. Answer correctly and it's yours — even if a rival already owns it. Corner tiles are safe zones with no question. Most territory when the board fills up wins!
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it. Corner tiles are safe zones with no dare. Most territory when the board fills up wins!
     </div>
   </div>
 
@@ -285,11 +295,17 @@
     </div>
   </div>
 
+  <!-- ── Browse all prompts (always visible, for the host to preview the full deck) ── -->
+  <div class="prompt-browser">
+    <div class="prompt-browser-hdr" id="prompt-browser-hdr"></div>
+    <div class="prompt-list" id="prompt-list"></div>
+  </div>
+
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
   <script>
     GAME_RENDER.injectCSS();
-    const QUESTIONS = GAME_DATA.conquest;
+    const PROMPTS = GAME_DATA.conquest;
 
     const PLAYER_COLORS = [
       { hex: '#ef4444', token: '🔴' },
@@ -301,35 +317,35 @@
     ];
 
     // 20-tile loop around the perimeter of an 8×4 grid (widescreen shape) —
-    // the inner 6×2 area holds the question, dead center of the map.
+    // the inner 6×2 area holds the dare prompt, dead center of the map.
     const PATH = [
       { row: 4, col: 8, corner: true,  icon: '🏁', label: 'START' },
-      { row: 3, col: 8, corner: false, icon: '🌾', cat: '💡 General' },
-      { row: 2, col: 8, corner: false, icon: '🌾', cat: '🌍 Geography' },
+      { row: 3, col: 8, corner: false, icon: '🎯' },
+      { row: 2, col: 8, corner: false, icon: '🎯' },
       { row: 1, col: 8, corner: true,  icon: '⭐', label: 'BONUS' },
-      { row: 1, col: 7, corner: false, icon: '🌾', cat: '🐾 Animals' },
-      { row: 1, col: 6, corner: false, icon: '🌾', cat: '🔬 Science' },
-      { row: 1, col: 5, corner: false, icon: '🌾', cat: '🍔 Food' },
-      { row: 1, col: 4, corner: false, icon: '🌾', cat: '🏛️ History' },
-      { row: 1, col: 3, corner: false, icon: '🌾', cat: '🎬 Pop Culture' },
-      { row: 1, col: 2, corner: false, icon: '🌾', cat: '⚽ Sports' },
+      { row: 1, col: 7, corner: false, icon: '🎯' },
+      { row: 1, col: 6, corner: false, icon: '🎯' },
+      { row: 1, col: 5, corner: false, icon: '🎯' },
+      { row: 1, col: 4, corner: false, icon: '🎯' },
+      { row: 1, col: 3, corner: false, icon: '🎯' },
+      { row: 1, col: 2, corner: false, icon: '🎯' },
       { row: 1, col: 1, corner: true,  icon: '🎲', label: 'LUCKY' },
-      { row: 2, col: 1, corner: false, icon: '🌾', cat: '📖 Language' },
-      { row: 3, col: 1, corner: false, icon: '🌾', cat: '🚀 Space' },
+      { row: 2, col: 1, corner: false, icon: '🎯' },
+      { row: 3, col: 1, corner: false, icon: '🎯' },
       { row: 4, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
-      { row: 4, col: 2, corner: false, icon: '🌾', cat: '🎵 Music' },
-      { row: 4, col: 3, corner: false, icon: '🌾', cat: '🗺️ Places' },
-      { row: 4, col: 4, corner: false, icon: '🌾', cat: '🎨 Culture' },
-      { row: 4, col: 5, corner: false, icon: '🌾', cat: '💡 General' },
-      { row: 4, col: 6, corner: false, icon: '🌾', cat: '🐾 Animals' },
-      { row: 4, col: 7, corner: false, icon: '🌾', cat: '🌍 Geography' },
+      { row: 4, col: 2, corner: false, icon: '🎯' },
+      { row: 4, col: 3, corner: false, icon: '🎯' },
+      { row: 4, col: 4, corner: false, icon: '🎯' },
+      { row: 4, col: 5, corner: false, icon: '🎯' },
+      { row: 4, col: 6, corner: false, icon: '🎯' },
+      { row: 4, col: 7, corner: false, icon: '🎯' },
     ];
     const CORNER_SET = new Set(PATH.map((t, i) => t.corner ? i : -1).filter(i => i >= 0));
     const CORNER_MSG = {
-      0:  { icon: '🏁', text: 'Safe tile — welcome back to START! No question here.' },
-      3:  { icon: '⭐', text: 'Bonus corner — a safe rest stop. No question here.' },
-      10: { icon: '🎲', text: 'Lucky corner — nothing but good vibes. No question here.' },
-      13: { icon: '🎁', text: 'Gift corner — a free pass. No question here.' },
+      0:  { icon: '🏁', text: 'Safe tile — welcome back to START! No dare here.' },
+      3:  { icon: '⭐', text: 'Bonus corner — a safe rest stop. No dare here.' },
+      10: { icon: '🎲', text: 'Lucky corner — nothing but good vibes. No dare here.' },
+      13: { icon: '🎁', text: 'Gift corner — a free pass. No dare here.' },
     };
     const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     const ALLOWED_COUNTS = [2, 3, 4, 5, 6];
@@ -339,12 +355,11 @@
     let players = [];       // { name, hex, token, pos }
     let ownership = [];     // length 20, index into players or -1
     let currentIdx = 0;
-    let usedQuestions = [];
+    let usedPrompts = [];
     let rolling = false;
     let awaitingJudgement = false;
     let gameStarted = false;
     let round = 0;
-    let currentQuestion = null;
     let currentTileIdx = null;
 
     /* ── Setup screen ── */
@@ -384,6 +399,18 @@
     }
     renderNameGrid();
 
+    /* ── Browse all prompts (read-only reference list) ── */
+    function buildPromptList() {
+      document.getElementById('prompt-browser-hdr').textContent = `📋 All Prompts (${PROMPTS.length}) — browse the full deck`;
+      const list = document.getElementById('prompt-list');
+      list.innerHTML = PROMPTS.map(p => `
+        <div class="prompt-item">
+          <div class="pi-cat">${p.cat}</div>
+          <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
+        </div>`).join('');
+    }
+    buildPromptList();
+
     /* ── Game start / reset ── */
     function startGame() {
       players = Array.from({ length: playerCount }, (_, i) => ({
@@ -394,7 +421,7 @@
       }));
       ownership = new Array(PATH.length).fill(-1);
       currentIdx = 0;
-      usedQuestions = [];
+      usedPrompts = [];
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -415,7 +442,7 @@
       ownership = new Array(PATH.length).fill(-1);
       players.forEach(p => p.pos = 0);
       currentIdx = 0;
-      usedQuestions = [];
+      usedPrompts = [];
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -447,7 +474,7 @@
         if (t.corner) {
           el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-corner-label">${t.label}</span>`;
         } else {
-          el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-cat">${t.cat}</span><span class="tile-owner-icon"></span><div class="tile-tokens"></div>`;
+          el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-owner-icon"></span><div class="tile-tokens"></div>`;
         }
         board.insertBefore(el, document.getElementById('board-center'));
         return el;
@@ -559,42 +586,34 @@
       }
     }
 
-    /* ── Question / judging ── */
+    /* ── Dare prompt / judging ── */
+    // fills {player} with a random OTHER player's name, colored to match their token
+    function resolvePromptText(text, excludeIdx) {
+      if (!text.includes('{player}')) return text;
+      const others = players.map((_, i) => i).filter(i => i !== excludeIdx);
+      const other = players[others[Math.floor(Math.random() * others.length)]];
+      return text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`);
+    }
+
     function showQuestion(tileIdx) {
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
-      if (usedQuestions.length >= QUESTIONS.length) usedQuestions = [];
-      const avail = QUESTIONS.map((_, i) => i).filter(i => !usedQuestions.includes(i));
-      const qi = avail[Math.floor(Math.random() * avail.length)];
-      usedQuestions.push(qi);
-      currentQuestion = QUESTIONS[qi];
+      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
+      const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
+      const pi = avail[Math.floor(Math.random() * avail.length)];
+      usedPrompts.push(pi);
+      const prompt = PROMPTS[pi];
 
       document.getElementById('board-center').classList.add('active-question');
       document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
-          <span class="q-cat">${currentQuestion.cat}</span>
-          <div class="q-text">${currentQuestion.q}</div>
-          <div class="q-choices" id="q-choices">
-            ${currentQuestion.choices.map((c, i) =>
-              `<div class="q-choice" data-idx="${i}"><span class="qk">${String.fromCharCode(65 + i)}</span><span>${c}</span></div>`
-            ).join('')}
-          </div>
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;">
+          <span class="q-cat">${prompt.cat}</span>
+          <div class="q-text">${resolvePromptText(prompt.text, currentIdx)}</div>
           <div class="q-actions">
-            <button class="btn-secondary" id="reveal-btn" onclick="revealAnswer()">🔍 Reveal Answer</button>
-            <button class="btn-judge btn-correct" id="correct-btn" onclick="judge(true)" disabled>✅ Correct</button>
-            <button class="btn-judge btn-wrong" id="wrong-btn" onclick="judge(false)" disabled>❌ Wrong</button>
+            <button class="btn-judge btn-correct" onclick="judge(true)">✅ Did It!</button>
+            <button class="btn-judge btn-wrong" onclick="judge(false)">❌ Skipped</button>
           </div>
         </div>`;
-    }
-
-    function revealAnswer() {
-      if (!currentQuestion) return;
-      document.querySelectorAll('.q-choice').forEach(el => {
-        if (Number(el.dataset.idx) === currentQuestion.correct) el.classList.add('correct-reveal');
-      });
-      document.getElementById('reveal-btn').disabled = true;
-      document.getElementById('correct-btn').disabled = false;
-      document.getElementById('wrong-btn').disabled = false;
     }
 
     function judge(isCorrect) {
