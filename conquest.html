@@ -581,7 +581,7 @@
         if (isSpecial) {
           el.innerHTML = `<span class="tile-icon">${TYPE_ICON[t.type]}</span><span class="tile-corner-label">${TYPE_LABEL[t.type]}</span><div class="tile-tokens"></div>`;
         } else {
-          el.innerHTML = `<span class="tile-icon">🎯</span><div class="tile-tokens"></div>`;
+          el.innerHTML = `<div class="tile-tokens"></div>`;
         }
         board.insertBefore(el, document.getElementById('board-center'));
         return el;
