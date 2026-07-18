@@ -197,15 +197,22 @@
       position: relative; overflow: hidden; padding: 4px;
       transition: background .35s, border-color .35s;
     }
-    .tile.corner { background: #171730; border-color: #2a2a4a; }
+    .tile.special { background: #171730; border-color: #2a2a4a; }
     .tile-icon { font-size: 1.3rem; line-height: 1; }
     .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
-    .tile-owner-icon { position: absolute; top: 4px; right: 5px; font-size: .85rem; }
     .tile-tokens {
       position: absolute; bottom: 3px; left: 0; right: 0;
       display: flex; justify-content: center; gap: 2px; flex-wrap: wrap;
     }
-    .tile-token { font-size: .85rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
+    .tile-token { font-size: .95rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
+
+    /* flash feedback when a special tile (START/BONUS/LUCKY/GIFT) triggers */
+    .tile.tile-flash { animation: tileFlash .9s ease; z-index: 2; }
+    @keyframes tileFlash {
+      0%   { box-shadow: 0 0 0 0 var(--flash-color, #fff); transform: scale(1); }
+      35%  { box-shadow: 0 0 22px 6px var(--flash-color, #fff); transform: scale(1.12); }
+      100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+    }
 
     /* ── Board center: the dice lives here, front and center on the map ── */
     .board-center {
@@ -228,14 +235,20 @@
       animation: fadeUp .5s .3s ease both;
     }
     .dare-panel.active { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.15); }
+    .dare-panel.corner-start { border-color: #94a3b8; box-shadow: 0 0 28px rgba(148,163,184,.18); }
+    .dare-panel.corner-bonus { border-color: #f59e0b; box-shadow: 0 0 28px rgba(245,158,11,.22); }
+    .dare-panel.corner-lucky { border-color: #a78bfa; box-shadow: 0 0 28px rgba(167,139,250,.22); }
+    .dare-panel.corner-gift  { border-color: #ec4899; box-shadow: 0 0 28px rgba(236,72,153,.22); }
 
-    .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+    @keyframes popIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+
+    .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .3s ease both; }
     .center-idle .ci-icon { font-size: 1.5rem; }
     .center-idle p { color: #555; font-size: .85rem; }
 
-    .center-safe { display: flex; flex-direction: row; align-items: center; gap: 10px; }
-    .center-safe .cs-icon { font-size: 1.5rem; }
-    .center-safe p { color: #aaa; font-size: .88rem; font-weight: 600; }
+    .center-safe { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .35s ease both; }
+    .center-safe .cs-icon { font-size: 1.7rem; }
+    .center-safe p { color: #ddd; font-size: .92rem; font-weight: 700; }
 
     .q-cat {
       display: inline-flex; align-self: center;
@@ -310,7 +323,7 @@
 
   <div class="header">
     <h1>🏰 Dare Conquest</h1>
-    <p>Roll the dice, move around the board, and pull off a silly dare to claim the land — or land on a corner for a special effect!</p>
+    <p>Roll the dice, move around the board, and pull off a silly dare to claim the land — or land on a BONUS, LUCKY, or GIFT tile for a special effect!</p>
   </div>
 
   <!-- ── Setup ── -->
@@ -322,7 +335,7 @@
     <div class="name-grid" id="name-grid"></div>
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
-      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it. Landing on a corner triggers a special effect instead: <strong>LUCKY</strong> swaps all your territory with another player's, <strong>BONUS</strong> hands you 3 random territories, and <strong>GIFT</strong> gives you every unclaimed territory. Most territory when the board fills up wins!
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it. A few tiles are special and can't be claimed: <strong>LUCKY</strong> swaps all your territory with another player's, <strong>BONUS</strong> hands you 3 random territories, and <strong>GIFT</strong> gives you every unclaimed territory. Most territory when the board fills up wins!
     </div>
   </div>
 
@@ -391,29 +404,33 @@
 
     // 18-tile clockwise loop around the perimeter of an 8×3 grid (wider, shorter shape),
     // starting at the top-left corner. The inner 6×1 area is now just decorative —
-    // the dare prompt itself lives in the panel above the board.
+    // the dare prompt itself lives in the panel above the board. Each tile's `type`
+    // is 'dare' (claimable, triggers a dare) or one of the special event types below
+    // (never claimable, triggers its effect instead) — several extra BONUS/LUCKY/GIFT
+    // tiles are sprinkled along the edges, not just at the four physical corners.
+    const TYPE_ICON = { start: '🏁', bonus: '⭐', lucky: '🎲', gift: '🎁' };
+    const TYPE_LABEL = { start: 'START', bonus: 'BONUS', lucky: 'LUCKY', gift: 'GIFT' };
+    const TYPE_COLOR = { start: '#94a3b8', bonus: '#f59e0b', lucky: '#a78bfa', gift: '#ec4899' };
     const PATH = [
-      { row: 1, col: 1, corner: true,  icon: '🏁', label: 'START' },
-      { row: 1, col: 2, corner: false, icon: '🎯' },
-      { row: 1, col: 3, corner: false, icon: '🎯' },
-      { row: 1, col: 4, corner: false, icon: '🎯' },
-      { row: 1, col: 5, corner: false, icon: '🎯' },
-      { row: 1, col: 6, corner: false, icon: '🎯' },
-      { row: 1, col: 7, corner: false, icon: '🎯' },
-      { row: 1, col: 8, corner: true,  icon: '⭐', label: 'BONUS' },
-      { row: 2, col: 8, corner: false, icon: '🎯' },
-      { row: 3, col: 8, corner: true,  icon: '🎲', label: 'LUCKY' },
-      { row: 3, col: 7, corner: false, icon: '🎯' },
-      { row: 3, col: 6, corner: false, icon: '🎯' },
-      { row: 3, col: 5, corner: false, icon: '🎯' },
-      { row: 3, col: 4, corner: false, icon: '🎯' },
-      { row: 3, col: 3, corner: false, icon: '🎯' },
-      { row: 3, col: 2, corner: false, icon: '🎯' },
-      { row: 3, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
-      { row: 2, col: 1, corner: false, icon: '🎯' },
+      { row: 1, col: 1, type: 'start' },
+      { row: 1, col: 2, type: 'dare' },
+      { row: 1, col: 3, type: 'gift' },
+      { row: 1, col: 4, type: 'dare' },
+      { row: 1, col: 5, type: 'lucky' },
+      { row: 1, col: 6, type: 'dare' },
+      { row: 1, col: 7, type: 'bonus' },
+      { row: 1, col: 8, type: 'bonus' },
+      { row: 2, col: 8, type: 'dare' },
+      { row: 3, col: 8, type: 'lucky' },
+      { row: 3, col: 7, type: 'dare' },
+      { row: 3, col: 6, type: 'bonus' },
+      { row: 3, col: 5, type: 'dare' },
+      { row: 3, col: 4, type: 'gift' },
+      { row: 3, col: 3, type: 'dare' },
+      { row: 3, col: 2, type: 'lucky' },
+      { row: 3, col: 1, type: 'gift' },
+      { row: 2, col: 1, type: 'dare' },
     ];
-    const CORNER_SET = new Set(PATH.map((t, i) => t.corner ? i : -1).filter(i => i >= 0));
-    const START_IDX = 0, BONUS_IDX = 7, LUCKY_IDX = 9, GIFT_IDX = 16;
     // rotation (in degrees) that brings each die face to front, matching the
     // .face-N transforms in CSS — opposite faces sum to 7, like a real die
     const FACE_ROTATION = { 1: { x: 0, y: 0 }, 2: { x: 0, y: -90 }, 3: { x: -90, y: 0 }, 4: { x: 90, y: 0 }, 5: { x: 0, y: 90 }, 6: { x: 0, y: 180 } };
@@ -538,13 +555,14 @@
       board.querySelectorAll('.tile').forEach(el => el.remove());
       tileEls = PATH.map((t, i) => {
         const el = document.createElement('div');
-        el.className = 'tile' + (t.corner ? ' corner' : '');
+        const isSpecial = t.type !== 'dare';
+        el.className = 'tile' + (isSpecial ? ' special' : '');
         el.style.gridRow = t.row;
         el.style.gridColumn = t.col;
-        if (t.corner) {
-          el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-corner-label">${t.label}</span>`;
+        if (isSpecial) {
+          el.innerHTML = `<span class="tile-icon">${TYPE_ICON[t.type]}</span><span class="tile-corner-label">${TYPE_LABEL[t.type]}</span><div class="tile-tokens"></div>`;
         } else {
-          el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-owner-icon"></span><div class="tile-tokens"></div>`;
+          el.innerHTML = `<span class="tile-icon">🎯</span><div class="tile-tokens"></div>`;
         }
         board.insertBefore(el, document.getElementById('board-center'));
         return el;
@@ -556,17 +574,16 @@
       PATH.forEach((t, i) => {
         const el = tileEls[i];
         if (!el) return;
-        if (t.corner) return;
-        const ownerIdx = ownership[i];
-        if (ownerIdx >= 0) {
-          const owner = players[ownerIdx];
-          el.style.background = owner.hex + '2a';
-          el.style.borderColor = owner.hex;
-          el.querySelector('.tile-owner-icon').textContent = owner.token;
-        } else {
-          el.style.background = '';
-          el.style.borderColor = '';
-          el.querySelector('.tile-owner-icon').textContent = '';
+        if (t.type === 'dare') {
+          const ownerIdx = ownership[i];
+          if (ownerIdx >= 0) {
+            const owner = players[ownerIdx];
+            el.style.background = owner.hex;
+            el.style.borderColor = owner.hex;
+          } else {
+            el.style.background = '';
+            el.style.borderColor = '';
+          }
         }
         const tokensEl = el.querySelector('.tile-tokens');
         tokensEl.innerHTML = players
@@ -574,6 +591,17 @@
           .map(p => `<span class="tile-token">${p.token}</span>`)
           .join('');
       });
+    }
+
+    // brief glowing pulse on the tile where a special event just triggered
+    function flashTile(pos, colorHex) {
+      const el = tileEls[pos];
+      if (!el) return;
+      el.style.setProperty('--flash-color', colorHex);
+      el.classList.remove('tile-flash');
+      void el.offsetWidth;
+      el.classList.add('tile-flash');
+      setTimeout(() => el.classList.remove('tile-flash'), 900);
     }
 
     function renderScoreboard() {
@@ -598,13 +626,15 @@
 
     /* ── Dare panel states: idle / safe-corner / active dare ── */
     function renderCenterIdle() {
-      document.getElementById('dare-panel').classList.remove('active');
+      document.getElementById('dare-panel').classList.remove('active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
     }
 
-    function showCornerMessage(icon, text) {
-      document.getElementById('dare-panel').classList.remove('active');
+    function showCornerMessage(icon, text, type) {
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add('corner-' + type);
       document.getElementById('center-content').outerHTML =
         `<div class="center-safe" id="center-content"><span class="cs-icon">${icon}</span><p>${text}</p></div>`;
     }
@@ -665,14 +695,16 @@
 
     function onLanded() {
       const p = players[currentIdx];
-      if (p.pos === START_IDX) {
-        showCornerMessage('🏁', 'Safe tile — welcome back to START! Nothing happens here.');
+      const type = PATH[p.pos].type;
+      if (type === 'start') {
+        flashTile(p.pos, TYPE_COLOR.start);
+        showCornerMessage('🏁', 'Safe tile — welcome back to START! Nothing happens here.', 'start');
         setTimeout(() => { nextTurn(); renderCenterIdle(); }, 1400);
-      } else if (p.pos === BONUS_IDX) {
+      } else if (type === 'bonus') {
         doBonus();
-      } else if (p.pos === LUCKY_IDX) {
+      } else if (type === 'lucky') {
         doLucky();
-      } else if (p.pos === GIFT_IDX) {
+      } else if (type === 'gift') {
         doGift();
       } else {
         showQuestion(p.pos);
@@ -688,26 +720,28 @@
     // BONUS: randomly hand the current player 3 territories they don't already own
     // (stealing from rivals if there aren't enough unclaimed tiles left)
     function doBonus() {
-      const eligible = shuffle(PATH.map((t, i) => (!t.corner && ownership[i] !== currentIdx) ? i : -1).filter(i => i >= 0));
+      const eligible = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] !== currentIdx) ? i : -1).filter(i => i >= 0));
       const gained = eligible.slice(0, 3);
       gained.forEach(i => ownership[i] = currentIdx);
       renderBoard();
       renderScoreboard();
+      flashTile(players[currentIdx].pos, TYPE_COLOR.bonus);
       showCornerMessage('⭐', gained.length
         ? `Bonus corner! You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`
-        : 'Bonus corner! There were no other territories left to claim.');
+        : 'Bonus corner! There were no other territories left to claim.', 'bonus');
       finishCornerEffect();
     }
 
     // GIFT: claim every currently unclaimed territory on the board
     function doGift() {
       const gained = [];
-      PATH.forEach((t, i) => { if (!t.corner && ownership[i] === -1) { ownership[i] = currentIdx; gained.push(i); } });
+      PATH.forEach((t, i) => { if (t.type === 'dare' && ownership[i] === -1) { ownership[i] = currentIdx; gained.push(i); } });
       renderBoard();
       renderScoreboard();
+      flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
       showCornerMessage('🎁', gained.length
         ? `Gift corner! You claimed all ${gained.length} unclaimed territor${gained.length === 1 ? 'y' : 'ies'}!`
-        : 'Gift corner! There were no unclaimed territories left to give.');
+        : 'Gift corner! There were no unclaimed territories left to give.', 'gift');
       finishCornerEffect();
     }
 
@@ -717,9 +751,11 @@
       const others = players.map((_, i) => i).filter(i => i !== currentIdx);
       if (others.length === 1) { performSwap(others[0]); return; }
       awaitingJudgement = true;
-      document.getElementById('dare-panel').classList.add('active');
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;">
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat">🎲 LUCKY</span>
           <div class="q-text">Choose a player to swap ALL territories with!</div>
           <div class="q-actions">
@@ -738,7 +774,8 @@
       awaitingJudgement = false;
       renderBoard();
       renderScoreboard();
-      showCornerMessage('🔄', `Lucky corner! You swapped all territories with ${players[targetIdx].name}!`);
+      flashTile(players[cur].pos, TYPE_COLOR.lucky);
+      showCornerMessage('🔄', `Lucky corner! You swapped all territories with ${players[targetIdx].name}!`, 'lucky');
       finishCornerEffect();
     }
 
@@ -760,9 +797,11 @@
       usedPrompts.push(pi);
       const prompt = PROMPTS[pi];
 
-      document.getElementById('dare-panel').classList.add('active');
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;">
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat">${prompt.cat}</span>
           <div class="q-text">${resolvePromptText(prompt.text, currentIdx)}</div>
           <div class="q-actions">
@@ -784,7 +823,7 @@
     }
 
     function checkAllOwned() {
-      return PATH.every((t, i) => t.corner || ownership[i] !== -1);
+      return PATH.every((t, i) => t.type !== 'dare' || ownership[i] !== -1);
     }
 
     function nextTurn() {
@@ -807,7 +846,7 @@
       banner.classList.add('shown');
       banner.innerHTML = winners.length > 1
         ? `<h2>🤝 It's a tie!</h2><p>${winners.map(w => `${w.token} ${w.name}`).join(' & ')} each hold ${max} territories</p>`
-        : `<h2>🏆 ${winners[0].token} ${winners[0].name} wins!</h2><p>Controlling ${max} out of ${PATH.length - CORNER_SET.size} territories</p>`;
+        : `<h2>🏆 ${winners[0].token} ${winners[0].name} wins!</h2><p>Controlling ${max} out of ${PATH.filter(t => t.type === 'dare').length} territories</p>`;
       renderScoreboard();
       renderCenterIdle();
     }
