@@ -543,11 +543,14 @@
   <div class="prompt-browser">
     <div class="prompt-browser-hdr" id="prompt-browser-hdr"></div>
     <div class="prompt-list" id="prompt-list"></div>
+    <div class="prompt-browser-hdr" id="duel-prompt-browser-hdr"></div>
+    <div class="prompt-list" id="duel-prompt-list"></div>
   </div>
 
   <script src="game-data.js"></script>
   <script>
     const PROMPTS = GAME_DATA.conquest;
+    const DUEL_PROMPTS = GAME_DATA.conquestDuel;
 
     const PLAYER_COLORS = [
       { hex: '#ef4444', token: '🔴' },
@@ -597,6 +600,7 @@
     let ownership = [];     // length PATH.length, index into players or -1
     let currentIdx = 0;
     let usedPrompts = [];
+    let usedDuelPrompts = [];
     let rolling = false;
     let awaitingJudgement = false;
     let gameStarted = false;
@@ -650,6 +654,14 @@
           <div class="pi-cat">${p.cat}</div>
           <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
         </div>`).join('');
+
+      document.getElementById('duel-prompt-browser-hdr').textContent = `⚔️ Duel Prompts (${DUEL_PROMPTS.length}) — used only when attacking a rival's land; {player} is always the defender`;
+      const duelList = document.getElementById('duel-prompt-list');
+      duelList.innerHTML = DUEL_PROMPTS.map(p => `
+        <div class="prompt-item">
+          <div class="pi-cat">${p.cat}</div>
+          <div class="pi-text">${p.text.split('{player}').join('<em>(the defender)</em>')}</div>
+        </div>`).join('');
     }
     buildPromptList();
 
@@ -664,6 +676,7 @@
       ownership = new Array(PATH.length).fill(-1);
       currentIdx = 0;
       usedPrompts = [];
+      usedDuelPrompts = [];
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -685,6 +698,7 @@
       players.forEach(p => p.pos = 0);
       currentIdx = 0;
       usedPrompts = [];
+      usedDuelPrompts = [];
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -990,11 +1004,17 @@
     }
 
     /* ── Dare prompt / judging ── */
-    // fills {player} with a random OTHER player's name, colored to match their token
-    function resolvePromptText(text, excludeIdx) {
+    // fills {player} with either a fixed target (e.g. the defender in a duel) or,
+    // if none given, a random OTHER player's name — colored to match their token
+    function resolvePromptText(text, excludeIdx, fixedIdx) {
       if (!text.includes('{player}')) return text;
-      const others = players.map((_, i) => i).filter(i => i !== excludeIdx);
-      const other = players[others[Math.floor(Math.random() * others.length)]];
+      let other;
+      if (fixedIdx !== undefined && fixedIdx !== null) {
+        other = players[fixedIdx];
+      } else {
+        const others = players.map((_, i) => i).filter(i => i !== excludeIdx);
+        other = players[others[Math.floor(Math.random() * others.length)]];
+      }
       return text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`);
     }
 
@@ -1010,15 +1030,17 @@
     }
 
     // renders the actual dare (category + text + optional timer + judge buttons) —
-    // shared by a normal random draw and a defender-picked challenge
-    function renderDareContent(prompt) {
+    // shared by a normal random draw and a defender-picked duel challenge.
+    // fixedTargetIdx pins {player} to a specific person (the defender in a duel)
+    // instead of picking a random other player.
+    function renderDareContent(prompt, fixedTargetIdx) {
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat">${prompt.cat}</span>
-          <div class="q-text">${resolvePromptText(prompt.text, currentIdx)}</div>
+          <div class="q-text">${resolvePromptText(prompt.text, currentIdx, fixedTargetIdx)}</div>
           ${prompt.seconds ? `
           <div class="timer-block">
             <button class="btn-secondary" id="timer-start-btn" onclick="startPromptTimer(${prompt.seconds})">⏱️ Start ${prompt.seconds}s Timer</button>
@@ -1031,16 +1053,17 @@
         </div>`;
     }
 
-    // DEFENSE: landing on a rival's territory lets its owner pick which
-    // challenge the attacker has to face, instead of a random draw
+    // DEFENSE: landing on a rival's territory lets its owner pick which challenge the
+    // attacker has to face — drawn from the Duel pool, where {player} is always pinned
+    // to the defender, so the confrontation stays personal instead of a random draw
     function showDefensePicker(tileIdx, ownerIdx) {
       clearPromptTimer();
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
       const owner = players[ownerIdx];
       const attacker = players[currentIdx];
-      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-      const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
+      if (usedDuelPrompts.length >= DUEL_PROMPTS.length) usedDuelPrompts = [];
+      const avail = DUEL_PROMPTS.map((_, i) => i).filter(i => !usedDuelPrompts.includes(i));
 
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden', 'active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
@@ -1048,18 +1071,18 @@
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;">🛡️ Defense</span>
-          <div class="q-text">This is <span style="color:${owner.hex}">${owner.name}</span>'s land! ${owner.name}, pick ${attacker.name}'s challenge:</div>
+          <div class="q-text">This is <span style="color:${owner.hex}">${owner.name}</span>'s land! ${owner.name}, pick ${attacker.name}'s duel challenge:</div>
           <div class="defense-cat-grid">
-            ${avail.map(i => `<button class="cat-pick-btn" onclick="pickDefenseCategory(${i})">${PROMPTS[i].cat}</button>`).join('')}
+            ${avail.map(i => `<button class="cat-pick-btn" onclick="pickDefenseCategory(${i}, ${ownerIdx})">${DUEL_PROMPTS[i].cat}</button>`).join('')}
           </div>
         </div>`;
     }
 
-    function pickDefenseCategory(promptIdx) {
+    function pickDefenseCategory(promptIdx, ownerIdx) {
       if (!awaitingJudgement) return;
-      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-      usedPrompts.push(promptIdx);
-      renderDareContent(PROMPTS[promptIdx]);
+      if (usedDuelPrompts.length >= DUEL_PROMPTS.length) usedDuelPrompts = [];
+      usedDuelPrompts.push(promptIdx);
+      renderDareContent(DUEL_PROMPTS[promptIdx], ownerIdx);
     }
 
     // countdown timer for timed dares — starts only when the host clicks the button,
