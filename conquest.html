@@ -220,6 +220,50 @@
     }
     .tile-token { font-size: .95rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
 
+    /* the token of whoever's turn it currently is — clearly marked so the host can spot it at a glance */
+    .tile-token.current-token {
+      position: relative; font-size: 1.15rem;
+      animation: currentTokenBounce 1s ease-in-out infinite;
+    }
+    .tile-token.current-token::before {
+      content: ''; position: absolute; left: 50%; top: 50%;
+      width: 22px; height: 22px; border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, var(--turn-color, #fff) 0%, transparent 70%);
+      box-shadow: 0 0 0 2px var(--turn-color, #fff);
+      opacity: .85; z-index: -1;
+      animation: currentTokenRing 1.4s ease-out infinite;
+    }
+    .tile-token.current-token::after {
+      content: '▼'; position: absolute; left: 50%; top: -13px;
+      transform: translate(-50%, 0); font-size: .55rem; line-height: 1;
+      color: var(--turn-color, #fff); text-shadow: 0 0 3px rgba(0,0,0,.9);
+      animation: currentTokenArrow 1s ease-in-out infinite;
+    }
+    @keyframes currentTokenBounce {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+    @keyframes currentTokenArrow {
+      0%, 100% { transform: translate(-50%, 0); }
+      50%      { transform: translate(-50%, 2px); }
+    }
+    @keyframes currentTokenRing {
+      0%   { box-shadow: 0 0 0 2px var(--turn-color, #fff); opacity: .85; }
+      70%  { box-shadow: 0 0 0 9px transparent; opacity: 0; }
+      100% { box-shadow: 0 0 0 9px transparent; opacity: 0; }
+    }
+
+    /* the whole tile the active player currently stands on gets a glowing "you are here" ring */
+    .tile.active-turn-tile {
+      box-shadow: 0 0 0 3px var(--turn-color, #fff), 0 0 14px 2px var(--turn-color, #fff);
+      animation: activeTilePulse 1.6s ease-in-out infinite;
+    }
+    @keyframes activeTilePulse {
+      0%, 100% { box-shadow: 0 0 0 3px var(--turn-color, #fff), 0 0 14px 2px var(--turn-color, #fff); }
+      50%      { box-shadow: 0 0 0 3px var(--turn-color, #fff), 0 0 22px 6px var(--turn-color, #fff); }
+    }
+
     /* flash feedback when a special tile (START/BONUS/LUCKY/GIFT) triggers */
     .tile.tile-flash { animation: tileFlash .9s ease; z-index: 2; }
     @keyframes tileFlash {
@@ -676,6 +720,7 @@
     }
 
     function renderBoard() {
+      const current = players[currentIdx];
       PATH.forEach((t, i) => {
         const el = tileEls[i];
         if (!el) return;
@@ -690,10 +735,13 @@
             el.style.borderColor = '';
           }
         }
+        const isCurrentTile = current && current.pos === i;
+        el.classList.toggle('active-turn-tile', !!isCurrentTile);
+        if (isCurrentTile) el.style.setProperty('--turn-color', current.hex);
         const tokensEl = el.querySelector('.tile-tokens');
         tokensEl.innerHTML = players
           .filter(p => p.pos === i)
-          .map(p => `<span class="tile-token">${p.token}</span>`)
+          .map(p => `<span class="tile-token${p === current ? ' current-token' : ''}"${p === current ? ` style="--turn-color:${p.hex}"` : ''}>${p.token}</span>`)
           .join('');
       });
     }
@@ -1062,6 +1110,7 @@
       document.getElementById('roll-btn').disabled = false;
       updateTurnIndicator();
       renderScoreboard();
+      renderBoard();
     }
 
     function showWinner() {
