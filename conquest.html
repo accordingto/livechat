@@ -335,7 +335,7 @@
     <div class="name-grid" id="name-grid"></div>
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
-      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it. A few tiles are special and can't be claimed: <strong>LUCKY</strong> swaps all your territory with another player's, <strong>BONUS</strong> hands you 3 random territories, and <strong>GIFT</strong> gives you every unclaimed territory. Most territory when the board fills up wins!
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>LUCKY</strong> swaps all your territory with another player's, <strong>BONUS</strong> hands you 3 random territories, and <strong>GIFT</strong> gives you every unclaimed territory. Whenever you're ready, hit <strong>End Game</strong> to see who's on top!
     </div>
   </div>
 
@@ -378,6 +378,7 @@
     <div class="winner-banner hidden" id="winner-banner"></div>
 
     <div class="controls-row">
+      <button class="btn-secondary" onclick="showWinner()">🏆 End Game</button>
       <button class="btn-secondary" onclick="restartRound()">🔄 Restart Board</button>
       <button class="btn-secondary" onclick="backToSetup()">⬅ Change Players</button>
     </div>
@@ -713,7 +714,6 @@
 
     /* ── Corner effects ── */
     function finishCornerEffect() {
-      if (checkAllOwned()) { setTimeout(showWinner, 1300); return; }
       setTimeout(() => { nextTurn(); renderCenterIdle(); }, 1700);
     }
 
@@ -817,13 +817,8 @@
       awaitingJudgement = false;
       renderBoard();
       renderScoreboard();
-      if (checkAllOwned()) { showWinner(); return; }
       nextTurn();
       renderCenterIdle();
-    }
-
-    function checkAllOwned() {
-      return PATH.every((t, i) => t.type !== 'dare' || ownership[i] !== -1);
     }
 
     function nextTurn() {
