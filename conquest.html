@@ -155,17 +155,25 @@
     }
     .tile-token { font-size: .85rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
 
-    /* ── Board center: the question lives here, dead center of the map ── */
+    /* ── Board center: purely decorative now — the dare panel lives above the board ── */
     .board-center {
       grid-row: 2 / 4; grid-column: 2 / 8;
-      background: var(--surface-b);
-      border: 2px solid var(--border);
-      border-radius: 20px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px; padding: 22px 30px; text-align: center;
-      transition: border-color .3s, box-shadow .3s;
+      display: flex; align-items: center; justify-content: center;
+      opacity: .15;
     }
-    .board-center.active-question { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.15); }
+    .board-center .bc-logo { font-size: 4rem; }
+
+    /* ── Dare panel: sits above the map, holds idle / safe-corner / active-dare states ── */
+    .dare-panel {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+      padding: 24px 30px; margin-bottom: 20px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; text-align: center; min-height: 100px;
+      transition: border-color .3s, box-shadow .3s;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .dare-panel.active { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.15); }
 
     .center-idle { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .center-idle .ci-icon { font-size: 2.6rem; }
@@ -276,13 +284,17 @@
       </div>
     </div>
 
+    <div class="dare-panel" id="dare-panel">
+      <div class="center-idle" id="center-content">
+        <span class="ci-icon">🏰</span>
+        <p>Roll the dice to start your conquest!</p>
+      </div>
+    </div>
+
     <div class="board-wrap">
       <div class="board" id="board">
         <div class="board-center" id="board-center">
-          <div class="center-idle" id="center-content">
-            <span class="ci-icon">🏰</span>
-            <p>Roll the dice to start your conquest!</p>
-          </div>
+          <span class="bc-logo">🏰</span>
         </div>
       </div>
     </div>
@@ -316,36 +328,37 @@
       { hex: '#06b6d4', token: '🔷' },
     ];
 
-    // 20-tile loop around the perimeter of an 8×4 grid (widescreen shape) —
-    // the inner 6×2 area holds the dare prompt, dead center of the map.
+    // 20-tile clockwise loop around the perimeter of an 8×4 grid (widescreen shape),
+    // starting at the top-left corner. The inner 6×2 area is now just decorative —
+    // the dare prompt itself lives in the panel above the board.
     const PATH = [
-      { row: 4, col: 8, corner: true,  icon: '🏁', label: 'START' },
-      { row: 3, col: 8, corner: false, icon: '🎯' },
-      { row: 2, col: 8, corner: false, icon: '🎯' },
-      { row: 1, col: 8, corner: true,  icon: '⭐', label: 'BONUS' },
-      { row: 1, col: 7, corner: false, icon: '🎯' },
-      { row: 1, col: 6, corner: false, icon: '🎯' },
-      { row: 1, col: 5, corner: false, icon: '🎯' },
-      { row: 1, col: 4, corner: false, icon: '🎯' },
-      { row: 1, col: 3, corner: false, icon: '🎯' },
+      { row: 1, col: 1, corner: true,  icon: '🏁', label: 'START' },
       { row: 1, col: 2, corner: false, icon: '🎯' },
-      { row: 1, col: 1, corner: true,  icon: '🎲', label: 'LUCKY' },
-      { row: 2, col: 1, corner: false, icon: '🎯' },
-      { row: 3, col: 1, corner: false, icon: '🎯' },
-      { row: 4, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
-      { row: 4, col: 2, corner: false, icon: '🎯' },
-      { row: 4, col: 3, corner: false, icon: '🎯' },
-      { row: 4, col: 4, corner: false, icon: '🎯' },
-      { row: 4, col: 5, corner: false, icon: '🎯' },
-      { row: 4, col: 6, corner: false, icon: '🎯' },
+      { row: 1, col: 3, corner: false, icon: '🎯' },
+      { row: 1, col: 4, corner: false, icon: '🎯' },
+      { row: 1, col: 5, corner: false, icon: '🎯' },
+      { row: 1, col: 6, corner: false, icon: '🎯' },
+      { row: 1, col: 7, corner: false, icon: '🎯' },
+      { row: 1, col: 8, corner: true,  icon: '⭐', label: 'BONUS' },
+      { row: 2, col: 8, corner: false, icon: '🎯' },
+      { row: 3, col: 8, corner: false, icon: '🎯' },
+      { row: 4, col: 8, corner: true,  icon: '🎲', label: 'LUCKY' },
       { row: 4, col: 7, corner: false, icon: '🎯' },
+      { row: 4, col: 6, corner: false, icon: '🎯' },
+      { row: 4, col: 5, corner: false, icon: '🎯' },
+      { row: 4, col: 4, corner: false, icon: '🎯' },
+      { row: 4, col: 3, corner: false, icon: '🎯' },
+      { row: 4, col: 2, corner: false, icon: '🎯' },
+      { row: 4, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
+      { row: 3, col: 1, corner: false, icon: '🎯' },
+      { row: 2, col: 1, corner: false, icon: '🎯' },
     ];
     const CORNER_SET = new Set(PATH.map((t, i) => t.corner ? i : -1).filter(i => i >= 0));
     const CORNER_MSG = {
       0:  { icon: '🏁', text: 'Safe tile — welcome back to START! No dare here.' },
-      3:  { icon: '⭐', text: 'Bonus corner — a safe rest stop. No dare here.' },
+      7:  { icon: '⭐', text: 'Bonus corner — a safe rest stop. No dare here.' },
       10: { icon: '🎲', text: 'Lucky corner — nothing but good vibes. No dare here.' },
-      13: { icon: '🎁', text: 'Gift corner — a free pass. No dare here.' },
+      17: { icon: '🎁', text: 'Gift corner — a free pass. No dare here.' },
     };
     const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     const ALLOWED_COUNTS = [2, 3, 4, 5, 6];
@@ -526,15 +539,15 @@
       el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>'s turn`;
     }
 
-    /* ── Board center states: idle / safe-corner / active question ── */
+    /* ── Dare panel states: idle / safe-corner / active dare ── */
     function renderCenterIdle() {
-      document.getElementById('board-center').classList.remove('active-question');
+      document.getElementById('dare-panel').classList.remove('active');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
     }
 
     function renderCenterSafe(msg) {
-      document.getElementById('board-center').classList.remove('active-question');
+      document.getElementById('dare-panel').classList.remove('active');
       document.getElementById('center-content').outerHTML =
         `<div class="center-safe" id="center-content"><span class="cs-icon">${msg.icon}</span><p>${msg.text}</p></div>`;
     }
@@ -604,7 +617,7 @@
       usedPrompts.push(pi);
       const prompt = PROMPTS[pi];
 
-      document.getElementById('board-center').classList.add('active-question');
+      document.getElementById('dare-panel').classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;">
           <span class="q-cat">${prompt.cat}</span>

@@ -30,7 +30,7 @@
 | `emotion.html` | 🎴 Emotion Cards（主持人頁：選 2–6 人、發牌、產生每位玩家的私人連結） |
 | `word-wolf.html` | 🐺 Word Wolf（主持人頁：選 3–6 人、發牌，多數人拿到同一個字、一人拿到臥底字，架構仿照 emotion.html） |
 | `team-words.html` | 🤐 Forbidden Words（主持人頁：選 2–6 人、發牌，隨機分成 Team A / Team B，兩隊各拿一個常見單字，目標是誘導對方隊伍說出自己這隊的字、同時避免說出對方的字，架構仿照 word-wolf.html，共用同一份 wordwolf 詞庫） |
-| `conquest.html` | 🏰 Dare Conquest（主持人單頁、不需 Firebase：選 2–6 人、8×4 寬螢幕比例 board 外圍 20 格路徑，輪流擲骰子、移動棋子，停在格子上需完成有趣的互動挑戰（跟其他玩家告白、唱指定歌曲、說笑話、講繞口令、吐槽某人等）才能佔領該地，做到也能從對手手中搶地，地圖格子不顯示題型、只有通用圖示，4 個角落為安全格不觸發挑戰，骰子與回合資訊獨立顯示在 board 上方的控制列，board 正中央專門顯示挑戰卡，全數佔領或手動結束後顯示贏家，頁面最下方列出完整題庫供主持人瀏覽） |
+| `conquest.html` | 🏰 Dare Conquest（主持人單頁、不需 Firebase：選 2–6 人、8×4 寬螢幕比例 board 外圍 20 格路徑，START 在左上角、順時針前進，輪流擲骰子、移動棋子，停在格子上需完成有趣的互動挑戰（跟其他玩家告白、唱指定歌曲、說笑話、講繞口令、吐槽某人等）才能佔領該地，做到也能從對手手中搶地，地圖格子不顯示題型、只有通用圖示，4 個角落（START/BONUS/LUCKY/GIFT）為安全格不觸發挑戰、目前彼此功能相同，骰子與回合資訊獨立顯示在 board 上方的控制列、挑戰卡也在地圖上方（board 正中央僅為裝飾用城堡圖示），全數佔領或手動結束後顯示贏家，頁面最下方列出完整題庫供主持人瀏覽） |
 | `play.html` | 🔗 三款遊戲（Emotion Cards / Word Wolf / Forbidden Words）共用的玩家頁面：玩家開啟自己的私人連結後看到當下這局的內容，依 Firebase 資料中的 `game` 欄位自動切換樣式；同一個 Room Code + 同一批玩家連結可以在三款遊戲間直接切換使用，不用重新產生連結 |
 | `firebase-config.js` | Emotion Cards / Word Wolf / Forbidden Words 共用的 Firebase Realtime Database 設定（host 與 play.html 共用，需自行申請免費專案並填入；三款遊戲共用同一個 `rooms/{roomCode}/players/{token}` 路徑） |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
