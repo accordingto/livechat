@@ -806,7 +806,7 @@ const GAME_DATA = {
     { word: 'Habit',        emoji: '🔁' },
   ],
 
-  // ── Trivia Conquest（board-game dares — silly interactive prompts, {player} is filled with a random other player）──
+  // ── Monopoly（board-game dares — silly interactive prompts, {player} is filled with a random other player）──
   conquest: [
     { cat: '💌 Confession', text: "Confess your feelings (real or made up!) to {player}." },
     { cat: '🎤 Sing', text: 'Sing one full verse of a song that {player} picks for you, right now.' },

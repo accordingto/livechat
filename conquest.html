@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Dare Conquest · IceBreak Hub</title>
+  <title>Monopoly · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Dare Conquest">
+  <meta name="apple-mobile-web-app-title" content="Monopoly">
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -174,7 +174,7 @@
     .p-ml { grid-row: 2; grid-column: 1; } .p-mc { grid-row: 2; grid-column: 2; } .p-mr { grid-row: 2; grid-column: 3; }
     .p-bl { grid-row: 3; grid-column: 1; } .p-bc { grid-row: 3; grid-column: 2; } .p-br { grid-row: 3; grid-column: 3; }
 
-    /* ── Board: a wide 8×4 perimeter loop, kept short enough to fit on screen ── */
+    /* ── Board: a wide 8×3 perimeter loop, kept short enough to fit on screen ── */
     .board-wrap {
       width: 100%; max-width: 1100px;
       margin: 0 auto 16px;
@@ -184,7 +184,7 @@
     .board {
       display: grid;
       grid-template-columns: 96px repeat(6, 1fr) 96px;
-      grid-template-rows: 96px 122px 122px 96px;
+      grid-template-rows: 96px 170px 96px;
       gap: 6px;
       width: 100%;
       min-width: 760px;
@@ -209,7 +209,7 @@
 
     /* ── Board center: the dice lives here, front and center on the map ── */
     .board-center {
-      grid-row: 2 / 4; grid-column: 2 / 8;
+      grid-row: 2 / 3; grid-column: 2 / 8;
       background: var(--surface-b);
       border: 2px solid var(--border);
       border-radius: 18px;
@@ -309,7 +309,7 @@
   </div>
 
   <div class="header">
-    <h1>🏰 Dare Conquest</h1>
+    <h1>🏰 Monopoly</h1>
     <p>Roll the dice, move around the board, and pull off a silly dare to claim the land — or land on a corner for a special effect!</p>
   </div>
 
@@ -389,8 +389,8 @@
       { hex: '#06b6d4', token: '🔷' },
     ];
 
-    // 20-tile clockwise loop around the perimeter of an 8×4 grid (widescreen shape),
-    // starting at the top-left corner. The inner 6×2 area is now just decorative —
+    // 18-tile clockwise loop around the perimeter of an 8×3 grid (wider, shorter shape),
+    // starting at the top-left corner. The inner 6×1 area is now just decorative —
     // the dare prompt itself lives in the panel above the board.
     const PATH = [
       { row: 1, col: 1, corner: true,  icon: '🏁', label: 'START' },
@@ -402,20 +402,18 @@
       { row: 1, col: 7, corner: false, icon: '🎯' },
       { row: 1, col: 8, corner: true,  icon: '⭐', label: 'BONUS' },
       { row: 2, col: 8, corner: false, icon: '🎯' },
-      { row: 3, col: 8, corner: false, icon: '🎯' },
-      { row: 4, col: 8, corner: true,  icon: '🎲', label: 'LUCKY' },
-      { row: 4, col: 7, corner: false, icon: '🎯' },
-      { row: 4, col: 6, corner: false, icon: '🎯' },
-      { row: 4, col: 5, corner: false, icon: '🎯' },
-      { row: 4, col: 4, corner: false, icon: '🎯' },
-      { row: 4, col: 3, corner: false, icon: '🎯' },
-      { row: 4, col: 2, corner: false, icon: '🎯' },
-      { row: 4, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
-      { row: 3, col: 1, corner: false, icon: '🎯' },
+      { row: 3, col: 8, corner: true,  icon: '🎲', label: 'LUCKY' },
+      { row: 3, col: 7, corner: false, icon: '🎯' },
+      { row: 3, col: 6, corner: false, icon: '🎯' },
+      { row: 3, col: 5, corner: false, icon: '🎯' },
+      { row: 3, col: 4, corner: false, icon: '🎯' },
+      { row: 3, col: 3, corner: false, icon: '🎯' },
+      { row: 3, col: 2, corner: false, icon: '🎯' },
+      { row: 3, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
       { row: 2, col: 1, corner: false, icon: '🎯' },
     ];
     const CORNER_SET = new Set(PATH.map((t, i) => t.corner ? i : -1).filter(i => i >= 0));
-    const START_IDX = 0, BONUS_IDX = 7, LUCKY_IDX = 10, GIFT_IDX = 17;
+    const START_IDX = 0, BONUS_IDX = 7, LUCKY_IDX = 9, GIFT_IDX = 16;
     // rotation (in degrees) that brings each die face to front, matching the
     // .face-N transforms in CSS — opposite faces sum to 7, like a real die
     const FACE_ROTATION = { 1: { x: 0, y: 0 }, 2: { x: 0, y: -90 }, 3: { x: -90, y: 0 }, 4: { x: 90, y: 0 }, 5: { x: 0, y: 90 }, 6: { x: 0, y: 180 } };
@@ -424,7 +422,7 @@
     let playerCount = 4;
     let playerNames = [];
     let players = [];       // { name, hex, token, pos }
-    let ownership = [];     // length 20, index into players or -1
+    let ownership = [];     // length PATH.length, index into players or -1
     let currentIdx = 0;
     let usedPrompts = [];
     let rolling = false;
