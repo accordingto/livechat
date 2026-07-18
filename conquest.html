@@ -264,8 +264,23 @@
     .dare-panel.corner-bonus { border-color: #f59e0b; box-shadow: 0 0 28px rgba(245,158,11,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-lucky { border-color: #a78bfa; box-shadow: 0 0 28px rgba(167,139,250,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-gift  { border-color: #ec4899; box-shadow: 0 0 28px rgba(236,72,153,.35), 0 16px 48px rgba(0,0,0,.55); }
+    .dare-panel.defense      { border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.35), 0 16px 48px rgba(0,0,0,.55); }
 
     @keyframes popIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+
+    /* ── Defense: owner picks the attacker's challenge category ── */
+    .defense-cat-grid {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+      max-height: 220px; overflow-y: auto; padding: 4px;
+    }
+    .cat-pick-btn {
+      border: 1.5px solid #1e1e42; background: #0d0d1a; color: #ccc;
+      border-radius: 16px; padding: 6px 13px; font-size: .78rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .cat-pick-btn:hover  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+    .cat-pick-btn:active { transform: scale(.96); }
 
     .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .3s ease both; }
     .center-idle .ci-icon { font-size: 1.5rem; }
@@ -668,7 +683,7 @@
        overlay on top of the map, so it's only shown when there's something to say ── */
     function renderCenterIdle() {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('hidden');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
@@ -678,7 +693,7 @@
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden');
-      panel.classList.remove('active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('corner-' + type);
       document.getElementById('center-content').outerHTML = `
         <div class="center-safe" id="center-content">
@@ -761,6 +776,8 @@
         doLucky();
       } else if (type === 'gift') {
         doGift();
+      } else if (ownership[p.pos] !== -1 && ownership[p.pos] !== currentIdx) {
+        showDefensePicker(p.pos, ownership[p.pos]);
       } else {
         showQuestion(p.pos);
       }
@@ -800,7 +817,7 @@
       if (others.length === 1) { performSwap(others[0]); return; }
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
@@ -843,10 +860,14 @@
       const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
       const pi = avail[Math.floor(Math.random() * avail.length)];
       usedPrompts.push(pi);
-      const prompt = PROMPTS[pi];
+      renderDareContent(PROMPTS[pi]);
+    }
 
+    // renders the actual dare (category + text + optional timer + judge buttons) —
+    // shared by a normal random draw and a defender-picked challenge
+    function renderDareContent(prompt) {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
@@ -862,6 +883,37 @@
             <button class="btn-judge btn-wrong" onclick="judge(false)">❌ Skipped</button>
           </div>
         </div>`;
+    }
+
+    // DEFENSE: landing on a rival's territory lets its owner pick which
+    // challenge the attacker has to face, instead of a random draw
+    function showDefensePicker(tileIdx, ownerIdx) {
+      clearPromptTimer();
+      awaitingJudgement = true;
+      currentTileIdx = tileIdx;
+      const owner = players[ownerIdx];
+      const attacker = players[currentIdx];
+      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
+      const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
+
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('hidden', 'active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add('defense');
+      document.getElementById('center-content').outerHTML = `
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
+          <span class="q-cat" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;">🛡️ Defense</span>
+          <div class="q-text">This is <span style="color:${owner.hex}">${owner.name}</span>'s land! ${owner.name}, pick ${attacker.name}'s challenge:</div>
+          <div class="defense-cat-grid">
+            ${avail.map(i => `<button class="cat-pick-btn" onclick="pickDefenseCategory(${i})">${PROMPTS[i].cat}</button>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    function pickDefenseCategory(promptIdx) {
+      if (!awaitingJudgement) return;
+      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
+      usedPrompts.push(promptIdx);
+      renderDareContent(PROMPTS[promptIdx]);
     }
 
     // countdown timer for timed dares — starts only when the host clicks the button,
