@@ -263,9 +263,9 @@
     .center-idle .ci-icon { font-size: 1.5rem; }
     .center-idle p { color: #555; font-size: .85rem; }
 
-    .center-safe { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .35s ease both; }
-    .center-safe .cs-icon { font-size: 1.7rem; }
-    .center-safe p { color: #ddd; font-size: .92rem; font-weight: 700; }
+    .center-safe { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: popIn .35s ease both; }
+    .center-safe .cs-icon { font-size: 2rem; }
+    .center-safe p { color: #ddd; font-size: .98rem; font-weight: 700; text-align: center; }
 
     .q-cat {
       display: inline-flex; align-self: center;
@@ -654,12 +654,24 @@
     }
 
     function showCornerMessage(icon, text, type) {
+      awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden');
       panel.classList.remove('active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('corner-' + type);
-      document.getElementById('center-content').outerHTML =
-        `<div class="center-safe" id="center-content"><span class="cs-icon">${icon}</span><p>${text}</p></div>`;
+      document.getElementById('center-content').outerHTML = `
+        <div class="center-safe" id="center-content">
+          <span class="cs-icon">${icon}</span>
+          <p>${text}</p>
+          <button class="btn-judge btn-correct" onclick="confirmCornerEffect()">👍 OK</button>
+        </div>`;
+    }
+
+    // host confirms they've read the corner-effect message before the turn moves on
+    function confirmCornerEffect() {
+      awaitingJudgement = false;
+      nextTurn();
+      renderCenterIdle();
     }
 
     function shuffle(arr) {
@@ -722,7 +734,6 @@
       if (type === 'start') {
         flashTile(p.pos, TYPE_COLOR.start);
         showCornerMessage('🏁', 'Safe tile — welcome back to START! Nothing happens here.', 'start');
-        setTimeout(() => { nextTurn(); renderCenterIdle(); }, 1400);
       } else if (type === 'bonus') {
         doBonus();
       } else if (type === 'lucky') {
@@ -735,10 +746,6 @@
     }
 
     /* ── Corner effects ── */
-    function finishCornerEffect() {
-      setTimeout(() => { nextTurn(); renderCenterIdle(); }, 1700);
-    }
-
     // BONUS: randomly hand the current player 3 territories they don't already own
     // (stealing from rivals if there aren't enough unclaimed tiles left)
     function doBonus() {
@@ -751,7 +758,6 @@
       showCornerMessage('⭐', gained.length
         ? `Bonus corner! You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`
         : 'Bonus corner! There were no other territories left to claim.', 'bonus');
-      finishCornerEffect();
     }
 
     // GIFT: claim every currently unclaimed territory on the board
@@ -764,7 +770,6 @@
       showCornerMessage('🎁', gained.length
         ? `Gift corner! You claimed all ${gained.length} unclaimed territor${gained.length === 1 ? 'y' : 'ies'}!`
         : 'Gift corner! There were no unclaimed territories left to give.', 'gift');
-      finishCornerEffect();
     }
 
     // LUCKY: swap your entire territory with one other player's — auto-picks the
@@ -798,7 +803,6 @@
       renderScoreboard();
       flashTile(players[cur].pos, TYPE_COLOR.lucky);
       showCornerMessage('🔄', `Lucky corner! You swapped all territories with ${players[targetIdx].name}!`, 'lucky');
-      finishCornerEffect();
     }
 
     /* ── Dare prompt / judging ── */
