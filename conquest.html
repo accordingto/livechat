@@ -284,6 +284,19 @@
     .q-text { font-size: clamp(1.1rem, 2.3vw, 1.4rem); font-weight: 700; text-align: center; line-height: 1.6; max-width: 640px; }
     .q-text .q-player { white-space: nowrap; }
     .q-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    /* ── Countdown timer: only starts when the host presses the button ── */
+    .timer-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .timer-circle {
+      width: 58px; height: 58px; border-radius: 50%;
+      border: 3px solid #22c55e; color: #eee;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .timer-circle.low { border-color: #f59e0b; color: #f59e0b; }
+    .timer-circle.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+    @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
     .btn-judge {
       border-radius: 12px; padding: 11px 24px; font-size: .9rem; font-weight: 800;
       font-family: inherit; cursor: pointer; border: 2px solid; transition: background .2s, transform .1s;
@@ -823,6 +836,7 @@
     }
 
     function showQuestion(tileIdx) {
+      clearPromptTimer();
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
       if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
@@ -838,6 +852,11 @@
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat">${prompt.cat}</span>
           <div class="q-text">${resolvePromptText(prompt.text, currentIdx)}</div>
+          ${prompt.seconds ? `
+          <div class="timer-block">
+            <button class="btn-secondary" id="timer-start-btn" onclick="startPromptTimer(${prompt.seconds})">⏱️ Start ${prompt.seconds}s Timer</button>
+            <div class="timer-circle hidden" id="timer-circle">${prompt.seconds}</div>
+          </div>` : ''}
           <div class="q-actions">
             <button class="btn-judge btn-correct" onclick="judge(true)">✅ Did It!</button>
             <button class="btn-judge btn-wrong" onclick="judge(false)">❌ Skipped</button>
@@ -845,8 +864,38 @@
         </div>`;
     }
 
+    // countdown timer for timed dares — starts only when the host clicks the button,
+    // never auto-fails anything; the host still judges Did It / Skipped manually
+    let promptTimerInterval = null;
+    function clearPromptTimer() {
+      if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; }
+    }
+    function startPromptTimer(seconds) {
+      clearPromptTimer();
+      const startBtn = document.getElementById('timer-start-btn');
+      const circle = document.getElementById('timer-circle');
+      if (!circle) return;
+      if (startBtn) startBtn.classList.add('hidden');
+      circle.classList.remove('hidden', 'low', 'critical');
+      let remaining = seconds;
+      circle.textContent = remaining;
+      promptTimerInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          circle.textContent = '0';
+          circle.classList.add('critical');
+          clearPromptTimer();
+          return;
+        }
+        circle.textContent = remaining;
+        circle.classList.toggle('low', remaining <= Math.ceil(seconds * 0.5));
+        circle.classList.toggle('critical', remaining <= Math.ceil(seconds * 0.25));
+      }, 1000);
+    }
+
     function judge(isCorrect) {
       if (!awaitingJudgement) return;
+      clearPromptTimer();
       if (isCorrect) ownership[currentTileIdx] = currentIdx;
       awaitingJudgement = false;
       renderBoard();
