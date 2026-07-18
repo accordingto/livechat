@@ -16,6 +16,14 @@
     /* ── Compact layout: this page keeps everything above the map as small as
        possible so the whole board fits on screen during a live share ── */
     .header { margin-bottom: 14px; }
+
+    /* body is a column flex container with align-items:center, so flex items
+       shrink-wrap to their content's preferred width by default — without an
+       explicit width here, the board's min-width:760px (needed for the
+       horizontal-scroll fallback on narrow screens) would propagate up and
+       force this whole section (and everything in it) to 760px wide instead
+       of actually fitting the viewport. */
+    #game-area { width: 100%; max-width: 1100px; }
     .header h1 { font-size: clamp(1.3rem, 3vw, 1.7rem); margin-bottom: 4px; }
     .header p { font-size: .8rem; }
 
