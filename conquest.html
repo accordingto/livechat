@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Trivia Conquest · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Trivia Conquest">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hidden { display: none !important; }
+
+    /* ── Buttons (shared look) ── */
+    .btn-primary {
+      background: #13132b; color: #22c55e; border: 2px solid #22c55e;
+      border-radius: 12px; padding: 14px 30px;
+      font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+      transition: background .2s, transform .1s, opacity .2s;
+    }
+    .btn-primary:hover:not(:disabled)  { background: rgba(34,197,94,.1); }
+    .btn-primary:active:not(:disabled) { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 12px; padding: 12px 22px;
+      font-size: .88rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .btn-secondary:hover  { border-color: #22c55e; color: #22c55e; }
+    .btn-secondary:active { transform: scale(.98); }
+
+    /* ── Setup card ── */
+    .setup-card {
+      width: 100%; max-width: 900px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+      padding: 26px 28px;
+      display: flex; flex-direction: column; gap: 18px;
+      margin-bottom: 24px;
+      animation: fadeUp .5s .2s ease both;
+    }
+    .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .control-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555;
+    }
+    .player-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .player-btn {
+      width: 44px; height: 44px; border-radius: 12px;
+      border: 2px solid #1e1e42; background: #13132b; color: #888;
+      font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .player-btn:hover  { border-color: #22c55e; color: #22c55e; }
+    .player-btn:active { transform: scale(.94); }
+    .player-btn.active { border-color: #22c55e; color: #fff; background: rgba(34,197,94,.18); }
+
+    .name-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .name-slot {
+      display: flex; align-items: center; gap: 10px;
+      background: #0d0d1a; border: 2px solid; border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .name-slot .token { font-size: 1.3rem; flex-shrink: 0; }
+    .name-slot input {
+      flex: 1; min-width: 0;
+      background: transparent; border: none; color: #eee;
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+    }
+    .name-slot input::placeholder { color: #555; }
+    .name-slot input:focus { outline: none; }
+
+    .rules-note {
+      color: #555; font-size: .82rem; line-height: 1.7;
+    }
+
+    /* ── Scoreboard ── */
+    .scoreboard {
+      width: 100%; max-width: 900px;
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+      margin-bottom: 22px;
+      animation: fadeUp .5s .25s ease both;
+    }
+    .score-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 999px;
+      padding: 8px 16px; font-size: .88rem; font-weight: 700; color: #ccc;
+      transition: border-color .25s, box-shadow .25s, transform .2s;
+    }
+    .score-chip .token { font-size: 1.05rem; }
+    .score-chip .count { color: #888; font-weight: 800; }
+    .score-chip.current-turn {
+      transform: translateY(-3px);
+      box-shadow: 0 0 0 1px currentColor, 0 8px 24px rgba(0,0,0,.35);
+      animation: turnPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes turnPulse {
+      0%, 100% { filter: brightness(1); }
+      50%       { filter: brightness(1.35); }
+    }
+
+    /* ── Board ── */
+    .board-wrap {
+      width: 100%; max-width: 760px;
+      margin: 0 auto 26px;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 6px;
+      width: 100%;
+      aspect-ratio: 1;
+    }
+    .tile {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; padding: 3px;
+      transition: background .35s, border-color .35s;
+    }
+    .tile.corner { background: #171730; border-color: #2a2a4a; }
+    .tile-icon { font-size: 1.25rem; line-height: 1; }
+    .tile-cat { font-size: .5rem; color: #555; text-align: center; line-height: 1.15; margin-top: 2px; padding: 0 2px; }
+    .tile-corner-label { font-size: .55rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 2px; }
+    .tile-owner-icon { position: absolute; top: 3px; right: 4px; font-size: .8rem; }
+    .tile-tokens {
+      position: absolute; bottom: 2px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 1px; flex-wrap: wrap;
+    }
+    .tile-token { font-size: .8rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
+
+    .board-center {
+      grid-row: 2 / 6; grid-column: 2 / 6;
+      background: var(--surface-b);
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; padding: 12px; text-align: center;
+    }
+    .turn-indicator { font-size: clamp(.95rem, 2.6vw, 1.2rem); font-weight: 800; }
+    .turn-indicator .tname { color: var(--turn-color, #22c55e); }
+    .dice-face { font-size: clamp(2.4rem, 8vw, 3.6rem); line-height: 1; }
+    .dice-face.rolling { animation: flicker .1s linear infinite; }
+    .roll-btn { font-size: clamp(.85rem, 2.2vw, 1rem); padding: 12px 26px; }
+
+    /* ── Question panel ── */
+    .question-panel {
+      width: 100%; max-width: 900px;
+      background: #13132b; border: 2px solid #22c55e; border-radius: 20px;
+      padding: 26px 30px;
+      display: flex; flex-direction: column; gap: 16px;
+      margin-bottom: 22px;
+      animation: fadeUp .35s ease both;
+      box-shadow: 0 0 32px rgba(34,197,94,.15);
+    }
+    .q-cat {
+      display: inline-flex; align-self: center;
+      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3);
+      color: #22c55e; font-size: .7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 20px;
+    }
+    .q-text { font-size: clamp(1.15rem, 3vw, 1.5rem); font-weight: 700; text-align: center; line-height: 1.5; }
+    .q-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .q-choice {
+      display: flex; align-items: center; gap: 10px;
+      background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 12px;
+      padding: 12px 16px; font-size: .95rem; font-weight: 600; color: #ccc;
+      transition: border-color .3s, background .3s, color .3s;
+    }
+    .q-choice .qk {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+      background: #1e1e42; color: #999; font-size: .78rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .q-choice.correct-reveal { border-color: #22c55e; background: rgba(34,197,94,.1); color: #fff; }
+    .q-choice.correct-reveal .qk { background: #22c55e; color: #0d0d1a; }
+    .q-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .btn-judge {
+      border-radius: 12px; padding: 12px 26px; font-size: .92rem; font-weight: 800;
+      font-family: inherit; cursor: pointer; border: 2px solid; transition: background .2s, transform .1s;
+    }
+    .btn-judge:active { transform: scale(.97); }
+    .btn-correct { color: #22c55e; border-color: #22c55e; background: transparent; }
+    .btn-correct:hover:not(:disabled) { background: rgba(34,197,94,.1); }
+    .btn-wrong { color: #ef4444; border-color: #ef4444; background: transparent; }
+    .btn-wrong:hover:not(:disabled) { background: rgba(239,68,68,.1); }
+    .btn-judge:disabled { opacity: .3; cursor: not-allowed; }
+
+    .safe-toast {
+      width: 100%; max-width: 900px;
+      background: rgba(255,255,255,.05); border: 1.5px solid #2a2a4a; color: #aaa;
+      border-radius: 14px; padding: 14px 18px; font-size: .92rem; text-align: center; font-weight: 600;
+      margin-bottom: 22px; animation: fadeUp .3s ease both;
+    }
+
+    /* ── Winner banner ── */
+    .winner-banner {
+      width: 100%; max-width: 900px;
+      background: linear-gradient(135deg, rgba(34,197,94,.15), rgba(34,197,94,.03));
+      border: 2px solid #22c55e; border-radius: 20px;
+      padding: 28px; text-align: center; margin-bottom: 22px;
+      animation: fadeUp .4s ease both;
+    }
+    .winner-banner h2 { font-size: clamp(1.3rem, 3.5vw, 1.8rem); margin-bottom: 8px; }
+    .winner-banner p { color: #999; font-size: .9rem; }
+
+    .controls-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+
+    @media (max-width: 640px) {
+      .q-choices { grid-template-columns: 1fr; }
+      .tile-cat, .tile-corner-label { display: none; }
+      .tile-icon { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🏰 Trivia Conquest</h1>
+    <p>Roll the dice, move around the board, and answer an English trivia question to claim the land — landing on someone else's territory? Answer right and steal it!</p>
+  </div>
+
+  <!-- ── Setup ── -->
+  <div class="setup-card" id="setup-card">
+    <div class="control-row">
+      <span class="control-label">Players</span>
+      <div class="player-btns" id="player-count-btns"></div>
+    </div>
+    <div class="name-grid" id="name-grid"></div>
+    <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
+    <div class="rules-note">
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → answer a trivia question. Answer correctly and it's yours — even if a rival already owns it. Corner tiles are safe zones with no question. Most territory when the board fills up wins!
+    </div>
+  </div>
+
+  <!-- ── Game area ── -->
+  <div class="hidden" id="game-area">
+    <div class="scoreboard" id="scoreboard"></div>
+
+    <div class="board-wrap">
+      <div class="board" id="board">
+        <div class="board-center" id="board-center">
+          <div class="turn-indicator" id="turn-indicator"></div>
+          <div class="dice-face" id="dice-face">⚀</div>
+          <button class="btn-primary roll-btn" id="roll-btn" onclick="rollDice()">🎲 Roll Dice</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="safe-toast hidden" id="safe-toast"></div>
+
+    <div class="question-panel hidden" id="question-panel">
+      <span class="q-cat" id="q-cat"></span>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-choices" id="q-choices"></div>
+      <div class="q-actions">
+        <button class="btn-secondary" id="reveal-btn" onclick="revealAnswer()">🔍 Reveal Answer</button>
+        <button class="btn-judge btn-correct" id="correct-btn" onclick="judge(true)" disabled>✅ Correct</button>
+        <button class="btn-judge btn-wrong" id="wrong-btn" onclick="judge(false)" disabled>❌ Wrong</button>
+      </div>
+    </div>
+
+    <div class="winner-banner hidden" id="winner-banner"></div>
+
+    <div class="controls-row">
+      <button class="btn-secondary" onclick="restartRound()">🔄 Restart Board</button>
+      <button class="btn-secondary" onclick="backToSetup()">⬅ Change Players</button>
+    </div>
+  </div>
+
+  <script src="game-data.js"></script>
+  <script src="game-render.js"></script>
+  <script>
+    GAME_RENDER.injectCSS();
+    const QUESTIONS = GAME_DATA.conquest;
+
+    const PLAYER_COLORS = [
+      { hex: '#ef4444', token: '🔴' },
+      { hex: '#4f9eff', token: '🔵' },
+      { hex: '#22c55e', token: '🟢' },
+      { hex: '#f59e0b', token: '🟡' },
+      { hex: '#a78bfa', token: '🟣' },
+      { hex: '#06b6d4', token: '🔷' },
+    ];
+
+    // 20-tile loop around the perimeter of a 6×6 grid; the inner 4×4 holds the control panel.
+    const PATH = [
+      { row: 6, col: 6, corner: true,  icon: '🏁', label: 'START' },
+      { row: 5, col: 6, corner: false, icon: '🌾', cat: '💡 General' },
+      { row: 4, col: 6, corner: false, icon: '🌾', cat: '🌍 Geography' },
+      { row: 3, col: 6, corner: false, icon: '🌾', cat: '🐾 Animals' },
+      { row: 2, col: 6, corner: false, icon: '🌾', cat: '🔬 Science' },
+      { row: 1, col: 6, corner: true,  icon: '⭐', label: 'BONUS' },
+      { row: 1, col: 5, corner: false, icon: '🌾', cat: '🍔 Food' },
+      { row: 1, col: 4, corner: false, icon: '🌾', cat: '🏛️ History' },
+      { row: 1, col: 3, corner: false, icon: '🌾', cat: '🎬 Pop Culture' },
+      { row: 1, col: 2, corner: false, icon: '🌾', cat: '⚽ Sports' },
+      { row: 1, col: 1, corner: true,  icon: '🎲', label: 'LUCKY' },
+      { row: 2, col: 1, corner: false, icon: '🌾', cat: '📖 Language' },
+      { row: 3, col: 1, corner: false, icon: '🌾', cat: '🚀 Space' },
+      { row: 4, col: 1, corner: false, icon: '🌾', cat: '🎵 Music' },
+      { row: 5, col: 1, corner: false, icon: '🌾', cat: '🗺️ Places' },
+      { row: 6, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
+      { row: 6, col: 2, corner: false, icon: '🌾', cat: '🎨 Culture' },
+      { row: 6, col: 3, corner: false, icon: '🌾', cat: '💡 General' },
+      { row: 6, col: 4, corner: false, icon: '🌾', cat: '🐾 Animals' },
+      { row: 6, col: 5, corner: false, icon: '🌾', cat: '🌍 Geography' },
+    ];
+    const CORNER_SET = new Set(PATH.map((t, i) => t.corner ? i : -1).filter(i => i >= 0));
+    const CORNER_MSG = {
+      0: "🏁 Safe tile — welcome back to START! No question here.",
+      5: "⭐ Bonus corner — a safe rest stop. No question here.",
+      10: "🎲 Lucky corner — nothing but good vibes. No question here.",
+      15: "🎁 Gift corner — a free pass. No question here.",
+    };
+    const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+    const ALLOWED_COUNTS = [2, 3, 4, 5, 6];
+
+    let playerCount = 4;
+    let playerNames = [];
+    let players = [];       // { name, hex, token, pos }
+    let ownership = [];     // length 20, index into players or -1
+    let currentIdx = 0;
+    let usedQuestions = [];
+    let rolling = false;
+    let awaitingJudgement = false;
+    let gameStarted = false;
+    let round = 0;
+    let currentQuestion = null;
+    let currentTileIdx = null;
+
+    /* ── Setup screen ── */
+    function setPlayerCount(n) {
+      playerCount = n;
+      document.querySelectorAll('.player-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
+      renderNameGrid();
+    }
+    (function buildPlayerBtns() {
+      const wrap = document.getElementById('player-count-btns');
+      ALLOWED_COUNTS.forEach(n => {
+        const b = document.createElement('button');
+        b.className = 'player-btn' + (n === playerCount ? ' active' : '');
+        b.textContent = n;
+        b.onclick = () => setPlayerCount(n);
+        wrap.appendChild(b);
+      });
+    })();
+
+    function renderNameGrid() {
+      const grid = document.getElementById('name-grid');
+      grid.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const c = PLAYER_COLORS[i];
+        const slot = document.createElement('div');
+        slot.className = 'name-slot';
+        slot.style.borderColor = c.hex;
+        const input = document.createElement('input');
+        input.maxLength = 14;
+        input.placeholder = `Player ${i + 1}`;
+        input.value = playerNames[i] || '';
+        input.oninput = () => { playerNames[i] = input.value.trim(); };
+        slot.innerHTML = `<span class="token">${c.token}</span>`;
+        slot.appendChild(input);
+        grid.appendChild(slot);
+      }
+    }
+    renderNameGrid();
+
+    /* ── Game start / reset ── */
+    function startGame() {
+      players = Array.from({ length: playerCount }, (_, i) => ({
+        name: playerNames[i] || `Player ${i + 1}`,
+        hex: PLAYER_COLORS[i].hex,
+        token: PLAYER_COLORS[i].token,
+        pos: 0,
+      }));
+      ownership = new Array(PATH.length).fill(-1);
+      currentIdx = 0;
+      usedQuestions = [];
+      rolling = false;
+      awaitingJudgement = false;
+      round = 0;
+      document.getElementById('roundNum').textContent = round;
+      document.getElementById('setup-card').classList.add('hidden');
+      document.getElementById('game-area').classList.remove('hidden');
+      document.getElementById('winner-banner').classList.add('hidden');
+      buildBoardTiles();
+      renderBoard();
+      renderScoreboard();
+      updateTurnIndicator();
+      document.getElementById('roll-btn').disabled = false;
+    }
+
+    function restartRound() {
+      if (!players.length) return;
+      ownership = new Array(PATH.length).fill(-1);
+      players.forEach(p => p.pos = 0);
+      currentIdx = 0;
+      usedQuestions = [];
+      rolling = false;
+      awaitingJudgement = false;
+      round = 0;
+      document.getElementById('roundNum').textContent = round;
+      document.getElementById('winner-banner').classList.add('hidden');
+      document.getElementById('question-panel').classList.add('hidden');
+      document.getElementById('safe-toast').classList.add('hidden');
+      renderBoard();
+      renderScoreboard();
+      updateTurnIndicator();
+      document.getElementById('roll-btn').disabled = false;
+    }
+
+    function backToSetup() {
+      document.getElementById('game-area').classList.add('hidden');
+      document.getElementById('setup-card').classList.remove('hidden');
+      gameStarted = false;
+    }
+
+    /* ── Board rendering ── */
+    let tileEls = [];
+    function buildBoardTiles() {
+      const board = document.getElementById('board');
+      board.querySelectorAll('.tile').forEach(el => el.remove());
+      tileEls = PATH.map((t, i) => {
+        const el = document.createElement('div');
+        el.className = 'tile' + (t.corner ? ' corner' : '');
+        el.style.gridRow = t.row;
+        el.style.gridColumn = t.col;
+        if (t.corner) {
+          el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-corner-label">${t.label}</span>`;
+        } else {
+          el.innerHTML = `<span class="tile-icon">${t.icon}</span><span class="tile-cat">${t.cat}</span><span class="tile-owner-icon"></span><div class="tile-tokens"></div>`;
+        }
+        board.insertBefore(el, document.getElementById('board-center'));
+        return el;
+      });
+      gameStarted = true;
+    }
+
+    function renderBoard() {
+      PATH.forEach((t, i) => {
+        const el = tileEls[i];
+        if (!el) return;
+        if (t.corner) return;
+        const ownerIdx = ownership[i];
+        if (ownerIdx >= 0) {
+          const owner = players[ownerIdx];
+          el.style.background = owner.hex + '2a';
+          el.style.borderColor = owner.hex;
+          el.querySelector('.tile-owner-icon').textContent = owner.token;
+        } else {
+          el.style.background = '';
+          el.style.borderColor = '';
+          el.querySelector('.tile-owner-icon').textContent = '';
+        }
+        const tokensEl = el.querySelector('.tile-tokens');
+        tokensEl.innerHTML = players
+          .filter(p => p.pos === i)
+          .map(p => `<span class="tile-token">${p.token}</span>`)
+          .join('');
+      });
+    }
+
+    function renderScoreboard() {
+      const wrap = document.getElementById('scoreboard');
+      wrap.innerHTML = '';
+      players.forEach((p, i) => {
+        const count = ownership.filter(o => o === i).length;
+        const chip = document.createElement('div');
+        chip.className = 'score-chip' + (i === currentIdx && !document.getElementById('winner-banner').classList.contains('shown') ? ' current-turn' : '');
+        chip.style.color = p.hex;
+        chip.innerHTML = `<span class="token">${p.token}</span><span>${p.name}</span><span class="count">${count}🏳️</span>`;
+        wrap.appendChild(chip);
+      });
+    }
+
+    function updateTurnIndicator() {
+      const p = players[currentIdx];
+      const el = document.getElementById('turn-indicator');
+      el.style.setProperty('--turn-color', p.hex);
+      el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>'s turn`;
+    }
+
+    /* ── Dice + movement ── */
+    function rollDice() {
+      if (rolling || awaitingJudgement || !players.length) return;
+      rolling = true;
+      document.getElementById('roll-btn').disabled = true;
+      const diceFace = document.getElementById('dice-face');
+      diceFace.classList.add('rolling');
+      const final = 1 + Math.floor(Math.random() * 6);
+      GAME_RENDER.drawTick(
+        [1, 2, 3, 4, 5, 6],
+        n => { diceFace.textContent = DICE_FACES[n - 1]; },
+        () => {
+          diceFace.textContent = DICE_FACES[final - 1];
+          diceFace.classList.remove('rolling');
+          movePlayer(final);
+        },
+        { count: 14, ms: 70 }
+      );
+    }
+
+    function movePlayer(steps) {
+      let remaining = steps;
+      const p = players[currentIdx];
+      const iv = setInterval(() => {
+        p.pos = (p.pos + 1) % PATH.length;
+        renderBoard();
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(iv);
+          setTimeout(onLanded, 200);
+        }
+      }, 260);
+    }
+
+    function onLanded() {
+      const p = players[currentIdx];
+      if (CORNER_SET.has(p.pos)) {
+        const toast = document.getElementById('safe-toast');
+        toast.textContent = CORNER_MSG[p.pos];
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          nextTurn();
+        }, 1300);
+      } else {
+        showQuestion(p.pos);
+      }
+    }
+
+    /* ── Question / judging ── */
+    function showQuestion(tileIdx) {
+      awaitingJudgement = true;
+      currentTileIdx = tileIdx;
+      if (usedQuestions.length >= QUESTIONS.length) usedQuestions = [];
+      const avail = QUESTIONS.map((_, i) => i).filter(i => !usedQuestions.includes(i));
+      const qi = avail[Math.floor(Math.random() * avail.length)];
+      usedQuestions.push(qi);
+      currentQuestion = QUESTIONS[qi];
+
+      document.getElementById('q-cat').textContent = currentQuestion.cat;
+      document.getElementById('q-text').textContent = currentQuestion.q;
+      const choicesEl = document.getElementById('q-choices');
+      choicesEl.innerHTML = currentQuestion.choices.map((c, i) =>
+        `<div class="q-choice" data-idx="${i}"><span class="qk">${String.fromCharCode(65 + i)}</span><span>${c}</span></div>`
+      ).join('');
+      document.getElementById('reveal-btn').disabled = false;
+      document.getElementById('correct-btn').disabled = true;
+      document.getElementById('wrong-btn').disabled = true;
+      document.getElementById('question-panel').classList.remove('hidden');
+      document.getElementById('question-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function revealAnswer() {
+      if (!currentQuestion) return;
+      document.querySelectorAll('.q-choice').forEach(el => {
+        if (Number(el.dataset.idx) === currentQuestion.correct) el.classList.add('correct-reveal');
+      });
+      document.getElementById('reveal-btn').disabled = true;
+      document.getElementById('correct-btn').disabled = false;
+      document.getElementById('wrong-btn').disabled = false;
+    }
+
+    function judge(isCorrect) {
+      if (!awaitingJudgement) return;
+      if (isCorrect) ownership[currentTileIdx] = currentIdx;
+      awaitingJudgement = false;
+      document.getElementById('question-panel').classList.add('hidden');
+      renderBoard();
+      renderScoreboard();
+      if (checkAllOwned()) { showWinner(); return; }
+      setTimeout(nextTurn, 150);
+    }
+
+    function checkAllOwned() {
+      return PATH.every((t, i) => t.corner || ownership[i] !== -1);
+    }
+
+    function nextTurn() {
+      currentIdx = (currentIdx + 1) % players.length;
+      round++;
+      document.getElementById('roundNum').textContent = round;
+      rolling = false;
+      document.getElementById('roll-btn').disabled = false;
+      updateTurnIndicator();
+      renderScoreboard();
+    }
+
+    function showWinner() {
+      document.getElementById('roll-btn').disabled = true;
+      const counts = players.map((p, i) => ({ p, count: ownership.filter(o => o === i).length }));
+      const max = Math.max(...counts.map(c => c.count));
+      const winners = counts.filter(c => c.count === max).map(c => c.p);
+      const banner = document.getElementById('winner-banner');
+      banner.classList.remove('hidden');
+      banner.classList.add('shown');
+      banner.innerHTML = winners.length > 1
+        ? `<h2>🤝 It's a tie!</h2><p>${winners.map(w => `${w.token} ${w.name}`).join(' & ')} each hold ${max} territories</p>`
+        : `<h2>🏆 ${winners[0].token} ${winners[0].name} wins!</h2><p>Controlling ${max} out of ${PATH.length - CORNER_SET.size} territories</p>`;
+      renderScoreboard();
+    }
+  </script>
+</body>
+</html>
