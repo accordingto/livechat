@@ -717,17 +717,8 @@
     // only rival in a 2-player game, otherwise lets the host choose who
     function doLucky() {
       const others = players.map((_, i) => i).filter(i => i !== currentIdx);
-      if (others.length === 1) { performSwap(others[0]); return; }
-      awaitingJudgement = true;
-      document.getElementById('dare-panel').classList.add('active');
-      document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;">
-          <span class="q-cat">🎲 LUCKY</span>
-          <div class="q-text">Choose a player to swap ALL territories with!</div>
-          <div class="q-actions">
-            ${others.map(i => `<button class="btn-judge" style="color:${players[i].hex};border-color:${players[i].hex}" onclick="performSwap(${i})">${players[i].token} ${players[i].name}</button>`).join('')}
-          </div>
-        </div>`;
+      const targetIdx = others[Math.floor(Math.random() * others.length)];
+      performSwap(targetIdx);
     }
 
     function performSwap(targetIdx) {
