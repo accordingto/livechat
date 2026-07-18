@@ -407,28 +407,27 @@
     // starting at the top-left corner. The inner 6×1 area is now just decorative —
     // the dare prompt itself lives in the panel above the board. Each tile's `type`
     // is 'dare' (claimable, triggers a dare) or one of the special event types below
-    // (never claimable, triggers its effect instead) — several extra BONUS/LUCKY/GIFT
-    // tiles are sprinkled along the edges, not just at the four physical corners.
+    // (never claimable, triggers its effect instead) — 2 LUCKY, 2 BONUS, and 1 GIFT tile.
     const TYPE_ICON = { start: '🏁', bonus: '⭐', lucky: '🎲', gift: '🎁' };
     const TYPE_LABEL = { start: 'START', bonus: 'BONUS', lucky: 'LUCKY', gift: 'GIFT' };
     const TYPE_COLOR = { start: '#94a3b8', bonus: '#f59e0b', lucky: '#a78bfa', gift: '#ec4899' };
     const PATH = [
       { row: 1, col: 1, type: 'start' },
       { row: 1, col: 2, type: 'dare' },
-      { row: 1, col: 3, type: 'gift' },
+      { row: 1, col: 3, type: 'dare' },
       { row: 1, col: 4, type: 'dare' },
       { row: 1, col: 5, type: 'lucky' },
       { row: 1, col: 6, type: 'dare' },
-      { row: 1, col: 7, type: 'bonus' },
+      { row: 1, col: 7, type: 'dare' },
       { row: 1, col: 8, type: 'bonus' },
       { row: 2, col: 8, type: 'dare' },
       { row: 3, col: 8, type: 'lucky' },
       { row: 3, col: 7, type: 'dare' },
-      { row: 3, col: 6, type: 'bonus' },
-      { row: 3, col: 5, type: 'dare' },
-      { row: 3, col: 4, type: 'gift' },
+      { row: 3, col: 6, type: 'dare' },
+      { row: 3, col: 5, type: 'bonus' },
+      { row: 3, col: 4, type: 'dare' },
       { row: 3, col: 3, type: 'dare' },
-      { row: 3, col: 2, type: 'lucky' },
+      { row: 3, col: 2, type: 'dare' },
       { row: 3, col: 1, type: 'gift' },
       { row: 2, col: 1, type: 'dare' },
     ];
