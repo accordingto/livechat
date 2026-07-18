@@ -37,7 +37,7 @@
 
     /* ── Setup card ── */
     .setup-card {
-      width: 100%; max-width: 900px;
+      width: 100%; max-width: 1100px;
       background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
       padding: 26px 28px;
       display: flex; flex-direction: column; gap: 18px;
@@ -84,9 +84,9 @@
 
     /* ── Scoreboard ── */
     .scoreboard {
-      width: 100%; max-width: 900px;
+      width: 100%; max-width: 1100px;
       display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
-      margin-bottom: 22px;
+      margin-bottom: 18px;
       animation: fadeUp .5s .25s ease both;
     }
     .score-chip {
@@ -107,87 +107,99 @@
       50%       { filter: brightness(1.35); }
     }
 
-    /* ── Board ── */
+    /* ── Control bar: turn indicator + dice + roll button, sits above the board ── */
+    .control-bar {
+      width: 100%; max-width: 1100px;
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 14px 26px; margin-bottom: 20px;
+      animation: fadeUp .5s .28s ease both;
+    }
+    .turn-indicator { font-size: clamp(.95rem, 2.2vw, 1.2rem); font-weight: 800; white-space: nowrap; }
+    .turn-indicator .tname { color: var(--turn-color, #22c55e); }
+    .dice-wrap { display: flex; align-items: center; gap: 16px; }
+    .dice-face { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1; }
+    .dice-face.rolling { animation: flicker .1s linear infinite; }
+    .roll-btn { font-size: clamp(.85rem, 2vw, 1rem); padding: 12px 26px; }
+
+    /* ── Board: a wide 8×4 perimeter loop, sized for widescreen sharing ── */
     .board-wrap {
-      width: 100%; max-width: 760px;
-      margin: 0 auto 26px;
-      animation: fadeUp .5s .3s ease both;
+      width: 100%; max-width: 1100px;
+      margin: 0 auto 22px;
+      overflow-x: auto;
+      animation: fadeUp .5s .32s ease both;
     }
     .board {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      grid-template-rows: repeat(6, 1fr);
-      gap: 6px;
+      grid-template-columns: 110px repeat(6, 1fr) 110px;
+      grid-template-rows: 110px 190px 190px 110px;
+      gap: 8px;
       width: 100%;
-      aspect-ratio: 1;
+      min-width: 760px;
     }
     .tile {
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 10px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      position: relative; overflow: hidden; padding: 3px;
+      position: relative; overflow: hidden; padding: 4px;
       transition: background .35s, border-color .35s;
     }
     .tile.corner { background: #171730; border-color: #2a2a4a; }
-    .tile-icon { font-size: 1.25rem; line-height: 1; }
-    .tile-cat { font-size: .5rem; color: #555; text-align: center; line-height: 1.15; margin-top: 2px; padding: 0 2px; }
-    .tile-corner-label { font-size: .55rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 2px; }
-    .tile-owner-icon { position: absolute; top: 3px; right: 4px; font-size: .8rem; }
+    .tile-icon { font-size: 1.3rem; line-height: 1; }
+    .tile-cat { font-size: .58rem; color: #555; text-align: center; line-height: 1.2; margin-top: 3px; padding: 0 2px; }
+    .tile-corner-label { font-size: .6rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
+    .tile-owner-icon { position: absolute; top: 4px; right: 5px; font-size: .85rem; }
     .tile-tokens {
-      position: absolute; bottom: 2px; left: 0; right: 0;
-      display: flex; justify-content: center; gap: 1px; flex-wrap: wrap;
+      position: absolute; bottom: 3px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 2px; flex-wrap: wrap;
     }
-    .tile-token { font-size: .8rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
+    .tile-token { font-size: .85rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.7)); }
 
+    /* ── Board center: the question lives here, dead center of the map ── */
     .board-center {
-      grid-row: 2 / 6; grid-column: 2 / 6;
+      grid-row: 2 / 4; grid-column: 2 / 8;
       background: var(--surface-b);
       border: 2px solid var(--border);
-      border-radius: 18px;
+      border-radius: 20px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 10px; padding: 12px; text-align: center;
+      gap: 14px; padding: 22px 30px; text-align: center;
+      transition: border-color .3s, box-shadow .3s;
     }
-    .turn-indicator { font-size: clamp(.95rem, 2.6vw, 1.2rem); font-weight: 800; }
-    .turn-indicator .tname { color: var(--turn-color, #22c55e); }
-    .dice-face { font-size: clamp(2.4rem, 8vw, 3.6rem); line-height: 1; }
-    .dice-face.rolling { animation: flicker .1s linear infinite; }
-    .roll-btn { font-size: clamp(.85rem, 2.2vw, 1rem); padding: 12px 26px; }
+    .board-center.active-question { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.15); }
 
-    /* ── Question panel ── */
-    .question-panel {
-      width: 100%; max-width: 900px;
-      background: #13132b; border: 2px solid #22c55e; border-radius: 20px;
-      padding: 26px 30px;
-      display: flex; flex-direction: column; gap: 16px;
-      margin-bottom: 22px;
-      animation: fadeUp .35s ease both;
-      box-shadow: 0 0 32px rgba(34,197,94,.15);
-    }
+    .center-idle { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .center-idle .ci-icon { font-size: 2.6rem; }
+    .center-idle p { color: #555; font-size: .95rem; }
+
+    .center-safe { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .center-safe .cs-icon { font-size: 2.6rem; }
+    .center-safe p { color: #aaa; font-size: 1rem; font-weight: 600; }
+
     .q-cat {
       display: inline-flex; align-self: center;
       background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3);
       color: #22c55e; font-size: .7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
       padding: 4px 14px; border-radius: 20px;
     }
-    .q-text { font-size: clamp(1.15rem, 3vw, 1.5rem); font-weight: 700; text-align: center; line-height: 1.5; }
-    .q-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .q-text { font-size: clamp(1.15rem, 2.4vw, 1.5rem); font-weight: 700; text-align: center; line-height: 1.5; }
+    .q-choices { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .q-choice {
       display: flex; align-items: center; gap: 10px;
       background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 12px;
-      padding: 12px 16px; font-size: .95rem; font-weight: 600; color: #ccc;
+      padding: 11px 16px; font-size: .92rem; font-weight: 600; color: #ccc;
       transition: border-color .3s, background .3s, color .3s;
     }
     .q-choice .qk {
-      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
-      background: #1e1e42; color: #999; font-size: .78rem; font-weight: 800;
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: #1e1e42; color: #999; font-size: .74rem; font-weight: 800;
       display: flex; align-items: center; justify-content: center;
     }
     .q-choice.correct-reveal { border-color: #22c55e; background: rgba(34,197,94,.1); color: #fff; }
     .q-choice.correct-reveal .qk { background: #22c55e; color: #0d0d1a; }
     .q-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
     .btn-judge {
-      border-radius: 12px; padding: 12px 26px; font-size: .92rem; font-weight: 800;
+      border-radius: 12px; padding: 11px 24px; font-size: .9rem; font-weight: 800;
       font-family: inherit; cursor: pointer; border: 2px solid; transition: background .2s, transform .1s;
     }
     .btn-judge:active { transform: scale(.97); }
@@ -197,16 +209,9 @@
     .btn-wrong:hover:not(:disabled) { background: rgba(239,68,68,.1); }
     .btn-judge:disabled { opacity: .3; cursor: not-allowed; }
 
-    .safe-toast {
-      width: 100%; max-width: 900px;
-      background: rgba(255,255,255,.05); border: 1.5px solid #2a2a4a; color: #aaa;
-      border-radius: 14px; padding: 14px 18px; font-size: .92rem; text-align: center; font-weight: 600;
-      margin-bottom: 22px; animation: fadeUp .3s ease both;
-    }
-
     /* ── Winner banner ── */
     .winner-banner {
-      width: 100%; max-width: 900px;
+      width: 100%; max-width: 1100px;
       background: linear-gradient(135deg, rgba(34,197,94,.15), rgba(34,197,94,.03));
       border: 2px solid #22c55e; border-radius: 20px;
       padding: 28px; text-align: center; margin-bottom: 22px;
@@ -218,9 +223,9 @@
     .controls-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
 
     @media (max-width: 640px) {
-      .q-choices { grid-template-columns: 1fr; }
+      .control-bar { flex-wrap: wrap; justify-content: center; text-align: center; }
       .tile-cat, .tile-corner-label { display: none; }
-      .tile-icon { font-size: 1rem; }
+      .tile-icon { font-size: 1.05rem; }
     }
   </style>
 </head>
@@ -253,26 +258,22 @@
   <div class="hidden" id="game-area">
     <div class="scoreboard" id="scoreboard"></div>
 
-    <div class="board-wrap">
-      <div class="board" id="board">
-        <div class="board-center" id="board-center">
-          <div class="turn-indicator" id="turn-indicator"></div>
-          <div class="dice-face" id="dice-face">⚀</div>
-          <button class="btn-primary roll-btn" id="roll-btn" onclick="rollDice()">🎲 Roll Dice</button>
-        </div>
+    <div class="control-bar">
+      <div class="turn-indicator" id="turn-indicator"></div>
+      <div class="dice-wrap">
+        <div class="dice-face" id="dice-face">⚀</div>
+        <button class="btn-primary roll-btn" id="roll-btn" onclick="rollDice()">🎲 Roll Dice</button>
       </div>
     </div>
 
-    <div class="safe-toast hidden" id="safe-toast"></div>
-
-    <div class="question-panel hidden" id="question-panel">
-      <span class="q-cat" id="q-cat"></span>
-      <div class="q-text" id="q-text"></div>
-      <div class="q-choices" id="q-choices"></div>
-      <div class="q-actions">
-        <button class="btn-secondary" id="reveal-btn" onclick="revealAnswer()">🔍 Reveal Answer</button>
-        <button class="btn-judge btn-correct" id="correct-btn" onclick="judge(true)" disabled>✅ Correct</button>
-        <button class="btn-judge btn-wrong" id="wrong-btn" onclick="judge(false)" disabled>❌ Wrong</button>
+    <div class="board-wrap">
+      <div class="board" id="board">
+        <div class="board-center" id="board-center">
+          <div class="center-idle" id="center-content">
+            <span class="ci-icon">🏰</span>
+            <p>Roll the dice to start your conquest!</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -299,14 +300,15 @@
       { hex: '#06b6d4', token: '🔷' },
     ];
 
-    // 20-tile loop around the perimeter of a 6×6 grid; the inner 4×4 holds the control panel.
+    // 20-tile loop around the perimeter of an 8×4 grid (widescreen shape) —
+    // the inner 6×2 area holds the question, dead center of the map.
     const PATH = [
-      { row: 6, col: 6, corner: true,  icon: '🏁', label: 'START' },
-      { row: 5, col: 6, corner: false, icon: '🌾', cat: '💡 General' },
-      { row: 4, col: 6, corner: false, icon: '🌾', cat: '🌍 Geography' },
-      { row: 3, col: 6, corner: false, icon: '🌾', cat: '🐾 Animals' },
-      { row: 2, col: 6, corner: false, icon: '🌾', cat: '🔬 Science' },
-      { row: 1, col: 6, corner: true,  icon: '⭐', label: 'BONUS' },
+      { row: 4, col: 8, corner: true,  icon: '🏁', label: 'START' },
+      { row: 3, col: 8, corner: false, icon: '🌾', cat: '💡 General' },
+      { row: 2, col: 8, corner: false, icon: '🌾', cat: '🌍 Geography' },
+      { row: 1, col: 8, corner: true,  icon: '⭐', label: 'BONUS' },
+      { row: 1, col: 7, corner: false, icon: '🌾', cat: '🐾 Animals' },
+      { row: 1, col: 6, corner: false, icon: '🌾', cat: '🔬 Science' },
       { row: 1, col: 5, corner: false, icon: '🌾', cat: '🍔 Food' },
       { row: 1, col: 4, corner: false, icon: '🌾', cat: '🏛️ History' },
       { row: 1, col: 3, corner: false, icon: '🌾', cat: '🎬 Pop Culture' },
@@ -314,20 +316,20 @@
       { row: 1, col: 1, corner: true,  icon: '🎲', label: 'LUCKY' },
       { row: 2, col: 1, corner: false, icon: '🌾', cat: '📖 Language' },
       { row: 3, col: 1, corner: false, icon: '🌾', cat: '🚀 Space' },
-      { row: 4, col: 1, corner: false, icon: '🌾', cat: '🎵 Music' },
-      { row: 5, col: 1, corner: false, icon: '🌾', cat: '🗺️ Places' },
-      { row: 6, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
-      { row: 6, col: 2, corner: false, icon: '🌾', cat: '🎨 Culture' },
-      { row: 6, col: 3, corner: false, icon: '🌾', cat: '💡 General' },
-      { row: 6, col: 4, corner: false, icon: '🌾', cat: '🐾 Animals' },
-      { row: 6, col: 5, corner: false, icon: '🌾', cat: '🌍 Geography' },
+      { row: 4, col: 1, corner: true,  icon: '🎁', label: 'GIFT' },
+      { row: 4, col: 2, corner: false, icon: '🌾', cat: '🎵 Music' },
+      { row: 4, col: 3, corner: false, icon: '🌾', cat: '🗺️ Places' },
+      { row: 4, col: 4, corner: false, icon: '🌾', cat: '🎨 Culture' },
+      { row: 4, col: 5, corner: false, icon: '🌾', cat: '💡 General' },
+      { row: 4, col: 6, corner: false, icon: '🌾', cat: '🐾 Animals' },
+      { row: 4, col: 7, corner: false, icon: '🌾', cat: '🌍 Geography' },
     ];
     const CORNER_SET = new Set(PATH.map((t, i) => t.corner ? i : -1).filter(i => i >= 0));
     const CORNER_MSG = {
-      0: "🏁 Safe tile — welcome back to START! No question here.",
-      5: "⭐ Bonus corner — a safe rest stop. No question here.",
-      10: "🎲 Lucky corner — nothing but good vibes. No question here.",
-      15: "🎁 Gift corner — a free pass. No question here.",
+      0:  { icon: '🏁', text: 'Safe tile — welcome back to START! No question here.' },
+      3:  { icon: '⭐', text: 'Bonus corner — a safe rest stop. No question here.' },
+      10: { icon: '🎲', text: 'Lucky corner — nothing but good vibes. No question here.' },
+      13: { icon: '🎁', text: 'Gift corner — a free pass. No question here.' },
     };
     const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     const ALLOWED_COUNTS = [2, 3, 4, 5, 6];
@@ -404,6 +406,7 @@
       renderBoard();
       renderScoreboard();
       updateTurnIndicator();
+      renderCenterIdle();
       document.getElementById('roll-btn').disabled = false;
     }
 
@@ -418,11 +421,10 @@
       round = 0;
       document.getElementById('roundNum').textContent = round;
       document.getElementById('winner-banner').classList.add('hidden');
-      document.getElementById('question-panel').classList.add('hidden');
-      document.getElementById('safe-toast').classList.add('hidden');
       renderBoard();
       renderScoreboard();
       updateTurnIndicator();
+      renderCenterIdle();
       document.getElementById('roll-btn').disabled = false;
     }
 
@@ -497,6 +499,19 @@
       el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>'s turn`;
     }
 
+    /* ── Board center states: idle / safe-corner / active question ── */
+    function renderCenterIdle() {
+      document.getElementById('board-center').classList.remove('active-question');
+      document.getElementById('center-content').outerHTML =
+        `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
+    }
+
+    function renderCenterSafe(msg) {
+      document.getElementById('board-center').classList.remove('active-question');
+      document.getElementById('center-content').outerHTML =
+        `<div class="center-safe" id="center-content"><span class="cs-icon">${msg.icon}</span><p>${msg.text}</p></div>`;
+    }
+
     /* ── Dice + movement ── */
     function rollDice() {
       if (rolling || awaitingJudgement || !players.length) return;
@@ -534,13 +549,11 @@
     function onLanded() {
       const p = players[currentIdx];
       if (CORNER_SET.has(p.pos)) {
-        const toast = document.getElementById('safe-toast');
-        toast.textContent = CORNER_MSG[p.pos];
-        toast.classList.remove('hidden');
+        renderCenterSafe(CORNER_MSG[p.pos]);
         setTimeout(() => {
-          toast.classList.add('hidden');
           nextTurn();
-        }, 1300);
+          renderCenterIdle();
+        }, 1400);
       } else {
         showQuestion(p.pos);
       }
@@ -556,17 +569,22 @@
       usedQuestions.push(qi);
       currentQuestion = QUESTIONS[qi];
 
-      document.getElementById('q-cat').textContent = currentQuestion.cat;
-      document.getElementById('q-text').textContent = currentQuestion.q;
-      const choicesEl = document.getElementById('q-choices');
-      choicesEl.innerHTML = currentQuestion.choices.map((c, i) =>
-        `<div class="q-choice" data-idx="${i}"><span class="qk">${String.fromCharCode(65 + i)}</span><span>${c}</span></div>`
-      ).join('');
-      document.getElementById('reveal-btn').disabled = false;
-      document.getElementById('correct-btn').disabled = true;
-      document.getElementById('wrong-btn').disabled = true;
-      document.getElementById('question-panel').classList.remove('hidden');
-      document.getElementById('question-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('board-center').classList.add('active-question');
+      document.getElementById('center-content').outerHTML = `
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
+          <span class="q-cat">${currentQuestion.cat}</span>
+          <div class="q-text">${currentQuestion.q}</div>
+          <div class="q-choices" id="q-choices">
+            ${currentQuestion.choices.map((c, i) =>
+              `<div class="q-choice" data-idx="${i}"><span class="qk">${String.fromCharCode(65 + i)}</span><span>${c}</span></div>`
+            ).join('')}
+          </div>
+          <div class="q-actions">
+            <button class="btn-secondary" id="reveal-btn" onclick="revealAnswer()">🔍 Reveal Answer</button>
+            <button class="btn-judge btn-correct" id="correct-btn" onclick="judge(true)" disabled>✅ Correct</button>
+            <button class="btn-judge btn-wrong" id="wrong-btn" onclick="judge(false)" disabled>❌ Wrong</button>
+          </div>
+        </div>`;
     }
 
     function revealAnswer() {
@@ -583,11 +601,11 @@
       if (!awaitingJudgement) return;
       if (isCorrect) ownership[currentTileIdx] = currentIdx;
       awaitingJudgement = false;
-      document.getElementById('question-panel').classList.add('hidden');
       renderBoard();
       renderScoreboard();
       if (checkAllOwned()) { showWinner(); return; }
-      setTimeout(nextTurn, 150);
+      nextTurn();
+      renderCenterIdle();
     }
 
     function checkAllOwned() {
@@ -616,6 +634,7 @@
         ? `<h2>🤝 It's a tie!</h2><p>${winners.map(w => `${w.token} ${w.name}`).join(' & ')} each hold ${max} territories</p>`
         : `<h2>🏆 ${winners[0].token} ${winners[0].name} wins!</h2><p>Controlling ${max} out of ${PATH.length - CORNER_SET.size} territories</p>`;
       renderScoreboard();
+      renderCenterIdle();
     }
   </script>
 </body>
