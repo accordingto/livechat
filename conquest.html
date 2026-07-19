@@ -463,8 +463,6 @@
     .winner-banner h2 { font-size: clamp(1.3rem, 3.5vw, 1.8rem); margin-bottom: 8px; }
     .winner-banner p { color: #999; font-size: .9rem; }
 
-    .controls-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-
     /* ── Browse all prompts ── */
     .prompt-browser {
       width: 100%; max-width: 1100px;
@@ -561,11 +559,6 @@
     </div>
 
     <div class="winner-banner hidden" id="winner-banner"></div>
-
-    <div class="controls-row">
-      <button class="btn-secondary" onclick="showWinner()">🏆 End Game</button>
-      <button class="btn-secondary" onclick="backToSetup()">⬅ Change Players</button>
-    </div>
   </div>
 
   <!-- ── Browse all prompts (always visible, for the host to preview the full deck) ── -->
@@ -726,14 +719,6 @@
       renderCenterIdle();
       document.getElementById('roll-btn').disabled = false;
       saveGame();
-    }
-
-    function backToSetup() {
-      document.getElementById('game-area').classList.add('hidden');
-      document.getElementById('setup-card').classList.remove('hidden');
-      gameStarted = false;
-      clearSavedGame();
-      checkForSavedGame();
     }
 
     /* ── Board rendering ── */
