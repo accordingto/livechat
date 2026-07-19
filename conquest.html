@@ -218,7 +218,7 @@
     .board {
       display: grid;
       grid-template-columns: 96px repeat(6, 1fr) 96px;
-      grid-template-rows: 96px 170px 96px;
+      grid-template-rows: 70px 76px 76px 70px;
       gap: 6px;
       width: 100%;
       min-width: 760px;
@@ -350,7 +350,7 @@
 
     /* ── Board center: the dice lives here, front and center on the map ── */
     .board-center {
-      grid-row: 2 / 3; grid-column: 2 / 8;
+      grid-row: 2 / 4; grid-column: 2 / 8;
       background: var(--surface-b);
       border: 2px solid var(--border);
       border-radius: 18px;
@@ -601,14 +601,16 @@
       { row: 1, col: 7, type: 'dare' },
       { row: 1, col: 8, type: 'bonus' },
       { row: 2, col: 8, type: 'dare' },
-      { row: 3, col: 8, type: 'lucky' },
-      { row: 3, col: 7, type: 'dare' },
-      { row: 3, col: 6, type: 'dare' },
-      { row: 3, col: 5, type: 'dare' },
-      { row: 3, col: 4, type: 'dare' },
-      { row: 3, col: 3, type: 'dare' },
-      { row: 3, col: 2, type: 'dare' },
-      { row: 3, col: 1, type: 'gift' },
+      { row: 3, col: 8, type: 'dare' },
+      { row: 4, col: 8, type: 'lucky' },
+      { row: 4, col: 7, type: 'dare' },
+      { row: 4, col: 6, type: 'dare' },
+      { row: 4, col: 5, type: 'dare' },
+      { row: 4, col: 4, type: 'dare' },
+      { row: 4, col: 3, type: 'dare' },
+      { row: 4, col: 2, type: 'dare' },
+      { row: 4, col: 1, type: 'gift' },
+      { row: 3, col: 1, type: 'dare' },
       { row: 2, col: 1, type: 'dare' },
     ];
     // rotation (in degrees) that brings each die face to front, matching the
