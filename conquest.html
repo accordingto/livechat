@@ -979,7 +979,11 @@
         doLucky();
       } else if (type === 'gift') {
         doGift();
-      } else if (ownership[p.pos] !== -1 && ownership[p.pos] !== currentIdx) {
+      } else if (ownership[p.pos] === currentIdx) {
+        // already your own land — nothing to steal from yourself, no challenge needed
+        flashTile(p.pos, players[currentIdx].hex);
+        showCornerMessage('🏳️', "This is already your land! Nothing to do here.", 'start');
+      } else if (ownership[p.pos] !== -1) {
         showChallengeChoice(p.pos, ownership[p.pos]);
       } else {
         showChallengeChoice(p.pos, -1);
