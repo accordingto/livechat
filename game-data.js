@@ -849,27 +849,4 @@ const GAME_DATA = {
     { cat: '📣 Announcer', text: 'Announce your own entrance like a boxing match announcer.' },
     { cat: '💌 Secret Admirer', text: 'Write (out loud) a one-line secret admirer note to {player}.' },
   ],
-
-  // ── Dare Conquest — Duel prompts, used only when attacking a rival's owned land;
-  //    {player} always resolves to the actual defender, keeping the confrontation personal ──
-  conquestDuel: [
-    { cat: '⚖️ Trial', text: "You're on trial for trying to take {player}'s land! Give a 20-second opening statement defending yourself.", seconds: 20 },
-    { cat: '🗯️ Rebuttal', text: '{player} says this land is theirs by right. Argue back, out loud, why you deserve it more.' },
-    { cat: '🎤 Diss Track', text: 'Freestyle a short, playful diss track about {player} trying to keep this land all to themselves.', seconds: 15 },
-    { cat: '🕵️ Interrogation', text: '{player} is your prisoner of war. Interrogate them about why they think they can hold onto this land.' },
-    { cat: '🕊️ Peace Treaty', text: 'Try to negotiate a peace treaty with {player} out loud — offer them something in exchange for the land, right now.' },
-    { cat: '⚔️ Battle Cry', text: 'Give a 10-second battle cry about why this land will be yours.', seconds: 10 },
-    { cat: '🦹 Villain Monologue', text: "Deliver a dramatic villain monologue explaining your master plan to take {player}'s land.", seconds: 20 },
-    { cat: '🔥 Roast Duel', text: 'Roast {player} with one playful line, then let them roast you back — see who gets the bigger laugh.' },
-    { cat: '🎓 Debate', text: "Debate {player} for 20 seconds: \"This land belongs to whoever wins today's challenge.\" Argue your side.", seconds: 20 },
-    { cat: '🤞 Oath', text: 'Swear a dramatic oath to {player} that you will protect this land forever if you win it.' },
-    { cat: '📹 Confessional', text: 'Give a reality-TV-style confessional about your rivalry with {player} over this land.' },
-    { cat: '😏 Taunt', text: 'Taunt {player} the way a champion taunts a rival before a big match — out loud, all in good fun.' },
-    { cat: '😭 Surrender Speech', text: "Pretend you're about to lose and give a dramatic, over-the-top surrender speech to {player}." },
-    { cat: '🐴 Knight\'s Challenge', text: 'Challenge {player} to a duel like a medieval knight — declare it as dramatically as you can.' },
-    { cat: '🎙️ Sports Commentary', text: 'Commentate this showdown with {player} like a live sports announcer calling the biggest match of the year.', seconds: 15 },
-    { cat: '🤝 Alliance Offer', text: 'Publicly propose a temporary alliance with {player} against everyone else at the table — sell it convincingly.' },
-    { cat: '👑 Throne Speech', text: "Give a royal decree explaining to {player} why this land's rightful ruler is you." },
-    { cat: '🎬 Flashback', text: 'Tell a dramatic (made-up) flashback story about "the first time" you and {player} fought over land like this.' },
-  ],
 };
