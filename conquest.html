@@ -1248,7 +1248,11 @@
 
       const outer = document.getElementById(which + '-dice-outer');
       if (outer) { outer.classList.remove('bounce'); void outer.offsetWidth; outer.classList.add('bounce'); }
-      const value = 1 + Math.floor(Math.random() * 6);
+      // the attacker's roll-off die only ever lands on 2, 4, or 6 — a small edge for
+      // successfully completing the challenge in the first place
+      const value = which === 'attacker'
+        ? 2 * (1 + Math.floor(Math.random() * 3))
+        : 1 + Math.floor(Math.random() * 6);
       spinMiniDiceTo(which, value);
 
       setTimeout(() => {
