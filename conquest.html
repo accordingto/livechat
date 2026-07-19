@@ -937,11 +937,8 @@
     function onLanded() {
       const p = players[currentIdx];
       const type = PATH[p.pos].type;
-      if (type === 'start') {
-        // START also carries the LUCKY effect now — landing here swaps territory instead of a no-op
-        doLucky();
-      } else if (type === 'bonus' || type === 'lucky' || type === 'gift') {
-        // BONUS/LUCKY/GIFT now require completing a Truth or Dare challenge first —
+      if (type === 'start' || type === 'bonus' || type === 'lucky' || type === 'gift') {
+        // START/BONUS/LUCKY/GIFT all require completing a Truth or Dare challenge first —
         // only a successful challenge actually triggers the reward (see judge())
         showChallengeChoice(p.pos, -1, type);
       } else if (ownership[p.pos] === currentIdx) {
@@ -1159,7 +1156,7 @@
         pendingSpecialEffect = null;
         if (isCorrect) {
           if (special === 'bonus') doBonus();
-          else if (special === 'lucky') doLucky();
+          else if (special === 'lucky' || special === 'start') doLucky();
           else if (special === 'gift') doGift();
           return;
         }
