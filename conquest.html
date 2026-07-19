@@ -633,6 +633,7 @@
     let round = 0;
     let currentTileIdx = null;
     let currentChallengeOwner = -1; // -1 = claiming unowned land; otherwise the rival being stolen from
+    let pendingSpecialEffect = null; // 'bonus' | 'lucky' | 'gift' while a challenge on a special tile is in progress
     let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
     let diceRotX = 0, diceRotY = 0; // cumulative degrees, always increasing so the cube keeps tumbling forward
@@ -707,6 +708,7 @@
       usedPrompts = [];
       usedTruths = [];
       currentChallengeOwner = -1;
+      pendingSpecialEffect = null;
       diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
@@ -938,12 +940,10 @@
       if (type === 'start') {
         // START also carries the LUCKY effect now — landing here swaps territory instead of a no-op
         doLucky();
-      } else if (type === 'bonus') {
-        doBonus();
-      } else if (type === 'lucky') {
-        doLucky();
-      } else if (type === 'gift') {
-        doGift();
+      } else if (type === 'bonus' || type === 'lucky' || type === 'gift') {
+        // BONUS/LUCKY/GIFT now require completing a Truth or Dare challenge first —
+        // only a successful challenge actually triggers the reward (see judge())
+        showChallengeChoice(p.pos, -1, type);
       } else if (ownership[p.pos] === currentIdx) {
         // already your own land — nothing to steal from yourself, no challenge needed
         flashTile(p.pos, players[currentIdx].hex);
@@ -1029,29 +1029,41 @@
       return text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`);
     }
 
-    // Landing on any dare tile — owned by a rival or unowned — first shows a Truth or
-    // Dare choice screen. The current player freely calls out "Truth" or "Dare" out loud,
-    // and the host clicks the matching button. ownerIdx is -1 when claiming unowned land,
-    // or the rival's index when this is a steal attempt (which then goes to a dice roll-off
-    // after a successful challenge — see judge()).
-    function showChallengeChoice(tileIdx, ownerIdx) {
+    // Landing on any dare tile — owned by a rival or unowned — or on a BONUS/LUCKY/GIFT tile —
+    // first shows a Truth or Dare choice screen. The current player freely calls out "Truth" or
+    // "Dare" out loud, and the host clicks the matching button. ownerIdx is -1 when claiming
+    // unowned land, or the rival's index when this is a steal attempt (which then goes to a dice
+    // roll-off after a successful challenge — see judge()). specialType is 'bonus'/'lucky'/'gift'
+    // when landing on one of those tiles — only a successful challenge triggers the reward.
+    function showChallengeChoice(tileIdx, ownerIdx, specialType) {
       clearPromptTimer();
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
       currentChallengeOwner = ownerIdx;
+      pendingSpecialEffect = specialType || null;
       const attacker = players[currentIdx];
       const isSteal = ownerIdx !== -1;
+      const isSpecial = !!specialType;
       const owner = isSteal ? players[ownerIdx] : null;
 
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add(isSteal ? 'defense' : 'choice');
+      const badgeStyle = isSteal
+        ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"'
+        : isSpecial
+        ? ` style="background:${TYPE_COLOR[specialType]}22;border-color:${TYPE_COLOR[specialType]}55;color:${TYPE_COLOR[specialType]};"`
+        : '';
+      const badgeText = isSteal ? '⚔️ Steal Attempt' : isSpecial ? `${TYPE_ICON[specialType]} ${TYPE_LABEL[specialType]} Challenge` : '🎲 Your Challenge';
+      const bodyText = isSteal
+        ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land!<br>${attacker.name}, call it — Truth or Dare?`
+        : isSpecial
+        ? `${attacker.name} landed on ${TYPE_LABEL[specialType]}!<br>${attacker.name}, call it — Truth or Dare?`
+        : `${attacker.name}, call it out loud — Truth or Dare?`;
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat"${isSteal ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"' : ''}>${isSteal ? '⚔️ Steal Attempt' : '🎲 Your Challenge'}</span>
-          <div class="q-text">${isSteal
-            ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land!<br>${attacker.name}, call it — Truth or Dare?`
-            : `${attacker.name}, call it out loud — Truth or Dare?`}</div>
+          <span class="q-cat"${badgeStyle}>${badgeText}</span>
+          <div class="q-text">${bodyText}</div>
           <div class="td-choice-grid">
             <button class="td-choice-btn td-truth" onclick="pickChallengeMode('truth')"><span class="td-emoji">😇</span>TRUTH</button>
             <button class="td-choice-btn td-dare" onclick="pickChallengeMode('dare')"><span class="td-emoji">😈</span>DARE</button>
@@ -1136,6 +1148,26 @@
       if (isCorrect && isSteal) {
         awaitingJudgement = false;
         showDiceOff(currentTileIdx, currentChallengeOwner);
+        return;
+      }
+
+      // BONUS/LUCKY/GIFT tiles now require a successful challenge before the reward
+      // actually triggers — a failed challenge just moves on with no effect
+      if (pendingSpecialEffect) {
+        const special = pendingSpecialEffect;
+        awaitingJudgement = false;
+        pendingSpecialEffect = null;
+        if (isCorrect) {
+          if (special === 'bonus') doBonus();
+          else if (special === 'lucky') doLucky();
+          else if (special === 'gift') doGift();
+          return;
+        }
+        currentChallengeOwner = -1;
+        renderBoard();
+        renderScoreboard();
+        nextTurn();
+        renderCenterIdle();
         return;
       }
 
@@ -1346,6 +1378,7 @@
       usedTruths = saved.usedTruths || [];
       playerCount = players.length;
       currentChallengeOwner = -1;
+      pendingSpecialEffect = null;
       diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
