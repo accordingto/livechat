@@ -365,22 +365,29 @@
     .dare-panel.corner-lucky { border-color: #a78bfa; box-shadow: 0 0 28px rgba(167,139,250,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-gift  { border-color: #ec4899; box-shadow: 0 0 28px rgba(236,72,153,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.defense      { border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.35), 0 16px 48px rgba(0,0,0,.55); }
+    .dare-panel.truth        { border-color: #eab308; box-shadow: 0 0 32px rgba(234,179,8,.35), 0 16px 48px rgba(0,0,0,.55); }
 
     @keyframes popIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
 
-    /* ── Defense: owner picks the attacker's challenge category ── */
-    .defense-cat-grid {
-      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
-      max-height: 220px; overflow-y: auto; padding: 4px;
+    /* Truth question category badge — gold instead of the usual green Dare accent */
+    .q-cat-truth {
+      background: rgba(234,179,8,.14) !important; border-color: rgba(234,179,8,.35) !important;
+      color: #eab308 !important;
     }
-    .cat-pick-btn {
-      border: 1.5px solid #1e1e42; background: #0d0d1a; color: #ccc;
-      border-radius: 16px; padding: 6px 13px; font-size: .78rem; font-weight: 700;
+
+    /* ── Defense: owner picks Truth or Dare for the attacker ── */
+    .td-choice-grid { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+    .td-choice-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      border: 2px solid #1e1e42; background: #0d0d1a; color: #ccc;
+      border-radius: 16px; padding: 16px 34px; font-size: .95rem; font-weight: 900; letter-spacing: 1px;
       cursor: pointer; font-family: inherit; white-space: nowrap;
       transition: border-color .2s, color .2s, background .2s, transform .1s;
     }
-    .cat-pick-btn:hover  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
-    .cat-pick-btn:active { transform: scale(.96); }
+    .td-choice-btn .td-emoji { font-size: 1.8rem; }
+    .td-choice-btn:active { transform: scale(.96); }
+    .td-choice-btn.td-truth:hover { border-color: #eab308; color: #eab308; background: rgba(234,179,8,.08); }
+    .td-choice-btn.td-dare:hover  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
 
     .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .3s ease both; }
     .center-idle .ci-icon { font-size: 1.5rem; }
@@ -543,11 +550,14 @@
   <div class="prompt-browser">
     <div class="prompt-browser-hdr" id="prompt-browser-hdr"></div>
     <div class="prompt-list" id="prompt-list"></div>
+    <div class="prompt-browser-hdr" id="truth-prompt-browser-hdr"></div>
+    <div class="prompt-list" id="truth-prompt-list"></div>
   </div>
 
   <script src="game-data.js"></script>
   <script>
     const PROMPTS = GAME_DATA.conquest;
+    const TRUTHS = GAME_DATA.conquestTruth;
 
     const PLAYER_COLORS = [
       { hex: '#ef4444', token: '🔴' },
@@ -597,6 +607,7 @@
     let ownership = [];     // length PATH.length, index into players or -1
     let currentIdx = 0;
     let usedPrompts = [];
+    let usedTruths = [];
     let rolling = false;
     let awaitingJudgement = false;
     let gameStarted = false;
@@ -643,12 +654,20 @@
 
     /* ── Browse all prompts (read-only reference list) ── */
     function buildPromptList() {
-      document.getElementById('prompt-browser-hdr').textContent = `📋 All Prompts (${PROMPTS.length}) — browse the full deck`;
+      document.getElementById('prompt-browser-hdr').textContent = `📋 All Dares (${PROMPTS.length}) — browse the full deck`;
       const list = document.getElementById('prompt-list');
       list.innerHTML = PROMPTS.map(p => `
         <div class="prompt-item">
           <div class="pi-cat">${p.cat}</div>
           <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
+        </div>`).join('');
+
+      document.getElementById('truth-prompt-browser-hdr').textContent = `😇 All Truths (${TRUTHS.length}) — used only when the defender picks Truth`;
+      const truthList = document.getElementById('truth-prompt-list');
+      truthList.innerHTML = TRUTHS.map(p => `
+        <div class="prompt-item">
+          <div class="pi-cat">${p.cat}</div>
+          <div class="pi-text">${p.text}</div>
         </div>`).join('');
     }
     buildPromptList();
@@ -664,6 +683,7 @@
       ownership = new Array(PATH.length).fill(-1);
       currentIdx = 0;
       usedPrompts = [];
+      usedTruths = [];
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -685,6 +705,7 @@
       players.forEach(p => p.pos = 0);
       currentIdx = 0;
       usedPrompts = [];
+      usedTruths = [];
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -829,7 +850,7 @@
        overlay on top of the map, so it's only shown when there's something to say ── */
     function renderCenterIdle() {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('active', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('hidden');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
@@ -839,7 +860,7 @@
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden');
-      panel.classList.remove('active', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('corner-' + type);
       document.getElementById('center-content').outerHTML = `
         <div class="center-safe" id="center-content">
@@ -963,7 +984,7 @@
       if (others.length === 1) { performSwap(others[0]); return; }
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
@@ -1009,15 +1030,15 @@
       renderDareContent(PROMPTS[pi]);
     }
 
-    // renders the actual dare (category + text + optional timer + judge buttons) —
-    // shared by a normal random draw and a defender-picked challenge
-    function renderDareContent(prompt) {
+    // renders the actual dare/truth (category + text + optional timer + judge buttons) —
+    // shared by a normal random draw and a defender-picked Truth or Dare challenge
+    function renderDareContent(prompt, isTruth) {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
-      panel.classList.add('active');
+      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add(isTruth ? 'truth' : 'active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat">${prompt.cat}</span>
+          <span class="q-cat${isTruth ? ' q-cat-truth' : ''}">${prompt.cat}</span>
           <div class="q-text">${resolvePromptText(prompt.text, currentIdx)}</div>
           ${prompt.seconds ? `
           <div class="timer-block">
@@ -1025,41 +1046,50 @@
             <div class="timer-circle hidden" id="timer-circle">${prompt.seconds}</div>
           </div>` : ''}
           <div class="q-actions">
-            <button class="btn-judge btn-correct" onclick="judge(true)">✅ Did It!</button>
-            <button class="btn-judge btn-wrong" onclick="judge(false)">❌ Skipped</button>
+            <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
+            <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Passed' : '❌ Skipped'}</button>
           </div>
         </div>`;
     }
 
-    // DEFENSE: landing on a rival's territory lets its owner pick which
-    // challenge the attacker has to face, instead of a random draw
+    // DEFENSE: landing on a rival's territory lets its owner choose Truth or Dare
+    // for the attacker, instead of a random draw
     function showDefensePicker(tileIdx, ownerIdx) {
       clearPromptTimer();
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
       const owner = players[ownerIdx];
       const attacker = players[currentIdx];
-      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-      const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
 
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'active', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('defense');
       document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;">🛡️ Defense</span>
-          <div class="q-text">This is <span style="color:${owner.hex}">${owner.name}</span>'s land! ${owner.name}, pick ${attacker.name}'s challenge:</div>
-          <div class="defense-cat-grid">
-            ${avail.map(i => `<button class="cat-pick-btn" onclick="pickDefenseCategory(${i})">${PROMPTS[i].cat}</button>`).join('')}
+          <div class="q-text">This is <span style="color:${owner.hex}">${owner.name}</span>'s land! ${owner.name}, choose ${attacker.name}'s fate:</div>
+          <div class="td-choice-grid">
+            <button class="td-choice-btn td-truth" onclick="pickDefenseMode('truth')"><span class="td-emoji">😇</span>TRUTH</button>
+            <button class="td-choice-btn td-dare" onclick="pickDefenseMode('dare')"><span class="td-emoji">😈</span>DARE</button>
           </div>
         </div>`;
     }
 
-    function pickDefenseCategory(promptIdx) {
+    function pickDefenseMode(mode) {
       if (!awaitingJudgement) return;
-      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-      usedPrompts.push(promptIdx);
-      renderDareContent(PROMPTS[promptIdx]);
+      if (mode === 'truth') {
+        if (usedTruths.length >= TRUTHS.length) usedTruths = [];
+        const avail = TRUTHS.map((_, i) => i).filter(i => !usedTruths.includes(i));
+        const ti = avail[Math.floor(Math.random() * avail.length)];
+        usedTruths.push(ti);
+        renderDareContent(TRUTHS[ti], true);
+      } else {
+        if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
+        const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
+        const pi = avail[Math.floor(Math.random() * avail.length)];
+        usedPrompts.push(pi);
+        renderDareContent(PROMPTS[pi], false);
+      }
     }
 
     // countdown timer for timed dares — starts only when the host clicks the button,

@@ -850,4 +850,29 @@ const GAME_DATA = {
     { cat: '📣 Announcer', text: 'Announce your own entrance like a boxing match announcer, in 10 seconds.', seconds: 10 },
     { cat: '💌 Secret Admirer', text: 'Write (out loud) a one-line secret admirer note to {player} within 10 seconds.', seconds: 10 },
   ],
+
+  // ── Dare Conquest — Truths, used only when the defender picks "Truth" in the
+  //    Truth or Dare defense screen; no timer, just an honest answer out loud ──
+  conquestTruth: [
+    { cat: '😅 Guilty Pleasure Song', text: "What's the most embarrassing song you secretly love?" },
+    { cat: '🤥 White Lie', text: "What's a small lie you've told someone this week?" },
+    { cat: '🔍 Search History', text: "What's the weirdest thing you've Googled recently?" },
+    { cat: '😨 Irrational Fear', text: "What's an irrational fear you have that you don't usually admit to?" },
+    { cat: '👶 Childhood Trouble', text: "What's the most trouble you ever got into as a kid?" },
+    { cat: '🎭 Hidden Talent', text: "What's a talent you have that almost nobody in this room knows about?" },
+    { cat: '😬 Cringe Memory', text: "What's the cringiest thing you've ever done to impress someone?" },
+    { cat: '🎯 Secret Pet Peeve', text: "What's a pet peeve you have that you never actually tell people about?" },
+    { cat: '📱 Last Text', text: 'What was the last text message you sent, word for word?' },
+    { cat: '🃏 Fake It', text: "What's something you pretend to understand but actually don't?" },
+    { cat: '🍕 Weird Combo', text: "What's a food combination you love that everyone judges you for?" },
+    { cat: '😏 Petty Moment', text: "What's the pettiest thing you've ever done to someone?" },
+    { cat: '💬 Most-Used Emoji', text: "What's your most-used emoji, and why that one?" },
+    { cat: '📏 Rule You Break', text: "What's a small rule you break on a regular basis?" },
+    { cat: '🏠 Home Alone', text: "What's something a little weird you do when you're home completely alone?" },
+    { cat: '🙄 Compliment Fishing', text: "What's a compliment you secretly fish for but never admit to wanting?" },
+    { cat: '😳 Most Embarrassing Moment', text: "What's the most embarrassing thing that's happened to you in public?" },
+    { cat: '🤳 Selfie Count', text: "How many selfies do you think you've taken before finding one you liked, honestly?" },
+    { cat: '🎬 Guilty Show', text: "What's a show or movie you love that you'd be embarrassed for people to know about?" },
+    { cat: '💭 Overthought It', text: "What's something small you're still overthinking from years ago?" },
+  ],
 };
