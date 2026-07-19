@@ -682,12 +682,12 @@
           <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
         </div>`).join('');
 
-      document.getElementById('truth-prompt-browser-hdr').textContent = `😇 All Truths (${TRUTHS.length}) — used only when the defender picks Truth`;
+      document.getElementById('truth-prompt-browser-hdr').textContent = `😇 All Truths (${TRUTHS.length}) — drawn whenever a player picks Truth`;
       const truthList = document.getElementById('truth-prompt-list');
       truthList.innerHTML = TRUTHS.map(p => `
         <div class="prompt-item">
           <div class="pi-cat">${p.cat}</div>
-          <div class="pi-text">${p.text}</div>
+          <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
         </div>`).join('');
     }
     buildPromptList();
