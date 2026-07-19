@@ -301,7 +301,7 @@
     }
 
     /* ── Land capture: a rival's territory just got stolen ── */
-    .tile.tile-capturing { overflow: visible; z-index: 8; animation: captureShake 1.5s ease; }
+    .tile.tile-capturing { overflow: visible; z-index: 8; animation: captureShake .5s ease; }
     @keyframes captureShake {
       0%   { transform: translate(0,0) rotate(0); }
       15%  { transform: translate(-4px,3px) rotate(-5deg); }
@@ -315,7 +315,7 @@
       position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
       background: radial-gradient(circle, var(--capture-color, #fff) 0%, transparent 72%);
       opacity: .95; transform: scale(0);
-      animation: captureWipe 1.95s ease-out both;
+      animation: captureWipe .65s ease-out both;
     }
     @keyframes captureWipe {
       0%   { transform: scale(0);   opacity: .95; }
@@ -328,7 +328,7 @@
       color: #fff !important;
       text-shadow: 0 0 4px rgba(0,0,0,.9), 0 0 8px var(--p-glow, #fff);
       transform: translate(-50%, -50%);
-      animation: captureBurst 2.25s ease-out both;
+      animation: captureBurst .75s ease-out both;
     }
     @keyframes captureBurst {
       0%   { transform: translate(-50%, -50%) rotate(var(--ang)) translateX(0); opacity: 1; }
@@ -341,7 +341,7 @@
       background: rgba(10,10,20,.88); border: 1.5px solid var(--capture-color, #fff);
       box-shadow: 0 2px 10px rgba(0,0,0,.6);
       pointer-events: none; z-index: 9;
-      animation: captureLabelFloat 2.55s ease-out both;
+      animation: captureLabelFloat .85s ease-out both;
     }
     @keyframes captureLabelFloat {
       0%   { opacity: 0; transform: translate(-50%, 8px)  scale(.7); }
@@ -824,7 +824,7 @@
         wipe.remove();
         burst.remove();
         label.remove();
-      }, 2550);
+      }, 850);
     }
 
     function renderScoreboard() {
@@ -1261,7 +1261,7 @@
         renderScoreboard();
         nextTurn();
         renderCenterIdle();
-      }, 3900);
+      }, 1300);
     }
 
     function nextTurn() {
