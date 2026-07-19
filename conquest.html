@@ -564,7 +564,6 @@
 
     <div class="controls-row">
       <button class="btn-secondary" onclick="showWinner()">🏆 End Game</button>
-      <button class="btn-secondary" onclick="restartRound()">🔄 Restart Board</button>
       <button class="btn-secondary" onclick="backToSetup()">⬅ Change Players</button>
     </div>
   </div>
@@ -721,29 +720,6 @@
       document.getElementById('winner-banner').classList.remove('shown');
       document.getElementById('winner-banner').classList.add('hidden');
       buildBoardTiles();
-      renderBoard();
-      renderScoreboard();
-      updateTurnIndicator();
-      renderCenterIdle();
-      document.getElementById('roll-btn').disabled = false;
-      saveGame();
-    }
-
-    function restartRound() {
-      if (!players.length) return;
-      ownership = new Array(PATH.length).fill(-1);
-      players.forEach(p => p.pos = 0);
-      currentIdx = 0;
-      usedPrompts = [];
-      usedTruths = [];
-      currentChallengeOwner = -1;
-      diceOffState = null;
-      rolling = false;
-      awaitingJudgement = false;
-      round = 0;
-      document.getElementById('roundNum').textContent = round;
-      document.getElementById('winner-banner').classList.remove('shown');
-      document.getElementById('winner-banner').classList.add('hidden');
       renderBoard();
       renderScoreboard();
       updateTurnIndicator();
@@ -1180,7 +1156,7 @@
 
     /* ── Dice roll-off: decides a steal attempt after the challenge is completed.
        Attacker rolls first, then the owner — both dice and their values stay visible
-       together once rolled. Higher number wins; a tie favors the defender. ── */
+       together once rolled. Higher number wins; a tie favors the attacker. ── */
     function diceFacesHTML() {
       return `
         <div class="d3-face face-1"><span class="pip p-mc"></span></div>
@@ -1202,7 +1178,7 @@
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">🎲 Dice-Off!</span>
-          <div class="q-text">Challenge complete! Roll for the land — higher number wins.</div>
+          <div class="q-text">Challenge complete! Roll for the land — higher number wins (ties go to the attacker).</div>
           <div class="diceoff-grid">
             <div class="diceoff-side">
               <div class="diceoff-name" style="color:${attacker.hex}">${attacker.token} ${attacker.name}</div>
@@ -1273,7 +1249,7 @@
     function checkDiceOffComplete() {
       const state = diceOffState;
       if (!state || state.attackerRoll == null || state.ownerRoll == null) return;
-      const attackerWins = state.attackerRoll > state.ownerRoll;
+      const attackerWins = state.attackerRoll >= state.ownerRoll; // a tie favors the attacker
       const resultEl = document.getElementById('diceoff-result');
       if (resultEl) {
         resultEl.textContent = attackerWins
@@ -1323,8 +1299,8 @@
     }
 
     /* ── Persistence: resume a game after leaving/reloading the page ──
-       Only settled turn-boundary states are saved (see nextTurn/startGame/restartRound/
-       showWinner) — nothing mid-dare, mid-dice-off, or mid-corner-effect is stored, so a
+       Only settled turn-boundary states are saved (see nextTurn/startGame/showWinner) —
+       nothing mid-dare, mid-dice-off, or mid-corner-effect is stored, so a
        reload always resumes at a clean "ready to roll" (or "game over") state. */
     const SAVE_KEY = 'dareConquestSave.v1';
 
