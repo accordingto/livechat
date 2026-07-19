@@ -608,7 +608,7 @@
       { row: 4, col: 7, type: 'dare' },
       { row: 4, col: 6, type: 'dare' },
       { row: 4, col: 5, type: 'dare' },
-      { row: 4, col: 4, type: 'dare' },
+      { row: 4, col: 4, type: 'bonus' },
       { row: 4, col: 3, type: 'dare' },
       { row: 4, col: 2, type: 'dare' },
       { row: 4, col: 1, type: 'gift' },
@@ -936,8 +936,8 @@
       const p = players[currentIdx];
       const type = PATH[p.pos].type;
       if (type === 'start') {
-        flashTile(p.pos, TYPE_COLOR.start);
-        showCornerMessage('🏁', 'Safe tile — welcome back to START! Nothing happens here.', 'start');
+        // START also carries the LUCKY effect now — landing here swaps territory instead of a no-op
+        doLucky();
       } else if (type === 'bonus') {
         doBonus();
       } else if (type === 'lucky') {
