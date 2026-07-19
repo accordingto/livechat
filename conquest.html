@@ -96,6 +96,15 @@
       color: #555; font-size: .82rem; line-height: 1.7;
     }
 
+    /* ── Resume banner: shown only when a saved game is found in localStorage ── */
+    .resume-banner {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      background: rgba(34,197,94,.08); border: 2px solid rgba(34,197,94,.35); border-radius: 14px;
+      padding: 14px 18px;
+    }
+    .resume-banner p { font-size: .88rem; font-weight: 700; color: #ddd; }
+    .resume-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
     /* ── Scoreboard ── */
     .scoreboard {
       width: 100%; max-width: 1100px;
@@ -501,6 +510,7 @@
 
   <!-- ── Setup ── -->
   <div class="setup-card" id="setup-card">
+    <div class="resume-banner hidden" id="resume-banner"></div>
     <div class="control-row">
       <span class="control-label">Players</span>
       <div class="player-btns" id="player-count-btns"></div>
@@ -708,6 +718,7 @@
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
       document.getElementById('game-area').classList.remove('hidden');
+      document.getElementById('winner-banner').classList.remove('shown');
       document.getElementById('winner-banner').classList.add('hidden');
       buildBoardTiles();
       renderBoard();
@@ -715,6 +726,7 @@
       updateTurnIndicator();
       renderCenterIdle();
       document.getElementById('roll-btn').disabled = false;
+      saveGame();
     }
 
     function restartRound() {
@@ -730,18 +742,22 @@
       awaitingJudgement = false;
       round = 0;
       document.getElementById('roundNum').textContent = round;
+      document.getElementById('winner-banner').classList.remove('shown');
       document.getElementById('winner-banner').classList.add('hidden');
       renderBoard();
       renderScoreboard();
       updateTurnIndicator();
       renderCenterIdle();
       document.getElementById('roll-btn').disabled = false;
+      saveGame();
     }
 
     function backToSetup() {
       document.getElementById('game-area').classList.add('hidden');
       document.getElementById('setup-card').classList.remove('hidden');
       gameStarted = false;
+      clearSavedGame();
+      checkForSavedGame();
     }
 
     /* ── Board rendering ── */
@@ -1279,6 +1295,7 @@
       updateTurnIndicator();
       renderScoreboard();
       renderBoard();
+      saveGame();
     }
 
     function showWinner() {
@@ -1294,7 +1311,88 @@
         : `<h2>🏆 ${winners[0].token} ${winners[0].name} wins!</h2><p>Controlling ${max} out of ${PATH.filter(t => t.type === 'dare').length} territories</p>`;
       renderScoreboard();
       renderCenterIdle();
+      saveGame();
     }
+
+    /* ── Persistence: resume a game after leaving/reloading the page ──
+       Only settled turn-boundary states are saved (see nextTurn/startGame/restartRound/
+       showWinner) — nothing mid-dare, mid-dice-off, or mid-corner-effect is stored, so a
+       reload always resumes at a clean "ready to roll" (or "game over") state. */
+    const SAVE_KEY = 'dareConquestSave.v1';
+
+    function saveGame() {
+      if (!gameStarted || !players.length) return;
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify({
+          players, ownership, currentIdx, round, usedPrompts, usedTruths,
+          gameEnded: document.getElementById('winner-banner').classList.contains('shown'),
+        }));
+      } catch (e) { /* localStorage unavailable or full — game still works without persistence */ }
+    }
+
+    function clearSavedGame() {
+      try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
+    }
+
+    function loadSavedGame() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.players) || !data.players.length) return null;
+        return data;
+      } catch (e) { return null; }
+    }
+
+    function checkForSavedGame() {
+      const banner = document.getElementById('resume-banner');
+      const saved = loadSavedGame();
+      if (!saved) { banner.classList.add('hidden'); banner.innerHTML = ''; return; }
+      banner.classList.remove('hidden');
+      banner.innerHTML = `
+        <p>🕹️ You have a game in progress — Round ${saved.round}, ${saved.players.length} players.</p>
+        <div class="resume-actions">
+          <button class="btn-primary" onclick="resumeGame()">▶️ Resume Game</button>
+          <button class="btn-secondary" onclick="discardSavedGame()">🗑️ Start New Instead</button>
+        </div>`;
+    }
+
+    function resumeGame() {
+      const saved = loadSavedGame();
+      if (!saved) return;
+      players = saved.players;
+      ownership = saved.ownership;
+      currentIdx = saved.currentIdx;
+      round = saved.round;
+      usedPrompts = saved.usedPrompts || [];
+      usedTruths = saved.usedTruths || [];
+      playerCount = players.length;
+      currentChallengeOwner = -1;
+      diceOffState = null;
+      rolling = false;
+      awaitingJudgement = false;
+
+      document.getElementById('roundNum').textContent = round;
+      document.getElementById('setup-card').classList.add('hidden');
+      document.getElementById('game-area').classList.remove('hidden');
+      document.getElementById('winner-banner').classList.remove('shown');
+      document.getElementById('winner-banner').classList.add('hidden');
+      buildBoardTiles();
+      gameStarted = true;
+      renderBoard();
+      renderScoreboard();
+      updateTurnIndicator();
+      renderCenterIdle();
+      document.getElementById('roll-btn').disabled = false;
+      if (saved.gameEnded) showWinner();
+    }
+
+    function discardSavedGame() {
+      clearSavedGame();
+      checkForSavedGame();
+    }
+
+    checkForSavedGame();
   </script>
 </body>
 </html>
