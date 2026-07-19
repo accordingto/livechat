@@ -182,6 +182,17 @@
     .p-ml { grid-row: 2; grid-column: 1; } .p-mc { grid-row: 2; grid-column: 2; } .p-mr { grid-row: 2; grid-column: 3; }
     .p-bl { grid-row: 3; grid-column: 1; } .p-bc { grid-row: 3; grid-column: 2; } .p-br { grid-row: 3; grid-column: 3; }
 
+    /* ── Dice roll-off: attacker vs owner, both dice and both values visible at once —
+       stays side-by-side even on narrow phones so both results are always readable together ── */
+    .diceoff-grid { display: flex; align-items: flex-start; justify-content: center; gap: 10px; margin-top: 6px; }
+    .diceoff-side { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; flex: 0 1 88px; }
+    .diceoff-name { font-size: .72rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .diceoff-value {
+      font-size: 1.3rem; font-weight: 900; color: #eee; min-height: 1.6rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .diceoff-vs { font-size: .85rem; font-weight: 900; color: #555; align-self: center; padding: 0 2px; flex-shrink: 0; }
+
     /* ── Board: a wide 8×3 perimeter loop, kept short enough to fit on screen ── */
     /* board-stage is the positioning context for the floating dare panel below —
        it never scrolls, so the overlay stays centered even if board-wrap does */
@@ -366,6 +377,8 @@
     .dare-panel.corner-gift  { border-color: #ec4899; box-shadow: 0 0 28px rgba(236,72,153,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.defense      { border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.truth        { border-color: #eab308; box-shadow: 0 0 32px rgba(234,179,8,.35), 0 16px 48px rgba(0,0,0,.55); }
+    .dare-panel.choice       { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.35), 0 16px 48px rgba(0,0,0,.55); }
+    .dare-panel.diceoff      { border-color: #eab308; box-shadow: 0 0 32px rgba(234,179,8,.35), 0 16px 48px rgba(0,0,0,.55); }
 
     @keyframes popIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
 
@@ -375,7 +388,7 @@
       color: #eab308 !important;
     }
 
-    /* ── Defense: owner picks Truth or Dare for the attacker ── */
+    /* ── Truth or Dare choice: the current player freely calls it, host clicks the match ── */
     .td-choice-grid { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
     .td-choice-btn {
       display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -613,6 +626,9 @@
     let gameStarted = false;
     let round = 0;
     let currentTileIdx = null;
+    let currentChallengeOwner = -1; // -1 = claiming unowned land; otherwise the rival being stolen from
+    let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
+    const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
     let diceRotX = 0, diceRotY = 0; // cumulative degrees, always increasing so the cube keeps tumbling forward
 
     /* ── Setup screen ── */
@@ -684,6 +700,8 @@
       currentIdx = 0;
       usedPrompts = [];
       usedTruths = [];
+      currentChallengeOwner = -1;
+      diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -706,6 +724,8 @@
       currentIdx = 0;
       usedPrompts = [];
       usedTruths = [];
+      currentChallengeOwner = -1;
+      diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
       round = 0;
@@ -850,7 +870,7 @@
        overlay on top of the map, so it's only shown when there's something to say ── */
     function renderCenterIdle() {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('active', 'defense', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('hidden');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
@@ -860,7 +880,7 @@
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden');
-      panel.classList.remove('active', 'defense', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('corner-' + type);
       document.getElementById('center-content').outerHTML = `
         <div class="center-safe" id="center-content">
@@ -944,9 +964,9 @@
       } else if (type === 'gift') {
         doGift();
       } else if (ownership[p.pos] !== -1 && ownership[p.pos] !== currentIdx) {
-        showDefensePicker(p.pos, ownership[p.pos]);
+        showChallengeChoice(p.pos, ownership[p.pos]);
       } else {
-        showQuestion(p.pos);
+        showChallengeChoice(p.pos, -1);
       }
     }
 
@@ -984,7 +1004,7 @@
       if (others.length === 1) { performSwap(others[0]); return; }
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
@@ -1019,22 +1039,57 @@
       return text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`);
     }
 
-    function showQuestion(tileIdx) {
+    // Landing on any dare tile — owned by a rival or unowned — first shows a Truth or
+    // Dare choice screen. The current player freely calls out "Truth" or "Dare" out loud,
+    // and the host clicks the matching button. ownerIdx is -1 when claiming unowned land,
+    // or the rival's index when this is a steal attempt (which then goes to a dice roll-off
+    // after a successful challenge — see judge()).
+    function showChallengeChoice(tileIdx, ownerIdx) {
       clearPromptTimer();
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
-      if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-      const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
-      const pi = avail[Math.floor(Math.random() * avail.length)];
-      usedPrompts.push(pi);
-      renderDareContent(PROMPTS[pi]);
+      currentChallengeOwner = ownerIdx;
+      const attacker = players[currentIdx];
+      const isSteal = ownerIdx !== -1;
+      const owner = isSteal ? players[ownerIdx] : null;
+
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add(isSteal ? 'defense' : 'choice');
+      document.getElementById('center-content').outerHTML = `
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
+          <span class="q-cat"${isSteal ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"' : ''}>${isSteal ? '⚔️ Steal Attempt' : '🎲 Your Challenge'}</span>
+          <div class="q-text">${isSteal
+            ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land! ${attacker.name}, call it — Truth or Dare?`
+            : `${attacker.name}, call it out loud — Truth or Dare?`}</div>
+          <div class="td-choice-grid">
+            <button class="td-choice-btn td-truth" onclick="pickChallengeMode('truth')"><span class="td-emoji">😇</span>TRUTH</button>
+            <button class="td-choice-btn td-dare" onclick="pickChallengeMode('dare')"><span class="td-emoji">😈</span>DARE</button>
+          </div>
+        </div>`;
     }
 
-    // renders the actual dare/truth (category + text + optional timer + judge buttons) —
-    // shared by a normal random draw and a defender-picked Truth or Dare challenge
+    function pickChallengeMode(mode) {
+      if (!awaitingJudgement) return;
+      if (mode === 'truth') {
+        if (usedTruths.length >= TRUTHS.length) usedTruths = [];
+        const avail = TRUTHS.map((_, i) => i).filter(i => !usedTruths.includes(i));
+        const ti = avail[Math.floor(Math.random() * avail.length)];
+        usedTruths.push(ti);
+        renderDareContent(TRUTHS[ti], true);
+      } else {
+        if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
+        const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
+        const pi = avail[Math.floor(Math.random() * avail.length)];
+        usedPrompts.push(pi);
+        renderDareContent(PROMPTS[pi], false);
+      }
+    }
+
+    // renders the actual dare/truth (category + text + optional timer + judge buttons)
     function renderDareContent(prompt, isTruth) {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add(isTruth ? 'truth' : 'active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
@@ -1050,46 +1105,6 @@
             <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Passed' : '❌ Skipped'}</button>
           </div>
         </div>`;
-    }
-
-    // DEFENSE: landing on a rival's territory lets its owner choose Truth or Dare
-    // for the attacker, instead of a random draw
-    function showDefensePicker(tileIdx, ownerIdx) {
-      clearPromptTimer();
-      awaitingJudgement = true;
-      currentTileIdx = tileIdx;
-      const owner = players[ownerIdx];
-      const attacker = players[currentIdx];
-
-      const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'truth', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
-      panel.classList.add('defense');
-      document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;">🛡️ Defense</span>
-          <div class="q-text">This is <span style="color:${owner.hex}">${owner.name}</span>'s land! ${owner.name}, choose ${attacker.name}'s fate:</div>
-          <div class="td-choice-grid">
-            <button class="td-choice-btn td-truth" onclick="pickDefenseMode('truth')"><span class="td-emoji">😇</span>TRUTH</button>
-            <button class="td-choice-btn td-dare" onclick="pickDefenseMode('dare')"><span class="td-emoji">😈</span>DARE</button>
-          </div>
-        </div>`;
-    }
-
-    function pickDefenseMode(mode) {
-      if (!awaitingJudgement) return;
-      if (mode === 'truth') {
-        if (usedTruths.length >= TRUTHS.length) usedTruths = [];
-        const avail = TRUTHS.map((_, i) => i).filter(i => !usedTruths.includes(i));
-        const ti = avail[Math.floor(Math.random() * avail.length)];
-        usedTruths.push(ti);
-        renderDareContent(TRUTHS[ti], true);
-      } else {
-        if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-        const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
-        const pi = avail[Math.floor(Math.random() * avail.length)];
-        usedPrompts.push(pi);
-        renderDareContent(PROMPTS[pi], false);
-      }
     }
 
     // countdown timer for timed dares — starts only when the host clicks the button,
@@ -1124,18 +1139,135 @@
     function judge(isCorrect) {
       if (!awaitingJudgement) return;
       clearPromptTimer();
-      if (isCorrect) {
-        const prevOwner = ownership[currentTileIdx];
-        ownership[currentTileIdx] = currentIdx;
-        if (prevOwner !== -1 && prevOwner !== currentIdx) {
-          animateCapture(currentTileIdx, players[currentIdx].hex);
-        }
+      const isSteal = currentChallengeOwner !== -1;
+
+      // completing the challenge on a steal attempt doesn't hand over the land outright —
+      // it earns the attacker a dice roll-off against the current owner
+      if (isCorrect && isSteal) {
+        awaitingJudgement = false;
+        showDiceOff(currentTileIdx, currentChallengeOwner);
+        return;
       }
+
+      if (isCorrect) ownership[currentTileIdx] = currentIdx; // plain claim of unowned land
       awaitingJudgement = false;
+      currentChallengeOwner = -1;
       renderBoard();
       renderScoreboard();
       nextTurn();
       renderCenterIdle();
+    }
+
+    /* ── Dice roll-off: decides a steal attempt after the challenge is completed.
+       Attacker rolls first, then the owner — both dice and their values stay visible
+       together once rolled. Higher number wins; a tie favors the defender. ── */
+    function diceFacesHTML() {
+      return `
+        <div class="d3-face face-1"><span class="pip p-mc"></span></div>
+        <div class="d3-face face-2"><span class="pip p-tl"></span><span class="pip p-br"></span></div>
+        <div class="d3-face face-3"><span class="pip p-tl"></span><span class="pip p-mc"></span><span class="pip p-br"></span></div>
+        <div class="d3-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+        <div class="d3-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+        <div class="d3-face face-6"><span class="pip p-tl"></span><span class="pip p-ml"></span><span class="pip p-bl"></span><span class="pip p-tr"></span><span class="pip p-mr"></span><span class="pip p-br"></span></div>`;
+    }
+
+    function showDiceOff(tileIdx, ownerIdx) {
+      const attacker = players[currentIdx];
+      const owner = players[ownerIdx];
+      diceOffState = { tileIdx, ownerIdx, attackerIdx: currentIdx, attackerRoll: null, ownerRoll: null };
+
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add('diceoff');
+      document.getElementById('center-content').outerHTML = `
+        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
+          <span class="q-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">🎲 Dice-Off!</span>
+          <div class="q-text">Challenge complete! Roll for the land — higher number wins.</div>
+          <div class="diceoff-grid">
+            <div class="diceoff-side">
+              <div class="diceoff-name" style="color:${attacker.hex}">${attacker.token} ${attacker.name}</div>
+              <div class="dice-outer" id="attacker-dice-outer">
+                <div class="dice-stage"><div class="dice-shadow"></div><div class="dice3d" id="attacker-dice3d">${diceFacesHTML()}</div></div>
+              </div>
+              <div class="diceoff-value" id="attacker-roll-value">—</div>
+              <button class="btn-secondary" id="attacker-roll-btn" onclick="rollOffRoll('attacker')">🎲 Roll</button>
+            </div>
+            <div class="diceoff-vs">VS</div>
+            <div class="diceoff-side">
+              <div class="diceoff-name" style="color:${owner.hex}">${owner.token} ${owner.name}</div>
+              <div class="dice-outer" id="owner-dice-outer">
+                <div class="dice-stage"><div class="dice-shadow"></div><div class="dice3d" id="owner-dice3d">${diceFacesHTML()}</div></div>
+              </div>
+              <div class="diceoff-value" id="owner-roll-value">—</div>
+              <button class="btn-secondary" id="owner-roll-btn" onclick="rollOffRoll('owner')" disabled>🎲 Roll</button>
+            </div>
+          </div>
+          <div class="q-text" id="diceoff-result" style="min-height:1.6em;font-size:1rem;"></div>
+        </div>`;
+    }
+
+    function spinMiniDiceTo(which, value) {
+      const rot = FACE_ROTATION[value];
+      const spins = (2 + Math.floor(Math.random() * 2)) * 360;
+      const state = miniDiceRot[which];
+      const nextAngle = (current, targetMod) => {
+        const wanted = ((targetMod % 360) + 360) % 360;
+        return Math.ceil((current + 1) / 360) * 360 + wanted;
+      };
+      state.x = nextAngle(state.x, rot.x) + spins;
+      state.y = nextAngle(state.y, rot.y) + spins;
+      const el = document.getElementById(which + '-dice3d');
+      if (el) el.style.transform = `rotateX(${state.x}deg) rotateY(${state.y}deg)`;
+    }
+
+    function rollOffRoll(which) {
+      if (!diceOffState) return;
+      const btn = document.getElementById(which + '-roll-btn');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+
+      const outer = document.getElementById(which + '-dice-outer');
+      if (outer) { outer.classList.remove('bounce'); void outer.offsetWidth; outer.classList.add('bounce'); }
+      const value = 1 + Math.floor(Math.random() * 6);
+      spinMiniDiceTo(which, value);
+
+      setTimeout(() => {
+        if (!diceOffState) return;
+        const valueEl = document.getElementById(which + '-roll-value');
+        if (valueEl) valueEl.textContent = value;
+        if (which === 'attacker') {
+          diceOffState.attackerRoll = value;
+          const ownerBtn = document.getElementById('owner-roll-btn');
+          if (ownerBtn) ownerBtn.disabled = false;
+        } else {
+          diceOffState.ownerRoll = value;
+        }
+        checkDiceOffComplete();
+      }, 1100);
+    }
+
+    function checkDiceOffComplete() {
+      const state = diceOffState;
+      if (!state || state.attackerRoll == null || state.ownerRoll == null) return;
+      const attackerWins = state.attackerRoll > state.ownerRoll;
+      const resultEl = document.getElementById('diceoff-result');
+      if (resultEl) {
+        resultEl.textContent = attackerWins
+          ? `${players[state.attackerIdx].name} wins the roll-off and takes the land!`
+          : `${players[state.ownerIdx].name} holds the line — the land stays theirs!`;
+      }
+      setTimeout(() => {
+        if (attackerWins) {
+          ownership[state.tileIdx] = state.attackerIdx;
+          animateCapture(state.tileIdx, players[state.attackerIdx].hex);
+        }
+        diceOffState = null;
+        currentChallengeOwner = -1;
+        renderBoard();
+        renderScoreboard();
+        nextTurn();
+        renderCenterIdle();
+      }, 1300);
     }
 
     function nextTurn() {
