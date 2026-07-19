@@ -1050,7 +1050,7 @@
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat"${isSteal ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"' : ''}>${isSteal ? '⚔️ Steal Attempt' : '🎲 Your Challenge'}</span>
           <div class="q-text">${isSteal
-            ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land! ${attacker.name}, call it — Truth or Dare?`
+            ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land!<br>${attacker.name}, call it — Truth or Dare?`
             : `${attacker.name}, call it out loud — Truth or Dare?`}</div>
           <div class="td-choice-grid">
             <button class="td-choice-btn td-truth" onclick="pickChallengeMode('truth')"><span class="td-emoji">😇</span>TRUTH</button>
