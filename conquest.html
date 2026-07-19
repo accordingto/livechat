@@ -1150,7 +1150,7 @@
 
     /* ── Dice roll-off: decides a steal attempt after the challenge is completed.
        Attacker rolls first, then the owner — both dice and their values stay visible
-       together once rolled. Higher number wins; a tie favors the attacker. ── */
+       together once rolled. Higher number wins; a tie favors the defender. ── */
     function diceFacesHTML() {
       return `
         <div class="d3-face face-1"><span class="pip p-mc"></span></div>
@@ -1172,7 +1172,7 @@
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">🎲 Dice-Off!</span>
-          <div class="q-text">Challenge complete! Roll for the land — higher number wins (ties go to the attacker).</div>
+          <div class="q-text">Challenge complete! Roll for the land — higher number wins (ties go to the defender).</div>
           <div class="diceoff-grid">
             <div class="diceoff-side">
               <div class="diceoff-name" style="color:${attacker.hex}">${attacker.token} ${attacker.name}</div>
@@ -1218,10 +1218,10 @@
 
       const outer = document.getElementById(which + '-dice-outer');
       if (outer) { outer.classList.remove('bounce'); void outer.offsetWidth; outer.classList.add('bounce'); }
-      // the attacker's roll-off die only ever lands on 2, 4, or 6 — a small edge for
+      // the attacker's roll-off die only ever lands on 4, 5, or 6 — a small edge for
       // successfully completing the challenge in the first place
       const value = which === 'attacker'
-        ? 2 * (1 + Math.floor(Math.random() * 3))
+        ? 4 + Math.floor(Math.random() * 3)
         : 1 + Math.floor(Math.random() * 6);
       spinMiniDiceTo(which, value);
 
@@ -1243,7 +1243,7 @@
     function checkDiceOffComplete() {
       const state = diceOffState;
       if (!state || state.attackerRoll == null || state.ownerRoll == null) return;
-      const attackerWins = state.attackerRoll >= state.ownerRoll; // a tie favors the attacker
+      const attackerWins = state.attackerRoll > state.ownerRoll; // a tie favors the defender
       const resultEl = document.getElementById('diceoff-result');
       if (resultEl) {
         resultEl.textContent = attackerWins
