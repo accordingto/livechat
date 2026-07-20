@@ -141,6 +141,9 @@
     .turn-indicator { font-size: clamp(.9rem, 2vw, 1.05rem); font-weight: 800; white-space: nowrap; }
     .turn-indicator .tname { color: var(--turn-color, #22c55e); }
     .roll-btn { font-size: clamp(.78rem, 1.6vw, .88rem); padding: 8px 18px; }
+    /* ── Roll choice: player picks 1 die (predictable) or 2 dice (bigger, riskier move) each turn ── */
+    .roll-btn-row { display: flex; gap: 10px; }
+    .dice-pair { display: flex; gap: 18px; align-items: center; justify-content: center; }
 
     /* ── 3D dice: a real rotating cube with pip faces, tossed with a bounce ── */
     .dice-outer { animation: none; }
@@ -574,20 +577,38 @@
       <div class="board-wrap">
       <div class="board" id="board">
         <div class="board-center" id="board-center">
-          <div class="dice-outer" id="dice-outer">
-            <div class="dice-stage">
-              <div class="dice-shadow"></div>
-              <div class="dice3d" id="dice3d">
-                <div class="d3-face face-1"><span class="pip p-mc"></span></div>
-                <div class="d3-face face-2"><span class="pip p-tl"></span><span class="pip p-br"></span></div>
-                <div class="d3-face face-3"><span class="pip p-tl"></span><span class="pip p-mc"></span><span class="pip p-br"></span></div>
-                <div class="d3-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
-                <div class="d3-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
-                <div class="d3-face face-6"><span class="pip p-tl"></span><span class="pip p-ml"></span><span class="pip p-bl"></span><span class="pip p-tr"></span><span class="pip p-mr"></span><span class="pip p-br"></span></div>
+          <div class="dice-pair" id="dice-pair">
+            <div class="dice-outer" id="dice-outer">
+              <div class="dice-stage">
+                <div class="dice-shadow"></div>
+                <div class="dice3d" id="dice3d">
+                  <div class="d3-face face-1"><span class="pip p-mc"></span></div>
+                  <div class="d3-face face-2"><span class="pip p-tl"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-3"><span class="pip p-tl"></span><span class="pip p-mc"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-6"><span class="pip p-tl"></span><span class="pip p-ml"></span><span class="pip p-bl"></span><span class="pip p-tr"></span><span class="pip p-mr"></span><span class="pip p-br"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="dice-outer dice-outer-second hidden" id="dice-outer-2">
+              <div class="dice-stage">
+                <div class="dice-shadow"></div>
+                <div class="dice3d" id="dice3d-2">
+                  <div class="d3-face face-1"><span class="pip p-mc"></span></div>
+                  <div class="d3-face face-2"><span class="pip p-tl"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-3"><span class="pip p-tl"></span><span class="pip p-mc"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                  <div class="d3-face face-6"><span class="pip p-tl"></span><span class="pip p-ml"></span><span class="pip p-bl"></span><span class="pip p-tr"></span><span class="pip p-mr"></span><span class="pip p-br"></span></div>
+                </div>
               </div>
             </div>
           </div>
-          <button class="btn-primary roll-btn" id="roll-btn" onclick="rollDice()">🎲 Roll Dice</button>
+          <div class="roll-btn-row">
+            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice(1)">🎲 Roll 1 Die</button>
+            <button class="btn-primary roll-btn" id="roll-btn-2" onclick="rollDice(2)">🎲🎲 Roll 2 Dice</button>
+          </div>
         </div>
       </div>
       </div>
@@ -670,7 +691,7 @@
     let pendingSpecialEffect = null; // 'bonus' | 'lucky' | 'gift' while a challenge on a special tile is in progress
     let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
-    let diceRotX = 0, diceRotY = 0; // cumulative degrees, always increasing so the cube keeps tumbling forward
+    const boardDiceRot = { 1: { x: 0, y: 0 }, 2: { x: 0, y: 0 } }; // cumulative rotation for the two movement dice
 
     /* ── Setup screen ── */
     function setPlayerCount(n) {
@@ -747,6 +768,7 @@
       diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
+      document.getElementById('dice-outer-2').classList.add('hidden');
       round = 0;
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
@@ -758,7 +780,7 @@
       renderScoreboard();
       updateTurnIndicator();
       renderCenterIdle();
-      document.getElementById('roll-btn').disabled = false;
+      setRollButtonsDisabled(false);
       saveGame();
     }
 
@@ -926,34 +948,56 @@
     }
 
     /* ── Dice + movement ── */
+    function setRollButtonsDisabled(disabled) {
+      document.getElementById('roll-btn-1').disabled = disabled;
+      document.getElementById('roll-btn-2').disabled = disabled;
+    }
     // spins the 3D cube forward (never backward, so it never visibly snaps) to land
-    // exactly on `value`, adding a few extra full turns each time for a proper tumble
-    function spinDiceTo(value) {
+    // exactly on `value`, adding a few extra full turns each time for a proper tumble.
+    // `which` is 1 or 2, picking which of the two movement dice to spin.
+    function spinDiceTo(which, value) {
       const rot = FACE_ROTATION[value];
       const spins = (2 + Math.floor(Math.random() * 2)) * 360;
+      const state = boardDiceRot[which];
       const nextAngle = (current, targetMod) => {
         const wanted = ((targetMod % 360) + 360) % 360;
         let candidate = Math.ceil((current + 1) / 360) * 360 + wanted;
         return candidate;
       };
-      diceRotX = nextAngle(diceRotX, rot.x) + spins;
-      diceRotY = nextAngle(diceRotY, rot.y) + spins;
-      document.getElementById('dice3d').style.transform = `rotateX(${diceRotX}deg) rotateY(${diceRotY}deg)`;
+      state.x = nextAngle(state.x, rot.x) + spins;
+      state.y = nextAngle(state.y, rot.y) + spins;
+      const el = document.getElementById(which === 1 ? 'dice3d' : 'dice3d-2');
+      el.style.transform = `rotateX(${state.x}deg) rotateY(${state.y}deg)`;
     }
 
-    function rollDice() {
+    // numDice is 1 or 2 — the current player's choice for how far to move this turn
+    function rollDice(numDice) {
       if (rolling || awaitingJudgement || !players.length) return;
       rolling = true;
-      document.getElementById('roll-btn').disabled = true;
-      const final = 1 + Math.floor(Math.random() * 6);
+      setRollButtonsDisabled(true);
 
-      const outer = document.getElementById('dice-outer');
-      outer.classList.remove('bounce');
-      void outer.offsetWidth; // restart the bounce animation even on back-to-back rolls
-      outer.classList.add('bounce');
-      spinDiceTo(final);
+      const die1 = 1 + Math.floor(Math.random() * 6);
+      const outer1 = document.getElementById('dice-outer');
+      outer1.classList.remove('bounce');
+      void outer1.offsetWidth; // restart the bounce animation even on back-to-back rolls
+      outer1.classList.add('bounce');
+      spinDiceTo(1, die1);
 
-      setTimeout(() => movePlayer(final), 1100);
+      let total = die1;
+      const outer2 = document.getElementById('dice-outer-2');
+      if (numDice === 2) {
+        const die2 = 1 + Math.floor(Math.random() * 6);
+        total += die2;
+        outer2.classList.remove('hidden');
+        outer2.classList.remove('bounce');
+        void outer2.offsetWidth;
+        outer2.classList.add('bounce');
+        spinDiceTo(2, die2);
+      } else {
+        outer2.classList.add('hidden');
+      }
+
+      setTimeout(() => movePlayer(total), 1100);
     }
 
     function movePlayer(steps) {
@@ -1417,7 +1461,8 @@
       round++;
       document.getElementById('roundNum').textContent = round;
       rolling = false;
-      document.getElementById('roll-btn').disabled = false;
+      setRollButtonsDisabled(false);
+      document.getElementById('dice-outer-2').classList.add('hidden'); // back to idle single-die view until the next player picks 2 dice
       updateTurnIndicator();
       renderScoreboard();
       renderBoard();
@@ -1425,7 +1470,7 @@
     }
 
     function showWinner() {
-      document.getElementById('roll-btn').disabled = true;
+      setRollButtonsDisabled(true);
       const counts = players.map((p, i) => ({ p, count: ownership.filter(o => o === i).length }));
       const max = Math.max(...counts.map(c => c.count));
       const winners = counts.filter(c => c.count === max).map(c => c.p);
@@ -1499,6 +1544,7 @@
       diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
+      document.getElementById('dice-outer-2').classList.add('hidden');
 
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
@@ -1511,7 +1557,7 @@
       renderScoreboard();
       updateTurnIndicator();
       renderCenterIdle();
-      document.getElementById('roll-btn').disabled = false;
+      setRollButtonsDisabled(false);
       if (saved.gameEnded) showWinner();
     }
 
