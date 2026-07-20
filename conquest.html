@@ -443,6 +443,8 @@
     .timer-circle.low { border-color: #f59e0b; color: #f59e0b; }
     .timer-circle.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
     @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    .timer-controls { display: flex; gap: 8px; }
+    .timer-ctrl-btn { padding: 7px 14px; font-size: .78rem; }
     .btn-judge {
       border-radius: 12px; padding: 11px 24px; font-size: .9rem; font-weight: 800;
       font-family: inherit; cursor: pointer; border: 2px solid; transition: background .2s, transform .1s;
@@ -1098,6 +1100,10 @@
           <div class="timer-block">
             <button class="btn-secondary" id="timer-start-btn" onclick="startPromptTimer(${prompt.seconds})">⏱️ Start ${prompt.seconds}s Timer</button>
             <div class="timer-circle hidden" id="timer-circle">${prompt.seconds}</div>
+            <div class="timer-controls hidden" id="timer-controls">
+              <button class="btn-secondary timer-ctrl-btn" id="timer-pause-btn" onclick="togglePauseTimer()">⏸️ Pause</button>
+              <button class="btn-secondary timer-ctrl-btn" onclick="restartPromptTimer(${prompt.seconds})">🔄 Restart</button>
+            </div>
           </div>` : ''}
           <div class="q-actions">
             <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
@@ -1107,32 +1113,82 @@
     }
 
     // countdown timer for timed dares — starts only when the host clicks the button,
-    // never auto-fails anything; the host still judges Did It / Skipped manually
+    // never auto-fails anything; the host still judges Did It / Skipped manually.
+    // Can be paused/resumed or restarted from the top at any point.
     let promptTimerInterval = null;
+    let promptTimerRemaining = 0;
+    let promptTimerTotal = 0;
+    let promptTimerPaused = false;
+
     function clearPromptTimer() {
       if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; }
+      promptTimerRemaining = 0;
+      promptTimerTotal = 0;
+      promptTimerPaused = false;
     }
+
+    function updateTimerPauseLabel() {
+      const btn = document.getElementById('timer-pause-btn');
+      if (btn) btn.textContent = promptTimerPaused ? '▶️ Resume' : '⏸️ Pause';
+    }
+
+    function tickPromptTimer() {
+      const circle = document.getElementById('timer-circle');
+      if (!circle) { if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; } return; }
+      promptTimerRemaining--;
+      if (promptTimerRemaining <= 0) {
+        circle.textContent = '0';
+        circle.classList.add('critical');
+        if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; }
+        return;
+      }
+      circle.textContent = promptTimerRemaining;
+      circle.classList.toggle('low', promptTimerRemaining <= Math.ceil(promptTimerTotal * 0.5));
+      circle.classList.toggle('critical', promptTimerRemaining <= Math.ceil(promptTimerTotal * 0.25));
+    }
+
     function startPromptTimer(seconds) {
-      clearPromptTimer();
+      if (promptTimerInterval) clearInterval(promptTimerInterval);
+      promptTimerTotal = seconds;
+      promptTimerRemaining = seconds;
+      promptTimerPaused = false;
       const startBtn = document.getElementById('timer-start-btn');
       const circle = document.getElementById('timer-circle');
+      const controls = document.getElementById('timer-controls');
       if (!circle) return;
       if (startBtn) startBtn.classList.add('hidden');
+      if (controls) controls.classList.remove('hidden');
       circle.classList.remove('hidden', 'low', 'critical');
-      let remaining = seconds;
-      circle.textContent = remaining;
-      promptTimerInterval = setInterval(() => {
-        remaining--;
-        if (remaining <= 0) {
-          circle.textContent = '0';
-          circle.classList.add('critical');
-          clearPromptTimer();
-          return;
-        }
-        circle.textContent = remaining;
-        circle.classList.toggle('low', remaining <= Math.ceil(seconds * 0.5));
-        circle.classList.toggle('critical', remaining <= Math.ceil(seconds * 0.25));
-      }, 1000);
+      circle.textContent = promptTimerRemaining;
+      updateTimerPauseLabel();
+      promptTimerInterval = setInterval(tickPromptTimer, 1000);
+    }
+
+    // toggles between running and paused — pausing keeps the remaining time, doesn't reset it
+    function togglePauseTimer() {
+      if (!promptTimerTotal) return; // timer hasn't been started yet
+      if (promptTimerInterval) {
+        clearInterval(promptTimerInterval);
+        promptTimerInterval = null;
+        promptTimerPaused = true;
+      } else if (promptTimerRemaining > 0) {
+        promptTimerPaused = false;
+        promptTimerInterval = setInterval(tickPromptTimer, 1000);
+      }
+      updateTimerPauseLabel();
+    }
+
+    // resets the countdown back to the full duration and starts running again,
+    // whether it was previously paused, still running, or already hit zero
+    function restartPromptTimer(seconds) {
+      if (promptTimerInterval) clearInterval(promptTimerInterval);
+      promptTimerTotal = seconds;
+      promptTimerRemaining = seconds;
+      promptTimerPaused = false;
+      const circle = document.getElementById('timer-circle');
+      if (circle) { circle.classList.remove('low', 'critical'); circle.textContent = promptTimerRemaining; }
+      updateTimerPauseLabel();
+      promptTimerInterval = setInterval(tickPromptTimer, 1000);
     }
 
     function judge(isCorrect) {
