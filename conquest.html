@@ -287,7 +287,6 @@
       0%, 100% { opacity: .85; box-shadow: 0 0 6px 1px rgba(255,255,255,.3); }
       50%      { opacity: 1;   box-shadow: 0 0 13px 4px rgba(255,255,255,.65); }
     }
-    .chain-bonus { color: #f59e0b; font-weight: 900; }
 
     .tile-icon { font-size: 1.3rem; line-height: 1; }
     .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
@@ -851,11 +850,6 @@
       }
       return edges;
     }
-    // +1 score for every pair of connected same-owner tiles a player holds (a chain of
-    // N connected tiles is N-1 pairs, so bonuses stack the longer a chain gets)
-    function getConnectionBonus(playerIdx) {
-      return getConnectedEdges().filter(e => e.ownerIdx === playerIdx).length;
-    }
 
     function renderBoard() {
       const current = players[currentIdx];
@@ -960,11 +954,10 @@
       wrap.innerHTML = '';
       players.forEach((p, i) => {
         const count = ownership.filter(o => o === i).length;
-        const bonus = getConnectionBonus(i);
         const chip = document.createElement('div');
         chip.className = 'score-chip' + (i === currentIdx && !document.getElementById('winner-banner').classList.contains('shown') ? ' current-turn' : '');
         chip.style.color = p.hex;
-        chip.innerHTML = `<span class="token">${p.token}</span><span>${p.name}</span><span class="count">${count}🏳️${bonus ? ` <span class="chain-bonus">+${bonus}⛓️</span>` : ''}</span>`;
+        chip.innerHTML = `<span class="token">${p.token}</span><span>${p.name}</span><span class="count">${count}🏳️</span>`;
         wrap.appendChild(chip);
       });
     }
