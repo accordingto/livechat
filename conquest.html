@@ -265,6 +265,30 @@
       font-size: .8rem; text-shadow: 0 1px 3px rgba(0,0,0,.85);
       filter: drop-shadow(0 0 3px rgba(56,189,248,.9));
     }
+    /* ── Territory connections: adjacent same-owner land gets a small glowing chain-link
+       badge straddling the gap between them, and each connected pair adds +1 to score ── */
+    .tile.has-connection { overflow: visible; z-index: 3; }
+    .tile-connectors { position: absolute; inset: -4px; pointer-events: none; }
+    .tile-connector {
+      position: absolute;
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      font-size: .62rem;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,.7);
+      animation: connectorPulse 1.8s ease-in-out infinite;
+    }
+    .tile-connector.conn-right  { top: 50%; right: -11px;  transform: translateY(-50%); }
+    .tile-connector.conn-left   { top: 50%; left: -11px;   transform: translateY(-50%); }
+    .tile-connector.conn-top    { left: 50%; top: -11px;   transform: translateX(-50%); }
+    .tile-connector.conn-bottom { left: 50%; bottom: -11px;transform: translateX(-50%); }
+    @keyframes connectorPulse {
+      0%, 100% { opacity: .85; box-shadow: 0 0 6px 1px rgba(255,255,255,.3); }
+      50%      { opacity: 1;   box-shadow: 0 0 13px 4px rgba(255,255,255,.65); }
+    }
+    .chain-bonus { color: #f59e0b; font-weight: 900; }
+
     .tile-icon { font-size: 1.3rem; line-height: 1; }
     .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
     .tile-tokens {
@@ -798,7 +822,7 @@
         if (isSpecial) {
           el.innerHTML = `<span class="tile-icon">${TYPE_ICON[t.type]}</span><span class="tile-corner-label">${TYPE_LABEL[t.type]}</span><div class="tile-tokens"></div>`;
         } else {
-          el.innerHTML = `<div class="tile-tokens"></div>`;
+          el.innerHTML = `<div class="tile-connectors"></div><div class="tile-tokens"></div>`;
         }
         board.insertBefore(el, document.getElementById('board-center'));
         return el;
@@ -806,8 +830,44 @@
       gameStarted = true;
     }
 
+    // adjacent tiles on the perimeter are always exactly one PATH step apart (circularly) —
+    // this returns every pair of circularly-adjacent dare tiles owned by the same player
+    const OPPOSITE_DIR = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' };
+    function directionBetween(fromIdx, toIdx) {
+      const a = PATH[fromIdx], b = PATH[toIdx];
+      if (b.row === a.row && b.col === a.col + 1) return 'right';
+      if (b.row === a.row && b.col === a.col - 1) return 'left';
+      if (b.col === a.col && b.row === a.row + 1) return 'bottom';
+      if (b.col === a.col && b.row === a.row - 1) return 'top';
+      return null;
+    }
+    function getConnectedEdges() {
+      const edges = [];
+      for (let i = 0; i < PATH.length; i++) {
+        const j = (i + 1) % PATH.length;
+        if (PATH[i].type !== 'dare' || PATH[j].type !== 'dare') continue;
+        if (ownership[i] === -1 || ownership[i] !== ownership[j]) continue;
+        edges.push({ a: i, b: j, ownerIdx: ownership[i] });
+      }
+      return edges;
+    }
+    // +1 score for every pair of connected same-owner tiles a player holds (a chain of
+    // N connected tiles is N-1 pairs, so bonuses stack the longer a chain gets)
+    function getConnectionBonus(playerIdx) {
+      return getConnectedEdges().filter(e => e.ownerIdx === playerIdx).length;
+    }
+
     function renderBoard() {
       const current = players[currentIdx];
+      const edges = getConnectedEdges();
+      const connByTile = {};
+      edges.forEach(e => {
+        const dirAB = directionBetween(e.a, e.b);
+        const hex = players[e.ownerIdx].hex;
+        (connByTile[e.a] = connByTile[e.a] || []).push({ dir: dirAB, hex });
+        (connByTile[e.b] = connByTile[e.b] || []).push({ dir: OPPOSITE_DIR[dirAB], hex });
+      });
+
       PATH.forEach((t, i) => {
         const el = tileEls[i];
         if (!el) return;
@@ -831,6 +891,14 @@
           .filter(p => p.pos === i)
           .map(p => `<span class="tile-token${p === current ? ' current-token' : ''}"${p === current ? ` style="--turn-color:${p.hex}"` : ''}>${p.token}</span>`)
           .join('');
+        const connEl = el.querySelector('.tile-connectors');
+        if (connEl) {
+          const conns = connByTile[i] || [];
+          el.classList.toggle('has-connection', conns.length > 0);
+          connEl.innerHTML = conns
+            .map(c => `<span class="tile-connector conn-${c.dir}" style="background:${c.hex}">⛓️</span>`)
+            .join('');
+        }
       });
     }
 
@@ -892,10 +960,11 @@
       wrap.innerHTML = '';
       players.forEach((p, i) => {
         const count = ownership.filter(o => o === i).length;
+        const bonus = getConnectionBonus(i);
         const chip = document.createElement('div');
         chip.className = 'score-chip' + (i === currentIdx && !document.getElementById('winner-banner').classList.contains('shown') ? ' current-turn' : '');
         chip.style.color = p.hex;
-        chip.innerHTML = `<span class="token">${p.token}</span><span>${p.name}</span><span class="count">${count}🏳️</span>`;
+        chip.innerHTML = `<span class="token">${p.token}</span><span>${p.name}</span><span class="count">${count}🏳️${bonus ? ` <span class="chain-bonus">+${bonus}⛓️</span>` : ''}</span>`;
         wrap.appendChild(chip);
       });
     }
