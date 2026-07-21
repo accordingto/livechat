@@ -265,28 +265,24 @@
       font-size: .8rem; text-shadow: 0 1px 3px rgba(0,0,0,.85);
       filter: drop-shadow(0 0 3px rgba(56,189,248,.9));
     }
-    /* ── Territory connections: adjacent same-owner land gets a small glowing chain-link
-       badge straddling the gap between them, and each connected pair adds +1 to score ── */
+    /* ── Territory connections: adjacent same-owner land gets a small stone bridge/wall
+       built across the gap between them, reading as one connected structure ── */
     .tile.has-connection { overflow: visible; z-index: 3; }
     .tile-connectors { position: absolute; inset: -4px; pointer-events: none; }
     .tile-connector {
       position: absolute;
-      width: 18px; height: 18px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      font-size: .62rem;
-      color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,.7);
-      animation: connectorPulse 1.8s ease-in-out infinite;
+      background-color: var(--conn-color, #fff);
+      background-image:
+        linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
+      background-size: 5px 4px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), 0 2px 3px rgba(0,0,0,.5);
+      border-radius: 2px;
     }
-    .tile-connector.conn-right  { top: 50%; right: -11px;  transform: translateY(-50%); }
-    .tile-connector.conn-left   { top: 50%; left: -11px;   transform: translateY(-50%); }
-    .tile-connector.conn-top    { left: 50%; top: -11px;   transform: translateX(-50%); }
-    .tile-connector.conn-bottom { left: 50%; bottom: -11px;transform: translateX(-50%); }
-    @keyframes connectorPulse {
-      0%, 100% { opacity: .85; box-shadow: 0 0 6px 1px rgba(255,255,255,.3); }
-      50%      { opacity: 1;   box-shadow: 0 0 13px 4px rgba(255,255,255,.65); }
-    }
+    .tile-connector.conn-right  { top: 34%; height: 32%; right: -8px;   width: 11px; }
+    .tile-connector.conn-left   { top: 34%; height: 32%; left: -8px;    width: 11px; }
+    .tile-connector.conn-top    { left: 34%; width: 32%; top: -8px;     height: 11px; }
+    .tile-connector.conn-bottom { left: 34%; width: 32%; bottom: -8px;  height: 11px; }
 
     .tile-icon { font-size: 1.3rem; line-height: 1; }
     .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
@@ -890,7 +886,7 @@
           const conns = connByTile[i] || [];
           el.classList.toggle('has-connection', conns.length > 0);
           connEl.innerHTML = conns
-            .map(c => `<span class="tile-connector conn-${c.dir}" style="background:${c.hex}">⛓️</span>`)
+            .map(c => `<span class="tile-connector conn-${c.dir}" style="--conn-color:${c.hex}"></span>`)
             .join('');
         }
       });
