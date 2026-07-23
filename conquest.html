@@ -142,7 +142,7 @@
     .turn-indicator .tname { color: var(--turn-color, #22c55e); }
     .roll-btn { font-size: clamp(.78rem, 1.6vw, .88rem); padding: 8px 18px; }
     /* ── Roll choice: player picks 1 die (predictable) or 2 dice (bigger, riskier move) each turn ── */
-    .roll-btn-row { display: flex; gap: 10px; }
+    .roll-btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     .dice-pair { display: flex; gap: 18px; align-items: center; justify-content: center; }
 
     /* ── 3D dice: a real rotating cube with pip faces, tossed with a bounce ── */
@@ -628,6 +628,7 @@
             <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice(1)">🎲 1 Die</button>
             <button class="btn-primary roll-btn" id="roll-btn-2" onclick="rollDice(2)">🎲🎲 2 Dice</button>
             <button class="btn-secondary roll-btn hidden" id="reroll-btn" onclick="rerollDice()">🔄 Reroll</button>
+            <button class="btn-secondary roll-btn hidden" id="highroll-btn" onclick="activateHighRoll()">🎯 High Roll</button>
           </div>
         </div>
       </div>
@@ -707,6 +708,8 @@
     const MAX_REROLLS = 2; // each player gets this many reroll skill charges per game
     let pendingMoveTimeout = null;   // set while a just-finished roll can still be rerolled instead of moving
     let pendingRerollNumDice = null; // how many dice to re-throw if the reroll skill is used right now
+    const MAX_HIGH_ROLLS = 2; // each player gets this many "guaranteed 4+" skill charges per game
+    let highRollArmed = false; // true for the rest of the current turn (covers rerolls too) once activated
     let gameStarted = false;
     let round = 0;
     let currentTileIdx = null;
@@ -781,6 +784,7 @@
         token: PLAYER_COLORS[i].token,
         pos: 0,
         rerolls: MAX_REROLLS,
+        highRolls: MAX_HIGH_ROLLS,
       }));
       ownership = new Array(PATH.length).fill(-1);
       fortified = new Array(PATH.length).fill(false);
@@ -795,6 +799,8 @@
       document.getElementById('dice-outer-2').classList.add('hidden');
       if (pendingMoveTimeout) { clearTimeout(pendingMoveTimeout); pendingMoveTimeout = null; }
       hideRerollButton();
+      highRollArmed = false;
+      updateHighRollButton();
       round = 0;
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
@@ -1043,7 +1049,8 @@
       pendingRerollNumDice = numDice;
       hideRerollButton(); // hide while the dice are actively spinning, reappears once they land
 
-      const die1 = 1 + Math.floor(Math.random() * 6);
+      const rollOneDie = () => highRollArmed ? (4 + Math.floor(Math.random() * 3)) : (1 + Math.floor(Math.random() * 6));
+      const die1 = rollOneDie();
       const outer1 = document.getElementById('dice-outer');
       outer1.classList.remove('bounce');
       void outer1.offsetWidth; // restart the bounce animation even on back-to-back rolls
@@ -1053,7 +1060,7 @@
       let total = die1;
       const outer2 = document.getElementById('dice-outer-2');
       if (numDice === 2) {
-        const die2 = 1 + Math.floor(Math.random() * 6);
+        const die2 = rollOneDie();
         total += die2;
         outer2.classList.remove('hidden');
         outer2.classList.remove('bounce');
@@ -1097,6 +1104,31 @@
       btn.classList.remove('hidden');
       btn.disabled = false;
       btn.textContent = `🔄 Reroll (${left})`;
+    }
+
+    // spends one high-roll charge and guarantees every die rolled for the rest of this
+    // turn (including any rerolls) lands on 4, 5, or 6 instead of the normal 1–6 range
+    function activateHighRoll() {
+      const p = players[currentIdx];
+      if (rolling || awaitingJudgement || highRollArmed || !p || (p.highRolls || 0) <= 0) return;
+      p.highRolls--;
+      highRollArmed = true;
+      updateHighRollButton();
+    }
+
+    function updateHighRollButton() {
+      const btn = document.getElementById('highroll-btn');
+      const p = players[currentIdx];
+      const left = p ? (p.highRolls || 0) : 0;
+      if (highRollArmed) {
+        btn.disabled = true;
+        btn.textContent = '🎯 Armed!';
+        return;
+      }
+      if (left <= 0) { btn.classList.add('hidden'); return; }
+      btn.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = `🎯 High Roll (${left})`;
     }
 
     function hideRerollButton() {
@@ -1568,6 +1600,8 @@
       document.getElementById('dice-outer-2').classList.add('hidden'); // back to idle single-die view until the next player picks 2 dice
       if (pendingMoveTimeout) { clearTimeout(pendingMoveTimeout); pendingMoveTimeout = null; }
       hideRerollButton();
+      highRollArmed = false;
+      updateHighRollButton();
       updateTurnIndicator();
       renderScoreboard();
       renderBoard();
@@ -1637,7 +1671,10 @@
       const saved = loadSavedGame();
       if (!saved) return;
       players = saved.players;
-      players.forEach(p => { if (p.rerolls == null) p.rerolls = MAX_REROLLS; }); // older saves predate the reroll skill
+      players.forEach(p => {
+        if (p.rerolls == null) p.rerolls = MAX_REROLLS; // older saves predate the reroll skill
+        if (p.highRolls == null) p.highRolls = MAX_HIGH_ROLLS; // older saves predate the high-roll skill
+      });
       ownership = saved.ownership;
       fortified = saved.fortified || new Array(PATH.length).fill(false);
       currentIdx = saved.currentIdx;
@@ -1653,6 +1690,8 @@
       document.getElementById('dice-outer-2').classList.add('hidden');
       if (pendingMoveTimeout) { clearTimeout(pendingMoveTimeout); pendingMoveTimeout = null; }
       hideRerollButton();
+      highRollArmed = false;
+      updateHighRollButton();
 
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
