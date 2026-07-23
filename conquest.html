@@ -270,11 +270,6 @@
       transition: background .35s, border-color .35s;
     }
     .tile.special { background: #171730; border-color: #2a2a4a; }
-    .tile.is-fortified::after {
-      content: '🛡️'; position: absolute; top: 3px; right: 3px;
-      font-size: .8rem; text-shadow: 0 1px 3px rgba(0,0,0,.85);
-      filter: drop-shadow(0 0 3px rgba(56,189,248,.9));
-    }
     /* ── Territory connections: adjacent same-owner land gets a small stone bridge/wall
        built across the gap between them, reading as one connected structure ── */
     .tile.has-connection { overflow: visible; z-index: 3; }
@@ -456,7 +451,6 @@
     .dare-panel.corner-bonus { border-color: #f59e0b; box-shadow: 0 0 28px rgba(245,158,11,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-lucky { border-color: #a78bfa; box-shadow: 0 0 28px rgba(167,139,250,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-gift  { border-color: #ec4899; box-shadow: 0 0 28px rgba(236,72,153,.35), 0 16px 48px rgba(0,0,0,.55); }
-    .dare-panel.corner-fortify { border-color: #38bdf8; box-shadow: 0 0 28px rgba(56,189,248,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.defense      { border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.truth        { border-color: #eab308; box-shadow: 0 0 32px rgba(234,179,8,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.choice       { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.35), 0 16px 48px rgba(0,0,0,.55); }
@@ -687,9 +681,9 @@
     // the dare prompt itself lives in the panel above the board. Each tile's `type`
     // is 'dare' (claimable, triggers a dare) or one of the special event types below
     // (never claimable, triggers its effect instead) — one each of BONUS, LUCKY, and GIFT.
-    const TYPE_ICON = { start: '🏁', bonus: '⭐', lucky: '🎲', gift: '🎁', fortify: '🛡️' };
-    const TYPE_LABEL = { start: 'START', bonus: 'BONUS', lucky: 'LUCKY', gift: 'GIFT', fortify: 'FORTIFY' };
-    const TYPE_COLOR = { start: '#94a3b8', bonus: '#f59e0b', lucky: '#a78bfa', gift: '#ec4899', fortify: '#38bdf8' };
+    const TYPE_ICON = { start: '🏁', bonus: '⭐', lucky: '🎲', gift: '🎁' };
+    const TYPE_LABEL = { start: 'START', bonus: 'BONUS', lucky: 'LUCKY', gift: 'GIFT' };
+    const TYPE_COLOR = { start: '#94a3b8', bonus: '#f59e0b', lucky: '#a78bfa', gift: '#ec4899' };
     const PATH = [
       { row: 1, col: 1, type: 'start' },
       { row: 1, col: 2, type: 'dare' },
@@ -721,7 +715,6 @@
     let playerNames = [];
     let players = [];       // { name, hex, token, pos }
     let ownership = [];     // length PATH.length, index into players or -1
-    let fortified = [];     // length PATH.length, true if that tile's owner has fortified it
     let currentIdx = 0;
     let usedPrompts = [];
     let usedTruths = [];
@@ -807,7 +800,6 @@
         lowRolls: MAX_LOW_ROLLS,
       }));
       ownership = new Array(PATH.length).fill(-1);
-      fortified = new Array(PATH.length).fill(false);
       currentIdx = 0;
       usedPrompts = [];
       usedTruths = [];
@@ -906,7 +898,6 @@
             if (nameEl) nameEl.textContent = '';
           }
         }
-        el.classList.toggle('is-fortified', t.type === 'dare' && !!fortified[i]);
         const isCurrentTile = current && current.pos === i;
         el.classList.toggle('active-turn-tile', !!isCurrentTile);
         if (isCurrentTile) el.style.setProperty('--turn-color', current.hex);
@@ -1003,7 +994,7 @@
        overlay on top of the map, so it's only shown when there's something to say ── */
     function renderCenterIdle() {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-fortify');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('hidden');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
@@ -1013,7 +1004,7 @@
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden');
-      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-fortify');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('corner-' + type);
       document.getElementById('center-content').outerHTML = `
         <div class="center-safe" id="center-content">
@@ -1167,14 +1158,9 @@
         // only a successful challenge actually triggers the reward (see judge())
         showChallengeChoice(p.pos, -1, type);
       } else if (ownership[p.pos] === currentIdx) {
-        // your own land — already fortified? just a quick confirmation, no need to challenge again
-        if (fortified[p.pos]) {
-          flashTile(p.pos, players[currentIdx].hex);
-          showCornerMessage('🛡️', 'This land is already fortified! Nothing more to do here.', 'fortify');
-        } else {
-          // not fortified yet — a successful Truth or Dare challenge fortifies it (see judge())
-          showChallengeChoice(p.pos, -1, 'fortify');
-        }
+        // your own land — nothing to do, just pass to the next player
+        nextTurn();
+        renderCenterIdle();
       } else if (ownership[p.pos] !== -1) {
         showChallengeChoice(p.pos, ownership[p.pos]);
       } else {
@@ -1189,7 +1175,7 @@
       const eligible = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] !== currentIdx) ? i : -1).filter(i => i >= 0));
       const gained = eligible.slice(0, 2);
       const stolen = gained.filter(i => ownership[i] !== -1); // tiles taken from a rival, not unowned land
-      gained.forEach(i => { ownership[i] = currentIdx; fortified[i] = false; });
+      gained.forEach(i => ownership[i] = currentIdx);
       renderBoard();
       renderScoreboard();
       flashTile(players[currentIdx].pos, TYPE_COLOR.bonus);
@@ -1207,7 +1193,7 @@
         doLucky();
         return;
       }
-      unclaimed.forEach(i => { ownership[i] = currentIdx; fortified[i] = false; });
+      unclaimed.forEach(i => ownership[i] = currentIdx);
       renderBoard();
       renderScoreboard();
       flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
@@ -1221,7 +1207,7 @@
       if (others.length === 1) { performSwap(others[0]); return; }
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-fortify');
+      panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
@@ -1235,8 +1221,7 @@
 
     function performSwap(targetIdx) {
       const cur = currentIdx;
-      ownership = ownership.map((o, i) => {
-        if (o === cur || o === targetIdx) fortified[i] = false; // changing hands clears any fortification
+      ownership = ownership.map(o => {
         if (o === cur) return targetIdx;
         if (o === targetIdx) return cur;
         return o;
@@ -1248,16 +1233,7 @@
       showCornerMessage('🔄', `Lucky corner! You swapped all territories with ${players[targetIdx].name}!`, 'lucky');
     }
 
-    // FORTIFY: landing on your own already-owned land can fortify it — a fortified tile
-    // requires the attacker to win a future Dice-Off by 2 or more instead of just 1
-    function doFortify(tileIdx) {
-      fortified[tileIdx] = true;
-      renderBoard();
-      flashTile(tileIdx, TYPE_COLOR.fortify);
-      showCornerMessage('🛡️', 'Fortified! This land now needs a 2-point win to be stolen from you.', 'fortify');
-    }
-
-    /* ── Dare prompt / judging ── */
+/* ── Dare prompt / judging ── */
     // fills {player} with a random OTHER player's name, colored to match their token
     function resolvePromptText(text, excludeIdx) {
       if (!text.includes('{player}')) return text;
@@ -1284,7 +1260,7 @@
       const owner = isSteal ? players[ownerIdx] : null;
 
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-fortify');
+      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add(isSteal ? 'defense' : 'choice');
       const badgeStyle = isSteal
         ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"'
@@ -1294,8 +1270,6 @@
       const badgeText = isSteal ? '⚔️ Steal Attempt' : isSpecial ? `${TYPE_ICON[specialType]} ${TYPE_LABEL[specialType]} Challenge` : '🎲 Your Challenge';
       const bodyText = isSteal
         ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land!<br>${attacker.name}, call it — Truth or Dare?`
-        : specialType === 'fortify'
-        ? `${attacker.name} wants to fortify this land!<br>${attacker.name}, call it — Truth or Dare?`
         : isSpecial
         ? `${attacker.name} landed on ${TYPE_LABEL[specialType]}!<br>${attacker.name}, call it — Truth or Dare?`
         : `${attacker.name}, call it out loud — Truth or Dare?`;
@@ -1330,7 +1304,7 @@
     // renders the actual dare/truth (category + text + optional timer + judge buttons)
     function renderDareContent(prompt, isTruth) {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-fortify');
+      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add(isTruth ? 'truth' : 'active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
@@ -1454,7 +1428,6 @@
           if (special === 'bonus') doBonus();
           else if (special === 'lucky' || special === 'start') doLucky();
           else if (special === 'gift') doGift();
-          else if (special === 'fortify') doFortify(currentTileIdx);
           return;
         }
         currentChallengeOwner = -1;
@@ -1490,16 +1463,15 @@
     function showDiceOff(tileIdx, ownerIdx) {
       const attacker = players[currentIdx];
       const owner = players[ownerIdx];
-      const isFortified = !!fortified[tileIdx];
       diceOffState = { tileIdx, ownerIdx, attackerIdx: currentIdx, attackerRoll: null, ownerRoll: null };
 
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-fortify');
+      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('diceoff');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">🎲 Dice-Off!</span>
-          <div class="q-text">Challenge complete! Roll for the land — higher number wins (ties go to the defender).${isFortified ? '<br><span style="color:#38bdf8;">🛡️ Fortified Land! The attacker needs to win by 2 or more.</span>' : ''}</div>
+          <div class="q-text">Challenge complete! Roll for the land — higher number wins (ties go to the defender).</div>
           <div class="diceoff-grid">
             <div class="diceoff-side" id="attacker-diceoff-side">
               <div class="diceoff-name" style="color:${attacker.hex}">${attacker.token} ${attacker.name}</div>
@@ -1570,8 +1542,7 @@
     function checkDiceOffComplete() {
       const state = diceOffState;
       if (!state || state.attackerRoll == null || state.ownerRoll == null) return;
-      const requiredMargin = fortified[state.tileIdx] ? 2 : 1; // fortified land needs a 2-point win, not just 1
-      const attackerWins = state.attackerRoll - state.ownerRoll >= requiredMargin;
+      const attackerWins = state.attackerRoll > state.ownerRoll;
       const resultEl = document.getElementById('diceoff-result');
       if (resultEl) {
         resultEl.textContent = attackerWins
@@ -1589,7 +1560,6 @@
       setTimeout(() => {
         if (attackerWins) {
           ownership[state.tileIdx] = state.attackerIdx;
-          fortified[state.tileIdx] = false; // changing hands clears any fortification
           animateCapture(state.tileIdx, players[state.attackerIdx].hex);
         }
         diceOffState = null;
@@ -1642,7 +1612,7 @@
       if (!gameStarted || !players.length) return;
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify({
-          players, ownership, fortified, currentIdx, round, usedPrompts, usedTruths,
+          players, ownership, currentIdx, round, usedPrompts, usedTruths,
           gameEnded: document.getElementById('winner-banner').classList.contains('shown'),
         }));
       } catch (e) { /* localStorage unavailable or full — game still works without persistence */ }
@@ -1684,7 +1654,6 @@
         if (p.lowRolls == null) p.lowRolls = MAX_LOW_ROLLS;   // older saves predate the low-roll skill
       });
       ownership = saved.ownership;
-      fortified = saved.fortified || new Array(PATH.length).fill(false);
       currentIdx = saved.currentIdx;
       round = saved.round;
       usedPrompts = saved.usedPrompts || [];
