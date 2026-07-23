@@ -625,8 +625,9 @@
             </div>
           </div>
           <div class="roll-btn-row">
-            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice(1)">🎲 Roll 1 Die</button>
-            <button class="btn-primary roll-btn" id="roll-btn-2" onclick="rollDice(2)">🎲🎲 Roll 2 Dice</button>
+            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice(1)">🎲 1 Die</button>
+            <button class="btn-primary roll-btn" id="roll-btn-2" onclick="rollDice(2)">🎲🎲 2 Dice</button>
+            <button class="btn-secondary roll-btn hidden" id="reroll-btn" onclick="rerollDice()">🔄 Reroll</button>
           </div>
         </div>
       </div>
@@ -703,6 +704,9 @@
     let usedTruths = [];
     let rolling = false;
     let awaitingJudgement = false;
+    const MAX_REROLLS = 2; // each player gets this many reroll skill charges per game
+    let pendingMoveTimeout = null;   // set while a just-finished roll can still be rerolled instead of moving
+    let pendingRerollNumDice = null; // how many dice to re-throw if the reroll skill is used right now
     let gameStarted = false;
     let round = 0;
     let currentTileIdx = null;
@@ -776,6 +780,7 @@
         hex: PLAYER_COLORS[i].hex,
         token: PLAYER_COLORS[i].token,
         pos: 0,
+        rerolls: MAX_REROLLS,
       }));
       ownership = new Array(PATH.length).fill(-1);
       fortified = new Array(PATH.length).fill(false);
@@ -788,6 +793,8 @@
       rolling = false;
       awaitingJudgement = false;
       document.getElementById('dice-outer-2').classList.add('hidden');
+      if (pendingMoveTimeout) { clearTimeout(pendingMoveTimeout); pendingMoveTimeout = null; }
+      hideRerollButton();
       round = 0;
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
@@ -1033,6 +1040,8 @@
       if (rolling || awaitingJudgement || !players.length) return;
       rolling = true;
       setRollButtonsDisabled(true);
+      pendingRerollNumDice = numDice;
+      hideRerollButton(); // hide while the dice are actively spinning, reappears once they land
 
       const die1 = 1 + Math.floor(Math.random() * 6);
       const outer1 = document.getElementById('dice-outer');
@@ -1055,7 +1064,43 @@
         outer2.classList.add('hidden');
       }
 
-      setTimeout(() => movePlayer(total), 1100);
+      setTimeout(() => {
+        // dice have landed — leave a short window where the reroll skill can still
+        // cancel this result before the player actually moves
+        updateRerollButton();
+        pendingMoveTimeout = setTimeout(() => {
+          pendingMoveTimeout = null;
+          hideRerollButton();
+          movePlayer(total);
+        }, 1500);
+      }, 1100);
+    }
+
+    // spends one reroll charge (if the current player has any left) and re-throws
+    // the same number of dice, replacing whatever result was just rolled
+    function rerollDice() {
+      const p = players[currentIdx];
+      if (!pendingMoveTimeout || pendingRerollNumDice == null || !p || (p.rerolls || 0) <= 0) return;
+      clearTimeout(pendingMoveTimeout);
+      pendingMoveTimeout = null;
+      p.rerolls--;
+      renderScoreboard();
+      rolling = false; // let rollDice() re-enter even though this turn's roll never finished moving
+      rollDice(pendingRerollNumDice);
+    }
+
+    function updateRerollButton() {
+      const btn = document.getElementById('reroll-btn');
+      const p = players[currentIdx];
+      const left = p ? (p.rerolls || 0) : 0;
+      if (left <= 0) { btn.classList.add('hidden'); return; }
+      btn.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = `🔄 Reroll (${left})`;
+    }
+
+    function hideRerollButton() {
+      document.getElementById('reroll-btn').classList.add('hidden');
     }
 
     function movePlayer(steps) {
@@ -1521,6 +1566,8 @@
       rolling = false;
       setRollButtonsDisabled(false);
       document.getElementById('dice-outer-2').classList.add('hidden'); // back to idle single-die view until the next player picks 2 dice
+      if (pendingMoveTimeout) { clearTimeout(pendingMoveTimeout); pendingMoveTimeout = null; }
+      hideRerollButton();
       updateTurnIndicator();
       renderScoreboard();
       renderBoard();
@@ -1590,6 +1637,7 @@
       const saved = loadSavedGame();
       if (!saved) return;
       players = saved.players;
+      players.forEach(p => { if (p.rerolls == null) p.rerolls = MAX_REROLLS; }); // older saves predate the reroll skill
       ownership = saved.ownership;
       fortified = saved.fortified || new Array(PATH.length).fill(false);
       currentIdx = saved.currentIdx;
@@ -1603,6 +1651,8 @@
       rolling = false;
       awaitingJudgement = false;
       document.getElementById('dice-outer-2').classList.add('hidden');
+      if (pendingMoveTimeout) { clearTimeout(pendingMoveTimeout); pendingMoveTimeout = null; }
+      hideRerollButton();
 
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
