@@ -627,7 +627,8 @@
           <div class="roll-btn-row">
             <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice(1)">🎲 1 Die</button>
             <button class="btn-primary roll-btn" id="roll-btn-2" onclick="rollDice(2)">🎲🎲 2 Dice</button>
-            <button class="btn-secondary roll-btn hidden" id="highroll-btn" onclick="activateHighRoll()">🎯 High Roll</button>
+            <button class="btn-secondary roll-btn hidden" id="highroll-btn" onclick="toggleSkill('high')">🎯 High Roll</button>
+            <button class="btn-secondary roll-btn hidden" id="lowroll-btn" onclick="toggleSkill('low')">🔻 Low Roll</button>
           </div>
         </div>
       </div>
@@ -705,7 +706,8 @@
     let rolling = false;
     let awaitingJudgement = false;
     const MAX_HIGH_ROLLS = 2; // each player gets this many "guaranteed 4+" skill charges per game
-    let highRollArmed = false; // true for the rest of the current turn once activated
+    const MAX_LOW_ROLLS = 2;  // each player gets this many "guaranteed 3-" skill charges per game
+    let armedSkill = null; // null | 'high' | 'low' — which one (if any) is active for the rest of this turn
     let gameStarted = false;
     let round = 0;
     let currentTileIdx = null;
@@ -780,6 +782,7 @@
         token: PLAYER_COLORS[i].token,
         pos: 0,
         highRolls: MAX_HIGH_ROLLS,
+        lowRolls: MAX_LOW_ROLLS,
       }));
       ownership = new Array(PATH.length).fill(-1);
       fortified = new Array(PATH.length).fill(false);
@@ -792,8 +795,8 @@
       rolling = false;
       awaitingJudgement = false;
       document.getElementById('dice-outer-2').classList.add('hidden');
-      highRollArmed = false;
-      updateHighRollButton();
+      armedSkill = null;
+      updateSkillButtons();
       round = 0;
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
@@ -1040,7 +1043,11 @@
       rolling = true;
       setRollButtonsDisabled(true);
 
-      const rollOneDie = () => highRollArmed ? (4 + Math.floor(Math.random() * 3)) : (1 + Math.floor(Math.random() * 6));
+      const rollOneDie = () => {
+        if (armedSkill === 'high') return 4 + Math.floor(Math.random() * 3);
+        if (armedSkill === 'low')  return 1 + Math.floor(Math.random() * 3);
+        return 1 + Math.floor(Math.random() * 6);
+      };
       const die1 = rollOneDie();
       const outer1 = document.getElementById('dice-outer');
       outer1.classList.remove('bounce');
@@ -1065,29 +1072,51 @@
       setTimeout(() => movePlayer(total), 1100);
     }
 
-    // spends one high-roll charge and guarantees every die rolled for the rest of this
-    // turn lands on 4, 5, or 6 instead of the normal 1–6 range
-    function activateHighRoll() {
+    const SKILL_INFO = {
+      high: { field: 'highRolls', icon: '🎯', label: 'High Roll', btnId: 'highroll-btn' },
+      low:  { field: 'lowRolls',  icon: '🔻', label: 'Low Roll',  btnId: 'lowroll-btn' },
+    };
+
+    // arms (or, on a second press, cancels) a "guaranteed range" skill for the rest of this
+    // turn — pressing the other skill's button while one is armed swaps to it instead,
+    // refunding the charge of whichever one was armed before
+    function toggleSkill(kind) {
       const p = players[currentIdx];
-      if (rolling || awaitingJudgement || highRollArmed || !p || (p.highRolls || 0) <= 0) return;
-      p.highRolls--;
-      highRollArmed = true;
-      updateHighRollButton();
+      if (rolling || awaitingJudgement || !p) return;
+      const info = SKILL_INFO[kind];
+
+      if (armedSkill === kind) {
+        p[info.field] = (p[info.field] || 0) + 1; // cancel — refund the charge, it was never used
+        armedSkill = null;
+      } else {
+        if ((p[info.field] || 0) <= 0) return;
+        if (armedSkill) {
+          const otherInfo = SKILL_INFO[armedSkill];
+          p[otherInfo.field] = (p[otherInfo.field] || 0) + 1; // switching skills refunds the previous one
+        }
+        p[info.field]--;
+        armedSkill = kind;
+      }
+      updateSkillButtons();
     }
 
-    function updateHighRollButton() {
-      const btn = document.getElementById('highroll-btn');
-      const p = players[currentIdx];
-      const left = p ? (p.highRolls || 0) : 0;
-      if (highRollArmed) {
-        btn.disabled = true;
-        btn.textContent = '🎯 Armed!';
-        return;
-      }
-      if (left <= 0) { btn.classList.add('hidden'); return; }
-      btn.classList.remove('hidden');
-      btn.disabled = false;
-      btn.textContent = `🎯 High Roll (${left})`;
+    function updateSkillButtons() {
+      Object.keys(SKILL_INFO).forEach(kind => {
+        const info = SKILL_INFO[kind];
+        const btn = document.getElementById(info.btnId);
+        const p = players[currentIdx];
+        const left = p ? (p[info.field] || 0) : 0;
+        if (armedSkill === kind) {
+          btn.classList.remove('hidden');
+          btn.disabled = false; // stays clickable so a second press can cancel it
+          btn.textContent = `${info.icon} Armed! (tap to cancel)`;
+          return;
+        }
+        if (left <= 0) { btn.classList.add('hidden'); return; }
+        btn.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = `${info.icon} ${info.label} (${left})`;
+      });
     }
 
     function movePlayer(steps) {
@@ -1553,8 +1582,8 @@
       rolling = false;
       setRollButtonsDisabled(false);
       document.getElementById('dice-outer-2').classList.add('hidden'); // back to idle single-die view until the next player picks 2 dice
-      highRollArmed = false;
-      updateHighRollButton();
+      armedSkill = null;
+      updateSkillButtons();
       updateTurnIndicator();
       renderScoreboard();
       renderBoard();
@@ -1626,6 +1655,7 @@
       players = saved.players;
       players.forEach(p => {
         if (p.highRolls == null) p.highRolls = MAX_HIGH_ROLLS; // older saves predate the high-roll skill
+        if (p.lowRolls == null) p.lowRolls = MAX_LOW_ROLLS;   // older saves predate the low-roll skill
       });
       ownership = saved.ownership;
       fortified = saved.fortified || new Array(PATH.length).fill(false);
@@ -1640,8 +1670,8 @@
       rolling = false;
       awaitingJudgement = false;
       document.getElementById('dice-outer-2').classList.add('hidden');
-      highRollArmed = false;
-      updateHighRollButton();
+      armedSkill = null;
+      updateSkillButtons();
 
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
