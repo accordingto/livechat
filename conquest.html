@@ -48,6 +48,9 @@
     }
     .btn-secondary:hover  { border-color: #22c55e; color: #22c55e; }
     .btn-secondary:active { transform: scale(.98); }
+    /* armed skill (High Roll / Low Roll) — red border + yellow text, text label itself doesn't change */
+    .btn-secondary.skill-armed,
+    .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
 
     /* ── Setup card ── */
     .setup-card {
@@ -1106,10 +1109,11 @@
         const btn = document.getElementById(info.btnId);
         const p = players[currentIdx];
         const left = p ? (p[info.field] || 0) : 0;
+        btn.classList.toggle('skill-armed', armedSkill === kind); // red border + yellow text while armed, text itself never changes
         if (armedSkill === kind) {
           btn.classList.remove('hidden');
           btn.disabled = false; // stays clickable so a second press can cancel it
-          btn.textContent = `${info.icon} Armed! (tap to cancel)`;
+          btn.textContent = `${info.icon} ${info.label} (${left})`;
           return;
         }
         if (left <= 0) { btn.classList.add('hidden'); return; }
