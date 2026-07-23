@@ -1169,11 +1169,24 @@
     }
 
     /* ── Corner effects ── */
-    // BONUS: randomly hand the current player 2 territories they don't already own
-    // (stealing from rivals if there aren't enough unclaimed tiles left)
+    // BONUS: seize 2 territories from whichever rival currently holds the most land (a
+    // catch-up-the-leader effect) — falls back to random unclaimed tiles if no rival owns any yet
     function doBonus() {
-      const eligible = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] !== currentIdx) ? i : -1).filter(i => i >= 0));
-      const gained = eligible.slice(0, 2);
+      const rivalCounts = players
+        .map((p, i) => ({ i, count: ownership.filter(o => o === i).length }))
+        .filter(r => r.i !== currentIdx);
+      const maxCount = Math.max(0, ...rivalCounts.map(r => r.count));
+      let gained, sourceIdx = -1;
+      if (maxCount > 0) {
+        const leaders = rivalCounts.filter(r => r.count === maxCount);
+        sourceIdx = leaders[Math.floor(Math.random() * leaders.length)].i;
+        const leaderTiles = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] === sourceIdx) ? i : -1).filter(i => i >= 0));
+        gained = leaderTiles.slice(0, 2);
+      } else {
+        // nobody else owns any land yet — nothing to seize, fall back to unclaimed tiles
+        const eligible = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] === -1) ? i : -1).filter(i => i >= 0));
+        gained = eligible.slice(0, 2);
+      }
       const stolen = gained.filter(i => ownership[i] !== -1); // tiles taken from a rival, not unowned land
       gained.forEach(i => ownership[i] = currentIdx);
       renderBoard();
@@ -1181,7 +1194,9 @@
       flashTile(players[currentIdx].pos, TYPE_COLOR.bonus);
       stolen.forEach(i => animateCapture(i, players[currentIdx].hex));
       showCornerMessage('⭐', gained.length
-        ? `Bonus corner! You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`
+        ? (sourceIdx >= 0
+            ? `Bonus corner! You seized ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'} from the leader, ${players[sourceIdx].name}!`
+            : `Bonus corner! You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`)
         : 'Bonus corner! There were no other territories left to claim.', 'bonus');
     }
 
