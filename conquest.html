@@ -296,6 +296,14 @@
 
     .tile-icon { font-size: 1.3rem; line-height: 1; }
     .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: #666; margin-top: 3px; }
+    /* the owning player's name, centered in an owned tile instead of just a plain color fill */
+    .tile-owner-name {
+      font-size: .68rem; font-weight: 800; color: #fff; text-align: center;
+      text-shadow: 0 1px 3px rgba(0,0,0,.6);
+      line-height: 1.15; padding: 0 3px; max-width: 100%;
+      word-break: break-word;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
     .tile-tokens {
       position: absolute; bottom: 3px; left: 0; right: 0;
       display: flex; justify-content: center; gap: 2px; flex-wrap: wrap;
@@ -840,7 +848,7 @@
         if (isSpecial) {
           el.innerHTML = `<span class="tile-icon">${TYPE_ICON[t.type]}</span><span class="tile-corner-label">${TYPE_LABEL[t.type]}</span><div class="tile-tokens"></div>`;
         } else {
-          el.innerHTML = `<div class="tile-connectors"></div><div class="tile-tokens"></div>`;
+          el.innerHTML = `<div class="tile-connectors"></div><div class="tile-owner-name"></div><div class="tile-tokens"></div>`;
         }
         board.insertBefore(el, document.getElementById('board-center'));
         return el;
@@ -886,13 +894,16 @@
         if (!el) return;
         if (t.type === 'dare') {
           const ownerIdx = ownership[i];
+          const nameEl = el.querySelector('.tile-owner-name');
           if (ownerIdx >= 0) {
             const owner = players[ownerIdx];
             el.style.background = owner.hex;
             el.style.borderColor = owner.hex;
+            if (nameEl) nameEl.textContent = owner.name;
           } else {
             el.style.background = '';
             el.style.borderColor = '';
+            if (nameEl) nameEl.textContent = '';
           }
         }
         el.classList.toggle('is-fortified', t.type === 'dare' && !!fortified[i]);
