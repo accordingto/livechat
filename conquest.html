@@ -452,6 +452,7 @@
     .dare-panel.corner-bonus { border-color: #f59e0b; box-shadow: 0 0 28px rgba(245,158,11,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-lucky { border-color: #a78bfa; box-shadow: 0 0 28px rgba(167,139,250,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.corner-gift  { border-color: #ec4899; box-shadow: 0 0 28px rgba(236,72,153,.35), 0 16px 48px rgba(0,0,0,.55); }
+    .dare-panel.corner-raid  { border-color: #f97316; box-shadow: 0 0 28px rgba(249,115,22,.4), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.defense      { border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.truth        { border-color: #eab308; box-shadow: 0 0 32px rgba(234,179,8,.35), 0 16px 48px rgba(0,0,0,.55); }
     .dare-panel.choice       { border-color: #22c55e; box-shadow: 0 0 32px rgba(34,197,94,.35), 0 16px 48px rgba(0,0,0,.55); }
@@ -730,6 +731,7 @@
     let currentChallengeOwner = -1; // -1 = claiming unowned land; otherwise the rival being stolen from
     let pendingSpecialEffect = null; // 'bonus' | 'lucky' | 'gift' while a challenge on a special tile is in progress
     let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
+    let raidState = null;           // { raiderIdx, leaderIdx, tileIdx, realNextIdx } while the last-place Surprise Raid is in progress
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
     const boardDiceRot = { 1: { x: 0, y: 0 }, 2: { x: 0, y: 0 } }; // cumulative rotation for the two movement dice
 
@@ -807,6 +809,7 @@
       currentChallengeOwner = -1;
       pendingSpecialEffect = null;
       diceOffState = null;
+      raidState = null;
       rolling = false;
       awaitingJudgement = false;
       document.getElementById('dice-outer-2').classList.add('hidden');
@@ -994,18 +997,71 @@
     /* ── Dare panel states: hidden / safe-corner / active dare — it's a floating
        overlay on top of the map, so it's only shown when there's something to say ── */
     function renderCenterIdle() {
+      if (raidState) { showRaidIntro(); return; } // a round just completed with a Surprise Raid pending
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-raid');
       panel.classList.add('hidden');
       document.getElementById('center-content').outerHTML =
         `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
+    }
+
+    // SURPRISE RAID: after a round completes, the last-place player gets one bonus attempt
+    // to steal a tile from the current leader — same Truth/Dare + Dice-Off flow as a normal steal
+    function maybeTriggerRaid() {
+      const counts = players.map((p, i) => ({ i, count: ownership.filter(o => o === i).length }));
+      const minCount = Math.min(...counts.map(c => c.count));
+      const maxCount = Math.max(...counts.map(c => c.count));
+      if (minCount === maxCount) return; // everyone's tied — no meaningful last place or leader
+      const lastPlace = counts.filter(c => c.count === minCount);
+      const raiderIdx = lastPlace[Math.floor(Math.random() * lastPlace.length)].i;
+      const leaders = counts.filter(c => c.count === maxCount && c.i !== raiderIdx);
+      if (!leaders.length) return; // the chosen last-place player is also (tied for) the leader — skip
+      const leaderIdx = leaders[Math.floor(Math.random() * leaders.length)].i;
+      const leaderTiles = PATH.map((t, i) => (t.type === 'dare' && ownership[i] === leaderIdx) ? i : -1).filter(i => i >= 0);
+      if (!leaderTiles.length) return;
+      const tileIdx = leaderTiles[Math.floor(Math.random() * leaderTiles.length)];
+      raidState = { raiderIdx, leaderIdx, tileIdx, realNextIdx: currentIdx };
+    }
+
+    function showRaidIntro() {
+      awaitingJudgement = true;
+      const { raiderIdx, leaderIdx } = raidState;
+      const panel = document.getElementById('dare-panel');
+      panel.classList.remove('hidden');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.add('corner-raid');
+      document.getElementById('center-content').outerHTML = `
+        <div class="center-safe" id="center-content">
+          <span class="cs-icon">🗡️</span>
+          <p><span style="color:${players[raiderIdx].hex}">${players[raiderIdx].name}</span> is in last place — time for a <strong>Surprise Raid</strong> on the leader, <span style="color:${players[leaderIdx].hex}">${players[leaderIdx].name}</span>!</p>
+          <button class="btn-judge btn-correct" onclick="startRaidChallenge()">👍 OK</button>
+        </div>`;
+    }
+
+    // the raid uses the exact same Truth/Dare + Dice-Off flow as a normal steal attempt,
+    // just with the raider borrowing currentIdx and the leader's tile as the target
+    function startRaidChallenge() {
+      const { leaderIdx, tileIdx } = raidState;
+      awaitingJudgement = false;
+      showChallengeChoice(tileIdx, leaderIdx);
+    }
+
+    // restores the real next player's turn once the raid challenge (win, lose, or fail) is done
+    function endRaid() {
+      currentIdx = raidState.realNextIdx;
+      raidState = null;
+      updateTurnIndicator();
+      renderScoreboard();
+      renderBoard();
+      saveGame();
+      renderCenterIdle();
     }
 
     function showCornerMessage(icon, text, type) {
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden');
-      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-raid');
       panel.classList.add('corner-' + type);
       document.getElementById('center-content').outerHTML = `
         <div class="center-safe" id="center-content">
@@ -1222,7 +1278,7 @@
       if (others.length === 1) { performSwap(others[0]); return; }
       awaitingJudgement = true;
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-raid');
       panel.classList.add('active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
@@ -1275,7 +1331,7 @@
       const owner = isSteal ? players[ownerIdx] : null;
 
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-raid');
       panel.classList.add(isSteal ? 'defense' : 'choice');
       const badgeStyle = isSteal
         ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"'
@@ -1319,7 +1375,7 @@
     // renders the actual dare/truth (category + text + optional timer + judge buttons)
     function renderDareContent(prompt, isTruth) {
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-raid');
       panel.classList.add(isTruth ? 'truth' : 'active');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
@@ -1458,8 +1514,13 @@
       currentChallengeOwner = -1;
       renderBoard();
       renderScoreboard();
-      nextTurn();
-      renderCenterIdle();
+      if (raidState) {
+        // a failed Surprise Raid challenge — no dice-off, just hand the turn back
+        endRaid();
+      } else {
+        nextTurn();
+        renderCenterIdle();
+      }
     }
 
     /* ── Dice roll-off: decides a steal attempt after the challenge is completed.
@@ -1481,7 +1542,7 @@
       diceOffState = { tileIdx, ownerIdx, attackerIdx: currentIdx, attackerRoll: null, ownerRoll: null };
 
       const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift', 'corner-raid');
       panel.classList.add('diceoff');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
@@ -1581,25 +1642,34 @@
         currentChallengeOwner = -1;
         renderBoard();
         renderScoreboard();
-        nextTurn();
-        renderCenterIdle();
+        if (raidState) {
+          // the Surprise Raid's dice-off is settled (win or lose) — hand the turn back either way
+          endRaid();
+        } else {
+          nextTurn();
+          renderCenterIdle();
+        }
       }, 1300);
     }
 
     function nextTurn() {
       const wasLastPlayer = currentIdx === players.length - 1; // finishing the last player's turn completes a round
       currentIdx = (currentIdx + 1) % players.length;
-      if (wasLastPlayer) round++;
+      if (wasLastPlayer) {
+        round++;
+        maybeTriggerRaid(); // may queue a Surprise Raid for the last-place player against the leader
+      }
       document.getElementById('roundNum').textContent = round;
       rolling = false;
       setRollButtonsDisabled(false);
       document.getElementById('dice-outer-2').classList.add('hidden'); // back to idle single-die view until the next player picks 2 dice
       armedSkill = null;
       updateSkillButtons();
+      if (raidState) currentIdx = raidState.raiderIdx; // borrow currentIdx so the raid plays out like a normal turn
       updateTurnIndicator();
       renderScoreboard();
       renderBoard();
-      saveGame();
+      if (!raidState) saveGame(); // mid-raid isn't a clean turn boundary — endRaid() saves once it resolves
     }
 
     function showWinner() {
@@ -1678,6 +1748,7 @@
       currentChallengeOwner = -1;
       pendingSpecialEffect = null;
       diceOffState = null;
+      raidState = null;
       rolling = false;
       awaitingJudgement = false;
       document.getElementById('dice-outer-2').classList.add('hidden');
