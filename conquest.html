@@ -35,7 +35,6 @@
       white-space: nowrap;
       transition: background .2s, transform .1s, opacity .2s;
     }
-    .btn-primary:hover:not(:disabled)  { background: rgba(34,197,94,.1); }
     .btn-primary:active:not(:disabled) { transform: scale(.98); }
     .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
 
@@ -46,11 +45,17 @@
       white-space: nowrap;
       transition: border-color .2s, color .2s, transform .1s;
     }
-    .btn-secondary:hover  { border-color: #22c55e; color: #22c55e; }
     .btn-secondary:active { transform: scale(.98); }
     /* armed skill (High Roll / Low Roll) — red border + yellow text, text label itself doesn't change */
-    .btn-secondary.skill-armed,
-    .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
+    .btn-secondary.skill-armed { border-color: #ef4444; color: #eab308; }
+    /* :hover only on devices that actually have a mouse — on touch (iPad), tapping a button
+       leaves it "stuck" in :hover with no mouseleave to clear it, so a canceled skill button
+       would otherwise stay green-tinted forever instead of returning to its plain gray look */
+    @media (hover: hover) and (pointer: fine) {
+      .btn-primary:hover:not(:disabled) { background: rgba(34,197,94,.1); }
+      .btn-secondary:hover { border-color: #22c55e; color: #22c55e; }
+      .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
+    }
 
     /* ── Setup card ── */
     .setup-card {
@@ -73,9 +78,11 @@
       font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: border-color .2s, color .2s, background .2s, transform .1s;
     }
-    .player-btn:hover  { border-color: #22c55e; color: #22c55e; }
     .player-btn:active { transform: scale(.94); }
     .player-btn.active { border-color: #22c55e; color: #fff; background: rgba(34,197,94,.18); }
+    @media (hover: hover) and (pointer: fine) {
+      .player-btn:hover { border-color: #22c55e; color: #22c55e; }
+    }
 
     .name-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -466,8 +473,10 @@
     }
     .td-choice-btn .td-emoji { font-size: 1.8rem; }
     .td-choice-btn:active { transform: scale(.96); }
-    .td-choice-btn.td-truth:hover { border-color: #eab308; color: #eab308; background: rgba(234,179,8,.08); }
-    .td-choice-btn.td-dare:hover  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+    @media (hover: hover) and (pointer: fine) {
+      .td-choice-btn.td-truth:hover { border-color: #eab308; color: #eab308; background: rgba(234,179,8,.08); }
+      .td-choice-btn.td-dare:hover  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+    }
 
     .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .3s ease both; }
     .center-idle .ci-icon { font-size: 1.5rem; }
@@ -507,10 +516,12 @@
     }
     .btn-judge:active { transform: scale(.97); }
     .btn-correct { color: #22c55e; border-color: #22c55e; background: transparent; }
-    .btn-correct:hover:not(:disabled) { background: rgba(34,197,94,.1); }
     .btn-wrong { color: #ef4444; border-color: #ef4444; background: transparent; }
-    .btn-wrong:hover:not(:disabled) { background: rgba(239,68,68,.1); }
     .btn-judge:disabled { opacity: .3; cursor: not-allowed; }
+    @media (hover: hover) and (pointer: fine) {
+      .btn-correct:hover:not(:disabled) { background: rgba(34,197,94,.1); }
+      .btn-wrong:hover:not(:disabled) { background: rgba(239,68,68,.1); }
+    }
 
     /* ── Winner banner ── */
     .winner-banner {
