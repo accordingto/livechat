@@ -1130,9 +1130,8 @@
           btn.textContent = `${info.icon} ${info.label} (${left})`;
           return;
         }
-        if (left <= 0) { btn.classList.add('hidden'); return; }
         btn.classList.remove('hidden');
-        btn.disabled = false;
+        btn.disabled = left <= 0; // out of charges — stays visible showing (0), just can't be pressed
         btn.textContent = `${info.icon} ${info.label} (${left})`;
       });
     }
