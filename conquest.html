@@ -150,6 +150,7 @@
     }
     .turn-indicator { font-size: clamp(.9rem, 2vw, 1.05rem); font-weight: 800; white-space: nowrap; }
     .turn-indicator .tname { color: var(--turn-color, #22c55e); }
+    .turn-indicator .round-count { color: #888; font-weight: 700; margin-left: 2px; }
     .roll-btn { font-size: clamp(.78rem, 1.6vw, .88rem); padding: 8px 18px; }
     /* ── Roll choice: player picks 1 die (predictable) or 2 dice (bigger, riskier move) each turn ── */
     .roll-btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
@@ -811,7 +812,7 @@
       document.getElementById('dice-outer-2').classList.add('hidden');
       armedSkill = null;
       updateSkillButtons();
-      round = 0;
+      round = 1;
       document.getElementById('roundNum').textContent = round;
       document.getElementById('setup-card').classList.add('hidden');
       document.getElementById('game-area').classList.remove('hidden');
@@ -987,7 +988,7 @@
       const p = players[currentIdx];
       const el = document.getElementById('turn-indicator');
       el.style.setProperty('--turn-color', p.hex);
-      el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>'s turn`;
+      el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>'s turn <span class="round-count">· Round ${round}</span>`;
     }
 
     /* ── Dare panel states: hidden / safe-corner / active dare — it's a floating
@@ -1572,8 +1573,9 @@
     }
 
     function nextTurn() {
+      const wasLastPlayer = currentIdx === players.length - 1; // finishing the last player's turn completes a round
       currentIdx = (currentIdx + 1) % players.length;
-      round++;
+      if (wasLastPlayer) round++;
       document.getElementById('roundNum').textContent = round;
       rolling = false;
       setRollButtonsDisabled(false);
