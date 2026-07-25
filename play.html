@@ -27,6 +27,26 @@
     .secret-card.theme-wordwolf    { border-color: #f59e0b; box-shadow: 0 0 60px rgba(245,158,11,.18); }
     .secret-card.theme-teamwords-a { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
     .secret-card.theme-teamwords-b { border-color: #f43f5e; box-shadow: 0 0 60px rgba(244,63,94,.18); }
+    .secret-card.theme-secretrule  { border-color: #14b8a6; box-shadow: 0 0 60px rgba(20,184,166,.18); }
+
+    /* Secret Rule: the rule itself is a sentence, not a single word, so it gets
+       its own left-aligned block plus a dimmer example line underneath */
+    .rule-text {
+      font-size: 1.45rem; font-weight: 800; color: #fff; line-height: 1.35;
+      max-width: 100%; overflow-wrap: break-word;
+    }
+    .rule-example {
+      font-size: .95rem; color: #7dd3c0; line-height: 1.5;
+      background: #0d0d1a; border-radius: 12px; padding: 12px 16px; width: 100%;
+    }
+    .rule-topic {
+      width: 100%; border-top: 1px solid #1e1e42; padding-top: 16px; margin-top: 4px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .rule-topic .rt-label {
+      font-size: .7rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #666;
+    }
+    .rule-topic .rt-text { font-size: 1.05rem; font-weight: 700; color: #ddd; line-height: 1.4; }
 
     /* big per-player name badge — every player gets their own vivid gradient,
        so one glance at the color + name says "this card is mine" */
@@ -194,6 +214,20 @@
             <span class="team-tag">Team ${data.team}</span>
             <div class="word-list">${wordListHTML(data.words)}</div>
             <span class="secret-hint">🤐 Trick the other team into saying these!</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'secretrule') {
+        const r = GAME_DATA.secretRule[data.idx];
+        if (!r) { showError('😵 This card link is not valid.<br>Please ask your host for the link again.'); return; }
+        el.innerHTML = `
+          <div class="secret-card theme-secretrule">
+            ${nameBanner(data)}
+            <span class="card-emoji">${r.emoji}</span>
+            <span class="rule-text">${esc(r.rule)}</span>
+            ${r.example ? `<span class="rule-example">${esc(r.example)}</span>` : ''}
+            ${data.topic ? `<div class="rule-topic"><span class="rt-label">💬 Talk about</span><span class="rt-text">${esc(data.topic)}</span></div>` : ''}
+            <span class="secret-hint">🤫 Follow your rule — don't let anyone guess it!</span>
           </div>`;
         return;
       }
