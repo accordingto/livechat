@@ -928,7 +928,7 @@ const GAME_DATA = {
     { emoji: '📛', rule: "Say another player's name every time you speak.", example: '"Well, Amy, I think..."' },
     { emoji: '😂', rule: 'Laugh before every answer.',                 example: '"Haha — okay, so..."' },
     { emoji: '🔢', rule: 'Use a number every time you speak.',         example: '"I did that 3 times last week."' },
-    { emoji: '🐶', rule: 'Mention an animal every time you speak.',    example: '"I slept like a cat."' },
+    { emoji: '✂️', rule: 'Never use short forms like "don\'t" or "I\'m".', example: 'Say "do not" and "I am" instead.' },
     { emoji: '👍', rule: 'Agree with the person who spoke before you.', example: '"Yeah, same here, and..."' },
     { emoji: '🤏', rule: 'Answer with one short sentence only.',       example: 'Never say two sentences in a row.' },
     { emoji: '💬', rule: 'Start everything you say with "Honestly,".', example: '"Honestly, I never wake up early."' },
