@@ -48,6 +48,24 @@
     }
     .rule-topic .rt-text { font-size: 1.05rem; font-weight: 700; color: #ddd; line-height: 1.4; }
 
+    /* 🗳️ Secret Rule guessing: one dropdown per other player, filled from the
+       host's shortlist — a native <select> beats a wall of buttons on a phone */
+    .guess-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; text-align: left; }
+    .guess-row:last-child { margin-bottom: 0; }
+    .guess-name { font-size: .9rem; font-weight: 800; color: #ddd; }
+    .guess-select {
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #ddd; font-family: inherit; font-size: .88rem; font-weight: 600;
+      padding: 11px 34px 11px 12px; /* room on the right so long rules never run under the arrow */
+      text-overflow: ellipsis; -webkit-appearance: none; appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #14b8a6 50%), linear-gradient(135deg, #14b8a6 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+      background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+      transition: border-color .2s;
+    }
+    .guess-select:focus { outline: none; border-color: #14b8a6; }
+    .guess-select.answered { border-color: #14b8a6; color: #2dd4bf; }
+
     /* big per-player name badge — every player gets their own vivid gradient,
        so one glance at the color + name says "this card is mine" */
     .name-banner {
@@ -192,6 +210,43 @@
         </div>`;
     }
 
+    /* 🗳️ Secret Rule guessing: each player records a guess per other player onto
+       their OWN node (same per-token rule already used for reads), so the host can
+       tally by reading each known token individually — never a shared list */
+    function submitGuess(targetPlayerNum, ruleIdx) {
+      if (!db || !session || !token) return;
+      const value = ruleIdx === '' ? null : Number(ruleIdx);
+      db.ref(`rooms/${session}/players/${token}/guesses/${targetPlayerNum}`).set(value);
+    }
+
+    function guessSectionHTML(data) {
+      const others = (latestRoster || []).filter(p => p.playerNum !== data.playerNum);
+      const candidates = data.candidates || [];
+      if (!others.length || !candidates.length) return '';
+      const picked = data.guesses || {};
+      const rows = others.map(p => {
+        const chosen = picked[p.playerNum];
+        const opts = ['<option value="">— pick a rule —</option>'].concat(
+          candidates.map(ci => {
+            const r = GAME_DATA.secretRule[ci];
+            if (!r) return '';
+            const sel = String(chosen) === String(ci) ? ' selected' : '';
+            return `<option value="${ci}"${sel}>${esc(r.emoji + '  ' + r.rule)}</option>`;
+          })
+        ).join('');
+        return `
+          <div class="guess-row">
+            <span class="guess-name">${esc(p.name || `Player ${p.playerNum}`)}</span>
+            <select class="guess-select${chosen != null ? ' answered' : ''}" onchange="submitGuess(${p.playerNum}, this.value)">${opts}</select>
+          </div>`;
+      }).join('');
+      return `
+        <div class="vote-section">
+          <div class="vote-title">🗳️ What rule is everyone following?</div>
+          ${rows}
+        </div>`;
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -228,6 +283,7 @@
             ${r.example ? `<span class="rule-example">${esc(r.example)}</span>` : ''}
             ${data.topic ? `<div class="rule-topic"><span class="rt-label">💬 Talk about</span><span class="rt-text">${esc(data.topic)}</span></div>` : ''}
             <span class="secret-hint">🤫 Follow your rule — don't let anyone guess it!</span>
+            ${guessSectionHTML(data)}
           </div>`;
         return;
       }
