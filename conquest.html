@@ -55,6 +55,7 @@
       .btn-primary:hover:not(:disabled) { background: rgba(34,197,94,.1); }
       .btn-secondary:hover { border-color: #22c55e; color: #22c55e; }
       .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
+      .btn-secondary:disabled:hover { border-color: #1e1e42; color: #666; }
     }
 
     /* ── Setup card ── */
@@ -498,6 +499,10 @@
     .q-text { font-size: clamp(1.1rem, 2.3vw, 1.4rem); font-weight: 700; text-align: center; line-height: 1.6; max-width: 640px; }
     .q-text .q-player { white-space: nowrap; }
     .q-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    /* "New Question" reroll — sits under the judge buttons so it never gets hit by accident */
+    .swap-row { display: flex; justify-content: center; }
+    .btn-swap { padding: 8px 16px; font-size: .78rem; border-radius: 10px; }
+    .btn-swap:disabled { opacity: .35; cursor: not-allowed; }
 
     /* ── Countdown timer: only starts when the host presses the button ── */
     .timer-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -723,11 +728,13 @@
     let awaitingJudgement = false;
     const MAX_HIGH_ROLLS = 2; // each player gets this many "guaranteed 4+" skill charges per game
     const MAX_LOW_ROLLS = 2;  // each player gets this many "guaranteed 3-" skill charges per game
+    const MAX_SWAPS = 3;      // each player may swap a drawn Truth/Dare for a new one this many times
     let armedSkill = null; // null | 'high' | 'low' — which one (if any) is active for the rest of this turn
     let gameStarted = false;
     let round = 0;
     let currentTileIdx = null;
     let currentChallengeOwner = -1; // -1 = claiming unowned land; otherwise the rival being stolen from
+    let currentChallengeMode = null; // 'truth' | 'dare' once the player has called it — what a swap redraws
     let pendingSpecialEffect = null; // 'bonus' | 'lucky' | 'gift' while a challenge on a special tile is in progress
     let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
@@ -799,12 +806,14 @@
         pos: 0,
         highRolls: MAX_HIGH_ROLLS,
         lowRolls: MAX_LOW_ROLLS,
+        swaps: MAX_SWAPS,
       }));
       ownership = new Array(PATH.length).fill(-1);
       currentIdx = 0;
       usedPrompts = [];
       usedTruths = [];
       currentChallengeOwner = -1;
+      currentChallengeMode = null;
       pendingSpecialEffect = null;
       diceOffState = null;
       rolling = false;
@@ -1268,6 +1277,7 @@
       awaitingJudgement = true;
       currentTileIdx = tileIdx;
       currentChallengeOwner = ownerIdx;
+      currentChallengeMode = null;
       pendingSpecialEffect = specialType || null;
       const attacker = players[currentIdx];
       const isSteal = ownerIdx !== -1;
@@ -1301,19 +1311,36 @@
 
     function pickChallengeMode(mode) {
       if (!awaitingJudgement) return;
-      if (mode === 'truth') {
-        if (usedTruths.length >= TRUTHS.length) usedTruths = [];
-        const avail = TRUTHS.map((_, i) => i).filter(i => !usedTruths.includes(i));
-        const ti = avail[Math.floor(Math.random() * avail.length)];
-        usedTruths.push(ti);
-        renderDareContent(TRUTHS[ti], true);
-      } else {
-        if (usedPrompts.length >= PROMPTS.length) usedPrompts = [];
-        const avail = PROMPTS.map((_, i) => i).filter(i => !usedPrompts.includes(i));
-        const pi = avail[Math.floor(Math.random() * avail.length)];
-        usedPrompts.push(pi);
-        renderDareContent(PROMPTS[pi], false);
+      currentChallengeMode = mode;
+      drawChallengePrompt(mode);
+    }
+
+    // draws one unused prompt of the chosen type and shows it; the deck reshuffles
+    // once every prompt of that type has been used
+    function drawChallengePrompt(mode) {
+      const isTruth = mode === 'truth';
+      const deck = isTruth ? TRUTHS : PROMPTS;
+      let used = isTruth ? usedTruths : usedPrompts;
+      if (used.length >= deck.length) {
+        used = [];
+        if (isTruth) usedTruths = used; else usedPrompts = used;
       }
+      const avail = deck.map((_, i) => i).filter(i => !used.includes(i));
+      const idx = avail[Math.floor(Math.random() * avail.length)];
+      used.push(idx);
+      renderDareContent(deck[idx], isTruth);
+    }
+
+    // "New Question" — the player who drew the prompt may throw it back and pull another
+    // one of the same type, up to MAX_SWAPS times per player per game. The discarded
+    // prompt stays in the used list, so it won't come back around this deck cycle.
+    function swapQuestion() {
+      if (!awaitingJudgement || !currentChallengeMode) return;
+      const player = players[currentIdx];
+      if (!player || player.swaps <= 0) return;
+      player.swaps--;
+      clearPromptTimer();
+      drawChallengePrompt(currentChallengeMode);
     }
 
     // renders the actual dare/truth (category + text + optional timer + judge buttons)
@@ -1321,6 +1348,7 @@
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add(isTruth ? 'truth' : 'active');
+      const swapsLeft = players[currentIdx] ? players[currentIdx].swaps : 0;
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
           <span class="q-cat${isTruth ? ' q-cat-truth' : ''}">${prompt.cat}</span>
@@ -1337,6 +1365,9 @@
           <div class="q-actions">
             <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
             <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Passed' : '❌ Skipped'}</button>
+          </div>
+          <div class="swap-row">
+            <button class="btn-secondary btn-swap" onclick="swapQuestion()"${swapsLeft > 0 ? '' : ' disabled'}>🔄 New Question (${swapsLeft})</button>
           </div>
         </div>`;
     }
@@ -1423,6 +1454,7 @@
     function judge(isCorrect) {
       if (!awaitingJudgement) return;
       clearPromptTimer();
+      currentChallengeMode = null;
       const isSteal = currentChallengeOwner !== -1;
 
       // completing the challenge on a steal attempt doesn't hand over the land outright —
@@ -1668,6 +1700,7 @@
       players.forEach(p => {
         if (p.highRolls == null) p.highRolls = MAX_HIGH_ROLLS; // older saves predate the high-roll skill
         if (p.lowRolls == null) p.lowRolls = MAX_LOW_ROLLS;   // older saves predate the low-roll skill
+        if (p.swaps == null) p.swaps = MAX_SWAPS;             // older saves predate question swapping
       });
       ownership = saved.ownership;
       currentIdx = saved.currentIdx;
@@ -1676,6 +1709,7 @@
       usedTruths = saved.usedTruths || [];
       playerCount = players.length;
       currentChallengeOwner = -1;
+      currentChallengeMode = null;
       pendingSpecialEffect = null;
       diceOffState = null;
       rolling = false;
