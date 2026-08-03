@@ -918,24 +918,26 @@ const GAME_DATA = {
   ],
 
   // ── Secret Rule（每人抽到一條只有自己知道的說話規則，聊天時要一直遵守，
-  //    最後大家互相猜對方的規則是什麼。刻意用簡單字彙，方便語音即時反應）──
+  //    最後大家互相猜對方的規則是什麼。全部採「關係型」：偷偷把在場所有人
+  //    當成某一種對象來講話，一條規則就會改變整個人的語氣、用詞與稱呼，
+  //    但不會像唱歌/拼字那樣一開口就穿幫。刻意用簡單字彙，方便語音即時反應）──
   secretRule: [
-    { emoji: '☕', rule: 'Mention a drink every time you speak.',        example: '"I need coffee before I answer that."' },
-    { emoji: '🏫', rule: 'Mention school or work every time you speak.', example: '"It is the same at my office."' },
-    { emoji: '📱', rule: 'Mention your phone or the internet every time you speak.', example: '"I saw that online yesterday."' },
-    { emoji: '🎵', rule: 'Mention music or a song every time you speak.', example: '"That song is stuck in my head."' },
-    { emoji: '🌍', rule: 'Mention a city or country every time you speak.', example: '"That feels very Tokyo to me."' },
-    { emoji: '👕', rule: 'Mention clothes every time you speak.',        example: '"I wore my old jacket that day."' },
-    { emoji: '🏠', rule: 'Mention your home every time you speak.',      example: '"My kitchen is always a mess."' },
-    { emoji: '🧸', rule: 'Mention being a kid every time you speak.',    example: '"When I was little, I loved that."' },
-    { emoji: '🚌', rule: 'Mention a car, bus, or train every time you speak.', example: '"I thought about it on the bus."' },
-    { emoji: '🍃', rule: 'Mention a season every time you speak.',       example: '"It always happens in summer."' },
-    { emoji: '💡', rule: 'Give an example every time you speak.',        example: '"For example, last week..."' },
-    { emoji: '🔗', rule: 'Use the word "because" every time you speak.', example: '"I like it because it is easy."' },
-    { emoji: '⏮️', rule: 'Talk about the past every time you speak.',     example: '"That happened to me before."' },
-    { emoji: '⏭️', rule: 'Talk about the future every time you speak.',   example: '"Maybe next year I will try it."' },
-    { emoji: '🗣️', rule: "Mention what another player said every time you speak.", example: '"Like Amy said earlier..."' },
-    { emoji: '⭐', rule: 'Mention something you want every time you speak.', example: '"I really want a long break."' },
+    { emoji: '👩‍🏫', rule: 'Talk to everyone like they are your students.',      example: '"Good question. Let me explain it."' },
+    { emoji: '🛍️', rule: 'Talk to everyone like they are your customers.',     example: '"Of course! Happy to help with that."' },
+    { emoji: '🙇', rule: 'Talk to everyone like they are much older than you.', example: '"That is very kind of you to say."' },
+    { emoji: '🧒', rule: 'Talk to everyone like they are much younger than you.', example: '"Nice job! That was a smart idea."' },
+    { emoji: '🎉', rule: 'Talk to everyone like they are old friends.',         example: '"Remember when we used to do that?"' },
+    { emoji: '👋', rule: 'Talk to everyone like you just met them.',            example: '"Oh really? So what do you do?"' },
+    { emoji: '💼', rule: 'Talk to everyone like they are your boss.',           example: '"Sure, I can take care of that."' },
+    { emoji: '📋', rule: 'Talk to everyone like they work for you.',            example: '"Let me know how that is going."' },
+    { emoji: '🎤', rule: 'Talk to everyone like they are a big audience.',      example: '"Everybody, you will love this one."' },
+    { emoji: '🩺', rule: 'Talk to everyone like they are your patients.',       example: '"How are you feeling about that?"' },
+    { emoji: '🕵️', rule: 'Talk to everyone like they are hiding something.',    example: '"Interesting... and what happened next?"' },
+    { emoji: '⭐', rule: 'Talk to everyone like they are famous.',              example: '"Wow, it is amazing to hear that from you."' },
+    { emoji: '🏠', rule: 'Talk to everyone like they are your family.',         example: '"You always say that. Come on."' },
+    { emoji: '🧳', rule: 'Talk to everyone like they are visiting your city.',  example: '"You should try the place near the station."' },
+    { emoji: '🏡', rule: 'Talk to everyone like they are your neighbors.',      example: '"I saw you outside the other day."' },
+    { emoji: '🐣', rule: 'Talk to everyone like it is their first day here.',   example: '"Do not worry, everyone feels that way."' },
   ],
 
   // ── Secret Rule — 主持人可隨機抽的聊天主題，讓大家有話題可以聊 ──
