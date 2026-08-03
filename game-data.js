@@ -863,14 +863,16 @@ const GAME_DATA = {
 
   // ── Dare Conquest — Truths, used only when the current player picks "Truth" in the
   //    Truth or Dare choice screen; no timer, just an honest answer out loud. All personal
-  //    disclosure questions about the player themselves (kept mild, nothing too extreme) ──
+  //    disclosure questions about the player themselves (kept mild, nothing too extreme).
+  //    8 題是「馬上打開手機」的隱私題（相簿最後一張照片、聊天室最新訊息、瀏覽紀錄、
+  //    螢幕使用時間等）；因為參與者沒有鏡頭，一律寫成唸出來／描述，而不是秀給大家看 ──
   conquestTruth: [
     { cat: "🚿 Shower Song", text: "What song do you always sing in the shower?", seconds: 45 },
     { cat: "🎤 Sung In Public", text: "Have you ever sung in front of other people? What happened?", seconds: 45 },
     { cat: "🎧 Every Word", text: "What song do you know every single word to?", seconds: 45 },
     { cat: "🧸 Childhood Song", text: "What song did you love when you were a kid?", seconds: 45 },
     { cat: "💧 Sad Song", text: "What song makes you feel sad every time you hear it?", seconds: 45 },
-    { cat: "🧢 Funny Photo", text: "What is the funniest photo you have of yourself?", seconds: 45 },
+    { cat: "📸 Last Photo", text: "Open your photo album and describe the last photo you took.", seconds: 45 },
     { cat: "🍀 Small Win", text: "What is a small thing that made you happy this week?", seconds: 45 },
     { cat: "🗓️ Free Day", text: "If tomorrow was free, what would you really do?", seconds: 45 },
     { cat: "⏰ Real Wake Time", text: "What time did you really wake up today?", seconds: 45 },
@@ -881,7 +883,7 @@ const GAME_DATA = {
     { cat: "🚪 Quick Escape", text: "Have you ever left a place early just to avoid someone?", seconds: 45 },
     { cat: "🎁 Never Used", text: "What is something you own that you never use?", seconds: 45 },
     { cat: "💤 Before Sleep", text: "What do you think about right before you fall asleep?", seconds: 45 },
-    { cat: "🧾 Last Order", text: "What is the last thing you bought online?", seconds: 45 },
+    { cat: "🛍️ Last Purchase", text: "Open your shopping app and read out the last thing you bought.", seconds: 45 },
     { cat: "🙈 Secretly Proud", text: "What is something you are secretly proud of?", seconds: 45 },
     { cat: "🗣️ Overused Word", text: "What is a word you say way too often?", seconds: 45 },
     { cat: "🧠 Hard For You", text: "What is something everyone finds easy but you find hard?", seconds: 45 },
@@ -889,8 +891,8 @@ const GAME_DATA = {
     { cat: "🌍 Move Tomorrow", text: "What country would you move to tomorrow if you could?", seconds: 45 },
     { cat: "🤝 Last Sorry", text: "Who was the last person you said sorry to?", seconds: 45 },
     { cat: "📅 Best Day", text: "What is the best day you have had this year?", seconds: 45 },
-    { cat: "🥱 Weekly Boredom", text: "What is the most boring thing you do every week?", seconds: 45 },
-    { cat: "🍽️ Table Habit", text: "What is your worst habit at the dinner table?", seconds: 45 },
+    { cat: "💬 Newest Message", text: "Open your chat app and read out the newest message you got.", seconds: 45 },
+    { cat: "🔍 Last Search", text: "Open your browser and read out the last thing you searched for.", seconds: 45 },
     { cat: "👀 First Thing", text: "What do you notice first about {player}?", seconds: 45 },
     { cat: "🧑‍🤝‍🧑 Travel Buddy", text: "Which player here would you pick to travel with? Why?", seconds: 45 },
     { cat: "🥇 Better Than Them", text: "What is one thing you do better than {player}?", seconds: 45 },
@@ -903,16 +905,16 @@ const GAME_DATA = {
     { cat: "🚿 Morning Routine", text: "How long does your morning routine really take?", seconds: 45 },
     { cat: "🧹 Always Later", text: "What job at home do you always put off?", seconds: 45 },
     { cat: "📖 Never Finished", text: "What is a book or show you started but never finished?", seconds: 45 },
-    { cat: "🕰️ Early Or Late", text: "Are you usually early or late? Be honest.", seconds: 45 },
-    { cat: "🧃 Usual Order", text: "What is a drink you order almost every time?", seconds: 45 },
+    { cat: "📱 Screen Time", text: "Check your screen time and say which app you used the most this week.", seconds: 45 },
+    { cat: "📇 Last Call", text: "Open your phone and say who you called most recently.", seconds: 45 },
     { cat: "🎡 Childhood Fear", text: "What is something you were scared of as a kid?", seconds: 45 },
     { cat: "🤳 Photo Count", text: "How many photos are on your phone right now?", seconds: 45 },
     { cat: "🛏️ All Day In Bed", text: "What is the longest you have stayed in bed all day?", seconds: 45 },
     { cat: "🎯 Gave Up", text: "What is a goal you gave up on?", seconds: 45 },
     { cat: "🧑‍🎓 Worst Subject", text: "What subject were you worst at in school?", seconds: 45 },
     { cat: "🌶️ Strangest Food", text: "What is the strangest food you have ever tried?", seconds: 45 },
-    { cat: "👟 Still Wearing", text: "What is the oldest thing you still wear?", seconds: 45 },
-    { cat: "🗺️ Never Visited", text: "What place near you have you never visited?", seconds: 45 },
+    { cat: "😀 Top Emoji", text: "Open your keyboard and say the three emojis you use the most.", seconds: 45 },
+    { cat: "🖼️ Ten Photos Back", text: "Scroll ten photos back in your album and describe what you see.", seconds: 45 },
     { cat: "🙃 Only You Laugh", text: "What is something you find funny that others do not?", seconds: 45 },
     { cat: "🧸 Kept From Childhood", text: "What is one thing from your childhood you still keep?", seconds: 45 },
   ],
