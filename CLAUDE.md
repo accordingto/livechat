@@ -23,7 +23,7 @@
 | 檔案 | 說明 |
 |------|------|
 | `index.html` | 主選單 / 遊戲入口頁（Secret Rule 排在第一個） |
-| `secret-rule.html` | 📜 Secret Rule（主持人頁：選 2–6 人、發牌，每人拿到一條**不同的**、只有自己知道的說話規則（例如「回答前先停三秒」「每句話都要以問句結尾」「每次發言都要提到一種顏色」），大家照常聊天但要全程遵守自己的規則又不能被看穿，最後互相猜對方的規則、再按「🔍 Reveal Rules」在主持人畫面公布每個人的規則。發牌後主持人畫面會列出一份「🃏 Possible Rules」候選清單（數量固定為玩家人數的 2 倍，包含這局實際發出去的每一條規則，其餘為干擾用的假選項，依字母排序所以位置不會洩漏誰拿到哪張），讓玩家從有限選項中猜測，而不是從整份題庫裡瞎猜；這份候選清單同時會推送到每位玩家的卡片上，玩家可以直接在自己的卡片上用下拉選單，替**其他每一位玩家**各投一張「我猜他是這條規則」的票（票寫進自己的 `players/{token}/guesses/{對方 playerNum}`，主持人靠已知的 token 逐一讀取來統計，不需要可列舉全房間的路徑）。主持人畫面會即時顯示「N / M 位玩家已完成猜測」，按下 Reveal Rules 後改成完整結果：每位玩家答對幾題的排行榜（最高分會highlight），以及每個人的真實規則與所有人對他的猜測（答對綠色 ✅、答錯灰色並列出猜錯的內容）。重新發牌會清空上一輪的所有猜測。另有「💬 New Topic」隨機抽聊天主題（同步顯示在主持人畫面與每位玩家的卡片上）與「🎲 Pick Someone」輪流點名發言，架構仿照 word-wolf.html，共用同一組 room code／玩家連結，主題色 teal；頁面最下方列出全部 10 條規則與 30 則主題供主持人瀏覽） |
+| `secret-rule.html` | 📜 Secret Rule（主持人頁：選 2–6 人、發牌，每人拿到一條**不同的**、只有自己知道的說話規則（例如「每次發言都要提到一種飲料」「每次發言都要用到 because」「每次發言都要提到小時候」），大家照常聊天但要全程遵守自己的規則又不能被看穿，最後互相猜對方的規則、再按「🔍 Reveal Rules」在主持人畫面公布每個人的規則。發牌後主持人畫面會列出一份「🃏 Possible Rules」候選清單（數量固定為玩家人數的 2 倍，包含這局實際發出去的每一條規則，其餘為干擾用的假選項，依字母排序所以位置不會洩漏誰拿到哪張），讓玩家從有限選項中猜測，而不是從整份題庫裡瞎猜；這份候選清單同時會推送到每位玩家的卡片上，玩家可以直接在自己的卡片上用下拉選單，替**其他每一位玩家**各投一張「我猜他是這條規則」的票（票寫進自己的 `players/{token}/guesses/{對方 playerNum}`，主持人靠已知的 token 逐一讀取來統計，不需要可列舉全房間的路徑）。主持人畫面會即時顯示「N / M 位玩家已完成猜測」，按下 Reveal Rules 後改成完整結果：每位玩家答對幾題的排行榜（最高分會highlight），以及每個人的真實規則與所有人對他的猜測（答對綠色 ✅、答錯灰色並列出猜錯的內容）。重新發牌會清空上一輪的所有猜測。另有「💬 New Topic」隨機抽聊天主題（同步顯示在主持人畫面與每位玩家的卡片上）與「🎲 Pick Someone」輪流點名發言，架構仿照 word-wolf.html，共用同一組 room code／玩家連結，主題色 teal；頁面最下方列出全部 16 條規則與 30 則主題供主持人瀏覽） |
 | `hottake.html` | 🔥 Pick a Side! |
 | `what-will-you-do.html` | 🤔 Sophie's Choice |
 | `persuade-team.html` | 🤝 Persuade Together! |
@@ -35,7 +35,7 @@
 | `play.html` | 🔗 四款遊戲（Secret Rule / Emotion Cards / Word Wolf / Forbidden Words）共用的玩家頁面：玩家開啟自己的私人連結後看到當下這局的內容，依 Firebase 資料中的 `game` 欄位自動切換樣式；同一個 Room Code + 同一批玩家連結可以在四款遊戲間直接切換使用，不用重新產生連結 |
 | `firebase-config.js` | Secret Rule / Emotion Cards / Word Wolf / Forbidden Words 共用的 Firebase Realtime Database 設定（host 與 play.html 共用，需自行申請免費專案並填入；四款遊戲共用同一個 `rooms/{roomCode}/players/{token}` 路徑） |
 | `shared.css` | 所有遊戲頁共用樣式 + 主題變數 |
-| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 200 組臥底詞組，Word Wolf 與 Forbidden Words 共用；emotion 25 種情緒；conquest 50 則互動挑戰指令（Dare），供 Dare Conquest 使用，`{player}` 會被隨機替換成另一位玩家的名字，全部 50 則都帶有 `seconds` 欄位表示挑戰的秒數限制，內容偏向較有爭議性與互動性（嗆聲互酸、投票淘汰、幫玩家頒獎、辯論等）；secretRule 10 條 Secret Rule 說話規則卡（`{ emoji, rule, example }`，發牌時每人拿到不同的一條；刻意全部挑「能自然融入對話」的類型（提到顏色/數字/時間/食物/家人/金錢/睡意/天氣、附和前一位發言者、講完前反問對方），避免唱歌、拼字、重複整句這種一開口就穿幫的規則）與 secretRuleTopics 30 則聊天主題；conquestTruth 50 則真心話題目，供玩家選擇「TRUTH」時使用，混合個人隱私類與評論/比較其他玩家的題目，全部 50 則都帶有 `seconds` 欄位，少數帶 `{player}` 佔位）— 遊戲題目唯一資料來源 |
+| `game-data.js` | 所有遊戲的題目資料（hottake / persuade / scene 各 10 題；sophies 38 則兩難劇本；wordwolf 200 組臥底詞組，Word Wolf 與 Forbidden Words 共用；emotion 25 種情緒；conquest 50 則互動挑戰指令（Dare），供 Dare Conquest 使用，`{player}` 會被隨機替換成另一位玩家的名字，全部 50 則都帶有 `seconds` 欄位表示挑戰的秒數限制，內容偏向較有爭議性與互動性（嗆聲互酸、投票淘汰、幫玩家頒獎、辯論等）；secretRule 16 條 Secret Rule 說話規則卡（`{ emoji, rule, example }`，發牌時每人拿到不同的一條；刻意全部挑「能自然融入對話」的類型：10 條把某個主題塞進發言裡（飲料/工作/手機/音樂/國家/衣服/家裡/小時候/交通工具/季節）、6 條改變說話結構（舉例、用 because、講過去、講未來、引述別人說過的話、講自己想要的東西），避免唱歌、拼字、重複整句這種一開口就穿幫的規則）與 secretRuleTopics 30 則聊天主題；conquestTruth 50 則真心話題目，供玩家選擇「TRUTH」時使用，混合個人隱私類與評論/比較其他玩家的題目，全部 50 則都帶有 `seconds` 欄位，少數帶 `{player}` 佔位）— 遊戲題目唯一資料來源 |
 | `game-render.js` | 共用渲染函式（GAME_RENDER） |
 | `qrcode.js` | QR code 產生函式庫（vendored，qrcode-generator 1.4.4，MIT）— Emotion Cards 頁面選用性顯示連結的 QR code |
 

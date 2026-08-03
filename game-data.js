@@ -920,16 +920,22 @@ const GAME_DATA = {
   // ── Secret Rule（每人抽到一條只有自己知道的說話規則，聊天時要一直遵守，
   //    最後大家互相猜對方的規則是什麼。刻意用簡單字彙，方便語音即時反應）──
   secretRule: [
-    { emoji: '🔢', rule: 'Use a number every time you speak.',          example: '"I did that 3 times last week."' },
-    { emoji: '⏰', rule: 'Say a day or a time every time you speak.',   example: '"On Monday I usually cook."' },
-    { emoji: '🍕', rule: 'Talk about food every time you speak.',       example: '"That reminds me of noodles."' },
-    { emoji: '🎨', rule: 'Say a color every time you speak.',           example: '"My blue phone died this morning."' },
-    { emoji: '👨‍👩‍👧', rule: 'Mention your family every time you speak.',   example: '"My mom says the same thing."' },
-    { emoji: '💰', rule: 'Mention money or a price every time you speak.', example: '"That costs way too much."' },
-    { emoji: '😴', rule: 'Mention sleep or being tired every time you speak.', example: '"I was half asleep when it happened."' },
-    { emoji: '🌦️', rule: 'Mention the weather every time you speak.',    example: '"It\'s so hot today, but anyway..."' },
-    { emoji: '👍', rule: 'Agree with the person who spoke before you.', example: '"Yeah, same here, and..."' },
-    { emoji: '🙋', rule: 'Ask someone a question before you stop talking.', example: '"...and that\'s why. What about you?"' },
+    { emoji: '☕', rule: 'Mention a drink every time you speak.',        example: '"I need coffee before I answer that."' },
+    { emoji: '🏫', rule: 'Mention school or work every time you speak.', example: '"It is the same at my office."' },
+    { emoji: '📱', rule: 'Mention your phone or the internet every time you speak.', example: '"I saw that online yesterday."' },
+    { emoji: '🎵', rule: 'Mention music or a song every time you speak.', example: '"That song is stuck in my head."' },
+    { emoji: '🌍', rule: 'Mention a city or country every time you speak.', example: '"That feels very Tokyo to me."' },
+    { emoji: '👕', rule: 'Mention clothes every time you speak.',        example: '"I wore my old jacket that day."' },
+    { emoji: '🏠', rule: 'Mention your home every time you speak.',      example: '"My kitchen is always a mess."' },
+    { emoji: '🧸', rule: 'Mention being a kid every time you speak.',    example: '"When I was little, I loved that."' },
+    { emoji: '🚌', rule: 'Mention a car, bus, or train every time you speak.', example: '"I thought about it on the bus."' },
+    { emoji: '🍃', rule: 'Mention a season every time you speak.',       example: '"It always happens in summer."' },
+    { emoji: '💡', rule: 'Give an example every time you speak.',        example: '"For example, last week..."' },
+    { emoji: '🔗', rule: 'Use the word "because" every time you speak.', example: '"I like it because it is easy."' },
+    { emoji: '⏮️', rule: 'Talk about the past every time you speak.',     example: '"That happened to me before."' },
+    { emoji: '⏭️', rule: 'Talk about the future every time you speak.',   example: '"Maybe next year I will try it."' },
+    { emoji: '🗣️', rule: "Mention what another player said every time you speak.", example: '"Like Amy said earlier..."' },
+    { emoji: '⭐', rule: 'Mention something you want every time you speak.', example: '"I really want a long break."' },
   ],
 
   // ── Secret Rule — 主持人可隨機抽的聊天主題，讓大家有話題可以聊 ──
