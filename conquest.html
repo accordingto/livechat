@@ -107,6 +107,48 @@
       color: #555; font-size: .82rem; line-height: 1.7;
     }
 
+    /* ── 🗳️ Player voting setup: room code + one private link per player ── */
+    .vote-setup {
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .vs-hdr {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #888;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .vs-tag {
+      font-size: .6rem; letter-spacing: 1px; color: #555;
+      border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px;
+    }
+    .vs-note { color: #555; font-size: .78rem; line-height: 1.6; }
+    .vs-room { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .vs-label { font-size: .72rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #555; }
+    .vs-input {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 10px; color: #eee;
+      font-family: inherit; font-size: .9rem; font-weight: 800; letter-spacing: 2px;
+      padding: 8px 12px; width: 130px; text-transform: uppercase;
+    }
+    .vs-input:focus { outline: none; border-color: #22c55e; }
+    .vs-btn { padding: 8px 14px; font-size: .76rem; }
+    .vs-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+    .vs-link {
+      display: flex; align-items: center; gap: 8px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 10px; padding: 7px 10px;
+    }
+    .vs-link .vl-name {
+      flex: 1; min-width: 0; font-size: .82rem; font-weight: 800; color: #ccc;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .vs-link .vl-copy {
+      flex-shrink: 0; background: transparent; border: 1px solid #1e1e42; border-radius: 8px;
+      color: #666; font-family: inherit; font-size: .7rem; font-weight: 800;
+      padding: 4px 9px; cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .vs-link .vl-copy:active { transform: scale(.97); }
+    @media (hover: hover) and (pointer: fine) {
+      .vs-link .vl-copy:hover { border-color: #22c55e; color: #22c55e; }
+    }
+
     /* ── Resume banner: shown only when a saved game is found in localStorage ── */
     .resume-banner {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
@@ -506,6 +548,15 @@
     .swap-corner { position: relative; justify-self: end; z-index: 3; }
     .btn-swap { padding: 6px 12px; font-size: .72rem; border-radius: 10px; }
     .btn-swap:disabled { opacity: .35; cursor: not-allowed; }
+    /* live audience tally under the judge buttons — advisory only, the host still decides */
+    .vote-tally {
+      display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+      font-size: .8rem; font-weight: 800; color: #555;
+    }
+    .vote-tally .vt-yes { color: #22c55e; }
+    .vote-tally .vt-no { color: #ef4444; }
+    .vote-tally .vt-wait { color: #555; font-weight: 700; }
+
     /* the confirmation floats out of flow so opening it doesn't shove the question around */
     .swap-confirm {
       position: absolute; top: calc(100% + 8px); right: 0;
@@ -621,6 +672,21 @@
       <div class="player-btns" id="player-count-btns"></div>
     </div>
     <div class="name-grid" id="name-grid"></div>
+
+    <!-- Audience vote: reuses the same room code + player links as the card games,
+         so anyone who already has their link can vote without a new one -->
+    <div class="vote-setup hidden" id="vote-setup">
+      <div class="vs-hdr">🗳️ Player Voting <span class="vs-tag">optional</span></div>
+      <p class="vs-note">Players open their own card link and vote ✅ / ❌ on every challenge — you still make the final call. Same room code and links as Secret Rule, Emotion Cards, Word Wolf and Forbidden Words.</p>
+      <div class="vs-room">
+        <label class="vs-label" for="room-code-input">Room</label>
+        <input id="room-code-input" class="vs-input" maxlength="8" autocomplete="off" spellcheck="false">
+        <button class="btn-secondary vs-btn" onclick="loadRoomCode()">↩️ Load</button>
+        <button class="btn-secondary vs-btn" onclick="newRoom()">✨ New Room</button>
+      </div>
+      <div class="vs-links" id="vote-links"></div>
+    </div>
+
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
       Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, <strong>BONUS</strong> hands you 2 random territories, and <strong>GIFT</strong> gives you every unclaimed territory (or a swap too, once nothing's left unclaimed).
@@ -697,6 +763,11 @@
   </div>
 
   <script src="game-data.js"></script>
+  <!-- Firebase is optional here: it only powers the audience vote. If it fails to load,
+       every check below falls back to "voting off" and the board game still works offline. -->
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
     const PROMPTS = GAME_DATA.conquest;
     const TRUTHS = GAME_DATA.conquestTruth;
@@ -768,11 +839,156 @@
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
     const boardDiceRot = { 1: { x: 0, y: 0 }, 2: { x: 0, y: 0 } }; // cumulative rotation for the two movement dice
 
+    /* ── 🗳️ Player voting (optional): the audience votes ✅ / ❌ on every challenge from
+       the same private card link the other games hand out. Firebase is not required —
+       if it's missing or unreachable the whole feature quietly turns itself off and the
+       board game runs exactly as before. ── */
+    const firebaseReady = typeof firebase !== 'undefined'
+      && typeof FIREBASE_CONFIG !== 'undefined'
+      && FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+    let db = null;
+    if (firebaseReady) {
+      try { firebase.initializeApp(FIREBASE_CONFIG); db = firebase.database(); } catch (e) { db = null; }
+    }
+    const votingOn = () => !!db;
+
+    /* same shared room storage every card game uses, so one room code + one set of
+       player links keeps working no matter which game the host switches to */
+    const STORAGE_PREFIX = 'room-session-';
+    const LAST_SESSION_KEY = 'room-last-session';
+    let sessionCode = '';
+    let playerTokens = [];
+
+    function generateSessionCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+      const bytes = new Uint8Array(6);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => chars[b % chars.length]).join('');
+    }
+
+    /* unguessable per-player token, so one link can't be edited into someone else's */
+    function generateToken() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function loadSessionData(code) {
+      try {
+        const raw = localStorage.getItem(STORAGE_PREFIX + code);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function saveSessionTokens() {
+      try {
+        const prev = loadSessionData(sessionCode) || {};
+        // names are shared with the card games, so keep any slots this game doesn't cover
+        const names = (prev.names || []).slice();
+        for (let i = 0; i < playerCount; i++) names[i] = playerNames[i] || '';
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({
+          tokens: playerTokens, playerCount: prev.playerCount || playerCount, names,
+        }));
+        localStorage.setItem(LAST_SESSION_KEY, sessionCode);
+      } catch (e) { /* private browsing — links still work for this session */ }
+    }
+
+    /* picks up the room the host was last using in any of the card games, so players who
+       already hold a link don't need a new one */
+    (function initSession() {
+      let lastCode = null;
+      try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
+      const saved = lastCode ? loadSessionData(lastCode) : null;
+      if (lastCode && saved && saved.tokens && saved.tokens.length) {
+        sessionCode = lastCode;
+        playerTokens = saved.tokens.slice();
+        playerNames = (saved.names || []).slice();
+      } else {
+        sessionCode = generateSessionCode();
+      }
+    })();
+
+    function ensureTokens(n) {
+      const before = playerTokens.length;
+      while (playerTokens.length < n) playerTokens.push(generateToken());
+      if (playerTokens.length !== before) saveSessionTokens();
+    }
+
+    function cardURL(token) {
+      return new URL(`play.html?s=${sessionCode}&p=${token}`, location.href).href;
+    }
+
+    function copyCardLink(token, btn) {
+      const url = cardURL(token);
+      const done = () => {
+        const old = btn.textContent;
+        btn.textContent = '✅';
+        setTimeout(() => { btn.textContent = old; }, 1400);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
+      } else {
+        prompt('Copy this link:', url);
+      }
+    }
+
+    function renderVoteSetup() {
+      const box = document.getElementById('vote-setup');
+      box.classList.toggle('hidden', !votingOn());
+      if (!votingOn()) return;
+      ensureTokens(playerCount);
+      document.getElementById('room-code-input').value = sessionCode;
+      const wrap = document.getElementById('vote-links');
+      wrap.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const row = document.createElement('div');
+        row.className = 'vs-link';
+        const name = document.createElement('span');
+        name.className = 'vl-name';
+        name.textContent = playerNames[i] || `Player ${i + 1}`;
+        const copy = document.createElement('button');
+        copy.className = 'vl-copy';
+        copy.textContent = '📋 Link';
+        copy.onclick = () => copyCardLink(playerTokens[i], copy);
+        row.appendChild(name);
+        row.appendChild(copy);
+        wrap.appendChild(row);
+      }
+    }
+
+    /* type an existing room code to bring back its links; unknown codes start fresh under that label */
+    function loadRoomCode() {
+      const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
+      if (!typed) return;
+      sessionCode = typed;
+      const saved = loadSessionData(typed);
+      playerTokens = saved && saved.tokens ? saved.tokens.slice() : [];
+      if (saved && saved.names && saved.names.length) {
+        playerNames = saved.names.slice();
+        renderNameGrid();
+      }
+      ensureTokens(playerCount);
+      saveSessionTokens();
+      renderVoteSetup();
+      attachVoteListeners();
+    }
+
+    function newRoom() {
+      sessionCode = generateSessionCode();
+      playerTokens = [];
+      ensureTokens(playerCount);
+      saveSessionTokens();
+      renderVoteSetup();
+      attachVoteListeners();
+    }
+
     /* ── Setup screen ── */
     function setPlayerCount(n) {
       playerCount = n;
       document.querySelectorAll('.player-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
       renderNameGrid();
+      renderVoteSetup();
+      attachVoteListeners();
     }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-count-btns');
@@ -797,13 +1013,19 @@
         input.maxLength = 14;
         input.placeholder = `Player ${i + 1}`;
         input.value = playerNames[i] || '';
-        input.oninput = () => { playerNames[i] = input.value.trim(); };
+        input.oninput = () => {
+          playerNames[i] = input.value.trim();
+          const label = document.querySelectorAll('#vote-links .vl-name')[i];
+          if (label) label.textContent = playerNames[i] || `Player ${i + 1}`;
+          saveSessionTokens();
+        };
         slot.innerHTML = `<span class="token">${c.token}</span>`;
         slot.appendChild(input);
         grid.appendChild(slot);
       }
     }
     renderNameGrid();
+    renderVoteSetup();
 
     /* ── Browse all prompts (read-only reference list) ── */
     function buildPromptList() {
@@ -861,6 +1083,8 @@
       updateTurnIndicator();
       renderCenterIdle();
       setRollButtonsDisabled(false);
+      attachVoteListeners();
+      publishIdle();
       saveGame();
     }
 
@@ -1285,13 +1509,111 @@
       showCornerMessage('🔄', `Lucky corner! You swapped all territories with ${players[targetIdx].name}!`, 'lucky');
     }
 
+    /* ── 🗳️ Publishing challenges to the player cards, and tallying what comes back.
+       Everything is written per token (rooms/{code}/players/{token}) — the same path the
+       card games already use — so no room-wide list is ever needed. ── */
+    let voteId = '';                 // identifies the challenge currently open for voting
+    let rawVotes = {};               // playerNum -> { id, choice } straight off each card
+    let voteListeners = [];
+    let lastRosterJSON = '';         // avoids rewriting an unchanged roster on every challenge
+
+    function detachVoteListeners() {
+      voteListeners.forEach(({ ref, handler }) => ref.off('value', handler));
+      voteListeners = [];
+      rawVotes = {};
+    }
+
+    function attachVoteListeners() {
+      detachVoteListeners();
+      if (!votingOn()) return;
+      ensureTokens(playerCount);
+      for (let i = 0; i < playerCount; i++) {
+        const pnum = i + 1;
+        const ref = db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`);
+        const handler = snap => {
+          const data = snap.val();
+          rawVotes[pnum] = (data && data.conquestVote) || null;
+          renderVoteTally();
+        };
+        ref.on('value', handler);
+        voteListeners.push({ ref, handler });
+      }
+    }
+
+    function publishToCards(payload) {
+      if (!votingOn()) return;
+      ensureTokens(playerCount);
+      for (let i = 0; i < playerCount; i++) {
+        db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).update(Object.assign({
+          game: 'conquest',
+          playerNum: i + 1,
+          name: playerNames[i] || `Player ${i + 1}`,
+        }, payload));
+      }
+      // non-secret roster, same shape the other games publish — only rewritten when the
+      // names actually change, since every challenge would otherwise re-send it
+      const roster = Array.from({ length: playerCount }, (_, i) => ({ playerNum: i + 1, name: playerNames[i] || `Player ${i + 1}` }));
+      const rosterJSON = JSON.stringify(roster);
+      if (rosterJSON !== lastRosterJSON) {
+        lastRosterJSON = rosterJSON;
+        db.ref(`rooms/${sessionCode}/roster`).set(roster);
+      }
+    }
+
+    /* opens a fresh vote — a new id means every card's old vote stops counting, so nothing
+       has to be deleted and a stale card can never leak into the next challenge's tally */
+    function publishChallenge(prompt, isTruth, plainText) {
+      if (!votingOn()) return;
+      voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      publishToCards({
+        conquest: {
+          id: voteId,
+          state: 'voting',
+          cat: prompt.cat,
+          text: plainText,
+          isTruth: !!isTruth,
+          player: (players[currentIdx] && players[currentIdx].name) || '',
+        },
+      });
+      renderVoteTally();
+    }
+
+    /* between challenges the cards just show "waiting" — no buttons to press by mistake */
+    function publishIdle() {
+      if (!votingOn()) return;
+      voteId = '';
+      publishToCards({ conquest: { id: '', state: 'idle' } });
+      renderVoteTally();
+    }
+
+    function renderVoteTally() {
+      const el = document.getElementById('vote-tally');
+      if (!el) return;
+      if (!votingOn() || !voteId) { el.classList.add('hidden'); return; }
+      let yes = 0, no = 0;
+      for (let p = 1; p <= playerCount; p++) {
+        const v = rawVotes[p];
+        if (!v || v.id !== voteId) continue;
+        if (v.choice === 'yes') yes++;
+        else if (v.choice === 'no') no++;
+      }
+      const waiting = playerCount - yes - no;
+      el.classList.remove('hidden');
+      el.innerHTML = `🗳️ <span class="vt-yes">✅ ${yes}</span> · <span class="vt-no">❌ ${no}</span>`
+        + (waiting > 0 ? ` · <span class="vt-wait">${waiting} to go</span>` : '');
+    }
+
 /* ── Dare prompt / judging ── */
-    // fills {player} with a random OTHER player's name, colored to match their token
-    function resolvePromptText(text, excludeIdx) {
-      if (!text.includes('{player}')) return text;
+    // fills {player} with a random OTHER player's name — colored inline for the host screen,
+    // and plain for the player cards, both naming the same person
+    function resolvePromptParts(text, excludeIdx) {
+      if (!text.includes('{player}')) return { html: text, plain: text };
       const others = players.map((_, i) => i).filter(i => i !== excludeIdx);
       const other = players[others[Math.floor(Math.random() * others.length)]];
-      return text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`);
+      return {
+        html: text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`),
+        plain: text.split('{player}').join(other.name),
+      };
     }
 
     // Landing on any dare tile — owned by a rival or unowned — or on a BONUS/LUCKY/GIFT tile —
@@ -1306,6 +1628,7 @@
       currentTileIdx = tileIdx;
       currentChallengeOwner = ownerIdx;
       currentChallengeMode = null;
+      publishIdle(); // no question drawn yet — nothing for the audience to vote on
       pendingSpecialEffect = specialType || null;
       const attacker = players[currentIdx];
       const isSteal = ownerIdx !== -1;
@@ -1397,6 +1720,7 @@
       panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add(isTruth ? 'truth' : 'active');
       const swapsLeft = players[currentIdx] ? players[currentIdx].swaps : 0;
+      const parts = resolvePromptParts(prompt.text, currentIdx);
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
           <div class="q-head">
@@ -1413,7 +1737,7 @@
               </div>
             </div>
           </div>
-          <div class="q-text">${resolvePromptText(prompt.text, currentIdx)}</div>
+          <div class="q-text">${parts.html}</div>
           ${prompt.seconds ? `
           <div class="timer-block">
             <button class="btn-secondary" id="timer-start-btn" onclick="startPromptTimer(${prompt.seconds})">⏱️ Start ${prompt.seconds}s Timer</button>
@@ -1427,7 +1751,9 @@
             <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
             <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Passed' : '❌ Skipped'}</button>
           </div>
+          <div class="vote-tally hidden" id="vote-tally"></div>
         </div>`;
+      publishChallenge(prompt, isTruth, parts.plain);
     }
 
     // countdown timer for timed dares — starts only when the host clicks the button,
@@ -1513,6 +1839,7 @@
       if (!awaitingJudgement) return;
       clearPromptTimer();
       currentChallengeMode = null;
+      publishIdle(); // the host has ruled — close the vote
       const isSteal = currentChallengeOwner !== -1;
 
       // completing the challenge on a steal attempt doesn't hand over the land outright —
@@ -1788,6 +2115,8 @@
       updateTurnIndicator();
       renderCenterIdle();
       setRollButtonsDisabled(false);
+      attachVoteListeners();
+      publishIdle();
       if (saved.gameEnded) showWinner();
     }
 

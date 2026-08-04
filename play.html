@@ -28,6 +28,37 @@
     .secret-card.theme-teamwords-a { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
     .secret-card.theme-teamwords-b { border-color: #f43f5e; box-shadow: 0 0 60px rgba(244,63,94,.18); }
     .secret-card.theme-secretrule  { border-color: #14b8a6; box-shadow: 0 0 60px rgba(20,184,166,.18); }
+    .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
+
+    /* 🏰 Dare Conquest: this card isn't a secret to keep, it's a ballot — whose challenge
+       is running, what they were asked, and the two buttons the host is also looking at */
+    .conq-turn {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #22c55e;
+    }
+    .conq-cat {
+      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #22c55e;
+      font-size: .7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 20px;
+    }
+    .conq-cat.is-truth { background: rgba(234,179,8,.14); border-color: rgba(234,179,8,.35); color: #eab308; }
+    .conq-text {
+      font-size: 1.25rem; font-weight: 800; color: #fff; line-height: 1.45;
+      max-width: 100%; overflow-wrap: break-word;
+    }
+    .conq-vote-row { display: flex; flex-direction: column; gap: 10px; }
+    .conq-vote {
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+      border-radius: 14px; padding: 16px; font-size: 1rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s;
+    }
+    .conq-vote:active { transform: scale(.98); }
+    .conq-vote.yes.picked { border-color: #22c55e; background: rgba(34,197,94,.16); color: #22c55e; }
+    .conq-vote.no.picked  { border-color: #ef4444; background: rgba(239,68,68,.16); color: #ef4444; }
+    .conq-wait { font-size: 1rem; color: #666; line-height: 1.7; }
+    @media (hover: hover) and (pointer: fine) {
+      .conq-vote.yes:hover { border-color: #22c55e; }
+      .conq-vote.no:hover  { border-color: #ef4444; }
+    }
 
     /* Secret Rule: the rule itself is a sentence, not a single word, so it gets
        its own left-aligned block plus a dimmer example line underneath */
@@ -249,9 +280,49 @@
         </div>`;
     }
 
+    /* 🏰 Dare Conquest: the audience votes on whether the current player pulled the
+       challenge off. The vote carries the challenge's id, so when the host moves on the
+       old vote simply stops matching instead of having to be cleaned up. */
+    function submitConquestVote(choice) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'voting' || !c.id) return;
+      db.ref(`rooms/${session}/players/${token}/conquestVote`).set({ id: c.id, choice });
+    }
+
+    function conquestCardHTML(data) {
+      const c = data.conquest || {};
+      if (c.state !== 'voting' || !c.id) {
+        return `
+          <div class="secret-card theme-conquest">
+            ${nameBanner(data)}
+            <span class="card-emoji">🏰</span>
+            <p class="conq-wait">⏳ Waiting for the next challenge…<br>Your vote buttons appear here.</p>
+          </div>`;
+      }
+      const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
+      const yesLabel = c.isTruth ? '✅ Answered Honestly!' : '✅ Did It!';
+      const noLabel  = c.isTruth ? '❌ Passed' : '❌ Skipped';
+      return `
+        <div class="secret-card theme-conquest">
+          ${nameBanner(data)}
+          ${c.player ? `<span class="conq-turn">🎲 ${esc(c.player)}'s challenge</span>` : ''}
+          ${c.cat ? `<span class="conq-cat${c.isTruth ? ' is-truth' : ''}">${esc(c.cat)}</span>` : ''}
+          <div class="conq-text">${esc(c.text || '')}</div>
+          <div class="vote-section">
+            <div class="vote-title">🗳️ Did they pull it off?</div>
+            <div class="conq-vote-row">
+              <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${yesLabel}</button>
+              <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${noLabel}</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
+      if (data.game === 'conquest') { el.innerHTML = conquestCardHTML(data); return; }
       if (data.game === 'wordwolf') {
         el.innerHTML = `
           <div class="secret-card theme-wordwolf">
