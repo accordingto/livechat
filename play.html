@@ -386,8 +386,9 @@
       // the category is a two-word label, not the prompt — enough to follow along by ear
       const chip = c.state === 'voting' && c.cat
         ? `<span class="conq-chip${c.isTruth ? ' is-truth' : ''}">${esc(c.cat)}</span>` : '';
-      const meta = c.round
-        ? `<div class="conq-meta"><span>🚩 ${data.tiles || 0} ${data.tiles === 1 ? 'tile' : 'tiles'}</span><span>Round ${c.round}</span></div>` : '';
+      // round and tiles are published at the top level of the node, not inside `conquest`
+      const meta = data.round
+        ? `<div class="conq-meta"><span>🚩 ${data.tiles || 0} ${data.tiles === 1 ? 'tile' : 'tiles'}</span><span>Round ${data.round}</span></div>` : '';
 
       return `
         <div class="secret-card theme-conquest">

@@ -1554,7 +1554,11 @@
     function publishToCards(payload) {
       if (!votingOn()) return;
       ensureTokens(playerCount);
-      for (let i = 0; i < playerCount; i++) {
+      // every link the room has ever handed out gets written to, not just the first
+      // `playerCount` — otherwise someone holding a link from a bigger round of an
+      // earlier game would sit on a stale card all game instead of being able to vote
+      for (let i = 0; i < playerTokens.length; i++) {
+        const onBoard = i < players.length;
         db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).update(Object.assign({
           game: 'conquest',
           playerNum: i + 1,
@@ -1562,7 +1566,7 @@
           // this player's own standing — the one thing their card can say that the
           // shared screen doesn't already say bigger
           round: gameStarted ? round : 0,
-          tiles: gameStarted ? ownership.filter(o => o === i).length : 0,
+          tiles: gameStarted && onBoard ? ownership.filter(o => o === i).length : 0,
         }, payload));
       }
       // non-secret roster, same shape the other games publish — only rewritten when the
