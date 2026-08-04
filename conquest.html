@@ -1567,6 +1567,9 @@
           game: 'conquest',
           playerNum: i + 1,
           name: playerNames[i] || `Player ${i + 1}`,
+          // this player's own piece, so their card is colour-matched to the board
+          myToken: onBoard ? PLAYER_COLORS[i].token : '',
+          myHex: onBoard ? PLAYER_COLORS[i].hex : '',
           // this player's own standing — the one thing their card can say that the
           // shared screen doesn't already say bigger
           round: gameStarted ? round : 0,

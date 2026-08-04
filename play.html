@@ -12,6 +12,9 @@
       align-items: center; justify-content: center;
       min-height: 100dvh; padding: 24px;
     }
+    /* the wrapper had no width of its own, so `width:100%` on the card resolved against
+       shrink-to-fit content — the card ended up a different width in every state */
+    #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
     .secret-card {
       background: #13132b;
       border: 2px solid #d946ef;
@@ -30,17 +33,32 @@
     .secret-card.theme-secretrule  { border-color: #14b8a6; box-shadow: 0 0 60px rgba(20,184,166,.18); }
     .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
 
-    /* 🏰 Dare Conquest: name, buttons, and just enough context to follow along */
+    /* 🏰 Dare Conquest: this card is a control panel, not a reveal — it gets tighter
+       spacing and a smaller name pill than the games that show one big secret word,
+       so the buttons sit together instead of drifting apart down a very tall card */
+    .secret-card.theme-conquest {
+      padding: 22px 20px 16px; gap: 14px; border-radius: 22px;
+    }
+    .theme-conquest .name-banner {
+      font-size: 1.2rem; padding: 7px 24px; box-shadow: 0 3px 12px rgba(0,0,0,.4);
+    }
+    .conq-name {
+      font-size: 1.2rem; font-weight: 900; line-height: 1.3;
+      border: 2px solid; border-radius: 999px; padding: 6px 20px;
+      max-width: 100%; overflow-wrap: break-word;
+    }
+    /* skills and the roll button belong together — tighter inside, normal gap outside */
+    .conq-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; }
     /* always-on turn marker: the board token + the name in that player's colour */
     .conq-turnbar {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 999px;
-      padding: 9px 16px;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      padding: 7px 14px;
     }
     .conq-turnbar.is-me { border-color: #22c55e; background: rgba(34,197,94,.1); }
-    .conq-turnbar .ct-token { font-size: 1.05rem; line-height: 1; }
+    .conq-turnbar .ct-token { font-size: .95rem; line-height: 1; }
     .conq-turnbar .ct-name {
-      font-size: .9rem; font-weight: 900; letter-spacing: .5px;
+      font-size: .85rem; font-weight: 900; letter-spacing: .5px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .conq-status {
@@ -53,17 +71,17 @@
     }
     .conq-chip.is-truth { background: rgba(234,179,8,.14); border-color: rgba(234,179,8,.35); color: #eab308; }
     .conq-meta {
-      width: 100%; display: flex; justify-content: center; gap: 18px;
-      border-top: 1px solid #1e1e42; padding-top: 14px; margin-top: 2px;
-      font-size: .78rem; font-weight: 800; color: #555;
+      width: 100%; display: flex; justify-content: center; gap: 16px;
+      border-top: 1px solid #1e1e42; padding-top: 11px; margin-top: 0;
+      font-size: .74rem; font-weight: 800; color: #555;
     }
     /* High/Low Roll on the card: same red-border + yellow-text armed look as the host screen,
        and the same "stays visible showing (0)" behaviour once the charges run out */
-    .conq-skill-row { display: flex; gap: 10px; width: 100%; }
+    .conq-skill-row { display: flex; gap: 8px; width: 100%; }
     .conq-skill {
       flex: 1; background: transparent; border: 2px solid #1e1e42; color: #666;
-      border-radius: 12px; padding: 12px 6px;
-      font-size: .82rem; font-weight: 800; font-family: inherit; white-space: nowrap;
+      border-radius: 12px; padding: 12px 4px;
+      font-size: .78rem; font-weight: 800; font-family: inherit; white-space: nowrap;
       cursor: pointer; transition: border-color .2s, color .2s, transform .1s;
     }
     .conq-skill:active:not(:disabled) { transform: scale(.97); }
@@ -73,42 +91,45 @@
     /* the challenge text, shown only to the player who has to perform it */
     .conq-prompt {
       width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
-      padding: 18px 16px;
-      font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.5;
+      padding: 16px 14px;
+      font-size: 1.08rem; font-weight: 800; color: #fff; line-height: 1.45;
       overflow-wrap: break-word;
     }
     .conq-vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .conq-vote {
       background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
-      border-radius: 14px; padding: 16px; font-size: 1rem; font-weight: 800; font-family: inherit;
+      border-radius: 14px; padding: 15px; font-size: .98rem; font-weight: 800; font-family: inherit;
       cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s;
     }
     .conq-vote:active { transform: scale(.98); }
     .conq-vote.yes.picked { border-color: #22c55e; background: rgba(34,197,94,.16); color: #22c55e; }
     .conq-vote.no.picked  { border-color: #ef4444; background: rgba(239,68,68,.16); color: #ef4444; }
-    .conq-wait { font-size: 1.6rem; color: #333; line-height: 1; }
+    .conq-wait { font-size: 1.5rem; color: #333; line-height: 1; padding: 6px 0; }
     /* the roll button on the card fires the die on the host's shared screen */
     .conq-roll {
-      width: 100%; background: rgba(34,197,94,.12); border: 2px solid #22c55e; color: #22c55e;
-      border-radius: 16px; padding: 20px; font-size: 1.15rem; font-weight: 900; font-family: inherit;
+      width: 100%; background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 14px; padding: 16px; font-size: 1.08rem; font-weight: 900; font-family: inherit;
+      box-shadow: 0 6px 18px rgba(34,197,94,.25);
       cursor: pointer; transition: background .2s, opacity .2s, transform .1s;
     }
+    .conq-roll:disabled { box-shadow: none; }
     .conq-roll:active:not(:disabled) { transform: scale(.98); }
     .conq-roll:disabled { opacity: .35; cursor: not-allowed; }
     /* Truth or Dare, called from the card — mirrors the host screen's two big buttons */
-    .conq-td-row { display: flex; gap: 12px; width: 100%; }
+    .conq-td-row { display: flex; gap: 10px; width: 100%; }
     .conq-td {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
       background: #0d0d1a; border: 2px solid #1e1e42; color: #ccc;
-      border-radius: 16px; padding: 16px 10px;
+      border-radius: 14px; padding: 14px 10px;
       font-size: .95rem; font-weight: 900; letter-spacing: 1px; font-family: inherit;
       cursor: pointer; transition: border-color .2s, color .2s, background .2s, transform .1s;
     }
-    .conq-td .conq-td-emoji { font-size: 1.9rem; letter-spacing: 0; }
+    .conq-td .conq-td-emoji { font-size: 1.7rem; letter-spacing: 0; }
     .conq-td:active:not(:disabled) { transform: scale(.96); }
     .conq-td:disabled { opacity: .35; cursor: not-allowed; }
-    .conq-td.truth { border-color: #eab308; color: #eab308; }
-    .conq-td.dare { border-color: #ef4444; color: #ef4444; }
+    .conq-td.truth { background: #eab308; border-color: #eab308; color: #2b1f00; box-shadow: 0 6px 18px rgba(234,179,8,.22); }
+    .conq-td.dare { background: #ef4444; border-color: #ef4444; color: #2b0808; box-shadow: 0 6px 18px rgba(239,68,68,.22); }
+    .conq-td:disabled { box-shadow: none; }
     @media (hover: hover) and (pointer: fine) {
       .conq-vote.yes:hover { border-color: #22c55e; }
       .conq-vote.no:hover  { border-color: #ef4444; }
@@ -415,11 +436,13 @@
           return `<button class="conq-skill${armed ? ' armed' : ''}" onclick="requestSkill('${kind}', this)"${off ? ' disabled' : ''}>${icon} ${label} (${left})</button>`;
         };
         body = `
-          <div class="conq-skill-row">
-            ${skill('low', '🔻', 'Low Roll', c.lowLeft || 0)}
-            ${skill('high', '🎯', 'High Roll', c.highLeft || 0)}
-          </div>
-          <button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
+          <div class="conq-actions">
+            <div class="conq-skill-row">
+              ${skill('low', '🔻', 'Low Roll', c.lowLeft || 0)}
+              ${skill('high', '🎯', 'High Roll', c.highLeft || 0)}
+            </div>
+            <button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>
+          </div>`;
       }
 
       // the turn marker is always on the card, in whatever state — it's the one thing
@@ -437,9 +460,13 @@
       const meta = data.round
         ? `<div class="conq-meta"><span>🚩 ${data.tiles || 0} ${data.tiles === 1 ? 'tile' : 'tiles'}</span><span>Round ${data.round}</span></div>` : '';
 
+      // name badge in this player's own board colour, so card and piece match
+      const badge = data.myHex
+        ? `<span class="conq-name" style="color:${esc(data.myHex)};border-color:${esc(data.myHex)}55;background:${esc(data.myHex)}1a">${esc(data.name || 'Player ' + data.playerNum)}</span>`
+        : nameBanner(data);
       return `
         <div class="secret-card theme-conquest">
-          ${nameBanner(data)}
+          ${badge}
           ${turnBar}
           ${hintLine}
           ${chip}
