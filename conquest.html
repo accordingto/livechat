@@ -556,14 +556,16 @@
     .swap-corner { position: relative; justify-self: end; z-index: 3; }
     .btn-swap { padding: 6px 12px; font-size: .72rem; border-radius: 10px; }
     .btn-swap:disabled { opacity: .35; cursor: not-allowed; }
-    /* live audience tally under the judge buttons — advisory only, the host still decides */
-    .vote-tally {
-      display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
-      font-size: .8rem; font-weight: 800; color: #555;
+    /* live audience tally, shown as a count badge inside each judge button — advisory
+       only, the host still decides. Hidden entirely until at least one vote lands. */
+    .judge-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 20px; margin-left: 9px; padding: 1px 6px;
+      border: 1.5px solid currentColor; border-radius: 999px;
+      font-size: .78em; font-weight: 900; line-height: 1.4;
     }
-    .vote-tally .vt-yes { color: #22c55e; }
-    .vote-tally .vt-no { color: #ef4444; }
-    .vote-tally .vt-wait { color: #555; font-weight: 700; }
+    .btn-correct .judge-count { background: rgba(34,197,94,.14); }
+    .btn-wrong .judge-count { background: rgba(239,68,68,.14); }
 
     /* the confirmation floats out of flow so opening it doesn't shove the question around */
     .swap-confirm {
@@ -1621,21 +1623,26 @@
       renderVoteTally();
     }
 
+    /* the counts ride inside the judge buttons themselves — no extra row under the card.
+       A badge only appears once that side has at least one vote, so an untouched
+       challenge card looks exactly like it did before voting existed. */
     function renderVoteTally() {
-      const el = document.getElementById('vote-tally');
-      if (!el) return;
-      if (!votingOn() || !voteId) { el.classList.add('hidden'); return; }
+      const yesEl = document.getElementById('judge-count-yes');
+      const noEl = document.getElementById('judge-count-no');
+      if (!yesEl || !noEl) return;
       let yes = 0, no = 0;
-      for (let p = 1; p <= playerCount; p++) {
-        const v = rawVotes[p];
-        if (!v || v.id !== voteId) continue;
-        if (v.choice === 'yes') yes++;
-        else if (v.choice === 'no') no++;
+      if (votingOn() && voteId) {
+        for (let p = 1; p <= playerCount; p++) {
+          const v = rawVotes[p];
+          if (!v || v.id !== voteId) continue;
+          if (v.choice === 'yes') yes++;
+          else if (v.choice === 'no') no++;
+        }
       }
-      const waiting = playerCount - yes - no;
-      el.classList.remove('hidden');
-      el.innerHTML = `🗳️ <span class="vt-yes">✅ ${yes}</span> · <span class="vt-no">❌ ${no}</span>`
-        + (waiting > 0 ? ` · <span class="vt-wait">${waiting} to go</span>` : '');
+      yesEl.textContent = yes;
+      noEl.textContent = no;
+      yesEl.classList.toggle('hidden', yes === 0);
+      noEl.classList.toggle('hidden', no === 0);
     }
 
 /* ── Dare prompt / judging ── */
@@ -1783,10 +1790,9 @@
             </div>
           </div>` : ''}
           <div class="q-actions">
-            <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
-            <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Passed' : '❌ Skipped'}</button>
+            <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}<span class="judge-count hidden" id="judge-count-yes">0</span></button>
+            <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Passed' : '❌ Skipped'}<span class="judge-count hidden" id="judge-count-no">0</span></button>
           </div>
-          <div class="vote-tally hidden" id="vote-tally"></div>
         </div>`;
       publishChallenge(prompt, isTruth, parts.plain);
     }
