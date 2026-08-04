@@ -439,7 +439,7 @@
       paintCardTimer();
     }
 
-    /* only the player actually taking the challenge sees a countdown */
+    /* the countdown runs on every card while a challenge is live */
     function syncCardTimer(data, mine) {
       const t = mine ? data.conquestTimer : null;
       if (!t || !t.total) { stopCardTimer(); cardTimer.seq = null; cardTimer.total = 0; return false; }
@@ -456,7 +456,7 @@
     function conquestCardHTML(data) {
       const c = data.conquest || {};
       const myTurn = c.turn && c.turn === data.playerNum;
-      if (!(c.state === 'voting' && c.id && myTurn)) syncCardTimer(data, false);
+      if (!(c.state === 'voting' && c.id)) syncCardTimer(data, false);
       const who = esc(c.player || 'Someone');
       let hint = '';
       let body = '<p class="conq-wait">⏳</p>';
@@ -471,14 +471,18 @@
       } else if (c.state === 'voting' && c.id) {
         // the one taking the challenge reads it instead of voting — they can't judge
         // themselves, and this is the one moment the prompt text belongs on a phone
+        // everyone watches the same clock — the challenger below their prompt, the
+        // voters above their buttons
+        const timing = syncCardTimer(data, true);
+        const clock = timing ? `<div class="conq-timer" id="conq-timer">${cardTimer.left}</div>` : '';
         if (myTurn) {
-          const timing = syncCardTimer(data, true);
           body = `
             <div class="conq-prompt">${esc(c.text || '')}</div>
-            ${timing ? `<div class="conq-timer" id="conq-timer">${cardTimer.left}</div>` : ''}`;
+            ${clock}`;
         } else {
           const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
           body = `
+            ${clock}
             <div class="conq-vote-row">
               <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${c.isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
               <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? '❌ Passed' : '❌ Skipped'}</button>
