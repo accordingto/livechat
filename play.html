@@ -226,12 +226,14 @@
       const picked = data.guesses || {};
       const rows = others.map(p => {
         const chosen = picked[p.playerNum];
-        const opts = ['<option value="">— pick a rule —</option>'].concat(
-          candidates.map(ci => {
+        const opts = ['<option value="">— pick a number —</option>'].concat(
+          // numbered in the same order the host screen shows them, so a player can match
+          // "number 4" on the shared screen to this list without re-reading the sentence
+          candidates.map((ci, i) => {
             const r = GAME_DATA.secretRule[ci];
             if (!r) return '';
             const sel = String(chosen) === String(ci) ? ' selected' : '';
-            return `<option value="${ci}"${sel}>${esc(r.emoji + '  ' + r.rule)}</option>`;
+            return `<option value="${ci}"${sel}>${esc(`${i + 1}. ${r.emoji}  ${r.rule}`)}</option>`;
           })
         ).join('');
         return `
