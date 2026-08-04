@@ -77,11 +77,13 @@
     }
     /* High/Low Roll on the card: same red-border + yellow-text armed look as the host screen,
        and the same "stays visible showing (0)" behaviour once the charges run out */
-    .conq-skill-row { display: flex; gap: 8px; width: 100%; }
+    /* stacked, not side by side — full-width rows are easier to hit and leave room for
+       the label and the charge count to breathe */
+    .conq-skill-row { display: flex; flex-direction: column; gap: 8px; width: 100%; }
     .conq-skill {
-      flex: 1; background: transparent; border: 2px solid #1e1e42; color: #666;
-      border-radius: 12px; padding: 12px 4px;
-      font-size: .78rem; font-weight: 800; font-family: inherit; white-space: nowrap;
+      width: 100%; background: transparent; border: 2px solid #1e1e42; color: #666;
+      border-radius: 12px; padding: 12px 10px;
+      font-size: .85rem; font-weight: 800; font-family: inherit; white-space: nowrap;
       cursor: pointer; transition: border-color .2s, color .2s, transform .1s;
     }
     .conq-skill:active:not(:disabled) { transform: scale(.97); }
