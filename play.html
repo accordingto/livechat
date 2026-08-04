@@ -30,22 +30,8 @@
     .secret-card.theme-secretrule  { border-color: #14b8a6; box-shadow: 0 0 60px rgba(20,184,166,.18); }
     .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
 
-    /* 🏰 Dare Conquest: this card isn't a secret to keep, it's a ballot — whose challenge
-       is running, what they were asked, and the two buttons the host is also looking at */
-    .conq-turn {
-      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #22c55e;
-    }
-    .conq-cat {
-      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #22c55e;
-      font-size: .7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 4px 14px; border-radius: 20px;
-    }
-    .conq-cat.is-truth { background: rgba(234,179,8,.14); border-color: rgba(234,179,8,.35); color: #eab308; }
-    .conq-text {
-      font-size: 1.25rem; font-weight: 800; color: #fff; line-height: 1.45;
-      max-width: 100%; overflow-wrap: break-word;
-    }
-    .conq-vote-row { display: flex; flex-direction: column; gap: 10px; }
+    /* 🏰 Dare Conquest: name and buttons only — everything else is on the host's screen */
+    .conq-vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .conq-vote {
       background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
       border-radius: 14px; padding: 16px; font-size: 1rem; font-weight: 800; font-family: inherit;
@@ -54,7 +40,7 @@
     .conq-vote:active { transform: scale(.98); }
     .conq-vote.yes.picked { border-color: #22c55e; background: rgba(34,197,94,.16); color: #22c55e; }
     .conq-vote.no.picked  { border-color: #ef4444; background: rgba(239,68,68,.16); color: #ef4444; }
-    .conq-wait { font-size: 1rem; color: #666; line-height: 1.7; }
+    .conq-wait { font-size: 1.6rem; color: #333; line-height: 1; }
     /* the roll button on the card fires the die on the host's shared screen */
     .conq-roll {
       width: 100%; background: rgba(34,197,94,.12); border: 2px solid #22c55e; color: #22c55e;
@@ -333,54 +319,36 @@
         .set({ id: c.choiceId, mode });
     }
 
+    /* Dare Conquest cards stay deliberately bare: the player's name and whatever buttons
+       they can press right now, nothing else. Everything else — whose turn it is, the
+       question, the category — is already big on the host's shared screen, and repeating
+       it here just gives people a reason to read their phone instead of watching. */
     function conquestCardHTML(data) {
       const c = data.conquest || {};
-      if (c.state === 'choice') {
-        const myTurn = c.turn && c.turn === data.playerNum;
-        return `
-          <div class="secret-card theme-conquest">
-            ${nameBanner(data)}
-            ${myTurn ? `
-              <span class="card-emoji">🎲</span>
-              <p class="conq-wait">Your challenge — call it!</p>
-              <div class="conq-td-row">
-                <button class="conq-td truth" onclick="requestChoice('truth', this)"><span class="conq-td-emoji">😇</span>TRUTH</button>
-                <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>DARE</button>
-              </div>` : `
-              <span class="card-emoji">🏰</span>
-              <p class="conq-wait">⏳ ${esc(c.player || 'Someone')} is picking Truth or Dare…</p>`}
+      const myTurn = c.turn && c.turn === data.playerNum;
+      let body = '<p class="conq-wait">⏳</p>';
+
+      if (c.state === 'choice' && myTurn) {
+        body = `
+          <div class="conq-td-row">
+            <button class="conq-td truth" onclick="requestChoice('truth', this)"><span class="conq-td-emoji">😇</span>TRUTH</button>
+            <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>DARE</button>
           </div>`;
-      }
-      if (c.state !== 'voting' || !c.id) {
-        const myTurn = c.turn && c.turn === data.playerNum;
-        const body = myTurn
-          ? `<p class="conq-wait">It's your turn!</p>
-             <button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>
-             ${c.canRoll ? '' : '<p class="conq-wait">Hang on — the board is still busy.</p>'}`
-          : `<p class="conq-wait">⏳ Waiting for the next challenge…<br>Your vote buttons appear here.</p>`;
-        return `
-          <div class="secret-card theme-conquest">
-            ${nameBanner(data)}
-            <span class="card-emoji">🏰</span>
-            ${body}
+      } else if (c.state === 'voting' && c.id) {
+        const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
+        body = `
+          <div class="conq-vote-row">
+            <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${c.isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
+            <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? '❌ Passed' : '❌ Skipped'}</button>
           </div>`;
+      } else if (myTurn) {
+        body = `<button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
       }
-      const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
-      const yesLabel = c.isTruth ? '✅ Answered Honestly!' : '✅ Did It!';
-      const noLabel  = c.isTruth ? '❌ Passed' : '❌ Skipped';
+
       return `
         <div class="secret-card theme-conquest">
           ${nameBanner(data)}
-          ${c.player ? `<span class="conq-turn">🎲 ${esc(c.player)}'s challenge</span>` : ''}
-          ${c.cat ? `<span class="conq-cat${c.isTruth ? ' is-truth' : ''}">${esc(c.cat)}</span>` : ''}
-          <div class="conq-text">${esc(c.text || '')}</div>
-          <div class="vote-section">
-            <div class="vote-title">🗳️ Did they pull it off?</div>
-            <div class="conq-vote-row">
-              <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${yesLabel}</button>
-              <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${noLabel}</button>
-            </div>
-          </div>
+          ${body}
         </div>`;
     }
 
