@@ -57,6 +57,13 @@
       border-top: 1px solid #1e1e42; padding-top: 14px; margin-top: 2px;
       font-size: .78rem; font-weight: 800; color: #555;
     }
+    /* the challenge text, shown only to the player who has to perform it */
+    .conq-prompt {
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 18px 16px;
+      font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.5;
+      overflow-wrap: break-word;
+    }
     .conq-vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .conq-vote {
       background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
@@ -364,13 +371,18 @@
             <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>DARE</button>
           </div>`;
       } else if (c.state === 'voting' && c.id) {
-        // no hint line here — the turn bar plus the category chip already say it
-        const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
-        body = `
-          <div class="conq-vote-row">
-            <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${c.isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
-            <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? '❌ Passed' : '❌ Skipped'}</button>
-          </div>`;
+        // the one taking the challenge reads it instead of voting — they can't judge
+        // themselves, and this is the one moment the prompt text belongs on a phone
+        if (myTurn) {
+          body = `<div class="conq-prompt">${esc(c.text || '')}</div>`;
+        } else {
+          const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
+          body = `
+            <div class="conq-vote-row">
+              <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${c.isTruth ? '✅ Answered Honestly!' : '✅ Did It!'}</button>
+              <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? '❌ Passed' : '❌ Skipped'}</button>
+            </div>`;
+        }
       } else if (myTurn) {
         body = `<button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
       }
