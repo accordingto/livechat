@@ -130,11 +130,18 @@
     }
     .vs-input:focus { outline: none; border-color: #22c55e; }
     .vs-btn { padding: 8px 14px; font-size: .76rem; }
-    .vs-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+    .vs-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; align-items: start; }
     .vs-link {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       background: #13132b; border: 2px solid #1e1e42; border-radius: 10px; padding: 7px 10px;
     }
+    /* QR beats reading a link out loud when the host is screen-sharing — players just scan */
+    .qr-inline {
+      background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
+      width: 100%; max-width: 150px; margin: 4px auto 2px;
+      animation: popIn .25s ease both;
+    }
+    .qr-inline svg { width: 100%; height: auto; display: block; }
     .vs-link .vl-name {
       flex: 1; min-width: 0; font-size: .82rem; font-weight: 800; color: #ccc;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -145,6 +152,7 @@
       padding: 4px 9px; cursor: pointer; transition: border-color .2s, color .2s;
     }
     .vs-link .vl-copy:active { transform: scale(.97); }
+    .vs-link .vl-qr.open { border-color: #22c55e; color: #22c55e; }
     @media (hover: hover) and (pointer: fine) {
       .vs-link .vl-copy:hover { border-color: #22c55e; color: #22c55e; }
     }
@@ -763,6 +771,7 @@
   </div>
 
   <script src="game-data.js"></script>
+  <script src="qrcode.js"></script>
   <!-- Firebase is optional here: it only powers the audience vote. If it fails to load,
        every check below falls back to "voting off" and the board game still works offline. -->
   <script src="firebase-config.js"></script>
@@ -932,6 +941,27 @@
       }
     }
 
+    function qrSVG(text) {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    }
+
+    /* only one QR open at a time — opening another closes the previous one, so the
+       setup card never grows into a wall of codes */
+    function toggleCardQR(token, row, btn) {
+      const existing = row.querySelector('.qr-inline');
+      document.querySelectorAll('#vote-links .qr-inline').forEach(el => { if (el !== existing) el.remove(); });
+      document.querySelectorAll('#vote-links .vl-qr').forEach(b => { if (b !== btn) b.classList.remove('open'); });
+      if (existing) { existing.remove(); btn.classList.remove('open'); return; }
+      const box = document.createElement('div');
+      box.className = 'qr-inline';
+      box.innerHTML = qrSVG(cardURL(token));
+      row.appendChild(box);
+      btn.classList.add('open');
+    }
+
     function renderVoteSetup() {
       const box = document.getElementById('vote-setup');
       box.classList.toggle('hidden', !votingOn());
@@ -950,8 +980,13 @@
         copy.className = 'vl-copy';
         copy.textContent = '📋 Link';
         copy.onclick = () => copyCardLink(playerTokens[i], copy);
+        const qr = document.createElement('button');
+        qr.className = 'vl-copy vl-qr';
+        qr.textContent = 'QR';
+        qr.onclick = () => toggleCardQR(playerTokens[i], row, qr);
         row.appendChild(name);
         row.appendChild(copy);
+        row.appendChild(qr);
         wrap.appendChild(row);
       }
     }
