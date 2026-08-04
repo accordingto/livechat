@@ -203,9 +203,9 @@
     .turn-indicator .tname { color: var(--turn-color, #22c55e); }
     .turn-indicator .round-count { color: #888; font-weight: 700; margin-left: 2px; }
     .roll-btn { font-size: clamp(.78rem, 1.6vw, .88rem); padding: 8px 18px; }
-    /* ── Roll choice: player picks 1 die (predictable) or 2 dice (bigger, riskier move) each turn ── */
+    /* ── Roll row: the single movement die, flanked by the two range skills ── */
     .roll-btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-    .dice-pair { display: flex; gap: 18px; align-items: center; justify-content: center; }
+    .dice-pair { display: flex; align-items: center; justify-content: center; }
 
     /* ── 3D dice: a real rotating cube with pip faces, tossed with a bounce ── */
     .dice-outer { animation: none; }
@@ -736,24 +736,10 @@
                 </div>
               </div>
             </div>
-            <div class="dice-outer dice-outer-second hidden" id="dice-outer-2">
-              <div class="dice-stage">
-                <div class="dice-shadow"></div>
-                <div class="dice3d" id="dice3d-2">
-                  <div class="d3-face face-1"><span class="pip p-mc"></span></div>
-                  <div class="d3-face face-2"><span class="pip p-tl"></span><span class="pip p-br"></span></div>
-                  <div class="d3-face face-3"><span class="pip p-tl"></span><span class="pip p-mc"></span><span class="pip p-br"></span></div>
-                  <div class="d3-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
-                  <div class="d3-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
-                  <div class="d3-face face-6"><span class="pip p-tl"></span><span class="pip p-ml"></span><span class="pip p-bl"></span><span class="pip p-tr"></span><span class="pip p-mr"></span><span class="pip p-br"></span></div>
-                </div>
-              </div>
-            </div>
           </div>
           <div class="roll-btn-row">
             <button class="btn-secondary roll-btn hidden" id="lowroll-btn" onclick="toggleSkill('low')">🔻 Low Roll</button>
-            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice(1)">🎲 1 Die</button>
-            <button class="btn-primary roll-btn" id="roll-btn-2" onclick="rollDice(2)">🎲🎲 2 Dice</button>
+            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice()">🎲 Roll</button>
             <button class="btn-secondary roll-btn hidden" id="highroll-btn" onclick="toggleSkill('high')">🎯 High Roll</button>
           </div>
         </div>
@@ -848,7 +834,7 @@
     let pendingSpecialEffect = null; // 'bonus' | 'lucky' | 'gift' while a challenge on a special tile is in progress
     let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
-    const boardDiceRot = { 1: { x: 0, y: 0 }, 2: { x: 0, y: 0 } }; // cumulative rotation for the two movement dice
+    const boardDiceRot = { x: 0, y: 0 }; // cumulative rotation for the movement die
 
     /* ── 🗳️ Player voting (optional): the audience votes ✅ / ❌ on every challenge from
        the same private card link the other games hand out. Firebase is not required —
@@ -1105,7 +1091,6 @@
       diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
-      document.getElementById('dice-outer-2').classList.add('hidden');
       armedSkill = null;
       updateSkillButtons();
       round = 1;
@@ -1332,59 +1317,40 @@
     /* ── Dice + movement ── */
     function setRollButtonsDisabled(disabled) {
       document.getElementById('roll-btn-1').disabled = disabled;
-      document.getElementById('roll-btn-2').disabled = disabled;
+      publishState(); // the player cards mirror whether the roll button is live
     }
     // spins the 3D cube forward (never backward, so it never visibly snaps) to land
-    // exactly on `value`, adding a few extra full turns each time for a proper tumble.
-    // `which` is 1 or 2, picking which of the two movement dice to spin.
-    function spinDiceTo(which, value) {
+    // exactly on `value`, adding a few extra full turns each time for a proper tumble
+    function spinDiceTo(value) {
       const rot = FACE_ROTATION[value];
       const spins = (2 + Math.floor(Math.random() * 2)) * 360;
-      const state = boardDiceRot[which];
+      const state = boardDiceRot;
       const nextAngle = (current, targetMod) => {
         const wanted = ((targetMod % 360) + 360) % 360;
-        let candidate = Math.ceil((current + 1) / 360) * 360 + wanted;
-        return candidate;
+        return Math.ceil((current + 1) / 360) * 360 + wanted;
       };
       state.x = nextAngle(state.x, rot.x) + spins;
       state.y = nextAngle(state.y, rot.y) + spins;
-      const el = document.getElementById(which === 1 ? 'dice3d' : 'dice3d-2');
-      el.style.transform = `rotateX(${state.x}deg) rotateY(${state.y}deg)`;
+      document.getElementById('dice3d').style.transform = `rotateX(${state.x}deg) rotateY(${state.y}deg)`;
     }
 
-    // numDice is 1 or 2 — the current player's choice for how far to move this turn
-    function rollDice(numDice) {
+    // one die per turn — 1 to 6 steps, or forced into 4-6 / 1-3 by an armed skill
+    function rollDice() {
       if (rolling || awaitingJudgement || !players.length) return;
       rolling = true;
       setRollButtonsDisabled(true);
 
-      const rollOneDie = () => {
-        if (armedSkill === 'high') return 4 + Math.floor(Math.random() * 3);
-        if (armedSkill === 'low')  return 1 + Math.floor(Math.random() * 3);
-        return 1 + Math.floor(Math.random() * 6);
-      };
-      const die1 = rollOneDie();
-      const outer1 = document.getElementById('dice-outer');
-      outer1.classList.remove('bounce');
-      void outer1.offsetWidth; // restart the bounce animation even on back-to-back rolls
-      outer1.classList.add('bounce');
-      spinDiceTo(1, die1);
+      let die = 1 + Math.floor(Math.random() * 6);
+      if (armedSkill === 'high') die = 4 + Math.floor(Math.random() * 3);
+      else if (armedSkill === 'low') die = 1 + Math.floor(Math.random() * 3);
 
-      let total = die1;
-      const outer2 = document.getElementById('dice-outer-2');
-      if (numDice === 2) {
-        const die2 = rollOneDie();
-        total += die2;
-        outer2.classList.remove('hidden');
-        outer2.classList.remove('bounce');
-        void outer2.offsetWidth;
-        outer2.classList.add('bounce');
-        spinDiceTo(2, die2);
-      } else {
-        outer2.classList.add('hidden');
-      }
+      const outer = document.getElementById('dice-outer');
+      outer.classList.remove('bounce');
+      void outer.offsetWidth; // restart the bounce animation even on back-to-back rolls
+      outer.classList.add('bounce');
+      spinDiceTo(die);
 
-      setTimeout(() => movePlayer(total), 1100);
+      setTimeout(() => movePlayer(die), 1100);
     }
 
     const SKILL_INFO = {
@@ -1553,6 +1519,7 @@
     let rawVotes = {};               // playerNum -> { id, choice } straight off each card
     let voteListeners = [];
     let lastRosterJSON = '';         // avoids rewriting an unchanged roster on every challenge
+    const handledRollIds = new Set(); // remote roll requests already acted on
 
     function detachVoteListeners() {
       voteListeners.forEach(({ ref, handler }) => ref.off('value', handler));
@@ -1571,6 +1538,8 @@
           const data = snap.val();
           rawVotes[pnum] = (data && data.conquestVote) || null;
           renderVoteTally();
+          const req = data && data.rollRequest;
+          if (req && req.id) handleRemoteRoll(pnum, req.id);
         };
         ref.on('value', handler);
         voteListeners.push({ ref, handler });
@@ -1615,12 +1584,41 @@
       renderVoteTally();
     }
 
-    /* between challenges the cards just show "waiting" — no buttons to press by mistake */
+    /* between challenges the cards just show whose turn it is — and, for that one player,
+       a Roll button that fires the die on the host screen */
     function publishIdle() {
       if (!votingOn()) return;
       voteId = '';
-      publishToCards({ conquest: { id: '', state: 'idle' } });
+      publishState();
       renderVoteTally();
+    }
+
+    /* mirrors the host's roll button onto the cards: only the player whose turn it is
+       sees an enabled Roll, and only while the host screen would accept a roll */
+    function publishState() {
+      if (!votingOn() || voteId) return; // a challenge is on screen — cards stay on the ballot
+      const rollBtn = document.getElementById('roll-btn-1');
+      publishToCards({
+        conquest: {
+          id: '',
+          state: 'idle',
+          turn: gameStarted && players.length ? currentIdx + 1 : 0,
+          canRoll: !!(gameStarted && rollBtn && !rollBtn.disabled && !rolling && !awaitingJudgement),
+        },
+      });
+    }
+
+    /* a card tapped Roll — accept it only from the player whose turn it actually is, and
+       only when the host screen would allow the roll anyway. The request is cleared as
+       soon as it's seen, so a re-delivered snapshot can never roll twice. */
+    function handleRemoteRoll(pnum, reqId) {
+      if (handledRollIds.has(reqId)) return;
+      handledRollIds.add(reqId);
+      db.ref(`rooms/${sessionCode}/players/${playerTokens[pnum - 1]}`).update({ rollRequest: null });
+      if (!gameStarted || pnum !== currentIdx + 1) return;
+      const rollBtn = document.getElementById('roll-btn-1');
+      if (!rollBtn || rollBtn.disabled || rolling || awaitingJudgement) return;
+      rollDice();
     }
 
     /* the counts ride inside the judge buttons themselves — no extra row under the card.
@@ -2051,7 +2049,6 @@
       document.getElementById('roundNum').textContent = round;
       rolling = false;
       setRollButtonsDisabled(false);
-      document.getElementById('dice-outer-2').classList.add('hidden'); // back to idle single-die view until the next player picks 2 dice
       armedSkill = null;
       updateSkillButtons();
       updateTurnIndicator();
@@ -2140,7 +2137,6 @@
       diceOffState = null;
       rolling = false;
       awaitingJudgement = false;
-      document.getElementById('dice-outer-2').classList.add('hidden');
       armedSkill = null;
       updateSkillButtons();
 

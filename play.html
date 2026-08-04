@@ -55,6 +55,14 @@
     .conq-vote.yes.picked { border-color: #22c55e; background: rgba(34,197,94,.16); color: #22c55e; }
     .conq-vote.no.picked  { border-color: #ef4444; background: rgba(239,68,68,.16); color: #ef4444; }
     .conq-wait { font-size: 1rem; color: #666; line-height: 1.7; }
+    /* the roll button on the card fires the die on the host's shared screen */
+    .conq-roll {
+      width: 100%; background: rgba(34,197,94,.12); border: 2px solid #22c55e; color: #22c55e;
+      border-radius: 16px; padding: 20px; font-size: 1.15rem; font-weight: 900; font-family: inherit;
+      cursor: pointer; transition: background .2s, opacity .2s, transform .1s;
+    }
+    .conq-roll:active:not(:disabled) { transform: scale(.98); }
+    .conq-roll:disabled { opacity: .35; cursor: not-allowed; }
     @media (hover: hover) and (pointer: fine) {
       .conq-vote.yes:hover { border-color: #22c55e; }
       .conq-vote.no:hover  { border-color: #ef4444; }
@@ -290,14 +298,29 @@
       db.ref(`rooms/${session}/players/${token}/conquestVote`).set({ id: c.id, choice });
     }
 
+    /* rolling from the card: the host screen owns the dice, this just asks it to roll.
+       The host ignores the request unless it really is this player's turn. */
+    function requestRoll(btn) {
+      if (!db || !session || !token) return;
+      if (btn) { btn.disabled = true; btn.textContent = '🎲 Rolling…'; }
+      db.ref(`rooms/${session}/players/${token}/rollRequest`)
+        .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7) });
+    }
+
     function conquestCardHTML(data) {
       const c = data.conquest || {};
       if (c.state !== 'voting' || !c.id) {
+        const myTurn = c.turn && c.turn === data.playerNum;
+        const body = myTurn
+          ? `<p class="conq-wait">It's your turn!</p>
+             <button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>
+             ${c.canRoll ? '' : '<p class="conq-wait">Hang on — the board is still busy.</p>'}`
+          : `<p class="conq-wait">⏳ Waiting for the next challenge…<br>Your vote buttons appear here.</p>`;
         return `
           <div class="secret-card theme-conquest">
             ${nameBanner(data)}
             <span class="card-emoji">🏰</span>
-            <p class="conq-wait">⏳ Waiting for the next challenge…<br>Your vote buttons appear here.</p>
+            ${body}
           </div>`;
       }
       const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
