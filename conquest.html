@@ -1559,6 +1559,10 @@
           game: 'conquest',
           playerNum: i + 1,
           name: playerNames[i] || `Player ${i + 1}`,
+          // this player's own standing — the one thing their card can say that the
+          // shared screen doesn't already say bigger
+          round: gameStarted ? round : 0,
+          tiles: gameStarted ? ownership.filter(o => o === i).length : 0,
         }, payload));
       }
       // non-secret roster, same shape the other games publish — only rewritten when the
@@ -1581,6 +1585,7 @@
         conquest: {
           id: voteId,
           state: 'voting',
+          turn: currentIdx + 1,
           cat: prompt.cat,
           text: plainText,
           isTruth: !!isTruth,
@@ -1632,6 +1637,7 @@
           id: '',
           state: 'idle',
           turn: gameStarted && players.length ? currentIdx + 1 : 0,
+          player: (players[currentIdx] && players[currentIdx].name) || '',
           canRoll: !!(gameStarted && rollBtn && !rollBtn.disabled && !rolling && !awaitingJudgement),
         },
       });

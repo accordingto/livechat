@@ -30,7 +30,21 @@
     .secret-card.theme-secretrule  { border-color: #14b8a6; box-shadow: 0 0 60px rgba(20,184,166,.18); }
     .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
 
-    /* 🏰 Dare Conquest: name and buttons only — everything else is on the host's screen */
+    /* 🏰 Dare Conquest: name, buttons, and just enough context to follow along */
+    .conq-status {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #22c55e;
+    }
+    .conq-chip {
+      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #22c55e;
+      font-size: .68rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 20px;
+    }
+    .conq-chip.is-truth { background: rgba(234,179,8,.14); border-color: rgba(234,179,8,.35); color: #eab308; }
+    .conq-meta {
+      width: 100%; display: flex; justify-content: center; gap: 18px;
+      border-top: 1px solid #1e1e42; padding-top: 14px; margin-top: 2px;
+      font-size: .78rem; font-weight: 800; color: #555;
+    }
     .conq-vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .conq-vote {
       background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
@@ -319,22 +333,26 @@
         .set({ id: c.choiceId, mode });
     }
 
-    /* Dare Conquest cards stay deliberately bare: the player's name and whatever buttons
-       they can press right now, nothing else. Everything else — whose turn it is, the
-       question, the category — is already big on the host's shared screen, and repeating
-       it here just gives people a reason to read their phone instead of watching. */
+    /* Dare Conquest cards stay light on text: the player's name, whichever buttons they
+       can press right now, a one-line status and their own standing. Deliberately NOT the
+       question itself — that is big on the host's shared screen, and reprinting it here
+       just gives everyone a reason to read their phone instead of watching. */
     function conquestCardHTML(data) {
       const c = data.conquest || {};
       const myTurn = c.turn && c.turn === data.playerNum;
+      const who = esc(c.player || 'Someone');
+      let status = myTurn ? 'Your turn' : `${who}'s turn`;
       let body = '<p class="conq-wait">⏳</p>';
 
-      if (c.state === 'choice' && myTurn) {
-        body = `
+      if (c.state === 'choice') {
+        status = myTurn ? 'Truth or Dare?' : `${who} is choosing…`;
+        if (myTurn) body = `
           <div class="conq-td-row">
             <button class="conq-td truth" onclick="requestChoice('truth', this)"><span class="conq-td-emoji">😇</span>TRUTH</button>
             <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>DARE</button>
           </div>`;
       } else if (c.state === 'voting' && c.id) {
+        status = myTurn ? 'Your challenge' : `${who}'s challenge`;
         const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
         body = `
           <div class="conq-vote-row">
@@ -345,10 +363,19 @@
         body = `<button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
       }
 
+      // the category is a two-word label, not the prompt — enough to follow along by ear
+      const chip = c.state === 'voting' && c.cat
+        ? `<span class="conq-chip${c.isTruth ? ' is-truth' : ''}">${esc(c.cat)}</span>` : '';
+      const meta = c.round
+        ? `<div class="conq-meta"><span>🚩 ${data.tiles || 0} ${data.tiles === 1 ? 'tile' : 'tiles'}</span><span>Round ${c.round}</span></div>` : '';
+
       return `
         <div class="secret-card theme-conquest">
           ${nameBanner(data)}
+          ${c.turn ? `<span class="conq-status">${status}</span>` : ''}
+          ${chip}
           ${body}
+          ${meta}
         </div>`;
     }
 
