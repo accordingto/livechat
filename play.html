@@ -31,8 +31,20 @@
     .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
 
     /* 🏰 Dare Conquest: name, buttons, and just enough context to follow along */
+    /* always-on turn marker: the board token + the name in that player's colour */
+    .conq-turnbar {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 999px;
+      padding: 9px 16px;
+    }
+    .conq-turnbar.is-me { border-color: #22c55e; background: rgba(34,197,94,.1); }
+    .conq-turnbar .ct-token { font-size: 1.05rem; line-height: 1; }
+    .conq-turnbar .ct-name {
+      font-size: .9rem; font-weight: 900; letter-spacing: .5px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .conq-status {
-      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #22c55e;
+      font-size: .72rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #666;
     }
     .conq-chip {
       background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #22c55e;
@@ -333,26 +345,26 @@
         .set({ id: c.choiceId, mode });
     }
 
-    /* Dare Conquest cards stay light on text: the player's name, whichever buttons they
-       can press right now, a one-line status and their own standing. Deliberately NOT the
-       question itself — that is big on the host's shared screen, and reprinting it here
-       just gives everyone a reason to read their phone instead of watching. */
+    /* Dare Conquest cards stay light on text: a turn marker in the current player's board
+       colour, the buttons this player can press right now, and their own standing.
+       Deliberately NOT the question itself — that is big on the host's shared screen, and
+       reprinting it here just gives everyone a reason to read their phone. */
     function conquestCardHTML(data) {
       const c = data.conquest || {};
       const myTurn = c.turn && c.turn === data.playerNum;
       const who = esc(c.player || 'Someone');
-      let status = myTurn ? 'Your turn' : `${who}'s turn`;
+      let hint = '';
       let body = '<p class="conq-wait">⏳</p>';
 
       if (c.state === 'choice') {
-        status = myTurn ? 'Truth or Dare?' : `${who} is choosing…`;
+        hint = myTurn ? 'Truth or Dare?' : 'picking Truth or Dare…';
         if (myTurn) body = `
           <div class="conq-td-row">
             <button class="conq-td truth" onclick="requestChoice('truth', this)"><span class="conq-td-emoji">😇</span>TRUTH</button>
             <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>DARE</button>
           </div>`;
       } else if (c.state === 'voting' && c.id) {
-        status = myTurn ? 'Your challenge' : `${who}'s challenge`;
+        // no hint line here — the turn bar plus the category chip already say it
         const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
         body = `
           <div class="conq-vote-row">
@@ -363,6 +375,14 @@
         body = `<button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
       }
 
+      // the turn marker is always on the card, in whatever state — it's the one thing
+      // players kept having to ask out loud
+      const turnBar = c.turn ? `
+        <div class="conq-turnbar${myTurn ? ' is-me' : ''}">
+          <span class="ct-token">${esc(c.turnToken || '🎲')}</span>
+          <span class="ct-name" style="color:${esc(c.turnHex || '#22c55e')}">${myTurn ? 'Your turn' : who + "'s turn"}</span>
+        </div>` : '';
+      const hintLine = hint ? `<span class="conq-status">${hint}</span>` : '';
       // the category is a two-word label, not the prompt — enough to follow along by ear
       const chip = c.state === 'voting' && c.cat
         ? `<span class="conq-chip${c.isTruth ? ' is-truth' : ''}">${esc(c.cat)}</span>` : '';
@@ -372,7 +392,8 @@
       return `
         <div class="secret-card theme-conquest">
           ${nameBanner(data)}
-          ${c.turn ? `<span class="conq-status">${status}</span>` : ''}
+          ${turnBar}
+          ${hintLine}
           ${chip}
           ${body}
           ${meta}

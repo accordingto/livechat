@@ -1575,6 +1575,18 @@
       }
     }
 
+    /* whose turn it is, in the shape the cards render it: name plus the player's board
+       colour, so every card can show the same turn marker the board does */
+    function turnInfo() {
+      const p = players[currentIdx];
+      return {
+        turn: gameStarted && players.length ? currentIdx + 1 : 0,
+        player: (p && p.name) || '',
+        turnToken: (p && p.token) || '',
+        turnHex: (p && p.hex) || '',
+      };
+    }
+
     /* opens a fresh vote — a new id means every card's old vote stops counting, so nothing
        has to be deleted and a stale card can never leak into the next challenge's tally */
     function publishChallenge(prompt, isTruth, plainText) {
@@ -1582,15 +1594,13 @@
       cardPhase = 'voting';
       voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       publishToCards({
-        conquest: {
+        conquest: Object.assign(turnInfo(), {
           id: voteId,
           state: 'voting',
-          turn: currentIdx + 1,
           cat: prompt.cat,
           text: plainText,
           isTruth: !!isTruth,
-          player: (players[currentIdx] && players[currentIdx].name) || '',
-        },
+        }),
       });
       renderVoteTally();
     }
@@ -1603,14 +1613,12 @@
       voteId = '';
       choiceId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       publishToCards({
-        conquest: {
+        conquest: Object.assign(turnInfo(), {
           id: '',
           state: 'choice',
           choiceId,
-          turn: currentIdx + 1,
           canRoll: false,
-          player: (players[currentIdx] && players[currentIdx].name) || '',
-        },
+        }),
       });
       renderVoteTally();
     }
@@ -1633,13 +1641,11 @@
       if (!votingOn() || cardPhase !== 'idle') return;
       const rollBtn = document.getElementById('roll-btn-1');
       publishToCards({
-        conquest: {
+        conquest: Object.assign(turnInfo(), {
           id: '',
           state: 'idle',
-          turn: gameStarted && players.length ? currentIdx + 1 : 0,
-          player: (players[currentIdx] && players[currentIdx].name) || '',
           canRoll: !!(gameStarted && rollBtn && !rollBtn.disabled && !rolling && !awaitingJudgement),
-        },
+        }),
       });
     }
 
