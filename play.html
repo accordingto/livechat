@@ -63,6 +63,20 @@
     }
     .conq-roll:active:not(:disabled) { transform: scale(.98); }
     .conq-roll:disabled { opacity: .35; cursor: not-allowed; }
+    /* Truth or Dare, called from the card — mirrors the host screen's two big buttons */
+    .conq-td-row { display: flex; gap: 12px; width: 100%; }
+    .conq-td {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ccc;
+      border-radius: 16px; padding: 16px 10px;
+      font-size: .95rem; font-weight: 900; letter-spacing: 1px; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .conq-td .conq-td-emoji { font-size: 1.9rem; letter-spacing: 0; }
+    .conq-td:active:not(:disabled) { transform: scale(.96); }
+    .conq-td:disabled { opacity: .35; cursor: not-allowed; }
+    .conq-td.truth { border-color: #eab308; color: #eab308; }
+    .conq-td.dare { border-color: #ef4444; color: #ef4444; }
     @media (hover: hover) and (pointer: fine) {
       .conq-vote.yes:hover { border-color: #22c55e; }
       .conq-vote.no:hover  { border-color: #ef4444; }
@@ -307,8 +321,36 @@
         .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7) });
     }
 
+    /* the Truth-or-Dare call, sent from the card instead of shouted across the room —
+       the host still only accepts it from whoever's turn it actually is */
+    function requestChoice(mode, btn) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'choice' || !c.choiceId) return;
+      const row = btn && btn.closest('.conq-td-row');
+      if (row) row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      db.ref(`rooms/${session}/players/${token}/choiceRequest`)
+        .set({ id: c.choiceId, mode });
+    }
+
     function conquestCardHTML(data) {
       const c = data.conquest || {};
+      if (c.state === 'choice') {
+        const myTurn = c.turn && c.turn === data.playerNum;
+        return `
+          <div class="secret-card theme-conquest">
+            ${nameBanner(data)}
+            ${myTurn ? `
+              <span class="card-emoji">🎲</span>
+              <p class="conq-wait">Your challenge — call it!</p>
+              <div class="conq-td-row">
+                <button class="conq-td truth" onclick="requestChoice('truth', this)"><span class="conq-td-emoji">😇</span>TRUTH</button>
+                <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>DARE</button>
+              </div>` : `
+              <span class="card-emoji">🏰</span>
+              <p class="conq-wait">⏳ ${esc(c.player || 'Someone')} is picking Truth or Dare…</p>`}
+          </div>`;
+      }
       if (c.state !== 'voting' || !c.id) {
         const myTurn = c.turn && c.turn === data.playerNum;
         const body = myTurn

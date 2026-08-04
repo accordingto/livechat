@@ -1519,7 +1519,10 @@
     let rawVotes = {};               // playerNum -> { id, choice } straight off each card
     let voteListeners = [];
     let lastRosterJSON = '';         // avoids rewriting an unchanged roster on every challenge
-    const handledRollIds = new Set(); // remote roll requests already acted on
+    const handledRollIds = new Set();   // remote roll requests already acted on
+    const handledChoiceIds = new Set(); // remote Truth/Dare calls already acted on
+    let choiceId = '';                  // identifies the Truth-or-Dare fork currently open
+    let cardPhase = 'idle';             // what the player cards are showing: idle | choice | voting
 
     function detachVoteListeners() {
       voteListeners.forEach(({ ref, handler }) => ref.off('value', handler));
@@ -1540,6 +1543,8 @@
           renderVoteTally();
           const req = data && data.rollRequest;
           if (req && req.id) handleRemoteRoll(pnum, req.id);
+          const ch = data && data.choiceRequest;
+          if (ch && ch.id) handleRemoteChoice(pnum, ch.id, ch.mode);
         };
         ref.on('value', handler);
         voteListeners.push({ ref, handler });
@@ -1570,6 +1575,7 @@
        has to be deleted and a stale card can never leak into the next challenge's tally */
     function publishChallenge(prompt, isTruth, plainText) {
       if (!votingOn()) return;
+      cardPhase = 'voting';
       voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       publishToCards({
         conquest: {
@@ -1584,19 +1590,42 @@
       renderVoteTally();
     }
 
+    /* the Truth-or-Dare fork: the current player calls it, so their card gets the two
+       buttons the host screen is showing. Same mechanism as the remote roll. */
+    function publishChoice() {
+      if (!votingOn()) return;
+      cardPhase = 'choice';
+      voteId = '';
+      choiceId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      publishToCards({
+        conquest: {
+          id: '',
+          state: 'choice',
+          choiceId,
+          turn: currentIdx + 1,
+          canRoll: false,
+          player: (players[currentIdx] && players[currentIdx].name) || '',
+        },
+      });
+      renderVoteTally();
+    }
+
     /* between challenges the cards just show whose turn it is — and, for that one player,
        a Roll button that fires the die on the host screen */
     function publishIdle() {
       if (!votingOn()) return;
+      cardPhase = 'idle';
       voteId = '';
+      choiceId = '';
       publishState();
       renderVoteTally();
     }
 
     /* mirrors the host's roll button onto the cards: only the player whose turn it is
-       sees an enabled Roll, and only while the host screen would accept a roll */
+       sees an enabled Roll, and only while the host screen would accept a roll. Does
+       nothing mid-challenge, so a stray call can't wipe the ballot off the cards. */
     function publishState() {
-      if (!votingOn() || voteId) return; // a challenge is on screen — cards stay on the ballot
+      if (!votingOn() || cardPhase !== 'idle') return;
       const rollBtn = document.getElementById('roll-btn-1');
       publishToCards({
         conquest: {
@@ -1608,12 +1637,27 @@
       });
     }
 
+    /* a card called Truth or Dare — same guards as the remote roll, plus a check that the
+       host is actually sitting on the choice screen and hasn't drawn a prompt yet */
+    function handleRemoteChoice(pnum, reqId, mode) {
+      // keyed per player: every card is handed the same choiceId, so a bare id would let
+      // the first (possibly wrong) player's call swallow the real one
+      const key = pnum + ':' + reqId;
+      if (handledChoiceIds.has(key)) return;
+      handledChoiceIds.add(key);
+      db.ref(`rooms/${sessionCode}/players/${playerTokens[pnum - 1]}`).update({ choiceRequest: null });
+      if (!gameStarted || pnum !== currentIdx + 1) return;
+      if (!awaitingJudgement || currentChallengeMode || (mode !== 'truth' && mode !== 'dare')) return;
+      pickChallengeMode(mode);
+    }
+
     /* a card tapped Roll — accept it only from the player whose turn it actually is, and
        only when the host screen would allow the roll anyway. The request is cleared as
        soon as it's seen, so a re-delivered snapshot can never roll twice. */
     function handleRemoteRoll(pnum, reqId) {
-      if (handledRollIds.has(reqId)) return;
-      handledRollIds.add(reqId);
+      const key = pnum + ':' + reqId;
+      if (handledRollIds.has(key)) return;
+      handledRollIds.add(key);
       db.ref(`rooms/${sessionCode}/players/${playerTokens[pnum - 1]}`).update({ rollRequest: null });
       if (!gameStarted || pnum !== currentIdx + 1) return;
       const rollBtn = document.getElementById('roll-btn-1');
@@ -1668,7 +1712,7 @@
       currentTileIdx = tileIdx;
       currentChallengeOwner = ownerIdx;
       currentChallengeMode = null;
-      publishIdle(); // no question drawn yet — nothing for the audience to vote on
+      publishChoice(); // the current player calls Truth or Dare from their own card
       pendingSpecialEffect = specialType || null;
       const attacker = players[currentIdx];
       const isSteal = ownerIdx !== -1;
