@@ -90,6 +90,18 @@
     .conq-skill:disabled { opacity: .4; cursor: not-allowed; }
     .conq-skill.armed { border-color: #ef4444; color: #eab308; opacity: 1; }
 
+    /* the countdown, mirrored from the host — same green → orange → red as the big screen */
+    .conq-timer {
+      width: 62px; height: 62px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #22c55e; color: #22c55e;
+      font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .conq-timer.low { border-color: #f59e0b; color: #f59e0b; }
+    .conq-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+    @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
     /* the challenge text, shown only to the player who has to perform it */
     .conq-prompt {
       width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
@@ -403,9 +415,48 @@
        colour, the buttons this player can press right now, and their own standing.
        Deliberately NOT the question itself — that is big on the host's shared screen, and
        reprinting it here just gives everyone a reason to read their phone. */
+    /* the host publishes the countdown only when it changes state, so the card runs its
+       own one-second tick from whatever number it was handed. `seq` changes on every
+       host-side change, which is how the card knows to re-sync instead of keeping its
+       own drifting count. */
+    const cardTimer = { seq: null, left: 0, total: 0, iv: null };
+
+    function stopCardTimer() {
+      if (cardTimer.iv) { clearInterval(cardTimer.iv); cardTimer.iv = null; }
+    }
+
+    function paintCardTimer() {
+      const el = document.getElementById('conq-timer');
+      if (!el) return;
+      el.textContent = cardTimer.left;
+      el.classList.toggle('low', cardTimer.left <= Math.ceil(cardTimer.total * 0.5));
+      el.classList.toggle('critical', cardTimer.left <= Math.ceil(cardTimer.total * 0.25));
+    }
+
+    function tickCardTimer() {
+      cardTimer.left = Math.max(0, cardTimer.left - 1);
+      if (cardTimer.left <= 0) stopCardTimer();
+      paintCardTimer();
+    }
+
+    /* only the player actually taking the challenge sees a countdown */
+    function syncCardTimer(data, mine) {
+      const t = mine ? data.conquestTimer : null;
+      if (!t || !t.total) { stopCardTimer(); cardTimer.seq = null; cardTimer.total = 0; return false; }
+      if (t.seq !== cardTimer.seq) {
+        cardTimer.seq = t.seq;
+        cardTimer.left = t.remaining;
+        cardTimer.total = t.total;
+        stopCardTimer();
+        if (t.state === 'running') cardTimer.iv = setInterval(tickCardTimer, 1000);
+      }
+      return true;
+    }
+
     function conquestCardHTML(data) {
       const c = data.conquest || {};
       const myTurn = c.turn && c.turn === data.playerNum;
+      if (!(c.state === 'voting' && c.id && myTurn)) syncCardTimer(data, false);
       const who = esc(c.player || 'Someone');
       let hint = '';
       let body = '<p class="conq-wait">⏳</p>';
@@ -421,7 +472,10 @@
         // the one taking the challenge reads it instead of voting — they can't judge
         // themselves, and this is the one moment the prompt text belongs on a phone
         if (myTurn) {
-          body = `<div class="conq-prompt">${esc(c.text || '')}</div>`;
+          const timing = syncCardTimer(data, true);
+          body = `
+            <div class="conq-prompt">${esc(c.text || '')}</div>
+            ${timing ? `<div class="conq-timer" id="conq-timer">${cardTimer.left}</div>` : ''}`;
         } else {
           const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
           body = `

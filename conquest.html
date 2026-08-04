@@ -1892,6 +1892,22 @@
       promptTimerRemaining = 0;
       promptTimerTotal = 0;
       promptTimerPaused = false;
+      publishTimer(null);
+    }
+
+    /* the countdown is mirrored to the player cards by publishing only when it CHANGES
+       STATE (start / pause / resume / restart / hit zero) — each card then runs its own
+       one-second tick from the number it was handed. Writing every second instead would
+       mean ~45 writes per player per challenge for no extra accuracy. */
+    let timerSeq = 0;
+    function publishTimer(state) {
+      if (!votingOn()) return;
+      timerSeq++;
+      publishToCards({
+        conquestTimer: state
+          ? { seq: timerSeq, state, remaining: promptTimerRemaining, total: promptTimerTotal }
+          : null,
+      });
     }
 
     function updateTimerPauseLabel() {
@@ -1904,9 +1920,11 @@
       if (!circle) { if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; } return; }
       promptTimerRemaining--;
       if (promptTimerRemaining <= 0) {
+        promptTimerRemaining = 0;
         circle.textContent = '0';
         circle.classList.add('critical');
         if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; }
+        publishTimer('done');
         return;
       }
       circle.textContent = promptTimerRemaining;
@@ -1929,6 +1947,7 @@
       circle.textContent = promptTimerRemaining;
       updateTimerPauseLabel();
       promptTimerInterval = setInterval(tickPromptTimer, 1000);
+      publishTimer('running');
     }
 
     // toggles between running and paused — pausing keeps the remaining time, doesn't reset it
@@ -1943,6 +1962,7 @@
         promptTimerInterval = setInterval(tickPromptTimer, 1000);
       }
       updateTimerPauseLabel();
+      publishTimer(promptTimerPaused ? 'paused' : 'running');
     }
 
     // resets the countdown back to the full duration and starts running again,
@@ -1956,6 +1976,7 @@
       if (circle) { circle.classList.remove('low', 'critical'); circle.textContent = promptTimerRemaining; }
       updateTimerPauseLabel();
       promptTimerInterval = setInterval(tickPromptTimer, 1000);
+      publishTimer('running');
     }
 
     function judge(isCorrect) {
