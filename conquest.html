@@ -1398,6 +1398,7 @@
         btn.disabled = left <= 0; // out of charges — stays visible showing (0), just can't be pressed
         btn.textContent = `${info.icon} ${info.label} (${left})`;
       });
+      publishState(); // the cards show the same charges and armed state
     }
 
     function movePlayer(steps) {
@@ -1521,6 +1522,7 @@
     let lastRosterJSON = '';         // avoids rewriting an unchanged roster on every challenge
     const handledRollIds = new Set();   // remote roll requests already acted on
     const handledChoiceIds = new Set(); // remote Truth/Dare calls already acted on
+    const handledSkillIds = new Set();  // remote High/Low Roll toggles already acted on
     let choiceId = '';                  // identifies the Truth-or-Dare fork currently open
     let cardPhase = 'idle';             // what the player cards are showing: idle | choice | voting
 
@@ -1545,6 +1547,8 @@
           if (req && req.id) handleRemoteRoll(pnum, req.id);
           const ch = data && data.choiceRequest;
           if (ch && ch.id) handleRemoteChoice(pnum, ch.id, ch.mode);
+          const sk = data && data.skillRequest;
+          if (sk && sk.id) handleRemoteSkill(pnum, sk.id, sk.kind);
         };
         ref.on('value', handler);
         voteListeners.push({ ref, handler });
@@ -1644,13 +1648,30 @@
     function publishState() {
       if (!votingOn() || cardPhase !== 'idle') return;
       const rollBtn = document.getElementById('roll-btn-1');
+      const p = players[currentIdx];
       publishToCards({
         conquest: Object.assign(turnInfo(), {
           id: '',
           state: 'idle',
           canRoll: !!(gameStarted && rollBtn && !rollBtn.disabled && !rolling && !awaitingJudgement),
+          // the two range skills, mirrored so the current player can arm them from their card
+          highLeft: p ? (p.highRolls || 0) : 0,
+          lowLeft: p ? (p.lowRolls || 0) : 0,
+          armed: armedSkill || '',
         }),
       });
+    }
+
+    /* a card armed or cancelled High/Low Roll — toggleSkill() does the real bookkeeping
+       (charges, refunds, mutual exclusion), this only checks it's that player's turn */
+    function handleRemoteSkill(pnum, reqId, kind) {
+      const key = pnum + ':' + reqId;
+      if (handledSkillIds.has(key)) return;
+      handledSkillIds.add(key);
+      db.ref(`rooms/${sessionCode}/players/${playerTokens[pnum - 1]}`).update({ skillRequest: null });
+      if (!gameStarted || pnum !== currentIdx + 1) return;
+      if (rolling || awaitingJudgement || (kind !== 'high' && kind !== 'low')) return;
+      toggleSkill(kind);
     }
 
     /* a card called Truth or Dare — same guards as the remote roll, plus a check that the

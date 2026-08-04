@@ -57,6 +57,19 @@
       border-top: 1px solid #1e1e42; padding-top: 14px; margin-top: 2px;
       font-size: .78rem; font-weight: 800; color: #555;
     }
+    /* High/Low Roll on the card: same red-border + yellow-text armed look as the host screen,
+       and the same "stays visible showing (0)" behaviour once the charges run out */
+    .conq-skill-row { display: flex; gap: 10px; width: 100%; }
+    .conq-skill {
+      flex: 1; background: transparent; border: 2px solid #1e1e42; color: #666;
+      border-radius: 12px; padding: 12px 6px;
+      font-size: .82rem; font-weight: 800; font-family: inherit; white-space: nowrap;
+      cursor: pointer; transition: border-color .2s, color .2s, transform .1s;
+    }
+    .conq-skill:active:not(:disabled) { transform: scale(.97); }
+    .conq-skill:disabled { opacity: .4; cursor: not-allowed; }
+    .conq-skill.armed { border-color: #ef4444; color: #eab308; opacity: 1; }
+
     /* the challenge text, shown only to the player who has to perform it */
     .conq-prompt {
       width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
@@ -340,6 +353,17 @@
         .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7) });
     }
 
+    /* arming (or cancelling) High/Low Roll from the card — the host owns the charge count,
+       this only asks it to toggle, exactly like pressing the button on the shared screen */
+    function requestSkill(kind, btn) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'idle' || !c.canRoll) return;
+      if (btn) btn.disabled = true;
+      db.ref(`rooms/${session}/players/${token}/skillRequest`)
+        .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), kind });
+    }
+
     /* the Truth-or-Dare call, sent from the card instead of shouted across the room —
        the host still only accepts it from whoever's turn it actually is */
     function requestChoice(mode, btn) {
@@ -384,7 +408,18 @@
             </div>`;
         }
       } else if (myTurn) {
-        body = `<button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
+        // the two range skills sit above the roll, same order and wording as the host screen
+        const skill = (kind, icon, label, left) => {
+          const armed = c.armed === kind;
+          const off = !c.canRoll || (!armed && left <= 0);
+          return `<button class="conq-skill${armed ? ' armed' : ''}" onclick="requestSkill('${kind}', this)"${off ? ' disabled' : ''}>${icon} ${label} (${left})</button>`;
+        };
+        body = `
+          <div class="conq-skill-row">
+            ${skill('low', '🔻', 'Low Roll', c.lowLeft || 0)}
+            ${skill('high', '🎯', 'High Roll', c.highLeft || 0)}
+          </div>
+          <button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>🎲 Roll the Dice</button>`;
       }
 
       // the turn marker is always on the card, in whatever state — it's the one thing
