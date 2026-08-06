@@ -921,8 +921,18 @@
       return url.href;
     }
 
-    function copyCardLink(token, btn) {
+    /* what actually goes on the clipboard: the player's name on its own line above the
+       link, so a pasted message says whose card it is. The name is on a separate line so
+       every chat app still detects the URL (and still builds its own link preview). */
+    function cardShareText(token) {
       const url = cardURL(token);
+      const i = playerTokens.indexOf(token);
+      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
+      return name ? `${name}\n${url}` : url;
+    }
+
+    function copyCardLink(token, btn) {
+      const url = cardShareText(token);
       const done = () => {
         const old = btn.textContent;
         btn.textContent = '✅';
@@ -931,7 +941,7 @@
       if (navigator.clipboard) {
         navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
       } else {
-        prompt('Copy this link:', url);
+        prompt('Copy this:', url);
       }
     }
 
