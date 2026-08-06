@@ -560,8 +560,14 @@
 
     /* same link for a player all night, and shared across every game — only the
        content behind it changes each round (or when the host switches games) */
+    /* the player's name rides along in the URL ("...&n=Jessie") so their card can title
+       itself before Firebase has even answered — the token still does all the identifying */
     function cardURL(token) {
-      return new URL(`play.html?s=${sessionCode}&p=${token}`, location.href).href;
+      const url = new URL(`play.html?s=${sessionCode}&p=${token}`, location.href);
+      const i = playerTokens.indexOf(token);
+      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
+      if (name) url.searchParams.set('n', name);
+      return url.href;
     }
 
     function qrSVG(text) {

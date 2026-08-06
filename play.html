@@ -257,7 +257,17 @@
     const params  = new URLSearchParams(location.search);
     const session = params.get('s');
     const token   = params.get('p'); // this player's private random token, not a guessable number
+    const urlName = (params.get('n') || '').trim(); // name the host put in the link
     const el = document.getElementById('content');
+
+    /* "Jessie's Secret Card" instead of "Your Secret Card" — the host sends five of these
+       out, so the tab title (and anything that reads it) should say whose card it is.
+       The name in the link is used right away; Firebase overrides it once it answers. */
+    function setCardTitle(name) {
+      const who = String(name || '').trim();
+      document.title = who ? `${who}'s Secret Card` : 'Your Secret Card';
+    }
+    setCardTitle(urlName);
 
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -276,7 +286,7 @@
 
     /* big colored name badge — host can give each player a name, fall back to Player N */
     function nameBanner(data) {
-      const label = data.name ? esc(data.name) : `Player ${data.playerNum || '?'}`;
+      const label = esc(data.name || urlName || `Player ${data.playerNum || '?'}`);
       const [c1, c2] = NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length];
       return `<span class="name-banner" style="background:linear-gradient(135deg,${c1},${c2})">${label}</span>`;
     }
@@ -545,6 +555,7 @@
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
+      setCardTitle(data.name || urlName);
       if (data.game === 'conquest') { el.innerHTML = conquestCardHTML(data); return; }
       if (data.game === 'wordwolf') {
         el.innerHTML = `
