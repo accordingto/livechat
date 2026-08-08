@@ -414,6 +414,17 @@
         .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), kind });
     }
 
+    /* the steal roll-off, rolled from the card. Which side you are is decided by the host
+       from your player number, so the side we send is only a hint it re-checks. */
+    function requestDiceOff(side, btn) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'diceoff' || !c.diceoffId) return;
+      if (btn) { btn.disabled = true; btn.textContent = '🎲 Rolling…'; }
+      db.ref(`rooms/${session}/players/${token}/diceoffRequest`)
+        .set({ id: c.diceoffId + ':' + Date.now().toString(36), side });
+    }
+
     /* the Truth-or-Dare call, sent from the card instead of shouted across the room —
        the host still only accepts it from whoever's turn it actually is */
     function requestChoice(mode, btn) {
@@ -476,7 +487,17 @@
       let hint = '';
       let body = '<p class="conq-wait">⏳</p>';
 
-      if (c.state === 'choice') {
+      if (c.state === 'diceoff') {
+        const side = c.attacker === data.playerNum ? 'attacker'
+                   : c.owner === data.playerNum ? 'owner' : null;
+        const live = side === 'attacker' ? c.canRollAttacker : c.canRollOwner;
+        hint = side === 'attacker' ? `Roll to take ${esc(c.ownerName || '')}'s land`
+             : side === 'owner' ? 'Roll to defend your land'
+             : `${esc(c.attackerName || '')} vs ${esc(c.ownerName || '')}`;
+        if (side) {
+          body = `<button class="conq-roll" onclick="requestDiceOff('${side}', this)"${live ? '' : ' disabled'}>🎲 Roll</button>`;
+        }
+      } else if (c.state === 'choice') {
         hint = myTurn ? 'Truth or Dare?' : 'picking Truth or Dare…';
         if (myTurn) body = `
           <div class="conq-td-row">

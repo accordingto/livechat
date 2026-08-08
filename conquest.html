@@ -1530,7 +1530,9 @@
     let lastRosterJSON = '';         // avoids rewriting an unchanged roster on every challenge
     const handledRollIds = new Set();   // remote roll requests already acted on
     const handledChoiceIds = new Set(); // remote Truth/Dare calls already acted on
-    const handledSkillIds = new Set();  // remote High/Low Roll toggles already acted on
+    const handledSkillIds = new Set();   // remote High/Low Roll toggles already acted on
+    const handledDiceOffIds = new Set(); // remote roll-off rolls already acted on
+    let diceoffId = '';                  // identifies the roll-off currently open
     let choiceId = '';                  // identifies the Truth-or-Dare fork currently open
     let cardPhase = 'idle';             // what the player cards are showing: idle | choice | voting
 
@@ -1557,6 +1559,8 @@
           if (ch && ch.id) handleRemoteChoice(pnum, ch.id, ch.mode);
           const sk = data && data.skillRequest;
           if (sk && sk.id) handleRemoteSkill(pnum, sk.id, sk.kind);
+          const dof = data && data.diceoffRequest;
+          if (dof && dof.id) handleRemoteDiceOff(pnum, dof.id, dof.side);
         };
         ref.on('value', handler);
         voteListeners.push({ ref, handler });
@@ -1671,6 +1675,43 @@
           armed: armedSkill || '',
         }),
       });
+    }
+
+    /* the steal roll-off: both players involved get a Roll button on their own card,
+       each enabled exactly when the matching button on the host screen is */
+    function publishDiceOff() {
+      if (!votingOn() || !diceOffState) return;
+      cardPhase = 'diceoff';
+      voteId = '';
+      const st = diceOffState;
+      const btnLive = id => { const b = document.getElementById(id); return !!(b && !b.disabled); };
+      publishToCards({
+        conquest: Object.assign(turnInfo(), {
+          id: '',
+          state: 'diceoff',
+          diceoffId,
+          canRoll: false,
+          attacker: st.attackerIdx + 1,
+          owner: st.ownerIdx + 1,
+          attackerName: players[st.attackerIdx].name,
+          ownerName: players[st.ownerIdx].name,
+          canRollAttacker: btnLive('attacker-roll-btn'),
+          canRollOwner: btnLive('owner-roll-btn'),
+        }),
+      });
+    }
+
+    /* a card tapped its Roll in the roll-off — only the attacker may roll the attacker's
+       die and only the owner the owner's, and only while that button is actually live */
+    function handleRemoteDiceOff(pnum, reqId, side) {
+      const key = pnum + ':' + reqId;
+      if (handledDiceOffIds.has(key)) return;
+      handledDiceOffIds.add(key);
+      db.ref(`rooms/${sessionCode}/players/${playerTokens[pnum - 1]}`).update({ diceoffRequest: null });
+      if (!diceOffState || (side !== 'attacker' && side !== 'owner')) return;
+      const expected = side === 'attacker' ? diceOffState.attackerIdx : diceOffState.ownerIdx;
+      if (pnum !== expected + 1) return;
+      rollOffRoll(side);
     }
 
     /* a card armed or cancelled High/Low Roll — toggleSkill() does the real bookkeeping
@@ -2077,6 +2118,8 @@
           </div>
           <div class="q-text" id="diceoff-result" style="min-height:1.6em;font-size:1rem;"></div>
         </div>`;
+      diceoffId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      publishDiceOff();
     }
 
     function spinMiniDiceTo(which, value) {
@@ -2099,6 +2142,8 @@
       if (!btn || btn.disabled) return;
       btn.disabled = true;
 
+      publishDiceOff(); // this side's button just went dead — mirror that to the cards
+
       const outer = document.getElementById(which + '-dice-outer');
       if (outer) { outer.classList.remove('bounce'); void outer.offsetWidth; outer.classList.add('bounce'); }
       // the attacker's roll-off die only ever lands on 4, 5, or 6 — a small edge for
@@ -2119,6 +2164,7 @@
         } else {
           diceOffState.ownerRoll = value;
         }
+        publishDiceOff(); // the owner's button may have just unlocked
         checkDiceOffComplete();
       }, 1100);
     }
@@ -2147,7 +2193,9 @@
           animateCapture(state.tileIdx, players[state.attackerIdx].hex);
         }
         diceOffState = null;
+        diceoffId = '';
         currentChallengeOwner = -1;
+        publishIdle(); // roll-off over — cards go back to the turn view
         renderBoard();
         renderScoreboard();
         nextTurn();
