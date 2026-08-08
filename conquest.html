@@ -699,7 +699,7 @@
 
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
-      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, <strong>BONUS</strong> takes 2 territories off whoever is leading, and <strong>GIFT</strong> takes 2 territories from each of two random rivals.
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, and <strong>BONUS</strong> and <strong>GIFT</strong> both take 2 territories off whoever is leading.
     </div>
   </div>
 
@@ -1452,7 +1452,10 @@
     /* ── Corner effects ── */
     // BONUS: seize 2 territories from whichever rival currently holds the most land (a
     // catch-up-the-leader effect) — falls back to random unclaimed tiles if no rival owns any yet
-    function doBonus() {
+    /* BONUS and GIFT do the same thing — seize 2 tiles from whoever is leading — and
+       differ only in their icon, colour and wording, so they share one implementation. */
+    const SEIZE_COUNT = 2; // tiles taken from the leader
+    function seizeFromLeader(type, icon, label) {
       const rivalCounts = players
         .map((p, i) => ({ i, count: ownership.filter(o => o === i).length }))
         .filter(r => r.i !== currentIdx);
@@ -1462,57 +1465,28 @@
         const leaders = rivalCounts.filter(r => r.count === maxCount);
         sourceIdx = leaders[Math.floor(Math.random() * leaders.length)].i;
         const leaderTiles = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] === sourceIdx) ? i : -1).filter(i => i >= 0));
-        gained = leaderTiles.slice(0, 2);
+        gained = leaderTiles.slice(0, SEIZE_COUNT);
       } else {
         // nobody else owns any land yet — nothing to seize, fall back to unclaimed tiles
         const eligible = shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] === -1) ? i : -1).filter(i => i >= 0));
-        gained = eligible.slice(0, 2);
+        gained = eligible.slice(0, SEIZE_COUNT);
       }
       const stolen = gained.filter(i => ownership[i] !== -1); // tiles taken from a rival, not unowned land
       gained.forEach(i => ownership[i] = currentIdx);
       renderBoard();
       renderScoreboard();
-      flashTile(players[currentIdx].pos, TYPE_COLOR.bonus);
+      flashTile(players[currentIdx].pos, TYPE_COLOR[type]);
       stolen.forEach(i => animateCapture(i, players[currentIdx].hex));
-      showCornerMessage('⭐', gained.length
+      showCornerMessage(icon, gained.length
         ? (sourceIdx >= 0
-            ? `Bonus corner! You seized ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'} from the leader, ${players[sourceIdx].name}!`
-            : `Bonus corner! You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`)
-        : 'Bonus corner! There were no other territories left to claim.', 'bonus');
+            ? `${label} You seized ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'} from the leader, ${players[sourceIdx].name}!`
+            : `${label} You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`)
+        : `${label} There were no other territories left to claim.`, type);
     }
 
-    // GIFT: take GIFT_TAKE tiles from each of two random rivals. It hits wider than BONUS
-    // (which takes 2 from the leader alone) but never empties anybody out — taking every
-    // tile they owned was a knockout blow and left nothing to play for.
-    const GIFT_TAKE = 2; // tiles taken from each victim
-    function doGift() {
-      const landed = shuffle(players.map((_, i) => i).filter(i => i !== currentIdx && ownership.includes(i)));
-      const victims = landed.slice(0, 2);
+    function doBonus() { seizeFromLeader('bonus', '⭐', 'Bonus corner!'); }
 
-      if (!victims.length) {
-        const unclaimed = PATH.map((t, i) => (t.type === 'dare' && ownership[i] === -1) ? i : -1).filter(i => i >= 0);
-        if (!unclaimed.length) { doLucky(); return; } // board full and nobody to rob — swap instead
-        unclaimed.forEach(i => ownership[i] = currentIdx);
-        renderBoard();
-        renderScoreboard();
-        flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
-        showCornerMessage('🎁', `Gift corner! Nobody else owns land yet, so you claimed all ${unclaimed.length} unclaimed territor${unclaimed.length === 1 ? 'y' : 'ies'}!`, 'gift');
-        return;
-      }
-
-      const gained = victims.flatMap(v =>
-        shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] === v) ? i : -1).filter(i => i >= 0))
-          .slice(0, GIFT_TAKE));
-      const names = victims.map(i => players[i].name);
-      gained.forEach(i => ownership[i] = currentIdx);
-      renderBoard();
-      renderScoreboard();
-      flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
-      gained.forEach(i => animateCapture(i, players[currentIdx].hex));
-      showCornerMessage('🎁',
-        `Gift corner! You took ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'} from ${names.join(' and ')}!`,
-        'gift');
-    }
+    function doGift() { seizeFromLeader('gift', '🎁', 'Gift corner!'); }
 
     // LUCKY: swap your entire territory with one other player's — auto-picks the
     // only rival in a 2-player game, otherwise lets the host choose who
