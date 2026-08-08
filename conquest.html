@@ -699,7 +699,7 @@
 
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
-      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, <strong>BONUS</strong> takes 2 territories off whoever is leading, and <strong>GIFT</strong> wipes out two random rivals — you take every tile they own.
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, <strong>BONUS</strong> takes 2 territories off whoever is leading, and <strong>GIFT</strong> takes 2 territories from each of two random rivals.
     </div>
   </div>
 
@@ -1481,9 +1481,10 @@
         : 'Bonus corner! There were no other territories left to claim.', 'bonus');
     }
 
-    // GIFT: wipe out two random rivals — you take every tile both of them own. With only
-    // one rival holding land you take that one; with nobody holding land there is nothing
-    // to seize, so it falls back to claiming whatever is still unowned.
+    // GIFT: take GIFT_TAKE tiles from each of two random rivals. It hits wider than BONUS
+    // (which takes 2 from the leader alone) but never empties anybody out — taking every
+    // tile they owned was a knockout blow and left nothing to play for.
+    const GIFT_TAKE = 2; // tiles taken from each victim
     function doGift() {
       const landed = shuffle(players.map((_, i) => i).filter(i => i !== currentIdx && ownership.includes(i)));
       const victims = landed.slice(0, 2);
@@ -1499,7 +1500,9 @@
         return;
       }
 
-      const gained = PATH.map((t, i) => (t.type === 'dare' && victims.includes(ownership[i])) ? i : -1).filter(i => i >= 0);
+      const gained = victims.flatMap(v =>
+        shuffle(PATH.map((t, i) => (t.type === 'dare' && ownership[i] === v) ? i : -1).filter(i => i >= 0))
+          .slice(0, GIFT_TAKE));
       const names = victims.map(i => players[i].name);
       gained.forEach(i => ownership[i] = currentIdx);
       renderBoard();
@@ -1507,7 +1510,7 @@
       flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
       gained.forEach(i => animateCapture(i, players[currentIdx].hex));
       showCornerMessage('🎁',
-        `Gift corner! You took every territory from ${names.join(' and ')} — ${gained.length} in total!`,
+        `Gift corner! You took ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'} from ${names.join(' and ')}!`,
         'gift');
     }
 
