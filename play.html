@@ -183,13 +183,20 @@
     .guess-select:focus { outline: none; border-color: #14b8a6; }
     .guess-select.answered { border-color: #14b8a6; color: #2dd4bf; }
 
-    /* one name chip for every game — same size, same shape, tinted with that player's
-       own colour. It only has to confirm "you opened the right link"; the card's actual
-       content is what deserves the big type. */
+    /* one name badge for every game: a colour-dot + the name, in that player's own
+       colour, over a dark base with a soft glow of the same colour. Same size and shape
+       everywhere — only the hue changes, which is what tells you the card is yours. */
     .name-banner {
-      font-size: .92rem; font-weight: 900; line-height: 1.3; letter-spacing: .5px;
-      border: 1.5px solid; border-radius: 999px; padding: 5px 16px;
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 1.3rem; font-weight: 900; line-height: 1.25; letter-spacing: .5px;
+      border: 2px solid; border-radius: 999px; padding: 8px 22px 8px 16px;
       max-width: 100%; overflow-wrap: break-word;
+    }
+    .name-banner::before {
+      content: ''; flex-shrink: 0;
+      width: 11px; height: 11px; border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
     }
 
     .team-tag {
@@ -282,7 +289,10 @@
     function nameBanner(data) {
       const label = esc(data.name || urlName || `Player ${data.playerNum || '?'}`);
       const hex = data.myHex || NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length][0];
-      return `<span class="name-banner" style="color:${hex};border-color:${hex}66;background:${hex}1a">${label}</span>`;
+      const style = `color:${hex};border-color:${hex}88;`
+        + `background:linear-gradient(160deg,${hex}2e,${hex}0d),#0b0b18;`
+        + `box-shadow:0 0 22px ${hex}33, inset 0 1px 0 ${hex}33`;
+      return `<span class="name-banner" style="${style}">${label}</span>`;
     }
 
     /* longer phrases (e.g. "Night Market Seller") get a smaller font so they
