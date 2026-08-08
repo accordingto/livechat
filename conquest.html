@@ -878,16 +878,23 @@
     }
 
     function saveSessionTokens() {
+      // nothing to share yet (no links handed out) — don't point the other games at an empty room
+      if (!playerTokens.length) return;
       try {
         const prev = loadSessionData(sessionCode) || {};
         // names are shared with the card games, so keep any slots this game doesn't cover
         const names = (prev.names || []).slice();
         for (let i = 0; i < playerCount; i++) names[i] = playerNames[i] || '';
         localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({
-          tokens: playerTokens, playerCount: prev.playerCount || playerCount, names,
+          tokens: playerTokens, playerCount, names,
         }));
         localStorage.setItem(LAST_SESSION_KEY, sessionCode);
       } catch (e) { /* private browsing — links still work for this session */ }
+    }
+
+    function clampCount(n) {
+      if (ALLOWED_COUNTS.includes(n)) return n;
+      return ALLOWED_COUNTS.reduce((best, c) => Math.abs(c - n) < Math.abs(best - n) ? c : best);
     }
 
     /* picks up the room the host was last using in any of the card games, so players who
@@ -900,6 +907,8 @@
         sessionCode = lastCode;
         playerTokens = saved.tokens.slice();
         playerNames = (saved.names || []).slice();
+        // player count travels with the room too, so the host doesn't re-pick it per game
+        if (saved.playerCount) playerCount = clampCount(saved.playerCount);
       } else {
         sessionCode = generateSessionCode();
       }
@@ -1002,10 +1011,9 @@
       sessionCode = typed;
       const saved = loadSessionData(typed);
       playerTokens = saved && saved.tokens ? saved.tokens.slice() : [];
-      if (saved && saved.names && saved.names.length) {
-        playerNames = saved.names.slice();
-        renderNameGrid();
-      }
+      if (saved && saved.names && saved.names.length) playerNames = saved.names.slice();
+      if (saved && saved.playerCount) setPlayerCount(clampCount(saved.playerCount));
+      else renderNameGrid();
       ensureTokens(playerCount);
       saveSessionTokens();
       renderVoteSetup();
@@ -1028,6 +1036,8 @@
       renderNameGrid();
       renderVoteSetup();
       attachVoteListeners();
+      // send the new count back to the shared room, so the card games open on it too
+      if (playerTokens.length) saveSessionTokens();
     }
     (function buildPlayerBtns() {
       const wrap = document.getElementById('player-count-btns');
