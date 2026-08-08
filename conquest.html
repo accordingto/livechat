@@ -699,7 +699,7 @@
 
     <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
     <div class="rules-note">
-      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, <strong>BONUS</strong> hands you 2 random territories, and <strong>GIFT</strong> gives you every unclaimed territory (or a swap too, once nothing's left unclaimed).
+      Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, <strong>BONUS</strong> takes 2 territories off whoever is leading, and <strong>GIFT</strong> wipes out two random rivals — you take every tile they own.
     </div>
   </div>
 
@@ -1481,19 +1481,34 @@
         : 'Bonus corner! There were no other territories left to claim.', 'bonus');
     }
 
-    // GIFT: claim every currently unclaimed territory on the board
+    // GIFT: wipe out two random rivals — you take every tile both of them own. With only
+    // one rival holding land you take that one; with nobody holding land there is nothing
+    // to seize, so it falls back to claiming whatever is still unowned.
     function doGift() {
-      const unclaimed = PATH.map((t, i) => (t.type === 'dare' && ownership[i] === -1) ? i : -1).filter(i => i >= 0);
-      if (unclaimed.length === 0) {
-        // nothing left unclaimed to give — fall back to a LUCKY-style territory swap instead
-        doLucky();
+      const landed = shuffle(players.map((_, i) => i).filter(i => i !== currentIdx && ownership.includes(i)));
+      const victims = landed.slice(0, 2);
+
+      if (!victims.length) {
+        const unclaimed = PATH.map((t, i) => (t.type === 'dare' && ownership[i] === -1) ? i : -1).filter(i => i >= 0);
+        if (!unclaimed.length) { doLucky(); return; } // board full and nobody to rob — swap instead
+        unclaimed.forEach(i => ownership[i] = currentIdx);
+        renderBoard();
+        renderScoreboard();
+        flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
+        showCornerMessage('🎁', `Gift corner! Nobody else owns land yet, so you claimed all ${unclaimed.length} unclaimed territor${unclaimed.length === 1 ? 'y' : 'ies'}!`, 'gift');
         return;
       }
-      unclaimed.forEach(i => ownership[i] = currentIdx);
+
+      const gained = PATH.map((t, i) => (t.type === 'dare' && victims.includes(ownership[i])) ? i : -1).filter(i => i >= 0);
+      const names = victims.map(i => players[i].name);
+      gained.forEach(i => ownership[i] = currentIdx);
       renderBoard();
       renderScoreboard();
       flashTile(players[currentIdx].pos, TYPE_COLOR.gift);
-      showCornerMessage('🎁', `Gift corner! You claimed all ${unclaimed.length} unclaimed territor${unclaimed.length === 1 ? 'y' : 'ies'}!`, 'gift');
+      gained.forEach(i => animateCapture(i, players[currentIdx].hex));
+      showCornerMessage('🎁',
+        `Gift corner! You took every territory from ${names.join(' and ')} — ${gained.length} in total!`,
+        'gift');
     }
 
     // LUCKY: swap your entire territory with one other player's — auto-picks the
