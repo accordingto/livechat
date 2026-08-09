@@ -100,6 +100,31 @@
     .opt-text { font-size: clamp(1rem, 2.5vw, 1.15rem); color: #ccc; line-height: 1.55; padding-top: 6px; }
     .opt-c .opt-text { color: #86efac; font-style: italic; }
 
+    /* ── live tally of what the players tapped on their own cards ── */
+    .pick-tally {
+      width: 100%; max-width: 1100px; margin: 16px auto 18px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .pick-tally.hidden { display: none; }
+    .pt-col {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: border-color .3s;
+    }
+    .pt-col.lead { border-color: currentColor; }
+    .pt-key { font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+    .pt-count { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1; }
+    .pt-names { font-size: .76rem; font-weight: 700; color: #666; text-align: center; line-height: 1.4; }
+    .pt-a { color: #2563eb; }
+    .pt-b { color: #dc2626; }
+    .pt-c { color: #16a34a; }
+    @media (max-width: 520px) {
+      .pick-tally { gap: 6px; }
+      .pt-col { padding: 10px 6px; }
+      .pt-count { font-size: 1.4rem; }
+      .pt-names { font-size: .68rem; }
+    }
+
     /* ── Draw button ── */
     .btn-draw {
       width: 100%; max-width: 1100px;
@@ -211,7 +236,12 @@
     </div>
   </div>
 
+  <div class="pick-tally hidden" id="pick-tally"></div>
+
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
+
+  <!-- player cards: everyone answers on their own phone, the tally above fills in live -->
+  <div id="room-mount"></div>
 
   <div class="scenario-browser">
     <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (10) — click to load</div>
@@ -219,8 +249,13 @@
     <div class="scenario-list" id="scenario-list"></div>
   </div>
 
+  <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
   <script>
     GAME_RENDER.injectCSS();
     const scenarios = GAME_DATA.sophies;
@@ -228,6 +263,55 @@
     let round   = 0;
     let used    = [];
     let rolling = false;
+    let voteId  = ''; // new ballot every draw, so old answers stop counting on their own
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#f59e0b',
+      linksNote: 'Players open their own card link and tap A, B or C — the tally under the card fills in as they answer, then everyone explains why.',
+      onPlayerData: renderTally,
+      onCountChange: renderTally,
+      onNameChange: () => { ROOM.render(); renderTally(); },
+    });
+
+    function cardPick(playerNum) {
+      const d = ROOM.answers[playerNum];
+      const v = d && d.vote;
+      return v && voteId && v.id === voteId ? v.choice : null;
+    }
+
+    ROOM.setDecorator(i => {
+      const c = cardPick(i + 1);
+      return c ? { marked: true, answer: `Picked <span style="color:#f59e0b">${c.toUpperCase()}</span>` } : {};
+    });
+
+    /* the live count under the situation card — the whole point of handing out links */
+    function renderTally() {
+      const el = document.getElementById('pick-tally');
+      if (!voteId || !ROOM.enabled) { el.classList.add('hidden'); return; }
+      const picks = { a: [], b: [], c: [] };
+      for (let i = 0; i < ROOM.count; i++) {
+        const c = cardPick(i + 1);
+        if (c && picks[c]) picks[c].push(ROOM.name(i));
+      }
+      const most = Math.max(picks.a.length, picks.b.length, picks.c.length);
+      const col = (key, label) => `
+        <div class="pt-col pt-${key}${most > 0 && picks[key].length === most ? ' lead' : ''}">
+          <span class="pt-key">${label}</span>
+          <span class="pt-count">${picks[key].length}</span>
+          <span class="pt-names">${picks[key].join(', ') || '—'}</span>
+        </div>`;
+      el.innerHTML = col('a', 'A') + col('b', 'B') + col('c', 'C · Own answer');
+      el.classList.remove('hidden');
+      ROOM.render();
+    }
+
+    /* hand this scenario to every card and open a fresh ballot */
+    function pushToCards(sc) {
+      voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      ROOM.publish({ game: 'sophies', round, situation: sc.situation, a: sc.a, b: sc.b, voteId });
+      renderTally();
+    }
 
     /* ── Scenario browser ── */
     let activeCat = '';
@@ -298,6 +382,7 @@
       round++;
       document.getElementById('roundNum').textContent = round;
       btn.textContent = '🔁 Next Situation';
+      pushToCards(sc);
 
       document.querySelectorAll('.scenario-item').forEach(el => {
         el.classList.toggle('active', +el.dataset.idx === idx);
@@ -332,6 +417,7 @@
         () => {
           const sc = scenarios[fi];
           GAME_RENDER.sophies(ct, sc);
+          pushToCards(sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
           round++;

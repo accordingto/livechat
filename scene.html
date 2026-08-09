@@ -138,6 +138,12 @@
     .role-e { background: rgba(163,230,53,.12);  border-color: rgba(163,230,53,.4); }
     .role-f { background: rgba(217,70,239,.12);  border-color: rgba(217,70,239,.4); }
 
+    /* who was dealt this role, once the cards are handed out */
+    .role-owner {
+      margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.09);
+      font-size: .8rem; font-weight: 800; color: #ddd; letter-spacing: .3px;
+    }
+
     .role-letter {
       font-size: .72rem; font-weight: 900; letter-spacing: 2px;
       text-transform: uppercase; margin-bottom: 2px;
@@ -264,13 +270,21 @@
 
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw Scene</button>
 
+  <!-- player cards: each player is dealt one role privately -->
+  <div id="room-mount"></div>
+
   <div class="scenario-browser">
     <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (10) — click to load</div>
     <div class="filter-bar" id="filter-bar"></div>
     <div class="scenario-list" id="scenario-list"></div>
   </div>
 
+  <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
   <script>
     const scenarios = GAME_DATA.scene;
     let round   = 0;
@@ -278,9 +292,24 @@
     let rolling = false;
     let currentScene = null;
     let currentPlayers = 0;
+    let roleOf = []; // roleOf[playerIndex] = which role that player was dealt
 
     const ALL_COLORS  = ['a','b','c','d','e','f'];
     const ALL_LETTERS = ['A','B','C','D','E','F'];
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#ec4899',
+      linksNote: 'Every player gets one role dealt privately to their own card — including the hint for how to play it. The list below stays on your screen so everyone can follow the scene.',
+      onCountChange: n => { if (currentScene) setPlayers(n, true); },
+      onNameChange: () => { ROOM.render(); renderRoleGrid(); },
+    });
+
+    ROOM.setDecorator(i => {
+      if (!ROOM.enabled || roleOf.length <= i || !currentScene) return {};
+      const role = getRoleData(currentScene, roleOf[i]);
+      return role ? { marked: true, answer: `🎭 ${role.label}<span class="la-sub">Role ${ALL_LETTERS[roleOf[i]]}</span>` } : {};
+    });
 
     function getRoleData(sc, index) {
       const keys = ['a','b','c','d','e','f'];
@@ -302,6 +331,7 @@
     function renderScene(sc) {
       currentScene  = sc;
       currentPlayers = 0;
+      roleOf = [];
 
       const el = document.getElementById('sc-content');
       el.innerHTML = `
@@ -331,11 +361,15 @@
           </div>
         </div>`;
       el.classList.add('show');
+      // the room already knows how many players there are — deal straight away
+      setPlayers(ROOM.count, true);
     }
 
-    function setPlayers(n) {
+    function setPlayers(n, fromRoom) {
       if (!currentScene) return;
       currentPlayers = n;
+      // the player count lives in the shared room, so every game opens on the same one
+      if (!fromRoom && ROOM.count !== n) ROOM.setCount(n);
 
       /* Update active button */
       document.querySelectorAll('.ps-btn').forEach(btn => {
@@ -346,11 +380,46 @@
       document.getElementById('roles-divider').style.display = '';
       document.getElementById('roles-header').style.display  = '';
 
-      /* Re-render roles grid */
+      dealRoles();
+      renderRoleGrid();
+    }
+
+    /* hand one role to each player's card — no more "who wants to be B?" */
+    function dealRoles() {
+      if (!currentScene || !currentPlayers) return;
+      const order = shuffle(Array.from({ length: currentPlayers }, (_, i) => i));
+      roleOf = order; // roleOf[playerIndex] = role index
+      ROOM.publish(i => {
+        const ri = roleOf[i];
+        const role = getRoleData(currentScene, ri);
+        if (!role) return null;
+        return {
+          game: 'scene', round,
+          title: currentScene.title,
+          situation: currentScene.situation,
+          role: { letter: ALL_LETTERS[ri], label: role.label, hint: role.hint },
+        };
+      });
+      ROOM.render();
+    }
+
+    /* who plays which role, so the shared screen and the phones agree */
+    function playerForRole(roleIdx) {
+      const i = roleOf.indexOf(roleIdx);
+      return i < 0 ? '' : ROOM.name(i);
+    }
+
+    function renderRoleGrid() {
+      const n = currentPlayers;
       const grid = document.getElementById('roles-grid');
+      if (!grid || !n) return;
       const narrow = window.innerWidth <= 560;
       grid.style.gridTemplateColumns = (narrow || n === 2 || n === 4) ? '1fr 1fr' : 'repeat(3, 1fr)';
       grid.innerHTML = '';
+      const dealt = ROOM.enabled && roleOf.length === n;
+      document.getElementById('roles-header').textContent = dealt
+        ? '🎪 Your Roles — check your own card!'
+        : '🎪 Your Roles — Pick one and play it!';
       for (let i = 0; i < n; i++) {
         const role   = getRoleData(currentScene, i);
         const letter = ALL_LETTERS[i];
@@ -361,9 +430,19 @@
         div.innerHTML = `
           <div class="role-letter">${letter}</div>
           <div class="role-name">${role.label}</div>
-          <div class="role-hint">${role.hint}</div>`;
+          <div class="role-hint">${role.hint}</div>
+          ${dealt ? `<div class="role-owner">🎴 ${playerForRole(i)}</div>` : ''}`;
         grid.appendChild(div);
       }
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
     /* ── Scenario browser ── */

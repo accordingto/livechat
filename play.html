@@ -242,6 +242,55 @@
     }
     .vote-btn:hover { border-color: #f59e0b; }
     .vote-btn.voted { border-color: #f59e0b; background: rgba(245,158,11,.15); color: #f59e0b; }
+
+    /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
+       You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
+    .secret-card.theme-hottake  { border-color: #ff7043; box-shadow: 0 0 60px rgba(255,112,67,.18); }
+    .secret-card.theme-sophies  { border-color: #a78bfa; box-shadow: 0 0 60px rgba(167,139,250,.18); }
+    .secret-card.theme-scene    { border-color: #ec4899; box-shadow: 0 0 60px rgba(236,72,153,.18); }
+    .secret-card.theme-persuade { border-color: #06b6d4; box-shadow: 0 0 60px rgba(6,182,212,.18); }
+    .secret-card.theme-hottake, .secret-card.theme-sophies,
+    .secret-card.theme-scene, .secret-card.theme-persuade { padding: 28px 24px 24px; gap: 16px; }
+
+    .pick-chip {
+      font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      border: 1px solid; border-radius: 20px; padding: 4px 14px;
+    }
+    /* the prompt is the one thing a player may need to re-read while everyone talks */
+    .pick-text {
+      width: 100%; font-size: 1.05rem; font-weight: 700; color: #fff; line-height: 1.5;
+      overflow-wrap: break-word;
+    }
+    .pick-sub { font-size: .85rem; color: #888; line-height: 1.5; }
+    .pick-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .pick-btn {
+      display: flex; align-items: center; gap: 12px; text-align: left;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+      border-radius: 14px; padding: 14px; font-size: .95rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s;
+    }
+    .pick-btn:active { transform: scale(.98); }
+    .pick-btn .pb-key {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: #1e1e42; color: #999; font-size: .8rem; font-weight: 900;
+    }
+    .pick-btn .pb-label { line-height: 1.35; font-weight: 700; }
+    .pick-btn.picked { border-color: currentColor; }
+    /* `color: inherit` picks up the button's own accent — `currentColor` on .pb-key
+       would resolve against its own colour and turn the letter invisible */
+    .pick-btn.picked .pb-key { background: color-mix(in srgb, currentColor 28%, transparent); color: inherit; }
+
+    /* a dealt role (You're In The Scene) or side (Persuade Together) */
+    .role-box {
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .role-box .rb-key {
+      font-size: .68rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .role-box .rb-name { font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1.2; }
+    .role-box .rb-hint { font-size: .92rem; color: #bbb; line-height: 1.55; }
   </style>
 </head>
 <body>
@@ -573,6 +622,35 @@
         </div>`;
     }
 
+    /* 🔥 Pick a Side / 🤔 Sophie's Choice: one tap picks a side. The vote carries the
+       round's ballot id, so when the host draws again the old vote simply stops
+       matching — nothing to clean up. */
+    function submitPick(choice) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.voteId;
+      if (!id) return;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice });
+    }
+
+    function myPick(data) {
+      return data.vote && data.voteId && data.vote.id === data.voteId ? data.vote.choice : null;
+    }
+
+    function pickButton(choice, key, label, picked, hex) {
+      const style = picked === choice ? ` style="color:${hex};background:${hex}1f"` : '';
+      return `<button class="pick-btn${picked === choice ? ' picked' : ''}"${style} onclick="submitPick('${choice}')">
+          <span class="pb-key">${key}</span><span class="pb-label">${label}</span>
+        </button>`;
+    }
+
+    /* 🤝 Persuade Together: only the judge gets a verdict button */
+    function submitVerdict(choice) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.voteId;
+      if (!id) return;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice });
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -624,6 +702,82 @@
             <span class="card-emoji">${emotion.emoji}</span>
             ${wordSpan(emotion.word)}
             <span class="secret-hint">🤫 Keep it secret!</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'hottake') {
+        const picked = myPick(data);
+        el.innerHTML = `
+          <div class="secret-card theme-hottake">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:#ff7043;border-color:#ff704355;background:rgba(255,112,67,.1)">🔥 Hot Take</span>
+            <span class="pick-text">${esc(data.text || '')}</span>
+            <div class="pick-row">
+              ${pickButton('agree', '👍', 'Agree', picked, '#4caf50')}
+              ${pickButton('middle', '🤷', 'It Depends', picked, '#f59e0b')}
+              ${pickButton('disagree', '👎', 'Disagree', picked, '#f44336')}
+            </div>
+            <span class="pick-sub">${picked ? 'You can change your mind any time.' : 'Pick a side — then say why out loud!'}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'sophies') {
+        const picked = myPick(data);
+        el.innerHTML = `
+          <div class="secret-card theme-sophies">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:#a78bfa;border-color:#a78bfa55;background:rgba(167,139,250,.1)">🎯 The Situation</span>
+            <span class="pick-text">${esc(data.situation || '')}</span>
+            <div class="pick-row">
+              ${pickButton('a', 'A', esc(data.a || ''), picked, '#22c55e')}
+              ${pickButton('b', 'B', esc(data.b || ''), picked, '#f59e0b')}
+              ${pickButton('c', 'C', 'Something else — my own answer', picked, '#a78bfa')}
+            </div>
+            <span class="pick-sub">${picked ? 'You can change your mind any time.' : 'Choose, then tell everyone why.'}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'scene') {
+        const r = data.role;
+        if (!r) { showError('⏳ Waiting for the host to hand out the roles...'); return; }
+        el.innerHTML = `
+          <div class="secret-card theme-scene">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:#ec4899;border-color:#ec489955;background:rgba(236,72,153,.1)">🎭 ${esc(data.title || 'The Scene')}</span>
+            <span class="pick-text">${esc(data.situation || '')}</span>
+            <div class="role-box" style="border-color:#ec489966">
+              <span class="rb-key" style="color:#ec4899">🎪 You play ${esc(r.letter || '')}</span>
+              <span class="rb-name">${esc(r.label || '')}</span>
+              <span class="rb-hint">${esc(r.hint || '')}</span>
+            </div>
+            <span class="pick-sub">Stay in character — no script, just improv!</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'persuade') {
+        const judge = !!data.isJudge;
+        const hex = judge ? '#f59e0b' : '#06b6d4';
+        const picked = myPick(data);
+        const verdict = judge ? `
+            <div class="pick-row">
+              <button class="pick-btn${picked === 'yes' ? ' picked' : ''}"${picked === 'yes' ? ' style="color:#22c55e;background:#22c55e1f"' : ''} onclick="submitVerdict('yes')">
+                <span class="pb-key">✅</span><span class="pb-label">You convinced me!</span>
+              </button>
+              <button class="pick-btn${picked === 'no' ? ' picked' : ''}"${picked === 'no' ? ' style="color:#ef4444;background:#ef44441f"' : ''} onclick="submitVerdict('no')">
+                <span class="pb-key">❌</span><span class="pb-label">Not convinced</span>
+              </button>
+            </div>` : '';
+        el.innerHTML = `
+          <div class="secret-card theme-persuade" style="border-color:${hex};box-shadow:0 0 60px ${hex}2e">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${judge ? '👨‍⚖️ You are the Judge' : '👥 Persuader Team'}</span>
+            <div class="role-box" style="border-color:${hex}66">
+              <span class="rb-key" style="color:${hex}">${judge ? 'Your role' : 'Your team plays'}</span>
+              <span class="rb-name">${esc(judge ? (data.judge || 'The Judge') : (data.team || ''))}</span>
+            </div>
+            <span class="pick-text">${esc(data.situation || '')}</span>
+            ${judge ? `<span class="pick-sub">Hear them out, then give your verdict.</span>${verdict}`
+                    : '<span class="pick-sub">Work together — win the judge over!</span>'}
           </div>`;
         return;
       }

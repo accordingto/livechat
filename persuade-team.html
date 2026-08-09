@@ -84,6 +84,24 @@
       line-height: 1.3;
     }
     .pt-divider { height: 1px; background: #1e1e42; margin: 4px 0 22px; }
+    /* who the judge is, once the roles are dealt to the player cards */
+    .pt-judge-name {
+      display: inline-block; margin-top: 8px;
+      background: rgba(192,132,252,.12); border: 1px solid rgba(192,132,252,.35); color: #e9d5ff;
+      font-size: .82rem; font-weight: 800; letter-spacing: .5px;
+      padding: 5px 14px; border-radius: 20px;
+    }
+
+    /* ── The judge's verdict, tapped on their own card ── */
+    .verdict-banner {
+      width: 100%; max-width: 1100px; margin: 16px auto 18px;
+      border: 2px solid #1e1e42; border-radius: 14px; padding: 16px 18px;
+      text-align: center; font-size: 1.05rem; font-weight: 800; color: #888;
+      animation: fadeUp .3s ease both;
+    }
+    .verdict-banner.hidden { display: none; }
+    .verdict-banner.yes { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
+    .verdict-banner.no  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
 
     /* theme overrides for new layout */
 
@@ -185,8 +203,13 @@
     <div class="sc-content" id="sc-content"></div>
   </div>
 
+  <div class="verdict-banner hidden" id="verdict-banner"></div>
+
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
   <div class="sc-counter" id="sc-counter">10 scenarios</div>
+
+  <!-- player cards: one player is dealt the judge, everyone else joins the team -->
+  <div id="room-mount"></div>
 
   <div class="scenario-browser">
     <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (10) — click to load</div>
@@ -194,8 +217,13 @@
     <div class="scenario-list" id="scenario-list"></div>
   </div>
 
+  <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
   <script>
     GAME_RENDER.injectCSS();
     const scenarios = GAME_DATA.persuade;
@@ -203,9 +231,70 @@
     let round   = 0;
     let used    = [];
     let rolling = false;
+    let judgeIdx = -1;  // which player was dealt the judge this round
+    let voteId   = '';  // the judge's verdict carries this, so an old verdict can't linger
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#06b6d4',
+      linksNote: 'Each round one player is dealt the judge and everyone else joins the persuader team — their cards say which. The judge taps their verdict when the team is done.',
+      onPlayerData: renderVerdict,
+      onCountChange: () => { dealRoles(); },
+      onNameChange: () => { ROOM.render(); renderVerdict(); },
+    });
+
+    ROOM.setDecorator(i => {
+      if (judgeIdx !== i) return {};
+      const v = verdict();
+      return {
+        marked: true,
+        answer: '👨‍⚖️ The Judge' + (v ? `<span class="la-sub">${v === 'yes' ? '✅ Convinced' : '❌ Not convinced'}</span>` : ''),
+      };
+    });
+
+    function verdict() {
+      if (judgeIdx < 0) return null;
+      const d = ROOM.answers[judgeIdx + 1];
+      const v = d && d.vote;
+      return v && voteId && v.id === voteId ? v.choice : null;
+    }
+
+    function renderVerdict() {
+      const el = document.getElementById('verdict-banner');
+      const v = verdict();
+      el.classList.remove('yes', 'no');
+      if (!ROOM.enabled || judgeIdx < 0) { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+      const who = ROOM.name(judgeIdx);
+      if (!v) { el.textContent = `👨‍⚖️ ${who} is judging — waiting for the verdict…`; }
+      else {
+        el.classList.add(v === 'yes' ? 'yes' : 'no');
+        el.textContent = v === 'yes' ? `✅ ${who} is convinced — the team wins!` : `❌ ${who} is not convinced — better luck next round!`;
+      }
+      ROOM.render();
+    }
+
+    /* deal the roles: one random judge, everyone else on the team */
+    function dealRoles() {
+      if (!currentScenario) { renderVerdict(); return; }
+      const sc = currentScenario;
+      judgeIdx = ROOM.count ? Math.floor(Math.random() * ROOM.count) : -1;
+      voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      ROOM.publish(i => ({
+        game: 'persuade', round, voteId,
+        isJudge: i === judgeIdx,
+        judge: sc.judge, team: sc.team, situation: sc.situation,
+      }));
+      renderCard(sc);
+      renderVerdict();
+    }
+
+    let currentScenario = null;
 
     function renderCard(sc) {
+      currentScenario = sc;
       const ct = document.getElementById('sc-content');
+      const dealt = ROOM.enabled && judgeIdx >= 0;
       ct.innerHTML = `
         <span class="pt-cat">${sc.emoji} ${sc.cat || 'Scenario'}</span>
         <div class="pt-block">
@@ -221,6 +310,7 @@
         <div class="pt-block" style="margin-bottom:0">
           <div class="pt-lbl pt-lbl-judge">👨‍⚖️ The Judge</div>
           <div class="pt-judge">${sc.judge}</div>
+          ${dealt ? `<span class="pt-judge-name">🎴 Played by ${ROOM.name(judgeIdx)}</span>` : ''}
         </div>`;
       ct.classList.add('show');
     }
@@ -299,6 +389,7 @@
       btn.textContent = '🔁 Redraw';
       used.push(idx);
       updateCounter();
+      dealRoles();
 
       document.querySelectorAll('.scenario-item').forEach(el => {
         el.classList.toggle('active', +el.dataset.idx === idx);
@@ -341,6 +432,7 @@
           btn.disabled    = false;
           rolling         = false;
           updateCounter();
+          dealRoles();
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         },
         { count: 24, ms: 82 }

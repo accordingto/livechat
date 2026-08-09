@@ -249,15 +249,48 @@
     <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled>↺ Reset</button>
   </div>
 
+  <!-- player cards: everyone votes from their own phone, the tally above updates live -->
+  <div id="room-mount"></div>
+
+  <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
   <script>
     GAME_RENDER.injectCSS();
     const takes = GAME_DATA.hottake;
 
     let rolling = false;
     let round = 0;
-    const votes = { agree: 0, middle: 0, disagree: 0 };
+    let currentTake = '';
+    let voteId = '';          // changes every spin, so last round's card votes stop counting
+    const votes = { agree: 0, middle: 0, disagree: 0 }; // tapped by the host, for people without a link
+
+    const SIDES = { agree: '👍 Agree', middle: '🤷 It Depends', disagree: '👎 Disagree' };
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#ff7043',
+      linksNote: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.',
+      onPlayerData: () => { updateBars(); ROOM.render(); },
+      onCountChange: () => updateBars(),
+      onNameChange: () => ROOM.render(),
+    });
+
+    /* what each player picked this round — only votes carrying the current id count */
+    function cardVote(playerNum) {
+      const d = ROOM.answers[playerNum];
+      const v = d && d.vote;
+      return v && v.id === voteId && voteId ? v.choice : null;
+    }
+
+    ROOM.setDecorator(i => {
+      const choice = cardVote(i + 1);
+      return choice ? { marked: true, answer: SIDES[choice] || '' } : {};
+    });
 
     function vote(side) {
       votes[side]++;
@@ -265,13 +298,18 @@
     }
 
     function updateBars() {
-      const total = votes.agree + votes.middle + votes.disagree || 1;
-      document.getElementById('cntAgree').textContent    = votes.agree;
-      document.getElementById('cntMiddle').textContent   = votes.middle;
-      document.getElementById('cntDisagree').textContent = votes.disagree;
-      document.getElementById('barAgree').style.width    = (votes.agree   / total * 100) + '%';
-      document.getElementById('barMiddle').style.width   = (votes.middle  / total * 100) + '%';
-      document.getElementById('barDisagree').style.width = (votes.disagree / total * 100) + '%';
+      const totals = { agree: votes.agree, middle: votes.middle, disagree: votes.disagree };
+      for (let i = 1; i <= ROOM.count; i++) {
+        const c = cardVote(i);
+        if (c && totals[c] != null) totals[c]++;
+      }
+      const total = totals.agree + totals.middle + totals.disagree || 1;
+      document.getElementById('cntAgree').textContent    = totals.agree;
+      document.getElementById('cntMiddle').textContent   = totals.middle;
+      document.getElementById('cntDisagree').textContent = totals.disagree;
+      document.getElementById('barAgree').style.width    = (totals.agree   / total * 100) + '%';
+      document.getElementById('barMiddle').style.width   = (totals.middle  / total * 100) + '%';
+      document.getElementById('barDisagree').style.width = (totals.disagree / total * 100) + '%';
     }
 
     function triggerRipple() {
@@ -313,18 +351,29 @@
         card.classList.add('active');
         GAME_RENDER.hottake(card, chosen);
         round++;
+        currentTake = chosen;
         document.getElementById('roundNum').textContent = round;
         btnA.disabled = btnM.disabled = btnD.disabled = false;
         spinBtn.textContent = '🔁 Spin Again';
         spinBtn.disabled = false;
         document.getElementById('resetBtn').disabled = false;
         rolling = false;
+        pushToCards();
       });
+    }
+
+    /* send this round's take to every player's card and open a fresh ballot */
+    function pushToCards() {
+      voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      ROOM.publish({ game: 'hottake', round, text: currentTake, voteId });
+      updateBars();
+      ROOM.render();
     }
 
     function resetVotes() {
       votes.agree = votes.middle = votes.disagree = 0;
-      updateBars();
+      if (currentTake) pushToCards(); // a new ballot id also wipes the votes cast from the cards
+      else updateBars();
     }
   </script>
 </body>
