@@ -58,20 +58,27 @@
       .btn-secondary:disabled:hover { border-color: #1e1e42; color: #666; }
     }
 
-    /* ── Setup card ── */
-    .setup-card {
+    /* ── Setup screen: same shape as the card games (control card on top, one
+       column per player underneath) so the host sees the same layout everywhere ── */
+    .setup-screen {
       width: 100%; max-width: 1100px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
-      padding: 26px 28px;
-      display: flex; flex-direction: column; gap: 18px;
+      display: flex; flex-direction: column;
       margin-bottom: 24px;
+    }
+    .setup-card {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+      padding: 22px 26px;
+      display: flex; flex-direction: column; gap: 16px;
       animation: fadeUp .5s .2s ease both;
     }
     .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
     .control-label {
       font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555;
+      color: #555; min-width: 58px;
     }
+    .control-divider { height: 1px; background: #1e1e42; }
+    .setup-card .btn-primary,
+    .setup-card .btn-secondary { padding: 11px 20px; font-size: .88rem; }
     .player-btns { display: flex; flex-wrap: wrap; gap: 8px; }
     .player-btn {
       width: 44px; height: 44px; border-radius: 12px;
@@ -85,76 +92,86 @@
       .player-btn:hover { border-color: #22c55e; color: #22c55e; }
     }
 
-    .name-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
+    #room-code-input {
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #eee; font-family: inherit; font-size: .95rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; padding: 11px 14px; width: 130px;
+      transition: border-color .2s;
     }
-    .name-slot {
-      display: flex; align-items: center; gap: 10px;
-      background: #0d0d1a; border: 2px solid; border-radius: 12px;
-      padding: 8px 12px;
-    }
-    .name-slot .token { font-size: 1.3rem; flex-shrink: 0; }
-    .name-slot input {
-      flex: 1; min-width: 0;
-      background: transparent; border: none; color: #eee;
-      font-family: inherit; font-size: .92rem; font-weight: 700;
-    }
-    .name-slot input::placeholder { color: #555; }
-    .name-slot input:focus { outline: none; }
+    #room-code-input:focus { outline: none; border-color: #22c55e; }
 
     .rules-note {
       color: #555; font-size: .82rem; line-height: 1.7;
+      margin-top: 22px; padding-top: 18px; border-top: 1px solid #1e1e42;
     }
 
-    /* ── 🗳️ Player voting setup: room code + one private link per player ── */
-    .vote-setup {
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
-      padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
-    }
-    .vs-hdr {
-      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #888;
+    /* ── Section label + note above the player columns ── */
+    .section-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin: 18px 0 10px;
       display: flex; align-items: center; gap: 8px;
     }
-    .vs-tag {
+    .section-tag {
       font-size: .6rem; letter-spacing: 1px; color: #555;
       border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px;
     }
-    .vs-note { color: #555; font-size: .78rem; line-height: 1.6; }
-    .vs-room { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .vs-label { font-size: .72rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #555; }
-    .vs-input {
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 10px; color: #eee;
-      font-family: inherit; font-size: .9rem; font-weight: 800; letter-spacing: 2px;
-      padding: 8px 12px; width: 130px; text-transform: uppercase;
+    .links-note { color: #555; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
+
+    /* ── One column per player: name on top, their private link underneath.
+       The border carries the player's board colour, so the setup screen already
+       shows who is which piece. ── */
+    .player-links {
+      display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
     }
-    .vs-input:focus { outline: none; border-color: #22c55e; }
-    .vs-btn { padding: 8px 14px; font-size: .76rem; }
-    .vs-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; align-items: start; }
-    .vs-link {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 10px; padding: 7px 10px;
+    .link-col {
+      flex: 1; min-width: 160px;
+      background: #13132b; border: 2px solid; border-radius: 14px;
+      padding: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      animation: fadeUp .3s ease both;
+    }
+    .link-col .token { font-size: 1.5rem; line-height: 1; }
+    .name-input {
+      width: 100%;
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
+      color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
+      padding: 8px 10px;
+      transition: border-color .2s;
+    }
+    .name-input::placeholder { color: #555; }
+    .name-input:focus { outline: none; border-color: #22c55e; }
+    .link-btn-row { display: flex; gap: 8px; width: 100%; }
+    .btn-copy {
+      flex: 1;
+      background: transparent; color: #22c55e; border: 2px solid #22c55e;
+      border-radius: 10px; padding: 9px 10px;
+      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn-copy:active { transform: scale(.97); }
+    .btn-qr-toggle {
+      background: transparent; color: #666; border: 2px solid #1e1e42;
+      border-radius: 10px; padding: 9px 12px;
+      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-qr-toggle.open { border-color: #22c55e; color: #22c55e; }
+    @media (hover: hover) and (pointer: fine) {
+      .btn-copy:hover { background: rgba(34,197,94,.1); }
+      .btn-qr-toggle:hover { border-color: #22c55e; color: #22c55e; }
     }
     /* QR beats reading a link out loud when the host is screen-sharing — players just scan */
     .qr-inline {
       background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
-      width: 100%; max-width: 150px; margin: 4px auto 2px;
+      width: 100%; max-width: 160px;
       animation: popIn .25s ease both;
     }
     .qr-inline svg { width: 100%; height: auto; display: block; }
-    .vs-link .vl-name {
-      flex: 1; min-width: 0; font-size: .82rem; font-weight: 800; color: #ccc;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .vs-link .vl-copy {
-      flex-shrink: 0; background: transparent; border: 1px solid #1e1e42; border-radius: 8px;
-      color: #666; font-family: inherit; font-size: .7rem; font-weight: 800;
-      padding: 4px 9px; cursor: pointer; transition: border-color .2s, color .2s;
-    }
-    .vs-link .vl-copy:active { transform: scale(.97); }
-    .vs-link .vl-qr.open { border-color: #22c55e; color: #22c55e; }
-    @media (hover: hover) and (pointer: fine) {
-      .vs-link .vl-copy:hover { border-color: #22c55e; color: #22c55e; }
+    @media (max-width: 520px) {
+      .link-col { min-width: 130px; padding: 12px 10px; }
+      /* two columns fit side by side on a phone — keep "Copy Link" on one line */
+      .btn-copy { font-size: .74rem; padding: 9px 4px; white-space: nowrap; }
+      .btn-qr-toggle { font-size: .74rem; padding: 9px 8px; }
     }
 
     /* ── Resume banner: shown only when a saved game is found in localStorage ── */
@@ -675,29 +692,29 @@
   </div>
 
   <!-- ── Setup ── -->
-  <div class="setup-card" id="setup-card">
-    <div class="resume-banner hidden" id="resume-banner"></div>
-    <div class="control-row">
-      <span class="control-label">Players</span>
-      <div class="player-btns" id="player-count-btns"></div>
-    </div>
-    <div class="name-grid" id="name-grid"></div>
-
-    <!-- Audience vote: reuses the same room code + player links as the card games,
-         so anyone who already has their link can vote without a new one -->
-    <div class="vote-setup hidden" id="vote-setup">
-      <div class="vs-hdr">🗳️ Player Voting <span class="vs-tag">optional</span></div>
-      <p class="vs-note">Players open their own card link and vote ✅ / ❌ on every challenge — you still make the final call. Same room code and links as Secret Rule, Emotion Cards, Word Wolf and Forbidden Words.</p>
-      <div class="vs-room">
-        <label class="vs-label" for="room-code-input">Room</label>
-        <input id="room-code-input" class="vs-input" maxlength="8" autocomplete="off" spellcheck="false">
-        <button class="btn-secondary vs-btn" onclick="loadRoomCode()">↩️ Load</button>
-        <button class="btn-secondary vs-btn" onclick="newRoom()">✨ New Room</button>
+  <div class="setup-screen" id="setup-card">
+    <div class="setup-card">
+      <div class="resume-banner hidden" id="resume-banner"></div>
+      <!-- Room row: same room code + player links as the card games, so anyone who
+           already has their link can vote without a new one. Hidden without Firebase. -->
+      <div class="control-row hidden" id="room-row">
+        <span class="control-label">Room</span>
+        <input id="room-code-input" maxlength="8" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')loadRoomCode()">
+        <button class="btn-primary" onclick="loadRoomCode()">Load</button>
+        <button class="btn-secondary" onclick="newRoom()">New Room</button>
       </div>
-      <div class="vs-links" id="vote-links"></div>
+      <div class="control-divider hidden" id="room-divider"></div>
+      <div class="control-row">
+        <span class="control-label">Players</span>
+        <div class="player-btns" id="player-count-btns"></div>
+        <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
+      </div>
     </div>
 
-    <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
+    <div class="section-hdr" id="links-hdr"></div>
+    <p class="links-note hidden" id="links-note">Players open their own card link to roll, call Truth or Dare, and vote ✅ / ❌ on every challenge — you still make the final call. Same room code and links as Secret Rule, Emotion Cards, Word Wolf and Forbidden Words.</p>
+    <div class="player-links" id="player-links"></div>
+
     <div class="rules-note">
       Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, and <strong>BONUS</strong> and <strong>GIFT</strong> both take 2 territories off whoever is leading.
     </div>
@@ -963,44 +980,70 @@
 
     /* only one QR open at a time — opening another closes the previous one, so the
        setup card never grows into a wall of codes */
-    function toggleCardQR(token, row, btn) {
-      const existing = row.querySelector('.qr-inline');
-      document.querySelectorAll('#vote-links .qr-inline').forEach(el => { if (el !== existing) el.remove(); });
-      document.querySelectorAll('#vote-links .vl-qr').forEach(b => { if (b !== btn) b.classList.remove('open'); });
+    function toggleCardQR(token, col, btn) {
+      const existing = col.querySelector('.qr-inline');
+      document.querySelectorAll('#player-links .qr-inline').forEach(el => { if (el !== existing) el.remove(); });
+      document.querySelectorAll('#player-links .btn-qr-toggle').forEach(b => { if (b !== btn) b.classList.remove('open'); });
       if (existing) { existing.remove(); btn.classList.remove('open'); return; }
       const box = document.createElement('div');
       box.className = 'qr-inline';
       box.innerHTML = qrSVG(cardURL(token));
-      row.appendChild(box);
+      col.appendChild(box);
       btn.classList.add('open');
     }
 
-    function renderVoteSetup() {
-      const box = document.getElementById('vote-setup');
-      box.classList.toggle('hidden', !votingOn());
-      if (!votingOn()) return;
-      ensureTokens(playerCount);
-      document.getElementById('room-code-input').value = sessionCode;
-      const wrap = document.getElementById('vote-links');
+    /* one column per player: their board colour, their name, and (when voting is on)
+       their private card link — the same shape the card games use */
+    function renderPlayerLinks() {
+      const on = votingOn();
+      document.getElementById('room-row').classList.toggle('hidden', !on);
+      document.getElementById('room-divider').classList.toggle('hidden', !on);
+      document.getElementById('links-note').classList.toggle('hidden', !on);
+      document.getElementById('links-hdr').innerHTML = on
+        ? '🔗 Player Links <span class="section-tag">optional</span>'
+        : '👥 Players';
+      if (on) {
+        ensureTokens(playerCount);
+        document.getElementById('room-code-input').value = sessionCode;
+      }
+      const wrap = document.getElementById('player-links');
       wrap.innerHTML = '';
       for (let i = 0; i < playerCount; i++) {
-        const row = document.createElement('div');
-        row.className = 'vs-link';
-        const name = document.createElement('span');
-        name.className = 'vl-name';
-        name.textContent = playerNames[i] || `Player ${i + 1}`;
-        const copy = document.createElement('button');
-        copy.className = 'vl-copy';
-        copy.textContent = '📋 Link';
-        copy.onclick = () => copyCardLink(playerTokens[i], copy);
-        const qr = document.createElement('button');
-        qr.className = 'vl-copy vl-qr';
-        qr.textContent = 'QR';
-        qr.onclick = () => toggleCardQR(playerTokens[i], row, qr);
-        row.appendChild(name);
-        row.appendChild(copy);
-        row.appendChild(qr);
-        wrap.appendChild(row);
+        const c = PLAYER_COLORS[i];
+        const col = document.createElement('div');
+        col.className = 'link-col';
+        col.style.borderColor = c.hex;
+
+        const token = document.createElement('span');
+        token.className = 'token';
+        token.textContent = c.token;
+
+        const input = document.createElement('input');
+        input.className = 'name-input';
+        input.maxLength = 14;
+        input.placeholder = `Player ${i + 1}`;
+        input.value = playerNames[i] || '';
+        input.oninput = () => { playerNames[i] = input.value.trim(); saveSessionTokens(); };
+
+        col.appendChild(token);
+        col.appendChild(input);
+
+        if (on) {
+          const row = document.createElement('div');
+          row.className = 'link-btn-row';
+          const copy = document.createElement('button');
+          copy.className = 'btn-copy';
+          copy.textContent = '📋 Copy Link';
+          copy.onclick = () => copyCardLink(playerTokens[i], copy);
+          const qr = document.createElement('button');
+          qr.className = 'btn-qr-toggle';
+          qr.textContent = 'QR';
+          qr.onclick = () => toggleCardQR(playerTokens[i], col, qr);
+          row.appendChild(copy);
+          row.appendChild(qr);
+          col.appendChild(row);
+        }
+        wrap.appendChild(col);
       }
     }
 
@@ -1013,10 +1056,9 @@
       playerTokens = saved && saved.tokens ? saved.tokens.slice() : [];
       if (saved && saved.names && saved.names.length) playerNames = saved.names.slice();
       if (saved && saved.playerCount) setPlayerCount(clampCount(saved.playerCount));
-      else renderNameGrid();
       ensureTokens(playerCount);
       saveSessionTokens();
-      renderVoteSetup();
+      renderPlayerLinks();
       attachVoteListeners();
     }
 
@@ -1025,7 +1067,7 @@
       playerTokens = [];
       ensureTokens(playerCount);
       saveSessionTokens();
-      renderVoteSetup();
+      renderPlayerLinks();
       attachVoteListeners();
     }
 
@@ -1033,8 +1075,7 @@
     function setPlayerCount(n) {
       playerCount = n;
       document.querySelectorAll('.player-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
-      renderNameGrid();
-      renderVoteSetup();
+      renderPlayerLinks();
       attachVoteListeners();
       // send the new count back to the shared room, so the card games open on it too
       if (playerTokens.length) saveSessionTokens();
@@ -1050,31 +1091,7 @@
       });
     })();
 
-    function renderNameGrid() {
-      const grid = document.getElementById('name-grid');
-      grid.innerHTML = '';
-      for (let i = 0; i < playerCount; i++) {
-        const c = PLAYER_COLORS[i];
-        const slot = document.createElement('div');
-        slot.className = 'name-slot';
-        slot.style.borderColor = c.hex;
-        const input = document.createElement('input');
-        input.maxLength = 14;
-        input.placeholder = `Player ${i + 1}`;
-        input.value = playerNames[i] || '';
-        input.oninput = () => {
-          playerNames[i] = input.value.trim();
-          const label = document.querySelectorAll('#vote-links .vl-name')[i];
-          if (label) label.textContent = playerNames[i] || `Player ${i + 1}`;
-          saveSessionTokens();
-        };
-        slot.innerHTML = `<span class="token">${c.token}</span>`;
-        slot.appendChild(input);
-        grid.appendChild(slot);
-      }
-    }
-    renderNameGrid();
-    renderVoteSetup();
+    renderPlayerLinks();
 
     /* ── Browse all prompts (read-only reference list) ── */
     function buildPromptList() {
