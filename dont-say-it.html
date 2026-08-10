@@ -73,6 +73,56 @@
     .status-line.foul  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
     .status-line .sl-sub { display: block; margin-top: 6px; font-size: .82rem; font-weight: 700; color: #666; }
 
+    /* ── Countdown: the host sets the length and starts it; every card mirrors it ── */
+    .timer-row {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
+      padding: 16px 20px; margin-bottom: 16px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px;
+      animation: fadeUp .5s .18s ease both;
+      transition: border-color .3s;
+    }
+    .timer-row.running { border-color: #6366f1; }
+    .timer-row.low     { border-color: #f59e0b; }
+    .timer-row.critical{ border-color: #ef4444; }
+    .timer-dial {
+      width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 4px solid #2a2a52; color: #555;
+      font-size: 2.1rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .timer-row.running .timer-dial { border-color: #6366f1; color: #a5b4fc; }
+    .timer-row.low      .timer-dial { border-color: #f59e0b; color: #f59e0b; }
+    .timer-row.critical .timer-dial { border-color: #ef4444; color: #ef4444; animation: dialPulse .8s ease-in-out infinite; }
+    @keyframes dialPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+    .timer-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .timer-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #555;
+    }
+    #timer-secs {
+      width: 82px; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #eee; font-family: inherit; font-size: 1rem; font-weight: 800; text-align: center;
+      padding: 10px 8px; transition: border-color .2s;
+    }
+    #timer-secs:focus { outline: none; border-color: #6366f1; }
+    .timer-preset {
+      background: transparent; border: 2px solid #1e1e42; color: #666; border-radius: 10px;
+      padding: 8px 12px; font-size: .82rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .timer-preset:hover, .timer-preset.active { border-color: #6366f1; color: #6366f1; }
+    .timer-btn {
+      background: transparent; border: 2px solid #6366f1; color: #6366f1; border-radius: 12px;
+      padding: 10px 18px; font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .timer-btn:hover:not(:disabled) { background: rgba(99,102,241,.1); }
+    .timer-btn:active:not(:disabled) { transform: scale(.97); }
+    .timer-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .timer-btn.ghost { border-color: #1e1e42; color: #666; }
+    .timer-btn.ghost:hover { border-color: #6366f1; color: #6366f1; background: transparent; }
+
     /* ── Taboo! ruling buttons, only while a call is open ── */
     .call-row {
       width: 100%; max-width: 1100px;
@@ -170,7 +220,7 @@
 
   <div class="header">
     <h1>🙊 Don't Say It!</h1>
-    <p>One player gets the secret word on their own card and describes it — never saying the forbidden words. Everyone else buzzes in to guess. This screen only keeps score.</p>
+    <p>One player gets the secret word on their own card and describes it — never saying the forbidden words. Everyone else buzzes in to guess, against the clock. This screen only keeps score.</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -178,6 +228,21 @@
   </div>
 
   <div class="status-line" id="status-line"></div>
+
+  <!-- the clock: the host picks any length and starts it, every card counts along -->
+  <div class="timer-row" id="timer-row">
+    <div class="timer-dial" id="timer-dial">60</div>
+    <div class="timer-controls">
+      <span class="timer-label">Seconds</span>
+      <input type="number" id="timer-secs" min="5" max="900" step="5" value="60">
+      <button class="timer-preset" data-secs="30" onclick="setSeconds(30)">30</button>
+      <button class="timer-preset" data-secs="60" onclick="setSeconds(60)">60</button>
+      <button class="timer-preset" data-secs="90" onclick="setSeconds(90)">90</button>
+      <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
+      <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
+    </div>
+  </div>
+
   <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
   <div class="call-row hidden" id="call-row">
     <button class="call-btn yes" onclick="ruleTaboo(true)">🚨 Yes — Taboo! End the turn</button>
@@ -223,6 +288,11 @@
     let popIdx = [];       // score cards to animate after a point
     let tabooCalls = [];   // players who shouted Taboo! and are waiting on the host's ruling
     let seenTaboo = {};    // playerNum -> the last Taboo! stamp already handled
+
+    /* The clock runs here and is mirrored to the cards. Only state changes are
+       published (a new seq, the state and the seconds left) — each card ticks itself
+       from there, so a 90-second round is a handful of writes, not 90 per player. */
+    const timer = { total: 60, left: 60, running: false, seq: 0, iv: null };
 
     ROOM.init({
       mount: 'room-mount',
@@ -303,6 +373,88 @@
       return {};
     });
 
+    /* ── The countdown ── */
+    function setSeconds(n) {
+      const secs = Math.max(5, Math.min(900, Math.round(n) || 60));
+      document.getElementById('timer-secs').value = secs;
+      timer.total = secs;
+      if (!timer.running) timer.left = secs;
+      timer.seq++;
+      pushTimer();
+      renderTimer();
+    }
+    document.getElementById('timer-secs').oninput = e => setSeconds(Number(e.target.value));
+
+    function toggleTimer() {
+      if (timer.running) { stopTicking(); timer.running = false; }
+      else {
+        if (timer.left <= 0) timer.left = timer.total;
+        timer.running = true;
+        startTicking();
+      }
+      timer.seq++;
+      pushTimer();
+      renderTimer();
+    }
+
+    function resetTimer() {
+      stopTicking();
+      timer.running = false;
+      timer.left = timer.total;
+      timer.seq++;
+      pushTimer();
+      renderTimer();
+    }
+
+    function startTicking() {
+      stopTicking();
+      timer.iv = setInterval(() => {
+        timer.left = Math.max(0, timer.left - 1);
+        if (timer.left <= 0) {
+          stopTicking();
+          timer.running = false;
+          timer.seq++;
+          if (state === 'playing') endRound({ type: 'time' });
+          else { pushTimer(); renderTimer(); }
+          return;
+        }
+        renderTimer(); // the host's own dial; the cards run their own clock
+      }, 1000);
+    }
+
+    function stopTicking() {
+      if (timer.iv) { clearInterval(timer.iv); timer.iv = null; }
+    }
+
+    function timerPayload() {
+      return {
+        seq: timer.seq,
+        state: timer.running ? 'running' : (timer.left <= 0 ? 'done' : 'paused'),
+        remaining: timer.left,
+        total: timer.total,
+      };
+    }
+
+    function pushTimer() {
+      ROOM.update(() => ({ timer: timerPayload() }));
+    }
+
+    function renderTimer() {
+      const row = document.getElementById('timer-row');
+      const dial = document.getElementById('timer-dial');
+      dial.textContent = timer.left;
+      const frac = timer.total ? timer.left / timer.total : 1;
+      // stays coloured while paused and after it hits zero — only a fresh clock is grey
+      const armed = timer.running || timer.left < timer.total;
+      row.classList.toggle('running', armed && frac > .5);
+      row.classList.toggle('low', armed && frac <= .5 && frac > .25);
+      row.classList.toggle('critical', armed && frac <= .25);
+      document.getElementById('timer-start').textContent = timer.running ? '⏸️ Pause' : '▶️ Start';
+      document.querySelectorAll('.timer-preset').forEach(b => {
+        b.classList.toggle('active', Number(b.dataset.secs) === timer.total);
+      });
+    }
+
     /* ── Round flow ── */
     function dealRound(keepGiver) {
       if (!ROOM.enabled) return;
@@ -323,7 +475,13 @@
       seenTaboo = {};
       result = null;
       popIdx = [];
+      // a fresh word gets a fresh clock, waiting on the host's Start
+      stopTicking();
+      timer.running = false;
+      timer.left = timer.total;
+      timer.seq++;
       publishRound();
+      renderTimer();
       renderAll();
     }
 
@@ -337,7 +495,11 @@
     function endRound(res) {
       result = res;
       state = 'done';
+      stopTicking();
+      timer.running = false;
+      timer.seq++;
       publishRound();
+      renderTimer();
       renderAll();
       setTimeout(() => { popIdx = []; renderScores(); }, 600);
     }
@@ -379,6 +541,7 @@
         forbidden: null, target: null, emoji: null,
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
         tabooBy: null, iCalledTaboo: null,
+        timer: timerPayload(),
       };
       if (state === 'idle' || !card) return base;
       const done = state === 'done';
@@ -455,6 +618,9 @@
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
         el.innerHTML = `🚨 ${ROOM.name(result.who - 1)} caught a forbidden word — no points this round.${answer}`;
+      } else if (result && result.type === 'time') {
+        el.classList.add('foul');
+        el.innerHTML = `⏰ Time's up — no points this round.${answer}`;
       } else {
         el.innerHTML = `⏭️ Round over — no points.${answer}`;
       }
@@ -498,6 +664,7 @@
       </div>`).join('');
     toggleDeck(); toggleDeck(); // sets the closed label
 
+    renderTimer();
     renderAll();
   </script>
 </body>
