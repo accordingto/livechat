@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Don't Say It! · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Don't Say It">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hidden { display: none !important; }
+    .round-badge span { color: #6366f1; }
+
+    /* ── Turn bar: who is describing right now ── */
+    .turn-bar {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 14px 20px; margin-bottom: 14px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px;
+      font-size: 1.15rem; font-weight: 800; color: #888;
+      animation: fadeUp .5s .15s ease both;
+    }
+    .turn-bar .tb-who { color: #6366f1; font-size: 1.45rem; font-weight: 900; }
+
+    /* ── The card everyone looks at on the shared screen ── */
+    .taboo-card {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 22px;
+      padding: 26px 28px; margin-bottom: 16px;
+      display: flex; flex-direction: column; gap: 18px;
+      animation: fadeUp .5s .2s ease both;
+      transition: border-color .4s;
+    }
+    .taboo-card.live { border-color: #6366f1; }
+    .tc-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      text-align: center; min-height: 180px; justify-content: center;
+    }
+    .tc-placeholder .big-emoji { font-size: 3.2rem; }
+    .tc-placeholder p { color: #333; font-size: .95rem; line-height: 1.7; }
+
+    /* the target word stays hidden — the host is sharing this screen with the guessers */
+    .tc-target {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px;
+      background: #0d0d1a; border: 2px dashed #2a2a52; border-radius: 16px;
+      padding: 18px 20px; text-align: center;
+    }
+    .tc-target.shown { border-style: solid; border-color: #6366f1; }
+    .tc-secret { font-size: .95rem; font-weight: 700; color: #555; }
+    .tc-word { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 900; color: #fff; line-height: 1.15; }
+    .tc-word .tw-emoji { margin-right: 10px; }
+    .btn-peek {
+      background: transparent; color: #666; border: 2px solid #1e1e42; border-radius: 12px;
+      padding: 9px 16px; font-size: .82rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .btn-peek:active { transform: scale(.97); }
+
+    .tc-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #ef4444; margin-bottom: 12px; text-align: center;
+    }
+    .tc-forbidden { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .tcf-word {
+      background: rgba(239,68,68,.1); border: 2px solid rgba(239,68,68,.45); color: #fca5a5;
+      border-radius: 14px; padding: 12px 22px;
+      font-size: clamp(1.05rem, 2.6vw, 1.4rem); font-weight: 800;
+      animation: fadeUp .3s ease both;
+    }
+
+    /* ── Judging row ── */
+    .judge-wrap {
+      width: 100%; max-width: 1100px; margin-bottom: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      animation: fadeUp .4s ease both;
+    }
+    .judge-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #555;
+    }
+    .judge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .judge-btn {
+      flex: 1; min-width: 130px;
+      background: #13132b; border: 2px solid #1e1e42; color: #999;
+      border-radius: 14px; padding: 13px 14px;
+      font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .judge-btn:active { transform: scale(.98); }
+    .judge-btn.buzzed { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.12); }
+    .judge-btn .jb-badge {
+      background: #22c55e; color: #06230f; border-radius: 999px;
+      font-size: .65rem; font-weight: 900; letter-spacing: .5px; padding: 2px 8px;
+    }
+    .judge-btn.foul { border-color: #ef4444; color: #ef4444; }
+    .judge-btn.foul.called { background: rgba(239,68,68,.14); }
+    .judge-btn.none { color: #666; }
+    @media (hover: hover) and (pointer: fine) {
+      .judge-btn:hover { border-color: #6366f1; color: #6366f1; }
+      .judge-btn.foul:hover { border-color: #ef4444; color: #ef4444; }
+      .btn-peek:hover { border-color: #6366f1; color: #6366f1; }
+    }
+
+    /* ── Result banner ── */
+    .result-banner {
+      width: 100%; max-width: 1100px; margin-bottom: 16px;
+      border: 2px solid #1e1e42; border-radius: 16px; padding: 16px 20px;
+      text-align: center; font-size: 1.05rem; font-weight: 800; color: #888;
+      animation: fadeUp .3s ease both;
+    }
+    .result-banner.win  { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
+    .result-banner.foul { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+    .result-banner .rb-answer { display: block; margin-top: 6px; font-size: .85rem; font-weight: 700; color: #777; }
+
+    /* ── Deal button ── */
+    .btn-deal {
+      width: 100%; max-width: 1100px;
+      background: #13132b; color: #6366f1; border: 2px solid #6366f1;
+      border-radius: 14px; padding: 16px;
+      font-size: 1.05rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: background .2s, transform .1s;
+      animation: fadeUp .5s .3s ease both;
+    }
+    .btn-deal:hover  { background: rgba(99,102,241,.1); }
+    .btn-deal:active { transform: scale(.98); }
+    .btn-deal:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Scoreboard ── */
+    .scoreboard {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+      margin: 16px 0 4px;
+      animation: fadeUp .5s .25s ease both;
+    }
+    .score-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 999px;
+      padding: 8px 16px; font-size: .9rem; font-weight: 800; color: #999;
+      transition: border-color .3s, color .3s;
+    }
+    .score-chip.is-giver { border-color: #6366f1; color: #fff; }
+    .score-chip .sc-pts { color: #6366f1; font-size: 1.05rem; font-weight: 900; }
+    .score-reset {
+      width: 100%; max-width: 1100px; text-align: center;
+      margin-bottom: 18px;
+    }
+    .score-reset button {
+      background: none; border: none; color: #2a2a50; font-family: inherit;
+      font-size: .78rem; font-weight: 700; cursor: pointer; padding: 4px;
+    }
+    .score-reset button:hover { color: #666; }
+
+    .fb-warning {
+      width: 100%; max-width: 1100px;
+      background: rgba(99,102,241,.1); border: 1.5px solid #6366f1; color: #a5b4fc;
+      border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
+
+    /* ── Deck browser ── */
+    .deck-browser { width: 100%; max-width: 1100px; margin: 28px 0 40px; }
+    .deck-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 14px;
+    }
+    .deck-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+    .deck-item {
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px; padding: 11px 14px;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .deck-item .di-word { font-size: .95rem; font-weight: 800; color: #ddd; }
+    .deck-item .di-num { color: #444; font-size: .74rem; font-weight: 900; margin-right: 6px; }
+    .deck-item .di-forbidden { font-size: .78rem; font-weight: 600; color: #7a4a52; line-height: 1.5; }
+
+    @media (max-width: 520px) {
+      .taboo-card { padding: 20px 16px; }
+      .tcf-word { padding: 10px 16px; }
+      .turn-bar { font-size: 1rem; padding: 12px 14px; }
+      .turn-bar .tb-who { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Round <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🙊 Don't Say It!</h1>
+    <p>One player describes the secret word — without ever saying the forbidden words. Everyone else guesses, and everyone else is the referee!</p>
+  </div>
+
+  <div class="fb-warning hidden" id="fb-warning">
+    ⚠️ Firebase isn't set up, so the clue giver has no private card. Open <code>firebase-config.js</code> to set it up — until then, use 👁️ Reveal and let everyone else look away while the clue giver reads the word.
+  </div>
+
+  <div class="turn-bar hidden" id="turn-bar"></div>
+
+  <div class="taboo-card" id="taboo-card">
+    <div class="tc-placeholder" id="tc-placeholder">
+      <div class="big-emoji">🙊</div>
+      <p>Press <strong>Deal a Word</strong> — the clue giver gets the secret word on their own card,<br>everyone else sees only the forbidden words.</p>
+    </div>
+    <div class="hidden" id="tc-body"></div>
+  </div>
+
+  <div class="judge-wrap hidden" id="judge-wrap"></div>
+  <div class="result-banner hidden" id="result-banner"></div>
+
+  <button class="btn-deal" id="deal-btn" onclick="dealRound()">🎬 Deal a Word</button>
+
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="score-reset"><button onclick="resetScores()">↺ Reset scores</button></div>
+
+  <!-- player cards: the clue giver gets the word, the guessers get the buzzer -->
+  <div id="room-mount"></div>
+
+  <div class="deck-browser">
+    <div class="deck-hdr" id="deck-hdr"></div>
+    <div class="deck-list" id="deck-list"></div>
+  </div>
+
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script>
+    const DECK = GAME_DATA.taboo;
+
+    let round = 0;
+    let giverIdx = 0;        // whose turn it is to describe — rotates every round
+    let card = null;         // the card in play
+    let roundId = '';        // ballot id: buzzes and fouls only count for the current round
+    let state = 'idle';      // idle | playing | done
+    let used = [];
+    let scores = [];
+    let buzzOrder = [];      // player numbers in the order their buzz reached this screen
+    let fouls = [];          // player numbers who called a forbidden word
+    let revealed = false;
+    let result = null;       // { type: 'got' | 'foul' | 'none', winner }
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#6366f1',
+      linksNote: 'The clue giver sees the secret word on their own card. Everyone else sees the forbidden words plus two buttons: 🙋 I got it! and 🚨 They said one!',
+      onPlayerData: collectAnswers,
+      onCountChange: () => { giverIdx = 0; syncScores(); endRound(null, true); renderAll(); },
+      onNameChange: () => { ROOM.render(); renderAll(); },
+    });
+    document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+
+    function syncScores() {
+      while (scores.length < ROOM.count) scores.push(0);
+    }
+    syncScores();
+
+    /* buzzes and fouls arrive on each player's own node, carrying this round's id */
+    function collectAnswers() {
+      if (state !== 'playing') { renderJudge(); return; }
+      for (let i = 0; i < ROOM.count; i++) {
+        const num = i + 1;
+        const d = ROOM.answers[num];
+        const v = d && d.vote;
+        if (!v || v.id !== roundId) continue;
+        if (v.choice === 'got' && num !== giverIdx + 1 && !buzzOrder.includes(num)) buzzOrder.push(num);
+        if (v.choice === 'foul' && num !== giverIdx + 1 && !fouls.includes(num)) fouls.push(num);
+      }
+      renderJudge();
+      ROOM.render();
+    }
+
+    ROOM.setDecorator(i => {
+      const num = i + 1;
+      if (state !== 'idle' && i === giverIdx) return { marked: true, answer: '🎤 Clue giver' };
+      if (buzzOrder.includes(num)) {
+        const place = buzzOrder.indexOf(num) + 1;
+        return { marked: true, answer: `🙋 Buzzed<span class="la-sub">#${place} in</span>` };
+      }
+      if (fouls.includes(num)) return { marked: true, answer: '🚨 Called a foul' };
+      return {};
+    });
+
+    /* ── Dealing ── */
+    function dealRound() {
+      syncScores();
+      if (state === 'done') giverIdx = (giverIdx + 1) % ROOM.count;
+      let avail = DECK.map((_, i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = DECK.map((_, i) => i); }
+      const pick = avail[Math.floor(Math.random() * avail.length)];
+      used.push(pick);
+      card = DECK[pick];
+      round++;
+      roundId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      state = 'playing';
+      buzzOrder = [];
+      fouls = [];
+      revealed = false;
+      result = null;
+      publish();
+      renderAll();
+    }
+
+    /* the round ends when the host judges it — a correct guess, a foul, or nobody got it */
+    function endRound(res, silent) {
+      if (state !== 'playing' && !silent) return;
+      if (res && res.type === 'got') {
+        scores[giverIdx] = (scores[giverIdx] || 0) + 1;
+        scores[res.winner - 1] = (scores[res.winner - 1] || 0) + 1;
+      }
+      result = res;
+      state = res ? 'done' : 'idle';
+      if (res) revealed = true;
+      publish();
+      renderAll();
+    }
+
+    function resetScores() {
+      scores = scores.map(() => 0);
+      publish();
+      renderAll();
+    }
+
+    /* ── Firebase ── */
+    function publish() {
+      if (state === 'idle') { ROOM.publish(i => idlePayload(i)); return; }
+      ROOM.publish(i => {
+        const isGiver = i === giverIdx;
+        const done = state === 'done';
+        return {
+          game: 'taboo', round, voteId: roundId,
+          state, isGiver,
+          giverName: ROOM.name(giverIdx),
+          forbidden: card.forbidden,
+          // the word itself only ever reaches the clue giver — until the round is over
+          target: (isGiver || done) ? card.word : null,
+          emoji: (isGiver || done) ? card.emoji : null,
+          result: done && result ? {
+            type: result.type,
+            winner: result.type === 'got' ? ROOM.name(result.winner - 1) : null,
+            youWon: result.type === 'got' && result.winner === i + 1,
+          } : null,
+          score: scores[i] || 0,
+        };
+      });
+    }
+
+    function idlePayload(i) {
+      return {
+        game: 'taboo', round, state: 'idle',
+        giverName: ROOM.name(giverIdx),
+        isGiver: i === giverIdx,
+        score: scores[i] || 0,
+      };
+    }
+
+    /* ── Rendering ── */
+    function renderAll() {
+      renderTurnBar();
+      renderCard();
+      renderJudge();
+      renderResult();
+      renderScores();
+      ROOM.render();
+      document.getElementById('roundNum').textContent = round;
+      const btn = document.getElementById('deal-btn');
+      btn.textContent = state === 'playing' ? '🔁 Skip this word'
+                      : state === 'done' ? `▶️ Next Round — ${ROOM.name((giverIdx + 1) % ROOM.count)} describes`
+                      : '🎬 Deal a Word';
+    }
+
+    function renderTurnBar() {
+      const el = document.getElementById('turn-bar');
+      if (state === 'idle') { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+      el.innerHTML = `🎤 <span class="tb-who">${ROOM.name(giverIdx)}</span> is describing · everyone else guesses`;
+    }
+
+    function renderCard() {
+      const box = document.getElementById('taboo-card');
+      const body = document.getElementById('tc-body');
+      const ph = document.getElementById('tc-placeholder');
+      if (!card || state === 'idle') {
+        box.classList.remove('live');
+        ph.classList.remove('hidden');
+        body.classList.add('hidden');
+        return;
+      }
+      box.classList.add('live');
+      ph.classList.add('hidden');
+      body.classList.remove('hidden');
+      const target = revealed
+        ? `<span class="tc-word"><span class="tw-emoji">${card.emoji}</span>${card.word}</span>`
+        : `<span class="tc-secret">🤫 Only ${ROOM.name(giverIdx)} can see the word</span>
+           <button class="btn-peek" onclick="peek()">👁️ Reveal</button>`;
+      body.innerHTML = `
+        <div class="tc-target${revealed ? ' shown' : ''}">${target}</div>
+        <div>
+          <div class="tc-label">🚫 Never say these</div>
+          <div class="tc-forbidden">${card.forbidden.map(w => `<span class="tcf-word">${w}</span>`).join('')}</div>
+        </div>`;
+    }
+
+    function peek() {
+      revealed = true;
+      renderCard();
+    }
+
+    function renderJudge() {
+      const wrap = document.getElementById('judge-wrap');
+      if (state !== 'playing') { wrap.classList.add('hidden'); return; }
+      wrap.classList.remove('hidden');
+      let btns = '';
+      for (let i = 0; i < ROOM.count; i++) {
+        if (i === giverIdx) continue;
+        const num = i + 1;
+        const place = buzzOrder.indexOf(num);
+        btns += `<button class="judge-btn${place >= 0 ? ' buzzed' : ''}" onclick="endRound({ type: 'got', winner: ${num} })">
+            ${place >= 0 ? '🙋' : '👤'} ${ROOM.name(i)}
+            ${place === 0 ? '<span class="jb-badge">FIRST</span>' : ''}
+          </button>`;
+      }
+      const foulNames = fouls.map(n => ROOM.name(n - 1)).join(', ');
+      wrap.innerHTML = `
+        <span class="judge-label">Who got it? — tap a name to give both of them +1</span>
+        <div class="judge-row">${btns}</div>
+        <div class="judge-row">
+          <button class="judge-btn foul${fouls.length ? ' called' : ''}" onclick="endRound({ type: 'foul' })">
+            🚨 ${ROOM.name(giverIdx)} said a forbidden word${fouls.length ? ` — called by ${foulNames}` : ''}
+          </button>
+          <button class="judge-btn none" onclick="endRound({ type: 'none' })">⏭️ Nobody got it</button>
+        </div>`;
+    }
+
+    function renderResult() {
+      const el = document.getElementById('result-banner');
+      if (state !== 'done' || !result) { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+      el.classList.remove('win', 'foul');
+      const answer = `<span class="rb-answer">The word was ${card.emoji} ${card.word}</span>`;
+      if (result.type === 'got') {
+        el.classList.add('win');
+        el.innerHTML = `✅ ${ROOM.name(result.winner - 1)} got it — +1 for ${ROOM.name(result.winner - 1)} and ${ROOM.name(giverIdx)}!${answer}`;
+      } else if (result.type === 'foul') {
+        el.classList.add('foul');
+        el.innerHTML = `🚨 ${ROOM.name(giverIdx)} said a forbidden word — no points this round.${answer}`;
+      } else {
+        el.innerHTML = `⏭️ Nobody got it this time.${answer}`;
+      }
+    }
+
+    function renderScores() {
+      const el = document.getElementById('scoreboard');
+      syncScores();
+      let html = '';
+      for (let i = 0; i < ROOM.count; i++) {
+        html += `<span class="score-chip${state !== 'idle' && i === giverIdx ? ' is-giver' : ''}">
+            ${state !== 'idle' && i === giverIdx ? '🎤' : '👤'} ${ROOM.name(i)}
+            <span class="sc-pts">${scores[i] || 0}</span>
+          </span>`;
+      }
+      el.innerHTML = html;
+    }
+
+    /* ── Deck browser (host reference) ── */
+    (function buildDeck() {
+      document.getElementById('deck-hdr').textContent =
+        `📋 All Words (${DECK.length}) — the clue giver gets the word, everyone gets the four banned ones`;
+      document.getElementById('deck-list').innerHTML = DECK.map((c, i) => `
+        <div class="deck-item">
+          <div class="di-word"><span class="di-num">${i + 1}</span>${c.emoji} ${c.word}</div>
+          <div class="di-forbidden">🚫 ${c.forbidden.join(' · ')}</div>
+        </div>`).join('');
+    })();
+
+    renderAll();
+  </script>
+</body>
+</html>

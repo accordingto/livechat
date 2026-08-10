@@ -281,6 +281,27 @@
        would resolve against its own colour and turn the letter invisible */
     .pick-btn.picked .pb-key { background: color-mix(in srgb, currentColor 28%, transparent); color: inherit; }
 
+    /* 🙊 Don't Say It: the clue giver's word, and the banned list everyone gets */
+    .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; }
+    .taboo-target {
+      width: 100%; background: #0d0d1a; border: 2px solid #6366f1; border-radius: 16px;
+      padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .taboo-target .tt-emoji { font-size: 2.6rem; line-height: 1; }
+    .taboo-target .tt-word {
+      font-size: 1.9rem; font-weight: 900; color: #fff; line-height: 1.2;
+      overflow-wrap: break-word; max-width: 100%;
+    }
+    .taboo-banned { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    .taboo-banned .tb-label {
+      font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #ef4444;
+    }
+    .taboo-banned .tb-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+    .taboo-banned .tb-word {
+      background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.45); color: #fca5a5;
+      border-radius: 10px; padding: 7px 13px; font-size: .95rem; font-weight: 800;
+    }
+
     /* a dealt role (You're In The Scene) or side (Persuade Together) */
     .role-box {
       width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 16px;
@@ -778,6 +799,74 @@
             <span class="pick-text">${esc(data.situation || '')}</span>
             ${judge ? `<span class="pick-sub">Hear them out, then give your verdict.</span>${verdict}`
                     : '<span class="pick-sub">Work together — win the judge over!</span>'}
+          </div>`;
+        return;
+      }
+      if (data.game === 'taboo') {
+        const banned = (data.forbidden || []).map(w => `<span class="tb-word">${esc(w)}</span>`).join('');
+        const bannedBlock = banned ? `
+            <div class="taboo-banned">
+              <span class="tb-label">🚫 Never say these</span>
+              <div class="tb-list">${banned}</div>
+            </div>` : '';
+        const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
+        if (data.state === 'done') {
+          const r = data.result || {};
+          const line = r.type === 'got'
+            ? (r.youWon ? '✅ You got it — +1!' : `✅ ${esc(r.winner || 'Someone')} got it`)
+            : r.type === 'foul' ? '🚨 A forbidden word slipped out — no points'
+            : '⏭️ Nobody got it';
+          el.innerHTML = `
+            <div class="secret-card theme-taboo">
+              ${nameBanner(data)}
+              <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">Round over</span>
+              <span class="pick-text">${line}</span>
+              <div class="taboo-target">
+                <span class="tt-emoji">${data.emoji || '🙊'}</span>
+                <span class="tt-word">${esc(data.target || '')}</span>
+              </div>
+              ${score}
+            </div>`;
+          return;
+        }
+        if (data.state === 'idle') {
+          el.innerHTML = `
+            <div class="secret-card theme-taboo">
+              ${nameBanner(data)}
+              <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">🙊 Don't Say It!</span>
+              <span class="pick-sub">Waiting for the host to deal the next word…</span>
+              <p class="conq-wait">⏳</p>
+              ${score}
+            </div>`;
+          return;
+        }
+        if (data.isGiver) {
+          el.innerHTML = `
+            <div class="secret-card theme-taboo">
+              ${nameBanner(data)}
+              <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">🎤 You're the clue giver</span>
+              <div class="taboo-target">
+                <span class="tt-emoji">${data.emoji || '🙊'}</span>
+                <span class="tt-word">${esc(data.target || '')}</span>
+              </div>
+              ${bannedBlock}
+              <span class="pick-sub">Describe it in English — but never say the word or the four banned ones!</span>
+              ${score}
+            </div>`;
+          return;
+        }
+        const picked = myPick(data);
+        el.innerHTML = `
+          <div class="secret-card theme-taboo">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">🕵️ ${esc(data.giverName || 'Someone')} is describing</span>
+            ${bannedBlock}
+            <div class="pick-row">
+              ${pickButton('got', '🙋', 'I got it!', picked, '#22c55e')}
+              ${pickButton('foul', '🚨', 'They said one!', picked, '#ef4444')}
+            </div>
+            <span class="pick-sub">Shout your guess out loud — the button just tells the host it was you.</span>
+            ${score}
           </div>`;
         return;
       }
