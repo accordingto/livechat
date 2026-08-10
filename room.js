@@ -412,6 +412,24 @@ const ROOM = (() => {
     );
   }
 
+  /* mid-round changes: .update() leaves fields the game didn't name alone, so a
+     player's answer isn't wiped by the host telling everyone else what changed */
+  function update(build) {
+    if (!on()) return;
+    for (let i = 0; i < count; i++) {
+      const payload = typeof build === 'function' ? build(i) : Object.assign({}, build);
+      if (!payload) continue;
+      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).update(payload);
+    }
+  }
+
+  /* drop one player's answer once the game has acted on it, so they can answer again */
+  function clearAnswer(i) {
+    if (!on() || !tokens[i]) return;
+    db.ref(`rooms/${sessionCode}/players/${tokens[i]}/vote`).set(null);
+    if (data[i + 1]) data[i + 1] = Object.assign({}, data[i + 1], { vote: null });
+  }
+
   function init(options) {
     cfg = Object.assign({ counts: [2, 3, 4, 5, 6], defaultCount: 4, accent: '#f59e0b' }, options);
     count = cfg.defaultCount;
@@ -438,7 +456,7 @@ const ROOM = (() => {
   }
 
   const api = {
-    init, render, publish, setCount,
+    init, render, publish, update, clearAnswer, setCount,
     get enabled() { return on(); },
     get count() { return count; },
     get names() { return names; },

@@ -301,6 +301,33 @@
       background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.45); color: #fca5a5;
       border-radius: 10px; padding: 7px 13px; font-size: .95rem; font-weight: 800;
     }
+    /* the buzzer: the biggest thing on a guesser's card, made to be hit fast */
+    .taboo-buzz {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 16px; padding: 20px 14px;
+      font-size: 1.15rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(34,197,94,.28);
+      transition: transform .1s, opacity .2s;
+    }
+    .taboo-buzz .pb-key { font-size: 1.5rem; }
+    .taboo-buzz:active:not(:disabled) { transform: scale(.97); }
+    .taboo-buzz:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .taboo-foul {
+      width: 100%; background: transparent; border: 2px solid rgba(239,68,68,.4); color: #ef4444;
+      border-radius: 12px; padding: 11px; font-size: .85rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: background .2s, transform .1s;
+    }
+    .taboo-foul:active { transform: scale(.98); }
+    /* who is currently guessing, on the giver's card and on the buzzer's own card */
+    .taboo-buzzed {
+      width: 100%; background: rgba(34,197,94,.12); border: 2px solid #22c55e; color: #22c55e;
+      border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 900;
+      animation: buzzIn .3s ease both;
+    }
+    .taboo-buzzed.mine { animation: buzzIn .3s ease both, buzzPulse 1.6s ease-in-out infinite .3s; }
+    @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+    @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
     /* a dealt role (You're In The Scene) or side (Persuade Together) */
     .role-box {
@@ -672,6 +699,112 @@
       db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice });
     }
 
+    /* 🙊 Don't Say It: everything happens on the cards — the host screen only keeps
+       score. Guessers buzz, and the clue giver (the only one holding the word) says
+       whether the guess was right. */
+    function tabooSend(payload) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.voteId;
+      if (!id) return;
+      db.ref(`rooms/${session}/players/${token}/vote`).set(Object.assign({ id }, payload));
+    }
+
+    function tabooBuzz(btn) {
+      if (btn) { btn.disabled = true; btn.querySelector('.pb-label').textContent = 'Buzzed — say it!'; }
+      tabooSend({ choice: 'buzz', t: Date.now() });
+    }
+
+    function tabooFoul() { tabooSend({ choice: 'foul' }); }
+
+    /* the clue giver's verdict names the buzzer it answers, so a late tap can't land
+       on whoever buzzed next */
+    function tabooVerdict(choice, buzzer, btn) {
+      const row = btn && btn.closest('.pick-row');
+      if (row) row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      tabooSend({ choice, buzzer });
+    }
+
+    function tabooCardHTML(data) {
+      const banned = (data.forbidden || []).map(w => `<span class="tb-word">${esc(w)}</span>`).join('');
+      const bannedBlock = banned ? `
+          <div class="taboo-banned">
+            <span class="tb-label">🚫 Never say these</span>
+            <div class="tb-list">${banned}</div>
+          </div>` : '';
+      const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
+      const chip = (text, hex) => `<span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${text}</span>`;
+      const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}</div>`;
+
+      if (data.state === 'done') {
+        const r = data.result || {};
+        const line = r.type === 'got'
+          ? (r.youWon ? '✅ You got it — +1!' : `✅ ${esc(r.who || 'Someone')} got it`)
+          : r.type === 'foul' ? '🚨 A forbidden word slipped out — no points'
+          : '⏭️ Round over — no points';
+        return shell(`
+          ${chip('Round over', '#6366f1')}
+          <span class="pick-text">${line}</span>
+          <div class="taboo-target">
+            <span class="tt-emoji">${data.emoji || '🙊'}</span>
+            <span class="tt-word">${esc(data.target || '')}</span>
+          </div>`);
+      }
+
+      if (data.state !== 'playing') {
+        return shell(`
+          ${chip("🙊 Don't Say It!", '#6366f1')}
+          <span class="pick-sub">Waiting for the next word…</span>
+          <p class="conq-wait">⏳</p>`);
+      }
+
+      if (data.isGiver) {
+        // the giver holds the word, so the giver is the one who can judge a guess
+        const verdict = data.buzzer ? `
+            <div class="taboo-buzzed">🙋 ${esc(data.buzzerName || '')} buzzed in</div>
+            <div class="pick-row">
+              <button class="pick-btn" style="color:#22c55e" onclick="tabooVerdict('right', ${data.buzzer}, this)">
+                <span class="pb-key">✅</span><span class="pb-label">Correct! +1 each</span>
+              </button>
+              <button class="pick-btn" style="color:#ef4444" onclick="tabooVerdict('wrong', ${data.buzzer}, this)">
+                <span class="pb-key">❌</span><span class="pb-label">Not it — keep going</span>
+              </button>
+            </div>`
+          : '<span class="pick-sub">Keep describing — the buttons appear when someone buzzes in.</span>';
+        return shell(`
+          ${chip("🎤 You're the clue giver", '#6366f1')}
+          <div class="taboo-target">
+            <span class="tt-emoji">${data.emoji || '🙊'}</span>
+            <span class="tt-word">${esc(data.target || '')}</span>
+          </div>
+          ${bannedBlock}
+          ${verdict}`);
+      }
+
+      const mine = data.buzzer === data.playerNum;
+      const waiting = data.queued && !mine;
+      let buzzArea;
+      if (mine) {
+        buzzArea = `
+          <div class="taboo-buzzed mine">🙋 You buzzed — say your guess out loud!</div>
+          <span class="pick-sub">${esc(data.giverName || 'The clue giver')} will tap ✅ or ❌.</span>`;
+      } else if (waiting) {
+        buzzArea = `
+          <div class="taboo-buzzed">⏳ You're #${data.queued} in the queue</div>
+          <span class="pick-sub">${esc(data.buzzerName || 'Someone')} is guessing first.</span>`;
+      } else {
+        buzzArea = `
+          <button class="taboo-buzz" onclick="tabooBuzz(this)">
+            <span class="pb-key">🙋</span><span class="pb-label">${data.rejected ? 'Buzz again!' : 'Buzz in!'}</span>
+          </button>
+          <span class="pick-sub">${data.buzzerName ? esc(data.buzzerName) + ' is guessing — buzz to get in line.' : 'Know it? Hit the buzzer, then say it out loud.'}</span>`;
+      }
+      return shell(`
+        ${chip(`🕵️ ${esc(data.giverName || 'Someone')} is describing`, '#6366f1')}
+        ${bannedBlock}
+        ${buzzArea}
+        <button class="taboo-foul" onclick="tabooFoul()">🚨 They said a forbidden word!</button>`);
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -802,74 +935,7 @@
           </div>`;
         return;
       }
-      if (data.game === 'taboo') {
-        const banned = (data.forbidden || []).map(w => `<span class="tb-word">${esc(w)}</span>`).join('');
-        const bannedBlock = banned ? `
-            <div class="taboo-banned">
-              <span class="tb-label">🚫 Never say these</span>
-              <div class="tb-list">${banned}</div>
-            </div>` : '';
-        const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
-        if (data.state === 'done') {
-          const r = data.result || {};
-          const line = r.type === 'got'
-            ? (r.youWon ? '✅ You got it — +1!' : `✅ ${esc(r.winner || 'Someone')} got it`)
-            : r.type === 'foul' ? '🚨 A forbidden word slipped out — no points'
-            : '⏭️ Nobody got it';
-          el.innerHTML = `
-            <div class="secret-card theme-taboo">
-              ${nameBanner(data)}
-              <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">Round over</span>
-              <span class="pick-text">${line}</span>
-              <div class="taboo-target">
-                <span class="tt-emoji">${data.emoji || '🙊'}</span>
-                <span class="tt-word">${esc(data.target || '')}</span>
-              </div>
-              ${score}
-            </div>`;
-          return;
-        }
-        if (data.state === 'idle') {
-          el.innerHTML = `
-            <div class="secret-card theme-taboo">
-              ${nameBanner(data)}
-              <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">🙊 Don't Say It!</span>
-              <span class="pick-sub">Waiting for the host to deal the next word…</span>
-              <p class="conq-wait">⏳</p>
-              ${score}
-            </div>`;
-          return;
-        }
-        if (data.isGiver) {
-          el.innerHTML = `
-            <div class="secret-card theme-taboo">
-              ${nameBanner(data)}
-              <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">🎤 You're the clue giver</span>
-              <div class="taboo-target">
-                <span class="tt-emoji">${data.emoji || '🙊'}</span>
-                <span class="tt-word">${esc(data.target || '')}</span>
-              </div>
-              ${bannedBlock}
-              <span class="pick-sub">Describe it in English — but never say the word or the four banned ones!</span>
-              ${score}
-            </div>`;
-          return;
-        }
-        const picked = myPick(data);
-        el.innerHTML = `
-          <div class="secret-card theme-taboo">
-            ${nameBanner(data)}
-            <span class="pick-chip" style="color:#6366f1;border-color:#6366f155;background:rgba(99,102,241,.1)">🕵️ ${esc(data.giverName || 'Someone')} is describing</span>
-            ${bannedBlock}
-            <div class="pick-row">
-              ${pickButton('got', '🙋', 'I got it!', picked, '#22c55e')}
-              ${pickButton('foul', '🚨', 'They said one!', picked, '#ef4444')}
-            </div>
-            <span class="pick-sub">Shout your guess out loud — the button just tells the host it was you.</span>
-            ${score}
-          </div>`;
-        return;
-      }
+      if (data.game === 'taboo') { el.innerHTML = tabooCardHTML(data); return; }
       showError('⏳ Waiting for the host to start a game...');
     }
 
