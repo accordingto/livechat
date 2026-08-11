@@ -48,6 +48,10 @@
     }
     .score-card.is-buzzed .sc-role { color: #22c55e; }
     .score-card.is-buzzed .sc-pts { color: #22c55e; }
+    .score-card.is-ref {
+      border-color: #f59e0b; box-shadow: 0 0 22px rgba(245,158,11,.22);
+    }
+    .score-card.is-ref .sc-role { color: #f59e0b; }
     .score-card.is-called {
       border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.3);
     }
@@ -310,7 +314,7 @@
 
   <div class="header">
     <h1>🙊 Don't Say It!</h1>
-    <p>One player gets the secret word on their own card and describes it — never saying the forbidden words. Everyone else buzzes in to guess, against the clock. This screen only keeps score.</p>
+    <p>One player describes a secret word without saying the four banned ones. Only the referee sees that list — everyone else just buzzes in and guesses, against the clock. This screen only keeps score.</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -379,6 +383,7 @@
 
     let round = 0;
     let giverIdx = 0;      // whose turn to describe — moves on after every round
+    let refIdx = -1;       // the referee: the only guesser-side player who sees the banned words
     let card = null;
     let roundId = '';
     let state = 'idle';    // idle | playing | done
@@ -408,7 +413,9 @@
     function toggleForbidden() {
       forbiddenOn = !forbiddenOn;
       saveOptions();
-      if (!forbiddenOn) tabooCalls = []; // nothing left to rule on
+      if (!forbiddenOn) { tabooCalls = []; refIdx = -1; } // no banned words, no referee
+      // switching back on mid-round needs someone holding the list again
+      else if (state === 'playing' && refIdx < 0) refIdx = (giverIdx + 1) % ROOM.count;
       if (state !== 'idle') pushState();
       renderForbiddenToggle();
       renderAll();
@@ -429,9 +436,11 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#6366f1',
-      linksNote: 'The clue giver gets the secret word, the forbidden words and the ✅ / ❌ buttons. Everyone else gets the forbidden words and a buzzer — the clue giver decides who got it.',
+      counts: [3, 4, 5, 6],
+      defaultCount: 4,
+      linksNote: 'Each round deals a clue giver (word + banned words + the ✅ / ❌ buttons) and a referee (banned words + the Taboo! button). Everyone else just gets a buzzer — they never see the banned words, so the list can\'t give the answer away.',
       onPlayerData: handleAnswer,
-      onCountChange: () => { giverIdx = 0; syncScores(); resetRound(); },
+      onCountChange: () => { giverIdx = 0; refIdx = -1; syncScores(); resetRound(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (state !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
@@ -461,6 +470,7 @@
       }
 
       if (v.choice === 'buzz') {
+        if (num === refIdx + 1) { ROOM.clearAnswer(num - 1); return; } // the referee sits this one out
         if (seenBuzz[num] === v.t) return;   // already queued this buzz
         seenBuzz[num] = v.t;
         ROOM.clearAnswer(num - 1);           // let them buzz again later
@@ -472,9 +482,10 @@
         return;
       }
 
-      /* Taboo! is a claim, not a verdict — the host rules on it */
+      /* Taboo! is a claim, not a verdict — the host rules on it. Only the referee
+         holds the banned words, so only the referee can call one. */
       if (v.choice === 'taboo') {
-        if (!forbiddenOn) { ROOM.clearAnswer(num - 1); return; }
+        if (!forbiddenOn || num !== refIdx + 1) { ROOM.clearAnswer(num - 1); return; }
         if (seenTaboo[num] === v.t) return;
         seenTaboo[num] = v.t;
         ROOM.clearAnswer(num - 1);
@@ -501,6 +512,7 @@
       if (state !== 'playing') return {};
       if (tabooCalls.includes(num)) return { marked: true, answer: '🚨 Called Taboo!' };
       if (i === giverIdx) return { marked: true, answer: '🎤 Clue giver' };
+      if (i === refIdx) return { marked: true, answer: '👀 Referee' };
       if (queue[0] === num) return { marked: true, answer: '🙋 Buzzed in' };
       if (queue.includes(num)) return { marked: true, answer: '🙋 In the queue' };
       return {};
@@ -607,6 +619,9 @@
       if (!ROOM.enabled) return;
       syncScores();
       if (state === 'done' && !keepGiver) giverIdx = (giverIdx + 1) % ROOM.count;
+      // the player after the giver referees, so everyone referees the round before
+      // they describe — no random streaks, and both jobs come round equally
+      refIdx = forbiddenOn ? (giverIdx + 1) % ROOM.count : -1;
       let avail = DECK.map((_, i) => i).filter(i => !used.includes(i));
       if (!avail.length) { used = []; avail = DECK.map((_, i) => i); }
       const pick = avail[Math.floor(Math.random() * avail.length)];
@@ -681,9 +696,11 @@
 
     function payloadFor(i) {
       const isGiver = i === giverIdx;
+      const isRef = i === refIdx;
       const base = {
         game: 'taboo', round, voteId: roundId, state,
-        isGiver, giverName: ROOM.name(giverIdx),
+        isGiver, isRef, giverName: ROOM.name(giverIdx),
+        refName: refIdx >= 0 ? ROOM.name(refIdx) : null,
         score: scores[i] || 0,
         forbidden: null, target: null, emoji: null,
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
@@ -694,7 +711,9 @@
       const done = state === 'done';
       return Object.assign(base, {
         forbiddenOn,
-        forbidden: forbiddenOn ? card.forbidden : null,
+        // the banned list is the whole answer in four words, so it goes only to the two
+        // people who need it: the giver and the referee (and everyone once it's over)
+        forbidden: forbiddenOn && (isGiver || isRef || done) ? card.forbidden : null,
         // the word only ever reaches the clue giver, until the round is over
         target: (isGiver || done) ? card.word : null,
         emoji: (isGiver || done) ? card.emoji : null,
@@ -755,7 +774,9 @@
           el.innerHTML = `🙋 <span class="sl-who" style="color:inherit">${ROOM.name(queue[0] - 1)}</span> buzzed in — waiting for ${ROOM.name(giverIdx)} to judge${rest}`;
         } else {
           el.classList.add('live');
-          el.innerHTML = `🎤 <span class="sl-who">${ROOM.name(giverIdx)}</span> is describing — everyone else, buzz in when you know it!`;
+          const ref = refIdx >= 0
+            ? `<span class="sl-sub">👀 ${ROOM.name(refIdx)} is refereeing this round — they hold the banned words</span>` : '';
+          el.innerHTML = `🎤 <span class="sl-who">${ROOM.name(giverIdx)}</span> is describing — buzz in when you know it!${ref}`;
         }
         return;
       }
@@ -783,11 +804,13 @@
         const giver = state !== 'idle' && i === giverIdx;
         const buzzed = state === 'playing' && queue[0] === num;
         const called = state === 'playing' && tabooCalls.includes(num);
+        const ref = state !== 'idle' && i === refIdx;
         const role = called ? '🚨 Called Taboo!'
                    : giver ? '🎤 Describing'
+                   : ref ? '👀 Referee'
                    : buzzed ? '🙋 Buzzed in'
                    : state === 'playing' && queue.includes(num) ? '⏳ In queue' : '';
-        html += `<div class="score-card${giver ? ' is-giver' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}">
+        html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${ROOM.name(i)}</span>
             <span class="sc-pts">${scores[i] || 0}</span>

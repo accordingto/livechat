@@ -874,17 +874,26 @@
           </button>
           <span class="pick-sub">${data.buzzerName ? esc(data.buzzerName) + ' is guessing — buzz to get in line.' : 'Know it? Hit the buzzer, then say it out loud.'}</span>`;
       }
-      const tabooBtn = data.forbiddenOn === false ? ''
+      // only the referee holds the banned list, so only the referee can call Taboo!
+      const tabooBtn = !data.isRef || data.forbiddenOn === false ? ''
         : data.iCalledTaboo
         ? '<div class="taboo-called mine">🚨 You called Taboo!<span class="tc-sub">Waiting for the host\'s call…</span></div>'
         : `<button class="taboo-foul" onclick="tabooCall(this)"${data.tabooBy ? ' disabled' : ''}>🚨 Taboo! They said a forbidden word</button>`;
+      if (data.isRef) {
+        return shell(`
+          ${chip('👀 You\'re the referee', '#f59e0b')}
+          ${clock}
+          ${bannedBlock}
+          <span class="pick-sub">Listen for a banned word — you sit this round out, so no buzzer for you.</span>
+          ${data.iCalledTaboo ? '' : callBanner}
+          ${tabooBtn}`);
+      }
       return shell(`
         ${chip(`🕵️ ${esc(data.giverName || 'Someone')} is describing`, '#6366f1')}
         ${clock}
         ${bannedBlock}
-        ${data.iCalledTaboo ? '' : callBanner}
-        ${buzzArea}
-        ${tabooBtn}`);
+        ${callBanner}
+        ${buzzArea}`);
     }
 
     /* one shared link per player works for every game — this page just renders
