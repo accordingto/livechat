@@ -90,7 +90,7 @@
     .control-bar.critical{ border-color: #ef4444; }
     .cb-sect {
       display: flex; flex-direction: column; justify-content: center; gap: 10px;
-      padding: 14px 20px; position: relative;
+      padding: 14px 16px; position: relative;
     }
     .cb-dial {
       display: flex; align-items: center; justify-content: center;
@@ -116,9 +116,10 @@
     }
     .cb-sect.timer .cb-head { color: #6366f1; }
     .cb-sect.rules .cb-head { color: #ef4444; }
-    .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-    /* narrow: the clock goes on top, then its controls, then the rules */
-    @media (max-width: 860px) {
+    .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    /* narrow: the clock goes on top, then its controls, then the rules. The cut-off is
+       just below iPad landscape, which is the last width where one row still fits. */
+    @media (max-width: 1023px) {
       .control-bar { grid-template-columns: 1fr; }
       .cb-dial { order: -1; padding-top: 16px; }
       .cb-sect.rules {
@@ -141,21 +142,40 @@
     .control-bar.critical .timer-dial { border-color: #ef4444; color: #ef4444; animation: dialPulse .8s ease-in-out infinite; }
     @keyframes dialPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 
-    /* type any number, or pick 30 / 60 / 90 from the list — one control, both ways */
-    .secs-field { position: relative; display: flex; align-items: center; }
-    #timer-secs {
-      width: 104px; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
-      color: #eee; font-family: inherit; font-size: 1rem; font-weight: 800;
-      padding: 11px 40px 11px 14px; transition: border-color .2s;
+    /* − / + step the length by 30 seconds, so the usual 30 / 60 / 90 / 120 are one or
+       two taps away; the field itself still takes any number typed in.
+       (A <datalist> was tried first — Safari filters its suggestions by what is already
+       in the field, so an iPad with "60" typed only ever offered "60".) */
+    .secs-field {
+      display: flex; align-items: stretch;
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      overflow: hidden; transition: border-color .2s;
     }
-    #timer-secs:focus { outline: none; border-color: #6366f1; }
-    .secs-field::after {
-      content: 'sec'; position: absolute; right: 12px;
-      font-size: .68rem; font-weight: 900; letter-spacing: 1px; color: #444; pointer-events: none;
+    .secs-field:focus-within { border-color: #6366f1; }
+    .secs-step {
+      width: 34px; flex-shrink: 0;
+      background: transparent; border: none; color: #888;
+      font-family: inherit; font-size: 1.2rem; font-weight: 900; line-height: 1;
+      cursor: pointer; transition: background .2s, color .2s;
+    }
+    .secs-step:hover:not(:disabled) { background: rgba(99,102,241,.14); color: #a5b4fc; }
+    .secs-step:active:not(:disabled) { background: rgba(99,102,241,.24); }
+    .secs-step:disabled { opacity: .3; cursor: not-allowed; }
+    #timer-secs {
+      width: 62px; background: transparent; border: none;
+      border-left: 2px solid #1e1e42; border-right: 2px solid #1e1e42;
+      color: #eee; font-family: inherit; font-size: 1rem; font-weight: 800; text-align: center;
+      padding: 11px 4px;
+    }
+    #timer-secs:focus { outline: none; }
+    .secs-unit {
+      display: flex; align-items: center; padding: 0 8px 0 6px;
+      font-size: .68rem; font-weight: 900; letter-spacing: 1px; color: #444;
+      border-right: 2px solid #1e1e42;
     }
     .timer-btn {
       background: transparent; border: 2px solid #6366f1; color: #6366f1; border-radius: 12px;
-      padding: 11px 18px; font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      padding: 11px 14px; font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, transform .1s;
     }
     .timer-btn:hover:not(:disabled) { background: rgba(99,102,241,.1); }
@@ -297,12 +317,10 @@
       <span class="cb-head">⏱️ Round timer</span>
       <div class="cb-body">
         <span class="secs-field">
-          <input id="timer-secs" list="secs-options" inputmode="numeric" autocomplete="off" value="60" aria-label="Seconds">
-          <datalist id="secs-options">
-            <option value="30"></option>
-            <option value="60"></option>
-            <option value="90"></option>
-          </datalist>
+          <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" aria-label="30 seconds less">−</button>
+          <input id="timer-secs" inputmode="numeric" autocomplete="off" value="60" aria-label="Seconds">
+          <span class="secs-unit">sec</span>
+          <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" aria-label="30 seconds more">+</button>
         </span>
         <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
         <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
@@ -496,6 +514,16 @@
     document.getElementById('timer-secs').oninput  = e => setSeconds(e.target.value, false);
     document.getElementById('timer-secs').onchange = e => setSeconds(e.target.value, true);
 
+    /* one tap = 30 seconds, landing on 30 / 60 / 90 / 120 … even from an odd number */
+    const STEP = 30, STEP_MIN = 30, STEP_MAX = 900;
+    function stepSeconds(dir) {
+      const now = timer.total;
+      const next = dir > 0
+        ? Math.floor(now / STEP) * STEP + STEP
+        : Math.ceil(now / STEP) * STEP - STEP;
+      setSeconds(Math.max(STEP_MIN, Math.min(STEP_MAX, next)), true);
+    }
+
     function toggleTimer() {
       if (timer.running) { stopTicking(); timer.running = false; }
       else {
@@ -560,6 +588,8 @@
       row.classList.toggle('low', armed && frac <= .5 && frac > .25);
       row.classList.toggle('critical', armed && frac <= .25);
       document.getElementById('timer-start').textContent = timer.running ? '⏸️ Pause' : '▶️ Start';
+      document.getElementById('secs-minus').disabled = timer.total <= STEP_MIN;
+      document.getElementById('secs-plus').disabled = timer.total >= STEP_MAX;
     }
 
     /* ── Round flow ── */
