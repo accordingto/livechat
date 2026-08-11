@@ -75,11 +75,13 @@
 
     /* ── One control bar, two clearly separate jobs: the clock on the left,
        the round's rules on the right, split by a divider and their own colours ── */
+    /* three columns, so the countdown itself lands dead centre of the screen no matter
+       how wide the controls on either side are */
     .control-bar {
       width: 100%; max-width: 1100px;
       background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
       margin-bottom: 16px; overflow: hidden;
-      display: flex; flex-wrap: wrap; align-items: stretch;
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch;
       animation: fadeUp .5s .18s ease both;
       transition: border-color .3s;
     }
@@ -87,16 +89,20 @@
     .control-bar.low     { border-color: #f59e0b; }
     .control-bar.critical{ border-color: #ef4444; }
     .cb-sect {
-      display: flex; flex-direction: column; gap: 10px;
+      display: flex; flex-direction: column; justify-content: center; gap: 10px;
       padding: 14px 20px; position: relative;
     }
-    .cb-sect.timer { flex: 1 1 420px; }
+    .cb-dial {
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px 10px;
+    }
     .cb-sect.rules {
-      flex: 0 1 300px; justify-content: center; align-items: center;
+      align-items: flex-end;
       background: rgba(239,68,68,.045);
       border-left: 2px solid #1e1e42;
     }
-    .cb-sect.rules .cb-head { align-self: flex-start; }
+    .cb-sect.rules .cb-head { align-self: flex-end; }
+    .cb-sect.rules::before { left: auto; right: 0; }
     /* the accent strip is what tells the two halves apart at a glance */
     .cb-sect::before {
       content: ''; position: absolute; top: 14px; bottom: 14px; left: 0;
@@ -111,15 +117,23 @@
     .cb-sect.timer .cb-head { color: #6366f1; }
     .cb-sect.rules .cb-head { color: #ef4444; }
     .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-    @media (max-width: 720px) {
-      .cb-sect.rules { border-left: none; border-top: 2px solid #1e1e42; flex: 1 1 100%; }
+    /* narrow: the clock goes on top, then its controls, then the rules */
+    @media (max-width: 860px) {
+      .control-bar { grid-template-columns: 1fr; }
+      .cb-dial { order: -1; padding-top: 16px; }
+      .cb-sect.rules {
+        border-left: none; border-top: 2px solid #1e1e42;
+        align-items: center;
+      }
+      .cb-sect.rules .cb-head { align-self: center; }
+      .cb-sect.rules::before { left: 0; right: auto; }
     }
 
     .timer-dial {
-      width: 74px; height: 74px; border-radius: 50%; flex-shrink: 0;
+      width: 108px; height: 108px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      border: 4px solid #2a2a52; color: #555;
-      font-size: 1.7rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      border: 5px solid #2a2a52; color: #555;
+      font-size: 2.6rem; font-weight: 900; font-variant-numeric: tabular-nums;
       transition: border-color .3s, color .3s;
     }
     .control-bar.running .timer-dial { border-color: #6366f1; color: #a5b4fc; }
@@ -282,7 +296,6 @@
     <section class="cb-sect timer">
       <span class="cb-head">⏱️ Round timer</span>
       <div class="cb-body">
-        <div class="timer-dial" id="timer-dial">60</div>
         <span class="secs-field">
           <input id="timer-secs" list="secs-options" inputmode="numeric" autocomplete="off" value="60" aria-label="Seconds">
           <datalist id="secs-options">
@@ -295,6 +308,7 @@
         <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
       </div>
     </section>
+    <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
     <section class="cb-sect rules">
       <span class="cb-head">🚫 Round rules</span>
       <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
