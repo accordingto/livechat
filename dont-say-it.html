@@ -352,7 +352,7 @@
 
   <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
   <div class="call-row hidden" id="call-row">
-    <button class="call-btn yes" onclick="ruleTaboo(true)">🚨 Yes — Taboo! End the turn</button>
+    <button class="call-btn yes" onclick="ruleTaboo(true)">🚨 Yes — Taboo! +1 to the referee</button>
     <button class="call-btn no" onclick="ruleTaboo(false)">👌 No — keep playing</button>
   </div>
   <div class="scoreboard" id="scoreboard"></div>
@@ -655,6 +655,12 @@
     }
 
     function endRound(res) {
+      // an upheld Taboo! is the referee's payoff — it is the only way they score
+      if (res && res.type === 'foul' && res.who) {
+        scores[res.who - 1] = (scores[res.who - 1] || 0) + 1;
+        popIdx = [res.who - 1];
+        setTimeout(() => { popIdx = []; renderScores(); }, 600);
+      }
       result = res;
       state = 'done';
       stopTicking();
@@ -726,7 +732,7 @@
         result: done && result ? {
           type: result.type,
           who: ROOM.name(result.who - 1),
-          youWon: result.type === 'got' && result.who === i + 1,
+          youWon: (result.type === 'got' || result.type === 'foul') && result.who === i + 1,
         } : null,
       });
     }
@@ -786,7 +792,7 @@
         el.innerHTML = `✅ ${ROOM.name(result.who - 1)} got it — +1 for ${ROOM.name(result.who - 1)} and ${ROOM.name(giverIdx)}!${answer}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `🚨 ${ROOM.name(result.who - 1)} caught a forbidden word — no points this round.${answer}`;
+        el.innerHTML = `🚨 ${ROOM.name(result.who - 1)} caught a forbidden word — +1 for ${ROOM.name(result.who - 1)}!${answer}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
         el.innerHTML = `⏰ Time's up — no points this round.${answer}`;
