@@ -150,27 +150,35 @@
       display: flex; align-items: stretch;
       background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
       overflow: hidden; transition: border-color .2s;
+      min-height: 48px;
+      /* breathing room before Start, so a thumb aiming at + doesn't land on it */
+      margin-right: 14px;
     }
+    /* Start and Reset travel together, so a wrap gives two tidy rows instead of a
+       stray button on its own line */
+    .timer-actions { display: flex; align-items: center; gap: 8px; }
     .secs-field:focus-within { border-color: #6366f1; }
+    /* sized for a finger, not a mouse: 56 x 48 is past Apple's 44pt minimum */
     .secs-step {
-      width: 34px; flex-shrink: 0;
-      background: transparent; border: none; color: #888;
-      font-family: inherit; font-size: 1.2rem; font-weight: 900; line-height: 1;
+      width: 56px; min-height: 48px; flex-shrink: 0;
+      background: rgba(99,102,241,.08); border: none; color: #a5b4fc;
+      font-family: inherit; font-size: 1.5rem; font-weight: 900; line-height: 1;
       cursor: pointer; transition: background .2s, color .2s;
+      -webkit-tap-highlight-color: transparent;
     }
-    .secs-step:hover:not(:disabled) { background: rgba(99,102,241,.14); color: #a5b4fc; }
-    .secs-step:active:not(:disabled) { background: rgba(99,102,241,.24); }
-    .secs-step:disabled { opacity: .3; cursor: not-allowed; }
+    .secs-step:hover:not(:disabled) { background: rgba(99,102,241,.2); color: #c7d2fe; }
+    .secs-step:active:not(:disabled) { background: rgba(99,102,241,.34); }
+    .secs-step:disabled { opacity: .25; cursor: not-allowed; }
     #timer-secs {
-      width: 62px; background: transparent; border: none;
+      width: 58px; background: transparent; border: none;
       border-left: 2px solid #1e1e42; border-right: 2px solid #1e1e42;
       color: #eee; font-family: inherit; font-size: 1rem; font-weight: 800; text-align: center;
-      padding: 11px 4px;
+      padding: 13px 4px;
     }
     #timer-secs:focus { outline: none; }
     .secs-unit {
-      display: flex; align-items: center; padding: 0 8px 0 6px;
-      font-size: .68rem; font-weight: 900; letter-spacing: 1px; color: #444;
+      display: flex; align-items: center; padding: 0 7px 0 5px;
+      font-size: .66rem; font-weight: 900; letter-spacing: .5px; color: #444;
       border-right: 2px solid #1e1e42;
     }
     .timer-btn {
@@ -322,8 +330,10 @@
           <span class="secs-unit">sec</span>
           <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" aria-label="30 seconds more">+</button>
         </span>
-        <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
-        <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
+        <span class="timer-actions">
+          <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
+          <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
+        </span>
       </div>
     </section>
     <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
