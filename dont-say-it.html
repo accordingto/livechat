@@ -73,48 +73,75 @@
     .status-line.foul  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
     .status-line .sl-sub { display: block; margin-top: 6px; font-size: .82rem; font-weight: 700; color: #666; }
 
-    /* ── Countdown: the host sets the length and starts it; every card mirrors it ── */
-    .timer-row {
+    /* ── One control bar, two clearly separate jobs: the clock on the left,
+       the round's rules on the right, split by a divider and their own colours ── */
+    .control-bar {
       width: 100%; max-width: 1100px;
       background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
-      padding: 16px 20px; margin-bottom: 16px;
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px;
+      margin-bottom: 16px; overflow: hidden;
+      display: flex; flex-wrap: wrap; align-items: stretch;
       animation: fadeUp .5s .18s ease both;
       transition: border-color .3s;
     }
-    .timer-row.running { border-color: #6366f1; }
-    .timer-row.low     { border-color: #f59e0b; }
-    .timer-row.critical{ border-color: #ef4444; }
+    .control-bar.running { border-color: #6366f1; }
+    .control-bar.low     { border-color: #f59e0b; }
+    .control-bar.critical{ border-color: #ef4444; }
+    .cb-sect {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 14px 20px; position: relative;
+    }
+    .cb-sect.timer { flex: 1 1 420px; }
+    .cb-sect.rules {
+      flex: 0 1 300px; justify-content: center; align-items: center;
+      background: rgba(239,68,68,.045);
+      border-left: 2px solid #1e1e42;
+    }
+    .cb-sect.rules .cb-head { align-self: flex-start; }
+    /* the accent strip is what tells the two halves apart at a glance */
+    .cb-sect::before {
+      content: ''; position: absolute; top: 14px; bottom: 14px; left: 0;
+      width: 3px; border-radius: 3px;
+    }
+    .cb-sect.timer::before { background: #6366f1; }
+    .cb-sect.rules::before { background: #ef4444; }
+    .cb-head {
+      font-size: .66rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cb-sect.timer .cb-head { color: #6366f1; }
+    .cb-sect.rules .cb-head { color: #ef4444; }
+    .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    @media (max-width: 720px) {
+      .cb-sect.rules { border-left: none; border-top: 2px solid #1e1e42; flex: 1 1 100%; }
+    }
+
     .timer-dial {
-      width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0;
+      width: 74px; height: 74px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       border: 4px solid #2a2a52; color: #555;
-      font-size: 2.1rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      font-size: 1.7rem; font-weight: 900; font-variant-numeric: tabular-nums;
       transition: border-color .3s, color .3s;
     }
-    .timer-row.running .timer-dial { border-color: #6366f1; color: #a5b4fc; }
-    .timer-row.low      .timer-dial { border-color: #f59e0b; color: #f59e0b; }
-    .timer-row.critical .timer-dial { border-color: #ef4444; color: #ef4444; animation: dialPulse .8s ease-in-out infinite; }
+    .control-bar.running .timer-dial { border-color: #6366f1; color: #a5b4fc; }
+    .control-bar.low      .timer-dial { border-color: #f59e0b; color: #f59e0b; }
+    .control-bar.critical .timer-dial { border-color: #ef4444; color: #ef4444; animation: dialPulse .8s ease-in-out infinite; }
     @keyframes dialPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
-    .timer-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .timer-label {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #555;
-    }
+
+    /* type any number, or pick 30 / 60 / 90 from the list — one control, both ways */
+    .secs-field { position: relative; display: flex; align-items: center; }
     #timer-secs {
-      width: 82px; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
-      color: #eee; font-family: inherit; font-size: 1rem; font-weight: 800; text-align: center;
-      padding: 10px 8px; transition: border-color .2s;
+      width: 104px; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #eee; font-family: inherit; font-size: 1rem; font-weight: 800;
+      padding: 11px 40px 11px 14px; transition: border-color .2s;
     }
     #timer-secs:focus { outline: none; border-color: #6366f1; }
-    .timer-preset {
-      background: transparent; border: 2px solid #1e1e42; color: #666; border-radius: 10px;
-      padding: 8px 12px; font-size: .82rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s;
+    .secs-field::after {
+      content: 'sec'; position: absolute; right: 12px;
+      font-size: .68rem; font-weight: 900; letter-spacing: 1px; color: #444; pointer-events: none;
     }
-    .timer-preset:hover, .timer-preset.active { border-color: #6366f1; color: #6366f1; }
     .timer-btn {
       background: transparent; border: 2px solid #6366f1; color: #6366f1; border-radius: 12px;
-      padding: 10px 18px; font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      padding: 11px 18px; font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, transform .1s;
     }
     .timer-btn:hover:not(:disabled) { background: rgba(99,102,241,.1); }
@@ -123,18 +150,12 @@
     .timer-btn.ghost { border-color: #1e1e42; color: #666; }
     .timer-btn.ghost:hover { border-color: #6366f1; color: #6366f1; background: transparent; }
 
-    /* ── Options ── */
-    .option-row {
-      width: 100%; max-width: 1100px;
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;
-      margin-bottom: 16px;
-      animation: fadeUp .5s .2s ease both;
-    }
     .toggle-btn {
-      display: flex; align-items: center; gap: 12px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 999px;
-      padding: 9px 18px 9px 14px;
-      font-size: .88rem; font-weight: 800; font-family: inherit; color: #666; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 999px;
+      padding: 9px 16px 9px 11px;
+      font-size: .8rem; font-weight: 900; letter-spacing: 1px; font-family: inherit;
+      color: #555; cursor: pointer; white-space: nowrap;
       transition: border-color .2s, color .2s;
     }
     .toggle-btn.on { border-color: #ef4444; color: #fca5a5; }
@@ -149,8 +170,6 @@
     }
     .toggle-btn.on .toggle-switch { background: rgba(239,68,68,.35); }
     .toggle-btn.on .toggle-switch::after { transform: translateX(18px); background: #ef4444; }
-    .toggle-state { font-size: .72rem; font-weight: 900; letter-spacing: 1.5px; color: #444; }
-    .toggle-btn.on .toggle-state { color: #ef4444; }
 
     /* ── Taboo! ruling buttons, only while a call is open ── */
     .call-row {
@@ -258,27 +277,31 @@
 
   <div class="status-line" id="status-line"></div>
 
-  <!-- the clock: the host picks any length and starts it, every card counts along -->
-  <div class="timer-row" id="timer-row">
-    <div class="timer-dial" id="timer-dial">60</div>
-    <div class="timer-controls">
-      <span class="timer-label">Seconds</span>
-      <input type="number" id="timer-secs" min="5" max="900" step="5" value="60">
-      <button class="timer-preset" data-secs="30" onclick="setSeconds(30)">30</button>
-      <button class="timer-preset" data-secs="60" onclick="setSeconds(60)">60</button>
-      <button class="timer-preset" data-secs="90" onclick="setSeconds(90)">90</button>
-      <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
-      <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
-    </div>
-  </div>
-
-  <!-- turn the banned words off for an easier, faster round -->
-  <div class="option-row">
-    <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
-      <span class="toggle-switch"></span>
-      🚫 Forbidden words
-      <span class="toggle-state" id="forbidden-state">OFF</span>
-    </button>
+  <!-- left: the clock every card mirrors. right: the rule switch for the round -->
+  <div class="control-bar" id="control-bar">
+    <section class="cb-sect timer">
+      <span class="cb-head">⏱️ Round timer</span>
+      <div class="cb-body">
+        <div class="timer-dial" id="timer-dial">60</div>
+        <span class="secs-field">
+          <input id="timer-secs" list="secs-options" inputmode="numeric" autocomplete="off" value="60" aria-label="Seconds">
+          <datalist id="secs-options">
+            <option value="30"></option>
+            <option value="60"></option>
+            <option value="90"></option>
+          </datalist>
+        </span>
+        <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
+        <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
+      </div>
+    </section>
+    <section class="cb-sect rules">
+      <span class="cb-head">🚫 Round rules</span>
+      <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
+        <span class="toggle-switch"></span>
+        <span id="forbidden-state">Forbidden words ON</span>
+      </button>
+    </section>
   </div>
 
   <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
@@ -352,7 +375,8 @@
     function renderForbiddenToggle() {
       const btn = document.getElementById('forbidden-toggle');
       btn.classList.toggle('on', forbiddenOn);
-      document.getElementById('forbidden-state').textContent = forbiddenOn ? 'ON' : 'OFF';
+      document.getElementById('forbidden-state').textContent =
+        forbiddenOn ? 'Forbidden words ON' : 'Forbidden words OFF';
     }
 
     /* The clock runs here and is mirrored to the cards. Only state changes are
@@ -441,16 +465,22 @@
     });
 
     /* ── The countdown ── */
-    function setSeconds(n) {
+    /* `snap` is off while the host is still typing, so "30" isn't clamped to 5 after
+       the first keystroke; it kicks in on blur or when a value is picked from the list */
+    function setSeconds(raw, snap) {
+      const n = Number(raw);
+      const field = document.getElementById('timer-secs');
+      if (!snap && (!n || n < 5 || n > 900)) return;
       const secs = Math.max(5, Math.min(900, Math.round(n) || 60));
-      document.getElementById('timer-secs').value = secs;
+      if (snap) field.value = secs;
       timer.total = secs;
       if (!timer.running) timer.left = secs;
       timer.seq++;
       pushTimer();
       renderTimer();
     }
-    document.getElementById('timer-secs').oninput = e => setSeconds(Number(e.target.value));
+    document.getElementById('timer-secs').oninput  = e => setSeconds(e.target.value, false);
+    document.getElementById('timer-secs').onchange = e => setSeconds(e.target.value, true);
 
     function toggleTimer() {
       if (timer.running) { stopTicking(); timer.running = false; }
@@ -507,9 +537,8 @@
     }
 
     function renderTimer() {
-      const row = document.getElementById('timer-row');
-      const dial = document.getElementById('timer-dial');
-      dial.textContent = timer.left;
+      const row = document.getElementById('control-bar');
+      document.getElementById('timer-dial').textContent = timer.left;
       const frac = timer.total ? timer.left / timer.total : 1;
       // stays coloured while paused and after it hits zero — only a fresh clock is grey
       const armed = timer.running || timer.left < timer.total;
@@ -517,9 +546,6 @@
       row.classList.toggle('low', armed && frac <= .5 && frac > .25);
       row.classList.toggle('critical', armed && frac <= .25);
       document.getElementById('timer-start').textContent = timer.running ? '⏸️ Pause' : '▶️ Start';
-      document.querySelectorAll('.timer-preset').forEach(b => {
-        b.classList.toggle('active', Number(b.dataset.secs) === timer.total);
-      });
     }
 
     /* ── Round flow ── */
