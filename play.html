@@ -786,6 +786,8 @@
     }
 
     function tabooCardHTML(data) {
+      // the host can switch the banned words off entirely — then no card shows them
+      // and there is nothing to call Taboo! on
       const banned = (data.forbidden || []).map(w => `<span class="tb-word">${esc(w)}</span>`).join('');
       const bannedBlock = banned ? `
           <div class="taboo-banned">
@@ -849,6 +851,7 @@
             <span class="tt-word">${esc(data.target || '')}</span>
           </div>
           ${bannedBlock}
+          ${data.forbiddenOn === false ? '<span class="pick-sub">No banned words this round — describe it any way you like!</span>' : ''}
           ${callBanner}
           ${verdict}`);
       }
@@ -871,7 +874,8 @@
           </button>
           <span class="pick-sub">${data.buzzerName ? esc(data.buzzerName) + ' is guessing — buzz to get in line.' : 'Know it? Hit the buzzer, then say it out loud.'}</span>`;
       }
-      const tabooBtn = data.iCalledTaboo
+      const tabooBtn = data.forbiddenOn === false ? ''
+        : data.iCalledTaboo
         ? '<div class="taboo-called mine">🚨 You called Taboo!<span class="tc-sub">Waiting for the host\'s call…</span></div>'
         : `<button class="taboo-foul" onclick="tabooCall(this)"${data.tabooBy ? ' disabled' : ''}>🚨 Taboo! They said a forbidden word</button>`;
       return shell(`
