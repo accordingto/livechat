@@ -985,8 +985,8 @@
         el.innerHTML = `
           <div class="secret-card theme-sophies">
             ${nameBanner(data)}
-            <span class="pick-chip" style="color:#a78bfa;border-color:#a78bfa55;background:rgba(167,139,250,.1)">🎯 The Situation</span>
-            <span class="pick-text">${esc(data.situation || '')}</span>
+            <!-- the scenario stays on the host's shared screen; printing it here again
+                 only sends everyone's eyes down to their phone -->
             <div class="pick-row">
               ${pickButton('a', 'A', esc(data.a || ''), picked, '#22c55e')}
               ${pickButton('b', 'B', esc(data.b || ''), picked, '#f59e0b')}
