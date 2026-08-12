@@ -671,6 +671,22 @@
     }
     .prompt-item .pi-text { font-size: .86rem; color: #aaa; line-height: 1.55; }
     .prompt-item .pi-text em { color: #666; font-style: normal; }
+    /* each deck is written as five groups of ten — browsing it grouped the same way
+       is how the host finds the kind of prompt they want */
+    .prompt-group-hdr {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 10px;
+      margin: 14px 0 2px;
+      font-size: .8rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #22c55e;
+    }
+    .prompt-group-hdr:first-child { margin-top: 0; }
+    .prompt-group-hdr::after {
+      content: ''; flex: 1; height: 1px; background: #1e1e42;
+    }
+    .prompt-group-hdr .pg-count { color: #444; letter-spacing: 1px; }
+    .truth-list .prompt-group-hdr { color: #eab308; }
+    .truth-list .prompt-item .pi-cat { color: #eab308; }
 
     @media (max-width: 640px) {
       .control-bar { flex-wrap: wrap; justify-content: center; text-align: center; }
@@ -1095,21 +1111,26 @@
 
     /* ── Browse all prompts (read-only reference list) ── */
     function buildPromptList() {
+      // grouped by the deck's five types, in the order they appear in the data
+      const groupedHTML = deck => {
+        const types = [...new Set(deck.map(p => p.type).filter(Boolean))];
+        const groups = types.length ? types.map(t => [t, deck.filter(p => p.type === t)]) : [['', deck]];
+        return groups.map(([type, items]) => `
+          ${type ? `<div class="prompt-group-hdr">${type}<span class="pg-count">${items.length}</span></div>` : ''}
+          ${items.map(p => `
+            <div class="prompt-item">
+              <div class="pi-cat">${p.cat}</div>
+              <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
+            </div>`).join('')}`).join('');
+      };
+
       document.getElementById('prompt-browser-hdr').textContent = `📋 All Dares (${PROMPTS.length}) — browse the full deck`;
-      const list = document.getElementById('prompt-list');
-      list.innerHTML = PROMPTS.map(p => `
-        <div class="prompt-item">
-          <div class="pi-cat">${p.cat}</div>
-          <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
-        </div>`).join('');
+      document.getElementById('prompt-list').innerHTML = groupedHTML(PROMPTS);
 
       document.getElementById('truth-prompt-browser-hdr').textContent = `😇 All Truths (${TRUTHS.length}) — drawn whenever a player picks Truth`;
       const truthList = document.getElementById('truth-prompt-list');
-      truthList.innerHTML = TRUTHS.map(p => `
-        <div class="prompt-item">
-          <div class="pi-cat">${p.cat}</div>
-          <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
-        </div>`).join('');
+      truthList.classList.add('truth-list');
+      truthList.innerHTML = groupedHTML(TRUTHS);
     }
     buildPromptList();
 
