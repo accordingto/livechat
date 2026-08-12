@@ -109,13 +109,12 @@
     }
     .link-col {
       flex: 1; min-width: 160px;
-      background: #13132b; border: 2px solid var(--pc, #1e1e42); border-radius: 14px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
       padding: 14px;
       display: flex; flex-direction: column; align-items: center; gap: 10px;
       animation: fadeUp .3s ease both;
     }
     .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
-    .link-col .token { font-size: 1.5rem; line-height: 1; }
     .name-input {
       width: 100%;
       background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
@@ -540,17 +539,6 @@
     }
 
     /* renders the persistent per-player link cards — safe to call any time */
-    /* the same six colours, in the same order, as the pieces on the Dare Conquest board —
-       one player keeps one colour across all ten games */
-    const LINK_COLORS = [
-      { hex: '#ef4444', token: '🔴' },
-      { hex: '#4f9eff', token: '🔵' },
-      { hex: '#22c55e', token: '🟢' },
-      { hex: '#f59e0b', token: '🟡' },
-      { hex: '#a78bfa', token: '🟣' },
-      { hex: '#06b6d4', token: '🔷' },
-    ];
-
     function renderPlayerLinks() {
       ensureTokens(playerCount);
       const wrap = document.getElementById('player-links');
@@ -558,15 +546,6 @@
       for (let i = 0; i < playerCount; i++) {
         const col = document.createElement('div');
         col.className = 'link-col';
-
-        const lc = LINK_COLORS[i % LINK_COLORS.length];
-        // a custom property, not an inline colour: a future state class still needs to win
-        col.style.setProperty('--pc', lc.hex);
-        const token = document.createElement('span');
-        token.className = 'token';
-        token.textContent = lc.token;
-        col.appendChild(token);
-
 
         const nameInput = document.createElement('input');
         nameInput.className = 'name-input';
