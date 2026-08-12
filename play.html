@@ -888,13 +888,15 @@
         ? '<div class="taboo-called mine">🚨 You called Taboo!<span class="tc-sub">Waiting for the host\'s call…</span></div>'
         : `<button class="taboo-foul" onclick="tabooCall(this)"${data.tabooBy ? ' disabled' : ''}>🚨 Taboo! They said a forbidden word</button>`;
       if (data.isRef) {
+        // the banned list and the button that acts on it belong next to each other —
+        // the standing reminder sits under both rather than splitting them apart
         return shell(`
           ${chip('👀 You\'re the referee', '#f59e0b')}
           ${clock}
           ${bannedBlock}
-          <span class="pick-sub">Listen for a banned word — you sit this round out, so no buzzer for you.</span>
           ${data.iCalledTaboo ? '' : callBanner}
-          ${tabooBtn}`);
+          ${tabooBtn}
+          <span class="pick-sub">Listen for a banned word — you sit this round out, so no buzzer for you.</span>`);
       }
       return shell(`
         ${chip(`🕵️ ${esc(data.giverName || 'Someone')} is describing`, '#6366f1')}
