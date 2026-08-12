@@ -40,6 +40,17 @@ const ROOM = (() => {
   }
   const on = () => !!db;
 
+  /* the same six colours, in the same order, as the pieces on the Dare Conquest board —
+     one player keeps one colour across all ten games */
+  const LINK_COLORS = [
+    { hex: '#ef4444', token: '🔴' },
+    { hex: '#4f9eff', token: '🔵' },
+    { hex: '#22c55e', token: '🟢' },
+    { hex: '#f59e0b', token: '🟡' },
+    { hex: '#a78bfa', token: '🟣' },
+    { hex: '#06b6d4', token: '🔷' },
+  ];
+
   /* ── Codes and tokens ── */
   function generateSessionCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous characters
@@ -186,11 +197,14 @@ const ROOM = (() => {
       .room-links { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
       .link-col {
         flex: 1; min-width: 160px;
-        background: #13132b; border: 2px solid #1e1e42; border-radius: 14px; padding: 14px;
+        background: #13132b; border: 2px solid var(--pc, #1e1e42); border-radius: 14px; padding: 14px;
         display: flex; flex-direction: column; align-items: center; gap: 10px;
         animation: fadeUp .3s ease both; transition: border-color .3s, box-shadow .3s;
       }
-      .link-col.is-marked { border-color: var(--room-accent); box-shadow: 0 0 20px color-mix(in srgb, var(--room-accent) 25%, transparent); }
+      .link-col .token { font-size: 1.5rem; line-height: 1; }
+      /* a player who has answered glows in their own colour rather than the game's accent,
+         so the column and the card in their hand still read as the same person */
+      .link-col.is-marked { box-shadow: 0 0 20px color-mix(in srgb, var(--pc, var(--room-accent)) 35%, transparent); }
       .name-input {
         width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
         color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
@@ -300,6 +314,13 @@ const ROOM = (() => {
       const info = decorate ? (decorate(i) || {}) : {};
       const col = document.createElement('div');
       col.className = 'link-col' + (info.marked ? ' is-marked' : '');
+      const lc = LINK_COLORS[i % LINK_COLORS.length];
+      col.style.setProperty('--pc', lc.hex);
+
+      const token = document.createElement('span');
+      token.className = 'token';
+      token.textContent = lc.token;
+      col.appendChild(token);
 
       const input = document.createElement('input');
       input.className = 'name-input';

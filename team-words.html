@@ -120,7 +120,7 @@
     }
     .link-col {
       flex: 1; min-width: 160px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      background: #13132b; border: 2px solid var(--pc, #1e1e42); border-radius: 14px;
       padding: 14px;
       display: flex; flex-direction: column; align-items: center; gap: 10px;
       animation: fadeUp .3s ease both;
@@ -129,6 +129,7 @@
     .link-col.team-a { border-color: #3b82f6; }
     .link-col.team-b { border-color: #f43f5e; }
     .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
+    .link-col .token { font-size: 1.5rem; line-height: 1; }
     .name-input {
       width: 100%;
       background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
@@ -490,6 +491,17 @@
     /* renders the persistent per-player link cards — safe to call any time.
        Team is never shown here before Reveal — this screen is shared, so showing it
        early would hand both teams' rosters to everyone before the round even starts. */
+    /* the same six colours, in the same order, as the pieces on the Dare Conquest board —
+       one player keeps one colour across all ten games */
+    const LINK_COLORS = [
+      { hex: '#ef4444', token: '🔴' },
+      { hex: '#4f9eff', token: '🔵' },
+      { hex: '#22c55e', token: '🟢' },
+      { hex: '#f59e0b', token: '🟡' },
+      { hex: '#a78bfa', token: '🟣' },
+      { hex: '#06b6d4', token: '🔷' },
+    ];
+
     function renderPlayerLinks() {
       ensureTokens(playerCount);
       const wrap = document.getElementById('player-links');
@@ -499,6 +511,15 @@
         const teamClass = revealed && p ? (p.team === 'A' ? ' team-a' : ' team-b') : '';
         const col = document.createElement('div');
         col.className = 'link-col' + teamClass;
+
+        const lc = LINK_COLORS[i % LINK_COLORS.length];
+        // a custom property, not an inline colour: .team-a / .team-b still needs to win
+        col.style.setProperty('--pc', lc.hex);
+        const token = document.createElement('span');
+        token.className = 'token';
+        token.textContent = lc.token;
+        col.appendChild(token);
+
 
         const nameInput = document.createElement('input');
         nameInput.className = 'name-input';
