@@ -463,8 +463,10 @@
         if (v.choice === 'right') awardPoint(queue[0]);
         else {
           rejected.push(queue.shift());
+          releaseTimer();   // no-op while someone else is still queued up
           pushState();
           renderAll();
+          renderTimer();
         }
         return;
       }
@@ -476,8 +478,10 @@
         ROOM.clearAnswer(num - 1);           // let them buzz again later
         if (!queue.includes(num)) {
           queue.push(num);
+          holdTimer();
           pushState();
           renderAll();
+          renderTimer();
         }
         return;
       }
@@ -491,8 +495,10 @@
         ROOM.clearAnswer(num - 1);
         if (!tabooCalls.includes(num)) {
           tabooCalls.push(num);
+          holdTimer();
           pushState();
           renderAll();
+          renderTimer();
         }
       }
     }
@@ -503,8 +509,10 @@
       if (!tabooCalls.length) return;
       if (upheld) { endRound({ type: 'foul', who: tabooCalls[0] }); return; }
       tabooCalls = [];
+      releaseTimer();   // waved off — the clock picks up where it stopped
       pushState();
       renderAll();
+      renderTimer();
     }
 
     ROOM.setDecorator(i => {
@@ -547,6 +555,7 @@
     }
 
     function toggleTimer() {
+      timer.autoHeld = false;  // the host pressing the button always wins
       if (timer.running) { stopTicking(); timer.running = false; }
       else {
         if (timer.left <= 0) timer.left = timer.total;
@@ -560,11 +569,36 @@
 
     function resetTimer() {
       stopTicking();
+      timer.autoHeld = false;
       timer.running = false;
       timer.left = timer.total;
       timer.seq++;
       pushTimer();
       renderTimer();
+    }
+
+    /* ── The clock stops itself while play is interrupted ──
+       A buzz freezes it so the guesser doesn't burn seconds waiting on the giver's
+       verdict, and a Taboo! call freezes it because play has stopped by definition.
+       `autoHeld` records that WE paused it, so a release only ever un-does our own
+       pause — a clock the host had already stopped stays stopped. Neither of these
+       pushes to Firebase on its own: every caller is already about to publish. */
+    function holdTimer() {
+      if (!timer.running) return;
+      stopTicking();
+      timer.running = false;
+      timer.autoHeld = true;
+      timer.seq++;
+    }
+
+    function releaseTimer() {
+      // anyone still waiting on a verdict keeps the clock frozen
+      if (!timer.autoHeld || queue.length || tabooCalls.length) return;
+      timer.autoHeld = false;
+      if (state !== 'playing' || timer.left <= 0) return;
+      timer.running = true;
+      startTicking();
+      timer.seq++;
     }
 
     function startTicking() {
@@ -639,6 +673,7 @@
       popIdx = [];
       // a fresh word gets a fresh clock, waiting on the host's Start
       stopTicking();
+      timer.autoHeld = false;
       timer.running = false;
       timer.left = timer.total;
       timer.seq++;
@@ -664,6 +699,7 @@
       result = res;
       state = 'done';
       stopTicking();
+      timer.autoHeld = false;
       timer.running = false;
       timer.seq++;
       publishRound();
@@ -767,17 +803,23 @@
         return;
       }
       if (state === 'playing') {
+        // say so when the clock stopped itself, or the host is left wondering why
+        const held = timer.autoHeld ? '⏸️ Clock on hold' : '';
+        const sub = parts => {
+          const line = parts.filter(Boolean).join(' · ');
+          return line ? `<span class="sl-sub">${line}</span>` : '';
+        };
         if (tabooCalls.length) {
           el.classList.add('foul');
           const who = tabooCalls.map(n => ROOM.name(n - 1)).join(', ');
           el.innerHTML = `🚨 ${who} called <b>Taboo!</b> on ${ROOM.name(giverIdx)}
-            <span class="sl-sub">Did ${ROOM.name(giverIdx)} really say a forbidden word? Your call.</span>`;
+            ${sub([`Did ${ROOM.name(giverIdx)} really say a forbidden word? Your call.`, held])}`;
           return;
         }
         if (queue.length) {
           el.classList.add('buzz');
-          const rest = queue.length > 1 ? `<span class="sl-sub">${queue.slice(1).map(n => ROOM.name(n - 1)).join(', ')} waiting to guess</span>` : '';
-          el.innerHTML = `🙋 <span class="sl-who" style="color:inherit">${ROOM.name(queue[0] - 1)}</span> buzzed in — waiting for ${ROOM.name(giverIdx)} to judge${rest}`;
+          const rest = queue.length > 1 ? `${queue.slice(1).map(n => ROOM.name(n - 1)).join(', ')} waiting to guess` : '';
+          el.innerHTML = `🙋 <span class="sl-who" style="color:inherit">${ROOM.name(queue[0] - 1)}</span> buzzed in — waiting for ${ROOM.name(giverIdx)} to judge${sub([rest, held])}`;
         } else {
           el.classList.add('live');
           const ref = refIdx >= 0
