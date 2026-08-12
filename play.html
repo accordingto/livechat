@@ -156,14 +156,6 @@
       font-size: .95rem; color: #7dd3c0; line-height: 1.5;
       background: #0d0d1a; border-radius: 12px; padding: 12px 16px; width: 100%;
     }
-    .rule-topic {
-      width: 100%; border-top: 1px solid #1e1e42; padding-top: 16px; margin-top: 4px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .rule-topic .rt-label {
-      font-size: .7rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #666;
-    }
-    .rule-topic .rt-text { font-size: 1.05rem; font-weight: 700; color: #ddd; line-height: 1.4; }
 
     /* 🗳️ Secret Rule guessing: one dropdown per other player, filled from the
        host's shortlist — a native <select> beats a wall of buttons on a phone */
@@ -946,8 +938,8 @@
             <span class="card-emoji">${r.emoji}</span>
             <span class="rule-text">${esc(r.rule)}</span>
             ${r.example ? `<span class="rule-example">${esc(r.example)}</span>` : ''}
-            ${data.topic ? `<div class="rule-topic"><span class="rt-label">💬 Talk about</span><span class="rt-text">${esc(data.topic)}</span></div>` : ''}
-            <span class="secret-hint">🤫 Follow your rule — don't let anyone guess it!</span>
+            <!-- the topic is on the host's shared screen, and "follow your rule" is the
+                 whole game — neither needs to take up room on a phone -->
             ${guessSectionHTML(data)}
           </div>`;
         return;
