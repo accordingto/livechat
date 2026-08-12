@@ -192,11 +192,13 @@
       border: 2px solid; border-radius: 999px; padding: 8px 22px 8px 16px;
       max-width: 100%; overflow-wrap: break-word;
     }
+    /* the dot sits on the filled chip now, so it reads as a hole punched in the colour
+       rather than a glowing bead floating on dark */
     .name-banner::before {
       content: ''; flex-shrink: 0;
       width: 11px; height: 11px; border-radius: 50%;
       background: currentColor;
-      box-shadow: 0 0 10px currentColor;
+      opacity: .55;
     }
 
     .team-tag {
@@ -393,24 +395,26 @@
 
     /* one vivid gradient per player number — the same player always sees the
        same color all night, so their card is instantly recognizable as theirs */
+    /* One palette for all ten games, in Dare Conquest's board order — player 1 is red,
+       2 blue, 3 green and so on — so a player keeps the same colour whichever game the
+       host switches to, and it always matches their piece on the Dare Conquest board. */
     const NAME_COLORS = [
-      ['#f59e0b', '#ef4444'], // amber -> red
-      ['#22c55e', '#14b8a6'], // green -> teal
-      ['#3b82f6', '#8b5cf6'], // blue -> violet
-      ['#ec4899', '#d946ef'], // pink -> fuchsia
-      ['#06b6d4', '#3b82f6'], // cyan -> blue
-      ['#a78bfa', '#6366f1'], // violet -> indigo
+      '#ef4444', // 1 red
+      '#4f9eff', // 2 blue
+      '#22c55e', // 3 green
+      '#f59e0b', // 4 yellow
+      '#a78bfa', // 5 purple
+      '#06b6d4', // 6 cyan
     ];
 
-    /* the name chip, identical in every game. Dare Conquest passes the player's board
-       colour so the card matches their piece; the other games fall back to their fixed
-       per-player colour. */
+    /* the name chip, identical in every game: the player's own colour fills it, with
+       dark text on top — every colour in the palette clears 5:1 against #0b0b18, which
+       a coloured-text-on-dark chip could not promise for all six. */
     function nameBanner(data) {
       const label = esc(data.name || urlName || `Player ${data.playerNum || '?'}`);
-      const hex = data.myHex || NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length][0];
-      const style = `color:${hex};border-color:${hex}88;`
-        + `background:linear-gradient(160deg,${hex}2e,${hex}0d),#0b0b18;`
-        + `box-shadow:0 0 22px ${hex}33, inset 0 1px 0 ${hex}33`;
+      const hex = data.myHex || NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length];
+      const style = `color:#0b0b18;border-color:${hex};background:${hex};`
+        + `box-shadow:0 0 26px ${hex}55`;
       return `<span class="name-banner" style="${style}">${label}</span>`;
     }
 
