@@ -74,7 +74,10 @@ https://console.firebase.google.com/project/livechat-92f66/usage
 
 ---
 
-## ③ `main` 的 branch protection（選配）
+## ③ `main` 的 branch protection（選配，private repo 可能無法使用）
+
+> repo 已改為 private。GitHub Free 方案的 branch protection / rulesets 只支援 public repo，
+> private repo 需要 Pro 以上方案，所以下面這段設定可能是鎖住的。這一項本來就不是必須。
 
 目前 `CLAUDE.md` 的規則是「直接 commit push 到 `main`」，push 完 Vercel 就自動部署到 production，
 中間沒有 review。方便，但也代表 AI 助理或任何自動化能直接改到線上版本。
@@ -88,14 +91,28 @@ https://github.com/accordingto/livechat/settings/branches
 
 ---
 
+## ④ GitHub 帳號本身
+
+repo 是 private，寫入權限只有帳號擁有者 `accordingto` 一個人，加上兩個授權的 GitHub App
+（Claude 有讀寫、Vercel 只需要讀取來部署）。陌生人沒有任何管道能改動或刪除內容。
+
+所以這裡唯一的風險是帳號被盜：
+
+- 確認 2FA 已開啟：https://github.com/settings/security
+- 定期看一眼授權清單，把不認識的移除：https://github.com/settings/installations
+
+另外，本機留一份 clone 當備援（`git clone` 出來就是完整歷史，repo 真的出事也推得回去）。
+
+---
+
 ## 不需要處理的事
 
 這些看起來可疑，但實際上沒問題，不用花時間：
 
-- **repo 是 public** — 裡面沒有任何真正的機密。
 - **`firebase-config.js` 裡的 `apiKey` 被 commit 進去** — Firebase 的 web apiKey 是**公開識別碼，不是密碼**。
-  它本來就會出現在瀏覽器的原始碼裡（https://livechat-two-alpha.vercel.app/firebase-config.js 任何人都打得開），
-  把 repo 設成 private 也擋不住。真正的防線是上面 ① 的 Rules。
+  repo 雖然是 private，但**部署出去的檔案仍然是公開的**：
+  https://livechat-two-alpha.vercel.app/firebase-config.js 任何人都打得開。
+  靜態網站沒辦法把它藏起來，也不需要藏。真正的防線是上面 ① 的 Rules。
 - **`roster` 路徑開放讀寫** — 只存玩家編號與名字，這些本來就顯示在主持人分享的螢幕上。
   它不含任何祕密字、投票或身分。
 - **玩家 token 出現在網址列** — 80 bits 加密級隨機值，不可猜測；這就是設計本身。
