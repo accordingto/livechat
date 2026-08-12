@@ -832,7 +832,9 @@
         : '';
 
       if (data.isGiver) {
-        // the giver holds the word, so the giver is the one who can judge a guess
+        // the giver holds the word, so the giver is the one who can judge a guess.
+        // this sits high on the card — right under the clock, above the word — because
+        // it is what the giver has to act on the instant it appears
         const verdict = data.buzzer ? `
             <div class="taboo-buzzed">🙋 ${esc(data.buzzerName || '')} buzzed in</div>
             <div class="pick-row">
@@ -843,10 +845,15 @@
                 <span class="pb-key">❌</span><span class="pb-label">Not it — keep going</span>
               </button>
             </div>`
+          : '';
+        // with nobody buzzed in there is nothing to act on, so the reminder stays at the foot
+        const idleHint = data.buzzer
+          ? ''
           : '<span class="pick-sub">Keep describing — the buttons appear when someone buzzes in.</span>';
         return shell(`
           ${chip("🎤 You're the clue giver", '#6366f1')}
           ${clock}
+          ${verdict}
           <div class="taboo-target">
             <span class="tt-emoji">${data.emoji || '🙊'}</span>
             <span class="tt-word">${esc(data.target || '')}</span>
@@ -854,7 +861,7 @@
           ${bannedBlock}
           ${data.forbiddenOn === false ? '<span class="pick-sub">No banned words this round — describe it any way you like!</span>' : ''}
           ${callBanner}
-          ${verdict}`);
+          ${idleHint}`);
       }
 
       const mine = data.buzzer === data.playerNum;
