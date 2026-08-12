@@ -36,45 +36,16 @@
     .btn-secondary:active { transform: scale(.98); }
 
     /* ── Control card: room code + player count + deal, grouped as one panel ── */
-    .control-card {
-      width: 100%; max-width: 1100px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
-      padding: 22px 26px;
-      display: flex; flex-direction: column; gap: 16px;
-      margin-bottom: 10px;
-      position: relative; z-index: 1;
-      animation: fadeUp .5s .2s ease both;
-    }
-    .control-row {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
-    }
-    .control-label {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; min-width: 58px;
-    }
-    .control-divider { height: 1px; background: #1e1e42; }
-    .control-note {
-      width: 100%; max-width: 1100px;
-      color: #444; font-size: .78rem; text-align: center; line-height: 1.6;
-      margin-bottom: 22px;
-      position: relative; z-index: 1;
-    }
-    .count-note {
-      width: 100%; max-width: 1100px;
-      color: #f59e0b; font-size: .78rem; text-align: center; line-height: 1.6;
-      margin: -6px 0 16px;
-      position: relative; z-index: 1;
-    }
 
-    .player-btns { display: flex; flex-wrap: wrap; gap: 8px; }
-    .player-btn {
-      min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px;
-      border: 2px solid #1e1e42; background: #13132b; color: #888;
-      font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s, background .2s, transform .1s;
-    }
-    .player-btn:hover  { border-color: #3b82f6; color: #3b82f6; }
-    .player-btn:active { transform: scale(.94); }
+
+
+
+
+
+
+
+
+
     .player-btn.active { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,.18); }
 
     #room-code-input {
@@ -118,66 +89,34 @@
       margin-bottom: 40px;
       position: relative; z-index: 1;
     }
-    .link-col {
-      flex: 1; min-width: 160px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
-      padding: 14px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      animation: fadeUp .3s ease both;
-      transition: border-color .3s;
-    }
+
     .link-col.team-a { border-color: #3b82f6; }
     .link-col.team-b { border-color: #f43f5e; }
-    .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
-    .name-input {
-      width: 100%;
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
-      color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
-      padding: 8px 10px;
-      transition: border-color .2s;
-    }
-    .name-input::placeholder { color: #555; }
-    .name-input:focus { outline: none; border-color: #3b82f6; }
-    .link-btn-row { display: flex; gap: 8px; width: 100%; }
-    .btn-copy {
-      flex: 1;
-      background: transparent; color: #3b82f6; border: 2px solid #3b82f6;
-      border-radius: 10px; padding: 9px 10px;
-      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: background .2s, transform .1s;
-    }
-    .btn-copy:hover  { background: rgba(59,130,246,.1); }
-    .btn-copy:active { transform: scale(.97); }
-    .btn-qr-toggle {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 10px; padding: 9px 12px;
-      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s;
-    }
-    .btn-qr-toggle:hover { border-color: #f43f5e; color: #f43f5e; }
-    .qr-inline {
-      background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
-      width: 100%; max-width: 160px;
-      animation: fadeUp .25s ease both;
-    }
-    .qr-inline svg { width: 100%; height: auto; display: block; }
+
+
+
+
+
+
+
+
+
+
+
+
 
     /* revealed word, shown under a player's link after "Reveal Teams" */
-    .link-word {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding-top: 10px; margin-top: 2px; border-top: 1px solid #1e1e42; width: 100%;
-      animation: fadeUp .3s ease both;
-    }
-    .link-word .lw-tag   { font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
-    .link-word .lw-tag.team-a { color: #3b82f6; }
-    .link-word .lw-tag.team-b { color: #f43f5e; }
-    .link-word .lw-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-    .link-word .lw-item {
+
+    .link-answer .lw-tag   { font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+    .link-answer .lw-tag.team-a { color: #3b82f6; }
+    .link-answer .lw-tag.team-b { color: #f43f5e; }
+    .link-answer .lw-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .link-answer .lw-item {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       background: #0d0d1a; border-radius: 10px; padding: 6px 10px;
     }
-    .link-word .lw-emoji { font-size: 1.4rem; line-height: 1; }
-    .link-word .lw-text  { font-size: .88rem; font-weight: 800; color: #34d399; }
+    .link-answer .lw-emoji { font-size: 1.4rem; line-height: 1; }
+    .link-answer .lw-text  { font-size: .88rem; font-weight: 800; color: #34d399; }
 
     /* Firebase-not-configured warning */
     .fb-warning {
@@ -191,8 +130,8 @@
     .round-badge span { color: #3b82f6; }
 
     @media (max-width: 520px) {
-      .link-col { min-width: 130px; }
-      .player-btn { height: 40px; }
+
+
     }
   </style>
 </head>
@@ -212,25 +151,7 @@
     ⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
   </div>
 
-  <div class="control-card">
-    <div class="control-row">
-      <span class="control-label">Room</span>
-      <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
-      <button class="btn-primary" onclick="loadRoomCode()">Load</button>
-      <button class="btn-secondary" onclick="newSession()">New Room</button>
-    </div>
-    <div class="control-divider"></div>
-    <div class="control-row">
-      <span class="control-label">Players</span>
-      <div class="player-btns" id="player-btns"></div>
-      <button class="btn-primary" id="deal-btn" onclick="deal()">🤐 Deal Words</button>
-      <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Words</button>
-      <span class="control-label" style="margin-left:auto">Words</span>
-      <div class="player-btns" id="words-btns"></div>
-    </div>
-  </div>
-  <div class="control-note">Players are split randomly into Team A and Team B each round — with an odd number, one team gets an extra player (it changes who each round). Each team only knows their own words — the goal is to steer the conversation so the other team says one first. Same Room Code and links work across Emotion Cards, Word Wolf and Forbidden Words.</div>
-  <div class="count-note hidden" id="count-mismatch-note"></div>
+  <div id="room-mount"></div>
 
   <div class="reveal-banner hidden" id="reveal-banner"></div>
 
@@ -243,12 +164,12 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
   <script>
     const WORDS = GAME_DATA.forbidden; // simple everyday words, easy to say naturally in conversation
     const PLAYER_COUNTS = [2, 3, 4, 5, 6]; // odd counts split into uneven teams (e.g. 3 vs 2)
     const ALLOWED_COUNTS = PLAYER_COUNTS;
     const WORD_COUNTS = [1, 2, 3]; // how many secret words each team gets per round
-    let playerCount = 6;
     let wordsPerTeam = 3;
     let assigned = [];    // [{ team, words: [{word,emoji} x N] }] per player — this round's deal
     let currentWordsA = null; // [{ word, emoji } x N] — Team A's secret words
@@ -256,175 +177,57 @@
     let revealed = false; // end-of-round: show every player's team + word
     let round = 0;
 
-    /* ── Firebase: lets each player's already-open link update live every round ── */
-    const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
-    document.getElementById('fb-warning').classList.toggle('hidden', firebaseReady);
-    let db = null;
-    if (firebaseReady) {
-      firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.database();
-    }
-
-    function generateSessionCode() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
-      const bytes = new Uint8Array(6);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, b => chars[b % chars.length]).join('');
-    }
-
-    /* each player gets an unguessable random token instead of a sequential number —
-       otherwise anyone with one link could just edit the URL to see other players' cards */
-    function generateToken() {
-      const bytes = new Uint8Array(10);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    /* remembers {sessionCode -> {tokens, playerCount}} in this browser only, so reopening
-       the page (or typing the same room code back in) resumes the same player links and
-       player count — tokens themselves stay truly random, never derived from the room code.
-       Shared across Emotion Cards / Word Wolf / Team Words so the SAME room code and SAME
-       player links keep working no matter which game the host switches to. */
-    const STORAGE_PREFIX = 'room-session-';
-    const LAST_SESSION_KEY = 'room-last-session';
-
-    function clampCount(n) {
-      if (ALLOWED_COUNTS.includes(n)) return n;
-      return ALLOWED_COUNTS.reduce((best, c) => Math.abs(c - n) < Math.abs(best - n) ? c : best);
-    }
-
-    function showCountNote(original, used) {
-      const note = document.getElementById('count-mismatch-note');
-      if (original === used) { note.classList.add('hidden'); return; }
-      note.textContent = `⚠️ This room was set up with ${original} players — using ${used} for Forbidden Words instead.`;
-      note.classList.remove('hidden');
-    }
-
+    /* Room code, tokens, names, the setup UI and the links all come from room.js,
+       shared with the other nine games. wordsPerTeam is this game's own setting and
+       rides along in the same session blob. */
     function clampWordsCount(n) {
       if (WORD_COUNTS.includes(n)) return n;
       return WORD_COUNTS.reduce((best, c) => Math.abs(c - n) < Math.abs(best - n) ? c : best);
     }
 
-    function saveSessionTokens() {
-      try {
-        const prev = loadSessionData(sessionCode) || {};
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
-          Object.assign({}, prev, { tokens: playerTokens, playerCount, names: playerNames, wordsPerTeam })));
-        localStorage.setItem(LAST_SESSION_KEY, sessionCode);
-      } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
-    }
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#3b82f6',
+      counts: PLAYER_COUNTS,
+      defaultCount: 6,
+      linksNote: "Copy each link once and send it privately (e.g. a LINE DM) — everyone's team and word update automatically every round.",
+      actionsHTML: '<button class="btn-primary" id="deal-btn" onclick="deal()">🤐 Deal Words</button>'
+                 + '<button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal Words</button>',
+      extraRowHTML: '<span class="room-label">Words</span><div class="room-count-btns" id="words-btns"></div>',
+      onCountChange: () => { assigned = []; revealed = false; },
+    });
+    document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
 
-    function loadSessionData(code) {
-      try {
-        const raw = localStorage.getItem(STORAGE_PREFIX + code);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) { return null; }
-    }
-
-    let sessionCode;
-    let playerTokens = [];
-    let playerNames = []; // travels with the room across all three games
-
-    (function initSession() {
-      let lastCode = null;
-      try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
-      const saved = lastCode ? loadSessionData(lastCode) : null;
-      if (lastCode && saved && saved.tokens && saved.tokens.length) {
-        sessionCode = lastCode;
-        playerTokens = saved.tokens;
-        playerNames = saved.names || [];
-        if (saved.playerCount) {
-          playerCount = clampCount(saved.playerCount);
-          showCountNote(saved.playerCount, playerCount);
-        }
-        if (saved.wordsPerTeam) wordsPerTeam = clampWordsCount(saved.wordsPerTeam);
-      } else {
-        sessionCode = generateSessionCode();
-      }
-    })();
-
-    function updateRoomCodeInput() {
-      document.getElementById('room-code-input').value = sessionCode;
-    }
-
-    function ensureTokens(n) {
-      const before = playerTokens.length;
-      while (playerTokens.length < n) playerTokens.push(generateToken());
-      if (playerTokens.length !== before) saveSessionTokens();
-    }
-
-    /* type an existing room code to bring back its links and player count; unknown codes just start fresh under that label */
-    function loadRoomCode() {
-      const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
-      if (!typed) return;
-      sessionCode = typed;
-      const saved = loadSessionData(typed);
-      if (saved && saved.tokens && saved.tokens.length) {
-        playerTokens = saved.tokens;
-        playerNames = saved.names || [];
-        if (saved.playerCount) {
-          const used = clampCount(saved.playerCount);
-          setPlayerCount(used);
-          showCountNote(saved.playerCount, used);
-        }
-        if (saved.wordsPerTeam) setWordsPerTeam(clampWordsCount(saved.wordsPerTeam));
-      } else {
-        playerTokens = [];
-        playerNames = [];
-        showCountNote(0, 0);
-      }
-      ensureTokens(playerCount);
-      saveSessionTokens();
-      updateRoomCodeInput();
-      renderPlayerLinks();
-    }
-
-    /* start a brand-new room with a fresh code and fresh player tokens */
-    function newSession() {
-      sessionCode = generateSessionCode();
-      playerTokens = [];
-      playerNames = [];
-      showCountNote(0, 0);
-      ensureTokens(playerCount);
-      updateRoomCodeInput();
-      renderPlayerLinks();
-    }
-
-    /* ── player count buttons 2–6 (odd counts split into uneven teams, e.g. 3 vs 2) ── */
-    function setPlayerCount(n) {
-      playerCount = n;
-      document.querySelectorAll('#player-btns .player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
-    }
-    (function buildPlayerBtns() {
-      const wrap = document.getElementById('player-btns');
-      PLAYER_COUNTS.forEach(n => {
-        const b = document.createElement('button');
-        b.className = 'player-btn' + (n === playerCount ? ' active' : '');
-        b.textContent = n;
-        b.onclick = () => {
-          setPlayerCount(n);
-          renderPlayerLinks();
-        };
-        wrap.appendChild(b);
-      });
-    })();
-
-    /* ── words-per-team buttons 1–3 ── */
+    /* the words-per-team row, stored alongside the room so it survives a game switch */
     function setWordsPerTeam(n) {
-      wordsPerTeam = n;
-      document.querySelectorAll('#words-btns .player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
-      saveSessionTokens();
+      wordsPerTeam = clampWordsCount(n);
+      document.querySelectorAll('#words-btns .room-count-btn')
+        .forEach(b => b.classList.toggle('active', Number(b.textContent) === wordsPerTeam));
+      ROOM.setExtra('wordsPerTeam', wordsPerTeam);
     }
     (function buildWordBtns() {
+      const saved = ROOM.getExtra('wordsPerTeam');
+      if (saved) wordsPerTeam = clampWordsCount(saved);
       const wrap = document.getElementById('words-btns');
       WORD_COUNTS.forEach(n => {
         const b = document.createElement('button');
-        b.className = 'player-btn' + (n === wordsPerTeam ? ' active' : '');
+        b.className = 'room-count-btn' + (n === wordsPerTeam ? ' active' : '');
         b.textContent = n;
         b.onclick = () => setWordsPerTeam(n);
         wrap.appendChild(b);
       });
     })();
+
+    /* revealed: the column takes the team's colour and lists that team's words */
+    ROOM.setDecorator(i => {
+      const p = assigned[i];
+      if (!revealed || !p) return {};
+      return {
+        cls: p.team === 'A' ? 'team-a' : 'team-b',
+        answer: `<span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>`
+              + `<div class="lw-list">${wordListHTML(p.words)}</div>`,
+      };
+    });
 
     function shuffle(arr) {
       const a = arr.slice();
@@ -434,114 +237,6 @@
       }
       return a;
     }
-
-    /* same link for a player all night, and shared across every game — only the
-       content behind it changes each round (or when the host switches games) */
-    /* the player's name rides along in the URL ("...&n=Jessie") so their card can title
-       itself before Firebase has even answered — the token still does all the identifying */
-    function cardURL(token) {
-      const url = new URL(`play.html?s=${sessionCode}&p=${token}`, location.href);
-      const i = playerTokens.indexOf(token);
-      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
-      if (name) url.searchParams.set('n', name);
-      return url.href;
-    }
-
-    function qrSVG(text) {
-      const qr = qrcode(0, 'M');
-      qr.addData(text);
-      qr.make();
-      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
-    }
-
-    /* what actually goes on the clipboard: the player's name on its own line above the
-       link, so a pasted message says whose card it is. The name is on a separate line so
-       every chat app still detects the URL (and still builds its own link preview). */
-    function cardShareText(token) {
-      const url = cardURL(token);
-      const i = playerTokens.indexOf(token);
-      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
-      return name ? `${name}\n${url}` : url;
-    }
-
-    function copyLink(token, btn) {
-      const url = cardShareText(token);
-      const done = () => {
-        const old = btn.textContent;
-        btn.textContent = '✅ Copied';
-        setTimeout(() => { btn.textContent = old; }, 1500);
-      };
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
-      } else {
-        prompt('Copy this:', url);
-      }
-    }
-
-    /* only one QR code open at a time — opening a new one closes any other */
-    function toggleQR(token, col) {
-      const existing = col.querySelector('.qr-inline');
-      document.querySelectorAll('.qr-inline').forEach(el => { if (el !== existing) el.remove(); });
-      if (existing) { existing.remove(); return; }
-      const box = document.createElement('div');
-      box.className = 'qr-inline';
-      box.innerHTML = qrSVG(cardURL(token));
-      col.appendChild(box);
-    }
-
-    /* renders the persistent per-player link cards — safe to call any time.
-       Team is never shown here before Reveal — this screen is shared, so showing it
-       early would hand both teams' rosters to everyone before the round even starts. */
-    function renderPlayerLinks() {
-      ensureTokens(playerCount);
-      const wrap = document.getElementById('player-links');
-      wrap.innerHTML = '';
-      for (let i = 0; i < playerCount; i++) {
-        const p = assigned[i];
-        const teamClass = revealed && p ? (p.team === 'A' ? ' team-a' : ' team-b') : '';
-        const col = document.createElement('div');
-        col.className = 'link-col' + teamClass;
-
-        const nameInput = document.createElement('input');
-        nameInput.className = 'name-input';
-        nameInput.type = 'text';
-        nameInput.maxLength = 12;
-        nameInput.placeholder = `Player ${i + 1}`;
-        nameInput.value = playerNames[i] || '';
-        nameInput.oninput = () => { playerNames[i] = nameInput.value.trim(); saveSessionTokens(); };
-        col.appendChild(nameInput);
-
-        const btnRow = document.createElement('div');
-        btnRow.className = 'link-btn-row';
-
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'btn-copy';
-        copyBtn.textContent = '📋 Copy Link';
-        copyBtn.onclick = () => copyLink(playerTokens[i], copyBtn);
-        btnRow.appendChild(copyBtn);
-
-        const qrBtn = document.createElement('button');
-        qrBtn.className = 'btn-qr-toggle';
-        qrBtn.textContent = 'QR';
-        qrBtn.onclick = () => toggleQR(playerTokens[i], col);
-        btnRow.appendChild(qrBtn);
-
-        col.appendChild(btnRow);
-
-        if (revealed && p) {
-          const face = document.createElement('div');
-          face.className = 'link-word';
-          face.innerHTML = `
-            <span class="lw-tag team-${p.team.toLowerCase()}">Team ${p.team}</span>
-            <div class="lw-list">${wordListHTML(p.words)}</div>`;
-          col.appendChild(face);
-        }
-
-        wrap.appendChild(col);
-      }
-    }
-    updateRoomCodeInput();
-    renderPlayerLinks();
 
     /* picks 6 distinct words from the list and splits them into two sets of 3 —
        Team A and Team B must never share a word */
@@ -559,8 +254,8 @@
       currentWordsA = wordsA;
       currentWordsB = wordsB;
       // odd counts can't split evenly — randomize which team gets the extra player each round
-      const bigHalf = Math.ceil(playerCount / 2);
-      const smallHalf = playerCount - bigHalf;
+      const bigHalf = Math.ceil(ROOM.count / 2);
+      const smallHalf = ROOM.count - bigHalf;
       const [countA, countB] = Math.random() < 0.5 ? [bigHalf, smallHalf] : [smallHalf, bigHalf];
       const teams = shuffle([
         ...Array(countA).fill('A'),
@@ -578,16 +273,8 @@
       document.getElementById('reveal-banner').classList.add('hidden');
 
       // push this round's team + words to each player's link — their page updates live
-      ensureTokens(playerCount);
-      if (firebaseReady) {
-        assigned.forEach((p, i) => {
-          db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({
-            game: 'teamwords', team: p.team, words: p.words, round, playerNum: i + 1, name: playerNames[i] || null,
-          });
-        });
-      }
-
-      renderPlayerLinks();
+      ROOM.publish(i => ({ game: 'teamwords', team: assigned[i].team, words: assigned[i].words, round }));
+      ROOM.render();
     }
 
     function wordListHTML(words) {
@@ -597,7 +284,7 @@
     /* end of round: show every player's team + words, and reveal both teams' word sets */
     function revealAll() {
       revealed = true;
-      renderPlayerLinks();
+      ROOM.render();
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
       const listA = currentWordsA.map(w => `${w.emoji} ${w.word}`).join(', ');

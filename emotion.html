@@ -36,45 +36,16 @@
     .btn-secondary:active { transform: scale(.98); }
 
     /* ── Control card: room code + player count + deal, grouped as one panel ── */
-    .control-card {
-      width: 100%; max-width: 1100px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
-      padding: 22px 26px;
-      display: flex; flex-direction: column; gap: 16px;
-      margin-bottom: 10px;
-      position: relative; z-index: 1;
-      animation: fadeUp .5s .2s ease both;
-    }
-    .control-row {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
-    }
-    .control-label {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; min-width: 58px;
-    }
-    .control-divider { height: 1px; background: #1e1e42; }
-    .control-note {
-      width: 100%; max-width: 1100px;
-      color: #444; font-size: .78rem; text-align: center; line-height: 1.6;
-      margin-bottom: 22px;
-      position: relative; z-index: 1;
-    }
-    .count-note {
-      width: 100%; max-width: 1100px;
-      color: #f59e0b; font-size: .78rem; text-align: center; line-height: 1.6;
-      margin: -6px 0 16px;
-      position: relative; z-index: 1;
-    }
 
-    .player-btns { display: flex; gap: 8px; }
-    .player-btn {
-      width: 46px; height: 46px; border-radius: 12px;
-      border: 2px solid #1e1e42; background: #13132b; color: #888;
-      font-size: 1.05rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s, background .2s, transform .1s;
-    }
-    .player-btn:hover  { border-color: #d946ef; color: #d946ef; }
-    .player-btn:active { transform: scale(.94); }
+
+
+
+
+
+
+
+
+
     .player-btn.active { border-color: #d946ef; color: #fff; background: rgba(217,70,239,.18); }
 
     #room-code-input {
@@ -93,69 +64,28 @@
       color: #555; margin: 6px 0 10px;
       position: relative; z-index: 1;
     }
-    .links-note {
-      width: 100%; max-width: 1100px;
-      color: #555; font-size: .82rem; text-align: center; line-height: 1.6;
-      margin: 0 0 16px;
-      position: relative; z-index: 1;
-    }
+
 
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
-    .player-links {
-      display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
-      width: 100%; max-width: 1100px;
-      margin-bottom: 24px;
-      position: relative; z-index: 1;
-    }
-    .link-col {
-      flex: 1; min-width: 160px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
-      padding: 14px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      animation: fadeUp .3s ease both;
-    }
-    .link-label { font-size: .95rem; font-weight: 800; color: #ddd; letter-spacing: .5px; }
-    .name-input {
-      width: 100%;
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
-      color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
-      padding: 8px 10px;
-      transition: border-color .2s;
-    }
-    .name-input::placeholder { color: #555; }
-    .name-input:focus { outline: none; border-color: #d946ef; }
-    .link-btn-row { display: flex; gap: 8px; width: 100%; }
-    .btn-copy {
-      flex: 1;
-      background: transparent; color: #d946ef; border: 2px solid #d946ef;
-      border-radius: 10px; padding: 9px 10px;
-      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: background .2s, transform .1s;
-    }
-    .btn-copy:hover  { background: rgba(217,70,239,.1); }
-    .btn-copy:active { transform: scale(.97); }
-    .btn-qr-toggle {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 10px; padding: 9px 12px;
-      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s;
-    }
-    .btn-qr-toggle:hover { border-color: #f59e0b; color: #f59e0b; }
-    .qr-inline {
-      background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
-      width: 100%; max-width: 160px;
-      animation: fadeUp .25s ease both;
-    }
-    .qr-inline svg { width: 100%; height: auto; display: block; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /* revealed emotion, shown under a player's link after "Reveal All" */
-    .link-emotion {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding-top: 10px; margin-top: 2px; border-top: 1px solid #1e1e42; width: 100%;
-      animation: fadeUp .3s ease both;
-    }
-    .link-emotion .emo-emoji { font-size: 2rem; line-height: 1; }
-    .link-emotion .emo-word  { font-size: .95rem; font-weight: 800; color: #34d399; }
+
+    .link-answer .emo-emoji { font-size: 2rem; line-height: 1; display: block; }
+    .link-answer .emo-word  { font-size: .95rem; font-weight: 800; color: #34d399; }
 
     /* Firebase-not-configured warning */
     .fb-warning {
@@ -254,8 +184,8 @@
     }
 
     @media (max-width: 520px) {
-      .link-col { min-width: 130px; }
-      .player-btn { width: 40px; height: 40px; }
+
+
       .lyrics-form input { flex-basis: 100%; }
       .lyrics-form input#artist-input { flex-basis: 100%; }
     }
@@ -277,27 +207,7 @@
     ⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
   </div>
 
-  <div class="control-card">
-    <div class="control-row">
-      <span class="control-label">Room</span>
-      <input type="text" id="room-code-input" maxlength="6" placeholder="e.g. CQ3HE7" onkeydown="if(event.key==='Enter')loadRoomCode()">
-      <button class="btn-primary" onclick="loadRoomCode()">Load</button>
-      <button class="btn-secondary" onclick="newSession()">New Room</button>
-    </div>
-    <div class="control-divider"></div>
-    <div class="control-row">
-      <span class="control-label">Players</span>
-      <div class="player-btns" id="player-btns"></div>
-      <button class="btn-primary" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>
-      <button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>
-    </div>
-  </div>
-  <div class="control-note">Same Room Code and links work across Emotion Cards, Word Wolf and Team Words — reopening this page resumes the same room automatically.</div>
-  <div class="count-note hidden" id="count-mismatch-note"></div>
-
-  <div class="section-hdr">🔗 Player Links</div>
-  <div class="links-note">Copy each link once and send it privately (e.g. a LINE DM) — it updates automatically every round.</div>
-  <div class="player-links" id="player-links"></div>
+  <div id="room-mount"></div>
 
   <div id="game-area" style="display:none">
     <div class="section-hdr">🎵 Lyrics Finder</div>
@@ -321,163 +231,35 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
   <script>
     const EMOTIONS = GAME_DATA.emotion;
     const ALLOWED_COUNTS = [2, 3, 4, 5, 6];
-    let playerCount = 4;
     let assigned = [];    // [{ idx }] per player — this round's dealt emotions
     let revealed = false; // end-of-round: show all emotions on the host screen
     let round = 0;
 
-    /* ── Firebase: lets each player's already-open link update live every round ── */
-    const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
-    document.getElementById('fb-warning').classList.toggle('hidden', firebaseReady);
-    let db = null;
-    if (firebaseReady) {
-      firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.database();
-    }
+    /* Room code, tokens, names, the setup UI and the per-player links all live in
+       room.js — shared with the other nine games, so a player keeps one link all night. */
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#d946ef',
+      counts: ALLOWED_COUNTS,
+      defaultCount: 4,
+      linksNote: 'Copy each link once and send it privately (e.g. a LINE DM) — it updates automatically every round.',
+      actionsHTML: '<button class="btn-primary" id="deal-btn" onclick="deal()">🎴 Deal Cards</button>'
+                 + '<button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>',
+      onCountChange: () => { assigned = []; revealed = false; },
+    });
+    document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
 
-    function generateSessionCode() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
-      const bytes = new Uint8Array(6);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, b => chars[b % chars.length]).join('');
-    }
+    /* the host screen shows each player's emotion under their name once revealed */
+    ROOM.setDecorator(i => {
+      if (!revealed || !assigned[i]) return {};
+      const e = EMOTIONS[assigned[i].idx];
+      return { marked: true, answer: `<span class="emo-emoji">${e.emoji}</span><span class="emo-word">${e.word}</span>` };
+    });
 
-    /* each player gets an unguessable random token instead of a sequential number —
-       otherwise anyone with one link could just edit the URL to see other players' cards */
-    function generateToken() {
-      const bytes = new Uint8Array(10);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    /* remembers {sessionCode -> {tokens, playerCount}} in this browser only, so reopening
-       the page (or typing the same room code back in) resumes the same player links and
-       player count — tokens themselves stay truly random, never derived from the room code.
-       Shared across Emotion Cards / Word Wolf / Team Words so the SAME room code and SAME
-       player links keep working no matter which game the host switches to. */
-    const STORAGE_PREFIX = 'room-session-';
-    const LAST_SESSION_KEY = 'room-last-session';
-
-    function clampCount(n) {
-      if (ALLOWED_COUNTS.includes(n)) return n;
-      return ALLOWED_COUNTS.reduce((best, c) => Math.abs(c - n) < Math.abs(best - n) ? c : best);
-    }
-
-    function showCountNote(original, used) {
-      const note = document.getElementById('count-mismatch-note');
-      if (original === used) { note.classList.add('hidden'); return; }
-      note.textContent = `⚠️ This room was set up with ${original} players — using ${used} for Emotion Cards instead.`;
-      note.classList.remove('hidden');
-    }
-
-    function saveSessionTokens() {
-      try {
-        // spread what is already there: the session blob is shared with nine other games,
-        // and some of them keep their own keys in it (Forbidden Words stores wordsPerTeam)
-        const prev = loadSessionData(sessionCode) || {};
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
-          Object.assign({}, prev, { tokens: playerTokens, playerCount, names: playerNames })));
-        localStorage.setItem(LAST_SESSION_KEY, sessionCode);
-      } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
-    }
-
-    function loadSessionData(code) {
-      try {
-        const raw = localStorage.getItem(STORAGE_PREFIX + code);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? { tokens: parsed, playerCount: parsed.length } : parsed; // old format fallback
-      } catch (e) { return null; }
-    }
-
-    let sessionCode;
-    let playerTokens = [];
-    let playerNames = []; // travels with the room across all three games
-
-    (function initSession() {
-      let lastCode = null;
-      try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
-      const saved = lastCode ? loadSessionData(lastCode) : null;
-      if (lastCode && saved && saved.tokens && saved.tokens.length) {
-        sessionCode = lastCode;
-        playerTokens = saved.tokens;
-        playerNames = saved.names || [];
-        if (saved.playerCount) {
-          playerCount = clampCount(saved.playerCount);
-          showCountNote(saved.playerCount, playerCount);
-        }
-      } else {
-        sessionCode = generateSessionCode();
-      }
-    })();
-
-    function updateRoomCodeInput() {
-      document.getElementById('room-code-input').value = sessionCode;
-    }
-
-    function ensureTokens(n) {
-      const before = playerTokens.length;
-      while (playerTokens.length < n) playerTokens.push(generateToken());
-      if (playerTokens.length !== before) saveSessionTokens();
-    }
-
-    /* type an existing room code to bring back its links and player count; unknown codes just start fresh under that label */
-    function loadRoomCode() {
-      const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
-      if (!typed) return;
-      sessionCode = typed;
-      const saved = loadSessionData(typed);
-      if (saved && saved.tokens && saved.tokens.length) {
-        playerTokens = saved.tokens;
-        playerNames = saved.names || [];
-        if (saved.playerCount) {
-          const used = clampCount(saved.playerCount);
-          setPlayerCount(used);
-          showCountNote(saved.playerCount, used);
-        }
-      } else {
-        playerTokens = [];
-        playerNames = [];
-        showCountNote(0, 0);
-      }
-      ensureTokens(playerCount);
-      saveSessionTokens();
-      updateRoomCodeInput();
-      renderPlayerLinks();
-    }
-
-    /* start a brand-new room with a fresh code and fresh player tokens */
-    function newSession() {
-      sessionCode = generateSessionCode();
-      playerTokens = [];
-      playerNames = [];
-      showCountNote(0, 0);
-      ensureTokens(playerCount);
-      updateRoomCodeInput();
-      renderPlayerLinks();
-    }
-
-    /* ── player count buttons 2–6 ── */
-    function setPlayerCount(n) {
-      playerCount = n;
-      document.querySelectorAll('.player-btn').forEach(x => x.classList.toggle('active', Number(x.textContent) === n));
-    }
-    (function buildPlayerBtns() {
-      const wrap = document.getElementById('player-btns');
-      for (let n = 2; n <= 6; n++) {
-        const b = document.createElement('button');
-        b.className = 'player-btn' + (n === playerCount ? ' active' : '');
-        b.textContent = n;
-        b.onclick = () => {
-          setPlayerCount(n);
-          renderPlayerLinks();
-        };
-        wrap.appendChild(b);
-      }
-    })();
 
     function shuffle(arr) {
       const a = arr.slice();
@@ -487,114 +269,10 @@
       }
       return a;
     }
-
-    /* same link for a player all night, and shared across every game — only the
-       content behind it changes each round (or when the host switches games) */
-    /* the player's name rides along in the URL ("...&n=Jessie") so their card can title
-       itself before Firebase has even answered — the token still does all the identifying */
-    function cardURL(token) {
-      const url = new URL(`play.html?s=${sessionCode}&p=${token}`, location.href);
-      const i = playerTokens.indexOf(token);
-      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
-      if (name) url.searchParams.set('n', name);
-      return url.href;
-    }
-
-    function qrSVG(text) {
-      const qr = qrcode(0, 'M');
-      qr.addData(text);
-      qr.make();
-      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
-    }
-
-    /* what actually goes on the clipboard: the player's name on its own line above the
-       link, so a pasted message says whose card it is. The name is on a separate line so
-       every chat app still detects the URL (and still builds its own link preview). */
-    function cardShareText(token) {
-      const url = cardURL(token);
-      const i = playerTokens.indexOf(token);
-      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
-      return name ? `${name}\n${url}` : url;
-    }
-
-    function copyLink(token, btn) {
-      const url = cardShareText(token);
-      const done = () => {
-        const old = btn.textContent;
-        btn.textContent = '✅ Copied';
-        setTimeout(() => { btn.textContent = old; }, 1500);
-      };
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
-      } else {
-        prompt('Copy this:', url);
-      }
-    }
-
-    /* only one QR code open at a time — opening a new one closes any other */
-    function toggleQR(token, col) {
-      const existing = col.querySelector('.qr-inline');
-      document.querySelectorAll('.qr-inline').forEach(el => { if (el !== existing) el.remove(); });
-      if (existing) { existing.remove(); return; }
-      const box = document.createElement('div');
-      box.className = 'qr-inline';
-      box.innerHTML = qrSVG(cardURL(token));
-      col.appendChild(box);
-    }
-
-    /* renders the persistent per-player link cards — safe to call any time */
-    function renderPlayerLinks() {
-      ensureTokens(playerCount);
-      const wrap = document.getElementById('player-links');
-      wrap.innerHTML = '';
-      for (let i = 0; i < playerCount; i++) {
-        const col = document.createElement('div');
-        col.className = 'link-col';
-
-        const nameInput = document.createElement('input');
-        nameInput.className = 'name-input';
-        nameInput.type = 'text';
-        nameInput.maxLength = 12;
-        nameInput.placeholder = `Player ${i + 1}`;
-        nameInput.value = playerNames[i] || '';
-        nameInput.oninput = () => { playerNames[i] = nameInput.value.trim(); saveSessionTokens(); };
-        col.appendChild(nameInput);
-
-        const btnRow = document.createElement('div');
-        btnRow.className = 'link-btn-row';
-
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'btn-copy';
-        copyBtn.textContent = '📋 Copy Link';
-        copyBtn.onclick = () => copyLink(playerTokens[i], copyBtn);
-        btnRow.appendChild(copyBtn);
-
-        const qrBtn = document.createElement('button');
-        qrBtn.className = 'btn-qr-toggle';
-        qrBtn.textContent = 'QR';
-        qrBtn.onclick = () => toggleQR(playerTokens[i], col);
-        btnRow.appendChild(qrBtn);
-
-        col.appendChild(btnRow);
-
-        if (revealed && assigned[i]) {
-          const e = EMOTIONS[assigned[i].idx];
-          const face = document.createElement('div');
-          face.className = 'link-emotion';
-          face.innerHTML = `<span class="emo-emoji">${e.emoji}</span><span class="emo-word">${e.word}</span>`;
-          col.appendChild(face);
-        }
-
-        wrap.appendChild(col);
-      }
-    }
-    updateRoomCodeInput();
-    renderPlayerLinks();
-
     function deal() {
       // 25 → 10 pool → N assigned
       const poolIdx  = shuffle(EMOTIONS.map((_, i) => i)).slice(0, 10);
-      const dealtIdx = shuffle(poolIdx).slice(0, playerCount);
+      const dealtIdx = shuffle(poolIdx).slice(0, ROOM.count);
       assigned = dealtIdx.map(idx => ({ idx }));
       revealed = false;
       round++;
@@ -604,14 +282,8 @@
       document.getElementById('reveal-btn').classList.remove('hidden');
 
       // push this round's assignment to each player's link — their page updates live
-      ensureTokens(playerCount);
-      if (firebaseReady) {
-        assigned.forEach((card, i) => {
-          db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({ game: 'emotion', idx: card.idx, round, playerNum: i + 1, name: playerNames[i] || null });
-        });
-      }
-
-      renderPlayerLinks();
+      ROOM.publish(i => ({ game: 'emotion', idx: assigned[i].idx, round }));
+      ROOM.render();
 
       /* pool of 10 — sorted alphabetically so card order reveals nothing */
       const pool = document.getElementById('pool-grid');
@@ -631,7 +303,7 @@
     /* end of round: show every player's emotion on the host screen for discussion */
     function revealAll() {
       revealed = true;
-      renderPlayerLinks();
+      ROOM.render();
     }
 
     /* ── Lyrics finder (lrclib.net — free, no API key) ── */

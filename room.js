@@ -80,6 +80,22 @@ const ROOM = (() => {
     } catch (e) { /* private browsing — links still work for this session */ }
   }
 
+  /* a game's own setting, parked in the same shared session blob (Forbidden Words keeps
+     wordsPerTeam here). Reading and writing it through room.js is what stops another
+     game's save from quietly dropping it. */
+  function setExtra(key, value) {
+    try {
+      const prev = loadSessionData(sessionCode) || {};
+      prev[key] = value;
+      localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(prev));
+    } catch (e) { /* private browsing — the setting just won't persist */ }
+  }
+
+  function getExtra(key) {
+    const saved = loadSessionData(sessionCode);
+    return saved ? saved[key] : undefined;
+  }
+
   function clampCount(n) {
     const allowed = cfg.counts;
     if (allowed.includes(n)) return n;
@@ -259,6 +275,7 @@ const ROOM = (() => {
           <div class="room-count-btns" id="room-count-btns"></div>
           <span id="room-actions"></span>
         </div>
+        ${cfg.extraRowHTML ? `<div class="room-divider"></div><div class="room-row" id="room-extra-row">${cfg.extraRowHTML}</div>` : ''}
       </div>
       <div class="room-hdr" id="room-hdr"></div>
       <p class="room-note hidden" id="room-note"></p>
@@ -301,7 +318,9 @@ const ROOM = (() => {
     for (let i = 0; i < count; i++) {
       const info = decorate ? (decorate(i) || {}) : {};
       const col = document.createElement('div');
-      col.className = 'link-col' + (info.marked ? ' is-marked' : '');
+      // `cls` lets a game paint its own states on the column (the Wolf, a team,
+      // an already-revealed card) with classes it defines in its own stylesheet
+      col.className = 'link-col' + (info.marked ? ' is-marked' : '') + (info.cls ? ' ' + info.cls : '');
 
       const input = document.createElement('input');
       input.className = 'name-input';
@@ -458,7 +477,7 @@ const ROOM = (() => {
   }
 
   const api = {
-    init, render, publish, update, clearAnswer, setCount,
+    init, render, publish, update, clearAnswer, setCount, setExtra, getExtra,
     get enabled() { return on(); },
     get count() { return count; },
     get names() { return names; },
