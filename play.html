@@ -281,7 +281,7 @@
        would resolve against its own colour and turn the letter invisible */
     .pick-btn.picked .pb-key { background: color-mix(in srgb, currentColor 28%, transparent); color: inherit; }
 
-    /* 🙊 Don't Say It: the clue giver's word, and the banned list everyone gets */
+    /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
     .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; }
     .taboo-target {
       width: 100%; background: #0d0d1a; border: 2px solid #6366f1; border-radius: 16px;
@@ -721,7 +721,7 @@
       db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice });
     }
 
-    /* 🙊 Don't Say It: everything happens on the cards — the host screen only keeps
+    /* 🙊 Say It Without Saying It: everything happens on the cards — the host screen only keeps
        score. Guessers buzz, and the clue giver (the only one holding the word) says
        whether the guess was right. */
     function tabooSend(payload) {
@@ -821,7 +821,7 @@
 
       if (data.state !== 'playing') {
         return shell(`
-          ${chip("🙊 Don't Say It!", '#6366f1')}
+          ${chip('🙊 Say It Without Saying It', '#6366f1')}
           <span class="pick-sub">Waiting for the next word…</span>
           <p class="conq-wait">⏳</p>`);
       }

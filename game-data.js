@@ -889,7 +889,7 @@ const GAME_DATA = {
     'What is something new you tried this year?',
   ],
 
-  /* ── 🙊 Don't Say It! — Taboo-style cards. The clue giver sees the word AND the
+  /* ── 🙊 Say It Without Saying It — Taboo-style cards. The clue giver sees the word AND the
      forbidden words; the guessers see only the forbidden words, which is both their
      hint and how they police the giver. Deliberately everyday vocabulary, and the
      four banned words are the ones you would reach for first. ── */
