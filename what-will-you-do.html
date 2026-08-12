@@ -9,7 +9,10 @@
   <meta name="apple-mobile-web-app-title" content="Sophie's Choice">
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="scenario.css">
   <style>
+    :root { --accent: #f59e0b; }
+
     .header h1 { background: linear-gradient(135deg, #fff 30%, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     @keyframes pulseGlow {
       0%, 100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
@@ -44,17 +47,8 @@
     }
 
     /* Placeholder */
-    .sc-placeholder {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 14px; text-align: center;
-      min-height: 200px;
-    }
-    .sc-placeholder .big-emoji { font-size: 3.2rem; }
-    .sc-placeholder p { color: #333; font-size: .95rem; }
 
     /* Content wrapper */
-    .sc-content { display: none; flex-direction: column; gap: 20px; }
-    .sc-content.show { display: flex; }
 
     /* Situation */
     .sc-label {
@@ -126,29 +120,15 @@
     }
 
     /* ── Draw button ── */
-    .btn-draw {
-      width: 100%; max-width: 1100px;
-      background: #13132b; color: #f59e0b; border: 2px solid #f59e0b;
-      border-radius: 14px; padding: 16px;
-      font-size: 1.05rem; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: background .2s, transform .1s;
-      animation: fadeUp .5s .3s ease both;
-    }
-    .btn-draw:hover { background: rgba(245,158,11,.1); }
-    .btn-draw:active { transform: scale(.98); }
-    .btn-draw:disabled { opacity: .4; cursor: not-allowed; }
 
     .round-badge span { color: #f59e0b; }
 
     @media (max-width: 520px) {
       .sc-card { padding: 22px 20px; }
       .opt-badge { width: 32px; height: 32px; font-size: .9rem; }
-      .filter-btn { padding: 8px 14px; }
     }
 
     /* ── Filter bar ── */
-    .filter-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
     .filter-btn {
       border: 1.5px solid #1e1e42; border-radius: 20px;
       padding: 5px 14px; font-size: .8rem; font-weight: 700;
@@ -156,34 +136,8 @@
       transition: border-color .18s, color .18s, background .18s, transform .1s;
       font-family: inherit; white-space: nowrap;
     }
-    .filter-btn:hover  { border-color: #f59e0b; color: #f59e0b; }
-    .filter-btn:active { transform: scale(.96); }
-    .filter-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.12); }
 
     /* ── Scenario browser ── */
-    .scenario-browser {
-      width: 100%; max-width: 1100px;
-      margin-top: 28px;
-    }
-    .scenario-browser-hdr {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin-bottom: 12px;
-    }
-    .scenario-list {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 8px;
-    }
-    .scenario-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      background: #13132b; border: 1.5px solid #1e1e42;
-      border-radius: 12px; padding: 12px 16px;
-      cursor: pointer;
-      transition: border-color .2s, background .2s, transform .1s;
-      font-family: inherit; text-align: left;
-    }
-    .scenario-item:hover  { border-color: #f59e0b; background: rgba(245,158,11,.06); }
-    .scenario-item:active { transform: scale(.98); }
-    .scenario-item.active { border-color: #f59e0b; background: rgba(245,158,11,.1); }
     .scenario-num  { font-size: .75rem; font-weight: 900; color: #f59e0b; flex-shrink: 0; padding-top: 2px; min-width: 22px; }
     .scenario-text { font-size: .88rem; font-weight: 500; color: #aaa; line-height: 1.4; }
 

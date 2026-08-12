@@ -10,60 +10,18 @@
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
+    :root { --accent: #f59e0b; --accent-alt: #d946ef; --warn: #f59e0b; }
+
     .header h1 { background: linear-gradient(135deg, #fff 30%, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-    .hidden { display: none; }
-
     /* ── Shared control-card buttons ── */
-    .btn-primary {
-      background: #13132b; color: #f59e0b; border: 2px solid #f59e0b;
-      border-radius: 12px; padding: 12px 26px;
-      font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap;
-      transition: background .2s, transform .1s;
-    }
-    .btn-primary:hover  { background: rgba(245,158,11,.1); }
-    .btn-primary:active { transform: scale(.98); }
-
-    .btn-secondary {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 12px; padding: 12px 22px;
-      font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap;
-      transition: border-color .2s, color .2s, transform .1s;
-    }
-    .btn-secondary:hover  { border-color: #d946ef; color: #d946ef; }
-    .btn-secondary:active { transform: scale(.98); }
 
     /* ── Control card: room code + player count + deal, grouped as one panel ── */
 
 
 
 
-
-
-
-
-
-
-
-
-    #room-code-input {
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
-      color: #eee; font-family: inherit; font-size: .95rem; text-transform: uppercase;
-      padding: 11px 14px; width: 130px;
-      transition: border-color .2s;
-    }
-    #room-code-input::placeholder { color: #444; text-transform: none; }
-    #room-code-input:focus { outline: none; border-color: #f59e0b; }
-
     /* ── Section labels ── */
-    .section-hdr {
-      width: 100%; max-width: 1100px;
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin: 6px 0 10px;
-      position: relative; z-index: 1;
-    }
 
 
     /* ── Reveal banner: shows the word pair after Reveal Wolf ── */
@@ -87,20 +45,6 @@
 
 
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
-    .player-links {
-      display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
-      width: 100%; max-width: 1100px;
-      margin-bottom: 40px;
-      position: relative; z-index: 1;
-    }
-    .link-col {
-      flex: 1; min-width: 160px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
-      padding: 14px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      animation: fadeUp .3s ease both;
-      transition: border-color .3s;
-    }
     .link-col.is-wolf { border-color: #f59e0b; }
     .link-col.is-picked { border-color: #d946ef; box-shadow: 0 0 24px rgba(217,70,239,.4); }
     .link-col.is-picked.pulse { animation: pickPulse .5s ease; }
@@ -130,13 +74,6 @@
     .link-answer .lw-tag   { font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #f59e0b; }
 
     /* Firebase-not-configured warning */
-    .fb-warning {
-      width: 100%; max-width: 1100px;
-      background: rgba(245,158,11,.1); border: 1.5px solid #f59e0b; color: #f59e0b;
-      border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
-      margin-bottom: 20px; position: relative; z-index: 1;
-    }
-    .fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
 
     .round-badge span { color: #f59e0b; }
 
@@ -176,7 +113,6 @@
     .pair-item .pi-vs { color: #555; font-size: .74rem; font-weight: 900; flex-shrink: 0; }
 
     @media (max-width: 520px) {
-      .link-col { min-width: 130px; }
 
     }
   </style>

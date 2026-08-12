@@ -106,3 +106,49 @@ a.back:hover { color: var(--text); }
     transition-duration: .01ms !important;
   }
 }
+
+/* ── Host-page chrome ──
+   Every host page draws the same warning strip, section headings and pair of
+   buttons; only the colour changes. Each page sets its own --accent (and
+   --accent-alt for the secondary button's hover, where it differs), so these
+   rules live here once instead of being copied into ten <style> blocks.
+   A page that genuinely needs a different shape still overrides below — its
+   own <style> comes after this file. */
+.hidden { display: none !important; }
+
+.fb-warning {
+  width: 100%; max-width: 1100px;
+  background: color-mix(in srgb, var(--warn, var(--accent)) 10%, transparent);
+  border: 1.5px solid var(--warn, var(--accent));
+  color: var(--warn, var(--accent));
+  border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
+  margin-bottom: 20px; position: relative; z-index: 1;
+}
+.fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
+
+.section-hdr {
+  width: 100%; max-width: 1100px;
+  font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+  color: #555; margin: 6px 0 10px;
+  position: relative; z-index: 1;
+}
+
+.btn-primary {
+  background: #13132b; color: var(--accent); border: 2px solid var(--accent);
+  border-radius: 12px; padding: 12px 26px;
+  font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, transform .1s;
+}
+.btn-primary:hover  { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.btn-primary:active { transform: scale(.98); }
+
+.btn-secondary {
+  background: transparent; color: #666; border: 2px solid #1e1e42;
+  border-radius: 12px; padding: 12px 22px;
+  font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .2s, color .2s, transform .1s;
+}
+.btn-secondary:hover  { border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt, var(--accent)); }
+.btn-secondary:active { transform: scale(.98); }

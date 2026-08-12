@@ -1,0 +1,55 @@
+/* scenario.css — the three "draw a scenario" games (Sophie's Choice, You're In The
+   Scene, Persuade Together) share one layout: a big card that a draw animation lands
+   in, a filter bar, and a browsable list of every scenario. Only the accent colour and
+   a couple of sizes differ, so those come from --accent and from each page's own
+   <style>, which loads after this file. */
+
+.scenario-browser {
+  width: 100%; max-width: 1100px;
+  margin-top: 28px;
+}
+.scenario-browser-hdr {
+  font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+  color: #555; margin-bottom: 12px;
+}
+.scenario-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px;
+}
+.scenario-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #13132b; border: 1.5px solid #1e1e42;
+  border-radius: 12px; padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, transform .1s;
+  font-family: inherit; text-align: left;
+}
+.scenario-item:hover  { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.scenario-item:active { transform: scale(.98); }
+.scenario-item.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sc-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 14px; text-align: center;
+  min-height: 200px;
+}
+.sc-placeholder .big-emoji { font-size: 3.2rem; }
+.sc-placeholder p { color: #333; font-size: .95rem; }
+.sc-content { display: none; flex-direction: column; gap: 20px; }
+.sc-content.show { display: flex; }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.filter-btn { padding: 8px 14px; }
+.filter-btn:hover  { border-color: var(--accent); color: var(--accent); }
+.filter-btn:active { transform: scale(.96); }
+.filter-btn.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.btn-draw {
+  width: 100%; max-width: 1100px;
+  background: #13132b; color: var(--accent); border: 2px solid var(--accent);
+  border-radius: 14px; padding: 16px;
+  font-size: 1.05rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: background .2s, transform .1s;
+  animation: fadeUp .5s .3s ease both;
+}
+.btn-draw:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.btn-draw:active { transform: scale(.98); }
+.btn-draw:disabled { opacity: .4; cursor: not-allowed; }

@@ -10,8 +10,15 @@
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
+    :root { --accent: #22c55e; --accent-alt: #22c55e; }
+    /* this page's headings sit in a row with a tag chip beside them, and hug the
+       board rather than the 1100px column shared.css assumes */
+    .section-hdr {
+      margin: 18px 0 10px; max-width: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+
     .header h1 { background: linear-gradient(135deg, #fff 30%, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .hidden { display: none !important; }
 
     /* ── Compact layout: this page keeps everything above the map as small as
        possible so the whole board fits on screen during a live share ── */
@@ -28,24 +35,8 @@
     .header p { font-size: .8rem; }
 
     /* ── Buttons (shared look) ── */
-    .btn-primary {
-      background: #13132b; color: #22c55e; border: 2px solid #22c55e;
-      border-radius: 12px; padding: 14px 30px;
-      font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap;
-      transition: background .2s, transform .1s, opacity .2s;
-    }
     .btn-primary:active:not(:disabled) { transform: scale(.98); }
     .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
-
-    .btn-secondary {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 12px; padding: 12px 22px;
-      font-size: .88rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap;
-      transition: border-color .2s, color .2s, transform .1s;
-    }
-    .btn-secondary:active { transform: scale(.98); }
     /* armed skill (High Roll / Low Roll) — red border + yellow text, text label itself doesn't change */
     .btn-secondary.skill-armed { border-color: #ef4444; color: #eab308; }
     /* :hover only on devices that actually have a mouse — on touch (iPad), tapping a button
@@ -53,7 +44,6 @@
        would otherwise stay green-tinted forever instead of returning to its plain gray look */
     @media (hover: hover) and (pointer: fine) {
       .btn-primary:hover:not(:disabled) { background: rgba(34,197,94,.1); }
-      .btn-secondary:hover { border-color: #22c55e; color: #22c55e; }
       .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
       .btn-secondary:disabled:hover { border-color: #1e1e42; color: #666; }
     }
@@ -106,11 +96,6 @@
     }
 
     /* ── Section label + note above the player columns ── */
-    .section-hdr {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin: 18px 0 10px;
-      display: flex; align-items: center; gap: 8px;
-    }
     .section-tag {
       font-size: .6rem; letter-spacing: 1px; color: #555;
       border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px;

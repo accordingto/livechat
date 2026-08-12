@@ -10,30 +10,11 @@
   <meta name="theme-color" content="#0d0d1a">
   <link rel="stylesheet" href="shared.css">
   <style>
+    :root { --accent: #3b82f6; --accent-alt: #f43f5e; --warn: #f59e0b; }
+
     .header h1 { background: linear-gradient(135deg, #fff 30%, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-    .hidden { display: none; }
-
     /* ── Shared control-card buttons ── */
-    .btn-primary {
-      background: #13132b; color: #3b82f6; border: 2px solid #3b82f6;
-      border-radius: 12px; padding: 12px 26px;
-      font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap;
-      transition: background .2s, transform .1s;
-    }
-    .btn-primary:hover  { background: rgba(59,130,246,.1); }
-    .btn-primary:active { transform: scale(.98); }
-
-    .btn-secondary {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 12px; padding: 12px 22px;
-      font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap;
-      transition: border-color .2s, color .2s, transform .1s;
-    }
-    .btn-secondary:hover  { border-color: #f43f5e; color: #f43f5e; }
-    .btn-secondary:active { transform: scale(.98); }
 
     /* ── Control card: room code + player count + deal, grouped as one panel ── */
 
@@ -48,22 +29,10 @@
 
     .player-btn.active { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,.18); }
 
-    #room-code-input {
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
-      color: #eee; font-family: inherit; font-size: .95rem; text-transform: uppercase;
-      padding: 11px 14px; width: 130px;
-      transition: border-color .2s;
-    }
-    #room-code-input::placeholder { color: #444; text-transform: none; }
-    #room-code-input:focus { outline: none; border-color: #3b82f6; }
+
+
 
     /* ── Section labels ── */
-    .section-hdr {
-      width: 100%; max-width: 1100px;
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin: 6px 0 10px;
-      position: relative; z-index: 1;
-    }
     .links-note {
       width: 100%; max-width: 1100px;
       color: #555; font-size: .82rem; text-align: center; line-height: 1.6;
@@ -119,13 +88,6 @@
     .link-answer .lw-text  { font-size: .88rem; font-weight: 800; color: #34d399; }
 
     /* Firebase-not-configured warning */
-    .fb-warning {
-      width: 100%; max-width: 1100px;
-      background: rgba(245,158,11,.1); border: 1.5px solid #f59e0b; color: #f59e0b;
-      border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
-      margin-bottom: 20px; position: relative; z-index: 1;
-    }
-    .fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
 
     .round-badge span { color: #3b82f6; }
 
