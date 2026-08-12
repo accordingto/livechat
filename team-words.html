@@ -307,7 +307,9 @@
 
     function saveSessionTokens() {
       try {
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({ tokens: playerTokens, playerCount, names: playerNames, wordsPerTeam }));
+        const prev = loadSessionData(sessionCode) || {};
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
+          Object.assign({}, prev, { tokens: playerTokens, playerCount, names: playerNames, wordsPerTeam })));
         localStorage.setItem(LAST_SESSION_KEY, sessionCode);
       } catch (e) { /* localStorage unavailable (e.g. private browsing) — just skip persistence */ }
     }

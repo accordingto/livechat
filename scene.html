@@ -316,18 +316,6 @@
       return sc[keys[index]];
     }
 
-    function roleCardHTML(sc, index, extraDelay) {
-      const role   = getRoleData(sc, index);
-      const letter = ALL_LETTERS[index];
-      const color  = ALL_COLORS[index];
-      const isOdd  = index % 2 !== 0;   // used to check if it's the last card and lonely
-      return `<div class="role-card role-${color}" style="animation-delay:${extraDelay}ms">
-        <div class="role-letter">${letter}</div>
-        <div class="role-name">${role.label}</div>
-        <div class="role-hint">${role.hint}</div>
-      </div>`;
-    }
-
     function renderScene(sc) {
       currentScene  = sc;
       currentPlayers = 0;

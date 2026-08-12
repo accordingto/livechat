@@ -918,9 +918,8 @@
         // names are shared with the card games, so keep any slots this game doesn't cover
         const names = (prev.names || []).slice();
         for (let i = 0; i < playerCount; i++) names[i] = playerNames[i] || '';
-        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({
-          tokens: playerTokens, playerCount, names,
-        }));
+        localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
+          Object.assign({}, prev, { tokens: playerTokens, playerCount, names })));
         localStorage.setItem(LAST_SESSION_KEY, sessionCode);
       } catch (e) { /* private browsing — links still work for this session */ }
     }

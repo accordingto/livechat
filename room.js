@@ -71,9 +71,11 @@ const ROOM = (() => {
       // names are shared with every game, so keep slots this game doesn't cover
       const merged = (prev.names || []).slice();
       for (let i = 0; i < count; i++) merged[i] = names[i] || '';
-      localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify({
-        tokens, playerCount: count, names: merged,
-      }));
+      // spread prev: other games keep their own keys in this shared blob
+      // (Forbidden Words stores wordsPerTeam), and dropping them silently
+      // resets their settings the next time the host switches back
+      localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
+        Object.assign({}, prev, { tokens, playerCount: count, names: merged })));
       localStorage.setItem(LAST_SESSION_KEY, sessionCode);
     } catch (e) { /* private browsing — links still work for this session */ }
   }
