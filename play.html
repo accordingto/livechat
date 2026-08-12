@@ -644,7 +644,7 @@
             ${clock}
             <div class="conq-vote-row">
               <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${c.isTruth ? '✅ Honest!' : '✅ Did It!'}</button>
-              <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? '❌ Dishonest!' : '❌ Failed!'}</button>
+              <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? '❌ Pass!' : '❌ Failed!'}</button>
             </div>`;
         }
       } else if (myTurn) {

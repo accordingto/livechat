@@ -1949,7 +1949,7 @@
           </div>` : ''}
           <div class="q-actions">
             <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Honest!' : '✅ Did It!'}<span class="judge-count hidden" id="judge-count-yes">0</span></button>
-            <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Dishonest!' : '❌ Failed!'}<span class="judge-count hidden" id="judge-count-no">0</span></button>
+            <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Pass!' : '❌ Failed!'}<span class="judge-count hidden" id="judge-count-no">0</span></button>
           </div>
         </div>`;
       publishChallenge(prompt, isTruth, parts.plain);
