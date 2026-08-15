@@ -65,7 +65,7 @@
       0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); }
     }
 
-    /* ── One status line: who is describing, or how the round ended ── */
+    /* ── One status line: who has the word, or how the round ended ── */
     .status-line {
       width: 100%; max-width: 1100px;
       background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
@@ -136,6 +136,30 @@
       }
       .cb-sect.rules .cb-head { align-self: center; }
       .cb-sect.rules::before { left: 0; right: auto; }
+    }
+
+    /* difficulty sits under the banned-words switch: same half of the bar, since both
+       decide how hard this round is */
+    .level-btns { display: flex; gap: 6px; }
+    .level-btn {
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #666;
+      border-radius: 10px; padding: 7px 14px;
+      font-size: .78rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .level-btn:active { transform: scale(.96); }
+    .level-btn.active { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,.12); }
+    .level-btn .lb-count { opacity: .5; font-weight: 700; }
+
+    /* a finished round: the deal button turns green and breathes, so "it is on to the
+       next clue giver" is visible from across a shared screen */
+    #deal-btn.is-next {
+      border-color: #22c55e; color: #22c55e;
+      animation: nextPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes nextPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+      50%      { box-shadow: 0 0 22px rgba(34,197,94,.45); }
     }
 
     .timer-dial {
@@ -290,8 +314,17 @@
       background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px; padding: 11px 14px;
       display: flex; flex-direction: column; gap: 5px;
     }
+    .deck-group-hdr {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 10px;
+      margin: 12px 0 2px;
+      font-size: .78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #7a7a9a;
+    }
+    .deck-group-hdr:first-child { margin-top: 0; }
+    .deck-group-hdr::after { content: ''; flex: 1; height: 1px; background: #1e1e42; }
+    .deck-group-hdr .dg-count { color: #444; }
     .deck-item .di-word { font-size: .95rem; font-weight: 800; color: #ddd; }
-    .deck-item .di-num { color: #444; font-size: .74rem; font-weight: 900; margin-right: 6px; }
     .deck-item .di-forbidden { font-size: .78rem; font-weight: 600; color: #7a4a52; line-height: 1.5; }
 
     @media (max-width: 520px) {
@@ -343,6 +376,7 @@
         <span class="toggle-switch"></span>
         <span id="forbidden-state">Forbidden words ON</span>
       </button>
+      <div class="level-btns" id="level-btns"></div>
     </section>
   </div>
 
@@ -378,8 +412,13 @@
     const DECK = GAME_DATA.taboo;
 
     let round = 0;
-    let giverIdx = 0;      // whose turn to describe — moves on after every round
+    let giverIdx = 0;      // this round's clue giver
     let refIdx = -1;       // the referee: the only guesser-side player who sees the banned words
+    /* Roles are drawn at random, but out of a bag rather than freshly each round: every
+       player is clue giver once before anyone repeats, and the referee is taken from
+       whoever has refereed least. Random order, no one left out, no fixed rotation. */
+    let giverBag = [];     // shuffled player indices still waiting for their turn to give
+    let refCount = [];     // how many times each player has refereed, to keep it even
     let card = null;
     let roundId = '';
     let state = 'idle';    // idle | playing | done
@@ -396,14 +435,50 @@
     /* Banned words can be switched off for an easier round: then nobody's card shows
        them and there is nothing to call Taboo! on. The choice sticks between sessions. */
     const OPTIONS_KEY = 'dontSayItOptions.v1';
+    const LEVELS = [
+      { id: 'easy',   label: '🟢 Easy' },
+      { id: 'medium', label: '🟡 Medium' },
+      { id: 'hard',   label: '🔴 Hard' },
+    ];
     let forbiddenOn = true;
+    let level = 'medium';
     try {
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
       if (saved && typeof saved.forbiddenOn === 'boolean') forbiddenOn = saved.forbiddenOn;
+      if (saved && LEVELS.some(l => l.id === saved.level)) level = saved.level;
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, level })); } catch (e) { /* ignore */ }
+    }
+
+    /* the indices of every card at the chosen difficulty */
+    function levelDeck() {
+      const idx = DECK.map((_, i) => i).filter(i => DECK[i].level === level);
+      return idx.length ? idx : DECK.map((_, i) => i);
+    }
+
+    /* changing difficulty only affects the next word — the round in play keeps its card */
+    function setLevel(id) {
+      if (level === id) return;
+      level = id;
+      used = [];
+      saveOptions();
+      renderLevelBtns();
+      renderAll();
+    }
+
+    function renderLevelBtns() {
+      const wrap = document.getElementById('level-btns');
+      wrap.innerHTML = '';
+      LEVELS.forEach(l => {
+        const n = DECK.filter(c => c.level === l.id).length;
+        const b = document.createElement('button');
+        b.className = 'level-btn' + (l.id === level ? ' active' : '');
+        b.innerHTML = `${l.label} <span class="lb-count">${n}</span>`;
+        b.onclick = () => setLevel(l.id);
+        wrap.appendChild(b);
+      });
     }
 
     function toggleForbidden() {
@@ -411,7 +486,7 @@
       saveOptions();
       if (!forbiddenOn) { tabooCalls = []; refIdx = -1; } // no banned words, no referee
       // switching back on mid-round needs someone holding the list again
-      else if (state === 'playing' && refIdx < 0) refIdx = (giverIdx + 1) % ROOM.count;
+      else if (state === 'playing' && refIdx < 0) refIdx = drawReferee(giverIdx);
       if (state !== 'idle') pushState();
       renderForbiddenToggle();
       renderAll();
@@ -436,7 +511,7 @@
       defaultCount: 4,
       linksNote: 'Each round deals a clue giver (word + banned words + the ✅ / ❌ buttons) and a referee (banned words + the Taboo! button). Everyone else just gets a buzzer — they never see the banned words, so the list can\'t give the answer away.',
       onPlayerData: handleAnswer,
-      onCountChange: () => { giverIdx = 0; refIdx = -1; syncScores(); resetRound(); },
+      onCountChange: () => { giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores(); resetRound(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (state !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
@@ -644,16 +719,54 @@
       document.getElementById('secs-plus').disabled = timer.total >= STEP_MAX;
     }
 
+    /* ── Whose turn it is ──
+       drawGiver() empties a shuffled bag before refilling it, so across any run of N
+       rounds every player gives exactly once, in a different order each cycle. A refill
+       never puts the player who just gave at the front, or they would give twice in a row
+       across the seam. */
+    function shuffled(n) {
+      const a = Array.from({ length: n }, (_, i) => i);
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function drawGiver() {
+      const n = ROOM.count;
+      giverBag = giverBag.filter(i => i < n);
+      if (!giverBag.length) {
+        giverBag = shuffled(n);
+        if (n > 1 && giverBag[0] === giverIdx) giverBag.push(giverBag.shift());
+      }
+      return giverBag.shift();
+    }
+
+    /* the referee is random among everyone except the giver, but drawn from those who
+       have refereed fewest times — so it stays even without becoming a fixed order */
+    function drawReferee(giver) {
+      const n = ROOM.count;
+      while (refCount.length < n) refCount.push(0);
+      const eligible = Array.from({ length: n }, (_, i) => i).filter(i => i !== giver);
+      if (!eligible.length) return -1;
+      const fewest = Math.min(...eligible.map(i => refCount[i] || 0));
+      const pool = eligible.filter(i => (refCount[i] || 0) === fewest);
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      refCount[pick] = (refCount[pick] || 0) + 1;
+      return pick;
+    }
+
     /* ── Round flow ── */
     function dealRound(keepGiver) {
       if (!ROOM.enabled) return;
       syncScores();
-      if (state === 'done' && !keepGiver) giverIdx = (giverIdx + 1) % ROOM.count;
-      // the player after the giver referees, so everyone referees the round before
-      // they describe — no random streaks, and both jobs come round equally
-      refIdx = forbiddenOn ? (giverIdx + 1) % ROOM.count : -1;
-      let avail = DECK.map((_, i) => i).filter(i => !used.includes(i));
-      if (!avail.length) { used = []; avail = DECK.map((_, i) => i); }
+      if (!keepGiver) giverIdx = drawGiver();
+      refIdx = forbiddenOn ? drawReferee(giverIdx) : -1;
+      // only cards at the chosen difficulty, and none repeated until that level runs dry
+      const deck = levelDeck();
+      let avail = deck.filter(i => !used.includes(i));
+      if (!avail.length) { used = []; avail = deck.slice(); }
       const pick = avail[Math.floor(Math.random() * avail.length)];
       used.push(pick);
       card = DECK[pick];
@@ -667,12 +780,14 @@
       seenTaboo = {};
       result = null;
       popIdx = [];
-      // a fresh word gets a fresh clock, waiting on the host's Start
+      // a fresh word gets a fresh clock, and it starts on its own: the host has just
+      // pressed a button, and having to press Start as well only ate seconds
       stopTicking();
       timer.autoHeld = false;
-      timer.running = false;
       timer.left = timer.total;
+      timer.running = true;
       timer.seq++;
+      startTicking();
       publishRound();
       renderTimer();
       renderAll();
@@ -780,9 +895,12 @@
       const skip = document.getElementById('skip-btn');
       deal.disabled = !ROOM.enabled;
       skip.classList.toggle('hidden', state !== 'playing');
+      // the button is the host's "what happens next", so it changes colour and pulses
+      // when a round has ended — easy to miss when only the words changed
+      deal.classList.toggle('is-next', state === 'done' && ROOM.enabled);
       deal.textContent = !ROOM.enabled ? '🔗 Player links needed'
                        : state === 'playing' ? `🛑 End ${ROOM.name(giverIdx)}'s turn`
-                       : state === 'done' ? `▶️ Next Round — ${ROOM.name((giverIdx + 1) % ROOM.count)} describes`
+                       : state === 'done' ? '▶️ Next Round — new clue giver'
                        : '🎬 Deal a Word';
       deal.onclick = state === 'playing' ? () => endRound({ type: 'stop', who: giverIdx + 1 }) : () => dealRound();
     }
@@ -820,7 +938,7 @@
           el.classList.add('live');
           const ref = refIdx >= 0
             ? `<span class="sl-sub">👀 ${ROOM.name(refIdx)} is refereeing this round — they hold the banned words</span>` : '';
-          el.innerHTML = `🎤 <span class="sl-who">${ROOM.name(giverIdx)}</span> is describing — buzz in when you know it!${ref}`;
+          el.innerHTML = `🎤 <span class="sl-who">${ROOM.name(giverIdx)}</span> is the clue giver — buzz in when you know it!${ref}`;
         }
         return;
       }
@@ -850,7 +968,7 @@
         const called = state === 'playing' && tabooCalls.includes(num);
         const ref = state !== 'idle' && i === refIdx;
         const role = called ? '🚨 Called Taboo!'
-                   : giver ? '🎤 Describing'
+                   : giver ? '🎤 Clue giver'
                    : ref ? '👀 Referee'
                    : buzzed ? '🙋 Buzzed in'
                    : state === 'playing' && queue.includes(num) ? '⏳ In queue' : '';
@@ -872,14 +990,20 @@
         ? `🙈 Hide the deck`
         : `👁️ Browse all ${DECK.length} words (spoilers — don't open while sharing)`;
     }
-    document.getElementById('deck-list').innerHTML = DECK.map((c, i) => `
-      <div class="deck-item">
-        <div class="di-word"><span class="di-num">${i + 1}</span>${c.emoji} ${c.word}</div>
-        <div class="di-forbidden">🚫 ${c.forbidden.join(' · ')}</div>
-      </div>`).join('');
+    /* grouped by difficulty, so the host can see what each setting will deal */
+    document.getElementById('deck-list').innerHTML = LEVELS.map(l => {
+      const cards = DECK.filter(c => c.level === l.id);
+      return `<div class="deck-group-hdr">${l.label}<span class="dg-count">${cards.length}</span></div>`
+        + cards.map(c => `
+        <div class="deck-item">
+          <div class="di-word">${c.emoji} ${c.word}</div>
+          <div class="di-forbidden">🚫 ${c.forbidden.join(' · ')}</div>
+        </div>`).join('');
+    }).join('');
     toggleDeck(); toggleDeck(); // sets the closed label
 
     renderForbiddenToggle();
+    renderLevelBtns();
     renderTimer();
     renderAll();
   </script>

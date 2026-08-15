@@ -845,7 +845,7 @@
         // with nobody buzzed in there is nothing to act on, so the reminder stays at the foot
         const idleHint = data.buzzer
           ? ''
-          : '<span class="pick-sub">Keep describing — the buttons appear when someone buzzes in.</span>';
+          : '<span class="pick-sub">Keep going — the buttons appear when someone buzzes in.</span>';
         return shell(`
           ${chip("🎤 You're the clue giver", '#6366f1')}
           ${clock}
@@ -895,7 +895,7 @@
           <span class="pick-sub">Listen for a banned word — you sit this round out, so no buzzer for you.</span>`);
       }
       return shell(`
-        ${chip(`🕵️ ${esc(data.giverName || 'Someone')} is describing`, '#6366f1')}
+        ${chip(`🕵️ ${esc(data.giverName || 'Someone')} is the clue giver`, '#6366f1')}
         ${clock}
         ${bannedBlock}
         ${callBanner}
