@@ -60,6 +60,12 @@
       border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.3);
     }
     .score-card.is-called .sc-role { color: #ef4444; }
+
+    /* the Player Links section is otherwise all indigo (same as the rest of the
+       page's chrome), so the clue giver needs a colour nothing else there uses to
+       actually stand out; the referee gets the same amber as their scoreboard tile */
+    .link-col.is-giver-link { border-color: #22c55e; box-shadow: 0 0 26px rgba(34,197,94,.45); }
+    .link-col.is-ref-link { border-color: #f59e0b; box-shadow: 0 0 22px rgba(245,158,11,.32); }
     .score-card.just-scored { animation: pointPop .5s ease; }
     @keyframes pointPop {
       0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); }
@@ -306,6 +312,12 @@
       transition: border-color .2s, color .2s;
     }
     .deck-toggle:hover { border-color: #6366f1; color: #6366f1; }
+    .card-preview-toggle { margin-bottom: 14px; }
+    /* the host's private copy of what a card says — smaller and dimmer than the
+       role tag above it, so it reads as "extra detail", not the headline */
+    .cp-preview { font-size: .78rem; font-weight: 700; color: #999; line-height: 1.5; }
+    .cp-preview b { color: #eee; }
+    .cp-preview .cp-result { color: #6366f1; }
     .deck-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 8px; margin-top: 14px;
@@ -432,6 +444,10 @@
     let tabooCalls = [];   // players who shouted Taboo! and are waiting on the host's ruling
     let seenTaboo = {};    // playerNum -> the last Taboo! stamp already handled
 
+    /* Host-only peek at exactly what's on each player's card right now — off by
+       default since the host is screen-sharing and this is a spoiler. */
+    let cardPreviewOn = false;
+
     /* Banned words can be switched off for an easier round: then nobody's card shows
        them and there is nothing to call Taboo! on. The choice sticks between sessions. */
     const OPTIONS_KEY = 'dontSayItOptions.v1';
@@ -516,6 +532,23 @@
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
 
+    /* Lets the host check what a player's card actually shows without picking up
+       their phone — text only appears in the Player Links section below, never on
+       the shared scoreboard, and stays off by default because it's a spoiler. */
+    document.getElementById('room-note').insertAdjacentHTML('afterend',
+      `<button class="deck-toggle card-preview-toggle" id="card-preview-toggle" type="button"></button>`);
+    function renderPreviewToggle() {
+      document.getElementById('card-preview-toggle').textContent = cardPreviewOn
+        ? '🙈 Hide player cards'
+        : '👁️ Show what\'s on player cards (spoilers — don\'t open while sharing)';
+    }
+    document.getElementById('card-preview-toggle').onclick = () => {
+      cardPreviewOn = !cardPreviewOn;
+      renderPreviewToggle();
+      renderAll();
+    };
+    renderPreviewToggle();
+
     function syncScores() { while (scores.length < ROOM.count) scores.push(0); }
     syncScores();
 
@@ -588,13 +621,20 @@
 
     ROOM.setDecorator(i => {
       const num = i + 1;
-      if (state !== 'playing') return {};
-      if (tabooCalls.includes(num)) return { marked: true, answer: '🚨 Called Taboo!' };
-      if (i === giverIdx) return { marked: true, answer: '🎤 Clue giver' };
-      if (i === refIdx) return { marked: true, answer: '👀 Referee' };
-      if (queue[0] === num) return { marked: true, answer: '🙋 Buzzed in' };
-      if (queue.includes(num)) return { marked: true, answer: '🙋 In the queue' };
-      return {};
+      let info = {};
+      if (state === 'playing') {
+        if (tabooCalls.includes(num)) info = { marked: true, answer: '🚨 Called Taboo!' };
+        else if (i === giverIdx) info = { cls: 'is-giver-link', answer: '🎤 Clue giver' };
+        else if (i === refIdx) info = { cls: 'is-ref-link', answer: '👀 Referee' };
+        else if (queue[0] === num) info = { marked: true, answer: '🙋 Buzzed in' };
+        else if (queue.includes(num)) info = { marked: true, answer: '🙋 In the queue' };
+      }
+      if (cardPreviewOn) {
+        info = Object.assign({}, info, {
+          answer: (info.answer ? info.answer + '<br>' : '') + `<div class="cp-preview">${cardPreviewText(i)}</div>`,
+        });
+      }
+      return info;
     });
 
     /* ── The countdown ── */
@@ -882,6 +922,37 @@
           youWon: (result.type === 'got' || result.type === 'foul') && result.who === i + 1,
         } : null,
       });
+    }
+
+    /* Plain-English version of exactly what payloadFor(i) put on that card — the
+       host's own words for it, not a raw dump of the payload. */
+    function cardPreviewText(i) {
+      const p = payloadFor(i);
+      if (p.state === 'idle') return '💤 Nothing dealt yet';
+      const lines = [];
+      if (p.isGiver) {
+        lines.push(`🎯 ${p.emoji || ''} <b>${p.target || '?'}</b>`);
+        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No banned words this round');
+        if (p.buzzerName) lines.push(`🙋 ${p.buzzerName} buzzed in — needs a ✅ / ❌`);
+      } else if (p.isRef) {
+        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No banned words this round');
+        if (p.iCalledTaboo) lines.push('🚨 Called Taboo! — waiting for the host');
+      } else if (p.tabooBy) {
+        lines.push(`⏸️ ${p.tabooBy} called Taboo! — clock on hold`);
+      } else if (p.queued === 1) {
+        lines.push('🙋 Buzzed in — waiting for the clue giver');
+      } else if (p.queued) {
+        lines.push(`🙋 #${p.queued} in the queue`);
+      } else if (p.rejected) {
+        lines.push('❌ Not it — can buzz again');
+      } else {
+        lines.push('🙋 Buzz in!');
+      }
+      if (p.state === 'done' && p.result) {
+        const kind = p.result.type === 'foul' ? '🚨 Taboo caught' : p.result.type === 'got' ? '✅ Got it' : '⏹️ Round ended';
+        lines.push(`<span class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? ' (+1 for you!)' : ''}</span>`);
+      }
+      return lines.join('<br>');
     }
 
     /* ── Rendering: scoreboard + one status line, nothing else ── */
