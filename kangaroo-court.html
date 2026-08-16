@@ -110,6 +110,18 @@
       50%      { filter: brightness(1.3); }
     }
 
+    /* a quiet secondary action, deliberately far less loud than the status
+       button above it — undoing a step is the exception, not the flow */
+    .kc-back-btn {
+      width: 100%; margin-top: 10px;
+      background: transparent; border: 2px solid #1e1e42; color: #666;
+      border-radius: 12px; padding: 10px 12px;
+      font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, opacity .2s;
+    }
+    .kc-back-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
+    .kc-back-btn:disabled { opacity: .3; cursor: not-allowed; }
+
     /* ── The charge card: the courtroom's centerpiece ── */
     .charge-card {
       width: 100%; max-width: 1100px;
@@ -386,6 +398,10 @@
              text stays to one short line; the flow steps above already say
              what's coming next -->
         <div class="status-line" id="status-line" onclick="advance()"></div>
+
+        <!-- undoes one accidental "advance" click — disabled once there's
+             nothing safe to step back into (idle, or the very first Pre-Vote) -->
+        <button class="kc-back-btn" id="kc-back-btn" onclick="goBack()">⬅️ Previous Step</button>
       </div>
     </aside>
 
@@ -718,6 +734,45 @@
       if (phase === 'finalvote')            { doReveal(); return; }
     }
 
+    /* undoes one accidental "advance" — the mirror image of advance() above.
+       Reveal's score changes are subtracted back out; timed phases restart
+       fresh rather than trying to restore the exact second they were on.
+       Stepping back from Prosecution to Defense's Witness can reuse the
+       witness already sitting in currentWitness (nothing overwrote it since),
+       but stepping back a second time — Defense's Witness to Prosecution's —
+       has already lost that data, so it draws a new one; a rare case, and a
+       reroll there is a fine trade for not having to keep both witnesses
+       in memory at once. Pre-Vote and idle have nothing safe to undo into,
+       so the button is disabled there (see renderBackBtn). */
+    function goBack() {
+      if (!ROOM.enabled) return;
+      if (phase === 'reveal') {
+        if (reveal) Object.keys(reveal.roundPoints).forEach(idx => { scores[idx] = (scores[idx] || 0) - reveal.roundPoints[idx]; });
+        reveal = null;
+        phase = 'finalvote';
+        stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
+        pushState(); renderAll();
+        return;
+      }
+      if (phase === 'finalvote') {
+        phase = 'cross';
+        stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
+        pushState(); renderAll();
+        return;
+      }
+      if (phase === 'cross')               { startPhase('defense', argSeconds); return; }
+      if (phase === 'defense')             { startPhase('prosecution', argSeconds); return; }
+      if (phase === 'prosecution')         { startPhase('defense-witness', argSeconds); return; }
+      if (phase === 'defense-witness')     { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
+      if (phase === 'prosecution-witness') {
+        currentWitness = null;
+        phase = 'prevote';
+        stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
+        pushState(); renderAll();
+        return;
+      }
+    }
+
     function resetToIdle() {
       caseNum = 0; phase = 'idle'; charge = null; reveal = null;
       currentWitness = null; witnessThisCase = [];
@@ -832,6 +887,7 @@
       document.getElementById('caseNum').textContent = caseNum;
       renderFlow();
       renderStatus();
+      renderBackBtn();
       renderWitness();
       renderCharge();
       renderRoleStrip();
@@ -839,6 +895,10 @@
       renderJuryTally();
       renderLeaderboard();
       ROOM.render();
+    }
+
+    function renderBackBtn() {
+      document.getElementById('kc-back-btn').disabled = !ROOM.enabled || phase === 'idle' || phase === 'prevote';
     }
 
     /* what's happening right now — and, since it doubles as the CTA, whether
