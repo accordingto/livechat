@@ -58,6 +58,8 @@
     .charge-emoji { font-size: 2.8rem; line-height: 1; position: relative; z-index: 1; }
     .charge-placeholder { color: #444; font-size: 1rem; position: relative; z-index: 1; }
 
+    .charge-swap { width: 100%; max-width: 1100px; text-align: center; margin-bottom: 16px; }
+
     /* ── Role strip: who is who this case ── */
     .role-strip {
       width: 100%; max-width: 1100px;
@@ -239,6 +241,10 @@
     </div>
   </div>
 
+  <div class="charge-swap hidden" id="charge-swap">
+    <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
+  </div>
+
   <div class="role-strip hidden" id="role-strip"></div>
 
   <div class="kc-timer-row hidden" id="kc-timer-row">
@@ -377,6 +383,16 @@
       renderTimer();
     }
 
+    /* draws a charge not currently on screen, cycling through the deck before any
+       repeat — shared by dealNewCase() and the host's "🔀 Different Charge" reroll */
+    function pickCharge(exclude) {
+      let avail = DECK.map((_, i) => i).filter(i => !usedCharges.includes(i) && DECK[i] !== exclude);
+      if (!avail.length) { usedCharges = []; avail = DECK.map((_, i) => i).filter(i => DECK[i] !== exclude); }
+      const pick = avail[Math.floor(Math.random() * avail.length)];
+      usedCharges.push(pick);
+      return DECK[pick];
+    }
+
     /* ── Round flow ──
        idle/reveal → prevote (new case) → prosecution → defense → cross →
        finalvote → reveal → (repeat) */
@@ -384,11 +400,7 @@
       if (!ROOM.enabled) return;
       syncScores();
       dealRoles();
-      let avail = DECK.map((_, i) => i).filter(i => !usedCharges.includes(i));
-      if (!avail.length) { usedCharges = []; avail = DECK.map((_, i) => i); }
-      const pick = avail[Math.floor(Math.random() * avail.length)];
-      usedCharges.push(pick);
-      charge = DECK[pick];
+      charge = pickCharge(null);
       caseNum++;
       phase = 'prevote';
       prevoteId = genId();
@@ -397,6 +409,15 @@
       stopTicking();
       timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last case's votes
+      renderAll();
+    }
+
+    /* lets the host reroll a charge that isn't landing, without redealing roles or
+       disturbing any pre-vote already cast — only available before arguments start */
+    function changeCharge() {
+      if (!ROOM.enabled || phase !== 'prevote' || !charge) return;
+      charge = pickCharge(charge);
+      pushState();
       renderAll();
     }
 
@@ -542,6 +563,7 @@
         document.getElementById('charge-emoji').textContent = charge.emoji;
         document.getElementById('charge-text').textContent = charge.charge;
       }
+      document.getElementById('charge-swap').classList.toggle('hidden', !(ROOM.enabled && phase === 'prevote'));
     }
 
     function renderRoleStrip() {
