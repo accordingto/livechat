@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Kangaroo Court · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Kangaroo Court">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --accent: #e94560; --accent-alt: #e94560; --warn: #e94560; }
+
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #e94560); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .round-badge span { color: #e94560; }
+
+    /* ── One status line, same shape as the other timed games ── */
+    .status-line {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42;
+      border-radius: 16px; padding: 16px 20px; margin-bottom: 16px; text-align: center;
+      font-size: 1.02rem; font-weight: 800; color: #999; line-height: 1.5;
+      animation: fadeUp .4s ease both;
+      transition: border-color .3s, color .3s, background .3s;
+    }
+    .status-line.live  { border-color: #e94560; }
+    .status-line.vote  { border-color: #a78bfa; color: #c4b5fd; background: rgba(167,139,250,.08); }
+    .status-line.win   { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
+    .status-line.lose  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+    .status-line .sl-sub { display: block; margin-top: 6px; font-size: .82rem; font-weight: 700; color: #777; }
+
+    /* ── The charge card: the courtroom's centerpiece ── */
+    .charge-card {
+      width: 100%; max-width: 1100px;
+      background: linear-gradient(135deg, rgba(233,69,96,.14), rgba(233,69,96,.03));
+      border: 2px solid #e94560; border-radius: 22px;
+      padding: 30px 32px; margin-bottom: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      text-align: center; min-height: 160px; justify-content: center;
+      position: relative; overflow: hidden;
+      animation: fadeUp .5s .1s ease both;
+      transition: border-color .3s;
+    }
+    .charge-card::before {
+      content: '⚖️'; position: absolute; font-size: 9rem; opacity: .04;
+      top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
+    }
+    .charge-card.idle { border-color: #1e1e42; background: #13132b; }
+    .charge-label {
+      font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #e94560; position: relative; z-index: 1;
+    }
+    .charge-text {
+      font-size: clamp(1.15rem, 3.4vw, 1.7rem); font-weight: 800; color: #fff; line-height: 1.5;
+      max-width: 880px; position: relative; z-index: 1;
+    }
+    .charge-emoji { font-size: 2.8rem; line-height: 1; position: relative; z-index: 1; }
+    .charge-placeholder { color: #444; font-size: 1rem; position: relative; z-index: 1; }
+
+    /* ── Role strip: who is who this case ── */
+    .role-strip {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+      animation: fadeUp .5s .15s ease both;
+    }
+    .role-chip {
+      flex: 1; min-width: 150px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .role-chip .rc-label { font-size: .64rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+    .role-chip .rc-name { font-size: 1.05rem; font-weight: 800; color: #eee; }
+    .role-chip.rc-defendant  { border-color: #ef4444; }
+    .role-chip.rc-defendant  .rc-label { color: #ef4444; }
+    .role-chip.rc-prosecutor { border-color: #f97316; }
+    .role-chip.rc-prosecutor .rc-label { color: #f97316; }
+    .role-chip.rc-defense    { border-color: #3b82f6; }
+    .role-chip.rc-defense    .rc-label { color: #3b82f6; }
+    .role-chip.rc-active { box-shadow: 0 0 22px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
+    @keyframes rolePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+
+    /* ── Timer, mirrored from the "Say It Without Saying It" control bar ── */
+    .kc-timer-row {
+      width: 100%; max-width: 1100px;
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+      margin-bottom: 16px;
+    }
+    .kc-timer-row.hidden { display: none; }
+    .kc-dial {
+      width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 5px solid #a78bfa; color: #c4b5fd;
+      font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .kc-dial.low { border-color: #f59e0b; color: #f59e0b; }
+    .kc-dial.critical { border-color: #ef4444; color: #ef4444; animation: dialPulse .8s ease-in-out infinite; }
+    @keyframes dialPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+    .kc-timer-btn {
+      background: transparent; border: 2px solid #1e1e42; color: #666; border-radius: 12px;
+      padding: 10px 16px; font-size: .85rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .kc-timer-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+
+    /* ── Jury tally: live progress while voting, full breakdown after Reveal ── */
+    .jury-tally {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 16px;
+      padding: 16px 20px; margin-bottom: 16px;
+      animation: fadeUp .3s ease both;
+    }
+    .jury-tally.hidden { display: none; }
+    .jt-title { font-size: .95rem; font-weight: 900; color: #eee; text-align: center; }
+    .jt-verdict {
+      text-align: center; font-size: 1.3rem; font-weight: 900; margin: 6px 0 12px;
+    }
+    .jt-verdict.guilty { color: #ef4444; }
+    .jt-verdict.notguilty { color: #22c55e; }
+    .jt-count { font-size: .82rem; font-weight: 700; color: #888; text-align: center; margin-bottom: 10px; }
+    .jt-rows { display: flex; flex-direction: column; gap: 6px; }
+    .jt-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: #0d0d1a; border-radius: 10px; padding: 8px 12px;
+      font-size: .85rem; font-weight: 700; color: #ccc;
+    }
+    .jt-row .jt-vote { display: flex; align-items: center; gap: 6px; font-weight: 800; }
+    .jt-row .jt-flip { font-size: .72rem; padding: 2px 8px; border-radius: 20px; font-weight: 800; }
+    .jt-row .jt-flip.def { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .jt-row .jt-flip.pro { background: rgba(249,115,22,.15); color: #fb923c; }
+    .jt-scores {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e1e42;
+    }
+    .jt-score {
+      background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 999px;
+      padding: 5px 14px; font-size: .8rem; font-weight: 800; color: #aaa;
+    }
+    .jt-score.plus  { border-color: #22c55e; color: #4ade80; }
+    .jt-score.minus { border-color: #ef4444; color: #f87171; }
+
+    /* ── CTA ── */
+    .btn-cta {
+      width: 100%; max-width: 1100px;
+      background: #13132b; color: #e94560; border: 2px solid #e94560;
+      border-radius: 14px; padding: 17px;
+      font-size: 1.05rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: background .2s, transform .1s;
+      animation: fadeUp .5s .2s ease both;
+      margin-bottom: 8px;
+    }
+    .btn-cta:hover:not(:disabled) { background: rgba(233,69,96,.1); }
+    .btn-cta:active:not(:disabled) { transform: scale(.99); }
+    .btn-cta:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-cta.is-next { animation: ctaPulse 1.6s ease-in-out infinite; }
+    @keyframes ctaPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(233,69,96,0); }
+      50%      { box-shadow: 0 0 26px rgba(233,69,96,.45); }
+    }
+    .score-reset { width: 100%; max-width: 1100px; text-align: center; margin: 4px 0 18px; }
+    .score-reset button {
+      background: none; border: none; color: #2a2a50; font-family: inherit;
+      font-size: .78rem; font-weight: 700; cursor: pointer; padding: 4px;
+    }
+    .score-reset button:hover { color: #666; }
+
+    /* ── Leaderboard: cumulative, persists across cases ── */
+    .leaderboard {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .lb-card {
+      flex: 1; min-width: 140px; max-width: 220px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .lb-card.is-top { border-color: #e94560; box-shadow: 0 0 22px rgba(233,69,96,.24); }
+    .lb-card .lb-name { font-size: .95rem; font-weight: 800; color: #ddd; text-align: center; }
+    .lb-card .lb-pts { font-size: 1.8rem; font-weight: 900; color: #e94560; line-height: 1; }
+
+    /* player links: a per-role tint so the host can see roles without opening a card */
+    .link-col.is-role-defendant  { border-color: #ef4444; }
+    .link-col.is-role-prosecutor { border-color: #f97316; }
+    .link-col.is-role-defense    { border-color: #3b82f6; }
+    .link-col .la-sub { color: #888; }
+
+    /* ── Charge browser ── */
+    .charge-browser { width: 100%; max-width: 1100px; margin: 12px 0 40px; }
+    .charge-browser-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 12px;
+    }
+    .charge-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 8px;
+    }
+    .charge-item {
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px;
+      padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
+      font-size: .85rem; color: #aaa; line-height: 1.5;
+    }
+    .charge-item .ci-emoji { font-size: 1.2rem; flex-shrink: 0; }
+
+    @media (max-width: 520px) {
+      .charge-card { padding: 22px 18px; min-height: 130px; }
+      .lb-card { min-width: 110px; padding: 12px 8px; }
+      .lb-card .lb-pts { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Case <span id="caseNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>⚖️ Kangaroo Court</h1>
+    <p>One player stands trial on a ridiculous charge — prosecutor and defense make their case, the jury secretly votes twice, and the verdict decides who scores.</p>
+  </div>
+
+  <div class="fb-warning hidden" id="fb-warning">
+    ⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
+  </div>
+
+  <div class="status-line" id="status-line"></div>
+
+  <div class="charge-card idle" id="charge-card">
+    <span class="charge-placeholder" id="charge-placeholder">Press <strong>⚖️ Draw a Charge</strong> to open the trial</span>
+    <div id="charge-content" style="display:none">
+      <span class="charge-emoji" id="charge-emoji"></span>
+      <span class="charge-label">⚖️ The defendant is charged with…</span>
+      <span class="charge-text" id="charge-text"></span>
+    </div>
+  </div>
+
+  <div class="role-strip hidden" id="role-strip"></div>
+
+  <div class="kc-timer-row hidden" id="kc-timer-row">
+    <div class="kc-dial" id="kc-dial">0</div>
+    <button class="kc-timer-btn" id="kc-timer-btn" onclick="toggleTimer()">⏸️ Pause</button>
+  </div>
+
+  <div class="jury-tally hidden" id="jury-tally"></div>
+
+  <button class="btn-cta" id="cta-btn" onclick="advance()"></button>
+
+  <div class="leaderboard" id="leaderboard"></div>
+  <div class="score-reset"><button onclick="resetScores()">↺ Reset scores</button></div>
+
+  <!-- player cards: role + phase decide what each card shows -->
+  <div id="room-mount"></div>
+
+  <div class="charge-browser">
+    <div class="charge-browser-hdr" id="charge-browser-hdr"></div>
+    <div class="charge-list" id="charge-list"></div>
+  </div>
+
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script>
+    const DECK = GAME_DATA.kangaroo;
+
+    let caseNum = 0;
+    let phase = 'idle'; // idle | prevote | open-pro | open-def | cross | close-pro | close-def | finalvote | reveal
+    let defendantIdx = -1, prosecutorIdx = -1, defenseIdx = -1;
+    let defendantBag = [];    // shuffled players still waiting to stand trial this cycle
+    let prosecutorCount = []; // times each player has prosecuted, kept even like the referee in Say It Without Saying It
+    let defenseCount = [];
+    let charge = null;
+    let usedCharges = [];
+    let prevoteId = '';
+    let finalVoteId = '';
+    let reveal = null;   // set by doReveal(): { verdict, juryDetail, roundPoints, guiltyFinal, notGuiltyFinal }
+    let scores = [];     // cumulative, across cases — roles rotate, so this is the real scoreboard
+
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+    function shuffled(n) {
+      const a = Array.from({ length: n }, (_, i) => i);
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#e94560',
+      counts: [4, 5, 6],
+      defaultCount: 4,
+      linksNote: 'Each case deals a Defendant, a Prosecutor and a Defense Attorney — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
+      onPlayerData: () => { renderJuryTally(); },
+      onCountChange: () => { defendantIdx = prosecutorIdx = defenseIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; syncScores(); resetToIdle(); },
+      onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
+    });
+    document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+
+    function syncScores() { while (scores.length < ROOM.count) scores.push(0); }
+    syncScores();
+
+    function roleOf(i) {
+      if (i === defendantIdx) return 'defendant';
+      if (i === prosecutorIdx) return 'prosecutor';
+      if (i === defenseIdx) return 'defense';
+      return 'jury';
+    }
+
+    ROOM.setDecorator(i => {
+      if (!caseNum) return {};
+      const role = roleOf(i);
+      const cls = role === 'jury' ? '' : 'is-role-' + role;
+      const label = { defendant: '🙇 Defendant', prosecutor: '⚔️ Prosecutor', defense: '🛡️ Defense', jury: '👥 Jury' }[role];
+      return { marked: role !== 'jury', cls, answer: `${label}<span class="la-sub">🏆 ${scores[i] || 0} pts</span>` };
+    });
+
+    /* ── Role dealing ──
+       The defendant comes out of a shuffled bag, same trick as the clue giver in
+       Say It Without Saying It: everyone stands trial once before anyone repeats, and
+       a refill never lets the same defendant go twice in a row across the seam.
+       Prosecutor and Defense are each drawn from whoever has held that job fewest
+       times, so both stay even over a long session without ever following a fixed order. */
+    function drawDefendant(n) {
+      defendantBag = defendantBag.filter(i => i < n);
+      if (!defendantBag.length) {
+        defendantBag = shuffled(n);
+        if (n > 1 && defendantBag[0] === defendantIdx) defendantBag.push(defendantBag.shift());
+      }
+      return defendantBag.shift();
+    }
+    function drawRole(countArr, n, exclude) {
+      while (countArr.length < n) countArr.push(0);
+      const eligible = Array.from({ length: n }, (_, i) => i).filter(i => !exclude.includes(i));
+      const fewest = Math.min(...eligible.map(i => countArr[i] || 0));
+      const pool = eligible.filter(i => (countArr[i] || 0) === fewest);
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      countArr[pick] = (countArr[pick] || 0) + 1;
+      return pick;
+    }
+    function dealRoles() {
+      const n = ROOM.count;
+      defendantIdx = drawDefendant(n);
+      prosecutorIdx = drawRole(prosecutorCount, n, [defendantIdx]);
+      defenseIdx = drawRole(defenseCount, n, [defendantIdx, prosecutorIdx]);
+    }
+
+    /* ── The clock — identical mirroring pattern to the other timed games: only state
+       changes are published, each card ticks itself from there. total === 0 means
+       "no clock this phase" (Cross-Examination is free-form). ── */
+    const timer = { total: 0, left: 0, running: false, seq: 0, iv: null };
+
+    function timerPayload() {
+      return { seq: timer.seq, state: timer.running ? 'running' : (timer.left <= 0 ? 'done' : 'paused'), remaining: timer.left, total: timer.total };
+    }
+    function startTicking() {
+      stopTicking();
+      timer.iv = setInterval(() => {
+        timer.left = Math.max(0, timer.left - 1);
+        if (timer.left <= 0) { stopTicking(); timer.running = false; timer.seq++; pushState(); renderTimer(); return; }
+        renderTimer();
+      }, 1000);
+    }
+    function stopTicking() { if (timer.iv) { clearInterval(timer.iv); timer.iv = null; } }
+    function toggleTimer() {
+      if (!timer.total) return;
+      if (timer.running) { stopTicking(); timer.running = false; }
+      else { if (timer.left <= 0) timer.left = timer.total; timer.running = true; startTicking(); }
+      timer.seq++;
+      pushState();
+      renderTimer();
+    }
+
+    /* ── Round flow ──
+       idle/reveal → prevote (new case) → open-pro → open-def → cross →
+       close-pro → close-def → finalvote → reveal → (repeat) */
+    function dealNewCase() {
+      if (!ROOM.enabled) return;
+      syncScores();
+      dealRoles();
+      let avail = DECK.map((_, i) => i).filter(i => !usedCharges.includes(i));
+      if (!avail.length) { usedCharges = []; avail = DECK.map((_, i) => i); }
+      const pick = avail[Math.floor(Math.random() * avail.length)];
+      usedCharges.push(pick);
+      charge = DECK[pick];
+      caseNum++;
+      phase = 'prevote';
+      prevoteId = genId();
+      finalVoteId = '';
+      reveal = null;
+      stopTicking();
+      timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
+      ROOM.publish(i => payloadFor(i)); // full reset — wipes last case's votes
+      renderAll();
+    }
+
+    function startPhase(next, secs) {
+      phase = next;
+      stopTicking();
+      if (secs > 0) {
+        timer.total = secs; timer.left = secs; timer.running = true;
+        startTicking();
+      } else {
+        timer.total = 0; timer.left = 0; timer.running = false;
+      }
+      timer.seq++;
+      pushState();
+      renderAll();
+    }
+
+    function advance() {
+      if (!ROOM.enabled) return;
+      if (phase === 'idle' || phase === 'reveal') { dealNewCase(); return; }
+      if (phase === 'prevote')    { startPhase('open-pro', 60); return; }
+      if (phase === 'open-pro')   { startPhase('open-def', 60); return; }
+      if (phase === 'open-def')   { startPhase('cross', 0); return; }
+      if (phase === 'cross')      { startPhase('close-pro', 30); return; }
+      if (phase === 'close-pro')  { startPhase('close-def', 30); return; }
+      if (phase === 'close-def')  { finalVoteId = genId(); startPhase('finalvote', 0); return; }
+      if (phase === 'finalvote')  { doReveal(); return; }
+    }
+
+    function resetToIdle() {
+      caseNum = 0; phase = 'idle'; charge = null; reveal = null;
+      stopTicking(); timer.running = false; timer.total = 0; timer.left = 0;
+      pushState();
+      renderAll();
+    }
+
+    /* ── Reveal: compare each juror's secret pre-vote to their final vote.
+       Scoring — "persuasion differential": a juror flipping Guilty → Not Guilty pays
+       off the Defense; flipping the other way pays off the Prosecutor. The defendant's
+       own fate rides on the final headcount (ties favor the defendant — reasonable doubt). ── */
+    function doReveal() {
+      const n = ROOM.count;
+      const juryIdx = Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx);
+      let guiltyFinal = 0, notGuiltyFinal = 0;
+      const juryDetail = juryIdx.map(i => {
+        const num = i + 1;
+        const d = ROOM.answers[num] || {};
+        const pre = d.kcPrevote && d.kcPrevote.id === prevoteId ? d.kcPrevote.choice : null;
+        const fin = d.kcFinalvote && d.kcFinalvote.id === finalVoteId ? d.kcFinalvote.choice : null;
+        if (fin === 'guilty') guiltyFinal++; else if (fin === 'notguilty') notGuiltyFinal++;
+        let flip = null;
+        if (pre && fin && pre !== fin) flip = pre === 'guilty' ? 'toNotGuilty' : 'toGuilty';
+        return { idx: i, num, pre, fin, flip };
+      });
+      const verdict = guiltyFinal > notGuiltyFinal ? 'guilty' : 'notguilty';
+
+      const roundPoints = {};
+      juryDetail.forEach(j => {
+        if (j.flip === 'toNotGuilty') roundPoints[defenseIdx] = (roundPoints[defenseIdx] || 0) + 2;
+        if (j.flip === 'toGuilty') roundPoints[prosecutorIdx] = (roundPoints[prosecutorIdx] || 0) + 2;
+      });
+      roundPoints[defendantIdx] = (roundPoints[defendantIdx] || 0) + (verdict === 'notguilty' ? 3 : -1);
+
+      Object.keys(roundPoints).forEach(idx => { scores[idx] = (scores[idx] || 0) + roundPoints[idx]; });
+
+      reveal = { verdict, juryDetail, roundPoints, guiltyFinal, notGuiltyFinal };
+      phase = 'reveal';
+      stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
+      pushState();
+      renderAll();
+    }
+
+    function resetScores() {
+      scores = scores.map(() => 0);
+      pushState();
+      renderAll();
+    }
+
+    /* ── Firebase ── */
+    function pushState() { ROOM.update(i => payloadFor(i)); }
+
+    function payloadFor(i) {
+      const role = roleOf(i);
+      const base = {
+        game: 'kangaroo', case: caseNum, phase, role,
+        defendantName: caseNum ? ROOM.name(defendantIdx) : null,
+        prosecutorName: caseNum ? ROOM.name(prosecutorIdx) : null,
+        defenseName: caseNum ? ROOM.name(defenseIdx) : null,
+        emoji: charge ? charge.emoji : null,
+        charge: charge ? charge.charge : null,
+        prevoteId: phase === 'prevote' ? prevoteId : null,
+        finalVoteId: phase === 'finalvote' ? finalVoteId : null,
+        timer: timerPayload(),
+        score: scores[i] || 0,
+        result: null,
+      };
+      if (phase === 'reveal' && reveal) {
+        const mine = reveal.juryDetail.find(j => j.idx === i);
+        base.result = {
+          verdict: reveal.verdict,
+          points: reveal.roundPoints[i] || 0,
+          flip: mine ? mine.flip : null,
+        };
+      }
+      return base;
+    }
+
+    /* ── Rendering ── */
+    function renderAll() {
+      document.getElementById('caseNum').textContent = caseNum;
+      renderStatus();
+      renderCharge();
+      renderRoleStrip();
+      renderTimer();
+      renderJuryTally();
+      renderCTA();
+      renderLeaderboard();
+      ROOM.render();
+    }
+
+    function renderStatus() {
+      const el = document.getElementById('status-line');
+      el.classList.remove('live', 'vote', 'win', 'lose');
+      if (!ROOM.enabled) { el.textContent = 'Hand out the player links below to start — the jury\'s vote has to stay secret from the room.'; return; }
+      if (phase === 'idle') { el.textContent = 'Press "⚖️ Draw a Charge" to open the trial.'; return; }
+      const pros = ROOM.name(prosecutorIdx), def = ROOM.name(defenseIdx), dft = ROOM.name(defendantIdx);
+      if (phase === 'prevote') { el.classList.add('vote'); el.innerHTML = `🤫 The jury is secretly voting — <b>Guilty or Not Guilty?</b><span class="sl-sub">This vote stays hidden until the verdict is revealed.</span>`; return; }
+      if (phase === 'open-pro') { el.classList.add('live'); el.innerHTML = `⚔️ <b>${esc(pros)}</b> — Prosecution's opening statement`; return; }
+      if (phase === 'open-def') { el.classList.add('live'); el.innerHTML = `🛡️ <b>${esc(def)}</b> — Defense's opening statement`; return; }
+      if (phase === 'cross') { el.classList.add('live'); el.innerHTML = `🗣️ Cross-Examination — ${esc(pros)} and ${esc(def)} question <b>${esc(dft)}</b>, who must answer`; return; }
+      if (phase === 'close-pro') { el.classList.add('live'); el.innerHTML = `⚔️ <b>${esc(pros)}</b> — Prosecution's closing argument`; return; }
+      if (phase === 'close-def') { el.classList.add('live'); el.innerHTML = `🛡️ <b>${esc(def)}</b> — Defense's closing argument`; return; }
+      if (phase === 'finalvote') { el.classList.add('vote'); el.innerHTML = `🗳️ The jury is casting their <b>final</b> vote…`; return; }
+      if (phase === 'reveal' && reveal) {
+        el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
+        const v = reveal.verdict === 'notguilty' ? `✅ NOT GUILTY — ${esc(dft)} walks free!` : `🚨 GUILTY — ${esc(dft)} is convicted!`;
+        el.innerHTML = `${v}<span class="sl-sub">Final vote: ${reveal.guiltyFinal} guilty · ${reveal.notGuiltyFinal} not guilty</span>`;
+      }
+    }
+
+    function renderCharge() {
+      const card = document.getElementById('charge-card');
+      card.classList.toggle('idle', !charge);
+      document.getElementById('charge-placeholder').style.display = charge ? 'none' : '';
+      document.getElementById('charge-content').style.display = charge ? '' : 'none';
+      if (charge) {
+        document.getElementById('charge-emoji').textContent = charge.emoji;
+        document.getElementById('charge-text').textContent = charge.charge;
+      }
+    }
+
+    function renderRoleStrip() {
+      const el = document.getElementById('role-strip');
+      el.classList.toggle('hidden', !caseNum);
+      if (!caseNum) return;
+      const chip = (role, label, name) => {
+        const active = (role === 'prosecutor' && (phase === 'open-pro' || phase === 'close-pro'))
+          || (role === 'defense' && (phase === 'open-def' || phase === 'close-def'))
+          || (role === 'defendant' && phase === 'cross');
+        return `<div class="role-chip rc-${role}${active ? ' rc-active' : ''}">
+          <span class="rc-label">${label}</span>
+          <span class="rc-name">${esc(name)}</span>
+        </div>`;
+      };
+      el.innerHTML =
+        chip('defendant', '🙇 Defendant', ROOM.name(defendantIdx)) +
+        chip('prosecutor', '⚔️ Prosecutor', ROOM.name(prosecutorIdx)) +
+        chip('defense', '🛡️ Defense', ROOM.name(defenseIdx));
+    }
+
+    function renderTimer() {
+      const row = document.getElementById('kc-timer-row');
+      const on = timer.total > 0;
+      row.classList.toggle('hidden', !on);
+      if (!on) return;
+      const dial = document.getElementById('kc-dial');
+      dial.textContent = timer.left;
+      const frac = timer.total ? timer.left / timer.total : 1;
+      dial.classList.toggle('low', frac <= .5 && frac > .25);
+      dial.classList.toggle('critical', frac <= .25);
+      document.getElementById('kc-timer-btn').textContent = timer.running ? '⏸️ Pause' : '▶️ Resume';
+    }
+
+    function juryIndices() {
+      const n = ROOM.count;
+      return Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx);
+    }
+
+    function renderJuryTally() {
+      const el = document.getElementById('jury-tally');
+      if (phase === 'reveal' && reveal) {
+        el.classList.remove('hidden');
+        const verdictLine = `<div class="jt-verdict ${reveal.verdict}">${reveal.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY'}</div>`;
+        const rows = reveal.juryDetail.map(j => {
+          const pre = j.pre === 'guilty' ? '🚨 Guilty' : j.pre === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
+          const fin = j.fin === 'guilty' ? '🚨 Guilty' : j.fin === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
+          const flip = j.flip === 'toNotGuilty' ? '<span class="jt-flip def">flipped → Defense +2</span>'
+                     : j.flip === 'toGuilty' ? '<span class="jt-flip pro">flipped → Prosecutor +2</span>' : '';
+          return `<div class="jt-row"><span>${esc(ROOM.name(j.idx))}</span><span class="jt-vote">${pre} → ${fin}</span>${flip}</div>`;
+        }).join('') || '<div class="jt-row">No jurors this case.</div>';
+        const scoreLine = ['defendant', 'prosecutor', 'defense'].map(role => {
+          const idx = role === 'defendant' ? defendantIdx : role === 'prosecutor' ? prosecutorIdx : defenseIdx;
+          const pts = reveal.roundPoints[idx] || 0;
+          if (!pts) return '';
+          const label = { defendant: '🙇', prosecutor: '⚔️', defense: '🛡️' }[role];
+          return `<span class="jt-score ${pts > 0 ? 'plus' : 'minus'}">${label} ${esc(ROOM.name(idx))} ${pts > 0 ? '+' : ''}${pts}</span>`;
+        }).join('');
+        el.innerHTML = `<div class="jt-title">⚖️ Verdict</div>${verdictLine}<div class="jt-rows">${rows}</div>${scoreLine ? `<div class="jt-scores">${scoreLine}</div>` : ''}`;
+        return;
+      }
+      if (phase !== 'prevote' && phase !== 'finalvote') { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+      const jury = juryIndices();
+      const id = phase === 'prevote' ? prevoteId : finalVoteId;
+      const field = phase === 'prevote' ? 'kcPrevote' : 'kcFinalvote';
+      const done = jury.filter(i => {
+        const d = ROOM.answers[i + 1];
+        return d && d[field] && d[field].id === id;
+      }).length;
+      el.innerHTML = `<div class="jt-title">🗳️ ${phase === 'prevote' ? 'Pre-Vote' : 'Final Vote'}</div><div class="jt-count">${done} / ${jury.length} jurors have voted</div>`;
+    }
+
+    function renderCTA() {
+      const btn = document.getElementById('cta-btn');
+      btn.disabled = !ROOM.enabled;
+      btn.classList.toggle('is-next', (phase === 'reveal' || (timer.total > 0 && timer.left <= 0)) && ROOM.enabled);
+      if (!ROOM.enabled) { btn.textContent = '🔗 Player links needed'; return; }
+      const labels = {
+        idle: '⚖️ Draw a Charge',
+        prevote: '🎤 Begin Opening Arguments',
+        'open-pro': "🛡️ Defense's Opening Statement",
+        'open-def': '🗣️ Begin Cross-Examination',
+        cross: '🎙️ Closing Arguments',
+        'close-pro': "🛡️ Defense's Closing Argument",
+        'close-def': '🗳️ Final Jury Vote',
+        finalvote: '⚖️ Reveal Verdict!',
+        reveal: '🆕 Next Case',
+      };
+      btn.textContent = labels[phase] || '⚖️ Draw a Charge';
+    }
+
+    function renderLeaderboard() {
+      const el = document.getElementById('leaderboard');
+      if (!caseNum) { el.innerHTML = ''; return; }
+      syncScores();
+      const top = Math.max(...scores, 0);
+      let html = '';
+      for (let i = 0; i < ROOM.count; i++) {
+        html += `<div class="lb-card${scores[i] === top && top > 0 ? ' is-top' : ''}">
+          <span class="lb-name">${esc(ROOM.name(i))}</span>
+          <span class="lb-pts">${scores[i] || 0}</span>
+        </div>`;
+      }
+      el.innerHTML = html;
+    }
+
+    /* ── Charge browser: unnumbered, just for the host to preview what might come up ── */
+    (function buildBrowser() {
+      document.getElementById('charge-browser-hdr').textContent = `⚖️ All Charges (${DECK.length}) — drawn by "Draw a Charge"`;
+      document.getElementById('charge-list').innerHTML = DECK.map(c =>
+        `<div class="charge-item"><span class="ci-emoji">${c.emoji}</span><span>The defendant is charged with ${esc(c.charge)}</span></div>`
+      ).join('');
+    })();
+
+    renderAll();
+  </script>
+</body>
+</html>

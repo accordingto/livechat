@@ -345,6 +345,18 @@
     @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
     @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
+    /* ⚖️ Kangaroo Court: role tint matches the host screen's role chips */
+    .secret-card.theme-kangaroo { padding: 28px 24px 24px; gap: 16px; }
+    .kc-card-timer {
+      width: 74px; height: 74px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 4px solid #a78bfa; color: #c4b5fd;
+      font-size: 1.75rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .kc-card-timer.low { border-color: #f59e0b; color: #f59e0b; }
+    .kc-card-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+
     /* a dealt role (You're In The Scene) or side (Persuade Together) */
     .role-box {
       width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 16px;
@@ -387,7 +399,7 @@
 
     /* one vivid gradient per player number — the same player always sees the
        same color all night, so their card is instantly recognizable as theirs */
-    /* One palette for all ten games, in Dare Conquest's board order — player 1 is red,
+    /* One palette for every game, in Dare Conquest's board order — player 1 is red,
        2 blue, 3 green and so on — so a player keeps the same colour whichever game the
        host switches to, and it always matches their piece on the Dare Conquest board. */
     const NAME_COLORS = [
@@ -902,6 +914,104 @@
         ${buzzArea}`);
     }
 
+    /* ⚖️ Kangaroo Court: the jury's vote (twice a case — a secret pre-vote, then a
+       final vote after arguments) is the only thing a card writes back. Two distinct
+       fields, not one shared "vote" field like the other games use, because both
+       values have to survive to Reveal at the same time to compute who flipped. */
+    function submitKcVote(field, id, choice) {
+      if (!db || !session || !token || !id) return;
+      db.ref(`rooms/${session}/players/${token}/${field}`).set({ id, choice });
+    }
+
+    /* the host publishes the clock only on state changes; each card ticks itself
+       from the number it was handed, same `seq`-guarded pattern as the other games */
+    const kcTimer = { seq: null, left: 0, total: 0, iv: null };
+    function stopKcTimer() { if (kcTimer.iv) { clearInterval(kcTimer.iv); kcTimer.iv = null; } }
+    function paintKcTimer() {
+      const el = document.getElementById('kc-card-timer');
+      if (!el) return;
+      el.textContent = kcTimer.left;
+      const frac = kcTimer.total ? kcTimer.left / kcTimer.total : 1;
+      el.classList.toggle('low', frac <= .5 && frac > .25);
+      el.classList.toggle('critical', frac <= .25);
+    }
+    function tickKcTimer() {
+      kcTimer.left = Math.max(0, kcTimer.left - 1);
+      if (kcTimer.left <= 0) stopKcTimer();
+      paintKcTimer();
+    }
+    function syncKcTimer(t) {
+      if (!t || !t.total) { stopKcTimer(); kcTimer.seq = null; return false; }
+      if (t.seq !== kcTimer.seq) {
+        kcTimer.seq = t.seq;
+        kcTimer.left = t.remaining;
+        kcTimer.total = t.total;
+        stopKcTimer();
+        if (t.state === 'running') kcTimer.iv = setInterval(tickKcTimer, 1000);
+      }
+      return true;
+    }
+
+    function kangarooCardHTML(data) {
+      if (!data.case) {
+        return `<div class="secret-card theme-kangaroo">${nameBanner(data)}<span class="pick-sub">⏳ Waiting for the next case…</span></div>`;
+      }
+      const role = data.role;
+      const roleHex = { defendant: '#ef4444', prosecutor: '#f97316', defense: '#3b82f6', jury: '#a78bfa' }[role] || '#e94560';
+      const roleLabel = { defendant: '🙇 You are the Defendant', prosecutor: '⚔️ You are the Prosecutor', defense: '🛡️ You are the Defense Attorney', jury: '👥 You are on the Jury' }[role] || '';
+      const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
+      const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
+      const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}${score}</div>`;
+
+      const timed = data.phase === 'open-pro' || data.phase === 'open-def' || data.phase === 'close-pro' || data.phase === 'close-def';
+      const ticking = timed && syncKcTimer(data.timer);
+      const clock = ticking ? `<div class="kc-card-timer" id="kc-card-timer">${kcTimer.left}</div>` : '';
+      if (!ticking) stopKcTimer();
+
+      if (data.phase === 'reveal' && data.result) {
+        const r = data.result;
+        const verdictLine = r.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY';
+        const ptsLine = r.points ? `<span class="pick-sub">${r.points > 0 ? '+' : ''}${r.points} points this case</span>` : '';
+        const flipLine = r.flip === 'toNotGuilty' ? '<span class="pick-sub">You flipped to Not Guilty — Defense +2</span>'
+                        : r.flip === 'toGuilty' ? '<span class="pick-sub">You flipped to Guilty — Prosecutor +2</span>' : '';
+        return shell(`<span class="pick-text">${verdictLine}</span>${ptsLine}${flipLine}`);
+      }
+
+      if (data.phase === 'prevote' || data.phase === 'finalvote') {
+        if (role !== 'jury') {
+          return shell(`<span class="pick-sub">🤫 The jury is voting${data.phase === 'finalvote' ? ' one last time' : ''} — hang tight…</span>`);
+        }
+        const field = data.phase === 'prevote' ? 'kcPrevote' : 'kcFinalvote';
+        const id = data.phase === 'prevote' ? data.prevoteId : data.finalVoteId;
+        const mine = data[field] && id && data[field].id === id ? data[field].choice : null;
+        return shell(`
+          <span class="pick-sub">${data.phase === 'prevote' ? 'This is secret — nobody sees it until the verdict.' : 'Last chance — did the trial change your mind?'}</span>
+          <div class="pick-row">
+            <button class="pick-btn${mine === 'guilty' ? ' picked' : ''}"${mine === 'guilty' ? ' style="color:#ef4444;background:#ef44441f"' : ''} onclick="submitKcVote('${field}','${id}','guilty')">
+              <span class="pb-key">🚨</span><span class="pb-label">Guilty</span>
+            </button>
+            <button class="pick-btn${mine === 'notguilty' ? ' picked' : ''}"${mine === 'notguilty' ? ' style="color:#22c55e;background:#22c55e1f"' : ''} onclick="submitKcVote('${field}','${id}','notguilty')">
+              <span class="pb-key">✅</span><span class="pb-label">Not Guilty</span>
+            </button>
+          </div>`);
+      }
+
+      if (data.phase === 'open-pro' || data.phase === 'close-pro') {
+        if (role === 'prosecutor') return shell(`${clock}<span class="pick-text">🎤 The floor is yours — make your case!</span>`);
+        return shell(`${clock}<span class="pick-sub">⚔️ ${esc(data.prosecutorName || 'The Prosecutor')} is speaking…</span>`);
+      }
+      if (data.phase === 'open-def' || data.phase === 'close-def') {
+        if (role === 'defense') return shell(`${clock}<span class="pick-text">🎤 The floor is yours — defend your client!</span>`);
+        return shell(`${clock}<span class="pick-sub">🛡️ ${esc(data.defenseName || 'The Defense')} is speaking…</span>`);
+      }
+      if (data.phase === 'cross') {
+        if (role === 'defendant') return shell(`<span class="pick-text">🎯 Answer every question — no dodging!</span>`);
+        if (role === 'prosecutor' || role === 'defense') return shell(`<span class="pick-text">❓ Ask ${esc(data.defendantName || 'the defendant')} a question!</span>`);
+        return shell(`<span class="pick-sub">👀 Watching the cross-examination…</span>`);
+      }
+      return shell(`<span class="pick-sub">⏳ Waiting…</span>`);
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -1035,6 +1145,7 @@
       // paint after the markup lands so the clock gets its colour on the first frame,
       // not only on the next tick
       if (data.game === 'taboo') { el.innerHTML = tabooCardHTML(data); paintTabooTimer(); return; }
+      if (data.game === 'kangaroo') { el.innerHTML = kangarooCardHTML(data); paintKcTimer(); return; }
       showError('⏳ Waiting for the host to start a game...');
     }
 

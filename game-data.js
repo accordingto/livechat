@@ -1208,4 +1208,41 @@ const GAME_DATA = {
     { level: 'hard', emoji: '🙏', word: 'Gratitude', forbidden: ['Thankful', 'Appreciate', 'Thanks', 'Grateful'] },
     { level: 'hard', emoji: '📼', word: 'Nostalgia', forbidden: ['Old Days', 'Miss', 'Remember', 'Past'] },
   ],
+
+  /* ── ⚖️ Kangaroo Court — 30 absurd-but-relatable "charges" the host reads aloud.
+     Each entry is just the act itself; the host screen always prepends
+     "The defendant is charged with…", so keep these as a lowercase gerund phrase
+     that reads naturally after that lead-in. ── */
+  kangaroo: [
+    { emoji: '📱', charge: "leaving a group chat on read for 72 hours, then posting a story in the meantime" },
+    { emoji: '🍽️', charge: "saying \"I don't care, anywhere is fine\" for three years straight, causing chronic indecision across the group" },
+    { emoji: '☕', charge: "ordering \"the usual\" at a coffee shop they have visited exactly twice" },
+    { emoji: '🎂', charge: "liking someone's birthday post one week late and calling it \"fashionably late\"" },
+    { emoji: '🚗', charge: "checking their mirrors before a lane change they had already fully decided to make" },
+    { emoji: '🛏️', charge: "setting five alarms and still being personally offended each one goes off" },
+    { emoji: '📺', charge: "spoiling the ending of a show, then asking \"oh, did you not finish it?\"" },
+    { emoji: '🍕', charge: "ordering pineapple pizza and refusing to discuss the matter further" },
+    { emoji: '💬', charge: "typing for two full minutes and sending just \"nvm\"" },
+    { emoji: '🎧', charge: "wearing headphones with no music playing, purely for social protection" },
+    { emoji: '📸', charge: "taking 47 photos of the same sunset and posting exactly one" },
+    { emoji: '🧦', charge: "owning eleven single socks and zero matching pairs" },
+    { emoji: '🛒', charge: "going into a store for one item and leaving with a full cart" },
+    { emoji: '🎮', charge: "rage-quitting a game, then reinstalling it four minutes later" },
+    { emoji: '📚', charge: "buying a book, reading the first chapter, and calling it \"basically finished\"" },
+    { emoji: '🚿', charge: "holding a full concert in the shower and denying it under oath" },
+    { emoji: '🍫', charge: "hiding chocolate from themselves, then \"finding\" it thirty minutes later" },
+    { emoji: '📅', charge: "saying \"let's definitely hang out soon\" and never once following up" },
+    { emoji: '🐌', charge: "walking at the exact speed of the slowest person in a crowded hallway" },
+    { emoji: '🎬', charge: "rewatching the same comfort show for the eleventh time this year instead of starting anything new" },
+    { emoji: '🧊', charge: "putting leftovers in the fridge \"to eat tomorrow\" and never touching them again" },
+    { emoji: '📦', charge: "ordering a package, then acting shocked when the doorbell rings" },
+    { emoji: '🗣️', charge: "starting every sentence with \"not to be dramatic, but\"" },
+    { emoji: '🎤', charge: "knowing every word to a song and still checking the lyrics" },
+    { emoji: '🧴', charge: "buying a skincare product because of one video, using it exactly twice" },
+    { emoji: '🚪', charge: "waving goodbye, then continuing the conversation for twenty more minutes at the door" },
+    { emoji: '🍜', charge: "claiming they're \"not that hungry,\" then eating the most food at the table" },
+    { emoji: '📵', charge: "leaving their phone in another room \"on purpose,\" then checking it four times an hour" },
+    { emoji: '🎉', charge: "RSVPing yes to an event, then negotiating with themselves at the door for an hour" },
+    { emoji: '🧠', charge: "forgetting why they walked into a room immediately after fully committing to the journey" },
+  ],
 };
