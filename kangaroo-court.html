@@ -75,41 +75,34 @@
       .kc-flow-dot { position: static; }
     }
 
-    /* ── Status line — doubles as the main CTA. It already says what's happening
-       right now; tapping it just moves to the next phase, so there's no separate
-       button restating "what happens next" (the flowchart sidebar covers that). ── */
+    /* ── Status line — lives in the sidebar, under the flow steps, and IS the
+       CTA: a real solid button, one short line, no restating "what's next"
+       since the step list right above it already shows that. ── */
     .status-line {
-      width: 100%; max-width: 1100px;
-      background: #13132b; border: 2px solid #1e1e42;
-      border-radius: 16px; padding: 18px 48px 18px 20px; margin-bottom: 16px; text-align: center;
-      font-size: 1.05rem; font-weight: 800; color: #999; line-height: 1.5;
-      animation: fadeUp .4s ease both;
-      position: relative; cursor: pointer;
-      transition: border-color .3s, color .3s, background .3s, filter .15s, transform .1s;
+      display: block; width: 100%;
+      background: linear-gradient(135deg, #ff5a76, #c81e3a);
+      color: #fff; border: 2px solid #ff8095; border-radius: 12px;
+      padding: 14px 12px; margin-top: 18px;
+      font-size: .92rem; font-weight: 800; line-height: 1.2; text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      box-shadow: 0 6px 18px rgba(233,69,96,.35);
+      cursor: pointer;
+      transition: box-shadow .2s, transform .1s, filter .15s, background .3s, border-color .3s, color .3s;
     }
-    /* a persistent chevron is the only hint needed that this box is tappable */
-    .status-line::after {
-      content: '›'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
-      font-size: 1.7rem; font-weight: 900; color: currentColor; opacity: .4;
-      transition: opacity .2s, transform .2s;
+    .status-line:hover:not(.not-clickable) { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(233,69,96,.5); }
+    .status-line:active:not(.not-clickable) { transform: scale(.98); }
+    .status-line.not-clickable {
+      cursor: default; background: #0d0d1a; color: #555; border-color: #1e1e42; box-shadow: none;
     }
-    .status-line:hover { filter: brightness(1.1); }
-    .status-line:hover::after { opacity: .85; transform: translateY(-50%) translateX(3px); }
-    .status-line:active { transform: scale(.997); }
-    .status-line.not-clickable { cursor: default; }
-    .status-line.not-clickable:hover { filter: none; }
-    .status-line.not-clickable::after { display: none; }
-    .status-line.live  { border-color: #e94560; background: rgba(233,69,96,.08); }
-    .status-line.vote  { border-color: #a78bfa; color: #c4b5fd; background: rgba(167,139,250,.08); }
-    .status-line.win   { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
-    .status-line.lose  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
-    .status-line .sl-sub { display: block; margin-top: 6px; font-size: .82rem; font-weight: 700; color: #777; }
+    .status-line.vote { background: linear-gradient(135deg, #b9a1fb, #7c3aed); border-color: #c4b5fd; box-shadow: 0 6px 18px rgba(167,139,250,.4); }
+    .status-line.win  { background: linear-gradient(135deg, #4ade80, #15803d); border-color: #86efac; box-shadow: 0 6px 18px rgba(34,197,94,.4); }
+    .status-line.lose { background: linear-gradient(135deg, #f87171, #b91c1c); border-color: #fca5a5; box-shadow: 0 6px 18px rgba(239,68,68,.4); }
     /* nudges the host when a phase's clock has run out, or the verdict is ready
-       to reveal — pulses in whatever color the box is already showing */
+       to reveal — a brightness pulse works on every color variant above */
     .status-line.is-next { animation: statusPulse 1.6s ease-in-out infinite; }
     @keyframes statusPulse {
-      0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
-      50%      { box-shadow: 0 0 28px color-mix(in srgb, currentColor 65%, transparent); }
+      0%, 100% { filter: brightness(1); }
+      50%      { filter: brightness(1.3); }
     }
 
     /* ── The charge card: the courtroom's centerpiece ── */
@@ -337,14 +330,14 @@
         <div class="charge-swap hidden" id="charge-swap">
           <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
         </div>
+        <!-- what's happening right now, as a real button — tap it to advance.
+             text stays to one short line; the flow steps above already say
+             what's coming next -->
+        <div class="status-line" id="status-line" onclick="advance()"></div>
       </div>
     </aside>
 
     <div class="kc-main">
-      <!-- shows what's happening right now AND doubles as the CTA — tap it to
-           advance; the flowchart on the left already says what's coming next -->
-      <div class="status-line" id="status-line" onclick="advance()"></div>
-
       <div class="role-strip hidden" id="role-strip"></div>
 
       <div class="charge-card idle" id="charge-card">
@@ -745,24 +738,29 @@
     /* what's happening right now — and, since it doubles as the CTA, whether
        tapping it does anything (not-clickable) and whether it should nudge the
        host that it's time to tap (is-next: clock ran out, or the verdict's ready) */
+    /* one short line, always — who's doing what is already on the role strip,
+       and the full verdict breakdown is in the jury tally panel below */
+    const STATUS_LABELS = {
+      idle: '⚖️ Draw a Charge',
+      prevote: '🤫 Jury is voting',
+      prosecution: "⚔️ Prosecution's turn",
+      defense: "🛡️ Defense's turn",
+      cross: '🗣️ Cross-Examination',
+      finalvote: '🗳️ Final vote',
+    };
     function renderStatus() {
       const el = document.getElementById('status-line');
-      el.classList.remove('live', 'vote', 'win', 'lose');
+      el.classList.remove('vote', 'win', 'lose');
       el.classList.toggle('not-clickable', !ROOM.enabled);
       el.classList.toggle('is-next', ROOM.enabled && (phase === 'reveal' || (timer.total > 0 && timer.left <= 0)));
-      if (!ROOM.enabled) { el.textContent = 'Hand out the player links below to start — the jury\'s vote has to stay secret from the room.'; return; }
-      if (phase === 'idle') { el.textContent = 'Press "⚖️ Draw a Charge" to open the trial.'; return; }
-      const pros = ROOM.name(prosecutorIdx), def = ROOM.name(defenseIdx), dft = ROOM.name(defendantIdx);
-      if (phase === 'prevote') { el.classList.add('vote'); el.innerHTML = `🤫 The jury is secretly voting — <b>Guilty or Not Guilty?</b><span class="sl-sub">This vote stays hidden until the verdict is revealed.</span>`; return; }
-      if (phase === 'prosecution') { el.classList.add('live'); el.innerHTML = `⚔️ <b>${esc(pros)}</b> — make the case for GUILTY`; return; }
-      if (phase === 'defense') { el.classList.add('live'); el.innerHTML = `🛡️ <b>${esc(def)}</b> — make the case for NOT GUILTY`; return; }
-      if (phase === 'cross') { el.classList.add('live'); el.innerHTML = `🗣️ Cross-Examination — ${esc(pros)} and ${esc(def)} question <b>${esc(dft)}</b>, who must answer`; return; }
-      if (phase === 'finalvote') { el.classList.add('vote'); el.innerHTML = `🗳️ The jury is casting their <b>final</b> vote…`; return; }
+      if (!ROOM.enabled) { el.textContent = '🔗 Add player links first'; return; }
       if (phase === 'reveal' && reveal) {
         el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
-        const v = reveal.verdict === 'notguilty' ? `✅ NOT GUILTY — ${esc(dft)} walks free!` : `🚨 GUILTY — ${esc(dft)} is convicted!`;
-        el.innerHTML = `${v}<span class="sl-sub">Final vote: ${reveal.guiltyFinal} guilty · ${reveal.notGuiltyFinal} not guilty</span>`;
+        el.textContent = reveal.verdict === 'notguilty' ? '✅ Not Guilty!' : '🚨 Guilty!';
+        return;
       }
+      if (phase === 'prevote' || phase === 'finalvote') el.classList.add('vote');
+      el.textContent = STATUS_LABELS[phase] || STATUS_LABELS.idle;
     }
 
     function renderCharge() {
