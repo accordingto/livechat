@@ -356,6 +356,15 @@
     }
     .kc-card-timer.low { border-color: #f59e0b; color: #f59e0b; }
     .kc-card-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+    /* the witness's own persona + evidence — the only card that actually spells
+       out what to improvise, since everyone else can already see it was called
+       out on the host's shared screen */
+    .witness-box {
+      width: 100%; background: #0d0d1a; border: 2px solid #eab308; border-radius: 14px;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .witness-box .wb-name { font-size: 1.15rem; font-weight: 900; color: #fde68a; }
+    .witness-box .wb-evidence { font-size: .85rem; color: #ccc; line-height: 1.5; }
 
     /* a dealt role (You're In The Scene) or side (Persuade Together) */
     .role-box {
@@ -957,13 +966,15 @@
         return `<div class="secret-card theme-kangaroo">${nameBanner(data)}<span class="pick-sub">⏳ Waiting for the next case…</span></div>`;
       }
       const role = data.role;
-      const roleHex = { defendant: '#ef4444', prosecutor: '#f97316', defense: '#3b82f6', jury: '#a78bfa' }[role] || '#e94560';
-      const roleLabel = { defendant: '🙇 You are the Defendant', prosecutor: '⚔️ You are the Prosecutor', defense: '🛡️ You are the Defense Attorney', jury: '👥 You are on the Jury' }[role] || '';
+      // a juror called to the stand gets the gold "witness" treatment on top of
+      // whatever their base role (always jury) would otherwise show
+      const roleHex = data.isWitness ? '#eab308' : ({ defendant: '#ef4444', prosecutor: '#f97316', defense: '#3b82f6', jury: '#a78bfa' }[role] || '#e94560');
+      const roleLabel = data.isWitness ? "🕵️ You're the Witness!" : ({ defendant: '🙇 You are the Defendant', prosecutor: '⚔️ You are the Prosecutor', defense: '🛡️ You are the Defense Attorney', jury: '👥 You are on the Jury' }[role] || '');
       const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
       const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
       const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}${score}</div>`;
 
-      const timed = data.phase === 'prosecution' || data.phase === 'defense';
+      const timed = data.phase === 'prosecution' || data.phase === 'defense' || data.phase === 'prosecution-witness' || data.phase === 'defense-witness';
       const ticking = timed && syncKcTimer(data.timer);
       const clock = ticking ? `<div class="kc-card-timer" id="kc-card-timer">${kcTimer.left}</div>` : '';
       if (!ticking) stopKcTimer();
@@ -996,6 +1007,22 @@
           </div>`);
       }
 
+      if (data.phase === 'prosecution-witness' || data.phase === 'defense-witness') {
+        const callingRole = data.phase === 'prosecution-witness' ? 'prosecutor' : 'defense';
+        if (data.isWitness && data.witnessCard) {
+          return shell(`
+            ${clock}
+            <div class="witness-box">
+              <span class="wb-name">${esc(data.witnessCard.emoji)} ${esc(data.witnessCard.name)}</span>
+              <span class="wb-evidence">${esc(data.witnessCard.evidence)}</span>
+            </div>
+            <span class="pick-sub">Stay in character — improvise your answers!</span>`);
+        }
+        if (role === callingRole) {
+          return shell(`${clock}<span class="pick-text">❓ Question your witness!</span><span class="pick-sub">${esc(data.witnessJurorName || 'Someone')} is on the stand.</span>`);
+        }
+        return shell(`${clock}<span class="pick-sub">👀 ${esc(data.witnessJurorName || 'Someone')} is testifying…</span>`);
+      }
       if (data.phase === 'prosecution') {
         if (role === 'prosecutor') return shell(`${clock}<span class="pick-text">🎤 The floor is yours — make your case!</span>`);
         return shell(`${clock}<span class="pick-sub">⚔️ ${esc(data.prosecutorName || 'The Prosecutor')} is speaking…</span>`);

@@ -1247,4 +1247,36 @@ const GAME_DATA = {
     { emoji: '📶', charge: "blaming the wifi for losing an online game" },
     { emoji: '🎉', charge: "arriving late to a party they were hosting" },
   ],
+
+  /* ── 🕵️ Kangaroo Court — witnesses either side can call. A jury member plays
+     the part; the "evidence" line is what the host reads out when they take the
+     stand, and is the whole prompt the juror has to improvise around. Same
+     plain-vocabulary, one-line-joke style as the charges — these are silly
+     character witnesses, not real testimony. ── */
+  kangarooWitness: [
+    { emoji: '🏠', name: 'The Roommate', evidence: 'brings a photo of the messy kitchen from "that night"' },
+    { emoji: '🐶', name: 'The Dog Walker', evidence: 'brings a very confused-looking dog as a character witness' },
+    { emoji: '📱', name: 'The Group Chat Admin', evidence: 'brings screenshots that may or may not be edited' },
+    { emoji: '☕', name: 'The Barista', evidence: 'remembers exactly what the defendant ordered, and judges them for it' },
+    { emoji: '🚕', name: 'The Rideshare Driver', evidence: 'brings a five-star rating as proof of good behavior' },
+    { emoji: '👵', name: 'The Grandmother', evidence: 'insists the defendant "would never," despite the evidence' },
+    { emoji: '🧑‍🍳', name: 'The Chef', evidence: 'brings the actual leftover dish in question' },
+    { emoji: '📦', name: 'The Delivery Guy', evidence: 'has a doorbell camera clip, allegedly' },
+    { emoji: '🧦', name: "The Roommate's Laundry Basket", evidence: 'is presented as physical evidence' },
+    { emoji: '🎧', name: 'The Concert Buddy', evidence: 'swears they did not hear any off-key singing' },
+    { emoji: '💼', name: 'The Coworker', evidence: 'brings a calendar full of suspiciously vague meetings' },
+    { emoji: '🐱', name: 'The Cat', evidence: 'refuses to testify — the evidence is purely circumstantial' },
+    { emoji: '📺', name: 'The Ex', evidence: 'brings receipts, literally and figuratively' },
+    { emoji: '🧑‍✈️', name: 'The Security Guard', evidence: 'has "seen everything" on the cameras' },
+    { emoji: '🎂', name: 'The Party Planner', evidence: 'brings a suspiciously specific guest list' },
+    { emoji: '🛒', name: 'The Grocery Store Clerk', evidence: 'remembers the exact aisle, and the exact time' },
+    { emoji: '📸', name: 'The Photographer', evidence: 'brings a blurry photo that "proves everything"' },
+    { emoji: '🎮', name: 'The Gaming Buddy', evidence: 'has the voice chat logs from that night' },
+    { emoji: '🧳', name: 'The Travel Companion', evidence: 'brings a boarding pass as an alibi' },
+    { emoji: '🍕', name: 'The Pizza Guy', evidence: 'testifies about a suspiciously large order for "just one person"' },
+    { emoji: '🧘', name: 'The Yoga Instructor', evidence: 'brings a class attendance sheet as an alibi' },
+    { emoji: '🚪', name: 'The Neighbor', evidence: 'heard everything through the wall, allegedly' },
+    { emoji: '💌', name: 'The Pen Pal', evidence: 'brings a letter that contradicts the whole story' },
+    { emoji: '🧑‍🔧', name: 'The Repair Guy', evidence: 'was in the room the entire time, fixing the sink' },
+  ],
 };
