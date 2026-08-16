@@ -981,7 +981,7 @@
 
       if (data.phase === 'reveal' && data.result) {
         const r = data.result;
-        const verdictLine = r.tie ? '🤷 HUNG JURY' : (r.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY');
+        const verdictLine = r.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY';
         const ptsLine = r.points ? `<span class="pick-sub">${r.points > 0 ? '+' : ''}${r.points} points this case</span>` : '';
         const flipLine = r.flip === 'toNotGuilty' ? `<span class="pick-sub">You flipped to Not Guilty — Defense +${r.flipValue}</span>`
                         : r.flip === 'toGuilty' ? `<span class="pick-sub">You flipped to Guilty — Prosecutor +${r.flipValue}</span>` : '';

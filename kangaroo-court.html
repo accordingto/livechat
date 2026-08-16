@@ -295,7 +295,6 @@
     }
     .jt-verdict.guilty { color: #ef4444; }
     .jt-verdict.notguilty { color: #22c55e; }
-    .jt-verdict.tie { color: #a78bfa; font-size: 1.05rem; }
     .jt-count { font-size: .82rem; font-weight: 700; color: #888; text-align: center; margin-bottom: 10px; }
     .jt-rows { display: flex; flex-direction: column; gap: 6px; }
     .jt-row {
@@ -792,10 +791,10 @@
          lawyer can win by sweeping the whole jury stays roughly the same (~6)
          whether the jury is 1 or 3 people, instead of scaling straight up with
          player count.
-       - The defendant's own fate rides on the final headcount: a real majority
-         either way is worth ±3/−1 (ties still favor acquittal — reasonable
-         doubt — but a true tie means nobody actually swayed anyone, so it's
-         worth 0, not the full +3).
+       - The defendant's own fate rides on the final headcount: Not Guilty
+         needs a real majority (+3), and anything else — a Guilty majority or
+         a tie — convicts them (−1). It's a Kangaroo Court: a tie doesn't get
+         the benefit of the doubt.
        - A witness who actually helped (their side landed at least one flip)
          gets a small +1 of their own — the only way the witness mechanic
          affects the score, keeping it a bonus rather than a core lever. ── */
@@ -814,15 +813,16 @@
         if (pre && fin && pre !== fin) flip = pre === 'guilty' ? 'toNotGuilty' : 'toGuilty';
         return { idx: i, num, pre, fin, flip };
       });
-      const tie = guiltyFinal === notGuiltyFinal;
-      const verdict = guiltyFinal > notGuiltyFinal ? 'guilty' : 'notguilty';
+      // it's a Kangaroo Court — a tie doesn't earn the defendant the benefit of
+      // the doubt, it convicts them, same as a real guilty majority
+      const verdict = guiltyFinal >= notGuiltyFinal ? 'guilty' : 'notguilty';
 
       const roundPoints = {};
       juryDetail.forEach(j => {
         if (j.flip === 'toNotGuilty') roundPoints[defenseIdx] = (roundPoints[defenseIdx] || 0) + flipValue;
         if (j.flip === 'toGuilty') roundPoints[prosecutorIdx] = (roundPoints[prosecutorIdx] || 0) + flipValue;
       });
-      roundPoints[defendantIdx] = (roundPoints[defendantIdx] || 0) + (tie ? 0 : verdict === 'notguilty' ? 3 : -1);
+      roundPoints[defendantIdx] = (roundPoints[defendantIdx] || 0) + (verdict === 'notguilty' ? 3 : -1);
 
       if (witnessOfSide.prosecution != null && roundPoints[prosecutorIdx]) {
         roundPoints[witnessOfSide.prosecution] = (roundPoints[witnessOfSide.prosecution] || 0) + 1;
@@ -833,7 +833,7 @@
 
       Object.keys(roundPoints).forEach(idx => { scores[idx] = (scores[idx] || 0) + roundPoints[idx]; });
 
-      reveal = { verdict, tie, flipValue, juryDetail, roundPoints, guiltyFinal, notGuiltyFinal };
+      reveal = { verdict, flipValue, juryDetail, roundPoints, guiltyFinal, notGuiltyFinal };
       phase = 'reveal';
       stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
       pushState();
@@ -873,7 +873,6 @@
         const witnessSide = i === witnessOfSide.prosecution ? 'prosecution' : i === witnessOfSide.defense ? 'defense' : null;
         base.result = {
           verdict: reveal.verdict,
-          tie: reveal.tie,
           flipValue: reveal.flipValue,
           points: reveal.roundPoints[i] || 0,
           flip: mine ? mine.flip : null,
@@ -950,13 +949,8 @@
       el.classList.toggle('is-next', ROOM.enabled && (phase === 'reveal' || (timer.total > 0 && timer.left <= 0)));
       if (!ROOM.enabled) { el.textContent = '🔗 Add player links first'; return; }
       if (phase === 'reveal' && reveal) {
-        if (reveal.tie) {
-          el.classList.add('vote');
-          el.textContent = '🤷 Hung Jury';
-        } else {
-          el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
-          el.textContent = reveal.verdict === 'notguilty' ? '✅ Not Guilty!' : '🚨 Guilty!';
-        }
+        el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
+        el.textContent = reveal.verdict === 'notguilty' ? '✅ Not Guilty!' : '🚨 Guilty!';
         return;
       }
       if (phase === 'prevote' || phase === 'finalvote') el.classList.add('vote');
@@ -1045,9 +1039,7 @@
       const el = document.getElementById('jury-tally');
       if (phase === 'reveal' && reveal) {
         el.classList.remove('hidden');
-        const verdictLine = reveal.tie
-          ? `<div class="jt-verdict tie">🤷 HUNG JURY — no points for the defendant</div>`
-          : `<div class="jt-verdict ${reveal.verdict}">${reveal.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY'}</div>`;
+        const verdictLine = `<div class="jt-verdict ${reveal.verdict}">${reveal.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY'}</div>`;
         const rows = reveal.juryDetail.map(j => {
           const pre = j.pre === 'guilty' ? '🚨 Guilty' : j.pre === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
           const fin = j.fin === 'guilty' ? '🚨 Guilty' : j.fin === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
