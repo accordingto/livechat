@@ -118,7 +118,9 @@
     .charge-emoji { font-size: 2.8rem; line-height: 1; position: relative; z-index: 1; }
     .charge-placeholder { color: #444; font-size: 1rem; position: relative; z-index: 1; }
 
-    .charge-swap { width: 100%; max-width: 1100px; text-align: center; margin-bottom: 16px; }
+    /* lives inside the flow sidebar now, under the step list */
+    .charge-swap { width: 100%; text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px solid #1e1e42; }
+    .charge-swap .btn-secondary { width: 100%; }
 
     /* ── Role strip: who is who this case ── */
     .role-strip {
@@ -295,6 +297,9 @@
       <div class="kc-flow-card">
         <div class="kc-flow-hdr">📍 Trial Progress</div>
         <div class="kc-flow-steps" id="kc-flow-steps"></div>
+        <div class="charge-swap hidden" id="charge-swap">
+          <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
+        </div>
       </div>
     </aside>
 
@@ -308,10 +313,6 @@
           <span class="charge-label">⚖️ The defendant is charged with…</span>
           <span class="charge-text" id="charge-text"></span>
         </div>
-      </div>
-
-      <div class="charge-swap hidden" id="charge-swap">
-        <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
       </div>
 
       <div class="role-strip hidden" id="role-strip"></div>
