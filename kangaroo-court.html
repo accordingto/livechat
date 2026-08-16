@@ -131,19 +131,22 @@
     .role-chip {
       flex: 1; min-width: 150px;
       background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
-      padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px;
-      transition: border-color .3s, box-shadow .3s;
+      padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      box-shadow: 0 0 18px transparent;
+      transition: border-color .3s, box-shadow .3s, background .3s;
     }
-    .role-chip .rc-label { font-size: .64rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
-    .role-chip .rc-name { font-size: 1.05rem; font-weight: 800; color: #eee; }
-    .role-chip.rc-defendant  { border-color: #ef4444; }
-    .role-chip.rc-defendant  .rc-label { color: #ef4444; }
-    .role-chip.rc-prosecutor { border-color: #f97316; }
-    .role-chip.rc-prosecutor .rc-label { color: #f97316; }
-    .role-chip.rc-defense    { border-color: #3b82f6; }
-    .role-chip.rc-defense    .rc-label { color: #3b82f6; }
-    .role-chip.rc-active { box-shadow: 0 0 22px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
-    @keyframes rolePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+    .role-chip .rc-label { font-size: .66rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+    .role-chip .rc-name { font-size: 1.1rem; font-weight: 800; color: #fff; }
+    /* every role gets a lit-up tinted background, not just a border, so the whole
+       row reads as "this matters" at a glance — even before anyone's turn */
+    .role-chip.rc-defendant  { background: linear-gradient(160deg, rgba(239,68,68,.22), rgba(239,68,68,.04)); border-color: #ef4444; box-shadow: 0 0 18px rgba(239,68,68,.18); }
+    .role-chip.rc-defendant  .rc-label { color: #fca5a5; }
+    .role-chip.rc-prosecutor { background: linear-gradient(160deg, rgba(249,115,22,.22), rgba(249,115,22,.04)); border-color: #f97316; box-shadow: 0 0 18px rgba(249,115,22,.18); }
+    .role-chip.rc-prosecutor .rc-label { color: #fdba74; }
+    .role-chip.rc-defense    { background: linear-gradient(160deg, rgba(59,130,246,.22), rgba(59,130,246,.04)); border-color: #3b82f6; box-shadow: 0 0 18px rgba(59,130,246,.18); }
+    .role-chip.rc-defense    .rc-label { color: #93c5fd; }
+    .role-chip.rc-active { box-shadow: 0 0 28px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
+    @keyframes rolePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
     /* ── Timer, mirrored from the "Say It Without Saying It" control bar ── */
     .kc-timer-row {
@@ -205,23 +208,29 @@
     .jt-score.plus  { border-color: #22c55e; color: #4ade80; }
     .jt-score.minus { border-color: #ef4444; color: #f87171; }
 
-    /* ── CTA ── */
+    /* ── CTA — the button the host actually clicks most, so it's a solid fill
+       with real weight behind it, not another outline box blending into the rest ── */
     .btn-cta {
       width: 100%; max-width: 1100px;
-      background: #13132b; color: #e94560; border: 2px solid #e94560;
-      border-radius: 14px; padding: 17px;
-      font-size: 1.05rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: background .2s, transform .1s;
+      background: linear-gradient(135deg, #ff5a76, #c81e3a);
+      color: #fff; border: 2px solid #ff8095;
+      border-radius: 14px; padding: 19px;
+      font-size: 1.15rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      box-shadow: 0 10px 28px rgba(233,69,96,.4);
+      transition: box-shadow .2s, transform .1s, filter .2s;
       animation: fadeUp .5s .2s ease both;
       margin-bottom: 8px;
     }
-    .btn-cta:hover:not(:disabled) { background: rgba(233,69,96,.1); }
+    .btn-cta:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 12px 34px rgba(233,69,96,.55); }
     .btn-cta:active:not(:disabled) { transform: scale(.99); }
-    .btn-cta:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-cta:disabled {
+      opacity: .4; cursor: not-allowed; box-shadow: none;
+      background: #13132b; color: #e94560; border-color: #e94560;
+    }
     .btn-cta.is-next { animation: ctaPulse 1.6s ease-in-out infinite; }
     @keyframes ctaPulse {
-      0%, 100% { box-shadow: 0 0 0 rgba(233,69,96,0); }
-      50%      { box-shadow: 0 0 26px rgba(233,69,96,.45); }
+      0%, 100% { box-shadow: 0 10px 28px rgba(233,69,96,.4); }
+      50%      { box-shadow: 0 10px 46px rgba(233,69,96,.85); }
     }
     .score-reset { width: 100%; max-width: 1100px; text-align: center; margin: 4px 0 18px; }
     .score-reset button {
