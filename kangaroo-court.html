@@ -497,7 +497,7 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#e94560',
-      counts: [4, 5, 6],
+      counts: [4, 5, 6, 7, 8],
       defaultCount: 4,
       linksNote: 'Each case deals a Defendant, a Prosecutor and a Defense Attorney — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
       onPlayerData: () => { renderJuryTally(); },
@@ -789,7 +789,7 @@
        - Each flipped juror pays the side that flipped them. The payout per flip
          is normalized to the jury size (round(6 / jury size)) so the total a
          lawyer can win by sweeping the whole jury stays roughly the same (~6)
-         whether the jury is 1 or 3 people, instead of scaling straight up with
+         whether the jury is 1 or 5 people, instead of scaling straight up with
          player count.
        - The defendant's own fate rides on the final headcount: Not Guilty
          needs a real majority (+3), and anything else — a Guilty majority or

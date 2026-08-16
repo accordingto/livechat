@@ -410,7 +410,9 @@
        same color all night, so their card is instantly recognizable as theirs */
     /* One palette for every game, in Dare Conquest's board order — player 1 is red,
        2 blue, 3 green and so on — so a player keeps the same colour whichever game the
-       host switches to, and it always matches their piece on the Dare Conquest board. */
+       host switches to, and it always matches their piece on the Dare Conquest board.
+       Dare Conquest itself only has 6 pieces, so slots 7-8 (lime, pink) exist purely
+       for games that allow more players, like Kangaroo Court's 8-person rooms. */
     const NAME_COLORS = [
       '#ef4444', // 1 red
       '#4f9eff', // 2 blue
@@ -418,11 +420,13 @@
       '#f59e0b', // 4 yellow
       '#a78bfa', // 5 purple
       '#06b6d4', // 6 cyan
+      '#84cc16', // 7 lime
+      '#ec4899', // 8 pink
     ];
 
     /* the name chip, identical in every game: the player's own colour fills it, with
        dark text on top — every colour in the palette clears 5:1 against #0b0b18, which
-       a coloured-text-on-dark chip could not promise for all six. */
+       a coloured-text-on-dark chip could not promise for all eight. */
     function nameBanner(data) {
       const label = esc(data.name || urlName || `Player ${data.playerNum || '?'}`);
       const hex = data.myHex || NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length];
