@@ -115,7 +115,6 @@
       background: rgba(239,68,68,.045);
       border-left: 2px solid #1e1e42;
     }
-    .cb-sect.rules .cb-head { align-self: flex-end; }
     .cb-sect.rules::before { left: auto; right: 0; }
     /* the accent strip is what tells the two halves apart at a glance */
     .cb-sect::before {
@@ -129,7 +128,6 @@
       display: flex; align-items: center; gap: 6px;
     }
     .cb-sect.timer .cb-head { color: #6366f1; }
-    .cb-sect.rules .cb-head { color: #ef4444; }
     .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     /* narrow: the clock goes on top, then its controls, then the rules. The cut-off is
        just below iPad landscape, which is the last width where one row still fits. */
@@ -140,7 +138,6 @@
         border-left: none; border-top: 2px solid #1e1e42;
         align-items: center;
       }
-      .cb-sect.rules .cb-head { align-self: center; }
       .cb-sect.rules::before { left: 0; right: auto; }
     }
 
@@ -156,6 +153,11 @@
     .level-btn:active { transform: scale(.96); }
     .level-btn.active { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,.12); }
     .level-btn .lb-count { opacity: .5; font-weight: 700; }
+    .count-row { display: flex; align-items: center; gap: 8px; }
+    .count-label {
+      font-size: .68rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      color: #555; white-space: nowrap;
+    }
 
     /* a finished round: the deal button turns green and breathes, so "it is on to the
        next clue giver" is visible from across a shared screen */
@@ -232,13 +234,13 @@
 
     .toggle-btn {
       display: flex; align-items: center; gap: 10px;
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 999px;
-      padding: 9px 16px 9px 11px;
+      background: transparent; border: none; border-radius: 999px;
+      padding: 9px 4px;
       font-size: .8rem; font-weight: 900; letter-spacing: 1px; font-family: inherit;
       color: #555; cursor: pointer; white-space: nowrap;
-      transition: border-color .2s, color .2s;
+      transition: color .2s;
     }
-    .toggle-btn.on { border-color: #ef4444; color: #fca5a5; }
+    .toggle-btn.on { color: #fca5a5; }
     .toggle-switch {
       width: 40px; height: 22px; border-radius: 999px; flex-shrink: 0;
       background: #1e1e42; position: relative; transition: background .25s;
@@ -355,7 +357,7 @@
 
   <div class="header">
     <h1>🙊 Say It Without Saying It</h1>
-    <p>One player describes a secret word without saying the four banned ones. Only the referee sees that list — everyone else just buzzes in and guesses, against the clock. This screen only keeps score.</p>
+    <p>One player describes a secret word without saying the banned ones. Only the referee sees that list — everyone else just buzzes in and guesses, against the clock. This screen only keeps score.</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -383,12 +385,15 @@
     </section>
     <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
     <section class="cb-sect rules">
-      <span class="cb-head">🚫 Round rules</span>
       <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
         <span class="toggle-switch"></span>
         <span id="forbidden-state">Forbidden words ON</span>
       </button>
       <div class="level-btns" id="level-btns"></div>
+      <div class="count-row">
+        <span class="count-label">🔢 Banned words</span>
+        <div class="level-btns" id="count-btns"></div>
+      </div>
     </section>
   </div>
 
@@ -432,6 +437,8 @@
     let giverBag = [];     // shuffled player indices still waiting for their turn to give
     let refCount = [];     // how many times each player has refereed, to keep it even
     let card = null;
+    let roundForbidden = null; // card.forbidden sliced to bannedCount at deal time, so a mid-round
+                                // setting change can't retroactively add or drop a banned word
     let roundId = '';
     let state = 'idle';    // idle | playing | done
     let used = [];
@@ -456,16 +463,21 @@
       { id: 'medium', label: '🟡 Medium' },
       { id: 'hard',   label: '🔴 Hard' },
     ];
+    // every card carries 6 banned words; how many of them are actually in play
+    // this round is a difficulty knob of its own — fewer bans is easier
+    const BANNED_COUNTS = [3, 4, 5, 6];
     let forbiddenOn = true;
     let level = 'medium';
+    let bannedCount = 4;
     try {
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
       if (saved && typeof saved.forbiddenOn === 'boolean') forbiddenOn = saved.forbiddenOn;
       if (saved && LEVELS.some(l => l.id === saved.level)) level = saved.level;
+      if (saved && BANNED_COUNTS.includes(saved.bannedCount)) bannedCount = saved.bannedCount;
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, level })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, level, bannedCount })); } catch (e) { /* ignore */ }
     }
 
     /* the indices of every card at the chosen difficulty */
@@ -493,6 +505,29 @@
         b.className = 'level-btn' + (l.id === level ? ' active' : '');
         b.innerHTML = `${l.label} <span class="lb-count">${n}</span>`;
         b.onclick = () => setLevel(l.id);
+        wrap.appendChild(b);
+      });
+    }
+
+    /* how many of a card's 6 banned words are actually live this round — changing
+       it only affects the next word, same as difficulty (the round in play keeps
+       the banned list the giver and referee already have) */
+    function setBannedCount(n) {
+      if (bannedCount === n) return;
+      bannedCount = n;
+      saveOptions();
+      renderBannedCountBtns();
+      renderAll();
+    }
+
+    function renderBannedCountBtns() {
+      const wrap = document.getElementById('count-btns');
+      wrap.innerHTML = '';
+      BANNED_COUNTS.forEach(n => {
+        const b = document.createElement('button');
+        b.className = 'level-btn' + (n === bannedCount ? ' active' : '');
+        b.textContent = n;
+        b.onclick = () => setBannedCount(n);
         wrap.appendChild(b);
       });
     }
@@ -824,6 +859,7 @@
       const pick = avail[Math.floor(Math.random() * avail.length)];
       used.push(pick);
       card = DECK[pick];
+      roundForbidden = card.forbidden.slice(0, bannedCount);
       round++;
       roundId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       state = 'playing';
@@ -876,6 +912,7 @@
     function resetRound() {
       state = 'idle';
       card = null;
+      roundForbidden = null;
       queue = [];
       rejected = [];
       tabooCalls = [];
@@ -918,9 +955,9 @@
       const done = state === 'done';
       return Object.assign(base, {
         forbiddenOn,
-        // the banned list is the whole answer in four words, so it goes only to the two
+        // the banned list is the whole answer in a few words, so it goes only to the two
         // people who need it: the giver and the referee (and everyone once it's over)
-        forbidden: forbiddenOn && (isGiver || isRef || done) ? card.forbidden : null,
+        forbidden: forbiddenOn && (isGiver || isRef || done) ? roundForbidden : null,
         // the word only ever reaches the clue giver, until the round is over
         target: (isGiver || done) ? card.word : null,
         emoji: (isGiver || done) ? card.emoji : null,
@@ -1089,6 +1126,7 @@
 
     renderForbiddenToggle();
     renderLevelBtns();
+    renderBannedCountBtns();
     renderTimer();
     renderAll();
   </script>
