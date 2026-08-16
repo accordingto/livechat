@@ -963,7 +963,7 @@
       const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
       const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}${score}</div>`;
 
-      const timed = data.phase === 'open-pro' || data.phase === 'open-def' || data.phase === 'close-pro' || data.phase === 'close-def';
+      const timed = data.phase === 'prosecution' || data.phase === 'defense';
       const ticking = timed && syncKcTimer(data.timer);
       const clock = ticking ? `<div class="kc-card-timer" id="kc-card-timer">${kcTimer.left}</div>` : '';
       if (!ticking) stopKcTimer();
@@ -996,11 +996,11 @@
           </div>`);
       }
 
-      if (data.phase === 'open-pro' || data.phase === 'close-pro') {
+      if (data.phase === 'prosecution') {
         if (role === 'prosecutor') return shell(`${clock}<span class="pick-text">🎤 The floor is yours — make your case!</span>`);
         return shell(`${clock}<span class="pick-sub">⚔️ ${esc(data.prosecutorName || 'The Prosecutor')} is speaking…</span>`);
       }
-      if (data.phase === 'open-def' || data.phase === 'close-def') {
+      if (data.phase === 'defense') {
         if (role === 'defense') return shell(`${clock}<span class="pick-text">🎤 The floor is yours — defend your client!</span>`);
         return shell(`${clock}<span class="pick-sub">🛡️ ${esc(data.defenseName || 'The Defense')} is speaking…</span>`);
       }

@@ -271,7 +271,7 @@
     const DECK = GAME_DATA.kangaroo;
 
     let caseNum = 0;
-    let phase = 'idle'; // idle | prevote | open-pro | open-def | cross | close-pro | close-def | finalvote | reveal
+    let phase = 'idle'; // idle | prevote | prosecution | defense | cross | finalvote | reveal
     let defendantIdx = -1, prosecutorIdx = -1, defenseIdx = -1;
     let defendantBag = [];    // shuffled players still waiting to stand trial this cycle
     let prosecutorCount = []; // times each player has prosecuted, kept even like the referee in Say It Without Saying It
@@ -378,8 +378,8 @@
     }
 
     /* ── Round flow ──
-       idle/reveal → prevote (new case) → open-pro → open-def → cross →
-       close-pro → close-def → finalvote → reveal → (repeat) */
+       idle/reveal → prevote (new case) → prosecution → defense → cross →
+       finalvote → reveal → (repeat) */
     function dealNewCase() {
       if (!ROOM.enabled) return;
       syncScores();
@@ -417,13 +417,11 @@
     function advance() {
       if (!ROOM.enabled) return;
       if (phase === 'idle' || phase === 'reveal') { dealNewCase(); return; }
-      if (phase === 'prevote')    { startPhase('open-pro', 60); return; }
-      if (phase === 'open-pro')   { startPhase('open-def', 60); return; }
-      if (phase === 'open-def')   { startPhase('cross', 0); return; }
-      if (phase === 'cross')      { startPhase('close-pro', 30); return; }
-      if (phase === 'close-pro')  { startPhase('close-def', 30); return; }
-      if (phase === 'close-def')  { finalVoteId = genId(); startPhase('finalvote', 0); return; }
-      if (phase === 'finalvote')  { doReveal(); return; }
+      if (phase === 'prevote')     { startPhase('prosecution', 60); return; }
+      if (phase === 'prosecution') { startPhase('defense', 60); return; }
+      if (phase === 'defense')     { startPhase('cross', 0); return; }
+      if (phase === 'cross')       { finalVoteId = genId(); startPhase('finalvote', 0); return; }
+      if (phase === 'finalvote')   { doReveal(); return; }
     }
 
     function resetToIdle() {
@@ -524,11 +522,9 @@
       if (phase === 'idle') { el.textContent = 'Press "⚖️ Draw a Charge" to open the trial.'; return; }
       const pros = ROOM.name(prosecutorIdx), def = ROOM.name(defenseIdx), dft = ROOM.name(defendantIdx);
       if (phase === 'prevote') { el.classList.add('vote'); el.innerHTML = `🤫 The jury is secretly voting — <b>Guilty or Not Guilty?</b><span class="sl-sub">This vote stays hidden until the verdict is revealed.</span>`; return; }
-      if (phase === 'open-pro') { el.classList.add('live'); el.innerHTML = `⚔️ <b>${esc(pros)}</b> — Prosecution's opening statement`; return; }
-      if (phase === 'open-def') { el.classList.add('live'); el.innerHTML = `🛡️ <b>${esc(def)}</b> — Defense's opening statement`; return; }
+      if (phase === 'prosecution') { el.classList.add('live'); el.innerHTML = `⚔️ <b>${esc(pros)}</b> — make the case for GUILTY`; return; }
+      if (phase === 'defense') { el.classList.add('live'); el.innerHTML = `🛡️ <b>${esc(def)}</b> — make the case for NOT GUILTY`; return; }
       if (phase === 'cross') { el.classList.add('live'); el.innerHTML = `🗣️ Cross-Examination — ${esc(pros)} and ${esc(def)} question <b>${esc(dft)}</b>, who must answer`; return; }
-      if (phase === 'close-pro') { el.classList.add('live'); el.innerHTML = `⚔️ <b>${esc(pros)}</b> — Prosecution's closing argument`; return; }
-      if (phase === 'close-def') { el.classList.add('live'); el.innerHTML = `🛡️ <b>${esc(def)}</b> — Defense's closing argument`; return; }
       if (phase === 'finalvote') { el.classList.add('vote'); el.innerHTML = `🗳️ The jury is casting their <b>final</b> vote…`; return; }
       if (phase === 'reveal' && reveal) {
         el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
@@ -553,8 +549,8 @@
       el.classList.toggle('hidden', !caseNum);
       if (!caseNum) return;
       const chip = (role, label, name) => {
-        const active = (role === 'prosecutor' && (phase === 'open-pro' || phase === 'close-pro'))
-          || (role === 'defense' && (phase === 'open-def' || phase === 'close-def'))
+        const active = (role === 'prosecutor' && phase === 'prosecution')
+          || (role === 'defense' && phase === 'defense')
           || (role === 'defendant' && phase === 'cross');
         return `<div class="role-chip rc-${role}${active ? ' rc-active' : ''}">
           <span class="rc-label">${label}</span>
@@ -626,12 +622,10 @@
       if (!ROOM.enabled) { btn.textContent = '🔗 Player links needed'; return; }
       const labels = {
         idle: '⚖️ Draw a Charge',
-        prevote: '🎤 Begin Opening Arguments',
-        'open-pro': "🛡️ Defense's Opening Statement",
-        'open-def': '🗣️ Begin Cross-Examination',
-        cross: '🎙️ Closing Arguments',
-        'close-pro': "🛡️ Defense's Closing Argument",
-        'close-def': '🗳️ Final Jury Vote',
+        prevote: '⚔️ Prosecution — Make Your Case',
+        prosecution: "🛡️ Defense — Make Your Case",
+        defense: '🗣️ Begin Cross-Examination',
+        cross: '🗳️ Final Jury Vote',
         finalvote: '⚖️ Reveal Verdict!',
         reveal: '🆕 Next Case',
       };
