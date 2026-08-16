@@ -139,17 +139,6 @@
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
     .charge-card.idle { border-color: #1e1e42; background: #13132b; }
-    /* shrinks the charge card during the two witness phases — the case is still
-       relevant background context, but the witness card is the thing happening
-       right now, so it gets to be the big one */
-    .charge-card.compact {
-      padding: 16px 24px; min-height: auto; gap: 4px; opacity: .7;
-      border-color: #2a2a44; background: #13132b;
-    }
-    .charge-card.compact::before { display: none; }
-    .charge-card.compact .charge-emoji { font-size: 1.6rem; }
-    .charge-card.compact .charge-label { font-size: .62rem; }
-    .charge-card.compact .charge-text { font-size: .92rem; color: #ccc; }
     .charge-label {
       font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
       color: #e94560; position: relative; z-index: 1;
@@ -198,47 +187,66 @@
     /* ── Witness log: stacks below the charge card, in the order each side
        actually called their witness, and stays on screen for the rest of the
        case — everyone watching the shared screen can still see what a
-       witness said several steps later, not just during their own turn. ── */
+       witness said several steps later, not just during their own turn.
+       Each side gets its own color (matching its role chip above) so the
+       two entries are never mistaken for each other at a glance. ── */
     .witness-log {
       width: 100%; max-width: 1100px;
       display: flex; flex-direction: column; gap: 14px;
       margin-bottom: 16px;
     }
     .witness-log.hidden { display: none; }
-    /* same shape as the charge card, amber instead of red so it never gets
-       mistaken for the charge itself */
     .witness-card {
       width: 100%;
-      background: linear-gradient(135deg, rgba(234,179,8,.16), rgba(234,179,8,.03));
-      border: 2px solid #eab308; border-radius: 22px;
-      padding: 26px 30px;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      border-radius: 22px;
+      padding: 22px 30px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
       text-align: center; position: relative; overflow: hidden;
       animation: fadeUp .4s ease both;
       transition: border-color .3s, box-shadow .3s, opacity .3s;
     }
+    /* prosecution's witness — orange, same as the Prosecutor role chip */
+    .witness-card.side-prosecution {
+      background: linear-gradient(135deg, rgba(249,115,22,.16), rgba(249,115,22,.03));
+      border: 2px solid #f97316;
+    }
+    .witness-card.side-prosecution .witness-label { color: #fdba74; }
+    .witness-card.side-prosecution .witness-evidence { color: #fed7aa; }
+    .witness-card.side-prosecution .witness-playedby {
+      background: rgba(249,115,22,.14); border-color: rgba(249,115,22,.4); color: #fdba74;
+    }
+    .witness-card.side-prosecution.is-current { box-shadow: 0 0 30px rgba(249,115,22,.28); }
+    /* defense's witness — blue, same as the Defense role chip */
+    .witness-card.side-defense {
+      background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(59,130,246,.03));
+      border: 2px solid #3b82f6;
+    }
+    .witness-card.side-defense .witness-label { color: #93c5fd; }
+    .witness-card.side-defense .witness-evidence { color: #bfdbfe; }
+    .witness-card.side-defense .witness-playedby {
+      background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.4); color: #93c5fd;
+    }
+    .witness-card.side-defense.is-current { box-shadow: 0 0 30px rgba(59,130,246,.28); }
     /* once their turn is over the entry stays legible but steps back visually,
        so whichever witness is on the stand right now still reads as "current" */
     .witness-card:not(.is-current) { opacity: .7; box-shadow: none; }
-    .witness-card.is-current { box-shadow: 0 0 30px rgba(234,179,8,.25); }
     .witness-card::before {
-      content: '🕵️'; position: absolute; font-size: 8rem; opacity: .05;
+      content: '🕵️'; position: absolute; font-size: 7rem; opacity: .05;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
     .witness-label {
-      font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #eab308; position: relative; z-index: 1;
+      font-size: .68rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      position: relative; z-index: 1;
     }
-    .witness-emoji { font-size: 2.6rem; line-height: 1; position: relative; z-index: 1; }
-    .witness-name { font-size: 1.5rem; font-weight: 900; color: #fff; position: relative; z-index: 1; }
+    .witness-emoji { font-size: 2.2rem; line-height: 1; position: relative; z-index: 1; }
+    .witness-name { font-size: 1.3rem; font-weight: 900; color: #fff; position: relative; z-index: 1; }
     .witness-evidence {
-      font-size: 1.02rem; color: #fde68a; font-weight: 600; line-height: 1.5;
-      max-width: 720px; position: relative; z-index: 1;
+      font-size: .92rem; font-weight: 600; line-height: 1.4;
+      max-width: 640px; position: relative; z-index: 1;
     }
     .witness-playedby {
-      margin-top: 6px; display: inline-block; position: relative; z-index: 1;
-      background: rgba(234,179,8,.14); border: 1px solid rgba(234,179,8,.4); color: #fde68a;
-      font-size: .8rem; font-weight: 800; padding: 5px 16px; border-radius: 20px;
+      margin-top: 4px; display: inline-block; position: relative; z-index: 1;
+      border: 1px solid; font-size: .76rem; font-weight: 800; padding: 4px 14px; border-radius: 20px;
     }
 
 
@@ -707,10 +715,6 @@
     function renderCharge() {
       const card = document.getElementById('charge-card');
       card.classList.toggle('idle', !charge);
-      // shrinks out of the way once the witness log has something in it —
-      // stays compact for the rest of the case, not just during their turn,
-      // so the log has room to keep growing underneath it
-      card.classList.toggle('compact', !!(caseWitnesses.prosecution || caseWitnesses.defense));
       document.getElementById('charge-placeholder').style.display = charge ? 'none' : '';
       document.getElementById('charge-content').style.display = charge ? '' : 'none';
       if (charge) {
@@ -765,7 +769,7 @@
         const label = side === 'prosecution'
           ? (isCurrent ? '⚔️ Prosecution calls their witness…' : '⚔️ Prosecution called their witness')
           : (isCurrent ? '🛡️ Defense calls their witness…' : '🛡️ Defense called their witness');
-        return `<div class="witness-card${isCurrent ? ' is-current' : ''}">
+        return `<div class="witness-card side-${side}${isCurrent ? ' is-current' : ''}">
           <span class="witness-label">${label}</span>
           <span class="witness-emoji">${w.card.emoji}</span>
           <span class="witness-name">${esc(w.card.name)}</span>
