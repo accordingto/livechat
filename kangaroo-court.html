@@ -238,8 +238,11 @@
       font-size: .68rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
       position: relative; z-index: 1;
     }
-    .witness-emoji { font-size: 2.2rem; line-height: 1; position: relative; z-index: 1; }
-    .witness-name { font-size: 1.3rem; font-weight: 900; color: #fff; position: relative; z-index: 1; }
+    .witness-who {
+      display: flex; align-items: center; gap: 10px; position: relative; z-index: 1;
+    }
+    .witness-emoji { font-size: 1.8rem; line-height: 1; }
+    .witness-name { font-size: 1.3rem; font-weight: 900; color: #fff; }
     .witness-evidence {
       font-size: .92rem; font-weight: 600; line-height: 1.4;
       max-width: 640px; position: relative; z-index: 1;
@@ -771,8 +774,10 @@
           : (isCurrent ? '🛡️ Defense calls their witness…' : '🛡️ Defense called their witness');
         return `<div class="witness-card side-${side}${isCurrent ? ' is-current' : ''}">
           <span class="witness-label">${label}</span>
-          <span class="witness-emoji">${w.card.emoji}</span>
-          <span class="witness-name">${esc(w.card.name)}</span>
+          <span class="witness-who">
+            <span class="witness-emoji">${w.card.emoji}</span>
+            <span class="witness-name">${esc(w.card.name)}</span>
+          </span>
           <span class="witness-evidence">${esc(w.card.evidence)}</span>
           <span class="witness-playedby">🎭 Played by ${esc(ROOM.name(w.jurorIdx))}</span>
         </div>`;
