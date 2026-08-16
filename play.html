@@ -981,11 +981,12 @@
 
       if (data.phase === 'reveal' && data.result) {
         const r = data.result;
-        const verdictLine = r.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY';
+        const verdictLine = r.tie ? '🤷 HUNG JURY' : (r.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY');
         const ptsLine = r.points ? `<span class="pick-sub">${r.points > 0 ? '+' : ''}${r.points} points this case</span>` : '';
-        const flipLine = r.flip === 'toNotGuilty' ? '<span class="pick-sub">You flipped to Not Guilty — Defense +2</span>'
-                        : r.flip === 'toGuilty' ? '<span class="pick-sub">You flipped to Guilty — Prosecutor +2</span>' : '';
-        return shell(`<span class="pick-text">${verdictLine}</span>${ptsLine}${flipLine}`);
+        const flipLine = r.flip === 'toNotGuilty' ? `<span class="pick-sub">You flipped to Not Guilty — Defense +${r.flipValue}</span>`
+                        : r.flip === 'toGuilty' ? `<span class="pick-sub">You flipped to Guilty — Prosecutor +${r.flipValue}</span>` : '';
+        const witnessLine = r.witnessBonus ? '<span class="pick-sub">🕵️ Your testimony helped — +1!</span>' : '';
+        return shell(`<span class="pick-text">${verdictLine}</span>${ptsLine}${flipLine}${witnessLine}`);
       }
 
       if (data.phase === 'prevote' || data.phase === 'finalvote') {
