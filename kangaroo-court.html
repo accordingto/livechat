@@ -195,18 +195,32 @@
     .role-chip.rc-active { box-shadow: 0 0 28px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
     @keyframes rolePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
-    /* ── Witness card: same shape as the charge card, amber instead of red so it
-       never gets mistaken for the charge itself — appears only during the two
-       witness phases, above the (shrunk) charge card. ── */
-    .witness-card {
+    /* ── Witness log: stacks below the charge card, in the order each side
+       actually called their witness, and stays on screen for the rest of the
+       case — everyone watching the shared screen can still see what a
+       witness said several steps later, not just during their own turn. ── */
+    .witness-log {
       width: 100%; max-width: 1100px;
+      display: flex; flex-direction: column; gap: 14px;
+      margin-bottom: 16px;
+    }
+    .witness-log.hidden { display: none; }
+    /* same shape as the charge card, amber instead of red so it never gets
+       mistaken for the charge itself */
+    .witness-card {
+      width: 100%;
       background: linear-gradient(135deg, rgba(234,179,8,.16), rgba(234,179,8,.03));
       border: 2px solid #eab308; border-radius: 22px;
-      padding: 26px 30px; margin-bottom: 16px;
+      padding: 26px 30px;
       display: flex; flex-direction: column; align-items: center; gap: 8px;
       text-align: center; position: relative; overflow: hidden;
       animation: fadeUp .4s ease both;
+      transition: border-color .3s, box-shadow .3s, opacity .3s;
     }
+    /* once their turn is over the entry stays legible but steps back visually,
+       so whichever witness is on the stand right now still reads as "current" */
+    .witness-card:not(.is-current) { opacity: .7; box-shadow: none; }
+    .witness-card.is-current { box-shadow: 0 0 30px rgba(234,179,8,.25); }
     .witness-card::before {
       content: '🕵️'; position: absolute; font-size: 8rem; opacity: .05;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
@@ -320,8 +334,6 @@
     <div class="kc-main">
       <div class="role-strip hidden" id="role-strip"></div>
 
-      <div class="witness-card hidden" id="witness-card"></div>
-
       <div class="charge-card idle" id="charge-card">
         <span class="charge-placeholder" id="charge-placeholder">Press <strong>⚖️ Draw a Charge</strong> to open the trial</span>
         <div id="charge-content" style="display:none">
@@ -330,6 +342,11 @@
           <span class="charge-text" id="charge-text"></span>
         </div>
       </div>
+
+      <!-- each side's witness testimony, in the order it actually happened —
+           stays here for the rest of the case once called, not just during
+           their own turn -->
+      <div class="witness-log hidden" id="witness-log"></div>
 
       <div class="jury-tally hidden" id="jury-tally"></div>
     </div>
@@ -373,6 +390,9 @@
     let witnessCount = [];
     let witnessThisCase = [];
     let currentWitness = null; // { card: {emoji,name,evidence}, jurorIdx, side: 'prosecution'|'defense' }
+    // both sides' testimony this case, kept past their own phase so the witness
+    // log can show everyone what was said, in the order it happened
+    let caseWitnesses = { prosecution: null, defense: null }; // side -> { card, jurorIdx }
 
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
@@ -486,6 +506,7 @@
       reveal = null;
       currentWitness = null;
       witnessThisCase = [];
+      caseWitnesses = { prosecution: null, defense: null };
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last case's votes
       renderAll();
     }
@@ -506,10 +527,12 @@
     }
 
     /* enters one of the two witness phases: draws who plays the witness and
-       which card they get */
+       which card they get, and files it into the case's witness log */
     function startWitnessPhase(next, side) {
       const jurorIdx = pickWitnessJuror();
-      currentWitness = { card: pickWitnessCard(), jurorIdx, side };
+      const card = pickWitnessCard();
+      currentWitness = { card, jurorIdx, side };
+      caseWitnesses[side] = { card, jurorIdx };
       startPhase(next);
     }
 
@@ -546,6 +569,7 @@
     function resetToIdle() {
       caseNum = 0; phase = 'idle'; charge = null; reveal = null;
       currentWitness = null; witnessThisCase = [];
+      caseWitnesses = { prosecution: null, defense: null };
       pushState();
       renderAll();
     }
@@ -683,8 +707,10 @@
     function renderCharge() {
       const card = document.getElementById('charge-card');
       card.classList.toggle('idle', !charge);
-      // shrinks out of the way while the witness card is the thing happening now
-      card.classList.toggle('compact', phase === 'prosecution-witness' || phase === 'defense-witness');
+      // shrinks out of the way once the witness log has something in it —
+      // stays compact for the rest of the case, not just during their turn,
+      // so the log has room to keep growing underneath it
+      card.classList.toggle('compact', !!(caseWitnesses.prosecution || caseWitnesses.defense));
       document.getElementById('charge-placeholder').style.display = charge ? 'none' : '';
       document.getElementById('charge-content').style.display = charge ? '' : 'none';
       if (charge) {
@@ -723,20 +749,30 @@
       el.innerHTML = html;
     }
 
-    /* the witness card — same idea as the charge card, shown only during the two
-       witness phases, right above the (shrunk) charge card */
+    /* the witness log — one entry per side, in the order they actually
+       testified (prosecution first per the trial order), each staying on
+       screen for the rest of the case instead of disappearing once that
+       side's turn ends. Whichever one is currently on the stand is
+       highlighted; a side that hasn't called a witness yet has no entry. */
     function renderWitness() {
-      const el = document.getElementById('witness-card');
-      const active = (phase === 'prosecution-witness' || phase === 'defense-witness') && currentWitness && currentWitness.jurorIdx >= 0;
-      el.classList.toggle('hidden', !active);
-      if (!active) return;
-      const label = currentWitness.side === 'prosecution' ? '⚔️ Prosecution calls their witness…' : '🛡️ Defense calls their witness…';
-      el.innerHTML = `
-        <span class="witness-label">${label}</span>
-        <span class="witness-emoji">${currentWitness.card.emoji}</span>
-        <span class="witness-name">${esc(currentWitness.card.name)}</span>
-        <span class="witness-evidence">${esc(currentWitness.card.evidence)}</span>
-        <span class="witness-playedby">🎭 Played by ${esc(ROOM.name(currentWitness.jurorIdx))}</span>`;
+      const el = document.getElementById('witness-log');
+      const entries = [];
+      if (caseWitnesses.prosecution) entries.push(['prosecution', caseWitnesses.prosecution]);
+      if (caseWitnesses.defense) entries.push(['defense', caseWitnesses.defense]);
+      el.classList.toggle('hidden', !entries.length);
+      el.innerHTML = entries.map(([side, w]) => {
+        const isCurrent = (phase === 'prosecution-witness' || phase === 'defense-witness') && currentWitness && currentWitness.side === side;
+        const label = side === 'prosecution'
+          ? (isCurrent ? '⚔️ Prosecution calls their witness…' : '⚔️ Prosecution called their witness')
+          : (isCurrent ? '🛡️ Defense calls their witness…' : '🛡️ Defense called their witness');
+        return `<div class="witness-card${isCurrent ? ' is-current' : ''}">
+          <span class="witness-label">${label}</span>
+          <span class="witness-emoji">${w.card.emoji}</span>
+          <span class="witness-name">${esc(w.card.name)}</span>
+          <span class="witness-evidence">${esc(w.card.evidence)}</span>
+          <span class="witness-playedby">🎭 Played by ${esc(ROOM.name(w.jurorIdx))}</span>
+        </div>`;
+      }).join('');
     }
 
     function juryIndices() {
