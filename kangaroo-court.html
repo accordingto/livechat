@@ -227,59 +227,6 @@
       font-size: .8rem; font-weight: 800; padding: 5px 16px; border-radius: 20px;
     }
 
-    /* ── Timer ── "Seconds per side" is a persistent setting that always shows,
-       and feeds both the Prosecution and Defense phases; the dial + Pause/Restart
-       are only meaningful once one of those timed phases is actually running. ── */
-    .kc-timer-row {
-      width: 100%; max-width: 1100px;
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px;
-      margin-bottom: 16px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px; padding: 14px 20px;
-      animation: fadeUp .4s ease both;
-    }
-    .kc-secs-field { display: flex; align-items: center; gap: 10px; }
-    .kc-secs-label {
-      font-size: .68rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #666; white-space: nowrap;
-    }
-    .kc-secs-input-wrap {
-      display: flex; align-items: stretch; background: #0d0d1a; border: 2px solid #1e1e42;
-      border-radius: 12px; overflow: hidden; transition: border-color .2s;
-    }
-    .kc-secs-input-wrap:focus-within { border-color: #a78bfa; }
-    .kc-secs-step {
-      width: 38px; background: rgba(167,139,250,.08); border: none; color: #c4b5fd;
-      font-family: inherit; font-size: 1.2rem; font-weight: 900; cursor: pointer;
-      transition: background .2s, color .2s;
-    }
-    .kc-secs-step:hover:not(:disabled) { background: rgba(167,139,250,.2); }
-    .kc-secs-step:disabled { opacity: .3; cursor: not-allowed; }
-    #kc-secs-input {
-      width: 50px; background: transparent; border: none;
-      border-left: 2px solid #1e1e42; border-right: 2px solid #1e1e42;
-      color: #eee; font-family: inherit; font-size: .92rem; font-weight: 800; text-align: center; padding: 9px 2px;
-    }
-    #kc-secs-input:focus { outline: none; }
-    .kc-secs-unit { display: flex; align-items: center; padding: 0 10px; font-size: .62rem; font-weight: 900; color: #555; }
-    .kc-dial {
-      width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      border: 5px solid #a78bfa; color: #c4b5fd;
-      font-size: 1.8rem; font-weight: 900; font-variant-numeric: tabular-nums;
-      transition: border-color .3s, color .3s;
-    }
-    .kc-dial.idle { border-color: #2a2a50; color: #444; }
-    .kc-dial.low { border-color: #f59e0b; color: #f59e0b; }
-    .kc-dial.critical { border-color: #ef4444; color: #ef4444; animation: dialPulse .8s ease-in-out infinite; }
-    @keyframes dialPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-    .kc-timer-actions { display: flex; gap: 8px; }
-    .kc-timer-btn {
-      background: transparent; border: 2px solid #1e1e42; color: #666; border-radius: 12px;
-      padding: 10px 16px; font-size: .85rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s, opacity .2s;
-    }
-    .kc-timer-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
-    .kc-timer-btn:disabled { opacity: .3; cursor: not-allowed; }
 
     /* ── Jury tally: live progress while voting, full breakdown after Reveal ── */
     .jury-tally {
@@ -306,39 +253,6 @@
     .jt-row .jt-flip { font-size: .72rem; padding: 2px 8px; border-radius: 20px; font-weight: 800; }
     .jt-row .jt-flip.def { background: rgba(59,130,246,.15); color: #60a5fa; }
     .jt-row .jt-flip.pro { background: rgba(249,115,22,.15); color: #fb923c; }
-    .jt-scores {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
-      margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e1e42;
-    }
-    .jt-score {
-      background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 999px;
-      padding: 5px 14px; font-size: .8rem; font-weight: 800; color: #aaa;
-    }
-    .jt-score.plus  { border-color: #22c55e; color: #4ade80; }
-    .jt-score.minus { border-color: #ef4444; color: #f87171; }
-
-    .score-reset { width: 100%; max-width: 1100px; text-align: center; margin: 4px 0 18px; }
-    .score-reset button {
-      background: none; border: none; color: #2a2a50; font-family: inherit;
-      font-size: .78rem; font-weight: 700; cursor: pointer; padding: 4px;
-    }
-    .score-reset button:hover { color: #666; }
-
-    /* ── Leaderboard: cumulative, persists across cases ── */
-    .leaderboard {
-      width: 100%; max-width: 1100px;
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
-      margin-bottom: 24px;
-    }
-    .lb-card {
-      flex: 1; min-width: 140px; max-width: 220px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
-      padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      transition: border-color .3s, box-shadow .3s;
-    }
-    .lb-card.is-top { border-color: #e94560; box-shadow: 0 0 22px rgba(233,69,96,.24); }
-    .lb-card .lb-name { font-size: .95rem; font-weight: 800; color: #ddd; text-align: center; }
-    .lb-card .lb-pts { font-size: 1.8rem; font-weight: 900; color: #e94560; line-height: 1; }
 
     /* player links: a per-role tint so the host can see roles without opening a card */
     .link-col.is-role-defendant  { border-color: #ef4444; }
@@ -365,8 +279,6 @@
 
     @media (max-width: 520px) {
       .charge-card { padding: 22px 18px; min-height: 130px; }
-      .lb-card { min-width: 110px; padding: 12px 8px; }
-      .lb-card .lb-pts { font-size: 1.5rem; }
     }
   </style>
 </head>
@@ -379,7 +291,7 @@
 
   <div class="header">
     <h1>⚖️ Kangaroo Court</h1>
-    <p>One player stands trial on a ridiculous charge — prosecutor and defense make their case, the jury secretly votes twice, and the verdict decides who scores.</p>
+    <p>One player stands trial on a ridiculous charge — prosecutor and defense make their case, then the jury secretly votes twice to decide the verdict.</p>
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
@@ -419,29 +331,7 @@
         </div>
       </div>
 
-      <!-- seconds-per-side is always adjustable and applies to both Prosecution
-           and Defense; the dial + Pause/Restart only act once one is running -->
-      <div class="kc-timer-row" id="kc-timer-row">
-        <div class="kc-secs-field">
-          <span class="kc-secs-label">⏱️ Seconds per side</span>
-          <span class="kc-secs-input-wrap">
-            <button class="kc-secs-step" id="kc-secs-minus" onclick="stepArgSeconds(-1)" aria-label="15 seconds less">−</button>
-            <input id="kc-secs-input" inputmode="numeric" autocomplete="off" value="60" aria-label="Seconds per side">
-            <span class="kc-secs-unit">sec</span>
-            <button class="kc-secs-step" id="kc-secs-plus" onclick="stepArgSeconds(1)" aria-label="15 seconds more">+</button>
-          </span>
-        </div>
-        <div class="kc-dial idle" id="kc-dial">60</div>
-        <div class="kc-timer-actions">
-          <button class="kc-timer-btn" id="kc-timer-btn" onclick="toggleTimer()">⏸️ Pause</button>
-          <button class="kc-timer-btn" id="kc-restart-btn" onclick="restartTimer()">🔄 Restart</button>
-        </div>
-      </div>
-
       <div class="jury-tally hidden" id="jury-tally"></div>
-
-      <div class="leaderboard" id="leaderboard"></div>
-      <div class="score-reset"><button onclick="resetScores()">↺ Reset scores</button></div>
     </div>
   </div>
 
@@ -473,8 +363,7 @@
     let usedCharges = [];
     let prevoteId = '';
     let finalVoteId = '';
-    let reveal = null;   // set by doReveal(): { verdict, juryDetail, roundPoints, guiltyFinal, notGuiltyFinal }
-    let scores = [];     // cumulative, across cases — roles rotate, so this is the real scoreboard
+    let reveal = null;   // set by doReveal(): { verdict, juryDetail, guiltyFinal, notGuiltyFinal }
 
     /* ── Witnesses ── either side can call one juror to the stand. witnessCount
        keeps picks even over a session, same trick as prosecutorCount/defenseCount;
@@ -484,7 +373,6 @@
     let witnessCount = [];
     let witnessThisCase = [];
     let currentWitness = null; // { card: {emoji,name,evidence}, jurorIdx, side: 'prosecution'|'defense' }
-    let witnessOfSide = { prosecution: null, defense: null }; // this case's two witnesses, kept past their own phase so Reveal can credit them
 
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
@@ -501,13 +389,10 @@
       defaultCount: 4,
       linksNote: 'Each case deals a Defendant, a Prosecutor and a Defense Attorney — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
       onPlayerData: () => { renderJuryTally(); },
-      onCountChange: () => { defendantIdx = prosecutorIdx = defenseIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; witnessCount = []; syncScores(); resetToIdle(); },
+      onCountChange: () => { defendantIdx = prosecutorIdx = defenseIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; witnessCount = []; resetToIdle(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
-
-    function syncScores() { while (scores.length < ROOM.count) scores.push(0); }
-    syncScores();
 
     function roleOf(i) {
       if (i === defendantIdx) return 'defendant';
@@ -521,7 +406,7 @@
       const role = roleOf(i);
       const cls = role === 'jury' ? '' : 'is-role-' + role;
       const label = { defendant: '🙇 Defendant', prosecutor: '⚔️ Prosecutor', defense: '🛡️ Defense', jury: '👥 Jury' }[role];
-      return { marked: role !== 'jury', cls, answer: `${label}<span class="la-sub">🏆 ${scores[i] || 0} pts</span>` };
+      return { marked: role !== 'jury', cls, answer: label };
     });
 
     /* ── Role dealing ──
@@ -577,91 +462,6 @@
       return DECKW[pick];
     }
 
-    /* ── The clock — identical mirroring pattern to the other timed games: only state
-       changes are published, each card ticks itself from there. total === 0 means
-       "no clock this phase" (Cross-Examination is free-form). ── */
-    const timer = { total: 0, left: 0, running: false, seq: 0, iv: null };
-
-    /* "seconds per side" is one setting shared by both Prosecution and Defense —
-       change it once and every argument phase (including the one in progress)
-       picks it up, instead of configuring each side separately. Persists like
-       Say It Without Saying It's round-length options. */
-    const TIMER_OPTIONS_KEY = 'kangarooCourtOptions.v1';
-    const ARG_MIN = 15, ARG_MAX = 300, ARG_STEP = 15;
-    let argSeconds = 60;
-    try {
-      const saved = JSON.parse(localStorage.getItem(TIMER_OPTIONS_KEY) || 'null');
-      if (saved && Number.isFinite(saved.argSeconds)) argSeconds = Math.max(ARG_MIN, Math.min(ARG_MAX, saved.argSeconds));
-    } catch (e) { /* ignore */ }
-    function saveTimerOptions() {
-      try { localStorage.setItem(TIMER_OPTIONS_KEY, JSON.stringify({ argSeconds })); } catch (e) { /* ignore */ }
-    }
-
-    function timerPayload() {
-      return { seq: timer.seq, state: timer.running ? 'running' : (timer.left <= 0 ? 'done' : 'paused'), remaining: timer.left, total: timer.total };
-    }
-    function startTicking() {
-      stopTicking();
-      timer.iv = setInterval(() => {
-        timer.left = Math.max(0, timer.left - 1);
-        if (timer.left <= 0) { stopTicking(); timer.running = false; timer.seq++; pushState(); renderTimer(); return; }
-        renderTimer();
-      }, 1000);
-    }
-    function stopTicking() { if (timer.iv) { clearInterval(timer.iv); timer.iv = null; } }
-    function toggleTimer() {
-      if (!timer.total) return;
-      if (timer.running) { stopTicking(); timer.running = false; }
-      else { if (timer.left <= 0) timer.left = timer.total; timer.running = true; startTicking(); }
-      timer.seq++;
-      pushState();
-      renderTimer();
-    }
-    /* restarts the side currently speaking back to the full length, still running */
-    function restartTimer() {
-      if (!timer.total) return;
-      stopTicking();
-      timer.left = timer.total;
-      timer.running = true;
-      startTicking();
-      timer.seq++;
-      pushState();
-      renderTimer();
-    }
-
-    /* `snap` is off while the host is still typing, so "30" isn't clamped to 15 after
-       the first keystroke; it kicks in on blur or when stepped with −/+ */
-    function setArgSeconds(raw, snap) {
-      const n = Number(raw);
-      const field = document.getElementById('kc-secs-input');
-      if (!snap && (!n || n < 5 || n > ARG_MAX)) return;
-      const secs = Math.max(ARG_MIN, Math.min(ARG_MAX, Math.round(n) || 60));
-      if (snap) field.value = secs;
-      argSeconds = secs;
-      saveTimerOptions();
-      // live-adjust whichever side is talking right now, so the change takes
-      // effect immediately instead of waiting for the next phase
-      if ((phase === 'prosecution' || phase === 'defense' || phase === 'prosecution-witness' || phase === 'defense-witness') && timer.total) {
-        timer.total = argSeconds;
-        if (timer.left > argSeconds) timer.left = argSeconds;
-        timer.seq++;
-        pushState();
-      }
-      renderTimer();
-    }
-    document.getElementById('kc-secs-input').oninput  = e => setArgSeconds(e.target.value, false);
-    document.getElementById('kc-secs-input').onchange = e => setArgSeconds(e.target.value, true);
-    document.getElementById('kc-secs-input').value = argSeconds;
-
-    /* one tap = 15 seconds, landing on 15 / 30 / 45 / 60 … even from an odd number */
-    function stepArgSeconds(dir) {
-      const now = argSeconds;
-      const next = dir > 0
-        ? Math.floor(now / ARG_STEP) * ARG_STEP + ARG_STEP
-        : Math.ceil(now / ARG_STEP) * ARG_STEP - ARG_STEP;
-      setArgSeconds(Math.max(ARG_MIN, Math.min(ARG_MAX, next)), true);
-    }
-
     /* draws a charge not currently on screen, cycling through the deck before any
        repeat — shared by dealNewCase() and the host's "🔀 Different Charge" reroll */
     function pickCharge(exclude) {
@@ -677,7 +477,6 @@
        defense → defense-witness → cross → finalvote → reveal → (repeat) */
     function dealNewCase() {
       if (!ROOM.enabled) return;
-      syncScores();
       dealRoles();
       charge = pickCharge(null);
       caseNum++;
@@ -687,9 +486,6 @@
       reveal = null;
       currentWitness = null;
       witnessThisCase = [];
-      witnessOfSide = { prosecution: null, defense: null };
-      stopTicking();
-      timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last case's votes
       renderAll();
     }
@@ -703,44 +499,33 @@
       renderAll();
     }
 
-    function startPhase(next, secs) {
+    function startPhase(next) {
       phase = next;
-      stopTicking();
-      if (secs > 0) {
-        timer.total = secs; timer.left = secs; timer.running = true;
-        startTicking();
-      } else {
-        timer.total = 0; timer.left = 0; timer.running = false;
-      }
-      timer.seq++;
       pushState();
       renderAll();
     }
 
     /* enters one of the two witness phases: draws who plays the witness and
-       which card they get, then starts the shared timer like any other phase */
+       which card they get */
     function startWitnessPhase(next, side) {
       const jurorIdx = pickWitnessJuror();
       currentWitness = { card: pickWitnessCard(), jurorIdx, side };
-      witnessOfSide[side] = jurorIdx; // kept past this phase so Reveal can credit them
-      startPhase(next, argSeconds);
+      startPhase(next);
     }
 
     function advance() {
       if (!ROOM.enabled) return;
       if (phase === 'idle' || phase === 'reveal') { dealNewCase(); return; }
-      if (phase === 'prevote')              { startPhase('prosecution', argSeconds); return; }
+      if (phase === 'prevote')              { startPhase('prosecution'); return; }
       if (phase === 'prosecution')          { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
-      if (phase === 'prosecution-witness')  { startPhase('defense', argSeconds); return; }
+      if (phase === 'prosecution-witness')  { startPhase('defense'); return; }
       if (phase === 'defense')              { startWitnessPhase('defense-witness', 'defense'); return; }
-      if (phase === 'defense-witness')      { startPhase('cross', 0); return; }
-      if (phase === 'cross')                { finalVoteId = genId(); startPhase('finalvote', 0); return; }
+      if (phase === 'defense-witness')      { startPhase('cross'); return; }
+      if (phase === 'cross')                { finalVoteId = genId(); startPhase('finalvote'); return; }
       if (phase === 'finalvote')            { doReveal(); return; }
     }
 
     /* undoes one accidental "advance" — the mirror image of advance() above.
-       Reveal's score changes are subtracted back out; timed phases restart
-       fresh rather than trying to restore the exact second they were on.
        Each side's witness is drawn only once (entering prosecution-witness /
        defense-witness) and nothing overwrites currentWitness until the OTHER
        side's witness phase is entered — so every step back that lands on a
@@ -749,59 +534,30 @@
        into, so the button is disabled there (see renderBackBtn). */
     function goBack() {
       if (!ROOM.enabled) return;
-      if (phase === 'reveal') {
-        if (reveal) Object.keys(reveal.roundPoints).forEach(idx => { scores[idx] = (scores[idx] || 0) - reveal.roundPoints[idx]; });
-        reveal = null;
-        phase = 'finalvote';
-        stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
-        pushState(); renderAll();
-        return;
-      }
-      if (phase === 'finalvote') {
-        phase = 'cross';
-        stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
-        pushState(); renderAll();
-        return;
-      }
-      if (phase === 'cross')               { startPhase('defense-witness', argSeconds); return; }
-      if (phase === 'defense-witness')     { startPhase('defense', argSeconds); return; }
-      if (phase === 'defense')             { startPhase('prosecution-witness', argSeconds); return; }
-      if (phase === 'prosecution-witness') { startPhase('prosecution', argSeconds); return; }
-      if (phase === 'prosecution') {
-        phase = 'prevote';
-        stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
-        pushState(); renderAll();
-        return;
-      }
+      if (phase === 'reveal')              { reveal = null; startPhase('finalvote'); return; }
+      if (phase === 'finalvote')           { startPhase('cross'); return; }
+      if (phase === 'cross')               { startPhase('defense-witness'); return; }
+      if (phase === 'defense-witness')     { startPhase('defense'); return; }
+      if (phase === 'defense')             { startPhase('prosecution-witness'); return; }
+      if (phase === 'prosecution-witness') { startPhase('prosecution'); return; }
+      if (phase === 'prosecution')         { startPhase('prevote'); return; }
     }
 
     function resetToIdle() {
       caseNum = 0; phase = 'idle'; charge = null; reveal = null;
       currentWitness = null; witnessThisCase = [];
-      witnessOfSide = { prosecution: null, defense: null };
-      stopTicking(); timer.running = false; timer.total = 0; timer.left = 0;
       pushState();
       renderAll();
     }
 
-    /* ── Reveal: compare each juror's secret pre-vote to their final vote.
-       Scoring — "persuasion differential":
-       - Each flipped juror pays the side that flipped them. The payout per flip
-         is normalized to the jury size (round(6 / jury size)) so the total a
-         lawyer can win by sweeping the whole jury stays roughly the same (~6)
-         whether the jury is 1 or 5 people, instead of scaling straight up with
-         player count.
-       - The defendant's own fate rides on the final headcount: Not Guilty
-         needs a real majority (+3), and anything else — a Guilty majority or
-         a tie — convicts them (−1). It's a Kangaroo Court: a tie doesn't get
-         the benefit of the doubt.
-       - A witness who actually helped (their side landed at least one flip)
-         gets a small +1 of their own — the only way the witness mechanic
-         affects the score, keeping it a bonus rather than a core lever. ── */
+    /* ── Reveal: compare each juror's secret pre-vote to their final vote, and
+       report who flipped which way and what the jury finally decided. The
+       defendant's fate rides on the final headcount: Not Guilty needs a real
+       majority, and anything else — a Guilty majority or a tie — convicts
+       them. It's a Kangaroo Court: a tie doesn't get the benefit of the doubt. ── */
     function doReveal() {
       const n = ROOM.count;
       const juryIdx = Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx);
-      const flipValue = Math.round(6 / Math.max(1, juryIdx.length));
       let guiltyFinal = 0, notGuiltyFinal = 0;
       const juryDetail = juryIdx.map(i => {
         const num = i + 1;
@@ -813,35 +569,10 @@
         if (pre && fin && pre !== fin) flip = pre === 'guilty' ? 'toNotGuilty' : 'toGuilty';
         return { idx: i, num, pre, fin, flip };
       });
-      // it's a Kangaroo Court — a tie doesn't earn the defendant the benefit of
-      // the doubt, it convicts them, same as a real guilty majority
       const verdict = guiltyFinal >= notGuiltyFinal ? 'guilty' : 'notguilty';
 
-      const roundPoints = {};
-      juryDetail.forEach(j => {
-        if (j.flip === 'toNotGuilty') roundPoints[defenseIdx] = (roundPoints[defenseIdx] || 0) + flipValue;
-        if (j.flip === 'toGuilty') roundPoints[prosecutorIdx] = (roundPoints[prosecutorIdx] || 0) + flipValue;
-      });
-      roundPoints[defendantIdx] = (roundPoints[defendantIdx] || 0) + (verdict === 'notguilty' ? 3 : -1);
-
-      if (witnessOfSide.prosecution != null && roundPoints[prosecutorIdx]) {
-        roundPoints[witnessOfSide.prosecution] = (roundPoints[witnessOfSide.prosecution] || 0) + 1;
-      }
-      if (witnessOfSide.defense != null && roundPoints[defenseIdx]) {
-        roundPoints[witnessOfSide.defense] = (roundPoints[witnessOfSide.defense] || 0) + 1;
-      }
-
-      Object.keys(roundPoints).forEach(idx => { scores[idx] = (scores[idx] || 0) + roundPoints[idx]; });
-
-      reveal = { verdict, flipValue, juryDetail, roundPoints, guiltyFinal, notGuiltyFinal };
+      reveal = { verdict, juryDetail, guiltyFinal, notGuiltyFinal };
       phase = 'reveal';
-      stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
-      pushState();
-      renderAll();
-    }
-
-    function resetScores() {
-      scores = scores.map(() => 0);
       pushState();
       renderAll();
     }
@@ -861,8 +592,6 @@
         charge: charge ? charge.charge : null,
         prevoteId: phase === 'prevote' ? prevoteId : null,
         finalVoteId: phase === 'finalvote' ? finalVoteId : null,
-        timer: timerPayload(),
-        score: scores[i] || 0,
         result: null,
         isWitness: !!(isWitnessPhase && currentWitness && i === currentWitness.jurorIdx),
         witnessCard: isWitnessPhase && currentWitness ? currentWitness.card : null,
@@ -870,13 +599,9 @@
       };
       if (phase === 'reveal' && reveal) {
         const mine = reveal.juryDetail.find(j => j.idx === i);
-        const witnessSide = i === witnessOfSide.prosecution ? 'prosecution' : i === witnessOfSide.defense ? 'defense' : null;
         base.result = {
           verdict: reveal.verdict,
-          flipValue: reveal.flipValue,
-          points: reveal.roundPoints[i] || 0,
           flip: mine ? mine.flip : null,
-          witnessBonus: witnessSide && reveal.roundPoints[i] > 0 ? witnessSide : null,
         };
       }
       return base;
@@ -917,9 +642,7 @@
       renderWitness();
       renderCharge();
       renderRoleStrip();
-      renderTimer();
       renderJuryTally();
-      renderLeaderboard();
       ROOM.render();
     }
 
@@ -946,7 +669,7 @@
       const el = document.getElementById('status-line');
       el.classList.remove('vote', 'win', 'lose');
       el.classList.toggle('not-clickable', !ROOM.enabled);
-      el.classList.toggle('is-next', ROOM.enabled && (phase === 'reveal' || (timer.total > 0 && timer.left <= 0)));
+      el.classList.toggle('is-next', ROOM.enabled && phase === 'reveal');
       if (!ROOM.enabled) { el.textContent = '🔗 Add player links first'; return; }
       if (phase === 'reveal' && reveal) {
         el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
@@ -1016,20 +739,6 @@
         <span class="witness-playedby">🎭 Played by ${esc(ROOM.name(currentWitness.jurorIdx))}</span>`;
     }
 
-    function renderTimer() {
-      const active = timer.total > 0;
-      const dial = document.getElementById('kc-dial');
-      dial.classList.toggle('idle', !active);
-      dial.classList.toggle('low', active && timer.left / timer.total <= .5 && timer.left / timer.total > .25);
-      dial.classList.toggle('critical', active && timer.left / timer.total <= .25);
-      dial.textContent = active ? timer.left : argSeconds;
-      document.getElementById('kc-timer-btn').disabled = !active;
-      document.getElementById('kc-timer-btn').textContent = !active || timer.running ? '⏸️ Pause' : '▶️ Resume';
-      document.getElementById('kc-restart-btn').disabled = !active;
-      document.getElementById('kc-secs-minus').disabled = argSeconds <= ARG_MIN;
-      document.getElementById('kc-secs-plus').disabled = argSeconds >= ARG_MAX;
-    }
-
     function juryIndices() {
       const n = ROOM.count;
       return Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx);
@@ -1043,22 +752,11 @@
         const rows = reveal.juryDetail.map(j => {
           const pre = j.pre === 'guilty' ? '🚨 Guilty' : j.pre === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
           const fin = j.fin === 'guilty' ? '🚨 Guilty' : j.fin === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
-          const flip = j.flip === 'toNotGuilty' ? `<span class="jt-flip def">flipped → Defense +${reveal.flipValue}</span>`
-                     : j.flip === 'toGuilty' ? `<span class="jt-flip pro">flipped → Prosecutor +${reveal.flipValue}</span>` : '';
+          const flip = j.flip === 'toNotGuilty' ? `<span class="jt-flip def">flipped to Not Guilty</span>`
+                     : j.flip === 'toGuilty' ? `<span class="jt-flip pro">flipped to Guilty</span>` : '';
           return `<div class="jt-row"><span>${esc(ROOM.name(j.idx))}</span><span class="jt-vote">${pre} → ${fin}</span>${flip}</div>`;
         }).join('') || '<div class="jt-row">No jurors this case.</div>';
-        // defendant/prosecutor/defense always shown; the two witnesses only
-        // join the line if they actually earned their +1 (same juror can play
-        // both, so skip the duplicate row rather than double-list them)
-        const roleEntries = [['🙇', defendantIdx], ['⚔️', prosecutorIdx], ['🛡️', defenseIdx]];
-        if (witnessOfSide.prosecution != null) roleEntries.push(['🕵️', witnessOfSide.prosecution]);
-        if (witnessOfSide.defense != null && witnessOfSide.defense !== witnessOfSide.prosecution) roleEntries.push(['🕵️', witnessOfSide.defense]);
-        const scoreLine = roleEntries.map(([label, idx]) => {
-          const pts = reveal.roundPoints[idx] || 0;
-          if (!pts) return '';
-          return `<span class="jt-score ${pts > 0 ? 'plus' : 'minus'}">${label} ${esc(ROOM.name(idx))} ${pts > 0 ? '+' : ''}${pts}</span>`;
-        }).join('');
-        el.innerHTML = `<div class="jt-title">⚖️ Verdict</div>${verdictLine}<div class="jt-rows">${rows}</div>${scoreLine ? `<div class="jt-scores">${scoreLine}</div>` : ''}`;
+        el.innerHTML = `<div class="jt-title">⚖️ Verdict</div>${verdictLine}<div class="jt-rows">${rows}</div>`;
         return;
       }
       if (phase !== 'prevote' && phase !== 'finalvote') { el.classList.add('hidden'); return; }
@@ -1071,21 +769,6 @@
         return d && d[field] && d[field].id === id;
       }).length;
       el.innerHTML = `<div class="jt-title">🗳️ ${phase === 'prevote' ? 'Pre-Vote' : 'Final Vote'}</div><div class="jt-count">${done} / ${jury.length} jurors have voted</div>`;
-    }
-
-    function renderLeaderboard() {
-      const el = document.getElementById('leaderboard');
-      if (!caseNum) { el.innerHTML = ''; return; }
-      syncScores();
-      const top = Math.max(...scores, 0);
-      let html = '';
-      for (let i = 0; i < ROOM.count; i++) {
-        html += `<div class="lb-card${scores[i] === top && top > 0 ? ' is-top' : ''}">
-          <span class="lb-name">${esc(ROOM.name(i))}</span>
-          <span class="lb-pts">${scores[i] || 0}</span>
-        </div>`;
-      }
-      el.innerHTML = html;
     }
 
     /* ── Charge browser: unnumbered, just for the host to preview what might come up ── */

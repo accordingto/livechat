@@ -314,6 +314,19 @@ const ROOM = (() => {
       ensureTokens(count);
       document.getElementById('room-code-input').value = sessionCode;
     }
+    // typing a name fires onNameChange -> render() on every keystroke (so the
+    // decorator can react live). Recreating every <input> from scratch would
+    // destroy and rebuild the one node the host is actively typing into, and
+    // restoring focus to its replacement after the fact is a race the browser
+    // doesn't always win under fast typing — a keystroke landing in the tiny
+    // window between the old node dying and the new one being refocused just
+    // disappears. So instead the currently-focused name-input is pulled out
+    // before the wipe and reused as-is (same node, same cursor position, no
+    // refocus needed) rather than replaced.
+    const active = document.activeElement;
+    const reuseInput = (active && active.classList && active.classList.contains('name-input') && wrap.contains(active)) ? active : null;
+    const reuseIndex = reuseInput ? Array.from(wrap.children).indexOf(reuseInput.closest('.link-col')) : -1;
+    if (reuseInput) reuseInput.remove(); // detach so it survives wrap.innerHTML = '' below
     wrap.innerHTML = '';
     for (let i = 0; i < count; i++) {
       const info = decorate ? (decorate(i) || {}) : {};
@@ -322,16 +335,25 @@ const ROOM = (() => {
       // an already-revealed card) with classes it defines in its own stylesheet
       col.className = 'link-col' + (info.marked ? ' is-marked' : '') + (info.cls ? ' ' + info.cls : '');
 
-      const input = document.createElement('input');
-      input.className = 'name-input';
-      input.maxLength = 14;
-      input.placeholder = `Player ${i + 1}`;
-      input.value = names[i] || '';
-      input.oninput = () => {
-        names[i] = input.value.trim();
-        save();
-        if (cfg.onNameChange) cfg.onNameChange();
-      };
+      let input;
+      if (i === reuseIndex && reuseInput) {
+        input = reuseInput; // same node: value, cursor and selection are already correct
+      } else {
+        input = document.createElement('input');
+        input.className = 'name-input';
+        input.maxLength = 14;
+        input.placeholder = `Player ${i + 1}`;
+        input.value = names[i] || '';
+        input.oninput = () => {
+          // don't trim here — this runs on every keystroke, and trimming a
+          // trailing space the moment it's typed (before the next letter can
+          // follow it) makes multi-word names impossible to type; every reader
+          // of `names` (ROOM.name(), cardURL(), shareText()) already trims
+          names[i] = input.value;
+          save();
+          if (cfg.onNameChange) cfg.onNameChange();
+        };
+      }
       col.appendChild(input);
 
       if (live) {
@@ -358,6 +380,11 @@ const ROOM = (() => {
       }
       wrap.appendChild(col);
     }
+    // removing a focused element blurs it synchronously, even when it's about to be
+    // reattached in the same tick — so the reused input needs one explicit focus()
+    // once it's actually back in the document; its value/cursor/selection carried
+    // over untouched since it was never actually re-created
+    if (reuseInput) reuseInput.focus();
   }
 
   function setCount(n) {
