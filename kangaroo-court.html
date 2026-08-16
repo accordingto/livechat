@@ -464,7 +464,7 @@
     const DECKW = GAME_DATA.kangarooWitness;
 
     let caseNum = 0;
-    let phase = 'idle'; // idle | prevote | prosecution-witness | defense-witness | prosecution | defense | cross | finalvote | reveal
+    let phase = 'idle'; // idle | prevote | prosecution | prosecution-witness | defense | defense-witness | cross | finalvote | reveal
     let defendantIdx = -1, prosecutorIdx = -1, defenseIdx = -1;
     let defendantBag = [];    // shuffled players still waiting to stand trial this cycle
     let prosecutorCount = []; // times each player has prosecuted, kept even like the referee in Say It Without Saying It
@@ -672,8 +672,8 @@
     }
 
     /* ── Round flow ──
-       idle/reveal → prevote (new case) → prosecution-witness → defense-witness →
-       prosecution → defense → cross → finalvote → reveal → (repeat) */
+       idle/reveal → prevote (new case) → prosecution → prosecution-witness →
+       defense → defense-witness → cross → finalvote → reveal → (repeat) */
     function dealNewCase() {
       if (!ROOM.enabled) return;
       syncScores();
@@ -725,11 +725,11 @@
     function advance() {
       if (!ROOM.enabled) return;
       if (phase === 'idle' || phase === 'reveal') { dealNewCase(); return; }
-      if (phase === 'prevote')              { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
-      if (phase === 'prosecution-witness')  { startWitnessPhase('defense-witness', 'defense'); return; }
-      if (phase === 'defense-witness')      { startPhase('prosecution', argSeconds); return; }
-      if (phase === 'prosecution')          { startPhase('defense', argSeconds); return; }
-      if (phase === 'defense')              { startPhase('cross', 0); return; }
+      if (phase === 'prevote')              { startPhase('prosecution', argSeconds); return; }
+      if (phase === 'prosecution')          { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
+      if (phase === 'prosecution-witness')  { startPhase('defense', argSeconds); return; }
+      if (phase === 'defense')              { startWitnessPhase('defense-witness', 'defense'); return; }
+      if (phase === 'defense-witness')      { startPhase('cross', 0); return; }
       if (phase === 'cross')                { finalVoteId = genId(); startPhase('finalvote', 0); return; }
       if (phase === 'finalvote')            { doReveal(); return; }
     }
@@ -737,13 +737,12 @@
     /* undoes one accidental "advance" — the mirror image of advance() above.
        Reveal's score changes are subtracted back out; timed phases restart
        fresh rather than trying to restore the exact second they were on.
-       Stepping back from Prosecution to Defense's Witness can reuse the
-       witness already sitting in currentWitness (nothing overwrote it since),
-       but stepping back a second time — Defense's Witness to Prosecution's —
-       has already lost that data, so it draws a new one; a rare case, and a
-       reroll there is a fine trade for not having to keep both witnesses
-       in memory at once. Pre-Vote and idle have nothing safe to undo into,
-       so the button is disabled there (see renderBackBtn). */
+       Each side's witness is drawn only once (entering prosecution-witness /
+       defense-witness) and nothing overwrites currentWitness until the OTHER
+       side's witness phase is entered — so every step back that lands on a
+       witness phase can just reuse startPhase() and get the same witness
+       back, no reroll needed. Pre-Vote and idle have nothing safe to undo
+       into, so the button is disabled there (see renderBackBtn). */
     function goBack() {
       if (!ROOM.enabled) return;
       if (phase === 'reveal') {
@@ -760,12 +759,11 @@
         pushState(); renderAll();
         return;
       }
-      if (phase === 'cross')               { startPhase('defense', argSeconds); return; }
-      if (phase === 'defense')             { startPhase('prosecution', argSeconds); return; }
-      if (phase === 'prosecution')         { startPhase('defense-witness', argSeconds); return; }
-      if (phase === 'defense-witness')     { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
-      if (phase === 'prosecution-witness') {
-        currentWitness = null;
+      if (phase === 'cross')               { startPhase('defense-witness', argSeconds); return; }
+      if (phase === 'defense-witness')     { startPhase('defense', argSeconds); return; }
+      if (phase === 'defense')             { startPhase('prosecution-witness', argSeconds); return; }
+      if (phase === 'prosecution-witness') { startPhase('prosecution', argSeconds); return; }
+      if (phase === 'prosecution') {
         phase = 'prevote';
         stopTicking(); timer.running = false; timer.total = 0; timer.left = 0; timer.seq++;
         pushState(); renderAll();
@@ -863,10 +861,10 @@
     const FLOW_STEPS = [
       { phase: 'idle', emoji: '⚖️', label: 'Draw a Charge' },
       { phase: 'prevote', emoji: '🤫', label: 'Jury Pre-Vote' },
-      { phase: 'prosecution-witness', emoji: '🕵️', label: "Prosecution's Witness" },
-      { phase: 'defense-witness', emoji: '🕵️', label: "Defense's Witness" },
       { phase: 'prosecution', emoji: '⚔️', label: 'Prosecution' },
+      { phase: 'prosecution-witness', emoji: '🕵️', label: "Prosecution's Witness" },
       { phase: 'defense', emoji: '🛡️', label: 'Defense' },
+      { phase: 'defense-witness', emoji: '🕵️', label: "Defense's Witness" },
       { phase: 'cross', emoji: '🗣️', label: 'Cross-Examination' },
       { phase: 'finalvote', emoji: '🗳️', label: 'Final Vote' },
       { phase: 'reveal', emoji: '⚖️', label: 'Reveal Verdict' },
