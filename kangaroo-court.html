@@ -15,16 +15,18 @@
     .header h1 { background: linear-gradient(135deg, #fff 30%, #e94560); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .round-badge span { color: #e94560; }
 
-    /* ── Layout: a flowchart sidebar (1/4 width) tracking which phase the trial is
-       in, next to the existing content (3/4 width). Room code / player links and
-       everything below stay outside this grid, full-width, untouched. ── */
+    /* ── Layout: the existing content (3/4 width) on the left, a flowchart
+       sidebar (1/4 width) tracking which phase the trial is in on the right.
+       Room code / player links and everything below stay outside this grid,
+       full-width, untouched. `order` does the swap so the sidebar can stay
+       first in the markup (it holds the CTA button) while rendering second. ── */
     .kc-layout {
       width: 100%; max-width: 1400px;
-      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+      display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
       align-items: start; gap: 24px;
       margin-bottom: 4px;
     }
-    .kc-flow { position: sticky; top: 20px; }
+    .kc-flow { position: sticky; top: 20px; order: 2; }
     .kc-flow-card {
       background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
       padding: 20px 18px;
@@ -64,11 +66,14 @@
       0%, 100% { box-shadow: 0 0 10px rgba(233,69,96,.35); }
       50%      { box-shadow: 0 0 22px rgba(233,69,96,.7); }
     }
-    .kc-main { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+    .kc-main { width: 100%; min-width: 0; order: 1; display: flex; flex-direction: column; align-items: center; }
 
     @media (max-width: 900px) {
       .kc-layout { grid-template-columns: 1fr; }
-      .kc-flow { position: static; }
+      /* the sidebar (and its CTA button) stays reachable without scrolling on a
+         phone, so keep it first here even though desktop puts it on the right */
+      .kc-flow { position: static; order: 0; }
+      .kc-main { order: 1; }
       .kc-flow-steps { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 14px 22px; }
       .kc-flow-step { flex-direction: column; text-align: center; padding-left: 0; min-height: auto; gap: 6px; }
       .kc-flow-step::before { display: none; }
