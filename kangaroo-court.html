@@ -127,27 +127,31 @@
       width: 100%; max-width: 1100px;
       background: linear-gradient(135deg, rgba(233,69,96,.14), rgba(233,69,96,.03));
       border: 2px solid #e94560; border-radius: 22px;
-      padding: 30px 32px; margin-bottom: 16px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      text-align: center; min-height: 160px; justify-content: center;
+      padding: 22px 30px; margin-bottom: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      text-align: center; justify-content: center;
       position: relative; overflow: hidden;
       animation: fadeUp .5s .1s ease both;
       transition: border-color .3s;
     }
     .charge-card::before {
-      content: '⚖️'; position: absolute; font-size: 9rem; opacity: .04;
+      content: '⚖️'; position: absolute; font-size: 7rem; opacity: .04;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
     .charge-card.idle { border-color: #1e1e42; background: #13132b; }
+    /* small header row — icon + label — same pattern as the witness cards below it */
+    .charge-top {
+      display: flex; align-items: center; gap: 8px; position: relative; z-index: 1;
+    }
     .charge-label {
       font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #e94560; position: relative; z-index: 1;
+      color: #e94560;
     }
     .charge-text {
-      font-size: clamp(1.15rem, 3.4vw, 1.7rem); font-weight: 800; color: #fff; line-height: 1.5;
+      font-size: clamp(1.1rem, 3.2vw, 1.5rem); font-weight: 800; color: #fff; line-height: 1.45;
       max-width: 880px; position: relative; z-index: 1;
     }
-    .charge-emoji { font-size: 2.8rem; line-height: 1; position: relative; z-index: 1; }
+    .charge-emoji { font-size: 1.5rem; line-height: 1; }
     .charge-placeholder { color: #444; font-size: 1rem; position: relative; z-index: 1; }
 
     /* lives inside the flow sidebar now, under the step list */
@@ -303,7 +307,7 @@
     .charge-item .ci-emoji { font-size: 1.2rem; flex-shrink: 0; }
 
     @media (max-width: 520px) {
-      .charge-card { padding: 22px 18px; min-height: 130px; }
+      .charge-card { padding: 18px 16px; }
     }
   </style>
 </head>
@@ -348,8 +352,10 @@
       <div class="charge-card idle" id="charge-card">
         <span class="charge-placeholder" id="charge-placeholder">Press <strong>⚖️ Draw a Charge</strong> to open the trial</span>
         <div id="charge-content" style="display:none">
-          <span class="charge-emoji" id="charge-emoji"></span>
-          <span class="charge-label">⚖️ The defendant is charged with…</span>
+          <div class="charge-top">
+            <span class="charge-emoji" id="charge-emoji"></span>
+            <span class="charge-label">⚖️ The defendant is charged with…</span>
+          </div>
           <span class="charge-text" id="charge-text"></span>
         </div>
       </div>
