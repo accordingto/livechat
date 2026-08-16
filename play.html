@@ -342,6 +342,12 @@
       animation: buzzIn .3s ease both;
     }
     .taboo-buzzed.mine { animation: buzzIn .3s ease both, buzzPulse 1.6s ease-in-out infinite .3s; }
+    /* locked out of buzzing this cycle — dim and neutral, not the "go" green of the buzzer */
+    .taboo-waiting {
+      width: 100%; background: rgba(148,163,184,.08); border: 2px solid #3a3a5c; color: #888;
+      border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 900;
+      animation: buzzIn .3s ease both;
+    }
     @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
     @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
@@ -887,10 +893,16 @@
         buzzArea = `
           <div class="taboo-buzzed">⏳ You're #${data.queued} in the queue</div>
           <span class="pick-sub">${esc(data.buzzerName || 'Someone')} is guessing first.</span>`;
+      } else if (data.rejected) {
+        // guessed wrong this cycle — locked out until everyone else in the
+        // rotation has also had a turn, so no buzzer to tap here
+        buzzArea = `
+          <div class="taboo-waiting">❌ Not it — hang tight</div>
+          <span class="pick-sub">You can buzz again once everyone else has had a turn.</span>`;
       } else {
         buzzArea = `
           <button class="taboo-buzz" onclick="tabooBuzz(this)">
-            <span class="pb-key">🙋</span><span class="pb-label">${data.rejected ? 'Buzz again!' : 'Buzz in!'}</span>
+            <span class="pb-key">🙋</span><span class="pb-label">Buzz in!</span>
           </button>
           <span class="pick-sub">${data.buzzerName ? esc(data.buzzerName) + ' is guessing — buzz to get in line.' : 'Know it? Hit the buzzer, then say it out loud.'}</span>`;
       }

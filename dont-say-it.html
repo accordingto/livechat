@@ -437,7 +437,7 @@
     let used = [];
     let scores = [];
     let queue = [];        // player numbers waiting to be judged, in the order they buzzed
-    let rejected = [];     // buzzed and were told "not it" — they can buzz again
+    let rejected = [];     // buzzed and were told "not it" this cycle — locked out of buzzing again until everyone else in guesserNums() has also had a turn (see handleAnswer)
     let seenBuzz = {};     // playerNum -> the last buzz stamp already queued
     let result = null;     // { type: 'got' | 'foul', who }
     let popIdx = [];       // score cards to animate after a point
@@ -567,6 +567,10 @@
         if (v.choice === 'right') awardPoint(queue[0]);
         else {
           rejected.push(queue.shift());
+          // once everyone in the rotation has had a wrong guess this round, the
+          // slate wipes and buzzing reopens for all of them — nobody's shut out
+          // once someone else has also had their turn
+          if (rejected.length >= guesserNums().length) rejected = [];
           releaseTimer();   // no-op while someone else is still queued up
           pushState();
           renderAll();
@@ -577,6 +581,9 @@
 
       if (v.choice === 'buzz') {
         if (num === refIdx + 1) { ROOM.clearAnswer(num - 1); return; } // the referee sits this one out
+        // wrong once already this cycle — locked out until everyone else has
+        // also had a turn (see the reset above)
+        if (rejected.includes(num)) { ROOM.clearAnswer(num - 1); return; }
         if (seenBuzz[num] === v.t) return;   // already queued this buzz
         seenBuzz[num] = v.t;
         ROOM.clearAnswer(num - 1);           // let them buzz again later
@@ -797,6 +804,13 @@
       return pick;
     }
 
+    /* everyone in this round's buzz-in rotation — every guesser except the clue
+       giver and the referee, who never buzz at all */
+    function guesserNums() {
+      const n = ROOM.count;
+      return Array.from({ length: n }, (_, i) => i + 1).filter(num => num !== giverIdx + 1 && num !== refIdx + 1);
+    }
+
     /* ── Round flow ── */
     function dealRound(keepGiver) {
       if (!ROOM.enabled) return;
@@ -944,7 +958,7 @@
       } else if (p.queued) {
         lines.push(`🙋 #${p.queued} in the queue`);
       } else if (p.rejected) {
-        lines.push('❌ Not it — can buzz again');
+        lines.push('❌ Not it — waiting for the others to try');
       } else {
         lines.push('🙋 Buzz in!');
       }
