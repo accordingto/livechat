@@ -15,6 +15,66 @@
     .header h1 { background: linear-gradient(135deg, #fff 30%, #e94560); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .round-badge span { color: #e94560; }
 
+    /* ── Layout: a flowchart sidebar (1/4 width) tracking which phase the trial is
+       in, next to the existing content (3/4 width). Room code / player links and
+       everything below stay outside this grid, full-width, untouched. ── */
+    .kc-layout {
+      width: 100%; max-width: 1400px;
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+      align-items: start; gap: 24px;
+      margin-bottom: 4px;
+    }
+    .kc-flow { position: sticky; top: 20px; }
+    .kc-flow-card {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
+      padding: 20px 18px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .kc-flow-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 18px;
+    }
+    .kc-flow-steps { display: flex; flex-direction: column; gap: 20px; }
+    .kc-flow-step {
+      position: relative; display: flex; align-items: center; gap: 12px;
+      padding-left: 40px; min-height: 32px;
+    }
+    /* the connecting line between one step's dot and the next */
+    .kc-flow-step::before {
+      content: ''; position: absolute; left: 15px; top: -20px; width: 2px; height: 20px;
+      background: #1e1e42; transition: background .3s;
+    }
+    .kc-flow-step:first-child::before { display: none; }
+    .kc-flow-dot {
+      position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #666;
+      display: flex; align-items: center; justify-content: center; font-size: .92rem;
+      z-index: 1; transition: border-color .3s, background .3s, color .3s, box-shadow .3s;
+    }
+    .kc-flow-label { font-size: .82rem; font-weight: 700; color: #555; line-height: 1.35; transition: color .3s; }
+    .kc-flow-step.is-done::before { background: #22c55e; }
+    .kc-flow-step.is-done .kc-flow-dot { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.1); }
+    .kc-flow-step.is-done .kc-flow-label { color: #4ade80; }
+    .kc-flow-step.is-current .kc-flow-dot {
+      border-color: var(--accent); color: #fff; background: rgba(233,69,96,.2);
+      animation: kcFlowPulse 1.8s ease-in-out infinite;
+    }
+    .kc-flow-step.is-current .kc-flow-label { color: #fff; }
+    @keyframes kcFlowPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(233,69,96,.35); }
+      50%      { box-shadow: 0 0 22px rgba(233,69,96,.7); }
+    }
+    .kc-main { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+
+    @media (max-width: 900px) {
+      .kc-layout { grid-template-columns: 1fr; }
+      .kc-flow { position: static; }
+      .kc-flow-steps { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 14px 22px; }
+      .kc-flow-step { flex-direction: column; text-align: center; padding-left: 0; min-height: auto; gap: 6px; }
+      .kc-flow-step::before { display: none; }
+      .kc-flow-dot { position: static; }
+    }
+
     /* ── One status line, same shape as the other timed games ── */
     .status-line {
       width: 100%; max-width: 1100px;
@@ -230,34 +290,45 @@
     ⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
   </div>
 
-  <div class="status-line" id="status-line"></div>
+  <div class="kc-layout">
+    <aside class="kc-flow" id="kc-flow">
+      <div class="kc-flow-card">
+        <div class="kc-flow-hdr">📍 Trial Progress</div>
+        <div class="kc-flow-steps" id="kc-flow-steps"></div>
+      </div>
+    </aside>
 
-  <div class="charge-card idle" id="charge-card">
-    <span class="charge-placeholder" id="charge-placeholder">Press <strong>⚖️ Draw a Charge</strong> to open the trial</span>
-    <div id="charge-content" style="display:none">
-      <span class="charge-emoji" id="charge-emoji"></span>
-      <span class="charge-label">⚖️ The defendant is charged with…</span>
-      <span class="charge-text" id="charge-text"></span>
+    <div class="kc-main">
+      <div class="status-line" id="status-line"></div>
+
+      <div class="charge-card idle" id="charge-card">
+        <span class="charge-placeholder" id="charge-placeholder">Press <strong>⚖️ Draw a Charge</strong> to open the trial</span>
+        <div id="charge-content" style="display:none">
+          <span class="charge-emoji" id="charge-emoji"></span>
+          <span class="charge-label">⚖️ The defendant is charged with…</span>
+          <span class="charge-text" id="charge-text"></span>
+        </div>
+      </div>
+
+      <div class="charge-swap hidden" id="charge-swap">
+        <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
+      </div>
+
+      <div class="role-strip hidden" id="role-strip"></div>
+
+      <div class="kc-timer-row hidden" id="kc-timer-row">
+        <div class="kc-dial" id="kc-dial">0</div>
+        <button class="kc-timer-btn" id="kc-timer-btn" onclick="toggleTimer()">⏸️ Pause</button>
+      </div>
+
+      <div class="jury-tally hidden" id="jury-tally"></div>
+
+      <button class="btn-cta" id="cta-btn" onclick="advance()"></button>
+
+      <div class="leaderboard" id="leaderboard"></div>
+      <div class="score-reset"><button onclick="resetScores()">↺ Reset scores</button></div>
     </div>
   </div>
-
-  <div class="charge-swap hidden" id="charge-swap">
-    <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
-  </div>
-
-  <div class="role-strip hidden" id="role-strip"></div>
-
-  <div class="kc-timer-row hidden" id="kc-timer-row">
-    <div class="kc-dial" id="kc-dial">0</div>
-    <button class="kc-timer-btn" id="kc-timer-btn" onclick="toggleTimer()">⏸️ Pause</button>
-  </div>
-
-  <div class="jury-tally hidden" id="jury-tally"></div>
-
-  <button class="btn-cta" id="cta-btn" onclick="advance()"></button>
-
-  <div class="leaderboard" id="leaderboard"></div>
-  <div class="score-reset"><button onclick="resetScores()">↺ Reset scores</button></div>
 
   <!-- player cards: role + phase decide what each card shows -->
   <div id="room-mount"></div>
@@ -524,8 +595,33 @@
     }
 
     /* ── Rendering ── */
+    /* the sidebar flowchart — same phase order the game actually moves through.
+       "idle" doubles as the entry point (before the first case, and again after a
+       player-count change), so it always has somewhere to point at. */
+    const FLOW_STEPS = [
+      { phase: 'idle', emoji: '⚖️', label: 'Draw a Charge' },
+      { phase: 'prevote', emoji: '🤫', label: 'Jury Pre-Vote' },
+      { phase: 'prosecution', emoji: '⚔️', label: 'Prosecution' },
+      { phase: 'defense', emoji: '🛡️', label: 'Defense' },
+      { phase: 'cross', emoji: '🗣️', label: 'Cross-Examination' },
+      { phase: 'finalvote', emoji: '🗳️', label: 'Final Vote' },
+      { phase: 'reveal', emoji: '⚖️', label: 'Reveal Verdict' },
+    ];
+    function renderFlow() {
+      const order = FLOW_STEPS.map(s => s.phase);
+      const idx = order.indexOf(phase);
+      document.getElementById('kc-flow-steps').innerHTML = FLOW_STEPS.map((s, i) => {
+        const cls = i === idx ? 'is-current' : i < idx ? 'is-done' : '';
+        return `<div class="kc-flow-step ${cls}">
+          <span class="kc-flow-dot">${i < idx ? '✓' : s.emoji}</span>
+          <span class="kc-flow-label">${esc(s.label)}</span>
+        </div>`;
+      }).join('');
+    }
+
     function renderAll() {
       document.getElementById('caseNum').textContent = caseNum;
+      renderFlow();
       renderStatus();
       renderCharge();
       renderRoleStrip();
