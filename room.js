@@ -127,7 +127,7 @@ const ROOM = (() => {
     const text = shareText(i);
     const done = () => {
       const old = btn.textContent;
-      btn.textContent = '✅ Copied';
+      btn.textContent = 'Copied';
       setTimeout(() => { btn.textContent = old; }, 1500);
     };
     if (navigator.clipboard) {
@@ -218,7 +218,7 @@ const ROOM = (() => {
       .name-input:focus { outline: none; border-color: var(--room-accent); }
       .link-btn-row { display: flex; gap: 8px; width: 100%; }
       .btn-copy {
-        flex: 1; background: transparent; color: var(--room-accent); border: 2px solid var(--room-accent);
+        flex: 1; min-width: 0; background: transparent; color: var(--room-accent); border: 2px solid var(--room-accent);
         border-radius: 10px; padding: 9px 10px;
         font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
         transition: background .2s, transform .1s;
@@ -250,7 +250,7 @@ const ROOM = (() => {
       }
       @media (max-width: 520px) {
         .link-col { min-width: 130px; padding: 12px 10px; }
-        .btn-copy { font-size: .74rem; padding: 9px 4px; white-space: nowrap; }
+        .btn-copy { font-size: .74rem; padding: 9px 4px; }
         .btn-qr-toggle { font-size: .74rem; padding: 9px 8px; }
         .room-count-btn { width: 40px; height: 40px; }
       }`;
@@ -361,7 +361,7 @@ const ROOM = (() => {
         row.className = 'link-btn-row';
         const copy = document.createElement('button');
         copy.className = 'btn-copy';
-        copy.textContent = '📋 Copy Link';
+        copy.textContent = 'Link';
         copy.onclick = () => copyLink(i, copy);
         const qr = document.createElement('button');
         qr.className = 'btn-qr-toggle';

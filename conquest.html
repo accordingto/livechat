@@ -127,7 +127,7 @@
     .name-input:focus { outline: none; border-color: #22c55e; }
     .link-btn-row { display: flex; gap: 8px; width: 100%; }
     .btn-copy {
-      flex: 1;
+      flex: 1; min-width: 0;
       background: transparent; color: #22c55e; border: 2px solid #22c55e;
       border-radius: 10px; padding: 9px 10px;
       font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
@@ -154,8 +154,7 @@
     .qr-inline svg { width: 100%; height: auto; display: block; }
     @media (max-width: 520px) {
       .link-col { min-width: 130px; padding: 12px 10px; }
-      /* two columns fit side by side on a phone — keep "Copy Link" on one line */
-      .btn-copy { font-size: .74rem; padding: 9px 4px; white-space: nowrap; }
+      .btn-copy { font-size: .74rem; padding: 9px 4px; }
       .btn-qr-toggle { font-size: .74rem; padding: 9px 8px; }
     }
 
@@ -961,7 +960,7 @@
       const url = cardShareText(token);
       const done = () => {
         const old = btn.textContent;
-        btn.textContent = '✅';
+        btn.textContent = 'Copied';
         setTimeout(() => { btn.textContent = old; }, 1400);
       };
       if (navigator.clipboard) {
@@ -1033,7 +1032,7 @@
           row.className = 'link-btn-row';
           const copy = document.createElement('button');
           copy.className = 'btn-copy';
-          copy.textContent = '📋 Copy Link';
+          copy.textContent = 'Link';
           copy.onclick = () => copyCardLink(playerTokens[i], copy);
           const qr = document.createElement('button');
           qr.className = 'btn-qr-toggle';
