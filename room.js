@@ -142,6 +142,28 @@ const ROOM = (() => {
     }
   }
 
+  /* one clipboard write with every player's link, so the host can paste the
+     whole roster into chat instead of copying and pasting one at a time —
+     a blank line between players keeps each name+link pair readable */
+  function copyAllLinks() {
+    const btn = document.getElementById('copy-all-btn');
+    ensureTokens(count);
+    const text = Array.from({ length: count }, (_, i) => shareText(i)).join('\n\n');
+    const done = () => {
+      btn.textContent = 'Copied';
+      btn.classList.remove('is-copied');
+      void btn.offsetWidth;
+      btn.classList.add('is-copied');
+      clearTimeout(btn._copyRevert);
+      btn._copyRevert = setTimeout(() => { btn.textContent = '📋 Copy All Links'; btn.classList.remove('is-copied'); }, 1500);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(done).catch(() => prompt('Copy this:', text));
+    } else {
+      prompt('Copy this:', text);
+    }
+  }
+
   function qrSVG(text) {
     const qr = qrcode(0, 'M');
     qr.addData(text);
@@ -206,6 +228,14 @@ const ROOM = (() => {
       }
       .room-tag { font-size: .6rem; letter-spacing: 1px; color: #555; border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px; }
       .room-note { color: #555; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
+      /* sits right after room-note, wrapping onto its own line on narrow screens
+         next to whatever game-specific toggle (e.g. Say It Without Saying It's
+         "Show what's on player cards") also lives in that same flow */
+      .copy-all-btn { margin-bottom: 14px; }
+      .copy-all-btn.is-copied {
+        background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
+        animation: copyPop .4s ease;
+      }
       .room-links { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
       .link-col {
         flex: 1; min-width: 160px;
@@ -295,10 +325,12 @@ const ROOM = (() => {
       </div>
       <div class="room-hdr" id="room-hdr"></div>
       <p class="room-note hidden" id="room-note"></p>
+      <button class="room-btn primary copy-all-btn hidden" id="copy-all-btn" type="button">📋 Copy All Links</button>
       <div class="room-links" id="room-links"></div>`;
 
     document.getElementById('room-load-btn').onclick = loadRoomCode;
     document.getElementById('room-new-btn').onclick = newRoom;
+    document.getElementById('copy-all-btn').onclick = copyAllLinks;
     document.getElementById('room-code-input').onkeydown = e => { if (e.key === 'Enter') loadRoomCode(); };
 
     const btns = document.getElementById('room-count-btns');
@@ -322,6 +354,7 @@ const ROOM = (() => {
     document.getElementById('room-code-row').classList.toggle('hidden', !live);
     document.getElementById('room-code-divider').classList.toggle('hidden', !live);
     document.getElementById('room-note').classList.toggle('hidden', !live || !cfg.linksNote);
+    document.getElementById('copy-all-btn').classList.toggle('hidden', !live);
     document.getElementById('room-hdr').innerHTML = live
       ? '🔗 Player Links <span class="room-tag">optional</span>'
       : '👥 Players';
