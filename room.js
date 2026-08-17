@@ -481,7 +481,7 @@ const ROOM = (() => {
       if (checkWords && checkWords[i]) {
         const badge = document.createElement('div');
         badge.className = 'check-word-badge';
-        badge.innerHTML = `🔍 <span>${checkWords[i].emoji} ${checkWords[i].word}</span>`;
+        badge.innerHTML = `<span>${checkWords[i].emoji} ${checkWords[i].word}</span>`;
         col.appendChild(badge);
       }
 
