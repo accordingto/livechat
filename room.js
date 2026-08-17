@@ -164,6 +164,27 @@ const ROOM = (() => {
     }
   }
 
+  /* a sanity check for after links have gone out: send every player a different,
+     simple word (pulled from the Forbidden Words deck — 200 everyday words, plenty
+     to cover up to 8 players with none repeated) so the host can go around asking
+     "what does your card say?" and catch anyone who opened the wrong link before
+     the real game starts. This overwrites whatever the current game had published,
+     same as any other publish() — dealing the real game afterward replaces it. */
+  function sendCardCheck() {
+    if (!on()) return;
+    const pool = (typeof GAME_DATA !== 'undefined' && GAME_DATA.forbidden) || [];
+    if (pool.length < count) return; // not enough words to guarantee everyone different
+    const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+    checkWords = shuffled.slice(0, count);
+    publish(i => ({ game: 'cardcheck', word: checkWords[i].word, emoji: checkWords[i].emoji }));
+    render();
+  }
+
+  function clearCardCheck() {
+    checkWords = null;
+    render();
+  }
+
   function qrSVG(text) {
     const qr = qrcode(0, 'M');
     qr.addData(text);
@@ -235,6 +256,22 @@ const ROOM = (() => {
       .copy-all-btn.is-copied {
         background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
         animation: copyPop .4s ease;
+      }
+      .check-btn { margin: 0 0 10px; }
+      .check-note {
+        width: 100%; color: #94a3b8; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px;
+      }
+      .check-note button {
+        background: none; border: none; color: #666; font-family: inherit;
+        font-size: .78rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0;
+      }
+      .check-note button:hover { color: #999; }
+      /* the host's private answer key: what sendCardCheck() actually sent this
+         player, shown only on the host's own screen */
+      .check-word-badge {
+        width: 100%; border-top: 1px dashed rgba(148,163,184,.3); padding-top: 9px;
+        font-size: .82rem; font-weight: 800; color: #94a3b8;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
       }
       .room-links { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
       .link-col {
@@ -326,11 +363,14 @@ const ROOM = (() => {
       <div class="room-hdr" id="room-hdr"></div>
       <p class="room-note hidden" id="room-note"></p>
       <button class="room-btn primary copy-all-btn hidden" id="copy-all-btn" type="button">📋 Copy All Links</button>
+      <button class="room-btn check-btn hidden" id="check-btn" type="button">🔍 Send Card Check</button>
+      <p class="check-note hidden" id="check-note"></p>
       <div class="room-links" id="room-links"></div>`;
 
     document.getElementById('room-load-btn').onclick = loadRoomCode;
     document.getElementById('room-new-btn').onclick = newRoom;
     document.getElementById('copy-all-btn').onclick = copyAllLinks;
+    document.getElementById('check-btn').onclick = sendCardCheck;
     document.getElementById('room-code-input').onkeydown = e => { if (e.key === 'Enter') loadRoomCode(); };
 
     const btns = document.getElementById('room-count-btns');
@@ -347,6 +387,11 @@ const ROOM = (() => {
   /* per-player marks + answers the game wants shown under the name (e.g. the judge, or a vote) */
   let decorate = null;
 
+  /* the word (or null) currently sent to each player index by sendCardCheck() —
+     kept around purely so the host's own screen can show what was sent next to
+     each name, as a private answer key for "what does your card say?" */
+  let checkWords = null;
+
   function render() {
     const wrap = document.getElementById('room-links');
     if (!wrap) return;
@@ -355,6 +400,18 @@ const ROOM = (() => {
     document.getElementById('room-code-divider').classList.toggle('hidden', !live);
     document.getElementById('room-note').classList.toggle('hidden', !live || !cfg.linksNote);
     document.getElementById('copy-all-btn').classList.toggle('hidden', !live);
+    document.getElementById('check-btn').classList.toggle('hidden', !live);
+    const checkNote = document.getElementById('check-note');
+    checkNote.classList.toggle('hidden', !live || !checkWords);
+    if (live && checkWords) {
+      checkNote.innerHTML = '';
+      checkNote.append('🔍 Check words sent — ask each player what they see, then re-deal the game to continue. ');
+      const clearLink = document.createElement('button');
+      clearLink.type = 'button';
+      clearLink.textContent = '✖️ Clear';
+      clearLink.onclick = clearCardCheck;
+      checkNote.appendChild(clearLink);
+    }
     document.getElementById('room-hdr').innerHTML = live
       ? '🔗 Player Links <span class="room-tag">optional</span>'
       : '👥 Players';
@@ -421,6 +478,13 @@ const ROOM = (() => {
         col.appendChild(row);
       }
 
+      if (checkWords && checkWords[i]) {
+        const badge = document.createElement('div');
+        badge.className = 'check-word-badge';
+        badge.innerHTML = `🔍 <span>${checkWords[i].emoji} ${checkWords[i].word}</span>`;
+        col.appendChild(badge);
+      }
+
       if (info.answer) {
         const ans = document.createElement('div');
         ans.className = 'link-answer';
@@ -438,6 +502,7 @@ const ROOM = (() => {
 
   function setCount(n) {
     count = n;
+    checkWords = null; // stale answer key for the old headcount
     document.querySelectorAll('.room-count-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
     if (on()) ensureTokens(count);
     save();
@@ -450,6 +515,7 @@ const ROOM = (() => {
     const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!typed) return;
     sessionCode = typed;
+    checkWords = null; // stale answer key for the room we just left
     const saved = loadSessionData(typed);
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
     if (saved && saved.names && saved.names.length) names = saved.names.slice();
@@ -462,6 +528,7 @@ const ROOM = (() => {
 
   function newRoom() {
     sessionCode = generateSessionCode();
+    checkWords = null;
     tokens = [];
     ensureTokens(count);
     save();

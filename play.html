@@ -32,6 +32,7 @@
     .secret-card.theme-teamwords-b { border-color: #f43f5e; box-shadow: 0 0 60px rgba(244,63,94,.18); }
     .secret-card.theme-secretrule  { border-color: #14b8a6; box-shadow: 0 0 60px rgba(20,184,166,.18); }
     .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
+    .secret-card.theme-cardcheck   { border-color: #94a3b8; box-shadow: 0 0 60px rgba(148,163,184,.18); }
 
     /* 🏰 Dare Conquest: this card is a control panel, not a reveal — it gets tighter
        spacing and a smaller name pill than the games that show one big secret word,
@@ -1022,6 +1023,16 @@
     function showCard(data) {
       setCardTitle(data.name || urlName);
       if (data.game === 'conquest') { el.innerHTML = conquestCardHTML(data); return; }
+      if (data.game === 'cardcheck') {
+        el.innerHTML = `
+          <div class="secret-card theme-cardcheck">
+            ${nameBanner(data)}
+            <span class="card-emoji">${esc(data.emoji || '🔍')}</span>
+            ${wordSpan(data.word || '')}
+            <span class="secret-hint">Tell the host what you see!</span>
+          </div>`;
+        return;
+      }
       if (data.game === 'wordwolf') {
         el.innerHTML = `
           <div class="secret-card theme-wordwolf">
