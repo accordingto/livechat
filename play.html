@@ -275,6 +275,13 @@
        would resolve against its own colour and turn the letter invisible */
     .pick-btn.picked .pb-key { background: color-mix(in srgb, currentColor 28%, transparent); color: inherit; }
 
+    /* 🙊 Say It Without Saying It: the clue giver's ✅/❌ verdict — filled solid so they
+       read as real buttons instead of list rows with coloured text on a dark background */
+    .pick-btn.verdict-right { background: #22c55e; border-color: #22c55e; color: #06230f; }
+    .pick-btn.verdict-right .pb-key { background: rgba(6,35,15,.22); color: inherit; }
+    .pick-btn.verdict-wrong { background: #ef4444; border-color: #ef4444; color: #2b0505; }
+    .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
+
     /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
     .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; }
     .taboo-target {
@@ -308,12 +315,13 @@
     .taboo-buzz:active:not(:disabled) { transform: scale(.97); }
     .taboo-buzz:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
     .taboo-foul {
-      width: 100%; background: transparent; border: 2px solid rgba(239,68,68,.4); color: #ef4444;
-      border-radius: 12px; padding: 11px; font-size: .85rem; font-weight: 800; font-family: inherit;
-      cursor: pointer; transition: background .2s, transform .1s;
+      width: 100%; background: #ef4444; border: 2px solid #ef4444; color: #2b0505;
+      border-radius: 12px; padding: 12px; font-size: .85rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(239,68,68,.28);
+      transition: transform .1s, opacity .2s;
     }
     .taboo-foul:active:not(:disabled) { transform: scale(.98); }
-    .taboo-foul:disabled { opacity: .4; cursor: not-allowed; }
+    .taboo-foul:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
     /* the countdown, mirrored from the host — same green → orange → red everywhere */
     .taboo-timer {
       width: 74px; height: 74px; border-radius: 50%;
@@ -856,10 +864,10 @@
         const verdict = data.buzzer ? `
             <div class="taboo-buzzed">🙋 ${esc(data.buzzerName || '')} buzzed in</div>
             <div class="pick-row">
-              <button class="pick-btn" style="color:#22c55e" onclick="tabooVerdict('right', ${data.buzzer}, this)">
+              <button class="pick-btn verdict-right" onclick="tabooVerdict('right', ${data.buzzer}, this)">
                 <span class="pb-key">✅</span><span class="pb-label">Correct! +1 each</span>
               </button>
-              <button class="pick-btn" style="color:#ef4444" onclick="tabooVerdict('wrong', ${data.buzzer}, this)">
+              <button class="pick-btn verdict-wrong" onclick="tabooVerdict('wrong', ${data.buzzer}, this)">
                 <span class="pb-key">❌</span><span class="pb-label">Not it — keep going</span>
               </button>
             </div>`
