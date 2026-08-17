@@ -139,11 +139,10 @@
         align-items: center;
       }
       .cb-sect.rules::before { left: 0; right: auto; }
-      .level-btns, .count-row { justify-content: center; }
+      .level-btns { justify-content: center; }
+      .rules-group { align-items: center; }
     }
 
-    /* difficulty sits under the banned-words switch: same half of the bar, since both
-       decide how hard this round is */
     .level-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
     .level-btn {
       background: #0d0d1a; border: 2px solid #1e1e42; color: #666;
@@ -154,10 +153,21 @@
     .level-btn:active { transform: scale(.96); }
     .level-btn.active { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,.12); }
     .level-btn .lb-count { opacity: .5; font-weight: 700; }
-    .count-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
-    .count-label {
-      font-size: .68rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
-      color: #555; white-space: nowrap;
+
+    /* three separate settings (forbidden words / difficulty / banned-word count) live in
+       this one column — each gets its own small caps label and a dashed rule above it
+       (except the first), so a glance at a shared screen reads "three things", not one
+       undifferentiated stack of switches and buttons */
+    .rules-group {
+      align-self: stretch;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+      padding-top: 12px;
+    }
+    .rules-group:first-child { padding-top: 0; }
+    .rules-group + .rules-group { border-top: 1px dashed rgba(239,68,68,.18); }
+    .rules-group-label {
+      font-size: .62rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #7a4a52;
     }
 
     /* a finished round: the deal button turns green and breathes, so "it is on to the
@@ -387,13 +397,19 @@
     </section>
     <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
     <section class="cb-sect rules">
-      <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
-        <span class="toggle-switch"></span>
-        <span id="forbidden-state">Forbidden words ON</span>
-      </button>
-      <div class="level-btns" id="level-btns"></div>
-      <div class="count-row">
-        <span class="count-label">🔢 Banned words</span>
+      <div class="rules-group">
+        <span class="rules-group-label">🚫 Forbidden words</span>
+        <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
+          <span class="toggle-switch"></span>
+          <span id="forbidden-state">ON</span>
+        </button>
+      </div>
+      <div class="rules-group">
+        <span class="rules-group-label">🎚️ Difficulty</span>
+        <div class="level-btns" id="level-btns"></div>
+      </div>
+      <div class="rules-group">
+        <span class="rules-group-label">🔢 Banned words</span>
         <div class="level-btns" id="count-btns"></div>
       </div>
     </section>
@@ -551,9 +567,10 @@
       const locked = ROOM.count < 3;
       btn.classList.toggle('on', forbiddenOn);
       btn.disabled = locked;
+      // the group label above already says "Forbidden words" — this only needs the state
       document.getElementById('forbidden-state').textContent = locked
-        ? 'Forbidden words OFF (needs 3+ players)'
-        : (forbiddenOn ? 'Forbidden words ON' : 'Forbidden words OFF');
+        ? 'OFF (needs 3+ players)'
+        : (forbiddenOn ? 'ON' : 'OFF');
     }
 
     /* The clock runs here and is mirrored to the cards. Only state changes are
