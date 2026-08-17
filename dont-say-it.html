@@ -351,11 +351,37 @@
     }
     .deck-toggle:hover { border-color: #6366f1; color: #6366f1; }
     .card-preview-toggle { margin-bottom: 14px; }
-    /* the host's private copy of what a card says — smaller and dimmer than the
-       role tag above it, so it reads as "extra detail", not the headline */
-    .cp-preview { font-size: .78rem; font-weight: 700; color: #999; line-height: 1.5; }
+    /* the host's private copy of what a card says — mirrors the actual player-card
+       elements in miniature (the target word gets the same boxed look, forbidden
+       words become individual pills, and anything that's a real button on the
+       card — Buzz in!, Taboo!, the ✅/❌ verdicts — renders as a small button here
+       too) rather than one flat line of text, so a glance tells the host what's
+       actually on that phone, not just what it says */
+    .cp-preview {
+      display: flex; flex-direction: column; gap: 6px;
+      font-size: .78rem; font-weight: 700; color: #999; line-height: 1.4;
+    }
     .cp-preview b { color: #eee; }
-    .cp-preview .cp-result { color: #6366f1; }
+    .cp-note { color: #999; }
+    .cp-target {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: #0d0d1a; border: 1px solid rgba(99,102,241,.4); border-radius: 8px;
+      padding: 6px 10px; color: #fff; font-size: .85rem;
+    }
+    .cp-target .cp-emoji { font-size: 1rem; line-height: 1; }
+    .cp-forbidden { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    .cp-pill {
+      background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.4); color: #fca5a5;
+      border-radius: 8px; padding: 3px 8px; font-size: .72rem; font-weight: 800;
+    }
+    .cp-btn-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+    .cp-btn {
+      display: inline-block; border-radius: 8px; padding: 5px 10px;
+      font-size: .74rem; font-weight: 900; line-height: 1.3;
+    }
+    .cp-btn-buzz, .cp-btn-right { background: rgba(34,197,94,.18); border: 1.5px solid #22c55e; color: #4ade80; }
+    .cp-btn-foul, .cp-btn-wrong { background: rgba(239,68,68,.18); border: 1.5px solid #ef4444; color: #f87171; }
+    .cp-preview .cp-result { color: #6366f1; font-weight: 800; }
     .deck-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 8px; margin-top: 14px;
@@ -1037,37 +1063,52 @@
       });
     }
 
-    /* Plain-English version of exactly what payloadFor(i) put on that card — the
-       host's own words for it, not a raw dump of the payload. */
+    /* A miniature of exactly what payloadFor(i) put on that card — not just a
+       plain-English description of it. The forbidden words render as the same
+       pill tags the real card uses, and anything that's an actual button there
+       (Buzz in!, Taboo!, the ✅/❌ verdicts) renders as a small non-clickable
+       button here too, so the host can see the card's shape, not just read
+       about its contents. */
+    function forbiddenPreviewHTML(p) {
+      return p.forbidden
+        ? `<div class="cp-forbidden">${p.forbidden.map(w => `<span class="cp-pill">${w}</span>`).join('')}</div>`
+        : `<div class="cp-note">No forbidden words this round</div>`;
+    }
+
     function cardPreviewText(i) {
       const p = payloadFor(i);
-      if (p.state === 'idle') return '💤 Nothing dealt yet';
-      const lines = [];
+      if (p.state === 'idle') return '<div class="cp-note">💤 Nothing dealt yet</div>';
+      const blocks = [];
       if (p.isGiver) {
-        lines.push(`🎯 ${p.emoji || ''} <b>${p.target || '?'}</b>`);
-        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No forbidden words this round');
-        if (p.buzzerName) lines.push(`🙋 ${p.buzzerName} buzzed in — needs a ✅ / ❌`);
+        blocks.push(`<div class="cp-target"><span class="cp-emoji">${p.emoji || ''}</span><b>${p.target || '?'}</b></div>`);
+        blocks.push(forbiddenPreviewHTML(p));
+        if (p.buzzerName) {
+          blocks.push(`<div class="cp-note">🙋 ${p.buzzerName} buzzed in</div>`);
+          blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">✅ Correct</span><span class="cp-btn cp-btn-wrong">❌ Not it</span></div>`);
+        }
       } else if (p.isRef) {
-        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No forbidden words this round');
-        if (p.iCalledTaboo) lines.push('🚨 Called Taboo! — waiting for the host');
+        blocks.push(forbiddenPreviewHTML(p));
+        blocks.push(p.iCalledTaboo
+          ? `<div class="cp-note">🚨 Called Taboo! — waiting for the host</div>`
+          : `<span class="cp-btn cp-btn-foul">🚨 Taboo!</span>`);
       } else if (p.tabooBy) {
-        lines.push(`⏸️ ${p.tabooBy} called Taboo! — clock on hold`);
+        blocks.push(`<div class="cp-note">⏸️ ${p.tabooBy} called Taboo! — clock on hold</div>`);
       } else if (p.queued === 1) {
-        lines.push('🙋 Buzzed in — waiting for the clue giver');
+        blocks.push('<div class="cp-note">🙋 You buzzed — say your guess out loud!</div>');
       } else if (p.queued) {
-        lines.push(`🙋 #${p.queued} in the queue`);
+        blocks.push(`<div class="cp-note">⏳ You're #${p.queued} in the queue</div>`);
       } else if (p.rejected) {
-        lines.push('❌ Not it — waiting for the others to try');
+        blocks.push('<div class="cp-note">❌ Not it — hang tight</div>');
       } else {
-        lines.push('🙋 Buzz in!');
+        blocks.push('<span class="cp-btn cp-btn-buzz">🙋 Buzz in!</span>');
       }
       if (p.state === 'done' && p.result) {
         const kind = p.result.type === 'foul' ? '🚨 Taboo caught' : p.result.type === 'got' ? '✅ Got it' : '⏹️ Round ended';
         const pts = p.result.type === 'foul' ? ' (+3 for you!)' : p.result.type === 'got' ? ' (+1 for you!)' : '';
         const penalty = p.result.type === 'foul' && p.isGiver ? ' (−2 for you)' : '';
-        lines.push(`<span class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</span>`);
+        blocks.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
-      return lines.join('<br>');
+      return blocks.join('');
     }
 
     /* ── Rendering: scoreboard + one status line, nothing else ── */
