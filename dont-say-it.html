@@ -241,6 +241,7 @@
       transition: color .2s;
     }
     .toggle-btn.on { color: #fca5a5; }
+    .toggle-btn:disabled { cursor: not-allowed; opacity: .5; }
     .toggle-switch {
       width: 40px; height: 22px; border-radius: 999px; flex-shrink: 0;
       background: #1e1e42; position: relative; transition: background .25s;
@@ -533,6 +534,7 @@
     }
 
     function toggleForbidden() {
+      if (!forbiddenOn && ROOM.count < 3) return; // no referee possible with only 2 players
       forbiddenOn = !forbiddenOn;
       saveOptions();
       if (!forbiddenOn) { tabooCalls = []; refIdx = -1; } // no banned words, no referee
@@ -545,9 +547,12 @@
 
     function renderForbiddenToggle() {
       const btn = document.getElementById('forbidden-toggle');
+      const locked = ROOM.count < 3;
       btn.classList.toggle('on', forbiddenOn);
-      document.getElementById('forbidden-state').textContent =
-        forbiddenOn ? 'Forbidden words ON' : 'Forbidden words OFF';
+      btn.disabled = locked;
+      document.getElementById('forbidden-state').textContent = locked
+        ? 'Forbidden words OFF (needs 3+ players)'
+        : (forbiddenOn ? 'Forbidden words ON' : 'Forbidden words OFF');
     }
 
     /* The clock runs here and is mirrored to the cards. Only state changes are
@@ -558,14 +563,23 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#6366f1',
-      counts: [3, 4, 5, 6],
+      counts: [2, 3, 4, 5, 6],
       defaultCount: 4,
-      linksNote: 'Each round deals a clue giver (word + banned words + the ✅ / ❌ buttons) and a referee (banned words + the Taboo! button). Everyone else just gets a buzzer — they never see the banned words, so the list can\'t give the answer away.',
+      linksNote: 'Each round deals a clue giver (word + banned words + the ✅ / ❌ buttons) and a referee (banned words + the Taboo! button). Everyone else just gets a buzzer — they never see the banned words, so the list can\'t give the answer away. 2-player games skip the referee — forbidden words are off.',
       onPlayerData: handleAnswer,
-      onCountChange: () => { giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores(); resetRound(); },
+      onCountChange: n => {
+        giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores();
+        // 1 giver + 1 guesser leaves nobody to referee, so 2-player games can't use banned words
+        if (n < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
+        renderForbiddenToggle();
+        resetRound();
+      },
       onNameChange: () => { ROOM.render(); renderAll(); if (state !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+    // ROOM.init() can restore a persisted count of 2 (shared across games) without
+    // running onCountChange, so the same correction has to happen here too
+    if (ROOM.count < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
 
     /* Lets the host check what a player's card actually shows without picking up
        their phone — text only appears in the Player Links section below, never on
