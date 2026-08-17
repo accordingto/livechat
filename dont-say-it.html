@@ -141,6 +141,7 @@
       .cb-sect.rules::before { left: 0; right: auto; }
       .level-btns { justify-content: center; }
       .rules-group { align-items: center; }
+      .banned-count-row { align-items: center; }
     }
 
     .level-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
@@ -168,6 +169,21 @@
     .rules-group-label {
       font-size: .62rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
       color: #7a4a52;
+    }
+
+    /* the banned-word count is a sub-setting of the toggle right above it — nested
+       inside the same .rules-group instead of a sibling group, and dimmed whenever
+       forbidden words is off/locked since it has nothing to control in that state */
+    .banned-count-row {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+      margin-top: 2px; padding-top: 8px; width: 100%;
+      border-top: 1px dashed rgba(239,68,68,.14);
+      transition: opacity .2s;
+    }
+    .banned-count-row.is-off { opacity: .35; pointer-events: none; }
+    .banned-count-label {
+      font-size: .58rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      color: #7a4a52; opacity: .85;
     }
 
     /* a finished round: the deal button turns green and breathes, so "it is on to the
@@ -403,14 +419,14 @@
           <span class="toggle-switch"></span>
           <span id="forbidden-state">ON</span>
         </button>
+        <div class="banned-count-row" id="banned-count-row">
+          <span class="banned-count-label">🔢 how many</span>
+          <div class="level-btns" id="count-btns"></div>
+        </div>
       </div>
       <div class="rules-group">
         <span class="rules-group-label">🎚️ Difficulty</span>
         <div class="level-btns" id="level-btns"></div>
-      </div>
-      <div class="rules-group">
-        <span class="rules-group-label">🔢 Banned words</span>
-        <div class="level-btns" id="count-btns"></div>
       </div>
     </section>
   </div>
@@ -571,6 +587,8 @@
       document.getElementById('forbidden-state').textContent = locked
         ? 'OFF (needs 3+ players)'
         : (forbiddenOn ? 'ON' : 'OFF');
+      // the count only means something while forbidden words is actually on
+      document.getElementById('banned-count-row').classList.toggle('is-off', locked || !forbiddenOn);
     }
 
     /* The clock runs here and is mirrored to the cards. Only state changes are
