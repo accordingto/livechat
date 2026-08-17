@@ -65,9 +65,7 @@ a.back:hover { color: var(--text); }
 }
 .header h1 {
   font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
-  margin-bottom: 8px;
 }
-.header p { color: var(--text-dim); font-size: .93rem; }
 
 .reset-btn {
   background: transparent; color: var(--text-muted);
@@ -95,7 +93,6 @@ a.back:hover { color: var(--text); }
 @media (max-width: 520px) {
   .topbar { margin-bottom: 24px; }
   .header { margin-bottom: 22px; }
-  .header p { font-size: .83rem; }
   .reset-btn { padding: 13px 20px; font-size: .92rem; }
 }
 
