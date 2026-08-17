@@ -770,7 +770,12 @@
     function renderWitness() {
       const el = document.getElementById('witness-log');
       const entries = [];
-      if (caseWitnesses.prosecution) entries.push(['prosecution', caseWitnesses.prosecution]);
+      // Prosecution's witness steps back off screen for the Defense's own turn —
+      // Defense (and their witness) gets the floor without the prior testimony
+      // sitting there as a visual cue — and returns once Cross-Examination opens
+      // the case back up to both sides at once.
+      const hideProsecution = phase === 'defense' || phase === 'defense-witness';
+      if (caseWitnesses.prosecution && !hideProsecution) entries.push(['prosecution', caseWitnesses.prosecution]);
       if (caseWitnesses.defense) entries.push(['defense', caseWitnesses.defense]);
       el.classList.toggle('hidden', !entries.length);
       el.innerHTML = entries.map(([side, w]) => {
