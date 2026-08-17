@@ -833,7 +833,7 @@
         const line = r.type === 'got'
           ? (r.youWon ? '✅ You got it — +1!' : `✅ ${esc(r.who || 'Someone')} got it`)
           : r.type === 'foul'
-          ? (r.youWon ? '🚨 Good catch — +1!' : `🚨 ${esc(r.who || 'The referee')} caught a forbidden word`)
+          ? (r.youWon ? '🚨 Good catch — +3!' : data.isGiver ? '🚨 Caught using a forbidden word — −2' : `🚨 ${esc(r.who || 'The referee')} caught a forbidden word`)
           : r.type === 'time' ? "⏰ Time's up — no points"
           : '⏭️ Round over — no points';
         return shell(`

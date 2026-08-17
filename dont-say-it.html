@@ -70,6 +70,14 @@
     @keyframes pointPop {
       0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); }
     }
+    /* the clue giver losing points needs to read as a penalty, not another pop of
+       the same green "you scored" animation the referee/guesser get */
+    .score-card.just-lost { animation: pointLoss .5s ease; }
+    @keyframes pointLoss {
+      0%   { transform: scale(1); box-shadow: 0 0 0 rgba(239,68,68,0); }
+      40%  { transform: scale(.93); box-shadow: 0 0 26px rgba(239,68,68,.5); }
+      100% { transform: scale(1); box-shadow: 0 0 0 rgba(239,68,68,0); }
+    }
 
     /* ── One status line: who has the word, or how the round ended ── */
     .status-line {
@@ -432,7 +440,7 @@
 
   <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
   <div class="call-row hidden" id="call-row">
-    <button class="call-btn yes" onclick="ruleTaboo(true)">🚨 Yes — Taboo! +1 to the referee</button>
+    <button class="call-btn yes" onclick="ruleTaboo(true)">🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver</button>
     <button class="call-btn no" onclick="ruleTaboo(false)">👌 No — keep playing</button>
   </div>
   <div class="scoreboard" id="scoreboard"></div>
@@ -480,7 +488,8 @@
     let rejected = [];     // buzzed and were told "not it" this cycle — locked out of buzzing again until everyone else in guesserNums() has also had a turn (see handleAnswer)
     let seenBuzz = {};     // playerNum -> the last buzz stamp already queued
     let result = null;     // { type: 'got' | 'foul', who }
-    let popIdx = [];       // score cards to animate after a point
+    let popIdx = [];       // score cards to pop green after gaining a point
+    let lostIdx = [];      // score cards to flash red after losing a point
     let tabooCalls = [];   // players who shouted Taboo! and are waiting on the host's ruling
     let seenTaboo = {};    // playerNum -> the last Taboo! stamp already handled
 
@@ -919,6 +928,7 @@
       seenTaboo = {};
       result = null;
       popIdx = [];
+      lostIdx = [];
       // a fresh word gets a fresh clock, and it starts on its own: the host has just
       // pressed a button, and having to press Start as well only ate seconds
       stopTicking();
@@ -940,11 +950,14 @@
     }
 
     function endRound(res) {
-      // an upheld Taboo! is the referee's payoff — it is the only way they score
+      // an upheld Taboo! is the referee's payoff — it is the only way they score —
+      // and it costs the clue giver, who let a forbidden word slip
       if (res && res.type === 'foul' && res.who) {
-        scores[res.who - 1] = (scores[res.who - 1] || 0) + 1;
+        scores[res.who - 1] = (scores[res.who - 1] || 0) + 3;
+        scores[giverIdx] = (scores[giverIdx] || 0) - 2;
         popIdx = [res.who - 1];
-        setTimeout(() => { popIdx = []; renderScores(); }, 600);
+        lostIdx = [giverIdx];
+        setTimeout(() => { popIdx = []; lostIdx = []; renderScores(); }, 600);
       }
       result = res;
       state = 'done';
@@ -955,7 +968,7 @@
       publishRound();
       renderTimer();
       renderAll();
-      setTimeout(() => { popIdx = []; renderScores(); }, 600);
+      setTimeout(() => { popIdx = []; lostIdx = []; renderScores(); }, 600);
     }
 
     function resetRound() {
@@ -1050,7 +1063,9 @@
       }
       if (p.state === 'done' && p.result) {
         const kind = p.result.type === 'foul' ? '🚨 Taboo caught' : p.result.type === 'got' ? '✅ Got it' : '⏹️ Round ended';
-        lines.push(`<span class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? ' (+1 for you!)' : ''}</span>`);
+        const pts = p.result.type === 'foul' ? ' (+3 for you!)' : p.result.type === 'got' ? ' (+1 for you!)' : '';
+        const penalty = p.result.type === 'foul' && p.isGiver ? ' (−2 for you)' : '';
+        lines.push(`<span class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</span>`);
       }
       return lines.join('<br>');
     }
@@ -1119,7 +1134,7 @@
         el.innerHTML = `✅ ${ROOM.name(result.who - 1)} got it — +1 for ${ROOM.name(result.who - 1)} and ${ROOM.name(giverIdx)}!${answer}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `🚨 ${ROOM.name(result.who - 1)} caught a forbidden word — +1 for ${ROOM.name(result.who - 1)}!${answer}`;
+        el.innerHTML = `🚨 ${ROOM.name(result.who - 1)} caught a forbidden word — +3 for ${ROOM.name(result.who - 1)}, −2 for ${ROOM.name(giverIdx)}!${answer}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
         el.innerHTML = `⏰ Time's up — no points this round.${answer}`;
@@ -1143,7 +1158,7 @@
                    : ref ? '👀 Referee'
                    : buzzed ? '🙋 Buzzed in'
                    : state === 'playing' && queue.includes(num) ? '⏳ In queue' : '';
-        html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}">
+        html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${ROOM.name(i)}</span>
             <span class="sc-pts">${scores[i] || 0}</span>
