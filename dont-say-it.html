@@ -104,7 +104,7 @@
     .control-bar.critical{ border-color: #ef4444; }
     .cb-sect {
       display: flex; flex-direction: column; justify-content: center; gap: 10px;
-      padding: 14px 16px; position: relative;
+      padding: 14px 16px; position: relative; min-width: 0;
     }
     .cb-dial {
       display: flex; align-items: center; justify-content: center;
@@ -139,11 +139,12 @@
         align-items: center;
       }
       .cb-sect.rules::before { left: 0; right: auto; }
+      .level-btns, .count-row { justify-content: center; }
     }
 
     /* difficulty sits under the banned-words switch: same half of the bar, since both
        decide how hard this round is */
-    .level-btns { display: flex; gap: 6px; }
+    .level-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
     .level-btn {
       background: #0d0d1a; border: 2px solid #1e1e42; color: #666;
       border-radius: 10px; padding: 7px 14px;
@@ -153,7 +154,7 @@
     .level-btn:active { transform: scale(.96); }
     .level-btn.active { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,.12); }
     .level-btn .lb-count { opacity: .5; font-weight: 700; }
-    .count-row { display: flex; align-items: center; gap: 8px; }
+    .count-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
     .count-label {
       font-size: .68rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
       color: #555; white-space: nowrap;
