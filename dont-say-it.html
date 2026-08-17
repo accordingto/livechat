@@ -600,7 +600,7 @@
       accent: '#6366f1',
       counts: [2, 3, 4, 5, 6],
       defaultCount: 4,
-      linksNote: 'Each round deals a clue giver (word + banned words + the ✅ / ❌ buttons) and a referee (banned words + the Taboo! button). Everyone else just gets a buzzer — they never see the banned words, so the list can\'t give the answer away. 2-player games skip the referee — forbidden words are off.',
+      linksNote: 'Each round deals a clue giver (word + forbidden words + the ✅ / ❌ buttons) and a referee (forbidden words + the Taboo! button). Everyone else just gets a buzzer — they never see the forbidden words, so the list can\'t give the answer away. 2-player games skip the referee — forbidden words are off.',
       onPlayerData: handleAnswer,
       onCountChange: n => {
         giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores();
@@ -1032,10 +1032,10 @@
       const lines = [];
       if (p.isGiver) {
         lines.push(`🎯 ${p.emoji || ''} <b>${p.target || '?'}</b>`);
-        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No banned words this round');
+        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No forbidden words this round');
         if (p.buzzerName) lines.push(`🙋 ${p.buzzerName} buzzed in — needs a ✅ / ❌`);
       } else if (p.isRef) {
-        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No banned words this round');
+        lines.push(p.forbidden ? `🚫 ${p.forbidden.join(' · ')}` : 'No forbidden words this round');
         if (p.iCalledTaboo) lines.push('🚨 Called Taboo! — waiting for the host');
       } else if (p.tabooBy) {
         lines.push(`⏸️ ${p.tabooBy} called Taboo! — clock on hold`);
@@ -1108,7 +1108,7 @@
         } else {
           el.classList.add('live');
           const ref = refIdx >= 0
-            ? `<span class="sl-sub">👀 ${ROOM.name(refIdx)} is refereeing this round — they hold the banned words</span>` : '';
+            ? `<span class="sl-sub">👀 ${ROOM.name(refIdx)} is refereeing this round — they hold the forbidden words</span>` : '';
           el.innerHTML = `🎤 <span class="sl-who">${ROOM.name(giverIdx)}</span> is the clue giver — buzz in when you know it!${ref}`;
         }
         return;

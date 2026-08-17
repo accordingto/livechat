@@ -817,7 +817,7 @@
       const banned = (data.forbidden || []).map(w => `<span class="tb-word">${esc(w)}</span>`).join('');
       const bannedBlock = banned ? `
           <div class="taboo-banned">
-            <span class="tb-label">🚫 Never say these</span>
+            <span class="tb-label">🚫 Forbidden words</span>
             <div class="tb-list">${banned}</div>
           </div>` : '';
       const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? 'point' : 'points'}</span>`;
@@ -885,7 +885,7 @@
             <span class="tt-word">${esc(data.target || '')}</span>
           </div>
           ${bannedBlock}
-          ${data.forbiddenOn === false ? '<span class="pick-sub">No banned words this round — describe it any way you like!</span>' : ''}
+          ${data.forbiddenOn === false ? '<span class="pick-sub">No forbidden words this round — describe it any way you like!</span>' : ''}
           ${callBanner}
           ${idleHint}`);
       }
@@ -928,7 +928,7 @@
           ${bannedBlock}
           ${data.iCalledTaboo ? '' : callBanner}
           ${tabooBtn}
-          <span class="pick-sub">Listen for a banned word — you sit this round out, so no buzzer for you.</span>`);
+          <span class="pick-sub">Listen for a forbidden word — you sit this round out, so no buzzer for you.</span>`);
       }
       return shell(`
         ${chip(`🕵️ ${esc(data.giverName || 'Someone')} is the clue giver`, '#6366f1')}
