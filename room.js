@@ -126,9 +126,14 @@ const ROOM = (() => {
   function copyLink(i, btn) {
     const text = shareText(i);
     const done = () => {
-      const old = btn.textContent;
       btn.textContent = 'Copied';
-      setTimeout(() => { btn.textContent = old; }, 1500);
+      btn.classList.remove('is-copied');
+      void btn.offsetWidth; // restart the animation even on a rapid re-click
+      btn.classList.add('is-copied');
+      // a second click before the first revert fires shouldn't leave the button
+      // stuck on "Copied" — clear the pending revert so only the latest click wins
+      clearTimeout(btn._copyRevert);
+      btn._copyRevert = setTimeout(() => { btn.textContent = 'Link'; btn.classList.remove('is-copied'); }, 1500);
     };
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(done).catch(() => prompt('Copy this link:', text));
@@ -224,6 +229,17 @@ const ROOM = (() => {
         transition: background .2s, transform .1s;
       }
       .btn-copy:active { transform: scale(.97); }
+      /* a quick pop + flash to green on copy — the text swap alone is easy to miss
+         on a screen a host glances at for half a second */
+      .btn-copy.is-copied {
+        background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
+        animation: copyPop .4s ease;
+      }
+      @keyframes copyPop {
+        0%   { transform: scale(1); }
+        35%  { transform: scale(1.12); }
+        100% { transform: scale(1); }
+      }
       .btn-qr-toggle {
         background: transparent; color: #666; border: 2px solid #1e1e42; border-radius: 10px;
         padding: 9px 12px; font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
