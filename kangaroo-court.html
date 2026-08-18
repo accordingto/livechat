@@ -619,17 +619,18 @@
 
     function advance() {
       if (!ROOM.enabled) return;
-      if (phase === 'idle' || phase === 'reveal') { dealNewCase(); return; }
+      if (phase === 'idle')                 { dealNewCase(); return; }
       if (phase === 'prevote')              { startPhase('prosecution'); return; }
       if (phase === 'prosecution')          { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
       if (phase === 'prosecution-witness')  { startPhase('defense'); return; }
       if (phase === 'defense')              { startWitnessPhase('defense-witness', 'defense'); return; }
       if (phase === 'defense-witness')      { startPhase('cross'); return; }
       if (phase === 'cross')                { finalVoteId = genId(); startPhase('finalvote'); return; }
+      if (phase === 'finalvote')            { doReveal(); return; }
       // the Judge's Ruling step only exists when this case actually dealt a Judge
-      // (the toggle was on) — otherwise skip straight to the verdict, same as before
-      if (phase === 'finalvote')            { if (judgeIdx >= 0) startPhase('judgment'); else doReveal(); return; }
-      if (phase === 'judgment')             { doReveal(); return; }
+      // (the toggle was on) — otherwise deal the next case straight from the verdict
+      if (phase === 'reveal')               { if (judgeIdx >= 0) startPhase('judgment'); else dealNewCase(); return; }
+      if (phase === 'judgment')             { dealNewCase(); return; }
     }
 
     /* undoes one accidental "advance" — the mirror image of advance() above.
@@ -641,8 +642,8 @@
        into, so the button is disabled there (see renderBackBtn). */
     function goBack() {
       if (!ROOM.enabled) return;
-      if (phase === 'reveal')              { reveal = null; startPhase(judgeIdx >= 0 ? 'judgment' : 'finalvote'); return; }
-      if (phase === 'judgment')            { startPhase('finalvote'); return; }
+      if (phase === 'judgment')            { startPhase('reveal'); return; }
+      if (phase === 'reveal')              { reveal = null; startPhase('finalvote'); return; }
       if (phase === 'finalvote')           { startPhase('cross'); return; }
       if (phase === 'cross')               { startPhase('defense-witness'); return; }
       if (phase === 'defense-witness')     { startPhase('defense'); return; }
@@ -707,7 +708,9 @@
         witnessCard: isWitnessPhase && currentWitness ? currentWitness.card : null,
         witnessJurorName: isWitnessPhase && currentWitness ? ROOM.name(currentWitness.jurorIdx) : null,
       };
-      if (phase === 'reveal' && reveal) {
+      // the verdict, once revealed, stays on every card through the Judge's
+      // Ruling ceremony too — it doesn't disappear just because the flow moved on
+      if ((phase === 'reveal' || phase === 'judgment') && reveal) {
         const mine = reveal.juryDetail.find(j => j.idx === i);
         base.result = {
           verdict: reveal.verdict,
@@ -730,8 +733,8 @@
       { phase: 'defense-witness', emoji: '🕵️', label: "Defense's Witness" },
       { phase: 'cross', emoji: '🗣️', label: 'Cross-Examination' },
       { phase: 'finalvote', emoji: '🗳️', label: 'Final Vote' },
-      { phase: 'judgment', emoji: '🧑‍⚖️', label: "Judge's Ruling" },
       { phase: 'reveal', emoji: '⚖️', label: 'Reveal Verdict' },
+      { phase: 'judgment', emoji: '🧑‍⚖️', label: "Judge's Ruling" },
     ];
     /* the Judge's Ruling step only exists for cases that actually dealt a Judge —
        with the toggle off (or before the first case) it's dropped from the list
@@ -880,7 +883,9 @@
 
     function renderJuryTally() {
       const el = document.getElementById('jury-tally');
-      if (phase === 'reveal' && reveal) {
+      // the full breakdown, once revealed, stays up through the Judge's Ruling
+      // ceremony too — it doesn't disappear just because the flow moved on
+      if ((phase === 'reveal' || phase === 'judgment') && reveal) {
         el.classList.remove('hidden');
         const verdictLine = `<div class="jt-verdict ${reveal.verdict}">${reveal.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY'}</div>`;
         const rows = reveal.juryDetail.map(j => {

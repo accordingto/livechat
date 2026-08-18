@@ -960,19 +960,21 @@
       const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
       const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
 
-      if (data.phase === 'reveal' && data.result) {
+      // the verdict, once revealed, stays on screen through the Judge's Ruling
+      // ceremony too (which now comes right after it) — it doesn't disappear just
+      // because the flow moved on; judgment only swaps in the ceremonial sub-line
+      if ((data.phase === 'reveal' || data.phase === 'judgment') && data.result) {
         const r = data.result;
         const verdictLine = r.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY';
+        if (data.phase === 'judgment') {
+          const judgeLine = role === 'judge'
+            ? '<span class="pick-sub">🧑‍⚖️ Deliver your ruling!</span>'
+            : `<span class="pick-sub">👀 ${esc(data.judgeName || 'The Judge')} is delivering the verdict…</span>`;
+          return shell(`<span class="pick-text">${verdictLine}</span>${judgeLine}`);
+        }
         const flipLine = r.flip === 'toNotGuilty' ? '<span class="pick-sub">You flipped to Not Guilty</span>'
                         : r.flip === 'toGuilty' ? '<span class="pick-sub">You flipped to Guilty</span>' : '';
         return shell(`<span class="pick-text">${verdictLine}</span>${flipLine}`);
-      }
-
-      // ceremonial only — no button, just tells the Judge it's their moment and
-      // everyone else that the verdict is about to be read
-      if (data.phase === 'judgment') {
-        if (role === 'judge') return shell(`<span class="pick-text">🧑‍⚖️ Deliver your ruling!</span><span class="pick-sub">Announce the jury's verdict to the court.</span>`);
-        return shell(`<span class="pick-sub">👀 ${esc(data.judgeName || 'The Judge')} is delivering the verdict…</span>`);
       }
 
       if (data.phase === 'prevote' || data.phase === 'finalvote') {
