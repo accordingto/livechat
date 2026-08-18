@@ -304,6 +304,7 @@
       font-family: inherit; cursor: pointer; transition: color .2s;
     }
     .toggle-btn.on { color: #c4b5fd; }
+    .toggle-btn:disabled { cursor: not-allowed; opacity: .5; }
     .toggle-switch {
       width: 40px; height: 22px; border-radius: 999px; flex-shrink: 0;
       background: #1e1e42; position: relative; transition: background .25s;
@@ -450,12 +451,19 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#e94560',
-      counts: [5, 6, 7, 8, 9],
+      counts: [4, 5, 6, 7, 8, 9],
       defaultCount: 5,
-      linksNote: 'Each case deals a Defendant, a Prosecutor, a Defense Attorney and (if the Judge toggle above is on) a Judge — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
+      linksNote: 'Each case deals a Defendant, a Prosecutor, a Defense Attorney and (if the Judge toggle above is on — needs 5+ players) a Judge — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
       extraRowHTML: '<span class="room-label">🧑‍⚖️ Judge</span><button class="toggle-btn" id="judge-toggle" onclick="toggleJudge()"><span class="toggle-switch"></span><span id="judge-state">ON</span></button>',
       onPlayerData: () => { renderJuryTally(); },
-      onCountChange: () => { defendantIdx = prosecutorIdx = defenseIdx = judgeIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; judgeCount = []; witnessCount = []; resetToIdle(); },
+      onCountChange: () => {
+        defendantIdx = prosecutorIdx = defenseIdx = judgeIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; judgeCount = []; witnessCount = [];
+        // 4-player games have no seat to spare for a Judge, so drop it automatically —
+        // same trick as Say It Without Saying It forcing Forbidden Words off at 2 players
+        if (ROOM.count < 5 && judgeEnabled) { judgeEnabled = false; ROOM.setExtra('judgeEnabled', false); }
+        renderJudgeToggle();
+        resetToIdle();
+      },
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
@@ -466,15 +474,22 @@
        deal, so a case already in progress keeps whichever roles it started with. */
     const savedJudgeEnabled = ROOM.getExtra('judgeEnabled');
     if (savedJudgeEnabled !== undefined && savedJudgeEnabled !== null) judgeEnabled = !!savedJudgeEnabled;
+    // a room saved before this feature existed (or saved at 4 players) may load with
+    // judgeEnabled true at a headcount that can't seat one — reconcile on load too,
+    // not just on a live count change
+    if (ROOM.count < 5 && judgeEnabled) { judgeEnabled = false; ROOM.setExtra('judgeEnabled', false); }
     function toggleJudge() {
+      if (!judgeEnabled && ROOM.count < 5) return; // no jury left to seat if 1 of 4 players becomes the Judge
       judgeEnabled = !judgeEnabled;
       ROOM.setExtra('judgeEnabled', judgeEnabled);
       renderJudgeToggle();
     }
     function renderJudgeToggle() {
       const btn = document.getElementById('judge-toggle');
+      const locked = ROOM.count < 5;
       btn.classList.toggle('on', judgeEnabled);
-      document.getElementById('judge-state').textContent = judgeEnabled ? 'ON' : 'OFF';
+      btn.disabled = locked;
+      document.getElementById('judge-state').textContent = locked ? 'OFF (needs 5+ players)' : (judgeEnabled ? 'ON' : 'OFF');
     }
     renderJudgeToggle();
 
@@ -522,7 +537,7 @@
       defendantIdx = drawDefendant(n);
       prosecutorIdx = drawRole(prosecutorCount, n, [defendantIdx]);
       defenseIdx = drawRole(defenseCount, n, [defendantIdx, prosecutorIdx]);
-      judgeIdx = judgeEnabled ? drawRole(judgeCount, n, [defendantIdx, prosecutorIdx, defenseIdx]) : -1;
+      judgeIdx = (judgeEnabled && n >= 5) ? drawRole(judgeCount, n, [defendantIdx, prosecutorIdx, defenseIdx]) : -1;
     }
 
     /* picks who plays the witness — same fewest-count fairness as drawRole above,
