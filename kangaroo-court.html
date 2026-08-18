@@ -181,8 +181,12 @@
     .role-chip.rc-prosecutor .rc-label { color: #fdba74; }
     .role-chip.rc-defense    { background: linear-gradient(160deg, rgba(59,130,246,.22), rgba(59,130,246,.04)); border-color: #3b82f6; box-shadow: 0 0 18px rgba(59,130,246,.18); }
     .role-chip.rc-defense    .rc-label { color: #93c5fd; }
+    /* the judge only shows up when the Judge toggle is on — violet, distinct from
+       the three roles above and from the witness's amber below */
+    .role-chip.rc-judge      { background: linear-gradient(160deg, rgba(139,92,246,.22), rgba(139,92,246,.04)); border-color: #8b5cf6; box-shadow: 0 0 18px rgba(139,92,246,.18); }
+    .role-chip.rc-judge      .rc-label { color: #c4b5fd; }
     /* the witness chip only shows up during the two witness phases — amber, so it
-       never gets confused with any of the three case-long roles above */
+       never gets confused with any of the case-long roles above */
     .role-chip.rc-witness    { background: linear-gradient(160deg, rgba(234,179,8,.24), rgba(234,179,8,.05)); border-color: #eab308; box-shadow: 0 0 18px rgba(234,179,8,.2); }
     .role-chip.rc-witness    .rc-label { color: #fde68a; }
     .role-chip.rc-active { box-shadow: 0 0 28px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
@@ -287,7 +291,30 @@
     .link-col.is-role-defendant  { border-color: #ef4444; }
     .link-col.is-role-prosecutor { border-color: #f97316; }
     .link-col.is-role-defense    { border-color: #3b82f6; }
+    .link-col.is-role-judge      { border-color: #8b5cf6; }
     .link-col .la-sub { color: #888; }
+
+    /* ── Judge toggle — lives in ROOM's setup card via extraRowHTML, borderless
+       switch same shape as Say It Without Saying It's Forbidden Words toggle,
+       recoloured violet to match the Judge role chip above ── */
+    .toggle-btn {
+      display: flex; align-items: center; gap: 10px;
+      background: transparent; border: none; border-radius: 999px;
+      padding: 9px 4px; color: #666; font-size: .86rem; font-weight: 800;
+      font-family: inherit; cursor: pointer; transition: color .2s;
+    }
+    .toggle-btn.on { color: #c4b5fd; }
+    .toggle-switch {
+      width: 40px; height: 22px; border-radius: 999px; flex-shrink: 0;
+      background: #1e1e42; position: relative; transition: background .25s;
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px; border-radius: 50%; background: #555;
+      transition: transform .25s, background .25s;
+    }
+    .toggle-btn.on .toggle-switch { background: rgba(139,92,246,.35); }
+    .toggle-btn.on .toggle-switch::after { transform: translateX(18px); background: #8b5cf6; }
 
     /* ── Charge browser ── */
     .charge-browser { width: 100%; max-width: 1100px; margin: 12px 0 40px; }
@@ -387,11 +414,13 @@
     const DECKW = GAME_DATA.kangarooWitness;
 
     let caseNum = 0;
-    let phase = 'idle'; // idle | prevote | prosecution | prosecution-witness | defense | defense-witness | cross | finalvote | reveal
-    let defendantIdx = -1, prosecutorIdx = -1, defenseIdx = -1;
+    let phase = 'idle'; // idle | prevote | prosecution | prosecution-witness | defense | defense-witness | cross | finalvote | judgment | reveal
+    let defendantIdx = -1, prosecutorIdx = -1, defenseIdx = -1, judgeIdx = -1;
     let defendantBag = [];    // shuffled players still waiting to stand trial this cycle
     let prosecutorCount = []; // times each player has prosecuted, kept even like the referee in Say It Without Saying It
     let defenseCount = [];
+    let judgeCount = [];
+    let judgeEnabled = true;  // host toggle — off skips dealing a Judge this case, jury gets that seat back
     let charge = null;
     let usedCharges = [];
     let prevoteId = '';
@@ -421,19 +450,39 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#e94560',
-      counts: [4, 5, 6, 7, 8],
-      defaultCount: 4,
-      linksNote: 'Each case deals a Defendant, a Prosecutor and a Defense Attorney — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
+      counts: [5, 6, 7, 8, 9],
+      defaultCount: 5,
+      linksNote: 'Each case deals a Defendant, a Prosecutor, a Defense Attorney and (if the Judge toggle above is on) a Judge — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
+      extraRowHTML: '<span class="room-label">🧑‍⚖️ Judge</span><button class="toggle-btn" id="judge-toggle" onclick="toggleJudge()"><span class="toggle-switch"></span><span id="judge-state">ON</span></button>',
       onPlayerData: () => { renderJuryTally(); },
-      onCountChange: () => { defendantIdx = prosecutorIdx = defenseIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; witnessCount = []; resetToIdle(); },
+      onCountChange: () => { defendantIdx = prosecutorIdx = defenseIdx = judgeIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; judgeCount = []; witnessCount = []; resetToIdle(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+
+    /* Judge toggle — a game setting parked in the same room session blob as e.g.
+       Forbidden Words' wordsPerTeam, so it survives a reload / game switch.
+       Flipping it only affects the NEXT case dealt: dealRoles() reads it once per
+       deal, so a case already in progress keeps whichever roles it started with. */
+    const savedJudgeEnabled = ROOM.getExtra('judgeEnabled');
+    if (savedJudgeEnabled !== undefined && savedJudgeEnabled !== null) judgeEnabled = !!savedJudgeEnabled;
+    function toggleJudge() {
+      judgeEnabled = !judgeEnabled;
+      ROOM.setExtra('judgeEnabled', judgeEnabled);
+      renderJudgeToggle();
+    }
+    function renderJudgeToggle() {
+      const btn = document.getElementById('judge-toggle');
+      btn.classList.toggle('on', judgeEnabled);
+      document.getElementById('judge-state').textContent = judgeEnabled ? 'ON' : 'OFF';
+    }
+    renderJudgeToggle();
 
     function roleOf(i) {
       if (i === defendantIdx) return 'defendant';
       if (i === prosecutorIdx) return 'prosecutor';
       if (i === defenseIdx) return 'defense';
+      if (i === judgeIdx) return 'judge';
       return 'jury';
     }
 
@@ -441,7 +490,7 @@
       if (!caseNum) return {};
       const role = roleOf(i);
       const cls = role === 'jury' ? '' : 'is-role-' + role;
-      const label = { defendant: '🙇 Defendant', prosecutor: '⚔️ Prosecutor', defense: '🛡️ Defense', jury: '👥 Jury' }[role];
+      const label = { defendant: '🙇 Defendant', prosecutor: '⚔️ Prosecutor', defense: '🛡️ Defense', judge: '🧑‍⚖️ Judge', jury: '👥 Jury' }[role];
       return { marked: role !== 'jury', cls, answer: label };
     });
 
@@ -473,6 +522,7 @@
       defendantIdx = drawDefendant(n);
       prosecutorIdx = drawRole(prosecutorCount, n, [defendantIdx]);
       defenseIdx = drawRole(defenseCount, n, [defendantIdx, prosecutorIdx]);
+      judgeIdx = judgeEnabled ? drawRole(judgeCount, n, [defendantIdx, prosecutorIdx, defenseIdx]) : -1;
     }
 
     /* picks who plays the witness — same fewest-count fairness as drawRole above,
@@ -481,7 +531,7 @@
        Falls back to allowing a repeat once every juror has already gone once. */
     function pickWitnessJuror() {
       const n = ROOM.count;
-      const caseRoles = [defendantIdx, prosecutorIdx, defenseIdx];
+      const caseRoles = [defendantIdx, prosecutorIdx, defenseIdx, judgeIdx];
       const stillFresh = Array.from({ length: n }, (_, i) => i)
         .some(i => !caseRoles.includes(i) && !witnessThisCase.includes(i));
       const pick = drawRole(witnessCount, n, stillFresh ? caseRoles.concat(witnessThisCase) : caseRoles);
@@ -561,7 +611,10 @@
       if (phase === 'defense')              { startWitnessPhase('defense-witness', 'defense'); return; }
       if (phase === 'defense-witness')      { startPhase('cross'); return; }
       if (phase === 'cross')                { finalVoteId = genId(); startPhase('finalvote'); return; }
-      if (phase === 'finalvote')            { doReveal(); return; }
+      // the Judge's Ruling step only exists when this case actually dealt a Judge
+      // (the toggle was on) — otherwise skip straight to the verdict, same as before
+      if (phase === 'finalvote')            { if (judgeIdx >= 0) startPhase('judgment'); else doReveal(); return; }
+      if (phase === 'judgment')             { doReveal(); return; }
     }
 
     /* undoes one accidental "advance" — the mirror image of advance() above.
@@ -573,7 +626,8 @@
        into, so the button is disabled there (see renderBackBtn). */
     function goBack() {
       if (!ROOM.enabled) return;
-      if (phase === 'reveal')              { reveal = null; startPhase('finalvote'); return; }
+      if (phase === 'reveal')              { reveal = null; startPhase(judgeIdx >= 0 ? 'judgment' : 'finalvote'); return; }
+      if (phase === 'judgment')            { startPhase('finalvote'); return; }
       if (phase === 'finalvote')           { startPhase('cross'); return; }
       if (phase === 'cross')               { startPhase('defense-witness'); return; }
       if (phase === 'defense-witness')     { startPhase('defense'); return; }
@@ -597,7 +651,7 @@
        them. It's a Kangaroo Court: a tie doesn't get the benefit of the doubt. ── */
     function doReveal() {
       const n = ROOM.count;
-      const juryIdx = Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx);
+      const juryIdx = Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx && i !== judgeIdx);
       let guiltyFinal = 0, notGuiltyFinal = 0;
       const juryDetail = juryIdx.map(i => {
         const num = i + 1;
@@ -628,6 +682,7 @@
         defendantName: caseNum ? ROOM.name(defendantIdx) : null,
         prosecutorName: caseNum ? ROOM.name(prosecutorIdx) : null,
         defenseName: caseNum ? ROOM.name(defenseIdx) : null,
+        judgeName: caseNum && judgeIdx >= 0 ? ROOM.name(judgeIdx) : null,
         emoji: charge ? charge.emoji : null,
         charge: charge ? charge.charge : null,
         prevoteId: phase === 'prevote' ? prevoteId : null,
@@ -660,12 +715,17 @@
       { phase: 'defense-witness', emoji: '🕵️', label: "Defense's Witness" },
       { phase: 'cross', emoji: '🗣️', label: 'Cross-Examination' },
       { phase: 'finalvote', emoji: '🗳️', label: 'Final Vote' },
+      { phase: 'judgment', emoji: '🧑‍⚖️', label: "Judge's Ruling" },
       { phase: 'reveal', emoji: '⚖️', label: 'Reveal Verdict' },
     ];
+    /* the Judge's Ruling step only exists for cases that actually dealt a Judge —
+       with the toggle off (or before the first case) it's dropped from the list
+       entirely, so the sidebar never shows a step nobody is there to perform */
     function renderFlow() {
-      const order = FLOW_STEPS.map(s => s.phase);
+      const steps = FLOW_STEPS.filter(s => s.phase !== 'judgment' || judgeIdx >= 0);
+      const order = steps.map(s => s.phase);
       const idx = order.indexOf(phase);
-      document.getElementById('kc-flow-steps').innerHTML = FLOW_STEPS.map((s, i) => {
+      document.getElementById('kc-flow-steps').innerHTML = steps.map((s, i) => {
         const cls = i === idx ? 'is-current' : i < idx ? 'is-done' : '';
         return `<div class="kc-flow-step ${cls}">
           <span class="kc-flow-dot">${i < idx ? '✓' : s.emoji}</span>
@@ -704,6 +764,7 @@
       defense: "🛡️ Defense's turn",
       cross: '🗣️ Cross-Examination',
       finalvote: '🗳️ Final vote',
+      judgment: "🧑‍⚖️ Judge's Ruling",
     };
     function renderStatus() {
       const el = document.getElementById('status-line');
@@ -739,17 +800,20 @@
       const chip = (role, label, name) => {
         const active = (role === 'prosecutor' && (phase === 'prosecution' || phase === 'prosecution-witness'))
           || (role === 'defense' && (phase === 'defense' || phase === 'defense-witness'))
-          || (role === 'defendant' && phase === 'cross');
+          || (role === 'defendant' && phase === 'cross')
+          || (role === 'judge' && phase === 'judgment');
         return `<div class="role-chip rc-${role}${active ? ' rc-active' : ''}">
           <span class="rc-label">${label}</span>
           <span class="rc-name">${esc(name)}</span>
         </div>`;
       };
-      let html =
+      // Judge goes first (when this case dealt one), then the three case-long roles
+      let html = judgeIdx >= 0 ? chip('judge', '🧑‍⚖️ Judge', ROOM.name(judgeIdx)) : '';
+      html +=
         chip('defendant', '🙇 Defendant', ROOM.name(defendantIdx)) +
         chip('prosecutor', '⚔️ Prosecutor', ROOM.name(prosecutorIdx)) +
         chip('defense', '🛡️ Defense', ROOM.name(defenseIdx));
-      // the witness only sits alongside the three case-long roles while they're
+      // the witness only sits alongside the case-long roles while they're
       // actually on the stand — no witness has been called yet the rest of the case
       const witnessLive = (phase === 'prosecution-witness' || phase === 'defense-witness') && currentWitness && currentWitness.jurorIdx >= 0;
       if (witnessLive) {
@@ -796,7 +860,7 @@
 
     function juryIndices() {
       const n = ROOM.count;
-      return Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx);
+      return Array.from({ length: n }, (_, i) => i).filter(i => i !== defendantIdx && i !== prosecutorIdx && i !== defenseIdx && i !== judgeIdx);
     }
 
     function renderJuryTally() {
