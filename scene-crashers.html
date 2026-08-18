@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Scene Crashers · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Scene Crashers">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --accent: #84cc16; --accent-alt: #84cc16; --warn: #84cc16; }
+
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #84cc16); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .round-badge span { color: #84cc16; }
+
+    /* ── Layout: the scene content (3/4 width) on the left, a progress sidebar
+       (1/4 width) tracking how far the scene has gone on the right — same split
+       as Kangaroo Court's trial layout, just renamed to this page's own prefix. ── */
+    .crash-layout {
+      width: 100%; max-width: 1400px;
+      display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+      align-items: start; gap: 24px;
+      margin-bottom: 4px;
+    }
+    .crash-flow { position: sticky; top: 20px; order: 2; }
+    .crash-flow-card {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
+      padding: 20px 18px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .crash-flow-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 18px;
+    }
+    .crash-flow-steps { display: flex; flex-direction: column; gap: 20px; }
+    .crash-flow-step {
+      position: relative; display: flex; align-items: center; gap: 12px;
+      padding-left: 40px; min-height: 32px;
+    }
+    .crash-flow-step::before {
+      content: ''; position: absolute; left: 15px; top: -20px; width: 2px; height: 20px;
+      background: #1e1e42; transition: background .3s;
+    }
+    .crash-flow-step:first-child::before { display: none; }
+    .crash-flow-dot {
+      position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #666;
+      display: flex; align-items: center; justify-content: center; font-size: .92rem;
+      z-index: 1; transition: border-color .3s, background .3s, color .3s, box-shadow .3s;
+    }
+    .crash-flow-label { font-size: .82rem; font-weight: 700; color: #555; line-height: 1.35; transition: color .3s; }
+    .crash-flow-step.is-done::before { background: #22c55e; }
+    .crash-flow-step.is-done .crash-flow-dot { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.1); }
+    .crash-flow-step.is-done .crash-flow-label { color: #4ade80; }
+    .crash-flow-step.is-current .crash-flow-dot {
+      border-color: var(--accent); color: #0d0d1a; background: rgba(132,204,22,.35);
+      animation: crashFlowPulse 1.8s ease-in-out infinite;
+    }
+    .crash-flow-step.is-current .crash-flow-label { color: #fff; }
+    @keyframes crashFlowPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(132,204,22,.35); }
+      50%      { box-shadow: 0 0 22px rgba(132,204,22,.7); }
+    }
+    .crash-main { width: 100%; min-width: 0; order: 1; display: flex; flex-direction: column; align-items: center; }
+
+    @media (max-width: 900px) {
+      .crash-layout { grid-template-columns: 1fr; }
+      .crash-flow { position: static; order: 0; }
+      .crash-main { order: 1; }
+      .crash-flow-steps { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 14px 22px; }
+      .crash-flow-step { flex-direction: column; text-align: center; padding-left: 0; min-height: auto; gap: 6px; }
+      .crash-flow-step::before { display: none; }
+      .crash-flow-dot { position: static; }
+    }
+
+    /* ── Status line — same "one real button, one short line" CTA as Kangaroo
+       Court's status button ── */
+    .status-line {
+      display: block; width: 100%;
+      background: linear-gradient(135deg, #a3e635, #4d7c0f);
+      color: #0d0d1a; border: 2px solid #bef264; border-radius: 12px;
+      padding: 14px 12px; margin-top: 18px;
+      font-size: .92rem; font-weight: 800; line-height: 1.2; text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      box-shadow: 0 6px 18px rgba(132,204,22,.35);
+      cursor: pointer;
+      transition: box-shadow .2s, transform .1s, filter .15s;
+    }
+    .status-line:hover { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(132,204,22,.5); }
+    .status-line:active { transform: scale(.98); }
+    .status-line.is-next { animation: statusPulse 1.6s ease-in-out infinite; }
+    @keyframes statusPulse {
+      0%, 100% { filter: brightness(1); }
+      50%      { filter: brightness(1.3); }
+    }
+
+    .crash-back-btn {
+      width: 100%; margin-top: 10px;
+      background: transparent; border: 2px solid #1e1e42; color: #666;
+      border-radius: 12px; padding: 10px 12px;
+      font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, opacity .2s;
+    }
+    .crash-back-btn:hover:not(:disabled) { border-color: #a3e635; color: #a3e635; }
+    .crash-back-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    /* ── The scene card: location + the leads' shared history ── */
+    .scene-card {
+      width: 100%; max-width: 1100px;
+      background: linear-gradient(135deg, rgba(132,204,22,.14), rgba(132,204,22,.03));
+      border: 2px solid #84cc16; border-radius: 22px;
+      padding: 22px 30px; margin-bottom: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      text-align: center; justify-content: center;
+      position: relative; overflow: hidden;
+      animation: fadeUp .5s .1s ease both;
+      transition: border-color .3s;
+    }
+    .scene-card::before {
+      content: '🚪'; position: absolute; font-size: 7rem; opacity: .04;
+      top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
+    }
+    .scene-card.idle { border-color: #1e1e42; background: #13132b; }
+    .scene-top { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+    .scene-label { font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #84cc16; }
+    .scene-location {
+      font-size: clamp(1.1rem, 3.2vw, 1.5rem); font-weight: 800; color: #fff; line-height: 1.35;
+      max-width: 880px; position: relative; z-index: 1;
+    }
+    .scene-plot {
+      font-size: clamp(1rem, 2.6vw, 1.2rem); font-weight: 500; color: #ccc; line-height: 1.55;
+      max-width: 820px; position: relative; z-index: 1; margin-top: 4px;
+    }
+    .scene-emoji { font-size: 1.5rem; line-height: 1; }
+    .scene-placeholder { color: #444; font-size: 1rem; position: relative; z-index: 1; }
+
+    .scene-swap { width: 100%; text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px solid #1e1e42; }
+    .scene-swap .btn-secondary { width: 100%; }
+
+    /* ── Lead strip: the two leads carrying the whole scene ── */
+    .lead-strip {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+      animation: fadeUp .5s .15s ease both;
+    }
+    .lead-chip {
+      flex: 1; min-width: 150px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      box-shadow: 0 0 18px transparent;
+      transition: border-color .3s, box-shadow .3s, background .3s;
+    }
+    .lead-chip .lc-label { font-size: .66rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+    .lead-chip .lc-name { font-size: 1.1rem; font-weight: 800; color: #fff; }
+    .lead-chip.lc-a { background: linear-gradient(160deg, rgba(132,204,22,.24), rgba(132,204,22,.05)); border-color: #84cc16; box-shadow: 0 0 18px rgba(132,204,22,.2); }
+    .lead-chip.lc-a .lc-label { color: #bef264; }
+    .lead-chip.lc-b { background: linear-gradient(160deg, rgba(245,158,11,.22), rgba(245,158,11,.04)); border-color: #f59e0b; box-shadow: 0 0 18px rgba(245,158,11,.18); }
+    .lead-chip.lc-b .lc-label { color: #fdba74; }
+
+    /* ── Entrance log: every new character who's walked in, in order, and stays
+       on screen for the rest of the scene — same idea as Kangaroo Court's
+       witness log. Each entrance gets its own colour so two cards stacked
+       together are never mistaken for each other. ── */
+    .entrance-log {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-direction: column; gap: 14px;
+      margin-bottom: 16px;
+    }
+    .entrance-log.hidden { display: none; }
+    .entrance-card {
+      width: 100%;
+      border-radius: 22px;
+      padding: 22px 30px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      text-align: center; position: relative; overflow: hidden;
+      animation: fadeUp .4s ease both;
+      transition: border-color .3s, box-shadow .3s, opacity .3s;
+    }
+    .entrance-card.slot-1 { background: linear-gradient(135deg, rgba(6,182,212,.16), rgba(6,182,212,.03)); border: 2px solid #06b6d4; }
+    .entrance-card.slot-1 .entrance-label { color: #67e8f9; }
+    .entrance-card.slot-1 .entrance-hint { color: #a5f3fc; }
+    .entrance-card.slot-1 .entrance-playedby { background: rgba(6,182,212,.14); border-color: rgba(6,182,212,.4); color: #67e8f9; }
+    .entrance-card.slot-1.is-current { box-shadow: 0 0 30px rgba(6,182,212,.28); }
+    .entrance-card.slot-2 { background: linear-gradient(135deg, rgba(217,70,239,.16), rgba(217,70,239,.03)); border: 2px solid #d946ef; }
+    .entrance-card.slot-2 .entrance-label { color: #f0abfc; }
+    .entrance-card.slot-2 .entrance-hint { color: #f5d0fe; }
+    .entrance-card.slot-2 .entrance-playedby { background: rgba(217,70,239,.14); border-color: rgba(217,70,239,.4); color: #f0abfc; }
+    .entrance-card.slot-2.is-current { box-shadow: 0 0 30px rgba(217,70,239,.28); }
+    .entrance-card:not(.is-current) { opacity: .75; box-shadow: none; }
+    .entrance-card::before {
+      content: '🚪'; position: absolute; font-size: 7rem; opacity: .05;
+      top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
+    }
+    .entrance-label {
+      font-size: .68rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      position: relative; z-index: 1;
+    }
+    .entrance-who { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+    .entrance-emoji { font-size: 1.8rem; line-height: 1; }
+    .entrance-name { font-size: 1.3rem; font-weight: 900; color: #fff; }
+    .entrance-hint {
+      font-size: .92rem; font-weight: 600; line-height: 1.4;
+      max-width: 640px; position: relative; z-index: 1;
+    }
+    .entrance-playedby {
+      margin-top: 4px; display: inline-block; position: relative; z-index: 1;
+      border: 1px solid; font-size: .76rem; font-weight: 800; padding: 4px 14px; border-radius: 20px;
+    }
+
+    /* player links: a per-role tint so the host can see roles without opening a card */
+    .link-col.is-role-leadA     { border-color: #84cc16; }
+    .link-col.is-role-leadB     { border-color: #f59e0b; }
+    .link-col.is-role-entrance1 { border-color: #06b6d4; }
+    .link-col.is-role-entrance2 { border-color: #d946ef; }
+    .link-col .la-sub { color: #888; }
+
+    /* ── Scenario / entrance browsers ── */
+    .crash-browser { width: 100%; max-width: 1100px; margin: 12px 0 40px; }
+    .crash-browser-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 12px;
+    }
+    .crash-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 8px;
+    }
+    .crash-item {
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px;
+      padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
+      font-size: .85rem; color: #aaa; line-height: 1.5;
+    }
+    .crash-item .ci-emoji { font-size: 1.2rem; flex-shrink: 0; }
+    .crash-item .ci-name { color: #ddd; font-weight: 700; }
+
+    @media (max-width: 520px) {
+      .scene-card { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Scene <span id="sceneNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🚪 Scene Crashers</h1>
+  </div>
+
+  <div class="crash-layout">
+    <aside class="crash-flow" id="crash-flow">
+      <div class="crash-flow-card">
+        <div class="crash-flow-hdr">📍 Scene Progress</div>
+        <div class="crash-flow-steps" id="crash-flow-steps"></div>
+        <div class="scene-swap hidden" id="scene-swap">
+          <button class="btn-secondary" onclick="changeScenario()">🔀 Different Scene</button>
+        </div>
+        <!-- what's happening right now, as a real button — tap it to advance -->
+        <div class="status-line" id="status-line" onclick="advance()"></div>
+
+        <!-- undoes one accidental "advance" click -->
+        <button class="crash-back-btn" id="crash-back-btn" onclick="goBack()">⬅️ Previous Step</button>
+      </div>
+    </aside>
+
+    <div class="crash-main">
+      <div class="lead-strip hidden" id="lead-strip"></div>
+
+      <div class="scene-card idle" id="scene-card">
+        <span class="scene-placeholder" id="scene-placeholder">Press <strong>🚪 Draw a Scene</strong> to open the story</span>
+        <div id="scene-content" style="display:none">
+          <div class="scene-top">
+            <span class="scene-emoji" id="scene-emoji"></span>
+            <span class="scene-label" id="scene-location"></span>
+          </div>
+          <span class="scene-plot" id="scene-plot"></span>
+        </div>
+      </div>
+
+      <!-- every new character who's walked in, in order, stays here for the
+           rest of the scene -->
+      <div class="entrance-log hidden" id="entrance-log"></div>
+    </div>
+  </div>
+
+  <!-- player cards: role decides what each card shows -->
+  <div id="room-mount"></div>
+
+  <div class="crash-browser">
+    <div class="crash-browser-hdr" id="scene-browser-hdr"></div>
+    <div class="crash-list" id="scene-list"></div>
+  </div>
+
+  <div class="crash-browser">
+    <div class="crash-browser-hdr" id="entrance-browser-hdr"></div>
+    <div class="crash-list" id="entrance-list"></div>
+  </div>
+
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script>
+    const DECK = GAME_DATA.crashers;
+    const DECKE = GAME_DATA.crashersEntrance;
+
+    let sceneNum = 0;
+    let phase = 'idle'; // idle | opening | entrance1 | entrance2
+    let leadAIdx = -1, leadBIdx = -1;
+    let leadABag = [];    // shuffled players still waiting to lead this cycle
+    let leadBCount = [];  // times each player has been Lead B, kept even like the referee in Say It Without Saying It
+    let scenario = null;
+    let usedScenarios = [];
+
+    /* ── Entrances ── new characters drawn from whoever isn't already a lead
+       this scene. entranceCount keeps picks even over a session, same trick as
+       leadBCount; entranceThisScene avoids using the same player for both
+       entrances in one scene unless the pool is too small to avoid it — with
+       only 3 players (2 leads + 1 spare), that one spare plays both. */
+    let entranceCount = [];
+    let entranceThisScene = [];
+    let usedEntranceCards = [];
+    let entrance1 = null; // { card: {emoji,name,hint}, playerIdx }
+    let entrance2 = null;
+
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+    function shuffled(n) {
+      const a = Array.from({ length: n }, (_, i) => i);
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#84cc16',
+      counts: [3, 4, 5, 6, 7, 8],
+      defaultCount: 4,
+      linksNote: 'Each scene deals two Leads who carry the whole story, plus (as the scene progresses) two new characters drawn from everyone else — roles rotate every scene, so everyone eventually gets a card. Works fine without player links too — the shared screen shows everything.',
+      onCountChange: () => { leadAIdx = leadBIdx = -1; leadABag = []; leadBCount = []; entranceCount = []; resetToIdle(); },
+      onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
+    });
+
+    function roleOf(i) {
+      if (i === leadAIdx) return 'leadA';
+      if (i === leadBIdx) return 'leadB';
+      if (entrance2 && i === entrance2.playerIdx && phase === 'entrance2') return 'entrance2';
+      if (entrance1 && i === entrance1.playerIdx && (phase === 'entrance1' || phase === 'entrance2')) return 'entrance1';
+      return 'audience';
+    }
+
+    ROOM.setDecorator(i => {
+      if (!sceneNum) return {};
+      const role = roleOf(i);
+      const cls = role === 'audience' ? '' : 'is-role-' + role;
+      const label = { leadA: '🎭 Lead A', leadB: '🎭 Lead B', entrance1: '🚪 Entrance', entrance2: '🚪 Entrance', audience: '👀 Watching' }[role];
+      return { marked: role !== 'audience', cls, answer: label };
+    });
+
+    /* ── Dealing ──
+       Lead A comes out of a shuffled bag, same trick as the defendant in
+       Kangaroo Court: everyone leads once before anyone repeats, and a refill
+       never lets the same Lead A go twice in a row across the seam. Lead B is
+       drawn from whoever has led fewest times, so it stays even over a long
+       session without ever following a fixed order. */
+    function drawLeadA(n) {
+      leadABag = leadABag.filter(i => i < n);
+      if (!leadABag.length) {
+        leadABag = shuffled(n);
+        if (n > 1 && leadABag[0] === leadAIdx) leadABag.push(leadABag.shift());
+      }
+      return leadABag.shift();
+    }
+    function drawRole(countArr, n, exclude) {
+      while (countArr.length < n) countArr.push(0);
+      const eligible = Array.from({ length: n }, (_, i) => i).filter(i => !exclude.includes(i));
+      const fewest = Math.min(...eligible.map(i => countArr[i] || 0));
+      const pool = eligible.filter(i => (countArr[i] || 0) === fewest);
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      countArr[pick] = (countArr[pick] || 0) + 1;
+      return pick;
+    }
+    function dealLeads() {
+      const n = ROOM.count;
+      leadAIdx = drawLeadA(n);
+      leadBIdx = drawRole(leadBCount, n, [leadAIdx]);
+    }
+
+    /* picks who plays the new character — same fewest-count fairness as
+       drawRole above, excluding both leads and whoever's already entered this
+       scene. Falls back to allowing a repeat once every non-lead has gone once
+       — the only way a 3-player scene (2 leads + 1 spare) can seat two
+       entrances at all. */
+    function pickEntrancePlayer() {
+      const n = ROOM.count;
+      const leads = [leadAIdx, leadBIdx];
+      const stillFresh = Array.from({ length: n }, (_, i) => i)
+        .some(i => !leads.includes(i) && !entranceThisScene.includes(i));
+      const pick = drawRole(entranceCount, n, stillFresh ? leads.concat(entranceThisScene) : leads);
+      entranceThisScene.push(pick);
+      return pick;
+    }
+
+    /* draws an entrance card, cycling through the deck before any repeat */
+    function pickEntranceCard() {
+      let avail = DECKE.map((_, i) => i).filter(i => !usedEntranceCards.includes(i));
+      if (!avail.length) { usedEntranceCards = []; avail = DECKE.map((_, i) => i); }
+      const pick = avail[Math.floor(Math.random() * avail.length)];
+      usedEntranceCards.push(pick);
+      return DECKE[pick];
+    }
+
+    /* draws a scenario not currently on screen, cycling through the deck before
+       any repeat — shared by dealNewScene() and the host's "Different Scene" reroll */
+    function pickScenario(exclude) {
+      let avail = DECK.map((_, i) => i).filter(i => !usedScenarios.includes(i) && DECK[i] !== exclude);
+      if (!avail.length) { usedScenarios = []; avail = DECK.map((_, i) => i).filter(i => DECK[i] !== exclude); }
+      const pick = avail[Math.floor(Math.random() * avail.length)];
+      usedScenarios.push(pick);
+      return DECK[pick];
+    }
+
+    /* ── Scene flow ──
+       idle/entrance2 → opening (new scene) → entrance1 → entrance2 → (repeat) */
+    function dealNewScene() {
+      dealLeads();
+      scenario = pickScenario(null);
+      sceneNum++;
+      phase = 'opening';
+      entrance1 = null; entrance2 = null;
+      entranceThisScene = [];
+      ROOM.publish(i => payloadFor(i)); // full reset — wipes last scene's cards
+      renderAll();
+    }
+
+    /* lets the host reroll a scene that isn't landing, without redealing the
+       leads — only available before any entrance happens */
+    function changeScenario() {
+      if (phase !== 'opening' || !scenario) return;
+      scenario = pickScenario(scenario);
+      pushState();
+      renderAll();
+    }
+
+    function startPhase(next) {
+      phase = next;
+      pushState();
+      renderAll();
+    }
+
+    /* enters one of the two entrance slots: draws who plays the new character
+       and which card they get */
+    function startEntrance(next) {
+      const playerIdx = pickEntrancePlayer();
+      const card = pickEntranceCard();
+      if (next === 'entrance1') entrance1 = { card, playerIdx };
+      else entrance2 = { card, playerIdx };
+      startPhase(next);
+    }
+
+    function advance() {
+      if (phase === 'idle')      { dealNewScene(); return; }
+      if (phase === 'opening')   { startEntrance('entrance1'); return; }
+      if (phase === 'entrance1') { startEntrance('entrance2'); return; }
+      if (phase === 'entrance2') { dealNewScene(); return; }
+    }
+
+    /* undoes one accidental "advance" — entrance1/entrance2 are each drawn only
+       once (entering that slot) and nothing overwrites them until the OTHER
+       slot is entered, so stepping back onto one just reuses startPhase() and
+       gets the same character back, no reroll needed. */
+    function goBack() {
+      if (phase === 'entrance2') { startPhase('entrance1'); return; }
+      if (phase === 'entrance1') { startPhase('opening'); return; }
+    }
+
+    function resetToIdle() {
+      sceneNum = 0; phase = 'idle'; scenario = null;
+      entrance1 = null; entrance2 = null; entranceThisScene = [];
+      pushState();
+      renderAll();
+    }
+
+    /* ── Firebase ── */
+    function pushState() { ROOM.update(i => payloadFor(i)); }
+
+    function payloadFor(i) {
+      const role = roleOf(i);
+      const base = {
+        game: 'crashers', scene: sceneNum, phase, role,
+        leadAName: sceneNum ? ROOM.name(leadAIdx) : null,
+        leadBName: sceneNum ? ROOM.name(leadBIdx) : null,
+        emoji: scenario ? scenario.emoji : null,
+        location: scenario ? scenario.location : null,
+        plot: scenario ? scenario.plot : null,
+        entranceCard: null,
+      };
+      if (role === 'entrance1') base.entranceCard = entrance1.card;
+      if (role === 'entrance2') base.entranceCard = entrance2.card;
+      return base;
+    }
+
+    /* ── Rendering ── */
+    const FLOW_STEPS = [
+      { phase: 'idle', emoji: '🚪', label: 'Draw a Scene' },
+      { phase: 'opening', emoji: '🎬', label: 'Opening Scene' },
+      { phase: 'entrance1', emoji: '🚪', label: 'New Character Enters' },
+      { phase: 'entrance2', emoji: '🚪', label: 'Another Enters' },
+    ];
+    function renderFlow() {
+      const order = FLOW_STEPS.map(s => s.phase);
+      const idx = order.indexOf(phase);
+      document.getElementById('crash-flow-steps').innerHTML = FLOW_STEPS.map((s, i) => {
+        const cls = i === idx ? 'is-current' : i < idx ? 'is-done' : '';
+        return `<div class="crash-flow-step ${cls}">
+          <span class="crash-flow-dot">${i < idx ? '✓' : s.emoji}</span>
+          <span class="crash-flow-label">${esc(s.label)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function renderAll() {
+      document.getElementById('sceneNum').textContent = sceneNum;
+      renderFlow();
+      renderStatus();
+      renderBackBtn();
+      renderScenario();
+      renderLeadStrip();
+      renderEntranceLog();
+      ROOM.render();
+    }
+
+    function renderBackBtn() {
+      document.getElementById('crash-back-btn').disabled = phase === 'idle' || phase === 'opening';
+    }
+
+    const STATUS_LABELS = {
+      idle: '🚪 Draw a Scene',
+      opening: '🚪 Bring in a New Character',
+      entrance1: '🚪 Bring in Another',
+      entrance2: '🎬 Next Scene',
+    };
+    function renderStatus() {
+      const el = document.getElementById('status-line');
+      el.classList.toggle('is-next', phase === 'entrance2');
+      el.textContent = STATUS_LABELS[phase] || STATUS_LABELS.idle;
+    }
+
+    function renderScenario() {
+      const card = document.getElementById('scene-card');
+      card.classList.toggle('idle', !scenario);
+      document.getElementById('scene-placeholder').style.display = scenario ? 'none' : '';
+      document.getElementById('scene-content').style.display = scenario ? '' : 'none';
+      if (scenario) {
+        document.getElementById('scene-emoji').textContent = scenario.emoji;
+        document.getElementById('scene-location').textContent = scenario.location;
+        document.getElementById('scene-plot').textContent = scenario.plot;
+      }
+      document.getElementById('scene-swap').classList.toggle('hidden', phase !== 'opening');
+    }
+
+    function renderLeadStrip() {
+      const el = document.getElementById('lead-strip');
+      el.classList.toggle('hidden', !sceneNum);
+      if (!sceneNum) return;
+      el.innerHTML =
+        `<div class="lead-chip lc-a">
+          <span class="lc-label">🎭 Lead A</span>
+          <span class="lc-name">${esc(ROOM.name(leadAIdx))}</span>
+        </div>
+        <div class="lead-chip lc-b">
+          <span class="lc-label">🎭 Lead B</span>
+          <span class="lc-name">${esc(ROOM.name(leadBIdx))}</span>
+        </div>`;
+    }
+
+    /* the entrance log — one entry per slot, in the order they actually walked
+       in, each staying on screen for the rest of the scene instead of
+       disappearing once the next entrance happens. */
+    function renderEntranceLog() {
+      const el = document.getElementById('entrance-log');
+      const entries = [];
+      if (entrance1) entries.push([1, entrance1]);
+      if (entrance2) entries.push([2, entrance2]);
+      el.classList.toggle('hidden', !entries.length);
+      el.innerHTML = entries.map(([slot, e]) => {
+        const isCurrent = phase === ('entrance' + slot);
+        const label = isCurrent ? `🚪 ${esc(ROOM.name(e.playerIdx))} enters the scene…` : `🚪 ${esc(ROOM.name(e.playerIdx))} entered the scene`;
+        return `<div class="entrance-card slot-${slot}${isCurrent ? ' is-current' : ''}">
+          <span class="entrance-label">${label}</span>
+          <span class="entrance-who">
+            <span class="entrance-emoji">${e.card.emoji}</span>
+            <span class="entrance-name">${esc(e.card.name)}</span>
+          </span>
+          <span class="entrance-hint">${esc(e.card.hint)}</span>
+          <span class="entrance-playedby">🎭 Played by ${esc(ROOM.name(e.playerIdx))}</span>
+        </div>`;
+      }).join('');
+    }
+
+    /* ── Scene / Entrance browsers: unnumbered, just for the host to preview
+       what might come up ── */
+    (function buildBrowsers() {
+      document.getElementById('scene-browser-hdr').textContent = `🚪 All Scenes (${DECK.length}) — drawn by "Draw a Scene"`;
+      document.getElementById('scene-list').innerHTML = DECK.map(c =>
+        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.location)}</span> — ${esc(c.plot)}</span></div>`
+      ).join('');
+
+      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — drawn as the scene progresses`;
+      document.getElementById('entrance-list').innerHTML = DECKE.map(c =>
+        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.name)}</span> — ${esc(c.hint)}</span></div>`
+      ).join('');
+    })();
+
+    renderAll();
+  </script>
+</body>
+</html>

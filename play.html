@@ -362,6 +362,8 @@
 
     /* ⚖️ Kangaroo Court: role tint matches the host screen's role chips */
     .secret-card.theme-kangaroo { padding: 28px 24px 24px; gap: 16px; }
+    /* 🚪 Scene Crashers: same layout, its own theme name for clarity */
+    .secret-card.theme-crashers { padding: 28px 24px 24px; gap: 16px; }
     /* the witness's own persona + evidence — the only card that actually spells
        out what to improvise, since everyone else can already see it was called
        out on the host's shared screen */
@@ -1027,6 +1029,46 @@
       return shell(`<span class="pick-sub">⏳ Waiting…</span>`);
     }
 
+    /* 🚪 Scene Crashers: two Leads carry a scene's whole history; whoever gets
+       drawn into one of the two entrance slots gets a persona + the twist they
+       bring, same "witness card" idea as Kangaroo Court just for barging into
+       a scene instead of testifying in one. Everyone else is just watching —
+       the shared screen already shows what's happening. */
+    function crashersCardHTML(data) {
+      if (!data.scene) {
+        return `<div class="secret-card theme-crashers">${nameBanner(data)}<span class="pick-sub">⏳ Waiting for the next scene…</span></div>`;
+      }
+      const role = data.role;
+      const roleHex = { leadA: '#84cc16', leadB: '#f59e0b', entrance1: '#06b6d4', entrance2: '#d946ef' }[role] || '#84cc16';
+      const roleLabel = { leadA: '🎭 You are Lead A', leadB: '🎭 You are Lead B', entrance1: "🚪 You're walking in!", entrance2: "🚪 You're walking in!" }[role] || '👀 Watching the Scene';
+      const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
+      const shell = inner => `<div class="secret-card theme-crashers" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
+
+      if (role === 'leadA' || role === 'leadB') {
+        return shell(`
+          <div class="role-box" style="border-color:${roleHex}66">
+            <span class="rb-key" style="color:${roleHex}">📍 ${esc(data.location || '')}</span>
+            <span class="rb-hint">${esc(data.plot || '')}</span>
+          </div>
+          <span class="pick-sub">Play it out — you know your own history together.</span>`);
+      }
+
+      if ((role === 'entrance1' || role === 'entrance2') && data.entranceCard) {
+        return shell(`
+          <div class="witness-box" style="border-color:${roleHex}">
+            <span class="wb-name">${esc(data.entranceCard.emoji)} ${esc(data.entranceCard.name)}</span>
+            <span class="wb-evidence">${esc(data.entranceCard.hint)}</span>
+          </div>
+          <span class="pick-sub">Stay in character — improvise your entrance!</span>`);
+      }
+
+      // audience — nothing to do but watch, phrasing depends on how far the scene has gone
+      if (data.phase === 'opening') {
+        return shell(`<span class="pick-sub">👀 ${esc(data.leadAName || 'Lead A')} &amp; ${esc(data.leadBName || 'Lead B')} are setting the scene…</span>`);
+      }
+      return shell(`<span class="pick-sub">👀 Watching the scene unfold…</span>`);
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -1171,6 +1213,7 @@
       // not only on the next tick
       if (data.game === 'taboo') { el.innerHTML = tabooCardHTML(data); paintTabooTimer(); return; }
       if (data.game === 'kangaroo') { el.innerHTML = kangarooCardHTML(data); return; }
+      if (data.game === 'crashers') { el.innerHTML = crashersCardHTML(data); return; }
       showError('⏳ Waiting for the host to start a game...');
     }
 
