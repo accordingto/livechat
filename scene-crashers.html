@@ -105,6 +105,7 @@
     }
     .crash-back-btn:hover:not(:disabled) { border-color: #a3e635; color: #a3e635; }
     .crash-back-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .crash-skip-btn { width: 100%; margin-top: 10px; }
 
     /* ── The scene card: location + the leads' shared history ── */
     .scene-card {
@@ -282,6 +283,11 @@
 
         <!-- undoes one accidental "advance" click -->
         <button class="crash-back-btn" id="crash-back-btn" onclick="goBack()">⬅️ Previous Step</button>
+
+        <!-- jumps straight to a brand new scene from anywhere in the flow —
+             the host doesn't have to play out both beats first if they'd
+             rather just fire through scenes back to back -->
+        <button class="btn-secondary crash-skip-btn hidden" id="crash-skip-btn" onclick="skipToNextScene()">⏭️ Skip to Next Scene</button>
       </div>
     </aside>
 
@@ -546,6 +552,15 @@
       if (phase === 'beat1') { startPhase('opening'); return; }
     }
 
+    /* jumps straight to a fresh scene from anywhere (opening, beat1, or
+       beat2) — the host doesn't have to play out both beats first if they'd
+       rather just fire through scenes back to back. No cap: press it as many
+       times in a row as the room wants. */
+    function skipToNextScene() {
+      if (phase === 'idle') return;
+      dealNewScene();
+    }
+
     function resetToIdle() {
       sceneNum = 0; phase = 'idle'; scenario = null;
       slot1 = null; slot2 = null; entranceThisScene = [];
@@ -603,6 +618,7 @@
       renderFlow();
       renderStatus();
       renderBackBtn();
+      renderSkipBtn();
       renderScenario();
       renderLeadStrip();
       renderBeatLog();
@@ -611,6 +627,12 @@
 
     function renderBackBtn() {
       document.getElementById('crash-back-btn').disabled = phase === 'idle' || phase === 'opening';
+    }
+
+    // hidden before the first scene is dealt — there's nothing to skip past
+    // yet, and "Draw a Scene" already does the identical thing
+    function renderSkipBtn() {
+      document.getElementById('crash-skip-btn').classList.toggle('hidden', phase === 'idle');
     }
 
     const STATUS_LABELS = {
