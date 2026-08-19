@@ -159,6 +159,11 @@
     .lead-chip.lc-a .lc-label { color: #bef264; }
     .lead-chip.lc-b { background: linear-gradient(160deg, rgba(245,158,11,.22), rgba(245,158,11,.04)); border-color: #f59e0b; box-shadow: 0 0 18px rgba(245,158,11,.18); }
     .lead-chip.lc-b .lc-label { color: #fdba74; }
+    /* the currently-entering character — only sits here alongside the two
+       leads while an entrance-type beat is the current one, same idea as
+       Kangaroo Court's witness chip appearing next to the case-long roles */
+    .lead-chip.lc-entrance { background: linear-gradient(160deg, rgba(6,182,212,.22), rgba(6,182,212,.04)); border-color: #06b6d4; box-shadow: 0 0 18px rgba(6,182,212,.18); }
+    .lead-chip.lc-entrance .lc-label { color: #67e8f9; }
 
     /* ── Beat log: every "something happens" beat, in order, staying on screen
        for the rest of the scene — same idea as Kangaroo Court's witness log.
@@ -186,6 +191,13 @@
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
     .beat-who { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+    /* the name + who's playing it, on one row spanning the full card width —
+       name on the left, the "Played by" pill pinned to the right instead of
+       stacked as its own centered line underneath */
+    .beat-who-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px; width: 100%; position: relative; z-index: 1;
+    }
     .beat-emoji { font-size: 1.8rem; line-height: 1; }
     .beat-emoji-solo { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
     .beat-name { font-size: 1.3rem; font-weight: 900; color: #fff; }
@@ -198,7 +210,7 @@
        to a fixed icon reads better than centered text */
     .beat-who .beat-hint { text-align: left; max-width: 560px; }
     .beat-playedby {
-      margin-top: 4px; display: inline-block; position: relative; z-index: 1;
+      flex-shrink: 0; display: inline-block; position: relative; z-index: 1;
       border: 1px solid; font-size: .76rem; font-weight: 800; padding: 4px 14px; border-radius: 20px;
     }
 
@@ -656,7 +668,7 @@
       const el = document.getElementById('lead-strip');
       el.classList.toggle('hidden', !sceneNum);
       if (!sceneNum) return;
-      el.innerHTML =
+      let html =
         `<div class="lead-chip lc-a">
           <span class="lc-label">🎭 Lead A</span>
           <span class="lc-name">${esc(ROOM.name(leadAIdx))}</span>
@@ -665,6 +677,17 @@
           <span class="lc-label">🎭 Lead B</span>
           <span class="lc-name">${esc(ROOM.name(leadBIdx))}</span>
         </div>`;
+      // whoever's currently entering rides alongside the leads too — only
+      // while the current beat is actually an entrance, not for event/prop
+      // beats or once the scene has moved past it
+      const current = phase === 'beat' ? beats[beatIndex] : null;
+      if (current && current.type === 'entrance') {
+        html += `<div class="lead-chip lc-entrance">
+          <span class="lc-label">🚪 Entrance</span>
+          <span class="lc-name">${esc(ROOM.name(current.playerIdx))}</span>
+        </div>`;
+      }
+      el.innerHTML = html;
     }
 
     /* the beat log — one entry per slot, in the order they actually happened,
@@ -679,12 +702,14 @@
 
         if (s.type === 'entrance') {
           return `<div class="beat-card ${cls}">
-            <span class="beat-who">
-              <span class="beat-emoji">${s.card.emoji}</span>
-              <span class="beat-name">${esc(s.card.name)}</span>
-            </span>
+            <div class="beat-who-row">
+              <span class="beat-who">
+                <span class="beat-emoji">${s.card.emoji}</span>
+                <span class="beat-name">${esc(s.card.name)}</span>
+              </span>
+              <span class="beat-playedby">🎭 Played by ${esc(ROOM.name(s.playerIdx))}</span>
+            </div>
             <span class="beat-hint">${esc(s.card.hint)}</span>
-            <span class="beat-playedby">🎭 Played by ${esc(ROOM.name(s.playerIdx))}</span>
           </div>`;
         }
 
