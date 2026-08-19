@@ -1039,18 +1039,26 @@
         return `<div class="secret-card theme-crashers">${nameBanner(data)}<span class="pick-sub">⏳ Waiting for the next scene…</span></div>`;
       }
       const role = data.role;
-      const roleHex = { leadA: '#84cc16', leadB: '#f59e0b', entrance1: '#06b6d4', entrance2: '#d946ef' }[role] || '#84cc16';
+      const roleHex = { leadA: '#84cc16', leadB: '#f59e0b', entrance1: '#06b6d4', entrance2: '#06b6d4' }[role] || '#84cc16';
       const roleLabel = { leadA: '🎭 You are Lead A', leadB: '🎭 You are Lead B', entrance1: "🚪 You're walking in!", entrance2: "🚪 You're walking in!" }[role] || '👀 Watching the Scene';
       const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
       const shell = inner => `<div class="secret-card theme-crashers" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
 
       if (role === 'leadA' || role === 'leadB') {
+        // secret instructions are addressed only to this exact player — never
+        // shown to the other Lead, the audience, or the host's own screen
+        const secrets = (data.secretInstructions || []).map(s => `
+          <div class="witness-box" style="border-color:#8b5cf6;border-style:dashed">
+            <span class="wb-name">🤫 Secret Instruction</span>
+            <span class="wb-evidence">${esc(s.text)}</span>
+          </div>`).join('');
         return shell(`
           <div class="role-box" style="border-color:${roleHex}66">
             <span class="rb-key" style="color:${roleHex}">📍 ${esc(data.location || '')}</span>
             <span class="rb-hint">${esc(data.plot || '')}</span>
           </div>
-          <span class="pick-sub">Play it out — you know your own history together.</span>`);
+          ${secrets}
+          <span class="pick-sub">Play it out — you know your own history together.${secrets ? ' Keep your secret instruction to yourself!' : ''}</span>`);
       }
 
       if ((role === 'entrance1' || role === 'entrance2') && data.entranceCard) {

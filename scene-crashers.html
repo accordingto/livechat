@@ -159,17 +159,18 @@
     .lead-chip.lc-b { background: linear-gradient(160deg, rgba(245,158,11,.22), rgba(245,158,11,.04)); border-color: #f59e0b; box-shadow: 0 0 18px rgba(245,158,11,.18); }
     .lead-chip.lc-b .lc-label { color: #fdba74; }
 
-    /* ── Entrance log: every new character who's walked in, in order, and stays
-       on screen for the rest of the scene — same idea as Kangaroo Court's
-       witness log. Each entrance gets its own colour so two cards stacked
-       together are never mistaken for each other. ── */
-    .entrance-log {
+    /* ── Beat log: every "something happens" beat, in order, staying on screen
+       for the rest of the scene — same idea as Kangaroo Court's witness log.
+       Coloured by TYPE rather than by slot position now, since which kind of
+       card came up is the whole surprise — an entrance, an event, a prop and a
+       secret instruction should never be mistaken for each other at a glance. ── */
+    .beat-log {
       width: 100%; max-width: 1100px;
       display: flex; flex-direction: column; gap: 14px;
       margin-bottom: 16px;
     }
-    .entrance-log.hidden { display: none; }
-    .entrance-card {
+    .beat-log.hidden { display: none; }
+    .beat-card {
       width: 100%;
       border-radius: 22px;
       padding: 22px 30px;
@@ -178,42 +179,60 @@
       animation: fadeUp .4s ease both;
       transition: border-color .3s, box-shadow .3s, opacity .3s;
     }
-    .entrance-card.slot-1 { background: linear-gradient(135deg, rgba(6,182,212,.16), rgba(6,182,212,.03)); border: 2px solid #06b6d4; }
-    .entrance-card.slot-1 .entrance-label { color: #67e8f9; }
-    .entrance-card.slot-1 .entrance-hint { color: #a5f3fc; }
-    .entrance-card.slot-1 .entrance-playedby { background: rgba(6,182,212,.14); border-color: rgba(6,182,212,.4); color: #67e8f9; }
-    .entrance-card.slot-1.is-current { box-shadow: 0 0 30px rgba(6,182,212,.28); }
-    .entrance-card.slot-2 { background: linear-gradient(135deg, rgba(217,70,239,.16), rgba(217,70,239,.03)); border: 2px solid #d946ef; }
-    .entrance-card.slot-2 .entrance-label { color: #f0abfc; }
-    .entrance-card.slot-2 .entrance-hint { color: #f5d0fe; }
-    .entrance-card.slot-2 .entrance-playedby { background: rgba(217,70,239,.14); border-color: rgba(217,70,239,.4); color: #f0abfc; }
-    .entrance-card.slot-2.is-current { box-shadow: 0 0 30px rgba(217,70,239,.28); }
-    .entrance-card:not(.is-current) { opacity: .75; box-shadow: none; }
-    .entrance-card::before {
-      content: '🚪'; position: absolute; font-size: 7rem; opacity: .05;
+    .beat-card:not(.is-current) { opacity: .75; box-shadow: none; }
+    .beat-card::before {
+      position: absolute; font-size: 7rem; opacity: .05;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
-    .entrance-label {
+    .beat-label {
       font-size: .68rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
       position: relative; z-index: 1;
     }
-    .entrance-who { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
-    .entrance-emoji { font-size: 1.8rem; line-height: 1; }
-    .entrance-name { font-size: 1.3rem; font-weight: 900; color: #fff; }
-    .entrance-hint {
+    .beat-who { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+    .beat-emoji { font-size: 1.8rem; line-height: 1; }
+    .beat-emoji-solo { font-size: 1.8rem; line-height: 1; position: relative; z-index: 1; }
+    .beat-name { font-size: 1.3rem; font-weight: 900; color: #fff; }
+    .beat-hint {
       font-size: .92rem; font-weight: 600; line-height: 1.4;
       max-width: 640px; position: relative; z-index: 1;
     }
-    .entrance-playedby {
+    .beat-playedby {
       margin-top: 4px; display: inline-block; position: relative; z-index: 1;
       border: 1px solid; font-size: .76rem; font-weight: 800; padding: 4px 14px; border-radius: 20px;
     }
 
+    /* a new character — cyan */
+    .beat-card.type-entrance { background: linear-gradient(135deg, rgba(6,182,212,.16), rgba(6,182,212,.03)); border: 2px solid #06b6d4; }
+    .beat-card.type-entrance::before { content: '🚪'; }
+    .beat-card.type-entrance .beat-label { color: #67e8f9; }
+    .beat-card.type-entrance .beat-hint { color: #a5f3fc; }
+    .beat-card.type-entrance .beat-playedby { background: rgba(6,182,212,.14); border-color: rgba(6,182,212,.4); color: #67e8f9; }
+    .beat-card.type-entrance.is-current { box-shadow: 0 0 30px rgba(6,182,212,.28); }
+    /* a public event — fuchsia */
+    .beat-card.type-event { background: linear-gradient(135deg, rgba(217,70,239,.16), rgba(217,70,239,.03)); border: 2px solid #d946ef; }
+    .beat-card.type-event::before { content: '🎲'; }
+    .beat-card.type-event .beat-label { color: #f0abfc; }
+    .beat-card.type-event .beat-hint { color: #f5d0fe; }
+    .beat-card.type-event.is-current { box-shadow: 0 0 30px rgba(217,70,239,.28); }
+    /* a public prop — teal */
+    .beat-card.type-prop { background: linear-gradient(135deg, rgba(20,184,166,.16), rgba(20,184,166,.03)); border: 2px solid #14b8a6; }
+    .beat-card.type-prop::before { content: '📦'; }
+    .beat-card.type-prop .beat-label { color: #5eead4; }
+    .beat-card.type-prop .beat-hint { color: #99f6e4; }
+    .beat-card.type-prop.is-current { box-shadow: 0 0 30px rgba(20,184,166,.28); }
+    /* a secret instruction — violet, dashed border since the content is
+       deliberately never shown here */
+    .beat-card.type-instruction { background: linear-gradient(135deg, rgba(139,92,246,.16), rgba(139,92,246,.03)); border: 2px dashed #8b5cf6; }
+    .beat-card.type-instruction::before { content: '🤫'; }
+    .beat-card.type-instruction .beat-label { color: #c4b5fd; }
+    .beat-card.type-instruction .beat-hint { color: #ddd6fe; font-style: italic; }
+    .beat-card.type-instruction.is-current { box-shadow: 0 0 30px rgba(139,92,246,.28); }
+
     /* player links: a per-role tint so the host can see roles without opening a card */
     .link-col.is-role-leadA     { border-color: #84cc16; }
     .link-col.is-role-leadB     { border-color: #f59e0b; }
-    .link-col.is-role-entrance1 { border-color: #06b6d4; }
-    .link-col.is-role-entrance2 { border-color: #d946ef; }
+    .link-col.is-role-entrance1,
+    .link-col.is-role-entrance2 { border-color: #06b6d4; }
     .link-col .la-sub { color: #888; }
 
     /* ── Scenario / entrance browsers ── */
@@ -280,9 +299,9 @@
         </div>
       </div>
 
-      <!-- every new character who's walked in, in order, stays here for the
-           rest of the scene -->
-      <div class="entrance-log hidden" id="entrance-log"></div>
+      <!-- every beat that's happened, in order, stays here for the rest of
+           the scene -->
+      <div class="beat-log hidden" id="beat-log"></div>
     </div>
   </div>
 
@@ -299,6 +318,21 @@
     <div class="crash-list" id="entrance-list"></div>
   </div>
 
+  <div class="crash-browser">
+    <div class="crash-browser-hdr" id="event-browser-hdr"></div>
+    <div class="crash-list" id="event-list"></div>
+  </div>
+
+  <div class="crash-browser">
+    <div class="crash-browser-hdr" id="prop-browser-hdr"></div>
+    <div class="crash-list" id="prop-list"></div>
+  </div>
+
+  <div class="crash-browser">
+    <div class="crash-browser-hdr" id="instruction-browser-hdr"></div>
+    <div class="crash-list" id="instruction-list"></div>
+  </div>
+
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="firebase-config.js"></script>
@@ -308,25 +342,38 @@
   <script>
     const DECK = GAME_DATA.crashers;
     const DECKE = GAME_DATA.crashersEntrance;
+    const DECKEV = GAME_DATA.crashersEvent;
+    const DECKP = GAME_DATA.crashersProp;
+    const DECKI = GAME_DATA.crashersInstruction;
 
     let sceneNum = 0;
-    let phase = 'idle'; // idle | opening | entrance1 | entrance2
+    let phase = 'idle'; // idle | opening | beat1 | beat2
     let leadAIdx = -1, leadBIdx = -1;
     let leadABag = [];    // shuffled players still waiting to lead this cycle
     let leadBCount = [];  // times each player has been Lead B, kept even like the referee in Say It Without Saying It
     let scenario = null;
     let usedScenarios = [];
 
-    /* ── Entrances ── new characters drawn from whoever isn't already a lead
-       this scene. entranceCount keeps picks even over a session, same trick as
+    /* ── Beats ── each of the two "something happens" steps randomly lands on
+       one of four kinds, so the host never knows in advance what's coming:
+        - entrance:    a new character walks in (same as before)
+        - event:       a public twist with no new character attached
+        - prop:        a public object that suddenly matters
+        - instruction: a secret behavior pushed to ONE lead's card only — never
+                        shown anywhere else, not even the host's own screen —
+                        so it needs Firebase and is left out of the pool without it
+       entranceCount keeps entrance picks even over a session, same trick as
        leadBCount; entranceThisScene avoids using the same player for both
-       entrances in one scene unless the pool is too small to avoid it — with
-       only 3 players (2 leads + 1 spare), that one spare plays both. */
+       entrance-type beats in one scene unless the pool is too small to avoid
+       it — with only 3 players (2 leads + 1 spare), that one spare plays both. */
     let entranceCount = [];
     let entranceThisScene = [];
     let usedEntranceCards = [];
-    let entrance1 = null; // { card: {emoji,name,hint}, playerIdx }
-    let entrance2 = null;
+    let usedEventCards = [];
+    let usedPropCards = [];
+    let usedInstructionCards = [];
+    let slot1 = null; // { type: 'entrance'|'event'|'prop'|'instruction', card, playerIdx?, leadIdx? }
+    let slot2 = null;
 
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function shuffled(n) {
@@ -340,7 +387,7 @@
       accent: '#84cc16',
       counts: [3, 4, 5, 6, 7, 8],
       defaultCount: 4,
-      linksNote: 'Each scene deals two Leads who carry the whole story, plus (as the scene progresses) two new characters drawn from everyone else — roles rotate every scene, so everyone eventually gets a card. Works fine without player links too — the shared screen shows everything.',
+      linksNote: 'Each scene deals two Leads who carry the whole story. As it progresses, each "something happens" step might pull in a new character, drop a public twist, or (with player links on) secretly hand one Lead a behavior nobody else finds out about. Works fine without player links too — the shared screen shows everything except secret instructions.',
       onCountChange: () => { leadAIdx = leadBIdx = -1; leadABag = []; leadBCount = []; entranceCount = []; resetToIdle(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
@@ -348,8 +395,8 @@
     function roleOf(i) {
       if (i === leadAIdx) return 'leadA';
       if (i === leadBIdx) return 'leadB';
-      if (entrance2 && i === entrance2.playerIdx && phase === 'entrance2') return 'entrance2';
-      if (entrance1 && i === entrance1.playerIdx && (phase === 'entrance1' || phase === 'entrance2')) return 'entrance1';
+      if (slot2 && slot2.type === 'entrance' && i === slot2.playerIdx && phase === 'beat2') return 'entrance2';
+      if (slot1 && slot1.type === 'entrance' && i === slot1.playerIdx && (phase === 'beat1' || phase === 'beat2')) return 'entrance1';
       return 'audience';
     }
 
@@ -405,13 +452,25 @@
       return pick;
     }
 
-    /* draws an entrance card, cycling through the deck before any repeat */
-    function pickEntranceCard() {
-      let avail = DECKE.map((_, i) => i).filter(i => !usedEntranceCards.includes(i));
-      if (!avail.length) { usedEntranceCards = []; avail = DECKE.map((_, i) => i); }
+    /* draws a card from a deck, cycling through before any repeat — the same
+       shape reused for all four "something happens" decks below */
+    function drawFromDeck(deck, used) {
+      let avail = deck.map((_, i) => i).filter(i => !used.includes(i));
+      if (!avail.length) { used.length = 0; avail = deck.map((_, i) => i); }
       const pick = avail[Math.floor(Math.random() * avail.length)];
-      usedEntranceCards.push(pick);
-      return DECKE[pick];
+      used.push(pick);
+      return deck[pick];
+    }
+    function pickEntranceCard() { return drawFromDeck(DECKE, usedEntranceCards); }
+    function pickEventCard() { return drawFromDeck(DECKEV, usedEventCards); }
+    function pickPropCard() { return drawFromDeck(DECKP, usedPropCards); }
+    function pickInstructionCard() { return drawFromDeck(DECKI, usedInstructionCards); }
+
+    /* which kind of beat comes up next — instruction needs a real channel to
+       deliver it secretly, so it's left out of the pool without Firebase */
+    function pickEscalationType() {
+      const pool = ROOM.enabled ? ['entrance', 'event', 'prop', 'instruction'] : ['entrance', 'event', 'prop'];
+      return pool[Math.floor(Math.random() * pool.length)];
     }
 
     /* draws a scenario not currently on screen, cycling through the deck before
@@ -425,20 +484,20 @@
     }
 
     /* ── Scene flow ──
-       idle/entrance2 → opening (new scene) → entrance1 → entrance2 → (repeat) */
+       idle/beat2 → opening (new scene) → beat1 → beat2 → (repeat) */
     function dealNewScene() {
       dealLeads();
       scenario = pickScenario(null);
       sceneNum++;
       phase = 'opening';
-      entrance1 = null; entrance2 = null;
+      slot1 = null; slot2 = null;
       entranceThisScene = [];
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last scene's cards
       renderAll();
     }
 
     /* lets the host reroll a scene that isn't landing, without redealing the
-       leads — only available before any entrance happens */
+       leads — only available before any beat happens */
     function changeScenario() {
       if (phase !== 'opening' || !scenario) return;
       scenario = pickScenario(scenario);
@@ -452,35 +511,44 @@
       renderAll();
     }
 
-    /* enters one of the two entrance slots: draws who plays the new character
-       and which card they get */
-    function startEntrance(next) {
-      const playerIdx = pickEntrancePlayer();
-      const card = pickEntranceCard();
-      if (next === 'entrance1') entrance1 = { card, playerIdx };
-      else entrance2 = { card, playerIdx };
+    /* fills one of the two beat slots: rolls which kind of thing happens, then
+       draws whatever that kind needs (a new character + who plays them, a
+       public event/prop card, or a secret instruction + which Lead gets it) */
+    function startBeat(next) {
+      const type = pickEscalationType();
+      let data;
+      if (type === 'entrance') {
+        data = { type, card: pickEntranceCard(), playerIdx: pickEntrancePlayer() };
+      } else if (type === 'event') {
+        data = { type, card: pickEventCard() };
+      } else if (type === 'prop') {
+        data = { type, card: pickPropCard() };
+      } else {
+        data = { type, card: pickInstructionCard(), leadIdx: Math.random() < 0.5 ? leadAIdx : leadBIdx };
+      }
+      if (next === 'beat1') slot1 = data; else slot2 = data;
       startPhase(next);
     }
 
     function advance() {
-      if (phase === 'idle')      { dealNewScene(); return; }
-      if (phase === 'opening')   { startEntrance('entrance1'); return; }
-      if (phase === 'entrance1') { startEntrance('entrance2'); return; }
-      if (phase === 'entrance2') { dealNewScene(); return; }
+      if (phase === 'idle')    { dealNewScene(); return; }
+      if (phase === 'opening') { startBeat('beat1'); return; }
+      if (phase === 'beat1')   { startBeat('beat2'); return; }
+      if (phase === 'beat2')   { dealNewScene(); return; }
     }
 
-    /* undoes one accidental "advance" — entrance1/entrance2 are each drawn only
-       once (entering that slot) and nothing overwrites them until the OTHER
-       slot is entered, so stepping back onto one just reuses startPhase() and
-       gets the same character back, no reroll needed. */
+    /* undoes one accidental "advance" — beat1/beat2 are each rolled only once
+       (entering that slot) and nothing overwrites them until the OTHER slot is
+       entered, so stepping back onto one just reuses startPhase() and gets the
+       same beat back, no reroll needed. */
     function goBack() {
-      if (phase === 'entrance2') { startPhase('entrance1'); return; }
-      if (phase === 'entrance1') { startPhase('opening'); return; }
+      if (phase === 'beat2') { startPhase('beat1'); return; }
+      if (phase === 'beat1') { startPhase('opening'); return; }
     }
 
     function resetToIdle() {
       sceneNum = 0; phase = 'idle'; scenario = null;
-      entrance1 = null; entrance2 = null; entranceThisScene = [];
+      slot1 = null; slot2 = null; entranceThisScene = [];
       pushState();
       renderAll();
     }
@@ -498,9 +566,16 @@
         location: scenario ? scenario.location : null,
         plot: scenario ? scenario.plot : null,
         entranceCard: null,
+        secretInstructions: [],
       };
-      if (role === 'entrance1') base.entranceCard = entrance1.card;
-      if (role === 'entrance2') base.entranceCard = entrance2.card;
+      if (role === 'entrance1') base.entranceCard = slot1.card;
+      if (role === 'entrance2') base.entranceCard = slot2.card;
+      // secret instructions: only the targeted Lead's own payload ever carries
+      // the text, and it's a standing directive for the rest of the scene, not
+      // a one-off announcement — so a Lead unlucky (or lucky) enough to draw
+      // two of them in one scene keeps both on their card
+      if (slot1 && slot1.type === 'instruction' && i === slot1.leadIdx) base.secretInstructions.push(slot1.card);
+      if (slot2 && slot2.type === 'instruction' && i === slot2.leadIdx) base.secretInstructions.push(slot2.card);
       return base;
     }
 
@@ -508,8 +583,8 @@
     const FLOW_STEPS = [
       { phase: 'idle', emoji: '🚪', label: 'Draw a Scene' },
       { phase: 'opening', emoji: '🎬', label: 'Opening Scene' },
-      { phase: 'entrance1', emoji: '🚪', label: 'New Character Enters' },
-      { phase: 'entrance2', emoji: '🚪', label: 'Another Enters' },
+      { phase: 'beat1', emoji: '🎲', label: 'Something Happens' },
+      { phase: 'beat2', emoji: '🎲', label: 'Something Else Happens' },
     ];
     function renderFlow() {
       const order = FLOW_STEPS.map(s => s.phase);
@@ -530,7 +605,7 @@
       renderBackBtn();
       renderScenario();
       renderLeadStrip();
-      renderEntranceLog();
+      renderBeatLog();
       ROOM.render();
     }
 
@@ -540,13 +615,13 @@
 
     const STATUS_LABELS = {
       idle: '🚪 Draw a Scene',
-      opening: '🚪 Bring in a New Character',
-      entrance1: '🚪 Bring in Another',
-      entrance2: '🎬 Next Scene',
+      opening: '🎲 Let Something Happen',
+      beat1: '🎲 Let Something Else Happen',
+      beat2: '🎬 Next Scene',
     };
     function renderStatus() {
       const el = document.getElementById('status-line');
-      el.classList.toggle('is-next', phase === 'entrance2');
+      el.classList.toggle('is-next', phase === 'beat2');
       el.textContent = STATUS_LABELS[phase] || STATUS_LABELS.idle;
     }
 
@@ -578,41 +653,81 @@
         </div>`;
     }
 
-    /* the entrance log — one entry per slot, in the order they actually walked
-       in, each staying on screen for the rest of the scene instead of
-       disappearing once the next entrance happens. */
-    function renderEntranceLog() {
-      const el = document.getElementById('entrance-log');
+    /* the beat log — one entry per slot, in the order they actually happened,
+       each staying on screen for the rest of the scene instead of disappearing
+       once the next beat happens. Rendering branches on the beat's type —
+       entrance/event/prop all show their card in full, but a secret
+       instruction NEVER prints its text here: this is the shared screen, and
+       the whole point is that nobody reading it gets to know what it says. */
+    function renderBeatLog() {
+      const el = document.getElementById('beat-log');
       const entries = [];
-      if (entrance1) entries.push([1, entrance1]);
-      if (entrance2) entries.push([2, entrance2]);
+      if (slot1) entries.push([1, slot1]);
+      if (slot2) entries.push([2, slot2]);
       el.classList.toggle('hidden', !entries.length);
-      el.innerHTML = entries.map(([slot, e]) => {
-        const isCurrent = phase === ('entrance' + slot);
-        const label = isCurrent ? `🚪 ${esc(ROOM.name(e.playerIdx))} enters the scene…` : `🚪 ${esc(ROOM.name(e.playerIdx))} entered the scene`;
-        return `<div class="entrance-card slot-${slot}${isCurrent ? ' is-current' : ''}">
-          <span class="entrance-label">${label}</span>
-          <span class="entrance-who">
-            <span class="entrance-emoji">${e.card.emoji}</span>
-            <span class="entrance-name">${esc(e.card.name)}</span>
-          </span>
-          <span class="entrance-hint">${esc(e.card.hint)}</span>
-          <span class="entrance-playedby">🎭 Played by ${esc(ROOM.name(e.playerIdx))}</span>
+      el.innerHTML = entries.map(([slot, s]) => {
+        const isCurrent = phase === ('beat' + slot);
+        const cls = `type-${s.type}${isCurrent ? ' is-current' : ''}`;
+
+        if (s.type === 'entrance') {
+          const label = isCurrent ? `🚪 ${esc(ROOM.name(s.playerIdx))} enters the scene…` : `🚪 ${esc(ROOM.name(s.playerIdx))} entered the scene`;
+          return `<div class="beat-card ${cls}">
+            <span class="beat-label">${label}</span>
+            <span class="beat-who">
+              <span class="beat-emoji">${s.card.emoji}</span>
+              <span class="beat-name">${esc(s.card.name)}</span>
+            </span>
+            <span class="beat-hint">${esc(s.card.hint)}</span>
+            <span class="beat-playedby">🎭 Played by ${esc(ROOM.name(s.playerIdx))}</span>
+          </div>`;
+        }
+
+        if (s.type === 'event' || s.type === 'prop') {
+          const label = s.type === 'event' ? '🎲 Something Happens' : '📦 A New Prop';
+          return `<div class="beat-card ${cls}">
+            <span class="beat-label">${label}</span>
+            <span class="beat-emoji-solo">${s.card.emoji}</span>
+            <span class="beat-hint">${esc(s.card.text)}</span>
+          </div>`;
+        }
+
+        // instruction — deliberately no card content here, ever
+        return `<div class="beat-card ${cls}">
+          <span class="beat-label">🤫 Secret Instruction</span>
+          <span class="beat-emoji-solo">🔒</span>
+          <span class="beat-hint">${esc(ROOM.name(s.leadIdx))} just got a secret instruction — nobody else finds out what it is, not even this screen.</span>
         </div>`;
       }).join('');
     }
 
-    /* ── Scene / Entrance browsers: unnumbered, just for the host to preview
-       what might come up ── */
+    /* ── Browsers: unnumbered, just for the host to preview what might come
+       up — the deck contents are always previewable, same as every other
+       game's browser, even though which card actually gets drawn (and to a
+       secret instruction, who it's for) stays a surprise ── */
     (function buildBrowsers() {
       document.getElementById('scene-browser-hdr').textContent = `🚪 All Scenes (${DECK.length}) — drawn by "Draw a Scene"`;
       document.getElementById('scene-list').innerHTML = DECK.map(c =>
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.location)}</span> — ${esc(c.plot)}</span></div>`
       ).join('');
 
-      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — drawn as the scene progresses`;
+      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — one of four kinds a "something happens" step can roll`;
       document.getElementById('entrance-list').innerHTML = DECKE.map(c =>
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.name)}</span> — ${esc(c.hint)}</span></div>`
+      ).join('');
+
+      document.getElementById('event-browser-hdr').textContent = `🎲 All Events (${DECKEV.length}) — another kind a "something happens" step can roll`;
+      document.getElementById('event-list').innerHTML = DECKEV.map(c =>
+        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text)}</span></div>`
+      ).join('');
+
+      document.getElementById('prop-browser-hdr').textContent = `📦 All Props (${DECKP.length}) — another kind a "something happens" step can roll`;
+      document.getElementById('prop-list').innerHTML = DECKP.map(c =>
+        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text)}</span></div>`
+      ).join('');
+
+      document.getElementById('instruction-browser-hdr').textContent = `🤫 All Secret Instructions (${DECKI.length}) — the last kind, needs player links; never shown to anyone but the Lead who gets it`;
+      document.getElementById('instruction-list').innerHTML = DECKI.map(c =>
+        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text)}</span></div>`
       ).join('');
     })();
 

@@ -1343,4 +1343,82 @@ const GAME_DATA = {
     { emoji: '🧑‍🎤', name: 'A Celebrity Look-Alike', hint: 'causes a commotion — everyone is sure it\'s really them' },
     { emoji: '🐍', name: 'A Wildlife Handler (with a loose snake)', hint: 'needs everyone\'s help right now, very calmly' },
   ],
+
+  /* ── 🚪 Scene Crashers — random events. A public twist with no new character
+     attached: something in the environment just changed, and the two leads
+     have to react to it without missing a beat. Drawn from the same pool as
+     entrance cards and prop cards, so the host never knows in advance which
+     kind of card is about to come up. ── */
+  crashersEvent: [
+    { emoji: '💡', text: 'The power suddenly goes out — everyone has to keep going in the dark.' },
+    { emoji: '📢', text: 'A fire alarm starts blaring, and it will not stop.' },
+    { emoji: '🌧️', text: "It suddenly starts pouring rain, right where you're standing." },
+    { emoji: '📱', text: "Someone's phone starts playing music at full volume, and nobody can find it." },
+    { emoji: '🎶', text: 'Romantic music starts playing from somewhere, for no reason at all.' },
+    { emoji: '🚨', text: 'A car alarm goes off outside and just keeps going.' },
+    { emoji: '🕰️', text: 'The clock on the wall suddenly starts ticking extremely loudly.' },
+    { emoji: '🐦', text: 'A bird flies directly into the room and will not leave.' },
+    { emoji: '📸', text: 'A flash goes off — someone just took a photo of this exact moment.' },
+    { emoji: '🎂', text: 'Someone wheels in a birthday cake, for absolutely no reason.' },
+    { emoji: '🔥', text: 'Something starts smoking in the background. Nobody addresses it.' },
+    { emoji: '🎉', text: 'Confetti falls from the ceiling, completely unprompted.' },
+    { emoji: '📻', text: 'A radio somewhere starts playing static, then a very specific song.' },
+    { emoji: '🚪', text: 'A door slams shut on its own, somewhere nearby.' },
+    { emoji: '❄️', text: 'The room suddenly gets freezing cold.' },
+    { emoji: '🕯️', text: 'All the lights start flickering, like something is haunting the place.' },
+    { emoji: '📣', text: 'An announcement over a loudspeaker interrupts everything, mid-sentence.' },
+    { emoji: '🐝', text: 'A bee — or something buzzing — starts flying around both of you.' },
+  ],
+
+  /* ── 🚪 Scene Crashers — props. Also public, also no new character, but the
+     twist is an object instead of an event: it just showed up, and the two
+     leads have to decide together what it means and what to do with it. ── */
+  crashersProp: [
+    { emoji: '🍌', text: 'A banana appears on the table. It must now be treated like a priceless family heirloom.' },
+    { emoji: '🪄', text: 'A magic wand is lying nearby. Someone has to try using it.' },
+    { emoji: '📜', text: 'An old, mysterious letter is found. It has to be read out loud, right now.' },
+    { emoji: '🎩', text: 'A top hat appears out of nowhere. Someone has to put it on immediately.' },
+    { emoji: '🔑', text: 'An old key shows up. It obviously belongs to something important.' },
+    { emoji: '🧸', text: "A stuffed animal appears, and it has to be treated like it's alive." },
+    { emoji: '🕶️', text: 'A pair of sunglasses appears. Whoever puts them on becomes instantly suspicious.' },
+    { emoji: '📦', text: 'A mysterious wrapped box shows up with no name tag.' },
+    { emoji: '🐍', text: "A rubber snake shows up and has to be reacted to as if it's completely real." },
+    { emoji: '🏆', text: 'A trophy appears. Someone has to explain, on the spot, why they deserve it.' },
+    { emoji: '💍', text: 'A ring is found on the ground. Someone has to react like it means something huge.' },
+    { emoji: '🎈', text: 'A single balloon floats into the scene and has to be dealt with.' },
+    { emoji: '📷', text: 'An old photograph turns up, and it has to explain something about the two of you.' },
+    { emoji: '🧦', text: 'A single, oddly specific sock appears and has to become a big deal.' },
+    { emoji: '🔮', text: 'A crystal ball appears. Someone has to look into it and announce what they see.' },
+    { emoji: '🍾', text: 'A bottle appears — someone has to decide if this is a celebration or not.' },
+    { emoji: '🧻', text: 'A roll of toilet paper unspools dramatically across the floor.' },
+    { emoji: '🎸', text: 'A guitar appears, and someone has to at least pretend to play it.' },
+  ],
+
+  /* ── 🚪 Scene Crashers — secret instructions. The only card type pushed
+     privately: one random Lead gets a behavior to secretly play, and nobody
+     else — not the other Lead, not the audience, not even the host's own
+     screen — ever sees the text. It only exists on that one player's card.
+     Needs Firebase to deliver at all, so the host never draws this type when
+     player links aren't available. Written second-person singular, addressed
+     straight at whichever Lead receives it. ── */
+  crashersInstruction: [
+    { emoji: '🤫', text: 'You must try to make the other person laugh, without ever breaking character.' },
+    { emoji: '😐', text: "You suddenly can't remember the other person's name. Cover for it." },
+    { emoji: '🥺', text: 'You are now secretly on the verge of tears the entire time.' },
+    { emoji: '😏', text: 'You are convinced the other person is flirting with you. Act accordingly.' },
+    { emoji: '🗣️', text: 'You must repeat the last thing the other person said, every time, before responding.' },
+    { emoji: '🤥', text: 'You are lying about something small and specific. Do not confess.' },
+    { emoji: '😱', text: 'You suddenly think you recognize the other person from somewhere terrible.' },
+    { emoji: '🙄', text: 'You are secretly bored out of your mind and trying very hard to hide it.' },
+    { emoji: '🤗', text: 'You are overwhelmed with affection for the other person, out of nowhere.' },
+    { emoji: '🕵️', text: 'You suddenly suspect the other person is hiding something. Investigate subtly.' },
+    { emoji: '😤', text: 'You are holding in a huge grudge about something totally unrelated to this conversation.' },
+    { emoji: '🥱', text: 'You are exhausted and fighting to stay awake through this entire conversation.' },
+    { emoji: '🤔', text: 'You keep almost saying something important, then stopping yourself.' },
+    { emoji: '😳', text: 'You are extremely embarrassed about something that just happened, off-screen.' },
+    { emoji: '🎭', text: "You are secretly performing for someone watching, who isn't actually there." },
+    { emoji: '🧐', text: "You've decided the other person is secretly famous. Try to figure out who." },
+    { emoji: '🤐', text: "You've just remembered a promise you made to never mention this topic again." },
+    { emoji: '💭', text: 'You keep getting distracted by a thought you refuse to say out loud.' },
+  ],
 };
