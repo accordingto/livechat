@@ -1045,20 +1045,12 @@
       const shell = inner => `<div class="secret-card theme-crashers" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
 
       if (role === 'leadA' || role === 'leadB') {
-        // secret instructions are addressed only to this exact player — never
-        // shown to the other Lead, the audience, or the host's own screen
-        const secrets = (data.secretInstructions || []).map(s => `
-          <div class="witness-box" style="border-color:#8b5cf6;border-style:dashed">
-            <span class="wb-name">🤫 Secret Instruction</span>
-            <span class="wb-evidence">${esc(s.text)}</span>
-          </div>`).join('');
         return shell(`
           <div class="role-box" style="border-color:${roleHex}66">
             <span class="rb-key" style="color:${roleHex}">📍 ${esc(data.location || '')}</span>
             <span class="rb-hint">${esc(data.plot || '')}</span>
           </div>
-          ${secrets}
-          <span class="pick-sub">Play it out — you know your own history together.${secrets ? ' Keep your secret instruction to yourself!' : ''}</span>`);
+          <span class="pick-sub">Play it out — you know your own history together.</span>`);
       }
 
       if ((role === 'entrance1' || role === 'entrance2') && data.entranceCard) {

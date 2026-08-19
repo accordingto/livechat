@@ -163,8 +163,8 @@
     /* ── Beat log: every "something happens" beat, in order, staying on screen
        for the rest of the scene — same idea as Kangaroo Court's witness log.
        Coloured by TYPE rather than by slot position now, since which kind of
-       card came up is the whole surprise — an entrance, an event, a prop and a
-       secret instruction should never be mistaken for each other at a glance. ── */
+       card came up is the whole surprise — an entrance, an event and a prop
+       should never be mistaken for each other at a glance. ── */
     .beat-log {
       width: 100%; max-width: 1100px;
       display: flex; flex-direction: column; gap: 14px;
@@ -221,13 +221,6 @@
     .beat-card.type-prop .beat-label { color: #5eead4; }
     .beat-card.type-prop .beat-hint { color: #99f6e4; }
     .beat-card.type-prop.is-current { box-shadow: 0 0 30px rgba(20,184,166,.28); }
-    /* a secret instruction — violet, dashed border since the content is
-       deliberately never shown here */
-    .beat-card.type-instruction { background: linear-gradient(135deg, rgba(139,92,246,.16), rgba(139,92,246,.03)); border: 2px dashed #8b5cf6; }
-    .beat-card.type-instruction::before { content: '🤫'; }
-    .beat-card.type-instruction .beat-label { color: #c4b5fd; }
-    .beat-card.type-instruction .beat-hint { color: #ddd6fe; font-style: italic; }
-    .beat-card.type-instruction.is-current { box-shadow: 0 0 30px rgba(139,92,246,.28); }
 
     /* player links: a per-role tint so the host can see roles without opening a card */
     .link-col.is-role-leadA     { border-color: #84cc16; }
@@ -334,11 +327,6 @@
     <div class="crash-list" id="prop-list"></div>
   </div>
 
-  <div class="crash-browser">
-    <div class="crash-browser-hdr" id="instruction-browser-hdr"></div>
-    <div class="crash-list" id="instruction-list"></div>
-  </div>
-
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="firebase-config.js"></script>
@@ -350,7 +338,6 @@
     const DECKE = GAME_DATA.crashersEntrance;
     const DECKEV = GAME_DATA.crashersEvent;
     const DECKP = GAME_DATA.crashersProp;
-    const DECKI = GAME_DATA.crashersInstruction;
 
     let sceneNum = 0;
     let phase = 'idle'; // idle | opening | beat1 | beat2
@@ -361,13 +348,10 @@
     let usedScenarios = [];
 
     /* ── Beats ── each of the two "something happens" steps randomly lands on
-       one of four kinds, so the host never knows in advance what's coming:
-        - entrance:    a new character walks in (same as before)
-        - event:       a public twist with no new character attached
-        - prop:        a public object that suddenly matters
-        - instruction: a secret behavior pushed to ONE lead's card only — never
-                        shown anywhere else, not even the host's own screen —
-                        so it needs Firebase and is left out of the pool without it
+       one of three kinds, so the host never knows in advance what's coming:
+        - entrance: a new character walks in (same as before)
+        - event:    a public twist with no new character attached
+        - prop:     a public object that suddenly matters
        entranceCount keeps entrance picks even over a session, same trick as
        leadBCount; entranceThisScene avoids using the same player for both
        entrance-type beats in one scene unless the pool is too small to avoid
@@ -377,8 +361,7 @@
     let usedEntranceCards = [];
     let usedEventCards = [];
     let usedPropCards = [];
-    let usedInstructionCards = [];
-    let slot1 = null; // { type: 'entrance'|'event'|'prop'|'instruction', card, playerIdx?, leadIdx? }
+    let slot1 = null; // { type: 'entrance'|'event'|'prop', card, playerIdx? }
     let slot2 = null;
 
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
@@ -393,7 +376,7 @@
       accent: '#84cc16',
       counts: [3, 4, 5, 6, 7, 8],
       defaultCount: 4,
-      linksNote: 'Each scene deals two Leads who carry the whole story. As it progresses, each "something happens" step might pull in a new character, drop a public twist, or (with player links on) secretly hand one Lead a behavior nobody else finds out about. Works fine without player links too — the shared screen shows everything except secret instructions.',
+      linksNote: 'Each scene deals two Leads who carry the whole story, plus (as it progresses) new characters drawn from everyone else — roles rotate every scene, so everyone eventually gets a card. Works fine without player links too — the shared screen shows everything.',
       onCountChange: () => { leadAIdx = leadBIdx = -1; leadABag = []; leadBCount = []; entranceCount = []; resetToIdle(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
@@ -459,7 +442,7 @@
     }
 
     /* draws a card from a deck, cycling through before any repeat — the same
-       shape reused for all four "something happens" decks below */
+       shape reused for all three "something happens" decks below */
     function drawFromDeck(deck, used) {
       let avail = deck.map((_, i) => i).filter(i => !used.includes(i));
       if (!avail.length) { used.length = 0; avail = deck.map((_, i) => i); }
@@ -470,12 +453,10 @@
     function pickEntranceCard() { return drawFromDeck(DECKE, usedEntranceCards); }
     function pickEventCard() { return drawFromDeck(DECKEV, usedEventCards); }
     function pickPropCard() { return drawFromDeck(DECKP, usedPropCards); }
-    function pickInstructionCard() { return drawFromDeck(DECKI, usedInstructionCards); }
 
-    /* which kind of beat comes up next — instruction needs a real channel to
-       deliver it secretly, so it's left out of the pool without Firebase */
+    /* which kind of beat comes up next */
     function pickEscalationType() {
-      const pool = ROOM.enabled ? ['entrance', 'event', 'prop', 'instruction'] : ['entrance', 'event', 'prop'];
+      const pool = ['entrance', 'event', 'prop'];
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
@@ -518,8 +499,8 @@
     }
 
     /* fills one of the two beat slots: rolls which kind of thing happens, then
-       draws whatever that kind needs (a new character + who plays them, a
-       public event/prop card, or a secret instruction + which Lead gets it) */
+       draws whatever that kind needs (a new character + who plays them, or a
+       public event/prop card) */
     function startBeat(next) {
       const type = pickEscalationType();
       let data;
@@ -527,10 +508,8 @@
         data = { type, card: pickEntranceCard(), playerIdx: pickEntrancePlayer() };
       } else if (type === 'event') {
         data = { type, card: pickEventCard() };
-      } else if (type === 'prop') {
-        data = { type, card: pickPropCard() };
       } else {
-        data = { type, card: pickInstructionCard(), leadIdx: Math.random() < 0.5 ? leadAIdx : leadBIdx };
+        data = { type, card: pickPropCard() };
       }
       if (next === 'beat1') slot1 = data; else slot2 = data;
       startPhase(next);
@@ -581,16 +560,9 @@
         location: scenario ? scenario.location : null,
         plot: scenario ? scenario.plot : null,
         entranceCard: null,
-        secretInstructions: [],
       };
       if (role === 'entrance1') base.entranceCard = slot1.card;
       if (role === 'entrance2') base.entranceCard = slot2.card;
-      // secret instructions: only the targeted Lead's own payload ever carries
-      // the text, and it's a standing directive for the rest of the scene, not
-      // a one-off announcement — so a Lead unlucky (or lucky) enough to draw
-      // two of them in one scene keeps both on their card
-      if (slot1 && slot1.type === 'instruction' && i === slot1.leadIdx) base.secretInstructions.push(slot1.card);
-      if (slot2 && slot2.type === 'instruction' && i === slot2.leadIdx) base.secretInstructions.push(slot2.card);
       return base;
     }
 
@@ -677,10 +649,7 @@
 
     /* the beat log — one entry per slot, in the order they actually happened,
        each staying on screen for the rest of the scene instead of disappearing
-       once the next beat happens. Rendering branches on the beat's type —
-       entrance/event/prop all show their card in full, but a secret
-       instruction NEVER prints its text here: this is the shared screen, and
-       the whole point is that nobody reading it gets to know what it says. */
+       once the next beat happens. Rendering branches on the beat's type. */
     function renderBeatLog() {
       const el = document.getElementById('beat-log');
       const entries = [];
@@ -704,35 +673,26 @@
           </div>`;
         }
 
-        if (s.type === 'event' || s.type === 'prop') {
-          const label = s.type === 'event' ? '🎲 Something Happens' : '📦 A New Prop';
-          return `<div class="beat-card ${cls}">
-            <span class="beat-label">${label}</span>
-            <span class="beat-emoji-solo">${s.card.emoji}</span>
-            <span class="beat-hint">${esc(s.card.text)}</span>
-          </div>`;
-        }
-
-        // instruction — deliberately no card content here, ever
+        const label = s.type === 'event' ? '🎲 Something Happens' : '📦 A New Prop';
         return `<div class="beat-card ${cls}">
-          <span class="beat-label">🤫 Secret Instruction</span>
-          <span class="beat-emoji-solo">🔒</span>
-          <span class="beat-hint">${esc(ROOM.name(s.leadIdx))} just got a secret instruction — nobody else finds out what it is, not even this screen.</span>
+          <span class="beat-label">${label}</span>
+          <span class="beat-emoji-solo">${s.card.emoji}</span>
+          <span class="beat-hint">${esc(s.card.text)}</span>
         </div>`;
       }).join('');
     }
 
     /* ── Browsers: unnumbered, just for the host to preview what might come
        up — the deck contents are always previewable, same as every other
-       game's browser, even though which card actually gets drawn (and to a
-       secret instruction, who it's for) stays a surprise ── */
+       game's browser, even though which card actually gets drawn stays a
+       surprise ── */
     (function buildBrowsers() {
       document.getElementById('scene-browser-hdr').textContent = `🚪 All Scenes (${DECK.length}) — drawn by "Draw a Scene"`;
       document.getElementById('scene-list').innerHTML = DECK.map(c =>
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.location)}</span> — ${esc(c.plot)}</span></div>`
       ).join('');
 
-      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — one of four kinds a "something happens" step can roll`;
+      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — one of three kinds a "something happens" step can roll`;
       document.getElementById('entrance-list').innerHTML = DECKE.map(c =>
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.name)}</span> — ${esc(c.hint)}</span></div>`
       ).join('');
@@ -742,13 +702,8 @@
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text)}</span></div>`
       ).join('');
 
-      document.getElementById('prop-browser-hdr').textContent = `📦 All Props (${DECKP.length}) — another kind a "something happens" step can roll`;
+      document.getElementById('prop-browser-hdr').textContent = `📦 All Props (${DECKP.length}) — the last kind a "something happens" step can roll`;
       document.getElementById('prop-list').innerHTML = DECKP.map(c =>
-        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text)}</span></div>`
-      ).join('');
-
-      document.getElementById('instruction-browser-hdr').textContent = `🤫 All Secret Instructions (${DECKI.length}) — the last kind, needs player links; never shown to anyone but the Lead who gets it`;
-      document.getElementById('instruction-list').innerHTML = DECKI.map(c =>
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text)}</span></div>`
       ).join('');
     })();

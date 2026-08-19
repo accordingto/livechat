@@ -1393,32 +1393,4 @@ const GAME_DATA = {
     { emoji: '🧻', text: 'A roll of toilet paper unspools dramatically across the floor.' },
     { emoji: '🎸', text: 'A guitar appears, and someone has to at least pretend to play it.' },
   ],
-
-  /* ── 🚪 Scene Crashers — secret instructions. The only card type pushed
-     privately: one random Lead gets a behavior to secretly play, and nobody
-     else — not the other Lead, not the audience, not even the host's own
-     screen — ever sees the text. It only exists on that one player's card.
-     Needs Firebase to deliver at all, so the host never draws this type when
-     player links aren't available. Written second-person singular, addressed
-     straight at whichever Lead receives it. ── */
-  crashersInstruction: [
-    { emoji: '🤫', text: 'You must try to make the other person laugh, without ever breaking character.' },
-    { emoji: '😐', text: "You suddenly can't remember the other person's name. Cover for it." },
-    { emoji: '🥺', text: 'You are now secretly on the verge of tears the entire time.' },
-    { emoji: '😏', text: 'You are convinced the other person is flirting with you. Act accordingly.' },
-    { emoji: '🗣️', text: 'You must repeat the last thing the other person said, every time, before responding.' },
-    { emoji: '🤥', text: 'You are lying about something small and specific. Do not confess.' },
-    { emoji: '😱', text: 'You suddenly think you recognize the other person from somewhere terrible.' },
-    { emoji: '🙄', text: 'You are secretly bored out of your mind and trying very hard to hide it.' },
-    { emoji: '🤗', text: 'You are overwhelmed with affection for the other person, out of nowhere.' },
-    { emoji: '🕵️', text: 'You suddenly suspect the other person is hiding something. Investigate subtly.' },
-    { emoji: '😤', text: 'You are holding in a huge grudge about something totally unrelated to this conversation.' },
-    { emoji: '🥱', text: 'You are exhausted and fighting to stay awake through this entire conversation.' },
-    { emoji: '🤔', text: 'You keep almost saying something important, then stopping yourself.' },
-    { emoji: '😳', text: 'You are extremely embarrassed about something that just happened, off-screen.' },
-    { emoji: '🎭', text: "You are secretly performing for someone watching, who isn't actually there." },
-    { emoji: '🧐', text: "You've decided the other person is secretly famous. Try to figure out who." },
-    { emoji: '🤐', text: "You've just remembered a promise you made to never mention this topic again." },
-    { emoji: '💭', text: 'You keep getting distracted by a thought you refuse to say out loud.' },
-  ],
 };
