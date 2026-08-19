@@ -1039,8 +1039,9 @@
         return `<div class="secret-card theme-crashers">${nameBanner(data)}<span class="pick-sub">⏳ Waiting for the next scene…</span></div>`;
       }
       const role = data.role;
-      const roleHex = { leadA: '#84cc16', leadB: '#f59e0b', entrance1: '#06b6d4', entrance2: '#06b6d4' }[role] || '#84cc16';
-      const roleLabel = { leadA: '🎭 You are Lead A', leadB: '🎭 You are Lead B', entrance1: "🚪 You're walking in!", entrance2: "🚪 You're walking in!" }[role] || '👀 Watching the Scene';
+      const isEntrance = role.startsWith('entrance');
+      const roleHex = role === 'leadA' ? '#84cc16' : role === 'leadB' ? '#f59e0b' : isEntrance ? '#06b6d4' : '#84cc16';
+      const roleLabel = role === 'leadA' ? '🎭 You are Lead A' : role === 'leadB' ? '🎭 You are Lead B' : isEntrance ? "🚪 You're walking in!" : '👀 Watching the Scene';
       const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
       const shell = inner => `<div class="secret-card theme-crashers" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
 
@@ -1053,7 +1054,7 @@
           <span class="pick-sub">Play it out — you know your own history together.</span>`);
       }
 
-      if ((role === 'entrance1' || role === 'entrance2') && data.entranceCard) {
+      if (isEntrance && data.entranceCard) {
         return shell(`
           <div class="witness-box" style="border-color:${roleHex}">
             <span class="wb-name">${esc(data.entranceCard.emoji)} ${esc(data.entranceCard.name)}</span>

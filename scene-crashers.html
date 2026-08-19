@@ -225,8 +225,7 @@
     /* player links: a per-role tint so the host can see roles without opening a card */
     .link-col.is-role-leadA     { border-color: #84cc16; }
     .link-col.is-role-leadB     { border-color: #f59e0b; }
-    .link-col.is-role-entrance1,
-    .link-col.is-role-entrance2 { border-color: #06b6d4; }
+    .link-col.is-role-entrance { border-color: #06b6d4; }
     .link-col .la-sub { color: #888; }
 
     /* ── Scenario / entrance browsers ── */
@@ -340,29 +339,35 @@
     const DECKP = GAME_DATA.crashersProp;
 
     let sceneNum = 0;
-    let phase = 'idle'; // idle | opening | beat1 | beat2
+    let phase = 'idle'; // idle | opening | beat
     let leadAIdx = -1, leadBIdx = -1;
     let leadABag = [];    // shuffled players still waiting to lead this cycle
     let leadBCount = [];  // times each player has been Lead B, kept even like the referee in Say It Without Saying It
     let scenario = null;
     let usedScenarios = [];
 
-    /* ── Beats ── each of the two "something happens" steps randomly lands on
-       one of three kinds, so the host never knows in advance what's coming:
-        - entrance: a new character walks in (same as before)
+    /* ── Beats ── how many "something happens" steps a scene gets is decided
+       by the room, not fixed: every non-lead player gets exactly one shot at
+       being drawn into the scene, so a 3-player room (2 leads + 1 spare) gets
+       a single tight beat while an 8-player room (2 leads + 6 spares) gets a
+       long, sprawling one. Each beat still randomly lands on one of three
+       kinds, so the host never knows in advance what's coming:
+        - entrance: a new character walks in
         - event:    a public twist with no new character attached
         - prop:     a public object that suddenly matters
        entranceCount keeps entrance picks even over a session, same trick as
-       leadBCount; entranceThisScene avoids using the same player for both
-       entrance-type beats in one scene unless the pool is too small to avoid
-       it — with only 3 players (2 leads + 1 spare), that one spare plays both. */
+       leadBCount; entranceThisScene avoids using the same player for two
+       entrance-type beats in one scene — with numBeats() capped at the
+       number of non-leads, every entrance-type beat in a scene can always
+       land on someone fresh, so that fallback never actually has to fire. */
+    function numBeats() { return Math.max(1, ROOM.count - 2); }
     let entranceCount = [];
     let entranceThisScene = [];
     let usedEntranceCards = [];
     let usedEventCards = [];
     let usedPropCards = [];
-    let slot1 = null; // { type: 'entrance'|'event'|'prop', card, playerIdx? }
-    let slot2 = null;
+    let beats = [];      // beats[i] = { type: 'entrance'|'event'|'prop', card, playerIdx? }, i = 0-based beat index
+    let beatIndex = -1;  // which beat is currently showing (-1 = none yet this scene)
 
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function shuffled(n) {
@@ -381,19 +386,25 @@
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
 
+    // once an entrance-type beat reveals who plays it, that player keeps the
+    // role for the rest of the scene (every beat up to and including the
+    // current one counts) — same idea as Kangaroo Court's witness staying
+    // "in the case" after their moment on the stand
     function roleOf(i) {
       if (i === leadAIdx) return 'leadA';
       if (i === leadBIdx) return 'leadB';
-      if (slot2 && slot2.type === 'entrance' && i === slot2.playerIdx && phase === 'beat2') return 'entrance2';
-      if (slot1 && slot1.type === 'entrance' && i === slot1.playerIdx && (phase === 'beat1' || phase === 'beat2')) return 'entrance1';
+      for (let idx = 0; idx <= beatIndex; idx++) {
+        const b = beats[idx];
+        if (b && b.type === 'entrance' && b.playerIdx === i) return 'entrance' + (idx + 1);
+      }
       return 'audience';
     }
 
     ROOM.setDecorator(i => {
       if (!sceneNum) return {};
       const role = roleOf(i);
-      const cls = role === 'audience' ? '' : 'is-role-' + role;
-      const label = { leadA: '🎭 Lead A', leadB: '🎭 Lead B', entrance1: '🚪 Entrance', entrance2: '🚪 Entrance', audience: '👀 Watching' }[role];
+      const cls = role === 'audience' ? '' : role.startsWith('entrance') ? 'is-role-entrance' : 'is-role-' + role;
+      const label = role === 'leadA' ? '🎭 Lead A' : role === 'leadB' ? '🎭 Lead B' : role.startsWith('entrance') ? '🚪 Entrance' : '👀 Watching';
       return { marked: role !== 'audience', cls, answer: label };
     });
 
@@ -428,9 +439,9 @@
 
     /* picks who plays the new character — same fewest-count fairness as
        drawRole above, excluding both leads and whoever's already entered this
-       scene. Falls back to allowing a repeat once every non-lead has gone once
-       — the only way a 3-player scene (2 leads + 1 spare) can seat two
-       entrances at all. */
+       scene. The fallback (allowing a repeat once every non-lead has gone
+       once) is defensive only: since numBeats() never exceeds the number of
+       non-leads, an entrance-type beat can always find someone fresh. */
     function pickEntrancePlayer() {
       const n = ROOM.count;
       const leads = [leadAIdx, leadBIdx];
@@ -471,13 +482,14 @@
     }
 
     /* ── Scene flow ──
-       idle/beat2 → opening (new scene) → beat1 → beat2 → (repeat) */
+       idle/last beat → opening (new scene) → beat 0 → beat 1 → … → beat
+       numBeats()-1 → (repeat) */
     function dealNewScene() {
       dealLeads();
       scenario = pickScenario(null);
       sceneNum++;
       phase = 'opening';
-      slot1 = null; slot2 = null;
+      beats = []; beatIndex = -1;
       entranceThisScene = [];
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last scene's cards
       renderAll();
@@ -492,16 +504,10 @@
       renderAll();
     }
 
-    function startPhase(next) {
-      phase = next;
-      pushState();
-      renderAll();
-    }
-
-    /* fills one of the two beat slots: rolls which kind of thing happens, then
-       draws whatever that kind needs (a new character + who plays them, or a
-       public event/prop card) */
-    function startBeat(next) {
+    /* rolls which kind of thing happens for beat index `idx`, draws whatever
+       that kind needs (a new character + who plays them, or a public
+       event/prop card), and makes it the current beat */
+    function startBeat(idx) {
       const type = pickEscalationType();
       let data;
       if (type === 'entrance') {
@@ -511,30 +517,38 @@
       } else {
         data = { type, card: pickPropCard() };
       }
-      if (next === 'beat1') slot1 = data; else slot2 = data;
-      startPhase(next);
+      beats[idx] = data;
+      beatIndex = idx;
+      phase = 'beat';
+      pushState();
+      renderAll();
     }
 
     function advance() {
       if (phase === 'idle')    { dealNewScene(); return; }
-      if (phase === 'opening') { startBeat('beat1'); return; }
-      if (phase === 'beat1')   { startBeat('beat2'); return; }
-      if (phase === 'beat2')   { dealNewScene(); return; }
+      if (phase === 'opening') { startBeat(0); return; }
+      if (phase === 'beat') {
+        if (beatIndex + 1 < numBeats()) { startBeat(beatIndex + 1); return; }
+        dealNewScene(); return;
+      }
     }
 
-    /* undoes one accidental "advance" — beat1/beat2 are each rolled only once
-       (entering that slot) and nothing overwrites them until the OTHER slot is
-       entered, so stepping back onto one just reuses startPhase() and gets the
-       same beat back, no reroll needed. */
+    /* undoes one accidental "advance" — each beat is rolled only once
+       (entering that index) and nothing overwrites it until the NEXT index is
+       entered, so stepping back just moves the pointer and reuses the stored
+       beat, no reroll needed. */
     function goBack() {
-      if (phase === 'beat2') { startPhase('beat1'); return; }
-      if (phase === 'beat1') { startPhase('opening'); return; }
+      if (phase !== 'beat') return;
+      if (beatIndex > 0) { beatIndex--; pushState(); renderAll(); return; }
+      phase = 'opening';
+      pushState();
+      renderAll();
     }
 
-    /* jumps straight to a fresh scene from anywhere (opening, beat1, or
-       beat2) — the host doesn't have to play out both beats first if they'd
-       rather just fire through scenes back to back. No cap: press it as many
-       times in a row as the room wants. */
+    /* jumps straight to a fresh scene from anywhere (opening or any beat) —
+       the host doesn't have to play out every beat first if they'd rather
+       just fire through scenes back to back. No cap: press it as many times
+       in a row as the room wants. */
     function skipToNextScene() {
       if (phase === 'idle') return;
       dealNewScene();
@@ -542,7 +556,7 @@
 
     function resetToIdle() {
       sceneNum = 0; phase = 'idle'; scenario = null;
-      slot1 = null; slot2 = null; entranceThisScene = [];
+      beats = []; beatIndex = -1; entranceThisScene = [];
       pushState();
       renderAll();
     }
@@ -561,22 +575,30 @@
         plot: scenario ? scenario.plot : null,
         entranceCard: null,
       };
-      if (role === 'entrance1') base.entranceCard = slot1.card;
-      if (role === 'entrance2') base.entranceCard = slot2.card;
+      if (role.startsWith('entrance')) {
+        base.entranceCard = beats[Number(role.slice('entrance'.length)) - 1].card;
+      }
       return base;
     }
 
     /* ── Rendering ── */
-    const FLOW_STEPS = [
-      { phase: 'idle', emoji: '🚪', label: 'Draw a Scene' },
-      { phase: 'opening', emoji: '🎬', label: 'Opening Scene' },
-      { phase: 'beat1', emoji: '🎲', label: 'Something Happens' },
-      { phase: 'beat2', emoji: '🎲', label: 'Something Else Happens' },
-    ];
+    // one entry per beat this scene will get (numBeats() of them) — built
+    // fresh on every render since the room's player count decides the count
+    function buildFlowSteps() {
+      const steps = [
+        { phase: 'idle', emoji: '🚪', label: 'Draw a Scene' },
+        { phase: 'opening', emoji: '🎬', label: 'Opening Scene' },
+      ];
+      const n = numBeats();
+      for (let i = 0; i < n; i++) {
+        steps.push({ phase: 'beat', beatIdx: i, emoji: '🎲', label: i === 0 ? 'Something Happens' : 'Something Else Happens' });
+      }
+      return steps;
+    }
     function renderFlow() {
-      const order = FLOW_STEPS.map(s => s.phase);
-      const idx = order.indexOf(phase);
-      document.getElementById('crash-flow-steps').innerHTML = FLOW_STEPS.map((s, i) => {
+      const steps = buildFlowSteps();
+      const idx = steps.findIndex(s => s.phase === 'beat' ? (phase === 'beat' && s.beatIdx === beatIndex) : phase === s.phase);
+      document.getElementById('crash-flow-steps').innerHTML = steps.map((s, i) => {
         const cls = i === idx ? 'is-current' : i < idx ? 'is-done' : '';
         return `<div class="crash-flow-step ${cls}">
           <span class="crash-flow-dot">${i < idx ? '✓' : s.emoji}</span>
@@ -607,16 +629,17 @@
       document.getElementById('crash-skip-btn').classList.toggle('hidden', phase === 'idle');
     }
 
-    const STATUS_LABELS = {
-      idle: '🚪 Draw a Scene',
-      opening: '🎲 Let Something Happen',
-      beat1: '🎲 Let Something Else Happen',
-      beat2: '🎬 Next Scene',
-    };
+    function statusLabel() {
+      if (phase === 'idle') return '🚪 Draw a Scene';
+      if (phase === 'opening') return '🎲 Let Something Happen';
+      // last beat of the scene — advancing deals a fresh one instead of another beat
+      if (beatIndex + 1 >= numBeats()) return '🎬 Next Scene';
+      return '🎲 Let Something Else Happen';
+    }
     function renderStatus() {
       const el = document.getElementById('status-line');
-      el.classList.toggle('is-next', phase === 'beat2');
-      el.textContent = STATUS_LABELS[phase] || STATUS_LABELS.idle;
+      el.classList.toggle('is-next', phase === 'beat' && beatIndex + 1 >= numBeats());
+      el.textContent = statusLabel();
     }
 
     function renderScenario() {
@@ -652,12 +675,9 @@
        once the next beat happens. Rendering branches on the beat's type. */
     function renderBeatLog() {
       const el = document.getElementById('beat-log');
-      const entries = [];
-      if (slot1) entries.push([1, slot1]);
-      if (slot2) entries.push([2, slot2]);
-      el.classList.toggle('hidden', !entries.length);
-      el.innerHTML = entries.map(([slot, s]) => {
-        const isCurrent = phase === ('beat' + slot);
+      el.classList.toggle('hidden', !beats.length);
+      el.innerHTML = beats.map((s, idx) => {
+        const isCurrent = phase === 'beat' && beatIndex === idx;
         const cls = `type-${s.type}${isCurrent ? ' is-current' : ''}`;
 
         if (s.type === 'entrance') {
