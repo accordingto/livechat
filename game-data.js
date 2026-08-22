@@ -1316,86 +1316,36 @@ const GAME_DATA = {
      into the scene already in progress: who they are, plus the disruption they
      bring, bundled into one line the assigned player can improvise around —
      same idea as a Kangaroo Court witness card, just for barging into a scene
-     instead of testifying in one. ── */
+     instead of testifying in one. Every hint deliberately engages "you two" /
+     "one of you" / "your history" — the character reacts to the LEADS and
+     whatever's going on between them (already set up by the scenario's own
+     `plot` line), not to the room they happen to be standing in, so the
+     entrance always feels like it belongs to this scene's actual story
+     instead of a random unrelated event. ── */
   crashersEntrance: [
     { emoji: '👶', name: "The Ex's New Partner", hint: 'walks in and cheerfully introduces themselves to both of you' },
-    { emoji: '👮', name: 'A Security Guard', hint: 'insists everyone needs to "keep it down" right now' },
-    { emoji: '📰', name: 'A Nosy Reporter', hint: 'starts asking very personal questions "for a story"' },
-    { emoji: '🗺️', name: 'A Lost Tourist', hint: 'walks up and won\'t stop asking for directions' },
-    { emoji: '🎤', name: 'A Wedding Singer', hint: 'starts performing loudly, right in the middle of everything' },
+    { emoji: '👮', name: 'A Security Guard', hint: 'notices the tension between you two and asks if everything\'s okay' },
+    { emoji: '📰', name: 'A Nosy Reporter', hint: 'overhears enough to start asking personal questions about the two of you' },
+    { emoji: '🗺️', name: 'A Lost Tourist', hint: 'mistakes you two for a couple and asks how you met' },
+    { emoji: '🎤', name: 'A Wedding Singer', hint: 'assumes you two are the happy couple and starts serenading you both' },
     { emoji: '🕵️', name: 'A Private Investigator', hint: 'reveals they\'ve been hired to follow one of you' },
-    { emoji: '👵', name: "Someone's Grandmother", hint: 'shows up uninvited with way too much food and too many opinions' },
-    { emoji: '📦', name: 'A Delivery Driver', hint: 'arrives with a huge, oddly specific package for one of you' },
-    { emoji: '🐕', name: 'An Escaped Dog (and its Owner)', hint: 'causes total chaos chasing it through the scene' },
-    { emoji: '🧑‍⚖️', name: 'A Process Server', hint: 'hands someone very official-looking paperwork' },
+    { emoji: '👵', name: "Someone's Grandmother", hint: 'shows up uninvited and demands to know what\'s really going on between you two' },
+    { emoji: '📦', name: 'A Delivery Driver', hint: 'arrives with a huge, oddly specific package addressed to one of you' },
+    { emoji: '🐕', name: 'An Escaped Dog (and its Owner)', hint: 'comes tearing through and ends up wedged directly between you two' },
+    { emoji: '🧑‍⚖️', name: 'A Process Server', hint: 'hands one of you very official-looking paperwork, right in front of the other' },
     { emoji: '💍', name: 'An Ex-Fiancé(e)', hint: 'shows up claiming they were never properly broken up with' },
-    { emoji: '🧑‍🍳', name: 'An Overly Chatty Waiter', hint: 'refuses to leave the table and keeps interrupting' },
-    { emoji: '🎉', name: 'A Party Clown', hint: 'was booked for the wrong event, and will not leave' },
-    { emoji: '🧑‍💼', name: 'The Boss', hint: 'shows up unannounced to "check in" at the worst possible time' },
-    { emoji: '🏘️', name: 'A Nosy Neighbor', hint: 'walks in like they own the place and comments on everything' },
-    { emoji: '🐈', name: 'A Lost Cat', hint: 'wanders in and refuses to leave either of your laps' },
-    { emoji: '🎥', name: 'A Documentary Filmmaker', hint: 'announces they\'ve been filming the whole thing' },
-    { emoji: '🧑‍🚒', name: 'A Fire Inspector', hint: 'declares the building must be evacuated immediately' },
-    { emoji: '🛍️', name: 'An Overeager Salesperson', hint: 'corners one of you and will not stop pitching something' },
-    { emoji: '🧑‍✈️', name: 'A Flight Attendant', hint: 'announces a huge delay that changes everyone\'s plans' },
-    { emoji: '🎓', name: 'An Old Teacher', hint: 'recognizes both of you instantly and will not stop reminiscing' },
-    { emoji: '🧾', name: 'A Debt Collector', hint: 'insists someone here owes them a large sum of money' },
-    { emoji: '🧑‍🎤', name: 'A Celebrity Look-Alike', hint: 'causes a commotion — everyone is sure it\'s really them' },
-    { emoji: '🎷', name: 'A Street Performer', hint: 'sets up right next to you and refuses to stop playing' },
-  ],
-
-  /* ── 🚪 Scene Crashers — random events. A public twist with no new character
-     attached, but it always lands on one specific person already in the
-     scene — a lead, or someone from an earlier entrance beat — named by the
-     `{player}` token in `text` (scene-crashers.html substitutes it with
-     whoever the fairness picker lands on, so the event is never generic
-     background noise, it's something that just happened to a real person in
-     THIS scene). Drawn from the same pool as entrance cards and prop cards,
-     so the host never knows in advance which kind of card is about to come
-     up. ── */
-  crashersEvent: [
-    { emoji: '💡', text: 'The power suddenly goes out, and {player} is the one who has to keep things going in the dark.' },
-    { emoji: '📢', text: 'A fire alarm starts blaring, and {player} is the one who has to decide whether to actually leave.' },
-    { emoji: '🌧️', text: 'It suddenly starts pouring rain, and {player} is the only one who forgot an umbrella.' },
-    { emoji: '📱', text: "{player}'s phone starts playing music at full volume, and they can't find it to make it stop." },
-    { emoji: '🎶', text: 'Romantic music suddenly starts playing from somewhere, and everyone looks at {player} like they did it.' },
-    { emoji: '🚨', text: "A car alarm goes off outside, and {player} is suspiciously sure it's theirs." },
-    { emoji: '🕰️', text: 'The clock on the wall suddenly starts ticking extremely loudly, and only {player} seems to notice.' },
-    { emoji: '🐦', text: 'A bird flies directly into the room and beelines straight for {player}.' },
-    { emoji: '📸', text: 'A flash goes off — someone just took a photo, and {player} is convinced it was aimed at them.' },
-    { emoji: '🎂', text: "Someone wheels in a birthday cake, and it's somehow addressed to {player}." },
-    { emoji: '🔥', text: 'Something starts smoking in the background, and {player} is the only one who goes to check it.' },
-    { emoji: '📶', text: "The Wi-Fi suddenly drops, and everyone decides it's {player}'s fault." },
-    { emoji: '📻', text: 'A radio somewhere starts playing static, then a song that means way too much to {player}.' },
-    { emoji: '🚪', text: 'A door slams shut on its own, and {player} is the one who has to go check what caused it.' },
-    { emoji: '❄️', text: 'The room suddenly gets freezing cold, and {player} is the only one who brought a jacket.' },
-    { emoji: '🕯️', text: "All the lights start flickering, and {player} is the one who insists it's not a big deal." },
-    { emoji: '📣', text: 'An announcement over a loudspeaker interrupts everything, and it\'s asking for {player} by name.' },
-    { emoji: '🐝', text: 'A bee — or something buzzing — starts flying around, and it will not leave {player} alone.' },
-  ],
-
-  /* ── 🚪 Scene Crashers — props. Also public, also no new character, but the
-     twist is an object instead of an event — and it always lands in the
-     hands of, or right next to, the one person `{player}` gets substituted
-     with, the same fairness-picked cast member as the event deck above. ── */
-  crashersProp: [
-    { emoji: '🍌', text: "A banana turns up in {player}'s bag, and it has to be treated like a priceless family heirloom." },
-    { emoji: '🎛️', text: "An old remote control is found nearby, and {player} is the one who has to figure out what it's for." },
-    { emoji: '📜', text: 'An old, mysterious letter is found, and {player} has to read it out loud, right now.' },
-    { emoji: '🎩', text: 'An old top hat is found nearby, and {player} has to put it on immediately.' },
-    { emoji: '🔑', text: "An old key shows up in {player}'s pocket. It obviously belongs to something important." },
-    { emoji: '🧸', text: "A stuffed animal turns up in {player}'s bag, and it has to be treated like it's alive." },
-    { emoji: '🕶️', text: 'A pair of sunglasses is found nearby, and {player} puts them on — instantly becoming suspicious.' },
-    { emoji: '📦', text: 'A mysterious wrapped box shows up nearby, and everyone agrees it must be for {player}.' },
-    { emoji: '🐍', text: "A rubber snake shows up right next to {player}, who has to react like it's completely real." },
-    { emoji: '🏆', text: 'An old trophy is spotted nearby, and {player} has to explain, on the spot, why they deserve it.' },
-    { emoji: '💍', text: 'A ring is found on the ground, and {player} has to react like it means something huge.' },
-    { emoji: '🎈', text: 'A single balloon floats over to {player}, who now has to deal with it.' },
-    { emoji: '📷', text: "An old photograph turns up in {player}'s pocket, and it has to explain something about this scene." },
-    { emoji: '🧾', text: "A receipt is found in {player}'s pocket, and it has to explain something embarrassing." },
-    { emoji: '🥠', text: "A fortune cookie is found, and {player} has to read the fortune out loud like it's gospel." },
-    { emoji: '🍾', text: "A bottle is found nearby, and {player} has to decide if this is a celebration or not." },
-    { emoji: '🧻', text: "A roll of toilet paper unspools dramatically, stuck to {player}'s shoe the whole time." },
-    { emoji: '🎸', text: "A guitar is leaning nearby, and {player} has to pick it up and at least pretend to play it." },
+    { emoji: '🧑‍🍳', name: 'An Overly Chatty Waiter', hint: 'keeps interrupting to ask if you two are on a date' },
+    { emoji: '🎉', name: 'A Party Clown', hint: 'was booked for the wrong event, and decides you two look like you need cheering up' },
+    { emoji: '🧑‍💼', name: 'The Boss', hint: 'shows up unannounced and immediately senses something\'s off between you two' },
+    { emoji: '🏘️', name: 'A Nosy Neighbor', hint: 'recognizes one of you and can\'t wait to bring up old history' },
+    { emoji: '🐈', name: 'A Lost Cat', hint: 'wanders in and chooses to sit directly between you two' },
+    { emoji: '🎥', name: 'A Documentary Filmmaker', hint: 'announces they\'ve been filming the two of you this whole time' },
+    { emoji: '🧑‍🚒', name: 'A Fire Inspector', hint: 'declares the building must be evacuated, right in the middle of your conversation' },
+    { emoji: '🛍️', name: 'An Overeager Salesperson', hint: 'corners you both, insisting this is exactly what your relationship needs' },
+    { emoji: '👂', name: 'An Eavesdropping Stranger', hint: 'admits they overheard everything and can\'t stop asking about the two of you' },
+    { emoji: '🎓', name: 'An Old Teacher', hint: 'recognizes both of you instantly and will not stop reminiscing about your history together' },
+    { emoji: '🧾', name: 'A Debt Collector', hint: 'insists one of you owes them a large sum of money' },
+    { emoji: '🧑‍🎤', name: 'A Celebrity Look-Alike', hint: 'causes a commotion, and everyone assumes you two are part of their entourage' },
+    { emoji: '🎷', name: 'A Street Performer', hint: 'sets up right next to you two, playing like it\'s the soundtrack to your conversation' },
   ],
 };

@@ -113,8 +113,8 @@
       background: linear-gradient(135deg, rgba(132,204,22,.14), rgba(132,204,22,.03));
       border: 2px solid #84cc16; border-radius: 22px;
       padding: 22px 30px; margin-bottom: 16px;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      text-align: center; justify-content: center;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+      text-align: left; justify-content: center;
       position: relative; overflow: hidden;
       animation: fadeUp .5s .1s ease both;
       transition: border-color .3s;
@@ -123,7 +123,9 @@
       content: '🚪'; position: absolute; font-size: 7rem; opacity: .04;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
-    .scene-card.idle { border-color: #1e1e42; background: #13132b; }
+    /* the idle placeholder has no location/plot to left-align — it's a single
+       centered hint, so it gets its own alignment back */
+    .scene-card.idle { border-color: #1e1e42; background: #13132b; align-items: center; text-align: center; }
     .scene-top { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
     .scene-label { font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #84cc16; }
     .scene-location {
@@ -168,11 +170,9 @@
     .lead-chip.lc-active { animation: leadChipPulse 1.8s ease-in-out infinite; }
     @keyframes leadChipPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
-    /* ── Beat log: every "something happens" beat, in order, staying on screen
-       for the rest of the scene — same idea as Kangaroo Court's witness log.
-       Coloured by TYPE rather than by slot position now, since which kind of
-       card came up is the whole surprise — an entrance, an event and a prop
-       should never be mistaken for each other at a glance. ── */
+    /* ── Beat log: every "something happens" beat — a new character walking
+       in — in order, staying on screen for the rest of the scene, same idea
+       as Kangaroo Court's witness log. ── */
     .beat-log {
       width: 100%; max-width: 1100px;
       display: flex; flex-direction: column; gap: 14px;
@@ -195,9 +195,9 @@
     }
     /* every beat card is an icon riding inline with its story text — the
        character's own NAME never appears here (that lives exclusively in
-       the Lead Strip up top), but an entrance-type beat still tags who's
-       playing it, pinned to the right of the row, so a card is never
-       ambiguous about who's on stage even out of context from the strip */
+       the Lead Strip up top), but the card still tags who's playing it,
+       pinned to the right of the row, so a card is never ambiguous about
+       who's on stage even out of context from the strip */
     .beat-story-row {
       display: flex; align-items: center; justify-content: space-between;
       flex-wrap: wrap; gap: 10px; width: 100%; position: relative; z-index: 1;
@@ -216,10 +216,6 @@
       flex-shrink: 0; display: inline-block; position: relative; z-index: 1;
       border: 1px solid; font-size: .76rem; font-weight: 800; padding: 4px 14px; border-radius: 20px;
     }
-    /* event/prop cards have no separate "played by" pill — the target's real
-       name is baked straight into the sentence via {player}, just bolded and
-       lightened so it still pops out of the line at a glance */
-    .beat-target { color: #fff; font-weight: 900; }
 
     /* a new character — cyan */
     .beat-card.type-entrance { background: linear-gradient(135deg, rgba(6,182,212,.16), rgba(6,182,212,.03)); border: 2px solid #06b6d4; }
@@ -227,16 +223,6 @@
     .beat-card.type-entrance .beat-hint { color: #a5f3fc; }
     .beat-card.type-entrance .beat-playedby { background: rgba(6,182,212,.14); border-color: rgba(6,182,212,.4); color: #67e8f9; }
     .beat-card.type-entrance.is-current { box-shadow: 0 0 30px rgba(6,182,212,.28); }
-    /* a public event — fuchsia */
-    .beat-card.type-event { background: linear-gradient(135deg, rgba(217,70,239,.16), rgba(217,70,239,.03)); border: 2px solid #d946ef; }
-    .beat-card.type-event::before { content: '🎲'; }
-    .beat-card.type-event .beat-hint { color: #f5d0fe; }
-    .beat-card.type-event.is-current { box-shadow: 0 0 30px rgba(217,70,239,.28); }
-    /* a public prop — teal */
-    .beat-card.type-prop { background: linear-gradient(135deg, rgba(20,184,166,.16), rgba(20,184,166,.03)); border: 2px solid #14b8a6; }
-    .beat-card.type-prop::before { content: '📦'; }
-    .beat-card.type-prop .beat-hint { color: #99f6e4; }
-    .beat-card.type-prop.is-current { box-shadow: 0 0 30px rgba(20,184,166,.28); }
 
     /* player links: a per-role tint so the host can see roles without opening a card */
     .link-col.is-role-leadA     { border-color: #84cc16; }
@@ -332,16 +318,6 @@
     <div class="crash-list" id="entrance-list"></div>
   </div>
 
-  <div class="crash-browser">
-    <div class="crash-browser-hdr" id="event-browser-hdr"></div>
-    <div class="crash-list" id="event-list"></div>
-  </div>
-
-  <div class="crash-browser">
-    <div class="crash-browser-hdr" id="prop-browser-hdr"></div>
-    <div class="crash-list" id="prop-list"></div>
-  </div>
-
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="firebase-config.js"></script>
@@ -351,8 +327,6 @@
   <script>
     const DECK = GAME_DATA.crashers;
     const DECKE = GAME_DATA.crashersEntrance;
-    const DECKEV = GAME_DATA.crashersEvent;
-    const DECKP = GAME_DATA.crashersProp;
 
     let sceneNum = 0;
     let phase = 'idle'; // idle | opening | beat
@@ -363,46 +337,20 @@
     let usedScenarios = [];
 
     /* ── Beats ── how many "something happens" steps a scene gets is decided
-       by the room, not fixed: every non-lead player is GUARANTEED exactly one
-       entrance-type beat (their own walk-in moment), plus EXTRA_BEATS more
-       pure event/prop beats on top for flavor — so a 3-player room (2 leads +
-       1 spare) gets 1 entrance + 2 flavor beats, while an 8-player room (2
-       leads + 6 spares) gets 6 entrances + 2 flavor beats. Every player at
-       the table ends up performing at least once; nobody just watches an
-       entire scene go by.
-       beatTypeSchedule is built once per scene, in dealNewScene(): a list
-       with exactly one 'entrance' per non-lead player and EXTRA_BEATS random
-       'event'/'prop' slots, shuffled together — so the host still never
-       knows in advance what kind of beat is coming next, but by the time the
-       scene ends every non-lead has had their entrance. entranceCount keeps
-       entrance picks even over a session, same trick as leadBCount;
-       entranceThisScene avoids using the same player for two entrance-type
-       beats in one scene — since the schedule contains exactly one 'entrance'
-       slot per non-lead, every entrance-type beat can always land on someone
-       fresh, so that fallback never actually has to fire. */
-    const EXTRA_BEATS = 2;
-    function numBeats() { return Math.max(1, ROOM.count - 2) + EXTRA_BEATS; }
+       by the room, not fixed: every non-lead player gets exactly one shot at
+       being drawn into the scene, so a 3-player room (2 leads + 1 spare) gets
+       a single beat while an 8-player room (2 leads + 6 spares) gets six.
+       Every beat is a new character walking in — entranceCount keeps entrance
+       picks even over a session, same trick as leadBCount; entranceThisScene
+       avoids using the same player for two beats in one scene — with
+       numBeats() capped at the number of non-leads, every beat can always
+       land on someone fresh, so that fallback never actually has to fire. */
+    function numBeats() { return Math.max(1, ROOM.count - 2); }
     let entranceCount = [];
     let entranceThisScene = [];
     let usedEntranceCards = [];
-    let usedEventCards = [];
-    let usedPropCards = [];
-    let targetCount = []; // times each player has been the target of an event/prop beat, kept even like leadBCount/entranceCount
-    let beats = [];      // beats[i] = { type: 'entrance', card, playerIdx } | { type: 'event'|'prop', card, targetIdx }, i = 0-based beat index
+    let beats = [];      // beats[i] = { type: 'entrance', card, playerIdx }, i = 0-based beat index
     let beatIndex = -1;  // which beat is currently showing (-1 = none yet this scene)
-    let beatTypeSchedule = []; // one 'entrance'|'event'|'prop' per beat this scene, decided up front by dealNewScene()
-
-    /* exactly one 'entrance' per non-lead player, padded with EXTRA_BEATS
-       random 'event'/'prop' slots, then shuffled — guarantees every non-lead
-       gets pulled into the scene exactly once, in an order the host can't
-       predict */
-    function buildBeatTypeSchedule() {
-      const nonLeads = Math.max(1, ROOM.count - 2);
-      const types = Array(nonLeads).fill('entrance');
-      for (let i = 0; i < EXTRA_BEATS; i++) types.push(Math.random() < 0.5 ? 'event' : 'prop');
-      const order = shuffled(types.length);
-      return order.map(i => types[i]);
-    }
 
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function shuffled(n) {
@@ -417,7 +365,7 @@
       counts: [3, 4, 5, 6, 7, 8],
       defaultCount: 4,
       linksNote: 'Each scene deals two Leads who carry the whole story, plus (as it progresses) new characters drawn from everyone else — roles rotate every scene, so everyone eventually gets a card. Works fine without player links too — the shared screen shows everything.',
-      onCountChange: () => { leadAIdx = leadBIdx = -1; leadABag = []; leadBCount = []; entranceCount = []; targetCount = []; resetToIdle(); },
+      onCountChange: () => { leadAIdx = leadBIdx = -1; leadABag = []; leadBCount = []; entranceCount = []; resetToIdle(); },
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
 
@@ -487,35 +435,7 @@
       return pick;
     }
 
-    /* everyone already established in the scene by the time beat `idx` is
-       about to happen — the two leads, plus whoever any earlier entrance-type
-       beat brought in. Always at least 2 (the leads), so there's always
-       someone real for an event/prop beat to happen to. */
-    function castBeforeBeat(idx) {
-      const cast = [leadAIdx, leadBIdx];
-      for (let i = 0; i < idx; i++) {
-        const b = beats[i];
-        if (b && b.type === 'entrance') cast.push(b.playerIdx);
-      }
-      return cast;
-    }
-
-    /* picks who an event/prop beat happens to — fewest-count fairness again,
-       but restricted to the cast already on stage (never someone who hasn't
-       entered yet), so the twist always lands on a real, already-introduced
-       character instead of a stranger to the scene. */
-    function pickBeatTarget(idx) {
-      const pool = castBeforeBeat(idx);
-      while (targetCount.length < ROOM.count) targetCount.push(0);
-      const fewest = Math.min(...pool.map(i => targetCount[i] || 0));
-      const eligible = pool.filter(i => (targetCount[i] || 0) === fewest);
-      const pick = eligible[Math.floor(Math.random() * eligible.length)];
-      targetCount[pick] = (targetCount[pick] || 0) + 1;
-      return pick;
-    }
-
-    /* draws a card from a deck, cycling through before any repeat — the same
-       shape reused for all three "something happens" decks below */
+    /* draws a card from the entrance deck, cycling through before any repeat */
     function drawFromDeck(deck, used) {
       let avail = deck.map((_, i) => i).filter(i => !used.includes(i));
       if (!avail.length) { used.length = 0; avail = deck.map((_, i) => i); }
@@ -524,8 +444,6 @@
       return deck[pick];
     }
     function pickEntranceCard() { return drawFromDeck(DECKE, usedEntranceCards); }
-    function pickEventCard() { return drawFromDeck(DECKEV, usedEventCards); }
-    function pickPropCard() { return drawFromDeck(DECKP, usedPropCards); }
 
     /* draws a scenario not currently on screen, cycling through the deck before
        any repeat — shared by dealNewScene() and the host's "Different Scene" reroll */
@@ -547,7 +465,6 @@
       phase = 'opening';
       beats = []; beatIndex = -1;
       entranceThisScene = [];
-      beatTypeSchedule = buildBeatTypeSchedule();
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last scene's cards
       renderAll();
     }
@@ -561,20 +478,9 @@
       renderAll();
     }
 
-    /* rolls which kind of thing happens for beat index `idx`, draws whatever
-       that kind needs (a new character + who plays them, or a public
-       event/prop card), and makes it the current beat */
+    /* draws a new character and who plays them, and makes it the current beat */
     function startBeat(idx) {
-      const type = beatTypeSchedule[idx];
-      let data;
-      if (type === 'entrance') {
-        data = { type, card: pickEntranceCard(), playerIdx: pickEntrancePlayer() };
-      } else if (type === 'event') {
-        data = { type, card: pickEventCard(), targetIdx: pickBeatTarget(idx) };
-      } else {
-        data = { type, card: pickPropCard(), targetIdx: pickBeatTarget(idx) };
-      }
-      beats[idx] = data;
+      beats[idx] = { type: 'entrance', card: pickEntranceCard(), playerIdx: pickEntrancePlayer() };
       beatIndex = idx;
       phase = 'beat';
       pushState();
@@ -613,7 +519,7 @@
 
     function resetToIdle() {
       sceneNum = 0; phase = 'idle'; scenario = null;
-      beats = []; beatIndex = -1; entranceThisScene = []; beatTypeSchedule = [];
+      beats = []; beatIndex = -1; entranceThisScene = [];
       pushState();
       renderAll();
     }
@@ -631,20 +537,9 @@
         location: scenario ? scenario.location : null,
         plot: scenario ? scenario.plot : null,
         entranceCard: null,
-        isBeatTarget: false,
       };
       if (role.startsWith('entrance')) {
         base.entranceCard = beats[Number(role.slice('entrance'.length)) - 1].card;
-      }
-      // if an event/prop beat is live right now and it landed on THIS player,
-      // hand them the card so their own screen calls them out by name too —
-      // every other role's payload is unaffected
-      const curBeat = phase === 'beat' ? beats[beatIndex] : null;
-      if (curBeat && curBeat.type !== 'entrance' && curBeat.targetIdx === i) {
-        base.isBeatTarget = true;
-        base.beatTargetType = curBeat.type;
-        base.beatTargetEmoji = curBeat.card.emoji;
-        base.beatTargetText = curBeat.card.text.replace(/\{player\}/g, 'You');
       }
       return base;
     }
@@ -727,28 +622,21 @@
       const el = document.getElementById('lead-strip');
       el.classList.toggle('hidden', !sceneNum);
       if (!sceneNum) return;
-      // an event/prop beat always names one already-established cast member
-      // (see castBeforeBeat/pickBeatTarget) — that person's chip pulses too,
-      // for the same reason an entrance's own chip pulses: it's their moment
-      const curBeat = phase === 'beat' ? beats[beatIndex] : null;
-      const targetIdx = curBeat && curBeat.type !== 'entrance' ? curBeat.targetIdx : null;
       let html =
-        `<div class="lead-chip lc-a${targetIdx === leadAIdx ? ' lc-active' : ''}">
+        `<div class="lead-chip lc-a">
           <span class="lc-label">🎭 Lead A</span>
           <span class="lc-name">${esc(ROOM.name(leadAIdx))}</span>
         </div>
-        <div class="lead-chip lc-b${targetIdx === leadBIdx ? ' lc-active' : ''}">
+        <div class="lead-chip lc-b">
           <span class="lc-label">🎭 Lead B</span>
           <span class="lc-name">${esc(ROOM.name(leadBIdx))}</span>
         </div>`;
-      // every entrance-type beat revealed so far gets a permanent chip here —
-      // this is the only place character identity (name + who plays them)
-      // is shown, so the beat log never has to repeat it. The one currently
-      // being revealed pulses to draw the eye, and so does an already-entered
-      // character's chip when a later event/prop beat targets them.
+      // every entrance beat revealed so far gets a permanent chip here — this
+      // is the only place character identity (name + who plays them) is
+      // shown, so the beat log never has to repeat it. The one currently
+      // being revealed pulses to draw the eye.
       beats.forEach((s, idx) => {
-        if (s.type !== 'entrance') return;
-        const isCurrent = (phase === 'beat' && beatIndex === idx) || targetIdx === s.playerIdx;
+        const isCurrent = phase === 'beat' && beatIndex === idx;
         html += `<div class="lead-chip lc-entrance${isCurrent ? ' lc-active' : ''}">
           <span class="lc-label">${s.card.emoji} ${esc(s.card.name)}</span>
           <span class="lc-name">${esc(ROOM.name(s.playerIdx))}</span>
@@ -759,33 +647,22 @@
 
     /* the beat log — one entry per slot, in the order they actually happened,
        each staying on screen for the rest of the scene instead of
-       disappearing once the next beat happens. Every type renders the same
-       way — an icon inline with its story text — since character identity
-       (for entrance-type beats) already lives in the Lead Strip above and
-       isn't repeated here. */
+       disappearing once the next beat happens. Character identity already
+       lives in the Lead Strip above, so this card only needs the story hint
+       plus a "Played by" pill naming the real player. */
     function renderBeatLog() {
       const el = document.getElementById('beat-log');
       el.classList.toggle('hidden', !beats.length);
       el.innerHTML = beats.map((s, idx) => {
         const isCurrent = phase === 'beat' && beatIndex === idx;
         const cls = `type-${s.type}${isCurrent ? ' is-current' : ''}`;
-        // entrance cards keep the "Played by" pill (the sentence itself is
-        // about the new character, not the player); event/prop cards instead
-        // have the target's real name baked into the sentence via {player} —
-        // both ways, no beat card is missing a real participant
-        const text = s.type === 'entrance'
-          ? esc(s.card.hint)
-          : esc(s.card.text).replace('{player}', `<strong class="beat-target">${esc(ROOM.name(s.targetIdx))}</strong>`);
-        const playedby = s.type === 'entrance'
-          ? `<span class="beat-playedby">🎭 Played by ${esc(ROOM.name(s.playerIdx))}</span>`
-          : '';
         return `<div class="beat-card ${cls}">
           <div class="beat-story-row">
             <span class="beat-who">
               <span class="beat-emoji-solo">${s.card.emoji}</span>
-              <span class="beat-hint">${text}</span>
+              <span class="beat-hint">${esc(s.card.hint)}</span>
             </span>
-            ${playedby}
+            <span class="beat-playedby">🎭 Played by ${esc(ROOM.name(s.playerIdx))}</span>
           </div>
         </div>`;
       }).join('');
@@ -801,21 +678,9 @@
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.location)}</span> — ${esc(c.plot)}</span></div>`
       ).join('');
 
-      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — one of three kinds a "something happens" step can roll`;
+      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — drawn by a "something happens" step`;
       document.getElementById('entrance-list').innerHTML = DECKE.map(c =>
         `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.name)}</span> — ${esc(c.hint)}</span></div>`
-      ).join('');
-
-      // {player} gets swapped for whoever's actually targeted in play — here
-      // it's just a preview deck with nobody dealt yet, so show a stand-in
-      document.getElementById('event-browser-hdr').textContent = `🎲 All Events (${DECKEV.length}) — another kind a "something happens" step can roll`;
-      document.getElementById('event-list').innerHTML = DECKEV.map(c =>
-        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text).replace('{player}', 'someone')}</span></div>`
-      ).join('');
-
-      document.getElementById('prop-browser-hdr').textContent = `📦 All Props (${DECKP.length}) — the last kind a "something happens" step can roll`;
-      document.getElementById('prop-list').innerHTML = DECKP.map(c =>
-        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span>${esc(c.text).replace('{player}', 'someone')}</span></div>`
       ).join('');
     })();
 
