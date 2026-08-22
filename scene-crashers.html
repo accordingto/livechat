@@ -363,20 +363,25 @@
     let usedScenarios = [];
 
     /* ── Beats ── how many "something happens" steps a scene gets is decided
-       by the room, not fixed: every non-lead player gets exactly one shot at
-       being drawn into the scene, so a 3-player room (2 leads + 1 spare) gets
-       a single tight beat while an 8-player room (2 leads + 6 spares) gets a
-       long, sprawling one. Each beat still randomly lands on one of three
-       kinds, so the host never knows in advance what's coming:
-        - entrance: a new character walks in
-        - event:    a public twist with no new character attached
-        - prop:     a public object that suddenly matters
-       entranceCount keeps entrance picks even over a session, same trick as
-       leadBCount; entranceThisScene avoids using the same player for two
-       entrance-type beats in one scene — with numBeats() capped at the
-       number of non-leads, every entrance-type beat in a scene can always
-       land on someone fresh, so that fallback never actually has to fire. */
-    function numBeats() { return Math.max(1, ROOM.count - 2); }
+       by the room, not fixed: every non-lead player is GUARANTEED exactly one
+       entrance-type beat (their own walk-in moment), plus EXTRA_BEATS more
+       pure event/prop beats on top for flavor — so a 3-player room (2 leads +
+       1 spare) gets 1 entrance + 2 flavor beats, while an 8-player room (2
+       leads + 6 spares) gets 6 entrances + 2 flavor beats. Every player at
+       the table ends up performing at least once; nobody just watches an
+       entire scene go by.
+       beatTypeSchedule is built once per scene, in dealNewScene(): a list
+       with exactly one 'entrance' per non-lead player and EXTRA_BEATS random
+       'event'/'prop' slots, shuffled together — so the host still never
+       knows in advance what kind of beat is coming next, but by the time the
+       scene ends every non-lead has had their entrance. entranceCount keeps
+       entrance picks even over a session, same trick as leadBCount;
+       entranceThisScene avoids using the same player for two entrance-type
+       beats in one scene — since the schedule contains exactly one 'entrance'
+       slot per non-lead, every entrance-type beat can always land on someone
+       fresh, so that fallback never actually has to fire. */
+    const EXTRA_BEATS = 2;
+    function numBeats() { return Math.max(1, ROOM.count - 2) + EXTRA_BEATS; }
     let entranceCount = [];
     let entranceThisScene = [];
     let usedEntranceCards = [];
@@ -385,6 +390,19 @@
     let targetCount = []; // times each player has been the target of an event/prop beat, kept even like leadBCount/entranceCount
     let beats = [];      // beats[i] = { type: 'entrance', card, playerIdx } | { type: 'event'|'prop', card, targetIdx }, i = 0-based beat index
     let beatIndex = -1;  // which beat is currently showing (-1 = none yet this scene)
+    let beatTypeSchedule = []; // one 'entrance'|'event'|'prop' per beat this scene, decided up front by dealNewScene()
+
+    /* exactly one 'entrance' per non-lead player, padded with EXTRA_BEATS
+       random 'event'/'prop' slots, then shuffled — guarantees every non-lead
+       gets pulled into the scene exactly once, in an order the host can't
+       predict */
+    function buildBeatTypeSchedule() {
+      const nonLeads = Math.max(1, ROOM.count - 2);
+      const types = Array(nonLeads).fill('entrance');
+      for (let i = 0; i < EXTRA_BEATS; i++) types.push(Math.random() < 0.5 ? 'event' : 'prop');
+      const order = shuffled(types.length);
+      return order.map(i => types[i]);
+    }
 
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function shuffled(n) {
@@ -509,12 +527,6 @@
     function pickEventCard() { return drawFromDeck(DECKEV, usedEventCards); }
     function pickPropCard() { return drawFromDeck(DECKP, usedPropCards); }
 
-    /* which kind of beat comes up next */
-    function pickEscalationType() {
-      const pool = ['entrance', 'event', 'prop'];
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-
     /* draws a scenario not currently on screen, cycling through the deck before
        any repeat — shared by dealNewScene() and the host's "Different Scene" reroll */
     function pickScenario(exclude) {
@@ -535,6 +547,7 @@
       phase = 'opening';
       beats = []; beatIndex = -1;
       entranceThisScene = [];
+      beatTypeSchedule = buildBeatTypeSchedule();
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last scene's cards
       renderAll();
     }
@@ -552,7 +565,7 @@
        that kind needs (a new character + who plays them, or a public
        event/prop card), and makes it the current beat */
     function startBeat(idx) {
-      const type = pickEscalationType();
+      const type = beatTypeSchedule[idx];
       let data;
       if (type === 'entrance') {
         data = { type, card: pickEntranceCard(), playerIdx: pickEntrancePlayer() };
@@ -600,7 +613,7 @@
 
     function resetToIdle() {
       sceneNum = 0; phase = 'idle'; scenario = null;
-      beats = []; beatIndex = -1; entranceThisScene = [];
+      beats = []; beatIndex = -1; entranceThisScene = []; beatTypeSchedule = [];
       pushState();
       renderAll();
     }
