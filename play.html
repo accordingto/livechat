@@ -1045,6 +1045,20 @@
       const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
       const shell = inner => `<div class="secret-card theme-crashers" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
 
+      // an event/prop beat always lands on someone already in the scene — if
+      // it's this player's turn to be called out, that takes over the card
+      // for this one beat, whatever their normal role view would otherwise be
+      if (data.isBeatTarget) {
+        const beatHex = data.beatTargetType === 'event' ? '#d946ef' : '#14b8a6';
+        const beatLabel = data.beatTargetType === 'event' ? '🎲 Something just happened to you!' : "📦 It just showed up — it's yours!";
+        return shell(`
+          <div class="witness-box" style="border-color:${beatHex}">
+            <span class="wb-name" style="color:${beatHex}">${esc(data.beatTargetEmoji || '')} ${beatLabel}</span>
+            <span class="wb-evidence">${esc(data.beatTargetText || '')}</span>
+          </div>
+          <span class="pick-sub">React in character — everyone's watching!</span>`);
+      }
+
       if (role === 'leadA' || role === 'leadB') {
         return shell(`
           <div class="role-box" style="border-color:${roleHex}66">

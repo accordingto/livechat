@@ -1345,52 +1345,57 @@ const GAME_DATA = {
   ],
 
   /* ── 🚪 Scene Crashers — random events. A public twist with no new character
-     attached: something in the environment just changed, and the two leads
-     have to react to it without missing a beat. Drawn from the same pool as
-     entrance cards and prop cards, so the host never knows in advance which
-     kind of card is about to come up. ── */
+     attached, but it always lands on one specific person already in the
+     scene — a lead, or someone from an earlier entrance beat — named by the
+     `{player}` token in `text` (scene-crashers.html substitutes it with
+     whoever the fairness picker lands on, so the event is never generic
+     background noise, it's something that just happened to a real person in
+     THIS scene). Drawn from the same pool as entrance cards and prop cards,
+     so the host never knows in advance which kind of card is about to come
+     up. ── */
   crashersEvent: [
-    { emoji: '💡', text: 'The power suddenly goes out — everyone has to keep going in the dark.' },
-    { emoji: '📢', text: 'A fire alarm starts blaring, and it will not stop.' },
-    { emoji: '🌧️', text: "It suddenly starts pouring rain, right where you're standing." },
-    { emoji: '📱', text: "Someone's phone starts playing music at full volume, and nobody can find it." },
-    { emoji: '🎶', text: 'Romantic music starts playing from somewhere, for no reason at all.' },
-    { emoji: '🚨', text: 'A car alarm goes off outside and just keeps going.' },
-    { emoji: '🕰️', text: 'The clock on the wall suddenly starts ticking extremely loudly.' },
-    { emoji: '🐦', text: 'A bird flies directly into the room and will not leave.' },
-    { emoji: '📸', text: 'A flash goes off — someone just took a photo of this exact moment.' },
-    { emoji: '🎂', text: 'Someone wheels in a birthday cake, for absolutely no reason.' },
-    { emoji: '🔥', text: 'Something starts smoking in the background. Nobody addresses it.' },
-    { emoji: '🎉', text: 'Confetti falls from the ceiling, completely unprompted.' },
-    { emoji: '📻', text: 'A radio somewhere starts playing static, then a very specific song.' },
-    { emoji: '🚪', text: 'A door slams shut on its own, somewhere nearby.' },
-    { emoji: '❄️', text: 'The room suddenly gets freezing cold.' },
-    { emoji: '🕯️', text: 'All the lights start flickering, like something is haunting the place.' },
-    { emoji: '📣', text: 'An announcement over a loudspeaker interrupts everything, mid-sentence.' },
-    { emoji: '🐝', text: 'A bee — or something buzzing — starts flying around both of you.' },
+    { emoji: '💡', text: 'The power suddenly goes out, and {player} is the one who has to keep things going in the dark.' },
+    { emoji: '📢', text: 'A fire alarm starts blaring, and {player} is the one who has to decide whether to actually leave.' },
+    { emoji: '🌧️', text: 'It suddenly starts pouring rain, and {player} is the only one who forgot an umbrella.' },
+    { emoji: '📱', text: "{player}'s phone starts playing music at full volume, and they can't find it to make it stop." },
+    { emoji: '🎶', text: 'Romantic music suddenly starts playing from somewhere, and everyone looks at {player} like they did it.' },
+    { emoji: '🚨', text: "A car alarm goes off outside, and {player} is suspiciously sure it's theirs." },
+    { emoji: '🕰️', text: 'The clock on the wall suddenly starts ticking extremely loudly, and only {player} seems to notice.' },
+    { emoji: '🐦', text: 'A bird flies directly into the room and beelines straight for {player}.' },
+    { emoji: '📸', text: 'A flash goes off — someone just took a photo, and {player} is convinced it was aimed at them.' },
+    { emoji: '🎂', text: "Someone wheels in a birthday cake, and it's somehow addressed to {player}." },
+    { emoji: '🔥', text: 'Something starts smoking in the background, and {player} is the only one who goes to check it.' },
+    { emoji: '🎉', text: 'Confetti falls from the ceiling, and it lands almost entirely on {player}.' },
+    { emoji: '📻', text: 'A radio somewhere starts playing static, then a song that means way too much to {player}.' },
+    { emoji: '🚪', text: 'A door slams shut on its own, and {player} is the one who has to go check what caused it.' },
+    { emoji: '❄️', text: 'The room suddenly gets freezing cold, and {player} is the only one who brought a jacket.' },
+    { emoji: '🕯️', text: "All the lights start flickering, and {player} is the one who insists it's not a big deal." },
+    { emoji: '📣', text: 'An announcement over a loudspeaker interrupts everything, and it\'s asking for {player} by name.' },
+    { emoji: '🐝', text: 'A bee — or something buzzing — starts flying around, and it will not leave {player} alone.' },
   ],
 
   /* ── 🚪 Scene Crashers — props. Also public, also no new character, but the
-     twist is an object instead of an event: it just showed up, and the two
-     leads have to decide together what it means and what to do with it. ── */
+     twist is an object instead of an event — and it always lands in the
+     hands of, or right next to, the one person `{player}` gets substituted
+     with, the same fairness-picked cast member as the event deck above. ── */
   crashersProp: [
-    { emoji: '🍌', text: 'A banana appears on the table. It must now be treated like a priceless family heirloom.' },
-    { emoji: '🪄', text: 'A magic wand is lying nearby. Someone has to try using it.' },
-    { emoji: '📜', text: 'An old, mysterious letter is found. It has to be read out loud, right now.' },
-    { emoji: '🎩', text: 'A top hat appears out of nowhere. Someone has to put it on immediately.' },
-    { emoji: '🔑', text: 'An old key shows up. It obviously belongs to something important.' },
-    { emoji: '🧸', text: "A stuffed animal appears, and it has to be treated like it's alive." },
-    { emoji: '🕶️', text: 'A pair of sunglasses appears. Whoever puts them on becomes instantly suspicious.' },
-    { emoji: '📦', text: 'A mysterious wrapped box shows up with no name tag.' },
-    { emoji: '🐍', text: "A rubber snake shows up and has to be reacted to as if it's completely real." },
-    { emoji: '🏆', text: 'A trophy appears. Someone has to explain, on the spot, why they deserve it.' },
-    { emoji: '💍', text: 'A ring is found on the ground. Someone has to react like it means something huge.' },
-    { emoji: '🎈', text: 'A single balloon floats into the scene and has to be dealt with.' },
-    { emoji: '📷', text: 'An old photograph turns up, and it has to explain something about the two of you.' },
-    { emoji: '🧦', text: 'A single, oddly specific sock appears and has to become a big deal.' },
-    { emoji: '🔮', text: 'A crystal ball appears. Someone has to look into it and announce what they see.' },
-    { emoji: '🍾', text: 'A bottle appears — someone has to decide if this is a celebration or not.' },
-    { emoji: '🧻', text: 'A roll of toilet paper unspools dramatically across the floor.' },
-    { emoji: '🎸', text: 'A guitar appears, and someone has to at least pretend to play it.' },
+    { emoji: '🍌', text: 'A banana appears on the table, and {player} is the one who has to treat it like a priceless family heirloom.' },
+    { emoji: '🪄', text: 'A magic wand is lying nearby, and {player} is the one who has to try using it.' },
+    { emoji: '📜', text: 'An old, mysterious letter is found, and {player} has to read it out loud, right now.' },
+    { emoji: '🎩', text: 'A top hat appears out of nowhere, and {player} has to put it on immediately.' },
+    { emoji: '🔑', text: "An old key shows up in {player}'s pocket. It obviously belongs to something important." },
+    { emoji: '🧸', text: "A stuffed animal appears in {player}'s arms, and it has to be treated like it's alive." },
+    { emoji: '🕶️', text: 'A pair of sunglasses appears, and {player} puts them on — instantly becoming suspicious.' },
+    { emoji: '📦', text: 'A mysterious wrapped box shows up, and everyone agrees it must be for {player}.' },
+    { emoji: '🐍', text: "A rubber snake shows up right next to {player}, who has to react like it's completely real." },
+    { emoji: '🏆', text: 'A trophy appears, and {player} has to explain, on the spot, why they deserve it.' },
+    { emoji: '💍', text: 'A ring is found on the ground, and {player} has to react like it means something huge.' },
+    { emoji: '🎈', text: 'A single balloon floats over to {player}, who now has to deal with it.' },
+    { emoji: '📷', text: "An old photograph turns up in {player}'s pocket, and it has to explain something about this scene." },
+    { emoji: '🧦', text: 'A single, oddly specific sock appears on {player}, and it has to become a big deal.' },
+    { emoji: '🔮', text: 'A crystal ball appears, and {player} has to look into it and announce what they see.' },
+    { emoji: '🍾', text: "A bottle appears in {player}'s hand — they have to decide if this is a celebration or not." },
+    { emoji: '🧻', text: "A roll of toilet paper unspools dramatically, stuck to {player}'s shoe the whole time." },
+    { emoji: '🎸', text: 'A guitar appears in {player}\'s hands, and they have to at least pretend to play it.' },
   ],
 };
