@@ -193,10 +193,15 @@
       position: absolute; font-size: 7rem; opacity: .05;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
-    /* every beat card — entrance included — is just an icon riding inline
-       with its story text now; character identity (name + who's playing
-       them) lives exclusively in the Lead Strip up top, so it's never
-       repeated down here */
+    /* every beat card is an icon riding inline with its story text — the
+       character's own NAME never appears here (that lives exclusively in
+       the Lead Strip up top), but an entrance-type beat still tags who's
+       playing it, pinned to the right of the row, so a card is never
+       ambiguous about who's on stage even out of context from the strip */
+    .beat-story-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px; width: 100%; position: relative; z-index: 1;
+    }
     .beat-who { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
     .beat-emoji-solo { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
     .beat-hint {
@@ -207,11 +212,16 @@
        the hint text instead — left-aligned, since a multi-line sentence next
        to a fixed icon reads better than centered text */
     .beat-who .beat-hint { text-align: left; max-width: 560px; }
+    .beat-playedby {
+      flex-shrink: 0; display: inline-block; position: relative; z-index: 1;
+      border: 1px solid; font-size: .76rem; font-weight: 800; padding: 4px 14px; border-radius: 20px;
+    }
 
     /* a new character — cyan */
     .beat-card.type-entrance { background: linear-gradient(135deg, rgba(6,182,212,.16), rgba(6,182,212,.03)); border: 2px solid #06b6d4; }
     .beat-card.type-entrance::before { content: '🚪'; }
     .beat-card.type-entrance .beat-hint { color: #a5f3fc; }
+    .beat-card.type-entrance .beat-playedby { background: rgba(6,182,212,.14); border-color: rgba(6,182,212,.4); color: #67e8f9; }
     .beat-card.type-entrance.is-current { box-shadow: 0 0 30px rgba(6,182,212,.28); }
     /* a public event — fuchsia */
     .beat-card.type-event { background: linear-gradient(135deg, rgba(217,70,239,.16), rgba(217,70,239,.03)); border: 2px solid #d946ef; }
@@ -698,11 +708,17 @@
         const isCurrent = phase === 'beat' && beatIndex === idx;
         const cls = `type-${s.type}${isCurrent ? ' is-current' : ''}`;
         const text = s.type === 'entrance' ? s.card.hint : s.card.text;
+        const playedby = s.type === 'entrance'
+          ? `<span class="beat-playedby">🎭 Played by ${esc(ROOM.name(s.playerIdx))}</span>`
+          : '';
         return `<div class="beat-card ${cls}">
-          <span class="beat-who">
-            <span class="beat-emoji-solo">${s.card.emoji}</span>
-            <span class="beat-hint">${esc(text)}</span>
-          </span>
+          <div class="beat-story-row">
+            <span class="beat-who">
+              <span class="beat-emoji-solo">${s.card.emoji}</span>
+              <span class="beat-hint">${esc(text)}</span>
+            </span>
+            ${playedby}
+          </div>
         </div>`;
       }).join('');
     }
