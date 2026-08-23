@@ -247,6 +247,13 @@
     }
     .crash-item .ci-emoji { font-size: 1.2rem; flex-shrink: 0; }
     .crash-item .ci-name { color: #ddd; font-weight: 700; }
+    /* each scenario's fixed cast, right under its plot line — makes the
+       scenario↔character pairing visible while browsing, not just at draw time */
+    .ci-cast { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .ci-cast-pill {
+      background: rgba(6,182,212,.12); border: 1px solid rgba(6,182,212,.35); color: #67e8f9;
+      font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+    }
 
     @media (max-width: 520px) {
       .scene-card { padding: 18px 16px; }
@@ -313,11 +320,6 @@
     <div class="crash-list" id="scene-list"></div>
   </div>
 
-  <div class="crash-browser">
-    <div class="crash-browser-hdr" id="entrance-browser-hdr"></div>
-    <div class="crash-list" id="entrance-list"></div>
-  </div>
-
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="firebase-config.js"></script>
@@ -326,7 +328,6 @@
   <script src="room.js"></script>
   <script>
     const DECK = GAME_DATA.crashers;
-    const DECKE = GAME_DATA.crashersEntrance;
 
     let sceneNum = 0;
     let phase = 'idle'; // idle | opening | beat
@@ -443,7 +444,10 @@
       used.push(pick);
       return deck[pick];
     }
-    function pickEntranceCard() { return drawFromDeck(DECKE, usedEntranceCards); }
+    // each scenario carries its own fixed cast of 6 — never a shared,
+    // randomly-matched pool — so the deck to draw from is whichever
+    // scenario is currently dealt
+    function pickEntranceCard() { return drawFromDeck(scenario.entrances, usedEntranceCards); }
 
     /* draws a scenario not currently on screen, cycling through the deck before
        any repeat — shared by dealNewScene() and the host's "Different Scene" reroll */
@@ -464,7 +468,7 @@
       sceneNum++;
       phase = 'opening';
       beats = []; beatIndex = -1;
-      entranceThisScene = [];
+      entranceThisScene = []; usedEntranceCards = []; // fresh scenario means a fresh 6-entry cast
       ROOM.publish(i => payloadFor(i)); // full reset — wipes last scene's cards
       renderAll();
     }
@@ -519,7 +523,7 @@
 
     function resetToIdle() {
       sceneNum = 0; phase = 'idle'; scenario = null;
-      beats = []; beatIndex = -1; entranceThisScene = [];
+      beats = []; beatIndex = -1; entranceThisScene = []; usedEntranceCards = [];
       pushState();
       renderAll();
     }
@@ -673,14 +677,20 @@
        game's browser, even though which card actually gets drawn stays a
        surprise ── */
     (function buildBrowsers() {
-      document.getElementById('scene-browser-hdr').textContent = `🚪 All Scenes (${DECK.length}) — drawn by "Draw a Scene"`;
-      document.getElementById('scene-list').innerHTML = DECK.map(c =>
-        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.location)}</span> — ${esc(c.plot)}</span></div>`
-      ).join('');
-
-      document.getElementById('entrance-browser-hdr').textContent = `🚪 All Entrances (${DECKE.length}) — drawn by a "something happens" step`;
-      document.getElementById('entrance-list').innerHTML = DECKE.map(c =>
-        `<div class="crash-item"><span class="ci-emoji">${c.emoji}</span><span><span class="ci-name">${esc(c.name)}</span> — ${esc(c.hint)}</span></div>`
+      // each scenario's fixed cast is nested right under it, so browsing the
+      // deck shows the actual scenario+character pairing, not a flat pool
+      const totalEntrances = DECK.reduce((n, c) => n + c.entrances.length, 0);
+      document.getElementById('scene-browser-hdr').textContent = `🚪 All Scenes (${DECK.length}) — drawn by "Draw a Scene", each with its own fixed cast of ${DECK[0].entrances.length} (${totalEntrances} total)`;
+      document.getElementById('scene-list').innerHTML = DECK.map(c => `
+        <div class="crash-item crash-item-scene">
+          <span class="ci-emoji">${c.emoji}</span>
+          <div>
+            <div><span class="ci-name">${esc(c.location)}</span> — ${esc(c.plot)}</div>
+            <div class="ci-cast">${c.entrances.map(e =>
+              `<span class="ci-cast-pill">${e.emoji} ${esc(e.name)}</span>`
+            ).join('')}</div>
+          </div>
+        </div>`
       ).join('');
     })();
 

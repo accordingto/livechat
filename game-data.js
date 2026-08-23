@@ -1284,68 +1284,210 @@ const GAME_DATA = {
      unresolved history; the "plot" line is what the host reads out loud right
      after dealing, second-person plural so it reads naturally for whoever the
      two leads end up being. Same plain-vocabulary, one-line-setup style as the
-     Kangaroo Court charges — a spark to improvise from, not a script. ── */
-  crashers: [
-    { emoji: '🏖️', location: 'A crowded beach resort pool bar', plot: 'You two used to date, haven\'t spoken in three years, and just got seated at the same tiny table by mistake.' },
-    { emoji: '✈️', location: 'An airport gate, flight delayed six hours', plot: 'You two are exes who broke up badly, and you\'re stuck sitting across from each other with nothing to do.' },
-    { emoji: '🏢', location: 'A tiny elevator, stuck between floors', plot: 'You two are coworkers secretly competing for the exact same promotion.' },
-    { emoji: '🎂', location: 'A surprise party planning meeting', plot: 'You two are the birthday person\'s two best friends, and neither of you knew the other existed.' },
-    { emoji: '🚗', location: 'A broken-down car on a long road trip', plot: 'You two are siblings who haven\'t agreed on anything since childhood.' },
-    { emoji: '🏫', location: 'A high school reunion', plot: 'You two used to be best friends, until a huge falling-out nobody ever explained.' },
-    { emoji: '🍽️', location: 'A fancy restaurant, wrong reservation', plot: 'You two are on a blind date, and you\'ve secretly met before under embarrassing circumstances.' },
-    { emoji: '🏠', location: 'Moving into a new shared apartment', plot: 'You two are new roommates who already disagree about literally everything.' },
-    { emoji: '🎤', location: 'Backstage before a talent show', plot: 'You two are rivals performing the exact same act, back to back.' },
-    { emoji: '🐶', location: 'A dog park', plot: 'Your two dogs just got into a fight, and now you have to talk.' },
-    { emoji: '💼', location: 'A job interview waiting room', plot: 'You two are applying for the exact same open position.' },
-    { emoji: '🏥', location: 'A hospital waiting room', plot: 'You two are distant cousins who haven\'t spoken since a family argument years ago.' },
-    { emoji: '🎓', location: 'A college dorm, move-in day', plot: 'You two are new roommates, and one of you already broke the other\'s stuff.' },
-    { emoji: '🚕', location: 'Sharing a taxi in the rain', plot: 'You two are strangers who just realized you\'re both headed to the same wedding.' },
-    { emoji: '🏋️', location: 'A gym locker room', plot: 'You two are training for the same competition, and just found out.' },
-    { emoji: '🎨', location: 'An art gallery opening', plot: 'You two are rival artists whose paintings hang right next to each other.' },
-    { emoji: '🍰', location: 'A bakery, one slice of cake left', plot: 'You two both reached for it at the same time, and now you\'re awkwardly sharing a table.' },
-    { emoji: '🏕️', location: 'A campsite, tents pitched too close together', plot: 'You two are old friends who had a huge fight on your last camping trip.' },
-    { emoji: '💒', location: 'Backstage at a wedding', plot: 'You two are the maid of honor and the best man, who dated each other years ago.' },
-    { emoji: '🛒', location: 'A grocery store, one shopping cart left', plot: 'You two are neighbors who\'ve been feuding over a fence for a year.' },
-    { emoji: '🎡', location: 'A theme park, stuck on a broken ride', plot: 'You two are coworkers who had a very awkward moment at last year\'s office party.' },
-    { emoji: '🏦', location: 'A bank, waiting in a very long line', plot: 'You two are business partners about to have a huge disagreement.' },
-    { emoji: '🎬', location: 'A movie theater, double-booked seats', plot: 'You two are exes, each on a date with someone else, sitting right next to each other.' },
-    { emoji: '🧳', location: 'A hotel lobby, double-booked room', plot: 'You two are old college roommates who haven\'t spoken since one of you moved out suddenly.' },
-  ],
+     Kangaroo Court charges — a spark to improvise from, not a script.
 
-  /* ── 🚪 Scene Crashers — the entrance cards. Each is a new character walking
-     into the scene already in progress: who they are, plus the disruption they
-     bring, bundled into one line the assigned player can improvise around —
-     same idea as a Kangaroo Court witness card, just for barging into a scene
-     instead of testifying in one. Every hint deliberately engages "you two" /
-     "one of you" / "your history" — the character reacts to the LEADS and
-     whatever's going on between them (already set up by the scenario's own
-     `plot` line), not to the room they happen to be standing in, so the
-     entrance always feels like it belongs to this scene's actual story
-     instead of a random unrelated event. ── */
-  crashersEntrance: [
-    { emoji: '👶', name: "The Ex's New Partner", hint: 'walks in and cheerfully introduces themselves to both of you' },
-    { emoji: '👮', name: 'A Security Guard', hint: 'notices the tension between you two and asks if everything\'s okay' },
-    { emoji: '📰', name: 'A Nosy Reporter', hint: 'overhears enough to start asking personal questions about the two of you' },
-    { emoji: '🗺️', name: 'A Lost Tourist', hint: 'mistakes you two for a couple and asks how you met' },
-    { emoji: '🎤', name: 'A Wedding Singer', hint: 'assumes you two are the happy couple and starts serenading you both' },
-    { emoji: '🕵️', name: 'A Private Investigator', hint: 'reveals they\'ve been hired to follow one of you' },
-    { emoji: '👵', name: "Someone's Grandmother", hint: 'shows up uninvited and demands to know what\'s really going on between you two' },
-    { emoji: '📦', name: 'A Delivery Driver', hint: 'arrives with a huge, oddly specific package addressed to one of you' },
-    { emoji: '🐕', name: 'An Escaped Dog (and its Owner)', hint: 'comes tearing through and ends up wedged directly between you two' },
-    { emoji: '🧑‍⚖️', name: 'A Process Server', hint: 'hands one of you very official-looking paperwork, right in front of the other' },
-    { emoji: '💍', name: 'An Ex-Fiancé(e)', hint: 'shows up claiming they were never properly broken up with' },
-    { emoji: '🧑‍🍳', name: 'An Overly Chatty Waiter', hint: 'keeps interrupting to ask if you two are on a date' },
-    { emoji: '🎉', name: 'A Party Clown', hint: 'was booked for the wrong event, and decides you two look like you need cheering up' },
-    { emoji: '🧑‍💼', name: 'The Boss', hint: 'shows up unannounced and immediately senses something\'s off between you two' },
-    { emoji: '🏘️', name: 'A Nosy Neighbor', hint: 'recognizes one of you and can\'t wait to bring up old history' },
-    { emoji: '🐈', name: 'A Lost Cat', hint: 'wanders in and chooses to sit directly between you two' },
-    { emoji: '🎥', name: 'A Documentary Filmmaker', hint: 'announces they\'ve been filming the two of you this whole time' },
-    { emoji: '🧑‍🚒', name: 'A Fire Inspector', hint: 'declares the building must be evacuated, right in the middle of your conversation' },
-    { emoji: '🛍️', name: 'An Overeager Salesperson', hint: 'corners you both, insisting this is exactly what your relationship needs' },
-    { emoji: '👂', name: 'An Eavesdropping Stranger', hint: 'admits they overheard everything and can\'t stop asking about the two of you' },
-    { emoji: '🎓', name: 'An Old Teacher', hint: 'recognizes both of you instantly and will not stop reminiscing about your history together' },
-    { emoji: '🧾', name: 'A Debt Collector', hint: 'insists one of you owes them a large sum of money' },
-    { emoji: '🧑‍🎤', name: 'A Celebrity Look-Alike', hint: 'causes a commotion, and everyone assumes you two are part of their entourage' },
-    { emoji: '🎷', name: 'A Street Performer', hint: 'sets up right next to you two, playing like it\'s the soundtrack to your conversation' },
+     Each scenario also carries its own fixed `entrances` — exactly 6 tailored
+     characters (never a shared, randomly-matched pool), written specifically
+     to escalate THAT scenario's own conflict. Every hint names the actual
+     stakes already set up by `plot` (the promotion, the fence, the wedding,
+     the broken item, whoever's watching) instead of a generic "you two" —
+     the point is that character, scenario and whoever ends up playing the
+     role are all pulling on the same thread, not three unrelated random
+     picks. 6 is the max non-lead count an 8-player room can produce
+     (`ROOM.count - 2`), so a scene never has to reuse a character even at
+     the largest room size. ── */
+  crashers: [
+    { emoji: '🏖️', location: 'A crowded beach resort pool bar', plot: 'You two used to date, haven\'t spoken in three years, and just got seated at the same tiny table by mistake.', entrances: [
+      { emoji: '🍹', name: 'The Resort Bartender', hint: 'keeps "accidentally" refilling both your drinks and won\'t stop asking how you two know each other' },
+      { emoji: '💑', name: 'A Honeymooning Guest', hint: 'at the next table, keeps comparing their perfect marriage to whatever this is' },
+      { emoji: '📸', name: 'A Vacation Photographer', hint: 'insists on snapping a "candid" photo of the two of you together for the resort brochure' },
+      { emoji: '👙', name: 'An Old Mutual Friend', hint: 'spots you both and can\'t believe you\'re finally in the same place again' },
+      { emoji: '🕶️', name: 'A Nosy Poolside Neighbor', hint: 'keeps "accidentally" overhearing everything and offering relationship advice' },
+      { emoji: '🎤', name: "The Resort's Karaoke Host", hint: 'drags one of you up to sing the song that used to be "your song"' },
+    ] },
+    { emoji: '✈️', location: 'An airport gate, flight delayed six hours', plot: 'You two are exes who broke up badly, and you\'re stuck sitting across from each other with nothing to do.', entrances: [
+      { emoji: '🧑‍✈️', name: 'A Gate Agent', hint: 'announces the delay and makes eye contact with both of you like they already know the whole story' },
+      { emoji: '👶', name: "The Ex's New Partner", hint: 'walks up, waves excitedly, and sits down right between you two' },
+      { emoji: '🧳', name: 'A Chatty Fellow Passenger', hint: 'notices the tension and asks if you two are traveling together' },
+      { emoji: '📱', name: 'A Mutual Friend', hint: "calls one of you and ends up on speaker, right in front of the other" },
+      { emoji: '🍸', name: 'An Airport Bartender', hint: 'keeps the drinks coming and keeps asking pointed questions about your "situation"' },
+      { emoji: '🧑‍🦱', name: 'An Old Friend From the Breakup', hint: 'recognizes you both and clearly remembers exactly whose side they were on' },
+    ] },
+    { emoji: '🏢', location: 'A tiny elevator, stuck between floors', plot: 'You two are coworkers secretly competing for the exact same promotion.', entrances: [
+      { emoji: '🧑‍💼', name: 'The Hiring Manager', hint: 'gets stuck in the elevator too, and casually asks each of you why you deserve the role' },
+      { emoji: '📋', name: 'An HR Rep', hint: 'mentions, a little too casually, that the promotion decision is being finalized today' },
+      { emoji: '🧑‍🔧', name: 'The Building Maintenance Worker', hint: 'says it could be a while, and settles in like this is now a group activity' },
+      { emoji: '🧑‍💻', name: 'A Third Coworker', hint: 'who\'s also up for the promotion, and isn\'t afraid to say so' },
+      { emoji: '📞', name: "Someone's Phone Call", hint: 'goes on speaker by accident, revealing exactly what they\'ve been telling people about the other' },
+      { emoji: '🧑‍🎓', name: 'An Intern', hint: 'trapped with you both, and starts nervously asking who\'s actually going to get the job' },
+    ] },
+    { emoji: '🎂', location: 'A surprise party planning meeting', plot: 'You two are the birthday person\'s two best friends, and neither of you knew the other existed.', entrances: [
+      { emoji: '🎁', name: 'The Birthday Person', hint: 'walks in on the meeting way ahead of schedule, putting the whole surprise at risk' },
+      { emoji: '🎈', name: 'The Party Venue Coordinator', hint: 'keeps asking which of you is "actually in charge" of the plans' },
+      { emoji: '🧑‍🍳', name: 'The Caterer', hint: 'shows up confused, holding two completely different, conflicting orders' },
+      { emoji: '👵', name: "The Birthday Person's Mother", hint: 'arrives with her own opinions about the party, and about the two of you' },
+      { emoji: '🎙️', name: 'A Friend Assigned to Give a Speech', hint: 'asks which of you actually knows the birthday person better' },
+      { emoji: '📷', name: 'The Party Photographer', hint: 'wants a "best friends" photo, with no idea there\'s a problem with that' },
+    ] },
+    { emoji: '🚗', location: 'A broken-down car on a long road trip', plot: 'You two are siblings who haven\'t agreed on anything since childhood.', entrances: [
+      { emoji: '🧑‍🔧', name: 'A Tow Truck Driver', hint: 'shows up, looks at the two of you, and asks who\'s actually in charge of this trip' },
+      { emoji: '👨‍👩‍👧', name: 'A Parent, Calling to Check In', hint: 'phones at the worst possible moment and wants a full update from both of you' },
+      { emoji: '🚶', name: 'A Fellow Stranded Traveler', hint: 'offers to help and immediately gets pulled into your argument' },
+      { emoji: '🧭', name: 'A Local Passerby', hint: 'gives directions, then can\'t help but comment on how much you two clearly don\'t get along' },
+      { emoji: '📻', name: 'A Passing Car\'s Radio', hint: 'blasts the exact song from your worst childhood family road trip' },
+      { emoji: '🧑‍🌾', name: "The Farmer Whose Land You've Broken Down On", hint: 'isn\'t thrilled, and wants the two of you to sort this out fast' },
+    ] },
+    { emoji: '🏫', location: 'A high school reunion', plot: 'You two used to be best friends, until a huge falling-out nobody ever explained.', entrances: [
+      { emoji: '🎓', name: 'A Former Classmate', hint: 'reminisces loudly about how inseparable you two used to be' },
+      { emoji: '🧑‍🏫', name: 'A Former Teacher', hint: 'remembers exactly what happened between you two, and isn\'t shy about bringing it up' },
+      { emoji: '📻', name: 'The Reunion DJ', hint: 'plays "your" old song from senior year, right as you\'re standing together' },
+      { emoji: '🏆', name: 'The Reunion Committee Organizer', hint: 'wants you both in the same photo for old times\' sake' },
+      { emoji: '💍', name: 'A Classmate Who Married Their High School Sweetheart', hint: 'can\'t stop asking why you two never patched things up' },
+      { emoji: '📖', name: 'Someone With the Old Yearbook', hint: 'flips straight to the page with your photo together and asks what really happened' },
+    ] },
+    { emoji: '🍽️', location: 'A fancy restaurant, wrong reservation', plot: 'You two are on a blind date, and you\'ve secretly met before under embarrassing circumstances.', entrances: [
+      { emoji: '🧑‍🍳', name: 'The Head Waiter', hint: 'keeps interrupting to ask if this is a "special occasion"' },
+      { emoji: '🍷', name: 'The Sommelier', hint: 'insists on pairing wine for "the happy couple" before anyone can correct him' },
+      { emoji: '🎻', name: 'A Violinist', hint: 'starts serenading your table like this is the most romantic night of your lives' },
+      { emoji: '👀', name: 'The Friend Who Set You Up', hint: 'shows up to spy on how the date is going, badly hidden across the room' },
+      { emoji: '🧑‍💼', name: 'The Restaurant Manager', hint: 'comes to sort out the reservation mix-up, and lingers to hear the whole story' },
+      { emoji: '📸', name: 'Another Diner', hint: 'recognizes one of you from exactly where you two secretly met before' },
+    ] },
+    { emoji: '🏠', location: 'Moving into a new shared apartment', plot: 'You two are new roommates who already disagree about literally everything.', entrances: [
+      { emoji: '🧑‍💼', name: 'The Landlord', hint: 'stops by to check on the move-in, and asks if everything\'s "working out" between you two' },
+      { emoji: '📦', name: 'A Moving Company Worker', hint: 'delivers the wrong boxes, and now neither of you can agree whose stuff is whose' },
+      { emoji: '🏘️', name: 'A Neighbor', hint: 'introduces themselves and immediately starts gossiping about the last roommates who lived here' },
+      { emoji: '🧾', name: 'The Building Super', hint: 'shows up with a long list of "house rules" neither of you agreed to' },
+      { emoji: '👨‍👩‍👦', name: "One Roommate's Parent", hint: 'drops by unannounced to "help" and starts taking sides' },
+      { emoji: '🐹', name: "A Roommate's Pet", hint: 'escapes right now, and you two have to work together to catch it' },
+    ] },
+    { emoji: '🎤', location: 'Backstage before a talent show', plot: 'You two are rivals performing the exact same act, back to back.', entrances: [
+      { emoji: '🎙️', name: "The Show's Host", hint: 'announces you\'re going back-to-back, and wants a "friendly" pre-show interview together' },
+      { emoji: '🧑‍🎨', name: 'A Judge', hint: 'wanders backstage and lets slip which act they\'re personally rooting for' },
+      { emoji: '🎭', name: 'Another Contestant', hint: 'can\'t believe you two picked the exact same act and wants all the details' },
+      { emoji: '🎬', name: 'A Show Producer', hint: 'says only one of your acts can go on, and wants you two to sort out who' },
+      { emoji: '👨‍👩‍👧', name: 'A Proud Parent', hint: 'corners you both to talk about how their kid is definitely going to win' },
+      { emoji: '🎧', name: 'The Sound Technician', hint: 'mixes up your music cues and needs you two to untangle it together, fast' },
+    ] },
+    { emoji: '🐶', location: 'A dog park', plot: 'Your two dogs just got into a fight, and now you have to talk.', entrances: [
+      { emoji: '🐕‍🦺', name: 'A Dog Trainer', hint: 'happened to see the whole thing and has opinions about both dogs\' behavior' },
+      { emoji: '🧑‍⚕️', name: 'A Concerned Bystander', hint: 'insists on checking that both dogs — and both of you — are okay' },
+      { emoji: '📋', name: 'The Dog Park Attendant', hint: 'needs an incident report from both of you before anyone can leave' },
+      { emoji: '🐕', name: 'Another Dog Owner', hint: 'saw everything and is very ready to tell you both exactly whose dog started it' },
+      { emoji: '👶', name: 'A Kid Who Saw It Happen', hint: 'gives a very dramatic, very confident retelling of the whole fight' },
+      { emoji: '📱', name: 'Someone Who Filmed It', hint: 'asks if they can post the video, right in front of both of you' },
+    ] },
+    { emoji: '💼', location: 'A job interview waiting room', plot: 'You two are applying for the exact same open position.', entrances: [
+      { emoji: '📋', name: 'The Receptionist', hint: 'announces, a little too loudly, that only one of you is getting called back today' },
+      { emoji: '🧑‍💼', name: 'The Hiring Manager', hint: 'steps out early and greets both of you by name, like they already know something' },
+      { emoji: '🧑‍💻', name: 'A Third Candidate', hint: 'sits down and mentions this is their fourth interview for the exact same role' },
+      { emoji: '📞', name: "One of Your Phones", hint: 'rings loudly, with a very telling caller ID, right in front of the other' },
+      { emoji: '☕', name: 'An Office Assistant', hint: 'brings coffee and mentions, off-hand, what the last person in this role was like' },
+      { emoji: '🧑‍🎓', name: 'A Former Candidate', hint: 'who didn\'t get the job last round, and has a lot of opinions to share' },
+    ] },
+    { emoji: '🏥', location: 'A hospital waiting room', plot: 'You two are distant cousins who haven\'t spoken since a family argument years ago.', entrances: [
+      { emoji: '👵', name: 'A Family Member', hint: 'walks in, spots you both, and immediately asks if you two have "finally made up"' },
+      { emoji: '🧑‍⚕️', name: 'A Nurse', hint: 'mentions you two are listed as each other\'s emergency contacts, and asks since when' },
+      { emoji: '📋', name: 'A Hospital Receptionist', hint: 'needs you both to fill out the same family medical history form, together' },
+      { emoji: '🧑‍🦳', name: 'An Older Relative', hint: 'brings up the exact argument that started this whole rift, right there in the waiting room' },
+      { emoji: '☕', name: 'A Jammed Vending Machine', hint: 'and the only other people around to fix it are the two of you' },
+      { emoji: '📱', name: 'A Cousin, Calling', hint: 'wants a full update on "how it\'s going" between the two of you, live, right now' },
+    ] },
+    { emoji: '🎓', location: 'A college dorm, move-in day', plot: 'You two are new roommates, and one of you already broke the other\'s stuff.', entrances: [
+      { emoji: '🧑‍💼', name: 'The Resident Advisor', hint: 'stops by to welcome you both and can\'t help but notice the broken item sitting right there' },
+      { emoji: '👨‍👩‍👧', name: 'A Parent Helping Move In', hint: 'asks what happened to the broken thing, loudly, in front of everyone' },
+      { emoji: '🧑‍🎓', name: 'A Neighbor From Down the Hall', hint: 'introduces themselves and immediately senses something\'s already wrong' },
+      { emoji: '📦', name: 'A Delivery Person', hint: 'shows up with a replacement item — addressed to the wrong roommate' },
+      { emoji: '🧑‍🔧', name: 'Campus Maintenance', hint: 'arrives to fix something unrelated and gets pulled into refereeing your dispute' },
+      { emoji: '🐿️', name: 'A Squirrel', hint: 'gets in through the open window, and now you two have to team up to deal with it' },
+    ] },
+    { emoji: '🚕', location: 'Sharing a taxi in the rain', plot: 'You two are strangers who just realized you\'re both headed to the same wedding.', entrances: [
+      { emoji: '🚕', name: 'The Taxi Driver', hint: 'overhears you\'re both headed to the same wedding and wants all the gossip' },
+      { emoji: '📱', name: 'The Bride, Calling One of You', hint: 'gets put on speaker for an urgent wedding question, right in front of the stranger next to you' },
+      { emoji: '💐', name: 'Another Wedding Guest', hint: 'flags down the same taxi and squeezes in, adding a third opinion to everything' },
+      { emoji: '🎁', name: 'A Gift Shop Clerk, Calling', hint: 'confirms an order, and it turns out you both bought the exact same gift' },
+      { emoji: '🧑‍🍳', name: 'The Wedding Caterer', hint: 'calls the taxi by mistake trying to reach the venue, and won\'t stop talking logistics' },
+      { emoji: '🕺', name: 'The Wedding Planner', hint: 'calls with last-minute instructions, assuming you two already know each other well' },
+    ] },
+    { emoji: '🏋️', location: 'A gym locker room', plot: 'You two are training for the same competition, and just found out.', entrances: [
+      { emoji: '🏆', name: 'The Gym Coach', hint: 'walks in and starts comparing your training stats out loud, right in front of both of you' },
+      { emoji: '🧑‍⚕️', name: 'A Nutritionist', hint: 'stops by to check in on "both of the competitors" and clearly doesn\'t know about the rivalry yet' },
+      { emoji: '📋', name: 'A Competition Official', hint: 'hands you both the same rulebook and mentions you\'re seeded right next to each other' },
+      { emoji: '🧑‍🤝‍🧑', name: 'A Fellow Gym Member', hint: 'who\'s heard about the competition and wants to know who they should bet on' },
+      { emoji: '📸', name: 'A Local Reporter', hint: 'wants a photo of "the two rising stars" training together for the paper' },
+      { emoji: '🧑‍💼', name: 'The Gym Manager', hint: 'reminds you both the locker room policy is one hour, and neither of you is leaving first' },
+    ] },
+    { emoji: '🎨', location: 'An art gallery opening', plot: 'You two are rival artists whose paintings hang right next to each other.', entrances: [
+      { emoji: '🧑‍🎨', name: 'The Gallery Curator', hint: 'stops by to mention, a little too casually, whose piece is getting more attention tonight' },
+      { emoji: '💰', name: 'A Serious Buyer', hint: 'stands between both paintings, clearly deciding which one to purchase' },
+      { emoji: '📰', name: 'An Art Critic', hint: 'takes notes on both pieces, side by side, right in front of you two' },
+      { emoji: '🥂', name: 'A Gallery Patron', hint: 'compliments one painting a little too loudly while the other artist is standing right there' },
+      { emoji: '📸', name: 'An Event Photographer', hint: 'wants a photo of "the two featured artists" together for the gallery\'s website' },
+      { emoji: '🧑‍🏫', name: 'A Former Art School Professor', hint: 'recognizes you both and remembers exactly who used to outshine who' },
+    ] },
+    { emoji: '🍰', location: 'A bakery, one slice of cake left', plot: 'You two both reached for it at the same time, and now you\'re awkwardly sharing a table.', entrances: [
+      { emoji: '🧑‍🍳', name: 'The Baker', hint: 'watches the standoff over the last slice with way too much amusement' },
+      { emoji: '👶', name: 'A Kid', hint: 'loudly asks their parent why the grown-ups are fighting over cake' },
+      { emoji: '📋', name: 'Another Customer in Line', hint: 'gets impatient and starts weighing in on who should get the slice' },
+      { emoji: '📸', name: 'Someone Filming a Food Video', hint: 'asks if they can film "the cake drama" for their page' },
+      { emoji: '💳', name: 'A Register Malfunction', hint: 'means you two now have to sort out, together, who\'s actually paying' },
+      { emoji: '🎂', name: 'The Bakery Owner', hint: 'offers to bake a whole new cake, but only if you two can agree on the flavor' },
+    ] },
+    { emoji: '🏕️', location: 'A campsite, tents pitched too close together', plot: 'You two are old friends who had a huge fight on your last camping trip.', entrances: [
+      { emoji: '🧑‍🌲', name: 'A Park Ranger', hint: 'stops by to check permits and immediately picks up on the tension' },
+      { emoji: '🔥', name: 'A Neighboring Camper', hint: 'invites you both to share a fire, with no idea what happened last time' },
+      { emoji: '🦝', name: 'A Raccoon', hint: 'gets into your shared supplies, and now you two have to deal with it together' },
+      { emoji: '🎸', name: 'Someone Playing Guitar Nearby', hint: 'starts playing the exact song from your last camping trip' },
+      { emoji: '🧭', name: 'A Lost Hiker', hint: 'asks you both for directions, assuming you\'re traveling together' },
+      { emoji: '👨‍👩‍👧', name: 'A Mutual Friend, Also Camping Nearby', hint: 'spots you both and can\'t believe you\'re both here after last time' },
+    ] },
+    { emoji: '💒', location: 'Backstage at a wedding', plot: 'You two are the maid of honor and the best man, who dated each other years ago.', entrances: [
+      { emoji: '💍', name: 'The Bride', hint: 'pulls you both aside for a photo, with zero idea about your history' },
+      { emoji: '🤵', name: 'The Groom', hint: 'asks if you two can "just get along" for one day' },
+      { emoji: '🧑‍💼', name: 'The Wedding Planner', hint: 'needs you both to walk down the aisle together, arm in arm, in five minutes' },
+      { emoji: '🎤', name: 'The Wedding DJ', hint: 'asks if there\'s a "special song" they should play for the wedding party' },
+      { emoji: '👵', name: 'A Relative Who Remembers Everything', hint: 'corners you both to ask whatever happened to "you two"' },
+      { emoji: '📸', name: 'The Wedding Photographer', hint: 'wants a wedding party photo, and keeps positioning you two right next to each other' },
+    ] },
+    { emoji: '🛒', location: 'A grocery store, one shopping cart left', plot: 'You two are neighbors who\'ve been feuding over a fence for a year.', entrances: [
+      { emoji: '🧑‍💼', name: 'The Store Manager', hint: 'recognizes you both and looks immediately nervous' },
+      { emoji: '🧾', name: 'Another Neighbor', hint: 'spots the standoff and can\'t wait to tell the rest of the street about it' },
+      { emoji: '👶', name: 'A Kid', hint: 'asks their parent why the two of you look so mad at each other' },
+      { emoji: '📋', name: 'A Store Employee', hint: 'asks you both to move along because you\'re blocking the aisle' },
+      { emoji: '🛠️', name: 'A Delivery for Fence Supplies', hint: 'shows up outside, addressed to one of your houses' },
+      { emoji: '🧑‍🌾', name: 'The HOA Representative', hint: 'spots you both and asks if the fence issue has "finally" been resolved' },
+    ] },
+    { emoji: '🎡', location: 'A theme park, stuck on a broken ride', plot: 'You two are coworkers who had a very awkward moment at last year\'s office party.', entrances: [
+      { emoji: '🎢', name: 'A Ride Operator', hint: 'says it\'s stuck and it might be a while, right as things were already awkward' },
+      { emoji: '🧑‍💼', name: 'Another Coworker', hint: 'in the next car over, who definitely heard about what happened at the office party' },
+      { emoji: '👨‍👩‍👧', name: 'A Family in the Same Car', hint: 'asks how you two know each other, right at the worst moment' },
+      { emoji: '📸', name: "The Ride's Photo Camera", hint: 'snaps a photo of your faces at the exact wrong second' },
+      { emoji: '🎙️', name: 'A Park Announcer', hint: 'makes jokes over the loudspeaker about everyone stuck on the ride' },
+      { emoji: '🧑‍🔧', name: 'A Maintenance Worker', hint: 'climbs up to fix the ride and ends up overhearing everything' },
+    ] },
+    { emoji: '🏦', location: 'A bank, waiting in a very long line', plot: 'You two are business partners about to have a huge disagreement.', entrances: [
+      { emoji: '🧑‍💼', name: 'A Bank Teller', hint: 'calls you both up together, assuming the account is still a happy partnership' },
+      { emoji: '📞', name: 'A Client, Calling', hint: 'wants an update on the business, right as things are falling apart' },
+      { emoji: '🧑‍💻', name: 'An Investor', hint: 'happens to be in line and recognizes you both from the pitch deck' },
+      { emoji: '📋', name: 'A Bank Manager', hint: 'mentions the loan paperwork still needs both of your signatures — today' },
+      { emoji: '🧑‍🎓', name: 'A Former Business Partner of Yours', hint: 'spots you two and can\'t resist commenting on how that usually goes' },
+      { emoji: '👥', name: 'Another Customer in Line', hint: 'overhears enough of your argument to start taking sides' },
+    ] },
+    { emoji: '🎬', location: 'A movie theater, double-booked seats', plot: 'You two are exes, each on a date with someone else, sitting right next to each other.', entrances: [
+      { emoji: '🧑‍💼', name: 'The Theater Usher', hint: 'tries to sort out the seating mix-up, making the whole row pay attention' },
+      { emoji: '💑', name: 'Your Date', hint: 'notices the tension and asks how exactly you two know each other' },
+      { emoji: '🍿', name: 'The Concessions Worker', hint: 'recognizes you both from when you used to come here together' },
+      { emoji: '📱', name: 'A Mutual Friend, Texting', hint: 'asks for an update, and you can\'t exactly answer with everyone sitting right there' },
+      { emoji: '🎬', name: 'Another Moviegoer', hint: 'notices the awkwardness and loudly asks if everything\'s okay' },
+      { emoji: '🧑‍🦱', name: 'The Theater Manager', hint: 'walks the aisle checking tickets, right as the tension peaks' },
+    ] },
+    { emoji: '🧳', location: 'A hotel lobby, double-booked room', plot: 'You two are old college roommates who haven\'t spoken since one of you moved out suddenly.', entrances: [
+      { emoji: '🧑‍💼', name: 'The Hotel Front Desk Clerk', hint: 'says there\'s only one room left, and you two will have to share' },
+      { emoji: '🧳', name: 'A Bellhop', hint: 'brings up both your bags and cheerfully asks if you\'re traveling together' },
+      { emoji: '🧑‍🤝‍🧑', name: 'Another Hotel Guest', hint: 'recognizes you both from college and can\'t believe you\'re in the same place' },
+      { emoji: '📞', name: 'The Hotel Manager, Calling', hint: 'about the booking mix-up, needing you both to sort it out together' },
+      { emoji: '🧑‍🍳', name: 'Room Service', hint: 'arrives with an order neither of you placed, addressed to "the two of you"' },
+      { emoji: '📷', name: "An Old Photo", hint: 'falls out of someone\'s bag — from back when you two still lived together' },
+    ] },
   ],
 };
