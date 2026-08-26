@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Dungeon Party · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Dungeon Party">
+  <meta name="theme-color" content="#0d0d1a">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --accent: #7c3aed; --accent-alt: #7c3aed; --warn: #7c3aed; }
+
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .round-badge span { color: #a78bfa; }
+
+    /* ── Layout: same split as Kangaroo Court — the run on the left, a sidebar
+       tracking which floor the party is on (and holding the CTA) on the right.
+       `order` keeps the sidebar first in the markup so its buttons stay at the
+       top on a phone, while desktop renders it on the right. ── */
+    .dg-layout {
+      width: 100%; max-width: 1400px;
+      display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+      align-items: start; gap: 24px;
+      margin-bottom: 4px;
+    }
+    .dg-flow { position: sticky; top: 20px; order: 2; }
+    .dg-flow-card {
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
+      padding: 20px 18px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .dg-flow-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 18px;
+    }
+    .dg-flow-steps { display: flex; flex-direction: column; gap: 20px; }
+    .dg-flow-step {
+      position: relative; display: flex; align-items: center; gap: 12px;
+      padding-left: 40px; min-height: 32px;
+    }
+    .dg-flow-step::before {
+      content: ''; position: absolute; left: 15px; top: -20px; width: 2px; height: 20px;
+      background: #1e1e42; transition: background .3s;
+    }
+    .dg-flow-step:first-child::before { display: none; }
+    .dg-flow-dot {
+      position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #666;
+      display: flex; align-items: center; justify-content: center; font-size: .92rem;
+      z-index: 1; transition: border-color .3s, background .3s, color .3s, box-shadow .3s;
+    }
+    .dg-flow-label { font-size: .82rem; font-weight: 700; color: #555; line-height: 1.35; transition: color .3s; }
+    .dg-flow-step.is-done::before { background: #22c55e; }
+    .dg-flow-step.is-done .dg-flow-dot { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.1); }
+    .dg-flow-step.is-done .dg-flow-label { color: #4ade80; }
+    /* a floor the party failed but walked away from — cleared in the sense that
+       they moved on, so it can't stay "current", but it never gets a green tick */
+    .dg-flow-step.is-failed::before { background: #ef4444; }
+    .dg-flow-step.is-failed .dg-flow-dot { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.1); }
+    .dg-flow-step.is-failed .dg-flow-label { color: #fca5a5; }
+    .dg-flow-step.is-current .dg-flow-dot {
+      border-color: var(--accent); color: #fff; background: rgba(124,58,237,.25);
+      animation: dgFlowPulse 1.8s ease-in-out infinite;
+    }
+    .dg-flow-step.is-current .dg-flow-label { color: #fff; }
+    @keyframes dgFlowPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(124,58,237,.35); }
+      50%      { box-shadow: 0 0 22px rgba(124,58,237,.75); }
+    }
+    .dg-main { width: 100%; min-width: 0; order: 1; display: flex; flex-direction: column; align-items: center; }
+
+    @media (max-width: 900px) {
+      .dg-layout { grid-template-columns: 1fr; }
+      .dg-flow { position: static; order: 0; }
+      .dg-main { order: 1; }
+      .dg-flow-steps { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 14px 22px; }
+      .dg-flow-step { flex-direction: column; text-align: center; padding-left: 0; min-height: auto; gap: 6px; }
+      .dg-flow-step::before { display: none; }
+      .dg-flow-dot { position: static; }
+    }
+
+    /* ── Status line — the sidebar's CTA, one short line, same shape as
+       Kangaroo Court's so the two host pages drive identically ── */
+    .status-line {
+      display: block; width: 100%;
+      background: linear-gradient(135deg, #a78bfa, #6d28d9);
+      color: #fff; border: 2px solid #c4b5fd; border-radius: 12px;
+      padding: 14px 12px; margin-top: 18px;
+      font-size: .92rem; font-weight: 800; line-height: 1.2; text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      box-shadow: 0 6px 18px rgba(124,58,237,.35);
+      cursor: pointer;
+      transition: box-shadow .2s, transform .1s, filter .15s, background .3s, border-color .3s, color .3s;
+    }
+    .status-line:hover:not(.not-clickable) { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(124,58,237,.5); }
+    .status-line:active:not(.not-clickable) { transform: scale(.98); }
+    .status-line.not-clickable { cursor: default; background: #0d0d1a; color: #555; border-color: #1e1e42; box-shadow: none; }
+    .status-line.win  { background: linear-gradient(135deg, #4ade80, #15803d); border-color: #86efac; box-shadow: 0 6px 18px rgba(34,197,94,.4); }
+    .status-line.lose { background: linear-gradient(135deg, #f87171, #b91c1c); border-color: #fca5a5; box-shadow: 0 6px 18px rgba(239,68,68,.4); }
+    .status-line.is-next { animation: statusPulse 1.6s ease-in-out infinite; }
+    @keyframes statusPulse {
+      0%, 100% { filter: brightness(1); }
+      50%      { filter: brightness(1.3); }
+    }
+
+    /* ── Verdict buttons: the host's only judgement in the whole game, so they
+       sit right under the CTA where the host is already looking. Solid fills,
+       same "this is a real button" treatment as Say It Without Saying It. ── */
+    .verdict-row { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .verdict-row.hidden { display: none; }
+    .vbtn {
+      width: 100%; border-radius: 12px; padding: 12px 10px;
+      font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      border: 2px solid; color: #fff;
+      transition: filter .15s, transform .1s;
+    }
+    .vbtn:hover  { filter: brightness(1.1); }
+    .vbtn:active { transform: scale(.98); }
+    .vbtn.win  { background: linear-gradient(135deg, #4ade80, #15803d); border-color: #86efac; }
+    .vbtn.lose { background: linear-gradient(135deg, #f87171, #b91c1c); border-color: #fca5a5; }
+
+    /* the one retry a party gets per run — deliberately quiet, it's a bail-out */
+    .dg-retry-btn {
+      width: 100%; margin-top: 10px;
+      background: transparent; border: 2px solid #1e1e42; color: #666;
+      border-radius: 12px; padding: 10px 12px;
+      font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, opacity .2s;
+    }
+    .dg-retry-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
+    .dg-retry-btn.hidden { display: none; }
+
+    /* ── Party health: one shared bar, the whole point of a co-op run ── */
+    .hp-wrap {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 14px 20px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 16px;
+      animation: fadeUp .5s ease both;
+    }
+    .hp-wrap.hidden { display: none; }
+    .hp-label { font-size: .72rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #888; white-space: nowrap; }
+    .hp-bar { flex: 1; height: 20px; background: #0d0d1a; border-radius: 999px; overflow: hidden; border: 1px solid #1e1e42; }
+    .hp-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      transition: width .5s ease, background .5s ease;
+    }
+    .hp-fill.mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .hp-fill.low { background: linear-gradient(90deg, #ef4444, #f87171); animation: flicker 1.2s ease-in-out infinite; }
+    .hp-num { font-size: 1.1rem; font-weight: 900; color: #fff; white-space: nowrap; }
+    .hp-num .hp-max { color: #555; font-size: .85rem; font-weight: 700; }
+    /* the damage number that jumps off the bar when a floor is lost */
+    .hp-hit { color: #f87171; font-size: 1rem; font-weight: 900; animation: hpHit .9s ease both; }
+    @keyframes hpHit {
+      0%   { opacity: 0; transform: translateY(0) scale(.8); }
+      30%  { opacity: 1; transform: translateY(-8px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-18px) scale(1); }
+    }
+
+    /* ── The monster card: this floor's centerpiece ── */
+    .monster-card {
+      width: 100%; max-width: 1100px;
+      background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(124,58,237,.03));
+      border: 2px solid #7c3aed; border-radius: 22px;
+      padding: 24px 30px; margin-bottom: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      text-align: center; position: relative; overflow: hidden;
+      animation: fadeUp .5s .1s ease both;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .monster-card.idle { border-color: #1e1e42; background: #13132b; }
+    .monster-card.is-boss {
+      border-color: #eab308;
+      background: linear-gradient(135deg, rgba(234,179,8,.18), rgba(234,179,8,.03));
+      box-shadow: 0 0 40px rgba(234,179,8,.2);
+    }
+    .monster-card.is-boss .m-label { color: #fde68a; }
+    .monster-card.is-boss .m-name  { color: #fef3c7; }
+    .m-top { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+    .m-emoji { font-size: 2.6rem; line-height: 1; }
+    .m-label { font-size: .7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #c4b5fd; }
+    .m-name { font-size: clamp(1.3rem, 3.6vw, 1.9rem); font-weight: 900; color: #fff; position: relative; z-index: 1; }
+    .m-taunt {
+      font-size: clamp(.95rem, 2.4vw, 1.1rem); font-weight: 600; color: #ddd6fe; font-style: italic;
+      line-height: 1.5; max-width: 760px; position: relative; z-index: 1;
+    }
+    /* the one line the host reads to explain how this floor is actually played */
+    .m-howto {
+      margin-top: 6px; background: rgba(0,0,0,.28); border: 1px solid rgba(196,181,253,.3);
+      border-radius: 12px; padding: 10px 18px;
+      font-size: .9rem; font-weight: 700; color: #ede9fe; line-height: 1.5;
+      max-width: 760px; position: relative; z-index: 1;
+    }
+    .m-placeholder { color: #444; font-size: 1rem; position: relative; z-index: 1; }
+
+    /* ── Round timer: host screen only for now, since the host is sharing it ── */
+    .timer-wrap {
+      width: 100%; max-width: 1100px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 16px 20px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap;
+    }
+    .timer-wrap.hidden { display: none; }
+    .timer-circle {
+      width: 92px; height: 92px; border-radius: 50%; flex-shrink: 0;
+      border: 4px solid #22c55e; color: #22c55e;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.7rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .4s, color .4s;
+    }
+    .timer-circle.mid { border-color: #f59e0b; color: #f59e0b; }
+    .timer-circle.low { border-color: #ef4444; color: #ef4444; animation: flicker 1s ease-in-out infinite; }
+    .timer-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── Party strip: who is playing which class this run ── */
+    .party-strip {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+      animation: fadeUp .5s .15s ease both;
+    }
+    .party-strip.hidden { display: none; }
+    .pc-chip {
+      flex: 1; min-width: 140px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      box-shadow: 0 0 18px transparent;
+      transition: border-color .3s, box-shadow .3s, background .3s;
+    }
+    .pc-emoji { font-size: 1.5rem; line-height: 1; }
+    .pc-class { font-size: .66rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
+    .pc-name { font-size: 1rem; font-weight: 800; color: #fff; }
+    /* the player in the spotlight this floor — never used on a Shapeshifter
+       floor, where marking anyone on the shared screen would give the game away */
+    .pc-chip.pc-hero { box-shadow: 0 0 26px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
+    @keyframes rolePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+
+    /* ── Result panel: what the answer was, and what it cost ── */
+    .result-card {
+      width: 100%; max-width: 1100px;
+      border-radius: 20px; padding: 20px 26px; margin-bottom: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      text-align: center; animation: fadeUp .4s ease both;
+      border: 2px solid;
+    }
+    .result-card.hidden { display: none; }
+    .result-card.won  { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,.16), rgba(34,197,94,.03)); }
+    .result-card.lost { border-color: #ef4444; background: linear-gradient(135deg, rgba(239,68,68,.16), rgba(239,68,68,.03)); }
+    .rc-headline { font-size: clamp(1.2rem, 3.4vw, 1.6rem); font-weight: 900; }
+    .result-card.won  .rc-headline { color: #4ade80; }
+    .result-card.lost .rc-headline { color: #f87171; }
+    .rc-answer { font-size: 1rem; font-weight: 700; color: #eee; line-height: 1.5; }
+    .rc-answer b { color: #fff; }
+    .rc-sub { font-size: .85rem; color: #888; }
+
+    /* ── Run-over banner: escaped with the loot, or wiped out ── */
+    .run-end {
+      width: 100%; max-width: 1100px;
+      border-radius: 22px; padding: 30px; margin-bottom: 16px;
+      text-align: center; border: 2px solid; animation: fadeUp .5s ease both;
+    }
+    .run-end.hidden { display: none; }
+    .run-end.escaped { border-color: #eab308; background: linear-gradient(135deg, rgba(234,179,8,.2), rgba(234,179,8,.03)); }
+    .run-end.wiped   { border-color: #ef4444; background: linear-gradient(135deg, rgba(239,68,68,.2), rgba(239,68,68,.03)); }
+    .re-title { font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 900; margin-bottom: 8px; }
+    .run-end.escaped .re-title { color: #fde68a; }
+    .run-end.wiped   .re-title { color: #f87171; }
+    .re-sub { font-size: 1rem; color: #ccc; line-height: 1.6; }
+
+    /* player links: the class tint, so the host can read the party at a glance */
+    .link-col.is-class { border-color: #7c3aed; }
+    .link-col .la-sub { color: #888; }
+
+    /* ── Monster browser: collapsed by default so sharing the screen before a
+       run doesn't spoil which monsters exist ── */
+    .m-browser { width: 100%; max-width: 1100px; margin-top: 30px; }
+    .m-browser-hdr {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #555; margin-bottom: 10px; cursor: pointer; user-select: none;
+    }
+    .m-browser-hdr:hover { color: #a78bfa; }
+    .m-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+    .m-list.hidden { display: none; }
+    .m-item {
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .m-item.boss { border-color: rgba(234,179,8,.5); }
+    .mi-top { display: flex; align-items: center; gap: 8px; }
+    .mi-name { font-size: .92rem; font-weight: 800; color: #eee; }
+    .mi-type { font-size: .68rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #7c3aed; }
+    .mi-taunt { font-size: .8rem; color: #777; font-style: italic; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">← Back to Hub</a>
+    <div class="round-badge">Run <span id="runNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🗡️ Dungeon Party</h1>
+  </div>
+
+  <div class="fb-warning hidden" id="fb-warning">
+    ⚠️ Firebase isn't configured yet, so player links won't update automatically — and this game deals every challenge privately, so it can't run without them. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
+  </div>
+
+  <div class="dg-layout">
+    <div class="dg-flow">
+      <div class="dg-flow-card">
+        <div class="dg-flow-hdr">The Descent</div>
+        <div class="dg-flow-steps" id="dg-flow-steps"></div>
+        <div class="status-line" id="status-line" onclick="advance()"></div>
+        <div class="verdict-row hidden" id="verdict-row">
+          <button class="vbtn win"  onclick="judge(true)">✅ Party wins the floor</button>
+          <button class="vbtn lose" onclick="judge(false)">❌ The monster wins</button>
+        </div>
+        <button class="dg-retry-btn hidden" id="dg-retry-btn" onclick="retryFloor()"></button>
+      </div>
+    </div>
+
+    <div class="dg-main">
+      <div class="hp-wrap hidden" id="hp-wrap">
+        <span class="hp-label">❤️ Party Health</span>
+        <div class="hp-bar"><div class="hp-fill" id="hp-fill" style="width:100%"></div></div>
+        <span class="hp-num"><span id="hp-num">20</span><span class="hp-max"> / 20</span></span>
+        <span id="hp-hit"></span>
+      </div>
+
+      <div class="monster-card idle" id="monster-card">
+        <span class="m-placeholder" id="m-placeholder">Press <strong>🗡️ Enter the Dungeon</strong> to deal classes and open Floor 1</span>
+        <div id="m-content" style="display:none">
+          <div class="m-top">
+            <span class="m-emoji" id="m-emoji"></span>
+            <span class="m-label" id="m-label"></span>
+          </div>
+          <div class="m-name" id="m-name"></div>
+          <div class="m-taunt" id="m-taunt"></div>
+          <div class="m-howto" id="m-howto"></div>
+        </div>
+      </div>
+
+      <div class="timer-wrap hidden" id="timer-wrap">
+        <div class="timer-circle" id="timer-circle">1:30</div>
+        <div class="timer-btns">
+          <button class="btn-primary" id="timer-toggle" onclick="toggleTimer()">▶️ Start</button>
+          <button class="btn-secondary" onclick="resetTimer()">🔄 Reset</button>
+        </div>
+      </div>
+
+      <div class="result-card hidden" id="result-card"></div>
+      <div class="run-end hidden" id="run-end"></div>
+      <div class="party-strip hidden" id="party-strip"></div>
+    </div>
+  </div>
+
+  <!-- player cards: class + this floor's secret decide what each card shows -->
+  <div id="room-mount"></div>
+
+  <div class="m-browser">
+    <div class="m-browser-hdr" id="m-browser-hdr" onclick="toggleBrowser()"></div>
+    <div class="m-list hidden" id="m-list"></div>
+  </div>
+
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script>
+    const CLASSES  = GAME_DATA.dungeonClasses;
+    const MONSTERS = GAME_DATA.dungeonMonsters;
+
+    const FLOORS  = 5;   // floor 5 is always the boss
+    const MAX_HP  = 20;
+    const DAMAGE  = 5;   // per lost floor
+    const BOSS_DAMAGE = 8;
+    const ROUND_SECONDS = 90;
+
+    /* ── Run state ──────────────────────────────────────────────────────────
+       phase: idle    — between runs, nothing dealt
+              brief   — the floor's monster is on screen, secrets NOT dealt yet
+              battle  — secrets are on the cards, the party is playing it out
+              result  — the host has judged; the answer is revealed
+              escaped — cleared floor 5
+              wiped   — health hit zero                                      */
+    let runNum = 0;
+    let floor = 0;
+    let phase = 'idle';
+    let hp = MAX_HP;
+    let retriesLeft = 1;          // one per run, the host's only do-over
+    let classIdx = [];            // player i -> index into CLASSES
+    let monster = null;
+    let challenge = null;         // { type, ...type-specific fields }
+    let heroIdx = -1;             // clue giver / possessed / the odd one out
+    let lastResult = null;        // { won, damage }
+    let floorLog = [];            // floorLog[f-1] = true (cleared) | false (failed)
+
+    /* fair-draw bookkeeping, all the same trick used elsewhere in this repo:
+       a shuffled bag for the thing that must rotate evenly and never repeat
+       back-to-back, and a fewest-times-picked count for the rest */
+    let classBag = [];            // shuffled class indexes, refilled when empty
+    let heroCount = [];           // times each player has been in the spotlight
+    let usedMonsters = [], usedTaboo = [], usedWolf = [], usedEmotion = [];
+
+    let timer = { remaining: ROUND_SECONDS, running: false, handle: null };
+
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+    function shuffled(n) {
+      const a = Array.from({ length: n }, (_, i) => i);
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+    /* draws from a deck without repeating until the deck is exhausted, then
+       reshuffles — same helper shape as pickCharge() in Kangaroo Court */
+    function drawFrom(deck, used, filter) {
+      const ok = i => !filter || filter(deck[i]);
+      let avail = deck.map((_, i) => i).filter(i => ok(i) && !used.includes(i));
+      if (!avail.length) {
+        // only forget the ones this filter could have drawn, so an easy-word
+        // reshuffle never wipes the memory of which hard words came up
+        for (let k = used.length - 1; k >= 0; k--) if (ok(used[k])) used.splice(k, 1);
+        avail = deck.map((_, i) => i).filter(ok);
+      }
+      const pick = avail[Math.floor(Math.random() * avail.length)];
+      used.push(pick);
+      return deck[pick];
+    }
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#7c3aed',
+      counts: [3, 4, 5, 6],
+      defaultCount: 4,
+      linksNote: 'Every player is dealt a class for the whole run, and each floor deals its challenge privately — the secret word, the odd word out and the possessing emotion never appear on this screen.',
+      onPlayerData: () => {},
+      onCountChange: () => {
+        // a different party size invalidates the classes and the fairness
+        // counters they were dealt against, so the run starts over
+        classIdx = []; classBag = []; heroCount = [];
+        resetRun();
+      },
+      onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
+    });
+    document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+
+    /* ── Dealing ──────────────────────────────────────────────────────────── */
+
+    /* one class per player, drawn from a shuffled bag so that across runs
+       everyone cycles through the roster instead of the same player being the
+       Mage every time; a refill never hands out the same class twice running */
+    function dealClasses() {
+      const n = Math.min(ROOM.count, CLASSES.length);
+      classIdx = [];
+      /* A party of 4 or 5 doesn't divide the 6-class roster evenly, so a run can
+         run the bag dry halfway through and refill it with a class this same run
+         has already handed out. Two people playing the Mage in one party is the
+         one thing the bag must never produce, so a repeat is set aside rather
+         than dealt, and goes back to the front of the bag afterwards — it stays
+         first in line for the next run, which is what keeps the rotation fair. */
+      const deferred = [];
+      while (classIdx.length < n) {
+        if (!classBag.length) {
+          classBag = shuffled(CLASSES.length);
+          if (classIdx.length && classBag[0] === classIdx[classIdx.length - 1]) classBag.push(classBag.shift());
+        }
+        const next = classBag.shift();
+        if (classIdx.includes(next)) deferred.push(next);
+        else classIdx.push(next);
+      }
+      classBag = deferred.concat(classBag);
+    }
+
+    /* who gets the spotlight on this floor — fewest turns so far, random among
+       ties, so it stays even without ever running in a predictable order */
+    function drawHero(n) {
+      while (heroCount.length < n) heroCount.push(0);
+      const fewest = Math.min(...heroCount.slice(0, n));
+      const pool = Array.from({ length: n }, (_, i) => i).filter(i => heroCount[i] === fewest);
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      heroCount[pick]++;
+      return pick;
+    }
+
+    /* the boss is held back for the last floor, and back-to-back floors never
+       repeat a challenge type — three floors of Gatekeeper in a row would make
+       the run feel like one long game of Taboo */
+    function drawMonster(f) {
+      const isBoss = f === FLOORS;
+      const prevType = monster ? monster.type : null;
+      let pool = MONSTERS.filter(m => !!m.boss === isBoss);
+      const varied = pool.filter(m => m.type !== prevType);
+      if (varied.length) pool = varied;
+      return drawFrom(pool, usedMonsters, null);
+    }
+
+    /* difficulty rides the floor number: the deeper the party goes, the more
+       abstract the Taboo word and the more forbidden words are live */
+    function tabooLevelFor(f) { return f <= 2 ? 'easy' : f <= 4 ? 'medium' : 'hard'; }
+    function bannedCountFor(f) { return f >= FLOORS ? 6 : f >= 3 ? 5 : 4; }
+
+    /* builds the floor's actual challenge out of an existing deck */
+    function drawChallenge(type, f) {
+      if (type === 'gatekeeper') {
+        const card = drawFrom(GAME_DATA.taboo, usedTaboo, c => c.level === tabooLevelFor(f));
+        return { type, emoji: card.emoji, word: card.word, forbidden: card.forbidden.slice(0, bannedCountFor(f)) };
+      }
+      if (type === 'shapeshifter') {
+        const pair = drawFrom(GAME_DATA.wordwolf, usedWolf, null);
+        // which side of the pair the party gets is itself a coin flip, so the
+        // odd word out isn't always the "b" column
+        const flip = Math.random() < .5;
+        return {
+          type,
+          partyWord:  flip ? pair.a : pair.b,  partyEmoji:  flip ? pair.emojiA : pair.emojiB,
+          shifterWord: flip ? pair.b : pair.a, shifterEmoji: flip ? pair.emojiB : pair.emojiA,
+        };
+      }
+      const card = drawFrom(GAME_DATA.emotion, usedEmotion, null);
+      return { type, emoji: card.emoji, word: card.word };
+    }
+
+    function openFloor(f) {
+      floor = f;
+      monster = drawMonster(f);
+      challenge = drawChallenge(monster.type, f);
+      heroIdx = drawHero(ROOM.count);
+      lastResult = null;
+      resetTimer();
+      phase = 'brief';
+      ROOM.publish(i => payloadFor(i));  // full reset — clears the last floor off every card
+      renderAll();
+    }
+
+    function startRun() {
+      if (!ROOM.enabled) return;
+      runNum++;
+      hp = MAX_HP;
+      retriesLeft = 1;
+      floorLog = [];
+      monster = null;
+      dealClasses();
+      openFloor(1);
+    }
+
+    function resetRun() {
+      runNum = 0; floor = 0; phase = 'idle';
+      hp = MAX_HP; retriesLeft = 1; floorLog = [];
+      monster = null; challenge = null; heroIdx = -1; lastResult = null;
+      stopTimer();
+      pushState();
+      renderAll();
+    }
+
+    /* ── Flow ─────────────────────────────────────────────────────────────── */
+
+    function advance() {
+      if (!ROOM.enabled) return;
+      if (phase === 'idle' || phase === 'escaped' || phase === 'wiped') { startRun(); return; }
+      if (phase === 'brief')  { phase = 'battle'; startTimer(); pushState(); renderAll(); return; }
+      if (phase === 'result') {
+        if (hp <= 0)        { phase = 'wiped';   stopTimer(); pushState(); renderAll(); return; }
+        if (floor >= FLOORS) { phase = 'escaped'; stopTimer(); pushState(); renderAll(); return; }
+        openFloor(floor + 1);
+        return;
+      }
+      // during 'battle' the CTA is inert — the host judges with the two
+      // verdict buttons underneath it instead
+    }
+
+    /* the host's call, and the only judgement in the game: everything the party
+       did happened out loud, so nothing here can be scored automatically */
+    function judge(won) {
+      if (!ROOM.enabled || phase !== 'battle') return;
+      const damage = won ? 0 : (monster && monster.boss ? BOSS_DAMAGE : DAMAGE);
+      if (damage) hp = Math.max(0, hp - damage);
+      floorLog[floor - 1] = won;
+      lastResult = { won, damage };
+      phase = 'result';
+      stopTimer();
+      pushState();
+      renderAll();
+      if (damage) flashDamage(damage);
+    }
+
+    /* the single do-over per run: same monster, fresh challenge card, and the
+       health it just cost comes back — otherwise a retry is a worse deal than
+       simply pressing on, and nobody would ever use it */
+    function retryFloor() {
+      if (!ROOM.enabled || phase !== 'result' || retriesLeft <= 0) return;
+      if (!lastResult || lastResult.won) return;
+      retriesLeft--;
+      hp = Math.min(MAX_HP, hp + lastResult.damage);
+      floorLog[floor - 1] = undefined;
+      challenge = drawChallenge(monster.type, floor);
+      heroIdx = drawHero(ROOM.count);
+      lastResult = null;
+      resetTimer();
+      phase = 'brief';
+      ROOM.publish(i => payloadFor(i));
+      renderAll();
+    }
+
+    /* ── Timer (host screen only — the host is sharing it, so every player can
+       already see it; syncing a copy to each card is a later pass) ── */
+    function startTimer() {
+      stopTimer();
+      timer.running = true;
+      timer.handle = setInterval(() => {
+        timer.remaining = Math.max(0, timer.remaining - 1);
+        if (timer.remaining === 0) stopTimer();
+        renderTimer();
+      }, 1000);
+      renderTimer();
+    }
+    function stopTimer() {
+      if (timer.handle) clearInterval(timer.handle);
+      timer.handle = null; timer.running = false;
+      renderTimer();
+    }
+    function toggleTimer() {
+      if (timer.running) stopTimer();
+      else if (timer.remaining > 0) startTimer();
+    }
+    function resetTimer() { stopTimer(); timer.remaining = ROUND_SECONDS; renderTimer(); }
+
+    /* ── Firebase ─────────────────────────────────────────────────────────── */
+    function pushState() { ROOM.update(i => payloadFor(i)); }
+
+    /* What one player may see. The rule the whole game rests on: the host screen
+       never carries the answer, and a card never carries more than that player
+       is entitled to.
+         gatekeeper — only the clue giver gets the word and the forbidden list
+         wraith     — only the possessed player gets the emotion
+         shapeshifter — EVERYONE gets a word and nobody is told they're the odd
+                        one out, so `role` stays 'party' for all of them; sending
+                        role:'hero' here would hand the shapeshifter the answer */
+    function payloadFor(i) {
+      const cls = classIdx[i] !== undefined ? CLASSES[classIdx[i]] : null;
+      const inRun = phase !== 'idle' && !!cls;
+      const isShifterFloor = challenge && challenge.type === 'shapeshifter';
+      const isHero = inRun && i === heroIdx && !isShifterFloor;
+      const base = {
+        game: 'dungeon',
+        run: runNum, floor, phase, hp, maxHp: MAX_HP,
+        className:  cls ? cls.name : null,
+        classEmoji: cls ? cls.emoji : null,
+        classHex:   cls ? cls.hex : null,
+        classBlurb: cls ? cls.blurb : null,
+        ctype: challenge ? challenge.type : null,
+        monsterEmoji: monster ? monster.emoji : null,
+        monsterName:  monster ? monster.name : null,
+        isBoss: !!(monster && monster.boss),
+        role: isHero ? 'hero' : 'party',
+        secret: null,
+        result: null,
+      };
+
+      if (phase === 'battle' && challenge) {
+        if (challenge.type === 'gatekeeper' && isHero) {
+          base.secret = { kind: 'word', emoji: challenge.emoji, word: challenge.word, forbidden: challenge.forbidden };
+        } else if (challenge.type === 'wraith' && isHero) {
+          base.secret = { kind: 'emotion', emoji: challenge.emoji, word: challenge.word };
+        } else if (challenge.type === 'shapeshifter') {
+          const odd = i === heroIdx;
+          base.secret = {
+            kind: 'word',
+            emoji: odd ? challenge.shifterEmoji : challenge.partyEmoji,
+            word:  odd ? challenge.shifterWord  : challenge.partyWord,
+          };
+        }
+      }
+
+      if (phase === 'result' && lastResult && challenge) {
+        base.result = {
+          won: lastResult.won,
+          damage: lastResult.damage,
+          answer: answerText(),
+          wasHero: i === heroIdx,
+        };
+      }
+      if (phase === 'escaped' || phase === 'wiped') {
+        base.result = { runOver: phase, hp };
+      }
+      return base;
+    }
+
+    /* the reveal line, shared by the host panel and every player card */
+    function answerText() {
+      if (!challenge) return '';
+      if (challenge.type === 'gatekeeper')  return `${challenge.emoji} ${challenge.word}`;
+      if (challenge.type === 'wraith')      return `${challenge.emoji} ${challenge.word}`;
+      return `${challenge.shifterEmoji} ${challenge.shifterWord}`;
+    }
+
+    /* ── Rendering ────────────────────────────────────────────────────────── */
+
+    function renderAll() {
+      document.getElementById('runNum').textContent = runNum;
+      renderFlow();
+      renderStatus();
+      renderVerdict();
+      renderRetry();
+      renderHP();
+      renderMonster();
+      renderTimer();
+      renderResult();
+      renderRunEnd();
+      renderParty();
+      ROOM.render();
+    }
+
+    /* the sidebar: one step per floor, plus the entry point so there's always
+       somewhere to point at before a run starts */
+    function renderFlow() {
+      const steps = [{ key: 'enter', emoji: '🗡️', label: 'Enter' }];
+      for (let f = 1; f <= FLOORS; f++) {
+        steps.push({ key: f, emoji: f === FLOORS ? '👑' : '🚪', label: f === FLOORS ? 'Boss Floor' : `Floor ${f}` });
+      }
+      document.getElementById('dg-flow-steps').innerHTML = steps.map(s => {
+        let cls = '';
+        if (s.key === 'enter') {
+          cls = phase === 'idle' ? 'is-current' : 'is-done';
+        } else if (phase !== 'idle') {
+          const cleared = floorLog[s.key - 1];
+          if (s.key === floor && phase !== 'escaped' && phase !== 'wiped') cls = 'is-current';
+          else if (cleared === true) cls = 'is-done';
+          else if (cleared === false) cls = 'is-failed';
+        }
+        const mark = cls === 'is-done' ? '✓' : cls === 'is-failed' ? '✕' : s.emoji;
+        return `<div class="dg-flow-step ${cls}">
+          <span class="dg-flow-dot">${mark}</span>
+          <span class="dg-flow-label">${esc(s.label)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function renderStatus() {
+      const el = document.getElementById('status-line');
+      el.classList.remove('win', 'lose');
+      const inert = !ROOM.enabled || phase === 'battle';
+      el.classList.toggle('not-clickable', inert);
+      // nudge the host when the next tap is theirs to make and the room is waiting
+      el.classList.toggle('is-next', ROOM.enabled && (phase === 'result' || phase === 'escaped' || phase === 'wiped'));
+
+      if (!ROOM.enabled) { el.textContent = '🔗 Add player links first'; return; }
+      if (phase === 'idle')    { el.textContent = '🗡️ Enter the Dungeon'; return; }
+      if (phase === 'brief')   { el.textContent = '⚔️ Deal the challenge'; return; }
+      if (phase === 'battle')  { el.textContent = '⚔️ Fighting — judge below'; return; }
+      if (phase === 'escaped') { el.classList.add('win');  el.textContent = '🗡️ New Run'; return; }
+      if (phase === 'wiped')   { el.classList.add('lose'); el.textContent = '🗡️ New Run'; return; }
+      // result
+      if (hp <= 0)             { el.classList.add('lose'); el.textContent = '💀 The party falls…'; return; }
+      if (floor >= FLOORS)     { el.classList.add('win');  el.textContent = '🏆 Escape with the loot!'; return; }
+      el.textContent = `⬇️ Descend to Floor ${floor + 1}`;
+    }
+
+    function renderVerdict() {
+      document.getElementById('verdict-row').classList.toggle('hidden', !(ROOM.enabled && phase === 'battle'));
+    }
+
+    function renderRetry() {
+      const btn = document.getElementById('dg-retry-btn');
+      const canRetry = ROOM.enabled && phase === 'result' && lastResult && !lastResult.won && retriesLeft > 0 && hp > 0;
+      btn.classList.toggle('hidden', !canRetry);
+      if (canRetry) btn.textContent = `🔄 Retry this floor (${retriesLeft} left)`;
+    }
+
+    function renderHP() {
+      document.getElementById('hp-wrap').classList.toggle('hidden', phase === 'idle');
+      const pct = Math.max(0, Math.round((hp / MAX_HP) * 100));
+      const fill = document.getElementById('hp-fill');
+      fill.style.width = pct + '%';
+      fill.classList.toggle('mid', pct <= 60 && pct > 30);
+      fill.classList.toggle('low', pct <= 30);
+      document.getElementById('hp-num').textContent = hp;
+    }
+
+    /* the damage number that jumps off the health bar — re-added each time so
+       the animation restarts instead of only ever playing once */
+    function flashDamage(n) {
+      const el = document.getElementById('hp-hit');
+      el.innerHTML = `<span class="hp-hit">−${n}</span>`;
+      setTimeout(() => { el.innerHTML = ''; }, 950);
+    }
+
+    /* the one line the host reads out to explain how this floor is played.
+       On a Shapeshifter floor it must never name the player in the spotlight —
+       everyone including the odd one out has to be in the dark. */
+    function howToText() {
+      if (!challenge) return '';
+      const hero = esc(ROOM.name(heroIdx));
+      if (challenge.type === 'gatekeeper') {
+        return `⚔️ <b>${hero}</b> has the secret word and its forbidden words — on their card only. They describe it, everyone else shouts guesses.`;
+      }
+      if (challenge.type === 'wraith') {
+        return `😈 <b>${hero}</b> has been possessed by a hidden emotion. They keep talking in it — the rest of the party names the emotion.`;
+      }
+      return `🐺 Everyone has a word on their card. One of you has a <b>different</b> one. Talk about it, then name the impostor.`;
+    }
+
+    function renderMonster() {
+      const card = document.getElementById('monster-card');
+      const showing = phase !== 'idle' && !!monster;
+      card.classList.toggle('idle', !showing);
+      card.classList.toggle('is-boss', showing && !!monster.boss);
+      document.getElementById('m-placeholder').style.display = showing ? 'none' : '';
+      document.getElementById('m-content').style.display = showing ? '' : 'none';
+      if (!showing) return;
+      document.getElementById('m-emoji').textContent = monster.emoji;
+      document.getElementById('m-label').textContent = monster.boss ? `👑 Boss · Floor ${floor}` : `Floor ${floor} of ${FLOORS}`;
+      document.getElementById('m-name').textContent = monster.name;
+      document.getElementById('m-taunt').textContent = `“${monster.taunt}”`;
+      const howto = document.getElementById('m-howto');
+      // before the cards are dealt the party shouldn't know who's in the
+      // spotlight yet — that lands with the challenge itself
+      howto.innerHTML = phase === 'brief'
+        ? '📜 Read the monster out, then press <b>⚔️ Deal the challenge</b>.'
+        : howToText();
+    }
+
+    function renderTimer() {
+      document.getElementById('timer-wrap').classList.toggle('hidden', phase !== 'battle');
+      const c = document.getElementById('timer-circle');
+      const m = Math.floor(timer.remaining / 60), s = timer.remaining % 60;
+      c.textContent = `${m}:${String(s).padStart(2, '0')}`;
+      const pct = timer.remaining / ROUND_SECONDS;
+      c.classList.toggle('mid', pct <= .5 && pct > .2);
+      c.classList.toggle('low', pct <= .2);
+      document.getElementById('timer-toggle').textContent = timer.running ? '⏸️ Pause' : '▶️ Start';
+    }
+
+    function renderResult() {
+      const el = document.getElementById('result-card');
+      const show = phase === 'result' && lastResult;
+      el.classList.toggle('hidden', !show);
+      if (!show) return;
+      el.classList.toggle('won', lastResult.won);
+      el.classList.toggle('lost', !lastResult.won);
+      const heroLine = challenge.type === 'shapeshifter'
+        ? `The Shapeshifter was <b>${esc(ROOM.name(heroIdx))}</b> — their word was <b>${esc(answerText())}</b>`
+        : `The answer was <b>${esc(answerText())}</b> — held by <b>${esc(ROOM.name(heroIdx))}</b>`;
+      el.innerHTML = `
+        <div class="rc-headline">${lastResult.won ? `⚔️ ${esc(monster.name)} falls!` : `💥 ${esc(monster.name)} wins the floor`}</div>
+        <div class="rc-answer">${heroLine}</div>
+        <div class="rc-sub">${lastResult.won ? 'No damage taken.' : `The party takes ${lastResult.damage} damage.`}</div>`;
+    }
+
+    function renderRunEnd() {
+      const el = document.getElementById('run-end');
+      const show = phase === 'escaped' || phase === 'wiped';
+      el.classList.toggle('hidden', !show);
+      if (!show) return;
+      const cleared = floorLog.filter(x => x === true).length;
+      el.classList.toggle('escaped', phase === 'escaped');
+      el.classList.toggle('wiped', phase === 'wiped');
+      el.innerHTML = phase === 'escaped'
+        ? `<div class="re-title">🏆 You made it out!</div>
+           <div class="re-sub">${cleared} of ${FLOORS} floors cleared, with <b>${hp}</b> health to spare.</div>`
+        : `<div class="re-title">💀 The party is wiped out</div>
+           <div class="re-sub">You got ${cleared} of ${FLOORS} floors deep before the dungeon took you.</div>`;
+    }
+
+    function renderParty() {
+      const el = document.getElementById('party-strip');
+      const show = phase !== 'idle' && classIdx.length;
+      el.classList.toggle('hidden', !show);
+      if (!show) return;
+      // the spotlight glow is deliberately suppressed on a Shapeshifter floor:
+      // this strip is on the shared screen, so lighting anyone up there would
+      // point straight at the odd word out
+      const showHero = challenge && challenge.type !== 'shapeshifter' && (phase === 'battle' || phase === 'result');
+      el.innerHTML = classIdx.slice(0, ROOM.count).map((ci, i) => {
+        const c = CLASSES[ci];
+        const hero = showHero && i === heroIdx;
+        return `<div class="pc-chip${hero ? ' pc-hero' : ''}" style="border-color:${c.hex};color:${c.hex};background:linear-gradient(160deg, ${c.hex}22, ${c.hex}06)">
+          <span class="pc-emoji">${c.emoji}</span>
+          <span class="pc-class" style="color:${c.hex}">${esc(c.name)}</span>
+          <span class="pc-name">${esc(ROOM.name(i))}</span>
+        </div>`;
+      }).join('');
+    }
+
+    /* the host's link column shows each player's class, so handing links out and
+       checking who got what doesn't mean opening six cards */
+    ROOM.setDecorator(i => {
+      if (phase === 'idle' || classIdx[i] === undefined) return {};
+      const c = CLASSES[classIdx[i]];
+      return { marked: true, cls: 'is-class', answer: `${c.emoji} ${c.name}` };
+    });
+
+    /* ── Monster browser (collapsed by default — opening it while sharing the
+       screen would show the party what's still coming) ── */
+    let browserOpen = false;
+    function toggleBrowser() {
+      browserOpen = !browserOpen;
+      document.getElementById('m-list').classList.toggle('hidden', !browserOpen);
+      renderBrowserHdr();
+    }
+    function renderBrowserHdr() {
+      document.getElementById('m-browser-hdr').textContent =
+        browserOpen ? '🙈 Hide the bestiary' : `👁️ Browse all ${MONSTERS.length} monsters`;
+    }
+    const TYPE_LABEL = { gatekeeper: '⚔️ Taboo', shapeshifter: '🐺 Odd word out', wraith: '😈 Emotion' };
+    document.getElementById('m-list').innerHTML = MONSTERS.map(m => `
+      <div class="m-item${m.boss ? ' boss' : ''}">
+        <div class="mi-top">
+          <span>${m.emoji}</span>
+          <span class="mi-name">${esc(m.name)}</span>
+        </div>
+        <span class="mi-type">${m.boss ? '👑 Boss · ' : ''}${TYPE_LABEL[m.type]}</span>
+        <span class="mi-taunt">“${esc(m.taunt)}”</span>
+      </div>`).join('');
+    renderBrowserHdr();
+
+    renderAll();
+  </script>
+
+</body>
+</html>

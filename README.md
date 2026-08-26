@@ -12,6 +12,7 @@ host is sharing.
 
 | Game | Players | Description |
 |------|---------|-------------|
+| 🗡️ Dungeon Party | 3–6 | Co-op: everyone is dealt a class, then the party descends five floors on one shared health bar. Each monster is a challenge dealt secretly to the players' cards |
 | ⚖️ Kangaroo Court | 4–9 | One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — before and after |
 | 🏰 Dare Conquest | 2–6 | Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival |
 | 📜 Secret Rule | 2–6 | Everyone secretly gets a different person to treat the room as — your students, your boss, total strangers. Just chat, then guess who everyone thought they were talking to |
@@ -28,7 +29,7 @@ host is sharing.
 ## How it works
 
 - `index.html` is the menu; each game has its own host page.
-- `play.html` is the single player card page shared by **all twelve games** — it
+- `play.html` is the single player card page shared by **all thirteen games** — it
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
@@ -41,9 +42,9 @@ database rules are documented at the top of that file).
 
 Without Firebase configured:
 
-- **Button is locked** — Kangaroo Court and Say It Without Saying It refuse to
-  deal at all (the jury's votes and the clue giver's word have nowhere private
-  to go).
+- **Button is locked** — Kangaroo Court, Say It Without Saying It and Dungeon
+  Party refuse to deal at all (the jury's votes, the clue giver's word and every
+  dungeon challenge have nowhere private to go).
 - **Warns, but still deals** — Secret Rule, Emotion Cards, Word Wolf and
   Forbidden Words show a banner; the cards go nowhere, so in practice these
   need Firebase too.

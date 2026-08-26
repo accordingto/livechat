@@ -364,6 +364,35 @@
     .secret-card.theme-kangaroo { padding: 28px 24px 24px; gap: 16px; }
     /* 🚪 Scene Crashers: same layout, its own theme name for clarity */
     .secret-card.theme-crashers { padding: 28px 24px 24px; gap: 16px; }
+
+    /* 🗡️ Dungeon Party: the card carries the class for the whole run, plus
+       whatever this floor dealt privately to this player */
+    .secret-card.theme-dungeon { padding: 28px 24px 24px; gap: 14px; }
+    /* shared party health, so nobody has to look up at the host screen to know
+       how close the run is to ending */
+    .dg-hp { width: 100%; display: flex; align-items: center; gap: 10px; }
+    .dg-hp .dh-label { font-size: .66rem; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; color: #666; white-space: nowrap; }
+    .dg-hp .dh-bar { flex: 1; height: 12px; background: #0d0d1a; border: 1px solid #1e1e42; border-radius: 999px; overflow: hidden; }
+    .dg-hp .dh-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #22c55e, #4ade80); transition: width .5s ease; }
+    .dg-hp .dh-fill.mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .dg-hp .dh-fill.low { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .dg-hp .dh-num { font-size: .82rem; font-weight: 900; color: #ccc; white-space: nowrap; }
+    /* the floor's monster, small — the host screen carries the full version */
+    .dg-floor { font-size: .8rem; font-weight: 700; color: #888; line-height: 1.4; }
+    .dg-floor b { color: #ddd; }
+    /* the secret this player is holding: same shape as the Taboo target box, so
+       a word looks the same wherever in the site it turns up */
+    .dg-secret {
+      width: 100%; background: #0d0d1a; border: 2px solid #7c3aed; border-radius: 16px;
+      padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .dg-secret .ds-label { font-size: .66rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #a78bfa; }
+    .dg-secret .ds-emoji { font-size: 2.4rem; line-height: 1; }
+    .dg-secret .ds-word {
+      font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1.2;
+      overflow-wrap: break-word; max-width: 100%;
+    }
+    .dg-class-blurb { font-size: .82rem; color: #777; font-style: italic; line-height: 1.5; }
     /* the witness's own persona + evidence — the only card that actually spells
        out what to improvise, since everyone else can already see it was called
        out on the host's shared screen */
@@ -1070,6 +1099,91 @@
       return shell(`<span class="pick-sub">👀 Watching the scene unfold…</span>`);
     }
 
+    /* 🗡️ Dungeon Party — the class chip stays put for the whole run; what sits
+       under it is only ever what this player is entitled to see this floor.
+       Note there is no "you are the odd one out" state: on a Shapeshifter floor
+       the host sends every card a word and nobody is told whose is different. */
+    function dungeonCardHTML(data) {
+      if (!data.run || !data.className) {
+        return `<div class="secret-card theme-dungeon">${nameBanner(data)}<span class="pick-sub">⏳ Waiting for the party to enter the dungeon…</span></div>`;
+      }
+
+      const hex = data.classHex || '#7c3aed';
+      const chip = `<span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${esc(data.classEmoji || '')} ${esc(data.className)}</span>`;
+
+      const pct = data.maxHp ? Math.max(0, Math.round((data.hp / data.maxHp) * 100)) : 100;
+      const fillCls = pct <= 30 ? ' low' : pct <= 60 ? ' mid' : '';
+      const hpBar = `
+        <div class="dg-hp">
+          <span class="dh-label">❤️ Party</span>
+          <div class="dh-bar"><div class="dh-fill${fillCls}" style="width:${pct}%"></div></div>
+          <span class="dh-num">${data.hp}/${data.maxHp}</span>
+        </div>`;
+
+      const shell = inner => `<div class="secret-card theme-dungeon" style="border-color:${hex};box-shadow:0 0 60px ${hex}2e">${nameBanner(data)}${chip}${hpBar}${inner}</div>`;
+
+      // the run is over — same banner for everyone
+      if (data.result && data.result.runOver) {
+        return data.result.runOver === 'escaped'
+          ? shell(`<span class="pick-text">🏆 You made it out!</span><span class="pick-sub">The party escaped with ${data.result.hp} health left.</span>`)
+          : shell(`<span class="pick-text">💀 The party is wiped out</span><span class="pick-sub">The dungeon wins this time.</span>`);
+      }
+
+      const floorLine = data.monsterName
+        ? `<span class="dg-floor">${data.isBoss ? '👑 Boss Floor' : `🚪 Floor ${data.floor}`} · <b>${esc(data.monsterEmoji || '')} ${esc(data.monsterName)}</b></span>`
+        : '';
+
+      // the floor has been judged — everyone sees the same answer
+      if (data.phase === 'result' && data.result) {
+        const r = data.result;
+        return shell(`
+          ${floorLine}
+          <span class="pick-text">${r.won ? '⚔️ Floor cleared!' : `💥 Down ${r.damage} health`}</span>
+          <span class="pick-sub">The answer was <b>${esc(r.answer || '')}</b>.</span>`);
+      }
+
+      // the monster is up but nothing has been dealt yet
+      if (data.phase === 'brief') {
+        return shell(`
+          ${floorLine}
+          <span class="pick-sub">⏳ Listen to the host — your challenge is coming.</span>
+          <span class="dg-class-blurb">${esc(data.classBlurb || '')}</span>`);
+      }
+
+      if (data.phase === 'battle' && data.secret) {
+        const s = data.secret;
+        // the clue giver also gets the words they may not say
+        const banned = s.forbidden && s.forbidden.length ? `
+          <div class="taboo-banned">
+            <span class="tb-label">🚫 Forbidden words</span>
+            <div class="tb-list">${s.forbidden.map(w => `<span class="tb-word">${esc(w)}</span>`).join('')}</div>
+          </div>` : '';
+        const label = s.kind === 'emotion' ? '😈 You are possessed by' : '🔒 Your word';
+        const hint = data.ctype === 'gatekeeper'
+          ? 'Describe it in English — never say the word itself or anything on the red list.'
+          : data.ctype === 'wraith'
+            ? 'Keep talking normally, but feel this the whole time. Do not name it.'
+            : 'One player in the party has a different word. Talk about yours — carefully.';
+        return shell(`
+          ${floorLine}
+          <div class="dg-secret" style="border-color:${hex}">
+            <span class="ds-label">${label}</span>
+            <span class="ds-emoji">${esc(s.emoji || '')}</span>
+            <span class="ds-word">${esc(s.word || '')}</span>
+          </div>
+          ${banned}
+          <span class="pick-sub">${hint}</span>`);
+      }
+
+      // in the fight, but holding nothing — this player is one of the guessers
+      const guessHint = data.ctype === 'gatekeeper'
+        ? '🗣️ Shout your guesses — someone in the party is describing a secret word.'
+        : data.ctype === 'wraith'
+          ? '👂 Listen closely. One of you is speaking with an emotion that is not theirs.'
+          : '👀 Watching…';
+      return shell(`${floorLine}<span class="pick-sub">${guessHint}</span>`);
+    }
+
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     function showCard(data) {
@@ -1215,6 +1329,7 @@
       if (data.game === 'taboo') { el.innerHTML = tabooCardHTML(data); paintTabooTimer(); return; }
       if (data.game === 'kangaroo') { el.innerHTML = kangarooCardHTML(data); return; }
       if (data.game === 'crashers') { el.innerHTML = crashersCardHTML(data); return; }
+      if (data.game === 'dungeon') { el.innerHTML = dungeonCardHTML(data); return; }
       showError('⏳ Waiting for the host to start a game...');
     }
 
