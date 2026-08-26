@@ -1493,18 +1493,24 @@ const GAME_DATA = {
   ],
 
   /* ── Dungeon Party ────────────────────────────────────────────────────────
-     Classes are dealt one per player at the start of a run. In this first
-     version the class is identity and flavour only — it decides nothing
-     mechanically — so there is deliberately no `skills` field here: the active
-     abilities land in a later pass, and nothing in the data should imply they
-     already work. */
+     Classes are dealt one per player at the start of a run. Each class carries
+     one signature `skill`, worth a single charge per run, fired by the player
+     from their own card and applied by the host. Every skill pulls on a lever
+     the game already has — party health, the clock, the spotlight, the
+     challenge card — rather than introducing a currency of its own. */
   dungeonClasses: [
-    { emoji: '🛡️', name: 'Tank',   hex: '#ef4444', blurb: 'Front line. You speak first when nobody else will.' },
-    { emoji: '🏹', name: 'Archer', hex: '#22c55e', blurb: 'Sharp eyes. You catch the detail everyone else skipped.' },
-    { emoji: '🔮', name: 'Mage',   hex: '#a78bfa', blurb: 'Arcane mind. You read what the party cannot.' },
-    { emoji: '❤️', name: 'Healer', hex: '#ec4899', blurb: 'Keeps the party standing. Watch who is struggling.' },
-    { emoji: '🎵', name: 'Bard',   hex: '#f59e0b', blurb: 'Loud and shameless. Keep the room talking.' },
-    { emoji: '🗡️', name: 'Rogue',  hex: '#06b6d4', blurb: 'Quiet until it counts. Then you take the shot.' },
+    { emoji: '🛡️', name: 'Tank',   hex: '#ef4444', blurb: 'Front line. You speak first when nobody else will.',
+      skill: { emoji: '🛡️', name: 'Guard', blurb: 'Block all damage if the party loses this floor.' } },
+    { emoji: '🏹', name: 'Archer', hex: '#22c55e', blurb: 'Sharp eyes. You catch the detail everyone else skipped.',
+      skill: { emoji: '🏹', name: 'Rapid Shot', blurb: 'Add 30 seconds to the clock.' } },
+    { emoji: '🔮', name: 'Mage',   hex: '#a78bfa', blurb: 'Arcane mind. You read what the party cannot.',
+      skill: { emoji: '🔮', name: 'Reveal', blurb: 'Pull a hint out of the monster, onto the host screen.' } },
+    { emoji: '❤️', name: 'Healer', hex: '#ec4899', blurb: 'Keeps the party standing. Watch who is struggling.',
+      skill: { emoji: '❤️', name: 'Mend', blurb: 'Heal the party for 5.' } },
+    { emoji: '🎵', name: 'Bard',   hex: '#f59e0b', blurb: 'Loud and shameless. Keep the room talking.',
+      skill: { emoji: '🎵', name: 'Inspire', blurb: 'Hand the spotlight to someone else and re-deal.' } },
+    { emoji: '🗡️', name: 'Rogue',  hex: '#06b6d4', blurb: 'Quiet until it counts. Then you take the shot.',
+      skill: { emoji: '🗡️', name: 'Smoke Bomb', blurb: 'Swap this challenge for a fresh one of the same kind.' } },
   ],
 
   /* Monsters the party meets on the way down. `type` picks which existing deck

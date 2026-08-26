@@ -215,6 +215,54 @@
     .timer-circle.low { border-color: #ef4444; color: #ef4444; animation: flicker 1s ease-in-out infinite; }
     .timer-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 
+    /* the Mage's Reveal, parked under the how-to line for the rest of the floor */
+    .m-hint {
+      margin-top: 4px; background: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.5);
+      border-radius: 12px; padding: 9px 16px;
+      font-size: .88rem; font-weight: 700; color: #ddd6fe; line-height: 1.5;
+      max-width: 760px; position: relative; z-index: 1;
+      animation: fadeUp .35s ease both;
+    }
+    .m-hint.hidden { display: none; }
+
+    /* ── Skill banner: the host screen has no skill buttons, so this is the only
+       place a spent charge announces itself ── */
+    .skill-log {
+      width: 100%; max-width: 1100px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, rgba(167,139,250,.18), rgba(167,139,250,.04));
+      border: 2px solid #a78bfa; border-radius: 14px;
+      padding: 12px 20px; margin-bottom: 16px;
+      animation: fadeUp .35s ease both;
+    }
+    .skill-log.hidden { display: none; }
+    .skill-log .sl-emoji { font-size: 1.4rem; line-height: 1; }
+    .skill-log .sl-text { font-size: .95rem; font-weight: 700; color: #ede9fe; line-height: 1.4; }
+    .skill-log .sl-text b { color: #fff; }
+
+    /* the round-length stepper, same shape as Say It Without Saying It's */
+    .secs-stepper { display: flex; align-items: center; gap: 8px; }
+    .secs-btn {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: transparent; border: 2px solid #1e1e42; color: #888;
+      font-size: 1.1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, opacity .2s;
+    }
+    .secs-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
+    .secs-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .secs-total { font-size: .95rem; font-weight: 900; color: #ccc; min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
+
+    /* run length, in the ROOM setup card via extraRowHTML */
+    .floor-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .floor-btn {
+      min-width: 44px; padding: 9px 14px; border-radius: 10px;
+      background: transparent; border: 2px solid #1e1e42; color: #888;
+      font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .floor-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+    .floor-btn.on { border-color: #7c3aed; color: #fff; background: rgba(124,58,237,.25); }
+
     /* ── Party strip: who is playing which class this run ── */
     .party-strip {
       width: 100%; max-width: 1100px;
@@ -234,6 +282,15 @@
     .pc-name { font-size: 1rem; font-weight: 800; color: #fff; }
     /* the player in the spotlight this floor — never used on a Shapeshifter
        floor, where marking anyone on the shared screen would give the game away */
+    /* whether this player still holds their one charge — the host reads the whole
+       party's options off this row without opening anyone's card */
+    .pc-skill {
+      margin-top: 2px; font-size: .64rem; font-weight: 900; letter-spacing: .5px;
+      padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+    }
+    .pc-skill.sk-ready { background: rgba(255,255,255,.09); color: #ddd; }
+    .pc-skill.sk-spent { background: transparent; color: #4a4a6a; }
+    .pc-skill.sk-armed { background: rgba(239,68,68,.22); color: #fca5a5; animation: rolePulse 1.6s ease-in-out infinite; }
     .pc-chip.pc-hero { box-shadow: 0 0 26px currentColor; animation: rolePulse 1.8s ease-in-out infinite; }
     @keyframes rolePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
@@ -341,11 +398,19 @@
           <div class="m-name" id="m-name"></div>
           <div class="m-taunt" id="m-taunt"></div>
           <div class="m-howto" id="m-howto"></div>
+          <div class="m-hint hidden" id="m-hint"></div>
         </div>
       </div>
 
+      <div class="skill-log hidden" id="skill-log"></div>
+
       <div class="timer-wrap hidden" id="timer-wrap">
         <div class="timer-circle" id="timer-circle">1:30</div>
+        <div class="secs-stepper">
+          <button class="secs-btn" id="secs-minus" onclick="bumpSeconds(-15)">−</button>
+          <span class="secs-total" id="secs-total">90s</span>
+          <button class="secs-btn" id="secs-plus" onclick="bumpSeconds(15)">+</button>
+        </div>
         <div class="timer-btns">
           <button class="btn-primary" id="timer-toggle" onclick="toggleTimer()">▶️ Start</button>
           <button class="btn-secondary" onclick="resetTimer()">🔄 Reset</button>
@@ -376,11 +441,22 @@
     const CLASSES  = GAME_DATA.dungeonClasses;
     const MONSTERS = GAME_DATA.dungeonMonsters;
 
-    const FLOORS  = 5;   // floor 5 is always the boss
     const MAX_HP  = 20;
     const DAMAGE  = 5;   // per lost floor
     const BOSS_DAMAGE = 8;
-    const ROUND_SECONDS = 90;
+
+    /* How long a run is, in floors — the last one is always the boss. A 5-floor
+       run lands around 25 minutes; 3 is a warm-up and 7 is a whole session, so
+       the host picks rather than being stuck with one length. */
+    const FLOOR_CHOICES = [3, 5, 7];
+    let floors = 5;
+
+    /* Each challenge type wants a different clock: describing a word is a race,
+       arguing about who has the odd word out is a discussion that dies if it's
+       rushed, and naming an emotion needs long enough to actually hear someone
+       talk. One number for all three was the wrong shape. */
+    const SECONDS_BY_TYPE = { gatekeeper: 75, shapeshifter: 150, wraith: 100 };
+    const SEC_STEP = 15, SEC_MIN = 30, SEC_MAX = 300;
 
     /* ── Run state ──────────────────────────────────────────────────────────
        phase: idle    — between runs, nothing dealt
@@ -400,6 +476,15 @@
     let heroIdx = -1;             // clue giver / possessed / the odd one out
     let lastResult = null;        // { won, damage }
     let floorLog = [];            // floorLog[f-1] = true (cleared) | false (failed)
+    let floorId = '';             // new every floor, so a card's stale skill request can't re-fire
+
+    /* ── Skills ── one charge per player per run, fired from that player's own
+       card and applied here. Guard is the only one that doesn't resolve
+       immediately: it arms, and is spent when the floor is judged. */
+    let skillUsed = [];           // player i -> true once their charge is gone
+    let guardArmed = -1;          // player index whose Guard is holding, or -1
+    let revealHint = null;        // Mage's hint for this floor, shown host-side
+    let skillLog = null;          // { who, emoji, name, detail } — banner for the last skill fired
 
     /* fair-draw bookkeeping, all the same trick used elsewhere in this repo:
        a shuffled bag for the thing that must rotate evenly and never repeat
@@ -408,8 +493,13 @@
     let heroCount = [];           // times each player has been in the spotlight
     let usedMonsters = [], usedTaboo = [], usedWolf = [], usedEmotion = [];
 
-    let timer = { remaining: ROUND_SECONDS, running: false, handle: null };
+    /* The clock is published, not streamed: the host bumps `seq` and pushes the
+       state once whenever something actually changes, and every card ticks its
+       own copy down from there. A running countdown therefore costs zero
+       Firebase writes — same trick as Dare Conquest and Say It Without Saying It. */
+    let timer = { total: 90, left: 90, running: false, seq: 0, iv: null };
 
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function shuffled(n) {
       const a = Array.from({ length: n }, (_, i) => i);
@@ -437,8 +527,9 @@
       accent: '#7c3aed',
       counts: [3, 4, 5, 6],
       defaultCount: 4,
-      linksNote: 'Every player is dealt a class for the whole run, and each floor deals its challenge privately — the secret word, the odd word out and the possessing emotion never appear on this screen.',
-      onPlayerData: () => {},
+      linksNote: 'Every player is dealt a class with one skill to spend per run, and each floor deals its challenge privately — the secret word, the odd word out and the possessing emotion never appear on this screen.',
+      extraRowHTML: '<span class="room-label">🏰 Floors</span><div class="floor-btns" id="floor-btns"></div>',
+      onPlayerData: handlePlayerData,
       onCountChange: () => {
         // a different party size invalidates the classes and the fairness
         // counters they were dealt against, so the run starts over
@@ -448,6 +539,28 @@
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+
+    /* Run length lives in the same room-session blob as e.g. Kangaroo Court's
+       Judge toggle, so it survives a reload or a switch to another game. Changing
+       it mid-run only moves the finish line; it never re-deals anything. */
+    const savedFloors = ROOM.getExtra('dungeonFloors');
+    if (FLOOR_CHOICES.includes(savedFloors)) floors = savedFloors;
+    function setFloors(n) {
+      if (!FLOOR_CHOICES.includes(n)) return;
+      floors = n;
+      ROOM.setExtra('dungeonFloors', n);
+      // a run already past the new finish line ends at the next descend, which
+      // advance() handles on its own — nothing to unwind here
+      renderFloorBtns();
+      renderAll();
+    }
+    function renderFloorBtns() {
+      const el = document.getElementById('floor-btns');
+      if (!el) return;
+      el.innerHTML = FLOOR_CHOICES.map(n =>
+        `<button class="floor-btn${n === floors ? ' on' : ''}" onclick="setFloors(${n})">${n}</button>`).join('');
+    }
+    renderFloorBtns();
 
     /* ── Dealing ──────────────────────────────────────────────────────────── */
 
@@ -491,7 +604,7 @@
        repeat a challenge type — three floors of Gatekeeper in a row would make
        the run feel like one long game of Taboo */
     function drawMonster(f) {
-      const isBoss = f === FLOORS;
+      const isBoss = f === floors;
       const prevType = monster ? monster.type : null;
       let pool = MONSTERS.filter(m => !!m.boss === isBoss);
       const varied = pool.filter(m => m.type !== prevType);
@@ -501,8 +614,8 @@
 
     /* difficulty rides the floor number: the deeper the party goes, the more
        abstract the Taboo word and the more forbidden words are live */
-    function tabooLevelFor(f) { return f <= 2 ? 'easy' : f <= 4 ? 'medium' : 'hard'; }
-    function bannedCountFor(f) { return f >= FLOORS ? 6 : f >= 3 ? 5 : 4; }
+    function tabooLevelFor(f) { return f >= floors ? 'hard' : f / floors <= .5 ? 'easy' : 'medium'; }
+    function bannedCountFor(f) { return f >= floors ? 6 : f / floors > .5 ? 5 : 4; }
 
     /* builds the floor's actual challenge out of an existing deck */
     function drawChallenge(type, f) {
@@ -517,6 +630,7 @@
         const flip = Math.random() < .5;
         return {
           type,
+          cat: pair.cat,   // kept for the Mage's Reveal, which gives the party the category
           partyWord:  flip ? pair.a : pair.b,  partyEmoji:  flip ? pair.emojiA : pair.emojiB,
           shifterWord: flip ? pair.b : pair.a, shifterEmoji: flip ? pair.emojiB : pair.emojiA,
         };
@@ -531,7 +645,11 @@
       challenge = drawChallenge(monster.type, f);
       heroIdx = drawHero(ROOM.count);
       lastResult = null;
-      resetTimer();
+      floorId = genId();
+      guardArmed = -1;
+      revealHint = null;
+      skillLog = null;
+      setSeconds(SECONDS_BY_TYPE[monster.type] || 90);
       phase = 'brief';
       ROOM.publish(i => payloadFor(i));  // full reset — clears the last floor off every card
       renderAll();
@@ -544,6 +662,7 @@
       retriesLeft = 1;
       floorLog = [];
       monster = null;
+      skillUsed = [];              // everyone's charge comes back for a fresh run
       dealClasses();
       openFloor(1);
     }
@@ -552,7 +671,9 @@
       runNum = 0; floor = 0; phase = 'idle';
       hp = MAX_HP; retriesLeft = 1; floorLog = [];
       monster = null; challenge = null; heroIdx = -1; lastResult = null;
-      stopTimer();
+      floorId = ''; skillUsed = []; guardArmed = -1; revealHint = null; skillLog = null;
+      stopTicking();
+      timer.running = false; timer.left = timer.total; timer.seq++;
       pushState();
       renderAll();
     }
@@ -564,8 +685,8 @@
       if (phase === 'idle' || phase === 'escaped' || phase === 'wiped') { startRun(); return; }
       if (phase === 'brief')  { phase = 'battle'; startTimer(); pushState(); renderAll(); return; }
       if (phase === 'result') {
-        if (hp <= 0)        { phase = 'wiped';   stopTimer(); pushState(); renderAll(); return; }
-        if (floor >= FLOORS) { phase = 'escaped'; stopTimer(); pushState(); renderAll(); return; }
+        if (hp <= 0)        { phase = 'wiped';   pauseTimer(); pushState(); renderAll(); return; }
+        if (floor >= floors) { phase = 'escaped'; pauseTimer(); pushState(); renderAll(); return; }
         openFloor(floor + 1);
         return;
       }
@@ -577,15 +698,127 @@
        did happened out loud, so nothing here can be scored automatically */
     function judge(won) {
       if (!ROOM.enabled || phase !== 'battle') return;
-      const damage = won ? 0 : (monster && monster.boss ? BOSS_DAMAGE : DAMAGE);
+      let damage = won ? 0 : (monster && monster.boss ? BOSS_DAMAGE : DAMAGE);
+      // the Tank's Guard has been holding since it was cast; this is where it pays out
+      let guardedBy = null;
+      if (damage && guardArmed >= 0) {
+        guardedBy = ROOM.name(guardArmed);
+        damage = 0;
+        guardArmed = -1;
+      }
       if (damage) hp = Math.max(0, hp - damage);
       floorLog[floor - 1] = won;
-      lastResult = { won, damage };
+      lastResult = { won, damage, guardedBy };
       phase = 'result';
-      stopTimer();
+      pauseTimer();
       pushState();
       renderAll();
       if (damage) flashDamage(damage);
+    }
+
+    /* ── Skills ───────────────────────────────────────────────────────────────
+       One charge per player per run. A player taps their own card, which writes
+       a vote carrying this floor's id; the host validates it here and applies
+       the effect. The host screen never grows six sets of buttons — it only
+       reports what fired. Everything stays usable from the moment the monster
+       appears until the floor is judged, so there is one rule to explain out
+       loud rather than a per-skill timing chart. */
+    function skillOf(i) {
+      const ci = classIdx[i];
+      return ci === undefined ? null : CLASSES[ci].skill;
+    }
+    function canUseSkill(i) {
+      return ROOM.enabled && (phase === 'brief' || phase === 'battle')
+        && classIdx[i] !== undefined && !skillUsed[i];
+    }
+
+    function useSkill(i) {
+      if (!canUseSkill(i)) return;
+      const cls = CLASSES[classIdx[i]];
+      const name = cls.skill.name;
+      let detail = '';
+      let redeal = false;
+
+      if (name === 'Guard') {
+        guardArmed = i;
+        detail = 'the next hit is blocked';
+      } else if (name === 'Rapid Shot') {
+        const before = timer.total;
+        timer.total = Math.min(SEC_MAX, timer.total + 30);
+        timer.left += timer.total - before;
+        timer.seq++;
+        pushTimer();
+        detail = `+${timer.total - before}s on the clock`;
+      } else if (name === 'Mend') {
+        const healed = Math.min(5, MAX_HP - hp);
+        hp += healed;
+        detail = healed ? `+${healed} health` : 'the party was already at full health';
+      } else if (name === 'Reveal') {
+        revealHint = buildHint();
+        detail = 'a hint is on the screen';
+      } else if (name === 'Inspire') {
+        // hand the spotlight to someone else — pointless if there's nobody else to hand it to
+        const others = Array.from({ length: ROOM.count }, (_, k) => k).filter(k => k !== heroIdx);
+        if (others.length) {
+          heroIdx = others[Math.floor(Math.random() * others.length)];
+          heroCount[heroIdx] = (heroCount[heroIdx] || 0) + 1;
+          redeal = true;
+          detail = `the spotlight moves to ${ROOM.name(heroIdx)}`;
+        } else {
+          detail = 'nobody else to hand it to';
+        }
+      } else if (name === 'Smoke Bomb') {
+        challenge = drawChallenge(monster.type, floor);
+        redeal = true;
+        detail = 'a fresh challenge';
+      }
+
+      skillUsed[i] = true;
+      skillLog = { who: ROOM.name(i), emoji: cls.skill.emoji, name, detail };
+      // a skill that changed what people are holding has to re-deal, so nobody
+      // is left looking at a word that is no longer this floor's challenge
+      if (redeal) ROOM.publish(k => payloadFor(k)); else pushState();
+      renderAll();
+    }
+
+    /* the Mage's hint, per challenge type — always a narrowing, never the answer:
+       fewer forbidden words to work around, the category the pair came from, or a
+       shortlist the real emotion is hiding in. */
+    function buildHint() {
+      if (!challenge) return null;
+      if (challenge.type === 'gatekeeper') {
+        // burning runes off the list makes the word easier to describe; never
+        // burn it down to nothing, or the floor stops being a challenge at all
+        const keep = Math.max(2, challenge.forbidden.length - 2);
+        const burned = challenge.forbidden.length - keep;
+        challenge.forbidden = challenge.forbidden.slice(0, keep);
+        return `🔮 ${burned} forbidden word${burned === 1 ? '' : 's'} burned away — the clue giver's list just got shorter.`;
+      }
+      if (challenge.type === 'shapeshifter') {
+        return `🔮 Both words come from: ${challenge.cat || 'an everyday category'}`;
+      }
+      /* the possessing emotion hidden among four decoys — the same move Emotion
+         Cards and Secret Rule already make, narrowing 25 options to a shortlist
+         rather than naming the answer. Sorted alphabetically so the real one's
+         position gives nothing away, and five rather than three so the party
+         still has to listen instead of blind-guessing a third of the time. */
+      const pool = GAME_DATA.emotion.filter(e => e.word !== challenge.word);
+      const picks = [];
+      while (picks.length < 4 && pool.length) picks.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      const short = picks.concat([{ word: challenge.word, emoji: challenge.emoji }])
+        .sort((a, b) => a.word.localeCompare(b.word))
+        .map(e => `${e.emoji} ${e.word}`).join('  ·  ');
+      return `🔮 One of these five is the one: ${short}`;
+    }
+
+    /* a card asking to spend its charge. The vote carries this floor's id, so a
+       request left over from an earlier floor simply stops matching instead of
+       having to be cleaned up. */
+    function handlePlayerData(num, data) {
+      const v = data && data.vote;
+      if (!v || v.kind !== 'skill' || !floorId || v.id !== floorId) return;
+      ROOM.clearAnswer(num - 1);
+      useSkill(num - 1);
     }
 
     /* the single do-over per run: same monster, fresh challenge card, and the
@@ -606,28 +839,67 @@
       renderAll();
     }
 
-    /* ── Timer (host screen only — the host is sharing it, so every player can
-       already see it; syncing a copy to each card is a later pass) ── */
-    function startTimer() {
-      stopTimer();
-      timer.running = true;
-      timer.handle = setInterval(() => {
-        timer.remaining = Math.max(0, timer.remaining - 1);
-        if (timer.remaining === 0) stopTimer();
-        renderTimer();
-      }, 1000);
+    /* ── Timer ────────────────────────────────────────────────────────────────
+       Published on change, ticked locally by every card. Each of these bumps
+       `seq` so the cards know this is a new instruction rather than a repeat of
+       one they're already counting down from. ── */
+    function stopTicking() { if (timer.iv) { clearInterval(timer.iv); timer.iv = null; } }
+
+    function setSeconds(secs) {
+      timer.total = Math.max(SEC_MIN, Math.min(SEC_MAX, Math.round(secs)));
+      stopTicking();
+      timer.running = false;
+      timer.left = timer.total;
+      timer.seq++;
+    }
+    /* the host's −/+ buttons: nudges the clock mid-floor without resetting it,
+       so adding time to a round that's already running doesn't restart it */
+    function bumpSeconds(delta) {
+      if (!ROOM.enabled) return;
+      const next = Math.max(SEC_MIN, Math.min(SEC_MAX, timer.total + delta));
+      if (next === timer.total) return;
+      timer.left = Math.max(0, timer.left + (next - timer.total));
+      timer.total = next;
+      timer.seq++;
+      pushTimer();
       renderTimer();
     }
-    function stopTimer() {
-      if (timer.handle) clearInterval(timer.handle);
-      timer.handle = null; timer.running = false;
+    function startTimer() {
+      stopTicking();
+      if (timer.left <= 0) timer.left = timer.total;
+      timer.running = true;
+      timer.seq++;
+      timer.iv = setInterval(() => {
+        timer.left = Math.max(0, timer.left - 1);
+        if (timer.left <= 0) { stopTicking(); timer.running = false; timer.seq++; pushTimer(); }
+        renderTimer();
+      }, 1000);
+      pushTimer();
+      renderTimer();
+    }
+    function pauseTimer() {
+      stopTicking();
+      timer.running = false;
+      timer.seq++;
+      pushTimer();
       renderTimer();
     }
     function toggleTimer() {
-      if (timer.running) stopTimer();
-      else if (timer.remaining > 0) startTimer();
+      if (!ROOM.enabled) return;
+      if (timer.running) pauseTimer(); else startTimer();
     }
-    function resetTimer() { stopTimer(); timer.remaining = ROUND_SECONDS; renderTimer(); }
+    function resetTimer() {
+      if (!ROOM.enabled) return;
+      setSeconds(timer.total);
+      pushTimer();
+      renderTimer();
+    }
+    function timerPayload() {
+      return { seq: timer.seq, state: timer.running ? 'running' : (timer.left <= 0 ? 'done' : 'paused'), remaining: timer.left, total: timer.total };
+    }
+    /* the clock alone — cheaper than a full pushState, and it can't race with a
+       card's in-flight skill request the way a whole-payload write could */
+    function pushTimer() { ROOM.update(() => ({ timer: timerPayload() })); }
 
     /* ── Firebase ─────────────────────────────────────────────────────────── */
     function pushState() { ROOM.update(i => payloadFor(i)); }
@@ -659,6 +931,17 @@
         role: isHero ? 'hero' : 'party',
         secret: null,
         result: null,
+        // this player's own skill: what it is, whether it's still available, and
+        // the floor id their tap has to carry so a stale request can't re-fire
+        skill: cls ? cls.skill : null,
+        skillReady: canUseSkill(i),
+        skillSpent: !!skillUsed[i],
+        floorId: floorId || null,
+        // the party-wide skill banner, so a player who wasn't looking at the
+        // shared screen still sees that someone just spent a charge
+        skillLog: skillLog,
+        guardArmed: guardArmed >= 0,
+        timer: (phase === 'brief' || phase === 'battle') ? timerPayload() : null,
       };
 
       if (phase === 'battle' && challenge) {
@@ -708,6 +991,7 @@
       renderRetry();
       renderHP();
       renderMonster();
+      renderSkillLog();
       renderTimer();
       renderResult();
       renderRunEnd();
@@ -719,8 +1003,8 @@
        somewhere to point at before a run starts */
     function renderFlow() {
       const steps = [{ key: 'enter', emoji: '🗡️', label: 'Enter' }];
-      for (let f = 1; f <= FLOORS; f++) {
-        steps.push({ key: f, emoji: f === FLOORS ? '👑' : '🚪', label: f === FLOORS ? 'Boss Floor' : `Floor ${f}` });
+      for (let f = 1; f <= floors; f++) {
+        steps.push({ key: f, emoji: f === floors ? '👑' : '🚪', label: f === floors ? 'Boss Floor' : `Floor ${f}` });
       }
       document.getElementById('dg-flow-steps').innerHTML = steps.map(s => {
         let cls = '';
@@ -756,7 +1040,7 @@
       if (phase === 'wiped')   { el.classList.add('lose'); el.textContent = '🗡️ New Run'; return; }
       // result
       if (hp <= 0)             { el.classList.add('lose'); el.textContent = '💀 The party falls…'; return; }
-      if (floor >= FLOORS)     { el.classList.add('win');  el.textContent = '🏆 Escape with the loot!'; return; }
+      if (floor >= floors)     { el.classList.add('win');  el.textContent = '🏆 Escape with the loot!'; return; }
       el.textContent = `⬇️ Descend to Floor ${floor + 1}`;
     }
 
@@ -813,7 +1097,7 @@
       document.getElementById('m-content').style.display = showing ? '' : 'none';
       if (!showing) return;
       document.getElementById('m-emoji').textContent = monster.emoji;
-      document.getElementById('m-label').textContent = monster.boss ? `👑 Boss · Floor ${floor}` : `Floor ${floor} of ${FLOORS}`;
+      document.getElementById('m-label').textContent = monster.boss ? `👑 Boss · Floor ${floor}` : `Floor ${floor} of ${floors}`;
       document.getElementById('m-name').textContent = monster.name;
       document.getElementById('m-taunt').textContent = `“${monster.taunt}”`;
       const howto = document.getElementById('m-howto');
@@ -822,17 +1106,35 @@
       howto.innerHTML = phase === 'brief'
         ? '📜 Read the monster out, then press <b>⚔️ Deal the challenge</b>.'
         : howToText();
+      // the Mage's hint sits under the how-to for the rest of the floor
+      const hint = document.getElementById('m-hint');
+      hint.classList.toggle('hidden', !revealHint);
+      if (revealHint) hint.textContent = revealHint;
+    }
+
+    /* the banner that says which skill just fired — the host screen carries no
+       skill buttons, so this is the only place a spent charge shows up */
+    function renderSkillLog() {
+      const el = document.getElementById('skill-log');
+      const show = !!skillLog && phase !== 'idle';
+      el.classList.toggle('hidden', !show);
+      if (!show) return;
+      el.innerHTML = `<span class="sl-emoji">${skillLog.emoji}</span>
+        <span class="sl-text"><b>${esc(skillLog.who)}</b> used <b>${esc(skillLog.name)}</b>${skillLog.detail ? ' — ' + esc(skillLog.detail) : ''}</span>`;
     }
 
     function renderTimer() {
-      document.getElementById('timer-wrap').classList.toggle('hidden', phase !== 'battle');
+      document.getElementById('timer-wrap').classList.toggle('hidden', !(phase === 'brief' || phase === 'battle'));
       const c = document.getElementById('timer-circle');
-      const m = Math.floor(timer.remaining / 60), s = timer.remaining % 60;
+      const m = Math.floor(timer.left / 60), s = timer.left % 60;
       c.textContent = `${m}:${String(s).padStart(2, '0')}`;
-      const pct = timer.remaining / ROUND_SECONDS;
+      const pct = timer.total ? timer.left / timer.total : 1;
       c.classList.toggle('mid', pct <= .5 && pct > .2);
       c.classList.toggle('low', pct <= .2);
       document.getElementById('timer-toggle').textContent = timer.running ? '⏸️ Pause' : '▶️ Start';
+      document.getElementById('secs-minus').disabled = timer.total <= SEC_MIN;
+      document.getElementById('secs-plus').disabled = timer.total >= SEC_MAX;
+      document.getElementById('secs-total').textContent = timer.total + 's';
     }
 
     function renderResult() {
@@ -848,7 +1150,9 @@
       el.innerHTML = `
         <div class="rc-headline">${lastResult.won ? `⚔️ ${esc(monster.name)} falls!` : `💥 ${esc(monster.name)} wins the floor`}</div>
         <div class="rc-answer">${heroLine}</div>
-        <div class="rc-sub">${lastResult.won ? 'No damage taken.' : `The party takes ${lastResult.damage} damage.`}</div>`;
+        <div class="rc-sub">${lastResult.won ? 'No damage taken.'
+          : lastResult.guardedBy ? `🛡️ ${esc(lastResult.guardedBy)} blocked the hit — no damage taken.`
+          : `The party takes ${lastResult.damage} damage.`}</div>`;
     }
 
     function renderRunEnd() {
@@ -861,9 +1165,9 @@
       el.classList.toggle('wiped', phase === 'wiped');
       el.innerHTML = phase === 'escaped'
         ? `<div class="re-title">🏆 You made it out!</div>
-           <div class="re-sub">${cleared} of ${FLOORS} floors cleared, with <b>${hp}</b> health to spare.</div>`
+           <div class="re-sub">${cleared} of ${floors} floors cleared, with <b>${hp}</b> health to spare.</div>`
         : `<div class="re-title">💀 The party is wiped out</div>
-           <div class="re-sub">You got ${cleared} of ${FLOORS} floors deep before the dungeon took you.</div>`;
+           <div class="re-sub">You got ${cleared} of ${floors} floors deep before the dungeon took you.</div>`;
     }
 
     function renderParty() {
@@ -878,10 +1182,18 @@
       el.innerHTML = classIdx.slice(0, ROOM.count).map((ci, i) => {
         const c = CLASSES[ci];
         const hero = showHero && i === heroIdx;
+        // whether this player still has their charge — the host needs to see at a
+        // glance who can still bail the party out, without opening anyone's card.
+        // The Tank's Guard reads as armed rather than spent while it's holding.
+        const spent = !!skillUsed[i];
+        const holding = guardArmed === i;
+        const state = holding ? 'armed' : spent ? 'spent' : 'ready';
+        const mark = holding ? '🛡️ holding' : spent ? '· used ·' : `${c.skill.emoji} ready`;
         return `<div class="pc-chip${hero ? ' pc-hero' : ''}" style="border-color:${c.hex};color:${c.hex};background:linear-gradient(160deg, ${c.hex}22, ${c.hex}06)">
           <span class="pc-emoji">${c.emoji}</span>
           <span class="pc-class" style="color:${c.hex}">${esc(c.name)}</span>
           <span class="pc-name">${esc(ROOM.name(i))}</span>
+          <span class="pc-skill sk-${state}">${mark}</span>
         </div>`;
       }).join('');
     }

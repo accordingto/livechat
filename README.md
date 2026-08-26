@@ -12,7 +12,7 @@ host is sharing.
 
 | Game | Players | Description |
 |------|---------|-------------|
-| 🗡️ Dungeon Party | 3–6 | Co-op: everyone is dealt a class, then the party descends five floors on one shared health bar. Each monster is a challenge dealt secretly to the players' cards |
+| 🗡️ Dungeon Party | 3–6 | Co-op: everyone is dealt a class with one skill to spend, then the party descends 3, 5 or 7 floors on one shared health bar. Each monster is a challenge dealt secretly to the players' cards |
 | ⚖️ Kangaroo Court | 4–9 | One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — before and after |
 | 🏰 Dare Conquest | 2–6 | Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival |
 | 📜 Secret Rule | 2–6 | Everyone secretly gets a different person to treat the room as — your students, your boss, total strangers. Just chat, then guess who everyone thought they were talking to |
