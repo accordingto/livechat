@@ -1491,5 +1491,57 @@ const GAME_DATA = {
       { emoji: '⛅', name: 'The Weather', hint: 'starts turning, adding urgency to figuring this out' },
     ] },
   ],
-};
 
+  /* ── Dungeon Party ────────────────────────────────────────────────────────
+     Classes are dealt one per player at the start of a run. Each class carries
+     one signature `skill`, worth a single charge per run, fired by the player
+     from their own card and applied by the host. Every skill pulls on a lever
+     the game already has — party health, the clock, the spotlight, the
+     challenge card — rather than introducing a currency of its own. */
+  dungeonClasses: [
+    { emoji: '🛡️', name: 'Tank',   hex: '#ef4444', blurb: 'Front line. You speak first when nobody else will.',
+      skill: { emoji: '🛡️', name: 'Guard', blurb: 'Block all damage if the party loses this floor.' } },
+    { emoji: '🏹', name: 'Archer', hex: '#22c55e', blurb: 'Sharp eyes. You catch the detail everyone else skipped.',
+      skill: { emoji: '🏹', name: 'Rapid Shot', blurb: 'Add 30 seconds to the clock.' } },
+    { emoji: '🔮', name: 'Mage',   hex: '#a78bfa', blurb: 'Arcane mind. You read what the party cannot.',
+      skill: { emoji: '🔮', name: 'Reveal', blurb: 'Pull a hint out of the monster, onto the host screen.' } },
+    { emoji: '❤️', name: 'Healer', hex: '#ec4899', blurb: 'Keeps the party standing. Watch who is struggling.',
+      skill: { emoji: '❤️', name: 'Mend', blurb: 'Heal the party for 5.' } },
+    { emoji: '🎵', name: 'Bard',   hex: '#f59e0b', blurb: 'Loud and shameless. Keep the room talking.',
+      skill: { emoji: '🎵', name: 'Inspire', blurb: 'Hand the spotlight to someone else and re-deal.' } },
+    { emoji: '🗡️', name: 'Rogue',  hex: '#06b6d4', blurb: 'Quiet until it counts. Then you take the shot.',
+      skill: { emoji: '🗡️', name: 'Smoke Bomb', blurb: 'Swap this challenge for a fresh one of the same kind.' } },
+  ],
+
+  /* Monsters the party meets on the way down. `type` picks which existing deck
+     supplies the actual challenge, so the dungeon reuses banks that already have
+     an objective win condition rather than inventing new content:
+       gatekeeper   -> taboo    (one player describes, the party guesses)
+       shapeshifter -> wordwolf (one player got a different word — find them)
+       wraith       -> emotion  (one player is possessed, the party names it)
+     `boss: true` monsters are held back for the final floor. `taunt` is the one
+     line the host reads aloud when the floor opens. */
+  dungeonMonsters: [
+    { emoji: '🗿', name: 'The Stone Gatekeeper',  type: 'gatekeeper', taunt: 'Name what I guard — but the sacred words may not pass your lips.' },
+    { emoji: '📜', name: 'The Riddle Scribe',     type: 'gatekeeper', taunt: 'I have written the answer down. Say it without saying it.' },
+    { emoji: '🔒', name: 'The Sealed Door',       type: 'gatekeeper', taunt: 'One of you knows the password. Make the others understand it.' },
+    { emoji: '🕯️', name: 'The Whispering Candle', type: 'gatekeeper', taunt: 'Speak around the flame. Say a forbidden word and it goes out.' },
+    { emoji: '🧿', name: 'The Watching Idol',     type: 'gatekeeper', taunt: 'Describe me. Use the obvious words and I will not answer.' },
+
+    { emoji: '🐺', name: 'The Shapeshifter',      type: 'shapeshifter', taunt: 'One of you is already me. You just have not noticed yet.' },
+    { emoji: '🎭', name: 'The Mimic',             type: 'shapeshifter', taunt: 'I wear a face from your own party. Talk, and find the seam.' },
+    { emoji: '🪞', name: 'The Mirror Twin',       type: 'shapeshifter', taunt: 'Someone here sees a different world than the rest of you.' },
+    { emoji: '🕷️', name: 'The Web Weaver',        type: 'shapeshifter', taunt: 'One thread does not match. Pull it before I pull you.' },
+    { emoji: '🌫️', name: 'The Fog Walker',        type: 'shapeshifter', taunt: 'You are not all looking at the same thing. Work out who is not.' },
+
+    { emoji: '😈', name: 'The Wraith',            type: 'wraith', taunt: 'I have taken one of you. Hear how they speak now.' },
+    { emoji: '👻', name: 'The Hollow Ghost',      type: 'wraith', taunt: 'A feeling not their own is in their voice. Name it.' },
+    { emoji: '🎃', name: 'The Grinning Hollow',   type: 'wraith', taunt: 'They will keep talking. Nothing they feel is real.' },
+    { emoji: '🩸', name: 'The Blood Echo',        type: 'wraith', taunt: 'Listen past the words. Something else is speaking.' },
+    { emoji: '🌑', name: 'The Nightmare',         type: 'wraith', taunt: 'One of you carries my mood now. Say what it is.' },
+
+    { emoji: '🐉', name: 'The Ancient Dragon',    type: 'gatekeeper',   boss: true, taunt: 'Speak my treasure aloud — and every obvious word burns you.' },
+    { emoji: '👑', name: 'The False King',        type: 'shapeshifter', boss: true, taunt: 'One of you has sat on my throne. Find the pretender or kneel.' },
+    { emoji: '💀', name: 'The Lich',              type: 'wraith',       boss: true, taunt: 'I have hollowed one of you out. Name what fills them now.' },
+  ],
+};
