@@ -15,30 +15,35 @@
   <style>
     :root { --accent: #7c3aed; --accent-alt: #7c3aed; --warn: #7c3aed; }
 
-    /* ── Dungeon atmosphere: stone walls, torchlight and drifting embers behind
-       everything. Pure CSS/gradients so there's nothing to fetch or vendor,
-       and kept low-contrast so it never competes with the shared screen. ── */
+    /* ── Dungeon atmosphere: soft torchlit vignette and a fine film-grain, the
+       way a AAA menu screen does it — not a literal brick pattern, which reads
+       as a placeholder texture rather than depth. Pure CSS/gradients plus one
+       tiny inline SVG grain, so there's nothing to fetch or vendor, and it's
+       kept low-contrast so it never competes with the shared screen. ── */
     body {
       background:
-        radial-gradient(ellipse 900px 500px at 15% -8%, rgba(234,179,8,.10), transparent 60%),
-        radial-gradient(ellipse 900px 500px at 85% -8%, rgba(234,179,8,.10), transparent 60%),
-        radial-gradient(ellipse 1100px 700px at 50% 108%, rgba(124,58,237,.14), transparent 60%),
-        repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 2px, transparent 2px 46px),
-        repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 2px, transparent 2px 92px),
-        radial-gradient(circle at 50% 0%, #14141f, #05050a 78%);
+        radial-gradient(ellipse 900px 500px at 15% -10%, rgba(234,179,8,.08), transparent 60%),
+        radial-gradient(ellipse 900px 500px at 85% -10%, rgba(234,179,8,.08), transparent 60%),
+        radial-gradient(ellipse 1200px 700px at 50% 115%, rgba(124,58,237,.13), transparent 60%),
+        radial-gradient(circle at 50% 0%, #15151f, #07070c 82%);
       position: relative;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      opacity: .05; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
     /* drifting embers — a handful of soft points rising slowly up the screen */
     .ember-field { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .ember {
-      position: absolute; bottom: -10px; width: 4px; height: 4px; border-radius: 50%;
-      background: #fbbf24; box-shadow: 0 0 8px 2px rgba(251,191,36,.8);
+      position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%;
+      background: #fbbf24; box-shadow: 0 0 7px 2px rgba(251,191,36,.7);
       opacity: 0; animation: emberRise linear infinite;
     }
     @keyframes emberRise {
       0%   { transform: translateY(0) translateX(0); opacity: 0; }
-      8%   { opacity: .8; }
-      92%  { opacity: .3; }
+      8%   { opacity: .65; }
+      92%  { opacity: .25; }
       100% { transform: translateY(-100vh) translateX(var(--drift, 20px)); opacity: 0; }
     }
     .topbar, .header, .fb-warning, .dg-layout, #room-mount, .m-browser { position: relative; z-index: 1; }
@@ -136,26 +141,36 @@
     /* ── Status line — the sidebar's CTA, one short line, same shape as
        Kangaroo Court's so the two host pages drive identically ── */
     .status-line {
-      display: block; width: 100%;
-      background: linear-gradient(135deg, #a78bfa, #6d28d9);
-      color: #fff; border: 2px solid #c4b5fd; border-radius: 12px;
-      padding: 14px 12px; margin-top: 18px;
+      display: block; width: 100%; position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #8b6fd6, #5b21b6);
+      color: #fff; border: 1.5px solid rgba(196,181,253,.7); border-radius: 12px;
+      padding: 15px 12px; margin-top: 18px;
       font-size: .92rem; font-weight: 800; line-height: 1.2; text-align: center;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      box-shadow: 0 6px 18px rgba(124,58,237,.35), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -3px 6px rgba(0,0,0,.25);
-      cursor: pointer;
+      white-space: nowrap; text-overflow: ellipsis;
+      box-shadow: 0 6px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.28), inset 0 -3px 6px rgba(0,0,0,.3);
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: box-shadow .2s, transform .1s, filter .15s, background .3s, border-color .3s, color .3s;
     }
-    .status-line:hover:not(.not-clickable) { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(124,58,237,.5); }
+    .status-line:hover:not(.not-clickable) { filter: brightness(1.08); }
     .status-line:active:not(.not-clickable) { transform: scale(.98); }
-    .status-line.not-clickable { cursor: default; background: #0d0d1a; color: #555; border-color: #1e1e42; box-shadow: none; }
-    .status-line.win  { background: linear-gradient(135deg, #4ade80, #15803d); border-color: #86efac; box-shadow: 0 6px 18px rgba(34,197,94,.4); }
-    .status-line.lose { background: linear-gradient(135deg, #f87171, #b91c1c); border-color: #fca5a5; box-shadow: 0 6px 18px rgba(239,68,68,.4); }
+    .status-line.not-clickable { cursor: default; background: #0d0d1a; color: #555; border-color: #1e1e42; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+    .status-line.win  { background: linear-gradient(160deg, #5fd191, #157347); border-color: rgba(134,239,172,.7); }
+    .status-line.lose { background: linear-gradient(160deg, #ef8686, #a52626); border-color: rgba(252,165,165,.7); }
     .status-line.is-next { animation: statusPulse 1.6s ease-in-out infinite; }
     @keyframes statusPulse {
       0%, 100% { filter: brightness(1); }
-      50%      { filter: brightness(1.3); }
+      50%      { filter: brightness(1.22); }
     }
+    /* tap ripple — one generic effect shared by every button-like element on
+       this page, fired from JS on pointerdown so it works the same on an
+       iPad's touch input as it does under a mouse */
+    .ripple-host { position: relative; overflow: hidden; }
+    .ripple {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      background: rgba(255,255,255,.5); transform: scale(0);
+      animation: rippleOut .55s ease-out forwards;
+    }
+    @keyframes rippleOut { to { transform: scale(1); opacity: 0; } }
 
     /* ── Verdict buttons: the host's only judgement in the whole game, so they
        sit right under the CTA where the host is already looking. Solid fills,
@@ -163,23 +178,24 @@
     .verdict-row { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
     .verdict-row.hidden { display: none; }
     .vbtn {
-      width: 100%; border-radius: 12px; padding: 12px 10px;
+      width: 100%; border-radius: 12px; padding: 12px 10px; position: relative; overflow: hidden;
       font-size: .88rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      border: 2px solid; color: #fff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -3px 6px rgba(0,0,0,.25);
+      border: 1.5px solid; color: #fff; -webkit-tap-highlight-color: transparent;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -3px 6px rgba(0,0,0,.28), 0 4px 10px rgba(0,0,0,.3);
       transition: filter .15s, transform .1s;
     }
-    .vbtn:hover  { filter: brightness(1.1); }
+    .vbtn:hover  { filter: brightness(1.08); }
     .vbtn:active { transform: scale(.98); }
-    .vbtn.win  { background: linear-gradient(135deg, #4ade80, #15803d); border-color: #86efac; }
-    .vbtn.lose { background: linear-gradient(135deg, #f87171, #b91c1c); border-color: #fca5a5; }
+    .vbtn.win  { background: linear-gradient(160deg, #5fd191, #157347); border-color: rgba(134,239,172,.7); }
+    .vbtn.lose { background: linear-gradient(160deg, #ef8686, #a52626); border-color: rgba(252,165,165,.7); }
 
     /* the one retry a party gets per run — deliberately quiet, it's a bail-out */
     .dg-retry-btn {
-      width: 100%; margin-top: 10px;
-      background: transparent; border: 2px solid #1e1e42; color: #666;
+      width: 100%; margin-top: 10px; position: relative; overflow: hidden;
+      background: transparent; border: 1.5px solid #26264a; color: #6a6a8a;
       border-radius: 12px; padding: 10px 12px;
       font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
       transition: border-color .2s, color .2s, opacity .2s;
     }
     .dg-retry-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
@@ -197,6 +213,13 @@
       animation: fadeUp .5s ease both;
     }
     .hp-wrap.hidden { display: none; }
+    .hp-wrap.hp-shake { animation: hpShake .45s ease; }
+    @keyframes hpShake {
+      10%, 90%  { transform: translateX(-1px); }
+      20%, 80%  { transform: translateX(2px); }
+      30%, 50%, 70% { transform: translateX(-4px); }
+      40%, 60%  { transform: translateX(4px); }
+    }
     .hp-label { font-size: .72rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #888; white-space: nowrap; }
     .hp-bar {
       flex: 1; height: 22px; background: #05050a; border-radius: 999px; overflow: hidden;
@@ -232,39 +255,54 @@
       100% { opacity: 0; transform: translateY(-18px) scale(1); }
     }
 
-    /* ── The monster card: a stone archway with the encounter lit inside it ── */
+    /* ── The monster card: a stone archway with the encounter lit inside it —
+       a clean rounded frame with a gilded arch line at the top standing in
+       for actual architecture, rather than deforming the box into a pill. ── */
     .monster-card {
       width: 100%; max-width: 1100px;
       background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(124,58,237,.03));
-      border: 2px solid #7c3aed; border-radius: 22px 22px 90px 90px / 22px 22px 40px 40px;
-      padding: 30px 30px 24px; margin-bottom: 16px;
+      border: 1.5px solid #7c3aed; border-radius: 20px;
+      padding: 32px 30px 26px; margin-bottom: 16px;
       display: flex; flex-direction: column; align-items: center; gap: 10px;
       text-align: center; position: relative; overflow: hidden;
-      box-shadow: inset 0 0 60px rgba(0,0,0,.4), inset 0 0 0 6px rgba(124,58,237,.08);
+      box-shadow: inset 0 0 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06), 0 14px 34px rgba(0,0,0,.4);
       animation: fadeUp .5s .1s ease both;
-      transition: border-color .3s, box-shadow .3s;
+      transition: border-color .3s, box-shadow .3s, transform .3s;
+    }
+    /* the gilded arch line across the top, standing in for stonework */
+    .monster-card::before {
+      content: ''; position: absolute; top: 0; left: 14%; right: 14%; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(234,179,8,.55), transparent);
     }
     /* fog drifting along the floor of the archway */
     .monster-card::after {
       content: ''; position: absolute; left: -20%; right: -20%; bottom: -10%; height: 60%;
-      background: radial-gradient(ellipse 50% 100% at 30% 100%, rgba(200,180,255,.08), transparent 70%),
-                  radial-gradient(ellipse 50% 100% at 70% 100%, rgba(200,180,255,.06), transparent 70%);
+      background: radial-gradient(ellipse 50% 100% at 30% 100%, rgba(200,180,255,.07), transparent 70%),
+                  radial-gradient(ellipse 50% 100% at 70% 100%, rgba(200,180,255,.05), transparent 70%);
       animation: fogDrift 12s ease-in-out infinite alternate; pointer-events: none;
     }
     @keyframes fogDrift { 0% { transform: translateX(-3%); } 100% { transform: translateX(3%); } }
     /* a torch guttering in each corner of the archway */
     .monster-card .m-torch {
-      position: absolute; top: 14px; font-size: 1.3rem; filter: drop-shadow(0 0 10px rgba(251,191,36,.65));
-      animation: torchFlicker 2.2s ease-in-out infinite; opacity: .85; z-index: 1;
+      position: absolute; top: 16px; font-size: 1.15rem; filter: drop-shadow(0 0 8px rgba(251,191,36,.6));
+      animation: torchFlicker 2.2s ease-in-out infinite; opacity: .8; z-index: 1;
     }
-    .monster-card .m-torch.left  { left: 18px; }
-    .monster-card .m-torch.right { right: 18px; animation-delay: .9s; }
-    .monster-card.idle { border-color: #1e1e42; background: #13132b; box-shadow: inset 0 0 40px rgba(0,0,0,.3); }
-    .monster-card.idle .m-torch { opacity: .25; filter: grayscale(1) drop-shadow(0 0 4px rgba(150,150,150,.3)); animation: none; }
+    .monster-card .m-torch.left  { left: 20px; }
+    .monster-card .m-torch.right { right: 20px; animation-delay: .9s; }
+    .monster-card.idle { border-color: #232345; background: #12122a; box-shadow: inset 0 0 40px rgba(0,0,0,.3); }
+    .monster-card.idle::before { background: linear-gradient(90deg, transparent, rgba(120,120,150,.35), transparent); }
+    .monster-card.idle .m-torch { opacity: .22; filter: grayscale(1) drop-shadow(0 0 4px rgba(150,150,150,.25)); animation: none; }
     .monster-card.is-boss {
       border-color: #eab308;
       background: linear-gradient(135deg, rgba(234,179,8,.18), rgba(234,179,8,.03));
-      box-shadow: inset 0 0 60px rgba(0,0,0,.4), inset 0 0 0 6px rgba(234,179,8,.12), 0 0 40px rgba(234,179,8,.2);
+      box-shadow: inset 0 0 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08), 0 0 44px rgba(234,179,8,.18);
+    }
+    /* the beat when a new floor's encounter drops in — retriggered from JS
+       whenever the monster actually changes, not on every render */
+    .monster-card.mc-enter { animation: mcEnter .55s cubic-bezier(.2,.8,.3,1) both; }
+    @keyframes mcEnter {
+      0%   { opacity: 0; transform: translateY(10px) scale(.97); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
     .monster-card.is-boss .m-label { color: #fde68a; }
     .monster-card.is-boss .m-name  { color: #fef3c7; }
@@ -307,6 +345,7 @@
     .timer-circle.mid { border-color: #f59e0b; color: #f59e0b; }
     .timer-circle.low { border-color: #ef4444; color: #ef4444; animation: flicker 1s ease-in-out infinite; }
     .timer-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .timer-btns button { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 
     /* the Mage's Reveal, parked under the how-to line for the rest of the floor */
     .m-hint {
@@ -333,42 +372,54 @@
     .skill-log .sl-text { font-size: .95rem; font-weight: 700; color: #ede9fe; line-height: 1.4; }
     .skill-log .sl-text b { color: #fff; }
 
-    /* the round-length stepper, same shape as Say It Without Saying It's */
+    /* the round-length stepper, same shape as Say It Without Saying It's —
+       40px square so it's a comfortable tap target on an iPad, not just a mouse */
     .secs-stepper { display: flex; align-items: center; gap: 8px; }
     .secs-btn {
-      width: 34px; height: 34px; border-radius: 9px;
-      background: transparent; border: 2px solid #1e1e42; color: #888;
+      width: 40px; height: 40px; border-radius: 10px; position: relative; overflow: hidden;
+      background: transparent; border: 1.5px solid #26264a; color: #888;
       font-size: 1.1rem; font-weight: 900; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s, opacity .2s;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color .2s, color .2s, opacity .2s, background .2s;
     }
     .secs-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
+    .secs-btn:active:not(:disabled) { background: rgba(167,139,250,.12); transform: scale(.96); }
     .secs-btn:disabled { opacity: .3; cursor: not-allowed; }
     .secs-total { font-size: .95rem; font-weight: 900; color: #ccc; min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
 
     /* run length, in the ROOM setup card via extraRowHTML */
     .floor-btns { display: flex; gap: 8px; flex-wrap: wrap; }
     .floor-btn {
-      min-width: 44px; padding: 9px 14px; border-radius: 10px;
-      background: transparent; border: 2px solid #1e1e42; color: #888;
+      min-width: 44px; min-height: 40px; padding: 9px 14px; border-radius: 10px; position: relative; overflow: hidden;
+      background: transparent; border: 1.5px solid #26264a; color: #888;
       font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s, background .2s;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color .2s, color .2s, background .2s, transform .1s;
     }
     .floor-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+    .floor-btn:active { transform: scale(.96); }
     .floor-btn.on { border-color: #7c3aed; color: #fff; background: rgba(124,58,237,.25); }
 
     /* ── Party strip: who is playing which class this run ── */
     .party-strip {
       width: 100%; max-width: 1100px;
       display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
-      animation: fadeUp .5s .15s ease both;
     }
     .party-strip.hidden { display: none; }
     .pc-chip {
       flex: 1; min-width: 140px; position: relative;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 6px 6px 14px 14px;
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 6px 6px 14px 14px;
       padding: 14px 12px 12px; display: flex; flex-direction: column; align-items: center; gap: 3px;
       box-shadow: 0 0 18px transparent, inset 0 1px 0 rgba(255,255,255,.05), inset 0 -12px 18px -12px rgba(0,0,0,.5);
       transition: border-color .3s, box-shadow .3s, background .3s;
+      /* each chip drops in a beat after the last — a deal-out feel rather
+         than the whole row appearing at once */
+      animation: pcEnter .4s ease both;
+      animation-delay: calc(var(--i, 0) * 70ms);
+    }
+    @keyframes pcEnter {
+      0%   { opacity: 0; transform: translateY(8px) scale(.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
     /* a little plaque nail top and bottom, like a name tag bolted to the wall */
     .pc-chip::before, .pc-chip::after {
@@ -434,10 +485,14 @@
        run doesn't spoil which monsters exist ── */
     .m-browser { width: 100%; max-width: 1100px; margin-top: 30px; }
     .m-browser-hdr {
+      display: inline-block; position: relative; overflow: hidden;
       font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin-bottom: 10px; cursor: pointer; user-select: none;
+      color: #555; margin-bottom: 10px; padding: 8px 4px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: color .2s, transform .1s;
     }
     .m-browser-hdr:hover { color: #a78bfa; }
+    .m-browser-hdr:active { transform: scale(.97); }
     .m-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
     .m-list.hidden { display: none; }
     /* bestiary entries read as a stack of hunter's notes pinned to the wall */
@@ -476,6 +531,23 @@
       }
       field.innerHTML = html;
     })();
+
+    // one tap-ripple effect shared by every button-like element on this page —
+    // pointerdown covers mouse, touch and pen alike, so it feels the same
+    // whether the host is on a laptop trackpad or tapping an iPad screen
+    document.addEventListener('pointerdown', (e) => {
+      const el = e.target.closest('.status-line, .vbtn, .dg-retry-btn, .secs-btn, .floor-btn, .m-browser-hdr, .timer-btns button');
+      if (!el || el.disabled || el.classList.contains('not-clickable')) return;
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 1.6;
+      const span = document.createElement('span');
+      span.className = 'ripple';
+      span.style.width = span.style.height = size + 'px';
+      span.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      span.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      el.appendChild(span);
+      span.addEventListener('animationend', () => span.remove());
+    }, { passive: true });
   </script>
 
   <div class="header">
@@ -1193,6 +1265,10 @@
       const el = document.getElementById('hp-hit');
       el.innerHTML = `<span class="hp-hit">−${n}</span>`;
       setTimeout(() => { el.innerHTML = ''; }, 950);
+      const wrap = document.getElementById('hp-wrap');
+      wrap.classList.remove('hp-shake');
+      void wrap.offsetWidth; // restart the animation even if the last hit is still fading
+      wrap.classList.add('hp-shake');
     }
 
     /* the one line the host reads out to explain how this floor is played.
@@ -1210,6 +1286,9 @@
       return `🐺 Everyone has a word on their card. One of you has a <b>different</b> one. Talk about it, then name the impostor.`;
     }
 
+    // which encounter the card last showed — lets renderMonster tell "still the
+    // same floor" apart from "a new one just dropped in" without a separate flag
+    let lastMonsterKey = null;
     function renderMonster() {
       const card = document.getElementById('monster-card');
       const showing = phase !== 'idle' && !!monster;
@@ -1217,7 +1296,14 @@
       card.classList.toggle('is-boss', showing && !!monster.boss);
       document.getElementById('m-placeholder').style.display = showing ? 'none' : '';
       document.getElementById('m-content').style.display = showing ? '' : 'none';
-      if (!showing) return;
+      if (!showing) { lastMonsterKey = null; return; }
+      const key = floor + ':' + monster.name;
+      if (key !== lastMonsterKey) {
+        lastMonsterKey = key;
+        card.classList.remove('mc-enter');
+        void card.offsetWidth;
+        card.classList.add('mc-enter');
+      }
       document.getElementById('m-emoji').textContent = monster.emoji;
       document.getElementById('m-label').textContent = monster.boss ? `👑 Boss · Floor ${floor}` : `Floor ${floor} of ${floors}`;
       document.getElementById('m-name').textContent = monster.name;
@@ -1311,7 +1397,7 @@
         const holding = guardArmed === i;
         const state = holding ? 'armed' : spent ? 'spent' : 'ready';
         const mark = holding ? '🛡️ holding' : spent ? '· used ·' : `${c.skill.emoji} ready`;
-        return `<div class="pc-chip${hero ? ' pc-hero' : ''}" style="border-color:${c.hex};color:${c.hex};background:linear-gradient(160deg, ${c.hex}22, ${c.hex}06)">
+        return `<div class="pc-chip${hero ? ' pc-hero' : ''}" style="--i:${i};border-color:${c.hex};color:${c.hex};background:linear-gradient(160deg, ${c.hex}22, ${c.hex}06)">
           <span class="pc-emoji">${c.emoji}</span>
           <span class="pc-class" style="color:${c.hex}">${esc(c.name)}</span>
           <span class="pc-name">${esc(ROOM.name(i))}</span>
