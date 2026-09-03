@@ -410,7 +410,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="onboarding.js"></script>
   <script>
     const DECK = GAME_DATA.kangaroo;
     const DECKW = GAME_DATA.kangarooWitness;
@@ -468,86 +467,6 @@
       onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
-
-    /* ── New host guide ──────────────────────────────────────────────────────
-       Pure UI, read-only against this page's own state — nothing here writes
-       to Firebase or touches the trial logic above. See onboarding.js for how
-       the wizard/hint/drawer actually work; this is just this game's content. */
-    ONBOARDING.init({
-      game: 'kangaroo',
-      accent: '#e94560',
-      title: 'How to Host Kangaroo Court',
-      pitch: 'One player stands trial on a silly charge. A Prosecutor and a Defense Attorney make their case, witnesses get called, and the jury secretly votes twice — the verdict decides who scores.',
-      hintAnchor: '#status-line',
-      wizardSteps: [
-        {
-          icon: '⚖️', title: 'Welcome, Host!',
-          body: `<p>One player stands trial on a silly charge. A Prosecutor and a Defense Attorney make their case, witnesses get called, and the jury secretly votes twice — the verdict decides who scores.</p>
-                 <p>4–9 players. This quick tour shows you everything you need to run a case — you can skip it any time, and reopen it later from the <b>❓ How to Host</b> button in the corner.</p>`,
-        },
-        {
-          icon: '🔗', title: 'Step 1 — Get everyone in the room',
-          body: `<p>Below the main screen there's a <b>Players</b> row — tap how many people are playing (4–9).</p>
-                 <ol>
-                   <li>Type each player's name into their box (optional, but nicer than "Player 3").</li>
-                   <li>Press <b>📋 Copy All Links</b> and paste the whole list into your group chat — or open each <b>QR</b> button for people to scan.</li>
-                   <li>Everyone taps their own link and keeps that page open — it's their private card for the whole game.</li>
-                 </ol>`,
-        },
-        {
-          icon: '👉', title: 'The big button drives everything',
-          body: `<p>The colored button on the right — under <b>📍 Trial Progress</b> — is the only button you need to remember. It always means <b>"do the current step, then press me for what's next."</b></p>
-                 <p>Right above that button, a highlighted box like this one will always tell you in plain English what's happening and what to do — so you never have to guess.</p>
-                 <p>The step list above the button shows you where you are in the case at a glance.</p>`,
-        },
-        {
-          icon: '🗺️', title: 'How one case flows',
-          body: `<ol>
-                   <li><b>Draw a Charge</b> — press the button, then read the charge out loud.</li>
-                   <li><b>Jury Pre-Vote</b> — the jury secretly votes on their phones. Just wait, then press the button.</li>
-                   <li><b>Prosecution</b> argues, then <b>calls a witness</b> (another player improvises).</li>
-                   <li><b>Defense</b> argues, then <b>calls their own witness</b>.</li>
-                   <li><b>Cross-Examination</b> — both sides question the Defendant.</li>
-                   <li><b>Final Vote</b> — the jury votes again.</li>
-                   <li><b>Reveal Verdict</b> — press the button to show the result to everyone.</li>
-                 </ol>`,
-        },
-        {
-          icon: '💡', title: 'A few extra things',
-          body: `<p><b>🧑‍⚖️ Judge toggle</b> (in the setup card, needs 5+ players) adds a Judge who announces the verdict at the end. Off by default is fine too.</p>
-                 <p><b>⬅️ Previous Step</b>, under the main button, undoes one accidental click.</p>
-                 <p>This game needs the player links to work — the jury's vote has to stay secret from your screen. If the button says "Add player links first," ask whoever manages this site to check <code>firebase-config.js</code>.</p>`,
-        },
-        {
-          icon: '🎉', title: "You're ready!",
-          body: `<p>That's the whole game. Press <b>Let's go!</b> and try <b>⚖️ Draw a Charge</b> to start your first case.</p>
-                 <p>Forget something mid-case? The hint box above the main button always says what's next, and the <b>❓ How to Host</b> button in the corner has the full guide any time.</p>`,
-        },
-      ],
-      steps: [
-        'Choose your player count and send out the links (see the wizard for how).',
-        '<b>Draw a Charge</b> — press the button, then read the charge out loud to everyone.',
-        '<b>Jury Pre-Vote</b> — the jury secretly votes Guilty or Not Guilty on their phones. Just wait for them, then press the button.',
-        '<b>Prosecution</b> — the Prosecutor argues their case out loud.',
-        "<b>Prosecution's Witness</b> — the Prosecutor calls a juror to the stand; that player improvises using the card only they can see.",
-        '<b>Defense</b> — the Defense Attorney argues their side.',
-        "<b>Defense's Witness</b> — same idea, for the Defense's side.",
-        '<b>Cross-Examination</b> — Prosecutor and Defense take turns questioning the Defendant.',
-        '<b>Final Vote</b> — the jury votes one last time, now that they\'ve heard everything.',
-        '<b>Reveal Verdict</b> — press the button to show the jury\'s decision to everyone.',
-        "<b>Judge's Ruling</b> (only if the Judge toggle is on) — the Judge announces the verdict out loud, then press the button to start a new case.",
-      ],
-      faq: [
-        { q: "The main button says \"Add player links first\" and won't click — why?",
-          a: "This game needs Firebase turned on, because the jury's vote has to stay secret from your screen. Ask whoever manages this site to check <code>firebase-config.js</code> — until then this game can't be played." },
-        { q: 'What does the Judge toggle do?',
-          a: 'Turns a bonus role on or off. With it on, one player becomes the Judge and closes the case by announcing the verdict out loud. It needs at least 5 players, and only affects the next case you draw.' },
-        { q: 'I pressed the wrong button — can I undo it?',
-          a: "Yes — the quieter \"⬅️ Previous Step\" button under the main one goes back one step, as long as there's somewhere safe to go back to." },
-        { q: "Can I change the charge after drawing it?",
-          a: "Yes, while you're still on Jury Pre-Vote — use the \"🔀 Different Charge\" button above the main button to redraw without disturbing anything else." },
-      ],
-    });
 
     /* Judge toggle — a game setting parked in the same room session blob as e.g.
        Forbidden Words' wordsPerTeam, so it survives a reload / game switch.
@@ -842,29 +761,7 @@
       renderCharge();
       renderRoleStrip();
       renderJuryTally();
-      ONBOARDING.setHint(guideHint());
       ROOM.render();
-    }
-
-    /* the new-host guide's persistent hint — one plain-English sentence for
-       whatever's happening right now. Reuses this page's own `phase` rather
-       than duplicating any state; onboarding.js just displays whatever string
-       comes back. */
-    const GUIDE_HINTS = {
-      idle: 'Choose how many players above, send everyone their link, then press the button below to draw a charge and start the first case.',
-      prevote: "The jury is secretly voting Guilty or Not Guilty on their own phones right now — you don't need to do anything but wait. Feel free to read the charge out loud again, then press the button to open arguments.",
-      prosecution: 'Let the <b>Prosecutor</b> make their opening case out loud. Press the button once they\'re done.',
-      'prosecution-witness': "The Prosecutor just called a witness — check the card above the trial log for who's playing them. Let that player improvise, then press the button.",
-      defense: 'Now the <b>Defense Attorney</b> argues their side. Press the button when they\'re done.',
-      'defense-witness': 'The Defense just called their witness. Let them improvise, then press the button.',
-      cross: 'The Prosecutor and Defense take turns asking the <b>Defendant</b> questions. Press the button once that\'s wrapped up.',
-      finalvote: "The jury is voting one last time, now that they've heard everything. Press the button once you're ready to see the result.",
-      reveal: "Press the glowing button below to reveal the jury's verdict to everyone.",
-      judgment: 'Let the <b>Judge</b> announce the verdict out loud — nothing else to do here. Press the button below to start the next case.',
-    };
-    function guideHint() {
-      if (!ROOM.enabled) return "This game needs player links to work — the jury's vote has to stay secret and can't be read off this screen. See the yellow warning above for how to turn that on.";
-      return GUIDE_HINTS[phase] || '';
     }
 
     function renderBackBtn() {
