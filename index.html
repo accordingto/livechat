@@ -243,6 +243,51 @@
       color: #aaa;
     }
 
+    .hidden { display: none !important; }
+
+    /* ── Step flow: set up the room once, then pick a game ── */
+    .step-wrap {
+      max-width: 820px; margin: 8px auto 0;
+      padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+    }
+    .step-hdr {
+      display: flex; align-items: baseline; gap: 10px; margin: 22px 0 14px;
+    }
+    .step-hdr .step-num {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+      color: #e94560; background: rgba(233,69,96,.12); border: 1px solid rgba(233,69,96,.35);
+      border-radius: 999px; padding: 4px 12px; flex-shrink: 0;
+    }
+    .step-hdr h2 { font-size: 1.15rem; font-weight: 800; color: #eee; }
+    .step-sub { font-size: .86rem; color: #666; line-height: 1.6; margin: -6px 0 16px; }
+    .continue-row { display: flex; justify-content: flex-end; margin: 18px 0 36px; }
+    .continue-btn {
+      background: linear-gradient(135deg, #ff5a76, #c81e3a); color: #fff;
+      border: 2px solid #ff8095; border-radius: 12px; padding: 14px 26px;
+      font-family: inherit; font-size: .95rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 6px 18px rgba(233,69,96,.35);
+      transition: filter .15s, transform .1s;
+    }
+    .continue-btn:hover { filter: brightness(1.08); }
+    .continue-btn:active { transform: scale(.98); }
+    /* the small bar atop step 2 that summarizes what was just set up, and
+       lets the host jump back without losing anything — nothing here is
+       destructive, ROOM already keeps its own state */
+    .setup-summary {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+      background: #13132b; border: 1px solid #1e1e42; border-radius: 14px;
+      padding: 12px 18px; margin: 0 0 20px;
+      font-size: .84rem; color: #999;
+    }
+    .setup-summary b { color: #eee; }
+    .edit-setup-btn {
+      background: transparent; border: 1.5px solid #2a2a4a; color: #888;
+      border-radius: 999px; padding: 7px 14px; font-family: inherit;
+      font-size: .8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: border-color .2s, color .2s;
+    }
+    .edit-setup-btn:hover { border-color: #e94560; color: #e94560; }
+
     /* ── Mobile ── */
     @media (max-width: 520px) {
       .card-icon-col { width: 76px; }
@@ -275,7 +320,30 @@
   </header>
   <div class="divider"></div>
 
-  <div class="game-list">
+  <!-- Step 1: every game shares the same room code and player links, so
+       setup happens once here, before picking a game — not re-explained on
+       eight separate host pages. Nothing is dealt yet; ROOM.publish() is
+       never called from this page, so a player's link just waits until the
+       host actually opens a game and deals. -->
+  <div class="step-wrap" id="step-setup">
+    <div class="step-hdr"><span class="step-num">Step 1</span><h2>Set up your room</h2></div>
+    <p class="step-sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
+    <div id="room-mount"></div>
+    <div class="continue-row">
+      <button class="continue-btn" id="continue-btn" type="button">▶️ Continue to Games</button>
+    </div>
+  </div>
+
+  <!-- Step 2: the game menu, reached only after the room is set up above -->
+  <div class="step-wrap hidden" id="step-games">
+    <div class="step-hdr"><span class="step-num">Step 2</span><h2>Choose a game</h2></div>
+    <div class="setup-summary" id="setup-summary">
+      <span id="setup-summary-text"></span>
+      <button class="edit-setup-btn" id="edit-setup-btn" type="button">✏️ Edit room setup</button>
+    </div>
+  </div>
+
+  <div class="game-list hidden" id="game-list">
 
     <a class="game-card card-red" href="kangaroo-court.html">
       <div class="card-icon-col"><span class="icon">⚖️</span></div>
@@ -384,6 +452,46 @@
   </div>
 
   <footer>IceBreak Hub · All games are free &amp; no sign-up required</footer>
+
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script>
+    /* Every game on this site shares one room code and one set of player
+       links (see room.js) — so instead of re-explaining "set your player
+       count, then send links" on eight separate host pages, it happens once
+       here. This page never calls ROOM.publish(): nothing is dealt from the
+       hub, a player's link just shows "waiting for the host" (play.html's
+       own default state) until the host actually opens a game and deals. */
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#e94560',
+      counts: [2, 3, 4, 5, 6, 7, 8, 9],
+      defaultCount: 5,
+      linksNote: "These links work for every game below. A player can keep the same tab open the whole session — it updates automatically once you deal.",
+      onCountChange: renderSetupSummary,
+      onNameChange: renderSetupSummary,
+    });
+
+    function renderSetupSummary() {
+      const el = document.getElementById('setup-summary-text');
+      el.innerHTML = ROOM.enabled
+        ? `🔗 Room <b>${ROOM.code}</b> · <b>${ROOM.count}</b> players`
+        : `👥 <b>${ROOM.count}</b> players (no player links — see the games below for why)`;
+    }
+    renderSetupSummary();
+
+    function showStep(step) {
+      document.getElementById('step-setup').classList.toggle('hidden', step !== 1);
+      document.getElementById('step-games').classList.toggle('hidden', step !== 2);
+      document.getElementById('game-list').classList.toggle('hidden', step !== 2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    document.getElementById('continue-btn').onclick = () => { renderSetupSummary(); showStep(2); };
+    document.getElementById('edit-setup-btn').onclick = () => showStep(1);
+  </script>
 
 </body>
 </html>
