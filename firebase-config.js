@@ -1,9 +1,8 @@
 // firebase-config.js — shared by every game that needs live host-to-player sync
-// (Emotion Cards: emotion.html, Word Wolf: word-wolf.html, Team Words:
-// team-words.html, and any future one, all sending to the single shared
-// player page play.html). Fill in YOUR Firebase project's values below so
-// those pages can sync through the same Realtime Database (host deals ->
-// player's page updates live).
+// (Word Wolf: word-wolf.html, Kangaroo Court: kangaroo-court.html, and any
+// future one, all sending to the single shared player page play.html). Fill
+// in YOUR Firebase project's values below so those pages can sync through the
+// same Realtime Database (host deals -> player's page updates live).
 //
 // Setup (~5 minutes, free, no credit card needed):
 //   1. https://console.firebase.google.com -> Add project (any name).

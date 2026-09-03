@@ -72,7 +72,7 @@ const ROOM = (() => {
       const merged = (prev.names || []).slice();
       for (let i = 0; i < count; i++) merged[i] = names[i] || '';
       // spread prev: other games keep their own keys in this shared blob
-      // (Forbidden Words stores wordsPerTeam), and dropping them silently
+      // (Kangaroo Court stores judgeEnabled), and dropping them silently
       // resets their settings the next time the host switches back
       localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
         Object.assign({}, prev, { tokens, playerCount: count, names: merged })));
@@ -80,8 +80,8 @@ const ROOM = (() => {
     } catch (e) { /* private browsing — links still work for this session */ }
   }
 
-  /* a game's own setting, parked in the same shared session blob (Forbidden Words keeps
-     wordsPerTeam here). Reading and writing it through room.js is what stops another
+  /* a game's own setting, parked in the same shared session blob (Kangaroo Court keeps
+     judgeEnabled here). Reading and writing it through room.js is what stops another
      game's save from quietly dropping it. */
   function setExtra(key, value) {
     try {
@@ -165,7 +165,7 @@ const ROOM = (() => {
   }
 
   /* a sanity check for after links have gone out: send every player a different,
-     simple word (pulled from the Forbidden Words deck — 200 everyday words, plenty
+     simple word (pulled from the shared everyday-word list — 200 words, plenty
      to cover up to 8 players with none repeated) so the host can go around asking
      "what does your card say?" and catch anyone who opened the wrong link before
      the real game starts. This overwrites whatever the current game had published,

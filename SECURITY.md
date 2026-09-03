@@ -30,7 +30,7 @@ https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app/rooms/A
 | 看到什麼 | 意思 |
 |---|---|
 | `{"error":"Permission denied"}` | ✅ 正常 |
-| `null` | ❌ 讀取權限掛太高層。root 雖然鎖著，但知道房號的人可以列出房間裡每個人的牌（臥底字、Secret Rule 規則卡、Say It Without Saying It 目標字）|
+| `null` | ❌ 讀取權限掛太高層。root 雖然鎖著，但知道房號的人可以列出房間裡每個人的牌（臥底字、Say It Without Saying It 目標字）|
 
 **修復：** 開 Rules 分頁
 https://console.firebase.google.com/project/livechat-92f66/database/livechat-92f66-default-rtdb/rules
