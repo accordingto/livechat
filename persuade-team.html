@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Persuade Together">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="scenario.css">
   <style>
@@ -138,8 +139,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="persuade.roundLabel">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
@@ -150,7 +151,7 @@
   <div class="scenario-card" id="sc-card">
     <div class="sc-placeholder" id="sc-placeholder">
       <div class="big-emoji">🤝</div>
-      <p>Press <strong>Draw</strong> to reveal the scene</p>
+      <p id="draw-hint">Press <strong>Draw</strong> to reveal the scene</p>
     </div>
     <div class="sc-content" id="sc-content"></div>
   </div>
@@ -178,6 +179,46 @@
   <script src="room.js"></script>
   <script>
     GAME_RENDER.injectCSS();
+
+    I18N.registerDict('persuade', {
+      roundLabel: { zh: '回合', en: 'Round' },
+      drawHint: { zh: '按下<strong>抽取</strong>揭曉場景', en: 'Press <strong>Draw</strong> to reveal the scene' },
+      drawBtn: { zh: '🎲 抽取', en: '🎲 Draw' },
+      redrawBtn: { zh: '🔁 重新抽取', en: '🔁 Redraw' },
+      drawingText: { zh: '抽取中…', en: 'Drawing…' },
+      scenarioFallback: { zh: '場景', en: 'Scenario' },
+      teamLbl: { zh: '👥 你的隊伍扮演', en: '👥 Your Team Plays' },
+      situationLbl: { zh: '🎯 情境', en: '🎯 The Situation' },
+      judgeLbl: { zh: '👨‍⚖️ 裁判', en: '👨‍⚖️ The Judge' },
+      playedBy: { zh: '🎴 由 {name} 扮演', en: '🎴 Played by {name}' },
+      convinced: { zh: '✅ 被說服了', en: '✅ Convinced' },
+      notConvinced: { zh: '❌ 沒被說服', en: '❌ Not convinced' },
+      judgingWait: { zh: '👨‍⚖️ {who} 正在裁決 — 等待判決中…', en: '👨‍⚖️ {who} is judging — waiting for the verdict…' },
+      convincedMsg: { zh: '✅ {who} 被說服了 — 隊伍獲勝！', en: '✅ {who} is convinced — the team wins!' },
+      notConvincedMsg: { zh: '❌ {who} 沒被說服 — 下一輪加油！', en: '❌ {who} is not convinced — better luck next round!' },
+      scenariosLeft: { zh: '剩下 {n} 個場景', en: '{n} scenarios left' },
+      scenariosTotal: { zh: '共 {n} 個場景', en: '{n} scenarios' },
+      browserHdr: { zh: '📋 全部場景（{n}）— 點擊載入', en: '📋 All Scenarios ({n}) — click to load' },
+      allFilter: { zh: '全部', en: 'All' },
+      // category labels — used in the filter bar and the scenario card's category chip.
+      // The scenario content itself (team/situation/judge text in game-data.js) is never translated.
+      '🏢 Workplace':      { zh: '🏢 職場',     en: '🏢 Workplace' },
+      '🏫 School':         { zh: '🏫 學校',     en: '🏫 School' },
+      '🏠 Family':         { zh: '🏠 家庭',     en: '🏠 Family' },
+      '🏋️ Gym':            { zh: '🏋️ 健身房',   en: '🏋️ Gym' },
+      '🏘️ Apartment':      { zh: '🏘️ 公寓社區', en: '🏘️ Apartment' },
+      '✈️ Travel':         { zh: '✈️ 旅行',     en: '✈️ Travel' },
+      '🍽️ Restaurant':     { zh: '🍽️ 餐廳',     en: '🍽️ Restaurant' },
+      '⚽ Sports Team':    { zh: '⚽ 運動團隊',  en: '⚽ Sports Team' },
+      '📚 Book Club':      { zh: '📚 讀書會',   en: '📚 Book Club' },
+      '🎂 Birthday Party': { zh: '🎂 生日派對', en: '🎂 Birthday Party' },
+    });
+    const pt = (key, vars) => {
+      let s = I18N.t('persuade', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+
     const scenarios = GAME_DATA.persuade;
 
     let round   = 0;
@@ -201,7 +242,7 @@
       const v = verdict();
       return {
         marked: true,
-        answer: '👨‍⚖️ The Judge' + (v ? `<span class="la-sub">${v === 'yes' ? '✅ Convinced' : '❌ Not convinced'}</span>` : ''),
+        answer: pt('judgeLbl') + (v ? `<span class="la-sub">${v === 'yes' ? pt('convinced') : pt('notConvinced')}</span>` : ''),
       };
     });
 
@@ -219,13 +260,14 @@
       if (!ROOM.enabled || judgeIdx < 0) { el.classList.add('hidden'); return; }
       el.classList.remove('hidden');
       const who = ROOM.name(judgeIdx);
-      if (!v) { el.textContent = `👨‍⚖️ ${who} is judging — waiting for the verdict…`; }
+      if (!v) { el.textContent = pt('judgingWait', { who }); }
       else {
         el.classList.add(v === 'yes' ? 'yes' : 'no');
-        el.textContent = v === 'yes' ? `✅ ${who} is convinced — the team wins!` : `❌ ${who} is not convinced — better luck next round!`;
+        el.textContent = v === 'yes' ? pt('convincedMsg', { who }) : pt('notConvincedMsg', { who });
       }
       ROOM.render();
     }
+    I18N.onChange(() => renderVerdict());
 
     /* deal the roles: one random judge, everyone else on the team */
     function dealRoles() {
@@ -249,33 +291,36 @@
       const ct = document.getElementById('sc-content');
       const dealt = ROOM.enabled && judgeIdx >= 0;
       ct.innerHTML = `
-        <span class="pt-cat">${sc.emoji} ${sc.cat || 'Scenario'}</span>
+        <span class="pt-cat">${sc.emoji} ${sc.cat ? pt(sc.cat) : pt('scenarioFallback')}</span>
         <div class="pt-block">
-          <div class="pt-lbl pt-lbl-team">👥 Your Team Plays</div>
+          <div class="pt-lbl pt-lbl-team">${pt('teamLbl')}</div>
           <div class="pt-team">${sc.team}</div>
         </div>
         <div class="pt-divider"></div>
         <div class="pt-block">
-          <div class="pt-lbl pt-lbl-sit">🎯 The Situation</div>
+          <div class="pt-lbl pt-lbl-sit">${pt('situationLbl')}</div>
           <div class="pt-sit">${sc.situation}</div>
         </div>
         <div class="pt-divider"></div>
         <div class="pt-block" style="margin-bottom:0">
-          <div class="pt-lbl pt-lbl-judge">👨‍⚖️ The Judge</div>
+          <div class="pt-lbl pt-lbl-judge">${pt('judgeLbl')}</div>
           <div class="pt-judge">${sc.judge}</div>
-          ${dealt ? `<span class="pt-judge-name">🎴 Played by ${ROOM.name(judgeIdx)}</span>` : ''}
+          ${dealt ? `<span class="pt-judge-name">${pt('playedBy', { name: ROOM.name(judgeIdx) })}</span>` : ''}
         </div>`;
       ct.classList.add('show');
     }
+    I18N.onChange(() => { if (currentScenario) renderCard(currentScenario); });
 
     function updateCounter() {
       const left = scenarios.length - used.length;
       document.getElementById('sc-counter').textContent =
-        left < scenarios.length ? left + ' scenarios left' : scenarios.length + ' scenarios';
+        left < scenarios.length ? pt('scenariosLeft', { n: left }) : pt('scenariosTotal', { n: scenarios.length });
     }
+    I18N.onChange(() => updateCounter());
 
     /* ── Scenario browser ── */
     let activeCat = '';
+    let loadedIdx = -1; // idx of the scenario-item currently highlighted as loaded, so a language toggle (which rebuilds the list) can restore it
 
     function filterBy(cat) {
       activeCat = cat;
@@ -293,14 +338,14 @@
       filterBar.innerHTML = '';
       list.innerHTML = '';
       activeCat = '';
-      document.getElementById('browser-hdr').textContent = `📋 All Scenarios (${scenarios.length}) — click to load`;
+      document.getElementById('browser-hdr').textContent = pt('browserHdr', { n: scenarios.length });
 
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
 
       const allBtn = document.createElement('button');
       allBtn.className = 'filter-btn active';
-      allBtn.textContent = 'All';
+      allBtn.textContent = pt('allFilter');
       allBtn.dataset.cat = '';
       allBtn.addEventListener('click', () => filterBy(''));
       filterBar.appendChild(allBtn);
@@ -308,7 +353,7 @@
       cats.forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
-        btn.textContent = cat;
+        btn.textContent = pt(cat);
         btn.dataset.cat = cat;
         btn.addEventListener('click', () => filterBy(cat));
         filterBar.appendChild(btn);
@@ -326,6 +371,16 @@
       });
     }
     buildList();
+    I18N.onChange(() => {
+      const prevCat = activeCat;
+      buildList();
+      if (prevCat) filterBy(prevCat);
+      if (loadedIdx >= 0) {
+        document.querySelectorAll('.scenario-item').forEach(el => {
+          el.classList.toggle('active', +el.dataset.idx === loadedIdx);
+        });
+      }
+    });
 
     function loadScenario(sc, idx) {
       const btn  = document.getElementById('draw-btn');
@@ -339,11 +394,12 @@
       renderCard(sc);
       round++;
       document.getElementById('roundNum').textContent = round;
-      btn.textContent = '🔁 Redraw';
+      btn.textContent = pt('redrawBtn');
       used.push(idx);
       updateCounter();
       dealRoles();
 
+      loadedIdx = idx;
       document.querySelectorAll('.scenario-item').forEach(el => {
         el.classList.toggle('active', +el.dataset.idx === idx);
       });
@@ -363,7 +419,7 @@
       card.classList.remove('landed');
       card.classList.add('rolling');
       ph.style.display = 'none';
-      ct.innerHTML = '<span class="gr-text" id="sc-roll-text">Drawing…</span>';
+      ct.innerHTML = `<span class="gr-text" id="sc-roll-text">${pt('drawingText')}</span>`;
       ct.classList.add('show');
 
       let avail = scenarios.map((_, i) => i).filter(i => !used.includes(i));
@@ -381,11 +437,12 @@
           card.classList.add('landed');
           round++;
           document.getElementById('roundNum').textContent = round;
-          btn.textContent = '🔁 Redraw';
+          btn.textContent = pt('redrawBtn');
           btn.disabled    = false;
           rolling         = false;
           updateCounter();
           dealRoles();
+          loadedIdx = -1;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         },
         { count: 24, ms: 82 }
@@ -393,6 +450,15 @@
     }
 
     updateCounter();
+
+    /* the draw-hint paragraph and the Draw/Redraw button label aren't rebuilt by any
+       other render function, so give them their own tiny sync + hook it to toggles */
+    function syncStaticText() {
+      document.getElementById('draw-hint').innerHTML = pt('drawHint');
+      document.getElementById('draw-btn').textContent = round > 0 ? pt('redrawBtn') : pt('drawBtn');
+    }
+    syncStaticText();
+    I18N.onChange(syncStaticText);
   </script>
 </body>
 </html>

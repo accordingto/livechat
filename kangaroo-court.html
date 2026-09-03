@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
+  <script src="i18n.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Kangaroo Court · IceBreak Hub</title>
@@ -342,8 +343,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Case <span id="caseNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="kangaroo.caseLabel">Case</span> <span id="caseNum">0</span></div>
   </div>
 
   <div class="header">
@@ -351,16 +352,16 @@
   </div>
 
   <div class="fb-warning hidden" id="fb-warning">
-    ⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
+    <span data-i18n="kangaroo.fbWarningPre">⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open </span><code>firebase-config.js</code><span data-i18n="kangaroo.fbWarningPost"> and follow the setup steps at the top of that file.</span>
   </div>
 
   <div class="kc-layout">
     <aside class="kc-flow" id="kc-flow">
       <div class="kc-flow-card">
-        <div class="kc-flow-hdr">📍 Trial Progress</div>
+        <div class="kc-flow-hdr" data-i18n="kangaroo.trialProgressHdr">📍 Trial Progress</div>
         <div class="kc-flow-steps" id="kc-flow-steps"></div>
         <div class="charge-swap hidden" id="charge-swap">
-          <button class="btn-secondary" onclick="changeCharge()">🔀 Different Charge</button>
+          <button class="btn-secondary" onclick="changeCharge()" data-i18n="kangaroo.differentChargeBtn">🔀 Different Charge</button>
         </div>
         <!-- what's happening right now, as a real button — tap it to advance.
              text stays to one short line; the flow steps above already say
@@ -369,7 +370,7 @@
 
         <!-- undoes one accidental "advance" click — disabled once there's
              nothing safe to step back into (idle, or the very first Pre-Vote) -->
-        <button class="kc-back-btn" id="kc-back-btn" onclick="goBack()">⬅️ Previous Step</button>
+        <button class="kc-back-btn" id="kc-back-btn" onclick="goBack()" data-i18n="kangaroo.previousStepBtn">⬅️ Previous Step</button>
       </div>
     </aside>
 
@@ -377,11 +378,11 @@
       <div class="role-strip hidden" id="role-strip"></div>
 
       <div class="charge-card idle" id="charge-card">
-        <span class="charge-placeholder" id="charge-placeholder">Press <strong>⚖️ Draw a Charge</strong> to open the trial</span>
+        <span class="charge-placeholder" id="charge-placeholder"><span data-i18n="kangaroo.chargePlaceholderPre">Press </span><strong data-i18n="kangaroo.drawChargeBtn">⚖️ Draw a Charge</strong><span data-i18n="kangaroo.chargePlaceholderPost"> to open the trial</span></span>
         <div id="charge-content" style="display:none">
           <div class="charge-top">
             <span class="charge-emoji" id="charge-emoji"></span>
-            <span class="charge-label">⚖️ The defendant is charged with…</span>
+            <span class="charge-label" data-i18n="kangaroo.chargeLabel">⚖️ The defendant is charged with…</span>
           </div>
           <span class="charge-text" id="charge-text"></span>
         </div>
@@ -411,6 +412,74 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
   <script>
+    const kt = (key, vars) => {
+      let s = I18N.t('kangaroo', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+    I18N.registerDict('kangaroo', {
+      caseLabel: { zh: '案件', en: 'Case' },
+      fbWarningPre: { zh: '⚠️ 這個遊戲需要玩家卡片才能進行：陪審團的投票必須保密，不能讓任何人唸出來、直接顯示在這個畫面上。請開啟 ', en: "⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open " },
+      fbWarningPost: { zh: '，並依照檔案最上方的設定步驟操作。', en: ' and follow the setup steps at the top of that file.' },
+      trialProgressHdr: { zh: '📍 審判進度', en: '📍 Trial Progress' },
+      differentChargeBtn: { zh: '🔀 換一條罪名', en: '🔀 Different Charge' },
+      previousStepBtn: { zh: '⬅️ 回上一步', en: '⬅️ Previous Step' },
+      chargePlaceholderPre: { zh: '按下 ', en: 'Press ' },
+      drawChargeBtn: { zh: '⚖️ 抽一條罪名', en: '⚖️ Draw a Charge' },
+      chargePlaceholderPost: { zh: ' 開始審判', en: ' to open the trial' },
+      chargeLabel: { zh: '⚖️ 被告的罪名是…', en: '⚖️ The defendant is charged with…' },
+      chargeItemPrefix: { zh: '被告的罪名：', en: 'The defendant is charged with' },
+      linksNoteJudge: { zh: '每個案件會發出被告、檢察官、辯護律師，以及（若上方的法官開關已開啟——需要 5 人以上）法官——其餘的人都是陪審團。角色每案輪替，讓每個人最終都會受審。', en: 'Each case deals a Defendant, a Prosecutor, a Defense Attorney and (if the Judge toggle above is on — needs 5+ players) a Judge — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.' },
+      roleDefendant: { zh: '🙇 被告', en: '🙇 Defendant' },
+      roleProsecutor: { zh: '⚔️ 檢察官', en: '⚔️ Prosecutor' },
+      roleDefense: { zh: '🛡️ 辯護律師', en: '🛡️ Defense' },
+      roleJudge: { zh: '🧑‍⚖️ 法官', en: '🧑‍⚖️ Judge' },
+      roleJury: { zh: '👥 陪審團', en: '👥 Jury' },
+      roleWitness: { zh: '🕵️ 證人', en: '🕵️ Witness' },
+      judgeOffLocked: { zh: 'OFF（需要 5 人以上）', en: 'OFF (needs 5+ players)' },
+      judgeOn: { zh: 'ON', en: 'ON' },
+      judgeOff: { zh: 'OFF', en: 'OFF' },
+      flowDrawCharge: { zh: '抽一條罪名', en: 'Draw a Charge' },
+      flowPrevote: { zh: '陪審團初步投票', en: 'Jury Pre-Vote' },
+      flowProsecution: { zh: '檢方陳述', en: 'Prosecution' },
+      flowProsecutionWitness: { zh: '檢方證人', en: "Prosecution's Witness" },
+      flowDefense: { zh: '辯方陳述', en: 'Defense' },
+      flowDefenseWitness: { zh: '辯方證人', en: "Defense's Witness" },
+      flowCross: { zh: '交叉詰問', en: 'Cross-Examination' },
+      flowFinalvote: { zh: '最終投票', en: 'Final Vote' },
+      flowReveal: { zh: '公布判決', en: 'Reveal Verdict' },
+      flowJudgment: { zh: '法官宣判', en: "Judge's Ruling" },
+      addPlayerLinksFirst: { zh: '🔗 請先設定玩家連結', en: '🔗 Add player links first' },
+      notGuiltyBang: { zh: '✅ 無罪！', en: '✅ Not Guilty!' },
+      guiltyBang: { zh: '🚨 有罪！', en: '🚨 Guilty!' },
+      statusPrevote: { zh: '🤫 陪審團投票中', en: '🤫 Jury is voting' },
+      statusProsecutionWitness: { zh: '🕵️ 檢方證人', en: "🕵️ Prosecution's Witness" },
+      statusDefenseWitness: { zh: '🕵️ 辯方證人', en: "🕵️ Defense's Witness" },
+      statusProsecution: { zh: '⚔️ 檢方發言中', en: "⚔️ Prosecution's turn" },
+      statusDefense: { zh: '🛡️ 辯方發言中', en: "🛡️ Defense's turn" },
+      statusCross: { zh: '🗣️ 交叉詰問', en: '🗣️ Cross-Examination' },
+      statusFinalvote: { zh: '🗳️ 最終投票', en: '🗳️ Final vote' },
+      statusJudgment: { zh: '🧑‍⚖️ 法官宣判', en: "🧑‍⚖️ Judge's Ruling" },
+      witnessProsecutionCalling: { zh: '⚔️ 檢方正在傳喚證人…', en: '⚔️ Prosecution calls their witness…' },
+      witnessProsecutionCalled: { zh: '⚔️ 檢方已傳喚證人', en: '⚔️ Prosecution called their witness' },
+      witnessDefenseCalling: { zh: '🛡️ 辯方正在傳喚證人…', en: '🛡️ Defense calls their witness…' },
+      witnessDefenseCalled: { zh: '🛡️ 辯方已傳喚證人', en: '🛡️ Defense called their witness' },
+      playedBy: { zh: '🎭 由 {name} 飾演', en: '🎭 Played by {name}' },
+      verdictTitle: { zh: '⚖️ 判決', en: '⚖️ Verdict' },
+      notGuiltyAllCaps: { zh: '✅ 無罪', en: '✅ NOT GUILTY' },
+      guiltyAllCaps: { zh: '🚨 有罪', en: '🚨 GUILTY' },
+      voteGuilty: { zh: '🚨 有罪', en: '🚨 Guilty' },
+      voteNotGuilty: { zh: '✅ 無罪', en: '✅ Not Guilty' },
+      voteNone: { zh: '— 未投票 —', en: '— no vote —' },
+      flippedToNotGuilty: { zh: '轉為無罪', en: 'flipped to Not Guilty' },
+      flippedToGuilty: { zh: '轉為有罪', en: 'flipped to Guilty' },
+      noJurorsThisCase: { zh: '這個案件沒有陪審團。', en: 'No jurors this case.' },
+      preVoteTitle: { zh: '🗳️ 初步投票', en: '🗳️ Pre-Vote' },
+      finalVoteTitle: { zh: '🗳️ 最終投票', en: '🗳️ Final Vote' },
+      jurorsVoted: { zh: '{done} / {total} 位陪審員已投票', en: '{done} / {total} jurors have voted' },
+      allChargesHdr: { zh: '⚖️ 全部罪名（{n} 條）— 由「⚖️ 抽一條罪名」隨機抽出', en: '⚖️ All Charges ({n}) — drawn by "Draw a Charge"' },
+    });
+
     const DECK = GAME_DATA.kangaroo;
     const DECKW = GAME_DATA.kangarooWitness;
 
@@ -454,8 +523,8 @@
       counts: [4, 5, 6, 7, 8, 9],
       defaultCount: 5,
       hideSetup: true, // player count and links are set up once on index.html now
-      linksNote: 'Each case deals a Defendant, a Prosecutor, a Defense Attorney and (if the Judge toggle above is on — needs 5+ players) a Judge — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
-      extraRowHTML: '<span class="room-label">🧑‍⚖️ Judge</span><button class="toggle-btn" id="judge-toggle" onclick="toggleJudge()"><span class="toggle-switch"></span><span id="judge-state">ON</span></button>',
+      linksNote: () => kt('linksNoteJudge'),
+      extraRowHTML: '<span class="room-label" data-i18n="kangaroo.roleJudge">🧑‍⚖️ Judge</span><button class="toggle-btn" id="judge-toggle" onclick="toggleJudge()"><span class="toggle-switch"></span><span id="judge-state">ON</span></button>',
       onPlayerData: () => { renderJuryTally(); },
       onCountChange: () => {
         defendantIdx = prosecutorIdx = defenseIdx = judgeIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; judgeCount = []; witnessCount = [];
@@ -490,7 +559,7 @@
       const locked = ROOM.count < 5;
       btn.classList.toggle('on', judgeEnabled);
       btn.disabled = locked;
-      document.getElementById('judge-state').textContent = locked ? 'OFF (needs 5+ players)' : (judgeEnabled ? 'ON' : 'OFF');
+      document.getElementById('judge-state').textContent = locked ? kt('judgeOffLocked') : (judgeEnabled ? kt('judgeOn') : kt('judgeOff'));
     }
     renderJudgeToggle();
 
@@ -506,7 +575,7 @@
       if (!caseNum) return {};
       const role = roleOf(i);
       const cls = role === 'jury' ? '' : 'is-role-' + role;
-      const label = { defendant: '🙇 Defendant', prosecutor: '⚔️ Prosecutor', defense: '🛡️ Defense', judge: '🧑‍⚖️ Judge', jury: '👥 Jury' }[role];
+      const label = { defendant: kt('roleDefendant'), prosecutor: kt('roleProsecutor'), defense: kt('roleDefense'), judge: kt('roleJudge'), jury: kt('roleJury') }[role];
       return { marked: role !== 'jury', cls, answer: label };
     });
 
@@ -726,16 +795,16 @@
        "idle" doubles as the entry point (before the first case, and again after a
        player-count change), so it always has somewhere to point at. */
     const FLOW_STEPS = [
-      { phase: 'idle', emoji: '⚖️', label: 'Draw a Charge' },
-      { phase: 'prevote', emoji: '🤫', label: 'Jury Pre-Vote' },
-      { phase: 'prosecution', emoji: '⚔️', label: 'Prosecution' },
-      { phase: 'prosecution-witness', emoji: '🕵️', label: "Prosecution's Witness" },
-      { phase: 'defense', emoji: '🛡️', label: 'Defense' },
-      { phase: 'defense-witness', emoji: '🕵️', label: "Defense's Witness" },
-      { phase: 'cross', emoji: '🗣️', label: 'Cross-Examination' },
-      { phase: 'finalvote', emoji: '🗳️', label: 'Final Vote' },
-      { phase: 'reveal', emoji: '⚖️', label: 'Reveal Verdict' },
-      { phase: 'judgment', emoji: '🧑‍⚖️', label: "Judge's Ruling" },
+      { phase: 'idle', emoji: '⚖️', key: 'flowDrawCharge' },
+      { phase: 'prevote', emoji: '🤫', key: 'flowPrevote' },
+      { phase: 'prosecution', emoji: '⚔️', key: 'flowProsecution' },
+      { phase: 'prosecution-witness', emoji: '🕵️', key: 'flowProsecutionWitness' },
+      { phase: 'defense', emoji: '🛡️', key: 'flowDefense' },
+      { phase: 'defense-witness', emoji: '🕵️', key: 'flowDefenseWitness' },
+      { phase: 'cross', emoji: '🗣️', key: 'flowCross' },
+      { phase: 'finalvote', emoji: '🗳️', key: 'flowFinalvote' },
+      { phase: 'reveal', emoji: '⚖️', key: 'flowReveal' },
+      { phase: 'judgment', emoji: '🧑‍⚖️', key: 'flowJudgment' },
     ];
     /* the Judge's Ruling step only exists for cases that actually dealt a Judge —
        with the toggle off (or before the first case) it's dropped from the list
@@ -748,7 +817,7 @@
         const cls = i === idx ? 'is-current' : i < idx ? 'is-done' : '';
         return `<div class="kc-flow-step ${cls}">
           <span class="kc-flow-dot">${i < idx ? '✓' : s.emoji}</span>
-          <span class="kc-flow-label">${esc(s.label)}</span>
+          <span class="kc-flow-label">${esc(kt(s.key))}</span>
         </div>`;
       }).join('');
     }
@@ -774,30 +843,30 @@
        host that it's time to tap (is-next: clock ran out, or the verdict's ready) */
     /* one short line, always — who's doing what is already on the role strip,
        and the full verdict breakdown is in the jury tally panel below */
-    const STATUS_LABELS = {
-      idle: '⚖️ Draw a Charge',
-      prevote: '🤫 Jury is voting',
-      'prosecution-witness': "🕵️ Prosecution's Witness",
-      'defense-witness': "🕵️ Defense's Witness",
-      prosecution: "⚔️ Prosecution's turn",
-      defense: "🛡️ Defense's turn",
-      cross: '🗣️ Cross-Examination',
-      finalvote: '🗳️ Final vote',
-      judgment: "🧑‍⚖️ Judge's Ruling",
+    const STATUS_KEYS = {
+      idle: 'drawChargeBtn',
+      prevote: 'statusPrevote',
+      'prosecution-witness': 'statusProsecutionWitness',
+      'defense-witness': 'statusDefenseWitness',
+      prosecution: 'statusProsecution',
+      defense: 'statusDefense',
+      cross: 'statusCross',
+      finalvote: 'statusFinalvote',
+      judgment: 'statusJudgment',
     };
     function renderStatus() {
       const el = document.getElementById('status-line');
       el.classList.remove('vote', 'win', 'lose');
       el.classList.toggle('not-clickable', !ROOM.enabled);
       el.classList.toggle('is-next', ROOM.enabled && phase === 'reveal');
-      if (!ROOM.enabled) { el.textContent = '🔗 Add player links first'; return; }
+      if (!ROOM.enabled) { el.textContent = kt('addPlayerLinksFirst'); return; }
       if (phase === 'reveal' && reveal) {
         el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
-        el.textContent = reveal.verdict === 'notguilty' ? '✅ Not Guilty!' : '🚨 Guilty!';
+        el.textContent = reveal.verdict === 'notguilty' ? kt('notGuiltyBang') : kt('guiltyBang');
         return;
       }
       if (phase === 'prevote' || phase === 'finalvote') el.classList.add('vote');
-      el.textContent = STATUS_LABELS[phase] || STATUS_LABELS.idle;
+      el.textContent = kt(STATUS_KEYS[phase] || STATUS_KEYS.idle);
     }
 
     function renderCharge() {
@@ -827,17 +896,17 @@
         </div>`;
       };
       // Judge goes first (when this case dealt one), then the three case-long roles
-      let html = judgeIdx >= 0 ? chip('judge', '🧑‍⚖️ Judge', ROOM.name(judgeIdx)) : '';
+      let html = judgeIdx >= 0 ? chip('judge', kt('roleJudge'), ROOM.name(judgeIdx)) : '';
       html +=
-        chip('defendant', '🙇 Defendant', ROOM.name(defendantIdx)) +
-        chip('prosecutor', '⚔️ Prosecutor', ROOM.name(prosecutorIdx)) +
-        chip('defense', '🛡️ Defense', ROOM.name(defenseIdx));
+        chip('defendant', kt('roleDefendant'), ROOM.name(defendantIdx)) +
+        chip('prosecutor', kt('roleProsecutor'), ROOM.name(prosecutorIdx)) +
+        chip('defense', kt('roleDefense'), ROOM.name(defenseIdx));
       // the witness only sits alongside the case-long roles while they're
       // actually on the stand — no witness has been called yet the rest of the case
       const witnessLive = (phase === 'prosecution-witness' || phase === 'defense-witness') && currentWitness && currentWitness.jurorIdx >= 0;
       if (witnessLive) {
         html += `<div class="role-chip rc-witness rc-active">
-          <span class="rc-label">🕵️ Witness</span>
+          <span class="rc-label">${kt('roleWitness')}</span>
           <span class="rc-name">${esc(ROOM.name(currentWitness.jurorIdx))}</span>
         </div>`;
       }
@@ -863,8 +932,8 @@
       el.innerHTML = entries.map(([side, w]) => {
         const isCurrent = (phase === 'prosecution-witness' || phase === 'defense-witness') && currentWitness && currentWitness.side === side;
         const label = side === 'prosecution'
-          ? (isCurrent ? '⚔️ Prosecution calls their witness…' : '⚔️ Prosecution called their witness')
-          : (isCurrent ? '🛡️ Defense calls their witness…' : '🛡️ Defense called their witness');
+          ? (isCurrent ? kt('witnessProsecutionCalling') : kt('witnessProsecutionCalled'))
+          : (isCurrent ? kt('witnessDefenseCalling') : kt('witnessDefenseCalled'));
         return `<div class="witness-card side-${side}${isCurrent ? ' is-current' : ''}">
           <span class="witness-label">${label}</span>
           <span class="witness-who">
@@ -872,7 +941,7 @@
             <span class="witness-name">${esc(w.card.name)}</span>
           </span>
           <span class="witness-evidence">${esc(w.card.evidence)}</span>
-          <span class="witness-playedby">🎭 Played by ${esc(ROOM.name(w.jurorIdx))}</span>
+          <span class="witness-playedby">${kt('playedBy', { name: esc(ROOM.name(w.jurorIdx)) })}</span>
         </div>`;
       }).join('');
     }
@@ -888,15 +957,15 @@
       // ceremony too — it doesn't disappear just because the flow moved on
       if ((phase === 'reveal' || phase === 'judgment') && reveal) {
         el.classList.remove('hidden');
-        const verdictLine = `<div class="jt-verdict ${reveal.verdict}">${reveal.verdict === 'notguilty' ? '✅ NOT GUILTY' : '🚨 GUILTY'}</div>`;
+        const verdictLine = `<div class="jt-verdict ${reveal.verdict}">${reveal.verdict === 'notguilty' ? kt('notGuiltyAllCaps') : kt('guiltyAllCaps')}</div>`;
         const rows = reveal.juryDetail.map(j => {
-          const pre = j.pre === 'guilty' ? '🚨 Guilty' : j.pre === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
-          const fin = j.fin === 'guilty' ? '🚨 Guilty' : j.fin === 'notguilty' ? '✅ Not Guilty' : '— no vote —';
-          const flip = j.flip === 'toNotGuilty' ? `<span class="jt-flip def">flipped to Not Guilty</span>`
-                     : j.flip === 'toGuilty' ? `<span class="jt-flip pro">flipped to Guilty</span>` : '';
+          const pre = j.pre === 'guilty' ? kt('voteGuilty') : j.pre === 'notguilty' ? kt('voteNotGuilty') : kt('voteNone');
+          const fin = j.fin === 'guilty' ? kt('voteGuilty') : j.fin === 'notguilty' ? kt('voteNotGuilty') : kt('voteNone');
+          const flip = j.flip === 'toNotGuilty' ? `<span class="jt-flip def">${kt('flippedToNotGuilty')}</span>`
+                     : j.flip === 'toGuilty' ? `<span class="jt-flip pro">${kt('flippedToGuilty')}</span>` : '';
           return `<div class="jt-row"><span>${esc(ROOM.name(j.idx))}</span><span class="jt-vote">${pre} → ${fin}</span>${flip}</div>`;
-        }).join('') || '<div class="jt-row">No jurors this case.</div>';
-        el.innerHTML = `<div class="jt-title">⚖️ Verdict</div>${verdictLine}<div class="jt-rows">${rows}</div>`;
+        }).join('') || `<div class="jt-row">${kt('noJurorsThisCase')}</div>`;
+        el.innerHTML = `<div class="jt-title">${kt('verdictTitle')}</div>${verdictLine}<div class="jt-rows">${rows}</div>`;
         return;
       }
       if (phase !== 'prevote' && phase !== 'finalvote') { el.classList.add('hidden'); return; }
@@ -908,16 +977,19 @@
         const d = ROOM.answers[i + 1];
         return d && d[field] && d[field].id === id;
       }).length;
-      el.innerHTML = `<div class="jt-title">🗳️ ${phase === 'prevote' ? 'Pre-Vote' : 'Final Vote'}</div><div class="jt-count">${done} / ${jury.length} jurors have voted</div>`;
+      el.innerHTML = `<div class="jt-title">${phase === 'prevote' ? kt('preVoteTitle') : kt('finalVoteTitle')}</div><div class="jt-count">${kt('jurorsVoted', { done, total: jury.length })}</div>`;
     }
 
     /* ── Charge browser: unnumbered, just for the host to preview what might come up ── */
-    (function buildBrowser() {
-      document.getElementById('charge-browser-hdr').textContent = `⚖️ All Charges (${DECK.length}) — drawn by "Draw a Charge"`;
+    function buildBrowser() {
+      document.getElementById('charge-browser-hdr').textContent = kt('allChargesHdr', { n: DECK.length });
       document.getElementById('charge-list').innerHTML = DECK.map(c =>
-        `<div class="charge-item"><span class="ci-emoji">${c.emoji}</span><span>The defendant is charged with ${esc(c.charge)}</span></div>`
+        `<div class="charge-item"><span class="ci-emoji">${c.emoji}</span><span>${kt('chargeItemPrefix')} ${esc(c.charge)}</span></div>`
       ).join('');
-    })();
+    }
+    buildBrowser();
+
+    I18N.onChange(() => { renderJudgeToggle(); renderAll(); buildBrowser(); });
 
     renderAll();
   </script>

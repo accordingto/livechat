@@ -1,7 +1,18 @@
 /* game-render.js — shared rendering for all 5 game types.
    Include AFTER game-data.js. Call GAME_RENDER.injectCSS() once on page load. */
 
+if (typeof I18N !== 'undefined') {
+  I18N.registerDict('render', {
+    hotTakeLabel: { zh: '🔥 犀利意見', en: '🔥 HOT TAKE' },
+    situationLabel: { zh: '🎯 情境', en: '🎯 THE SITUATION' },
+    optionC: { zh: '其他！說出你自己的答案。', en: 'Something else! Tell us your own answer.' },
+    persuaderTeamLabel: { zh: '👥 說服團隊', en: '👥 Persuader Team' },
+    situationFallback: { zh: '情境', en: 'THE SITUATION' },
+    judgeLabel: { zh: '👨‍⚖️ 裁判', en: '👨‍⚖️ The Judge' },
+  });
+}
 const GAME_RENDER = (() => {
+  const grt = key => (typeof I18N !== 'undefined' ? I18N.t('render', key) : key);
 
   function injectCSS() {
     if (document.getElementById('gr-styles')) return;
@@ -147,20 +158,20 @@ const GAME_RENDER = (() => {
   /* ── hottake ── */
   function hottake(el, take) {
     el.innerHTML = `
-      <span class="gr-label" style="color:#ff7043">🔥 HOT TAKE</span>
+      <span class="gr-label" style="color:#ff7043">${grt('hotTakeLabel')}</span>
       <span class="gr-text">${take}</span>`;
   }
 
   /* ── sophies ── */
   function sophies(el, sc) {
     el.innerHTML = `
-      <span class="gr-label" style="color:#a78bfa">🎯 THE SITUATION</span>
+      <span class="gr-label" style="color:#a78bfa">${grt('situationLabel')}</span>
       <span class="gr-text">${sc.situation}</span>
       <div class="gr-divider"></div>
       <div class="gr-options">
         <div class="gr-opt gr-opt-a"><span class="gr-opt-key">A</span><span class="gr-opt-text">${sc.a}</span></div>
         <div class="gr-opt gr-opt-b"><span class="gr-opt-key">B</span><span class="gr-opt-text">${sc.b}</span></div>
-        <div class="gr-opt gr-opt-c"><span class="gr-opt-key">C</span><span class="gr-opt-text">Something else! Tell us your own answer.</span></div>
+        <div class="gr-opt gr-opt-c"><span class="gr-opt-key">C</span><span class="gr-opt-text">${grt('optionC')}</span></div>
       </div>`;
   }
 
@@ -168,15 +179,15 @@ const GAME_RENDER = (() => {
   function persuade(el, sc) {
     el.innerHTML = `
       <div class="gr-role-chip gr-role-team">
-        <span class="gr-role-label">👥 Persuader Team</span>
+        <span class="gr-role-label">${grt('persuaderTeamLabel')}</span>
         <span class="gr-role-val">${sc.team}</span>
       </div>
       <div class="gr-divider"></div>
-      <span class="gr-label" style="color:#06b6d4">${sc.emoji || '🤝'} ${sc.cat ? sc.cat.toUpperCase() : 'THE SITUATION'}</span>
+      <span class="gr-label" style="color:#06b6d4">${sc.emoji || '🤝'} ${sc.cat ? sc.cat.toUpperCase() : grt('situationFallback')}</span>
       <span class="gr-text">${sc.situation}</span>
       <div class="gr-divider"></div>
       <div class="gr-role-chip gr-role-judge">
-        <span class="gr-role-label">👨‍⚖️ The Judge</span>
+        <span class="gr-role-label">${grt('judgeLabel')}</span>
         <span class="gr-role-val">${sc.judge}</span>
       </div>`;
   }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Word Wolf">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --accent: #f59e0b; --accent-alt: #d946ef; --warn: #f59e0b; }
@@ -75,7 +76,7 @@
 
     /* Firebase-not-configured warning */
 
-    .round-badge span { color: #f59e0b; }
+    .round-badge #roundNum { color: #f59e0b; }
 
     /* ── Deck browser: the whole word list, for the host to skim before playing.
        Grouped by category, since the pairs only make sense next to their neighbours. ── */
@@ -120,8 +121,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="wordwolf.roundLabel">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
@@ -150,6 +151,48 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
   <script>
+    I18N.registerDict('wordwolf', {
+      roundLabel: { zh: '回合', en: 'Round' },
+      fbWarning: { zh: '⚠️ 尚未設定 Firebase，玩家連結不會自動更新。請開啟 <code>firebase-config.js</code>，依照檔案開頭的設定步驟操作。', en: "⚠️ Firebase isn't configured yet, so player links won't update automatically. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file." },
+      linksNote: { zh: '每個連結只要複製一次，私訊傳給該玩家（例如 LINE）即可 — 每回合的字會自動更新。', en: 'Copy each link once and send it privately (e.g. a LINE DM) — the word updates automatically every round.' },
+      dealBtn: { zh: '🐺 發字卡', en: '🐺 Deal Words' },
+      revealBtn: { zh: '👁 全部公開', en: '👁 Reveal All' },
+      pickBtn: { zh: '🎲 隨機點名', en: '🎲 Pick Someone' },
+      browserHdr: { zh: '📋 全部詞組（{n}）— 每回合一組，狼人拿到第二個字', en: '📋 All Word Pairs ({n}) — one pair per round, the Wolf gets the second word' },
+      vsLabel: { zh: 'vs', en: 'vs' },
+      votedProgress: { zh: '🗳️ {cast} / {total} 位玩家已投票', en: '🗳️ {cast} / {total} players have voted' },
+      noVotes: { zh: '這一輪沒有人投票。', en: 'No votes were cast this round.' },
+      voteCount: { zh: '{name}：{count} 票', en: '{name}: {count} vote{s}' },
+      verdictCorrect: { zh: '✅ 村民抓到狼人了！', en: '✅ Villagers caught the Wolf!' },
+      verdictWrong: { zh: '❌ 狼人逃過一劫！', en: '❌ The Wolf escaped detection!' },
+      revealBanner: { zh: '這一輪：<strong>{emojiA} {a}</strong> vs <strong>{emojiB} {b}</strong>', en: 'This round: <strong>{emojiA} {a}</strong> vs <strong>{emojiB} {b}</strong>' },
+      wolfTag: { zh: '🐺 狼人', en: '🐺 Wolf' },
+      // category headers in the pair browser below — UI chrome around the word pairs,
+      // which themselves (game-data.js's wordwolf array) are never translated
+      '🍔 Food & Drink': { zh: '🍔 美食飲品', en: '🍔 Food & Drink' },
+      '🐾 Animals': { zh: '🐾 動物', en: '🐾 Animals' },
+      '🗺️ Places': { zh: '🗺️ 地方', en: '🗺️ Places' },
+      '🚗 Transport': { zh: '🚗 交通工具', en: '🚗 Transport' },
+      '🎵 Music': { zh: '🎵 音樂', en: '🎵 Music' },
+      '💼 Jobs': { zh: '💼 職業', en: '💼 Jobs' },
+      '☀️ Weather': { zh: '☀️ 天氣', en: '☀️ Weather' },
+      '🎯 Activities': { zh: '🎯 活動', en: '🎯 Activities' },
+      '🎒 Objects': { zh: '🎒 物品', en: '🎒 Objects' },
+      '🍽️ Kitchen': { zh: '🍽️ 廚房', en: '🍽️ Kitchen' },
+      '📚 School': { zh: '📚 學校', en: '📚 School' },
+      '💻 Technology': { zh: '💻 科技', en: '💻 Technology' },
+      '👕 Clothing': { zh: '👕 服飾', en: '👕 Clothing' },
+      '🎉 Holidays': { zh: '🎉 節慶', en: '🎉 Holidays' },
+      '🎬 Entertainment': { zh: '🎬 娛樂', en: '🎬 Entertainment' },
+      '🌳 Nature': { zh: '🌳 大自然', en: '🌳 Nature' },
+      '🫀 Body': { zh: '🫀 身體部位', en: '🫀 Body' },
+    });
+    const wt = (key, vars) => {
+      let s = I18N.t('wordwolf', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+
     const PAIRS = GAME_DATA.wordwolf;
 
     function escHTML(s) {
@@ -157,27 +200,30 @@
     }
 
     /* the full deck at the bottom of the page, grouped by category — a pair only reads
-       as "fair" next to the others in its group, so the grouping is worth keeping */
-    (function buildPairBrowser() {
-      document.getElementById('pair-browser-hdr').textContent =
-        `📋 All Word Pairs (${PAIRS.length}) — one pair per round, the Wolf gets the second word`;
+       as "fair" next to the others in its group, so the grouping is worth keeping.
+       The words themselves (p.a / p.b) are never translated — only the header and
+       category labels around them are. Re-run on every language toggle. */
+    function buildPairBrowser() {
+      document.getElementById('pair-browser-hdr').textContent = wt('browserHdr', { n: PAIRS.length });
       const groups = [];
       PAIRS.forEach((p, i) => {
         if (!groups.length || groups[groups.length - 1].cat !== p.cat) groups.push({ cat: p.cat, items: [] });
         groups[groups.length - 1].items.push({ p, n: i + 1 });
       });
       document.getElementById('pair-browser-body').innerHTML = groups.map(g => `
-        <div class="pair-cat">${escHTML(g.cat)} (${g.items.length})</div>
+        <div class="pair-cat">${escHTML(wt(g.cat))} (${g.items.length})</div>
         <div class="pair-list">
           ${g.items.map(({ p, n }) => `
             <div class="pair-item">
               <span class="pi-num">${n}</span>
               <span class="pi-word">${p.emojiA} ${escHTML(p.a)}</span>
-              <span class="pi-vs">vs</span>
+              <span class="pi-vs">${escHTML(wt('vsLabel'))}</span>
               <span class="pi-word">${p.emojiB} ${escHTML(p.b)}</span>
             </div>`).join('')}
         </div>`).join('');
-    })();
+    }
+    buildPairBrowser();
+    I18N.onChange(() => buildPairBrowser());
     const ALLOWED_COUNTS = [3, 4, 5, 6];
     let assigned = [];    // [{ word, emoji, isWolf }] per player — this round's deal
     let currentPair = null;
@@ -209,11 +255,11 @@
       el.classList.remove('hidden');
 
       if (!revealed) {
-        el.textContent = `🗳️ ${cast.length} / ${ROOM.count} players have voted`;
+        el.textContent = wt('votedProgress', { cast: cast.length, total: ROOM.count });
         return;
       }
 
-      if (!cast.length) { el.innerHTML = 'No votes were cast this round.'; return; }
+      if (!cast.length) { el.innerHTML = wt('noVotes'); return; }
 
       const counts = {};
       cast.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
@@ -221,15 +267,16 @@
       const lines = entries.map(([pnum, c]) => {
         const idx = Number(pnum) - 1;
         const name = ROOM.name(idx);
-        return `${name}: ${c} vote${c > 1 ? 's' : ''}`;
+        return wt('voteCount', { name, count: c, s: c > 1 ? 's' : '' });
       }).join(' &nbsp;·&nbsp; ');
 
       const wolfIdx = assigned.findIndex(p => p.isWolf);
       const topPnum = Number(entries[0][0]);
       const correct = wolfIdx >= 0 && (topPnum - 1) === wolfIdx;
-      const verdict = correct ? '✅ Villagers caught the Wolf!' : '❌ The Wolf escaped detection!';
+      const verdict = correct ? wt('verdictCorrect') : wt('verdictWrong');
       el.innerHTML = `<div class="verdict">${verdict}</div>${lines}`;
     }
+    I18N.onChange(() => renderVoteTally());
     /* Room code, tokens, names, the setup UI and the links all live in room.js */
     ROOM.init({
       mount: 'room-mount',
@@ -237,10 +284,10 @@
       counts: ALLOWED_COUNTS,
       defaultCount: 5,
       hideSetup: true, // player count and links are set up once on index.html now
-      linksNote: 'Copy each link once and send it privately (e.g. a LINE DM) — the word updates automatically every round.',
-      actionsHTML: '<button class="btn-primary" id="deal-btn" onclick="deal()">🐺 Deal Words</button>'
-                 + '<button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>'
-                 + '<button class="btn-secondary" id="dice-btn" onclick="pickSomeone()">🎲 Pick Someone</button>',
+      linksNote: () => wt('linksNote'),
+      actionsHTML: '<button class="btn-primary" id="deal-btn" onclick="deal()" data-i18n="wordwolf.dealBtn">🐺 Deal Words</button>'
+                 + '<button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()" data-i18n="wordwolf.revealBtn">👁 Reveal All</button>'
+                 + '<button class="btn-secondary" id="dice-btn" onclick="pickSomeone()" data-i18n="wordwolf.pickBtn">🎲 Pick Someone</button>',
       onCountChange: () => { assigned = []; revealed = false; votes = {}; resetPickOrder(); renderVoteTally(); },
       onPlayerData: (num, data) => {
         votes[num] = data && data.vote != null ? data.vote : null;
@@ -248,6 +295,9 @@
       },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+    function renderFbWarning() { document.getElementById('fb-warning').innerHTML = wt('fbWarning'); }
+    renderFbWarning();
+    I18N.onChange(() => renderFbWarning());
 
     /* the Wolf once revealed, the current pick, and everyone already picked this cycle */
     ROOM.setDecorator(i => {
@@ -258,10 +308,11 @@
       else if (pickedThisCycle.has(i)) cls = 'is-picked-done';
       const answer = revealed && p
         ? `<span class="lw-emoji">${p.emoji}</span><span class="lw-text">${p.word}</span>`
-          + (p.isWolf ? '<span class="lw-tag">🐺 Wolf</span>' : '')
+          + (p.isWolf ? `<span class="lw-tag">${wt('wolfTag')}</span>` : '')
         : '';
       return { cls, answer };
     });
+    I18N.onChange(() => ROOM.render());
 
     function shuffle(arr) {
       const a = arr.slice();
@@ -302,9 +353,10 @@
       ROOM.render();
       const banner = document.getElementById('reveal-banner');
       banner.classList.remove('hidden');
-      banner.innerHTML = `This round: <strong>${currentPair.emojiA} ${currentPair.a}</strong> vs <strong>${currentPair.emojiB} ${currentPair.b}</strong>`;
+      banner.innerHTML = wt('revealBanner', { emojiA: currentPair.emojiA, a: currentPair.a, emojiB: currentPair.emojiB, b: currentPair.b });
       renderVoteTally();
     }
+    I18N.onChange(() => { if (revealed && currentPair) revealAll(); });
 
     /* draws the next player in the shuffled order — everyone gets picked once
        before the cycle reshuffles and starts over. Shown entirely through the

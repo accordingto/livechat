@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Sophie's Choice">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="scenario.css">
   <style>
@@ -147,8 +148,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="sophies.roundLabel">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
@@ -159,13 +160,13 @@
 
     <div class="sc-placeholder" id="sc-placeholder">
       <div class="big-emoji">🤔</div>
-      <p>Press <strong>Draw</strong> to reveal the situation</p>
+      <p id="sc-placeholder-text">Press <strong>Draw</strong> to reveal the situation</p>
     </div>
 
     <div class="sc-content" id="sc-content">
 
       <div>
-        <div class="sc-label">🎯 The Situation</div>
+        <div class="sc-label" data-i18n="sophies.situationLabel">🎯 The Situation</div>
         <div class="sc-situation" id="sc-situation"></div>
       </div>
 
@@ -182,7 +183,7 @@
         </div>
         <div class="opt opt-c">
           <div class="opt-badge">C</div>
-          <div class="opt-text">Something else — come up with your own answer and share it with the group!</div>
+          <div class="opt-text" data-i18n="sophies.optionC">Something else — come up with your own answer and share it with the group!</div>
         </div>
       </div>
 
@@ -210,6 +211,28 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
   <script>
+    I18N.registerDict('sophies', {
+      roundLabel: { zh: '回合', en: 'Round' },
+      situationLabel: { zh: '🎯 情境', en: '🎯 The Situation' },
+      placeholderText: { zh: '按下<strong>抽取</strong>揭曉情境', en: 'Press <strong>Draw</strong> to reveal the situation' },
+      optionC: { zh: '其他答案 — 想出你自己的答案，並和大家分享！', en: 'Something else — come up with your own answer and share it with the group!' },
+      drawBtn: { zh: '🎲 抽取', en: '🎲 Draw' },
+      nextBtn: { zh: '🔁 下一個情境', en: '🔁 Next Situation' },
+      rollingText: { zh: '抽取中…', en: 'Drawing…' },
+      browserHdr: { zh: '📋 全部情境（{n}）— 點擊載入', en: '📋 All Scenarios ({n}) — click to load' },
+      filterAll: { zh: '全部', en: 'All' },
+      pickedLabel: { zh: '已選擇', en: 'Picked' },
+      tallyA: { zh: 'A', en: 'A' },
+      tallyB: { zh: 'B', en: 'B' },
+      tallyC: { zh: 'C · 自己的答案', en: 'C · Own answer' },
+      linksNote: { zh: '玩家開啟自己的卡片連結，點選 A、B 或 C — 卡片下方的統計會即時更新，接著大家再說明理由。', en: 'Players open their own card link and tap A, B or C — the tally under the card fills in as they answer, then everyone explains why.' },
+    });
+    const st = (key, vars) => {
+      let s = I18N.t('sophies', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+
     GAME_RENDER.injectCSS();
     const scenarios = GAME_DATA.sophies;
 
@@ -218,11 +241,23 @@
     let rolling = false;
     let voteId  = ''; // new ballot every draw, so old answers stop counting on their own
 
+    /* the placeholder ("Press Draw...") and the Draw/Next Situation button both carry
+       state-dependent text that data-i18n's static re-apply can't know about, so they're
+       kept in sync by hand from here and from the I18N.onChange hook below */
+    function renderPlaceholderText() {
+      document.getElementById('sc-placeholder-text').innerHTML = st('placeholderText');
+    }
+    function renderDrawBtnLabel() {
+      document.getElementById('draw-btn').textContent = round === 0 ? st('drawBtn') : st('nextBtn');
+    }
+    renderPlaceholderText();
+    renderDrawBtnLabel();
+
     ROOM.init({
       mount: 'room-mount',
       accent: '#f59e0b',
       hideSetup: true, // player count and links are set up once on index.html now
-      linksNote: 'Players open their own card link and tap A, B or C — the tally under the card fills in as they answer, then everyone explains why.',
+      linksNote: () => st('linksNote'),
       onPlayerData: renderTally,
       onCountChange: renderTally,
       onNameChange: () => { ROOM.render(); renderTally(); },
@@ -236,7 +271,7 @@
 
     ROOM.setDecorator(i => {
       const c = cardPick(i + 1);
-      return c ? { marked: true, answer: `Picked <span style="color:#f59e0b">${c.toUpperCase()}</span>` } : {};
+      return c ? { marked: true, answer: `${st('pickedLabel')} <span style="color:#f59e0b">${c.toUpperCase()}</span>` } : {};
     });
 
     /* the live count under the situation card — the whole point of handing out links */
@@ -255,7 +290,7 @@
           <span class="pt-count">${picks[key].length}</span>
           <span class="pt-names">${picks[key].join(', ') || '—'}</span>
         </div>`;
-      el.innerHTML = col('a', 'A') + col('b', 'B') + col('c', 'C · Own answer');
+      el.innerHTML = col('a', st('tallyA')) + col('b', st('tallyB')) + col('c', st('tallyC'));
       el.classList.remove('hidden');
       ROOM.render();
     }
@@ -286,14 +321,14 @@
       filterBar.innerHTML = '';
       list.innerHTML = '';
       activeCat = '';
-      document.getElementById('browser-hdr').textContent = `📋 All Scenarios (${scenarios.length}) — click to load`;
+      document.getElementById('browser-hdr').textContent = st('browserHdr', { n: scenarios.length });
 
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
 
       const allBtn = document.createElement('button');
       allBtn.className = 'filter-btn active';
-      allBtn.textContent = 'All';
+      allBtn.textContent = st('filterAll');
       allBtn.dataset.cat = '';
       allBtn.addEventListener('click', () => filterBy(''));
       filterBar.appendChild(allBtn);
@@ -335,7 +370,7 @@
       ct.classList.add('show');
       round++;
       document.getElementById('roundNum').textContent = round;
-      btn.textContent = '🔁 Next Situation';
+      renderDrawBtnLabel();
       pushToCards(sc);
 
       document.querySelectorAll('.scenario-item').forEach(el => {
@@ -357,7 +392,7 @@
       card.classList.remove('landed');
       card.classList.add('rolling');
       ph.style.display = 'none';
-      ct.innerHTML = '<span class="gr-text" id="sc-roll-text">Drawing…</span>';
+      ct.innerHTML = `<span class="gr-text" id="sc-roll-text">${st('rollingText')}</span>`;
       ct.classList.add('show');
 
       let avail = scenarios.map((_,i) => i).filter(i => !used.includes(i));
@@ -376,13 +411,25 @@
           card.classList.add('landed');
           round++;
           document.getElementById('roundNum').textContent = round;
-          btn.textContent = '🔁 Next Situation';
+          renderDrawBtnLabel();
           btn.disabled    = false;
           rolling = false;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         }
       );
     }
+
+    /* live language toggle: re-run everything that was built with translated text
+       (data-i18n handles the plain static tags on its own) */
+    I18N.onChange(() => {
+      renderPlaceholderText();
+      renderDrawBtnLabel();
+      document.getElementById('browser-hdr').textContent = st('browserHdr', { n: scenarios.length });
+      const allBtn = document.querySelector('.filter-btn[data-cat=""]');
+      if (allBtn) allBtn.textContent = st('filterAll');
+      renderTally();
+      ROOM.render();
+    });
   </script>
 </body>
 </html>

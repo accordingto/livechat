@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Pick a Side!">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     .header h1 { background: linear-gradient(135deg, #fff 30%, #ff7043); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -207,8 +208,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="hottake.round">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
@@ -217,27 +218,27 @@
 
 
   <div class="card" id="card">
-    <span class="fire-label">🔥 Pick a Side</span>
-    <span class="take-text placeholder" id="takeText">Press Spin to reveal a bold opinion</span>
+    <span class="fire-label" data-i18n="hottake.fireLabel">🔥 Pick a Side</span>
+    <span class="take-text placeholder" id="takeText" data-i18n="hottake.placeholder">Press Spin to reveal a bold opinion</span>
   </div>
 
 
   <div class="vote-row">
     <button class="vote-btn agree" id="btnAgree" disabled onclick="vote('agree')">
       <span class="emoji">👍</span>
-      <span class="label">Agree</span>
+      <span class="label" data-i18n="hottake.agree">Agree</span>
       <span class="count" id="cntAgree">0</span>
       <div class="bar-wrap"><div class="bar" id="barAgree"></div></div>
     </button>
     <button class="vote-btn middle" id="btnMiddle" disabled onclick="vote('middle')">
       <span class="emoji">🤷</span>
-      <span class="label">It Depends</span>
+      <span class="label" data-i18n="hottake.itDepends">It Depends</span>
       <span class="count" id="cntMiddle">0</span>
       <div class="bar-wrap"><div class="bar" id="barMiddle"></div></div>
     </button>
     <button class="vote-btn disagree" id="btnDisagree" disabled onclick="vote('disagree')">
       <span class="emoji">👎</span>
-      <span class="label">Disagree</span>
+      <span class="label" data-i18n="hottake.disagree">Disagree</span>
       <span class="count" id="cntDisagree">0</span>
       <div class="bar-wrap"><div class="bar" id="barDisagree"></div></div>
     </button>
@@ -245,7 +246,7 @@
 
   <div class="spin-wrap">
     <button class="spin-btn" id="spinBtn" onclick="spin()">🎡 Spin!</button>
-    <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled>↺ Reset</button>
+    <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled data-i18n="hottake.reset">↺ Reset</button>
   </div>
 
   <!-- player cards: everyone votes from their own phone, the tally above updates live -->
@@ -262,22 +263,52 @@
     GAME_RENDER.injectCSS();
     const takes = GAME_DATA.hottake;
 
+    I18N.registerDict('hottake', {
+      round:      { zh: '回合', en: 'Round' },
+      fireLabel:  { zh: '🔥 選邊站', en: '🔥 Pick a Side' },
+      placeholder:{ zh: '按下 Spin 顯示一句犀利意見', en: 'Press Spin to reveal a bold opinion' },
+      agree:      { zh: '同意', en: 'Agree' },
+      itDepends:  { zh: '看情況', en: 'It Depends' },
+      disagree:   { zh: '不同意', en: 'Disagree' },
+      spin:       { zh: '🎡 抽題！', en: '🎡 Spin!' },
+      spinAgain:  { zh: '🔁 再抽一次', en: '🔁 Spin Again' },
+      drawing:    { zh: '抽題中…', en: 'Drawing…' },
+      reset:      { zh: '↺ 重置', en: '↺ Reset' },
+      linksNote:  { zh: '玩家打開自己的卡片連結，針對每個議題投 👍／🤷／👎 —— 上方的統計會把他們的票數和你在這裡點的加總在一起。', en: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.' },
+    });
+    const ht = key => (typeof I18N !== 'undefined' ? I18N.t('hottake', key) : key);
+
     let rolling = false;
     let round = 0;
     let currentTake = '';
     let voteId = '';          // changes every spin, so last round's card votes stop counting
     const votes = { agree: 0, middle: 0, disagree: 0 }; // tapped by the host, for people without a link
 
-    const SIDES = { agree: '👍 Agree', middle: '🤷 It Depends', disagree: '👎 Disagree' };
+    function buildSides() {
+      return { agree: '👍 ' + ht('agree'), middle: '🤷 ' + ht('itDepends'), disagree: '👎 ' + ht('disagree') };
+    }
+    let SIDES = buildSides();
+
+    function updateSpinLabel() {
+      document.getElementById('spinBtn').textContent = round > 0 ? ht('spinAgain') : ht('spin');
+    }
+    updateSpinLabel();
 
     ROOM.init({
       mount: 'room-mount',
       accent: '#ff7043',
       hideSetup: true, // player count and links are set up once on index.html now
-      linksNote: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.',
+      linksNote: () => ht('linksNote'),
       onPlayerData: () => { updateBars(); ROOM.render(); },
       onCountChange: () => updateBars(),
       onNameChange: () => ROOM.render(),
+    });
+
+    I18N.onChange(() => {
+      SIDES = buildSides();
+      updateSpinLabel();
+      updateBars();
+      ROOM.render();
     });
 
     /* what each player picked this round — only votes carrying the current id count */
@@ -333,7 +364,7 @@
       const btnM    = document.getElementById('btnMiddle');
       const btnD    = document.getElementById('btnDisagree');
 
-      card.innerHTML = '<span class="fire-label">🔥 Pick a Side</span><span class="take-text" id="takeText">Drawing…</span>';
+      card.innerHTML = `<span class="fire-label" data-i18n="hottake.fireLabel">${ht('fireLabel')}</span><span class="take-text" id="takeText" data-i18n="hottake.drawing">${ht('drawing')}</span>`;
       const text = document.getElementById('takeText');
 
       spinBtn.disabled = true;
@@ -354,7 +385,7 @@
         currentTake = chosen;
         document.getElementById('roundNum').textContent = round;
         btnA.disabled = btnM.disabled = btnD.disabled = false;
-        spinBtn.textContent = '🔁 Spin Again';
+        updateSpinLabel();
         spinBtn.disabled = false;
         document.getElementById('resetBtn').disabled = false;
         rolling = false;

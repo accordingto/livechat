@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="In The Scene">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="scenario.css">
   <style>
@@ -205,8 +206,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="scene.roundLabel">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
@@ -217,7 +218,7 @@
 
     <div class="sc-placeholder" id="sc-placeholder">
       <div class="big-emoji">🎭</div>
-      <p>Press <strong>Draw Scene</strong> to reveal your situation and roles</p>
+      <p id="sc-placeholder-text">Press <strong>Draw Scene</strong> to reveal your situation and roles</p>
     </div>
 
     <div class="sc-content" id="sc-content"></div>
@@ -242,6 +243,25 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
   <script>
+    I18N.registerDict('scene', {
+      roundLabel: { zh: '回合', en: 'Round' },
+      placeholder: { zh: '按下 <strong>抽場景</strong> 揭曉你們的情境與角色', en: 'Press <strong>Draw Scene</strong> to reveal your situation and roles' },
+      drawBtn: { zh: '🎲 抽場景', en: '🎲 Draw Scene' },
+      nextBtn: { zh: '🔁 下一個場景', en: '🔁 Next Scene' },
+      rollingText: { zh: '抽選中…', en: 'Drawing…' },
+      theSceneTag: { zh: '🎭 場景', en: '🎭 The Scene' },
+      howManyPlayers: { zh: '幾位玩家？', en: 'How many players?' },
+      rolesHdrPick: { zh: '🎪 你們的角色 — 選一個並演出來！', en: '🎪 Your Roles — Pick one and play it!' },
+      rolesHdrDealt: { zh: '🎪 你們的角色 — 看看自己的卡片！', en: '🎪 Your Roles — check your own card!' },
+      browserHdr: { zh: '📋 全部場景（{n}）— 點擊載入', en: '📋 All Scenarios ({n}) — click to load' },
+      filterAll: { zh: '全部', en: 'All' },
+    });
+    const st = (key, vars) => {
+      let s = I18N.t('scene', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+
     const scenarios = GAME_DATA.scene;
     let round   = 0;
     let used    = [];
@@ -281,13 +301,13 @@
       const el = document.getElementById('sc-content');
       el.innerHTML = `
         <div class="situation-block">
-          <div class="sc-theme-tag">🎭 The Scene</div>
+          <div class="sc-theme-tag">${st('theSceneTag')}</div>
           <div class="sc-title">${sc.emoji} ${sc.title}</div>
           <div class="sc-situation">${sc.situation}</div>
         </div>
         <div class="sc-divider"></div>
         <div class="ps-wrap">
-          <div class="ps-label">How many players?</div>
+          <div class="ps-label">${st('howManyPlayers')}</div>
           <div class="ps-btns" id="ps-btns">
             ${[2,3,4,5,6].map(n =>
               `<button class="ps-btn" onclick="setPlayers(${n})">${n}</button>`
@@ -296,7 +316,7 @@
         </div>
         <div class="sc-divider" id="roles-divider" style="display:none"></div>
         <div class="roles-header" id="roles-header" style="display:none">
-          🎪 Your Roles — Pick one and play it!
+          ${st('rolesHdrPick')}
         </div>
         <div class="roles-grid" id="roles-grid">
           <div class="role-card role-a">
@@ -363,8 +383,8 @@
       grid.innerHTML = '';
       const dealt = ROOM.enabled && roleOf.length === n;
       document.getElementById('roles-header').textContent = dealt
-        ? '🎪 Your Roles — check your own card!'
-        : '🎪 Your Roles — Pick one and play it!';
+        ? st('rolesHdrDealt')
+        : st('rolesHdrPick');
       for (let i = 0; i < n; i++) {
         const role   = getRoleData(currentScene, i);
         const letter = ALL_LETTERS[i];
@@ -409,14 +429,14 @@
       filterBar.innerHTML = '';
       list.innerHTML = '';
       activeCat = '';
-      document.getElementById('browser-hdr').textContent = `📋 All Scenarios (${scenarios.length}) — click to load`;
+      document.getElementById('browser-hdr').textContent = st('browserHdr', { n: scenarios.length });
 
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
 
       const allBtn = document.createElement('button');
       allBtn.className = 'filter-btn active';
-      allBtn.textContent = 'All';
+      allBtn.textContent = st('filterAll');
       allBtn.dataset.cat = '';
       allBtn.addEventListener('click', () => filterBy(''));
       filterBar.appendChild(allBtn);
@@ -457,7 +477,7 @@
 
       round++;
       document.getElementById('roundNum').textContent = round;
-      document.getElementById('draw-btn').textContent = '🔁 Next Scene';
+      document.getElementById('draw-btn').textContent = st('nextBtn');
 
       document.querySelectorAll('.scenario-item').forEach(el => {
         el.classList.toggle('active', +el.dataset.idx === idx);
@@ -480,7 +500,7 @@
       card.classList.add('rolling');
       ph.style.display = 'none';
       ct.classList.remove('show');
-      ct.innerHTML = `<div class="sc-roll-text" id="roll-text">Drawing…</div>`;
+      ct.innerHTML = `<div class="sc-roll-text" id="roll-text">${st('rollingText')}</div>`;
       ct.classList.add('show');
 
       let avail = scenarios.map((_,i) => i).filter(i => !used.includes(i));
@@ -503,13 +523,33 @@
           card.classList.add('landed');
           round++;
           document.getElementById('roundNum').textContent = round;
-          btn.textContent = '🔁 Next Scene';
+          btn.textContent = st('nextBtn');
           btn.disabled    = false;
           rolling = false;
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         }
       }, 85);
     }
+
+    /* re-run on every language toggle: the placeholder, the Draw/Next Scene button,
+       the role-assignment header (via renderRoleGrid), and the browsable list's
+       header + "All" filter label. The scenario/role content from game-data.js
+       (titles, situations, role labels/hints, categories) is never touched here —
+       only the UI chrome. Doesn't call buildList() again so the current filter
+       and "loaded" highlight in the list below aren't reset by a toggle. */
+    function refreshSceneI18n() {
+      const ph = document.getElementById('sc-placeholder-text');
+      if (ph) ph.innerHTML = st('placeholder');
+      const drawBtn = document.getElementById('draw-btn');
+      if (drawBtn && !rolling) drawBtn.textContent = round > 0 ? st('nextBtn') : st('drawBtn');
+      renderRoleGrid();
+      const hdr = document.getElementById('browser-hdr');
+      if (hdr) hdr.textContent = st('browserHdr', { n: scenarios.length });
+      const allBtn = document.querySelector('.filter-btn[data-cat=""]');
+      if (allBtn) allBtn.textContent = st('filterAll');
+    }
+    refreshSceneI18n();
+    I18N.onChange(refreshSceneI18n);
   </script>
 </body>
 </html>

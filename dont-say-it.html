@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Say It Without Saying It">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --accent: #6366f1; --accent-alt: #6366f1; --warn: #ef4444; }
@@ -413,52 +414,50 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="taboo.roundLabel">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
     <h1>🙊 Say It Without Saying It</h1>
   </div>
 
-  <div class="fb-warning hidden" id="fb-warning">
-    ⚠️ This game needs the player cards: the secret word goes to the clue giver's phone, never to this screen. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.
-  </div>
+  <div class="fb-warning hidden" id="fb-warning"></div>
 
   <div class="status-line" id="status-line"></div>
 
   <!-- left: the clock every card mirrors. right: the rule switch for the round -->
   <div class="control-bar" id="control-bar">
     <section class="cb-sect timer">
-      <span class="cb-head">⏱️ Round timer</span>
+      <span class="cb-head" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
       <div class="cb-body">
         <span class="secs-field">
-          <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" aria-label="30 seconds less">−</button>
-          <input id="timer-secs" inputmode="numeric" autocomplete="off" value="60" aria-label="Seconds">
-          <span class="secs-unit">sec</span>
-          <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" aria-label="30 seconds more">+</button>
+          <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
+          <input id="timer-secs" inputmode="numeric" autocomplete="off" value="60" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
+          <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
+          <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
         </span>
         <span class="timer-actions">
           <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
-          <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()">🔄 Reset</button>
+          <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()" data-i18n="taboo.resetBtn">🔄 Reset</button>
         </span>
       </div>
     </section>
     <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
     <section class="cb-sect rules">
       <div class="rules-group">
-        <span class="rules-group-label">🚫 Forbidden words</span>
+        <span class="rules-group-label" data-i18n="taboo.forbiddenWordsLabel">🚫 Forbidden words</span>
         <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
           <span class="toggle-switch"></span>
           <span id="forbidden-state">ON</span>
         </button>
         <div class="banned-count-row" id="banned-count-row">
-          <span class="banned-count-label">🔢 how many</span>
+          <span class="banned-count-label" data-i18n="taboo.howManyLabel">🔢 how many</span>
           <div class="level-btns" id="count-btns"></div>
         </div>
       </div>
       <div class="rules-group">
-        <span class="rules-group-label">🎚️ Difficulty</span>
+        <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
         <div class="level-btns" id="level-btns"></div>
       </div>
     </section>
@@ -466,16 +465,16 @@
 
   <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
   <div class="call-row hidden" id="call-row">
-    <button class="call-btn yes" onclick="ruleTaboo(true)">🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver</button>
-    <button class="call-btn no" onclick="ruleTaboo(false)">👌 No — keep playing</button>
+    <button class="call-btn yes" onclick="ruleTaboo(true)" data-i18n="taboo.callYesBtn">🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver</button>
+    <button class="call-btn no" onclick="ruleTaboo(false)" data-i18n="taboo.callNoBtn">👌 No — keep playing</button>
   </div>
   <div class="scoreboard" id="scoreboard"></div>
 
   <div class="deal-row">
     <button class="btn-deal" id="deal-btn" onclick="dealRound()">🎬 Deal a Word</button>
-    <button class="btn-skip hidden" id="skip-btn" onclick="dealRound(true)">🔁 Skip this word</button>
+    <button class="btn-skip hidden" id="skip-btn" onclick="dealRound(true)" data-i18n="taboo.skipBtn">🔁 Skip this word</button>
   </div>
-  <div class="score-reset"><button onclick="resetScores()">↺ Reset scores</button></div>
+  <div class="score-reset"><button onclick="resetScores()" data-i18n="taboo.resetScoresBtn">↺ Reset scores</button></div>
 
   <!-- player cards: the clue giver gets the word and the verdict buttons,
        everyone else gets the forbidden words and the buzzer -->
@@ -493,6 +492,90 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
   <script>
+    I18N.registerDict('taboo', {
+      roundLabel: { zh: '回合', en: 'Round' },
+      fbWarning: {
+        zh: '⚠️ 這個遊戲需要玩家卡片才能進行：祕密字只會出現在描述者的手機上，絕不會顯示在這個畫面。請開啟 <code>firebase-config.js</code>，並依照檔案開頭的設定步驟操作。',
+        en: "⚠️ This game needs the player cards: the secret word goes to the clue giver's phone, never to this screen. Open <code>firebase-config.js</code> and follow the setup steps at the top of that file.",
+      },
+      roundTimer: { zh: '⏱️ 回合計時', en: '⏱️ Round timer' },
+      secsMinusAria: { zh: '減少 30 秒', en: '30 seconds less' },
+      secsFieldAria: { zh: '秒數', en: 'Seconds' },
+      secsPlusAria: { zh: '增加 30 秒', en: '30 seconds more' },
+      secUnit: { zh: '秒', en: 'sec' },
+      startBtn: { zh: '▶️ 開始', en: '▶️ Start' },
+      pauseBtn: { zh: '⏸️ 暫停', en: '⏸️ Pause' },
+      resetBtn: { zh: '🔄 重設', en: '🔄 Reset' },
+      forbiddenWordsLabel: { zh: '🚫 禁字', en: '🚫 Forbidden words' },
+      howManyLabel: { zh: '🔢 生效幾個', en: '🔢 how many' },
+      difficultyLabel: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
+      toggleOn: { zh: 'ON', en: 'ON' },
+      toggleOff: { zh: 'OFF', en: 'OFF' },
+      toggleOffLocked: { zh: 'OFF（需要 3 人以上）', en: 'OFF (needs 3+ players)' },
+      easyLabel: { zh: '🟢 簡單', en: '🟢 Easy' },
+      mediumLabel: { zh: '🟡 中等', en: '🟡 Medium' },
+      hardLabel: { zh: '🔴 困難', en: '🔴 Hard' },
+      callYesBtn: { zh: '🚨 成立 — Taboo！裁判 +3，描述者 −2', en: '🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver' },
+      callNoBtn: { zh: '👌 不成立 — 繼續遊戲', en: '👌 No — keep playing' },
+      dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
+      skipBtn: { zh: '🔁 跳過這個題目', en: '🔁 Skip this word' },
+      resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
+      linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
+      endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
+      nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
+      cluegiverRole: { zh: '🎤 描述者', en: '🎤 Clue giver' },
+      refereeRole: { zh: '👀 裁判', en: '👀 Referee' },
+      calledTabooRole: { zh: '🚨 喊了 Taboo！', en: '🚨 Called Taboo!' },
+      buzzedInRole: { zh: '🙋 搶答了', en: '🙋 Buzzed in' },
+      inQueueRole: { zh: '🙋 排隊中', en: '🙋 In the queue' },
+      inQueueRoleShort: { zh: '⏳ 排隊中', en: '⏳ In queue' },
+      statusNoRoom: { zh: '請先發出下方的玩家連結才能開始 — 祕密字只會給描述者，絕不會出現在這個畫面。', en: "Hand out the player links below to start — the secret word goes to the clue giver, never to this screen." },
+      statusIdle: { zh: '按下「發一個題目」— 每個人都用自己的卡片作答。', en: 'Press Deal a Word — everyone answers from their own card.' },
+      clockOnHold: { zh: '⏸️ 計時已暫停', en: '⏸️ Clock on hold' },
+      calledTabooOn: { zh: '🚨 {who} 對 {giver} 喊了 <b>Taboo！</b>', en: '🚨 {who} called <b>Taboo!</b> on {giver}' },
+      tabooYourCall: { zh: '{giver} 真的說了禁字嗎？由你裁決。', en: 'Did {giver} really say a forbidden word? Your call.' },
+      buzzedWaiting: { zh: '🙋 <span class="sl-who" style="color:inherit">{buzzer}</span> 搶答了 — 等待 {giver} 裁定', en: '🙋 <span class="sl-who" style="color:inherit">{buzzer}</span> buzzed in — waiting for {giver} to judge' },
+      waitingToGuess: { zh: '{names} 排隊等著猜', en: '{names} waiting to guess' },
+      giverIsLive: { zh: '🎤 <span class="sl-who">{giver}</span> 是這輪的描述者 — 知道答案就搶答！', en: '🎤 <span class="sl-who">{giver}</span> is the clue giver — buzz in when you know it!' },
+      refIsRefereeing: { zh: '👀 {ref} 是這輪的裁判 — 由他持有禁字清單', en: '👀 {ref} is refereeing this round — they hold the forbidden words' },
+      wordWas: { zh: '答案是 {emoji} {word}', en: 'The word was {emoji} {word}' },
+      gotItResult: { zh: '✅ {who} 猜對了 — {who} 與 {giver} 各 +1！', en: '✅ {who} got it — +1 for {who} and {giver}!' },
+      foulResult: { zh: '🚨 {who} 抓到禁字 — {who} +3，{giver} −2！', en: '🚨 {who} caught a forbidden word — +3 for {who}, −2 for {giver}!' },
+      timeUpResult: { zh: '⏰ 時間到 — 這輪不計分。', en: "⏰ Time's up — no points this round." },
+      roundOverResult: { zh: '⏭️ 這輪結束 — 不計分。', en: '⏭️ Round over — no points.' },
+      showCardsBtn: { zh: '👁️ 查看玩家卡片內容（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Show what's on player cards (spoilers — don't open while sharing)" },
+      hideCardsBtn: { zh: '🙈 隱藏玩家卡片', en: '🙈 Hide player cards' },
+      linksNote: {
+        zh: '每一輪會發出一位描述者（題目＋禁字＋✅／❌ 判定鈕）與一位裁判（禁字＋Taboo! 按鈕）。其他人只有搶答鈕 — 他們看不到禁字，這樣清單才不會洩漏答案。2 人局沒有裁判 — 禁字功能關閉。',
+        en: "Each round deals a clue giver (word + forbidden words + the ✅ / ❌ buttons) and a referee (forbidden words + the Taboo! button). Everyone else just gets a buzzer — they never see the forbidden words, so the list can't give the answer away. 2-player games skip the referee — forbidden words are off.",
+      },
+      nothingDealtYet: { zh: '💤 還沒發題目', en: '💤 Nothing dealt yet' },
+      buzzedInPreview: { zh: '🙋 {name} 搶答了', en: '🙋 {name} buzzed in' },
+      correctPreviewBtn: { zh: '✅ 答對', en: '✅ Correct' },
+      notItPreviewBtn: { zh: '❌ 不對', en: '❌ Not it' },
+      tabooPreviewBtn: { zh: '🚨 Taboo！', en: '🚨 Taboo!' },
+      calledTabooWaiting: { zh: '🚨 已喊 Taboo！— 等待主持人裁決', en: '🚨 Called Taboo! — waiting for the host' },
+      clockOnHoldPreview: { zh: '⏸️ {name} 喊了 Taboo！— 計時暫停', en: '⏸️ {name} called Taboo! — clock on hold' },
+      youBuzzedPreview: { zh: '🙋 你搶答了 — 大聲說出你的答案！', en: '🙋 You buzzed — say your guess out loud!' },
+      queuePosPreview: { zh: "⏳ 你排在第 {n} 位", en: "⏳ You're #{n} in the queue" },
+      notItHangTightPreview: { zh: '❌ 不對 — 先等一下', en: '❌ Not it — hang tight' },
+      buzzInPreviewBtn: { zh: '🙋 搶答！', en: '🙋 Buzz in!' },
+      noForbiddenPreview: { zh: '這輪沒有禁字', en: 'No forbidden words this round' },
+      tabooCaughtKind: { zh: '🚨 抓到禁字', en: '🚨 Taboo caught' },
+      gotItKind: { zh: '✅ 答對了', en: '✅ Got it' },
+      roundEndedKind: { zh: '⏹️ 這輪結束', en: '⏹️ Round ended' },
+      plusThreeForYou: { zh: '（你 +3！）', en: ' (+3 for you!)' },
+      plusOneForYou: { zh: '（你 +1！）', en: ' (+1 for you!)' },
+      minusTwoForYou: { zh: '（你 −2）', en: ' (−2 for you)' },
+      hideDeckBtn: { zh: '🙈 收起題庫', en: '🙈 Hide the deck' },
+      browseDeckBtn: { zh: "👁️ 瀏覽全部 {n} 個題目（暴雷 — 分享畫面時請勿開啟）", en: "👁️ Browse all {n} words (spoilers — don't open while sharing)" },
+    });
+    const tt = (key, vars) => {
+      let s = I18N.t('taboo', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+
     const DECK = GAME_DATA.taboo;
 
     let round = 0;
@@ -527,9 +610,9 @@
        them and there is nothing to call Taboo! on. The choice sticks between sessions. */
     const OPTIONS_KEY = 'dontSayItOptions.v1';
     const LEVELS = [
-      { id: 'easy',   label: '🟢 Easy' },
-      { id: 'medium', label: '🟡 Medium' },
-      { id: 'hard',   label: '🔴 Hard' },
+      { id: 'easy',   labelKey: 'easyLabel' },
+      { id: 'medium', labelKey: 'mediumLabel' },
+      { id: 'hard',   labelKey: 'hardLabel' },
     ];
     // every card carries 6 banned words; how many of them are actually in play
     // this round is a difficulty knob of its own — fewer bans is easier
@@ -571,7 +654,7 @@
         const n = DECK.filter(c => c.level === l.id).length;
         const b = document.createElement('button');
         b.className = 'level-btn' + (l.id === level ? ' active' : '');
-        b.innerHTML = `${l.label} <span class="lb-count">${n}</span>`;
+        b.innerHTML = `${tt(l.labelKey)} <span class="lb-count">${n}</span>`;
         b.onclick = () => setLevel(l.id);
         wrap.appendChild(b);
       });
@@ -619,8 +702,8 @@
       btn.disabled = locked;
       // the group label above already says "Forbidden words" — this only needs the state
       document.getElementById('forbidden-state').textContent = locked
-        ? 'OFF (needs 3+ players)'
-        : (forbiddenOn ? 'ON' : 'OFF');
+        ? tt('toggleOffLocked')
+        : (forbiddenOn ? tt('toggleOn') : tt('toggleOff'));
       // the count only means something while forbidden words is actually on
       document.getElementById('banned-count-row').classList.toggle('is-off', locked || !forbiddenOn);
     }
@@ -637,7 +720,7 @@
       defaultCount: 4,
       hideSetup: true, // player count and links are set up once on index.html now
       extraRowHTML: '<button class="deck-toggle card-preview-toggle" id="card-preview-toggle" type="button"></button>',
-      linksNote: 'Each round deals a clue giver (word + forbidden words + the ✅ / ❌ buttons) and a referee (forbidden words + the Taboo! button). Everyone else just gets a buzzer — they never see the forbidden words, so the list can\'t give the answer away. 2-player games skip the referee — forbidden words are off.',
+      linksNote: tt('linksNote'),
       onPlayerData: handleAnswer,
       onCountChange: n => {
         giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores();
@@ -648,7 +731,11 @@
       },
       onNameChange: () => { ROOM.render(); renderAll(); if (state !== 'idle') pushState(); },
     });
-    document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+    function renderFbWarning() {
+      document.getElementById('fb-warning').innerHTML = tt('fbWarning');
+      document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+    }
+    renderFbWarning();
     // ROOM.init() can restore a persisted count of 2 (shared across games) without
     // running onCountChange, so the same correction has to happen here too
     if (ROOM.count < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
@@ -659,8 +746,8 @@
        button itself is built by room.js via extraRowHTML above; this just drives it. */
     function renderPreviewToggle() {
       document.getElementById('card-preview-toggle').textContent = cardPreviewOn
-        ? '🙈 Hide player cards'
-        : '👁️ Show what\'s on player cards (spoilers — don\'t open while sharing)';
+        ? tt('hideCardsBtn')
+        : tt('showCardsBtn');
     }
     document.getElementById('card-preview-toggle').onclick = () => {
       cardPreviewOn = !cardPreviewOn;
@@ -750,11 +837,11 @@
       const num = i + 1;
       let info = {};
       if (state === 'playing') {
-        if (tabooCalls.includes(num)) info = { marked: true, answer: '🚨 Called Taboo!' };
-        else if (i === giverIdx) info = { cls: 'is-giver-link', answer: '🎤 Clue giver' };
-        else if (i === refIdx) info = { cls: 'is-ref-link', answer: '👀 Referee' };
-        else if (queue[0] === num) info = { marked: true, answer: '🙋 Buzzed in' };
-        else if (queue.includes(num)) info = { marked: true, answer: '🙋 In the queue' };
+        if (tabooCalls.includes(num)) info = { marked: true, answer: tt('calledTabooRole') };
+        else if (i === giverIdx) info = { cls: 'is-giver-link', answer: tt('cluegiverRole') };
+        else if (i === refIdx) info = { cls: 'is-ref-link', answer: tt('refereeRole') };
+        else if (queue[0] === num) info = { marked: true, answer: tt('buzzedInRole') };
+        else if (queue.includes(num)) info = { marked: true, answer: tt('inQueueRole') };
       }
       if (cardPreviewOn) {
         info = Object.assign({}, info, {
@@ -881,7 +968,7 @@
       row.classList.toggle('running', armed && frac > .5);
       row.classList.toggle('low', armed && frac <= .5 && frac > .25);
       row.classList.toggle('critical', armed && frac <= .25);
-      document.getElementById('timer-start').textContent = timer.running ? '⏸️ Pause' : '▶️ Start';
+      document.getElementById('timer-start').textContent = timer.running ? tt('pauseBtn') : tt('startBtn');
       document.getElementById('secs-minus').disabled = timer.total <= STEP_MIN;
       document.getElementById('secs-plus').disabled = timer.total >= STEP_MAX;
     }
@@ -1073,40 +1160,40 @@
     function forbiddenPreviewHTML(p) {
       return p.forbidden
         ? `<div class="cp-forbidden">${p.forbidden.map(w => `<span class="cp-pill">${w}</span>`).join('')}</div>`
-        : `<div class="cp-note">No forbidden words this round</div>`;
+        : `<div class="cp-note">${tt('noForbiddenPreview')}</div>`;
     }
 
     function cardPreviewText(i) {
       const p = payloadFor(i);
-      if (p.state === 'idle') return '<div class="cp-note">💤 Nothing dealt yet</div>';
+      if (p.state === 'idle') return `<div class="cp-note">${tt('nothingDealtYet')}</div>`;
       const blocks = [];
       if (p.isGiver) {
         blocks.push(`<div class="cp-target"><span class="cp-emoji">${p.emoji || ''}</span><b>${p.target || '?'}</b></div>`);
         blocks.push(forbiddenPreviewHTML(p));
         if (p.buzzerName) {
-          blocks.push(`<div class="cp-note">🙋 ${p.buzzerName} buzzed in</div>`);
-          blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">✅ Correct</span><span class="cp-btn cp-btn-wrong">❌ Not it</span></div>`);
+          blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
+          blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">${tt('correctPreviewBtn')}</span><span class="cp-btn cp-btn-wrong">${tt('notItPreviewBtn')}</span></div>`);
         }
       } else if (p.isRef) {
         blocks.push(forbiddenPreviewHTML(p));
         blocks.push(p.iCalledTaboo
-          ? `<div class="cp-note">🚨 Called Taboo! — waiting for the host</div>`
-          : `<span class="cp-btn cp-btn-foul">🚨 Taboo!</span>`);
+          ? `<div class="cp-note">${tt('calledTabooWaiting')}</div>`
+          : `<span class="cp-btn cp-btn-foul">${tt('tabooPreviewBtn')}</span>`);
       } else if (p.tabooBy) {
-        blocks.push(`<div class="cp-note">⏸️ ${p.tabooBy} called Taboo! — clock on hold</div>`);
+        blocks.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
       } else if (p.queued === 1) {
-        blocks.push('<div class="cp-note">🙋 You buzzed — say your guess out loud!</div>');
+        blocks.push(`<div class="cp-note">${tt('youBuzzedPreview')}</div>`);
       } else if (p.queued) {
-        blocks.push(`<div class="cp-note">⏳ You're #${p.queued} in the queue</div>`);
+        blocks.push(`<div class="cp-note">${tt('queuePosPreview', { n: p.queued })}</div>`);
       } else if (p.rejected) {
-        blocks.push('<div class="cp-note">❌ Not it — hang tight</div>');
+        blocks.push(`<div class="cp-note">${tt('notItHangTightPreview')}</div>`);
       } else {
-        blocks.push('<span class="cp-btn cp-btn-buzz">🙋 Buzz in!</span>');
+        blocks.push(`<span class="cp-btn cp-btn-buzz">${tt('buzzInPreviewBtn')}</span>`);
       }
       if (p.state === 'done' && p.result) {
-        const kind = p.result.type === 'foul' ? '🚨 Taboo caught' : p.result.type === 'got' ? '✅ Got it' : '⏹️ Round ended';
-        const pts = p.result.type === 'foul' ? ' (+3 for you!)' : p.result.type === 'got' ? ' (+1 for you!)' : '';
-        const penalty = p.result.type === 'foul' && p.isGiver ? ' (−2 for you)' : '';
+        const kind = p.result.type === 'foul' ? tt('tabooCaughtKind') : p.result.type === 'got' ? tt('gotItKind') : tt('roundEndedKind');
+        const pts = p.result.type === 'foul' ? tt('plusThreeForYou') : p.result.type === 'got' ? tt('plusOneForYou') : '';
+        const penalty = p.result.type === 'foul' && p.isGiver ? tt('minusTwoForYou') : '';
         blocks.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
       return blocks.join('');
@@ -1126,10 +1213,10 @@
       // the button is the host's "what happens next", so it changes colour and pulses
       // when a round has ended — easy to miss when only the words changed
       deal.classList.toggle('is-next', state === 'done' && ROOM.enabled);
-      deal.textContent = !ROOM.enabled ? '🔗 Player links needed'
-                       : state === 'playing' ? `🛑 End ${ROOM.name(giverIdx)}'s turn`
-                       : state === 'done' ? '▶️ Next Round — new clue giver'
-                       : '🎬 Deal a Word';
+      deal.textContent = !ROOM.enabled ? tt('linksNeededBtn')
+                       : state === 'playing' ? tt('endTurnBtn', { name: ROOM.name(giverIdx) })
+                       : state === 'done' ? tt('nextRoundBtn')
+                       : tt('dealBtn');
       deal.onclick = state === 'playing' ? () => endRound({ type: 'stop', who: giverIdx + 1 }) : () => dealRound();
     }
 
@@ -1137,16 +1224,16 @@
       const el = document.getElementById('status-line');
       el.classList.remove('live', 'buzz', 'win', 'foul');
       if (!ROOM.enabled) {
-        el.textContent = 'Hand out the player links below to start — the secret word goes to the clue giver, never to this screen.';
+        el.textContent = tt('statusNoRoom');
         return;
       }
       if (state === 'idle') {
-        el.textContent = 'Press Deal a Word — everyone answers from their own card.';
+        el.textContent = tt('statusIdle');
         return;
       }
       if (state === 'playing') {
         // say so when the clock stopped itself, or the host is left wondering why
-        const held = timer.autoHeld ? '⏸️ Clock on hold' : '';
+        const held = timer.autoHeld ? tt('clockOnHold') : '';
         const sub = parts => {
           const line = parts.filter(Boolean).join(' · ');
           return line ? `<span class="sl-sub">${line}</span>` : '';
@@ -1154,34 +1241,34 @@
         if (tabooCalls.length) {
           el.classList.add('foul');
           const who = tabooCalls.map(n => ROOM.name(n - 1)).join(', ');
-          el.innerHTML = `🚨 ${who} called <b>Taboo!</b> on ${ROOM.name(giverIdx)}
-            ${sub([`Did ${ROOM.name(giverIdx)} really say a forbidden word? Your call.`, held])}`;
+          el.innerHTML = `${tt('calledTabooOn', { who, giver: ROOM.name(giverIdx) })}
+            ${sub([tt('tabooYourCall', { giver: ROOM.name(giverIdx) }), held])}`;
           return;
         }
         if (queue.length) {
           el.classList.add('buzz');
-          const rest = queue.length > 1 ? `${queue.slice(1).map(n => ROOM.name(n - 1)).join(', ')} waiting to guess` : '';
-          el.innerHTML = `🙋 <span class="sl-who" style="color:inherit">${ROOM.name(queue[0] - 1)}</span> buzzed in — waiting for ${ROOM.name(giverIdx)} to judge${sub([rest, held])}`;
+          const rest = queue.length > 1 ? tt('waitingToGuess', { names: queue.slice(1).map(n => ROOM.name(n - 1)).join(', ') }) : '';
+          el.innerHTML = `${tt('buzzedWaiting', { buzzer: ROOM.name(queue[0] - 1), giver: ROOM.name(giverIdx) })}${sub([rest, held])}`;
         } else {
           el.classList.add('live');
           const ref = refIdx >= 0
-            ? `<span class="sl-sub">👀 ${ROOM.name(refIdx)} is refereeing this round — they hold the forbidden words</span>` : '';
-          el.innerHTML = `🎤 <span class="sl-who">${ROOM.name(giverIdx)}</span> is the clue giver — buzz in when you know it!${ref}`;
+            ? `<span class="sl-sub">${tt('refIsRefereeing', { ref: ROOM.name(refIdx) })}</span>` : '';
+          el.innerHTML = `${tt('giverIsLive', { giver: ROOM.name(giverIdx) })}${ref}`;
         }
         return;
       }
-      const answer = card ? `<span class="sl-sub">The word was ${card.emoji} ${card.word}</span>` : '';
+      const answer = card ? `<span class="sl-sub">${tt('wordWas', { emoji: card.emoji, word: card.word })}</span>` : '';
       if (result && result.type === 'got') {
         el.classList.add('win');
-        el.innerHTML = `✅ ${ROOM.name(result.who - 1)} got it — +1 for ${ROOM.name(result.who - 1)} and ${ROOM.name(giverIdx)}!${answer}`;
+        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `🚨 ${ROOM.name(result.who - 1)} caught a forbidden word — +3 for ${ROOM.name(result.who - 1)}, −2 for ${ROOM.name(giverIdx)}!${answer}`;
+        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
-        el.innerHTML = `⏰ Time's up — no points this round.${answer}`;
+        el.innerHTML = `${tt('timeUpResult')}${answer}`;
       } else {
-        el.innerHTML = `⏭️ Round over — no points.${answer}`;
+        el.innerHTML = `${tt('roundOverResult')}${answer}`;
       }
     }
 
@@ -1195,11 +1282,11 @@
         const buzzed = state === 'playing' && queue[0] === num;
         const called = state === 'playing' && tabooCalls.includes(num);
         const ref = state !== 'idle' && i === refIdx;
-        const role = called ? '🚨 Called Taboo!'
-                   : giver ? '🎤 Clue giver'
-                   : ref ? '👀 Referee'
-                   : buzzed ? '🙋 Buzzed in'
-                   : state === 'playing' && queue.includes(num) ? '⏳ In queue' : '';
+        const role = called ? tt('calledTabooRole')
+                   : giver ? tt('cluegiverRole')
+                   : ref ? tt('refereeRole')
+                   : buzzed ? tt('buzzedInRole')
+                   : state === 'playing' && queue.includes(num) ? tt('inQueueRoleShort') : '';
         html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${ROOM.name(i)}</span>
@@ -1214,20 +1301,26 @@
     function toggleDeck() {
       deckOpen = !deckOpen;
       document.getElementById('deck-list').classList.toggle('hidden', !deckOpen);
+      renderDeckToggleLabel();
+    }
+    function renderDeckToggleLabel() {
       document.getElementById('deck-toggle').textContent = deckOpen
-        ? `🙈 Hide the deck`
-        : `👁️ Browse all ${DECK.length} words (spoilers — don't open while sharing)`;
+        ? tt('hideDeckBtn')
+        : tt('browseDeckBtn', { n: DECK.length });
     }
     /* grouped by difficulty, so the host can see what each setting will deal */
-    document.getElementById('deck-list').innerHTML = LEVELS.map(l => {
-      const cards = DECK.filter(c => c.level === l.id);
-      return `<div class="deck-group-hdr">${l.label}<span class="dg-count">${cards.length}</span></div>`
-        + cards.map(c => `
-        <div class="deck-item">
-          <div class="di-word">${c.emoji} ${c.word}</div>
-          <div class="di-forbidden">🚫 ${c.forbidden.join(' · ')}</div>
-        </div>`).join('');
-    }).join('');
+    function renderDeckList() {
+      document.getElementById('deck-list').innerHTML = LEVELS.map(l => {
+        const cards = DECK.filter(c => c.level === l.id);
+        return `<div class="deck-group-hdr">${tt(l.labelKey)}<span class="dg-count">${cards.length}</span></div>`
+          + cards.map(c => `
+          <div class="deck-item">
+            <div class="di-word">${c.emoji} ${c.word}</div>
+            <div class="di-forbidden">🚫 ${c.forbidden.join(' · ')}</div>
+          </div>`).join('');
+      }).join('');
+    }
+    renderDeckList();
     toggleDeck(); toggleDeck(); // sets the closed label
 
     renderForbiddenToggle();
@@ -1235,6 +1328,20 @@
     renderBannedCountBtns();
     renderTimer();
     renderAll();
+
+    // a language switch needs every JS-built piece of UI redrawn in place —
+    // data-i18n handles the static markup on its own, this covers the rest
+    I18N.onChange(() => {
+      renderFbWarning();
+      renderPreviewToggle();
+      renderForbiddenToggle();
+      renderLevelBtns();
+      renderBannedCountBtns();
+      renderDeckList();
+      renderDeckToggleLabel();
+      renderTimer();
+      renderAll();
+    });
   </script>
 </body>
 </html>
