@@ -15,9 +15,33 @@
    Without Firebase (not configured, or the CDN is unreachable) everything still runs:
    the room row and link buttons hide themselves and the game keeps working on the
    host's screen alone. */
+if (typeof I18N !== 'undefined') {
+  I18N.registerDict('room', {
+    roomLabel: { zh: '房號', en: 'Room' },
+    loadBtn: { zh: '載入', en: 'Load' },
+    newRoomBtn: { zh: '新房間', en: 'New Room' },
+    playersLabel: { zh: '玩家', en: 'Players' },
+    copyAllBtn: { zh: '📋 複製所有連結', en: '📋 Copy All Links' },
+    copiedBtn: { zh: '已複製', en: 'Copied' },
+    linkBtn: { zh: '連結', en: 'Link' },
+    qrBtn: { zh: 'QR', en: 'QR' },
+    sendCheckBtn: { zh: '🔍 傳送核對卡', en: '🔍 Send Card Check' },
+    linksHdrOptional: { zh: '🔗 玩家連結 <span class="room-tag">選填</span>', en: '🔗 Player Links <span class="room-tag">optional</span>' },
+    linksHdrNoFirebase: { zh: '👥 玩家', en: '👥 Players' },
+    checkSentNote: { zh: '🔍 核對字已送出 — 請每位玩家唸出卡片上看到的內容，接著重新發牌繼續遊戲。 ', en: '🔍 Check words sent — ask each player what they see, then re-deal the game to continue. ' },
+    clearBtn: { zh: '✖️ 清除', en: '✖️ Clear' },
+    playerPlaceholder: { zh: '玩家 {n}', en: 'Player {n}' },
+    copyPromptLink: { zh: '複製這個連結：', en: 'Copy this link:' },
+    copyPromptGeneric: { zh: '複製這個：', en: 'Copy this:' },
+  });
+}
+
 const ROOM = (() => {
   const STORAGE_PREFIX = 'room-session-';
   const LAST_SESSION_KEY = 'room-last-session';
+
+  const rt = key => (typeof I18N !== 'undefined' ? I18N.t('room', key) : key);
+  const playerLabel = i => rt('playerPlaceholder').replace('{n}', i + 1);
 
   let cfg = {};
   let sessionCode = '';
@@ -126,19 +150,19 @@ const ROOM = (() => {
   function copyLink(i, btn) {
     const text = shareText(i);
     const done = () => {
-      btn.textContent = 'Copied';
+      btn.textContent = rt('copiedBtn');
       btn.classList.remove('is-copied');
       void btn.offsetWidth; // restart the animation even on a rapid re-click
       btn.classList.add('is-copied');
       // a second click before the first revert fires shouldn't leave the button
       // stuck on "Copied" — clear the pending revert so only the latest click wins
       clearTimeout(btn._copyRevert);
-      btn._copyRevert = setTimeout(() => { btn.textContent = 'Link'; btn.classList.remove('is-copied'); }, 1500);
+      btn._copyRevert = setTimeout(() => { btn.textContent = rt('linkBtn'); btn.classList.remove('is-copied'); }, 1500);
     };
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(done).catch(() => prompt('Copy this link:', text));
+      navigator.clipboard.writeText(text).then(done).catch(() => prompt(rt('copyPromptLink'), text));
     } else {
-      prompt('Copy this:', text);
+      prompt(rt('copyPromptGeneric'), text);
     }
   }
 
@@ -150,17 +174,17 @@ const ROOM = (() => {
     ensureTokens(count);
     const text = Array.from({ length: count }, (_, i) => shareText(i)).join('\n\n');
     const done = () => {
-      btn.textContent = 'Copied';
+      btn.textContent = rt('copiedBtn');
       btn.classList.remove('is-copied');
       void btn.offsetWidth;
       btn.classList.add('is-copied');
       clearTimeout(btn._copyRevert);
-      btn._copyRevert = setTimeout(() => { btn.textContent = '📋 Copy All Links'; btn.classList.remove('is-copied'); }, 1500);
+      btn._copyRevert = setTimeout(() => { btn.textContent = rt('copyAllBtn'); btn.classList.remove('is-copied'); }, 1500);
     };
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(done).catch(() => prompt('Copy this:', text));
+      navigator.clipboard.writeText(text).then(done).catch(() => prompt(rt('copyPromptGeneric'), text));
     } else {
-      prompt('Copy this:', text);
+      prompt(rt('copyPromptGeneric'), text);
     }
   }
 
@@ -367,14 +391,14 @@ const ROOM = (() => {
     mount.innerHTML = `
       <div class="room-card">
         <div class="room-row hidden" id="room-code-row">
-          <span class="room-label">Room</span>
+          <span class="room-label" data-i18n="room.roomLabel">${rt('roomLabel')}</span>
           <input id="room-code-input" maxlength="8" autocomplete="off" spellcheck="false">
-          <button class="room-btn primary" id="room-load-btn">Load</button>
-          <button class="room-btn" id="room-new-btn">New Room</button>
+          <button class="room-btn primary" id="room-load-btn" data-i18n="room.loadBtn">${rt('loadBtn')}</button>
+          <button class="room-btn" id="room-new-btn" data-i18n="room.newRoomBtn">${rt('newRoomBtn')}</button>
         </div>
         <div class="room-divider hidden" id="room-code-divider"></div>
         <div class="room-row">
-          <span class="room-label">Players</span>
+          <span class="room-label" data-i18n="room.playersLabel">${rt('playersLabel')}</span>
           <div class="room-count-btns" id="room-count-btns"></div>
           <span id="room-actions"></span>
         </div>
@@ -382,8 +406,8 @@ const ROOM = (() => {
       </div>
       <div class="room-hdr" id="room-hdr"></div>
       <p class="room-note hidden" id="room-note"></p>
-      <button class="room-btn primary copy-all-btn hidden" id="copy-all-btn" type="button">📋 Copy All Links</button>
-      <button class="room-btn check-btn hidden" id="check-btn" type="button">🔍 Send Card Check</button>
+      <button class="room-btn primary copy-all-btn hidden" id="copy-all-btn" type="button" data-i18n="room.copyAllBtn">${rt('copyAllBtn')}</button>
+      <button class="room-btn check-btn hidden" id="check-btn" type="button" data-i18n="room.sendCheckBtn">${rt('sendCheckBtn')}</button>
       <p class="check-note hidden" id="check-note"></p>
       <div class="room-links" id="room-links"></div>`;
 
@@ -419,24 +443,27 @@ const ROOM = (() => {
     const live = on();
     document.getElementById('room-code-row').classList.toggle('hidden', !live);
     document.getElementById('room-code-divider').classList.toggle('hidden', !live);
-    document.getElementById('room-note').classList.toggle('hidden', !live || !cfg.linksNote);
+    // linksNote may be a function so callers can keep it in sync with the
+    // current language (see index.html, the only caller still using it)
+    const linksNote = typeof cfg.linksNote === 'function' ? cfg.linksNote() : cfg.linksNote;
+    document.getElementById('room-note').classList.toggle('hidden', !live || !linksNote);
     document.getElementById('copy-all-btn').classList.toggle('hidden', !live);
     document.getElementById('check-btn').classList.toggle('hidden', !live);
     const checkNote = document.getElementById('check-note');
     checkNote.classList.toggle('hidden', !live || !checkWords);
     if (live && checkWords) {
       checkNote.innerHTML = '';
-      checkNote.append('🔍 Check words sent — ask each player what they see, then re-deal the game to continue. ');
+      checkNote.append(rt('checkSentNote'));
       const clearLink = document.createElement('button');
       clearLink.type = 'button';
-      clearLink.textContent = '✖️ Clear';
+      clearLink.textContent = rt('clearBtn');
       clearLink.onclick = clearCardCheck;
       checkNote.appendChild(clearLink);
     }
     document.getElementById('room-hdr').innerHTML = live
-      ? '🔗 Player Links <span class="room-tag">optional</span>'
-      : '👥 Players';
-    if (cfg.linksNote) document.getElementById('room-note').textContent = cfg.linksNote;
+      ? rt('linksHdrOptional')
+      : rt('linksHdrNoFirebase');
+    if (linksNote) document.getElementById('room-note').textContent = linksNote;
     if (live) {
       ensureTokens(count);
       document.getElementById('room-code-input').value = sessionCode;
@@ -469,7 +496,7 @@ const ROOM = (() => {
         input = document.createElement('input');
         input.className = 'name-input';
         input.maxLength = 14;
-        input.placeholder = `Player ${i + 1}`;
+        input.placeholder = playerLabel(i);
         input.value = names[i] || '';
         input.oninput = () => {
           // don't trim here — this runs on every keystroke, and trimming a
@@ -488,11 +515,11 @@ const ROOM = (() => {
         row.className = 'link-btn-row';
         const copy = document.createElement('button');
         copy.className = 'btn-copy';
-        copy.textContent = 'Link';
+        copy.textContent = rt('linkBtn');
         copy.onclick = () => copyLink(i, copy);
         const qr = document.createElement('button');
         qr.className = 'btn-qr-toggle';
-        qr.textContent = 'QR';
+        qr.textContent = rt('qrBtn');
         qr.onclick = () => toggleQR(i, col, qr);
         row.appendChild(copy);
         row.appendChild(qr);
@@ -666,6 +693,11 @@ const ROOM = (() => {
     save();
     render();
     attach();
+    // re-run the dynamic bits render() builds by hand (placeholders, Link/QR
+    // button text, the check-note, the room-hdr) so a language toggle updates
+    // them immediately — the purely static markup above is already covered
+    // by I18N's own data-i18n rescan on every setLang()
+    if (typeof I18N !== 'undefined') I18N.onChange(() => render());
     return api;
   }
 
@@ -676,7 +708,7 @@ const ROOM = (() => {
     get names() { return names; },
     get code() { return sessionCode; },
     get answers() { return data; },
-    name(i) { return String(names[i] || '').trim() || `Player ${i + 1}`; },
+    name(i) { return String(names[i] || '').trim() || playerLabel(i); },
     setDecorator(fn) { decorate = fn; },
   };
   return api;

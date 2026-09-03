@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="IceBreak">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-text-size-adjust: 100%; }
@@ -326,20 +327,20 @@
        never called from this page, so a player's link just waits until the
        host actually opens a game and deals. -->
   <div class="step-wrap" id="step-setup">
-    <div class="step-hdr"><span class="step-num">Step 1</span><h2>Set up your room</h2></div>
-    <p class="step-sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
+    <div class="step-hdr"><span class="step-num" data-i18n="index.step1Badge">Step 1</span><h2 data-i18n="index.step1Title">Set up your room</h2></div>
+    <p class="step-sub" data-i18n="index.step1Sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
     <div id="room-mount"></div>
     <div class="continue-row">
-      <button class="continue-btn" id="continue-btn" type="button">▶️ Continue to Games</button>
+      <button class="continue-btn" id="continue-btn" type="button" data-i18n="index.continueBtn">▶️ Continue to Games</button>
     </div>
   </div>
 
   <!-- Step 2: the game menu, reached only after the room is set up above -->
   <div class="step-wrap hidden" id="step-games">
-    <div class="step-hdr"><span class="step-num">Step 2</span><h2>Choose a game</h2></div>
+    <div class="step-hdr"><span class="step-num" data-i18n="index.step2Badge">Step 2</span><h2 data-i18n="index.step2Title">Choose a game</h2></div>
     <div class="setup-summary" id="setup-summary">
       <span id="setup-summary-text"></span>
-      <button class="edit-setup-btn" id="edit-setup-btn" type="button">✏️ Edit room setup</button>
+      <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
   </div>
 
@@ -349,11 +350,11 @@
       <div class="card-icon-col"><span class="icon">⚖️</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Roleplay</span>
+          <span class="tag" data-i18n="index.tagRoleplay">Roleplay</span>
           <span class="tag">👥 4-9</span>
         </div>
         <h2>Kangaroo Court</h2>
-        <p>One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — and the verdict decides who scores.</p>
+        <p data-i18n="index.descKangaroo">One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — and the verdict decides who scores.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -362,11 +363,11 @@
       <div class="card-icon-col"><span class="icon">🏰</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Board Game</span>
+          <span class="tag" data-i18n="index.tagBoardGame">Board Game</span>
           <span class="tag">👥 2-6</span>
         </div>
         <h2>Dare Conquest</h2>
-        <p>Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival!</p>
+        <p data-i18n="index.descConquest">Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival!</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -375,11 +376,11 @@
       <div class="card-icon-col"><span class="icon">🙊</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Describing</span>
+          <span class="tag" data-i18n="index.tagDescribing">Describing</span>
           <span class="tag">👥 2-6</span>
         </div>
         <h2>Say It Without Saying It</h2>
-        <p>One player describes a secret word without saying the forbidden words, one player referees with the forbidden list in hand, and everyone else hits the buzzer to guess. This screen only keeps score.</p>
+        <p data-i18n="index.descTaboo">One player describes a secret word without saying the forbidden words, one player referees with the forbidden list in hand, and everyone else hits the buzzer to guess. This screen only keeps score.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -388,11 +389,11 @@
       <div class="card-icon-col"><span class="icon">🐺</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Deduction</span>
+          <span class="tag" data-i18n="index.tagDeduction">Deduction</span>
           <span class="tag">👥 3-6</span>
         </div>
         <h2>Word Wolf</h2>
-        <p>Almost everyone gets the same secret word — one Wolf gets something different. Talk it out and find the Wolf!</p>
+        <p data-i18n="index.descWordwolf">Almost everyone gets the same secret word — one Wolf gets something different. Talk it out and find the Wolf!</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -401,11 +402,11 @@
       <div class="card-icon-col"><span class="icon">🔥</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Debate</span>
+          <span class="tag" data-i18n="index.tagDebate">Debate</span>
           <span class="tag">👥 2+</span>
         </div>
         <h2>Pick a Side!</h2>
-        <p>Spin for a bold opinion — everyone votes 👍 / 🤷 / 👎 from their own card link, the room tally fills in live, then defend your answer!</p>
+        <p data-i18n="index.descHottake">Spin for a bold opinion — everyone votes 👍 / 🤷 / 👎 from their own card link, the room tally fills in live, then defend your answer!</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -414,11 +415,11 @@
       <div class="card-icon-col"><span class="icon">🤔</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Dilemma</span>
+          <span class="tag" data-i18n="index.tagDilemma">Dilemma</span>
           <span class="tag">👥 2+</span>
         </div>
         <h2>Sophie's Choice</h2>
-        <p>A morally impossible situation with two extreme choices — A or B. Everyone taps their pick on their own card, then explains why. Or take option C and defend your own answer.</p>
+        <p data-i18n="index.descSophies">A morally impossible situation with two extreme choices — A or B. Everyone taps their pick on their own card, then explains why. Or take option C and defend your own answer.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -427,11 +428,11 @@
       <div class="card-icon-col"><span class="icon">🤝</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Team</span>
+          <span class="tag" data-i18n="index.tagTeam">Team</span>
           <span class="tag">👥 3+</span>
         </div>
         <h2>Persuade Together!</h2>
-        <p>One player is dealt the judge on their own card, everyone else teams up. Make the most convincing case — then the judge taps the verdict!</p>
+        <p data-i18n="index.descPersuade">One player is dealt the judge on their own card, everyone else teams up. Make the most convincing case — then the judge taps the verdict!</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -440,18 +441,18 @@
       <div class="card-icon-col"><span class="icon">🎭</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag">Roleplay</span>
+          <span class="tag" data-i18n="index.tagRoleplay">Roleplay</span>
           <span class="tag">👥 2-6</span>
         </div>
         <h2>You're In The Scene</h2>
-        <p>Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!</p>
+        <p data-i18n="index.descScene">Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
 
   </div>
 
-  <footer>IceBreak Hub · All games are free &amp; no sign-up required</footer>
+  <footer>IceBreak Hub · <span data-i18n="index.footerTagline">All games are free &amp; no sign-up required</span></footer>
 
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
@@ -460,6 +461,35 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
   <script>
+    I18N.registerDict('index', {
+      step1Badge: { zh: '步驟 1', en: 'Step 1' },
+      step1Title: { zh: '設定房間', en: 'Set up your room' },
+      step1Sub: { zh: '選擇玩家人數，並把連結傳給每個人。同一組連結可以用在下面所有遊戲，不用重複發送。', en: "Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again." },
+      continueBtn: { zh: '▶️ 前往選擇遊戲', en: '▶️ Continue to Games' },
+      step2Badge: { zh: '步驟 2', en: 'Step 2' },
+      step2Title: { zh: '選擇遊戲', en: 'Choose a game' },
+      editSetupBtn: { zh: '✏️ 編輯房間設定', en: '✏️ Edit room setup' },
+      summaryWithRoom: { zh: '🔗 房號 <b>{code}</b> ・ <b>{count}</b> 位玩家', en: '🔗 Room <b>{code}</b> · <b>{count}</b> players' },
+      summaryNoRoom: { zh: '👥 <b>{count}</b> 位玩家（未啟用玩家連結，原因見下方各遊戲說明）', en: '👥 <b>{count}</b> players (no player links — see the games below for why)' },
+      linksNote: { zh: '這組連結可以用在下面每一款遊戲。玩家可以整場都開著同一個分頁，主持人一發牌就會自動更新。', en: 'These links work for every game below. A player can keep the same tab open the whole session — it updates automatically once you deal.' },
+      tagRoleplay: { zh: '角色扮演', en: 'Roleplay' },
+      tagBoardGame: { zh: '棋盤遊戲', en: 'Board Game' },
+      tagDescribing: { zh: '比手畫腳', en: 'Describing' },
+      tagDeduction: { zh: '推理', en: 'Deduction' },
+      tagDebate: { zh: '辯論', en: 'Debate' },
+      tagDilemma: { zh: '兩難抉擇', en: 'Dilemma' },
+      tagTeam: { zh: '團隊合作', en: 'Team' },
+      descKangaroo: { zh: '一位玩家因荒謬的罪名受審，控方與辯方輪番陳述，陪審團全程祕密投票兩次——最終判決揭曉勝負。', en: 'One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — and the verdict decides who scores.' },
+      descConquest: { zh: '擲骰子在棋盤上前進，完成搞笑的挑戰——告白、唱歌、講笑話、互虧——就能佔領土地，或搶走對手的地盤！', en: 'Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival!' },
+      descTaboo: { zh: '一位玩家要形容一個祕密單字、但不能說出禁字，另一位裁判手持禁字清單把關，其餘玩家搶答猜答案。這個畫面只負責計分。', en: 'One player describes a secret word without saying the forbidden words, one player referees with the forbidden list in hand, and everyone else hits the buzzer to guess. This screen only keeps score.' },
+      descWordwolf: { zh: '幾乎每個人都拿到同一個祕密單字——只有一位臥底拿到不同的字。討論看看，找出臥底是誰！', en: 'Almost everyone gets the same secret word — one Wolf gets something different. Talk it out and find the Wolf!' },
+      descHottake: { zh: '轉出一句大膽的意見——每個人在自己的卡片連結上投 👍／🤷／👎，全場票數即時累加，接著為自己的答案辯護！', en: 'Spin for a bold opinion — everyone votes 👍 / 🤷 / 👎 from their own card link, the room tally fills in live, then defend your answer!' },
+      descSophies: { zh: '一個道德兩難的處境，只有兩個極端選項——A 或 B。每個人在自己的卡片上點選，再說明理由；也可以選 C，提出自己的答案並為它辯護。', en: 'A morally impossible situation with two extreme choices — A or B. Everyone taps their pick on their own card, then explains why. Or take option C and defend your own answer.' },
+      descPersuade: { zh: '一位玩家的卡片會被發到「裁判」身分，其他人則組隊合作。提出最有說服力的論點——最後由裁判在卡片上按下判決！', en: 'One player is dealt the judge on their own card, everyone else teams up. Make the most convincing case — then the judge taps the verdict!' },
+      descScene: { zh: '抽出一個混亂的場景——每位玩家會在自己的私人卡片上拿到專屬角色與提示。沒有劇本，純靠即興演出，笑料百出！', en: 'Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!' },
+      footerTagline: { zh: '所有遊戲完全免費，無需註冊', en: 'All games are free & no sign-up required' },
+    });
+
     /* Every game on this site shares one room code and one set of player
        links (see room.js) — so instead of re-explaining "set your player
        count, then send links" on eight separate host pages, it happens once
@@ -471,18 +501,20 @@
       accent: '#e94560',
       counts: [2, 3, 4, 5, 6, 7, 8, 9],
       defaultCount: 5,
-      linksNote: "These links work for every game below. A player can keep the same tab open the whole session — it updates automatically once you deal.",
+      linksNote: () => I18N.t('index', 'linksNote'),
       onCountChange: renderSetupSummary,
       onNameChange: renderSetupSummary,
     });
 
     function renderSetupSummary() {
       const el = document.getElementById('setup-summary-text');
-      el.innerHTML = ROOM.enabled
-        ? `🔗 Room <b>${ROOM.code}</b> · <b>${ROOM.count}</b> players`
-        : `👥 <b>${ROOM.count}</b> players (no player links — see the games below for why)`;
+      el.innerHTML = (ROOM.enabled
+        ? I18N.t('index', 'summaryWithRoom').replace('{code}', ROOM.code)
+        : I18N.t('index', 'summaryNoRoom')
+      ).replace('{count}', ROOM.count);
     }
     renderSetupSummary();
+    I18N.onChange(renderSetupSummary);
 
     function showStep(step) {
       document.getElementById('step-setup').classList.toggle('hidden', step !== 1);
