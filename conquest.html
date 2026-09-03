@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Dare Conquest">
   <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --accent: #22c55e; --accent-alt: #22c55e; }
@@ -593,8 +594,8 @@
 <body>
 
   <div class="topbar">
-    <a class="back" href="index.html">← Back to Hub</a>
-    <div class="round-badge">Round <span id="roundNum">0</span></div>
+    <a class="back" href="index.html" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="conquest.roundLabel">Round</span> <span id="roundNum">0</span></div>
   </div>
 
   <div class="header">
@@ -610,11 +611,11 @@
     <div class="setup-card">
       <div class="resume-banner hidden" id="resume-banner"></div>
       <div class="control-row">
-        <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
+        <button class="btn-primary" id="start-btn" onclick="startGame()" data-i18n="conquest.startGameBtn">🎲 Start Game</button>
       </div>
     </div>
 
-    <div class="rules-note">
+    <div class="rules-note" id="rules-note">
       Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, and <strong>BONUS</strong> and <strong>GIFT</strong> both take 2 territories off whoever is leading.
     </div>
   </div>
@@ -631,7 +632,7 @@
       <div class="dare-panel hidden" id="dare-panel">
         <div class="center-idle" id="center-content">
           <span class="ci-icon">🏰</span>
-          <p>Roll the dice to start your conquest!</p>
+          <p data-i18n="conquest.idleHint">Roll the dice to start your conquest!</p>
         </div>
       </div>
 
@@ -655,7 +656,7 @@
           </div>
           <div class="roll-btn-row">
             <button class="btn-secondary roll-btn hidden" id="lowroll-btn" onclick="toggleSkill('low')">🔻 Low Roll</button>
-            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice()">🎲 Roll</button>
+            <button class="btn-primary roll-btn" id="roll-btn-1" onclick="rollDice()" data-i18n="conquest.rollBtn">🎲 Roll</button>
             <button class="btn-secondary roll-btn hidden" id="highroll-btn" onclick="toggleSkill('high')">🎯 High Roll</button>
           </div>
         </div>
@@ -682,6 +683,93 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script>
+    I18N.registerDict('conquest', {
+      roundLabel: { zh: '回合', en: 'Round' },
+      startGameBtn: { zh: '🎲 開始遊戲', en: '🎲 Start Game' },
+      rulesNote: {
+        zh: '每位玩家輪流擲骰子、移動棋子繞行棋盤。停在普通格 → 完成畫面上的挑戰。過關就能佔領這塊地 — 就算是對手的地盤也一樣，所以就算全部土地都被佔領了，局勢還是會一直變化。有幾格是特殊格，無法被佔領：<strong>起點</strong>與<strong>幸運</strong>都會讓你跟另一位玩家交換全部領地，<strong>獎勵</strong>與<strong>禮物</strong>則都會從目前領先的玩家手上奪走 2 塊地。',
+        en: "Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, and <strong>BONUS</strong> and <strong>GIFT</strong> both take 2 territories off whoever is leading.",
+      },
+      resumeBanner: { zh: '🕹️ 你有一場進行中的遊戲 — 第 {round} 回合，{n} 位玩家。', en: '🕹️ You have a game in progress — Round {round}, {n} players.' },
+      resumeBtn: { zh: '▶️ 繼續遊戲', en: '▶️ Resume Game' },
+      startNewBtn: { zh: '🗑️ 改成開新局', en: '🗑️ Start New Instead' },
+      playerFallback: { zh: '玩家 {n}', en: 'Player {n}' },
+      rollBtn: { zh: '🎲 擲骰子', en: '🎲 Roll' },
+      highRollBtn: { zh: '🎯 高點數', en: '🎯 High Roll' },
+      lowRollBtn: { zh: '🔻 低點數', en: '🔻 Low Roll' },
+      turnSuffix: { zh: ' 的回合', en: "'s turn" },
+      idleHint: { zh: '擲骰子在棋盤上移動！', en: 'Roll the dice to move around the board!' },
+      okBtn: { zh: '👍 OK', en: '👍 OK' },
+      startLabel: { zh: '起點', en: 'START' },
+      bonusLabel: { zh: '獎勵', en: 'BONUS' },
+      luckyLabel: { zh: '幸運', en: 'LUCKY' },
+      giftLabel: { zh: '禮物', en: 'GIFT' },
+      challengeWord: { zh: '挑戰', en: 'Challenge' },
+      bonusCornerLabel: { zh: '獎勵格！', en: 'Bonus corner!' },
+      giftCornerLabel: { zh: '禮物格！', en: 'Gift corner!' },
+      territoryUnit: { zh: '塊土地', en: 'territory' },
+      territoriesUnit: { zh: '塊土地', en: 'territories' },
+      seizedFromRival: { zh: '{label}你從領先者 {name} 手中奪取了 {n} {unit}！', en: '{label} You seized {n} {unit} from the leader, {name}!' },
+      randomlyClaimed: { zh: '{label}你隨機取得了 {n} {unit}！', en: '{label} You randomly claimed {n} {unit}!' },
+      noTerritoriesLeft: { zh: '{label}已經沒有其他土地可以佔領了。', en: '{label} There were no other territories left to claim.' },
+      luckyPickTitle: { zh: '選一位玩家交換全部領地！', en: 'Choose a player to swap ALL territories with!' },
+      luckySwapMessage: { zh: '幸運格！你和 {name} 交換了全部領地！', en: 'Lucky corner! You swapped all territories with {name}!' },
+      stealAttemptBadge: { zh: '⚔️ 搶地挑戰', en: '⚔️ Steal Attempt' },
+      yourChallengeBadge: { zh: '🎲 你的挑戰', en: '🎲 Your Challenge' },
+      stealBody: { zh: '{attacker} 想搶走 <span style="color:{ownerHex}">{owner}</span> 的地！<br>{attacker}，大聲喊出來 — 真心話還是大冒險？', en: "{attacker} wants to take <span style=\"color:{ownerHex}\">{owner}</span>'s land!<br>{attacker}, call it — Truth or Dare?" },
+      specialBody: { zh: '{attacker} 停在{type}格！<br>{attacker}，大聲喊出來 — 真心話還是大冒險？', en: '{attacker} landed on {type}!<br>{attacker}, call it — Truth or Dare?' },
+      plainBody: { zh: '{attacker}，大聲喊出來 — 真心話還是大冒險？', en: '{attacker}, call it out loud — Truth or Dare?' },
+      truthBtn: { zh: 'TRUTH', en: 'TRUTH' },
+      dareBtn: { zh: 'DARE', en: 'DARE' },
+      newQuestionBtn: { zh: '🔄 換一題 ({n})', en: '🔄 New Question ({n})' },
+      changeQuestionQ: { zh: '要換這一題嗎？', en: 'Change this question?' },
+      leftThisGame: { zh: '這局還剩 {n} 次', en: '{n} left this game' },
+      swapYesBtn: { zh: '✅ 是', en: '✅ Yes' },
+      swapNoBtn: { zh: '✖️ 取消', en: '✖️ Cancel' },
+      startTimerBtn: { zh: '⏱️ 開始 {s} 秒倒數', en: '⏱️ Start {s}s Timer' },
+      pauseBtn: { zh: '⏸️ 暫停', en: '⏸️ Pause' },
+      resumeTimerBtn: { zh: '▶️ 繼續', en: '▶️ Resume' },
+      restartBtn: { zh: '🔄 重新計時', en: '🔄 Restart' },
+      honestBtn: { zh: '✅ 誠實回答！', en: '✅ Honest!' },
+      passBtn: { zh: '❌ 跳過！', en: '❌ Pass!' },
+      diditBtn: { zh: '✅ 完成了！', en: '✅ Did It!' },
+      failedBtn: { zh: '❌ 失敗了！', en: '❌ Failed!' },
+      diceoffTitle: { zh: '🎲 骰子對決！', en: '🎲 Dice-Off!' },
+      diceoffInstructions: { zh: '挑戰完成！擲骰子搶地 — 點數高的獲勝（平手算地主守住）。', en: 'Challenge complete! Roll for the land — higher number wins (ties go to the defender).' },
+      vsLabel: { zh: 'VS', en: 'VS' },
+      diceoffAttackerWins: { zh: '{name} 贏得對決，奪下這塊地！', en: '{name} wins the roll-off and takes the land!' },
+      diceoffOwnerWins: { zh: '{name} 守住了陣地 — 這塊地還是他的！', en: '{name} holds the line — the land stays theirs!' },
+      capturedLabel: { zh: '🏴 淪陷了！', en: '🏴 CAPTURED!' },
+      tieBanner: { zh: '🤝 平手！', en: "🤝 It's a tie!" },
+      tieDetail: { zh: '{names} 各擁有 {n} 塊土地', en: '{names} each hold {n} territories' },
+      winBanner: { zh: '🏆 {name} 獲勝！', en: '🏆 {name} wins!' },
+      winDetail: { zh: '掌控了 {n} / {total} 塊土地', en: 'Controlling {n} out of {total} territories' },
+      allDaresHdr: { zh: '📋 全部大冒險（{n} 題）— 瀏覽完整題庫', en: '📋 All Dares ({n}) — browse the full deck' },
+      allTruthsHdr: { zh: '😇 全部真心話（{n} 題）— 選擇 Truth 時隨機抽出', en: '😇 All Truths ({n}) — drawn whenever a player picks Truth' },
+      anotherPlayerPlaceholder: { zh: '（另一位玩家）', en: '(another player)' },
+      // dare/truth deck section headers — the type groups themselves come from
+      // game-data.js, but the header text is UI chrome around each per-prompt
+      // `cat`/`text`, which stay English (see CLAUDE.md), so it's translated here
+      // the same way word-wolf.html translates its own data-driven category headers.
+      '🎤 Singing': { zh: '🎤 唱歌', en: '🎤 Singing' },
+      '🗣️ Voices & Sounds': { zh: '🗣️ 變聲與音效', en: '🗣️ Voices & Sounds' },
+      '🎭 Improv & Roleplay': { zh: '🎭 即興與角色扮演', en: '🎭 Improv & Roleplay' },
+      '💬 To Their Face': { zh: '💬 當面說', en: '💬 To Their Face' },
+      '🧠 Word Games & Memory': { zh: '🧠 文字遊戲與記憶', en: '🧠 Word Games & Memory' },
+      '📱 Phone Reveal': { zh: '📱 手機大公開', en: '📱 Phone Reveal' },
+      '😳 Cringe & Confessions': { zh: '😳 糗事與自白', en: '😳 Cringe & Confessions' },
+      '🧒 Back Then': { zh: '🧒 那些年', en: '🧒 Back Then' },
+      '💘 Crushes & Dating': { zh: '💘 曖昧與約會', en: '💘 Crushes & Dating' },
+      '💰 Money & Work': { zh: '💰 金錢與工作', en: '💰 Money & Work' },
+    });
+    const ct = (key, vars) => {
+      let s = I18N.t('conquest', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+    const TYPE_LABEL_KEY = { start: 'startLabel', bonus: 'bonusLabel', lucky: 'luckyLabel', gift: 'giftLabel' };
+    const typeLabel = type => ct(TYPE_LABEL_KEY[type]);
+
     const PROMPTS = GAME_DATA.conquest;
     const TRUTHS = GAME_DATA.conquestTruth;
 
@@ -700,7 +788,8 @@
     // is 'dare' (claimable, triggers a dare) or one of the special event types below
     // (never claimable, triggers its effect instead) — one each of BONUS, LUCKY, and GIFT.
     const TYPE_ICON = { start: '🏁', bonus: '⭐', lucky: '🎲', gift: '🎁' };
-    const TYPE_LABEL = { start: 'START', bonus: 'BONUS', lucky: 'LUCKY', gift: 'GIFT' };
+    // English/Chinese label per special tile type now lives in the conquest.startLabel /
+    // .bonusLabel / .luckyLabel / .giftLabel dict entries — see typeLabel() above.
     const TYPE_COLOR = { start: '#94a3b8', bonus: '#f59e0b', lucky: '#a78bfa', gift: '#ec4899' };
     const PATH = [
       { row: 1, col: 1, type: 'start' },
@@ -751,6 +840,12 @@
     let diceOffState = null;        // { tileIdx, ownerIdx, attackerRoll, ownerRoll } while the roll-off is in progress
     const miniDiceRot = { attacker: { x: 0, y: 0 }, owner: { x: 0, y: 0 } }; // cumulative rotation for the roll-off dice
     const boardDiceRot = { x: 0, y: 0 }; // cumulative rotation for the movement die
+
+    // whatever function last painted the #dare-panel's #center-content — re-invoked on
+    // every language toggle so the currently displayed screen retranslates instantly
+    // instead of waiting for the next natural re-render (next roll, next challenge, …).
+    // Each "show ___" function below assigns its own closure here before calling it.
+    let currentPanelRender = null;
 
     /* ── 🗳️ Player voting (optional): the audience votes ✅ / ❌ on every challenge from
        the same private card link the other games hand out. Firebase is not required —
@@ -842,28 +937,35 @@
         const types = [...new Set(deck.map(p => p.type).filter(Boolean))];
         const groups = types.length ? types.map(t => [t, deck.filter(p => p.type === t)]) : [['', deck]];
         return groups.map(([type, items]) => `
-          ${type ? `<div class="prompt-group-hdr">${type}<span class="pg-count">${items.length}</span></div>` : ''}
+          ${type ? `<div class="prompt-group-hdr">${ct(type)}<span class="pg-count">${items.length}</span></div>` : ''}
           ${items.map(p => `
             <div class="prompt-item">
               <div class="pi-cat">${p.cat}</div>
-              <div class="pi-text">${p.text.split('{player}').join('<em>(another player)</em>')}</div>
+              <div class="pi-text">${p.text.split('{player}').join(`<em>${ct('anotherPlayerPlaceholder')}</em>`)}</div>
             </div>`).join('')}`).join('');
       };
 
-      document.getElementById('prompt-browser-hdr').textContent = `📋 All Dares (${PROMPTS.length}) — browse the full deck`;
+      document.getElementById('prompt-browser-hdr').textContent = ct('allDaresHdr', { n: PROMPTS.length });
       document.getElementById('prompt-list').innerHTML = groupedHTML(PROMPTS);
 
-      document.getElementById('truth-prompt-browser-hdr').textContent = `😇 All Truths (${TRUTHS.length}) — drawn whenever a player picks Truth`;
+      document.getElementById('truth-prompt-browser-hdr').textContent = ct('allTruthsHdr', { n: TRUTHS.length });
       const truthList = document.getElementById('truth-prompt-list');
       truthList.classList.add('truth-list');
       truthList.innerHTML = groupedHTML(TRUTHS);
     }
     buildPromptList();
+    I18N.onChange(() => buildPromptList());
+
+    // the setup screen's rules blurb has <strong> markup, so it's set via innerHTML
+    // (data-i18n on its own only assigns textContent) rather than a data-i18n attribute
+    function renderRulesNote() { document.getElementById('rules-note').innerHTML = ct('rulesNote'); }
+    renderRulesNote();
+    I18N.onChange(() => renderRulesNote());
 
     /* ── Game start / reset ── */
     function startGame() {
       players = Array.from({ length: playerCount }, (_, i) => ({
-        name: playerNames[i] || `Player ${i + 1}`,
+        name: playerNames[i] || ct('playerFallback', { n: i + 1 }),
         hex: PLAYER_COLORS[i].hex,
         token: PLAYER_COLORS[i].token,
         pos: 0,
@@ -912,7 +1014,7 @@
         el.style.gridRow = t.row;
         el.style.gridColumn = t.col;
         if (isSpecial) {
-          el.innerHTML = `<span class="tile-icon">${TYPE_ICON[t.type]}</span><span class="tile-corner-label">${TYPE_LABEL[t.type]}</span><div class="tile-tokens"></div>`;
+          el.innerHTML = `<span class="tile-icon">${TYPE_ICON[t.type]}</span><span class="tile-corner-label" data-tile-type="${t.type}">${typeLabel(t.type)}</span><div class="tile-tokens"></div>`;
         } else {
           el.innerHTML = `<div class="tile-connectors"></div><div class="tile-owner-name"></div><div class="tile-tokens"></div>`;
         }
@@ -920,6 +1022,15 @@
         return el;
       });
       gameStarted = true;
+    }
+
+    // re-labels the board's special (START/BONUS/LUCKY/GIFT) tiles on a language toggle —
+    // cheap and safe to call any time, board built or not (querySelectorAll is just empty then)
+    function refreshBoardLabels() {
+      document.querySelectorAll('.tile-corner-label').forEach(el => {
+        const type = el.getAttribute('data-tile-type');
+        if (type) el.textContent = typeLabel(type);
+      });
     }
 
     // adjacent tiles on the perimeter are always exactly one PATH step apart (circularly) —
@@ -1029,7 +1140,7 @@
 
       const label = document.createElement('div');
       label.className = 'capture-label';
-      label.textContent = '🏴 CAPTURED!';
+      label.textContent = ct('capturedLabel');
       el.appendChild(label);
 
       el.classList.remove('tile-capturing');
@@ -1061,31 +1172,38 @@
       const p = players[currentIdx];
       const el = document.getElementById('turn-indicator');
       el.style.setProperty('--turn-color', p.hex);
-      el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>'s turn <span class="round-count">· Round ${round}</span>`;
+      el.innerHTML = `${p.token} <span class="tname" style="color:${p.hex}">${p.name}</span>${ct('turnSuffix')} <span class="round-count">· ${ct('roundLabel')} ${round}</span>`;
     }
 
     /* ── Dare panel states: hidden / safe-corner / active dare — it's a floating
        overlay on top of the map, so it's only shown when there's something to say ── */
     function renderCenterIdle() {
+      currentPanelRender = renderCenterIdle;
       const panel = document.getElementById('dare-panel');
       panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
       panel.classList.add('hidden');
       document.getElementById('center-content').outerHTML =
-        `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>Roll the dice to move around the board!</p></div>`;
+        `<div class="center-idle" id="center-content"><span class="ci-icon">🏰</span><p>${ct('idleHint')}</p></div>`;
     }
 
-    function showCornerMessage(icon, text, type) {
-      awaitingJudgement = true;
-      const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden');
-      panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
-      panel.classList.add('corner-' + type);
-      document.getElementById('center-content').outerHTML = `
-        <div class="center-safe" id="center-content">
-          <span class="cs-icon">${icon}</span>
-          <p>${text}</p>
-          <button class="btn-judge btn-correct" onclick="confirmCornerEffect()">👍 OK</button>
-        </div>`;
+    // `buildText` is a closure (not a plain string) so the message can be re-composed in
+    // the current language — via ct() — both now and again on a later language toggle.
+    function showCornerMessage(icon, type, buildText) {
+      const render = () => {
+        awaitingJudgement = true;
+        const panel = document.getElementById('dare-panel');
+        panel.classList.remove('hidden');
+        panel.classList.remove('active', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+        panel.classList.add('corner-' + type);
+        document.getElementById('center-content').outerHTML = `
+          <div class="center-safe" id="center-content">
+            <span class="cs-icon">${icon}</span>
+            <p>${buildText()}</p>
+            <button class="btn-judge btn-correct" onclick="confirmCornerEffect()">${ct('okBtn')}</button>
+          </div>`;
+      };
+      currentPanelRender = render;
+      render();
     }
 
     // host confirms they've read the corner-effect message before the turn moves on
@@ -1144,8 +1262,8 @@
     }
 
     const SKILL_INFO = {
-      high: { field: 'highRolls', icon: '🎯', label: 'High Roll', btnId: 'highroll-btn' },
-      low:  { field: 'lowRolls',  icon: '🔻', label: 'Low Roll',  btnId: 'lowroll-btn' },
+      high: { field: 'highRolls', icon: '🎯', labelKey: 'highRollBtn', btnId: 'highroll-btn' },
+      low:  { field: 'lowRolls',  icon: '🔻', labelKey: 'lowRollBtn',  btnId: 'lowroll-btn' },
     };
 
     // arms (or, on a second press, cancels) a "guaranteed range" skill for the rest of this
@@ -1181,12 +1299,12 @@
         if (armedSkill === kind) {
           btn.classList.remove('hidden');
           btn.disabled = false; // stays clickable so a second press can cancel it
-          btn.textContent = `${info.icon} ${info.label} (${left})`;
+          btn.textContent = `${ct(info.labelKey)} (${left})`;
           return;
         }
         btn.classList.remove('hidden');
         btn.disabled = left <= 0; // out of charges — stays visible showing (0), just can't be pressed
-        btn.textContent = `${info.icon} ${info.label} (${left})`;
+        btn.textContent = `${ct(info.labelKey)} (${left})`;
       });
       publishState(); // the cards show the same charges and armed state
     }
@@ -1229,7 +1347,7 @@
     /* BONUS and GIFT do the same thing — seize 2 tiles from whoever is leading — and
        differ only in their icon, colour and wording, so they share one implementation. */
     const SEIZE_COUNT = 2; // tiles taken from the leader
-    function seizeFromLeader(type, icon, label) {
+    function seizeFromLeader(type, icon, labelKey) {
       const rivalCounts = players
         .map((p, i) => ({ i, count: ownership.filter(o => o === i).length }))
         .filter(r => r.i !== currentIdx);
@@ -1251,34 +1369,43 @@
       renderScoreboard();
       flashTile(players[currentIdx].pos, TYPE_COLOR[type]);
       stolen.forEach(i => animateCapture(i, players[currentIdx].hex));
-      showCornerMessage(icon, gained.length
-        ? (sourceIdx >= 0
-            ? `${label} You seized ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'} from the leader, ${players[sourceIdx].name}!`
-            : `${label} You randomly claimed ${gained.length} territor${gained.length === 1 ? 'y' : 'ies'}!`)
-        : `${label} There were no other territories left to claim.`, type);
+      // buildText() re-runs ct() fresh each time (initially, and again on a language
+      // toggle) so the label/unit words are never baked in in the wrong language.
+      showCornerMessage(icon, type, () => {
+        const label = ct(labelKey);
+        if (!gained.length) return ct('noTerritoriesLeft', { label });
+        const unit = gained.length === 1 ? ct('territoryUnit') : ct('territoriesUnit');
+        return sourceIdx >= 0
+          ? ct('seizedFromRival', { label, name: players[sourceIdx].name, n: gained.length, unit })
+          : ct('randomlyClaimed', { label, n: gained.length, unit });
+      });
     }
 
-    function doBonus() { seizeFromLeader('bonus', '⭐', 'Bonus corner!'); }
+    function doBonus() { seizeFromLeader('bonus', '⭐', 'bonusCornerLabel'); }
 
-    function doGift() { seizeFromLeader('gift', '🎁', 'Gift corner!'); }
+    function doGift() { seizeFromLeader('gift', '🎁', 'giftCornerLabel'); }
 
     // LUCKY: swap your entire territory with one other player's — auto-picks the
     // only rival in a 2-player game, otherwise lets the host choose who
     function doLucky() {
       const others = players.map((_, i) => i).filter(i => i !== currentIdx);
       if (others.length === 1) { performSwap(others[0]); return; }
-      awaitingJudgement = true;
-      const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
-      panel.classList.add('active');
-      document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat">🎲 LUCKY</span>
-          <div class="q-text">Choose a player to swap ALL territories with!</div>
-          <div class="q-actions">
-            ${others.map(i => `<button class="btn-judge" style="color:${players[i].hex};border-color:${players[i].hex}" onclick="performSwap(${i})">${players[i].token} ${players[i].name}</button>`).join('')}
-          </div>
-        </div>`;
+      const render = () => {
+        awaitingJudgement = true;
+        const panel = document.getElementById('dare-panel');
+        panel.classList.remove('hidden', 'defense', 'truth', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+        panel.classList.add('active');
+        document.getElementById('center-content').outerHTML = `
+          <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:popIn .3s ease both;">
+            <span class="q-cat">${TYPE_ICON.lucky} ${typeLabel('lucky')}</span>
+            <div class="q-text">${ct('luckyPickTitle')}</div>
+            <div class="q-actions">
+              ${others.map(i => `<button class="btn-judge" style="color:${players[i].hex};border-color:${players[i].hex}" onclick="performSwap(${i})">${players[i].token} ${players[i].name}</button>`).join('')}
+            </div>
+          </div>`;
+      };
+      currentPanelRender = render;
+      render();
     }
 
     function performSwap(targetIdx) {
@@ -1292,7 +1419,7 @@
       renderBoard();
       renderScoreboard();
       flashTile(players[cur].pos, TYPE_COLOR.lucky);
-      showCornerMessage('🔄', `Lucky corner! You swapped all territories with ${players[targetIdx].name}!`, 'lucky');
+      showCornerMessage('🔄', 'lucky', () => ct('luckySwapMessage', { name: players[targetIdx].name }));
     }
 
     /* ── 🗳️ Publishing challenges to the player cards, and tallying what comes back.
@@ -1352,7 +1479,7 @@
         db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).update(Object.assign({
           game: 'conquest',
           playerNum: i + 1,
-          name: playerNames[i] || `Player ${i + 1}`,
+          name: playerNames[i] || ct('playerFallback', { n: i + 1 }),
           // this player's own piece, so their card is colour-matched to the board
           myToken: onBoard ? PLAYER_COLORS[i].token : '',
           myHex: onBoard ? PLAYER_COLORS[i].hex : '',
@@ -1364,7 +1491,7 @@
       }
       // non-secret roster, same shape the other games publish — only rewritten when the
       // names actually change, since every challenge would otherwise re-send it
-      const roster = Array.from({ length: playerCount }, (_, i) => ({ playerNum: i + 1, name: playerNames[i] || `Player ${i + 1}` }));
+      const roster = Array.from({ length: playerCount }, (_, i) => ({ playerNum: i + 1, name: playerNames[i] || ct('playerFallback', { n: i + 1 }) }));
       const rosterJSON = JSON.stringify(roster);
       if (rosterJSON !== lastRosterJSON) {
         lastRosterJSON = rosterJSON;
@@ -1582,29 +1709,37 @@
       const isSpecial = !!specialType;
       const owner = isSteal ? players[ownerIdx] : null;
 
-      const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
-      panel.classList.add(isSteal ? 'defense' : 'choice');
-      const badgeStyle = isSteal
-        ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"'
-        : isSpecial
-        ? ` style="background:${TYPE_COLOR[specialType]}22;border-color:${TYPE_COLOR[specialType]}55;color:${TYPE_COLOR[specialType]};"`
-        : '';
-      const badgeText = isSteal ? '⚔️ Steal Attempt' : isSpecial ? `${TYPE_ICON[specialType]} ${TYPE_LABEL[specialType]} Challenge` : '🎲 Your Challenge';
-      const bodyText = isSteal
-        ? `${attacker.name} wants to take <span style="color:${owner.hex}">${owner.name}</span>'s land!<br>${attacker.name}, call it — Truth or Dare?`
-        : isSpecial
-        ? `${attacker.name} landed on ${TYPE_LABEL[specialType]}!<br>${attacker.name}, call it — Truth or Dare?`
-        : `${attacker.name}, call it out loud — Truth or Dare?`;
-      document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat"${badgeStyle}>${badgeText}</span>
-          <div class="q-text">${bodyText}</div>
-          <div class="td-choice-grid">
-            <button class="td-choice-btn td-truth" onclick="pickChallengeMode('truth')"><span class="td-emoji">😇</span>TRUTH</button>
-            <button class="td-choice-btn td-dare" onclick="pickChallengeMode('dare')"><span class="td-emoji">😈</span>DARE</button>
-          </div>
-        </div>`;
+      const render = () => {
+        const panel = document.getElementById('dare-panel');
+        panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+        panel.classList.add(isSteal ? 'defense' : 'choice');
+        const badgeStyle = isSteal
+          ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"'
+          : isSpecial
+          ? ` style="background:${TYPE_COLOR[specialType]}22;border-color:${TYPE_COLOR[specialType]}55;color:${TYPE_COLOR[specialType]};"`
+          : '';
+        const badgeText = isSteal
+          ? ct('stealAttemptBadge')
+          : isSpecial
+          ? `${TYPE_ICON[specialType]} ${typeLabel(specialType)} ${ct('challengeWord')}`
+          : ct('yourChallengeBadge');
+        const bodyText = isSteal
+          ? ct('stealBody', { attacker: attacker.name, owner: owner.name, ownerHex: owner.hex })
+          : isSpecial
+          ? ct('specialBody', { attacker: attacker.name, type: typeLabel(specialType) })
+          : ct('plainBody', { attacker: attacker.name });
+        document.getElementById('center-content').outerHTML = `
+          <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
+            <span class="q-cat"${badgeStyle}>${badgeText}</span>
+            <div class="q-text">${bodyText}</div>
+            <div class="td-choice-grid">
+              <button class="td-choice-btn td-truth" onclick="pickChallengeMode('truth')"><span class="td-emoji">😇</span>${ct('truthBtn')}</button>
+              <button class="td-choice-btn td-dare" onclick="pickChallengeMode('dare')"><span class="td-emoji">😈</span>${ct('dareBtn')}</button>
+            </div>
+          </div>`;
+      };
+      currentPanelRender = render;
+      render();
     }
 
     function pickChallengeMode(mode) {
@@ -1661,44 +1796,60 @@
       drawChallengePrompt(currentChallengeMode);
     }
 
+    // the timer block's markup, in whichever state the countdown actually is right now —
+    // shared between the initial draw and a language-toggle repaint, so retranslating the
+    // button labels never resets (or secretly detaches the visible circle from) a running countdown
+    function timerBlockHTML(seconds) {
+      if (!seconds) return '';
+      const started = promptTimerTotal > 0;
+      const remaining = started ? promptTimerRemaining : seconds;
+      const low = started && remaining <= Math.ceil(promptTimerTotal * 0.5);
+      const critical = started && remaining <= Math.ceil(promptTimerTotal * 0.25);
+      return `
+      <div class="timer-block">
+        <button class="btn-secondary${started ? ' hidden' : ''}" id="timer-start-btn" onclick="startPromptTimer(${seconds})">${ct('startTimerBtn', { s: seconds })}</button>
+        <div class="timer-circle${started ? '' : ' hidden'}${low ? ' low' : ''}${critical ? ' critical' : ''}" id="timer-circle">${remaining}</div>
+        <div class="timer-controls${started ? '' : ' hidden'}" id="timer-controls">
+          <button class="btn-secondary timer-ctrl-btn" id="timer-pause-btn" onclick="togglePauseTimer()">${promptTimerPaused ? ct('resumeTimerBtn') : ct('pauseBtn')}</button>
+          <button class="btn-secondary timer-ctrl-btn" onclick="restartPromptTimer(${seconds})">${ct('restartBtn')}</button>
+        </div>
+      </div>`;
+    }
+
     // renders the actual dare/truth (category + text + optional timer + judge buttons)
     function renderDareContent(prompt, isTruth) {
-      const panel = document.getElementById('dare-panel');
-      panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
-      panel.classList.add(isTruth ? 'truth' : 'active');
       const swapsLeft = players[currentIdx] ? players[currentIdx].swaps : 0;
       const parts = resolvePromptParts(prompt.text, currentIdx);
-      document.getElementById('center-content').outerHTML = `
-        <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
-          <div class="q-head">
-            <span></span>
-            <span class="q-cat${isTruth ? ' q-cat-truth' : ''}">${prompt.cat}</span>
-            <div class="swap-corner">
-              <button class="btn-secondary btn-swap" id="swap-btn" onclick="askSwapQuestion()"${swapsLeft > 0 ? '' : ' disabled'}>🔄 New Question (${swapsLeft})</button>
-              <div class="swap-confirm hidden" id="swap-confirm">
-                <p>Change this question?<span class="swap-left">${swapsLeft} left this game</span></p>
-                <div class="swap-confirm-actions">
-                  <button class="swap-yes" onclick="swapQuestion()">✅ Yes</button>
-                  <button class="swap-no" onclick="cancelSwapQuestion()">✖️ Cancel</button>
+      const render = () => {
+        const panel = document.getElementById('dare-panel');
+        panel.classList.remove('hidden', 'defense', 'truth', 'active', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
+        panel.classList.add(isTruth ? 'truth' : 'active');
+        document.getElementById('center-content').outerHTML = `
+          <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;animation:popIn .3s ease both;">
+            <div class="q-head">
+              <span></span>
+              <span class="q-cat${isTruth ? ' q-cat-truth' : ''}">${prompt.cat}</span>
+              <div class="swap-corner">
+                <button class="btn-secondary btn-swap" id="swap-btn" onclick="askSwapQuestion()"${swapsLeft > 0 ? '' : ' disabled'}>${ct('newQuestionBtn', { n: swapsLeft })}</button>
+                <div class="swap-confirm hidden" id="swap-confirm">
+                  <p>${ct('changeQuestionQ')}<span class="swap-left">${ct('leftThisGame', { n: swapsLeft })}</span></p>
+                  <div class="swap-confirm-actions">
+                    <button class="swap-yes" onclick="swapQuestion()">${ct('swapYesBtn')}</button>
+                    <button class="swap-no" onclick="cancelSwapQuestion()">${ct('swapNoBtn')}</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="q-text">${parts.html}</div>
-          ${prompt.seconds ? `
-          <div class="timer-block">
-            <button class="btn-secondary" id="timer-start-btn" onclick="startPromptTimer(${prompt.seconds})">⏱️ Start ${prompt.seconds}s Timer</button>
-            <div class="timer-circle hidden" id="timer-circle">${prompt.seconds}</div>
-            <div class="timer-controls hidden" id="timer-controls">
-              <button class="btn-secondary timer-ctrl-btn" id="timer-pause-btn" onclick="togglePauseTimer()">⏸️ Pause</button>
-              <button class="btn-secondary timer-ctrl-btn" onclick="restartPromptTimer(${prompt.seconds})">🔄 Restart</button>
+            <div class="q-text">${parts.html}</div>
+            ${timerBlockHTML(prompt.seconds)}
+            <div class="q-actions">
+              <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? ct('honestBtn') : ct('diditBtn')}<span class="judge-count hidden" id="judge-count-yes">0</span></button>
+              <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? ct('passBtn') : ct('failedBtn')}<span class="judge-count hidden" id="judge-count-no">0</span></button>
             </div>
-          </div>` : ''}
-          <div class="q-actions">
-            <button class="btn-judge btn-correct" onclick="judge(true)">${isTruth ? '✅ Honest!' : '✅ Did It!'}<span class="judge-count hidden" id="judge-count-yes">0</span></button>
-            <button class="btn-judge btn-wrong" onclick="judge(false)">${isTruth ? '❌ Pass!' : '❌ Failed!'}<span class="judge-count hidden" id="judge-count-no">0</span></button>
-          </div>
-        </div>`;
+          </div>`;
+      };
+      currentPanelRender = render;
+      render();
       publishChallenge(prompt, isTruth, parts.plain);
     }
 
@@ -1735,7 +1886,7 @@
 
     function updateTimerPauseLabel() {
       const btn = document.getElementById('timer-pause-btn');
-      if (btn) btn.textContent = promptTimerPaused ? '▶️ Resume' : '⏸️ Pause';
+      if (btn) btn.textContent = promptTimerPaused ? ct('resumeTimerBtn') : ct('pauseBtn');
     }
 
     function tickPromptTimer() {
@@ -1869,8 +2020,8 @@
       panel.classList.add('diceoff');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">🎲 Dice-Off!</span>
-          <div class="q-text">Challenge complete! Roll for the land — higher number wins (ties go to the defender).</div>
+          <span class="q-cat" id="diceoff-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">${ct('diceoffTitle')}</span>
+          <div class="q-text" id="diceoff-instructions">${ct('diceoffInstructions')}</div>
           <div class="diceoff-grid">
             <div class="diceoff-side" id="attacker-diceoff-side">
               <div class="diceoff-name" style="color:${attacker.hex}">${attacker.token} ${attacker.name}</div>
@@ -1878,22 +2029,44 @@
                 <div class="dice-stage"><div class="dice-shadow"></div><div class="dice3d" id="attacker-dice3d">${diceFacesHTML()}</div></div>
               </div>
               <div class="diceoff-value" id="attacker-roll-value">—</div>
-              <button class="btn-secondary" id="attacker-roll-btn" onclick="rollOffRoll('attacker')">🎲 Roll</button>
+              <button class="btn-secondary" id="attacker-roll-btn" onclick="rollOffRoll('attacker')">${ct('rollBtn')}</button>
             </div>
-            <div class="diceoff-vs">VS</div>
+            <div class="diceoff-vs" id="diceoff-vs">${ct('vsLabel')}</div>
             <div class="diceoff-side" id="owner-diceoff-side">
               <div class="diceoff-name" style="color:${owner.hex}">${owner.token} ${owner.name}</div>
               <div class="dice-outer" id="owner-dice-outer">
                 <div class="dice-stage"><div class="dice-shadow"></div><div class="dice3d" id="owner-dice3d">${diceFacesHTML()}</div></div>
               </div>
               <div class="diceoff-value" id="owner-roll-value">—</div>
-              <button class="btn-secondary" id="owner-roll-btn" onclick="rollOffRoll('owner')" disabled>🎲 Roll</button>
+              <button class="btn-secondary" id="owner-roll-btn" onclick="rollOffRoll('owner')" disabled>${ct('rollBtn')}</button>
             </div>
           </div>
           <div class="q-text" id="diceoff-result" style="min-height:1.6em;font-size:1rem;"></div>
         </div>`;
       diceoffId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       publishDiceOff();
+      // dice-off has moving 3D dice mid-animation, so a language toggle only patches
+      // this panel's text nodes in place (refreshDiceOffTexts) instead of going through
+      // currentPanelRender's full outerHTML rebuild used by the other panels.
+      currentPanelRender = null;
+    }
+
+    // patches the dice-off panel's translatable text without touching the dice elements
+    // themselves, so a language toggle mid-roll never interrupts an in-flight animation
+    function refreshDiceOffTexts() {
+      if (!diceOffState) return;
+      const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      setText('diceoff-cat', ct('diceoffTitle'));
+      setText('diceoff-instructions', ct('diceoffInstructions'));
+      setText('diceoff-vs', ct('vsLabel'));
+      setText('attacker-roll-btn', ct('rollBtn'));
+      setText('owner-roll-btn', ct('rollBtn'));
+      if (diceOffState.attackerRoll != null && diceOffState.ownerRoll != null) {
+        const attackerWins = diceOffState.attackerRoll > diceOffState.ownerRoll;
+        setText('diceoff-result', attackerWins
+          ? ct('diceoffAttackerWins', { name: players[diceOffState.attackerIdx].name })
+          : ct('diceoffOwnerWins', { name: players[diceOffState.ownerIdx].name }));
+      }
     }
 
     function spinMiniDiceTo(which, value) {
@@ -1950,8 +2123,8 @@
       const resultEl = document.getElementById('diceoff-result');
       if (resultEl) {
         resultEl.textContent = attackerWins
-          ? `${players[state.attackerIdx].name} wins the roll-off and takes the land!`
-          : `${players[state.ownerIdx].name} holds the line — the land stays theirs!`;
+          ? ct('diceoffAttackerWins', { name: players[state.attackerIdx].name })
+          : ct('diceoffOwnerWins', { name: players[state.ownerIdx].name });
       }
       const attackerSide = document.getElementById('attacker-diceoff-side');
       const ownerSide = document.getElementById('owner-diceoff-side');
@@ -2001,8 +2174,8 @@
       banner.classList.remove('hidden');
       banner.classList.add('shown');
       banner.innerHTML = winners.length > 1
-        ? `<h2>🤝 It's a tie!</h2><p>${winners.map(w => `${w.token} ${w.name}`).join(' & ')} each hold ${max} territories</p>`
-        : `<h2>🏆 ${winners[0].token} ${winners[0].name} wins!</h2><p>Controlling ${max} out of ${PATH.filter(t => t.type === 'dare').length} territories</p>`;
+        ? `<h2>${ct('tieBanner')}</h2><p>${ct('tieDetail', { names: winners.map(w => `${w.token} ${w.name}`).join(' & '), n: max })}</p>`
+        : `<h2>${ct('winBanner', { name: `${winners[0].token} ${winners[0].name}` })}</h2><p>${ct('winDetail', { n: max, total: PATH.filter(t => t.type === 'dare').length })}</p>`;
       renderScoreboard();
       renderCenterIdle();
       saveGame();
@@ -2044,10 +2217,10 @@
       if (!saved) { banner.classList.add('hidden'); banner.innerHTML = ''; return; }
       banner.classList.remove('hidden');
       banner.innerHTML = `
-        <p>🕹️ You have a game in progress — Round ${saved.round}, ${saved.players.length} players.</p>
+        <p>${ct('resumeBanner', { round: saved.round, n: saved.players.length })}</p>
         <div class="resume-actions">
-          <button class="btn-primary" onclick="resumeGame()">▶️ Resume Game</button>
-          <button class="btn-secondary" onclick="discardSavedGame()">🗑️ Start New Instead</button>
+          <button class="btn-primary" onclick="resumeGame()">${ct('resumeBtn')}</button>
+          <button class="btn-secondary" onclick="discardSavedGame()">${ct('startNewBtn')}</button>
         </div>`;
     }
 
@@ -2098,6 +2271,31 @@
     }
 
     checkForSavedGame();
+
+    // ── Language toggle: retranslate everything currently on screen ──
+    // - the prompt browser and the setup screen's rules note have their own I18N.onChange
+    //   calls above, next to where they're defined
+    // - currentPanelRender always points at whichever "show ___" function last painted
+    //   #center-content, so calling it again repaints that exact screen in the new
+    //   language (see its declaration, and every showXxx()/renderXxx() function that
+    //   assigns it, for the full list of panels this covers: idle, corner-effect
+    //   messages, the Truth/Dare choice screen, the LUCKY player-picker, and the
+    //   dare/truth card itself — including an in-progress countdown timer, which is
+    //   read from its own live state rather than reset)
+    // - the dice-off panel is the one exception: it's patched in place (refreshDiceOffTexts)
+    //   instead of going through currentPanelRender, so a toggle mid-roll never disturbs
+    //   the spinning 3D dice
+    I18N.onChange(() => {
+      refreshBoardLabels();
+      if (gameStarted) {
+        updateTurnIndicator();
+        updateSkillButtons();
+      }
+      if (currentPanelRender) currentPanelRender();
+      refreshDiceOffTexts();
+      if (document.getElementById('winner-banner').classList.contains('shown')) showWinner();
+      checkForSavedGame();
+    });
   </script>
 </body>
 </html>
