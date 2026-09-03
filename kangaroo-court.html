@@ -453,6 +453,7 @@
       accent: '#e94560',
       counts: [4, 5, 6, 7, 8, 9],
       defaultCount: 5,
+      hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Each case deals a Defendant, a Prosecutor, a Defense Attorney and (if the Judge toggle above is on — needs 5+ players) a Judge — everyone else is the Jury. Roles rotate every case, so everyone eventually stands trial.',
       extraRowHTML: '<span class="room-label">🧑‍⚖️ Judge</span><button class="toggle-btn" id="judge-toggle" onclick="toggleJudge()"><span class="toggle-switch"></span><span id="judge-state">ON</span></button>',
       onPlayerData: () => { renderJuryTally(); },

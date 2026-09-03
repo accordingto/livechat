@@ -273,6 +273,7 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#ff7043',
+      hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.',
       onPlayerData: () => { updateBars(); ROOM.render(); },
       onCountChange: () => updateBars(),

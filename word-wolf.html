@@ -137,9 +137,6 @@
   <div class="reveal-banner hidden" id="reveal-banner"></div>
   <div class="vote-tally hidden" id="vote-tally"></div>
 
-  <div class="section-hdr">🔗 Player Links</div>
-  <div class="player-links" id="player-links"></div>
-
   <!-- Browse the whole deck (always visible, for the host to preview before dealing) -->
   <div class="pair-browser">
     <div class="pair-browser-hdr" id="pair-browser-hdr"></div>
@@ -239,6 +236,7 @@
       accent: '#f59e0b',
       counts: ALLOWED_COUNTS,
       defaultCount: 5,
+      hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Copy each link once and send it privately (e.g. a LINE DM) — the word updates automatically every round.',
       actionsHTML: '<button class="btn-primary" id="deal-btn" onclick="deal()">🐺 Deal Words</button>'
                  + '<button class="btn-secondary hidden" id="reveal-btn" onclick="revealAll()">👁 Reveal All</button>'

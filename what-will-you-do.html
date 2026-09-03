@@ -221,6 +221,7 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#f59e0b',
+      hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Players open their own card link and tap A, B or C — the tally under the card fills in as they answer, then everyone explains why.',
       onPlayerData: renderTally,
       onCountChange: renderTally,

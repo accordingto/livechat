@@ -256,6 +256,7 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#ec4899',
+      hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Every player gets one role dealt privately to their own card — including the hint for how to play it. The list below stays on your screen so everyone can follow the scene.',
       onCountChange: n => { if (currentScene) setPlayers(n, true); },
       onNameChange: () => { ROOM.render(); renderRoleGrid(); },

@@ -344,6 +344,26 @@ const ROOM = (() => {
 
   function buildDOM(mount) {
     mount.classList.add('room-setup');
+
+    /* Room count, links, "Copy All Links" and "Send Card Check" all now live
+       on index.html's own Step 1 — every game shares that one setup, so a
+       game passing `hideSetup: true` skips re-building all of it here and
+       only keeps what it actually still needs: any real per-game control
+       (`actionsHTML` — e.g. Word Wolf's own Deal button, `extraRowHTML` —
+       e.g. Kangaroo Court's Judge toggle) and, once there's something worth
+       showing, a compact read-only roster (see renderCompact()) — nothing a
+       host would call "setup," just the answer the game wants them to see
+       next to each name (a role, a vote, a pick). */
+    if (cfg.hideSetup) {
+      const rows = [];
+      if (cfg.actionsHTML) rows.push(`<div class="room-row" id="room-actions-row">${cfg.actionsHTML}</div>`);
+      if (cfg.extraRowHTML) rows.push(`<div class="room-row" id="room-extra-row">${cfg.extraRowHTML}</div>`);
+      mount.innerHTML = `
+        ${rows.length ? `<div class="room-card compact">${rows.join('<div class="room-divider"></div>')}</div>` : ''}
+        <div class="room-links hidden" id="room-links"></div>`;
+      return;
+    }
+
     mount.innerHTML = `
       <div class="room-card">
         <div class="room-row hidden" id="room-code-row">
@@ -395,6 +415,7 @@ const ROOM = (() => {
   function render() {
     const wrap = document.getElementById('room-links');
     if (!wrap) return;
+    if (cfg.hideSetup) { renderCompact(wrap); return; }
     const live = on();
     document.getElementById('room-code-row').classList.toggle('hidden', !live);
     document.getElementById('room-code-divider').classList.toggle('hidden', !live);
@@ -498,6 +519,35 @@ const ROOM = (() => {
     // once it's actually back in the document; its value/cursor/selection carried
     // over untouched since it was never actually re-created
     if (reuseInput) reuseInput.focus();
+  }
+
+  /* the `hideSetup` counterpart to render() above: no name inputs, no
+     Link/QR buttons — a player only shows up here at all once the game has
+     something to say about them (`info.answer`), same `cls`/`marked` styling
+     as the full version so a game's own CSS (`.link-col.is-role-defendant`,
+     `.link-col.is-wolf`, …) keeps working unmodified. Empty entirely until
+     the game actually deals something, same as the full grid would be blank
+     before any player links exist. */
+  function renderCompact(wrap) {
+    wrap.innerHTML = '';
+    let any = false;
+    for (let i = 0; i < count; i++) {
+      const info = decorate ? (decorate(i) || {}) : {};
+      if (!info.answer) continue;
+      any = true;
+      const col = document.createElement('div');
+      col.className = 'link-col' + (info.marked ? ' is-marked' : '') + (info.cls ? ' ' + info.cls : '');
+      const label = document.createElement('div');
+      label.className = 'name-input is-static';
+      label.textContent = api.name(i);
+      col.appendChild(label);
+      const ans = document.createElement('div');
+      ans.className = 'link-answer';
+      ans.innerHTML = info.answer;
+      col.appendChild(ans);
+      wrap.appendChild(col);
+    }
+    wrap.classList.toggle('hidden', !any);
   }
 
   function setCount(n) {

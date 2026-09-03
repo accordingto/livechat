@@ -189,6 +189,7 @@
     ROOM.init({
       mount: 'room-mount',
       accent: '#06b6d4',
+      hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Each round one player is dealt the judge and everyone else joins the persuader team — their cards say which. The judge taps their verdict when the team is done.',
       onPlayerData: renderVerdict,
       onCountChange: () => { dealRoles(); },

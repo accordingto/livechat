@@ -61,130 +61,12 @@
       animation: fadeUp .5s .2s ease both;
     }
     .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-    .control-label {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; min-width: 58px;
-    }
-    .control-divider { height: 1px; background: #1e1e42; }
     .setup-card .btn-primary,
     .setup-card .btn-secondary { padding: 11px 20px; font-size: .88rem; }
-    .player-btns { display: flex; flex-wrap: wrap; gap: 8px; }
-    .player-btn {
-      width: 44px; height: 44px; border-radius: 12px;
-      border: 2px solid #1e1e42; background: #13132b; color: #888;
-      font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s, background .2s, transform .1s;
-    }
-    .player-btn:active { transform: scale(.94); }
-    .player-btn.active { border-color: #22c55e; color: #fff; background: rgba(34,197,94,.18); }
-    @media (hover: hover) and (pointer: fine) {
-      .player-btn:hover { border-color: #22c55e; color: #22c55e; }
-    }
-
-    #room-code-input {
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
-      color: #eee; font-family: inherit; font-size: .95rem; font-weight: 800; letter-spacing: 2px;
-      text-transform: uppercase; padding: 11px 14px; width: 130px;
-      transition: border-color .2s;
-    }
-    #room-code-input:focus { outline: none; border-color: #22c55e; }
 
     .rules-note {
       color: #555; font-size: .82rem; line-height: 1.7;
       margin-top: 22px; padding-top: 18px; border-top: 1px solid #1e1e42;
-    }
-
-    /* ── Section label + note above the player columns ── */
-    .section-tag {
-      font-size: .6rem; letter-spacing: 1px; color: #555;
-      border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px;
-    }
-    .links-note { color: #555; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
-
-    /* ── One column per player: name on top, their private link underneath.
-       The border carries the player's board colour, so the setup screen already
-       shows who is which piece. ── */
-    .player-links {
-      display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
-    }
-    .link-col {
-      flex: 1; min-width: 160px;
-      background: #13132b; border: 2px solid; border-radius: 14px;
-      padding: 14px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      animation: fadeUp .3s ease both;
-    }
-    .link-col .token { font-size: 1.5rem; line-height: 1; }
-    .name-input {
-      width: 100%;
-      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
-      color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
-      padding: 8px 10px;
-      transition: border-color .2s;
-    }
-    .name-input::placeholder { color: #555; }
-    .name-input:focus { outline: none; border-color: #22c55e; }
-    .link-btn-row { display: flex; gap: 8px; width: 100%; }
-    .btn-copy {
-      flex: 1; min-width: 0;
-      background: transparent; color: #22c55e; border: 2px solid #22c55e;
-      border-radius: 10px; padding: 9px 10px;
-      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: background .2s, transform .1s;
-    }
-    .btn-copy:active { transform: scale(.97); }
-    /* a quick pop + brighter fill on copy — the text swap alone is easy to miss
-       on a screen a host glances at for half a second */
-    .btn-copy.is-copied {
-      background: rgba(34,197,94,.28);
-      animation: copyPop .4s ease;
-    }
-    @keyframes copyPop {
-      0%   { transform: scale(1); }
-      35%  { transform: scale(1.12); }
-      100% { transform: scale(1); }
-    }
-    .copy-all-btn { margin-bottom: 14px; }
-    .copy-all-btn.is-copied {
-      background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
-      animation: copyPop .4s ease;
-    }
-    .check-btn { margin: 0 0 10px; }
-    .check-note {
-      width: 100%; color: #94a3b8; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px;
-    }
-    .check-note button {
-      background: none; border: none; color: #666; font-family: inherit;
-      font-size: .78rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0;
-    }
-    .check-note button:hover { color: #999; }
-    .check-word-badge {
-      width: 100%; border-top: 1px dashed rgba(148,163,184,.3); padding-top: 9px;
-      font-size: .82rem; font-weight: 800; color: #94a3b8;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-    }
-    .btn-qr-toggle {
-      background: transparent; color: #666; border: 2px solid #1e1e42;
-      border-radius: 10px; padding: 9px 12px;
-      font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      transition: border-color .2s, color .2s;
-    }
-    .btn-qr-toggle.open { border-color: #22c55e; color: #22c55e; }
-    @media (hover: hover) and (pointer: fine) {
-      .btn-copy:hover { background: rgba(34,197,94,.1); }
-      .btn-qr-toggle:hover { border-color: #22c55e; color: #22c55e; }
-    }
-    /* QR beats reading a link out loud when the host is screen-sharing — players just scan */
-    .qr-inline {
-      background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
-      width: 100%; max-width: 160px;
-      animation: popIn .25s ease both;
-    }
-    .qr-inline svg { width: 100%; height: auto; display: block; }
-    @media (max-width: 520px) {
-      .link-col { min-width: 130px; padding: 12px 10px; }
-      .btn-copy { font-size: .74rem; padding: 9px 4px; }
-      .btn-qr-toggle { font-size: .74rem; padding: 9px 8px; }
     }
 
     /* ── Resume banner: shown only when a saved game is found in localStorage ── */
@@ -719,32 +601,18 @@
     <h1>🏰 Dare Conquest</h1>
   </div>
 
-  <!-- ── Setup ── -->
+  <!-- ── Setup ──
+       Player count and links are set up once on index.html now — this screen
+       used to duplicate that (room code, player count, per-player links);
+       all that's left here is the one thing this page alone can do: kick off
+       the board itself. -->
   <div class="setup-screen" id="setup-card">
     <div class="setup-card">
       <div class="resume-banner hidden" id="resume-banner"></div>
-      <!-- Room row: same room code + player links as the card games, so anyone who
-           already has their link can vote without a new one. Hidden without Firebase. -->
-      <div class="control-row hidden" id="room-row">
-        <span class="control-label">Room</span>
-        <input id="room-code-input" maxlength="8" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')loadRoomCode()">
-        <button class="btn-primary" onclick="loadRoomCode()">Load</button>
-        <button class="btn-secondary" onclick="newRoom()">New Room</button>
-      </div>
-      <div class="control-divider hidden" id="room-divider"></div>
       <div class="control-row">
-        <span class="control-label">Players</span>
-        <div class="player-btns" id="player-count-btns"></div>
         <button class="btn-primary" id="start-btn" onclick="startGame()">🎲 Start Game</button>
       </div>
     </div>
-
-    <div class="section-hdr" id="links-hdr"></div>
-    <p class="links-note hidden" id="links-note">Players open their own card link to roll, call Truth or Dare, and vote ✅ / ❌ on every challenge — you still make the final call. Same room code and links as Secret Rule, Emotion Cards, Word Wolf and Forbidden Words.</p>
-    <button class="btn-primary copy-all-btn hidden" id="copy-all-btn" type="button" onclick="copyAllLinks()">📋 Copy All Links</button>
-    <button class="btn-secondary check-btn hidden" id="check-btn" type="button" onclick="sendCardCheck()">🔍 Send Card Check</button>
-    <p class="check-note hidden" id="check-note"></p>
-    <div class="player-links" id="player-links"></div>
 
     <div class="rules-note">
       Each player takes turns rolling the dice and moving their token around the board. Land on a plain tile → do the dare shown on screen. Pull it off and the land is yours — even if a rival already owns it, so the board keeps changing hands even after every tile is claimed. A few tiles are special and can't be claimed: <strong>START</strong> and <strong>LUCKY</strong> both swap all your territory with another player's, and <strong>BONUS</strong> and <strong>GIFT</strong> both take 2 territories off whoever is leading.
@@ -903,10 +771,6 @@
     const LAST_SESSION_KEY = 'room-last-session';
     let sessionCode = '';
     let playerTokens = [];
-    /* the word (or null) sent to each player index by sendCardCheck() — kept
-       around purely so the host's own screen can show what was sent next to
-       each name, as a private answer key for "what does your card say?" */
-    let checkWords = null;
 
     function generateSessionCode() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
@@ -970,240 +834,6 @@
       while (playerTokens.length < n) playerTokens.push(generateToken());
       if (playerTokens.length !== before) saveSessionTokens();
     }
-
-    /* the player's name rides along in the URL ("...&n=Jessie") so their card can title
-       itself before Firebase has even answered — the token still does all the identifying */
-    function cardURL(token) {
-      const url = new URL(`play.html?s=${sessionCode}&p=${token}`, location.href);
-      const i = playerTokens.indexOf(token);
-      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
-      if (name) url.searchParams.set('n', name);
-      return url.href;
-    }
-
-    /* what actually goes on the clipboard: the player's name on its own line above the
-       link, so a pasted message says whose card it is. The name is on a separate line so
-       every chat app still detects the URL (and still builds its own link preview). */
-    function cardShareText(token) {
-      const url = cardURL(token);
-      const i = playerTokens.indexOf(token);
-      const name = i >= 0 ? String(playerNames[i] || '').trim() : '';
-      return name ? `${name}\n${url}` : url;
-    }
-
-    function copyCardLink(token, btn) {
-      const url = cardShareText(token);
-      const done = () => {
-        btn.textContent = 'Copied';
-        btn.classList.remove('is-copied');
-        void btn.offsetWidth; // restart the animation even on a rapid re-click
-        btn.classList.add('is-copied');
-        // a second click before the first revert fires shouldn't leave the button
-        // stuck on "Copied" — clear the pending revert so only the latest click wins
-        clearTimeout(btn._copyRevert);
-        btn._copyRevert = setTimeout(() => { btn.textContent = 'Link'; btn.classList.remove('is-copied'); }, 1400);
-      };
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this link:', url));
-      } else {
-        prompt('Copy this:', url);
-      }
-    }
-
-    /* one clipboard write with every player's link, so the host can paste the
-       whole roster into chat instead of copying and pasting one at a time —
-       a blank line between players keeps each name+link pair readable */
-    function copyAllLinks() {
-      const btn = document.getElementById('copy-all-btn');
-      ensureTokens(playerCount);
-      const text = Array.from({ length: playerCount }, (_, i) => cardShareText(playerTokens[i])).join('\n\n');
-      const done = () => {
-        btn.textContent = 'Copied';
-        btn.classList.remove('is-copied');
-        void btn.offsetWidth;
-        btn.classList.add('is-copied');
-        clearTimeout(btn._copyRevert);
-        btn._copyRevert = setTimeout(() => { btn.textContent = '📋 Copy All Links'; btn.classList.remove('is-copied'); }, 1500);
-      };
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(done).catch(() => prompt('Copy this:', text));
-      } else {
-        prompt('Copy this:', text);
-      }
-    }
-
-    /* a sanity check for after links have gone out: send every player a different,
-       simple word (pulled from the Forbidden Words deck — 200 everyday words, the
-       same pool every other game's Send Card Check uses, plenty to cover up to 8
-       players with none repeated) so the host can go around asking "what does
-       your card say?" and catch anyone who opened the wrong link. This overwrites
-       whatever the board had published — same as any other write to a player's
-       node — so the next dice roll or vote naturally restores real game data. */
-    function sendCardCheck() {
-      if (!votingOn()) return;
-      const pool = (typeof GAME_DATA !== 'undefined' && GAME_DATA.forbidden) || [];
-      if (pool.length < playerCount) return; // not enough words to guarantee everyone different
-      ensureTokens(playerCount);
-      const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-      checkWords = shuffled.slice(0, playerCount);
-      for (let i = 0; i < playerCount; i++) {
-        db.ref(`rooms/${sessionCode}/players/${playerTokens[i]}`).set({
-          game: 'cardcheck', word: checkWords[i].word, emoji: checkWords[i].emoji,
-          playerNum: i + 1, name: playerNames[i] || null,
-        });
-      }
-      renderPlayerLinks();
-    }
-
-    function clearCardCheck() {
-      checkWords = null;
-      renderPlayerLinks();
-    }
-
-    function qrSVG(text) {
-      const qr = qrcode(0, 'M');
-      qr.addData(text);
-      qr.make();
-      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
-    }
-
-    /* only one QR open at a time — opening another closes the previous one, so the
-       setup card never grows into a wall of codes */
-    function toggleCardQR(token, col, btn) {
-      const existing = col.querySelector('.qr-inline');
-      document.querySelectorAll('#player-links .qr-inline').forEach(el => { if (el !== existing) el.remove(); });
-      document.querySelectorAll('#player-links .btn-qr-toggle').forEach(b => { if (b !== btn) b.classList.remove('open'); });
-      if (existing) { existing.remove(); btn.classList.remove('open'); return; }
-      const box = document.createElement('div');
-      box.className = 'qr-inline';
-      box.innerHTML = qrSVG(cardURL(token));
-      col.appendChild(box);
-      btn.classList.add('open');
-    }
-
-    /* one column per player: their board colour, their name, and (when voting is on)
-       their private card link — the same shape the card games use */
-    function renderPlayerLinks() {
-      const on = votingOn();
-      document.getElementById('room-row').classList.toggle('hidden', !on);
-      document.getElementById('room-divider').classList.toggle('hidden', !on);
-      document.getElementById('links-note').classList.toggle('hidden', !on);
-      document.getElementById('copy-all-btn').classList.toggle('hidden', !on);
-      document.getElementById('check-btn').classList.toggle('hidden', !on);
-      const checkNote = document.getElementById('check-note');
-      checkNote.classList.toggle('hidden', !on || !checkWords);
-      if (on && checkWords) {
-        checkNote.innerHTML = '';
-        checkNote.append('🔍 Check words sent — ask each player what they see, then re-deal the game to continue. ');
-        const clearLink = document.createElement('button');
-        clearLink.type = 'button';
-        clearLink.textContent = '✖️ Clear';
-        clearLink.onclick = clearCardCheck;
-        checkNote.appendChild(clearLink);
-      }
-      document.getElementById('links-hdr').innerHTML = on
-        ? '🔗 Player Links <span class="section-tag">optional</span>'
-        : '👥 Players';
-      if (on) {
-        ensureTokens(playerCount);
-        document.getElementById('room-code-input').value = sessionCode;
-      }
-      const wrap = document.getElementById('player-links');
-      wrap.innerHTML = '';
-      for (let i = 0; i < playerCount; i++) {
-        const c = PLAYER_COLORS[i];
-        const col = document.createElement('div');
-        col.className = 'link-col';
-        col.style.borderColor = c.hex;
-
-        const token = document.createElement('span');
-        token.className = 'token';
-        token.textContent = c.token;
-
-        const input = document.createElement('input');
-        input.className = 'name-input';
-        input.maxLength = 14;
-        input.placeholder = `Player ${i + 1}`;
-        input.value = playerNames[i] || '';
-        input.oninput = () => { playerNames[i] = input.value.trim(); saveSessionTokens(); };
-
-        col.appendChild(token);
-        col.appendChild(input);
-
-        if (on) {
-          const row = document.createElement('div');
-          row.className = 'link-btn-row';
-          const copy = document.createElement('button');
-          copy.className = 'btn-copy';
-          copy.textContent = 'Link';
-          copy.onclick = () => copyCardLink(playerTokens[i], copy);
-          const qr = document.createElement('button');
-          qr.className = 'btn-qr-toggle';
-          qr.textContent = 'QR';
-          qr.onclick = () => toggleCardQR(playerTokens[i], col, qr);
-          row.appendChild(copy);
-          row.appendChild(qr);
-          col.appendChild(row);
-        }
-
-        if (checkWords && checkWords[i]) {
-          const badge = document.createElement('div');
-          badge.className = 'check-word-badge';
-          badge.innerHTML = `<span>${checkWords[i].emoji} ${checkWords[i].word}</span>`;
-          col.appendChild(badge);
-        }
-        wrap.appendChild(col);
-      }
-    }
-
-    /* type an existing room code to bring back its links; unknown codes start fresh under that label */
-    function loadRoomCode() {
-      const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
-      if (!typed) return;
-      sessionCode = typed;
-      checkWords = null; // stale answer key for the room we just left
-      const saved = loadSessionData(typed);
-      playerTokens = saved && saved.tokens ? saved.tokens.slice() : [];
-      if (saved && saved.names && saved.names.length) playerNames = saved.names.slice();
-      if (saved && saved.playerCount) setPlayerCount(clampCount(saved.playerCount));
-      ensureTokens(playerCount);
-      saveSessionTokens();
-      renderPlayerLinks();
-      attachVoteListeners();
-    }
-
-    function newRoom() {
-      sessionCode = generateSessionCode();
-      checkWords = null;
-      playerTokens = [];
-      ensureTokens(playerCount);
-      saveSessionTokens();
-      renderPlayerLinks();
-      attachVoteListeners();
-    }
-
-    /* ── Setup screen ── */
-    function setPlayerCount(n) {
-      playerCount = n;
-      checkWords = null; // stale answer key for the old headcount
-      document.querySelectorAll('.player-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
-      renderPlayerLinks();
-      attachVoteListeners();
-      // send the new count back to the shared room, so the card games open on it too
-      if (playerTokens.length) saveSessionTokens();
-    }
-    (function buildPlayerBtns() {
-      const wrap = document.getElementById('player-count-btns');
-      ALLOWED_COUNTS.forEach(n => {
-        const b = document.createElement('button');
-        b.className = 'player-btn' + (n === playerCount ? ' active' : '');
-        b.textContent = n;
-        b.onclick = () => setPlayerCount(n);
-        wrap.appendChild(b);
-      });
-    })();
-
-    renderPlayerLinks();
 
     /* ── Browse all prompts (read-only reference list) ── */
     function buildPromptList() {
