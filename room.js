@@ -689,7 +689,14 @@ const ROOM = (() => {
       sessionCode = lastCode;
       tokens = saved.tokens.slice();
       names = (saved.names || []).slice();
-      if (saved.playerCount) count = clampCount(saved.playerCount);
+      // hideSetup pages don't own the room's player count — index.html's Step 1
+      // does. Clamping it into *this* game's own counts range (e.g. Kangaroo
+      // Court's 4-9) and then letting ensureTokens()/save() below persist that
+      // clamped number would silently overwrite the host's real setting (a room
+      // set to 3 on Step 1 would come back as 4 after visiting Kangaroo Court).
+      // Only the setup page itself — the one with real count buttons — should
+      // ever normalize an out-of-range saved count.
+      if (saved.playerCount) count = cfg.hideSetup ? saved.playerCount : clampCount(saved.playerCount);
     } else {
       sessionCode = generateSessionCode();
     }

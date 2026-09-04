@@ -357,6 +357,10 @@
     <span data-i18n="kangaroo.fbWarningPre">⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open </span><code>firebase-config.js</code><span data-i18n="kangaroo.fbWarningPost"> and follow the setup steps at the top of that file.</span>
   </div>
 
+  <div class="fb-warning hidden" id="count-warning">
+    <span data-i18n="kangaroo.countWarning">⚠️ Kangaroo Court needs at least 4 players (Defendant, Prosecutor, Defense, and at least one juror). Go back to the hub and raise the room's player count to play this game.</span>
+  </div>
+
   <div class="kc-layout">
     <aside class="kc-flow" id="kc-flow">
       <div class="kc-flow-card">
@@ -423,6 +427,8 @@
       caseLabel: { zh: '案件', en: 'Case' },
       fbWarningPre: { zh: '⚠️ 這個遊戲需要玩家卡片才能進行：陪審團的投票必須保密，不能讓任何人唸出來、直接顯示在這個畫面上。請開啟 ', en: "⚠️ This game needs the player cards: the jury's vote is secret and has to reach this screen without anyone reading it out loud. Open " },
       fbWarningPost: { zh: '，並依照檔案最上方的設定步驟操作。', en: ' and follow the setup steps at the top of that file.' },
+      countWarning: { zh: '⚠️ Kangaroo Court 至少需要 4 位玩家（被告、檢察官、辯護律師，加上至少 1 位陪審員）。請回首頁把房間人數調高才能玩這款遊戲。', en: '⚠️ Kangaroo Court needs at least 4 players (Defendant, Prosecutor, Defense, and at least one juror). Go back to the hub and raise the room\'s player count to play this game.' },
+      needMorePlayers: { zh: '🔗 房間人數不足（需要 4 人以上）', en: '🔗 Not enough players (needs 4+)' },
       trialProgressHdr: { zh: '📍 審判進度', en: '📍 Trial Progress' },
       differentChargeBtn: { zh: '🔀 換一條罪名', en: '🔀 Different Charge' },
       previousStepBtn: { zh: '⬅️ 回上一步', en: '⬅️ Previous Step' },
@@ -540,6 +546,12 @@
       onNameChange: () => { renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+    // the room's player count is set once on index.html and shared by every game —
+    // this page must never bump it up to its own 4-player minimum itself (that
+    // would silently overwrite what the host actually chose), so instead it just
+    // refuses to deal and tells the host to go raise the count
+    function countOK() { return ROOM.count >= 4; }
+    document.getElementById('count-warning').classList.toggle('hidden', countOK());
 
     /* Judge toggle — a game setting parked in the same room session blob as e.g.
        Forbidden Words' wordsPerTeam, so it survives a reload / game switch.
@@ -650,7 +662,7 @@
        idle/reveal → prevote (new case) → prosecution → prosecution-witness →
        defense → defense-witness → cross → finalvote → reveal → (repeat) */
     function dealNewCase() {
-      if (!ROOM.enabled) return;
+      if (!ROOM.enabled || !countOK()) return;
       dealRoles();
       charge = pickCharge(null);
       caseNum++;
@@ -705,7 +717,7 @@
     }
 
     function advance() {
-      if (!ROOM.enabled) return;
+      if (!ROOM.enabled || !countOK()) return;
       if (phase === 'idle')                 { dealNewCase(); return; }
       if (phase === 'prevote')              { startPhase('prosecution'); return; }
       if (phase === 'prosecution')          { enterWitnessPhase('prosecution-witness', 'prosecution'); return; }
@@ -728,7 +740,7 @@
        back, no reroll needed. Pre-Vote and idle have nothing safe to undo
        into, so the button is disabled there (see renderBackBtn). */
     function goBack() {
-      if (!ROOM.enabled) return;
+      if (!ROOM.enabled || !countOK()) return;
       if (phase === 'judgment')            { startPhase('reveal'); return; }
       if (phase === 'reveal')              { reveal = null; startPhase('finalvote'); return; }
       if (phase === 'finalvote')           { startPhase('cross'); return; }
@@ -852,7 +864,7 @@
     }
 
     function renderBackBtn() {
-      document.getElementById('kc-back-btn').disabled = !ROOM.enabled || phase === 'idle' || phase === 'prevote';
+      document.getElementById('kc-back-btn').disabled = !ROOM.enabled || !countOK() || phase === 'idle' || phase === 'prevote';
     }
 
     /* what's happening right now — and, since it doubles as the CTA, whether
@@ -874,9 +886,10 @@
     function renderStatus() {
       const el = document.getElementById('status-line');
       el.classList.remove('vote', 'win', 'lose');
-      el.classList.toggle('not-clickable', !ROOM.enabled);
-      el.classList.toggle('is-next', ROOM.enabled && phase === 'reveal');
+      el.classList.toggle('not-clickable', !ROOM.enabled || !countOK());
+      el.classList.toggle('is-next', ROOM.enabled && countOK() && phase === 'reveal');
       if (!ROOM.enabled) { el.textContent = kt('addPlayerLinksFirst'); return; }
+      if (!countOK()) { el.textContent = kt('needMorePlayers'); return; }
       if (phase === 'reveal' && reveal) {
         el.classList.add(reveal.verdict === 'notguilty' ? 'win' : 'lose');
         el.textContent = reveal.verdict === 'notguilty' ? kt('notGuiltyBang') : kt('guiltyBang');
