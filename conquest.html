@@ -998,6 +998,7 @@
         highRolls: MAX_HIGH_ROLLS,
         lowRolls: MAX_LOW_ROLLS,
         swaps: MAX_SWAPS,
+        otherPicks: 0, // times chosen as the {player} in someone else's prompt — kept low-first so the same person isn't named round after round
       }));
       ownership = new Array(PATH.length).fill(-1);
       currentIdx = 0;
@@ -1704,12 +1705,20 @@
     }
 
 /* ── Dare prompt / judging ── */
-    // fills {player} with a random OTHER player's name — colored inline for the host screen,
-    // and plain for the player cards, both naming the same person
+    // fills {player} with an OTHER player's name — colored inline for the host screen,
+    // and plain for the player cards, both naming the same person. Picked the same way
+    // Kangaroo Court picks its roles: from whoever's been named fewest so far, not a flat
+    // Math.random() over every other player — a small table (2-3 players means only 1-2
+    // candidates each time) makes a pure random pick feel like it keeps landing on the
+    // same person, even though it isn't actually biased.
     function resolvePromptParts(text, excludeIdx) {
       if (!text.includes('{player}')) return { html: text, plain: text };
       const others = players.map((_, i) => i).filter(i => i !== excludeIdx);
-      const other = players[others[Math.floor(Math.random() * others.length)]];
+      const fewest = Math.min(...others.map(i => players[i].otherPicks || 0));
+      const pool = others.filter(i => (players[i].otherPicks || 0) === fewest);
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      const other = players[pick];
+      other.otherPicks = (other.otherPicks || 0) + 1;
       return {
         html: text.split('{player}').join(`<span class="q-player" style="color:${other.hex}">${other.name}</span>`),
         plain: text.split('{player}').join(other.name),
@@ -2258,6 +2267,7 @@
         if (p.highRolls == null) p.highRolls = MAX_HIGH_ROLLS; // older saves predate the high-roll skill
         if (p.lowRolls == null) p.lowRolls = MAX_LOW_ROLLS;   // older saves predate the low-roll skill
         if (p.swaps == null) p.swaps = MAX_SWAPS;             // older saves predate question swapping
+        if (p.otherPicks == null) p.otherPicks = 0;           // older saves predate {player} fairness tracking
       });
       ownership = saved.ownership;
       currentIdx = saved.currentIdx;
