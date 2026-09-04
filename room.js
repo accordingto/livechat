@@ -281,7 +281,13 @@ const ROOM = (() => {
         background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
         animation: copyPop .4s ease;
       }
-      .check-btn { margin: 0 0 10px; }
+      /* its own accent (not the room's pink, so it never reads as "the same button"
+         as Copy All Links) — a pre-flight step easy to skip past if it looks like
+         just another muted utility button next to a loud primary one */
+      .check-btn {
+        margin: 0 0 10px; background: rgba(56,189,248,.1);
+        border-color: #38bdf8; color: #7dd3fc;
+      }
       .check-note {
         width: 100%; color: #94a3b8; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px;
       }
@@ -354,6 +360,7 @@ const ROOM = (() => {
         .room-count-btn:hover { border-color: var(--room-accent); color: var(--room-accent); }
         .btn-copy:hover { background: color-mix(in srgb, var(--room-accent) 10%, transparent); }
         .btn-qr-toggle:hover { border-color: var(--room-accent); color: var(--room-accent); }
+        .check-btn:hover { background: rgba(56,189,248,.2); border-color: #7dd3fc; color: #bae6fd; }
       }
       @media (max-width: 520px) {
         .link-col { min-width: 130px; padding: 12px 10px; }
