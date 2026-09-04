@@ -252,9 +252,9 @@ const ROOM = (() => {
       }
       #room-code-input:focus { outline: none; border-color: var(--room-accent); }
       .room-btn {
-        background: transparent; color: #666; border: 2px solid #1e1e42; border-radius: 12px;
+        background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
         padding: 11px 20px; font-size: .88rem; font-weight: 700; font-family: inherit;
-        white-space: nowrap; cursor: pointer; transition: border-color .2s, color .2s, transform .1s;
+        white-space: nowrap; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
       }
       .room-btn:active { transform: scale(.98); }
       .room-btn.primary { color: var(--room-accent); border-color: var(--room-accent); }
@@ -332,9 +332,9 @@ const ROOM = (() => {
         100% { transform: scale(1); }
       }
       .btn-qr-toggle {
-        background: transparent; color: #666; border: 2px solid #1e1e42; border-radius: 10px;
+        background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 10px;
         padding: 9px 12px; font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
-        transition: border-color .2s, color .2s;
+        transition: background .2s, border-color .2s, color .2s;
       }
       .btn-qr-toggle.open { border-color: var(--room-accent); color: var(--room-accent); }
       .qr-inline {

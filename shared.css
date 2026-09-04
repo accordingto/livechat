@@ -68,8 +68,8 @@ a.back:hover { color: var(--text); }
 }
 
 .reset-btn {
-  background: transparent; color: var(--text-muted);
-  border: 2px solid var(--border); border-radius: 999px;
+  background: var(--surface); color: #999;
+  border: 2px solid #35355e; border-radius: 999px;
   padding: 16px 28px; font-size: 1rem; font-weight: 700;
   cursor: pointer; font-family: inherit;
   transition: background .2s, color .2s, border-color .2s, transform .1s;
@@ -141,11 +141,11 @@ a.back:hover { color: var(--text); }
 .btn-primary:active { transform: scale(.98); }
 
 .btn-secondary {
-  background: transparent; color: #666; border: 2px solid #1e1e42;
+  background: #1a1a38; color: #999; border: 2px solid #35335e;
   border-radius: 12px; padding: 12px 22px;
   font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
   white-space: nowrap;
-  transition: border-color .2s, color .2s, transform .1s;
+  transition: background .2s, border-color .2s, color .2s, transform .1s;
 }
 .btn-secondary:hover  { border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt, var(--accent)); }
 .btn-secondary:active { transform: scale(.98); }
