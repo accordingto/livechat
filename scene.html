@@ -557,6 +557,14 @@
       if (ph) ph.innerHTML = st('placeholder');
       const drawBtn = document.getElementById('draw-btn');
       if (drawBtn && !rolling) drawBtn.textContent = round > 0 ? st('nextBtn') : st('drawBtn');
+      // the drawn scene's card is built once by renderScene() and never fully
+      // redrawn again (a redraw would reset currentPlayers/roleOf and wipe out
+      // whichever roles are already dealt) — patch its two static labels in
+      // place instead, the same way roles-header is patched via renderRoleGrid()
+      const themeTag = document.querySelector('.sc-theme-tag');
+      if (themeTag) themeTag.textContent = st('theSceneTag');
+      const psLabel = document.querySelector('.ps-label');
+      if (psLabel) psLabel.textContent = st('howManyPlayers');
       renderRoleGrid();
       renderBrowserLabel();
       const allBtn = document.querySelector('.filter-btn[data-cat=""]');

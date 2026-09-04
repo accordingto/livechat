@@ -309,6 +309,11 @@
       updateSpinLabel();
       updateBars();
       ROOM.render();
+      // the drawn take's card is built once by GAME_RENDER.hottake() and never
+      // touched again, so its "🔥 HOT TAKE" label is baked into the DOM in
+      // whatever language was active at draw time — redraw it so a language
+      // switch mid-round actually takes effect
+      if (currentTake) GAME_RENDER.hottake(document.getElementById('card'), currentTake);
     });
 
     /* what each player picked this round — only votes carrying the current id count */

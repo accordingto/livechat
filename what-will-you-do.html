@@ -243,6 +243,7 @@
     let used    = [];
     let rolling = false;
     let voteId  = ''; // new ballot every draw, so old answers stop counting on their own
+    let currentScenario = null; // last scenario handed to GAME_RENDER.sophies(), for re-rendering on a language switch
 
     /* the placeholder ("Press Draw...") and the Draw/Next Situation button both carry
        state-dependent text that data-i18n's static re-apply can't know about, so they're
@@ -382,6 +383,7 @@
       ct.classList.remove('show');
       ct.innerHTML = '';
       GAME_RENDER.sophies(ct, sc);
+      currentScenario = sc;
       ct.classList.add('show');
       round++;
       document.getElementById('roundNum').textContent = round;
@@ -421,6 +423,7 @@
         () => {
           const sc = scenarios[fi];
           GAME_RENDER.sophies(ct, sc);
+          currentScenario = sc;
           pushToCards(sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
@@ -444,6 +447,11 @@
       if (allBtn) allBtn.textContent = st('filterAll');
       renderTally();
       ROOM.render();
+      // the drawn scenario's card is built once by GAME_RENDER.sophies() and
+      // never touched again, so its "🎯 THE SITUATION" label and "C. Something
+      // else" option are baked into the DOM in whatever language was active at
+      // draw time — redraw it so a language switch mid-round actually takes effect
+      if (currentScenario) GAME_RENDER.sophies(document.getElementById('sc-content'), currentScenario);
     });
   </script>
 </body>
