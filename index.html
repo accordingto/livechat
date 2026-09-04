@@ -524,6 +524,13 @@
     }
     document.getElementById('continue-btn').onclick = () => { renderSetupSummary(); showStep(2); };
     document.getElementById('edit-setup-btn').onclick = () => showStep(1);
+
+    /* a game page's own "← Back to Hub" link sends the host back here with
+       ?step=2 — the room is already set up (that's how they got to a game in
+       the first place), so landing them back on Step 1 would make them wade
+       through room setup again just to pick another game. Opening the hub
+       fresh (no query string) still lands on Step 1 as always. */
+    if (new URLSearchParams(location.search).get('step') === '2') showStep(2);
   </script>
 
 </body>
