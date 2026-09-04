@@ -248,12 +248,12 @@ const GAME_DATA = {
     // ── 🍔 Food & Drink ──
     { cat:'🍔 Food & Drink', emojiA:'🍩', emojiB:'🥯', a:'Donut', b:'Bagel' },
     { cat:'🍔 Food & Drink', emojiA:'🌮', emojiB:'🌯', a:'Taco', b:'Burrito' },
-    { cat:'🍔 Food & Drink', emojiA:'🍣', emojiB:'🍣', a:'Sushi', b:'Sashimi' },
+    { cat:'🍔 Food & Drink', emojiA:'🍣', emojiB:'🍙', a:'Sushi', b:'Rice Ball' },
     { cat:'🍔 Food & Drink', emojiA:'🍜', emojiB:'🍝', a:'Noodles', b:'Spaghetti' },
     { cat:'🍔 Food & Drink', emojiA:'🍿', emojiB:'🥨', a:'Popcorn', b:'Pretzel' },
     { cat:'🍔 Food & Drink', emojiA:'🧁', emojiB:'🧁', a:'Cupcake', b:'Muffin' },
     { cat:'🍔 Food & Drink', emojiA:'🥑', emojiB:'🍐', a:'Avocado', b:'Pear' },
-    { cat:'🍔 Food & Drink', emojiA:'🍉', emojiB:'🍈', a:'Watermelon', b:'Cantaloupe' },
+    { cat:'🍔 Food & Drink', emojiA:'🍉', emojiB:'🍈', a:'Watermelon', b:'Melon' },
     { cat:'🍔 Food & Drink', emojiA:'🫚', emojiB:'🧄', a:'Ginger', b:'Garlic' },
 
     // ── 🐾 Animals ──
@@ -263,10 +263,10 @@ const GAME_DATA = {
     { cat:'🐾 Animals', emojiA:'🦎', emojiB:'🦎', a:'Gecko', b:'Chameleon' },
     { cat:'🐾 Animals', emojiA:'🐫', emojiB:'🦙', a:'Camel', b:'Llama' },
     { cat:'🐾 Animals', emojiA:'🐿️', emojiB:'🐿️', a:'Squirrel', b:'Chipmunk' },
-    { cat:'🐾 Animals', emojiA:'🦝', emojiB:'🦡', a:'Raccoon', b:'Badger' },
+    { cat:'🐾 Animals', emojiA:'🦝', emojiB:'🦨', a:'Raccoon', b:'Skunk' },
     { cat:'🐾 Animals', emojiA:'🦃', emojiB:'🐔', a:'Turkey', b:'Chicken' },
-    { cat:'🐾 Animals', emojiA:'🦜', emojiB:'🦜', a:'Parrot', b:'Toucan' },
-    { cat:'🐾 Animals', emojiA:'🦤', emojiB:'🦤', a:'Ostrich', b:'Emu' },
+    { cat:'🐾 Animals', emojiA:'🦜', emojiB:'🦉', a:'Parrot', b:'Owl' },
+    { cat:'🐾 Animals', emojiA:'🦆', emojiB:'🪿', a:'Duck', b:'Goose' },
     { cat:'🐾 Animals', emojiA:'🦚', emojiB:'🐓', a:'Peacock', b:'Rooster' },
     { cat:'🐾 Animals', emojiA:'🐨', emojiB:'🐼', a:'Koala', b:'Panda' },
     { cat:'🐾 Animals', emojiA:'🦔', emojiB:'🦔', a:'Hedgehog', b:'Porcupine' },
@@ -279,10 +279,10 @@ const GAME_DATA = {
     { cat:'🗺️ Places', emojiA:'🛖', emojiB:'🏡', a:'Cabin', b:'Cottage' },
     { cat:'🗺️ Places', emojiA:'🏟️', emojiB:'🏟️', a:'Stadium', b:'Arena' },
     { cat:'🗺️ Places', emojiA:'🐠', emojiB:'🦁', a:'Aquarium', b:'Zoo' },
-    { cat:'🗺️ Places', emojiA:'🏛️', emojiB:'🏛️', a:'Courthouse', b:'City Hall' },
+    { cat:'🗺️ Places', emojiA:'🏛️', emojiB:'📚', a:'Museum', b:'Library' },
 
     // ── 🚗 Transport ──
-    { cat:'🚗 Transport', emojiA:'🚌', emojiB:'🚌', a:'Bus', b:'Coach' },
+    { cat:'🚗 Transport', emojiA:'🚌', emojiB:'🚋', a:'Bus', b:'Trolley' },
     { cat:'🚗 Transport', emojiA:'🚚', emojiB:'🚐', a:'Truck', b:'Van' },
     { cat:'🚗 Transport', emojiA:'🚁', emojiB:'🚁', a:'Helicopter', b:'Drone' },
     { cat:'🚗 Transport', emojiA:'🛴', emojiB:'🛼', a:'Scooter', b:'Rollerblades' },
@@ -299,28 +299,28 @@ const GAME_DATA = {
     { cat:'💼 Jobs', emojiA:'🧑‍🔧', emojiB:'🧑‍🔧', a:'Electrician', b:'Plumber' },
     { cat:'💼 Jobs', emojiA:'📷', emojiB:'📹', a:'Photographer', b:'Videographer' },
     { cat:'💼 Jobs', emojiA:'👩‍🏫', emojiB:'👨‍🏫', a:'Teacher', b:'Professor' },
-    { cat:'💼 Jobs', emojiA:'🧮', emojiB:'🧑‍💼', a:'Accountant', b:'Banker' },
+    { cat:'💼 Jobs', emojiA:'🧑‍⚕️', emojiB:'🧑‍⚕️', a:'Doctor', b:'Nurse' },
 
     // ── ☀️ Weather ──
-    { cat:'☀️ Weather', emojiA:'🌦️', emojiB:'🌫️', a:'Drizzle', b:'Mist' },
-    { cat:'☀️ Weather', emojiA:'🍃', emojiB:'🍃', a:'Breeze', b:'Gust' },
-    { cat:'☀️ Weather', emojiA:'🥵', emojiB:'🏜️', a:'Heatwave', b:'Drought' },
-    { cat:'☀️ Weather', emojiA:'❄️', emojiB:'🧊', a:'Frost', b:'Sleet' },
+    { cat:'☀️ Weather', emojiA:'🌧️', emojiB:'🌦️', a:'Rain', b:'Shower' },
+    { cat:'☀️ Weather', emojiA:'❄️', emojiB:'🧊', a:'Snow', b:'Hail' },
+    { cat:'☀️ Weather', emojiA:'☁️', emojiB:'🌫️', a:'Cloudy', b:'Foggy' },
+    { cat:'☀️ Weather', emojiA:'💨', emojiB:'⛈️', a:'Windy', b:'Stormy' },
 
     // ── 🎯 Activities ──
-    { cat:'🎯 Activities', emojiA:'🏸', emojiB:'🎾', a:'Badminton', b:'Squash' },
+    { cat:'🎯 Activities', emojiA:'🏸', emojiB:'🎾', a:'Badminton', b:'Tennis' },
     { cat:'🎯 Activities', emojiA:'🏉', emojiB:'🏈', a:'Rugby', b:'American Football' },
     { cat:'🎯 Activities', emojiA:'🏹', emojiB:'🎯', a:'Archery', b:'Darts' },
     { cat:'🎯 Activities', emojiA:'🥋', emojiB:'🥋', a:'Judo', b:'Karate' },
 
     // ── 🎒 Objects ──
-    { cat:'🎒 Objects', emojiA:'🏺', emojiB:'🏺', a:'Vase', b:'Urn' },
+    { cat:'🎒 Objects', emojiA:'🏺', emojiB:'🏺', a:'Vase', b:'Pot' },
     { cat:'🎒 Objects', emojiA:'🪜', emojiB:'🪜', a:'Ladder', b:'Step Stool' },
     { cat:'🎒 Objects', emojiA:'🧳', emojiB:'🧳', a:'Suitcase', b:'Trunk' },
     { cat:'🎒 Objects', emojiA:'☂️', emojiB:'☂️', a:'Umbrella', b:'Parasol' },
 
     // ── 🍽️ Kitchen ──
-    { cat:'🍽️ Kitchen', emojiA:'🥄', emojiB:'🥄', a:'Whisk', b:'Spatula' },
+    { cat:'🍽️ Kitchen', emojiA:'🥣', emojiB:'🍽️', a:'Bowl', b:'Plate' },
     { cat:'🍽️ Kitchen', emojiA:'🫖', emojiB:'🫖', a:'Kettle', b:'Teapot' },
     { cat:'🍽️ Kitchen', emojiA:'🥢', emojiB:'🍴', a:'Chopsticks', b:'Fork' },
 
@@ -330,30 +330,30 @@ const GAME_DATA = {
     { cat:'📚 School', emojiA:'📘', emojiB:'📗', a:'Textbook', b:'Workbook' },
 
     // ── 💻 Technology ──
-    { cat:'💻 Technology', emojiA:'💻', emojiB:'📱', a:'Laptop', b:'Tablet' },
+    { cat:'💻 Technology', emojiA:'📱', emojiB:'📱', a:'Phone', b:'Tablet' },
     { cat:'💻 Technology', emojiA:'📶', emojiB:'📶', a:'Router', b:'Modem' },
     { cat:'💻 Technology', emojiA:'🖨️', emojiB:'🖨️', a:'Printer', b:'Scanner' },
 
     // ── 👕 Clothing ──
     { cat:'👕 Clothing', emojiA:'🧥', emojiB:'🧥', a:'Hoodie', b:'Sweatshirt' },
-    { cat:'👕 Clothing', emojiA:'🩳', emojiB:'🩳', a:'Shorts', b:'Skirt' },
+    { cat:'👕 Clothing', emojiA:'🧣', emojiB:'🧣', a:'Scarf', b:'Shawl' },
     { cat:'👕 Clothing', emojiA:'🧤', emojiB:'🧤', a:'Gloves', b:'Mittens' },
     { cat:'👕 Clothing', emojiA:'👔', emojiB:'👔', a:'Necktie', b:'Bow Tie' },
 
     // ── 🎉 Holidays ──
-    { cat:'🎉 Holidays', emojiA:'🎃', emojiB:'🎃', a:'Pumpkin', b:"Jack-o'-Lantern" },
+    { cat:'🎉 Holidays', emojiA:'🎃', emojiB:'🎃', a:'Pumpkin', b:'Squash' },
     { cat:'🎉 Holidays', emojiA:'🎄', emojiB:'🎄', a:'Wreath', b:'Christmas Tree' },
 
     // ── 🎬 Entertainment ──
     { cat:'🎬 Entertainment', emojiA:'🎙️', emojiB:'📻', a:'Podcast', b:'Radio Show' },
-    { cat:'🎬 Entertainment', emojiA:'🎤', emojiB:'🎪', a:'Concert', b:'Music Festival' },
-    { cat:'🎬 Entertainment', emojiA:'📚', emojiB:'📖', a:'Comic Book', b:'Graphic Novel' },
-    { cat:'🎬 Entertainment', emojiA:'🧩', emojiB:'🧩', a:'Puzzle', b:'Jigsaw' },
+    { cat:'🎬 Entertainment', emojiA:'🎤', emojiB:'🎤', a:'Concert', b:'Karaoke' },
+    { cat:'🎬 Entertainment', emojiA:'📚', emojiB:'📖', a:'Comic Book', b:'Magazine' },
+    { cat:'🎬 Entertainment', emojiA:'🧩', emojiB:'🎲', a:'Puzzle', b:'Board Game' },
 
     // ── 🌳 Nature ──
-    { cat:'🌳 Nature', emojiA:'🌵', emojiB:'🌵', a:'Cactus', b:'Succulent' },
+    { cat:'🌳 Nature', emojiA:'🌵', emojiB:'🌵', a:'Cactus', b:'Aloe' },
     { cat:'🌳 Nature', emojiA:'🎍', emojiB:'🎍', a:'Bamboo', b:'Reed' },
-    { cat:'🌳 Nature', emojiA:'🍁', emojiB:'🍁', a:'Maple Tree', b:'Birch Tree' },
+    { cat:'🌳 Nature', emojiA:'🌴', emojiB:'🌲', a:'Palm Tree', b:'Pine Tree' },
     { cat:'🌳 Nature', emojiA:'🌿', emojiB:'🌿', a:'Ivy', b:'Vine' },
 
     // ── 🫀 Body ──
