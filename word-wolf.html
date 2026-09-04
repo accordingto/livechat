@@ -324,7 +324,11 @@
       const answer = revealed && p
         ? `<span class="lw-emoji">${p.emoji}</span><span class="lw-text">${p.word}</span>`
           + (p.isWolf ? `<span class="lw-tag">${wt('wolfTag')}</span>` : '')
-        : '';
+        // pre-reveal, a picked player still needs a (blank) truthy answer — room.js's
+        // compact roster only renders rows where info.answer is truthy, and Pick
+        // Someone's whole point is to highlight someone *during* discussion, before
+        // any word is revealed
+        : (cls ? '&#8203;' : '');
       return { cls, answer };
     });
     I18N.onChange(() => ROOM.render());

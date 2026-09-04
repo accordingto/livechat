@@ -537,7 +537,7 @@
         renderJudgeToggle();
         resetToIdle();
       },
-      onNameChange: () => { ROOM.render(); renderAll(); if (phase !== 'idle') pushState(); },
+      onNameChange: () => { renderAll(); if (phase !== 'idle') pushState(); },
     });
     document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
 
@@ -690,13 +690,27 @@
       startPhase(next);
     }
 
+    /* advance() reaching a witness phase should only draw once per case — if the
+       host went ⬅️ Previous Step past it and is advancing again, caseWitnesses[side]
+       is already filled in (dealNewCase() is the only place that clears it), so
+       reuse that draw instead of picking a second juror/card and leaving the first
+       juror's witnessCount charged for a turn they never actually got */
+    function enterWitnessPhase(next, side) {
+      if (caseWitnesses[side]) {
+        currentWitness = Object.assign({ side }, caseWitnesses[side]);
+        startPhase(next);
+      } else {
+        startWitnessPhase(next, side);
+      }
+    }
+
     function advance() {
       if (!ROOM.enabled) return;
       if (phase === 'idle')                 { dealNewCase(); return; }
       if (phase === 'prevote')              { startPhase('prosecution'); return; }
-      if (phase === 'prosecution')          { startWitnessPhase('prosecution-witness', 'prosecution'); return; }
+      if (phase === 'prosecution')          { enterWitnessPhase('prosecution-witness', 'prosecution'); return; }
       if (phase === 'prosecution-witness')  { startPhase('defense'); return; }
-      if (phase === 'defense')              { startWitnessPhase('defense-witness', 'defense'); return; }
+      if (phase === 'defense')              { enterWitnessPhase('defense-witness', 'defense'); return; }
       if (phase === 'defense-witness')      { startPhase('cross'); return; }
       if (phase === 'cross')                { finalVoteId = genId(); startPhase('finalvote'); return; }
       if (phase === 'finalvote')            { doReveal(); return; }

@@ -688,7 +688,10 @@
       if (!forbiddenOn && ROOM.count < 3) return; // no referee possible with only 2 players
       forbiddenOn = !forbiddenOn;
       saveOptions();
-      if (!forbiddenOn) { tabooCalls = []; refIdx = -1; } // no banned words, no referee
+      // no banned words, no referee — and dropping a pending Taboo! call this way
+      // (instead of the host ruling on it) needs to release the hold it put on the
+      // clock itself, or the countdown stays frozen for the rest of the round
+      if (!forbiddenOn) { tabooCalls = []; refIdx = -1; releaseTimer(); }
       // switching back on mid-round needs someone holding the list again
       else if (state === 'playing' && refIdx < 0) refIdx = drawReferee(giverIdx);
       if (state !== 'idle') pushState();
@@ -730,7 +733,7 @@
         renderForbiddenToggle();
         resetRound();
       },
-      onNameChange: () => { ROOM.render(); renderAll(); if (state !== 'idle') pushState(); },
+      onNameChange: () => { renderAll(); if (state !== 'idle') pushState(); },
     });
     function renderFbWarning() {
       document.getElementById('fb-warning').innerHTML = tt('fbWarning');
