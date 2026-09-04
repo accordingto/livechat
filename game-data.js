@@ -256,22 +256,24 @@ const GAME_DATA = {
     { cat:'🍔 Food & Drink', emojiA:'🍉', emojiB:'🍈', a:'Watermelon', b:'Melon' },
     { cat:'🍔 Food & Drink', emojiA:'🫚', emojiB:'🧄', a:'Ginger', b:'Garlic' },
 
-    // ── 🐾 Animals ──
-    { cat:'🐾 Animals', emojiA:'🐸', emojiB:'🐸', a:'Frog', b:'Toad' },
-    { cat:'🐾 Animals', emojiA:'🐹', emojiB:'🐹', a:'Hamster', b:'Guinea Pig' },
-    { cat:'🐾 Animals', emojiA:'🐰', emojiB:'🐇', a:'Rabbit', b:'Hare' },
-    { cat:'🐾 Animals', emojiA:'🦎', emojiB:'🦎', a:'Gecko', b:'Chameleon' },
-    { cat:'🐾 Animals', emojiA:'🐫', emojiB:'🦙', a:'Camel', b:'Llama' },
-    { cat:'🐾 Animals', emojiA:'🐿️', emojiB:'🐿️', a:'Squirrel', b:'Chipmunk' },
-    { cat:'🐾 Animals', emojiA:'🦝', emojiB:'🦨', a:'Raccoon', b:'Skunk' },
-    { cat:'🐾 Animals', emojiA:'🦃', emojiB:'🐔', a:'Turkey', b:'Chicken' },
-    { cat:'🐾 Animals', emojiA:'🦜', emojiB:'🦉', a:'Parrot', b:'Owl' },
-    { cat:'🐾 Animals', emojiA:'🦆', emojiB:'🪿', a:'Duck', b:'Goose' },
-    { cat:'🐾 Animals', emojiA:'🦚', emojiB:'🐓', a:'Peacock', b:'Rooster' },
-    { cat:'🐾 Animals', emojiA:'🐨', emojiB:'🐼', a:'Koala', b:'Panda' },
-    { cat:'🐾 Animals', emojiA:'🦔', emojiB:'🦔', a:'Hedgehog', b:'Porcupine' },
-    { cat:'🐾 Animals', emojiA:'🦘', emojiB:'🦘', a:'Kangaroo', b:'Wallaby' },
-    { cat:'🐾 Animals', emojiA:'🫎', emojiB:'🦌', a:'Moose', b:'Deer' },
+    // ── 😊 Feelings (abstract — no physical shape/color/size to match, so the
+    //    "same category" test here is "two feelings close enough to genuinely
+    //    mix up," not "looks the same") ──
+    { cat:'😊 Feelings', emojiA:'😊', emojiB:'🤩', a:'Happy', b:'Excited' },
+    { cat:'😊 Feelings', emojiA:'😢', emojiB:'😞', a:'Sad', b:'Disappointed' },
+    { cat:'😊 Feelings', emojiA:'😠', emojiB:'😤', a:'Angry', b:'Annoyed' },
+    { cat:'😊 Feelings', emojiA:'😨', emojiB:'😰', a:'Scared', b:'Nervous' },
+    { cat:'😊 Feelings', emojiA:'😲', emojiB:'😱', a:'Surprised', b:'Shocked' },
+    { cat:'😊 Feelings', emojiA:'😕', emojiB:'🤔', a:'Confused', b:'Curious' },
+    { cat:'😊 Feelings', emojiA:'😌', emojiB:'😎', a:'Proud', b:'Confident' },
+    { cat:'😊 Feelings', emojiA:'😑', emojiB:'😴', a:'Bored', b:'Tired' },
+    { cat:'😊 Feelings', emojiA:'😳', emojiB:'🙈', a:'Shy', b:'Embarrassed' },
+    { cat:'😊 Feelings', emojiA:'🥺', emojiB:'😒', a:'Lonely', b:'Jealous' },
+    { cat:'😊 Feelings', emojiA:'😟', emojiB:'🤞', a:'Worried', b:'Hopeful' },
+    { cat:'😊 Feelings', emojiA:'🙂', emojiB:'😌', a:'Calm', b:'Relaxed' },
+    { cat:'😊 Feelings', emojiA:'🙏', emojiB:'😅', a:'Grateful', b:'Relieved' },
+    { cat:'😊 Feelings', emojiA:'😩', emojiB:'😵', a:'Frustrated', b:'Overwhelmed' },
+    { cat:'😊 Feelings', emojiA:'💪', emojiB:'🔥', a:'Determined', b:'Motivated' },
 
     // ── 🗺️ Places ──
     { cat:'🗺️ Places', emojiA:'⛪', emojiB:'🛕', a:'Church', b:'Temple' },
