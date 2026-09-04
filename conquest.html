@@ -550,9 +550,12 @@
       margin: 12px 0 40px;
     }
     .prompt-browser-hdr {
-      font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-      color: #555; margin-bottom: 12px;
+      background: transparent; color: #555; border: 2px solid #1e1e42; border-radius: 12px;
+      padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s; margin-bottom: 14px;
     }
+    .prompt-browser-hdr:hover { border-color: #22c55e; color: #22c55e; }
+    .prompt-deck + .prompt-deck { margin-top: 24px; }
     .prompt-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 10px;
@@ -667,12 +670,17 @@
     <div class="winner-banner hidden" id="winner-banner"></div>
   </div>
 
-  <!-- ── Browse all prompts (always visible, for the host to preview the full deck) ── -->
+  <!-- ── Browse all prompts: closed by default, since this screen is shared and the
+       full deck would spoil every dare/truth before it's drawn ── -->
   <div class="prompt-browser">
-    <div class="prompt-browser-hdr" id="prompt-browser-hdr"></div>
-    <div class="prompt-list" id="prompt-list"></div>
-    <div class="prompt-browser-hdr" id="truth-prompt-browser-hdr"></div>
-    <div class="prompt-list" id="truth-prompt-list"></div>
+    <div class="prompt-deck">
+      <button class="prompt-browser-hdr" id="prompt-browser-hdr" onclick="toggleDeck('dare')"></button>
+      <div class="prompt-list hidden" id="prompt-list"></div>
+    </div>
+    <div class="prompt-deck">
+      <button class="prompt-browser-hdr" id="truth-prompt-browser-hdr" onclick="toggleDeck('truth')"></button>
+      <div class="prompt-list hidden" id="truth-prompt-list"></div>
+    </div>
   </div>
 
   <script src="game-data.js"></script>
@@ -744,8 +752,10 @@
       tieDetail: { zh: '{names} 各擁有 {n} 塊土地', en: '{names} each hold {n} territories' },
       winBanner: { zh: '🏆 {name} 獲勝！', en: '🏆 {name} wins!' },
       winDetail: { zh: '掌控了 {n} / {total} 塊土地', en: 'Controlling {n} out of {total} territories' },
-      allDaresHdr: { zh: '📋 全部大冒險（{n} 題）— 瀏覽完整題庫', en: '📋 All Dares ({n}) — browse the full deck' },
-      allTruthsHdr: { zh: '😇 全部真心話（{n} 題）— 選擇 Truth 時隨機抽出', en: '😇 All Truths ({n}) — drawn whenever a player picks Truth' },
+      browseDaresBtn: { zh: '📋 瀏覽全部 {n} 個大冒險（暴雷 — 分享畫面時請勿開啟）', en: "📋 Browse all {n} Dares (spoilers — don't open while sharing)" },
+      hideDaresBtn: { zh: '🙈 收起大冒險清單', en: '🙈 Hide the Dare list' },
+      browseTruthsBtn: { zh: '😇 瀏覽全部 {n} 個真心話（暴雷 — 分享畫面時請勿開啟）', en: "😇 Browse all {n} Truths (spoilers — don't open while sharing)" },
+      hideTruthsBtn: { zh: '🙈 收起真心話清單', en: '🙈 Hide the Truth list' },
       anotherPlayerPlaceholder: { zh: '（另一位玩家）', en: '(another player)' },
       // dare/truth deck section headers — the type groups themselves come from
       // game-data.js, but the header text is UI chrome around each per-prompt
@@ -930,7 +940,24 @@
       if (playerTokens.length !== before) saveSessionTokens();
     }
 
-    /* ── Browse all prompts (read-only reference list) ── */
+    /* ── Browse all prompts (read-only reference list): each deck is closed by
+       default, since this screen is being shared and the full list would spoil
+       every dare/truth before it's drawn — open independently per deck. ── */
+    const deckOpen = { dare: false, truth: false };
+    function toggleDeck(kind) {
+      deckOpen[kind] = !deckOpen[kind];
+      const listId = kind === 'dare' ? 'prompt-list' : 'truth-prompt-list';
+      document.getElementById(listId).classList.toggle('hidden', !deckOpen[kind]);
+      renderDeckToggleLabels();
+    }
+    function renderDeckToggleLabels() {
+      document.getElementById('prompt-browser-hdr').textContent = deckOpen.dare
+        ? ct('hideDaresBtn')
+        : ct('browseDaresBtn', { n: PROMPTS.length });
+      document.getElementById('truth-prompt-browser-hdr').textContent = deckOpen.truth
+        ? ct('hideTruthsBtn')
+        : ct('browseTruthsBtn', { n: TRUTHS.length });
+    }
     function buildPromptList() {
       // grouped by the deck's five types, in the order they appear in the data
       const groupedHTML = deck => {
@@ -945,10 +972,9 @@
             </div>`).join('')}`).join('');
       };
 
-      document.getElementById('prompt-browser-hdr').textContent = ct('allDaresHdr', { n: PROMPTS.length });
+      renderDeckToggleLabels();
       document.getElementById('prompt-list').innerHTML = groupedHTML(PROMPTS);
 
-      document.getElementById('truth-prompt-browser-hdr').textContent = ct('allTruthsHdr', { n: TRUTHS.length });
       const truthList = document.getElementById('truth-prompt-list');
       truthList.classList.add('truth-list');
       truthList.innerHTML = groupedHTML(TRUTHS);

@@ -198,9 +198,11 @@
   <div id="room-mount"></div>
 
   <div class="scenario-browser">
-    <div class="scenario-browser-hdr" id="browser-hdr">📋 All Scenarios (10) — click to load</div>
-    <div class="filter-bar" id="filter-bar"></div>
-    <div class="scenario-list" id="scenario-list"></div>
+    <button class="scenario-browser-hdr" id="browser-hdr" onclick="toggleScenarioBrowser()"></button>
+    <div class="scenario-browser-body hidden" id="scenario-browser-body">
+      <div class="filter-bar" id="filter-bar"></div>
+      <div class="scenario-list" id="scenario-list"></div>
+    </div>
   </div>
 
   <script src="qrcode.js"></script>
@@ -219,7 +221,8 @@
       drawBtn: { zh: '🎲 抽取', en: '🎲 Draw' },
       nextBtn: { zh: '🔁 下一個情境', en: '🔁 Next Situation' },
       rollingText: { zh: '抽取中…', en: 'Drawing…' },
-      browserHdr: { zh: '📋 全部情境（{n}）— 點擊載入', en: '📋 All Scenarios ({n}) — click to load' },
+      browseBtn: { zh: '👁️ 瀏覽全部 {n} 個情境（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Browse all {n} scenarios (spoilers — don't open while sharing)" },
+      hideBtn: { zh: '🙈 收起情境清單', en: '🙈 Hide the scenario list' },
       filterAll: { zh: '全部', en: 'All' },
       pickedLabel: { zh: '已選擇', en: 'Picked' },
       tallyA: { zh: 'A', en: 'A' },
@@ -302,8 +305,20 @@
       renderTally();
     }
 
-    /* ── Scenario browser ── */
+    /* ── Scenario browser: closed by default, since this screen is being shared and
+       the full list would spoil every scenario before it's drawn ── */
     let activeCat = '';
+    let browserOpen = false;
+    function toggleScenarioBrowser() {
+      browserOpen = !browserOpen;
+      document.getElementById('scenario-browser-body').classList.toggle('hidden', !browserOpen);
+      renderBrowserLabel();
+    }
+    function renderBrowserLabel() {
+      document.getElementById('browser-hdr').textContent = browserOpen
+        ? st('hideBtn')
+        : st('browseBtn', { n: scenarios.length });
+    }
 
     function filterBy(cat) {
       activeCat = cat;
@@ -321,7 +336,7 @@
       filterBar.innerHTML = '';
       list.innerHTML = '';
       activeCat = '';
-      document.getElementById('browser-hdr').textContent = st('browserHdr', { n: scenarios.length });
+      renderBrowserLabel();
 
       const cats = [];
       scenarios.forEach(sc => { if (sc.cat && !cats.includes(sc.cat)) cats.push(sc.cat); });
@@ -424,7 +439,7 @@
     I18N.onChange(() => {
       renderPlaceholderText();
       renderDrawBtnLabel();
-      document.getElementById('browser-hdr').textContent = st('browserHdr', { n: scenarios.length });
+      renderBrowserLabel();
       const allBtn = document.querySelector('.filter-btn[data-cat=""]');
       if (allBtn) allBtn.textContent = st('filterAll');
       renderTally();
