@@ -18,7 +18,7 @@ const GAME_RENDER = (() => {
     s.textContent = `
       /* ── Shared label / text ── */
       .gr-label {
-        font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+        font-size: .86rem; letter-spacing: 1.5px; text-transform: uppercase;
         font-weight: 700; position: relative; z-index: 1;
       }
       .gr-text {

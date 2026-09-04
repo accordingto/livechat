@@ -241,7 +241,7 @@ const ROOM = (() => {
       }
       .room-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
       .room-label {
-        font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+        font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
         color: #555; min-width: 58px;
       }
       .room-divider { height: 1px; background: #1e1e42; }
@@ -268,10 +268,10 @@ const ROOM = (() => {
       .room-count-btn:active { transform: scale(.94); }
       .room-count-btn.active { border-color: var(--room-accent); color: #fff; background: color-mix(in srgb, var(--room-accent) 18%, transparent); }
       .room-hdr {
-        font-size: .72rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+        font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
         color: #555; margin: 18px 0 10px; display: flex; align-items: center; gap: 8px;
       }
-      .room-tag { font-size: .6rem; letter-spacing: 1px; color: #555; border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px; }
+      .room-tag { font-size: .74rem; letter-spacing: .5px; color: #555; border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px; }
       .room-note { color: #555; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
       /* sits right after room-note, wrapping onto its own line on narrow screens
          next to whatever game-specific toggle (e.g. Say It Without Saying It's
