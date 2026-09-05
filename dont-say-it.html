@@ -410,6 +410,87 @@
       .score-card .sc-pts { font-size: 1.9rem; }
       .status-line { font-size: .95rem; padding: 14px; }
     }
+
+    /* ── Setup phase: same step-wizard pattern as index.html's Step 1 (room
+       setup), applied to this game's own settings instead — difficulty,
+       forbidden words, and round length walk past one at a time, then
+       "Start Game" hands the same three controls to the live control bar
+       for the Game phase, where they stay editable via "Edit settings". ── */
+    .phase-wrap { width: 100%; max-width: 1100px; }
+    .step-hdr { display: flex; align-items: baseline; gap: 10px; margin: 4px 0 14px; }
+    .step-hdr .step-num {
+      font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      border-radius: 999px; padding: 4px 12px; flex-shrink: 0;
+    }
+    .step-hdr h2 { font-size: 1.15rem; font-weight: 800; color: #eee; }
+    .step-sub { font-size: .86rem; color: #666; line-height: 1.6; margin: -6px 0 16px; }
+
+    .substep-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 20px; }
+    .substep-dot {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      background: #13132b; border: 2px solid #1e1e42; color: #666;
+      font-family: inherit; font-size: .8rem; font-weight: 800; cursor: default;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .substep-dot.is-done { border-color: var(--accent); color: var(--accent); cursor: pointer; }
+    .substep-dot.is-active { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .substep-dot-line { width: 18px; height: 2px; background: #1e1e42; flex-shrink: 0; }
+    .substep-dot-line.is-done { background: var(--accent); }
+
+    .substep { animation: fadeUp .35s ease both; background: #13132b; border: 2px solid #1e1e42; border-radius: 18px; padding: 22px 24px; }
+    .substep-hdr { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
+    .substep-hdr .substep-tag {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      color: #999; background: #1a1a38; border: 1px solid #35335e;
+      border-radius: 999px; padding: 3px 11px; flex-shrink: 0;
+    }
+    .substep-hdr h3 { font-size: 1rem; font-weight: 800; color: #eee; }
+    .substep-desc { font-size: .86rem; color: #999; line-height: 1.6; margin: 0 0 16px; }
+    /* the moved-in widgets (difficulty buttons, forbidden toggle, timer field)
+       were built to sit flush-right inside a narrow control-bar column —
+       here they get the room to stand on their own, left-aligned */
+    .substep .rules-group { align-items: flex-start; align-self: stretch; padding-top: 0; }
+    .substep .banned-count-row { align-items: flex-start; }
+    .substep .level-btns { justify-content: flex-start; }
+    .substep .secs-field { margin-right: 0; }
+
+    .substep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+    .substep-nav-btn {
+      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      padding: 11px 22px; font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .substep-nav-btn:active { transform: scale(.98); }
+    .substep-nav-btn.substep-next {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+      margin-left: auto;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .substep-dot.is-done:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+      .substep-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .substep-nav-btn.substep-next:hover { filter: brightness(1.1); color: #fff; }
+    }
+
+    /* the compact summary bar atop the Game phase — same pattern as
+       index.html's setup-summary + "Edit room setup" */
+    .phase-summary {
+      width: 100%; max-width: 1100px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+      background: #13132b; border: 1px solid #1e1e42; border-radius: 14px;
+      padding: 12px 18px; margin: 0 0 20px;
+      font-size: .84rem; color: #999;
+    }
+    .phase-summary b { color: #eee; }
+    .edit-setup-btn {
+      background: #1e1e42; border: 1.5px solid #3a3a6a; color: #bbb;
+      border-radius: 999px; padding: 7px 14px; font-family: inherit;
+      font-size: .8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .edit-setup-btn:hover { border-color: var(--accent); color: var(--accent); }
   </style>
 </head>
 <body>
@@ -425,28 +506,38 @@
 
   <div class="fb-warning hidden" id="fb-warning"></div>
 
-  <div class="status-line" id="status-line"></div>
+  <!-- ══════════ Setup phase: walk the host through the three things this
+       game needs decided before dealing a word — difficulty, forbidden
+       words, and round length — one at a time, same pattern as index.html's
+       room-setup wizard. The widgets themselves (#rules-group-difficulty,
+       #rules-group-forbidden, #secs-field) are the very same elements the
+       Game phase's control bar uses; startGame()/editSettings() just move
+       them back and forth, they're never rebuilt. ══════════ -->
+  <div class="phase-wrap" id="phase-setup">
+    <div class="step-hdr">
+      <span class="step-num" data-i18n="taboo.setupBadge">SETUP</span>
+      <h2 data-i18n="taboo.setupTitle">⚙️ Game Settings</h2>
+    </div>
+    <p class="step-sub" data-i18n="taboo.setupSub">Set these up once, then start the game — you can still change them anytime from the game screen.</p>
+    <div class="substep-dots" id="taboo-dots"></div>
 
-  <!-- left: the clock every card mirrors. right: the rule switch for the round -->
-  <div class="control-bar" id="control-bar">
-    <section class="cb-sect timer">
-      <span class="cb-head" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
-      <div class="cb-body">
-        <span class="secs-field">
-          <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
-          <input id="timer-secs" inputmode="numeric" autocomplete="off" value="60" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
-          <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
-          <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
-        </span>
-        <span class="timer-actions">
-          <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
-          <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()" data-i18n="taboo.resetBtn">🔄 Reset</button>
-        </span>
+    <div class="substep" id="taboo-substep-1">
+      <div class="substep-hdr"><span class="substep-tag">1 / 4</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
+      <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas.</p>
+      <div class="rules-group" id="rules-group-difficulty">
+        <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
+        <div class="level-btns" id="level-btns"></div>
       </div>
-    </section>
-    <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
-    <section class="cb-sect rules">
-      <div class="rules-group">
+      <div class="substep-nav">
+        <span></span>
+        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(2)" data-i18n="taboo.nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <div class="substep hidden" id="taboo-substep-2">
+      <div class="substep-hdr"><span class="substep-tag">2 / 4</span><h3 data-i18n="taboo.subStep2Title">🚫 Forbidden Words</h3></div>
+      <p class="substep-desc" data-i18n="taboo.subStep2Desc">Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.</p>
+      <div class="rules-group" id="rules-group-forbidden">
         <span class="rules-group-label" data-i18n="taboo.forbiddenWordsLabel">🚫 Forbidden words</span>
         <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
           <span class="toggle-switch"></span>
@@ -457,33 +548,84 @@
           <div class="level-btns" id="count-btns"></div>
         </div>
       </div>
-      <div class="rules-group">
-        <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
-        <div class="level-btns" id="level-btns"></div>
+      <div class="substep-nav">
+        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(1)" data-i18n="taboo.backBtn">← Back</button>
+        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(3)" data-i18n="taboo.nextBtn">Next →</button>
       </div>
-    </section>
+    </div>
+
+    <div class="substep hidden" id="taboo-substep-3">
+      <div class="substep-hdr"><span class="substep-tag">3 / 4</span><h3 data-i18n="taboo.subStep3Title">⏱️ Round Timer</h3></div>
+      <p class="substep-desc" data-i18n="taboo.subStep3Desc">Set how many seconds each round lasts. You can still adjust it from the game screen anytime.</p>
+      <span class="secs-field" id="secs-field">
+        <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
+        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="60" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
+        <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
+        <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
+      </span>
+      <div class="substep-nav">
+        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(2)" data-i18n="taboo.backBtn">← Back</button>
+        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(4)" data-i18n="taboo.nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <div class="substep hidden" id="taboo-substep-4">
+      <div class="substep-hdr"><span class="substep-tag">4 / 4</span><h3 data-i18n="taboo.subStep4Title">🎮 Start Game</h3></div>
+      <p class="substep-desc" data-i18n="taboo.subStep4Desc">All set! You can always come back with "Edit settings" once the game is running.</p>
+      <div class="substep-nav">
+        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(3)" data-i18n="taboo.backBtn">← Back</button>
+        <button type="button" class="substep-nav-btn substep-next" onclick="startGame()" data-i18n="taboo.startGameBtn">🎮 Start Game</button>
+      </div>
+    </div>
   </div>
 
-  <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
-  <div class="call-row hidden" id="call-row">
-    <button class="call-btn yes" onclick="ruleTaboo(true)" data-i18n="taboo.callYesBtn">🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver</button>
-    <button class="call-btn no" onclick="ruleTaboo(false)" data-i18n="taboo.callNoBtn">👌 No — keep playing</button>
-  </div>
-  <div class="scoreboard" id="scoreboard"></div>
+  <!-- ══════════ Game phase: unchanged from before, apart from the three
+       settings widgets above now living inside its control bar instead of
+       being hard-coded there. ══════════ -->
+  <div class="phase-wrap hidden" id="phase-game">
+    <div class="phase-summary" id="phase-summary">
+      <span id="phase-summary-text"></span>
+      <button type="button" class="edit-setup-btn" onclick="editSettings()" data-i18n="taboo.editSettingsBtn">⚙️ Edit settings</button>
+    </div>
 
-  <div class="deal-row">
-    <button class="btn-deal" id="deal-btn" onclick="dealRound()">🎬 Deal a Word</button>
-    <button class="btn-skip hidden" id="skip-btn" onclick="dealRound(true)" data-i18n="taboo.skipBtn">🔁 Skip this word</button>
-  </div>
-  <div class="score-reset"><button onclick="resetScores()" data-i18n="taboo.resetScoresBtn">↺ Reset scores</button></div>
+    <div class="status-line" id="status-line"></div>
 
-  <!-- player cards: the clue giver gets the word and the verdict buttons,
-       everyone else gets the forbidden words and the buzzer -->
-  <div id="room-mount"></div>
+    <!-- left: the clock every card mirrors. right: the rule switch for the round -->
+    <div class="control-bar" id="control-bar">
+      <section class="cb-sect timer">
+        <span class="cb-head" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
+        <div class="cb-body" id="cb-body-timer">
+          <span class="timer-actions">
+            <button class="timer-btn" id="timer-start" onclick="toggleTimer()">▶️ Start</button>
+            <button class="timer-btn ghost" id="timer-reset" onclick="resetTimer()" data-i18n="taboo.resetBtn">🔄 Reset</button>
+          </span>
+        </div>
+      </section>
+      <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
+      <section class="cb-sect rules" id="cb-sect-rules"></section>
+    </div>
 
-  <div class="deck-browser">
-    <button class="deck-toggle" id="deck-toggle" onclick="toggleDeck()"></button>
-    <div class="deck-list hidden" id="deck-list"></div>
+    <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
+    <div class="call-row hidden" id="call-row">
+      <button class="call-btn yes" onclick="ruleTaboo(true)" data-i18n="taboo.callYesBtn">🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver</button>
+      <button class="call-btn no" onclick="ruleTaboo(false)" data-i18n="taboo.callNoBtn">👌 No — keep playing</button>
+    </div>
+    <div class="scoreboard" id="scoreboard"></div>
+
+    <div class="deal-row">
+      <button class="btn-deal" id="deal-btn" onclick="dealRound()">🎬 Deal a Word</button>
+      <button class="btn-skip hidden" id="skip-btn" onclick="dealRound(true)" data-i18n="taboo.skipBtn">🔁 Skip this word</button>
+    </div>
+    <div class="score-reset"><button onclick="resetScores()" data-i18n="taboo.resetScoresBtn">↺ Reset scores</button></div>
+
+    <!-- player cards: the clue giver gets the word and the verdict buttons,
+         everyone else gets the forbidden words and the buzzer -->
+    <div id="room-mount"></div>
+
+    <div class="deck-browser">
+      <button class="deck-toggle" id="deck-toggle" onclick="toggleDeck()"></button>
+      <div class="deck-list hidden" id="deck-list"></div>
+    </div>
   </div>
 
   <script src="qrcode.js"></script>
@@ -570,6 +712,24 @@
       minusTwoForYou: { zh: '（你 −2）', en: ' (−2 for you)' },
       hideDeckBtn: { zh: '🙈 收起題庫', en: '🙈 Hide the deck' },
       browseDeckBtn: { zh: "👁️ 瀏覽全部 {n} 個題目（暴雷 — 分享畫面時請勿開啟）", en: "👁️ Browse all {n} words (spoilers — don't open while sharing)" },
+      setupBadge: { zh: '設定', en: 'SETUP' },
+      setupTitle: { zh: '⚙️ 遊戲設定', en: '⚙️ Game Settings' },
+      setupSub: { zh: '依序設定好這三項，再開始遊戲 — 開始後仍可以隨時從遊戲畫面調整。', en: 'Set these up once, then start the game — you can still change them anytime from the game screen.' },
+      subStep1Title: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
+      subStep1Desc: { zh: '簡單是看得到摸得到的日常物品，困難則是抽象的情緒或概念。', en: 'Easy words are everyday objects; Hard words are abstract feelings and ideas.' },
+      subStep2Title: { zh: '🚫 禁字設定', en: '🚫 Forbidden Words' },
+      subStep2Desc: { zh: '開啟後，每輪會多發一位裁判專門聽違規禁字；也可以設定實際生效幾個禁字，數字愈小愈簡單。', en: 'Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.' },
+      subStep3Title: { zh: '⏱️ 回合時間', en: '⏱️ Round Timer' },
+      subStep3Desc: { zh: '設定每一輪的秒數，開始遊戲後仍可以在畫面上隨時調整。', en: 'Set how many seconds each round lasts. You can still adjust it from the game screen anytime.' },
+      subStep4Title: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
+      subStep4Desc: { zh: '設定完成！遊戲開始後，仍可以隨時按「編輯設定」回來調整。', en: 'All set! You can always come back with "Edit settings" once the game is running.' },
+      nextBtn: { zh: '下一步 →', en: 'Next →' },
+      backBtn: { zh: '← 上一步', en: '← Back' },
+      startGameBtn: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
+      editSettingsBtn: { zh: '⚙️ 編輯設定', en: '⚙️ Edit settings' },
+      summaryForbiddenOn: { zh: '🚫 禁字 ON（{n}）', en: '🚫 Forbidden ON ({n})' },
+      summaryForbiddenOff: { zh: '🚫 禁字 OFF', en: '🚫 Forbidden OFF' },
+      summaryTimer: { zh: '⏱️ {n} 秒', en: '⏱️ {n}s' },
     });
     const tt = (key, vars) => {
       let s = I18N.t('taboo', key);
@@ -602,6 +762,92 @@
     let lostIdx = [];      // score cards to flash red after losing a point
     let tabooCalls = [];   // players who shouted Taboo! and are waiting on the host's ruling
     let seenTaboo = {};    // playerNum -> the last Taboo! stamp already handled
+
+    /* ── Setup phase: a 4-step wizard over the three widgets below, same
+       pattern as index.html's room-setup wizard — walk past difficulty,
+       forbidden words, and round length one at a time, then hand them to
+       the Game phase's control bar. editSettings() moves them back without
+       touching round/score/game state, since settings have always only
+       ever affected the *next* deal (see setLevel/setBannedCount/toggleForbidden). */
+    let phase = 'setup'; // 'setup' | 'game'
+    const TABOO_SUBSTEPS = 4;
+    let tabooSubStep = 1;
+    let tabooSubStepReached = 1;
+
+    function renderTabooDots() {
+      const wrap = document.getElementById('taboo-dots');
+      wrap.innerHTML = '';
+      for (let n = 1; n <= TABOO_SUBSTEPS; n++) {
+        if (n > 1) {
+          const line = document.createElement('span');
+          line.className = 'substep-dot-line' + (n <= tabooSubStepReached ? ' is-done' : '');
+          wrap.appendChild(line);
+        }
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.textContent = n;
+        const reached = n <= tabooSubStepReached;
+        dot.className = 'substep-dot' + (n === tabooSubStep ? ' is-active' : reached ? ' is-done' : '');
+        dot.disabled = !reached;
+        if (reached) dot.onclick = () => showTabooSubStep(n);
+        wrap.appendChild(dot);
+      }
+    }
+
+    function showTabooSubStep(n) {
+      if (n < 1 || n > TABOO_SUBSTEPS) return;
+      tabooSubStep = n;
+      if (n > tabooSubStepReached) tabooSubStepReached = n;
+      for (let i = 1; i <= TABOO_SUBSTEPS; i++) {
+        document.getElementById('taboo-substep-' + i).classList.toggle('hidden', i !== n);
+      }
+      renderTabooDots();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    renderTabooDots();
+
+    /* moves the three settings widgets from the wizard into the live control
+       bar and switches to the Game phase — never rebuilt, just reparented,
+       so nothing about how they work changes */
+    function startGame() {
+      document.getElementById('cb-sect-rules').appendChild(document.getElementById('rules-group-forbidden'));
+      document.getElementById('cb-sect-rules').appendChild(document.getElementById('rules-group-difficulty'));
+      const cbBody = document.getElementById('cb-body-timer');
+      cbBody.insertBefore(document.getElementById('secs-field'), cbBody.firstChild);
+      phase = 'game';
+      document.getElementById('phase-setup').classList.add('hidden');
+      document.getElementById('phase-game').classList.remove('hidden');
+      renderPhaseSummary();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* the reverse of startGame() — moves the same three widgets back into
+       their wizard slots. Deliberately does NOT touch round/state/scores:
+       these settings have only ever affected the *next* deal, so hopping
+       back to tweak one mid-round is safe. */
+    function editSettings() {
+      document.getElementById('taboo-substep-2').insertBefore(document.getElementById('rules-group-forbidden'), document.getElementById('taboo-substep-2').querySelector('.substep-nav'));
+      document.getElementById('taboo-substep-1').insertBefore(document.getElementById('rules-group-difficulty'), document.getElementById('taboo-substep-1').querySelector('.substep-nav'));
+      document.getElementById('taboo-substep-3').insertBefore(document.getElementById('secs-field'), document.getElementById('taboo-substep-3').querySelector('.substep-nav'));
+      phase = 'setup';
+      document.getElementById('phase-game').classList.add('hidden');
+      document.getElementById('phase-setup').classList.remove('hidden');
+      tabooSubStepReached = 1;
+      showTabooSubStep(1);
+    }
+
+    /* a compact read-out atop the Game phase, so the host doesn't have to
+       remember what was picked in the wizard — same idea as index.html's
+       room-setup summary line next to "Edit room setup" */
+    function renderPhaseSummary() {
+      const lvl = LEVELS.find(l => l.id === level) || LEVELS[1];
+      const parts = [
+        tt(lvl.labelKey),
+        forbiddenOn ? tt('summaryForbiddenOn', { n: bannedCount }) : tt('summaryForbiddenOff'),
+        tt('summaryTimer', { n: timer.total }),
+      ];
+      document.getElementById('phase-summary-text').innerHTML = parts.join(' &middot; ');
+    }
 
     /* Host-only peek at exactly what's on each player's card right now — off by
        default since the host is screen-sharing and this is a spoiler. */
@@ -975,6 +1221,7 @@
       document.getElementById('timer-start').textContent = timer.running ? tt('pauseBtn') : tt('startBtn');
       document.getElementById('secs-minus').disabled = timer.total <= STEP_MIN;
       document.getElementById('secs-plus').disabled = timer.total >= STEP_MAX;
+      renderPhaseSummary();
     }
 
     /* ── Whose turn it is ──
@@ -1207,6 +1454,7 @@
     function renderAll() {
       renderStatus();
       renderScores();
+      renderPhaseSummary();
       ROOM.render();
       document.getElementById('call-row').classList.toggle('hidden', !(state === 'playing' && tabooCalls.length));
       document.getElementById('roundNum').textContent = round;
@@ -1332,6 +1580,7 @@
     renderBannedCountBtns();
     renderTimer();
     renderAll();
+    renderPhaseSummary();
 
     // a language switch needs every JS-built piece of UI redrawn in place —
     // data-i18n handles the static markup on its own, this covers the rest
@@ -1345,6 +1594,7 @@
       renderDeckToggleLabel();
       renderTimer();
       renderAll();
+      renderPhaseSummary();
     });
   </script>
 </body>
