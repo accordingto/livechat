@@ -701,7 +701,10 @@ const ROOM = (() => {
     checkWords = null; // stale answer key for the room we just left
     const saved = loadSessionData(typed);
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
-    if (saved && saved.names && saved.names.length) names = saved.names.slice();
+    // a code with no saved data of its own (brand new, never used) starts
+    // blank, same as newRoom() below — it should never inherit whatever
+    // names happened to still be in memory from the room just left
+    names = (saved && saved.names) ? saved.names.slice() : [];
     if (saved && saved.playerCount) { setCount(clampCount(saved.playerCount)); return; }
     ensureTokens(count);
     save();
@@ -713,6 +716,7 @@ const ROOM = (() => {
     sessionCode = generateSessionCode();
     checkWords = null;
     tokens = [];
+    names = []; // a brand new room starts with blank names, not whoever was in the old one
     ensureTokens(count);
     save();
     attach();
