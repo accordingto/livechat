@@ -443,6 +443,16 @@ const ROOM = (() => {
      each name, as a private answer key for "what does your card say?" */
   let checkWords = null;
 
+  /* which parts of each player row render() draws — only index.html's own
+     Step 1 wizard ever changes this (its sub-steps split name-editing,
+     Link/QR, and the card-check answer into separate screens, each showing
+     read-only names for the two that aren't "edit the names" itself); every
+     other non-hideSetup caller never touches it and keeps the original
+     all-in-one row. 'full' = name input + Link/QR + check badge (default,
+     unchanged behavior). 'names' = editable name input only. 'links' =
+     read-only name + Link/QR. 'check' = read-only name + check badge only. */
+  let linksView = 'full';
+
   function render() {
     const wrap = document.getElementById('room-links');
     if (!wrap) return;
@@ -484,8 +494,9 @@ const ROOM = (() => {
     // disappears. So instead the currently-focused name-input is pulled out
     // before the wipe and reused as-is (same node, same cursor position, no
     // refocus needed) rather than replaced.
+    const editableNames = linksView === 'names' || linksView === 'full';
     const active = document.activeElement;
-    const reuseInput = (active && active.classList && active.classList.contains('name-input') && wrap.contains(active)) ? active : null;
+    const reuseInput = (editableNames && active && active.classList && active.classList.contains('name-input') && wrap.contains(active)) ? active : null;
     const reuseIndex = reuseInput ? Array.from(wrap.children).indexOf(reuseInput.closest('.link-col')) : -1;
     if (reuseInput) reuseInput.remove(); // detach so it survives wrap.innerHTML = '' below
     wrap.innerHTML = '';
@@ -497,7 +508,13 @@ const ROOM = (() => {
       col.className = 'link-col' + (info.marked ? ' is-marked' : '') + (info.cls ? ' ' + info.cls : '');
 
       let input;
-      if (i === reuseIndex && reuseInput) {
+      if (!editableNames) {
+        // read-only, e.g. index.html's Link/QR and card-check sub-steps — the
+        // name was already locked in on the "set player names" sub-step
+        input = document.createElement('div');
+        input.className = 'name-input is-static';
+        input.textContent = api.name(i);
+      } else if (i === reuseIndex && reuseInput) {
         input = reuseInput; // same node: value, cursor and selection are already correct
       } else {
         input = document.createElement('input');
@@ -517,7 +534,7 @@ const ROOM = (() => {
       }
       col.appendChild(input);
 
-      if (live) {
+      if (live && (linksView === 'links' || linksView === 'full')) {
         const row = document.createElement('div');
         row.className = 'link-btn-row';
         const copy = document.createElement('button');
@@ -533,7 +550,7 @@ const ROOM = (() => {
         col.appendChild(row);
       }
 
-      if (checkWords && checkWords[i]) {
+      if ((linksView === 'check' || linksView === 'full') && checkWords && checkWords[i]) {
         const badge = document.createElement('div');
         badge.className = 'check-word-badge';
         badge.innerHTML = `<span>${checkWords[i].emoji} ${checkWords[i].word}</span>`;
@@ -724,6 +741,9 @@ const ROOM = (() => {
     get answers() { return data; },
     name(i) { return String(names[i] || '').trim() || playerLabel(i); },
     setDecorator(fn) { decorate = fn; },
+    // 'full' (default) | 'names' | 'links' | 'check' — see the comment by
+    // `let linksView` above. Only index.html's wizard calls this.
+    setLinksView(mode) { linksView = mode; render(); },
   };
   return api;
 })();

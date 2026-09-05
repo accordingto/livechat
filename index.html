@@ -584,12 +584,27 @@
     let subStep = 1;
     let subStepReached = 1;
 
+    // #room-links is never parked on one sub-step — its content (editable
+    // name / read-only name+Link+QR / read-only name+check-badge) depends on
+    // ROOM.setLinksView(), so it moves into whichever of these three slots is
+    // showing right now instead of living permanently in any one of them
+    const LINKS_VIEW_BY_SUBSTEP = { 2: 'names', 3: 'links', 4: 'check' };
+    function placeRoomLinks(n) {
+      const mode = LINKS_VIEW_BY_SUBSTEP[n];
+      if (!mode) return;
+      document.getElementById('substep-' + n + '-links-slot').appendChild(document.getElementById('room-links'));
+      ROOM.setLinksView(mode);
+    }
+
     function initSetupWizard() {
       const mount = document.getElementById('room-mount');
       const roomCard = mount.querySelector('.room-card');
+      // sub-step 2 is names only (no Link/QR — those move to sub-step 3, see
+      // placeRoomLinks); sub-step 3 gets the "Player Links" header/note since
+      // it's the one actually showing links now, plus Copy All Links
       const pieces = {
-        2: [document.getElementById('room-hdr'), document.getElementById('room-note'), document.getElementById('room-links')],
-        3: [document.getElementById('copy-all-btn')],
+        1: [roomCard],
+        3: [document.getElementById('room-hdr'), document.getElementById('room-note'), document.getElementById('copy-all-btn')],
         4: [document.getElementById('check-btn'), document.getElementById('check-note')],
       };
       const titleKeys = { 1: 'substep1Title', 2: 'substep2Title', 3: 'substep3Title', 4: 'substep4Title' };
@@ -598,7 +613,12 @@
         panel.className = 'substep hidden';
         panel.id = 'substep-' + n;
         panel.innerHTML = `<div class="substep-hdr"><span class="substep-tag">${n} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.${titleKeys[n]}"></h3></div>`;
-        (n === 1 ? [roomCard] : pieces[n]).forEach(el => panel.appendChild(el));
+        (pieces[n] || []).forEach(el => panel.appendChild(el));
+        if (n >= 2) {
+          const slot = document.createElement('div');
+          slot.id = 'substep-' + n + '-links-slot';
+          panel.appendChild(slot);
+        }
         const nav = document.createElement('div');
         nav.className = 'substep-nav';
         if (n > 1) {
@@ -615,6 +635,7 @@
         mount.appendChild(panel);
       });
       document.getElementById('substep5-back').onclick = () => showSubStep(4);
+      placeRoomLinks(2); // park #room-links somewhere hidden until a sub-step that shows it is reached
       I18N.applyStatic(); // these nodes were just created, so the initial scan never saw them
       showSubStep(1, true);
     }
@@ -645,6 +666,7 @@
       if (n < 1 || n > SUBSTEP_COUNT) return;
       subStep = n;
       if (n > subStepReached) subStepReached = n;
+      placeRoomLinks(n);
       for (let i = 1; i <= SUBSTEP_COUNT; i++) {
         document.getElementById('substep-' + i).classList.toggle('hidden', i !== n);
       }
