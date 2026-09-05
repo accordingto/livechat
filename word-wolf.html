@@ -47,9 +47,12 @@
 
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
     .link-col.is-wolf { border-color: #f59e0b; }
-    .link-col.is-picked { border-color: #d946ef; box-shadow: 0 0 24px rgba(217,70,239,.4); }
+    /* border + glow alone read as too subtle a change on a shared screen —
+       the fill itself needs to shift color, not just its edge */
+    .link-col.is-picked, .link-col.is-picked-done { transition: border-color .3s, box-shadow .3s, background-color .3s; }
+    .link-col.is-picked { border-color: #d946ef; background: rgba(217,70,239,.18); box-shadow: 0 0 24px rgba(217,70,239,.4); }
     .link-col.is-picked.pulse { animation: pickPulse .5s ease; }
-    .link-col.is-picked-done { border-color: #14b8a6; box-shadow: 0 0 14px rgba(20,184,166,.25); }
+    .link-col.is-picked-done { border-color: #14b8a6; background: rgba(20,184,166,.14); box-shadow: 0 0 14px rgba(20,184,166,.25); }
     @keyframes pickPulse {
       0%   { transform: scale(1); }
       30%  { transform: scale(1.05); }
@@ -324,13 +327,17 @@
       const answer = revealed && p
         ? `<span class="lw-emoji">${p.emoji}</span><span class="lw-text">${p.word}</span>`
           + (p.isWolf ? `<span class="lw-tag">${wt('wolfTag')}</span>` : '')
-        // pre-reveal, a picked player still needs a (blank) truthy answer — room.js's
+        // pre-reveal, every player still needs a (blank) truthy answer — room.js's
         // compact roster only renders rows where info.answer is truthy, and Pick
-        // Someone's whole point is to highlight someone *during* discussion, before
-        // any word is revealed
-        : (cls ? '&#8203;' : '');
+        // Someone needs everyone's name on screen up front so the highlight has
+        // something to move between, not just the players drawn so far
+        : '&#8203;';
       return { cls, answer };
     });
+    // every player's name should be on screen from the moment the room is
+    // ready, not just after the first Deal/Pick click — setDecorator() alone
+    // doesn't repaint anything by itself
+    ROOM.render();
     I18N.onChange(() => ROOM.render());
 
     function shuffle(arr) {
