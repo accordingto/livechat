@@ -331,6 +331,32 @@
       .substep-nav-btn.substep-next:hover { filter: brightness(1.08); color: #fff; }
     }
 
+    /* ── sub-step 3: pick one link-sharing method, then only that method's
+       UI shows — the goal is never showing all three ways at once, since
+       that's what made this step confusing enough to get people stuck */
+    .method-intro { font-size: .88rem; color: #999; line-height: 1.6; margin: 2px 0 14px; }
+    .method-choices { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .method-btn {
+      flex: 1; min-width: 150px;
+      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      font-family: inherit; cursor: pointer; transition: border-color .2s, background .2s, transform .1s;
+    }
+    .method-btn:active { transform: scale(.98); }
+    .method-btn .method-icon { font-size: 1.6rem; }
+    .method-btn .method-label { font-size: .84rem; font-weight: 700; color: #bbb; text-align: center; line-height: 1.35; }
+    .method-btn.active { border-color: #e94560; background: rgba(233,69,96,.1); }
+    .method-btn.active .method-label { color: #eee; }
+    .method-detail { animation: fadeUp .3s ease both; }
+    .method-desc {
+      font-size: .86rem; color: #ccc; line-height: 1.7; background: #13132b;
+      border: 1px solid #1e1e42; border-left: 3px solid #e94560; border-radius: 10px;
+      padding: 12px 16px; margin: 0 0 16px;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .method-btn:hover { border-color: #e94560; }
+    }
+
     /* ── Mobile ── */
     @media (max-width: 520px) {
       .card-icon-col { width: 76px; }
@@ -547,6 +573,13 @@
       substep5Title: { zh: '前往選擇遊戲', en: 'Continue to Games' },
       nextBtn: { zh: '下一步 →', en: 'Next →' },
       backBtn: { zh: '← 上一步', en: '← Back' },
+      methodIntro: { zh: '選一種方式，把連結分享給玩家：', en: 'Pick one way to share the links with your players:' },
+      methodQrLabel: { zh: '手機掃描 QR Code', en: 'Scan a QR Code' },
+      methodLinkLabel: { zh: '私訊連結給每個人', en: 'Send each link privately' },
+      methodCopyallLabel: { zh: '複製全部貼到聊天室', en: 'Copy all, paste in chat' },
+      methodQrDesc: { zh: '把這個畫面分享出去（螢幕分享）。每位玩家在自己手機上找到寫著自己名字的那一格，用相機掃描下面的 QR Code，就會打開他自己的連結。', en: 'Share this screen with everyone. Each player finds the box with their own name below and scans that QR code with their phone camera to open their own link.' },
+      methodLinkDesc: { zh: '點下面每個人名字下方的「連結」按鈕複製連結，再用私訊（一對一）分別傳給對應的那位玩家——不要貼到公開的聊天室，不然連結可能會被別人先點走。', en: 'Tap the "Link" button under each name to copy that link, then send it privately (one-on-one) to that exact player. Don\'t post it in the public chat, or someone else might open it first.' },
+      methodCopyallDesc: { zh: '按下面的按鈕，一次複製所有玩家的連結，貼到聊天室裡。每位玩家自己找到寫著自己名字的那一行，點開就是他的連結。', en: 'Tap the button below to copy every player\'s link at once, then paste it into the chat. Each player finds the line with their own name and opens that link.' },
     });
 
     /* Every game on this site shares one room code and one set of player
@@ -585,10 +618,11 @@
     let subStepReached = 1;
 
     // #room-links is never parked on one sub-step — its content (editable
-    // name / read-only name+Link+QR / read-only name+check-badge) depends on
-    // ROOM.setLinksView(), so it moves into whichever of these three slots is
-    // showing right now instead of living permanently in any one of them
-    const LINKS_VIEW_BY_SUBSTEP = { 2: 'names', 3: 'links', 4: 'check' };
+    // name / read-only name+Link / read-only name+QR / read-only
+    // name+check-badge) depends on ROOM.setLinksView(), so it moves into
+    // whichever slot is showing right now. Sub-step 3 has three slots of its
+    // own (one per sharing method — see selectMethod()) instead of one.
+    const LINKS_VIEW_BY_SUBSTEP = { 2: 'names', 4: 'check' };
     function placeRoomLinks(n) {
       const mode = LINKS_VIEW_BY_SUBSTEP[n];
       if (!mode) return;
@@ -596,19 +630,83 @@
       ROOM.setLinksView(mode);
     }
 
+    // Sub-step 3 used to show Copy All Links plus every player's Link and QR
+    // button all at once — the single most common place hosts got stuck,
+    // by their own report. It's now a choice of exactly one method, with
+    // only that method's own explanation and controls on screen.
+    let chosenMethod = null; // null | 'qr' | 'link' | 'copyall'
+    function selectMethod(method) {
+      chosenMethod = method;
+      ['qr', 'link', 'copyall'].forEach(m => {
+        document.getElementById('method-detail-' + m).classList.toggle('hidden', m !== method);
+      });
+      document.querySelectorAll('.method-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.method === method);
+      });
+      const linksEl = document.getElementById('room-links');
+      if (method === 'qr') {
+        document.getElementById('method-links-slot-qr').appendChild(linksEl);
+        ROOM.setLinksView('qr-only');
+      } else if (method === 'link') {
+        document.getElementById('method-links-slot-link').appendChild(linksEl);
+        ROOM.setLinksView('link-only');
+      }
+      // 'copyall' needs no per-player row at all, so #room-links just isn't placed anywhere for it
+    }
+
+    function buildMethodPanel() {
+      const panel = document.createElement('div');
+      panel.className = 'substep hidden';
+      panel.id = 'substep-3';
+      panel.innerHTML = `
+        <div class="substep-hdr"><span class="substep-tag">3 / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.substep3Title"></h3></div>
+        <p class="method-intro" data-i18n="index.methodIntro"></p>
+        <div class="method-choices">
+          <button type="button" class="method-btn" data-method="qr"><span class="method-icon">📱</span><span class="method-label" data-i18n="index.methodQrLabel"></span></button>
+          <button type="button" class="method-btn" data-method="link"><span class="method-icon">🔗</span><span class="method-label" data-i18n="index.methodLinkLabel"></span></button>
+          <button type="button" class="method-btn" data-method="copyall"><span class="method-icon">📋</span><span class="method-label" data-i18n="index.methodCopyallLabel"></span></button>
+        </div>
+        <div class="method-detail hidden" id="method-detail-qr">
+          <p class="method-desc" data-i18n="index.methodQrDesc"></p>
+          <div id="method-links-slot-qr"></div>
+        </div>
+        <div class="method-detail hidden" id="method-detail-link">
+          <p class="method-desc" data-i18n="index.methodLinkDesc"></p>
+          <div id="method-links-slot-link"></div>
+        </div>
+        <div class="method-detail hidden" id="method-detail-copyall">
+          <p class="method-desc" data-i18n="index.methodCopyallDesc"></p>
+        </div>`;
+      panel.querySelectorAll('.method-btn').forEach(btn => {
+        btn.onclick = () => selectMethod(btn.dataset.method);
+      });
+      panel.querySelector('#method-detail-copyall').appendChild(document.getElementById('copy-all-btn'));
+      const nav = document.createElement('div');
+      nav.className = 'substep-nav';
+      const back = document.createElement('button');
+      back.type = 'button'; back.className = 'substep-nav-btn'; back.dataset.i18n = 'index.backBtn';
+      back.onclick = () => showSubStep(2);
+      nav.appendChild(back);
+      const next = document.createElement('button');
+      next.type = 'button'; next.className = 'substep-nav-btn substep-next'; next.dataset.i18n = 'index.nextBtn';
+      next.onclick = () => showSubStep(4);
+      nav.appendChild(next);
+      panel.appendChild(nav);
+      return panel;
+    }
+
     function initSetupWizard() {
       const mount = document.getElementById('room-mount');
       const roomCard = mount.querySelector('.room-card');
-      // sub-step 2 is names only (no Link/QR — those move to sub-step 3, see
-      // placeRoomLinks); sub-step 3 gets the "Player Links" header/note since
-      // it's the one actually showing links now, plus Copy All Links
+      // sub-step 2 is names only (no Link/QR — those move to sub-step 3's
+      // chosen method, see selectMethod()); the "Player Links" header/note
+      // moves there too since that's the step actually showing links now
       const pieces = {
         1: [roomCard],
-        3: [document.getElementById('room-hdr'), document.getElementById('room-note'), document.getElementById('copy-all-btn')],
         4: [document.getElementById('check-btn'), document.getElementById('check-note')],
       };
-      const titleKeys = { 1: 'substep1Title', 2: 'substep2Title', 3: 'substep3Title', 4: 'substep4Title' };
-      [1, 2, 3, 4].forEach(n => {
+      const titleKeys = { 1: 'substep1Title', 2: 'substep2Title', 4: 'substep4Title' };
+      [1, 2, 4].forEach(n => {
         const panel = document.createElement('div');
         panel.className = 'substep hidden';
         panel.id = 'substep-' + n;
@@ -634,6 +732,16 @@
         panel.appendChild(nav);
         mount.appendChild(panel);
       });
+      // sub-step 3's own header/note come from room.js's rendered elements
+      // too — grabbed here, before buildMethodPanel() runs, and inserted
+      // right after its title so the "Player Links (optional)" context sits
+      // above the method choices
+      const roomHdr = document.getElementById('room-hdr');
+      const roomNote = document.getElementById('room-note');
+      const methodPanel = buildMethodPanel();
+      methodPanel.querySelector('.substep-hdr').after(roomHdr, roomNote);
+      mount.insertBefore(methodPanel, document.getElementById('substep-4'));
+
       document.getElementById('substep5-back').onclick = () => showSubStep(4);
       placeRoomLinks(2); // park #room-links somewhere hidden until a sub-step that shows it is reached
       I18N.applyStatic(); // these nodes were just created, so the initial scan never saw them
@@ -667,6 +775,10 @@
       subStep = n;
       if (n > subStepReached) subStepReached = n;
       placeRoomLinks(n);
+      // #room-links may have been moved off to sub-step 2 or 4's slot since
+      // sub-step 3 was last shown — put it back in whichever method the
+      // host already picked, if any, instead of showing an empty method panel
+      if (n === 3 && chosenMethod) selectMethod(chosenMethod);
       for (let i = 1; i <= SUBSTEP_COUNT; i++) {
         document.getElementById('substep-' + i).classList.toggle('hidden', i !== n);
       }
@@ -679,7 +791,7 @@
       document.getElementById('step-setup').classList.toggle('hidden', step !== 1);
       document.getElementById('step-games').classList.toggle('hidden', step !== 2);
       document.getElementById('game-list').classList.toggle('hidden', step !== 2);
-      if (step === 1) { subStepReached = 1; showSubStep(1, true); }
+      if (step === 1) { subStepReached = 1; chosenMethod = null; showSubStep(1, true); }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     document.getElementById('continue-btn').onclick = () => { renderSetupSummary(); showStep(2); };

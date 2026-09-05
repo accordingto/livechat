@@ -444,13 +444,19 @@ const ROOM = (() => {
   let checkWords = null;
 
   /* which parts of each player row render() draws — only index.html's own
-     Step 1 wizard ever changes this (its sub-steps split name-editing,
-     Link/QR, and the card-check answer into separate screens, each showing
-     read-only names for the two that aren't "edit the names" itself); every
-     other non-hideSetup caller never touches it and keeps the original
-     all-in-one row. 'full' = name input + Link/QR + check badge (default,
-     unchanged behavior). 'names' = editable name input only. 'links' =
-     read-only name + Link/QR. 'check' = read-only name + check badge only. */
+     Step 1 wizard ever changes this (its sub-steps split name-editing, the
+     three link-sharing methods, and the card-check answer into separate
+     screens, each showing read-only names for anything that isn't "edit the
+     names" itself); every other non-hideSetup caller never touches it and
+     keeps the original all-in-one row.
+       'full'     = name input + Link + QR toggle + check badge (default,
+                    unchanged legacy behavior)
+       'names'    = editable name input only
+       'link-only'= read-only name + a Link button only, no QR
+       'qr-only'  = read-only name + an always-expanded QR code, no Link
+                    button (every code needs to be visible at once when the
+                    host is sharing this screen for players to scan)
+       'check'    = read-only name + check badge only */
   let linksView = 'full';
 
   function render() {
@@ -534,20 +540,33 @@ const ROOM = (() => {
       }
       col.appendChild(input);
 
-      if (live && (linksView === 'links' || linksView === 'full')) {
+      if (live && (linksView === 'link-only' || linksView === 'full')) {
         const row = document.createElement('div');
         row.className = 'link-btn-row';
         const copy = document.createElement('button');
         copy.className = 'btn-copy';
         copy.textContent = rt('linkBtn');
         copy.onclick = () => copyLink(i, copy);
-        const qr = document.createElement('button');
-        qr.className = 'btn-qr-toggle';
-        qr.textContent = rt('qrBtn');
-        qr.onclick = () => toggleQR(i, col, qr);
         row.appendChild(copy);
-        row.appendChild(qr);
+        if (linksView === 'full') {
+          const qr = document.createElement('button');
+          qr.className = 'btn-qr-toggle';
+          qr.textContent = rt('qrBtn');
+          qr.onclick = () => toggleQR(i, col, qr);
+          row.appendChild(qr);
+        }
         col.appendChild(row);
+      }
+
+      // one QR-only mode for index.html's "everyone scans their own code off
+      // a shared screen" method — every code needs to be visible at once, so
+      // this draws it straight in instead of going through toggleQR() (which
+      // deliberately keeps only one open at a time for the Link/QR mode above)
+      if (live && linksView === 'qr-only') {
+        const qrBox = document.createElement('div');
+        qrBox.className = 'qr-inline';
+        qrBox.innerHTML = qrSVG(cardURL(i));
+        col.appendChild(qrBox);
       }
 
       if ((linksView === 'check' || linksView === 'full') && checkWords && checkWords[i]) {
