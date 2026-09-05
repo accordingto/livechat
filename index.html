@@ -732,14 +732,18 @@
         panel.appendChild(nav);
         mount.appendChild(panel);
       });
-      // sub-step 3's own header/note come from room.js's rendered elements
-      // too — grabbed here, before buildMethodPanel() runs, and inserted
-      // right after its title so the "Player Links (optional)" context sits
-      // above the method choices
-      const roomHdr = document.getElementById('room-hdr');
-      const roomNote = document.getElementById('room-note');
+      // room.js's own "🔗 Player Links (optional)" header/note are redundant
+      // here — the method intro line and each method's own description
+      // already say what this step is for — but render() still reaches for
+      // both by id on every call, so they have to keep existing in the
+      // document somewhere or that throws. Parked in a permanently hidden
+      // wrapper instead of just deleted.
+      const hiddenRoomMeta = document.createElement('div');
+      hiddenRoomMeta.style.display = 'none';
+      hiddenRoomMeta.appendChild(document.getElementById('room-hdr'));
+      hiddenRoomMeta.appendChild(document.getElementById('room-note'));
       const methodPanel = buildMethodPanel();
-      methodPanel.querySelector('.substep-hdr').after(roomHdr, roomNote);
+      methodPanel.appendChild(hiddenRoomMeta);
       mount.insertBefore(methodPanel, document.getElementById('substep-4'));
 
       document.getElementById('substep5-back').onclick = () => showSubStep(4);
