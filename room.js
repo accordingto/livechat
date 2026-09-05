@@ -488,9 +488,10 @@ const ROOM = (() => {
                     unchanged legacy behavior)
        'names'    = editable name input only
        'link-only'= read-only name + a Link button only, no QR
-       'qr-only'  = read-only name + an always-expanded QR code, no Link
-                    button (every code needs to be visible at once when the
-                    host is sharing this screen for players to scan)
+       'qr-only'  = read-only name + a QR toggle button only, no Link
+                    button (same one-open-at-a-time toggleQR() behavior as
+                    'full' — showing every code at once risks a phone
+                    camera scanning the wrong player's)
        'check'    = read-only name + check badge only */
   let linksView = 'full';
 
@@ -607,15 +608,21 @@ const ROOM = (() => {
         col.appendChild(row);
       }
 
-      // one QR-only mode for index.html's "everyone scans their own code off
-      // a shared screen" method — every code needs to be visible at once, so
-      // this draws it straight in instead of going through toggleQR() (which
-      // deliberately keeps only one open at a time for the Link/QR mode above)
+      // index.html's QR-sharing method: a toggle button per player, same
+      // one-at-a-time behavior as toggleQR() always had. Showing every
+      // player's code at once (tried first) is actually worse for the
+      // "share this screen, everyone scans their own" case it's meant for —
+      // with several codes on screen at the same time, a phone camera can
+      // easily catch and scan the wrong one.
       if (live && linksView === 'qr-only') {
-        const qrBox = document.createElement('div');
-        qrBox.className = 'qr-inline';
-        qrBox.innerHTML = qrSVG(cardURL(i));
-        col.appendChild(qrBox);
+        const row = document.createElement('div');
+        row.className = 'link-btn-row';
+        const qr = document.createElement('button');
+        qr.className = 'btn-qr-toggle';
+        qr.textContent = rt('qrBtn');
+        qr.onclick = () => toggleQR(i, col, qr);
+        row.appendChild(qr);
+        col.appendChild(row);
       }
 
       if ((linksView === 'check' || linksView === 'full') && checkWords && checkWords[i] && checkRevealed) {
