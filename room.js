@@ -290,7 +290,7 @@ const ROOM = (() => {
       /* sits right after room-note, wrapping onto its own line on narrow screens
          next to whatever game-specific toggle (e.g. Say It Without Saying It's
          "Show what's on player cards") also lives in that same flow */
-      .copy-all-btn { margin-bottom: 14px; }
+      .copy-all-btn { width: 100%; margin-bottom: 14px; }
       .copy-all-btn.is-copied {
         background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
         animation: copyPop .4s ease;
