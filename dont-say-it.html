@@ -455,7 +455,11 @@
     .substep .rules-group { align-items: flex-start; align-self: stretch; padding-top: 0; }
     .substep .banned-count-row { align-items: flex-start; }
     .substep .level-btns { justify-content: flex-start; }
-    .substep .secs-field { margin-right: 0; }
+    /* .secs-field is a bare display:flex element — a flex item shrinks to fit
+       inside the control bar's own flex row, but as a direct child of a plain
+       block (.substep) it would otherwise stretch to the panel's full width,
+       leaving a wide empty box next to the −/60/+ controls */
+    .substep .secs-field { display: inline-flex; margin-right: 0; }
 
     .substep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
     .substep-nav-btn {
@@ -649,8 +653,8 @@
       startBtn: { zh: '▶️ 開始', en: '▶️ Start' },
       pauseBtn: { zh: '⏸️ 暫停', en: '⏸️ Pause' },
       resetBtn: { zh: '🔄 重設', en: '🔄 Reset' },
-      forbiddenWordsLabel: { zh: '🚫 禁字', en: '🚫 Forbidden words' },
-      howManyLabel: { zh: '🔢 生效幾個', en: '🔢 how many' },
+      forbiddenWordsLabel: { zh: '🚫 啟用禁字功能', en: '🚫 Forbidden words' },
+      howManyLabel: { zh: '🔢 生效幾個禁字', en: '🔢 Active words' },
       difficultyLabel: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
       toggleOn: { zh: 'ON', en: 'ON' },
       toggleOff: { zh: 'OFF', en: 'OFF' },
