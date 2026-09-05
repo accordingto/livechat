@@ -119,38 +119,26 @@
       display: flex; align-items: center; justify-content: center;
       padding: 12px 10px;
     }
-    .cb-sect.rules {
-      align-items: flex-end;
-      background: rgba(239,68,68,.045);
-      border-left: 2px solid #1e1e42;
-    }
-    .cb-sect.rules::before { left: auto; right: 0; }
-    /* the accent strip is what tells the two halves apart at a glance */
+    /* the accent strip marks the timer section — there used to be a second,
+       red one on a .cb-sect.rules half, removed along with the settings it
+       held (see the control-bar's own comment in the body) */
     .cb-sect::before {
       content: ''; position: absolute; top: 14px; bottom: 14px; left: 0;
       width: 3px; border-radius: 3px;
     }
     .cb-sect.timer::before { background: #6366f1; }
-    .cb-sect.rules::before { background: #ef4444; }
     .cb-head {
       font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
       display: flex; align-items: center; gap: 6px;
     }
     .cb-sect.timer .cb-head { color: #6366f1; }
     .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    /* narrow: the clock goes on top, then its controls, then the rules. The cut-off is
-       just below iPad landscape, which is the last width where one row still fits. */
+    /* narrow: the dial moves above the clock's own controls, the only two
+       things left in the control bar. The cut-off is just below iPad
+       landscape, which is the last width where one row still fits. */
     @media (max-width: 1023px) {
       .control-bar { grid-template-columns: 1fr; }
       .cb-dial { order: -1; padding-top: 16px; }
-      .cb-sect.rules {
-        border-left: none; border-top: 2px solid #1e1e42;
-        align-items: center;
-      }
-      .cb-sect.rules::before { left: 0; right: auto; }
-      .level-btns { justify-content: center; }
-      .rules-group { align-items: center; }
-      .banned-count-row { align-items: center; }
     }
 
     .level-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
@@ -594,7 +582,14 @@
 
     <div class="status-line" id="status-line"></div>
 
-    <!-- left: the clock every card mirrors. right: the rule switch for the round -->
+    <!-- Difficulty / forbidden words / round length are settings, not live
+         controls — they stay in the setup wizard and can only be reached
+         again via "Edit settings" above, never edited mid-game. Only the
+         timer's own Start/Reset survive here, since those operate the clock
+         itself rather than configure it. The 1fr auto 1fr grid still keeps
+         the dial dead centre even with column 3 empty: an explicit
+         grid-template-columns reserves all three tracks regardless of how
+         many children actually land in them. -->
     <div class="control-bar" id="control-bar">
       <section class="cb-sect timer">
         <span class="cb-head" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
@@ -606,7 +601,6 @@
         </div>
       </section>
       <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
-      <section class="cb-sect rules" id="cb-sect-rules"></section>
     </div>
 
     <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
@@ -810,14 +804,13 @@
     }
     renderTabooDots();
 
-    /* moves the three settings widgets from the wizard into the live control
-       bar and switches to the Game phase — never rebuilt, just reparented,
-       so nothing about how they work changes */
+    /* The three settings widgets (difficulty, forbidden words, round length)
+       live only in the setup wizard — they never move into the game phase,
+       so there's nothing to change mid-game without going through "Edit
+       settings" first. startGame()/editSettings() just swap which phase is
+       showing; the read-only .phase-summary bar is what the host sees
+       during play. */
     function startGame() {
-      document.getElementById('cb-sect-rules').appendChild(document.getElementById('rules-group-forbidden'));
-      document.getElementById('cb-sect-rules').appendChild(document.getElementById('rules-group-difficulty'));
-      const cbBody = document.getElementById('cb-body-timer');
-      cbBody.insertBefore(document.getElementById('secs-field'), cbBody.firstChild);
       phase = 'game';
       document.getElementById('phase-setup').classList.add('hidden');
       document.getElementById('phase-game').classList.remove('hidden');
@@ -825,14 +818,11 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    /* the reverse of startGame() — moves the same three widgets back into
-       their wizard slots. Deliberately does NOT touch round/state/scores:
-       these settings have only ever affected the *next* deal, so hopping
-       back to tweak one mid-round is safe. */
+    /* Deliberately does NOT touch round/state/scores: these settings have
+       only ever affected the *next* deal, so hopping back to tweak one
+       mid-round is safe — the round in progress just keeps running once the
+       host returns to the game phase. */
     function editSettings() {
-      document.getElementById('taboo-substep-2').insertBefore(document.getElementById('rules-group-forbidden'), document.getElementById('taboo-substep-2').querySelector('.substep-nav'));
-      document.getElementById('taboo-substep-1').insertBefore(document.getElementById('rules-group-difficulty'), document.getElementById('taboo-substep-1').querySelector('.substep-nav'));
-      document.getElementById('taboo-substep-3').insertBefore(document.getElementById('secs-field'), document.getElementById('taboo-substep-3').querySelector('.substep-nav'));
       phase = 'setup';
       document.getElementById('phase-game').classList.add('hidden');
       document.getElementById('phase-setup').classList.remove('hidden');
