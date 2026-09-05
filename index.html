@@ -289,6 +289,48 @@
     }
     .edit-setup-btn:hover { border-color: #e94560; color: #e94560; }
 
+    /* ── Step 1's own inner wizard: room count / names / copy links / card
+       check / continue are shown one at a time instead of all at once, each
+       reusing the exact same room.js-rendered elements — see initSetupWizard() */
+    .substep-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 20px; }
+    .substep-dot {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      background: #13132b; border: 2px solid #1e1e42; color: #666;
+      font-family: inherit; font-size: .8rem; font-weight: 800; cursor: default;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .substep-dot.is-done { border-color: #e94560; color: #e94560; cursor: pointer; }
+    .substep-dot.is-active { border-color: #e94560; background: #e94560; color: #fff; }
+    .substep-dot-line { width: 18px; height: 2px; background: #1e1e42; flex-shrink: 0; }
+    .substep-dot-line.is-done { background: #e94560; }
+    .substep { animation: fadeUp .35s ease both; }
+    .substep-hdr {
+      display: flex; align-items: baseline; gap: 10px; margin: 4px 0 12px;
+    }
+    .substep-hdr .substep-tag {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      color: #999; background: #1a1a38; border: 1px solid #35335e;
+      border-radius: 999px; padding: 3px 11px; flex-shrink: 0;
+    }
+    .substep-hdr h3 { font-size: 1rem; font-weight: 800; color: #eee; }
+    .substep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+    .substep-nav-btn {
+      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      padding: 11px 22px; font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .substep-nav-btn:active { transform: scale(.98); }
+    .substep-nav-btn.substep-next {
+      background: linear-gradient(135deg, #ff5a76, #c81e3a); color: #fff; border-color: #ff8095;
+      margin-left: auto;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .substep-dot.is-done:hover { background: rgba(233,69,96,.15); }
+      .substep-nav-btn:hover { border-color: #e94560; color: #e94560; }
+      .substep-nav-btn.substep-next:hover { filter: brightness(1.08); color: #fff; }
+    }
+
     /* ── Mobile ── */
     @media (max-width: 520px) {
       .card-icon-col { width: 76px; }
@@ -329,9 +371,19 @@
   <div class="step-wrap" id="step-setup">
     <div class="step-hdr"><span class="step-num" data-i18n="index.step1Badge">Step 1</span><h2 data-i18n="index.step1Title">Set up your room</h2></div>
     <p class="step-sub" data-i18n="index.step1Sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
+    <div class="substep-dots" id="substep-dots"></div>
     <div id="room-mount"></div>
-    <div class="continue-row">
-      <button class="continue-btn" id="continue-btn" type="button" data-i18n="index.continueBtn">▶️ Continue to Games</button>
+    <div class="substep hidden" id="substep-5">
+      <div class="substep-hdr">
+        <span class="substep-tag">5 / 5</span>
+        <h3 data-i18n="index.substep5Title">Continue to Games</h3>
+      </div>
+      <div class="continue-row">
+        <button class="continue-btn" id="continue-btn" type="button" data-i18n="index.continueBtn">▶️ Continue to Games</button>
+      </div>
+      <div class="substep-nav">
+        <button class="substep-nav-btn" id="substep5-back" type="button" data-i18n="index.backBtn">← Back</button>
+      </div>
     </div>
   </div>
 
@@ -488,6 +540,13 @@
       descPersuade: { zh: '一位玩家的卡片會被發到「裁判」身分，其他人則組隊合作。提出最有說服力的論點——最後由裁判在卡片上按下判決！', en: 'One player is dealt the judge on their own card, everyone else teams up. Make the most convincing case — then the judge taps the verdict!' },
       descScene: { zh: '抽出一個混亂的場景——每位玩家會在自己的私人卡片上拿到專屬角色與提示。沒有劇本，純靠即興演出，笑料百出！', en: 'Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!' },
       footerTagline: { zh: '所有遊戲完全免費，無需註冊', en: 'All games are free & no sign-up required' },
+      substep1Title: { zh: '設定房間人數', en: 'Set the number of players' },
+      substep2Title: { zh: '設定玩家名稱', en: 'Set player names' },
+      substep3Title: { zh: '複製所有連結', en: 'Copy all links' },
+      substep4Title: { zh: '傳送核對卡片', en: 'Send a card check' },
+      substep5Title: { zh: '前往選擇遊戲', en: 'Continue to Games' },
+      nextBtn: { zh: '下一步 →', en: 'Next →' },
+      backBtn: { zh: '← 上一步', en: '← Back' },
     });
 
     /* Every game on this site shares one room code and one set of player
@@ -516,10 +575,89 @@
     renderSetupSummary();
     I18N.onChange(renderSetupSummary);
 
+    /* Step 1 used to show room count, names, Copy All Links and Send Card
+       Check all at once. It now walks the host through them one at a time —
+       the same room.js-rendered elements just get moved into their own
+       panel each, so nothing about how they work (state, saves, live
+       re-renders on name/count change) is touched. */
+    const SUBSTEP_COUNT = 5;
+    let subStep = 1;
+    let subStepReached = 1;
+
+    function initSetupWizard() {
+      const mount = document.getElementById('room-mount');
+      const roomCard = mount.querySelector('.room-card');
+      const pieces = {
+        2: [document.getElementById('room-hdr'), document.getElementById('room-note'), document.getElementById('room-links')],
+        3: [document.getElementById('copy-all-btn')],
+        4: [document.getElementById('check-btn'), document.getElementById('check-note')],
+      };
+      const titleKeys = { 1: 'substep1Title', 2: 'substep2Title', 3: 'substep3Title', 4: 'substep4Title' };
+      [1, 2, 3, 4].forEach(n => {
+        const panel = document.createElement('div');
+        panel.className = 'substep hidden';
+        panel.id = 'substep-' + n;
+        panel.innerHTML = `<div class="substep-hdr"><span class="substep-tag">${n} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.${titleKeys[n]}"></h3></div>`;
+        (n === 1 ? [roomCard] : pieces[n]).forEach(el => panel.appendChild(el));
+        const nav = document.createElement('div');
+        nav.className = 'substep-nav';
+        if (n > 1) {
+          const back = document.createElement('button');
+          back.type = 'button'; back.className = 'substep-nav-btn'; back.dataset.i18n = 'index.backBtn';
+          back.onclick = () => showSubStep(n - 1);
+          nav.appendChild(back);
+        }
+        const next = document.createElement('button');
+        next.type = 'button'; next.className = 'substep-nav-btn substep-next'; next.dataset.i18n = 'index.nextBtn';
+        next.onclick = () => showSubStep(n + 1);
+        nav.appendChild(next);
+        panel.appendChild(nav);
+        mount.appendChild(panel);
+      });
+      document.getElementById('substep5-back').onclick = () => showSubStep(4);
+      I18N.applyStatic(); // these nodes were just created, so the initial scan never saw them
+      showSubStep(1, true);
+    }
+
+    function renderSubStepDots() {
+      const wrap = document.getElementById('substep-dots');
+      wrap.innerHTML = '';
+      for (let n = 1; n <= SUBSTEP_COUNT; n++) {
+        if (n > 1) {
+          const line = document.createElement('span');
+          line.className = 'substep-dot-line' + (n <= subStepReached ? ' is-done' : '');
+          wrap.appendChild(line);
+        }
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.textContent = n;
+        const reached = n <= subStepReached;
+        dot.className = 'substep-dot' + (n === subStep ? ' is-active' : reached ? ' is-done' : '');
+        dot.disabled = !reached;
+        if (reached) dot.onclick = () => showSubStep(n);
+        wrap.appendChild(dot);
+      }
+    }
+
+    // skipScroll avoids fighting with showStep()'s own scrollTo(top:0) when
+    // it resets the wizard back to sub-step 1 on every visit to Step 1
+    function showSubStep(n, skipScroll) {
+      if (n < 1 || n > SUBSTEP_COUNT) return;
+      subStep = n;
+      if (n > subStepReached) subStepReached = n;
+      for (let i = 1; i <= SUBSTEP_COUNT; i++) {
+        document.getElementById('substep-' + i).classList.toggle('hidden', i !== n);
+      }
+      renderSubStepDots();
+      if (!skipScroll) document.getElementById('step-setup').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    initSetupWizard();
+
     function showStep(step) {
       document.getElementById('step-setup').classList.toggle('hidden', step !== 1);
       document.getElementById('step-games').classList.toggle('hidden', step !== 2);
       document.getElementById('game-list').classList.toggle('hidden', step !== 2);
+      if (step === 1) { subStepReached = 1; showSubStep(1, true); }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     document.getElementById('continue-btn').onclick = () => { renderSetupSummary(); showStep(2); };
