@@ -328,7 +328,14 @@ const ROOM = (() => {
         font-size: .82rem; font-weight: 800; color: #94a3b8;
         display: flex; align-items: center; justify-content: center; gap: 6px;
       }
-      .room-links { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+      /* a grid, not a wrapping flex row: with flex:1 items, a lone leftover
+         card on its own last row (5 players = a row of 4 then 1 alone, say)
+         stretches to fill the entire row width, which looks broken. A grid
+         with a fixed 220px-minimum column keeps every card the same width
+         whether it's sharing a row or sitting alone in the last one — this
+         also caps every row at 3 columns on the widths this site actually
+         renders at, so nothing needs to hand-count "more than 4 players" */
+      .room-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start; gap: 12px; }
       .link-col {
         flex: 1; min-width: 160px;
         background: #13132b; border: 2px solid #1e1e42; border-radius: 14px; padding: 14px;
