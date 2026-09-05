@@ -202,6 +202,25 @@
       .spin-btn { padding: 14px 32px; font-size: .95rem; }
     }
 
+    /* ── Deck browser: every take at a glance, closed by default since the
+       screen is being shared ── */
+    .deck-browser { width: 100%; max-width: 1100px; margin: 28px 0 40px; }
+    .deck-toggle {
+      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .deck-toggle:hover { border-color: #ff7043; color: #ff7043; }
+    .deck-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 8px; margin-top: 14px;
+    }
+    .deck-item {
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px; padding: 12px 14px;
+      font-size: .88rem; font-weight: 600; color: #ccc; line-height: 1.5;
+    }
+    .deck-item .di-num { color: #ff7043; font-weight: 800; margin-right: 6px; }
+
 
   </style>
 </head>
@@ -252,6 +271,11 @@
   <!-- player cards: everyone votes from their own phone, the tally above updates live -->
   <div id="room-mount"></div>
 
+  <div class="deck-browser">
+    <button class="deck-toggle" id="deck-toggle" onclick="toggleDeck()"></button>
+    <div class="deck-list hidden" id="deck-list"></div>
+  </div>
+
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="game-render.js"></script>
@@ -275,8 +299,14 @@
       drawing:    { zh: '抽題中…', en: 'Drawing…' },
       reset:      { zh: '↺ 重置', en: '↺ Reset' },
       linksNote:  { zh: '玩家打開自己的卡片連結，針對每個議題投 👍／🤷／👎 —— 上方的統計會把他們的票數和你在這裡點的加總在一起。', en: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.' },
+      hideDeckBtn:   { zh: '🙈 收起清單', en: '🙈 Hide the list' },
+      browseDeckBtn: { zh: '👁️ 瀏覽全部 {n} 句犀利意見（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Browse all {n} takes (spoilers — don't open while sharing)" },
     });
-    const ht = key => (typeof I18N !== 'undefined' ? I18N.t('hottake', key) : key);
+    const ht = (key, vars) => {
+      let s = typeof I18N !== 'undefined' ? I18N.t('hottake', key) : key;
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
 
     let rolling = false;
     let round = 0;
@@ -314,6 +344,7 @@
       // whatever language was active at draw time — redraw it so a language
       // switch mid-round actually takes effect
       if (currentTake) GAME_RENDER.hottake(document.getElementById('card'), currentTake);
+      renderDeckToggleLabel();
     });
 
     /* what each player picked this round — only votes carrying the current id count */
@@ -411,6 +442,26 @@
       if (currentTake) pushToCards(); // a new ballot id also wipes the votes cast from the cards
       else updateBars();
     }
+
+    /* ── Deck browser: closed by default, since this screen is being shared ── */
+    let deckOpen = false;
+    function toggleDeck() {
+      deckOpen = !deckOpen;
+      document.getElementById('deck-list').classList.toggle('hidden', !deckOpen);
+      renderDeckToggleLabel();
+    }
+    function renderDeckToggleLabel() {
+      document.getElementById('deck-toggle').textContent = deckOpen
+        ? ht('hideDeckBtn')
+        : ht('browseDeckBtn', { n: takes.length });
+    }
+    function renderDeckList() {
+      document.getElementById('deck-list').innerHTML = takes
+        .map((t, i) => `<div class="deck-item"><span class="di-num">#${i + 1}</span>${t}</div>`)
+        .join('');
+    }
+    renderDeckList();
+    renderDeckToggleLabel();
   </script>
 </body>
 </html>
