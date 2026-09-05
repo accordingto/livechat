@@ -261,6 +261,7 @@
     }
     .step-hdr h2 { font-size: 1.15rem; font-weight: 800; color: #eee; }
     .step-sub { font-size: .86rem; color: #666; line-height: 1.6; margin: -6px 0 16px; }
+    .substep-desc { font-size: .86rem; color: #999; line-height: 1.6; margin: 2px 0 16px; }
     .continue-row { display: flex; justify-content: center; margin: 18px 0 36px; }
     .continue-btn {
       background: linear-gradient(135deg, #ff5a76, #c81e3a); color: #fff;
@@ -567,6 +568,7 @@
       descScene: { zh: '抽出一個混亂的場景——每位玩家會在自己的私人卡片上拿到專屬角色與提示。沒有劇本，純靠即興演出，笑料百出！', en: 'Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!' },
       footerTagline: { zh: '所有遊戲完全免費，無需註冊', en: 'All games are free & no sign-up required' },
       substep1Title: { zh: '設定房間人數', en: 'Set the number of players' },
+      substep1Desc: { zh: '先設定玩家人數。下方的「房號」是系統自動產生的房間代碼，用來讓所有分頁、裝置同步同一批連結，通常不需要自己設定——只有要換回之前用過的房間時，才需要輸入房號並按「載入」。', en: 'Start with how many players there are. The "Room" code below is generated for you automatically, so every tab and device stays in sync with the same links — you usually don\'t need to touch it. Only type one in and press "Load" if you want to switch back to a room you used before.' },
       substep2Title: { zh: '設定玩家名稱', en: 'Set player names' },
       substep3Title: { zh: '傳送玩家連結', en: 'Send player links' },
       substep4Title: { zh: '傳送核對卡片', en: 'Send a card check' },
@@ -710,7 +712,8 @@
         const panel = document.createElement('div');
         panel.className = 'substep hidden';
         panel.id = 'substep-' + n;
-        panel.innerHTML = `<div class="substep-hdr"><span class="substep-tag">${n} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.${titleKeys[n]}"></h3></div>`;
+        panel.innerHTML = `<div class="substep-hdr"><span class="substep-tag">${n} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.${titleKeys[n]}"></h3></div>`
+          + (n === 1 ? `<p class="substep-desc" data-i18n="index.substep1Desc"></p>` : '');
         (pieces[n] || []).forEach(el => panel.appendChild(el));
         if (n >= 2) {
           const slot = document.createElement('div');

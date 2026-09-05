@@ -430,17 +430,17 @@ const ROOM = (() => {
 
     mount.innerHTML = `
       <div class="room-card">
+        <div class="room-row">
+          <span class="room-label" data-i18n="room.playersLabel">${rt('playersLabel')}</span>
+          <div class="room-count-btns" id="room-count-btns"></div>
+          <span id="room-actions"></span>
+        </div>
+        <div class="room-divider hidden" id="room-code-divider"></div>
         <div class="room-row hidden" id="room-code-row">
           <span class="room-label" data-i18n="room.roomLabel">${rt('roomLabel')}</span>
           <input id="room-code-input" maxlength="8" autocomplete="off" spellcheck="false">
           <button class="room-btn primary" id="room-load-btn" data-i18n="room.loadBtn">${rt('loadBtn')}</button>
           <button class="room-btn" id="room-new-btn" data-i18n="room.newRoomBtn">${rt('newRoomBtn')}</button>
-        </div>
-        <div class="room-divider hidden" id="room-code-divider"></div>
-        <div class="room-row">
-          <span class="room-label" data-i18n="room.playersLabel">${rt('playersLabel')}</span>
-          <div class="room-count-btns" id="room-count-btns"></div>
-          <span id="room-actions"></span>
         </div>
         ${cfg.extraRowHTML ? `<div class="room-divider"></div><div class="room-row" id="room-extra-row">${cfg.extraRowHTML}</div>` : ''}
       </div>
