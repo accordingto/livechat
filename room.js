@@ -28,7 +28,9 @@ if (typeof I18N !== 'undefined') {
     sendCheckBtn: { zh: '🔍 傳送核對卡', en: '🔍 Send Card Check' },
     linksHdrOptional: { zh: '🔗 玩家連結 <span class="room-tag">選填</span>', en: '🔗 Player Links <span class="room-tag">optional</span>' },
     linksHdrNoFirebase: { zh: '👥 玩家', en: '👥 Players' },
-    checkSentNote: { zh: '🔍 核對字已送出 — 請每位玩家唸出卡片上看到的內容，接著重新發牌繼續遊戲。 ', en: '🔍 Check words sent — ask each player what they see, then re-deal the game to continue. ' },
+    checkSentNote: { zh: '🔍 核對字已送出 — 請每位玩家先唸出卡片上看到的內容，核對完後按「顯示所有答案」查看正確答案。', en: '🔍 Check words sent — have each player say what they see out loud first, then tap "Reveal Answers" to check them against the real thing.' },
+    revealCheckBtn: { zh: '👁️ 顯示所有答案', en: '👁️ Reveal Answers' },
+    checkRevealedNote: { zh: '✅ 答案已顯示 — 核對完畢後，重新發牌就能繼續遊戲。', en: '✅ Answers revealed — re-deal the game whenever you\'re done checking.' },
     clearBtn: { zh: '✖️ 清除', en: '✖️ Clear' },
     playerPlaceholder: { zh: '玩家 {n}', en: 'Player {n}' },
     copyPromptLink: { zh: '複製這個連結：', en: 'Copy this link:' },
@@ -200,12 +202,24 @@ const ROOM = (() => {
     if (pool.length < count) return; // not enough words to guarantee everyone different
     const shuffled = pool.slice().sort(() => Math.random() - 0.5);
     checkWords = shuffled.slice(0, count);
+    // the point of this check is catching a host who already knows the
+    // answer from silently nodding along — the words stay off the host's
+    // own screen until each player has said theirs out loud and
+    // revealCardCheck() is pressed on purpose
+    checkRevealed = false;
     publish(i => ({ game: 'cardcheck', word: checkWords[i].word, emoji: checkWords[i].emoji }));
+    render();
+  }
+
+  function revealCardCheck() {
+    if (!checkWords) return;
+    checkRevealed = true;
     render();
   }
 
   function clearCardCheck() {
     checkWords = null;
+    checkRevealed = false;
     render();
   }
 
@@ -291,11 +305,22 @@ const ROOM = (() => {
       .check-note {
         width: 100%; color: #94a3b8; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px;
       }
-      .check-note button {
+      .check-note { display: flex; flex-direction: column; gap: 10px; }
+      .check-note-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+      .check-note .check-clear-btn {
         background: none; border: none; color: #666; font-family: inherit;
         font-size: .78rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0;
       }
-      .check-note button:hover { color: #999; }
+      .check-note .check-clear-btn:hover { color: #999; }
+      /* the actual "check it's correct now" action — kept as a real button
+         (not the plain underlined Clear link) since revealing the answers
+         is the whole point of this step, not a minor cleanup action */
+      .check-note .check-reveal-btn {
+        background: rgba(56,189,248,.12); border: 2px solid #38bdf8; color: #7dd3fc;
+        border-radius: 10px; padding: 8px 16px; font-family: inherit;
+        font-size: .82rem; font-weight: 800; cursor: pointer; transition: background .2s, transform .1s;
+      }
+      .check-note .check-reveal-btn:active { transform: scale(.97); }
       /* the host's private answer key: what sendCardCheck() actually sent this
          player, shown only on the host's own screen */
       .check-word-badge {
@@ -361,6 +386,7 @@ const ROOM = (() => {
         .btn-copy:hover { background: color-mix(in srgb, var(--room-accent) 10%, transparent); }
         .btn-qr-toggle:hover { border-color: var(--room-accent); color: var(--room-accent); }
         .check-btn:hover { background: rgba(56,189,248,.2); border-color: #7dd3fc; color: #bae6fd; }
+        .check-note .check-reveal-btn:hover { background: rgba(56,189,248,.22); border-color: #bae6fd; color: #bae6fd; }
       }
       @media (max-width: 520px) {
         .link-col { min-width: 130px; padding: 12px 10px; }
@@ -443,6 +469,15 @@ const ROOM = (() => {
      each name, as a private answer key for "what does your card say?" */
   let checkWords = null;
 
+  /* whether the host has pressed "Reveal Answers" yet for the current
+     checkWords — kept separate from checkWords itself so sending the check
+     and seeing the answer key are two deliberate steps: players read their
+     card out loud first, the host reveals the answer key second, instead of
+     the answers just appearing on the host's screen the instant they're sent
+     (which defeats the point of the check — a host who can already see the
+     answer isn't actually verifying anything). */
+  let checkRevealed = false;
+
   /* which parts of each player row render() draws — only index.html's own
      Step 1 wizard ever changes this (its sub-steps split name-editing, the
      three link-sharing methods, and the card-check answer into separate
@@ -476,12 +511,26 @@ const ROOM = (() => {
     checkNote.classList.toggle('hidden', !live || !checkWords);
     if (live && checkWords) {
       checkNote.innerHTML = '';
-      checkNote.append(rt('checkSentNote'));
+      const text = document.createElement('span');
+      text.textContent = checkRevealed ? rt('checkRevealedNote') : rt('checkSentNote');
+      checkNote.appendChild(text);
+      const actions = document.createElement('div');
+      actions.className = 'check-note-actions';
+      if (!checkRevealed) {
+        const revealBtn = document.createElement('button');
+        revealBtn.type = 'button';
+        revealBtn.className = 'check-reveal-btn';
+        revealBtn.textContent = rt('revealCheckBtn');
+        revealBtn.onclick = revealCardCheck;
+        actions.appendChild(revealBtn);
+      }
       const clearLink = document.createElement('button');
       clearLink.type = 'button';
+      clearLink.className = 'check-clear-btn';
       clearLink.textContent = rt('clearBtn');
       clearLink.onclick = clearCardCheck;
-      checkNote.appendChild(clearLink);
+      actions.appendChild(clearLink);
+      checkNote.appendChild(actions);
     }
     document.getElementById('room-hdr').innerHTML = live
       ? rt('linksHdrOptional')
@@ -569,7 +618,7 @@ const ROOM = (() => {
         col.appendChild(qrBox);
       }
 
-      if ((linksView === 'check' || linksView === 'full') && checkWords && checkWords[i]) {
+      if ((linksView === 'check' || linksView === 'full') && checkWords && checkWords[i] && checkRevealed) {
         const badge = document.createElement('div');
         badge.className = 'check-word-badge';
         badge.innerHTML = `<span>${checkWords[i].emoji} ${checkWords[i].word}</span>`;
