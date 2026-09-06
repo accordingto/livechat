@@ -112,3 +112,7 @@
 
 - 所有變更直接 commit 並 push 到 `main` branch
 - 不使用 feature branch
+
+## Kangaroo Court (Beta版)
+
+`kangaroo-court-beta/` 是 Kangaroo Court 的獨立實驗副本，入口為 `kangaroo-court-beta/index.html`。Beta 的主持人、玩家卡片、题庫、說明、房間模組、樣式與設定均使用資料夾內自己的檔案；後續 Beta 修改請限定在此資料夾，不修改根目錄原版遊戲及共用模組。初始建立時根目錄 `index.html` 只新增 Beta 入口，原本八款遊戲入口保持不變。Beta 使用獨立的 localStorage 前綴 `kangaroo-beta-` 和 Firebase 房間路徑 `rooms/kangaroo-beta-{CODE}`；原版仍用 `rooms/{CODE}`。需另外設定 Beta 人數與傳送 Beta 玩家連結，不能沿用原版卡片。詳細維護說明見 `kangaroo-court-beta/README.md`。
