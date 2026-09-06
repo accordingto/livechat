@@ -11,6 +11,10 @@
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
+    /* every other host page declares its theme colour here; this one used to
+       hardcode #ff7043 everywhere, which left shared.css rules that rely on
+       var(--accent) — the guide screen among them — with no colour at all */
+    :root { --accent: #ff7043; }
     .header h1 { background: linear-gradient(135deg, #fff 30%, #ff7043); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     /* ── Card ── */
     @keyframes pulse-glow {

@@ -281,3 +281,54 @@ a.back:hover { color: var(--text); }
   .guide-steps li::before { width: 28px; height: 28px; font-size: .92rem; }
   .guide-start { width: 100%; padding: 16px 24px; font-size: 1.08rem; }
 }
+
+/* ── Buttons quoted inside a guide ──
+   guide-data.js renders real <button>s carrying each page's own button class,
+   so the briefing shows the exact control the host will tap rather than naming
+   it. These rules only neutralise the parts that do not survive being dropped
+   into a sentence — full-width sizing, margins, entry animations, clicks — and
+   leave colour, border, radius and weight to the page's own class. !important
+   is needed because each page's <style> loads after this file.
+   The is-* variants below are for buttons that live on the player cards
+   (play.html), which has no stylesheet in common with the host pages; the
+   values mirror the ones there. */
+.guide-btn {
+  display: inline-flex !important;
+  align-items: center; justify-content: center;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 2px 3px !important;
+  vertical-align: middle;
+  pointer-events: none;
+  animation: none !important;
+  box-shadow: none;
+}
+.guide-btn-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 10px 0 4px;
+}
+.guide-btn-row .guide-btn { margin: 0 !important; }
+
+/* filled card buttons — buzzers, Taboo! calls, the judge's verdict */
+.guide-btn.is-green,
+.guide-btn.is-red {
+  border-radius: 14px; padding: 12px 20px;
+  font-size: 1rem; font-weight: 900; font-family: inherit;
+}
+.guide-btn.is-green { background: #22c55e; border: 2px solid #22c55e; color: #06230f; }
+.guide-btn.is-red   { background: #ef4444; border: 2px solid #ef4444; color: #2b0505; }
+
+/* outlined card buttons — A/B/C picks, the jury's two options */
+.guide-btn.is-choice {
+  background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+  border-radius: 14px; padding: 12px 20px;
+  font-size: .95rem; font-weight: 800; font-family: inherit;
+}
+.guide-btn.is-choice.is-tint-red   { color: #ef4444; background: #ef44441f; }
+.guide-btn.is-choice.is-tint-green { color: #22c55e; background: #22c55e1f; }
+
+@media (max-width: 520px) {
+  .guide-btn.is-green,
+  .guide-btn.is-red,
+  .guide-btn.is-choice { padding: 10px 14px; font-size: .92rem; }
+}
