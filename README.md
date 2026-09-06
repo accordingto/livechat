@@ -28,12 +28,18 @@ host is sharing.
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
+- `CLAUDE.md` is the architecture log (written in Chinese): what every screen
+  does and, more usefully, why each decision was made. Read it before changing
+  anything shared — `room.js`, `play.html`, `index.html`, `game-data.js`,
+  `i18n.js`, `shared.css` are relied on by all eight games at once.
 
 ## Firebase
 
 Live host → player sync runs on a free Firebase Realtime Database. Copy your own
 project's values into `firebase-config.js` (setup steps and the required
-database rules are documented at the top of that file).
+database rules are documented at the top of that file). The file ships with a
+real project's values already in it, so this is a swap, not a fill-in-the-blank
+— see [Running your own copy](#running-your-own-copy).
 
 Without Firebase configured:
 
@@ -44,6 +50,61 @@ Without Firebase configured:
   so in practice it needs Firebase too.
 - **Still fully playable** — the other five. They only lose the on-phone voting
   and buzzer interactions; the host screen carries the whole game.
+
+## Running your own copy
+
+Fork it, clone it, or just download the files — there is no build step and
+nothing to install. Three things need doing before it actually works.
+
+### 1. Point it at your own Firebase project
+
+`firebase-config.js` is committed with **a real project's values in it**, not
+blanks. Clone the repo, skip this step, and nothing breaks and no error appears
+— the games quietly read and write to somebody else's database. Replace every
+value with your own before you play a single round:
+
+```js
+const FIREBASE_CONFIG = {
+  apiKey: "...",
+  authDomain: "...",
+  databaseURL: "...",
+  projectId: "...",
+};
+```
+
+Setup takes about five minutes on the free tier. The steps, and the database
+rules you have to paste in, are in the comment block at the top of that same
+file. The rules are not optional — they are the only thing keeping one player's
+link from reading everyone else's cards.
+
+### 2. Serve it over HTTP, not `file://`
+
+```
+git clone <your fork>
+cd livechat
+python3 -m http.server 8000   # then open http://localhost:8000/index.html
+```
+
+Double-clicking the HTML files opens them as `file://`, which breaks the room
+state (kept in `localStorage`) and the Firebase connection.
+
+### 3. Deploy it somewhere public — the player cards cannot be tested locally
+
+This is the step that is easy to miss. Every game deals its secrets to
+`play.html`, which players open **on their own phones**. A phone cannot reach
+the `localhost` on your laptop, so with only a local server you can drive all
+eight host screens perfectly and never once see a player card — half of each
+game (buzzers, votes, the jury, Truth or Dare calls) lives on that page.
+
+Any static host will do, since the site is plain files with no build step —
+"import the repo, deploy" is the entire process:
+
+- **Vercel** — what the live site runs on
+- **Netlify**, **Cloudflare Pages**, **GitHub Pages** — equivalent here
+
+Deployed files are public even when the repo is private: anyone can fetch
+`/firebase-config.js` from the deployed site. That is expected and safe as long
+as step 1's database rules are in place — see `SECURITY.md`.
 
 ## Features
 
@@ -57,3 +118,7 @@ Vanilla HTML / CSS / JavaScript — no build step, no backend.
 
 - Firebase Realtime Database (compat SDK, loaded from CDN) for host → player sync
 - `qrcode.js` — vendored qrcode-generator 1.4.4 (MIT)
+
+## License
+
+MIT — see `LICENSE`.
