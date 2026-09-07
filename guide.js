@@ -3,7 +3,7 @@
  *
  * Flow: how-to-play  ->  game setup  ->  the game itself.
  * The middle step only exists on the two pages that actually have settings of
- * their own (dont-say-it.html's difficulty/timer wizard, conquest.html's Start
+ * their own (say-it-without-saying-it.html's difficulty/timer wizard, dare-conquest.html's Start
  * Game card). Everywhere else room setup already happened once on index.html,
  * so this screen hands straight over to the game.
  *

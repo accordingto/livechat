@@ -29,7 +29,7 @@ const B = (cls, label) =>
   `<button class="guide-btn ${cls}" type="button" tabindex="-1">${label}</button>`;
 const BROW = (...btns) => `<span class="guide-btn-row">${btns.join('')}</span>`;
 
-/* Pick a Side's three vote buttons, rebuilt with hottake.html's own markup so
+/* Pick a Side's three vote buttons, rebuilt with pick-a-side.html's own markup so
    they carry the same bars and counts the host sees. */
 const VOTE = (agree, depends, disagree) => BROW(
   ...[['agree', '👍', agree], ['middle', '🤷', depends], ['disagree', '👎', disagree]].map(

@@ -1,4 +1,4 @@
-/* game-render.js — shared rendering for hottake.html and what-will-you-do.html.
+/* game-render.js — shared rendering for pick-a-side.html and sophies-choice.html.
    Include AFTER game-data.js. Call GAME_RENDER.injectCSS() once on page load. */
 
 if (typeof I18N !== 'undefined') {
