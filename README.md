@@ -121,4 +121,10 @@ Vanilla HTML / CSS / JavaScript — no build step, no backend.
 
 ## License
 
-MIT — see `LICENSE`.
+[PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)
+— see `LICENSE`. Free to use, change, and share for any noncommercial purpose,
+including schools and other educational institutions. Commercial use, such as
+selling it or running it in paid classes, needs a separate licence from the
+copyright holder.
+
+`qrcode.js` is third-party (qrcode-generator, MIT) and keeps its own licence.
