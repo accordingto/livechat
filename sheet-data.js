@@ -23,6 +23,12 @@
 (function () {
   const STORE_KEY = 'icebreak-sheet-data.v1';
 
+  /* 本站的題庫試算表。這是寫死的、唯一的來源——主持人不用（也不能）在畫面上
+     指定別的網址，按下按鈕就是讀這一份。要換成別份試算表，改這一行即可。
+     這份試算表開放給協作者編輯，所以它同時要滿足兩種權限：編輯者各自被加入
+     編輯權限，以及「知道連結的任何人 → 檢視者」，後者才是這支程式讀得到的原因。 */
+  const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1mDZjPYgrT-tmKWDkrn2jUEZ_gbVJ37lLEaRuvvbXH6g/edit';
+
   /* 每個資料集的欄位定義。cols = 試算表的標題列（順序就是欄位順序），
      required = 這幾欄是空的就跳過該列，build = 把一列組成 GAME_DATA 要的物件。
      這份 SCHEMA 同時也是產生範本 .xlsx 的依據，兩邊永遠一致。 */
@@ -217,7 +223,7 @@
   /* ── 抓取（只有 index.html 的按鈕會呼叫）──
      11 個分頁各自獨立抓、獨立失敗；onProgress(tab, result) 讓 UI 邊抓邊顯示。 */
   async function load(input, onProgress) {
-    const id = sheetId(input);                  // 網址不合法會在這裡就丟出來
+    const id = sheetId(input || SHEET_URL);     // 不給網址就是讀本站那一份
     const results = {};
     const data = {};
 
@@ -238,7 +244,7 @@
 
     const loaded = Object.keys(data).length;
     if (loaded) {
-      write({ url: String(input).trim(), loadedAt: Date.now(), data });
+      write({ url: String(input || SHEET_URL).trim(), loadedAt: Date.now(), data });
       apply();
     }
     return { loaded, total: TABS.length, results };
@@ -260,7 +266,7 @@
   }
 
   window.SHEET_DATA = {
-    SCHEMA, TABS,
+    SCHEMA, TABS, SHEET_URL,
     load, clear, info, apply,
     parseCSV, parseTab, sheetId, csvUrl,        // 給測試與 index.html 用
     get applied() { return applied; },
