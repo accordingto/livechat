@@ -456,7 +456,24 @@
     <div class="substep hidden" id="substep-5">
       <div class="substep-hdr">
         <span class="substep-tag">5 / 5</span>
-        <h3 data-i18n="index.substep5Title">Continue to Games</h3>
+        <h3 data-i18n="index.substep5Title">Load prompts and start</h3>
+      </div>
+      <!-- Prompts source: built-in by default, or pulled from a Google Sheet on
+           demand. Nothing here touches the network until 讀取 is pressed. -->
+      <div class="sheet-bar">
+        <div class="sheet-bar-row">
+          <span class="sheet-status" id="sheet-status"></span>
+          <div class="sheet-bar-btns">
+            <!-- 這顆的文字由 initSheetLoader() 依「有沒有載入過」切換，所以不掛
+                   data-i18n：i18n.js 的 applyStatic() 在 inline script 之後才跑，
+                   會把「🔄 重新讀取」蓋回「📄 讀取線上題庫」 -->
+              <button class="sheet-load-btn" id="sheet-load-btn" type="button">📄 Load prompts</button>
+            <a class="edit-setup-btn" id="sheet-open-link" target="_blank" rel="noopener" data-i18n="index.sheetOpenLink">📝 Open the sheet</a>
+            <button class="edit-setup-btn hidden" id="sheet-reset-btn" type="button" data-i18n="index.sheetResetBtn">↺ Back to built-in prompts</button>
+          </div>
+        </div>
+        <p class="sheet-help" id="sheet-help"></p>
+        <div class="sheet-results hidden" id="sheet-results"></div>
       </div>
       <div class="continue-row">
         <button class="continue-btn" id="continue-btn" type="button" data-i18n="index.continueBtn">▶️ Continue to Games</button>
@@ -475,20 +492,6 @@
       <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
 
-    <!-- Prompts source: built-in by default, or pulled from a Google Sheet on
-         demand. Nothing here touches the network until 讀取 is pressed. -->
-    <div class="sheet-bar">
-      <div class="sheet-bar-row">
-        <span class="sheet-status" id="sheet-status"></span>
-        <div class="sheet-bar-btns">
-          <button class="sheet-load-btn" id="sheet-load-btn" type="button" data-i18n="index.sheetLoadBtn">📄 Load prompts</button>
-          <a class="edit-setup-btn" id="sheet-open-link" target="_blank" rel="noopener" data-i18n="index.sheetOpenLink">📝 Open the sheet</a>
-          <button class="edit-setup-btn hidden" id="sheet-reset-btn" type="button" data-i18n="index.sheetResetBtn">↺ Back to built-in prompts</button>
-        </div>
-      </div>
-      <p class="sheet-help" id="sheet-help"></p>
-      <div class="sheet-results hidden" id="sheet-results"></div>
-    </div>
   </div>
 
   <div class="game-list hidden" id="game-list">
@@ -645,6 +648,8 @@
       },
       sheetSummary: { zh: '✅ 已套用 {ok} 個資料集，其餘 {fallback} 個使用內建題庫',
                       en: '✅ {ok} sets applied, {fallback} falling back to built-in' },
+      sheetNotStored: { zh: '⚠️ 題庫讀到了，但存不進這台裝置的瀏覽器儲存空間，重新整理後就會失效（可能是儲存空間已滿或使用了無痕視窗）',
+                        en: '⚠️ The prompts loaded but could not be saved on this device, so they will be gone after a reload (storage may be full, or this is a private window)' },
       sheetAllFailed: { zh: '⚠️ 一個資料集都沒讀到，八款遊戲全部維持內建題庫。請確認試算表已設為「知道連結的人皆可檢視」',
                         en: '⚠️ Nothing could be read, so all games keep their built-in prompts. Check that the sheet is shared as "Anyone with the link can view"' },
       sheetRowsOk:   { zh: '{n} 題', en: '{n} rows' },
@@ -674,7 +679,7 @@
       substep2Title: { zh: '設定玩家名稱', en: 'Set player names' },
       substep3Title: { zh: '傳送玩家連結', en: 'Send player links' },
       substep4Title: { zh: '傳送核對卡片', en: 'Send a card check' },
-      substep5Title: { zh: '前往選擇遊戲', en: 'Continue to Games' },
+      substep5Title: { zh: '載入題庫並開始', en: 'Load prompts and start' },
       nextBtn: { zh: '下一步 →', en: 'Next →' },
       backBtn: { zh: '← 上一步', en: '← Back' },
       methodIntro: { zh: '選一種方式，把連結分享給玩家：', en: 'Pick one way to share the links with your players:' },
@@ -975,9 +980,9 @@
           const out = await SHEET_DATA.load(null, (tab, res) => results.appendChild(rowFor(tab, res)));
           const line = document.createElement('div');
           line.className = 'sheet-summary-line';
-          line.textContent = out.loaded
-            ? it('sheetSummary', { ok: out.loaded, fallback: out.total - out.loaded })
-            : it('sheetAllFailed');
+          line.textContent = !out.loaded ? it('sheetAllFailed')
+            : out.stored ? it('sheetSummary', { ok: out.loaded, fallback: out.total - out.loaded })
+            : it('sheetNotStored');
           results.appendChild(line);
         } catch (e) {
           const line = document.createElement('div');

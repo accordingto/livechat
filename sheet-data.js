@@ -60,10 +60,15 @@
       required: ['title', 'situation', 'a_label', 'b_label'],
       build: r => {
         const o = { cat: r.cat, emoji: r.emoji, title: r.title, situation: r.situation };
-        // 六個角色都補齊才發得出去（房間可以到 6 人），缺的用前面的補
-        ['a', 'b', 'c', 'd', 'e', 'f'].forEach(k => {
-          if (r[k + '_label']) o[k] = { label: r[k + '_label'], hint: r[k + '_hint'] || '' };
-        });
+        const keys = ['a', 'b', 'c', 'd', 'e', 'f'];
+        const given = keys
+          .filter(k => r[k + '_label'])
+          .map(k => ({ label: r[k + '_label'], hint: r[k + '_hint'] || '' }));
+        /* 六個角色一定要補滿：房間可以開到 6 人，而 youre-in-the-scene.html
+           的 renderRoleGrid() 是照「房間人數」跑迴圈的，少一個角色就會在
+           role.label 上丟 TypeError 讓整頁當掉（實測過）。填不滿的欄位用
+           已填的循環補上——兩個人演同一個角色只是重複，不會壞。 */
+        keys.forEach((k, i) => { o[k] = given[i] || given[i % given.length]; });
         return o;
       },
     },
@@ -107,6 +112,17 @@
   };
 
   const TABS = Object.keys(SCHEMA);
+
+  /* 試算表的內容會被各遊戲頁直接塞進 innerHTML，而這份試算表是開放給別人
+     編輯的，所以任何一個編輯者本來都能在主持人畫面與玩家卡片上執行任意
+     程式碼（實測 `<img src=x onerror=…>` 真的會跑）。這裡在「解析的當下」
+     就把 < 與 > 拿掉，讓題目一律是純文字。
+     為什麼是拿掉而不是轉義成 &lt;：消費端三種寫法都有——`play.html`
+     自己會 esc()（轉義過的字串再轉一次會變成 &amp;lt;）、`kangaroo-court.html`
+     用 textContent（會把 &lt; 原封不動印出來）、其餘頁面直接 innerHTML。
+     只有「純文字、不含 < >」這一種形式在三種寫法下都正確。
+     也不是只擋惡意：題目裡打一個 `cats < dogs` 的 < 一樣會讓版面解析錯亂。 */
+  const clean = v => String(v == null ? '' : v).replace(/[<>]/g, '').trim();
 
   function num(v, fallback) {
     const n = parseInt(String(v).trim(), 10);
@@ -159,7 +175,7 @@
       const r = {};
       spec.cols.forEach(c => {
         const idx = keyOf[c.toLowerCase()];
-        r[c] = idx === undefined ? '' : String(line[idx] == null ? '' : line[idx]).trim();
+        r[c] = idx === undefined ? '' : clean(line[idx]);
       });
       if (spec.required.some(c => !r[c])) { skipped++; continue; }
       rows.push(spec.build(r));
@@ -243,11 +259,14 @@
     }));
 
     const loaded = Object.keys(data).length;
+    let stored = true;
     if (loaded) {
-      write({ url: String(input || SHEET_URL).trim(), loadedAt: Date.now(), data });
+      // write() 失敗（配額爆掉／隱私模式）時什麼都沒存下來，呼叫端要知道，
+      // 否則畫面會顯示「已套用 N 個資料集」但各遊戲頁其實全部用內建題庫
+      stored = write({ url: String(input || SHEET_URL).trim(), loadedAt: Date.now(), data });
       apply();
     }
-    return { loaded, total: TABS.length, results };
+    return { loaded, total: TABS.length, stored, results };
   }
 
   function clear() {

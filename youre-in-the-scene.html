@@ -394,6 +394,10 @@
         : st('rolesHdrPick');
       for (let i = 0; i < n; i++) {
         const role   = getRoleData(currentScene, i);
+        // 場景的角色數少於房間人數時（外部題庫可能只填了前幾個角色），
+        // 這裡以前會直接在 role.label 上丟 TypeError 把整頁打掛。少一張
+        // 角色卡總比整頁當掉好——sheet-data.js 那邊也會把角色補滿六個。
+        if (!role) continue;
         const letter = ALL_LETTERS[i];
         const color  = ALL_COLORS[i];
         const div    = document.createElement('div');
