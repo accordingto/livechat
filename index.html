@@ -290,6 +290,63 @@
     }
     .edit-setup-btn:hover { border-color: #e94560; color: #e94560; }
 
+    /* ── Step 2's Google Sheet loader ──
+       Collapsed to a single line until the host opens it; the fetch only ever
+       runs from the 讀取 button inside, never on page load. */
+    .sheet-bar {
+      background: #13132b; border: 1px solid #1e1e42; border-radius: 14px;
+      padding: 12px 18px; margin: 0 0 20px;
+      font-size: .84rem; color: #999;
+    }
+    .sheet-bar-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .sheet-bar-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sheet-status b { color: #eee; }
+    .sheet-status.is-sheet b { color: #22c55e; }
+
+    .sheet-panel { margin-top: 14px; padding-top: 14px; border-top: 1px solid #1e1e42; }
+    .sheet-help { font-size: .8rem; line-height: 1.75; color: #888; margin-bottom: 12px; }
+    .sheet-help b { color: #bbb; }
+    .sheet-help code {
+      background: #0d0d1a; border: 1px solid #1e1e42; border-radius: 4px;
+      padding: 1px 6px; color: #a78bfa; font-size: .95em;
+    }
+    .sheet-input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sheet-input-row input {
+      flex: 1; min-width: 220px;
+      background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 10px;
+      padding: 10px 14px; color: #eee; font-family: inherit; font-size: .85rem;
+    }
+    .sheet-input-row input:focus { outline: none; border-color: #e94560; }
+    .sheet-load-btn {
+      background: #e94560; border: none; border-radius: 10px; color: #0b0b18;
+      padding: 10px 22px; font-family: inherit; font-size: .85rem; font-weight: 800;
+      cursor: pointer; white-space: nowrap; transition: filter .2s, opacity .2s;
+    }
+    .sheet-load-btn:hover:not(:disabled) { filter: brightness(1.12); }
+    .sheet-load-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .sheet-results { margin-top: 14px; display: grid; gap: 6px; }
+    .sheet-result-row {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .8rem; padding: 7px 12px;
+      background: #0d0d1a; border: 1px solid #1e1e42; border-radius: 8px;
+    }
+    .sheet-result-row .sr-tab { font-weight: 800; color: #ccc; min-width: 130px; }
+    .sheet-result-row .sr-msg { color: #888; }
+    .sheet-result-row.is-ok   { border-color: rgba(34,197,94,.4); }
+    .sheet-result-row.is-ok   .sr-msg { color: #22c55e; }
+    .sheet-result-row.is-warn .sr-msg { color: #f59e0b; }
+    .sheet-summary-line { font-size: .82rem; font-weight: 700; color: #eee; margin-top: 10px; }
+
+    @media (max-width: 520px) {
+      .sheet-result-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+      .sheet-result-row .sr-tab { min-width: 0; }
+      .sheet-load-btn { width: 100%; }
+    }
+
     /* ── Step 1's own inner wizard: room count / names / copy links / card
        check / continue are shown one at a time instead of all at once, each
        reusing the exact same room.js-rendered elements — see initSetupWizard() */
@@ -421,6 +478,28 @@
       <span id="setup-summary-text"></span>
       <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
+
+    <!-- Prompts source: built-in by default, or pulled from a Google Sheet on
+         demand. Nothing here touches the network until 讀取 is pressed. -->
+    <div class="sheet-bar">
+      <div class="sheet-bar-row">
+        <span class="sheet-status" id="sheet-status"></span>
+        <div class="sheet-bar-btns">
+          <button class="edit-setup-btn" id="sheet-toggle-btn" type="button" data-i18n="index.sheetToggleBtn">📄 Load prompts from Google Sheet</button>
+          <button class="edit-setup-btn hidden" id="sheet-reset-btn" type="button" data-i18n="index.sheetResetBtn">↺ Back to built-in prompts</button>
+        </div>
+      </div>
+
+      <div class="sheet-panel hidden" id="sheet-panel">
+        <p class="sheet-help" id="sheet-help"></p>
+        <div class="sheet-input-row">
+          <input type="url" id="sheet-url" data-i18n="index.sheetPlaceholder" data-i18n-attr="placeholder"
+                 placeholder="https://docs.google.com/spreadsheets/d/...">
+          <button class="sheet-load-btn" id="sheet-load-btn" type="button" data-i18n="index.sheetLoadBtn">📥 Load</button>
+        </div>
+        <div class="sheet-results hidden" id="sheet-results"></div>
+      </div>
+    </div>
   </div>
 
   <div class="game-list hidden" id="game-list">
@@ -548,6 +627,7 @@
 
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
+  <script src="sheet-data.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -562,6 +642,26 @@
       step2Badge: { zh: '步驟 2', en: 'Step 2' },
       step2Title: { zh: '選擇遊戲', en: 'Choose a game' },
       editSetupBtn: { zh: '✏️ 編輯房間設定', en: '✏️ Edit room setup' },
+      sheetToggleBtn: { zh: '📄 從 Google Sheet 載入題庫', en: '📄 Load prompts from Google Sheet' },
+      sheetHideBtn:   { zh: '✖️ 收起', en: '✖️ Close' },
+      sheetResetBtn:  { zh: '↺ 恢復預設題庫', en: '↺ Back to built-in prompts' },
+      sheetLoadBtn:   { zh: '📥 讀取', en: '📥 Load' },
+      sheetLoading:   { zh: '讀取中…', en: 'Loading…' },
+      sheetPlaceholder: { zh: '貼上 Google Sheet 網址', en: 'Paste your Google Sheet URL' },
+      sheetUsingDefault: { zh: '題庫來源：<b>內建預設</b>', en: 'Prompts: <b>built-in</b>' },
+      sheetUsingSheet:   { zh: '題庫來源：<b>Google Sheet</b>（{n} 個資料集 · {time} 載入）',
+                           en: 'Prompts: <b>Google Sheet</b> ({n} sets · loaded {time})' },
+      sheetHelp: {
+        zh: '把題庫放在一份 Google Sheet 裡，<b>每個資料集一個分頁</b>，分頁名稱要跟範本一致（<code>hottake</code>、<code>taboo</code>、<code>kangaroo</code>…）。試算表要先設成<b>「知道連結的人皆可檢視」</b>，否則這裡讀不到。<b>只有按下「讀取」的當下才會連線 Google</b>，讀到的內容存在這台裝置上，之後各遊戲頁直接使用、不會再連線。<b>沒讀到或格式不對的分頁，那一款遊戲就自動使用內建題庫</b>，不會開天窗。',
+        en: 'Keep your prompts in one Google Sheet with <b>one tab per data set</b>, named exactly as in the template (<code>hottake</code>, <code>taboo</code>, <code>kangaroo</code>…). The sheet must be shared as <b>"Anyone with the link can view"</b> or this cannot read it. <b>Google is only contacted when you press Load</b>; what comes back is stored on this device and used by the games with no further requests. <b>Any tab that fails or does not parse simply falls back to the built-in prompts</b> for that game.'
+      },
+      sheetSummary: { zh: '✅ 已套用 {ok} 個資料集，其餘 {fallback} 個使用內建題庫',
+                      en: '✅ {ok} sets applied, {fallback} falling back to built-in' },
+      sheetAllFailed: { zh: '⚠️ 一個資料集都沒讀到，八款遊戲全部維持內建題庫。請確認試算表已設為「知道連結的人皆可檢視」',
+                        en: '⚠️ Nothing could be read, so all games keep their built-in prompts. Check that the sheet is shared as "Anyone with the link can view"' },
+      sheetRowsOk:   { zh: '{n} 題', en: '{n} rows' },
+      sheetSkipped:  { zh: '（跳過 {n} 列不完整資料）', en: '({n} incomplete rows skipped)' },
+      sheetFellBack: { zh: '使用內建題庫', en: 'built-in prompts' },
       summaryWithRoom: { zh: '🔗 房號 <b>{code}</b> ・ <b>{count}</b> 位玩家', en: '🔗 Room <b>{code}</b> · <b>{count}</b> players' },
       summaryNoRoom: { zh: '👥 <b>{count}</b> 位玩家（未啟用玩家連結，原因見下方各遊戲說明）', en: '👥 <b>{count}</b> players (no player links — see the games below for why)' },
       linksNote: { zh: '這組連結可以用在下面每一款遊戲。玩家可以整場都開著同一個分頁，主持人一發牌就會自動更新。', en: 'These links work for every game below. A player can keep the same tab open the whole session — it updates automatically once you deal.' },
@@ -824,6 +924,94 @@
        through room setup again just to pick another game. Opening the hub
        fresh (no query string) still lands on Step 1 as always. */
     if (new URLSearchParams(location.search).get('step') === '2') showStep(2);
+
+    /* ── Google Sheet prompt loader (Step 2) ──
+       SHEET_DATA does the fetching and parsing; this is only the panel around
+       it. The one rule worth keeping in mind while editing: nothing in here
+       may fire a request on its own — the host presses 讀取, or nothing
+       happens at all. */
+    (function initSheetLoader() {
+      const bar     = document.getElementById('sheet-status');
+      const panel   = document.getElementById('sheet-panel');
+      const toggle  = document.getElementById('sheet-toggle-btn');
+      const resetBtn= document.getElementById('sheet-reset-btn');
+      const urlBox  = document.getElementById('sheet-url');
+      const loadBtn = document.getElementById('sheet-load-btn');
+      const results = document.getElementById('sheet-results');
+      const help    = document.getElementById('sheet-help');
+      if (!bar || typeof SHEET_DATA === 'undefined') return;
+
+      const it = (key, vars) => {
+        let out = I18N.t('index', key);
+        if (vars) Object.keys(vars).forEach(k => { out = out.split('{' + k + '}').join(vars[k]); });
+        return out;
+      };
+
+      function renderStatus() {
+        const info = SHEET_DATA.info();
+        help.innerHTML = it('sheetHelp');
+        if (info) {
+          const n = Object.keys(info.counts).length;
+          bar.innerHTML = it('sheetUsingSheet', { n, time: new Date(info.loadedAt).toLocaleString() });
+          bar.classList.add('is-sheet');
+          resetBtn.classList.remove('hidden');
+          if (info.url && !urlBox.value) urlBox.value = info.url;
+        } else {
+          bar.innerHTML = it('sheetUsingDefault');
+          bar.classList.remove('is-sheet');
+          resetBtn.classList.add('hidden');
+        }
+      }
+
+      function rowFor(tab, res) {
+        const row = document.createElement('div');
+        row.className = 'sheet-result-row ' + (res.ok ? 'is-ok' : 'is-warn');
+        const msg = res.ok
+          ? it('sheetRowsOk', { n: res.count }) + (res.skipped ? ' ' + it('sheetSkipped', { n: res.skipped }) : '')
+          : it('sheetFellBack') + (res.message ? ' — ' + res.message : '');
+        row.innerHTML = '<span class="sr-tab">' + (res.ok ? '✅ ' : '— ') + tab + '</span>' +
+                        '<span class="sr-msg"></span>';
+        row.querySelector('.sr-msg').textContent = msg;   // 訊息可能含試算表回傳的文字，不當 HTML 解讀
+        return row;
+      }
+
+      toggle.onclick = () => {
+        const open = panel.classList.toggle('hidden') === false;
+        toggle.textContent = open ? it('sheetHideBtn') : it('sheetToggleBtn');
+        if (open) urlBox.focus();
+      };
+
+      resetBtn.onclick = () => { SHEET_DATA.clear(); location.reload(); };
+
+      loadBtn.onclick = async () => {
+        results.classList.remove('hidden');
+        results.innerHTML = '';
+        loadBtn.disabled = true;
+        const label = loadBtn.textContent;
+        loadBtn.textContent = it('sheetLoading');
+        try {
+          const out = await SHEET_DATA.load(urlBox.value, (tab, res) => results.appendChild(rowFor(tab, res)));
+          const line = document.createElement('div');
+          line.className = 'sheet-summary-line';
+          line.textContent = out.loaded
+            ? it('sheetSummary', { ok: out.loaded, fallback: out.total - out.loaded })
+            : it('sheetAllFailed');
+          results.appendChild(line);
+          renderStatus();
+        } catch (e) {
+          const line = document.createElement('div');
+          line.className = 'sheet-summary-line';
+          line.textContent = '⚠️ ' + (e.message || e);
+          results.appendChild(line);
+        } finally {
+          loadBtn.disabled = false;
+          loadBtn.textContent = label;
+        }
+      };
+
+      I18N.onChange(renderStatus);
+      renderStatus();
+    })();
   </script>
 
 </body>
