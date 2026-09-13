@@ -170,3 +170,25 @@ test('chosen and custom follow-ups survive host replacement without using a main
   assert.equal(f.card(1).talk.extended, false);
   second.close();
 });
+
+test('starter preference reaches every card and survives replacing the host', async () => {
+  const f = setup(), first = f.host(); await settle(first);
+  await first.start({topic:{...topic,starter:'Imagine joining a new group.'},showStarters:false});
+  await settle(first);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).talk.showStarters, false);
+  await first.command('starters', {show:true}); await settle(first);
+  for (let n = 1; n <= 4; n++) {
+    assert.equal(f.card(n).talk.showStarters, true);
+    assert.equal(f.card(n).talk.starter, 'Imagine joining a new group.');
+  }
+  first.close(); await settle(first);
+  const second = f.host(); await settle(second);
+  assert.equal(second.latest.showStarters, true);
+  await second.command('starters', {show:false}); await settle(second);
+  assert.equal(f.card(1).talk.showStarters, false);
+  assert.equal(f.card(1).talk.phase, 'thinking');
+  await second.start({topic}); await settle(second);
+  assert.equal(f.card(1).talk.showStarters, true);
+  assert.equal(f.card(1).talk.starter, topic.followUp);
+  second.close();
+});

@@ -130,3 +130,25 @@ test('Firebase omission of empty containers still allows starting, questions, an
   assert.equal(s.round, 3);
   assert.equal(E.order(s).length, 3);
 });
+
+test('starter toggle is host-only and preserves thinking time, turns and an active question', () => {
+  let s = create(); assert.equal(E.view(s, 1, 0).talk.showStarters, true);
+  const deadline = s.deadline;
+  s = act(s, 'starters', 0, {show:false});
+  assert.equal(s.deadline, deadline); assert.equal(s.phase, 'thinking');
+  s = act(s, 'starters', 1, {show:true}); assert.equal(s.showStarters, false);
+  assert.equal(s.replies[1].error, 'not_available');
+  s = act(s, 'start'); s = act(s, 'ask', E.order(s)[0]);
+  s = act(s, 'invite', s.speaker, {target:s.questions[0].id});
+  const before = JSON.stringify([s.speaker, s.turnId, s.round, s.remaining, s.spoken, s.questions, s.activeQuestion]);
+  s = act(s, 'starters', 0, {show:true});
+  assert.equal(JSON.stringify([s.speaker, s.turnId, s.round, s.remaining, s.spoken, s.questions, s.activeQuestion]), before);
+  assert.equal(E.view(s, 2, 0).talk.showStarters, true);
+  assert.equal(E.view(s, 2, 0).talk.starter, topic.followUp);
+  s = act(s, 'extend', 0, {text:'A different follow-up?'});
+  assert.equal(E.view(s, 2, 0).talk.starter, topic.followUp);
+  s = act(s, 'starters', 0, {show:'false'}); assert.equal(s.showStarters, true);
+  assert.equal(s.replies[0].error, 'not_available');
+  delete s.showStarters;
+  assert.equal(E.view(s, 2, 0).talk.showStarters, false);
+});

@@ -25,6 +25,9 @@
     <p class="talk-connection talk-quiet" id="talk-host-status" role="status"></p>
     <div id="talk-demo-player" class="talk-demo-card" hidden></div>
     <div id="talk-host-view">
+      <div class="talk-view-options">
+        <label class="talk-toggle"><input id="talk-starter-toggle" type="checkbox" checked><span class="talk-switch" aria-hidden="true"></span><span data-i18n="talk.showStarters">顯示引題（試用）</span></label>
+      </div>
       <form id="talk-setup" class="talk-panel talk-setup">
         <p class="talk-soft" data-i18n="talk.intro">每人都有分享的機會；不用精彩，也不用講很長。</p>
         <div class="talk-actions" role="group" aria-label="Topic source">
@@ -35,6 +38,7 @@
           <div id="talk-preview" class="talk-preview talk-topic">
             <p class="talk-kicker" data-i18n="talk.setupTopic">這次聊什麼</p>
             <h2 id="talk-preview-question" tabindex="-1" aria-live="polite"></h2>
+            <p id="talk-preview-starter" class="talk-starter"></p>
             <p class="talk-soft" data-i18n="talk.randomHint">可以直接聊這一題。不合適就再抽，或到頁尾挑選；按「開啟話題」才會開始。</p>
             <details class="talk-details"><summary data-i18n="talk.previewPath">預覽這題可以怎麼深入</summary><ol id="talk-preview-path" class="talk-path"></ol></details>
             <button type="button" class="talk-button" id="talk-edit-topic" data-i18n="talk.editTopic">以這題修改</button>
@@ -50,6 +54,7 @@
           <p class="talk-soft" data-i18n="talk.customHint">可以直接輸入中英文。按「開啟話題」後，問題才會送到玩家頁。</p>
           <label class="talk-field"><span data-i18n="talk.customTitle">話題名稱（選填）</span><input id="talk-custom-title" maxlength="80"></label>
           <label class="talk-field"><span data-i18n="talk.customQuestion">想聊的問題（必填，最多 500 字）</span><textarea id="talk-custom-question" rows="3" maxlength="500"></textarea></label>
+          <label class="talk-field"><span data-i18n="talk.customStarter">引題描述（選填，最多 400 字）</span><textarea id="talk-custom-starter" rows="3" maxlength="400"></textarea></label>
           <label class="talk-field"><span data-i18n="talk.customFollowUps">延伸問題（選填，每行一題，最多 8 題，每題 300 字）</span><textarea id="talk-custom-followups" rows="4" maxlength="2407"></textarea></label>
           <p class="talk-soft" id="talk-draft-status" role="status"></p>
         </div>
@@ -66,6 +71,7 @@
         <div class="talk-panel talk-topic">
           <p class="talk-kicker" id="talk-topic-title"></p>
           <h2 id="talk-question"></h2>
+          <p id="talk-starter" class="talk-starter"></p>
           <p id="talk-follow-up" class="talk-extension" hidden></p>
         </div>
         <div class="talk-panel talk-host-floor">
@@ -78,13 +84,13 @@
             <button type="button" class="talk-button talk-primary" id="talk-help-end" data-i18n="talk.helpEnd">結束發言，下一位</button>
             <button type="button" class="talk-button talk-primary" id="talk-help-resume" data-i18n="talk.helpResume">結束提問，回到分享者</button>
           </div>
+          <button type="button" class="talk-button talk-primary" id="talk-start" data-i18n="talk.start">開始分享</button>
           <p class="talk-soft" data-i18n="talk.natural">可以隨性自然地聊，卡片只是輔助。</p>
         </div>
         <div class="talk-panel talk-notes" id="talk-notes" hidden>
           <h3 data-i18n="talk.sharedNotes">一起想到的話</h3><div id="talk-notes-content"></div>
         </div>
-        <div class="talk-actions">
-          <button type="button" class="talk-button talk-primary" id="talk-start" data-i18n="talk.start">開始分享</button>
+        <div class="talk-actions talk-session-actions">
           <button type="button" class="talk-button" id="talk-extend" data-i18n="talk.extend">延伸這個話題</button>
           <button type="button" class="talk-button" id="talk-new" data-i18n="talk.newTopic">換個話題</button>
           <button type="button" class="talk-button" id="talk-random-new" data-i18n="talk.randomNew">🎲 隨機選下一題</button>

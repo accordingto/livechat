@@ -22,11 +22,12 @@ var TALK_ENGINE = (() => {
     }
     return result;
   }
-  function create({ id, topic, roster, mode = 'think', seconds = 45, now }) {
+  const starter = topic => typeof topic?.starter === 'string' && topic.starter.trim() ? topic.starter.trim().slice(0, 400) : followUps(topic)[0]?.question || '';
+  function create({ id, topic, roster, mode = 'think', seconds = 45, showStarters = true, now }) {
     if (!id || !topic || !topic.question || !Array.isArray(roster) || roster.length < 2 || roster.length > 9) throw new Error('invalid_setup');
     if (new Set(roster.map(p => p.playerNum)).size !== roster.length || roster.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
     return {
-      version: 1, sessionId: String(id), topic: copy(topic),
+      version: 1, sessionId: String(id), topic: copy(topic), showStarters: showStarters === true,
       roster: roster.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').slice(0, 80) })),
       mode: mode === 'write' ? 'write' : 'think', phase: 'thinking', round: 0, turnId: 0,
       deadline: now + Math.max(15, Math.min(120, Number(seconds) || 45)) * 1000,
@@ -142,6 +143,10 @@ var TALK_ENGINE = (() => {
         s.spoken.push(s.speaker);
         nextSpeaker(s, input.seed);
         break;
+      case 'starters':
+        if (!host || typeof input.show !== 'boolean') { reject('not_available'); break; }
+        s.showStarters = input.show;
+        break;
       case 'extend': {
         if (!host || s.phase !== 'talking') { reject('not_available'); break; }
         if (input.show === false) { s.extended = false; break; }
@@ -172,7 +177,7 @@ var TALK_ENGINE = (() => {
       game: 'letstalk', playerNum, name: mine?.name || null,
       talk: {
         version: 1, sessionId: s.sessionId, mode: s.mode, phase: s.phase, round: s.round,
-        turnId: s.turnId, deadline: s.deadline,
+        turnId: s.turnId, deadline: s.deadline, showStarters: !!s.showStarters, starter: starter(s.topic),
         // Keep the original followUp field in cards so already-open v0.1
         // player pages can display the newly selected question as well.
         topic: Object.assign({}, s.topic, { followUp: s.extension || s.topic.followUp || '' }), extended: !!s.extended,
@@ -188,6 +193,6 @@ var TALK_ENGINE = (() => {
       },
     };
   }
-  return { create, apply, view, order, shuffle, list, followUps };
+  return { create, apply, view, order, shuffle, list, followUps, starter };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_ENGINE;

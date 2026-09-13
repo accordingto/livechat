@@ -9,6 +9,56 @@ const TALK_CATEGORIES = [
   {id:'ethics',zh:'日常倫理與選擇',en:'Everyday ethics & choices'},
   {id:'future',zh:'社會與未來',en:'Society & the future'},
 ];
+const TALK_STARTERS = {
+  comfortable: 'With some people, talking feels easy. With others, we watch every word. Think about what helps someone relax, disagree, or show a different side of themselves.',
+  support: 'A friend might want advice, company, or simply someone to listen. The same kind action can feel helpful to one person and tiring to another.',
+  cancel: 'Imagine you have kept an evening free and the plan suddenly changes. You might care about the reason, the lost time, or whether your friend suggests another day.',
+  care: 'Remembering a small detail, sharing food, or checking in can all show care. Think about why an ordinary action might mean more than an expensive gift.',
+  contact: 'Some friends message every day; others reconnect after months. Think about what makes a quiet period feel comfortable, and when it starts to feel like distance.',
+  help: 'Imagine a friend looks overwhelmed but says nothing is wrong. You could offer practical help, ask a question, or give them space. Each choice may feel different to them.',
+  space: 'An evening alone can feel restful to one person and lonely to another. Think about how people can ask for space while still showing that a relationship matters.',
+  change: 'New information or a conversation can make an old opinion feel less certain. Think about what makes changing your mind feel like learning rather than losing.',
+  time: 'Imagine an afternoon with no work or plans. Resting, seeing someone, or doing a small task could all feel worthwhile. What makes time feel well spent?',
+  enough: 'Enough might mean feeling safe, having choices, or no longer worrying about comparison. Think about how a goal changes when the people around you have more.',
+  approval: 'Advice can help us see something we missed, but too many opinions can make a choice harder. Think about whose views deserve a place in your decision.',
+  uncertainty: 'Imagine choosing between two paths with incomplete information. Waiting may bring clarity, but it can also close an opportunity. Consider what a small first step could teach you.',
+  different: 'Friends can enjoy different habits, interests, and beliefs. Think about a difference that brings curiosity, and what might make another difference harder to live with.',
+  welcome: 'Picture your first visit to a group where everyone else already knows each other. Small choices about seating, introductions, or conversation can change how easy it feels to join.',
+  travel: 'One friend wants a full schedule; another wants time to wander. Money, sleep, food, and time apart can matter as much as the destination.',
+  family: 'Family hopes can offer support and also create pressure. Imagine someone choosing a different job, home, or way of living from what their family expected.',
+  tradition: 'A shared meal or yearly celebration can connect people, even when its meaning changes. Think about what is worth passing on and what could be adapted.',
+  boundaries: 'Imagine turning down an invitation or a request for help. A clear no can protect your time, while its wording can affect whether the other person feels respected.',
+  pay: 'Two jobs may require different skills, effort, or risk. Some work helps many people but pays little. Think about which differences should matter when deciding pay.',
+  ambition: 'A job can offer money, freedom, learning, or a sense of belonging. Imagine choosing between a respected title and a daily routine that suits your life.',
+  rest: 'Imagine a team with unfinished work and tired people. Rest can protect health, but someone may still need to cover urgent tasks. Consider how that responsibility could be shared.',
+  teamwork: 'One person presents the result while others plan, check details, or support the team quietly. Think about which contributions are easiest to notice and which may be missed.',
+  failure: 'A mistake can lead to learning or make people afraid to try again. Think about how the response might change when a mistake also affects someone else.',
+  meaning: 'Some people find purpose in their work; others use work to support the rest of life. Imagine a useful, comfortable job that does not feel personally exciting.',
+  rules: 'Giving everyone the same time, tools, or support sounds fair. But people may begin with different needs. Think about when an exception improves fairness and when it weakens trust.',
+  chances: 'Imagine two people working toward the same goal with very different starting points. Time, money, health, and support may affect what each can realistically do.',
+  freedom: 'Music, pets, smoking, or late-night visitors can make a shared place feel different to each person. Think about how to protect personal choices while considering other people.',
+  voice: 'A group decision may affect people who speak confidently and people who rarely speak. Think about whether having a vote is enough to feel heard.',
+  secondchance: 'Imagine someone who caused harm asking to try again. An apology, changed behavior, and time may each matter. Consider what the people affected would need.',
+  merit: 'Effort can shape success, but so can timing, support, and chance. Think about how we give credit when we cannot clearly separate what someone earned from what helped them.',
+  privacy: 'A useful service may ask for your location, habits, or contacts. Think about how your answer changes when the benefit is small, the choice is unclear, or others are affected.',
+  ai: 'An AI tool might suggest words, plan a task, or make a recommendation. Think about when that help gives people more freedom and when it might replace their own judgment.',
+  onlinefriend: 'People can share daily life through messages and voice without meeting in person. Think about what builds trust across a screen and what might still feel missing.',
+  news: 'A claim can feel convincing because a friend shares it or because it fits what we already believe. Think about what would make you pause, check, or change your view.',
+  attention: 'You open an app for a moment and stay longer than planned. Think about where your own choices meet the design of the service and what control you would like to have.',
+  publicmistakes: 'Imagine a comment from years ago being shared again after someone has changed. People may want accountability, room to grow, or both. Consider what context should matter.',
+  honesty: 'A friend asks for your opinion about something they care about. You might weigh honesty, kindness, timing, and whether they can use the information.',
+  loyalty: 'A friend expects your support, but you disagree with what they did. Think about whether standing by someone means defending their choice or helping them face it.',
+  giving: 'Imagine having a little time or money to offer when many people need help. You might consider closeness, urgency, or how much difference your help could make.',
+  promise: 'A promise made earlier may become difficult when health, needs, or circumstances change. Think about what people owe each other when keeping their word has a new cost.',
+  goodintentions: 'Someone tries to help but causes a problem instead. Think about how their intention, the effect, and what they do next should shape the response.',
+  smallchoices: 'An everyday purchase can connect us to workers, animals, and the environment. Think about what is reasonable to ask of a person with limited money, time, or information.',
+  climate: 'Protecting the environment may require people to change travel, energy use, or spending. Their options and resources can differ. Think about what would make a shared plan fair.',
+  city: 'A street can be a home, a route to work, a place to play, or a place to rest. Think about how a shared space could serve people with different needs.',
+  generations: 'Choices about land, money, or resources may affect people who are not here to speak for themselves. Think about how much weight their future needs should carry today.',
+  education: 'Learning can prepare people for work, relationships, public life, or curiosity itself. Think about which valuable abilities are easy to overlook when progress is measured by tests.',
+  animals: 'People may relate differently to pets, farm animals, and wildlife. Think about what shapes those differences and how care might be balanced with human needs.',
+  communitychange: 'A small shared action may improve daily life even if a larger problem remains. Think about what helps people see progress and decide what to try next.',
+};
 const TALK_TOPICS = Object.entries({
   connection: [
     ['comfortable','🌿','Feeling at ease','自在 真實 信任 朋友',
@@ -315,7 +365,7 @@ const TALK_TOPICS = Object.entries({
       'What could a small group try, learn from, and adjust together?'],
   ],
 }).flatMap(([category, rows]) => rows.map(([id, emoji, title, keywords, question, ...questions]) => ({
-  id, category, emoji, title, keywords, question, followUp: questions[0],
+  id, category, emoji, title, keywords, question, starter: TALK_STARTERS[id], followUp: questions[0],
   followUps: questions.map((question, i) => ({stage:['understand','perspective','tradeoff','practice'][i],question})),
 })));
 const TALK_LIBRARY = (() => {
@@ -323,7 +373,7 @@ const TALK_LIBRARY = (() => {
     const words = String(query).trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
     return TALK_TOPICS.filter(topic => {
       const group = TALK_CATEGORIES.find(c => c.id === topic.category);
-      const text = [topic.title, topic.keywords, topic.question, ...topic.followUps.map(q => q.question), group.zh, group.en].join(' ').toLocaleLowerCase();
+      const text = [topic.title, topic.keywords, topic.question, topic.starter, ...topic.followUps.map(q => q.question), group.zh, group.en].join(' ').toLocaleLowerCase();
       return (!category || category === topic.category) && words.every(word => text.includes(word));
     });
   }
@@ -333,11 +383,11 @@ const TALK_LIBRARY = (() => {
     const pool = fresh.length ? fresh : matches;
     return pool.length ? pool[Math.floor(random() * pool.length)] : null;
   }
-  function custom({title = '', question = '', followUps = ''}) {
-    question = String(question).trim(); title = String(title).trim();
+  function custom({title = '', question = '', starter = '', followUps = ''}) {
+    question = String(question).trim(); title = String(title).trim(); starter = String(starter).trim();
     const questions = String(followUps).split(/\r?\n/).map(q => q.trim()).filter(Boolean);
-    if (!question || question.length > 500 || title.length > 80 || questions.length > 8 || questions.some(q => q.length > 300)) throw new Error('invalid_topic');
-    return {id:'custom',emoji:'✏️',title,question,followUp:questions[0] || '',
+    if (!question || question.length > 500 || title.length > 80 || starter.length > 400 || questions.length > 8 || questions.some(q => q.length > 300)) throw new Error('invalid_topic');
+    return {id:'custom',emoji:'✏️',title,question,starter,followUp:questions[0] || '',
       followUps:questions.map(question => ({stage:'custom',question}))};
   }
   return {search, draw, custom};

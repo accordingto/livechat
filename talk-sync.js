@@ -74,12 +74,12 @@ var TALK_SYNC = (() => {
       if (!result.committed) throw new Error('not_available');
       return result.snapshot.val().state;
     }
-    start({ topic, mode, seconds }) {
+    start({ topic, mode, seconds, showStarters }) {
       return this.enqueue(async () => {
         await this.outgoing;
         const id = uid(); this.initialSession = id; this.suspended = false; this.seenCards.clear();
         try {
-          return await this.change(() => TALK_ENGINE.create({ id, topic, mode, seconds, now: this.now(),
+          return await this.change(() => TALK_ENGINE.create({ id, topic, mode, seconds, showStarters, now: this.now(),
             roster: Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) })) }));
         } catch (e) { this.initialSession = null; throw e; }
       });

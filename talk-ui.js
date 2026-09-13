@@ -56,11 +56,13 @@ var TALK_UI = (() => {
     customHint: ['可以直接輸入中英文。按「開啟話題」後，問題才會送到玩家頁。', 'Write in any language. The question reaches player pages when you open the topic.'],
     customTitle: ['話題名稱（選填）', 'Topic title (optional)'],
     customQuestion: ['想聊的問題（必填，最多 500 字）', 'Your question (required, up to 500 characters)'],
+    customStarter: ['引題描述（選填，最多 400 字）', 'Topic starter (optional, up to 400 characters)'],
+    showStarters: ['顯示引題（試用）', 'Show topic starters (trial)'],
     customFollowUps: ['延伸問題（選填，每行一題，最多 8 題，每題 300 字）', 'Follow-ups (optional, one per line, up to 8, 300 characters each)'],
     customTopic: ['自訂話題', 'Your topic'],
     draftSaved: ['草稿已保存在這個瀏覽器，重新整理後可接著編輯。', 'Draft saved in this browser. You can keep editing after a reload.'],
     draftUnsaved: ['這個瀏覽器無法保存草稿，關頁前請自行留存。', 'This browser could not save the draft. Keep a copy before closing.'],
-    invalid_topic: ['請填寫主問題；名稱最多 80 字、主問題 500 字，延伸最多 8 題、每題 300 字。', 'Add a main question (up to 500 characters). Title: 80; follow-ups: up to 8, 300 characters each.'],
+    invalid_topic: ['請填寫主問題；名稱最多 80 字、主問題 500 字、引題 400 字，延伸最多 8 題、每題 300 字。', 'Add a main question (up to 500 characters). Title: 80; starter: 400; follow-ups: up to 8, 300 characters each.'],
     invalid_extension: ['請選擇延伸問題，或輸入 1–300 字的新問題。', 'Choose a follow-up or enter a question of 1–300 characters.'],
     understand: ['先理解想法', 'Understand the idea'], perspective: ['換個角度', 'Another perspective'],
     tradeoff: ['價值與取捨', 'Values & trade-offs'], practice: ['回到生活', 'Bring it into life'], custom: ['自訂延伸', 'Your follow-up'],
@@ -207,6 +209,7 @@ var TALK_PLAYER = (() => {
         ${myTurn ? `<div class="talk-turn-alert" role="status"><span aria-hidden="true">🎤</span><strong>${esc(t('turnAlert'))}</strong><p>${esc(t('turnHint'))}</p></div>` : ''}
         <span class="talk-kicker">Let's Talk</span>
         <p class="talk-player-topic">${esc(s.topic.question)}</p>
+        ${s.showStarters && s.starter && !(s.extended && s.starter === s.topic.followUp) ? `<p class="talk-starter">${esc(s.starter)}</p>` : ''}
         ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}
         <div class="talk-floor" aria-live="polite">${esc(TALK_UI.status(s, me))}</div>
         ${s.phase === 'thinking' ? '<p class="talk-soft" data-talk-clock></p>' : ''}

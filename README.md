@@ -64,6 +64,10 @@ Picking a question only changes the preview until you open it for everyone.
 Prominent host controls can end a turn or return from a question if someone
 leaves. The speaker's card shows a gold **Your turn!** banner and an **I'm done** button.
 
+Each built-in topic also has a short scene or idea to help start the conversation.
+The host can turn **Show topic starters (trial)** on or off for everyone's cards
+without interrupting a turn. Custom topics can include their own starter too.
+
 ## Firebase
 
 Live host → player sync runs on a free Firebase Realtime Database. Copy your own

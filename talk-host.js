@@ -8,6 +8,16 @@
   let error = '';
   let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '';
   const draftKey = 'lets-talk-topic-draft.v1';
+  const startersKey = 'lets-talk-starters.v1';
+  let starterPreference = true, starterPending = null;
+  try { starterPreference = localStorage.getItem(startersKey) !== 'false'; } catch (e) {}
+  const activeSession = () => !!state && status !== 'switched';
+  const startersOn = () => activeSession() ? !!state.showStarters : starterPreference;
+  function renderStarters() {
+    byId('starter-toggle').checked = starterPending ?? startersOn();
+    byId('starter-toggle').disabled = busy || (activeSession() && !canControl());
+    byId('host-view').classList.toggle('talk-starters-off', !startersOn());
+  }
   const now = () => sync ? sync.now() : Date.now();
   const canControl = () => demo || (!!sync?.own && sync.connected);
   const selectedTopic = () => TALK_TOPICS.find(topic => topic.id === byId('topic-select').value);
@@ -16,6 +26,7 @@
     byId('preview').hidden = !topic;
     if (!topic) return;
     byId('preview-question').textContent = topic.question;
+    byId('preview-starter').textContent = TALK_ENGINE.starter(topic);
     byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><p>${esc(q.question)}</p></li>`).join('');
   }
   function drawTopic() {
@@ -40,6 +51,7 @@
     byId('bank-list').innerHTML = topics.length ? topics.map(topic => `<article class="talk-bank-topic">
       <p class="talk-kicker">${esc(topic.emoji + ' ' + topic.title)}</p>
       <h3>${esc(topic.question)}</h3>
+      <p class="talk-starter">${esc(TALK_ENGINE.starter(topic))}</p>
       <details class="talk-details"><summary>${esc(t('previewPath'))}</summary><ol class="talk-path">${TALK_ENGINE.followUps(topic).map(q => `<li><p>${esc(q.question)}</p></li>`).join('')}</ol></details>
       <button type="button" class="talk-button" data-talk-topic="${esc(topic.id)}">${esc(t('useTopic'))}</button>
     </article>`).join('') : `<p class="talk-soft">${esc(t('noTopics'))}</p>`;
@@ -57,7 +69,7 @@
     byId('source-custom').setAttribute('aria-pressed', String(source === 'custom'));
     error = ''; render();
   }
-  const draft = () => ({ title: byId('custom-title').value, question: byId('custom-question').value, followUps: byId('custom-followups').value });
+  const draft = () => ({ title: byId('custom-title').value, question: byId('custom-question').value, starter: byId('custom-starter').value, followUps: byId('custom-followups').value });
   function saveDraft() {
     try { localStorage.setItem(draftKey, JSON.stringify(draft())); byId('draft-status').dataset.message = 'draftSaved'; }
     catch (e) { byId('draft-status').dataset.message = 'draftUnsaved'; }
@@ -68,6 +80,7 @@
     if (saved) {
       byId('custom-title').value = String(saved.title || '').slice(0, 80);
       byId('custom-question').value = String(saved.question || '').slice(0, 500);
+      byId('custom-starter').value = String(saved.starter || '').slice(0, 400);
       byId('custom-followups').value = String(saved.followUps || '').slice(0, 2407);
       byId('draft-status').dataset.message = 'draftSaved';
     }
@@ -104,6 +117,7 @@
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
   function render() {
+    renderStarters();
     byId('host-status').textContent = status === 'ready' ? '' : t(status);
     byId('open').disabled = busy || !canControl() || (source === 'library' && !selectedTopic());
     byId('session').hidden = !state || !byId('setup').hidden;
@@ -120,6 +134,7 @@
     const s = TALK_ENGINE.view(state, 0, now()).talk;
     byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
     byId('question').textContent = state.topic.question;
+    byId('starter').textContent = s.extended && s.starter === s.topic.followUp ? '' : s.starter;
     byId('follow-up').hidden = !state.extended;
     byId('follow-up').textContent = s.topic.followUp;
     byId('floor').textContent = TALK_UI.status(s, 0);
@@ -170,7 +185,7 @@
     try {
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
-      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value) };
+      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value), showStarters: startersOn() };
       if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
@@ -178,6 +193,18 @@
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
+  byId('starter-toggle').addEventListener('change', async event => {
+    const show = event.target.checked;
+    if (activeSession()) {
+      starterPending = show;
+      await command('starters', { show });
+      starterPending = null; render();
+      if (error) return;
+    }
+    starterPreference = show;
+    try { localStorage.setItem(startersKey, String(show)); } catch (e) {}
+    render();
+  });
   byId('source-library').addEventListener('click', () => selectSource('library'));
   byId('source-custom').addEventListener('click', () => selectSource('custom'));
   byId('category').addEventListener('change', () => { filterTopics(); render(); });
@@ -191,10 +218,11 @@
     byId('topic-select').value = button.dataset.talkTopic;
     previewTopic(); selectSource('library'); showSetup();
   });
-  for (const id of ['custom-title', 'custom-question', 'custom-followups']) byId(id).addEventListener('input', saveDraft);
+  for (const id of ['custom-title', 'custom-question', 'custom-starter', 'custom-followups']) byId(id).addEventListener('input', saveDraft);
   byId('edit-topic').addEventListener('click', () => {
     const topic = selectedTopic(); if (!topic) return;
     byId('custom-title').value = topic.title; byId('custom-question').value = topic.question;
+    byId('custom-starter').value = TALK_ENGINE.starter(topic);
     byId('custom-followups').value = TALK_ENGINE.followUps(topic).map(q => q.question).join('\n');
     saveDraft(); selectSource('custom'); byId('custom-question').focus();
   });
