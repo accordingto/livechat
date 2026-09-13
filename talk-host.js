@@ -16,7 +16,7 @@
     byId('preview').hidden = !topic;
     if (!topic) return;
     byId('preview-question').textContent = topic.question;
-    byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><span>${esc(t(q.stage))}</span><p>${esc(q.question)}</p></li>`).join('');
+    byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><p>${esc(q.question)}</p></li>`).join('');
   }
   function drawTopic() {
     const topic = TALK_LIBRARY.draw(byId('category').value, byId('search').value,
@@ -40,7 +40,7 @@
     byId('bank-list').innerHTML = topics.length ? topics.map(topic => `<article class="talk-bank-topic">
       <p class="talk-kicker">${esc(topic.emoji + ' ' + topic.title)}</p>
       <h3>${esc(topic.question)}</h3>
-      <details class="talk-details"><summary>${esc(t('previewPath'))}</summary><ol class="talk-path">${TALK_ENGINE.followUps(topic).map(q => `<li><span>${esc(t(q.stage))}</span><p>${esc(q.question)}</p></li>`).join('')}</ol></details>
+      <details class="talk-details"><summary>${esc(t('previewPath'))}</summary><ol class="talk-path">${TALK_ENGINE.followUps(topic).map(q => `<li><p>${esc(q.question)}</p></li>`).join('')}</ol></details>
       <button type="button" class="talk-button" data-talk-topic="${esc(topic.id)}">${esc(t('useTopic'))}</button>
     </article>`).join('') : `<p class="talk-soft">${esc(t('noTopics'))}</p>`;
     previewTopic();
@@ -81,7 +81,7 @@
     if (key !== exploreKey) {
       const previous = byId('followup-select').value;
       const sameSession = exploreKey && renderedSession === state.sessionId;
-      byId('followup-select').innerHTML = choices.map((q, i) => `<option value="${i}">${i + 1}. ${esc(t(q.stage))}</option>`).join('');
+      byId('followup-select').innerHTML = choices.map((q, i) => `<option value="${i}">${i + 1}. ${esc(q.question)}</option>`).join('');
       const index = sameSession && choices[Number(previous)] ? Number(previous) : Math.max(0, state.extensionIndex || 0);
       if (choices[index]) byId('followup-select').value = String(index);
       exploreKey = key;
@@ -122,7 +122,6 @@
     byId('question').textContent = state.topic.question;
     byId('follow-up').hidden = !state.extended;
     byId('follow-up').textContent = s.topic.followUp;
-    byId('round').textContent = s.round ? t('round', { n: s.round }) : t('thinking');
     byId('floor').textContent = TALK_UI.status(s, 0);
     byId('question-return').textContent = s.activeQuestion ? t('returnTo', { name: name(s, s.speaker) }) : '';
     byId('question-requests').textContent = list(s.questions).filter(q => q.id !== s.activeQuestion?.id).map(q => t('wantsAsk', { name: name(s, q.playerNum) }) + (q.deferred ? ' · ' + t('held') : '')).join(' · ');

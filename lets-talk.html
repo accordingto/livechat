@@ -69,18 +69,16 @@
           <p id="talk-follow-up" class="talk-extension" hidden></p>
         </div>
         <div class="talk-panel talk-host-floor">
-          <p class="talk-meta" id="talk-round"></p>
           <p class="talk-floor" id="talk-floor" aria-live="polite"></p>
           <p class="talk-soft" id="talk-clock"></p>
           <p class="talk-soft" id="talk-question-return"></p>
           <div id="talk-interest" class="talk-interest" aria-live="polite"></div>
           <div id="talk-question-requests" class="talk-soft"></div>
           <div id="talk-help" class="talk-editor" hidden>
-            <p class="talk-soft" data-i18n="talk.hostHelp">主持人可協助操作；有人臨時離開，也能繼續。</p>
             <button type="button" class="talk-button talk-primary" id="talk-help-end" data-i18n="talk.helpEnd">結束發言，下一位</button>
             <button type="button" class="talk-button talk-primary" id="talk-help-resume" data-i18n="talk.helpResume">結束提問，回到分享者</button>
           </div>
-          <p class="talk-soft" data-i18n="talk.natural">嗯嗯、笑聲、附和，都可以直接說。</p>
+          <p class="talk-soft" data-i18n="talk.natural">可以隨性自然地聊，卡片只是輔助。</p>
         </div>
         <div class="talk-panel talk-notes" id="talk-notes" hidden>
           <h3 data-i18n="talk.sharedNotes">一起想到的話</h3><div id="talk-notes-content"></div>
@@ -96,7 +94,7 @@
           <p id="talk-explore-current" class="talk-soft" role="status"></p>
           <p class="talk-soft" data-i18n="talk.exploreHint">選適合當下的一題，不必照順序或全部問完。只更新延伸問題，原分享者與輪次會保留。</p>
           <div id="talk-explore-library" class="talk-editor">
-            <label class="talk-field"><span data-i18n="talk.exploreDirection">想往哪個方向談</span><select id="talk-followup-select"></select></label>
+            <label class="talk-field"><span data-i18n="talk.exploreDirection">選擇延伸問題</span><select id="talk-followup-select"></select></label>
             <p id="talk-followup-preview" class="talk-player-topic"></p>
             <button type="button" class="talk-button talk-primary" id="talk-show-followup" data-i18n="talk.showFollowUp">顯示這個問題</button>
           </div>
@@ -119,7 +117,7 @@
       <a id="talk-demo-link" class="back" href="lets-talk.html?demo=1" data-i18n="talk.demoLink">先試操作示範</a>
       <section id="talk-question-bank" class="talk-panel talk-editor talk-question-bank" aria-labelledby="talk-bank-title">
         <h2 id="talk-bank-title" data-i18n="talk.fullLibrary">完整問題庫</h2>
-        <p class="talk-soft" data-i18n="talk.libraryHint">先看完整問題，再決定聊哪一題。每題下方可展開四個延伸方向；選題後仍可修改。</p>
+        <p class="talk-soft" data-i18n="talk.libraryHint">先看完整問題，再決定聊哪一題。每題下方可展開四個延伸問題；選題後仍可修改。</p>
         <div class="talk-settings-row">
           <label class="talk-field"><span data-i18n="talk.category">議題分類</span><select id="talk-category"></select></label>
           <label class="talk-field"><span data-i18n="talk.searchTopics">搜尋題目（中／英）</span><input id="talk-search" type="search" maxlength="100"></label>

@@ -21,7 +21,6 @@
 .talk-bank-topic > .talk-button { margin-top: auto; width: 100%; }
 .talk-browse-link { display: flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; }
 .talk-path { padding-left: 24px; display: grid; gap: 16px; }
-.talk-path span { display: block; color: #c6b8df; margin-bottom: 4px; }
 .talk-path p { color: #e7e1f3; }
 #talk-explore { margin-top: 18px; }
 .talk-topic h2, .talk-player-topic, .talk-extension, .talk-kicker { overflow-wrap: anywhere; white-space: pre-wrap; }
