@@ -22,7 +22,7 @@ var TALK_ENGINE = (() => {
     }
     return result;
   }
-  const starter = topic => typeof topic?.starter === 'string' && topic.starter.trim() ? topic.starter.trim().slice(0, 400) : followUps(topic)[0]?.question || '';
+  const starter = topic => typeof topic?.starter === 'string' ? topic.starter.trim().slice(0, 600) : '';
   function create({ id, topic, roster, mode = 'think', seconds = 45, showStarters = true, now }) {
     if (!id || !topic || !topic.question || !Array.isArray(roster) || roster.length < 2 || roster.length > 9) throw new Error('invalid_setup');
     if (new Set(roster.map(p => p.playerNum)).size !== roster.length || roster.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
@@ -143,6 +143,13 @@ var TALK_ENGINE = (() => {
         s.spoken.push(s.speaker);
         nextSpeaker(s, input.seed);
         break;
+      case 'explain': {
+        if (!host) { reject('not_available'); break; }
+        const text = typeof input.text === 'string' ? input.text.trim() : '';
+        if (!text || text.length > 600) { reject('invalid_topic'); break; }
+        s.topic.starter = text;
+        break;
+      }
       case 'starters':
         if (!host || typeof input.show !== 'boolean') { reject('not_available'); break; }
         s.showStarters = input.show;

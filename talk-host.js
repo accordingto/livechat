@@ -10,6 +10,7 @@
   const draftKey = 'lets-talk-topic-draft.v1';
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
+  let explanationSession = null;
   try { starterPreference = localStorage.getItem(startersKey) !== 'false'; } catch (e) {}
   const activeSession = () => !!state && status !== 'switched';
   const startersOn = () => activeSession() ? !!state.showStarters : starterPreference;
@@ -80,7 +81,7 @@
     if (saved) {
       byId('custom-title').value = String(saved.title || '').slice(0, 80);
       byId('custom-question').value = String(saved.question || '').slice(0, 500);
-      byId('custom-starter').value = String(saved.starter || '').slice(0, 400);
+      byId('custom-starter').value = String(saved.starter || '').slice(0, 600);
       byId('custom-followups').value = String(saved.followUps || '').slice(0, 2407);
       byId('draft-status').dataset.message = 'draftSaved';
     }
@@ -176,7 +177,7 @@
         state = TALK_ENGINE.apply(state, Object.assign({}, extra, { id, type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] }));
         error = state.replies?.[0]?.error || '';
       } else await sync.command(type, extra);
-    } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1 } ? e.message : 'error'; }
+    } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1, invalid_topic: 1 } ? e.message : 'error'; }
     finally { busy = false; render(); if (error === 'pending_questions') byId('force-end').focus(); }
   }
   byId('setup').addEventListener('submit', async event => {
@@ -245,6 +246,13 @@
     byId('interest').querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now()) e.remove(); });
     if (state.phase === 'thinking' && now() >= state.deadline && canControl() && status !== 'switched' && !busy && !autoStart) {
       autoStart = true; command('start').finally(() => { autoStart = false; });
+    }
+    // Refresh published library wording in an existing room without restarting
+    // its topic. Adapted/custom questions and their saved descriptions stay intact.
+    if (canControl() && status !== 'switched' && !busy && explanationSession !== state.sessionId) {
+      explanationSession = state.sessionId;
+      const topic = TALK_TOPICS.find(t => t.id === state.topic.id && t.question === state.topic.question);
+      if (topic && topic.starter !== state.topic.starter) command('explain', { text: topic.starter });
     }
   }
   labels();

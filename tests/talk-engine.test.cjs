@@ -133,6 +133,8 @@ test('Firebase omission of empty containers still allows starting, questions, an
 
 test('starter toggle is host-only and preserves thinking time, turns and an active question', () => {
   let s = create(); assert.equal(E.view(s, 1, 0).talk.showStarters, true);
+  s.topic.starter = 'Feeling at ease means being comfortable enough to speak honestly.';
+  const explanation = s.topic.starter;
   const deadline = s.deadline;
   s = act(s, 'starters', 0, {show:false});
   assert.equal(s.deadline, deadline); assert.equal(s.phase, 'thinking');
@@ -144,11 +146,30 @@ test('starter toggle is host-only and preserves thinking time, turns and an acti
   s = act(s, 'starters', 0, {show:true});
   assert.equal(JSON.stringify([s.speaker, s.turnId, s.round, s.remaining, s.spoken, s.questions, s.activeQuestion]), before);
   assert.equal(E.view(s, 2, 0).talk.showStarters, true);
-  assert.equal(E.view(s, 2, 0).talk.starter, topic.followUp);
+  assert.equal(E.view(s, 2, 0).talk.starter, explanation);
   s = act(s, 'extend', 0, {text:'A different follow-up?'});
-  assert.equal(E.view(s, 2, 0).talk.starter, topic.followUp);
+  assert.equal(E.view(s, 2, 0).talk.starter, explanation);
   s = act(s, 'starters', 0, {show:'false'}); assert.equal(s.showStarters, true);
   assert.equal(s.replies[0].error, 'not_available');
   delete s.showStarters;
   assert.equal(E.view(s, 2, 0).talk.showStarters, false);
+});
+
+test('host can refresh the explanation in an existing topic without changing the conversation', () => {
+  let s = act(create(4, 'write'), 'note', 1, {text:'Keep my note'});
+  s = act(s, 'start'); s = act(s, 'ask', E.order(s)[0]);
+  s = act(s, 'invite', s.speaker, {target:s.questions[0].id});
+  s = act(s, 'starters', 0, {show:false});
+  const unchanged = state => JSON.stringify([state.sessionId,state.topic.question,state.topic.followUp,state.deadline,state.speaker,state.round,state.turnId,state.remaining,state.spoken,state.notes,state.questions,state.activeQuestion,state.showStarters]);
+  const before = unchanged(s), text = 'This question asks what makes speaking honestly feel comfortable.';
+  s = act(s, 'explain', 1, {text}); assert.equal(s.replies[1].error, 'not_available');
+  assert.equal(s.topic.starter, undefined);
+  s = act(s, 'explain', 0, {text}); assert.equal(E.view(s,2,0).talk.starter, text);
+  assert.equal(unchanged(s), before);
+  for (const invalid of ['', ' ', 'x'.repeat(601), false]) {
+    s = act(s, 'explain', 0, {text:invalid}); assert.equal(s.replies[0].error, 'invalid_topic');
+    assert.equal(s.topic.starter, text);
+  }
+  const old = act(s, 'explain', 0, {text:'Old description',sessionId:'older-topic'});
+  assert.equal(old, s);
 });

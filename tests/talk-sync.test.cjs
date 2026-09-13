@@ -184,11 +184,13 @@ test('starter preference reaches every card and survives replacing the host', as
   first.close(); await settle(first);
   const second = f.host(); await settle(second);
   assert.equal(second.latest.showStarters, true);
+  await second.command('explain', {text:'Being at ease means feeling comfortable enough to speak openly.'}); await settle(second);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).talk.starter, 'Being at ease means feeling comfortable enough to speak openly.');
   await second.command('starters', {show:false}); await settle(second);
   assert.equal(f.card(1).talk.showStarters, false);
   assert.equal(f.card(1).talk.phase, 'thinking');
   await second.start({topic}); await settle(second);
   assert.equal(f.card(1).talk.showStarters, true);
-  assert.equal(f.card(1).talk.starter, topic.followUp);
+  assert.equal(f.card(1).talk.starter, '');
   second.close();
 });

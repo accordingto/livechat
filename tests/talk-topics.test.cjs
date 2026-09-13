@@ -10,7 +10,7 @@ test('library has complete, distinct discussion paths with searchable categories
   const questions = [];
   for (const category of categories) assert.equal(topics.filter(t => t.category === category.id).length, 6);
   for (const topic of topics) {
-    assert.ok(topic.starter.trim() && topic.starter.length <= 400 && !/[<>]/.test(topic.starter));
+    assert.ok(topic.starter.trim() && topic.starter.length <= 600 && !/[<>]/.test(topic.starter));
     assert.deepEqual(topic.followUps.map(q => q.stage), ['understand', 'perspective', 'tradeoff', 'practice']);
     assert.equal(topic.followUp, topic.followUps[0].question);
     for (const q of [topic.question, ...topic.followUps.map(q => q.question)]) {
@@ -29,12 +29,13 @@ test('custom topics preserve user text, normalize lines and reject invalid limit
   const topic = library.custom({ question: '  What does <fair> mean?  ', starter: '  Think about <fairness>.  ', followUps: 'Why?\r\n\r\n給個例子？\n' });
   assert.equal(topic.question, 'What does <fair> mean?');
   assert.equal(E.starter(topic), 'Think about <fairness>.');
-  assert.equal(E.starter({followUp:'An old follow-up?'}), 'An old follow-up?');
+  assert.equal(E.starter({followUp:'An old follow-up?'}), '');
+  assert.equal(library.custom({question:'Q?',starter:'x'.repeat(600)}).starter.length, 600);
   assert.equal(E.starter({question:'A question without a starter?'}), '');
   assert.deepEqual(E.followUps(topic).map(q => q.question), ['Why?', '給個例子？']);
   assert.equal(library.custom({question:'One question only?'}).followUps.length, 0);
   for (const data of [{question:'  '}, {question:'x'.repeat(501)}, {question:'Q?',title:'x'.repeat(81)},
-    {question:'Q?',starter:'x'.repeat(401)}, {question:'Q?',followUps:Array(9).fill('Why?').join('\n')}, {question:'Q?',followUps:'x'.repeat(301)}]) {
+    {question:'Q?',starter:'x'.repeat(601)}, {question:'Q?',followUps:Array(9).fill('Why?').join('\n')}, {question:'Q?',followUps:'x'.repeat(301)}]) {
     assert.throws(() => library.custom(data), /invalid_topic/);
   }
 });
