@@ -12,6 +12,14 @@
 .talk-field { min-width: 0; }
 .talk-editor { display: grid; gap: 18px; min-width: 0; }
 .talk-preview { padding: 20px; border: 1px solid #39324f; border-radius: 14px; background: #0e0e21; }
+.talk-preview .talk-details { text-align: left; }
+.talk-question-bank { margin-top: 32px; scroll-margin-top: 24px; }
+.talk-bank-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.talk-bank-topic { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 20px; background: #0e0e21; border: 1px solid #39324f; border-radius: 16px; min-width: 0; overflow-wrap: anywhere; }
+.talk-bank-topic h3 { font-size: 1.1rem; line-height: 1.6; color: #eee8f7; font-weight: 500; }
+.talk-bank-topic .talk-details { width: 100%; margin: 0; }
+.talk-bank-topic > .talk-button { margin-top: auto; width: 100%; }
+.talk-browse-link { display: flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; }
 .talk-path { padding-left: 24px; display: grid; gap: 16px; }
 .talk-path span { display: block; color: #c6b8df; margin-bottom: 4px; }
 .talk-path p { color: #e7e1f3; }
@@ -49,6 +57,12 @@
 .talk-controls { width: 100%; display: grid; gap: 12px; }
 .talk-listener-actions { display: grid; gap: 10px; }
 .secret-card.talk-player { padding: 25px 20px; gap: 16px; border: 1px solid #5b5072; box-shadow: none; animation: none; border-radius: 22px; }
+.secret-card.talk-my-turn { border: 3px solid #e5bc61; box-shadow: 0 0 28px #e5bc6126; }
+.talk-turn-alert { width: 100%; display: grid; justify-items: center; gap: 8px; border-radius: 15px; padding: 20px 14px; background: #f6d48b; color: #2c210b; line-height: 1.5; }
+.talk-turn-alert > span { font-size: 1.8rem; }
+.talk-turn-alert strong { font-size: clamp(1.65rem, 6vw, 2.1rem); font-weight: 800; }
+.talk-turn-alert p { font-size: .96rem; color: #443416; }
+.talk-my-turn .talk-controls > .talk-primary { background: #f6d48b; border-color: #f6d48b; color: #2c210b; font-size: 1.1rem; min-height: 54px; }
 .talk-player-topic { font-size: 1.03rem; color: #eee8f7; line-height: 1.55; }
 .talk-player .talk-footnote { border-top: 1px solid #353045; width: 100%; padding-top: 13px; }
 .talk-shared { width: 100%; text-align: left; }
@@ -63,7 +77,7 @@
 .talk-page [hidden], .talk-player [hidden] { display: none !important; }
 @media (max-width: 520px) {
   .talk-panel { padding: 20px 17px; }
-  .talk-settings-row { grid-template-columns: 1fr; }
+  .talk-settings-row, .talk-bank-grid { grid-template-columns: 1fr; }
   .talk-topic h2 { font-size: 1.45rem; }
   .talk-actions .talk-button { min-width: 115px; }
   .talk-note { display: block; }

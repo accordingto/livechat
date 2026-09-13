@@ -58,6 +58,12 @@ in the current browser. During a conversation, the host can choose a deeper
 question or write one on the spot; it updates everyone's page while keeping
 the current speaker, round, and spoken question requests.
 
+A random question is ready at the top when the page opens. Draw another,
+choose manually, or browse full questions and their follow-ups at the bottom.
+Picking a question only changes the preview until you open it for everyone.
+Prominent host controls can end a turn or return from a question if someone
+leaves. The speaker's card shows a gold **Your turn!** banner and an **I'm done** button.
+
 ## Firebase
 
 Live host → player sync runs on a free Firebase Realtime Database. Copy your own

@@ -327,6 +327,12 @@ const TALK_LIBRARY = (() => {
       return (!category || category === topic.category) && words.every(word => text.includes(word));
     });
   }
+  function draw(category = '', query = '', exclude = [], random = Math.random) {
+    const matches = search(category, query);
+    const fresh = matches.filter(topic => !exclude.includes(topic.id));
+    const pool = fresh.length ? fresh : matches;
+    return pool.length ? pool[Math.floor(random() * pool.length)] : null;
+  }
   function custom({title = '', question = '', followUps = ''}) {
     question = String(question).trim(); title = String(title).trim();
     const questions = String(followUps).split(/\r?\n/).map(q => q.trim()).filter(Boolean);
@@ -334,6 +340,6 @@ const TALK_LIBRARY = (() => {
     return {id:'custom',emoji:'✏️',title,question,followUp:questions[0] || '',
       followUps:questions.map(question => ({stage:'custom',question}))};
   }
-  return {search, custom};
+  return {search, draw, custom};
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = {TALK_TOPICS, TALK_CATEGORIES, TALK_LIBRARY};

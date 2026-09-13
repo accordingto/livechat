@@ -32,18 +32,19 @@
           <button type="button" class="talk-button" id="talk-source-custom" aria-pressed="false" data-i18n="talk.writeTopic">自己出題</button>
         </div>
         <div id="talk-library" class="talk-editor">
-          <p class="talk-soft" id="talk-library-count"></p>
-          <div class="talk-settings-row">
-            <label class="talk-field"><span data-i18n="talk.category">議題分類</span><select id="talk-category"></select></label>
-            <label class="talk-field"><span data-i18n="talk.searchTopics">搜尋題目（中／英）</span><input id="talk-search" type="search" maxlength="100"></label>
-          </div>
-          <label class="talk-field"><span data-i18n="talk.setupTopic">這次聊什麼</span><select id="talk-topic-select"></select></label>
-          <p id="talk-no-topics" class="talk-soft" hidden data-i18n="talk.noTopics">沒有符合的題目，試試別的關鍵字，或自己出題。</p>
-          <div id="talk-preview" class="talk-preview">
-            <p id="talk-preview-question" class="talk-player-topic"></p>
+          <div id="talk-preview" class="talk-preview talk-topic">
+            <p class="talk-kicker" data-i18n="talk.setupTopic">這次聊什麼</p>
+            <h2 id="talk-preview-question" tabindex="-1" aria-live="polite"></h2>
+            <p class="talk-soft" data-i18n="talk.randomHint">可以直接聊這一題。不合適就再抽，或到頁尾挑選；按「開啟話題」才會開始。</p>
             <details class="talk-details"><summary data-i18n="talk.previewPath">預覽這題可以怎麼深入</summary><ol id="talk-preview-path" class="talk-path"></ol></details>
             <button type="button" class="talk-button" id="talk-edit-topic" data-i18n="talk.editTopic">以這題修改</button>
           </div>
+          <div class="talk-actions">
+            <button type="button" class="talk-button" id="talk-random" data-i18n="talk.randomTopic">🎲 隨機抽一題</button>
+            <a class="talk-button talk-browse-link" href="#talk-question-bank" data-i18n="talk.browseLibrary">到頁尾看完整題庫 ↓</a>
+          </div>
+          <label class="talk-field"><span data-i18n="talk.chooseManually">手動選題</span><select id="talk-topic-select"></select></label>
+          <p id="talk-no-topics" class="talk-soft" hidden data-i18n="talk.noTopics">沒有符合的題目，試試別的關鍵字，或自己出題。</p>
         </div>
         <div id="talk-custom" class="talk-editor" hidden>
           <p class="talk-soft" data-i18n="talk.customHint">可以直接輸入中英文。按「開啟話題」後，問題才會送到玩家頁。</p>
@@ -74,6 +75,11 @@
           <p class="talk-soft" id="talk-question-return"></p>
           <div id="talk-interest" class="talk-interest" aria-live="polite"></div>
           <div id="talk-question-requests" class="talk-soft"></div>
+          <div id="talk-help" class="talk-editor" hidden>
+            <p class="talk-soft" data-i18n="talk.hostHelp">主持人可協助操作；有人臨時離開，也能繼續。</p>
+            <button type="button" class="talk-button talk-primary" id="talk-help-end" data-i18n="talk.helpEnd">結束發言，下一位</button>
+            <button type="button" class="talk-button talk-primary" id="talk-help-resume" data-i18n="talk.helpResume">結束提問，回到分享者</button>
+          </div>
           <p class="talk-soft" data-i18n="talk.natural">嗯嗯、笑聲、附和，都可以直接說。</p>
         </div>
         <div class="talk-panel talk-notes" id="talk-notes" hidden>
@@ -83,6 +89,7 @@
           <button type="button" class="talk-button talk-primary" id="talk-start" data-i18n="talk.start">開始分享</button>
           <button type="button" class="talk-button" id="talk-extend" data-i18n="talk.extend">延伸這個話題</button>
           <button type="button" class="talk-button" id="talk-new" data-i18n="talk.newTopic">換個話題</button>
+          <button type="button" class="talk-button" id="talk-random-new" data-i18n="talk.randomNew">🎲 隨機選下一題</button>
         </div>
         <div id="talk-explore" class="talk-panel talk-editor" hidden>
           <h3 data-i18n="talk.exploreTitle">接著這個議題往下聊</h3>
@@ -102,21 +109,24 @@
           </details>
           <button type="button" class="talk-button" id="talk-hide-followup" data-i18n="talk.hideExtend" hidden>收起延伸題</button>
         </div>
-        <details class="talk-details" id="talk-help">
-          <summary data-i18n="talk.help">流程協助</summary>
-          <div class="talk-actions">
-            <button type="button" class="talk-button" id="talk-help-end" data-i18n="talk.helpEnd">協助交給下一位</button>
-            <button type="button" class="talk-button" id="talk-help-resume" data-i18n="talk.resume">繼續分享</button>
-          </div>
-        </details>
       </section>
       <p id="talk-host-error" class="talk-feedback talk-quiet" role="status"></p>
-      <button type="button" class="talk-button" id="talk-force-end" hidden data-i18n="talk.forceEnd">這段先結束，交棒</button>
+      <button type="button" class="talk-button" id="talk-force-end" hidden data-i18n="talk.forceEnd">直接結束，下一位</button>
       <details class="talk-details">
         <summary data-i18n="talk.details">怎麼參與</summary>
         <p data-i18n="talk.tip1"></p><p data-i18n="talk.tip2"></p><p data-i18n="talk.tip3"></p><p data-i18n="talk.tip4"></p>
       </details>
       <a id="talk-demo-link" class="back" href="lets-talk.html?demo=1" data-i18n="talk.demoLink">先試操作示範</a>
+      <section id="talk-question-bank" class="talk-panel talk-editor talk-question-bank" aria-labelledby="talk-bank-title">
+        <h2 id="talk-bank-title" data-i18n="talk.fullLibrary">完整問題庫</h2>
+        <p class="talk-soft" data-i18n="talk.libraryHint">先看完整問題，再決定聊哪一題。每題下方可展開四個延伸方向；選題後仍可修改。</p>
+        <div class="talk-settings-row">
+          <label class="talk-field"><span data-i18n="talk.category">議題分類</span><select id="talk-category"></select></label>
+          <label class="talk-field"><span data-i18n="talk.searchTopics">搜尋題目（中／英）</span><input id="talk-search" type="search" maxlength="100"></label>
+        </div>
+        <p class="talk-soft" id="talk-library-count" role="status"></p>
+        <div id="talk-bank-list" class="talk-bank-grid"></div>
+      </section>
     </div>
   </main>
   <div id="room-mount" hidden></div>

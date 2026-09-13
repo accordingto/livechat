@@ -18,16 +18,36 @@
     byId('preview-question').textContent = topic.question;
     byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><span>${esc(t(q.stage))}</span><p>${esc(q.question)}</p></li>`).join('');
   }
+  function drawTopic() {
+    const topic = TALK_LIBRARY.draw(byId('category').value, byId('search').value,
+      [byId('topic-select').value, state?.topic.id], () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296);
+    if (topic) byId('topic-select').value = topic.id;
+    previewTopic();
+    return topic;
+  }
   function filterTopics() {
     const selected = byId('topic-select').value;
     const topics = TALK_LIBRARY.search(byId('category').value, byId('search').value);
-    byId('topic-select').innerHTML = topics.map(topic => `<option value="${esc(topic.id)}">${esc(topic.emoji + ' ' + topic.title)}</option>`).join('');
+    byId('topic-select').innerHTML = topics.map(topic => `<option value="${esc(topic.id)}">${esc(topic.emoji + ' ' + topic.question)}</option>`).join('');
     if (topics.some(topic => topic.id === selected)) byId('topic-select').value = selected;
+    else { byId('topic-select').value = ''; drawTopic(); }
     byId('topic-select').disabled = !topics.length;
+    byId('random').disabled = !topics.length;
+    byId('random-new').disabled = !topics.length;
     byId('no-topics').hidden = !!topics.length;
     byId('library-count').textContent = t('libraryCount', { categories: TALK_CATEGORIES.length, topics: TALK_TOPICS.length,
       questions: TALK_TOPICS.reduce((sum, topic) => sum + 1 + TALK_ENGINE.followUps(topic).length, 0), matches: topics.length });
+    byId('bank-list').innerHTML = topics.length ? topics.map(topic => `<article class="talk-bank-topic">
+      <p class="talk-kicker">${esc(topic.emoji + ' ' + topic.title)}</p>
+      <h3>${esc(topic.question)}</h3>
+      <details class="talk-details"><summary>${esc(t('previewPath'))}</summary><ol class="talk-path">${TALK_ENGINE.followUps(topic).map(q => `<li><span>${esc(t(q.stage))}</span><p>${esc(q.question)}</p></li>`).join('')}</ol></details>
+      <button type="button" class="talk-button" data-talk-topic="${esc(topic.id)}">${esc(t('useTopic'))}</button>
+    </article>`).join('') : `<p class="talk-soft">${esc(t('noTopics'))}</p>`;
     previewTopic();
+  }
+  function showSetup() {
+    byId('setup').hidden = false; error = ''; render();
+    byId(source === 'custom' ? 'custom-question' : selectedTopic() ? 'preview-question' : 'topic-select').focus();
   }
   function selectSource(next) {
     source = next;
@@ -143,7 +163,7 @@
         error = state.replies?.[0]?.error || '';
       } else await sync.command(type, extra);
     } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1 } ? e.message : 'error'; }
-    finally { busy = false; render(); }
+    finally { busy = false; render(); if (error === 'pending_questions') byId('force-end').focus(); }
   }
   byId('setup').addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !canControl()) return;
@@ -164,6 +184,14 @@
   byId('category').addEventListener('change', () => { filterTopics(); render(); });
   byId('search').addEventListener('input', () => { filterTopics(); render(); });
   byId('topic-select').addEventListener('change', previewTopic);
+  byId('random').addEventListener('click', () => { drawTopic(); render(); });
+  byId('random-new').addEventListener('click', () => { drawTopic(); selectSource('library'); showSetup(); });
+  byId('bank-list').addEventListener('click', event => {
+    const button = event.target.closest('[data-talk-topic]');
+    if (!button || !byId('bank-list').contains(button)) return;
+    byId('topic-select').value = button.dataset.talkTopic;
+    previewTopic(); selectSource('library'); showSetup();
+  });
   for (const id of ['custom-title', 'custom-question', 'custom-followups']) byId(id).addEventListener('input', saveDraft);
   byId('edit-topic').addEventListener('click', () => {
     const topic = selectedTopic(); if (!topic) return;
@@ -181,7 +209,7 @@
   byId('help-end').addEventListener('click', () => command('end'));
   byId('help-resume').addEventListener('click', () => command('resume'));
   byId('force-end').addEventListener('click', () => command('end', { confirm: true }));
-  byId('new').addEventListener('click', () => { byId('setup').hidden = false; render(); byId(source === 'custom' ? 'custom-question' : 'topic-select').focus(); });
+  byId('new').addEventListener('click', showSetup);
   byId('cancel-setup').addEventListener('click', () => { byId('setup').hidden = true; render(); });
   byId('demo-view').addEventListener('change', render);
   function paintClock() {

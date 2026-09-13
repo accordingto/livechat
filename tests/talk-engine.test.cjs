@@ -64,6 +64,28 @@ test('pending question is not silently lost; a deliberate handover can close it'
   s = act(s, 'end', speaker, { confirm: true }); assert.notEqual(s.speaker, speaker); assert.equal(s.questions.length, 0);
 });
 
+test('host can handle an absent speaker or asker without spending anyone else’s main turn', () => {
+  let s = act(create(), 'start');
+  const first = s.speaker, asker = E.order(s)[0], listener = E.order(s)[1];
+  s = act(s, 'end', listener); assert.equal(s.speaker, first);
+  assert.equal(s.replies[listener].error, 'not_available');
+  s = act(s, 'ask', asker);
+  s = act(s, 'end'); assert.equal(s.replies[0].error, 'pending_questions');
+  s = act(s, 'invite', first, { target: s.questions[0].id });
+  const remaining = s.remaining.slice();
+  s = act(s, 'resume');
+  assert.equal(s.activeQuestion, null); assert.equal(s.speaker, first);
+  assert.deepEqual(s.remaining, remaining); assert.deepEqual(s.spoken, []);
+  const endedTurn = s.turnId;
+  s = act(s, 'end');
+  assert.deepEqual(s.spoken, [first]); assert.notEqual(s.speaker, first);
+  const next = s.speaker;
+  s = act(s, 'end', first, { turnId: endedTurn }); assert.equal(s.speaker, next);
+  const seen = [first];
+  while (s.round === 1) { seen.push(s.speaker); s = act(s, 'end'); }
+  assert.deepEqual(seen.slice().sort(), [1, 2, 3, 4]);
+});
+
 test('duplicate, old-session, and old-turn requests cannot advance or affect a new speaker', () => {
   let s = act(create(), 'start'); const oldTurn = s.turnId, speaker = s.speaker;
   const cmd = { id: 'same-end', type: 'end', actor: speaker, sessionId: s.sessionId, turnId: s.turnId, seed: 51 };

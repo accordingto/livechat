@@ -10,6 +10,7 @@ var TALK_UI = (() => {
     sendNote: ['分享這句想法', 'Share this thought'], updateNote: ['更新這句想法', 'Update this thought'],
     noteSent: ['已分享，大家都看得到。', 'Shared with everyone.'],
     yourTurn: ['輪到你分享', 'Your turn to share'], speaking: ['{name} 正在分享', '{name} is sharing'],
+    turnAlert: ['輪到你了！', 'Your turn!'], turnHint: ['現在可以開口分享，說完按「我說完了」。', 'You can speak now. Tap “I’m done” when you finish.'],
     asking: ['{name} 可以口頭提問', '{name}, you can ask out loud'],
     returnTo: ['提問後，回到 {name} 繼續分享', 'Then {name} continues sharing'],
     ask: ['我想追問', 'I would like to ask'], cancelAsk: ['取消追問', 'Cancel my request'],
@@ -17,14 +18,14 @@ var TALK_UI = (() => {
     askLater: ['對方想先說完這段，你的追問意願還在。', 'They will finish this thought first. Your request is still there.'],
     wantsAsk: ['{name} 想追問', '{name} would like to ask'], invite: ['請你問', 'Please ask'],
     later: ['等我說完這段', 'Let me finish this thought'], held: ['先保留', 'Waiting'],
-    asked: ['問好了', 'I have asked my question'], resume: ['繼續分享', 'Continue sharing'],
+    asked: ['我問完了', 'Done asking'], resume: ['繼續分享', 'Continue sharing'],
     more: ['想聽更多', 'I would like to hear more'], interested: ['{name} 想聽更多', '{name} would like to hear more'],
     share: ['我也有想法', 'I have a thought too'], cancelShare: ['取消接話意願', 'Cancel my sharing request'],
     shareThisRound: ['已保留本輪的接話機會。', 'Your thought is queued for this round.'],
     shareNextRound: ['已保留到下一輪，輪到你時再接著聊。', 'Saved for the next round, when your turn comes.'],
     next: ['接下來預計輪到你，可以慢慢想。', 'You are expected next. Take a moment to think.'],
     listening: ['聽聽彼此的想法，也可以自然附和。', 'Listen, and feel free to respond naturally.'],
-    end: ['先到這裡', 'That is my thought for now'],
+    end: ['我說完了', "I'm done"],
     briefIsFine: ['一句想法、接著別人的話聊，都很好。', 'A short thought or a response to someone is welcome.'],
     natural: ['嗯嗯、笑聲、附和，都可以直接說。', 'Small responses and laughter can happen naturally.'],
     sharedNotes: ['一起想到的話', 'Thoughts to build on'],
@@ -36,7 +37,7 @@ var TALK_UI = (() => {
     not_available: ['這個動作目前無法使用，請看最新畫面。', 'That action is no longer available. Check the current view.'],
     pending_questions: ['還有人想追問。可以先請對方問，或直接交棒。', 'Someone is waiting to ask. Invite them, or hand over the turn.'],
     question_open: ['目前有人在提問，請先回到原發言者。', 'A question is open. Return to the original speaker first.'],
-    forceEnd: ['這段先結束，交棒', 'Finish this thought and hand over'],
+    forceEnd: ['直接結束，下一位', 'End turn, next person'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check the connection and try again.'],
     title: ['{name} 的談話頁', "{name}'s conversation"], player: ['參加者 {n}', 'Participant {n}'],
     room: ['房間 {code}', 'Room {code}'], round: ['第 {n} 輪', 'Round {n}'],
@@ -73,7 +74,17 @@ var TALK_UI = (() => {
     currentFollowUp: ['目前顯示：{question}', 'Now showing: {question}'],
     noFollowUpShown: ['目前還沒顯示延伸問題。', 'No follow-up is showing.'],
     topicSource: ['話題來源', 'Topic source'],
-    helpEnd: ['協助交給下一位', 'Help pass the turn'],
+    helpEnd: ['結束發言，下一位', 'End turn, next person'],
+    helpResume: ['結束提問，回到分享者', 'End question, return to speaker'],
+    hostHelp: ['主持人可協助操作；有人臨時離開，也能繼續。', 'Host controls: keep things moving if someone needs to leave.'],
+    randomTopic: ['🎲 隨機抽一題', '🎲 Pick a random question'],
+    randomNew: ['🎲 隨機選下一題', '🎲 Pick a random next topic'],
+    randomHint: ['可以直接聊這一題。不合適就再抽，或到頁尾挑選；按「開啟話題」才會開始。', 'Ready to use. Pick another or browse below if you like. It starts when you open the topic.'],
+    chooseManually: ['手動選題', 'Choose a question'],
+    browseLibrary: ['到頁尾看完整題庫 ↓', 'Browse the full library below ↓'],
+    fullLibrary: ['完整問題庫', 'Full question library'],
+    libraryHint: ['先看完整問題，再決定聊哪一題。每題下方可展開四個延伸方向；選題後仍可修改。', 'Read each question before choosing. Expand its four follow-ups below. You can still edit it after selecting.'],
+    useTopic: ['選這題', 'Use this question'],
     other_host: ['另一個主持頁正在控制這個房間；關閉那頁後，這裡會自動接續。', 'Another host tab is controlling this room. Close it to continue here.'],
     switched: ['玩家頁已切換到其他活動。要回來聊，可以重新開啟話題。', 'Player pages have switched activities. Open a topic to return here.'],
     setupNeeded: ['先到主選單設定房間與玩家連結。', 'Set up the room and player links in the hub first.'],
@@ -175,7 +186,7 @@ var TALK_PLAYER = (() => {
         if (s.activeQuestion) controls += `<p class="talk-soft">${esc(t('returnTo', { name: name(s, me) }))}</p>${button('resume', 'resume', '', true)}`;
         else {
           controls += list(s.questions).map(q => `<div class="talk-request"><p>${esc(t('wantsAsk', { name: name(s, q.playerNum) }))}${q.deferred ? ` · ${esc(t('held'))}` : ''}</p><div class="talk-actions">${button('invite', 'invite', `data-target="${esc(q.id)}"`, true)}${!q.deferred ? button('later', 'later', `data-target="${esc(q.id)}"`) : ''}</div></div>`).join('');
-          controls += button('end', 'end') + `<p class="talk-soft">${esc(t('briefIsFine'))}</p>`;
+          controls += button('end', 'end', '', true) + `<p class="talk-soft">${esc(t('briefIsFine'))}</p>`;
         }
       } else if (s.activeQuestion?.playerNum === me) {
         controls += button('asked', 'resume', '', true);
@@ -191,8 +202,11 @@ var TALK_PLAYER = (() => {
       const focused = keep && document.activeElement === keep;
       const notesOpen = preserveInput && this.element.querySelector('.talk-shared')?.open;
       if (keep) keep.remove();
-      this.element.innerHTML = `<div class="secret-card talk-player">
-        ${this.nameBanner(data)}<span class="talk-kicker">Let's Talk</span>
+      const myTurn = s.phase === 'talking' && s.speaker === me && !s.activeQuestion;
+      this.element.innerHTML = `<div class="secret-card talk-player${myTurn ? ' talk-my-turn' : ''}">
+        ${this.nameBanner(data)}
+        ${myTurn ? `<div class="talk-turn-alert" role="status"><span aria-hidden="true">🎤</span><strong>${esc(t('turnAlert'))}</strong><p>${esc(t('turnHint'))}</p></div>` : ''}
+        <span class="talk-kicker">Let's Talk</span>
         <p class="talk-player-topic">${esc(s.topic.question)}</p>
         ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}
         <div class="talk-floor" aria-live="polite">${esc(TALK_UI.status(s, me))}</div>
@@ -211,7 +225,7 @@ var TALK_PLAYER = (() => {
         if (focused) keep.focus({ preventScroll: true });
       }
       if (notesOpen && this.element.querySelector('.talk-shared')) this.element.querySelector('.talk-shared').open = true;
-      document.title = t('title', { name: data.name || t('player', { n: me }) });
+      document.title = (myTurn ? t('turnAlert') + ' · ' : '') + t('title', { name: data.name || t('player', { n: me }) });
       this.paint();
     }
     paint() {

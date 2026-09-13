@@ -34,6 +34,21 @@ test('custom topics preserve user text, normalize lines and reject invalid limit
   }
 });
 
+test('random draw respects filters and avoids the current and previewed topics when possible', () => {
+  const category = 'digital', matches = library.search(category);
+  const excluded = matches.slice(0, 2).map(t => t.id), picked = new Set();
+  for (let i = 0; i < 100; i++) {
+    const topic = library.draw(category, '', excluded, () => i / 100);
+    assert.equal(topic.category, category); assert.ok(!excluded.includes(topic.id));
+    picked.add(topic.id);
+  }
+  assert.equal(picked.size, matches.length - excluded.length);
+  assert.equal(library.draw(category, '人工智慧', ['ai'], () => 0.99).id, 'ai');
+  assert.equal(library.draw(category, 'no-such-topic', [], () => 0), null);
+  assert.equal(library.draw('', '', [], () => 0).id, topics[0].id);
+  assert.equal(library.draw('', '', [], () => 0.9999).id, topics.at(-1).id);
+});
+
 test('choosing and improvising a follow-up preserve turns, notes and a spoken question', () => {
   let serial = 0;
   const act = (s, type, actor = 0, extra = {}) => E.apply(s, {id:String(++serial),type,actor,sessionId:s.sessionId,turnId:s.turnId,now:2000,seed:99,...extra});
