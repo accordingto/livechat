@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Let's Talk · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="talk.css">
+</head>
+<body class="talk-page">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← 返回主選單</a>
+    <span class="talk-meta" id="talk-room-label"></span>
+  </div>
+  <div class="header"><h1>💬 Let's Talk</h1></div>
+  <main class="talk-shell">
+    <div id="talk-demo-bar" class="talk-panel talk-demo-bar" hidden>
+      <p class="talk-kicker" data-i18n="talk.demo">操作示範・單機模擬</p>
+      <label class="talk-field"><span data-i18n="talk.demoView">切換示範視角</span><select id="talk-demo-view"></select></label>
+      <a class="back" href="lets-talk.html" data-i18n="talk.liveLink">使用正式房間</a>
+    </div>
+    <p class="talk-connection talk-quiet" id="talk-host-status" role="status"></p>
+    <div id="talk-demo-player" class="talk-demo-card" hidden></div>
+    <div id="talk-host-view">
+      <form id="talk-setup" class="talk-panel talk-setup">
+        <p class="talk-soft" data-i18n="talk.intro">每人都有分享的機會；不用精彩，也不用講很長。</p>
+        <label class="talk-field"><span data-i18n="talk.setupTopic">這次聊什麼</span><select id="talk-topic-select"></select></label>
+        <div class="talk-settings-row">
+          <label class="talk-field"><span data-i18n="talk.setupMode">怎麼開始</span>
+            <select id="talk-mode"><option value="think" data-i18n="talk.thinkMode">先想一想，不用打字</option><option value="write" data-i18n="talk.writeMode">可以寫一句想法</option></select>
+          </label>
+          <label class="talk-field"><span data-i18n="talk.thinkingTime">思考時間</span><select id="talk-seconds"><option value="30">30 秒</option><option value="45" selected>45 秒</option><option value="60">60 秒</option><option value="90">90 秒</option></select></label>
+        </div>
+        <button class="talk-button talk-primary" type="submit" id="talk-open" data-i18n="talk.openTopic">開啟話題</button>
+      </form>
+      <section id="talk-session" hidden>
+        <div class="talk-panel talk-topic">
+          <p class="talk-kicker" id="talk-topic-title"></p>
+          <h2 id="talk-question"></h2>
+          <p id="talk-follow-up" class="talk-extension" hidden></p>
+        </div>
+        <div class="talk-panel talk-host-floor">
+          <p class="talk-meta" id="talk-round"></p>
+          <p class="talk-floor" id="talk-floor" aria-live="polite"></p>
+          <p class="talk-soft" id="talk-clock"></p>
+          <p class="talk-soft" id="talk-question-return"></p>
+          <div id="talk-interest" class="talk-interest" aria-live="polite"></div>
+          <div id="talk-question-requests" class="talk-soft"></div>
+          <p class="talk-soft" data-i18n="talk.natural">嗯嗯、笑聲、附和，都可以直接說。</p>
+        </div>
+        <div class="talk-panel talk-notes" id="talk-notes" hidden>
+          <h3 data-i18n="talk.sharedNotes">一起想到的話</h3><div id="talk-notes-content"></div>
+        </div>
+        <div class="talk-actions">
+          <button type="button" class="talk-button talk-primary" id="talk-start" data-i18n="talk.start">開始分享</button>
+          <button type="button" class="talk-button" id="talk-extend" data-i18n="talk.extend">延伸這個話題</button>
+          <button type="button" class="talk-button" id="talk-new" data-i18n="talk.newTopic">換個話題</button>
+        </div>
+        <details class="talk-details" id="talk-help">
+          <summary data-i18n="talk.help">流程協助</summary>
+          <div class="talk-actions">
+            <button type="button" class="talk-button" id="talk-help-end" data-i18n="talk.helpEnd">協助交給下一位</button>
+            <button type="button" class="talk-button" id="talk-help-resume" data-i18n="talk.resume">繼續分享</button>
+          </div>
+        </details>
+      </section>
+      <p id="talk-host-error" class="talk-feedback talk-quiet" role="status"></p>
+      <button type="button" class="talk-button" id="talk-force-end" hidden data-i18n="talk.forceEnd">這段先結束，交棒</button>
+      <details class="talk-details">
+        <summary data-i18n="talk.details">怎麼參與</summary>
+        <p data-i18n="talk.tip1"></p><p data-i18n="talk.tip2"></p><p data-i18n="talk.tip3"></p><p data-i18n="talk.tip4"></p>
+      </details>
+      <a id="talk-demo-link" class="back" href="lets-talk.html?demo=1" data-i18n="talk.demoLink">先試操作示範</a>
+    </div>
+  </main>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script src="talk-engine.js"></script>
+  <script src="talk-topics.js"></script>
+  <script src="talk-ui.js"></script>
+  <script src="talk-sync.js"></script>
+  <script src="talk-host.js"></script>
+</body>
+</html>

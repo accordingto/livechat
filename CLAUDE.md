@@ -18,6 +18,8 @@
 
 ## 專案結構（現役檔案）
 
+**Let's Talk v0.1 新增說明**：原本八款遊戲之外新增一個談話模式，入口 `lets-talk.html`，沿用首頁房間設定與 `play.html` 玩家連結。下表原有「八款／七款」敘述保留為原版遊戲背景；共用頁現在另外服務 Let's Talk。詳細規則與同步設計見 `talk-mode.md`，修改本模式前請先讀取。新檔案為 `talk-engine.js`（純規則）、`talk-sync.js`（主持頁狀態與玩家同步）、`talk-ui.js`（雙語與玩家卡片）、`talk-host.js`（共同畫面與單機示範）、`talk-topics.js`（12 題原創簡單英文話題）、`talk.css`（限定本模式樣式）、`tests/talk-*.test.cjs`（無依賴測試）。`room.js` 僅新增主持端 `ROOM.playerRef(i)`；不可把其他人的 token 傳入玩家 payload。`?demo=1` 是不寫入 Firebase 的單機操作示範。暫不擴充原本 Google Sheet 題庫格式；本模式使用頁內收合說明，沒有另加強制教學步驟。
+
 > ⚠️ **只讀取以下檔案。`_archive/` 資料夾內的所有檔案為舊版廢棄遊戲，除非使用者明確要求，否則永遠不要讀取或修改。**
 
 | 檔案 | 說明 |

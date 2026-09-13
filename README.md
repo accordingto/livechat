@@ -12,6 +12,7 @@ host is sharing.
 
 | Game | Players | Description |
 |------|---------|-------------|
+| 💬 Let's Talk | 2–9 | A conversation mode: think first, optionally share a written thought, then take one main turn each round with spoken follow-up requests |
 | ⚖️ Kangaroo Court | 4–9 | One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — before and after |
 | 🏰 Dare Conquest | 2–6 | Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival |
 | 🙊 Say It Without Saying It | 2–6 | One player describes a secret word without saying the forbidden words, one referees, and everyone else hits the buzzer to guess |
@@ -24,14 +25,31 @@ host is sharing.
 ## How it works
 
 - `index.html` is the menu; each game has its own host page.
-- `play.html` is the single player card page shared by **all eight games** — it
+- `play.html` is the single player card page shared by **the eight games and Let's Talk** — it
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
 - `CLAUDE.md` is the architecture log (written in Chinese): what every screen
   does and, more usefully, why each decision was made. Read it before changing
   anything shared — `room.js`, `play.html`, `index.html`, `game-data.js`,
-  `i18n.js`, `shared.css` are relied on by all eight games at once.
+  `i18n.js`, `shared.css` are relied on across the site.
+
+### Let's Talk — first trial
+
+Choose **Let's Talk** after the usual room setup; existing player links update
+automatically. The host opens a topic and keeps that page open. Participants
+use their own cards to signal readiness, request an oral question, invite the
+question, and pass their main turn. Voice stays in your existing chat app.
+
+Try [`lets-talk.html?demo=1`](https://livechat-two-alpha.vercel.app/lets-talk.html?demo=1)
+on one phone without a room. Choose a topic, then switch the demo viewpoint
+between the shared screen and four participants. This simulation does not
+connect player cards and resets on reload.
+
+Rules, synchronization design, limits, and verification steps are documented
+in [`talk-mode.md`](talk-mode.md). Topics use plain English; interface controls
+follow the site's Chinese / English switch. There are no scores, reaction
+totals, required story lengths, or AI evaluations.
 
 ## Firebase
 
@@ -43,6 +61,8 @@ real project's values already in it, so this is a swap, not a fill-in-the-blank
 
 Without Firebase configured:
 
+- **Let's Talk** needs Firebase for real rooms. Its single-device demo works
+  without a database connection.
 - **Button is locked** — Kangaroo Court and Say It Without Saying It refuse to
   deal at all (the jury's votes and the clue giver's word have nowhere private
   to go).
@@ -109,7 +129,8 @@ as step 1's database rules are in place — see `SECURITY.md`.
 ## Features
 
 - Screen-share friendly: large text, high contrast, clean layout
-- All game prompts live in `game-data.js` — no network call to play
+- Game prompts live in `game-data.js`; Let's Talk's 12 original trial topics
+  live in `talk-topics.js`. The existing spreadsheet datasets are unchanged.
 - Player links can be handed out as a copyable list or as QR codes
 
 ## Stack
@@ -118,6 +139,12 @@ Vanilla HTML / CSS / JavaScript — no build step, no backend.
 
 - Firebase Realtime Database (compat SDK, loaded from CDN) for host → player sync
 - `qrcode.js` — vendored qrcode-generator 1.4.4 (MIT)
+
+Conversation rule and transport regression tests require only Node.js:
+
+```sh
+node --test tests/talk-*.test.cjs
+```
 
 ## License
 

@@ -825,6 +825,10 @@ const ROOM = (() => {
     get names() { return names; },
     get code() { return sessionCode; },
     get answers() { return data; },
+    // Host-only integration point. Callers already hold this room's tokens;
+    // never send a reference or its token to a different player's card.
+    playerRef(i) { return on() && Number.isInteger(i) && i >= 0 && i < count && tokens[i]
+      ? db.ref(`rooms/${sessionCode}/players/${tokens[i]}`) : null; },
     name(i) { return String(names[i] || '').trim() || playerLabel(i); },
     setDecorator(fn) { decorate = fn; },
     // 'full' (default) | 'names' | 'links' | 'check' — see the comment by

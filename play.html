@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="talk.css">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -379,6 +380,7 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="talk-ui.js"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -1086,8 +1088,25 @@
 
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
+    let talkCard = null;
+    let talkConnected = true;
+    let talkClockOffset = 0;
     function showCard(data) {
       setCardTitle(data.name || urlName);
+      if (data.game === 'letstalk' && data.talk && data.talk.version === 1) {
+        if (!talkCard) talkCard = new TALK_PLAYER.Card(el, {
+          nameBanner,
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId || current.talk.turnId !== command.turnId) return;
+            return Object.assign({}, current, { talkAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        talkCard.update(data);
+        return;
+      }
+      if (talkCard) { talkCard.destroy(); talkCard = null; }
       if (data.game === 'conquest') { el.innerHTML = conquestCardHTML(data); return; }
       if (data.game === 'cardcheck') {
         el.innerHTML = `
@@ -1195,6 +1214,7 @@
 
     let lastErrorKey = null;
     function showError(key) {
+      if (talkCard) { talkCard.destroy(); talkCard = null; }
       lastErrorKey = key;
       el.innerHTML = `<div class="error-msg">${pt(key)}</div>`;
     }
@@ -1220,6 +1240,8 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); });
+      db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();
         if (!data) { showError('waitingDeal'); return; }
