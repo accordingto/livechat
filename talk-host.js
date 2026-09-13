@@ -6,29 +6,102 @@
   const demoRoster = ['小安', '阿哲', '小羽', '阿凱'].map((name, i) => ({ playerNum: i + 1, name }));
   let state = null, sync = null, demoCard = null, status = demo ? 'ready' : 'offline', busy = false, autoStart = false;
   let error = '';
+  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '';
+  const draftKey = 'lets-talk-topic-draft.v1';
   const now = () => sync ? sync.now() : Date.now();
   const canControl = () => demo || (!!sync?.own && sync.connected);
-  byId('topic-select').innerHTML = TALK_TOPICS.map((topic, i) => `<option value="${i}">${esc(topic.emoji + ' ' + topic.title)}</option>`).join('');
+  const selectedTopic = () => TALK_TOPICS.find(topic => topic.id === byId('topic-select').value);
+  function previewTopic() {
+    const topic = selectedTopic();
+    byId('preview').hidden = !topic;
+    if (!topic) return;
+    byId('preview-question').textContent = topic.question;
+    byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><span>${esc(t(q.stage))}</span><p>${esc(q.question)}</p></li>`).join('');
+  }
+  function filterTopics() {
+    const selected = byId('topic-select').value;
+    const topics = TALK_LIBRARY.search(byId('category').value, byId('search').value);
+    byId('topic-select').innerHTML = topics.map(topic => `<option value="${esc(topic.id)}">${esc(topic.emoji + ' ' + topic.title)}</option>`).join('');
+    if (topics.some(topic => topic.id === selected)) byId('topic-select').value = selected;
+    byId('topic-select').disabled = !topics.length;
+    byId('no-topics').hidden = !!topics.length;
+    byId('library-count').textContent = t('libraryCount', { categories: TALK_CATEGORIES.length, topics: TALK_TOPICS.length,
+      questions: TALK_TOPICS.reduce((sum, topic) => sum + 1 + TALK_ENGINE.followUps(topic).length, 0), matches: topics.length });
+    previewTopic();
+  }
+  function selectSource(next) {
+    source = next;
+    byId('library').hidden = source !== 'library'; byId('custom').hidden = source !== 'custom';
+    byId('custom-question').required = source === 'custom';
+    byId('source-library').setAttribute('aria-pressed', String(source === 'library'));
+    byId('source-custom').setAttribute('aria-pressed', String(source === 'custom'));
+    error = ''; render();
+  }
+  const draft = () => ({ title: byId('custom-title').value, question: byId('custom-question').value, followUps: byId('custom-followups').value });
+  function saveDraft() {
+    try { localStorage.setItem(draftKey, JSON.stringify(draft())); byId('draft-status').dataset.message = 'draftSaved'; }
+    catch (e) { byId('draft-status').dataset.message = 'draftUnsaved'; }
+    byId('draft-status').textContent = t(byId('draft-status').dataset.message);
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(draftKey) || 'null');
+    if (saved) {
+      byId('custom-title').value = String(saved.title || '').slice(0, 80);
+      byId('custom-question').value = String(saved.question || '').slice(0, 500);
+      byId('custom-followups').value = String(saved.followUps || '').slice(0, 2407);
+      byId('draft-status').dataset.message = 'draftSaved';
+    }
+  } catch (e) {}
+  function previewFollowUp() {
+    byId('followup-preview').textContent = TALK_ENGINE.followUps(state?.topic)[Number(byId('followup-select').value)]?.question || '';
+  }
+  function renderExplore() {
+    const choices = TALK_ENGINE.followUps(state.topic);
+    const key = JSON.stringify([state.sessionId, choices, I18N.lang]);
+    if (key !== exploreKey) {
+      const previous = byId('followup-select').value;
+      const sameSession = exploreKey && renderedSession === state.sessionId;
+      byId('followup-select').innerHTML = choices.map((q, i) => `<option value="${i}">${i + 1}. ${esc(t(q.stage))}</option>`).join('');
+      const index = sameSession && choices[Number(previous)] ? Number(previous) : Math.max(0, state.extensionIndex || 0);
+      if (choices[index]) byId('followup-select').value = String(index);
+      exploreKey = key;
+    }
+    byId('explore-library').hidden = !choices.length;
+    byId('explore').hidden = !exploreOpen || state.phase !== 'talking';
+    byId('hide-followup').hidden = !state.extended;
+    byId('explore-current').textContent = state.extended ? t('currentFollowUp', { question: state.extension || state.topic.followUp }) : t('noFollowUpShown');
+    previewFollowUp();
+  }
   function labels() {
+    byId('source-library').parentElement.setAttribute('aria-label', t('topicSource'));
+    const category = byId('category').value;
+    byId('category').innerHTML = `<option value="">${esc(t('allCategories'))}</option>` + TALK_CATEGORIES.map(c => `<option value="${c.id}">${esc(c[I18N.lang] || c.en)}</option>`).join('');
+    byId('category').value = category;
+    filterTopics();
+    if (byId('draft-status').dataset.message) byId('draft-status').textContent = t(byId('draft-status').dataset.message);
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('seconds').querySelectorAll('option').forEach(o => { o.textContent = t('seconds', { n: o.value }); });
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
   function render() {
     byId('host-status').textContent = status === 'ready' ? '' : t(status);
-    byId('open').disabled = busy || !canControl();
-    byId('session').hidden = !state;
+    byId('open').disabled = busy || !canControl() || (source === 'library' && !selectedTopic());
+    byId('session').hidden = !state || !byId('setup').hidden;
+    byId('cancel-setup').hidden = !state || status === 'switched';
     byId('host-error').textContent = error ? t(error) : '';
     byId('force-end').hidden = error !== 'pending_questions';
     const me = demo ? Number(byId('demo-view').value) : 0;
     byId('demo-player').hidden = !state || !me;
     byId('host-view').hidden = !!state && !!me;
     if (!state) return;
+    if (renderedSession !== state.sessionId) {
+      exploreOpen = false; exploreKey = ''; byId('live-followup').value = ''; renderedSession = state.sessionId;
+    }
     const s = TALK_ENGINE.view(state, 0, now()).talk;
-    byId('topic-title').textContent = state.topic.emoji + ' ' + state.topic.title;
+    byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
     byId('question').textContent = state.topic.question;
     byId('follow-up').hidden = !state.extended;
-    byId('follow-up').textContent = state.topic.followUp;
+    byId('follow-up').textContent = s.topic.followUp;
     byId('round').textContent = s.round ? t('round', { n: s.round }) : t('thinking');
     byId('floor').textContent = TALK_UI.status(s, 0);
     byId('question-return').textContent = s.activeQuestion ? t('returnTo', { name: name(s, s.speaker) }) : '';
@@ -38,11 +111,13 @@
     byId('notes-content').innerHTML = TALK_UI.notes(s);
     byId('start').hidden = s.phase !== 'thinking';
     byId('extend').hidden = s.phase !== 'talking';
-    byId('extend').textContent = t(s.extended ? 'hideExtend' : 'extend');
+    byId('extend').textContent = t(exploreOpen ? 'closeExplore' : 'extend');
+    byId('extend').setAttribute('aria-expanded', String(exploreOpen));
+    renderExplore();
     byId('help').hidden = s.phase !== 'talking';
     byId('help-end').hidden = !!s.activeQuestion;
     byId('help-resume').hidden = !s.activeQuestion;
-    for (const id of ['start', 'extend', 'new', 'help-end', 'help-resume', 'force-end']) byId(id).disabled = busy || !canControl() || status === 'switched';
+    for (const id of ['start', 'extend', 'new', 'help-end', 'help-resume', 'force-end', 'show-followup', 'show-custom-followup', 'hide-followup']) byId(id).disabled = busy || !canControl() || status === 'switched';
     if (demo && me) {
       if (!demoCard || demoCard.data?.playerNum !== me) {
         if (demoCard) demoCard.destroy();
@@ -67,26 +142,47 @@
         state = TALK_ENGINE.apply(state, Object.assign({}, extra, { id, type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] }));
         error = state.replies?.[0]?.error || '';
       } else await sync.command(type, extra);
-    } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1 } ? e.message : 'error'; }
+    } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1 } ? e.message : 'error'; }
     finally { busy = false; render(); }
   }
   byId('setup').addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !canControl()) return;
     busy = true; error = ''; render();
-    const options = { topic: TALK_TOPICS[Number(byId('topic-select').value)] || TALK_TOPICS[0], mode: byId('mode').value, seconds: Number(byId('seconds').value) };
     try {
+      const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
+      if (!topic) throw new Error('invalid_topic');
+      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value) };
       if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
-    } catch (e) { error = e.message === 'offline' ? 'offline' : 'error'; }
+    } catch (e) { error = ['offline', 'invalid_topic'].includes(e.message) ? e.message : 'error'; }
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
-  byId('extend').addEventListener('click', () => command('extend'));
+  byId('source-library').addEventListener('click', () => selectSource('library'));
+  byId('source-custom').addEventListener('click', () => selectSource('custom'));
+  byId('category').addEventListener('change', () => { filterTopics(); render(); });
+  byId('search').addEventListener('input', () => { filterTopics(); render(); });
+  byId('topic-select').addEventListener('change', previewTopic);
+  for (const id of ['custom-title', 'custom-question', 'custom-followups']) byId(id).addEventListener('input', saveDraft);
+  byId('edit-topic').addEventListener('click', () => {
+    const topic = selectedTopic(); if (!topic) return;
+    byId('custom-title').value = topic.title; byId('custom-question').value = topic.question;
+    byId('custom-followups').value = TALK_ENGINE.followUps(topic).map(q => q.question).join('\n');
+    saveDraft(); selectSource('custom'); byId('custom-question').focus();
+  });
+  byId('extend').addEventListener('click', () => { exploreOpen = !exploreOpen; render(); });
+  byId('followup-select').addEventListener('change', previewFollowUp);
+  byId('show-followup').addEventListener('click', () => command('extend', { index: Number(byId('followup-select').value) }));
+  byId('hide-followup').addEventListener('click', () => command('extend', { show: false }));
+  byId('followup-form').addEventListener('submit', event => {
+    event.preventDefault(); command('extend', { text: byId('live-followup').value });
+  });
   byId('help-end').addEventListener('click', () => command('end'));
   byId('help-resume').addEventListener('click', () => command('resume'));
   byId('force-end').addEventListener('click', () => command('end', { confirm: true }));
-  byId('new').addEventListener('click', () => { byId('setup').hidden = false; byId('topic-select').focus(); });
+  byId('new').addEventListener('click', () => { byId('setup').hidden = false; render(); byId(source === 'custom' ? 'custom-question' : 'topic-select').focus(); });
+  byId('cancel-setup').addEventListener('click', () => { byId('setup').hidden = true; render(); });
   byId('demo-view').addEventListener('change', render);
   function paintClock() {
     if (!state) return;

@@ -51,6 +51,13 @@ in [`talk-mode.md`](talk-mode.md). Topics use plain English; interface controls
 follow the site's Chinese / English switch. There are no scores, reaction
 totals, required story lengths, or AI evaluations.
 
+Choose from **48 topics across 8 categories**, with 4 follow-ups each (**240
+questions** in total), or write your own topic. Search in Chinese or English,
+preview a discussion path, and adapt a library topic. Custom drafts are saved
+in the current browser. During a conversation, the host can choose a deeper
+question or write one on the spot; it updates everyone's page while keeping
+the current speaker, round, and spoken question requests.
+
 ## Firebase
 
 Live host → player sync runs on a free Firebase Realtime Database. Copy your own

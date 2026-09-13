@@ -7,6 +7,11 @@ var TALK_ENGINE = (() => {
   'use strict';
   const list = value => Array.isArray(value) ? value.filter(x => x != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
+  const followUps = topic => {
+    const items = list(topic?.followUps).map(q => typeof q === 'string' ? { stage: 'custom', question: q } : q)
+      .filter(q => q && typeof q.question === 'string' && q.question.trim());
+    return items.length ? items : topic?.followUp ? [{ stage: 'custom', question: topic.followUp }] : [];
+  };
   function shuffle(items, seed) {
     let n = (Number(seed) >>> 0) || 1;
     const random = () => { n ^= n << 13; n ^= n >>> 17; n ^= n << 5; return (n >>> 0) / 4294967296; };
@@ -137,10 +142,23 @@ var TALK_ENGINE = (() => {
         s.spoken.push(s.speaker);
         nextSpeaker(s, input.seed);
         break;
-      case 'extend':
+      case 'extend': {
         if (!host || s.phase !== 'talking') { reject('not_available'); break; }
-        s.extended = !s.extended;
+        if (input.show === false) { s.extended = false; break; }
+        if (Object.hasOwn(input, 'text')) {
+          const text = typeof input.text === 'string' ? input.text.trim() : '';
+          if (!text || text.length > 300) { reject('invalid_extension'); break; }
+          s.extension = text; s.extensionIndex = -1; s.extended = true;
+        } else if (Object.hasOwn(input, 'index')) {
+          const choices = followUps(s.topic);
+          if (!Number.isInteger(input.index) || !choices[input.index]) { reject('invalid_extension'); break; }
+          s.extension = choices[input.index].question; s.extensionIndex = input.index; s.extended = true;
+        } else {
+          if (!s.extension && !s.topic.followUp) { reject('invalid_extension'); break; }
+          s.extended = !s.extended;
+        }
         break;
+      }
       default: reject('not_available');
     }
     s.seen[actor] = [...list(s.seen[actor]), input.id].slice(-32);
@@ -154,7 +172,10 @@ var TALK_ENGINE = (() => {
       game: 'letstalk', playerNum, name: mine?.name || null,
       talk: {
         version: 1, sessionId: s.sessionId, mode: s.mode, phase: s.phase, round: s.round,
-        turnId: s.turnId, deadline: s.deadline, topic: s.topic, extended: !!s.extended,
+        turnId: s.turnId, deadline: s.deadline,
+        // Keep the original followUp field in cards so already-open v0.1
+        // player pages can display the newly selected question as well.
+        topic: Object.assign({}, s.topic, { followUp: s.extension || s.topic.followUp || '' }), extended: !!s.extended,
         speaker: s.speaker || null, roster, questions: list(s.questions), activeQuestion: s.activeQuestion || null,
         notes: roster.filter(p => (s.notes || {})[p.playerNum]).map(p => ({ playerNum: p.playerNum, text: s.notes[p.playerNum] })),
         interests: list(s.interests).filter(r => r.until > now),
@@ -167,6 +188,6 @@ var TALK_ENGINE = (() => {
       },
     };
   }
-  return { create, apply, view, order, shuffle, list };
+  return { create, apply, view, order, shuffle, list, followUps };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_ENGINE;

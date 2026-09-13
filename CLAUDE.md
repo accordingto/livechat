@@ -20,6 +20,8 @@
 
 **Let's Talk v0.1 新增說明**：原本八款遊戲之外新增一個談話模式，入口 `lets-talk.html`，沿用首頁房間設定與 `play.html` 玩家連結。下表原有「八款／七款」敘述保留為原版遊戲背景；共用頁現在另外服務 Let's Talk。詳細規則與同步設計見 `talk-mode.md`，修改本模式前請先讀取。新檔案為 `talk-engine.js`（純規則）、`talk-sync.js`（主持頁狀態與玩家同步）、`talk-ui.js`（雙語與玩家卡片）、`talk-host.js`（共同畫面與單機示範）、`talk-topics.js`（12 題原創簡單英文話題）、`talk.css`（限定本模式樣式）、`tests/talk-*.test.cjs`（無依賴測試）。`room.js` 僅新增主持端 `ROOM.playerRef(i)`；不可把其他人的 token 傳入玩家 payload。`?demo=1` 是不寫入 Firebase 的單機操作示範。暫不擴充原本 Google Sheet 題庫格式；本模式使用頁內收合說明，沒有另加強制教學步驟。
 
+**Let's Talk v0.2**：題庫已由 12 題擴成 8 類、48 組議題與 192 個延伸問題（共 240 個問題），可依分類與中英文關鍵字搜尋、預覽討論路徑，或用「以這題修改」帶入手動出題。主問題可直接輸入中英文，選填名稱與每行一題的延伸問句；草稿用獨立的 `lets-talk-topic-draft.v1` 保存。進行中可選取任一延伸方向或臨場自訂問句，使用主持 `extend` 命令同步，保留輪次與口頭追問；玩家投影沿用 `talk.topic.followUp` 以相容已開啟的 v0.1 卡片。詳見 `talk-mode.md`；不變更既有 Google Sheet 格式。
+
 > ⚠️ **只讀取以下檔案。`_archive/` 資料夾內的所有檔案為舊版廢棄遊戲，除非使用者明確要求，否則永遠不要讀取或修改。**
 
 | 檔案 | 說明 |

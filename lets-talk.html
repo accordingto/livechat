@@ -27,7 +27,31 @@
     <div id="talk-host-view">
       <form id="talk-setup" class="talk-panel talk-setup">
         <p class="talk-soft" data-i18n="talk.intro">每人都有分享的機會；不用精彩，也不用講很長。</p>
-        <label class="talk-field"><span data-i18n="talk.setupTopic">這次聊什麼</span><select id="talk-topic-select"></select></label>
+        <div class="talk-actions" role="group" aria-label="Topic source">
+          <button type="button" class="talk-button" id="talk-source-library" aria-pressed="true" data-i18n="talk.fromLibrary">從題庫選</button>
+          <button type="button" class="talk-button" id="talk-source-custom" aria-pressed="false" data-i18n="talk.writeTopic">自己出題</button>
+        </div>
+        <div id="talk-library" class="talk-editor">
+          <p class="talk-soft" id="talk-library-count"></p>
+          <div class="talk-settings-row">
+            <label class="talk-field"><span data-i18n="talk.category">議題分類</span><select id="talk-category"></select></label>
+            <label class="talk-field"><span data-i18n="talk.searchTopics">搜尋題目（中／英）</span><input id="talk-search" type="search" maxlength="100"></label>
+          </div>
+          <label class="talk-field"><span data-i18n="talk.setupTopic">這次聊什麼</span><select id="talk-topic-select"></select></label>
+          <p id="talk-no-topics" class="talk-soft" hidden data-i18n="talk.noTopics">沒有符合的題目，試試別的關鍵字，或自己出題。</p>
+          <div id="talk-preview" class="talk-preview">
+            <p id="talk-preview-question" class="talk-player-topic"></p>
+            <details class="talk-details"><summary data-i18n="talk.previewPath">預覽這題可以怎麼深入</summary><ol id="talk-preview-path" class="talk-path"></ol></details>
+            <button type="button" class="talk-button" id="talk-edit-topic" data-i18n="talk.editTopic">以這題修改</button>
+          </div>
+        </div>
+        <div id="talk-custom" class="talk-editor" hidden>
+          <p class="talk-soft" data-i18n="talk.customHint">可以直接輸入中英文。按「開啟話題」後，問題才會送到玩家頁。</p>
+          <label class="talk-field"><span data-i18n="talk.customTitle">話題名稱（選填）</span><input id="talk-custom-title" maxlength="80"></label>
+          <label class="talk-field"><span data-i18n="talk.customQuestion">想聊的問題（必填，最多 500 字）</span><textarea id="talk-custom-question" rows="3" maxlength="500"></textarea></label>
+          <label class="talk-field"><span data-i18n="talk.customFollowUps">延伸問題（選填，每行一題，最多 8 題，每題 300 字）</span><textarea id="talk-custom-followups" rows="4" maxlength="2407"></textarea></label>
+          <p class="talk-soft" id="talk-draft-status" role="status"></p>
+        </div>
         <div class="talk-settings-row">
           <label class="talk-field"><span data-i18n="talk.setupMode">怎麼開始</span>
             <select id="talk-mode"><option value="think" data-i18n="talk.thinkMode">先想一想，不用打字</option><option value="write" data-i18n="talk.writeMode">可以寫一句想法</option></select>
@@ -35,6 +59,7 @@
           <label class="talk-field"><span data-i18n="talk.thinkingTime">思考時間</span><select id="talk-seconds"><option value="30">30 秒</option><option value="45" selected>45 秒</option><option value="60">60 秒</option><option value="90">90 秒</option></select></label>
         </div>
         <button class="talk-button talk-primary" type="submit" id="talk-open" data-i18n="talk.openTopic">開啟話題</button>
+        <button class="talk-button" type="button" id="talk-cancel-setup" hidden data-i18n="talk.cancelSetup">返回目前話題</button>
       </form>
       <section id="talk-session" hidden>
         <div class="talk-panel talk-topic">
@@ -58,6 +83,24 @@
           <button type="button" class="talk-button talk-primary" id="talk-start" data-i18n="talk.start">開始分享</button>
           <button type="button" class="talk-button" id="talk-extend" data-i18n="talk.extend">延伸這個話題</button>
           <button type="button" class="talk-button" id="talk-new" data-i18n="talk.newTopic">換個話題</button>
+        </div>
+        <div id="talk-explore" class="talk-panel talk-editor" hidden>
+          <h3 data-i18n="talk.exploreTitle">接著這個議題往下聊</h3>
+          <p id="talk-explore-current" class="talk-soft" role="status"></p>
+          <p class="talk-soft" data-i18n="talk.exploreHint">選適合當下的一題，不必照順序或全部問完。只更新延伸問題，原分享者與輪次會保留。</p>
+          <div id="talk-explore-library" class="talk-editor">
+            <label class="talk-field"><span data-i18n="talk.exploreDirection">想往哪個方向談</span><select id="talk-followup-select"></select></label>
+            <p id="talk-followup-preview" class="talk-player-topic"></p>
+            <button type="button" class="talk-button talk-primary" id="talk-show-followup" data-i18n="talk.showFollowUp">顯示這個問題</button>
+          </div>
+          <details class="talk-details">
+            <summary data-i18n="talk.improvise">接著大家的話，自訂延伸問題</summary>
+            <form id="talk-followup-form" class="talk-editor">
+              <label class="talk-field"><span data-i18n="talk.liveFollowUp">此刻想接著問什麼（最多 300 字）</span><textarea id="talk-live-followup" rows="3" maxlength="300" required></textarea></label>
+              <button type="submit" class="talk-button" id="talk-show-custom-followup" data-i18n="talk.showCustomFollowUp">顯示自訂延伸問題</button>
+            </form>
+          </details>
+          <button type="button" class="talk-button" id="talk-hide-followup" data-i18n="talk.hideExtend" hidden>收起延伸題</button>
         </div>
         <details class="talk-details" id="talk-help">
           <summary data-i18n="talk.help">流程協助</summary>

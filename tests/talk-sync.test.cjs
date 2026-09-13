@@ -153,3 +153,20 @@ test('a new topic waits for old projections and stale topic requests cannot affe
   }
   h.close();
 });
+
+test('chosen and custom follow-ups survive host replacement without using a main turn', async () => {
+  const f = setup(), first = f.host(); await settle(first);
+  await first.start({ topic: { ...topic, followUps: [{ stage: 'tradeoff', question: 'Who bears the cost?' }] } });
+  await settle(first); await first.command('start'); await settle(first);
+  const original = [first.latest.sessionId, first.latest.turnId, first.latest.speaker];
+  await first.command('extend', { index: 0 }); await settle(first);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).talk.topic.followUp, 'Who bears the cost?');
+  await first.command('extend', { text: 'What would you change here?' }); await settle(first);
+  first.close(); await settle(first);
+  const second = f.host(); await settle(second);
+  assert.deepEqual([second.latest.sessionId, second.latest.turnId, second.latest.speaker], original);
+  assert.equal(f.card(4).talk.topic.followUp, 'What would you change here?');
+  await second.command('extend', { show: false }); await settle(second);
+  assert.equal(f.card(1).talk.extended, false);
+  second.close();
+});
