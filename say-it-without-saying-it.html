@@ -278,25 +278,40 @@
     .toggle-btn.on .toggle-switch { background: rgba(239,68,68,.35); }
     .toggle-btn.on .toggle-switch::after { transform: translateX(18px); background: #ef4444; }
 
-    /* ── Taboo! ruling buttons, only while a call is open ── */
+    /* ── Taboo! ruling, only while a call is open ──
+       This replaces the Deal row rather than joining it, and it is loud on purpose:
+       it is the one thing the host has to answer before anything else can happen. */
     .call-row {
       width: 100%; max-width: 1100px;
-      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
-      animation: fadeUp .3s ease both;
+      display: flex; flex-direction: column; gap: 12px;
+      background: rgba(239,68,68,.08);
+      border: 2px solid rgba(239,68,68,.5); border-radius: 18px;
+      padding: 16px;
+      animation: fadeUp .3s ease both, callGlow 1.7s ease-in-out infinite;
+    }
+    @keyframes callGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(239,68,68,0); }
+      50%      { box-shadow: 0 0 26px rgba(239,68,68,.3); }
     }
     .call-row.hidden { display: none; }
-    .call-btn {
-      flex: 1; min-width: 200px;
-      background: #13132b; border: 2px solid #1e1e42; color: #999;
-      border-radius: 14px; padding: 15px 16px;
-      font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
-      transition: background .2s, transform .1s;
+    .call-hdr {
+      text-align: center; font-size: 1.05rem; font-weight: 900; color: #fca5a5; line-height: 1.5;
     }
+    .call-hdr b { color: #ef4444; }
+    .call-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+    /* filled, not outlined: these two are the decision, and the outlined Deal button
+       right below used to look just as clickable as they did */
+    .call-btn {
+      flex: 1; min-width: 220px;
+      border: 2px solid; border-radius: 14px; padding: 18px 16px;
+      font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: filter .2s, transform .1s;
+    }
+    .call-btn:hover { filter: brightness(1.08); }
     .call-btn:active { transform: scale(.98); }
-    .call-btn.yes { border-color: #ef4444; color: #ef4444; }
-    .call-btn.yes:hover { background: rgba(239,68,68,.1); }
-    .call-btn.no { border-color: #22c55e; color: #22c55e; }
-    .call-btn.no:hover { background: rgba(34,197,94,.1); }
+    .call-btn.yes { background: #ef4444; border-color: #ef4444; color: #2b0505; box-shadow: 0 6px 22px rgba(239,68,68,.35); }
+    .call-btn.no  { background: #22c55e; border-color: #22c55e; color: #06230f; box-shadow: 0 6px 22px rgba(34,197,94,.3); }
+    @media (max-width: 560px) { .call-btn { min-width: 100%; } }
 
     /* ── Deal button ── */
     .btn-deal {
@@ -603,14 +618,22 @@
       <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
     </div>
 
-    <!-- a Taboo! call is a claim: the host heard the round and rules on it -->
-    <div class="call-row hidden" id="call-row">
-      <button class="call-btn yes" onclick="ruleTaboo(true)" data-i18n="taboo.callYesBtn">🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver</button>
-      <button class="call-btn no" onclick="ruleTaboo(false)" data-i18n="taboo.callNoBtn">👌 No — keep playing</button>
-    </div>
     <div class="scoreboard" id="scoreboard"></div>
 
-    <div class="deal-row">
+    <!-- A Taboo! call is a claim: the host heard the round and rules on it. The panel
+         sits here, in place of the Deal / End-turn row (which hides while it is open),
+         instead of above the scoreboard: the host's hand is already going for the
+         buttons at the bottom of the screen, and a second set of buttons somewhere
+         else is exactly how "End this turn" gets pressed instead of a ruling. -->
+    <div class="call-row hidden" id="call-row">
+      <div class="call-hdr" id="call-hdr"></div>
+      <div class="call-btns">
+        <button class="call-btn yes" onclick="ruleTaboo(true)" data-i18n="taboo.callYesBtn">🚨 Yes — +2 to the referee, −1 to the clue giver</button>
+        <button class="call-btn no" onclick="ruleTaboo(false)" data-i18n="taboo.callNoBtn">👌 No — keep playing this round</button>
+      </div>
+    </div>
+
+    <div class="deal-row" id="deal-row">
       <button class="btn-deal" id="deal-btn" onclick="dealRound()">🎬 Deal a Word</button>
       <button class="btn-skip hidden" id="skip-btn" onclick="dealRound(true)" data-i18n="taboo.skipBtn">🔁 Skip this word</button>
     </div>
@@ -660,8 +683,8 @@
       easyLabel: { zh: '🟢 簡單', en: '🟢 Easy' },
       mediumLabel: { zh: '🟡 中等', en: '🟡 Medium' },
       hardLabel: { zh: '🔴 困難', en: '🔴 Hard' },
-      callYesBtn: { zh: '🚨 成立 — Taboo！裁判 +3，描述者 −2', en: '🚨 Yes — Taboo! +3 to the referee, −2 to the clue giver' },
-      callNoBtn: { zh: '👌 不成立 — 繼續遊戲', en: '👌 No — keep playing' },
+      callYesBtn: { zh: '🚨 成立 — 裁判 +2，描述者 −1', en: '🚨 Yes — +2 to the referee, −1 to the clue giver' },
+      callNoBtn: { zh: '👌 不成立 — 繼續這一輪', en: '👌 No — keep playing this round' },
       dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
       skipBtn: { zh: '🔁 跳過這個題目', en: '🔁 Skip this word' },
       resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
@@ -691,7 +714,7 @@
       refIsRefereeing: { zh: '👀 {ref} 是這輪的裁判 — 由他持有禁字清單', en: '👀 {ref} is refereeing this round — they hold the forbidden words' },
       wordWas: { zh: '答案是 {emoji} {word}', en: 'The word was {emoji} {word}' },
       gotItResult: { zh: '✅ {who} 猜對了 — {who} 與 {giver} 各 +1！', en: '✅ {who} got it — +1 for {who} and {giver}!' },
-      foulResult: { zh: '🚨 {who} 抓到禁字 — {who} +3，{giver} −2！', en: '🚨 {who} caught a forbidden word — +3 for {who}, −2 for {giver}!' },
+      foulResult: { zh: '🚨 {who} 抓到禁字 — {who} +2，{giver} −1！', en: '🚨 {who} caught a forbidden word — +2 for {who}, −1 for {giver}!' },
       timeUpResult: { zh: '⏰ 時間到 — 這輪不計分。', en: "⏰ Time's up — no points this round." },
       roundOverResult: { zh: '⏭️ 這輪結束 — 不計分。', en: '⏭️ Round over — no points.' },
       showCardsBtn: { zh: '👁️ 查看玩家卡片內容（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Show what's on player cards (spoilers — don't open while sharing)" },
@@ -715,9 +738,9 @@
       tabooCaughtKind: { zh: '🚨 抓到禁字', en: '🚨 Taboo caught' },
       gotItKind: { zh: '✅ 答對了', en: '✅ Got it' },
       roundEndedKind: { zh: '⏹️ 這輪結束', en: '⏹️ Round ended' },
-      plusThreeForYou: { zh: '（你 +3！）', en: ' (+3 for you!)' },
+      plusTwoForYou: { zh: '（你 +2！）', en: ' (+2 for you!)' },
       plusOneForYou: { zh: '（你 +1！）', en: ' (+1 for you!)' },
-      minusTwoForYou: { zh: '（你 −2）', en: ' (−2 for you)' },
+      minusOneForYou: { zh: '（你 −1）', en: ' (−1 for you)' },
       hideDeckBtn: { zh: '🙈 收起題庫', en: '🙈 Hide the deck' },
       browseDeckBtn: { zh: "👁️ 瀏覽全部 {n} 個題目（暴雷 — 分享畫面時請勿開啟）", en: "👁️ Browse all {n} words (spoilers — don't open while sharing)" },
       setupBadge: { zh: '設定', en: 'SETUP' },
@@ -1380,8 +1403,8 @@
       // an upheld Taboo! is the referee's payoff — it is the only way they score —
       // and it costs the clue giver, who let a forbidden word slip
       if (res && res.type === 'foul' && res.who) {
-        scores[res.who - 1] = (scores[res.who - 1] || 0) + 3;
-        scores[giverIdx] = (scores[giverIdx] || 0) - 2;
+        scores[res.who - 1] = (scores[res.who - 1] || 0) + 2;
+        scores[giverIdx] = (scores[giverIdx] || 0) - 1;
         popIdx = [res.who - 1];
         lostIdx = [giverIdx];
         setTimeout(() => { popIdx = []; lostIdx = []; renderScores(); }, 600);
@@ -1515,8 +1538,8 @@
       }
       if (p.state === 'done' && p.result) {
         const kind = p.result.type === 'foul' ? tt('tabooCaughtKind') : p.result.type === 'got' ? tt('gotItKind') : tt('roundEndedKind');
-        const pts = p.result.type === 'foul' ? tt('plusThreeForYou') : p.result.type === 'got' ? tt('plusOneForYou') : '';
-        const penalty = p.result.type === 'foul' && p.isGiver ? tt('minusTwoForYou') : '';
+        const pts = p.result.type === 'foul' ? tt('plusTwoForYou') : p.result.type === 'got' ? tt('plusOneForYou') : '';
+        const penalty = p.result.type === 'foul' && p.isGiver ? tt('minusOneForYou') : '';
         blocks.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
       return blocks.join('');
@@ -1528,7 +1551,14 @@
       renderScores();
       renderPhaseSummary();
       ROOM.render();
-      document.getElementById('call-row').classList.toggle('hidden', !(state === 'playing' && tabooCalls.length));
+      // the ruling and the deal buttons never share the screen: one decision at a time
+      const ruling = state === 'playing' && tabooCalls.length > 0;
+      document.getElementById('call-row').classList.toggle('hidden', !ruling);
+      document.getElementById('deal-row').classList.toggle('hidden', ruling);
+      if (ruling) {
+        document.getElementById('call-hdr').innerHTML =
+          tt('tabooYourCall', { giver: ROOM.name(giverIdx) });
+      }
       document.getElementById('roundNum').textContent = round;
       const deal = document.getElementById('deal-btn');
       const skip = document.getElementById('skip-btn');
@@ -1574,8 +1604,8 @@
         if (tabooCalls.length) {
           el.classList.add('foul');
           const who = tabooCalls.map(n => ROOM.name(n - 1)).join(', ');
-          el.innerHTML = `${tt('calledTabooOn', { who, giver: ROOM.name(giverIdx) })}
-            ${sub([tt('tabooYourCall', { giver: ROOM.name(giverIdx) }), held])}`;
+          // the question itself lives on the ruling panel down by the buttons
+          el.innerHTML = `${tt('calledTabooOn', { who, giver: ROOM.name(giverIdx) })}${sub([held])}`;
           return;
         }
         if (queue.length) {
