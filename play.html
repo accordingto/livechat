@@ -321,6 +321,31 @@
     .taboo-timer.low { border-color: #f59e0b; color: #f59e0b; }
     .taboo-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
 
+    /* ── Between rounds ──
+       The answer is out, the next word deals itself in a few seconds, and this says
+       who it lands on. The next clue giver has to know before the round starts, not
+       after: those seconds are their only chance to pick up their phone. */
+    .next-up {
+      width: 100%; display: flex; align-items: center; gap: 14px;
+      background: rgba(99,102,241,.1); border: 2px solid rgba(99,102,241,.45);
+      border-radius: 16px; padding: 14px;
+    }
+    .next-up.is-mine {
+      background: rgba(34,197,94,.12); border-color: #22c55e;
+      animation: buzzPulse 1.6s ease-in-out infinite;
+    }
+    .next-timer {
+      flex-shrink: 0; width: 54px; height: 54px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #6366f1; color: #a5b4fc;
+      font-size: 1.4rem; font-weight: 900; font-variant-numeric: tabular-nums;
+    }
+    .next-up.is-mine .next-timer { border-color: #22c55e; color: #4ade80; }
+    .next-roles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+    .nr-lead { font-size: .74rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #6b6b8a; }
+    .nr-line { font-size: .95rem; font-weight: 800; color: #ccc; line-height: 1.35; overflow-wrap: break-word; }
+    .nr-line.is-you { font-size: 1.05rem; color: #4ade80; }
+
     /* an open Taboo! call — the host decides whether it stands */
     .taboo-called {
       width: 100%; background: rgba(239,68,68,.12); border: 2px solid #ef4444; color: #ef4444;
@@ -437,6 +462,11 @@
       roundOverNoPoints: { zh: '⏭️ 這輪結束 — 不計分', en: '⏭️ Round over — no points' },
       roundOverChip: { zh: '這輪結束', en: 'Round over' },
       waitingNextWord: { zh: '等待下一個題目…', en: 'Waiting for the next word…' },
+      nextRoundLead: { zh: '下一回合', en: 'Next round' },
+      nextGiverIs: { zh: '🎤 {name} 描述', en: '🎤 {name} describes' },
+      nextRefIs: { zh: '👀 {name} 當裁判', en: '👀 {name} referees' },
+      nextYouGive: { zh: '🎤 換你描述！', en: "🎤 You're the clue giver!" },
+      nextYouRef: { zh: '👀 你當裁判', en: "👀 You're the referee" },
       openWordBtn: { zh: '看題目', en: 'Show my word' },
       openingWord: { zh: '開啟中…', en: 'Opening…' },
       openWordSub: { zh: '輪到你描述了！準備好再按下面的按鈕 — 按下去才會看到題目，倒數也才開始。', en: "You're describing this round. Tap when you're ready — the word appears and the clock starts at that moment." },
@@ -920,6 +950,52 @@
       paintTabooTimer();
     }
 
+    /* the countdown to the next round ticks locally too — the host publishes it once */
+    const nextTimer = { seq: null, left: 0, iv: null };
+
+    function stopNextTimer() {
+      if (nextTimer.iv) { clearInterval(nextTimer.iv); nextTimer.iv = null; }
+    }
+
+    function paintNextTimer() {
+      const el = document.getElementById('next-timer');
+      if (el) el.textContent = nextTimer.left;
+    }
+
+    function syncNextTimer(n) {
+      if (!n) { stopNextTimer(); nextTimer.seq = null; return false; }
+      if (n.seq !== nextTimer.seq) {
+        nextTimer.seq = n.seq;
+        nextTimer.left = n.in;
+        stopNextTimer();
+        nextTimer.iv = setInterval(() => {
+          nextTimer.left = Math.max(0, nextTimer.left - 1);
+          if (nextTimer.left <= 0) stopNextTimer();
+          paintNextTimer();
+        }, 1000);
+      }
+      return true;
+    }
+
+    /* who is up next, on every card — the two people it names need it most, but
+       everyone else knowing means nobody has to ask */
+    function nextUpHTML(n) {
+      if (!syncNextTimer(n)) return '';
+      const lines = [];
+      if (n.youGive) lines.push(`<span class="nr-line is-you">${pt('nextYouGive')}</span>`);
+      else lines.push(`<span class="nr-line">${pt('nextGiverIs', { name: esc(n.giver) })}</span>`);
+      if (n.youRef) lines.push(`<span class="nr-line is-you">${pt('nextYouRef')}</span>`);
+      else if (n.ref) lines.push(`<span class="nr-line">${pt('nextRefIs', { name: esc(n.ref) })}</span>`);
+      return `
+        <div class="next-up${n.youGive || n.youRef ? ' is-mine' : ''}">
+          <div class="next-timer" id="next-timer">${nextTimer.left}</div>
+          <div class="next-roles">
+            <span class="nr-lead">${pt('nextRoundLead')}</span>
+            ${lines.join('')}
+          </div>
+        </div>`;
+    }
+
     function syncTabooTimer(t) {
       if (!t || !t.total) { stopTabooTimer(); tabooTimer.seq = null; return false; }
       if (t.seq !== tabooTimer.seq) {
@@ -948,6 +1024,7 @@
       const ticking = data.state === 'playing' && syncTabooTimer(data.timer);
       const clock = ticking ? `<div class="taboo-timer" id="taboo-timer">${tabooTimer.left}</div>` : '';
       if (!ticking) stopTabooTimer();
+      if (!data.next) { stopNextTimer(); nextTimer.seq = null; }
 
       if (data.state === 'done') {
         const r = data.result || {};
@@ -963,7 +1040,8 @@
           <div class="taboo-target">
             <span class="tt-emoji">${data.emoji || '🙊'}</span>
             <span class="tt-word">${esc(data.target || '')}</span>
-          </div>`);
+          </div>
+          ${nextUpHTML(data.next)}`);
       }
 
       // dealt, but still sealed — the incoming clue giver opens it themselves

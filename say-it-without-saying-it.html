@@ -695,6 +695,11 @@
       waitingGiverOpen: { zh: '🎤 換 {giver} 描述 — 請他在自己的卡片上按「看題目」', en: "🎤 {giver} is up — ask them to tap Show my word on their own card" },
       waitingGiverOpenSub: { zh: '題目與禁字要等描述者自己開啟才會送出，倒數也是那時才開始。', en: 'The word and the banned list only go out when the clue giver opens them — and that is when the clock starts.' },
       nextRoundIn: { zh: '▶️ {n} 秒後自動進入下一回合', en: '▶️ Next round in {n}s' },
+      nextGiverIs: { zh: '🎤 下一位描述者：{name}', en: '🎤 {name} describes next' },
+      nextRefIs: { zh: '👀 裁判：{name}', en: '👀 Referee: {name}' },
+      nextUpPreview: { zh: '⏳ {n} 秒後換人 — 🎤 {giver}', en: '⏳ New round in {n}s — 🎤 {giver}' },
+      nextYouGivePreview: { zh: '🎤 下一回合換你描述！', en: "🎤 You're the clue giver next!" },
+      nextYouRefPreview: { zh: '👀 下一回合你當裁判', en: "👀 You're the referee next" },
       openWordPreviewBtn: { zh: '👀 看題目', en: '👀 Show my word' },
       waitingOpenPreview: { zh: '⏳ 等 {name} 開啟題目', en: '⏳ Waiting for {name} to open the word' },
       cluegiverRole: { zh: '🎤 描述者', en: '🎤 Clue giver' },
@@ -1314,8 +1319,13 @@
       if (!ROOM.enabled) return;
       cancelNextRound();
       syncScores();
-      if (!keepGiver) giverIdx = drawGiver();
-      refIdx = forbiddenOn ? drawReferee(giverIdx) : -1;
+      // whoever the cards named during the countdown is whoever gets dealt in
+      const announced = keepGiver ? null : nextRoles;
+      nextRoles = null;
+      if (!keepGiver) giverIdx = announced ? announced.giver : drawGiver();
+      refIdx = !forbiddenOn ? -1
+             : announced && announced.ref >= 0 ? announced.ref
+             : drawReferee(giverIdx);
       // only cards at the chosen difficulty, and none repeated until that level runs dry
       const deck = levelDeck();
       let avail = deck.filter(i => !used.includes(i));
@@ -1369,23 +1379,35 @@
     /* ── Rolling straight into the next round ──
        A correct guess needs nothing more from the host: the points are already in and
        the next word deals itself. The delay is there only so the answer stays on screen
-       long enough to be read out. Any button the host presses cancels it. */
+       long enough to be read out. Any button the host presses cancels it.
+
+       The next round's roles are drawn HERE rather than inside dealRound(), because
+       every card names them while the countdown runs: five seconds is exactly when the
+       next clue giver should be reaching for their phone, and they can't do that if
+       they only find out once the round has already started. `nextRoles` then waits
+       for dealRound() to consume it, so what the cards announced is what gets dealt. */
+    let nextRoles = null;   // { giver, ref } — decided before the countdown, dealt after
     let nextRoundAt = 0;
     let nextRoundIv = null;
+    let nextSeq = 0;
     const NEXT_ROUND_WAIT = 5;
 
-    function queueNextRound() {
+    function armNextRound() {
       cancelNextRound();
       if (!ROOM.enabled) return;
+      const giver = drawGiver();
+      nextRoles = { giver, ref: forbiddenOn ? drawReferee(giver) : -1 };
       nextRoundAt = NEXT_ROUND_WAIT;
-      renderStatus();
+      nextSeq++;   // the cards run their own one-second tick from this, as the clock does
       nextRoundIv = setInterval(() => {
         nextRoundAt--;
         if (nextRoundAt <= 0) { cancelNextRound(); dealRound(); }
-        else renderStatus();
+        else renderStatus();   // the host's own line; no write per second
       }, 1000);
     }
 
+    /* stops the countdown but keeps `nextRoles`: whoever was announced still deals,
+       whether the round arrives on the timer or because the host pressed the button */
     function cancelNextRound() {
       if (nextRoundIv) { clearInterval(nextRoundIv); nextRoundIv = null; }
       nextRoundAt = 0;
@@ -1395,11 +1417,10 @@
       scores[giverIdx] = (scores[giverIdx] || 0) + 1;
       scores[buzzerNum - 1] = (scores[buzzerNum - 1] || 0) + 1;
       popIdx = [giverIdx, buzzerNum - 1];
-      endRound({ type: 'got', who: buzzerNum });
-      queueNextRound();
+      endRound({ type: 'got', who: buzzerNum }, true);
     }
 
-    function endRound(res) {
+    function endRound(res, autoNext) {
       // an upheld Taboo! is the referee's payoff — it is the only way they score —
       // and it costs the clue giver, who let a forbidden word slip
       if (res && res.type === 'foul' && res.who) {
@@ -1416,6 +1437,9 @@
       timer.autoHeld = false;
       timer.running = false;
       timer.seq++;
+      // draw the next roles before publishing: the result and "you're up next" then
+      // reach every card in the same write
+      if (autoNext) armNextRound();
       publishRound();
       renderTimer();
       renderAll();
@@ -1424,6 +1448,7 @@
 
     function resetRound() {
       cancelNextRound();
+      nextRoles = null;
       state = 'idle';
       card = null;
       roundForbidden = null;
@@ -1452,6 +1477,22 @@
       ROOM.update(i => payloadFor(i));
     }
 
+    /* What the cards show between rounds: the same countdown the host is running, and
+       who is up next. Published once, with `seq` telling a card to re-sync — the card
+       counts the seconds down itself, so five seconds is one write, not five. */
+    function nextPayload(i) {
+      if (!nextRoles || !nextRoundAt) return null;
+      const ref = forbiddenOn ? nextRoles.ref : -1;
+      return {
+        seq: nextSeq,
+        in: nextRoundAt,
+        giver: ROOM.name(nextRoles.giver),
+        ref: ref >= 0 ? ROOM.name(ref) : null,
+        youGive: nextRoles.giver === i,
+        youRef: ref === i,
+      };
+    }
+
     function payloadFor(i) {
       const isGiver = i === giverIdx;
       const isRef = i === refIdx;
@@ -1464,6 +1505,7 @@
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
         tabooBy: null, iCalledTaboo: null, forbiddenOn,
         timer: timerPayload(),
+        next: nextPayload(i),
       };
       if (state === 'idle' || !card) return base;
       const done = state === 'done';
@@ -1535,6 +1577,12 @@
         blocks.push(`<div class="cp-note">${tt('notItHangTightPreview')}</div>`);
       } else {
         blocks.push(`<span class="cp-btn cp-btn-buzz">${tt('buzzInPreviewBtn')}</span>`);
+      }
+      if (p.next) {
+        blocks.push(`<div class="cp-note">${
+          p.next.youGive ? tt('nextYouGivePreview')
+          : p.next.youRef ? tt('nextYouRefPreview')
+          : tt('nextUpPreview', { n: p.next.in, giver: p.next.giver })}</div>`);
       }
       if (p.state === 'done' && p.result) {
         const kind = p.result.type === 'foul' ? tt('tabooCaughtKind') : p.result.type === 'got' ? tt('gotItKind') : tt('roundEndedKind');
@@ -1621,13 +1669,17 @@
         return;
       }
       const answer = card ? `<span class="sl-sub">${tt('wordWas', { emoji: card.emoji, word: card.word })}</span>` : '';
-      const nextIn = nextRoundAt ? `<span class="sl-sub">${tt('nextRoundIn', { n: nextRoundAt })}</span>` : '';
+      const upNext = nextRoundAt && nextRoles
+        ? `<span class="sl-sub">${tt('nextRoundIn', { n: nextRoundAt })}
+             · ${tt('nextGiverIs', { name: ROOM.name(nextRoles.giver) })}${
+               forbiddenOn && nextRoles.ref >= 0 ? ` · ${tt('nextRefIs', { name: ROOM.name(nextRoles.ref) })}` : ''}</span>`
+        : '';
       if (result && result.type === 'got') {
         el.classList.add('win');
-        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${nextIn}`;
+        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${upNext}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${nextIn}`;
+        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${upNext}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
         el.innerHTML = `${tt('timeUpResult')}${answer}`;
