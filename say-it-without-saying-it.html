@@ -713,7 +713,10 @@
       statusIdle: { zh: '按下「發一個題目」— 每個人都用自己的卡片作答。', en: 'Press Deal a Word — everyone answers from their own card.' },
       clockOnHold: { zh: '⏸️ 計時已暫停', en: '⏸️ Clock on hold' },
       calledTabooOn: { zh: '🚨 {who} 對 {giver} 喊了 <b>Taboo！</b>', en: '🚨 {who} called <b>Taboo!</b> on {giver}' },
-      tabooYourCall: { zh: '{giver} 真的說了禁字嗎？由你裁決。', en: 'Did {giver} really say a forbidden word? Your call.' },
+      tabooYourCall: { zh: '等 {giver} 在自己的卡片上回答有沒有說 — 手機不方便時也可以由你代答：',
+                       en: '{giver} answers this on their own card — or answer for them if their phone is not cooperating:' },
+      admitPreviewBtn: { zh: '🚨 我說了', en: '🚨 I did' },
+      denyPreviewBtn: { zh: '👌 我沒說', en: "👌 I didn't" },
       buzzedWaiting: { zh: '🙋 <span class="sl-who" style="color:inherit">{buzzer}</span> 搶答了 — 等待 {giver} 裁定', en: '🙋 <span class="sl-who" style="color:inherit">{buzzer}</span> buzzed in — waiting for {giver} to judge' },
       waitingToGuess: { zh: '{names} 排隊等著猜', en: '{names} waiting to guess' },
       giverIsLive: { zh: '🎤 <span class="sl-who">{giver}</span> 是這輪的描述者 — 知道答案就搶答！', en: '🎤 <span class="sl-who">{giver}</span> is the clue giver — buzz in when you know it!' },
@@ -734,7 +737,7 @@
       correctPreviewBtn: { zh: '✅ 答對', en: '✅ Correct' },
       notItPreviewBtn: { zh: '❌ 不對', en: '❌ Not it' },
       tabooPreviewBtn: { zh: '🚨 Taboo！', en: '🚨 Taboo!' },
-      calledTabooWaiting: { zh: '🚨 已喊 Taboo！— 等待主持人裁決', en: '🚨 Called Taboo! — waiting for the host' },
+      calledTabooWaiting: { zh: '🚨 已喊 Taboo！— 等描述者回答', en: '🚨 Called Taboo! — waiting for the clue giver' },
       clockOnHoldPreview: { zh: '⏸️ {name} 喊了 Taboo！— 計時暫停', en: '⏸️ {name} called Taboo! — clock on hold' },
       youBuzzedPreview: { zh: '🙋 你搶答了 — 大聲說出你的答案！', en: '🙋 You buzzed — say your guess out loud!' },
       queuePosPreview: { zh: "⏳ 你排在第 {n} 位", en: "⏳ You're #{n} in the queue" },
@@ -1060,6 +1063,16 @@
         return;
       }
 
+      /* the accused answers the Taboo! call: they are the only person who both holds
+         the banned list and knows what they just said. This has to come before the
+         buzz-verdict branch below, which drops anything that isn't a right/wrong. */
+      if (v.choice === 'ruling') {
+        if (num !== giverIdx + 1 || !tabooCalls.length) { ROOM.clearAnswer(num - 1); return; }
+        ROOM.clearAnswer(giverIdx);
+        ruleTaboo(v.upheld === true);
+        return;
+      }
+
       if (num === giverIdx + 1) {
         if (v.choice !== 'right' && v.choice !== 'wrong') return;
         if (!queue.length || v.buzzer !== queue[0]) { ROOM.clearAnswer(giverIdx); return; }
@@ -1097,7 +1110,7 @@
         return;
       }
 
-      /* Taboo! is a claim, not a verdict — the host rules on it. Only the referee
+      /* Taboo! is a claim, not a verdict — the clue giver answers it. Only the referee
          holds the banned words, so only the referee can call one. */
       if (v.choice === 'taboo') {
         if (!forbiddenOn || num !== refIdx + 1) { ROOM.clearAnswer(num - 1); return; }
@@ -1118,7 +1131,9 @@
        off and play carries on exactly where it was */
     function ruleTaboo(upheld) {
       if (!tabooCalls.length) return;
-      if (upheld) { endRound({ type: 'foul', who: tabooCalls[0] }); return; }
+      // upheld ends the turn, so it hands over like a correct guess does: the points
+      // are settled and the next clue giver is named on every card while it counts down
+      if (upheld) { endRound({ type: 'foul', who: tabooCalls[0] }, true); return; }
       tabooCalls = [];
       releaseTimer();   // waved off — the clock picks up where it stopped
       pushState();
@@ -1557,9 +1572,13 @@
       }
       const blocks = [];
       if (p.isGiver) {
+        if (p.tabooBy) {
+          blocks.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
+          blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-wrong">${tt('admitPreviewBtn')}</span><span class="cp-btn cp-btn-right">${tt('denyPreviewBtn')}</span></div>`);
+        }
         blocks.push(`<div class="cp-target"><span class="cp-emoji">${p.emoji || ''}</span><b>${p.target || '?'}</b></div>`);
         blocks.push(forbiddenPreviewHTML(p));
-        if (p.buzzerName) {
+        if (p.buzzerName && !p.tabooBy) {
           blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
           blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">${tt('correctPreviewBtn')}</span><span class="cp-btn cp-btn-wrong">${tt('notItPreviewBtn')}</span></div>`);
         }

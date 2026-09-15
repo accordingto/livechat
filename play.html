@@ -472,7 +472,10 @@
       openWordSub: { zh: '輪到你描述了！準備好再按下面的按鈕 — 按下去才會看到題目，倒數也才開始。', en: "You're describing this round. Tap when you're ready — the word appears and the clock starts at that moment." },
       waitingGiverOpen: { zh: '等 {name} 開啟題目…', en: 'Waiting for {name} to open the word…' },
       calledTaboo: { zh: '🚨 {name} 喊了 Taboo！', en: '🚨 {name} called Taboo!' },
-      waitingHostCall: { zh: '等待主持人裁決…', en: "Waiting for the host's call…" },
+      waitingGiverRuling: { zh: '等 {name} 回答有沒有說…', en: 'Waiting for {name} to answer…' },
+      tabooOnYou: { zh: '🚨 {name} 說你講了禁字 — 你說呢？', en: '🚨 {name} says you said a forbidden word — did you?' },
+      tabooAdmitBtn: { zh: '我說了（他 +2，我 −1）', en: 'I did (+2 them, −1 me)' },
+      tabooDenyBtn: { zh: '我沒說 — 繼續', en: "I didn't — keep going" },
       clueGiverChip: { zh: '🎤 你是描述者', en: "🎤 You're the clue giver" },
       buzzedIn: { zh: '🙋 {name} 搶答了', en: '🙋 {name} buzzed in' },
       correctBtn: { zh: '✅ 答對了！雙方各 +1', en: '✅ Correct! +1 each' },
@@ -913,10 +916,19 @@
       tabooSend({ choice: 'ready' });
     }
 
-    /* Taboo! is a claim the host rules on, not an instant end to the round */
+    /* Taboo! is a claim, answered by the person it is about */
     function tabooCall(btn) {
       if (btn) btn.disabled = true;
       tabooSend({ choice: 'taboo', t: Date.now() });
+    }
+
+    /* the clue giver owns up or denies it: they are the only one holding both the
+       banned list and the memory of what they just said, and the words never reach
+       the host's screen at all */
+    function tabooRule(upheld, btn) {
+      const row = btn && btn.closest('.pick-row');
+      if (row) row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      tabooSend({ choice: 'ruling', upheld });
     }
 
     /* the clue giver's verdict names the buzzer it answers, so a late tap can't land
@@ -1067,16 +1079,29 @@
           <p class="conq-wait">⏳</p>`);
       }
 
-      // a Taboo! call is open — everyone sees it while the host rules
+      // a Taboo! call is open — everyone sees it while the clue giver answers
       const callBanner = data.tabooBy
-        ? `<div class="taboo-called">${pt('calledTaboo', { name: esc(data.tabooBy) })}<span class="tc-sub">${pt('waitingHostCall')}</span></div>`
+        ? `<div class="taboo-called">${pt('calledTaboo', { name: esc(data.tabooBy) })}<span class="tc-sub">${pt('waitingGiverRuling', { name: esc(data.giverName || '') })}</span></div>`
         : '';
 
       if (data.isGiver) {
+        // an open Taboo! call takes the top of the card and replaces the buzz verdict:
+        // it is one question at a time, and this one decides whether the turn survives
+        const ruling = data.tabooBy ? `
+            <div class="taboo-called mine">${pt('tabooOnYou', { name: esc(data.tabooBy) })}</div>
+            <div class="pick-row">
+              <button class="pick-btn verdict-wrong" onclick="tabooRule(true, this)">
+                <span class="pb-key">🚨</span><span class="pb-label">${pt('tabooAdmitBtn')}</span>
+              </button>
+              <button class="pick-btn verdict-right" onclick="tabooRule(false, this)">
+                <span class="pb-key">👌</span><span class="pb-label">${pt('tabooDenyBtn')}</span>
+              </button>
+            </div>`
+          : '';
         // the giver holds the word, so the giver is the one who can judge a guess.
         // this sits high on the card — right under the clock, above the word — because
         // it is what the giver has to act on the instant it appears
-        const verdict = data.buzzer ? `
+        const verdict = data.tabooBy ? '' : data.buzzer ? `
             <div class="taboo-buzzed">${pt('buzzedIn', { name: esc(data.buzzerName || '') })}</div>
             <div class="pick-row">
               <button class="pick-btn verdict-right" onclick="tabooVerdict('right', ${data.buzzer}, this)">
@@ -1094,6 +1119,7 @@
         return shell(`
           ${chip(pt('clueGiverChip'), '#6366f1')}
           ${clock}
+          ${ruling}
           ${verdict}
           <div class="taboo-target">
             <span class="tt-emoji">${data.emoji || '🙊'}</span>
@@ -1101,7 +1127,6 @@
           </div>
           ${bannedBlock}
           ${data.forbiddenOn === false ? `<span class="pick-sub">${pt('noForbiddenThisRound')}</span>` : ''}
-          ${callBanner}
           ${idleHint}`);
       }
 
@@ -1132,7 +1157,7 @@
       // only the referee holds the banned list, so only the referee can call Taboo!
       const tabooBtn = !data.isRef || data.forbiddenOn === false ? ''
         : data.iCalledTaboo
-        ? `<div class="taboo-called mine">${pt('youCalledTaboo')}<span class="tc-sub">${pt('waitingHostCall')}</span></div>`
+        ? `<div class="taboo-called mine">${pt('youCalledTaboo')}<span class="tc-sub">${pt('waitingGiverRuling', { name: esc(data.giverName || '') })}</span></div>`
         : `<button class="taboo-foul" onclick="tabooCall(this)"${data.tabooBy ? ' disabled' : ''}>${pt('tabooFoulBtn')}</button>`;
       if (data.isRef) {
         // the banned list and the button that acts on it belong next to each other —
