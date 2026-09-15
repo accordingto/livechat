@@ -315,7 +315,6 @@
       background: #0d0d1a; border: 1px solid #1e1e42; border-radius: 4px;
       padding: 1px 6px; color: #a78bfa; font-size: .95em;
     }
-    a#sheet-open-link { text-decoration: none; display: inline-flex; align-items: center; }
     .sheet-load-btn {
       background: #e94560; border: none; border-radius: 10px; color: #0b0b18;
       padding: 10px 22px; font-family: inherit; font-size: .85rem; font-weight: 800;
@@ -468,7 +467,6 @@
                    data-i18n：i18n.js 的 applyStatic() 在 inline script 之後才跑，
                    會把「🔄 重新讀取」蓋回「📄 讀取線上題庫」 -->
               <button class="sheet-load-btn" id="sheet-load-btn" type="button">📄 Load prompts</button>
-            <a class="edit-setup-btn" id="sheet-open-link" target="_blank" rel="noopener" data-i18n="index.sheetOpenLink">📝 Open the sheet</a>
             <button class="edit-setup-btn hidden" id="sheet-reset-btn" type="button" data-i18n="index.sheetResetBtn">↺ Back to built-in prompts</button>
           </div>
         </div>
@@ -649,14 +647,13 @@
       sheetResetBtn:  { zh: '↺ 恢復預設題庫', en: '↺ Back to built-in prompts' },
       sheetLoadBtn:   { zh: '📄 讀取線上題庫', en: '📄 Load prompts' },
       sheetReloadBtn: { zh: '🔄 重新讀取', en: '🔄 Reload' },
-      sheetOpenLink:  { zh: '📝 開啟題庫試算表', en: '📝 Open the sheet' },
       sheetLoading:   { zh: '讀取中…', en: 'Loading…' },
       sheetUsingDefault: { zh: '題庫來源：<b>內建預設</b>', en: 'Prompts: <b>built-in</b>' },
       sheetUsingSheet:   { zh: '題庫來源：<b>Google Sheet</b>（{n} 個資料集 · {time} 載入）',
                            en: 'Prompts: <b>Google Sheet</b> ({n} sets · loaded {time})' },
       sheetHelp: {
-        zh: '題庫放在本站專用的 Google 試算表裡，按「📝 開啟題庫試算表」就能直接編輯，改完回來按一次讀取即可。<b>只有按下讀取的當下才會連線 Google</b>，讀到的內容存在這台裝置上，之後各遊戲頁直接使用、不會再連線——所以<b>換一台電腦要各自讀取一次</b>，別人改了題目你也要再按一次才會更新。<b>沒讀到或格式不對的分頁，那一款遊戲就自動使用內建題庫</b>，不會開天窗。',
-        en: 'The prompts live in this site\u2019s own Google Sheet — open it with the button above, edit, then come back and load again. <b>Google is only contacted when you press Load</b>; what comes back is stored on this device and used by the games with no further requests, so <b>each device loads once for itself</b> and you need to load again to pick up someone else\u2019s edits. <b>Any tab that fails or does not parse falls back to the built-in prompts</b> for that game.'
+        zh: '題庫放在本站專用的 Google 試算表裡，題目改完之後回到這裡按一次讀取即可。<b>只有按下讀取的當下才會連線 Google</b>，讀到的內容存在這台裝置上，之後各遊戲頁直接使用、不會再連線——所以<b>換一台電腦要各自讀取一次</b>，別人改了題目你也要再按一次才會更新。<b>沒讀到或格式不對的分頁，那一款遊戲就自動使用內建題庫</b>，不會開天窗。',
+        en: 'The prompts live in this site\u2019s own Google Sheet. Once it has been edited, come back here and load again. <b>Google is only contacted when you press Load</b>; what comes back is stored on this device and used by the games with no further requests, so <b>each device loads once for itself</b> and you need to load again to pick up someone else\u2019s edits. <b>Any tab that fails or does not parse falls back to the built-in prompts</b> for that game.'
       },
       sheetSummary: { zh: '✅ 已套用 {ok} 個資料集，其餘 {fallback} 個使用內建題庫',
                       en: '✅ {ok} sets applied, {fallback} falling back to built-in' },
@@ -939,12 +936,9 @@
       const bar     = document.getElementById('sheet-status');
       const loadBtn = document.getElementById('sheet-load-btn');
       const resetBtn= document.getElementById('sheet-reset-btn');
-      const openLink= document.getElementById('sheet-open-link');
       const results = document.getElementById('sheet-results');
       const help    = document.getElementById('sheet-help');
       if (!bar || typeof SHEET_DATA === 'undefined') return;
-
-      openLink.href = SHEET_DATA.SHEET_URL;
 
       const it = (key, vars) => {
         let out = I18N.t('index', key);
