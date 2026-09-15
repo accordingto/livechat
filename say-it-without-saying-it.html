@@ -566,7 +566,7 @@
       <p class="substep-desc" data-i18n="taboo.subStep3Desc">Set how many seconds each round lasts. You can still adjust it from the game screen anytime.</p>
       <span class="secs-field" id="secs-field">
         <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
-        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="60" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
+        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="90" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
         <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
         <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
       </span>
@@ -615,7 +615,7 @@
           </span>
         </div>
       </section>
-      <div class="cb-dial"><div class="timer-dial" id="timer-dial">60</div></div>
+      <div class="cb-dial"><div class="timer-dial" id="timer-dial">90</div></div>
     </div>
 
     <div class="scoreboard" id="scoreboard"></div>
@@ -995,7 +995,7 @@
     /* The clock runs here and is mirrored to the cards. Only state changes are
        published (a new seq, the state and the seconds left) — each card ticks itself
        from there, so a 90-second round is a handful of writes, not 90 per player. */
-    const timer = { total: 60, left: 60, running: false, seq: 0, iv: null };
+    const timer = { total: 90, left: 90, running: false, seq: 0, iv: null };
 
     ROOM.init({
       mount: 'room-mount',
@@ -1150,7 +1150,7 @@
       const n = Number(raw);
       const field = document.getElementById('timer-secs');
       if (!snap && (!n || n < 5 || n > 900)) return;
-      const secs = Math.max(5, Math.min(900, Math.round(n) || 60));
+      const secs = Math.max(5, Math.min(900, Math.round(n) || 90));
       if (snap) field.value = secs;
       timer.total = secs;
       if (!timer.running) timer.left = secs;
