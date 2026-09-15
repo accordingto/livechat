@@ -52,8 +52,33 @@
     const hex = CARD_COLORS[((c.color || 1) - 1) % CARD_COLORS.length];
     const parts = [];
     if (c.name) parts.push(`<span class="gp-name" style="border-color:${hex};background:${hex}">${c.name}</span>`);
+    if (c.chip) {
+      const ch = c.chip.hex || 'var(--accent)';
+      parts.push(`<span class="gp-chip" style="color:${ch};border-color:${ch}55;background:${ch}1a">${s(c.chip.label)}</span>`);
+    }
+    if (c.text)  parts.push(`<span class="gp-text">${s(c.text)}</span>`);
     if (c.emoji) parts.push(`<span class="gp-emoji">${c.emoji}</span>`);
     if (c.word)  parts.push(`<span class="gp-word">${s(c.word)}</span>`);
+    if (c.target) {
+      parts.push(`<div class="gp-target">
+          <span class="gp-tt-emoji">${c.target.emoji}</span>
+          <span class="gp-tt-word">${s(c.target.word)}</span>
+        </div>`);
+    }
+    if (c.pills) {
+      parts.push(`<div class="gp-pills">
+          <span class="gp-pill-label">${s(c.pills.label)}</span>
+          <div class="gp-pill-list">${c.pills.items.map(w => `<span class="gp-pill">${w}</span>`).join('')}</div>
+        </div>`);
+    }
+    if (c.role) {
+      parts.push(`<div class="gp-role">
+          <span class="gp-role-key">${s(c.role.key)}</span>
+          <span class="gp-role-name">${s(c.role.name)}</span>
+          <span class="gp-role-hint">${s(c.role.hint)}</span>
+        </div>`);
+    }
+    if (c.sub) parts.push(`<span class="gp-sub">${s(c.sub)}</span>`);
     if (c.buttons && c.buttons.length) {
       parts.push(`<div class="gp-btns">${c.buttons
         .map(b => `<div class="gp-btn ${b.cls || ''}">${s(b.label)}</div>`)
