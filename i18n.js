@@ -94,7 +94,7 @@
         right: max(12px, env(safe-area-inset-right));
         z-index: 9999;
         display: flex;
-        background: #13132b;
+        background: #22224a;
         border: 1px solid #2a2a52;
         border-radius: 999px;
         padding: 3px;

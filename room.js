@@ -266,7 +266,7 @@ const ROOM = (() => {
       }
       #room-code-input:focus { outline: none; border-color: var(--room-accent); }
       .room-btn {
-        background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+        background: var(--btn-face, #22224a); color: #999; border: 2px solid #35335e; border-radius: 12px;
         padding: 11px 20px; font-size: .88rem; font-weight: 700; font-family: inherit;
         white-space: nowrap; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
       }
@@ -275,7 +275,7 @@ const ROOM = (() => {
       .room-count-btns { display: flex; flex-wrap: wrap; gap: 8px; }
       .room-count-btn {
         width: 44px; height: 44px; border-radius: 12px;
-        border: 2px solid #1e1e42; background: #13132b; color: #888;
+        border: 2px solid #2e2e5e; background: var(--btn-face, #22224a); color: #aaa;
         font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
         transition: border-color .2s, color .2s, background .2s, transform .1s;
       }
@@ -352,7 +352,7 @@ const ROOM = (() => {
       .name-input:focus { outline: none; border-color: var(--room-accent); }
       .link-btn-row { display: flex; gap: 8px; width: 100%; }
       .btn-copy {
-        flex: 1; min-width: 0; background: transparent; color: var(--room-accent); border: 2px solid var(--room-accent);
+        flex: 1; min-width: 0; background: var(--btn-face, #22224a); color: var(--room-accent); border: 2px solid var(--room-accent);
         border-radius: 10px; padding: 9px 10px;
         font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
         transition: background .2s, transform .1s;
@@ -370,7 +370,7 @@ const ROOM = (() => {
         100% { transform: scale(1); }
       }
       .btn-qr-toggle {
-        background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 10px;
+        background: var(--btn-face, #22224a); color: #bbb; border: 2px solid #35335e; border-radius: 10px;
         padding: 9px 12px; font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
         transition: background .2s, border-color .2s, color .2s;
       }

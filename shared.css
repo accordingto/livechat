@@ -12,6 +12,15 @@
   --text-muted: #555;
   --text-faint: #2a2a50;
   --divider: #1e1e3a;
+  /* ── Every button has a face ──
+     A control filled with the page colour reads as a label, not something to
+     press: the Taboo! verdicts sat next to an outlined Deal button and got
+     pressed by mistake for exactly that reason. So the one action the host is
+     meant to take is a solid accent fill, and every other button sits on a
+     slate face that is clearly lighter than the page behind it. */
+  --btn-face: #22224a;
+  --btn-face-hi: #2d2d5e;
+  --btn-ink: #0b0b18;      /* text on a solid accent fill */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -68,13 +77,13 @@ a.back:hover { color: var(--text); }
 }
 
 .reset-btn {
-  background: var(--surface); color: #999;
+  background: var(--btn-face); color: #bbb;
   border: 2px solid #35355e; border-radius: 999px;
   padding: 16px 28px; font-size: 1rem; font-weight: 700;
   cursor: pointer; font-family: inherit;
   transition: background .2s, color .2s, border-color .2s, transform .1s;
 }
-.reset-btn:hover { background: var(--border-dim); color: var(--text); border-color: var(--text-muted); }
+.reset-btn:hover { background: var(--btn-face-hi); color: var(--text); border-color: var(--text-muted); }
 .reset-btn:active { transform: scale(.97); }
 .reset-btn:disabled { opacity: .3; cursor: not-allowed; }
 
@@ -131,23 +140,24 @@ a.back:hover { color: var(--text); }
 }
 
 .btn-primary {
-  background: #13132b; color: var(--accent); border: 2px solid var(--accent);
+  background: var(--accent); color: var(--btn-ink); border: 2px solid var(--accent);
   border-radius: 12px; padding: 12px 26px;
-  font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer;
   white-space: nowrap;
-  transition: background .2s, transform .1s;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 26%, transparent);
+  transition: filter .2s, transform .1s;
 }
-.btn-primary:hover  { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.btn-primary:hover  { filter: brightness(1.08); }
 .btn-primary:active { transform: scale(.98); }
 
 .btn-secondary {
-  background: #1a1a38; color: #999; border: 2px solid #35335e;
+  background: var(--btn-face); color: #bbb; border: 2px solid #35335e;
   border-radius: 12px; padding: 12px 22px;
   font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
   white-space: nowrap;
   transition: background .2s, border-color .2s, color .2s, transform .1s;
 }
-.btn-secondary:hover  { border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt, var(--accent)); }
+.btn-secondary:hover  { background: var(--btn-face-hi); border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt, var(--accent)); }
 .btn-secondary:active { transform: scale(.98); }
 
 /* ── Game guide ──
@@ -260,14 +270,14 @@ a.back:hover { color: var(--text); }
 .guide-start:active { transform: scale(.98); }
 
 .guide-reopen {
-  background: transparent; color: var(--text-muted);
+  background: var(--btn-face); color: #aaa;
   border: 1.5px solid var(--border);
   border-radius: 999px; padding: 7px 18px;
   font-size: .88rem; font-weight: 700; font-family: inherit;
   cursor: pointer; margin-bottom: 22px;
   transition: color .2s, border-color .2s;
 }
-.guide-reopen:hover { color: var(--accent); border-color: var(--accent); }
+.guide-reopen:hover { background: var(--btn-face-hi); color: var(--accent); border-color: var(--accent); }
 
 @media (max-width: 520px) {
   .guide-screen { padding: 24px 20px 22px; border-radius: 14px; }

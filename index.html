@@ -14,6 +14,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-text-size-adjust: 100%; }
 
+    /* the same button tokens shared.css defines for the game pages — this is the one
+       host page that doesn't load it, and room.js (which both use) reads them */
+    :root {
+      --btn-face: #22224a;
+      --btn-face-hi: #2d2d5e;
+      --btn-ink: #0b0b18;
+    }
+
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: #0d0d1a;
@@ -283,7 +291,7 @@
     }
     .setup-summary b { color: #eee; }
     .edit-setup-btn {
-      background: #1e1e42; border: 1.5px solid #3a3a6a; color: #bbb;
+      background: var(--btn-face); border: 1.5px solid #3a3a6a; color: #bbb;
       border-radius: 999px; padding: 7px 14px; font-family: inherit;
       font-size: .8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
       transition: background .2s, border-color .2s, color .2s;
@@ -348,7 +356,7 @@
     .substep-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 20px; }
     .substep-dot {
       width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-      background: #13132b; border: 2px solid #1e1e42; color: #666;
+      background: var(--btn-face); border: 2px solid #2e2e5e; color: #9a9ac4;
       font-family: inherit; font-size: .8rem; font-weight: 800; cursor: default;
       display: flex; align-items: center; justify-content: center;
       transition: border-color .2s, color .2s, background .2s;
@@ -369,7 +377,7 @@
     .substep-hdr h3 { font-size: 1rem; font-weight: 800; color: #eee; }
     .substep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
     .substep-nav-btn {
-      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      background: var(--btn-face); color: #999; border: 2px solid #35335e; border-radius: 12px;
       padding: 11px 22px; font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer;
       transition: background .2s, border-color .2s, color .2s, transform .1s;
     }
@@ -391,7 +399,7 @@
     .method-choices { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
     .method-btn {
       flex: 1; min-width: 150px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      background: var(--btn-face); border: 2px solid #1e1e42; border-radius: 14px;
       padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px;
       font-family: inherit; cursor: pointer; transition: border-color .2s, background .2s, transform .1s;
     }

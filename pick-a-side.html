@@ -113,7 +113,7 @@
       border-radius: 16px;
       padding: 12px 12px;
       cursor: pointer;
-      background: transparent;
+      background: var(--btn-face);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -124,19 +124,19 @@
     .vote-btn:active { transform: scale(.97); }
     .vote-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
 
-    .vote-btn.agree  { border-color: #4caf50; color: #4caf50; }
+    .vote-btn.agree  { background: rgba(76,175,80,.16); border-color: #4caf50; color: #86efac; }
     .vote-btn.agree:hover:not(:disabled) {
       background: rgba(76,175,80,.1);
       box-shadow: 0 6px 28px rgba(76,175,80,.25);
       transform: translateY(-3px);
     }
-    .vote-btn.disagree { border-color: #f44336; color: #f44336; }
+    .vote-btn.disagree { background: rgba(244,67,54,.16); border-color: #f44336; color: #fca5a5; }
     .vote-btn.disagree:hover:not(:disabled) {
       background: rgba(244,67,54,.1);
       box-shadow: 0 6px 28px rgba(244,67,54,.25);
       transform: translateY(-3px);
     }
-    .vote-btn.middle { border-color: #f59e0b; color: #f59e0b; }
+    .vote-btn.middle { background: rgba(245,158,11,.16); border-color: #f59e0b; color: #fcd34d; }
     .vote-btn.middle:hover:not(:disabled) {
       background: rgba(245,158,11,.1);
       box-shadow: 0 6px 28px rgba(245,158,11,.25);
@@ -174,7 +174,7 @@
     /* ── Spin button ── */
     .spin-btn {
       background: #ff7043;
-      color: #fff;
+      color: var(--btn-ink);
       border: none;
       border-radius: 999px;
       padding: 16px 48px;
