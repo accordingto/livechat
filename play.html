@@ -572,6 +572,55 @@
       return `<span class="card-word" style="font-size:${wordFontSize(text)}">${esc(text)}</span>`;
     }
 
+    /* ── Never split a word down the middle ──
+       The card is one big word on a phone, and the tiers above (and the fixed sizes on
+       .tt-word and friends) are guesses from a character count — they can't know how
+       wide this particular phone is. At 320-390px "Neighborhood" and "Procrastination"
+       came out as "Neighborho / od", which reads as two nonsense fragments before it
+       reads as a word. So after the card is on screen, measure the words that really
+       are on screen and step the size down until each one lands on a single line.
+       Measuring, rather than another character-count tier, is also what keeps this
+       right for whatever words a collaborator adds to the shared sheet later. */
+    function wordSplitAcrossLines(el) {
+      for (const node of el.childNodes) {
+        if (node.nodeType !== 3) continue;
+        const re = /\S+/g;
+        let m;
+        while ((m = re.exec(node.textContent))) {
+          // Chinese has no spaces, so the whole line reads as one "word" and is
+          // supposed to wrap wherever it runs out of room — never shrink for it
+          if (/[\u2e80-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(m[0])) continue;
+          const r = document.createRange();
+          r.setStart(node, m.index);
+          r.setEnd(node, m.index + m[0].length);
+          const tops = new Set(Array.from(r.getClientRects())
+            .filter(box => box.width > .5)
+            .map(box => Math.round(box.top)));
+          if (tops.size > 1) return true;
+        }
+      }
+      return false;
+    }
+
+    function fitWords(selector, minPx) {
+      el.querySelectorAll(selector).forEach(node => {
+        let px = parseFloat(getComputedStyle(node).fontSize);
+        // one pixel at a time from a size that already nearly fits: a handful of
+        // reflows on a card that is drawn once, and it stops at the first size that works
+        while (px > minPx && wordSplitAcrossLines(node)) {
+          px -= 1;
+          node.style.fontSize = px + 'px';
+        }
+      });
+    }
+
+    function fitCardWords() {
+      fitWords('.card-word', 18);          // Word Wolf / card check: the word IS the card
+      fitWords('.taboo-target .tt-word', 18);
+      fitWords('.role-box .rb-name', 16);  // You're In The Scene / Persuade Together
+      fitWords('.witness-box .wb-name', 14);
+    }
+
     /* Forbidden Words shows 3 words stacked in one row each — smaller tiers than
        the single-word card since an emoji shares the row with the text */
     /* 🗳️ Word Wolf voting: each player writes a "vote" field onto their OWN node
@@ -1120,6 +1169,11 @@
     let talkConnected = true;
     let talkClockOffset = 0;
     function showCard(data) {
+      renderCard(data);
+      fitCardWords();
+    }
+
+    function renderCard(data) {
       setCardTitle(data.name || urlName);
       if (data.game === 'letstalk' && data.talk && data.talk.version === 1) {
         if (!talkCard) talkCard = new TALK_PLAYER.Card(el, {
