@@ -72,10 +72,19 @@
         </div>`);
     }
     if (c.role) {
+      const rHint = s(c.role.hint);   // 沒有提示就不要畫一個空元素出來撐間距
       parts.push(`<div class="gp-role">
           <span class="gp-role-key">${s(c.role.key)}</span>
           <span class="gp-role-name">${s(c.role.name)}</span>
-          <span class="gp-role-hint">${s(c.role.hint)}</span>
+          ${rHint ? `<span class="gp-role-hint">${rHint}</span>` : ''}
+        </div>`);
+    }
+    if (c.turnbar) {
+      const th = CARD_COLORS[((c.turnbar.color || 1) - 1) % CARD_COLORS.length];
+      parts.push(`<div class="gp-turnbar" style="border-color:${th};background:${th}1a;color:${th}">
+          <span class="gp-ct-token">●</span>
+          <span class="gp-ct-name">${c.turnbar.name}</span>
+          <span class="gp-ct-suffix">${s(c.turnbar.suffix)}</span>
         </div>`);
     }
     if (c.sub) parts.push(`<span class="gp-sub">${s(c.sub)}</span>`);

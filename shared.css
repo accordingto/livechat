@@ -430,6 +430,14 @@ a.back:hover { color: var(--text); }
 .gp-role .gp-role-name { font-size: 1.05rem; font-weight: 900; color: #fff; line-height: 1.2; }
 .gp-role .gp-role-hint { font-size: .74rem; color: #bbb; line-height: 1.5; }
 
+.gp-turnbar {
+  display: flex; align-items: baseline; justify-content: center; gap: 6px;
+  width: 100%; border: 2px solid; border-radius: 11px; padding: 9px 11px;
+}
+.gp-turnbar .gp-ct-token { font-size: .95rem; line-height: 1; align-self: center; }
+.gp-turnbar .gp-ct-name { font-size: .95rem; font-weight: 900; letter-spacing: .4px; }
+.gp-turnbar .gp-ct-suffix { font-size: .68rem; font-weight: 800; opacity: .75; }
+
 .gp-btns { display: flex; flex-direction: column; gap: 7px; width: 100%; }
 .gp-btn {
   border-radius: 11px; padding: 9px 8px;
