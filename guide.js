@@ -35,6 +35,37 @@
   const gt = (key) =>
     typeof I18N !== 'undefined' ? I18N.t('guide', key) : DICT[key][lang()];
 
+  /* 📱 Phone mockups.
+     Some games deal a secret card to each player's phone, and that card is the
+     one thing that never appears on the shared screen — so the host has never
+     seen it either, and a sentence describing it does not land. These draw it.
+     A phone's `card` is declarative so each game only says what its own card
+     shows: `name` + `color` (1–8, play.html's player palette) make the filled
+     name chip, `emoji` / `word` the big reveal, `hint` the small line under the
+     divider, `buttons` [{label, cls}] any buttons that card really has. Every
+     field is optional. Styles live in shared.css (`.guide-phone`, `.gp-*`). */
+  const CARD_COLORS = ['#ef4444', '#4f9eff', '#22c55e', '#f59e0b',
+                       '#a78bfa', '#06b6d4', '#84cc16', '#ec4899'];
+
+  function phoneHTML(p) {
+    const c = p.card || {};
+    const hex = CARD_COLORS[((c.color || 1) - 1) % CARD_COLORS.length];
+    const parts = [];
+    if (c.name) parts.push(`<span class="gp-name" style="border-color:${hex};background:${hex}">${c.name}</span>`);
+    if (c.emoji) parts.push(`<span class="gp-emoji">${c.emoji}</span>`);
+    if (c.word)  parts.push(`<span class="gp-word">${s(c.word)}</span>`);
+    if (c.buttons && c.buttons.length) {
+      parts.push(`<div class="gp-btns">${c.buttons
+        .map(b => `<div class="gp-btn ${b.cls || ''}">${s(b.label)}</div>`)
+        .join('')}</div>`);
+    }
+    if (c.hint) parts.push(`<span class="gp-hint">${s(c.hint)}</span>`);
+    return `<div class="guide-phone-col">
+        <span class="guide-phone-cap">${s(p.caption)}</span>
+        <div class="guide-phone"><div class="gp-card">${parts.join('')}</div></div>
+      </div>`;
+  }
+
   function sectionHTML(sec) {
     let inner = '';
     if (sec.paragraphs) {
@@ -55,6 +86,9 @@
           </div>`
         )
         .join('')}</div>`;
+    } else if (sec.phones) {
+      inner = `<div class="guide-phones">${sec.phones.map(phoneHTML).join('')}</div>`
+            + (sec.note ? `<p class="guide-phone-note">${s(sec.note)}</p>` : '');
     } else if (sec.tips) {
       inner = `<ul class="guide-tips">${sec.tips
         .map((x) => `<li>${s(x)}</li>`)

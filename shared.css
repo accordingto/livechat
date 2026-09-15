@@ -332,3 +332,90 @@ a.back:hover { color: var(--text); }
   .guide-btn.is-red,
   .guide-btn.is-choice { padding: 10px 14px; font-size: .92rem; }
 }
+
+/* ── Phone mockups inside a guide ──
+   Some games deal a secret card to each player's phone, and describing that in
+   words never lands — the host has never seen the card either, because it is
+   the one thing that must not appear on the shared screen. So the guide draws
+   it: a phone frame with a scaled-down replica of the real card.
+   The values below are copied from play.html (border 2px, radius 26px, the
+   name chip's filled pill, the 6rem emoji…) and scaled down together, because
+   play.html has no stylesheet in common with the host pages — same reason the
+   is-green / is-red buttons above carry their own copy. Card colour follows
+   each page's own --accent, which already matches that game's theme in
+   play.html. */
+.guide-phones {
+  display: flex; flex-wrap: wrap; gap: 18px;
+  margin: 4px 0 2px;
+}
+.guide-phone-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.guide-phone-cap {
+  font-size: .92rem; font-weight: 800; color: var(--accent);
+  text-align: center;
+}
+
+.guide-phone {
+  width: 208px; flex-shrink: 0;
+  background: var(--bg);
+  border: 7px solid #2c2c4e;
+  border-radius: 30px;
+  padding: 20px 12px 16px;
+  position: relative;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+}
+/* the speaker slot, so it reads as a phone and not just a rounded box */
+.guide-phone::before {
+  content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  width: 52px; height: 5px; border-radius: 999px; background: #2c2c4e;
+}
+
+.gp-card {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 18px;
+  padding: 18px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 11px;
+  text-align: center;
+  box-shadow: 0 0 34px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.gp-name {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .8rem; font-weight: 900; letter-spacing: .5px;
+  color: #0b0b18; border: 2px solid; border-radius: 999px;
+  padding: 4px 13px 4px 9px; max-width: 100%;
+}
+.gp-name::before {
+  content: ''; flex-shrink: 0;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; opacity: .55;
+}
+.gp-emoji { font-size: 3.1rem; line-height: 1; }
+.gp-word  { font-size: 1.5rem; font-weight: 800; color: #fff; line-height: 1.15; overflow-wrap: break-word; }
+.gp-hint  {
+  font-size: .8rem; color: #8b8ba7; line-height: 1.5;
+  border-top: 1px solid var(--border); padding-top: 11px; width: 100%;
+}
+.gp-btns { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+.gp-btn {
+  border-radius: 11px; padding: 9px 8px;
+  font-size: .82rem; font-weight: 900; font-family: inherit;
+  border: 2px solid transparent;
+}
+.gp-btn.is-green  { background: #22c55e; border-color: #22c55e; color: #06230f; }
+.gp-btn.is-red    { background: #ef4444; border-color: #ef4444; color: #2b0505; }
+.gp-btn.is-choice { background: #0d0d1a; border-color: var(--border); color: #ddd; }
+
+.guide-phone-note {
+  font-size: 1.05rem; line-height: 1.8; color: #fff;
+  margin-top: 14px;
+  border-left: 3px solid var(--accent); padding-left: 14px;
+}
+
+@media (max-width: 520px) {
+  .guide-phones { gap: 14px; justify-content: center; }
+  .guide-phone { width: 160px; border-width: 6px; padding: 16px 9px 13px; }
+  .gp-hint { font-size: .74rem; }
+  .gp-emoji { font-size: 2.4rem; }
+  .gp-word  { font-size: 1.2rem; }
+  .guide-phone-note { font-size: .98rem; }
+}

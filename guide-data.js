@@ -23,6 +23,15 @@
  *   steps:      [ {zh, en} ]                       auto-numbered
  *   roles:      [ {emoji, name:{zh,en}, desc:{zh,en}} ]
  *   tips:       [ {zh, en} ]                       bulleted
+ *   phones:     [ {caption:{zh,en}, card:{…}} ]     phone mockups + optional
+ *                                                   `note` line underneath
+ *
+ * `phones` draws the secret card the way the player really sees it on their
+ * phone. It exists because that card is the one thing that must never appear
+ * on the shared screen, so the host has never seen it either — telling them
+ * "each player gets a word" does not convey what they are about to hand out.
+ * Card fields are all optional: name + color (1–8, play.html's palette),
+ * emoji, word, hint, buttons [{label, cls}]. See guide.js for the renderer.
  */
 
 const B = (cls, label) =>
@@ -73,6 +82,17 @@ const GAME_GUIDES = {
         { zh: `按 ${B('btn-secondary', '👁 全部公開')} 揭曉每個人的字與臥底身分。抓到臥底村民贏，沒抓到臥底贏。`,
           en: `Tap ${B('btn-secondary', '👁 Reveal All')} to show every word and unmask the Wolf. Caught, the villagers win; missed, the Wolf wins.` },
       ]},
+      { icon: '📱', title: { zh: '玩家手機上會看到什麼', en: 'What players see on their phones' },
+        phones: [
+          { caption: { zh: '一般玩家的卡片', en: "A villager's card" },
+            card: { name: 'Amy', color: 2, emoji: '🍩', word: { zh: 'Donut', en: 'Donut' },
+                    hint: { zh: '🤫 保密，不要說出來！', en: '🤫 Keep it secret!' } } },
+          { caption: { zh: '臥底的卡片', en: "The Wolf's card" },
+            card: { name: 'Ben', color: 3, emoji: '🥯', word: { zh: 'Bagel', en: 'Bagel' },
+                    hint: { zh: '🤫 保密，不要說出來！', en: '🤫 Keep it secret!' } } },
+        ],
+        note: { zh: '兩張卡片長得一模一樣——沒有任何一張寫著「你是臥底」。Ben 自己也不知道，他要從別人的描述裡慢慢發現自己拿到的字不對。',
+                en: 'The two cards are identical in every way — neither says "you are the Wolf". Ben does not know either; he has to work it out from how everyone else describes theirs.' } },
       { icon: '🎭', title: GUIDE_TITLES.roles, roles: [
         { emoji: '🐑', name: { zh: '一般玩家（多數）', en: 'Villagers (the majority)' },
           desc: { zh: '找出誰的描述跟大家對不上，但別把答案送給臥底。',
