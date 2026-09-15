@@ -668,6 +668,12 @@
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
       nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
+      openForBtn: { zh: '👀 幫 {name} 開啟題目', en: '👀 Open the word for {name}' },
+      waitingGiverOpen: { zh: '🎤 換 {giver} 描述 — 請他在自己的卡片上按「看題目」', en: "🎤 {giver} is up — ask them to tap Show my word on their own card" },
+      waitingGiverOpenSub: { zh: '題目與禁字要等描述者自己開啟才會送出，倒數也是那時才開始。', en: 'The word and the banned list only go out when the clue giver opens them — and that is when the clock starts.' },
+      nextRoundIn: { zh: '▶️ {n} 秒後自動進入下一回合', en: '▶️ Next round in {n}s' },
+      openWordPreviewBtn: { zh: '👀 看題目', en: '👀 Show my word' },
+      waitingOpenPreview: { zh: '⏳ 等 {name} 開啟題目', en: '⏳ Waiting for {name} to open the word' },
       cluegiverRole: { zh: '🎤 描述者', en: '🎤 Clue giver' },
       refereeRole: { zh: '👀 裁判', en: '👀 Referee' },
       calledTabooRole: { zh: '🚨 喊了 Taboo！', en: '🚨 Called Taboo!' },
@@ -753,7 +759,9 @@
     let roundForbidden = null; // card.forbidden sliced to bannedCount at deal time, so a mid-round
                                 // setting change can't retroactively add or drop a banned word
     let roundId = '';
-    let state = 'idle';    // idle | playing | done
+    let state = 'idle';    // idle | ready | playing | done
+    // 'ready' = the word is dealt but still sealed: it only reaches the clue giver's
+    // card once they tap Show my word there, and the clock starts at that moment
     let used = [];
     let scores = [];
     let queue = [];        // player numbers waiting to be judged, in the order they buzzed
@@ -937,7 +945,7 @@
       // clock itself, or the countdown stays frozen for the rest of the round
       if (!forbiddenOn) { tabooCalls = []; refIdx = -1; releaseTimer(); }
       // switching back on mid-round needs someone holding the list again
-      else if (state === 'playing' && refIdx < 0) refIdx = drawReferee(giverIdx);
+      else if ((state === 'playing' || state === 'ready') && refIdx < 0) refIdx = drawReferee(giverIdx);
       if (state !== 'idle') pushState();
       renderForbiddenToggle();
       renderAll();
@@ -1011,9 +1019,17 @@
        guesser : { id, choice:'buzz', t }  or  { id, choice:'foul' }
        giver   : { id, choice:'right'|'wrong', buzzer }                       */
     function handleAnswer(num, data) {
-      if (state !== 'playing') return;
+      if (state !== 'playing' && state !== 'ready') return;
       const v = data && data.vote;
       if (!v || v.id !== roundId) return;
+
+      // before a round is live the only thing a card can say is "I'm looking at my
+      // phone" — and only the incoming clue giver gets to say it
+      if (state === 'ready') {
+        ROOM.clearAnswer(num - 1);
+        if (num === giverIdx + 1 && v.choice === 'ready') startRound();
+        return;
+      }
 
       if (num === giverIdx + 1) {
         if (v.choice !== 'right' && v.choice !== 'wrong') return;
@@ -1084,7 +1100,7 @@
     ROOM.setDecorator(i => {
       const num = i + 1;
       let info = {};
-      if (state === 'playing') {
+      if (state === 'playing' || state === 'ready') {
         if (tabooCalls.includes(num)) info = { marked: true, answer: tt('calledTabooRole') };
         else if (i === giverIdx) info = { cls: 'is-giver-link', answer: tt('cluegiverRole') };
         else if (i === refIdx) info = { cls: 'is-ref-link', answer: tt('refereeRole') };
@@ -1128,6 +1144,9 @@
     }
 
     function toggleTimer() {
+      // nothing to time until the word is open; pressing Start is the host saying
+      // "just go" on the giver's behalf (a phone that won't load, say)
+      if (state === 'ready') { startRound(); return; }
       timer.autoHeld = false;  // the host pressing the button always wins
       if (timer.running) { stopTicking(); timer.running = false; }
       else {
@@ -1270,6 +1289,7 @@
     /* ── Round flow ── */
     function dealRound(keepGiver) {
       if (!ROOM.enabled) return;
+      cancelNextRound();
       syncScores();
       if (!keepGiver) giverIdx = drawGiver();
       refIdx = forbiddenOn ? drawReferee(giverIdx) : -1;
@@ -1283,7 +1303,7 @@
       roundForbidden = card.forbidden.slice(0, bannedCount);
       round++;
       roundId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      state = 'playing';
+      state = 'ready';
       queue = [];
       rejected = [];
       seenBuzz = {};
@@ -1292,17 +1312,60 @@
       result = null;
       popIdx = [];
       lostIdx = [];
-      // a fresh word gets a fresh clock, and it starts on its own: the host has just
-      // pressed a button, and having to press Start as well only ate seconds
+      // the clock is set but not running: the round hasn't started yet, the word is
+      // still sealed, and burning seconds while the next giver picks up their phone
+      // would be seconds they never had
+      stopTicking();
+      timer.autoHeld = false;
+      timer.left = timer.total;
+      timer.running = false;
+      timer.seq++;
+      publishRound();
+      renderTimer();
+      renderAll();
+    }
+
+    /* The clue giver has opened the word on their own card. That tap is what makes the
+       round live: only now does the word (and the banned list) leave this machine, and
+       only now does the clock start — so the host never has to guess whether the person
+       whose turn it is has actually picked up their phone. */
+    function startRound() {
+      if (state !== 'ready' || !card) return;
+      state = 'playing';
       stopTicking();
       timer.autoHeld = false;
       timer.left = timer.total;
       timer.running = true;
       timer.seq++;
       startTicking();
-      publishRound();
+      publishRound();   // .set() — the reveal also wipes the tap that asked for it
       renderTimer();
       renderAll();
+    }
+
+    /* ── Rolling straight into the next round ──
+       A correct guess needs nothing more from the host: the points are already in and
+       the next word deals itself. The delay is there only so the answer stays on screen
+       long enough to be read out. Any button the host presses cancels it. */
+    let nextRoundAt = 0;
+    let nextRoundIv = null;
+    const NEXT_ROUND_WAIT = 5;
+
+    function queueNextRound() {
+      cancelNextRound();
+      if (!ROOM.enabled) return;
+      nextRoundAt = NEXT_ROUND_WAIT;
+      renderStatus();
+      nextRoundIv = setInterval(() => {
+        nextRoundAt--;
+        if (nextRoundAt <= 0) { cancelNextRound(); dealRound(); }
+        else renderStatus();
+      }, 1000);
+    }
+
+    function cancelNextRound() {
+      if (nextRoundIv) { clearInterval(nextRoundIv); nextRoundIv = null; }
+      nextRoundAt = 0;
     }
 
     function awardPoint(buzzerNum) {
@@ -1310,6 +1373,7 @@
       scores[buzzerNum - 1] = (scores[buzzerNum - 1] || 0) + 1;
       popIdx = [giverIdx, buzzerNum - 1];
       endRound({ type: 'got', who: buzzerNum });
+      queueNextRound();
     }
 
     function endRound(res) {
@@ -1322,6 +1386,7 @@
         lostIdx = [giverIdx];
         setTimeout(() => { popIdx = []; lostIdx = []; renderScores(); }, 600);
       }
+      cancelNextRound();
       result = res;
       state = 'done';
       stopTicking();
@@ -1335,6 +1400,7 @@
     }
 
     function resetRound() {
+      cancelNextRound();
       state = 'idle';
       card = null;
       roundForbidden = null;
@@ -1378,14 +1444,17 @@
       };
       if (state === 'idle' || !card) return base;
       const done = state === 'done';
+      // sealed: dealt, but the clue giver hasn't opened it yet, so nothing about the
+      // word leaves this machine — not even to the giver, and not to the referee
+      const sealed = state === 'ready';
       return Object.assign(base, {
         forbiddenOn,
         // the banned list is the whole answer in a few words, so it goes only to the two
         // people who need it: the giver and the referee (and everyone once it's over)
-        forbidden: forbiddenOn && (isGiver || isRef || done) ? roundForbidden : null,
+        forbidden: forbiddenOn && !sealed && (isGiver || isRef || done) ? roundForbidden : null,
         // the word only ever reaches the clue giver, until the round is over
-        target: (isGiver || done) ? card.word : null,
-        emoji: (isGiver || done) ? card.emoji : null,
+        target: (isGiver && !sealed) || done ? card.word : null,
+        emoji: (isGiver && !sealed) || done ? card.emoji : null,
         buzzer: queue.length ? queue[0] : null,
         buzzerName: queue.length ? ROOM.name(queue[0] - 1) : null,
         queued: queue.includes(i + 1) ? queue.indexOf(i + 1) + 1 : null,
@@ -1415,6 +1484,11 @@
     function cardPreviewText(i) {
       const p = payloadFor(i);
       if (p.state === 'idle') return `<div class="cp-note">${tt('nothingDealtYet')}</div>`;
+      if (p.state === 'ready') {
+        return p.isGiver
+          ? `<span class="cp-btn cp-btn-buzz">${tt('openWordPreviewBtn')}</span>`
+          : `<div class="cp-note">${tt('waitingOpenPreview', { name: p.giverName })}</div>`;
+      }
       const blocks = [];
       if (p.isGiver) {
         blocks.push(`<div class="cp-target"><span class="cp-emoji">${p.emoji || ''}</span><b>${p.target || '?'}</b></div>`);
@@ -1464,10 +1538,13 @@
       // when a round has ended — easy to miss when only the words changed
       deal.classList.toggle('is-next', state === 'done' && ROOM.enabled);
       deal.textContent = !ROOM.enabled ? tt('linksNeededBtn')
+                       : state === 'ready' ? tt('openForBtn', { name: ROOM.name(giverIdx) })
                        : state === 'playing' ? tt('endTurnBtn', { name: ROOM.name(giverIdx) })
                        : state === 'done' ? tt('nextRoundBtn')
                        : tt('dealBtn');
-      deal.onclick = state === 'playing' ? () => endRound({ type: 'stop', who: giverIdx + 1 }) : () => dealRound();
+      deal.onclick = state === 'ready' ? () => startRound()
+                   : state === 'playing' ? () => endRound({ type: 'stop', who: giverIdx + 1 })
+                   : () => dealRound();
     }
 
     function renderStatus() {
@@ -1479,6 +1556,12 @@
       }
       if (state === 'idle') {
         el.textContent = tt('statusIdle');
+        return;
+      }
+      if (state === 'ready') {
+        el.classList.add('live');
+        el.innerHTML = `${tt('waitingGiverOpen', { giver: ROOM.name(giverIdx) })}
+          <span class="sl-sub">${tt('waitingGiverOpenSub')}</span>`;
         return;
       }
       if (state === 'playing') {
@@ -1508,12 +1591,13 @@
         return;
       }
       const answer = card ? `<span class="sl-sub">${tt('wordWas', { emoji: card.emoji, word: card.word })}</span>` : '';
+      const nextIn = nextRoundAt ? `<span class="sl-sub">${tt('nextRoundIn', { n: nextRoundAt })}</span>` : '';
       if (result && result.type === 'got') {
         el.classList.add('win');
-        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}`;
+        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${nextIn}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}`;
+        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${nextIn}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
         el.innerHTML = `${tt('timeUpResult')}${answer}`;

@@ -437,6 +437,10 @@
       roundOverNoPoints: { zh: '⏭️ 這輪結束 — 不計分', en: '⏭️ Round over — no points' },
       roundOverChip: { zh: '這輪結束', en: 'Round over' },
       waitingNextWord: { zh: '等待下一個題目…', en: 'Waiting for the next word…' },
+      openWordBtn: { zh: '看題目', en: 'Show my word' },
+      openingWord: { zh: '開啟中…', en: 'Opening…' },
+      openWordSub: { zh: '輪到你描述了！準備好再按下面的按鈕 — 按下去才會看到題目，倒數也才開始。', en: "You're describing this round. Tap when you're ready — the word appears and the clock starts at that moment." },
+      waitingGiverOpen: { zh: '等 {name} 開啟題目…', en: 'Waiting for {name} to open the word…' },
       calledTaboo: { zh: '🚨 {name} 喊了 Taboo！', en: '🚨 {name} called Taboo!' },
       waitingHostCall: { zh: '等待主持人裁決…', en: "Waiting for the host's call…" },
       clueGiverChip: { zh: '🎤 你是描述者', en: "🎤 You're the clue giver" },
@@ -822,6 +826,14 @@
       tabooSend({ choice: 'buzz', t: Date.now() });
     }
 
+    /* A round is dealt sealed: the word only lands on this card when the clue giver
+       taps for it, so the phone can change hands with nothing secret on screen. The
+       tap is also what starts everyone's clock. */
+    function tabooOpen(btn) {
+      if (btn) { btn.disabled = true; btn.querySelector('.pb-label').textContent = pt('openingWord'); }
+      tabooSend({ choice: 'ready' });
+    }
+
     /* Taboo! is a claim the host rules on, not an instant end to the round */
     function tabooCall(btn) {
       if (btn) btn.disabled = true;
@@ -903,6 +915,22 @@
             <span class="tt-emoji">${data.emoji || '🙊'}</span>
             <span class="tt-word">${esc(data.target || '')}</span>
           </div>`);
+      }
+
+      // dealt, but still sealed — the incoming clue giver opens it themselves
+      if (data.state === 'ready') {
+        if (data.isGiver) {
+          return shell(`
+            ${chip(pt('clueGiverChip'), '#6366f1')}
+            <span class="pick-sub">${pt('openWordSub')}</span>
+            <button class="taboo-buzz" onclick="tabooOpen(this)">
+              <span class="pb-key">👀</span><span class="pb-label">${pt('openWordBtn')}</span>
+            </button>`);
+        }
+        return shell(`
+          ${chip(pt('clueGiverIsChip', { name: esc(data.giverName || 'Someone') }), '#6366f1')}
+          <span class="pick-sub">${pt('waitingGiverOpen', { name: esc(data.giverName || '') })}</span>
+          <p class="conq-wait">⏳</p>`);
       }
 
       if (data.state !== 'playing') {
