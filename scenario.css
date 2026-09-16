@@ -13,7 +13,7 @@
   padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
   transition: background .2s, border-color .2s, color .2s; margin-bottom: 14px;
 }
-.scenario-browser-hdr:hover { border-color: var(--accent); color: var(--accent); }
+.scenario-browser-hdr:hover { border-color: var(--accent); color: var(--accent-text); }
 .scenario-list {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 8px;
@@ -35,14 +35,16 @@
   min-height: 200px;
 }
 .sc-placeholder .big-emoji { font-size: 3.2rem; }
-.sc-placeholder p { color: #333; font-size: .95rem; }
+/* this line is the only thing telling the host what to press before anything is
+   drawn, and it is on the shared screen — it was #333 (1.4:1), i.e. invisible */
+.sc-placeholder p { color: var(--text-dim); font-size: .95rem; }
 .sc-content { display: none; flex-direction: column; gap: 20px; }
 .sc-content.show { display: flex; }
 .filter-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .filter-btn { padding: 8px 14px; }
-.filter-btn:hover  { border-color: var(--accent); color: var(--accent); }
+.filter-btn:hover  { border-color: var(--accent); color: var(--accent-text); }
 .filter-btn:active { transform: scale(.96); }
-.filter-btn.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.filter-btn.active { border-color: var(--accent); color: var(--accent-text); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .btn-draw {
   width: 100%; max-width: 1100px;
   background: var(--accent); color: var(--btn-ink); border: 2px solid var(--accent);

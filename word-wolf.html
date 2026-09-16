@@ -11,7 +11,9 @@
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
-    :root { --accent: #f59e0b; --accent-alt: #d946ef; --warn: #f59e0b; }
+    :root { --accent: #f59e0b; --accent-alt: #d946ef; --warn: #f59e0b;
+            /* the magenta is a 4.3:1 label on a button face — lighten it for text only */
+            --accent-alt-text: #e16df2; }
 
     .header h1 { background: linear-gradient(135deg, #fff 30%, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
@@ -111,12 +113,12 @@
     }
     .pair-item .pi-num {
       flex-shrink: 0; min-width: 24px; text-align: right;
-      color: #444; font-size: .74rem; font-weight: 900;
+      color: var(--text-muted); font-size: .74rem; font-weight: 900;
     }
     /* long pairs wrap onto a second line rather than truncating — the host is reading
        this list to judge the pairs, so a cut-off word defeats the point */
     .pair-item .pi-word { overflow-wrap: break-word; }
-    .pair-item .pi-vs { color: #555; font-size: .74rem; font-weight: 900; flex-shrink: 0; }
+    .pair-item .pi-vs { color: var(--text-muted); font-size: .74rem; font-weight: 900; flex-shrink: 0; }
 
     @media (max-width: 520px) {
 

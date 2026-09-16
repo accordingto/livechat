@@ -109,10 +109,12 @@
     .pt-col.lead { border-color: currentColor; }
     .pt-key { font-size: .84rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
     .pt-count { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1; }
-    .pt-names { font-size: .84rem; font-weight: 700; color: #666; text-align: center; line-height: 1.4; }
-    .pt-a { color: #2563eb; }
-    .pt-b { color: #dc2626; }
-    .pt-c { color: #16a34a; }
+    .pt-names { font-size: .84rem; font-weight: 700; color: var(--text-dim); text-align: center; line-height: 1.4; }
+    /* the three tally columns paint their key and name in their own colour on a card
+       face, where the original 600-weight blues and reds only reached 3.5:1 */
+    .pt-a { color: #5e8cf0; }
+    .pt-b { color: #e76767; }
+    .pt-c { color: #45c16d; }
     @media (max-width: 520px) {
       .pick-tally { gap: 6px; }
       .pt-col { padding: 10px 6px; }

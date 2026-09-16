@@ -61,7 +61,7 @@
       font-size: .92rem; font-weight: 800; opacity: .75; white-space: nowrap;
     }
     .conq-status {
-      font-size: .84rem; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: #666;
+      font-size: .84rem; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--text-dim);
     }
     .conq-chip {
       background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #22c55e;
@@ -72,7 +72,7 @@
     .conq-meta {
       width: 100%; display: flex; justify-content: center; gap: 16px;
       border-top: 1px solid #1e1e42; padding-top: 11px; margin-top: 0;
-      font-size: .82rem; font-weight: 800; color: #555;
+      font-size: .82rem; font-weight: 800; color: var(--text-muted);
     }
     /* High/Low Roll on the card: same red-border + yellow-text armed look as the host screen,
        and the same "stays visible showing (0)" behaviour once the charges run out */
@@ -117,7 +117,7 @@
     .conq-vote:active { transform: scale(.98); }
     .conq-vote.yes.picked { border-color: #22c55e; background: rgba(34,197,94,.16); color: #22c55e; }
     .conq-vote.no.picked  { border-color: #ef4444; background: rgba(239,68,68,.16); color: #ef4444; }
-    .conq-wait { font-size: 1.5rem; color: #333; line-height: 1; padding: 6px 0; }
+    .conq-wait { font-size: 1.5rem; color: var(--text-dim); line-height: 1; padding: 6px 0; }
     /* the roll button on the card fires the die on the host's shared screen */
     .conq-roll {
       width: 100%; background: #22c55e; border: 2px solid #22c55e; color: #06230f;
@@ -201,11 +201,11 @@
       max-width: 100%; overflow-wrap: break-word;
     }
     .secret-hint {
-      font-size: .85rem; color: #555;
+      font-size: .85rem; color: var(--text-dim);
       border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
       width: 100%;
     }
-    .error-msg { color: #666; font-size: 1rem; text-align: center; line-height: 1.7; }
+    .error-msg { color: var(--text-dim); font-size: 1rem; text-align: center; line-height: 1.7; }
 
     /* 🗳️ vote section on the Word Wolf card */
     .vote-section {
@@ -214,7 +214,7 @@
     }
     .vote-title {
       font-size: .86rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
-      color: #666; margin-bottom: 10px;
+      color: var(--text-dim); margin-bottom: 10px;
     }
     .vote-list { display: flex; flex-direction: column; gap: 8px; }
     .vote-btn {
@@ -243,7 +243,7 @@
       width: 100%; font-size: 1.05rem; font-weight: 700; color: #fff; line-height: 1.5;
       overflow-wrap: break-word;
     }
-    .pick-sub { font-size: .85rem; color: #888; line-height: 1.5; }
+    .pick-sub { font-size: .85rem; color: var(--text-dim); line-height: 1.5; }
     .pick-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .pick-btn {
       display: flex; align-items: center; gap: 12px; text-align: left;
@@ -365,7 +365,7 @@
     .taboo-buzzed.mine { animation: buzzIn .3s ease both, buzzPulse 1.6s ease-in-out infinite .3s; }
     /* locked out of buzzing this cycle — dim and neutral, not the "go" green of the buzzer */
     .taboo-waiting {
-      width: 100%; background: rgba(148,163,184,.08); border: 2px solid #3a3a5c; color: #888;
+      width: 100%; background: rgba(148,163,184,.08); border: 2px solid #3a3a5c; color: var(--text-dim);
       border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 900;
       animation: buzzIn .3s ease both;
     }
@@ -561,6 +561,13 @@
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     }
+
+    /* A role colour that works as a border and a 10%-tint fill is not automatically
+       readable as 13px uppercase TEXT sitting on that same tint: indigo and purple
+       land around 3.7:1 there. The chip keeps the role's exact colour for its shape
+       and paints the label with a lightened mix of it, which clears 4.5:1 for every
+       role colour the two games use without losing which role it is. */
+    const chipInk = hex => `color-mix(in srgb, ${hex} 78%, #fff)`;
 
     /* one vivid gradient per player number — the same player always sees the
        same color all night, so their card is instantly recognizable as theirs */
@@ -1030,7 +1037,7 @@
             <div class="tb-list">${banned}</div>
           </div>` : '';
       const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
-      const chip = (text, hex) => `<span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${text}</span>`;
+      const chip = (text, hex) => `<span class="pick-chip" style="color:${chipInk(hex)};border-color:${hex}55;background:${hex}1a">${text}</span>`;
       const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}</div>`;
       // the clock is on every card while a word is in play
       const ticking = data.state === 'playing' && syncTabooTimer(data.timer);
@@ -1196,7 +1203,7 @@
       // whatever their base role (always jury) would otherwise show
       const roleHex = data.isWitness ? '#eab308' : ({ judge: '#8b5cf6', defendant: '#ef4444', prosecutor: '#f97316', defense: '#3b82f6', jury: '#a78bfa' }[role] || '#e94560');
       const roleLabel = data.isWitness ? pt('witnessRole') : ({ judge: pt('judgeRole'), defendant: pt('defendantRole'), prosecutor: pt('prosecutorRole'), defense: pt('defenseRole'), jury: pt('juryRole') }[role] || '');
-      const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
+      const chip = `<span class="pick-chip" style="color:${chipInk(roleHex)};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
       const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
 
       // the verdict, once revealed, stays on screen through the Judge's Ruling
@@ -1319,7 +1326,7 @@
         el.innerHTML = `
           <div class="secret-card theme-hottake">
             ${nameBanner(data)}
-            <span class="pick-chip" style="color:#ff7043;border-color:#ff704355;background:rgba(255,112,67,.1)">${pt('hotTakeChip')}</span>
+            <span class="pick-chip" style="color:${chipInk('#ff7043')};border-color:#ff704355;background:rgba(255,112,67,.1)">${pt('hotTakeChip')}</span>
             <span class="pick-text">${esc(data.text || '')}</span>
             <div class="pick-row">
               ${pickButton('agree', '👍', pt('agreeLabel'), picked, '#4caf50')}
@@ -1352,7 +1359,7 @@
         el.innerHTML = `
           <div class="secret-card theme-scene">
             ${nameBanner(data)}
-            <span class="pick-chip" style="color:#ec4899;border-color:#ec489955;background:rgba(236,72,153,.1)">🎭 ${esc(data.title || pt('sceneFallbackTitle'))}</span>
+            <span class="pick-chip" style="color:${chipInk('#ec4899')};border-color:#ec489955;background:rgba(236,72,153,.1)">🎭 ${esc(data.title || pt('sceneFallbackTitle'))}</span>
             <span class="pick-text">${esc(data.situation || '')}</span>
             <div class="role-box" style="border-color:#ec489966">
               <span class="rb-key" style="color:#ec4899">${pt('youPlay', { letter: esc(r.letter || '') })}</span>
@@ -1379,7 +1386,7 @@
         el.innerHTML = `
           <div class="secret-card theme-persuade" style="border-color:${hex};box-shadow:0 0 60px ${hex}2e">
             ${nameBanner(data)}
-            <span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${judge ? pt('youAreJudge') : pt('persuaderTeam')}</span>
+            <span class="pick-chip" style="color:${chipInk(hex)};border-color:${hex}55;background:${hex}1a">${judge ? pt('youAreJudge') : pt('persuaderTeam')}</span>
             <div class="role-box" style="border-color:${hex}66">
               <span class="rb-key" style="color:${hex}">${judge ? pt('yourRole') : pt('yourTeamPlays')}</span>
               <span class="rb-name">${esc(judge ? (data.judge || 'The Judge') : (data.team || ''))}</span>

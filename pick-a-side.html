@@ -76,7 +76,7 @@
       font-weight: 600;
       line-height: 1.55;
     }
-    .take-text.placeholder { color: #333; font-weight: 400; font-size: 1rem; }
+    .take-text.placeholder { color: var(--text-dim); font-weight: 400; font-size: 1rem; }
 
     /* rolling flicker */
     .card.rolling .take-text { animation: flicker .1s linear infinite; }
@@ -191,7 +191,7 @@
       transform: translateY(-2px);
     }
     .spin-btn:active { transform: scale(.97); }
-    .spin-btn:disabled { background: #2a2a4a; color: #555; cursor: not-allowed; box-shadow: none; transform: none; }
+    .spin-btn:disabled { background: #2a2a4a; color: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none; }
 
     .round-badge span { color: #ff7043; }
 

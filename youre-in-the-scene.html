@@ -12,7 +12,9 @@
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="scenario.css">
   <style>
-    :root { --accent: #ec4899; }
+    :root { --accent: #ec4899;
+            /* the pink is 4.3:1 as a label on a button face — lighten it for text */
+            --accent-text: #ee57a1; }
     .scenario-item { align-items: center; gap: 12px; }
     .sc-placeholder { min-height: 280px; }
     .sc-content { gap: 0; }
@@ -85,7 +87,7 @@
     .ps-wrap { margin-bottom: 20px; }
     .ps-label {
       font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #666; margin-bottom: 10px;
+      color: var(--text-dim); margin-bottom: 10px;
     }
     .ps-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .ps-btn {
@@ -105,7 +107,7 @@
     /* ── Roles header ── */
     .roles-header {
       font-size: .88rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #666; margin-bottom: 14px;
+      color: var(--text-dim); margin-bottom: 14px;
     }
 
     /* ── Role grid ── */

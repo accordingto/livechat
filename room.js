@@ -246,7 +246,11 @@ const ROOM = (() => {
   /* ── Setup UI ── */
   function injectCSS(accent) {
     const css = `
-      .room-setup { width: 100%; max-width: 1100px; margin: 24px auto; --room-accent: ${accent}; }
+      /* --room-accent paints shapes (borders, fills, glows) and keeps the exact brand
+         colour; --room-accent-text paints words, and falls back to the page's own
+         --accent-text, which is lightened enough to stay readable on a button face. */
+      .room-setup { width: 100%; max-width: 1100px; margin: 24px auto;
+                    --room-accent: ${accent}; --room-accent-text: var(--accent-text, ${accent}); }
       .room-setup .hidden { display: none !important; }
       .room-card {
         background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
@@ -256,7 +260,7 @@ const ROOM = (() => {
       .room-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
       .room-label {
         font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-        color: #555; min-width: 58px;
+        color: var(--text-muted, #82829f); min-width: 58px;
       }
       .room-divider { height: 1px; background: #1e1e42; }
       #room-code-input {
@@ -271,7 +275,7 @@ const ROOM = (() => {
         white-space: nowrap; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
       }
       .room-btn:active { transform: scale(.98); }
-      .room-btn.primary { color: var(--room-accent); border-color: var(--room-accent); }
+      .room-btn.primary { color: var(--room-accent-text); border-color: var(--room-accent); }
       .room-count-btns { display: flex; flex-wrap: wrap; gap: 8px; }
       .room-count-btn {
         width: 44px; height: 44px; border-radius: 12px;
@@ -283,10 +287,10 @@ const ROOM = (() => {
       .room-count-btn.active { border-color: var(--room-accent); color: #fff; background: color-mix(in srgb, var(--room-accent) 18%, transparent); }
       .room-hdr {
         font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-        color: #555; margin: 18px 0 10px; display: flex; align-items: center; gap: 8px;
+        color: var(--text-muted, #82829f); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px;
       }
-      .room-tag { font-size: .74rem; letter-spacing: .5px; color: #555; border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px; }
-      .room-note { color: #555; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
+      .room-tag { font-size: .74rem; letter-spacing: .5px; color: var(--text-muted, #82829f); border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px; }
+      .room-note { color: var(--text-dim, #9999bb); font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
       /* sits right after room-note, wrapping onto its own line on narrow screens
          next to whatever game-specific toggle (e.g. Say It Without Saying It's
          "Show what's on player cards") also lives in that same flow */
@@ -308,10 +312,10 @@ const ROOM = (() => {
       .check-note { display: flex; flex-direction: column; gap: 10px; }
       .check-note-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
       .check-note .check-clear-btn {
-        background: none; border: none; color: #666; font-family: inherit;
+        background: none; border: none; color: var(--text-dim, #9999bb); font-family: inherit;
         font-size: .78rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0;
       }
-      .check-note .check-clear-btn:hover { color: #999; }
+      .check-note .check-clear-btn:hover { color: #fff; }
       /* the actual "check it's correct now" action — kept as a real button
          (not the plain underlined Clear link) since revealing the answers
          is the whole point of this step, not a minor cleanup action */
@@ -348,11 +352,11 @@ const ROOM = (() => {
         color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
         padding: 8px 10px; transition: border-color .2s;
       }
-      .name-input::placeholder { color: #555; }
+      .name-input::placeholder { color: var(--text-muted, #82829f); }
       .name-input:focus { outline: none; border-color: var(--room-accent); }
       .link-btn-row { display: flex; gap: 8px; width: 100%; }
       .btn-copy {
-        flex: 1; min-width: 0; background: var(--btn-face, #22224a); color: var(--room-accent); border: 2px solid var(--room-accent);
+        flex: 1; min-width: 0; background: var(--btn-face, #22224a); color: var(--room-accent-text); border: 2px solid var(--room-accent);
         border-radius: 10px; padding: 9px 10px;
         font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
         transition: background .2s, transform .1s;
@@ -374,7 +378,7 @@ const ROOM = (() => {
         padding: 9px 12px; font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
         transition: background .2s, border-color .2s, color .2s;
       }
-      .btn-qr-toggle.open { border-color: var(--room-accent); color: var(--room-accent); }
+      .btn-qr-toggle.open { border-color: var(--room-accent); color: var(--room-accent-text); }
       .qr-inline {
         background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
         width: 100%; max-width: 160px; animation: fadeUp .25s ease both;
@@ -386,12 +390,12 @@ const ROOM = (() => {
         font-size: .82rem; font-weight: 800; line-height: 1.35; color: #ddd;
         animation: fadeUp .25s ease both;
       }
-      .link-answer .la-sub { display: block; font-size: .7rem; font-weight: 700; color: #555; margin-top: 3px; }
+      .link-answer .la-sub { display: block; font-size: .7rem; font-weight: 700; color: var(--text-muted, #82829f); margin-top: 3px; }
       @media (hover: hover) and (pointer: fine) {
-        .room-btn:hover { border-color: var(--room-accent); color: var(--room-accent); }
-        .room-count-btn:hover { border-color: var(--room-accent); color: var(--room-accent); }
+        .room-btn:hover { border-color: var(--room-accent); color: var(--room-accent-text); }
+        .room-count-btn:hover { border-color: var(--room-accent); color: var(--room-accent-text); }
         .btn-copy:hover { background: color-mix(in srgb, var(--room-accent) 10%, transparent); }
-        .btn-qr-toggle:hover { border-color: var(--room-accent); color: var(--room-accent); }
+        .btn-qr-toggle:hover { border-color: var(--room-accent); color: var(--room-accent-text); }
         .check-btn:hover { background: rgba(56,189,248,.2); border-color: #7dd3fc; color: #bae6fd; }
         .check-note .check-reveal-btn:hover { background: rgba(56,189,248,.22); border-color: #bae6fd; color: #bae6fd; }
       }

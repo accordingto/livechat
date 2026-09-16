@@ -7,10 +7,19 @@
   --surface-b: #100f25;
   --border: #1e1e42;
   --border-dim: rgba(255,255,255,.06);
-  --text: #eee;
-  --text-dim: #666;
-  --text-muted: #555;
-  --text-faint: #2a2a50;
+  /* ── Text has to survive a projector ──
+     Every colour here is contrast-checked against --bg. The host shares this
+     screen over a call, so the picture is scaled down and video-compressed
+     before anyone reads it: greys that look merely "quiet" on the machine it
+     was built on disappear completely on the other end. #555 body text was
+     2.6:1 and #333 hints were 1.4:1 — they were not quiet, they were gone.
+     Anything a host or player has to READ uses --text / --text-dim /
+     --text-muted, all of which clear 4.5:1 on every surface they land on.
+     --text-faint is for rules and separators, never for words. */
+  --text: #eee;            /* 16.6:1 — headings, card words                */
+  --text-dim: #9999bb;     /* 7.0:1  — body copy, and any label on a button face */
+  --text-muted: #82829f;   /* 5.2:1  — small captions on the page or a card      */
+  --text-faint: #2a2a50;   /* decoration only: hairlines, dividers, watermarks   */
   --divider: #1e1e3a;
   /* ── Every button has a face ──
      A control filled with the page colour reads as a label, not something to
@@ -20,7 +29,14 @@
      slate face that is clearly lighter than the page behind it. */
   --btn-face: #22224a;
   --btn-face-hi: #2d2d5e;
-  --btn-ink: #0b0b18;      /* text on a solid accent fill */
+  /* An accent bright enough to be a solid fill is not automatically bright enough
+     to be TEXT on --btn-face: indigo #6366f1 reads 3.4:1 there. Each page that
+     paints its accent as words overrides --accent-text (and --accent-alt-text)
+     with a lightened version; the fill, border and glow keep the exact brand
+     colour, because those are shapes, not something anyone has to read. */
+  --accent-text: var(--accent);
+  --btn-ink: #050510;      /* text on a solid accent fill — dark enough that even
+                              the lightest accent (indigo) clears 4.5:1 */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -135,7 +151,7 @@ a.back:hover { color: var(--text); }
 .section-hdr {
   width: 100%; max-width: 1100px;
   font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-  color: #555; margin: 6px 0 10px;
+  color: var(--text-muted); margin: 6px 0 10px;
   position: relative; z-index: 1;
 }
 
@@ -157,7 +173,7 @@ a.back:hover { color: var(--text); }
   white-space: nowrap;
   transition: background .2s, border-color .2s, color .2s, transform .1s;
 }
-.btn-secondary:hover  { background: var(--btn-face-hi); border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt, var(--accent)); }
+.btn-secondary:hover  { background: var(--btn-face-hi); border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt-text, var(--accent-text)); }
 .btn-secondary:active { transform: scale(.98); }
 
 /* ── Game guide ──

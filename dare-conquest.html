@@ -45,7 +45,7 @@
     @media (hover: hover) and (pointer: fine) {
       .btn-primary:hover:not(:disabled) { background: rgba(34,197,94,.1); }
       .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
-      .btn-secondary:disabled:hover { border-color: #1e1e42; color: #666; }
+      .btn-secondary:disabled:hover { border-color: #1e1e42; color: var(--text-muted); }
     }
 
     /* ── Setup screen: same shape as the card games (control card on top, one
@@ -66,7 +66,7 @@
     .setup-card .btn-secondary { padding: 11px 20px; font-size: .88rem; }
 
     .rules-note {
-      color: #555; font-size: .82rem; line-height: 1.7;
+      color: var(--text-dim); font-size: .82rem; line-height: 1.7;
       margin-top: 22px; padding-top: 18px; border-top: 1px solid #1e1e42;
     }
 
@@ -93,7 +93,7 @@
       transition: border-color .25s, box-shadow .25s, transform .2s;
     }
     .score-chip .token { font-size: 1.05rem; }
-    .score-chip .count { color: #888; font-weight: 800; }
+    .score-chip .count { color: var(--text-dim); font-weight: 800; }
     .score-chip.current-turn {
       transform: translateY(-3px);
       box-shadow: 0 0 0 1px currentColor, 0 8px 24px rgba(0,0,0,.35);
@@ -114,7 +114,7 @@
     }
     .turn-indicator { font-size: clamp(.9rem, 2vw, 1.05rem); font-weight: 800; white-space: nowrap; }
     .turn-indicator .tname { color: var(--turn-color, #22c55e); }
-    .turn-indicator .round-count { color: #888; font-weight: 700; margin-left: 2px; }
+    .turn-indicator .round-count { color: var(--text-dim); font-weight: 700; margin-left: 2px; }
     .roll-btn { font-size: clamp(.78rem, 1.6vw, .88rem); padding: 8px 18px; }
     /* ── Roll row: the single movement die, flanked by the two range skills ── */
     .roll-btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
@@ -178,7 +178,7 @@
       font-size: 1.3rem; font-weight: 900; color: #eee; min-height: 1.6rem;
       font-variant-numeric: tabular-nums;
     }
-    .diceoff-vs { font-size: .85rem; font-weight: 900; color: #555; align-self: center; padding: 0 2px; flex-shrink: 0; }
+    .diceoff-vs { font-size: .85rem; font-weight: 900; color: var(--text-dim); align-self: center; padding: 0 2px; flex-shrink: 0; }
 
     /* ── Dice-Off winner celebration: highlight whichever side won the roll-off ── */
     .diceoff-side { position: relative; border-radius: 14px; transition: opacity .3s, filter .3s; }
@@ -447,7 +447,7 @@
 
     .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .3s ease both; }
     .center-idle .ci-icon { font-size: 1.5rem; }
-    .center-idle p { color: #555; font-size: .85rem; }
+    .center-idle p { color: var(--text-dim); font-size: .85rem; }
 
     .center-safe { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: popIn .35s ease both; }
     .center-safe .cs-icon { font-size: 2rem; }
@@ -495,7 +495,7 @@
     .swap-confirming .timer-block,
     .swap-confirming .q-actions { opacity: .18; pointer-events: none; transition: opacity .18s; }
     .swap-confirm p { font-size: .84rem; color: #ddd; font-weight: 700; line-height: 1.4; text-align: center; }
-    .swap-confirm .swap-left { display: block; color: #666; font-weight: 700; font-size: .78rem; margin-top: 2px; }
+    .swap-confirm .swap-left { display: block; color: var(--text-dim); font-weight: 700; font-size: .78rem; margin-top: 2px; }
     .swap-confirm-actions { display: flex; gap: 6px; }
     .swap-confirm-actions button {
       flex: 1; padding: 6px 4px; font-size: .82rem; font-weight: 800; font-family: inherit;
@@ -569,7 +569,7 @@
       color: #22c55e; margin-bottom: 5px;
     }
     .prompt-item .pi-text { font-size: .86rem; color: #aaa; line-height: 1.55; }
-    .prompt-item .pi-text em { color: #666; font-style: normal; }
+    .prompt-item .pi-text em { color: var(--text-dim); font-style: normal; }
     /* each deck is written as five groups of ten — browsing it grouped the same way
        is how the host finds the kind of prompt they want */
     .prompt-group-hdr {
@@ -583,7 +583,7 @@
     .prompt-group-hdr::after {
       content: ''; flex: 1; height: 1px; background: #1e1e42;
     }
-    .prompt-group-hdr .pg-count { color: #444; letter-spacing: 1px; }
+    .prompt-group-hdr .pg-count { color: var(--text-muted); letter-spacing: 1px; }
     .truth-list .prompt-group-hdr { color: #eab308; }
     .truth-list .prompt-item .pi-cat { color: #eab308; }
 

@@ -105,7 +105,7 @@
       #i18n-toggle button {
         border: none;
         background: transparent;
-        color: #888;
+        color: #9999bb;
         font-size: 12px;
         font-weight: 700;
         padding: 6px 13px;

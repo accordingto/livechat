@@ -47,7 +47,8 @@ const GAME_RENDER = (() => {
         padding: 3px 10px; border-radius: 999px; flex-shrink: 0; margin-top: 2px;
       }
       .gr-opt-a .gr-opt-key { background: #4f9eff; color: #0d0d1a; }
-      .gr-opt-b .gr-opt-key { background: #ef4444; color: #fff; }
+      /* dark ink like its A and C siblings — white on this red was only 3.8:1 */
+      .gr-opt-b .gr-opt-key { background: #ef4444; color: #0d0d1a; }
       .gr-opt-c .gr-opt-key { background: #22c55e; color: #0d0d1a; }
       .gr-opt-text { font-size: clamp(1.05rem, 2.5vw, 1.2rem); line-height: 1.55; }
     `;
