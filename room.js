@@ -340,6 +340,12 @@ const ROOM = (() => {
          also caps every row at 3 columns on the widths this site actually
          renders at, so nothing needs to hand-count "more than 4 players" */
       .room-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start; gap: 12px; }
+      /* In the compact roster the action card and the player columns are direct
+         siblings with nothing between them, so they sat edge to edge — two panels
+         touching, which reads as one broken box. (The full setup layout has the
+         header, the note and the two buttons in between, so this adjacent-sibling
+         rule only fires in the compact case, which is the one that needed it.) */
+      .room-card + .room-links { margin-top: 18px; }
       .link-col {
         flex: 1; min-width: 160px;
         background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 14px;
