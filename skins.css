@@ -36,7 +36,7 @@
 
   --bg: #070613;
   --surface: var(--glass);
-  --surface-2: rgba(255,255,255,.085);
+  --surface-2: rgba(255,255,255,.16);   /* a panel inside a panel, e.g. the board's special tiles */
   --surface-b: rgba(255,255,255,.03);
   --border: var(--edge);
   --border-2: rgba(255,255,255,.18);
@@ -46,7 +46,7 @@
 
   --btn-face: rgba(255,255,255,.09);
   --btn-face-hi: rgba(255,255,255,.17);
-  --btn-off: rgba(255,255,255,.05);
+  --btn-off: rgba(255,255,255,.11);     /* dim, but still a visible edge where it is used as one */
   --btn-ink: #000;           /* on a glowing capsule, pure ink is what clears 4.5:1
                                 even against the lightest accent (indigo) */
 
@@ -103,46 +103,52 @@
 
 /* ── 2. Glass ──
    Every panel becomes a floating pane: soft corner, hairline of light along the
-   top edge, wide shadow, and the page's colour blurred through it. */
-:root[data-skin="aurora"] .guide-screen,
-:root[data-skin="aurora"] .room-card,
-:root[data-skin="aurora"] .setup-card,
-:root[data-skin="aurora"] .scenario-card,
-:root[data-skin="aurora"] .scene-card,
-:root[data-skin="aurora"] .take-card,
-:root[data-skin="aurora"] .score-card,
-:root[data-skin="aurora"] .control-bar,
-:root[data-skin="aurora"] .phase-summary,
-:root[data-skin="aurora"] .substep-panel,
-:root[data-skin="aurora"] .step-card,
-:root[data-skin="aurora"] .kc-flow,
-:root[data-skin="aurora"] .charge-card,
-:root[data-skin="aurora"] .witness-card,
-:root[data-skin="aurora"] .jury-tally,
-:root[data-skin="aurora"] .role-card,
-:root[data-skin="aurora"] .link-col,
-:root[data-skin="aurora"] .pt-col,
-:root[data-skin="aurora"] .game-card,
-:root[data-skin="aurora"] .deck-body,
-:root[data-skin="aurora"] .scenario-browser-body,
-:root[data-skin="aurora"] .status-line,
-:root[data-skin="aurora"] .board-wrap {
+   top edge, wide shadow, and the page's colour blurred through it.
+
+   :where() on purpose. A game marks its own state by adding a class — Word
+   Wolf's .link-col.is-picked, Taboo's .score-card.is-giver, Kangaroo's role
+   colours — and those rules are two classes, exactly the weight this file's
+   :root[data-skin] prefix used to carry. skins.css loads last, so the tie went
+   to the skin and the aurora page painted every panel identically: whoever got
+   picked looked like everyone else. Wrapping the base look in :where() drops it
+   to one class, so the skin sets the material and the game still gets to say
+   which panel matters. */
+[data-skin="aurora"] :where(
+  .guide-screen,
+  .room-card,
+  .setup-card,
+  .scenario-card,
+  .scene-card,
+  .take-card,
+  .score-card,
+  .control-bar,
+  .phase-summary,
+  .substep-panel,
+  .step-card,
+  .kc-flow,
+  .charge-card,
+  .witness-card,
+  .jury-tally,
+  .role-card,
+  .link-col,
+  .pt-col,
+  .game-card,
+  .deck-body,
+  .scenario-browser-body,
+  .status-line,
+  .board-wrap) {
   background-color: var(--glass);
   background-image: none;
-  border: 1px solid var(--edge);
   border-radius: var(--r-lg);
   box-shadow: var(--lift), var(--sheen);
   backdrop-filter: blur(16px) saturate(125%);
   -webkit-backdrop-filter: blur(16px) saturate(125%);
 }
 
-/* A card that is currently "the one" — the clue giver, the lead vote, the
-   player whose turn it is — lifts further and takes the accent as its light,
-   instead of only swapping its border colour. */
-:root[data-skin="aurora"] .score-card.is-giver,
-:root[data-skin="aurora"] .score-card.is-buzzed,
-:root[data-skin="aurora"] .pt-col.lead,
-:root[data-skin="aurora"] .link-col.is-marked,
+/* The hub's game cards have no state of their own, so the skin is free to give
+   them a hover. Everything else that means "this is the one right now" is left
+   to the game that owns it — the skin must never be the thing deciding which
+   panel is highlighted. */
 :root[data-skin="aurora"] .game-card:hover {
   background-color: var(--glass-hi);
   box-shadow: var(--lift), var(--sheen),
@@ -153,31 +159,32 @@
 
 /* ── 3. Capsules ──
    Controls stop being rectangles with a border and become pills with a face.
-   Nothing here changes a word's capitalisation — this skin never shouts. */
-:root[data-skin="aurora"] .btn-secondary,
-:root[data-skin="aurora"] .btn-skip,
-:root[data-skin="aurora"] .reset-btn,
-:root[data-skin="aurora"] .guide-reopen,
-:root[data-skin="aurora"] .deck-toggle,
-:root[data-skin="aurora"] .room-btn,
-:root[data-skin="aurora"] .substep-nav-btn,
-:root[data-skin="aurora"] .edit-setup-btn,
-:root[data-skin="aurora"] .kc-back-btn,
-:root[data-skin="aurora"] .timer-ctrl-btn,
-:root[data-skin="aurora"] .timer-btn,
-:root[data-skin="aurora"] .btn-swap,
-:root[data-skin="aurora"] .filter-btn,
-:root[data-skin="aurora"] .level-btn,
-:root[data-skin="aurora"] .banned-count-btn,
-:root[data-skin="aurora"] .room-count-btn,
-:root[data-skin="aurora"] .btn-copy,
-:root[data-skin="aurora"] .btn-qr-toggle,
-:root[data-skin="aurora"] .ps-btn,
-:root[data-skin="aurora"] .method-btn,
-:root[data-skin="aurora"] .scenario-browser-hdr,
-:root[data-skin="aurora"] .scenario-item {
+   Nothing here changes a word's capitalisation — this skin never shouts.
+   :where() for the same reason as the panels above: .ps-btn.active and
+   .timer-btn.ghost have to keep winning. */
+[data-skin="aurora"] :where(
+  .btn-secondary,
+  .btn-skip,
+  .reset-btn,
+  .deck-toggle,
+  .room-btn,
+  .substep-nav-btn,
+  .edit-setup-btn,
+  .kc-back-btn,
+  .timer-ctrl-btn,
+  .timer-btn,
+  .btn-swap,
+  .filter-btn,
+  .level-btn,
+  .banned-count-btn,
+  .room-count-btn,
+  .btn-copy,
+  .btn-qr-toggle,
+  .ps-btn,
+  .method-btn,
+  .scenario-browser-hdr,
+  .scenario-item) {
   background-color: var(--btn-face);
-  border: 1px solid var(--edge);
   border-radius: 999px;
   box-shadow: var(--sheen);
   backdrop-filter: blur(10px);
@@ -192,8 +199,7 @@
 :root[data-skin="aurora"] .deck-toggle:hover,
 :root[data-skin="aurora"] .room-btn:hover,
 :root[data-skin="aurora"] .filter-btn:hover,
-:root[data-skin="aurora"] .scenario-item:hover,
-:root[data-skin="aurora"] .guide-reopen:hover {
+:root[data-skin="aurora"] .scenario-item:hover {
   background-color: var(--btn-face-hi);
   box-shadow: var(--sheen), var(--lift-sm);
   transform: translateY(-1px);
@@ -251,14 +257,14 @@
 :root[data-skin="aurora"] .game-card { --accent-text: color-mix(in srgb, var(--accent) 70%, #fff); }
 
 /* ── 5. Fields ── */
-:root[data-skin="aurora"] .name-input,
-:root[data-skin="aurora"] #room-code-input,
-:root[data-skin="aurora"] .secs-input,
-:root[data-skin="aurora"] input,
-:root[data-skin="aurora"] select,
-:root[data-skin="aurora"] textarea {
+[data-skin="aurora"] :where(
+  .name-input,
+  #room-code-input,
+  .secs-input,
+  input,
+  select,
+  textarea) {
   background-color: rgba(255,255,255,.06);
-  border: 1px solid var(--edge);
   border-radius: 999px;
   color: var(--text);
 }

@@ -315,16 +315,6 @@ a.back:hover { color: var(--text); }
 .guide-start:hover  { filter: brightness(1.12); }
 .guide-start:active { transform: scale(.98); }
 
-.guide-reopen {
-  background: var(--btn-face); color: var(--text-dim);
-  border: 1.5px solid var(--border);
-  border-radius: 999px; padding: 7px 18px;
-  font-size: .88rem; font-weight: 700; font-family: inherit;
-  cursor: pointer; margin-bottom: 22px;
-  transition: color .2s, border-color .2s;
-}
-.guide-reopen:hover { background: var(--btn-face-hi); color: var(--accent); border-color: var(--accent); }
-
 @media (max-width: 520px) {
   .guide-screen { padding: 24px 20px 22px; border-radius: 14px; }
   .guide-tagline { font-size: 1.15rem; }

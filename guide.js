@@ -25,7 +25,6 @@
   const DICT = {
     toSetup:  { zh: '▶️ 前往遊戲設定', en: '▶️ Go to game setup' },
     toGame:   { zh: '▶️ 開始遊戲',     en: '▶️ Start the game' },
-    reopen:   { zh: '📖 玩法說明',     en: '📖 How to play' },
     close:    { zh: '✖️ 關閉說明',     en: '✖️ Close' },
     players:  { zh: '👥 建議人數',     en: '👥 Players' },
   };
@@ -173,44 +172,30 @@
     screen.className = 'guide-screen';
     screen.id = 'game-guide';
 
-    // Sits on the game screen so the host can re-read the rules mid-round.
-    const reopen = document.createElement('button');
-    reopen.type = 'button';
-    reopen.className = 'guide-reopen hidden';
-    reopen.textContent = gt('reopen');
-
     header.insertAdjacentElement('afterend', screen);
-    screen.insertAdjacentElement('afterend', reopen);
 
     function draw() {
       screen.innerHTML = screenHTML(data, next);
       screen.querySelector('.guide-start').addEventListener('click', close);
-      reopen.textContent = gt('reopen');
     }
 
     function open() {
       draw();
       screen.classList.remove('hidden');
-      reopen.classList.add('hidden');
       veiled.forEach((el) => el.classList.add(VEIL));
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
     function close() {
       screen.classList.add('hidden');
-      reopen.classList.remove('hidden');
       veiled.forEach((el) => el.classList.remove(VEIL));
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
-    reopen.addEventListener('click', open);
     // Re-render in place on a language switch, without changing which
     // screen the host is currently looking at.
     if (typeof I18N !== 'undefined') {
-      I18N.onChange(() => {
-        if (screen.classList.contains('hidden')) reopen.textContent = gt('reopen');
-        else draw();
-      });
+      I18N.onChange(() => { if (!screen.classList.contains('hidden')) draw(); });
     }
 
     draw();
