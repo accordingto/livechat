@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Pick a Side!">
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
+  <script src="skin.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     /* every other host page declares its theme colour here; this one used to
@@ -26,8 +27,8 @@
     .card {
       width: 100%;
       max-width: 1100px;
-      background: linear-gradient(160deg, #13132b 0%, #100f25 100%);
-      border: 2px solid #1e1e42;
+      background: linear-gradient(160deg, var(--surface) 0%, var(--surface-b) 100%);
+      border: 2px solid var(--border);
       border-radius: 24px;
       padding: 52px 40px;
       text-align: center;
@@ -67,7 +68,7 @@
       font-size: .84rem;
       letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: #ff7043;
+      color: var(--accent-text);
       font-weight: 700;
     }
 
@@ -130,7 +131,7 @@
       box-shadow: 0 6px 28px rgba(76,175,80,.25);
       transform: translateY(-3px);
     }
-    .vote-btn.disagree { background: rgba(244,67,54,.16); border-color: #f44336; color: #fca5a5; }
+    .vote-btn.disagree { background: rgba(244,67,54,.16); border-color: #f44336; color: var(--bad-text-soft); }
     .vote-btn.disagree:hover:not(:disabled) {
       background: rgba(244,67,54,.1);
       box-shadow: 0 6px 28px rgba(244,67,54,.25);
@@ -191,9 +192,9 @@
       transform: translateY(-2px);
     }
     .spin-btn:active { transform: scale(.97); }
-    .spin-btn:disabled { background: #2a2a4a; color: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none; }
+    .spin-btn:disabled { background: var(--btn-off); color: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none; }
 
-    .round-badge span { color: #ff7043; }
+    .round-badge span { color: var(--accent-text); }
 
     @media (max-width: 520px) {
       .card { padding: 32px 20px; }
@@ -210,23 +211,24 @@
        screen is being shared ── */
     .deck-browser { width: 100%; max-width: 1100px; margin: 28px 0 40px; }
     .deck-toggle {
-      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      background: var(--surface-2); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
       padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, border-color .2s, color .2s;
     }
-    .deck-toggle:hover { border-color: #ff7043; color: #ff7043; }
+    .deck-toggle:hover { border-color: #ff7043; color: var(--accent-text); }
     .deck-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 8px; margin-top: 14px;
     }
     .deck-item {
-      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px; padding: 12px 14px;
-      font-size: .88rem; font-weight: 600; color: #ccc; line-height: 1.5;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px;
+      font-size: .88rem; font-weight: 600; color: var(--text-3); line-height: 1.5;
     }
-    .deck-item .di-num { color: #ff7043; font-weight: 800; margin-right: 6px; }
+    .deck-item .di-num { color: var(--accent-text); font-weight: 800; margin-right: 6px; }
 
 
   </style>
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-guide="hottake" data-guide-next="game">
 

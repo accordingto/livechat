@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Sophie's Choice">
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
+  <script src="skin.js"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="scenario.css">
   <style>
@@ -27,8 +28,8 @@
     /* ── Card ── */
     .sc-card {
       width: 100%; max-width: 1100px;
-      background: #13132b;
-      border: 2px solid #1e1e42;
+      background: var(--surface);
+      border: 2px solid var(--border);
       border-radius: 22px;
       padding: 32px 34px;
       margin-bottom: 16px;
@@ -54,18 +55,18 @@
     /* Situation */
     .sc-label {
       font-size: .86rem; text-transform: uppercase;
-      letter-spacing: .1em; color: #f59e0b; font-weight: 700;
+      letter-spacing: .1em; color: var(--warn-text); font-weight: 700;
       margin-bottom: 10px;
     }
     .sc-situation {
-      font-size: clamp(1.15rem, 3vw, 1.45rem); color: #eee;
+      font-size: clamp(1.15rem, 3vw, 1.45rem); color: var(--text);
       line-height: 1.55; font-weight: 600;
     }
     /* GAME_RENDER.sophies() centers .gr-text by default (shared with other games) — left-align it here only */
     #sc-content .gr-text { text-align: left; }
 
     /* Divider */
-    .sc-divider { height: 1px; background: #1e1e42; }
+    .sc-divider { height: 1px; background: var(--border); }
 
     /* Options section */
     .options-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -88,11 +89,11 @@
       font-weight: 900; font-size: 1.05rem; flex-shrink: 0;
       margin-top: 1px;
     }
-    .opt-a .opt-badge { background: #2563eb; color: #fff; }
-    .opt-b .opt-badge { background: #dc2626; color: #fff; }
-    .opt-c .opt-badge { background: #16a34a; color: #fff; }
+    .opt-a .opt-badge { background: #2563eb; color: var(--text-hi); }
+    .opt-b .opt-badge { background: #dc2626; color: var(--text-hi); }
+    .opt-c .opt-badge { background: #16a34a; color: var(--text-hi); }
 
-    .opt-text { font-size: clamp(1rem, 2.5vw, 1.15rem); color: #ccc; line-height: 1.55; padding-top: 6px; }
+    .opt-text { font-size: clamp(1rem, 2.5vw, 1.15rem); color: var(--text-3); line-height: 1.55; padding-top: 6px; }
     .opt-c .opt-text { color: #86efac; font-style: italic; }
 
     /* ── live tally of what the players tapped on their own cards ── */
@@ -102,13 +103,13 @@
     }
     .pick-tally.hidden { display: none; }
     .pt-col {
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 14px;
       padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px;
       transition: border-color .3s;
     }
     .pt-col.lead { border-color: currentColor; }
     .pt-key { font-size: .84rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; }
-    .pt-count { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1; }
+    .pt-count { font-size: 1.8rem; font-weight: 900; color: var(--text-hi); line-height: 1; }
     .pt-names { font-size: .84rem; font-weight: 700; color: var(--text-dim); text-align: center; line-height: 1.4; }
     /* the three tally columns paint their key and name in their own colour on a card
        face, where the original 600-weight blues and reds only reached 3.5:1 */
@@ -124,7 +125,7 @@
 
     /* ── Draw button ── */
 
-    .round-badge span { color: #f59e0b; }
+    .round-badge span { color: var(--warn-text); }
 
     @media (max-width: 520px) {
       .sc-card { padding: 22px 20px; }
@@ -133,19 +134,20 @@
 
     /* ── Filter bar ── */
     .filter-btn {
-      border: 1.5px solid #35335e; border-radius: 20px;
+      border: 1.5px solid var(--border-3); border-radius: 20px;
       padding: 5px 14px; font-size: .8rem; font-weight: 700;
-      color: #999; background: var(--btn-face); cursor: pointer;
+      color: var(--text-dim); background: var(--btn-face); cursor: pointer;
       transition: border-color .18s, color .18s, background .18s, transform .1s;
       font-family: inherit; white-space: nowrap;
     }
 
     /* ── Scenario browser ── */
-    .scenario-num  { font-size: .75rem; font-weight: 900; color: #f59e0b; flex-shrink: 0; padding-top: 2px; min-width: 22px; }
-    .scenario-text { font-size: .88rem; font-weight: 500; color: #aaa; line-height: 1.4; }
+    .scenario-num  { font-size: .75rem; font-weight: 900; color: var(--warn-text); flex-shrink: 0; padding-top: 2px; min-width: 22px; }
+    .scenario-text { font-size: .88rem; font-weight: 500; color: var(--text-dim); line-height: 1.4; }
 
 
   </style>
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-guide="sophies" data-guide-next="game">
 
@@ -281,7 +283,7 @@
 
     ROOM.setDecorator(i => {
       const c = cardPick(i + 1);
-      return c ? { marked: true, answer: `${st('pickedLabel')} <span style="color:#f59e0b">${c.toUpperCase()}</span>` } : {};
+      return c ? { marked: true, answer: `${st('pickedLabel')} <span style="color:var(--warn-text)">${c.toUpperCase()}</span>` } : {};
     });
 
     /* the live count under the situation card — the whole point of handing out links */

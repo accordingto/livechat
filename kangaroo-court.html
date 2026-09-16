@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <script src="i18n.js"></script>
+  <script src="skin.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Kangaroo Court · IceBreak Hub</title>
@@ -31,7 +32,7 @@
     }
     .kc-flow { position: sticky; top: 20px; order: 2; }
     .kc-flow-card {
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 18px;
       padding: 20px 18px;
       animation: fadeUp .5s .1s ease both;
     }
@@ -47,24 +48,24 @@
     /* the connecting line between one step's dot and the next */
     .kc-flow-step::before {
       content: ''; position: absolute; left: 15px; top: -20px; width: 2px; height: 20px;
-      background: #1e1e42; transition: background .3s;
+      background: var(--border); transition: background .3s;
     }
     .kc-flow-step:first-child::before { display: none; }
     .kc-flow-dot {
       position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-      background: #0d0d1a; border: 2px solid #1e1e42; color: var(--text-dim);
+      background: var(--bg); border: 2px solid var(--border); color: var(--text-dim);
       display: flex; align-items: center; justify-content: center; font-size: .92rem;
       z-index: 1; transition: border-color .3s, background .3s, color .3s, box-shadow .3s;
     }
     .kc-flow-label { font-size: .82rem; font-weight: 700; color: var(--text-muted); line-height: 1.35; transition: color .3s; }
     .kc-flow-step.is-done::before { background: #22c55e; }
-    .kc-flow-step.is-done .kc-flow-dot { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.1); }
-    .kc-flow-step.is-done .kc-flow-label { color: #4ade80; }
+    .kc-flow-step.is-done .kc-flow-dot { border-color: #22c55e; color: var(--ok-text); background: rgba(34,197,94,.1); }
+    .kc-flow-step.is-done .kc-flow-label { color: var(--ok-text-lit); }
     .kc-flow-step.is-current .kc-flow-dot {
-      border-color: var(--accent); color: #fff; background: rgba(233,69,96,.2);
+      border-color: var(--accent); color: var(--text-hi); background: rgba(233,69,96,.2);
       animation: kcFlowPulse 1.8s ease-in-out infinite;
     }
-    .kc-flow-step.is-current .kc-flow-label { color: #fff; }
+    .kc-flow-step.is-current .kc-flow-label { color: var(--text-hi); }
     @keyframes kcFlowPulse {
       0%, 100% { box-shadow: 0 0 10px rgba(233,69,96,.35); }
       50%      { box-shadow: 0 0 22px rgba(233,69,96,.7); }
@@ -89,7 +90,7 @@
     .status-line {
       display: block; width: 100%;
       background: linear-gradient(135deg, #ff5a76, #c81e3a);
-      color: #fff; border: 2px solid #ff8095; border-radius: 12px;
+      color: var(--text-hi); border: 2px solid #ff8095; border-radius: 12px;
       padding: 14px 12px; margin-top: 18px;
       font-size: .92rem; font-weight: 800; line-height: 1.2; text-align: center;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -100,7 +101,7 @@
     .status-line:hover:not(.not-clickable) { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(233,69,96,.5); }
     .status-line:active:not(.not-clickable) { transform: scale(.98); }
     .status-line.not-clickable {
-      cursor: default; background: #0d0d1a; color: var(--text-dim); border-color: #1e1e42; box-shadow: none;
+      cursor: default; background: var(--bg); color: var(--text-dim); border-color: var(--border); box-shadow: none;
     }
     .status-line.vote { background: linear-gradient(135deg, #b9a1fb, #7c3aed); border-color: #c4b5fd; box-shadow: 0 6px 18px rgba(167,139,250,.4); }
     .status-line.win  { background: linear-gradient(135deg, #4ade80, #15803d); border-color: #86efac; box-shadow: 0 6px 18px rgba(34,197,94,.4); }
@@ -117,12 +118,12 @@
        button above it — undoing a step is the exception, not the flow */
     .kc-back-btn {
       width: 100%; margin-top: 10px;
-      background: var(--btn-face); border: 2px solid #35335e; color: #999;
+      background: var(--btn-face); border: 2px solid var(--border-3); color: var(--text-dim);
       border-radius: 12px; padding: 10px 12px;
       font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, border-color .2s, color .2s, opacity .2s;
     }
-    .kc-back-btn:hover:not(:disabled) { border-color: #a78bfa; color: #a78bfa; }
+    .kc-back-btn:hover:not(:disabled) { border-color: #a78bfa; color: var(--violet-text); }
     .kc-back-btn:disabled { opacity: .3; cursor: not-allowed; }
 
     /* ── The charge card: the courtroom's centerpiece ── */
@@ -141,17 +142,17 @@
       content: '⚖️'; position: absolute; font-size: 7rem; opacity: .04;
       top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
     }
-    .charge-card.idle { border-color: #1e1e42; background: #13132b; }
+    .charge-card.idle { border-color: var(--border); background: var(--surface); }
     /* small header row — icon + label — same pattern as the witness cards below it */
     .charge-top {
       display: flex; align-items: center; gap: 8px; position: relative; z-index: 1;
     }
     .charge-label {
       font-size: .84rem; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase;
-      color: #e94560;
+      color: var(--accent-text);
     }
     .charge-text {
-      font-size: clamp(1.1rem, 3.2vw, 1.5rem); font-weight: 800; color: #fff; line-height: 1.45;
+      font-size: clamp(1.1rem, 3.2vw, 1.5rem); font-weight: 800; color: var(--text-hi); line-height: 1.45;
       max-width: 880px; position: relative; z-index: 1;
     }
     .charge-emoji { font-size: 1.5rem; line-height: 1; }
@@ -159,7 +160,7 @@
     .charge-placeholder { color: var(--text-dim); font-size: 1rem; position: relative; z-index: 1; }
 
     /* lives inside the flow sidebar now, under the step list */
-    .charge-swap { width: 100%; text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px solid #1e1e42; }
+    .charge-swap { width: 100%; text-align: center; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
     .charge-swap .btn-secondary { width: 100%; }
 
     /* ── Role strip: who is who this case ── */
@@ -170,21 +171,21 @@
     }
     .role-chip {
       flex: 1; min-width: 150px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 14px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 14px;
       padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px;
       box-shadow: 0 0 18px transparent;
       transition: border-color .3s, box-shadow .3s, background .3s;
     }
     .role-chip .rc-label { font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
-    .role-chip .rc-name { font-size: 1.1rem; font-weight: 800; color: #fff; }
+    .role-chip .rc-name { font-size: 1.1rem; font-weight: 800; color: var(--text-hi); }
     /* every role gets a lit-up tinted background, not just a border, so the whole
        row reads as "this matters" at a glance — even before anyone's turn */
     .role-chip.rc-defendant  { background: linear-gradient(160deg, rgba(239,68,68,.22), rgba(239,68,68,.04)); border-color: #ef4444; box-shadow: 0 0 18px rgba(239,68,68,.18); }
-    .role-chip.rc-defendant  .rc-label { color: #fca5a5; }
+    .role-chip.rc-defendant  .rc-label { color: var(--bad-text-soft); }
     .role-chip.rc-prosecutor { background: linear-gradient(160deg, rgba(249,115,22,.22), rgba(249,115,22,.04)); border-color: #f97316; box-shadow: 0 0 18px rgba(249,115,22,.18); }
-    .role-chip.rc-prosecutor .rc-label { color: #fdba74; }
+    .role-chip.rc-prosecutor .rc-label { color: var(--warn-text-soft); }
     .role-chip.rc-defense    { background: linear-gradient(160deg, rgba(59,130,246,.22), rgba(59,130,246,.04)); border-color: #3b82f6; box-shadow: 0 0 18px rgba(59,130,246,.18); }
-    .role-chip.rc-defense    .rc-label { color: #93c5fd; }
+    .role-chip.rc-defense    .rc-label { color: var(--info-text); }
     /* the judge only shows up when the Judge toggle is on — violet, distinct from
        the three roles above and from the witness's amber below */
     .role-chip.rc-judge      { background: linear-gradient(160deg, rgba(139,92,246,.22), rgba(139,92,246,.04)); border-color: #8b5cf6; box-shadow: 0 0 18px rgba(139,92,246,.18); }
@@ -222,10 +223,10 @@
       background: linear-gradient(135deg, rgba(249,115,22,.16), rgba(249,115,22,.03));
       border: 2px solid #f97316;
     }
-    .witness-card.side-prosecution .witness-label { color: #fdba74; }
+    .witness-card.side-prosecution .witness-label { color: var(--warn-text-soft); }
     .witness-card.side-prosecution .witness-evidence { color: #fed7aa; }
     .witness-card.side-prosecution .witness-playedby {
-      background: rgba(249,115,22,.14); border-color: rgba(249,115,22,.4); color: #fdba74;
+      background: rgba(249,115,22,.14); border-color: rgba(249,115,22,.4); color: var(--warn-text-soft);
     }
     .witness-card.side-prosecution.is-current { box-shadow: 0 0 30px rgba(249,115,22,.28); }
     /* defense's witness — blue, same as the Defense role chip */
@@ -233,10 +234,10 @@
       background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(59,130,246,.03));
       border: 2px solid #3b82f6;
     }
-    .witness-card.side-defense .witness-label { color: #93c5fd; }
+    .witness-card.side-defense .witness-label { color: var(--info-text); }
     .witness-card.side-defense .witness-evidence { color: #bfdbfe; }
     .witness-card.side-defense .witness-playedby {
-      background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.4); color: #93c5fd;
+      background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.4); color: var(--info-text);
     }
     .witness-card.side-defense.is-current { box-shadow: 0 0 30px rgba(59,130,246,.28); }
     /* once their turn is over the entry stays legible but steps back visually,
@@ -254,7 +255,7 @@
       display: flex; align-items: center; gap: 10px; position: relative; z-index: 1;
     }
     .witness-emoji { font-size: 1.8rem; line-height: 1; }
-    .witness-name { font-size: 1.3rem; font-weight: 900; color: #fff; }
+    .witness-name { font-size: 1.3rem; font-weight: 900; color: var(--text-hi); }
     .witness-evidence {
       font-size: .92rem; font-weight: 600; line-height: 1.4;
       max-width: 640px; position: relative; z-index: 1;
@@ -268,23 +269,23 @@
     /* ── Jury tally: live progress while voting, full breakdown after Reveal ── */
     .jury-tally {
       width: 100%; max-width: 1100px;
-      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 16px;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px;
       padding: 16px 20px; margin-bottom: 16px;
       animation: fadeUp .3s ease both;
     }
     .jury-tally.hidden { display: none; }
-    .jt-title { font-size: .95rem; font-weight: 900; color: #eee; text-align: center; }
+    .jt-title { font-size: .95rem; font-weight: 900; color: var(--text); text-align: center; }
     .jt-verdict {
       text-align: center; font-size: 1.3rem; font-weight: 900; margin: 6px 0 12px;
     }
-    .jt-verdict.guilty { color: #ef4444; }
-    .jt-verdict.notguilty { color: #22c55e; }
+    .jt-verdict.guilty { color: var(--bad-text); }
+    .jt-verdict.notguilty { color: var(--ok-text); }
     .jt-count { font-size: .82rem; font-weight: 700; color: var(--text-dim); text-align: center; margin-bottom: 10px; }
     .jt-rows { display: flex; flex-direction: column; gap: 6px; }
     .jt-row {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: #0d0d1a; border-radius: 10px; padding: 8px 12px;
-      font-size: .85rem; font-weight: 700; color: #ccc;
+      background: var(--bg); border-radius: 10px; padding: 8px 12px;
+      font-size: .85rem; font-weight: 700; color: var(--text-3);
     }
     .jt-row .jt-vote { display: flex; align-items: center; gap: 6px; font-weight: 800; }
     .jt-row .jt-flip { font-size: .8rem; padding: 2px 8px; border-radius: 20px; font-weight: 800; }
@@ -311,7 +312,7 @@
     .toggle-btn:disabled { cursor: not-allowed; opacity: .5; }
     .toggle-switch {
       width: 40px; height: 22px; border-radius: 999px; flex-shrink: 0;
-      background: #1e1e42; position: relative; transition: background .25s;
+      background: var(--border); position: relative; transition: background .25s;
     }
     .toggle-switch::after {
       content: ''; position: absolute; top: 3px; left: 3px;
@@ -324,19 +325,19 @@
     /* ── Charge browser ── */
     .charge-browser { width: 100%; max-width: 1100px; margin: 12px 0 40px; }
     .charge-toggle {
-      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      background: var(--surface-2); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
       padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, border-color .2s, color .2s; margin-bottom: 14px;
     }
-    .charge-toggle:hover { border-color: #e94560; color: #e94560; }
+    .charge-toggle:hover { border-color: #e94560; color: var(--accent-text); }
     .charge-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 8px;
     }
     .charge-item {
-      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
       padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
-      font-size: .85rem; color: #aaa; line-height: 1.5;
+      font-size: .85rem; color: var(--text-dim); line-height: 1.5;
     }
     .charge-item .ci-emoji { font-size: 1.2rem; flex-shrink: 0; }
 
@@ -344,6 +345,7 @@
       .charge-card { padding: 18px 16px; }
     }
   </style>
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-guide="kangaroo" data-guide-next="game">
 

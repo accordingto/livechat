@@ -2,10 +2,18 @@
 
 /* ── Theme tokens ── */
 :root {
-  --bg: #0d0d1a;
-  --surface: #13132b;
-  --surface-b: #100f25;
-  --border: #1e1e42;
+  /* ── Surfaces and rules ──
+     Every panel, hairline and outline on a host page comes from these, so a
+     skin can repaint the whole site by redefining them (see skins.css). They
+     are deliberately semantic — "the second surface", "the bright rule" —
+     rather than named after the colour they happen to be in the dark skin. */
+  --bg: #0d0d1a;           /* the page itself                       */
+  --surface: #13132b;      /* cards and panels sitting on the page  */
+  --surface-2: #1a1a38;    /* a panel nested inside another         */
+  --surface-b: #100f25;    /* the darker half of a panel gradient   */
+  --border: #1e1e42;       /* the default hairline                  */
+  --border-2: #2e2e5e;     /* a rule that needs to be noticed       */
+  --border-3: #35335e;     /* a button's own outline                */
   --border-dim: rgba(255,255,255,.06);
   /* ── Text has to survive a projector ──
      Every colour here is contrast-checked against --bg. The host shares this
@@ -16,10 +24,31 @@
      Anything a host or player has to READ uses --text / --text-dim /
      --text-muted, all of which clear 4.5:1 on every surface they land on.
      --text-faint is for rules and separators, never for words. */
+  --text-hi: #fff;         /* 18.1:1 — the brightest thing on the page, and text
+                              sitting on a solid colour block                  */
   --text: #eee;            /* 16.6:1 — headings, card words                */
+  --text-2: #ddd;          /* 13.6:1 — body copy inside a card                 */
+  --text-3: #ccc;          /* 11.0:1 — the quieter half of a card              */
   --text-dim: #9999bb;     /* 7.0:1  — body copy, and any label on a button face */
   --text-muted: #82829f;   /* 5.2:1  — small captions on the page or a card      */
   --text-faint: #2a2a50;   /* decoration only: hairlines, dividers, watermarks   */
+
+  /* ── State colours, split by job ──
+     A colour bright enough to be a fill is not automatically readable as words
+     on top of one. So the bright hexes stay written inline wherever they paint
+     a SHAPE (fill, rule, glow) — those need no help in either skin — and every
+     place that paints a WORD goes through one of these instead. A skin only has
+     to redefine this short list to keep the whole site legible; see skins.css,
+     where the press skin pulls each of them most of the way to ink. */
+  --ok-text: #22c55e;
+  --ok-text-lit: #4ade80;
+  --bad-text: #ef4444;
+  --bad-text-soft: #fca5a5;   /* a note about a failure, not the failure itself */
+  --warn-text: #f59e0b;
+  --warn-text-soft: #fdba74;
+  --gold-text: #eab308;
+  --info-text: #93c5fd;
+  --violet-text: #a78bfa;
   --divider: #1e1e3a;
   /* ── Every button has a face ──
      A control filled with the page colour reads as a label, not something to
@@ -29,6 +58,7 @@
      slate face that is clearly lighter than the page behind it. */
   --btn-face: #22224a;
   --btn-face-hi: #2d2d5e;
+  --btn-off: #2a2a4a;      /* a disabled button's fill */
   /* An accent bright enough to be a solid fill is not automatically bright enough
      to be TEXT on --btn-face: indigo #6366f1 reads 3.4:1 there. Each page that
      paints its accent as words overrides --accent-text (and --accent-alt-text)
@@ -93,7 +123,7 @@ a.back:hover { color: var(--text); }
 }
 
 .reset-btn {
-  background: var(--btn-face); color: #bbb;
+  background: var(--btn-face); color: var(--text-dim);
   border: 2px solid #35355e; border-radius: 999px;
   padding: 16px 28px; font-size: 1rem; font-weight: 700;
   cursor: pointer; font-family: inherit;
@@ -167,7 +197,7 @@ a.back:hover { color: var(--text); }
 .btn-primary:active { transform: scale(.98); }
 
 .btn-secondary {
-  background: var(--btn-face); color: #bbb; border: 2px solid #35335e;
+  background: var(--btn-face); color: var(--text-dim); border: 2px solid var(--border-3);
   border-radius: 12px; padding: 12px 22px;
   font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
   white-space: nowrap;
@@ -207,7 +237,7 @@ a.back:hover { color: var(--text); }
 
 .guide-tagline {
   font-size: 1.3rem; line-height: 1.7; font-weight: 700;
-  color: #fff;
+  color: var(--text-hi);
   padding-bottom: 22px; margin-bottom: 6px;
   border-bottom: 1px solid var(--divider);
 }
@@ -225,7 +255,7 @@ a.back:hover { color: var(--text); }
 .guide-steps li,
 .guide-tips li,
 .guide-role-desc {
-  font-size: 1.15rem; line-height: 1.85; color: #fff;
+  font-size: 1.15rem; line-height: 1.85; color: var(--text-hi);
 }
 .guide-p + .guide-p { margin-top: 12px; }
 
@@ -275,7 +305,7 @@ a.back:hover { color: var(--text); }
   display: flex; justify-content: center;
 }
 .guide-start {
-  background: var(--accent); color: #0b0b18;
+  background: var(--accent); color: var(--btn-ink);
   border: none; border-radius: 14px;
   padding: 18px 46px;
   font-size: 1.2rem; font-weight: 800; font-family: inherit;
@@ -286,7 +316,7 @@ a.back:hover { color: var(--text); }
 .guide-start:active { transform: scale(.98); }
 
 .guide-reopen {
-  background: var(--btn-face); color: #aaa;
+  background: var(--btn-face); color: var(--text-dim);
   border: 1.5px solid var(--border);
   border-radius: 999px; padding: 7px 18px;
   font-size: .88rem; font-weight: 700; font-family: inherit;
@@ -341,17 +371,17 @@ a.back:hover { color: var(--text); }
   border-radius: 14px; padding: 12px 20px;
   font-size: 1rem; font-weight: 900; font-family: inherit;
 }
-.guide-btn.is-green { background: #22c55e; border: 2px solid #22c55e; color: #06230f; }
+.guide-btn.is-green { background: #22c55e; border: 2px solid #22c55e; color: var(--btn-ink); }
 .guide-btn.is-red   { background: #ef4444; border: 2px solid #ef4444; color: #2b0505; }
 
 /* outlined card buttons — A/B/C picks, the jury's two options */
 .guide-btn.is-choice {
-  background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+  background: var(--bg); border: 2px solid var(--border); color: var(--text-2);
   border-radius: 14px; padding: 12px 20px;
   font-size: .95rem; font-weight: 800; font-family: inherit;
 }
-.guide-btn.is-choice.is-tint-red   { color: #ef4444; background: #ef44441f; }
-.guide-btn.is-choice.is-tint-green { color: #22c55e; background: #22c55e1f; }
+.guide-btn.is-choice.is-tint-red   { color: var(--bad-text); background: #ef44441f; }
+.guide-btn.is-choice.is-tint-green { color: var(--ok-text); background: #22c55e1f; }
 
 @media (max-width: 520px) {
   .guide-btn.is-green,
@@ -407,7 +437,7 @@ a.back:hover { color: var(--text); }
 .gp-name {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: .8rem; font-weight: 900; letter-spacing: .5px;
-  color: #0b0b18; border: 2px solid; border-radius: 999px;
+  color: var(--btn-ink); border: 2px solid; border-radius: 999px;
   padding: 4px 13px 4px 9px; max-width: 100%;
 }
 .gp-name::before {
@@ -439,11 +469,11 @@ a.back:hover { color: var(--text); }
 
 .gp-pills { width: 100%; display: flex; flex-direction: column; gap: 6px; }
 .gp-pill-label {
-  font-size: .62rem; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; color: #ef4444;
+  font-size: .62rem; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; color: var(--bad-text);
 }
 .gp-pill-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .gp-pill {
-  background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.45); color: #fca5a5;
+  background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.45); color: var(--bad-text-soft);
   border-radius: 8px; padding: 4px 9px; font-size: .72rem; font-weight: 800;
 }
 
@@ -475,7 +505,7 @@ a.back:hover { color: var(--text); }
 .gp-btn.is-choice { background: #0d0d1a; border-color: var(--border); color: #ddd; }
 
 .guide-phone-note {
-  font-size: 1.05rem; line-height: 1.8; color: #fff;
+  font-size: 1.05rem; line-height: 1.8; color: var(--text-hi);
   margin-top: 14px;
   border-left: 3px solid var(--accent); padding-left: 14px;
 }

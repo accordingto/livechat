@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Word Wolf">
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
+  <script src="skin.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --accent: #f59e0b; --accent-alt: #d946ef; --warn: #f59e0b;
@@ -30,7 +31,7 @@
     /* ── Reveal banner: shows the word pair after Reveal Wolf ── */
     .reveal-banner {
       width: 100%; max-width: 1100px;
-      background: rgba(245,158,11,.1); border: 1.5px solid #f59e0b; color: #f59e0b;
+      background: rgba(245,158,11,.1); border: 1.5px solid #f59e0b; color: var(--warn-text);
       border-radius: 14px; padding: 14px 18px; font-size: .95rem; font-weight: 700; text-align: center;
       margin-bottom: 20px; position: relative; z-index: 1;
       animation: fadeUp .3s ease both;
@@ -39,12 +40,12 @@
     /* ── Vote tally: live "X / Y voted" progress, then full breakdown after Reveal ── */
     .vote-tally {
       width: 100%; max-width: 1100px;
-      background: #13132b; border: 1.5px solid #1e1e42; color: #999;
+      background: var(--surface); border: 1.5px solid var(--border); color: var(--text-dim);
       border-radius: 14px; padding: 12px 18px; font-size: .85rem; text-align: center;
       margin-bottom: 20px; position: relative; z-index: 1;
     }
     .vote-tally.hidden { display: none; }
-    .vote-tally .verdict { font-size: .95rem; font-weight: 800; color: #eee; margin-bottom: 4px; }
+    .vote-tally .verdict { font-size: .95rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
 
 
     /* ── Player links: one persistent link per player, sent once via LINE/etc ── */
@@ -77,11 +78,11 @@
 
     .link-answer .lw-emoji { font-size: 2rem; line-height: 1; }
     .link-answer .lw-text  { font-size: .95rem; font-weight: 800; color: #34d399; }
-    .link-answer .lw-tag   { font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #f59e0b; }
+    .link-answer .lw-tag   { font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--warn-text); }
 
     /* Firebase-not-configured warning */
 
-    .round-badge #roundNum { color: #f59e0b; }
+    .round-badge #roundNum { color: var(--warn-text); }
 
     /* ── Deck browser: the whole word list, for the host to skim before playing.
        Grouped by category, since the pairs only make sense next to their neighbours. ── */
@@ -91,13 +92,13 @@
       position: relative; z-index: 1;
     }
     .pair-browser-hdr {
-      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      background: var(--surface-2); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
       padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, border-color .2s, color .2s; margin-bottom: 14px;
     }
-    .pair-browser-hdr:hover { border-color: #f59e0b; color: #f59e0b; }
+    .pair-browser-hdr:hover { border-color: #f59e0b; color: var(--warn-text); }
     .pair-cat {
-      font-size: .88rem; font-weight: 900; color: #f59e0b;
+      font-size: .88rem; font-weight: 900; color: var(--warn-text);
       margin: 20px 0 8px;
     }
     .pair-cat:first-of-type { margin-top: 0; }
@@ -106,10 +107,10 @@
       gap: 8px;
     }
     .pair-item {
-      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
       padding: 10px 14px;
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      font-size: .85rem; font-weight: 700; color: #ddd; line-height: 1.4;
+      font-size: .85rem; font-weight: 700; color: var(--text-2); line-height: 1.4;
     }
     .pair-item .pi-num {
       flex-shrink: 0; min-width: 24px; text-align: right;
@@ -124,6 +125,7 @@
 
     }
   </style>
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-guide="wordwolf" data-guide-next="game">
 

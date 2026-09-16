@@ -1,0 +1,293 @@
+/*
+ * skins.css — the alternate look, switched by the button skin.js injects.
+ *
+ * ── How this file wins ──
+ * Every rule is prefixed with :root[data-skin="aurora"], which is specificity
+ * (0,2,0) before the rest of the selector is counted, so it outranks the plain
+ * class rules the host pages are written with. Where a page styles something by
+ * #id, this file has to say #id too. The <link> is also placed LAST in every
+ * host page's <head>, after that page's own <style>, so equal-specificity ties
+ * fall this way as well.
+ *
+ * ── What a skin is allowed to change ──
+ * Everything about the surface: colour, depth, corner, rule weight, shadow,
+ * type, spacing. Nothing about the content or the markup — no rule here hides a
+ * control or moves a node, because the games' own scripts own that.
+ *
+ * ── AURORA ──
+ * Still a dark room, because this is a game running on a shared screen and the
+ * lights should stay down. What changes is the material. Midnight is flat: solid
+ * panels sitting on a solid page, separated by thin lines. Aurora is lit: the
+ * page carries two slow colour blooms in the game's own accent, and every panel
+ * is a pane of frosted glass floating over them — big soft corners, a hairline
+ * of light along the top edge, a wide shadow underneath. Controls become
+ * capsules. Nothing is shouted in capitals and nothing is boxed in hard.
+ *
+ * ── What it must not touch ──
+ * The player card. play.html never loads skin.js, so it never carries the
+ * attribute. The guide's little phone mock-ups DO live on skinned pages, but
+ * they are pictures of that card, so the last block here keeps them literal.
+ */
+
+:root[data-skin="aurora"] {
+  --glass: rgba(255,255,255,.07);
+  --glass-hi: rgba(255,255,255,.10);
+  --edge: rgba(255,255,255,.12);
+
+  --bg: #070613;
+  --surface: var(--glass);
+  --surface-2: rgba(255,255,255,.085);
+  --surface-b: rgba(255,255,255,.03);
+  --border: var(--edge);
+  --border-2: rgba(255,255,255,.18);
+  --border-3: rgba(255,255,255,.24);
+  --border-dim: rgba(255,255,255,.07);
+  --divider: rgba(255,255,255,.10);
+
+  --btn-face: rgba(255,255,255,.09);
+  --btn-face-hi: rgba(255,255,255,.17);
+  --btn-off: rgba(255,255,255,.05);
+  --btn-ink: #000;           /* on a glowing capsule, pure ink is what clears 4.5:1
+                                even against the lightest accent (indigo) */
+
+  --text-hi: #fff;
+  --text: #f5f3ff;
+  --text-2: #e5e1f8;
+  --text-3: #d3cef0;
+  --text-dim: #c0bade;
+  --text-muted: #a49ec6;
+  --text-faint: rgba(255,255,255,.10);
+
+  /* The page is darker than midnight's and the panels are translucent, so an
+     accent can afford to come UP rather than down — words in the game's colour
+     glow instead of receding. Fills and rules keep the brand colour exactly. */
+  --accent-text: color-mix(in srgb, var(--accent) 74%, #ffffff);
+  --accent-alt-text: color-mix(in srgb, var(--accent-alt, var(--accent)) 66%, #ffffff);
+
+  --ok-text: #6ee7a0;
+  --ok-text-lit: #86efac;
+  --bad-text: #ff8b8b;
+  --bad-text-soft: #ffb4b4;
+  --warn-text: #fbc46a;
+  --warn-text-soft: #fdd9a0;
+  --gold-text: #f6d97a;
+  --info-text: #a8cdff;
+  --violet-text: #c6b3ff;
+
+  /* Depth, as tokens, so the component rules below stay short. */
+  --r-lg: 24px;
+  --r-md: 16px;
+  --lift: 0 18px 44px rgba(0,0,0,.46);
+  --lift-sm: 0 8px 22px rgba(0,0,0,.36);
+  --sheen: inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+/* ── 1. The room ──
+   Two wide, soft blooms in the page's own accent, fixed to the viewport so they
+   sit behind the content like stage light rather than scrolling with it. This
+   is the single biggest reason the skin does not read as "midnight, recoloured":
+   the background stops being one flat value. */
+:root[data-skin="aurora"] body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1100px 620px at 12% -8%,
+      color-mix(in srgb, var(--accent, #6366f1) 26%, transparent) 0%, transparent 62%),
+    radial-gradient(900px 560px at 92% 4%,
+      color-mix(in srgb, var(--accent-alt, var(--accent, #6366f1)) 17%, transparent) 0%, transparent 60%),
+    radial-gradient(1000px 700px at 50% 108%,
+      rgba(120,110,255,.13) 0%, transparent 64%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--text);
+}
+
+/* ── 2. Glass ──
+   Every panel becomes a floating pane: soft corner, hairline of light along the
+   top edge, wide shadow, and the page's colour blurred through it. */
+:root[data-skin="aurora"] .guide-screen,
+:root[data-skin="aurora"] .room-card,
+:root[data-skin="aurora"] .setup-card,
+:root[data-skin="aurora"] .scenario-card,
+:root[data-skin="aurora"] .scene-card,
+:root[data-skin="aurora"] .take-card,
+:root[data-skin="aurora"] .score-card,
+:root[data-skin="aurora"] .control-bar,
+:root[data-skin="aurora"] .phase-summary,
+:root[data-skin="aurora"] .substep-panel,
+:root[data-skin="aurora"] .step-card,
+:root[data-skin="aurora"] .kc-flow,
+:root[data-skin="aurora"] .charge-card,
+:root[data-skin="aurora"] .witness-card,
+:root[data-skin="aurora"] .jury-tally,
+:root[data-skin="aurora"] .role-card,
+:root[data-skin="aurora"] .link-col,
+:root[data-skin="aurora"] .pt-col,
+:root[data-skin="aurora"] .game-card,
+:root[data-skin="aurora"] .deck-body,
+:root[data-skin="aurora"] .scenario-browser-body,
+:root[data-skin="aurora"] .status-line,
+:root[data-skin="aurora"] .board-wrap {
+  background-color: var(--glass);
+  background-image: none;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift), var(--sheen);
+  backdrop-filter: blur(16px) saturate(125%);
+  -webkit-backdrop-filter: blur(16px) saturate(125%);
+}
+
+/* A card that is currently "the one" — the clue giver, the lead vote, the
+   player whose turn it is — lifts further and takes the accent as its light,
+   instead of only swapping its border colour. */
+:root[data-skin="aurora"] .score-card.is-giver,
+:root[data-skin="aurora"] .score-card.is-buzzed,
+:root[data-skin="aurora"] .pt-col.lead,
+:root[data-skin="aurora"] .link-col.is-marked,
+:root[data-skin="aurora"] .game-card:hover {
+  background-color: var(--glass-hi);
+  box-shadow: var(--lift), var(--sheen),
+              0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+              0 0 48px color-mix(in srgb, var(--accent) 24%, transparent);
+  transform: translateY(-2px);
+}
+
+/* ── 3. Capsules ──
+   Controls stop being rectangles with a border and become pills with a face.
+   Nothing here changes a word's capitalisation — this skin never shouts. */
+:root[data-skin="aurora"] .btn-secondary,
+:root[data-skin="aurora"] .btn-skip,
+:root[data-skin="aurora"] .reset-btn,
+:root[data-skin="aurora"] .guide-reopen,
+:root[data-skin="aurora"] .deck-toggle,
+:root[data-skin="aurora"] .room-btn,
+:root[data-skin="aurora"] .substep-nav-btn,
+:root[data-skin="aurora"] .edit-setup-btn,
+:root[data-skin="aurora"] .kc-back-btn,
+:root[data-skin="aurora"] .timer-ctrl-btn,
+:root[data-skin="aurora"] .timer-btn,
+:root[data-skin="aurora"] .btn-swap,
+:root[data-skin="aurora"] .filter-btn,
+:root[data-skin="aurora"] .level-btn,
+:root[data-skin="aurora"] .banned-count-btn,
+:root[data-skin="aurora"] .room-count-btn,
+:root[data-skin="aurora"] .btn-copy,
+:root[data-skin="aurora"] .btn-qr-toggle,
+:root[data-skin="aurora"] .ps-btn,
+:root[data-skin="aurora"] .method-btn,
+:root[data-skin="aurora"] .scenario-browser-hdr,
+:root[data-skin="aurora"] .scenario-item {
+  background-color: var(--btn-face);
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  box-shadow: var(--sheen);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color .18s, box-shadow .18s, transform .12s;
+}
+:root[data-skin="aurora"] .scenario-item,
+:root[data-skin="aurora"] .method-btn,
+:root[data-skin="aurora"] .game-card { border-radius: var(--r-md); }
+
+:root[data-skin="aurora"] .btn-secondary:hover,
+:root[data-skin="aurora"] .deck-toggle:hover,
+:root[data-skin="aurora"] .room-btn:hover,
+:root[data-skin="aurora"] .filter-btn:hover,
+:root[data-skin="aurora"] .scenario-item:hover,
+:root[data-skin="aurora"] .guide-reopen:hover {
+  background-color: var(--btn-face-hi);
+  box-shadow: var(--sheen), var(--lift-sm);
+  transform: translateY(-1px);
+}
+
+/* The one action the host is meant to take: still a solid accent fill, but now
+   a soft capsule that glows in its own colour rather than a flat rectangle. */
+:root[data-skin="aurora"] .btn-primary,
+:root[data-skin="aurora"] .btn-draw,
+:root[data-skin="aurora"] .btn-deal,
+:root[data-skin="aurora"] .spin-btn,
+:root[data-skin="aurora"] .guide-start,
+:root[data-skin="aurora"] .continue-btn,
+:root[data-skin="aurora"] .substep-nav-btn.substep-next {
+  border-radius: 999px;
+  border-color: transparent;
+  color: var(--btn-ink);     /* a filled accent always takes dark ink — see shared.css */
+  background-color: var(--accent);
+  background-image: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 88%, #fff) 0%, var(--accent) 100%);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 36%, transparent),
+              inset 0 1px 0 rgba(255,255,255,.28);
+}
+:root[data-skin="aurora"] .btn-primary:hover,
+:root[data-skin="aurora"] .btn-draw:hover,
+:root[data-skin="aurora"] .btn-deal:hover,
+:root[data-skin="aurora"] .spin-btn:hover,
+:root[data-skin="aurora"] .continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 46%, transparent),
+              inset 0 1px 0 rgba(255,255,255,.28);
+}
+:root[data-skin="aurora"] button:active { transform: translateY(1px); }
+
+/* ── 4. Headings ──
+   Kept centred and kept in sentence case. The change is light, not weight: the
+   title sits in its own glow, and a section header is a small capsule rather
+   than a line of tracked-out grey. */
+:root[data-skin="aurora"] .header h1,
+:root[data-skin="aurora"] .hero h1 {
+  text-shadow: 0 0 46px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+:root[data-skin="aurora"] .section-hdr {
+  display: inline-block;
+  width: auto;
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  padding: 6px 16px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  box-shadow: var(--sheen);
+}
+:root[data-skin="aurora"] .topbar { border-bottom: 1px solid var(--border-dim); padding-bottom: 10px; }
+:root[data-skin="aurora"] .game-card { --accent-text: color-mix(in srgb, var(--accent) 70%, #fff); }
+
+/* ── 5. Fields ── */
+:root[data-skin="aurora"] .name-input,
+:root[data-skin="aurora"] #room-code-input,
+:root[data-skin="aurora"] .secs-input,
+:root[data-skin="aurora"] input,
+:root[data-skin="aurora"] select,
+:root[data-skin="aurora"] textarea {
+  background-color: rgba(255,255,255,.06);
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  color: var(--text);
+}
+:root[data-skin="aurora"] textarea { border-radius: var(--r-md); }
+:root[data-skin="aurora"] .name-input.is-static { background: transparent; border-color: transparent; }
+
+/* ── 6. The tools cluster ── */
+:root[data-skin="aurora"] #skin-toggle,
+:root[data-skin="aurora"] #i18n-toggle {
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  box-shadow: var(--lift-sm), var(--sheen);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+:root[data-skin="aurora"] #skin-toggle { color: var(--text-dim); }
+:root[data-skin="aurora"] #skin-toggle:hover { background: var(--glass-hi); color: var(--text); }
+:root[data-skin="aurora"] #i18n-toggle button { color: var(--text-muted); }
+:root[data-skin="aurora"] #i18n-toggle button.active {
+  background: color-mix(in srgb, var(--accent) 34%, transparent); color: var(--text);
+}
+
+/* ── 7. The guide's phone mock-ups keep their own skin ──
+   They are scale drawings of play.html, which no skin touches. Their colours
+   are already literal in shared.css; this only stops the glass rules above from
+   reaching the card body inside them. */
+:root[data-skin="aurora"] .guide-phone {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #13132b;
+  box-shadow: var(--lift);
+}

@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Persuade Together">
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
+  <script src="skin.js"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="scenario.css">
   <style>
@@ -27,8 +28,8 @@
     /* ── Scenario card ── */
     .scenario-card {
       width: 100%; max-width: 1100px;
-      background: #13132b;
-      border: 2px solid #1e1e42;
+      background: var(--surface);
+      border: 2px solid var(--border);
       border-radius: 22px;
       padding: 28px 30px;
       margin-bottom: 16px;
@@ -56,7 +57,7 @@
       display: inline-flex; align-items: center; gap: 6px;
       background: rgba(6,182,212,.12);
       border: 1px solid rgba(6,182,212,.28);
-      color: #06b6d4;
+      color: var(--accent-text);
       font-size: .82rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
       padding: 4px 12px; border-radius: 20px;
       align-self: flex-start;
@@ -67,14 +68,14 @@
       font-size: .8rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
       margin-bottom: 7px;
     }
-    .pt-lbl-team  { color: #06b6d4; }
+    .pt-lbl-team  { color: var(--accent-text); }
     .pt-lbl-sit   { color: #8390a2; }
-    .pt-lbl-judge { color: #c084fc; }
+    .pt-lbl-judge { color: var(--violet-text); }
     .pt-team, .pt-sit, .pt-judge {
-      font-size: clamp(1.3rem, 4vw, 1.75rem); font-weight: 800; color: #fff;
+      font-size: clamp(1.3rem, 4vw, 1.75rem); font-weight: 800; color: var(--text-hi);
       line-height: 1.3;
     }
-    .pt-divider { height: 1px; background: #1e1e42; margin: 4px 0 22px; }
+    .pt-divider { height: 1px; background: var(--border); margin: 4px 0 22px; }
     /* who the judge is, once the roles are dealt to the player cards */
     .pt-judge-name {
       display: inline-block; margin-top: 8px;
@@ -86,13 +87,13 @@
     /* ── The judge's verdict, tapped on their own card ── */
     .verdict-banner {
       width: 100%; max-width: 1100px; margin: 16px auto 18px;
-      border: 2px solid #1e1e42; border-radius: 14px; padding: 16px 18px;
+      border: 2px solid var(--border); border-radius: 14px; padding: 16px 18px;
       text-align: center; font-size: 1.05rem; font-weight: 800; color: var(--text-dim);
       animation: fadeUp .3s ease both;
     }
     .verdict-banner.hidden { display: none; }
-    .verdict-banner.yes { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
-    .verdict-banner.no  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+    .verdict-banner.yes { border-color: #22c55e; color: var(--ok-text); background: rgba(34,197,94,.08); }
+    .verdict-banner.no  { border-color: #ef4444; color: var(--bad-text); background: rgba(239,68,68,.08); }
 
     /* theme overrides for new layout */
 
@@ -106,7 +107,7 @@
       animation: fadeUp .5s .35s ease both;
     }
 
-    .round-badge span { color: #06b6d4; }
+    .round-badge span { color: var(--accent-text); }
 
     @media (max-width: 520px) {
       .scenario-card { padding: 20px 18px; min-height: 160px; }
@@ -116,17 +117,18 @@
 
     /* ── Scenario browser ── */
     .filter-btn {
-      border: 1.5px solid #35335e; border-radius: 20px;
+      border: 1.5px solid var(--border-3); border-radius: 20px;
       padding: 5px 14px; font-size: .8rem; font-weight: 700;
-      color: #999; background: var(--btn-face); cursor: pointer;
+      color: var(--text-dim); background: var(--btn-face); cursor: pointer;
       transition: border-color .18s, color .18s, background .18s, transform .1s;
       font-family: inherit; white-space: nowrap;
     }
     .scenario-emoji { font-size: 1.3rem; flex-shrink: 0; line-height: 1; padding-top: 1px; }
-    .scenario-text  { font-size: .88rem; font-weight: 500; color: #aaa; line-height: 1.4; }
+    .scenario-text  { font-size: .88rem; font-weight: 500; color: var(--text-dim); line-height: 1.4; }
 
 
   </style>
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-guide="persuade" data-guide-next="game">
 

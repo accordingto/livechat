@@ -253,7 +253,7 @@ const ROOM = (() => {
                     --room-accent: ${accent}; --room-accent-text: var(--accent-text, ${accent}); }
       .room-setup .hidden { display: none !important; }
       .room-card {
-        background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+        background: var(--surface); border: 2px solid var(--border); border-radius: 20px;
         padding: 22px 26px; display: flex; flex-direction: column; gap: 16px;
         animation: fadeUp .5s .2s ease both;
       }
@@ -262,15 +262,15 @@ const ROOM = (() => {
         font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
         color: var(--text-muted, #82829f); min-width: 58px;
       }
-      .room-divider { height: 1px; background: #1e1e42; }
+      .room-divider { height: 1px; background: var(--border); }
       #room-code-input {
-        background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
-        color: #eee; font-family: inherit; font-size: .95rem; font-weight: 800; letter-spacing: 2px;
+        background: var(--bg); border: 2px solid var(--border); border-radius: 12px;
+        color: var(--text); font-family: inherit; font-size: .95rem; font-weight: 800; letter-spacing: 2px;
         text-transform: uppercase; padding: 11px 14px; width: 130px; transition: border-color .2s;
       }
       #room-code-input:focus { outline: none; border-color: var(--room-accent); }
       .room-btn {
-        background: var(--btn-face, #22224a); color: #999; border: 2px solid #35335e; border-radius: 12px;
+        background: var(--btn-face, #22224a); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
         padding: 11px 20px; font-size: .88rem; font-weight: 700; font-family: inherit;
         white-space: nowrap; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
       }
@@ -279,24 +279,24 @@ const ROOM = (() => {
       .room-count-btns { display: flex; flex-wrap: wrap; gap: 8px; }
       .room-count-btn {
         width: 44px; height: 44px; border-radius: 12px;
-        border: 2px solid #2e2e5e; background: var(--btn-face, #22224a); color: #aaa;
+        border: 2px solid var(--border-2); background: var(--btn-face, #22224a); color: var(--text-dim);
         font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
         transition: border-color .2s, color .2s, background .2s, transform .1s;
       }
       .room-count-btn:active { transform: scale(.94); }
-      .room-count-btn.active { border-color: var(--room-accent); color: #fff; background: color-mix(in srgb, var(--room-accent) 18%, transparent); }
+      .room-count-btn.active { border-color: var(--room-accent); color: var(--text-hi); background: color-mix(in srgb, var(--room-accent) 18%, transparent); }
       .room-hdr {
         font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
         color: var(--text-muted, #82829f); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px;
       }
-      .room-tag { font-size: .74rem; letter-spacing: .5px; color: var(--text-muted, #82829f); border: 1px solid #1e1e42; border-radius: 20px; padding: 2px 8px; }
+      .room-tag { font-size: .74rem; letter-spacing: .5px; color: var(--text-muted, #82829f); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; }
       .room-note { color: var(--text-dim, #9999bb); font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
       /* sits right after room-note, wrapping onto its own line on narrow screens
          next to whatever game-specific toggle (e.g. Say It Without Saying It's
          "Show what's on player cards") also lives in that same flow */
       .copy-all-btn { width: 100%; margin-bottom: 14px; }
       .copy-all-btn.is-copied {
-        background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
+        background: rgba(34,197,94,.18); border-color: #22c55e; color: var(--ok-text);
         animation: copyPop .4s ease;
       }
       /* its own accent (not the room's pink, so it never reads as "the same button"
@@ -315,7 +315,7 @@ const ROOM = (() => {
         background: none; border: none; color: var(--text-dim, #9999bb); font-family: inherit;
         font-size: .78rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0;
       }
-      .check-note .check-clear-btn:hover { color: #fff; }
+      .check-note .check-clear-btn:hover { color: var(--text-hi); }
       /* the actual "check it's correct now" action — kept as a real button
          (not the plain underlined Clear link) since revealing the answers
          is the whole point of this step, not a minor cleanup action */
@@ -342,14 +342,14 @@ const ROOM = (() => {
       .room-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start; gap: 12px; }
       .link-col {
         flex: 1; min-width: 160px;
-        background: #13132b; border: 2px solid #1e1e42; border-radius: 14px; padding: 14px;
+        background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 14px;
         display: flex; flex-direction: column; align-items: center; gap: 10px;
         animation: fadeUp .3s ease both; transition: border-color .3s, box-shadow .3s;
       }
       .link-col.is-marked { border-color: var(--room-accent); box-shadow: 0 0 20px color-mix(in srgb, var(--room-accent) 25%, transparent); }
       .name-input {
-        width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 10px;
-        color: #eee; font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
+        width: 100%; background: var(--bg); border: 2px solid var(--border); border-radius: 10px;
+        color: var(--text); font-family: inherit; font-size: .9rem; font-weight: 700; text-align: center;
         padding: 8px 10px; transition: border-color .2s;
       }
       .name-input::placeholder { color: var(--text-muted, #82829f); }
@@ -365,7 +365,7 @@ const ROOM = (() => {
       /* a quick pop + flash to green on copy — the text swap alone is easy to miss
          on a screen a host glances at for half a second */
       .btn-copy.is-copied {
-        background: rgba(34,197,94,.18); border-color: #22c55e; color: #22c55e;
+        background: rgba(34,197,94,.18); border-color: #22c55e; color: var(--ok-text);
         animation: copyPop .4s ease;
       }
       @keyframes copyPop {
@@ -374,7 +374,7 @@ const ROOM = (() => {
         100% { transform: scale(1); }
       }
       .btn-qr-toggle {
-        background: var(--btn-face, #22224a); color: #bbb; border: 2px solid #35335e; border-radius: 10px;
+        background: var(--btn-face, #22224a); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 10px;
         padding: 9px 12px; font-size: .82rem; font-weight: 700; font-family: inherit; cursor: pointer;
         transition: background .2s, border-color .2s, color .2s;
       }
@@ -386,8 +386,8 @@ const ROOM = (() => {
       .qr-inline svg { width: 100%; height: auto; display: block; }
       /* what each player answered, shown under their name once they tap their card */
       .link-answer {
-        width: 100%; border-top: 1px solid #1e1e42; padding-top: 9px;
-        font-size: .82rem; font-weight: 800; line-height: 1.35; color: #ddd;
+        width: 100%; border-top: 1px solid var(--border); padding-top: 9px;
+        font-size: .82rem; font-weight: 800; line-height: 1.35; color: var(--text-2);
         animation: fadeUp .25s ease both;
       }
       .link-answer .la-sub { display: block; font-size: .7rem; font-weight: 700; color: var(--text-muted, #82829f); margin-top: 3px; }

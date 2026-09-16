@@ -9,7 +9,7 @@
   margin-top: 28px;
 }
 .scenario-browser-hdr {
-  background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+  background: var(--surface-2); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
   padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
   transition: background .2s, border-color .2s, color .2s; margin-bottom: 14px;
 }
@@ -20,7 +20,7 @@
 }
 .scenario-item {
   display: flex; align-items: flex-start; gap: 10px;
-  background: var(--btn-face); border: 1.5px solid #2e2e5e;
+  background: var(--btn-face); border: 1.5px solid var(--border-2);
   border-radius: 12px; padding: 12px 16px;
   cursor: pointer;
   transition: border-color .2s, background .2s, transform .1s;

@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Dare Conquest">
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
+  <script src="skin.js"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --accent: #22c55e; --accent-alt: #22c55e; }
@@ -38,14 +39,14 @@
     .btn-primary:active:not(:disabled) { transform: scale(.98); }
     .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
     /* armed skill (High Roll / Low Roll) — red border + yellow text, text label itself doesn't change */
-    .btn-secondary.skill-armed { border-color: #ef4444; color: #eab308; }
+    .btn-secondary.skill-armed { border-color: #ef4444; color: var(--gold-text); }
     /* :hover only on devices that actually have a mouse — on touch (iPad), tapping a button
        leaves it "stuck" in :hover with no mouseleave to clear it, so a canceled skill button
        would otherwise stay green-tinted forever instead of returning to its plain gray look */
     @media (hover: hover) and (pointer: fine) {
       .btn-primary:hover:not(:disabled) { background: rgba(34,197,94,.1); }
-      .btn-secondary.skill-armed:hover { border-color: #ef4444; color: #eab308; }
-      .btn-secondary:disabled:hover { border-color: #1e1e42; color: var(--text-muted); }
+      .btn-secondary.skill-armed:hover { border-color: #ef4444; color: var(--gold-text); }
+      .btn-secondary:disabled:hover { border-color: var(--border); color: var(--text-muted); }
     }
 
     /* ── Setup screen: same shape as the card games (control card on top, one
@@ -56,7 +57,7 @@
       margin-bottom: 24px;
     }
     .setup-card {
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 20px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 20px;
       padding: 22px 26px;
       display: flex; flex-direction: column; gap: 16px;
       animation: fadeUp .5s .2s ease both;
@@ -67,7 +68,7 @@
 
     .rules-note {
       color: var(--text-dim); font-size: .82rem; line-height: 1.7;
-      margin-top: 22px; padding-top: 18px; border-top: 1px solid #1e1e42;
+      margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border);
     }
 
     /* ── Resume banner: shown only when a saved game is found in localStorage ── */
@@ -76,7 +77,7 @@
       background: rgba(34,197,94,.08); border: 2px solid rgba(34,197,94,.35); border-radius: 14px;
       padding: 14px 18px;
     }
-    .resume-banner p { font-size: .88rem; font-weight: 700; color: #ddd; }
+    .resume-banner p { font-size: .88rem; font-weight: 700; color: var(--text-2); }
     .resume-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* ── Scoreboard ── */
@@ -88,8 +89,8 @@
     }
     .score-chip {
       display: flex; align-items: center; gap: 6px;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 999px;
-      padding: 5px 13px; font-size: .8rem; font-weight: 700; color: #ccc;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 999px;
+      padding: 5px 13px; font-size: .8rem; font-weight: 700; color: var(--text-3);
       transition: border-color .25s, box-shadow .25s, transform .2s;
     }
     .score-chip .token { font-size: 1.05rem; }
@@ -108,12 +109,12 @@
     .control-bar {
       width: 100%; max-width: 1100px;
       display: flex; align-items: center; justify-content: center;
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 16px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 16px;
       padding: 8px 22px; margin-bottom: 10px;
       animation: fadeUp .5s .28s ease both;
     }
     .turn-indicator { font-size: clamp(.9rem, 2vw, 1.05rem); font-weight: 800; white-space: nowrap; }
-    .turn-indicator .tname { color: var(--turn-color, #22c55e); }
+    .turn-indicator .tname { color: var(--turn-color, var(--ok-text)); }
     .turn-indicator .round-count { color: var(--text-dim); font-weight: 700; margin-left: 2px; }
     .roll-btn { font-size: clamp(.78rem, 1.6vw, .88rem); padding: 8px 18px; }
     /* ── Roll row: the single movement die, flanked by the two range skills ── */
@@ -175,7 +176,7 @@
     .diceoff-side { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; flex: 0 1 104px; }
     .diceoff-name { font-size: 1.05rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     .diceoff-value {
-      font-size: 1.3rem; font-weight: 900; color: #eee; min-height: 1.6rem;
+      font-size: 1.3rem; font-weight: 900; color: var(--text); min-height: 1.6rem;
       font-variant-numeric: tabular-nums;
     }
     .diceoff-vs { font-size: .85rem; font-weight: 900; color: var(--text-dim); align-self: center; padding: 0 2px; flex-shrink: 0; }
@@ -184,7 +185,7 @@
     .diceoff-side { position: relative; border-radius: 14px; transition: opacity .3s, filter .3s; }
     .diceoff-side.diceoff-loser { opacity: .4; filter: grayscale(.75); }
     .diceoff-side.diceoff-winner { animation: diceoffWinnerPulse .7s ease-in-out infinite; }
-    .diceoff-side.diceoff-winner .diceoff-value { color: #22c55e; text-shadow: 0 0 10px rgba(34,197,94,.7); }
+    .diceoff-side.diceoff-winner .diceoff-value { color: var(--ok-text); text-shadow: 0 0 10px rgba(34,197,94,.7); }
     .diceoff-side.diceoff-winner::before {
       content: '👑'; position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
       font-size: 1.3rem; animation: diceoffCrownDrop .5s ease both;
@@ -234,7 +235,7 @@
       position: relative; overflow: hidden; padding: 4px;
       transition: background .35s, border-color .35s;
     }
-    .tile.special { background: #171730; border-color: #2a2a4a; }
+    .tile.special { background: var(--surface-2); border-color: var(--btn-off); }
     /* ── Territory connections: adjacent same-owner land gets a small stone bridge/wall
        built across the gap between them, reading as one connected structure ── */
     .tile.has-connection { overflow: visible; z-index: 3; }
@@ -255,10 +256,10 @@
     .tile-connector.conn-bottom { left: 34%; width: 32%; bottom: -8px;  height: 11px; }
 
     .tile-icon { font-size: 1.3rem; line-height: 1; }
-    .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: #fff; margin-top: 3px; }
+    .tile-corner-label { font-size: .58rem; font-weight: 800; letter-spacing: .5px; color: var(--text-hi); margin-top: 3px; }
     /* the owning player's name, centered in an owned tile instead of just a plain color fill */
     .tile-owner-name {
-      font-size: .68rem; font-weight: 800; color: #fff; text-align: center;
+      font-size: .68rem; font-weight: 800; color: var(--text-hi); text-align: center;
       text-shadow: 0 1px 3px rgba(0,0,0,.6);
       line-height: 1.15; padding: 0 3px; max-width: 100%;
       word-break: break-word;
@@ -287,7 +288,7 @@
     .tile-token.current-token::after {
       content: '▼'; position: absolute; left: 50%; top: -13px;
       transform: translate(-50%, 0); font-size: .55rem; line-height: 1;
-      color: var(--turn-color, #fff); text-shadow: 0 0 3px rgba(0,0,0,.9);
+      color: var(--turn-color, var(--text-hi)); text-shadow: 0 0 3px rgba(0,0,0,.9);
       animation: currentTokenArrow 1s ease-in-out infinite;
     }
     @keyframes currentTokenBounce {
@@ -355,7 +356,7 @@
     .capture-burst { position: absolute; inset: 0; pointer-events: none; }
     .capture-particle {
       position: absolute; top: 50%; left: 50%; font-size: .85rem;
-      color: #fff !important;
+      color: var(--text-hi) !important;
       text-shadow: 0 0 4px rgba(0,0,0,.9), 0 0 8px var(--p-glow, #fff);
       transform: translate(-50%, -50%);
       animation: captureBurst .75s ease-out both;
@@ -366,7 +367,7 @@
     }
     .capture-label {
       position: absolute; left: 50%; top: -10px; transform: translate(-50%, 0);
-      font-size: .64rem; font-weight: 900; letter-spacing: .3px; color: #fff !important;
+      font-size: .64rem; font-weight: 900; letter-spacing: .3px; color: var(--text-hi) !important;
       white-space: nowrap; padding: 3px 9px; border-radius: 10px;
       background: rgba(10,10,20,.88); border: 1.5px solid var(--capture-color, #fff);
       box-shadow: 0 2px 10px rgba(0,0,0,.6);
@@ -396,7 +397,7 @@
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       z-index: 20;
       width: min(640px, 92%);
-      background: #13132b; border: 2px solid #1e1e42; border-radius: 18px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 18px;
       padding: 18px 26px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 10px; text-align: center;
@@ -426,14 +427,14 @@
     /* Truth question category badge — gold instead of the usual green Dare accent */
     .q-cat-truth {
       background: rgba(234,179,8,.14) !important; border-color: rgba(234,179,8,.35) !important;
-      color: #eab308 !important;
+      color: var(--gold-text) !important;
     }
 
     /* ── Truth or Dare choice: the current player freely calls it, host clicks the match ── */
     .td-choice-grid { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
     .td-choice-btn {
       display: flex; flex-direction: column; align-items: center; gap: 6px;
-      border: 2px solid #1e1e42; background: var(--btn-face); color: #ccc;
+      border: 2px solid var(--border); background: var(--btn-face); color: var(--text-3);
       border-radius: 16px; padding: 16px 34px; font-size: .95rem; font-weight: 900; letter-spacing: 1px;
       cursor: pointer; font-family: inherit; white-space: nowrap;
       transition: border-color .2s, color .2s, background .2s, transform .1s;
@@ -441,8 +442,8 @@
     .td-choice-btn .td-emoji { font-size: 1.8rem; }
     .td-choice-btn:active { transform: scale(.96); }
     @media (hover: hover) and (pointer: fine) {
-      .td-choice-btn.td-truth:hover { border-color: #eab308; color: #eab308; background: rgba(234,179,8,.08); }
-      .td-choice-btn.td-dare:hover  { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.08); }
+      .td-choice-btn.td-truth:hover { border-color: #eab308; color: var(--gold-text); background: rgba(234,179,8,.08); }
+      .td-choice-btn.td-dare:hover  { border-color: #ef4444; color: var(--bad-text); background: rgba(239,68,68,.08); }
     }
 
     .center-idle { display: flex; flex-direction: row; align-items: center; gap: 10px; animation: popIn .3s ease both; }
@@ -451,12 +452,12 @@
 
     .center-safe { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: popIn .35s ease both; }
     .center-safe .cs-icon { font-size: 2rem; }
-    .center-safe p { color: #ddd; font-size: .98rem; font-weight: 700; text-align: center; }
+    .center-safe p { color: var(--text-2); font-size: .98rem; font-weight: 700; text-align: center; }
 
     .q-cat {
       display: inline-flex; align-self: center;
       background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3);
-      color: #22c55e; font-size: .84rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--ok-text); font-size: .84rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
       padding: 4px 14px; border-radius: 20px;
     }
     .q-text { font-size: clamp(1.1rem, 2.3vw, 1.4rem); font-weight: 700; text-align: center; line-height: 1.6; max-width: 640px; }
@@ -483,7 +484,7 @@
     /* the confirmation floats out of flow so opening it doesn't shove the question around */
     .swap-confirm {
       position: absolute; top: calc(100% + 8px); right: 0;
-      width: 190px; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      width: 190px; background: var(--bg); border: 2px solid var(--border); border-radius: 12px;
       padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
       box-shadow: 0 10px 28px rgba(0,0,0,.6); animation: popIn .18s ease both;
     }
@@ -494,29 +495,29 @@
     .swap-confirming .q-text,
     .swap-confirming .timer-block,
     .swap-confirming .q-actions { opacity: .18; pointer-events: none; transition: opacity .18s; }
-    .swap-confirm p { font-size: .84rem; color: #ddd; font-weight: 700; line-height: 1.4; text-align: center; }
+    .swap-confirm p { font-size: .84rem; color: var(--text-2); font-weight: 700; line-height: 1.4; text-align: center; }
     .swap-confirm .swap-left { display: block; color: var(--text-dim); font-weight: 700; font-size: .78rem; margin-top: 2px; }
     .swap-confirm-actions { display: flex; gap: 6px; }
     .swap-confirm-actions button {
       flex: 1; padding: 6px 4px; font-size: .82rem; font-weight: 800; font-family: inherit;
-      border-radius: 8px; cursor: pointer; background: #1a1a38; border: 2px solid #35335e; color: #999;
+      border-radius: 8px; cursor: pointer; background: var(--surface-2); border: 2px solid var(--border-3); color: var(--text-dim);
       transition: background .2s, border-color .2s, color .2s, transform .1s;
     }
     .swap-confirm-actions button:active { transform: scale(.97); }
-    .swap-confirm-actions .swap-yes { border-color: rgba(34,197,94,.45); color: #22c55e; }
-    .swap-confirm-actions .swap-no { border-color: rgba(239,68,68,.35); color: #ef4444; }
+    .swap-confirm-actions .swap-yes { border-color: rgba(34,197,94,.45); color: var(--ok-text); }
+    .swap-confirm-actions .swap-no { border-color: rgba(239,68,68,.35); color: var(--bad-text); }
 
     /* ── Countdown timer: only starts when the host presses the button ── */
     .timer-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .timer-circle {
       width: 58px; height: 58px; border-radius: 50%;
-      border: 3px solid #22c55e; color: #eee;
+      border: 3px solid #22c55e; color: var(--text);
       display: flex; align-items: center; justify-content: center;
       font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums;
       transition: border-color .3s, color .3s;
     }
-    .timer-circle.low { border-color: #f59e0b; color: #f59e0b; }
-    .timer-circle.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+    .timer-circle.low { border-color: #f59e0b; color: var(--warn-text); }
+    .timer-circle.critical { border-color: #ef4444; color: var(--bad-text); animation: timerPulse .8s ease-in-out infinite; }
     @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
     .timer-controls { display: flex; gap: 8px; }
     .timer-ctrl-btn { background: var(--btn-face); padding: 7px 14px; font-size: .86rem; }
@@ -525,7 +526,7 @@
       font-family: inherit; cursor: pointer; border: 2px solid; transition: background .2s, transform .1s;
     }
     .btn-judge:active { transform: scale(.97); }
-    .btn-correct { color: #4ade80; border-color: #22c55e; background: rgba(34,197,94,.16); }
+    .btn-correct { color: var(--ok-text-lit); border-color: #22c55e; background: rgba(34,197,94,.16); }
     .btn-wrong { color: #f87171; border-color: #ef4444; background: rgba(239,68,68,.16); }
     .btn-judge:disabled { opacity: .3; cursor: not-allowed; }
     @media (hover: hover) and (pointer: fine) {
@@ -542,7 +543,7 @@
       animation: fadeUp .4s ease both;
     }
     .winner-banner h2 { font-size: clamp(1.3rem, 3.5vw, 1.8rem); margin-bottom: 8px; }
-    .winner-banner p { color: #999; font-size: .9rem; }
+    .winner-banner p { color: var(--text-dim); font-size: .9rem; }
 
     /* ── Browse all prompts ── */
     .prompt-browser {
@@ -550,25 +551,25 @@
       margin: 12px 0 40px;
     }
     .prompt-browser-hdr {
-      background: #1a1a38; color: #999; border: 2px solid #35335e; border-radius: 12px;
+      background: var(--surface-2); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
       padding: 10px 18px; font-size: .8rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .2s, border-color .2s, color .2s; margin-bottom: 14px;
     }
-    .prompt-browser-hdr:hover { border-color: #22c55e; color: #22c55e; }
+    .prompt-browser-hdr:hover { border-color: #22c55e; color: var(--ok-text); }
     .prompt-deck + .prompt-deck { margin-top: 24px; }
     .prompt-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 10px;
     }
     .prompt-item {
-      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 12px;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
       padding: 12px 16px;
     }
     .prompt-item .pi-cat {
       font-size: .8rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
-      color: #22c55e; margin-bottom: 5px;
+      color: var(--ok-text); margin-bottom: 5px;
     }
-    .prompt-item .pi-text { font-size: .86rem; color: #aaa; line-height: 1.55; }
+    .prompt-item .pi-text { font-size: .86rem; color: var(--text-dim); line-height: 1.55; }
     .prompt-item .pi-text em { color: var(--text-dim); font-style: normal; }
     /* each deck is written as five groups of ten — browsing it grouped the same way
        is how the host finds the kind of prompt they want */
@@ -577,15 +578,15 @@
       display: flex; align-items: center; gap: 10px;
       margin: 14px 0 2px;
       font-size: .8rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #22c55e;
+      color: var(--ok-text);
     }
     .prompt-group-hdr:first-child { margin-top: 0; }
     .prompt-group-hdr::after {
-      content: ''; flex: 1; height: 1px; background: #1e1e42;
+      content: ''; flex: 1; height: 1px; background: var(--border);
     }
     .prompt-group-hdr .pg-count { color: var(--text-muted); letter-spacing: 1px; }
-    .truth-list .prompt-group-hdr { color: #eab308; }
-    .truth-list .prompt-item .pi-cat { color: #eab308; }
+    .truth-list .prompt-group-hdr { color: var(--gold-text); }
+    .truth-list .prompt-item .pi-cat { color: var(--gold-text); }
 
     @media (max-width: 640px) {
       .control-bar { flex-wrap: wrap; justify-content: center; text-align: center; }
@@ -593,6 +594,7 @@
       .tile-icon { font-size: 1.1rem; }
     }
   </style>
+  <link rel="stylesheet" href="skins.css">
 </head>
 <body data-guide="conquest" data-guide-next="setup">
 
@@ -1753,7 +1755,7 @@
         panel.classList.remove('hidden', 'active', 'truth', 'defense', 'choice', 'diceoff', 'corner-start', 'corner-bonus', 'corner-lucky', 'corner-gift');
         panel.classList.add(isSteal ? 'defense' : 'choice');
         const badgeStyle = isSteal
-          ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#ef4444;"'
+          ? ' style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:var(--bad-text);"'
           : isSpecial
           ? ` style="background:${TYPE_COLOR[specialType]}22;border-color:${TYPE_COLOR[specialType]}55;color:${TYPE_COLOR[specialType]};"`
           : '';
@@ -2059,7 +2061,7 @@
       panel.classList.add('diceoff');
       document.getElementById('center-content').outerHTML = `
         <div id="center-content" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;animation:popIn .3s ease both;">
-          <span class="q-cat" id="diceoff-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#eab308;">${ct('diceoffTitle')}</span>
+          <span class="q-cat" id="diceoff-cat" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:var(--gold-text);">${ct('diceoffTitle')}</span>
           <div class="q-text" id="diceoff-instructions">${ct('diceoffInstructions')}</div>
           <div class="diceoff-grid">
             <div class="diceoff-side" id="attacker-diceoff-side">
