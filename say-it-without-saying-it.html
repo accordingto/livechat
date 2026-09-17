@@ -429,7 +429,6 @@
     .cp-btn-buzz, .cp-btn-right { background: rgba(34,197,94,.18); border: 1.5px solid #22c55e; color: var(--ok-text-lit); }
     .cp-btn-foul, .cp-btn-wrong { background: rgba(239,68,68,.18); border: 1.5px solid #ef4444; color: #f87171; }
     .cp-btn-deal { background: rgba(99,102,241,.18); border: 1.5px solid #6366f1; color: var(--accent-text); }
-    .cp-btn-skip { background: var(--btn-face); border: 1.5px solid var(--border-3); color: var(--text-dim); }
     .cp-preview .cp-result { color: var(--accent-text); font-weight: 800; }
     .deck-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -749,7 +748,6 @@
       dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
       dealFirstPreviewBtn: { zh: '🎬 發第一個題目', en: '🎬 Deal the first word' },
       dealNextPreviewBtn: { zh: '🎬 發下一個題目', en: '🎬 Deal the next word' },
-      skipPreviewBtn: { zh: '🛑 我想換一題', en: "🛑 I can't describe this one" },
       resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
@@ -1163,8 +1161,7 @@
        anyone   : { id, choice:'deal' }                        (between rounds only)
        guesser  : { id, choice:'buzz', t }
        referee  : { id, choice:'taboo', t }
-       giver    : { id, choice:'right'|'wrong', buzzer }
-                  { id, choice:'ruling', upheld }  |  { id, choice:'skip' }
+       giver    : { id, choice:'right'|'wrong', buzzer }  or  { id, choice:'ruling', upheld }
        Every branch is a request, not an instruction: this page holds the deck, the
        scores and the roles, and decides whether the request makes sense right now. */
     function handleAnswer(num, data) {
@@ -1183,19 +1180,6 @@
 
       if (state !== 'playing' && state !== 'ready') return;
       if (v.id !== roundId) return;
-
-      /* A word the clue giver can't describe is theirs to drop, from their own card —
-         it costs the round, so the card asks twice before this arrives. Unlike the
-         host's end-turn button it rolls straight on to the next word: a giver asking
-         for a different word is not the host stopping the game to talk. */
-      if (v.choice === 'skip') {
-        ROOM.clearAnswer(num - 1);
-        if (state === 'playing' && num === giverIdx + 1) {
-          confirmEnd = false;
-          endRound({ type: 'stop', who: giverIdx + 1 }, true);
-        }
-        return;
-      }
 
       // before a round is live the only thing a card can say is "I'm looking at my
       // phone" — and only the incoming clue giver gets to say it
@@ -1790,11 +1774,6 @@
         if (p.buzzerName && !p.tabooBy) {
           blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
           blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">${tt('correctPreviewBtn')}</span><span class="cp-btn cp-btn-wrong">${tt('notItPreviewBtn')}</span></div>`);
-        }
-        // the giver's own way out of a word they can't describe, shown only when the
-        // card really has it: not while a guess or a Taboo! call is waiting
-        if (p.state === 'playing' && !p.tabooBy && !p.buzzerName) {
-          blocks.push(`<span class="cp-btn cp-btn-skip">${tt('skipPreviewBtn')}</span>`);
         }
       } else if (p.isRef) {
         if (p.buzzerName && !p.tabooBy) {

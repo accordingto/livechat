@@ -369,10 +369,8 @@ a.back:hover { color: var(--text); }
   border-radius: 14px; padding: 12px 20px;
   font-size: .95rem; font-weight: 800; font-family: inherit;
 }
-/* a filled card button in the page's own accent (Say It's deal button), and the
-   quiet one beside it — same pair as .gp-btn.is-accent / .is-quiet below */
+/* a filled card button in the page's own accent — Say It's deal button */
 .guide-btn.is-accent { background: var(--accent); border: 2px solid var(--accent); color: var(--btn-ink); }
-.guide-btn.is-quiet  { background: var(--btn-face); border: 2px solid var(--border-3); color: var(--text-dim); }
 .guide-btn.is-choice.is-tint-red   { color: var(--bad-text); background: #ef44441f; }
 .guide-btn.is-choice.is-tint-green { color: var(--ok-text); background: #22c55e1f; }
 
@@ -497,9 +495,8 @@ a.back:hover { color: var(--text); }
 .gp-btn.is-red    { background: #ef4444; border-color: #ef4444; color: #2b0505; }
 .gp-btn.is-choice { background: #0d0d1a; border-color: var(--border); color: #ddd; }
 /* the card's own accent-filled button (dark ink, as everywhere a filled accent
-   carries text), and the quietest thing on a card */
+   carries text) */
 .gp-btn.is-accent { background: var(--accent); border-color: var(--accent); color: var(--btn-ink); }
-.gp-btn.is-quiet  { background: var(--btn-face); border-color: var(--border-3); color: var(--text-dim); }
 
 .guide-phone-note {
   font-size: 1.05rem; line-height: 1.8; color: var(--text-hi);
