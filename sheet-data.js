@@ -153,9 +153,36 @@
     return rows;
   }
 
+  /* gviz 不是每次都回 CSV：查詢被拒、分頁權限不對、或是被導去登入頁時，它會回
+     一段 JS（開頭是那個著名的 O_o 註解，接著 google.visualization.Query.setResponse
+     包一包 status 是 error 的 JSON）或一整頁 HTML。那些東西餵給 CSV 解析器不會
+     噴錯，只會解析出一列莫名其妙的「標題」，然後被回報成「標題列缺少必填欄位」
+     ——把主持人送去檢查一份根本沒問題的試算表。先認出這兩種回應，講實話。 */
+  function notCSV(text) {
+    const head = String(text || '').replace(/^﻿/, '').trimStart().slice(0, 300);
+    if (/^\/\*O_o\*\/|google\.visualization\.Query\.setResponse/.test(head)) {
+      /* 依序試，不要寫成一條 alternation：JSON 裡 "reason" 排在
+         "detailed_message" 前面，一條 regex 會先撞上機器代碼（access_denied），
+         把真正寫給人看的那句蓋掉。 */
+      let why = '';
+      for (const k of ['detailed_message', 'message', 'reason']) {
+        const m = head.match(new RegExp('"' + k + '":"([^"]{1,120})"'));
+        if (m && m[1]) { why = m[1].replace(/\\u003c|\\u003e/g, ''); break; }
+      }
+      return 'Google 拒絕了這個分頁的查詢' + (why ? '：' + why : '');
+    }
+    if (/^<(?:!doctype|html|\?xml)/i.test(head)) {
+      return '拿到的是網頁而不是資料（試算表可能沒設成「知道連結的人皆可檢視」）';
+    }
+    return null;
+  }
+
   /* 一個分頁的 CSV → 乾淨的物件陣列。回傳 { rows, skipped } 或丟出錯誤。 */
   function parseTab(tab, csv) {
     const spec = SCHEMA[tab];
+    const bad = notCSV(csv);
+    if (bad) throw new Error(bad);
+
     const table = parseCSV(csv).filter(r => r.some(c => String(c).trim() !== ''));
     if (!table.length) return { rows: [], skipped: 0 };
 
@@ -165,7 +192,10 @@
 
     const missing = spec.required.filter(c => !(c.toLowerCase() in keyOf));
     if (missing.length) {
-      throw new Error('標題列缺少必填欄位：' + missing.join('、'));
+      /* 把「實際收到的標題列」一起印出來。少了這一段，畫面上只會說缺哪一欄，
+         但缺的原因幾乎都是「這一列根本不是標題列」，光看訊息看不出來。 */
+      const got = header.filter(Boolean).slice(0, 6).join('、') || '（空白）';
+      throw new Error('標題列缺少必填欄位：' + missing.join('、') + '（實際讀到的標題列是：' + got + '）');
     }
 
     const rows = [];
@@ -197,9 +227,15 @@
     throw new Error('看不出這是 Google Sheet 網址');
   }
 
+  /* headers=1 是必要的，不是保險：不給這個參數時 gviz 會**自己猜**每個分頁有幾列
+     標題，而且是逐個分頁各猜各的。猜錯的那一個分頁，第一列資料會被當成標題列，
+     於是這支程式看不到 word／text 這些欄位名，回報「標題列缺少必填欄位」——但
+     試算表本身完全正常，主持人怎麼檢查都找不到問題（實際回報過：11 個分頁裡
+     只有 taboo 這一個失敗，它的標題列明明就是 level／emoji／word）。11 個分頁
+     的格式都是固定的一列標題，所以直接寫死，不讓它猜。 */
   const csvUrl = (id, tab) =>
     'https://docs.google.com/spreadsheets/d/' + id +
-    '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(tab);
+    '/gviz/tq?tqx=out:csv&headers=1&sheet=' + encodeURIComponent(tab);
 
   /* ── localStorage ── */
   function read() {
