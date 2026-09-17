@@ -520,6 +520,7 @@
       pickChangeAnytime: { zh: '隨時都可以改變答案。', en: 'You can change your mind any time.' },
       hottakePrompt: { zh: '選一邊——然後大聲說出理由！', en: 'Pick a side — then say why out loud!' },
       somethingElse: { zh: '其他 — 我自己的答案', en: 'Something else — my own answer' },
+      situationChip: { zh: '🎯 情境', en: '🎯 The Situation' },
       sophiesChooseThen: { zh: '選好之後，跟大家說明理由。', en: 'Choose, then tell everyone why.' },
       sceneFallbackTitle: { zh: '這個場景', en: 'The Scene' },
       youPlay: { zh: '🎪 你飾演 {letter}', en: '🎪 You play {letter}' },
@@ -1637,8 +1638,13 @@
         el.innerHTML = `
           <div class="secret-card theme-sophies">
             ${nameBanner(data)}
-            <!-- the scenario stays on the host's shared screen; printing it here again
-                 only sends everyone's eyes down to their phone -->
+            <!-- The situation is printed here as well as on the host's shared screen.
+                 It was deliberately left off at first, to keep everyone's eyes up — but
+                 that assumed every player can read the shared screen, and on a phone in
+                 a voice call they often can't, which left them unable to answer without
+                 asking the host to read it again. -->
+            <span class="pick-chip" style="color:${chipInk('#f59e0b')};border-color:#f59e0b55;background:rgba(245,158,11,.1)">${pt('situationChip')}</span>
+            <span class="pick-text">${esc(data.situation || '')}</span>
             <div class="pick-row">
               ${pickButton('a', 'A', esc(data.a || ''), picked, '#22c55e')}
               ${pickButton('b', 'B', esc(data.b || ''), picked, '#f59e0b')}

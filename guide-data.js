@@ -202,8 +202,8 @@ const GAME_GUIDES = {
     },
     sections: [
       { icon: '🎯', title: GUIDE_TITLES.what, paragraphs: [
-        { zh: '玩家在手機上按 A／B／C（C 是「我有自己的答案」），主持人畫面即時顯示票數與投票的人。情境只留在主持人畫面上，卡片不重印，免得大家低頭看手機。',
-          en: 'Players tap A, B, or C (C means "my own answer") and the host screen tallies names as they land. The scenario stays on the shared screen only, so nobody spends the round on their phone.' },
+        { zh: '玩家在手機上讀到情境、按 A／B／C（C 是「我有自己的答案」），主持人畫面即時顯示票數與投票的人。',
+          en: 'Players read the situation on their phone and tap A, B, or C (C means "my own answer"); the host screen tallies names as they land.' },
       ]},
       { icon: '🕹️', title: GUIDE_TITLES.how, steps: [
         { zh: `任何一位玩家在自己的卡片上按 ${B('is-accent', '🎲 抽第一個情境')} 就開始；你畫面上的 ${B('btn-draw', '🎲 抽取')} 是備援。把情境與兩個選項唸出來。`,
@@ -215,8 +215,11 @@ const GAME_GUIDES = {
       ]},
       { icon: '📱', title: { zh: '玩家手機上會看到什麼', en: 'What players see on their phones' },
         phones: [
-          { caption: { zh: '只有三個選項', en: 'Just the three options' },
+          { caption: { zh: '情境跟三個選項都在卡片上', en: 'The situation and all three options' },
             card: { name: 'Amy', color: 1,
+                    chip: { label: { zh: '🎯 情境', en: '🎯 The Situation' }, hex: '#f59e0b' },
+                    text: { zh: 'Your closest friend asks you to lie to their partner to cover for them.',
+                            en: 'Your closest friend asks you to lie to their partner to cover for them.' },
                     buttons: [
                       { label: { zh: 'A　Report them to HR', en: 'A　Report them to HR' }, cls: 'is-choice' },
                       { label: { zh: 'B　Keep it to yourself', en: 'B　Keep it to yourself' }, cls: 'is-choice' },
@@ -225,8 +228,8 @@ const GAME_GUIDES = {
                     ],
                     hint: { zh: '誰先按都可以 — 不用等其他人。', en: 'Anyone can tap it — no need to wait for the others.' } } },
         ],
-        note: { zh: '卡片上<b>刻意不印情境本文</b>——情境留在你分享的畫面上。再印一次只會讓所有人整段時間低頭看手機。最下面那顆「換下一個情境」誰按都可以，按下去會先跑<b>五秒倒數</b>，這段時間任何人都能按「等一下」停住。',
-                en: 'The scenario is deliberately left off the card — it stays on the screen you are sharing. Printing it twice just sends everyone’s eyes down to their phones. Anyone may tap “next” at the bottom; it runs a <b>five-second countdown</b> first, and anyone can hold it during those seconds.' } },
+        note: { zh: '情境本文<b>也會印在卡片上</b>，所以看不清楚分享畫面的人（手機在通話中、螢幕太小）照樣答得出來，不必請你再唸一次。最下面那顆「換下一個情境」誰按都可以，按下去會先跑<b>五秒倒數</b>，這段時間任何人都能按「等一下」停住。',
+                en: 'The situation <b>is printed on the card too</b>, so anyone who can’t read the shared screen — on a phone, mid-call, or just too small — can still answer without asking you to read it again. Anyone may tap “next” at the bottom; it runs a <b>five-second countdown</b> first, and anyone can hold it during those seconds.' } },
       { icon: '🙋', title: GUIDE_TITLES.who, roles: [
         { emoji: '🎙️', name: { zh: '主持人', en: 'Host' },
           desc: { zh: '唸出情境與選項、主持討論。抽題由卡片決定，畫面上的抽取鈕是備援。',
