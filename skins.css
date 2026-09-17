@@ -164,7 +164,6 @@
    .timer-btn.ghost have to keep winning. */
 [data-skin="aurora"] :where(
   .btn-secondary,
-  .btn-skip,
   .reset-btn,
   .deck-toggle,
   .room-btn,
