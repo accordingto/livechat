@@ -379,6 +379,17 @@
     }
     .deal-row .btn-deal { flex: 1; }
 
+    /* deliberately the quietest thing on the screen: a small pill, well below the
+       deal button, because wiping the scores is something a host does between
+       sessions and never mid-game */
+    .score-reset { width: 100%; max-width: 1100px; text-align: center; margin: 14px 0 4px; }
+    .score-reset button {
+      background: var(--surface-2); border: 2px solid var(--border-3); color: var(--text-dim); font-family: inherit;
+      font-size: .78rem; font-weight: 700; cursor: pointer; padding: 8px 16px; border-radius: 999px;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .score-reset button:hover { border-color: #6366f1; color: var(--accent-text); }
+
     /* ── Deck browser: spoilers, so it stays closed while the screen is shared ── */
     .deck-browser { width: 100%; max-width: 1100px; margin: 28px 0 40px; }
     .deck-toggle {
@@ -681,14 +692,12 @@
       </div>
     </div>
 
-    <!-- One button, one decision. "Skip this word" and "Reset scores" used to sit
-         beside and below it; both are gone. A word the giver doesn't like is a
-         round they can end anyway, and resetting the score mid-session is not a
-         thing a host does — two more things to hit by mistake on a screen the
-         host is sharing, for no use either of them was actually getting. -->
+    <!-- One button, one decision: "Skip this word" used to sit beside this one and
+         is gone — a word the giver doesn't like is a round they can end anyway. -->
     <div class="deal-row" id="deal-row">
       <button class="btn-deal" id="deal-btn" onclick="dealRound()">🎬 Deal a Word</button>
     </div>
+    <div class="score-reset"><button onclick="resetScores()" data-i18n="taboo.resetScoresBtn">↺ Reset scores</button></div>
 
     <!-- player cards: the clue giver gets the word and the verdict buttons,
          everyone else gets the forbidden words and the buzzer -->
@@ -737,6 +746,7 @@
       callYesBtn: { zh: '🚨 成立 — 裁判 +2，描述者 −1', en: '🚨 Yes — +2 to the referee, −1 to the clue giver' },
       callNoBtn: { zh: '👌 不成立 — 繼續這一輪', en: '👌 No — keep playing this round' },
       dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
+      resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
       nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
@@ -1570,6 +1580,14 @@
       renderAll();
     }
 
+    /* every card carries the standings now, so this has to reach them too, not just
+       repaint the host's scoreboard */
+    function resetScores() {
+      scores = scores.map(() => 0);
+      publishRound();
+      renderAll();
+    }
+
     /* ── Firebase ──
        A full .set() at the start of a round wipes last round's answers; everything
        after that is an .update() so a buzz arriving at the same moment isn't erased. */
@@ -1686,6 +1704,9 @@
           blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">${tt('correctPreviewBtn')}</span><span class="cp-btn cp-btn-wrong">${tt('notItPreviewBtn')}</span></div>`);
         }
       } else if (p.isRef) {
+        if (p.buzzerName && !p.tabooBy) {
+          blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
+        }
         blocks.push(forbiddenPreviewHTML(p));
         blocks.push(p.iCalledTaboo
           ? `<div class="cp-note">${tt('calledTabooWaiting')}</div>`

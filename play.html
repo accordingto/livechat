@@ -1225,11 +1225,20 @@
         ? `<div class="taboo-called mine">${pt('youCalledTaboo')}<span class="tc-sub">${pt('waitingGiverRuling', { name: esc(data.giverName || '') })}</span></div>`
         : `<button class="taboo-foul" onclick="tabooCall(this)"${data.tabooBy ? ' disabled' : ''}>${pt('tabooFoulBtn')}</button>`;
       if (data.isRef) {
+        // the referee is listening to the round, not playing it, so they need to know
+        // a guess is on the table — same green block, same place under the clock, as
+        // the clue giver sees. No buttons: judging the guess is the giver's job.
+        // Hidden while a Taboo! call is open, since that freezes the round anyway and
+        // the call banner is the thing to read.
+        const heard = !data.tabooBy && data.buzzer
+          ? `<div class="taboo-buzzed">${pt('buzzedIn', { name: esc(data.buzzerName || '') })}</div>`
+          : '';
         // the banned list and the button that acts on it belong next to each other —
         // the standing reminder sits under both rather than splitting them apart
         return shell(`
           ${chip(pt('refereeChip'), '#f59e0b')}
           ${clock}
+          ${heard}
           ${bannedBlock}
           ${data.iCalledTaboo ? '' : callBanner}
           ${tabooBtn}
