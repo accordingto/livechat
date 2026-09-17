@@ -520,8 +520,8 @@
       noForbiddenThisRound: { zh: '這輪沒有禁字 — 隨便怎麼形容都可以！', en: 'No forbidden words this round — describe it any way you like!' },
       refereeChip: { zh: '👀 你是裁判', en: "👀 You're the referee" },
       youCalledTaboo: { zh: '🚨 你喊了 Taboo！', en: '🚨 You called Taboo!' },
-      tabooFoulBtn: { zh: '🚨 Taboo！他說了禁字', en: '🚨 Taboo! They said a forbidden word' },
-      listenForForbidden: { zh: '仔細聽有沒有人說出禁字 — 這輪你不用搶答。', en: 'Listen for a forbidden word — you sit this round out, so no buzzer for you.' },
+      tabooFoulBtn: { zh: '🚨 Taboo！描述者說了禁字', en: '🚨 Taboo! The clue giver said one' },
+      listenForForbidden: { zh: '只有 {name}（描述者）說出禁字才算 — 猜的人說到不算。這輪你不用搶答。', en: "Only {name}, the clue giver, can break the rule — a guesser saying a forbidden word doesn't count. You sit this round out." },
       youBuzzed: { zh: '🙋 你搶答了 — 大聲說出你的答案！', en: '🙋 You buzzed — say your guess out loud!' },
       willTap: { zh: '{giver} 會按 ✅ 或 ❌。', en: '{giver} will tap ✅ or ❌.' },
       queuePos: { zh: '⏳ 你排在第 {n} 位', en: "⏳ You're #{n} in the queue" },
@@ -1242,7 +1242,7 @@
           ${bannedBlock}
           ${data.iCalledTaboo ? '' : callBanner}
           ${tabooBtn}
-          <span class="pick-sub">${pt('listenForForbidden')}</span>`);
+          <span class="pick-sub">${pt('listenForForbidden', { name: esc(data.giverName || '') })}</span>`);
       }
       return shell(`
         ${chip(pt('clueGiverIsChip', { name: esc(data.giverName || 'Someone') }), '#6366f1')}

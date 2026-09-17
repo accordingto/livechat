@@ -752,7 +752,11 @@
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
       nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
       openForBtn: { zh: '👀 幫 {name} 開啟題目', en: '👀 Open the word for {name}' },
-      waitingGiverOpen: { zh: '🎤 換 {giver} 描述 — 請他在自己的卡片上按「看題目」', en: "🎤 {giver} is up — ask them to tap Show my word on their own card" },
+      /* 房間裡每個人的卡片各自可以是中文或英文（語言是存在各自瀏覽器的 site-lang），
+         所以這句話**不能只寫其中一種語言的按鈕名稱**：主持人照著唸「請按看題目」，
+         但那位玩家的卡片上寫的是 Show my word，他就會找不到而整輪卡在這裡等。
+         兩個名稱一起寫出來，不管誰用哪種語言都對得上。 */
+      waitingGiverOpen: { zh: '🎤 換 {giver} 描述 — 請他在自己的卡片上按「看題目 / Show my word」', en: '🎤 {giver} is up — ask them to tap "Show my word / 看題目" on their own card' },
       waitingGiverOpenSub: { zh: '題目與禁字要等描述者自己開啟才會送出，倒數也是那時才開始。', en: 'The word and the banned list only go out when the clue giver opens them — and that is when the clock starts.' },
       nextRoundIn: { zh: '▶️ {n} 秒後自動進入下一回合', en: '▶️ Next round in {n}s' },
       nextGiverIs: { zh: '🎤 下一位描述者：{name}', en: '🎤 {name} describes next' },
