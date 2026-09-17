@@ -357,10 +357,30 @@
       background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
       padding: 1px 6px; color: var(--violet-text); font-size: .95em;
     }
+    /* Shown whenever the stored prompts are not from today. The green ticks in the
+       results list below are the very problem this solves: they say the last read
+       worked, which reads as "I am up to date", so Reload gets skipped and everyone
+       plays last week's questions. */
+    .sheet-nudge {
+      font-size: .84rem; line-height: 1.7; color: var(--text-3);
+      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.4);
+      border-radius: 10px; padding: 11px 15px; margin: 12px 0 0;
+    }
+    .sheet-nudge b { color: var(--warn-text-soft); }
     .sheet-load-btn {
       background: #e94560; border: none; border-radius: 10px; color: var(--btn-ink);
       padding: 10px 22px; font-family: inherit; font-size: .85rem; font-weight: 800;
       cursor: pointer; white-space: nowrap; transition: filter .2s, opacity .2s;
+    }
+    /* a slow breath rather than a flash: it has to catch the eye on a screen the host
+       is sharing without becoming the loudest thing in the room */
+    .sheet-load-btn.is-stale { animation: sheetNudge 2.4s ease-in-out infinite; }
+    @keyframes sheetNudge {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(233,69,96,0); }
+      50%      { box-shadow: 0 0 0 6px rgba(233,69,96,.22); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sheet-load-btn.is-stale { animation: none; box-shadow: 0 0 0 4px rgba(233,69,96,.25); }
     }
     .sheet-load-btn:hover:not(:disabled) { filter: brightness(1.12); }
     .sheet-load-btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -397,7 +417,15 @@
     }
     .substep-dot.is-done { border-color: #e94560; color: var(--accent-text); cursor: pointer; }
     .substep-dot.is-active { border-color: #e94560; background: #e94560; color: var(--btn-ink); }
-    .substep-dot-line { width: 18px; height: 2px; background: var(--border); flex-shrink: 0; }
+    /* The rail has to survive adding a step: six full-size dots plus five rigid 18px
+       connectors overflow a 320px phone and push the whole page sideways (measured).
+       The connectors carry nothing the dots don't, so they are the part allowed to
+       compress, and the dots themselves come down a little on phone widths. */
+    .substep-dot-line { width: 18px; height: 2px; background: var(--border); flex: 0 1 18px; min-width: 4px; }
+    @media (max-width: 420px) {
+      .substep-dots { gap: 5px; }
+      .substep-dot { width: 26px; height: 26px; font-size: .72rem; }
+    }
     .substep-dot-line.is-done { background: #e94560; }
     .substep { animation: fadeUp .35s ease both; }
     .substep-hdr {
@@ -433,6 +461,10 @@
     .method-choices { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
     .method-btn {
       flex: 1; min-width: 150px;
+      /* the labels inside carry their own colour, but the button must not fall back
+         to the browser's default ink on a dark face if anything ever sits directly
+         in it — the contrast audit reads the element, not just the labelled spans */
+      color: var(--text-dim);
       background: var(--btn-face); border: 2px solid var(--border); border-radius: 14px;
       padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px;
       font-family: inherit; cursor: pointer; transition: border-color .2s, background .2s, transform .1s;
@@ -442,6 +474,16 @@
     .method-btn .method-label { font-size: .84rem; font-weight: 700; color: var(--text-dim); text-align: center; line-height: 1.35; }
     .method-btn.active { border-color: #e94560; background: rgba(233,69,96,.1); }
     .method-btn.active .method-label { color: var(--text); }
+    /* the one thing on the language step that is not about picking a language:
+       what the choice does NOT do. It reads as a caveat, so it is set apart from
+       the description above the buttons rather than buried in it. */
+    .lang-note {
+      font-size: .84rem; line-height: 1.7; color: var(--text-3);
+      background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.35);
+      border-radius: 10px; padding: 12px 16px; margin: 16px 0 0;
+    }
+    .method-btn .method-icon.is-text { font-size: 1.15rem; font-weight: 900; letter-spacing: .5px; color: var(--text-dim); }
+    .method-btn.active .method-icon.is-text { color: var(--text); }
     .method-detail { animation: fadeUp .3s ease both; }
     .method-desc {
       font-size: .86rem; color: var(--text-3); line-height: 1.7; background: var(--surface);
@@ -494,10 +536,10 @@
     <p class="step-sub" data-i18n="index.step1Sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
     <div class="substep-dots" id="substep-dots"></div>
     <div id="room-mount"></div>
-    <div class="substep hidden" id="substep-5">
+    <div class="substep hidden" id="substep-6">
       <div class="substep-hdr">
-        <span class="substep-tag">5 / 5</span>
-        <h3 data-i18n="index.substep5Title">Load prompts and start</h3>
+        <span class="substep-tag">6 / 6</span>
+        <h3 data-i18n="index.substepSheetTitle">Load prompts and start</h3>
       </div>
       <!-- Prompts source: built-in by default, or pulled from a Google Sheet on
            demand. Nothing here touches the network until 讀取 is pressed. -->
@@ -512,6 +554,7 @@
             <button class="edit-setup-btn hidden" id="sheet-reset-btn" type="button" data-i18n="index.sheetResetBtn">↺ Back to built-in prompts</button>
           </div>
         </div>
+        <p class="sheet-nudge hidden" id="sheet-nudge"></p>
         <p class="sheet-help" id="sheet-help"></p>
         <div class="sheet-results hidden" id="sheet-results"></div>
       </div>
@@ -519,7 +562,7 @@
         <button class="continue-btn" id="continue-btn" type="button" data-i18n="index.continueBtn">▶️ Continue to Games</button>
       </div>
       <div class="substep-nav">
-        <button class="substep-nav-btn" id="substep5-back" type="button" data-i18n="index.backBtn">← Back</button>
+        <button class="substep-nav-btn" id="sheet-back-btn" type="button" data-i18n="index.backBtn">← Back</button>
       </div>
     </div>
   </div>
@@ -688,11 +731,21 @@
       editSetupBtn: { zh: '✏️ 編輯房間設定', en: '✏️ Edit room setup' },
       sheetResetBtn:  { zh: '↺ 恢復預設題庫', en: '↺ Back to built-in prompts' },
       sheetLoadBtn:   { zh: '📄 讀取線上題庫', en: '📄 Load prompts' },
-      sheetReloadBtn: { zh: '🔄 重新讀取', en: '🔄 Reload' },
+      sheetReloadBtn: { zh: '🔄 重新讀取（更新題目）', en: '🔄 Reload (update prompts)' },
       sheetLoading:   { zh: '讀取中…', en: 'Loading…' },
       sheetUsingDefault: { zh: '題庫來源：<b>內建預設</b>', en: 'Prompts: <b>built-in</b>' },
-      sheetUsingSheet:   { zh: '題庫來源：<b>Google Sheet</b>（{n} 個資料集 · {time} 載入）',
-                           en: 'Prompts: <b>Google Sheet</b> ({n} sets · loaded {time})' },
+      sheetAgeToday:     { zh: '今天', en: 'today' },
+      sheetAgeYesterday: { zh: '昨天', en: 'yesterday' },
+      sheetAgeDays:      { zh: '{n} 天前', en: '{n} days ago' },
+      /* 「上次讀取是什麼時候」是這一步唯一需要主持人自己判斷的事：有人改過題目、
+         但你沒有重讀時，下面那排綠色打勾照樣是綠的——它們說的是「上次那一次讀取
+         成功了」，不是「現在是最新的」。所以只要不是今天讀的，就直接把話講明。 */
+      /* 冒號不是裝飾：中文句子接一個阿拉伯數字（「…是4 天前」）會黏在一起，
+         而 {age} 有時是「昨天」有時是「4 天前」，用冒號兩種都讀得順。 */
+      sheetStale: { zh: '⚠️ 上次讀取：{age}。<b>如果有人改過題目，要按「重新讀取」才會更新</b>——下面那排綠色打勾只代表上次讀成功，不代表現在是最新的。',
+                    en: '⚠️ Last read: {age}. <b>If anyone has edited them since, only "Reload" brings the changes in</b> — the green ticks below mean the last read worked, not that you are up to date.' },
+      sheetUsingSheet:   { zh: '題庫來源：<b>Google Sheet</b>（{n} 個資料集 · {age}讀取）',
+                           en: 'Prompts: <b>Google Sheet</b> ({n} sets · read {age})' },
       sheetHelp: {
         zh: '題庫放在本站專用的 Google 試算表裡，題目改完之後回到這裡按一次讀取即可。<b>只有按下讀取的當下才會連線 Google</b>，讀到的內容存在這台裝置上，之後各遊戲頁直接使用、不會再連線——所以<b>換一台電腦要各自讀取一次</b>，別人改了題目你也要再按一次才會更新。<b>沒讀到或格式不對的分頁，那一款遊戲就自動使用內建題庫</b>，不會開天窗。',
         en: 'The prompts live in this site\u2019s own Google Sheet. Once it has been edited, come back here and load again. <b>Google is only contacted when you press Load</b>; what comes back is stored on this device and used by the games with no further requests, so <b>each device loads once for itself</b> and you need to load again to pick up someone else\u2019s edits. <b>Any tab that fails or does not parse falls back to the built-in prompts</b> for that game.'
@@ -725,12 +778,15 @@
       descPersuade: { zh: '一位玩家的卡片會被發到「裁判」身分，其他人則組隊合作。提出最有說服力的論點——最後由裁判在卡片上按下判決！', en: 'One player is dealt the judge on their own card, everyone else teams up. Make the most convincing case — then the judge taps the verdict!' },
       descScene: { zh: '抽出一個混亂的場景——每位玩家會在自己的私人卡片上拿到專屬角色與提示。沒有劇本，純靠即興演出，笑料百出！', en: 'Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!' },
       footerTagline: { zh: '所有遊戲完全免費，無需註冊', en: 'All games are free & no sign-up required' },
-      substep1Title: { zh: '設定房間人數', en: 'Set the number of players' },
-      substep1Desc: { zh: '先設定玩家人數。下方的「房號」是系統自動產生的房間代碼，用來讓所有分頁、裝置同步同一批連結，通常不需要自己設定——只有要換回之前用過的房間時，才需要輸入房號並按「載入」。', en: 'Start with how many players there are. The "Room" code below is generated for you automatically, so every tab and device stays in sync with the same links — you usually don\'t need to touch it. Only type one in and press "Load" if you want to switch back to a room you used before.' },
-      substep2Title: { zh: '設定玩家名稱', en: 'Set player names' },
-      substep3Title: { zh: '傳送玩家連結', en: 'Send player links' },
-      substep4Title: { zh: '傳送核對卡片', en: 'Send a card check' },
-      substep5Title: { zh: '載入題庫並開始', en: 'Load prompts and start' },
+      substepLangTitle: { zh: '選擇介面語言', en: 'Choose the interface language' },
+      substepLangDesc: { zh: '這個設定只影響「介面文字」——按鈕、說明、狀態列，主持人畫面與每個人手機上的卡片都跟著換。選好就整站生效，之後每一頁、每一款遊戲都是這個語言，換裝置才需要再選一次。', en: 'This only changes the interface — buttons, instructions, status lines, on this screen and on everyone\'s phone card. It applies to the whole site: every page and every game follows it from here on, and you only pick again on a different device.' },
+      substepLangNote: { zh: '⚠️ 遊戲題目本身永遠是英文：單字、劇情、問題、罪名都不會被翻譯。那些就是大家要拿來練習英文的東西，翻成中文這個網站就沒有意義了。', en: '⚠️ The prompts themselves are always English: the words, scenarios, questions and charges are never translated. They are the English everyone came to practise — translating them would defeat the point.' },
+      substepCountTitle: { zh: '設定房間人數', en: 'Set the number of players' },
+      substepCountDesc: { zh: '先設定玩家人數。下方的「房號」是系統自動產生的房間代碼，用來讓所有分頁、裝置同步同一批連結，通常不需要自己設定——只有要換回之前用過的房間時，才需要輸入房號並按「載入」。', en: 'Start with how many players there are. The "Room" code below is generated for you automatically, so every tab and device stays in sync with the same links — you usually don\'t need to touch it. Only type one in and press "Load" if you want to switch back to a room you used before.' },
+      substepNamesTitle: { zh: '設定玩家名稱', en: 'Set player names' },
+      substepLinksTitle: { zh: '傳送玩家連結', en: 'Send player links' },
+      substepCheckTitle: { zh: '傳送核對卡片', en: 'Send a card check' },
+      substepSheetTitle: { zh: '載入題庫並開始', en: 'Load prompts and start' },
       nextBtn: { zh: '下一步 →', en: 'Next →' },
       backBtn: { zh: '← 上一步', en: '← Back' },
       methodIntro: { zh: '選一種方式，把連結分享給玩家：', en: 'Pick one way to share the links with your players:' },
@@ -773,7 +829,14 @@
        the same room.js-rendered elements just get moved into their own
        panel each, so nothing about how they work (state, saves, live
        re-renders on name/count change) is touched. */
-    const SUBSTEP_COUNT = 5;
+    /* The sub-steps are named rather than numbered. They used to be numbered, and
+       inserting the language step at the front meant every hardcoded 2/3/4/5 in here
+       (the links slots, the method panel's back/next, the title-key map, the Back
+       button on the last panel) had to shift by one in step or the wizard silently
+       wired itself to the wrong panel. Position now comes from this one array. */
+    const SUBSTEPS = ['lang', 'count', 'names', 'links', 'check', 'sheet'];
+    const SUBSTEP_COUNT = SUBSTEPS.length;
+    const no = key => SUBSTEPS.indexOf(key) + 1;   // 1-based, as the UI counts
     let subStep = 1;
     let subStepReached = 1;
 
@@ -782,7 +845,7 @@
     // name+check-badge) depends on ROOM.setLinksView(), so it moves into
     // whichever slot is showing right now. Sub-step 3 has three slots of its
     // own (one per sharing method — see selectMethod()) instead of one.
-    const LINKS_VIEW_BY_SUBSTEP = { 2: 'names', 4: 'check' };
+    const LINKS_VIEW_BY_SUBSTEP = { [no('names')]: 'names', [no('check')]: 'check' };
     function placeRoomLinks(n) {
       const mode = LINKS_VIEW_BY_SUBSTEP[n];
       if (!mode) return;
@@ -817,9 +880,9 @@
     function buildMethodPanel() {
       const panel = document.createElement('div');
       panel.className = 'substep hidden';
-      panel.id = 'substep-3';
+      panel.id = 'substep-' + no('links');
       panel.innerHTML = `
-        <div class="substep-hdr"><span class="substep-tag">3 / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.substep3Title"></h3></div>
+        <div class="substep-hdr"><span class="substep-tag">${no('links')} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.substepLinksTitle"></h3></div>
         <p class="method-intro" data-i18n="index.methodIntro"></p>
         <div class="method-choices">
           <button type="button" class="method-btn" data-method="qr"><span class="method-icon">📱</span><span class="method-label" data-i18n="index.methodQrLabel"></span></button>
@@ -845,14 +908,53 @@
       nav.className = 'substep-nav';
       const back = document.createElement('button');
       back.type = 'button'; back.className = 'substep-nav-btn'; back.dataset.i18n = 'index.backBtn';
-      back.onclick = () => showSubStep(2);
+      back.onclick = () => showSubStep(no('links') - 1);
       nav.appendChild(back);
       const next = document.createElement('button');
       next.type = 'button'; next.className = 'substep-nav-btn substep-next'; next.dataset.i18n = 'index.nextBtn';
-      next.onclick = () => showSubStep(4);
+      next.onclick = () => showSubStep(no('links') + 1);
       nav.appendChild(next);
       panel.appendChild(nav);
       return panel;
+    }
+
+    /* Sub-step 1: the language choice. It is first because everything after it is
+       written in whichever language is picked — being asked to read five panels of
+       Chinese before being offered English is the wrong order. The two labels are
+       deliberately NOT translated: a language picker that renames itself when you
+       switch is useless to the person who cannot read the current one. */
+    function buildLangPanel() {
+      const panel = document.createElement('div');
+      panel.className = 'substep hidden';
+      panel.id = 'substep-' + no('lang');
+      panel.innerHTML = `
+        <div class="substep-hdr"><span class="substep-tag">${no('lang')} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.substepLangTitle"></h3></div>
+        <p class="substep-desc" data-i18n="index.substepLangDesc"></p>
+        <div class="method-choices">
+          <button type="button" class="method-btn lang-btn" data-lang="zh">
+            <span class="method-icon is-text">中文</span><span class="method-label">繁體中文</span></button>
+          <button type="button" class="method-btn lang-btn" data-lang="en">
+            <span class="method-icon is-text">EN</span><span class="method-label">English</span></button>
+        </div>
+        <p class="lang-note" data-i18n="index.substepLangNote"></p>`;
+      panel.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.onclick = () => I18N.setLang(btn.dataset.lang);
+      });
+      const nav = document.createElement('div');
+      nav.className = 'substep-nav';
+      nav.appendChild(document.createElement('span'));   // nothing to go back to
+      const next = document.createElement('button');
+      next.type = 'button'; next.className = 'substep-nav-btn substep-next'; next.dataset.i18n = 'index.nextBtn';
+      next.onclick = () => showSubStep(no('lang') + 1);
+      nav.appendChild(next);
+      panel.appendChild(nav);
+      return panel;
+    }
+
+    function renderLangBtns() {
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === I18N.lang);
+      });
     }
 
     function initSetupWizard() {
@@ -862,18 +964,20 @@
       // chosen method, see selectMethod()); the "Player Links" header/note
       // moves there too since that's the step actually showing links now
       const pieces = {
-        1: [roomCard],
-        4: [document.getElementById('check-btn'), document.getElementById('check-note')],
+        count: [roomCard],
+        check: [document.getElementById('check-btn'), document.getElementById('check-note')],
       };
-      const titleKeys = { 1: 'substep1Title', 2: 'substep2Title', 4: 'substep4Title' };
-      [1, 2, 4].forEach(n => {
+      const titleKeys = { count: 'substepCountTitle', names: 'substepNamesTitle', check: 'substepCheckTitle' };
+      const descKeys  = { count: 'substepCountDesc' };
+      ['count', 'names', 'check'].forEach(key => {
+        const n = no(key);
         const panel = document.createElement('div');
         panel.className = 'substep hidden';
         panel.id = 'substep-' + n;
-        panel.innerHTML = `<div class="substep-hdr"><span class="substep-tag">${n} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.${titleKeys[n]}"></h3></div>`
-          + (n === 1 ? `<p class="substep-desc" data-i18n="index.substep1Desc"></p>` : '');
-        (pieces[n] || []).forEach(el => panel.appendChild(el));
-        if (n >= 2) {
+        panel.innerHTML = `<div class="substep-hdr"><span class="substep-tag">${n} / ${SUBSTEP_COUNT}</span><h3 data-i18n="index.${titleKeys[key]}"></h3></div>`
+          + (descKeys[key] ? `<p class="substep-desc" data-i18n="index.${descKeys[key]}"></p>` : '');
+        (pieces[key] || []).forEach(el => panel.appendChild(el));
+        if (LINKS_VIEW_BY_SUBSTEP[n]) {
           const slot = document.createElement('div');
           slot.id = 'substep-' + n + '-links-slot';
           panel.appendChild(slot);
@@ -905,11 +1009,14 @@
       hiddenRoomMeta.appendChild(document.getElementById('room-note'));
       const methodPanel = buildMethodPanel();
       methodPanel.appendChild(hiddenRoomMeta);
-      mount.insertBefore(methodPanel, document.getElementById('substep-4'));
+      mount.insertBefore(methodPanel, document.getElementById('substep-' + no('check')));
+      mount.insertBefore(buildLangPanel(), mount.firstChild);
 
-      document.getElementById('substep5-back').onclick = () => showSubStep(4);
-      placeRoomLinks(2); // park #room-links somewhere hidden until a sub-step that shows it is reached
+      document.getElementById('sheet-back-btn').onclick = () => showSubStep(no('sheet') - 1);
+      placeRoomLinks(no('names')); // park #room-links out of sight until a step that shows it
       I18N.applyStatic(); // these nodes were just created, so the initial scan never saw them
+      renderLangBtns();
+      I18N.onChange(renderLangBtns);
       showSubStep(1, true);
     }
 
@@ -943,7 +1050,7 @@
       // #room-links may have been moved off to sub-step 2 or 4's slot since
       // sub-step 3 was last shown — put it back in whichever method the
       // host already picked, if any, instead of showing an empty method panel
-      if (n === 3 && chosenMethod) selectMethod(chosenMethod);
+      if (n === no('links') && chosenMethod) selectMethod(chosenMethod);
       for (let i = 1; i <= SUBSTEP_COUNT; i++) {
         document.getElementById('substep-' + i).classList.toggle('hidden', i !== n);
       }
@@ -980,6 +1087,7 @@
       const resetBtn= document.getElementById('sheet-reset-btn');
       const results = document.getElementById('sheet-results');
       const help    = document.getElementById('sheet-help');
+      const nudge   = document.getElementById('sheet-nudge');
       if (!bar || typeof SHEET_DATA === 'undefined') return;
 
       const it = (key, vars) => {
@@ -988,19 +1096,38 @@
         return out;
       };
 
+      /* Calendar days apart, not 24-hour blocks: "yesterday" should say yesterday
+         even when it was fourteen hours ago. The host walks this wizard once per
+         session, so "was this read today" is the question actually worth answering. */
+      function daysAgo(ts) {
+        const a = new Date(ts), b = new Date();
+        a.setHours(0, 0, 0, 0); b.setHours(0, 0, 0, 0);
+        return Math.max(0, Math.round((b - a) / 86400000));
+      }
+
       function renderStatus() {
         const info = SHEET_DATA.info();
         help.innerHTML = it('sheetHelp');
         loadBtn.textContent = it(info ? 'sheetReloadBtn' : 'sheetLoadBtn');
         if (info) {
           const n = Object.keys(info.counts).length;
-          bar.innerHTML = it('sheetUsingSheet', { n, time: new Date(info.loadedAt).toLocaleString() });
+          const d = daysAgo(info.loadedAt);
+          const age = d === 0 ? it('sheetAgeToday') : d === 1 ? it('sheetAgeYesterday') : it('sheetAgeDays', { n: d });
+          bar.innerHTML = it('sheetUsingSheet', { n, age });
           bar.classList.add('is-sheet');
           resetBtn.classList.remove('hidden');
+          /* Anything not read today may already be out of date and nothing else on
+             this screen would show it, so say so — and make the button look like the
+             thing to press rather than one of three equal-weight options. */
+          nudge.classList.toggle('hidden', d === 0);
+          loadBtn.classList.toggle('is-stale', d !== 0);
+          if (d !== 0) nudge.innerHTML = it('sheetStale', { age });
         } else {
           bar.innerHTML = it('sheetUsingDefault');
           bar.classList.remove('is-sheet');
           resetBtn.classList.add('hidden');
+          nudge.classList.add('hidden');
+          loadBtn.classList.remove('is-stale');
         }
       }
 
