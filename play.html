@@ -312,6 +312,25 @@
     .taboo-deal .pb-key { font-size: 1.4rem; }
     .taboo-deal:active:not(:disabled) { transform: scale(.97); }
     .taboo-deal:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    /* Draws the next take / situation / scene / scenario from the cards (next-round.js).
+       Filled in that game's own colour with the site's dark ink, like .taboo-deal above —
+       a real button, not a label. `--nx` is set inline per game. */
+    .next-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: var(--nx); border: 2px solid var(--nx); color: #050510;
+      border-radius: 16px; padding: 18px 14px;
+      font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px color-mix(in srgb, var(--nx) 28%, transparent);
+      transition: transform .1s, opacity .2s, background .2s, color .2s;
+    }
+    .next-btn .pb-key { font-size: 1.4rem; }
+    .next-btn:active:not(:disabled) { transform: scale(.97); }
+    .next-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    /* this card has said "ready" — outlined, so the waiting state is visibly not the
+       action, and tapping it again takes the ready back */
+    .next-btn.is-ready { background: #22c55e1f; border-color: #22c55e; color: #86efac; box-shadow: none; }
+    .next-meter { font-size: .85rem; color: var(--text-dim); line-height: 1.5; text-align: center; }
+    .next-meter b { color: #fff; }
     /* the countdown, mirrored from the host — same green → orange → red everywhere */
     .taboo-timer {
       width: 74px; height: 74px; border-radius: 50%;
@@ -513,6 +532,24 @@
       dealFirstBtn: { zh: '發第一個題目', en: 'Deal the first word' },
       dealingWord: { zh: '發題中…', en: 'Dealing…' },
       dealAnyoneSub: { zh: '誰先按都可以 — 題目與角色由系統隨機發。', en: 'Anyone can tap it — the word and the roles are dealt at random.' },
+      // next-round.js: the cards draw the next prompt in the four "draw a prompt" games
+      nextFirstTake: { zh: '抽第一題', en: 'Spin the first one' },
+      nextTake: { zh: '換下一題', en: 'Next take' },
+      nextFirstSituation: { zh: '抽第一個情境', en: 'Draw the first situation' },
+      nextSituation: { zh: '換下一個情境', en: 'Next situation' },
+      nextFirstScene: { zh: '抽第一個場景', en: 'Draw the first scene' },
+      nextScene: { zh: '換下一個場景', en: 'Next scene' },
+      nextFirstScenario: { zh: '抽第一個場景', en: 'Draw the first scenario' },
+      nextScenario: { zh: '下一個場景', en: 'Next scenario' },
+      nextAnyoneSub: { zh: '誰先按都可以 — 題目由系統隨機抽。', en: 'Anyone can tap it — the prompt is drawn at random.' },
+      nextReadyBtn: { zh: '我好了，換下一題', en: "I'm ready for the next one" },
+      nextReadyOn: { zh: '已準備好 — 再按一次取消', en: 'Ready — tap again to cancel' },
+      nextReadyMeter: { zh: '{ready} / {count} 位準備好了 · <b>{needed}</b> 位就換下一題', en: '{ready} of {count} ready · next one at <b>{needed}</b>' },
+      nextSending: { zh: '抽題中…', en: 'Drawing…' },
+      idleHottake: { zh: '還沒有題目。等大家都到齊了，任何人都可以抽第一題。', en: 'No take yet. Once everyone is here, anyone can spin the first one.' },
+      idleSophies: { zh: '還沒有情境。等大家都到齊了，任何人都可以抽第一個。', en: 'No situation yet. Once everyone is here, anyone can draw the first one.' },
+      idleScene: { zh: '還沒有場景。等大家都到齊了，任何人都可以抽第一個。', en: 'No scene yet. Once everyone is here, anyone can draw the first one.' },
+      idlePersuade: { zh: '還沒有場景。等大家都到齊了，任何人都可以抽第一個 — 裁判會隨機發。', en: 'No scenario yet. Once everyone is here, anyone can draw the first one — the judge is dealt at random.' },
       openWordBtn: { zh: '看題目', en: 'Show my word' },
       openingWord: { zh: '開啟中…', en: 'Opening…' },
       openWordSub: { zh: '輪到你描述了！準備好再按下面的按鈕 — 按下去才會看到題目，倒數也才開始。', en: "You're describing this round. Tap when you're ready — the word appears and the clock starts at that moment." },
@@ -919,6 +956,50 @@
       return `<button class="pick-btn${picked === choice ? ' picked' : ''}"${style} onclick="submitPick('${choice}')">
           <span class="pb-key">${key}</span><span class="pb-label">${label}</span>
         </button>`;
+    }
+
+    /* next-round.js: `players/{token}/next = { id, ready }` is this card's say on whether
+       the next prompt should be drawn. It quotes the nextId the host published — a new
+       draw brings a new id, so a tap that was still in flight is simply not counted.
+       It's a separate field from `vote`, because the vote has to survive it. */
+    function nextSend(ready, btn) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.nextId;
+      if (!id) return;
+      if (btn) {
+        btn.disabled = true;
+        if (ready && (latestData.nextNeeded || 1) <= 1) btn.querySelector('.pb-label').textContent = pt('nextSending');
+      }
+      db.ref(`rooms/${session}/players/${token}/next`).set({ id, ready: !!ready });
+    }
+
+    function myNextReady(data) {
+      return !!(data.next && data.nextId && data.next.id === data.nextId && data.next.ready === true);
+    }
+
+    /* The block under a card in the four "draw a prompt" games. Two shapes, chosen by
+       the host: needed ≤ 1 is one big button anyone may tap (a first draw, or Persuade
+       after the verdict); otherwise it's a "ready" toggle plus a meter, and the host
+       draws once more than half the room has tapped it. Nothing at all when the host
+       says the gate is shut (mid-animation, or Persuade before the verdict). */
+    function nextBlock(data, opts) {
+      if (!data.nextId) return '';
+      const first = !(data.round > 0);
+      const needed = data.nextNeeded || 1;
+      const nx = `style="--nx:${opts.hex}"`;
+      if (needed <= 1) {
+        return `
+          <button class="next-btn" ${nx} onclick="nextSend(true, this)">
+            <span class="pb-key">${opts.emoji}</span><span class="pb-label">${pt(first ? opts.first : opts.next)}</span>
+          </button>
+          <span class="pick-sub">${pt('nextAnyoneSub')}</span>`;
+      }
+      const ready = myNextReady(data);
+      return `
+        <button class="next-btn${ready ? ' is-ready' : ''}" ${nx} onclick="nextSend(${ready ? 'false' : 'true'}, this)">
+          <span class="pb-key">${ready ? '✅' : '👋'}</span><span class="pb-label">${pt(ready ? 'nextReadyOn' : 'nextReadyBtn')}</span>
+        </button>
+        <span class="next-meter">${pt('nextReadyMeter', { ready: data.nextReady || 0, count: data.nextCount || '', needed })}</span>`;
     }
 
     /* 🤝 Persuade Together: only the judge gets a verdict button */
@@ -1417,6 +1498,18 @@
       }
       if (data.game === 'hottake') {
         const picked = myPick(data);
+        const next = nextBlock(data, { hex: '#ff7043', emoji: '🎡', first: 'nextFirstTake', next: 'nextTake' });
+        // nothing spun yet: just the name and the "spin the first one" button
+        if (!data.text) {
+          el.innerHTML = `
+            <div class="secret-card theme-hottake">
+              ${nameBanner(data)}
+              <span class="pick-chip" style="color:${chipInk('#ff7043')};border-color:#ff704355;background:rgba(255,112,67,.1)">${pt('hotTakeChip')}</span>
+              <span class="pick-sub">${pt('idleHottake')}</span>
+              ${next}
+            </div>`;
+          return;
+        }
         el.innerHTML = `
           <div class="secret-card theme-hottake">
             ${nameBanner(data)}
@@ -1428,11 +1521,23 @@
               ${pickButton('disagree', '👎', pt('disagreeLabel'), picked, '#f44336')}
             </div>
             <span class="pick-sub">${picked ? pt('pickChangeAnytime') : pt('hottakePrompt')}</span>
+            ${next}
           </div>`;
         return;
       }
       if (data.game === 'sophies') {
         const picked = myPick(data);
+        const next = nextBlock(data, { hex: '#f59e0b', emoji: '🎲', first: 'nextFirstSituation', next: 'nextSituation' });
+        // nothing drawn yet: just the name and the "draw the first one" button
+        if (!data.a && !data.b) {
+          el.innerHTML = `
+            <div class="secret-card theme-sophies">
+              ${nameBanner(data)}
+              <span class="pick-sub">${pt('idleSophies')}</span>
+              ${next}
+            </div>`;
+          return;
+        }
         el.innerHTML = `
           <div class="secret-card theme-sophies">
             ${nameBanner(data)}
@@ -1444,11 +1549,23 @@
               ${pickButton('c', 'C', pt('somethingElse'), picked, '#a78bfa')}
             </div>
             <span class="pick-sub">${picked ? pt('pickChangeAnytime') : pt('sophiesChooseThen')}</span>
+            ${next}
           </div>`;
         return;
       }
       if (data.game === 'scene') {
         const r = data.role;
+        const next = nextBlock(data, { hex: '#ec4899', emoji: '🎭', first: 'nextFirstScene', next: 'nextScene' });
+        // nothing drawn yet: just the name and the "draw the first one" button
+        if (!r && data.nextId) {
+          el.innerHTML = `
+            <div class="secret-card theme-scene">
+              ${nameBanner(data)}
+              <span class="pick-sub">${pt('idleScene')}</span>
+              ${next}
+            </div>`;
+          return;
+        }
         if (!r) { showError('waitingRoles'); return; }
         el.innerHTML = `
           <div class="secret-card theme-scene">
@@ -1461,6 +1578,7 @@
               <span class="rb-hint">${esc(r.hint || '')}</span>
             </div>
             <span class="pick-sub">${pt('stayInCharacterScene')}</span>
+            ${next}
           </div>`;
         return;
       }
@@ -1468,6 +1586,17 @@
         const judge = !!data.isJudge;
         const hex = judge ? '#f59e0b' : '#06b6d4';
         const picked = myPick(data);
+        // the host opens this only once the judge has ruled (or before the first draw)
+        const next = nextBlock(data, { hex: '#06b6d4', emoji: '🎲', first: 'nextFirstScenario', next: 'nextScenario' });
+        if (!data.situation && !data.team) {
+          el.innerHTML = `
+            <div class="secret-card theme-persuade">
+              ${nameBanner(data)}
+              <span class="pick-sub">${pt('idlePersuade')}</span>
+              ${next}
+            </div>`;
+          return;
+        }
         const verdict = judge ? `
             <div class="pick-row">
               <button class="pick-btn${picked === 'yes' ? ' picked' : ''}"${picked === 'yes' ? ' style="color:#22c55e;background:#22c55e1f"' : ''} onclick="submitVerdict('yes')">
@@ -1488,6 +1617,7 @@
             <span class="pick-text">${esc(data.situation || '')}</span>
             ${judge ? `<span class="pick-sub">${pt('hearThemOut')}</span>${verdict}`
                     : `<span class="pick-sub">${pt('workTogether')}</span>`}
+            ${next}
           </div>`;
         return;
       }

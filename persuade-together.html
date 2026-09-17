@@ -151,6 +151,9 @@
   <div class="verdict-banner hidden" id="verdict-banner"></div>
 
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
+  <!-- the cards draw the next scenario themselves (see nextGate below); this line
+       says what they can tap right now, so the host knows nothing is waiting on them -->
+  <div class="next-status hidden" id="next-status"></div>
   <div class="sc-counter" id="sc-counter">10 scenarios</div>
 
   <!-- player cards: one player is dealt the judge, everyone else joins the team -->
@@ -175,6 +178,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
+  <script src="next-round.js"></script>
   <script>
     GAME_RENDER.injectCSS();
 
@@ -194,6 +198,8 @@
       judgingWait: { zh: '👨‍⚖️ {who} 正在裁決 — 等待判決中…', en: '👨‍⚖️ {who} is judging — waiting for the verdict…' },
       convincedMsg: { zh: '✅ {who} 被說服了 — 隊伍獲勝！', en: '✅ {who} is convinced — the team wins!' },
       notConvincedMsg: { zh: '❌ {who} 沒被說服 — 下一輪加油！', en: '❌ {who} is not convinced — better luck next round!' },
+      nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎲 抽第一個場景」開始 — 這裡的抽取鈕是備援。', en: '📱 Any player can tap "🎲 Draw the first scenario" on their own card to start — the Draw button here is the backup.' },
+      nextStatusOpen: { zh: '📱 判決出來了 — 任何一位玩家都可以在自己的卡片上按「🎲 下一個場景」。', en: '📱 Verdict is in — any player can tap "🎲 Next scenario" on their own card.' },
       scenariosLeft: { zh: '剩下 {n} 個場景', en: '{n} scenarios left' },
       scenariosTotal: { zh: '共 {n} 個場景', en: '{n} scenarios' },
       browseBtn: { zh: '👁️ 瀏覽全部 {n} 個場景（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Browse all {n} scenarios (spoilers — don't open while sharing)" },
@@ -231,10 +237,30 @@
       accent: '#06b6d4',
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Each round one player is dealt the judge and everyone else joins the persuader team — their cards say which. The judge taps their verdict when the team is done.',
-      onPlayerData: renderVerdict,
+      onPlayerData: (num, data) => { renderVerdict(); nextGate.handle(num, data); nextGate.sync(); },
       onCountChange: () => { dealRoles(); },
       onNameChange: () => { ROOM.render(); renderVerdict(); },
     });
+
+    /* The cards draw the next scenario, the host's Draw button is the backup. The
+       judge's verdict is what ends a round here, so once it's in, one tap from any
+       card is enough — there is no discussion left for an early tap to cut short.
+       Before the verdict the gate is shut and no card shows the button. The very
+       first draw needs no verdict: nothing is on the cards yet. */
+    const nextGate = NEXT_ROUND.create({
+      count: () => ROOM.count,
+      needed: () => 1,
+      canDraw: () => ROOM.enabled && !rolling && (judgeIdx < 0 || verdict() !== null),
+      draw: () => draw(),
+      publish: p => ROOM.update(p),
+    });
+
+    function renderNextStatus() {
+      const el = document.getElementById('next-status');
+      const open = nextGate.isOpen();
+      el.classList.toggle('hidden', !open);
+      if (open) el.textContent = pt(round > 0 ? 'nextStatusOpen' : 'nextStatusFirst');
+    }
 
     ROOM.setDecorator(i => {
       if (judgeIdx !== i) return {};
@@ -265,22 +291,34 @@
         el.textContent = v === 'yes' ? pt('convincedMsg', { who }) : pt('notConvincedMsg', { who });
       }
       ROOM.render();
+      renderNextStatus();
     }
     I18N.onChange(() => renderVerdict());
 
     /* deal the roles: one random judge, everyone else on the team */
     function dealRoles() {
-      if (!currentScenario) { renderVerdict(); return; }
+      if (!currentScenario) { publishIdle(); renderVerdict(); return; }
       const sc = currentScenario;
       judgeIdx = ROOM.count ? Math.floor(Math.random() * ROOM.count) : -1;
       voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      ROOM.publish(i => ({
+      nextGate.open();   // shut until the verdict lands — see canDraw above
+      const next = nextGate.payload();
+      ROOM.publish(i => Object.assign({
         game: 'persuade', round, voteId,
         isJudge: i === judgeIdx,
         judge: sc.judge, team: sc.team, situation: sc.situation,
-      }));
+      }, next));
       renderCard(sc);
       renderVerdict();
+    }
+
+    /* nothing drawn yet: the cards show only "draw the first scenario", so the game
+       can start from any phone — the same way Say It opens with its deal button */
+    function publishIdle() {
+      if (!ROOM.enabled || currentScenario) return;
+      judgeIdx = -1;
+      nextGate.open();
+      ROOM.publish(Object.assign({ game: 'persuade', round: 0, voteId: '', isJudge: false }, nextGate.payload()));
     }
 
     let currentScenario = null;
@@ -470,6 +508,7 @@
     }
     syncStaticText();
     I18N.onChange(syncStaticText);
+    publishIdle();   // after every `let` above — it reads currentScenario
   </script>
 </body>
 </html>

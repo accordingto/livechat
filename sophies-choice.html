@@ -195,6 +195,9 @@
   <div class="pick-tally hidden" id="pick-tally"></div>
 
   <button class="btn-draw" id="draw-btn" onclick="draw()">🎲 Draw</button>
+  <!-- the cards draw the next situation themselves (see nextGate below); this line shows
+       how many are ready, so the host can see the room deciding without touching anything -->
+  <div class="next-status hidden" id="next-status"></div>
 
   <!-- player cards: everyone answers on their own phone, the tally above fills in live -->
   <div id="room-mount"></div>
@@ -218,6 +221,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
+  <script src="next-round.js"></script>
   <script>
     I18N.registerDict('sophies', {
       roundLabel: { zh: '回合', en: 'Round' },
@@ -234,6 +238,8 @@
       tallyA: { zh: 'A', en: 'A' },
       tallyB: { zh: 'B', en: 'B' },
       tallyC: { zh: 'C · 自己的答案', en: 'C · Own answer' },
+      nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎲 抽第一個情境」開始 — 這裡的抽取鈕是備援。', en: '📱 Any player can tap "🎲 Draw the first situation" on their own card to start — Draw here is the backup.' },
+      nextStatusReady: { zh: '👋 {ready} / {count} 位玩家準備好換下一題（{needed} 位就自動抽）', en: '👋 {ready} of {count} players ready for the next one — it draws itself at {needed}' },
       linksNote: { zh: '玩家開啟自己的卡片連結，點選 A、B 或 C — 卡片下方的統計會即時更新，接著大家再說明理由。', en: 'Players open their own card link and tap A, B or C — the tally under the card fills in as they answer, then everyone explains why.' },
     });
     const st = (key, vars) => {
@@ -268,10 +274,33 @@
       accent: '#f59e0b',
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: () => st('linksNote'),
-      onPlayerData: renderTally,
-      onCountChange: renderTally,
+      onPlayerData: (num, data) => { renderTally(); nextGate.handle(num, data); },
+      onCountChange: () => { renderTally(); nextGate.sync(); },
       onNameChange: () => { ROOM.render(); renderTally(); },
     });
+
+    /* The cards draw the next situation, the host's Draw button is the backup. A
+       pick isn't the end of a round here — the reasons are the game — so one tap
+       must not be able to cut them short: each card says "ready for the next one"
+       and the draw fires when more than half the room has. The first draw of a
+       session takes one tap, because nothing is on the cards yet. */
+    const nextGate = NEXT_ROUND.create({
+      count: () => ROOM.count,
+      needed: n => round > 0 ? NEXT_ROUND.majority(n) : 1,
+      canDraw: () => ROOM.enabled && !rolling,
+      draw: () => draw(),
+      publish: p => { ROOM.update(p); renderNextStatus(); },
+    });
+
+    function renderNextStatus() {
+      const el = document.getElementById('next-status');
+      const open = nextGate.isOpen();
+      el.classList.toggle('hidden', !open);
+      if (!open) return;
+      el.textContent = round > 0
+        ? st('nextStatusReady', { ready: nextGate.readyNums().length, count: ROOM.count, needed: nextGate.needed() })
+        : st('nextStatusFirst');
+    }
 
     function cardPick(playerNum) {
       const d = ROOM.answers[playerNum];
@@ -308,9 +337,21 @@
     /* hand this scenario to every card and open a fresh ballot */
     function pushToCards(sc) {
       voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      ROOM.publish({ game: 'sophies', round, situation: sc.situation, a: sc.a, b: sc.b, voteId });
+      nextGate.open();   // a new ballot is a new round: everyone's "ready" starts over
+      ROOM.publish(Object.assign({ game: 'sophies', round, situation: sc.situation, a: sc.a, b: sc.b, voteId }, nextGate.payload()));
       renderTally();
+      renderNextStatus();
     }
+
+    /* nothing drawn yet: the cards carry only "draw the first situation", so the
+       game can start from any phone — the same way Say It opens with its deal button */
+    function publishIdle() {
+      if (!ROOM.enabled || currentScenario) return;
+      nextGate.open();
+      ROOM.publish(Object.assign({ game: 'sophies', round: 0, situation: '', a: '', b: '', voteId: '' }, nextGate.payload()));
+      renderNextStatus();
+    }
+    publishIdle();
 
     /* ── Scenario browser: closed by default, since this screen is being shared and
        the full list would spoil every scenario before it's drawn ── */
@@ -430,7 +471,6 @@
           const sc = scenarios[fi];
           GAME_RENDER.sophies(ct, sc);
           currentScenario = sc;
-          pushToCards(sc);
           card.classList.remove('rolling');
           card.classList.add('landed');
           round++;
@@ -438,6 +478,10 @@
           renderDrawBtnLabel();
           btn.disabled    = false;
           rolling = false;
+          // after round++ and rolling = false: the next-round gate reads both when
+          // it decides what the cards may show (a majority toggle, and only once
+          // the animation is over)
+          pushToCards(sc);
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         }
       );
@@ -453,6 +497,7 @@
       if (allBtn) allBtn.textContent = st('filterAll');
       renderTally();
       ROOM.render();
+      renderNextStatus();
       // the drawn scenario's card is built once by GAME_RENDER.sophies() and
       // never touched again, so its "🎯 THE SITUATION" label and "C. Something
       // else" option are baked into the DOM in whatever language was active at

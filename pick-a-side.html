@@ -271,6 +271,9 @@
     <button class="spin-btn" id="spinBtn" onclick="spin()">🎡 Spin!</button>
     <button class="reset-btn" id="resetBtn" onclick="resetVotes()" disabled data-i18n="hottake.reset">↺ Reset</button>
   </div>
+  <!-- the cards spin the next take themselves (see nextGate below); this line shows
+       how many are ready, so the host can see the room deciding without touching anything -->
+  <div class="next-status hidden" id="next-status"></div>
 
   <!-- player cards: everyone votes from their own phone, the tally above updates live -->
   <div id="room-mount"></div>
@@ -291,6 +294,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
+  <script src="next-round.js"></script>
   <script>
     GAME_RENDER.injectCSS();
     const takes = GAME_DATA.hottake;
@@ -306,6 +310,8 @@
       spinAgain:  { zh: '🔁 再抽一次', en: '🔁 Spin Again' },
       drawing:    { zh: '抽題中…', en: 'Drawing…' },
       reset:      { zh: '↺ 重置', en: '↺ Reset' },
+      nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎡 抽第一題」開始 — 這裡的 Spin 是備援。', en: '📱 Any player can tap "🎡 Spin the first one" on their own card to start — Spin here is the backup.' },
+      nextStatusReady: { zh: '👋 {ready} / {count} 位玩家準備好換下一題（{needed} 位就自動抽）', en: '👋 {ready} of {count} players ready for the next one — it spins itself at {needed}' },
       linksNote:  { zh: '玩家打開自己的卡片連結，針對每個議題投 👍／🤷／👎 —— 上方的統計會把他們的票數和你在這裡點的加總在一起。', en: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.' },
       hideDeckBtn:   { zh: '🙈 收起清單', en: '🙈 Hide the list' },
       browseDeckBtn: { zh: '👁️ 瀏覽全部 {n} 句犀利意見（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Browse all {n} takes (spoilers — don't open while sharing)" },
@@ -337,16 +343,40 @@
       accent: '#ff7043',
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: () => ht('linksNote'),
-      onPlayerData: () => { updateBars(); ROOM.render(); },
-      onCountChange: () => updateBars(),
+      onPlayerData: (num, data) => { updateBars(); ROOM.render(); nextGate.handle(num, data); },
+      onCountChange: () => { updateBars(); nextGate.sync(); },
       onNameChange: () => ROOM.render(),
     });
+
+    /* The cards spin the next take, the host's Spin button is the backup. A vote
+       isn't the end of a round here — the talk after it is the game — so one tap
+       must not be able to cut it short: each card says "ready for the next one" and
+       the spin fires when more than half the room has. The first spin of a session
+       takes one tap, because nothing is on the cards yet. */
+    const nextGate = NEXT_ROUND.create({
+      count: () => ROOM.count,
+      needed: n => round > 0 ? NEXT_ROUND.majority(n) : 1,
+      canDraw: () => ROOM.enabled && !rolling,
+      draw: () => spin(),
+      publish: p => { ROOM.update(p); renderNextStatus(); },
+    });
+
+    function renderNextStatus() {
+      const el = document.getElementById('next-status');
+      const open = nextGate.isOpen();
+      el.classList.toggle('hidden', !open);
+      if (!open) return;
+      el.textContent = round > 0
+        ? ht('nextStatusReady', { ready: nextGate.readyNums().length, count: ROOM.count, needed: nextGate.needed() })
+        : ht('nextStatusFirst');
+    }
 
     I18N.onChange(() => {
       SIDES = buildSides();
       updateSpinLabel();
       updateBars();
       ROOM.render();
+      renderNextStatus();
       // the drawn take's card is built once by GAME_RENDER.hottake() and never
       // touched again, so its "🔥 HOT TAKE" label is baked into the DOM in
       // whatever language was active at draw time — redraw it so a language
@@ -440,10 +470,22 @@
     /* send this round's take to every player's card and open a fresh ballot */
     function pushToCards() {
       voteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      ROOM.publish({ game: 'hottake', round, text: currentTake, voteId });
+      nextGate.open();   // a new ballot is a new round: everyone's "ready" starts over
+      ROOM.publish(Object.assign({ game: 'hottake', round, text: currentTake, voteId }, nextGate.payload()));
       updateBars();
       ROOM.render();
+      renderNextStatus();
     }
+
+    /* nothing spun yet: the cards carry only "spin the first one", so the game can
+       start from any phone — the same way Say It opens with its deal button */
+    function publishIdle() {
+      if (!ROOM.enabled || currentTake) return;
+      nextGate.open();
+      ROOM.publish(Object.assign({ game: 'hottake', round: 0, text: '', voteId: '' }, nextGate.payload()));
+      renderNextStatus();
+    }
+    publishIdle();
 
     function resetVotes() {
       votes.agree = votes.middle = votes.disagree = 0;
