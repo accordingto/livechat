@@ -311,7 +311,7 @@
       drawing:    { zh: '抽題中…', en: 'Drawing…' },
       reset:      { zh: '↺ 重置', en: '↺ Reset' },
       nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎡 抽第一題」開始 — 這裡的 Spin 是備援。', en: '📱 Any player can tap "🎡 Spin the first one" on their own card to start — Spin here is the backup.' },
-      nextStatusReady: { zh: '👋 {ready} / {count} 位玩家準備好換下一題（{needed} 位就自動抽）', en: '👋 {ready} of {count} players ready for the next one — it spins itself at {needed}' },
+      nextStatusOpen: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎡 換下一題」— 這裡的 Spin 是備援。', en: '📱 Any player can tap "🎡 Next take" on their own card — Spin here is the backup.' },
       linksNote:  { zh: '玩家打開自己的卡片連結，針對每個議題投 👍／🤷／👎 —— 上方的統計會把他們的票數和你在這裡點的加總在一起。', en: 'Players open their own card link and vote 👍 / 🤷 / 👎 on each take — the tally above counts their votes together with the ones you tap here.' },
       hideDeckBtn:   { zh: '🙈 收起清單', en: '🙈 Hide the list' },
       browseDeckBtn: { zh: '👁️ 瀏覽全部 {n} 句犀利意見（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Browse all {n} takes (spoilers — don't open while sharing)" },
@@ -355,21 +355,18 @@
        takes one tap, because nothing is on the cards yet. */
     const nextGate = NEXT_ROUND.create({
       count: () => ROOM.count,
-      needed: n => round > 0 ? NEXT_ROUND.majority(n) : 1,
       canDraw: () => ROOM.enabled && !rolling,
       draw: () => spin(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
-    nextGate.watch(2000);   // reconcile on a slow tick and on tab wake-up, not only on events
+    nextGate.watch(3000);   // re-check on a slow tick and on tab wake-up, not only on events
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');
       const open = nextGate.isOpen();
       el.classList.toggle('hidden', !open);
       if (!open) return;
-      el.textContent = round > 0
-        ? ht('nextStatusReady', { ready: nextGate.readyNums().length, count: ROOM.count, needed: nextGate.needed() })
-        : ht('nextStatusFirst');
+      el.textContent = ht(round > 0 ? 'nextStatusOpen' : 'nextStatusFirst');
     }
 
     I18N.onChange(() => {

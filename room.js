@@ -763,7 +763,11 @@ const ROOM = (() => {
       const num = i + 1;
       const handler = snap => {
         data[num] = snap.val();
-        if (cfg.onPlayerData) cfg.onPlayerData(num, snap.val());
+        // never let one game's render error kill this listener: the card messages
+        // that drive a round (a buzz, a vote, a request for the next prompt) all
+        // arrive through here, and a page that throws once would go deaf
+        try { if (cfg.onPlayerData) cfg.onPlayerData(num, snap.val()); }
+        catch (e) { console.error('onPlayerData', e); }
       };
       ref.on('value', handler);
       listeners.push({ ref, handler });

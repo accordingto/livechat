@@ -323,11 +323,9 @@
     .next-btn .pb-key { font-size: 1.4rem; }
     .next-btn:active:not(:disabled) { transform: scale(.97); }
     .next-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
-    /* this card has said "ready" — outlined, so the waiting state is visibly not the
-       action, and tapping it again takes the ready back */
-    .next-btn.is-ready { background: #22c55e1f; border-color: #22c55e; color: #86efac; box-shadow: none; }
-    .next-meter { font-size: .85rem; color: var(--text-dim); line-height: 1.5; text-align: center; }
-    .next-meter b { color: #fff; }
+    /* one tap from moving everyone on — amber, because the next tap is the one that
+       actually changes the question for the whole room */
+    .next-btn.is-armed { background: #f59e0b; border-color: #f59e0b; color: #2b1a00; box-shadow: 0 6px 20px rgba(245,158,11,.3); }
     /* the host isn't answering (or can't hear this seat) — amber, so it reads as a
        problem to go fix rather than one more line of grey */
     .next-warn {
@@ -541,11 +539,11 @@
       nextFirstScenario: { zh: '抽第一個場景', en: 'Draw the first scenario' },
       nextScenario: { zh: '下一個場景', en: 'Next scenario' },
       nextAnyoneSub: { zh: '誰先按都可以 — 題目由系統隨機抽。', en: 'Anyone can tap it — the prompt is drawn at random.' },
-      nextReadyBtn: { zh: '我好了，換下一題', en: "I'm ready for the next one" },
-      nextReadyOn: { zh: '已準備好 — 再按一次取消', en: 'Ready — tap again to cancel' },
-      nextReadyMeter: { zh: '{ready} / {count} 位準備好了 · <b>{needed}</b> 位就換下一題', en: '{ready} of {count} ready · next one at <b>{needed}</b>' },
+      nextConfirmBtn: { zh: '確定換下一題 — 再按一次', en: 'Tap again to confirm' },
+      nextConfirmSub: { zh: '換了就換到下一題，大家的畫面一起換。按其他地方或等一下就取消。', en: 'This moves everyone on to the next one. Tap anywhere else, or wait, to cancel.' },
       nextSending: { zh: '抽題中…', en: 'Drawing…' },
-      nextNoHost: { zh: '⚠️ 主持人畫面還沒收到 — 請確認主持人的遊戲頁面是開著的、沒有被切到背景或關掉。', en: "⚠️ The host screen hasn't picked this up yet — make sure the host's game page is open and not in a background tab." },
+      nextAnyoneNote: { zh: '誰先按都可以 — 不用等其他人。', en: 'Anyone can tap it — no need to wait for the others.' },
+      nextNoHost: { zh: '⚠️ 沒有換成功 — 主持人的遊戲頁面要開著而且停在最前面（切到其他分頁或 App 時，手機/平板會把它凍結）。請主持人切回那一頁，再按一次。', en: "⚠️ That didn't go through — the host's game page has to be open and in front (phones and tablets freeze background tabs). Ask the host to switch back to it, then tap again." },
       nextNotInRoom: { zh: '⚠️ 你的連結是第 {n} 位，但主持人的房間目前只有 {count} 人 — 主持人畫面收不到你的操作，請主持人回首頁調整人數或重發連結。', en: "⚠️ Your link is seat {n}, but the host's room is set to {count} players — the host screen can't see your taps. Ask the host to fix the player count on the home page or resend the links." },
       idleHottake: { zh: '還沒有題目。等大家都到齊了，任何人都可以抽第一題。', en: 'No take yet. Once everyone is here, anyone can spin the first one.' },
       idleSophies: { zh: '還沒有情境。等大家都到齊了，任何人都可以抽第一個。', en: 'No situation yet. Once everyone is here, anyone can draw the first one.' },
@@ -963,24 +961,48 @@
        the next prompt should be drawn. It quotes the nextId the host published — a new
        draw brings a new id, so a tap that was still in flight is simply not counted.
        It's a separate field from `vote`, because the vote has to survive it. */
-    let nextTapAt = 0;   // when this card last said "ready" — to notice a host that never answers
-    function nextSend(ready, btn) {
+    /* next-round.js: asking for the next prompt is one tap, exactly like the deal
+       button in Say It Without Saying It — `players/{token}/next = { id, go: true }`
+       quotes the id the host is currently offering, and the draw spends that id, so
+       two people tapping together still only moves the game on once. Nothing here
+       is counted across cards: the only guard against an accidental skip is the
+       second tap below, which lives on this phone and cannot get out of step. */
+    let nextArmed = '';      // the nextId this card has asked to confirm
+    let nextArmTimer = null;
+    let nextSentId = '';     // the nextId this card asked to draw
+    let nextSentAt = 0;
+    const NEXT_STALL_MS = 4500;   // no new round by then → the host page isn't listening
+
+    function nextArm(id) {
+      nextArmed = id;
+      clearTimeout(nextArmTimer);
+      // as the note under the button says: a tap anywhere else calls it off
+      setTimeout(() => document.addEventListener('click', onArmedClick, { once: true }), 0);
+      // an unconfirmed tap forgets itself, so a card left armed in a pocket can't
+      // skip a question with one stray touch later on
+      nextArmTimer = setTimeout(() => { nextArmed = ''; tryRenderCard(); }, 6000);
+      tryRenderCard();
+    }
+    function onArmedClick(e) {
+      if (!nextArmed) return;
+      if (e.target.closest && e.target.closest('.next-btn')) return;   // that's the confirm itself
+      nextArmed = '';
+      clearTimeout(nextArmTimer);
+      tryRenderCard();
+    }
+    function nextTap(needsConfirm, btn) {
       if (!db || !session || !token) return;
       const id = latestData && latestData.nextId;
       if (!id) return;
-      if (btn) {
-        btn.disabled = true;
-        if (ready && (latestData.nextNeeded || 1) <= 1) btn.querySelector('.pb-label').textContent = pt('nextSending');
-      }
-      nextTapAt = Date.now();
-      // if the host hasn't counted us by then, repaint so the card says so
+      if (needsConfirm && nextArmed !== id) { nextArm(id); return; }
+      nextArmed = '';
+      clearTimeout(nextArmTimer);
+      nextSentId = id;
+      nextSentAt = Date.now();
+      if (btn) { btn.disabled = true; const l = btn.querySelector('.pb-label'); if (l) l.textContent = pt('nextSending'); }
+      // if no new round has arrived by then, repaint so the card says what's wrong
       setTimeout(tryRenderCard, NEXT_STALL_MS + 200);
-      db.ref(`rooms/${session}/players/${token}/next`).set({ id, ready: !!ready });
-    }
-    const NEXT_STALL_MS = 6000;
-
-    function myNextReady(data) {
-      return !!(data.next && data.nextId && data.next.id === data.nextId && data.next.ready === true);
+      db.ref(`rooms/${session}/players/${token}/next`).set({ id, go: true });
     }
 
     /* The block under a card in the four "draw a prompt" games. Two shapes, chosen by
@@ -988,34 +1010,45 @@
        after the verdict); otherwise it's a "ready" toggle plus a meter, and the host
        draws once more than half the room has tapped it. Nothing at all when the host
        says the gate is shut (mid-animation, or Persuade before the verdict). */
+    /* The block under a card in the four "draw a prompt" games: one button that draws
+       the next prompt for everybody. `opts.instant` skips the confirm where there is
+       nothing to interrupt — the very first draw of a session, and Persuade Together
+       once the judge has ruled. Nothing is drawn while the host says the gate is shut
+       (mid-animation, or Persuade before the verdict): then there is no block at all. */
     function nextBlock(data, opts) {
       if (!data.nextId) return '';
-      const first = !(data.round > 0);
-      const needed = data.nextNeeded || 1;
       const nx = `style="--nx:${opts.hex}"`;
       // the host only listens to the seats inside its player count — a link from a
-      // bigger earlier room can see the payload but never be heard. Say so instead
-      // of offering a button that does nothing.
+      // bigger earlier room can see the payload but would never be heard
       if (data.nextCount && data.playerNum > data.nextCount) {
         return `<span class="next-warn">${pt('nextNotInRoom', { n: data.playerNum, count: data.nextCount })}</span>`;
       }
-      // this card said "ready" a while ago and the host still counts nobody: the
-      // host page is the only thing that can draw, so tell them to go look at it
-      const stalled = myNextReady(data) && !(data.nextReady > 0) && nextTapAt && Date.now() - nextTapAt > NEXT_STALL_MS;
-      const warn = stalled ? `<span class="next-warn">${pt('nextNoHost')}</span>` : '';
-      if (needed <= 1) {
+      const first = !(data.round > 0);
+      const label = pt(first ? opts.first : opts.next);
+      // we asked and the round still hasn't changed: the host page is the only thing
+      // that can draw, so say to go and look at it rather than sit on a dead button
+      const waiting = nextSentId === data.nextId;
+      if (waiting && Date.now() - nextSentAt < NEXT_STALL_MS) {
         return `
-          <button class="next-btn" ${nx} onclick="nextSend(true, this)">
-            <span class="pb-key">${opts.emoji}</span><span class="pb-label">${pt(first ? opts.first : opts.next)}</span>
-          </button>
-          <span class="pick-sub">${pt('nextAnyoneSub')}</span>`;
+          <button class="next-btn" ${nx} disabled>
+            <span class="pb-key">${opts.emoji}</span><span class="pb-label">${pt('nextSending')}</span>
+          </button>`;
       }
-      const ready = myNextReady(data);
+      const warn = waiting ? `<span class="next-warn">${pt('nextNoHost')}</span>` : '';
+      const needsConfirm = !first && !opts.instant;
+      if (needsConfirm && nextArmed === data.nextId) {
+        return `
+          <button class="next-btn is-armed" ${nx} onclick="nextTap(true, this)">
+            <span class="pb-key">⚠️</span><span class="pb-label">${pt('nextConfirmBtn')}</span>
+          </button>
+          <span class="pick-sub">${pt('nextConfirmSub')}</span>
+          ${warn}`;
+      }
       return `
-        <button class="next-btn${ready ? ' is-ready' : ''}" ${nx} onclick="nextSend(${ready ? 'false' : 'true'}, this)">
-          <span class="pb-key">${ready ? '✅' : '👋'}</span><span class="pb-label">${pt(ready ? 'nextReadyOn' : 'nextReadyBtn')}</span>
+        <button class="next-btn" ${nx} onclick="nextTap(${needsConfirm}, this)">
+          <span class="pb-key">${opts.emoji}</span><span class="pb-label">${label}</span>
         </button>
-        <span class="next-meter">${pt('nextReadyMeter', { ready: data.nextReady || 0, count: data.nextCount || '', needed })}</span>
+        <span class="pick-sub">${pt(first ? 'nextAnyoneSub' : 'nextAnyoneNote')}</span>
         ${warn}`;
     }
 
@@ -1604,7 +1637,7 @@
         const hex = judge ? '#f59e0b' : '#06b6d4';
         const picked = myPick(data);
         // the host opens this only once the judge has ruled (or before the first draw)
-        const next = nextBlock(data, { hex: '#06b6d4', emoji: '🎲', first: 'nextFirstScenario', next: 'nextScenario' });
+        const next = nextBlock(data, { hex: '#06b6d4', emoji: '🎲', first: 'nextFirstScenario', next: 'nextScenario', instant: true });
         if (!data.situation && !data.team) {
           el.innerHTML = `
             <div class="secret-card theme-persuade">

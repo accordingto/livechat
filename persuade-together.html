@@ -249,12 +249,11 @@
        first draw needs no verdict: nothing is on the cards yet. */
     const nextGate = NEXT_ROUND.create({
       count: () => ROOM.count,
-      needed: () => 1,
       canDraw: () => ROOM.enabled && !rolling && (judgeIdx < 0 || verdict() !== null),
       draw: () => draw(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
-    nextGate.watch(2000);   // reconcile on a slow tick and on tab wake-up, not only on events
+    nextGate.watch(3000);   // re-check on a slow tick and on tab wake-up, not only on events
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');

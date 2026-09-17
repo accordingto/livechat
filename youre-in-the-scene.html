@@ -269,7 +269,7 @@
       hideBtn: { zh: '🙈 收起場景清單', en: '🙈 Hide the scenario list' },
       filterAll: { zh: '全部', en: 'All' },
       nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎭 抽第一個場景」開始 — 這裡的抽場景鈕是備援。', en: '📱 Any player can tap "🎭 Draw the first scene" on their own card to start — Draw Scene here is the backup.' },
-      nextStatusReady: { zh: '👋 {ready} / {count} 位玩家準備好換下一個場景（{needed} 位就自動抽）', en: '👋 {ready} of {count} players ready for the next scene — it draws itself at {needed}' },
+      nextStatusOpen: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎭 換下一個場景」— 這裡的抽場景鈕是備援。', en: '📱 Any player can tap "🎭 Next scene" on their own card — Draw Scene here is the backup.' },
     });
     const st = (key, vars) => {
       let s = I18N.t('scene', key);
@@ -305,21 +305,18 @@
        session takes one tap, because nothing is on the cards yet. */
     const nextGate = NEXT_ROUND.create({
       count: () => ROOM.count,
-      needed: n => round > 0 ? NEXT_ROUND.majority(n) : 1,
       canDraw: () => ROOM.enabled && !rolling,
       draw: () => draw(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
-    nextGate.watch(2000);   // reconcile on a slow tick and on tab wake-up, not only on events
+    nextGate.watch(3000);   // re-check on a slow tick and on tab wake-up, not only on events
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');
       const open = nextGate.isOpen();
       el.classList.toggle('hidden', !open);
       if (!open) return;
-      el.textContent = round > 0
-        ? st('nextStatusReady', { ready: nextGate.readyNums().length, count: ROOM.count, needed: nextGate.needed() })
-        : st('nextStatusFirst');
+      el.textContent = st(round > 0 ? 'nextStatusOpen' : 'nextStatusFirst');
     }
 
     /* nothing drawn yet: the cards carry only "draw the first scene", so the game
@@ -594,8 +591,8 @@
           btn.disabled    = false;
           rolling = false;
           // after round++ and rolling = false: renderScene() deals the roles, and the
-          // next-round gate reads both when it decides what the cards may show (a
-          // majority toggle, and only once the animation is over)
+          // next-round gate reads both when it decides what the cards may show
+          // (whether the first draw or a later one, and only once the animation is over)
           renderScene(sc);
           document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
         }
