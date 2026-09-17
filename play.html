@@ -369,6 +369,40 @@
       border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 900;
       animation: buzzIn .3s ease both;
     }
+    /* ── Standings, at the foot of every Say It card ──
+       The host's screen has the big scoreboard, but a player is looking down at their
+       phone, so their own total on its own said nothing about where they stood.
+       The rows WRAP rather than sitting in fixed columns: a two-column grid is more
+       compact, but at 360–430px each column is ~130px and real names ("Christopher",
+       "Wolfgang-Amadeus") get cut off with an ellipsis — which defeats the point of
+       showing who has what. Wrapping lets short names pack several to a line and gives
+       a long one the full width of the card to itself. */
+    .taboo-board {
+      width: 100%; border-top: 1px dashed #2e2e5e; padding-top: 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .taboo-board .tbd-hdr {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .taboo-board .tbd-rows {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+    }
+    .tbd-row {
+      display: flex; align-items: center; gap: 8px;
+      background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 10px;
+      padding: 7px 11px; min-width: 0; max-width: 100%;
+    }
+    /* own row picks up the player's own colour, the same one the name chip uses, so
+       "which one am I" needs no reading */
+    .tbd-row.is-me { border-color: var(--me); background: color-mix(in srgb, var(--me) 14%, #0d0d1a); }
+    .tbd-name {
+      font-size: .84rem; font-weight: 800; color: var(--text-dim);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+    }
+    .tbd-row.is-me .tbd-name { color: #fff; }
+    .tbd-pts { font-size: 1rem; font-weight: 900; color: #ddd; flex: none; }
+    .tbd-row.is-me .tbd-pts { color: var(--me-text); }
     @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
     @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
@@ -431,6 +465,8 @@
       turnSuffix: { zh: ' 的回合', en: "'s turn" },
       tileWord: { zh: '塊地', en: 'tile' },
       tilesWord: { zh: '塊地', en: 'tiles' },
+      standings: { zh: '🏆 目前分數', en: '🏆 Standings' },
+      buzzHeldForTaboo: { zh: '⏸️ 有人喊了 Taboo！ — 等 {name} 回答之後才能再搶答。', en: '⏸️ Taboo! was called — buzzing reopens once {name} answers.' },
       point: { zh: '分', en: 'point' },
       points: { zh: '分', en: 'points' },
       hotTakeChip: { zh: '🔥 大膽發言', en: '🔥 Hot Take' },
@@ -590,9 +626,13 @@
     /* the name chip, identical in every game: the player's own colour fills it, with
        dark text on top — every colour in the palette clears 5:1 against #0b0b18, which
        a coloured-text-on-dark chip could not promise for all eight. */
+    function playerColor(data) {
+      return (data && data.myHex) || NAME_COLORS[(((data && data.playerNum) || 1) - 1) % NAME_COLORS.length];
+    }
+
     function nameBanner(data) {
       const label = esc(data.name || urlName || pt('playerFallback', { n: data.playerNum || '?' }));
-      const hex = data.myHex || NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length];
+      const hex = playerColor(data);
       const style = `color:#0b0b18;border-color:${hex};background:${hex};`
         + `box-shadow:0 0 26px ${hex}55`;
       return `<span class="name-banner" style="${style}">${label}</span>`;
@@ -1036,7 +1076,19 @@
             <span class="tb-label">${pt('forbiddenWordsLabel')}</span>
             <div class="tb-list">${banned}</div>
           </div>` : '';
-      const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
+      // the standings; a host tab that predates this field still sends only `score`,
+      // so fall back to the old single line rather than showing nothing
+      const hex = playerColor(data);
+      const score = Array.isArray(data.board) && data.board.length
+        ? `<div class="taboo-board" style="--me:${hex};--me-text:${chipInk(hex)}">
+             <span class="tbd-hdr">${pt('standings')}</span>
+             <div class="tbd-rows">${data.board.map(r => `
+               <div class="tbd-row${r.me ? ' is-me' : ''}">
+                 <span class="tbd-name">${esc(r.n || '')}</span>
+                 <span class="tbd-pts">${r.p || 0}</span>
+               </div>`).join('')}</div>
+           </div>`
+        : `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
       const chip = (text, hex) => `<span class="pick-chip" style="color:${chipInk(hex)};border-color:${hex}55;background:${hex}1a">${text}</span>`;
       const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}</div>`;
       // the clock is on every card while a word is in play
@@ -1140,7 +1192,13 @@
       const mine = data.buzzer === data.playerNum;
       const waiting = data.queued && !mine;
       let buzzArea;
-      if (mine) {
+      if (data.tabooBy) {
+        // the round is stopped dead until the clue giver answers the call, so there is
+        // nothing to buzz on: the button goes away entirely rather than sitting there
+        // greyed out (and the host drops any buzz that arrives anyway). It comes back
+        // by itself on the next payload if the call is waved off.
+        buzzArea = `<span class="pick-sub">${pt('buzzHeldForTaboo', { name: esc(data.giverName || '') })}</span>`;
+      } else if (mine) {
         buzzArea = `
           <div class="taboo-buzzed mine">${pt('youBuzzed')}</div>
           <span class="pick-sub">${pt('willTap', { giver: esc(data.giverName || 'The clue giver') })}</span>`;
