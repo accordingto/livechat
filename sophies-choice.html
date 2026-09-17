@@ -240,6 +240,7 @@
       tallyC: { zh: 'C · 自己的答案', en: 'C · Own answer' },
       nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎲 抽第一個情境」開始 — 這裡的抽取鈕是備援。', en: '📱 Any player can tap "🎲 Draw the first situation" on their own card to start — Draw here is the backup.' },
       nextStatusOpen: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎲 換下一個情境」— 這裡的抽取鈕是備援。', en: '📱 Any player can tap "🎲 Next situation" on their own card — Draw here is the backup.' },
+      nextStatusCounting: { zh: '⏱️ {n} 秒後換下一個情境 — 還在講的話，請玩家在卡片上按「等一下」。', en: '⏱️ Next situation in {n}s — still talking? Tap "Hold on" on any card.' },
       linksNote: { zh: '玩家開啟自己的卡片連結，點選 A、B 或 C — 卡片下方的統計會即時更新，接著大家再說明理由。', en: 'Players open their own card link and tap A, B or C — the tally under the card fills in as they answer, then everyone explains why.' },
     });
     const st = (key, vars) => {
@@ -286,14 +287,25 @@
        session takes one tap, because nothing is on the cards yet. */
     const nextGate = NEXT_ROUND.create({
       count: () => ROOM.count,
+      // a five-second countdown before every change but the first, so nobody is cut
+      // off mid-sentence and anyone can still stop it from their card
+      delay: () => round > 0 ? 5000 : 0,
+      onTick: () => renderNextStatus(),
       canDraw: () => ROOM.enabled && !rolling,
       draw: () => draw(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
-    nextGate.watch(3000);   // re-check on a slow tick and on tab wake-up, not only on events
+    nextGate.watch(500);   // keeps the countdown honest on a frozen tab, and re-checks the gate
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');
+      // the shared countdown takes the line over while it runs — this screen is
+      // being projected, so everyone should see the same number the cards show
+      if (nextGate.isArmed()) {
+        el.classList.remove('hidden');
+        el.textContent = st('nextStatusCounting', { n: nextGate.secondsLeft() });
+        return;
+      }
       const open = nextGate.isOpen();
       el.classList.toggle('hidden', !open);
       if (!open) return;

@@ -270,6 +270,7 @@
       filterAll: { zh: '全部', en: 'All' },
       nextStatusFirst: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎭 抽第一個場景」開始 — 這裡的抽場景鈕是備援。', en: '📱 Any player can tap "🎭 Draw the first scene" on their own card to start — Draw Scene here is the backup.' },
       nextStatusOpen: { zh: '📱 任何一位玩家都可以在自己的卡片上按「🎭 換下一個場景」— 這裡的抽場景鈕是備援。', en: '📱 Any player can tap "🎭 Next scene" on their own card — Draw Scene here is the backup.' },
+      nextStatusCounting: { zh: '⏱️ {n} 秒後換下一個場景 — 還沒演完的話，請玩家在卡片上按「等一下」。', en: '⏱️ Next scene in {n}s — not finished? Tap "Hold on" on any card.' },
     });
     const st = (key, vars) => {
       let s = I18N.t('scene', key);
@@ -305,14 +306,25 @@
        session takes one tap, because nothing is on the cards yet. */
     const nextGate = NEXT_ROUND.create({
       count: () => ROOM.count,
+      // a five-second countdown before every change but the first, so nobody is cut
+      // off mid-sentence and anyone can still stop it from their card
+      delay: () => round > 0 ? 5000 : 0,
+      onTick: () => renderNextStatus(),
       canDraw: () => ROOM.enabled && !rolling,
       draw: () => draw(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
-    nextGate.watch(3000);   // re-check on a slow tick and on tab wake-up, not only on events
+    nextGate.watch(500);   // keeps the countdown honest on a frozen tab, and re-checks the gate
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');
+      // the shared countdown takes the line over while it runs — this screen is
+      // being projected, so everyone should see the same number the cards show
+      if (nextGate.isArmed()) {
+        el.classList.remove('hidden');
+        el.textContent = st('nextStatusCounting', { n: nextGate.secondsLeft() });
+        return;
+      }
       const open = nextGate.isOpen();
       el.classList.toggle('hidden', !open);
       if (!open) return;
