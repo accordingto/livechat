@@ -429,6 +429,8 @@
     }
     .cp-btn-buzz, .cp-btn-right { background: rgba(34,197,94,.18); border: 1.5px solid #22c55e; color: var(--ok-text-lit); }
     .cp-btn-foul, .cp-btn-wrong { background: rgba(239,68,68,.18); border: 1.5px solid #ef4444; color: #f87171; }
+    .cp-btn-deal { background: rgba(99,102,241,.18); border: 1.5px solid #6366f1; color: var(--accent-text); }
+    .cp-btn-skip { background: var(--btn-face); border: 1.5px solid var(--border-3); color: var(--text-dim); }
     .cp-preview .cp-result { color: var(--accent-text); font-weight: 800; }
     .deck-list {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -747,6 +749,9 @@
       callYesBtn: { zh: '🚨 成立 — 裁判 +2，描述者 −1', en: '🚨 Yes — +2 to the referee, −1 to the clue giver' },
       callNoBtn: { zh: '👌 不成立 — 繼續這一輪', en: '👌 No — keep playing this round' },
       dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
+      dealFirstPreviewBtn: { zh: '🎬 發第一個題目', en: '🎬 Deal the first word' },
+      dealNextPreviewBtn: { zh: '🎬 發下一個題目', en: '🎬 Deal the next word' },
+      skipPreviewBtn: { zh: '🛑 我想換一題', en: "🛑 I can't describe this one" },
       resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
@@ -773,7 +778,7 @@
       inQueueRole: { zh: '🙋 排隊中', en: '🙋 In the queue' },
       inQueueRoleShort: { zh: '⏳ 排隊中', en: '⏳ In queue' },
       statusNoRoom: { zh: '請先發出下方的玩家連結才能開始 — 祕密字只會給描述者，絕不會出現在這個畫面。', en: "Hand out the player links below to start — the secret word goes to the clue giver, never to this screen." },
-      statusIdle: { zh: '按下「發一個題目」— 每個人都用自己的卡片作答。', en: 'Press Deal a Word — everyone answers from their own card.' },
+      statusIdle: { zh: '按下「發一個題目」開始 — 或由任何一位玩家從自己的卡片上發題。', en: 'Press Deal a Word to start — or let any player deal it from their own card.' },
       clockOnHold: { zh: '⏸️ 計時已暫停', en: '⏸️ Clock on hold' },
       calledTabooOn: { zh: '🚨 {who} 對 {giver} 喊了 <b>Taboo！</b>', en: '🚨 {who} called <b>Taboo!</b> on {giver}' },
       tabooYourCall: { zh: '等 {giver} 在自己的卡片上回答有沒有說 — 手機不方便時也可以由你代答：',
@@ -857,6 +862,11 @@
     let roundForbidden = null; // card.forbidden sliced to bannedCount at deal time, so a mid-round
                                 // setting change can't retroactively add or drop a banned word
     let roundId = '';
+    /* Between rounds any card can deal the next word, so the cards need something to
+       quote back the way a round's answers quote roundId — otherwise a tap queued on a
+       stale card could deal a second word on top of a live round. Non-empty only while
+       dealing is actually open; dealRound() blanks it as it consumes the tap. */
+    let dealId = '';
     let state = 'idle';    // idle | ready | playing | done
     // 'ready' = the word is dealt but still sealed: it only reaches the clue giver's
     // card once they tap Show my word there, and the clock starts at that moment
@@ -870,6 +880,14 @@
     let lostIdx = [];      // score cards to flash red after losing a point
     let tabooCalls = [];   // players who shouted Taboo! and are waiting on the host's ruling
     let seenTaboo = {};    // playerNum -> the last Taboo! stamp already handled
+    /* The five-second handover between rounds. Declared up here rather than beside
+       armNextRound() because canDeal() reads nextRoundIv, and the first publish happens
+       during ROOM.init() — long before that block further down has run. */
+    let nextRoles = null;   // { giver, ref } — decided before the countdown, dealt after
+    let nextRoundAt = 0;
+    let nextRoundIv = null;
+    let nextSeq = 0;
+    const NEXT_ROUND_WAIT = 5;
 
     /* ── Setup phase: a 4-step wizard over the three widgets below, same
        pattern as index.html's room-setup wizard — walk past difficulty,
@@ -933,6 +951,15 @@
       document.getElementById('phase-setup').classList.add('hidden');
       document.getElementById('phase-game').classList.remove('hidden');
       renderPhaseSummary();
+      /* Leaving the wizard is what hands the game to the cards: canDeal() was false
+         while phase was 'setup', so nobody could start a round before the host had
+         finished choosing difficulty, banned words and round length. A fresh game
+         publishes over whatever the last game left on the cards; coming back from a
+         mid-round detour into the settings only updates, so a buzz waiting to be read
+         isn't wiped. */
+      dealId = newId();
+      if (state === 'idle') publishRound(); else pushState();
+      renderAll();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -947,6 +974,7 @@
       document.getElementById('phase-setup').classList.remove('hidden');
       tabooSubStepReached = 1;
       showTabooSubStep(1);
+      pushState();   // canDeal() is false again — take the deal button off the cards
     }
 
     /* a compact read-out atop the Game phase, so the host doesn't have to
@@ -1134,12 +1162,42 @@
     syncScores();
 
     /* ── What the players send back ──
-       guesser : { id, choice:'buzz', t }  or  { id, choice:'foul' }
-       giver   : { id, choice:'right'|'wrong', buzzer }                       */
+       anyone   : { id, choice:'deal' }                        (between rounds only)
+       guesser  : { id, choice:'buzz', t }
+       referee  : { id, choice:'taboo', t }
+       giver    : { id, choice:'right'|'wrong', buzzer }
+                  { id, choice:'ruling', upheld }  |  { id, choice:'skip' }
+       Every branch is a request, not an instruction: this page holds the deck, the
+       scores and the roles, and decides whether the request makes sense right now. */
     function handleAnswer(num, data) {
-      if (state !== 'playing' && state !== 'ready') return;
       const v = data && data.vote;
-      if (!v || v.id !== roundId) return;
+      if (!v) return;
+
+      /* Dealing the next word is the one thing anybody may do, because between rounds
+         there is nothing to protect: no roles, no clock, no word in play. It is also the
+         only branch that runs outside a live round, so it sits above the state guard.
+         Whoever reaches for their phone first deals; the rest is decided here, as always. */
+      if (v.choice === 'deal') {
+        ROOM.clearAnswer(num - 1);
+        if (canDeal() && v.id && v.id === dealId) dealRound();
+        return;
+      }
+
+      if (state !== 'playing' && state !== 'ready') return;
+      if (v.id !== roundId) return;
+
+      /* A word the clue giver can't describe is theirs to drop, from their own card —
+         it costs the round, so the card asks twice before this arrives. Unlike the
+         host's end-turn button it rolls straight on to the next word: a giver asking
+         for a different word is not the host stopping the game to talk. */
+      if (v.choice === 'skip') {
+        ROOM.clearAnswer(num - 1);
+        if (state === 'playing' && num === giverIdx + 1) {
+          confirmEnd = false;
+          endRound({ type: 'stop', who: giverIdx + 1 }, true);
+        }
+        return;
+      }
 
       // before a round is live the only thing a card can say is "I'm looking at my
       // phone" — and only the incoming clue giver gets to say it
@@ -1423,6 +1481,18 @@
     }
 
     /* ── Round flow ── */
+    const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    /* Is there a word waiting to be dealt right now? Only between rounds: during one
+       there is nothing to press, and while the five-second handover is running the next
+       word is already on its way. Gated on the game phase too, because onCountChange()
+       can publish an idle round while the host is still in the settings wizard, and a
+       card should not be able to start a game before the host has finished setting it up. */
+    function canDeal() {
+      return ROOM.enabled && phase === 'game' && !nextRoundIv
+        && (state === 'idle' || state === 'done');
+    }
+
     function dealRound() {
       if (!ROOM.enabled) return;
       cancelNextRound();
@@ -1443,7 +1513,8 @@
       card = DECK[pick];
       roundForbidden = card.forbidden.slice(0, bannedCount);
       round++;
-      roundId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      roundId = newId();
+      dealId = '';   // this tap is spent; a second card's stale one can't deal again
       state = 'ready';
       queue = [];
       rejected = [];
@@ -1497,12 +1568,6 @@
        next clue giver should be reaching for their phone, and they can't do that if
        they only find out once the round has already started. `nextRoles` then waits
        for dealRound() to consume it, so what the cards announced is what gets dealt. */
-    let nextRoles = null;   // { giver, ref } — decided before the countdown, dealt after
-    let nextRoundAt = 0;
-    let nextRoundIv = null;
-    let nextSeq = 0;
-    const NEXT_ROUND_WAIT = 5;
-
     function armNextRound() {
       cancelNextRound();
       if (!ROOM.enabled) return;
@@ -1566,6 +1631,8 @@
       cancelNextRound();
       result = res;
       state = 'done';
+      // a round that rolls on by itself needs no button; one that stops here does
+      dealId = autoNext ? '' : newId();
       stopTicking();
       timer.autoHeld = false;
       timer.running = false;
@@ -1582,6 +1649,7 @@
     function resetRound() {
       cancelNextRound();
       nextRoles = null;
+      dealId = newId();
       state = 'idle';
       card = null;
       roundForbidden = null;
@@ -1651,6 +1719,10 @@
         // roster of its own. Six rows of {n, p} is a handful of bytes, and it rides
         // along on writes that were happening anyway — no extra Firebase traffic.
         board: boardFor(i),
+        // between rounds the next word can be dealt from any card, so every card needs
+        // to know that and to have the id its tap must quote
+        canDeal: canDeal() || null,
+        dealId: canDeal() ? dealId : null,
         forbidden: null, target: null, emoji: null,
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
         tabooBy: null, iCalledTaboo: null, forbiddenOn,
@@ -1698,7 +1770,12 @@
 
     function cardPreviewText(i) {
       const p = payloadFor(i);
-      if (p.state === 'idle') return `<div class="cp-note">${tt('nothingDealtYet')}</div>`;
+      // between rounds the card's one control is the deal button — the preview is a
+      // miniature of the card, so it has to show that rather than "nothing dealt yet"
+      const dealPreview = p.canDeal
+        ? `<span class="cp-btn cp-btn-deal">${tt(p.state === 'idle' ? 'dealFirstPreviewBtn' : 'dealNextPreviewBtn')}</span>`
+        : '';
+      if (p.state === 'idle') return dealPreview || `<div class="cp-note">${tt('nothingDealtYet')}</div>`;
       if (p.state === 'ready') {
         return p.isGiver
           ? `<span class="cp-btn cp-btn-buzz">${tt('openWordPreviewBtn')}</span>`
@@ -1715,6 +1792,11 @@
         if (p.buzzerName && !p.tabooBy) {
           blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
           blocks.push(`<div class="cp-btn-row"><span class="cp-btn cp-btn-right">${tt('correctPreviewBtn')}</span><span class="cp-btn cp-btn-wrong">${tt('notItPreviewBtn')}</span></div>`);
+        }
+        // the giver's own way out of a word they can't describe, shown only when the
+        // card really has it: not while a guess or a Taboo! call is waiting
+        if (p.state === 'playing' && !p.tabooBy && !p.buzzerName) {
+          blocks.push(`<span class="cp-btn cp-btn-skip">${tt('skipPreviewBtn')}</span>`);
         }
       } else if (p.isRef) {
         if (p.buzzerName && !p.tabooBy) {
@@ -1747,6 +1829,7 @@
         const penalty = p.result.type === 'foul' && p.isGiver ? tt('minusOneForYou') : '';
         blocks.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
+      if (dealPreview) blocks.push(dealPreview);
       return blocks.join('');
     }
 

@@ -310,6 +310,31 @@
     }
     .taboo-foul:active:not(:disabled) { transform: scale(.98); }
     .taboo-foul:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+    /* deals the next word, from whichever card gets there first — the game's own indigo,
+       filled, with the dark ink the rest of the site uses on a filled accent */
+    .taboo-deal {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #6366f1; border: 2px solid #6366f1; color: #050510;
+      border-radius: 16px; padding: 18px 14px;
+      font-size: 1.1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(99,102,241,.28);
+      transition: transform .1s, opacity .2s;
+    }
+    .taboo-deal .pb-key { font-size: 1.4rem; }
+    .taboo-deal:active:not(:disabled) { transform: scale(.97); }
+    .taboo-deal:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    /* the giver drops a word they can't describe — deliberately the quietest thing on
+       the card, and nowhere near the verdict buttons. The greys are shared.css's
+       --btn-face / --border-3 / --text-dim values written out: this page doesn't load
+       that file, so the tokens themselves wouldn't resolve here. */
+    .taboo-skip { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .taboo-skip.is-off { display: none; }
+    .taboo-skip-btn {
+      width: 100%; background: #22224a; border: 1.5px solid #3a3a5c; color: #9999bb;
+      border-radius: 12px; padding: 11px; font-size: .85rem; font-weight: 800;
+      font-family: inherit; cursor: pointer; transition: transform .1s, border-color .2s;
+    }
+    .taboo-skip-btn:active { transform: scale(.98); }
     /* the countdown, mirrored from the host — same green → orange → red everywhere */
     .taboo-timer {
       width: 74px; height: 74px; border-radius: 50%;
@@ -503,6 +528,14 @@
       nextRefIs: { zh: '👀 {name} 當裁判', en: '👀 {name} referees' },
       nextYouGive: { zh: '🎤 換你描述！', en: "🎤 You're the clue giver!" },
       nextYouRef: { zh: '👀 你當裁判', en: "👀 You're the referee" },
+      dealWordBtn: { zh: '發下一個題目', en: 'Deal the next word' },
+      dealFirstBtn: { zh: '發第一個題目', en: 'Deal the first word' },
+      dealingWord: { zh: '發題中…', en: 'Dealing…' },
+      dealAnyoneSub: { zh: '誰先按都可以 — 題目與角色由系統隨機發。', en: 'Anyone can tap it — the word and the roles are dealt at random.' },
+      skipWordBtn: { zh: '🛑 我想換一題', en: "🛑 I can't describe this one" },
+      skipAskSub: { zh: '確定要換掉這一題嗎？這一輪不會計分，會直接換下一位描述者。', en: 'Drop this word? Nobody scores this round, and the next clue giver is up.' },
+      skipCancelBtn: { zh: '👌 取消 — 繼續', en: '👌 Cancel — keep going' },
+      skipYesBtn: { zh: '🛑 換一題', en: '🛑 Drop it' },
       openWordBtn: { zh: '看題目', en: 'Show my word' },
       openingWord: { zh: '開啟中…', en: 'Opening…' },
       openWordSub: { zh: '輪到你描述了！準備好再按下面的按鈕 — 按下去才會看到題目，倒數也才開始。', en: "You're describing this round. Tap when you're ready — the word appears and the clock starts at that moment." },
@@ -950,6 +983,36 @@
       db.ref(`rooms/${session}/players/${token}/vote`).set(Object.assign({ id }, payload));
     }
 
+    /* Dealing the next word is the one tap that happens between rounds, so it can't
+       quote the round id the way every other message does — it quotes dealId, which the
+       host only publishes while dealing is actually open. Any player's card can send it:
+       the host page still decides whether it lands. */
+    function tabooDeal(btn) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.dealId;
+      if (!id) return;
+      if (btn) { btn.disabled = true; btn.querySelector('.pb-label').textContent = pt('dealingWord'); }
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice: 'deal' });
+    }
+
+    /* Dropping a word throws the round away, and this button sits on the same card as
+       the verdict buttons the giver is reaching for all round — so it asks first, the
+       way the host's own end-turn button does. Any repaint (a buzz arriving, the round
+       ending) rebuilds the card unarmed, so a stale question can't be answered. */
+    function armTabooSkip(on) {
+      const ask = document.getElementById('taboo-skip-ask');
+      const row = document.getElementById('taboo-skip-confirm');
+      if (!ask || !row) return;
+      ask.classList.toggle('is-off', on);
+      row.classList.toggle('is-off', !on);
+    }
+
+    function tabooSkip(btn) {
+      const row = btn && btn.closest('.pick-row');
+      if (row) row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      tabooSend({ choice: 'skip' });
+    }
+
     function tabooBuzz(btn) {
       if (btn) { btn.disabled = true; btn.querySelector('.pb-label').textContent = pt('buzzedSayIt'); }
       tabooSend({ choice: 'buzz', t: Date.now() });
@@ -1095,6 +1158,15 @@
       const ticking = data.state === 'playing' && syncTabooTimer(data.timer);
       const clock = ticking ? `<div class="taboo-timer" id="taboo-timer">${tabooTimer.left}</div>` : '';
       if (!ticking) stopTabooTimer();
+      /* Between rounds every card carries the deal button, so a game never waits on
+         whoever happens to be sitting at the host's keyboard. It only appears when the
+         host says dealing is open — during a round, and during the five-second handover
+         that deals the next word by itself, there is nothing here to press. */
+      const dealBlock = first => !data.canDeal ? '' : `
+        <button class="taboo-deal" onclick="tabooDeal(this)">
+          <span class="pb-key">🎬</span><span class="pb-label">${pt(first ? 'dealFirstBtn' : 'dealWordBtn')}</span>
+        </button>
+        <span class="pick-sub">${pt('dealAnyoneSub')}</span>`;
       if (!data.next) { stopNextTimer(); nextTimer.seq = null; }
 
       if (data.state === 'done') {
@@ -1112,7 +1184,8 @@
             <span class="tt-emoji">${data.emoji || '🙊'}</span>
             <span class="tt-word">${esc(data.target || '')}</span>
           </div>
-          ${nextUpHTML(data.next)}`);
+          ${nextUpHTML(data.next)}
+          ${dealBlock(false)}`);
       }
 
       // dealt, but still sealed — the incoming clue giver opens it themselves
@@ -1132,10 +1205,14 @@
       }
 
       if (data.state !== 'playing') {
+        // idle: either the host has just opened the game, or a round was cleared. If
+        // dealing is open this card starts it; if it isn't, there is genuinely nothing
+        // to do but wait.
         return shell(`
           ${chip('🙊 Say It Without Saying It', '#6366f1')}
-          <span class="pick-sub">${pt('waitingNextWord')}</span>
-          <p class="conq-wait">⏳</p>`);
+          ${data.canDeal
+            ? dealBlock(true)
+            : `<span class="pick-sub">${pt('waitingNextWord')}</span><p class="conq-wait">⏳</p>`}`);
       }
 
       // a Taboo! call is open — everyone sees it while the clue giver answers
@@ -1175,6 +1252,28 @@
         const idleHint = data.buzzer
           ? ''
           : `<span class="pick-sub">${pt('keepGoingHint')}</span>`;
+        /* Stuck on the word? The giver drops it themselves rather than calling across
+           to the host. It lives at the very foot of the card, well below the verdict
+           buttons it must never be mistaken for, and it asks before it fires. Hidden
+           whenever the round already has a question of its own waiting — a guess on the
+           table or an open Taboo! call: one decision at a time, the same rule the host's
+           screen follows, and it keeps a second red button off a card that already has
+           one meaning something else. */
+        const skip = data.tabooBy || data.buzzer ? '' : `
+            <div class="taboo-skip" id="taboo-skip-ask">
+              <button class="taboo-skip-btn" onclick="armTabooSkip(true)">${pt('skipWordBtn')}</button>
+            </div>
+            <div class="taboo-skip is-off" id="taboo-skip-confirm">
+              <span class="pick-sub">${pt('skipAskSub')}</span>
+              <div class="pick-row">
+                <button class="pick-btn verdict-right skip-no" onclick="armTabooSkip(false)">
+                  <span class="pb-label">${pt('skipCancelBtn')}</span>
+                </button>
+                <button class="pick-btn verdict-wrong skip-yes" onclick="tabooSkip(this)">
+                  <span class="pb-label">${pt('skipYesBtn')}</span>
+                </button>
+              </div>
+            </div>`;
         return shell(`
           ${chip(pt('clueGiverChip'), '#6366f1')}
           ${clock}
@@ -1186,7 +1285,8 @@
           </div>
           ${bannedBlock}
           ${data.forbiddenOn === false ? `<span class="pick-sub">${pt('noForbiddenThisRound')}</span>` : ''}
-          ${idleHint}`);
+          ${idleHint}
+          ${skip}`);
       }
 
       const mine = data.buzzer === data.playerNum;
