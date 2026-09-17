@@ -123,26 +123,31 @@
       display: flex; align-items: center; justify-content: center;
       padding: 12px 10px;
     }
-    /* the accent strip marks the timer section — there used to be a second,
-       red one on a .cb-sect.rules half, removed along with the settings it
-       held (see the control-bar's own comment in the body) */
+    /* one accent strip per half: indigo for the clock, red for the difficulty
+       switch that sits opposite it */
     .cb-sect::before {
       content: ''; position: absolute; top: 14px; bottom: 14px; left: 0;
       width: 3px; border-radius: 3px;
     }
     .cb-sect.timer::before { background: #6366f1; }
+    /* mirrored: the clock's strip hugs the bar's left wall, so difficulty's
+       hugs the right one rather than sitting against the dial */
+    .cb-sect.rules::before { left: auto; right: 0; background: #ef4444; }
     .cb-head {
       font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
       display: flex; align-items: center; gap: 6px;
     }
     .cb-sect.timer .cb-head { color: var(--accent-text); }
     .cb-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    /* narrow: the dial moves above the clock's own controls, the only two
-       things left in the control bar. The cut-off is just below iPad
-       landscape, which is the last width where one row still fits. */
+    /* narrow: the dial moves above the clock's controls and the difficulty
+       switch. The cut-off is just below iPad landscape, which is the last
+       width where one row still fits. */
     @media (max-width: 1023px) {
       .control-bar { grid-template-columns: 1fr; }
       .cb-dial { order: -1; padding-top: 16px; }
+      /* stacked, there is no right edge to hang off any more */
+      .cb-sect.rules .rules-group { align-items: center; }
+      .cb-sect.rules .level-btns { justify-content: center; }
     }
 
     .level-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
@@ -316,6 +321,44 @@
     .call-btn.yes { background: #ef4444; border-color: #ef4444; color: #2b0505; box-shadow: 0 6px 22px rgba(239,68,68,.35); }
     .call-btn.no  { background: #22c55e; border-color: #22c55e; color: var(--btn-ink); box-shadow: 0 6px 22px rgba(34,197,94,.3); }
     @media (max-width: 560px) { .call-btn { min-width: 100%; } }
+
+    /* ── "End this turn" is one tap away from wiping a round in progress, and it
+       sits exactly where the host's hand already is. It asks first. The question
+       line pushes both answers a good 40px below where the finger just landed, so
+       a second, accidental tap in the same spot hits nothing. Same "replace the
+       deal row, one decision on screen at a time" shape as the Taboo! panel, in a
+       quieter amber since this is the host's own slip to undo, not a ruling. ── */
+    .confirm-row {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-direction: column; gap: 12px;
+      background: rgba(245,158,11,.08);
+      border: 2px solid rgba(245,158,11,.5); border-radius: 18px;
+      /* deep top padding on purpose: measured at 390/820/1280px it puts both
+         answers clear of the rectangle the End-turn button occupied a moment
+         ago, so the second half of an accidental double-tap lands on the panel
+         itself and does nothing */
+      padding: 36px 16px 18px;
+      animation: fadeUp .25s ease both;
+    }
+    .confirm-row.hidden { display: none; }
+    .confirm-hdr {
+      text-align: center; font-size: 1.05rem; font-weight: 900;
+      color: var(--warn-text-soft); line-height: 1.5;
+    }
+    .confirm-hdr b { color: var(--warn-text); }
+    .confirm-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+    .confirm-btn {
+      flex: 1; min-width: 220px;
+      border: 2px solid; border-radius: 14px; padding: 18px 16px;
+      font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: filter .2s, transform .1s;
+    }
+    .confirm-btn:hover { filter: brightness(1.08); }
+    .confirm-btn:active { transform: scale(.98); }
+    /* keep-playing is the safe answer, so it is the green one and it comes first */
+    .confirm-btn.no  { background: #22c55e; border-color: #22c55e; color: var(--btn-ink); box-shadow: 0 6px 22px rgba(34,197,94,.3); }
+    .confirm-btn.yes { background: #f59e0b; border-color: #f59e0b; color: #2b1a02; box-shadow: 0 6px 22px rgba(245,158,11,.35); }
+    @media (max-width: 560px) { .confirm-btn { min-width: 100%; } }
 
     /* ── Deal button ── */
     .btn-deal {
@@ -522,10 +565,10 @@
   <!-- ══════════ Setup phase: walk the host through the three things this
        game needs decided before dealing a word — difficulty, forbidden
        words, and round length — one at a time, same pattern as index.html's
-       room-setup wizard. The widgets themselves (#rules-group-difficulty,
-       #rules-group-forbidden, #secs-field) are the very same elements the
-       Game phase's control bar uses; startGame()/editSettings() just move
-       them back and forth, they're never rebuilt. ══════════ -->
+       room-setup wizard. #rules-group-difficulty is the one widget the game
+       phase also shows: startGame()/editSettings() move that single node
+       between the two slots below, so the wizard and the control bar can
+       never disagree about which level is selected. ══════════ -->
   <div class="phase-wrap" id="phase-setup">
     <div class="step-hdr">
       <span class="step-num" data-i18n="taboo.setupBadge">SETUP</span>
@@ -537,9 +580,11 @@
     <div class="substep" id="taboo-substep-1">
       <div class="substep-hdr"><span class="substep-tag">1 / 4</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
       <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas.</p>
-      <div class="rules-group" id="rules-group-difficulty">
-        <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
-        <div class="level-btns" id="level-btns"></div>
+      <div id="substep-difficulty-slot">
+        <div class="rules-group" id="rules-group-difficulty">
+          <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
+          <div class="level-btns" id="level-btns"></div>
+        </div>
       </div>
       <div class="substep-nav">
         <span></span>
@@ -603,14 +648,16 @@
 
     <div class="status-line" id="status-line"></div>
 
-    <!-- Difficulty / forbidden words / round length are settings, not live
-         controls — they stay in the setup wizard and can only be reached
-         again via "Edit settings" above, never edited mid-game. Only the
-         timer's own Start/Reset survive here, since those operate the clock
-         itself rather than configure it. The 1fr auto 1fr grid still keeps
-         the dial dead centre even with column 3 empty: an explicit
-         grid-template-columns reserves all three tracks regardless of how
-         many children actually land in them. -->
+    <!-- Difficulty is the one setting the host reaches for mid-session — the
+         room warms up and Easy stops landing — so it sits here in the right
+         half rather than three taps away behind "Edit settings". It is the
+         SAME node as the wizard's, moved in by startGame(); there is only one
+         set of level buttons in the document. Forbidden words and round
+         length stay in the wizard: neither is something you change between
+         two rounds. Switching level never disturbs the round in play — it
+         only ever decided which card the NEXT deal draws from.
+         The 1fr auto 1fr grid keeps the dial dead centre: both side tracks
+         are 1fr whatever they hold. -->
     <div class="control-bar" id="control-bar">
       <section class="cb-sect timer">
         <span class="cb-head" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
@@ -622,6 +669,9 @@
         </div>
       </section>
       <div class="cb-dial"><div class="timer-dial" id="timer-dial">90</div></div>
+      <section class="cb-sect rules">
+        <div id="game-difficulty-slot"></div>
+      </section>
     </div>
 
     <div class="scoreboard" id="scoreboard"></div>
@@ -636,6 +686,14 @@
       <div class="call-btns">
         <button class="call-btn yes" onclick="ruleTaboo(true)" data-i18n="taboo.callYesBtn">🚨 Yes — +2 to the referee, −1 to the clue giver</button>
         <button class="call-btn no" onclick="ruleTaboo(false)" data-i18n="taboo.callNoBtn">👌 No — keep playing this round</button>
+      </div>
+    </div>
+
+    <div class="confirm-row hidden" id="confirm-row">
+      <div class="confirm-hdr" id="confirm-hdr"></div>
+      <div class="confirm-btns">
+        <button class="confirm-btn no" onclick="cancelEndTurn()" data-i18n="taboo.confirmNoBtn">👌 No — keep playing</button>
+        <button class="confirm-btn yes" onclick="doEndTurn()" data-i18n="taboo.confirmYesBtn">🛑 Yes — end this turn</button>
       </div>
     </div>
 
@@ -775,6 +833,9 @@
       summaryForbiddenOn: { zh: '🚫 禁字 ON（{n}）', en: '🚫 Forbidden ON ({n})' },
       summaryForbiddenOff: { zh: '🚫 禁字 OFF', en: '🚫 Forbidden OFF' },
       summaryTimer: { zh: '⏱️ {n} 秒', en: '⏱️ {n}s' },
+      confirmEndHdr: { zh: '🛑 確定要結束 <b>{giver}</b> 的回合嗎？這一輪不會計分。', en: "🛑 End <b>{giver}</b>'s turn for good? Nobody scores this round." },
+      confirmNoBtn: { zh: '👌 取消 — 繼續這一輪', en: '👌 No — keep playing this round' },
+      confirmYesBtn: { zh: '🛑 結束這一回合', en: '🛑 Yes — end this turn' },
     });
     const tt = (key, vars) => {
       let s = I18N.t('taboo', key);
@@ -853,14 +914,22 @@
     }
     renderTabooDots();
 
-    /* The three settings widgets (difficulty, forbidden words, round length)
-       live only in the setup wizard — they never move into the game phase,
-       so there's nothing to change mid-game without going through "Edit
-       settings" first. startGame()/editSettings() just swap which phase is
-       showing; the read-only .phase-summary bar is what the host sees
-       during play. */
+    /* Difficulty is shown in both phases, so rather than keep two sets of level
+       buttons in sync there is one node that travels: appendChild MOVES an
+       existing element, so the listeners renderLevelBtns() attached and the
+       `active` marking come along untouched. Forbidden words and round length
+       stay put in the wizard — they are decided once — and the .phase-summary
+       bar is still what reports all three during play. */
+    function placeDifficulty(where) {
+      const grp = document.getElementById('rules-group-difficulty');
+      const slot = document.getElementById(
+        where === 'game' ? 'game-difficulty-slot' : 'substep-difficulty-slot');
+      if (grp && slot && grp.parentNode !== slot) slot.appendChild(grp);
+    }
+
     function startGame() {
       phase = 'game';
+      placeDifficulty('game');
       document.getElementById('phase-setup').classList.add('hidden');
       document.getElementById('phase-game').classList.remove('hidden');
       renderPhaseSummary();
@@ -873,6 +942,7 @@
        host returns to the game phase. */
     function editSettings() {
       phase = 'setup';
+      placeDifficulty('setup');
       document.getElementById('phase-game').classList.add('hidden');
       document.getElementById('phase-setup').classList.remove('hidden');
       tabooSubStepReached = 1;
@@ -881,7 +951,10 @@
 
     /* a compact read-out atop the Game phase, so the host doesn't have to
        remember what was picked in the wizard — same idea as index.html's
-       room-setup summary line next to "Edit room setup" */
+       room-setup summary line next to "Edit room setup". Difficulty is named
+       here as well as on its own buttons below: the line is the one place that
+       states all three settings, and dropping a third of it to avoid saying
+       "Medium" twice would read as an omission. */
     function renderPhaseSummary() {
       const lvl = LEVELS.find(l => l.id === level) || LEVELS[1];
       const parts = [
@@ -1250,7 +1323,9 @@
           stopTicking();
           timer.running = false;
           timer.seq++;
-          if (state === 'playing') endRound({ type: 'time' });
+          // nobody got it, but the handover is the same job as a correct guess:
+          // name the next clue giver and give them five seconds to pick the phone up
+          if (state === 'playing') endRound({ type: 'time' }, true);
           else { pushTimer(); renderTimer(); }
           return;
         }
@@ -1398,9 +1473,12 @@
     }
 
     /* ── Rolling straight into the next round ──
-       A correct guess needs nothing more from the host: the points are already in and
-       the next word deals itself. The delay is there only so the answer stays on screen
-       long enough to be read out. Any button the host presses cancels it.
+       A round that simply finished — someone guessed it, the referee's call stood, or
+       the clock ran out — needs nothing more from the host: whatever points there were
+       are already in and the next word deals itself. The delay is there only so the
+       answer stays on screen long enough to be read out. Any button the host presses
+       cancels it. The host ending a turn by hand is the exception: that one stops on
+       the result, because it is usually the start of a conversation.
 
        The next round's roles are drawn HERE rather than inside dealRound(), because
        every card names them while the countdown runs: five seconds is exactly when the
@@ -1432,6 +1510,28 @@
     function cancelNextRound() {
       if (nextRoundIv) { clearInterval(nextRoundIv); nextRoundIv = null; }
       nextRoundAt = 0;
+    }
+
+    /* "End this turn" throws the round away, and it lives under the host's thumb at
+       the bottom of the screen; it has been hit by accident. It now opens a panel in
+       place of the deal row and waits for an answer. renderAll() drops the question
+       the moment it stops making sense — a buzz, a Taboo! call, the clock running
+       out — so the host is never answering a stale one. */
+    let confirmEnd = false;
+    let confirmSig = '';
+    // what the host was looking at when they asked. Anything that moves the round
+    // on — a buzz arriving, a wrong verdict clearing the queue, a Taboo! call, the
+    // round ending — makes the question stale, and a stale question is worse than
+    // no question: the host answers "yes, end it" about a round that has already
+    // moved somewhere else. Snapshotting rather than simply refusing to open while
+    // a buzz is pending, because ending the turn IS allowed then.
+    const roundSig = () => [roundId, state, queue.length, tabooCalls.length].join('|');
+
+    function askEndTurn() { confirmEnd = true; confirmSig = roundSig(); renderAll(); }
+    function cancelEndTurn() { confirmEnd = false; renderAll(); }
+    function doEndTurn() {
+      confirmEnd = false;
+      endRound({ type: 'stop', who: giverIdx + 1 });
     }
 
     function awardPoint(buzzerNum) {
@@ -1624,13 +1724,21 @@
       renderScores();
       renderPhaseSummary();
       ROOM.render();
-      // the ruling and the deal buttons never share the screen: one decision at a time
+      // ruling, end-turn confirmation and the deal buttons never share the screen:
+      // one decision at a time. A ruling outranks a confirmation, and anything that
+      // ends the round drops the confirmation on its own.
       const ruling = state === 'playing' && tabooCalls.length > 0;
+      if (confirmEnd && (state !== 'playing' || roundSig() !== confirmSig)) confirmEnd = false;
       document.getElementById('call-row').classList.toggle('hidden', !ruling);
-      document.getElementById('deal-row').classList.toggle('hidden', ruling);
+      document.getElementById('confirm-row').classList.toggle('hidden', !confirmEnd);
+      document.getElementById('deal-row').classList.toggle('hidden', ruling || confirmEnd);
       if (ruling) {
         document.getElementById('call-hdr').innerHTML =
           tt('tabooYourCall', { giver: ROOM.name(giverIdx) });
+      }
+      if (confirmEnd) {
+        document.getElementById('confirm-hdr').innerHTML =
+          tt('confirmEndHdr', { giver: ROOM.name(giverIdx) });
       }
       document.getElementById('roundNum').textContent = round;
       const deal = document.getElementById('deal-btn');
@@ -1646,7 +1754,7 @@
                        : state === 'done' ? tt('nextRoundBtn')
                        : tt('dealBtn');
       deal.onclick = state === 'ready' ? () => startRound()
-                   : state === 'playing' ? () => endRound({ type: 'stop', who: giverIdx + 1 })
+                   : state === 'playing' ? () => askEndTurn()
                    : () => dealRound();
     }
 
@@ -1707,7 +1815,7 @@
         el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${upNext}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
-        el.innerHTML = `${tt('timeUpResult')}${answer}`;
+        el.innerHTML = `${tt('timeUpResult')}${answer}${upNext}`;
       } else {
         el.innerHTML = `${tt('roundOverResult')}${answer}`;
       }
