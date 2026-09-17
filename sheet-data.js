@@ -48,11 +48,6 @@
       required: ['judge', 'team', 'situation'],
       build: r => ({ cat: r.cat, judge: r.judge, emoji: r.emoji, team: r.team, situation: r.situation }),
     },
-    wordwolf: {
-      cols: ['cat', 'emojiA', 'emojiB', 'a', 'b'],
-      required: ['a', 'b'],
-      build: r => ({ cat: r.cat, emojiA: r.emojiA, emojiB: r.emojiB, a: r.a, b: r.b }),
-    },
     scene: {
       cols: ['cat', 'emoji', 'title', 'situation',
              'a_label', 'a_hint', 'b_label', 'b_hint', 'c_label', 'c_hint',

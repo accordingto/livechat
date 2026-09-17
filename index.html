@@ -332,6 +332,16 @@
     }
     .edit-setup-btn:hover { border-color: #e94560; color: var(--accent-text); }
 
+    .guide-opt {
+      display: flex; align-items: flex-start; gap: 11px; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 12px 18px; margin: 0 0 20px;
+    }
+    .guide-opt:hover { border-color: var(--border-2); }
+    .guide-opt input { width: 17px; height: 17px; margin-top: 2px; flex-shrink: 0; accent-color: #e94560; cursor: pointer; }
+    .guide-opt b { font-size: .86rem; font-weight: 800; color: var(--text); }
+    .guide-opt .guide-opt-desc { display: block; font-size: .8rem; line-height: 1.6; color: var(--text-dim); margin-top: 3px; }
+
     /* ── Step 2's Google Sheet loader ──
        Collapsed to a single line until the host opens it; the fetch only ever
        runs from the 讀取 button inside, never on page load. */
@@ -574,6 +584,16 @@
       <span id="setup-summary-text"></span>
       <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
+    <!-- Off by default: the briefing is a wall of text in front of a game the
+         regulars already know. A host running this weekly was reading past it
+         every time, so it is now something you ask for. -->
+    <label class="guide-opt" for="guide-opt">
+      <input type="checkbox" id="guide-opt">
+      <span>
+        <b data-i18n="index.guideOptLabel">Show the how-to-play screen first</b>
+        <span class="guide-opt-desc" data-i18n="index.guideOptDesc"></span>
+      </span>
+    </label>
 
   </div>
 
@@ -589,15 +609,15 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a class="game-card card-amber" href="word-wolf.html">
-      <div class="card-icon-col"><span class="icon">🐺</span></div>
+    <a class="game-card card-indigo" href="say-it-without-saying-it.html">
+      <div class="card-icon-col"><span class="icon">🙊</span></div>
       <div class="card-body">
         <div class="card-meta">
-          <span class="tag" data-i18n="index.tagDeduction">Deduction</span>
-          <span class="tag">👥 3-6</span>
+          <span class="tag" data-i18n="index.tagDescribing">Describing</span>
+          <span class="tag">👥 2-6</span>
         </div>
-        <h2>Word Wolf</h2>
-        <p data-i18n="index.descWordwolf">Almost everyone gets the same secret word — one Wolf gets something different. Talk it out and find the Wolf!</p>
+        <h2>Say It Without Saying It</h2>
+        <p data-i18n="index.descTaboo">One player describes a secret word without saying the forbidden words, one player referees with the forbidden list in hand, and everyone else hits the buzzer to guess. This screen only keeps score.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -650,19 +670,6 @@
         </div>
         <h2>You're In The Scene</h2>
         <p data-i18n="index.descScene">Draw a chaotic situation — every player is dealt their own role and hint on their private card. No script, just improv and laughs!</p>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a class="game-card card-indigo" href="say-it-without-saying-it.html">
-      <div class="card-icon-col"><span class="icon">🙊</span></div>
-      <div class="card-body">
-        <div class="card-meta">
-          <span class="tag" data-i18n="index.tagDescribing">Describing</span>
-          <span class="tag">👥 2-6</span>
-        </div>
-        <h2>Say It Without Saying It</h2>
-        <p data-i18n="index.descTaboo">One player describes a secret word without saying the forbidden words, one player referees with the forbidden list in hand, and everyone else hits the buzzer to guess. This screen only keeps score.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -728,6 +735,9 @@
       continueBtn: { zh: '▶️ 前往選擇遊戲', en: '▶️ Continue to Games' },
       step2Badge: { zh: '步驟 2', en: 'Step 2' },
       step2Title: { zh: '選擇遊戲', en: 'Choose a game' },
+      guideOptLabel: { zh: '進入遊戲前先顯示玩法說明', en: 'Show the how-to-play screen before each game' },
+      guideOptDesc: { zh: '預設不顯示，直接進入遊戲畫面。勾起來的話，每一款遊戲點進去都會先看到一頁玩法說明，讀完按「開始遊戲」才進去——帶新手時好用，老班底通常不需要。這個選擇會記在這台裝置上。',
+                      en: "Off by default, so a game opens straight into its screen. Tick it and every game starts with a page explaining how it works, which you dismiss with \"Start the game\" — useful with newcomers, usually not with regulars. The choice is remembered on this device." },
       editSetupBtn: { zh: '✏️ 編輯房間設定', en: '✏️ Edit room setup' },
       sheetResetBtn:  { zh: '↺ 恢復預設題庫', en: '↺ Back to built-in prompts' },
       sheetLoadBtn:   { zh: '📄 讀取線上題庫', en: '📄 Load prompts' },
@@ -765,7 +775,6 @@
       tagRoleplay: { zh: '角色扮演', en: 'Roleplay' },
       tagBoardGame: { zh: '棋盤遊戲', en: 'Board Game' },
       tagDescribing: { zh: '比手畫腳', en: 'Describing' },
-      tagDeduction: { zh: '推理', en: 'Deduction' },
       tagDebate: { zh: '辯論', en: 'Debate' },
       tagDilemma: { zh: '兩難抉擇', en: 'Dilemma' },
       tagTeam: { zh: '團隊合作', en: 'Team' },
@@ -1058,6 +1067,18 @@
       if (!skipScroll) document.getElementById('step-setup').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     initSetupWizard();
+
+    /* Shared browser-wide with site-lang, and read by guide.js on every game page.
+       Unset means off — the host has to ask for the briefing. */
+    (function initGuideOpt() {
+      const box = document.getElementById('guide-opt');
+      if (!box) return;
+      const read = () => { try { return localStorage.getItem('site-guide') === '1'; } catch (e) { return false; } };
+      box.checked = read();
+      box.onchange = () => {
+        try { localStorage.setItem('site-guide', box.checked ? '1' : '0'); } catch (e) { /* private mode: this session only */ }
+      };
+    })();
 
     function showStep(step) {
       document.getElementById('step-setup').classList.toggle('hidden', step !== 1);

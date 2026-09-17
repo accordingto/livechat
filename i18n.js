@@ -7,8 +7,8 @@
  *
  * Usage:
  *   <script src="i18n.js"></script>            (near the top, before other scripts)
- *   I18N.registerDict('wordwolf', { dealBtn: { zh: '發字卡', en: '🎬 Deal Words' } });
- *   I18N.t('wordwolf', 'dealBtn')               -> current-language string
+ *   I18N.registerDict('taboo', { dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' } });
+ *   I18N.t('taboo', 'dealBtn')                  -> current-language string
  *   <span data-i18n="common.backToHub"></span>  -> auto-filled + kept in sync
  *   I18N.onChange(() => render());              -> re-run JS-built UI on switch
  */

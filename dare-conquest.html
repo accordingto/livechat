@@ -764,7 +764,7 @@
       // dare/truth deck section headers — the type groups themselves come from
       // game-data.js, but the header text is UI chrome around each per-prompt
       // `cat`/`text`, which stay English (see CLAUDE.md), so it's translated here
-      // the same way word-wolf.html translates its own data-driven category headers.
+      // the same way the other pages translate their own data-driven category headers.
       '🎤 Singing': { zh: '🎤 唱歌', en: '🎤 Singing' },
       '🗣️ Voices & Sounds': { zh: '🗣️ 變聲與音效', en: '🗣️ Voices & Sounds' },
       '🎭 Improv & Roleplay': { zh: '🎭 即興與角色扮演', en: '🎭 Improv & Roleplay' },
@@ -1459,7 +1459,6 @@
     let voteId = '';                 // identifies the challenge currently open for voting
     let rawVotes = {};               // playerNum -> { id, choice } straight off each card
     let voteListeners = [];
-    let lastRosterJSON = '';         // avoids rewriting an unchanged roster on every challenge
     const handledRollIds = new Set();   // remote roll requests already acted on
     const handledChoiceIds = new Set(); // remote Truth/Dare calls already acted on
     const handledSkillIds = new Set();   // remote High/Low Roll toggles already acted on
@@ -1519,14 +1518,6 @@
           round: gameStarted ? round : 0,
           tiles: gameStarted && onBoard ? ownership.filter(o => o === i).length : 0,
         }, payload));
-      }
-      // non-secret roster, same shape the other games publish — only rewritten when the
-      // names actually change, since every challenge would otherwise re-send it
-      const roster = Array.from({ length: playerCount }, (_, i) => ({ playerNum: i + 1, name: playerNames[i] || ct('playerFallback', { n: i + 1 }) }));
-      const rosterJSON = JSON.stringify(roster);
-      if (rosterJSON !== lastRosterJSON) {
-        lastRosterJSON = rosterJSON;
-        db.ref(`rooms/${sessionCode}/roster`).set(roster);
       }
     }
 

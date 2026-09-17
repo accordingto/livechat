@@ -25,6 +25,7 @@ if (typeof I18N !== 'undefined') {
     copiedBtn: { zh: '已複製', en: 'Copied' },
     linkBtn: { zh: '連結', en: 'Link' },
     qrBtn: { zh: 'QR', en: 'QR' },
+    qrOpenHint: { zh: '點一下用這台裝置開啟這位玩家的卡片', en: "Tap to open this player's card on this device" },
     sendCheckBtn: { zh: '🔍 傳送核對卡', en: '🔍 Send Card Check' },
     linksHdrOptional: { zh: '🔗 玩家連結 <span class="room-tag">選填</span>', en: '🔗 Player Links <span class="room-tag">optional</span>' },
     linksHdrNoFirebase: { zh: '👥 玩家', en: '👥 Players' },
@@ -238,7 +239,18 @@ const ROOM = (() => {
     if (existing) { existing.remove(); btn.classList.remove('open'); return; }
     const box = document.createElement('div');
     box.className = 'qr-inline';
-    box.innerHTML = qrSVG(cardURL(i));
+    /* The QR itself is a link to the same card. Scanning is what it is for, but the
+       host is often on the machine showing it — checking a player's card, opening it
+       on a second screen, handing a laptop over — and the only way in was to copy the
+       link and paste it. `href` is assigned on the element rather than interpolated
+       into markup so nothing in a player's name can escape the attribute. */
+    const a = document.createElement('a');
+    a.href = cardURL(i);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.title = rt('qrOpenHint');
+    a.innerHTML = qrSVG(cardURL(i));
+    box.appendChild(a);
     col.appendChild(box);
     btn.classList.add('open');
   }
@@ -389,7 +401,10 @@ const ROOM = (() => {
         background: #fff; border-radius: 10px; padding: 8px; line-height: 0;
         width: 100%; max-width: 160px; animation: fadeUp .25s ease both;
       }
+      .qr-inline a { display: block; line-height: 0; cursor: pointer; }
       .qr-inline svg { width: 100%; height: auto; display: block; }
+      /* the QR is a link, so say so on hover without disturbing what the camera reads */
+      .qr-inline a:hover { outline: 3px solid var(--room-accent); outline-offset: 3px; border-radius: 2px; }
       /* what each player answered, shown under their name once they tap their card */
       .link-answer {
         width: 100%; border-top: 1px solid var(--border); padding-top: 9px;
@@ -423,7 +438,7 @@ const ROOM = (() => {
        on index.html's own Step 1 — every game shares that one setup, so a
        game passing `hideSetup: true` skips re-building all of it here and
        only keeps what it actually still needs: any real per-game control
-       (`actionsHTML` — e.g. Word Wolf's own Deal button, `extraRowHTML` —
+       (`actionsHTML` — e.g. Say It Without Saying It's own Deal button, `extraRowHTML` —
        e.g. Kangaroo Court's Judge toggle) and, once there's something worth
        showing, a compact read-only roster (see renderCompact()) — nothing a
        host would call "setup," just the answer the game wants them to see
@@ -767,10 +782,6 @@ const ROOM = (() => {
       db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).set(payload);
       data[i + 1] = null;
     }
-    // non-secret name list, so a card can show who else is in the room
-    db.ref(`rooms/${sessionCode}/roster`).set(
-      Array.from({ length: count }, (_, i) => ({ playerNum: i + 1, name: names[i] || null }))
-    );
   }
 
   /* mid-round changes: .update() leaves fields the game didn't name alone, so a

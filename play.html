@@ -31,7 +31,6 @@
       animation: fadeUp .5s ease both;
       transition: border-color .3s, box-shadow .3s;
     }
-    .secret-card.theme-wordwolf    { border-color: #f59e0b; box-shadow: 0 0 60px rgba(245,158,11,.18); }
     .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
     .secret-card.theme-cardcheck   { border-color: #94a3b8; box-shadow: 0 0 60px rgba(148,163,184,.18); }
 
@@ -206,24 +205,6 @@
       width: 100%;
     }
     .error-msg { color: var(--text-dim); font-size: 1rem; text-align: center; line-height: 1.7; }
-
-    /* 🗳️ vote section on the Word Wolf card */
-    .vote-section {
-      width: 100%;
-      border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
-    }
-    .vote-title {
-      font-size: .86rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
-      color: var(--text-dim); margin-bottom: 10px;
-    }
-    .vote-list { display: flex; flex-direction: column; gap: 8px; }
-    .vote-btn {
-      background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
-      border-radius: 12px; padding: 12px; font-size: .95rem; font-weight: 700; font-family: inherit;
-      cursor: pointer; transition: border-color .2s, background .2s;
-    }
-    .vote-btn:hover { border-color: #f59e0b; }
-    .vote-btn.voted { border-color: #f59e0b; background: rgba(245,158,11,.15); color: #f59e0b; }
 
     /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
        You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
@@ -457,7 +438,6 @@
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
       titleNamed: { zh: '{name} 的祕密卡片', en: "{name}'s Secret Card" },
-      whoIsWolf: { zh: '🗳️ 誰是臥底？', en: '🗳️ Who is the Wolf?' },
       playerFallback: { zh: '玩家 {n}', en: 'Player {n}' },
       rolling: { zh: '🎲 擲骰中…', en: '🎲 Rolling…' },
       rollToTake: { zh: '擲骰奪取 {name} 的土地', en: "Roll to take {name}'s land" },
@@ -585,7 +565,6 @@
       watchingCross: { zh: '👀 正在旁觀交叉詰問…', en: '👀 Watching the cross-examination…' },
       waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
       tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
-      keepSecret: { zh: '🤫 保密，不要說出來！', en: '🤫 Keep it secret!' },
       waitingRoles: { zh: '⏳ 等待主持人發放角色...', en: '⏳ Waiting for the host to hand out the roles...' },
       waitingStartGame: { zh: '⏳ 等待主持人開始遊戲...', en: '⏳ Waiting for the host to start a game...' },
       notSetUp: { zh: '⚙️ 這個遊戲還沒設定完成。<br>請主持人完成 Firebase 設定。', en: "⚙️ This game isn't fully set up yet.<br>Ask your host to finish the Firebase setup." },
@@ -715,7 +694,7 @@
     }
 
     function fitCardWords() {
-      fitWords('.card-word', 18);          // Word Wolf / card check: the word IS the card
+      fitWords('.card-word', 18);          // the card check: the word IS the card
       fitWords('.taboo-target .tt-word', 18);
       fitWords('.role-box .rb-name', 16);  // You're In The Scene / Persuade Together
       fitWords('.witness-box .wb-name', 14);
@@ -723,29 +702,6 @@
 
     /* Forbidden Words shows 3 words stacked in one row each — smaller tiers than
        the single-word card since an emoji shares the row with the text */
-    /* 🗳️ Word Wolf voting: each player writes a "vote" field onto their OWN node
-       (allowed by the same per-token rule already used for reads) — the host
-       tallies by reading each known token individually, never a shared list */
-    function submitVote(votedForPlayerNum) {
-      if (!db || !session || !token) return;
-      db.ref(`rooms/${session}/players/${token}`).update({ vote: votedForPlayerNum });
-    }
-
-    function voteSectionHTML(data) {
-      const roster = (latestRoster || []).filter(p => p.playerNum !== data.playerNum);
-      if (!roster.length) return '';
-      const buttons = roster.map(p => {
-        const voted = data.vote === p.playerNum;
-        const name = esc(p.name || pt('playerFallback', { n: p.playerNum }));
-        return `<button class="vote-btn${voted ? ' voted' : ''}" onclick="submitVote(${p.playerNum})">${voted ? '✅ ' : ''}${name}</button>`;
-      }).join('');
-      return `
-        <div class="vote-section">
-          <div class="vote-title">${pt('whoIsWolf')}</div>
-          <div class="vote-list">${buttons}</div>
-        </div>`;
-    }
-
     /* 🏰 Dare Conquest: the audience votes on whether the current player pulled the
        challenge off. The vote carries the challenge's id, so when the host moves on the
        old vote simply stops matching instead of having to be cleaned up. */
@@ -1446,17 +1402,6 @@
           </div>`;
         return;
       }
-      if (data.game === 'wordwolf') {
-        el.innerHTML = `
-          <div class="secret-card theme-wordwolf">
-            ${nameBanner(data)}
-            <span class="card-emoji">${data.emoji}</span>
-            ${wordSpan(data.word)}
-            <span class="secret-hint">${pt('keepSecret')}</span>
-            ${voteSectionHTML(data)}
-          </div>`;
-        return;
-      }
       if (data.game === 'hottake') {
         const picked = myPick(data);
         el.innerHTML = `
@@ -1550,7 +1495,6 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
-    let latestRoster = null; // Word Wolf's non-secret {playerNum,name} list, for the vote buttons
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -1577,10 +1521,6 @@
         tryRenderCard();
       }, () => {
         showError('connectError');
-      });
-      db.ref(`rooms/${session}/roster`).on('value', snap => {
-        latestRoster = snap.val() || [];
-        tryRenderCard();
       });
     }
   </script>

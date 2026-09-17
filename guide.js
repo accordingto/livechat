@@ -8,7 +8,7 @@
  * so this screen hands straight over to the game.
  *
  * Usage — the page opts in from <body>, no inline script needed:
- *   <body data-guide="wordwolf" data-guide-next="game">
+ *   <body data-guide="taboo" data-guide-next="setup">
  *   <script src="guide-data.js"></script>
  *   <script src="guide.js"></script>
  *
@@ -21,6 +21,14 @@
  */
 (function () {
   const VEIL = 'guide-veiled';
+  /* Off unless the host turned it on, on the hub's Step 2. The briefing is a wall of
+     text in front of a game the regulars already know, and a host who runs this every
+     week was reading past it every single time. Stored browser-wide next to site-lang,
+     so the choice holds across pages and games and only has to be made once. */
+  const GUIDE_KEY = 'site-guide';
+  function wanted() {
+    try { return localStorage.getItem(GUIDE_KEY) === '1'; } catch (e) { return false; }
+  }
 
   const DICT = {
     toSetup:  { zh: '▶️ 前往遊戲設定', en: '▶️ Go to game setup' },
@@ -149,6 +157,8 @@
     const body = document.body;
     const key = body.dataset.guide;
     if (!key || typeof GAME_GUIDES === 'undefined') return;
+    // opted out: the page is left exactly as its own scripts set it up, unveiled
+    if (!wanted()) return;
     const data = GAME_GUIDES[key];
     const header = document.querySelector('.header');
     if (!data || !header) return;

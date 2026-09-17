@@ -1,5 +1,5 @@
 // firebase-config.js — shared by every game that needs live host-to-player sync
-// (Word Wolf: word-wolf.html, Kangaroo Court: kangaroo-court.html, and any
+// (Say It Without Saying It, Kangaroo Court: kangaroo-court.html, and any
 // future one, all sending to the single shared player page play.html). Fill
 // in YOUR Firebase project's values below so those pages can sync through the
 // same Realtime Database (host deals -> player's page updates live).
@@ -20,12 +20,13 @@
 // All games share one "rooms" key so the SAME room code and SAME player links
 // keep working no matter which game the host switches to.
 //
-// "roster" is a separate, openly-readable path per room used only by Word
-// Wolf's voting feature — it holds nothing but each player's number and name
-// (which the host already shows on the shared screen anyway), so it's safe to
-// leave broadly readable/writable. It never contains secret words, votes, or
-// who is the Wolf — only the "players" leaf above holds that, and it stays
-// locked to the exact token.
+// "roster" is a separate, openly-readable path per room. Nothing writes or
+// reads it any more — it existed only for Word Wolf's vote buttons, and that
+// game has been removed — but the rule below is left in place so an older tab
+// still open somewhere doesn't start failing writes mid-session. It only ever
+// held each player's number and name (which the host shows on the shared screen
+// anyway); secret words and answers live under "players", locked to the exact
+// token, and always did.
 //   {
 //     "rules": {
 //       "rooms": {

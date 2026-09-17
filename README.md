@@ -4,7 +4,7 @@ Online icebreaker games for English voice chat rooms and conversation classes.
 The host shares their screen while participants respond via voice — no camera,
 no app, no login required.
 
-Everything secret (the wolf's word, the taboo card, the jury's vote) is dealt to
+Everything secret (the taboo card, the jury's vote, each actor's role) is dealt to
 each player's phone through a private link, so it never appears on the screen the
 host is sharing.
 
@@ -16,7 +16,6 @@ host is sharing.
 | ⚖️ Kangaroo Court | 4–9 | One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — before and after |
 | 🏰 Dare Conquest | 2–6 | Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival |
 | 🙊 Say It Without Saying It | 2–6 | One player describes a secret word without saying the forbidden words, one referees, and everyone else hits the buzzer to guess |
-| 🐺 Word Wolf | 3–6 | Almost everyone gets the same secret word — one Wolf gets something different. Talk it out and find the Wolf |
 | 🔥 Pick a Side! | 2+ | Spin for a bold opinion; everyone votes 👍 / 🤷 / 👎 from their own card and the tally fills in live |
 | 🤔 Sophie's Choice | 2+ | A morally impossible situation with two extreme choices — pick one and defend it, or take option C and argue your own |
 | 🤝 Persuade Together! | 3+ | One player is dealt the judge, everyone else teams up to convince them |
@@ -25,7 +24,7 @@ host is sharing.
 ## How it works
 
 - `index.html` is the menu; each game has its own host page.
-- `play.html` is the single player card page shared by **the eight games and Let's Talk** — it
+- `play.html` is the single player card page shared by **the seven games and Let's Talk** — it
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
@@ -84,10 +83,8 @@ Without Firebase configured:
 - **Button is locked** — Kangaroo Court and Say It Without Saying It refuse to
   deal at all (the jury's votes and the clue giver's word have nowhere private
   to go).
-- **Warns, but still deals** — Word Wolf shows a banner; the cards go nowhere,
-  so in practice it needs Firebase too.
-- **Still fully playable** — the other five. They only lose the on-phone voting
-  and buzzer interactions; the host screen carries the whole game.
+- **Still fully playable** — the rest. They only lose the on-phone voting and
+  buzzer interactions; the host screen carries the whole game.
 
 ## Running your own copy
 
@@ -131,7 +128,7 @@ state (kept in `localStorage`) and the Firebase connection.
 This is the step that is easy to miss. Every game deals its secrets to
 `play.html`, which players open **on their own phones**. A phone cannot reach
 the `localhost` on your laptop, so with only a local server you can drive all
-eight host screens perfectly and never once see a player card — half of each
+every host screen perfectly and never once see a player card — half of each
 game (buzzers, votes, the jury, Truth or Dare calls) lives on that page.
 
 Any static host will do, since the site is plain files with no build step —

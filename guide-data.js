@@ -60,58 +60,6 @@ const GUIDE_TITLES = {
 
 const GAME_GUIDES = {
 
-  /* ══════════════════════ 🐺 Word Wolf ══════════════════════ */
-  wordwolf: {
-    players: { zh: '3–6 人', en: '3–6 players' },
-    tagline: {
-      zh: '多數人拿到同一個字，一個人拿到不一樣的——而且沒有人知道自己是哪一種。',
-      en: 'Most players share a secret word. One gets a different one, and nobody is told which they are.',
-    },
-    sections: [
-      { icon: '🎯', title: GUIDE_TITLES.what, paragraphs: [
-        { zh: '每個人的手機上只有一個英文單字。卡片不會寫「你是臥底」，臥底要自己從別人的描述裡發現不對勁。',
-          en: 'Each phone shows one English word. No card says "you are the Wolf" — the Wolf works it out from how everyone else describes theirs.' },
-      ]},
-      { icon: '🕹️', title: GUIDE_TITLES.how, steps: [
-        { zh: `按 ${B('btn-primary', '🐺 發字卡')} 發字。`,
-          en: `Tap ${B('btn-primary', '🐺 Deal Words')} to deal.` },
-        { zh: `輪流用英文描述自己的字，但不能把那個字說出來。可以用 ${B('btn-secondary', '🎲 隨機點名')} 決定誰先講。`,
-          en: `Take turns describing your word in English without saying it. ${B('btn-secondary', '🎲 Pick Someone')} chooses who speaks.` },
-        { zh: '聊一兩輪之後，大家一起投票指認誰是臥底。',
-          en: 'After a round or two, everyone votes on who the Wolf is.' },
-        { zh: `按 ${B('btn-secondary', '👁 全部公開')} 揭曉每個人的字與臥底身分。抓到臥底村民贏，沒抓到臥底贏。`,
-          en: `Tap ${B('btn-secondary', '👁 Reveal All')} to show every word and unmask the Wolf. Caught, the villagers win; missed, the Wolf wins.` },
-      ]},
-      { icon: '📱', title: { zh: '玩家手機上會看到什麼', en: 'What players see on their phones' },
-        phones: [
-          { caption: { zh: '一般玩家的卡片', en: "A villager's card" },
-            card: { name: 'Amy', color: 2, emoji: '🍩', word: { zh: 'Donut', en: 'Donut' },
-                    hint: { zh: '🤫 保密，不要說出來！', en: '🤫 Keep it secret!' } } },
-          { caption: { zh: '臥底的卡片', en: "The Wolf's card" },
-            card: { name: 'Ben', color: 3, emoji: '🥯', word: { zh: 'Bagel', en: 'Bagel' },
-                    hint: { zh: '🤫 保密，不要說出來！', en: '🤫 Keep it secret!' } } },
-        ],
-        note: { zh: '兩張卡片長得一模一樣——沒有任何一張寫著「你是臥底」。Ben 自己也不知道，他要從別人的描述裡慢慢發現自己拿到的字不對。',
-                en: 'The two cards are identical in every way — neither says "you are the Wolf". Ben does not know either; he has to work it out from how everyone else describes theirs.' } },
-      { icon: '🎭', title: GUIDE_TITLES.roles, roles: [
-        { emoji: '🐑', name: { zh: '一般玩家（多數）', en: 'Villagers (the majority)' },
-          desc: { zh: '找出誰的描述跟大家對不上，但別把答案送給臥底。',
-                  en: 'Spot whose description does not fit, without handing the Wolf the answer.' } },
-        { emoji: '🐺', name: { zh: 'Wolf 臥底（1 位）', en: 'The Wolf (one player)' },
-          desc: { zh: '拿到不一樣的字，而且不知道自己是臥底。發現之後要模仿別人混過去。',
-                  en: 'Holds the odd word and does not know it. Once they realise, they blend in.' } },
-        { emoji: '🎙️', name: { zh: '主持人', en: 'Host' },
-          desc: { zh: '不描述，只負責發字、點人、揭曉。',
-                  en: 'Does not describe. Deals, picks speakers, reveals.' } },
-      ]},
-      { icon: '💡', title: GUIDE_TITLES.tips, tips: [
-        { zh: '兩個字非常像（例如 Donut / Bagel），第一輪聽起來都一樣很正常，第二輪才會出現破綻。',
-          en: 'The two words are close (Donut / Bagel). Round one sounds identical for everyone; the cracks show in round two.' },
-        { zh: '全部公開會把答案顯示在分享的畫面上，投票結束前不要按。',
-          en: 'Reveal All puts the answer on the screen you are sharing. Not before the vote.' },
-      ]},
-    ],
-  },
 
   /* ══════════════════ 🙊 Say It Without Saying It ══════════════════ */
   taboo: {
