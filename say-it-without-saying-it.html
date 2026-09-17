@@ -159,6 +159,23 @@
     .level-btn:active { transform: scale(.96); }
     .level-btn.active { border-color: #ef4444; color: var(--bad-text-soft); background: rgba(239,68,68,.12); }
     .level-btn .lb-count { opacity: .5; font-weight: 700; }
+    /* Difficulty is a multi-select and the banned-word count beside it is still a
+       pick-one, yet both rows are .level-btn. Without a tick box they look like the
+       same kind of control, and on a shared screen "which of these can I have more
+       than one of" is not something the host should have to test by clicking. Only
+       the difficulty row gets .is-check. */
+    .level-btn.is-check { padding-left: 9px; }
+    .level-btn .lb-box {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px;
+      border: 1.5px solid var(--border-3); border-radius: 4px;
+      font-size: .68rem; line-height: 1;
+    }
+    .level-btn.active .lb-box { border-color: #ef4444; background: #ef4444; color: var(--btn-ink); }
+    /* the last one ticked still looks ticked — it just doesn't answer, because
+       unticking it would leave no deck (see toggleLevel) */
+    .level-btn.is-locked { cursor: default; }
+    .level-btn.is-locked:active { transform: none; }
 
     /* three separate settings (forbidden words / difficulty / banned-word count) live in
        this one column — each gets its own small caps label and a dashed rule above it
@@ -562,7 +579,7 @@
        room-setup wizard. #rules-group-difficulty is the one widget the game
        phase also shows: startGame()/editSettings() move that single node
        between the two slots below, so the wizard and the control bar can
-       never disagree about which level is selected. ══════════ -->
+       never disagree about which levels are ticked. ══════════ -->
   <div class="phase-wrap" id="phase-setup">
     <div class="step-hdr">
       <span class="step-num" data-i18n="taboo.setupBadge">SETUP</span>
@@ -573,7 +590,7 @@
 
     <div class="substep" id="taboo-substep-1">
       <div class="substep-hdr"><span class="substep-tag">1 / 4</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas. "All" draws from all three.</p>
+      <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas. Tick as many as you like — the ticked levels are drawn from together, and at least one has to stay on.</p>
       <div id="substep-difficulty-slot">
         <div class="rules-group" id="rules-group-difficulty">
           <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
@@ -742,7 +759,7 @@
       easyLabel: { zh: '🟢 簡單', en: '🟢 Easy' },
       mediumLabel: { zh: '🟡 中等', en: '🟡 Medium' },
       hardLabel: { zh: '🔴 困難', en: '🔴 Hard' },
-      allLabel: { zh: '🔀 全部', en: '🔀 All' },
+      levelLockedHint: { zh: '至少要留一個難度', en: 'Keep at least one level ticked' },
       callYesBtn: { zh: '🚨 成立 — 裁判 +2，描述者 −1', en: '🚨 Yes — +2 to the referee, −1 to the clue giver' },
       callNoBtn: { zh: '👌 不成立 — 繼續這一輪', en: '👌 No — keep playing this round' },
       dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
@@ -820,7 +837,7 @@
       setupTitle: { zh: '⚙️ 遊戲設定', en: '⚙️ Game Settings' },
       setupSub: { zh: '依序設定好這三項，再開始遊戲 — 開始後仍可以隨時從遊戲畫面調整。', en: 'Set these up once, then start the game — you can still change them anytime from the game screen.' },
       subStep1Title: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
-      subStep1Desc: { zh: '簡單是看得到摸得到的日常物品，困難則是抽象的情緒或概念；選「全部」就是三種混在一起抽。', en: 'Easy words are everyday objects; Hard words are abstract feelings and ideas. "All" draws from all three.' },
+      subStep1Desc: { zh: '簡單是看得到摸得到的日常物品，困難則是抽象的情緒或概念。可以複選，勾起來的難度會混在一起抽，至少要留一個。', en: 'Easy words are everyday objects; Hard words are abstract feelings and ideas. Tick as many as you like — the ticked levels are drawn from together, and at least one has to stay on.' },
       subStep2Title: { zh: '🚫 禁字設定', en: '🚫 Forbidden Words' },
       subStep2Desc: { zh: '開啟後，每輪會多發一位裁判專門聽違規禁字；也可以設定實際生效幾個禁字，數字愈小愈簡單。', en: 'Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.' },
       subStep3Title: { zh: '⏱️ 回合時間', en: '⏱️ Round Timer' },
@@ -890,7 +907,7 @@
        forbidden words, and round length one at a time, then hand them to
        the Game phase's control bar. editSettings() moves them back without
        touching round/score/game state, since settings have always only
-       ever affected the *next* deal (see setLevel/setBannedCount/toggleForbidden). */
+       ever affected the *next* deal (see toggleLevel/setBannedCount/toggleForbidden). */
     let phase = 'setup'; // 'setup' | 'game'
     const TABOO_SUBSTEPS = 4;
     let tabooSubStep = 1;
@@ -980,9 +997,8 @@
        states all three settings, and dropping a third of it to avoid saying
        "Medium" twice would read as an omission. */
     function renderPhaseSummary() {
-      const lvl = LEVEL_CHOICES.find(l => l.id === level) || LEVELS[1];
       const parts = [
-        tt(lvl.labelKey),
+        LEVELS.filter(l => isLevelOn(l.id)).map(l => tt(l.labelKey)).join(' + '),
         forbiddenOn ? tt('summaryForbiddenOn', { n: bannedCount }) : tt('summaryForbiddenOff'),
         tt('summaryTimer', { n: timer.total }),
       ];
@@ -1001,41 +1017,56 @@
       { id: 'medium', labelKey: 'mediumLabel' },
       { id: 'hard',   labelKey: 'hardLabel' },
     ];
-    /* What the buttons offer: the three levels plus "All", which draws from the whole
-       300-card deck instead of one level. It is a choice, not a level — no card is
-       tagged level: 'all' — so it is kept out of LEVELS, which stays the list of real
-       levels that the deck browser groups by and that a card's own `level` is one of.
-       It sits last because the first three read as a progression and this is the
-       catch-all; the shuffle icon rather than a fourth coloured dot says the same. */
-    const LEVEL_CHOICES = LEVELS.concat([{ id: 'all', labelKey: 'allLabel' }]);
+    /* Difficulty is a multi-select, not a pick-one: the host ticks whichever levels
+       should be in the bag and the deck is the union of them. Ticking all three is
+       what the old "All" button used to do, so that fourth pseudo-level is gone —
+       it was never a level (no card is tagged level: 'all'), just a name for "the
+       whole deck", and as a checkbox row that state says itself. At least one has
+       to stay ticked or there is no deck to draw from; toggleLevel() enforces it. */
     // every card carries 6 banned words; how many of them are actually in play
     // this round is a difficulty knob of its own — fewer bans is easier
     const BANNED_COUNTS = [2, 3, 4, 5, 6];
     let forbiddenOn = true;
-    let level = 'medium';
+    let levels = ['medium'];
     let bannedCount = 4;
+    const isLevelOn = id => levels.includes(id);
     try {
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
       if (saved && typeof saved.forbiddenOn === 'boolean') forbiddenOn = saved.forbiddenOn;
-      if (saved && LEVEL_CHOICES.some(l => l.id === saved.level)) level = saved.level;
-      if (saved && BANNED_COUNTS.includes(saved.bannedCount)) bannedCount = saved.bannedCount;
+      /* `levels` is the current shape. A session saved before difficulty became a
+         multi-select still holds a single `level` string, so read that too: 'all'
+         was the whole deck, anything else was that one level. */
+      const restored = Array.isArray(saved && saved.levels)
+        ? LEVELS.filter(l => saved.levels.includes(l.id)).map(l => l.id)
+        : saved && saved.level === 'all' ? LEVELS.map(l => l.id)
+        : saved && LEVELS.some(l => l.id === saved.level) ? [saved.level]
+        : [];
+      if (restored.length) levels = restored;
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, level, bannedCount })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount })); } catch (e) { /* ignore */ }
     }
 
-    /* the indices of every card at the chosen difficulty */
+    /* the indices of every card at a ticked difficulty — the union, so ticking all
+       three is the whole 300-card deck */
     function levelDeck() {
-      if (level === 'all') return DECK.map((_, i) => i);
-      const idx = DECK.map((_, i) => i).filter(i => DECK[i].level === level);
+      const idx = DECK.map((_, i) => i).filter(i => isLevelOn(DECK[i].level));
       return idx.length ? idx : DECK.map((_, i) => i);
     }
 
-    /* changing difficulty only affects the next word — the round in play keeps its card */
-    function setLevel(id) {
-      if (level === id) return;
-      level = id;
+    /* Changing difficulty only affects the next word — the round in play keeps its
+       card. Unticking the last remaining level is refused rather than silently
+       falling back to the whole deck: a row with nothing ticked would read as "no
+       words at all", and the next deal would quietly contradict it. */
+    function toggleLevel(id) {
+      if (!LEVELS.some(l => l.id === id)) return;
+      if (isLevelOn(id)) {
+        if (levels.length === 1) return;
+        levels = levels.filter(x => x !== id);
+      } else {
+        levels = LEVELS.filter(l => l.id === id || isLevelOn(l.id)).map(l => l.id);
+      }
       used = [];
       saveOptions();
       renderLevelBtns();
@@ -1045,12 +1076,17 @@
     function renderLevelBtns() {
       const wrap = document.getElementById('level-btns');
       wrap.innerHTML = '';
-      LEVEL_CHOICES.forEach(l => {
-        const n = l.id === 'all' ? DECK.length : DECK.filter(c => c.level === l.id).length;
+      LEVELS.forEach(l => {
+        const n = DECK.filter(c => c.level === l.id).length;
+        const on = isLevelOn(l.id);
+        const locked = on && levels.length === 1;   // the one keeping the deck alive
         const b = document.createElement('button');
-        b.className = 'level-btn' + (l.id === level ? ' active' : '');
-        b.innerHTML = `${tt(l.labelKey)} <span class="lb-count">${n}</span>`;
-        b.onclick = () => setLevel(l.id);
+        b.type = 'button';
+        b.className = 'level-btn is-check' + (on ? ' active' : '') + (locked ? ' is-locked' : '');
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (locked) b.title = tt('levelLockedHint');
+        b.innerHTML = `<span class="lb-box">${on ? '✓' : ''}</span>${tt(l.labelKey)} <span class="lb-count">${n}</span>`;
+        b.onclick = () => toggleLevel(l.id);
         wrap.appendChild(b);
       });
     }
