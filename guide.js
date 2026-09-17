@@ -21,13 +21,14 @@
  */
 (function () {
   const VEIL = 'guide-veiled';
-  /* Off unless the host turned it on, on the hub's Step 2. The briefing is a wall of
-     text in front of a game the regulars already know, and a host who runs this every
-     week was reading past it every single time. Stored browser-wide next to site-lang,
-     so the choice holds across pages and games and only has to be made once. */
+  /* On unless the host turned it off, on the hub's Step 2. Only the exact string '0'
+     hides it — an unset key, a wiped browser or a device that has never seen the hub
+     all get the briefing, because someone who has not chosen yet is more likely to be
+     the person who needs it. Stored browser-wide next to site-lang, so the choice
+     holds across pages and games and only has to be made once. */
   const GUIDE_KEY = 'site-guide';
   function wanted() {
-    try { return localStorage.getItem(GUIDE_KEY) === '1'; } catch (e) { return false; }
+    try { return localStorage.getItem(GUIDE_KEY) !== '0'; } catch (e) { return true; }
   }
 
   const DICT = {
