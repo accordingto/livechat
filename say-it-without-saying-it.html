@@ -1145,7 +1145,19 @@
     /* The clock runs here and is mirrored to the cards. Only state changes are
        published (a new seq, the state and the seconds left) — each card ticks itself
        from there, so a 90-second round is a handful of writes, not 90 per player. */
-    const timer = { total: 90, left: 90, running: false, seq: 0, iv: null };
+    /* `endsAt` is the wall-clock moment this round runs out, and it — not the tick
+       count — is what decides the round is over. setInterval alone is not a clock: a
+       browser throttles a hidden tab's intervals to roughly once a minute and can
+       freeze them entirely, so a host who switches tabs mid-round (the call app, the
+       word list, anything) gets a host page whose 90 seconds never arrive, while every
+       player's card — running its own interval in a tab they ARE looking at — reaches
+       zero and then sits there, because the card only displays the clock and this page
+       is the one that ends the round. That is the "time ran out and nothing happened"
+       report. Reading the wall clock means a throttled tick still sees the round has
+       expired the first time it runs, and the visibility handler below catches it the
+       moment the host comes back. It also stops the host's dial and the cards' dials
+       drifting apart over a long round, which plain tick-counting guarantees. */
+    const timer = { total: 90, left: 90, running: false, seq: 0, iv: null, endsAt: 0 };
 
     ROOM.init({
       mount: 'room-mount',
@@ -1405,24 +1417,42 @@
 
     function startTicking() {
       stopTicking();
-      timer.iv = setInterval(() => {
-        timer.left = Math.max(0, timer.left - 1);
-        if (timer.left <= 0) {
-          stopTicking();
-          timer.running = false;
-          timer.seq++;
-          // nobody got it, but the handover is the same job as a correct guess:
-          // name the next clue giver and give them five seconds to pick the phone up
-          if (state === 'playing') endRound({ type: 'time' }, true);
-          else { pushTimer(); renderTimer(); }
-          return;
-        }
-        renderTimer(); // the host's own dial; the cards run their own clock
-      }, 1000);
+      timer.endsAt = Date.now() + timer.left * 1000;
+      timer.iv = setInterval(tickTimer, 250);
     }
+
+    /* Polled four times a second rather than once: the dial still only changes once a
+       second, but a quarter-second poll keeps the displayed number from lagging behind
+       the wall clock by most of a second after a pause or a re-sync. */
+    function tickTimer() {
+      if (!timer.running) return;
+      const left = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
+      if (left === timer.left && left > 0) return;   // nothing to repaint yet
+      timer.left = left;
+      if (left > 0) { renderTimer(); return; }       // the cards run their own dial
+      stopTicking();
+      timer.running = false;
+      timer.seq++;
+      // nobody got it, but the handover is the same job as a correct guess:
+      // name the next clue giver and give them five seconds to pick the phone up
+      if (state === 'playing') endRound({ type: 'time' }, true);
+      else { pushTimer(); renderTimer(); }
+    }
+
+    /* A hidden tab's interval is throttled, so the round can be seconds or minutes
+       past its end by the time the host looks back at this page. Settle up on the spot
+       instead of waiting for the next throttled tick. */
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tickTimer(); });
 
     function stopTicking() {
       if (timer.iv) { clearInterval(timer.iv); timer.iv = null; }
+      // settle `left` against the wall clock before dropping the deadline: the tick
+      // only writes `left` when the displayed second changes, so it can be most of a
+      // second stale, and a pause has to keep the second it was really paused on
+      if (timer.endsAt && timer.running) {
+        timer.left = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
+      }
+      timer.endsAt = 0;   // a resume recomputes it from whatever `left` is then
     }
 
     function timerPayload() {

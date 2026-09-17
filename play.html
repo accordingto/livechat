@@ -536,6 +536,9 @@
       keepGoingHint: { zh: '繼續形容 — 有人搶答時按鈕就會出現。', en: 'Keep going — the buttons appear when someone buzzes in.' },
       noForbiddenThisRound: { zh: '這輪沒有禁字 — 隨便怎麼形容都可以！', en: 'No forbidden words this round — describe it any way you like!' },
       refereeChip: { zh: '👀 你是裁判', en: "👀 You're the referee" },
+      guesserChip: { zh: '🙋 你這輪負責猜', en: "🙋 You're guessing this round" },
+      refereeReadySub: { zh: '這輪你不用猜 — 專心聽 {name} 有沒有說出禁字。題目一開，禁字清單就會出現在這裡。', en: "You don't guess this round — just listen for {name} saying a forbidden word. The list appears here the moment the word opens." },
+      guesserReadySub: { zh: '{name} 開始形容之後，想到答案就按搶答鈕，然後大聲說出來。', en: 'Once {name} starts describing, hit the buzzer and say your guess out loud.' },
       youCalledTaboo: { zh: '🚨 你喊了 Taboo！', en: '🚨 You called Taboo!' },
       tabooFoulBtn: { zh: '🚨 Taboo！描述者說了禁字', en: '🚨 Taboo! The clue giver said one' },
       listenForForbidden: { zh: '只有 {name}（描述者）說出禁字才算 — 猜的人說到不算。這輪你不用搶答。', en: "Only {name}, the clue giver, can break the rule — a guesser saying a forbidden word doesn't count. You sit this round out." },
@@ -1017,7 +1020,7 @@
 
     /* the host publishes the clock only when it changes state, so each card runs its
        own one-second tick from the number it was handed — `seq` tells it to re-sync */
-    const tabooTimer = { seq: null, left: 0, total: 0, iv: null };
+    const tabooTimer = { seq: null, left: 0, total: 0, iv: null, endsAt: 0 };
 
     function stopTabooTimer() {
       if (tabooTimer.iv) { clearInterval(tabooTimer.iv); tabooTimer.iv = null; }
@@ -1032,11 +1035,20 @@
       el.classList.toggle('critical', frac <= .25);
     }
 
+    /* Read off the wall clock rather than counted down, for the same reason the host
+       page does it: a phone that locks or switches apps has its interval throttled, so
+       a counted-down dial comes back seconds behind and disagrees with the number on
+       the shared screen. The deadline was set when this card received the clock. */
     function tickTabooTimer() {
-      tabooTimer.left = Math.max(0, tabooTimer.left - 1);
-      if (tabooTimer.left <= 0) stopTabooTimer();
+      const left = Math.max(0, Math.ceil((tabooTimer.endsAt - Date.now()) / 1000));
+      if (left === tabooTimer.left) return;
+      tabooTimer.left = left;
+      if (left <= 0) stopTabooTimer();
       paintTabooTimer();
     }
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && tabooTimer.iv) tickTabooTimer();
+    });
 
     /* the countdown to the next round ticks locally too — the host publishes it once */
     const nextTimer = { seq: null, left: 0, iv: null };
@@ -1091,7 +1103,10 @@
         tabooTimer.left = t.remaining;
         tabooTimer.total = t.total;
         stopTabooTimer();
-        if (t.state === 'running') tabooTimer.iv = setInterval(tickTabooTimer, 1000);
+        if (t.state === 'running') {
+          tabooTimer.endsAt = Date.now() + t.remaining * 1000;
+          tabooTimer.iv = setInterval(tickTabooTimer, 250);
+        }
       }
       return true;
     }
@@ -1164,8 +1179,19 @@
               <span class="pb-key">👀</span><span class="pb-label">${pt('openWordBtn')}</span>
             </button>`);
         }
+        /* A sealed round used to tell everyone except the clue giver the same thing:
+           "waiting for X to open the word". That names the one person who already
+           knows what they are doing, and leaves the other two or three not knowing
+           whether they are refereeing this round or guessing — which they only find
+           out when the word opens and the buttons appear, i.e. with the clock already
+           running. Lead with their own role instead; who is describing follows. */
+        const isRef = data.isRef && data.forbiddenOn !== false;
         return shell(`
-          ${chip(pt('clueGiverIsChip', { name: esc(data.giverName || 'Someone') }), '#6366f1')}
+          ${isRef ? chip(pt('refereeChip'), '#f59e0b') : chip(pt('guesserChip'), '#22c55e')}
+          <span class="pick-sub">${isRef
+            ? pt('refereeReadySub', { name: esc(data.giverName || '') })
+            : pt('guesserReadySub', { name: esc(data.giverName || '') })}</span>
+          <div class="taboo-waiting">${pt('clueGiverIsChip', { name: esc(data.giverName || 'Someone') })}</div>
           <span class="pick-sub">${pt('waitingGiverOpen', { name: esc(data.giverName || '') })}</span>
           <p class="conq-wait">⏳</p>`);
       }
