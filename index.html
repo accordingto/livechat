@@ -10,17 +10,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
-  <script src="skin.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-text-size-adjust: 100%; }
 
     /* the same tokens shared.css defines for the game pages — this is the one host
        page that doesn't load it, and room.js (which both use) reads them. Keep the
-       two lists in step: skins.css redefines these by name for every page at once. */
+       two lists in step, or this page drifts away from the other ten. */
     :root {
-      /* the hub has no single game colour of its own, but room.js and skins.css
-         both read --accent, so it names the site red here */
+      /* the hub has no single game colour of its own, but room.js reads --accent,
+         so it names the site red here */
       --accent: #e94560;
       --bg: #0d0d1a;
       --surface: #13132b;
@@ -474,7 +473,6 @@
 
 
   </style>
-  <link rel="stylesheet" href="skins.css">
 </head>
 <body>
 

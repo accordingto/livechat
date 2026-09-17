@@ -88,6 +88,12 @@
     if (document.getElementById('i18n-toggle')) return;
     const style = document.createElement('style');
     style.textContent = `
+      /* Pinned to the top-right only as a fallback. Pinned is where it used to
+         live full time, and on every game page below ~1400px it sat on top of
+         the round counter (measured at 320 / 390 / 768 / 1280px; only 1920px
+         cleared it, because the content centres). It now docks into the page's
+         own top row instead — see buildToggle() — and takes part in the layout
+         rather than floating over it. */
       #i18n-toggle {
         position: fixed;
         top: max(12px, env(safe-area-inset-top));
@@ -116,6 +122,16 @@
       }
       #i18n-toggle button.active { background: #2a2a52; color: #fff; }
       #i18n-toggle button:not(.active):hover { color: #ccc; }
+      #i18n-toggle.is-docked { position: static; top: auto; right: auto; }
+      /* The top row is justify-content: space-between and now holds one more
+         child. An auto margin on the back link eats the free space before
+         space-between gets a say, so the link stays hard left and the round
+         counter packs up against the pill instead of drifting into the middle.
+         Both rows wrap so the pill drops to a second line at phone widths
+         rather than pushing the page wide. */
+      .topbar { gap: 14px; flex-wrap: wrap; }
+      .topbar > a.back { margin-right: auto; }
+      .hero { flex-wrap: wrap; }
       @media (max-width: 480px) {
         #i18n-toggle button { padding: 6px 10px; font-size: 11px; }
       }
@@ -127,7 +143,19 @@
     wrap.innerHTML =
       '<button type="button" data-lang="zh">中文</button>' +
       '<button type="button" data-lang="en">EN</button>';
-    document.body.appendChild(wrap);
+    /* Dock into whatever this page uses as its top row: the game pages and
+       Let's Talk have .topbar, the hub has .hero. Both are flex rows that come
+       BEFORE .header, which is what keeps the pill reachable while guide.js has
+       the rest of the page veiled behind the how-to-play screen (it veils every
+       body child after .header). Pages without either row keep the pinned
+       fallback above. */
+    const host = document.querySelector('.topbar') || document.querySelector('.hero');
+    if (host) {
+      host.appendChild(wrap);
+      wrap.classList.add('is-docked');
+    } else {
+      document.body.appendChild(wrap);
+    }
     wrap.querySelectorAll('button').forEach((btn) => {
       btn.addEventListener('click', () => setLang(btn.dataset.lang));
     });

@@ -3,10 +3,10 @@
 /* ── Theme tokens ── */
 :root {
   /* ── Surfaces and rules ──
-     Every panel, hairline and outline on a host page comes from these, so a
-     skin can repaint the whole site by redefining them (see skins.css). They
-     are deliberately semantic — "the second surface", "the bright rule" —
-     rather than named after the colour they happen to be in the dark skin. */
+     Every panel, hairline and outline on a host page comes from these, so the
+     whole site can be repainted by redefining this list in one place. They are
+     deliberately semantic — "the second surface", "the bright rule" — rather
+     than named after the colour they happen to be right now. */
   --bg: #0d0d1a;           /* the page itself                       */
   --surface: #13132b;      /* cards and panels sitting on the page  */
   --surface-2: #1a1a38;    /* a panel nested inside another         */
@@ -36,10 +36,9 @@
   /* ── State colours, split by job ──
      A colour bright enough to be a fill is not automatically readable as words
      on top of one. So the bright hexes stay written inline wherever they paint
-     a SHAPE (fill, rule, glow) — those need no help in either skin — and every
-     place that paints a WORD goes through one of these instead. A skin only has
-     to redefine this short list to keep the whole site legible; see skins.css,
-     where the press skin pulls each of them most of the way to ink. */
+     a SHAPE (fill, rule, glow) — those need no help — and every place that
+     paints a WORD goes through one of these instead. Retuning the site's text
+     for legibility is then this short list, not a sweep of every file. */
   --ok-text: #22c55e;
   --ok-text-lit: #4ade80;
   --bad-text: #ef4444;
