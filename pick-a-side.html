@@ -343,7 +343,7 @@
       accent: '#ff7043',
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: () => ht('linksNote'),
-      onPlayerData: (num, data) => { updateBars(); ROOM.render(); nextGate.handle(num, data); },
+      onPlayerData: (num, data) => { nextGate.handle(num, data); updateBars(); ROOM.render(); },
       onCountChange: () => { updateBars(); nextGate.sync(); },
       onNameChange: () => ROOM.render(),
     });
@@ -360,6 +360,7 @@
       draw: () => spin(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
+    nextGate.watch(2000);   // reconcile on a slow tick and on tab wake-up, not only on events
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');

@@ -107,6 +107,34 @@ test('sync writes only when the payload changed; unrelated card traffic is free'
   assert.equal(log.published.length, 1, 'same ready state, new vote — nothing to write');
 });
 
+test('the count is recomputed from the cards, never carried as state', () => {
+  const { gate, log } = setup({ count: 3, needed: NEXT_ROUND.majority });
+  const id = gate.open();
+  // the same card node delivered twice (a re-entrant or duplicated event) counts once
+  gate.handle(1, { next: { id, ready: true } });
+  gate.handle(1, { next: { id, ready: true } });
+  assert.deepEqual(gate.readyNums(), [1]);
+  // a host publish wiped the node locally (room.js sets it to null) — the card's
+  // real state comes back with the next server event and is counted then
+  gate.handle(1, null);
+  assert.deepEqual(gate.readyNums(), []);
+  gate.handle(1, { next: { id, ready: true } });
+  gate.handle(2, { next: { id, ready: true } });
+  assert.equal(log.draws, 1);
+});
+
+test('sync() alone (the reconcile tick) fires a draw that the events missed', () => {
+  const { gate, log, setCan } = setup({ count: 2, needed: NEXT_ROUND.majority });
+  const id = gate.open();
+  setCan(false);                                       // e.g. a draw animation was running
+  gate.handle(1, { next: { id, ready: true } });
+  gate.handle(2, { next: { id, ready: true } });
+  assert.equal(log.draws, 0);
+  setCan(true);
+  gate.sync();
+  assert.equal(log.draws, 1);
+});
+
 test('needed never exceeds the room and counts only seats in the room', () => {
   const { gate, log, setCount } = setup({ count: 2, needed: () => 9 });
   const id = gate.open();

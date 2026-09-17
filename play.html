@@ -328,6 +328,13 @@
     .next-btn.is-ready { background: #22c55e1f; border-color: #22c55e; color: #86efac; box-shadow: none; }
     .next-meter { font-size: .85rem; color: var(--text-dim); line-height: 1.5; text-align: center; }
     .next-meter b { color: #fff; }
+    /* the host isn't answering (or can't hear this seat) — amber, so it reads as a
+       problem to go fix rather than one more line of grey */
+    .next-warn {
+      display: block; font-size: .85rem; line-height: 1.5; text-align: left;
+      color: #fbbf24; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.35);
+      border-radius: 12px; padding: 10px 12px;
+    }
     /* the countdown, mirrored from the host — same green → orange → red everywhere */
     .taboo-timer {
       width: 74px; height: 74px; border-radius: 50%;
@@ -538,6 +545,8 @@
       nextReadyOn: { zh: '已準備好 — 再按一次取消', en: 'Ready — tap again to cancel' },
       nextReadyMeter: { zh: '{ready} / {count} 位準備好了 · <b>{needed}</b> 位就換下一題', en: '{ready} of {count} ready · next one at <b>{needed}</b>' },
       nextSending: { zh: '抽題中…', en: 'Drawing…' },
+      nextNoHost: { zh: '⚠️ 主持人畫面還沒收到 — 請確認主持人的遊戲頁面是開著的、沒有被切到背景或關掉。', en: "⚠️ The host screen hasn't picked this up yet — make sure the host's game page is open and not in a background tab." },
+      nextNotInRoom: { zh: '⚠️ 你的連結是第 {n} 位，但主持人的房間目前只有 {count} 人 — 主持人畫面收不到你的操作，請主持人回首頁調整人數或重發連結。', en: "⚠️ Your link is seat {n}, but the host's room is set to {count} players — the host screen can't see your taps. Ask the host to fix the player count on the home page or resend the links." },
       idleHottake: { zh: '還沒有題目。等大家都到齊了，任何人都可以抽第一題。', en: 'No take yet. Once everyone is here, anyone can spin the first one.' },
       idleSophies: { zh: '還沒有情境。等大家都到齊了，任何人都可以抽第一個。', en: 'No situation yet. Once everyone is here, anyone can draw the first one.' },
       idleScene: { zh: '還沒有場景。等大家都到齊了，任何人都可以抽第一個。', en: 'No scene yet. Once everyone is here, anyone can draw the first one.' },
@@ -954,6 +963,7 @@
        the next prompt should be drawn. It quotes the nextId the host published — a new
        draw brings a new id, so a tap that was still in flight is simply not counted.
        It's a separate field from `vote`, because the vote has to survive it. */
+    let nextTapAt = 0;   // when this card last said "ready" — to notice a host that never answers
     function nextSend(ready, btn) {
       if (!db || !session || !token) return;
       const id = latestData && latestData.nextId;
@@ -962,8 +972,12 @@
         btn.disabled = true;
         if (ready && (latestData.nextNeeded || 1) <= 1) btn.querySelector('.pb-label').textContent = pt('nextSending');
       }
+      nextTapAt = Date.now();
+      // if the host hasn't counted us by then, repaint so the card says so
+      setTimeout(tryRenderCard, NEXT_STALL_MS + 200);
       db.ref(`rooms/${session}/players/${token}/next`).set({ id, ready: !!ready });
     }
+    const NEXT_STALL_MS = 6000;
 
     function myNextReady(data) {
       return !!(data.next && data.nextId && data.next.id === data.nextId && data.next.ready === true);
@@ -979,6 +993,16 @@
       const first = !(data.round > 0);
       const needed = data.nextNeeded || 1;
       const nx = `style="--nx:${opts.hex}"`;
+      // the host only listens to the seats inside its player count — a link from a
+      // bigger earlier room can see the payload but never be heard. Say so instead
+      // of offering a button that does nothing.
+      if (data.nextCount && data.playerNum > data.nextCount) {
+        return `<span class="next-warn">${pt('nextNotInRoom', { n: data.playerNum, count: data.nextCount })}</span>`;
+      }
+      // this card said "ready" a while ago and the host still counts nobody: the
+      // host page is the only thing that can draw, so tell them to go look at it
+      const stalled = myNextReady(data) && !(data.nextReady > 0) && nextTapAt && Date.now() - nextTapAt > NEXT_STALL_MS;
+      const warn = stalled ? `<span class="next-warn">${pt('nextNoHost')}</span>` : '';
       if (needed <= 1) {
         return `
           <button class="next-btn" ${nx} onclick="nextSend(true, this)">
@@ -991,7 +1015,8 @@
         <button class="next-btn${ready ? ' is-ready' : ''}" ${nx} onclick="nextSend(${ready ? 'false' : 'true'}, this)">
           <span class="pb-key">${ready ? '✅' : '👋'}</span><span class="pb-label">${pt(ready ? 'nextReadyOn' : 'nextReadyBtn')}</span>
         </button>
-        <span class="next-meter">${pt('nextReadyMeter', { ready: data.nextReady || 0, count: data.nextCount || '', needed })}</span>`;
+        <span class="next-meter">${pt('nextReadyMeter', { ready: data.nextReady || 0, count: data.nextCount || '', needed })}</span>
+        ${warn}`;
     }
 
     /* 🤝 Persuade Together: only the judge gets a verdict button */

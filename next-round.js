@@ -16,6 +16,13 @@
  * The first draw of a session never needs more than one tap: there is nothing on
  * the cards yet for an early tap to wipe.
  *
+ * The count is never kept as running state. Every card's latest node is remembered
+ * and the ready set is recomputed from those nodes on every sync — so a missed,
+ * reordered or re-entrant event (Firebase raises local events synchronously inside
+ * set()/update()) can never leave the host stuck on a stale number. watch() adds a
+ * slow reconcile tick and a visibilitychange hook on top, so a host tab the browser
+ * froze for a while catches up the moment it wakes.
+ *
  * Pure: no DOM and no Firebase in here, so it runs under node for the tests. The
  * host page passes `publish` (normally ROOM.update) and calls `sync()` after every
  * card message; only a changed payload is written, so unrelated card traffic (a
@@ -28,7 +35,7 @@ var NEXT_ROUND = (() => {
 
   function create(cfg) {
     let id = '';        // one-shot id; '' means the gate is closed
-    let ready = {};     // playerNum -> true while that card says "ready" against `id`
+    let latest = {};    // playerNum -> that card's latest node, as the host last saw it
     let lastSent = '';  // JSON of the last payload handed out, so sync() only writes changes
 
     const count = () => Math.max(0, Number(cfg.count()) || 0);
@@ -38,15 +45,19 @@ var NEXT_ROUND = (() => {
       const want = cfg.needed ? Number(cfg.needed(n)) : 1;
       return Math.max(1, Math.min(n || 1, want || 1));
     }
+    const isReady = d => !!(d && d.next && id && d.next.id === id && d.next.ready === true);
     function readyNums() {
       const n = count();
-      return Object.keys(ready).map(Number).filter(k => ready[k] && k >= 1 && k <= n).sort((a, b) => a - b);
+      const out = [];
+      for (let k = 1; k <= n; k++) if (isReady(latest[k])) out.push(k);
+      return out;
     }
     function isOpen() { return !!id && canDraw(); }
 
-    /* a new round is on the cards: every earlier "ready" is about the old round */
-    function open() { id = newId(); ready = {}; return id; }
-    function close() { id = ''; ready = {}; }
+    /* a new round is on the cards: a fresh id means every earlier "ready" (which
+       quotes the old id) stops counting on its own */
+    function open() { id = newId(); return id; }
+    function close() { id = ''; }
 
     /* what the cards need: whether the gate is open, how many are ready, how many
        it takes. Calling this counts as having sent it (see sync) */
@@ -62,11 +73,16 @@ var NEXT_ROUND = (() => {
     function fireIfDue() {
       if (!isOpen() || readyNums().length < needed()) return false;
       close();
+      // the draw that follows publishes the next round within a couple of seconds;
+      // telling every card "gate shut" in the meantime would be a write per card for
+      // nothing, so count the closed state as already sent
+      payload();
       cfg.draw();
       return true;
     }
 
-    /* push the payload only if it differs from the last one handed out */
+    /* recompute from the cards and push the payload only if it differs from the
+       last one handed out. Safe to call as often as you like. */
     function sync() {
       if (fireIfDue()) return true;
       const before = lastSent;
@@ -76,19 +92,25 @@ var NEXT_ROUND = (() => {
       return true;
     }
 
-    /* one card's node changed — returns true when the gate acted on it (a ready
-       flag flipped, or the draw fired) */
+    /* one card's node changed — remember it and reconcile. Returns true when the
+       gate acted on it (the count changed hands, or the draw fired). */
     function handle(num, data) {
-      const n = data && data.next;
-      const was = !!ready[num];
-      const now = !!(n && id && n.id === id && n.ready === true);
-      if (was === now) return false;
-      ready[num] = now;
-      sync();
-      return true;
+      num = Number(num);
+      if (!Number.isInteger(num) || num < 1) return false;
+      latest[num] = data || null;
+      return sync();
     }
 
-    return { open, close, isOpen, handle, payload, sync, readyNums, needed, id: () => id };
+    /* the host page's safety net: reconcile every `ms` and whenever the tab comes
+       back to the foreground, so nothing depends on every single event arriving */
+    function watch(ms) {
+      if (typeof setInterval === 'function') setInterval(() => { try { sync(); } catch (e) { /* keep ticking */ } }, ms || 2000);
+      if (typeof document !== 'undefined' && document.addEventListener) {
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+      }
+    }
+
+    return { open, close, isOpen, handle, payload, sync, watch, readyNums, needed, id: () => id };
   }
 
   return { create, majority };

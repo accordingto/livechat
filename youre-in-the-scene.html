@@ -310,6 +310,7 @@
       draw: () => draw(),
       publish: p => { ROOM.update(p); renderNextStatus(); },
     });
+    nextGate.watch(2000);   // reconcile on a slow tick and on tab wake-up, not only on events
 
     function renderNextStatus() {
       const el = document.getElementById('next-status');
