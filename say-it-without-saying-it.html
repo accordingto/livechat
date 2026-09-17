@@ -574,7 +574,7 @@
 
     <div class="substep" id="taboo-substep-1">
       <div class="substep-hdr"><span class="substep-tag">1 / 4</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas.</p>
+      <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas. "All" draws from all three.</p>
       <div id="substep-difficulty-slot">
         <div class="rules-group" id="rules-group-difficulty">
           <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
@@ -743,6 +743,7 @@
       easyLabel: { zh: '🟢 簡單', en: '🟢 Easy' },
       mediumLabel: { zh: '🟡 中等', en: '🟡 Medium' },
       hardLabel: { zh: '🔴 困難', en: '🔴 Hard' },
+      allLabel: { zh: '🔀 全部', en: '🔀 All' },
       callYesBtn: { zh: '🚨 成立 — 裁判 +2，描述者 −1', en: '🚨 Yes — +2 to the referee, −1 to the clue giver' },
       callNoBtn: { zh: '👌 不成立 — 繼續這一輪', en: '👌 No — keep playing this round' },
       dealBtn: { zh: '🎬 發一個題目', en: '🎬 Deal a Word' },
@@ -814,7 +815,7 @@
       setupTitle: { zh: '⚙️ 遊戲設定', en: '⚙️ Game Settings' },
       setupSub: { zh: '依序設定好這三項，再開始遊戲 — 開始後仍可以隨時從遊戲畫面調整。', en: 'Set these up once, then start the game — you can still change them anytime from the game screen.' },
       subStep1Title: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
-      subStep1Desc: { zh: '簡單是看得到摸得到的日常物品，困難則是抽象的情緒或概念。', en: 'Easy words are everyday objects; Hard words are abstract feelings and ideas.' },
+      subStep1Desc: { zh: '簡單是看得到摸得到的日常物品，困難則是抽象的情緒或概念；選「全部」就是三種混在一起抽。', en: 'Easy words are everyday objects; Hard words are abstract feelings and ideas. "All" draws from all three.' },
       subStep2Title: { zh: '🚫 禁字設定', en: '🚫 Forbidden Words' },
       subStep2Desc: { zh: '開啟後，每輪會多發一位裁判專門聽違規禁字；也可以設定實際生效幾個禁字，數字愈小愈簡單。', en: 'Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.' },
       subStep3Title: { zh: '⏱️ 回合時間', en: '⏱️ Round Timer' },
@@ -951,7 +952,7 @@
        states all three settings, and dropping a third of it to avoid saying
        "Medium" twice would read as an omission. */
     function renderPhaseSummary() {
-      const lvl = LEVELS.find(l => l.id === level) || LEVELS[1];
+      const lvl = LEVEL_CHOICES.find(l => l.id === level) || LEVELS[1];
       const parts = [
         tt(lvl.labelKey),
         forbiddenOn ? tt('summaryForbiddenOn', { n: bannedCount }) : tt('summaryForbiddenOff'),
@@ -972,6 +973,13 @@
       { id: 'medium', labelKey: 'mediumLabel' },
       { id: 'hard',   labelKey: 'hardLabel' },
     ];
+    /* What the buttons offer: the three levels plus "All", which draws from the whole
+       300-card deck instead of one level. It is a choice, not a level — no card is
+       tagged level: 'all' — so it is kept out of LEVELS, which stays the list of real
+       levels that the deck browser groups by and that a card's own `level` is one of.
+       It sits last because the first three read as a progression and this is the
+       catch-all; the shuffle icon rather than a fourth coloured dot says the same. */
+    const LEVEL_CHOICES = LEVELS.concat([{ id: 'all', labelKey: 'allLabel' }]);
     // every card carries 6 banned words; how many of them are actually in play
     // this round is a difficulty knob of its own — fewer bans is easier
     const BANNED_COUNTS = [2, 3, 4, 5, 6];
@@ -981,7 +989,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
       if (saved && typeof saved.forbiddenOn === 'boolean') forbiddenOn = saved.forbiddenOn;
-      if (saved && LEVELS.some(l => l.id === saved.level)) level = saved.level;
+      if (saved && LEVEL_CHOICES.some(l => l.id === saved.level)) level = saved.level;
       if (saved && BANNED_COUNTS.includes(saved.bannedCount)) bannedCount = saved.bannedCount;
     } catch (e) { /* ignore */ }
 
@@ -991,6 +999,7 @@
 
     /* the indices of every card at the chosen difficulty */
     function levelDeck() {
+      if (level === 'all') return DECK.map((_, i) => i);
       const idx = DECK.map((_, i) => i).filter(i => DECK[i].level === level);
       return idx.length ? idx : DECK.map((_, i) => i);
     }
@@ -1008,8 +1017,8 @@
     function renderLevelBtns() {
       const wrap = document.getElementById('level-btns');
       wrap.innerHTML = '';
-      LEVELS.forEach(l => {
-        const n = DECK.filter(c => c.level === l.id).length;
+      LEVEL_CHOICES.forEach(l => {
+        const n = l.id === 'all' ? DECK.length : DECK.filter(c => c.level === l.id).length;
         const b = document.createElement('button');
         b.className = 'level-btn' + (l.id === level ? ' active' : '');
         b.innerHTML = `${tt(l.labelKey)} <span class="lb-count">${n}</span>`;
