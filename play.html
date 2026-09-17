@@ -17,14 +17,11 @@
     /* the wrapper had no width of its own, so `width:100%` on the card resolved against
        shrink-to-fit content — the card ended up a different width in every state */
     #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
-    /* same width as the card, so the switch lines up with its right edge */
-    .card-tools {
-      width: 100%; max-width: 420px; display: flex; justify-content: flex-end;
-      margin-bottom: 8px; flex-shrink: 0;
-    }
-    /* this page has no --accent of its own; give the selected side one so it is as
-       loud here as it is on the host screens */
-    .card-tools #i18n-toggle { --accent: #6366f1; }
+    /* The language pill floats over the top-right corner here — this page has no top
+       row to dock into, and a row of its own cost more height than the control is
+       worth. It has no --accent either, so name one, or the lit side falls back to
+       the site red instead of this page's indigo. */
+    #i18n-toggle { --accent: #6366f1; }
     /* every render path sets its own theme-* class below, so this base color
        is just a safe fallback and never actually shows on screen */
     .secret-card {
@@ -433,11 +430,6 @@
   </style>
 </head>
 <body>
-
-  <!-- A real slot for the language switch, above the card rather than floating over
-       its top-right corner. Players open this link once and leave it open all session;
-       a pill overlapping the card read as decoration, not as something to press. -->
-  <div class="card-tools" data-i18n-dock></div>
 
   <div id="content">⏳</div>
 
