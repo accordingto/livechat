@@ -577,6 +577,263 @@ const GAME_DATA = {
     { type: "💰 Money & Work", cat: "📈 Side Business", text: "If you started a small business tomorrow, what would it be?", seconds: 45 },
   ],
 
+  // ── Dare Conquest — EASY dares. For people who have just met: nothing personal,
+  //    nothing to be embarrassed about. Every prompt is something you perform or guess,
+  //    never something you reveal ──
+  conquestEasy: [
+    /* ── 🎤 Singing ── */
+    { type: "🎤 Singing", cat: "🐢 Slow Birthday", text: "Sing Happy Birthday very slowly, like a sad song.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🔤 Deep Alphabet", text: "Sing the alphabet in the deepest voice you can.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🎵 Hum It", text: "Hum a song you like. Let the others guess what it is.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🌏 Your Language", text: "Sing Happy Birthday to {player} in your first language.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🗣️ All La", text: "Sing any song you know, but change every word to la.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🧸 Childhood Song", text: "Sing one line from a song you liked as a child.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🎭 Opera Numbers", text: "Sing the numbers one to ten like an opera singer.", seconds: 45 },
+    { type: "🎤 Singing", cat: "⚡ Fast Birthday", text: "Sing Happy Birthday as fast as you can.", seconds: 45 },
+    { type: "🎤 Singing", cat: "😴 Sleepy Song", text: "Pick any song. Sing one line like you are almost asleep.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🤝 Take Turns", text: "Sing one line of a song, then ask {player} to sing the next line.", seconds: 45 },
+
+    /* ── 🗣️ Voices & Sounds ── */
+    { type: "🗣️ Voices & Sounds", cat: "🌧️ Rain Sound", text: "Make the sound of rain for ten seconds.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "☀️ Five Mornings", text: "Say good morning five times, in five different voices.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🐮 Guess The Animal", text: "Make the sound of three animals. Let the others guess each one.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🤖 Robot Food", text: "Say your favorite food in a robot voice.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🚗 On The Move", text: "Make the sound of a car, then a train, then a plane.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "👴 Old Counting", text: "Count to ten like a very old person.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "😢 Wrong Mood", text: "Say that you are very happy, but in a very sad voice.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🍳 Busy Kitchen", text: "Make the sounds of a busy kitchen for ten seconds.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "👋 Three Hellos", text: "Say hello to {player} in three different voices.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "📞 Ring Ring", text: "Make the sound of a phone ringing, then answer it.", seconds: 45 },
+
+    /* ── 🎭 Improv & Roleplay ── */
+    { type: "🎭 Improv & Roleplay", cat: "🧭 Tour Guide", text: "You are a tour guide. Describe your city to the group.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🍽️ Take The Order", text: "You are a waiter. Take {player}'s order for dinner.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🌤️ Weather Report", text: "You are a weather reporter. Report today's weather.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "📚 One Word", text: "You are a teacher. Teach the group one word from your language.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🚕 Where To", text: "You are a taxi driver. Ask {player} where they want to go.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🖊️ Sell A Pen", text: "You are a shop worker. Sell {player} a pen.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "📰 Cat News", text: "You are a news reporter. Report that a cat is stuck in a tree.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "👨‍🍳 The Chef", text: "You are a chef. Describe the dish you are cooking right now.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🏨 Welcome In", text: "You are a hotel worker. Welcome {player} to your hotel.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "✈️ Captain Speaking", text: "You are a pilot. Welcome everyone onto the plane.", seconds: 45 },
+
+    /* ── 💬 To Their Face ── */
+    { type: "💬 To Their Face", cat: "📛 Nice Name", text: "Say one nice thing about {player}'s name.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "💼 Good Job", text: "Guess a job {player} would be good at. Say why.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🏷️ New Nickname", text: "Give {player} a friendly nickname. Say why it fits.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🍜 Food Guess", text: "Guess what kind of food {player} likes.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "❓ One Question", text: "Tell {player} one question you would like to ask them.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🌍 Dream Country", text: "Guess which country {player} would like to visit.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🤝 Same Here", text: "Say one thing you think you and {player} have in common.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🎙️ Nice Voice", text: "Give {player} a compliment about their voice.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🌅 This Morning", text: "Guess what {player} did this morning.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "😊 Good Today", text: "Tell {player} one thing you are happy about today.", seconds: 45 },
+
+    /* ── 🧠 Word Games & Memory ── */
+    { type: "🧠 Word Games & Memory", cat: "🍎 Five Fruits", text: "Say five fruits in ten seconds.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "📅 Days Backwards", text: "Say the days of the week backwards.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🔁 Three And Back", text: "Name three things near you, then say them again backwards.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🅱️ Letter B", text: "Say five words that start with the letter B.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🔢 Twenty Down", text: "Count from twenty down to one out loud.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🏊 Swimmers", text: "Say five animals that can swim.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🎨 All Colors", text: "Say every color you can think of in ten seconds.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🗺️ Five Countries", text: "Name five countries in ten seconds.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🔗 Word Chain", text: "Say a word. {player} must say a word starting with your last letter.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🍽️ In The Kitchen", text: "Say five things you can find in a kitchen.", seconds: 45 },
+  ],
+
+  // ── Dare Conquest — EASY truths. Preferences and everyday life only — the kind of
+  //    question you could answer in front of someone you met five minutes ago ──
+  conquestTruthEasy: [
+    /* ── ⭐ Favorites ── */
+    { type: "⭐ Favorites", cat: "📆 Best Day", text: "What is your favorite day of the week? Say why.", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🎨 Your Color", text: "What is your favorite color? Say why.", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🐾 Your Animal", text: "What is your favorite animal? Say why.", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🍂 Best Season", text: "What is your favorite season? Say why.", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🔢 Lucky Number", text: "What is your favorite number? Say why.", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🌧️ Rainy Day", text: "What is your favorite thing to do on a rainy day?", seconds: 45 },
+    { type: "⭐ Favorites", cat: "👃 Good Smell", text: "What is a smell you really like?", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🔊 Good Sound", text: "What is a sound you really like?", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🏠 Best Corner", text: "What is your favorite place in your home? Say why.", seconds: 45 },
+    { type: "⭐ Favorites", cat: "🥤 Drinks", text: "Ask {player} what their favorite drink is. Then say yours.", seconds: 45 },
+
+    /* ── 🍜 Food ── */
+    { type: "🍜 Food", cat: "🍳 Breakfast", text: "What did you eat for breakfast today?", seconds: 45 },
+    { type: "🍜 Food", cat: "♾️ Every Day", text: "What food could you eat every day and never get tired of?", seconds: 45 },
+    { type: "🍜 Food", cat: "🙅 No Thanks", text: "What is one food you really do not like?", seconds: 45 },
+    { type: "🍜 Food", cat: "🍬 Sweet Or Salty", text: "Sweet or salty? Choose one and say why.", seconds: 45 },
+    { type: "🍜 Food", cat: "👩‍🍳 Your Best Dish", text: "What is the best thing you can cook?", seconds: 45 },
+    { type: "🍜 Food", cat: "☕ Tea Or Coffee", text: "Tea or coffee? Say why.", seconds: 45 },
+    { type: "🍜 Food", cat: "🌏 From Your Country", text: "What food from your country should everyone try?", seconds: 45 },
+    { type: "🍜 Food", cat: "🍇 Most Fruit", text: "What fruit do you eat the most?", seconds: 45 },
+    { type: "🍜 Food", cat: "🍲 Last Dinner", text: "Ask {player} what they had for dinner last night.", seconds: 45 },
+    { type: "🍜 Food", cat: "⏱️ In A Hurry", text: "What do you eat when you are hungry and in a hurry?", seconds: 45 },
+
+    /* ── 🌍 Places & Travel ── */
+    { type: "🌍 Places & Travel", cat: "🛫 Next Trip", text: "What country do you want to visit next? Say why.", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🏆 Best Place", text: "What is the best place you have ever been to?", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🏖️ Beach Or Mountain", text: "Beach or mountain? Say why.", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🌆 City Or Country", text: "City or countryside? Say why.", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🚶 Near Home", text: "What is one nice place near your home?", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🛬 Long Flights", text: "Do you like long trips or short trips? Say why.", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🗝️ One Year There", text: "If you could live in another country for one year, where?", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🧳 Longest Trip", text: "What is the longest trip you have taken?", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "📅 This Weekend", text: "Ask {player} where they would like to go this weekend.", seconds: 45 },
+    { type: "🌍 Places & Travel", cat: "🎒 Always Packed", text: "What do you always take with you when you travel?", seconds: 45 },
+
+    /* ── 🎬 Shows & Music ── */
+    { type: "🎬 Shows & Music", cat: "🎞️ Last Film", text: "What was the last film you watched?", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "🔁 On Repeat", text: "What song do you listen to the most right now?", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "🎤 Words Or Not", text: "Do you like music with words or without words? Say why.", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "📺 Watch This", text: "What show would you tell everyone to watch?", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "🧘 Calm Music", text: "What kind of music helps you relax?", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "🌟 A Singer", text: "Name a singer you like, and one of their songs.", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "↩️ Watch Again", text: "Do you watch a show again after it ends? Say why.", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "😂 Made You Laugh", text: "What film made you laugh the most?", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "👀 Watching Now", text: "Ask {player} what they are watching these days.", seconds: 45 },
+    { type: "🎬 Shows & Music", cat: "🎼 Every Word", text: "What song do you know all the words to?", seconds: 45 },
+
+    /* ── 🗓️ Everyday Life ── */
+    { type: "🗓️ Everyday Life", cat: "🌅 Morning Or Night", text: "Are you a morning person or a night person?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "⏰ Wake Up", text: "What time do you usually wake up?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "👣 First Thing", text: "What do you do first after you wake up?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "🚌 Getting There", text: "How do you get to work or school?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "🛋️ After A Long Day", text: "What do you do to relax after a long day?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "✨ Small Things", text: "What is one small thing that makes your day better?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "📝 Plan Or Not", text: "Do you make plans, or decide on the day?", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "😮‍💨 Hard Day", text: "Which day of the week is hardest for you? Say why.", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "📈 This Week", text: "Ask {player} how their week is going.", seconds: 45 },
+    { type: "🗓️ Everyday Life", cat: "🎯 Weekend Plan", text: "What is one thing you want to do this weekend?", seconds: 45 },
+  ],
+
+  // ── Dare Conquest — MEDIUM dares. For people who have talked a couple of times:
+  //    a bit bolder, some light teasing, still nothing that needs real trust ──
+  conquestMedium: [
+    /* ── 🎤 Singing ── */
+    { type: "🎤 Singing", cat: "🎧 Last Song", text: "Sing the last song you listened to. Just the part you remember.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🌏 Then Explain", text: "Sing a song from your country, then say what it is about.", seconds: 45 },
+    { type: "🎤 Singing", cat: "📱 Love My Phone", text: "Sing a love song to your phone.", seconds: 45 },
+    { type: "🎤 Singing", cat: "😤 Angry Birthday", text: "Sing Happy Birthday like you are very angry.", seconds: 45 },
+    { type: "🎤 Singing", cat: "📛 Name Song", text: "Make up a short song about {player}'s name.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🕰️ Ten Years Ago", text: "Sing a song you liked ten years ago. Say if you still like it.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🎭 Bad Then Good", text: "Sing one line badly on purpose, then sing it well.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🍽️ Today I Ate", text: "Make up a song about what you ate today.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🤝 You Finish It", text: "Sing half a line, then let {player} finish it.", seconds: 45 },
+    { type: "🎤 Singing", cat: "🙃 Happy And Sad", text: "Sing the saddest song you know in a happy voice.", seconds: 45 },
+
+    /* ── 🗣️ Voices & Sounds ── */
+    { type: "🗣️ Voices & Sounds", cat: "📰 My Day Live", text: "Report what you did today in a news reporter voice.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🌟 Guess Who", text: "Do your best impression of someone famous. Let the group guess.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🎭 Five Moods", text: "Say that you love this game in five different moods.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🌆 City Morning", text: "Make the sounds of your city in the morning.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "👋 Copy Hello", text: "Copy the way {player} says hello.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🤖 Robot Day", text: "Talk like a robot for thirty seconds about your day.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "⚙️ Machine Guess", text: "Make the sound of a machine, then say what it is.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🥶 Cold Alphabet", text: "Say the alphabet as if you are very cold.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🗯️ Two Voices", text: "Argue with yourself out loud in two different voices.", seconds: 45 },
+    { type: "🗣️ Voices & Sounds", cat: "🎩 Fancy Order", text: "Order a burger in a very fancy voice.", seconds: 45 },
+
+    /* ── 🎭 Improv & Roleplay ── */
+    { type: "🎭 Improv & Roleplay", cat: "☕ No More Coffee", text: "You are a doctor. Tell {player} they must stop drinking coffee.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "⚖️ Not My Fault", text: "You are a lawyer. Explain why being late is not your fault.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "📞 Late For Work", text: "Act out a phone call with your boss. You are late for work.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "📣 Big Speech", text: "You are a coach. Give the group a speech before a big game.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🏠 Home Tour", text: "You are a tour guide for your own home. Start the tour.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🛒 Sell It", text: "You are a salesperson. Sell {player} something near you right now.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🕰️ Ten Years Later", text: "Act like you are meeting {player} again after ten years.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "📚 Stop Homework", text: "You are a teacher. Explain why homework should stop.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "📻 On The Radio", text: "You are a radio host. Introduce the next song.", seconds: 45 },
+    { type: "🎭 Improv & Roleplay", cat: "🏃 Missed The Bus", text: "Act out waking up late and running for the bus.", seconds: 45 },
+
+    /* ── 💬 To Their Face ── */
+    { type: "💬 To Their Face", cat: "👍 Clearly Good", text: "Tell {player} one thing they are clearly good at.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🔍 Daily Guess", text: "Guess one thing {player} does every day. Ask if you are right.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🐯 Animal Match", text: "Tell {player} what animal they remind you of. Say why.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🎓 Teach Me", text: "Say one thing you would like to learn from {player}.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🏅 Funny Award", text: "Give {player} a funny award. Say why they won it.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "😮 Surprised Me", text: "Tell {player} one thing about them that surprised you.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🌦️ Their Weather", text: "Guess what kind of weather {player} likes best.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🏙️ Right City", text: "Tell {player} which city they would fit in well. Say why.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🤔 Been Wondering", text: "Ask {player} one question you have been wanting to ask.", seconds: 45 },
+    { type: "💬 To Their Face", cat: "🔮 Next Year", text: "Guess one thing {player} will do next year.", seconds: 45 },
+
+    /* ── 🧠 Word Games & Memory ── */
+    { type: "🧠 Word Games & Memory", cat: "🇸 Ten With S", text: "Say ten words that start with S in twenty seconds.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "📦 Add One More", text: "Repeat this: red truck, blue book, green lamp. Then add one more.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "📅 Months Backwards", text: "Say the months of the year backwards.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "👥 Name Everyone", text: "Name every player in this room, in any order.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🔤 Same Letter", text: "Say a full sentence where every word starts with the same letter.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🔔 Beep On Three", text: "Count to thirty, but say beep for every number with a three in it.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🪙 Cheap Things", text: "Say five things you can buy for very little money.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "✋ Five Words Only", text: "Describe your whole day using only five words.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🎲 Their Letter", text: "{player} picks a letter. Say five words with it in ten seconds.", seconds: 45 },
+    { type: "🧠 Word Games & Memory", cat: "🔧 Jobs And Tools", text: "Name five jobs, then name a tool each one uses.", seconds: 45 },
+  ],
+
+  // ── Dare Conquest — MEDIUM truths. Mild personal ground — habits, childhood,
+  //    opinions, work — with nothing about dating, money problems or real secrets ──
+  conquestTruthMedium: [
+    /* ── 😅 Small Confessions ── */
+    { type: "😅 Small Confessions", cat: "🚦 Small Rule", text: "What is a small rule you break all the time?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "🙃 Not For Me", text: "What is something everyone seems to like, but you do not?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "🤥 Tiny Lie", text: "What is the last small lie you told?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "⏳ Never Done", text: "What is one thing you always say you will do, but never do?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "🍽️ Pretend To Like", text: "What is a food you say you like, but really do not?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "💪 Still Trying", text: "What are you bad at but keep trying anyway?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "🎒 In Your Bag", text: "What is one thing in your bag you do not need?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "👂 Not Listening", text: "When did you last pretend to listen?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "🛑 Want To Stop", text: "What is a habit you would like to stop?", seconds: 45 },
+    { type: "😅 Small Confessions", cat: "🧠 Always Forget", text: "Ask {player} what they always forget.", seconds: 45 },
+
+    /* ── 🧒 Back Then ── */
+    { type: "🧒 Back Then", cat: "🚀 Dream Job", text: "What did you want to be when you were a child?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🎮 Best Game", text: "What was your favorite game as a child?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "😨 Old Fear", text: "What is one thing you were afraid of as a child?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🙏 Always Asking", text: "What did you always ask your parents for?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🌸 That Smell", text: "What smell reminds you of your childhood?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🏫 Best School Day", text: "What was your best day at school?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🗃️ Collector", text: "What did you collect when you were young?", seconds: 45 },
+    { type: "🧒 Back Then", cat: "👩‍🏫 Best Teacher", text: "Who was your favorite teacher? Say why.", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🔟 At Ten", text: "Ask {player} what they were like at ten years old.", seconds: 45 },
+    { type: "🧒 Back Then", cat: "🏠 House Rule", text: "What rule at home did you not like?", seconds: 45 },
+
+    /* ── 🎯 Opinions ── */
+    { type: "🎯 Opinions", cat: "🛑 Please Stop", text: "What is something people should stop doing?", seconds: 45 },
+    { type: "🎯 Opinions", cat: "⏰ Early Or Late", text: "Is it better to be early or late? Say why.", seconds: 45 },
+    { type: "🎯 Opinions", cat: "📜 Your Rule", text: "What is one rule you would make for everyone?", seconds: 45 },
+    { type: "🎯 Opinions", cat: "💸 Waste Of Money", text: "What do you think is a waste of money?", seconds: 45 },
+    { type: "🎯 Opinions", cat: "📖 Books Or Films", text: "Books or films? Say why.", seconds: 45 },
+    { type: "🎯 Opinions", cat: "🎂 Best Age", text: "What is the best age to be? Say why.", seconds: 45 },
+    { type: "🎯 Opinions", cat: "📲 Reply Fast", text: "Should people answer messages quickly? Say why.", seconds: 45 },
+    { type: "🎯 Opinions", cat: "📈 Better Now", text: "What is one thing that is better now than ten years ago?", seconds: 45 },
+    { type: "🎯 Opinions", cat: "🤝 Do You Agree", text: "Ask {player} if they agree with your last answer.", seconds: 45 },
+    { type: "🎯 Opinions", cat: "🎓 Everyone Should", text: "What is one thing everyone should learn?", seconds: 45 },
+
+    /* ── 😴 Habits ── */
+    { type: "😴 Habits", cat: "🌙 Cannot Sleep", text: "What do you do when you cannot sleep?", seconds: 45 },
+    { type: "😴 Habits", cat: "⏰ How Many Alarms", text: "How many alarms do you set in the morning?", seconds: 45 },
+    { type: "😴 Habits", cat: "🎒 Always With You", text: "What do you always carry with you?", seconds: 45 },
+    { type: "😴 Habits", cat: "📱 First App", text: "What is the first app you open each day?", seconds: 45 },
+    { type: "😴 Habits", cat: "🧹 As You Go", text: "Do you clean as you go, or all at once?", seconds: 45 },
+    { type: "😴 Habits", cat: "🍽️ Eating Alone", text: "What do you do while you eat alone?", seconds: 45 },
+    { type: "😴 Habits", cat: "🪞 Getting Ready", text: "How long do you spend getting ready to go out?", seconds: 45 },
+    { type: "😴 Habits", cat: "🥱 When Bored", text: "What do you do when you are bored?", seconds: 45 },
+    { type: "😴 Habits", cat: "🌅 Their Morning", text: "Ask {player} how they start their morning.", seconds: 45 },
+    { type: "😴 Habits", cat: "👨‍👩‍👧 From Family", text: "What is a habit you got from your family?", seconds: 45 },
+
+    /* ── 🎒 School & Work ── */
+    { type: "🎒 School & Work", cat: "📉 Worst Subject", text: "What was your worst subject at school? Say why.", seconds: 45 },
+    { type: "🎒 School & Work", cat: "🏆 Best Job", text: "What is the best job you have had?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "🚫 Never That", text: "What job would you never want to do?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "📚 Bad Day Lesson", text: "What is one thing you learned from a bad day at work?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "🕘 Morning Or Night", text: "Do you work better in the morning or at night?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "🎓 Do You Use It", text: "What did you study, and do you use it now?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "🧗 New Skill", text: "What is one skill you want to learn this year?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "😣 Hardest Part", text: "What is the hardest part of your work or study?", seconds: 45 },
+    { type: "🎒 School & Work", cat: "1️⃣8️⃣ At Eighteen", text: "Ask {player} what job they wanted at eighteen.", seconds: 45 },
+    { type: "🎒 School & Work", cat: "🏝️ One Month Off", text: "If you could take one month off, what would you do?", seconds: 45 },
+  ],
+
   /* ── 🙊 Say It Without Saying It — Taboo-style cards. The clue giver sees the word AND the
      forbidden words; the guessers see only the forbidden words, which is both their
      hint and how they police the giver. Deliberately everyday vocabulary, and the

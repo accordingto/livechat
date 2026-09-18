@@ -62,6 +62,23 @@
       animation: fadeUp .5s .2s ease both;
     }
     .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+    /* ── Difficulty picker (setup screen) ──
+       One row of three cards; each says who the tier is for, because "easy / medium /
+       hard" on its own does not tell the host which one suits the room they have. */
+    .diff-label { color: var(--text-muted); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
+    .diff-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .diff-btn {
+      background: var(--btn-face, #22224a); border: 2px solid var(--border-3, #39396b);
+      border-radius: 14px; padding: 13px 15px; cursor: pointer; text-align: left;
+      display: flex; flex-direction: column; gap: 5px; font: inherit; transition: .15s;
+    }
+    .diff-btn:hover { background: var(--btn-face-hi, #2b2b5c); }
+    .diff-btn .db-name { color: var(--text); font-size: .95rem; font-weight: 700; }
+    .diff-btn .db-desc { color: var(--text-dim); font-size: .78rem; line-height: 1.5; }
+    .diff-btn.is-on { border-color: var(--accent); background: rgba(255,112,67,.14); }
+    .diff-btn.is-on .db-name { color: var(--accent-text, var(--accent)); }
+    .diff-btn.is-on .db-name::after { content: ' ✓'; }
     .setup-card .btn-primary,
     .setup-card .btn-secondary { padding: 11px 20px; font-size: .88rem; }
 
@@ -613,6 +630,8 @@
   <div class="setup-screen" id="setup-card">
     <div class="setup-card">
       <div class="resume-banner hidden" id="resume-banner"></div>
+      <div class="diff-label" data-i18n="conquest.difficultyLabel">🎚️ Question difficulty</div>
+      <div class="diff-row" id="diff-row"></div>
       <div class="control-row">
         <button class="btn-primary" id="start-btn" onclick="startGame()" data-i18n="conquest.startGameBtn">🎲 Start Game</button>
       </div>
@@ -733,9 +752,15 @@
       plainBody: { zh: '{attacker}，大聲喊出來 — 真心話還是大冒險？', en: '{attacker}, call it out loud — Truth or Dare?' },
       truthBtn: { zh: 'TRUTH', en: 'TRUTH' },
       dareBtn: { zh: 'DARE', en: 'DARE' },
-      newQuestionBtn: { zh: '🔄 換一題 ({n})', en: '🔄 New Question ({n})' },
+      difficultyLabel: { zh: '🎚️ 題目難度', en: '🎚️ Question difficulty' },
+      diffEasyName: { zh: '🟢 簡單', en: '🟢 Easy' },
+      diffEasyDesc: { zh: '適合剛見面的陌生人', en: 'For people who have just met' },
+      diffMediumName: { zh: '🟡 中等', en: '🟡 Medium' },
+      diffMediumDesc: { zh: '適合聊過兩次天的人', en: 'For people who have chatted a couple of times' },
+      diffHardName: { zh: '🔴 困難', en: '🔴 Hard' },
+      diffHardDesc: { zh: '原本的題目 — 適合已經熟了的人', en: 'The original prompts — for people who know each other' },
+      newQuestionBtn: { zh: '🔄 換一題', en: '🔄 New Question' },
       changeQuestionQ: { zh: '要換這一題嗎？', en: 'Change this question?' },
-      leftThisGame: { zh: '這局還剩 {n} 次', en: '{n} left this game' },
       swapYesBtn: { zh: '✅ 是', en: '✅ Yes' },
       swapNoBtn: { zh: '✖️ 取消', en: '✖️ Cancel' },
       startTimerBtn: { zh: '⏱️ 開始 {s} 秒倒數', en: '⏱️ Start {s}s Timer' },
@@ -775,6 +800,17 @@
       '🧒 Back Then': { zh: '🧒 那些年', en: '🧒 Back Then' },
       '💘 Crushes & Dating': { zh: '💘 曖昧與約會', en: '💘 Crushes & Dating' },
       '💰 Money & Work': { zh: '💰 金錢與工作', en: '💰 Money & Work' },
+      // easy-tier truth types
+      '⭐ Favorites': { zh: '⭐ 最喜歡的', en: '⭐ Favorites' },
+      '🍜 Food': { zh: '🍜 吃的', en: '🍜 Food' },
+      '🌍 Places & Travel': { zh: '🌍 地方與旅行', en: '🌍 Places & Travel' },
+      '🎬 Shows & Music': { zh: '🎬 影劇與音樂', en: '🎬 Shows & Music' },
+      '🗓️ Everyday Life': { zh: '🗓️ 日常生活', en: '🗓️ Everyday Life' },
+      // medium-tier truth types
+      '😅 Small Confessions': { zh: '😅 小小自白', en: '😅 Small Confessions' },
+      '🎯 Opinions': { zh: '🎯 你的看法', en: '🎯 Opinions' },
+      '😴 Habits': { zh: '😴 習慣', en: '😴 Habits' },
+      '🎒 School & Work': { zh: '🎒 求學與工作', en: '🎒 School & Work' },
     });
     const ct = (key, vars) => {
       let s = I18N.t('conquest', key);
@@ -784,8 +820,31 @@
     const TYPE_LABEL_KEY = { start: 'startLabel', bonus: 'bonusLabel', lucky: 'luckyLabel', gift: 'giftLabel' };
     const typeLabel = type => ct(TYPE_LABEL_KEY[type]);
 
-    const PROMPTS = GAME_DATA.conquest;
-    const TRUTHS = GAME_DATA.conquestTruth;
+    /* ── Difficulty ──
+       Three tiers of prompts, chosen on the setup screen before the game starts.
+       `hard` is the original deck and keeps the original GAME_DATA keys, because those
+       are the two dataset names the shared Google Sheet writes into (see sheet-data.js):
+       loading the sheet replaces the HARD prompts, easy and medium stay built in.
+       Read through a function rather than captured into a const — the deck has to follow
+       whatever the host picked, and the picker runs after this line. */
+    const DECKS = {
+      easy:   { dare: 'conquestEasy',   truth: 'conquestTruthEasy' },
+      medium: { dare: 'conquestMedium', truth: 'conquestTruthMedium' },
+      hard:   { dare: 'conquest',       truth: 'conquestTruth' },
+    };
+    const DIFFICULTIES = ['easy', 'medium', 'hard'];
+    const DIFF_KEY = 'dareConquestDifficulty.v1';
+    let difficulty = 'easy';
+    try {
+      const saved = localStorage.getItem(DIFF_KEY);
+      if (DIFFICULTIES.includes(saved)) difficulty = saved;
+    } catch (e) { /* private mode — just use the default */ }
+
+    // fall back to the hard deck if a tier is somehow missing, so the game never
+    // ends up drawing from an empty array
+    const deckFor = kind => GAME_DATA[DECKS[difficulty][kind]] || GAME_DATA[DECKS.hard[kind]];
+    const dareDeck = () => deckFor('dare');
+    const truthDeck = () => deckFor('truth');
 
     const PLAYER_COLORS = [
       { hex: '#ef4444', token: '🔴' },
@@ -843,7 +902,6 @@
     let awaitingJudgement = false;
     const MAX_HIGH_ROLLS = 2; // each player gets this many "guaranteed 4+" skill charges per game
     const MAX_LOW_ROLLS = 2;  // each player gets this many "guaranteed 3-" skill charges per game
-    const MAX_SWAPS = 3;      // each player may swap a drawn Truth/Dare for a new one this many times
     let armedSkill = null; // null | 'high' | 'low' — which one (if any) is active for the rest of this turn
     let gameStarted = false;
     let round = 0;
@@ -957,10 +1015,10 @@
     function renderDeckToggleLabels() {
       document.getElementById('prompt-browser-hdr').textContent = deckOpen.dare
         ? ct('hideDaresBtn')
-        : ct('browseDaresBtn', { n: PROMPTS.length });
+        : ct('browseDaresBtn', { n: dareDeck().length });
       document.getElementById('truth-prompt-browser-hdr').textContent = deckOpen.truth
         ? ct('hideTruthsBtn')
-        : ct('browseTruthsBtn', { n: TRUTHS.length });
+        : ct('browseTruthsBtn', { n: truthDeck().length });
     }
     function buildPromptList() {
       // grouped by the deck's five types, in the order they appear in the data
@@ -977,14 +1035,41 @@
       };
 
       renderDeckToggleLabels();
-      document.getElementById('prompt-list').innerHTML = groupedHTML(PROMPTS);
+      document.getElementById('prompt-list').innerHTML = groupedHTML(dareDeck());
 
       const truthList = document.getElementById('truth-prompt-list');
       truthList.classList.add('truth-list');
-      truthList.innerHTML = groupedHTML(TRUTHS);
+      truthList.innerHTML = groupedHTML(truthDeck());
     }
     buildPromptList();
     I18N.onChange(() => buildPromptList());
+
+    /* ── Difficulty picker ──
+       Only reachable from the setup screen, so it can never change the deck mid-game;
+       a resumed game restores whatever tier it was played on. Switching redraws the
+       prompt browser below, since that list is the chosen tier's deck. */
+    function renderDiffButtons() {
+      const row = document.getElementById('diff-row');
+      if (!row) return;
+      row.innerHTML = DIFFICULTIES.map(d => {
+        const k = d[0].toUpperCase() + d.slice(1);
+        return `<button type="button" class="diff-btn${d === difficulty ? ' is-on' : ''}" onclick="setDifficulty('${d}')">
+            <span class="db-name">${ct('diff' + k + 'Name')}</span>
+            <span class="db-desc">${ct('diff' + k + 'Desc')}</span>
+          </button>`;
+      }).join('');
+    }
+
+    function setDifficulty(d) {
+      if (!DIFFICULTIES.includes(d)) return;
+      difficulty = d;
+      try { localStorage.setItem(DIFF_KEY, d); } catch (e) { /* private mode — this game only */ }
+      renderDiffButtons();
+      buildPromptList();          // the browser at the bottom lists this tier's prompts
+    }
+
+    renderDiffButtons();
+    I18N.onChange(renderDiffButtons);
 
     // the setup screen's rules blurb has <strong> markup, so it's set via innerHTML
     // (data-i18n on its own only assigns textContent) rather than a data-i18n attribute
@@ -1001,7 +1086,6 @@
         pos: 0,
         highRolls: MAX_HIGH_ROLLS,
         lowRolls: MAX_LOW_ROLLS,
-        swaps: MAX_SWAPS,
         otherPicks: 0, // times chosen as the {player} in someone else's prompt — kept low-first so the same person isn't named round after round
       }));
       ownership = new Array(PATH.length).fill(-1);
@@ -1782,7 +1866,7 @@
     // once every prompt of that type has been used
     function drawChallengePrompt(mode) {
       const isTruth = mode === 'truth';
-      const deck = isTruth ? TRUTHS : PROMPTS;
+      const deck = isTruth ? truthDeck() : dareDeck();
       let used = isTruth ? usedTruths : usedPrompts;
       if (used.length >= deck.length) {
         used = [];
@@ -1815,13 +1899,13 @@
     }
 
     // the player who drew the prompt may throw it back and pull another one of the same
-    // type, up to MAX_SWAPS times per player per game. The discarded prompt stays in the
-    // used list, so it won't come back around this deck cycle.
+    // type, as many times as they want. The discarded prompt stays in the used list, so it
+    // won't come back around this deck cycle. There used to be a cap of three per player:
+    // it only ever punished the person who drew a prompt they could not do, which is the
+    // one case where swapping is the right answer — and the confirmation below already
+    // stops a stray tap on the shared screen from burning the prompt by accident.
     function swapQuestion() {
       if (!awaitingJudgement || !currentChallengeMode) return;
-      const player = players[currentIdx];
-      if (!player || player.swaps <= 0) return;
-      player.swaps--;
       clearPromptTimer();
       drawChallengePrompt(currentChallengeMode);
     }
@@ -1848,7 +1932,6 @@
 
     // renders the actual dare/truth (category + text + optional timer + judge buttons)
     function renderDareContent(prompt, isTruth) {
-      const swapsLeft = players[currentIdx] ? players[currentIdx].swaps : 0;
       const parts = resolvePromptParts(prompt.text, currentIdx);
       const render = () => {
         const panel = document.getElementById('dare-panel');
@@ -1860,9 +1943,9 @@
               <span></span>
               <span class="q-cat${isTruth ? ' q-cat-truth' : ''}">${prompt.cat}</span>
               <div class="swap-corner">
-                <button class="btn-secondary btn-swap" id="swap-btn" onclick="askSwapQuestion()"${swapsLeft > 0 ? '' : ' disabled'}>${ct('newQuestionBtn', { n: swapsLeft })}</button>
+                <button class="btn-secondary btn-swap" id="swap-btn" onclick="askSwapQuestion()">${ct('newQuestionBtn')}</button>
                 <div class="swap-confirm hidden" id="swap-confirm">
-                  <p>${ct('changeQuestionQ')}<span class="swap-left">${ct('leftThisGame', { n: swapsLeft })}</span></p>
+                  <p>${ct('changeQuestionQ')}</p>
                   <div class="swap-confirm-actions">
                     <button class="swap-yes" onclick="swapQuestion()">${ct('swapYesBtn')}</button>
                     <button class="swap-no" onclick="cancelSwapQuestion()">${ct('swapNoBtn')}</button>
@@ -2221,7 +2304,7 @@
       if (!gameStarted || !players.length) return;
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify({
-          players, ownership, currentIdx, round, usedPrompts, usedTruths,
+          players, ownership, currentIdx, round, usedPrompts, usedTruths, difficulty,
           gameEnded: document.getElementById('winner-banner').classList.contains('shown'),
         }));
       } catch (e) { /* localStorage unavailable or full — game still works without persistence */ }
@@ -2261,7 +2344,6 @@
       players.forEach(p => {
         if (p.highRolls == null) p.highRolls = MAX_HIGH_ROLLS; // older saves predate the high-roll skill
         if (p.lowRolls == null) p.lowRolls = MAX_LOW_ROLLS;   // older saves predate the low-roll skill
-        if (p.swaps == null) p.swaps = MAX_SWAPS;             // older saves predate question swapping
         if (p.otherPicks == null) p.otherPicks = 0;           // older saves predate {player} fairness tracking
       });
       ownership = saved.ownership;
@@ -2269,6 +2351,9 @@
       round = saved.round;
       usedPrompts = saved.usedPrompts || [];
       usedTruths = saved.usedTruths || [];
+      // used* are indexes into the tier that was being played, so the tier has to come
+      // back with them — otherwise resuming would mark the wrong prompts as already seen
+      if (DIFFICULTIES.includes(saved.difficulty)) setDifficulty(saved.difficulty);
       playerCount = players.length;
       currentChallengeOwner = -1;
       currentChallengeMode = null;
