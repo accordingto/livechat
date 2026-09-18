@@ -998,9 +998,13 @@
       document.getElementById('phase-setup').classList.remove('hidden');
       tabooSubStepReached = 1;
       showTabooSubStep(1);
-      /* The deal button stays on the cards: settings only ever affect the next deal,
-         so a word dealt from a card while the host is in here is dealt with whatever
-         is saved at that moment, and the shared screen jumps back to the game. */
+      /* Take the deal button off the cards while the host is in here. canDeal() is
+         false the moment phase flips, so without this push the cards would keep
+         showing a button whose taps are dropped on arrival — and play.html would then
+         blame the host for having the page closed, which is not what happened.
+         update(), not set(), so a buzz waiting to be read is not wiped. */
+      pushState();
+      renderAll();
     }
 
     /* a compact read-out atop the Game phase, so the host doesn't have to
@@ -1236,10 +1240,9 @@
       if (v.choice === 'deal') {
         ROOM.clearAnswer(num - 1);
         if (canDeal() && v.id && v.id === dealId) {
-          // the cards start the game: if the host is still on the settings screen (or
-          // the briefing before it), the shared screen follows them into the game
+          // canDeal() already means the host is on the game screen, so there is no
+          // wizard left to leave — but the briefing may still be up over it
           cardDrove();
-          if (phase === 'setup') enterGame();
           dealRound();
         }
         return;
@@ -1560,12 +1563,14 @@
 
     /* Is there a word waiting to be dealt right now? Only between rounds: during one
        there is nothing to press, and while the five-second handover is running the next
-       word is already on its way. Deliberately NOT gated on the settings wizard: the
-       cards are how a game starts, so a tap that lands while the host is still on the
-       setup screen starts the game with the settings as saved (see handleAnswer's deal
-       branch) rather than waiting for a click on the shared screen. */
+       word is already on its way. Also only once the host is on the game screen —
+       a card must not open a game the host is still setting up, because the word it
+       deals would use whatever difficulty / forbidden / seconds happened to be saved
+       from last time, and the host would be yanked out of the wizard mid-choice.
+       editSettings() pushes state so the button actually leaves the cards while the
+       host is in there, rather than sitting there failing silently. */
     function canDeal() {
-      return ROOM.enabled && !nextRoundIv
+      return ROOM.enabled && phase === 'game' && !nextRoundIv
         && (state === 'idle' || state === 'done');
     }
 
@@ -1825,6 +1830,9 @@
         // to know that and to have the id its tap must quote
         canDeal: canDeal() || null,
         dealId: canDeal() ? dealId : null,
+        // why there is no deal button, so the card can say "the host is setting up"
+        // instead of the generic "waiting for the next word"
+        hostSetup: phase === 'setup' || null,
         forbidden: null, target: null, emoji: null,
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
         tabooBy: null, iCalledTaboo: null, forbiddenOn,

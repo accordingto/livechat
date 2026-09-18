@@ -548,6 +548,9 @@
       roundOverNoPoints: { zh: '⏭️ 這輪結束 — 不計分', en: '⏭️ Round over — no points' },
       roundOverChip: { zh: '這輪結束', en: 'Round over' },
       waitingNextWord: { zh: '等待下一個題目…', en: 'Waiting for the next word…' },
+      // the host is still on the settings wizard — no card may deal yet, and saying
+      // "waiting for the next word" there would read like something is stuck
+      waitingHostSetup: { zh: '主持人正在設定遊戲…', en: 'The host is setting up the game…' },
       nextRoundLead: { zh: '下一回合', en: 'Next round' },
       nextGiverIs: { zh: '🎤 {name} 描述', en: '🎤 {name} describes' },
       nextRefIs: { zh: '👀 {name} 當裁判', en: '👀 {name} referees' },
@@ -1377,7 +1380,7 @@
           ${chip('🙊 Say It Without Saying It', '#6366f1')}
           ${data.canDeal
             ? dealBlock(true)
-            : `<span class="pick-sub">${pt('waitingNextWord')}</span><p class="conq-wait">⏳</p>`}`);
+            : `<span class="pick-sub">${pt(data.hostSetup ? 'waitingHostSetup' : 'waitingNextWord')}</span><p class="conq-wait">⏳</p>`}`);
       }
 
       // a Taboo! call is open — everyone sees it while the clue giver answers
