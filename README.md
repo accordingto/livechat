@@ -146,9 +146,12 @@ as step 1's database rules are in place — see `SECURITY.md`.
 - Screen-share friendly: large text, high contrast, clean layout
 - Game prompts live in `game-data.js`; Let's Talk's topics live in
   `talk-topics.js`. The host can override the former from a Google Sheet whose
-  tabs are named after the games — `prompt-sheet-template.xlsx` is that sheet's
-  starting content, generated from `game-data.js` by
-  `tools/build-sheet-template.py`.
+  tabs are named after the games. `prompt-sheet-template.xlsx` mirrors that
+  sheet, and `tools/` keeps the two in step: `build-sheet-template.py` writes
+  the workbook from `game-data.js`, and `sheet-to-game-data.py` folds an edited
+  workbook back into `game-data.js`. Both parse through the site's own
+  `parseTab()`, so what the site reads and what ships as the fallback cannot
+  drift apart.
 - Player links can be handed out as a copyable list or as QR codes
 
 ## Stack
