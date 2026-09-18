@@ -534,6 +534,12 @@
     }
     .timer-circle.low { border-color: #f59e0b; color: var(--warn-text); }
     .timer-circle.critical { border-color: #ef4444; color: var(--bad-text); animation: timerPulse .8s ease-in-out infinite; }
+    /* Zero is not a verdict — the countdown only builds a bit of tension while someone
+       performs, and the host still judges Did It / Failed by hand. This screen is shared
+       with the whole room, so a red circle pulsing forever announces a failure that never
+       happened. Neutral, no animation. */
+    .timer-circle.is-done { border-color: var(--border-2); color: var(--text-dim); animation: none; }
+    .timer-timeup { color: var(--text-muted); font-size: .78rem; }
     @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
     .timer-controls { display: flex; gap: 8px; }
     .timer-ctrl-btn { background: var(--btn-face); padding: 7px 14px; font-size: .86rem; }
@@ -767,6 +773,8 @@
       pauseBtn: { zh: '⏸️ 暫停', en: '⏸️ Pause' },
       resumeTimerBtn: { zh: '▶️ 繼續', en: '▶️ Resume' },
       restartBtn: { zh: '🔄 重新計時', en: '🔄 Restart' },
+      // 倒數歸零不代表沒過關——過不過仍然是下面那兩顆判定鈕決定的
+      timeUpNote: { zh: '⏰ 時間到 — 這個倒數沒有輸贏', en: "⏰ Time's up — the clock doesn't decide anything" },
       honestBtn: { zh: '✅ 誠實回答！', en: '✅ Honest!' },
       passBtn: { zh: '❌ 跳過！', en: '❌ Pass!' },
       diditBtn: { zh: '✅ 完成了！', en: '✅ Did It!' },
@@ -1917,12 +1925,14 @@
       if (!seconds) return '';
       const started = promptTimerTotal > 0;
       const remaining = started ? promptTimerRemaining : seconds;
-      const low = started && remaining <= Math.ceil(promptTimerTotal * 0.5);
-      const critical = started && remaining <= Math.ceil(promptTimerTotal * 0.25);
+      const done = started && remaining <= 0;
+      const low = started && !done && remaining <= Math.ceil(promptTimerTotal * 0.5);
+      const critical = started && !done && remaining <= Math.ceil(promptTimerTotal * 0.25);
       return `
       <div class="timer-block">
         <button class="btn-secondary${started ? ' hidden' : ''}" id="timer-start-btn" onclick="startPromptTimer(${seconds})">${ct('startTimerBtn', { s: seconds })}</button>
-        <div class="timer-circle${started ? '' : ' hidden'}${low ? ' low' : ''}${critical ? ' critical' : ''}" id="timer-circle">${remaining}</div>
+        <div class="timer-circle${started ? '' : ' hidden'}${low ? ' low' : ''}${critical ? ' critical' : ''}${done ? ' is-done' : ''}" id="timer-circle">${done ? '⏰' : remaining}</div>
+        <span class="timer-timeup${done ? '' : ' hidden'}" id="timer-timeup">${ct('timeUpNote')}</span>
         <div class="timer-controls${started ? '' : ' hidden'}" id="timer-controls">
           <button class="btn-secondary timer-ctrl-btn" id="timer-pause-btn" onclick="togglePauseTimer()">${promptTimerPaused ? ct('resumeTimerBtn') : ct('pauseBtn')}</button>
           <button class="btn-secondary timer-ctrl-btn" onclick="restartPromptTimer(${seconds})">${ct('restartBtn')}</button>
@@ -2008,8 +2018,11 @@
       promptTimerRemaining--;
       if (promptTimerRemaining <= 0) {
         promptTimerRemaining = 0;
-        circle.textContent = '0';
-        circle.classList.add('critical');
+        circle.textContent = '⏰';
+        circle.classList.remove('low', 'critical');
+        circle.classList.add('is-done');
+        const note = document.getElementById('timer-timeup');
+        if (note) note.classList.remove('hidden');
         if (promptTimerInterval) { clearInterval(promptTimerInterval); promptTimerInterval = null; }
         publishTimer('done');
         return;
@@ -2060,7 +2073,9 @@
       promptTimerRemaining = seconds;
       promptTimerPaused = false;
       const circle = document.getElementById('timer-circle');
-      if (circle) { circle.classList.remove('low', 'critical'); circle.textContent = promptTimerRemaining; }
+      if (circle) { circle.classList.remove('low', 'critical', 'is-done'); circle.textContent = promptTimerRemaining; }
+      const note = document.getElementById('timer-timeup');
+      if (note) note.classList.add('hidden');
       updateTimerPauseLabel();
       promptTimerInterval = setInterval(tickPromptTimer, 1000);
       publishTimer('running');

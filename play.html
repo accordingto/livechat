@@ -103,6 +103,15 @@
     }
     .conq-timer.low { border-color: #f59e0b; color: #f59e0b; }
     .conq-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+    /* Time's up is not a verdict. The countdown exists to build a little tension while
+       someone performs — nothing passes or fails when it reaches zero, the host still
+       judges. A red circle pulsing forever says the opposite, and on everyone else's
+       card it sits directly above the ❌ Failed! button, which reads as an instruction.
+       So zero drops the alarm entirely: neutral grey, no animation. */
+    .conq-timer.is-done {
+      border-color: #3a3a5e; color: #9999bb; font-size: 1.5rem; animation: none;
+    }
+    .conq-timeup { color: #82829f; font-size: .78rem; text-align: center; }
     @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 
     /* the challenge text, shown only to the player who has to perform it */
@@ -505,6 +514,8 @@
       passBtn: { zh: '❌ 跳過！', en: '❌ Pass!' },
       diditBtn: { zh: '✅ 完成了！', en: '✅ Did It!' },
       failedBtn: { zh: '❌ 失敗了！', en: '❌ Failed!' },
+      // 時間到不是判定：倒數只是助興，過不過關仍然由主持人按判定鈕決定
+      conqTimeUp: { zh: '⏰ 時間到 — 這個倒數沒有輸贏', en: "⏰ Time's up — the clock doesn't decide anything" },
       lowRoll: { zh: '低點數', en: 'Low Roll' },
       highRoll: { zh: '高點數', en: 'High Roll' },
       rollDice: { zh: '🎲 擲骰子', en: '🎲 Roll the Dice' },
@@ -869,9 +880,14 @@
     function paintCardTimer() {
       const el = document.getElementById('conq-timer');
       if (!el) return;
-      el.textContent = cardTimer.left;
-      el.classList.toggle('low', cardTimer.left <= Math.ceil(cardTimer.total * 0.5));
-      el.classList.toggle('critical', cardTimer.left <= Math.ceil(cardTimer.total * 0.25));
+      const done = cardTimer.left <= 0;
+      // at zero the clock stops being a warning and becomes a plain fact — see .is-done
+      el.textContent = done ? '⏰' : cardTimer.left;
+      el.classList.toggle('is-done', done);
+      el.classList.toggle('low', !done && cardTimer.left <= Math.ceil(cardTimer.total * 0.5));
+      el.classList.toggle('critical', !done && cardTimer.left <= Math.ceil(cardTimer.total * 0.25));
+      const note = document.getElementById('conq-timeup');
+      if (note) note.classList.toggle('hidden', !done);
     }
 
     function tickCardTimer() {
@@ -925,7 +941,10 @@
         // everyone watches the same clock — the challenger below their prompt, the
         // voters above their buttons
         const timing = syncCardTimer(data, true);
-        const clock = timing ? `<div class="conq-timer" id="conq-timer">${cardTimer.left}</div>` : '';
+        const zero = cardTimer.left <= 0;
+        const clock = timing ? `
+            <div class="conq-timer${zero ? ' is-done' : ''}" id="conq-timer">${zero ? '⏰' : cardTimer.left}</div>
+            <span class="conq-timeup${zero ? '' : ' hidden'}" id="conq-timeup">${pt('conqTimeUp')}</span>` : '';
         if (myTurn) {
           body = `
             <div class="conq-prompt">${esc(c.text || '')}</div>
