@@ -629,6 +629,22 @@
       improviseAnswers: { zh: '融入角色 — 即興回答問題！', en: 'Stay in character — improvise your answers!' },
       questionWitness: { zh: '❓ 詢問你的證人！', en: '❓ Question your witness!' },
       onTheStand: { zh: '{name} 正在出庭作證。', en: '{name} is on the stand.' },
+      // the cards drive the trial (see kangaroo-court.html): the next-case gate and each phase's "I'm done"
+      kcFirstCase: { zh: '抽第一條罪名', en: 'Draw the first charge' },
+      kcNextCase: { zh: '下一個案件', en: 'Next case' },
+      kcIdleNote: { zh: '還沒開庭。等大家都到齊了，任何人都可以抽第一條罪名 — 角色會隨機發。', en: 'Court is not in session yet. Once everyone is here, anyone can draw the first charge — roles are dealt at random.' },
+      kcVotesSoFar: { zh: '{done} / {total} 位陪審員已投票 — 全部投完會自動進入下一步。', en: '{done} of {total} jurors have voted — it moves on by itself once they all have.' },
+      kcStepPrevote: { zh: '不等了，開始發言', en: "Don't wait — start the prosecution" },
+      kcStepProsecution: { zh: '我講完了 — 傳喚我的證人', en: 'Done — call my witness' },
+      kcStepProsecutionWitness: { zh: '問完了 — 換辯方發言', en: 'Done — over to the Defense' },
+      kcStepDefense: { zh: '我講完了 — 傳喚我的證人', en: 'Done — call my witness' },
+      kcStepDefenseWitness: { zh: '問完了 — 進入交叉詰問', en: 'Done — on to cross-examination' },
+      kcStepCross: { zh: '詰問結束 — 陪審團投票', en: 'Close questioning — jury votes' },
+      kcStepFinalvote: { zh: '不等了，揭曉判決', en: "Don't wait — reveal the verdict" },
+      kcStepReveal: { zh: '進入法官宣判', en: "On to the Judge's ruling" },
+      kcStepEitherSide: { zh: '檢方或辯方任一位按都可以。', en: 'Either the Prosecutor or the Defense may tap this.' },
+      kcStepYours: { zh: '這一步由你推進 — 講完再按。', en: 'This step is yours to end — tap when you are done.' },
+      kcStepSending: { zh: '推進中…', en: 'Moving on…' },
       testifying: { zh: '👀 {name} 正在作證…', en: '👀 {name} is testifying…' },
       floorYoursCase: { zh: '🎤 換你發言 — 提出你的論點！', en: '🎤 The floor is yours — make your case!' },
       speakingProsecutor: { zh: '⚔️ {name} 正在發言…', en: '⚔️ {name} is speaking…' },
@@ -1477,9 +1493,53 @@
       db.ref(`rooms/${session}/players/${token}/${field}`).set({ id, choice });
     }
 
+    /* Moving the trial on is one tap from whoever holds the current phase — it quotes
+       the stepId the host published for this seat, and the host mints a new one on
+       every phase change, so a tap from the previous step is simply dropped. Same
+       one-shot shape as the next-prompt request, on its own field. */
+    let kcStepSentId = '';
+    let kcStepSentAt = 0;
+    function kcStep(btn) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.stepId;
+      if (!id) return;
+      kcStepSentId = id;
+      kcStepSentAt = Date.now();
+      if (btn) { btn.disabled = true; const l = btn.querySelector('.pb-label'); if (l) l.textContent = pt('kcStepSending'); }
+      setTimeout(tryRenderCard, NEXT_STALL_MS + 200);
+      db.ref(`rooms/${session}/players/${token}/kcStep`).set({ id });
+    }
+    const KC_STEP_LABEL = {
+      prevote: 'kcStepPrevote', prosecution: 'kcStepProsecution', 'prosecution-witness': 'kcStepProsecutionWitness',
+      defense: 'kcStepDefense', 'defense-witness': 'kcStepDefenseWitness', cross: 'kcStepCross',
+      finalvote: 'kcStepFinalvote', reveal: 'kcStepReveal',
+    };
+    // one icon per step, on the button's key — the "don't wait" fallbacks and the
+    // ruling carry their own, everything else is a plain "done"
+    const KC_STEP_ICON = { prevote: '⚔️', finalvote: '⚖️', reveal: '🧑‍⚖️' };
+    /* the "I'm done" button for the seat that holds this phase; nothing for anyone else */
+    function kcStepBlock(data, hex) {
+      if (!data.stepId || !KC_STEP_LABEL[data.phase]) return '';
+      const nx = `style="--nx:${hex}"`;
+      const waiting = kcStepSentId === data.stepId;
+      if (waiting && Date.now() - kcStepSentAt < NEXT_STALL_MS) {
+        return `<button class="next-btn" ${nx} disabled><span class="pb-key">⏳</span><span class="pb-label">${pt('kcStepSending')}</span></button>`;
+      }
+      const sub = data.stepAnyLawyer ? pt('kcStepEitherSide') : pt('kcStepYours');
+      return `
+        <button class="next-btn" ${nx} onclick="kcStep(this)">
+          <span class="pb-key">${KC_STEP_ICON[data.phase] || '✅'}</span><span class="pb-label">${pt(KC_STEP_LABEL[data.phase])}</span>
+        </button>
+        <span class="pick-sub">${sub}</span>
+        ${waiting ? `<span class="next-warn">${pt('nextNoHost')}</span>` : ''}`;
+    }
+
     function kangarooCardHTML(data) {
+      // the next-case gate (next-round.js): "draw the first charge" before the first
+      // case, "next case" once the verdict has been delivered, with the shared countdown
+      const nextCase = nextBlock(data, { hex: '#e94560', emoji: '⚖️', first: 'kcFirstCase', next: 'kcNextCase' });
       if (!data.case) {
-        return `<div class="secret-card theme-kangaroo">${nameBanner(data)}<span class="pick-sub">${pt('waitingNextCase')}</span></div>`;
+        return `<div class="secret-card theme-kangaroo">${nameBanner(data)}<span class="pick-sub">${nextCase ? pt('kcIdleNote') : pt('waitingNextCase')}</span>${nextCase}</div>`;
       }
       const role = data.role;
       // a juror called to the stand gets the gold "witness" treatment on top of
@@ -1487,7 +1547,8 @@
       const roleHex = data.isWitness ? '#eab308' : ({ judge: '#8b5cf6', defendant: '#ef4444', prosecutor: '#f97316', defense: '#3b82f6', jury: '#a78bfa' }[role] || '#e94560');
       const roleLabel = data.isWitness ? pt('witnessRole') : ({ judge: pt('judgeRole'), defendant: pt('defendantRole'), prosecutor: pt('prosecutorRole'), defense: pt('defenseRole'), jury: pt('juryRole') }[role] || '');
       const chip = `<span class="pick-chip" style="color:${chipInk(roleHex)};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
-      const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
+      const step = kcStepBlock(data, roleHex);
+      const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}${step}${nextCase}</div>`;
 
       // the verdict, once revealed, stays on screen through the Judge's Ruling
       // ceremony too (which now comes right after it) — it doesn't disappear just
@@ -1508,7 +1569,8 @@
 
       if (data.phase === 'prevote' || data.phase === 'finalvote') {
         if (role !== 'jury') {
-          return shell(`<span class="pick-sub">${data.phase === 'finalvote' ? pt('juryVotingFinal') : pt('juryVotingOnce')}</span>`);
+          const progress = data.votes ? `<span class="pick-sub">${pt('kcVotesSoFar', { done: data.votes.done, total: data.votes.total })}</span>` : '';
+          return shell(`<span class="pick-sub">${data.phase === 'finalvote' ? pt('juryVotingFinal') : pt('juryVotingOnce')}</span>${progress}`);
         }
         const field = data.phase === 'prevote' ? 'kcPrevote' : 'kcFinalvote';
         const id = data.phase === 'prevote' ? data.prevoteId : data.finalVoteId;
