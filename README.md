@@ -144,8 +144,11 @@ as step 1's database rules are in place — see `SECURITY.md`.
 ## Features
 
 - Screen-share friendly: large text, high contrast, clean layout
-- Game prompts live in `game-data.js`; Let's Talk's 12 original trial topics
-  live in `talk-topics.js`. The existing spreadsheet datasets are unchanged.
+- Game prompts live in `game-data.js`; Let's Talk's topics live in
+  `talk-topics.js`. The host can override the former from a Google Sheet whose
+  tabs are named after the games — `prompt-sheet-template.xlsx` is that sheet's
+  starting content, generated from `game-data.js` by
+  `tools/build-sheet-template.py`.
 - Player links can be handed out as a copyable list or as QR codes
 
 ## Stack
@@ -155,10 +158,10 @@ Vanilla HTML / CSS / JavaScript — no build step, no backend.
 - Firebase Realtime Database (compat SDK, loaded from CDN) for host → player sync
 - `qrcode.js` — vendored qrcode-generator 1.4.4 (MIT)
 
-Conversation rule and transport regression tests require only Node.js:
+Rule and transport regression tests require only Node.js:
 
 ```sh
-node --test tests/talk-*.test.cjs
+node --test tests/*.test.cjs
 ```
 
 ## License

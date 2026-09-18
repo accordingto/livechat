@@ -7,7 +7,7 @@
  *   1. 載入即套用。每一頁開啟時 apply() 會把 localStorage 裡上次成功抓下來
  *      的題庫合併進 GAME_DATA。沒有抓過、或抓下來的資料壞了，就完全不動，
  *      GAME_DATA 維持 game-data.js 的預設題庫。
- *   2. 抓取。只有 index.html 的 Step 2 那顆按鈕會呼叫 load()，也就是說
+ *   2. 抓取。只有 index.html 房間設定精靈最後一步那顆按鈕會呼叫 load()，也就是說
  *      **只有主持人主動按下去的那一刻才會連線 Google**，其餘任何時候
  *      （每一頁載入、每一次發牌）都只讀 localStorage，不發任何網路請求。
  *
@@ -17,8 +17,11 @@
  *
  * 讀法是 Google 的 gviz CSV 端點（試算表要設成「知道連結的人皆可檢視」）：
  *   https://docs.google.com/spreadsheets/d/{ID}/gviz/tq?tqx=out:csv&sheet={分頁名}
- * 用分頁「名稱」而不是 gid，主持人才不必為了 11 個分頁去抄 11 組 gid；
- * 分頁名稱必須等於下面 SCHEMA 的 key，也就是 GAME_DATA 的 key。
+ * 用分頁「名稱」而不是 gid，主持人才不必為了 10 個分頁去抄 10 組 gid。
+ * 分頁名稱就是**遊戲名稱**（Say It Without Saying It、Pick a Side…），見下面
+ * SCHEMA 每一項的 tab 欄位——刻意跟 GAME_DATA 的 key（taboo、hottake…）分開：
+ * key 是程式碼各處在讀的，分頁名是主持人在試算表上要認的，兩者的取名標準不同。
+ * 舊分頁名（＝key）照樣讀得到，見 load() 的退路。
  */
 (function () {
   const STORE_KEY = 'icebreak-sheet-data.v1';
@@ -29,26 +32,47 @@
      編輯權限，以及「知道連結的任何人 → 檢視者」，後者才是這支程式讀得到的原因。 */
   const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1mDZjPYgrT-tmKWDkrn2jUEZ_gbVJ37lLEaRuvvbXH6g/edit';
 
-  /* 每個資料集的欄位定義。cols = 試算表的標題列（順序就是欄位順序），
+  /* 每個資料集的欄位定義。key = GAME_DATA 的欄位名（程式內部用），
+     tab = Google Sheet 上那個分頁的名稱（主持人看得到的），兩者刻意分開：
+     分頁名要用遊戲名才找得到，但 GAME_DATA 的 key 是程式碼各處在讀的，
+     不能因為改個分頁名就跟著動。cols = 標題列（順序就是欄位順序），
      required = 這幾欄是空的就跳過該列，build = 把一列組成 GAME_DATA 要的物件。
-     這份 SCHEMA 同時也是產生範本 .xlsx 的依據，兩邊永遠一致。 */
+     這份 SCHEMA 同時也是產生範本 .xlsx 的依據，兩邊永遠一致——連順序都是，
+     下面的排列順序就是首頁遊戲清單的順序，範本的分頁也照這個順序排。 */
   const SCHEMA = {
+    taboo: {
+      tab: 'Say It Without Saying It',
+      cols: ['level', 'emoji', 'word',
+             'forbidden1', 'forbidden2', 'forbidden3', 'forbidden4', 'forbidden5', 'forbidden6'],
+      required: ['word'],
+      build: r => ({
+        level: ['easy', 'medium', 'hard'].includes(String(r.level).toLowerCase())
+          ? String(r.level).toLowerCase() : 'medium',
+        emoji: r.emoji || '💬',
+        word: r.word,
+        forbidden: [1, 2, 3, 4, 5, 6].map(i => r['forbidden' + i]).filter(Boolean),
+      }),
+    },
     hottake: {
+      tab: 'Pick a Side',
       cols: ['text'],
       required: ['text'],
       build: r => r.text,                       // 這款是純字串陣列，不是物件
     },
     sophies: {
+      tab: "Sophie's Choice",
       cols: ['cat', 'situation', 'a', 'b'],
       required: ['situation', 'a', 'b'],
       build: r => ({ cat: r.cat, situation: r.situation, a: r.a, b: r.b }),
     },
     persuade: {
+      tab: 'Persuade Together',
       cols: ['cat', 'judge', 'emoji', 'team', 'situation'],
       required: ['judge', 'team', 'situation'],
       build: r => ({ cat: r.cat, judge: r.judge, emoji: r.emoji, team: r.team, situation: r.situation }),
     },
     scene: {
+      tab: "You're In The Scene",
       cols: ['cat', 'emoji', 'title', 'situation',
              'a_label', 'a_hint', 'b_label', 'b_hint', 'c_label', 'c_hint',
              'd_label', 'd_hint', 'e_label', 'e_hint', 'f_label', 'f_hint'],
@@ -67,46 +91,44 @@
         return o;
       },
     },
-    forbidden: {
-      cols: ['word', 'emoji'],
-      required: ['word'],
-      build: r => ({ word: r.word, emoji: r.emoji || '🔍' }),
-    },
     conquest: {
+      tab: 'Dare Conquest - Dare',
       cols: ['type', 'cat', 'text', 'seconds'],
       required: ['text'],
       build: r => ({ type: r.type, cat: r.cat, text: r.text, seconds: num(r.seconds, 45) }),
     },
     conquestTruth: {
+      tab: 'Dare Conquest - Truth',
       cols: ['type', 'cat', 'text', 'seconds'],
       required: ['text'],
       build: r => ({ type: r.type, cat: r.cat, text: r.text, seconds: num(r.seconds, 45) }),
     },
-    taboo: {
-      cols: ['level', 'emoji', 'word',
-             'forbidden1', 'forbidden2', 'forbidden3', 'forbidden4', 'forbidden5', 'forbidden6'],
-      required: ['word'],
-      build: r => ({
-        level: ['easy', 'medium', 'hard'].includes(String(r.level).toLowerCase())
-          ? String(r.level).toLowerCase() : 'medium',
-        emoji: r.emoji || '💬',
-        word: r.word,
-        forbidden: [1, 2, 3, 4, 5, 6].map(i => r['forbidden' + i]).filter(Boolean),
-      }),
-    },
     kangaroo: {
+      tab: 'Kangaroo Court - Charges',
       cols: ['emoji', 'charge'],
       required: ['charge'],
       build: r => ({ emoji: r.emoji || '⚖️', charge: r.charge }),
     },
     kangarooWitness: {
+      tab: 'Kangaroo Court - Witnesses',
       cols: ['emoji', 'name', 'evidence'],
       required: ['name', 'evidence'],
       build: r => ({ emoji: r.emoji || '🕵️', name: r.name, evidence: r.evidence }),
     },
+    forbidden: {
+      /* 不是一款遊戲，是 room.js 發連結後那顆「🔍 Send Card Check」用的核對字 */
+      tab: 'Card Check',
+      cols: ['word', 'emoji'],
+      required: ['word'],
+      build: r => ({ word: r.word, emoji: r.emoji || '🔍' }),
+    },
   };
 
   const TABS = Object.keys(SCHEMA);
+
+  /* 分頁名稱。主持人在試算表上看到的是遊戲名（Say It Without Saying It），
+     程式內部用的仍是 GAME_DATA 的 key（taboo）。 */
+  const tabName = key => (SCHEMA[key] && SCHEMA[key].tab) || key;
 
   /* 試算表的內容會被各遊戲頁直接塞進 innerHTML，而這份試算表是開放給別人
      編輯的，所以任何一個編輯者本來都能在主持人畫面與玩家卡片上執行任意
@@ -226,7 +248,7 @@
      標題，而且是逐個分頁各猜各的。猜錯的那一個分頁，第一列資料會被當成標題列，
      於是這支程式看不到 word／text 這些欄位名，回報「標題列缺少必填欄位」——但
      試算表本身完全正常，主持人怎麼檢查都找不到問題（實際回報過：11 個分頁裡
-     只有 taboo 這一個失敗，它的標題列明明就是 level／emoji／word）。11 個分頁
+     只有 taboo 這一個失敗，它的標題列明明就是 level／emoji／word）。每個分頁
      的格式都是固定的一列標題，所以直接寫死，不讓它猜。 */
   const csvUrl = (id, tab) =>
     'https://docs.google.com/spreadsheets/d/' + id +
@@ -268,25 +290,40 @@
   }
 
   /* ── 抓取（只有 index.html 的按鈕會呼叫）──
-     11 個分頁各自獨立抓、獨立失敗；onProgress(tab, result) 讓 UI 邊抓邊顯示。 */
+     10 個分頁各自獨立抓、獨立失敗；onProgress(分頁名, result) 讓 UI 邊抓邊顯示。 */
   async function load(input, onProgress) {
     const id = sheetId(input || SHEET_URL);     // 不給網址就是讀本站那一份
     const results = {};
     const data = {};
 
-    await Promise.all(TABS.map(async tab => {
+    /* 一個資料集抓一次。分頁名先試遊戲名，讀不到再試舊的 key——分頁改名是
+       在試算表那一端手動做的，改到一半、或有人手上還開著舊的複本都是正常的，
+       多一次只在失敗時才發生的請求，換的是「改名不會讓整款遊戲開天窗」。 */
+    async function fetchTab(key, name) {
+      const r = await fetch(csvUrl(id, name), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return parseTab(key, await r.text());
+    }
+
+    await Promise.all(TABS.map(async key => {
+      const name = tabName(key);
       let res;
       try {
-        const r = await fetch(csvUrl(id, tab), { cache: 'no-store' });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const { rows, skipped } = parseTab(tab, await r.text());
-        if (rows.length) { data[tab] = rows; res = { ok: true, count: rows.length, skipped }; }
+        let out;
+        try { out = await fetchTab(key, name); }
+        catch (e) {
+          if (name === key) throw e;              // 沒有別名可以退，就是真的失敗
+          out = await fetchTab(key, key);         // 舊分頁名（＝GAME_DATA 的 key）
+        }
+        const { rows, skipped } = out;
+        if (rows.length) { data[key] = rows; res = { ok: true, count: rows.length, skipped }; }
         else res = { ok: false, reason: 'empty' };
       } catch (e) {
         res = { ok: false, reason: 'error', message: String(e.message || e) };
       }
-      results[tab] = res;
-      if (onProgress) onProgress(tab, res);
+      results[key] = res;
+      // 畫面上要顯示的是主持人在試算表上看得到的那個名字，不是內部的 key
+      if (onProgress) onProgress(name, res);
     }));
 
     const loaded = Object.keys(data).length;
@@ -316,7 +353,7 @@
   }
 
   window.SHEET_DATA = {
-    SCHEMA, TABS, SHEET_URL,
+    SCHEMA, TABS, SHEET_URL, tabName,
     load, clear, info, apply,
     parseCSV, parseTab, sheetId, csvUrl,        // 給測試與 index.html 用
     get applied() { return applied; },
