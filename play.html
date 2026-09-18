@@ -598,12 +598,11 @@
       listenForForbidden: { zh: '只有 {name}（描述者）說出禁字才算 — 猜的人說到不算。這輪你不用搶答。', en: "Only {name}, the clue giver, can break the rule — a guesser saying a forbidden word doesn't count. You sit this round out." },
       youBuzzed: { zh: '🙋 你搶答了 — 大聲說出你的答案！', en: '🙋 You buzzed — say your guess out loud!' },
       willTap: { zh: '{giver} 會按 ✅ 或 ❌。', en: '{giver} will tap ✅ or ❌.' },
-      queuePos: { zh: '⏳ 你排在第 {n} 位', en: "⏳ You're #{n} in the queue" },
-      guessingFirst: { zh: '{name} 正在搶答。', en: '{name} is guessing first.' },
+      buzzHeldForRuling: { zh: '⏸️ {name} 搶答了', en: '⏸️ {name} buzzed in' },
+      buzzAfterRuling: { zh: '等 {giver} 判定完才能再搶答。', en: 'Buzzing reopens once {giver} has ruled.' },
       notItHangTight: { zh: '❌ 不對 — 先等一下', en: '❌ Not it — hang tight' },
       buzzAgainLater: { zh: '等其他人都搶答過一次後，你就能再搶答。', en: 'You can buzz again once everyone else has had a turn.' },
       buzzInBtn: { zh: '🙋 搶答！', en: '🙋 Buzz in!' },
-      guessingBuzzToLine: { zh: '{name} 正在搶答 — 按下搶答排隊。', en: '{name} is guessing — buzz to get in line.' },
       knowItHint: { zh: '知道答案嗎？按下搶答鈕，然後大聲說出來。', en: 'Know it? Hit the buzzer, then say it out loud.' },
       clueGiverIsChip: { zh: '🕵️ {name} 是描述者', en: '🕵️ {name} is the clue giver' },
       buzzedSayIt: { zh: '已搶答 — 說出答案！', en: 'Buzzed — say it!' },
@@ -1422,7 +1421,8 @@
       }
 
       const mine = data.buzzer === data.playerNum;
-      const waiting = data.queued && !mine;
+      // somebody else's guess is on the table: no buzzer until the giver rules on it
+      const waiting = !!data.buzzer && !mine;
       let buzzArea;
       if (data.tabooBy) {
         // the round is stopped dead until the clue giver answers the call, so there is
@@ -1435,9 +1435,12 @@
           <div class="taboo-buzzed mine">${pt('youBuzzed')}</div>
           <span class="pick-sub">${pt('willTap', { giver: esc(data.giverName || 'The clue giver') })}</span>`;
       } else if (waiting) {
+        // one guess at a time: the button goes away (not greyed out — grey buttons
+        // still get poked) and the host drops any buzz that lands anyway. It comes
+        // back on the next payload once the clue giver taps ❌.
         buzzArea = `
-          <div class="taboo-buzzed">${pt('queuePos', { n: data.queued })}</div>
-          <span class="pick-sub">${pt('guessingFirst', { name: esc(data.buzzerName || 'Someone') })}</span>`;
+          <div class="taboo-waiting">${pt('buzzHeldForRuling', { name: esc(data.buzzerName || 'Someone') })}</div>
+          <span class="pick-sub">${pt('buzzAfterRuling', { giver: esc(data.giverName || 'The clue giver') })}</span>`;
       } else if (data.rejected) {
         // guessed wrong this cycle — locked out until everyone else in the
         // rotation has also had a turn, so no buzzer to tap here
@@ -1449,7 +1452,7 @@
           <button class="taboo-buzz" onclick="tabooBuzz(this)">
             <span class="pb-key">🙋</span><span class="pb-label">${pt('buzzInBtn')}</span>
           </button>
-          <span class="pick-sub">${data.buzzerName ? pt('guessingBuzzToLine', { name: esc(data.buzzerName) }) : pt('knowItHint')}</span>`;
+          <span class="pick-sub">${pt('knowItHint')}</span>`;
       }
       // only the referee holds the banned list, so only the referee can call Taboo!
       const tabooBtn = !data.isRef || data.forbiddenOn === false ? ''

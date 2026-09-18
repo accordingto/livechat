@@ -788,8 +788,6 @@
       refereeRole: { zh: '👀 裁判', en: '👀 Referee' },
       calledTabooRole: { zh: '🚨 喊了 Taboo！', en: '🚨 Called Taboo!' },
       buzzedInRole: { zh: '🙋 搶答了', en: '🙋 Buzzed in' },
-      inQueueRole: { zh: '🙋 排隊中', en: '🙋 In the queue' },
-      inQueueRoleShort: { zh: '⏳ 排隊中', en: '⏳ In queue' },
       statusNoRoom: { zh: '請先發出下方的玩家連結才能開始 — 祕密字只會給描述者，絕不會出現在這個畫面。', en: "Hand out the player links below to start — the secret word goes to the clue giver, never to this screen." },
       statusIdle: { zh: '按下「發一個題目」開始 — 或由任何一位玩家從自己的卡片上發題。', en: 'Press Deal a Word to start — or let any player deal it from their own card.' },
       clockOnHold: { zh: '⏸️ 計時已暫停', en: '⏸️ Clock on hold' },
@@ -799,7 +797,7 @@
       admitPreviewBtn: { zh: '🚨 我說了', en: '🚨 I did' },
       denyPreviewBtn: { zh: '👌 我沒說', en: "👌 I didn't" },
       buzzedWaiting: { zh: '🙋 <span class="sl-who" style="color:inherit">{buzzer}</span> 搶答了 — 等待 {giver} 裁定', en: '🙋 <span class="sl-who" style="color:inherit">{buzzer}</span> buzzed in — waiting for {giver} to judge' },
-      waitingToGuess: { zh: '{names} 排隊等著猜', en: '{names} waiting to guess' },
+      othersHeld: { zh: '其他人要等判定完才能再搶答', en: 'Everyone else waits for the ruling before buzzing again' },
       giverIsLive: { zh: '🎤 <span class="sl-who">{giver}</span> 是這輪的描述者 — 知道答案就搶答！', en: '🎤 <span class="sl-who">{giver}</span> is the clue giver — buzz in when you know it!' },
       refIsRefereeing: { zh: '👀 {ref} 是這輪的裁判 — 由他持有禁字清單', en: '👀 {ref} is refereeing this round — they hold the forbidden words' },
       wordWas: { zh: '答案是 {emoji} {word}', en: 'The word was {emoji} {word}' },
@@ -821,7 +819,7 @@
       calledTabooWaiting: { zh: '🚨 已喊 Taboo！— 等描述者回答', en: '🚨 Called Taboo! — waiting for the clue giver' },
       clockOnHoldPreview: { zh: '⏸️ {name} 喊了 Taboo！— 計時暫停', en: '⏸️ {name} called Taboo! — clock on hold' },
       youBuzzedPreview: { zh: '🙋 你搶答了 — 大聲說出你的答案！', en: '🙋 You buzzed — say your guess out loud!' },
-      queuePosPreview: { zh: "⏳ 你排在第 {n} 位", en: "⏳ You're #{n} in the queue" },
+      buzzHeldPreview: { zh: '⏸️ {name} 搶答了 — 等判定完才能再搶答', en: '⏸️ {name} buzzed — buzzing reopens after the ruling' },
       notItHangTightPreview: { zh: '❌ 不對 — 先等一下', en: '❌ Not it — hang tight' },
       buzzInPreviewBtn: { zh: '🙋 搶答！', en: '🙋 Buzz in!' },
       noForbiddenPreview: { zh: '這輪沒有禁字', en: 'No forbidden words this round' },
@@ -885,7 +883,7 @@
     // card once they tap Show my word there, and the clock starts at that moment
     let used = [];
     let scores = [];
-    let queue = [];        // player numbers waiting to be judged, in the order they buzzed
+    let queue = [];        // the one buzz waiting on the clue giver ([] or [playerNum]); a second buzz is dropped, not lined up
     let rejected = [];     // buzzed and were told "not it" this cycle — locked out of buzzing again until everyone else in guesserNums() has also had a turn (see handleAnswer)
     let seenBuzz = {};     // playerNum -> the last buzz stamp already queued
     let result = null;     // { type: 'got' | 'foul', who }
@@ -1270,7 +1268,7 @@
           // slate wipes and buzzing reopens for all of them — nobody's shut out
           // once someone else has also had their turn
           if (rejected.length >= guesserNums().length) rejected = [];
-          releaseTimer();   // no-op while someone else is still queued up
+          releaseTimer();   // the table is clear again: the clock resumes and everyone else may buzz
           pushState();
           renderAll();
           renderTimer();
@@ -1287,16 +1285,21 @@
         // wrong once already this cycle — locked out until everyone else has
         // also had a turn (see the reset above)
         if (rejected.includes(num)) { ROOM.clearAnswer(num - 1); return; }
-        if (seenBuzz[num] === v.t) return;   // already queued this buzz
+        if (seenBuzz[num] === v.t) return;   // already handled this buzz
         seenBuzz[num] = v.t;
         ROOM.clearAnswer(num - 1);           // let them buzz again later
-        if (!queue.includes(num)) {
-          queue.push(num);
-          holdTimer();
-          pushState();
-          renderAll();
-          renderTimer();
-        }
+        /* One guess on the table at a time. While a buzz waits on the clue giver the
+           other cards hide their buzzer, and anything that still lands here (a card
+           that hadn't repainted yet, two thumbs in the same instant) is dropped, not
+           queued: a second name lined up behind the first only tempts the giver to
+           rule on two guesses at once, and the second guesser got a look at the first
+           guess for free. Buzzing reopens the moment the giver taps ❌. */
+        if (queue.length) return;
+        queue.push(num);
+        holdTimer();
+        pushState();
+        renderAll();
+        renderTimer();
         return;
       }
 
@@ -1339,7 +1342,6 @@
         else if (i === giverIdx) info = { cls: 'is-giver-link', answer: tt('cluegiverRole') };
         else if (i === refIdx) info = { cls: 'is-ref-link', answer: tt('refereeRole') };
         else if (queue[0] === num) info = { marked: true, answer: tt('buzzedInRole') };
-        else if (queue.includes(num)) info = { marked: true, answer: tt('inQueueRole') };
       }
       if (cardPreviewOn) {
         info = Object.assign({}, info, {
@@ -1870,8 +1872,8 @@
         blocks.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
       } else if (p.queued === 1) {
         blocks.push(`<div class="cp-note">${tt('youBuzzedPreview')}</div>`);
-      } else if (p.queued) {
-        blocks.push(`<div class="cp-note">${tt('queuePosPreview', { n: p.queued })}</div>`);
+      } else if (p.buzzerName) {
+        blocks.push(`<div class="cp-note">${tt('buzzHeldPreview', { name: p.buzzerName })}</div>`);
       } else if (p.rejected) {
         blocks.push(`<div class="cp-note">${tt('notItHangTightPreview')}</div>`);
       } else {
@@ -1964,8 +1966,7 @@
         }
         if (queue.length) {
           el.classList.add('buzz');
-          const rest = queue.length > 1 ? tt('waitingToGuess', { names: queue.slice(1).map(n => ROOM.name(n - 1)).join(', ') }) : '';
-          el.innerHTML = `${tt('buzzedWaiting', { buzzer: ROOM.name(queue[0] - 1), giver: ROOM.name(giverIdx) })}${sub([rest, held])}`;
+          el.innerHTML = `${tt('buzzedWaiting', { buzzer: ROOM.name(queue[0] - 1), giver: ROOM.name(giverIdx) })}${sub([tt('othersHeld'), held])}`;
         } else {
           el.classList.add('live');
           const ref = refIdx >= 0
@@ -2008,7 +2009,7 @@
                    : giver ? tt('cluegiverRole')
                    : ref ? tt('refereeRole')
                    : buzzed ? tt('buzzedInRole')
-                   : state === 'playing' && queue.includes(num) ? tt('inQueueRoleShort') : '';
+                   : '';
         html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${ROOM.name(i)}</span>
