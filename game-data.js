@@ -581,18 +581,6 @@ const GAME_DATA = {
   //    nothing to be embarrassed about. Every prompt is something you perform or guess,
   //    never something you reveal ──
   conquestEasy: [
-    /* ── 🎤 Singing ── */
-    { type: "🎤 Singing", cat: "🐢 Slow Birthday", text: "Sing Happy Birthday very slowly, like a sad song.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🔤 Deep Alphabet", text: "Sing the alphabet in the deepest voice you can.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🎵 Hum It", text: "Hum a song you like. Let the others guess what it is.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🌏 Your Language", text: "Sing Happy Birthday to {player} in your first language.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🗣️ All La", text: "Sing any song you know, but change every word to la.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🧸 Childhood Song", text: "Sing one line from a song you liked as a child.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🎭 Opera Numbers", text: "Sing the numbers one to ten like an opera singer.", seconds: 45 },
-    { type: "🎤 Singing", cat: "⚡ Fast Birthday", text: "Sing Happy Birthday as fast as you can.", seconds: 45 },
-    { type: "🎤 Singing", cat: "😴 Sleepy Song", text: "Pick any song. Sing one line like you are almost asleep.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🤝 Take Turns", text: "Sing one line of a song, then ask {player} to sing the next line.", seconds: 45 },
-
     /* ── 🗣️ Voices & Sounds ── */
     { type: "🗣️ Voices & Sounds", cat: "🌧️ Rain Sound", text: "Make the sound of rain for ten seconds.", seconds: 45 },
     { type: "🗣️ Voices & Sounds", cat: "☀️ Five Mornings", text: "Say good morning five times, in five different voices.", seconds: 45 },
@@ -709,18 +697,6 @@ const GAME_DATA = {
   // ── Dare Conquest — MEDIUM dares. For people who have talked a couple of times:
   //    a bit bolder, some light teasing, still nothing that needs real trust ──
   conquestMedium: [
-    /* ── 🎤 Singing ── */
-    { type: "🎤 Singing", cat: "🎧 Last Song", text: "Sing the last song you listened to. Just the part you remember.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🌏 Then Explain", text: "Sing a song from your country, then say what it is about.", seconds: 45 },
-    { type: "🎤 Singing", cat: "📱 Love My Phone", text: "Sing a love song to your phone.", seconds: 45 },
-    { type: "🎤 Singing", cat: "😤 Angry Birthday", text: "Sing Happy Birthday like you are very angry.", seconds: 45 },
-    { type: "🎤 Singing", cat: "📛 Name Song", text: "Make up a short song about {player}'s name.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🕰️ Ten Years Ago", text: "Sing a song you liked ten years ago. Say if you still like it.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🎭 Bad Then Good", text: "Sing one line badly on purpose, then sing it well.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🍽️ Today I Ate", text: "Make up a song about what you ate today.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🤝 You Finish It", text: "Sing half a line, then let {player} finish it.", seconds: 45 },
-    { type: "🎤 Singing", cat: "🙃 Happy And Sad", text: "Sing the saddest song you know in a happy voice.", seconds: 45 },
-
     /* ── 🗣️ Voices & Sounds ── */
     { type: "🗣️ Voices & Sounds", cat: "📰 My Day Live", text: "Report what you did today in a news reporter voice.", seconds: 45 },
     { type: "🗣️ Voices & Sounds", cat: "🌟 Guess Who", text: "Do your best impression of someone famous. Let the group guess.", seconds: 45 },
