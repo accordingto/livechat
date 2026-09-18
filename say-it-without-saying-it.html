@@ -958,22 +958,26 @@
       if (grp && slot && grp.parentNode !== slot) slot.appendChild(grp);
     }
 
-    function startGame() {
+    /* Swap the wizard for the game screen. Split from startGame() because a card can
+       do this too: when somebody deals the first word while the host is still on the
+       settings screen, the shared screen has to follow (see handleAnswer's deal branch). */
+    function enterGame() {
       phase = 'game';
       placeDifficulty('game');
       document.getElementById('phase-setup').classList.add('hidden');
       document.getElementById('phase-game').classList.remove('hidden');
       renderPhaseSummary();
-      /* Leaving the wizard is what hands the game to the cards: canDeal() was false
-         while phase was 'setup', so nobody could start a round before the host had
-         finished choosing difficulty, banned words and round length. A fresh game
-         publishes over whatever the last game left on the cards; coming back from a
-         mid-round detour into the settings only updates, so a buzz waiting to be read
-         isn't wiped. */
-      dealId = newId();
-      if (state === 'idle') publishRound(); else pushState();
-      renderAll();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startGame() {
+      enterGame();
+      /* A fresh game publishes over whatever the last game left on the cards; coming
+         back from a mid-round detour into the settings only updates, so a buzz waiting
+         to be read isn't wiped. The cards already hold a deal id (the page published
+         one on load), so this is a refresh, not what unlocks them. */
+      if (state === 'idle') { dealId = newId(); publishRound(); } else pushState();
+      renderAll();
     }
 
     /* Deliberately does NOT touch round/state/scores: these settings have
@@ -987,7 +991,9 @@
       document.getElementById('phase-setup').classList.remove('hidden');
       tabooSubStepReached = 1;
       showTabooSubStep(1);
-      pushState();   // canDeal() is false again — take the deal button off the cards
+      /* The deal button stays on the cards: settings only ever affect the next deal,
+         so a word dealt from a card while the host is in here is dealt with whatever
+         is saved at that moment, and the shared screen jumps back to the game. */
     }
 
     /* a compact read-out atop the Game phase, so the host doesn't have to
@@ -1222,7 +1228,13 @@
          Whoever reaches for their phone first deals; the rest is decided here, as always. */
       if (v.choice === 'deal') {
         ROOM.clearAnswer(num - 1);
-        if (canDeal() && v.id && v.id === dealId) dealRound();
+        if (canDeal() && v.id && v.id === dealId) {
+          // the cards start the game: if the host is still on the settings screen (or
+          // the briefing before it), the shared screen follows them into the game
+          cardDrove();
+          if (phase === 'setup') enterGame();
+          dealRound();
+        }
         return;
       }
 
@@ -1530,14 +1542,19 @@
 
     /* ── Round flow ── */
     const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    /* A card just moved the game on. The briefing (guide.js) veils this page until the
+       host clicks through it; when the players start playing from their phones the
+       shared screen has to show the game, not the how-to. No-op once it is closed. */
+    const cardDrove = () => { if (window.GUIDE) GUIDE.close(); };
 
     /* Is there a word waiting to be dealt right now? Only between rounds: during one
        there is nothing to press, and while the five-second handover is running the next
-       word is already on its way. Gated on the game phase too, because onCountChange()
-       can publish an idle round while the host is still in the settings wizard, and a
-       card should not be able to start a game before the host has finished setting it up. */
+       word is already on its way. Deliberately NOT gated on the settings wizard: the
+       cards are how a game starts, so a tap that lands while the host is still on the
+       setup screen starts the game with the settings as saved (see handleAnswer's deal
+       branch) rather than waiting for a click on the shared screen. */
     function canDeal() {
-      return ROOM.enabled && phase === 'game' && !nextRoundIv
+      return ROOM.enabled && !nextRoundIv
         && (state === 'idle' || state === 'done');
     }
 
@@ -2034,6 +2051,13 @@
     renderTimer();
     renderAll();
     renderPhaseSummary();
+
+    /* Hand the game to the cards straight away: ROOM.init() restores the room without
+       running onCountChange, so nothing had been published yet and the cards would
+       still be showing whatever the previous game left there until the host clicked
+       through the wizard. The first deal therefore comes from a card, with the
+       settings as saved (the wizard shows exactly those). */
+    if (ROOM.enabled && state === 'idle') { dealId = newId(); publishRound(); }
 
     // a language switch needs every JS-built piece of UI redrawn in place —
     // data-i18n handles the static markup on its own, this covers the rest

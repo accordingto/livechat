@@ -270,12 +270,16 @@
     renderPlaceholderText();
     renderDrawBtnLabel();
 
+    /* A card just moved the game on. guide.js veils this page behind the briefing
+       until the host clicks through it; when the players start from their phones the
+       shared screen has to show the game, not the how-to. No-op once it is closed. */
+    const cardDrove = () => { if (window.GUIDE) GUIDE.close(); };
     ROOM.init({
       mount: 'room-mount',
       accent: '#f59e0b',
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: () => st('linksNote'),
-      onPlayerData: (num, data) => { nextGate.handle(num, data); renderTally(); },
+      onPlayerData: (num, data) => { if (nextGate.handle(num, data)) cardDrove(); renderTally(); },
       onCountChange: () => { renderTally(); nextGate.sync(); },
       onNameChange: () => { ROOM.render(); renderTally(); },
     });

@@ -289,12 +289,16 @@
     const ALL_COLORS  = ['a','b','c','d','e','f'];
     const ALL_LETTERS = ['A','B','C','D','E','F'];
 
+    /* A card just moved the game on. guide.js veils this page behind the briefing
+       until the host clicks through it; when the players start from their phones the
+       shared screen has to show the game, not the how-to. No-op once it is closed. */
+    const cardDrove = () => { if (window.GUIDE) GUIDE.close(); };
     ROOM.init({
       mount: 'room-mount',
       accent: '#ec4899',
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: 'Every player gets one role dealt privately to their own card — including the hint for how to play it. The list below stays on your screen so everyone can follow the scene.',
-      onPlayerData: (num, data) => { nextGate.handle(num, data); },
+      onPlayerData: (num, data) => { if (nextGate.handle(num, data)) cardDrove(); },
       onCountChange: n => { if (currentScene) setPlayers(n, true); else nextGate.sync(); },
       onNameChange: () => { ROOM.render(); renderRoleGrid(); },
     });

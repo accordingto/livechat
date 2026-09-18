@@ -74,8 +74,8 @@ const GAME_GUIDES = {
           en: 'Each round draws a target word plus forbidden words. The card goes only to the clue giver and the referee — the answer never reaches the shared screen.' },
       ]},
       { icon: '🕹️', title: GUIDE_TITLES.how, steps: [
-        { zh: '先在設定畫面選好難度、禁字個數、每輪秒數。',
-          en: 'Set difficulty, how many forbidden words count, and the round length on the setup screen.' },
+        { zh: '設定畫面可以選難度、禁字個數、每輪秒數 — 但不用等你按完：玩家隨時可以從卡片發第一題，用的就是目前存著的設定。',
+          en: "The setup screen sets difficulty, how many forbidden words count, and the round length — but nobody has to wait for it: a player can deal the first word from their card at any time, with the settings as saved." },
         { zh: `按 ${B('btn-deal', '🎬 發一個題目')} 抽角色 — 兩輪之間每個人的卡片上也有 ${B('is-accent', '🎬 發下一個題目')}，誰先按都可以。題目先是鎖著的：描述者要在自己的卡片上按 ${B('is-green', '👀 看題目')}，題目才會出現、倒數才開始。`,
           en: `Tap ${B('btn-deal', '🎬 Deal a Word')} to draw the roles — between rounds every card carries ${B('is-accent', '🎬 Deal the next word')} too, and whoever taps first deals. The word stays sealed until the clue giver taps ${B('is-green', '👀 Show my word')} on their own card — that is when it appears and the clock starts.` },
         { zh: `猜到的人按卡片上的 ${B('is-green', '🙋 Buzz in!')} 然後用講的喊答案。`,

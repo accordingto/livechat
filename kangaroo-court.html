@@ -544,6 +544,10 @@
       return a;
     }
 
+    /* A card just moved the game on. guide.js veils this page behind the briefing
+       until the host clicks through it; when the players start from their phones the
+       shared screen has to show the game, not the how-to. No-op once it is closed. */
+    const cardDrove = () => { if (window.GUIDE) GUIDE.close(); };
     ROOM.init({
       mount: 'room-mount',
       accent: '#e94560',
@@ -553,11 +557,13 @@
       linksNote: () => kt('linksNoteJudge'),
       extraRowHTML: '<span class="room-label" data-i18n="kangaroo.roleJudge">🧑‍⚖️ Judge</span><button class="toggle-btn" id="judge-toggle" onclick="toggleJudge()"><span class="toggle-switch"></span><span id="judge-state">ON</span></button>',
       onPlayerData: (num, data) => {
-        nextGate.handle(num, data);   // "draw the next case" / "hold on"
-        handleStep(num, data);        // "I'm done" from whoever holds this phase
+        // the cards run the trial; the first thing any of them does also takes the
+        // shared screen off the briefing (guide.js) if the host is still reading it
+        if (nextGate.handle(num, data)) cardDrove();   // "draw the next case" / "hold on"
+        if (handleStep(num, data)) cardDrove();        // "I'm done" from whoever holds this phase
         renderJuryTally();
         // a secret ballot closes itself the moment the last juror has voted
-        if (allJuryVoted()) { autoAdvancedBallot = phase === 'prevote' ? prevoteId : finalVoteId; advance(); }
+        if (allJuryVoted()) { autoAdvancedBallot = phase === 'prevote' ? prevoteId : finalVoteId; cardDrove(); advance(); }
       },
       onCountChange: () => {
         defendantIdx = prosecutorIdx = defenseIdx = judgeIdx = -1; defendantBag = []; prosecutorCount = []; defenseCount = []; judgeCount = []; witnessCount = [];
@@ -613,9 +619,10 @@
     function newStep() { stepId = genId(); }
     function handleStep(num, data) {
       const s = data && data.kcStep;
-      if (!s || !stepId || s.id !== stepId) return;
-      if (!stepOwners().includes(num - 1)) return;
+      if (!s || !stepId || s.id !== stepId) return false;
+      if (!stepOwners().includes(num - 1)) return false;
       advance();
+      return true;
     }
     function juryVoteState() {
       const jury = juryIndices();

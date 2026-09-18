@@ -197,7 +197,14 @@
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
+    const isOpen = () => !screen.classList.contains('hidden');
+
+    /* Also called by the game pages the moment a player card drives the game on (a
+       first deal, a first draw, a trial step): the players do not wait for the host to
+       finish reading, so the shared screen must switch to the game by itself. A no-op
+       once closed, so those calls never scroll the host back to the top mid-game. */
     function close() {
+      if (!isOpen()) return;
       screen.classList.add('hidden');
       veiled.forEach((el) => el.classList.remove(VEIL));
       window.scrollTo({ top: 0, behavior: 'auto' });
@@ -210,7 +217,7 @@
     }
 
     draw();
-    window.GUIDE = { open, close };
+    window.GUIDE = { open, close, isOpen };
   }
 
   if (document.readyState === 'loading') {
