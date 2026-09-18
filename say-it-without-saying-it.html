@@ -46,6 +46,14 @@
       text-align: center; overflow-wrap: break-word; max-width: 100%;
     }
     .score-card .sc-pts { font-size: 2.4rem; font-weight: 900; color: var(--accent-text); line-height: 1; }
+    /* catch-up bonus: a tile well below the room average scores double. The badge
+       is a filled amber pill so it reads on a shared screen; the legend only shows
+       while somebody actually has it, so the board stays quiet the rest of the time. */
+    .score-card .sc-boost {
+      font-size: .74rem; font-weight: 900; letter-spacing: .5px;
+      color: var(--btn-ink); background: #f59e0b; border-radius: 999px; padding: 3px 9px;
+    }
+    .sc-boost-note { flex-basis: 100%; text-align: center; font-size: .86rem; font-weight: 700; color: var(--warn-text); }
     .score-card.is-giver {
       border-color: #6366f1; box-shadow: 0 0 28px rgba(99,102,241,.28);
     }
@@ -801,8 +809,10 @@
       giverIsLive: { zh: '🎤 <span class="sl-who">{giver}</span> 是這輪的描述者 — 知道答案就搶答！', en: '🎤 <span class="sl-who">{giver}</span> is the clue giver — buzz in when you know it!' },
       refIsRefereeing: { zh: '👀 {ref} 是這輪的裁判 — 由他持有禁字清單', en: '👀 {ref} is refereeing this round — they hold the forbidden words' },
       wordWas: { zh: '答案是 {emoji} {word}', en: 'The word was {emoji} {word}' },
-      gotItResult: { zh: '✅ {who} 猜對了 — {who} 與 {giver} 各 +1！', en: '✅ {who} got it — +1 for {who} and {giver}!' },
-      foulResult: { zh: '🚨 {who} 抓到禁字 — {who} +2，{giver} −1！', en: '🚨 {who} caught a forbidden word — +2 for {who}, −1 for {giver}!' },
+      gotItResult: { zh: '✅ {who} 猜對了 — {who} +{whoPts}，{giver} +{giverPts}！', en: '✅ {who} got it — +{whoPts} for {who}, +{giverPts} for {giver}!' },
+      foulResult: { zh: '🚨 {who} 抓到禁字 — {who} +{whoPts}，{giver} −1！', en: '🚨 {who} caught a forbidden word — +{whoPts} for {who}, −1 for {giver}!' },
+      boostBadge: { zh: '🔥 ×2 落後加分', en: '🔥 ×2 catch-up' },
+      boostNote: { zh: '🔥 ×2 落後加分：分數比全場平均低 {n} 分以上的人，這輪得分加倍', en: '🔥 ×2 catch-up bonus: anyone {n}+ points below the room average scores double' },
       timeUpResult: { zh: '⏰ 時間到 — 這輪不計分。', en: "⏰ Time's up — no points this round." },
       roundOverResult: { zh: '⏭️ 這輪結束 — 不計分。', en: '⏭️ Round over — no points.' },
       showCardsBtn: { zh: '👁️ 查看玩家卡片內容（暴雷 — 分享畫面時請勿開啟）', en: "👁️ Show what's on player cards (spoilers — don't open while sharing)" },
@@ -826,8 +836,7 @@
       tabooCaughtKind: { zh: '🚨 抓到禁字', en: '🚨 Taboo caught' },
       gotItKind: { zh: '✅ 答對了', en: '✅ Got it' },
       roundEndedKind: { zh: '⏹️ 這輪結束', en: '⏹️ Round ended' },
-      plusTwoForYou: { zh: '（你 +2！）', en: ' (+2 for you!)' },
-      plusOneForYou: { zh: '（你 +1！）', en: ' (+1 for you!)' },
+      plusForYou: { zh: '（你 +{pts}！）', en: ' (+{pts} for you!)' },
       minusOneForYou: { zh: '（你 −1）', en: ' (−1 for you)' },
       hideDeckBtn: { zh: '🙈 收起題庫', en: '🙈 Hide the deck' },
       browseDeckBtn: { zh: "👁️ 瀏覽全部 {n} 個題目（暴雷 — 分享畫面時請勿開啟）", en: "👁️ Browse all {n} words (spoilers — don't open while sharing)" },
@@ -1678,19 +1687,45 @@
       endRound({ type: 'stop', who: giverIdx + 1 });
     }
 
+    /* ── Catch-up bonus ──
+       Anyone sitting CATCH_UP_GAP or more points below the room average scores double
+       (a correct guess +2 instead of +1, an upheld Taboo! +4 instead of +2) until they
+       climb back within range. Judged against the standings as they are BEFORE the
+       round's points land, and per player: on a correct guess the giver and the
+       guesser are each checked on their own. Penalties (the giver's −1) are never
+       doubled — the bonus is a hand up, not a bigger fall. The average includes the
+       player themselves, so in a two-player game a 6-point lead is what trips it. */
+    const CATCH_UP_GAP = 3;
+    function roomAverage() {
+      syncScores();
+      let sum = 0;
+      for (let k = 0; k < ROOM.count; k++) sum += scores[k] || 0;
+      return ROOM.count ? sum / ROOM.count : 0;
+    }
+    function isBehind(i) { return ROOM.count > 1 && roomAverage() - (scores[i] || 0) >= CATCH_UP_GAP; }
+    const multiplierFor = i => (isBehind(i) ? 2 : 1);
+
     function awardPoint(buzzerNum) {
-      scores[giverIdx] = (scores[giverIdx] || 0) + 1;
-      scores[buzzerNum - 1] = (scores[buzzerNum - 1] || 0) + 1;
-      popIdx = [giverIdx, buzzerNum - 1];
-      endRound({ type: 'got', who: buzzerNum }, true);
+      const b = buzzerNum - 1;
+      // both multipliers are read before either point lands, so the giver's +1 can't
+      // move the average under the guesser's feet (or the other way round)
+      const giverPts = 1 * multiplierFor(giverIdx);
+      const whoPts = 1 * multiplierFor(b);
+      scores[giverIdx] = (scores[giverIdx] || 0) + giverPts;
+      scores[b] = (scores[b] || 0) + whoPts;
+      popIdx = [giverIdx, b];
+      endRound({ type: 'got', who: buzzerNum, whoPts, giverPts }, true);
     }
 
     function endRound(res, autoNext) {
       // an upheld Taboo! is the referee's payoff — it is the only way they score —
       // and it costs the clue giver, who let a forbidden word slip
       if (res && res.type === 'foul' && res.who) {
-        scores[res.who - 1] = (scores[res.who - 1] || 0) + 2;
+        const whoPts = 2 * multiplierFor(res.who - 1);   // the catch-up bonus applies here too
+        scores[res.who - 1] = (scores[res.who - 1] || 0) + whoPts;
         scores[giverIdx] = (scores[giverIdx] || 0) - 1;
+        res.whoPts = whoPts;
+        res.giverPts = -1;
         popIdx = [res.who - 1];
         lostIdx = [giverIdx];
         setTimeout(() => { popIdx = []; lostIdx = []; renderScores(); }, 600);
@@ -1767,7 +1802,7 @@
     function boardFor(i) {
       const out = [];
       for (let k = 0; k < ROOM.count; k++) {
-        out.push({ n: ROOM.name(k), p: scores[k] || 0, me: k === i || null });
+        out.push({ n: ROOM.name(k), p: scores[k] || 0, me: k === i || null, x2: isBehind(k) || null });
       }
       return out;
     }
@@ -1819,6 +1854,7 @@
           type: result.type,
           who: ROOM.name(result.who - 1),
           youWon: (result.type === 'got' || result.type === 'foul') && result.who === i + 1,
+          whoPts: result.whoPts || null, giverPts: result.giverPts || null,
         } : null,
       });
     }
@@ -1887,7 +1923,7 @@
       }
       if (p.state === 'done' && p.result) {
         const kind = p.result.type === 'foul' ? tt('tabooCaughtKind') : p.result.type === 'got' ? tt('gotItKind') : tt('roundEndedKind');
-        const pts = p.result.type === 'foul' ? tt('plusTwoForYou') : p.result.type === 'got' ? tt('plusOneForYou') : '';
+        const pts = p.result.type === 'foul' || p.result.type === 'got' ? tt('plusForYou', { pts: p.result.whoPts || (p.result.type === 'foul' ? 2 : 1) }) : '';
         const penalty = p.result.type === 'foul' && p.isGiver ? tt('minusOneForYou') : '';
         blocks.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
@@ -1983,10 +2019,10 @@
         : '';
       if (result && result.type === 'got') {
         el.classList.add('win');
-        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${upNext}`;
+        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx), whoPts: result.whoPts || 1, giverPts: result.giverPts || 1 })}${answer}${upNext}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx) })}${answer}${upNext}`;
+        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx), whoPts: result.whoPts || 2 })}${answer}${upNext}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
         el.innerHTML = `${tt('timeUpResult')}${answer}${upNext}`;
@@ -1999,6 +2035,7 @@
       const el = document.getElementById('scoreboard');
       syncScores();
       let html = '';
+      let anyBehind = false;
       for (let i = 0; i < ROOM.count; i++) {
         const num = i + 1;
         const giver = state !== 'idle' && i === giverIdx;
@@ -2010,12 +2047,17 @@
                    : ref ? tt('refereeRole')
                    : buzzed ? tt('buzzedInRole')
                    : '';
+        const behind = isBehind(i);
         html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${ROOM.name(i)}</span>
             <span class="sc-pts">${scores[i] || 0}</span>
+            ${behind ? `<span class="sc-boost">${tt('boostBadge')}</span>` : ''}
           </div>`;
+        if (behind) anyBehind = true;
       }
+      // the legend only while it applies — this board is on the shared screen
+      if (anyBehind) html += `<div class="sc-boost-note">${tt('boostNote', { n: CATCH_UP_GAP })}</div>`;
       el.innerHTML = html;
     }
 

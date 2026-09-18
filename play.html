@@ -448,6 +448,9 @@
     .tbd-row.is-me .tbd-name { color: #fff; }
     .tbd-pts { font-size: 1rem; font-weight: 900; color: #ddd; flex: none; }
     .tbd-row.is-me .tbd-pts { color: var(--me-text); }
+    /* catch-up bonus: same amber pill as the host's scoreboard tile */
+    .tbd-boost { font-size: .7rem; font-weight: 900; color: #0b0b18; background: #f59e0b; border-radius: 999px; padding: 2px 7px; flex: none; }
+    .tbd-note { font-size: .82rem; font-weight: 700; color: #fbbf24; text-align: center; }
     @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
     @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
@@ -534,9 +537,11 @@
       convincedBtn: { zh: '✅ 你說服我了！', en: '✅ You convinced me!' },
       notConvincedBtn: { zh: '❌ 沒有被說服', en: '❌ Not convinced' },
       forbiddenWordsLabel: { zh: '🚫 禁字', en: '🚫 Forbidden words' },
-      gotItYou: { zh: '✅ 你猜對了 — +1！', en: '✅ You got it — +1!' },
+      gotItYou: { zh: '✅ 你猜對了 — +{pts}！', en: '✅ You got it — +{pts}!' },
+      gotItGiver: { zh: '✅ {who} 猜對了 — 你也 +{pts}！', en: '✅ {who} got it — +{pts} for you too!' },
       gotItOther: { zh: '✅ {who} 猜對了', en: '✅ {who} got it' },
-      goodCatch: { zh: '🚨 抓得好 — +2！', en: '🚨 Good catch — +2!' },
+      goodCatch: { zh: '🚨 抓得好 — +{pts}！', en: '🚨 Good catch — +{pts}!' },
+      boostMine: { zh: '🔥 落後加分中：你這輪的得分 ×2', en: '🔥 Catch-up bonus: your points count double this round' },
       caughtYou: { zh: '🚨 說了禁字被抓到 — −1', en: '🚨 Caught using a forbidden word — −1' },
       caughtOther: { zh: '🚨 {who} 抓到禁字', en: '🚨 {who} caught a forbidden word' },
       timeUp: { zh: '⏰ 時間到 — 不計分', en: "⏰ Time's up — no points" },
@@ -1292,7 +1297,9 @@
                <div class="tbd-row${r.me ? ' is-me' : ''}">
                  <span class="tbd-name">${esc(r.n || '')}</span>
                  <span class="tbd-pts">${r.p || 0}</span>
+                 ${r.x2 ? '<span class="tbd-boost">🔥×2</span>' : ''}
                </div>`).join('')}</div>
+             ${data.board.some(r => r.me && r.x2) ? `<span class="tbd-note">${pt('boostMine')}</span>` : ''}
            </div>`
         : `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
       const chip = (text, hex) => `<span class="pick-chip" style="color:${chipInk(hex)};border-color:${hex}55;background:${hex}1a">${text}</span>`;
@@ -1314,10 +1321,14 @@
 
       if (data.state === 'done') {
         const r = data.result || {};
+        // the points are spelled out from the payload: with the catch-up bonus they
+        // are not always +1 / +2 (an older host tab sends none, hence the fallbacks)
         const line = r.type === 'got'
-          ? (r.youWon ? pt('gotItYou') : pt('gotItOther', { who: esc(r.who || 'Someone') }))
+          ? (r.youWon ? pt('gotItYou', { pts: r.whoPts || 1 })
+             : data.isGiver ? pt('gotItGiver', { who: esc(r.who || 'Someone'), pts: r.giverPts || 1 })
+             : pt('gotItOther', { who: esc(r.who || 'Someone') }))
           : r.type === 'foul'
-          ? (r.youWon ? pt('goodCatch') : data.isGiver ? pt('caughtYou') : pt('caughtOther', { who: esc(r.who || 'The referee') }))
+          ? (r.youWon ? pt('goodCatch', { pts: r.whoPts || 2 }) : data.isGiver ? pt('caughtYou') : pt('caughtOther', { who: esc(r.who || 'The referee') }))
           : r.type === 'time' ? pt('timeUp')
           : pt('roundOverNoPoints');
         return shell(`

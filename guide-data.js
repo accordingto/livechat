@@ -127,6 +127,8 @@ const GAME_GUIDES = {
                   en: 'Never see the forbidden words. They just listen.' } },
       ]},
       { icon: '💡', title: GUIDE_TITLES.tips, tips: [
+        { zh: '落後加分：分數比全場平均低 3 分以上的人，計分板上會掛「🔥 ×2」，那一輪得分加倍（答對 +2、抓到禁字 +4），追回來就自動取消。',
+          en: 'Catch-up bonus: anyone 3+ points below the room average gets a "🔥 ×2" tag on the scoreboard and scores double that round (+2 for a guess, +4 for a Taboo! catch) until they catch up.' },
         { zh: '猜題者看不到禁字是刻意的——禁字就是最快聯想到答案的字。',
           en: 'Hiding the list from guessers is deliberate: those words are the fastest route to the answer.' },
         { zh: '2 人局沒有裁判，禁字會自動關閉。',
