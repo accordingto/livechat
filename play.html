@@ -311,35 +311,28 @@
        without actually reading the card) and the host asked for the row to
        stack top-to-bottom instead, one wide button per line, which also gives a
        two-digit number more room than a cramped square ever could. Solid green
-       (the site's own "primary action, unmistakably a button" colour — see
-       .conq-roll — with the same dark-ink-on-bright-fill pairing) rather than
-       the first version's dark recessed look: a bare number had no icon or
-       label to say "button" the way .pick-btn's A/B/C do, and was reported as
-       not looking pressable at all. The one actually pressed turns a deeper
-       green with a white ring instead of switching hue, so all three keep
-       reading as one green control even once one of them is picked. */
+       and copied from .conq-roll's exact recipe pixel-for-pixel — background,
+       border, dark-ink text, soft glow shadow, plain scale-down on press, no
+       colour-shifting hover — after an earlier pass invented its own "3D keycap"
+       treatment (an offset drop-shadow ledge, a translateY press) that looked
+       like a different control despite using the same green; matching the one
+       real green button already on the site reads as "the same kind of button"
+       instead of a new one that merely shares a colour. The one actually pressed
+       turns a deeper green with a white ring instead of switching hue, so all
+       three keep reading as one green control even once one is picked. */
     .checknum-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
     .checknum-btn {
       width: 100%; padding: 18px 14px;
       display: flex; align-items: center; justify-content: center;
-      background: #22c55e; border: 2px solid #22c55e; border-radius: 16px;
-      box-shadow: 0 4px 0 #14532d, 0 6px 14px rgba(34,197,94,.35);
+      background: #22c55e; border: 2px solid #22c55e; border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(34,197,94,.25);
       font-size: 2rem; font-weight: 900; font-family: inherit; color: #06230f;
-      cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s, box-shadow .2s;
+      cursor: pointer; transition: background .2s, color .2s, transform .1s, box-shadow .2s;
     }
-    /* pressed-down feel: the keycap drops onto its own shadow instead of just
-       shrinking in place */
-    .checknum-btn:active {
-      transform: translateY(3px) scale(.98);
-      box-shadow: 0 1px 0 #14532d, 0 2px 6px rgba(34,197,94,.35);
-    }
+    .checknum-btn:active { transform: scale(.98); }
     .checknum-btn.pressed {
       background: #166534; border-color: #fff; color: #fff;
-      box-shadow: 0 4px 0 #052e13, 0 0 20px rgba(255,255,255,.35);
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .checknum-btn:hover { background: #1fb356; border-color: #1fb356; }
-      .checknum-btn.pressed:hover { background: #187a3d; }
+      box-shadow: 0 0 20px rgba(255,255,255,.35);
     }
 
     /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
