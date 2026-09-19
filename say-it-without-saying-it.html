@@ -72,6 +72,10 @@
       border-color: #ef4444; box-shadow: 0 0 28px rgba(239,68,68,.3);
     }
     .score-card.is-called .sc-role { color: var(--bad-text); }
+    /* a plain dim, not a colour — this is a pause, not a result, and it shouldn't
+       compete on a shared screen with the giver/ref/buzzed highlights above */
+    .score-card.is-away { opacity: .55; }
+    .score-card.is-away .sc-role { color: var(--text-muted); }
 
     /* the Player Links section is otherwise all indigo (same as the rest of the
        page's chrome), so the clue giver needs a colour nothing else there uses to
@@ -184,6 +188,32 @@
        unticking it would leave no deck (see toggleLevel) */
     .level-btn.is-locked { cursor: default; }
     .level-btn.is-locked:active { transform: none; }
+
+    /* Marking a player "away" lives in the room card (below), not the control bar, so
+       it gets its own small button rather than reusing .level-btn — same checkbox
+       shape, its own colour (grey, not this page's red/indigo, since it isn't a game
+       setting) so it never reads as another difficulty-style option. */
+    .away-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    .away-btn {
+      display: inline-flex; align-items: center;
+      background: var(--btn-face, #22224a); border: 2px solid var(--border-3); color: var(--text-dim);
+      border-radius: 10px; padding: 7px 12px 7px 9px;
+      font-size: .8rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .away-btn:active { transform: scale(.96); }
+    .away-btn .ab-box {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 15px; height: 15px; margin-right: 6px;
+      border: 1.5px solid var(--border-3); border-radius: 4px;
+      font-size: .68rem; line-height: 1;
+    }
+    .away-btn.on { border-color: #94a3b8; color: #cbd5e1; background: rgba(148,163,184,.14); }
+    .away-btn.on .ab-box { border-color: #94a3b8; background: #94a3b8; color: var(--btn-ink); }
+    /* can't turn away ON from here — doing so would leave fewer than 2 players in
+       play (see toggleAway) */
+    .away-btn.is-locked { cursor: not-allowed; opacity: .55; }
+    .away-btn.is-locked:active { transform: none; }
 
     /* three separate settings (forbidden words / difficulty / banned-word count) live in
        this one column — each gets its own small caps label and a dashed rule above it
@@ -763,7 +793,7 @@
       difficultyLabel: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
       toggleOn: { zh: 'ON', en: 'ON' },
       toggleOff: { zh: 'OFF', en: 'OFF' },
-      toggleOffLocked: { zh: 'OFF（需要 3 人以上）', en: 'OFF (needs 3+ players)' },
+      toggleOffLocked: { zh: 'OFF（需要 3 位以上在場玩家）', en: 'OFF (needs 3+ players in the game)' },
       easyLabel: { zh: '🟢 簡單', en: '🟢 Easy' },
       mediumLabel: { zh: '🟡 中等', en: '🟡 Medium' },
       hardLabel: { zh: '🔴 困難', en: '🔴 Hard' },
@@ -796,6 +826,9 @@
       refereeRole: { zh: '👀 裁判', en: '👀 Referee' },
       calledTabooRole: { zh: '🚨 喊了 Taboo！', en: '🚨 Called Taboo!' },
       buzzedInRole: { zh: '🙋 搶答了', en: '🙋 Buzzed in' },
+      awayRole: { zh: '💤 暫時離開', en: '💤 Away' },
+      awayLabel: { zh: '💤 暫時離開', en: '💤 Away' },
+      awayLockedHint: { zh: '至少要留 2 位在場玩家', en: 'Keep at least 2 players in the game' },
       statusNoRoom: { zh: '請先發出下方的玩家連結才能開始 — 祕密字只會給描述者，絕不會出現在這個畫面。', en: "Hand out the player links below to start — the secret word goes to the clue giver, never to this screen." },
       statusIdle: { zh: '按下「發一個題目」開始 — 或由任何一位玩家從自己的卡片上發題。', en: 'Press Deal a Word to start — or let any player deal it from their own card.' },
       clockOnHold: { zh: '⏸️ 計時已暫停', en: '⏸️ Clock on hold' },
@@ -878,6 +911,17 @@
        whoever has refereed least. Random order, no one left out, no fixed rotation. */
     let giverBag = [];     // shuffled player indices still waiting for their turn to give
     let refCount = [];     // how many times each player has refereed, to keep it even
+    /* A player the host has marked "temporarily away" (stepped out mid-session) is
+       skipped by every future role draw — drawGiver()/drawReferee()/guesserNums() all
+       filter it out — but is not removed from the room: their score stays on the
+       board and they can be switched back on the moment they return. It never touches
+       a round already in progress (same rule as difficulty/banned words: a setting
+       change only affects the NEXT deal), so marking the CURRENT clue giver or
+       referee away does not cut their turn short — the host still ends that with the
+       existing "End turn" button if they need to. Persisted the same way Kangaroo
+       Court keeps judgeEnabled: via ROOM.setExtra(), in the shared room session, so
+       it survives a reload of this tab. */
+    let away = [];
     let card = null;
     let roundForbidden = null; // card.forbidden sliced to bannedCount at deal time, so a mid-round
                                 // setting change can't retroactively add or drop a banned word
@@ -1156,7 +1200,7 @@
     }
 
     function toggleForbidden() {
-      if (!forbiddenOn && ROOM.count < 3) return; // no referee possible with only 2 players
+      if (!forbiddenOn && activeCount() < 3) return; // no referee possible with fewer than 3 players in play
       forbiddenOn = !forbiddenOn;
       saveOptions();
       // no banned words, no referee — and dropping a pending Taboo! call this way
@@ -1172,7 +1216,7 @@
 
     function renderForbiddenToggle() {
       const btn = document.getElementById('forbidden-toggle');
-      const locked = ROOM.count < 3;
+      const locked = activeCount() < 3;
       btn.classList.toggle('on', forbiddenOn);
       btn.disabled = locked;
       // the group label above already says "Forbidden words" — this only needs the state
@@ -1206,26 +1250,35 @@
       counts: [2, 3, 4, 5, 6],
       defaultCount: 4,
       hideSetup: true, // player count and links are set up once on index.html now
+      actionsHTML: '<span class="room-label" data-i18n="taboo.awayLabel">' + tt('awayLabel') + '</span><div class="away-btns" id="away-btns"></div>',
       extraRowHTML: '<button class="deck-toggle card-preview-toggle" id="card-preview-toggle" type="button"></button>',
       linksNote: tt('linksNote'),
       onPlayerData: handleAnswer,
       onCountChange: n => {
         giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores();
-        // 1 giver + 1 guesser leaves nobody to referee, so 2-player games can't use banned words
-        if (n < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
+        reconcileAway(n);
+        // fewer than 3 players in play leaves nobody to referee, so banned words can't stay on
+        if (activeCount() < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
         renderForbiddenToggle();
+        renderAwayBtns();
         resetRound();
       },
-      onNameChange: () => { renderAll(); if (state !== 'idle') pushState(); },
+      onNameChange: () => { renderAll(); renderAwayBtns(); if (state !== 'idle') pushState(); },
     });
     function renderFbWarning() {
       document.getElementById('fb-warning').innerHTML = tt('fbWarning');
       document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
     }
     renderFbWarning();
+    // away lives in the same shared room-session blob Kangaroo Court keeps
+    // judgeEnabled in (see ROOM.setExtra), so it survives a reload of this tab
+    const savedAway = ROOM.getExtra('away');
+    away = Array.isArray(savedAway) ? savedAway.map(Boolean) : [];
     // ROOM.init() can restore a persisted count of 2 (shared across games) without
     // running onCountChange, so the same correction has to happen here too
-    if (ROOM.count < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
+    reconcileAway(ROOM.count);
+    if (activeCount() < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
+    renderAwayBtns();
 
     /* Lets the host check what a player's card actually shows without picking up
        their phone — text only appears in the Player Links section below, never on
@@ -1314,6 +1367,9 @@
 
       if (v.choice === 'buzz') {
         if (num === refIdx + 1) { ROOM.clearAnswer(num - 1); return; } // the referee sits this one out
+        // marked away — their card shouldn't be showing a buzzer at all, but a stray
+        // tap from a phone left open in a pocket is dropped just the same
+        if (away[num - 1]) { ROOM.clearAnswer(num - 1); return; }
         // play stopped the moment someone called Taboo! — the cards hide their buzzers
         // for the duration, and anything that slips through (a card that hadn't
         // repainted yet) is dropped rather than queued behind the ruling
@@ -1547,22 +1603,101 @@
       return a;
     }
 
+    /* how many players are actually in play right now — everyone minus whoever the
+       host has marked away. Every role draw below works off this, not ROOM.count,
+       so a player sitting out is invisible to them the same way a player who was
+       never in the room would be. */
+    function activeCount() {
+      let n = 0;
+      for (let i = 0; i < ROOM.count; i++) if (!away[i]) n++;
+      return n;
+    }
+
+    /* Sizes `away` to `n` players and refuses to trust a saved list that would leave
+       fewer than 2 in play — a giver with nobody to guess is not a game. That can
+       happen with a stale list from a bigger room, or a room whose count shrank
+       while this tab was closed; resetting to "nobody away" is always safe, silently
+       trusting the number is not. Persists whatever it lands on either way, so a
+       correction made here doesn't get read back uncorrected next time. */
+    function reconcileAway(n) {
+      if (!Array.isArray(away)) away = [];
+      away = away.slice(0, n).map(Boolean);
+      while (away.length < n) away.push(false);
+      let activeN = 0;
+      for (let i = 0; i < n; i++) if (!away[i]) activeN++;
+      if (activeN < 2) away = away.map(() => false);
+      ROOM.setExtra('away', away);
+    }
+
+    /* Turning a player's away flag ON only ever changes what the NEXT role draw sees
+       (see drawGiver/drawReferee/guesserNums above and below) — it never touches a
+       round already in progress. If they happen to be this round's clue giver or
+       referee, that round plays out with them exactly as it would have anyway; the
+       host still has "End turn" for a giver who really has to leave right now. */
+    function toggleAway(i) {
+      if (i < 0 || i >= ROOM.count) return;
+      const turningOn = !away[i];
+      if (turningOn && activeCount() <= 2) return; // would leave fewer than 2 players in play
+      away[i] = turningOn;
+      ROOM.setExtra('away', away);
+      // marking someone away can drop the active headcount below what banned words
+      // needs (a referee) — same reaction as the room shrinking to 2 players, and for
+      // the same reason: it clears the pending call rather than leaving it stuck open
+      if (turningOn && activeCount() < 3 && forbiddenOn) {
+        forbiddenOn = false; saveOptions();
+        tabooCalls = []; refIdx = -1; releaseTimer();
+      }
+      renderAwayBtns();
+      renderForbiddenToggle();
+      if (state !== 'idle') pushState();
+      renderAll();
+    }
+
+    function renderAwayBtns() {
+      const wrap = document.getElementById('away-btns');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      for (let i = 0; i < ROOM.count; i++) {
+        const on = !!away[i];
+        const locked = !on && activeCount() <= 2;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'away-btn' + (on ? ' on' : '') + (locked ? ' is-locked' : '');
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (locked) b.title = tt('awayLockedHint');
+        const box = document.createElement('span');
+        box.className = 'ab-box';
+        box.textContent = on ? '✓' : '';
+        b.appendChild(box);
+        b.appendChild(document.createTextNode(ROOM.name(i)));
+        b.onclick = () => toggleAway(i);
+        wrap.appendChild(b);
+      }
+    }
+
     function drawGiver() {
       const n = ROOM.count;
-      giverBag = giverBag.filter(i => i < n);
+      giverBag = giverBag.filter(i => i < n && !away[i]);
       if (!giverBag.length) {
-        giverBag = shuffled(n);
-        if (n > 1 && giverBag[0] === giverIdx) giverBag.push(giverBag.shift());
+        giverBag = shuffled(n).filter(i => !away[i]);
+        // everyone is away (should not happen — toggleAway() refuses to let active
+        // drop below 2 — but dealing a word to nobody is worse than ignoring away
+        // here just this once) falls back to the full, unfiltered bag
+        if (!giverBag.length) giverBag = shuffled(n);
+        if (giverBag.length > 1 && giverBag[0] === giverIdx) giverBag.push(giverBag.shift());
       }
       return giverBag.shift();
     }
 
-    /* the referee is random among everyone except the giver, but drawn from those who
-       have refereed fewest times — so it stays even without becoming a fixed order */
+    /* the referee is random among everyone except the giver and anyone away, but
+       drawn from those who have refereed fewest times — so it stays even without
+       becoming a fixed order. A player's refCount stays frozen while they're away,
+       so they tend to come up sooner once they're switched back on — a fair way to
+       make up the turns they missed, not something that needs its own bookkeeping. */
     function drawReferee(giver) {
       const n = ROOM.count;
       while (refCount.length < n) refCount.push(0);
-      const eligible = Array.from({ length: n }, (_, i) => i).filter(i => i !== giver);
+      const eligible = Array.from({ length: n }, (_, i) => i).filter(i => i !== giver && !away[i]);
       if (!eligible.length) return -1;
       const fewest = Math.min(...eligible.map(i => refCount[i] || 0));
       const pool = eligible.filter(i => (refCount[i] || 0) === fewest);
@@ -1572,10 +1707,11 @@
     }
 
     /* everyone in this round's buzz-in rotation — every guesser except the clue
-       giver and the referee, who never buzz at all */
+       giver and the referee, who never buzz at all — and anyone currently marked
+       away, who isn't expected to be looking at their phone at all */
     function guesserNums() {
       const n = ROOM.count;
-      return Array.from({ length: n }, (_, i) => i + 1).filter(num => num !== giverIdx + 1 && num !== refIdx + 1);
+      return Array.from({ length: n }, (_, i) => i + 1).filter(num => num !== giverIdx + 1 && num !== refIdx + 1 && !away[num - 1]);
     }
 
     /* ── Round flow ── */
@@ -1861,6 +1997,9 @@
         forbidden: null, target: null, emoji: null,
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
         tabooBy: null, iCalledTaboo: null, forbiddenOn,
+        // told to the card mainly so it can stop showing a buzzer to someone who
+        // stepped away — the host-side draws already skip them either way
+        away: !!away[i],
         timer: timerPayload(),
         next: nextPayload(i),
       };
@@ -2075,13 +2214,18 @@
         const buzzed = state === 'playing' && queue[0] === num;
         const called = state === 'playing' && tabooCalls.includes(num);
         const ref = state !== 'idle' && i === refIdx;
+        // an away flag on the current giver/ref/buzzer still loses to what's actually
+        // happening in this round — away only ever kept them out of being drawn for
+        // it in the first place, so if one of those is true here they're in it anyway
+        const awayNow = away[i] && !giver && !ref && !buzzed && !called;
         const role = called ? tt('calledTabooRole')
                    : giver ? tt('cluegiverRole')
                    : ref ? tt('refereeRole')
                    : buzzed ? tt('buzzedInRole')
+                   : awayNow ? tt('awayRole')
                    : '';
         const behind = isBehind(i);
-        html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
+        html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${awayNow ? ' is-away' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${ROOM.name(i)}</span>
             <span class="sc-pts">${scores[i] || 0}</span>
@@ -2141,6 +2285,7 @@
       renderFbWarning();
       renderPreviewToggle();
       renderForbiddenToggle();
+      renderAwayBtns();
       renderLevelBtns();
       renderBannedCountBtns();
       renderDeckList();

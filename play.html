@@ -767,6 +767,8 @@
       guesserChip: { zh: '🙋 你這輪負責猜', en: "🙋 You're guessing this round" },
       refereeReadySub: { zh: '這輪你不用猜 — 專心聽 {name} 有沒有說出禁字。題目一開，禁字清單就會出現在這裡。', en: "You don't guess this round — just listen for {name} saying a forbidden word. The list appears here the moment the word opens." },
       guesserReadySub: { zh: '{name} 開始形容之後，想到答案就按搶答鈕，然後大聲說出來。', en: 'Once {name} starts describing, hit the buzzer and say your guess out loud.' },
+      awayChip: { zh: '💤 你被標記為暫時離開', en: "💤 You're marked away" },
+      awaySub: { zh: '主持人會跳過你，等你回來再把你加回輪替。安心，你的分數還在。', en: "The host is skipping you for now — you'll be back in the rotation whenever they switch you on again. Your score is safe." },
       youCalledTaboo: { zh: '🚨 你喊了 Taboo！', en: '🚨 You called Taboo!' },
       tabooFoulBtn: { zh: '🚨 Taboo！描述者說了禁字', en: '🚨 Taboo! The clue giver said one' },
       listenForForbidden: { zh: '只有 {name}（描述者）說出禁字才算 — 猜的人說到不算。這輪你不用搶答。', en: "Only {name}, the clue giver, can break the rule — a guesser saying a forbidden word doesn't count. You sit this round out." },
@@ -1561,6 +1563,12 @@
               <span class="pb-key">👀</span><span class="pb-label">${pt('openWordBtn')}</span>
             </button>`);
         }
+        if (data.away) {
+          return shell(`
+            ${chip(pt('awayChip'), '#64748b')}
+            <span class="pick-sub">${pt('awaySub')}</span>
+            <p class="conq-wait">💤</p>`);
+        }
         /* A sealed round used to tell everyone except the clue giver the same thing:
            "waiting for X to open the word". That names the one person who already
            knows what they are doing, and leaves the other two or three not knowing
@@ -1638,6 +1646,13 @@
           ${bannedBlock}
           ${data.forbiddenOn === false ? `<span class="pick-sub">${pt('noForbiddenThisRound')}</span>` : ''}
           ${idleHint}`);
+      }
+
+      if (data.away) {
+        return shell(`
+          ${chip(pt('awayChip'), '#64748b')}
+          ${clock}
+          <span class="pick-sub">${pt('awaySub')}</span>`);
       }
 
       const mine = data.buzzer === data.playerNum;
