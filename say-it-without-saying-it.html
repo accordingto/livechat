@@ -1088,7 +1088,19 @@
     /* Changing difficulty only affects the next word — the round in play keeps its
        card. Unticking the last remaining level is refused rather than silently
        falling back to the whole deck: a row with nothing ticked would read as "no
-       words at all", and the next deal would quietly contradict it. */
+       words at all", and the next deal would quietly contradict it.
+       `used` is deliberately NOT cleared here. Its entries are absolute indices
+       into the one unchanging `DECK` array (see levelDeck()/dealRound() — they
+       only ever filter DECK's own indices, never rebuild or reindex a new
+       array), so every "already dealt" marker stays meaningful no matter which
+       levels are ticked afterward. A real report confirmed the bug this used to
+       cause: widening the pool (e.g. easy+medium → easy+medium+hard) reset
+       `used` to empty right as new cards became eligible, so the very next deal
+       could immediately repeat a word the group had just seen a moment earlier.
+       This is different from dare-conquest.html's usedPrompts/usedTruths, which
+       DO need clearing on a tier change — those index into a freshly
+       concatenated/merged deck whose shape and internal order genuinely changes
+       when a tier is added or removed. */
     function toggleLevel(id) {
       if (!LEVELS.some(l => l.id === id)) return;
       if (isLevelOn(id)) {
@@ -1097,7 +1109,6 @@
       } else {
         levels = LEVELS.filter(l => l.id === id || isLevelOn(l.id)).map(l => l.id);
       }
-      used = [];
       saveOptions();
       renderLevelBtns();
       renderAll();
