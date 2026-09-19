@@ -67,20 +67,40 @@
        One row of three cards; each says who the tier is for, because "easy / medium /
        hard" is the whole label — the tiers are tick boxes, not three exclusive options.
        `.diff-group` wraps the label + row as one unit so it can move as a single node
-       between the setup screen and the in-game control bar (see placeDiffGroup()) —
+       between the setup screen and the in-game popover (see placeDiffGroupInGame()) —
        the room warms up mid-game and Easy runs dry, so the host shouldn't have to end
        the game to switch it. */
     .diff-group { display: flex; flex-direction: column; gap: 8px; }
     .diff-label { color: var(--text-muted); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
     .diff-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-    /* the same row, shrunk to fit the control bar during play — the setup screen has
-       the whole width to itself, the control bar shares it with the turn indicator */
-    .diff-inline-slot:empty { display: none; }
-    .diff-inline-slot .diff-group { gap: 4px; }
-    .diff-inline-slot .diff-row { grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 6px; }
-    .diff-inline-slot .diff-btn { padding: 6px 10px; border-radius: 10px; gap: 6px; }
-    .diff-inline-slot .diff-btn .db-name { font-size: .8rem; }
-    .diff-inline-slot .diff-btn .db-box { width: 15px; height: 15px; }
+    /* ── In-game: a popover instead of an always-open row ──
+       The full picker takes real vertical space the setup screen can spare and the
+       shared game screen can't — three full-height rows next to the turn indicator was
+       reported as wasted space on a screen that's meant to be mostly board. In-game it
+       collapses to one small pill that shows the ticked tiers as their colour dots
+       (🟢/🟡/🔴, the same dots the checkboxes use) and opens the exact same `#diff-group`
+       — moved in, not copied — in a floating panel that costs zero layout space closed.
+       `#diff-popover` itself lives OUTSIDE #game-area in the HTML (see the comment
+       there) and is `position: fixed`, positioned in JS from the toggle button's own
+       rect each time it opens — a plain CSS anchor to this button doesn't reach it,
+       because .control-bar's finished entrance animation leaves it with its own
+       stacking context that a descendant's z-index can never climb out of. */
+    .diff-popover-wrap { flex: none; }
+    .diff-toggle-btn {
+      background: var(--btn-face, #22224a); border: 2px solid var(--border-3, #39396b);
+      border-radius: 999px; padding: 7px 14px; cursor: pointer; font: inherit;
+      display: flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 700;
+      color: var(--text-dim); transition: background .15s;
+    }
+    .diff-toggle-btn:hover { background: var(--btn-face-hi, #2b2b5c); }
+    .diff-toggle-btn .dtb-dots { font-size: .8rem; letter-spacing: 1px; }
+    .diff-popover {
+      position: fixed; z-index: 9999;
+      min-width: 220px;
+      background: var(--surface); border: 2px solid var(--border-2, #2e2e5e);
+      border-radius: 16px; padding: 14px; box-shadow: 0 14px 34px rgba(0,0,0,.5);
+    }
+    .diff-popover .diff-row { grid-template-columns: 1fr; }
     .diff-btn {
       background: var(--btn-face, #22224a); border: 2px solid var(--border-3, #39396b);
       border-radius: 14px; padding: 13px 15px; cursor: pointer; text-align: left;
@@ -145,10 +165,9 @@
       50%       { filter: brightness(1.35); }
     }
 
-    /* ── Control bar: the turn indicator, plus the difficulty picker once the game
-       starts (moved in from the setup screen — see placeDiffGroup()). Falls back to
-       centered if that slot is ever empty, which shouldn't happen once the game is
-       showing, but costs nothing to guard. ── */
+    /* ── Control bar: the turn indicator, plus a small difficulty pill once the game
+       starts (see the difficulty-popover comment above) — the pill is one line tall,
+       so this row keeps its original height whether the game is running or not. ── */
     .control-bar {
       width: 100%; max-width: 1100px;
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -156,7 +175,6 @@
       padding: 8px 22px; margin-bottom: 10px;
       animation: fadeUp .5s .28s ease both;
     }
-    .control-bar:has(.diff-inline-slot:empty) { justify-content: center; }
     .turn-indicator { font-size: clamp(.9rem, 2vw, 1.05rem); font-weight: 800; white-space: nowrap; }
     .turn-indicator .tname { color: var(--turn-color, var(--ok-text)); }
     .turn-indicator .round-count { color: var(--text-dim); font-weight: 700; margin-left: 2px; }
@@ -687,7 +705,11 @@
 
     <div class="control-bar">
       <div class="turn-indicator" id="turn-indicator"></div>
-      <div class="diff-inline-slot" id="diff-inline-slot"></div>
+      <div class="diff-popover-wrap" id="diff-popover-wrap">
+        <button type="button" class="diff-toggle-btn" id="diff-toggle-btn" onclick="toggleDiffPopover()">
+          🎚️ <span class="dtb-dots" id="diff-toggle-dots"></span>
+        </button>
+      </div>
     </div>
 
     <div class="board-stage">
@@ -728,6 +750,16 @@
 
     <div class="winner-banner hidden" id="winner-banner"></div>
   </div>
+
+  <!-- The difficulty popover lives here, OUTSIDE #game-area, on purpose: .control-bar
+       and .board-stage both carry a finished fadeUp entrance animation with fill-mode
+       'both', which per spec leaves them with a (identity) transform and therefore
+       their own stacking context — z-index inside one of them can never out-rank
+       content in the other, no matter how high, because they're compared as whole
+       units in DOM order instead. Placing the popover as a plain sibling of #game-area
+       (position: fixed, positioned in JS from the toggle button's own rect — see
+       toggleDiffPopover()) sidesteps that entirely. -->
+  <div class="diff-popover hidden" id="diff-popover"></div>
 
   <!-- ── Browse all prompts: closed by default, since this screen is shared and the
        full deck would spoil every dare/truth before it's drawn ── -->
@@ -1099,13 +1131,13 @@
     I18N.onChange(() => buildPromptList());
 
     /* ── Difficulty picker ──
-       Only reachable from the setup screen, so it can never change the deck mid-game;
-       a resumed game restores whatever tiers it was played on. Toggling redraws the
-       prompt browser below, since that list is the combined deck. */
+       Reachable from the setup screen AND, once the game starts, from a small popover
+       in the control bar (see placeDiffGroupInGame() below) — the room warms up and
+       Easy runs dry mid-game, so the host shouldn't have to end the game to add a tier.
+       Toggling redraws the prompt browser below, since that list is the combined deck. */
     function renderDiffButtons() {
       const row = document.getElementById('diff-row');
-      if (!row) return;
-      row.innerHTML = DIFFICULTIES.map(d => {
+      if (row) row.innerHTML = DIFFICULTIES.map(d => {
         const on = isTierOn(d);
         const locked = on && difficulties.length === 1;
         const k = d[0].toUpperCase() + d.slice(1);
@@ -1115,6 +1147,16 @@
             <span class="db-name">${ct('diff' + k + 'Name')}</span>
           </button>`;
       }).join('');
+      renderDiffToggleDots();
+    }
+
+    // the closed-by-default in-game pill: just the colour dot of every ticked tier
+    // (the same dot the checkboxes themselves use), so it reads at a glance without
+    // spending any width on text — opening the popover shows the full names.
+    const TIER_DOT = { easy: '🟢', medium: '🟡', hard: '🔴' };
+    function renderDiffToggleDots() {
+      const el = document.getElementById('diff-toggle-dots');
+      if (el) el.textContent = DIFFICULTIES.filter(isTierOn).map(d => TIER_DOT[d]).join('');
     }
 
     function toggleDifficulty(d) {
@@ -1138,16 +1180,60 @@
       saveGame();                 // no-ops before the game starts (saveGame checks that)
     }
 
-    /* Moves the difficulty picker from the setup screen into the in-game control bar —
+    /* Moves the difficulty picker from the setup screen into the in-game popover panel —
        same node, not a copy, so the exact same buttons/handlers keep working and there's
        only ever one place the checkmarks can be. One-way: Dare Conquest has no mid-game
        "back to setup" screen to move it back to, so both startGame() and resumeGame()
        just call this once on the way into the game. */
     function placeDiffGroupInGame() {
       const group = document.getElementById('diff-group');
-      const target = document.getElementById('diff-inline-slot');
+      const target = document.getElementById('diff-popover');
       if (group && target) target.appendChild(group);
     }
+
+    // popover open/close: click the pill to toggle, click anywhere outside to close —
+    // it floats over the board, so leaving it stuck open would sit on top of play.
+    // Position is computed from the button's own viewport rect each time it opens,
+    // rather than anchored via CSS to a parent, because #diff-popover lives outside
+    // #game-area on purpose (see the HTML comment there).
+    function positionDiffPopover() {
+      const btn = document.getElementById('diff-toggle-btn');
+      const pop = document.getElementById('diff-popover');
+      if (!btn || !pop) return;
+      const r = btn.getBoundingClientRect();
+      pop.style.top = (r.bottom + 8) + 'px';
+      pop.style.right = (window.innerWidth - r.right) + 'px';
+    }
+    function closeDiffPopover() {
+      document.getElementById('diff-popover').classList.add('hidden');
+      window.removeEventListener('resize', positionDiffPopover);
+      window.removeEventListener('scroll', closeDiffPopover, true);
+    }
+    function toggleDiffPopover() {
+      const pop = document.getElementById('diff-popover');
+      if (pop.classList.contains('hidden')) {
+        positionDiffPopover();
+        pop.classList.remove('hidden');
+        window.addEventListener('resize', positionDiffPopover);
+        // capture: a scroll on any inner scrollable area (e.g. the board's own
+        // horizontal scroller) still counts as "the anchor moved, close it"
+        window.addEventListener('scroll', closeDiffPopover, true);
+      } else {
+        closeDiffPopover();
+      }
+    }
+    document.addEventListener('click', e => {
+      const wrap = document.getElementById('diff-popover-wrap');
+      const pop = document.getElementById('diff-popover');
+      if (!wrap || !pop) return;
+      // composedPath(), not .contains(e.target): ticking a checkbox re-renders
+      // #diff-row's innerHTML from inside its own click handler, which runs first and
+      // detaches the clicked button before this listener sees the event — at that
+      // point .contains(e.target) reports "not inside" for a node that plainly was.
+      // composedPath() is the path captured at dispatch time, so it stays correct.
+      const path = e.composedPath();
+      if (!path.includes(wrap) && !path.includes(pop)) closeDiffPopover();
+    });
 
     renderDiffButtons();
     I18N.onChange(renderDiffButtons);
