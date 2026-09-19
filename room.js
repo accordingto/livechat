@@ -33,6 +33,13 @@ if (typeof I18N !== 'undefined') {
     revealCheckBtn: { zh: '👁️ 顯示所有答案', en: '👁️ Reveal Answers' },
     checkRevealedNote: { zh: '✅ 答案已顯示 — 核對完畢後，重新發牌就能繼續遊戲。', en: '✅ Answers revealed — re-deal the game whenever you\'re done checking.' },
     clearBtn: { zh: '✖️ 清除', en: '✖️ Clear' },
+    // a second, different check: this one asks for something back, so it catches a
+    // player who can see their card but whose taps aren't actually getting through
+    // — sendCardCheck() alone can't, since it never asks the card for anything.
+    sendButtonCheckBtn: { zh: '🔢 傳送按鈕測試', en: '🔢 Send Button Check' },
+    buttonCheckSentNote: { zh: '🔢 已送出這三個數字：{numbers} — 口頭說出其中一個，請每位玩家按下卡片上顯示該數字的按鈕；按下的結果會即時顯示在下方。', en: "🔢 Sent these three numbers: {numbers} — call one of them out loud and have each player tap the matching button on their own card. Presses show up live below." },
+    btnCheckWaitingBadge: { zh: '🔢 等待按下…', en: '🔢 waiting for a press…' },
+    btnCheckPressedBadge: { zh: '🔢 按下了：{n}', en: '🔢 pressed: {n}' },
     playerPlaceholder: { zh: '玩家 {n}', en: 'Player {n}' },
     copyPromptLink: { zh: '複製這個連結：', en: 'Copy this link:' },
     copyPromptGeneric: { zh: '複製這個：', en: 'Copy this:' },
@@ -224,6 +231,32 @@ const ROOM = (() => {
     render();
   }
 
+  /* a second, different sanity check from sendCardCheck(): three random numbers,
+     shown to every player but shuffled into a different order on each card, so the
+     host can call one number out loud ("everyone press 7") and confirm every
+     player's own phone is actually responding to taps — not just that they can see
+     their card. sendCardCheck() alone can't catch that: it never asks the card to
+     answer back, only to be read out loud. No reveal step here (unlike the word
+     check) because there's no answer to accidentally peek at — the host picked the
+     numbers and calls them out, so seeing a press land live is the whole point. */
+  function sendButtonCheck() {
+    if (!on()) return;
+    const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+    checkNumbers = pool.slice(0, 3);
+    checkButtonId = 'bc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const id = checkButtonId;
+    // each card gets its own independent shuffle of the same three numbers, so
+    // "press 7" can't be answered by copying whichever position a neighbor pressed
+    publish(() => ({ game: 'buttoncheck', id, numbers: checkNumbers.slice().sort(() => Math.random() - 0.5) }));
+    render();
+  }
+
+  function clearButtonCheck() {
+    checkNumbers = null;
+    checkButtonId = '';
+    render();
+  }
+
   function qrSVG(text) {
     const qr = qrcode(0, 'M');
     qr.addData(text);
@@ -322,6 +355,9 @@ const ROOM = (() => {
         width: 100%; color: #94a3b8; font-size: .78rem; line-height: 1.6; margin: -4px 0 12px;
       }
       .check-note { display: flex; flex-direction: column; gap: 10px; }
+      /* the numbers the host has to actually read back out loud — the one thing
+         on this line worth pulling out of the muted note colour */
+      .check-note strong { color: #7dd3fc; font-size: .95rem; letter-spacing: .5px; }
       .check-note-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
       .check-note .check-clear-btn {
         background: none; border: none; color: var(--text-dim, #9999bb); font-family: inherit;
@@ -343,6 +379,11 @@ const ROOM = (() => {
         width: 100%; border-top: 1px dashed rgba(148,163,184,.3); padding-top: 9px;
         font-size: .82rem; font-weight: 800; color: #94a3b8;
         display: flex; align-items: center; justify-content: center; gap: 6px;
+      }
+      /* a press landing is good news, not just information — same green the rest
+         of the site already uses for "this went right" (copyPop's flash, etc.) */
+      .check-word-badge.is-pressed {
+        border-top-color: rgba(34,197,94,.4); color: var(--ok-text, #22c55e);
       }
       /* a grid, not a wrapping flex row: with flex:1 items, a lone leftover
          card on its own last row (5 players = a row of 4 then 1 alone, say)
@@ -474,12 +515,15 @@ const ROOM = (() => {
       <button class="room-btn primary copy-all-btn hidden" id="copy-all-btn" type="button" data-i18n="room.copyAllBtn">${rt('copyAllBtn')}</button>
       <button class="room-btn check-btn hidden" id="check-btn" type="button" data-i18n="room.sendCheckBtn">${rt('sendCheckBtn')}</button>
       <p class="check-note hidden" id="check-note"></p>
+      <button class="room-btn check-btn hidden" id="btncheck-btn" type="button" data-i18n="room.sendButtonCheckBtn">${rt('sendButtonCheckBtn')}</button>
+      <p class="check-note hidden" id="btncheck-note"></p>
       <div class="room-links" id="room-links"></div>`;
 
     document.getElementById('room-load-btn').onclick = loadRoomCode;
     document.getElementById('room-new-btn').onclick = newRoom;
     document.getElementById('copy-all-btn').onclick = copyAllLinks;
     document.getElementById('check-btn').onclick = sendCardCheck;
+    document.getElementById('btncheck-btn').onclick = sendButtonCheck;
     document.getElementById('room-code-input').onkeydown = e => { if (e.key === 'Enter') loadRoomCode(); };
 
     const btns = document.getElementById('room-count-btns');
@@ -509,6 +553,15 @@ const ROOM = (() => {
      (which defeats the point of the check — a host who can already see the
      answer isn't actually verifying anything). */
   let checkRevealed = false;
+
+  /* the three numbers (or null) currently sent to every player by
+     sendButtonCheck() — kept for the same reason checkWords is, except every
+     player got the same three numbers, just in their own shuffled order, so
+     there's one set to remember rather than one per player. checkButtonId is
+     the round id each press has to quote, so a press from a check the host
+     already cleared or re-sent can't be mistaken for a live one. */
+  let checkNumbers = null;
+  let checkButtonId = '';
 
   /* which parts of each player row render() draws — only index.html's own
      Step 1 wizard ever changes this (its sub-steps split name-editing, the
@@ -564,6 +617,27 @@ const ROOM = (() => {
       clearLink.onclick = clearCardCheck;
       actions.appendChild(clearLink);
       checkNote.appendChild(actions);
+    }
+    document.getElementById('btncheck-btn').classList.toggle('hidden', !live);
+    const btnCheckNote = document.getElementById('btncheck-note');
+    btnCheckNote.classList.toggle('hidden', !live || !checkNumbers);
+    if (live && checkNumbers) {
+      btnCheckNote.innerHTML = '';
+      const text = document.createElement('span');
+      // checkNumbers is generated here, never external input, so building this
+      // as markup (to bold the numbers — the one thing on this line the host
+      // actually has to read back out loud) is safe.
+      text.innerHTML = rt('buttonCheckSentNote').replace('{numbers}', `<strong>${checkNumbers.join(', ')}</strong>`);
+      btnCheckNote.appendChild(text);
+      const actions = document.createElement('div');
+      actions.className = 'check-note-actions';
+      const clearLink = document.createElement('button');
+      clearLink.type = 'button';
+      clearLink.className = 'check-clear-btn';
+      clearLink.textContent = rt('clearBtn');
+      clearLink.onclick = clearButtonCheck;
+      actions.appendChild(clearLink);
+      btnCheckNote.appendChild(actions);
     }
     document.getElementById('room-hdr').innerHTML = live
       ? rt('linksHdrOptional')
@@ -664,6 +738,22 @@ const ROOM = (() => {
         col.appendChild(badge);
       }
 
+      // this one is live the moment a press lands (see sendButtonCheck()'s own
+      // comment for why there's no reveal step to gate it behind): data[i+1] is
+      // the same node attach()'s own listener already keeps current for every
+      // caller, so no extra plumbing is needed to read a player's card-check
+      // press back out of it here.
+      if ((linksView === 'check' || linksView === 'full') && checkNumbers) {
+        const press = data[i + 1] && data[i + 1].checkPress && data[i + 1].checkPress.id === checkButtonId
+          ? data[i + 1].checkPress.value : null;
+        const badge = document.createElement('div');
+        badge.className = 'check-word-badge' + (press != null ? ' is-pressed' : '');
+        badge.innerHTML = press != null
+          ? `<span>${rt('btnCheckPressedBadge').replace('{n}', press)}</span>`
+          : `<span>${rt('btnCheckWaitingBadge')}</span>`;
+        col.appendChild(badge);
+      }
+
       if (info.answer) {
         const ans = document.createElement('div');
         ans.className = 'link-answer';
@@ -711,6 +801,7 @@ const ROOM = (() => {
   function setCount(n) {
     count = n;
     checkWords = null; // stale answer key for the old headcount
+    checkNumbers = null; checkButtonId = '';
     document.querySelectorAll('.room-count-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
     if (on()) ensureTokens(count);
     save();
@@ -724,6 +815,7 @@ const ROOM = (() => {
     if (!typed) return;
     sessionCode = typed;
     checkWords = null; // stale answer key for the room we just left
+    checkNumbers = null; checkButtonId = '';
     const saved = loadSessionData(typed);
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
     // a code with no saved data of its own (brand new, never used) starts
@@ -740,6 +832,7 @@ const ROOM = (() => {
   function newRoom() {
     sessionCode = generateSessionCode();
     checkWords = null;
+    checkNumbers = null; checkButtonId = '';
     tokens = [];
     names = []; // a brand new room starts with blank names, not whoever was in the old one
     ensureTokens(count);
@@ -768,6 +861,13 @@ const ROOM = (() => {
         // arrive through here, and a page that throws once would go deaf
         try { if (cfg.onPlayerData) cfg.onPlayerData(num, snap.val()); }
         catch (e) { console.error('onPlayerData', e); }
+        // a button-check press has to reach the host's screen the moment it
+        // lands (that's the entire point of it), and render() is the only thing
+        // that redraws the badge that shows it. Gated on checkNumbers so this is
+        // a no-op the rest of the time — index.html's own card-check substep
+        // is the only place either of these are ever non-null, and its names
+        // are read-only there, so a rebuild mid-check never costs a focused input.
+        if (checkNumbers) render();
       };
       ref.on('value', handler);
       listeners.push({ ref, handler });

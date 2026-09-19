@@ -304,6 +304,24 @@
     .pick-btn.verdict-wrong { background: #ef4444; border-color: #ef4444; color: #2b0505; }
     .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
 
+    /* 🔢 room.js's button check: three big equal buttons in a row rather than the
+       stacked .pick-row list — three single digits read better side by side than
+       one under another, and there's no need to fit a sentence of label text next
+       to each one the way A/B/C answers do. Same recessed-dark-with-border look as
+       .pick-btn, so it reads as "a real button on this site" rather than a new
+       shape. Sky-blue on press, matching room.js's own "check" accent on the
+       host's screen, so the two ends of this same check read as one feature. */
+    .checknum-row { display: flex; gap: 12px; width: 100%; }
+    .checknum-btn {
+      flex: 1; aspect-ratio: 1; min-width: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 16px;
+      font-size: 2.1rem; font-weight: 900; font-family: inherit; color: #fff;
+      cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s;
+    }
+    .checknum-btn:active { transform: scale(.96); }
+    .checknum-btn.pressed { border-color: #38bdf8; background: rgba(56,189,248,.16); color: #7dd3fc; }
+
     /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
     .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; }
     .taboo-target {
@@ -712,6 +730,12 @@
       watchingCross: { zh: '👀 正在旁觀交叉詰問…', en: '👀 Watching the cross-examination…' },
       waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
       tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
+      // room.js's second check — three numbers, shuffled into a different order
+      // on every card, so the host can call one out loud and confirm every
+      // phone is actually receiving taps, not just displaying a card.
+      buttonCheckHint: { zh: '主持人會口頭喊出一個數字 — 按下你卡片上顯示那個數字的按鈕。', en: 'The host will call out a number out loud — tap the button on your card that shows it.' },
+      buttonCheckWaitNote: { zh: '⏳ 等待主持人喊出數字…', en: '⏳ Waiting for the host to call a number…' },
+      buttonCheckPressedNote: { zh: '✅ 你按下了：{n}', en: '✅ You pressed: {n}' },
       waitingRoles: { zh: '⏳ 等待主持人發放角色...', en: '⏳ Waiting for the host to hand out the roles...' },
       waitingStartGame: { zh: '⏳ 等待主持人開始遊戲...', en: '⏳ Waiting for the host to start a game...' },
       notSetUp: { zh: '⚙️ 這個遊戲還沒設定完成。<br>請主持人完成 Firebase 設定。', en: "⚙️ This game isn't fully set up yet.<br>Ask your host to finish the Firebase setup." },
@@ -1063,6 +1087,21 @@
 
     function myPick(data) {
       return data.vote && data.voteId && data.vote.id === data.voteId ? data.vote.choice : null;
+    }
+
+    /* 🔢 room.js's button check: writes to its own field (checkPress), not `vote` —
+       this card isn't part of any real game round, so there's no vote/voteId to
+       collide with, and keeping it separate means a future game on this same
+       token can't accidentally see a stale press. Quotes data.id the same way a
+       vote quotes voteId, so a press from a check the host already cleared or
+       re-sent never gets mistaken for an answer to the current one. */
+    function submitCheckPress(value) {
+      if (!db || !session || !token || !latestData || !latestData.id) return;
+      db.ref(`rooms/${session}/players/${token}/checkPress`).set({ id: latestData.id, value });
+    }
+
+    function myCheckPress(data) {
+      return data.checkPress && data.id && data.checkPress.id === data.id ? data.checkPress.value : null;
     }
 
     function pickButton(choice, key, label, picked, hex) {
@@ -1736,6 +1775,19 @@
             <span class="card-emoji">${esc(data.emoji || '🔍')}</span>
             ${wordSpan(data.word || '')}
             <span class="secret-hint">${pt('tellHostSee')}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'buttoncheck') {
+        const pressed = myCheckPress(data);
+        el.innerHTML = `
+          <div class="secret-card theme-cardcheck">
+            ${nameBanner(data)}
+            <span class="pick-sub">${pt('buttonCheckHint')}</span>
+            <div class="checknum-row">
+              ${(data.numbers || []).map(n => `<button class="checknum-btn${pressed === n ? ' pressed' : ''}" onclick="submitCheckPress(${Number(n)})">${esc(String(n))}</button>`).join('')}
+            </div>
+            <span class="secret-hint">${pressed != null ? pt('buttonCheckPressedNote', { n: pressed }) : pt('buttonCheckWaitNote')}</span>
           </div>`;
         return;
       }
