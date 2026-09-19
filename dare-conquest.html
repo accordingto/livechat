@@ -1256,16 +1256,6 @@
         otherPicks: 0, // times chosen as the {player} in someone else's prompt — kept low-first so the same person isn't named round after round
       }));
       ownership = new Array(PATH.length).fill(-1);
-      // starting land grant: hand each player 2 tiles before the first roll, so there's
-      // already territory on the map to attack from turn one instead of a slow first lap
-      // where every tile is unclaimed and nobody can steal anything yet. Only 'dare' tiles
-      // are ownable (14 of them); max 6 players × 2 = 12, so there's always enough to go
-      // around with land left over.
-      const startTiles = shuffle(PATH.map((t, i) => t.type === 'dare' ? i : -1).filter(i => i >= 0));
-      players.forEach((_, i) => {
-        ownership[startTiles[i * 2]] = i;
-        ownership[startTiles[i * 2 + 1]] = i;
-      });
       currentIdx = 0;
       usedPrompts = [];
       usedTruths = [];
