@@ -20,6 +20,11 @@ if (typeof I18N !== 'undefined') {
     roomLabel: { zh: '房號', en: 'Room' },
     loadBtn: { zh: '載入', en: 'Load' },
     newRoomBtn: { zh: '新房間', en: 'New Room' },
+    // sits right under the room-code row: the row itself only ever explains what
+    // "Load" is for (switching back to a room used before) — nothing told the host
+    // when to press the OTHER button instead, so a host reusing a stale room code
+    // from last time's activity had no prompt telling them not to.
+    newRoomNote: { zh: '🆕 這是全新的一場活動嗎？按「新房間」重新產生房號，才不會跟上次活動的連結搞混。', en: '🆕 Starting a brand-new session? Tap "New Room" for a fresh code, so you don\'t mix up links with last time\'s.' },
     playersLabel: { zh: '玩家', en: 'Players' },
     copyAllBtn: { zh: '📋 複製所有連結', en: '📋 Copy All Links' },
     copiedBtn: { zh: '已複製', en: 'Copied' },
@@ -336,6 +341,16 @@ const ROOM = (() => {
       }
       .room-tag { font-size: .74rem; letter-spacing: .5px; color: var(--text-muted, #82829f); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; }
       .room-note { color: var(--text-dim, #9999bb); font-size: .78rem; line-height: 1.6; margin: -4px 0 12px; }
+      /* the room-code row only ever explained "Load" (switch back to a room used
+         before) — nothing told the host when to use New Room instead, so reusing a
+         stale room code from last time's activity went unprompted. Amber, same
+         family as index.html's own .sheet-nudge, for the same reason: a host
+         reading this is deciding whether their old links still apply. */
+      .room-new-note {
+        font-size: .8rem; line-height: 1.6; color: var(--warn-text-soft, #fdba74);
+        background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.35);
+        border-radius: 10px; padding: 9px 13px; margin: -4px 0 14px;
+      }
       /* sits right after room-note, wrapping onto its own line on narrow screens
          next to whatever game-specific toggle (e.g. Say It Without Saying It's
          "Show what's on player cards") also lives in that same flow */
@@ -496,17 +511,18 @@ const ROOM = (() => {
 
     mount.innerHTML = `
       <div class="room-card">
-        <div class="room-row">
-          <span class="room-label" data-i18n="room.playersLabel">${rt('playersLabel')}</span>
-          <div class="room-count-btns" id="room-count-btns"></div>
-          <span id="room-actions"></span>
-        </div>
-        <div class="room-divider hidden" id="room-code-divider"></div>
         <div class="room-row hidden" id="room-code-row">
           <span class="room-label" data-i18n="room.roomLabel">${rt('roomLabel')}</span>
           <input id="room-code-input" maxlength="8" autocomplete="off" spellcheck="false">
           <button class="room-btn" id="room-load-btn" data-i18n="room.loadBtn">${rt('loadBtn')}</button>
           <button class="room-btn" id="room-new-btn" data-i18n="room.newRoomBtn">${rt('newRoomBtn')}</button>
+        </div>
+        <p class="room-new-note hidden" id="room-new-note" data-i18n="room.newRoomNote">${rt('newRoomNote')}</p>
+        <div class="room-divider hidden" id="room-code-divider"></div>
+        <div class="room-row">
+          <span class="room-label" data-i18n="room.playersLabel">${rt('playersLabel')}</span>
+          <div class="room-count-btns" id="room-count-btns"></div>
+          <span id="room-actions"></span>
         </div>
         ${cfg.extraRowHTML ? `<div class="room-divider"></div><div class="room-row" id="room-extra-row">${cfg.extraRowHTML}</div>` : ''}
       </div>
@@ -586,6 +602,7 @@ const ROOM = (() => {
     if (cfg.hideSetup) { renderCompact(wrap); return; }
     const live = on();
     document.getElementById('room-code-row').classList.toggle('hidden', !live);
+    document.getElementById('room-new-note').classList.toggle('hidden', !live);
     document.getElementById('room-code-divider').classList.toggle('hidden', !live);
     // linksNote may be a function so callers can keep it in sync with the
     // current language (see index.html, the only caller still using it)
