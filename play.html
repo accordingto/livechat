@@ -36,8 +36,20 @@
       animation: fadeUp .5s ease both;
       transition: border-color .3s, box-shadow .3s;
     }
-    .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
+    .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); animation: fadeUp .5s ease both, pulseConquest 3s ease-in-out infinite; }
     .secret-card.theme-cardcheck   { border-color: #94a3b8; box-shadow: 0 0 60px rgba(148,163,184,.18); }
+    /* every theme below breathes the same way theme-waiting and theme-cardcheck
+       already did (see the big comment further down) — one named keyframe per
+       theme's own colour rather than a shared CSS-variable-driven one, because
+       two cards (Persuade Together's judge, Kangaroo Court's role-tinted card)
+       recolour their border/box-shadow per player with an inline `style=`, and a
+       class-level animation would fight that inline colour every frame once it's
+       running (a CSS animation overrides even inline styles for the property it
+       animates). Those two dynamic cases are left static, exactly as before;
+       their own *idle*, not-yet-recoloured state further down opts into a pulse
+       through its own scoped class instead of through .theme-persuade/.theme-kangaroo
+       directly, so the fixed-colour cases below are the simple, safe majority. */
+    @keyframes pulseConquest { 0%, 100% { box-shadow: 0 0 60px rgba(34,197,94,.18); } 50% { box-shadow: 0 0 80px rgba(34,197,94,.32); } }
 
     /* 🏰 Dare Conquest: this card is a control panel, not a reveal — it gets tighter
        spacing and a smaller name pill than the games that show one big secret word,
@@ -213,8 +225,18 @@
       font-weight: 800; color: #fff; line-height: 1.15;
       max-width: 100%; overflow-wrap: break-word;
     }
+    /* Site-wide unification: the host liked how the waiting/check-card treatment
+       reads (see the theme-waiting and theme-cardcheck comments below) enough to
+       ask for the same style everywhere — this footer note used to be a much
+       smaller .85rem on every other game's card, which is exactly the "unfinished
+       debug screen" contrast that prompted the check-card redesign in the first
+       place. Raising the base size here means every game's card picks it up
+       automatically; theme-waiting keeps its own slightly bigger 1.2rem override
+       (three separate rounds of that specific card being asked to grow further —
+       not shrinking it back down just to make the numbers match to two decimal
+       places). */
     .secret-hint {
-      font-size: .85rem; color: var(--text-dim);
+      font-size: 1.15rem; color: var(--text-dim); line-height: 1.6;
       border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
       width: 100%;
     }
@@ -296,12 +318,23 @@
 
     /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
        You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
-    .secret-card.theme-hottake  { border-color: #ff7043; box-shadow: 0 0 60px rgba(255,112,67,.18); }
-    .secret-card.theme-sophies  { border-color: #a78bfa; box-shadow: 0 0 60px rgba(167,139,250,.18); }
-    .secret-card.theme-scene    { border-color: #ec4899; box-shadow: 0 0 60px rgba(236,72,153,.18); }
+    .secret-card.theme-hottake  { border-color: #ff7043; box-shadow: 0 0 60px rgba(255,112,67,.18); animation: fadeUp .5s ease both, pulseHottake 3s ease-in-out infinite; }
+    .secret-card.theme-sophies  { border-color: #a78bfa; box-shadow: 0 0 60px rgba(167,139,250,.18); animation: fadeUp .5s ease both, pulseSophies 3s ease-in-out infinite; }
+    .secret-card.theme-scene    { border-color: #ec4899; box-shadow: 0 0 60px rgba(236,72,153,.18); animation: fadeUp .5s ease both, pulseScene 3s ease-in-out infinite; }
     .secret-card.theme-persuade { border-color: #06b6d4; box-shadow: 0 0 60px rgba(6,182,212,.18); }
+    /* Persuade Together's card only pulses in this default, pre-role colour — the
+       moment a judge/team is dealt it switches to the inline-recoloured variant
+       further down (`style="border-color:${hex}…"`), which stays static so the
+       animation never fights that per-player colour (see the big comment above
+       theme-conquest). `.is-idle-glow` is added only on that one un-recoloured
+       render path. */
+    .secret-card.theme-persuade.is-idle-glow { animation: fadeUp .5s ease both, pulsePersuade 3s ease-in-out infinite; }
     .secret-card.theme-hottake, .secret-card.theme-sophies,
     .secret-card.theme-scene, .secret-card.theme-persuade { padding: 28px 24px 24px; gap: 16px; }
+    @keyframes pulseHottake  { 0%, 100% { box-shadow: 0 0 60px rgba(255,112,67,.18); } 50% { box-shadow: 0 0 80px rgba(255,112,67,.32); } }
+    @keyframes pulseSophies  { 0%, 100% { box-shadow: 0 0 60px rgba(167,139,250,.18); } 50% { box-shadow: 0 0 80px rgba(167,139,250,.32); } }
+    @keyframes pulseScene    { 0%, 100% { box-shadow: 0 0 60px rgba(236,72,153,.18); } 50% { box-shadow: 0 0 80px rgba(236,72,153,.32); } }
+    @keyframes pulsePersuade { 0%, 100% { box-shadow: 0 0 60px rgba(6,182,212,.18); } 50% { box-shadow: 0 0 80px rgba(6,182,212,.32); } }
 
     .pick-chip {
       font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
@@ -312,7 +345,15 @@
       width: 100%; font-size: 1.05rem; font-weight: 700; color: #fff; line-height: 1.5;
       overflow-wrap: break-word;
     }
-    .pick-sub { font-size: .85rem; color: var(--text-dim); line-height: 1.5; }
+    /* same unification as .secret-hint above — this is every game's "what's
+       happening / what to do next" line (whose turn it is, why a button is
+       hidden, etc.), the exact role .check-lead and .waiting-lead play on the
+       two cards this whole pass is matching. Bumped less than those two
+       (1.05rem, not 1.15–1.22rem) because .pick-sub also carries much shorter
+       one-line labels on some of the busier cards (Taboo, Kangaroo Court) where
+       the full lead-paragraph size left less headroom before wrapping; verified
+       against every game's states at 320–390px before landing on this number. */
+    .pick-sub { font-size: 1.05rem; color: var(--text-dim); line-height: 1.55; }
     .pick-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .pick-btn {
       display: flex; align-items: center; gap: 12px; text-align: left;
@@ -371,7 +412,8 @@
     }
 
     /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
-    .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; }
+    .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; animation: fadeUp .5s ease both, pulseTaboo 3s ease-in-out infinite; }
+    @keyframes pulseTaboo { 0%, 100% { box-shadow: 0 0 60px rgba(99,102,241,.18); } 50% { box-shadow: 0 0 80px rgba(99,102,241,.32); } }
     .taboo-target {
       width: 100%; background: #0d0d1a; border: 2px solid #6366f1; border-radius: 16px;
       padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -570,6 +612,14 @@
 
     /* ⚖️ Kangaroo Court: role tint matches the host screen's role chips */
     .secret-card.theme-kangaroo { padding: 28px 24px 24px; gap: 16px; }
+    /* Before a case is drawn nobody has a role yet, so the card is still the
+       plain slate default (base .secret-card's own border/shadow) — the same
+       colour theme-cardcheck uses, so this reuses its `checkGlow` pulse rather
+       than inventing a redundant near-identical keyframe. Once a role is dealt
+       the card switches to the inline-recoloured `style="border-color:${roleHex}…"`
+       variant further down, which stays static for the same reason
+       theme-persuade's judge/team card does (see the comment above theme-conquest). */
+    .secret-card.theme-kangaroo.is-idle-glow { animation: fadeUp .5s ease both, checkGlow 3s ease-in-out infinite; }
     /* the witness's own persona + evidence — the only card that actually spells
        out what to improvise, since everyone else can already see it was called
        out on the host's shared screen */
@@ -1712,7 +1762,7 @@
       // case, "next case" once the verdict has been delivered, with the shared countdown
       const nextCase = nextBlock(data, { hex: '#e94560', emoji: '⚖️', first: 'kcFirstCase', next: 'kcNextCase' });
       if (!data.case) {
-        return `<div class="secret-card theme-kangaroo">${nameBanner(data)}<span class="pick-sub">${nextCase ? pt('kcIdleNote') : pt('waitingNextCase')}</span>${nextCase}</div>`;
+        return `<div class="secret-card theme-kangaroo is-idle-glow">${nameBanner(data)}<span class="pick-sub">${nextCase ? pt('kcIdleNote') : pt('waitingNextCase')}</span>${nextCase}</div>`;
       }
       const role = data.role;
       // a juror called to the stand gets the gold "witness" treatment on top of
@@ -1942,7 +1992,7 @@
         const next = nextBlock(data, { hex: '#06b6d4', emoji: '🎲', first: 'nextFirstScenario', next: 'nextScenario' });
         if (!data.situation && !data.team) {
           el.innerHTML = `
-            <div class="secret-card theme-persuade">
+            <div class="secret-card theme-persuade is-idle-glow">
               ${nameBanner(data)}
               <span class="pick-sub">${pt('idlePersuade')}</span>
               ${next}
