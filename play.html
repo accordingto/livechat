@@ -249,15 +249,19 @@
       box-shadow: 0 0 22px rgba(234,179,8,.2);
     }
     .waiting-eyebrow {
-      font-size: .85rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      font-size: 1rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
       color: #eab308; opacity: .85;
     }
-    .waiting-lead { font-size: 1.08rem; color: var(--text-dim); line-height: 1.6; }
+    .waiting-lead { font-size: 1.22rem; color: var(--text-dim); line-height: 1.6; }
     /* this card's own hint text runs bigger than other cards' .secret-hint — it's the
        only text most players will actually read while waiting, so it gets read at
-       arm's length on a phone rather than skimmed on a shared desktop screen */
-    .secret-card.theme-waiting .secret-hint { font-size: 1.05rem; line-height: 1.55; }
-    .waiting-keep { display: inline-block; margin-top: 6px; font-size: .92rem; color: var(--text-muted, var(--text-dim)); }
+       arm's length on a phone rather than skimmed on a shared desktop screen. Bumped
+       a second time after a real-device screenshot still came back "make it bigger" —
+       the first round (eyebrow .72→.85rem, lead .92→1.08rem, hint .78→1.05rem,
+       keep-note nothing→.92rem) wasn't enough once seen on an actual phone rather
+       than a devtools viewport. */
+    .secret-card.theme-waiting .secret-hint { font-size: 1.2rem; line-height: 1.6; }
+    .waiting-keep { display: inline-block; margin-top: 6px; font-size: 1.05rem; color: var(--text-muted, var(--text-dim)); }
 
     /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
        You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
