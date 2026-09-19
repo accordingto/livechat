@@ -246,8 +246,14 @@ const ROOM = (() => {
      numbers and calls them out, so seeing a press land live is the whole point. */
   function sendButtonCheck() {
     if (!on()) return;
-    const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
-    checkNumbers = pool.slice(0, 3);
+    // two-digit (10-99), not single digits — a lone digit is easy to guess/copy
+    // without actually reading the card, which defeats a check that's meant to
+    // confirm the player is looking at their own screen. The domain (90 values)
+    // is far bigger than the 3 drawn, so a Set just keeps rolling until it has
+    // three distinct ones rather than shuffling a small fixed pool like before.
+    const drawn = new Set();
+    while (drawn.size < 3) drawn.add(10 + Math.floor(Math.random() * 90));
+    checkNumbers = [...drawn];
     checkButtonId = 'bc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const id = checkButtonId;
     // each card gets its own independent shuffle of the same three numbers, so

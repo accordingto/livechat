@@ -305,39 +305,41 @@
     .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
 
     /* 🔢 room.js's button check: three big equal buttons in a row rather than the
-       stacked .pick-row list — three single digits read better side by side than
-       one under another, and there's no need to fit a sentence of label text next
-       to each one the way A/B/C answers do. First version copied .pick-btn's
-       recessed dark-on-dark look (background #0d0d1a — literally the page's own
-       background colour), which reads fine on .pick-btn because the icon+label
-       pair still says "button"; a bare digit with nothing else had no such cue and
-       was reported as not looking pressable at all. Lifted onto a lighter raised
-       face with a drop shadow instead — a real keycap, not a tile that happens to
-       have a number printed on it — and sky-blue on press, matching room.js's own
-       "check" accent on the host's screen so the two ends of this one feature
-       read as connected. */
-    .checknum-row { display: flex; gap: 12px; width: 100%; }
+       stacked .pick-row list at first (three single digits read fine side by
+       side) — then the numbers became two digits (see sendButtonCheck()'s own
+       comment: a single digit is too easy to guess or copy off a neighbor
+       without actually reading the card) and the host asked for the row to
+       stack top-to-bottom instead, one wide button per line, which also gives a
+       two-digit number more room than a cramped square ever could. Solid green
+       (the site's own "primary action, unmistakably a button" colour — see
+       .conq-roll — with the same dark-ink-on-bright-fill pairing) rather than
+       the first version's dark recessed look: a bare number had no icon or
+       label to say "button" the way .pick-btn's A/B/C do, and was reported as
+       not looking pressable at all. The one actually pressed turns a deeper
+       green with a white ring instead of switching hue, so all three keep
+       reading as one green control even once one of them is picked. */
+    .checknum-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
     .checknum-btn {
-      flex: 1; aspect-ratio: 1; min-width: 0;
+      width: 100%; padding: 18px 14px;
       display: flex; align-items: center; justify-content: center;
-      background: #2a2a5c; border: 2px solid #40408a; border-radius: 16px;
-      box-shadow: 0 4px 0 #14142e, 0 6px 14px rgba(0,0,0,.4);
-      font-size: 2.1rem; font-weight: 900; font-family: inherit; color: #fff;
+      background: #22c55e; border: 2px solid #22c55e; border-radius: 16px;
+      box-shadow: 0 4px 0 #14532d, 0 6px 14px rgba(34,197,94,.35);
+      font-size: 2rem; font-weight: 900; font-family: inherit; color: #06230f;
       cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s, box-shadow .2s;
     }
     /* pressed-down feel: the keycap drops onto its own shadow instead of just
        shrinking in place */
     .checknum-btn:active {
       transform: translateY(3px) scale(.98);
-      box-shadow: 0 1px 0 #14142e, 0 2px 6px rgba(0,0,0,.4);
+      box-shadow: 0 1px 0 #14532d, 0 2px 6px rgba(34,197,94,.35);
     }
     .checknum-btn.pressed {
-      border-color: #38bdf8; background: #1c4356; color: #7dd3fc;
-      box-shadow: 0 4px 0 #0d2530, 0 0 20px rgba(56,189,248,.4);
+      background: #166534; border-color: #fff; color: #fff;
+      box-shadow: 0 4px 0 #052e13, 0 0 20px rgba(255,255,255,.35);
     }
     @media (hover: hover) and (pointer: fine) {
-      .checknum-btn:hover { border-color: #5252a8; background: #313168; }
-      .checknum-btn.pressed:hover { border-color: #7dd3fc; background: #234b60; }
+      .checknum-btn:hover { background: #1fb356; border-color: #1fb356; }
+      .checknum-btn.pressed:hover { background: #187a3d; }
     }
 
     /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
