@@ -480,7 +480,14 @@
       transition: background .2s, border-color .2s, color .2s;
     }
     .deck-toggle:hover { border-color: #6366f1; color: var(--accent-text); }
-    .card-preview-toggle { margin-bottom: 14px; }
+    /* It sits between the away/settings card and the read-only roster below it,
+       not inside either one — a host report showed it visually read as one of the
+       away card's own options, when what it actually controls is the cards in the
+       roster underneath. room.js's `.room-card + .room-links` gap assumes the
+       roster is the card's very next sibling, which is no longer true once this
+       button is inserted between them (see the JS that does that), so the same
+       spacing is redone here against this page's actual sibling chain. */
+    #card-preview-toggle { display: inline-block; margin: 18px 0 14px; }
     /* the host's private copy of what a card says — mirrors the actual player-card
        elements in miniature (the target word gets the same boxed look, forbidden
        words become individual pills, and anything that's a real button on the
@@ -1290,7 +1297,6 @@
       defaultCount: 4,
       hideSetup: true, // player count and links are set up once on index.html now
       actionsHTML: '<span class="room-label" data-i18n="taboo.awayLabel">' + tt('awayLabel') + '</span><div class="away-btns" id="away-btns"></div>',
-      extraRowHTML: '<button class="deck-toggle card-preview-toggle" id="card-preview-toggle" type="button"></button>',
       linksNote: tt('linksNote'),
       onPlayerData: handleAnswer,
       onCountChange: n => {
@@ -1310,6 +1316,17 @@
       document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
     }
     renderFbWarning();
+    /* Not part of room.js's own DOM at all — it belongs with the read-only roster
+       below it (it's a spoiler switch for those cards, not an away/game setting),
+       so it's built by hand and inserted as #room-links' immediate previous
+       sibling inside #room-mount. That spot never gets touched by ROOM.render()
+       (only #room-links' own children get rebuilt — see room.js's renderCompact()),
+       so this survives every re-render without needing to be re-inserted. */
+    const previewBtn = document.createElement('button');
+    previewBtn.type = 'button';
+    previewBtn.id = 'card-preview-toggle';
+    previewBtn.className = 'deck-toggle card-preview-toggle';
+    document.getElementById('room-mount').insertBefore(previewBtn, document.getElementById('room-links'));
     // away and tempNames live in the same shared room-session blob Kangaroo Court
     // keeps judgeEnabled in (see ROOM.setExtra), so both survive a reload of this tab
     const savedAway = ROOM.getExtra('away');
@@ -1326,7 +1343,8 @@
     /* Lets the host check what a player's card actually shows without picking up
        their phone — text only appears in the Player Links section below, never on
        the shared scoreboard, and stays off by default because it's a spoiler. The
-       button itself is built by room.js via extraRowHTML above; this just drives it. */
+       button itself is created just above (right before #room-links); this just
+       drives it. */
     function renderPreviewToggle() {
       document.getElementById('card-preview-toggle').textContent = cardPreviewOn
         ? tt('hideCardsBtn')
