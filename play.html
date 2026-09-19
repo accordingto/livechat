@@ -249,11 +249,15 @@
       box-shadow: 0 0 22px rgba(234,179,8,.2);
     }
     .waiting-eyebrow {
-      font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      font-size: .85rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
       color: #eab308; opacity: .85;
     }
-    .waiting-lead { font-size: .92rem; color: var(--text-dim); line-height: 1.65; }
-    .waiting-keep { font-size: .78rem; color: var(--text-muted, var(--text-dim)); }
+    .waiting-lead { font-size: 1.08rem; color: var(--text-dim); line-height: 1.6; }
+    /* this card's own hint text runs bigger than other cards' .secret-hint — it's the
+       only text most players will actually read while waiting, so it gets read at
+       arm's length on a phone rather than skimmed on a shared desktop screen */
+    .secret-card.theme-waiting .secret-hint { font-size: 1.05rem; line-height: 1.55; }
+    .waiting-keep { display: inline-block; margin-top: 6px; font-size: .92rem; color: var(--text-muted, var(--text-dim)); }
 
     /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
        You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
@@ -717,7 +721,10 @@
       // the plain "⏳ waiting…" screen before anything has been dealt: this explains
       // what the card in the player's hand actually is, since there's nothing else
       // on screen yet to show them.
-      waitingCardEyebrow: { zh: '你的專屬卡片', en: 'Your personal card' },
+      // "Secret Card", not "personal card" — this page's own <title> already calls it
+      // that (see titleDefault/titleNamed above), so the card itself should say the
+      // same thing rather than inventing a second name for itself.
+      waitingCardEyebrow: { zh: '你的祕密卡片', en: 'Your Secret Card' },
       waitingCardLead: { zh: '這張卡片是你在遊戲中的專屬畫面 — 題目、選項與操作按鈕，主持人開始之後都會直接顯示在這裡。', en: "This card is your own screen for the game — prompts, choices and buttons will all show up right here once the host gets going." },
       waitingCardKeep: { zh: '把這個分頁留著，不用重新整理。', en: 'Keep this tab open — no need to refresh.' },
     });
