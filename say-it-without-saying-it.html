@@ -229,11 +229,15 @@
     }
     .temp-name-input:focus { outline: none; border-color: #94a3b8; }
     .temp-name-input::placeholder { color: var(--text-muted); }
+    /* sized to match room.js's own .btn-copy/.btn-qr-toggle (the Link/QR row on
+       index.html's Step 1) — this sits right next to a real .btn-qr-toggle in the
+       same .link-btn-row, so it needs to look like its sibling, not a smaller
+       lookalike */
     .copy-sub-btn {
-      flex: 0 0 auto;
+      flex: 1; min-width: 0;
       background: var(--btn-face-hi, #2a2a52); border: 1.5px solid var(--border-3); color: var(--text-dim);
-      border-radius: 8px; padding: 6px 10px; font-size: .85rem; cursor: pointer;
-      transition: border-color .2s, color .2s, transform .1s;
+      border-radius: 10px; padding: 9px 10px; font-size: .82rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, color .2s, transform .1s;
     }
     .copy-sub-btn:active { transform: scale(.94); }
     .copy-sub-btn.is-copied { border-color: #22c55e; color: var(--ok-text); }
@@ -1709,21 +1713,28 @@
       if (state !== 'idle') pushState();
     }
 
-    /* Copies "name\nlink" for seat i's own token — the same seat, same Firebase
-       path, just relabelled — so the host can hand it to a stand-in without
-       generating a new player slot. ROOM.playerRef(i) is the sanctioned host-only
-       way to reach a seat's token (see room.js); .key on that reference is the
-       token itself, the same thing cardURL()/shareText() build a link from inside
-       room.js, just done from outside it since room.js has no reason to know this
-       game keeps its own substitute names. */
-    function copySubLink(i, btn) {
-      if (!ROOM.enabled) return;
+    /* Seat i's own link, relabelled with its substitute name if it has one — the
+       same seat, same Firebase path as room.js's own cardURL(i), just built from
+       out here since room.js has no reason to know this game keeps its own
+       substitute names. ROOM.playerRef(i) is the sanctioned host-only way to reach
+       a seat's token (see room.js); .key on that reference is the token itself. */
+    function subCardURL(i) {
       const ref = ROOM.playerRef(i);
-      if (!ref) return;
+      if (!ref) return '';
       const label = pname(i);
       const url = new URL(`play.html?s=${ROOM.code}&p=${ref.key}`, location.href);
       if (label) url.searchParams.set('n', label);
-      const text = label ? `${label}\n${url.href}` : url.href;
+      return url.href;
+    }
+
+    /* Copies "name\nlink" for seat i — so the host can hand it to a stand-in
+       without generating a new player slot. */
+    function copySubLink(i, btn) {
+      if (!ROOM.enabled) return;
+      const url = subCardURL(i);
+      if (!url) return;
+      const label = pname(i);
+      const text = label ? `${label}\n${url}` : url;
       const revert = btn ? btn.textContent : '';
       const done = () => {
         if (!btn) return;
@@ -1737,6 +1748,47 @@
       } else {
         prompt(tt('copyPromptLink'), text);
       }
+    }
+
+    /* Same tiny wrapper room.js's own qrSVG() is — kept as its own copy rather than
+       reaching into room.js's closure (toggleQR()/qrSVG() aren't part of its public
+       api), since this needs to encode subCardURL(i)'s substitute-name link, not
+       room.js's own cardURL(i). qrcode.js (loaded by this page already, like every
+       other game) is what actually renders it. */
+    function subQrSVG(text) {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    }
+
+    /* One QR open at a time, same rule as room.js's own toggleQR() — several codes
+       on a shared screen at once just means a phone camera can catch the wrong
+       one. Reuses room.js's .btn-qr-toggle/.qr-inline classes (injected into this
+       page's <head> by ROOM.init() regardless of hideSetup) so an away-card's QR
+       looks and behaves exactly like the one on index.html's Step 1, not a
+       reinvented lookalike. */
+    function toggleSubQR(i, card, btn) {
+      const existing = card.querySelector('.qr-inline');
+      document.querySelectorAll('#away-btns .qr-inline').forEach(el => { if (el !== existing) el.remove(); });
+      document.querySelectorAll('#away-btns .btn-qr-toggle').forEach(b => { if (b !== btn) b.classList.remove('open'); });
+      if (existing) { existing.remove(); btn.classList.remove('open'); return; }
+      const url = subCardURL(i);
+      if (!url) return;
+      const box = document.createElement('div');
+      box.className = 'qr-inline';
+      // href assigned on the element, not interpolated into markup, so nothing in
+      // a substitute name can escape the attribute (same reasoning as room.js's
+      // own toggleQR())
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.title = I18N.t('room', 'qrOpenHint');
+      a.innerHTML = subQrSVG(url);
+      box.appendChild(a);
+      card.appendChild(box);
+      btn.classList.add('open');
     }
 
     /* Turning a player's away flag ON only ever changes what the NEXT role draw sees
@@ -1800,7 +1852,13 @@
         input.value = tempNames[i] || '';
         input.oninput = () => setTempName(i, input.value);
         row.appendChild(input);
+        card.appendChild(row);
 
+        // link-btn-row is room.js's own class (see the Link/QR row on index.html's
+        // Step 1) — reused here so this looks like the same control, not a
+        // lookalike built from scratch
+        const btnRow = document.createElement('div');
+        btnRow.className = 'link-btn-row';
         const copyBtn = document.createElement('button');
         copyBtn.type = 'button';
         copyBtn.className = 'copy-sub-btn';
@@ -1808,9 +1866,17 @@
         copyBtn.textContent = '🔗';
         copyBtn.disabled = !ROOM.enabled;
         copyBtn.onclick = () => copySubLink(i, copyBtn);
-        row.appendChild(copyBtn);
+        btnRow.appendChild(copyBtn);
 
-        card.appendChild(row);
+        const qrBtn = document.createElement('button');
+        qrBtn.type = 'button';
+        qrBtn.className = 'btn-qr-toggle';
+        qrBtn.textContent = I18N.t('room', 'qrBtn');
+        qrBtn.disabled = !ROOM.enabled;
+        qrBtn.onclick = () => toggleSubQR(i, card, qrBtn);
+        btnRow.appendChild(qrBtn);
+
+        card.appendChild(btnRow);
         wrap.appendChild(card);
       }
     }
