@@ -2251,10 +2251,12 @@
 
       const outer = document.getElementById(which + '-dice-outer');
       if (outer) { outer.classList.remove('bounce'); void outer.offsetWidth; outer.classList.add('bounce'); }
-      // the attacker's roll-off die only ever lands on 4, 5, or 6 — a small edge for
-      // successfully completing the challenge in the first place
+      // the attacker's roll-off die only ever lands on 3, 4, 5 or 6 — an edge for having
+      // completed the challenge, but not a near-certainty. At 4-6 the attacker took the
+      // tile 2 times in 3, which made defending a rival's land feel pointless; 3-6 brings
+      // that to a bit over half, so the roll-off is still a roll-off.
       const value = which === 'attacker'
-        ? 4 + Math.floor(Math.random() * 3)
+        ? 3 + Math.floor(Math.random() * 4)
         : 1 + Math.floor(Math.random() * 6);
       spinMiniDiceTo(which, value);
 

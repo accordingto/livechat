@@ -389,8 +389,8 @@ const GAME_GUIDES = {
           en: `They call it themselves: ${BROW(B('td-choice-btn td-truth', '<span class="td-emoji">😇</span>TRUTH'), B('td-choice-btn td-dare', '<span class="td-emoji">😈</span>DARE'))}` },
         { zh: '主持人先把題目唸完，再按計時器開始 45 秒。其他人可以在卡片上投票，但最終由主持人判定。',
           en: 'The host reads the prompt out first, then starts the clock. Others vote from their cards, but the host makes the call.' },
-        { zh: '過關：無主地直接佔領；對手的地要再比一次骰子（進攻方只會骰出 4/5/6，平手算地主守住）。',
-          en: 'On a pass, unclaimed land is yours. Rival land goes to a dice-off: the attacker only rolls 4–6, and a tie holds for the owner.' },
+        { zh: '過關：無主地直接佔領；對手的地要再比一次骰子（進攻方只會骰出 3~6，平手算地主守住）。',
+          en: 'On a pass, unclaimed land is yours. Rival land goes to a dice-off: the attacker only rolls 3–6, and a tie holds for the owner.' },
       ]},
       { icon: '📱', title: { zh: '玩家手機上會看到什麼', en: 'What players see on their phones' },
         phones: [
