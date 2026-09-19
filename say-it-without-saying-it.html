@@ -197,26 +197,45 @@
        away toggle: a substitute-name field and a copy-link button, for handing that
        same player's slot to someone new without touching the shared room roster. */
     .away-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    /* the whole card — not just the checkbox — tints grey once away is on, so the
+       state reads at a glance from across a shared screen, not just up close (a
+       host report: the old checkbox was "too small to notice" and on/off "look
+       almost the same") */
     .away-card {
-      display: flex; flex-direction: column; gap: 6px;
+      display: flex; flex-direction: column; gap: 8px;
       background: var(--btn-face, #22224a); border: 2px solid var(--border-3);
-      border-radius: 12px; padding: 8px 10px; min-width: 170px;
+      border-radius: 12px; padding: 10px; min-width: 180px;
+      transition: background .2s, border-color .2s;
     }
+    .away-card.is-away { background: rgba(148,163,184,.14); border-color: #94a3b8; }
+    /* a full bordered toggle, not a bare checkbox-plus-text line — the same size
+       and shape as a real button (matching .temp-name-input/.copy-sub-btn right
+       below it in the same card) so "this is something you press" and "this is
+       currently on" are both obvious without having to squint at a tiny box */
     .away-btn {
-      display: inline-flex; align-items: center; align-self: flex-start;
-      background: transparent; border: none; color: var(--text-dim); padding: 0;
-      font-size: .8rem; font-weight: 800; font-family: inherit;
-      cursor: pointer; transition: color .2s, transform .1s;
+      display: flex; align-items: center; width: 100%;
+      background: var(--bg); border: 2px solid var(--border-3); color: var(--text-dim);
+      border-radius: 10px; padding: 9px 10px;
+      font-size: 1.05rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
     }
-    .away-btn:active { transform: scale(.96); }
+    .away-btn:active { transform: scale(.97); }
     .away-btn .ab-box {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 15px; height: 15px; margin-right: 6px;
-      border: 1.5px solid var(--border-3); border-radius: 4px;
-      font-size: .68rem; line-height: 1;
+      display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+      width: 24px; height: 24px; margin-right: 10px;
+      border: 2px solid var(--border-3); border-radius: 6px;
+      font-size: 1.05rem; font-weight: 900; line-height: 1;
+      transition: background .2s, border-color .2s;
     }
-    .away-btn.on { color: #cbd5e1; }
-    .away-btn.on .ab-box { border-color: #94a3b8; background: #94a3b8; color: var(--btn-ink); }
+    .away-btn .ab-name { overflow-wrap: anywhere; }
+    /* on: a solid fill, not just a border-colour swap — the same "can't miss it"
+       treatment as the difficulty/forbidden-words toggles elsewhere on this page,
+       plus a strikethrough on the name itself so "this seat isn't in the
+       rotation" reads even with the checkbox out of view (e.g. a screenshot
+       cropped tight on the roster) */
+    .away-btn.on { background: #94a3b8; border-color: #94a3b8; color: var(--btn-ink); }
+    .away-btn.on .ab-box { border-color: var(--btn-ink); background: var(--btn-ink); color: #fff; }
+    .away-btn.on .ab-name { text-decoration: line-through; text-decoration-thickness: 2px; }
     /* can't turn away ON from here — doing so would leave fewer than 2 players in
        play (see toggleAway) */
     .away-btn.is-locked { cursor: not-allowed; opacity: .55; }
@@ -1846,7 +1865,7 @@
         const on = !!away[i];
         const locked = !on && activeCount() <= 2;
         const card = document.createElement('div');
-        card.className = 'away-card';
+        card.className = 'away-card' + (on ? ' is-away' : '');
 
         const b = document.createElement('button');
         b.type = 'button';
@@ -1857,7 +1876,10 @@
         box.className = 'ab-box';
         box.textContent = on ? '✓' : '';
         b.appendChild(box);
-        b.appendChild(document.createTextNode(pname(i)));
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'ab-name';
+        nameSpan.textContent = pname(i);
+        b.appendChild(nameSpan);
         b.onclick = () => toggleAway(i);
         card.appendChild(b);
 
