@@ -192,14 +192,21 @@
     /* Marking a player "away" lives in the room card (below), not the control bar, so
        it gets its own small button rather than reusing .level-btn — same checkbox
        shape, its own colour (grey, not this page's red/indigo, since it isn't a game
-       setting) so it never reads as another difficulty-style option. */
-    .away-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+       setting) so it never reads as another difficulty-style option. Each player gets
+       a small card (not just a button) because there are two more controls under the
+       away toggle: a substitute-name field and a copy-link button, for handing that
+       same player's slot to someone new without touching the shared room roster. */
+    .away-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .away-card {
+      display: flex; flex-direction: column; gap: 6px;
+      background: var(--btn-face, #22224a); border: 2px solid var(--border-3);
+      border-radius: 12px; padding: 8px 10px; min-width: 170px;
+    }
     .away-btn {
-      display: inline-flex; align-items: center;
-      background: var(--btn-face, #22224a); border: 2px solid var(--border-3); color: var(--text-dim);
-      border-radius: 10px; padding: 7px 12px 7px 9px;
+      display: inline-flex; align-items: center; align-self: flex-start;
+      background: transparent; border: none; color: var(--text-dim); padding: 0;
       font-size: .8rem; font-weight: 800; font-family: inherit;
-      cursor: pointer; transition: border-color .2s, color .2s, background .2s, transform .1s;
+      cursor: pointer; transition: color .2s, transform .1s;
     }
     .away-btn:active { transform: scale(.96); }
     .away-btn .ab-box {
@@ -208,12 +215,29 @@
       border: 1.5px solid var(--border-3); border-radius: 4px;
       font-size: .68rem; line-height: 1;
     }
-    .away-btn.on { border-color: #94a3b8; color: #cbd5e1; background: rgba(148,163,184,.14); }
+    .away-btn.on { color: #cbd5e1; }
     .away-btn.on .ab-box { border-color: #94a3b8; background: #94a3b8; color: var(--btn-ink); }
     /* can't turn away ON from here — doing so would leave fewer than 2 players in
        play (see toggleAway) */
     .away-btn.is-locked { cursor: not-allowed; opacity: .55; }
     .away-btn.is-locked:active { transform: none; }
+    .temp-row { display: flex; gap: 6px; }
+    .temp-name-input {
+      flex: 1; min-width: 0;
+      background: var(--bg); border: 1.5px solid var(--border-3); border-radius: 8px;
+      padding: 6px 8px; font-size: .78rem; font-family: inherit; color: var(--text);
+    }
+    .temp-name-input:focus { outline: none; border-color: #94a3b8; }
+    .temp-name-input::placeholder { color: var(--text-muted); }
+    .copy-sub-btn {
+      flex: 0 0 auto;
+      background: var(--btn-face-hi, #2a2a52); border: 1.5px solid var(--border-3); color: var(--text-dim);
+      border-radius: 8px; padding: 6px 10px; font-size: .85rem; cursor: pointer;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .copy-sub-btn:active { transform: scale(.94); }
+    .copy-sub-btn.is-copied { border-color: #22c55e; color: var(--ok-text); }
+    .copy-sub-btn:disabled { cursor: not-allowed; opacity: .5; }
 
     /* three separate settings (forbidden words / difficulty / banned-word count) live in
        this one column — each gets its own small caps label and a dashed rule above it
@@ -829,6 +853,8 @@
       awayRole: { zh: '💤 暫時離開', en: '💤 Away' },
       awayLabel: { zh: '💤 暫時離開', en: '💤 Away' },
       awayLockedHint: { zh: '至少要留 2 位在場玩家', en: 'Keep at least 2 players in the game' },
+      copySubLinkTitle: { zh: '複製替補姓名＋這個座位的連結', en: "Copy the substitute's name + this seat's link" },
+      copyPromptLink: { zh: '複製失敗，請手動複製：', en: 'Copy failed — copy this manually:' },
       statusNoRoom: { zh: '請先發出下方的玩家連結才能開始 — 祕密字只會給描述者，絕不會出現在這個畫面。', en: "Hand out the player links below to start — the secret word goes to the clue giver, never to this screen." },
       statusIdle: { zh: '按下「發一個題目」開始 — 或由任何一位玩家從自己的卡片上發題。', en: 'Press Deal a Word to start — or let any player deal it from their own card.' },
       clockOnHold: { zh: '⏸️ 計時已暫停', en: '⏸️ Clock on hold' },
@@ -922,6 +948,15 @@
        Court keeps judgeEnabled: via ROOM.setExtra(), in the shared room session, so
        it survives a reload of this tab. */
     let away = [];
+    /* A per-slot substitute name, independent of the shared room roster (`names[i]`
+       in room.js, edited on index.html's Step 1). Set one when the away player is
+       being handed off to someone new: pname(i) — used everywhere in this file that
+       used to read ROOM.name(i) directly — prefers this over the roster name, so the
+       scoreboard, status line, and every player's card ("board" standings, the giver/
+       referee's name) all show the substitute the instant they're renamed, without
+       ever touching the shared name index.html and the other 6 games also read. Also
+       persisted via ROOM.setExtra(), same as `away`. */
+    let tempNames = [];
     let card = null;
     let roundForbidden = null; // card.forbidden sliced to bannedCount at deal time, so a mid-round
                                 // setting change can't retroactively add or drop a banned word
@@ -1257,6 +1292,7 @@
       onCountChange: n => {
         giverIdx = 0; refIdx = -1; giverBag = []; refCount = []; syncScores();
         reconcileAway(n);
+        reconcileTempNames(n);
         // fewer than 3 players in play leaves nobody to referee, so banned words can't stay on
         if (activeCount() < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
         renderForbiddenToggle();
@@ -1270,13 +1306,16 @@
       document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
     }
     renderFbWarning();
-    // away lives in the same shared room-session blob Kangaroo Court keeps
-    // judgeEnabled in (see ROOM.setExtra), so it survives a reload of this tab
+    // away and tempNames live in the same shared room-session blob Kangaroo Court
+    // keeps judgeEnabled in (see ROOM.setExtra), so both survive a reload of this tab
     const savedAway = ROOM.getExtra('away');
     away = Array.isArray(savedAway) ? savedAway.map(Boolean) : [];
+    const savedTempNames = ROOM.getExtra('tempNames');
+    tempNames = Array.isArray(savedTempNames) ? savedTempNames.map(x => typeof x === 'string' ? x : '') : [];
     // ROOM.init() can restore a persisted count of 2 (shared across games) without
     // running onCountChange, so the same correction has to happen here too
     reconcileAway(ROOM.count);
+    reconcileTempNames(ROOM.count);
     if (activeCount() < 3 && forbiddenOn) { forbiddenOn = false; saveOptions(); }
     renderAwayBtns();
 
@@ -1440,6 +1479,11 @@
           answer: (info.answer ? info.answer + '<br>' : '') + `<div class="cp-preview">${cardPreviewText(i)}</div>`,
         });
       }
+      // room.js's read-only roster shows this player's role only once info.answer is
+      // set (see above), but whenever it does, it should show whoever is actually
+      // holding this seat right now, not the shared roster name a substitute has
+      // overridden — same reasoning as pname() everywhere else in this file
+      info.name = pname(i);
       return info;
     });
 
@@ -1629,6 +1673,72 @@
       ROOM.setExtra('away', away);
     }
 
+    /* Same sizing job as reconcileAway(), for the substitute-name list — a name left
+       over from a bigger room just sits unused past the new headcount, nothing here
+       needs the "would this break the game" safety check that away has. */
+    function reconcileTempNames(n) {
+      if (!Array.isArray(tempNames)) tempNames = [];
+      tempNames = tempNames.slice(0, n).map(x => typeof x === 'string' ? x : '');
+      while (tempNames.length < n) tempNames.push('');
+      ROOM.setExtra('tempNames', tempNames);
+    }
+
+    /* The name to show for seat i everywhere in this game — the substitute name if
+       the host has set one for this seat, otherwise the shared roster name. Used in
+       place of every ROOM.name(i) call in this file, so renaming a seat updates the
+       scoreboard, status line, and every player's card (the "board" standings, and
+       whoever the giver/referee's name is quoted to) without touching the roster
+       name index.html and the other six games share. */
+    function pname(i) {
+      const t = tempNames[i];
+      return (t && String(t).trim()) || ROOM.name(i);
+    }
+
+    /* Typed into the substitute-name field — deliberately does NOT call
+       renderAwayBtns(): that would tear down and rebuild the very <input> the host
+       is mid-keystroke in, same problem room.js's own name field solves by never
+       recreating a focused input. renderAll() is safe here because it never touches
+       #away-btns (only renderAwayBtns() does), so the field keeps its focus and
+       cursor position while everything else that reads pname(i) — the scoreboard,
+       the status line, and (mid-round) every player's card — updates live. */
+    function setTempName(i, value) {
+      if (i < 0 || i >= ROOM.count) return;
+      tempNames[i] = value;
+      ROOM.setExtra('tempNames', tempNames);
+      renderAll();
+      if (state !== 'idle') pushState();
+    }
+
+    /* Copies "name\nlink" for seat i's own token — the same seat, same Firebase
+       path, just relabelled — so the host can hand it to a stand-in without
+       generating a new player slot. ROOM.playerRef(i) is the sanctioned host-only
+       way to reach a seat's token (see room.js); .key on that reference is the
+       token itself, the same thing cardURL()/shareText() build a link from inside
+       room.js, just done from outside it since room.js has no reason to know this
+       game keeps its own substitute names. */
+    function copySubLink(i, btn) {
+      if (!ROOM.enabled) return;
+      const ref = ROOM.playerRef(i);
+      if (!ref) return;
+      const label = pname(i);
+      const url = new URL(`play.html?s=${ROOM.code}&p=${ref.key}`, location.href);
+      if (label) url.searchParams.set('n', label);
+      const text = label ? `${label}\n${url.href}` : url.href;
+      const revert = btn ? btn.textContent : '';
+      const done = () => {
+        if (!btn) return;
+        btn.textContent = '✅';
+        btn.classList.add('is-copied');
+        clearTimeout(btn._copyRevert);
+        btn._copyRevert = setTimeout(() => { btn.textContent = revert; btn.classList.remove('is-copied'); }, 1500);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(done).catch(() => prompt(tt('copyPromptLink'), text));
+      } else {
+        prompt(tt('copyPromptLink'), text);
+      }
+    }
+
     /* Turning a player's away flag ON only ever changes what the NEXT role draw sees
        (see drawGiver/drawReferee/guesserNums above and below) — it never touches a
        round already in progress. If they happen to be this round's clue giver or
@@ -1653,6 +1763,11 @@
       renderAll();
     }
 
+    /* Rebuilds the whole away-card row — every discrete change (a toggle, a count
+       change, a language switch) goes through here. The one thing that must NOT
+       call this is a temp-name keystroke (see setTempName()): rebuilding the input
+       mid-type would drop focus and cursor position, the exact bug room.js's own
+       name field already had to solve once. */
     function renderAwayBtns() {
       const wrap = document.getElementById('away-btns');
       if (!wrap) return;
@@ -1660,6 +1775,9 @@
       for (let i = 0; i < ROOM.count; i++) {
         const on = !!away[i];
         const locked = !on && activeCount() <= 2;
+        const card = document.createElement('div');
+        card.className = 'away-card';
+
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'away-btn' + (on ? ' on' : '') + (locked ? ' is-locked' : '');
@@ -1669,9 +1787,31 @@
         box.className = 'ab-box';
         box.textContent = on ? '✓' : '';
         b.appendChild(box);
-        b.appendChild(document.createTextNode(ROOM.name(i)));
+        b.appendChild(document.createTextNode(pname(i)));
         b.onclick = () => toggleAway(i);
-        wrap.appendChild(b);
+        card.appendChild(b);
+
+        const row = document.createElement('div');
+        row.className = 'temp-row';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'temp-name-input';
+        input.placeholder = ROOM.name(i);
+        input.value = tempNames[i] || '';
+        input.oninput = () => setTempName(i, input.value);
+        row.appendChild(input);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'copy-sub-btn';
+        copyBtn.title = tt('copySubLinkTitle');
+        copyBtn.textContent = '🔗';
+        copyBtn.disabled = !ROOM.enabled;
+        copyBtn.onclick = () => copySubLink(i, copyBtn);
+        row.appendChild(copyBtn);
+
+        card.appendChild(row);
+        wrap.appendChild(card);
       }
     }
 
@@ -1957,8 +2097,8 @@
       return {
         seq: nextSeq,
         in: nextRoundAt,
-        giver: ROOM.name(nextRoles.giver),
-        ref: ref >= 0 ? ROOM.name(ref) : null,
+        giver: pname(nextRoles.giver),
+        ref: ref >= 0 ? pname(ref) : null,
         youGive: nextRoles.giver === i,
         youRef: ref === i,
       };
@@ -1968,7 +2108,7 @@
     function boardFor(i) {
       const out = [];
       for (let k = 0; k < ROOM.count; k++) {
-        out.push({ n: ROOM.name(k), p: scores[k] || 0, me: k === i || null, x2: isBehind(k) || null });
+        out.push({ n: pname(k), p: scores[k] || 0, me: k === i || null, x2: isBehind(k) || null });
       }
       return out;
     }
@@ -1978,8 +2118,8 @@
       const isRef = i === refIdx;
       const base = {
         game: 'taboo', round, voteId: roundId, state,
-        isGiver, isRef, giverName: ROOM.name(giverIdx),
-        refName: refIdx >= 0 ? ROOM.name(refIdx) : null,
+        isGiver, isRef, giverName: pname(giverIdx),
+        refName: refIdx >= 0 ? pname(refIdx) : null,
         score: scores[i] || 0,
         // the whole scoreboard, not just this player's own total: on a shared screen
         // the standings are right there, but a player looking down at their phone had
@@ -2017,14 +2157,14 @@
         target: (isGiver && !sealed) || done ? card.word : null,
         emoji: (isGiver && !sealed) || done ? card.emoji : null,
         buzzer: queue.length ? queue[0] : null,
-        buzzerName: queue.length ? ROOM.name(queue[0] - 1) : null,
+        buzzerName: queue.length ? pname(queue[0] - 1) : null,
         queued: queue.includes(i + 1) ? queue.indexOf(i + 1) + 1 : null,
         rejected: rejected.includes(i + 1) || null,
-        tabooBy: tabooCalls.length ? tabooCalls.map(n => ROOM.name(n - 1)).join(', ') : null,
+        tabooBy: tabooCalls.length ? tabooCalls.map(n => pname(n - 1)).join(', ') : null,
         iCalledTaboo: tabooCalls.includes(i + 1) || null,
         result: done && result ? {
           type: result.type,
-          who: ROOM.name(result.who - 1),
+          who: pname(result.who - 1),
           youWon: (result.type === 'got' || result.type === 'foul') && result.who === i + 1,
           whoPts: result.whoPts || null, giverPts: result.giverPts || null,
         } : null,
@@ -2119,11 +2259,11 @@
       document.getElementById('deal-row').classList.toggle('hidden', ruling || confirmEnd);
       if (ruling) {
         document.getElementById('call-hdr').innerHTML =
-          tt('tabooYourCall', { giver: ROOM.name(giverIdx) });
+          tt('tabooYourCall', { giver: pname(giverIdx) });
       }
       if (confirmEnd) {
         document.getElementById('confirm-hdr').innerHTML =
-          tt('confirmEndHdr', { giver: ROOM.name(giverIdx) });
+          tt('confirmEndHdr', { giver: pname(giverIdx) });
       }
       document.getElementById('roundNum').textContent = round;
       const deal = document.getElementById('deal-btn');
@@ -2132,8 +2272,8 @@
       // when a round has ended — easy to miss when only the words changed
       deal.classList.toggle('is-next', state === 'done' && ROOM.enabled);
       deal.textContent = !ROOM.enabled ? tt('linksNeededBtn')
-                       : state === 'ready' ? tt('openForBtn', { name: ROOM.name(giverIdx) })
-                       : state === 'playing' ? tt('endTurnBtn', { name: ROOM.name(giverIdx) })
+                       : state === 'ready' ? tt('openForBtn', { name: pname(giverIdx) })
+                       : state === 'playing' ? tt('endTurnBtn', { name: pname(giverIdx) })
                        : state === 'done' ? tt('nextRoundBtn')
                        : tt('dealBtn');
       deal.onclick = state === 'ready' ? () => startRound()
@@ -2154,7 +2294,7 @@
       }
       if (state === 'ready') {
         el.classList.add('live');
-        el.innerHTML = `${tt('waitingGiverOpen', { giver: ROOM.name(giverIdx) })}
+        el.innerHTML = `${tt('waitingGiverOpen', { giver: pname(giverIdx) })}
           <span class="sl-sub">${tt('waitingGiverOpenSub')}</span>`;
         return;
       }
@@ -2167,34 +2307,34 @@
         };
         if (tabooCalls.length) {
           el.classList.add('foul');
-          const who = tabooCalls.map(n => ROOM.name(n - 1)).join(', ');
+          const who = tabooCalls.map(n => pname(n - 1)).join(', ');
           // the question itself lives on the ruling panel down by the buttons
-          el.innerHTML = `${tt('calledTabooOn', { who, giver: ROOM.name(giverIdx) })}${sub([held])}`;
+          el.innerHTML = `${tt('calledTabooOn', { who, giver: pname(giverIdx) })}${sub([held])}`;
           return;
         }
         if (queue.length) {
           el.classList.add('buzz');
-          el.innerHTML = `${tt('buzzedWaiting', { buzzer: ROOM.name(queue[0] - 1), giver: ROOM.name(giverIdx) })}${sub([tt('othersHeld'), held])}`;
+          el.innerHTML = `${tt('buzzedWaiting', { buzzer: pname(queue[0] - 1), giver: pname(giverIdx) })}${sub([tt('othersHeld'), held])}`;
         } else {
           el.classList.add('live');
           const ref = refIdx >= 0
-            ? `<span class="sl-sub">${tt('refIsRefereeing', { ref: ROOM.name(refIdx) })}</span>` : '';
-          el.innerHTML = `${tt('giverIsLive', { giver: ROOM.name(giverIdx) })}${ref}`;
+            ? `<span class="sl-sub">${tt('refIsRefereeing', { ref: pname(refIdx) })}</span>` : '';
+          el.innerHTML = `${tt('giverIsLive', { giver: pname(giverIdx) })}${ref}`;
         }
         return;
       }
       const answer = card ? `<span class="sl-sub">${tt('wordWas', { emoji: card.emoji, word: card.word })}</span>` : '';
       const upNext = nextRoundAt && nextRoles
         ? `<span class="sl-sub">${tt('nextRoundIn', { n: nextRoundAt })}
-             · ${tt('nextGiverIs', { name: ROOM.name(nextRoles.giver) })}${
-               forbiddenOn && nextRoles.ref >= 0 ? ` · ${tt('nextRefIs', { name: ROOM.name(nextRoles.ref) })}` : ''}</span>`
+             · ${tt('nextGiverIs', { name: pname(nextRoles.giver) })}${
+               forbiddenOn && nextRoles.ref >= 0 ? ` · ${tt('nextRefIs', { name: pname(nextRoles.ref) })}` : ''}</span>`
         : '';
       if (result && result.type === 'got') {
         el.classList.add('win');
-        el.innerHTML = `${tt('gotItResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx), whoPts: result.whoPts || 1, giverPts: result.giverPts || 1 })}${answer}${upNext}`;
+        el.innerHTML = `${tt('gotItResult', { who: pname(result.who - 1), giver: pname(giverIdx), whoPts: result.whoPts || 1, giverPts: result.giverPts || 1 })}${answer}${upNext}`;
       } else if (result && result.type === 'foul') {
         el.classList.add('foul');
-        el.innerHTML = `${tt('foulResult', { who: ROOM.name(result.who - 1), giver: ROOM.name(giverIdx), whoPts: result.whoPts || 2 })}${answer}${upNext}`;
+        el.innerHTML = `${tt('foulResult', { who: pname(result.who - 1), giver: pname(giverIdx), whoPts: result.whoPts || 2 })}${answer}${upNext}`;
       } else if (result && result.type === 'time') {
         el.classList.add('foul');
         el.innerHTML = `${tt('timeUpResult')}${answer}${upNext}`;
@@ -2227,7 +2367,7 @@
         const behind = isBehind(i);
         html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${awayNow ? ' is-away' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
-            <span class="sc-name">${ROOM.name(i)}</span>
+            <span class="sc-name">${pname(i)}</span>
             <span class="sc-pts">${scores[i] || 0}</span>
             ${behind ? `<span class="sc-boost">${tt('boostBadge')}</span>` : ''}
           </div>`;

@@ -815,7 +815,11 @@ const ROOM = (() => {
       col.className = 'link-col' + (info.marked ? ' is-marked' : '') + (info.cls ? ' ' + info.cls : '');
       const label = document.createElement('div');
       label.className = 'name-input is-static';
-      label.textContent = api.name(i);
+      // a decorator may know a name for this seat that isn't the shared roster's
+      // (Say It Without Saying It's substitute names, when a seat is handed off to
+      // someone new mid-session) — falls back to the roster name exactly as before
+      // for every other caller, which never sets this field
+      label.textContent = info.name || api.name(i);
       col.appendChild(label);
       const ans = document.createElement('div');
       ans.className = 'link-answer';
