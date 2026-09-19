@@ -635,7 +635,12 @@ const ROOM = (() => {
       actions.appendChild(clearLink);
       checkNote.appendChild(actions);
     }
-    document.getElementById('btncheck-btn').classList.toggle('hidden', !live);
+    // strictly sequential on purpose: showing this button alongside "Send Card
+    // Check" from the very start left the host looking at two unrelated buttons
+    // with no indication which to press first (reported as confusing) — it only
+    // appears once the card check has actually been sent AND revealed, so the
+    // screen only ever offers the one next thing worth pressing.
+    document.getElementById('btncheck-btn').classList.toggle('hidden', !live || !checkRevealed);
     const btnCheckNote = document.getElementById('btncheck-note');
     btnCheckNote.classList.toggle('hidden', !live || !checkNumbers);
     if (live && checkNumbers) {
