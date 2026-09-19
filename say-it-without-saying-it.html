@@ -1059,10 +1059,23 @@
         : saved && LEVELS.some(l => l.id === saved.level) ? [saved.level]
         : [];
       if (restored.length) levels = restored;
+      /* "已出過" also has to survive a reload, not just a difficulty change — a
+         real report of a repeated word during an actual session traced back to
+         `used` living only in a page-scoped `let`: any reload of this tab (a
+         flaky wifi refresh, the phone waking the page back up, an accidental
+         F5) reset it to empty while the same 300-card deck was still in play,
+         so the very next few deals could repeat words the group had just seen.
+         `saved.deckLen` is a cheap fingerprint against `DECK` (see below)
+         having changed shape since — a Google Sheet reload elsewhere reordering
+         or resizing the deck — in which case the old indices could point at the
+         wrong cards, so it's safer to just start the "seen" list over. */
+      if (Array.isArray(saved && saved.used) && saved.deckLen === DECK.length) {
+        used = saved.used.filter(i => Number.isInteger(i) && i >= 0 && i < DECK.length);
+      }
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
     }
 
     /* the indices of every card at a ticked difficulty — the union, so ticking all
@@ -1591,6 +1604,7 @@
       if (!avail.length) { used = []; avail = deck.slice(); }
       const pick = avail[Math.floor(Math.random() * avail.length)];
       used.push(pick);
+      saveOptions(); // persist the "seen" list so a reload mid-session can't repeat a word
       card = DECK[pick];
       roundForbidden = card.forbidden.slice(0, bannedCount);
       round++;
