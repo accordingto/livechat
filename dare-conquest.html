@@ -63,11 +63,24 @@
     }
     .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 
-    /* ── Difficulty picker (setup screen) ──
+    /* ── Difficulty picker ──
        One row of three cards; each says who the tier is for, because "easy / medium /
-       hard" is the whole label — the tiers are tick boxes, not three exclusive options. */
+       hard" is the whole label — the tiers are tick boxes, not three exclusive options.
+       `.diff-group` wraps the label + row as one unit so it can move as a single node
+       between the setup screen and the in-game control bar (see placeDiffGroup()) —
+       the room warms up mid-game and Easy runs dry, so the host shouldn't have to end
+       the game to switch it. */
+    .diff-group { display: flex; flex-direction: column; gap: 8px; }
     .diff-label { color: var(--text-muted); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
     .diff-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    /* the same row, shrunk to fit the control bar during play — the setup screen has
+       the whole width to itself, the control bar shares it with the turn indicator */
+    .diff-inline-slot:empty { display: none; }
+    .diff-inline-slot .diff-group { gap: 4px; }
+    .diff-inline-slot .diff-row { grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 6px; }
+    .diff-inline-slot .diff-btn { padding: 6px 10px; border-radius: 10px; gap: 6px; }
+    .diff-inline-slot .diff-btn .db-name { font-size: .8rem; }
+    .diff-inline-slot .diff-btn .db-box { width: 15px; height: 15px; }
     .diff-btn {
       background: var(--btn-face, #22224a); border: 2px solid var(--border-3, #39396b);
       border-radius: 14px; padding: 13px 15px; cursor: pointer; text-align: left;
@@ -132,14 +145,18 @@
       50%       { filter: brightness(1.35); }
     }
 
-    /* ── Control bar: just the turn indicator now — the dice moved to the map's center ── */
+    /* ── Control bar: the turn indicator, plus the difficulty picker once the game
+       starts (moved in from the setup screen — see placeDiffGroup()). Falls back to
+       centered if that slot is ever empty, which shouldn't happen once the game is
+       showing, but costs nothing to guard. ── */
     .control-bar {
       width: 100%; max-width: 1100px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
       background: var(--surface); border: 2px solid var(--border); border-radius: 16px;
       padding: 8px 22px; margin-bottom: 10px;
       animation: fadeUp .5s .28s ease both;
     }
+    .control-bar:has(.diff-inline-slot:empty) { justify-content: center; }
     .turn-indicator { font-size: clamp(.9rem, 2vw, 1.05rem); font-weight: 800; white-space: nowrap; }
     .turn-indicator .tname { color: var(--turn-color, var(--ok-text)); }
     .turn-indicator .round-count { color: var(--text-dim); font-weight: 700; margin-left: 2px; }
@@ -647,8 +664,13 @@
   <div class="setup-screen" id="setup-card">
     <div class="setup-card">
       <div class="resume-banner hidden" id="resume-banner"></div>
-      <div class="diff-label" data-i18n="conquest.difficultyLabel">🎚️ Question difficulty</div>
-      <div class="diff-row" id="diff-row"></div>
+      <!-- this whole group also moves into the control bar once the game starts
+           (see placeDiffGroup()) — same node, not a copy, so toggling it works
+           identically before and during play -->
+      <div class="diff-group" id="diff-group">
+        <div class="diff-label" data-i18n="conquest.difficultyLabel">🎚️ Question difficulty</div>
+        <div class="diff-row" id="diff-row"></div>
+      </div>
       <div class="control-row">
         <button class="btn-primary" id="start-btn" onclick="startGame()" data-i18n="conquest.startGameBtn">🎲 Start Game</button>
       </div>
@@ -665,6 +687,7 @@
 
     <div class="control-bar">
       <div class="turn-indicator" id="turn-indicator"></div>
+      <div class="diff-inline-slot" id="diff-inline-slot"></div>
     </div>
 
     <div class="board-stage">
@@ -1102,8 +1125,28 @@
       difficulties = isTierOn(d) ? difficulties.filter(x => x !== d) : sortTiers(difficulties.concat(d));
       try { localStorage.setItem(DIFF_KEY, JSON.stringify(difficulties)); }
       catch (e) { /* private mode — this game only */ }
+      // usedPrompts/usedTruths are indexes into the concatenated deck (see deckFor()),
+      // which reshuffles its shape whenever a tier is added or dropped — an index that
+      // meant "already shown" under the old set of tiers can silently point at a
+      // different prompt under the new one. Forgetting what's been shown is a small
+      // price for never showing a stale match; pre-game these are empty anyway, so
+      // this is a no-op there.
+      usedPrompts = [];
+      usedTruths = [];
       renderDiffButtons();
       buildPromptList();          // the browser at the bottom lists the combined deck
+      saveGame();                 // no-ops before the game starts (saveGame checks that)
+    }
+
+    /* Moves the difficulty picker from the setup screen into the in-game control bar —
+       same node, not a copy, so the exact same buttons/handlers keep working and there's
+       only ever one place the checkmarks can be. One-way: Dare Conquest has no mid-game
+       "back to setup" screen to move it back to, so both startGame() and resumeGame()
+       just call this once on the way into the game. */
+    function placeDiffGroupInGame() {
+      const group = document.getElementById('diff-group');
+      const target = document.getElementById('diff-inline-slot');
+      if (group && target) target.appendChild(group);
     }
 
     renderDiffButtons();
@@ -1150,6 +1193,7 @@
       updateSkillButtons();
       round = 1;
       document.getElementById('roundNum').textContent = round;
+      placeDiffGroupInGame();
       document.getElementById('setup-card').classList.add('hidden');
       document.getElementById('game-area').classList.remove('hidden');
       document.getElementById('winner-banner').classList.remove('shown');
@@ -2424,6 +2468,7 @@
       updateSkillButtons();
 
       document.getElementById('roundNum').textContent = round;
+      placeDiffGroupInGame();
       document.getElementById('setup-card').classList.add('hidden');
       document.getElementById('game-area').classList.remove('hidden');
       document.getElementById('winner-banner').classList.remove('shown');
