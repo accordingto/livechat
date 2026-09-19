@@ -266,6 +266,34 @@
     .secret-card.theme-waiting .secret-hint { font-size: 1.2rem; line-height: 1.6; }
     .waiting-keep { display: inline-block; margin-top: 6px; font-size: 1.05rem; color: var(--text-muted, var(--text-dim)); }
 
+    /* ── Card Check / Button Check borrow the waiting card's look ──
+       Both `game: 'cardcheck'` and `game: 'buttoncheck'` are host-verification
+       cards, not a real round of any game — same category as the waiting card
+       above (a card that exists to tell the player something about the *site*,
+       not to run a turn). They used to just be the plain .secret-card shell with
+       no eyebrow, no glow and default-size hint text, which read as an unfinished
+       debug screen next to how polished the waiting card looks. Same treatment,
+       reused rather than duplicated: a slow breathing glow (`checkGlow`, same
+       3s ease-in-out shape as `waitingGlow`, just kept in the slate colour this
+       theme already used), a small uppercase eyebrow label naming what kind of
+       check this is (`.check-eyebrow`, sized and weighted like `.waiting-eyebrow`),
+       and the same bigger, easier-to-read hint text at the bottom. `.check-lead`
+       is `.waiting-lead` under a new name for Button Check's explanation
+       paragraph — Card Check doesn't need one, its big emoji+word *is* the card. */
+    .secret-card.theme-cardcheck {
+      animation: fadeUp .5s ease both, checkGlow 3s ease-in-out infinite;
+    }
+    @keyframes checkGlow {
+      0%, 100% { box-shadow: 0 0 60px rgba(148,163,184,.18); }
+      50%      { box-shadow: 0 0 80px rgba(148,163,184,.32); }
+    }
+    .check-eyebrow {
+      font-size: 1.1rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      color: #94a3b8; opacity: .9;
+    }
+    .check-lead { font-size: 1.15rem; color: var(--text-dim); line-height: 1.6; }
+    .secret-card.theme-cardcheck .secret-hint { font-size: 1.15rem; line-height: 1.6; }
+
     /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
        You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
     .secret-card.theme-hottake  { border-color: #ff7043; box-shadow: 0 0 60px rgba(255,112,67,.18); }
@@ -749,10 +777,12 @@
       askQuestion: { zh: '❓ 詢問 {name} 一個問題！', en: '❓ Ask {name} a question!' },
       watchingCross: { zh: '👀 正在旁觀交叉詰問…', en: '👀 Watching the cross-examination…' },
       waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
+      cardCheckEyebrow: { zh: '🔍 核對卡片', en: '🔍 Card Check' },
       tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
       // room.js's second check — three numbers, shuffled into a different order
       // on every card, so the host can call one out loud and confirm every
       // phone is actually receiving taps, not just displaying a card.
+      buttonCheckEyebrow: { zh: '🔢 按鈕測試', en: '🔢 Button Check' },
       buttonCheckHint: { zh: '主持人會口頭喊出一個數字 — 按下你卡片上顯示那個數字的按鈕。', en: 'The host will call out a number out loud — tap the button on your card that shows it.' },
       buttonCheckWaitNote: { zh: '⏳ 等待主持人喊出數字…', en: '⏳ Waiting for the host to call a number…' },
       buttonCheckPressedNote: { zh: '✅ 你按下了：{n}', en: '✅ You pressed: {n}' },
@@ -1791,6 +1821,7 @@
       if (data.game === 'cardcheck') {
         el.innerHTML = `
           <div class="secret-card theme-cardcheck">
+            <span class="check-eyebrow">${pt('cardCheckEyebrow')}</span>
             ${nameBanner(data)}
             <span class="card-emoji">${esc(data.emoji || '🔍')}</span>
             ${wordSpan(data.word || '')}
@@ -1802,8 +1833,9 @@
         const pressed = myCheckPress(data);
         el.innerHTML = `
           <div class="secret-card theme-cardcheck">
+            <span class="check-eyebrow">${pt('buttonCheckEyebrow')}</span>
             ${nameBanner(data)}
-            <span class="pick-sub">${pt('buttonCheckHint')}</span>
+            <p class="check-lead">${pt('buttonCheckHint')}</p>
             <div class="checknum-row">
               ${(data.numbers || []).map(n => `<button class="checknum-btn${pressed === n ? ' pressed' : ''}" onclick="submitCheckPress(${Number(n)})">${esc(String(n))}</button>`).join('')}
             </div>
