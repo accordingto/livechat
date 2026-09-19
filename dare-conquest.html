@@ -65,20 +65,31 @@
 
     /* ── Difficulty picker (setup screen) ──
        One row of three cards; each says who the tier is for, because "easy / medium /
-       hard" on its own does not tell the host which one suits the room they have. */
+       hard" is the whole label — the tiers are tick boxes, not three exclusive options. */
     .diff-label { color: var(--text-muted); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
-    .diff-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .diff-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
     .diff-btn {
       background: var(--btn-face, #22224a); border: 2px solid var(--border-3, #39396b);
       border-radius: 14px; padding: 13px 15px; cursor: pointer; text-align: left;
-      display: flex; flex-direction: column; gap: 5px; font: inherit; transition: .15s;
+      display: flex; align-items: center; gap: 10px; font: inherit; transition: .15s;
     }
     .diff-btn:hover { background: var(--btn-face-hi, #2b2b5c); }
     .diff-btn .db-name { color: var(--text); font-size: .95rem; font-weight: 700; }
-    .diff-btn .db-desc { color: var(--text-dim); font-size: .78rem; line-height: 1.5; }
+    /* the tick box is what says "you may pick more than one" — same device as the
+       difficulty checkboxes in say-it-without-saying-it.html. Empty means EMPTY: no
+       transparent ✓ inside, or a screen reader announces a tick that is not there. */
+    .diff-btn .db-box {
+      width: 18px; height: 18px; flex: none; border-radius: 5px;
+      border: 2px solid var(--border-2, #2e2e5e); background: #12122a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 900; color: var(--btn-ink, #050510);
+    }
     .diff-btn.is-on { border-color: var(--accent); background: rgba(255,112,67,.14); }
     .diff-btn.is-on .db-name { color: var(--accent-text, var(--accent)); }
-    .diff-btn.is-on .db-name::after { content: ' ✓'; }
+    .diff-btn.is-on .db-box { background: var(--accent); border-color: var(--accent); }
+    /* the last remaining tier keeps its tick and just stops responding — not greyed out,
+       because it is still very much switched on */
+    .diff-btn.is-locked { cursor: default; }
     .setup-card .btn-primary,
     .setup-card .btn-secondary { padding: 11px 20px; font-size: .88rem; }
 
@@ -760,11 +771,9 @@
       dareBtn: { zh: 'DARE', en: 'DARE' },
       difficultyLabel: { zh: '🎚️ 題目難度', en: '🎚️ Question difficulty' },
       diffEasyName: { zh: '🟢 簡單', en: '🟢 Easy' },
-      diffEasyDesc: { zh: '適合剛見面的陌生人', en: 'For people who have just met' },
       diffMediumName: { zh: '🟡 中等', en: '🟡 Medium' },
-      diffMediumDesc: { zh: '適合聊過兩次天的人', en: 'For people who have chatted a couple of times' },
       diffHardName: { zh: '🔴 困難', en: '🔴 Hard' },
-      diffHardDesc: { zh: '原本的題目 — 適合已經熟了的人', en: 'The original prompts — for people who know each other' },
+      keepOneTier: { zh: '至少要留一個難度', en: 'Keep at least one difficulty' },
       newQuestionBtn: { zh: '🔄 換一題', en: '🔄 New Question' },
       changeQuestionQ: { zh: '要換這一題嗎？', en: 'Change this question?' },
       swapYesBtn: { zh: '✅ 是', en: '✅ Yes' },
@@ -842,15 +851,29 @@
     };
     const DIFFICULTIES = ['easy', 'medium', 'hard'];
     const DIFF_KEY = 'dareConquestDifficulty.v1';
-    let difficulty = 'easy';
-    try {
-      const saved = localStorage.getItem(DIFF_KEY);
-      if (DIFFICULTIES.includes(saved)) difficulty = saved;
-    } catch (e) { /* private mode — just use the default */ }
 
-    // fall back to the hard deck if a tier is somehow missing, so the game never
-    // ends up drawing from an empty array
-    const deckFor = kind => GAME_DATA[DECKS[difficulty][kind]] || GAME_DATA[DECKS.hard[kind]];
+    /* Tiers are a MULTI-select, not one of three: ticking easy + medium shuffles both
+       decks together, which is what a room that has warmed up a little actually wants.
+       Always kept in DIFFICULTIES order, because usedPrompts/usedTruths are indexes
+       into the combined deck — a different order would point them at other prompts. */
+    let difficulties = ['easy'];
+    const sortTiers = a => DIFFICULTIES.filter(d => a.includes(d));
+    try {
+      const raw = localStorage.getItem(DIFF_KEY);
+      // v1 stored a single tier as a plain string; read it back as a one-tier selection
+      const saved = raw && raw[0] === '[' ? JSON.parse(raw) : [raw];
+      const clean = sortTiers(Array.isArray(saved) ? saved : []);
+      if (clean.length) difficulties = clean;
+    } catch (e) { /* private mode or a corrupt value — just use the default */ }
+
+    const isTierOn = d => difficulties.includes(d);
+    // the union of every ticked tier, in tier order; falls back to hard so the game can
+    // never end up drawing from an empty array
+    function deckFor(kind) {
+      const out = [];
+      DIFFICULTIES.forEach(d => { if (isTierOn(d)) out.push(...(GAME_DATA[DECKS[d][kind]] || [])); });
+      return out.length ? out : GAME_DATA[DECKS.hard[kind]];
+    }
     const dareDeck = () => deckFor('dare');
     const truthDeck = () => deckFor('truth');
 
@@ -1054,26 +1077,33 @@
 
     /* ── Difficulty picker ──
        Only reachable from the setup screen, so it can never change the deck mid-game;
-       a resumed game restores whatever tier it was played on. Switching redraws the
-       prompt browser below, since that list is the chosen tier's deck. */
+       a resumed game restores whatever tiers it was played on. Toggling redraws the
+       prompt browser below, since that list is the combined deck. */
     function renderDiffButtons() {
       const row = document.getElementById('diff-row');
       if (!row) return;
       row.innerHTML = DIFFICULTIES.map(d => {
+        const on = isTierOn(d);
+        const locked = on && difficulties.length === 1;
         const k = d[0].toUpperCase() + d.slice(1);
-        return `<button type="button" class="diff-btn${d === difficulty ? ' is-on' : ''}" onclick="setDifficulty('${d}')">
+        return `<button type="button" class="diff-btn${on ? ' is-on' : ''}${locked ? ' is-locked' : ''}"
+            onclick="toggleDifficulty('${d}')"${locked ? ` title="${ct('keepOneTier')}"` : ''}>
+            <span class="db-box">${on ? '✓' : ''}</span>
             <span class="db-name">${ct('diff' + k + 'Name')}</span>
-            <span class="db-desc">${ct('diff' + k + 'Desc')}</span>
           </button>`;
       }).join('');
     }
 
-    function setDifficulty(d) {
+    function toggleDifficulty(d) {
       if (!DIFFICULTIES.includes(d)) return;
-      difficulty = d;
-      try { localStorage.setItem(DIFF_KEY, d); } catch (e) { /* private mode — this game only */ }
+      // never let the last tier be unticked: deckFor() would fall back to hard and the
+      // board would then be drawing from a tier the screen says is switched off
+      if (isTierOn(d) && difficulties.length === 1) return;
+      difficulties = isTierOn(d) ? difficulties.filter(x => x !== d) : sortTiers(difficulties.concat(d));
+      try { localStorage.setItem(DIFF_KEY, JSON.stringify(difficulties)); }
+      catch (e) { /* private mode — this game only */ }
       renderDiffButtons();
-      buildPromptList();          // the browser at the bottom lists this tier's prompts
+      buildPromptList();          // the browser at the bottom lists the combined deck
     }
 
     renderDiffButtons();
@@ -2319,7 +2349,7 @@
       if (!gameStarted || !players.length) return;
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify({
-          players, ownership, currentIdx, round, usedPrompts, usedTruths, difficulty,
+          players, ownership, currentIdx, round, usedPrompts, usedTruths, difficulties,
           gameEnded: document.getElementById('winner-banner').classList.contains('shown'),
         }));
       } catch (e) { /* localStorage unavailable or full — game still works without persistence */ }
@@ -2368,7 +2398,9 @@
       usedTruths = saved.usedTruths || [];
       // used* are indexes into the tier that was being played, so the tier has to come
       // back with them — otherwise resuming would mark the wrong prompts as already seen
-      if (DIFFICULTIES.includes(saved.difficulty)) setDifficulty(saved.difficulty);
+      // accept a save from the single-tier version too, so a game in progress survives
+      const tiers = sortTiers(Array.isArray(saved.difficulties) ? saved.difficulties : [saved.difficulty]);
+      if (tiers.length) { difficulties = tiers; renderDiffButtons(); buildPromptList(); }
       playerCount = players.length;
       currentChallengeOwner = -1;
       currentChallengeMode = null;
