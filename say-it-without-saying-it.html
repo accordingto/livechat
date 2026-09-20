@@ -157,8 +157,7 @@
       .control-bar { grid-template-columns: 1fr; }
       .cb-dial { order: -1; padding-top: 16px; }
       /* stacked, there is no right edge to hang off any more */
-      .cb-sect.rules .rules-group { align-items: center; }
-      .cb-sect.rules .level-btns { justify-content: center; }
+      .cb-sect.rules .settings-popover-wrap { align-self: center; }
     }
 
     .level-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
@@ -262,10 +261,12 @@
     .copy-sub-btn.is-copied { border-color: #22c55e; color: var(--ok-text); }
     .copy-sub-btn:disabled { cursor: not-allowed; opacity: .5; }
 
-    /* three separate settings (forbidden words / difficulty / banned-word count) live in
-       this one column — each gets its own small caps label and a dashed rule above it
-       (except the first), so a glance at a shared screen reads "three things", not one
-       undifferentiated stack of switches and buttons */
+    /* Difficulty / forbidden words / round length each get their own small caps label
+       and a dashed rule above it (except the first), so a glance at a shared screen
+       reads "three things", not one undifferentiated stack of switches and buttons.
+       This is also the exact column the in-game settings popover stacks all three
+       .rules-group nodes into (see #settings-popover below) — same class, same
+       dividers, just moved from the wizard into a floating panel. */
     .rules-group {
       align-self: stretch;
       display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
@@ -292,6 +293,59 @@
       font-size: .72rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
       color: #c98f97; opacity: .85;
     }
+
+    /* ── In-game: all three settings behind one small pill, not three always-open
+       widgets ── Difficulty used to be the one exception, sitting permanently open in
+       this half of the control bar while forbidden words/banned count/round length
+       stayed wizard-only, three taps behind "Edit settings". A host asked for all four
+       to be adjustable without leaving the game screen, but stacking three full
+       .rules-group columns here permanently would cost as much width as the board
+       itself. Same fix as Dare Conquest already uses for its own difficulty picker:
+       collapse to one pill showing the ticked difficulty dots (forbidden words/banned
+       count/round length already have a live read-out in .phase-summary just above,
+       so the pill itself doesn't need to repeat them), and open the exact same
+       #rules-group-difficulty / #rules-group-forbidden / #rules-group-seconds nodes —
+       moved in, not copied — in a floating popover that costs zero layout space closed.
+       #settings-popover itself lives OUTSIDE #phase-game in the HTML (see the comment
+       there) and is `position: fixed`, positioned in JS from the toggle button's own
+       rect each time it opens — a plain CSS anchor doesn't reach it, because
+       .control-bar's finished entrance animation leaves it with its own stacking
+       context that a descendant's z-index can never climb out of (see dare-conquest.html
+       for the same problem worked out at length). */
+    .settings-popover-wrap { align-self: flex-end; }
+    .settings-toggle-btn {
+      background: var(--btn-face); border: 2px solid var(--border-3); color: var(--text-dim);
+      border-radius: 999px; padding: 7px 14px; cursor: pointer; font: inherit;
+      display: flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 700;
+      transition: background .15s;
+    }
+    .settings-toggle-btn:hover { background: var(--btn-face-hi); }
+    .settings-toggle-btn .stb-dots { font-size: .8rem; letter-spacing: 1px; }
+    .settings-popover {
+      position: fixed; z-index: 9999;
+      min-width: 240px; max-width: min(340px, calc(100vw - 24px));
+      max-height: min(70vh, 520px); overflow-y: auto;
+      background: var(--surface); border: 2px solid var(--border-2); border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.5);
+    }
+    /* the moved-in groups were built to sit flush-right inside a narrow control-bar
+       column — inside the popover they get the same left-aligned treatment as inside
+       the wizard (see the .substep overrides further down), just reusing that rule
+       for a second context rather than repeating it. padding-top stays out of this
+       shared pair on purpose: the wizard's slots each hold exactly one group, so
+       zeroing it there is harmless, but the popover holds all three as siblings and
+       needs .rules-group's own base padding-top (zeroed only for :first-child) to
+       keep the gap below each dashed divider between them. */
+    .settings-popover .rules-group,
+    .substep .rules-group { align-items: flex-start; align-self: stretch; }
+    .substep .rules-group { padding-top: 0; }
+    .settings-popover .banned-count-row,
+    .substep .banned-count-row { align-items: flex-start; }
+    .settings-popover .level-btns,
+    .substep .level-btns { justify-content: flex-start; }
+    .settings-popover .secs-field,
+    .substep .secs-field { display: inline-flex; margin-right: 0; }
 
     /* a finished round: the deal button turns green and breathes, so "it is on to the
        next clue giver" is visible from across a shared screen */
@@ -604,17 +658,10 @@
     }
     .substep-hdr h3 { font-size: 1rem; font-weight: 800; color: var(--text); }
     .substep-desc { font-size: .86rem; color: var(--text-dim); line-height: 1.6; margin: 0 0 16px; }
-    /* the moved-in widgets (difficulty buttons, forbidden toggle, timer field)
-       were built to sit flush-right inside a narrow control-bar column —
-       here they get the room to stand on their own, left-aligned */
-    .substep .rules-group { align-items: flex-start; align-self: stretch; padding-top: 0; }
-    .substep .banned-count-row { align-items: flex-start; }
-    .substep .level-btns { justify-content: flex-start; }
-    /* .secs-field is a bare display:flex element — a flex item shrinks to fit
-       inside the control bar's own flex row, but as a direct child of a plain
-       block (.substep) it would otherwise stretch to the panel's full width,
-       leaving a wide empty box next to the −/60/+ controls */
-    .substep .secs-field { display: inline-flex; margin-right: 0; }
+    /* left-aligned overrides for the moved-in widgets (difficulty buttons, forbidden
+       toggle, timer field) live with the popover's own copy of the same rules, further
+       up — .substep and .settings-popover are the widgets' only two homes, so one
+       shared selector list covers both instead of repeating it here */
 
     .substep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
     .substep-nav-btn {
@@ -668,10 +715,12 @@
   <!-- ══════════ Setup phase: walk the host through the three things this
        game needs decided before dealing a word — difficulty, forbidden
        words, and round length — one at a time, same pattern as index.html's
-       room-setup wizard. #rules-group-difficulty is the one widget the game
-       phase also shows: startGame()/editSettings() move that single node
-       between the two slots below, so the wizard and the control bar can
-       never disagree about which levels are ticked. ══════════ -->
+       room-setup wizard. #rules-group-difficulty / #rules-group-forbidden /
+       #rules-group-seconds are the three widgets the game phase also shows:
+       startGame()/editSettings() move all three nodes (via
+       placeSettingsGroups()) between the wizard slots below and the in-game
+       settings popover, so the wizard and the popover can never disagree
+       about what's ticked. ══════════ -->
   <div class="phase-wrap" id="phase-setup">
     <div class="step-hdr">
       <span class="step-num" data-i18n="taboo.setupBadge">SETUP</span>
@@ -698,15 +747,17 @@
     <div class="substep hidden" id="taboo-substep-2">
       <div class="substep-hdr"><span class="substep-tag">2 / 4</span><h3 data-i18n="taboo.subStep2Title">🚫 Forbidden Words</h3></div>
       <p class="substep-desc" data-i18n="taboo.subStep2Desc">Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.</p>
-      <div class="rules-group" id="rules-group-forbidden">
-        <span class="rules-group-label" data-i18n="taboo.forbiddenWordsLabel">🚫 Forbidden words</span>
-        <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
-          <span class="toggle-switch"></span>
-          <span id="forbidden-state">ON</span>
-        </button>
-        <div class="banned-count-row" id="banned-count-row">
-          <span class="banned-count-label" data-i18n="taboo.howManyLabel">🔢 how many</span>
-          <div class="level-btns" id="count-btns"></div>
+      <div id="substep-forbidden-slot">
+        <div class="rules-group" id="rules-group-forbidden">
+          <span class="rules-group-label" data-i18n="taboo.forbiddenWordsLabel">🚫 Forbidden words</span>
+          <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
+            <span class="toggle-switch"></span>
+            <span id="forbidden-state">ON</span>
+          </button>
+          <div class="banned-count-row" id="banned-count-row">
+            <span class="banned-count-label" data-i18n="taboo.howManyLabel">🔢 how many</span>
+            <div class="level-btns" id="count-btns"></div>
+          </div>
         </div>
       </div>
       <div class="substep-nav">
@@ -718,12 +769,17 @@
     <div class="substep hidden" id="taboo-substep-3">
       <div class="substep-hdr"><span class="substep-tag">3 / 4</span><h3 data-i18n="taboo.subStep3Title">⏱️ Round Timer</h3></div>
       <p class="substep-desc" data-i18n="taboo.subStep3Desc">Set how many seconds each round lasts. You can still adjust it from the game screen anytime.</p>
-      <span class="secs-field" id="secs-field">
-        <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
-        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="90" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
-        <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
-        <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
-      </span>
+      <div id="substep-seconds-slot">
+        <div class="rules-group" id="rules-group-seconds">
+          <span class="rules-group-label" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
+          <span class="secs-field" id="secs-field">
+            <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
+            <input id="timer-secs" inputmode="numeric" autocomplete="off" value="90" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
+            <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
+            <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
+          </span>
+        </div>
+      </div>
       <div class="substep-nav">
         <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(2)" data-i18n="taboo.backBtn">← Back</button>
         <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(4)" data-i18n="taboo.nextBtn">Next →</button>
@@ -740,9 +796,9 @@
     </div>
   </div>
 
-  <!-- ══════════ Game phase: unchanged from before, apart from the three
-       settings widgets above now living inside its control bar instead of
-       being hard-coded there. ══════════ -->
+  <!-- ══════════ Game phase: unchanged from before, apart from the settings
+       widgets above now living inside a popover off its control bar instead
+       of one of them being hard-coded there. ══════════ -->
   <div class="phase-wrap hidden" id="phase-game">
     <div class="phase-summary" id="phase-summary">
       <span id="phase-summary-text"></span>
@@ -751,14 +807,17 @@
 
     <div class="status-line" id="status-line"></div>
 
-    <!-- Difficulty is the one setting the host reaches for mid-session — the
-         room warms up and Easy stops landing — so it sits here in the right
-         half rather than three taps away behind "Edit settings". It is the
-         SAME node as the wizard's, moved in by startGame(); there is only one
-         set of level buttons in the document. Forbidden words and round
-         length stay in the wizard: neither is something you change between
-         two rounds. Switching level never disturbs the round in play — it
-         only ever decided which card the NEXT deal draws from.
+    <!-- Difficulty / forbidden words / banned-word count / round length are all
+         reachable mid-session — the room warms up and Easy stops landing, or a
+         group wants an easier round — without three taps away behind "Edit
+         settings". They are the SAME nodes as the wizard's, moved in by
+         placeSettingsGroups('game') (see the script below); there is only one
+         copy of each widget in the document. The pill only shows the ticked
+         difficulty dots — .phase-summary just above already reads out
+         forbidden-words state, banned count and the timer, so the pill itself
+         doesn't need to repeat them. None of these settings ever disturb the
+         round in play — they only ever decide what the NEXT deal draws from
+         or how long the NEXT round runs.
          The 1fr auto 1fr grid keeps the dial dead centre: both side tracks
          are 1fr whatever they hold. -->
     <div class="control-bar" id="control-bar">
@@ -773,7 +832,11 @@
       </section>
       <div class="cb-dial"><div class="timer-dial" id="timer-dial">90</div></div>
       <section class="cb-sect rules">
-        <div id="game-difficulty-slot"></div>
+        <div class="settings-popover-wrap" id="settings-popover-wrap">
+          <button type="button" class="settings-toggle-btn" id="settings-toggle-btn" onclick="toggleSettingsPopover()" data-i18n="taboo.settingsToggleTitle" data-i18n-attr="title" title="Game settings: difficulty, forbidden words, timer">
+            ⚙️ <span class="stb-dots" id="settings-toggle-dots"></span>
+          </button>
+        </div>
       </section>
     </div>
 
@@ -816,6 +879,17 @@
       <div class="deck-list hidden" id="deck-list"></div>
     </div>
   </div>
+
+  <!-- The settings popover lives here, OUTSIDE #phase-game, on purpose: .control-bar
+       carries a finished fadeUp entrance animation with fill-mode 'both', which per
+       spec leaves it with a (identity) transform and therefore its own stacking
+       context — z-index inside it can never out-rank content in a DOM-later sibling,
+       no matter how high, because they're compared as whole units in DOM order
+       instead. Placing the popover as a plain sibling of #phase-game (position: fixed,
+       positioned in JS from the toggle button's own rect — see toggleSettingsPopover())
+       sidesteps that entirely. Same fix, same reasoning, as dare-conquest.html's own
+       #diff-popover. -->
+  <div class="settings-popover hidden" id="settings-popover"></div>
 
   <!-- how-to-play briefing: shown first, hands over to the page below -->
   <script src="guide-data.js"></script>
@@ -944,6 +1018,7 @@
       backBtn: { zh: '← 上一步', en: '← Back' },
       startGameBtn: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
       editSettingsBtn: { zh: '⚙️ 編輯設定', en: '⚙️ Edit settings' },
+      settingsToggleTitle: { zh: '遊戲設定：難度／禁字／秒數', en: 'Game settings: difficulty, forbidden words, timer' },
       summaryForbiddenOn: { zh: '🚫 禁字 ON（{n}）', en: '🚫 Forbidden ON ({n})' },
       summaryForbiddenOff: { zh: '🚫 禁字 OFF', en: '🚫 Forbidden OFF' },
       summaryTimer: { zh: '⏱️ {n} 秒', en: '⏱️ {n}s' },
@@ -1061,17 +1136,34 @@
     }
     renderTabooDots();
 
-    /* Difficulty is shown in both phases, so rather than keep two sets of level
-       buttons in sync there is one node that travels: appendChild MOVES an
-       existing element, so the listeners renderLevelBtns() attached and the
-       `active` marking come along untouched. Forbidden words and round length
-       stay put in the wizard — they are decided once — and the .phase-summary
-       bar is still what reports all three during play. */
-    function placeDifficulty(where) {
-      const grp = document.getElementById('rules-group-difficulty');
-      const slot = document.getElementById(
-        where === 'game' ? 'game-difficulty-slot' : 'substep-difficulty-slot');
-      if (grp && slot && grp.parentNode !== slot) slot.appendChild(grp);
+    /* All three settings widgets are shown in both phases, so rather than keep two
+       (or three) copies of each in sync there is one node per setting that travels:
+       appendChild MOVES an existing element, so the listeners renderLevelBtns() /
+       renderForbiddenToggle() / setSeconds() attached, and their current state,
+       come along untouched — there is only ever one #rules-group-difficulty,
+       #rules-group-forbidden and #rules-group-seconds in the whole document.
+       'game' gathers all three into #settings-popover, in wizard order, so the
+       existing .rules-group + .rules-group dashed dividers fall between them the
+       same way they used to when this was one static column; 'setup' returns each
+       to its own wizard slot. Bidirectional (unlike Dare Conquest's one-way
+       placeDiffGroupInGame()) because editSettings() below needs the round trip
+       back to the wizard that Dare Conquest's setup screen doesn't have. */
+    function placeSettingsGroups(where) {
+      const diff = document.getElementById('rules-group-difficulty');
+      const forb = document.getElementById('rules-group-forbidden');
+      const secs = document.getElementById('rules-group-seconds');
+      if (where === 'game') {
+        const pop = document.getElementById('settings-popover');
+        if (pop) { if (diff) pop.appendChild(diff); if (forb) pop.appendChild(forb); if (secs) pop.appendChild(secs); }
+      } else {
+        const move = (grp, slotId) => {
+          const slot = document.getElementById(slotId);
+          if (grp && slot && grp.parentNode !== slot) slot.appendChild(grp);
+        };
+        move(diff, 'substep-difficulty-slot');
+        move(forb, 'substep-forbidden-slot');
+        move(secs, 'substep-seconds-slot');
+      }
     }
 
     /* Swap the wizard for the game screen. Split from startGame() because a card can
@@ -1079,7 +1171,7 @@
        settings screen, the shared screen has to follow (see handleAnswer's deal branch). */
     function enterGame() {
       phase = 'game';
-      placeDifficulty('game');
+      placeSettingsGroups('game');
       document.getElementById('phase-setup').classList.add('hidden');
       document.getElementById('phase-game').classList.remove('hidden');
       renderPhaseSummary();
@@ -1102,7 +1194,8 @@
        host returns to the game phase. */
     function editSettings() {
       phase = 'setup';
-      placeDifficulty('setup');
+      placeSettingsGroups('setup');
+      closeSettingsPopover();
       document.getElementById('phase-game').classList.add('hidden');
       document.getElementById('phase-setup').classList.remove('hidden');
       tabooSubStepReached = 1;
@@ -1239,7 +1332,103 @@
         b.onclick = () => toggleLevel(l.id);
         wrap.appendChild(b);
       });
+      renderSettingsToggleDots();
     }
+
+    // the closed-by-default in-game pill: just the colour dot of every ticked
+    // difficulty (the same dot the checkboxes themselves use), same trick as
+    // dare-conquest.html's own difficulty pill — forbidden words/banned count/
+    // round length already have a live read-out in .phase-summary, so the pill
+    // itself only needs to earn its keep for the one setting that doesn't.
+    const LEVEL_DOT = { easy: '🟢', medium: '🟡', hard: '🔴' };
+    function renderSettingsToggleDots() {
+      const el = document.getElementById('settings-toggle-dots');
+      if (el) el.textContent = LEVELS.filter(l => isLevelOn(l.id)).map(l => LEVEL_DOT[l.id]).join('');
+    }
+
+    // popover open/close: click the pill to toggle, click anywhere outside to close.
+    // Position is computed from the button's own viewport rect each time it opens,
+    // rather than anchored via CSS to a parent, because #settings-popover lives
+    // outside #phase-game on purpose (see the HTML comment there).
+    // Unlike Dare Conquest's own difficulty popover — pinned to one edge of a
+    // control bar that never re-centres — this pill sits in a control bar that
+    // switches to a single centred column under 1024px (see the media query
+    // above), so the button can land anywhere across the width of a narrow phone
+    // screen, and it holds three settings groups stacked rather than one, so it's
+    // taller. A plain "always below-right of the button" placement (Dare
+    // Conquest's version) runs the popover off both the left and bottom edges on
+    // a phone in that case — this clamps both axes into the viewport instead.
+    function positionSettingsPopover() {
+      const btn = document.getElementById('settings-toggle-btn');
+      const pop = document.getElementById('settings-popover');
+      if (!btn || !pop) return;
+      const margin = 12;
+      const r = btn.getBoundingClientRect();
+      const popRect = pop.getBoundingClientRect(); // already unhidden by the caller, so this is its real size
+      // flip above the button when there isn't room below, rather than running off
+      // the bottom of a short phone screen
+      if (r.bottom + 8 + popRect.height > window.innerHeight - margin) {
+        pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+        pop.style.top = '';
+      } else {
+        pop.style.top = (r.bottom + 8) + 'px';
+        pop.style.bottom = '';
+      }
+      // right-aligned to the button by default (Dare Conquest's behaviour), then
+      // clamped so it never runs past either edge — the button here can be
+      // centred, not just pinned to the control bar's own right edge
+      const maxRight = window.innerWidth - margin - popRect.width;
+      const right = Math.min(Math.max(window.innerWidth - r.right, margin), Math.max(margin, maxRight));
+      pop.style.right = right + 'px';
+    }
+    function closeSettingsPopover() {
+      document.getElementById('settings-popover').classList.add('hidden');
+      window.removeEventListener('resize', positionSettingsPopover);
+      window.removeEventListener('scroll', onSettingsPageScroll, true);
+    }
+    // A scroll on any OTHER scrollable area (the page itself, the deck browser, a
+    // roster that's grown tall) means the anchor moved under a popover that's
+    // pinned by viewport coordinates, so close it. Unlike Dare Conquest's own
+    // popover — short enough to never need one — this one has its own
+    // overflow-y:auto (three settings groups can be taller than a short phone
+    // screen; see positionSettingsPopover()), so a scroll that's scrolling THAT
+    // has to be told apart from one scrolling the page: closing on your own
+    // attempt to scroll down the list you just opened would be unusable.
+    function onSettingsPageScroll(e) {
+      const pop = document.getElementById('settings-popover');
+      if (pop && e.target instanceof Node && pop.contains(e.target)) return;
+      closeSettingsPopover();
+    }
+    function toggleSettingsPopover() {
+      const pop = document.getElementById('settings-popover');
+      if (pop.classList.contains('hidden')) {
+        // unhide first so positionSettingsPopover() can measure the popover's real
+        // size — getBoundingClientRect() on a display:none element is always zero.
+        // The position is still set before the browser's next paint, so nothing
+        // visibly flashes at the wrong spot.
+        pop.classList.remove('hidden');
+        positionSettingsPopover();
+        window.addEventListener('resize', positionSettingsPopover);
+        // capture: a scroll on any inner scrollable area still counts as
+        // "the anchor moved, close it" — except the popover's own, see above
+        window.addEventListener('scroll', onSettingsPageScroll, true);
+      } else {
+        closeSettingsPopover();
+      }
+    }
+    document.addEventListener('click', e => {
+      const wrap = document.getElementById('settings-popover-wrap');
+      const pop = document.getElementById('settings-popover');
+      if (!wrap || !pop) return;
+      // composedPath(), not .contains(e.target): ticking a checkbox re-renders
+      // #level-btns'/#count-btns' innerHTML from inside its own click handler, which
+      // runs first and detaches the clicked button before this listener sees the
+      // event — at that point .contains(e.target) reports "not inside" for a node
+      // that plainly was. composedPath() is the path captured at dispatch time, so
+      // it stays correct. Same fix as dare-conquest.html's own popover.
+      const path = e.composedPath();
+      if (!path.includes(wrap) && !path.includes(pop)) closeSettingsPopover();
+    });
 
     /* how many of a card's 6 banned words are actually live this round — changing
        it only affects the next word, same as difficulty (the round in play keeps
