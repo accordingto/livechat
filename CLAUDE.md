@@ -1,5 +1,15 @@
 ## 專案背景
 
+**聊天狼人 v1（2026-09-20）**：入口 `chat-wolf.html`。這款遊戲不使用既有
+`play.html` 私人牌卡節點，而是由 `api/chat-wolf.js` 驗證每位玩家的 256-bit 重連
+token，再從 Firebase `chatWolfRooms/{CODE}` 取出伺服器權威狀態並分成公開／個人／
+狼隊投影。房主也是普通玩家，若為村民不會看到狼人或任務。六輪、兩個會議槽、
+一次搖鈴、整組指認、兩個共享任務、人工核對與再玩一局均在
+`api/_lib/chat-wolf-engine.cjs` 的原子狀態轉移內；前端只送意圖，不可自行推進。
+介面文案集中在 `chat-wolf-copy.js`，規則、環境設定與測試矩陣見
+`chat-wolf-mode.md`。此模式需要 Vercel 的 `FIREBASE_SERVICE_ACCOUNT_JSON`，不能把
+服務帳號或當局秘密移到公開前端，也不能用 localStorage 冒充多人同步。
+
 我是一個**英文線上聊天室的主持人**，負責帶領參與者進行互動活動。
 
 ### 溝通限制

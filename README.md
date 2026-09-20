@@ -13,6 +13,7 @@ host is sharing.
 | Game | Players | Description |
 |------|---------|-------------|
 | 💬 Let's Talk | 2–9 | A conversation mode: think first, optionally share a written thought, then take one main turn each round with spoken follow-up requests |
+| 🐺 聊天狼人 | 3–12 (6–8 recommended) | Six guided conversation rounds with a hidden Wolf team, two shared missions, scheduled identifications, and no elimination |
 | ⚖️ Kangaroo Court | 4–9 | One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — before and after |
 | 🏰 Dare Conquest | 2–6 | Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival |
 | 🙊 Say It Without Saying It | 2–6 | One player describes a secret word without saying the forbidden words, one referees, and everyone else hits the buzzer to guess |
@@ -28,6 +29,9 @@ host is sharing.
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
+- **聊天狼人 is intentionally separate from the legacy card links.** Players join
+  its secure lobby by room code and keep an opaque reconnect token on their own
+  device. Its authoritative state is only available through `/api/chat-wolf`.
 - `CLAUDE.md` is the architecture log (written in Chinese): what every screen
   does and, more usefully, why each decision was made. Read it before changing
   anything shared — `room.js`, `play.html`, `index.html`, `game-data.js`,
@@ -85,11 +89,31 @@ Without Firebase configured:
   to go).
 - **Still fully playable** — the rest. They only lose the on-phone voting and
   buzzer interactions; the host screen carries the whole game.
+- **聊天狼人** additionally needs the server-only Firebase Admin environment
+  variables in `.env.example`. It refuses to create a room when that trusted
+  backend is not configured; it never falls back to a fake local room.
+
+### Chat Wolf trusted backend
+
+Chat Wolf cannot safely assign hidden roles or collect private ballots in the
+browser. Vercel runs `api/chat-wolf.js`, and that function alone reads and writes
+`chatWolfRooms/{CODE}` with Firebase Admin. Configure these deployment variables:
+
+```text
+FIREBASE_SERVICE_ACCOUNT_JSON={...the complete service-account JSON...}
+FIREBASE_DATABASE_URL=https://YOUR_PROJECT...firebasedatabase.app
+```
+
+Use the template in `.env.example`. Keep `chatWolfRooms` denied to browser SDKs;
+Firebase Admin bypasses Rules after the API authenticates the player's bearer
+token. Full rules, state transitions, privacy boundaries, and verification steps
+are in [`chat-wolf-mode.md`](chat-wolf-mode.md).
 
 ## Running your own copy
 
-Fork it, clone it, or just download the files — there is no build step and
-nothing to install. Three things need doing before it actually works.
+Fork it or clone it. The original games remain buildless; Chat Wolf adds one
+server dependency, so run `pnpm install` (or an equivalent package-manager
+install) before exercising its API. Three things need doing before it works.
 
 ### 1. Point it at your own Firebase project
 
@@ -131,11 +155,12 @@ the `localhost` on your laptop, so with only a local server you can drive all
 every host screen perfectly and never once see a player card — half of each
 game (buzzers, votes, the jury, Truth or Dare calls) lives on that page.
 
-Any static host will do, since the site is plain files with no build step —
-"import the repo, deploy" is the entire process:
+The original games can still use any static host. Chat Wolf requires a host with
+Node serverless functions; the current deployment uses Vercel:
 
 - **Vercel** — what the live site runs on
-- **Netlify**, **Cloudflare Pages**, **GitHub Pages** — equivalent here
+- Another provider is possible only after adapting `api/chat-wolf.js` to its
+  server-function format. GitHub Pages alone cannot run Chat Wolf.
 
 Deployed files are public even when the repo is private: anyone can fetch
 `/firebase-config.js` from the deployed site. That is expected and safe as long
