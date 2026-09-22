@@ -712,13 +712,19 @@
     .crack-tile.is-static { border-bottom: none; min-width: 10px; color: var(--text-muted); font-size: 1rem; }
     .crack-excluded { font-size: .85rem; font-weight: 700; color: var(--bad-text-soft); text-align: center; }
     /* whose turn it is to press a letter, and the shared turn budget — shown
-       on every card, since neither fact is secret (see the theme comment above) */
+       on every card, since neither fact is secret (see the theme comment above).
+       Amber is reserved for "this is YOU" — every other card just names whoever
+       it is in a neutral tone, so the one card that's actually asking for
+       action doesn't get lost among two others wearing the same colour. */
     .crack-turnbar {
       width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      background: rgba(251,191,36,.1); border: 1.5px solid rgba(251,191,36,.4);
-      border-radius: 12px; padding: 10px 14px; font-size: .95rem; font-weight: 800; color: #fbbf24; text-align: center;
+      background: var(--surface-2); border: 1.5px solid var(--border-2);
+      border-radius: 12px; padding: 10px 14px; font-size: .95rem; font-weight: 800; color: var(--text-dim); text-align: center;
     }
-    .crack-turnbar.is-mine { animation: turnGlow 1.6s ease-in-out infinite; }
+    .crack-turnbar.is-mine {
+      background: rgba(251,191,36,.1); border-color: rgba(251,191,36,.4); color: #fbbf24;
+      animation: turnGlow 1.6s ease-in-out infinite;
+    }
     @keyframes turnGlow { 0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0); } 50% { box-shadow: 0 0 22px rgba(251,191,36,.45); } }
     .crack-turn-count { font-size: .85rem; font-weight: 800; color: var(--text-dim); font-variant-numeric: tabular-nums; }
     .crack-turn-count.is-low { color: var(--bad-text-soft); }
