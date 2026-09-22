@@ -31,9 +31,11 @@
       transition: border-color .3s, box-shadow .3s;
     }
     .score-card.is-active { border-color: #3b82f6; box-shadow: 0 0 24px rgba(59,130,246,.28); }
+    .score-card.is-turn-card { border-color: #fbbf24; box-shadow: 0 0 24px rgba(251,191,36,.28); }
     .score-card .sc-role { font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); min-height: 14px; }
     .score-card .cw-tag { color: var(--accent-text); }
     .score-card .cw-tag.is-guessing { color: #4ade80; }
+    .score-card .cw-tag.is-turn { color: #fbbf24; }
     .score-card .cw-tag.is-rejected { color: var(--bad-text-soft); }
     .score-card .sc-name { font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.2; text-align: center; overflow-wrap: break-word; max-width: 100%; }
     .score-card .sc-pts { font-size: 2.1rem; font-weight: 900; color: var(--accent-text); line-height: 1; }
@@ -65,7 +67,20 @@
     .cw-tier-pool { font-size: .82rem; font-weight: 700; opacity: .75; }
     .cw-result { width: 100%; text-align: center; }
     .cw-result-line { font-size: 1.15rem; font-weight: 800; color: #4ade80; margin: 0 0 6px; }
+    .cw-result-line.is-limit { color: #fbbf24; }
     .cw-result-credits { font-size: .92rem; color: var(--text-muted); margin: 0; }
+
+    /* whose turn it is to press, and how much of the shared turn budget is
+       left — the same line every card shows, since neither is secret */
+    .cw-turnbar {
+      width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+      background: rgba(251,191,36,.1); border: 1.5px solid rgba(251,191,36,.4); border-radius: 14px;
+      padding: 10px 16px;
+    }
+    .cw-turnbar-name { font-size: 1rem; font-weight: 800; color: #fbbf24; }
+    .cw-turn-count { font-size: .92rem; font-weight: 800; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .cw-turn-count.is-low { color: var(--bad-text-soft); }
+    .cw-seat-letters.is-turn .cw-seat-name { color: #fbbf24; }
 
     .cw-tier-chip {
       align-self: center; background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.4); color: var(--accent-text);
@@ -103,6 +118,7 @@
     .cw-letter-btn.is-correct { background: #22c55e; border-color: #22c55e; color: #06230f; }
     .cw-letter-btn.is-wrong { background: #3a1d1d; border-color: #5c2b2b; color: #7a4b4b; }
     .cw-letter-btn:disabled { cursor: default; }
+    .cw-letter-btn:disabled:not(.is-correct):not(.is-wrong) { opacity: .4; }
 
     /* the read-only roster below is just for reconnect links; nothing here is
        secret since the tile row already shows the same revealed state */
@@ -159,6 +175,11 @@
       rejectedTag: { zh: '⏸️ 等其他人先猜', en: '⏸️ Waiting for others' },
       resultLine: { zh: '🎉 {name} 猜對了！答案是「{word}」（+{pts} 分）', en: '🎉 {name} got it! The word was "{word}" (+{pts})' },
       creditsLine: { zh: '🔤 按對字母得分：{list}', en: '🔤 Letter credit: {list}' },
+      turnTag: { zh: '👆 輪到按字母', en: '👆 Turn to press' },
+      turnHostLine: { zh: '輪到 {name} 按字母', en: "It's {name}'s turn to press a letter" },
+      turnCounter: { zh: '回合 {used}/{limit}', en: 'Turn {used}/{limit}' },
+      allLettersDone: { zh: '所有字母都按完了 — 大家討論看看答案吧！', en: 'Every letter has been pressed — talk it out!' },
+      limitResultLine: { zh: '⏰ 回合數用完了！答案是「{word}」— 全員 −{pts} 分', en: '⏰ Out of turns! The word was "{word}" — everyone loses {pts}' },
     });
     const tt = (key, vars) => {
       let s = I18N.t('crack', key);
@@ -224,8 +245,51 @@
     let chooserSeat = -1;          // 0-based, or -1 for "the host is choosing"
     let letterCreditsThisRound = [];
     let lastResult = null;
+    let turnBag = [];              // shuffled seats not yet used to START a round this cycle
+    let lastStarter = -1;          // avoids the same seat starting twice in a row on reshuffle
+    let currentTurnSeat = -1;      // whose turn it is to press a letter; -1 = nobody has letters left
+    let turnLimit = 0;             // this round's press budget (CRACK_ENGINE.turnLimitFor)
+    let turnsUsed = 0;             // presses spent so far this round
 
     function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+    /* Fair "who starts pressing letters this round" rotation — a shuffled bag
+     * exactly like Say It Without Saying It's giverBag: everyone starts once
+     * before anyone starts twice, and a reshuffle never hands the bag straight
+     * back to whoever just had it. Persists across rounds in page memory only
+     * (see the "Round state" comment above); it is who starts, not the whole
+     * in-round order, that this fairness applies to — within a round, turns
+     * simply proceed seat 0..count-1 from that starting point (advanceTurn()). */
+    function drawStarter() {
+      const n = ROOM.count;
+      if (!turnBag.length) {
+        turnBag = CRACK_ENGINE.shuffle(Array.from({ length: n }, (_, i) => i));
+        if (n > 1 && turnBag[turnBag.length - 1] === lastStarter) {
+          const swapAt = turnBag.length - 2;
+          const tmp = turnBag[swapAt]; turnBag[swapAt] = turnBag[turnBag.length - 1]; turnBag[turnBag.length - 1] = tmp;
+        }
+      }
+      const starter = turnBag.pop();
+      lastStarter = starter;
+      return starter;
+    }
+
+    function hasUnpressedLetters(seat) {
+      return CRACK_ENGINE.lettersForSeat(owner, seat).some(l => !revealedLetters.includes(l) && !excludedLetters.includes(l));
+    }
+
+    /* Round-robin from whoever currently holds the turn, skipping any seat
+     * that has already pressed every letter it was dealt. If nobody has any
+     * letters left (the whole alphabet has been pressed), there is no turn
+     * left to hand out — the round just waits on a guess or the turn limit. */
+    function advanceTurn() {
+      const n = ROOM.count;
+      for (let step = 1; step <= n; step++) {
+        const cand = (currentTurnSeat + step + n) % n;
+        if (hasUnpressedLetters(cand)) { currentTurnSeat = cand; return; }
+      }
+      currentTurnSeat = -1;
+    }
 
     function syncScores(n) {
       n = n || ROOM.count;
@@ -240,6 +304,8 @@
       guessing = null; roundId = ''; chooserSeat = -1; chooseId = '';
       lastResult = null; // a count change invalidates any result still on screen — the
                           // letters it was scored against belonged to a different room size
+      currentTurnSeat = -1; turnLimit = 0; turnsUsed = 0;
+      turnBag = []; lastStarter = -1; // room size changed underneath it — start the fairness bag over
       dealId = newId();
       sync();
     }
@@ -270,6 +336,12 @@
       state = 'playing';
       chooseId = ''; chooserSeat = -1;
       roundNum++;
+      // the room's shared press budget for this round, and who presses first —
+      // fresh every round since both depend on this specific word and this
+      // specific fair rotation, see CRACK_ENGINE.turnLimitFor() / drawStarter()
+      turnLimit = CRACK_ENGINE.turnLimitFor(word, card.level || 'medium');
+      turnsUsed = 0;
+      currentTurnSeat = drawStarter();
       sync();
     }
 
@@ -313,12 +385,18 @@
       };
       state = 'done';
       guessing = null;
+      currentTurnSeat = -1;
       dealId = newId();
       sync();
     }
 
+    /* Only one seat may press at a time — the one currentTurnSeat names. This
+     * is a separate lock from the buzz-to-guess one below: pressing a letter
+     * is the mechanical, turn-by-turn action; guessing the whole word stays
+     * open to whoever the room has talked into typing it in, any time. */
     function pressLetter(seat, rid, letter) {
       if (state !== 'playing' || rid !== roundId) return;
+      if (seat !== currentTurnSeat) return;
       letter = String(letter || '').toUpperCase();
       if (!/^[A-Z]$/.test(letter)) return;
       if (owner[letter] !== seat) return;
@@ -330,6 +408,28 @@
       } else {
         excludedLetters.push(letter);
       }
+      turnsUsed++;
+      if (turnsUsed >= turnLimit) { finishRoundByLimit(); return; }
+      advanceTurn();
+      sync();
+    }
+
+    /* The room ran out of turns before anyone guessed it — a shared budget
+     * misses together, so everyone pays the same flat penalty rather than
+     * singling out whoever happened to hold the last turn. The word is
+     * revealed in the result exactly like a normal solve, since by this
+     * point continuing to keep it secret serves nobody. */
+    function finishRoundByLimit() {
+      const penalty = CRACK_ENGINE.TURN_LIMIT_PENALTY;
+      for (let s = 0; s < ROOM.count; s++) scores[s] = (scores[s] || 0) - penalty;
+      lastResult = {
+        limitReached: true, word, tier, penalty,
+        letterCredits: letterCreditsThisRound.map(c => ({ name: ROOM.name(c.seat), letter: c.letter })),
+      };
+      state = 'done';
+      guessing = null;
+      currentTurnSeat = -1;
+      dealId = newId();
       sync();
     }
 
@@ -339,7 +439,7 @@
          chooser  : { id, choice:'tier', tier }                 (choosing only)
          anyone*  : { choice:'buzz' } / { id, choice:'cancelGuess' }
          guesser  : { id, choice:'guess', text }
-         letter owner : { roundId, choice:'letter', letter }
+         current turn holder : { roundId, choice:'letter', letter }
        (*not currently guessing, and not locked out from a recent wrong guess) ── */
     function handleAnswer(num, data) {
       const v = data && data.vote;
@@ -399,6 +499,11 @@
         base.guessing = guessing ? { name: ROOM.name(guessing.seat), id: guessing.id, mine: guessing.seat === seat } : null;
         base.canBuzz = !guessing && !rejected[seat];
         base.rejected = !!rejected[seat];
+        base.turnSeat = currentTurnSeat;
+        base.turnName = currentTurnSeat >= 0 ? ROOM.name(currentTurnSeat) : null;
+        base.myTurn = seat === currentTurnSeat;
+        base.turnsUsed = turnsUsed;
+        base.turnLimit = turnLimit;
       }
       if (state === 'done' && lastResult) base.result = lastResult;
       base.board = Array.from({ length: ROOM.count }, (_, s) => ({ n: ROOM.name(s), p: scores[s] || 0, me: s === seat }));
@@ -436,14 +541,16 @@
         const isChooser = state === 'choosing' && s === chooserSeat;
         const isGuessing = state === 'playing' && guessing && guessing.seat === s;
         const isRejected = state === 'playing' && rejected[s];
+        const isTurn = state === 'playing' && !guessing && s === currentTurnSeat;
         const canBuzzHost = state === 'playing' && !guessing && !rejected[s];
         let tag = '';
         if (isChooser) tag = tt('choosingTag');
         else if (isGuessing) tag = tt('guessingTag');
+        else if (isTurn) tag = tt('turnTag');
         else if (isRejected) tag = tt('rejectedTag');
         return `
-          <div class="score-card${isGuessing ? ' is-active' : ''}">
-            <span class="sc-role cw-tag${isGuessing ? ' is-guessing' : ''}${isRejected ? ' is-rejected' : ''}">${tag}</span>
+          <div class="score-card${isGuessing ? ' is-active' : ''}${isTurn ? ' is-turn-card' : ''}">
+            <span class="sc-role cw-tag${isGuessing ? ' is-guessing' : ''}${isTurn ? ' is-turn' : ''}${isRejected ? ' is-rejected' : ''}">${tag}</span>
             <span class="sc-name">${esc(ROOM.name(s))}</span>
             <span class="sc-pts">${scores[s] || 0}</span>
             ${canBuzzHost ? `<button class="cw-fallback-btn" onclick="hostBuzz(${s})">${tt('hostBuzzBtn')}</button>` : ''}
@@ -454,11 +561,15 @@
     function renderRoundPanel() {
       const el = document.getElementById('round-panel');
       if (state === 'idle' || state === 'done') {
-        const doneBlock = state === 'done' && lastResult ? `
+        const doneBlock = state === 'done' && lastResult ? (lastResult.limitReached ? `
+          <div class="cw-result">
+            <p class="cw-result-line is-limit">${tt('limitResultLine', { word: esc(lastResult.word), pts: lastResult.penalty })}</p>
+            ${lastResult.letterCredits.length ? `<p class="cw-result-credits">${tt('creditsLine', { list: lastResult.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</p>` : ''}
+          </div>` : `
           <div class="cw-result">
             <p class="cw-result-line">${tt('resultLine', { name: esc(lastResult.solverName), word: esc(lastResult.word), pts: lastResult.solverPts })}</p>
             ${lastResult.letterCredits.length ? `<p class="cw-result-credits">${tt('creditsLine', { list: lastResult.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</p>` : ''}
-          </div>` : '';
+          </div>`) : '';
         el.innerHTML = `
           ${doneBlock}
           <p class="cw-idle-note">${tt('idleHostNote')}</p>
@@ -494,19 +605,34 @@
         </div>` : '';
       const lettersGrid = Array.from({ length: ROOM.count }, (_, s) => {
         const mine = CRACK_ENGINE.lettersForSeat(owner, s);
-        return `<div class="cw-seat-letters">
-          <span class="cw-seat-name">${esc(ROOM.name(s))}</span>
+        const isTurn = s === currentTurnSeat;
+        return `<div class="cw-seat-letters${isTurn ? ' is-turn' : ''}">
+          <span class="cw-seat-name">${esc(ROOM.name(s))}${isTurn ? ' 👆' : ''}</span>
           <div class="cw-letter-row">
             ${mine.map(l => {
               const pressed = revealedLetters.includes(l) || excludedLetters.includes(l);
               const correct = revealedLetters.includes(l);
-              return `<button class="cw-letter-btn${pressed ? (correct ? ' is-correct' : ' is-wrong') : ''}"${pressed ? ' disabled' : ''} onclick="hostPressLetter(${s},'${l}')">${l}</button>`;
+              const clickable = isTurn && !pressed;
+              return `<button class="cw-letter-btn${pressed ? (correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="hostPressLetter(${s},'${l}')">${l}</button>`;
             }).join('')}
           </div>
         </div>`;
       }).join('');
+      // the turn budget and who is pressing next — the same info every card shows,
+      // since none of it is secret (see the file-level comment on payloadFor)
+      const turnFrac = turnLimit ? turnsUsed / turnLimit : 0;
+      const turnBar = currentTurnSeat >= 0 ? `
+        <div class="cw-turnbar">
+          <span class="cw-turnbar-name">🔤 ${tt('turnHostLine', { name: esc(ROOM.name(currentTurnSeat)) })}</span>
+          <span class="cw-turn-count${turnFrac >= .8 ? ' is-low' : ''}">${tt('turnCounter', { used: turnsUsed, limit: turnLimit })}</span>
+        </div>` : `
+        <div class="cw-turnbar">
+          <span class="cw-turnbar-name">🔤 ${tt('allLettersDone')}</span>
+          <span class="cw-turn-count is-low">${tt('turnCounter', { used: turnsUsed, limit: turnLimit })}</span>
+        </div>`;
       el.innerHTML = `
         <div class="cw-tier-chip">${TIER_EMOJI[tier]} ${tt('tier_' + tier)}</div>
+        ${turnBar}
         <div class="cw-tiles">${tileRow}</div>
         ${excludedRow}
         ${guessBox}

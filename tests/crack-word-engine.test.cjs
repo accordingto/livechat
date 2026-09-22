@@ -120,3 +120,36 @@ test('a one-letter room still gets every letter assigned somewhere', () => {
   assert.equal(Object.keys(owner).length, 26);
   for (const l of E.ALPHABET) assert.equal(owner[l], 0);
 });
+
+test('uniqueLetterCount counts distinct letters, not positions', () => {
+  assert.equal(E.uniqueLetterCount('wall'), 3); // w, a, l
+  assert.equal(E.uniqueLetterCount('Pot'), 3);
+  assert.equal(E.uniqueLetterCount('Ice Cream'), 6); // i c e r a m (case/space-insensitive)
+});
+
+test('turnLimitFor scales with difficulty at the same word', () => {
+  const easy = E.turnLimitFor('Pineapple', 'easy');
+  const medium = E.turnLimitFor('Pineapple', 'medium');
+  const hard = E.turnLimitFor('Pineapple', 'hard');
+  assert.ok(easy < medium);
+  assert.ok(medium < hard);
+});
+
+test('turnLimitFor scales with unique letters at the same difficulty', () => {
+  const short = E.turnLimitFor('cat', 'medium'); // 3 unique
+  const long = E.turnLimitFor('resilience', 'medium'); // more unique letters
+  assert.ok(long > short);
+});
+
+test('turnLimitFor is clamped to [TURN_MIN, TURN_MAX]', () => {
+  assert.ok(E.turnLimitFor('a', 'easy') >= E.TURN_MIN);
+  assert.ok(E.turnLimitFor('pneumonoultramicroscopicsilicovolcanoconiosis', 'hard') <= E.TURN_MAX);
+});
+
+test('turnLimitFor is deterministic for the same inputs', () => {
+  assert.equal(E.turnLimitFor('Underwear', 'hard'), E.turnLimitFor('Underwear', 'hard'));
+});
+
+test('turnLimitFor falls back to the medium multiplier for an unknown difficulty', () => {
+  assert.equal(E.turnLimitFor('wall', 'nonsense'), E.turnLimitFor('wall', 'medium'));
+});

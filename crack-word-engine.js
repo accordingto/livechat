@@ -74,6 +74,45 @@ var CRACK_ENGINE = (() => {
     return n;
   }
 
+  /* How many distinct letters the word actually needs owners for — the same
+   * count `distributeLetters()` uses to size `correctLetters`. This is the
+   * real "how much is there to find" number: two people each holding one of
+   * the word's four repeated letters doesn't make it easier, so turnLimitFor
+   * budgets on unique letters, not total positions. */
+  function uniqueLetterCount(word) {
+    return new Set(String(word).toUpperCase().match(/[A-Za-z]/g) || []).size;
+  }
+
+  /* Turns per unique letter, by the word's own concept-difficulty tier (the
+   * taboo deck's existing easy/medium/hard `level` — see game-data.js). A
+   * harder concept needs more turns for the same letter count: seeing
+   * "_ E _ I _ I E N C E" up doesn't make "Resilience" easy to name the way
+   * "_ I N E A P P L E" makes "Pineapple" easy, so hard words get a bigger
+   * per-letter budget rather than a flat bonus. */
+  const TURN_MULT = { easy: 1.2, medium: 1.6, hard: 2.2 };
+  const TURN_MIN = 6;
+  const TURN_MAX = 30;
+
+  /* The shared turn budget for a round: enough presses for the room to find
+   * a good chunk of the word's letters together, not so many that the whole
+   * thing gets revealed by mechanical exhaustion before anyone has to guess.
+   * Driven by exactly three things — how many unique letters need finding,
+   * how long the word is end to end, and how hard the concept itself is to
+   * name once you can see it — then clamped to a sane range so a 2-letter
+   * word and a 13-letter word both land somewhere playable. */
+  function turnLimitFor(word, difficulty) {
+    const unique = uniqueLetterCount(word);
+    const total = letterCount(word);
+    const mult = TURN_MULT[difficulty] || TURN_MULT.medium;
+    const raw = unique * mult + total * 0.3;
+    return Math.min(TURN_MAX, Math.max(TURN_MIN, Math.round(raw)));
+  }
+
+  /* Flat point loss for every seat when a round's turn budget runs out
+   * before anyone guesses it — a shared consequence for a shared budget,
+   * not scaled by tier or difficulty (only the turn count itself is). */
+  const TURN_LIMIT_PENALTY = 2;
+
   function normalizeGuess(s) {
     return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
@@ -116,6 +155,7 @@ var CRACK_ENGINE = (() => {
     ALPHABET, shuffle, letterCount, tileLayout, TIERS, tierOf, TIER_BASE, LETTER_CREDIT,
     guesserScore, revealedPositions, normalizeGuess, isCorrectGuess,
     distributeLetters, lettersForSeat,
+    uniqueLetterCount, TURN_MULT, TURN_MIN, TURN_MAX, turnLimitFor, TURN_LIMIT_PENALTY,
   };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CRACK_ENGINE;

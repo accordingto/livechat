@@ -711,6 +711,17 @@
     .crack-tile.is-revealed { border-color: #4ade80; color: #4ade80; }
     .crack-tile.is-static { border-bottom: none; min-width: 10px; color: var(--text-muted); font-size: 1rem; }
     .crack-excluded { font-size: .85rem; font-weight: 700; color: var(--bad-text-soft); text-align: center; }
+    /* whose turn it is to press a letter, and the shared turn budget — shown
+       on every card, since neither fact is secret (see the theme comment above) */
+    .crack-turnbar {
+      width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: rgba(251,191,36,.1); border: 1.5px solid rgba(251,191,36,.4);
+      border-radius: 12px; padding: 10px 14px; font-size: .95rem; font-weight: 800; color: #fbbf24; text-align: center;
+    }
+    .crack-turnbar.is-mine { animation: turnGlow 1.6s ease-in-out infinite; }
+    @keyframes turnGlow { 0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0); } 50% { box-shadow: 0 0 22px rgba(251,191,36,.45); } }
+    .crack-turn-count { font-size: .85rem; font-weight: 800; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .crack-turn-count.is-low { color: var(--bad-text-soft); }
     .crack-letters { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .cw-letters-label { font-size: .82rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
     .crack-letter-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -723,6 +734,9 @@
     .crack-letter-btn.is-correct { background: #22c55e; border-color: #22c55e; color: #06230f; }
     .crack-letter-btn.is-wrong { background: #2b0505; border-color: #5c2b2b; color: #7a4b4b; opacity: .7; }
     .crack-letter-btn:disabled { cursor: default; }
+    /* not-my-turn dims to .4 so it reads as "can't touch this yet"; an already-pressed
+       letter keeps its full-strength green/red — that outcome is settled, not withheld */
+    .crack-letter-btn:disabled:not(.is-correct):not(.is-wrong) { opacity: .4; }
     /* the buzzer, same recipe as .taboo-buzz's — the biggest thing on the card
        once someone thinks they know the answer */
     .crack-buzz {
@@ -1022,6 +1036,12 @@
       crackResultChip: { zh: '🎉 這輪結束', en: '🎉 Round over' },
       crackResultLine: { zh: '{name} 猜對了！答案是「{word}」（+{pts} 分）', en: '{name} got it! The word was "{word}" (+{pts})' },
       crackCreditsLine: { zh: '🔤 按對字母得分：{list}', en: '🔤 Letter credit: {list}' },
+      crackYourTurnBanner: { zh: '👆 換你按字母了！', en: '👆 Your turn to press a letter!' },
+      crackWaitingTurn: { zh: '⏳ 輪到 {name} 按字母…', en: "⏳ It's {name}'s turn to press…" },
+      crackAllLettersDone: { zh: '所有字母都按完了 — 大家討論看看答案吧！', en: 'Every letter has been pressed — talk it out!' },
+      crackTurnCounter: { zh: '🔁 回合 {used}/{limit}', en: '🔁 Turn {used}/{limit}' },
+      crackLimitChip: { zh: '⏰ 回合數用完', en: '⏰ Out of turns' },
+      crackLimitResultLine: { zh: '答案是「{word}」— 全員 −{pts} 分', en: 'The word was "{word}" — everyone loses {pts}' },
     });
     const pt = (key, vars) => {
       let s = I18N.t('play', key);
@@ -1593,13 +1613,28 @@
         ).join('');
         const excludedRow = data.excluded && data.excluded.length
           ? `<span class="crack-excluded">${pt('crackExcludedLabel')} ${data.excluded.join(' · ')}</span>` : '';
-        const letters = (data.myLetters || []).map(l => `
-          <button class="crack-letter-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${l.pressed ? ' disabled' : ''} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>
-        `).join('');
+        // only the seat named in data.turnSeat may press — everyone else's own
+        // buttons stay disabled even though they can see them, same as any
+        // already-pressed letter
+        const letters = (data.myLetters || []).map(l => {
+          const clickable = data.myTurn && !l.pressed;
+          return `<button class="crack-letter-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
+        }).join('');
         const lettersBlock = `
           <div class="crack-letters">
             <span class="cw-letters-label">${pt('crackYourLettersLabel')}</span>
             <div class="crack-letter-row">${letters}</div>
+          </div>`;
+        // whose turn it is to press, and the shared turn budget — the same
+        // info the host's own screen shows, since none of it is secret
+        const turnFrac = data.turnLimit ? (data.turnsUsed || 0) / data.turnLimit : 0;
+        const turnWho = data.turnSeat != null
+          ? (data.myTurn ? pt('crackYourTurnBanner') : pt('crackWaitingTurn', { name: esc(data.turnName || '') }))
+          : pt('crackAllLettersDone');
+        const turnBlock = `
+          <div class="crack-turnbar${data.myTurn ? ' is-mine' : ''}">
+            <span>${turnWho}</span>
+            ${data.turnLimit ? `<span class="crack-turn-count${turnFrac >= .8 ? ' is-low' : ''}">${pt('crackTurnCounter', { used: data.turnsUsed || 0, limit: data.turnLimit })}</span>` : ''}
           </div>`;
 
         let buzzBlock;
@@ -1628,6 +1663,7 @@
 
         return shell(`
           <div class="crack-tiles">${tiles}</div>
+          ${turnBlock}
           ${excludedRow}
           ${lettersBlock}
           ${buzzBlock}
@@ -1637,12 +1673,17 @@
       // idle or done: between rounds, every card carries the deal button —
       // a fresh room with no round yet looks the same as one that just finished
       const isDone = data.state === 'done' && data.result;
-      const resultBlock = isDone ? `
+      const resultBlock = !isDone ? '' : data.result.limitReached ? `
+        <div class="crack-result">
+          <span class="pick-chip" style="color:#fbbf24;border-color:#fbbf2455;background:rgba(251,191,36,.1)">${pt('crackLimitChip')}</span>
+          <span class="pick-text">${pt('crackLimitResultLine', { word: esc(data.result.word || ''), pts: data.result.penalty || 0 })}</span>
+          ${data.result.letterCredits && data.result.letterCredits.length ? `<span class="pick-sub">${pt('crackCreditsLine', { list: data.result.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</span>` : ''}
+        </div>` : `
         <div class="crack-result">
           <span class="pick-chip" style="color:${chipInk('#3b82f6')};border-color:#3b82f655;background:rgba(59,130,246,.1)">${pt('crackResultChip')}</span>
           <span class="pick-text">${pt('crackResultLine', { name: esc(data.result.solverName || ''), word: esc(data.result.word || ''), pts: data.result.solverPts || 0 })}</span>
           ${data.result.letterCredits && data.result.letterCredits.length ? `<span class="pick-sub">${pt('crackCreditsLine', { list: data.result.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</span>` : ''}
-        </div>` : '';
+        </div>`;
       const idleSub = !isDone ? `<span class="pick-sub">${pt('crackIdleSub')}</span>` : '';
       const dealBtn = data.canDeal ? `
         <button class="crack-deal" onclick="crackDeal(this)">
