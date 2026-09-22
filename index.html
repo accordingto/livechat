@@ -171,6 +171,7 @@
     .card-purple { --accent:#a78bfa; --accent-rgb:167,139,250; background: linear-gradient(110deg, rgba(167,139,250,.2) 0%, var(--surface) 50%); }
     .card-pink    { --accent:#ec4899; --accent-rgb:236,72,153;  background: linear-gradient(110deg, rgba(236,72,153,.2)  0%, var(--surface) 50%); }
     .card-indigo  { --accent:#6366f1; --accent-rgb:99,102,241; background: linear-gradient(110deg, rgba(99,102,241,.2)  0%, var(--surface) 50%); }
+    .card-blue    { --accent:#3b82f6; --accent-rgb:59,130,246;  background: linear-gradient(110deg, rgba(59,130,246,.2)  0%, var(--surface) 50%); }
 
     /* ── Icon column ── */
     .card-icon-col {
@@ -632,6 +633,19 @@
       <div class="card-arrow">→</div>
     </a>
 
+    <a class="game-card card-blue" href="crack-the-word.html">
+      <div class="card-icon-col"><span class="icon">🔤</span></div>
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="tag" data-i18n="index.tagWordGame">Word Game</span>
+          <span class="tag">👥 2-9</span>
+        </div>
+        <h2>Crack the Word</h2>
+        <p data-i18n="index.descCrack">Everyone gets a slice of the alphabet — press a letter you're holding to reveal it on every card, then buzz in and type the word before someone else does. Nobody knows the answer alone.</p>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
     <a class="game-card card-orange" href="pick-a-side.html">
       <div class="card-icon-col"><span class="icon">🔥</span></div>
       <div class="card-body">
@@ -789,9 +803,11 @@
       tagDebate: { zh: '辯論', en: 'Debate' },
       tagDilemma: { zh: '兩難抉擇', en: 'Dilemma' },
       tagTeam: { zh: '團隊合作', en: 'Team' },
+      tagWordGame: { zh: '單字遊戲', en: 'Word Game' },
       descKangaroo: { zh: '一位玩家因荒謬的罪名受審，控方與辯方輪番陳述，陪審團全程祕密投票兩次——最終判決揭曉勝負。', en: 'One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — and the verdict decides who scores.' },
       descConquest: { zh: '擲骰子在棋盤上前進，完成搞笑的挑戰——告白、唱歌、講笑話、互虧——就能佔領土地，或搶走對手的地盤！', en: 'Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival!' },
       descTaboo: { zh: '一位玩家要形容一個祕密單字、但不能說出禁字，另一位裁判手持禁字清單把關，其餘玩家搶答猜答案。這個畫面只負責計分。', en: 'One player describes a secret word without saying the forbidden words, one player referees with the forbidden list in hand, and everyone else hits the buzzer to guess. This screen only keeps score.' },
+      descCrack: { zh: '26 個英文字母被平均分給所有玩家——按下自己手上的字母，它就會出現在大家卡片上的單字空格裡。想到答案就搶答、打字送出，沒有人一開始就知道答案。', en: "Everyone gets a slice of the alphabet — press a letter you're holding to reveal it on every card, then buzz in and type the word before someone else does. Nobody knows the answer alone." },
       descWordwolf: { zh: '幾乎每個人都拿到同一個祕密單字——只有一位臥底拿到不同的字。討論看看，找出臥底是誰！', en: 'Almost everyone gets the same secret word — one Wolf gets something different. Talk it out and find the Wolf!' },
       descHottake: { zh: '轉出一句大膽的意見——每個人在自己的卡片連結上投 👍／🤷／👎，全場票數即時累加，接著為自己的答案辯護！', en: 'Spin for a bold opinion — everyone votes 👍 / 🤷 / 👎 from their own card link, the room tally fills in live, then defend your answer!' },
       descSophies: { zh: '一個道德兩難的處境，只有兩個極端選項——A 或 B。每個人在自己的卡片上點選，再說明理由；也可以選 C，提出自己的答案並為它辯護。', en: 'A morally impossible situation with two extreme choices — A or B. Everyone taps their pick on their own card, then explains why. Or take option C and defend your own answer.' },

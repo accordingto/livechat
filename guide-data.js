@@ -141,6 +141,54 @@ const GAME_GUIDES = {
     ],
   },
 
+  /* ══════════════════ 🔤 Crack the Word ══════════════════ */
+  crack: {
+    players: { zh: '2–9 人', en: '2–9 players' },
+    tagline: {
+      zh: '26 個字母分給全場，一起按出一個沒有人一開始就知道的單字。',
+      en: 'The alphabet is split across the room — piece the word together with letters nobody starts out knowing.',
+    },
+    sections: [
+      { icon: '🎯', title: GUIDE_TITLES.what, paragraphs: [
+        { zh: '沿用 Say It Without Saying It 的同一個 700 字題庫，但沒有人私下知道答案：單字先變成一排空格，26 個字母平均分給全場玩家，按對的字母才會揭曉。',
+          en: "Uses the same 700-word deck as Say It Without Saying It, but nobody privately knows the answer: the word starts as a row of blanks, the 26 letters are split evenly across the room, and only a correct press reveals one." },
+      ]},
+      { icon: '🕹️', title: GUIDE_TITLES.how, steps: [
+        { zh: `任何人在自己卡片上按 ${B('is-accent', '🔤 抽第一題')} 都能開局 — 接著自選要挑戰幾個字母，這一步每輪都要重選，不是設定一次就好。`,
+          en: `Anyone taps ${B('is-accent', '🔤 Deal the first word')} on their own card — then picks how many letters to take on. That choice is made fresh every round, not set once at the start.` },
+        { zh: `每個人卡片上都有自己分到的字母按鈕。按下自己手上的字母，它就會出現在所有人卡片的空格裡——按對的人 +1 分。`,
+          en: `Everyone's card carries their own slice of the alphabet as buttons. Pressing one reveals it in the blanks on every card — a correct press is worth +1.` },
+        { zh: `想到答案就按 ${B('is-green', '🙋 我知道了！')}，打出完整單字送出。一次只有一個人在猜；猜對算分、幾個字母都沒揭曉也一樣算分（愈早猜中分數愈高）。`,
+          en: `Think you know it? Tap ${B('is-green', "🙋 I've got it!")} and type the full word. One guess at a time — getting it right scores, and scores more the fewer letters were already up.` },
+        { zh: '猜錯的人要等這輪其他人都各猜錯一次，才會整批重新開放搶答。',
+          en: 'A wrong guess locks that player out until everyone else has also missed once this round.' },
+      ]},
+      { icon: '📱', title: { zh: '每支手機看到的不一樣', en: 'What each phone shows' },
+        phones: [
+          { caption: { zh: '🔀 選長度', en: '🔀 Choosing a length' },
+            card: { name: 'Dan', color: 4,
+                    sub: { zh: '選一個長度，開始這一輪：', en: 'Pick a length to start this round:' },
+                    buttons: [
+                      { label: { zh: '🟢 短字（5 字母以下）', en: '🟢 Short (≤5 letters)' }, cls: 'is-choice' },
+                      { label: { zh: '🔴 長字（9 字母以上）', en: '🔴 Long (9+ letters)' }, cls: 'is-choice' },
+                    ] } },
+          { caption: { zh: '🔤 猜題中', en: '🔤 Mid-round' },
+            card: { name: 'Amy', color: 1,
+                    word: { zh: '_ A _ _', en: '_ A _ _' },
+                    sub: { zh: '🔤 你的字母：K · A · N · Q', en: '🔤 Your letters: K · A · N · Q' },
+                    buttons: [{ label: { zh: "🙋 我知道了！", en: "🙋 I've got it!" }, cls: 'is-green' }] } },
+        ],
+        note: { zh: '空格與已揭曉的字母，全場每張卡片都看得到——這不是祕密。祕密只有主持人畫面上完全不會出現的原始單字本身，連主持人自己也判斷不出來，猜對猜錯全靠主持人頁自己比對。',
+                en: "The blanks and whatever's already been revealed are visible on every card — that part was never secret. The only thing that stays hidden is the plain word itself, which never reaches this shared screen either; a typed guess is checked against it automatically." } },
+      { icon: '💡', title: GUIDE_TITLES.tips, tips: [
+        { zh: '整局不用碰主持人畫面：開局、選長度、按字母、搶答、判定全部在卡片上。手機臨時故障時，這個畫面上也有一樣的按鈕可以代按。',
+          en: "You never have to touch this screen: dealing, choosing a length, pressing letters, buzzing and judging all happen on the cards. The same controls are mirrored here as a fallback if a phone drops out." },
+        { zh: '字母不是猜的人才看得到——每個人分到的字母裡，大約只有幾個真的在單字裡，其餘按了會直接顯示「不在裡面」，這本身就是線索。',
+          en: "The letters someone holds aren't hand-picked to be useful — most of the alphabet isn't in any given word, so a lot of presses will come back \"not in it,\" and that's useful information too." },
+      ]},
+    ],
+  },
+
   /* ══════════════════════ 🔥 Pick a Side! ══════════════════════ */
   hottake: {
     players: { zh: '2–9 人', en: '2–9 players' },

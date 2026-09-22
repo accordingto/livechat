@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Crack the Word · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Crack the Word">
+  <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --accent: #3b82f6; --accent-alt: #3b82f6; --warn: #ef4444; }
+    .fb-warning { color: var(--bad-text-soft); margin-bottom: 16px; }
+    .header h1 { background: linear-gradient(135deg, #fff 30%, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .round-badge span { color: var(--accent-text); }
+
+    /* ── Scoreboard: same shape as Say It's own (see that file), tinted blue ── */
+    .scoreboard {
+      width: 100%; max-width: 1100px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+      margin-bottom: 18px;
+      animation: fadeUp .5s .15s ease both;
+    }
+    .score-card {
+      flex: 1; min-width: 150px; max-width: 220px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 18px;
+      padding: 16px 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .score-card.is-active { border-color: #3b82f6; box-shadow: 0 0 24px rgba(59,130,246,.28); }
+    .score-card .sc-role { font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); min-height: 14px; }
+    .score-card .cw-tag { color: var(--accent-text); }
+    .score-card .cw-tag.is-guessing { color: #4ade80; }
+    .score-card .cw-tag.is-rejected { color: var(--bad-text-soft); }
+    .score-card .sc-name { font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.2; text-align: center; overflow-wrap: break-word; max-width: 100%; }
+    .score-card .sc-pts { font-size: 2.1rem; font-weight: 900; color: var(--accent-text); line-height: 1; }
+    .cw-fallback-btn {
+      background: var(--btn-face); border: 1.5px solid var(--border-3); color: var(--text-dim);
+      border-radius: 10px; padding: 6px 12px; font-size: .82rem; font-weight: 800; font-family: inherit; cursor: pointer;
+    }
+    .cw-fallback-btn:hover { background: var(--btn-face-hi); }
+
+    /* ── Round panel: tiles, tier chooser, letter grid, guess judge box ── */
+    .cw-panel {
+      width: 100%; max-width: 1100px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 22px;
+      padding: 22px 20px; margin-bottom: 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+      animation: fadeUp .5s .2s ease both;
+    }
+    .cw-idle-note, .cw-choosing-note, .cw-guess-box p { color: var(--text-dim); text-align: center; font-size: 1rem; line-height: 1.5; }
+    .cw-host-deal, .cw-tier-btn {
+      background: var(--accent); border: 2px solid var(--accent); color: var(--btn-ink);
+      border-radius: 14px; padding: 14px 20px; font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+      transition: transform .1s;
+    }
+    .cw-host-deal:active, .cw-tier-btn:active { transform: scale(.97); }
+    .cw-host-deal:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+    .cw-tier-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .cw-tier-btn { display: flex; align-items: baseline; gap: 8px; }
+    .cw-tier-pool { font-size: .82rem; font-weight: 700; opacity: .75; }
+    .cw-result { width: 100%; text-align: center; }
+    .cw-result-line { font-size: 1.15rem; font-weight: 800; color: #4ade80; margin: 0 0 6px; }
+    .cw-result-credits { font-size: .92rem; color: var(--text-muted); margin: 0; }
+
+    .cw-tier-chip {
+      align-self: center; background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.4); color: var(--accent-text);
+      font-size: .85rem; font-weight: 900; letter-spacing: .5px; text-transform: uppercase;
+      padding: 5px 16px; border-radius: 20px;
+    }
+    .cw-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .cw-tile {
+      min-width: 34px; height: 46px; display: flex; align-items: center; justify-content: center;
+      border-bottom: 3px solid var(--border-2); font-size: 1.6rem; font-weight: 900; color: #fff;
+    }
+    .cw-tile.is-revealed { border-color: #4ade80; color: #4ade80; }
+    .cw-tile.is-static { border-bottom: none; min-width: 14px; color: var(--text-muted); }
+    .cw-excluded { color: var(--bad-text-soft); font-size: .92rem; font-weight: 700; text-align: center; }
+    .cw-guess-box { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .cw-guess-row { display: flex; gap: 8px; width: 100%; }
+    .cw-guess-row input {
+      flex: 1; min-width: 0; background: var(--bg); border: 2px solid var(--border-2); color: var(--text);
+      border-radius: 10px; padding: 10px 12px; font-size: 1rem; font-family: inherit;
+    }
+    .cw-guess-row button {
+      background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 10px; padding: 10px 14px; font-size: .95rem; font-weight: 900; font-family: inherit; cursor: pointer;
+    }
+    .cw-guess-row button.cw-guess-cancel { background: var(--btn-face); border-color: var(--border-3); color: var(--text-dim); }
+
+    .cw-letters-grid { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .cw-seat-letters { display: flex; flex-direction: column; gap: 6px; }
+    .cw-seat-name { font-size: .82rem; font-weight: 800; color: var(--text-muted); }
+    .cw-letter-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .cw-letter-btn {
+      width: 30px; height: 30px; border-radius: 8px; background: var(--btn-face); border: 1.5px solid var(--border-3);
+      color: var(--text-dim); font-size: .88rem; font-weight: 900; font-family: inherit; cursor: pointer;
+    }
+    .cw-letter-btn.is-correct { background: #22c55e; border-color: #22c55e; color: #06230f; }
+    .cw-letter-btn.is-wrong { background: #3a1d1d; border-color: #5c2b2b; color: #7a4b4b; }
+    .cw-letter-btn:disabled { cursor: default; }
+
+    /* the read-only roster below is just for reconnect links; nothing here is
+       secret since the tile row already shows the same revealed state */
+  </style>
+</head>
+<body data-guide="crack" data-guide-next="game">
+
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
+    <div class="round-badge"><span data-i18n="crack.roundLabel">Round</span> <span id="roundNum">0</span></div>
+  </div>
+
+  <div class="header">
+    <h1>🔤 Crack the Word</h1>
+  </div>
+
+  <div class="fb-warning hidden" id="fb-warning"></div>
+
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="cw-panel" id="round-panel"></div>
+
+  <div id="room-mount"></div>
+
+  <script src="guide-data.js"></script>
+  <script src="guide.js"></script>
+  <script src="qrcode.js"></script>
+  <script src="game-data.js"></script>
+  <script src="sheet-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script src="crack-word-engine.js"></script>
+  <script>
+    I18N.registerDict('crack', {
+      roundLabel: { zh: 'Round', en: 'Round' },
+      linksNote: { zh: '分數與目前進度即時顯示在下面。', en: "Scores and the round in progress are shown live below." },
+      fbWarning: { zh: '⚠️ 尚未設定 Firebase — 這款遊戲需要私人玩家卡片才能進行，無法在沒有 Firebase 的情況下遊玩。', en: "⚠️ Firebase isn't set up — this game needs private player cards to work, so it can't be played without it." },
+      tier_short: { zh: '🟢 短字（5 字母以下）', en: '🟢 Short (≤5 letters)' },
+      tier_medium: { zh: '🟡 中字（6–8 字母）', en: '🟡 Medium (6–8 letters)' },
+      tier_long: { zh: '🔴 長字（9 字母以上）', en: '🔴 Long (9+ letters)' },
+      idleHostNote: { zh: '任何一位玩家都可以從自己的卡片按「換下一題」開局，並自選要挑戰的長度。', en: 'Any player can start the next round from their own card and choose the length to challenge.' },
+      hostDealBtn: { zh: '🔀 主持人代抽下一題', en: '🔀 Deal the next word (host fallback)' },
+      linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
+      choosingHostNote: { zh: '⏳ 等 {name} 選擇題目長度…（手機不方便時，主持人也可以直接點下面的按鈕代選）', en: '⏳ Waiting for {name} to choose a length… (or tap a button below yourself if their phone isn\'t handy)' },
+      excludedLabel: { zh: '❌ 已試過、不在這個字裡：', en: '❌ Tried, not in the word:' },
+      guessingHostNote: { zh: '🙋 {name} 正在猜 — 手機不方便時，主持人可以幫忙打字送出：', en: '🙋 {name} is guessing — type it in yourself below if their phone isn\'t handy:' },
+      guessPlaceholder: { zh: '輸入猜測的完整單字…', en: 'Type the full guessed word…' },
+      hostJudgeBtn: { zh: '送出', en: 'Submit' },
+      hostCancelGuessBtn: { zh: '取消', en: 'Cancel' },
+      hostBuzzBtn: { zh: '🙋 代按搶答', en: '🙋 Buzz in for them' },
+      choosingTag: { zh: '🔀 選長度中', en: '🔀 Choosing length' },
+      guessingTag: { zh: '🙋 猜題中', en: '🙋 Guessing' },
+      rejectedTag: { zh: '⏸️ 等其他人先猜', en: '⏸️ Waiting for others' },
+      resultLine: { zh: '🎉 {name} 猜對了！答案是「{word}」（+{pts} 分）', en: '🎉 {name} got it! The word was "{word}" (+{pts})' },
+      creditsLine: { zh: '🔤 按對字母得分：{list}', en: '🔤 Letter credit: {list}' },
+    });
+    const tt = (key, vars) => {
+      let s = I18N.t('crack', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+    const TIER_EMOJI = { short: '🟢', medium: '🟡', long: '🔴' };
+
+    /* ── The word deck, bucketed by how many actual letters it needs revealed
+       (not raw string length — a two-word phrase's space doesn't count). Reuses
+       Say It Without Saying It's exact 700-word deck as-is; no changes needed
+       there. Computed once at load, after sheet-data.js has already applied any
+       collaborator edits on top of GAME_DATA. ── */
+    const DECK = GAME_DATA.taboo;
+    const BUCKET = { short: [], medium: [], long: [] };
+    DECK.forEach((w, i) => { BUCKET[CRACK_ENGINE.tierOf(CRACK_ENGINE.letterCount(w.word))].push(i); });
+
+    /* Not-yet-dealt indices per tier, shuffled — refilled (and reshuffled) only
+       once a tier runs dry, so nothing repeats until the whole tier has been
+       seen. Persisted the same way Say It's `used` is: fingerprinted against
+       the deck's current length, so a sheet reload that changes the deck's
+       shape doesn't replay stale indices against a different pool. */
+    const SAVE_KEY = 'crackWordUsed.v1';
+    let remaining = { short: [], medium: [], long: [] };
+    function saveUsed() {
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify({ deckLen: DECK.length, remaining })); } catch (e) {}
+    }
+    (function loadUsed() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved && saved.deckLen === DECK.length && saved.remaining) remaining = saved.remaining;
+      } catch (e) {}
+    })();
+    function pickWordIndex(t) {
+      const bucket = (BUCKET[t] && BUCKET[t].length) ? BUCKET[t] : DECK.map((_, i) => i);
+      if (!remaining[t] || !remaining[t].length) remaining[t] = CRACK_ENGINE.shuffle(bucket);
+      const idx = remaining[t].pop();
+      saveUsed();
+      return idx;
+    }
+
+    /* ── Round state — page memory only, exactly like Say It's `scores`/`state`:
+       reloading the host tab starts a fresh game, on purpose (see that file for
+       why scores are never persisted). ── */
+    let roundNum = 0;
+    let scores = [];
+    let state = 'idle';          // idle | choosing | playing | done
+    let tier = null;
+    let word = '';                // the secret — lives ONLY here, never published raw
+    let owner = {};                // letter -> 0-based seat, this round
+    let revealedLetters = [];
+    let excludedLetters = [];
+    let rejected = [];
+    let guessing = null;           // { seat, id } or null
+    let roundId = '';              // guards letter/guess messages against a stale round
+    let dealId = '';               // one-shot id while idle/done
+    let chooseId = '';             // one-shot id while choosing
+    let chooserSeat = -1;          // 0-based, or -1 for "the host is choosing"
+    let letterCreditsThisRound = [];
+    let lastResult = null;
+
+    function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+    function syncScores(n) {
+      n = n || ROOM.count;
+      while (scores.length < n) scores.push(0);
+    }
+
+    function sync() { ROOM.publish(seat => payloadFor(seat)); renderAll(); }
+
+    function openIdle() {
+      state = 'idle'; tier = null; word = ''; owner = {};
+      revealedLetters = []; excludedLetters = []; rejected = [];
+      guessing = null; roundId = ''; chooserSeat = -1; chooseId = '';
+      lastResult = null; // a count change invalidates any result still on screen — the
+                          // letters it was scored against belonged to a different room size
+      dealId = newId();
+      sync();
+    }
+
+    /* anyone's card (or the host, with seat -1) asking to open the next round */
+    function requestDeal(seat) {
+      if (state !== 'idle' && state !== 'done') return;
+      state = 'choosing';
+      chooserSeat = seat;
+      chooseId = newId();
+      dealId = '';
+      lastResult = null;
+      sync();
+    }
+
+    function requestTier(seat, id, t) {
+      if (state !== 'choosing' || seat !== chooserSeat || id !== chooseId) return;
+      if (!CRACK_ENGINE.TIERS.includes(t)) return;
+      const idx = pickWordIndex(t);
+      const card = DECK[idx];
+      word = card.word;
+      tier = t;
+      owner = CRACK_ENGINE.distributeLetters(word, ROOM.count).owner;
+      revealedLetters = []; excludedLetters = []; letterCreditsThisRound = [];
+      rejected = new Array(ROOM.count).fill(false);
+      guessing = null;
+      roundId = newId();
+      state = 'playing';
+      chooseId = ''; chooserSeat = -1;
+      roundNum++;
+      sync();
+    }
+
+    function requestBuzz(seat) {
+      if (state !== 'playing' || guessing || rejected[seat]) return;
+      guessing = { seat, id: newId() };
+      sync();
+    }
+
+    function cancelGuess(seat) {
+      if (state !== 'playing' || !guessing || guessing.seat !== seat) return;
+      guessing = null;
+      sync();
+    }
+
+    function submitGuess(seat, id, text) {
+      if (state !== 'playing' || !guessing || guessing.seat !== seat || guessing.id !== id) return;
+      if (CRACK_ENGINE.isCorrectGuess(text, word)) {
+        finishRound(seat);
+        return;
+      }
+      rejected[seat] = true;
+      guessing = null;
+      // once every seat has missed once this round, everyone gets another shot —
+      // same "full lap of misses" unlock as Say It Without Saying It's referee lock
+      if (Array.from({ length: ROOM.count }, (_, i) => i).every(i => rejected[i])) {
+        rejected = new Array(ROOM.count).fill(false);
+      }
+      sync();
+    }
+
+    function finishRound(solverSeat) {
+      const total = CRACK_ENGINE.letterCount(word);
+      const revealedNow = CRACK_ENGINE.revealedPositions(word, revealedLetters);
+      const pts = CRACK_ENGINE.guesserScore(tier, revealedNow, total);
+      scores[solverSeat] = (scores[solverSeat] || 0) + pts;
+      lastResult = {
+        word, tier, solverPts: pts,
+        solverName: ROOM.name(solverSeat),
+        letterCredits: letterCreditsThisRound.map(c => ({ name: ROOM.name(c.seat), letter: c.letter })),
+      };
+      state = 'done';
+      guessing = null;
+      dealId = newId();
+      sync();
+    }
+
+    function pressLetter(seat, rid, letter) {
+      if (state !== 'playing' || rid !== roundId) return;
+      letter = String(letter || '').toUpperCase();
+      if (!/^[A-Z]$/.test(letter)) return;
+      if (owner[letter] !== seat) return;
+      if (revealedLetters.includes(letter) || excludedLetters.includes(letter)) return;
+      if (word.toUpperCase().includes(letter)) {
+        revealedLetters.push(letter);
+        scores[seat] = (scores[seat] || 0) + CRACK_ENGINE.LETTER_CREDIT;
+        letterCreditsThisRound.push({ seat, letter });
+      } else {
+        excludedLetters.push(letter);
+      }
+      sync();
+    }
+
+    /* ── What the players send back, all through `vote` like every other game
+       on this site:
+         anyone   : { id, choice:'deal' }                       (idle/done only)
+         chooser  : { id, choice:'tier', tier }                 (choosing only)
+         anyone*  : { choice:'buzz' } / { id, choice:'cancelGuess' }
+         guesser  : { id, choice:'guess', text }
+         letter owner : { roundId, choice:'letter', letter }
+       (*not currently guessing, and not locked out from a recent wrong guess) ── */
+    function handleAnswer(num, data) {
+      const v = data && data.vote;
+      if (!v) return;
+      const seat = num - 1;
+      ROOM.clearAnswer(seat);
+      if (v.choice === 'deal') { if (v.id === dealId) requestDeal(seat); return; }
+      if (v.choice === 'tier') { requestTier(seat, v.id, v.tier); return; }
+      if (v.choice === 'buzz') { requestBuzz(seat); return; }
+      if (v.choice === 'cancelGuess') { if (v.id === (guessing && guessing.id)) cancelGuess(seat); return; }
+      if (v.choice === 'guess') { submitGuess(seat, v.id, v.text); return; }
+      if (v.choice === 'letter') { pressLetter(seat, v.roundId, v.letter); return; }
+    }
+
+    /* ── Host-screen fallbacks: these call the exact same authoritative
+       functions a card's request would — the host tab already holds the
+       word and the room state, so there is nothing to re-validate. ── */
+    function hostDeal() { requestDeal(-1); }
+    function hostPickTier(t) { requestTier(chooserSeat, chooseId, t); }
+    function hostBuzz(seat) { requestBuzz(seat); }
+    function hostCancelGuess() { if (guessing) cancelGuess(guessing.seat); }
+    function hostSubmitGuess() {
+      if (!guessing) return;
+      const input = document.getElementById('cw-guess-input');
+      submitGuess(guessing.seat, guessing.id, input ? input.value : '');
+    }
+    function hostPressLetter(seat, letter) { pressLetter(seat, roundId, letter); }
+
+    /* ── What each card gets — the secret `word` itself never leaves this page;
+       only the tile pattern (blanks + whatever's already been revealed) does,
+       so there's nothing to leak even by reading the payload in devtools. ── */
+    function payloadFor(seat) {
+      const base = { game: 'crack', state, tier };
+      if (state === 'idle' || state === 'done') {
+        base.canDeal = true;
+        base.dealId = dealId;
+      }
+      if (state === 'choosing') {
+        base.chooserName = chooserSeat >= 0 ? ROOM.name(chooserSeat) : null;
+        if (seat === chooserSeat) {
+          base.isChooser = true;
+          base.chooseId = chooseId;
+          base.tierOptions = CRACK_ENGINE.TIERS.map(t => ({ tier: t, pool: (BUCKET[t] || []).length }));
+        }
+      }
+      if (state === 'playing') {
+        base.roundId = roundId;
+        base.tiles = CRACK_ENGINE.tileLayout(word).map(t => t.isLetter
+          ? { isLetter: true, ch: revealedLetters.includes(t.ch) ? t.ch : null }
+          : { isLetter: false, ch: t.ch });
+        base.excluded = excludedLetters.slice().sort();
+        base.myLetters = CRACK_ENGINE.lettersForSeat(owner, seat).map(l => ({
+          letter: l,
+          pressed: revealedLetters.includes(l) || excludedLetters.includes(l),
+          correct: revealedLetters.includes(l),
+        }));
+        base.guessing = guessing ? { name: ROOM.name(guessing.seat), id: guessing.id, mine: guessing.seat === seat } : null;
+        base.canBuzz = !guessing && !rejected[seat];
+        base.rejected = !!rejected[seat];
+      }
+      if (state === 'done' && lastResult) base.result = lastResult;
+      base.board = Array.from({ length: ROOM.count }, (_, s) => ({ n: ROOM.name(s), p: scores[s] || 0, me: s === seat }));
+      return base;
+    }
+
+    ROOM.init({
+      mount: 'room-mount',
+      accent: '#3b82f6',
+      counts: [2, 3, 4, 5, 6, 7, 8, 9],
+      defaultCount: 5,
+      hideSetup: true, // player count and links are set up once on index.html now
+      linksNote: tt('linksNote'),
+      onPlayerData: handleAnswer,
+      onCountChange: n => { syncScores(n); openIdle(); },
+    });
+
+    function renderFbWarning() {
+      document.getElementById('fb-warning').innerHTML = tt('fbWarning');
+      document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
+    }
+    renderFbWarning();
+    syncScores(ROOM.count);
+    openIdle();
+
+    function renderAll() {
+      document.getElementById('roundNum').textContent = roundNum;
+      renderScoreboard();
+      renderRoundPanel();
+    }
+
+    function renderScoreboard() {
+      const el = document.getElementById('scoreboard');
+      el.innerHTML = Array.from({ length: ROOM.count }, (_, s) => {
+        const isChooser = state === 'choosing' && s === chooserSeat;
+        const isGuessing = state === 'playing' && guessing && guessing.seat === s;
+        const isRejected = state === 'playing' && rejected[s];
+        const canBuzzHost = state === 'playing' && !guessing && !rejected[s];
+        let tag = '';
+        if (isChooser) tag = tt('choosingTag');
+        else if (isGuessing) tag = tt('guessingTag');
+        else if (isRejected) tag = tt('rejectedTag');
+        return `
+          <div class="score-card${isGuessing ? ' is-active' : ''}">
+            <span class="sc-role cw-tag${isGuessing ? ' is-guessing' : ''}${isRejected ? ' is-rejected' : ''}">${tag}</span>
+            <span class="sc-name">${esc(ROOM.name(s))}</span>
+            <span class="sc-pts">${scores[s] || 0}</span>
+            ${canBuzzHost ? `<button class="cw-fallback-btn" onclick="hostBuzz(${s})">${tt('hostBuzzBtn')}</button>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function renderRoundPanel() {
+      const el = document.getElementById('round-panel');
+      if (state === 'idle' || state === 'done') {
+        const doneBlock = state === 'done' && lastResult ? `
+          <div class="cw-result">
+            <p class="cw-result-line">${tt('resultLine', { name: esc(lastResult.solverName), word: esc(lastResult.word), pts: lastResult.solverPts })}</p>
+            ${lastResult.letterCredits.length ? `<p class="cw-result-credits">${tt('creditsLine', { list: lastResult.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</p>` : ''}
+          </div>` : '';
+        el.innerHTML = `
+          ${doneBlock}
+          <p class="cw-idle-note">${tt('idleHostNote')}</p>
+          <button class="cw-host-deal" onclick="hostDeal()"${ROOM.enabled ? '' : ' disabled'}>${ROOM.enabled ? tt('hostDealBtn') : tt('linksNeededBtn')}</button>`;
+        return;
+      }
+      if (state === 'choosing') {
+        const label = chooserSeat >= 0 ? esc(ROOM.name(chooserSeat)) : '…';
+        el.innerHTML = `
+          <p class="cw-choosing-note">${tt('choosingHostNote', { name: label })}</p>
+          <div class="cw-tier-row">
+            ${CRACK_ENGINE.TIERS.map(t => `
+              <button class="cw-tier-btn" onclick="hostPickTier('${t}')">
+                <span>${TIER_EMOJI[t]} ${tt('tier_' + t)}</span><span class="cw-tier-pool">${(BUCKET[t] || []).length}</span>
+              </button>`).join('')}
+          </div>`;
+        return;
+      }
+      // playing
+      const tileRow = CRACK_ENGINE.tileLayout(word).map(t => t.isLetter
+        ? (revealedLetters.includes(t.ch) ? `<span class="cw-tile is-revealed">${t.ch}</span>` : `<span class="cw-tile"></span>`)
+        : `<span class="cw-tile is-static">${t.ch === ' ' ? '' : esc(t.ch)}</span>`
+      ).join('');
+      const excludedRow = excludedLetters.length ? `<div class="cw-excluded">${tt('excludedLabel')} ${excludedLetters.slice().sort().join(' · ')}</div>` : '';
+      const guessBox = guessing ? `
+        <div class="cw-guess-box">
+          <p>${tt('guessingHostNote', { name: esc(ROOM.name(guessing.seat)) })}</p>
+          <div class="cw-guess-row">
+            <input type="text" id="cw-guess-input" placeholder="${tt('guessPlaceholder')}">
+            <button onclick="hostSubmitGuess()">${tt('hostJudgeBtn')}</button>
+            <button class="cw-guess-cancel" onclick="hostCancelGuess()">${tt('hostCancelGuessBtn')}</button>
+          </div>
+        </div>` : '';
+      const lettersGrid = Array.from({ length: ROOM.count }, (_, s) => {
+        const mine = CRACK_ENGINE.lettersForSeat(owner, s);
+        return `<div class="cw-seat-letters">
+          <span class="cw-seat-name">${esc(ROOM.name(s))}</span>
+          <div class="cw-letter-row">
+            ${mine.map(l => {
+              const pressed = revealedLetters.includes(l) || excludedLetters.includes(l);
+              const correct = revealedLetters.includes(l);
+              return `<button class="cw-letter-btn${pressed ? (correct ? ' is-correct' : ' is-wrong') : ''}"${pressed ? ' disabled' : ''} onclick="hostPressLetter(${s},'${l}')">${l}</button>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+      el.innerHTML = `
+        <div class="cw-tier-chip">${TIER_EMOJI[tier]} ${tt('tier_' + tier)}</div>
+        <div class="cw-tiles">${tileRow}</div>
+        ${excludedRow}
+        ${guessBox}
+        <div class="cw-letters-grid">${lettersGrid}</div>`;
+    }
+
+    I18N.onChange(renderAll);
+  </script>
+</body>
+</html>

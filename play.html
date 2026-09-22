@@ -695,6 +695,89 @@
     }
     .role-box .rb-name { font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1.2; }
     .role-box .rb-hint { font-size: .92rem; color: #bbb; line-height: 1.55; }
+
+    /* 🔤 Crack the Word: the tile row (blanks + whatever's been revealed) is the
+       one thing every card shows regardless of role — nobody here privately
+       holds the answer, so unlike Say It there's nothing to keep off this card
+       except the letters still unrevealed, and those just render as empty tiles. */
+    @keyframes pulseCrack { 0%, 100% { box-shadow: 0 0 60px rgba(59,130,246,.18); } 50% { box-shadow: 0 0 80px rgba(59,130,246,.32); } }
+    .secret-card.theme-crack { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
+    .secret-card.theme-crack.is-idle-glow { animation: fadeUp .5s ease both, pulseCrack 3s ease-in-out infinite; }
+    .crack-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .crack-tile {
+      min-width: 26px; height: 38px; display: flex; align-items: center; justify-content: center;
+      border-bottom: 3px solid #35335e; font-size: 1.3rem; font-weight: 900; color: #fff;
+    }
+    .crack-tile.is-revealed { border-color: #4ade80; color: #4ade80; }
+    .crack-tile.is-static { border-bottom: none; min-width: 10px; color: var(--text-muted); font-size: 1rem; }
+    .crack-excluded { font-size: .85rem; font-weight: 700; color: var(--bad-text-soft); text-align: center; }
+    .crack-letters { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .cw-letters-label { font-size: .82rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+    .crack-letter-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .crack-letter-btn {
+      width: 40px; height: 40px; border-radius: 10px; background: #1a1a38; border: 2px solid #35335e;
+      color: #ddd; font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: transform .1s, opacity .2s;
+    }
+    .crack-letter-btn:active:not(:disabled) { transform: scale(.94); }
+    .crack-letter-btn.is-correct { background: #22c55e; border-color: #22c55e; color: #06230f; }
+    .crack-letter-btn.is-wrong { background: #2b0505; border-color: #5c2b2b; color: #7a4b4b; opacity: .7; }
+    .crack-letter-btn:disabled { cursor: default; }
+    /* the buzzer, same recipe as .taboo-buzz's — the biggest thing on the card
+       once someone thinks they know the answer */
+    .crack-buzz {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 16px; padding: 18px 14px;
+      font-size: 1.1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(34,197,94,.28);
+      transition: transform .1s, opacity .2s;
+    }
+    .crack-buzz:active:not(:disabled) { transform: scale(.97); }
+    .crack-buzz:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .crack-guess-box { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .crack-guess-input {
+      width: 100%; background: #0d0d1a; border: 2px solid #35335e; color: #fff;
+      border-radius: 12px; padding: 12px 14px; font-size: 1.1rem; font-family: inherit; text-align: center;
+    }
+    .crack-guess-submit {
+      flex: 1; background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 12px; padding: 12px; font-size: 1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+    }
+    .crack-guess-cancel {
+      flex: 1; background: transparent; border: 1.5px solid #475569; color: #94a3b8;
+      border-radius: 12px; padding: 12px; font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer;
+    }
+    .crack-deal {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #3b82f6; border: 2px solid #3b82f6; color: #050510;
+      border-radius: 16px; padding: 18px 14px;
+      font-size: 1.1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(59,130,246,.28);
+      transition: transform .1s, opacity .2s;
+    }
+    .crack-deal .pb-key { font-size: 1.4rem; }
+    .crack-deal:active:not(:disabled) { transform: scale(.97); }
+    .crack-deal:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .crack-result { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .crack-board {
+      width: 100%; background: #0d0d1a; border: 1.5px solid #1e1e42; border-radius: 14px;
+      padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .crack-board .cwb-hdr {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted);
+      text-align: center;
+    }
+    .crack-board .cwb-rows { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .cwb-row {
+      display: flex; align-items: center; gap: 8px;
+      background: #13132b; border: 1.5px solid #1e1e42; border-radius: 10px; padding: 5px 10px;
+    }
+    .cwb-row.is-me { border-color: var(--me); background: color-mix(in srgb, var(--me) 14%, #0d0d1a); }
+    .cwb-name { font-size: .88rem; font-weight: 800; color: #ccc; }
+    .cwb-row.is-me .cwb-name { color: #fff; }
+    .cwb-pts { font-size: .95rem; font-weight: 900; color: #ddd; }
+    .cwb-row.is-me .cwb-pts { color: var(--me-text); }
   </style>
 </head>
 <body>
@@ -915,6 +998,30 @@
       waitingCardEyebrow: { zh: '你的祕密卡片', en: 'Your Secret Card' },
       waitingCardLead: { zh: '這張卡片是你在遊戲中的專屬畫面 — 題目、選項與操作按鈕，主持人開始之後都會直接顯示在這裡。', en: "This card is your own screen for the game — prompts, choices and buttons will all show up right here once the host gets going." },
       waitingCardKeep: { zh: '把這個分頁留著，不用重新整理。', en: 'Keep this tab open — no need to refresh.' },
+      // 🔤 Crack the Word
+      crackIdleSub: { zh: '還沒有題目 — 任何人都可以抽第一題，並自選要挑戰的長度。', en: "No word yet — anyone can deal the first one and pick the length to challenge." },
+      crackDealFirstBtn: { zh: '🔤 抽第一題', en: '🔤 Deal the first word' },
+      crackDealNextBtn: { zh: '🔤 換下一題', en: '🔤 Deal the next word' },
+      crackDealing: { zh: '發題中…', en: 'Dealing…' },
+      crackDealAnyoneSub: { zh: '誰先按都可以，接著自己選要挑戰幾個字母。', en: "Whoever taps first deals — then picks how many letters to take on." },
+      crackChooseSub: { zh: '選一個長度，開始這一輪：', en: 'Pick a length to start this round:' },
+      crackTier_short: { zh: '🟢 短字（5 字母以下）', en: '🟢 Short (≤5 letters)' },
+      crackTier_medium: { zh: '🟡 中字（6–8 字母）', en: '🟡 Medium (6–8 letters)' },
+      crackTier_long: { zh: '🔴 長字（9 字母以上）', en: '🔴 Long (9+ letters)' },
+      crackWaitingChooser: { zh: '⏳ 等 {name} 選擇題目長度…', en: '⏳ Waiting for {name} to choose a length…' },
+      crackWaitingChooserHost: { zh: '⏳ 等主持人選擇題目長度…', en: '⏳ Waiting for the host to choose a length…' },
+      crackExcludedLabel: { zh: '❌ 已試過、不在這個字裡：', en: '❌ Tried, not in the word:' },
+      crackYourLettersLabel: { zh: '🔤 你的字母', en: '🔤 Your letters' },
+      crackBuzzBtn: { zh: '🙋 我知道了！', en: "🙋 I've got it!" },
+      crackGuessingSub: { zh: '打出完整的答案：', en: 'Type the full word:' },
+      crackGuessPlaceholder: { zh: '輸入猜測的完整單字…', en: 'Type the full guessed word…' },
+      crackSubmitGuessBtn: { zh: '✅ 送出', en: '✅ Submit' },
+      crackCancelGuessBtn: { zh: '✖️ 取消', en: '✖️ Cancel' },
+      crackSomeoneGuessing: { zh: '⏸️ {name} 正在猜 — 等結果出來才能再搶。', en: '⏸️ {name} is guessing — wait for the result before trying again.' },
+      crackRejectedSub: { zh: '❌ 剛剛猜錯了 — 等其他人都試過一次才能再猜。', en: '❌ You just missed — wait until everyone else has tried once too.' },
+      crackResultChip: { zh: '🎉 這輪結束', en: '🎉 Round over' },
+      crackResultLine: { zh: '{name} 猜對了！答案是「{word}」（+{pts} 分）', en: '{name} got it! The word was "{word}" (+{pts})' },
+      crackCreditsLine: { zh: '🔤 按對字母得分：{list}', en: '🔤 Letter credit: {list}' },
     });
     const pt = (key, vars) => {
       let s = I18N.t('play', key);
@@ -1398,6 +1505,151 @@
       const id = latestData && latestData.voteId;
       if (!id) return;
       db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice });
+    }
+
+    /* 🔤 Crack the Word: nobody privately holds the answer here — the host tab does,
+       in memory, and judges a typed guess against it itself, so there is no clue
+       giver step to route through. Every request quotes an id the host is currently
+       offering (dealId while idle/done, chooseId while choosing, the buzz lock's own
+       id once guessing), exactly like Say It's own `vote` messages below. */
+    function crackDeal(btn) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.dealId;
+      if (!id) return;
+      if (btn) { btn.disabled = true; btn.querySelector('.pb-label').textContent = pt('crackDealing'); }
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice: 'deal' });
+    }
+    function crackChooseTier(t) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.chooseId;
+      if (!id) return;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id, choice: 'tier', tier: t });
+    }
+    /* a letter press quotes the current round's id, not a one-shot id of its own —
+       ownership plus "not already pressed" (checked host-side) is enough of a
+       guard, and a stale press from a round that already ended is dropped simply
+       because it quotes the wrong roundId */
+    function crackPressLetter(letter) {
+      if (!db || !session || !token) return;
+      const rid = latestData && latestData.roundId;
+      if (!rid) return;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ roundId: rid, choice: 'letter', letter });
+    }
+    function crackBuzz(btn) {
+      if (!db || !session || !token) return;
+      if (btn) btn.disabled = true;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ choice: 'buzz' });
+    }
+    function crackSubmitGuess(btn) {
+      if (!db || !session || !token) return;
+      const g = latestData && latestData.guessing;
+      if (!g || !g.mine) return;
+      const input = document.getElementById('crack-guess-input');
+      const text = input ? input.value : '';
+      if (btn) btn.disabled = true;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id: g.id, choice: 'guess', text });
+    }
+    function crackCancelGuess(btn) {
+      if (!db || !session || !token) return;
+      const g = latestData && latestData.guessing;
+      if (!g || !g.mine) return;
+      if (btn) btn.disabled = true;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ id: g.id, choice: 'cancelGuess' });
+    }
+
+    function crackCardHTML(data) {
+      const hex = playerColor(data);
+      const board = Array.isArray(data.board) && data.board.length ? `
+        <div class="crack-board" style="--me:${hex};--me-text:${chipInk(hex)}">
+          <span class="cwb-hdr">${pt('standings')}</span>
+          <div class="cwb-rows">${data.board.map(r => `
+            <div class="cwb-row${r.me ? ' is-me' : ''}">
+              <span class="cwb-name">${esc(r.n || '')}</span>
+              <span class="cwb-pts">${r.p || 0}</span>
+            </div>`).join('')}</div>
+        </div>` : '';
+      const shell = inner => `<div class="secret-card theme-crack${data.state === 'playing' ? '' : ' is-idle-glow'}">${nameBanner(data)}${inner}${board}</div>`;
+      const tierEmoji = { short: '🟢', medium: '🟡', long: '🔴' };
+
+      if (data.state === 'choosing') {
+        if (data.isChooser) {
+          return shell(`
+            <span class="pick-sub">${pt('crackChooseSub')}</span>
+            <div class="pick-row">
+              ${(data.tierOptions || []).map(o => `
+                <button class="pick-btn" onclick="crackChooseTier('${o.tier}')">
+                  <span class="pb-key">${tierEmoji[o.tier] || '🔤'}</span>
+                  <span class="pb-label">${pt('crackTier_' + o.tier)} · ${o.pool}</span>
+                </button>`).join('')}
+            </div>`);
+        }
+        return shell(`<span class="pick-sub">${data.chooserName ? pt('crackWaitingChooser', { name: esc(data.chooserName) }) : pt('crackWaitingChooserHost')}</span>`);
+      }
+
+      if (data.state === 'playing') {
+        const tiles = (data.tiles || []).map(t => t.isLetter
+          ? (t.ch ? `<span class="crack-tile is-revealed">${esc(t.ch)}</span>` : `<span class="crack-tile"></span>`)
+          : `<span class="crack-tile is-static">${t.ch === ' ' ? '' : esc(t.ch || '')}</span>`
+        ).join('');
+        const excludedRow = data.excluded && data.excluded.length
+          ? `<span class="crack-excluded">${pt('crackExcludedLabel')} ${data.excluded.join(' · ')}</span>` : '';
+        const letters = (data.myLetters || []).map(l => `
+          <button class="crack-letter-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${l.pressed ? ' disabled' : ''} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>
+        `).join('');
+        const lettersBlock = `
+          <div class="crack-letters">
+            <span class="cw-letters-label">${pt('crackYourLettersLabel')}</span>
+            <div class="crack-letter-row">${letters}</div>
+          </div>`;
+
+        let buzzBlock;
+        if (data.guessing && data.guessing.mine) {
+          buzzBlock = `
+            <div class="crack-guess-box">
+              <span class="pick-sub">${pt('crackGuessingSub')}</span>
+              <input type="text" class="crack-guess-input" id="crack-guess-input" placeholder="${pt('crackGuessPlaceholder')}">
+              <div class="pick-row">
+                <button class="crack-guess-submit" onclick="crackSubmitGuess(this)">${pt('crackSubmitGuessBtn')}</button>
+                <button class="crack-guess-cancel" onclick="crackCancelGuess(this)">${pt('crackCancelGuessBtn')}</button>
+              </div>
+            </div>`;
+        } else if (data.guessing) {
+          buzzBlock = `<span class="pick-sub">${pt('crackSomeoneGuessing', { name: esc(data.guessing.name || '') })}</span>`;
+        } else if (data.rejected) {
+          buzzBlock = `<span class="pick-sub">${pt('crackRejectedSub')}</span>`;
+        } else if (data.canBuzz) {
+          buzzBlock = `
+            <button class="crack-buzz" onclick="crackBuzz(this)">
+              <span class="pb-key">🙋</span><span class="pb-label">${pt('crackBuzzBtn')}</span>
+            </button>`;
+        } else {
+          buzzBlock = '';
+        }
+
+        return shell(`
+          <div class="crack-tiles">${tiles}</div>
+          ${excludedRow}
+          ${lettersBlock}
+          ${buzzBlock}
+        `);
+      }
+
+      // idle or done: between rounds, every card carries the deal button —
+      // a fresh room with no round yet looks the same as one that just finished
+      const isDone = data.state === 'done' && data.result;
+      const resultBlock = isDone ? `
+        <div class="crack-result">
+          <span class="pick-chip" style="color:${chipInk('#3b82f6')};border-color:#3b82f655;background:rgba(59,130,246,.1)">${pt('crackResultChip')}</span>
+          <span class="pick-text">${pt('crackResultLine', { name: esc(data.result.solverName || ''), word: esc(data.result.word || ''), pts: data.result.solverPts || 0 })}</span>
+          ${data.result.letterCredits && data.result.letterCredits.length ? `<span class="pick-sub">${pt('crackCreditsLine', { list: data.result.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</span>` : ''}
+        </div>` : '';
+      const idleSub = !isDone ? `<span class="pick-sub">${pt('crackIdleSub')}</span>` : '';
+      const dealBtn = data.canDeal ? `
+        <button class="crack-deal" onclick="crackDeal(this)">
+          <span class="pb-key">🔤</span><span class="pb-label">${pt(isDone ? 'crackDealNextBtn' : 'crackDealFirstBtn')}</span>
+        </button>
+        <span class="pick-sub">${pt('crackDealAnyoneSub')}</span>` : '';
+      return shell(`${resultBlock}${idleSub}${dealBtn}`);
     }
 
     /* 🙊 Say It Without Saying It: everything happens on the cards — the host screen only keeps
@@ -2158,6 +2410,7 @@
           </div>`;
         return;
       }
+      if (data.game === 'crack') { el.innerHTML = crackCardHTML(data); return; }
       // paint after the markup lands so the clock gets its colour on the first frame,
       // not only on the next tick
       if (data.game === 'taboo') { el.innerHTML = tabooCardHTML(data); paintTabooTimer(); return; }
