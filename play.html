@@ -1040,7 +1040,8 @@
       crackSomeoneGuessing: { zh: '⏸️ {name} 正在猜 — 等結果出來才能再搶。', en: '⏸️ {name} is guessing — wait for the result before trying again.' },
       crackRejectedSub: { zh: '❌ 剛剛猜錯了 — 等其他人都試過一次才能再猜。', en: '❌ You just missed — wait until everyone else has tried once too.' },
       crackResultChip: { zh: '🎉 這輪結束', en: '🎉 Round over' },
-      crackResultLine: { zh: '{name} 猜對了！答案是「{word}」（+{pts} 分）', en: '{name} got it! The word was "{word}" (+{pts})' },
+      crackResultLine: { zh: '{name} 猜對了！答案是「{word}」— 全員 +{teamPts} 分，{name} 額外 +{bonus}（共 +{pts}）', en: '{name} got it! The word was "{word}" — everyone +{teamPts}, {name} gets +{bonus} more (+{pts} total)' },
+      crackResultLineMine: { zh: '你猜對了！答案是「{word}」— 全員 +{teamPts} 分，你額外 +{bonus}（你共 +{pts}）', en: 'You got it! The word was "{word}" — everyone +{teamPts}, you get +{bonus} more (+{pts} total for you)' },
       crackCreditsLine: { zh: '🔤 按對字母得分：{list}', en: '🔤 Letter credit: {list}' },
       crackYourTurnBanner: { zh: '👆 換你按字母了！', en: '👆 Your turn to press a letter!' },
       crackWaitingTurn: { zh: '⏳ 輪到 {name} 按字母…', en: "⏳ It's {name}'s turn to press…" },
@@ -1687,7 +1688,9 @@
         </div>` : `
         <div class="crack-result">
           <span class="pick-chip" style="color:${chipInk('#3b82f6')};border-color:#3b82f655;background:rgba(59,130,246,.1)">${pt('crackResultChip')}</span>
-          <span class="pick-text">${pt('crackResultLine', { name: esc(data.result.solverName || ''), word: esc(data.result.word || ''), pts: data.result.solverPts || 0 })}</span>
+          <span class="pick-text">${data.result.mine
+            ? pt('crackResultLineMine', { word: esc(data.result.word || ''), teamPts: data.result.teamPts || 0, bonus: data.result.solverBonus || 0, pts: data.result.solverPts || 0 })
+            : pt('crackResultLine', { name: esc(data.result.solverName || ''), word: esc(data.result.word || ''), teamPts: data.result.teamPts || 0, bonus: data.result.solverBonus || 0, pts: data.result.solverPts || 0 })}</span>
           ${data.result.letterCredits && data.result.letterCredits.length ? `<span class="pick-sub">${pt('crackCreditsLine', { list: data.result.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</span>` : ''}
         </div>`;
       const idleSub = !isDone ? `<span class="pick-sub">${pt('crackIdleSub')}</span>` : '';

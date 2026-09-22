@@ -192,7 +192,7 @@
       choosingTag: { zh: '🔀 選長度中', en: '🔀 Choosing length' },
       guessingTag: { zh: '🙋 猜題中', en: '🙋 Guessing' },
       rejectedTag: { zh: '⏸️ 等其他人先猜', en: '⏸️ Waiting for others' },
-      resultLine: { zh: '🎉 {name} 猜對了！答案是「{word}」（+{pts} 分）', en: '🎉 {name} got it! The word was "{word}" (+{pts})' },
+      resultLine: { zh: '🎉 {name} 猜對了！答案是「{word}」— 全員 +{teamPts} 分，{name} 額外 +{bonus}（共 +{pts}）', en: '🎉 {name} got it! The word was "{word}" — everyone +{teamPts}, {name} gets +{bonus} more (+{pts} total)' },
       creditsLine: { zh: '🔤 按對字母得分：{list}', en: '🔤 Letter credit: {list}' },
       turnTag: { zh: '👆 輪到按字母', en: '👆 Turn to press' },
       turnHostLine: { zh: '輪到 {name} 按字母', en: "It's {name}'s turn to press a letter" },
@@ -425,14 +425,19 @@
       sync();
     }
 
+    /* A correct guess pays the whole room, not just the solver: everyone gets
+     * the number of letter positions still blank at that moment (an early
+     * guess off very little information is worth more to the whole team,
+     * not only to whoever happened to type it), and the solver alone gets
+     * one extra point on top for having actually called it out. */
     function finishRound(solverSeat) {
-      const total = CRACK_ENGINE.letterCount(word);
-      const revealedNow = CRACK_ENGINE.revealedPositions(word, revealedLetters);
-      const pts = CRACK_ENGINE.guesserScore(tier, revealedNow, total);
-      scores[solverSeat] = (scores[solverSeat] || 0) + pts;
+      const teamPts = CRACK_ENGINE.remainingBlanks(word, revealedLetters);
+      for (let s = 0; s < ROOM.count; s++) scores[s] = (scores[s] || 0) + teamPts;
+      scores[solverSeat] = (scores[solverSeat] || 0) + CRACK_ENGINE.SOLVER_BONUS;
       lastResult = {
-        word, tier, solverPts: pts,
-        solverName: ROOM.name(solverSeat),
+        word, tier, teamPts, solverBonus: CRACK_ENGINE.SOLVER_BONUS,
+        solverPts: teamPts + CRACK_ENGINE.SOLVER_BONUS,
+        solverSeat, solverName: ROOM.name(solverSeat),
         letterCredits: letterCreditsThisRound.map(c => ({ name: ROOM.name(c.seat), letter: c.letter })),
       };
       state = 'done';
@@ -557,7 +562,7 @@
         base.turnsUsed = turnsUsed;
         base.turnLimit = turnLimit;
       }
-      if (state === 'done' && lastResult) base.result = lastResult;
+      if (state === 'done' && lastResult) base.result = Object.assign({}, lastResult, { mine: seat === lastResult.solverSeat });
       base.board = Array.from({ length: ROOM.count }, (_, s) => ({ n: ROOM.name(s), p: scores[s] || 0, me: s === seat }));
       return base;
     }
@@ -631,7 +636,7 @@
             ${lastResult.letterCredits.length ? `<p class="cw-result-credits">${tt('creditsLine', { list: lastResult.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</p>` : ''}
           </div>` : `
           <div class="cw-result">
-            <p class="cw-result-line">${tt('resultLine', { name: esc(lastResult.solverName), word: esc(lastResult.word), pts: lastResult.solverPts })}</p>
+            <p class="cw-result-line">${tt('resultLine', { name: esc(lastResult.solverName), word: esc(lastResult.word), teamPts: lastResult.teamPts, bonus: lastResult.solverBonus, pts: lastResult.solverPts })}</p>
             ${lastResult.letterCredits.length ? `<p class="cw-result-credits">${tt('creditsLine', { list: lastResult.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</p>` : ''}
           </div>`) : '';
         el.innerHTML = `

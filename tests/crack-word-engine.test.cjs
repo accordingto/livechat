@@ -42,28 +42,25 @@ test('revealedPositions counts positions, not unique letters', () => {
   assert.equal(E.revealedPositions('wall', ['W', 'A', 'L']), 4);
 });
 
-test('guesserScore decreases toward a floor of 1 as more gets revealed', () => {
-  const none = E.guesserScore('medium', 0, 6);
-  const half = E.guesserScore('medium', 3, 6);
-  const all = E.guesserScore('medium', 6, 6);
-  assert.ok(none > half);
-  assert.ok(half >= all);
-  assert.equal(all, 1);
-  assert.ok(none >= 1);
+test('remainingBlanks counts unrevealed letter positions, matching the example: 3 blanks left', () => {
+  // "wall" revealed W and A leaves L, L unrevealed — 2 blanks, not 3, but the
+  // shape is the same: total positions minus however many are already up
+  assert.equal(E.remainingBlanks('wall', ['W', 'A']), 2);
+  assert.equal(E.remainingBlanks('wall', []), 4);
+  assert.equal(E.remainingBlanks('wall', ['W', 'A', 'L']), 0);
 });
 
-test('guesserScore never returns less than 1 even fully revealed', () => {
-  for (const tier of E.TIERS) {
-    assert.equal(E.guesserScore(tier, 20, 20), 1);
-  }
+test('remainingBlanks never goes negative', () => {
+  assert.equal(E.remainingBlanks('cat', ['C', 'A', 'T']), 0);
 });
 
-test('longer tiers are worth more at the same reveal fraction', () => {
-  const s = E.guesserScore('short', 0, 4);
-  const m = E.guesserScore('medium', 0, 7);
-  const l = E.guesserScore('long', 0, 10);
-  assert.ok(s < m);
-  assert.ok(m < l);
+test('remainingBlanks ignores letters that were pressed but aren\'t in the word', () => {
+  // an excluded/filler letter someone pressed shouldn't reduce the blank count
+  assert.equal(E.remainingBlanks('wall', ['Z', 'Q']), 4);
+});
+
+test('SOLVER_BONUS is a small flat amount on top of the team award', () => {
+  assert.equal(E.SOLVER_BONUS, 1);
 });
 
 test('distributeLetters assigns every one of the 26 letters to exactly one seat', () => {

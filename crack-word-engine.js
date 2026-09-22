@@ -46,24 +46,10 @@ var CRACK_ENGINE = (() => {
     return 'long';
   }
 
-  /* Base points a correct guess is worth before the reveal penalty below —
-   * longer words are worth chasing even once a few letters are already up. */
-  const TIER_BASE = { short: 5, medium: 8, long: 12 };
-
   /* Every letter someone presses that turns out to be in the word earns them
    * a flat point — small and constant regardless of tier, since it rewards
    * information given, not the length of the word it happened to belong to. */
   const LETTER_CREDIT = 1;
-
-  /* Wheel-of-Fortune-style: the more of the word was already up when someone
-   * guesses it right, the less it's worth — floors at 1 so a guess is never
-   * worthless, even on a fully-revealed word. */
-  function guesserScore(tier, revealedPositionsCount, totalPositions) {
-    const base = TIER_BASE[tier] || TIER_BASE.medium;
-    if (!totalPositions) return base;
-    const frac = Math.max(0, 1 - revealedPositionsCount / totalPositions);
-    return Math.max(1, Math.round(base * frac));
-  }
 
   /* How many of the word's letter POSITIONS (not unique letters) a set of
    * revealed letters accounts for — "wall" with L revealed is 2, not 1. */
@@ -73,6 +59,23 @@ var CRACK_ENGINE = (() => {
     for (const ch of String(word).toUpperCase()) if (set.has(ch)) n++;
     return n;
   }
+
+  /* How many letter positions are STILL blank when someone guesses correctly
+   * — this is the shared team award (see SOLVER_BONUS below): everyone in
+   * the room gets this many points, the solver a little more. It rewards
+   * guessing early, off less information, the same way the old per-tier
+   * formula tried to, but the number itself now means something a player
+   * can see on the tile row at the moment they call it out — "3 blanks
+   * left" and "+3 each" are the same number, not a hidden formula. */
+  function remainingBlanks(word, revealedLetters) {
+    return Math.max(0, letterCount(word) - revealedPositions(word, revealedLetters));
+  }
+
+  /* The solver's one point of credit for actually being the one who typed
+   * the word in, on top of the team award everyone else also gets. Flat and
+   * small — the achievement being rewarded is "spoke first", not "knew
+   * more than the room", which the shared award already covers. */
+  const SOLVER_BONUS = 1;
 
   /* How many distinct letters the word actually needs owners for — the same
    * count `distributeLetters()` uses to size `correctLetters`. This is the
@@ -166,8 +169,8 @@ var CRACK_ENGINE = (() => {
   }
 
   return {
-    ALPHABET, shuffle, letterCount, tileLayout, TIERS, tierOf, TIER_BASE, LETTER_CREDIT,
-    guesserScore, revealedPositions, normalizeGuess, isCorrectGuess,
+    ALPHABET, shuffle, letterCount, tileLayout, TIERS, tierOf, LETTER_CREDIT,
+    revealedPositions, remainingBlanks, SOLVER_BONUS, normalizeGuess, isCorrectGuess,
     distributeLetters, lettersForSeat,
     uniqueLetterCount, TURN_MULT, TURN_MIN, TURN_MAX, turnLimitFor, TURN_LIMIT_PENALTY,
     TURN_DIFF_MULT, applyTurnDifficulty,
