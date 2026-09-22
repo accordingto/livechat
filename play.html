@@ -707,6 +707,10 @@
     .crack-tile {
       min-width: 26px; height: 38px; display: flex; align-items: center; justify-content: center;
       border-bottom: 3px solid #35335e; font-size: 1.3rem; font-weight: 900; color: #fff;
+      /* lowercase i/l look identical in most UI sans fonts — a monospace stack draws
+         a foot/serif on l (and a dot on i) so the two never get mistaken mid-game */
+      font-family: Consolas, 'SFMono-Regular', Menlo, 'Liberation Mono', monospace;
+      text-transform: lowercase;
     }
     .crack-tile.is-revealed { border-color: #4ade80; color: #4ade80; }
     .crack-tile.is-static { border-bottom: none; min-width: 10px; color: var(--text-muted); font-size: 1rem; }
@@ -733,7 +737,10 @@
     .crack-letter-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
     .crack-letter-btn {
       width: 40px; height: 40px; border-radius: 10px; background: #1a1a38; border: 2px solid #35335e;
-      color: #ddd; font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      color: #ddd; font-size: 1.05rem; font-weight: 900; cursor: pointer;
+      /* same reasoning as .crack-tile above: monospace so a pressed l can't be misread as i */
+      font-family: Consolas, 'SFMono-Regular', Menlo, 'Liberation Mono', monospace;
+      text-transform: lowercase;
       transition: transform .1s, opacity .2s;
     }
     .crack-letter-btn:active:not(:disabled) { transform: scale(.94); }
