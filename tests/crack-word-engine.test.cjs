@@ -153,3 +153,23 @@ test('turnLimitFor is deterministic for the same inputs', () => {
 test('turnLimitFor falls back to the medium multiplier for an unknown difficulty', () => {
   assert.equal(E.turnLimitFor('wall', 'nonsense'), E.turnLimitFor('wall', 'medium'));
 });
+
+test('applyTurnDifficulty: easy is the unscaled turnLimitFor value', () => {
+  const limit = E.turnLimitFor('Underwear', 'medium');
+  assert.equal(E.applyTurnDifficulty(limit, 'easy'), limit);
+});
+
+test('applyTurnDifficulty: medium cuts to two thirds, hard to one half', () => {
+  const limit = 18; // a value comfortably above TURN_MIN so the cuts aren't clamped away
+  assert.equal(E.applyTurnDifficulty(limit, 'medium'), Math.round(18 * 2 / 3));
+  assert.equal(E.applyTurnDifficulty(limit, 'hard'), Math.round(18 * 1 / 2));
+});
+
+test('applyTurnDifficulty never cuts below TURN_MIN', () => {
+  assert.ok(E.applyTurnDifficulty(E.TURN_MIN, 'hard') >= E.TURN_MIN);
+  assert.ok(E.applyTurnDifficulty(1, 'hard') >= E.TURN_MIN);
+});
+
+test('applyTurnDifficulty falls back to medium for an unknown setting', () => {
+  assert.equal(E.applyTurnDifficulty(18, 'nonsense'), E.applyTurnDifficulty(18, 'medium'));
+});

@@ -113,6 +113,20 @@ var CRACK_ENGINE = (() => {
    * not scaled by tier or difficulty (only the turn count itself is). */
   const TURN_LIMIT_PENALTY = 2;
 
+  /* A second, host-set dial on top of turnLimitFor(): players found the
+   * computed budget too generous, so the host can tighten it — "easy" is
+   * exactly what turnLimitFor() already computes, "medium" (the default)
+   * cuts it to two thirds, "hard" cuts it in half. This scales the whole
+   * room's shared budget, not any one word's own concept difficulty
+   * (that's still `card.level`, already baked into turnLimitFor's result) —
+   * two independent knobs on the same number. */
+  const TURN_DIFF_MULT = { easy: 1, medium: 2 / 3, hard: 1 / 2 };
+
+  function applyTurnDifficulty(limit, turnDifficulty) {
+    const mult = TURN_DIFF_MULT[turnDifficulty] || TURN_DIFF_MULT.medium;
+    return Math.max(TURN_MIN, Math.round(limit * mult));
+  }
+
   function normalizeGuess(s) {
     return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
@@ -156,6 +170,7 @@ var CRACK_ENGINE = (() => {
     guesserScore, revealedPositions, normalizeGuess, isCorrectGuess,
     distributeLetters, lettersForSeat,
     uniqueLetterCount, TURN_MULT, TURN_MIN, TURN_MAX, turnLimitFor, TURN_LIMIT_PENALTY,
+    TURN_DIFF_MULT, applyTurnDifficulty,
   };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CRACK_ENGINE;

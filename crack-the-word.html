@@ -45,6 +45,24 @@
     }
     .cw-fallback-btn:hover { background: var(--btn-face-hi); }
 
+    /* ── Turn-count difficulty: a standing host setting, not tied to any
+       round, so it lives above the scoreboard rather than inside the round
+       panel (which only exists while a round is idle/choosing/playing). ── */
+    .cw-settings-row {
+      width: 100%; max-width: 1100px; margin-bottom: 16px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px;
+      animation: fadeUp .5s .1s ease both;
+    }
+    .cw-diff-label { font-size: .85rem; font-weight: 800; color: var(--text-muted); }
+    .cw-diff-btns { display: flex; gap: 8px; }
+    .cw-diff-btn {
+      background: var(--btn-face); border: 1.5px solid var(--border-3); color: var(--text-dim);
+      border-radius: 10px; padding: 7px 16px; font-size: .9rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .cw-diff-btn:hover { background: var(--btn-face-hi); }
+    .cw-diff-btn.is-on { background: var(--accent); border-color: var(--accent); color: var(--btn-ink); }
+
     /* ── Round panel: tiles, tier chooser, letter grid, guess judge box ── */
     .cw-panel {
       width: 100%; max-width: 1100px;
@@ -137,6 +155,7 @@
 
   <div class="fb-warning hidden" id="fb-warning"></div>
 
+  <div class="cw-settings-row" id="turn-diff-row"></div>
   <div class="scoreboard" id="scoreboard"></div>
   <div class="cw-panel" id="round-panel"></div>
 
@@ -180,6 +199,10 @@
       turnCounter: { zh: '回合 {used}/{limit}', en: 'Turn {used}/{limit}' },
       allLettersDone: { zh: '所有字母都按完了 — 大家討論看看答案吧！', en: 'Every letter has been pressed — talk it out!' },
       limitResultLine: { zh: '⏰ 回合數用完了！答案是「{word}」— 全員 −{pts} 分', en: '⏰ Out of turns! The word was "{word}" — everyone loses {pts}' },
+      turnDiffLabel: { zh: '🎚️ 回合數難度（只影響下一輪）', en: '🎚️ Turn budget (next round only)' },
+      turnDiff_easy: { zh: '🟢 簡單', en: '🟢 Easy' },
+      turnDiff_medium: { zh: '🟡 中等', en: '🟡 Medium' },
+      turnDiff_hard: { zh: '🔴 困難', en: '🔴 Hard' },
     });
     const tt = (key, vars) => {
       let s = I18N.t('crack', key);
@@ -224,6 +247,32 @@
       const idx = remaining[t].pop();
       saveUsed();
       return idx;
+    }
+
+    /* ── Turn-count difficulty: a host-set dial on the shared turn budget,
+       separate from the word's own length (tier) or concept difficulty
+       (card.level) — players found the computed budget too generous, so
+       this scales the whole thing down (see CRACK_ENGINE.applyTurnDifficulty).
+       Persisted like a real setting (not page-memory only, unlike scores),
+       since it's a host preference that should survive a reload. ── */
+    const SETTINGS_KEY = 'crackWordSettings.v1';
+    let turnDifficulty = 'medium';
+    function saveSettings() {
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ turnDifficulty })); } catch (e) {}
+    }
+    (function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved && CRACK_ENGINE.TURN_DIFF_MULT[saved.turnDifficulty]) turnDifficulty = saved.turnDifficulty;
+      } catch (e) {}
+    })();
+    function setTurnDifficulty(d) {
+      if (!CRACK_ENGINE.TURN_DIFF_MULT[d]) return;
+      turnDifficulty = d;
+      saveSettings();
+      renderTurnDiffRow();
     }
 
     /* ── Round state — page memory only, exactly like Say It's `scores`/`state`:
@@ -338,8 +387,11 @@
       roundNum++;
       // the room's shared press budget for this round, and who presses first —
       // fresh every round since both depend on this specific word and this
-      // specific fair rotation, see CRACK_ENGINE.turnLimitFor() / drawStarter()
-      turnLimit = CRACK_ENGINE.turnLimitFor(word, card.level || 'medium');
+      // specific fair rotation, see CRACK_ENGINE.turnLimitFor() / drawStarter().
+      // turnDifficulty only affects the NEXT deal, like every other setting
+      // on this site — changing it mid-round doesn't retroactively shrink
+      // the budget a round already started with.
+      turnLimit = CRACK_ENGINE.applyTurnDifficulty(CRACK_ENGINE.turnLimitFor(word, card.level || 'medium'), turnDifficulty);
       turnsUsed = 0;
       currentTurnSeat = drawStarter();
       sync();
@@ -531,8 +583,20 @@
 
     function renderAll() {
       document.getElementById('roundNum').textContent = roundNum;
+      renderTurnDiffRow();
       renderScoreboard();
       renderRoundPanel();
+    }
+
+    function renderTurnDiffRow() {
+      const el = document.getElementById('turn-diff-row');
+      el.innerHTML = `
+        <span class="cw-diff-label">${tt('turnDiffLabel')}</span>
+        <div class="cw-diff-btns">
+          ${['easy', 'medium', 'hard'].map(d => `
+            <button class="cw-diff-btn${turnDifficulty === d ? ' is-on' : ''}" onclick="setTurnDifficulty('${d}')">${tt('turnDiff_' + d)}</button>
+          `).join('')}
+        </div>`;
     }
 
     function renderScoreboard() {
