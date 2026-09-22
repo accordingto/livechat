@@ -256,7 +256,7 @@
        Persisted like a real setting (not page-memory only, unlike scores),
        since it's a host preference that should survive a reload. ── */
     const SETTINGS_KEY = 'crackWordSettings.v1';
-    let turnDifficulty = 'medium';
+    let turnDifficulty = 'easy';
     function saveSettings() {
       try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ turnDifficulty })); } catch (e) {}
     }
