@@ -1,0 +1,17 @@
+{
+  "name": "icebreak-hub",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Voice-first online icebreaker games",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:chat-wolf": "node --test tests/chat-wolf-*.test.cjs",
+    "dev:chat-wolf": "node scripts/chat-wolf-dev-server.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
+  }
+}

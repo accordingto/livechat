@@ -1,7 +1,8 @@
 # 安全檢查清單
 
-這個專案是純前端靜態網站（GitHub → Vercel 自動部署），**沒有後端、沒有登入機制**。
-所有防護都押在 Firebase Realtime Database 的 Rules 那一層上。
+原有遊戲是純前端靜態網站；**聊天狼人**另外使用 Vercel Serverless API。
+原有牌卡仍由 Firebase Rules 保護；聊天狼人的身分、任務、選票與流程只存放在
+`chatWolfRooms/{CODE}`，瀏覽器不能直接讀寫，必須經過 `/api/chat-wolf` 驗證會話。
 
 Firebase 專案：`livechat-92f66`（新加坡區）
 Console：https://console.firebase.google.com/project/livechat-92f66
@@ -46,6 +47,10 @@ https://console.firebase.google.com/project/livechat-92f66/database/livechat-92f
         },
         "roster": { ".read": true, ".write": true }
       }
+    },
+    "chatWolfRooms": {
+      ".read": false,
+      ".write": false
     }
   }
 }
@@ -57,6 +62,12 @@ https://console.firebase.google.com/project/livechat-92f66/database/livechat-92f
 Firebase 不允許讀取「權限規則在下層」的節點，所以這樣寫的效果是：知道自己 token 的人只能讀寫自己那一格，
 無法列出房間裡有誰、也讀不到別人的牌。玩家 token 是 `crypto.getRandomValues()` 產的 80 bits 隨機值
 （見 `room.js` 的 `generateToken()`），猜不出來。
+
+聊天狼人不要仿照舊遊戲替 `chatWolfRooms` 開瀏覽器權限。Vercel 需要設定
+`FIREBASE_SERVICE_ACCOUNT_JSON` 與 `FIREBASE_DATABASE_URL`；服務帳號 JSON 只能放在
+Vercel Environment Variables 或本機未提交的 `.env.local`，不能寫進 HTML、前端 JS、
+錯誤訊息或 Git。邀請碼只能加入房間；實際操作需要每位玩家裝置保存的 256-bit
+會話 token，資料庫只保存其 SHA-256 雜湊。
 
 > ⚠️ Firebase 建立資料庫時如果選 "test mode"，預設規則是全開、30 天後失效。
 > 千萬不要停在那個狀態。

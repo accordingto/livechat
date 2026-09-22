@@ -42,9 +42,16 @@
 //             ".write": true
 //           }
 //         }
+//       },
+//       "chatWolfRooms": {
+//         ".read": false,
+//         ".write": false
 //       }
 //     }
 //   }
+// Chat Wolf is different from the legacy card games: only its trusted Vercel
+// API uses Firebase Admin to access chatWolfRooms. Never grant browser access
+// to that path and never put the service-account JSON in this public file.
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDojGHsk2N6EssSWrmEbfeN3abZ7lQt9wY",

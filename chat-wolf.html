@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="聊天狼人：輕鬆的多人語音聊天派對遊戲。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'self'">
+  <title>聊天狼人｜ICEBREAKING HUB</title>
+  <link rel="icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="chat-wolf.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="back-link" href="index.html?step=2" id="back-link"></a>
+    <div class="brand" id="brand"></div>
+    <div class="sync-pill" id="sync-pill" hidden></div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+  <noscript>聊天狼人需要 JavaScript 才能同步房間。</noscript>
+  <script src="chat-wolf-copy.js"></script>
+  <script src="chat-wolf.js"></script>
+</body>
+</html>
