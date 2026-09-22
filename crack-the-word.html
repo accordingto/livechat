@@ -179,6 +179,7 @@
       tier_short: { zh: '🟢 短字（5 字母以下）', en: '🟢 Short (≤5 letters)' },
       tier_medium: { zh: '🟡 中字（6–8 字母）', en: '🟡 Medium (6–8 letters)' },
       tier_long: { zh: '🔴 長字（9 字母以上）', en: '🔴 Long (9+ letters)' },
+      tier_phrase: { zh: '💬 片語（常用英文片語）', en: '💬 Phrases (common English phrases)' },
       idleHostNote: { zh: '任何一位玩家都可以從自己的卡片按「換下一題」開局，並自選要挑戰的長度。', en: 'Any player can start the next round from their own card and choose the length to challenge.' },
       hostDealBtn: { zh: '🔀 主持人代抽下一題', en: '🔀 Deal the next word (host fallback)' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
@@ -212,7 +213,7 @@
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     }
-    const TIER_EMOJI = { short: '🟢', medium: '🟡', long: '🔴' };
+    const TIER_EMOJI = { short: '🟢', medium: '🟡', long: '🔴', phrase: '💬' };
 
     /* ── The word deck, bucketed by how many actual letters it needs revealed
        (not raw string length — a two-word phrase's space doesn't count). Reuses
@@ -223,26 +224,43 @@
     const BUCKET = { short: [], medium: [], long: [] };
     DECK.forEach((w, i) => { BUCKET[CRACK_ENGINE.tierOf(CRACK_ENGINE.letterCount(w.word))].push(i); });
 
+    /* ── A 4th tier, separate from the three above: a fixed 100-phrase deck
+       (game-data.js's `crackPhrase`) rather than a letter-count bucket carved
+       out of the shared `taboo` deck. It isn't a `tierOf()` output — nothing
+       computes it from letter count — so it's deliberately kept out of
+       CRACK_ENGINE.TIERS (that stays the pure short/medium/long classifier the
+       engine's tests check) and only added to this page's own `ALL_TIERS`. Its
+       whole 100-entry pool counts as its "bucket" since there's no length split
+       to make within it. `deckFor()` is the one place that knows which of the
+       two decks a tier's cards come from. ── */
+    const PHRASE_TIER = 'phrase';
+    const ALL_TIERS = CRACK_ENGINE.TIERS.concat([PHRASE_TIER]);
+    const PHRASE_DECK = GAME_DATA.crackPhrase;
+    BUCKET[PHRASE_TIER] = PHRASE_DECK.map((_, i) => i);
+    function deckFor(t) { return t === PHRASE_TIER ? PHRASE_DECK : DECK; }
+
     /* Not-yet-dealt indices per tier, shuffled — refilled (and reshuffled) only
        once a tier runs dry, so nothing repeats until the whole tier has been
        seen. Persisted the same way Say It's `used` is: fingerprinted against
-       the deck's current length, so a sheet reload that changes the deck's
-       shape doesn't replay stale indices against a different pool. */
+       each deck's current length, so a sheet reload that changes the `taboo`
+       deck's shape (or a future edit to the phrase deck) doesn't replay stale
+       indices against a different pool. */
     const SAVE_KEY = 'crackWordUsed.v1';
-    let remaining = { short: [], medium: [], long: [] };
+    let remaining = { short: [], medium: [], long: [], phrase: [] };
     function saveUsed() {
-      try { localStorage.setItem(SAVE_KEY, JSON.stringify({ deckLen: DECK.length, remaining })); } catch (e) {}
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify({ deckLen: DECK.length, phraseLen: PHRASE_DECK.length, remaining })); } catch (e) {}
     }
     (function loadUsed() {
       try {
         const raw = localStorage.getItem(SAVE_KEY);
         if (!raw) return;
         const saved = JSON.parse(raw);
-        if (saved && saved.deckLen === DECK.length && saved.remaining) remaining = saved.remaining;
+        if (saved && saved.deckLen === DECK.length && saved.phraseLen === PHRASE_DECK.length && saved.remaining) remaining = saved.remaining;
       } catch (e) {}
     })();
     function pickWordIndex(t) {
-      const bucket = (BUCKET[t] && BUCKET[t].length) ? BUCKET[t] : DECK.map((_, i) => i);
+      const deck = deckFor(t);
+      const bucket = (BUCKET[t] && BUCKET[t].length) ? BUCKET[t] : deck.map((_, i) => i);
       if (!remaining[t] || !remaining[t].length) remaining[t] = CRACK_ENGINE.shuffle(bucket);
       const idx = remaining[t].pop();
       saveUsed();
@@ -372,9 +390,9 @@
 
     function requestTier(seat, id, t) {
       if (state !== 'choosing' || seat !== chooserSeat || id !== chooseId) return;
-      if (!CRACK_ENGINE.TIERS.includes(t)) return;
+      if (!ALL_TIERS.includes(t)) return;
       const idx = pickWordIndex(t);
-      const card = DECK[idx];
+      const card = deckFor(t)[idx];
       word = card.word;
       tier = t;
       owner = CRACK_ENGINE.distributeLetters(word, ROOM.count).owner;
@@ -539,7 +557,7 @@
         if (seat === chooserSeat) {
           base.isChooser = true;
           base.chooseId = chooseId;
-          base.tierOptions = CRACK_ENGINE.TIERS.map(t => ({ tier: t, pool: (BUCKET[t] || []).length }));
+          base.tierOptions = ALL_TIERS.map(t => ({ tier: t, pool: (BUCKET[t] || []).length }));
         }
       }
       if (state === 'playing') {
@@ -650,7 +668,7 @@
         el.innerHTML = `
           <p class="cw-choosing-note">${tt('choosingHostNote', { name: label })}</p>
           <div class="cw-tier-row">
-            ${CRACK_ENGINE.TIERS.map(t => `
+            ${ALL_TIERS.map(t => `
               <button class="cw-tier-btn" onclick="hostPickTier('${t}')">
                 <span>${TIER_EMOJI[t]} ${tt('tier_' + t)}</span><span class="cw-tier-pool">${(BUCKET[t] || []).length}</span>
               </button>`).join('')}

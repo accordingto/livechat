@@ -1035,6 +1035,7 @@
       crackTier_short: { zh: '🟢 短字（5 字母以下）', en: '🟢 Short (≤5 letters)' },
       crackTier_medium: { zh: '🟡 中字（6–8 字母）', en: '🟡 Medium (6–8 letters)' },
       crackTier_long: { zh: '🔴 長字（9 字母以上）', en: '🔴 Long (9+ letters)' },
+      crackTier_phrase: { zh: '💬 片語（常用英文片語）', en: '💬 Phrases (common English phrases)' },
       crackWaitingChooser: { zh: '⏳ 等 {name} 選擇題目長度…', en: '⏳ Waiting for {name} to choose a length…' },
       crackWaitingChooserHost: { zh: '⏳ 等主持人選擇題目長度…', en: '⏳ Waiting for the host to choose a length…' },
       crackExcludedLabel: { zh: '❌ 已試過、不在這個字裡：', en: '❌ Tried, not in the word:' },
@@ -1603,7 +1604,7 @@
             </div>`).join('')}</div>
         </div>` : '';
       const shell = inner => `<div class="secret-card theme-crack${data.state === 'playing' ? '' : ' is-idle-glow'}">${nameBanner(data)}${inner}${board}</div>`;
-      const tierEmoji = { short: '🟢', medium: '🟡', long: '🔴' };
+      const tierEmoji = { short: '🟢', medium: '🟡', long: '🔴', phrase: '💬' };
 
       if (data.state === 'choosing') {
         if (data.isChooser) {

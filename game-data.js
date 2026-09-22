@@ -1742,6 +1742,131 @@ const GAME_DATA = {
     { level: 'hard', emoji: '🧭', word: 'Compass', forbidden: ['North', 'Direction', 'South', 'Map', 'Needle', 'Navigate'] },
   ],
 
+  /* ── 🔤 Crack the Word — phrase deck (100 common 2–5 word English phrases),
+     a 4th tier alongside the letter-length-based short/medium/long buckets
+     above (see crack-the-word.html). A host who picks this tier gets a
+     whole phrase instead of a single word, played through the exact same
+     letter-by-letter / buzz-and-guess mechanics — tileLayout() already
+     treats the space between words as a plain static tile, not a secret
+     to reveal (see crack-word-engine.js). `level` feeds turnLimitFor() the
+     same way it does for `taboo` above: easy = concrete, everyday phrases
+     that are easy to guess even half-revealed; medium = common phrasal
+     verbs and collocations that need more of the phrase visible; hard =
+     idioms and proverbs whose literal words don't give the meaning away
+     even fully spelled out, so they get the largest per-letter turn
+     budget. Not part of `sheet-data.js`'s SCHEMA — like Dare Conquest's
+     built-in easy/medium decks, this pool isn't sheet-editable. Same
+     "plain, globally understandable English" rule as every other deck on
+     this site (see CLAUDE.md): no US-specific slang, nothing that needs
+     outside cultural context to understand. ── */
+  crackPhrase: [
+    /* ── 🟢 EASY — concrete, everyday phrases ── */
+    { level: 'easy', emoji: '☀️', word: 'Good Morning' },
+    { level: 'easy', emoji: '🌙', word: 'Good Night' },
+    { level: 'easy', emoji: '🌤️', word: 'Good Afternoon' },
+    { level: 'easy', emoji: '🙏', word: 'Thank You' },
+    { level: 'easy', emoji: '👋', word: 'See You Later' },
+    { level: 'easy', emoji: '👋', word: 'See You Soon' },
+    { level: 'easy', emoji: '🤝', word: 'Nice To Meet You' },
+    { level: 'easy', emoji: '❓', word: 'How Are You' },
+    { level: 'easy', emoji: '💛', word: 'Take Care' },
+    { level: 'easy', emoji: '🙋', word: 'Excuse Me' },
+    { level: 'easy', emoji: '😔', word: 'I Am Sorry' },
+    { level: 'easy', emoji: '🎂', word: 'Happy Birthday' },
+    { level: 'easy', emoji: '🎄', word: 'Merry Christmas' },
+    { level: 'easy', emoji: '🎉', word: 'Happy New Year' },
+    { level: 'easy', emoji: '⏰', word: 'Wake Up' },
+    { level: 'easy', emoji: '🛏️', word: 'Go To Bed' },
+    { level: 'easy', emoji: '🪑', word: 'Sit Down' },
+    { level: 'easy', emoji: '🧍', word: 'Stand Up' },
+    { level: 'easy', emoji: '🚪', word: 'Open The Door' },
+    { level: 'easy', emoji: '🚪', word: 'Close The Door' },
+    { level: 'easy', emoji: '💡', word: 'Turn On The Light' },
+    { level: 'easy', emoji: '💡', word: 'Turn Off The Light' },
+    { level: 'easy', emoji: '🧼', word: 'Wash Your Hands' },
+    { level: 'easy', emoji: '🪥', word: 'Brush Your Teeth' },
+    { level: 'easy', emoji: '🍳', word: 'Eat Breakfast' },
+    { level: 'easy', emoji: '💧', word: 'Drink Water' },
+    { level: 'easy', emoji: '🚶', word: 'Go For A Walk' },
+    { level: 'easy', emoji: '🎬', word: 'Watch A Movie' },
+    { level: 'easy', emoji: '🎵', word: 'Listen To Music' },
+    { level: 'easy', emoji: '📖', word: 'Read A Book' },
+    { level: 'easy', emoji: '🎮', word: 'Play A Game' },
+    { level: 'easy', emoji: '🚲', word: 'Ride A Bike' },
+    { level: 'easy', emoji: '🚿', word: 'Take A Shower' },
+    { level: 'easy', emoji: '🍽️', word: 'Do The Dishes' },
+    { level: 'easy', emoji: '🧹', word: 'Clean Your Room' },
+    { level: 'easy', emoji: '🛏️', word: 'Make The Bed' },
+    { level: 'easy', emoji: '🍲', word: 'Cook Dinner' },
+    { level: 'easy', emoji: '🐕', word: 'Walk The Dog' },
+    { level: 'easy', emoji: '🐈', word: 'Feed The Cat' },
+    { level: 'easy', emoji: '🚌', word: 'Catch The Bus' },
+
+    /* ── 🟡 MEDIUM — phrasal verbs and common collocations ── */
+    { level: 'medium', emoji: '⏰', word: 'Wake Up Early' },
+    { level: 'medium', emoji: '😴', word: 'Get Up Late' },
+    { level: 'medium', emoji: '🤲', word: 'Look After' },
+    { level: 'medium', emoji: '🔍', word: 'Look For' },
+    { level: 'medium', emoji: '🔎', word: 'Find Out' },
+    { level: 'medium', emoji: '🏳️', word: 'Give Up' },
+    { level: 'medium', emoji: '🔙', word: 'Come Back' },
+    { level: 'medium', emoji: '🚶‍♂️', word: 'Go Away' },
+    { level: 'medium', emoji: '☎️', word: 'Hang Up The Phone' },
+    { level: 'medium', emoji: '📞', word: 'Pick Up The Phone' },
+    { level: 'medium', emoji: '🔉', word: 'Turn Down The Music' },
+    { level: 'medium', emoji: '🔊', word: 'Turn Up The Volume' },
+    { level: 'medium', emoji: '✅', word: 'Check In' },
+    { level: 'medium', emoji: '🧳', word: 'Check Out' },
+    { level: 'medium', emoji: '📝', word: 'Fill Out The Form' },
+    { level: 'medium', emoji: '🗑️', word: 'Throw Away The Trash' },
+    { level: 'medium', emoji: '🧽', word: 'Clean Up The Mess' },
+    { level: 'medium', emoji: '🧸', word: 'Put Away Your Toys' },
+    { level: 'medium', emoji: '👟', word: 'Take Off Your Shoes' },
+    { level: 'medium', emoji: '🧥', word: 'Put On Your Jacket' },
+    { level: 'medium', emoji: '🤗', word: 'Get Along Well' },
+    { level: 'medium', emoji: '⏳', word: 'Run Out Of Time' },
+    { level: 'medium', emoji: '💰', word: 'Save Some Money' },
+    { level: 'medium', emoji: '💸', word: 'Spend Too Much' },
+    { level: 'medium', emoji: '🤔', word: 'Make A Decision' },
+    { level: 'medium', emoji: '🔄', word: 'Change Your Mind' },
+    { level: 'medium', emoji: '⌛', word: 'Take Your Time' },
+    { level: 'medium', emoji: '💪', word: 'Do Your Best' },
+    { level: 'medium', emoji: '👍', word: 'Good Job' },
+    { level: 'medium', emoji: '👏', word: 'Well Done' },
+    { level: 'medium', emoji: '📱', word: 'Keep In Touch' },
+    { level: 'medium', emoji: '🏋️', word: 'Stay In Shape' },
+    { level: 'medium', emoji: '😌', word: 'Get Some Rest' },
+    { level: 'medium', emoji: '☕', word: 'Take A Break' },
+    { level: 'medium', emoji: '🙋', word: 'Ask For Help' },
+    { level: 'medium', emoji: '🙏', word: 'Say Thank You' },
+    { level: 'medium', emoji: '🗣️', word: 'Tell The Truth' },
+    { level: 'medium', emoji: '🤫', word: 'Keep A Secret' },
+    { level: 'medium', emoji: '📋', word: 'Follow The Rules' },
+    { level: 'medium', emoji: '🚫', word: 'Break A Rule' },
+
+    /* ── 🔴 HARD — idioms and proverbs, harder to guess even fully spelled out ── */
+    { level: 'hard', emoji: '👋', word: 'Long Time No See' },
+    { level: 'hard', emoji: '🎯', word: 'Practice Makes Perfect' },
+    { level: 'hard', emoji: '⏱️', word: 'Time Flies' },
+    { level: 'hard', emoji: '⏰', word: 'Better Late Than Never' },
+    { level: 'hard', emoji: '🗣️', word: 'Actions Speak Louder Than Words' },
+    { level: 'hard', emoji: '🍃', word: 'Easy Come Easy Go' },
+    { level: 'hard', emoji: '💪', word: 'No Pain No Gain' },
+    { level: 'hard', emoji: '⚠️', word: 'Out Of Order' },
+    { level: 'hard', emoji: '📅', word: 'Out Of Date' },
+    { level: 'hard', emoji: '📆', word: 'Up To Date' },
+    { level: 'hard', emoji: '⏳', word: 'In The Meantime' },
+    { level: 'hard', emoji: '⚡', word: 'As Soon As Possible' },
+    { level: 'hard', emoji: '🔁', word: 'From Time To Time' },
+    { level: 'hard', emoji: '🔂', word: 'Once In A While' },
+    { level: 'hard', emoji: '⏲️', word: 'Sooner Or Later' },
+    { level: 'hard', emoji: '🐢', word: 'Little By Little' },
+    { level: 'hard', emoji: '👣', word: 'Step By Step' },
+    { level: 'hard', emoji: '🎫', word: 'First Come First Served' },
+    { level: 'hard', emoji: '🕰️', word: 'Every Now And Then' },
+    { level: 'hard', emoji: '🏁', word: 'Last But Not Least' },
+  ],
+
   /* ── ⚖️ Kangaroo Court — 30 short, silly "charges" the host reads aloud.
      Each one is a tiny, everyday scene in plain, easy vocabulary (no legal
      jargon), usually two beats joined by a comma — a small relatable habit,
