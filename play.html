@@ -465,6 +465,43 @@
     .taboo-deal .pb-key { font-size: 1.4rem; }
     .taboo-deal:active:not(:disabled) { transform: scale(.97); }
     .taboo-deal:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    /* stepping away is reachable from any card at any time and costs nothing to look
+       at, so it stays a quiet outlined button — nothing here should compete with the
+       game's own buttons above it — right up until a tap opens the loud confirmation
+       below, because the tap after that one does something that can't be undone
+       (the score reset in particular). */
+    .taboo-away-ask {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: transparent; border: 1.5px solid #475569; color: #94a3b8;
+      border-radius: 12px; padding: 10px 12px; margin-top: 4px;
+      font-size: .88rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: border-color .2s, color .2s, transform .1s;
+    }
+    .taboo-away-ask:active:not(:disabled) { transform: scale(.98); }
+    .taboo-away-ask:disabled { opacity: .4; cursor: not-allowed; }
+    .taboo-away-confirm {
+      width: 100%; background: rgba(245,158,11,.1); border: 2px solid rgba(245,158,11,.5);
+      border-radius: 14px; padding: 14px; margin-top: 4px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .taboo-away-confirm p { font-size: .92rem; font-weight: 700; color: #fbbf24; text-align: center; line-height: 1.5; margin: 0; }
+    .taboo-away-confirm-actions { display: flex; flex-direction: column; gap: 8px; }
+    /* the safe answer (stay) is green and listed first, the consequential one (leave,
+       which zeroes the score right away) is amber and second — same "safe answer
+       first" convention the host's own end-turn/Taboo! ruling confirmations use */
+    .away-confirm-no {
+      background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 12px; padding: 12px; font-size: 1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: transform .1s;
+    }
+    .away-confirm-no:active { transform: scale(.98); }
+    .away-confirm-yes {
+      background: #f59e0b; border: 2px solid #f59e0b; color: #2b1605;
+      border-radius: 12px; padding: 12px; font-size: 1rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: transform .1s, opacity .2s;
+    }
+    .away-confirm-yes:active:not(:disabled) { transform: scale(.98); }
+    .away-confirm-yes:disabled { opacity: .5; cursor: not-allowed; }
     /* Draws the next take / situation / scene / scenario from the cards (next-round.js).
        Filled in that game's own colour with the site's dark ink, like .taboo-deal above —
        a real button, not a label. `--nx` is set inline per game. */
@@ -604,9 +641,27 @@
     .tbd-row.is-me .tbd-name { color: #fff; }
     .tbd-pts { font-size: 1rem; font-weight: 900; color: #ddd; flex: none; }
     .tbd-row.is-me .tbd-pts { color: var(--me-text); }
-    /* catch-up bonus: same amber pill as the host's scoreboard tile */
-    .tbd-boost { font-size: .7rem; font-weight: 900; color: #0b0b18; background: #f59e0b; border-radius: 999px; padding: 2px 7px; flex: none; }
+    /* catch-up bonus: same small round icon as the host's scoreboard tile now — see
+       say-it-without-saying-it.html's .sc-boost for why the "🔥 ×2" text pill is gone */
+    .tbd-boost {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 17px; height: 17px; border-radius: 50%; flex: none;
+      font-size: .72rem; line-height: 1; color: #0b0b18; background: #f59e0b;
+    }
     .tbd-note { font-size: .82rem; font-weight: 700; color: #fbbf24; text-align: center; }
+    /* the 'compact' score-display mode: room low ~ my name (my score) ~ room high,
+       instead of every name in the room. .tbdc-mine reuses .tbd-row.is-me's own-colour
+       treatment (border + tinted fill) so "this one is me" reads the same way it does
+       in the full board */
+    .tbd-compact { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+    .tbdc-edge { font-size: 1rem; font-weight: 900; color: var(--text-dim); }
+    .tbdc-sep { font-size: .82rem; font-weight: 700; color: var(--text-muted); }
+    .tbdc-mine {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 1rem; font-weight: 900; color: var(--me-text);
+      background: color-mix(in srgb, var(--me) 16%, #0d0d1a); border: 1.5px solid var(--me);
+      border-radius: 999px; padding: 4px 12px;
+    }
     @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
     @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
@@ -708,6 +763,7 @@
       gotItOther: { zh: '✅ {who} 猜對了', en: '✅ {who} got it' },
       goodCatch: { zh: '🚨 抓得好 — +{pts}！', en: '🚨 Good catch — +{pts}!' },
       boostMine: { zh: '🔥 落後加分中：你這輪的得分 ×2', en: '🔥 Catch-up bonus: your points count double this round' },
+      boostBadgeTitle: { zh: '×2 落後加分中', en: '×2 catch-up bonus active' },
       caughtYou: { zh: '🚨 說了禁字被抓到 — −1', en: '🚨 Caught using a forbidden word — −1' },
       caughtOther: { zh: '🚨 {who} 抓到禁字', en: '🚨 {who} caught a forbidden word' },
       timeUp: { zh: '⏰ 時間到 — 不計分', en: "⏰ Time's up — no points" },
@@ -768,7 +824,13 @@
       refereeReadySub: { zh: '這輪你不用猜 — 專心聽 {name} 有沒有說出禁字。題目一開，禁字清單就會出現在這裡。', en: "You don't guess this round — just listen for {name} saying a forbidden word. The list appears here the moment the word opens." },
       guesserReadySub: { zh: '{name} 開始形容之後，想到答案就按搶答鈕，然後大聲說出來。', en: 'Once {name} starts describing, hit the buzzer and say your guess out loud.' },
       awayChip: { zh: '💤 你被標記為暫時離開', en: "💤 You're marked away" },
-      awaySub: { zh: '主持人會跳過你，等你回來再把你加回輪替。安心，你的分數還在。', en: "The host is skipping you for now — you'll be back in the rotation whenever they switch you on again. Your score is safe." },
+      awaySub: { zh: '主持人會跳過你，等你回來再把你加回輪替。你的分數已經歸零，且這局遊戲剩下的時間都不會再獲得 ×2 落後加分。', en: "The host is skipping you for now — you'll be back in the rotation whenever they switch you on again. Your score has been reset to zero, and you won't be eligible for the ×2 catch-up bonus for the rest of this game." },
+      askAwayBtn: { zh: '💤 我要暫時離開', en: '💤 Step away' },
+      awayConfirmQ: { zh: '確定要暫時離開嗎？你的分數會立刻歸零，之後也不會再獲得 ×2 落後加分優勢。', en: "Step away now? Your score resets to zero immediately, and you won't be eligible for the ×2 catch-up bonus again this game." },
+      awayConfirmYesBtn: { zh: '😥 確定，我要離開', en: "😥 Yes, I'm stepping away" },
+      awayConfirmNoBtn: { zh: '👌 取消，我還在', en: "👌 Cancel — I'm still here" },
+      awayRequestingBtn: { zh: '處理中…', en: 'Stepping away…' },
+      awayLockedSub: { zh: '至少要留 2 位在場玩家，現在無法離開', en: "At least 2 players need to stay active — you can't step away right now" },
       youCalledTaboo: { zh: '🚨 你喊了 Taboo！', en: '🚨 You called Taboo!' },
       tabooFoulBtn: { zh: '🚨 Taboo！描述者說了禁字', en: '🚨 Taboo! The clue giver said one' },
       listenForForbidden: { zh: '只有 {name}（描述者）說出禁字才算 — 猜的人說到不算。這輪你不用搶答。', en: "Only {name}, the clue giver, can break the rule — a guesser saying a forbidden word doesn't count. You sit this round out." },
@@ -1489,6 +1551,47 @@
       return true;
     }
 
+    /* A player can mark themselves away from their own card — the host has to know
+       whether someone is still there to be dealt into the next round, and this beats
+       relying on the host to notice they've gone quiet on the call. It's one-way from
+       here: the host's own away checkboxes are still what switches someone back on
+       (see say-it-without-saying-it.html for why). This is local UI state, not
+       something Firebase round-trips — a fresh Firebase snapshot rebuilds the whole
+       card (see renderCard()) and would otherwise wipe an open confirmation the
+       instant an unrelated field (someone else's score, say) changed underneath it,
+       so it survives re-renders in a plain module-level flag instead, and every
+       toggle here re-invokes showCard(latestData) rather than waiting on Firebase. */
+    let tabooAwaySelfConfirm = false;
+    function tabooAskAway() { tabooAwaySelfConfirm = true; if (latestData) showCard(latestData); }
+    function tabooCancelAway() { tabooAwaySelfConfirm = false; if (latestData) showCard(latestData); }
+    // no round id to quote — going away isn't tied to any particular round, and the
+    // host applies it (toggleAway()) the moment it arrives, any time, round or no round
+    function tabooRequestAway(btn) {
+      if (btn) { btn.disabled = true; btn.textContent = pt('awayRequestingBtn'); }
+      if (!db || !session || !token) return;
+      db.ref(`rooms/${session}/players/${token}/vote`).set({ choice: 'setAway' });
+    }
+    // appended to every non-away taboo card, whichever state/role branch built it —
+    // centralised in shell() itself rather than repeated in each branch
+    function tabooAwaySelfBlock(data) {
+      if (data.away) return '';
+      if (tabooAwaySelfConfirm) {
+        return `
+          <div class="taboo-away-confirm">
+            <p>${pt('awayConfirmQ')}</p>
+            <div class="taboo-away-confirm-actions">
+              <button class="away-confirm-no" onclick="tabooCancelAway()">${pt('awayConfirmNoBtn')}</button>
+              <button class="away-confirm-yes" onclick="tabooRequestAway(this)">${pt('awayConfirmYesBtn')}</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <button class="taboo-away-ask"${data.awayLocked ? ' disabled' : ''} onclick="tabooAskAway()">
+          <span class="pb-key">💤</span><span class="pb-label">${pt('askAwayBtn')}</span>
+        </button>
+        ${data.awayLocked ? `<span class="pick-sub">${pt('awayLockedSub')}</span>` : ''}`;
+    }
+
     function tabooCardHTML(data) {
       // the host can switch the banned words off entirely — then no card shows them
       // and there is nothing to call Taboo! on
@@ -1498,23 +1601,40 @@
             <span class="tb-label">${pt('forbiddenWordsLabel')}</span>
             <div class="tb-list">${banned}</div>
           </div>` : '';
-      // the standings; a host tab that predates this field still sends only `score`,
-      // so fall back to the old single line rather than showing nothing
+      // the standings, in whichever shape the host picked under "📊 Score display"
+      // (see say-it-without-saying-it.html's setBoardMode()): the whole board, just
+      // this seat bracketed by the room's low/high, or nothing at all. A host tab
+      // that predates boardMode still sends only `board`/`score`, so that case falls
+      // through to the old array check and then the single-line fallback, rather
+      // than a blank card.
       const hex = playerColor(data);
-      const score = Array.isArray(data.board) && data.board.length
+      const score = data.boardMode === 'none' ? ''
+        : data.boardMode === 'compact' && data.compactBoard
+        ? `<div class="taboo-board" style="--me:${hex};--me-text:${chipInk(hex)}">
+             <span class="tbd-hdr">${pt('standings')}</span>
+             <div class="tbd-compact">
+               <span class="tbdc-edge">${data.compactBoard.min}</span>
+               <span class="tbdc-sep">~</span>
+               <span class="tbdc-mine">${esc(data.compactBoard.n || '')} (${data.compactBoard.p || 0})${data.compactBoard.x2 ? `<span class="tbd-boost" title="${pt('boostBadgeTitle')}">⚡</span>` : ''}</span>
+               <span class="tbdc-sep">~</span>
+               <span class="tbdc-edge">${data.compactBoard.max}</span>
+             </div>
+             ${data.compactBoard.x2 ? `<span class="tbd-note">${pt('boostMine')}</span>` : ''}
+           </div>`
+        : Array.isArray(data.board) && data.board.length
         ? `<div class="taboo-board" style="--me:${hex};--me-text:${chipInk(hex)}">
              <span class="tbd-hdr">${pt('standings')}</span>
              <div class="tbd-rows">${data.board.map(r => `
                <div class="tbd-row${r.me ? ' is-me' : ''}">
                  <span class="tbd-name">${esc(r.n || '')}</span>
                  <span class="tbd-pts">${r.p || 0}</span>
-                 ${r.x2 ? '<span class="tbd-boost">🔥×2</span>' : ''}
+                 ${r.x2 ? `<span class="tbd-boost" title="${pt('boostBadgeTitle')}">⚡</span>` : ''}
                </div>`).join('')}</div>
              ${data.board.some(r => r.me && r.x2) ? `<span class="tbd-note">${pt('boostMine')}</span>` : ''}
            </div>`
         : `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
       const chip = (text, hex) => `<span class="pick-chip" style="color:${chipInk(hex)};border-color:${hex}55;background:${hex}1a">${text}</span>`;
-      const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}</div>`;
+      const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}${tabooAwaySelfBlock(data)}</div>`;
       // the clock is on every card while a word is in play
       const ticking = data.state === 'playing' && syncTabooTimer(data.timer);
       const clock = ticking ? `<div class="taboo-timer" id="taboo-timer">${tabooTimer.left}</div>` : '';

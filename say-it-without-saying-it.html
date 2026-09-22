@@ -46,12 +46,17 @@
       text-align: center; overflow-wrap: break-word; max-width: 100%;
     }
     .score-card .sc-pts { font-size: 2.4rem; font-weight: 900; color: var(--accent-text); line-height: 1; }
-    /* catch-up bonus: a tile well below the room average scores double. The badge
-       is a filled amber pill so it reads on a shared screen; the legend only shows
-       while somebody actually has it, so the board stays quiet the rest of the time. */
+    /* catch-up bonus: a tile well below the room average scores double. This used to
+       spell it out as a "🔥 ×2 catch-up" pill on every boosted tile, which a host
+       asked to be quieter — a small round icon carries the same "something's on"
+       signal without repeating the same three words next to every low score on a
+       shared screen. The full explanation moves to the title tooltip and to
+       .sc-boost-note below, which still only shows up while it applies. */
     .score-card .sc-boost {
-      font-size: .74rem; font-weight: 900; letter-spacing: .5px;
-      color: var(--btn-ink); background: #f59e0b; border-radius: 999px; padding: 3px 9px;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+      font-size: .95rem; line-height: 1;
+      color: var(--btn-ink); background: #f59e0b;
     }
     .sc-boost-note { flex-basis: 100%; text-align: center; font-size: .86rem; font-weight: 700; color: var(--warn-text); }
     .score-card.is-giver {
@@ -730,7 +735,7 @@
     <div class="substep-dots" id="taboo-dots"></div>
 
     <div class="substep" id="taboo-substep-1">
-      <div class="substep-hdr"><span class="substep-tag">1 / 4</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
+      <div class="substep-hdr"><span class="substep-tag">1 / 5</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
       <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas. Tick as many as you like — the ticked levels are drawn from together, and at least one has to stay on.</p>
       <div id="substep-difficulty-slot">
         <div class="rules-group" id="rules-group-difficulty">
@@ -745,7 +750,7 @@
     </div>
 
     <div class="substep hidden" id="taboo-substep-2">
-      <div class="substep-hdr"><span class="substep-tag">2 / 4</span><h3 data-i18n="taboo.subStep2Title">🚫 Forbidden Words</h3></div>
+      <div class="substep-hdr"><span class="substep-tag">2 / 5</span><h3 data-i18n="taboo.subStep2Title">🚫 Forbidden Words</h3></div>
       <p class="substep-desc" data-i18n="taboo.subStep2Desc">Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.</p>
       <div id="substep-forbidden-slot">
         <div class="rules-group" id="rules-group-forbidden">
@@ -767,7 +772,7 @@
     </div>
 
     <div class="substep hidden" id="taboo-substep-3">
-      <div class="substep-hdr"><span class="substep-tag">3 / 4</span><h3 data-i18n="taboo.subStep3Title">⏱️ Round Timer</h3></div>
+      <div class="substep-hdr"><span class="substep-tag">3 / 5</span><h3 data-i18n="taboo.subStep3Title">⏱️ Round Timer</h3></div>
       <p class="substep-desc" data-i18n="taboo.subStep3Desc">Set how many seconds each round lasts. You can still adjust it from the game screen anytime.</p>
       <div id="substep-seconds-slot">
         <div class="rules-group" id="rules-group-seconds">
@@ -787,10 +792,25 @@
     </div>
 
     <div class="substep hidden" id="taboo-substep-4">
-      <div class="substep-hdr"><span class="substep-tag">4 / 4</span><h3 data-i18n="taboo.subStep4Title">🎮 Start Game</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep4Desc">All set! You can always come back with "Edit settings" once the game is running.</p>
+      <div class="substep-hdr"><span class="substep-tag">4 / 5</span><h3 data-i18n="taboo.subStep4Title">📊 Score Display</h3></div>
+      <p class="substep-desc" data-i18n="taboo.subStep4Desc">Choose what the player cards show about everyone's scores. You can still change this from the game screen anytime.</p>
+      <div id="substep-scoredisplay-slot">
+        <div class="rules-group" id="rules-group-scoredisplay">
+          <span class="rules-group-label" data-i18n="taboo.scoreDisplayLabel">📊 Score display</span>
+          <div class="level-btns" id="scoredisplay-btns"></div>
+        </div>
+      </div>
       <div class="substep-nav">
         <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(3)" data-i18n="taboo.backBtn">← Back</button>
+        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(5)" data-i18n="taboo.nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <div class="substep hidden" id="taboo-substep-5">
+      <div class="substep-hdr"><span class="substep-tag">5 / 5</span><h3 data-i18n="taboo.subStep5Title">🎮 Start Game</h3></div>
+      <p class="substep-desc" data-i18n="taboo.subStep5Desc">All set! You can always come back with "Edit settings" once the game is running.</p>
+      <div class="substep-nav">
+        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(4)" data-i18n="taboo.backBtn">← Back</button>
         <button type="button" class="substep-nav-btn substep-next" onclick="startGame()" data-i18n="taboo.startGameBtn">🎮 Start Game</button>
       </div>
     </div>
@@ -974,7 +994,7 @@
       wordWas: { zh: '答案是 {emoji} {word}', en: 'The word was {emoji} {word}' },
       gotItResult: { zh: '✅ {who} 猜對了 — {who} +{whoPts}，{giver} +{giverPts}！', en: '✅ {who} got it — +{whoPts} for {who}, +{giverPts} for {giver}!' },
       foulResult: { zh: '🚨 {who} 抓到禁字 — {who} +{whoPts}，{giver} −1！', en: '🚨 {who} caught a forbidden word — +{whoPts} for {who}, −1 for {giver}!' },
-      boostBadge: { zh: '🔥 ×2 落後加分', en: '🔥 ×2 catch-up' },
+      boostBadge: { zh: '×2 落後加分中', en: '×2 catch-up bonus active' },
       boostNote: { zh: '🔥 ×2 落後加分：分數比全場平均低 {n} 分以上的人，這輪得分加倍', en: '🔥 ×2 catch-up bonus: anyone {n}+ points below the room average scores double' },
       timeUpResult: { zh: '⏰ 時間到 — 這輪不計分。', en: "⏰ Time's up — no points this round." },
       roundOverResult: { zh: '⏭️ 這輪結束 — 不計分。', en: '⏭️ Round over — no points.' },
@@ -1012,8 +1032,14 @@
       subStep2Desc: { zh: '開啟後，每輪會多發一位裁判專門聽違規禁字；也可以設定實際生效幾個禁字，數字愈小愈簡單。', en: 'Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.' },
       subStep3Title: { zh: '⏱️ 回合時間', en: '⏱️ Round Timer' },
       subStep3Desc: { zh: '設定每一輪的秒數，開始遊戲後仍可以在畫面上隨時調整。', en: 'Set how many seconds each round lasts. You can still adjust it from the game screen anytime.' },
-      subStep4Title: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
-      subStep4Desc: { zh: '設定完成！遊戲開始後，仍可以隨時按「編輯設定」回來調整。', en: 'All set! You can always come back with "Edit settings" once the game is running.' },
+      subStep4Title: { zh: '📊 分數顯示', en: '📊 Score Display' },
+      subStep4Desc: { zh: '選擇玩家卡片要怎麼顯示大家的分數。之後仍可以隨時從遊戲畫面調整。', en: "Choose what the player cards show about everyone's scores. You can still change this from the game screen anytime." },
+      subStep5Title: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
+      subStep5Desc: { zh: '設定完成！遊戲開始後，仍可以隨時按「編輯設定」回來調整。', en: 'All set! You can always come back with "Edit settings" once the game is running.' },
+      scoreDisplayLabel: { zh: '📊 分數顯示', en: '📊 Score display' },
+      scoreDisplayFull: { zh: '全部顯示', en: 'Show everyone' },
+      scoreDisplayNone: { zh: '全部隱藏', en: 'Hide all' },
+      scoreDisplayCompact: { zh: '最低～我～最高', en: 'Low ~ mine ~ high' },
       nextBtn: { zh: '下一步 →', en: 'Next →' },
       backBtn: { zh: '← 上一步', en: '← Back' },
       startGameBtn: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
@@ -1044,14 +1070,17 @@
     let refCount = [];     // how many times each player has refereed, to keep it even
     /* A player the host has marked "temporarily away" (stepped out mid-session) is
        skipped by every future role draw — drawGiver()/drawReferee()/guesserNums() all
-       filter it out — but is not removed from the room: their score stays on the
-       board and they can be switched back on the moment they return. It never touches
-       a round already in progress (same rule as difficulty/banned words: a setting
-       change only affects the NEXT deal), so marking the CURRENT clue giver or
-       referee away does not cut their turn short — the host still ends that with the
-       existing "End turn" button if they need to. Persisted the same way Kangaroo
-       Court keeps judgeEnabled: via ROOM.setExtra(), in the shared room session, so
-       it survives a reload of this tab. */
+       filter it out — but is not removed from the room: they can be switched back on
+       the moment they return. It never touches a round already in progress (same rule
+       as difficulty/banned words: a setting change only affects the NEXT deal), so
+       marking the CURRENT clue giver or referee away does not cut their turn short —
+       the host still ends that with the existing "End turn" button if they need to.
+       Persisted the same way Kangaroo Court keeps judgeEnabled: via ROOM.setExtra(),
+       in the shared room session, so it survives a reload of this tab.
+       Turning it ON does reach the score, though (see toggleAway()): the seat's score
+       is zeroed on the spot and it's permanently barred from the catch-up bonus for
+       the rest of the game (see catchUpBlocked above) — a host asked for this after
+       noticing a returning player would otherwise usually qualify for a free x2. */
     let away = [];
     /* A per-slot substitute name, independent of the shared room roster (`names[i]`
        in room.js, edited on index.html's Step 1). Set one when the away player is
@@ -1076,6 +1105,13 @@
     // card once they tap Show my word there, and the clock starts at that moment
     let used = [];
     let scores = [];
+    // A seat that has ever been marked away loses catch-up-bonus eligibility for the
+    // rest of the game (see toggleAway()/isBehind()) — reset only by "↺ Reset scores".
+    // Without this, marking away zeroes the score (see toggleAway()), which on its own
+    // would drop that seat well below the room average, and coming back would then
+    // hand them the x2 multiplier for free: leaving and returning would be a way to
+    // manufacture a bonus out of nothing, not a real comeback.
+    let catchUpBlocked = [];
     let queue = [];        // the one buzz waiting on the clue giver ([] or [playerNum]); a second buzz is dropped, not lined up
     let rejected = [];     // buzzed and were told "not it" this cycle — locked out of buzzing again until everyone else in guesserNums() has also had a turn (see handleAnswer)
     let seenBuzz = {};     // playerNum -> the last buzz stamp already queued
@@ -1093,14 +1129,15 @@
     let nextSeq = 0;
     const NEXT_ROUND_WAIT = 5;
 
-    /* ── Setup phase: a 4-step wizard over the three widgets below, same
+    /* ── Setup phase: a 5-step wizard over the four widgets below, same
        pattern as index.html's room-setup wizard — walk past difficulty,
-       forbidden words, and round length one at a time, then hand them to
-       the Game phase's control bar. editSettings() moves them back without
-       touching round/score/game state, since settings have always only
-       ever affected the *next* deal (see toggleLevel/setBannedCount/toggleForbidden). */
+       forbidden words, round length, and score display one at a time, then
+       hand them to the Game phase's control bar. editSettings() moves them
+       back without touching round/score/game state, since settings have
+       always only ever affected the *next* deal (see
+       toggleLevel/setBannedCount/toggleForbidden/setBoardMode). */
     let phase = 'setup'; // 'setup' | 'game'
-    const TABOO_SUBSTEPS = 4;
+    const TABOO_SUBSTEPS = 5;
     let tabooSubStep = 1;
     let tabooSubStepReached = 1;
 
@@ -1136,13 +1173,14 @@
     }
     renderTabooDots();
 
-    /* All three settings widgets are shown in both phases, so rather than keep two
-       (or three) copies of each in sync there is one node per setting that travels:
+    /* All four settings widgets are shown in both phases, so rather than keep two
+       (or four) copies of each in sync there is one node per setting that travels:
        appendChild MOVES an existing element, so the listeners renderLevelBtns() /
-       renderForbiddenToggle() / setSeconds() attached, and their current state,
-       come along untouched — there is only ever one #rules-group-difficulty,
-       #rules-group-forbidden and #rules-group-seconds in the whole document.
-       'game' gathers all three into #settings-popover, in wizard order, so the
+       renderForbiddenToggle() / setSeconds() / renderBoardModeBtns() attached, and
+       their current state, come along untouched — there is only ever one
+       #rules-group-difficulty, #rules-group-forbidden, #rules-group-seconds and
+       #rules-group-scoredisplay in the whole document.
+       'game' gathers all four into #settings-popover, in wizard order, so the
        existing .rules-group + .rules-group dashed dividers fall between them the
        same way they used to when this was one static column; 'setup' returns each
        to its own wizard slot. Bidirectional (unlike Dare Conquest's one-way
@@ -1152,9 +1190,10 @@
       const diff = document.getElementById('rules-group-difficulty');
       const forb = document.getElementById('rules-group-forbidden');
       const secs = document.getElementById('rules-group-seconds');
+      const disp = document.getElementById('rules-group-scoredisplay');
       if (where === 'game') {
         const pop = document.getElementById('settings-popover');
-        if (pop) { if (diff) pop.appendChild(diff); if (forb) pop.appendChild(forb); if (secs) pop.appendChild(secs); }
+        if (pop) { if (diff) pop.appendChild(diff); if (forb) pop.appendChild(forb); if (secs) pop.appendChild(secs); if (disp) pop.appendChild(disp); }
       } else {
         const move = (grp, slotId) => {
           const slot = document.getElementById(slotId);
@@ -1163,6 +1202,7 @@
         move(diff, 'substep-difficulty-slot');
         move(forb, 'substep-forbidden-slot');
         move(secs, 'substep-seconds-slot');
+        move(disp, 'substep-scoredisplay-slot');
       }
     }
 
@@ -1213,13 +1253,14 @@
        remember what was picked in the wizard — same idea as index.html's
        room-setup summary line next to "Edit room setup". Difficulty is named
        here as well as on its own buttons below: the line is the one place that
-       states all three settings, and dropping a third of it to avoid saying
-       "Medium" twice would read as an omission. */
+       states all four settings, and dropping one to avoid saying "Medium" twice
+       would read as an omission. */
     function renderPhaseSummary() {
       const parts = [
         LEVELS.filter(l => isLevelOn(l.id)).map(l => tt(l.labelKey)).join(' + '),
         forbiddenOn ? tt('summaryForbiddenOn', { n: bannedCount }) : tt('summaryForbiddenOff'),
         tt('summaryTimer', { n: timer.total }),
+        tt(BOARD_MODE_LABEL[boardMode]),
       ];
       document.getElementById('phase-summary-text').innerHTML = parts.join(' &middot; ');
     }
@@ -1245,13 +1286,19 @@
     // every card carries 6 banned words; how many of them are actually in play
     // this round is a difficulty knob of its own — fewer bans is easier
     const BANNED_COUNTS = [2, 3, 4, 5, 6];
+    // 'full' = every player's name and score (today's default); 'none' = nothing at
+    // all; 'compact' = just the room's low/high scores either side of this player's
+    // own name and score — see compactBoardFor() and play.html's rendering of it
+    const BOARD_MODES = ['full', 'none', 'compact'];
     let forbiddenOn = true;
     let levels = ['medium'];
     let bannedCount = 4;
+    let boardMode = 'full';
     const isLevelOn = id => levels.includes(id);
     try {
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
       if (saved && typeof saved.forbiddenOn === 'boolean') forbiddenOn = saved.forbiddenOn;
+      if (saved && BOARD_MODES.includes(saved.boardMode)) boardMode = saved.boardMode;
       /* `levels` is the current shape. A session saved before difficulty became a
          multi-select still holds a single `level` string, so read that too: 'all'
          was the whole deck, anything else was that one level. */
@@ -1277,7 +1324,7 @@
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, boardMode, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
     }
 
     /* the indices of every card at a ticked difficulty — the union, so ticking all
@@ -1427,7 +1474,14 @@
       // that plainly was. composedPath() is the path captured at dispatch time, so
       // it stays correct. Same fix as dare-conquest.html's own popover.
       const path = e.composedPath();
-      if (!path.includes(wrap) && !path.includes(pop)) closeSettingsPopover();
+      // The away roster (#away-btns) sits outside the popover, but ticking someone
+      // away or back is the other half of the exact workflow the popover exists for —
+      // marking a player away/back can be the very thing that unlocks Forbidden words
+      // (see toggleAway()/renderForbiddenToggle()), and a host who has to reopen the
+      // popover after every away click reported that as "the toggle won't turn back
+      // on" (it was really just hidden). So a click there doesn't count as "outside".
+      const awayArea = document.getElementById('away-btns');
+      if (!path.includes(wrap) && !path.includes(pop) && !(awayArea && path.includes(awayArea))) closeSettingsPopover();
     });
 
     /* how many of a card's 6 banned words are actually live this round — changing
@@ -1449,6 +1503,39 @@
         b.className = 'level-btn' + (n === bannedCount ? ' active' : '');
         b.textContent = n;
         b.onclick = () => setBannedCount(n);
+        wrap.appendChild(b);
+      });
+    }
+
+    /* What every player's card shows about the room's scores — unlike difficulty/
+       banned count (which only ever change the NEXT deal), this is read fresh into
+       every payload (see boardFor()/compactBoardFor() and payloadFor() below), so a
+       change here has to reach the cards on the spot or the host would be looking at
+       a setting that visibly hasn't taken effect yet. */
+    function setBoardMode(mode) {
+      if (!BOARD_MODES.includes(mode) || boardMode === mode) return;
+      boardMode = mode;
+      saveOptions();
+      renderBoardModeBtns();
+      renderPhaseSummary();
+      // unlike difficulty/forbidden/seconds, this has to reach the cards even at
+      // 'idle' — the very first payload (published on page load, before any round
+      // is ever dealt) already carries a board, so there's always something on the
+      // card for a mode change to actually change
+      pushState();
+    }
+
+    const BOARD_MODE_LABEL = { full: 'scoreDisplayFull', none: 'scoreDisplayNone', compact: 'scoreDisplayCompact' };
+    function renderBoardModeBtns() {
+      const wrap = document.getElementById('scoredisplay-btns');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      BOARD_MODES.forEach(mode => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'level-btn' + (mode === boardMode ? ' active' : '');
+        b.textContent = tt(BOARD_MODE_LABEL[mode]);
+        b.onclick = () => setBoardMode(mode);
         wrap.appendChild(b);
       });
     }
@@ -1565,7 +1652,10 @@
     };
     renderPreviewToggle();
 
-    function syncScores() { while (scores.length < ROOM.count) scores.push(0); }
+    function syncScores() {
+      while (scores.length < ROOM.count) scores.push(0);
+      while (catchUpBlocked.length < ROOM.count) catchUpBlocked.push(false);
+    }
     syncScores();
 
     /* ── What the players send back ──
@@ -1591,6 +1681,19 @@
           cardDrove();
           dealRound();
         }
+        return;
+      }
+
+      /* A player marking themselves away (see play.html's own confirm step before
+         this is ever sent) — same "may happen any time, round or no round" shape as
+         dealing, since away only ever changes the NEXT role draw. Routed through
+         toggleAway() itself rather than setting away[num-1] directly, so it gets the
+         exact same floor-of-2-active guard, forbidden-words fallout, and score reset
+         the host's own checkbox gets — a stray or doubled tap just finds away[] is
+         already true and toggleAway() no-ops on the "turning on" branch's own check. */
+      if (v.choice === 'setAway') {
+        ROOM.clearAnswer(num - 1);
+        if (!away[num - 1]) toggleAway(num - 1);
         return;
       }
 
@@ -2021,13 +2124,24 @@
        (see drawGiver/drawReferee/guesserNums above and below) — it never touches a
        round already in progress. If they happen to be this round's clue giver or
        referee, that round plays out with them exactly as it would have anyway; the
-       host still has "End turn" for a giver who really has to leave right now. */
+       host still has "End turn" for a giver who really has to leave right now.
+       The score is different: it is zeroed the moment away turns on, and the seat is
+       barred from the catch-up bonus from then on — including after it returns — so
+       stepping out and back in is never a way to manufacture a x2 multiplier (see
+       catchUpBlocked above). */
     function toggleAway(i) {
       if (i < 0 || i >= ROOM.count) return;
       const turningOn = !away[i];
       if (turningOn && activeCount() <= 2) return; // would leave fewer than 2 players in play
       away[i] = turningOn;
       ROOM.setExtra('away', away);
+      if (turningOn) {
+        syncScores();
+        scores[i] = 0;
+        catchUpBlocked[i] = true;
+        popIdx = popIdx.filter(k => k !== i);
+        lostIdx = lostIdx.filter(k => k !== i);
+      }
       // marking someone away can drop the active headcount below what banned words
       // needs (a referee) — same reaction as the room shrinking to 2 players, and for
       // the same reason: it clears the pending call rather than leaving it stuck open
@@ -2037,7 +2151,12 @@
       }
       renderAwayBtns();
       renderForbiddenToggle();
-      if (state !== 'idle') pushState();
+      // Away has to reach the cards even at 'idle' — a host can mark someone away
+      // before the first word is ever dealt, and that seat's own card (the neutral
+      // "you're marked away" screen) and everyone else's awayLocked hint both read
+      // straight off this payload. The very first payload already went out at page
+      // load (see the bottom of this script), so there's always something to update.
+      pushState();
       renderAll();
     }
 
@@ -2303,7 +2422,10 @@
       for (let k = 0; k < ROOM.count; k++) sum += scores[k] || 0;
       return ROOM.count ? sum / ROOM.count : 0;
     }
-    function isBehind(i) { return ROOM.count > 1 && roomAverage() - (scores[i] || 0) >= CATCH_UP_GAP; }
+    // catchUpBlocked[i] is permanent for the rest of the game (see toggleAway()) — a
+    // seat that has ever been sent away, including one that's back in play now, never
+    // qualifies again until "↺ Reset scores" clears the flag along with the scores
+    function isBehind(i) { return !catchUpBlocked[i] && ROOM.count > 1 && roomAverage() - (scores[i] || 0) >= CATCH_UP_GAP; }
     const multiplierFor = i => (isBehind(i) ? 2 : 1);
 
     function awardPoint(buzzerNum) {
@@ -2365,9 +2487,12 @@
     }
 
     /* every card carries the standings now, so this has to reach them too, not just
-       repaint the host's scoreboard */
+       repaint the host's scoreboard. Wiping catchUpBlocked here too: a fresh set of
+       scores is a fresh game, so a seat that was barred from the bonus for having
+       stepped away earlier gets to start clean like everyone else. */
     function resetScores() {
       scores = scores.map(() => 0);
+      catchUpBlocked = catchUpBlocked.map(() => false);
       publishRound();
       renderAll();
     }
@@ -2399,13 +2524,29 @@
       };
     }
 
-    /* { n: name, p: points, me } for everyone, in seat order */
+    /* { n: name, p: points, me } for everyone, in seat order — the 'full' score
+       display mode */
     function boardFor(i) {
       const out = [];
       for (let k = 0; k < ROOM.count; k++) {
         out.push({ n: pname(k), p: scores[k] || 0, me: k === i || null, x2: isBehind(k) || null });
       }
       return out;
+    }
+
+    /* the room's lowest and highest scores either side of this player's own name and
+       score — the 'compact' score display mode, for a host who wants a rough sense of
+       standing on every card without printing the whole room's names and numbers */
+    function compactBoardFor(i) {
+      syncScores();
+      let min = Infinity, max = -Infinity;
+      for (let k = 0; k < ROOM.count; k++) {
+        const p = scores[k] || 0;
+        if (p < min) min = p;
+        if (p > max) max = p;
+      }
+      if (!ROOM.count) { min = 0; max = 0; }
+      return { min, max, n: pname(i), p: scores[i] || 0, x2: isBehind(i) || null };
     }
 
     function payloadFor(i) {
@@ -2416,12 +2557,17 @@
         isGiver, isRef, giverName: pname(giverIdx),
         refName: refIdx >= 0 ? pname(refIdx) : null,
         score: scores[i] || 0,
-        // the whole scoreboard, not just this player's own total: on a shared screen
-        // the standings are right there, but a player looking down at their phone had
-        // no way to see where they stood. Names travel with it because a card has no
-        // roster of its own. Six rows of {n, p} is a handful of bytes, and it rides
-        // along on writes that were happening anyway — no extra Firebase traffic.
-        board: boardFor(i),
+        // the standings, in whichever shape the host picked in "📊 Score display"
+        // (see setBoardMode()): the whole scoreboard, nothing at all, or just this
+        // seat's own name/score bracketed by the room's low and high. On a shared
+        // screen the standings are right there, but a player looking down at their
+        // phone had no way to see where they stood — that's what all three modes are
+        // for, they just disagree on how much of the room to name. Names travel with
+        // it because a card has no roster of its own. A handful of bytes either way,
+        // riding on writes that were happening anyway — no extra Firebase traffic.
+        boardMode,
+        board: boardMode === 'full' ? boardFor(i) : null,
+        compactBoard: boardMode === 'compact' ? compactBoardFor(i) : null,
         // between rounds the next word can be dealt from any card, so every card needs
         // to know that and to have the id its tap must quote
         canDeal: canDeal() || null,
@@ -2435,6 +2581,10 @@
         // told to the card mainly so it can stop showing a buzzer to someone who
         // stepped away — the host-side draws already skip them either way
         away: !!away[i],
+        // lets a not-yet-away card grey out its own "step away" request instead of
+        // sending one toggleAway() would just refuse — same floor the host's own
+        // away checkboxes are locked by (see renderAwayBtns())
+        awayLocked: activeCount() <= 2,
         timer: timerPayload(),
         next: nextPayload(i),
       };
@@ -2664,7 +2814,7 @@
             <span class="sc-role">${role}</span>
             <span class="sc-name">${pname(i)}</span>
             <span class="sc-pts">${scores[i] || 0}</span>
-            ${behind ? `<span class="sc-boost">${tt('boostBadge')}</span>` : ''}
+            ${behind ? `<span class="sc-boost" title="${tt('boostBadge')}">⚡</span>` : ''}
           </div>`;
         if (behind) anyBehind = true;
       }
@@ -2703,6 +2853,7 @@
     renderForbiddenToggle();
     renderLevelBtns();
     renderBannedCountBtns();
+    renderBoardModeBtns();
     renderTimer();
     renderAll();
     renderPhaseSummary();
@@ -2723,6 +2874,7 @@
       renderAwayBtns();
       renderLevelBtns();
       renderBannedCountBtns();
+      renderBoardModeBtns();
       renderDeckList();
       renderDeckToggleLabel();
       renderTimer();
