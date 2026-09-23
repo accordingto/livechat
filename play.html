@@ -805,6 +805,17 @@
     .cwb-row.is-me .cwb-name { color: #fff; }
     .cwb-pts { font-size: .95rem; font-weight: 900; color: #ddd; }
     .cwb-row.is-me .cwb-pts { color: var(--me-text); }
+    /* the host's score-display setting (crack-the-word.html) decides whether
+       this shows: 'team' and 'teamContrib' both show it, 'individual' (the
+       original per-seat-only leaderboard, still below via .crack-board) does
+       not — see crackCardHTML() */
+    .crack-team-total {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: rgba(59,130,246,.1); border: 1.5px solid rgba(59,130,246,.4); border-radius: 14px;
+      padding: 10px 14px;
+    }
+    .crack-team-total .ctt-label { font-size: .85rem; font-weight: 800; color: #60a5fa; }
+    .crack-team-total .ctt-score { font-size: 1.3rem; font-weight: 900; color: #fff; }
   </style>
 </head>
 <body>
@@ -844,6 +855,7 @@
       tileWord: { zh: '塊地', en: 'tile' },
       tilesWord: { zh: '塊地', en: 'tiles' },
       standings: { zh: '🏆 目前分數', en: '🏆 Standings' },
+      crackTeamTotalLabel: { zh: '🏆 團隊總分', en: '🏆 Team score' },
       buzzHeldForTaboo: { zh: '⏸️ 有人喊了 Taboo！ — 等 {name} 回答之後才能再搶答。', en: '⏸️ Taboo! was called — buzzing reopens once {name} answers.' },
       point: { zh: '分', en: 'point' },
       points: { zh: '分', en: 'points' },
@@ -1594,7 +1606,16 @@
 
     function crackCardHTML(data) {
       const hex = playerColor(data);
-      const board = Array.isArray(data.board) && data.board.length ? `
+      // the host's score-display setting (crack-the-word.html) — an old host
+      // tab that never sent this field falls back to 'individual', today's
+      // original per-seat-only leaderboard, so nothing changes for it
+      const scoreMode = data.scoreDisplayMode || 'individual';
+      const teamTotal = scoreMode !== 'individual' ? `
+        <div class="crack-team-total">
+          <span class="ctt-label">${pt('crackTeamTotalLabel')}</span>
+          <span class="ctt-score">${data.teamTotal || 0}</span>
+        </div>` : '';
+      const board = scoreMode !== 'team' && Array.isArray(data.board) && data.board.length ? `
         <div class="crack-board" style="--me:${hex};--me-text:${chipInk(hex)}">
           <span class="cwb-hdr">${pt('standings')}</span>
           <div class="cwb-rows">${data.board.map(r => `
@@ -1603,7 +1624,7 @@
               <span class="cwb-pts">${r.p || 0}</span>
             </div>`).join('')}</div>
         </div>` : '';
-      const shell = inner => `<div class="secret-card theme-crack${data.state === 'playing' ? '' : ' is-idle-glow'}">${nameBanner(data)}${inner}${board}</div>`;
+      const shell = inner => `<div class="secret-card theme-crack${data.state === 'playing' ? '' : ' is-idle-glow'}">${nameBanner(data)}${inner}${teamTotal}${board}</div>`;
       const tierEmoji = { short: '🟢', medium: '🟡', long: '🔴', phrase: '💬' };
 
       if (data.state === 'choosing') {

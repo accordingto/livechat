@@ -45,23 +45,71 @@
     }
     .cw-fallback-btn:hover { background: var(--btn-face-hi); }
 
-    /* ── Turn-count difficulty: a standing host setting, not tied to any
-       round, so it lives above the scoreboard rather than inside the round
-       panel (which only exists while a round is idle/choosing/playing). ── */
+    /* ── Host settings: two standing preferences (turn budget difficulty,
+       score display mode), neither tied to any one round, so they live above
+       the scoreboard rather than inside the round panel (which only exists
+       while a round is idle/choosing/playing). Collapsed behind one small
+       pill instead of an always-open row — same move as Say It Without
+       Saying It's own settings popover (see that file's long comment) once
+       it grew past a single setting: two full-width button groups sitting
+       permanently open above the scoreboard on a screen that's meant to be
+       mostly tiles and letters is exactly the "wasted space" that pattern
+       exists to fix. `#settings-popover` itself lives OUTSIDE `.cw-settings-row`
+       in the HTML, as its own sibling, not nested inside it — `.cw-settings-row`
+       carries a `fadeUp` entrance animation, and `fill-mode: both` leaves the
+       finished animation's (identity) transform on the element forever, which
+       creates a stacking context a nested popover's z-index could never climb
+       out of (see dare-conquest.html for this worked out at length). Position
+       is computed from the toggle button's own viewport rect each time it
+       opens, not anchored via CSS, for the same reason. */
     .cw-settings-row {
       width: 100%; max-width: 1100px; margin-bottom: 16px;
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px;
       animation: fadeUp .5s .1s ease both;
     }
-    .cw-diff-label { font-size: .85rem; font-weight: 800; color: var(--text-muted); }
-    .cw-diff-btns { display: flex; gap: 8px; }
+    .cw-settings-toggle-btn {
+      background: var(--btn-face); border: 2px solid var(--border-3); color: var(--text-dim);
+      border-radius: 999px; padding: 7px 14px; cursor: pointer; font: inherit;
+      display: flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 700;
+      transition: background .15s;
+    }
+    .cw-settings-toggle-btn:hover { background: var(--btn-face-hi); }
+    .cw-settings-toggle-btn .cst-dots { font-size: .8rem; letter-spacing: 1px; }
+    .cw-settings-popover {
+      position: fixed; z-index: 9999;
+      min-width: 240px; max-width: min(340px, calc(100vw - 24px));
+      max-height: min(70vh, 520px); overflow-y: auto;
+      background: var(--surface); border: 2px solid var(--border-2); border-radius: 16px;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 14px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.5);
+    }
+    .cw-setting-group { display: flex; flex-direction: column; gap: 8px; }
+    .cw-setting-group + .cw-setting-group { border-top: 1px dashed var(--border-2); padding-top: 14px; }
+    .cw-setting-label { font-size: .82rem; font-weight: 800; color: var(--text-muted); }
+    /* stacked full-width, not the side-by-side row this button used to sit in —
+       the score-mode labels are long sentences, not short words like the turn
+       difficulty ones, and a narrow popover has no room to wrap them sideways */
+    .cw-setting-btns { display: flex; flex-direction: column; gap: 6px; }
     .cw-diff-btn {
+      width: 100%; text-align: left;
       background: var(--btn-face); border: 1.5px solid var(--border-3); color: var(--text-dim);
-      border-radius: 10px; padding: 7px 16px; font-size: .9rem; font-weight: 800; font-family: inherit; cursor: pointer;
+      border-radius: 10px; padding: 9px 14px; font-size: .9rem; font-weight: 800; font-family: inherit; cursor: pointer;
       transition: background .15s, color .15s, border-color .15s;
     }
     .cw-diff-btn:hover { background: var(--btn-face-hi); }
     .cw-diff-btn.is-on { background: var(--accent); border-color: var(--accent); color: var(--btn-ink); }
+    /* the live read-out of what the score setting is currently doing — stays
+       visible outside the (closed-by-default) popover, same reasoning as Say
+       It's own .phase-summary: a setting that changes what every card shows
+       right now shouldn't require opening a menu just to check it */
+    .cw-team-total {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(59,130,246,.12); border: 1.5px solid rgba(59,130,246,.4); border-radius: 999px;
+      padding: 7px 18px;
+    }
+    .cw-team-total .ctt-label { font-size: .85rem; font-weight: 800; color: var(--accent-text); }
+    .cw-team-total .ctt-score { font-size: 1.15rem; font-weight: 900; color: var(--text); }
 
     /* ── Round panel: tiles, tier chooser, letter grid, guess judge box ── */
     .cw-panel {
@@ -166,11 +214,14 @@
 
   <div class="fb-warning hidden" id="fb-warning"></div>
 
-  <div class="cw-settings-row" id="turn-diff-row"></div>
+  <div class="cw-settings-row" id="settings-row"></div>
   <div class="scoreboard" id="scoreboard"></div>
   <div class="cw-panel" id="round-panel"></div>
 
   <div id="room-mount"></div>
+
+  <!-- lives outside .cw-settings-row on purpose — see the CSS comment there -->
+  <div class="cw-settings-popover hidden" id="settings-popover"></div>
 
   <script src="guide-data.js"></script>
   <script src="guide.js"></script>
@@ -216,6 +267,12 @@
       turnDiff_easy: { zh: '🟢 簡單', en: '🟢 Easy' },
       turnDiff_medium: { zh: '🟡 中等', en: '🟡 Medium' },
       turnDiff_hard: { zh: '🔴 困難', en: '🔴 Hard' },
+      settingsToggleTitle: { zh: '遊戲設定：回合預算、分數顯示方式', en: 'Game settings: turn budget, score display' },
+      scoreModeLabel: { zh: '📊 分數顯示方式', en: '📊 Score display' },
+      scoreMode_team: { zh: '🏆 團隊總分', en: '🏆 Team total' },
+      scoreMode_teamContrib: { zh: '📊 團隊總分＋個人貢獻度', en: '📊 Team total + individual contribution' },
+      scoreMode_individual: { zh: '🏅 個別競賽', en: '🏅 Individual competition' },
+      teamTotalLabel: { zh: '🏆 團隊總分', en: '🏆 Team score' },
     });
     const tt = (key, vars) => {
       let s = I18N.t('crack', key);
@@ -285,10 +342,23 @@
        this scales the whole thing down (see CRACK_ENGINE.applyTurnDifficulty).
        Persisted like a real setting (not page-memory only, unlike scores),
        since it's a host preference that should survive a reload. ── */
+    /* ── Score display mode: how the scoreboard (host screen) and each
+       player's own "standings" block (their card) present `scores` —
+       purely a presentation choice, the underlying numbers never change:
+       'team' shows one combined total and nothing per-seat; 'teamContrib'
+       (the default) shows that same total plus each seat's own number
+       alongside it, read as "how much of the total this person helped get";
+       'individual' is the original per-seat leaderboard with no total line
+       at all. Persisted like turnDifficulty — a host preference that should
+       survive a reload, unlike the page-memory-only `scores` themselves. ── */
     const SETTINGS_KEY = 'crackWordSettings.v1';
     let turnDifficulty = 'easy';
+    const SCORE_MODES = ['team', 'teamContrib', 'individual'];
+    let scoreDisplayMode = 'teamContrib';
+    const TURN_DIFF_DOT = { easy: '🟢', medium: '🟡', hard: '🔴' };
+    const SCORE_MODE_ICON = { team: '🏆', teamContrib: '📊', individual: '🏅' };
     function saveSettings() {
-      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ turnDifficulty })); } catch (e) {}
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ turnDifficulty, scoreDisplayMode })); } catch (e) {}
     }
     (function loadSettings() {
       try {
@@ -296,13 +366,25 @@
         if (!raw) return;
         const saved = JSON.parse(raw);
         if (saved && CRACK_ENGINE.TURN_DIFF_MULT[saved.turnDifficulty]) turnDifficulty = saved.turnDifficulty;
+        if (saved && SCORE_MODES.includes(saved.scoreDisplayMode)) scoreDisplayMode = saved.scoreDisplayMode;
       } catch (e) {}
     })();
     function setTurnDifficulty(d) {
       if (!CRACK_ENGINE.TURN_DIFF_MULT[d]) return;
       turnDifficulty = d;
       saveSettings();
-      renderTurnDiffRow();
+      renderSettings();
+    }
+    /* Unlike turnDifficulty (only read when the NEXT round's budget is
+       computed), this changes what every card is showing right this
+       moment — idle, playing, or done all already carry a score display —
+       so it always pushes immediately rather than waiting for a natural
+       next sync(), same as Say It Without Saying It's own setBoardMode(). */
+    function setScoreDisplayMode(m) {
+      if (!SCORE_MODES.includes(m)) return;
+      scoreDisplayMode = m;
+      saveSettings();
+      sync();
     }
 
     /* ── Round state — page memory only, exactly like Say It's `scores`/`state`:
@@ -623,6 +705,10 @@
       }
       if (state === 'done' && lastResult) base.result = Object.assign({}, lastResult, { mine: seat === lastResult.solverSeat });
       base.board = Array.from({ length: ROOM.count }, (_, s) => ({ n: ROOM.name(s), p: scores[s] || 0, me: s === seat }));
+      // sent unconditionally, same as board above — the card decides what to
+      // draw from scoreDisplayMode, this page doesn't prune the payload per mode
+      base.scoreDisplayMode = scoreDisplayMode;
+      base.teamTotal = scores.reduce((sum, p) => sum + (p || 0), 0);
       return base;
     }
 
@@ -647,24 +733,125 @@
 
     function renderAll() {
       document.getElementById('roundNum').textContent = roundNum;
-      renderTurnDiffRow();
+      renderSettings();
       renderScoreboard();
       renderRoundPanel();
     }
 
-    function renderTurnDiffRow() {
-      const el = document.getElementById('turn-diff-row');
+    /* The always-visible row (toggle pill + the live team-total read-out)
+       and the popover's own contents (both settings groups) — two functions
+       because the row must redraw on every renderAll() (the total changes
+       every time scores do) while the popover only needs to redraw when a
+       setting itself changes or the popover is opened; renderSettings()
+       just calls both so callers never have to remember which one to use. */
+    function renderSettingsRow() {
+      const el = document.getElementById('settings-row');
+      const showTotal = scoreDisplayMode !== 'individual';
+      const total = scores.reduce((sum, p) => sum + (p || 0), 0);
       el.innerHTML = `
-        <span class="cw-diff-label">${tt('turnDiffLabel')}</span>
-        <div class="cw-diff-btns">
-          ${['easy', 'medium', 'hard'].map(d => `
-            <button class="cw-diff-btn${turnDifficulty === d ? ' is-on' : ''}" onclick="setTurnDifficulty('${d}')">${tt('turnDiff_' + d)}</button>
-          `).join('')}
+        <div class="cw-settings-popover-wrap" id="settings-popover-wrap">
+          <button type="button" class="cw-settings-toggle-btn" id="settings-toggle-btn" onclick="toggleSettingsPopover()" title="${tt('settingsToggleTitle')}">
+            ⚙️ <span class="cst-dots">${TURN_DIFF_DOT[turnDifficulty]}${SCORE_MODE_ICON[scoreDisplayMode]}</span>
+          </button>
+        </div>
+        ${showTotal ? `
+          <div class="cw-team-total">
+            <span class="ctt-label">${tt('teamTotalLabel')}</span>
+            <span class="ctt-score">${total}</span>
+          </div>` : ''}`;
+    }
+    function renderSettingsPopover() {
+      const el = document.getElementById('settings-popover');
+      el.innerHTML = `
+        <div class="cw-setting-group">
+          <span class="cw-setting-label">${tt('turnDiffLabel')}</span>
+          <div class="cw-setting-btns">
+            ${['easy', 'medium', 'hard'].map(d => `
+              <button class="cw-diff-btn${turnDifficulty === d ? ' is-on' : ''}" onclick="setTurnDifficulty('${d}')">${tt('turnDiff_' + d)}</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="cw-setting-group">
+          <span class="cw-setting-label">${tt('scoreModeLabel')}</span>
+          <div class="cw-setting-btns">
+            ${SCORE_MODES.map(m => `
+              <button class="cw-diff-btn${scoreDisplayMode === m ? ' is-on' : ''}" onclick="setScoreDisplayMode('${m}')">${tt('scoreMode_' + m)}</button>
+            `).join('')}
+          </div>
         </div>`;
     }
+    function renderSettings() {
+      renderSettingsRow();
+      renderSettingsPopover();
+    }
+
+    // popover open/close: click the pill to toggle, click anywhere outside to
+    // close. Position is computed from the button's own viewport rect each
+    // time it opens (see the CSS comment on .cw-settings-popover for why it
+    // can't just be CSS-anchored), with the same flip-above/clamp-horizontal
+    // logic as Say It Without Saying It's own settings popover — the toggle
+    // button here is centred rather than pinned to one edge, so it can land
+    // anywhere across a narrow phone screen's width.
+    function positionSettingsPopover() {
+      const btn = document.getElementById('settings-toggle-btn');
+      const pop = document.getElementById('settings-popover');
+      if (!btn || !pop) return;
+      const margin = 12;
+      const r = btn.getBoundingClientRect();
+      const popRect = pop.getBoundingClientRect(); // already unhidden by the caller, so this is its real size
+      if (r.bottom + 8 + popRect.height > window.innerHeight - margin) {
+        pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+        pop.style.top = '';
+      } else {
+        pop.style.top = (r.bottom + 8) + 'px';
+        pop.style.bottom = '';
+      }
+      const maxRight = window.innerWidth - margin - popRect.width;
+      const right = Math.min(Math.max(window.innerWidth - r.right, margin), Math.max(margin, maxRight));
+      pop.style.right = right + 'px';
+    }
+    function closeSettingsPopover() {
+      document.getElementById('settings-popover').classList.add('hidden');
+      window.removeEventListener('resize', positionSettingsPopover);
+      window.removeEventListener('scroll', onSettingsPageScroll, true);
+    }
+    // A scroll on any OTHER scrollable area means the anchor moved under a
+    // popover pinned by viewport coordinates, so close it — but not a scroll
+    // inside the popover's own overflow-y:auto (its two groups can run taller
+    // than a short phone screen), which would otherwise close it on the very
+    // attempt to scroll down the list just opened.
+    function onSettingsPageScroll(e) {
+      const pop = document.getElementById('settings-popover');
+      if (pop && e.target instanceof Node && pop.contains(e.target)) return;
+      closeSettingsPopover();
+    }
+    function toggleSettingsPopover() {
+      const pop = document.getElementById('settings-popover');
+      if (pop.classList.contains('hidden')) {
+        pop.classList.remove('hidden');
+        positionSettingsPopover();
+        window.addEventListener('resize', positionSettingsPopover);
+        window.addEventListener('scroll', onSettingsPageScroll, true);
+      } else {
+        closeSettingsPopover();
+      }
+    }
+    document.addEventListener('click', e => {
+      const wrap = document.getElementById('settings-popover-wrap');
+      const pop = document.getElementById('settings-popover');
+      if (!wrap || !pop) return;
+      // composedPath(), not .contains(e.target): picking a setting re-renders
+      // the popover's innerHTML from inside its own click handler, which runs
+      // first and detaches the clicked button before this listener sees the
+      // event — .contains(e.target) would report "not inside" for a node that
+      // plainly was. composedPath() is the path captured at dispatch time.
+      const path = e.composedPath();
+      if (!path.includes(wrap) && !path.includes(pop)) closeSettingsPopover();
+    });
 
     function renderScoreboard() {
       const el = document.getElementById('scoreboard');
+      const showPts = scoreDisplayMode !== 'team';
       el.innerHTML = Array.from({ length: ROOM.count }, (_, s) => {
         const isChooser = state === 'choosing' && s === chooserSeat;
         const isGuessing = state === 'playing' && guessing && guessing.seat === s;
@@ -680,7 +867,7 @@
           <div class="score-card${isGuessing ? ' is-active' : ''}${isTurn ? ' is-turn-card' : ''}">
             <span class="sc-role cw-tag${isGuessing ? ' is-guessing' : ''}${isTurn ? ' is-turn' : ''}${isRejected ? ' is-rejected' : ''}">${tag}</span>
             <span class="sc-name">${esc(ROOM.name(s))}</span>
-            <span class="sc-pts">${scores[s] || 0}</span>
+            ${showPts ? `<span class="sc-pts">${scores[s] || 0}</span>` : ''}
             ${canBuzzHost ? `<button class="cw-fallback-btn" onclick="hostBuzz(${s})">${tt('hostBuzzBtn')}</button>` : ''}
           </div>`;
       }).join('');
