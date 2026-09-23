@@ -30,6 +30,7 @@ if (typeof I18N !== 'undefined') {
     copiedBtn: { zh: '已複製', en: 'Copied' },
     linkBtn: { zh: '連結', en: 'Link' },
     qrBtn: { zh: 'QR', en: 'QR' },
+    openBtn: { zh: '開啟', en: 'Open' },
     qrOpenHint: { zh: '點一下用這台裝置開啟這位玩家的卡片', en: "Tap to open this player's card on this device" },
     sendCheckBtn: { zh: '🔍 傳送核對卡', en: '🔍 Send Card Check' },
     linksHdrOptional: { zh: '🔗 玩家連結 <span class="room-tag">選填</span>', en: '🔗 Player Links <span class="room-tag">optional</span>' },
@@ -297,6 +298,20 @@ const ROOM = (() => {
     box.appendChild(a);
     col.appendChild(box);
     btn.classList.add('open');
+  }
+
+  /* Same URL toggleQR()'s inline anchor already opens, minus the two clicks
+     it takes to get there (open the QR, then click the code image) — for a
+     host who's opening the card on this same device (checking it, a second
+     screen, handing a laptop over) rather than handing a phone a code to
+     scan. `href` is assigned on the element for the same reason as
+     toggleQR()'s anchor: nothing in a player's name can escape it this way. */
+  function openCardLink(i) {
+    const a = document.createElement('a');
+    a.href = cardURL(i);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.click();
   }
 
   /* ── Setup UI ── */
@@ -747,7 +762,10 @@ const ROOM = (() => {
       // player's code at once (tried first) is actually worse for the
       // "share this screen, everyone scans their own" case it's meant for —
       // with several codes on screen at the same time, a phone camera can
-      // easily catch and scan the wrong one.
+      // easily catch and scan the wrong one. Next to it, a plain "Open"
+      // button for the host's own device — checking a card, a second
+      // screen, handing a laptop over — without the QR-scan detour of
+      // opening the code first, then clicking the code image itself.
       if (live && linksView === 'qr-only') {
         const row = document.createElement('div');
         row.className = 'link-btn-row';
@@ -756,6 +774,12 @@ const ROOM = (() => {
         qr.textContent = rt('qrBtn');
         qr.onclick = () => toggleQR(i, col, qr);
         row.appendChild(qr);
+        const open = document.createElement('button');
+        open.className = 'btn-copy';
+        open.textContent = rt('openBtn');
+        open.title = rt('qrOpenHint');
+        open.onclick = () => openCardLink(i);
+        row.appendChild(open);
         col.appendChild(row);
       }
 
