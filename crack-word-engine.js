@@ -8,10 +8,13 @@ var CRACK_ENGINE = (() => {
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-  /* The 5 vowels are never owned by a seat — anyone can press any of them,
-   * any time, outside the turn system entirely (see CONSONANTS below and
-   * distributeLetters()). CONSONANTS is the actual pool distributeLetters()
-   * hands out; a plain ALPHABET-minus-VOWELS filter, computed once. */
+  /* The 5 vowels are never owned by a seat — distributeLetters() only ever
+   * hands out CONSONANTS below, so a vowel's owner is always undefined —
+   * but pressing one is still gated by whose turn it is, exactly like a
+   * consonant (see crack-the-word.html's pressLetter); "ownerless" only
+   * describes the letter-distribution side of things, not who may press.
+   * CONSONANTS is the actual pool distributeLetters() hands out; a plain
+   * ALPHABET-minus-VOWELS filter, computed once. */
   const VOWELS = ['A', 'E', 'I', 'O', 'U'];
   const CONSONANTS = ALPHABET.filter(l => !VOWELS.includes(l));
 

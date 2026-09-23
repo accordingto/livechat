@@ -1669,15 +1669,14 @@
         ).join('');
         const excludedRow = data.excluded && data.excluded.length
           ? `<span class="crack-excluded">${pt('crackExcludedLabel')} ${data.excluded.join(' · ')}</span>` : '';
-        // one merged grid, visually identical buttons — consonants only
-        // press-able on data.myTurn, vowels have no owner (see
-        // crack-the-word.html's pressLetter) and are always press-able by
-        // anyone, but nothing on the button itself marks that difference
-        const consonantEntries = (data.myLetters || []).map(l => ({ l, isVowel: false }));
-        const vowelEntries = (data.vowels || []).map(l => ({ l, isVowel: true }));
-        const merged = consonantEntries.concat(vowelEntries).sort((a, b) => a.l.letter.localeCompare(b.l.letter));
-        const letters = merged.map(({ l, isVowel }) => {
-          const clickable = isVowel ? !l.pressed : (data.myTurn && !l.pressed);
+        // one merged grid, visually identical buttons — vowels have no
+        // owner (see crack-the-word.html's pressLetter, myLetters below
+        // only ever lists this seat's own consonants) but pressing either
+        // kind of letter needs data.myTurn all the same now, so a single
+        // clickable rule covers both
+        const merged = (data.myLetters || []).concat(data.vowels || []).sort((a, b) => a.letter.localeCompare(b.letter));
+        const letters = merged.map(l => {
+          const clickable = data.myTurn && !l.pressed;
           return `<button class="crack-letter-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
         }).join('');
         const lettersBlock = merged.length ? `
