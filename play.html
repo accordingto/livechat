@@ -750,15 +750,11 @@
     /* not-my-turn dims to .4 so it reads as "can't touch this yet"; an already-pressed
        letter keeps its full-strength green/red — that outcome is settled, not withheld */
     .crack-letter-btn:disabled:not(.is-correct):not(.is-wrong) { opacity: .4; }
-    /* the shared vowel row: dashed green border marks "open to anyone, any
-       time" — distinct from .crack-letters below it, which is your own
-       consonants and gated by whose turn it is; is-correct/is-wrong (shared
-       with .crack-letter-btn) still win once a vowel is actually pressed */
-    .crack-vowels {
-      width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;
-      background: rgba(74,222,128,.08); border: 1.5px dashed rgba(74,222,128,.4); border-radius: 14px;
-      padding: 12px 14px;
-    }
+    /* vowels sit in the same grid as your own consonants (merged to save
+       vertical space) but keep a green border — the one remaining cue that
+       these are open to anyone, any time, not gated by whose turn it is;
+       is-correct/is-wrong (shared with .crack-letter-btn) still win once a
+       vowel is actually pressed */
     .crack-vowel-btn { border-color: rgba(74,222,128,.55); }
     /* the buzzer, same recipe as .taboo-buzz's — the biggest thing on the card
        once someone thinks they know the answer */
@@ -1050,7 +1046,6 @@
       crackWaitingChooserHost: { zh: '⏳ 等主持人選擇題目長度…', en: '⏳ Waiting for the host to choose a length…' },
       crackExcludedLabel: { zh: '❌ 已試過、不在這個字裡：', en: '❌ Tried, not in the word:' },
       crackYourLettersLabel: { zh: '🔤 你的字母', en: '🔤 Your letters' },
-      crackVowelsLabel: { zh: '🅰️ 母音（任何人隨時都能按）', en: '🅰️ Vowels — anyone can press, any time' },
       crackBuzzBtn: { zh: '🙋 我知道了！', en: "🙋 I've got it!" },
       crackGuessingSub: { zh: '打出完整的答案：', en: 'Type the full word:' },
       crackGuessPlaceholder: { zh: '輸入猜測的完整單字…', en: 'Type the full guessed word…' },
@@ -1639,29 +1634,23 @@
         ).join('');
         const excludedRow = data.excluded && data.excluded.length
           ? `<span class="crack-excluded">${pt('crackExcludedLabel')} ${data.excluded.join(' · ')}</span>` : '';
-        // only the seat named in data.turnSeat may press — everyone else's own
-        // buttons stay disabled even though they can see them, same as any
-        // already-pressed letter
-        const letters = (data.myLetters || []).map(l => {
-          const clickable = data.myTurn && !l.pressed;
-          return `<button class="crack-letter-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
+        // one merged grid to save vertical space on the phone-sized card —
+        // consonants only press-able on data.myTurn, vowels have no owner
+        // (see crack-the-word.html's pressLetter) and are always press-able
+        // by anyone; the green border on vowel buttons is the only remaining
+        // cue for that difference now that they no longer sit in their own
+        // boxed section
+        const consonantEntries = (data.myLetters || []).map(l => ({ l, isVowel: false }));
+        const vowelEntries = (data.vowels || []).map(l => ({ l, isVowel: true }));
+        const merged = consonantEntries.concat(vowelEntries).sort((a, b) => a.l.letter.localeCompare(b.l.letter));
+        const letters = merged.map(({ l, isVowel }) => {
+          const clickable = isVowel ? !l.pressed : (data.myTurn && !l.pressed);
+          return `<button class="crack-letter-btn${isVowel ? ' crack-vowel-btn' : ''}${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
         }).join('');
-        const lettersBlock = `
+        const lettersBlock = merged.length ? `
           <div class="crack-letters">
             <span class="cw-letters-label">${pt('crackYourLettersLabel')}</span>
             <div class="crack-letter-row">${letters}</div>
-          </div>`;
-        // vowels have no owner (see crack-the-word.html's pressLetter) — every
-        // seat's payload carries the identical list, and pressing one isn't
-        // gated by data.myTurn the way the consonant grid above is
-        const vowels = (data.vowels || []).map(l => {
-          const clickable = !l.pressed;
-          return `<button class="crack-letter-btn crack-vowel-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
-        }).join('');
-        const vowelsBlock = (data.vowels || []).length ? `
-          <div class="crack-vowels">
-            <span class="cw-letters-label">${pt('crackVowelsLabel')}</span>
-            <div class="crack-letter-row">${vowels}</div>
           </div>` : '';
         // whose turn it is to press, and the shared turn budget — the same
         // info the host's own screen shows, since none of it is secret
@@ -1703,7 +1692,6 @@
           <div class="crack-tiles">${tiles}</div>
           ${turnBlock}
           ${excludedRow}
-          ${vowelsBlock}
           ${lettersBlock}
           ${buzzBlock}
         `);
