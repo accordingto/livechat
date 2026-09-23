@@ -459,17 +459,27 @@
       return CRACK_ENGINE.lettersForSeat(owner, seat).some(l => !revealedLetters.includes(l) && !excludedLetters.includes(l));
     }
 
-    /* Round-robin from whoever currently holds the turn, skipping any seat
-     * that has already pressed every letter it was dealt. If nobody has any
-     * letters left (the whole alphabet has been pressed), there is no turn
-     * left to hand out — the round just waits on a guess or the turn limit. */
+    /* Round-robin from whoever currently holds the turn, preferring a seat
+     * that still has an unpressed consonant of its own. This used to fall
+     * back to currentTurnSeat = -1 the moment no seat had any consonant
+     * left — but the 5 vowels are never owned by anyone (see
+     * CRACK_ENGINE.VOWELS) and only ever open to whoever's turn it currently
+     * is, so -1 stranded any still-unpressed vowels forever: nobody's own
+     * seat ever equals -1, so pressLetter()'s `seat !== currentTurnSeat`
+     * check silently rejected every vowel press from then on and the round
+     * could never reach CRACK_ENGINE.allLettersSpent() to end itself — this
+     * was the exact bug reported (every letter physically pressed, round
+     * still open). Once no seat owns a consonant anymore, this just keeps
+     * rotating round-robin instead, so whoever's turn it is can still mop up
+     * the remaining vowels; pressLetter() itself is what actually ends the
+     * round, the instant every one of the 26 letters is spent. */
     function advanceTurn() {
       const n = ROOM.count;
       for (let step = 1; step <= n; step++) {
         const cand = (currentTurnSeat + step + n) % n;
         if (hasUnpressedLetters(cand)) { currentTurnSeat = cand; return; }
       }
-      currentTurnSeat = -1;
+      currentTurnSeat = (currentTurnSeat + 1 + n) % n;
     }
 
     function syncScores(n) {
@@ -606,7 +616,13 @@
         excludedLetters.push(letter);
       }
       turnsUsed++;
-      if (turnsUsed >= turnLimit) { finishRoundByLimit(); return; }
+      // the second check is a belt-and-braces guard, not just the same test
+      // twice: turnLimit is normally well under 26 (see CRACK_ENGINE.TURN_MAX),
+      // but if it were ever miscalculated above that cap, turnsUsed alone
+      // could never catch up — there are only 26 letters in the alphabet, so
+      // once every one of them has been revealed or excluded there is
+      // nothing left to press and the round must end regardless of budget
+      if (turnsUsed >= turnLimit || CRACK_ENGINE.allLettersSpent(revealedLetters, excludedLetters)) { finishRoundByLimit(); return; }
       advanceTurn();
       sync();
     }

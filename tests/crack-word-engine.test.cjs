@@ -245,9 +245,29 @@ test('penaltyFor lands on 2 for a typical short/medium turnLimit, matching the o
   assert.equal(E.penaltyFor(12), 2);
 });
 
+test('TURN_MAX never exceeds the 26 letters of the alphabet', () => {
+  assert.equal(E.TURN_MAX, 26);
+  assert.ok(E.turnLimitFor('pneumonoultramicroscopicsilicovolcanoconiosis', 'hard') <= 26);
+});
+
+test('allLettersSpent is false until all 26 letters are accounted for', () => {
+  assert.equal(E.allLettersSpent([], []), false);
+  assert.equal(E.allLettersSpent(['A', 'B', 'C'], ['X', 'Y']), false);
+  assert.equal(E.allLettersSpent(E.ALPHABET.slice(0, 20), E.ALPHABET.slice(20, 25)), false); // 25 of 26
+});
+
+test('allLettersSpent is true once revealed + excluded covers all 26 letters', () => {
+  assert.equal(E.allLettersSpent(E.ALPHABET.slice(0, 13), E.ALPHABET.slice(13)), true);
+  assert.equal(E.allLettersSpent(E.ALPHABET, []), true);
+  assert.equal(E.allLettersSpent([], E.ALPHABET), true);
+});
+
 test('penaltyFor is clamped to [TURN_LIMIT_PENALTY_MIN, TURN_LIMIT_PENALTY_MAX]', () => {
   assert.equal(E.penaltyFor(E.TURN_MIN), E.TURN_LIMIT_PENALTY_MIN);
-  assert.equal(E.penaltyFor(E.TURN_MAX), E.TURN_LIMIT_PENALTY_MAX);
   assert.ok(E.penaltyFor(0) >= E.TURN_LIMIT_PENALTY_MIN);
-  assert.ok(E.penaltyFor(999) <= E.TURN_LIMIT_PENALTY_MAX);
+  // deliberately not E.TURN_MAX here — since TURN_MAX was capped to 26 (see
+  // that constant's own comment), 26 / TURN_LIMIT_PENALTY_DIVISOR no longer
+  // lands exactly on TURN_LIMIT_PENALTY_MAX; a plain large number tests the
+  // clamp itself without depending on that coincidence
+  assert.equal(E.penaltyFor(999), E.TURN_LIMIT_PENALTY_MAX);
 });

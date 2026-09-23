@@ -146,7 +146,20 @@ var CRACK_ENGINE = (() => {
    * per-letter budget rather than a flat bonus. */
   const TURN_MULT = { easy: 1.2, medium: 1.6, hard: 2.2 };
   const TURN_MIN = 6;
-  const TURN_MAX = 30;
+  /* Capped at 26 — the English alphabet's own size, and therefore the most
+   * letters (21 consonants + 5 vowels, see distributeLetters()) any round
+   * could ever have pressed, correct or not, before literally nothing is
+   * left to press. A budget above 26 was reachable in practice on long,
+   * hard-difficulty words/phrases before this cap (the formula below has
+   * no ceiling of its own tied to the alphabet), and a round whose budget
+   * exceeds the number of letters that physically exist can never end on
+   * its own: every letter gets pressed, currentTurnSeat runs out of seats
+   * with anything left (crack-the-word.html's advanceTurn()), and the
+   * round just sits there forever short of its unreachable turn count.
+   * See crack-the-word.html's pressLetter() for the matching belt-and-
+   * braces check (allLettersSpent()) that ends the round the moment every
+   * letter is gone even if turnLimit somehow still exceeded 26. */
+  const TURN_MAX = 26;
 
   /* The shared turn budget for a round: enough presses for the room to find
    * a good chunk of the word's letters together, not so many that the whole
@@ -237,10 +250,23 @@ var CRACK_ENGINE = (() => {
     return CONSONANTS.filter(l => owner[l] === seat);
   }
 
+  /* True once every one of the 26 English letters has been either revealed
+   * or excluded this round — nothing (consonant or vowel) is left that
+   * anyone could ever press. This is the belt-and-braces companion to the
+   * TURN_MAX cap above: crack-the-word.html's pressLetter() checks this
+   * alongside turnsUsed >= turnLimit so the round always ends the moment
+   * the alphabet itself runs out, even if some future change to the budget
+   * formula let turnLimit exceed 26 again. `revealedLetters`/`excludedLetters`
+   * are the round's own tracking arrays (see crack-the-word.html); this
+   * function only ever reads their length, so any array-likes work. */
+  function allLettersSpent(revealedLetters, excludedLetters) {
+    return (revealedLetters || []).length + (excludedLetters || []).length >= ALPHABET.length;
+  }
+
   return {
     ALPHABET, VOWELS, CONSONANTS, shuffle, letterCount, tileLayout, groupTiles, TIERS, tierOf, LETTER_CREDIT,
     revealedPositions, remainingBlanks, SOLVER_BONUS, normalizeGuess, isCorrectGuess,
-    distributeLetters, lettersForSeat,
+    distributeLetters, lettersForSeat, allLettersSpent,
     uniqueLetterCount, uniqueConsonantCount, consonantPositionCount,
     TURN_MULT, TURN_MIN, TURN_MAX, turnLimitFor,
     TURN_LIMIT_PENALTY_MIN, TURN_LIMIT_PENALTY_MAX, TURN_LIMIT_PENALTY_DIVISOR, penaltyFor,
