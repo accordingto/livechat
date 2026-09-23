@@ -63,10 +63,11 @@ test('SOLVER_BONUS is a small flat amount on top of the team award', () => {
   assert.equal(E.SOLVER_BONUS, 1);
 });
 
-test('distributeLetters assigns every one of the 26 letters to exactly one seat', () => {
+test('distributeLetters assigns every one of the 21 consonants to exactly one seat, and no vowel to any', () => {
   const { owner } = E.distributeLetters('wall', 4);
-  assert.equal(Object.keys(owner).length, 26);
-  for (const l of E.ALPHABET) assert.ok(owner[l] >= 0 && owner[l] < 4);
+  assert.equal(Object.keys(owner).length, 21);
+  for (const l of E.CONSONANTS) assert.ok(owner[l] >= 0 && owner[l] < 4);
+  for (const l of E.VOWELS) assert.equal(owner[l], undefined);
 });
 
 test('distributeLetters splits the word\'s own letters as evenly as possible', () => {
@@ -103,19 +104,27 @@ test('distributeLetters is reproducible with an injected rng', () => {
   assert.deepEqual(a.owner, b.owner);
 });
 
-test('lettersForSeat returns exactly the letters distributeLetters assigned to it', () => {
+test('lettersForSeat returns exactly the letters distributeLetters assigned to it, and never a vowel', () => {
   const { owner } = E.distributeLetters('sunshine', 5);
   for (let seat = 0; seat < 5; seat++) {
     const mine = E.lettersForSeat(owner, seat);
-    for (const l of mine) assert.equal(owner[l], seat);
-    for (const l of E.ALPHABET) if (owner[l] === seat) assert.ok(mine.includes(l));
+    for (const l of mine) { assert.equal(owner[l], seat); assert.ok(!E.VOWELS.includes(l)); }
+    for (const l of E.CONSONANTS) if (owner[l] === seat) assert.ok(mine.includes(l));
   }
 });
 
-test('a one-letter room still gets every letter assigned somewhere', () => {
+test('a one-letter room still gets every consonant assigned somewhere, no vowels at all', () => {
   const { owner } = E.distributeLetters('hi', 1);
-  assert.equal(Object.keys(owner).length, 26);
-  for (const l of E.ALPHABET) assert.equal(owner[l], 0);
+  assert.equal(Object.keys(owner).length, 21);
+  for (const l of E.CONSONANTS) assert.equal(owner[l], 0);
+  for (const l of E.VOWELS) assert.equal(owner[l], undefined);
+});
+
+test('VOWELS is exactly A E I O U, and CONSONANTS is the other 21 letters', () => {
+  assert.deepEqual(E.VOWELS, ['A', 'E', 'I', 'O', 'U']);
+  assert.equal(E.CONSONANTS.length, 21);
+  for (const l of E.VOWELS) assert.ok(!E.CONSONANTS.includes(l));
+  for (const l of E.ALPHABET) assert.ok(E.VOWELS.includes(l) || E.CONSONANTS.includes(l));
 });
 
 test('uniqueLetterCount counts distinct letters, not positions', () => {
@@ -124,10 +133,37 @@ test('uniqueLetterCount counts distinct letters, not positions', () => {
   assert.equal(E.uniqueLetterCount('Ice Cream'), 6); // i c e r a m (case/space-insensitive)
 });
 
+test('uniqueConsonantCount excludes vowels entirely', () => {
+  assert.equal(E.uniqueConsonantCount('wall'), 2); // w, l (a is a vowel)
+  assert.equal(E.uniqueConsonantCount('Pineapple'), 3); // p, n, l
+  assert.equal(E.uniqueConsonantCount('aeiou'), 0);
+});
+
+test('consonantPositionCount counts consonant positions, not unique consonants', () => {
+  assert.equal(E.consonantPositionCount('wall'), 3); // w, l, l
+  assert.equal(E.consonantPositionCount('Ice Cream'), 4); // c, c, r, m
+  assert.equal(E.consonantPositionCount('aeiou'), 0);
+});
+
+test('turnLimitFor does not grow just because a word has more vowels', () => {
+  // same 5-consonant skeleton (b c d f g) either way — comfortably above
+  // TURN_MIN so the equality isn't just both sides hitting the floor —
+  // padding in extra vowels shouldn't raise the budget, since vowels never
+  // cost a turn to press
+  const few = E.turnLimitFor('bcdfg', 'medium');
+  const many = E.turnLimitFor('baecdaeifagou', 'medium');
+  assert.ok(few > E.TURN_MIN, 'test word should land above the floor to be meaningful');
+  assert.equal(few, many);
+});
+
 test('turnLimitFor scales with difficulty at the same word', () => {
-  const easy = E.turnLimitFor('Pineapple', 'easy');
-  const medium = E.turnLimitFor('Pineapple', 'medium');
-  const hard = E.turnLimitFor('Pineapple', 'hard');
+  // needs enough consonants (b l p r n t = 6) that easy/medium/hard don't all
+  // collapse onto TURN_MIN once vowels are excluded from the count — a
+  // vowel-heavy word like "Pineapple" (only 3 unique consonants) hits the
+  // floor at "easy" and can't demonstrate the scaling this test is for
+  const easy = E.turnLimitFor('Blueprint', 'easy');
+  const medium = E.turnLimitFor('Blueprint', 'medium');
+  const hard = E.turnLimitFor('Blueprint', 'hard');
   assert.ok(easy < medium);
   assert.ok(medium < hard);
 });
@@ -169,4 +205,20 @@ test('applyTurnDifficulty never cuts below TURN_MIN', () => {
 
 test('applyTurnDifficulty falls back to medium for an unknown setting', () => {
   assert.equal(E.applyTurnDifficulty(18, 'nonsense'), E.applyTurnDifficulty(18, 'medium'));
+});
+
+test('penaltyFor scales up with a bigger turnLimit', () => {
+  assert.ok(E.penaltyFor(6) < E.penaltyFor(18));
+  assert.ok(E.penaltyFor(18) < E.penaltyFor(30));
+});
+
+test('penaltyFor lands on 2 for a typical short/medium turnLimit, matching the old flat constant', () => {
+  assert.equal(E.penaltyFor(12), 2);
+});
+
+test('penaltyFor is clamped to [TURN_LIMIT_PENALTY_MIN, TURN_LIMIT_PENALTY_MAX]', () => {
+  assert.equal(E.penaltyFor(E.TURN_MIN), E.TURN_LIMIT_PENALTY_MIN);
+  assert.equal(E.penaltyFor(E.TURN_MAX), E.TURN_LIMIT_PENALTY_MAX);
+  assert.ok(E.penaltyFor(0) >= E.TURN_LIMIT_PENALTY_MIN);
+  assert.ok(E.penaltyFor(999) <= E.TURN_LIMIT_PENALTY_MAX);
 });

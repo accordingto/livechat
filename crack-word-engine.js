@@ -8,6 +8,13 @@ var CRACK_ENGINE = (() => {
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+  /* The 5 vowels are never owned by a seat — anyone can press any of them,
+   * any time, outside the turn system entirely (see CONSONANTS below and
+   * distributeLetters()). CONSONANTS is the actual pool distributeLetters()
+   * hands out; a plain ALPHABET-minus-VOWELS filter, computed once. */
+  const VOWELS = ['A', 'E', 'I', 'O', 'U'];
+  const CONSONANTS = ALPHABET.filter(l => !VOWELS.includes(l));
+
   function shuffle(arr, rng) {
     const a = arr.slice();
     const rand = rng || Math.random;
@@ -86,6 +93,23 @@ var CRACK_ENGINE = (() => {
     return new Set(String(word).toUpperCase().match(/[A-Za-z]/g) || []).size;
   }
 
+  /* Same idea, but counting only consonants — vowels are free-for-all (see
+   * VOWELS above) and never cost a turn to press, so turnLimitFor() budgets
+   * on this, not uniqueLetterCount(), or a vowel-heavy word would inflate a
+   * budget that vowels don't actually spend from. */
+  function uniqueConsonantCount(word) {
+    let n = 0;
+    new Set(String(word).toUpperCase().match(/[A-Za-z]/g) || []).forEach(l => { if (!VOWELS.includes(l)) n++; });
+    return n;
+  }
+
+  /* Total consonant POSITIONS (not unique) — the consonant-only counterpart
+   * of letterCount(), used for turnLimitFor()'s small length-based nudge so
+   * that term also only reflects what actually costs a turn to reveal. */
+  function consonantPositionCount(word) {
+    return (String(word).toUpperCase().match(/[A-Za-z]/g) || []).filter(l => !VOWELS.includes(l)).length;
+  }
+
   /* Turns per unique letter, by the word's own concept-difficulty tier (the
    * taboo deck's existing easy/medium/hard `level` — see game-data.js). A
    * harder concept needs more turns for the same letter count: seeing
@@ -104,17 +128,30 @@ var CRACK_ENGINE = (() => {
    * name once you can see it — then clamped to a sane range so a 2-letter
    * word and a 13-letter word both land somewhere playable. */
   function turnLimitFor(word, difficulty) {
-    const unique = uniqueLetterCount(word);
-    const total = letterCount(word);
+    const unique = uniqueConsonantCount(word);
+    const total = consonantPositionCount(word);
     const mult = TURN_MULT[difficulty] || TURN_MULT.medium;
     const raw = unique * mult + total * 0.3;
     return Math.min(TURN_MAX, Math.max(TURN_MIN, Math.round(raw)));
   }
 
-  /* Flat point loss for every seat when a round's turn budget runs out
-   * before anyone guesses it — a shared consequence for a shared budget,
-   * not scaled by tier or difficulty (only the turn count itself is). */
-  const TURN_LIMIT_PENALTY = 2;
+  /* Point loss for every seat when a round's turn budget runs out before
+   * anyone guesses it — a shared consequence for a shared budget. Scales
+   * with turnLimit itself rather than being a flat number: turnLimit is
+   * already the room's one number for "how big a challenge was this"
+   * (unique consonants + length + concept difficulty + the host's own
+   * turn-difficulty dial all feed into it — see turnLimitFor() and
+   * applyTurnDifficulty() above), so deriving the penalty from it means a
+   * short/easy word that gets squandered costs little, and a long/hard one
+   * costs more, without maintaining a second parallel formula. The divisor
+   * is picked so a middling turnLimit (~12, a typical short/medium word)
+   * lands on 2 — the same number this was a flat constant at before. */
+  const TURN_LIMIT_PENALTY_MIN = 1;
+  const TURN_LIMIT_PENALTY_MAX = 5;
+  const TURN_LIMIT_PENALTY_DIVISOR = 6;
+  function penaltyFor(turnLimit) {
+    return Math.min(TURN_LIMIT_PENALTY_MAX, Math.max(TURN_LIMIT_PENALTY_MIN, Math.round(turnLimit / TURN_LIMIT_PENALTY_DIVISOR)));
+  }
 
   /* A second, host-set dial on top of turnLimitFor(): players found the
    * computed budget too generous, so the host can tighten it — "easy" is
@@ -138,21 +175,23 @@ var CRACK_ENGINE = (() => {
     return normalizeGuess(guess) === normalizeGuess(word);
   }
 
-  /* Splits the 26 letters between `count` seats for one round of `word`.
-   * Two-phase round-robin over a single shuffled seat order:
-   *   1. the word's own unique letters, shuffled, dealt first;
-   *   2. every other letter of the alphabet, shuffled, dealt next, continuing
-   *      the SAME rotation (not restarted) so both passes stay in step.
-   * That keeps both "how many letters total" and "how many are actually in
-   * the word" within 1 of each other across every seat — nobody ends up
+  /* Splits the 21 CONSONANTS between `count` seats for one round of `word` —
+   * vowels are never in this pool at all (see VOWELS above), so they never
+   * get an owner and stay open to everyone. Two-phase round-robin over a
+   * single shuffled seat order, same as before:
+   *   1. the word's own unique consonants, shuffled, dealt first;
+   *   2. every other consonant, shuffled, dealt next, continuing the SAME
+   *      rotation (not restarted) so both passes stay in step.
+   * That keeps both "how many consonants total" and "how many are actually
+   * in the word" within 1 of each other across every seat — nobody ends up
    * starving for useful letters just because they went early or late in the
-   * deal. Returns { owner: {A:0, B:2, …} (0-based seat per letter),
-   * correctLetters, fillerLetters }. */
+   * deal. Returns { owner: {A:0, B:2, …} (0-based seat per consonant, no
+   * vowel keys at all), correctLetters, fillerLetters }. */
   function distributeLetters(word, count, rng) {
     const n = Math.max(1, Math.floor(count) || 1);
     const inWord = new Set(String(word).toUpperCase().match(/[A-Za-z]/g) || []);
-    const correctLetters = shuffle(ALPHABET.filter(l => inWord.has(l)), rng);
-    const fillerLetters = shuffle(ALPHABET.filter(l => !inWord.has(l)), rng);
+    const correctLetters = shuffle(CONSONANTS.filter(l => inWord.has(l)), rng);
+    const fillerLetters = shuffle(CONSONANTS.filter(l => !inWord.has(l)), rng);
     const order = shuffle(Array.from({ length: n }, (_, i) => i), rng);
     const owner = {};
     let seat = 0;
@@ -161,18 +200,22 @@ var CRACK_ENGINE = (() => {
     return { owner, correctLetters, fillerLetters };
   }
 
-  /* The letters owned by one seat — used to build that seat's own button grid.
-   * Deliberately not split into "correct" / "filler" here: a seat finds that
-   * out only by pressing, exactly like everyone else watching the tiles. */
+  /* The consonants owned by one seat — used to build that seat's own button
+   * grid. Vowels never appear here: owner[vowel] is always undefined, so it
+   * can never equal a real seat number. Deliberately not split into
+   * "correct" / "filler" — a seat finds that out only by pressing, exactly
+   * like everyone else watching the tiles. */
   function lettersForSeat(owner, seat) {
-    return ALPHABET.filter(l => owner[l] === seat);
+    return CONSONANTS.filter(l => owner[l] === seat);
   }
 
   return {
-    ALPHABET, shuffle, letterCount, tileLayout, TIERS, tierOf, LETTER_CREDIT,
+    ALPHABET, VOWELS, CONSONANTS, shuffle, letterCount, tileLayout, TIERS, tierOf, LETTER_CREDIT,
     revealedPositions, remainingBlanks, SOLVER_BONUS, normalizeGuess, isCorrectGuess,
     distributeLetters, lettersForSeat,
-    uniqueLetterCount, TURN_MULT, TURN_MIN, TURN_MAX, turnLimitFor, TURN_LIMIT_PENALTY,
+    uniqueLetterCount, uniqueConsonantCount, consonantPositionCount,
+    TURN_MULT, TURN_MIN, TURN_MAX, turnLimitFor,
+    TURN_LIMIT_PENALTY_MIN, TURN_LIMIT_PENALTY_MAX, TURN_LIMIT_PENALTY_DIVISOR, penaltyFor,
     TURN_DIFF_MULT, applyTurnDifficulty,
   };
 })();

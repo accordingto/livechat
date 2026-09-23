@@ -125,6 +125,17 @@
     }
     .cw-guess-row button.cw-guess-cancel { background: var(--btn-face); border-color: var(--border-3); color: var(--text-dim); }
 
+    /* the shared vowel row — dashed border and a green tint mark it as "open
+       to anyone", distinct from the per-seat grid below it which is gated by
+       turn/ownership; is-correct/is-wrong (shared with .cw-letter-btn) still
+       win once a vowel is actually pressed, since those are more specific */
+    .cw-vowel-row {
+      width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      background: rgba(74,222,128,.08); border: 1.5px dashed rgba(74,222,128,.4); border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .cw-vowel-label { font-size: .82rem; font-weight: 800; color: #4ade80; }
+    .cw-vowel-btn { border-color: rgba(74,222,128,.55); }
     .cw-letters-grid { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
     .cw-seat-letters { display: flex; flex-direction: column; gap: 6px; }
     .cw-seat-name { font-size: .82rem; font-weight: 800; color: var(--text-muted); }
@@ -185,6 +196,7 @@
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       choosingHostNote: { zh: '⏳ 等 {name} 選擇題目長度…（手機不方便時，主持人也可以直接點下面的按鈕代選）', en: '⏳ Waiting for {name} to choose a length… (or tap a button below yourself if their phone isn\'t handy)' },
       excludedLabel: { zh: '❌ 已試過、不在這個字裡：', en: '❌ Tried, not in the word:' },
+      vowelsLabel: { zh: '🅰️ 母音（任何人隨時都能按）', en: '🅰️ Vowels — anyone can press, any time' },
       guessingHostNote: { zh: '🙋 {name} 正在猜 — 手機不方便時，主持人可以幫忙打字送出：', en: '🙋 {name} is guessing — type it in yourself below if their phone isn\'t handy:' },
       guessPlaceholder: { zh: '輸入猜測的完整單字…', en: 'Type the full guessed word…' },
       hostJudgeBtn: { zh: '送出', en: 'Submit' },
@@ -465,17 +477,25 @@
       sync();
     }
 
-    /* Only one seat may press at a time — the one currentTurnSeat names. This
-     * is a separate lock from the buzz-to-guess one below: pressing a letter
-     * is the mechanical, turn-by-turn action; guessing the whole word stays
-     * open to whoever the room has talked into typing it in, any time. */
+    /* Consonants: only one seat may press at a time — the one currentTurnSeat
+     * names — and it spends one of the room's shared turns. Vowels (see
+     * CRACK_ENGINE.VOWELS) are the exception: nobody owns them, so any seat
+     * can press one at any time, and doing so costs nothing from the turn
+     * budget and doesn't advance whose turn it is — they sit entirely
+     * outside the turn system rather than being "everyone's turn at once".
+     * Either way this is a separate lock from the buzz-to-guess one below:
+     * pressing a letter is a mechanical reveal, guessing the whole word
+     * stays open to whoever the room has talked into typing it in, any time. */
     function pressLetter(seat, rid, letter) {
       if (state !== 'playing' || rid !== roundId) return;
-      if (seat !== currentTurnSeat) return;
       letter = String(letter || '').toUpperCase();
       if (!/^[A-Z]$/.test(letter)) return;
-      if (owner[letter] !== seat) return;
       if (revealedLetters.includes(letter) || excludedLetters.includes(letter)) return;
+      const isVowel = CRACK_ENGINE.VOWELS.includes(letter);
+      if (!isVowel) {
+        if (seat !== currentTurnSeat) return;
+        if (owner[letter] !== seat) return;
+      }
       if (word.toUpperCase().includes(letter)) {
         revealedLetters.push(letter);
         scores[seat] = (scores[seat] || 0) + CRACK_ENGINE.LETTER_CREDIT;
@@ -483,6 +503,7 @@
       } else {
         excludedLetters.push(letter);
       }
+      if (isVowel) { sync(); return; }
       turnsUsed++;
       if (turnsUsed >= turnLimit) { finishRoundByLimit(); return; }
       advanceTurn();
@@ -495,7 +516,7 @@
      * revealed in the result exactly like a normal solve, since by this
      * point continuing to keep it secret serves nobody. */
     function finishRoundByLimit() {
-      const penalty = CRACK_ENGINE.TURN_LIMIT_PENALTY;
+      const penalty = CRACK_ENGINE.penaltyFor(turnLimit);
       for (let s = 0; s < ROOM.count; s++) scores[s] = (scores[s] || 0) - penalty;
       lastResult = {
         limitReached: true, word, tier, penalty,
@@ -542,6 +563,14 @@
       submitGuess(guessing.seat, guessing.id, input ? input.value : '');
     }
     function hostPressLetter(seat, letter) { pressLetter(seat, roundId, letter); }
+    /* Vowels have no owning seat (see pressLetter), so there's no single
+     * "this seat's phone is down" case to fall back for — any of the other
+     * players can already press one from their own card. This button is
+     * just for the rare case nobody's phone is handy at all; crediting it
+     * to whoever currently holds the turn (or seat 0 once turns run out) is
+     * an arbitrary but harmless choice, since a vowel press never touches
+     * the turn or its budget either way. */
+    function hostPressVowel(letter) { pressLetter(currentTurnSeat >= 0 ? currentTurnSeat : 0, roundId, letter); }
 
     /* ── What each card gets — the secret `word` itself never leaves this page;
        only the tile pattern (blanks + whatever's already been revealed) does,
@@ -567,6 +596,13 @@
           : { isLetter: false, ch: t.ch });
         base.excluded = excludedLetters.slice().sort();
         base.myLetters = CRACK_ENGINE.lettersForSeat(owner, seat).map(l => ({
+          letter: l,
+          pressed: revealedLetters.includes(l) || excludedLetters.includes(l),
+          correct: revealedLetters.includes(l),
+        }));
+        // shared, ownerless letters — identical on every seat's payload,
+        // unlike myLetters above which only lists this seat's own consonants
+        base.vowels = CRACK_ENGINE.VOWELS.map(l => ({
           letter: l,
           pressed: revealedLetters.includes(l) || excludedLetters.includes(l),
           correct: revealedLetters.includes(l),
@@ -681,6 +717,19 @@
         : `<span class="cw-tile is-static">${t.ch === ' ' ? '' : esc(t.ch)}</span>`
       ).join('');
       const excludedRow = excludedLetters.length ? `<div class="cw-excluded">${tt('excludedLabel')} ${excludedLetters.slice().sort().join(' · ')}</div>` : '';
+      // shared, ownerless letters — anyone's card can press these any time,
+      // so this row isn't scoped to a seat the way the grid below is
+      const vowelRow = `
+        <div class="cw-vowel-row">
+          <span class="cw-vowel-label">${tt('vowelsLabel')}</span>
+          <div class="cw-letter-row">
+            ${CRACK_ENGINE.VOWELS.map(l => {
+              const pressed = revealedLetters.includes(l) || excludedLetters.includes(l);
+              const correct = revealedLetters.includes(l);
+              return `<button class="cw-letter-btn cw-vowel-btn${pressed ? (correct ? ' is-correct' : ' is-wrong') : ''}"${pressed ? ' disabled' : ''} onclick="hostPressVowel('${l}')">${l}</button>`;
+            }).join('')}
+          </div>
+        </div>`;
       const guessBox = guessing ? `
         <div class="cw-guess-box">
           <p>${tt('guessingHostNote', { name: esc(ROOM.name(guessing.seat)) })}</p>
@@ -723,6 +772,7 @@
         <div class="cw-tiles">${tileRow}</div>
         ${excludedRow}
         ${guessBox}
+        ${vowelRow}
         <div class="cw-letters-grid">${lettersGrid}</div>`;
     }
 
