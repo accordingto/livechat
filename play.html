@@ -1085,6 +1085,10 @@
       crackTurnCounter: { zh: '🔁 回合 {used}/{limit}', en: '🔁 Turn {used}/{limit}' },
       crackLimitChip: { zh: '⏰ 回合數用完', en: '⏰ Out of turns' },
       crackLimitResultLine: { zh: '答案是「{word}」— 全員 −{pts} 分', en: 'The word was "{word}" — everyone loses {pts}' },
+      crackAwayChip: { zh: '💤 你被標記為暫時離開', en: "💤 You're marked away" },
+      crackAwaySub: { zh: '主持人會跳過你，等你回來再把你加回輪替。', en: "The host is skipping you for now — you'll be back in the rotation once they switch you on again." },
+      crackAbortedChip: { zh: '🛑 回合已結束', en: '🛑 Round ended' },
+      crackAbortedResultLine: { zh: '主持人結束了這一輪 — 答案是「{word}」，這一輪不計分。', en: 'The host ended this round — the word was "{word}". No points awarded.' },
     });
     const pt = (key, vars) => {
       let s = I18N.t('play', key);
@@ -1677,6 +1681,17 @@
       const shell = inner => `<div class="secret-card theme-crack${data.state === 'playing' ? '' : ' is-idle-glow'}">${nameBanner(data)}${inner}${teamTotal}${board}</div>`;
       const tierEmoji = { short: '🟢', medium: '🟡', long: '🔴', phrase: '💬' };
 
+      // marked away by the host — overrides every other state, same as Say
+      // It Without Saying It's own away card. No role here is worth keeping
+      // this card showing (crack-the-word.html has already resolved whatever
+      // consonants this seat still owned the instant they went away, see
+      // toggleAway()), so there's nothing left for this card to do either
+      if (data.away) {
+        return shell(`
+          <span class="pick-chip" style="color:${chipInk('#64748b')};border-color:#64748b55;background:rgba(100,116,139,.12)">${pt('crackAwayChip')}</span>
+          <span class="pick-sub">${pt('crackAwaySub')}</span>`);
+      }
+
       if (data.state === 'choosing') {
         if (data.isChooser) {
           return shell(`
@@ -1765,7 +1780,11 @@
       // idle or done: between rounds, every card carries the deal button —
       // a fresh room with no round yet looks the same as one that just finished
       const isDone = data.state === 'done' && data.result;
-      const resultBlock = !isDone ? '' : data.result.limitReached ? `
+      const resultBlock = !isDone ? '' : data.result.aborted ? `
+        <div class="crack-result">
+          <span class="pick-chip" style="color:#fbbf24;border-color:#fbbf2455;background:rgba(251,191,36,.1)">${pt('crackAbortedChip')}</span>
+          <span class="pick-text">${pt('crackAbortedResultLine', { word: esc(data.result.word || '') })}</span>
+        </div>` : data.result.limitReached ? `
         <div class="crack-result">
           <span class="pick-chip" style="color:#fbbf24;border-color:#fbbf2455;background:rgba(251,191,36,.1)">${pt('crackLimitChip')}</span>
           <span class="pick-text">${pt('crackLimitResultLine', { word: esc(data.result.word || ''), pts: data.result.penalty || 0 })}</span>

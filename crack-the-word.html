@@ -211,6 +211,94 @@
     .cw-letter-btn.is-wrong { background: #3a1d1d; border-color: #5c2b2b; color: #7a4b4b; }
     .cw-letter-btn:disabled { cursor: default; }
     .cw-letter-btn:disabled:not(.is-correct):not(.is-wrong) { opacity: .4; }
+    /* dimmed rather than hidden — the seat is still in the room, just not
+       being dealt any letters this round (see toggleAway()/activeSeatList()
+       in the script); hiding it entirely would make the grid jump around
+       every time someone steps away or comes back */
+    .cw-seat-letters.is-away { opacity: .45; }
+
+    /* ── Away — ported from Say It Without Saying It's own away mechanism
+       (see that file), pared down to just the toggle itself: no substitute
+       name / QR hand-off here, this game has no per-round "role" for a
+       stand-in to inherit, just a shared pool of letters. Same visual
+       language regardless: a full bordered toggle (not a bare checkbox) so
+       "this is a button" and "this is currently on" both read at a glance on
+       a shared screen, and the whole card (not just the checkbox) tints grey
+       once on. ── */
+    .cw-away-label { display: block; width: 100%; text-align: center; font-size: .82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; }
+    .away-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .away-card {
+      background: var(--btn-face, #22224a); border: 2px solid var(--border-3);
+      border-radius: 12px; padding: 10px; min-width: 180px;
+      transition: background .2s, border-color .2s;
+    }
+    .away-card.is-away { background: rgba(148,163,184,.14); border-color: #94a3b8; }
+    .away-btn {
+      display: flex; align-items: center; width: 100%;
+      background: var(--bg); border: 2px solid var(--border-3); color: var(--text-dim);
+      border-radius: 10px; padding: 9px 10px;
+      font-size: 1.05rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .away-btn:active { transform: scale(.97); }
+    .away-btn .ab-box {
+      display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+      width: 24px; height: 24px; margin-right: 10px;
+      border: 2px solid var(--border-3); border-radius: 6px;
+      font-size: 1.05rem; font-weight: 900; line-height: 1;
+      transition: background .2s, border-color .2s;
+    }
+    .away-btn .ab-name { overflow-wrap: anywhere; }
+    .away-btn.on { background: #94a3b8; border-color: #94a3b8; color: var(--btn-ink); }
+    .away-btn.on .ab-box { border-color: var(--btn-ink); background: var(--btn-ink); color: #fff; }
+    .away-btn.on .ab-name { text-decoration: line-through; text-decoration-thickness: 2px; }
+    .away-btn.is-locked { cursor: not-allowed; opacity: .55; }
+    .away-btn.is-locked:active { transform: none; }
+
+    /* ── Host controls: force-end this round, reset all scores — ported from
+       Say It Without Saying It's own "🛑 結束回合" confirm panel and
+       "↺ 重設分數" pill (see that file for the full reasoning). ── */
+    .cw-end-round-row { width: 100%; text-align: center; }
+    .cw-end-round-btn {
+      background: var(--btn-face); border: 2px solid var(--border-3); color: var(--bad-text-soft);
+      border-radius: 12px; padding: 10px 18px; font-size: .92rem; font-weight: 800; font-family: inherit; cursor: pointer;
+    }
+    .cw-end-round-btn:hover { border-color: var(--warn); }
+    .confirm-row {
+      width: 100%;
+      display: flex; flex-direction: column; gap: 12px;
+      background: rgba(245,158,11,.08);
+      border: 2px solid rgba(245,158,11,.5); border-radius: 18px;
+      /* deep top padding on purpose — same reasoning as Say It's own version:
+         it puts both answers clear of the rectangle the end-round button
+         occupied a moment ago, so an accidental second tap in the same spot
+         lands on the panel itself and does nothing */
+      padding: 36px 16px 18px;
+      animation: fadeUp .25s ease both;
+    }
+    .confirm-hdr { text-align: center; font-size: 1.05rem; font-weight: 900; color: var(--warn-text-soft); line-height: 1.5; }
+    .confirm-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+    .confirm-btn {
+      flex: 1; min-width: 220px;
+      border: 2px solid; border-radius: 14px; padding: 18px 16px;
+      font-size: 1.05rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      transition: filter .2s, transform .1s;
+    }
+    .confirm-btn:hover { filter: brightness(1.08); }
+    .confirm-btn:active { transform: scale(.98); }
+    .confirm-btn.no  { background: #22c55e; border-color: #22c55e; color: var(--btn-ink); box-shadow: 0 6px 22px rgba(34,197,94,.3); }
+    .confirm-btn.yes { background: #f59e0b; border-color: #f59e0b; color: #2b1a02; box-shadow: 0 6px 22px rgba(245,158,11,.35); }
+    @media (max-width: 560px) { .confirm-btn { min-width: 100%; } }
+    /* deliberately the quietest thing on the screen, same as Say It's own —
+       wiping every score is something a host does between sessions, not mid-game */
+    .score-reset { width: 100%; max-width: 1100px; text-align: center; margin: 14px 0 4px; }
+    .score-reset button {
+      background: var(--surface-2); border: 2px solid var(--border-3); color: var(--text-dim); font-family: inherit;
+      font-size: .78rem; font-weight: 700; cursor: pointer; padding: 8px 16px; border-radius: 999px;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .score-reset button:hover { border-color: var(--accent); color: var(--accent-text); }
+    .score-card.is-away { opacity: .55; }
 
     /* the read-only roster below is just for reconnect links; nothing here is
        secret since the tile row already shows the same revealed state */
@@ -231,6 +319,8 @@
 
   <div class="cw-settings-row" id="settings-row"></div>
   <div class="cw-panel" id="round-panel"></div>
+
+  <div class="score-reset"><button onclick="resetScores()" data-i18n="crack.resetScoresBtn">↺ Reset scores</button></div>
 
   <div id="room-mount"></div>
 
@@ -293,6 +383,14 @@
       scoreMode_teamContrib: { zh: '📊 團隊總分＋個人貢獻度', en: '📊 Team total + individual contribution' },
       scoreMode_individual: { zh: '🏅 個別競賽', en: '🏅 Individual competition' },
       teamTotalLabel: { zh: '🏆 團隊總分', en: '🏆 Team score' },
+      awayLabel: { zh: '💤 暫時離開', en: '💤 Away' },
+      awayLockedHint: { zh: '至少要留 2 位在場玩家', en: 'Keep at least 2 players in the game' },
+      resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
+      endRoundBtn: { zh: '🛑 強制結束這一回合', en: '🛑 Force-end this round' },
+      confirmEndHdr: { zh: '🛑 確定要結束這一回合嗎？這一輪不會計分，答案會被公開。', en: "🛑 End this round now? It won't be scored, and the word will be revealed." },
+      confirmNoBtn: { zh: '👌 取消 — 繼續這一輪', en: '👌 No — keep playing' },
+      confirmYesBtn: { zh: '🛑 結束這一回合', en: '🛑 Yes — end it' },
+      abortedResultLine: { zh: '🛑 主持人已結束這一回合 — 答案是「{word}」，這一輪不計分。', en: '🛑 The host ended this round — the word was "{word}". No points awarded.' },
     });
     const tt = (key, vars) => {
       let s = I18N.t('crack', key);
@@ -431,8 +529,13 @@
     let currentTurnSeat = -1;      // whose turn it is to press a letter; -1 = nobody has letters left
     let turnLimit = 0;             // this round's press budget (CRACK_ENGINE.turnLimitFor)
     let turnsUsed = 0;             // presses spent so far this round
+    let away = [];                 // per-seat "temporarily away" flags — ported from Say It
+                                    // Without Saying It, see toggleAway() for the adaptation
+    let confirmEnd = false;        // host is mid-confirm on "🛑 force-end this round"
+    let confirmSig = '';           // roundSig() snapshot the confirm panel was opened against
 
     function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function roundSig() { return roundId + '|' + state; }
 
     /* Fair "who starts pressing letters this round" rotation — a shuffled bag
      * exactly like Say It Without Saying It's giverBag: everyone starts once
@@ -441,22 +544,58 @@
      * (see the "Round state" comment above); it is who starts, not the whole
      * in-round order, that this fairness applies to — within a round, turns
      * simply proceed seat 0..count-1 from that starting point (advanceTurn()). */
+    /* Someone marked away isn't just muted — they must never be dealt a turn
+     * at all, since the room can't hand off to a seat nobody's watching. The
+     * bag itself is only ever built from the currently-active seat list, but
+     * it can still hold stale entries from before a seat most recently went
+     * away (it only refills once empty — see the loop below) or from before
+     * ROOM.count last changed, so every pop is re-checked against both
+     * `away` and the current count before it's trusted; a guard counter
+     * keeps this from ever looping forever if something got wedged. */
+    function activeSeatList() {
+      return Array.from({ length: ROOM.count }, (_, i) => i).filter(i => !away[i]);
+    }
     function drawStarter() {
-      const n = ROOM.count;
-      if (!turnBag.length) {
-        turnBag = CRACK_ENGINE.shuffle(Array.from({ length: n }, (_, i) => i));
-        if (n > 1 && turnBag[turnBag.length - 1] === lastStarter) {
-          const swapAt = turnBag.length - 2;
-          const tmp = turnBag[swapAt]; turnBag[swapAt] = turnBag[turnBag.length - 1]; turnBag[turnBag.length - 1] = tmp;
+      const seats = activeSeatList();
+      if (!seats.length) return 0; // shouldn't happen — reconcileAway() always keeps 2+ active
+      for (let guard = 0; guard < 50; guard++) {
+        if (!turnBag.length) {
+          turnBag = CRACK_ENGINE.shuffle(seats.slice());
+          if (seats.length > 1 && turnBag[turnBag.length - 1] === lastStarter) {
+            const swapAt = turnBag.length - 2;
+            const tmp = turnBag[swapAt]; turnBag[swapAt] = turnBag[turnBag.length - 1]; turnBag[turnBag.length - 1] = tmp;
+          }
         }
+        const starter = turnBag.pop();
+        if (starter == null || starter >= ROOM.count || away[starter]) continue; // stale — from before a count/away change
+        lastStarter = starter;
+        return starter;
       }
-      const starter = turnBag.pop();
-      lastStarter = starter;
-      return starter;
+      return seats[0];
     }
 
     function hasUnpressedLetters(seat) {
       return CRACK_ENGINE.lettersForSeat(owner, seat).some(l => !revealedLetters.includes(l) && !excludedLetters.includes(l));
+    }
+    function activeCount() {
+      let n = 0;
+      for (let i = 0; i < ROOM.count; i++) if (!away[i]) n++;
+      return n;
+    }
+    /* Resizes `away` to the current room count and forces it back off entirely
+     * if it would otherwise leave fewer than 2 people in the game — same
+     * floor as Say It Without Saying It's own away mechanism (a solo player
+     * can't run a round by themselves). Also the one place that persists it,
+     * mirroring Say It's ROOM.setExtra('away', away) so it survives a reload
+     * and follows the room across games the same way judgeEnabled does. */
+    function reconcileAway(n) {
+      if (!Array.isArray(away)) away = [];
+      away = away.slice(0, n).map(Boolean);
+      while (away.length < n) away.push(false);
+      let activeN = 0;
+      for (let i = 0; i < n; i++) if (!away[i]) activeN++;
+      if (activeN < 2) away = away.map(() => false);
+      ROOM.setExtra('away', away);
     }
 
     /* Round-robin from whoever currently holds the turn, preferring a seat
@@ -477,9 +616,16 @@
       const n = ROOM.count;
       for (let step = 1; step <= n; step++) {
         const cand = (currentTurnSeat + step + n) % n;
-        if (hasUnpressedLetters(cand)) { currentTurnSeat = cand; return; }
+        if (!away[cand] && hasUnpressedLetters(cand)) { currentTurnSeat = cand; return; }
       }
-      currentTurnSeat = (currentTurnSeat + 1 + n) % n;
+      // nobody active still owns a consonant — round-robin the vowel-only
+      // phase among active seats only; an away seat is never a valid holder,
+      // whether it still had letters or not (see toggleAway())
+      for (let step = 1; step <= n; step++) {
+        const cand = (currentTurnSeat + step + n) % n;
+        if (!away[cand]) { currentTurnSeat = cand; return; }
+      }
+      currentTurnSeat = (currentTurnSeat + 1 + n) % n; // everyone away — shouldn't happen, see reconcileAway()
     }
 
     function syncScores(n) {
@@ -504,6 +650,7 @@
     /* anyone's card (or the host, with seat -1) asking to open the next round */
     function requestDeal(seat) {
       if (state !== 'idle' && state !== 'done') return;
+      if (seat >= 0 && away[seat]) return; // an away seat can't kick off the next round or become its chooser
       state = 'choosing';
       chooserSeat = seat;
       chooseId = newId();
@@ -519,7 +666,14 @@
       const card = deckFor(t)[idx];
       word = card.word;
       tier = t;
-      owner = CRACK_ENGINE.distributeLetters(word, ROOM.count).owner;
+      // consonants are only ever dealt to seats currently in the game — an
+      // away seat gets none this round (see activeSeatList()); distributeLetters()
+      // itself still just hands out virtual 0..n-1 indices, so those are
+      // remapped onto the real active seat numbers here
+      const activeSeats = activeSeatList();
+      const rawOwner = CRACK_ENGINE.distributeLetters(word, activeSeats.length).owner;
+      owner = {};
+      Object.keys(rawOwner).forEach(l => { owner[l] = activeSeats[rawOwner[l]]; });
       revealedLetters = []; excludedLetters = []; letterCreditsThisRound = [];
       rejected = new Array(ROOM.count).fill(false);
       guessing = null;
@@ -540,7 +694,7 @@
     }
 
     function requestBuzz(seat) {
-      if (state !== 'playing' || guessing || rejected[seat]) return;
+      if (state !== 'playing' || guessing || rejected[seat] || away[seat]) return;
       guessing = { seat, id: newId() };
       sync();
     }
@@ -602,6 +756,7 @@
      * time, regardless of whose turn it is. */
     function pressLetter(seat, rid, letter) {
       if (state !== 'playing' || rid !== roundId) return;
+      if (away[seat]) return; // belt-and-braces — an away seat should never even hold the turn
       letter = String(letter || '').toUpperCase();
       if (!/^[A-Z]$/.test(letter)) return;
       if (revealedLetters.includes(letter) || excludedLetters.includes(letter)) return;
@@ -643,6 +798,91 @@
       guessing = null;
       currentTurnSeat = -1;
       dealId = newId();
+      sync();
+    }
+
+    /* ── Away — ported from Say It Without Saying It, but adapted rather than
+     * copied outright: Say It's away only ever affects the NEXT role draw,
+     * because its clue-giver/referee/guesser roles are redundant — the round
+     * survives fine without any one specific person's live input, so an
+     * already-assigned giver just finishes their round unaffected. Crack the
+     * Word can't defer the same way: distributeLetters() hands each active
+     * seat an EXCLUSIVE slice of the 21 consonants (see that function), and
+     * nobody else may ever press someone else's owned letter — so muting a
+     * seat mid-round without releasing whatever they were still holding would
+     * strand those letters forever, recreating the exact stall bug already
+     * fixed once above (see advanceTurn()'s comment) for a different reason.
+     * So going away here takes effect immediately: their remaining unpressed
+     * consonants are auto-resolved on the spot (revealed or excluded, same
+     * as a real press, but with no score credit — the room didn't press
+     * this), any guess they had in flight is dropped, and the turn is handed
+     * off if it was theirs. Coming back only rejoins the fairness rotation
+     * and the next round's dealt letters — there's nothing to hand back
+     * mid-round since there's nothing left of theirs still unresolved. */
+    function toggleAway(i) {
+      const turningOn = !away[i];
+      if (turningOn && activeCount() <= 2) return; // keep at least 2 people in the game
+      away[i] = turningOn;
+      ROOM.setExtra('away', away);
+      if (turningOn && state === 'choosing' && chooserSeat === i) {
+        // nobody else can pick a length on their behalf (chooseId only means
+        // anything to that one seat, see requestTier()) — cancel the pending
+        // deal rather than leave the room stuck waiting on someone who isn't here
+        openIdle();
+        return;
+      }
+      if (turningOn && state === 'playing') {
+        const stuck = CRACK_ENGINE.lettersForSeat(owner, i).filter(l => !revealedLetters.includes(l) && !excludedLetters.includes(l));
+        stuck.forEach(l => {
+          if (word.toUpperCase().includes(l)) revealedLetters.push(l);
+          else excludedLetters.push(l);
+        });
+        turnsUsed += stuck.length;
+        if (guessing && guessing.seat === i) guessing = null;
+        rejected[i] = false;
+        if (turnsUsed >= turnLimit || CRACK_ENGINE.allLettersSpent(revealedLetters, excludedLetters)) {
+          finishRoundByLimit();
+          return;
+        }
+        if (currentTurnSeat === i) advanceTurn();
+      }
+      sync();
+    }
+
+    /* ── Host controls: force-end this round, reset all scores. Mirrors Say
+     * It Without Saying It's own "🛑 結束回合" confirm panel (a two-tap
+     * confirm, since the button sits where the host's thumb naturally lands
+     * and a stray tap should cost nothing) and its low-key "↺ 重設分數" pill. ── */
+    function askEndRound() {
+      if (state !== 'playing') return;
+      confirmEnd = true;
+      confirmSig = roundSig();
+      renderAll();
+    }
+    function cancelEndRound() {
+      confirmEnd = false;
+      renderAll();
+    }
+    function doEndRound() {
+      const sig = confirmSig;
+      confirmEnd = false;
+      if (state !== 'playing' || roundSig() !== sig) { renderAll(); return; } // the round moved on while the confirm sat open
+      forceEndRound();
+    }
+    /* No score change either way — the round simply moves to 'done' with the
+     * word revealed, same shape as a normal ending, so the existing "deal the
+     * next round" flow just picks back up from there. */
+    function forceEndRound() {
+      if (state !== 'playing') return;
+      lastResult = { aborted: true, word, tier };
+      state = 'done';
+      guessing = null;
+      currentTurnSeat = -1;
+      dealId = newId();
+      sync();
+    }
+    function resetScores() {
+      scores = scores.map(() => 0);
       sync();
     }
 
@@ -693,7 +933,7 @@
        only the tile pattern (blanks + whatever's already been revealed) does,
        so there's nothing to leak even by reading the payload in devtools. ── */
     function payloadFor(seat) {
-      const base = { game: 'crack', state, tier };
+      const base = { game: 'crack', state, tier, away: !!away[seat] };
       if (state === 'idle' || state === 'done') {
         base.canDeal = true;
         base.dealId = dealId;
@@ -750,9 +990,19 @@
       defaultCount: 5,
       hideSetup: true, // player count and links are set up once on index.html now
       linksNote: tt('linksNote'),
+      actionsHTML: `<span class="cw-away-label" data-i18n="crack.awayLabel">${tt('awayLabel')}</span><div class="away-btns" id="away-btns"></div>`,
       onPlayerData: handleAnswer,
-      onCountChange: n => { syncScores(n); openIdle(); },
+      onCountChange: n => { syncScores(n); reconcileAway(n); openIdle(); },
     });
+
+    // loaded once ROOM.init() has resolved ROOM.count, same as Kangaroo Court's
+    // own judgeEnabled — persisted per room, survives a reload or a switch to
+    // another game and back
+    away = (() => {
+      const saved = ROOM.getExtra('away');
+      return Array.isArray(saved) ? saved.map(Boolean) : [];
+    })();
+    reconcileAway(ROOM.count);
 
     function renderFbWarning() {
       document.getElementById('fb-warning').innerHTML = tt('fbWarning');
@@ -767,6 +1017,28 @@
       renderSettings();
       renderScoreboard();
       renderRoundPanel();
+      renderAwayBtns();
+    }
+
+    /* No text input lives in this row (unlike Say It's own away card, which
+     * also carries a substitute-name field) — so unlike that page, a full
+     * innerHTML rebuild on every renderAll() is safe here, no focus to lose. */
+    function renderAwayBtns() {
+      const wrap = document.getElementById('away-btns');
+      if (!wrap) return;
+      wrap.innerHTML = Array.from({ length: ROOM.count }, (_, i) => {
+        const on = !!away[i];
+        const locked = !on && activeCount() <= 2;
+        return `
+          <div class="away-card${on ? ' is-away' : ''}">
+            <button type="button" class="away-btn${on ? ' on' : ''}${locked ? ' is-locked' : ''}"
+              onclick="toggleAway(${i})" aria-pressed="${on ? 'true' : 'false'}"
+              ${locked ? `title="${tt('awayLockedHint')}"` : ''}>
+              <span class="ab-box">${on ? '✓' : ''}</span>
+              <span class="ab-name">${esc(ROOM.name(i))}</span>
+            </button>
+          </div>`;
+      }).join('');
     }
 
     /* The always-visible row (toggle pill + the live team-total read-out)
@@ -884,18 +1156,20 @@
       const el = document.getElementById('scoreboard');
       const showPts = scoreDisplayMode !== 'team';
       el.innerHTML = Array.from({ length: ROOM.count }, (_, s) => {
+        const isAway = !!away[s];
         const isChooser = state === 'choosing' && s === chooserSeat;
         const isGuessing = state === 'playing' && guessing && guessing.seat === s;
         const isRejected = state === 'playing' && rejected[s];
         const isTurn = state === 'playing' && !guessing && s === currentTurnSeat;
-        const canBuzzHost = state === 'playing' && !guessing && !rejected[s];
+        const canBuzzHost = state === 'playing' && !guessing && !rejected[s] && !isAway;
         let tag = '';
-        if (isChooser) tag = tt('choosingTag');
+        if (isAway) tag = '💤';
+        else if (isChooser) tag = tt('choosingTag');
         else if (isGuessing) tag = tt('guessingTag');
         else if (isTurn) tag = tt('turnTag');
         else if (isRejected) tag = tt('rejectedTag');
         return `
-          <div class="score-card${isGuessing ? ' is-active' : ''}${isTurn ? ' is-turn-card' : ''}">
+          <div class="score-card${isAway ? ' is-away' : ''}${isGuessing ? ' is-active' : ''}${isTurn ? ' is-turn-card' : ''}">
             <span class="sc-role cw-tag${isGuessing ? ' is-guessing' : ''}${isTurn ? ' is-turn' : ''}${isRejected ? ' is-rejected' : ''}">${tag}</span>
             <span class="sc-name">${esc(ROOM.name(s))}</span>
             ${showPts ? `<span class="sc-pts">${scores[s] || 0}</span>` : ''}
@@ -905,9 +1179,16 @@
     }
 
     function renderRoundPanel() {
+      // the confirm panel only ever makes sense against the exact round it
+      // was opened for — anything that moved the round on underneath it
+      // (a natural finish, a limit-out, a re-deal) invalidates it silently
+      if (confirmEnd && (state !== 'playing' || roundSig() !== confirmSig)) confirmEnd = false;
       const el = document.getElementById('round-panel');
       if (state === 'idle' || state === 'done') {
-        const doneBlock = state === 'done' && lastResult ? (lastResult.limitReached ? `
+        const doneBlock = state === 'done' && lastResult ? (lastResult.aborted ? `
+          <div class="cw-result">
+            <p class="cw-result-line is-limit">${tt('abortedResultLine', { word: esc(lastResult.word) })}</p>
+          </div>` : lastResult.limitReached ? `
           <div class="cw-result">
             <p class="cw-result-line is-limit">${tt('limitResultLine', { word: esc(lastResult.word), pts: lastResult.penalty })}</p>
             ${lastResult.letterCredits.length ? `<p class="cw-result-credits">${tt('creditsLine', { list: lastResult.letterCredits.map(c => `${esc(c.name)} (${esc(c.letter)})`).join('、') })}</p>` : ''}
@@ -967,20 +1248,30 @@
           </div>
         </div>` : '';
       const lettersGrid = Array.from({ length: ROOM.count }, (_, s) => {
+        const isAway = !!away[s];
         const mine = CRACK_ENGINE.lettersForSeat(owner, s);
         const isTurn = s === currentTurnSeat;
-        return `<div class="cw-seat-letters${isTurn ? ' is-turn' : ''}">
-          <span class="cw-seat-name">${esc(ROOM.name(s))}${isTurn ? ' 👆' : ''}</span>
+        return `<div class="cw-seat-letters${isTurn ? ' is-turn' : ''}${isAway ? ' is-away' : ''}">
+          <span class="cw-seat-name">${esc(ROOM.name(s))}${isTurn ? ' 👆' : ''}${isAway ? ' 💤' : ''}</span>
           <div class="cw-letter-row">
             ${mine.map(l => {
               const pressed = revealedLetters.includes(l) || excludedLetters.includes(l);
               const correct = revealedLetters.includes(l);
-              const clickable = isTurn && !pressed;
+              const clickable = isTurn && !pressed && !isAway;
               return `<button class="cw-letter-btn${pressed ? (correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="hostPressLetter(${s},'${l}')">${l}</button>`;
             }).join('')}
           </div>
         </div>`;
       }).join('');
+      const endRow = confirmEnd ? `
+        <div class="confirm-row">
+          <div class="confirm-hdr">${tt('confirmEndHdr')}</div>
+          <div class="confirm-btns">
+            <button class="confirm-btn no" onclick="cancelEndRound()">${tt('confirmNoBtn')}</button>
+            <button class="confirm-btn yes" onclick="doEndRound()">${tt('confirmYesBtn')}</button>
+          </div>
+        </div>` : `
+        <div class="cw-end-round-row"><button class="cw-end-round-btn" onclick="askEndRound()">${tt('endRoundBtn')}</button></div>`;
       // the turn budget and who is pressing next — the same info every card shows,
       // since none of it is secret (see the file-level comment on payloadFor)
       const turnFrac = turnLimit ? turnsUsed / turnLimit : 0;
@@ -1000,7 +1291,8 @@
         ${excludedRow}
         ${guessBox}
         ${vowelRow}
-        <div class="cw-letters-grid">${lettersGrid}</div>`;
+        <div class="cw-letters-grid">${lettersGrid}</div>
+        ${endRow}`;
     }
 
     I18N.onChange(renderAll);
