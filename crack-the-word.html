@@ -479,13 +479,16 @@
 
     /* Consonants: only one seat may press at a time — the one currentTurnSeat
      * names — and it spends one of the room's shared turns. Vowels (see
-     * CRACK_ENGINE.VOWELS) are the exception: nobody owns them, so any seat
-     * can press one at any time, and doing so costs nothing from the turn
-     * budget and doesn't advance whose turn it is — they sit entirely
-     * outside the turn system rather than being "everyone's turn at once".
-     * Either way this is a separate lock from the buzz-to-guess one below:
-     * pressing a letter is a mechanical reveal, guessing the whole word
-     * stays open to whoever the room has talked into typing it in, any time. */
+     * CRACK_ENGINE.VOWELS) are the exception to who may press: nobody owns
+     * them, so any seat can press one at any time, and doing so costs
+     * nothing from the turn budget (turnLimitFor is sized off consonants
+     * only, so a vowel press never risks tripping the limit) — but it still
+     * passes the turn along to the next seat with unpressed consonants,
+     * same as a consonant press does, so one seat can't camp on free vowels
+     * forever and stall the round. Either way this is a separate lock from
+     * the buzz-to-guess one below: pressing a letter is a mechanical
+     * reveal, guessing the whole word stays open to whoever the room has
+     * talked into typing it in, any time. */
     function pressLetter(seat, rid, letter) {
       if (state !== 'playing' || rid !== roundId) return;
       letter = String(letter || '').toUpperCase();
@@ -503,9 +506,10 @@
       } else {
         excludedLetters.push(letter);
       }
-      if (isVowel) { sync(); return; }
-      turnsUsed++;
-      if (turnsUsed >= turnLimit) { finishRoundByLimit(); return; }
+      if (!isVowel) {
+        turnsUsed++;
+        if (turnsUsed >= turnLimit) { finishRoundByLimit(); return; }
+      }
       advanceTurn();
       sync();
     }
@@ -568,8 +572,9 @@
      * players can already press one from their own card. This button is
      * just for the rare case nobody's phone is handy at all; crediting it
      * to whoever currently holds the turn (or seat 0 once turns run out) is
-     * an arbitrary but harmless choice, since a vowel press never touches
-     * the turn or its budget either way. */
+     * an arbitrary but harmless choice — the credit is the only thing that's
+     * arbitrary here; the turn itself advances the same way any vowel press
+     * does, regardless of who's credited. */
     function hostPressVowel(letter) { pressLetter(currentTurnSeat >= 0 ? currentTurnSeat : 0, roundId, letter); }
 
     /* ── What each card gets — the secret `word` itself never leaves this page;

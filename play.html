@@ -750,12 +750,6 @@
     /* not-my-turn dims to .4 so it reads as "can't touch this yet"; an already-pressed
        letter keeps its full-strength green/red — that outcome is settled, not withheld */
     .crack-letter-btn:disabled:not(.is-correct):not(.is-wrong) { opacity: .4; }
-    /* vowels sit in the same grid as your own consonants (merged to save
-       vertical space) but keep a green border — the one remaining cue that
-       these are open to anyone, any time, not gated by whose turn it is;
-       is-correct/is-wrong (shared with .crack-letter-btn) still win once a
-       vowel is actually pressed */
-    .crack-vowel-btn { border-color: rgba(74,222,128,.55); }
     /* the buzzer, same recipe as .taboo-buzz's — the biggest thing on the card
        once someone thinks they know the answer */
     .crack-buzz {
@@ -1634,18 +1628,16 @@
         ).join('');
         const excludedRow = data.excluded && data.excluded.length
           ? `<span class="crack-excluded">${pt('crackExcludedLabel')} ${data.excluded.join(' · ')}</span>` : '';
-        // one merged grid to save vertical space on the phone-sized card —
-        // consonants only press-able on data.myTurn, vowels have no owner
-        // (see crack-the-word.html's pressLetter) and are always press-able
-        // by anyone; the green border on vowel buttons is the only remaining
-        // cue for that difference now that they no longer sit in their own
-        // boxed section
+        // one merged grid, visually identical buttons — consonants only
+        // press-able on data.myTurn, vowels have no owner (see
+        // crack-the-word.html's pressLetter) and are always press-able by
+        // anyone, but nothing on the button itself marks that difference
         const consonantEntries = (data.myLetters || []).map(l => ({ l, isVowel: false }));
         const vowelEntries = (data.vowels || []).map(l => ({ l, isVowel: true }));
         const merged = consonantEntries.concat(vowelEntries).sort((a, b) => a.l.letter.localeCompare(b.l.letter));
         const letters = merged.map(({ l, isVowel }) => {
           const clickable = isVowel ? !l.pressed : (data.myTurn && !l.pressed);
-          return `<button class="crack-letter-btn${isVowel ? ' crack-vowel-btn' : ''}${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
+          return `<button class="crack-letter-btn${l.pressed ? (l.correct ? ' is-correct' : ' is-wrong') : ''}"${clickable ? '' : ' disabled'} onclick="crackPressLetter('${l.letter}')">${esc(l.letter)}</button>`;
         }).join('');
         const lettersBlock = merged.length ? `
           <div class="crack-letters">
