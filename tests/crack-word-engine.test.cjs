@@ -27,6 +27,35 @@ test('tileLayout tags letters vs punctuation and upper-cases letters', () => {
   assert.equal(t.filter(x => x.isLetter).length, 8);
 });
 
+test('groupTiles keeps each word\'s tiles together, splitting only at gaps', () => {
+  const g = E.groupTiles(E.tileLayout('Ice Cream'));
+  assert.equal(g.length, 3);
+  assert.equal(g[0].type, 'word');
+  assert.equal(g[0].tiles.map(t => t.ch).join(''), 'ICE');
+  assert.equal(g[1].type, 'gap');
+  assert.equal(g[1].tile.ch, ' ');
+  assert.equal(g[2].type, 'word');
+  assert.equal(g[2].tiles.map(t => t.ch).join(''), 'CREAM');
+});
+
+test('groupTiles handles a single word with no gaps', () => {
+  const g = E.groupTiles(E.tileLayout('Wall'));
+  assert.equal(g.length, 1);
+  assert.equal(g[0].type, 'word');
+  assert.equal(g[0].tiles.length, 4);
+});
+
+test('groupTiles works on a payload-shaped array (unrevealed letters have ch: null)', () => {
+  const payload = [
+    { isLetter: true, ch: null }, { isLetter: true, ch: 'C' }, { isLetter: false, ch: ' ' },
+    { isLetter: true, ch: null }, { isLetter: true, ch: null },
+  ];
+  const g = E.groupTiles(payload);
+  assert.equal(g.length, 3);
+  assert.equal(g[0].tiles.length, 2);
+  assert.equal(g[2].tiles.length, 2);
+});
+
 test('isCorrectGuess is case- and whitespace-insensitive', () => {
   assert.equal(E.isCorrectGuess('wall', 'Wall'), true);
   assert.equal(E.isCorrectGuess('  WALL  ', 'Wall'), true);

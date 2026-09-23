@@ -46,6 +46,31 @@ var CRACK_ENGINE = (() => {
     }));
   }
 
+  /* Groups a tileLayout() array — or the same-shaped {isLetter, ch} array a
+   * host sends down in a payload, once unrevealed letters have had their
+   * `ch` nulled out — into per-word runs, so a renderer can wrap each
+   * word's own tiles in a no-wrap flex group. Without this, the outer tile
+   * row's flex-wrap has no notion of a "word": it wraps between any two
+   * tiles, including two letters of the same word, splitting it across two
+   * lines in a way that reads as two different fragments rather than one
+   * word that just needed to move to the next line whole. Only `isLetter`
+   * drives the split, so this works identically on the host's own
+   * tileLayout(word) output and on the client's reduced payload copy. */
+  function groupTiles(tiles) {
+    const groups = [];
+    let word = null;
+    for (const t of tiles) {
+      if (t.isLetter) {
+        if (!word) { word = []; groups.push({ type: 'word', tiles: word }); }
+        word.push(t);
+      } else {
+        word = null;
+        groups.push({ type: 'gap', tile: t });
+      }
+    }
+    return groups;
+  }
+
   const TIERS = ['short', 'medium', 'long'];
   /* Boundaries chosen from the actual taboo deck's letter-count spread (700
    * words, 2–13 letters): short ≤5 covers ~340 words, medium 6–8 ~270,
@@ -213,7 +238,7 @@ var CRACK_ENGINE = (() => {
   }
 
   return {
-    ALPHABET, VOWELS, CONSONANTS, shuffle, letterCount, tileLayout, TIERS, tierOf, LETTER_CREDIT,
+    ALPHABET, VOWELS, CONSONANTS, shuffle, letterCount, tileLayout, groupTiles, TIERS, tierOf, LETTER_CREDIT,
     revealedPositions, remainingBlanks, SOLVER_BONUS, normalizeGuess, isCorrectGuess,
     distributeLetters, lettersForSeat,
     uniqueLetterCount, uniqueConsonantCount, consonantPositionCount,

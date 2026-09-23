@@ -155,7 +155,17 @@
       font-size: .85rem; font-weight: 900; letter-spacing: .5px; text-transform: uppercase;
       padding: 5px 16px; border-radius: 20px;
     }
-    .cw-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    /* max-width/overflow-x: a single word's own tiles can no longer ever
+     * split across two lines (see .cw-word below), so a word wide enough to
+     * not fit the row at all — a narrow shared-screen window, a long word —
+     * needs somewhere to go that isn't off the edge of the page: it scrolls
+     * horizontally inside this row instead of stretching the whole page. */
+    .cw-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 100%; overflow-x: auto; }
+    /* One word's tiles, grouped so the outer .cw-tiles flex-wrap can only
+     * break between whole words, never inside one — see groupTiles() in
+     * crack-word-engine.js. Same gap as .cw-tiles so the spacing between a
+     * word's own letters looks identical to before this was nested. */
+    .cw-word { display: inline-flex; flex-wrap: nowrap; gap: 8px; }
     .cw-tile {
       min-width: 34px; height: 46px; display: flex; align-items: center; justify-content: center;
       border-bottom: 3px solid var(--border-2); font-size: 1.6rem; font-weight: 900; color: #fff;
@@ -909,10 +919,13 @@
         return;
       }
       // playing
-      const tileRow = CRACK_ENGINE.tileLayout(word).map(t => t.isLetter
-        ? (revealedLetters.includes(t.ch) ? `<span class="cw-tile is-revealed">${t.ch}</span>` : `<span class="cw-tile"></span>`)
-        : `<span class="cw-tile is-static">${t.ch === ' ' ? '' : esc(t.ch)}</span>`
-      ).join('');
+      const tileRow = CRACK_ENGINE.groupTiles(CRACK_ENGINE.tileLayout(word)).map(seg => {
+        if (seg.type === 'gap') {
+          return `<span class="cw-tile is-static">${seg.tile.ch === ' ' ? '' : esc(seg.tile.ch)}</span>`;
+        }
+        const inner = seg.tiles.map(t => revealedLetters.includes(t.ch) ? `<span class="cw-tile is-revealed">${t.ch}</span>` : `<span class="cw-tile"></span>`).join('');
+        return `<span class="cw-word">${inner}</span>`;
+      }).join('');
       const excludedRow = excludedLetters.length ? `<div class="cw-excluded">${tt('excludedLabel')} ${excludedLetters.slice().sort().join(' · ')}</div>` : '';
       // shared, ownerless letters — not scoped to any one seat's card the
       // way the grid below is, but still only pressable by whoever

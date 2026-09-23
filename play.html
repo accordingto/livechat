@@ -703,7 +703,15 @@
     @keyframes pulseCrack { 0%, 100% { box-shadow: 0 0 60px rgba(59,130,246,.18); } 50% { box-shadow: 0 0 80px rgba(59,130,246,.32); } }
     .secret-card.theme-crack { border-color: #3b82f6; box-shadow: 0 0 60px rgba(59,130,246,.18); }
     .secret-card.theme-crack.is-idle-glow { animation: fadeUp .5s ease both, pulseCrack 3s ease-in-out infinite; }
-    .crack-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    /* max-width/overflow-x: same reasoning as crack-the-word.html's .cw-tiles
+     * — a word can no longer split across two lines (see .crack-word below),
+     * so on the rare word too wide for even a full line on this phone it
+     * scrolls horizontally inside the row instead of stretching the card. */
+    .crack-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 100%; overflow-x: auto; }
+    /* One word's tiles, grouped so .crack-tiles' flex-wrap can only break
+     * between whole words, never inside one — see groupCrackTiles() below.
+     * Same gap as .crack-tiles so a word's own letter spacing is unchanged. */
+    .crack-word { display: inline-flex; flex-wrap: nowrap; gap: 6px; }
     .crack-tile {
       min-width: 26px; height: 38px; display: flex; align-items: center; justify-content: center;
       border-bottom: 3px solid #35335e; font-size: 1.3rem; font-weight: 900; color: #fff;
@@ -1101,6 +1109,28 @@
 
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+
+    /* Groups a Crack the Word tiles array (data.tiles — same {isLetter, ch}
+     * shape as crack-word-engine.js's tileLayout(), just with unrevealed
+     * letters' `ch` nulled out by the host) into per-word runs, mirroring
+     * that file's groupTiles() so a long word's tile-row wraps as a whole
+     * to the next line instead of splitting mid-word — this page doesn't
+     * load crack-word-engine.js (it's shared by all eight games), so the
+     * same small pure function is duplicated here rather than pulled in. */
+    function groupCrackTiles(tiles) {
+      const groups = [];
+      let word = null;
+      (tiles || []).forEach(t => {
+        if (t.isLetter) {
+          if (!word) { word = []; groups.push({ type: 'word', tiles: word }); }
+          word.push(t);
+        } else {
+          word = null;
+          groups.push({ type: 'gap', tile: t });
+        }
+      });
+      return groups;
     }
 
     /* A role colour that works as a border and a 10%-tint fill is not automatically
@@ -1663,10 +1693,13 @@
       }
 
       if (data.state === 'playing') {
-        const tiles = (data.tiles || []).map(t => t.isLetter
-          ? (t.ch ? `<span class="crack-tile is-revealed">${esc(t.ch)}</span>` : `<span class="crack-tile"></span>`)
-          : `<span class="crack-tile is-static">${t.ch === ' ' ? '' : esc(t.ch || '')}</span>`
-        ).join('');
+        const tiles = groupCrackTiles(data.tiles).map(seg => {
+          if (seg.type === 'gap') {
+            return `<span class="crack-tile is-static">${seg.tile.ch === ' ' ? '' : esc(seg.tile.ch || '')}</span>`;
+          }
+          const inner = seg.tiles.map(t => t.ch ? `<span class="crack-tile is-revealed">${esc(t.ch)}</span>` : `<span class="crack-tile"></span>`).join('');
+          return `<span class="crack-word">${inner}</span>`;
+        }).join('');
         const excludedRow = data.excluded && data.excluded.length
           ? `<span class="crack-excluded">${pt('crackExcludedLabel')} ${data.excluded.join(' · ')}</span>` : '';
         // one merged grid, visually identical buttons — vowels have no
