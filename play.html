@@ -806,16 +806,23 @@
     .cwb-pts { font-size: .95rem; font-weight: 900; color: #ddd; }
     .cwb-row.is-me .cwb-pts { color: var(--me-text); }
     /* the host's score-display setting (crack-the-word.html) decides whether
-       this shows: 'team' and 'teamContrib' both show it, 'individual' (the
-       original per-seat-only leaderboard, still below via .crack-board) does
-       not — see crackCardHTML() */
+       this shows, and what's on it: 'team' is just the total; 'teamContrib'
+       packs the total and this seat's OWN number onto the same line (never
+       anyone else's — a card only has one viewer, so there's nothing to gain
+       from spending a whole extra block on names that aren't theirs, unlike
+       the full everyone board 'individual' still shows below via
+       .crack-board); 'individual' shows neither — see crackCardHTML(). Wraps
+       rather than the fixed one-line row it started as, since 'teamContrib'
+       can carry two label+number pairs plus a separator on one line and
+       English labels are longer than the Chinese ones */
     .crack-team-total {
-      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 8px 10px;
       background: rgba(59,130,246,.1); border: 1.5px solid rgba(59,130,246,.4); border-radius: 14px;
       padding: 10px 14px;
     }
     .crack-team-total .ctt-label { font-size: .85rem; font-weight: 800; color: #60a5fa; }
     .crack-team-total .ctt-score { font-size: 1.3rem; font-weight: 900; color: #fff; }
+    .crack-team-total .ctt-sep { font-size: 1rem; font-weight: 700; color: #60a5fa; opacity: .6; }
   </style>
 </head>
 <body>
@@ -856,6 +863,7 @@
       tilesWord: { zh: '塊地', en: 'tiles' },
       standings: { zh: '🏆 目前分數', en: '🏆 Standings' },
       crackTeamTotalLabel: { zh: '🏆 團隊總分', en: '🏆 Team score' },
+      crackMyContribLabel: { zh: '我的貢獻', en: 'My contribution' },
       buzzHeldForTaboo: { zh: '⏸️ 有人喊了 Taboo！ — 等 {name} 回答之後才能再搶答。', en: '⏸️ Taboo! was called — buzzing reopens once {name} answers.' },
       point: { zh: '分', en: 'point' },
       points: { zh: '分', en: 'points' },
@@ -1608,14 +1616,26 @@
       const hex = playerColor(data);
       // the host's score-display setting (crack-the-word.html) — an old host
       // tab that never sent this field falls back to 'individual', today's
-      // original per-seat-only leaderboard, so nothing changes for it
+      // original per-seat-only leaderboard, so nothing changes for it.
+      // 'teamContrib' packs the total and this seat's own number onto one
+      // line rather than the total plus a full everyone-sees-everyone board
+      // (that full board is what 'individual' still shows below) — a card
+      // only has one viewer, so there's no one else's number worth taking
+      // up a whole extra block for here.
       const scoreMode = data.scoreDisplayMode || 'individual';
-      const teamTotal = scoreMode !== 'individual' ? `
+      const teamTotal = scoreMode === 'team' ? `
         <div class="crack-team-total">
           <span class="ctt-label">${pt('crackTeamTotalLabel')}</span>
           <span class="ctt-score">${data.teamTotal || 0}</span>
+        </div>` : scoreMode === 'teamContrib' ? `
+        <div class="crack-team-total">
+          <span class="ctt-label">${pt('crackTeamTotalLabel')}</span>
+          <span class="ctt-score">${data.teamTotal || 0}</span>
+          <span class="ctt-sep">·</span>
+          <span class="ctt-label">${pt('crackMyContribLabel')}</span>
+          <span class="ctt-score">${data.myScore || 0}</span>
         </div>` : '';
-      const board = scoreMode !== 'team' && Array.isArray(data.board) && data.board.length ? `
+      const board = scoreMode === 'individual' && Array.isArray(data.board) && data.board.length ? `
         <div class="crack-board" style="--me:${hex};--me-text:${chipInk(hex)}">
           <span class="cwb-hdr">${pt('standings')}</span>
           <div class="cwb-rows">${data.board.map(r => `

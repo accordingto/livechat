@@ -709,6 +709,7 @@
       // draw from scoreDisplayMode, this page doesn't prune the payload per mode
       base.scoreDisplayMode = scoreDisplayMode;
       base.teamTotal = scores.reduce((sum, p) => sum + (p || 0), 0);
+      base.myScore = scores[seat] || 0;
       return base;
     }
 
