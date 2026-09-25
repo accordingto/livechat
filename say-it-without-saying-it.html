@@ -22,13 +22,26 @@
     .header h1 { background: linear-gradient(135deg, #fff 30%, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .round-badge span { color: var(--accent-text); }
 
-    /* ── The shared screen is ONLY the scoreboard: the word and the forbidden words
-       live on the players' own cards, never here — the host is screen-sharing. ── */
+    /* ── The shared screen is the scoreboard by default: the word and the
+       forbidden words live on the players' own cards, never here — the host is
+       screen-sharing. The one opt-in exception is cardPreviewOn (see the
+       .sc-preview rule below and the button that flips it) — off by default,
+       and it prints "don't open while sharing" on its own label, same as it
+       always has; this just also reaches the scoreboard now, not only the
+       roster further down. ── */
     .scoreboard {
       width: 100%; max-width: 1100px;
       display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
       margin-bottom: 18px;
       animation: fadeUp .5s .15s ease both;
+    }
+    /* Sits right above the scoreboard so both toggles that affect it — hide the
+       score number, show the card-preview spoiler — are where the host is
+       already looking, not buried further down the page. */
+    .score-controls {
+      width: 100%; max-width: 1100px;
+      display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 12px;
     }
     .score-card {
       flex: 1; min-width: 150px; max-width: 240px;
@@ -59,6 +72,14 @@
       color: var(--btn-ink); background: #f59e0b;
     }
     .sc-boost-note { flex-basis: 100%; text-align: center; font-size: .86rem; font-weight: 700; color: var(--warn-text); }
+    /* the same cardPreviewText(i) miniature the read-only roster below already
+       shows, now also inside the scoreboard tile itself — reuses the .cp-*
+       classes as-is (none of them are scoped to a specific parent), just
+       wrapped in its own dashed divider so it reads as "more detail about
+       this tile" rather than part of the name/score line above it */
+    .score-card .sc-preview {
+      width: 100%; margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--border);
+    }
     .score-card.is-giver {
       border-color: #6366f1; box-shadow: 0 0 28px rgba(99,102,241,.28);
     }
@@ -558,14 +579,6 @@
       transition: background .2s, border-color .2s, color .2s;
     }
     .deck-toggle:hover { border-color: #6366f1; color: var(--accent-text); }
-    /* It sits between the away/settings card and the read-only roster below it,
-       not inside either one — a host report showed it visually read as one of the
-       away card's own options, when what it actually controls is the cards in the
-       roster underneath. room.js's `.room-card + .room-links` gap assumes the
-       roster is the card's very next sibling, which is no longer true once this
-       button is inserted between them (see the JS that does that), so the same
-       spacing is redone here against this page's actual sibling chain. */
-    #card-preview-toggle { display: inline-block; margin: 18px 0 14px; }
     /* the host's private copy of what a card says — mirrors the actual player-card
        elements in miniature (the target word gets the same boxed look, forbidden
        words become individual pills, and anything that's a real button on the
@@ -860,6 +873,11 @@
       </section>
     </div>
 
+    <!-- populated by hand in the script below: the "hide scores" toggle this
+         page creates, plus the card-preview toggle button moved here from
+         between the away card and the roster (see the JS that does that) -->
+    <div class="score-controls" id="score-controls"></div>
+
     <div class="scoreboard" id="scoreboard"></div>
 
     <!-- A Taboo! call is a claim: the host heard the round and rules on it. The panel
@@ -952,6 +970,8 @@
       dealFirstPreviewBtn: { zh: '🎬 發第一個題目', en: '🎬 Deal the first word' },
       dealNextPreviewBtn: { zh: '🎬 發下一個題目', en: '🎬 Deal the next word' },
       resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
+      hideScoresBtn: { zh: '🙈 隱藏分數', en: '🙈 Hide scores' },
+      showScoresBtn: { zh: '👁️ 顯示分數', en: '👁️ Show scores' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
       nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
@@ -1269,6 +1289,13 @@
        default since the host is screen-sharing and this is a spoiler. */
     let cardPreviewOn = false;
 
+    /* Hides just the score number (and the ⚡ catch-up badge, which is a score
+       detail) from every scoreboard tile — the role tag and any colour
+       highlight stay, since those aren't the number the host wanted gone. A
+       host preference, not a spoiler switch like cardPreviewOn above, so —
+       unlike that one — this persists across a reload (see saveOptions()). */
+    let scoresHidden = false;
+
     /* Banned words can be switched off for an easier round: then nobody's card shows
        them and there is nothing to call Taboo! on. The choice sticks between sessions. */
     const OPTIONS_KEY = 'dontSayItOptions.v1';
@@ -1299,6 +1326,7 @@
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
       if (saved && typeof saved.forbiddenOn === 'boolean') forbiddenOn = saved.forbiddenOn;
       if (saved && BOARD_MODES.includes(saved.boardMode)) boardMode = saved.boardMode;
+      if (saved && typeof saved.scoresHidden === 'boolean') scoresHidden = saved.scoresHidden;
       /* `levels` is the current shape. A session saved before difficulty became a
          multi-select still holds a single `level` string, so read that too: 'all'
          was the whole deck, anything else was that one level. */
@@ -1324,7 +1352,7 @@
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, boardMode, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, boardMode, scoresHidden, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
     }
 
     /* the indices of every card at a ticked difficulty — the union, so ticking all
@@ -1611,17 +1639,24 @@
       document.getElementById('fb-warning').classList.toggle('hidden', ROOM.enabled);
     }
     renderFbWarning();
-    /* Not part of room.js's own DOM at all — it belongs with the read-only roster
-       below it (it's a spoiler switch for those cards, not an away/game setting),
-       so it's built by hand and inserted as #room-links' immediate previous
-       sibling inside #room-mount. That spot never gets touched by ROOM.render()
-       (only #room-links' own children get rebuilt — see room.js's renderCompact()),
-       so this survives every re-render without needing to be re-inserted. */
+    /* Not part of room.js's own DOM at all, and — since the host asked for this
+       spoiler content to also show up inline on each scoreboard tile (see
+       renderScores()'s .sc-preview block) — not tied to the read-only roster
+       below it either anymore. Both toggle buttons for the scoreboard header
+       (this one and the hide-scores one right after it) live in #score-controls,
+       a plain static div sitting just above #scoreboard in the HTML; nothing
+       ever rebuilds that div's children wholesale, so both buttons survive every
+       re-render without needing to be re-inserted. */
     const previewBtn = document.createElement('button');
     previewBtn.type = 'button';
     previewBtn.id = 'card-preview-toggle';
     previewBtn.className = 'deck-toggle card-preview-toggle';
-    document.getElementById('room-mount').insertBefore(previewBtn, document.getElementById('room-links'));
+    document.getElementById('score-controls').appendChild(previewBtn);
+    const scoresHiddenBtn = document.createElement('button');
+    scoresHiddenBtn.type = 'button';
+    scoresHiddenBtn.id = 'scores-hidden-toggle';
+    scoresHiddenBtn.className = 'deck-toggle';
+    document.getElementById('score-controls').appendChild(scoresHiddenBtn);
     // away and tempNames live in the same shared room-session blob Kangaroo Court
     // keeps judgeEnabled in (see ROOM.setExtra), so both survive a reload of this tab
     const savedAway = ROOM.getExtra('away');
@@ -1636,10 +1671,12 @@
     renderAwayBtns();
 
     /* Lets the host check what a player's card actually shows without picking up
-       their phone — text only appears in the Player Links section below, never on
-       the shared scoreboard, and stays off by default because it's a spoiler. The
-       button itself is created just above (right before #room-links); this just
-       drives it. */
+       their phone — now shown both in the Player Links section below AND inline
+       on each scoreboard tile (renderScores()'s .sc-preview), so the host can
+       tell a stuck player which button to press without leaving the scoreboard.
+       Stays off by default because it's a spoiler — a host sharing their screen
+       could out the target word to the whole room by leaving it on. The button
+       itself is created just above (in #score-controls); this just drives it. */
     function renderPreviewToggle() {
       document.getElementById('card-preview-toggle').textContent = cardPreviewOn
         ? tt('hideCardsBtn')
@@ -1651,6 +1688,23 @@
       renderAll();
     };
     renderPreviewToggle();
+
+    /* Hides just the number (and the ⚡ catch-up badge) on every scoreboard tile
+       — a host preference for when the score itself is a distraction, not a
+       spoiler switch like cardPreviewOn above, so this one persists (see
+       saveOptions()) and the button reflects that saved state on load. */
+    function renderScoresToggleLabel() {
+      document.getElementById('scores-hidden-toggle').textContent = scoresHidden
+        ? tt('showScoresBtn')
+        : tt('hideScoresBtn');
+    }
+    document.getElementById('scores-hidden-toggle').onclick = () => {
+      scoresHidden = !scoresHidden;
+      saveOptions();
+      renderScoresToggleLabel();
+      renderAll();
+    };
+    renderScoresToggleLabel();
 
     function syncScores() {
       while (scores.length < ROOM.count) scores.push(0);
@@ -2524,6 +2578,27 @@
       };
     }
 
+    /* { n: name, role, me } for everyone, in seat order — who's the clue giver,
+       the referee, and everyone else guessing, so a player's own card can show
+       the whole room's roles at a glance instead of just its own. Independent
+       of boardMode (which only ever governed the scores) and always sent while
+       a round is on, so it isn't hidden by a host who's turned scores off —
+       roles aren't a spoiler the way the word or the banned list is. Away
+       overrides guesser/nothing but never the giver or referee: someone
+       mid-round when marked away keeps running that round (see toggleAway()),
+       so their card should still say what they're actually doing right now. */
+    function rosterFor(i) {
+      const out = [];
+      for (let k = 0; k < ROOM.count; k++) {
+        const isG = k === giverIdx;
+        const isR = k === refIdx;
+        const awayNow = away[k] && !isG && !isR;
+        const role = awayNow ? 'away' : isG ? 'giver' : isR ? 'ref' : 'guesser';
+        out.push({ n: pname(k), role, me: k === i || null });
+      }
+      return out;
+    }
+
     /* { n: name, p: points, me } for everyone, in seat order — the 'full' score
        display mode */
     function boardFor(i) {
@@ -2568,6 +2643,12 @@
         boardMode,
         board: boardMode === 'full' ? boardFor(i) : null,
         compactBoard: boardMode === 'compact' ? compactBoardFor(i) : null,
+        // who's the clue giver / referee / guessing right now, for every seat —
+        // separate from the boardMode-gated fields above since it's role
+        // information, not a score display choice (see rosterFor()); null
+        // before the first round of the game so a fresh idle card has nothing
+        // to draw yet
+        roster: state !== 'idle' ? rosterFor(i) : null,
         // between rounds the next word can be dealt from any card, so every card needs
         // to know that and to have the id its tap must quote
         canDeal: canDeal() || null,
@@ -2813,13 +2894,15 @@
         html += `<div class="score-card${giver ? ' is-giver' : ''}${ref ? ' is-ref' : ''}${buzzed ? ' is-buzzed' : ''}${called ? ' is-called' : ''}${awayNow ? ' is-away' : ''}${popIdx.includes(i) ? ' just-scored' : ''}${lostIdx.includes(i) ? ' just-lost' : ''}">
             <span class="sc-role">${role}</span>
             <span class="sc-name">${pname(i)}</span>
-            <span class="sc-pts">${scores[i] || 0}</span>
-            ${behind ? `<span class="sc-boost" title="${tt('boostBadge')}">⚡</span>` : ''}
+            ${scoresHidden ? '' : `<span class="sc-pts">${scores[i] || 0}</span>
+            ${behind ? `<span class="sc-boost" title="${tt('boostBadge')}">⚡</span>` : ''}`}
+            ${cardPreviewOn ? `<div class="sc-preview">${cardPreviewText(i)}</div>` : ''}
           </div>`;
         if (behind) anyBehind = true;
       }
-      // the legend only while it applies — this board is on the shared screen
-      if (anyBehind) html += `<div class="sc-boost-note">${tt('boostNote', { n: CATCH_UP_GAP })}</div>`;
+      // the legend only while it applies — and only while there's a ⚡ badge on
+      // screen for it to explain, which scoresHidden strips along with the number
+      if (anyBehind && !scoresHidden) html += `<div class="sc-boost-note">${tt('boostNote', { n: CATCH_UP_GAP })}</div>`;
       el.innerHTML = html;
     }
 
@@ -2870,6 +2953,7 @@
     I18N.onChange(() => {
       renderFbWarning();
       renderPreviewToggle();
+      renderScoresToggleLabel();
       renderForbiddenToggle();
       renderAwayBtns();
       renderLevelBtns();

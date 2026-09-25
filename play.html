@@ -665,6 +665,33 @@
     @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
     @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
+    /* Who's the clue giver / referee / guessing, for the whole room, always
+       visible below the score (see say-it-without-saying-it.html's rosterFor())
+       rather than only inferable from whatever state the card itself happens
+       to be showing — a player mid-conversation shouldn't have to remember who
+       had which job. Same shape as .taboo-board just above (dashed divider,
+       wrapping row of pills), colour-coded per role via inline style — reuses
+       .pick-chip's own tinting formula (chipInk()/hex+alpha) rather than a
+       fourth hardcoded colour scheme, since these are the exact same three
+       role colours the chip at the top of this card already uses. */
+    .taboo-roster {
+      width: 100%; border-top: 1px dashed #2e2e5e; padding-top: 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .taboo-roster .tr-hdr {
+      font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .tr-rows { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .tr-chip {
+      display: inline-block; border-radius: 999px; padding: 5px 12px;
+      font-size: .82rem; font-weight: 800; border: 1.5px solid;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    /* a ring, not a colour swap — the role colour is the whole point of this
+       chip and self shouldn't overwrite it the way .tbd-row.is-me can afford to */
+    .tr-chip.is-me { box-shadow: 0 0 0 2px #fff; }
+
     /* ⚖️ Kangaroo Court: role tint matches the host screen's role chips */
     .secret-card.theme-kangaroo { padding: 28px 24px 24px; gap: 16px; }
     /* Before a case is drawn nobody has a role yet, so the card is still the
@@ -959,6 +986,7 @@
       noForbiddenThisRound: { zh: '這輪沒有禁字 — 隨便怎麼形容都可以！', en: 'No forbidden words this round — describe it any way you like!' },
       refereeChip: { zh: '👀 你是裁判', en: "👀 You're the referee" },
       guesserChip: { zh: '🙋 你這輪負責猜', en: "🙋 You're guessing this round" },
+      rosterHdr: { zh: '🎭 這輪的角色', en: "🎭 This round's roles" },
       refereeReadySub: { zh: '這輪你不用猜 — 專心聽 {name} 有沒有說出禁字。題目一開，禁字清單就會出現在這裡。', en: "You don't guess this round — just listen for {name} saying a forbidden word. The list appears here the moment the word opens." },
       guesserReadySub: { zh: '{name} 開始形容之後，想到答案就按搶答鈕，然後大聲說出來。', en: 'Once {name} starts describing, hit the buzzer and say your guess out loud.' },
       awayChip: { zh: '💤 你被標記為暫時離開', en: "💤 You're marked away" },
@@ -1998,6 +2026,20 @@
         ${data.awayLocked ? `<span class="pick-sub">${pt('awayLockedSub')}</span>` : ''}`;
     }
 
+    // same three role colours the chip at the top of this card already uses
+    // (clueGiverChip/refereeChip/guesserChip), plus the away grey used elsewhere
+    const TABOO_ROSTER_HEX = { giver: '#6366f1', ref: '#f59e0b', guesser: '#22c55e', away: '#64748b' };
+    function tabooRosterHTML(data) {
+      if (!Array.isArray(data.roster) || !data.roster.length) return '';
+      return `<div class="taboo-roster">
+        <span class="tr-hdr">${pt('rosterHdr')}</span>
+        <div class="tr-rows">${data.roster.map(r => {
+          const hex = TABOO_ROSTER_HEX[r.role] || TABOO_ROSTER_HEX.guesser;
+          return `<span class="tr-chip${r.me ? ' is-me' : ''}" style="color:${chipInk(hex)};border-color:${hex};background:${hex}1a">${esc(r.n || '')}</span>`;
+        }).join('')}</div>
+      </div>`;
+    }
+
     function tabooCardHTML(data) {
       // the host can switch the banned words off entirely — then no card shows them
       // and there is nothing to call Taboo! on
@@ -2040,7 +2082,7 @@
            </div>`
         : `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
       const chip = (text, hex) => `<span class="pick-chip" style="color:${chipInk(hex)};border-color:${hex}55;background:${hex}1a">${text}</span>`;
-      const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}${tabooAwaySelfBlock(data)}</div>`;
+      const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}${tabooRosterHTML(data)}${tabooAwaySelfBlock(data)}</div>`;
       // the clock is on every card while a word is in play
       const ticking = data.state === 'playing' && syncTabooTimer(data.timer);
       const clock = ticking ? `<div class="taboo-timer" id="taboo-timer">${tabooTimer.left}</div>` : '';
