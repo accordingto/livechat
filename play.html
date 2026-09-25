@@ -2640,6 +2640,33 @@
       }, () => {
         showError('connectError');
       });
+      /* A phone that gets locked or backgrounded (the host went off to
+       * index.html to change the room's player count or someone's name, then
+       * came back a minute later) can have its Firebase socket suspended
+       * long enough that, once brought back to the foreground, the SDK's own
+       * reconnect either lags or — on some mobile browsers — never quite
+       * catches this listener back up before the player looks at the
+       * screen again. The card is then stuck showing whatever round was on
+       * it the moment the phone went to sleep, while every other player who
+       * never left the app moves on normally — this is the exact "some
+       * cards are on the old round, others already moved to the new one"
+       * symptom reported for Crack the Word, and it isn't specific to that
+       * game (every game's card goes through this same listener). Rather
+       * than trust the SDK to have already caught up, force one fresh read
+       * the instant the tab is looked at again; it's a no-op if the value
+       * hadn't actually gone stale. */
+      let cardWasHidden = false;
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { cardWasHidden = true; return; }
+        if (!cardWasHidden) return;
+        cardWasHidden = false;
+        db.ref(`rooms/${session}/players/${token}`).once('value').then(snap => {
+          const data = snap.val();
+          if (!data) { showError('waitingDeal'); return; }
+          latestData = data;
+          tryRenderCard();
+        }).catch(() => {});
+      });
     }
   </script>
 
