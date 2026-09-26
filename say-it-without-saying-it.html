@@ -342,8 +342,15 @@
     .settings-toggle-btn .stb-dots { font-size: .8rem; letter-spacing: 1px; }
     .settings-popover {
       position: fixed; z-index: 9999;
-      min-width: 240px; max-width: min(340px, calc(100vw - 24px));
-      max-height: min(70vh, 520px); overflow-y: auto;
+      /* five rules-groups live in here now (difficulty / forbidden+active-words /
+         round timer / score display / host screen) — the original 240–340px box
+         sized for two or three of them made every extra group mean more scrolling,
+         not more room. Wider and taller gives most of them room to sit without a
+         scrollbar on common desktop/tablet sizes; positionSettingsPopover() still
+         clamps both dimensions live against the actual viewport, so this is just
+         the upper bound, not a fixed size a small phone would be forced into. */
+      min-width: 240px; max-width: min(420px, calc(100vw - 24px));
+      max-height: min(80vh, 640px); overflow-y: auto;
       background: var(--surface); border: 2px solid var(--border-2); border-radius: 16px;
       padding: 16px;
       box-shadow: 0 14px 34px rgba(0,0,0,.5);
@@ -583,6 +590,21 @@
     }
     .cp-preview b { color: var(--text); }
     .cp-note { color: var(--text-dim); }
+    /* cardPreviewText() now returns two separate blocks instead of one flat list —
+       .cp-actions (any real button, alone or paired) always renders first/on top,
+       .cp-info (buzz/hold/result notes) always renders second/below, so a card's
+       "what can I press" and "what's happening" never sit mixed in one column. Both
+       centre their own contents — a lone button and a paired .cp-btn-row used to be
+       centred two different ways (the row centred itself, a solo button just sat at
+       the flex column's default start edge and looked left-aligned) — .cp-actions
+       being the single flex/justify-center context for both fixes that instead of
+       patching each solo push site one at a time. */
+    .cp-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .cp-info {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      text-align: center;
+    }
+    .cp-actions + .cp-info { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
     .cp-btn-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
     .cp-btn {
       display: inline-block; border-radius: 8px; padding: 5px 10px;
@@ -2714,52 +2736,62 @@
       const dealPreview = p.canDeal
         ? `<button type="button" class="cp-btn cp-btn-deal" onclick="previewAction(${i},'deal')">${tt(p.state === 'idle' ? 'dealFirstPreviewBtn' : 'dealNextPreviewBtn')}</button>`
         : '';
-      if (p.state === 'idle') return dealPreview || `<div class="cp-note">${tt('nothingDealtYet')}</div>`;
+      // actions (buttons) always render first/on top, info (notes/results) always
+      // render second/below — two fixed regions, not whatever order the branch
+      // below happened to push things in
+      if (p.state === 'idle') {
+        return dealPreview
+          ? `<div class="cp-actions">${dealPreview}</div>`
+          : `<div class="cp-info"><div class="cp-note">${tt('nothingDealtYet')}</div></div>`;
+      }
       if (p.state === 'ready') {
         return p.isGiver
-          ? `<button type="button" class="cp-btn cp-btn-buzz" onclick="previewAction(${i},'ready')">${tt('openWordPreviewBtn')}</button>`
-          : `<div class="cp-note">${tt('waitingOpenPreview', { name: p.giverName })}</div>`;
+          ? `<div class="cp-actions"><button type="button" class="cp-btn cp-btn-buzz" onclick="previewAction(${i},'ready')">${tt('openWordPreviewBtn')}</button></div>`
+          : `<div class="cp-info"><div class="cp-note">${tt('waitingOpenPreview', { name: p.giverName })}</div></div>`;
       }
-      const blocks = [];
+      const actions = [];
+      const info = [];
       if (p.isGiver) {
         if (p.tabooBy) {
-          blocks.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
-          blocks.push(`<div class="cp-btn-row">
+          info.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
+          actions.push(`<div class="cp-btn-row">
             <button type="button" class="cp-btn cp-btn-wrong" onclick="previewAction(${i},'ruling',{upheld:true})">${tt('admitPreviewBtn')}</button>
             <button type="button" class="cp-btn cp-btn-right" onclick="previewAction(${i},'ruling',{upheld:false})">${tt('denyPreviewBtn')}</button>
           </div>`);
         }
         if (p.buzzerName && !p.tabooBy) {
-          blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
-          blocks.push(`<div class="cp-btn-row">
+          info.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
+          actions.push(`<div class="cp-btn-row">
             <button type="button" class="cp-btn cp-btn-right" onclick="previewAction(${i},'right',{buzzer:${p.buzzer}})">${tt('correctPreviewBtn')}</button>
             <button type="button" class="cp-btn cp-btn-wrong" onclick="previewAction(${i},'wrong',{buzzer:${p.buzzer}})">${tt('notItPreviewBtn')}</button>
           </div>`);
         } else if (!p.tabooBy) {
           // with the word gone from this view, an idle giver's card would otherwise
           // be entirely blank — this is the one line standing in for "still going"
-          blocks.push(`<div class="cp-note">${tt('keepGoingPreview')}</div>`);
+          info.push(`<div class="cp-note">${tt('keepGoingPreview')}</div>`);
         }
       } else if (p.isRef) {
         if (p.buzzerName && !p.tabooBy) {
-          blocks.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
+          info.push(`<div class="cp-note">${tt('buzzedInPreview', { name: p.buzzerName })}</div>`);
         }
-        blocks.push(p.iCalledTaboo
-          ? `<div class="cp-note">${tt('calledTabooWaiting')}</div>`
-          : `<button type="button" class="cp-btn cp-btn-foul" onclick="previewAction(${i},'taboo')">${tt('tabooPreviewBtn')}</button>`);
+        if (p.iCalledTaboo) {
+          info.push(`<div class="cp-note">${tt('calledTabooWaiting')}</div>`);
+        } else {
+          actions.push(`<button type="button" class="cp-btn cp-btn-foul" onclick="previewAction(${i},'taboo')">${tt('tabooPreviewBtn')}</button>`);
+        }
       } else if (p.tabooBy) {
-        blocks.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
+        info.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
       } else if (p.queued === 1) {
-        blocks.push(`<div class="cp-note">${tt('youBuzzedPreview')}</div>`);
+        info.push(`<div class="cp-note">${tt('youBuzzedPreview')}</div>`);
       } else if (p.buzzerName) {
-        blocks.push(`<div class="cp-note">${tt('buzzHeldPreview', { name: p.buzzerName })}</div>`);
+        info.push(`<div class="cp-note">${tt('buzzHeldPreview', { name: p.buzzerName })}</div>`);
       } else if (p.rejected) {
-        blocks.push(`<div class="cp-note">${tt('notItHangTightPreview')}</div>`);
+        info.push(`<div class="cp-note">${tt('notItHangTightPreview')}</div>`);
       } else {
-        blocks.push(`<button type="button" class="cp-btn cp-btn-buzz" onclick="previewAction(${i},'buzz')">${tt('buzzInPreviewBtn')}</button>`);
+        actions.push(`<button type="button" class="cp-btn cp-btn-buzz" onclick="previewAction(${i},'buzz')">${tt('buzzInPreviewBtn')}</button>`);
       }
       if (p.next) {
-        blocks.push(`<div class="cp-note">${
+        info.push(`<div class="cp-note">${
           p.next.youGive ? tt('nextYouGivePreview')
           : p.next.youRef ? tt('nextYouRefPreview')
           : tt('nextUpPreview', { n: p.next.in, giver: p.next.giver })}</div>`);
@@ -2768,10 +2800,12 @@
         const kind = p.result.type === 'foul' ? tt('tabooCaughtKind') : p.result.type === 'got' ? tt('gotItKind') : tt('roundEndedKind');
         const pts = p.result.type === 'foul' || p.result.type === 'got' ? tt('plusForYou', { pts: p.result.whoPts || (p.result.type === 'foul' ? 2 : 1) }) : '';
         const penalty = p.result.type === 'foul' && p.isGiver ? tt('minusOneForYou') : '';
-        blocks.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
+        info.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
-      if (dealPreview) blocks.push(dealPreview);
-      return blocks.join('');
+      if (dealPreview) actions.push(dealPreview);
+      const actionsHTML = actions.length ? `<div class="cp-actions">${actions.join('')}</div>` : '';
+      const infoHTML = info.length ? `<div class="cp-info">${info.join('')}</div>` : '';
+      return actionsHTML + infoHTML;
     }
 
     /* ── Rendering: scoreboard + one status line, nothing else ── */
