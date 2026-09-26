@@ -241,3 +241,13 @@ details.sensitive summary::-webkit-details-marker { display: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
+
+/* The existing play.html card embeds the same UI and permission-checked actions. */
+.embedded-card-root { min-width: 0; }
+.embedded-card .site-header { position: static; padding: 8px; }
+.embedded-card .back-link, .embedded-card .brand { display: none; }
+.embedded-card #app { width: 100%; padding: 8px; margin: 0; }
+.embedded-card .game-grid, .embedded-card .entry-grid { display: block; }
+.embedded-card .panel, .embedded-card .card { margin-bottom: 12px; }
+.embedded-card .room-bar { flex-wrap: wrap; }
+.embedded-card #host-connection { margin: 8px; }

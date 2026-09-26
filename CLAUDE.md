@@ -1,5 +1,13 @@
 ## 專案背景
 
+**聊天狼人原小卡整合（2026-09-27）**：`chat-wolf-cards.js` 讀首頁
+`room-last-session`／`room-session-{CODE}`，建立房間時選房主座位並預先加入原玩家。
+`chat-wolf-sync.js` 的 `connectCards()` 明確發送 `game: chatwolf` 到各自原 token
+路徑，僅含該卡自己的憑證。`play.html` 嵌入 `chat-wolf.html?card=1`，憑證在 fragment，
+不使用共享 localStorage 覆蓋卡片身分、不接手主持；換遊戲移除 iframe。沿用同一
+套準備、角色、發言、任务、投票介面，非額外複製引擎。卡片轉接不持續覆寫原卡。
+詳見 `chat-wolf-mode.md` 的原小卡段落。不要再讓聊天狼人繞過首頁小卡。
+
 **聊天狼人 v2（2026-09-27，使用者同意改回舊遊戲的主持信任模式）**：入口
 `chat-wolf.html`，純靜態部署。已移除 Admin API 與其憑證需求。`chat-wolf-sync.js`
 沿用 Firebase `rooms/chatwolf-{CODE}/players/{隨機token}` 存主持狀態／私人投影，

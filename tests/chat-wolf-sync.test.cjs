@@ -4,9 +4,18 @@ const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const { Client, FirebaseREST, stamp } = require('../chat-wolf-sync.js');
 const E = require('../chat-wolf-engine.js');
+const Cards = require('../chat-wolf-cards.js');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const storage = () => { const values = new Map(); return { getItem: k => values.get(k) || null, setItem: (k,v) => values.set(k,v) }; };
 const copy = x => x === undefined ? null : JSON.parse(JSON.stringify(x));
+test('legacy card setup and iframe links reject malformed credentials', () => {
+  assert.equal(Cards.normalize({ code: '../bad', playerCount: 3, tokens: [] }), null);
+  assert.equal(Cards.frameURL({ version: 1, room: 'ABC234', token: 'fake' }, 'https://example.com/play.html'), null);
+  const link = new URL(Cards.frameURL({ version: 1, room: 'ABC234', token: 'a'.repeat(64) }, 'https://example.com/play.html'));
+  assert.equal(link.pathname, '/chat-wolf.html');
+  assert.equal(link.searchParams.has('session'), false);
+  assert.equal(link.hash, '#session=' + 'a'.repeat(64));
+});
 test('REST calls browser fetch without an illegal receiver', async () => {
   let receiver;
   const store = new FirebaseREST('https://example.invalid', async function () {
@@ -39,6 +48,69 @@ class Store {
     return { value: copy(value) };
   }
 }
+test('existing player cards get only their own sessions and can ready, reveal, speak, vote and replay', async t => {
+  const store = new Store();
+  const host = new Client({ store, storage: storage(), interval: 10 });
+  t.after(() => host.close());
+  const legacy = { code: 'ABC234', playerCount: 6,
+    tokens: Array.from({length:6}, (_, i) => String(i + 1).repeat(20)),
+    names: Array.from({length:6}, (_, i) => `Card ${i+1}`) };
+  const made = await host.create({ name: 'Card 2', settings: {playerCount:6,wolfCount:2}, legacy, hostSeat:1 });
+  const code = made.state.public.code;
+  await host.connectCards();
+  const cards = await Promise.all(legacy.tokens.map(token => store.get(`rooms/${legacy.code}/players/${token}`)));
+  const players = [];
+  for (const { value } of cards) {
+    assert.equal(value.game, 'chatwolf');
+    assert.equal(value.chatWolf.room, code);
+    assert.equal(Object.keys(value.chatWolf).length, 3);
+    const client = new Client({ store, storage: storage(), allowHostRecovery:false });
+    const token = value.chatWolf.token;
+    const view = await client.read(code, token);
+    players.push({client,token,id:view.private.playerId});
+  }
+  assert.equal(new Set(players.map(p=>p.token)).size,6);
+  for (let i=0;i<6;i++) for (let j=0;j<6;j++) if(i!==j) assert.equal(JSON.stringify(cards[i]).includes(players[j].token),false);
+  const read = p => p.client.read(code,p.token);
+  const send = async(p,body)=>{await read(p); return p.client.command(code,p.token,body);};
+  for(const p of players) await send(p,{action:'ready',ready:true});
+  await send(players[1],{action:'startGame'});
+  const views = await Promise.all(players.map(read));
+  const wolves=players.filter((_,i)=>views[i].private.role==='WOLF');
+  const villagers=players.filter((_,i)=>views[i].private.role==='VILLAGER');
+  for (const p of villagers) assert.equal((await read(p)).private.tasks,null);
+  assert.deepEqual((await read(wolves[0])).private.tasks,(await read(wolves[1])).private.tasks);
+  for(const p of players) await send(p,{action:'ackRole'});
+  const taskId=(await read(wolves[0])).private.tasks[0].id;
+  await send(wolves[0],{action:'taskNote',taskId,note:'來自原小卡'});
+  assert.equal((await read(wolves[1])).private.tasks[0].note,'來自原小卡');
+  await send(wolves[1],{action:'claimTask',taskId,targetIds:villagers.slice(0,2).map(p=>p.id),round:1,summary:'測試合成事件'});
+  let meetings=0,votes=0;
+  for(let n=0;n<100;n++) {
+    const view=await read(players[1]),p=view.public;
+    if(p.phase==='TASK_REVIEW') { await send(players[1],{action:'reviewTask',taskId,valid:false}); break; }
+    if(p.phase==='TALK'||p.phase==='MEETING_DISCUSS') {
+      const turn=p.talk||p.meeting;
+      if(p.phase==='MEETING_DISCUSS'&&turn.speakerIndex===0) meetings++;
+      if(p.phase==='TALK') assert.ok(p.talk.question);
+      const speaker=players.find(x=>x.id===turn.currentSpeakerId);
+      assert.equal((await read(speaker)).private.actions.canEndTurn,true);
+      await send(speaker,{action:'endTurn'});
+    } else if(p.phase==='VOTING') {
+      votes++;
+      await send(players[0],{action:'submitVote',selections:villagers.slice(0,2).map(x=>x.id)});
+      const other=await read(players[1]);
+      assert.equal(other.private.myVoteSubmitted,false);
+      assert.equal(other.public.ballots,undefined);
+      for(const player of players.slice(1)) await send(player,{action:'submitVote',selections:villagers.slice(0,2).map(x=>x.id)});
+    } else assert.fail(p.phase);
+  }
+  assert.equal(meetings,2); assert.equal(votes,3);
+  assert.equal((await read(players[1])).public.phase,'FINISHED');
+  await send(players[1],{action:'replay'});
+  for(const p of players) {const v=await read(p);assert.equal(v.private.role,null);assert.equal(v.private.tasks,null);assert.equal(v.public.phase,'LOBBY');}
+  await assert.rejects(players[0].client.connectCards(),{code:'HOST_ONLY'});
+});
 async function setup(t, count = 6) {
   const store = new Store(); const hostStorage = storage();
   let now = 1000000;

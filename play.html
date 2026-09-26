@@ -17,6 +17,10 @@
     /* the wrapper had no width of its own, so `width:100%` on the card resolved against
        shrink-to-fit content — the card ended up a different width in every state */
     #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
+    body.chat-wolf-card { padding: 8px; justify-content: flex-start; }
+    body.chat-wolf-card #content { max-width: 760px; }
+    body.chat-wolf-card #i18n-toggle { display: none; }
+    .chat-wolf-frame { width: 100%; height: calc(100dvh - 24px); border: 0; border-radius: 16px; }
     /* The language pill floats over the top-right corner here — this page has no top
        row to dock into, and a row of its own cost more height than the control is
        worth. It has no --accent either, so name one, or the lit side falls back to
@@ -870,6 +874,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="talk-ui.js"></script>
+  <script src="chat-wolf-cards.js"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -2427,6 +2432,7 @@
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
+    let wolfCardFrame = null;
     let talkConnected = true;
     let talkClockOffset = 0;
     function showCard(data) {
@@ -2436,6 +2442,21 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      const wolfURL = data.game === 'chatwolf' ? CHAT_WOLF_CARDS.frameURL(data.chatWolf, location.href) : null;
+      document.body.classList.toggle('chat-wolf-card', !!wolfURL);
+      if (wolfURL) {
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (!wolfCardFrame || wolfCardFrame.src !== wolfURL) {
+          wolfCardFrame = document.createElement('iframe');
+          wolfCardFrame.className = 'chat-wolf-frame';
+          wolfCardFrame.title = '聊天狼人玩家小卡';
+          wolfCardFrame.referrerPolicy = 'no-referrer';
+          wolfCardFrame.src = wolfURL;
+          el.replaceChildren(wolfCardFrame);
+        }
+        return;
+      }
+      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
       if (data.game === 'letstalk' && data.talk && data.talk.version === 1) {
         if (!talkCard) talkCard = new TALK_PLAYER.Card(el, {
           nameBanner,
@@ -2645,6 +2666,8 @@
     let lastErrorData = null;
     function showError(key, data) {
       if (talkCard) { talkCard.destroy(); talkCard = null; }
+      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+      document.body.classList.remove('chat-wolf-card');
       lastErrorKey = key;
       lastErrorData = data || null;
       el.innerHTML = WAITING_KEYS.has(key)

@@ -2,7 +2,13 @@
   'use strict';
 
   const C = window.CHAT_WOLF_COPY;
-  const transport = new window.CHAT_WOLF_SYNC.Client({ databaseURL: FIREBASE_CONFIG.databaseURL });
+  const embeddedCard = new URLSearchParams(location.search).get('card') === '1';
+  const legacySetup = window.CHAT_WOLF_CARDS.readSetup(localStorage);
+  if (embeddedCard) {
+    document.body.classList.add('embedded-card');
+    document.documentElement.classList.add('embedded-card-root');
+  }
+  const transport = new window.CHAT_WOLF_SYNC.Client({ databaseURL: FIREBASE_CONFIG.databaseURL, allowHostRecovery: !embeddedCard });
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
   const syncPill = document.getElementById('sync-pill');
@@ -15,6 +21,7 @@
   let pollTimer = null;
   let heartbeatTimer = null;
   let requestRunning = false;
+  let pollRunning = false;
   let toastTimer = null;
   let lastRevision = null;
   let entryMode = new URLSearchParams(location.search).has('room') ? 'join' : 'create';
@@ -118,7 +125,11 @@
   }
 
   async function action(actionName, payload) {
-    if (!session || requestRunning) return;
+    if (!session) return;
+    if (requestRunning) {
+      if (actionName !== 'heartbeat') showToast(C.actionBusy);
+      return false;
+    }
     requestRunning = true;
     setSync('connecting');
     try {
@@ -141,8 +152,8 @@
   }
 
   async function poll() {
-    if (!session || requestRunning) return;
-    requestRunning = true;
+    if (!session || requestRunning || pollRunning) return;
+    pollRunning = true;
     try {
       const response = await apiRequest('GET');
       applyState(response.state, false);
@@ -156,7 +167,7 @@
         showToast(errorMessage(error.code));
       }
     } finally {
-      requestRunning = false;
+      pollRunning = false;
     }
   }
 
@@ -201,6 +212,8 @@
       <section class="entry-grid">
         <form class="card" id="create-form"${entryMode === 'create' ? '' : ' hidden'}>
           <h2>${esc(C.createRoom)}</h2>
+          ${legacySetup ? `<label class="check-line"><input name="useCards" type="checkbox" checked><span>${esc(C.useCards)}</span></label>
+          <label class="field"><span>${esc(C.hostSeat)}</span><select name="hostSeat">${legacySetup.names.map((n,i) => `<option value="${i}">${i+1}. ${esc(n)}</option>`).join('')}</select></label>` : ''}
           <label class="field"><span>${esc(C.hostName)}</span><input name="name" type="text" maxlength="24" autocomplete="nickname" required></label>
           <div class="inline-fields">
             <label class="field"><span>${esc(C.playerCount)}</span><select name="playerCount">${options(3, 12, 6, { 6: C.recommended, 7: C.recommended, 8: C.recommended })}</select></label>
@@ -224,6 +237,21 @@
         </form>
       </section>
       <p class="secure-note">${esc(C.secureInvite)}</p>`;
+    syncCardSetupForm();
+  }
+
+  function syncCardSetupForm() {
+    const form = document.getElementById('create-form');
+    if (!form || !legacySetup) return;
+    const enabled = form.elements.useCards.checked;
+    form.elements.hostSeat.disabled = !enabled;
+    form.elements.name.disabled = enabled;
+    form.elements.playerCount.disabled = enabled;
+    if (enabled) {
+      form.elements.name.value = legacySetup.names[Number(form.elements.hostSeat.value)];
+      form.elements.playerCount.value = String(legacySetup.playerCount);
+    }
+    updateCreateWolfOptions(form.elements.playerCount);
   }
 
   function inviteUrl() {
@@ -236,8 +264,9 @@
   function roomBar() {
     return `<div class="room-bar">
       <div><span class="phase-chip">${esc(C.phases[state.public.phase] || state.public.phase)}</span> <span class="room-code">${esc(state.public.code)}</span></div>
-      <div class="button-row"><button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button></div>
-    </div>`;
+      <div class="button-row">${embeddedCard ? '' : `<button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button>`}
+      ${!embeddedCard && state.private.isHost && state.public.legacyCardRoom ? `<button class="btn secondary small" type="button" data-command="sendCards">${esc(C.sendCards)}</button>` : ''}</div>
+    </div>${state.public.legacyCardRoom && !embeddedCard ? `<p class="notice">${esc(C.cardsLinked)}</p>` : ''}`;
   }
 
   function playerRows(showRemove) {
@@ -492,7 +521,7 @@
     if (connection) {
       connection.hidden = !state;
       connection.textContent = !state ? '' : Date.now() + serverOffset > state.public.hostLiveUntil
-        ? C.hostUnavailable : state.private.isHost ? C.keepHostOpen : C.hostConnected;
+        ? C.hostUnavailable : state.private.isHost ? (embeddedCard ? C.keepMainHostOpen : C.keepHostOpen) : C.hostConnected;
     }
     document.querySelectorAll('[data-deadline]').forEach((element) => {
       const remaining = Math.max(0, Number(element.dataset.deadline) - (Date.now() + serverOffset));
@@ -518,6 +547,13 @@
     }
     const button = event.target.closest('[data-command], [data-action]');
     if (!button || button.disabled) return;
+    if (button.dataset.command === 'sendCards') {
+      button.disabled = true;
+      try { await transport.connectCards(); showToast(C.cardsSent); }
+      catch (error) { showToast(errorMessage(error.code)); }
+      finally { button.disabled = false; }
+      return;
+    }
     if (button.dataset.command === 'copyInvite') {
       try { await navigator.clipboard.writeText(inviteUrl()); showToast(C.copied); }
       catch (error) { window.prompt(C.copyInvite, inviteUrl()); }
@@ -543,6 +579,7 @@
   });
 
   app.addEventListener('change', (event) => {
+    if (event.target.matches('#create-form [name="useCards"], #create-form [name="hostSeat"]')) syncCardSetupForm();
     if (event.target.matches('#create-form [name="playerCount"]')) updateCreateWolfOptions(event.target);
     if (event.target.matches('#settings-form [name]')) {
       const form = event.target.form;
@@ -586,6 +623,7 @@
         const response = await apiRequest('POST', {
           action: 'create',
           name: form.elements.name.value,
+          ...(form.elements.useCards?.checked ? { legacy: legacySetup, hostSeat: Number(form.elements.hostSeat.value) } : {}),
           settings: {
             playerCount: Number(form.elements.playerCount.value),
             wolfCount: Number(form.elements.wolfCount.value),
@@ -598,6 +636,10 @@
         saveSession(response.state.public.code, response.token);
         applyState(response.state, true);
         startSync();
+        if (response.state.public.legacyCardRoom) {
+          await transport.connectCards();
+          showToast(C.cardsSent);
+        }
       } catch (error) { showToast(errorMessage(error.code)); }
       finally { requestRunning = false; }
       return;
@@ -661,7 +703,13 @@
   async function boot() {
     const code = roomCodeFromUrl();
     let token = null;
-    if (code) {
+    if (embeddedCard) {
+      token = new URLSearchParams(location.hash.slice(1)).get('session');
+      if (!/^[a-f0-9]{64}$/.test(token || '')) {
+        app.innerHTML = `<p class="notice">${esc(C.cardLoadingError)}</p>`;
+        return;
+      }
+    } else if (code) {
       try { token = localStorage.getItem(storageKey(code)); } catch (error) {}
     }
     if (!code || !token) {

@@ -6,6 +6,7 @@
 (function (root) {
   'use strict';
   const E = typeof module === 'object' && module.exports ? require('./chat-wolf-engine.js') : root.CHAT_WOLF_ENGINE;
+  const Cards = typeof module === 'object' && module.exports ? require('./chat-wolf-cards.js') : root.CHAT_WOLF_CARDS;
   const fail = code => { throw Object.assign(new Error(code), { code }); };
   const uid = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
   const validToken = token => /^[a-f0-9]{64}$/.test(token || '');
@@ -60,11 +61,12 @@
   }
 
   class Client {
-    constructor({ databaseURL, store, storage, clock = () => Date.now(), interval = 1500 } = {}) {
+    constructor({ databaseURL, store, storage, clock = () => Date.now(), interval = 1500, allowHostRecovery = true } = {}) {
       this.store = store || new FirebaseREST(databaseURL);
       this.storage = storage || root.localStorage;
       this.now = clock;
       this.interval = interval;
+      this.allowHostRecovery = allowHostRecovery;
       this.owner = uid();
       this.host = null;
       this.lastView = null;
@@ -80,6 +82,10 @@
     }
     load(key) { try { return this.storage.getItem(key); } catch (_) { return null; } }
     async create(body) {
+      const legacy = body.legacy ? Cards.normalize(body.legacy) : null;
+      const hostSeat = Number(body.hostSeat);
+      if (body.legacy && (!legacy || !Number.isInteger(hostSeat) || hostSeat < 0 || hostSeat >= legacy.playerCount ||
+          body.settings.playerCount !== legacy.playerCount)) fail('INVALID_CARD_SETUP');
       const token = uid(), control = uid(), hostId = `p_${uid().slice(0, 24)}`;
       // Validate before writing any room data or generating the join key.
       E.createRoom({ code: 'ABCDEF', hostPlayerId: hostId, hostSessionHash: token,
@@ -98,6 +104,19 @@
         this.save(this.hostKey(code), JSON.stringify({ control, token }));
         this.save(this.sessionKey(code), token);
         const data = { room, privateKey, channels: { [token]: { playerId: hostId, seq: 0 } }, joins: {} };
+        if (legacy) {
+          room.players[hostId].name = legacy.names[hostSeat];
+          data.legacyRoom = legacy.code;
+          data.cardLinks = legacy.tokens.map((sourceToken, i) => {
+            const cardToken = i === hostSeat ? token : uid();
+            if (i !== hostSeat) {
+              const playerId = `p_${uid().slice(0, 24)}`;
+              E.addPlayer(room, { playerId, sessionHash: cardToken, name: legacy.names[i], now: this.now() });
+              data.channels[cardToken] = { playerId, seq: 0 };
+            }
+            return { sourceToken, token: cardToken, name: legacy.names[i], playerNum: i + 1 };
+          });
+        }
         await this.store.put(this.path(code, control), { data: JSON.stringify(data), revision: 1,
           owner: this.owner, lastHostAt: this.now(), leaseUntil: this.now() + 10000 });
         const reserved = await this.store.put(ref, { version: 2, publicKey, createdAt: this.now() }, old.etag);
@@ -160,7 +179,7 @@
     async read(code, token) {
       code = codeOf(code);
       if (!validToken(token)) fail('INVALID_SESSION');
-      if (!this.host) {
+      if (!this.host && this.allowHostRecovery) {
         let saved;
         try { saved = JSON.parse(this.load(this.hostKey(code))); } catch (_) {}
         if (saved?.token === token && validToken(saved.control)) {
@@ -274,7 +293,8 @@
       if (committed.conflict || this.stopped) return;
       await Promise.all(Object.entries(data.channels).map(async ([token, channel]) => {
         const view = room.players[channel.playerId] && !channel.error ? E.projectState(room, channel.playerId, now) : null;
-        if (view) Object.assign(view.public, { syncRevision: revision, hostLiveUntil: now + 10000, transportRound: room.round || 0 });
+        if (view) Object.assign(view.public, { syncRevision: revision, hostLiveUntil: now + 10000, transportRound: room.round || 0,
+          legacyCardRoom: data.legacyRoom || null });
         for (let attempt = 0; attempt < 4; attempt++) {
           const ref = this.path(code, token), oldCard = await this.store.get(ref);
           if ((oldCard.value?.revision || 0) > revision || this.stopped) return;
@@ -286,6 +306,23 @@
           if (!result.conflict) return;
         }
       }));
+    }
+    async connectCards() {
+      if (!this.host) fail('HOST_ONLY');
+      const { code, control } = this.host;
+      const data = JSON.parse((await this.store.get(this.path(code, control))).value.data);
+      if (!data.cardLinks || !data.legacyRoom) fail('INVALID_CARD_SETUP');
+      for (const link of data.cardLinks) {
+        const ref = `rooms/${data.legacyRoom}/players/${link.sourceToken}`;
+        let done = false;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const old = await this.store.get(ref);
+          const result = await this.store.put(ref, { game: 'chatwolf', name: link.name, playerNum: link.playerNum,
+            chatWolf: { version: 1, room: code, token: link.token } }, old.etag);
+          if (!result.conflict) { done = true; break; }
+        }
+        if (!done) fail('ACTION_CONFLICT');
+      }
     }
     async request(method, body, session) {
       if (method === 'POST' && body?.action === 'create') return this.create(body);
