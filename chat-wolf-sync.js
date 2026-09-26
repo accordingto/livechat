@@ -22,7 +22,7 @@
     const meeting = room.meeting;
     return [room.gameNumber, room.phase, room.round || 0,
       room.phase === 'TALK' ? turn?.speakerIndex : room.phase === 'MEETING_DISCUSS' ? meeting?.speakerIndex : '',
-      room.voting?.id || ''].join(':');
+      room.phase === 'VOTING' ? room.voting?.id || '' : ''].join(':');
   }
   function viewStamp(view) {
     const p = view.public;

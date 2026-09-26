@@ -2,12 +2,18 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
-const { Client, FirebaseREST, stamp } = require('../chat-wolf-sync.js');
+const { Client, FirebaseREST, stamp, viewStamp } = require('../chat-wolf-sync.js');
 const E = require('../chat-wolf-engine.js');
 const Cards = require('../chat-wolf-cards.js');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const storage = () => { const values = new Map(); return { getItem: k => values.get(k) || null, setItem: (k,v) => values.set(k,v) }; };
 const copy = x => x === undefined ? null : JSON.parse(JSON.stringify(x));
+test('a finished identification does not retain a hidden voting context that blocks replay', () => {
+  const room = E.createRoom({ code:'ABC234', hostPlayerId:'p1', hostSessionHash:'host', hostName:'Host', settings:{playerCount:3,wolfCount:1}, now:100, seed:1 });
+  room.phase = 'FINISHED';
+  room.voting = { id:'completed-identification' };
+  assert.equal(stamp(room),viewStamp(E.projectState(room,'p1',100)));
+});
 test('legacy card setup and iframe links reject malformed credentials', () => {
   assert.equal(Cards.normalize({ code: '../bad', playerCount: 3, tokens: [] }), null);
   assert.equal(Cards.frameURL({ version: 1, room: 'ABC234', token: 'fake' }, 'https://example.com/play.html'), null);
