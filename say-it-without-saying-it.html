@@ -605,6 +605,18 @@
       text-align: center;
     }
     .cp-actions + .cp-info { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+    /* Stands in for a real button when a card has none right now — an onlooker
+       mid-round, a referee who already called Taboo! — so the divider above
+       .cp-info still shows up and every card in the round lines its info line up
+       at the same height, whether it has a button below the divider or not.
+       Sized like .cp-btn's own padding/line-height, not styled like one (no
+       border, no fill, dimmer text) — it reads as "there's a gap here on
+       purpose," not as a fourth kind of clickable button. */
+    .cp-none {
+      display: inline-block; padding: 5px 10px;
+      font-size: .74rem; font-weight: 700; line-height: 1.3;
+      color: var(--text-muted); opacity: .7;
+    }
     .cp-btn-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
     .cp-btn {
       display: inline-block; border-radius: 8px; padding: 5px 10px;
@@ -1046,6 +1058,7 @@
       notItHangTightPreview: { zh: '❌ 不對 — 先等一下', en: '❌ Not it — hang tight' },
       buzzInPreviewBtn: { zh: '🙋 搶答！', en: '🙋 Buzz in!' },
       keepGoingPreview: { zh: '🎤 正在描述中 — 有人搶答時按鈕就會出現', en: '🎤 Still describing — buttons appear once someone buzzes in' },
+      noButtonPreview: { zh: '· 沒有按鈕 ·', en: '· No button ·' },
       tabooCaughtKind: { zh: '🚨 抓到禁字', en: '🚨 Taboo caught' },
       gotItKind: { zh: '✅ 答對了', en: '✅ Got it' },
       roundEndedKind: { zh: '⏹️ 這輪結束', en: '⏹️ Round ended' },
@@ -2736,21 +2749,21 @@
       const dealPreview = p.canDeal
         ? `<button type="button" class="cp-btn cp-btn-deal" onclick="previewAction(${i},'deal')">${tt(p.state === 'idle' ? 'dealFirstPreviewBtn' : 'dealNextPreviewBtn')}</button>`
         : '';
+      const actions = [];
+      const info = [];
       // actions (buttons) always render first/on top, info (notes/results) always
       // render second/below — two fixed regions, not whatever order the branch
       // below happened to push things in
       if (p.state === 'idle') {
-        return dealPreview
-          ? `<div class="cp-actions">${dealPreview}</div>`
-          : `<div class="cp-info"><div class="cp-note">${tt('nothingDealtYet')}</div></div>`;
+        if (dealPreview) actions.push(dealPreview);
+        else info.push(`<div class="cp-note">${tt('nothingDealtYet')}</div>`);
+        return combinePreview(actions, info);
       }
       if (p.state === 'ready') {
-        return p.isGiver
-          ? `<div class="cp-actions"><button type="button" class="cp-btn cp-btn-buzz" onclick="previewAction(${i},'ready')">${tt('openWordPreviewBtn')}</button></div>`
-          : `<div class="cp-info"><div class="cp-note">${tt('waitingOpenPreview', { name: p.giverName })}</div></div>`;
+        if (p.isGiver) actions.push(`<button type="button" class="cp-btn cp-btn-buzz" onclick="previewAction(${i},'ready')">${tt('openWordPreviewBtn')}</button>`);
+        else info.push(`<div class="cp-note">${tt('waitingOpenPreview', { name: p.giverName })}</div>`);
+        return combinePreview(actions, info);
       }
-      const actions = [];
-      const info = [];
       if (p.isGiver) {
         if (p.tabooBy) {
           info.push(`<div class="cp-note">${tt('clockOnHoldPreview', { name: p.tabooBy })}</div>`);
@@ -2803,8 +2816,22 @@
         info.push(`<div class="cp-result">${kind} — ${p.result.who}${p.result.youWon ? pts : ''}${penalty}</div>`);
       }
       if (dealPreview) actions.push(dealPreview);
-      const actionsHTML = actions.length ? `<div class="cp-actions">${actions.join('')}</div>` : '';
+      return combinePreview(actions, info);
+    }
+
+    /* Renders the two fixed regions cardPreviewText() collects into. A card with
+       nothing to press right now (an onlooker mid-round, a referee who already
+       called Taboo!) used to skip the actions block entirely — which meant its
+       divider disappeared too, so next to a card that DOES have a button, the two
+       ended up starting their info line at different heights and looking like two
+       different layouts rather than the same card in two different states. The
+       actions block (real button, or this placeholder when there isn't one) is now
+       always drawn whenever there's an info line below it, so every card in a round
+       lines up on the same divider whether it has something to press or not. */
+    function combinePreview(actions, info) {
+      const actionsBody = actions.length ? actions.join('') : `<div class="cp-none">${tt('noButtonPreview')}</div>`;
       const infoHTML = info.length ? `<div class="cp-info">${info.join('')}</div>` : '';
+      const actionsHTML = actions.length || infoHTML ? `<div class="cp-actions">${actionsBody}</div>` : '';
       return actionsHTML + infoHTML;
     }
 
