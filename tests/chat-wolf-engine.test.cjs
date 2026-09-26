@@ -9,7 +9,7 @@ const {
   advanceExpired,
   dispatch,
   projectState,
-} = require('../api/_lib/chat-wolf-engine.cjs');
+} = require('../chat-wolf-engine.js');
 
 function setup6(seed = 123456, settings = {}) {
   let now = 1_000_000;

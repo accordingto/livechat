@@ -1,14 +1,16 @@
 ## 專案背景
 
-**聊天狼人 v1（2026-09-20）**：入口 `chat-wolf.html`。這款遊戲不使用既有
-`play.html` 私人牌卡節點，而是由 `api/chat-wolf.js` 驗證每位玩家的 256-bit 重連
-token，再從 Firebase `chatWolfRooms/{CODE}` 取出伺服器權威狀態並分成公開／個人／
-狼隊投影。房主也是普通玩家，若為村民不會看到狼人或任務。六輪、兩個會議槽、
-一次搖鈴、整組指認、兩個共享任務、人工核對與再玩一局均在
-`api/_lib/chat-wolf-engine.cjs` 的原子狀態轉移內；前端只送意圖，不可自行推進。
-介面文案集中在 `chat-wolf-copy.js`，規則、環境設定與測試矩陣見
-`chat-wolf-mode.md`。此模式需要 Vercel 的 `FIREBASE_SERVICE_ACCOUNT_JSON`，不能把
-服務帳號或當局秘密移到公開前端，也不能用 localStorage 冒充多人同步。
+**聊天狼人 v2（2026-09-27，使用者同意改回舊遊戲的主持信任模式）**：入口
+`chat-wolf.html`，純靜態部署。已移除 Admin API 與其憑證需求。`chat-wolf-sync.js`
+沿用 Firebase `rooms/chatwolf-{CODE}/players/{隨機token}` 存主持狀態／私人投影，
+`roster` 僅存加入用公鑰及加密請求，不公布玩家 token。`chat-wolf-engine.js` 保留
+六輪、共享兩任務、會議配額與人工核對。Firebase REST ETag 作 CAS，主持 lease
+避免多分頁重複推進，指令序號與階段／發言位置防重送。JSON 字串保存精確空陣列。
+房主正常村民介面不顯示其他身分或任務，但其瀏覽器能檢查完整狀態，必須信任房主。
+房主頁需保持開啟；斷線超過 lease 後回來延續剩餘時間，狀態仍保存在 Firebase。
+localStorage 只存玩家 token／主持控制 token，不存權威牌局。不要再宣稱伺服器
+秘密隔離或要求 Firebase Admin。詳見 `chat-wolf-mode.md`；文案集中在
+`chat-wolf-copy.js`。正式頁不提供多玩家測試／任意讀卡入口。
 
 我是一個**英文線上聊天室的主持人**，負責帶領參與者進行互動活動。
 

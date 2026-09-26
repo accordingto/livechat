@@ -1,3 +1,4 @@
+(function (root) {
 'use strict';
 
 const PHASES = Object.freeze({
@@ -866,7 +867,7 @@ function projectState(room, actorId, now = Date.now()) {
   return { public: publicState, private: privateState };
 }
 
-module.exports = {
+const engine = {
   PHASES,
   SCENARIO,
   TASK_POOL,
@@ -878,3 +879,6 @@ module.exports = {
   dispatch,
   projectState,
 };
+if (typeof module === 'object' && module.exports) module.exports = engine;
+else root.CHAT_WOLF_ENGINE = engine;
+})(typeof globalThis === 'object' ? globalThis : this);

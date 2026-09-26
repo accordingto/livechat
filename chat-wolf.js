@@ -2,6 +2,7 @@
   'use strict';
 
   const C = window.CHAT_WOLF_COPY;
+  const transport = new window.CHAT_WOLF_SYNC.Client({ databaseURL: FIREBASE_CONFIG.databaseURL });
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
   const syncPill = document.getElementById('sync-pill');
@@ -28,7 +29,7 @@
   const roomCodeFromUrl = () => String(new URLSearchParams(location.search).get('room') || '').trim().toUpperCase();
   const playerById = (id) => state && state.public.players.find((player) => player.id === id);
   const playerName = (id) => (playerById(id) || {}).name || '未知玩家';
-  const storageKey = (code) => `chat-wolf-session:${code}`;
+  const storageKey = (code) => `chat-wolf-legacy-session:${code}`;
 
   function showToast(message) {
     clearTimeout(toastTimer);
@@ -66,32 +67,7 @@
   }
 
   async function apiRequest(method, body) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (session) headers.Authorization = `Bearer ${session.token}`;
-    const url = method === 'GET'
-      ? `/api/chat-wolf?room=${encodeURIComponent(session.room)}`
-      : '/api/chat-wolf';
-    let response;
-    try {
-      response = await fetch(url, {
-        method,
-        headers,
-        cache: 'no-store',
-        body: method === 'POST' ? JSON.stringify(body || {}) : undefined,
-      });
-    } catch (error) {
-      const network = new Error('NETWORK');
-      network.code = 'NETWORK';
-      throw network;
-    }
-    let payload = null;
-    try { payload = await response.json(); } catch (error) {}
-    if (!response.ok || !payload || !payload.ok) {
-      const apiError = new Error(payload && payload.error ? payload.error : 'SERVER_ERROR');
-      apiError.code = apiError.message;
-      throw apiError;
-    }
-    return payload;
+    return transport.request(method, body, session);
   }
 
   function captureOpenDetails() {
@@ -102,7 +78,8 @@
     app.querySelectorAll('form[data-task-form]').forEach((form) => {
       const id = form.dataset.taskForm;
       taskDrafts[id] = {
-        note: form.querySelector('[name="note"]') ? form.querySelector('[name="note"]').value : undefined,
+        note: form.querySelector('[name="note"]') && form.querySelector('[name="note"]').value !== state?.private.tasks?.find(task => task.id === id)?.note
+          ? form.querySelector('[name="note"]').value : undefined,
         summary: form.querySelector('[name="summary"]') ? form.querySelector('[name="summary"]').value : undefined,
         round: form.querySelector('[name="round"]') ? form.querySelector('[name="round"]').value : undefined,
         targets: Array.from(form.querySelectorAll('[name="target"]:checked')).map((input) => input.value),
@@ -118,10 +95,15 @@
   }
 
   function applyState(next, forceRender) {
-    const open = captureOpenDetails();
-    captureTaskDrafts();
+    const newGame = state && (state.public.gameNumber !== next.public.gameNumber ||
+      (next.public.phase === 'LOBBY' && state.public.phase !== 'LOBBY'));
+    const open = newGame ? new Set() : captureOpenDetails();
+    if (newGame) taskDrafts = {};
+    else captureTaskDrafts();
+    if (state?.public.syncRevision !== next.public.syncRevision) {
+      serverOffset = Number(next.public.serverNow || Date.now()) - Date.now();
+    }
     state = next;
-    serverOffset = Number(state.public.serverNow || Date.now()) - Date.now();
     setSync('connected');
     if (forceRender || lastRevision !== state.public.revision) {
       if (!state.public.voting || voteDraftId !== state.public.voting.id) {
@@ -206,6 +188,7 @@
       <h1>${esc(C.title)}</h1>
       <p>${esc(C.intro)}</p>
       <p class="system-note">${esc(C.systemRandomNote)}</p>
+      <p class="notice warning">${esc(C.hostModeNote)}</p>
     </section>`;
   }
 
@@ -505,6 +488,12 @@
   }
 
   function paintTimers() {
+    const connection = document.getElementById('host-connection');
+    if (connection) {
+      connection.hidden = !state;
+      connection.textContent = !state ? '' : Date.now() + serverOffset > state.public.hostLiveUntil
+        ? C.hostUnavailable : state.private.isHost ? C.keepHostOpen : C.hostConnected;
+    }
     document.querySelectorAll('[data-deadline]').forEach((element) => {
       const remaining = Math.max(0, Number(element.dataset.deadline) - (Date.now() + serverOffset));
       const seconds = Math.ceil(remaining / 1000);
@@ -687,10 +676,12 @@
       applyState(response.state, true);
       startSync();
     } catch (error) {
-      clearSession();
+      // Keep the saved identity on transient network/host failures.
+      if (['INVALID_SESSION', 'SESSION_REQUIRED'].includes(error.code)) clearSession();
       entryMode = 'join';
       renderEntry(code);
       showToast(errorMessage(error.code));
+      if (session) startSync();
     }
   }
 
