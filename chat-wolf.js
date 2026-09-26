@@ -309,7 +309,7 @@
     return `<section class="panel role-card">
       <div class="eyebrow">${esc(C.roleReveal)}</div>
       <div class="role-title ${isWolf ? 'wolf' : 'villager'}">${esc(isWolf ? C.wolf : C.villager)}</div>
-      <p class="muted">${esc(isWolf ? C.wolfHelp : C.villagerHelp)}</p>
+      <p class="muted">${esc(isWolf ? (state.public.rulesVersion >= 2 ? C.wolfHelp : C.legacyWolfHelp) : C.villagerHelp)}</p>
       ${team}
       ${isWolf ? taskCards() : ''}
     </section>`;
@@ -324,7 +324,7 @@
     return `<details class="sensitive" data-detail="wolf-tasks">
       <summary><span>${esc(C.sensitive)} · ${esc(C.tasks)}</span><span>${esc(C.sensitiveHint)}</span></summary>
       <div class="sensitive-body">
-        <p class="notice danger">${esc(C.taskHumanRule)}</p>
+        <p class="notice danger">${esc(state.public.rulesVersion >= 2 ? C.taskHumanRule : C.legacyTaskHumanRule)}</p>
         ${state.private.tasks.map((task) => {
           const noteDraft = taskDrafts[task.id] || {};
           const claimDraft = taskDrafts[`${task.id}-claim`] || {};
@@ -333,24 +333,27 @@
           const round = claimDraft.round || String(state.public.talk ? state.public.talk.round : 1);
           const targetDraft = new Set(claimDraft.targets || []);
           const claim = task.claim;
+          const mine = !task.ownerId || task.ownerId === state.private.playerId;
           return `<article class="task-card">
-            <div class="task-title-row"><div class="task-title">${esc(task.id)} · ${esc(task.title)}</div><span class="mini-chip${claim ? ' ready' : ''}">${esc(claim ? C.taskStatusClaimed : C.taskStatusOpen)}</span></div>
+            <h3>${esc(task.ownerId ? (mine ? C.myPersonalTask : C.teammateTask(task.ownerName)) : C.sharedTask)}</h3>
+            <div class="task-title-row"><div class="task-title">${esc(task.id)}</div><span class="mini-chip${claim ? ' ready' : ''}">${esc(claim ? C.taskStatusClaimed : C.taskStatusOpen)}</span></div>
             <p class="task-condition">${esc(task.condition)}</p>
+            ${task.ownerId ? `<p class="muted">${esc(C.personalOwnerRule(task.ownerName))}</p>` : ''}
             ${claim ? `<div class="claim-box"><strong>${esc(C.taskStatusClaimed)}</strong><br>${esc(claim.targetNames.join('、'))} · 第 ${claim.round} 輪<br>${esc(claim.summary)}</div>` : ''}
             ${canEditNote ? `<form class="task-form" data-task-form="${esc(task.id)}" data-form="taskNote">
               <input type="hidden" name="taskId" value="${esc(task.id)}">
               <label class="field"><span>${esc(C.taskNote)}</span><textarea name="note" maxlength="240" placeholder="${esc(C.notePlaceholder)}">${esc(note)}</textarea></label>
               <button class="btn secondary small" type="submit">${esc(C.saveNote)}</button>
             </form>` : ''}
-            ${canClaim ? `
+            ${canClaim && mine ? `
             <form class="task-form" data-task-form="${esc(task.id)}-claim" data-form="taskClaim">
               <input type="hidden" name="taskId" value="${esc(task.id)}">
               <strong>${esc(C.claimTask)}</strong>
-              <div class="muted">${esc(C.taskTargets)}（${task.requiredVillagers} 人）</div>
-              <div class="target-grid">${villagers.map((player) => `<label class="target-check"><input type="checkbox" name="target" value="${esc(player.id)}"${targetDraft.has(player.id) ? ' checked' : ''}><span>${esc(player.name)}</span></label>`).join('')}</div>
+              ${task.requiredVillagers ? `<div class="muted">${esc(C.taskTargets)}（${task.requiredVillagers} 人）</div>
+              <div class="target-grid">${villagers.map((player) => `<label class="target-check"><input type="checkbox" name="target" value="${esc(player.id)}"${targetDraft.has(player.id) ? ' checked' : ''}><span>${esc(player.name)}</span></label>`).join('')}</div>` : ''}
               <label class="field"><span>${esc(C.taskRound)}</span><select name="round">${options(1, state.public.talk.round, Number(round))}</select></label>
               <label class="field"><span>${esc(C.taskSummary)}</span><textarea name="summary" maxlength="240" placeholder="${esc(C.summaryPlaceholder)}">${esc(summary)}</textarea></label>
-              <div class="button-row"><button class="btn small" type="submit">${esc(C.submitClaim)}</button>${claim ? `<button class="btn ghost small" type="button" data-action="cancelClaim" data-task-id="${esc(task.id)}">${esc(C.cancelClaim)}</button>` : ''}</div>
+              <div class="button-row"><button class="btn small" type="submit">${esc(task.ownerId ? C.personalClaim : C.submitClaim)}</button>${claim ? `<button class="btn ghost small" type="button" data-action="cancelClaim" data-task-id="${esc(task.id)}">${esc(C.cancelClaim)}</button>` : ''}</div>
             </form>` : ''}
           </article>`;
         }).join('')}
@@ -383,6 +386,7 @@
             <label class="check-line"><input name="bellEnabled" type="checkbox"${settings.bellEnabled ? ' checked' : ''}><span>${esc(C.bellSetting)}</span></label>
             <div class="inline-fields"><label class="field"><span>${esc(C.talkSeconds)}</span><input name="talkSeconds" type="number" min="20" max="180" value="${esc(settings.talkSeconds)}"></label><label class="field"><span>${esc(C.meetingSeconds)}</span><input name="meetingSeconds" type="number" min="10" max="60" value="${esc(settings.meetingSeconds)}"></label></div>
             <label class="field"><span>${esc(C.voteSeconds)}</span><input name="voteSeconds" type="number" min="15" max="90" value="${esc(settings.voteSeconds)}"></label>
+            <label class="field"><span>${esc(C.freeTalkSeconds)}</span><input name="freeTalkSeconds" type="number" min="20" max="180" value="${esc(settings.freeTalkSeconds || settings.talkSeconds)}"></label>
             <button class="btn secondary" type="submit">${esc(C.saveSettings)}</button>
           </form>` : `<section class="panel"><h3>${esc(C.room)}</h3><p class="muted">${esc(C.waitingForPlayers(current, state.public.settings.playerCount))}</p></section>`}
         </div>
@@ -421,6 +425,7 @@
     return `<div class="button-row">
       ${actions.canEndTurn ? `<button class="btn" type="button" data-action="endTurn">${esc(C.endMyTurn)}</button>` : ''}
       ${actions.canHostEndTurn ? `<button class="btn secondary" type="button" data-action="endTurn">${esc(C.hostSkip)}</button>` : ''}
+      ${actions.canEndFreeTalk ? `<button class="btn" type="button" data-action="endFreeTalk">${esc(C.endFreeTalk)}</button>` : ''}
       ${actions.canRingBell ? `<button class="btn warning" type="button" data-action="ringBell">${esc(C.bell)}</button>` : ''}
       ${actions.canFollowUp ? `<button class="btn secondary" type="button" data-action="followUp">${esc(C.followUp)}</button>` : ''}
     </div>`;
@@ -429,10 +434,12 @@
   function renderTalk() {
     const talk = state.public.talk;
     const speaker = playerById(talk.currentSpeakerId);
+    const free = state.public.phase === 'FREE_TALK';
     const isMe = talk.currentSpeakerId === state.private.playerId;
     return `${roomBar()}${roundTrack(talk.round)}<div class="game-grid"><div class="main-stack">${lastVoteNotice()}
-      <section class="question-card"><div class="scenario">${esc(C.roundOf(talk.round))} · ${esc(state.public.scenario.title)}</div><h2 class="question">${esc(talk.question)}</h2>${talk.followUp ? `<div class="follow-up"><strong>${esc(C.followUpLabel)}</strong><br>${esc(talk.followUp)}</div>` : ''}
-        <div class="speaker-hero"><div class="speaker-icon">${isMe ? '👋' : '🎙️'}</div><div><div class="speaker-label">${esc(isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
+      <section class="question-card${free ? ' free-talk' : ''}"><div class="scenario">${esc(C.roundOf(talk.round))} · ${esc(state.public.rulesVersion >= 2 ? C.mainTopic : state.public.scenario.title)}</div><h2 class="question">${esc(talk.question)}</h2>${talk.followUp ? `<div class="follow-up"><strong>${esc(C.followUpLabel)}</strong><br>${esc(talk.followUp)}</div>` : ''}
+        <div class="speaker-hero"><div class="speaker-icon">${free ? '💬' : isMe ? '👋' : '🎙️'}</div><div><div class="speaker-label">${esc(free ? C.everyoneCanTalk : isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(free ? C.freeTalk : speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
+        ${free ? `<p>${esc(C.freeTalkHelp)} ${esc(talk.nextSpeakerId ? C.nextSpeaker(playerName(talk.nextSpeakerId)) : C.roundEnding)}</p>` : ''}
       </section>
       <section class="panel"><div class="panel-header"><h3>${esc(C.speakerOrder)}</h3>${hostControls()}</div>${orderList(talk.order, talk.completed, talk.currentSpeakerId)}<div style="margin-top:16px">${talkControls()}</div><p class="muted">${esc(C.externalVoiceNote)}</p></section>
     </div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
@@ -476,7 +483,7 @@
   function publicTaskCards(reviewMode) {
     return state.public.reveal.tasks.map((task) => {
       const status = !task.claim ? C.unclaimed : !task.review ? C.pendingReview : task.review.valid ? C.valid : C.invalid;
-      return `<article class="task-card"><div class="task-title-row"><div class="task-title">${esc(task.id)} · ${esc(task.title)}</div><span class="mini-chip${task.review && task.review.valid ? ' ready' : ''}">${esc(status)}</span></div><p class="task-condition">${esc(task.condition)}</p>
+      return `<article class="task-card"><h3>${esc(task.ownerId ? C.teammateTask(task.ownerName) : C.sharedTask)}</h3><div class="task-title-row"><div class="task-title">${esc(task.id)}</div><span class="mini-chip${task.review && task.review.valid ? ' ready' : ''}">${esc(status)}</span></div><p class="task-condition">${esc(task.condition)}</p>
         ${task.claim ? `<div class="claim-box">${esc(task.claim.targetNames.join('、'))} · 第 ${task.claim.round} 輪<br>${esc(task.claim.summary)}</div>` : `<p class="muted">${esc(C.unclaimed)}</p>`}
         ${reviewMode && state.private.actions.canReviewTasks && task.claim && !task.review ? `<div class="button-row" style="margin-top:12px"><button class="btn small" type="button" data-action="reviewTask" data-task-id="${esc(task.id)}" data-valid="true">${esc(C.valid)}</button><button class="btn danger small" type="button" data-action="reviewTask" data-task-id="${esc(task.id)}" data-valid="false">${esc(C.invalid)}</button></div>` : ''}
       </article>`;
@@ -507,6 +514,7 @@
       case 'LOBBY': app.innerHTML = renderLobby(); break;
       case 'ROLE_REVEAL': app.innerHTML = renderRoleReveal(); break;
       case 'TALK': app.innerHTML = renderTalk(); break;
+      case 'FREE_TALK': app.innerHTML = renderTalk(); break;
       case 'MEETING_DISCUSS': app.innerHTML = renderMeeting(); break;
       case 'VOTING': app.innerHTML = renderVoting(); break;
       case 'TASK_REVIEW': app.innerHTML = renderTaskReview(); break;
@@ -588,6 +596,7 @@
         wolfCount: Number(form.elements.wolfCount.value),
         bellEnabled: form.elements.bellEnabled.checked,
         talkSeconds: Number(form.elements.talkSeconds.value),
+        freeTalkSeconds: Number(form.elements.freeTalkSeconds.value),
         meetingSeconds: Number(form.elements.meetingSeconds.value),
         voteSeconds: Number(form.elements.voteSeconds.value),
       };
@@ -663,6 +672,7 @@
         wolfCount: Number(form.elements.wolfCount.value),
         bellEnabled: form.elements.bellEnabled.checked,
         talkSeconds: Number(form.elements.talkSeconds.value),
+        freeTalkSeconds: Number(form.elements.freeTalkSeconds.value),
         meetingSeconds: Number(form.elements.meetingSeconds.value),
         voteSeconds: Number(form.elements.voteSeconds.value),
       };

@@ -1,10 +1,12 @@
 (function (root) {
 'use strict';
+const CONTENT = typeof module === 'object' && module.exports ? require('./chat-wolf-content.js') : root.CHAT_WOLF_CONTENT;
 
 const PHASES = Object.freeze({
   LOBBY: 'LOBBY',
   ROLE_REVEAL: 'ROLE_REVEAL',
   TALK: 'TALK',
+  FREE_TALK: 'FREE_TALK',
   MEETING_DISCUSS: 'MEETING_DISCUSS',
   VOTING: 'VOTING',
   TASK_REVIEW: 'TASK_REVIEW',
@@ -126,6 +128,7 @@ function normalizeSettings(input = {}) {
     wolfCount,
     bellEnabled: input.bellEnabled !== false,
     talkSeconds: intInRange(input.talkSeconds == null ? 60 : input.talkSeconds, 20, 180),
+    freeTalkSeconds: intInRange(input.freeTalkSeconds == null ? (input.talkSeconds || 60) : input.freeTalkSeconds, 20, 180),
     meetingSeconds: intInRange(input.meetingSeconds == null ? 20 : input.meetingSeconds, 10, 60),
     voteSeconds: intInRange(input.voteSeconds == null ? 30 : input.voteSeconds, 15, 90),
   };
@@ -233,12 +236,25 @@ function clearGameData(room) {
   for (const key of [
     'round', 'rounds', 'currentRoundState', 'meeting', 'meetingSlots', 'bell', 'tasks',
     'tasksFrozen', 'voting', 'ballots', 'voteHistory', 'lastVoteResult', 'result',
-    'paused', 'pausedRemainingMs', 'deadlineAt', 'followUpIndexByRound',
+    'paused', 'pausedRemainingMs', 'deadlineAt', 'followUpIndexByRound', 'topic', 'followUpOrder', 'followUpCursor',
   ]) delete room[key];
   for (const player of Object.values(room.players || {})) {
     player.role = null;
     player.roleAcknowledged = false;
   }
+}
+
+function chooseTask(room, pool, selected) {
+  const history = room.recentTasks || [];
+  const used = new Set(history.map(t => t.id));
+  let candidates = pool.filter(t => !used.has(t.id) && !selected.some(s => s.id === t.id));
+  if (!candidates.length) fail('NO_ELIGIBLE_TASKS', 409);
+  const diverse = candidates.filter(t => !selected.some(s => s.type === t.type &&
+    (s.family === t.family || (s.similarityGroup && s.similarityGroup === t.similarityGroup))));
+  if (diverse.length) candidates = diverse;
+  // Prefer families not used in the last game-sized slice; IDs never repeat within last 30.
+  const fresh = candidates.filter(t => !history.slice(-Math.max(3, room.settings.wolfCount + 1)).some(h => h.family === t.family && h.type === t.type));
+  return shuffle(room, fresh.length ? fresh : candidates)[0];
 }
 
 function startGame(room, now) {
@@ -256,10 +272,22 @@ function startGame(room, now) {
     room.players[id].roleAcknowledged = false;
   }
   const villagerCount = ids.length - room.settings.wolfCount;
-  const eligible = TASK_POOL.filter((task) => task.requiredVillagers <= villagerCount);
-  if (eligible.length < 2) fail('NO_ELIGIBLE_TASKS', 409);
-  room.tasks = shuffle(room, eligible).slice(0, 2).map((task) => ({
+  room.rulesVersion = 2;
+  room.topic = shuffle(room, CONTENT.topics.filter(t => t.id !== room.lastTopicId))[0];
+  room.lastTopicId = room.topic.id;
+  room.followUpOrder = shuffle(room, room.topic.followUps);
+  room.followUpCursor = -1;
+  const eligible = CONTENT.sharedTasks.filter(task => task.requiredVillagers <= villagerCount && task.minPlayers <= ids.length &&
+    task.compatibleTopicTags.some(tag => tag === '*' || room.topic.tags.includes(tag)));
+  const drawn = [chooseTask(room, eligible, [])];
+  for (const ownerId of wolves) {
+    drawn.push({ ...chooseTask(room, CONTENT.personalTasks.filter(t => t.onlineCompatible && t.minPlayers <= ids.length), drawn), ownerId });
+  }
+  room.recentTasks = [...(room.recentTasks || []), ...drawn.map(({ id, family, type }) => ({ id, family, type }))].slice(-30);
+  room.tasks = drawn.map((task) => ({
     ...task,
+    title: task.type === 'shared' ? '共同任務' : '個人行為任務',
+    condition: task.text,
     note: '',
     noteEditedBy: null,
     noteEditedAt: null,
@@ -378,8 +406,19 @@ function finishCurrentTalk(room, anchorTime, reason) {
   const currentId = state.order[state.speakerIndex];
   if (!currentId || state.completed[currentId]) fail('TURN_ALREADY_USED', 409);
   state.completed[currentId] = { reason, endedAt: anchorTime };
+  if (room.rulesVersion >= 2) {
+    room.phase = PHASES.FREE_TALK;
+    room.deadlineAt = anchorTime + (room.settings.freeTalkSeconds || room.settings.talkSeconds) * 1000;
+    return;
+  }
+  nextTalkSpeaker(room, anchorTime);
+}
+
+function nextTalkSpeaker(room, anchorTime) {
+  const state = room.currentRoundState;
   if (state.speakerIndex + 1 < state.order.length) {
     state.speakerIndex += 1;
+    room.phase = PHASES.TALK;
     room.deadlineAt = anchorTime + room.settings.talkSeconds * 1000;
   } else {
     room.deadlineAt = null;
@@ -475,7 +514,8 @@ function allTaskReviewsDone(room) {
 
 function finalizeTaskReview(room, now) {
   if (!allTaskReviewsDone(room)) fail('TASK_REVIEW_INCOMPLETE', 409);
-  const allValid = room.tasks.length === 2 && room.tasks.every((task) => task.review.valid === true);
+  const expected = room.rulesVersion >= 2 ? room.settings.wolfCount + 1 : 2;
+  const allValid = room.tasks.length === expected && room.tasks.every((task) => task.review.valid === true);
   finishGame(room, allValid ? 'WOLVES' : 'DRAW', allValid ? 'TASKS_VALID' : 'TASKS_INCOMPLETE', now);
 }
 
@@ -488,6 +528,7 @@ function advanceExpired(room, now) {
     changed = true;
     const anchor = Number(room.deadlineAt);
     if (room.phase === PHASES.TALK) finishCurrentTalk(room, anchor, 'timeout');
+    else if (room.phase === PHASES.FREE_TALK) nextTalkSpeaker(room, anchor);
     else if (room.phase === PHASES.MEETING_DISCUSS) finishCurrentMeetingSpeaker(room, anchor, 'timeout');
     else if (room.phase === PHASES.VOTING) finishVote(room, anchor);
     else break;
@@ -561,8 +602,15 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
       } else fail('WRONG_PHASE', 409);
       break;
     }
+    case 'endFreeTalk': {
+      requireHost(room, actorId);
+      requirePhase(room, PHASES.FREE_TALK);
+      if (room.paused) fail('GAME_PAUSED', 409);
+      nextTalkSpeaker(room, now);
+      break;
+    }
     case 'ringBell': {
-      requirePhase(room, PHASES.TALK);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK);
       if (room.paused) fail('GAME_PAUSED', 409);
       if (!room.bell.enabled) fail('BELL_DISABLED', 409);
       if (room.bell.used) fail('BELL_ALREADY_USED', 409);
@@ -579,7 +627,12 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
     }
     case 'followUp': {
       requireHost(room, actorId);
-      requirePhase(room, PHASES.TALK);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK);
+      if (room.rulesVersion >= 2) {
+        if (room.followUpCursor + 1 >= room.followUpOrder.length) fail('NO_MORE_FOLLOW_UPS', 409);
+        room.followUpCursor += 1;
+        break;
+      }
       const round = room.round;
       const options = SCENARIO.rounds[round - 1].followUps;
       const next = Number(room.followUpIndexByRound[String(round)] == null ? -1 : room.followUpIndexByRound[String(round)]) + 1;
@@ -589,7 +642,7 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
     }
     case 'pause': {
       requireHost(room, actorId);
-      requirePhase(room, PHASES.TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING);
       if (room.paused) fail('GAME_PAUSED', 409);
       room.pausedRemainingMs = Math.max(0, Number(room.deadlineAt) - now);
       room.paused = true;
@@ -598,7 +651,7 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
     }
     case 'resume': {
       requireHost(room, actorId);
-      requirePhase(room, PHASES.TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING);
       if (!room.paused) fail('GAME_NOT_PAUSED', 409);
       room.deadlineAt = now + Math.max(0, Number(room.pausedRemainingMs) || 0);
       room.paused = false;
@@ -614,7 +667,7 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
     case 'taskNote': {
       if (actor.role !== 'WOLF') fail('WOLF_ONLY', 403);
       if (room.tasksFrozen) fail('TASKS_FROZEN', 409);
-      if (![PHASES.ROLE_REVEAL, PHASES.TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase)
+      if (![PHASES.ROLE_REVEAL, PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase)
           || (room.phase === PHASES.VOTING && room.voting && room.voting.type === 'FINAL')) fail('WRONG_PHASE', 409);
       const task = room.tasks.find((item) => item.id === payload.taskId);
       if (!task) fail('INVALID_TASK');
@@ -624,11 +677,12 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
       break;
     }
     case 'claimTask': {
-      requirePhase(room, PHASES.TALK);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK);
       if (actor.role !== 'WOLF') fail('WOLF_ONLY', 403);
       if (room.tasksFrozen) fail('TASKS_FROZEN', 409);
       const task = room.tasks.find((item) => item.id === payload.taskId);
       if (!task) fail('INVALID_TASK');
+      if (task.ownerId && task.ownerId !== actorId) fail('TASK_OWNER_ONLY', 403);
       const targets = Array.isArray(payload.targetIds) ? payload.targetIds.map(String) : [];
       if (targets.length !== task.requiredVillagers || new Set(targets).size !== targets.length) fail('INVALID_TASK_TARGETS');
       if (!targets.every((id) => room.players[id] && room.players[id].role === 'VILLAGER')) fail('TASK_REQUIRES_VILLAGERS');
@@ -644,11 +698,12 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
       break;
     }
     case 'cancelClaim': {
-      requirePhase(room, PHASES.TALK);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK);
       if (actor.role !== 'WOLF') fail('WOLF_ONLY', 403);
       if (room.tasksFrozen) fail('TASKS_FROZEN', 409);
       const task = room.tasks.find((item) => item.id === payload.taskId);
       if (!task) fail('INVALID_TASK');
+      if (task.ownerId && task.ownerId !== actorId) fail('TASK_OWNER_ONLY', 403);
       task.claim = null;
       task.review = null;
       break;
@@ -715,6 +770,9 @@ function publicTask(room, task) {
   const nameOf = (id) => room.players[id] ? room.players[id].name : '未知玩家';
   return {
     id: task.id,
+    type: task.type || 'shared',
+    ownerId: task.ownerId || null,
+    ownerName: task.ownerId ? nameOf(task.ownerId) : null,
     title: task.title,
     condition: task.condition,
     requiredVillagers: task.requiredVillagers,
@@ -762,13 +820,14 @@ function projectState(room, actorId, now = Date.now()) {
     code: room.code,
     phase: room.phase,
     gameNumber: room.gameNumber,
+    rulesVersion: room.rulesVersion || 1,
     settings: { ...room.settings },
     players,
     hostPlayerId: room.hostPlayerId,
     scenario: {
-      id: SCENARIO.id,
-      title: SCENARIO.title,
-      rounds: room.phase === PHASES.LOBBY ? SCENARIO.rounds.map((round) => ({ question: round.question })) : undefined,
+      id: room.topic ? room.topic.id : SCENARIO.id,
+      title: room.topic ? room.topic.mainQuestion : SCENARIO.title,
+      rounds: room.phase === PHASES.LOBBY ? CONTENT.topics.map(t => ({ question: t.mainQuestion })) : undefined,
     },
     meetingSlots: room.meetingSlots ? JSON.parse(JSON.stringify(room.meetingSlots)) : null,
     bell: room.bell ? {
@@ -785,18 +844,19 @@ function projectState(room, actorId, now = Date.now()) {
     ...timerProjection(room),
   };
 
-  if (room.phase === PHASES.TALK && room.currentRoundState) {
+  if ([PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && room.currentRoundState) {
     const state = room.currentRoundState;
     const followIndex = room.followUpIndexByRound && room.followUpIndexByRound[String(room.round)];
     publicState.talk = {
       round: room.round,
       totalRounds: 6,
-      question: SCENARIO.rounds[room.round - 1].question,
-      followUp: Number.isInteger(followIndex) ? SCENARIO.rounds[room.round - 1].followUps[followIndex] : null,
-      followUpsRemaining: SCENARIO.rounds[room.round - 1].followUps.length - (Number.isInteger(followIndex) ? followIndex + 1 : 0),
+      question: room.topic ? room.topic.mainQuestion : SCENARIO.rounds[room.round - 1].question,
+      followUp: room.topic ? room.followUpOrder[room.followUpCursor] || null : Number.isInteger(followIndex) ? SCENARIO.rounds[room.round - 1].followUps[followIndex] : null,
+      followUpsRemaining: room.topic ? room.followUpOrder.length - room.followUpCursor - 1 : SCENARIO.rounds[room.round - 1].followUps.length - (Number.isInteger(followIndex) ? followIndex + 1 : 0),
       order: state.order.slice(),
       speakerIndex: state.speakerIndex,
-      currentSpeakerId: state.order[state.speakerIndex],
+      currentSpeakerId: room.phase === PHASES.FREE_TALK ? null : state.order[state.speakerIndex],
+      nextSpeakerId: state.order[state.speakerIndex + 1] || null,
       completed: { ...state.completed },
     };
   }
@@ -830,7 +890,7 @@ function projectState(room, actorId, now = Date.now()) {
     : room.phase === PHASES.MEETING_DISCUSS && room.meeting
       ? room.meeting.order[room.meeting.speakerIndex]
       : null;
-  const canBell = room.phase === PHASES.TALK && !room.paused && room.bell && room.bell.enabled && !room.bell.used
+  const canBell = [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && !room.paused && room.bell && room.bell.enabled && !room.bell.used
     && [1, 3].includes(room.round)
     && !(room.round === 1 ? room.meetingSlots.after2.used || room.meetingSlots.after2.advanced : room.meetingSlots.after4.used || room.meetingSlots.after4.advanced);
   const privateState = {
@@ -851,14 +911,15 @@ function projectState(room, actorId, now = Date.now()) {
       canEndTurn: !room.paused && currentSpeakerId === actorId,
       canHostEndTurn: !room.paused && actor.isHost && !!currentSpeakerId && currentSpeakerId !== actorId,
       canRingBell: canBell,
-      canFollowUp: actor.isHost && room.phase === PHASES.TALK && publicState.talk && publicState.talk.followUpsRemaining > 0,
-      canPause: actor.isHost && [PHASES.TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase) && !room.paused,
+      canEndFreeTalk: actor.isHost && room.phase === PHASES.FREE_TALK && !room.paused,
+      canFollowUp: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.followUpsRemaining > 0,
+      canPause: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase) && !room.paused,
       canResume: actor.isHost && !!room.paused,
       canCancel: actor.isHost && room.phase !== PHASES.FINISHED,
       canEditTaskNote: actor.role === 'WOLF' && !room.tasksFrozen
-        && [PHASES.ROLE_REVEAL, PHASES.TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase)
+        && [PHASES.ROLE_REVEAL, PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase)
         && !(room.phase === PHASES.VOTING && room.voting && room.voting.type === 'FINAL'),
-      canClaimTasks: actor.role === 'WOLF' && room.phase === PHASES.TALK && !room.tasksFrozen,
+      canClaimTasks: actor.role === 'WOLF' && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && !room.tasksFrozen,
       canSubmitVote: room.phase === PHASES.VOTING && !room.paused && !(room.voting && room.voting.submitted[actorId]),
       canReviewTasks: actor.isHost && room.phase === PHASES.TASK_REVIEW,
       canReplay: actor.isHost && room.phase === PHASES.FINISHED,

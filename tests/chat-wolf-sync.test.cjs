@@ -90,10 +90,12 @@ test('existing player cards get only their own sessions and can ready, reveal, s
   const taskId=(await read(wolves[0])).private.tasks[0].id;
   await send(wolves[0],{action:'taskNote',taskId,note:'來自原小卡'});
   assert.equal((await read(wolves[1])).private.tasks[0].note,'來自原小卡');
-  await send(wolves[1],{action:'claimTask',taskId,targetIds:villagers.slice(0,2).map(p=>p.id),round:1,summary:'測試合成事件'});
+  const required=(await read(wolves[0])).private.tasks[0].requiredVillagers;
+  await send(wolves[1],{action:'claimTask',taskId,targetIds:villagers.slice(0,required).map(p=>p.id),round:1,summary:'測試合成事件'});
   let meetings=0,votes=0;
   for(let n=0;n<100;n++) {
     const view=await read(players[1]),p=view.public;
+    if(p.phase==='FREE_TALK') { await send(players[1],{action:'endFreeTalk'}); continue; }
     if(p.phase==='TASK_REVIEW') { await send(players[1],{action:'reviewTask',taskId,valid:false}); break; }
     if(p.phase==='TALK'||p.phase==='MEETING_DISCUSS') {
       const turn=p.talk||p.meeting;
@@ -144,7 +146,7 @@ test('six clients join with encrypted tokens; two wolves share notes and village
   const wolves = s.clients.filter((_,i) => views[i].private.role === 'WOLF');
   const villagers = views.filter(v => v.private.role === 'VILLAGER');
   assert.equal(wolves.length, 2);
-  assert.equal((await s.read(wolves[0])).private.tasks.length, 2);
+  assert.equal((await s.read(wolves[0])).private.tasks.length, 3);
   for (const view of villagers) { assert.equal(view.private.tasks, null); assert.equal(view.private.wolfTeam, null); assert.equal(view.public.reveal, undefined); }
   const roster = JSON.stringify((await s.store.get(s.host.lobby(s.code))).value);
   for (const p of s.clients) assert.equal(roster.includes(p.token), false);
@@ -171,6 +173,9 @@ test('simultaneous bell/end commands advance once; stale actions cannot affect t
   await Promise.all(s.clients.map(s.read));
   const commands = speaker === s.clients[0] ? [speaker, s.clients[1]] : [speaker, s.clients[0]];
   await Promise.allSettled(commands.map(p => p.client.command(s.code,p.token,{ action:'endTurn' })));
+  assert.equal((await s.canonical()).room.currentRoundState.speakerIndex, 0);
+  assert.equal((await s.canonical()).room.phase, 'FREE_TALK');
+  await s.send(s.clients[0], { action: 'endFreeTalk' });
   assert.equal((await s.canonical()).room.currentRoundState.speakerIndex, 1);
   const stale = s.clients[0].client.lastView;
   await s.send(s.clients[0], { action: 'cancelGame' });
@@ -220,6 +225,7 @@ test('timeout and host skip use the displayed turn, not the newly advanced turn'
   await s.store.put(cardPath,card);
   s.host.stopped=false; await s.host.cycle(); s.host.close();
   const next=(await s.canonical()).room;
-  assert.equal(next.currentRoundState.speakerIndex,1);
+  assert.equal(next.currentRoundState.speakerIndex,0);
+  assert.equal(next.phase,'FREE_TALK');
   assert.equal((await s.store.get(cardPath)).value.reply.error,'STALE_ACTION');
 });

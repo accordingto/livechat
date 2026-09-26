@@ -1,5 +1,13 @@
 ## 專案背景
 
+**聊天狼人新版談話／任務（2026-09-27）**：新開局 `rulesVersion: 2`，每個正式發言後
+先進 `FREE_TALK`，再換下一人；固定六輪与既有會議／投票。每局一主題，Follow-up
+只抽相關延伸不重置時間。`chat-wolf-content.js` 有 40 主題／160 延伸／110 共同任務／
+150 個人任務。每局一共同＋每狼一个人，依最後補充**狼人互看隊友個人任務**，
+但只有本人能申報或取消，所有任務人工核對有效才可能狼勝。沒有第三人稱叫自己名字。
+房間近期 30 任務避重，重玩保留歷史；舊已開局無 rulesVersion 者到下局才升新版。
+內容模組須在 engine 前載入，UI copy 仍集中管理；詳見 `chat-wolf-mode.md` 最新段落。
+
 **聊天狼人原小卡整合（2026-09-27）**：`chat-wolf-cards.js` 讀首頁
 `room-last-session`／`room-session-{CODE}`，建立房間時選房主座位並預先加入原玩家。
 `chat-wolf-sync.js` 的 `connectCards()` 明確發送 `game: chatwolf` 到各自原 token

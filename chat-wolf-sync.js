@@ -21,13 +21,13 @@
     const turn = room.currentRoundState;
     const meeting = room.meeting;
     return [room.gameNumber, room.phase, room.round || 0,
-      room.phase === 'TALK' ? turn?.speakerIndex : room.phase === 'MEETING_DISCUSS' ? meeting?.speakerIndex : '',
+      ['TALK', 'FREE_TALK'].includes(room.phase) ? turn?.speakerIndex : room.phase === 'MEETING_DISCUSS' ? meeting?.speakerIndex : '',
       room.phase === 'VOTING' ? room.voting?.id || '' : ''].join(':');
   }
   function viewStamp(view) {
     const p = view.public;
     return [p.gameNumber, p.phase, p.talk?.round || p.transportRound || 0,
-      p.phase === 'TALK' ? p.talk.speakerIndex : p.phase === 'MEETING_DISCUSS' ? p.meeting.speakerIndex : '',
+      ['TALK', 'FREE_TALK'].includes(p.phase) ? p.talk.speakerIndex : p.phase === 'MEETING_DISCUSS' ? p.meeting.speakerIndex : '',
       p.voting?.id || ''].join(':');
   }
   const encode = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));

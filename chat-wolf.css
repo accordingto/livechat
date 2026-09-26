@@ -251,3 +251,6 @@ details.sensitive summary::-webkit-details-marker { display: none; }
 .embedded-card .panel, .embedded-card .card { margin-bottom: 12px; }
 .embedded-card .room-bar { flex-wrap: wrap; }
 .embedded-card #host-connection { margin: 8px; }
+/* The open response interval is a separate phase, not another formal turn. */
+.question-card.free-talk { border: 2px solid #56cfba; background: #133432; }
+.free-talk .speaker-name { color: #8bf1d8; }

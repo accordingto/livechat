@@ -31,7 +31,8 @@ async function main(){
   assert.equal(wolves.length,2);
   for(const p of villagers){const v=await read(p);assert.equal(v.private.tasks,null);assert.equal(v.private.wolfTeam,null);assert.equal(v.public.reveal,undefined);}
   const tasks=(await read(wolves[0])).private.tasks;
-  assert.equal(tasks.length,2);
+  assert.equal(tasks.length,3);
+  assert.deepEqual(tasks,(await read(wolves[1])).private.tasks);
   await send(wolves[0],{action:'taskNote',taskId:tasks[0].id,note:'Live sync QA'});
   assert.equal((await read(wolves[1])).private.tasks[0].note,'Live sync QA');
   const roster=JSON.stringify((await store.get(host.lobby(code))).value);
@@ -44,7 +45,13 @@ async function main(){
   await Promise.all(clients.map(read));
   const bells=await Promise.allSettled(clients.slice(1,3).map(p=>p.client.command(code,p.token,{action:'ringBell'})));
   assert.equal(bells.filter(r=>r.status==='fulfilled').length,1);
-  for(const task of tasks) await send(wolves[0],{action:'claimTask',taskId:task.id,targetIds:villagers.slice(0,2).map(p=>p.id),round:1,summary:'QA fabricated event for transport verification only'});
+  for(const task of tasks) await send(clients.find(p=>p.id===task.ownerId)||wolves[0],{action:'claimTask',taskId:task.id,targetIds:villagers.slice(0,task.requiredVillagers).map(p=>p.id),round:1,summary:'QA fabricated event for transport verification only'});
+  const before=(await read(clients[0])).public;
+  for(let i=0;i<3;i++) await send(clients[0],{action:'followUp'});
+  const after=(await read(clients[1])).public;
+  assert.equal(after.talk.round,before.talk.round);
+  assert.deepEqual(after.talk.order,before.talk.order);
+  assert.equal(after.deadlineAt,before.deadlineAt);
   assert.equal((await read(villagers[0])).private.tasks,null);
   await send(clients[0],{action:'pause'}); const paused=await read(clients[1]);assert.equal(paused.public.paused,true);
   await send(clients[0],{action:'resume'});
@@ -52,6 +59,13 @@ async function main(){
   const stages=[];
   for(let guard=0;guard<110;guard++){
     const view=await read(clients[0]),p=view.public;
+    if(p.phase==='FREE_TALK') {
+      const reconnect=new Client({store,storage:memory()});
+      const restored=await reconnect.read(code,clients[1].token); reconnect.close();
+      assert.equal(restored.public.phase,'FREE_TALK');
+      assert.equal(restored.public.talk.speakerIndex,p.talk.speakerIndex);
+      await send(clients[0],{action:'endFreeTalk'}); continue;
+    }
     const key=p.phase==='TALK'?`TALK ${p.talk.round}`:p.phase==='MEETING_DISCUSS'?`MEETING ${p.meeting.slotId}`:p.phase==='VOTING'?`VOTING ${p.voting.type}`:p.phase;
     if(stages.at(-1)!==key){stages.push(key);console.log(key);}
     if(p.phase==='TALK'||p.phase==='MEETING_DISCUSS')await send(clients[0],{action:'endTurn'});
