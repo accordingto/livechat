@@ -75,10 +75,16 @@ localStorage 僅保存 `chat-wolf-legacy-session:{CODE}`、`chat-wolf-host-v2:{C
 
 2026-09-27 實際驗證：
 
-- 本機 `node --test tests/*.test.cjs`：99 / 99 通過（聊天狼人 16 項）。
+- 本機 `node --test tests/*.test.cjs`：100 / 100 通過（聊天狼人 17 項）。
 - 真實 Firebase：六份獨立會話完成六輪、搖鈴提前會議、終局核對、狼人勝與重玩；
   測試完只清除自己新建的測試路徑。不是 localStorage 假多人。
 - Firebase CORS 回應正確暴露 ETag；若缺版本標記，連線層拒絕繼續，不降級成無條件寫入。
-- Chrome 與內建瀏覽器已載入介面，但受控瀏覽器對 Firebase 回報
-  `net::ERR_BLOCKED_BY_CLIENT`，因此不能宣稱瀏覽器內開房／跨瀏覽器同步已驗證。
+- 修正瀏覽器開房失敗：`this.fetcher(...)` 將 FirebaseREST 實例當作原生 fetch 的
+  receiver，瀏覽器會拋出 Illegal invocation，再被轉成 NETWORK。Node fetch 不會
+  因相同 receiver 失敗，先前純 Node 六人測試因此漏掉此問題。改用獨立函式呼叫，
+  新增測試先重現失敗再確認修正。HTML 增加同步程式版本參數避免沿用舊快取。
+- 修正後 Chrome 實際開房成功，內建瀏覽器實際加入成功，兩邊同步顯示同一房號、
+  兩名玩家。這是瀏覽器載入本機修正版、連線至真實 Firebase，不是模擬資料。
+  先前把開房失敗歸於受控瀏覽器直接導航 Firebase 時的 ERR_BLOCKED_BY_CLIENT
+  並不足以判定遊戲請求失敗原因；本次已確認遊戲內原因是上述呼叫錯誤。
 - 不同實體裝置尚未測試。資料庫自動測試不等同於手機與電腦實玩。

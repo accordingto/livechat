@@ -7,6 +7,16 @@ const E = require('../chat-wolf-engine.js');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const storage = () => { const values = new Map(); return { getItem: k => values.get(k) || null, setItem: (k,v) => values.set(k,v) }; };
 const copy = x => x === undefined ? null : JSON.parse(JSON.stringify(x));
+test('REST calls browser fetch without an illegal receiver', async () => {
+  let receiver;
+  const store = new FirebaseREST('https://example.invalid', async function () {
+    receiver = this;
+    if (this !== undefined) throw new TypeError('Illegal invocation');
+    return { ok: true, status: 200, headers: { get: () => 'null_etag' }, json: async () => null };
+  });
+  assert.deepEqual(await store.get('test'), { value: null, etag: 'null_etag' });
+  assert.equal(receiver, undefined);
+});
 test('REST requires an exposed ETag before any conditional update', async () => {
   const store = new FirebaseREST('https://example.invalid', async () => ({
     ok: true, status: 200, headers: { get: () => null }, json: async () => null,

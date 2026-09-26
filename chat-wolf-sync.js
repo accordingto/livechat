@@ -40,7 +40,10 @@
       if (etag) headers['if-match'] = etag;
       let response;
       try {
-        response = await this.fetcher(`${this.url}/${path}.json`, {
+        // Native browser fetch rejects a FirebaseREST instance as its receiver.
+        // Call the function directly (Node fetch did not expose this difference).
+        const fetcher = this.fetcher;
+        response = await fetcher(`${this.url}/${path}.json`, {
           method, headers, cache: 'no-store', signal: AbortSignal.timeout(12000),
           ...(value === undefined ? {} : { body: JSON.stringify(value) }),
         });
