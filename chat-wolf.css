@@ -171,10 +171,15 @@ input:focus, select:focus, textarea:focus, button:focus-visible, summary:focus-v
 .team-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
 .team-chip { padding: 7px 10px; border-radius: 999px; color: #ffd6dd; background: rgba(255,113,133,.1); border: 1px solid rgba(255,113,133,.3); }
 
-details.sensitive { margin-top: 12px; border: 1px solid rgba(255,113,133,.28); border-radius: 14px; background: rgba(40,13,25,.34); overflow: clip; }
-details.sensitive summary { display: flex; justify-content: space-between; gap: 12px; padding: 14px; cursor: pointer; font-weight: 850; color: #ffd1d9; }
-details.sensitive summary::-webkit-details-marker { display: none; }
-.sensitive-body { padding: 0 14px 14px; }
+.wolf-tasks { margin-top: 22px; }
+.meeting-footer { margin-top: 20px; }
+.wolf-task-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; align-items: start; }
+.wolf-task-grid .task-card + .task-card { margin-top: 0; }
+.wolf-task-grid h3 { color: #ffd2da; margin: 0 0 14px; }
+.task-tools { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.task-tools summary { cursor: pointer; color: var(--cyan); font-weight: 700; min-height: 32px; }
+.task-context, .saved-note { line-height: 1.5; font-size: .9rem; }
+.topic-context { line-height: 1.6; color: #c7d5e7; }
 .task-card { padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: rgba(10,15,28,.54); }
 .task-card + .task-card { margin-top: 12px; }
 .task-title-row { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
@@ -220,7 +225,7 @@ details.sensitive summary::-webkit-details-marker { display: none; }
   .site-header { grid-template-columns: 1fr auto; }
   .brand { display: none; }
   .entry-grid, .game-grid { grid-template-columns: 1fr; }
-  .side-stack { order: -1; }
+  .side-stack { order: initial; }
   .speaker-hero { grid-template-columns: auto 1fr; }
   .timer { grid-column: 1 / -1; text-align: left; padding-left: 64px; }
 }

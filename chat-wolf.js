@@ -35,7 +35,7 @@
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   const roomCodeFromUrl = () => String(new URLSearchParams(location.search).get('room') || '').trim().toUpperCase();
   const playerById = (id) => state && state.public.players.find((player) => player.id === id);
-  const playerName = (id) => (playerById(id) || {}).name || '未知玩家';
+  const playerName = (id) => (playerById(id) || {}).name || C.unknownPlayer;
   const storageKey = (code) => `chat-wolf-legacy-session:${code}`;
 
   function showToast(message) {
@@ -46,7 +46,7 @@
   }
 
   function errorMessage(code) {
-    return C.errors[code] || `操作未完成（${code || 'UNKNOWN'}）`;
+    return C.errors[code] || `Action not completed (${code || 'UNKNOWN'})`;
   }
 
   function setSync(kind) {
@@ -266,13 +266,13 @@
       <div><span class="phase-chip">${esc(C.phases[state.public.phase] || state.public.phase)}</span> <span class="room-code">${esc(state.public.code)}</span></div>
       <div class="button-row">${embeddedCard ? '' : `<button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button>`}
       ${!embeddedCard && state.private.isHost && state.public.legacyCardRoom ? `<button class="btn secondary small" type="button" data-command="sendCards">${esc(C.sendCards)}</button>` : ''}</div>
-    </div>${state.public.legacyCardRoom && !embeddedCard ? `<p class="notice">${esc(C.cardsLinked)}</p>` : ''}`;
+    </div>${state.public.legacyCardRoom && !embeddedCard && state.public.phase === 'LOBBY' ? `<p class="notice">${esc(C.cardsLinked)}</p>` : ''}`;
   }
 
   function playerRows(showRemove) {
     return `<div class="player-list">${state.public.players.map((player) => `<div class="player-row">
       <span class="status-dot${player.connected ? ' on' : ''}" title="${esc(player.connected ? C.online : C.offline)}"></span>
-      <span class="name">${esc(player.name)}${player.id === state.private.playerId ? ` <span class="muted">（${esc(C.me)}）</span>` : ''}</span>
+      <span class="name">${esc(player.name)}${player.id === state.private.playerId ? ` <span class="muted"> (${esc(C.me)})</span>` : ''}</span>
       ${player.isHost ? `<span class="mini-chip host">${esc(C.host)}</span>` : ''}
       <span class="mini-chip${player.ready ? ' ready' : ''}">${esc(player.ready ? C.ready : C.notReady)}</span>
       ${showRemove && !player.isHost ? `<button class="btn ghost small" type="button" data-action="removePlayer" data-player-id="${esc(player.id)}">${esc(C.remove)}</button>` : ''}
@@ -311,21 +311,18 @@
       <div class="role-title ${isWolf ? 'wolf' : 'villager'}">${esc(isWolf ? C.wolf : C.villager)}</div>
       <p class="muted">${esc(isWolf ? (state.public.rulesVersion >= 2 ? C.wolfHelp : C.legacyWolfHelp) : C.villagerHelp)}</p>
       ${team}
-      ${isWolf ? taskCards() : ''}
     </section>`;
   }
 
   function taskCards() {
     if (!state.private.tasks) return '';
+    const taskRank = task => !task.ownerId ? 0 : task.ownerId === state.private.playerId ? 1 : 2;
     const canEditNote = state.private.actions.canEditTaskNote;
     const canClaim = state.private.actions.canClaimTasks;
     const wolfIds = new Set((state.private.wolfTeam || []).map((member) => member.id));
     const villagers = state.public.players.filter((player) => !wolfIds.has(player.id));
-    return `<details class="sensitive" data-detail="wolf-tasks">
-      <summary><span>${esc(C.sensitive)} · ${esc(C.tasks)}</span><span>${esc(C.sensitiveHint)}</span></summary>
-      <div class="sensitive-body">
-        <p class="notice danger">${esc(state.public.rulesVersion >= 2 ? C.taskHumanRule : C.legacyTaskHumanRule)}</p>
-        ${state.private.tasks.map((task) => {
+    return `<section class="wolf-tasks"><div class="panel-header"><div><h2>${esc(C.tasks)}</h2><p>${esc(state.public.rulesVersion >= 2 ? C.taskTiming : C.legacyTaskHumanRule)}</p></div></div><div class="wolf-task-grid">
+        ${[...state.private.tasks].sort((a, b) => taskRank(a) - taskRank(b)).map((task) => {
           const noteDraft = taskDrafts[task.id] || {};
           const claimDraft = taskDrafts[`${task.id}-claim`] || {};
           const note = noteDraft.note == null ? task.note : noteDraft.note;
@@ -336,10 +333,13 @@
           const mine = !task.ownerId || task.ownerId === state.private.playerId;
           return `<article class="task-card">
             <h3>${esc(task.ownerId ? (mine ? C.myPersonalTask : C.teammateTask(task.ownerName)) : C.sharedTask)}</h3>
-            <div class="task-title-row"><div class="task-title">${esc(task.id)}</div><span class="mini-chip${claim ? ' ready' : ''}">${esc(claim ? C.taskStatusClaimed : C.taskStatusOpen)}</span></div>
+            <div class="task-title-row"><div class="task-title">${esc(C.doThis)}</div><span class="mini-chip${claim ? ' ready' : ''}">${esc(claim ? C.taskStatusClaimed : C.taskStatusOpen)}</span></div>
             <p class="task-condition">${esc(task.condition)}</p>
+            ${!task.ownerId && task.context ? `<p class="task-context">${esc(C.taskContext)}: <strong>${esc(task.context)}</strong></p><p class="muted">${esc(C.sharedSuccess(task.requiredVillagers))}</p>` : ''}
             ${task.ownerId ? `<p class="muted">${esc(C.personalOwnerRule(task.ownerName))}</p>` : ''}
-            ${claim ? `<div class="claim-box"><strong>${esc(C.taskStatusClaimed)}</strong><br>${esc(claim.targetNames.join('、'))} · 第 ${claim.round} 輪<br>${esc(claim.summary)}</div>` : ''}
+            ${claim ? `<div class="claim-box"><strong>${esc(C.taskStatusClaimed)}</strong><br>${esc(claim.targetNames.join(', '))} · ${esc(C.roundLabel(claim.round))}<br>${esc(claim.summary)}</div>` : ''}
+            ${task.note ? `<p class="saved-note"><strong>${esc(C.taskNote)}:</strong> ${esc(task.note)}</p>` : ''}
+            ${canEditNote || (canClaim && mine) ? `<details class="task-tools" data-detail="tools-${esc(task.id)}"><summary>${esc(canClaim && mine ? C.claimTask : C.taskNote)}</summary>` : ''}
             ${canEditNote ? `<form class="task-form" data-task-form="${esc(task.id)}" data-form="taskNote">
               <input type="hidden" name="taskId" value="${esc(task.id)}">
               <label class="field"><span>${esc(C.taskNote)}</span><textarea name="note" maxlength="240" placeholder="${esc(C.notePlaceholder)}">${esc(note)}</textarea></label>
@@ -349,16 +349,17 @@
             <form class="task-form" data-task-form="${esc(task.id)}-claim" data-form="taskClaim">
               <input type="hidden" name="taskId" value="${esc(task.id)}">
               <strong>${esc(C.claimTask)}</strong>
-              ${task.requiredVillagers ? `<div class="muted">${esc(C.taskTargets)}（${task.requiredVillagers} 人）</div>
+              ${task.requiredVillagers ? `<div class="muted">${esc(C.taskTargets)} (${task.requiredVillagers})</div>
               <div class="target-grid">${villagers.map((player) => `<label class="target-check"><input type="checkbox" name="target" value="${esc(player.id)}"${targetDraft.has(player.id) ? ' checked' : ''}><span>${esc(player.name)}</span></label>`).join('')}</div>` : ''}
               <label class="field"><span>${esc(C.taskRound)}</span><select name="round">${options(1, state.public.talk.round, Number(round))}</select></label>
               <label class="field"><span>${esc(C.taskSummary)}</span><textarea name="summary" maxlength="240" placeholder="${esc(C.summaryPlaceholder)}">${esc(summary)}</textarea></label>
               <div class="button-row"><button class="btn small" type="submit">${esc(task.ownerId ? C.personalClaim : C.submitClaim)}</button>${claim ? `<button class="btn ghost small" type="button" data-action="cancelClaim" data-task-id="${esc(task.id)}">${esc(C.cancelClaim)}</button>` : ''}</div>
             </form>` : ''}
+            ${canEditNote || (canClaim && mine) ? '</details>' : ''}
           </article>`;
         }).join('')}
       </div>
-    </details>`;
+    </section>`;
   }
 
   function renderLobby() {
@@ -398,7 +399,7 @@
       <section class="panel"><div class="panel-header"><div><h2>${esc(C.roleReveal)}</h2><p>${esc(C.roleRevealHelp)}</p></div></div>
         <div class="player-list">${state.public.players.map((player) => `<div class="player-row"><span class="name">${esc(player.name)}</span><span class="mini-chip${player.roleAcknowledged ? ' ready' : ''}">${esc(player.roleAcknowledged ? C.acknowledged : C.waiting)}</span></div>`).join('')}</div>
         <div class="button-row" style="margin-top:14px">${state.private.actions.canAckRole ? `<button class="btn" type="button" data-action="ackRole">${esc(C.acknowledgeRole)}</button>` : `<span class="notice">${esc(C.acknowledged)}</span>`}${state.private.actions.canBeginTalk ? `<button class="btn ghost" type="button" data-action="beginTalk">${esc(C.forceBegin)}</button>` : ''}</div>
-      </section></div><div class="side-stack"><section class="panel"><h3>${esc(state.public.scenario.title)}</h3><p class="muted">${esc(C.externalVoiceNote)}</p></section></div></div>`;
+      </section></div><div class="side-stack"><section class="panel"><h3>${esc(state.public.scenario.title)}</h3><p class="muted">${esc(state.public.scenario.context || C.externalVoiceNote)}</p></section></div></div>${taskCards()}`;
   }
 
   function orderList(order, completed, currentId) {
@@ -417,7 +418,7 @@
   function lastVoteNotice() {
     const record = state.public.lastVoteResult;
     if (!record || record.type !== 'MIDGAME') return '';
-    return `<div class="notice warning"><strong>${esc(C.nomination)}：</strong> ${record.nominees.length ? record.nominees.map(playerName).map(esc).join('、') : esc(C.noNomination)}<br>${record.nominees.length ? esc(C.notExact) : ''}</div>`;
+    return `<div class="notice warning"><strong>${esc(C.nomination)}：</strong> ${record.nominees.length ? record.nominees.map(playerName).map(esc).join(', ') : esc(C.noNomination)}<br>${record.nominees.length ? esc(C.notExact) : ''}</div>`;
   }
 
   function talkControls() {
@@ -427,6 +428,7 @@
       ${actions.canHostEndTurn ? `<button class="btn secondary" type="button" data-action="endTurn">${esc(C.hostSkip)}</button>` : ''}
       ${actions.canEndFreeTalk ? `<button class="btn" type="button" data-action="endFreeTalk">${esc(C.endFreeTalk)}</button>` : ''}
       ${actions.canRingBell ? `<button class="btn warning" type="button" data-action="ringBell">${esc(C.bell)}</button>` : ''}
+      ${actions.canNewTopic ? `<button class="btn secondary" type="button" data-action="newTopic">${esc(C.newTopic)}</button>` : ''}
       ${actions.canFollowUp ? `<button class="btn secondary" type="button" data-action="followUp">${esc(C.followUp)}</button>` : ''}
     </div>`;
   }
@@ -437,12 +439,12 @@
     const free = state.public.phase === 'FREE_TALK';
     const isMe = talk.currentSpeakerId === state.private.playerId;
     return `${roomBar()}${roundTrack(talk.round)}<div class="game-grid"><div class="main-stack">${lastVoteNotice()}
-      <section class="question-card${free ? ' free-talk' : ''}"><div class="scenario">${esc(C.roundOf(talk.round))} · ${esc(state.public.rulesVersion >= 2 ? C.mainTopic : state.public.scenario.title)}</div><h2 class="question">${esc(talk.question)}</h2>${talk.followUp ? `<div class="follow-up"><strong>${esc(C.followUpLabel)}</strong><br>${esc(talk.followUp)}</div>` : ''}
+      <section class="question-card${free ? ' free-talk' : ''}"><div class="scenario">${esc(C.roundOf(talk.round))} · ${esc(state.public.rulesVersion >= 2 ? C.mainTopic : state.public.scenario.title)}</div><h2 class="question">${esc(talk.question)}</h2>${talk.context ? `<p class="topic-context">${esc(talk.context)}</p>` : ''}${talk.followUp ? `<div class="follow-up"><strong>${esc(C.followUpLabel)}</strong><br>${esc(talk.followUp)}</div>` : ''}
         <div class="speaker-hero"><div class="speaker-icon">${free ? '💬' : isMe ? '👋' : '🎙️'}</div><div><div class="speaker-label">${esc(free ? C.everyoneCanTalk : isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(free ? C.freeTalk : speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
         ${free ? `<p>${esc(C.freeTalkHelp)} ${esc(talk.nextSpeakerId ? C.nextSpeaker(playerName(talk.nextSpeakerId)) : C.roundEnding)}</p>` : ''}
       </section>
-      <section class="panel"><div class="panel-header"><h3>${esc(C.speakerOrder)}</h3>${hostControls()}</div>${orderList(talk.order, talk.completed, talk.currentSpeakerId)}<div style="margin-top:16px">${talkControls()}</div><p class="muted">${esc(C.externalVoiceNote)}</p></section>
-    </div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
+      <section class="panel"><div class="panel-header"><h3>${esc(C.speakerOrder)}</h3>${hostControls()}</div>${orderList(talk.order, talk.completed, talk.currentSpeakerId)}<div style="margin-top:16px">${talkControls()}</div>${state.private.isHost ? `<p class="muted">${esc(C.topicCount(talk.relatedTopicsRemaining))}</p>` : ''} </section>
+    </div><aside class="side-stack">${roleCard()}</aside></div>${taskCards()}<div class="meeting-footer">${meetingPlan()}</div>`;
   }
 
   function renderMeeting() {
@@ -453,7 +455,7 @@
       <div class="speaker-hero"><div class="speaker-icon">${isMe ? '👋' : '🗣️'}</div><div><div class="speaker-label">${esc(isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
       <div style="margin-top:16px">${orderList(meeting.order, meeting.completed, meeting.currentSpeakerId)}</div>
       <div style="margin-top:16px">${talkControls()}</div>
-    </section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
+    </section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>${taskCards()}`;
   }
 
   function submissionStatus() {
@@ -468,8 +470,8 @@
     const title = voting.type === 'FINAL' ? C.finalVoting : C.midVoting;
     return `${roomBar()}<div class="game-grid"><div class="main-stack"><section class="panel"><div class="panel-header"><div><h2>${esc(title)}</h2><p>${esc(C.selectExactly(required))}</p></div>${timer(state.public.deadlineAt)}</div>
       <p class="notice warning">${esc(C.tieRule)}</p>
-      ${mineLocked ? `<div class="notice">${esc(C.voteLocked)}</div>` : `<form id="vote-form"><div class="vote-grid">${state.public.players.map((player) => `<div class="vote-choice"><input id="vote-${esc(player.id)}" name="vote" value="${esc(player.id)}" type="checkbox"${voteDraft.has(player.id) ? ' checked' : ''}><label for="vote-${esc(player.id)}">${esc(player.name)}${player.id === state.private.playerId ? `（${esc(C.me)}）` : ''}</label></div>`).join('')}</div><div class="button-row"><span id="vote-count" class="muted">${esc(C.selectedCount(voteDraft.size, required))}</span><button class="btn" id="vote-submit" type="submit"${voteDraft.size === required ? '' : ' disabled'}>${esc(C.submitVote)}</button></div></form>`}
-    </section><section class="panel"><div class="panel-header"><h3>${esc(C.submitted)}</h3>${hostControls()}</div>${submissionStatus()}</section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
+      ${mineLocked ? `<div class="notice">${esc(C.voteLocked)}</div>` : `<form id="vote-form"><div class="vote-grid">${state.public.players.map((player) => `<div class="vote-choice"><input id="vote-${esc(player.id)}" name="vote" value="${esc(player.id)}" type="checkbox"${voteDraft.has(player.id) ? ' checked' : ''}><label for="vote-${esc(player.id)}">${esc(player.name)}${player.id === state.private.playerId ? ` (${esc(C.me)})` : ''}</label></div>`).join('')}</div><div class="button-row"><span id="vote-count" class="muted">${esc(C.selectedCount(voteDraft.size, required))}</span><button class="btn" id="vote-submit" type="submit"${voteDraft.size === required ? '' : ' disabled'}>${esc(C.submitVote)}</button></div></form>`}
+    </section><section class="panel"><div class="panel-header"><h3>${esc(C.submitted)}</h3>${hostControls()}</div>${submissionStatus()}</section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>${taskCards()}`;
   }
 
   function revealedRoles() {
@@ -484,7 +486,7 @@
     return state.public.reveal.tasks.map((task) => {
       const status = !task.claim ? C.unclaimed : !task.review ? C.pendingReview : task.review.valid ? C.valid : C.invalid;
       return `<article class="task-card"><h3>${esc(task.ownerId ? C.teammateTask(task.ownerName) : C.sharedTask)}</h3><div class="task-title-row"><div class="task-title">${esc(task.id)}</div><span class="mini-chip${task.review && task.review.valid ? ' ready' : ''}">${esc(status)}</span></div><p class="task-condition">${esc(task.condition)}</p>
-        ${task.claim ? `<div class="claim-box">${esc(task.claim.targetNames.join('、'))} · 第 ${task.claim.round} 輪<br>${esc(task.claim.summary)}</div>` : `<p class="muted">${esc(C.unclaimed)}</p>`}
+        ${task.claim ? `<div class="claim-box">${esc(task.claim.targetNames.join(', '))} · ${esc(C.roundLabel(task.claim.round))}<br>${esc(task.claim.summary)}</div>` : `<p class="muted">${esc(C.unclaimed)}</p>`}
         ${reviewMode && state.private.actions.canReviewTasks && task.claim && !task.review ? `<div class="button-row" style="margin-top:12px"><button class="btn small" type="button" data-action="reviewTask" data-task-id="${esc(task.id)}" data-valid="true">${esc(C.valid)}</button><button class="btn danger small" type="button" data-action="reviewTask" data-task-id="${esc(task.id)}" data-valid="false">${esc(C.invalid)}</button></div>` : ''}
       </article>`;
     }).join('');
@@ -496,8 +498,8 @@
   }
 
   function voteHistory() {
-    const labels = { after2: '中途指認 1', after4: '中途指認 2', final: C.finalVoting };
-    return `<div class="history-list">${state.public.voteHistory.map((record) => `<div class="history-item"><strong>${esc(labels[record.id] || record.id)}</strong><div>${record.nominees.length ? record.nominees.map(playerName).map(esc).join('、') : esc(C.noNomination)}</div></div>`).join('')}</div>`;
+    const labels = { after2: C.midMeeting(1), after4: C.midMeeting(2), final: C.finalVoting };
+    return `<div class="history-list">${state.public.voteHistory.map((record) => `<div class="history-item"><strong>${esc(labels[record.id] || record.id)}</strong><div>${record.nominees.length ? record.nominees.map(playerName).map(esc).join(', ') : esc(C.noNomination)}</div></div>`).join('')}</div>`;
   }
 
   function renderFinished() {

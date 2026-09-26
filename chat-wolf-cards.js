@@ -8,7 +8,7 @@
     const tokens = Array.isArray(value.tokens) ? value.tokens.slice(0, count) : null;
     if (!Number.isInteger(count) || count < 3 || count > 12 || tokens?.length !== count ||
         tokens.some(t => !/^[a-f0-9]{20}$/.test(t)) || new Set(tokens).size !== count) return null;
-    const names = tokens.map((_, i) => String(value.names?.[i] || '').trim().slice(0, 20) || `玩家 ${i + 1}`);
+    const names = tokens.map((_, i) => String(value.names?.[i] || '').trim().slice(0, 20) || `Player ${i + 1}`);
     // Existing rooms allow repeated names. Give those seats distinct game names.
     const used = new Set();
     const unique = names.map(n => {

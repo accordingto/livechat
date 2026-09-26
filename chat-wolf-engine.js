@@ -15,7 +15,7 @@ const PHASES = Object.freeze({
 
 const SCENARIO = Object.freeze({
   id: 'shared-apartment-month',
-  title: '我們一起合租一間房子，住一個月。',
+  title: 'We are sharing a home for one month.',
   rounds: [
     {
       question: '你希望住在什麼樣的房子裡？最在意哪一點？',
@@ -237,6 +237,7 @@ function clearGameData(room) {
     'round', 'rounds', 'currentRoundState', 'meeting', 'meetingSlots', 'bell', 'tasks',
     'tasksFrozen', 'voting', 'ballots', 'voteHistory', 'lastVoteResult', 'result',
     'paused', 'pausedRemainingMs', 'deadlineAt', 'followUpIndexByRound', 'topic', 'followUpOrder', 'followUpCursor',
+    'relatedTopicOrder', 'relatedTopicCursor', 'activeTopic',
   ]) delete room[key];
   for (const player of Object.values(room.players || {})) {
     player.role = null;
@@ -275,6 +276,9 @@ function startGame(room, now) {
   room.rulesVersion = 2;
   room.topic = shuffle(room, CONTENT.topics.filter(t => t.id !== room.lastTopicId))[0];
   room.lastTopicId = room.topic.id;
+  room.relatedTopicOrder = shuffle(room, room.topic.relatedTopics || []);
+  room.relatedTopicCursor = -1;
+  room.activeTopic = null;
   room.followUpOrder = shuffle(room, room.topic.followUps);
   room.followUpCursor = -1;
   const eligible = CONTENT.sharedTasks.filter(task => task.requiredVillagers <= villagerCount && task.minPlayers <= ids.length &&
@@ -286,7 +290,7 @@ function startGame(room, now) {
   room.recentTasks = [...(room.recentTasks || []), ...drawn.map(({ id, family, type }) => ({ id, family, type }))].slice(-30);
   room.tasks = drawn.map((task) => ({
     ...task,
-    title: task.type === 'shared' ? '共同任務' : '個人行為任務',
+    title: task.type === 'shared' ? 'Shared team task' : 'Personal task',
     condition: task.text,
     note: '',
     noteEditedBy: null,
@@ -625,6 +629,17 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
       slot.advanced = true;
       break;
     }
+    case 'newTopic': {
+      requireHost(room, actorId);
+      requirePhase(room, PHASES.TALK, PHASES.FREE_TALK);
+      const next = Number(room.relatedTopicCursor ?? -1) + 1;
+      if (!room.relatedTopicOrder || next >= room.relatedTopicOrder.length) fail('NO_MORE_TOPICS', 409);
+      room.relatedTopicCursor = next;
+      room.activeTopic = room.relatedTopicOrder[next];
+      room.followUpOrder = shuffle(room, room.activeTopic.followUps);
+      room.followUpCursor = -1;
+      break;
+    }
     case 'followUp': {
       requireHost(room, actorId);
       requirePhase(room, PHASES.TALK, PHASES.FREE_TALK);
@@ -767,7 +782,7 @@ function playerSummary(room, player, now) {
 }
 
 function publicTask(room, task) {
-  const nameOf = (id) => room.players[id] ? room.players[id].name : '未知玩家';
+  const nameOf = (id) => room.players[id] ? room.players[id].name : 'Unknown player';
   return {
     id: task.id,
     type: task.type || 'shared',
@@ -775,6 +790,7 @@ function publicTask(room, task) {
     ownerName: task.ownerId ? nameOf(task.ownerId) : null,
     title: task.title,
     condition: task.condition,
+    context: room.topic ? room.topic.subject : null,
     requiredVillagers: task.requiredVillagers,
     scenarioId: task.scenarioId,
     claim: task.claim ? {
@@ -827,6 +843,7 @@ function projectState(room, actorId, now = Date.now()) {
     scenario: {
       id: room.topic ? room.topic.id : SCENARIO.id,
       title: room.topic ? room.topic.mainQuestion : SCENARIO.title,
+      context: room.topic ? room.topic.context : null,
       rounds: room.phase === PHASES.LOBBY ? CONTENT.topics.map(t => ({ question: t.mainQuestion })) : undefined,
     },
     meetingSlots: room.meetingSlots ? JSON.parse(JSON.stringify(room.meetingSlots)) : null,
@@ -850,7 +867,10 @@ function projectState(room, actorId, now = Date.now()) {
     publicState.talk = {
       round: room.round,
       totalRounds: 6,
-      question: room.topic ? room.topic.mainQuestion : SCENARIO.rounds[room.round - 1].question,
+      question: room.activeTopic ? room.activeTopic.question : room.topic ? room.topic.mainQuestion : SCENARIO.rounds[room.round - 1].question,
+      context: room.activeTopic ? room.activeTopic.context : room.topic ? room.topic.context : null,
+      topicTitle: room.activeTopic ? room.activeTopic.title : null,
+      relatedTopicsRemaining: (room.relatedTopicOrder || []).length - Number(room.relatedTopicCursor ?? -1) - 1,
       followUp: room.topic ? room.followUpOrder[room.followUpCursor] || null : Number.isInteger(followIndex) ? SCENARIO.rounds[room.round - 1].followUps[followIndex] : null,
       followUpsRemaining: room.topic ? room.followUpOrder.length - room.followUpCursor - 1 : SCENARIO.rounds[room.round - 1].followUps.length - (Number.isInteger(followIndex) ? followIndex + 1 : 0),
       order: state.order.slice(),
@@ -913,6 +933,7 @@ function projectState(room, actorId, now = Date.now()) {
       canRingBell: canBell,
       canEndFreeTalk: actor.isHost && room.phase === PHASES.FREE_TALK && !room.paused,
       canFollowUp: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.followUpsRemaining > 0,
+      canNewTopic: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.relatedTopicsRemaining > 0,
       canPause: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase) && !room.paused,
       canResume: actor.isHost && !!room.paused,
       canCancel: actor.isHost && room.phase !== PHASES.FINISHED,

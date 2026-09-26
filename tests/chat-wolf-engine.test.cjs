@@ -47,6 +47,59 @@ test('本地題庫數量、分類、明確條件與禁用第三人稱', () => {
   assert.ok(CONTENT.personalTasks.every(t => t.onlineCompatible));
 });
 
+test('English content has clear goals and six related directions per starting topic', () => {
+  assert.equal(/[一-鿿]/.test(JSON.stringify(CONTENT)), false);
+  for (const topic of CONTENT.topics) {
+    assert.ok(topic.context && topic.subject);
+    assert.equal(topic.relatedTopics.length, 6);
+    assert.equal(new Set(topic.relatedTopics.map(t => t.id)).size, 6);
+    for (const next of topic.relatedTopics) {
+      assert.ok(next.question && next.context.includes(topic.mainQuestion));
+      assert.equal(next.followUps.length, 2);
+    }
+  }
+  const fs = require('node:fs');
+  const ui = fs.readFileSync(require.resolve('../chat-wolf.js'), 'utf8');
+  assert.equal(ui.includes('details class="sensitive"'), false);
+  assert.ok(ui.includes('class="wolf-task-grid"'));
+});
+
+test('Host can add six related topics without changing turns, timers or secret tasks', () => {
+  const ctx = setup6();
+  assert.throws(() => dispatch(ctx.room, 'p1', 'newTopic', {}, ++ctx.now), /WRONG_PHASE/);
+  acknowledgeAll(ctx);
+  const original = structuredClone(ctx.room.topic);
+  const tasks = structuredClone(ctx.room.tasks);
+  const turn = structuredClone(ctx.room.currentRoundState);
+  const deadline = ctx.room.deadlineAt;
+  const seen = new Set();
+  assert.throws(() => dispatch(ctx.room, 'p2', 'newTopic', {}, ++ctx.now), /HOST_ONLY/);
+  for (let i = 0; i < 6; i++) {
+    dispatch(ctx.room, 'p1', 'newTopic', {}, ++ctx.now);
+    const view = projectState(ctx.room, 'p2', ctx.now);
+    seen.add(view.public.talk.question);
+    assert.equal(view.public.talk.relatedTopicsRemaining, 5 - i);
+    assert.equal(view.private.actions.canNewTopic, false);
+    assert.equal(view.public.talk.followUp, null);
+    assert.equal(view.public.talk.followUpsRemaining, 2);
+    dispatch(ctx.room, 'p1', 'followUp', {}, ++ctx.now);
+    assert.ok(projectState(ctx.room, 'p1', ctx.now).public.talk.followUp);
+    assert.deepEqual(ctx.room.currentRoundState, turn);
+    assert.equal(ctx.room.deadlineAt, deadline);
+    assert.deepEqual(ctx.room.tasks, tasks);
+    assert.deepEqual(ctx.room.topic, original);
+    const restored = JSON.parse(JSON.stringify(ctx.room));
+    assert.equal(projectState(restored, 'p2', ctx.now).public.talk.question, view.public.talk.question);
+  }
+  assert.equal(seen.size, 6);
+  assert.throws(() => dispatch(ctx.room, 'p1', 'newTopic', {}, ++ctx.now), /NO_MORE_TOPICS/);
+  assert.equal(projectState(ctx.room, 'p1', ctx.now).private.actions.canNewTopic, false);
+  dispatch(ctx.room, 'p1', 'cancelGame', {}, ++ctx.now);
+  dispatch(ctx.room, 'p1', 'replay', {}, ++ctx.now);
+  assert.equal(ctx.room.activeTopic, undefined);
+  assert.equal(ctx.room.relatedTopicOrder, undefined);
+});
+
 test('主題六輪保持相同；延伸不重複、不改倒數與順序；自由討論可暫停與重連', () => {
   const ctx = setup6(); acknowledgeAll(ctx);
   const topic = ctx.room.topic.id;

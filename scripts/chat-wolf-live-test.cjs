@@ -53,6 +53,23 @@ async function main(){
   assert.deepEqual(after.talk.order,before.talk.order);
   assert.equal(after.deadlineAt,before.deadlineAt);
   assert.equal((await read(villagers[0])).private.tasks,null);
+  const originalTopic = after.scenario.title;
+  const topics = new Set();
+  for(let i=0;i<3;i++){
+    await send(clients[0],{action:'newTopic'});
+    const shared = (await read(clients[1])).public;
+    topics.add(shared.talk.question);
+    assert.equal(shared.scenario.title,originalTopic);
+    assert.equal(shared.talk.relatedTopicsRemaining,5-i);
+    assert.equal(shared.talk.followUp,null);
+    assert.equal(shared.talk.followUpsRemaining,2);
+    assert.equal(shared.deadlineAt,before.deadlineAt);
+    assert.deepEqual(shared.talk.order,before.talk.order);
+    await send(clients[0],{action:'followUp'});
+    assert.ok((await read(clients[2])).public.talk.followUp);
+  }
+  assert.equal(topics.size,3);
+  console.log('PASS multiple related topics and fresh follow-ups sync without resetting turns or timers.');
   await send(clients[0],{action:'pause'}); const paused=await read(clients[1]);assert.equal(paused.public.paused,true);
   await send(clients[0],{action:'resume'});
   console.log('PASS reconnect identity, concurrent bell once, claims stay private, pause/resume.');
