@@ -1,8 +1,10 @@
 # 安全檢查清單
 
-原有遊戲是純前端靜態網站；**聊天狼人**另外使用 Vercel Serverless API。
-原有牌卡仍由 Firebase Rules 保護；聊天狼人的身分、任務、選票與流程只存放在
-`chatWolfRooms/{CODE}`，瀏覽器不能直接讀寫，必須經過 `/api/chat-wolf` 驗證會話。
+所有遊戲現在都是純前端靜態網站，沿用既有 Firebase bearer 路徑規則。
+**聊天狼人 v2** 使用 `rooms/chatwolf-{CODE}`，主持完整狀態存於只有主持裝置
+知道的隨機 token 路徑；每位玩家另有自己的投影與操作路徑。這些路徑不可列舉，
+但知道 token 即可讀寫。因此必須信任主持人及保管好裝置重連資料。
+房主介面不顯示別人的秘密，不等於開發工具也無法讀取。見 `chat-wolf-mode.md`。
 
 Firebase 專案：`livechat-92f66`（新加坡區）
 Console：https://console.firebase.google.com/project/livechat-92f66
@@ -63,11 +65,11 @@ Firebase 不允許讀取「權限規則在下層」的節點，所以這樣寫�
 無法列出房間裡有誰、也讀不到別人的牌。玩家 token 是 `crypto.getRandomValues()` 產的 80 bits 隨機值
 （見 `room.js` 的 `generateToken()`），猜不出來。
 
-聊天狼人不要仿照舊遊戲替 `chatWolfRooms` 開瀏覽器權限。Vercel 需要設定
-`FIREBASE_SERVICE_ACCOUNT_JSON` 與 `FIREBASE_DATABASE_URL`；服務帳號 JSON 只能放在
-Vercel Environment Variables 或本機未提交的 `.env.local`，不能寫進 HTML、前端 JS、
-錯誤訊息或 Git。邀請碼只能加入房間；實際操作需要每位玩家裝置保存的 256-bit
-會話 token，資料庫只保存其 SHA-256 雜湊。
+聊天狼人不使用 `chatWolfRooms`，該路徑繼續維持拒絕存取。不需改 Rules、
+建立服務帳號或設定 Vercel 環境變數。新房間的 `roster` 只放 RSA-OAEP 公鑰和
+加密加入請求；玩家 token 不得明文放進該公共節點。主持控制 token 不出現在
+邀請連結或玩家投影。這些措施避免一般玩家直接取得其他牌卡，但不能抵抗
+惡意房主、已外洩的 token，或有人刻意竄改公共加入節點；它延續舊版誠信玩法。
 
 > ⚠️ Firebase 建立資料庫時如果選 "test mode"，預設規則是全開、30 天後失效。
 > 千萬不要停在那個狀態。
@@ -87,8 +89,7 @@ https://console.firebase.google.com/project/livechat-92f66/usage
 
 ## ③ `main` 的 branch protection（選配，private repo 可能無法使用）
 
-> repo 已改為 private。GitHub Free 方案的 branch protection / rulesets 只支援 public repo，
-> private repo 需要 Pro 以上方案，所以下面這段設定可能是鎖住的。這一項本來就不是必須。
+> 2026-09-27 已實際確認 repo 為 public。此項屬可選維護設定，不是上傳前置條件。
 
 目前 `CLAUDE.md` 的規則是「直接 commit push 到 `main`」，push 完 Vercel 就自動部署到 production，
 中間沒有 review。方便，但也代表 AI 助理或任何自動化能直接改到線上版本。
@@ -104,8 +105,8 @@ https://github.com/accordingto/livechat/settings/branches
 
 ## ④ GitHub 帳號本身
 
-repo 是 private，寫入權限只有帳號擁有者 `accordingto` 一個人，加上兩個授權的 GitHub App
-（Claude 有讀寫、Vercel 只需要讀取來部署）。陌生人沒有任何管道能改動或刪除內容。
+repo 為 public，原始碼可以公開讀取；寫入仍需要 GitHub 已授予的權限。
+本機 Git 憑證已成功推送 main，不需要再次要求擁有者核准上傳。
 
 所以這裡唯一的風險是帳號被盜：
 
@@ -121,7 +122,7 @@ repo 是 private，寫入權限只有帳號擁有者 `accordingto` 一個人，�
 這些看起來可疑，但實際上沒問題，不用花時間：
 
 - **`firebase-config.js` 裡的 `apiKey` 被 commit 進去** — Firebase 的 web apiKey 是**公開識別碼，不是密碼**。
-  repo 雖然是 private，但**部署出去的檔案仍然是公開的**：
+  repo 與**部署出去的檔案都是公開的**：
   https://livechat-two-alpha.vercel.app/firebase-config.js 任何人都打得開。
   靜態網站沒辦法把它藏起來，也不需要藏。真正的防線是上面 ① 的 Rules。
 - **`roster` 路徑開放讀寫** — 現在已經沒有任何程式讀或寫它（它只服務過 Word Wolf 的投票按鈕，

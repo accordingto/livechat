@@ -2,6 +2,13 @@
   'use strict';
 
   const C = window.CHAT_WOLF_COPY;
+  const embeddedCard = new URLSearchParams(location.search).get('card') === '1';
+  const legacySetup = window.CHAT_WOLF_CARDS.readSetup(localStorage);
+  if (embeddedCard) {
+    document.body.classList.add('embedded-card');
+    document.documentElement.classList.add('embedded-card-root');
+  }
+  const transport = new window.CHAT_WOLF_SYNC.Client({ databaseURL: FIREBASE_CONFIG.databaseURL, allowHostRecovery: !embeddedCard });
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
   const syncPill = document.getElementById('sync-pill');
@@ -14,6 +21,7 @@
   let pollTimer = null;
   let heartbeatTimer = null;
   let requestRunning = false;
+  let pollRunning = false;
   let toastTimer = null;
   let lastRevision = null;
   let entryMode = new URLSearchParams(location.search).has('room') ? 'join' : 'create';
@@ -27,8 +35,8 @@
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   const roomCodeFromUrl = () => String(new URLSearchParams(location.search).get('room') || '').trim().toUpperCase();
   const playerById = (id) => state && state.public.players.find((player) => player.id === id);
-  const playerName = (id) => (playerById(id) || {}).name || '未知玩家';
-  const storageKey = (code) => `chat-wolf-session:${code}`;
+  const playerName = (id) => (playerById(id) || {}).name || C.unknownPlayer;
+  const storageKey = (code) => `chat-wolf-legacy-session:${code}`;
 
   function showToast(message) {
     clearTimeout(toastTimer);
@@ -38,7 +46,7 @@
   }
 
   function errorMessage(code) {
-    return C.errors[code] || `操作未完成（${code || 'UNKNOWN'}）`;
+    return C.errors[code] || `Action not completed (${code || 'UNKNOWN'})`;
   }
 
   function setSync(kind) {
@@ -66,32 +74,7 @@
   }
 
   async function apiRequest(method, body) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (session) headers.Authorization = `Bearer ${session.token}`;
-    const url = method === 'GET'
-      ? `/api/chat-wolf?room=${encodeURIComponent(session.room)}`
-      : '/api/chat-wolf';
-    let response;
-    try {
-      response = await fetch(url, {
-        method,
-        headers,
-        cache: 'no-store',
-        body: method === 'POST' ? JSON.stringify(body || {}) : undefined,
-      });
-    } catch (error) {
-      const network = new Error('NETWORK');
-      network.code = 'NETWORK';
-      throw network;
-    }
-    let payload = null;
-    try { payload = await response.json(); } catch (error) {}
-    if (!response.ok || !payload || !payload.ok) {
-      const apiError = new Error(payload && payload.error ? payload.error : 'SERVER_ERROR');
-      apiError.code = apiError.message;
-      throw apiError;
-    }
-    return payload;
+    return transport.request(method, body, session);
   }
 
   function captureOpenDetails() {
@@ -102,7 +85,8 @@
     app.querySelectorAll('form[data-task-form]').forEach((form) => {
       const id = form.dataset.taskForm;
       taskDrafts[id] = {
-        note: form.querySelector('[name="note"]') ? form.querySelector('[name="note"]').value : undefined,
+        note: form.querySelector('[name="note"]') && form.querySelector('[name="note"]').value !== state?.private.tasks?.find(task => task.id === id)?.note
+          ? form.querySelector('[name="note"]').value : undefined,
         summary: form.querySelector('[name="summary"]') ? form.querySelector('[name="summary"]').value : undefined,
         round: form.querySelector('[name="round"]') ? form.querySelector('[name="round"]').value : undefined,
         targets: Array.from(form.querySelectorAll('[name="target"]:checked')).map((input) => input.value),
@@ -118,10 +102,15 @@
   }
 
   function applyState(next, forceRender) {
-    const open = captureOpenDetails();
-    captureTaskDrafts();
+    const newGame = state && (state.public.gameNumber !== next.public.gameNumber ||
+      (next.public.phase === 'LOBBY' && state.public.phase !== 'LOBBY'));
+    const open = newGame ? new Set() : captureOpenDetails();
+    if (newGame) taskDrafts = {};
+    else captureTaskDrafts();
+    if (state?.public.syncRevision !== next.public.syncRevision) {
+      serverOffset = Number(next.public.serverNow || Date.now()) - Date.now();
+    }
     state = next;
-    serverOffset = Number(state.public.serverNow || Date.now()) - Date.now();
     setSync('connected');
     if (forceRender || lastRevision !== state.public.revision) {
       if (!state.public.voting || voteDraftId !== state.public.voting.id) {
@@ -136,7 +125,11 @@
   }
 
   async function action(actionName, payload) {
-    if (!session || requestRunning) return;
+    if (!session) return;
+    if (requestRunning) {
+      if (actionName !== 'heartbeat') showToast(C.actionBusy);
+      return false;
+    }
     requestRunning = true;
     setSync('connecting');
     try {
@@ -159,8 +152,8 @@
   }
 
   async function poll() {
-    if (!session || requestRunning) return;
-    requestRunning = true;
+    if (!session || requestRunning || pollRunning) return;
+    pollRunning = true;
     try {
       const response = await apiRequest('GET');
       applyState(response.state, false);
@@ -174,7 +167,7 @@
         showToast(errorMessage(error.code));
       }
     } finally {
-      requestRunning = false;
+      pollRunning = false;
     }
   }
 
@@ -206,6 +199,7 @@
       <h1>${esc(C.title)}</h1>
       <p>${esc(C.intro)}</p>
       <p class="system-note">${esc(C.systemRandomNote)}</p>
+      <p class="notice warning">${esc(C.hostModeNote)}</p>
     </section>`;
   }
 
@@ -218,6 +212,8 @@
       <section class="entry-grid">
         <form class="card" id="create-form"${entryMode === 'create' ? '' : ' hidden'}>
           <h2>${esc(C.createRoom)}</h2>
+          ${legacySetup ? `<label class="check-line"><input name="useCards" type="checkbox" checked><span>${esc(C.useCards)}</span></label>
+          <label class="field"><span>${esc(C.hostSeat)}</span><select name="hostSeat">${legacySetup.names.map((n,i) => `<option value="${i}">${i+1}. ${esc(n)}</option>`).join('')}</select></label>` : ''}
           <label class="field"><span>${esc(C.hostName)}</span><input name="name" type="text" maxlength="24" autocomplete="nickname" required></label>
           <div class="inline-fields">
             <label class="field"><span>${esc(C.playerCount)}</span><select name="playerCount">${options(3, 12, 6, { 6: C.recommended, 7: C.recommended, 8: C.recommended })}</select></label>
@@ -241,6 +237,21 @@
         </form>
       </section>
       <p class="secure-note">${esc(C.secureInvite)}</p>`;
+    syncCardSetupForm();
+  }
+
+  function syncCardSetupForm() {
+    const form = document.getElementById('create-form');
+    if (!form || !legacySetup) return;
+    const enabled = form.elements.useCards.checked;
+    form.elements.hostSeat.disabled = !enabled;
+    form.elements.name.disabled = enabled;
+    form.elements.playerCount.disabled = enabled;
+    if (enabled) {
+      form.elements.name.value = legacySetup.names[Number(form.elements.hostSeat.value)];
+      form.elements.playerCount.value = String(legacySetup.playerCount);
+    }
+    updateCreateWolfOptions(form.elements.playerCount);
   }
 
   function inviteUrl() {
@@ -253,14 +264,15 @@
   function roomBar() {
     return `<div class="room-bar">
       <div><span class="phase-chip">${esc(C.phases[state.public.phase] || state.public.phase)}</span> <span class="room-code">${esc(state.public.code)}</span></div>
-      <div class="button-row"><button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button></div>
-    </div>`;
+      <div class="button-row">${embeddedCard ? '' : `<button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button>`}
+      ${!embeddedCard && state.private.isHost && state.public.legacyCardRoom ? `<button class="btn secondary small" type="button" data-command="sendCards">${esc(C.sendCards)}</button>` : ''}</div>
+    </div>${state.public.legacyCardRoom && !embeddedCard && state.public.phase === 'LOBBY' ? `<p class="notice">${esc(C.cardsLinked)}</p>` : ''}`;
   }
 
   function playerRows(showRemove) {
     return `<div class="player-list">${state.public.players.map((player) => `<div class="player-row">
       <span class="status-dot${player.connected ? ' on' : ''}" title="${esc(player.connected ? C.online : C.offline)}"></span>
-      <span class="name">${esc(player.name)}${player.id === state.private.playerId ? ` <span class="muted">（${esc(C.me)}）</span>` : ''}</span>
+      <span class="name">${esc(player.name)}${player.id === state.private.playerId ? ` <span class="muted"> (${esc(C.me)})</span>` : ''}</span>
       ${player.isHost ? `<span class="mini-chip host">${esc(C.host)}</span>` : ''}
       <span class="mini-chip${player.ready ? ' ready' : ''}">${esc(player.ready ? C.ready : C.notReady)}</span>
       ${showRemove && !player.isHost ? `<button class="btn ghost small" type="button" data-action="removePlayer" data-player-id="${esc(player.id)}">${esc(C.remove)}</button>` : ''}
@@ -297,23 +309,20 @@
     return `<section class="panel role-card">
       <div class="eyebrow">${esc(C.roleReveal)}</div>
       <div class="role-title ${isWolf ? 'wolf' : 'villager'}">${esc(isWolf ? C.wolf : C.villager)}</div>
-      <p class="muted">${esc(isWolf ? C.wolfHelp : C.villagerHelp)}</p>
+      <p class="muted">${esc(isWolf ? (state.public.rulesVersion >= 2 ? C.wolfHelp : C.legacyWolfHelp) : C.villagerHelp)}</p>
       ${team}
-      ${isWolf ? taskCards() : ''}
     </section>`;
   }
 
   function taskCards() {
     if (!state.private.tasks) return '';
+    const taskRank = task => !task.ownerId ? 0 : task.ownerId === state.private.playerId ? 1 : 2;
     const canEditNote = state.private.actions.canEditTaskNote;
     const canClaim = state.private.actions.canClaimTasks;
     const wolfIds = new Set((state.private.wolfTeam || []).map((member) => member.id));
     const villagers = state.public.players.filter((player) => !wolfIds.has(player.id));
-    return `<details class="sensitive" data-detail="wolf-tasks">
-      <summary><span>${esc(C.sensitive)} · ${esc(C.tasks)}</span><span>${esc(C.sensitiveHint)}</span></summary>
-      <div class="sensitive-body">
-        <p class="notice danger">${esc(C.taskHumanRule)}</p>
-        ${state.private.tasks.map((task) => {
+    return `<section class="wolf-tasks"><div class="panel-header"><div><h2>${esc(C.tasks)}</h2><p>${esc(state.public.rulesVersion >= 2 ? C.taskTiming : C.legacyTaskHumanRule)}</p></div></div><div class="wolf-task-grid">
+        ${[...state.private.tasks].sort((a, b) => taskRank(a) - taskRank(b)).map((task) => {
           const noteDraft = taskDrafts[task.id] || {};
           const claimDraft = taskDrafts[`${task.id}-claim`] || {};
           const note = noteDraft.note == null ? task.note : noteDraft.note;
@@ -321,29 +330,36 @@
           const round = claimDraft.round || String(state.public.talk ? state.public.talk.round : 1);
           const targetDraft = new Set(claimDraft.targets || []);
           const claim = task.claim;
+          const mine = !task.ownerId || task.ownerId === state.private.playerId;
           return `<article class="task-card">
-            <div class="task-title-row"><div class="task-title">${esc(task.id)} · ${esc(task.title)}</div><span class="mini-chip${claim ? ' ready' : ''}">${esc(claim ? C.taskStatusClaimed : C.taskStatusOpen)}</span></div>
+            <h3>${esc(task.ownerId ? (mine ? C.myPersonalTask : C.teammateTask(task.ownerName)) : C.sharedTask)}</h3>
+            <div class="task-title-row"><div class="task-title">${esc(C.doThis)}</div><span class="mini-chip${claim ? ' ready' : ''}">${esc(claim ? C.taskStatusClaimed : C.taskStatusOpen)}</span></div>
             <p class="task-condition">${esc(task.condition)}</p>
-            ${claim ? `<div class="claim-box"><strong>${esc(C.taskStatusClaimed)}</strong><br>${esc(claim.targetNames.join('、'))} · 第 ${claim.round} 輪<br>${esc(claim.summary)}</div>` : ''}
+            ${!task.ownerId && task.context ? `<p class="task-context">${esc(C.taskContext)}: <strong>${esc(task.context)}</strong></p><p class="muted">${esc(C.sharedSuccess(task.requiredVillagers))}</p>` : ''}
+            ${task.ownerId ? `<p class="muted">${esc(C.personalOwnerRule(task.ownerName))}</p>` : ''}
+            ${claim ? `<div class="claim-box"><strong>${esc(C.taskStatusClaimed)}</strong><br>${esc(claim.targetNames.join(', '))} · ${esc(C.roundLabel(claim.round))}<br>${esc(claim.summary)}</div>` : ''}
+            ${task.note ? `<p class="saved-note"><strong>${esc(C.taskNote)}:</strong> ${esc(task.note)}</p>` : ''}
+            ${canEditNote || (canClaim && mine) ? `<details class="task-tools" data-detail="tools-${esc(task.id)}"><summary>${esc(canClaim && mine ? C.claimTask : C.taskNote)}</summary>` : ''}
             ${canEditNote ? `<form class="task-form" data-task-form="${esc(task.id)}" data-form="taskNote">
               <input type="hidden" name="taskId" value="${esc(task.id)}">
               <label class="field"><span>${esc(C.taskNote)}</span><textarea name="note" maxlength="240" placeholder="${esc(C.notePlaceholder)}">${esc(note)}</textarea></label>
               <button class="btn secondary small" type="submit">${esc(C.saveNote)}</button>
             </form>` : ''}
-            ${canClaim ? `
+            ${canClaim && mine ? `
             <form class="task-form" data-task-form="${esc(task.id)}-claim" data-form="taskClaim">
               <input type="hidden" name="taskId" value="${esc(task.id)}">
               <strong>${esc(C.claimTask)}</strong>
-              <div class="muted">${esc(C.taskTargets)}（${task.requiredVillagers} 人）</div>
-              <div class="target-grid">${villagers.map((player) => `<label class="target-check"><input type="checkbox" name="target" value="${esc(player.id)}"${targetDraft.has(player.id) ? ' checked' : ''}><span>${esc(player.name)}</span></label>`).join('')}</div>
+              ${task.requiredVillagers ? `<div class="muted">${esc(C.taskTargets)} (${task.requiredVillagers})</div>
+              <div class="target-grid">${villagers.map((player) => `<label class="target-check"><input type="checkbox" name="target" value="${esc(player.id)}"${targetDraft.has(player.id) ? ' checked' : ''}><span>${esc(player.name)}</span></label>`).join('')}</div>` : ''}
               <label class="field"><span>${esc(C.taskRound)}</span><select name="round">${options(1, state.public.talk.round, Number(round))}</select></label>
               <label class="field"><span>${esc(C.taskSummary)}</span><textarea name="summary" maxlength="240" placeholder="${esc(C.summaryPlaceholder)}">${esc(summary)}</textarea></label>
-              <div class="button-row"><button class="btn small" type="submit">${esc(C.submitClaim)}</button>${claim ? `<button class="btn ghost small" type="button" data-action="cancelClaim" data-task-id="${esc(task.id)}">${esc(C.cancelClaim)}</button>` : ''}</div>
+              <div class="button-row"><button class="btn small" type="submit">${esc(task.ownerId ? C.personalClaim : C.submitClaim)}</button>${claim ? `<button class="btn ghost small" type="button" data-action="cancelClaim" data-task-id="${esc(task.id)}">${esc(C.cancelClaim)}</button>` : ''}</div>
             </form>` : ''}
+            ${canEditNote || (canClaim && mine) ? '</details>' : ''}
           </article>`;
         }).join('')}
       </div>
-    </details>`;
+    </section>`;
   }
 
   function renderLobby() {
@@ -371,6 +387,7 @@
             <label class="check-line"><input name="bellEnabled" type="checkbox"${settings.bellEnabled ? ' checked' : ''}><span>${esc(C.bellSetting)}</span></label>
             <div class="inline-fields"><label class="field"><span>${esc(C.talkSeconds)}</span><input name="talkSeconds" type="number" min="20" max="180" value="${esc(settings.talkSeconds)}"></label><label class="field"><span>${esc(C.meetingSeconds)}</span><input name="meetingSeconds" type="number" min="10" max="60" value="${esc(settings.meetingSeconds)}"></label></div>
             <label class="field"><span>${esc(C.voteSeconds)}</span><input name="voteSeconds" type="number" min="15" max="90" value="${esc(settings.voteSeconds)}"></label>
+            <label class="field"><span>${esc(C.freeTalkSeconds)}</span><input name="freeTalkSeconds" type="number" min="20" max="180" value="${esc(settings.freeTalkSeconds || settings.talkSeconds)}"></label>
             <button class="btn secondary" type="submit">${esc(C.saveSettings)}</button>
           </form>` : `<section class="panel"><h3>${esc(C.room)}</h3><p class="muted">${esc(C.waitingForPlayers(current, state.public.settings.playerCount))}</p></section>`}
         </div>
@@ -382,7 +399,7 @@
       <section class="panel"><div class="panel-header"><div><h2>${esc(C.roleReveal)}</h2><p>${esc(C.roleRevealHelp)}</p></div></div>
         <div class="player-list">${state.public.players.map((player) => `<div class="player-row"><span class="name">${esc(player.name)}</span><span class="mini-chip${player.roleAcknowledged ? ' ready' : ''}">${esc(player.roleAcknowledged ? C.acknowledged : C.waiting)}</span></div>`).join('')}</div>
         <div class="button-row" style="margin-top:14px">${state.private.actions.canAckRole ? `<button class="btn" type="button" data-action="ackRole">${esc(C.acknowledgeRole)}</button>` : `<span class="notice">${esc(C.acknowledged)}</span>`}${state.private.actions.canBeginTalk ? `<button class="btn ghost" type="button" data-action="beginTalk">${esc(C.forceBegin)}</button>` : ''}</div>
-      </section></div><div class="side-stack"><section class="panel"><h3>${esc(state.public.scenario.title)}</h3><p class="muted">${esc(C.externalVoiceNote)}</p></section></div></div>`;
+      </section></div><div class="side-stack"><section class="panel"><h3>${esc(state.public.scenario.title)}</h3><p class="muted">${esc(state.public.scenario.context || C.externalVoiceNote)}</p></section></div></div>${taskCards()}`;
   }
 
   function orderList(order, completed, currentId) {
@@ -401,7 +418,7 @@
   function lastVoteNotice() {
     const record = state.public.lastVoteResult;
     if (!record || record.type !== 'MIDGAME') return '';
-    return `<div class="notice warning"><strong>${esc(C.nomination)}：</strong> ${record.nominees.length ? record.nominees.map(playerName).map(esc).join('、') : esc(C.noNomination)}<br>${record.nominees.length ? esc(C.notExact) : ''}</div>`;
+    return `<div class="notice warning"><strong>${esc(C.nomination)}：</strong> ${record.nominees.length ? record.nominees.map(playerName).map(esc).join(', ') : esc(C.noNomination)}<br>${record.nominees.length ? esc(C.notExact) : ''}</div>`;
   }
 
   function talkControls() {
@@ -409,7 +426,9 @@
     return `<div class="button-row">
       ${actions.canEndTurn ? `<button class="btn" type="button" data-action="endTurn">${esc(C.endMyTurn)}</button>` : ''}
       ${actions.canHostEndTurn ? `<button class="btn secondary" type="button" data-action="endTurn">${esc(C.hostSkip)}</button>` : ''}
+      ${actions.canEndFreeTalk ? `<button class="btn" type="button" data-action="endFreeTalk">${esc(C.endFreeTalk)}</button>` : ''}
       ${actions.canRingBell ? `<button class="btn warning" type="button" data-action="ringBell">${esc(C.bell)}</button>` : ''}
+      ${actions.canNewTopic ? `<button class="btn secondary" type="button" data-action="newTopic">${esc(C.newTopic)}</button>` : ''}
       ${actions.canFollowUp ? `<button class="btn secondary" type="button" data-action="followUp">${esc(C.followUp)}</button>` : ''}
     </div>`;
   }
@@ -417,13 +436,15 @@
   function renderTalk() {
     const talk = state.public.talk;
     const speaker = playerById(talk.currentSpeakerId);
+    const free = state.public.phase === 'FREE_TALK';
     const isMe = talk.currentSpeakerId === state.private.playerId;
     return `${roomBar()}${roundTrack(talk.round)}<div class="game-grid"><div class="main-stack">${lastVoteNotice()}
-      <section class="question-card"><div class="scenario">${esc(C.roundOf(talk.round))} · ${esc(state.public.scenario.title)}</div><h2 class="question">${esc(talk.question)}</h2>${talk.followUp ? `<div class="follow-up"><strong>${esc(C.followUpLabel)}</strong><br>${esc(talk.followUp)}</div>` : ''}
-        <div class="speaker-hero"><div class="speaker-icon">${isMe ? '👋' : '🎙️'}</div><div><div class="speaker-label">${esc(isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
+      <section class="question-card${free ? ' free-talk' : ''}"><div class="scenario">${esc(C.roundOf(talk.round))} · ${esc(state.public.rulesVersion >= 2 ? C.mainTopic : state.public.scenario.title)}</div><h2 class="question">${esc(talk.question)}</h2>${talk.context ? `<p class="topic-context">${esc(talk.context)}</p>` : ''}${talk.followUp ? `<div class="follow-up"><strong>${esc(C.followUpLabel)}</strong><br>${esc(talk.followUp)}</div>` : ''}
+        <div class="speaker-hero"><div class="speaker-icon">${free ? '💬' : isMe ? '👋' : '🎙️'}</div><div><div class="speaker-label">${esc(free ? C.everyoneCanTalk : isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(free ? C.freeTalk : speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
+        ${free ? `<p>${esc(C.freeTalkHelp)} ${esc(talk.nextSpeakerId ? C.nextSpeaker(playerName(talk.nextSpeakerId)) : C.roundEnding)}</p>` : ''}
       </section>
-      <section class="panel"><div class="panel-header"><h3>${esc(C.speakerOrder)}</h3>${hostControls()}</div>${orderList(talk.order, talk.completed, talk.currentSpeakerId)}<div style="margin-top:16px">${talkControls()}</div><p class="muted">${esc(C.externalVoiceNote)}</p></section>
-    </div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
+      <section class="panel"><div class="panel-header"><h3>${esc(C.speakerOrder)}</h3>${hostControls()}</div>${orderList(talk.order, talk.completed, talk.currentSpeakerId)}<div style="margin-top:16px">${talkControls()}</div>${state.private.isHost ? `<p class="muted">${esc(C.topicCount(talk.relatedTopicsRemaining))}</p>` : ''} </section>
+    </div><aside class="side-stack">${roleCard()}</aside></div>${taskCards()}<div class="meeting-footer">${meetingPlan()}</div>`;
   }
 
   function renderMeeting() {
@@ -434,7 +455,7 @@
       <div class="speaker-hero"><div class="speaker-icon">${isMe ? '👋' : '🗣️'}</div><div><div class="speaker-label">${esc(isMe ? C.yourTurn : C.currentSpeaker)}</div><div class="speaker-name">${esc(speaker.name)}</div></div>${timer(state.public.deadlineAt)}</div>
       <div style="margin-top:16px">${orderList(meeting.order, meeting.completed, meeting.currentSpeakerId)}</div>
       <div style="margin-top:16px">${talkControls()}</div>
-    </section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
+    </section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>${taskCards()}`;
   }
 
   function submissionStatus() {
@@ -449,8 +470,8 @@
     const title = voting.type === 'FINAL' ? C.finalVoting : C.midVoting;
     return `${roomBar()}<div class="game-grid"><div class="main-stack"><section class="panel"><div class="panel-header"><div><h2>${esc(title)}</h2><p>${esc(C.selectExactly(required))}</p></div>${timer(state.public.deadlineAt)}</div>
       <p class="notice warning">${esc(C.tieRule)}</p>
-      ${mineLocked ? `<div class="notice">${esc(C.voteLocked)}</div>` : `<form id="vote-form"><div class="vote-grid">${state.public.players.map((player) => `<div class="vote-choice"><input id="vote-${esc(player.id)}" name="vote" value="${esc(player.id)}" type="checkbox"${voteDraft.has(player.id) ? ' checked' : ''}><label for="vote-${esc(player.id)}">${esc(player.name)}${player.id === state.private.playerId ? `（${esc(C.me)}）` : ''}</label></div>`).join('')}</div><div class="button-row"><span id="vote-count" class="muted">${esc(C.selectedCount(voteDraft.size, required))}</span><button class="btn" id="vote-submit" type="submit"${voteDraft.size === required ? '' : ' disabled'}>${esc(C.submitVote)}</button></div></form>`}
-    </section><section class="panel"><div class="panel-header"><h3>${esc(C.submitted)}</h3>${hostControls()}</div>${submissionStatus()}</section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>`;
+      ${mineLocked ? `<div class="notice">${esc(C.voteLocked)}</div>` : `<form id="vote-form"><div class="vote-grid">${state.public.players.map((player) => `<div class="vote-choice"><input id="vote-${esc(player.id)}" name="vote" value="${esc(player.id)}" type="checkbox"${voteDraft.has(player.id) ? ' checked' : ''}><label for="vote-${esc(player.id)}">${esc(player.name)}${player.id === state.private.playerId ? ` (${esc(C.me)})` : ''}</label></div>`).join('')}</div><div class="button-row"><span id="vote-count" class="muted">${esc(C.selectedCount(voteDraft.size, required))}</span><button class="btn" id="vote-submit" type="submit"${voteDraft.size === required ? '' : ' disabled'}>${esc(C.submitVote)}</button></div></form>`}
+    </section><section class="panel"><div class="panel-header"><h3>${esc(C.submitted)}</h3>${hostControls()}</div>${submissionStatus()}</section></div><aside class="side-stack">${roleCard()}${meetingPlan()}</aside></div>${taskCards()}`;
   }
 
   function revealedRoles() {
@@ -464,8 +485,8 @@
   function publicTaskCards(reviewMode) {
     return state.public.reveal.tasks.map((task) => {
       const status = !task.claim ? C.unclaimed : !task.review ? C.pendingReview : task.review.valid ? C.valid : C.invalid;
-      return `<article class="task-card"><div class="task-title-row"><div class="task-title">${esc(task.id)} · ${esc(task.title)}</div><span class="mini-chip${task.review && task.review.valid ? ' ready' : ''}">${esc(status)}</span></div><p class="task-condition">${esc(task.condition)}</p>
-        ${task.claim ? `<div class="claim-box">${esc(task.claim.targetNames.join('、'))} · 第 ${task.claim.round} 輪<br>${esc(task.claim.summary)}</div>` : `<p class="muted">${esc(C.unclaimed)}</p>`}
+      return `<article class="task-card"><h3>${esc(task.ownerId ? C.teammateTask(task.ownerName) : C.sharedTask)}</h3><div class="task-title-row"><div class="task-title">${esc(task.id)}</div><span class="mini-chip${task.review && task.review.valid ? ' ready' : ''}">${esc(status)}</span></div><p class="task-condition">${esc(task.condition)}</p>
+        ${task.claim ? `<div class="claim-box">${esc(task.claim.targetNames.join(', '))} · ${esc(C.roundLabel(task.claim.round))}<br>${esc(task.claim.summary)}</div>` : `<p class="muted">${esc(C.unclaimed)}</p>`}
         ${reviewMode && state.private.actions.canReviewTasks && task.claim && !task.review ? `<div class="button-row" style="margin-top:12px"><button class="btn small" type="button" data-action="reviewTask" data-task-id="${esc(task.id)}" data-valid="true">${esc(C.valid)}</button><button class="btn danger small" type="button" data-action="reviewTask" data-task-id="${esc(task.id)}" data-valid="false">${esc(C.invalid)}</button></div>` : ''}
       </article>`;
     }).join('');
@@ -477,8 +498,8 @@
   }
 
   function voteHistory() {
-    const labels = { after2: '中途指認 1', after4: '中途指認 2', final: C.finalVoting };
-    return `<div class="history-list">${state.public.voteHistory.map((record) => `<div class="history-item"><strong>${esc(labels[record.id] || record.id)}</strong><div>${record.nominees.length ? record.nominees.map(playerName).map(esc).join('、') : esc(C.noNomination)}</div></div>`).join('')}</div>`;
+    const labels = { after2: C.midMeeting(1), after4: C.midMeeting(2), final: C.finalVoting };
+    return `<div class="history-list">${state.public.voteHistory.map((record) => `<div class="history-item"><strong>${esc(labels[record.id] || record.id)}</strong><div>${record.nominees.length ? record.nominees.map(playerName).map(esc).join(', ') : esc(C.noNomination)}</div></div>`).join('')}</div>`;
   }
 
   function renderFinished() {
@@ -495,6 +516,7 @@
       case 'LOBBY': app.innerHTML = renderLobby(); break;
       case 'ROLE_REVEAL': app.innerHTML = renderRoleReveal(); break;
       case 'TALK': app.innerHTML = renderTalk(); break;
+      case 'FREE_TALK': app.innerHTML = renderTalk(); break;
       case 'MEETING_DISCUSS': app.innerHTML = renderMeeting(); break;
       case 'VOTING': app.innerHTML = renderVoting(); break;
       case 'TASK_REVIEW': app.innerHTML = renderTaskReview(); break;
@@ -505,6 +527,12 @@
   }
 
   function paintTimers() {
+    const connection = document.getElementById('host-connection');
+    if (connection) {
+      connection.hidden = !state;
+      connection.textContent = !state ? '' : Date.now() + serverOffset > state.public.hostLiveUntil
+        ? C.hostUnavailable : state.private.isHost ? (embeddedCard ? C.keepMainHostOpen : C.keepHostOpen) : C.hostConnected;
+    }
     document.querySelectorAll('[data-deadline]').forEach((element) => {
       const remaining = Math.max(0, Number(element.dataset.deadline) - (Date.now() + serverOffset));
       const seconds = Math.ceil(remaining / 1000);
@@ -529,6 +557,13 @@
     }
     const button = event.target.closest('[data-command], [data-action]');
     if (!button || button.disabled) return;
+    if (button.dataset.command === 'sendCards') {
+      button.disabled = true;
+      try { await transport.connectCards(); showToast(C.cardsSent); }
+      catch (error) { showToast(errorMessage(error.code)); }
+      finally { button.disabled = false; }
+      return;
+    }
     if (button.dataset.command === 'copyInvite') {
       try { await navigator.clipboard.writeText(inviteUrl()); showToast(C.copied); }
       catch (error) { window.prompt(C.copyInvite, inviteUrl()); }
@@ -554,6 +589,7 @@
   });
 
   app.addEventListener('change', (event) => {
+    if (event.target.matches('#create-form [name="useCards"], #create-form [name="hostSeat"]')) syncCardSetupForm();
     if (event.target.matches('#create-form [name="playerCount"]')) updateCreateWolfOptions(event.target);
     if (event.target.matches('#settings-form [name]')) {
       const form = event.target.form;
@@ -562,6 +598,7 @@
         wolfCount: Number(form.elements.wolfCount.value),
         bellEnabled: form.elements.bellEnabled.checked,
         talkSeconds: Number(form.elements.talkSeconds.value),
+        freeTalkSeconds: Number(form.elements.freeTalkSeconds.value),
         meetingSeconds: Number(form.elements.meetingSeconds.value),
         voteSeconds: Number(form.elements.voteSeconds.value),
       };
@@ -597,6 +634,7 @@
         const response = await apiRequest('POST', {
           action: 'create',
           name: form.elements.name.value,
+          ...(form.elements.useCards?.checked ? { legacy: legacySetup, hostSeat: Number(form.elements.hostSeat.value) } : {}),
           settings: {
             playerCount: Number(form.elements.playerCount.value),
             wolfCount: Number(form.elements.wolfCount.value),
@@ -609,6 +647,10 @@
         saveSession(response.state.public.code, response.token);
         applyState(response.state, true);
         startSync();
+        if (response.state.public.legacyCardRoom) {
+          await transport.connectCards();
+          showToast(C.cardsSent);
+        }
       } catch (error) { showToast(errorMessage(error.code)); }
       finally { requestRunning = false; }
       return;
@@ -632,6 +674,7 @@
         wolfCount: Number(form.elements.wolfCount.value),
         bellEnabled: form.elements.bellEnabled.checked,
         talkSeconds: Number(form.elements.talkSeconds.value),
+        freeTalkSeconds: Number(form.elements.freeTalkSeconds.value),
         meetingSeconds: Number(form.elements.meetingSeconds.value),
         voteSeconds: Number(form.elements.voteSeconds.value),
       };
@@ -672,7 +715,13 @@
   async function boot() {
     const code = roomCodeFromUrl();
     let token = null;
-    if (code) {
+    if (embeddedCard) {
+      token = new URLSearchParams(location.hash.slice(1)).get('session');
+      if (!/^[a-f0-9]{64}$/.test(token || '')) {
+        app.innerHTML = `<p class="notice">${esc(C.cardLoadingError)}</p>`;
+        return;
+      }
+    } else if (code) {
       try { token = localStorage.getItem(storageKey(code)); } catch (error) {}
     }
     if (!code || !token) {
@@ -687,10 +736,12 @@
       applyState(response.state, true);
       startSync();
     } catch (error) {
-      clearSession();
+      // Keep the saved identity on transient network/host failures.
+      if (['INVALID_SESSION', 'SESSION_REQUIRED'].includes(error.code)) clearSession();
       entryMode = 'join';
       renderEntry(code);
       showToast(errorMessage(error.code));
+      if (session) startSync();
     }
   }
 

@@ -20,13 +20,9 @@
 // All games share one "rooms" key so the SAME room code and SAME player links
 // keep working no matter which game the host switches to.
 //
-// "roster" is a separate, openly-readable path per room. Nothing writes or
-// reads it any more — it existed only for Word Wolf's vote buttons, and that
-// game has been removed — but the rule below is left in place so an older tab
-// still open somewhere doesn't start failing writes mid-session. It only ever
-// held each player's number and name (which the host shows on the shared screen
-// anyway); secret words and answers live under "players", locked to the exact
-// token, and always did.
+// "roster" is openly readable/writable. Chat Wolf v2 uses it for a join public
+// key and encrypted join requests only; never place plaintext card tokens or
+// selected secret tasks here. Older games may still use it for public names.
 //   {
 //     "rules": {
 //       "rooms": {
@@ -49,9 +45,9 @@
 //       }
 //     }
 //   }
-// Chat Wolf is different from the legacy card games: only its trusted Vercel
-// API uses Firebase Admin to access chatWolfRooms. Never grant browser access
-// to that path and never put the service-account JSON in this public file.
+// Chat Wolf v2 uses the same rules under rooms/chatwolf-{CODE}. Its host browser
+// is trusted and must stay open. The old chatWolfRooms path is unused and stays
+// denied. No Firebase Admin credential belongs in this public file.
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDojGHsk2N6EssSWrmEbfeN3abZ7lQt9wY",

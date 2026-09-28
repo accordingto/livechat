@@ -1,14 +1,38 @@
 ## 專案背景
 
-**聊天狼人 v1（2026-09-20）**：入口 `chat-wolf.html`。這款遊戲不使用既有
-`play.html` 私人牌卡節點，而是由 `api/chat-wolf.js` 驗證每位玩家的 256-bit 重連
-token，再從 Firebase `chatWolfRooms/{CODE}` 取出伺服器權威狀態並分成公開／個人／
-狼隊投影。房主也是普通玩家，若為村民不會看到狼人或任務。六輪、兩個會議槽、
-一次搖鈴、整組指認、兩個共享任務、人工核對與再玩一局均在
-`api/_lib/chat-wolf-engine.cjs` 的原子狀態轉移內；前端只送意圖，不可自行推進。
-介面文案集中在 `chat-wolf-copy.js`，規則、環境設定與測試矩陣見
-`chat-wolf-mode.md`。此模式需要 Vercel 的 `FIREBASE_SERVICE_ACCOUNT_JSON`，不能把
-服務帳號或當局秘密移到公開前端，也不能用 localStorage 冒充多人同步。
+**Chat Wolf 英文化與清楚任務（2026-09-27）**：全部新局素材與操作介面改簡單英文。
+狼人直接看到共同／自己／隊友目標，不再收合秘密任務；僅備註與申報表單收整。
+每個起始情境附 6 個相關新方向，每方向 2 個追問；主持以 `newTopic` 多次加入，
+保留原情境、任務、發言順序及截止時間。原始四追問仍保留。
+沿用原 Firebase／小卡／主持信任模式。舊局已存的素材到下局才更新，不能中途重抽。
+
+**聊天狼人新版談話／任務（2026-09-27）**：新開局 `rulesVersion: 2`，每個正式發言後
+先進 `FREE_TALK`，再換下一人；固定六輪与既有會議／投票。每局一主題，Follow-up
+只抽相關延伸不重置時間。`chat-wolf-content.js` 有 40 主題／160 延伸／110 共同任務／
+150 個人任務。每局一共同＋每狼一个人，依最後補充**狼人互看隊友個人任務**，
+但只有本人能申報或取消，所有任務人工核對有效才可能狼勝。沒有第三人稱叫自己名字。
+房間近期 30 任務避重，重玩保留歷史；舊已開局無 rulesVersion 者到下局才升新版。
+內容模組須在 engine 前載入，UI copy 仍集中管理；詳見 `chat-wolf-mode.md` 最新段落。
+
+**聊天狼人原小卡整合（2026-09-27）**：`chat-wolf-cards.js` 讀首頁
+`room-last-session`／`room-session-{CODE}`，建立房間時選房主座位並預先加入原玩家。
+`chat-wolf-sync.js` 的 `connectCards()` 明確發送 `game: chatwolf` 到各自原 token
+路徑，僅含該卡自己的憑證。`play.html` 嵌入 `chat-wolf.html?card=1`，憑證在 fragment，
+不使用共享 localStorage 覆蓋卡片身分、不接手主持；換遊戲移除 iframe。沿用同一
+套準備、角色、發言、任务、投票介面，非額外複製引擎。卡片轉接不持續覆寫原卡。
+詳見 `chat-wolf-mode.md` 的原小卡段落。不要再讓聊天狼人繞過首頁小卡。
+
+**聊天狼人 v2（2026-09-27，使用者同意改回舊遊戲的主持信任模式）**：入口
+`chat-wolf.html`，純靜態部署。已移除 Admin API 與其憑證需求。`chat-wolf-sync.js`
+沿用 Firebase `rooms/chatwolf-{CODE}/players/{隨機token}` 存主持狀態／私人投影，
+`roster` 僅存加入用公鑰及加密請求，不公布玩家 token。`chat-wolf-engine.js` 保留
+六輪、共享兩任務、會議配額與人工核對。Firebase REST ETag 作 CAS，主持 lease
+避免多分頁重複推進，指令序號與階段／發言位置防重送。JSON 字串保存精確空陣列。
+房主正常村民介面不顯示其他身分或任務，但其瀏覽器能檢查完整狀態，必須信任房主。
+房主頁需保持開啟；斷線超過 lease 後回來延續剩餘時間，狀態仍保存在 Firebase。
+localStorage 只存玩家 token／主持控制 token，不存權威牌局。不要再宣稱伺服器
+秘密隔離或要求 Firebase Admin。詳見 `chat-wolf-mode.md`；文案集中在
+`chat-wolf-copy.js`。正式頁不提供多玩家測試／任意讀卡入口。
 
 我是一個**英文線上聊天室的主持人**，負責帶領參與者進行互動活動。
 

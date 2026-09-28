@@ -30,8 +30,8 @@ host is sharing.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
 - **聊天狼人 is intentionally separate from the legacy card links.** Players join
-  its secure lobby by room code and keep an opaque reconnect token on their own
-  device. Its authoritative state is only available through `/api/chat-wolf`.
+  its lobby by room code and keep an opaque reconnect token on their own device.
+  Like the other games, it uses the existing Firebase and trusts the host browser.
 - `CLAUDE.md` is the architecture log (written in Chinese): what every screen
   does and, more usefully, why each decision was made. Read it before changing
   anything shared — `room.js`, `play.html`, `index.html`, `game-data.js`,
@@ -89,31 +89,23 @@ Without Firebase configured:
   to go).
 - **Still fully playable** — the rest. They only lose the on-phone voting and
   buzzer interactions; the host screen carries the whole game.
-- **聊天狼人** additionally needs the server-only Firebase Admin environment
-  variables in `.env.example`. It refuses to create a room when that trusted
-  backend is not configured; it never falls back to a fake local room.
+- **聊天狼人** needs the same existing Firebase configuration and an open host page.
 
-### Chat Wolf trusted backend
+### Chat Wolf host mode (2026-09-27)
 
-Chat Wolf cannot safely assign hidden roles or collect private ballots in the
-browser. Vercel runs `api/chat-wolf.js`, and that function alone reads and writes
-`chatWolfRooms/{CODE}` with Firebase Admin. Configure these deployment variables:
-
-```text
-FIREBASE_SERVICE_ACCOUNT_JSON={...the complete service-account JSON...}
-FIREBASE_DATABASE_URL=https://YOUR_PROJECT...firebasedatabase.app
-```
-
-Use the template in `.env.example`. Keep `chatWolfRooms` denied to browser SDKs;
-Firebase Admin bypasses Rules after the API authenticates the player's bearer
-token. Full rules, state transitions, privacy boundaries, and verification steps
-are in [`chat-wolf-mode.md`](chat-wolf-mode.md).
+The separate Admin API has been removed. `chat-wolf-sync.js` uses the existing
+Firebase REST API and bearer paths under `rooms/chatwolf-{CODE}`. No additional
+credentials, paid service, or Rules changes are needed on the current site.
+The host must keep the page open. Its normal villager interface hides other
+roles and tasks, but the host browser necessarily receives the full game state.
+This is an honesty-based host model, not protection against a host inspecting
+developer tools. See [`chat-wolf-mode.md`](chat-wolf-mode.md) for persistence,
+reconnect behavior, and the exact privacy boundary.
 
 ## Running your own copy
 
-Fork it or clone it. The original games remain buildless; Chat Wolf adds one
-server dependency, so run `pnpm install` (or an equivalent package-manager
-install) before exercising its API. Three things need doing before it works.
+Fork it or clone it. All games are buildless static pages. Three things need
+doing before a separate copy works.
 
 ### 1. Point it at your own Firebase project
 
@@ -155,12 +147,10 @@ the `localhost` on your laptop, so with only a local server you can drive all
 every host screen perfectly and never once see a player card — half of each
 game (buzzers, votes, the jury, Truth or Dare calls) lives on that page.
 
-The original games can still use any static host. Chat Wolf requires a host with
-Node serverless functions; the current deployment uses Vercel:
+All games, including Chat Wolf, can use a static HTTPS host:
 
 - **Vercel** — what the live site runs on
-- Another provider is possible only after adapting `api/chat-wolf.js` to its
-  server-function format. GitHub Pages alone cannot run Chat Wolf.
+- GitHub Pages, Netlify, or another static HTTPS host also works with the Firebase configuration.
 
 Deployed files are public even when the repo is private: anyone can fetch
 `/firebase-config.js` from the deployed site. That is expected and safe as long
