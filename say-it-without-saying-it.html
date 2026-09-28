@@ -280,12 +280,11 @@
     .copy-sub-btn.is-copied { border-color: #22c55e; color: var(--ok-text); }
     .copy-sub-btn:disabled { cursor: not-allowed; opacity: .5; }
 
-    /* Difficulty / forbidden words / round length each get their own small caps label
-       and a dashed rule above it (except the first), so a glance at a shared screen
-       reads "three things", not one undifferentiated stack of switches and buttons.
-       This is also the exact column the in-game settings popover stacks all three
-       .rules-group nodes into (see #settings-popover below) — same class, same
-       dividers, just moved from the wizard into a floating panel. */
+    /* Difficulty / forbidden words / round length / score display each get their own
+       small caps label and a dashed rule above it (except the first), so a glance at
+       a shared screen reads "four things", not one undifferentiated stack of
+       switches and buttons. This is the exact column #settings-popover (below)
+       stacks all four .rules-group nodes into. */
     .rules-group {
       align-self: stretch;
       display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
@@ -323,8 +322,8 @@
        collapse to one pill showing the ticked difficulty dots (forbidden words/banned
        count/round length already have a live read-out in .phase-summary just above,
        so the pill itself doesn't need to repeat them), and open the exact same
-       #rules-group-difficulty / #rules-group-forbidden / #rules-group-seconds nodes —
-       moved in, not copied — in a floating popover that costs zero layout space closed.
+       #rules-group-difficulty / #rules-group-forbidden / #rules-group-seconds nodes,
+       living permanently in a floating popover that costs zero layout space closed.
        #settings-popover itself lives OUTSIDE #phase-game in the HTML (see the comment
        there) and is `position: fixed`, positioned in JS from the toggle button's own
        rect each time it opens — a plain CSS anchor doesn't reach it, because
@@ -355,23 +354,15 @@
       padding: 16px;
       box-shadow: 0 14px 34px rgba(0,0,0,.5);
     }
-    /* the moved-in groups were built to sit flush-right inside a narrow control-bar
-       column — inside the popover they get the same left-aligned treatment as inside
-       the wizard (see the .substep overrides further down), just reusing that rule
-       for a second context rather than repeating it. padding-top stays out of this
-       shared pair on purpose: the wizard's slots each hold exactly one group, so
-       zeroing it there is harmless, but the popover holds all three as siblings and
-       needs .rules-group's own base padding-top (zeroed only for :first-child) to
-       keep the gap below each dashed divider between them. */
-    .settings-popover .rules-group,
-    .substep .rules-group { align-items: flex-start; align-self: stretch; }
-    .substep .rules-group { padding-top: 0; }
-    .settings-popover .banned-count-row,
-    .substep .banned-count-row { align-items: flex-start; }
-    .settings-popover .level-btns,
-    .substep .level-btns { justify-content: flex-start; }
-    .settings-popover .secs-field,
-    .substep .secs-field { display: inline-flex; margin-right: 0; }
+    /* .rules-group's base alignment (further up) is flush-right, built for a narrow
+       control-bar column — inside the popover, which is the only place these groups
+       live now, they need the opposite: left-aligned, stacked as siblings with
+       .rules-group's own base padding-top (zeroed only for :first-child) keeping the
+       gap below each dashed divider between them. */
+    .settings-popover .rules-group { align-items: flex-start; align-self: stretch; }
+    .settings-popover .banned-count-row { align-items: flex-start; }
+    .settings-popover .level-btns { justify-content: flex-start; }
+    .settings-popover .secs-field { display: inline-flex; margin-right: 0; }
 
     /* a finished round: the deal button turns green and breathes, so "it is on to the
        next clue giver" is visible from across a shared screen */
@@ -655,68 +646,11 @@
       .status-line { font-size: .95rem; padding: 14px; }
     }
 
-    /* ── Setup phase: same step-wizard pattern as index.html's Step 1 (room
-       setup), applied to this game's own settings instead — difficulty,
-       forbidden words, and round length walk past one at a time, then
-       "Start Game" hands the same three controls to the live control bar
-       for the Game phase, where they stay editable via "Edit settings". ── */
     .phase-wrap { width: 100%; max-width: 1100px; }
-    .step-hdr { display: flex; align-items: baseline; gap: 10px; margin: 4px 0 14px; }
-    .step-hdr .step-num {
-      font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--accent-text); background: color-mix(in srgb, var(--accent) 14%, transparent);
-      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-      border-radius: 999px; padding: 4px 12px; flex-shrink: 0;
-    }
-    .step-hdr h2 { font-size: 1.15rem; font-weight: 800; color: var(--text); }
-    .step-sub { font-size: .86rem; color: var(--text-dim); line-height: 1.6; margin: -6px 0 16px; }
 
-    .substep-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 20px; }
-    .substep-dot {
-      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-      background: var(--btn-face); border: 2px solid var(--border-2); color: #9a9ac4;
-      font-family: inherit; font-size: .8rem; font-weight: 800; cursor: default;
-      display: flex; align-items: center; justify-content: center;
-      transition: border-color .2s, color .2s, background .2s;
-    }
-    .substep-dot.is-done { border-color: var(--accent); color: var(--accent-text); cursor: pointer; }
-    .substep-dot.is-active { border-color: var(--accent); background: var(--accent); color: var(--btn-ink); }
-    .substep-dot-line { width: 18px; height: 2px; background: var(--border); flex-shrink: 0; }
-    .substep-dot-line.is-done { background: var(--accent); }
-
-    .substep { animation: fadeUp .35s ease both; background: var(--surface); border: 2px solid var(--border); border-radius: 18px; padding: 22px 24px; }
-    .substep-hdr { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
-    .substep-hdr .substep-tag {
-      font-size: .78rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
-      color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border-3);
-      border-radius: 999px; padding: 3px 11px; flex-shrink: 0;
-    }
-    .substep-hdr h3 { font-size: 1rem; font-weight: 800; color: var(--text); }
-    .substep-desc { font-size: .86rem; color: var(--text-dim); line-height: 1.6; margin: 0 0 16px; }
-    /* left-aligned overrides for the moved-in widgets (difficulty buttons, forbidden
-       toggle, timer field) live with the popover's own copy of the same rules, further
-       up — .substep and .settings-popover are the widgets' only two homes, so one
-       shared selector list covers both instead of repeating it here */
-
-    .substep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
-    .substep-nav-btn {
-      background: var(--btn-face); color: var(--text-dim); border: 2px solid var(--border-3); border-radius: 12px;
-      padding: 11px 22px; font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer;
-      transition: background .2s, border-color .2s, color .2s, transform .1s;
-    }
-    .substep-nav-btn:active { transform: scale(.98); }
-    .substep-nav-btn.substep-next {
-      background: var(--accent); color: var(--btn-ink); border-color: var(--accent);
-      margin-left: auto;
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .substep-dot.is-done:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
-      .substep-nav-btn:hover { border-color: var(--accent); color: var(--accent-text); }
-      .substep-nav-btn.substep-next:hover { filter: brightness(1.1); color: var(--btn-ink); }
-    }
-
-    /* the compact summary bar atop the Game phase — same pattern as
-       index.html's setup-summary + "Edit room setup" */
+    /* the compact summary bar atop the game screen — one line reading out
+       difficulty / forbidden words / timer / score display, so a glance at the
+       shared screen (not the settings popover) tells you what's currently set */
     .phase-summary {
       width: 100%; max-width: 1100px;
       display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
@@ -725,16 +659,9 @@
       font-size: .84rem; color: var(--text-dim);
     }
     .phase-summary b { color: var(--text); }
-    .edit-setup-btn {
-      background: var(--btn-face); border: 1.5px solid var(--border-3); color: var(--text-dim);
-      border-radius: 999px; padding: 7px 14px; font-family: inherit;
-      font-size: .8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
-      transition: background .2s, border-color .2s, color .2s;
-    }
-    .edit-setup-btn:hover { border-color: var(--accent); color: var(--accent); }
   </style>
 </head>
-<body data-guide="taboo" data-guide-next="setup">
+<body data-guide="taboo" data-guide-next="game">
 
   <div class="topbar">
     <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
@@ -747,122 +674,24 @@
 
   <div class="fb-warning hidden" id="fb-warning"></div>
 
-  <!-- ══════════ Setup phase: walk the host through the three things this
-       game needs decided before dealing a word — difficulty, forbidden
-       words, and round length — one at a time, same pattern as index.html's
-       room-setup wizard. #rules-group-difficulty / #rules-group-forbidden /
-       #rules-group-seconds are the three widgets the game phase also shows:
-       startGame()/editSettings() move all three nodes (via
-       placeSettingsGroups()) between the wizard slots below and the in-game
-       settings popover, so the wizard and the popover can never disagree
-       about what's ticked. ══════════ -->
-  <div class="phase-wrap" id="phase-setup">
-    <div class="step-hdr">
-      <span class="step-num" data-i18n="taboo.setupBadge">SETUP</span>
-      <h2 data-i18n="taboo.setupTitle">⚙️ Game Settings</h2>
-    </div>
-    <p class="step-sub" data-i18n="taboo.setupSub">Set these up once, then start the game — you can still change them anytime from the game screen.</p>
-    <div class="substep-dots" id="taboo-dots"></div>
-
-    <div class="substep" id="taboo-substep-1">
-      <div class="substep-hdr"><span class="substep-tag">1 / 5</span><h3 data-i18n="taboo.subStep1Title">🎚️ Difficulty</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep1Desc">Easy words are everyday objects; Hard words are abstract feelings and ideas. Tick as many as you like — the ticked levels are drawn from together, and at least one has to stay on.</p>
-      <div id="substep-difficulty-slot">
-        <div class="rules-group" id="rules-group-difficulty">
-          <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
-          <div class="level-btns" id="level-btns"></div>
-        </div>
-      </div>
-      <div class="substep-nav">
-        <span></span>
-        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(2)" data-i18n="taboo.nextBtn">Next →</button>
-      </div>
-    </div>
-
-    <div class="substep hidden" id="taboo-substep-2">
-      <div class="substep-hdr"><span class="substep-tag">2 / 5</span><h3 data-i18n="taboo.subStep2Title">🚫 Forbidden Words</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep2Desc">Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.</p>
-      <div id="substep-forbidden-slot">
-        <div class="rules-group" id="rules-group-forbidden">
-          <span class="rules-group-label" data-i18n="taboo.forbiddenWordsLabel">🚫 Forbidden words</span>
-          <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
-            <span class="toggle-switch"></span>
-            <span id="forbidden-state">ON</span>
-          </button>
-          <div class="banned-count-row" id="banned-count-row">
-            <span class="banned-count-label" data-i18n="taboo.howManyLabel">🔢 how many</span>
-            <div class="level-btns" id="count-btns"></div>
-          </div>
-        </div>
-      </div>
-      <div class="substep-nav">
-        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(1)" data-i18n="taboo.backBtn">← Back</button>
-        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(3)" data-i18n="taboo.nextBtn">Next →</button>
-      </div>
-    </div>
-
-    <div class="substep hidden" id="taboo-substep-3">
-      <div class="substep-hdr"><span class="substep-tag">3 / 5</span><h3 data-i18n="taboo.subStep3Title">⏱️ Round Timer</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep3Desc">Set how many seconds each round lasts. You can still adjust it from the game screen anytime.</p>
-      <div id="substep-seconds-slot">
-        <div class="rules-group" id="rules-group-seconds">
-          <span class="rules-group-label" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
-          <span class="secs-field" id="secs-field">
-            <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
-            <input id="timer-secs" inputmode="numeric" autocomplete="off" value="90" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
-            <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
-            <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
-          </span>
-        </div>
-      </div>
-      <div class="substep-nav">
-        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(2)" data-i18n="taboo.backBtn">← Back</button>
-        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(4)" data-i18n="taboo.nextBtn">Next →</button>
-      </div>
-    </div>
-
-    <div class="substep hidden" id="taboo-substep-4">
-      <div class="substep-hdr"><span class="substep-tag">4 / 5</span><h3 data-i18n="taboo.subStep4Title">📊 Score Display</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep4Desc">Choose what the player cards show about everyone's scores. You can still change this from the game screen anytime.</p>
-      <div id="substep-scoredisplay-slot">
-        <div class="rules-group" id="rules-group-scoredisplay">
-          <span class="rules-group-label" data-i18n="taboo.scoreDisplayLabel">📊 Score display</span>
-          <div class="level-btns" id="scoredisplay-btns"></div>
-        </div>
-      </div>
-      <div class="substep-nav">
-        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(3)" data-i18n="taboo.backBtn">← Back</button>
-        <button type="button" class="substep-nav-btn substep-next" onclick="showTabooSubStep(5)" data-i18n="taboo.nextBtn">Next →</button>
-      </div>
-    </div>
-
-    <div class="substep hidden" id="taboo-substep-5">
-      <div class="substep-hdr"><span class="substep-tag">5 / 5</span><h3 data-i18n="taboo.subStep5Title">🎮 Start Game</h3></div>
-      <p class="substep-desc" data-i18n="taboo.subStep5Desc">All set! You can always come back with "Edit settings" once the game is running.</p>
-      <div class="substep-nav">
-        <button type="button" class="substep-nav-btn" onclick="showTabooSubStep(4)" data-i18n="taboo.backBtn">← Back</button>
-        <button type="button" class="substep-nav-btn substep-next" onclick="startGame()" data-i18n="taboo.startGameBtn">🎮 Start Game</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════ Game phase: unchanged from before, apart from the settings
-       widgets above now living inside a popover off its control bar instead
-       of one of them being hard-coded there. ══════════ -->
-  <div class="phase-wrap hidden" id="phase-game">
+  <!-- ══════════ The setup wizard is gone — difficulty / forbidden words /
+       round length / score display are all reachable straight from the game
+       screen's own ⚙️ settings popover (see #settings-popover below), so
+       there is nothing left for a "before the game" step to walk the host
+       through. The game screen is what the host sees the moment they get
+       past guide.js's briefing. ══════════ -->
+  <div class="phase-wrap" id="phase-game">
     <div class="phase-summary" id="phase-summary">
       <span id="phase-summary-text"></span>
-      <button type="button" class="edit-setup-btn" onclick="editSettings()" data-i18n="taboo.editSettingsBtn">⚙️ Edit settings</button>
     </div>
 
     <div class="status-line" id="status-line"></div>
 
     <!-- Difficulty / forbidden words / banned-word count / round length are all
          reachable mid-session — the room warms up and Easy stops landing, or a
-         group wants an easier round — without three taps away behind "Edit
-         settings". They are the SAME nodes as the wizard's, moved in by
-         placeSettingsGroups('game') (see the script below); there is only one
-         copy of each widget in the document. The pill only shows the ticked
+         group wants an easier round — a tap on the ⚙️ pill away. Each widget has
+         exactly one copy in the document, written directly into #settings-popover
+         (see the HTML further up). The pill only shows the ticked
          difficulty dots — .phase-summary just above already reads out
          forbidden-words state, banned count and the timer, so the pill itself
          doesn't need to repeat them. None of these settings ever disturb the
@@ -939,10 +768,45 @@
        positioned in JS from the toggle button's own rect — see toggleSettingsPopover())
        sidesteps that entirely. Same fix, same reasoning, as dare-conquest.html's own
        #diff-popover. -->
+  <!-- Every game setting lives here now, permanently — there used to be a second
+       copy of each widget in a setup wizard, with a function that physically moved
+       the nodes back and forth between the wizard and this popover so the two
+       could never disagree about what was ticked (see the old placeSettingsGroups()).
+       The wizard is gone, so each widget has exactly one home: right here. None of
+       these settings ever disturb the round in play — they only ever decide what
+       the NEXT deal draws from or how long the NEXT round runs (see toggleLevel() /
+       setBannedCount() / toggleForbidden() / setBoardMode()). -->
   <div class="settings-popover hidden" id="settings-popover">
-    <!-- Host-screen display prefs (not a game rule, so it never has a wizard slot to
-         travel to and from — placeSettingsGroups() below just re-appends it last on
-         every 'game' entry so it stays after the four rules groups). -->
+    <div class="rules-group" id="rules-group-difficulty">
+      <span class="rules-group-label" data-i18n="taboo.difficultyLabel">🎚️ Difficulty</span>
+      <div class="level-btns" id="level-btns"></div>
+    </div>
+    <div class="rules-group" id="rules-group-forbidden">
+      <span class="rules-group-label" data-i18n="taboo.forbiddenWordsLabel">🚫 Forbidden words</span>
+      <button class="toggle-btn" id="forbidden-toggle" onclick="toggleForbidden()">
+        <span class="toggle-switch"></span>
+        <span id="forbidden-state">ON</span>
+      </button>
+      <div class="banned-count-row" id="banned-count-row">
+        <span class="banned-count-label" data-i18n="taboo.howManyLabel">🔢 how many</span>
+        <div class="level-btns" id="count-btns"></div>
+      </div>
+    </div>
+    <div class="rules-group" id="rules-group-seconds">
+      <span class="rules-group-label" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
+      <span class="secs-field" id="secs-field">
+        <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
+        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="90" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
+        <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
+        <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
+      </span>
+    </div>
+    <div class="rules-group" id="rules-group-scoredisplay">
+      <span class="rules-group-label" data-i18n="taboo.scoreDisplayLabel">📊 Score display</span>
+      <div class="level-btns" id="scoredisplay-btns"></div>
+    </div>
+    <!-- Host-screen display prefs — not a game rule (it never affects a deal), just
+         placed last so it reads as its own group after the four rules above. -->
     <div class="rules-group" id="rules-group-view">
       <span class="rules-group-label" data-i18n="taboo.viewSettingsLabel">👁️ Host screen</span>
       <button type="button" class="deck-toggle" id="scores-hidden-toggle"></button>
@@ -1066,27 +930,10 @@
       minusOneForYou: { zh: '（你 −1）', en: ' (−1 for you)' },
       hideDeckBtn: { zh: '🙈 收起題庫', en: '🙈 Hide the deck' },
       browseDeckBtn: { zh: "👁️ 瀏覽全部 {n} 個題目（暴雷 — 分享畫面時請勿開啟）", en: "👁️ Browse all {n} words (spoilers — don't open while sharing)" },
-      setupBadge: { zh: '設定', en: 'SETUP' },
-      setupTitle: { zh: '⚙️ 遊戲設定', en: '⚙️ Game Settings' },
-      setupSub: { zh: '依序設定好這三項，再開始遊戲 — 開始後仍可以隨時從遊戲畫面調整。', en: 'Set these up once, then start the game — you can still change them anytime from the game screen.' },
-      subStep1Title: { zh: '🎚️ 難度', en: '🎚️ Difficulty' },
-      subStep1Desc: { zh: '簡單是看得到摸得到的日常物品，困難則是抽象的情緒或概念。可以複選，勾起來的難度會混在一起抽，至少要留一個。', en: 'Easy words are everyday objects; Hard words are abstract feelings and ideas. Tick as many as you like — the ticked levels are drawn from together, and at least one has to stay on.' },
-      subStep2Title: { zh: '🚫 禁字設定', en: '🚫 Forbidden Words' },
-      subStep2Desc: { zh: '開啟後，每輪會多發一位裁判專門聽違規禁字；也可以設定實際生效幾個禁字，數字愈小愈簡單。', en: 'Turn this on to deal an extra referee each round who listens for a forbidden word. You can also choose how many of the 6 words are actually banned — fewer is easier.' },
-      subStep3Title: { zh: '⏱️ 回合時間', en: '⏱️ Round Timer' },
-      subStep3Desc: { zh: '設定每一輪的秒數，開始遊戲後仍可以在畫面上隨時調整。', en: 'Set how many seconds each round lasts. You can still adjust it from the game screen anytime.' },
-      subStep4Title: { zh: '📊 分數顯示', en: '📊 Score Display' },
-      subStep4Desc: { zh: '選擇玩家卡片要怎麼顯示大家的分數。之後仍可以隨時從遊戲畫面調整。', en: "Choose what the player cards show about everyone's scores. You can still change this from the game screen anytime." },
-      subStep5Title: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
-      subStep5Desc: { zh: '設定完成！遊戲開始後，仍可以隨時按「編輯設定」回來調整。', en: 'All set! You can always come back with "Edit settings" once the game is running.' },
       scoreDisplayLabel: { zh: '📊 分數顯示', en: '📊 Score display' },
       scoreDisplayFull: { zh: '全部顯示', en: 'Show everyone' },
       scoreDisplayNone: { zh: '全部隱藏', en: 'Hide all' },
       scoreDisplayCompact: { zh: '最低～我～最高', en: 'Low ~ mine ~ high' },
-      nextBtn: { zh: '下一步 →', en: 'Next →' },
-      backBtn: { zh: '← 上一步', en: '← Back' },
-      startGameBtn: { zh: '🎮 開始遊戲', en: '🎮 Start Game' },
-      editSettingsBtn: { zh: '⚙️ 編輯設定', en: '⚙️ Edit settings' },
       settingsToggleTitle: { zh: '遊戲設定：難度／禁字／秒數', en: 'Game settings: difficulty, forbidden words, timer' },
       summaryForbiddenOn: { zh: '🚫 禁字 ON（{n}）', en: '🚫 Forbidden ON ({n})' },
       summaryForbiddenOff: { zh: '🚫 禁字 OFF', en: '🚫 Forbidden OFF' },
@@ -1172,138 +1019,21 @@
     let nextSeq = 0;
     const NEXT_ROUND_WAIT = 5;
 
-    /* ── Setup phase: a 5-step wizard over the four widgets below, same
-       pattern as index.html's room-setup wizard — walk past difficulty,
-       forbidden words, round length, and score display one at a time, then
-       hand them to the Game phase's control bar. editSettings() moves them
-       back without touching round/score/game state, since settings have
-       always only ever affected the *next* deal (see
-       toggleLevel/setBannedCount/toggleForbidden/setBoardMode). */
-    let phase = 'setup'; // 'setup' | 'game'
-    const TABOO_SUBSTEPS = 5;
-    let tabooSubStep = 1;
-    let tabooSubStepReached = 1;
+    /* The four settings widgets (difficulty, forbidden words, round timer, score
+       display) used to also live in a setup wizard shown before the game screen,
+       with a function that physically moved each node between the wizard and the
+       in-game settings popover so the two could never disagree about what was
+       ticked. The wizard is gone — every widget now has exactly one home,
+       #settings-popover, written directly into the HTML — so there is nothing left
+       to move. Settings still only ever affect the *next* deal (see
+       toggleLevel/setBannedCount/toggleForbidden/setBoardMode), never the round
+       in progress. */
 
-    function renderTabooDots() {
-      const wrap = document.getElementById('taboo-dots');
-      wrap.innerHTML = '';
-      for (let n = 1; n <= TABOO_SUBSTEPS; n++) {
-        if (n > 1) {
-          const line = document.createElement('span');
-          line.className = 'substep-dot-line' + (n <= tabooSubStepReached ? ' is-done' : '');
-          wrap.appendChild(line);
-        }
-        const dot = document.createElement('button');
-        dot.type = 'button';
-        dot.textContent = n;
-        const reached = n <= tabooSubStepReached;
-        dot.className = 'substep-dot' + (n === tabooSubStep ? ' is-active' : reached ? ' is-done' : '');
-        dot.disabled = !reached;
-        if (reached) dot.onclick = () => showTabooSubStep(n);
-        wrap.appendChild(dot);
-      }
-    }
-
-    function showTabooSubStep(n) {
-      if (n < 1 || n > TABOO_SUBSTEPS) return;
-      tabooSubStep = n;
-      if (n > tabooSubStepReached) tabooSubStepReached = n;
-      for (let i = 1; i <= TABOO_SUBSTEPS; i++) {
-        document.getElementById('taboo-substep-' + i).classList.toggle('hidden', i !== n);
-      }
-      renderTabooDots();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    renderTabooDots();
-
-    /* All four settings widgets are shown in both phases, so rather than keep two
-       (or four) copies of each in sync there is one node per setting that travels:
-       appendChild MOVES an existing element, so the listeners renderLevelBtns() /
-       renderForbiddenToggle() / setSeconds() / renderBoardModeBtns() attached, and
-       their current state, come along untouched — there is only ever one
-       #rules-group-difficulty, #rules-group-forbidden, #rules-group-seconds and
-       #rules-group-scoredisplay in the whole document. A fifth group,
-       #rules-group-view (the two host-screen display toggles), lives in the
-       popover permanently — see below.
-       'game' gathers all four wizard groups into #settings-popover, in wizard
-       order, so the existing .rules-group + .rules-group dashed dividers fall
-       between them the same way they used to when this was one static column;
-       'setup' returns each to its own wizard slot. Bidirectional (unlike Dare
-       Conquest's one-way placeDiffGroupInGame()) because editSettings() below
-       needs the round trip back to the wizard that Dare Conquest's setup screen
-       doesn't have. */
-    function placeSettingsGroups(where) {
-      const diff = document.getElementById('rules-group-difficulty');
-      const forb = document.getElementById('rules-group-forbidden');
-      const secs = document.getElementById('rules-group-seconds');
-      const disp = document.getElementById('rules-group-scoredisplay');
-      // never has a wizard slot (it's not a game rule), so 'setup' below never moves
-      // it out — re-appending it here on every 'game' entry just keeps it last
-      const view = document.getElementById('rules-group-view');
-      if (where === 'game') {
-        const pop = document.getElementById('settings-popover');
-        if (pop) { if (diff) pop.appendChild(diff); if (forb) pop.appendChild(forb); if (secs) pop.appendChild(secs); if (disp) pop.appendChild(disp); if (view) pop.appendChild(view); }
-      } else {
-        const move = (grp, slotId) => {
-          const slot = document.getElementById(slotId);
-          if (grp && slot && grp.parentNode !== slot) slot.appendChild(grp);
-        };
-        move(diff, 'substep-difficulty-slot');
-        move(forb, 'substep-forbidden-slot');
-        move(secs, 'substep-seconds-slot');
-        move(disp, 'substep-scoredisplay-slot');
-      }
-    }
-
-    /* Swap the wizard for the game screen. Split from startGame() because a card can
-       do this too: when somebody deals the first word while the host is still on the
-       settings screen, the shared screen has to follow (see handleAnswer's deal branch). */
-    function enterGame() {
-      phase = 'game';
-      placeSettingsGroups('game');
-      document.getElementById('phase-setup').classList.add('hidden');
-      document.getElementById('phase-game').classList.remove('hidden');
-      renderPhaseSummary();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function startGame() {
-      enterGame();
-      /* A fresh game publishes over whatever the last game left on the cards; coming
-         back from a mid-round detour into the settings only updates, so a buzz waiting
-         to be read isn't wiped. The cards already hold a deal id (the page published
-         one on load), so this is a refresh, not what unlocks them. */
-      if (state === 'idle') { dealId = newId(); publishRound(); } else pushState();
-      renderAll();
-    }
-
-    /* Deliberately does NOT touch round/state/scores: these settings have
-       only ever affected the *next* deal, so hopping back to tweak one
-       mid-round is safe — the round in progress just keeps running once the
-       host returns to the game phase. */
-    function editSettings() {
-      phase = 'setup';
-      placeSettingsGroups('setup');
-      closeSettingsPopover();
-      document.getElementById('phase-game').classList.add('hidden');
-      document.getElementById('phase-setup').classList.remove('hidden');
-      tabooSubStepReached = 1;
-      showTabooSubStep(1);
-      /* Take the deal button off the cards while the host is in here. canDeal() is
-         false the moment phase flips, so without this push the cards would keep
-         showing a button whose taps are dropped on arrival — and play.html would then
-         blame the host for having the page closed, which is not what happened.
-         update(), not set(), so a buzz waiting to be read is not wiped. */
-      pushState();
-      renderAll();
-    }
-
-    /* a compact read-out atop the Game phase, so the host doesn't have to
-       remember what was picked in the wizard — same idea as index.html's
-       room-setup summary line next to "Edit room setup". Difficulty is named
-       here as well as on its own buttons below: the line is the one place that
-       states all four settings, and dropping one to avoid saying "Medium" twice
-       would read as an omission. */
+    /* a compact read-out atop the game screen, so the shared screen states what's
+       currently set without opening the settings popover. Difficulty is named
+       here as well as on its own buttons in the popover: this line is the one
+       place that states all four settings, and dropping one to avoid saying
+       "Medium" twice would read as an omission. */
     function renderPhaseSummary() {
       const parts = [
         LEVELS.filter(l => isLevelOn(l.id)).map(l => tt(l.labelKey)).join(' + '),
@@ -1749,8 +1479,7 @@
       if (v.choice === 'deal') {
         ROOM.clearAnswer(num - 1);
         if (canDeal() && v.id && v.id === dealId) {
-          // canDeal() already means the host is on the game screen, so there is no
-          // wizard left to leave — but the briefing may still be up over it
+          // the briefing (guide.js) may still be up over the game screen
           cardDrove();
           dealRound();
         }
@@ -2350,14 +2079,9 @@
 
     /* Is there a word waiting to be dealt right now? Only between rounds: during one
        there is nothing to press, and while the five-second handover is running the next
-       word is already on its way. Also only once the host is on the game screen —
-       a card must not open a game the host is still setting up, because the word it
-       deals would use whatever difficulty / forbidden / seconds happened to be saved
-       from last time, and the host would be yanked out of the wizard mid-choice.
-       editSettings() pushes state so the button actually leaves the cards while the
-       host is in there, rather than sitting there failing silently. */
+       word is already on its way. */
     function canDeal() {
-      return ROOM.enabled && phase === 'game' && !nextRoundIv
+      return ROOM.enabled && !nextRoundIv
         && (state === 'idle' || state === 'done');
     }
 
@@ -2672,9 +2396,6 @@
         // to know that and to have the id its tap must quote
         canDeal: canDeal() || null,
         dealId: canDeal() ? dealId : null,
-        // why there is no deal button, so the card can say "the host is setting up"
-        // instead of the generic "waiting for the next word"
-        hostSetup: phase === 'setup' || null,
         forbidden: null, target: null, emoji: null,
         buzzer: null, buzzerName: null, queued: null, rejected: null, result: null,
         tabooBy: null, iCalledTaboo: null, forbiddenOn,
@@ -3009,9 +2730,9 @@
 
     /* Hand the game to the cards straight away: ROOM.init() restores the room without
        running onCountChange, so nothing had been published yet and the cards would
-       still be showing whatever the previous game left there until the host clicked
-       through the wizard. The first deal therefore comes from a card, with the
-       settings as saved (the wizard shows exactly those). */
+       still be showing whatever the previous game left there until this runs. The
+       first deal therefore comes from a card, with the settings as saved (the
+       settings popover shows exactly those). */
     if (ROOM.enabled && state === 'idle') { dealId = newId(); publishRound(); }
 
     // a language switch needs every JS-built piece of UI redrawn in place —
