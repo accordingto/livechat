@@ -1,5 +1,23 @@
 ## 專案背景
 
+**Chat Wolf free-chat v3 (2026-09-30)**: Incremental new mode, not a project rewrite.
+New rooms use `free-chat-v3` / `rulesVersion: 3`; legacy rooms remain compatible and
+can explicitly upgrade from LOBBY or FINISHED. Defaults: 3 × 600-second free-chat
+rounds, 3 shared wolf tasks (1 interaction + 2 self-actions), optional Jester,
+and six unique village professions with ordinary villagers filling extra seats.
+User overrides: host presentation hides its player's private role/tasks/ballot;
+round 2 automatically opens an unused follow-up; Kindred stays disabled;
+professions never repeat. Host plays through a separate private card.
+One-button honest task reports replace required notes and manual task review.
+Voting allows 0–K other players, never self; final priority is full wolf
+identification, then Jester, then all wolf tasks complete, otherwise draw.
+The user explicitly accepts the existing trusted-host Firebase architecture:
+the host page must stay open/awake, and this is not hostile-host-secret or
+server-executed gameplay. No new Admin service, AI API, or credentials.
+See `chat-wolf-v3-mode.md` for defaults, files, actual content counts, tests,
+compatibility, and verification limits. Do not mix legacy personal-task or
+alternating-turn rules into v3.
+
 **Chat Wolf 英文化與清楚任務（2026-09-27）**：全部新局素材與操作介面改簡單英文。
 狼人直接看到共同／自己／隊友目標，不再收合秘密任務；僅備註與申報表單收整。
 每個起始情境附 6 個相關新方向，每方向 2 個追問；主持以 `newTopic` 多次加入，

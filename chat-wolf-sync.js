@@ -18,6 +18,8 @@
     return code;
   }
   function stamp(room) {
+    if (room.rulesVersion >= 3) return [room.matchId || '', room.phaseVersion || 0, room.phase, room.round || 0,
+      room.phase === 'VOTING' || room.phase === 'JUDGE_DECISION' ? room.voting?.id || '' : ''].join(':');
     const turn = room.currentRoundState;
     const meeting = room.meeting;
     return [room.gameNumber, room.phase, room.round || 0,
@@ -26,12 +28,29 @@
   }
   function viewStamp(view) {
     const p = view.public;
+    if (p.rulesVersion >= 3) return [p.matchId || '', p.phaseVersion || 0, p.phase, p.round || 0,
+      p.phase === 'VOTING' || p.phase === 'JUDGE_DECISION' ? p.voting?.id || '' : ''].join(':');
     return [p.gameNumber, p.phase, p.talk?.round || p.transportRound || 0,
       ['TALK', 'FREE_TALK'].includes(p.phase) ? p.talk.speakerIndex : p.phase === 'MEETING_DISCUSS' ? p.meeting.speakerIndex : '',
       p.voting?.id || ''].join(':');
   }
   const encode = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
   const decode = text => Uint8Array.from(atob(text), c => c.charCodeAt(0));
+
+  // Presentation safety, not hostile-host security. The trusted coordinator
+  // still runs the rules. Its shareable UI consumes no private player fields.
+  function presentationView(view) {
+    if (view.public.rulesVersion < 3 || !view.private.isHost || view.public.phase === 'FINISHED') return view;
+    const actions = view.private.actions || {};
+    const publicActions = ['canStart','canSettings','canBeginTalk','canEndTalk','canExtendTalk','canEndClues','canEndMeeting','canEndVote',
+      'canPause','canResume','canCancel','canRestart','canReplay','canFollowUp','canClearFollowUp'];
+    return { public: view.public, private: {
+      playerId: view.private.playerId, name: view.private.name, isHost: true, presentationOnly: true,
+      role: null, profession: null, wolfTeam: null, tasks: null, villageTask: null, reward: null,
+      myVoteSubmitted: false, judgeDecision: null, roleAcknowledged: false,
+      actions: Object.fromEntries(publicActions.map(key => [key, !!actions[key]])),
+    } };
+  }
 
   class FirebaseREST {
     constructor(url, fetcher = fetch) { this.url = url.replace(/\/$/, ''); this.fetcher = fetcher; }
@@ -61,12 +80,13 @@
   }
 
   class Client {
-    constructor({ databaseURL, store, storage, clock = () => Date.now(), interval = 1500, allowHostRecovery = true } = {}) {
+    constructor({ databaseURL, store, storage, clock = () => Date.now(), interval = 1500, allowHostRecovery = true, hostPresentation = false } = {}) {
       this.store = store || new FirebaseREST(databaseURL);
       this.storage = storage || root.localStorage;
       this.now = clock;
       this.interval = interval;
       this.allowHostRecovery = allowHostRecovery;
+      this.hostPresentation = hostPresentation;
       this.owner = uid();
       this.host = null;
       this.lastView = null;
@@ -101,6 +121,7 @@
         if (old.value) continue;
         const room = E.createRoom({ code, hostPlayerId: hostId, hostSessionHash: token, hostName: body.name,
           settings: body.settings, now: this.now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] });
+        if (room.rulesVersion >= 3) room.secureRandom = true;
         this.save(this.hostKey(code), JSON.stringify({ control, token }));
         this.save(this.sessionKey(code), token);
         const data = { room, privateKey, channels: { [token]: { playerId: hostId, seq: 0 } }, joins: {} };
@@ -169,7 +190,8 @@
     accept(card) {
       if (card.error) fail(card.error);
       if (!card.view) fail('HOST_UNAVAILABLE');
-      const view = JSON.parse(card.view);
+      const raw = JSON.parse(card.view);
+      const view = this.hostPresentation ? presentationView(raw) : raw;
       // A slow earlier poll must not replace a newer state on this client.
       if (this.lastView?.public.code === view.public.code &&
           this.lastView.public.syncRevision > view.public.syncRevision) return this.lastView;
@@ -193,20 +215,40 @@
       if (!card) fail('INVALID_SESSION');
       return this.accept(card);
     }
-    async command(code, token, body) {
+    async command(code, token, body, displayedView) {
       code = codeOf(code);
       if (!validToken(token)) fail('INVALID_SESSION');
       const path = this.path(code, token);
       const requestId = uid();
       // Capture the turn the user actually clicked, not a newer turn fetched below.
-      const context = this.lastView ? viewStamp(this.lastView) : null;
+      let clickedView = displayedView || this.lastView;
+      let context = clickedView ? viewStamp(clickedView) : null;
+      const waitUntil = Date.now() + 12000;
       let seq;
       for (let attempt = 0; attempt < 8; attempt++) {
-        const old = await this.store.get(path), card = old.value;
+        let old = await this.store.get(path), card = old.value;
         if (!card?.view) fail('INVALID_SESSION');
-        if ((card.request?.seq || 0) > (card.reply?.seq || 0)) fail('ACTION_PENDING');
+        if (!clickedView) { clickedView = JSON.parse(card.view); context = viewStamp(clickedView); }
+        while ((card.request?.seq || 0) > (card.reply?.seq || 0)) {
+          let pendingBody;
+          try { pendingBody = typeof card.request.bodyJson === 'string' ? JSON.parse(card.request.bodyJson) : card.request.body; }
+          catch (_) { fail('ACTION_PENDING'); }
+          // Host presentation and its private card share one session channel.
+          // A presence ping must not swallow a real click; never queue/retry an
+          // arbitrary user action or update the click's original phase fence.
+          if (body.action === 'heartbeat' || pendingBody?.action !== 'heartbeat' || Date.now() >= waitUntil) fail('ACTION_PENDING');
+          if (this.host) await this.cycle();
+          await wait(150);
+          old = await this.store.get(path); card = old.value;
+          if (!card?.view) fail('INVALID_SESSION');
+        }
         seq = (card.reply?.seq || 0) + 1;
-        const request = { seq, id: requestId, context: context || viewStamp(JSON.parse(card.view)), body };
+        const protectedBody = clickedView.public.rulesVersion >= 3 ? { ...body, matchId: clickedView.public.matchId, phaseVersion: clickedView.public.phaseVersion } : body;
+        // Firebase deletes empty arrays/objects from nested JSON nodes. Preserve
+        // an exact command alongside the legacy object so [] remains an explicit
+        // abstention (and an empty profession pool remains an intentional choice).
+        const request = { seq, id: requestId, context,
+          body: protectedBody, bodyJson: JSON.stringify(protectedBody) };
         if (JSON.stringify(request).length > 12000) fail('REQUEST_TOO_LARGE');
         const result = await this.store.put(path, { ...card, request }, old.etag);
         if (!result.conflict) break;
@@ -278,11 +320,13 @@
         channel.reply = { seq: request.seq, id: String(request.id || '').slice(0, 64), error: null };
         try {
           if (!room.players[channel.playerId] || channel.error) fail('INVALID_SESSION');
-          if (!request.body || typeof request.body.action !== 'string' || JSON.stringify(request).length > 12000) fail('INVALID_REQUEST');
-          if (request.body.action !== 'heartbeat' && request.context !== stamp(room)) fail('STALE_ACTION');
+          if (JSON.stringify(request).length > 12000) fail('INVALID_REQUEST');
+          const body = typeof request.bodyJson === 'string' ? JSON.parse(request.bodyJson) : request.body;
+          if (!body || Array.isArray(body) || typeof body.action !== 'string') fail('INVALID_REQUEST');
+          if (body.action !== 'heartbeat' && request.context !== stamp(room)) fail('STALE_ACTION');
           // Failed actions must not leave partial mutations behind.
           const next = clone(room);
-          E.dispatch(next, channel.playerId, request.body.action, request.body, now);
+          E.dispatch(next, channel.playerId, body.action, body, now);
           Object.keys(room).forEach(key => delete room[key]);
           Object.assign(room, next);
         } catch (e) { channel.reply.error = e.code || 'INVALID_REQUEST'; }
@@ -324,17 +368,17 @@
         if (!done) fail('ACTION_CONFLICT');
       }
     }
-    async request(method, body, session) {
+    async request(method, body, session, displayedView) {
       if (method === 'POST' && body?.action === 'create') return this.create(body);
       if (method === 'POST' && body?.action === 'join') return this.join(body);
       if (!session) fail('SESSION_REQUIRED');
       const state = method === 'GET' ? await this.read(session.room, session.token)
-        : await this.command(session.room, session.token, body);
+        : await this.command(session.room, session.token, body, displayedView);
       return { ok: true, state };
     }
     close() { this.stopped = true; clearInterval(this.timer); this.timer = null; }
   }
-  const api = { Client, FirebaseREST, stamp, viewStamp };
+  const api = { Client, FirebaseREST, stamp, viewStamp, presentationView };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.CHAT_WOLF_SYNC = api;
 })(typeof globalThis === 'object' ? globalThis : this);

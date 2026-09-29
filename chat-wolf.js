@@ -8,7 +8,7 @@
     document.body.classList.add('embedded-card');
     document.documentElement.classList.add('embedded-card-root');
   }
-  const transport = new window.CHAT_WOLF_SYNC.Client({ databaseURL: FIREBASE_CONFIG.databaseURL, allowHostRecovery: !embeddedCard });
+  const transport = new window.CHAT_WOLF_SYNC.Client({ databaseURL: FIREBASE_CONFIG.databaseURL, allowHostRecovery: !embeddedCard, hostPresentation: !embeddedCard });
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
   const syncPill = document.getElementById('sync-pill');
@@ -20,6 +20,7 @@
   let serverOffset = 0;
   let pollTimer = null;
   let heartbeatTimer = null;
+  let heartbeatRunning = null;
   let requestRunning = false;
   let pollRunning = false;
   let toastTimer = null;
@@ -37,6 +38,18 @@
   const playerById = (id) => state && state.public.players.find((player) => player.id === id);
   const playerName = (id) => (playerById(id) || {}).name || C.unknownPlayer;
   const storageKey = (code) => `chat-wolf-legacy-session:${code}`;
+  const v3 = window.CHAT_WOLF_V3_UI.create({
+    esc, action, getState: () => state, embeddedCard, playerName, roomBar, timer,
+    playerRows, showToast, rerender: renderState,
+    privateCardUrl: () => {
+      const url = new URL('chat-wolf.html', location.href);
+      url.search = '';
+      url.searchParams.set('room', session.room);
+      url.searchParams.set('card', '1');
+      url.hash = new URLSearchParams({ session:session.token }).toString();
+      return url.href;
+    },
+  });
 
   function showToast(message) {
     clearTimeout(toastTimer);
@@ -46,7 +59,7 @@
   }
 
   function errorMessage(code) {
-    return C.errors[code] || `Action not completed (${code || 'UNKNOWN'})`;
+    return (state?.public.rulesVersion >= 3 || !state ? window.CHAT_WOLF_COPY_V3.errors[code] : '') || C.errors[code] || `Action not completed (${code || 'UNKNOWN'})`;
   }
 
   function setSync(kind) {
@@ -73,8 +86,8 @@
     stopSync();
   }
 
-  async function apiRequest(method, body) {
-    return transport.request(method, body, session);
+  async function apiRequest(method, body, displayedView) {
+    return transport.request(method, body, session, displayedView);
   }
 
   function captureOpenDetails() {
@@ -125,15 +138,22 @@
   }
 
   async function action(actionName, payload) {
+    if (actionName === 'heartbeat') return heartbeat();
     if (!session) return;
     if (requestRunning) {
-      if (actionName !== 'heartbeat') showToast(C.actionBusy);
+      showToast(C.actionBusy);
       return false;
     }
+    const clickedSession = session;
+    const clickedView = state;
     requestRunning = true;
     setSync('connecting');
     try {
-      const response = await apiRequest('POST', { action: actionName, room: session.room, ...(payload || {}) });
+      // Wait for our own quiet presence request, keeping exactly the phase the
+      // player clicked. The transport also handles heartbeats from a second tab.
+      if (heartbeatRunning) await heartbeatRunning;
+      if (session !== clickedSession) return false;
+      const response = await apiRequest('POST', { action: actionName, room: session.room, ...(payload || {}) }, clickedView);
       applyState(response.state, true);
       return true;
     } catch (error) {
@@ -149,6 +169,22 @@
     } finally {
       requestRunning = false;
     }
+  }
+
+  function heartbeat() {
+    if (!session || requestRunning || heartbeatRunning) return Promise.resolve(false);
+    const currentSession = session;
+    const pending = apiRequest('POST', { action: 'heartbeat', room: session.room })
+      .then(response => {
+        // A heartbeat does not force a re-render or steal a form's focus. Real
+        // phase changes still refresh normally, unless a user click is waiting.
+        if (session === currentSession && !requestRunning) applyState(response.state, false);
+        return true;
+      })
+      .catch(() => false) // Polling handles connectivity; presence pings need no toast.
+      .finally(() => { if (heartbeatRunning === pending) heartbeatRunning = null; });
+    heartbeatRunning = pending;
+    return pending;
   }
 
   async function poll() {
@@ -174,7 +210,7 @@
   function startSync() {
     stopSync();
     pollTimer = setInterval(poll, 1200);
-    heartbeatTimer = setInterval(() => action('heartbeat'), 15000);
+    heartbeatTimer = setInterval(heartbeat, 15000);
   }
 
   function stopSync() {
@@ -219,12 +255,7 @@
             <label class="field"><span>${esc(C.playerCount)}</span><select name="playerCount">${options(3, 12, 6, { 6: C.recommended, 7: C.recommended, 8: C.recommended })}</select></label>
             <label class="field"><span>${esc(C.wolfCount)}</span><select name="wolfCount">${options(1, 4, 2)}</select></label>
           </div>
-          <label class="check-line"><input name="bellEnabled" type="checkbox" checked><span>${esc(C.bellSetting)}</span></label>
-          <div class="inline-fields">
-            <label class="field"><span>${esc(C.talkSeconds)}</span><select name="talkSeconds">${[30,45,60,75,90,120].map((n) => `<option value="${n}"${n === 60 ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
-            <label class="field"><span>${esc(C.meetingSeconds)}</span><select name="meetingSeconds">${[10,15,20,30,45,60].map((n) => `<option value="${n}"${n === 20 ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
-          </div>
-          <label class="field"><span>${esc(C.voteSeconds)}</span><select name="voteSeconds">${[15,20,30,45,60,90].map((n) => `<option value="${n}"${n === 30 ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+          ${v3.entryFields()}
           <button class="btn" type="submit">${esc(C.createButton)}</button>
           <button class="btn ghost" type="button" data-entry-mode="join">${esc(C.joinRoom)}</button>
         </form>
@@ -238,6 +269,7 @@
       </section>
       <p class="secure-note">${esc(C.secureInvite)}</p>`;
     syncCardSetupForm();
+    updateCreateWolfOptions(document.getElementById('create-form').elements.playerCount);
   }
 
   function syncCardSetupForm() {
@@ -262,8 +294,9 @@
   }
 
   function roomBar() {
+    const phaseNames = state.public.rulesVersion >= 3 ? window.CHAT_WOLF_COPY_V3.phases : C.phases;
     return `<div class="room-bar">
-      <div><span class="phase-chip">${esc(C.phases[state.public.phase] || state.public.phase)}</span> <span class="room-code">${esc(state.public.code)}</span></div>
+      <div><span class="phase-chip">${esc(phaseNames[state.public.phase] || state.public.phase)}</span> <span class="room-code">${esc(state.public.code)}</span></div>
       <div class="button-row">${embeddedCard ? '' : `<button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button>`}
       ${!embeddedCard && state.private.isHost && state.public.legacyCardRoom ? `<button class="btn secondary small" type="button" data-command="sendCards">${esc(C.sendCards)}</button>` : ''}</div>
     </div>${state.public.legacyCardRoom && !embeddedCard && state.public.phase === 'LOBBY' ? `<p class="notice">${esc(C.cardsLinked)}</p>` : ''}`;
@@ -512,6 +545,11 @@
 
   function renderState() {
     if (!state) return;
+    if (state.public.rulesVersion >= 3) {
+      app.innerHTML = v3.render();
+      paintTimers();
+      return;
+    }
     switch (state.public.phase) {
       case 'LOBBY': app.innerHTML = renderLobby(); break;
       case 'ROLE_REVEAL': app.innerHTML = renderRoleReveal(); break;
@@ -522,6 +560,9 @@
       case 'TASK_REVIEW': app.innerHTML = renderTaskReview(); break;
       case 'FINISHED': app.innerHTML = renderFinished(); break;
       default: app.innerHTML = `<p class="empty">${esc(C.loading)}</p>`;
+    }
+    if (!embeddedCard && state.private.isHost && ['LOBBY', 'FINISHED'].includes(state.public.phase)) {
+      app.insertAdjacentHTML('afterbegin', '<section class="notice"><strong>New: Free-chat edition</strong><p>Keep this room and player cards. Use continuous chat, shared wolf tasks, and unique village professions.</p><button type="button" class="btn secondary" data-action="upgradeV3">Set up the new edition</button></section>');
     }
     paintTimers();
   }
@@ -545,10 +586,12 @@
     const form = select.form;
     const wolf = form.elements.wolfCount;
     const previous = Number(wolf.value) || 2;
-    wolf.innerHTML = options(1, Math.max(1, Number(select.value) - 2), Math.min(previous, Number(select.value) - 2));
+    const maximum = Math.max(1, Number(select.value) - 2 - (form.elements.jesterEnabled?.checked ? 1 : 0));
+    wolf.innerHTML = options(1, maximum, Math.min(previous, maximum));
   }
 
   app.addEventListener('click', async (event) => {
+    if (await v3.handleClick(event)) return;
     const modeButton = event.target.closest('[data-entry-mode]');
     if (modeButton) {
       entryMode = modeButton.dataset.entryMode;
@@ -589,8 +632,9 @@
   });
 
   app.addEventListener('change', (event) => {
+    if (state?.public.rulesVersion >= 3 && v3.handleChange(event)) return;
     if (event.target.matches('#create-form [name="useCards"], #create-form [name="hostSeat"]')) syncCardSetupForm();
-    if (event.target.matches('#create-form [name="playerCount"]')) updateCreateWolfOptions(event.target);
+    if (event.target.matches('#create-form [name="playerCount"], #create-form [name="jesterEnabled"]')) updateCreateWolfOptions(event.target.form.elements.playerCount);
     if (event.target.matches('#settings-form [name]')) {
       const form = event.target.form;
       lobbyDraft = {
@@ -626,6 +670,7 @@
 
   app.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (state?.public.rulesVersion >= 3 && await v3.handleSubmit(event)) return;
     const form = event.target;
     if (form.id === 'create-form') {
       if (requestRunning) return;
@@ -635,14 +680,7 @@
           action: 'create',
           name: form.elements.name.value,
           ...(form.elements.useCards?.checked ? { legacy: legacySetup, hostSeat: Number(form.elements.hostSeat.value) } : {}),
-          settings: {
-            playerCount: Number(form.elements.playerCount.value),
-            wolfCount: Number(form.elements.wolfCount.value),
-            bellEnabled: form.elements.bellEnabled.checked,
-            talkSeconds: Number(form.elements.talkSeconds.value),
-            meetingSeconds: Number(form.elements.meetingSeconds.value),
-            voteSeconds: Number(form.elements.voteSeconds.value),
-          },
+          settings: v3.readSettings(form),
         });
         saveSession(response.state.public.code, response.token);
         applyState(response.state, true);
@@ -710,6 +748,7 @@
     }
   });
 
+  app.addEventListener('input', event => v3.handleInput(event));
   setInterval(paintTimers, 250);
 
   async function boot() {

@@ -1,6 +1,11 @@
 (function (root) {
 'use strict';
 const CONTENT = typeof module === 'object' && module.exports ? require('./chat-wolf-content.js') : root.CHAT_WOLF_CONTENT;
+// Older saved matches keep their rules; only new free-chat rooms use v3.
+const isV3 = room => room?.rulesVersion >= 3 || room?.settings?.mode === 'free-chat-v3';
+function v3Engine() {
+  return typeof module === 'object' && module.exports ? require('./chat-wolf-v3-engine.js') : root.CHAT_WOLF_V3_ENGINE;
+}
 
 const PHASES = Object.freeze({
   LOBBY: 'LOBBY',
@@ -121,6 +126,7 @@ function intInRange(value, min, max, code = 'INVALID_SETTING') {
 }
 
 function normalizeSettings(input = {}) {
+  if (input.mode === 'free-chat-v3') return v3Engine().normalizeSettings(input);
   const playerCount = intInRange(input.playerCount == null ? 6 : input.playerCount, 3, 12);
   const wolfCount = intInRange(input.wolfCount == null ? 2 : input.wolfCount, 1, playerCount - 2, 'INVALID_WOLF_COUNT');
   return {
@@ -148,6 +154,7 @@ function makePlayer({ id, name, isHost, now }) {
 }
 
 function createRoom({ code, hostPlayerId, hostSessionHash, hostName, settings, now, seed }) {
+  if (settings?.mode === 'free-chat-v3') return v3Engine().createRoom({ code, hostPlayerId, hostSessionHash, hostName, settings, now, seed });
   const normalized = normalizeSettings(settings);
   const room = {
     version: 1,
@@ -169,6 +176,7 @@ function createRoom({ code, hostPlayerId, hostSessionHash, hostName, settings, n
 }
 
 function addPlayer(room, { playerId, sessionHash, name, now }) {
+  if (isV3(room)) return v3Engine().addPlayer(room, { playerId, sessionHash, name, now });
   if (!room || room.phase !== PHASES.LOBBY) fail('GAME_ALREADY_STARTED', 409);
   const players = Object.values(room.players || {});
   if (players.length >= room.settings.playerCount) fail('ROOM_FULL', 409);
@@ -524,6 +532,7 @@ function finalizeTaskReview(room, now) {
 }
 
 function advanceExpired(room, now) {
+  if (isV3(room)) return v3Engine().advanceExpired(room, now);
   if (!room || room.paused) return false;
   let changed = false;
   let guard = 0;
@@ -542,7 +551,32 @@ function advanceExpired(room, now) {
 }
 
 function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
+  if (isV3(room)) return v3Engine().dispatch(room, actorId, action, payload, now);
   if (!room) fail('ROOM_NOT_FOUND', 404);
+  if (action === 'upgradeV3') {
+    requireHost(room, actorId);
+    requirePhase(room, PHASES.LOBBY, PHASES.FINISHED);
+    const hostHash = Object.keys(room.sessions).find(hash => room.sessions[hash].playerId === room.hostPlayerId);
+    const upgraded = v3Engine().createRoom({
+      code: room.code, hostPlayerId: room.hostPlayerId, hostSessionHash: hostHash,
+      hostName: room.players[room.hostPlayerId].name, now, seed: room.rngState,
+      settings: { mode: 'free-chat-v3', playerCount: room.settings.playerCount, wolfCount: room.settings.wolfCount,
+        jesterEnabled: room.settings.playerCount >= room.settings.wolfCount + 3 },
+    });
+    for (const [hash, session] of Object.entries(room.sessions)) {
+      if (session.playerId === room.hostPlayerId) continue;
+      const player = room.players[session.playerId];
+      if (player) v3Engine().addPlayer(upgraded, { playerId: player.id, sessionHash: hash, name: player.name, now });
+    }
+    upgraded.secureRandom = true;
+    upgraded.createdAt = room.createdAt;
+    upgraded.gameNumber = room.gameNumber;
+    upgraded.revision = room.revision + 1;
+    upgraded.recentTasks = (room.recentTasks || []).slice(-60);
+    Object.keys(room).forEach(key => delete room[key]);
+    Object.assign(room, upgraded);
+    return room;
+  }
   advanceExpired(room, now);
   const actor = requireActor(room, actorId);
   if (action === 'heartbeat') {
@@ -560,6 +594,7 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
     case 'settings': {
       requireHost(room, actorId);
       requirePhase(room, PHASES.LOBBY);
+      if (payload.settings?.mode === 'free-chat-v3') fail('UPGRADE_REQUIRED', 409);
       const settings = normalizeSettings({ ...room.settings, ...payload.settings });
       if (settings.playerCount < playerIds(room).length) fail('PLAYER_COUNT_TOO_SMALL', 409);
       room.settings = settings;
@@ -825,6 +860,7 @@ function timerProjection(room) {
 }
 
 function projectState(room, actorId, now = Date.now()) {
+  if (isV3(room)) return v3Engine().projectState(room, actorId, now);
   const actor = requireActor(room, actorId);
   const reveal = [PHASES.TASK_REVIEW, PHASES.FINISHED].includes(room.phase);
   const players = playerIds(room).map((id) => playerSummary(room, room.players[id], now));

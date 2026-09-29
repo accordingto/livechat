@@ -1,5 +1,8 @@
 # 聊天狼人 v2 — 沿用既有 Firebase 的主持人模式
 
+> 2026-09-30：新房間已改用 v3 自由聊天版。最新規則、設定與驗證請看
+> [chat-wolf-v3-mode.md](chat-wolf-v3-mode.md)。以下保留給尚未升級的舊房間。
+
 2026-09-27 使用者明確同意改用舊遊戲方式，免除新伺服器與 Admin 憑證需求。
 首頁 `chat-wolf.html` 已改簡單英文，文案集中 `chat-wolf-copy.js`。
 
