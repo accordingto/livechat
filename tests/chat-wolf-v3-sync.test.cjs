@@ -91,7 +91,7 @@ test('v3 original cards: host presentation is public, private cards keep unique 
 });
 
 test('v3 expiry/host advance happens once; restart fences old cards and resets secrets',async t=>{
-  const s=await setup(t);
+  const s=await setup(t,{talkEndBehavior:'automatic'});
   await s.send(s.hostPlayer,{action:'startGame'});
   await s.send(s.hostPlayer,{action:'beginTalk'});
   const before=await s.read(s.hostPlayer);
@@ -136,7 +136,7 @@ test('v3 three rounds synchronize follow-up, partial votes, abstention and final
       await assert.rejects(s.send(wolf,{action:'completeTask',taskId:(await s.read(wolf)).private.tasks[0].id}));
       await s.elapse(p.deadlineAt-s.now());p=(await s.read(s.hostPlayer)).public;
     }
-    assert.equal(p.phase,'MEETING_DISCUSS');
+    assert.equal(p.phase,'MEETING_TURNS');
     await s.send(s.hostPlayer,{action:'endMeeting'});
     for(const player of s.players)await s.send(player,{action:'submitVote',selections:[]});
     updated=(await s.read(s.players[2])).public;
@@ -144,7 +144,7 @@ test('v3 three rounds synchronize follow-up, partial votes, abstention and final
     assert.deepEqual(updated.voteHistory.at(-1).nominees,[]);
     if(round===1){
       assert.ok(updated.activeFollowUp);
-      assert.notEqual(updated.activeFollowUp.id,seen[0]);
+      assert.equal(updated.activeFollowUp.id,seen[0]);
       seen.push(updated.activeFollowUp.id);
     }
     if(round===2)assert.equal(updated.activeFollowUp.id,seen[1]);
@@ -199,7 +199,7 @@ test('a real host click waits for a pending heartbeat from its private card inst
 });
 
 test('waiting for a heartbeat never replaces the original clicked phase with a fresher polled phase',async t=>{
-  const s=await setup(t);await s.send(s.hostPlayer,{action:'startGame'});await s.send(s.hostPlayer,{action:'beginTalk'});
+  const s=await setup(t,{talkEndBehavior:'automatic'});await s.send(s.hostPlayer,{action:'startGame'});await s.send(s.hostPlayer,{action:'beginTalk'});
   const talk=await s.read(s.hostPlayer);
   await s.elapse(talk.public.deadlineAt-s.now()-1000);stopAutomaticCycles(s);
   const clicked=await s.read(s.hostPlayer);

@@ -1,5 +1,9 @@
 # Chat Wolf content / flow development preview — 2026-10-02
 
+**Archived snapshot:** the completed update is now in the original `/chat-wolf.html`
+entry with Hub card integration. See `chat-wolf-v3-mode.md` for the current release.
+The following record describes the earlier preview at the time it was published.
+
 ## Release boundary
 
 This is an isolated, playable **development preview**, not the completed content release.

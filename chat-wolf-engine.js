@@ -986,6 +986,7 @@ function projectState(room, actorId, now = Date.now()) {
 }
 
 const engine = {
+  prepareHistory(room) { return isV3(room) ? v3Engine().prepareHistory(room) : null; },
   PHASES,
   SCENARIO,
   TASK_POOL,

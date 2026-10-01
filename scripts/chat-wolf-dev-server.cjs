@@ -8,7 +8,7 @@ const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 const server = http.createServer((req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   const relative = pathname === '/' ? 'chat-wolf.html' : pathname.slice(1);
-  if (!/^(chat-wolf[\w.-]*\.(html|css|js)|play\.html|index\.html|[a-z][a-z0-9-]*\.(js|css)|apple-touch-icon\.png)$/.test(relative)) {
+  if (!/^(chat-wolf-v4-preview\/)?(chat-wolf[\w.-]*\.(html|css|js)|play\.html|index\.html|[a-z][a-z0-9-]*\.(js|css)|apple-touch-icon\.png|asset-manifest\.json)$/.test(relative)) {
     res.writeHead(404); res.end('Not found'); return;
   }
   const file = path.join(root, relative);

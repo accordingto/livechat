@@ -64,7 +64,7 @@ test('only chosen professions occur once; ordinary villagers fill; information c
 });
 
 test('settings validate seats, K/M/I, midgame windows, weights and duration estimate', () => {
-  assert.equal(E.RULES.estimateSeconds(E.normalizeSettings()), 2240);
+  assert.equal(E.RULES.estimateSeconds(E.normalizeSettings()), 3050);
   fails(() => E.normalizeSettings({ playerCount: 4 }), 'INVALID_WOLF_COUNT');
   fails(() => E.normalizeSettings({ taskCount: 2, interactionTaskCount: 3 }), 'INVALID_TASK_COUNTS');
   for (const id of ['reporter', 'dreamer', 'bait']) fails(() => E.normalizeSettings({ roundCount: 1, enabledProfessions: [id] }), 'PROFESSION_NEEDS_MIDGAME');
@@ -101,24 +101,26 @@ test('village and jester projections contain no wolf tasks, teammate IDs, other 
   fails(() => E.projectState(r, 'outsider'), 'NOT_A_MEMBER');
 });
 
-test('a full talk interval does not alternate speakers, then wrap-up, meeting and vote', () => {
-  const r = talk(); const deadline = r.deadlineAt;
+test('optional automatic talk does not alternate speakers, then wrap-up, individual meeting and vote', () => {
+  const r = talk({talkEndBehavior:'automatic'}); const deadline = r.deadlineAt;
   E.advanceExpired(r, deadline - 1); assert.equal(r.phase, 'TALK'); assert.equal(r.currentRoundState, undefined);
   E.advanceExpired(r, deadline); assert.equal(r.phase, 'WRAP_UP'); assert.equal(r.deadlineAt, deadline + 30000);
-  E.advanceExpired(r, r.deadlineAt); assert.equal(r.phase, 'MEETING_DISCUSS');
-  E.advanceExpired(r, r.deadlineAt); assert.equal(r.phase, 'VOTING');
+  E.advanceExpired(r, r.deadlineAt); assert.equal(r.phase, 'MEETING_TURNS');
+  for(let i=0;i<r.settings.playerCount;i++)E.advanceExpired(r,r.deadlineAt);
+  assert.equal(r.phase, 'VOTING');
   E.advanceExpired(r, r.deadlineAt); assert.equal(r.phase, 'TALK'); assert.equal(r.round, 2);
   assert.equal(r.voteHistory.length, 1);
 });
 
-test('follow-ups preserve countdown and missions; round two auto-selects unused follow-up only once', () => {
+test('follow-ups preserve time and missions; round two no longer automatically changes the question', () => {
   const r = talk(); const deadline = r.deadlineAt; const tasks = JSON.stringify(r.tasks);
   const first = r.topic.followUps[0]; host(r, 'followUp', { followUpId: first.id });
   assert.equal(r.activeFollowUp.id, first.id); assert.equal(r.deadlineAt, deadline); assert.equal(JSON.stringify(r.tasks), tasks);
   host(r, 'clearFollowUp'); assert.equal(r.activeFollowUp, null); assert.deepEqual(r.usedFollowUpIds, [first.id]);
   fails(() => host(r, 'followUp', { followUpId: first.id }), 'INVALID_FOLLOW_UP');
-  beginVote(r); abstain(r); assert.equal(r.round, 2); assert.equal(r.usedFollowUpIds.length, 2); assert.notEqual(r.activeFollowUp.id, first.id);
-  const second = r.activeFollowUp.id; beginVote(r); abstain(r); assert.equal(r.round, 3); assert.equal(r.activeFollowUp.id, second);
+  beginVote(r); abstain(r); assert.equal(r.round, 2); assert.equal(r.usedFollowUpIds.length, 1); assert.equal(r.activeFollowUp,null);
+  host(r,'followUp');const second = r.activeFollowUp.id;
+  beginVote(r); abstain(r); assert.equal(r.round, 3); assert.equal(r.activeFollowUp.id, second);
 });
 
 test('round count generalizes: exactly R votes with R-1 midgame, final freeze and outcome', () => {
@@ -132,7 +134,7 @@ test('round count generalizes: exactly R votes with R-1 midgame, final freeze an
 });
 
 test('pause freezes deadlines; extension and resume retain remainder; stale timer cannot skip stages', () => {
-  const r = talk(); const before = r.deadlineAt;
+  const r = talk({talkEndBehavior:'automatic'}); const before = r.deadlineAt;
   host(r, 'pause'); const remaining = r.pausedRemainingMs; const version = r.phaseVersion;
   E.advanceExpired(r, before + 999999); assert.equal(r.phase, 'TALK'); assert.equal(r.pausedRemainingMs, remaining);
   host(r, 'extendTalk', { seconds: 120 }); assert.equal(r.pausedRemainingMs, remaining + 120000);
@@ -156,8 +158,9 @@ test('shared completion needs only taskId, is idempotent, never ends play, and r
 });
 function clone(v) { return JSON.parse(JSON.stringify(v)); }
 
-test('tasks count during wrap-up but freeze before final clues; no review or report forms required', () => {
-  const r = talk({ roundCount: 1, enabledProfessions: [] });
+test('legacy running snapshots retain wrap-up completion but freeze before final clues', () => {
+  const r = talk({ roundCount: 1, enabledProfessions: [], talkEndBehavior:'automatic' });
+  r.flowVersion = 3; // Compatibility contract for a game dealt by the earlier release.
   E.advanceExpired(r, r.deadlineAt); assert.equal(r.phase, 'WRAP_UP'); clock = r.updatedAt;
   completeWolves(r); host(r, 'endTalk'); assert.equal(r.phase, 'FINAL_CLUES');
   fails(() => send(r, wolves(r)[0].id, 'undoTask', { taskId: r.tasks[0].id }), 'WRONG_PHASE');
@@ -374,9 +377,15 @@ test('secure production randomness does not consume or expose the deterministic 
   assert.equal(E.projectState(r, 'p0').public.rngState, undefined);
 });
 
-test('all 48 topics support maximum configured task counts without mechanic duplicates', () => {
+test('large custom counts either allocate valid unique cards or explicitly report atomic content exhaustion', () => {
   for (const topic of E.CONTENT.topics) for (const interactionTaskCount of [0, 6, 12]) {
-    const r = start({ topicId: topic.id, taskCount: 12, interactionTaskCount });
+    const r = room({ topicId: topic.id, taskCount: 12, interactionTaskCount });
+    const before = JSON.stringify(r);
+    try { host(r,'startGame'); } catch(error) {
+      assert.equal(error.code,'CONTENT_EXHAUSTED',topic.id);
+      assert.equal(JSON.stringify(r),before,'No partial roles/history after shortage');
+      continue;
+    }
     assert.equal(r.tasks.length, 12, topic.id);
     assert.equal(new Set(r.tasks.map(t => t.mechanicKey)).size, 12, topic.id);
     assert.equal(r.tasks.filter(t => t.type === 'interaction').length, interactionTaskCount, topic.id);
@@ -392,12 +401,12 @@ test('full identification outranks a jester tied for highest when judge selects 
   assert.equal(r.result.outcome, 'VILLAGERS'); assert.equal(E.projectState(r, 'p0').public.reveal.jester.qualified, true);
 });
 
-test('restart at every active stage invalidates timers, rewards, ballots and old match requests', () => {
-  for (const target of ['ROLE_REVEAL', 'TALK', 'WRAP_UP', 'MEETING_DISCUSS', 'VOTING', 'FINAL_CLUES', 'JUDGE_DECISION', 'FINISHED']) {
-    const r = start({ playerCount: 12, infoRoleLimit: 2 });
+test('restart at each eligible stage invalidates timers, rewards, ballots and old match requests', () => {
+  for (const target of ['ROLE_REVEAL', 'TALK', 'WRAP_UP', 'MEETING_TURNS', 'VOTING', 'FINAL_CLUES', 'FINISHED']) {
+    const r = start({ playerCount: 12, infoRoleLimit: 2, ...(target==='WRAP_UP'?{talkEndBehavior:'automatic'}:{}) });
     if (target !== 'ROLE_REVEAL') host(r, 'beginTalk');
     if (target === 'WRAP_UP') { E.advanceExpired(r, r.deadlineAt); clock = r.updatedAt; }
-    if (target === 'MEETING_DISCUSS') host(r, 'endTalk');
+    if (target === 'MEETING_TURNS') host(r, 'endTalk');
     if (target === 'VOTING') beginVote(r);
     if (target === 'FINAL_CLUES') {
       while (r.round < r.settings.roundCount) { beginVote(r); abstain(r); }
@@ -423,6 +432,9 @@ test('room history is bounded and keeps compatible shared IDs across new topics'
   const r = start(); const history = r.tasks.map(t => t.id);
   host(r, 'restart', { keepTopic: false });
   assert.equal(r.tasks.some(t => history.includes(t.id)), false);
-  for (let i = 0; i < 20; i++) host(r, 'restart', { keepTopic: true });
+  for (let i = 0; i < 20; i++) {
+    try { host(r, 'restart', { keepTopic: true }); }
+    catch(error) { assert.equal(error.code,'CONTENT_EXHAUSTED');host(r,'restart',{keepTopic:true,allowRecentRepeat:true}); }
+  }
   assert.equal(r.recentTasks.length, 60); assert.ok(r.tasks.every(t => E.compatible(t, r.topic)));
 });

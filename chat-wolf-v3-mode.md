@@ -1,4 +1,117 @@
-# Chat Wolf — free-chat edition v3
+# Chat Wolf — content / flow release v4
+
+## Current production update — 2026-10-02
+
+The original `/chat-wolf.html` entry now contains the completed content/flow update.
+The isolated `/chat-wolf-v4-preview/` directory is an archived development snapshot,
+not the current game. Use the original Hub to distribute player cards and open Chat
+Wolf. Keep **Use player cards already sent from Hub** enabled, choose the host's
+seat, and create the room. Participants keep their original `play.html` links;
+**Reconnect original cards** republishes only each card's own session if needed.
+The host's own playable card opens separately from the public presentation.
+
+### Latest decisions and behavior
+
+- Kindred remains disabled. Professions are unique; surplus villagers are ordinary.
+- Every follow-up is manual, including round 2. Eight related choices per main topic;
+  the host can choose or draw an unused one and return to the main question.
+- Host presentation does not display its role, tasks, private rewards or ballot.
+- Chat time starts collapsed. The host can expand elapsed minutes/seconds; players
+  do not get a large chat countdown. Manual ending is the default; a suggested-time
+  reminder does not end conversation. Pause/reconnect preserves active elapsed time.
+- Meetings give each person one timed turn (default 60 seconds), with self-end,
+  skip and host recovery. The saved order rotates its starting player next meeting.
+  Final tasks lock before private clues, then final discussion, then final voting.
+- New flow task completion/undo is TALK-only, including when optional automatic
+  timing is selected. No evidence forms, audio judging, or host task review.
+- Existing running matches retain their saved cards. A new deal upgrades their
+  flow; archived flow3 matches retain their earlier stage semantics until then.
+- Default estimate: six players 50:50; eight players 56:50, excluding setup,
+  pauses, extra chat and host choices. The estimate is not a forced time limit.
+- Final Judge decisions cannot be bypassed by restart or cancel. The saved timeout
+  still resolves a missing decision. Earlier win/Jester/vote priorities are unchanged.
+
+### Content and allocation
+
+There are 48 complete bilingual main topics, 384 follow-ups, 1,425 authored wolf
+cards, and 575 village cards (576 mappings: two per enabled profession/topic).
+Each topic has 62–117 unique canonical wolf candidates, at least 20 interactions,
+40 self-actions and 21 broad normalized families. Cards shared by compatible topics
+retain one canonical identity; this is not 48 independent copies of each bank.
+Ordinary preference prediction, naming, third-person self-name and rejected
+voice-roleplay are not active fallback mechanics. Editorial checks do not establish
+play-tested fun or balance.
+
+Recent 60 wolf canonicals, three-deal mechanic avoidance and five-deal soft family
+preference are separate from village history. Bait shares applicable action groups.
+Exposure records at assignment, not task completion or results. Restart, rerolls,
+replay and new rooms retain host-scope history; repeated reads do not record again.
+Aliases also migrate in saved history. A complete search precedes exhaustion;
+only an explicit host choice relaxes recent exclusions for one deal.
+
+The original 70d0c56 audit did **not** reproduce “restart clears history”: its
+history survived every tested restart. It instead found a shared wolf/village
+60-entry window, soft-only mechanic penalties, no cross-room host history and
+heavy generic/vocal content. The baseline script preserves those factual results.
+
+### Validation and reports
+
+Run `node --test tests/*.test.cjs` for the regression suite.
+The final local run passed **223/223** tests, with no failures or skipped tests.
+The opt-in real Firebase six-card test also passed the complete three-round game
+and restart. Automated test clients are not a claim of six physical devices.
+Run `node scripts/chat-wolf-v4-content-report.cjs --write` for the real-content
+report at `qa/chat-wolf-v4-content-report.json`, including per-topic counts,
+family distributions, candidate counts at every filter and 2,000 synthetic deals.
+The 100-seed × 10-deal same-topic and changing-topic runs both have zero shortages,
+silent canonical repeats, recent-group repeats, duplicate voice pairs or invalid
+cards. Generic shares are 8/3000 and 5/3000. These use the actual authored pool,
+not the separate synthetic exhaustive-search fixture in engine tests.
+
+The real Firebase test can be rerun in PowerShell with:
+
+```powershell
+$env:CHAT_WOLF_LIVE_TEST='1'
+$env:CHAT_WOLF_TEST_CARDS='1'
+node scripts/chat-wolf-v3-live-test.cjs
+```
+
+It creates six independent test sessions and fresh synthetic original Hub cards,
+checks readiness, privacy, all three rounds, votes, Judge result and restart, then
+removes only its own temporary room/card/history data. Do not use real player links
+as test fixtures. Chrome UI checks covered Hub setup, original-card connection,
+private readiness/task completion, host follow-up synchronization, collapsed and
+expanded timer, and 360/390/430 viewport widths without horizontal overflow.
+Viewport emulation is **not** proof of separate physical-device testing. Physical
+phones, long real voice sessions, and content balance remain user play-test work.
+
+### Runtime, deployment and limits
+
+No new service, secret, environment variable, migration or AI API is required.
+Keep the existing public `firebase-config.js` connection and existing Firebase
+rules. Local serving: `node scripts/chat-wolf-dev-server.cjs`, then open the printed
+localhost address. The live site uses the existing Git-connected deployment.
+This remains the explicitly accepted **trusted-host** design: the host browser
+processes the room and must stay open/awake; the game persists in Firebase and
+reconnects, but it is not a new always-on trusted server. Host presentation hides
+secrets; a technical host can still inspect its authority state. Public projections
+and other players' cards do not receive that state or individual ballots.
+
+Cross-room history follows a private opaque credential in the same host browser.
+Using another browser/device or clearing its storage creates a different scope;
+no account-based cross-device host identity is claimed. Conditional updates and
+the recovery journal serialize room/history allocation. No private credentials or
+real participant content appear in the published audit report.
+
+Main implementation files: `chat-wolf-v4-content.js`, the three expansion banks,
+the three wolf banks, `chat-wolf-v4-village.js`, `chat-wolf-v4-taxonomy.js`,
+`chat-wolf-v3-engine.js`, `chat-wolf-v3-rules.js`, `chat-wolf-history.js`,
+`chat-wolf-sync.js`, `chat-wolf-v3-ui.js`, `chat-wolf.js`, copy/CSS/HTML, plus tests
+and audit scripts. Other Hub games and the existing card bridge are retained.
+
+---
+
+# Archived free-chat edition v3 behavior
 
 Incremental update, 2026-09-30. The existing room, Firebase connection, reconnect credentials, original Hub player cards, and deployment are retained. This document describes v3 only; saved legacy games retain their earlier rules.
 

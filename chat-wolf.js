@@ -3,7 +3,7 @@
 
   const C = window.CHAT_WOLF_COPY;
   const embeddedCard = new URLSearchParams(location.search).get('card') === '1';
-  const legacySetup = window.CHAT_WOLF_CARDS.readSetup(localStorage);
+  const legacySetup = window.CHAT_WOLF_PREVIEW ? null : window.CHAT_WOLF_CARDS.readSetup(localStorage);
   if (embeddedCard) {
     document.body.classList.add('embedded-card');
     document.documentElement.classList.add('embedded-card-root');
@@ -59,7 +59,7 @@
   }
 
   function errorMessage(code) {
-    return (state?.public.rulesVersion >= 3 || !state ? window.CHAT_WOLF_COPY_V3.errors[code] : '') || C.errors[code] || `Action not completed (${code || 'UNKNOWN'})`;
+    return (state?.public.flowVersion >= 4 || !state ? window.CHAT_WOLF_COPY_V4.errors[code] : '') || (state?.public.rulesVersion >= 3 ? window.CHAT_WOLF_COPY_V3.errors[code] : '') || C.errors[code] || `Action not completed (${code || 'UNKNOWN'})`;
   }
 
   function setSync(kind) {
@@ -163,6 +163,7 @@
         entryMode = 'join';
         renderEntry(code);
       }
+      if (state?.public.rulesVersion >= 3) v3.onActionError(actionName, payload, error.code);
       showToast(errorMessage(error.code));
       setSync('reconnecting');
       return false;
@@ -294,7 +295,7 @@
   }
 
   function roomBar() {
-    const phaseNames = state.public.rulesVersion >= 3 ? window.CHAT_WOLF_COPY_V3.phases : C.phases;
+    const phaseNames = state.public.flowVersion >= 4 ? window.CHAT_WOLF_COPY_V4.phases : state.public.rulesVersion >= 3 ? window.CHAT_WOLF_COPY_V3.phases : C.phases;
     return `<div class="room-bar">
       <div><span class="phase-chip">${esc(phaseNames[state.public.phase] || state.public.phase)}</span> <span class="room-code">${esc(state.public.code)}</span></div>
       <div class="button-row">${embeddedCard ? '' : `<button class="btn secondary small" type="button" data-command="copyInvite">${esc(C.copyInvite)}</button>`}
@@ -543,10 +544,46 @@
     </div>`;
   }
 
+  function captureInteraction() {
+    const active=document.activeElement;
+    const focused=active && app.contains(active);
+    const formId=focused ? active.form?.id : null;
+    return {
+      x:window.scrollX,y:window.scrollY,open:captureOpenDetails(),
+      libraryScroll:app.querySelector('.v3-topic-list')?.scrollTop || 0,
+      focus:focused?{id:active.id,formId,name:active.name,value:active.value,
+        action:active.dataset?.v3Action,taskId:active.dataset?.taskId,
+        start:active.selectionStart,end:active.selectionEnd}:null,
+    };
+  }
+
+  function restoreInteraction(snapshot) {
+    if(!snapshot)return;
+    restoreOpenDetails(snapshot.open);
+    const list=app.querySelector('.v3-topic-list');
+    if(list)list.scrollTop=snapshot.libraryScroll;
+    const focus=snapshot.focus;
+    let target=null;
+    if(focus?.id)target=document.getElementById(focus.id);
+    else if(focus?.formId && focus.name)target=document.getElementById(focus.formId)?.elements.namedItem(focus.name);
+    else if(focus?.action)target=app.querySelector('[data-v3-action="'+CSS.escape(focus.action)+'"]'+(focus.taskId?'[data-task-id="'+CSS.escape(focus.taskId)+'"]':''));
+    if(target && app.contains(target) && !target.disabled && typeof target.focus==='function'){
+      if(focus.value!=null && ['INPUT','TEXTAREA','SELECT'].includes(target.tagName))target.value=focus.value;
+      target.focus({preventScroll:true});
+      if(typeof focus.start==='number' && typeof target.setSelectionRange==='function'){
+        try{target.setSelectionRange(focus.start,focus.end);}catch(_){}
+      }
+    }
+    window.scrollTo({left:snapshot.x,top:snapshot.y,behavior:'instant'});
+  }
+
   function renderState() {
     if (!state) return;
     if (state.public.rulesVersion >= 3) {
+      const preserve=app.dataset.matchId===(state.public.matchId || '')?captureInteraction():null;
       app.innerHTML = v3.render();
+      app.dataset.matchId=state.public.matchId || '';
+      restoreInteraction(preserve);
       paintTimers();
       return;
     }
@@ -579,6 +616,18 @@
       const seconds = Math.ceil(remaining / 1000);
       element.textContent = `${seconds} ${C.seconds}`;
       element.classList.toggle('urgent', seconds <= 10);
+    });
+    document.querySelectorAll('[data-elapsed-ms]').forEach((element) => {
+      const since=Number(element.dataset.activeSince || 0);
+      const elapsed=window.CHAT_WOLF_V3_UI.elapsedMilliseconds({elapsedMs:Number(element.dataset.elapsedMs||0),activeSince:since || null,paused:element.dataset.clockPaused==='true'},Date.now()+serverOffset);
+      const seconds=Math.floor(elapsed/1000);
+      element.textContent=window.CHAT_WOLF_V3_UI.formatElapsed(elapsed);
+      const overtime=element.closest('.v4-chat-clock')?.querySelector('[data-talk-overtime]');
+      if(overtime){
+        const extra=Math.max(0,seconds-Number(overtime.dataset.talkOvertime));
+        overtime.textContent=extra?Math.floor(extra/60)+':'+String(extra%60).padStart(2,'0')+' '+window.CHAT_WOLF_COPY_V4.overSuggested:'';
+        overtime.hidden=!extra;
+      }
     });
   }
 

@@ -17,22 +17,26 @@
   ].map(p => Object.freeze({ ...p, roleId: p.id, camp: 'VILLAGER', defaultMaxCopies: 1 })));
   const defaults = Object.freeze({ mode: 'free-chat-v3', playerCount: 6, wolfCount: 2,
     jesterEnabled: true, enabledProfessions: Object.freeze(professions.map(p => p.id)),
-    roundCount: 3, talkSeconds: 600, wrapUpSeconds: 30, meetingSeconds: 60,
+    roundCount: 3, talkSeconds: 600, talkEndBehavior: 'host_confirm', wrapUpSeconds: 30,
+    meetingSeconds: 60, meetingTurnSeconds: 60,
     voteSeconds: 45, clueSeconds: 20, judgeSeconds: 15, taskCount: 3,
     interactionTaskCount: 1, topicId: 'random', rerollLimit: 1, infoRoleLimit: 1,
     jesterTieWins: false, professionWeights: Object.freeze({}) });
   const limits = Object.freeze({ playerCount: [3, 12], wolfCount: [1, 10], roundCount: [1, 6],
-    talkSeconds: [30, 3600], wrapUpSeconds: [0, 180], meetingSeconds: [0, 600],
+    talkSeconds: [30, 3600], wrapUpSeconds: [0, 180], meetingSeconds: [0, 600], meetingTurnSeconds: [10, 180],
     voteSeconds: [10, 300], clueSeconds: [0, 180], judgeSeconds: [5, 120],
     taskCount: [1, 12], interactionTaskCount: [0, 12], rerollLimit: [0, 3], infoRoleLimit: [0, 2] });
-  const api = Object.freeze({ mode: 'free-chat-v3', version: 3, professions, defaults, limits,
+  const api = Object.freeze({ mode: 'free-chat-v3', version: 3, flowVersion: 4, professions, defaults, limits,
     historyLimit: 60, maxExtensionSeconds: 1800,
     completionPhases: Object.freeze(['TALK', 'WRAP_UP']),
     rewardUsePhases: Object.freeze(['TALK']),
     outcomePriority: Object.freeze(['VILLAGERS', 'JESTER', 'WOLVES', 'DRAW']),
-    uniqueProfessions: true, automaticFollowUpRound: 2,
+    uniqueProfessions: true, automaticFollowUpRound: null,
+    selection: Object.freeze({ canonicalWindow: 60, variantDeals: 3, familyDeals: 5,
+      villageWindow: 60, maxGeneric: 1, maxVoicePerformance: 1 }),
     estimateSeconds(settings) {
-      return settings.roundCount * (settings.talkSeconds + settings.wrapUpSeconds + settings.meetingSeconds + settings.voteSeconds)
+      return settings.roundCount * (settings.talkSeconds + settings.playerCount * (settings.meetingTurnSeconds || 60) + settings.voteSeconds
+        + (settings.talkEndBehavior === 'automatic' ? settings.wrapUpSeconds : 0))
         + settings.clueSeconds + (settings.enabledProfessions.includes('judge') ? settings.judgeSeconds : 0);
     },
   });

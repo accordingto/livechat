@@ -7,6 +7,7 @@
   'use strict';
   const E = typeof module === 'object' && module.exports ? require('./chat-wolf-engine.js') : root.CHAT_WOLF_ENGINE;
   const Cards = typeof module === 'object' && module.exports ? require('./chat-wolf-cards.js') : root.CHAT_WOLF_CARDS;
+  const History = typeof module === 'object' && module.exports ? require('./chat-wolf-history.js') : root.CHAT_WOLF_HISTORY;
   const fail = code => { throw Object.assign(new Error(code), { code }); };
   const uid = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
   const validToken = token => /^[a-f0-9]{64}$/.test(token || '');
@@ -43,11 +44,14 @@
     if (view.public.rulesVersion < 3 || !view.private.isHost || view.public.phase === 'FINISHED') return view;
     const actions = view.private.actions || {};
     const publicActions = ['canStart','canSettings','canBeginTalk','canEndTalk','canExtendTalk','canEndClues','canEndMeeting','canEndVote',
-      'canPause','canResume','canCancel','canRestart','canReplay','canFollowUp','canClearFollowUp'];
+      'canPause','canResume','canCancel','canRestart','canReplay','canFollowUp','canClearFollowUp',
+      'canEndMeetingTurn','canSkipMeetingTurn','canSetMeetingTurnSeconds','canSnoozeTalkReminder'];
     return { public: view.public, private: {
       playerId: view.private.playerId, name: view.private.name, isHost: true, presentationOnly: true,
       role: null, profession: null, wolfTeam: null, tasks: null, villageTask: null, reward: null,
       myVoteSubmitted: false, judgeDecision: null, roleAcknowledged: false,
+      talkReminder: view.private.talkReminder || null,
+      contentRepeatException: !!view.private.contentRepeatException,
       actions: Object.fromEntries(publicActions.map(key => [key, !!actions[key]])),
     } };
   }
@@ -97,6 +101,12 @@
     lobby(code) { return `rooms/chatwolf-${code}/roster`; }
     hostKey(code) { return `chat-wolf-host-v2:${code}`; }
     sessionKey(code) { return `chat-wolf-legacy-session:${code}`; }
+    historyToken() {
+      const key = 'chat-wolf-history-scope-v1';
+      let token = this.load(key);
+      if (!validToken(token)) { token = uid(); this.save(key, token); }
+      return token;
+    }
     save(key, value) {
       try { this.storage.setItem(key, value); } catch (_) { fail('STORAGE_REQUIRED'); }
     }
@@ -125,6 +135,7 @@
         this.save(this.hostKey(code), JSON.stringify({ control, token }));
         this.save(this.sessionKey(code), token);
         const data = { room, privateKey, channels: { [token]: { playerId: hostId, seq: 0 } }, joins: {} };
+        if (room.rulesVersion >= 3) data.historyScopeToken = this.historyToken();
         if (legacy) {
           room.players[hostId].name = legacy.names[hostSeat];
           data.legacyRoom = legacy.code;
@@ -291,6 +302,11 @@
         room.deadlineAt = now + Math.max(0, room.deadlineAt - doc.lastHostAt);
         room.revision++;
       }
+      if (doc.leaseUntil < now && room.flowVersion >= 4 && room.phase === 'TALK' && !room.paused && room.talkClock?.activeSince != null) {
+        room.talkClock.elapsedMs += Math.max(0, doc.lastHostAt - room.talkClock.activeSince);
+        room.talkClock.activeSince = now;
+        room.revision++;
+      }
       E.advanceExpired(room, now);
       const lobby = (await this.store.get(this.lobby(code))).value;
       if (!this.privateKey) this.privateKey = await crypto.subtle.importKey('jwk', data.privateKey,
@@ -313,6 +329,22 @@
       }
       const incoming = await Promise.all(Object.entries(data.channels).map(async ([token, channel]) =>
         [token, channel, (await this.store.get(this.path(code, token))).value]));
+      let historyScope = null, historyChanged = false, storedHistory = null;
+      // Acquire one scope fence before consuming allocation requests. If another
+      // room is dealing, leave requests untouched for the next coordinator tick.
+      const allocationActions = ['startGame', 'restart', 'replay', 'rerollTask'];
+      const allocationPending = room.rulesVersion >= 3 && incoming.some(([, channel, card]) => {
+        if (!card?.request || card.request.seq <= channel.seq) return false;
+        try {
+          const body = typeof card.request.bodyJson === 'string' ? JSON.parse(card.request.bodyJson) : card.request.body;
+          return allocationActions.includes(body?.action);
+        } catch (_) { return false; }
+      });
+      if (allocationPending) {
+        if (!validToken(data.historyScopeToken)) data.historyScopeToken = this.historyToken();
+        historyScope = new History.HistoryScope({ store: this.store, token: data.historyScopeToken, owner: this.owner, clock: this.now });
+        storedHistory = (await historyScope.acquire()).history || null;
+      }
       for (const [token, channel, card] of incoming) {
         const request = card?.request;
         if (!request || !Number.isSafeInteger(request.seq) || request.seq <= channel.seq) continue;
@@ -326,14 +358,32 @@
           if (body.action !== 'heartbeat' && request.context !== stamp(room)) fail('STALE_ACTION');
           // Failed actions must not leave partial mutations behind.
           const next = clone(room);
+          if (historyScope && allocationActions.includes(body.action)) {
+            E.prepareHistory(next);
+            next.exposureHistory = historyScope.historyFor(code, next.exposureHistory);
+            // Multiple rerolls in this same transaction accumulate rather than
+            // reloading the scope's pre-transaction exposure list.
+            if (historyChanged) next.exposureHistory = clone(room.exposureHistory);
+          }
           E.dispatch(next, channel.playerId, body.action, body, now);
+          if (historyScope && allocationActions.includes(body.action) &&
+              JSON.stringify(next.exposureHistory || null) !== JSON.stringify(storedHistory)) historyChanged = true;
           Object.keys(room).forEach(key => delete room[key]);
           Object.assign(room, next);
         } catch (e) { channel.reply.error = e.code || 'INVALID_REQUEST'; }
       }
       const revision = doc.revision + 1;
-      const committed = await this.store.put(path, { data: JSON.stringify(data), revision,
-        owner: this.owner, leaseUntil: now + 10000, lastHostAt: now }, old.etag);
+      const nextDoc = { data: JSON.stringify(data), revision,
+        ...(doc.historyTransactionId ? { historyTransactionId: doc.historyTransactionId } : {}),
+        owner: this.owner, leaseUntil: now + 10000, lastHostAt: now };
+      let committed;
+      if (historyScope && historyChanged) {
+        committed = await historyScope.commit({ roomPath: path, baseEtag: old.etag, nextDoc,
+          history: room.exposureHistory, roomCode: code, id: uid() });
+      } else {
+        if (historyScope) await historyScope.release();
+        committed = await this.store.put(path, nextDoc, old.etag);
+      }
       if (committed.conflict || this.stopped) return;
       await Promise.all(Object.entries(data.channels).map(async ([token, channel]) => {
         const view = room.players[channel.playerId] && !channel.error ? E.projectState(room, channel.playerId, now) : null;

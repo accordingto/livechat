@@ -18,8 +18,8 @@ function harness(overrides = {}, embeddedCard = false) {
   const players = ['a','b','c','d','e','f'].map((id,i)=>({id,name:'Player '+(i+1),isHost:i===0,ready:true}));
   const current = {
     public: {
-      code:'TEST01',rulesVersion:3,matchId:'match-1',gameNumber:1,phase:'TALK',round:1,totalRounds:3,
-      players,settings:{...RULES.defaults,enabledProfessions:[...RULES.defaults.enabledProfessions]},
+      code:'TEST01',rulesVersion:3,flowVersion:3,matchId:'match-1',gameNumber:1,phase:'TALK',round:1,totalRounds:3,
+      players,settings:{...RULES.defaults,talkEndBehavior:undefined,wrapUpSeconds:30,enabledProfessions:[...RULES.defaults.enabledProfessions]},
       topic:context.window.CHAT_WOLF_V3_CONTENT.topics[0],usedFollowUpIds:[],activeFollowUp:null,
       voteHistory:[],deadlineAt:10000,paused:false,
       ...overrides.public,
@@ -180,10 +180,110 @@ test('actual engine projections render every role through a full three-round gam
   while(room.phase!=='FINISHED') {
     if(['TALK','WRAP_UP'].includes(room.phase))send('endTalk');
     else if(room.phase==='FINAL_CLUES')send('endClues');
-    else if(room.phase==='MEETING_DISCUSS')send('endMeeting');
+    else if(['MEETING_DISCUSS','MEETING_TURNS'].includes(room.phase))send('endMeeting');
     else if(room.phase==='VOTING')send('endVote');
     else throw new Error('Unexpected phase '+room.phase);
     check();
   }
   assert.equal(room.result.outcome,'DRAW');
+});
+
+test('v4 private reading order is role, full question, task and reward; no oversized chat controls',()=>{
+  const {api}=harness({public:{flowVersion:4,deadlineAt:null},private:{role:'VILLAGER',profession:'contrarian',tasks:null,wolfTeam:null,
+    villageTask:{id:'c1',text:'Say one upside of a noisy kitchen.',textZh:'說一個吵雜廚房的好處。',completed:null},
+    reward:{unlocked:false}}},true);
+  const html=api.render();
+  assert.ok(html.indexOf('Village team')<html.indexOf('data-current-question'));
+  assert.ok(html.indexOf('data-current-question')<html.indexOf('Say one upside'));
+  assert.ok(html.indexOf('Say one upside')<html.indexOf('Your reward'));
+  assert.match(html,/Other Side/);
+  assert.doesNotMatch(html,/>Everyone can talk<|>Player cards<|data-elapsed-ms|class="timer"/);
+  assert.match(html,/v4-question-peek/);
+  assert.match(html,/What do you like about trips/);
+});
+
+test('v4 host talk timer is collapsed and forward-only, with a host-only gentle reminder',()=>{
+  const {api,current}=harness({public:{flowVersion:4,deadlineAt:null,talkClock:{elapsedMs:4000,activeSince:10000,suggestedSeconds:600}},private:{isHost:true,talkReminder:{due:true},actions:{canEndTalk:true,canExtendTalk:true}}});
+  const html=api.render();
+  assert.match(html,/<details class="v4-chat-clock" data-detail="talk-clock-1">/);
+  assert.doesNotMatch(html,/<details class="v4-chat-clock"[^>]*open|class="timer"|urgent/);
+  assert.match(html,/data-elapsed-ms="4000"/);
+  assert.match(html,/Suggested chat time reached/);
+  assert.match(html,/Remind me again in 2 minutes/);
+  current.private.isHost=false;
+  assert.doesNotMatch(api.render(),/v4-chat-clock|Suggested chat time reached/);
+});
+
+test('v4 elapsed clock excludes paused time, survives saved accumulated time, and passes one hour',()=>{
+  const {context}=harness();
+  const {elapsedMilliseconds,formatElapsed}=context.window.CHAT_WOLF_V3_UI;
+  assert.equal(elapsedMilliseconds({elapsedMs:5000,activeSince:10000,paused:false},17000),12000);
+  assert.equal(elapsedMilliseconds({elapsedMs:12000,activeSince:null,paused:true},99000),12000);
+  assert.equal(elapsedMilliseconds({elapsedMs:12000,activeSince:100000,paused:false},104000),16000);
+  assert.equal(formatElapsed(260000),'4:20');
+  assert.equal(formatElapsed(3723000),'1:02:03');
+});
+
+test('v4 Chinese task explanation is a private local toggle and preserves required English lines',async()=>{
+  const {api,calls}=harness({public:{flowVersion:4},private:{tasks:[{id:'w1',text:'Say “My sofa needs a holiday.”',textZh:'說出「My sofa needs a holiday.」。',completed:null}]}},true);
+  api.render();
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'toggleTaskLanguage'}})}});
+  const html=api.render();
+  assert.match(html,/lang="zh-Hant"/);
+  assert.match(html,/說出「My sofa needs a holiday.」。/);
+  assert.equal(calls.length,0);
+  assert.match(html,/data-task-id="w1"/);
+});
+
+test('v4 meetings expose the current speaker only for player controls and a distinct confirmed host end-all action',async()=>{
+  const meeting={id:'m1',order:['a','b','c','d','e','f'],speakerIndex:1,currentSpeakerId:'b',nextSpeakerId:'c',completedPlayerIds:['a'],turnSeconds:60,nextTurnSeconds:45};
+  const {api,current,context,calls}=harness({public:{flowVersion:4,phase:'MEETING_TURNS',meeting},private:{isHost:false,playerId:'b',actions:{canEndMeetingTurn:true,canSkipMeetingTurn:true}}},true);
+  let html=api.render();
+  assert.match(html,/Turn 2 of 6/);
+  assert.match(html,/I am done speaking/);
+  assert.match(html,/Next speaker: up to 45 seconds/);
+  assert.match(html,/class="timer"/);
+  current.private.playerId='c';
+  assert.doesNotMatch(api.render(),/data-v3-action="endMeetingTurn"|data-v3-action="skipMeetingTurn"/);
+  const host=harness({public:{flowVersion:4,phase:'MEETING_TURNS',meeting},private:{isHost:true,actions:{canSkipMeetingTurn:true,canEndMeeting:true,canSetMeetingTurnSeconds:true}}});
+  host.context.window.confirm=()=>false;
+  html=host.api.render();
+  assert.match(html,/Skip \/ end this speaker/);
+  assert.match(html,/End remaining turns and start voting/);
+  assert.match(html,/Applies from the next speaker/);
+  assert.match(html,/name="seconds" type="number" min="10" max="180"/);
+  await host.api.handleClick({target:{closest:()=>({dataset:{v3Action:'endMeeting'}})}});
+  assert.equal(host.calls.length,0);
+  host.context.window.confirm=()=>true;
+  await host.api.handleClick({target:{closest:()=>({dataset:{v3Action:'endMeeting'}})}});
+  assert.equal(host.calls[0].action,'endMeeting');
+});
+
+test('v4 estimates use all meeting turns without a forty-minute warning and manual follow-ups only',()=>{
+  const {api,current}=harness({public:{flowVersion:4,phase:'LOBBY',matchId:null},private:{isHost:true}});
+  let html=api.render();
+  assert.match(html,/50 min 50 s/);
+  assert.doesNotMatch(html,/40 minutes|37 min 20|Round 2 starts/);
+  assert.match(html,/Follow-ups change only when the host chooses/);
+  assert.match(html,/name="meetingTurnSeconds"/);
+  assert.doesNotMatch(html,/name="wrapUpSeconds"|name="meetingSeconds"/);
+  current.public.settings.playerCount=8;
+  assert.match(api.render(),/56 min 50 s/);
+});
+
+test('v4 exhaustion offers no secret details and requires explicit one-deal repeat permission',async()=>{
+  const {api,context,calls}=harness({public:{flowVersion:4},private:{isHost:true}});
+  api.render();
+  api.onActionError('restart',{keepTopic:true},'CONTENT_EXHAUSTED');
+  let html=api.render();
+  assert.match(html,/Fresh task combinations are running low/);
+  assert.doesNotMatch(html,/Secret wolf action|canonicalTaskKey|variantGroup/);
+  context.window.confirm=()=>false;
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'allowRecentRepeat'}})}});
+  assert.equal(calls.length,0);
+  context.window.confirm=()=>true;
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'allowRecentRepeat'}})}});
+  assert.equal(calls[0].action,'restart');
+  assert.equal(calls[0].payload.allowRecentRepeat,true);
+  assert.equal(calls[0].payload.keepTopic,true);
 });
