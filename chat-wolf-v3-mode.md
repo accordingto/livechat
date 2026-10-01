@@ -1,6 +1,144 @@
-# Chat Wolf — content / flow release v4
+# Chat Wolf — readable cards update
 
-## Current production update — 2026-10-02
+## Current update — readable-v5
+
+This is an incremental content/UI release on the existing production entry.
+No role, profession power, Jester victory, vote priority, three-round flow, three
+shared wolf tasks, meeting, timer or trusted-host architecture was changed.
+
+### What changed
+
+- Wolf role names/borders are red, Jester yellow and villagers green. Text labels
+  remain, so color is not the only identifier. Host presentation still shows no role.
+- The private-card top no longer shows **Read your card** or room number. A closed
+  **Room info** disclosure at the bottom retains room number and stage for reconnect help.
+- One complete current question appears directly above tasks. No duplicate sticky
+  question or duplicate progress. Follow-ups remain manual; original context is collapsed.
+- **Wolf tasks 0/3**, **Shared by all wolves**, and closed **? Rules** replace repeated
+  explanatory paragraphs. Tasks remain visible without opening anything.
+- All 48 English/Chinese main questions were shortened; all 384 follow-ups remain.
+
+### Content quality and actual counts
+
+All 1,425 previous wolf-card wordings were removed from active draws, not destroyed:
+existing match snapshots and audit/migration data remain recoverable. The curated
+pool has **667 unique cards**: **246 interaction / 421 self-action**. Of these,
+**39** are same-goal rewrites with their original canonical identity retained.
+English average **9.21 words**, median **9**; **0 over 14**, **0 under 6**.
+
+The root editor read 120 final sample rows. Independent reviews also covered all
+274 A cards and 198 B cards, including context/wording corrections. C's 182 cards
+were checked during authoring and sampled again. No active task requires object
+personification, naming, nicknames or invented words. Public fantasy topics remain;
+their wolf tasks are ordinary conversational actions. This is editorial review by
+coding agents, not a claim that human players have proved the content balanced.
+
+There are still near-variant actions, such as different concrete help offers or
+thank-you remarks. They intentionally share mechanic groups; aliases migrate in
+saved history. Same-deal duplication and three-deal near-variant exclusion remain.
+There are no exact English duplicates. The eight deliberately generic self-actions
+are shared across all topics, with at most one per deal; they are not counted as
+48 separately authored sets. The old 60/20/40 content quota is superseded by the
+user's readability-first requirement.
+
+Per-topic candidate counts below are **before exposure exclusions**. The total
+includes eight generic self-action candidates; the current-match rules still select
+one interaction and two self-actions. A finite pool can eventually exhaust: the
+existing explicit host recovery choice remains, with no silent fallback or reset.
+
+| Topic | Available | Interaction | Self |
+| --- | ---: | ---: | ---: |
+| 01 · One Trip, Different Holidays | 52 | 18 | 34 |
+| 02 · A Month Under One Roof | 51 | 17 | 34 |
+| 03 · Four Hours in One Car | 56 | 18 | 38 |
+| 04 · A Weekend With No Plans | 53 | 19 | 34 |
+| 05 · A Shared Work Table | 79 | 27 | 52 |
+| 06 · A Gathering Without Signal | 51 | 17 | 34 |
+| 07 · A New Friend Joins Us | 51 | 17 | 34 |
+| 08 · Dinner in One Kitchen | 50 | 16 | 34 |
+| 09 · A Shop That Lets Us Rest | 52 | 16 | 36 |
+| 10 · A Birthday on a Small Budget | 123 | 43 | 80 |
+| 11 · Our Unusual Little Show | 54 | 20 | 34 |
+| 12 · Ordinary Objects on Display | 50 | 16 | 34 |
+| 13 · A Gathering Without Pressure | 51 | 17 | 34 |
+| 14 · An Interesting Ordinary Street | 50 | 16 | 34 |
+| 15 · A One-Day Swap Shop | 50 | 16 | 34 |
+| 16 · A Room to Rest In | 50 | 16 | 34 |
+| 17 · Powers That Only Help Neighbors | 51 | 15 | 36 |
+| 18 · Borrowing a Friend’s Routine | 50 | 14 | 36 |
+| 19 · One Hour Just for You | 49 | 13 | 36 |
+| 20 · The Objects Have Complaints | 71 | 15 | 56 |
+| 21 · A Ten-Second Redo | 50 | 14 | 36 |
+| 22 · A Small Package From the Future | 48 | 15 | 33 |
+| 23 · Watching an Ordinary Moment Again | 50 | 17 | 33 |
+| 24 · Impossible Everyday Services | 53 | 17 | 36 |
+| 25 · A Thoughtful Gift You Do Not Want | 79 | 22 | 57 |
+| 26 · One Dinner, Different Bills | 53 | 16 | 37 |
+| 27 · A Group Chat That Never Stops | 55 | 16 | 39 |
+| 28 · A Photo You Do Not Want Shared | 53 | 17 | 36 |
+| 29 · Help You Did Not Ask For | 83 | 23 | 60 |
+| 30 · An Invitation Accepted Too Quickly | 51 | 16 | 35 |
+| 31 · An Honest Response to a Friend’s Work | 60 | 19 | 41 |
+| 32 · A Favorite Item Comes Back Worn | 80 | 23 | 57 |
+| 33 · An Assistant That Knows Your Taste | 53 | 16 | 37 |
+| 34 · Everyone Leaves the Planning to You | 61 | 20 | 41 |
+| 35 · A Hobby or a Job? | 47 | 15 | 32 |
+| 36 · Changing Your Mind in Front of Friends | 48 | 15 | 33 |
+| 37 · Speaking Up for an Old Object | 53 | 15 | 38 |
+| 38 · A Small Mistake Friends Keep Retelling | 44 | 12 | 32 |
+| 39 · A First Impression Changes | 53 | 17 | 36 |
+| 40 · A Habit Others Do Not Understand | 69 | 19 | 50 |
+| 41 · A Purchase With a Different Ending | 63 | 18 | 45 |
+| 42 · A Small Act of Care | 65 | 19 | 46 |
+| 43 · A Good Day After Plans Failed | 57 | 16 | 41 |
+| 44 · A Small Skill That Comes in Handy | 61 | 16 | 45 |
+| 45 · What Makes an Ordinary Day Good | 48 | 16 | 32 |
+| 46 · An Interest You Found by Accident | 50 | 16 | 34 |
+| 47 · Effort People Do Not See | 74 | 24 | 50 |
+| 48 · Enjoyment You Do Not Want to Outgrow | 70 | 19 | 51 |
+
+The complete reproducible report, including family/mechanic distributions,
+near-variant examples and the 120 sampled texts, is
+[qa/chat-wolf-readable-report.json](qa/chat-wolf-readable-report.json).
+Run `node scripts/chat-wolf-readable-report.cjs --write` to regenerate it.
+
+### Validation in this revision
+
+- Full local suite: **233/233 passed**, no failures or skips.
+- 100 seeded runs each: initial deal + 10 same-topic restarts (**1,100 deals**),
+  10 same-topic normally completed games (**1,000 full games**), and 10 changing-topic
+  deals (**1,000 deals, 900 actual topic changes**). Every run succeeded, with zero
+  canonical/recent-variant repeats, same-deal mechanic collisions, history resets,
+  generic/voice-cap violations or exhaustion. Tests use the actual curated bank.
+- Opt-in real Firebase test passed with six independent synthetic original Hub cards:
+  readiness, shared task progress, private projections, complete three-round votes,
+  final Judge decision, result and fresh restart. Only its own test data was removed.
+- In-app browser: actual red/yellow/green computed colors, one question/progress,
+  closed Rules, accessible footer room/stage, private readiness button, host no-role
+  presentation. Wolf card widths 360/390/430/1280 had no horizontal overflow.
+- This revision does **not** claim a new Chrome/multi-browser pass or physical phone
+  testing. Six network clients and viewport emulation are not six physical devices.
+  Live voice-game naturalness and balance still need group play-testing.
+
+### Running and publishing
+
+Use the same original Hub/player-card links and `/chat-wolf.html`, not the archived
+preview. Reload the host and private cards, then start/restart a game for the new
+wording; an in-progress game deliberately keeps its original dealt content.
+No new environment variables, server, credentials, migrations or AI usage fees.
+Local serving remains `node scripts/chat-wolf-dev-server.cjs`.
+Optional local-only visual samples: `node scripts/chat-wolf-ui-preview.cjs`;
+these are clearly labeled synthetic samples, not real multiplayer sessions.
+
+Runtime files changed: four `chat-wolf-v5-readable-*.js` banks,
+`chat-wolf-v4-content.js`, `chat-wolf-v4-taxonomy.js`, `chat-wolf-v3-ui.js`,
+`chat-wolf-copy.js`, `chat-wolf.css` and `chat-wolf.html`. Tests and report tools
+are included. Production verification uses `node scripts/chat-wolf-verify-release.cjs <commit>`.
+
+## Prior production record — content / flow v4 (2026-10-02)
+
+The following describes the previous release. Its 1,425-card and 223-test figures
+are historical, not the current curated pool or current test count.
 
 The original `/chat-wolf.html` entry now contains the completed content/flow update.
 The isolated `/chat-wolf-v4-preview/` directory is an archived development snapshot,

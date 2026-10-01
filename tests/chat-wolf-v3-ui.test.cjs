@@ -198,8 +198,48 @@ test('v4 private reading order is role, full question, task and reward; no overs
   assert.ok(html.indexOf('Say one upside')<html.indexOf('Your reward'));
   assert.match(html,/Other Side/);
   assert.doesNotMatch(html,/>Everyone can talk<|>Player cards<|data-elapsed-ms|class="timer"/);
-  assert.match(html,/v4-question-peek/);
+  assert.doesNotMatch(html,/v4-question-peek/);
   assert.match(html,/What do you like about trips/);
+  assert.equal(html.split('What do you like about trips?').length-1,1);
+});
+
+test('readable private cards use camp colors, one progress heading, collapsed rules and footer room info',()=>{
+  const {api,current}=harness({public:{flowVersion:4,phase:'ROLE_REVEAL'},private:{roleAcknowledged:false}},true);
+  let html=api.render();
+  assert.match(html,/v5-role-wolf/);
+  assert.match(html,/<h2 class="role-title wolf">Wolf<\/h2>/);
+  assert.equal(html.split('Wolf tasks 1/3').length-1,1);
+  assert.match(html,/Shared by all wolves/);
+  assert.match(html,/<details class="v5-task-rules" data-detail="wolf-task-rules">/);
+  assert.doesNotMatch(html,/<details class="v5-task-rules"[^>]*open|<header>Room<\/header>/);
+  assert.ok(html.indexOf('v5-room-info')>html.indexOf('Secret wolf action three'));
+  assert.match(html,/<dd>TEST01<\/dd>/);
+  assert.match(html,/data-v3-action="ackRole"/);
+  current.private.role='JESTER';current.private.tasks=null;
+  html=api.render();assert.match(html,/<h2 class="role-title jester">Jester<\/h2>/);
+  current.private.role='VILLAGER';current.private.profession='bait';
+  html=api.render();assert.match(html,/<h2 class="role-title villager">Bait<\/h2>/);
+  current.public.phase='LOBBY';assert.match(api.render(),/<header>Room<\/header>/);
+});
+
+test('role colors are readable red, yellow and green without relying on color alone',()=>{
+  const css=fs.readFileSync(path.join(rootPath,'chat-wolf.css'),'utf8');
+  assert.match(css,/\.role-title\.wolf\s*\{\s*color:\s*#ff8996/);
+  assert.match(css,/\.role-title\.jester\s*\{\s*color:\s*#ffdc73/);
+  assert.match(css,/\.role-title\.villager\s*\{\s*color:\s*#78e5a6/);
+  for(const role of ['WOLF','JESTER','VILLAGER']){
+    const html=harness({public:{flowVersion:4},private:{role,isHost:true}}).api.render();
+    assert.doesNotMatch(html,/v5-role-wolf|v5-role-jester|v5-role-villager|Secret wolf action/);
+  }
+});
+
+test('a manual follow-up displays once above tasks and retains the original only in collapsed context',()=>{
+  const {api}=harness({public:{flowVersion:4,activeFollowUp:{id:'f1',text:'Which trip would you repeat?'}}},true);
+  const html=api.render();
+  assert.equal(html.split('Which trip would you repeat?').length-1,1);
+  assert.equal(html.split('What do you like about trips?').length-1,1);
+  assert.match(html,/<details class="v4-original-topic" data-detail="original-topic">/);
+  assert.doesNotMatch(html,/v4-question-peek/);
 });
 
 test('v4 host talk timer is collapsed and forward-only, with a host-only gentle reminder',()=>{

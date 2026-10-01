@@ -9,7 +9,7 @@
   'use strict';
   const aliases = {
     fixed_phrase:'prepared_sentence',quotation:'prepared_sentence',quoted_line:'prepared_sentence',
-    spoken_notice:'prepared_sentence',short_dialogue:'prepared_sentence',correction:'prepared_sentence',
+    spoken_notice:'prepared_sentence',short_dialogue:'prepared_sentence',
     comparison:'analogy',choose_one:'choice',
     practical_fix:'advice',recommendation:'advice',compose_reply:'reply',repair:'reply',
     specific_limit:'boundary',personal_boundary:'boundary',time_limit:'boundary',number_limit:'boundary',
@@ -49,7 +49,20 @@
     imitate_appliance_sound:'short_sound_effect',imitate_alert_sound:'short_sound_effect',
     imitate_activation_sound:'short_sound_effect',self_added_story_sound:'short_sound_effect',
     sing_one_line:'sing_short_phrase',clap_short_beat:'three_audible_beats',
-    guess_my_object_choice:'guess_my_choice',guess_my_time_choice:'guess_my_choice'
+    guess_my_object_choice:'guess_my_choice',guess_my_time_choice:'guess_my_choice',
+    state_clear_preference:'state_personal_stance',state_a_preference:'state_personal_stance',
+    express_preference:'state_personal_stance',state_dealbreaker:'state_personal_stance',
+    name_a_deal_breaker:'state_personal_stance',reject_one_option:'state_personal_stance',
+    refuse_specific_request:'state_personal_stance',set_personal_limit:'set_a_specific_limit',
+    mention_concrete_detail:'mention_specific_detail',share_personal_example:'describe_past_example',
+    share_specific_experience:'describe_past_example',short_personal_example:'describe_past_example',
+    admit_minor_habit:'admit_a_mistake',compare_concrete_options:'compare_real_options',
+    give_concrete_reason:'give_one_reason',explain_personal_reason:'give_one_reason',
+    name_a_concrete_cost:'state_personal_number',thank_specific_help:'thank_a_person',
+    thank_player_for_idea:'thank_a_person',state_a_small_rule:'propose_simple_rule',
+    offer_specific_trade:'offer_concrete_exchange',challenge_a_choice:'disagree_with_choice',
+    change_one_detail:'propose_simple_change',recommend_specific_item:'practical_suggestion',
+    invite_specific_activity:'invite_small_experiment',give_one_step_instruction:'propose_simple_change'
   };
   // Families are broad editorial buckets shared by all banks, never unique
   // per sentence/topic. Mechanic groups above retain the stricter deduping key.
@@ -57,7 +70,7 @@
     food_choice:'choice',concrete_choice:'choice',sequence_decision:'ranking',
     short_reply:'reply',finish_given_sentence:'reply',focused_question:'question',ask_question:'question',
     practical_suggestion:'advice',time_boundary:'boundary',quantity_boundary:'boundary',
-    object_personification:'object_address',gratitude:'object_address',
+    object_personification:'object_address',gratitude:'appreciation',thanks:'appreciation',
     short_quotation:'prepared_sentence',read_short_notice:'prepared_sentence',two_line_dialogue:'prepared_sentence',
     price_or_payment:'absurd_price',playful_suggestion:'proposal',absurd_proposal:'proposal',
     fairness_judgment:'exception',concrete_comparison:'analogy',proposed_rule:'rule',
@@ -69,7 +82,10 @@
     reversal:'reframe',understatement:'reframe',attribution:'reframe',
     objection:'complaint',concession:'confession',celebration:'commitment',
     bureaucracy:'rule',permission:'rule',simplification:'proposal',
-    clapping:'sound_effect',vocal_timing:'sound_effect',repetition:'prepared_sentence'
+    clapping:'sound_effect',vocal_timing:'sound_effect',repetition:'prepared_sentence',
+    detail:'insertion',experience:'memory',reason:'reasoning',admission:'confession',
+    sequence:'ranking',help:'support',revision:'proposal',refusal:'preference',
+    comparison:'reasoning'
   };
   const normalizeGroup = value => groups[value] || value;
   function normalizeFamily(value) {
@@ -119,6 +135,8 @@
       if(task.type==='self_action' && ['fixed_phrase','quotation','quoted_line'].some(tag=>(task.actionTags||[]).includes(tag)) &&
           task.performanceGroup!=='voice' && /^(Say|Read|Read out)\b/i.test(task.text))variantGroup='prepared_one_line';
       const family=normalizeFamily(task.family);
+      // Comparing two real options is not an unlike-things metaphor.
+      if(variantGroup==='compare_real_options'){tags.delete('analogy');tags.add('real_comparison');}
       if(negatives[family])tags.add(family);
       if(['address_object','apologize_to_object','thank_object','promise_to_object'].includes(variantGroup))tags.add('object_address');
       if(/\b(ask|beg|tell|thank|address|apologize to) (a |an |the |your )?(cupboard|photograph|phone|wallet|alarm|lamp|picture|object)\b/i.test(task.text))tags.add('object_address');

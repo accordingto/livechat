@@ -1,0 +1,3596 @@
+{
+  "version": "chat-wolf-readable-v5",
+  "scope": "Authored content and engine-only tests, no recordings or physical-device claim.",
+  "previousActiveCards": 1425,
+  "disabledOldCards": 1425,
+  "directlyRewrittenOldCards": 39,
+  "activeCards": 667,
+  "uniqueCanonicalCards": 667,
+  "averageWords": 9.21,
+  "medianWords": 9,
+  "over14": [],
+  "under6": [],
+  "types": {
+    "interaction": 246,
+    "self_action": 421
+  },
+  "families": {
+    "advice": 44,
+    "agreement": 15,
+    "appreciation": 15,
+    "boundary": 58,
+    "choice": 28,
+    "confession": 24,
+    "exception": 9,
+    "insertion": 34,
+    "instruction": 6,
+    "invitation": 7,
+    "memory": 37,
+    "negotiation": 28,
+    "paraphrase": 7,
+    "planning": 8,
+    "preference": 34,
+    "prepared_sentence": 25,
+    "proposal": 33,
+    "quantity": 30,
+    "question": 35,
+    "ranking": 9,
+    "reasoning": 97,
+    "reframe": 22,
+    "regret": 6,
+    "reply": 21,
+    "rule": 20,
+    "singing": 1,
+    "sound_effect": 2,
+    "support": 6,
+    "warning": 6
+  },
+  "mechanics": {
+    "admit_a_mistake": 24,
+    "agree_with_specific_point": 15,
+    "allow_different_choice": 1,
+    "ask_permission": 7,
+    "ask_topic_question": 35,
+    "challenge_concrete_claim": 10,
+    "choose_action_order": 6,
+    "choose_one_of_two": 27,
+    "compare_real_options": 24,
+    "compose_short_reply": 21,
+    "correct_own_statement": 11,
+    "defend_minor_flaw": 3,
+    "describe_past_example": 37,
+    "disagree_with_choice": 18,
+    "discard_one_of_two": 1,
+    "exception_to_rule": 9,
+    "get_number_estimate": 19,
+    "give_counterexample": 4,
+    "give_one_reason": 35,
+    "give_practical_warning": 6,
+    "invite_small_experiment": 7,
+    "make_specific_plan": 8,
+    "mention_specific_detail": 34,
+    "offer_concrete_exchange": 15,
+    "offer_concrete_help": 19,
+    "paraphrase_concrete_idea": 7,
+    "point_out_downside": 4,
+    "practical_suggestion": 43,
+    "prepared_one_line": 22,
+    "propose_simple_change": 50,
+    "propose_simple_rule": 12,
+    "rank_three_options": 3,
+    "repeat_spoken_words": 3,
+    "set_a_specific_limit": 52,
+    "short_sound_effect": 1,
+    "sing_short_phrase": 1,
+    "state_a_regret": 6,
+    "state_personal_number": 11,
+    "state_personal_stance": 40,
+    "thank_a_person": 15,
+    "three_audible_beats": 1
+  },
+  "exactTextDuplicates": [],
+  "nearVariantExamples": [
+    {
+      "cards": [
+        {
+          "id": "wolf_v5_a_s_food-help",
+          "text": "Offer to wash the dishes after our meal.",
+          "mechanic": "offer_concrete_help"
+        },
+        {
+          "id": "wolf_v5_b_s-power-offer",
+          "text": "Offer to wash dishes for someone else.",
+          "mechanic": "offer_concrete_help"
+        }
+      ],
+      "policy": "One mechanic group: cannot appear together or within the three recent deals."
+    },
+    {
+      "cards": [
+        {
+          "id": "wolf_v5_a_s_object-thanks",
+          "text": "Thank someone for sharing the story behind an object.",
+          "mechanic": "thank_a_person"
+        },
+        {
+          "id": "w5-c-s-change-thanks",
+          "text": "Thank someone for correcting you without embarrassing you.",
+          "mechanic": "thank_a_person"
+        }
+      ],
+      "policy": "One mechanic group: cannot appear together or within the three recent deals."
+    },
+    {
+      "cards": [
+        {
+          "id": "wolf_v5_a_s_room-lamp",
+          "text": "Suggest using a lamp instead of the main light.",
+          "mechanic": "propose_simple_change"
+        },
+        {
+          "id": "wolf_v5_a_s_room-change",
+          "text": "Suggest moving a chair closer to a window.",
+          "mechanic": "propose_simple_change"
+        }
+      ],
+      "policy": "One mechanic group: cannot appear together or within the three recent deals."
+    }
+  ],
+  "rejectedMechanicFlags": [],
+  "editorialSample": [
+    {
+      "id": "wolf_v5_a_i_seat",
+      "type": "interaction",
+      "text": "Get someone to choose a window or aisle seat for you.",
+      "textZh": "讓別人替你選靠窗或靠走道的座位。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "One Trip, Different Holidays"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_travel-breakfast",
+      "type": "self_action",
+      "text": "Say breakfast matters more to you than leaving early.",
+      "textZh": "說早餐對你比早點出發更重要。",
+      "words": 9,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_house-chores",
+      "type": "interaction",
+      "text": "Get someone to choose dishwashing or taking out rubbish for you.",
+      "textZh": "讓別人替你選洗碗或倒垃圾。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "A Month Under One Roof",
+        "A Weekend With No Plans"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_room-quiet",
+      "type": "self_action",
+      "text": "Say you prefer silence to quiet background music.",
+      "textZh": "說你比起輕音樂更喜歡安靜。",
+      "words": 8,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "A Month Under One Roof",
+        "A Weekend With No Plans",
+        "A Shared Work Table",
+        "A Room to Rest In"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_luggage",
+      "type": "interaction",
+      "text": "Get someone to choose which of two things you should leave behind.",
+      "textZh": "讓別人選出你兩件物品中不該帶的一件。",
+      "words": 12,
+      "mechanic": "discard_one_of_two",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_rain",
+      "type": "interaction",
+      "text": "Get someone to suggest a rainy-day plan for your outing.",
+      "textZh": "讓別人替你的出遊建議雨天備案。",
+      "words": 10,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "One Trip, Different Holidays",
+        "A Weekend With No Plans",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_lighting",
+      "type": "interaction",
+      "text": "Get someone to suggest how two people could share one lamp.",
+      "textZh": "讓別人建議兩個人怎麼共用一盞燈。",
+      "words": 11,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "A Month Under One Roof",
+        "A Weekend With No Plans",
+        "A Shared Work Table",
+        "A Room to Rest In"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_phone-free-game",
+      "type": "interaction",
+      "text": "Get someone to recommend a game that needs no phone.",
+      "textZh": "讓別人推薦一個不需要手機的遊戲。",
+      "words": 10,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "A Weekend With No Plans",
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_gather-small",
+      "type": "self_action",
+      "text": "Say you prefer a small group to a big party.",
+      "textZh": "說你比起大派對更喜歡小聚會。",
+      "words": 10,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_food-choice",
+      "type": "interaction",
+      "text": "Get someone to choose homemade or bought food for our guests.",
+      "textZh": "讓別人替客人選自製或外買的食物。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_food-simple",
+      "type": "self_action",
+      "text": "Say you prefer simple food served on time.",
+      "textZh": "說你比較喜歡準時上桌的簡單食物。",
+      "words": 8,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_queue",
+      "type": "interaction",
+      "text": "Get someone to say how long they would queue for lunch.",
+      "textZh": "讓別人說出願意為午餐排隊多久。",
+      "words": 11,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "One Trip, Different Holidays",
+        "A Shop That Lets Us Rest",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_team-backstage",
+      "type": "self_action",
+      "text": "Say you prefer working behind the scenes.",
+      "textZh": "說你比較喜歡做幕後工作。",
+      "words": 7,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "A Shared Work Table",
+        "A Shop That Lets Us Rest",
+        "A Birthday on a Small Budget",
+        "Our Unusual Little Show"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_gather-choice",
+      "type": "interaction",
+      "text": "Get someone to choose a picnic or dinner for our gathering.",
+      "textZh": "讓別人替聚會選野餐或晚餐。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_display-choice",
+      "type": "interaction",
+      "text": "Get someone to choose photos or real objects for our display.",
+      "textZh": "讓別人替展示選照片或實物。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "Our Unusual Little Show",
+        "Ordinary Objects on Display",
+        "A One-Day Swap Shop"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_object-old",
+      "type": "self_action",
+      "text": "Say you would choose a useful old item over a new one.",
+      "textZh": "說你會選有用的舊物，不選新物。",
+      "words": 12,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "Ordinary Objects on Display",
+        "A One-Day Swap Shop"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-dropped-phone",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest what to do after dropping a phone.",
+      "textZh": "讓一位非狼玩家建議手機摔落後該怎麼辦。",
+      "words": 12,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "A Ten-Second Redo",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-clean",
+      "type": "self_action",
+      "text": "Say you would rather clean dishes than fold laundry.",
+      "textZh": "表示你寧願洗碗也不想摺衣服。",
+      "words": 9,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-breakfast",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose toast or noodles for breakfast.",
+      "textZh": "讓一位非狼玩家選早餐吃吐司還是麵。",
+      "words": 10,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "Borrowing a Friend’s Routine",
+        "One Hour Just for You",
+        "A Ten-Second Redo",
+        "Watching an Ordinary Moment Again"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-morning-coffee",
+      "type": "self_action",
+      "text": "Mention spilling coffee while explaining your choice.",
+      "textZh": "說明選擇時提到打翻咖啡。",
+      "words": 7,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "Borrowing a Friend’s Routine",
+        "One Hour Just for You",
+        "A Ten-Second Redo",
+        "Watching an Ordinary Moment Again"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-object-keep",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose keeping a mug or a photo.",
+      "textZh": "讓一位非狼玩家選留下杯子還是照片。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "The Objects Have Complaints",
+        "A Small Package From the Future",
+        "A Thoughtful Gift You Do Not Want",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-object-mug",
+      "type": "self_action",
+      "text": "Mention a cup with a chipped handle.",
+      "textZh": "提到杯柄缺角的杯子。",
+      "words": 7,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "The Objects Have Complaints",
+        "A Small Package From the Future",
+        "A Thoughtful Gift You Do Not Want",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-redo-downside",
+      "type": "interaction",
+      "text": "Get a non-wolf to explain one downside of unlimited redos.",
+      "textZh": "讓一位非狼玩家說明無限重來的一個缺點。",
+      "words": 10,
+      "mechanic": "give_one_reason",
+      "topics": [
+        "A Ten-Second Redo",
+        "Impossible Everyday Services"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-dinner-budget",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest a budget for dinner together.",
+      "textZh": "讓一位非狼玩家建議一起吃飯的預算。",
+      "words": 10,
+      "mechanic": "get_number_estimate",
+      "topics": [
+        "One Dinner, Different Bills",
+        "An Invitation Accepted Too Quickly"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-social-private",
+      "type": "self_action",
+      "text": "Say you would prefer to talk privately.",
+      "textZh": "表示你比較想私下談。",
+      "words": 7,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "A Thoughtful Gift You Do Not Want",
+        "One Dinner, Different Bills",
+        "A Group Chat That Never Stops",
+        "A Photo You Do Not Want Shared",
+        "Help You Did Not Ask For",
+        "An Invitation Accepted Too Quickly",
+        "An Honest Response to a Friend’s Work",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-chat-mute",
+      "type": "interaction",
+      "text": "Get a non-wolf to say when they mute group chats.",
+      "textZh": "讓一位非狼玩家說出何時會關閉群組通知。",
+      "words": 10,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "A Group Chat That Never Stops",
+        "An Invitation Accepted Too Quickly"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-chat-agree",
+      "type": "self_action",
+      "text": "Agree with someone’s rule about late-night messages.",
+      "textZh": "贊同一位玩家提出的深夜訊息規則。",
+      "words": 7,
+      "mechanic": "agree_with_specific_point",
+      "topics": [
+        "A Group Chat That Never Stops"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-photo-kept",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose a blurry photo or one without people.",
+      "textZh": "讓一位非狼玩家選模糊照片還是沒有人的照片。",
+      "words": 12,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "A Small Package From the Future",
+        "Watching an Ordinary Moment Again",
+        "A Photo You Do Not Want Shared"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-help-ask",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest how to ask before helping.",
+      "textZh": "讓一位非狼玩家想一句幫忙前先詢問的話。",
+      "words": 10,
+      "mechanic": "compose_short_reply",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For",
+        "An Honest Response to a Friend’s Work"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-admit-help",
+      "type": "self_action",
+      "text": "Admit you sometimes give advice too quickly.",
+      "textZh": "承認你有時太快就給建議。",
+      "words": 7,
+      "mechanic": "admit_a_mistake",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For",
+        "An Honest Response to a Friend’s Work"
+      ]
+    },
+    {
+      "id": "w5-c-i-dinner-choice",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose dinner at home or eating out.",
+      "textZh": "讓一位非狼玩家選在家吃晚餐，還是出去吃。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good"
+      ]
+    },
+    {
+      "id": "w5-c-s-food-detail",
+      "type": "self_action",
+      "text": "Mention a breakfast food in your answer.",
+      "textZh": "在回答中提到一種早餐食物。",
+      "words": 7,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good"
+      ]
+    },
+    {
+      "id": "w5-c-i-learning-choice",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose learning alone or with friends.",
+      "textZh": "讓一位非狼玩家選自己學，還是跟朋友一起學。",
+      "words": 10,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "A Hobby or a Job?",
+        "A Small Skill That Comes in Handy",
+        "An Interest You Found by Accident",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-s-hobby-food",
+      "type": "self_action",
+      "text": "Mention baking a cake while discussing your interest.",
+      "textZh": "聊興趣時提到烤蛋糕。",
+      "words": 8,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "A Hobby or a Job?",
+        "A Purchase With a Different Ending",
+        "A Small Skill That Comes in Handy",
+        "An Interest You Found by Accident",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-i-change-reply",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest a reply to an embarrassing reminder.",
+      "textZh": "讓一位非狼玩家建議怎麼回應令人尷尬的舊事提醒。",
+      "words": 11,
+      "mechanic": "compose_short_reply",
+      "topics": [
+        "Changing Your Mind in Front of Friends",
+        "A Small Mistake Friends Keep Retelling",
+        "A First Impression Changes"
+      ]
+    },
+    {
+      "id": "w5-c-s-change-detail",
+      "type": "self_action",
+      "text": "Mention a restaurant while explaining a changed opinion.",
+      "textZh": "解釋改變看法時提到一家餐廳。",
+      "words": 8,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "Changing Your Mind in Front of Friends",
+        "A Small Mistake Friends Keep Retelling",
+        "A First Impression Changes",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed"
+      ]
+    },
+    {
+      "id": "w5-c-i-childhood-game",
+      "type": "interaction",
+      "text": "Get a non-wolf to mention a childhood game they still enjoy.",
+      "textZh": "讓一位非狼玩家提到現在仍喜歡的童年遊戲。",
+      "words": 11,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "A Hobby or a Job?",
+        "Speaking Up for an Old Object",
+        "What Makes an Ordinary Day Good",
+        "An Interest You Found by Accident",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-memory",
+      "type": "self_action",
+      "text": "Describe finding something you thought you had lost.",
+      "textZh": "描述找到原本以為弄丟的東西。",
+      "words": 8,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For",
+        "Speaking Up for an Old Object",
+        "A Small Mistake Friends Keep Retelling",
+        "A Purchase With a Different Ending",
+        "A Good Day After Plans Failed",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-s-hobby-thanks",
+      "type": "self_action",
+      "text": "Thank someone who showed you how to do something.",
+      "textZh": "感謝一個曾教你做某件事的人。",
+      "words": 9,
+      "mechanic": "thank_a_person",
+      "topics": [
+        "A Hobby or a Job?",
+        "A First Impression Changes",
+        "A Small Act of Care",
+        "A Small Skill That Comes in Handy",
+        "An Interest You Found by Accident"
+      ]
+    },
+    {
+      "id": "w5-c-i-lunch-budget",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest a budget for a group lunch.",
+      "textZh": "讓一位非狼玩家建議團體午餐的預算。",
+      "words": 11,
+      "mechanic": "get_number_estimate",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Purchase With a Different Ending",
+        "A Good Day After Plans Failed"
+      ]
+    },
+    {
+      "id": "w5-c-i-planning-no",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest how to refuse planning another gathering.",
+      "textZh": "讓一位非狼玩家建議怎麼拒絕再安排一次聚會。",
+      "words": 11,
+      "mechanic": "compose_short_reply",
+      "topics": [
+        "Everyone Leaves the Planning to You",
+        "A Small Act of Care",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "w5-c-s-plan-book",
+      "type": "self_action",
+      "text": "Offer to handle the restaurant booking yourself.",
+      "textZh": "主動說餐廳由你來訂。",
+      "words": 7,
+      "mechanic": "offer_concrete_help",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Small Act of Care",
+        "A Good Day After Plans Failed",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "w5-c-s-plan-refuse",
+      "type": "self_action",
+      "text": "Refuse to wake up early for a group plan.",
+      "textZh": "拒絕為團體計畫提早起床。",
+      "words": 9,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-honest-specific",
+      "type": "self_action",
+      "text": "Offer one specific improvement instead of a score.",
+      "textZh": "提出一項具體改進而不是打分數。",
+      "words": 8,
+      "mechanic": "offer_concrete_help",
+      "topics": [
+        "An Honest Response to a Friend’s Work"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_room-change",
+      "type": "self_action",
+      "text": "Suggest moving a chair closer to a window.",
+      "textZh": "提議把一張椅子移近窗戶。",
+      "words": 8,
+      "mechanic": "propose_simple_change",
+      "topics": [
+        "A Month Under One Roof",
+        "A Weekend With No Plans",
+        "A Shared Work Table",
+        "A Room to Rest In"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_gather-compare",
+      "type": "interaction",
+      "text": "Get someone to compare gathering at home with eating out.",
+      "textZh": "讓別人比較在家聚會與外出吃飯。",
+      "words": 10,
+      "mechanic": "compare_real_options",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "w5-c-i-change-example",
+      "type": "interaction",
+      "text": "Get a non-wolf to mention something they changed their mind about.",
+      "textZh": "讓一位非狼玩家提到一件自己改變看法的事。",
+      "words": 11,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "Changing Your Mind in Front of Friends",
+        "A Small Mistake Friends Keep Retelling",
+        "A First Impression Changes",
+        "An Interest You Found by Accident"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_gather-trade",
+      "type": "self_action",
+      "text": "Offer to bring snacks if someone else brings drinks.",
+      "textZh": "提出你帶點心，交換別人帶飲料。",
+      "words": 9,
+      "mechanic": "offer_concrete_exchange",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_food-agree",
+      "type": "interaction",
+      "text": "Get someone to agree that smaller portions could reduce waste.",
+      "textZh": "讓別人贊成小份量可能減少浪費。",
+      "words": 10,
+      "mechanic": "agree_with_specific_point",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "w5-c-s-respect-keeping",
+      "type": "self_action",
+      "text": "Thank someone for respecting what you want to keep.",
+      "textZh": "感謝一個人尊重你想留下的東西。",
+      "words": 9,
+      "mechanic": "thank_a_person",
+      "topics": [
+        "Speaking Up for an Old Object",
+        "A Purchase With a Different Ending",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-i-habit-morning",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose a slow breakfast or extra sleep.",
+      "textZh": "讓一位非狼玩家選慢慢吃早餐，還是多睡一點。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good"
+      ]
+    },
+    {
+      "id": "w5-c-s-hobby-question",
+      "type": "self_action",
+      "text": "Ask someone how they first tried their hobby.",
+      "textZh": "問一位玩家最初怎麼接觸那個興趣。",
+      "words": 8,
+      "mechanic": "ask_topic_question",
+      "topics": [
+        "A Hobby or a Job?",
+        "A Small Skill That Comes in Handy",
+        "An Interest You Found by Accident",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_gather-correct",
+      "type": "self_action",
+      "text": "Correct the number of guests you just suggested.",
+      "textZh": "更正自己剛建議的客人人數。",
+      "words": 8,
+      "mechanic": "correct_own_statement",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-object-week",
+      "type": "interaction",
+      "text": "Get a non-wolf to defend keeping an object rarely used.",
+      "textZh": "讓一位非狼玩家替留下少用的物品說一個理由。",
+      "words": 10,
+      "mechanic": "exception_to_rule",
+      "topics": [
+        "The Objects Have Complaints",
+        "A Small Package From the Future",
+        "A Thoughtful Gift You Do Not Want",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "w5-c-i-plan-rain",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest a backup for a rainy picnic.",
+      "textZh": "讓一位非狼玩家建議野餐遇雨的備案。",
+      "words": 11,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Good Day After Plans Failed"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-social-disagree",
+      "type": "self_action",
+      "text": "Disagree that a good friend should automatically understand.",
+      "textZh": "反對好朋友應該不用說就能懂。",
+      "words": 8,
+      "mechanic": "challenge_concrete_claim",
+      "topics": [
+        "A Thoughtful Gift You Do Not Want",
+        "One Dinner, Different Bills",
+        "A Group Chat That Never Stops",
+        "A Photo You Do Not Want Shared",
+        "Help You Did Not Ask For",
+        "An Invitation Accepted Too Quickly",
+        "An Honest Response to a Friend’s Work",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_salty-food",
+      "type": "interaction",
+      "text": "Get someone to suggest how to fix overly salty food.",
+      "textZh": "讓別人建議太鹹的食物怎麼補救。",
+      "words": 10,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_show-phone",
+      "type": "self_action",
+      "text": "Mention using your phone instead of buying a camera.",
+      "textZh": "提到用自己的手機而不是買相機拍攝。",
+      "words": 9,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "Our Unusual Little Show"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-exchange",
+      "type": "self_action",
+      "text": "Offer to cook if someone else washes dishes.",
+      "textZh": "提出自己煮飯，換別人洗碗。",
+      "words": 8,
+      "mechanic": "offer_concrete_exchange",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For"
+      ]
+    },
+    {
+      "id": "w5-c-s-change-correct",
+      "type": "self_action",
+      "text": "Replace your own “always” with “sometimes” aloud.",
+      "textZh": "把自己剛說的「always」口頭改成「sometimes」。",
+      "words": 7,
+      "mechanic": "correct_own_statement",
+      "topics": [
+        "Changing Your Mind in Front of Friends",
+        "A Small Mistake Friends Keep Retelling",
+        "A First Impression Changes",
+        "A Habit Others Do Not Understand"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-object-proposal",
+      "type": "self_action",
+      "text": "Suggest taking a photo before giving something away.",
+      "textZh": "提議送走物品之前先拍張照。",
+      "words": 8,
+      "mechanic": "propose_simple_change",
+      "topics": [
+        "The Objects Have Complaints",
+        "A Small Package From the Future",
+        "A Thoughtful Gift You Do Not Want",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_object-invite",
+      "type": "self_action",
+      "text": "Invite someone to bring an object with a family story.",
+      "textZh": "邀請一個人帶來一件有家族故事的物品。",
+      "words": 10,
+      "mechanic": "invite_small_experiment",
+      "topics": [
+        "Ordinary Objects on Display",
+        "A One-Day Swap Shop"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_travel-past",
+      "type": "self_action",
+      "text": "Describe a real journey that took longer than expected.",
+      "textZh": "描述一段真的比預期花更久的旅程。",
+      "words": 9,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "w5-c-s-old-photos",
+      "type": "self_action",
+      "text": "Suggest looking through old photos together another time.",
+      "textZh": "提議改天一起翻看舊照片。",
+      "words": 8,
+      "mechanic": "make_specific_plan",
+      "topics": [
+        "Speaking Up for an Old Object",
+        "A Small Mistake Friends Keep Retelling",
+        "A First Impression Changes",
+        "A Good Day After Plans Failed",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-question",
+      "type": "self_action",
+      "text": "Ask someone which chore they always postpone.",
+      "textZh": "問一位玩家總是拖延哪件家事。",
+      "words": 7,
+      "mechanic": "ask_topic_question",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_team-limit",
+      "type": "interaction",
+      "text": "Get someone to say how many hours they would help.",
+      "textZh": "讓別人說出願意幫忙幾個小時。",
+      "words": 10,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "A Shared Work Table",
+        "A Shop That Lets Us Rest",
+        "A Birthday on a Small Budget",
+        "Our Unusual Little Show"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_object-thanks",
+      "type": "self_action",
+      "text": "Thank someone for sharing the story behind an object.",
+      "textZh": "感謝某人分享物品背後的故事。",
+      "words": 9,
+      "mechanic": "thank_a_person",
+      "topics": [
+        "Ordinary Objects on Display",
+        "A One-Day Swap Shop"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_keep-objection",
+      "type": "interaction",
+      "text": "Get someone to disagree with throwing away an object you mention.",
+      "textZh": "讓別人反對你丟掉提到的某件物品。",
+      "words": 11,
+      "mechanic": "disagree_with_choice",
+      "topics": [
+        "Ordinary Objects on Display",
+        "A One-Day Swap Shop"
+      ]
+    },
+    {
+      "id": "w5-c-s-habit-story",
+      "type": "self_action",
+      "text": "Describe a morning that improved after a small change.",
+      "textZh": "描述某天早上因為小改變而變好的經驗。",
+      "words": 9,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-bill-pay",
+      "type": "self_action",
+      "text": "Offer to pay only for what you ordered.",
+      "textZh": "表示你願意只付自己點的餐。",
+      "words": 8,
+      "mechanic": "offer_concrete_help",
+      "topics": [
+        "One Dinner, Different Bills"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_travel-paraphrase",
+      "type": "self_action",
+      "text": "Summarize someone’s travel plan in your own words.",
+      "textZh": "用自己的話簡述某人的旅行計畫。",
+      "words": 8,
+      "mechanic": "paraphrase_concrete_idea",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-offer",
+      "type": "self_action",
+      "text": "Offer to wash dishes for someone else.",
+      "textZh": "表示願意幫別人洗碗。",
+      "words": 7,
+      "mechanic": "offer_concrete_help",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For"
+      ]
+    },
+    {
+      "id": "w5-c-s-care-thanks",
+      "type": "self_action",
+      "text": "Thank someone for doing work nobody usually notices.",
+      "textZh": "感謝有人做了平常沒人注意的工作。",
+      "words": 8,
+      "mechanic": "thank_a_person",
+      "topics": [
+        "Everyone Leaves the Planning to You",
+        "A First Impression Changes",
+        "A Small Act of Care",
+        "A Small Skill That Comes in Handy",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_travel-water",
+      "type": "self_action",
+      "text": "Remind everyone to fill their water bottles before leaving.",
+      "textZh": "提醒大家出發前把水壺裝滿。",
+      "words": 9,
+      "mechanic": "propose_simple_change",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-photo-food",
+      "type": "self_action",
+      "text": "Mention food stuck between your teeth in a photo.",
+      "textZh": "提到照片裡牙縫卡著食物。",
+      "words": 9,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "A Photo You Do Not Want Shared"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-dinner-change",
+      "type": "interaction",
+      "text": "Get a non-wolf to replace one part of your dinner plan.",
+      "textZh": "讓一位非狼玩家更換你聚餐計畫的一個部分。",
+      "words": 11,
+      "mechanic": "propose_simple_change",
+      "topics": [
+        "One Dinner, Different Bills",
+        "An Invitation Accepted Too Quickly"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_car-volume",
+      "type": "interaction",
+      "text": "Get someone to say when the music would be too loud.",
+      "textZh": "讓別人說出音樂大到什麼程度會太吵。",
+      "words": 11,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "Four Hours in One Car"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-advice",
+      "type": "self_action",
+      "text": "Recommend starting with just one small chore.",
+      "textZh": "建議先只做一件小家事。",
+      "words": 7,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_travel-agree",
+      "type": "self_action",
+      "text": "Agree with someone’s reason for taking a break.",
+      "textZh": "贊成別人提出的一個休息理由。",
+      "words": 8,
+      "mechanic": "agree_with_specific_point",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-social-admit",
+      "type": "self_action",
+      "text": "Admit you sometimes say yes too quickly.",
+      "textZh": "承認你有時太快答應。",
+      "words": 7,
+      "mechanic": "admit_a_mistake",
+      "topics": [
+        "A Thoughtful Gift You Do Not Want",
+        "One Dinner, Different Bills",
+        "A Group Chat That Never Stops",
+        "A Photo You Do Not Want Shared",
+        "Help You Did Not Ask For",
+        "An Invitation Accepted Too Quickly",
+        "An Honest Response to a Friend’s Work",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "w5-c-s-care-cost",
+      "type": "self_action",
+      "text": "Estimate the unpaid hours behind one finished task.",
+      "textZh": "估算一項完成的工作背後，有幾小時沒拿錢。",
+      "words": 8,
+      "mechanic": "state_personal_number",
+      "topics": [
+        "Everyone Leaves the Planning to You",
+        "A Hobby or a Job?",
+        "A Small Act of Care",
+        "A Small Skill That Comes in Handy",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-photo-number",
+      "type": "interaction",
+      "text": "Get a non-wolf to say how many photos one outing needs.",
+      "textZh": "讓一位非狼玩家說出一次出遊拍幾張照片就夠。",
+      "words": 11,
+      "mechanic": "get_number_estimate",
+      "topics": [
+        "A Small Package From the Future",
+        "Watching an Ordinary Moment Again",
+        "A Photo You Do Not Want Shared"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-photo-private",
+      "type": "interaction",
+      "text": "Get a non-wolf to mention a moment they would not photograph.",
+      "textZh": "讓一位非狼玩家說出不想拍照的一個時刻。",
+      "words": 11,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "A Small Package From the Future",
+        "Watching an Ordinary Moment Again",
+        "A Photo You Do Not Want Shared"
+      ]
+    },
+    {
+      "id": "w5-c-s-object-rule",
+      "type": "self_action",
+      "text": "Suggest asking before throwing away someone else’s belongings.",
+      "textZh": "提議丟掉別人的東西之前要先問。",
+      "words": 8,
+      "mechanic": "propose_simple_rule",
+      "topics": [
+        "Speaking Up for an Old Object",
+        "A Habit Others Do Not Understand",
+        "A Purchase With a Different Ending",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-i-object-photo",
+      "type": "interaction",
+      "text": "Get a non-wolf to choose keeping an object or its photo.",
+      "textZh": "讓一位非狼玩家選保留物品，還是只保留照片。",
+      "words": 11,
+      "mechanic": "choose_one_of_two",
+      "topics": [
+        "Speaking Up for an Old Object",
+        "A Purchase With a Different Ending",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-s-object-detail",
+      "type": "self_action",
+      "text": "Mention an old T-shirt you would keep.",
+      "textZh": "提到一件你會留著的舊T恤。",
+      "words": 7,
+      "mechanic": "mention_specific_detail",
+      "topics": [
+        "Speaking Up for an Old Object",
+        "A Habit Others Do Not Understand",
+        "A Purchase With a Different Ending",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "w5-c-s-plan-quote",
+      "type": "self_action",
+      "text": "Say: “I need a plan for the plan.”",
+      "textZh": "說出：「I need a plan for the plan.」",
+      "words": 8,
+      "mechanic": "prepared_one_line",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "Everyone Leaves the Planning to You",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "w5-c-s-day-no-rush",
+      "type": "self_action",
+      "text": "Say: “Can we do absolutely nothing for five minutes?”",
+      "textZh": "說出：「Can we do absolutely nothing for five minutes?」",
+      "words": 9,
+      "mechanic": "prepared_one_line",
+      "topics": [
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "w5-c-s-care-warning",
+      "type": "self_action",
+      "text": "Warn that a quick request can create hours of work.",
+      "textZh": "提醒一句簡短請求可能帶來幾小時的工作。",
+      "words": 10,
+      "mechanic": "give_practical_warning",
+      "topics": [
+        "Everyone Leaves the Planning to You",
+        "A Small Act of Care",
+        "A Small Skill That Comes in Handy",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_day-snack",
+      "type": "interaction",
+      "text": "Get someone to recommend a snack for the journey.",
+      "textZh": "讓別人推薦路上吃的點心。",
+      "words": 9,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "w5-c-s-price-use",
+      "type": "self_action",
+      "text": "Compare how useful two differently priced objects actually are.",
+      "textZh": "比較兩件不同價錢物品實際有多好用。",
+      "words": 9,
+      "mechanic": "compare_real_options",
+      "topics": [
+        "Changing Your Mind in Front of Friends",
+        "Speaking Up for an Old Object",
+        "A Purchase With a Different Ending",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-object-new",
+      "type": "interaction",
+      "text": "Get a non-wolf to disagree that newer objects are always better.",
+      "textZh": "讓一位非狼玩家反對新物品一定比較好。",
+      "words": 11,
+      "mechanic": "challenge_concrete_claim",
+      "topics": [
+        "The Objects Have Complaints",
+        "A Small Package From the Future",
+        "A Thoughtful Gift You Do Not Want",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_travel-budget",
+      "type": "self_action",
+      "text": "State your maximum budget for a day out.",
+      "textZh": "說出你出遊一天的預算上限。",
+      "words": 8,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "One Trip, Different Holidays",
+        "Four Hours in One Car",
+        "An Interesting Ordinary Street"
+      ]
+    },
+    {
+      "id": "w5-c-s-hobby-trade",
+      "type": "self_action",
+      "text": "Offer to teach your skill in exchange for another lesson.",
+      "textZh": "提出用教自己的本事，交換學另一項本事。",
+      "words": 10,
+      "mechanic": "offer_concrete_exchange",
+      "topics": [
+        "A Hobby or a Job?",
+        "A Small Act of Care",
+        "A Small Skill That Comes in Handy",
+        "An Interest You Found by Accident",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_food-price",
+      "type": "self_action",
+      "text": "State how much you would spend on dessert.",
+      "textZh": "說出你願意花多少錢買甜點。",
+      "words": 8,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_gather-surprise",
+      "type": "self_action",
+      "text": "Say you would rather receive an invitation than a surprise.",
+      "textZh": "說你比起突然的驚喜更喜歡先收到邀請。",
+      "words": 10,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-object-downside",
+      "type": "self_action",
+      "text": "Point out one problem with keeping every gift.",
+      "textZh": "指出每件禮物都保留的一個問題。",
+      "words": 8,
+      "mechanic": "point_out_downside",
+      "topics": [
+        "The Objects Have Complaints",
+        "A Small Package From the Future",
+        "A Thoughtful Gift You Do Not Want",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-quiet-trade",
+      "type": "self_action",
+      "text": "Offer to skip scrolling for ten more minutes of sleep.",
+      "textZh": "表示願意少滑手機來多睡十分鐘。",
+      "words": 10,
+      "mechanic": "offer_concrete_exchange",
+      "topics": [
+        "Borrowing a Friend’s Routine",
+        "One Hour Just for You",
+        "A Ten-Second Redo"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_room-lamp",
+      "type": "self_action",
+      "text": "Suggest using a lamp instead of the main light.",
+      "textZh": "提議用檯燈代替主燈。",
+      "words": 9,
+      "mechanic": "propose_simple_change",
+      "topics": [
+        "A Month Under One Roof",
+        "A Weekend With No Plans",
+        "A Shared Work Table",
+        "A Room to Rest In"
+      ]
+    },
+    {
+      "id": "w5-c-s-habit-question",
+      "type": "self_action",
+      "text": "Ask someone what they do first after getting home.",
+      "textZh": "問一位玩家回家後第一件事做什麼。",
+      "words": 9,
+      "mechanic": "ask_topic_question",
+      "topics": [
+        "An Assistant That Knows Your Taste",
+        "A Habit Others Do Not Understand",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_good-gathering",
+      "type": "interaction",
+      "text": "Get someone to describe a gathering where they felt comfortable.",
+      "textZh": "讓別人描述一次讓自己自在的聚會。",
+      "words": 10,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-social-limit",
+      "type": "self_action",
+      "text": "Say that being pressured would be a deal-breaker.",
+      "textZh": "表示被施壓就會讓你完全不接受。",
+      "words": 8,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "A Thoughtful Gift You Do Not Want",
+        "One Dinner, Different Bills",
+        "A Group Chat That Never Stops",
+        "A Photo You Do Not Want Shared",
+        "Help You Did Not Ask For",
+        "An Invitation Accepted Too Quickly",
+        "An Honest Response to a Friend’s Work",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_food-amount",
+      "type": "interaction",
+      "text": "Get someone to estimate how much rice our group needs.",
+      "textZh": "讓別人估計我們這群人需要多少米飯。",
+      "words": 10,
+      "mechanic": "get_number_estimate",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-social-permission",
+      "type": "self_action",
+      "text": "Say your friend may disagree with your choice.",
+      "textZh": "表示朋友可以不同意你的選擇。",
+      "words": 8,
+      "mechanic": "allow_different_choice",
+      "topics": [
+        "A Thoughtful Gift You Do Not Want",
+        "One Dinner, Different Bills",
+        "A Group Chat That Never Stops",
+        "A Photo You Do Not Want Shared",
+        "Help You Did Not Ask For",
+        "An Invitation Accepted Too Quickly",
+        "An Honest Response to a Friend’s Work",
+        "A Favorite Item Comes Back Worn"
+      ]
+    },
+    {
+      "id": "w5-c-s-change-thanks",
+      "type": "self_action",
+      "text": "Thank someone for correcting you without embarrassing you.",
+      "textZh": "感謝有人更正你，卻沒讓你難堪。",
+      "words": 8,
+      "mechanic": "thank_a_person",
+      "topics": [
+        "Changing Your Mind in Front of Friends",
+        "A Small Mistake Friends Keep Retelling",
+        "A First Impression Changes",
+        "A Small Act of Care"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_food-wait",
+      "type": "interaction",
+      "text": "Get someone to suggest an apology for serving food late.",
+      "textZh": "讓別人幫你想一句上菜太慢的道歉。",
+      "words": 10,
+      "mechanic": "compose_short_reply",
+      "topics": [
+        "Dinner in One Kitchen",
+        "A Birthday on a Small Budget"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-quiet-limit",
+      "type": "self_action",
+      "text": "Say that losing sleep would be a deal-breaker.",
+      "textZh": "表示犧牲睡眠會讓你完全不接受。",
+      "words": 8,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "Borrowing a Friend’s Routine",
+        "One Hour Just for You",
+        "A Ten-Second Redo",
+        "Watching an Ordinary Moment Again"
+      ]
+    },
+    {
+      "id": "w5-c-i-hobby-detail",
+      "type": "interaction",
+      "text": "Get a non-wolf to suggest an easier first practice session.",
+      "textZh": "讓一位非狼玩家建議更簡單的第一次練習安排。",
+      "words": 10,
+      "mechanic": "practical_suggestion",
+      "topics": [
+        "A Hobby or a Job?",
+        "A Small Skill That Comes in Handy",
+        "An Interest You Found by Accident",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_room-ask",
+      "type": "interaction",
+      "text": "Get someone to ask what usually interrupts your concentration.",
+      "textZh": "讓別人問你通常什麼會打斷你的專注。",
+      "words": 9,
+      "mechanic": "ask_topic_question",
+      "topics": [
+        "A Month Under One Roof",
+        "A Weekend With No Plans",
+        "A Shared Work Table",
+        "A Room to Rest In"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_shop-close",
+      "type": "self_action",
+      "text": "State the latest you would want our shop to close.",
+      "textZh": "說出你希望小店最晚幾點打烊。",
+      "words": 10,
+      "mechanic": "set_a_specific_limit",
+      "topics": [
+        "A Shop That Lets Us Rest"
+      ]
+    },
+    {
+      "id": "w5-c-s-oldest-show",
+      "type": "self_action",
+      "text": "Invite someone to show you their oldest possession later.",
+      "textZh": "邀請一個人之後給你看他最老的物品。",
+      "words": 9,
+      "mechanic": "invite_small_experiment",
+      "topics": [
+        "Speaking Up for an Old Object",
+        "A Purchase With a Different Ending",
+        "Enjoyment You Do Not Want to Outgrow"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_car-line",
+      "type": "self_action",
+      "text": "Say: “Wake me up when we get to the snacks.”",
+      "textZh": "說：「Wake me up when we get to the snacks.」",
+      "words": 10,
+      "mechanic": "prepared_one_line",
+      "topics": [
+        "Four Hours in One Car"
+      ]
+    },
+    {
+      "id": "w5-c-s-care-story",
+      "type": "self_action",
+      "text": "Describe a small favor that saved you time.",
+      "textZh": "描述一個替你省下時間的小忙。",
+      "words": 8,
+      "mechanic": "describe_past_example",
+      "topics": [
+        "Everyone Leaves the Planning to You",
+        "A First Impression Changes",
+        "A Small Act of Care",
+        "A Good Day After Plans Failed",
+        "What Makes an Ordinary Day Good",
+        "Effort People Do Not See"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_i-late-reply",
+      "type": "interaction",
+      "text": "Get a non-wolf to give a good reason for replying late.",
+      "textZh": "讓一位非狼玩家說出晚回訊息的合理原因。",
+      "words": 11,
+      "mechanic": "exception_to_rule",
+      "topics": [
+        "A Group Chat That Never Stops",
+        "An Invitation Accepted Too Quickly"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_i_game-objection",
+      "type": "interaction",
+      "text": "Get someone to reject a party game you suggest.",
+      "textZh": "讓別人拒絕你建議的一個聚會遊戲。",
+      "words": 9,
+      "mechanic": "disagree_with_choice",
+      "topics": [
+        "A Gathering Without Signal",
+        "A New Friend Joins Us",
+        "A Birthday on a Small Budget",
+        "A Gathering Without Pressure"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-morning-estimate",
+      "type": "self_action",
+      "text": "Estimate how many alarms you would need.",
+      "textZh": "估計自己會需要幾個鬧鐘。",
+      "words": 7,
+      "mechanic": "state_personal_number",
+      "topics": [
+        "Borrowing a Friend’s Routine",
+        "One Hour Just for You",
+        "A Ten-Second Redo",
+        "Watching an Ordinary Moment Again"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-help-praise",
+      "type": "self_action",
+      "text": "Thank someone for explaining a different point of view.",
+      "textZh": "感謝一位玩家說明不同的觀點。",
+      "words": 9,
+      "mechanic": "thank_a_person",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For",
+        "An Honest Response to a Friend’s Work"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_shop-weekend",
+      "type": "self_action",
+      "text": "Say you would close the shop one day each week.",
+      "textZh": "說你會讓小店每週休息一天。",
+      "words": 10,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "A Shop That Lets Us Rest"
+      ]
+    },
+    {
+      "id": "wolf_v5_a_s_team-help",
+      "type": "self_action",
+      "text": "Offer to write down the group’s ideas.",
+      "textZh": "主動幫大家把想法記下來。",
+      "words": 7,
+      "mechanic": "offer_concrete_help",
+      "topics": [
+        "A Shared Work Table",
+        "A Shop That Lets Us Rest",
+        "A Birthday on a Small Budget",
+        "Our Unusual Little Show"
+      ]
+    },
+    {
+      "id": "wolf_v5_b_s-power-prefer-rest",
+      "type": "self_action",
+      "text": "Say you would choose rest over perfect tidiness.",
+      "textZh": "表示你會選休息而不是保持完美整齊。",
+      "words": 8,
+      "mechanic": "state_personal_stance",
+      "topics": [
+        "Powers That Only Help Neighbors",
+        "The Objects Have Complaints",
+        "Impossible Everyday Services",
+        "Help You Did Not Ask For"
+      ]
+    }
+  ],
+  "perTopic": [
+    {
+      "id": "topic_v2_01",
+      "title": "One Trip, Different Holidays",
+      "mainQuestion": "We are taking a three-day trip together. What would make it a good holiday for everyone?",
+      "mainWords": 16,
+      "candidates": 52,
+      "topicSpecific": 44,
+      "genericCandidates": 8,
+      "interaction": 18,
+      "self": 34,
+      "mechanics": 29,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_02",
+      "title": "A Month Under One Roof",
+      "mainQuestion": "We are sharing a home for a month. How would our everyday habits fit together?",
+      "mainWords": 15,
+      "candidates": 51,
+      "topicSpecific": 43,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 2,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 2,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_03",
+      "title": "Four Hours in One Car",
+      "mainQuestion": "We have four hours together in one car. How would you like to spend the ride?",
+      "mainWords": 16,
+      "candidates": 56,
+      "topicSpecific": 48,
+      "genericCandidates": 8,
+      "interaction": 18,
+      "self": 38,
+      "mechanics": 29,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 1,
+        "insertion": 3,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 4,
+        "ranking": 1,
+        "reasoning": 8,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_04",
+      "title": "A Weekend With No Plans",
+      "mainQuestion": "We have a cabin for the weekend and no plans. How would you really relax?",
+      "mainWords": 15,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 19,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 5,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 2,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 2,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_05",
+      "title": "A Shared Work Table",
+      "mainQuestion": "We all work at one shared table. What would help you feel comfortable and get things done?",
+      "mainWords": 17,
+      "candidates": 79,
+      "topicSpecific": 71,
+      "genericCandidates": 8,
+      "interaction": 27,
+      "self": 52,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "agreement": 4,
+        "appreciation": 2,
+        "boundary": 5,
+        "choice": 2,
+        "confession": 2,
+        "insertion": 2,
+        "instruction": 2,
+        "invitation": 2,
+        "memory": 4,
+        "negotiation": 2,
+        "paraphrase": 2,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 5,
+        "quantity": 3,
+        "question": 5,
+        "ranking": 2,
+        "reasoning": 12,
+        "reframe": 3,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 2
+      }
+    },
+    {
+      "id": "topic_v2_06",
+      "title": "A Gathering Without Signal",
+      "mainQuestion": "Our gathering has no internet signal. How would we spend the time together?",
+      "mainWords": 13,
+      "candidates": 51,
+      "topicSpecific": 43,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_07",
+      "title": "A New Friend Joins Us",
+      "mainQuestion": "A new friend is joining our close group. What would help them feel at home?",
+      "mainWords": 15,
+      "candidates": 51,
+      "topicSpecific": 43,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_08",
+      "title": "Dinner in One Kitchen",
+      "mainQuestion": "We are cooking dinner in one kitchen. What would it be like with you helping?",
+      "mainWords": 15,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 2,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_09",
+      "title": "A Shop That Lets Us Rest",
+      "mainQuestion": "We are opening a small, relaxed shop together. What would make it enjoyable to run?",
+      "mainWords": 15,
+      "candidates": 52,
+      "topicSpecific": 44,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 36,
+      "mechanics": 28,
+      "families": {
+        "advice": 1,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 2,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 3,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 2,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 6,
+        "reframe": 2,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_10",
+      "title": "A Birthday on a Small Budget",
+      "mainQuestion": "We have very little money for a friend’s birthday. How would you make it memorable?",
+      "mainWords": 15,
+      "candidates": 123,
+      "topicSpecific": 115,
+      "genericCandidates": 8,
+      "interaction": 43,
+      "self": 80,
+      "mechanics": 28,
+      "families": {
+        "advice": 6,
+        "agreement": 6,
+        "appreciation": 3,
+        "boundary": 8,
+        "choice": 4,
+        "confession": 3,
+        "insertion": 5,
+        "instruction": 3,
+        "invitation": 3,
+        "memory": 6,
+        "negotiation": 3,
+        "paraphrase": 3,
+        "preference": 5,
+        "prepared_sentence": 7,
+        "proposal": 8,
+        "quantity": 3,
+        "question": 8,
+        "ranking": 3,
+        "reasoning": 19,
+        "reframe": 4,
+        "reply": 4,
+        "rule": 3,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 3
+      }
+    },
+    {
+      "id": "topic_v2_11",
+      "title": "Our Unusual Little Show",
+      "mainQuestion": "We are making a simple show with our everyday talents. What would we make?",
+      "mainWords": 14,
+      "candidates": 54,
+      "topicSpecific": 46,
+      "genericCandidates": 8,
+      "interaction": 20,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 2,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 3,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 3,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 4,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 2,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_12",
+      "title": "Ordinary Objects on Display",
+      "mainQuestion": "We are displaying ordinary objects with personal stories. What would you bring?",
+      "mainWords": 12,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 4,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_13",
+      "title": "A Gathering Without Pressure",
+      "mainQuestion": "We want a gathering for people who dislike parties. What would make it comfortable?",
+      "mainWords": 14,
+      "candidates": 51,
+      "topicSpecific": 43,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_14",
+      "title": "An Interesting Ordinary Street",
+      "mainQuestion": "A friend is visiting our ordinary neighborhood. How would you make the day interesting?",
+      "mainWords": 14,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 34,
+      "mechanics": 27,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_15",
+      "title": "A One-Day Swap Shop",
+      "mainQuestion": "We are holding a one-day swap shop. What would you bring or hope to find?",
+      "mainWords": 15,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 1,
+        "question": 4,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_16",
+      "title": "A Room to Rest In",
+      "mainQuestion": "We have a small room for relaxing after work. What would make you want to stay?",
+      "mainWords": 16,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 2,
+        "instruction": 1,
+        "invitation": 1,
+        "memory": 2,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 3,
+        "quantity": 2,
+        "question": 3,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "support": 1
+      }
+    },
+    {
+      "id": "topic_v2_17",
+      "title": "Powers That Only Help Neighbors",
+      "mainQuestion": "Everyone in our building has a small power that only helps others. What would yours be?",
+      "mainWords": 16,
+      "candidates": 51,
+      "topicSpecific": 43,
+      "genericCandidates": 8,
+      "interaction": 15,
+      "self": 36,
+      "mechanics": 30,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 2,
+        "exception": 2,
+        "insertion": 2,
+        "memory": 2,
+        "negotiation": 3,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 3,
+        "question": 1,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 3,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_18",
+      "title": "Borrowing a Friend’s Routine",
+      "mainQuestion": "You can try a friend’s daily routine for one day. Whose life would you choose?",
+      "mainWords": 15,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 14,
+      "self": 36,
+      "mechanics": 30,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 2,
+        "exception": 1,
+        "insertion": 3,
+        "memory": 3,
+        "negotiation": 2,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 2,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 3,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_19",
+      "title": "One Hour Just for You",
+      "mainQuestion": "You get one extra hour every day, with no interruptions. How would you spend it?",
+      "mainWords": 15,
+      "candidates": 49,
+      "topicSpecific": 41,
+      "genericCandidates": 8,
+      "interaction": 13,
+      "self": 36,
+      "mechanics": 30,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 2,
+        "exception": 1,
+        "insertion": 3,
+        "memory": 2,
+        "negotiation": 2,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 2,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 3,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_20",
+      "title": "The Objects Have Complaints",
+      "mainQuestion": "Your household objects can complain today. What would they say about you?",
+      "mainWords": 12,
+      "candidates": 71,
+      "topicSpecific": 63,
+      "genericCandidates": 8,
+      "interaction": 15,
+      "self": 56,
+      "mechanics": 30,
+      "families": {
+        "advice": 6,
+        "appreciation": 1,
+        "boundary": 5,
+        "choice": 1,
+        "confession": 3,
+        "exception": 3,
+        "insertion": 4,
+        "memory": 3,
+        "negotiation": 4,
+        "preference": 4,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 3,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 13,
+        "reframe": 4,
+        "reply": 1,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_21",
+      "title": "A Ten-Second Redo",
+      "mainQuestion": "A button lets you redo the last ten seconds. Which everyday moments need it?",
+      "mainWords": 14,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 14,
+      "self": 36,
+      "mechanics": 27,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 5,
+        "choice": 3,
+        "confession": 2,
+        "exception": 1,
+        "insertion": 3,
+        "memory": 3,
+        "negotiation": 2,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 1,
+        "question": 2,
+        "reasoning": 7,
+        "reframe": 3,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_22",
+      "title": "A Small Package From the Future",
+      "mainQuestion": "You receive ordinary objects from yourself ten years ahead. What would reveal your future life?",
+      "mainWords": 15,
+      "candidates": 48,
+      "topicSpecific": 40,
+      "genericCandidates": 8,
+      "interaction": 15,
+      "self": 33,
+      "mechanics": 30,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 2,
+        "confession": 2,
+        "exception": 2,
+        "insertion": 2,
+        "memory": 2,
+        "negotiation": 2,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 1,
+        "quantity": 3,
+        "question": 1,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 3,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_23",
+      "title": "Watching an Ordinary Moment Again",
+      "mainQuestion": "You can watch one ordinary moment from your past again. Which would you choose?",
+      "mainWords": 14,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 33,
+      "mechanics": 28,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 4,
+        "choice": 4,
+        "confession": 2,
+        "exception": 1,
+        "insertion": 3,
+        "memory": 4,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "quantity": 3,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 7,
+        "reframe": 2,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_24",
+      "title": "Impossible Everyday Services",
+      "mainQuestion": "A shop sells impossible solutions to everyday problems. What service would you pay for?",
+      "mainWords": 14,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 36,
+      "mechanics": 30,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 5,
+        "choice": 2,
+        "confession": 2,
+        "exception": 2,
+        "insertion": 2,
+        "memory": 2,
+        "negotiation": 3,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 3,
+        "question": 1,
+        "ranking": 1,
+        "reasoning": 8,
+        "reframe": 3,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_25",
+      "title": "A Thoughtful Gift You Do Not Want",
+      "mainQuestion": "A friend gives you a thoughtful gift you do not want. What would you do?",
+      "mainWords": 15,
+      "candidates": 79,
+      "topicSpecific": 71,
+      "genericCandidates": 8,
+      "interaction": 22,
+      "self": 57,
+      "mechanics": 31,
+      "families": {
+        "advice": 5,
+        "appreciation": 2,
+        "boundary": 7,
+        "choice": 2,
+        "confession": 4,
+        "exception": 4,
+        "insertion": 3,
+        "memory": 4,
+        "negotiation": 3,
+        "preference": 3,
+        "prepared_sentence": 7,
+        "proposal": 2,
+        "quantity": 3,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 15,
+        "reframe": 5,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_26",
+      "title": "One Dinner, Different Bills",
+      "mainQuestion": "Friends share dinner but order very different amounts. How should you split the bill?",
+      "mainWords": 14,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 37,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 5,
+        "choice": 2,
+        "confession": 3,
+        "exception": 2,
+        "insertion": 2,
+        "memory": 2,
+        "negotiation": 2,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 2,
+        "question": 1,
+        "reasoning": 9,
+        "reframe": 4,
+        "reply": 1,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_27",
+      "title": "A Group Chat That Never Stops",
+      "mainQuestion": "Your group chat never stops. What would make it fun instead of exhausting?",
+      "mainWords": 13,
+      "candidates": 55,
+      "topicSpecific": 47,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 39,
+      "mechanics": 30,
+      "families": {
+        "advice": 3,
+        "agreement": 1,
+        "appreciation": 1,
+        "boundary": 6,
+        "choice": 1,
+        "confession": 3,
+        "exception": 2,
+        "insertion": 2,
+        "memory": 3,
+        "negotiation": 1,
+        "paraphrase": 1,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 2,
+        "question": 1,
+        "reasoning": 7,
+        "reframe": 5,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_28",
+      "title": "A Photo You Do Not Want Shared",
+      "mainQuestion": "Everyone loves a group photo except you. How would you ask them not to share it?",
+      "mainWords": 16,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 36,
+      "mechanics": 27,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 7,
+        "choice": 3,
+        "confession": 2,
+        "exception": 1,
+        "insertion": 2,
+        "memory": 2,
+        "negotiation": 2,
+        "preference": 1,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 2,
+        "question": 1,
+        "reasoning": 8,
+        "reframe": 4,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_29",
+      "title": "Help You Did Not Ask For",
+      "mainQuestion": "A friend helps without asking, but you wanted to handle it yourself. How would you respond?",
+      "mainWords": 16,
+      "candidates": 83,
+      "topicSpecific": 75,
+      "genericCandidates": 8,
+      "interaction": 23,
+      "self": 60,
+      "mechanics": 31,
+      "families": {
+        "advice": 5,
+        "appreciation": 2,
+        "boundary": 8,
+        "choice": 2,
+        "confession": 4,
+        "exception": 4,
+        "insertion": 3,
+        "memory": 4,
+        "negotiation": 4,
+        "preference": 3,
+        "prepared_sentence": 8,
+        "proposal": 3,
+        "quantity": 3,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 15,
+        "reframe": 5,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_30",
+      "title": "An Invitation Accepted Too Quickly",
+      "mainQuestion": "You accepted an invitation, but now you want to rest. What would you tell your friend?",
+      "mainWords": 16,
+      "candidates": 51,
+      "topicSpecific": 43,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 35,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 6,
+        "choice": 1,
+        "confession": 2,
+        "exception": 2,
+        "insertion": 2,
+        "memory": 2,
+        "negotiation": 2,
+        "preference": 1,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 2,
+        "question": 1,
+        "reasoning": 9,
+        "reframe": 4,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_31",
+      "title": "An Honest Response to a Friend’s Work",
+      "mainQuestion": "A friend proudly shows you their work, but you dislike it. What would you say?",
+      "mainWords": 15,
+      "candidates": 60,
+      "topicSpecific": 52,
+      "genericCandidates": 8,
+      "interaction": 19,
+      "self": 41,
+      "mechanics": 29,
+      "families": {
+        "advice": 2,
+        "appreciation": 2,
+        "boundary": 7,
+        "choice": 2,
+        "confession": 3,
+        "exception": 3,
+        "insertion": 2,
+        "memory": 3,
+        "negotiation": 2,
+        "preference": 1,
+        "prepared_sentence": 7,
+        "proposal": 2,
+        "quantity": 2,
+        "question": 1,
+        "ranking": 1,
+        "reasoning": 9,
+        "reframe": 4,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_32",
+      "title": "A Favorite Item Comes Back Worn",
+      "mainQuestion": "Your favorite item comes back worn after a friend borrows it. How would you handle it?",
+      "mainWords": 16,
+      "candidates": 80,
+      "topicSpecific": 72,
+      "genericCandidates": 8,
+      "interaction": 23,
+      "self": 57,
+      "mechanics": 31,
+      "families": {
+        "advice": 6,
+        "appreciation": 2,
+        "boundary": 7,
+        "choice": 2,
+        "confession": 4,
+        "exception": 4,
+        "insertion": 3,
+        "memory": 4,
+        "negotiation": 3,
+        "preference": 3,
+        "prepared_sentence": 7,
+        "proposal": 2,
+        "quantity": 3,
+        "question": 2,
+        "ranking": 1,
+        "reasoning": 15,
+        "reframe": 5,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2
+      }
+    },
+    {
+      "id": "topic_v2_33",
+      "title": "An Assistant That Knows Your Taste",
+      "mainQuestion": "A personal assistant knows your tastes. Which everyday choices would you trust it with?",
+      "mainWords": 14,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 37,
+      "mechanics": 26,
+      "families": {
+        "advice": 3,
+        "boundary": 5,
+        "choice": 2,
+        "confession": 2,
+        "insertion": 2,
+        "memory": 3,
+        "negotiation": 2,
+        "planning": 1,
+        "preference": 4,
+        "prepared_sentence": 6,
+        "proposal": 3,
+        "quantity": 4,
+        "question": 2,
+        "reasoning": 4,
+        "reframe": 1,
+        "regret": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_34",
+      "title": "Everyone Leaves the Planning to You",
+      "mainQuestion": "After one great gathering, everyone expects you to organize everything. How would you handle that?",
+      "mainWords": 15,
+      "candidates": 61,
+      "topicSpecific": 53,
+      "genericCandidates": 8,
+      "interaction": 20,
+      "self": 41,
+      "mechanics": 28,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 5,
+        "choice": 2,
+        "confession": 2,
+        "insertion": 2,
+        "memory": 4,
+        "negotiation": 4,
+        "planning": 2,
+        "preference": 4,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 4,
+        "question": 2,
+        "reasoning": 6,
+        "reframe": 1,
+        "regret": 2,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_35",
+      "title": "A Hobby or a Job?",
+      "mainQuestion": "Friends say you could earn money from your hobby. Would that make it better or ruin the fun?",
+      "mainWords": 18,
+      "candidates": 47,
+      "topicSpecific": 39,
+      "genericCandidates": 8,
+      "interaction": 15,
+      "self": 32,
+      "mechanics": 28,
+      "families": {
+        "advice": 4,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 1,
+        "insertion": 1,
+        "memory": 2,
+        "negotiation": 3,
+        "planning": 2,
+        "preference": 3,
+        "prepared_sentence": 5,
+        "proposal": 2,
+        "quantity": 5,
+        "question": 1,
+        "reasoning": 4,
+        "reframe": 2,
+        "regret": 1,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_36",
+      "title": "Changing Your Mind in Front of Friends",
+      "mainQuestion": "You are changing your mind about something you strongly defended. How would you tell friends who remember?",
+      "mainWords": 17,
+      "candidates": 48,
+      "topicSpecific": 40,
+      "genericCandidates": 8,
+      "interaction": 15,
+      "self": 33,
+      "mechanics": 26,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 2,
+        "memory": 3,
+        "negotiation": 1,
+        "planning": 2,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 2,
+        "quantity": 1,
+        "question": 2,
+        "reasoning": 6,
+        "reframe": 4,
+        "regret": 1,
+        "reply": 3,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_37",
+      "title": "Speaking Up for an Old Object",
+      "mainQuestion": "What old thing would you refuse to throw away, even if nobody else understands?",
+      "mainWords": 14,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 15,
+      "self": 38,
+      "mechanics": 31,
+      "families": {
+        "advice": 3,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 2,
+        "invitation": 1,
+        "memory": 5,
+        "negotiation": 2,
+        "planning": 2,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 1,
+        "quantity": 2,
+        "question": 3,
+        "reasoning": 6,
+        "reframe": 2,
+        "regret": 1,
+        "reply": 1,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_38",
+      "title": "A Small Mistake Friends Keep Retelling",
+      "mainQuestion": "What small mistake of yours would your friends never let you forget?",
+      "mainWords": 12,
+      "candidates": 44,
+      "topicSpecific": 36,
+      "genericCandidates": 8,
+      "interaction": 12,
+      "self": 32,
+      "mechanics": 26,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 2,
+        "choice": 2,
+        "confession": 2,
+        "insertion": 1,
+        "memory": 5,
+        "negotiation": 1,
+        "planning": 2,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 2,
+        "quantity": 1,
+        "question": 2,
+        "reasoning": 3,
+        "reframe": 2,
+        "regret": 1,
+        "reply": 2,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_39",
+      "title": "A First Impression Changes",
+      "mainQuestion": "What small moment completely changed your first impression of someone?",
+      "mainWords": 10,
+      "candidates": 53,
+      "topicSpecific": 45,
+      "genericCandidates": 8,
+      "interaction": 17,
+      "self": 36,
+      "mechanics": 26,
+      "families": {
+        "advice": 2,
+        "appreciation": 3,
+        "boundary": 2,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 2,
+        "memory": 4,
+        "negotiation": 1,
+        "planning": 2,
+        "preference": 3,
+        "prepared_sentence": 5,
+        "proposal": 2,
+        "quantity": 1,
+        "question": 3,
+        "reasoning": 8,
+        "reframe": 2,
+        "regret": 2,
+        "reply": 3,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_40",
+      "title": "A Habit Others Do Not Understand",
+      "mainQuestion": "What small habit feels normal to you but strange to your friends?",
+      "mainWords": 12,
+      "candidates": 69,
+      "topicSpecific": 61,
+      "genericCandidates": 8,
+      "interaction": 19,
+      "self": 50,
+      "mechanics": 27,
+      "families": {
+        "advice": 3,
+        "appreciation": 1,
+        "boundary": 9,
+        "choice": 2,
+        "confession": 3,
+        "insertion": 4,
+        "memory": 4,
+        "negotiation": 1,
+        "planning": 4,
+        "preference": 6,
+        "prepared_sentence": 7,
+        "proposal": 1,
+        "quantity": 2,
+        "question": 2,
+        "reasoning": 7,
+        "reframe": 2,
+        "regret": 2,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_41",
+      "title": "A Purchase With a Different Ending",
+      "mainQuestion": "What purchase turned out very differently from what you expected?",
+      "mainWords": 10,
+      "candidates": 63,
+      "topicSpecific": 55,
+      "genericCandidates": 8,
+      "interaction": 18,
+      "self": 45,
+      "mechanics": 31,
+      "families": {
+        "advice": 4,
+        "agreement": 2,
+        "appreciation": 1,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 3,
+        "invitation": 1,
+        "memory": 4,
+        "negotiation": 2,
+        "planning": 1,
+        "preference": 2,
+        "prepared_sentence": 5,
+        "proposal": 1,
+        "quantity": 9,
+        "question": 3,
+        "reasoning": 7,
+        "reframe": 2,
+        "regret": 2,
+        "reply": 1,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_42",
+      "title": "A Small Act of Care",
+      "mainQuestion": "What small act of care meant more to you than the other person realized?",
+      "mainWords": 14,
+      "candidates": 65,
+      "topicSpecific": 57,
+      "genericCandidates": 8,
+      "interaction": 19,
+      "self": 46,
+      "mechanics": 28,
+      "families": {
+        "advice": 2,
+        "appreciation": 4,
+        "boundary": 3,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 2,
+        "memory": 3,
+        "negotiation": 9,
+        "planning": 3,
+        "preference": 3,
+        "prepared_sentence": 5,
+        "proposal": 4,
+        "quantity": 2,
+        "question": 1,
+        "reasoning": 6,
+        "reframe": 1,
+        "regret": 2,
+        "reply": 3,
+        "rule": 4,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_43",
+      "title": "A Good Day After Plans Failed",
+      "mainQuestion": "Tell us about a day that went wrong but became a great memory.",
+      "mainWords": 13,
+      "candidates": 57,
+      "topicSpecific": 49,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 41,
+      "mechanics": 27,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 2,
+        "choice": 4,
+        "confession": 1,
+        "insertion": 4,
+        "memory": 8,
+        "negotiation": 3,
+        "planning": 3,
+        "preference": 3,
+        "prepared_sentence": 7,
+        "proposal": 1,
+        "quantity": 3,
+        "question": 3,
+        "reasoning": 5,
+        "reframe": 1,
+        "regret": 1,
+        "reply": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_44",
+      "title": "A Small Skill That Comes in Handy",
+      "mainQuestion": "What small skill are you proud of, even if it would never go on your resume?",
+      "mainWords": 16,
+      "candidates": 61,
+      "topicSpecific": 53,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 45,
+      "mechanics": 28,
+      "families": {
+        "advice": 5,
+        "appreciation": 2,
+        "boundary": 4,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 1,
+        "memory": 1,
+        "negotiation": 5,
+        "planning": 3,
+        "preference": 4,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 6,
+        "question": 2,
+        "reasoning": 5,
+        "reframe": 2,
+        "regret": 2,
+        "reply": 2,
+        "rule": 2,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 2
+      }
+    },
+    {
+      "id": "topic_v2_45",
+      "title": "What Makes an Ordinary Day Good",
+      "mainQuestion": "What little moment turns an ordinary day into a good one for you?",
+      "mainWords": 13,
+      "candidates": 48,
+      "topicSpecific": 40,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 32,
+      "mechanics": 26,
+      "families": {
+        "advice": 2,
+        "appreciation": 1,
+        "boundary": 2,
+        "choice": 2,
+        "confession": 1,
+        "insertion": 3,
+        "memory": 6,
+        "negotiation": 1,
+        "planning": 2,
+        "preference": 3,
+        "prepared_sentence": 6,
+        "proposal": 2,
+        "quantity": 2,
+        "question": 2,
+        "reasoning": 6,
+        "reframe": 1,
+        "regret": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_46",
+      "title": "An Interest You Found by Accident",
+      "mainQuestion": "What did you try once and unexpectedly get really interested in?",
+      "mainWords": 11,
+      "candidates": 50,
+      "topicSpecific": 42,
+      "genericCandidates": 8,
+      "interaction": 16,
+      "self": 34,
+      "mechanics": 28,
+      "families": {
+        "advice": 4,
+        "appreciation": 1,
+        "boundary": 2,
+        "choice": 1,
+        "confession": 2,
+        "insertion": 1,
+        "memory": 5,
+        "negotiation": 3,
+        "planning": 2,
+        "preference": 2,
+        "prepared_sentence": 6,
+        "proposal": 1,
+        "quantity": 4,
+        "question": 3,
+        "reasoning": 4,
+        "reframe": 2,
+        "regret": 1,
+        "reply": 1,
+        "rule": 1,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    },
+    {
+      "id": "topic_v2_47",
+      "title": "Effort People Do Not See",
+      "mainQuestion": "What do people think is easy that actually takes you a lot of effort?",
+      "mainWords": 14,
+      "candidates": 74,
+      "topicSpecific": 66,
+      "genericCandidates": 8,
+      "interaction": 24,
+      "self": 50,
+      "mechanics": 28,
+      "families": {
+        "advice": 4,
+        "appreciation": 1,
+        "boundary": 10,
+        "choice": 1,
+        "confession": 4,
+        "insertion": 1,
+        "memory": 2,
+        "negotiation": 7,
+        "planning": 3,
+        "preference": 4,
+        "prepared_sentence": 8,
+        "proposal": 4,
+        "quantity": 3,
+        "question": 1,
+        "reasoning": 4,
+        "reframe": 1,
+        "regret": 3,
+        "reply": 3,
+        "rule": 3,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 4
+      }
+    },
+    {
+      "id": "topic_v2_48",
+      "title": "Enjoyment You Do Not Want to Outgrow",
+      "mainQuestion": "What do you still enjoy that other people think you should have outgrown?",
+      "mainWords": 13,
+      "candidates": 70,
+      "topicSpecific": 62,
+      "genericCandidates": 8,
+      "interaction": 19,
+      "self": 51,
+      "mechanics": 29,
+      "families": {
+        "advice": 4,
+        "agreement": 1,
+        "appreciation": 1,
+        "boundary": 6,
+        "choice": 2,
+        "confession": 3,
+        "insertion": 2,
+        "invitation": 1,
+        "memory": 5,
+        "negotiation": 1,
+        "planning": 3,
+        "preference": 5,
+        "prepared_sentence": 6,
+        "quantity": 5,
+        "question": 3,
+        "reasoning": 9,
+        "reframe": 3,
+        "regret": 1,
+        "reply": 2,
+        "rule": 3,
+        "singing": 1,
+        "sound_effect": 2,
+        "warning": 1
+      }
+    }
+  ],
+  "repeatTests": {
+    "sameTopicRestart": {
+      "seeds": 100,
+      "initialDeals": 100,
+      "subsequentDealsPerSeed": 10,
+      "successfulDeals": 1100,
+      "fullGamesCompleted": 0,
+      "exhaustedRuns": [],
+      "canonicalRepeats": 0,
+      "recentVariantRepeats": 0,
+      "sameDealVariantPairs": 0,
+      "historyReset": 0,
+      "genericOverCap": 0,
+      "voiceOverCap": 0,
+      "topicChanges": 0
+    },
+    "sameTopicNormal": {
+      "seeds": 100,
+      "initialDeals": 100,
+      "subsequentDealsPerSeed": 9,
+      "successfulDeals": 1000,
+      "fullGamesCompleted": 1000,
+      "exhaustedRuns": [],
+      "canonicalRepeats": 0,
+      "recentVariantRepeats": 0,
+      "sameDealVariantPairs": 0,
+      "historyReset": 0,
+      "genericOverCap": 0,
+      "voiceOverCap": 0,
+      "topicChanges": 0
+    },
+    "changingTopics": {
+      "seeds": 100,
+      "initialDeals": 100,
+      "subsequentDealsPerSeed": 9,
+      "successfulDeals": 1000,
+      "fullGamesCompleted": 0,
+      "exhaustedRuns": [],
+      "canonicalRepeats": 0,
+      "recentVariantRepeats": 0,
+      "sameDealVariantPairs": 0,
+      "historyReset": 0,
+      "genericOverCap": 0,
+      "voiceOverCap": 0,
+      "topicChanges": 900
+    }
+  },
+  "editorialNotes": [
+    "Word count measures English letter/number tokens with internal apostrophes/hyphens as one word.",
+    "The root editor read all 120 final sample rows; a second editor read all B and C-authored task groups were checked during authoring. Independent A review covered its initial 232 rows and final additions.",
+    "Review fixes included car/aisle-seat mismatch, generic shop/food assumptions, vague physical actions, weak past-moment mappings and an exact duplicate across banks.",
+    "Near variants still exist (for example different concrete help offers, preferences and thank-you actions). They share normalized mechanics, cannot coexist in a deal and are excluded for three recent deals; the report does not claim every card has an entirely unique mechanic.",
+    "No active task asks for object roleplay, object apologies, naming, nicknames or invented words. Some public topics remain imaginative, as requested; their wolf instructions are ordinary actions.",
+    "The former 60-card target is not enforced: the user explicitly prioritizes quality over pool size.",
+    "Existing dealt cards remain immutable until the next deal. Roles, rewards, rounds and outcomes are unchanged."
+  ],
+  "limitations": [
+    "Shortness and editorial review do not prove task difficulty, naturalness for every group, fun or balance; live voice play-testing is still needed.",
+    "Pool counts are before exposure filters. A finite pool can still exhaust in longer runs; the existing explicit host recovery prompt remains. No hidden repeat fallback is enabled.",
+    "These repeated-game tests are deterministic engine runs, not browser or physical-device tests."
+  ]
+}

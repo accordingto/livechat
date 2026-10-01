@@ -117,11 +117,8 @@
       const time=!['ROLE_REVEAL','LOBBY','FINISHED','TALK','MEETING_TURNS'].includes(p.phase)?ctx.timer(p.deadlineAt):'';
       return '<section class="question-card v3-topic v4-topic-full"><div class="panel-header"><div><span class="scenario">'+esc(p.phase==='ROLE_REVEAL'?C.topic:C.round(p.round,p.totalRounds || p.settings.roundCount))+'</span><span class="v4-topic-label">'+esc(label)+'</span></div>'+time+'</div><div class="eyebrow">'+esc(active?C.currentQuestion:C.mainTopic)+'</div><h2 class="question'+(active?' v4-active-followup':'')+'" data-current-question>'+esc(active?active.text:topic.mainQuestion)+'</h2>'+(active?'<details class="v4-original-topic" data-detail="original-topic"><summary>'+esc(C.viewOriginal)+'</summary><p>'+esc(topic.mainQuestion)+'</p></details>':'')+(!privateView?'<p class="muted">'+esc(C.chatHelp)+'</p>':'')+chatClock()+'</section>';
     }
-    function stickyQuestion() {
-      const p=pub();
-      if(!p.topic)return '';
-      const text=p.activeFollowUp?.text || p.topic.mainQuestion;
-      return '<details class="v4-question-peek" data-detail="sticky-question"><summary><span>'+esc(C.currentQuestion)+'</span><span class="v4-peek-question">'+esc(text)+'</span></summary><p>'+esc(text)+'</p></details>';
+    function privateRoomInfo() {
+      return '<details class="v5-room-info" data-detail="private-room-info"><summary>'+esc(C.roomInfo)+'</summary><dl><dt>'+esc(C.roomCode)+'</dt><dd>'+esc(pub().code)+'</dd><dt>'+esc(C.roomPhase)+'</dt><dd>'+esc(C.phases[pub().phase]||pub().phase)+'</dd></dl></details>';
     }
     function followUpControls() {
       if (!isHost() || pub().paused || !['TALK','WRAP_UP'].includes(pub().phase)) return '';
@@ -155,7 +152,7 @@
       if (isHost() || !me().role) return '';
       if (modern()) return modernPrivateCard();
       const role = me().role, villager = profession(me().profession);
-      let html = '<section class="panel v3-private"><div class="eyebrow">'+esc(C.privateCard)+'</div><h2 class="role-title '+(role==='WOLF'?'wolf':'villager')+'">'+esc(role==='VILLAGER'?(villager?.name || C.ordinary):C.roles[role])+'</h2>';
+      let html = '<section class="panel v3-private"><div class="eyebrow">'+esc(C.privateCard)+'</div><h2 class="role-title '+(role==='WOLF'?'wolf':role==='JESTER'?'jester':'villager')+'">'+esc(role==='VILLAGER'?(villager?.name || C.ordinary):C.roles[role])+'</h2>';
       if (role==='WOLF') {
         html += '<p>'+esc(C.wolfHelp)+'</p><div class="team-list">'+(me().wolfTeam || []).map(player=>'<span class="team-chip">'+esc(player.name)+'</span>').join('')+'</div><h3>'+esc(C.teamTasks((me().tasks || []).filter(task=>task.completed).length,(me().tasks || []).length))+'</h3><p class="muted">'+esc(C.wolfTaskRule)+'</p><div class="v3-task-list">'+(me().tasks || []).map(task=>taskCard(task,true)).join('')+'</div><p class="muted">'+esc(C.taskWindow)+'</p>';
       } else if (role==='JESTER') html += '<p>'+esc(C.jesterHelp)+'</p><p class="notice">'+esc(pub().settings.jesterTieWins?C.jesterTie:C.jesterUnique)+'</p>';
@@ -171,12 +168,13 @@
       const team=role==='WOLF'?C.wolfCamp:role==='JESTER'?C.independentCamp:C.villageCamp;
       const roleName=role==='VILLAGER'?(villageRole?.name || C.ordinary):C.roles[role];
       const progress=role==='WOLF'?C.teamTasks((person.tasks||[]).filter(task=>task.completed).length,(person.tasks||[]).length):'';
-      let html='<div class="v4-private-layout"><header class="panel v4-role-header"><div><div class="eyebrow">'+esc(team)+'</div><h2>'+esc(roleName)+'</h2>'+(progress?'<p>'+esc(progress)+'</p>':'')+'</div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
+      const roleClass=role==='WOLF'?'wolf':role==='JESTER'?'jester':'villager';
+      let html='<div class="v4-private-layout"><header class="panel v4-role-header v5-role-'+roleClass+'"><div><div class="eyebrow">'+esc(team)+'</div><h2 class="role-title '+roleClass+'">'+esc(roleName)+'</h2></div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
       if(['MEETING_TURNS','FINAL_CLUES','VOTING','JUDGE_DECISION'].includes(p.phase))html+=phasePanel();
-      html+=topicCard(true)+stickyQuestion();
+      html+=topicCard(true);
       if(hasTasks)html+='<section class="panel v4-private-tasks"><div class="v4-task-toolbar"><h3>'+esc(role==='WOLF'?progress:roleName+' · task')+'</h3>'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'aria-pressed="'+(taskLanguage==='zh')+'"','ghost small')+'</div>';
       if(role==='WOLF') {
-        html+='<p class="v4-task-rule">'+esc(C.wolfHelp)+'</p><p class="v4-task-rule muted">'+esc(C.wolfTaskRule)+'</p><div class="team-list">'+(person.wolfTeam||[]).map(player=>'<span class="team-chip">'+esc(player.name)+'</span>').join('')+'</div><div class="v3-task-list">'+(person.tasks||[]).map(task=>taskCard(task,true)).join('')+'</div>';
+        html+='<div class="v5-task-meta"><span class="muted">'+esc(C.sharedTasks)+'</span><details class="v5-task-rules" data-detail="wolf-task-rules"><summary>'+esc(C.taskRules)+'</summary><ul>'+C.wolfTaskRules.map(text=>'<li>'+esc(text)+'</li>').join('')+'</ul></details></div><div class="team-list" aria-label="'+esc(C.wolfTeam)+'">'+(person.wolfTeam||[]).map(player=>'<span class="team-chip">'+esc(player.name)+'</span>').join('')+'</div><div class="v3-task-list">'+(person.tasks||[]).map(task=>taskCard(task,true)).join('')+'</div>';
       } else if(person.villageTask) {
         html+=taskCard(person.villageTask,false)+(actions().canRerollTask?'<div class="button-row">'+button('rerollTask',C.reroll,'','ghost small')+'<span class="muted">'+esc(C.rerollLeft(person.rerollRemaining))+'</span></div>':'');
       }
@@ -278,7 +276,8 @@
         draftMatch = pub().matchId; ballot.clear(); judgeDraft.clear(); rewardDraft={}; settingsDraft=null; pendingDeal=null;taskLanguage='en';
       }
       if (ballotId !== pub().voting?.id) { ballotId=pub().voting?.id; ballot.clear(); judgeDraft.clear(); }
-      let html = ctx.roomBar()+contentExhausted();
+      const privateView=modern()&&!isHost()&&!['LOBBY','FINISHED'].includes(pub().phase);
+      let html = (privateView?'':ctx.roomBar())+contentExhausted();
       if(pub().releaseStage==='development')html+='<p class="notice warning v4-development">'+esc(C.developmentPreview)+'</p>';
       if (pub().phase==='LOBBY') html += lobby();
       else if (pub().phase==='FINISHED') html += finished()+restartControls();
@@ -288,7 +287,7 @@
       } else {
         html += '<div class="v3-play-grid"><div class="main-stack">'+topicCard()+(['TALK','WRAP_UP'].includes(pub().phase)?lastGuess():'')+phasePanel()+followUpControls()+hostCardLink()+'</div>'+(!isHost()?'<aside class="side-stack">'+privateCard()+'</aside>':'')+'</div>'+restartControls();
       }
-      return '<div class="v3-shell">'+html+rules()+'</div>';
+      return '<div class="v3-shell">'+html+(privateView?privateRoomInfo():'')+rules()+'</div>';
     }
     async function handleClick(event) {
       const b = event.target.closest('[data-v3-action]');

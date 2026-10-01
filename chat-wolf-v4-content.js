@@ -6,12 +6,14 @@
    module.exports = factory(require('./chat-wolf-v3-content.js'),
      [require('./chat-wolf-v4-wolf-tasks.js'), require('./chat-wolf-v4-wolf-imagine.js'), require('./chat-wolf-v4-wolf-life.js'),
       require('./chat-wolf-v4-expansion-a.js'), require('./chat-wolf-v4-expansion-b.js'), require('./chat-wolf-v4-expansion-c.js')],
-     require('./chat-wolf-v4-village.js'),require('./chat-wolf-v4-taxonomy.js'));
+     require('./chat-wolf-v4-village.js'),require('./chat-wolf-v4-taxonomy.js'),
+     [require('./chat-wolf-v5-readable-a.js'),require('./chat-wolf-v5-readable-b.js'),require('./chat-wolf-v5-readable-c.js'),require('./chat-wolf-v5-readable-core.js')]);
  } else root.CHAT_WOLF_V4_CONTENT = factory(root.CHAT_WOLF_V3_CONTENT,
    [root.CHAT_WOLF_V4_WOLF_TASKS, root.CHAT_WOLF_V4_WOLF_IMAGINE, root.CHAT_WOLF_V4_WOLF_LIFE,
     root.CHAT_WOLF_V4_EXPANSION_A, root.CHAT_WOLF_V4_EXPANSION_B, root.CHAT_WOLF_V4_EXPANSION_C],
-   root.CHAT_WOLF_V4_VILLAGE,root.CHAT_WOLF_V4_TAXONOMY);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (legacy, supplements, village, taxonomy) {
+   root.CHAT_WOLF_V4_VILLAGE,root.CHAT_WOLF_V4_TAXONOMY,
+   [root.CHAT_WOLF_V5_READABLE_A,root.CHAT_WOLF_V5_READABLE_B,root.CHAT_WOLF_V5_READABLE_C,root.CHAT_WOLF_V5_READABLE_CORE]);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (legacy, supplements, village, taxonomy, readable) {
  'use strict';
  const topics = [
   {
@@ -5667,14 +5669,20 @@
      family:task.roleId,source:'village',roleId:task.roleId,status:'deprecated',active:false,
      reason:'Previous village card retained in old match snapshots; its exposure history survives migration.'};
  }
- const wolfTasks = taxonomy.normalize(appendixTasks.concat(...supplements.map(s => Array.isArray(s) ? s : s.tasks)));
+ // Keep the former bank as migration/audit data, never as a fallback draw pool.
+ // Already-dealt rooms retain their own immutable card snapshots.
+ const previousWolfTasks = taxonomy.normalize(appendixTasks.concat(...supplements.map(s => Array.isArray(s) ? s : s.tasks)));
+ const version='chat-wolf-readable-v5';
+ const topicUpdates=Object.assign({},...readable.map(bank=>bank.topicUpdates||{}));
+ for(const topic of topics) Object.assign(topic,topicUpdates[topic.id]||{},{contentVersion:version});
+ const wolfTasks = taxonomy.normalize(readable.flatMap(bank=>bank.tasks).map(task=>({...task,contentVersion:version})));
  const exclusionClues = Object.fromEntries(Object.entries(clueInfo).map(([key,value])=>[key,value[2]]));
  const exclusionCluesZh = Object.fromEntries(Object.entries(clueInfo).map(([key,value])=>[key,value[3]]));
  for (const supplement of supplements) {
    if (supplement.exclusionClues) Object.assign(exclusionClues,supplement.exclusionClues);
    if (supplement.exclusionCluesZh) Object.assign(exclusionCluesZh,supplement.exclusionCluesZh);
  }
- return {version:'chat-wolf-content-20261002',releaseStage:'release',topics,wolfTasks,villageTasks,
+ return {version,releaseStage:'release',contentPolicy:'readability-first',topics,wolfTasks,villageTasks,previousWolfTasks,
    normalizeGroup:taxonomy.normalizeGroup,normalizeFamily:taxonomy.normalizeFamily,normalizeHistoryEntry:taxonomy.normalizeHistoryEntry,
    normalizeTasks:taxonomy.normalize,
    exclusionClues:taxonomy.exclusionClues,exclusionCluesZh:taxonomy.exclusionCluesZh,
