@@ -107,8 +107,10 @@ are published, so the main entry is not silently upgraded.
   the same identity/progress; round 2 kept the manual follow-up. Chrome narrow viewport had no horizontal
   overflow. This is not a physical phone test.
 - Still unverified: real phones/tablets, multiple physical devices and live
-  English-learning group balance. Cloud deployment is only confirmed after the
-  published assets are fetched and compared with the manifest.
+  English-learning group balance.
+- Deployment confirmed at commit `6da1806`: all **22/22** HTTPS runtime assets
+  matched the published manifest. The original root HTML, main controller and
+  v3 engine matched release `70d0c56` byte-for-byte; its entry was not upgraded.
 
 Independent preview smoke test (works from a clean checkout):
 `node --test tests/chat-wolf-v4-preview.test.cjs`.
