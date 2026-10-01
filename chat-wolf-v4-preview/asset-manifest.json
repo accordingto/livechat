@@ -1,0 +1,93 @@
+{
+  "stage": "development",
+  "files": [
+    {
+      "file": "chat-wolf.html",
+      "sha256": "70865fcbbc995b7146de405908b5de3f81d0ff7f7f40193dd6ddb405414a7f93"
+    },
+    {
+      "file": "chat-wolf.css",
+      "sha256": "021308e8d2f055320921e30912defcfbdfc51f40fbeff81439c4310079cb14bb"
+    },
+    {
+      "file": "chat-wolf-copy.js",
+      "sha256": "33de4cec83b06cc47356c40229cb987a868522af2112b2f674517d7cab6e42fe"
+    },
+    {
+      "file": "firebase-config.js",
+      "sha256": "516302f312f8e8dd0f0264fdf71631a6fed0b1738f4ec5b0fd04b131fbfe7066"
+    },
+    {
+      "file": "chat-wolf-content.js",
+      "sha256": "bb9de306559acfbf9e3dc8c7e6674524aed332ed258def72c71f97cc85247a01"
+    },
+    {
+      "file": "chat-wolf-v3-rules.js",
+      "sha256": "2485139f82e235c8b63079145954460af2e69009fa0a35f8a77c0c9c1f05e775"
+    },
+    {
+      "file": "chat-wolf-v3-content.js",
+      "sha256": "2062f87ba2997f4e819ce1fa10172e73bdc98e9660c23465722302ca5a5a70dc"
+    },
+    {
+      "file": "chat-wolf-v4-wolf-tasks.js",
+      "sha256": "b195a174e8c6d76eeacc31c7c0571409cff184b84fedc9b4604ce8e5a5531203"
+    },
+    {
+      "file": "chat-wolf-v4-wolf-imagine.js",
+      "sha256": "5ad5a21ff47770dbfefd088542bb0d76cc0245bfe853cda9deb5af7fcde538da"
+    },
+    {
+      "file": "chat-wolf-v4-wolf-life.js",
+      "sha256": "e780f1f943fe33d432ef4f98431fcde087546e91b42df6d5445d3ae3e5d91ab5"
+    },
+    {
+      "file": "chat-wolf-v4-village.js",
+      "sha256": "bea955be007768ac9671e09f27b9c63626d4f5c113f3818434635782ce31b50f"
+    },
+    {
+      "file": "chat-wolf-v4-taxonomy.js",
+      "sha256": "f4f7cdcfc200d9e508a68ec68bfc68fa869653aceacc05d21df205413d956b26"
+    },
+    {
+      "file": "chat-wolf-v4-content.js",
+      "sha256": "d1931ce3cc2cb12e06f6b26889872d61cca7f94a08ae75f2c1055e206104c343"
+    },
+    {
+      "file": "chat-wolf-v3-engine.js",
+      "sha256": "484f09f074459dc4b2606985d33a5cbffb33544d72e01cd9eb2eb1fe8d80bd27"
+    },
+    {
+      "file": "chat-wolf-engine.js",
+      "sha256": "6f3204ea575a828eeab2764dad02c43ebbbfa7b3a9174e8b2258b036b47cebe2"
+    },
+    {
+      "file": "chat-wolf-cards.js",
+      "sha256": "b4786dee1f5319d95100cc8ec1a05f8af6139bcd03017ea064fc05b46715fa94"
+    },
+    {
+      "file": "chat-wolf-history.js",
+      "sha256": "514f6181d04dd6431ac092e35dddafc312bda8c74d34433543711c008095f938"
+    },
+    {
+      "file": "chat-wolf-sync.js",
+      "sha256": "e690668edf6261f65ac8137f34870d72e482944d79a9ff35b6e977eb53bec899"
+    },
+    {
+      "file": "chat-wolf-v3-ui.js",
+      "sha256": "4d8d065b0e373ddcb3cb2a0150eed6941a56edbefb6af3fd858d5162c47c302f"
+    },
+    {
+      "file": "chat-wolf.js",
+      "sha256": "454381487ba49744be0fd1cbe167e1fced374e84e0d4a4e3c7ce99fb0003a73a"
+    },
+    {
+      "file": "chat-wolf-preview-config.js",
+      "sha256": "b98b90e3356fb4b8a80f5d0721928418acb840ce97d4b264edd64797d544fdcb"
+    },
+    {
+      "file": "apple-touch-icon.png",
+      "sha256": "24323945edb845faadd08c53fafde98c24df4a915b26f8a12f4c7a49445f3179"
+    }
+  ]
+}
