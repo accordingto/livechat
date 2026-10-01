@@ -57,7 +57,7 @@
       return settings;
     }
     function entryFields() {
-      return (root.CHAT_WOLF_V4_CONTENT?.releaseStage==='development'?'<p class="notice warning">'+esc(root.CHAT_WOLF_COPY_V4.developmentPreview)+'</p>':'')+'<label class="check-line"><input name="jesterEnabled" type="checkbox" checked><span>'+esc(C.jester)+'</span></label><p class="muted">3 rounds · 10 minutes of continuous free chat each. All settings can be changed in the lobby.</p>';
+      return (root.CHAT_WOLF_V4_CONTENT?.releaseStage==='development'?'<p class="notice warning">'+esc(root.CHAT_WOLF_COPY_V4.developmentPreview)+'</p>':'')+'<label class="check-line"><input name="jesterEnabled" type="checkbox" checked><span>'+esc(C.jester)+'</span></label><p class="muted">3 rounds · about 10 minutes of free chat per round. The host decides when to start each meeting. Settings can be changed in the lobby.</p>';
     }
     function rules() {
       return '<details class="panel v3-rules" data-detail="v3-rules"><summary><strong>'+esc(C.rules)+'</strong></summary><p>'+esc(C.rulesIntro)+'</p><ul>'+C.rulesBullets.map(text => '<li>'+esc(text)+'</li>').join('')+'</ul><p><strong>'+esc(C.rulesWins)+'</strong></p><ul>'+C.rulesExamples.map(text => '<li>'+esc(text)+'</li>').join('')+'</ul></details>';
