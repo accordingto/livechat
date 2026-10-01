@@ -60,6 +60,10 @@ Run `node --test tests/*.test.cjs` for the regression suite.
 The final local run passed **223/223** tests, with no failures or skipped tests.
 The opt-in real Firebase six-card test also passed the complete three-round game
 and restart. Automated test clients are not a claim of six physical devices.
+Production commit `3afbd45` was pushed to the existing main branch. A read-only
+check of the live original entry matched **23/23** runtime asset hashes (normalizing
+line endings), and the live page opened in the in-app browser with original Hub
+card setup enabled. Recheck with `node scripts/chat-wolf-verify-release.cjs 3afbd45`.
 Run `node scripts/chat-wolf-v4-content-report.cjs --write` for the real-content
 report at `qa/chat-wolf-v4-content-report.json`, including per-topic counts,
 family distributions, candidate counts at every filter and 2,000 synthetic deals.
