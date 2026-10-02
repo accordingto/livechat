@@ -7,7 +7,7 @@ const normalize=s=>s.replace(/\r\n/g,'\n');
 const hash=s=>crypto.createHash('sha256').update(normalize(s)).digest('hex');
 (async()=>{
   const html=fs.readFileSync(path.join(root,'chat-wolf.html'),'utf8');
-  const assets=['chat-wolf.html',...Array.from(html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css)(?:\?[^"#]*)?)"/g),m=>m[1])];
+  const assets=['chat-wolf.html','play.html',...Array.from(html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css)(?:\?[^"#]*)?)"/g),m=>m[1])];
   let matched=0;
   const results=await Promise.all(assets.map(async asset=>{
     const local=fs.readFileSync(path.join(root,asset.split('?')[0]),'utf8');

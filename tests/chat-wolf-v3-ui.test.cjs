@@ -7,6 +7,7 @@ const RULES = require('../chat-wolf-v3-rules.js');
 const rootPath = path.resolve(__dirname, '..');
 
 function harness(overrides = {}, embeddedCard = false) {
+  let now=1000;
   const context = { window: {}, console };
   context.window.CHAT_WOLF_V3_RULES = RULES;
   context.window.CHAT_WOLF_V3_CONTENT = { topics:[{
@@ -37,13 +38,65 @@ function harness(overrides = {}, embeddedCard = false) {
   const calls=[];
   const htmlEsc = value=>String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
   const api=context.window.CHAT_WOLF_V3_UI.create({
-    esc:htmlEsc,getState:()=>current,embeddedCard,playerName:id=>players.find(p=>p.id===id)?.name || 'Unknown',
+    esc:htmlEsc,getState:()=>current,now:()=>now,embeddedCard,playerName:id=>players.find(p=>p.id===id)?.name || 'Unknown',
     action:async(action,payload)=>{calls.push({action,payload});return true;},
     roomBar:()=>'<header>Room</header>',timer:()=>'<div class="timer">10:00</div>',playerRows:()=>'<div>Players</div>',
     showToast:()=>{},rerender:()=>{},privateCardUrl:()=>'/chat-wolf.html?card=1#session=private',
   });
-  return {api,current,calls,context};
+  return {api,current,calls,context,setNow:value=>{now=value;}};
 }
+
+test('new private direction opens a central dialog without a render-time request; premature Got it is ignored',async()=>{
+  const {api,current,calls,setNow}=harness({public:{flowVersion:4},private:{role:'JESTER',tasks:null,
+    secretDirection:{id:'notice-1',text:'Start with “Breaking news!”',noticeShownAt:null,noticeUnlockAt:null,noticeAcknowledgedAt:null,swapsRemaining:1},
+    actions:{canCompleteDirection:true,canShowDirectionNotice:true}}});
+  let html=api.render();
+  assert.match(html,/role="dialog" aria-modal="true"/);assert.match(html,/Got it · 30s/);
+  assert.match(html,/data-direction-notice-close disabled/);assert.equal(calls.length,0);
+  const click=()=>api.handleClick({target:{closest:()=>({dataset:{v3Action:'acknowledgeDirection',directionId:'notice-1'},disabled:false})}});
+  await click();assert.equal(calls.length,0,'forged enabled button cannot bypass missing server receipt');
+  Object.assign(current.private.secretDirection,{noticeShownAt:1000,noticeUnlockAt:31000});setNow(30999);
+  html=api.render();assert.match(html,/Got it · 1s/);await click();assert.equal(calls.length,0);
+  setNow(31000);html=api.render();assert.match(html,/data-direction-notice-close class|data-direction-notice-close>/);
+  await click();assert.equal(calls[0].action,'acknowledgeDirection');assert.equal(calls[0].payload.directionId,'notice-1');
+  assert.ok(!calls.some(c=>c.action==='completeDirection'||c.action==='completeTask'));
+});
+
+test('acknowledged direction folds below the card and a fixed reopen control does not impose another lock',async()=>{
+  const {api,current,calls}=harness({public:{flowVersion:4},private:{role:'VILLAGER',tasks:null,
+    secretDirection:{id:'notice-1',text:'Sing one sentence.',noticeAcknowledgedAt:100,swapsRemaining:1},actions:{}}});
+  let html=api.render();assert.doesNotMatch(html,/role="dialog"/);
+  assert.match(html,/<details class="panel v6-secret-direction" data-detail="saved-secret-direction">/);
+  assert.match(html,/id="direction-notice-reopen"/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'openDirectionNotice',directionId:'notice-1'},disabled:false})}});
+  html=api.render();assert.match(html,/role="dialog"/);assert.doesNotMatch(html,/Got it · 30s/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'acknowledgeDirection',directionId:'notice-1'},disabled:false})}});
+  assert.equal(calls.length,0,'rereading already acknowledged text needs no server command');
+  assert.doesNotMatch(api.render(),/role="dialog"/);
+  current.private.secretDirection={id:'notice-2',text:'Start with “Plot twist!”',noticeAcknowledgedAt:null};
+  html=api.render();assert.match(html,/Got it · 30s/);assert.match(html,/data-direction-notice-id="notice-2"/);
+});
+
+test('visible popup starts one receipt request, traps keyboard focus and updates the button without rerendering',async()=>{
+  const {api,current,calls,context,setNow}=harness({public:{flowVersion:4},private:{role:'JESTER',tasks:null,
+    secretDirection:{id:'notice-1',text:'Sing one sentence.',noticeShownAt:null,noticeUnlockAt:null,noticeAcknowledgedAt:null}}});
+  api.render();
+  const background={inert:false},header={inert:false},help={textContent:''};let focusCount=0;
+  const doc={hidden:true,activeElement:{id:'old-control'},body:{classList:{toggle(){}}}};
+  const heading={focus(){doc.activeElement=heading;focusCount++;}},language={dataset:{v3Action:'toggleTaskLanguage'},disabled:false,focus(){doc.activeElement=language;}},close={dataset:{v3Action:'acknowledgeDirection'},disabled:true,focus(){doc.activeElement=close;}};
+  const popup={contains:e=>[heading,language,close].includes(e),querySelector:selector=>selector==='[data-direction-notice-close]'?close:selector==='[data-direction-notice-help]'?help:heading,
+    querySelectorAll:()=>[language,close].filter(b=>!b.disabled)};
+  doc.querySelector=()=>popup;doc.querySelectorAll=selector=>selector==='.site-header'?[header]:[background,popup];context.window.document=doc;
+  api.updateDirectionNotice();assert.equal(calls.length,0,'background tabs do not start the reading window');
+  doc.hidden=false;api.updateDirectionNotice();api.updateDirectionNotice();
+  assert.equal(calls.length,1);assert.equal(calls[0].action,'showDirectionNotice');assert.equal(focusCount,1);
+  assert.equal(background.inert,true);assert.equal(header.inert,true);assert.equal(close.disabled,true);
+  current.private.secretDirection.noticeShownAt=1000;current.private.secretDirection.noticeUnlockAt=31000;
+  setNow(31000);api.updateDirectionNotice();assert.equal(close.disabled,false);assert.equal(close.textContent,'Got it');assert.equal(focusCount,1);
+  let prevented=0;doc.activeElement=close;api.handleKeydown({key:'Tab',shiftKey:false,preventDefault(){prevented++;}});assert.equal(doc.activeElement,language);
+  api.handleKeydown({key:'Escape',preventDefault(){prevented++;},stopPropagation(){}});assert.equal(prevented,2);
+  await Promise.resolve();
+});
 
 test('Director private card offers one simple target selector and preserves choices through refreshes',async()=>{
   const {api,calls}=harness({public:{flowVersion:4},private:{wolfProfession:'director',

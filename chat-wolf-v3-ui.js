@@ -20,6 +20,13 @@
     let pendingDeal = null;
     let directorDraft = {targetId:'random',directionId:''};
     let temporaryTopicDraft = '';
+    let reopenedDirectionId = null;
+    let noticeRequestInFlight = null;
+    let noticeRetryAt = 0;
+    let noticeFocusId = null;
+    let noticeFocusAction = null;
+    let noticeReturnFocusId = null;
+    const now = () => ctx.now ? ctx.now() : Date.now();
     const state = () => ctx.getState();
     const pub = () => state().public;
     const me = () => state().private;
@@ -207,7 +214,68 @@
     function secretDirectionCard() {
       const direction=me().secretDirection;
       if(!direction)return '';
-      return '<section class="panel v6-secret-direction"><div class="v4-task-toolbar"><h3>'+esc(C.secretDirection)+'</h3>'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'','ghost small')+'</div><p class="task-condition">'+esc(taskLanguage==='zh'&&direction.textZh?direction.textZh:direction.text)+'</p><small class="muted">'+esc(C.directionTurn)+'</small><div class="button-row">'+(direction.completed?'<span class="mini-chip ready">'+esc(C.directionCompleted)+'</span>':button('completeDirection',C.directionDone,'data-direction-id="'+esc(direction.id)+'"'+(!actions().canCompleteDirection?' disabled':''),'secondary')+(direction.swapsRemaining?button('swapDirection',C.swapDirection,'data-direction-id="'+esc(direction.id)+'"'+(!actions().canSwapDirection?' disabled':''),'ghost small'):''))+'</div><details data-detail="secret-direction-rules"><summary>'+esc(C.roleRules)+'</summary><p>'+esc(C.directionNoProgress)+'</p><p>'+esc(C.directionRule)+'</p></details></section>';
+      const folded=direction.noticeAcknowledgedAt!=null;
+      return '<'+(folded?'details':'section')+' class="panel v6-secret-direction"'+(folded?' data-detail="saved-secret-direction"><summary>'+esc(C.secretDirection)+(direction.completed?' · '+esc(C.directionCompleted):'')+'</summary>':'>')+'<div class="v4-task-toolbar">'+(!folded?'<h3>'+esc(C.secretDirection)+'</h3>':'')+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'','ghost small')+'</div><p class="task-condition">'+esc(taskLanguage==='zh'&&direction.textZh?direction.textZh:direction.text)+'</p><small class="muted">'+esc(C.directionTurn)+'</small><div class="button-row">'+(direction.completed?'<span class="mini-chip ready">'+esc(C.directionCompleted)+'</span>':button('completeDirection',C.directionDone,'data-direction-id="'+esc(direction.id)+'"'+(!actions().canCompleteDirection?' disabled':''),'secondary')+(direction.swapsRemaining?button('swapDirection',C.swapDirection,'data-direction-id="'+esc(direction.id)+'"'+(!actions().canSwapDirection?' disabled':''),'ghost small'):''))+'</div><details data-detail="secret-direction-rules"><summary>'+esc(C.roleRules)+'</summary><p>'+esc(C.directionNoProgress)+'</p><p>'+esc(C.directionRule)+'</p></details></'+(folded?'details':'section')+'>';
+    }
+    function noticeDirection() {
+      if(!state()||isHost()||me().role==='WOLF'||['LOBBY','FINISHED'].includes(pub().phase))return null;
+      return me().secretDirection||null;
+    }
+    function noticeRemaining(direction) {
+      if(direction.noticeAcknowledgedAt!=null)return 0;
+      return direction.noticeUnlockAt==null?30:Math.ceil(Math.max(0,direction.noticeUnlockAt-now())/1000);
+    }
+    function directionNoticePopup() {
+      const direction=noticeDirection();
+      if(!direction)return '';
+      if(direction.noticeAcknowledgedAt!=null&&reopenedDirectionId!==direction.id){
+        return button('openDirectionNotice',C.directionNoticeReopen,'id="direction-notice-reopen" data-direction-id="'+esc(direction.id)+'"','v6-direction-reopen');
+      }
+      const previous=root.document?.querySelector('[data-direction-notice-id]');
+      if(previous?.contains(root.document.activeElement))noticeFocusAction=root.document.activeElement.dataset?.v3Action||null;
+      const remaining=noticeRemaining(direction);
+      return '<div class="v6-direction-backdrop" data-direction-notice-id="'+esc(direction.id)+'"><section class="v6-direction-dialog" role="dialog" aria-modal="true" aria-labelledby="direction-notice-title" aria-describedby="direction-notice-text"><p class="eyebrow">'+esc(C.directionNoticeIntro)+'</p><h2 id="direction-notice-title" tabindex="-1">'+esc(C.secretDirection)+'</h2><p id="direction-notice-text" class="v6-direction-text">'+esc(taskLanguage==='zh'&&direction.textZh?direction.textZh:direction.text)+'</p><p class="muted">'+esc(C.directionTurn)+'</p><div class="button-row">'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'','ghost small')+button('acknowledgeDirection',remaining?C.directionNoticeWait(remaining):C.directionNoticeGotIt,'data-direction-id="'+esc(direction.id)+'" data-direction-notice-close'+(remaining?' disabled':''),'secondary')+'</div><p class="muted v6-direction-reading-note" data-direction-notice-help>'+esc(remaining?C.directionNoticeLocked:C.directionNoticeReadOnly)+'</p></section></div>';
+    }
+    function updateDirectionNotice() {
+      const doc=root.document;
+      if(!doc)return;
+      const popup=doc.querySelector('[data-direction-notice-id]'),direction=noticeDirection();
+      doc.body.classList.toggle('v6-direction-notice-open',!!popup);
+      doc.querySelectorAll('.v3-shell > *').forEach(element=>{element.inert=!!popup&&element!==popup;});
+      doc.querySelectorAll('.site-header').forEach(element=>{element.inert=!!popup;});
+      if(!popup||!direction){noticeFocusId=null;return;}
+      const remaining=noticeRemaining(direction),close=popup.querySelector('[data-direction-notice-close]');
+      close.disabled=remaining>0;
+      close.textContent=remaining?C.directionNoticeWait(remaining):C.directionNoticeGotIt;
+      popup.querySelector('[data-direction-notice-help]').textContent=remaining?C.directionNoticeLocked:C.directionNoticeReadOnly;
+      if(!doc.hidden&&!popup.contains(doc.activeElement)){
+        if(noticeFocusId!==direction.id){
+          noticeReturnFocusId=doc.activeElement?.id||null;
+          noticeFocusAction=null;
+          if(root.parent&&root.parent!==root)root.parent.postMessage({type:'chat-wolf-direction-notice'},root.location.origin);
+        }
+        const target=noticeFocusAction?popup.querySelector('[data-v3-action="'+noticeFocusAction+'"]'):null;
+        (target&&!target.disabled?target:popup.querySelector('#direction-notice-title')).focus({preventScroll:true});
+      }
+      if(!doc.hidden)noticeFocusId=direction.id;
+      if(!doc.hidden&&direction.noticeShownAt==null&&!noticeRequestInFlight&&now()>=noticeRetryAt){
+        noticeRequestInFlight=direction.id;noticeRetryAt=now()+2000;
+        // Only start the authoritative reading window once the actual popup is
+        // visible. Rendering itself never sends commands or stores local secrets.
+        Promise.resolve(ctx.action('showDirectionNotice',{directionId:direction.id})).catch(()=>{}).finally(()=>{noticeRequestInFlight=null;});
+      }
+    }
+    function handleKeydown(event) {
+      const popup=root.document?.querySelector('[data-direction-notice-id]');
+      if(!popup)return false;
+      if(event.key==='Escape'){event.preventDefault();event.stopPropagation();return true;}
+      if(event.key!=='Tab')return false;
+      const focusable=Array.from(popup.querySelectorAll('button:not([disabled])'));
+      const first=focusable[0],last=focusable.at(-1),current=root.document.activeElement;
+      if(!first){event.preventDefault();return true;}
+      if(event.shiftKey&&(current===first||!focusable.includes(current))){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&(current===last||!focusable.includes(current))){event.preventDefault();first.focus();}
+      return true;
     }
     function modernPrivateCard() {
       const p=pub(), person=me(), role=person.role, villageRole=profession(person.profession);
@@ -325,7 +393,7 @@
     function render() {
       C=modern()?(root.CHAT_WOLF_COPY_V4 || root.CHAT_WOLF_COPY_V3):root.CHAT_WOLF_COPY_V3;
       if (draftMatch !== pub().matchId) {
-        draftMatch = pub().matchId; ballot.clear(); judgeDraft.clear(); rewardDraft={}; settingsDraft=null; pendingDeal=null;taskLanguage='en';directorDraft={targetId:'random',directionId:''};temporaryTopicDraft='';
+        draftMatch = pub().matchId; ballot.clear(); judgeDraft.clear(); rewardDraft={}; settingsDraft=null; pendingDeal=null;taskLanguage='en';directorDraft={targetId:'random',directionId:''};temporaryTopicDraft='';reopenedDirectionId=null;noticeFocusId=null;noticeRetryAt=0;
       }
       if (ballotId !== pub().voting?.id) { ballotId=pub().voting?.id; ballot.clear(); judgeDraft.clear(); }
       const privateView=modern()&&!isHost()&&!['LOBBY','FINISHED'].includes(pub().phase);
@@ -339,13 +407,26 @@
       } else {
         html += '<div class="v3-play-grid"><div class="main-stack">'+topicCard()+(['TALK','WRAP_UP'].includes(pub().phase)?lastGuess():'')+phasePanel()+followUpControls()+hostCardLink()+'</div>'+(!isHost()?'<aside class="side-stack">'+privateCard()+'</aside>':'')+'</div>'+restartControls();
       }
-      return '<div class="v3-shell">'+html+(privateView?privateRoomInfo():'')+rules()+'</div>';
+      return '<div class="v3-shell">'+html+(privateView?privateRoomInfo():'')+rules()+directionNoticePopup()+'</div>';
     }
     async function handleClick(event) {
       const b = event.target.closest('[data-v3-action]');
       if (!b) return false;
       if (b.disabled) return true;
       const action = b.dataset.v3Action;
+      if(action==='openDirectionNotice'){
+        if(noticeDirection()?.id===b.dataset.directionId){reopenedDirectionId=b.dataset.directionId;ctx.rerender();}
+        return true;
+      }
+      if(action==='acknowledgeDirection'){
+        const direction=noticeDirection();
+        if(!direction||direction.id!==b.dataset.directionId||noticeRemaining(direction)>0)return true;
+        if(direction.noticeAcknowledgedAt==null&&!await ctx.action('acknowledgeDirection',{directionId:direction.id}))return true;
+        reopenedDirectionId=null;ctx.rerender();
+        const doc=root.document;
+        (noticeReturnFocusId&&doc?.getElementById(noticeReturnFocusId)||doc?.getElementById('direction-notice-reopen'))?.focus({preventScroll:true});
+        return true;
+      }
       if(action==='toggleTaskLanguage'){taskLanguage=taskLanguage==='en'?'zh':'en';ctx.rerender();return true;}
       if(action==='exhaustedSettings'){document.getElementById('v3-settings-form')?.scrollIntoView({block:'start'});return true;}
       if(action==='exhaustedNewTopic'){if(root.confirm(C.restartConfirm))await ctx.action('restart',{keepTopic:false});return true;}
@@ -441,7 +522,7 @@
       }
       return false;
     }
-    return {render,entryFields,readSettings,handleClick,handleChange,handleInput,handleSubmit,onActionError};
+    return {render,entryFields,readSettings,handleClick,handleChange,handleInput,handleSubmit,onActionError,updateDirectionNotice,handleKeydown};
   }
   root.CHAT_WOLF_V3_UI=Object.freeze({create,elapsedMilliseconds,formatElapsed});
 }(window));

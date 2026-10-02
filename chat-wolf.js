@@ -39,7 +39,7 @@
   const playerName = (id) => (playerById(id) || {}).name || C.unknownPlayer;
   const storageKey = (code) => `chat-wolf-legacy-session:${code}`;
   const v3 = window.CHAT_WOLF_V3_UI.create({
-    esc, action, getState: () => state, embeddedCard, playerName, roomBar, timer,
+    esc, action, getState: () => state, now: () => Date.now()+serverOffset, embeddedCard, playerName, roomBar, timer,
     playerRows, showToast, rerender: renderState,
     privateCardUrl: () => {
       const url = new URL('chat-wolf.html', location.href);
@@ -605,6 +605,7 @@
   }
 
   function paintTimers() {
+    v3.updateDirectionNotice();
     const connection = document.getElementById('host-connection');
     if (connection) {
       connection.hidden = !state;
@@ -803,6 +804,7 @@
   });
 
   app.addEventListener('input', event => v3.handleInput(event));
+  app.addEventListener('keydown', event => v3.handleKeydown(event));
   setInterval(paintTimers, 250);
 
   async function boot() {

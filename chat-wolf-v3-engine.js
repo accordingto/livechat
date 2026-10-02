@@ -4,6 +4,7 @@ const RULES = typeof module === 'object' && module.exports ? require('./chat-wol
 const CONTENT = typeof module === 'object' && module.exports ? require('./chat-wolf-v4-content.js') : root.CHAT_WOLF_V4_CONTENT;
 const contentFor = room => (room.flowVersion || 3) < 4 && CONTENT.legacy ? CONTENT.legacy : CONTENT;
 const PHASES = Object.freeze(Object.fromEntries(['LOBBY', 'ROLE_REVEAL', 'TALK', 'WRAP_UP', 'FINAL_CLUES', 'MEETING_DISCUSS', 'MEETING_TURNS', 'VOTING', 'JUDGE_DECISION', 'FINISHED'].map(p => [p, p])));
+const DIRECTION_NOTICE_DELAY_MS = 30000;
 const clone = value => JSON.parse(JSON.stringify(value));
 class GameError extends Error {
   constructor(code, status = 400) { super(code); this.name = 'GameError'; this.code = code; this.status = status; }
@@ -323,6 +324,31 @@ function requireDirection(room, actor, assignmentId) {
   if (assignmentId !== actor.secretDirection.id) fail('STALE_DIRECTION', 409);
   return actor.secretDirection;
 }
+function requireDirectionNotice(room, actor, assignmentId) {
+  if ([PHASES.LOBBY, PHASES.FINISHED].includes(room.phase)) fail('WRONG_PHASE', 409);
+  if (!actor.secretDirection || actor.role === 'WOLF') fail('SECRET_DIRECTION_UNAVAILABLE', 403);
+  if (assignmentId !== actor.secretDirection.id) fail('STALE_DIRECTION', 409);
+  return actor.secretDirection;
+}
+function showDirectionNotice(room, actor, payload, now) {
+  const direction = requireDirectionNotice(room, actor, payload.directionId);
+  // Receipt starts when the player's popup is actually displayed, not when
+  // the Director sends it to a disconnected or background player. Save this
+  // once so refreshes and other devices cannot restart or shorten the lock.
+  if (direction.noticeShownAt != null || direction.noticeAcknowledgedAt != null) return;
+  direction.noticeShownAt = now;
+  direction.noticeUnlockAt = now + DIRECTION_NOTICE_DELAY_MS;
+}
+function acknowledgeDirection(room, actor, payload, now) {
+  const direction = requireDirectionNotice(room, actor, payload.directionId);
+  if (direction.noticeAcknowledgedAt != null) return;
+  if (direction.noticeShownAt == null || direction.noticeUnlockAt == null || now < direction.noticeUnlockAt) {
+    fail('DIRECTION_NOTICE_LOCKED', 409);
+  }
+  direction.noticeAcknowledgedAt = now;
+  // Reading is not completing the performance, and is never added to the
+  // public recap or sent back to the Director as a receipt.
+}
 function sendDirection(room, actor, payload, now) {
   requireWolfAbility(room, actor, 'director');
   const direction = actor.wolfAbility.options.find(d => d.id === payload.directionId);
@@ -333,7 +359,8 @@ function sendDirection(room, actor, payload, now) {
   const recapId = `${room.matchId}-direction-${Math.floor(random(room) * 0x100000000).toString(16).padStart(8, '0')}`;
   const assignmentId = `${recapId}-1`;
   target.secretDirection = { ...clone(direction), id: assignmentId, directionKey: direction.id,
-    recapId, completed: null, swapsRemaining: 1 };
+    recapId, completed: null, swapsRemaining: 1,
+    noticeShownAt: null, noticeUnlockAt: null, noticeAcknowledgedAt: null };
   room.directionRecap.push({ id: recapId, assignmentId, directorId: actor.id, targetId: target.id,
     originalDirection: clone(direction), currentDirection: clone(direction), sentAt: now,
     round: room.round, completed: null, swappedAt: null });
@@ -360,7 +387,8 @@ function swapDirection(room, actor, payload, now) {
   if (!next) fail('DIRECTION_SWAP_UNAVAILABLE', 409);
   const assignmentId = `${current.recapId}-2`;
   actor.secretDirection = { ...clone(next), id: assignmentId, directionKey: next.id,
-    recapId: current.recapId, completed: null, swapsRemaining: 0 };
+    recapId: current.recapId, completed: null, swapsRemaining: 0,
+    noticeShownAt: null, noticeUnlockAt: null, noticeAcknowledgedAt: null };
   const recap = room.directionRecap.find(row => row.id === current.recapId);
   recap.assignmentId = assignmentId; recap.currentDirection = clone(next); recap.swappedAt = now;
 }
@@ -665,7 +693,7 @@ function applyCommand(room, actorId, action, payload, now) {
   const actor = requireActor(room, actorId);
   actor.lastSeenAt = now;
   if (action === 'heartbeat') return;
-  if (room.paused && !['resume', 'cancelGame', 'restart', 'extendTalk', 'setMeetingTurnSeconds'].includes(action)) fail('GAME_PAUSED', 409);
+  if (room.paused && !['resume', 'cancelGame', 'restart', 'extendTalk', 'setMeetingTurnSeconds', 'showDirectionNotice', 'acknowledgeDirection'].includes(action)) fail('GAME_PAUSED', 409);
   switch (action) {
     case 'ready': requirePhase(room, PHASES.LOBBY); actor.ready = !!payload.ready; break;
     case 'settings': {
@@ -754,6 +782,8 @@ function applyCommand(room, actorId, action, payload, now) {
     case 'followUp': requireHost(room, actorId); requirePhase(room, PHASES.TALK, PHASES.WRAP_UP); useFollowUp(room, payload.followUpId); break;
     case 'clearFollowUp': requireHost(room, actorId); requirePhase(room, PHASES.TALK, PHASES.WRAP_UP); room.activeFollowUp = null; break;
     case 'sendDirection': sendDirection(room, actor, payload, now); break;
+    case 'showDirectionNotice': showDirectionNotice(room, actor, payload, now); break;
+    case 'acknowledgeDirection': acknowledgeDirection(room, actor, payload, now); break;
     case 'completeDirection': completeDirection(room, actor, payload, now); break;
     case 'swapDirection': swapDirection(room, actor, payload, now); break;
     case 'changeTopic': {
@@ -865,6 +895,7 @@ function projectState(room, actorId, now = Date.now()) {
   const active = ![PHASES.LOBBY, PHASES.FINISHED].includes(room.phase);
   const talk = completionPhases(room).includes(room.phase) && !room.tasksFrozen && !room.paused;
   const abilityTalk = room.phase === PHASES.TALK && !room.paused && !room.tasksFrozen;
+  const notice = active && actor.role !== 'WOLF' ? actor.secretDirection : null;
   const reward = rewardView(room, actor);
   const actions = {
     canReady: room.phase === PHASES.LOBBY, canSettings: host && room.phase === PHASES.LOBBY,
@@ -889,6 +920,9 @@ function projectState(room, actorId, now = Date.now()) {
     canChangeTopic: abilityTalk && actor.role === 'WOLF' && actor.wolfProfession === 'topic_shifter' && actor.wolfAbility?.type === 'topic_shifter' && !actor.wolfAbility.used && !room.temporaryTopic,
     canCompleteDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed,
     canSwapDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed && actor.secretDirection.swapsRemaining > 0,
+    canShowDirectionNotice: !!notice && notice.noticeAcknowledgedAt == null && notice.noticeShownAt == null,
+    canAcknowledgeDirection: !!notice && notice.noticeAcknowledgedAt == null && notice.noticeShownAt != null &&
+      notice.noticeUnlockAt != null && now >= notice.noticeUnlockAt,
     canCompleteTask: talk && (actor.role === 'WOLF' || !!actor.villageTask),
     canUndoTask: talk && (actor.role === 'WOLF' || (!!actor.villageTask?.completed && !actor.reward?.used)),
     canRerollTask: room.phase === PHASES.ROLE_REVEAL && !!actor.villageTask && actor.rerollsUsed < room.settings.rerollLimit,
@@ -945,7 +979,10 @@ function projectState(room, actorId, now = Date.now()) {
       id: actor.secretDirection.id, text: actor.secretDirection.text,
       ...(actor.secretDirection.textZh ? { textZh: actor.secretDirection.textZh } : {}),
       completed: actor.secretDirection.completed ? clone(actor.secretDirection.completed) : null,
-      swapsRemaining: actor.secretDirection.swapsRemaining } : null,
+      swapsRemaining: actor.secretDirection.swapsRemaining,
+      noticeShownAt: actor.secretDirection.noticeShownAt == null ? null : actor.secretDirection.noticeShownAt,
+      noticeUnlockAt: actor.secretDirection.noticeUnlockAt == null ? null : actor.secretDirection.noticeUnlockAt,
+      noticeAcknowledgedAt: actor.secretDirection.noticeAcknowledgedAt == null ? null : actor.secretDirection.noticeAcknowledgedAt } : null,
     wolfTeam: actor.role === 'WOLF' ? Object.values(room.players).filter(p => p.role === 'WOLF').map(p => ({ id: p.id, name: p.name })) : null,
     tasks: actor.role === 'WOLF' ? room.tasks.map(taskView) : null,
     villageTask: actor.villageTask ? taskView(actor.villageTask) : null,

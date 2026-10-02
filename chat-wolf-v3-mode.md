@@ -1,6 +1,56 @@
 # Chat Wolf — special wolves and task-quality update
 
-## Current update — special-wolves-v6 (2026-10-03)
+## Current update — Director instruction popup (2026-10-03)
+
+This is an incremental card/UI update; roles, tasks, rewards, voting and game
+outcomes are unchanged. A received Secret Direction now opens in a large central
+dialog on the recipient's private card. The original Hub card frame scrolls into
+view via a same-origin, same-frame, content-free message; no instruction, role or
+sender data is sent to the parent page.
+
+- `Got it` is disabled for 30 seconds after the card first displays the dialog.
+  The host-authoritative room stores this receipt and unlock deadline, so refresh,
+  duplicate actions and another device do not restart or shorten the wait. A
+  hidden/background card does not start a new reading window.
+- After acknowledgement the instruction folds into its existing card section;
+  the fixed `View direction` shortcut reopens it without another reading lock.
+  `Got it` means read, not performed: `I did it` remains a separate action and no
+  wolf progress or village reward changes. A swapped instruction starts a fresh
+  30-second window. Old assignment actions cannot close the replacement.
+- Reading/acknowledgement remain available while the game is paused or in a
+  meeting, without changing any game timer or allowing task completion there.
+  Finished/restarted matches do not keep the popup. Receipt metadata is private
+  to the recipient, not a Director receipt or a public recap field.
+
+No new service, credentials, environment variables, database policy or AI calls.
+The existing trusted host must still keep its page open to process card commands.
+`node scripts/chat-wolf-direction-popup-preview.cjs` opens a localhost-only,
+fixed synthetic recipient at `http://127.0.0.1:8093/`; it is an interactive test
+fixture, never a production player-card selector or Firebase tool.
+
+Verification for this popup revision:
+
+- Full repository automated suite: 291/291 passed. New coverage includes 8 engine,
+  6 multi-client transport, 3 UI/focus/visibility and 5 actual parent-frame/host-card
+  tests. Existing game, card bridge and other Hub game regressions also passed.
+- Six independently credentialed synthetic original Hub cards passed the real
+  Firebase test: actual elapsed 30-second lock, premature acknowledgement rejected,
+  same saved receipt across reconnect/duplicate clients, private metadata, fresh
+  swap notice, unchanged task progress, and all three rounds/votes/rewards/restart.
+  Only this run's synthetic paths were cleaned. The maintenance script also waits
+  for committed Topic Shifter data to publish to all cards before checking it.
+- In-app browser checked the functional localhost fixture: central visible popup,
+  disabled button, refresh continuing the countdown, acknowledgement/fold/reopen,
+  refresh after acknowledgement, swap reopening, and Escape not dismissing. Mobile
+  viewport checks at 390 and 360 pixels kept the dialog within the card width.
+
+These are local browser/simulated viewport and actual database-session checks,
+not physical-phone or human voice-chat verification. Publishing is verified by
+comparing the root game assets plus the changed original `play.html` card shell.
+After publishing, refresh both the trusted host page and participants' original
+cards to load the new engine and UI; their persisted seats and roles are retained.
+
+## Previous update — special-wolves-v6 (2026-10-03)
 
 Incremental release at the original `chat-wolf.html` entry. Existing dealt cards
 remain snapshots until redeal. No change to votes, Jester outcomes, profession

@@ -2430,6 +2430,14 @@
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
     let wolfCardFrame = null;
+    // A private instruction can only ask its own same-origin frame to become
+    // visible. Never pass role, sender, instruction text or card data upstream.
+    window.addEventListener('message', event => {
+      if (!wolfCardFrame || event.origin !== location.origin || event.source !== wolfCardFrame.contentWindow ||
+          event.data?.type !== 'chat-wolf-direction-notice') return;
+      wolfCardFrame.scrollIntoView({block:'start',behavior:'instant'});
+      window.scrollTo({top:0,behavior:'instant'});
+    });
     let talkConnected = true;
     let talkClockOffset = 0;
     function showCard(data) {

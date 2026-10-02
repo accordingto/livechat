@@ -107,7 +107,7 @@ test('Director sends once to Jester, refresh keeps stable options and usage, rec
   assert.ok(privateTarget);
   assert.equal(privateTarget.completed, null); assert.equal(privateTarget.swapsRemaining, 1);
   assert.equal(privateTarget.id.includes(p.id), false);
-  assert.deepEqual(Object.keys(privateTarget).sort(), ['completed', 'id', 'swapsRemaining', 'text', 'textZh']);
+  assert.deepEqual(Object.keys(privateTarget).sort(), ['completed', 'id', 'noticeAcknowledgedAt', 'noticeShownAt', 'noticeUnlockAt', 'swapsRemaining', 'text', 'textZh']);
   for (const other of all(r).filter(player => player.id !== target.id)) {
     const view = h.E.projectState(r, other.id);
     assert.equal(view.private.secretDirection, null);

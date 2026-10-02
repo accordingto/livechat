@@ -97,27 +97,61 @@ async function main(){
   assert.equal((await read(director)).private.wolfAbility.used,true);
   const secret=(await read(jester)).private.secretDirection;assert.ok(secret);assert.equal(secret.swapsRemaining,1);
   assert.equal(secret.id.includes(director.id),false);
+  assert.equal(secret.noticeShownAt,null);assert.equal(secret.noticeUnlockAt,null);assert.equal(secret.noticeAcknowledgedAt,null);
+  const refreshedTarget=new Client({store,storage:memory(),allowHostRecovery:false});auxiliary.push(refreshedTarget);
+  await send(jester,{action:'showDirectionNotice',directionId:secret.id});
+  const shownView=await read(jester),shown=shownView.private.secretDirection;
+  assert.equal(shown.noticeUnlockAt-shown.noticeShownAt,30000);
+  assert.equal(shown.noticeAcknowledgedAt,null);
+  assert.equal(shownView.private.actions.canAcknowledgeDirection,false);
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:secret.id}),{code:'DIRECTION_NOTICE_LOCKED'});
+  assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,(await read(jester)).private.secretDirection);
+  await send(jester,{action:'showDirectionNotice',directionId:secret.id});
+  assert.equal((await read(jester)).private.secretDirection.noticeShownAt,shown.noticeShownAt);
+  assert.equal((await read(jester)).private.secretDirection.noticeUnlockAt,shown.noticeUnlockAt);
+  // Wait on real elapsed host time; do not edit clocks or private room data to
+  // pretend this passed. The script runs in a background test process.
+  const beforeWait=await read(jester);
+  await new Promise(resolve=>setTimeout(resolve,Math.max(0,shown.noticeUnlockAt-beforeWait.public.serverNow)+250));
+  await send(jester,{action:'acknowledgeDirection',directionId:secret.id});
+  const acknowledged=(await read(jester)).private.secretDirection;
+  assert.ok(acknowledged.noticeAcknowledgedAt>=acknowledged.noticeUnlockAt);
+  assert.equal(acknowledged.completed,null,'Got it is reading, not completing the performance.');
+  assert.equal(JSON.stringify((await read(director)).private.tasks),beforeDirection);
+  assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,(await read(jester)).private.secretDirection);
+  await send(jester,{action:'acknowledgeDirection',directionId:secret.id});
+  assert.equal((await read(jester)).private.secretDirection.noticeAcknowledgedAt,acknowledged.noticeAcknowledgedAt);
   for(const p of players){
     const view=await read(p);assert.equal(view.public.directionRecap,undefined);
     assert.equal(JSON.stringify(view.public).includes(secret.id),false);
+    for(const key of ['noticeShownAt','noticeUnlockAt','noticeAcknowledgedAt'])assert.equal(JSON.stringify(view.public).includes(key),false);
     if(p.id!==jester.id)assert.equal(view.private.secretDirection,null);
   }
+  assert.equal((await read(hostPlayer)).private.secretDirection,null);
+  console.log('PASS real Director notice transport: first display saved once, premature acknowledgement rejected, actual 30-second server lock, private acknowledgement survives a second client, and no task progress.');
   const beforeSwap=JSON.stringify((await read(director)).private.wolfAbility);
   await send(jester,{action:'swapDirection',directionId:secret.id});
   const swapped=(await read(jester)).private.secretDirection;
   assert.notEqual(swapped.id,secret.id);assert.equal(swapped.swapsRemaining,0);
+  assert.equal(swapped.noticeShownAt,null);assert.equal(swapped.noticeUnlockAt,null);assert.equal(swapped.noticeAcknowledgedAt,null);
   assert.equal(JSON.stringify((await read(director)).private.wolfAbility),beforeSwap);
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:secret.id}),{code:'STALE_DIRECTION'});
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:swapped.id}),{code:'DIRECTION_NOTICE_LOCKED'});
+  await send(jester,{action:'showDirectionNotice',directionId:swapped.id});
+  const swappedNotice=(await read(jester)).private.secretDirection;
+  assert.equal(swappedNotice.noticeUnlockAt-swappedNotice.noticeShownAt,30000);
+  assert.equal(swappedNotice.noticeAcknowledgedAt,null);
   await assert.rejects(send(jester,{action:'completeDirection',directionId:secret.id}),{code:'STALE_DIRECTION'});
   await assert.rejects(send(jester,{action:'swapDirection',directionId:swapped.id}),{code:'DIRECTION_SWAP_UNAVAILABLE'});
   await send(jester,{action:'completeDirection',directionId:swapped.id});
   assert.ok((await read(jester)).private.secretDirection.completed);
+  assert.equal((await read(jester)).private.secretDirection.noticeAcknowledgedAt,null,'Task completion cannot dismiss an unread replacement notice.');
   assert.equal(JSON.stringify((await read(director)).private.tasks),beforeDirection);
   assert.equal((await refreshedDirector.read(code,director.token)).private.wolfAbility.used,true);
-  const refreshedTarget=new Client({store,storage:memory(),allowHostRecovery:false});auxiliary.push(refreshedTarget);
   assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,(await read(jester)).private.secretDirection);
   const directionRoom=JSON.parse((await store.get(host.path(code,control))).value.data).room;
   assert.equal(directionRoom.directionRecap.length,1);
-  console.log('PASS real Director transport: one CAS use, all non-wolf targets including Jester, stable private options, private recipient, one swap, refresh, and no wolf task progress.');
+  console.log('PASS real Director transport: one CAS use, all non-wolf targets including Jester, stable private options, private recipient, one swap with fresh locked notice, stale acknowledgement rejected, refresh, and no wolf task progress.');
   await send(hostPlayer,{action:'followUp'});
   const beforeTopic=(await read(hostPlayer)).public;
   const shifterTab=new Client({store,storage:memory(),allowHostRecovery:false});auxiliary.push(shifterTab);
@@ -128,10 +162,32 @@ async function main(){
   ]);
   assert.ok(topicRace.filter(r=>r.status==='fulfilled').length<=1);
   for(const result of topicRace.filter(r=>r.status==='rejected'))assert.ok(['ACTION_PENDING','ACTION_CONFLICT','STALE_ACTION','WOLF_ABILITY_ALREADY_USED'].includes(result.reason.code));
-  const topicViews=await Promise.all(players.map(read)),temporary=topicViews[0].public.temporaryTopic;
+  // Replies can lose a mailbox race without an action being consumed, and a
+  // committed control document is published to separate cards asynchronously.
+  // Check authoritative consumption first; only retry if neither contender
+  // committed. This is maintenance-test recovery, not an automatic player retry.
+  let topicDoc=(await store.get(host.path(code,control))).value;
+  let topicRoom=JSON.parse(topicDoc.data).room;
+  if(!topicRoom.players[shifter.id].wolfAbility.used){
+    assert.equal(topicRoom.temporaryTopic??null,null);
+    await send(shifter,{action:'changeTopic',text:'What hobby would be hardest to quit?'});
+    topicDoc=(await store.get(host.path(code,control))).value;
+    topicRoom=JSON.parse(topicDoc.data).room;
+    console.log('PASS concurrent Topic Shifter attempts left the ability unused; one refreshed single command committed it.');
+  }
+  assert.ok(topicRoom.temporaryTopic,'One valid Topic Shifter use must be committed.');
+  assert.equal(topicRoom.players[shifter.id].wolfAbility.used,true);
+  let topicViews;
+  const topicPublicationDeadline=Date.now()+12000;
+  do{
+    topicViews=await Promise.all(players.map(read));
+    if(topicViews.every(v=>v.public.syncRevision>=topicDoc.revision&&v.public.temporaryTopic?.id===topicRoom.temporaryTopic.id))break;
+    await host.cycle();
+    await new Promise(resolve=>setTimeout(resolve,100));
+  }while(Date.now()<topicPublicationDeadline);
+  const temporary=topicViews[0].public.temporaryTopic;
   assert.ok(temporary);assert.equal(temporary.text,'What hobby would be hardest to quit?');
   assert.ok(temporary.deadlineAt-topicViews[0].public.serverNow>0&&temporary.deadlineAt-topicViews[0].public.serverNow<=180000);
-  const topicRoom=JSON.parse((await store.get(host.path(code,control))).value.data).room;
   assert.equal(topicRoom.temporaryTopic.deadlineAt-topicRoom.updatedAt,180000);
   assert.equal(topicRoom.players[shifter.id].wolfAbility.used,true);
   assert.deepEqual(Object.keys(temporary).sort(),['deadlineAt','id','remainingMs','text']);
