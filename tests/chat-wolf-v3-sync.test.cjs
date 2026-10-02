@@ -17,7 +17,10 @@ class Store {
   constructor(stripEmpty=false){this.data={};this.stripEmpty=stripEmpty;}
   async get(path){const value=copy(path.split('/').reduce((v,k)=>v?.[k],this.data));return {value,etag:createHash('sha256').update(JSON.stringify(value)).digest('hex')};}
   async put(path,value,etag){
-    if(etag!==undefined&&(await this.get(path)).etag!==etag)return {conflict:true};
+    // Compare and write in one synchronous section, matching Firebase CAS.
+    // Awaiting get() here would let two fake-store writes both pass one ETag.
+    const current=copy(path.split('/').reduce((v,k)=>v?.[k],this.data));
+    if(etag!==undefined&&createHash('sha256').update(JSON.stringify(current)).digest('hex')!==etag)return {conflict:true};
     const parts=path.split('/');let parent=this.data;
     for(const p of parts.slice(0,-1))parent=parent[p]||={};
     const stored=this.stripEmpty?firebaseValue(value):copy(value);
@@ -179,6 +182,120 @@ test('real Firebase empty-node semantics preserve explicit abstention and empty 
   await assert.rejects(s.send(s.players[1],{action:'submitVote'}),{code:'INVALID_SELECTION'});
 });
 
+test('Director reaches only the chosen Jester card, stays private after refresh, and concurrent tabs consume one use',async t=>{
+  const s=await setup(t,{enabledWolfRoles:['director','topic_shifter']},true);
+  await s.send(s.hostPlayer,{action:'startGame'});await s.send(s.hostPlayer,{action:'beginTalk'});
+  const views=await Promise.all(s.players.map(s.read));
+  const director=s.players.find((p,i)=>views[i].private.wolfProfession==='director');
+  const target=s.players.find((p,i)=>views[i].private.role==='JESTER');
+  const wolf=s.players.find((p,i)=>views[i].private.role==='WOLF'&&p.id!==director.id);
+  const offer=(await s.read(director)).private.wolfAbility;
+  assert.ok(offer.options.length>=3&&offer.options.length<=5);
+  assert.deepEqual(offer.targets.map(p=>p.id).sort(),s.players.filter((p,i)=>views[i].private.role!=='WOLF').map(p=>p.id).sort());
+  assert.ok(offer.targets.some(p=>p.id===target.id));
+  assert.ok(offer.targets.every(p=>Object.keys(p).sort().join(',')==='id,name'));
+  await assert.rejects(s.send(director,{action:'sendDirection',targetId:wolf.id,directionId:offer.options[0].id}),{code:'INVALID_TARGET'});
+  assert.equal((await s.read(director)).private.wolfAbility.used,false);
+  const duplicate=new Client({store:s.store,storage:storage(),clock:s.now,allowHostRecovery:false});t.after(()=>duplicate.close());
+  assert.deepEqual((await duplicate.read(s.code,director.token)).private.wolfAbility.options,offer.options);
+  const before=JSON.stringify((await s.read(wolf)).private.tasks);
+  await Promise.all([s.read(director),duplicate.read(s.code,director.token)]);
+  const body={action:'sendDirection',targetId:target.id,directionId:offer.options[0].id};
+  const race=await Promise.allSettled([director.client.command(s.code,director.token,body),duplicate.command(s.code,director.token,body)]);
+  assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+  for(const result of race.filter(r=>r.status==='rejected'))assert.ok(['ACTION_PENDING','ACTION_CONFLICT','WOLF_ABILITY_ALREADY_USED'].includes(result.reason.code));
+  const direction=(await s.read(target)).private.secretDirection;
+  assert.ok(direction);assert.equal(direction.id.includes(director.id),false);
+  assert.deepEqual(Object.keys(direction).sort(),['completed','id','swapsRemaining','text','textZh']);
+  const canonical=(await s.data()).room;
+  assert.equal(canonical.directionRecap.length,1);assert.equal(canonical.players[director.id].wolfAbility.used,true);
+  for(const p of s.players){
+    const view=await s.read(p);
+    assert.equal(view.public.reveal,undefined);assert.equal(view.public.directionRecap,undefined);
+    assert.equal(JSON.stringify(view.public).includes(direction.id),false);
+    if(p.id!==target.id)assert.equal(view.private.secretDirection,null);
+  }
+  const host=await s.read(s.hostPlayer);
+  assert.equal(host.private.wolfProfession,null);assert.equal(host.private.wolfAbility,null);assert.equal(host.private.secretDirection,null);
+  assert.equal(host.private.actions.canSendDirection,undefined);assert.equal(host.private.actions.canCompleteDirection,undefined);
+  const beforeSwap=JSON.stringify((await s.read(director)).private.wolfAbility);
+  await s.send(target,{action:'swapDirection',directionId:direction.id});
+  const swapped=(await s.read(target)).private.secretDirection;
+  assert.notEqual(swapped.id,direction.id);assert.equal(swapped.swapsRemaining,0);
+  assert.equal(JSON.stringify((await s.read(director)).private.wolfAbility),beforeSwap);
+  await assert.rejects(s.send(target,{action:'completeDirection',directionId:direction.id}),{code:'STALE_DIRECTION'});
+  await assert.rejects(s.send(target,{action:'swapDirection',directionId:swapped.id}),{code:'DIRECTION_SWAP_UNAVAILABLE'});
+  await s.send(target,{action:'completeDirection',directionId:swapped.id});
+  assert.equal(JSON.stringify((await s.read(wolf)).private.tasks),before);
+  const refreshed=new Client({store:s.store,storage:storage(),clock:s.now,allowHostRecovery:false});t.after(()=>refreshed.close());
+  assert.deepEqual((await refreshed.read(s.code,target.token)).private.secretDirection,(await s.read(target)).private.secretDirection);
+  assert.equal((await duplicate.read(s.code,director.token)).private.wolfAbility.used,true);
+  await s.send(s.hostPlayer,{action:'endTalk'});
+  await assert.rejects(s.send(target,{action:'completeDirection',directionId:swapped.id}),{code:'WRONG_PHASE'});
+});
+
+test('Temporary Topic sync keeps one deadline through concurrent use, refresh and pause, then expires to Main Topic',async t=>{
+  const s=await setup(t,{enabledWolfRoles:['director','topic_shifter'],temporaryTopicSeconds:180});
+  await s.send(s.hostPlayer,{action:'startGame'});await s.send(s.hostPlayer,{action:'beginTalk'});
+  const views=await Promise.all(s.players.map(s.read));
+  const shifter=s.players.find((p,i)=>views[i].private.wolfProfession==='topic_shifter');
+  const director=s.players.find((p,i)=>views[i].private.wolfProfession==='director');
+  await s.send(s.hostPlayer,{action:'followUp'});
+  const before=(await s.read(s.hostPlayer)).public,tasks=JSON.stringify((await s.read(director)).private.tasks);
+  const duplicate=new Client({store:s.store,storage:storage(),clock:s.now,allowHostRecovery:false});t.after(()=>duplicate.close());
+  await Promise.all([s.read(shifter),duplicate.read(s.code,shifter.token)]);
+  const body={action:'changeTopic',text:'What hobby would be hardest to quit?'};
+  const race=await Promise.allSettled([shifter.client.command(s.code,shifter.token,body),duplicate.command(s.code,shifter.token,body)]);
+  assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+  for(const result of race.filter(r=>r.status==='rejected'))assert.ok(['ACTION_PENDING','ACTION_CONFLICT','WOLF_ABILITY_ALREADY_USED'].includes(result.reason.code));
+  const temporary=(await s.read(s.hostPlayer)).public.temporaryTopic;
+  assert.equal(temporary.deadlineAt-s.now(),180000);
+  assert.deepEqual(Object.keys(temporary).sort(),['deadlineAt','id','remainingMs','text']);
+  for(const view of await Promise.all(s.players.map(s.read))){
+    assert.deepEqual(view.public.temporaryTopic,temporary);assert.deepEqual(view.public.talkClock,before.talkClock);
+    assert.equal(view.public.round,before.round);assert.deepEqual(view.public.usedFollowUpIds,before.usedFollowUpIds);
+  }
+  assert.deepEqual((await duplicate.read(s.code,shifter.token)).public.temporaryTopic,temporary);
+  await s.elapse(30000);await s.send(s.hostPlayer,{action:'pause'});
+  const paused=(await s.read(s.hostPlayer)).public,remaining=paused.temporaryTopic.remainingMs;
+  assert.equal(remaining,150000);assert.equal(paused.temporaryTopic.deadlineAt,null);
+  for(const view of await Promise.all(s.players.map(s.read)))assert.deepEqual(view.public.temporaryTopic,paused.temporaryTopic);
+  await s.elapse(180000);
+  assert.equal((await s.read(shifter)).public.temporaryTopic.remainingMs,remaining);
+  await s.send(s.hostPlayer,{action:'resume'});
+  const resumed=(await s.read(s.hostPlayer)).public;
+  assert.equal(resumed.temporaryTopic.deadlineAt,s.now()+remaining);
+  await s.elapse(remaining-1);assert.ok((await s.read(shifter)).public.temporaryTopic);
+  await s.elapse(1);
+  for(const view of await Promise.all(s.players.map(s.read))){
+    assert.equal(view.public.temporaryTopic,null);assert.equal(view.public.activeFollowUp,null);
+    assert.equal(view.public.round,1);assert.equal(view.public.phase,'TALK');
+    assert.deepEqual(view.public.usedFollowUpIds,before.usedFollowUpIds);
+  }
+  assert.equal(JSON.stringify((await s.read(director)).private.tasks),tasks);
+  assert.equal((await duplicate.read(s.code,shifter.token)).private.wolfAbility.used,true);
+  await assert.rejects(s.send(shifter,{action:'changeTopic',text:'Another topic?'}),{code:'WOLF_ABILITY_ALREADY_USED'});
+});
+
+test('host can end Temporary Topic and sleeping coordinator recovery preserves its remaining time',async t=>{
+  const s=await setup(t,{enabledWolfRoles:['director','topic_shifter']});
+  await s.send(s.hostPlayer,{action:'startGame'});await s.send(s.hostPlayer,{action:'beginTalk'});
+  const views=await Promise.all(s.players.map(s.read));
+  const shifter=s.players.find((p,i)=>views[i].private.wolfProfession==='topic_shifter');
+  await s.send(shifter,{action:'changeTopic',text:'Where would you travel?'});
+  await s.elapse(20000);stopAutomaticCycles(s);
+  const before=(await s.read(s.hostPlayer)).public,remaining=before.temporaryTopic.deadlineAt-s.now();
+  s.advance(900000);await s.host.cycle();
+  const returned=(await s.read(s.hostPlayer)).public;
+  assert.equal(returned.temporaryTopic.deadlineAt-s.now(),remaining);
+  assert.deepEqual(returned.talkClock.elapsedMs,before.talkClock.elapsedMs+(s.now()-900000-before.talkClock.activeSince));
+  await assert.rejects(s.send(s.hostPlayer,{action:'endTemporaryTopic',temporaryTopicId:'stale'}),{code:'STALE_ACTION'});
+  await s.send(s.hostPlayer,{action:'endTemporaryTopic',temporaryTopicId:returned.temporaryTopic.id});
+  for(const view of await Promise.all(s.players.map(s.read)))assert.equal(view.public.temporaryTopic,null);
+  const state=(await s.data()).room;
+  assert.equal(state.players[shifter.id].wolfAbility.used,true);
+});
+
 async function pendingRequest(s,player,body){
   const path=s.host.path(s.code,player.token),old=await s.store.get(path),card=old.value;
   card.request={seq:(card.reply?.seq||0)+1,id:'other-tab-presence',context:viewStamp(JSON.parse(card.view)),body,bodyJson:JSON.stringify(body)};
@@ -227,12 +344,18 @@ test('pending user commands are not automatically queued or retried',async t=>{
 });
 
 test('presentation sanitizer never changes the actual private card',()=>{
-  const view={public:{rulesVersion:3,phase:'VOTING'},private:{playerId:'host',isHost:true,role:'WOLF',tasks:[{text:'secret'}],profession:null,reward:{result:'secret'},actions:{canEndVote:true,canSubmitVote:true}}};
+  const view={public:{rulesVersion:3,phase:'VOTING'},private:{playerId:'host',isHost:true,role:'WOLF',tasks:[{text:'secret'}],profession:null,reward:{result:'secret'},
+    wolfProfession:'director',wolfAbility:{type:'director',used:false,options:[{text:'secret'}]},secretDirection:{text:'secret'},
+    actions:{canEndVote:true,canSubmitVote:true,canSendDirection:true,canChangeTopic:true,canCompleteDirection:true,canSwapDirection:true,canEndTemporaryTopic:true}}};
   const clean=presentationView(view);
   assert.equal(clean.private.role,null);
   assert.equal(clean.private.actions.canSubmitVote,undefined);
   assert.equal(clean.private.actions.canEndVote,true);
+  assert.equal(clean.private.wolfProfession,null);assert.equal(clean.private.wolfAbility,null);assert.equal(clean.private.secretDirection,null);
+  for(const action of ['canSendDirection','canChangeTopic','canCompleteDirection','canSwapDirection'])assert.equal(clean.private.actions[action],undefined);
+  assert.equal(clean.private.actions.canEndTemporaryTopic,true);
   assert.equal(view.private.role,'WOLF');
+  assert.equal(view.private.wolfProfession,'director');assert.equal(view.private.wolfAbility.type,'director');
   view.public.phase='FINISHED';
   assert.equal(presentationView(view),view);
 });

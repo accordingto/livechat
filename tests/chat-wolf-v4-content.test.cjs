@@ -14,23 +14,23 @@ function sixPlayerRoom(engine=E,settings={},seed=17){
   for(let i=1;i<6;i++)engine.addPlayer(room,{playerId:'p'+i,sessionHash:'s'+i,name:'Player '+i,now:1});
   return room;
 }
-test('readability-first release supports an honest 1-interaction/2-self default deal on every topic',()=>{
+test('formal release supports an honest three-self-action default deal on every topic',()=>{
   assert.equal(C.releaseStage,'release');
-  assert.equal(C.contentPolicy,'readability-first');
+  assert.equal(C.contentPolicy,'self-soft-tell');
   assert.equal(C.topics.length,48);
   for(const topic of C.topics){
     assert.equal(topic.followUps.length,8);
     const pool=[...new Map(C.wolfTasks.filter(t=>E.compatible(t,topic)).map(t=>[t.canonicalTaskKey,t])).values()];
     // The user explicitly superseded the former 60/20/40 quantity quota.
     // Keep real playability checks; repetition statistics belong in the report.
-    assert.ok(pool.filter(t=>t.type==='interaction').length>=1,topic.id+': an interaction exists');
-    assert.ok(pool.filter(t=>t.type==='self_action').length>=2,topic.id+': two self actions exist');
+    assert.equal(pool.filter(t=>t.type==='interaction').length,0,topic.id+': interactions are archived');
+    assert.ok(pool.filter(t=>t.type==='self_action').length>=3,topic.id+': three self actions exist');
     for(const seed of [1,17,91]){
       const room=sixPlayerRoom(E,{topicId:topic.id},seed);
       E.dispatch(room,'p0','startGame',{},2);
       assert.equal(room.tasks.length,3);
-      assert.equal(room.tasks.filter(t=>t.type==='interaction').length,1);
-      assert.equal(room.tasks.filter(t=>t.type==='self_action').length,2);
+      assert.equal(room.tasks.filter(t=>t.type==='interaction').length,0);
+      assert.equal(room.tasks.filter(t=>t.type==='self_action').length,3);
       assert.ok(room.tasks.every(t=>E.compatible(t,topic)&&t.status==='active'));
       assert.equal(new Set(room.tasks.map(t=>t.canonicalTaskKey)).size,3);
       assert.equal(new Set(room.tasks.map(t=>t.variantGroup)).size,3);
@@ -111,9 +111,11 @@ test('all 48 main questions are concise bilingual updates, not topic-title templ
   }
 });
 
-test('formal draw pool contains only readable banks; retired cards remain audit-only',()=>{
-  const authored=banks.flatMap(bank=>bank.content.tasks);
+test('formal draw pool contains only curated self actions; old interactions remain audit-only',()=>{
+  const authored=banks.flatMap(bank=>bank.content.tasks).filter(t=>t.type==='self_action').concat(require('../chat-wolf-v6-soft-tells.js').newTasks);
   assert.deepEqual(C.wolfTasks.map(t=>t.id).sort(),authored.map(t=>t.id).sort());
+  assert.equal(C.experimentalWolfTasks.length,246);
+  assert.ok(C.experimentalWolfTasks.every(t=>t.type==='interaction'));
   const retiredIds=new Set(C.previousWolfTasks.map(t=>t.id));
   assert.ok(retiredIds.size>0);
   assert.ok(C.wolfTasks.every(t=>!retiredIds.has(t.id)),'no retired prose can re-enter the active pool');
@@ -140,7 +142,7 @@ test('shortened same-goal cards retain old canonical identities and normalized v
     assert.equal(task.canonicalTaskKey,old.canonicalTaskKey,task.id);
     assert.equal(task.variantGroup,C.normalizeGroup(old.variantGroup),task.id);
   }
-  const changed=C.wolfTasks.find(t=>t.id==='wolf_v5_b_i-reply-too-direct');
+  const changed=C.experimentalWolfTasks.find(t=>t.id==='wolf_v5_b_i-reply-too-direct');
   assert.ok(changed);
   assert.equal(changed.canonicalTaskKey,'v5-b:i-reply-too-direct');
   assert.deepEqual(changed.replaces,[],'a different goal does not masquerade as a wording-only rewrite');
@@ -162,7 +164,8 @@ test('actual readable-content audit reports a 120-card sample and no hidden qual
   assert.equal(report.activeCards,C.wolfTasks.length);
   assert.equal(report.uniqueCanonicalCards,report.activeCards);
   assert.equal(report.disabledOldCards,C.previousWolfTasks.length);
-  assert.equal(report.types.interaction+report.types.self_action,report.activeCards);
+  assert.equal(report.types.interaction||0,0);
+  assert.equal(report.types.self_action,report.activeCards);
   assert.deepEqual(report.over14,[]);
   assert.deepEqual(report.under6,[]);
   assert.deepEqual(report.exactTextDuplicates,[]);
@@ -183,7 +186,8 @@ test('actual readable-content audit reports a 120-card sample and no hidden qual
     assert.equal(row.candidates,pool.length,row.id);
     assert.equal(row.interaction,pool.filter(t=>t.type==='interaction').length,row.id);
     assert.equal(row.self,pool.filter(t=>t.type==='self_action').length,row.id);
-    assert.ok(row.interaction>=1&&row.self>=2,row.id);
+    assert.equal(row.interaction,0,row.id);
+    assert.ok(row.self>=3,row.id);
   }
 });
 

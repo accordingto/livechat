@@ -1,6 +1,89 @@
-# Chat Wolf — readable cards update
+# Chat Wolf — special wolves and task-quality update
 
-## Current update — readable-v5
+## Current update — special-wolves-v6 (2026-10-03)
+
+Incremental release at the original `chat-wolf.html` entry. Existing dealt cards
+remain snapshots until redeal. No change to votes, Jester outcomes, profession
+rewards, three-round flow, shared completion, host presentation or the accepted
+trusted-host/Firebase architecture. Fellow Fan and Control/Puppet Wolf remain off.
+
+- Every new deal randomly assigns exactly one Director Wolf. The optional Lobby
+  Topic Shifter occupies one additional wolf seat; remaining wolves are normal.
+  The host sets the pool, never the player identities.
+- Director sees five saved options from different families, one target list
+  (`Random` plus all non-wolves, including Jester), and `Send Direction`. One use
+  during unpaused free chat. Only the recipient sees `Secret Direction`, `I did
+  it`, and a once-only, low-pressure swap. Completion never changes wolf progress;
+  no public confirmation or sender identity is available until the final recap.
+- Topic Shifter has one short input (150 characters) and one use. The public
+  Temporary Topic defaults to 180 seconds, adjustable in the Lobby from 60–300.
+  It preserves the round, accumulated chat time, roles, tasks and follow-up history.
+  Pause and host lease recovery retain remaining time. Expiry or host early end
+  returns to Main Topic. Text rules prohibit vote manipulation; there is no AI
+  moderation or objective speech verification.
+- Red Wolf, yellow Jester, green Village labels remain. Abilities follow visible
+  tasks; `? Role Rules` is closed by default. Host chat time is still collapsed.
+- Reviewed all 575 village cards against 48 main topics and 384 follow-ups.
+  Removed/replaced two unrelated first-impression mappings; changed 145 cards:
+  35 wording edits and 110 goal rewrites, including all 96 Judge tasks. Each Judge
+  task is now a personal spoken action; its final tie reward is unchanged.
+- Formal wolf draws now use only self-actions: 501 cards, with 42 targeted Soft
+  Tell rewrites and 80 additions. 379 existing self-actions retain their text;
+  246 interaction cards are archived, never a shortage fallback. Some unchanged
+  wolf cards retain broader topic mappings; this was not a complete wolf rewrite.
+- Director pool: 48 reviewed voice-only directions, 16 `shared_soft_tell` and
+  32 `director_only`, across 12 families. Formal wolf mechanic counts and actual
+  reviewed samples are in [the current QA report](docs/chat-wolf-v6-content-qa.md).
+
+### Running and multiplayer access
+
+No new service, schema, key or AI API is required. Keep the existing Firebase
+configuration. Open the original Hub, create a Chat Wolf room, invite participants
+using their original `play.html` private cards, and have them use Ready and game
+controls there. The host presentation contains no personal role/card; the host
+plays through the separate private card. As before, the trusted host tab must stay
+open and awake to process commands. It is not an independently hosted server.
+
+For local viewing, run `node scripts/chat-wolf-dev-server.cjs` from this repository.
+The separate `scripts/chat-wolf-ui-preview.cjs` is explicitly a localhost-only
+visual sample with inert actions; it is never a production player or room tool.
+
+### Verification performed for this revision
+
+- Full repository automated suite: 269/269 passed, including 186 Chat Wolf tests
+  and the existing Hub/other-game regressions. Production HTML/browser content
+  dependency order and current report consistency were checked too.
+- Strict actual-engine draws: 48 topics × 100 seeds × 11 deals = 52,800 successes,
+  zero exhaustion, repeats, cap violations, history resets or silent overrides.
+- Twenty consecutive Director sends and recipient completions across saved
+  redeals: five different families per offer, zero adjacent offer repeats and zero
+  changes to wolf/village tasks or rewards. The recorded seed used 43 distinct
+  directions out of 100 offers; max single-direction appearances was five.
+- Opt-in real Firebase test passed six independently credentialed synthetic Hub
+  card sessions, Director/Jester/private swap/once-only races, six matching
+  Temporary Topic deadlines, pause/resume, reconnection and host early end,
+  plus all three rounds, rewards, private votes, final Judge and fresh restart.
+  Only this run's temporary paths were cleaned. The network test used host early
+  end; the full 180-second expiry is verified with an authoritative simulated clock.
+- In-app browser and Chrome checked local visual cards and text entry. Mobile
+  viewport checks at 360/390 pixels had no horizontal overflow, correct colors,
+  closed rules and no private role on the host view. These are visual samples,
+  not a claim that the sample's inert buttons control a live match.
+
+Not verified: physical phones on different networks, a human voice-chat group,
+fun/balance, or objective completion. Publishing is verified separately by fetching
+the production assets and comparing hashes; a push alone is not deployment proof.
+
+Reproduce the current editorial/capacity report:
+
+```powershell
+node scripts/chat-wolf-v6-report.cjs --write
+$env:CHAT_WOLF_LIVE_TEST = '1'
+$env:CHAT_WOLF_TEST_CARDS = '1'
+node scripts/chat-wolf-v3-live-test.cjs
+```
+
+## Previous release — readable-v5 (historical counts and checks)
 
 This is an incremental content/UI release on the existing production entry.
 No role, profession power, Jester victory, vote priority, three-round flow, three

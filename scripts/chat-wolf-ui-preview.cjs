@@ -5,21 +5,31 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const E=require('../chat-wolf-v3-engine.js');
 const root=path.resolve(__dirname,'..');
 const room=E.createRoom({code:'SAMPLE',hostPlayerId:'p0',hostSessionHash:'test-only',hostName:'Alex',
-  settings:{topicId:'topic_v2_02'},seed:7,now:1});
+  settings:{topicId:'topic_v2_02',enabledWolfRoles:['director','topic_shifter']},seed:7,now:1});
 for(let i=1;i<6;i++)E.addPlayer(room,{playerId:'p'+i,sessionHash:'test-'+i,name:['','Jamie','Sam','Riley','Taylor','Morgan'][i],now:1});
 E.dispatch(room,'p0','startGame',{},2);E.dispatch(room,'p0','beginTalk',{},3);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1');
   if(url.pathname==='/'){
-    const role=['WOLF','JESTER','VILLAGER','HOST'].includes(url.searchParams.get('role'))?url.searchParams.get('role'):'WOLF';
-    const player=Object.values(room.players).find(p=>p.role===(role==='HOST'?'WOLF':role));
-    const state=E.projectState(room,player.id,3);
+    const roles=['DIRECTOR','SHIFTER','TARGET','WOLF','JESTER','VILLAGER','HOST'];
+    const role=roles.includes(url.searchParams.get('role'))?url.searchParams.get('role'):'DIRECTOR';
+    const sample=JSON.parse(JSON.stringify(room));
+    const player=Object.values(sample.players).find(p=>role==='DIRECTOR'?p.wolfProfession==='director':role==='SHIFTER'?p.wolfProfession==='topic_shifter':p.role===(role==='HOST'?'WOLF':role==='TARGET'?'JESTER':role));
+    if(role==='TARGET'){
+      const director=Object.values(sample.players).find(p=>p.wolfProfession==='director');
+      E.dispatch(sample,director.id,'sendDirection',{targetId:player.id,directionId:director.wolfAbility.options[0].id},4);
+    }
+    if(url.searchParams.get('temporary')==='1'){
+      const shifter=Object.values(sample.players).find(p=>p.wolfProfession==='topic_shifter');
+      E.dispatch(sample,shifter.id,'changeTopic',{text:'What hobby would be hardest to quit?'},4);
+    }
+    const state=E.projectState(sample,player.id,4);
     state.private.isHost=role==='HOST';
     if(url.searchParams.get('phase')==='reveal')state.public.phase='ROLE_REVEAL';
     const data=JSON.stringify(state).replace(/</g,'\\u003c');
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});
-    res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local card design check</title><link rel="stylesheet" href="/chat-wolf.css"></head><body><nav style="padding:12px;font-size:12px">LOCAL SAMPLE — no real players · ${['WOLF','JESTER','VILLAGER','HOST'].map(r=>`<a href="/?role=${r}&phase=reveal">${esc(r)}</a>`).join(' · ')}</nav><main id="app"></main><script src="/chat-wolf-copy.js"></script><script src="/chat-wolf-v3-rules.js"></script><script src="/chat-wolf-v3-ui.js"></script><script>
+    res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local card design check</title><link rel="stylesheet" href="/chat-wolf.css"></head><body><nav style="padding:12px;font-size:12px">LOCAL VISUAL SAMPLE — no real players; controls are not connected · ${roles.map(r=>`<a href="/?role=${r}">${esc(r)}</a>`).join(' · ')}</nav><main id="app"></main><script src="/chat-wolf-copy.js"></script><script src="/chat-wolf-v3-rules.js"></script><script src="/chat-wolf-v3-ui.js"></script><script>
     const state=${data};
     const escapeText=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const ui=CHAT_WOLF_V3_UI.create({esc:escapeText,getState:()=>state,embeddedCard:${role!=='HOST'},

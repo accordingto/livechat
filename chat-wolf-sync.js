@@ -45,10 +45,11 @@
     const actions = view.private.actions || {};
     const publicActions = ['canStart','canSettings','canBeginTalk','canEndTalk','canExtendTalk','canEndClues','canEndMeeting','canEndVote',
       'canPause','canResume','canCancel','canRestart','canReplay','canFollowUp','canClearFollowUp',
-      'canEndMeetingTurn','canSkipMeetingTurn','canSetMeetingTurnSeconds','canSnoozeTalkReminder'];
+      'canEndMeetingTurn','canSkipMeetingTurn','canSetMeetingTurnSeconds','canSnoozeTalkReminder','canEndTemporaryTopic'];
     return { public: view.public, private: {
       playerId: view.private.playerId, name: view.private.name, isHost: true, presentationOnly: true,
       role: null, profession: null, wolfTeam: null, tasks: null, villageTask: null, reward: null,
+      wolfProfession: null, wolfAbility: null, secretDirection: null,
       myVoteSubmitted: false, judgeDecision: null, roleAcknowledged: false,
       talkReminder: view.private.talkReminder || null,
       contentRepeatException: !!view.private.contentRepeatException,
@@ -300,6 +301,10 @@
       // time instead of silently timing out everybody during its absence.
       if (doc.leaseUntil < now && room.deadlineAt != null && !room.paused) {
         room.deadlineAt = now + Math.max(0, room.deadlineAt - doc.lastHostAt);
+        room.revision++;
+      }
+      if (doc.leaseUntil < now && room.temporaryTopic?.deadlineAt != null && !room.paused) {
+        room.temporaryTopic.deadlineAt = now + Math.max(0, room.temporaryTopic.deadlineAt - doc.lastHostAt);
         room.revision++;
       }
       if (doc.leaseUntil < now && room.flowVersion >= 4 && room.phase === 'TALK' && !room.paused && room.talkClock?.activeSince != null) {

@@ -7,9 +7,9 @@ const files=['chat-wolf.html','chat-wolf.css','chat-wolf-copy.js','firebase-conf
   'chat-wolf-content.js','chat-wolf-v3-rules.js','chat-wolf-v3-content.js',
   'chat-wolf-v4-wolf-tasks.js','chat-wolf-v4-wolf-imagine.js','chat-wolf-v4-wolf-life.js',
   'chat-wolf-v4-expansion-a.js','chat-wolf-v4-expansion-b.js','chat-wolf-v4-expansion-c.js',
-  'chat-wolf-v4-village.js','chat-wolf-v4-taxonomy.js',
+  'chat-wolf-v4-village.js','chat-wolf-v6-village.js','chat-wolf-v4-taxonomy.js',
   'chat-wolf-v5-readable-a.js','chat-wolf-v5-readable-b.js','chat-wolf-v5-readable-c.js','chat-wolf-v5-readable-core.js',
-  'chat-wolf-v4-content.js',
+  'chat-wolf-v6-directions.js','chat-wolf-v6-soft-tells.js','chat-wolf-v4-content.js',
   'chat-wolf-v3-engine.js','chat-wolf-engine.js','chat-wolf-cards.js','chat-wolf-history.js',
   'chat-wolf-sync.js','chat-wolf-v3-ui.js','chat-wolf.js','chat-wolf-preview-config.js','apple-touch-icon.png'];
 for(const file of files)if(!fs.existsSync(path.join(root,file)))throw new Error('Missing public asset: '+file);

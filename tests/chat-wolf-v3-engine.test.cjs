@@ -44,7 +44,7 @@ test('v3 defaults: six seats, two wolves, one jester, unique village professions
   assert.equal(wolves(r).length, 2); assert.equal(villagers(r).length, 3);
   assert.equal(players(r).filter(p => p.role === 'JESTER').length, 1);
   assert.equal(new Set(villagers(r).map(p => p.profession)).size, 3);
-  assert.equal(r.tasks.length, 3); assert.equal(r.tasks.filter(t => t.type === 'interaction').length, 1);
+  assert.equal(r.tasks.length, 3); assert.equal(r.tasks.filter(t => t.type === 'interaction').length, 0);
   const views = wolves(r).map(p => E.projectState(r, p.id).private);
   assert.deepEqual(views[0].tasks, views[1].tasks); assert.equal(views[0].tasks.length, 3);
   assert.equal(r.phase, 'ROLE_REVEAL'); assert.equal(r.deadlineAt, null);
@@ -80,7 +80,7 @@ test('variable wolf and mission counts stay one whole-team set, with feasible co
     { playerCount: 12, wolfCount: 4, taskCount: 8, interactionTaskCount: 3 }]) {
     const r = start(settings);
     assert.equal(r.tasks.length, settings.taskCount);
-    assert.equal(r.tasks.filter(t => t.type === 'interaction').length, settings.interactionTaskCount);
+    assert.equal(r.tasks.filter(t => t.type === 'interaction').length, 0);
     assert.equal(new Set(r.tasks.map(t => t.mechanicKey)).size, r.tasks.length);
     for (const task of r.tasks) { assert.ok(E.compatible(task, r.topic)); assert.ok(task.requiredOtherPlayerCount <= r.settings.playerCount - settings.wolfCount); }
     for (const p of wolves(r)) assert.equal(E.projectState(r, p.id).private.tasks.length, settings.taskCount);
@@ -388,7 +388,7 @@ test('large custom counts either allocate valid unique cards or explicitly repor
     }
     assert.equal(r.tasks.length, 12, topic.id);
     assert.equal(new Set(r.tasks.map(t => t.mechanicKey)).size, 12, topic.id);
-    assert.equal(r.tasks.filter(t => t.type === 'interaction').length, interactionTaskCount, topic.id);
+    assert.equal(r.tasks.filter(t => t.type === 'interaction').length, 0, topic.id);
     for (const task of r.tasks) assert.ok(E.compatible(task, topic));
   }
 });

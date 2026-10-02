@@ -45,6 +45,62 @@ function harness(overrides = {}, embeddedCard = false) {
   return {api,current,calls,context};
 }
 
+test('Director private card offers one simple target selector and preserves choices through refreshes',async()=>{
+  const {api,calls}=harness({public:{flowVersion:4},private:{wolfProfession:'director',
+    wolfAbility:{type:'director',used:false,targets:[{id:'c',name:'Jessie'},{id:'d',name:'Leo'}],options:[
+      {id:'d1',text:'Sing your next sentence.'},{id:'d2',text:'Make a short drumroll.'},{id:'d3',text:'Start with “Breaking news!”'}]},
+    actions:{canSendDirection:true}}});
+  let html=api.render();
+  assert.match(html,/Director Wolf/);assert.match(html,/Send Direction/);
+  assert.equal((html.match(/>Random<\/option>/g)||[]).length,1);
+  assert.match(html,/>Jessie<\/option>/);assert.match(html,/>Leo<\/option>/);
+  assert.doesNotMatch(html,/Choose random|Choose player|Control Wolf|Puppet Wolf/);
+  api.handleChange({target:{name:'targetId',value:'d',form:{id:'v6-director-form'}}});
+  api.handleChange({target:{name:'directionId',value:'d2',form:{id:'v6-director-form'}}});
+  html=api.render();assert.match(html,/value="d" selected/);assert.match(html,/value="d2" selected/);
+  await api.handleSubmit({preventDefault(){},target:{id:'v6-director-form',elements:{targetId:{value:'d'},directionId:{value:'d2'}}}});
+  assert.equal(calls.at(-1).action,'sendDirection');assert.deepEqual({...calls.at(-1).payload},{targetId:'d',directionId:'d2'});
+});
+
+test('Secret Direction is playable on a Jester card without a sender or a wolf-task control',async()=>{
+  const {api,calls}=harness({public:{flowVersion:4},private:{role:'JESTER',wolfTeam:null,tasks:null,
+    secretDirection:{id:'opaque-1',text:'Start with “Breaking news!”',completed:null,swapsRemaining:1},
+    actions:{canCompleteDirection:true,canSwapDirection:true}}});
+  const html=api.render();
+  assert.match(html,/Secret Direction/);assert.match(html,/I did it/);assert.match(html,/Swap direction/);
+  assert.doesNotMatch(html,/v6-director-form|Send Direction|data-v3-action="completeTask"/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'completeDirection',directionId:'opaque-1'},disabled:false})}});
+  assert.equal(calls.at(-1).action,'completeDirection');assert.equal(calls.at(-1).payload.directionId,'opaque-1');
+});
+
+test('Temporary Topic is shown once with its own countdown; drafted short text survives rerender',async()=>{
+  const {api,current,calls}=harness({public:{flowVersion:4,serverNow:1000,temporaryTopic:{id:'temp-1',text:'What hobby would be hardest to quit?',deadlineAt:181000,remainingMs:null}},private:{
+    wolfProfession:'topic_shifter',wolfAbility:{type:'topic_shifter',used:false},actions:{canChangeTopic:true}}});
+  api.render();api.handleInput({target:{value:'Which friend replies last?',form:{id:'v6-topic-shifter-form'}}});
+  let html=api.render();
+  assert.equal((html.match(/What hobby would be hardest to quit\?/g)||[]).length,1);
+  assert.match(html,/data-temporary-deadline="181000"/);assert.match(html,/>3:00<\/span>/);
+  assert.match(html,/Which friend replies last\?/);assert.match(html,/maxlength="150"/);
+  assert.doesNotMatch(html,/data-v3-action="endTemporaryTopic"/);
+  await api.handleSubmit({preventDefault(){},target:{id:'v6-topic-shifter-form',elements:{text:{value:' Which friend replies last? '}}}});
+  assert.equal(calls.at(-1).action,'changeTopic');assert.equal(calls.at(-1).payload.text,'Which friend replies last?');
+  current.private.isHost=true;current.private.actions={canEndTemporaryTopic:true};
+  html=api.render();assert.match(html,/data-temporary-topic-id="temp-1"/);assert.doesNotMatch(html,/v6-topic-shifter-form/);
+});
+
+test('Host presentation never renders wolf abilities or a directed host’s private performance',()=>{
+  const {api}=harness({public:{flowVersion:4},private:{isHost:true,wolfProfession:'director',
+    wolfAbility:{type:'director',used:false,options:[{id:'secret',text:'PRIVATE OPTION'}],targets:[]},
+    secretDirection:{id:'hidden',text:'PRIVATE DIRECTION',swapsRemaining:1},actions:{canSendDirection:true,canCompleteDirection:true}}});
+  assert.doesNotMatch(api.render(),/PRIVATE OPTION|PRIVATE DIRECTION|v6-director-form|v6-secret-direction|class="role-title[^>]*>Director Wolf/);
+});
+
+test('Lobby has required Director, optional Topic Shifter and no interaction quota input',()=>{
+  const {api}=harness({public:{phase:'LOBBY',flowVersion:4,matchId:null,topic:null},private:{isHost:true,role:null,tasks:null}});
+  const html=api.render();assert.match(html,/Required · always included/);assert.match(html,/name="wolfRole" value="topic_shifter"/);
+  assert.match(html,/name="temporaryTopicSeconds"[^>]*value="180"/);assert.doesNotMatch(html,/name="interactionTaskCount"|Control Wolf|Puppet Wolf/);
+});
+
 test('paused follow-ups cannot be clicked and extensions show the updated estimate',()=>{
   const {api,current}=harness({public:{extensionSeconds:120,estimatedSeconds:2360},private:{isHost:true,actions:{canFollowUp:true}}});
   assert.match(api.render(),/Estimated core game: 39 min 20 s/);

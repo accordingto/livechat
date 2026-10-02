@@ -29,6 +29,10 @@ function normalizeSettings(input = {}) {
   const valid = RULES.professions.map(p => p.id);
   if (!Array.isArray(s.enabledProfessions) || s.enabledProfessions.some(id => !valid.includes(id))) fail('INVALID_PROFESSIONS');
   s.enabledProfessions = [...new Set(s.enabledProfessions)];
+  const validWolfRoles = RULES.wolfProfessions.map(p => p.id);
+  if (!Array.isArray(s.enabledWolfRoles) || s.enabledWolfRoles.some(id => !validWolfRoles.includes(id))) fail('INVALID_WOLF_ROLES');
+  // The host chooses a pool, never a player's identity. Director is always required.
+  s.enabledWolfRoles = ['director', ...new Set(s.enabledWolfRoles.filter(id => id !== 'director'))];
   if (s.roundCount < 2 && RULES.professions.some(p => p.requiresMidgame && s.enabledProfessions.includes(p.id))) fail('PROFESSION_NEEDS_MIDGAME');
   s.topicId = String(s.topicId || 'random');
   if (s.topicId !== 'random' && !CONTENT.topics.some(t => t.id === s.topicId)) fail('INVALID_TOPIC');
@@ -41,6 +45,7 @@ function normalizeSettings(input = {}) {
 }
 function makePlayer(id, name, isHost, now) {
   return { id, name: cleanName(name), isHost, ready: false, role: null, profession: null,
+    wolfProfession: null, wolfAbility: null, secretDirection: null,
     roleAcknowledged: false, joinedAt: now, lastSeenAt: now, villageTask: null, reward: null, rerollsUsed: 0 };
 }
 function createRoom({ code, hostPlayerId, hostSessionHash, hostName, settings, now = Date.now(), seed }) {
@@ -93,6 +98,7 @@ function compatible(task, topic) {
 }
 function sameSet(a, b) { return a.length === b.length && new Set(a).size === a.length && a.every(id => b.includes(id)); }
 function stage(room, phase, now, seconds = null) {
+  if (room.temporaryTopic && phase !== PHASES.TALK) endTemporaryTopic(room);
   room.phase = phase; room.phaseVersion = (room.phaseVersion || 0) + 1;
   room.deadlineAt = seconds == null ? null : now + seconds * 1000;
   room.paused = false; room.pausedRemainingMs = null;
@@ -101,9 +107,10 @@ function clearMatch(room) {
   for (const key of ['topic', 'tasks', 'tasksFrozen', 'round', 'meeting', 'voting', 'ballots', 'voteHistory', 'judge', 'result',
     'lastVoteResult', 'deadlineAt', 'paused', 'pausedRemainingMs', 'activeFollowUp', 'usedFollowUpIds',
     'extensionSeconds', 'finalClues', 'finishedAt', 'talkClock', 'talkReminder', 'meetingBaseOrder',
-    'meetingTimePlan', 'liveMeetingTurnSeconds', 'contentRepeatException']) delete room[key];
+    'meetingTimePlan', 'liveMeetingTurnSeconds', 'contentRepeatException', 'temporaryTopic', 'directionRecap']) delete room[key];
   for (const player of Object.values(room.players)) {
     player.role = null; player.profession = null; player.roleAcknowledged = false;
+    player.wolfProfession = null; player.wolfAbility = null; player.secretDirection = null;
     player.villageTask = null; player.reward = null; player.rerollsUsed = 0;
   }
 }
@@ -270,12 +277,108 @@ function chooseTopic(room, pool) {
     (1 + 3 * recent.filter(id => id === topic.id).length + categories.filter(c => c === topic.category).length) }))
     .sort((a, b) => a.rank - b.rank)[0]?.topic;
 }
+function directionPool() {
+  return (CONTENT.directorDirections || []).filter(d => d.id && d.text && d.family &&
+    d.active === true && d.reviewed === true && d.status !== 'deprecated');
+}
+function directionOptions(room, now) {
+  const pool = directionPool();
+  const last = (room.directionHistory || []).at(-1);
+  const previousIds = new Set(last?.optionIds || []);
+  // Dealt options are snapshots. Refresh cannot reroll them, and no caller can
+  // supply an unreviewed instruction. Prefer a different option from last deal.
+  const candidates = shuffle(room, pool).sort((a, b) => Number(previousIds.has(a.id)) - Number(previousIds.has(b.id)));
+  const families = shuffle(room, [...new Set(candidates.map(d => d.family))]);
+  if (families.length < 3) fail('DIRECTION_POOL_UNAVAILABLE', 503);
+  const options = families.slice(0, 5).map(family => clone(candidates.find(d => d.family === family)));
+  room.directionHistory = [...(room.directionHistory || []), { matchId: room.matchId, at: now,
+    optionIds: options.map(d => d.id), families: options.map(d => d.family) }].slice(-RULES.historyLimit);
+  return options;
+}
+function assignWolfProfessions(room, now) {
+  const wolves = shuffle(room, ids(room).filter(id => room.players[id].role === 'WOLF'));
+  const director = room.players[wolves[0]];
+  director.wolfProfession = 'director';
+  director.wolfAbility = { type: 'director', used: false, options: directionOptions(room, now) };
+  let optional = shuffle(room, room.settings.enabledWolfRoles.filter(id => id !== 'director'));
+  for (const id of wolves.slice(1)) {
+    const profession = optional.shift() || 'normal';
+    room.players[id].wolfProfession = profession;
+    room.players[id].wolfAbility = profession === 'normal' ? null : { type: profession, used: false };
+  }
+  room.directionRecap = [];
+}
+function directionTargets(room) {
+  // Include every non-wolf camp, including Jester and future third parties.
+  return Object.values(room.players).filter(p => p.role && p.role !== 'WOLF');
+}
+function requireWolfAbility(room, actor, type) {
+  requirePhase(room, PHASES.TALK);
+  if (actor.role !== 'WOLF' || actor.wolfProfession !== type || actor.wolfAbility?.type !== type) fail('WOLF_ABILITY_UNAVAILABLE', 403);
+  if (actor.wolfAbility.used) fail('WOLF_ABILITY_ALREADY_USED', 409);
+}
+function requireDirection(room, actor, assignmentId) {
+  requirePhase(room, PHASES.TALK);
+  if (!actor.secretDirection || actor.role === 'WOLF') fail('SECRET_DIRECTION_UNAVAILABLE', 403);
+  if (assignmentId !== actor.secretDirection.id) fail('STALE_DIRECTION', 409);
+  return actor.secretDirection;
+}
+function sendDirection(room, actor, payload, now) {
+  requireWolfAbility(room, actor, 'director');
+  const direction = actor.wolfAbility.options.find(d => d.id === payload.directionId);
+  if (!direction) fail('INVALID_DIRECTION');
+  const eligible = directionTargets(room);
+  const target = payload.targetId === 'random' ? shuffle(room, eligible)[0] : eligible.find(p => p.id === payload.targetId);
+  if (!target) fail('INVALID_TARGET');
+  const recapId = `${room.matchId}-direction-${Math.floor(random(room) * 0x100000000).toString(16).padStart(8, '0')}`;
+  const assignmentId = `${recapId}-1`;
+  target.secretDirection = { ...clone(direction), id: assignmentId, directionKey: direction.id,
+    recapId, completed: null, swapsRemaining: 1 };
+  room.directionRecap.push({ id: recapId, assignmentId, directorId: actor.id, targetId: target.id,
+    originalDirection: clone(direction), currentDirection: clone(direction), sentAt: now,
+    round: room.round, completed: null, swappedAt: null });
+  actor.wolfAbility.used = true;
+}
+function completeDirection(room, actor, payload, now) {
+  const direction = requireDirection(room, actor, payload.directionId);
+  if (direction.completed) return;
+  direction.completed = { at: now, round: room.round };
+  const recap = room.directionRecap.find(row => row.id === direction.recapId);
+  recap.completed = clone(direction.completed);
+  // This deliberately never calls personalTask or updates shared wolf progress.
+}
+function swapDirection(room, actor, payload, now) {
+  const current = requireDirection(room, actor, payload.directionId);
+  if (current.completed || !current.swapsRemaining) fail('DIRECTION_SWAP_UNAVAILABLE', 409);
+  const pool = directionPool().filter(d => d.id !== current.directionKey &&
+    String(d.pressure || 'low') === String(current.pressure || 'low'));
+  // A player uncomfortable with singing must be able to leave that mechanic.
+  // Prefer a different, gentle spoken family at the same pressure level.
+  const differentFamily = pool.filter(d => d.family !== current.family);
+  const gentle = differentFamily.filter(d => ['short_phrase', 'unusual_opening', 'unusual_ending', 'repetition'].includes(d.family));
+  const next = shuffle(room, gentle.length ? gentle : differentFamily.length ? differentFamily : pool)[0];
+  if (!next) fail('DIRECTION_SWAP_UNAVAILABLE', 409);
+  const assignmentId = `${current.recapId}-2`;
+  actor.secretDirection = { ...clone(next), id: assignmentId, directionKey: next.id,
+    recapId: current.recapId, completed: null, swapsRemaining: 0 };
+  const recap = room.directionRecap.find(row => row.id === current.recapId);
+  recap.assignmentId = assignmentId; recap.currentDirection = clone(next); recap.swappedAt = now;
+}
+function cleanTemporaryTopic(value) {
+  const text = String(value == null ? '' : value).replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!text || text.length > 150) fail('INVALID_TEMPORARY_TOPIC');
+  return text;
+}
+function endTemporaryTopic(room) {
+  room.temporaryTopic = null;
+  room.activeFollowUp = null;
+}
 function startGame(room, now, keepTopic = false, changeTopic = false, allowRecentRepeat = false) {
   if (ids(room).length !== room.settings.playerCount) fail('WAITING_FOR_PLAYERS', 409);
   const savedTopic = keepTopic && room.topic ? clone(CONTENT.topics.find(t =>
     t.id === room.topic.id || t.id === CONTENT.legacyTopicMap?.[room.topic.id]) || room.topic) : null;
   const oldTopicId = room.topic && room.topic.id;
-  room.settings = normalizeSettings({ ...room.settings,
+  room.settings = normalizeSettings({ ...room.settings, interactionTaskCount: 0,
     topicId: room.settings.topicId === 'random' || CONTENT.topics.some(t => t.id === room.settings.topicId) ? room.settings.topicId : 'random' });
   prepareHistory(room);
   clearMatch(room);
@@ -297,6 +400,7 @@ function startGame(room, now, keepTopic = false, changeTopic = false, allowRecen
   const order = shuffle(room, ids(room));
   order.forEach((id, index) => { room.players[id].role = index < room.settings.wolfCount ? 'WOLF' :
     room.settings.jesterEnabled && index === room.settings.wolfCount ? 'JESTER' : 'VILLAGER'; });
+  assignWolfProfessions(room, now);
   let available = RULES.professions.filter(p => room.settings.enabledProfessions.includes(p.id));
   let informationRoles = 0;
   for (const id of shuffle(room, ids(room).filter(id => room.players[id].role === 'VILLAGER'))) {
@@ -409,6 +513,7 @@ function endMeetingTurn(room, now, reason) {
   stage(room, PHASES.MEETING_TURNS, now, meeting.turnSeconds);
 }
 function endTalk(room, now) {
+  if (room.temporaryTopic) endTemporaryTopic(room);
   stopTalkClock(room, now);
   if (room.round === room.settings.roundCount) {
     freezeTasks(room);
@@ -521,6 +626,9 @@ function advanceOne(room, now) {
 function advanceExpired(room, now = Date.now()) {
   if (!room || room.paused) return false;
   let changed = false;
+  if (room.temporaryTopic?.deadlineAt != null && room.temporaryTopic.deadlineAt <= now) {
+    endTemporaryTopic(room); changed = true;
+  }
   if (room.flowVersion >= 4 && room.phase === PHASES.TALK && room.settings.talkEndBehavior !== 'automatic' &&
       room.talkReminder && !room.talkReminder.due && talkElapsedMs(room, now) >= room.talkReminder.remindAtElapsedMs) {
     room.talkReminder.due = true; room.talkReminder.number++; changed = true;
@@ -619,6 +727,10 @@ function applyCommand(room, actorId, action, payload, now) {
       if (room.deadlineAt == null && !(room.flowVersion >= 4 && room.phase === PHASES.TALK)) fail('WRONG_PHASE', 409);
       stopTalkClock(room, now);
       room.pausedRemainingMs = room.deadlineAt == null ? null : Math.max(0, room.deadlineAt - now);
+      if (room.temporaryTopic) {
+        room.temporaryTopic.remainingMs = Math.max(0, room.temporaryTopic.deadlineAt - now);
+        room.temporaryTopic.deadlineAt = null;
+      }
       room.deadlineAt = null; room.paused = true;
       room.phaseVersion++; break;
     }
@@ -626,6 +738,10 @@ function applyCommand(room, actorId, action, payload, now) {
       requireHost(room, actorId);
       if (!room.paused) fail('NOT_PAUSED', 409);
       room.deadlineAt = room.pausedRemainingMs == null ? null : now + room.pausedRemainingMs;
+      if (room.temporaryTopic) {
+        room.temporaryTopic.deadlineAt = now + room.temporaryTopic.remainingMs;
+        room.temporaryTopic.remainingMs = null;
+      }
       if (room.phase === PHASES.TALK && room.talkClock) room.talkClock.activeSince = now;
       room.paused = false; room.pausedRemainingMs = null;
       room.phaseVersion++; break;
@@ -637,6 +753,22 @@ function applyCommand(room, actorId, action, payload, now) {
       stage(room, PHASES.LOBBY, now); break;
     case 'followUp': requireHost(room, actorId); requirePhase(room, PHASES.TALK, PHASES.WRAP_UP); useFollowUp(room, payload.followUpId); break;
     case 'clearFollowUp': requireHost(room, actorId); requirePhase(room, PHASES.TALK, PHASES.WRAP_UP); room.activeFollowUp = null; break;
+    case 'sendDirection': sendDirection(room, actor, payload, now); break;
+    case 'completeDirection': completeDirection(room, actor, payload, now); break;
+    case 'swapDirection': swapDirection(room, actor, payload, now); break;
+    case 'changeTopic': {
+      requireWolfAbility(room, actor, 'topic_shifter');
+      if (room.temporaryTopic) fail('TEMPORARY_TOPIC_ACTIVE', 409);
+      room.temporaryTopic = { id: `${room.matchId}-temporary-topic`, text: cleanTemporaryTopic(payload.text),
+        deadlineAt: now + room.settings.temporaryTopicSeconds * 1000, remainingMs: null };
+      actor.wolfAbility.used = true; break;
+    }
+    case 'endTemporaryTopic': {
+      requireHost(room, actorId); requirePhase(room, PHASES.TALK);
+      if (!room.temporaryTopic) fail('TEMPORARY_TOPIC_NOT_ACTIVE', 409);
+      if (payload.temporaryTopicId != null && payload.temporaryTopicId !== room.temporaryTopic.id) fail('STALE_ACTION', 409);
+      endTemporaryTopic(room); break;
+    }
     case 'completeTask': {
       requirePhase(room, ...completionPhases(room));
       if (room.tasksFrozen) fail('TASKS_FROZEN', 409);
@@ -705,6 +837,18 @@ function taskView(task) { return { id: task.id, text: task.text,
   ...(task.textZh ? { textZh: task.textZh } : {}), ...(task.example ? { example: task.example } : {}),
   ...(task.exampleZh ? { exampleZh: task.exampleZh } : {}),
   ...(task.type ? { type: task.type } : {}), completed: task.completed ? clone(task.completed) : null }; }
+function directionView(direction) {
+  return { id: direction.id, text: direction.text,
+    ...(direction.textZh ? { textZh: direction.textZh } : {}), family: direction.family,
+    source: direction.source || 'director_only', pressure: direction.pressure || 'low' };
+}
+function wolfAbilityView(room, actor) {
+  const ability = actor.wolfAbility;
+  if (actor.role !== 'WOLF' || !ability || [PHASES.LOBBY, PHASES.FINISHED].includes(room.phase)) return null;
+  return { type: ability.type, used: !!ability.used,
+    ...(ability.type === 'director' ? { options: ability.options.map(directionView),
+      targets: directionTargets(room).map(p => ({ id: p.id, name: p.name })) } : {}) };
+}
 function publicVote(vote) { return { id: vote.id, round: vote.round, type: vote.type, nominees: vote.nominees.slice() }; }
 function rewardView(room, actor) {
   if (!actor.reward) return null;
@@ -720,6 +864,7 @@ function projectState(room, actorId, now = Date.now()) {
   const host = actor.isHost && room.hostPlayerId === actorId;
   const active = ![PHASES.LOBBY, PHASES.FINISHED].includes(room.phase);
   const talk = completionPhases(room).includes(room.phase) && !room.tasksFrozen && !room.paused;
+  const abilityTalk = room.phase === PHASES.TALK && !room.paused && !room.tasksFrozen;
   const reward = rewardView(room, actor);
   const actions = {
     canReady: room.phase === PHASES.LOBBY, canSettings: host && room.phase === PHASES.LOBBY,
@@ -739,6 +884,11 @@ function projectState(room, actorId, now = Date.now()) {
     canCancel: host && active && room.phase !== PHASES.JUDGE_DECISION, canReplay: host && room.phase === PHASES.FINISHED,
     canFollowUp: host && talk && room.topic.followUps.some(t => !room.usedFollowUpIds.includes(t.id)),
     canClearFollowUp: host && talk && !!room.activeFollowUp,
+    canEndTemporaryTopic: host && abilityTalk && !!room.temporaryTopic,
+    canSendDirection: abilityTalk && actor.role === 'WOLF' && actor.wolfProfession === 'director' && actor.wolfAbility?.type === 'director' && !actor.wolfAbility.used,
+    canChangeTopic: abilityTalk && actor.role === 'WOLF' && actor.wolfProfession === 'topic_shifter' && actor.wolfAbility?.type === 'topic_shifter' && !actor.wolfAbility.used && !room.temporaryTopic,
+    canCompleteDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed,
+    canSwapDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed && actor.secretDirection.swapsRemaining > 0,
     canCompleteTask: talk && (actor.role === 'WOLF' || !!actor.villageTask),
     canUndoTask: talk && (actor.role === 'WOLF' || (!!actor.villageTask?.completed && !actor.reward?.used)),
     canRerollTask: room.phase === PHASES.ROLE_REVEAL && !!actor.villageTask && actor.rerollsUsed < room.settings.rerollLimit,
@@ -763,6 +913,8 @@ function projectState(room, actorId, now = Date.now()) {
       ...(room.topic.shortTitleZh ? { shortTitleZh: room.topic.shortTitleZh } : {}),
       entryPrompts: room.topic.entryPrompts.slice(), followUps: clone(room.topic.followUps), tags: room.topic.tags.slice() } : null,
     activeFollowUp: room.activeFollowUp ? clone(room.activeFollowUp) : null,
+    temporaryTopic: room.temporaryTopic ? { id: room.temporaryTopic.id, text: room.temporaryTopic.text,
+      deadlineAt: room.temporaryTopic.deadlineAt, remainingMs: room.temporaryTopic.remainingMs } : null,
     usedFollowUpIds: (room.usedFollowUpIds || []).slice(),
     estimatedSeconds: estimateRoomSeconds(room), extensionSeconds: room.extensionSeconds || 0,
     voteHistory: (room.voteHistory || []).map(publicVote), lastVoteResult: room.lastVoteResult ? clone(room.lastVoteResult) : null,
@@ -776,6 +928,8 @@ function projectState(room, actorId, now = Date.now()) {
   if (room.phase === PHASES.FINISHED) {
     publicState.reveal = { roles: Object.fromEntries(Object.values(room.players).map(p => [p.id, p.role])),
       professions: Object.fromEntries(Object.values(room.players).map(p => [p.id, p.profession])),
+      wolfProfessions: Object.fromEntries(Object.values(room.players).filter(p => p.role === 'WOLF').map(p => [p.id, p.wolfProfession || 'normal'])),
+      directionRecap: clone(room.directionRecap || []),
       wolfIds: ids(room).filter(id => room.players[id].role === 'WOLF'),
       tasks: (room.tasks || []).map(taskView), villageTasks: Object.values(room.players).filter(p => p.villageTask).map(p =>
         ({ playerId: p.id, profession: p.profession, ...taskView(p.villageTask), unlocked: !!p.reward.unlocked })),
@@ -785,6 +939,13 @@ function projectState(room, actorId, now = Date.now()) {
   }
   const privateState = { playerId: actor.id, name: actor.name, isHost: host, ready: !!actor.ready,
     role: actor.role, roleAcknowledged: !!actor.roleAcknowledged, profession: actor.profession,
+    wolfProfession: actor.role === 'WOLF' ? actor.wolfProfession || 'normal' : null,
+    wolfAbility: wolfAbilityView(room, actor),
+    secretDirection: active && actor.role !== 'WOLF' && actor.secretDirection ? {
+      id: actor.secretDirection.id, text: actor.secretDirection.text,
+      ...(actor.secretDirection.textZh ? { textZh: actor.secretDirection.textZh } : {}),
+      completed: actor.secretDirection.completed ? clone(actor.secretDirection.completed) : null,
+      swapsRemaining: actor.secretDirection.swapsRemaining } : null,
     wolfTeam: actor.role === 'WOLF' ? Object.values(room.players).filter(p => p.role === 'WOLF').map(p => ({ id: p.id, name: p.name })) : null,
     tasks: actor.role === 'WOLF' ? room.tasks.map(taskView) : null,
     villageTask: actor.villageTask ? taskView(actor.villageTask) : null,

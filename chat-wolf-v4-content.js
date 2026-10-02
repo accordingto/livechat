@@ -7,13 +7,15 @@
      [require('./chat-wolf-v4-wolf-tasks.js'), require('./chat-wolf-v4-wolf-imagine.js'), require('./chat-wolf-v4-wolf-life.js'),
       require('./chat-wolf-v4-expansion-a.js'), require('./chat-wolf-v4-expansion-b.js'), require('./chat-wolf-v4-expansion-c.js')],
      require('./chat-wolf-v4-village.js'),require('./chat-wolf-v4-taxonomy.js'),
-     [require('./chat-wolf-v5-readable-a.js'),require('./chat-wolf-v5-readable-b.js'),require('./chat-wolf-v5-readable-c.js'),require('./chat-wolf-v5-readable-core.js')]);
+     [require('./chat-wolf-v5-readable-a.js'),require('./chat-wolf-v5-readable-b.js'),require('./chat-wolf-v5-readable-c.js'),require('./chat-wolf-v5-readable-core.js')],
+     require('./chat-wolf-v6-village.js'),require('./chat-wolf-v6-directions.js'),require('./chat-wolf-v6-soft-tells.js'));
  } else root.CHAT_WOLF_V4_CONTENT = factory(root.CHAT_WOLF_V3_CONTENT,
    [root.CHAT_WOLF_V4_WOLF_TASKS, root.CHAT_WOLF_V4_WOLF_IMAGINE, root.CHAT_WOLF_V4_WOLF_LIFE,
     root.CHAT_WOLF_V4_EXPANSION_A, root.CHAT_WOLF_V4_EXPANSION_B, root.CHAT_WOLF_V4_EXPANSION_C],
    root.CHAT_WOLF_V4_VILLAGE,root.CHAT_WOLF_V4_TAXONOMY,
-   [root.CHAT_WOLF_V5_READABLE_A,root.CHAT_WOLF_V5_READABLE_B,root.CHAT_WOLF_V5_READABLE_C,root.CHAT_WOLF_V5_READABLE_CORE]);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (legacy, supplements, village, taxonomy, readable) {
+   [root.CHAT_WOLF_V5_READABLE_A,root.CHAT_WOLF_V5_READABLE_B,root.CHAT_WOLF_V5_READABLE_C,root.CHAT_WOLF_V5_READABLE_CORE],
+   root.CHAT_WOLF_V6_VILLAGE,root.CHAT_WOLF_V6_DIRECTIONS,root.CHAT_WOLF_V6_SOFT_TELLS);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (legacy, supplements, village, taxonomy, readable, revisedVillage, directions, softTells) {
  'use strict';
  const topics = [
   {
@@ -5530,7 +5532,8 @@
     ]
   }
 ];
- const villageTasks = taxonomy.normalize(Array.isArray(village) ? village : village.tasks);
+ const previousVillageTasks=taxonomy.normalize(Array.isArray(village)?village:village.tasks);
+ const villageTasks=taxonomy.normalize(revisedVillage.tasks);
  const clueInfo = {
   "choice": [
     "One task involves a specific choice.",
@@ -5672,17 +5675,26 @@
  // Keep the former bank as migration/audit data, never as a fallback draw pool.
  // Already-dealt rooms retain their own immutable card snapshots.
  const previousWolfTasks = taxonomy.normalize(appendixTasks.concat(...supplements.map(s => Array.isArray(s) ? s : s.tasks)));
- const version='chat-wolf-readable-v5';
+ const version='chat-wolf-special-wolves-v6';
  const topicUpdates=Object.assign({},...readable.map(bank=>bank.topicUpdates||{}));
  for(const topic of topics) Object.assign(topic,topicUpdates[topic.id]||{},{contentVersion:version});
- const wolfTasks = taxonomy.normalize(readable.flatMap(bank=>bank.tasks).map(task=>({...task,contentVersion:version})));
+ const previousReadableWolfTasks=taxonomy.normalize(readable.flatMap(bank=>bank.tasks));
+ const softEdits=new Map(softTells.overrides.map(task=>[task.id,task]));
+ const updatedReadable=readable.flatMap(bank=>bank.tasks).map(task=>({...task,...softEdits.get(task.id),contentVersion:version}));
+ // Old interaction cards are migration/audit data, never a formal fallback.
+ // Already-dealt rooms retain their immutable card snapshots.
+ const experimentalWolfTasks=taxonomy.normalize(updatedReadable.filter(task=>task.type==='interaction'));
+ const wolfTasks=taxonomy.normalize(updatedReadable.filter(task=>task.type==='self_action').concat(softTells.newTasks.map(task=>({...task,contentVersion:version}))));
+ const directorDirections=directions.directions;
  const exclusionClues = Object.fromEntries(Object.entries(clueInfo).map(([key,value])=>[key,value[2]]));
  const exclusionCluesZh = Object.fromEntries(Object.entries(clueInfo).map(([key,value])=>[key,value[3]]));
  for (const supplement of supplements) {
    if (supplement.exclusionClues) Object.assign(exclusionClues,supplement.exclusionClues);
    if (supplement.exclusionCluesZh) Object.assign(exclusionCluesZh,supplement.exclusionCluesZh);
  }
- return {version,releaseStage:'release',contentPolicy:'readability-first',topics,wolfTasks,villageTasks,previousWolfTasks,
+ return {version,releaseStage:'release',contentPolicy:'self-soft-tell',topics,wolfTasks,villageTasks,directorDirections,
+   previousWolfTasks,previousReadableWolfTasks,previousVillageTasks,experimentalWolfTasks,
+   villageAudit:revisedVillage.audit,softTellAudit:softTells.audit,
    normalizeGroup:taxonomy.normalizeGroup,normalizeFamily:taxonomy.normalizeFamily,normalizeHistoryEntry:taxonomy.normalizeHistoryEntry,
    normalizeTasks:taxonomy.normalize,
    exclusionClues:taxonomy.exclusionClues,exclusionCluesZh:taxonomy.exclusionCluesZh,

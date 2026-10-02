@@ -18,6 +18,8 @@
     let rewardDraft = {};
     let taskLanguage = 'en';
     let pendingDeal = null;
+    let directorDraft = {targetId:'random',directionId:''};
+    let temporaryTopicDraft = '';
     const state = () => ctx.getState();
     const pub = () => state().public;
     const me = () => state().private;
@@ -43,24 +45,30 @@
 
     function readSettings(form, base) {
       const settings = Object.assign({}, base || root.CHAT_WOLF_V3_RULES.defaults, { mode:'free-chat-v3' });
-      for (const key of ['playerCount','wolfCount','roundCount','talkSeconds','wrapUpSeconds','meetingSeconds','meetingTurnSeconds','voteSeconds','clueSeconds','judgeSeconds','taskCount','interactionTaskCount','rerollLimit','infoRoleLimit']) {
+      for (const key of ['playerCount','wolfCount','roundCount','talkSeconds','wrapUpSeconds','meetingSeconds','meetingTurnSeconds','voteSeconds','clueSeconds','judgeSeconds','taskCount','rerollLimit','infoRoleLimit','temporaryTopicSeconds']) {
         if (form.elements[key]) settings[key] = Number(form.elements[key].value);
       }
       if (form.elements.jesterEnabled) settings.jesterEnabled = form.elements.jesterEnabled.checked;
       if (form.elements.jesterTieWins) settings.jesterTieWins = form.elements.jesterTieWins.checked;
       if (form.elements.topicId) settings.topicId = form.elements.topicId.value;
       if (form.dataset.v3Settings) {
+        settings.enabledWolfRoles = ['director',...Array.from(form.querySelectorAll('[name="wolfRole"]:checked')).map(input=>input.value).filter(id=>id!=='director')];
         settings.enabledProfessions = Array.from(form.querySelectorAll('[name="profession"]:checked')).map(input => input.value);
         settings.professionWeights = {};
         form.querySelectorAll('[data-profession-weight]').forEach(input => { settings.professionWeights[input.dataset.professionWeight] = Number(input.value); });
       }
+      settings.interactionTaskCount = 0;
       return settings;
     }
     function entryFields() {
       return (root.CHAT_WOLF_V4_CONTENT?.releaseStage==='development'?'<p class="notice warning">'+esc(root.CHAT_WOLF_COPY_V4.developmentPreview)+'</p>':'')+'<label class="check-line"><input name="jesterEnabled" type="checkbox" checked><span>'+esc(C.jester)+'</span></label><p class="muted">3 rounds · about 10 minutes of free chat per round. The host decides when to start each meeting. Settings can be changed in the lobby.</p>';
     }
+    function taskRuleLines(lines) {
+      // Retain the old interaction explanation only for already-dealt rooms.
+      return pub().settings?.interactionTaskCount>0 ? lines : lines.filter(text=>!/^An interaction\b|^Interaction tasks\b/.test(text));
+    }
     function rules() {
-      return '<details class="panel v3-rules" data-detail="v3-rules"><summary><strong>'+esc(C.rules)+'</strong></summary><p>'+esc(C.rulesIntro)+'</p><ul>'+C.rulesBullets.map(text => '<li>'+esc(text)+'</li>').join('')+'</ul><p><strong>'+esc(C.rulesWins)+'</strong></p><ul>'+C.rulesExamples.map(text => '<li>'+esc(text)+'</li>').join('')+'</ul></details>';
+      return '<details class="panel v3-rules" data-detail="v3-rules"><summary><strong>'+esc(C.rules)+'</strong></summary><p>'+esc(C.rulesIntro)+'</p><ul>'+taskRuleLines(C.rulesBullets).map(text => '<li>'+esc(text)+'</li>').join('')+'</ul><p><strong>'+esc(C.rulesWins)+'</strong></p><ul>'+C.rulesExamples.map(text => '<li>'+esc(text)+'</li>').join('')+'</ul></details>';
     }
     function hostCardLink() {
       if (!isHost()) return '';
@@ -78,6 +86,7 @@
       if (a.canEndClues) html += button('endClues',C.endClues,'','secondary');
       if (a.canEndMeeting && pub().phase !== 'MEETING_TURNS') html += button('endMeeting',C.endMeeting);
       if (a.canEndVote) html += button('endVote',C.endVote,'','secondary');
+      if (a.canEndTemporaryTopic) html += button('endTemporaryTopic',C.endTemporaryTopic,'data-temporary-topic-id="'+esc(pub().temporaryTopic?.id)+'"','secondary');
       html += '</div>';
       return html;
     }
@@ -89,10 +98,19 @@
       const seconds = estimate(settings);
       return '<div id="v3-estimate" class="notice"><strong>'+esc(C.estimated)+': '+esc(duration(seconds))+'</strong><br>'+esc(C.estimateNote)+'</div>';
     }
+    function wolfRoleSettings(settings) {
+      const W=root.CHAT_WOLF_COPY_V4;
+      const limits=root.CHAT_WOLF_V3_RULES.limits.temporaryTopicSeconds||[60,300];
+      return '<fieldset class="v3-professions v6-wolf-roles"><legend>'+esc(W.wolfRoles)+'</legend><label class="check-line"><input type="checkbox" checked disabled><span>'+esc(W.directorName)+' <small>'+esc(W.requiredWolfRole)+'</small></span></label><label class="check-line"><input type="checkbox" name="wolfRole" value="topic_shifter"'+(settings.enabledWolfRoles?.includes('topic_shifter')?' checked':'')+'><span>'+esc(W.shifterSetting)+'</span></label><small class="muted">'+esc(W.shifterSeatNote)+'</small><label class="field"><span>'+esc(W.temporaryTopicSeconds)+'</span><input name="temporaryTopicSeconds" type="number" min="'+limits[0]+'" max="'+limits[1]+'" value="'+Number(settings.temporaryTopicSeconds||180)+'" required></label></fieldset>';
+    }
     function settingsForm() {
       const s = settingsDraft || pub().settings;
       const numeric = (key,min,max) => field(key,s[key],min,max);
-      return '<form class="panel v3-settings" id="v3-settings-form" data-v3-settings="true"><h2>'+esc(C.settings)+'</h2><div class="inline-fields">'+numeric('playerCount',3,12)+numeric('wolfCount',1,9)+'</div><label class="check-line"><input type="checkbox" name="jesterEnabled" '+(s.jesterEnabled?'checked':'')+'><span>'+esc(C.jester)+'</span></label><div class="inline-fields">'+numeric('roundCount',1,8)+numeric('talkSeconds',30,3600)+numeric('taskCount',1,12)+numeric('interactionTaskCount',0,12)+'</div><p id="v3-self-tasks" class="muted">'+esc(C.selfTasks(Math.max(0,s.taskCount-s.interactionTaskCount)))+'</p><label class="field"><span>'+esc(C.topic)+'</span><select name="topicId"><option value="random">'+esc(C.randomTopic)+'</option>'+topics().map(topic => '<option value="'+esc(topic.id)+'"'+(topic.id===s.topicId?' selected':'')+'>'+esc(topic.mainQuestion)+'</option>').join('')+'</select><small>'+esc(C.topicDefault)+'</small></label><fieldset class="v3-professions"><legend>'+esc(C.pool)+'</legend><p class="muted">'+esc(C.unique)+'</p>'+professions().map(role => '<label class="v3-profession"><input type="checkbox" name="profession" value="'+esc(role.id || role.roleId)+'" '+(s.enabledProfessions.includes(role.id || role.roleId)?'checked':'')+'><span><strong>'+esc(role.name)+'</strong><span>'+esc(role.style)+'</span><small>'+esc(role.reward)+'</small></span></label>').join('')+'<p id="v3-no-pool" class="notice"'+(s.enabledProfessions.length?' hidden':'')+'>'+esc(C.noPool)+'</p></fieldset><details data-detail="v3-advanced"><summary>'+esc(C.advanced)+'</summary><div class="inline-fields">'+ (modern()?numeric('meetingTurnSeconds',10,300):numeric('wrapUpSeconds',0,300)+numeric('meetingSeconds',0,600))+numeric('voteSeconds',10,300)+numeric('clueSeconds',0,120)+numeric('judgeSeconds',5,120)+numeric('rerollLimit',0,3)+numeric('infoRoleLimit',0,2)+'</div><p class="muted">'+esc(C.infoWarning)+'</p><label class="check-line"><input type="checkbox" name="jesterTieWins" '+(s.jesterTieWins?'checked':'')+'><span>'+esc(C.jesterTieWins)+'</span></label><p class="muted">'+esc(C.jesterDefault)+'</p><div class="inline-fields">'+professions().map(role=>'<label class="field"><span>'+esc(role.name)+' · '+esc(C.weight)+'</span><input data-profession-weight="'+esc(role.id || role.roleId)+'" type="number" min="1" max="10" value="'+esc(s.professionWeights?.[role.id || role.roleId] || 1)+'"></label>').join('')+'</div></details>'+settingSummary(s)+'<button class="btn" type="submit">'+esc(C.save)+'</button></form>';
+      return '<form class="panel v3-settings" id="v3-settings-form" data-v3-settings="true"><h2>'+esc(C.settings)+'</h2><div class="inline-fields">'+numeric('playerCount',3,12)+numeric('wolfCount',1,9)+'</div><label class="check-line"><input type="checkbox" name="jesterEnabled" '+(s.jesterEnabled?'checked':'')+'><span>'+esc(C.jester)+'</span></label>'+
+        wolfRoleSettings(s)+'<div class="inline-fields">'+numeric('roundCount',1,8)+numeric('talkSeconds',30,3600)+numeric('taskCount',1,12)+'</div><p id="v3-self-tasks" class="muted">'+esc(C.selfTasks(s.taskCount))+'</p>'+
+        '<label class="field"><span>'+esc(C.topic)+'</span><select name="topicId"><option value="random">'+esc(C.randomTopic)+'</option>'+topics().map(topic => '<option value="'+esc(topic.id)+'"'+(topic.id===s.topicId?' selected':'')+'>'+esc(topic.mainQuestion)+'</option>').join('')+'</select><small>'+esc(C.topicDefault)+'</small></label>'+
+        '<fieldset class="v3-professions"><legend>'+esc(C.pool)+'</legend><p class="muted">'+esc(C.unique)+'</p>'+professions().map(role => '<label class="v3-profession"><input type="checkbox" name="profession" value="'+esc(role.id || role.roleId)+'" '+(s.enabledProfessions.includes(role.id || role.roleId)?'checked':'')+'><span><strong>'+esc(role.name)+'</strong><span>'+esc(role.style)+'</span><small>'+esc(role.reward)+'</small></span></label>').join('')+'<p id="v3-no-pool" class="notice"'+(s.enabledProfessions.length?' hidden':'')+'>'+esc(C.noPool)+'</p></fieldset>'+
+        '<details data-detail="v3-advanced"><summary>'+esc(C.advanced)+'</summary><div class="inline-fields">'+ (modern()?numeric('meetingTurnSeconds',10,300):numeric('wrapUpSeconds',0,300)+numeric('meetingSeconds',0,600))+numeric('voteSeconds',10,300)+numeric('clueSeconds',0,120)+numeric('judgeSeconds',5,120)+numeric('rerollLimit',0,3)+numeric('infoRoleLimit',0,2)+'</div><p class="muted">'+esc(C.infoWarning)+'</p><label class="check-line"><input type="checkbox" name="jesterTieWins" '+(s.jesterTieWins?'checked':'')+'><span>'+esc(C.jesterTieWins)+'</span></label><p class="muted">'+esc(C.jesterDefault)+'</p><div class="inline-fields">'+professions().map(role=>'<label class="field"><span>'+esc(role.name)+' · '+esc(C.weight)+'</span><input data-profession-weight="'+esc(role.id || role.roleId)+'" type="number" min="1" max="10" value="'+esc(s.professionWeights?.[role.id || role.roleId] || 1)+'"></label>').join('')+'</div></details>'+settingSummary(s)+'<button class="btn" type="submit">'+esc(C.save)+'</button></form>';
     }
     function topicLibrary() {
       const selected = (settingsDraft || pub().settings).topicId;
@@ -115,13 +133,17 @@
       if (!modern()) return '<section class="question-card v3-topic"><div class="panel-header"><div class="scenario">'+esc(p.phase==='ROLE_REVEAL'?C.topic:C.round(p.round,p.totalRounds || p.settings.roundCount))+'</div>'+((p.deadlineAt || p.paused)&&!['ROLE_REVEAL','LOBBY','FINISHED'].includes(p.phase)?ctx.timer(p.deadlineAt):'')+'</div><h2 class="question">'+esc(active?active.text:topic.mainQuestion)+'</h2>'+(active?'<p class="muted v3-main-anchor"><strong>'+esc(C.mainTopic)+':</strong> '+esc(topic.mainQuestion)+'</p>':'<ul class="v3-entry-prompts">'+topic.entryPrompts.map(text=>'<li>'+esc(text)+'</li>').join(''))+'<p class="muted">'+esc(C.chatHelp)+'</p>'+(p.phase==='WRAP_UP'?'<div class="notice warning">'+esc(C.wrapUp)+'</div>':'')+'</section>';
       const label=topic.shortTitle || topic.title || topic.category;
       const time=!['ROLE_REVEAL','LOBBY','FINISHED','TALK','MEETING_TURNS'].includes(p.phase)?ctx.timer(p.deadlineAt):'';
-      return '<section class="question-card v3-topic v4-topic-full"><div class="panel-header"><div><span class="scenario">'+esc(p.phase==='ROLE_REVEAL'?C.topic:C.round(p.round,p.totalRounds || p.settings.roundCount))+'</span><span class="v4-topic-label">'+esc(label)+'</span></div>'+time+'</div><div class="eyebrow">'+esc(active?C.currentQuestion:C.mainTopic)+'</div><h2 class="question'+(active?' v4-active-followup':'')+'" data-current-question>'+esc(active?active.text:topic.mainQuestion)+'</h2>'+(active?'<details class="v4-original-topic" data-detail="original-topic"><summary>'+esc(C.viewOriginal)+'</summary><p>'+esc(topic.mainQuestion)+'</p></details>':'')+(!privateView?'<p class="muted">'+esc(C.chatHelp)+'</p>':'')+chatClock()+'</section>';
+      const temporary=p.temporaryTopic;
+      const current=temporary?.text || active?.text || topic.mainQuestion;
+      const remaining=temporary?(temporary.remainingMs??Math.max(0,temporary.deadlineAt-(p.serverNow||Date.now()))):0;
+      const tempClock=temporary?'<span class="v6-temporary-clock" role="timer" data-temporary-deadline="'+Number(temporary.deadlineAt||0)+'" data-temporary-paused="'+(p.paused?'true':'false')+'" data-temporary-remaining="'+Number(remaining)+'">'+formatElapsed(remaining)+'</span>':'';
+      return '<section class="question-card v3-topic v4-topic-full'+(temporary?' v6-temporary-topic':'')+'"><div class="panel-header"><div><span class="scenario">'+esc(p.phase==='ROLE_REVEAL'?C.topic:C.round(p.round,p.totalRounds || p.settings.roundCount))+'</span><span class="v4-topic-label">'+esc(label)+'</span></div>'+time+tempClock+'</div><div class="eyebrow">'+esc(temporary?C.temporaryTopic:active?C.currentQuestion:C.mainTopic)+'</div><h2 class="question'+(active||temporary?' v4-active-followup':'')+'" data-current-question>'+esc(current)+'</h2>'+(active||temporary?'<details class="v4-original-topic" data-detail="original-topic"><summary>'+esc(C.viewOriginal)+'</summary><p>'+esc(topic.mainQuestion)+'</p></details>':'')+(!privateView?'<p class="muted">'+esc(C.chatHelp)+'</p>':'')+chatClock()+'</section>';
     }
     function privateRoomInfo() {
       return '<details class="v5-room-info" data-detail="private-room-info"><summary>'+esc(C.roomInfo)+'</summary><dl><dt>'+esc(C.roomCode)+'</dt><dd>'+esc(pub().code)+'</dd><dt>'+esc(C.roomPhase)+'</dt><dd>'+esc(C.phases[pub().phase]||pub().phase)+'</dd></dl></details>';
     }
     function followUpControls() {
-      if (!isHost() || pub().paused || !['TALK','WRAP_UP'].includes(pub().phase)) return '';
+      if (!isHost() || pub().paused || pub().temporaryTopic || !['TALK','WRAP_UP'].includes(pub().phase)) return '';
       const used = new Set(pub().usedFollowUpIds || []);
       return '<section class="panel"><div class="button-row">'+(actions().canFollowUp?button('followUp',C.followUp,'','secondary'):'<p class="muted">'+esc(C.noFollowUps)+'</p>')+(pub().activeFollowUp?button('clearFollowUp',C.backToMain,'','ghost'):'')+'</div><details data-detail="v3-followups"><summary>'+esc(C.chooseFollowUp)+'</summary><div class="v3-followup-list">'+pub().topic.followUps.map(item=>'<article><p>'+esc(item.text)+'</p>'+(used.has(item.id)?'<span class="mini-chip">'+esc(C.used)+'</span>':button('followUp',C.useFollowUp,'data-follow-up-id="'+esc(item.id)+'"','secondary small'))+'</article>').join('')+'</div></details></section>';
     }
@@ -162,11 +184,36 @@
       if (['FINAL_CLUES','MEETING_DISCUSS','VOTING','JUDGE_DECISION'].includes(pub().phase) && (pub().round===pub().settings.roundCount)) html += '<p class="muted">'+esc(C.taskLocked)+'</p>';
       return html+'</section>';
     }
+    function wolfRoleName(id) {
+      return id==='director'?C.directorName:id==='topic_shifter'?C.shifterName:C.roles.WOLF;
+    }
+    function wolfAbilityCard() {
+      const ability=me().wolfAbility;
+      if(me().role!=='WOLF'||!ability)return '';
+      let html='<section class="panel v6-ability"><div class="v4-task-toolbar"><h3>'+esc(C.specialAbility)+'</h3><details data-detail="wolf-role-rules"><summary>'+esc(C.roleRules)+'</summary><p>'+esc(ability.type==='director'?C.directorRule:C.shifterRule)+'</p></details></div>';
+      if(ability.used)return html+'<p class="muted">'+esc(C.abilityUsed)+'</p></section>';
+      if(ability.type==='director'){
+        const options=ability.options||[],targets=ability.targets||[];
+        if(directorDraft.directionId&&!options.some(d=>d.id===directorDraft.directionId))directorDraft.directionId='';
+        if(directorDraft.targetId!=='random'&&!targets.some(p=>p.id===directorDraft.targetId))directorDraft.targetId='random';
+        html+='<form id="v6-director-form"><label class="field"><span>'+esc(C.directorTarget)+'</span><select name="targetId"><option value="random"'+(directorDraft.targetId==='random'?' selected':'')+'>'+esc(C.randomTarget)+'</option>'+targets.map(player=>'<option value="'+esc(player.id)+'"'+(directorDraft.targetId===player.id?' selected':'')+'>'+esc(player.name)+'</option>').join('')+'</select></label><label class="field"><span>'+esc(C.directorDirection)+'</span><select name="directionId" required><option value="">'+esc(C.chooseDirection)+'</option>'+options.map(direction=>'<option value="'+esc(direction.id)+'"'+(directorDraft.directionId===direction.id?' selected':'')+'>'+esc(direction.text)+'</option>').join('')+'</select></label><button class="btn secondary" type="submit"'+(!actions().canSendDirection?' disabled':'')+'>'+esc(C.sendDirection)+'</button></form>';
+        if(!actions().canSendDirection)html+='<small class="muted">'+esc(C.abilityWait)+'</small>';
+      }else if(ability.type==='topic_shifter'){
+        html+='<form id="v6-topic-shifter-form"><label class="field"><span>'+esc(C.changeTopicLabel)+'</span><textarea name="text" maxlength="150" rows="2" required>'+esc(temporaryTopicDraft)+'</textarea><small>'+esc(C.changeTopicHint)+'</small></label><button class="btn secondary" type="submit"'+(!actions().canChangeTopic?' disabled':'')+'>'+esc(C.changeTopic)+'</button><small class="muted">'+esc(C.changeTopicRules)+'</small></form>';
+        if(!actions().canChangeTopic)html+='<small class="muted">'+esc(C.abilityWait)+'</small>';
+      }
+      return html+'</section>';
+    }
+    function secretDirectionCard() {
+      const direction=me().secretDirection;
+      if(!direction)return '';
+      return '<section class="panel v6-secret-direction"><div class="v4-task-toolbar"><h3>'+esc(C.secretDirection)+'</h3>'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'','ghost small')+'</div><p class="task-condition">'+esc(taskLanguage==='zh'&&direction.textZh?direction.textZh:direction.text)+'</p><small class="muted">'+esc(C.directionTurn)+'</small><div class="button-row">'+(direction.completed?'<span class="mini-chip ready">'+esc(C.directionCompleted)+'</span>':button('completeDirection',C.directionDone,'data-direction-id="'+esc(direction.id)+'"'+(!actions().canCompleteDirection?' disabled':''),'secondary')+(direction.swapsRemaining?button('swapDirection',C.swapDirection,'data-direction-id="'+esc(direction.id)+'"'+(!actions().canSwapDirection?' disabled':''),'ghost small'):''))+'</div><details data-detail="secret-direction-rules"><summary>'+esc(C.roleRules)+'</summary><p>'+esc(C.directionNoProgress)+'</p><p>'+esc(C.directionRule)+'</p></details></section>';
+    }
     function modernPrivateCard() {
       const p=pub(), person=me(), role=person.role, villageRole=profession(person.profession);
       const hasTasks=role==='WOLF' || !!person.villageTask;
       const team=role==='WOLF'?C.wolfCamp:role==='JESTER'?C.independentCamp:C.villageCamp;
-      const roleName=role==='VILLAGER'?(villageRole?.name || C.ordinary):C.roles[role];
+      const roleName=role==='VILLAGER'?(villageRole?.name || C.ordinary):role==='WOLF'?wolfRoleName(person.wolfProfession):C.roles[role];
       const progress=role==='WOLF'?C.teamTasks((person.tasks||[]).filter(task=>task.completed).length,(person.tasks||[]).length):'';
       const roleClass=role==='WOLF'?'wolf':role==='JESTER'?'jester':'villager';
       let html='<div class="v4-private-layout"><header class="panel v4-role-header v5-role-'+roleClass+'"><div><div class="eyebrow">'+esc(team)+'</div><h2 class="role-title '+roleClass+'">'+esc(roleName)+'</h2></div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
@@ -174,7 +221,7 @@
       html+=topicCard(true);
       if(hasTasks)html+='<section class="panel v4-private-tasks"><div class="v4-task-toolbar"><h3>'+esc(role==='WOLF'?progress:roleName+' · task')+'</h3>'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'aria-pressed="'+(taskLanguage==='zh')+'"','ghost small')+'</div>';
       if(role==='WOLF') {
-        html+='<div class="v5-task-meta"><span class="muted">'+esc(C.sharedTasks)+'</span><details class="v5-task-rules" data-detail="wolf-task-rules"><summary>'+esc(C.taskRules)+'</summary><ul>'+C.wolfTaskRules.map(text=>'<li>'+esc(text)+'</li>').join('')+'</ul></details></div><div class="team-list" aria-label="'+esc(C.wolfTeam)+'">'+(person.wolfTeam||[]).map(player=>'<span class="team-chip">'+esc(player.name)+'</span>').join('')+'</div><div class="v3-task-list">'+(person.tasks||[]).map(task=>taskCard(task,true)).join('')+'</div>';
+        html+='<div class="v5-task-meta"><span class="muted">'+esc(C.sharedTasks)+'</span><details class="v5-task-rules" data-detail="wolf-task-rules"><summary>'+esc(C.taskRules)+'</summary><ul>'+taskRuleLines(C.wolfTaskRules).map(text=>'<li>'+esc(text)+'</li>').join('')+'</ul></details></div><div class="team-list" aria-label="'+esc(C.wolfTeam)+'">'+(person.wolfTeam||[]).map(player=>'<span class="team-chip">'+esc(player.name)+'</span>').join('')+'</div><div class="v3-task-list">'+(person.tasks||[]).map(task=>taskCard(task,true)).join('')+'</div>';
       } else if(person.villageTask) {
         html+=taskCard(person.villageTask,false)+(actions().canRerollTask?'<div class="button-row">'+button('rerollTask',C.reroll,'','ghost small')+'<span class="muted">'+esc(C.rerollLeft(person.rerollRemaining))+'</span></div>':'');
       }
@@ -182,6 +229,7 @@
       if(role==='JESTER') html+='<section class="panel"><p>'+esc(C.jesterHelp)+'</p><p class="notice">'+esc(p.settings.jesterTieWins?C.jesterTie:C.jesterUnique)+'</p></section>';
       else if(!hasTasks)html+='<p class="notice">'+esc(C.ordinaryHelp)+'</p>';
       if(person.villageTask)html+='<section class="panel v4-reward-panel">'+rewardCard()+'</section>';
+      html+=wolfAbilityCard()+secretDirectionCard();
       if(['FINAL_CLUES','MEETING_TURNS','VOTING','JUDGE_DECISION'].includes(p.phase) && p.round===p.settings.roundCount)html+='<p class="muted">'+esc(C.taskLocked)+'</p>';
       return html+'</div>';
     }
@@ -258,7 +306,11 @@
     function finished() {
       const r = pub().reveal || {}, records = pub().voteHistory || [];
       const village = Array.isArray(r.villageTasks)?r.villageTasks:Object.entries(r.villageTasks || {}).map(([playerId,task])=>Object.assign({playerId},task));
-      return '<section class="result-hero"><div class="eyebrow">'+esc(C.results)+'</div><h1>'+esc(C.outcomes[pub().result.outcome])+'</h1><p>'+esc(resultReason())+'</p></section><section class="panel"><h2>'+esc(C.reveal)+'</h2><div class="role-grid">'+pub().players.map(player=>'<div class="reveal-player'+(r.roles?.[player.id]==='WOLF'?' wolf':'')+'"><strong>'+esc(player.name)+'</strong><span>'+esc(r.roles?.[player.id]==='VILLAGER'?(profession(r.professions?.[player.id])?.name || C.ordinary):C.roles[r.roles?.[player.id]] || C.ordinary)+'</span></div>').join('')+'</div></section><div class="game-grid"><section class="panel"><h2>'+esc(C.wolfResults)+'</h2><p class="muted">'+esc(C.reportedNote)+'</p>'+(r.tasks || []).map(task=>'<article class="task-card"><p>'+esc(task.text)+'</p><span class="mini-chip'+(task.completed?' ready':'')+'">'+esc(task.completed?C.completed:C.notCompleted)+'</span></article>').join('')+'</section><section class="panel"><h2>'+esc(C.villageResults)+'</h2>'+village.map(task=>'<article class="task-card"><h3>'+esc(name(task.playerId || task.ownerId))+'</h3><p>'+esc(task.text)+'</p><span class="mini-chip">'+esc(task.completed?C.unlocked:C.notUnlocked)+'</span></article>').join('')+'</section></div><section class="panel"><h2>'+esc(C.history)+'</h2><div class="history-list">'+records.map(record=>'<article class="history-item"><strong>'+esc(C.round(record.round,pub().totalRounds || pub().settings.roundCount))+' · '+esc(record.type==='FINAL'?C.finalVote:C.midVote)+'</strong><p>'+(record.nominees.length?names(record.nominees):esc(C.noGuess))+'</p></article>').join('')+'</div></section>'+jesterResult(r)+judgeResult(r);
+      return '<section class="result-hero"><div class="eyebrow">'+esc(C.results)+'</div><h1>'+esc(C.outcomes[pub().result.outcome])+'</h1><p>'+esc(resultReason())+'</p></section><section class="panel"><h2>'+esc(C.reveal)+'</h2><div class="role-grid">'+pub().players.map(player=>'<div class="reveal-player'+(r.roles?.[player.id]==='WOLF'?' wolf':'')+'"><strong>'+esc(player.name)+'</strong><span>'+esc(r.roles?.[player.id]==='VILLAGER'?(profession(r.professions?.[player.id])?.name || C.ordinary):r.roles?.[player.id]==='WOLF'?wolfRoleName(r.wolfProfessions?.[player.id]):C.roles[r.roles?.[player.id]] || C.ordinary)+'</span></div>').join('')+'</div></section><div class="game-grid"><section class="panel"><h2>'+esc(C.wolfResults)+'</h2><p class="muted">'+esc(C.reportedNote)+'</p>'+(r.tasks || []).map(task=>'<article class="task-card"><p>'+esc(task.text)+'</p><span class="mini-chip'+(task.completed?' ready':'')+'">'+esc(task.completed?C.completed:C.notCompleted)+'</span></article>').join('')+'</section><section class="panel"><h2>'+esc(C.villageResults)+'</h2>'+village.map(task=>'<article class="task-card"><h3>'+esc(name(task.playerId || task.ownerId))+'</h3><p>'+esc(task.text)+'</p><span class="mini-chip">'+esc(task.completed?C.unlocked:C.notUnlocked)+'</span></article>').join('')+'</section></div><section class="panel"><h2>'+esc(C.history)+'</h2><div class="history-list">'+records.map(record=>'<article class="history-item"><strong>'+esc(C.round(record.round,pub().totalRounds || pub().settings.roundCount))+' · '+esc(record.type==='FINAL'?C.finalVote:C.midVote)+'</strong><p>'+(record.nominees.length?names(record.nominees):esc(C.noGuess))+'</p></article>').join('')+'</div></section>'+directionResults(r)+jesterResult(r)+judgeResult(r);
+    }
+    function directionResults(reveal) {
+      if(!reveal.directionRecap?.length)return '';
+      return '<section class="panel"><h3>'+esc(C.directionRecap)+'</h3>'+reveal.directionRecap.map(row=>'<article class="task-card"><strong>'+esc(name(row.directorId))+' → '+esc(name(row.targetId))+'</strong><p>'+esc(row.currentDirection.text)+'</p><span class="mini-chip">'+esc(row.completed?C.directionCompleted:C.directionNotDone)+'</span></article>').join('')+'</section>';
     }
     function jesterResult(reveal) {
       if (!pub().settings.jesterEnabled) return '';
@@ -273,7 +325,7 @@
     function render() {
       C=modern()?(root.CHAT_WOLF_COPY_V4 || root.CHAT_WOLF_COPY_V3):root.CHAT_WOLF_COPY_V3;
       if (draftMatch !== pub().matchId) {
-        draftMatch = pub().matchId; ballot.clear(); judgeDraft.clear(); rewardDraft={}; settingsDraft=null; pendingDeal=null;taskLanguage='en';
+        draftMatch = pub().matchId; ballot.clear(); judgeDraft.clear(); rewardDraft={}; settingsDraft=null; pendingDeal=null;taskLanguage='en';directorDraft={targetId:'random',directionId:''};temporaryTopicDraft='';
       }
       if (ballotId !== pub().voting?.id) { ballotId=pub().voting?.id; ballot.clear(); judgeDraft.clear(); }
       const privateView=modern()&&!isHost()&&!['LOBBY','FINISHED'].includes(pub().phase);
@@ -318,6 +370,8 @@
       if (action==='restart') payload.keepTopic=b.dataset.keepTopic==='true';
       if (action==='ready') payload.ready=b.dataset.ready==='true';
       if (action==='completeTask') payload.taskId=b.dataset.taskId;
+      if (['completeDirection','swapDirection'].includes(action)) payload.directionId=b.dataset.directionId;
+      if (action==='endTemporaryTopic') payload.temporaryTopicId=b.dataset.temporaryTopicId;
       if (action==='extendTalk') payload.seconds=Number(b.dataset.seconds);
       if (action==='followUp' && b.dataset.followUpId) payload.followUpId=b.dataset.followUpId;
       if (['endMeetingTurn','skipMeetingTurn'].includes(action)) payload.meetingId=pub().meeting?.id;
@@ -327,11 +381,13 @@
     }
     function handleChange(event) {
       const input = event.target, form = input.form;
+      if(form?.id==='v6-director-form'){directorDraft[input.name]=input.value;return true;}
+      if(form?.id==='v6-topic-shifter-form'){temporaryTopicDraft=input.value;return true;}
       if (form?.id==='v3-settings-form') {
         settingsDraft=readSettings(form,settingsDraft || pub().settings);
         const s=settingsDraft;
         document.getElementById('v3-estimate').outerHTML=settingSummary(s);
-        document.getElementById('v3-self-tasks').textContent=C.selfTasks(Math.max(0,s.taskCount-s.interactionTaskCount));
+        document.getElementById('v3-self-tasks').textContent=C.selfTasks(s.taskCount);
         document.getElementById('v3-no-pool').hidden=s.enabledProfessions.length>0;
         return true;
       }
@@ -347,6 +403,7 @@
       return false;
     }
     function handleInput(event) {
+      if(event.target.form?.id==='v6-topic-shifter-form'){temporaryTopicDraft=event.target.value;return;}
       if(event.target.form?.id==='v3-settings-form'){handleChange(event);return;}
       if (event.target.id!=='v3-topic-search') return;
       const query=event.target.value.toLowerCase().trim();
@@ -354,6 +411,16 @@
     }
     async function handleSubmit(event) {
       const form=event.target;
+      if(form.id==='v6-director-form'){
+        event.preventDefault();
+        await ctx.action('sendDirection',{targetId:form.elements.targetId.value,directionId:form.elements.directionId.value});
+        return true;
+      }
+      if(form.id==='v6-topic-shifter-form'){
+        event.preventDefault();
+        if(await ctx.action('changeTopic',{text:form.elements.text.value.trim()}))temporaryTopicDraft='';
+        return true;
+      }
       if(form.id==='v4-meeting-time-form'){event.preventDefault();await ctx.action('setMeetingTurnSeconds',{seconds:Number(form.elements.seconds.value)});return true;}
       if (form.id==='v3-settings-form') {
         event.preventDefault();

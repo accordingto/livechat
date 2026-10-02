@@ -316,6 +316,20 @@ input:focus, select:focus, textarea:focus, button:focus-visible, summary:focus-v
 .v5-room-info summary { cursor: pointer; }
 .v5-room-info dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 12px 0; }
 .v5-room-info dd { margin: 0; overflow-wrap: anywhere; }
+.v6-wolf-roles .field { margin-top: 16px; }
+.v6-wolf-roles small { color: var(--muted); }
+.v6-ability form { display: grid; gap: 14px; margin-top: 16px; min-width: 0; }
+.v6-ability select, .v6-ability textarea { width: 100%; min-width: 0; }
+.v6-ability textarea { resize: vertical; }
+.v6-ability .v4-task-toolbar { flex-wrap: wrap; }
+.v6-ability details { font-size: .85rem; color: var(--muted); }
+.v6-ability details[open] { flex-basis: 100%; }
+.v6-ability summary, .v6-secret-direction summary { cursor: pointer; }
+.v6-secret-direction { border-left: 3px solid var(--amber); }
+.v6-secret-direction .task-condition { font-size: 1.15rem; line-height: 1.5; }
+.v6-secret-direction details { color: var(--muted); font-size: .85rem; margin-top: 16px; }
+.v6-temporary-topic { border-color: var(--amber); }
+.v6-temporary-clock { font-size: 1.3rem; color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v4-topic-label { display: block; color: var(--muted); font-size: .88rem; margin-top: 4px; }
 .v4-topic-full .question { overflow-wrap: anywhere; line-height: 1.45; font-size: clamp(1.25rem, 3.5vw, 2.05rem); }
 .v4-topic-full .eyebrow { margin-bottom: 9px; }

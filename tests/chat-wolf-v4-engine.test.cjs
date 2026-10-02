@@ -22,6 +22,7 @@ function fixtureContent() {
     canonicalTaskKey: `vkey-${role.id}-${i}`, variantGroup: role.id === 'bait' ? 'group-25' : `vgroup-${role.id}-${i}`,
     family: role.id, active: true, status: 'active', reviewed: true, compatibleTopicIds: ['a', 'b'] })));
   const result = { version: 'fixture-v4', topics, wolfTasks, villageTasks,
+    directorDirections: require('../chat-wolf-v6-directions.js').directions,
     exclusionClues: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`tag-${i}`, `No task uses method ${i}.`])), legacyTaskMap: {} };
   result.legacy = { ...result }; return result;
 }
@@ -254,19 +255,19 @@ test('scope history can carry into a new room or another topic without canonical
 test('complete combination search backtracks rather than falsely reporting shortage', () => {
   const content = fixtureContent();
   content.wolfTasks = [
-    { ...content.wolfTasks[1], id: 'i-block', canonicalTaskKey: 'i-block', variantGroup: 'shared' },
-    { ...content.wolfTasks[2], id: 'i-good', canonicalTaskKey: 'i-good', variantGroup: 'other' },
-    { ...content.wolfTasks[31], id: 's-one', canonicalTaskKey: 's-one', variantGroup: 'shared' },
-    { ...content.wolfTasks[32], id: 's-two', canonicalTaskKey: 's-two', variantGroup: 'self-two' },
+    { ...content.wolfTasks[31], id: 's-block', canonicalTaskKey: 's-block', variantGroup: 'block', isGeneric:true, performanceGroup:'voice' },
+    { ...content.wolfTasks[32], id: 's-voice', canonicalTaskKey: 's-voice', variantGroup: 'voice', isGeneric:false, performanceGroup:'voice' },
+    { ...content.wolfTasks[33], id: 's-generic', canonicalTaskKey: 's-generic', variantGroup: 'generic', isGeneric:true, performanceGroup:null },
+    { ...content.wolfTasks[34], id: 's-plain', canonicalTaskKey: 's-plain', variantGroup: 'plain', isGeneric:false, performanceGroup:null },
   ];
   for (let seed = 1; seed <= 100; seed++) {
     const h = harness(content), r = h.started({ enabledProfessions: [] }, seed);
-    assert.equal(r.tasks.find(t => t.type === 'interaction').id, 'i-good');
+    assert.deepEqual(Array.from(r.tasks,t=>t.id).sort(),['s-generic','s-plain','s-voice']);
   }
 });
 
 test('exhaustion is nonsecret and atomic; explicit relaxation restores oldest history without clearing it', () => {
-  const content = fixtureContent(); content.wolfTasks = [content.wolfTasks[1], content.wolfTasks[31], content.wolfTasks[32]];
+  const content = fixtureContent(); content.wolfTasks = [content.wolfTasks[31], content.wolfTasks[32], content.wolfTasks[33]];
   const h = harness(content), r = h.started({ enabledProfessions: [] }); const before = JSON.stringify(r);
   fails(() => h.host(r, 'restart', { keepTopic: true }), 'CONTENT_EXHAUSTED'); assert.equal(JSON.stringify(r), before);
   h.host(r, 'restart', { keepTopic: true, allowRecentRepeat: true });
@@ -275,7 +276,7 @@ test('exhaustion is nonsecret and atomic; explicit relaxation restores oldest hi
 });
 
 test('deprecated, unreviewed, incompatible or duplicate-voice cards never become a fallback', () => {
-  const content = fixtureContent(); const one = content.wolfTasks[1], voice = content.wolfTasks[25];
+  const content = fixtureContent(); const one = content.wolfTasks[31], voice = content.wolfTasks[25];
   content.wolfTasks = [one, voice,
     { ...content.wolfTasks[26], id: 'unreviewed', reviewed: false },
     { ...content.wolfTasks[31], id: 'deprecated', active: false, status: 'deprecated' },

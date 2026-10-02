@@ -100,6 +100,7 @@ test('v4 village UMD exports the same bank in browser and CommonJS', () => {
   const context = {};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../chat-wolf-v4-village.js'), 'utf8'), context);
   assert.equal(JSON.stringify(context.CHAT_WOLF_V4_VILLAGE), JSON.stringify(CARDS));
-  assert.equal(CONTENT.villageTasks.length, CARDS.length);
-  assert.deepEqual(CONTENT.villageTasks.map(t => t.id), CARDS.map(t => t.id));
+  assert.equal(CONTENT.previousVillageTasks.length, CARDS.length);
+  assert.deepEqual(CONTENT.previousVillageTasks.map(t => t.id), CARDS.map(t => t.id));
+  assert.deepEqual(CONTENT.villageTasks.map(t => t.id), require('../chat-wolf-v6-village.js').tasks.map(t=>t.id));
 });

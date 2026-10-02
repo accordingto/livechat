@@ -617,6 +617,11 @@
       element.textContent = `${seconds} ${C.seconds}`;
       element.classList.toggle('urgent', seconds <= 10);
     });
+    document.querySelectorAll('[data-temporary-deadline]').forEach(element=>{
+      const remaining=element.dataset.temporaryPaused==='true'?Number(element.dataset.temporaryRemaining):Math.max(0,Number(element.dataset.temporaryDeadline)-(Date.now()+serverOffset));
+      const seconds=Math.ceil(Math.max(0,remaining)/1000);
+      element.textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+    });
     document.querySelectorAll('[data-elapsed-ms]').forEach((element) => {
       const since=Number(element.dataset.activeSince || 0);
       const elapsed=window.CHAT_WOLF_V3_UI.elapsedMilliseconds({elapsedMs:Number(element.dataset.elapsedMs||0),activeSince:since || null,paused:element.dataset.clockPaused==='true'},Date.now()+serverOffset);
