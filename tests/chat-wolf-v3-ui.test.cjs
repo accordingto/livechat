@@ -108,12 +108,24 @@ test('visible persistent popup starts one receipt, traps focus and does not gain
 test('wolf task volunteers show teammates privately, allow undo, and do not replace the completion button',async()=>{
   const {api,current,calls}=harness({public:{flowVersion:4},private:{actions:{canCompleteTask:true,canVolunteerTask:true},
     tasks:[{id:'w1',text:'Say “Plot twist!”',volunteerIds:['b'],completed:null}]}},true);
-  let html=api.render();assert.match(html,/Planning to do it: Player 2/);assert.match(html,/I&#039;ll do it/);
+  const actionsRow=html=>{
+    const task=html.match(/<article\b[^>]*data-player-task="w1"[^>]*>([\s\S]*?)<\/article>/)?.[1];
+    assert.ok(task,'the named task must have its own card');
+    const row=task.match(/<div\b[^>]*class="[^"]*\bv7-task-actions\b[^"]*"[^>]*>([\s\S]*?)<\/div>/)?.[1];
+    assert.ok(row,'completion and cooperation need one shared actions row');
+    assert.match(row,/data-v3-action="completeTask"[^>]*data-task-id="w1"/);
+    assert.equal((row.match(/<button\b/g)||[]).length,2);
+    return row;
+  };
+  let html=api.render();assert.match(html,/Planning to do it: Player 2/);assert.match(html,/>Let me do it<\/button>/);
+  assert.doesNotMatch(html,/I&#039;ll do it|>I'll do it<\/button>/);
+  assert.match(actionsRow(html),/data-v3-action="volunteerTask"[^>]*data-task-id="w1"[^>]*aria-pressed="false"/);
   assert.match(html,/data-v3-action="completeTask"/);
   await api.handleClick({target:{closest:()=>({dataset:{v3Action:'volunteerTask',taskId:'w1'}})}});
   assert.equal(calls[0].action,'volunteerTask');assert.equal(calls[0].payload.taskId,'w1');
   current.private.tasks[0].volunteerIds=['a','b'];html=api.render();
   assert.match(html,/Planning to do it: Player 1, Player 2/);assert.match(html,/I&#039;m doing it · Undo/);
+  assert.match(actionsRow(html),/data-v3-action="withdrawTaskVolunteer"[^>]*data-task-id="w1"[^>]*aria-pressed="true"/);
   await api.handleClick({target:{closest:()=>({dataset:{v3Action:'withdrawTaskVolunteer',taskId:'w1'}})}});
   assert.equal(calls[1].action,'withdrawTaskVolunteer');assert.equal(calls[1].payload.taskId,'w1');
   current.private.actions.canVolunteerTask=false;assert.doesNotMatch(api.render(),/data-v3-action="volunteerTask"|data-v3-action="withdrawTaskVolunteer"/);
@@ -122,19 +134,22 @@ test('wolf task volunteers show teammates privately, allow undo, and do not repl
 test('village tasks and host presentation never get wolf volunteer controls or names',()=>{
   const village=harness({public:{flowVersion:4},private:{role:'VILLAGER',tasks:null,profession:'judge',
     villageTask:{id:'v1',text:'Give your opinion.',volunteerIds:['b']},actions:{canCompleteTask:true,canVolunteerTask:true}}},true);
-  assert.doesNotMatch(village.api.render(),/Planning to do it|data-task-volunteers|volunteerTask/);
+  assert.doesNotMatch(village.api.render(),/Planning to do it|data-task-volunteers|volunteerTask|Let me do it|I&#039;m doing it/);
   const host=harness({public:{flowVersion:4},private:{isHost:true,actions:{canVolunteerTask:true}}});
-  assert.doesNotMatch(host.api.render(),/Planning to do it|data-task-volunteers|volunteerTask/);
+  assert.doesNotMatch(host.api.render(),/Planning to do it|data-task-volunteers|volunteerTask|Let me do it|I&#039;m doing it/);
 });
 
 test('saved V3 wolf cards render cooperation with base copy rather than requiring V4 copy',async()=>{
-  const {api,calls}=harness({private:{actions:{canVolunteerTask:true,canCompleteTask:true},
+  const {api,calls,current}=harness({private:{actions:{canVolunteerTask:true,canCompleteTask:true},
     tasks:[{id:'w1',text:'Say one odd sentence.',volunteerIds:['a','b'],completed:null}]}},true);
   const html=api.render();
   assert.match(html,/Planning to do it: Player 1, Player 2/);
   assert.match(html,/I&#039;m doing it · Undo/);
   await api.handleClick({target:{closest:()=>({dataset:{v3Action:'withdrawTaskVolunteer',taskId:'w1'}})}});
   assert.equal(calls[0].action,'withdrawTaskVolunteer');
+  current.private.tasks[0].volunteerIds=['b'];
+  assert.match(api.render(),/>Let me do it<\/button>/);
+  assert.doesNotMatch(api.render(),/I&#039;ll do it/);
 });
 
 test('new popup waits for a running swap request before sending its display receipt',async()=>{

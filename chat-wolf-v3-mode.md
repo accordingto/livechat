@@ -14,7 +14,8 @@ paid AI calls are required. The host page still needs to remain open.
   variants retain shared mechanic groups. Exact-minimum draws are preferred,
   but more tells are allowed when needed. Existing generic/voice caps and strict
   recent-history exclusions remain; no silent repeat or ordinary-task fallback.
-- Each unfinished shared wolf task has `I'll do it`. The private wolf team sees
+- Each unfinished shared wolf task has `Let me do it`, beside its completion
+  control in one compact two-column row, including on mobile. The private wolf team sees
   the intending players, and each can undo only their own intent. Both wolves
   may volunteer, either can still complete a task, and volunteering does not
   count as completion or affect the result. This metadata never enters the

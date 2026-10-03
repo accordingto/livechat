@@ -158,8 +158,11 @@
       const translated=modern() && taskLanguage==='zh' && task.textZh;
       const example=translated?(task.exampleZh || task.example):task.example;
       const volunteers=wolf?(task.volunteerIds||[]):[],own=volunteers.includes(me().playerId);
-      const cooperation=wolf&&!task.completed?'<div class="v7-task-cooperation">'+(volunteers.length?'<p class="muted" data-task-volunteers>'+esc(C.taskVolunteers(volunteers.map(name).join(', ')))+'</p>':'')+(actions().canVolunteerTask?button(own?'withdrawTaskVolunteer':'volunteerTask',own?C.withdrawTaskVolunteer:C.volunteerTask,'data-task-id="'+esc(task.id)+'" aria-pressed="'+own+'"','secondary small'):'')+'</div>':'';
-      return '<article class="task-card v3-task" data-player-task="'+esc(task.id)+'"><p class="task-condition" lang="'+(translated?'zh-Hant':'en')+'">'+esc(translated?task.textZh:task.text)+'</p>'+(example?'<details class="v4-task-example" data-detail="example-'+esc(task.id)+'"><summary>Example</summary><p>'+esc(example)+'</p></details>':'')+cooperation+(task.completed?'<span class="mini-chip ready">'+esc(C.completed)+'</span>':actions().canCompleteTask?button('completeTask',C.complete,'data-task-id="'+esc(task.id)+'"'):'<span class="mini-chip">'+esc(C.notCompleted)+'</span>')+'</article>';
+      const cooperation=wolf&&!task.completed&&volunteers.length?'<p class="muted v7-task-cooperation" data-task-volunteers>'+esc(C.taskVolunteers(volunteers.map(name).join(', ')))+'</p>':'';
+      const volunteer=wolf&&!task.completed&&actions().canVolunteerTask?button(own?'withdrawTaskVolunteer':'volunteerTask',own?C.withdrawTaskVolunteer:C.volunteerTask,'data-task-id="'+esc(task.id)+'" aria-pressed="'+own+'"','secondary small'):'';
+      const completion=task.completed?'<span class="mini-chip ready">'+esc(C.completed)+'</span>':actions().canCompleteTask?button('completeTask',C.complete,'data-task-id="'+esc(task.id)+'"'):'<span class="mini-chip">'+esc(C.notCompleted)+'</span>';
+      const controls=volunteer?'<div class="v7-task-actions">'+volunteer+completion+'</div>':completion;
+      return '<article class="task-card v3-task" data-player-task="'+esc(task.id)+'"><p class="task-condition" lang="'+(translated?'zh-Hant':'en')+'">'+esc(translated?task.textZh:task.text)+'</p>'+(example?'<details class="v4-task-example" data-detail="example-'+esc(task.id)+'"><summary>Example</summary><p>'+esc(example)+'</p></details>':'')+cooperation+controls+'</article>';
     }
     function rewardCard() {
       const reward = me().reward, role = profession(me().profession);
