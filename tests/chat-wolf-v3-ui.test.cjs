@@ -121,6 +121,7 @@ test('wolf task volunteers show teammates privately, allow undo, and do not repl
     assert.ok(row.indexOf('data-v3-action="completeTask"')<row.indexOf('v7-task-support'),'completion must come first on the left');
     assert.doesNotMatch(task.slice(0,rowMatch.index),/data-task-volunteers|Planning to do it/,'names must not consume a separate line above the actions');
     assert.match(row,/data-v3-action="completeTask"[^>]*data-task-id="w1"/);
+    assert.match(row,/data-v3-action="completeTask"[^>]*>I completed the task<\/button>/,'the completion label remains unchanged');
     const completion=row.match(/<button\b[^>]*data-v3-action="completeTask"[^>]*>/)?.[0];
     assert.doesNotMatch(completion,/class="[^"]*\b(?:ghost|secondary)\b/,'completion remains the primary button');
     assert.match(support,/<button\b[^>]*class="[^"]*\bghost\b[^"]*"[^>]*data-v3-action="(?:volunteerTask|withdrawTaskVolunteer)"[^>]*data-task-id="w1"/);
@@ -205,6 +206,7 @@ test('Director private card offers one simple target selector and preserves choi
     actions:{canSendDirection:true}}});
   let html=api.render();
   assert.match(html,/Director Wolf/);assert.match(html,/Send Direction/);
+  assert.match(html,/<details data-detail="wolf-role-rules">/,'role ability rules remain available');
   assert.equal((html.match(/>Random<\/option>/g)||[]).length,1);
   assert.match(html,/>Jessie<\/option>/);assert.match(html,/>Leo<\/option>/);
   assert.doesNotMatch(html,/Choose random|Choose player|Control Wolf|Puppet Wolf/);
@@ -232,6 +234,8 @@ test('Temporary Topic is shown once with its own countdown; drafted short text s
   api.render();api.handleInput({target:{value:'Which friend replies last?',form:{id:'v6-topic-shifter-form'}}});
   let html=api.render();
   assert.equal((html.match(/What hobby would be hardest to quit\?/g)||[]).length,1);
+  assert.match(html,/<div class="eyebrow">Temporary topic<\/div>/);
+  assert.doesNotMatch(html,/v4-topic-label|<div class="eyebrow">Main topic<\/div>/);
   assert.match(html,/data-temporary-deadline="181000"/);assert.match(html,/>3:00<\/span>/);
   assert.match(html,/Which friend replies last\?/);assert.match(html,/maxlength="150"/);
   assert.doesNotMatch(html,/data-v3-action="endTemporaryTopic"/);
@@ -412,15 +416,52 @@ test('v4 private reading order is role, full question, task and reward; no overs
   assert.equal(html.split('What do you like about trips?').length-1,1);
 });
 
-test('readable private cards use camp colors, one progress heading, collapsed rules and footer room info',()=>{
+test('modern private question panels omit duplicate titles and main eyebrows while host panels retain them',()=>{
+  const topic={id:'travel',shortTitle:'Our Short Trip Title',title:'Our Full Trip Title',category:'Travel',
+    mainQuestion:'What do you like about trips?',entryPrompts:['Food?'],followUps:[{id:'travel-f1',text:'What can go wrong?'}]};
+  for(const role of ['WOLF','VILLAGER','JESTER']){
+    const {api}=harness({public:{flowVersion:4,round:2,topic},private:{role}},true);
+    const html=api.render();
+    const panel=html.match(/<section class="question-card v3-topic v4-topic-full[^\"]*">([\s\S]*?)<\/section>/)?.[1];
+    assert.ok(panel);
+    assert.match(panel,/>Round 2 of 3<\/span>/);
+    assert.match(panel,/data-current-question>What do you like about trips\?<\/h2>/);
+    assert.doesNotMatch(panel,/v4-topic-label|Our Short Trip Title|Our Full Trip Title|<div class="eyebrow">Main topic<\/div>/);
+    assert.equal((panel.match(/What do you like about trips\?/g)||[]).length,1);
+  }
+  const host=harness({public:{flowVersion:4,round:2,topic},private:{isHost:true}});
+  const hostHtml=host.api.render();
+  assert.match(hostHtml,/<span class="v4-topic-label">Our Short Trip Title<\/span>/);
+  assert.match(hostHtml,/<div class="eyebrow">Main topic<\/div>/);
+  assert.match(hostHtml,/data-current-question>What do you like about trips\?<\/h2>/);
+});
+
+test('completion rows use readable primary text and top alignment rather than stretching to volunteer names',()=>{
+  const css=fs.readFileSync(path.join(rootPath,'chat-wolf.css'),'utf8');
+  const row=css.match(/\.v7-task-actions\s*\{([^}]+)\}/)?.[1];
+  const sharedButton=css.match(/\.v7-task-actions\s+\.btn\s*\{([^}]+)\}/)?.[1]||'';
+  const button=css.match(/\.v7-task-actions\s*>\s*\.btn\s*\{([^}]+)\}/)?.[1]||sharedButton;
+  assert.match(row,/align-items:\s*start\b/);
+  assert.doesNotMatch(row,/align-items:\s*stretch\b/);
+  assert.match(button,/font-size:\s*(?:0)?\.95rem\b/);
+  const minimum=Number((button.match(/min-height:\s*(\d+)px\b/)||sharedButton.match(/min-height:\s*(\d+)px\b/))?.[1]);
+  assert.ok(minimum>=44,'the primary control must have at least a 44px tap target');
+  assert.match(sharedButton+button,/white-space:\s*normal\b/);
+  assert.doesNotMatch(button,/(?:^|;)\s*height:\s*(?:100%|\d+px)\b/,'the primary button should keep its natural content height');
+});
+
+test('readable private cards use camp colors, one progress heading, essential controls and footer room info',()=>{
   const {api,current}=harness({public:{flowVersion:4,phase:'ROLE_REVEAL'},private:{roleAcknowledged:false}},true);
   let html=api.render();
   assert.match(html,/v5-role-wolf/);
   assert.match(html,/<h2 class="role-title wolf">Wolf<\/h2>/);
   assert.equal(html.split('Wolf tasks 1/3').length-1,1);
-  assert.match(html,/Shared by all wolves/);
-  assert.match(html,/<details class="v5-task-rules" data-detail="wolf-task-rules">/);
-  assert.doesNotMatch(html,/<details class="v5-task-rules"[^>]*open|<header>Room<\/header>/);
+  assert.doesNotMatch(html,/Shared by all wolves|v5-task-meta|data-detail="wolf-task-rules"|<header>Room<\/header>/);
+  assert.match(html,/<div class="team-list" aria-label="Wolf team">/);
+  assert.match(html,/<span class="team-chip">Player 1<\/span>/);
+  assert.match(html,/<span class="team-chip">Player 2<\/span>/);
+  assert.match(html,/data-v3-action="toggleTaskLanguage"/);
+  assert.match(html,/<details class="panel v3-rules" data-detail="v3-rules">/);
   assert.ok(html.indexOf('v5-room-info')>html.indexOf('Secret wolf action three'));
   assert.match(html,/<dd>TEST01<\/dd>/);
   assert.match(html,/data-v3-action="ackRole"/);
@@ -448,6 +489,8 @@ test('a manual follow-up displays once above tasks and retains the original only
   assert.equal(html.split('Which trip would you repeat?').length-1,1);
   assert.equal(html.split('What do you like about trips?').length-1,1);
   assert.match(html,/<details class="v4-original-topic" data-detail="original-topic">/);
+  assert.match(html,/<div class="eyebrow">Currently discussing<\/div>/);
+  assert.doesNotMatch(html,/v4-topic-label|<div class="eyebrow">Main topic<\/div>/);
   assert.doesNotMatch(html,/v4-question-peek/);
 });
 

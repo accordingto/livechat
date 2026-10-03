@@ -1,6 +1,32 @@
 # Chat Wolf — special wolves and task-quality update
 
-## Current update — noticeable wolf tasks and cooperation (2026-10-04)
+## Current UI cleanup — compact private cards (2026-10-04)
+
+- Removed `Shared by all wolves` and the shared-task `? Rules` row from modern
+  wolf cards. Team names, task progress, translation toggle and the separate
+  role-ability/global game rules remain available.
+- Private cards omit the redundant topic short title and main-topic eyebrow.
+  The complete current question and round remain; follow-up/temporary-topic
+  labels and the collapsed original question still distinguish topic changes.
+  Host presentation keeps its existing topic labels.
+- Completion remains the primary left-hand action, with unchanged wording,
+  15.2px text and a natural height of at least 48px. Its box no longer stretches
+  to match wrapped planning names in the subdued right-hand support column.
+- Local synthetic in-app-browser checks passed at 320px, 360px and 390px:
+  no horizontal content overflow and primary buttons stayed about 57px high
+  even when the right-hand column grew to 88px. These are simulated mobile
+  viewports, not physical-device or live-player tests.
+- Targeted card tests: 34/34 passed. Full repository rerun with
+  `node --test --test-concurrency=1 tests/*.test.cjs`: 322/322 passed. The initial
+  parallel run was 321/322 because an unchanged, unrelated `next-round` test
+  races a 1ms real-time deadline; its narrow rerun also passed. No other game's
+  production code or tests were changed to obtain the passing rerun.
+
+This is a UI-only update. No roles, tasks, rewards, votes, game outcomes or sync
+mechanisms changed. Refresh the host page and each player card; no redeal is
+needed. Use the original `/chat-wolf.html` entry, not the archived v4 preview.
+
+## Previous update — noticeable wolf tasks and cooperation (2026-10-04)
 
 Incremental changes only: no new roles, outcomes, profession rewards, votes or
 round flow. Fellow Fan remains disabled. The existing trusted-host/Firebase
