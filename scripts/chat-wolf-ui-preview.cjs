@@ -24,6 +24,13 @@ const server=http.createServer((req,res)=>{
       const shifter=Object.values(sample.players).find(p=>p.wolfProfession==='topic_shifter');
       E.dispatch(sample,shifter.id,'changeTopic',{text:'What hobby would be hardest to quit?'},4);
     }
+    // Opt-in synthetic planning state for checking its quiet right-hand layout.
+    // This local visual server never connects to Firebase or another room.
+    if(url.searchParams.get('planning')==='1'&&player.role==='WOLF'){
+      const teammate=Object.values(sample.players).find(p=>p.role==='WOLF'&&p.id!==player.id);
+      E.dispatch(sample,teammate.id,'volunteerTask',{taskId:sample.tasks[0].id},4);
+      E.dispatch(sample,player.id,'volunteerTask',{taskId:sample.tasks[1].id},4);
+    }
     const state=E.projectState(sample,player.id,4);
     state.private.isHost=role==='HOST';
     if(url.searchParams.get('phase')==='reveal')state.public.phase='ROLE_REVEAL';

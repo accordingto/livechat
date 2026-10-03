@@ -14,8 +14,9 @@ paid AI calls are required. The host page still needs to remain open.
   variants retain shared mechanic groups. Exact-minimum draws are preferred,
   but more tells are allowed when needed. Existing generic/voice caps and strict
   recent-history exclusions remain; no silent repeat or ordinary-task fallback.
-- Each unfinished shared wolf task has `Let me do it`, beside its completion
-  control in one compact two-column row, including on mobile. The private wolf team sees
+- Each unfinished shared wolf task has its primary completion control on the
+  left. `Let me do it` and the intending players sit in a subdued right column
+  in the same compact row, including on mobile. The private wolf team sees
   the intending players, and each can undo only their own intent. Both wolves
   may volunteer, either can still complete a task, and volunteering does not
   count as completion or affect the result. This metadata never enters the
@@ -32,7 +33,7 @@ paid AI calls are required. The host page still needs to remain open.
 
 Verification performed for this update:
 
-- Full repository automated suite: 319/319 passed, including new shared-task
+- Full repository automated suite: 320/320 passed, including new shared-task
   intent, persistent Director notice, actual content quota and transport tests.
 - Authored bank: 501 active self-action tasks, including 328 reviewed small
   tells. All 48 topics passed 100 seeded sequences of eleven same-topic deals:

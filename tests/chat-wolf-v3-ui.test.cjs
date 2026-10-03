@@ -111,9 +111,20 @@ test('wolf task volunteers show teammates privately, allow undo, and do not repl
   const actionsRow=html=>{
     const task=html.match(/<article\b[^>]*data-player-task="w1"[^>]*>([\s\S]*?)<\/article>/)?.[1];
     assert.ok(task,'the named task must have its own card');
-    const row=task.match(/<div\b[^>]*class="[^"]*\bv7-task-actions\b[^"]*"[^>]*>([\s\S]*?)<\/div>/)?.[1];
+    // The support column contains its own div; match through the task's end,
+    // not the first closing div inside the shared actions row.
+    const rowMatch=task.match(/<div\b[^>]*class="[^"]*\bv7-task-actions\b[^"]*"[^>]*>([\s\S]*)<\/div>\s*$/);
+    const row=rowMatch?.[1];
     assert.ok(row,'completion and cooperation need one shared actions row');
+    const support=row.match(/<div\b[^>]*class="[^"]*\bv7-task-support\b[^"]*"[^>]*>([\s\S]*)<\/div>\s*$/)?.[1];
+    assert.ok(support,'intent button and volunteer names need one right support column');
+    assert.ok(row.indexOf('data-v3-action="completeTask"')<row.indexOf('v7-task-support'),'completion must come first on the left');
+    assert.doesNotMatch(task.slice(0,rowMatch.index),/data-task-volunteers|Planning to do it/,'names must not consume a separate line above the actions');
     assert.match(row,/data-v3-action="completeTask"[^>]*data-task-id="w1"/);
+    const completion=row.match(/<button\b[^>]*data-v3-action="completeTask"[^>]*>/)?.[0];
+    assert.doesNotMatch(completion,/class="[^"]*\b(?:ghost|secondary)\b/,'completion remains the primary button');
+    assert.match(support,/<button\b[^>]*class="[^"]*\bghost\b[^"]*"[^>]*data-v3-action="(?:volunteerTask|withdrawTaskVolunteer)"[^>]*data-task-id="w1"/);
+    assert.match(support,/<p\b[^>]*data-task-volunteers[^>]*>Planning to do it:/);
     assert.equal((row.match(/<button\b/g)||[]).length,2);
     return row;
   };
@@ -129,6 +140,25 @@ test('wolf task volunteers show teammates privately, allow undo, and do not repl
   await api.handleClick({target:{closest:()=>({dataset:{v3Action:'withdrawTaskVolunteer',taskId:'w1'}})}});
   assert.equal(calls[1].action,'withdrawTaskVolunteer');assert.equal(calls[1].payload.taskId,'w1');
   current.private.actions.canVolunteerTask=false;assert.doesNotMatch(api.render(),/data-v3-action="volunteerTask"|data-v3-action="withdrawTaskVolunteer"/);
+});
+
+test('paused and meeting cards keep existing volunteer names in the right support column without enabling actions',()=>{
+  const {api,current}=harness({public:{flowVersion:4,paused:true},private:{
+    actions:{canCompleteTask:false,canVolunteerTask:false},
+    tasks:[{id:'w1',text:'Say one odd sentence.',volunteerIds:['a','b'],completed:null}]}},true);
+  for(const phase of ['TALK','MEETING_TURNS']){
+    current.public.phase=phase;
+    current.public.paused=phase==='TALK';
+    const html=api.render();
+    const task=html.match(/<article\b[^>]*data-player-task="w1"[^>]*>([\s\S]*?)<\/article>/)?.[1];
+    const rowMatch=task?.match(/<div\b[^>]*class="[^"]*\bv7-task-actions\b[^"]*"[^>]*>([\s\S]*)<\/div>\s*$/);
+    assert.ok(rowMatch,'existing coordination remains in its compact row when actions are unavailable');
+    const row=rowMatch[1],support=row.match(/<div\b[^>]*class="[^"]*\bv7-task-support\b[^"]*"[^>]*>([\s\S]*)<\/div>\s*$/)?.[1];
+    assert.match(support,/data-task-volunteers>Planning to do it: Player 1, Player 2<\/p>/);
+    assert.match(row.slice(0,row.indexOf('v7-task-support')),/>Not completed<\/span>/,'left completion state stays unchanged');
+    assert.doesNotMatch(task.slice(0,rowMatch.index),/data-task-volunteers|Planning to do it/);
+    assert.doesNotMatch(task,/data-v3-action="volunteerTask"|data-v3-action="withdrawTaskVolunteer"|data-v3-action="completeTask"/);
+  }
 });
 
 test('village tasks and host presentation never get wolf volunteer controls or names',()=>{
