@@ -129,7 +129,8 @@ test('participating host may receive the popup in their original private embedde
   const privateHtml = recipientUI(true).render();
   assert.match(privateHtml, /role="dialog" aria-modal="true"/);
   assert.match(privateHtml, /PRIVATE HOST INSTRUCTION/);
-  assert.match(privateHtml, /Got it · 30s/);
+  assert.match(privateHtml, /Keep this direction open/);
+  assert.doesNotMatch(privateHtml, /data-direction-notice-close/);
   const presentationHtml = recipientUI(false).render();
   assert.doesNotMatch(presentationHtml, /role="dialog"|PRIVATE HOST INSTRUCTION|data-direction-notice-id|direction-notice-reopen/);
 });

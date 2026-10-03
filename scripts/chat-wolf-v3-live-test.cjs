@@ -62,6 +62,7 @@ async function main(){
   assert.equal(publicHost.private.role,null);assert.equal(publicHost.private.wolfProfession,null);
   assert.equal(publicHost.private.wolfAbility,null);assert.equal(publicHost.private.secretDirection,null);
   assert.equal(publicHost.private.actions.canSendDirection,undefined);assert.equal(publicHost.private.actions.canChangeTopic,undefined);
+  assert.equal(publicHost.private.actions.canVolunteerTask,undefined);
   const views=await Promise.all(players.map(read));
   const wolves=players.filter((_,i)=>views[i].private.role==='WOLF');
   const villagers=players.filter((_,i)=>views[i].private.role==='VILLAGER');
@@ -76,6 +77,28 @@ async function main(){
   for(const v of views.filter(v=>v.private.role!=='WOLF'))assert.equal(v.private.tasks,null);
   assert.deepEqual((await read(wolves[0])).private.tasks,(await read(wolves[1])).private.tasks);
   await send(hostPlayer,{action:'beginTalk'});
+  const beforeVolunteer=(await read(wolves[0])).private.tasks;
+  const dealtWolfTasks=JSON.parse((await store.get(host.path(code,control))).value.data).room.tasks;
+  assert.ok(dealtWolfTasks.filter(task=>task.noticeableTell===true).length>=Math.ceil(dealtWolfTasks.length/2));
+  assert.ok(beforeVolunteer.every(task=>task.volunteerIds.length===0));
+  const cooperationTaskId=beforeVolunteer[0].id;
+  await Promise.all(wolves.map(wolf=>send(wolf,{action:'volunteerTask',taskId:cooperationTaskId})));
+  const volunteerIds=wolves.map(wolf=>wolf.id).sort();
+  assert.deepEqual((await read(wolves[0])).private.tasks[0].volunteerIds,volunteerIds);
+  assert.deepEqual((await read(wolves[1])).private.tasks,(await read(wolves[0])).private.tasks);
+  assert.ok((await read(wolves[0])).private.tasks.every(task=>task.completed===null));
+  await send(wolves[0],{action:'volunteerTask',taskId:cooperationTaskId});
+  assert.deepEqual((await read(wolves[1])).private.tasks[0].volunteerIds,volunteerIds);
+  await send(wolves[0],{action:'withdrawTaskVolunteer',taskId:cooperationTaskId});
+  assert.deepEqual((await read(wolves[1])).private.tasks[0].volunteerIds,[wolves[1].id]);
+  await send(wolves[0],{action:'volunteerTask',taskId:cooperationTaskId});
+  await assert.rejects(send(villagers[0],{action:'volunteerTask',taskId:cooperationTaskId,playerId:wolves[0].id,role:'WOLF'}),{code:'WOLF_ONLY'});
+  for(const view of await Promise.all(players.map(read))){
+    assert.equal(JSON.stringify(view.public).includes('volunteerIds'),false);
+    if(view.private.role!=='WOLF')assert.equal(JSON.stringify(view.private).includes('volunteerIds'),false);
+  }
+  assert.equal(JSON.stringify(await read(hostPlayer)).includes('volunteerIds'),false);
+  console.log('PASS real wolf cooperation: concurrent nonexclusive private volunteers, repeated action, own withdrawal, no task completion, forged villager rejected, and no public or host-presentation leak.');
   const directorCard=await read(director),options=directorCard.private.wolfAbility.options;
   assert.ok(options.length>=3&&options.length<=5);assert.equal(new Set(options.map(o=>o.family)).size,options.length);
   assert.deepEqual(directorCard.private.wolfAbility.targets.map(p=>p.id).sort(),players.filter((_,i)=>views[i].private.role!=='WOLF').map(p=>p.id).sort());
@@ -83,6 +106,7 @@ async function main(){
   assert.ok(directorCard.private.wolfAbility.targets.every(p=>Object.keys(p).sort().join(',')==='id,name'));
   const refreshedDirector=new Client({store,storage:memory(),allowHostRecovery:false});auxiliary.push(refreshedDirector);
   assert.deepEqual((await refreshedDirector.read(code,director.token)).private.wolfAbility.options,options);
+  assert.deepEqual((await refreshedDirector.read(code,director.token)).private.tasks,directorCard.private.tasks);
   const beforeDirection=JSON.stringify(directorCard.private.tasks);
   // The same private session in two tabs must consume this ability exactly once.
   const directionBody={action:'sendDirection',targetId:jester.id,directionId:options[0].id};
@@ -98,13 +122,14 @@ async function main(){
   const secret=(await read(jester)).private.secretDirection;assert.ok(secret);assert.equal(secret.swapsRemaining,1);
   assert.equal(secret.id.includes(director.id),false);
   assert.equal(secret.noticeShownAt,null);assert.equal(secret.noticeUnlockAt,null);assert.equal(secret.noticeAcknowledgedAt,null);
+  assert.equal(secret.noticeClosedAt,null);assert.equal(secret.noticeClosedReason,null);
   const refreshedTarget=new Client({store,storage:memory(),allowHostRecovery:false});auxiliary.push(refreshedTarget);
   await send(jester,{action:'showDirectionNotice',directionId:secret.id});
   const shownView=await read(jester),shown=shownView.private.secretDirection;
   assert.equal(shown.noticeUnlockAt-shown.noticeShownAt,30000);
   assert.equal(shown.noticeAcknowledgedAt,null);
   assert.equal(shownView.private.actions.canAcknowledgeDirection,false);
-  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:secret.id}),{code:'DIRECTION_NOTICE_LOCKED'});
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:secret.id}),{code:'DIRECTION_MUST_COMPLETE'});
   assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,(await read(jester)).private.secretDirection);
   await send(jester,{action:'showDirectionNotice',directionId:secret.id});
   assert.equal((await read(jester)).private.secretDirection.noticeShownAt,shown.noticeShownAt);
@@ -113,45 +138,45 @@ async function main(){
   // pretend this passed. The script runs in a background test process.
   const beforeWait=await read(jester);
   await new Promise(resolve=>setTimeout(resolve,Math.max(0,shown.noticeUnlockAt-beforeWait.public.serverNow)+250));
-  await send(jester,{action:'acknowledgeDirection',directionId:secret.id});
-  const acknowledged=(await read(jester)).private.secretDirection;
-  assert.ok(acknowledged.noticeAcknowledgedAt>=acknowledged.noticeUnlockAt);
-  assert.equal(acknowledged.completed,null,'Got it is reading, not completing the performance.');
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:secret.id}),{code:'DIRECTION_MUST_COMPLETE'});
+  const pending=(await read(jester)).private.secretDirection;
+  assert.equal(pending.noticeAcknowledgedAt,null);
+  assert.equal(pending.noticeClosedAt,null);
+  assert.equal(pending.completed,null,'An unfinished performance cannot close through the old Got it action.');
   assert.equal(JSON.stringify((await read(director)).private.tasks),beforeDirection);
   assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,(await read(jester)).private.secretDirection);
-  await send(jester,{action:'acknowledgeDirection',directionId:secret.id});
-  assert.equal((await read(jester)).private.secretDirection.noticeAcknowledgedAt,acknowledged.noticeAcknowledgedAt);
+  assert.equal((await read(jester)).private.actions.canAcknowledgeDirection,false);
   for(const p of players){
     const view=await read(p);assert.equal(view.public.directionRecap,undefined);
     assert.equal(JSON.stringify(view.public).includes(secret.id),false);
-    for(const key of ['noticeShownAt','noticeUnlockAt','noticeAcknowledgedAt'])assert.equal(JSON.stringify(view.public).includes(key),false);
+    for(const key of ['noticeShownAt','noticeUnlockAt','noticeAcknowledgedAt','noticeClosedAt','noticeClosedReason'])assert.equal(JSON.stringify(view.public).includes(key),false);
     if(p.id!==jester.id)assert.equal(view.private.secretDirection,null);
   }
   assert.equal((await read(hostPlayer)).private.secretDirection,null);
-  console.log('PASS real Director notice transport: first display saved once, premature acknowledgement rejected, actual 30-second server lock, private acknowledgement survives a second client, and no task progress.');
+  console.log('PASS real Director notice transport: first display saved once, actual 30-second elapsed check still cannot dismiss an unfinished performance, refreshed target remains pending, and no task progress.');
   const beforeSwap=JSON.stringify((await read(director)).private.wolfAbility);
   await send(jester,{action:'swapDirection',directionId:secret.id});
   const swapped=(await read(jester)).private.secretDirection;
   assert.notEqual(swapped.id,secret.id);assert.equal(swapped.swapsRemaining,0);
   assert.equal(swapped.noticeShownAt,null);assert.equal(swapped.noticeUnlockAt,null);assert.equal(swapped.noticeAcknowledgedAt,null);
+  assert.equal(swapped.noticeClosedAt,null);assert.equal(swapped.noticeClosedReason,null);
   assert.equal(JSON.stringify((await read(director)).private.wolfAbility),beforeSwap);
   await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:secret.id}),{code:'STALE_DIRECTION'});
-  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:swapped.id}),{code:'DIRECTION_NOTICE_LOCKED'});
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:swapped.id}),{code:'DIRECTION_MUST_COMPLETE'});
   await send(jester,{action:'showDirectionNotice',directionId:swapped.id});
   const swappedNotice=(await read(jester)).private.secretDirection;
   assert.equal(swappedNotice.noticeUnlockAt-swappedNotice.noticeShownAt,30000);
   assert.equal(swappedNotice.noticeAcknowledgedAt,null);
   await assert.rejects(send(jester,{action:'completeDirection',directionId:secret.id}),{code:'STALE_DIRECTION'});
   await assert.rejects(send(jester,{action:'swapDirection',directionId:swapped.id}),{code:'DIRECTION_SWAP_UNAVAILABLE'});
-  await send(jester,{action:'completeDirection',directionId:swapped.id});
-  assert.ok((await read(jester)).private.secretDirection.completed);
-  assert.equal((await read(jester)).private.secretDirection.noticeAcknowledgedAt,null,'Task completion cannot dismiss an unread replacement notice.');
+  assert.equal((await read(jester)).private.secretDirection.completed,null);
+  assert.equal((await read(jester)).private.secretDirection.noticeClosedAt,null);
   assert.equal(JSON.stringify((await read(director)).private.tasks),beforeDirection);
   assert.equal((await refreshedDirector.read(code,director.token)).private.wolfAbility.used,true);
   assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,(await read(jester)).private.secretDirection);
   const directionRoom=JSON.parse((await store.get(host.path(code,control))).value.data).room;
   assert.equal(directionRoom.directionRecap.length,1);
-  console.log('PASS real Director transport: one CAS use, all non-wolf targets including Jester, stable private options, private recipient, one swap with fresh locked notice, stale acknowledgement rejected, refresh, and no wolf task progress.');
+  console.log('PASS real Director transport: one CAS use, all non-wolf targets including Jester, stable private options, private recipient, one swap with a fresh persistent notice, stale acknowledgement rejected, refresh, and no wolf task progress.');
   await send(hostPlayer,{action:'followUp'});
   const beforeTopic=(await read(hostPlayer)).public;
   const shifterTab=new Client({store,storage:memory(),allowHostRecovery:false});auxiliary.push(shifterTab);
@@ -198,6 +223,9 @@ async function main(){
   const pausedViews=await Promise.all(players.map(read)),remaining=pausedViews[0].public.temporaryTopic.remainingMs;
   assert.ok(remaining>0&&remaining<=180000);
   for(const view of pausedViews){assert.equal(view.public.paused,true);assert.equal(view.public.temporaryTopic.deadlineAt,null);assert.equal(view.public.temporaryTopic.remainingMs,remaining);}
+  assert.equal((await read(jester)).private.secretDirection.noticeClosedAt,null);
+  await assert.rejects(send(jester,{action:'acknowledgeDirection',directionId:swapped.id}),{code:'DIRECTION_MUST_COMPLETE'});
+  await assert.rejects(send(jester,{action:'completeDirection',directionId:swapped.id}),{code:'GAME_PAUSED'});
   await assert.rejects(send(shifter,{action:'changeTopic',text:'Another question?'}),{code:'GAME_PAUSED'});
   await send(hostPlayer,{action:'resume'});
   const resumed=(await read(hostPlayer)).public;
@@ -230,6 +258,14 @@ async function main(){
     const phase=(await read(hostPlayer)).public.phase;
     assert.equal(phase,'MEETING_TURNS');
     if(round===1){
+      const closedDirection=(await read(jester)).private.secretDirection;
+      assert.ok(closedDirection.noticeClosedAt);
+      assert.equal(closedDirection.noticeClosedReason,'meeting');
+      assert.equal(closedDirection.completed,null);
+      assert.equal((await read(jester)).private.actions.canShowDirectionNotice,false);
+      assert.deepEqual((await refreshedTarget.read(code,jester.token)).private.secretDirection,closedDirection);
+      await assert.rejects(send(jester,{action:'completeDirection',directionId:swapped.id}),{code:'WRONG_PHASE'});
+      await assert.rejects(send(wolves[0],{action:'volunteerTask',taskId:cooperationTaskId}),{code:'WRONG_PHASE'});
       const meeting=(await read(hostPlayer)).public.meeting;
       assert.equal(new Set(meeting.order).size,6);
       const speaker=players.find(p=>p.id===meeting.currentSpeakerId);
@@ -251,6 +287,14 @@ async function main(){
       const next=(await read(players[1])).public;
       assert.equal(next.phase,'TALK');assert.equal(next.round,round+1);
       if(round===1){
+        const nextDirection=(await read(jester)).private.secretDirection;
+        assert.equal(nextDirection.noticeClosedReason,'meeting');
+        assert.equal(nextDirection.completed,null);
+        assert.equal((await read(jester)).private.actions.canShowDirectionNotice,false);
+        await send(jester,{action:'completeDirection',directionId:swapped.id});
+        assert.ok((await read(jester)).private.secretDirection.completed);
+        assert.equal((await read(jester)).private.secretDirection.noticeClosedAt,nextDirection.noticeClosedAt);
+        console.log('PASS real Director meeting close: pending notice auto-folds without completion, survives a second card and next TALK without reopening, then only an explicit I did it completes the performance.');
         assert.ok(next.activeFollowUp);assert.equal(next.activeFollowUp.id,initialFollow);
         for(const role of ['reporter','dreamer']){
           const p=players.find((_,i)=>views[i].private.profession===role);
@@ -292,7 +336,10 @@ async function main(){
   const restarted=(await read(hostPlayer)).public;
   assert.equal(restarted.phase,'ROLE_REVEAL');assert.notEqual(restarted.matchId,final.matchId);
   assert.deepEqual(restarted.voteHistory,[]);
-  for(const view of await Promise.all(players.map(read))){assert.equal(view.private.secretDirection,null);if(view.private.wolfAbility)assert.equal(view.private.wolfAbility.used,false);}
+  for(const view of await Promise.all(players.map(read))){
+    assert.equal(view.private.secretDirection,null);if(view.private.wolfAbility)assert.equal(view.private.wolfAbility.used,false);
+    if(view.private.tasks)assert.ok(view.private.tasks.every(task=>task.volunteerIds.length===0));
+  }
   const canonical=JSON.parse((await store.get(host.path(code,control))).value.data);
   const savedScope=JSON.parse((await store.get('rooms/chatwolf-history/players/'+historyToken)).value.data);
   assert.equal(savedScope.history.deals.length,2);

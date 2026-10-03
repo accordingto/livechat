@@ -25,6 +25,13 @@ test('current QA samples and reported capacity refer to the released content, no
   const report=require('../docs/chat-wolf-v6-content-qa.json');
   assert.equal(report.version,C.version);
   assert.equal(report.wolf.activeSelfCards,C.wolfTasks.length);
+  assert.equal(report.wolf.noticeableTellCards,C.wolfTasks.filter(t=>t.noticeableTell===true).length);
+  assert.equal(report.wolf.minimumNoticeableShare,0.5);
+  assert.equal(report.wolf.defaultMinimumNoticeable,2);
+  assert.ok(report.wolf.noticeableSamples.length>=20);
+  for(const sample of report.wolf.noticeableSamples){
+    assert.ok(C.wolfTasks.some(t=>t.noticeableTell===true&&t.id===sample.id&&t.text===sample.text&&t.textZh===sample.textZh));
+  }
   assert.equal(report.wolf.archivedInteractionCards,C.experimentalWolfTasks.length);
   assert.equal(report.village.aggregateCards,C.villageTasks.length);
   assert.equal(report.director.poolTotal,C.directorDirections.length);
@@ -35,6 +42,7 @@ test('current QA samples and reported capacity refer to the released content, no
   assert.equal(report.strictCapacity.successfulDeals,52800);
   assert.deepEqual(report.strictCapacity.shortages,[]);
   assert.ok(Object.values(report.strictCapacity.violations).every(n=>n===0));
+  assert.equal(report.strictCapacity.violations.noticeableTellUnderQuota,0);
   assert.equal(report.director.simulation.executions,20);
   assert.equal(report.director.simulation.wolfProgressChanges,0);
 });

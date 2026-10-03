@@ -49,21 +49,29 @@ test('Browser direction bank matches Node without any runtime service',()=>{
   assert.equal(JSON.stringify(sandbox.CHAT_WOLF_V6_DIRECTIONS.directions),JSON.stringify(directions));
 });
 
-test('Soft Tell edits are a modest overlay and never mutate the previous readable cards',()=>{
+test('Soft Tell edits are an audited overlay and never mutate the previous readable cards',()=>{
   assert.equal(JSON.stringify(banks),original);
   const previous=banks.flatMap(bank=>bank.tasks);
-  assert.ok(overlay.overrides.length>0&&overlay.overrides.length<previous.length/10);
-  assert.ok(overlay.newTasks.length<previous.length/8);
+  // The new per-deal small-tell quota supersedes the earlier ten-percent edit
+  // cap. Keep actual authored counts and immutable history checks instead.
+  assert.ok(overlay.overrides.length>0&&overlay.overrides.length<previous.length);
+  assert.equal(overlay.audit.overwrittenCount,overlay.overrides.length);
+  assert.equal(overlay.audit.addedCount,overlay.newTasks.length);
   assert.equal(overlay.audit.defaultDisabledInteractionCount,previous.filter(task=>task.type==='interaction').length);
   for(const task of overlay.overrides){
-    const before=previous.find(item=>item.id===task.id);
+    const before=overlay.previousNoticeableTasks.find(item=>item.id===task.id)||previous.find(item=>item.id===task.id);
     assert.ok(before);
     assert.equal(before.type,'self_action');
-    assert.notEqual(task.text,before.text);
-    assert.notEqual(task.canonicalTaskKey,before.canonicalTaskKey,'Changed goals need new history identity.');
-    assert.equal(task.previousCanonicalTaskKey,before.canonicalTaskKey);
-    assert.equal(task.previousTaskId,before.id);
-    assert.deepEqual(task.replaces,[],'Changed goals are not audited as wording-only replacements.');
+    if(task.text===before.text){
+      assert.equal(task.canonicalTaskKey,before.canonicalTaskKey,'Classification alone cannot refresh history.');
+      assert.equal(task.variantGroup,before.variantGroup);
+      assert.equal(typeof task.noticeableTell,'boolean');
+    }else{
+      assert.notEqual(task.canonicalTaskKey,before.canonicalTaskKey,'Changed goals need new history identity.');
+      assert.equal(task.previousCanonicalTaskKey,before.canonicalTaskKey);
+      assert.equal(task.previousTaskId,before.id);
+      assert.deepEqual(task.replaces,[],'Changed goals are not audited as wording-only replacements.');
+    }
   }
 });
 
@@ -75,7 +83,7 @@ test('Soft Tell additions stay literal, brief, audible and self-completable',()=
     assert.equal(task.requiredOtherPlayerCount,0);
     assert.equal(task.editorial.singleOutcome,true);
     assert.equal(task.editorial.audioOnly,true);
-    assert.ok(task.softTell);
+    if(task.noticeableTell)assert.ok(task.tellEvidence,'A quota-eligible tell needs explicit review evidence.');
     assert.doesNotMatch(task.text,/\b(get someone|make someone|two people|three people|apologize to a lamp|imaginary rent|invent a nickname|name yourself|give yourself a name)\b/i);
     for(const utterance of task.requiredUtterances||[])assert.ok(task.textZh.includes(utterance),task.id);
   }

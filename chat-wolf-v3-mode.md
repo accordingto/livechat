@@ -1,6 +1,65 @@
 # Chat Wolf — special wolves and task-quality update
 
-## Current update — Director instruction popup (2026-10-03)
+## Current update — noticeable wolf tasks and cooperation (2026-10-04)
+
+Incremental changes only: no new roles, outcomes, profession rewards, votes or
+round flow. Fellow Fan remains disabled. The existing trusted-host/Firebase
+architecture is retained; no new service, credentials, environment settings or
+paid AI calls are required. The host page still needs to remain open.
+
+- Every new formal deal has at least `ceil(sharedTaskCount / 2)` explicitly
+  reviewed, audible small-tell tasks. The default three-task deal includes at
+  least two. Ordinary conversational wording is not counted merely because it
+  has quotation marks. New goals have new canonical history keys; real near
+  variants retain shared mechanic groups. Exact-minimum draws are preferred,
+  but more tells are allowed when needed. Existing generic/voice caps and strict
+  recent-history exclusions remain; no silent repeat or ordinary-task fallback.
+- Each unfinished shared wolf task has `I'll do it`. The private wolf team sees
+  the intending players, and each can undo only their own intent. Both wolves
+  may volunteer, either can still complete a task, and volunteering does not
+  count as completion or affect the result. This metadata never enters the
+  public game state, host presentation or final public recap.
+- An unfinished Director direction remains a central popup through free chat
+  and wrap-up. There is no `Got it`, timed dismissal, Escape or outside-click
+  dismissal. `I did it` completes and closes it; entering a meeting/final-clue
+  stage automatically folds it without completion, exposing turns and ballots.
+  After that it remains available through `View direction`, including in the
+  next chat round. A swapped direction starts its own persistent notice.
+  Refresh, a second recipient session and old read acknowledgements cannot hide
+  an unfinished current-chat direction. The older thirty-second receipt fields
+  remain for saved-data compatibility, not as a dismissal unlock.
+
+Verification performed for this update:
+
+- Full repository automated suite: 319/319 passed, including new shared-task
+  intent, persistent Director notice, actual content quota and transport tests.
+- Authored bank: 501 active self-action tasks, including 328 reviewed small
+  tells. All 48 topics passed 100 seeded sequences of eleven same-topic deals:
+  52,800 successful strict draws, zero shortages, repeats, cap violations or
+  below-half deals. These are default three-task engine tests, not a promise of
+  unlimited capacity for twelve tasks across repeated games. Readable content
+  audit found no duplicate English instruction or out-of-range 6–14-word task.
+- Six independently credentialed synthetic original Hub cards passed the real
+  Firebase test: concurrent wolf volunteering/withdrawal, rejected village
+  impersonation, unchanged completion, no private metadata leaks, actual
+  thirty-second elapsed persistence, reconnect, fresh swap, meeting auto-fold,
+  all three rounds/votes/rewards and fresh restart. Only this run's temporary
+  paths were cleaned; no existing player rooms were used.
+- Functional in-app-browser localhost checks at 390px and 360px: prominent
+  pending popup, refresh persistence, explicit completion/fold/reopen, and
+  meeting auto-fold without completion. Separate local visual fixtures show
+  the three wolf task controls. These are synthetic sessions and simulated
+  mobile viewport sizes, not physical-phone or human voice-play tests.
+
+Refresh the trusted host page and each original player card after publishing.
+Existing seats, roles and dealt text are retained; use a new game/redeal for the
+new authored task pool. The game still relies on honest human completion, not
+speech recognition or an objective audio referee.
+
+## Previous update — Director instruction popup (2026-10-03)
+
+The read-to-dismiss behavior below is historical and superseded by the current
+completion-or-meeting popup rule.
 
 This is an incremental card/UI update; roles, tasks, rewards, voting and game
 outcomes are unchanged. A received Secret Direction now opens in a large central

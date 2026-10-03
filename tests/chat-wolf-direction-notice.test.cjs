@@ -22,7 +22,7 @@ function fixture(seed = 7) {
     view: id => E.projectState(room, id || targetId, now) };
 }
 
-test('Director receipt waits for first displayed popup then uses an authoritative 30-second lock', () => {
+test('Director receipt saves a 30-second read clock but pending chat directions cannot be dismissed', () => {
   const h = fixture();
   assert.equal(h.assignment().noticeShownAt, null);
   assert.equal(h.assignment().noticeUnlockAt, null);
@@ -35,21 +35,24 @@ test('Director receipt waits for first displayed popup then uses an authoritativ
   assert.equal(h.assignment().noticeShownAt, h.now());
   assert.equal(h.assignment().noticeUnlockAt, h.now() + 30000);
   assert.equal(h.view().private.actions.canShowDirectionNotice, false);
-  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_NOTICE_LOCKED');
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
   h.advance(29999);
   assert.equal(h.view().private.actions.canAcknowledgeDirection, false);
-  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_NOTICE_LOCKED');
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
   h.advance(1);
-  assert.equal(h.view().private.actions.canAcknowledgeDirection, true);
-  h.notice('acknowledgeDirection');
-  assert.equal(h.assignment().noticeAcknowledgedAt, h.now());
   assert.equal(h.view().private.actions.canAcknowledgeDirection, false);
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
+  assert.equal(h.assignment().noticeClosedAt, null);
+  h.notice('completeDirection');
+  assert.equal(h.assignment().noticeClosedAt, h.now());
+  assert.equal(h.assignment().noticeClosedReason, 'completed');
+  assert.equal(h.view().private.actions.canCompleteDirection, false);
 });
 
-test('unshown notices cannot be acknowledged even long after delivery', () => {
+test('unshown pending directions cannot be dismissed even long after delivery', () => {
   const h = fixture();
   h.advance(1000000);
-  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_NOTICE_LOCKED');
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
   assert.equal(h.assignment().noticeAcknowledgedAt, null);
   assert.equal(h.assignment().noticeShownAt, null);
 });
@@ -64,7 +67,7 @@ test('refresh and duplicate read/ack actions preserve the first saved times acro
   assert.equal(h.assignment().noticeUnlockAt, unlockAt);
   assert.deepEqual(E.projectState(secondDeviceRoom, h.targetId, h.now()).private.secretDirection,
     h.view().private.secretDirection);
-  h.advance(20000); h.notice('acknowledgeDirection');
+  h.advance(20000); h.notice('completeDirection'); h.notice('acknowledgeDirection');
   const acknowledgedAt = h.assignment().noticeAcknowledgedAt;
   h.advance(5000); h.notice('acknowledgeDirection'); h.notice('showDirectionNotice');
   assert.equal(h.assignment().noticeAcknowledgedAt, acknowledgedAt);
@@ -74,10 +77,11 @@ test('refresh and duplicate read/ack actions preserve the first saved times acro
     h.view().private.secretDirection);
 });
 
-test('reading and task completion are separate; neither changes wolf progress nor village rewards', () => {
+test('direction completion can close immediately and never changes wolf progress nor village rewards', () => {
   const h = fixture();
   const tasks = JSON.stringify(h.room.tasks), rewards = JSON.stringify(Object.values(h.room.players).map(p => p.reward));
-  h.notice('showDirectionNotice'); h.advance(30000); h.notice('acknowledgeDirection');
+  h.notice('showDirectionNotice'); h.advance(30000);
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
   assert.equal(h.assignment().completed, null);
   assert.equal(JSON.stringify(h.room.tasks), tasks); assert.equal(JSON.stringify(Object.values(h.room.players).map(p => p.reward)), rewards);
   h.notice('completeDirection');
@@ -87,18 +91,22 @@ test('reading and task completion are separate; neither changes wolf progress no
   completionFirst.notice('completeDirection');
   assert.ok(completionFirst.assignment().completed);
   assert.equal(completionFirst.assignment().noticeAcknowledgedAt, null);
-  assert.equal(completionFirst.view().private.actions.canShowDirectionNotice, true);
+  assert.equal(completionFirst.assignment().noticeClosedReason, 'completed');
+  assert.equal(completionFirst.view().private.actions.canShowDirectionNotice, false);
 });
 
 test('notice reading continues while paused and in meetings without changing game timers', () => {
   const h = fixture();
   h.send('p0', 'pause');
   const pausedTimer = h.room.pausedRemainingMs, clock = JSON.stringify(h.room.talkClock);
-  h.notice('showDirectionNotice'); h.advance(30000); h.notice('acknowledgeDirection');
+  h.notice('showDirectionNotice'); h.advance(30000);
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
   assert.equal(h.room.paused, true); assert.equal(h.room.pausedRemainingMs, pausedTimer);
   assert.equal(JSON.stringify(h.room.talkClock), clock);
   h.send('p0', 'resume'); h.send('p0', 'endTalk');
   assert.equal(h.room.phase, 'MEETING_TURNS');
+  assert.equal(h.assignment().noticeClosedReason, 'meeting');
+  assert.equal(h.assignment().completed, null);
   const meeting = fixture(9);
   meeting.send('p0', 'endTalk');
   meeting.notice('showDirectionNotice'); meeting.advance(30000);
@@ -114,12 +122,14 @@ test('notice reading continues while paused and in meetings without changing gam
 
 test('swap opens a fresh notice; old assignment and another player cannot read or acknowledge it', () => {
   const h = fixture();
-  h.notice('showDirectionNotice'); h.advance(30000); h.notice('acknowledgeDirection');
+  h.notice('showDirectionNotice'); h.advance(30000);
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
   const oldId = h.assignment().id;
   h.notice('swapDirection');
   assert.notEqual(h.assignment().id, oldId);
   assert.equal(h.assignment().noticeShownAt, null); assert.equal(h.assignment().noticeUnlockAt, null);
   assert.equal(h.assignment().noticeAcknowledgedAt, null);
+  assert.equal(h.assignment().noticeClosedAt, null); assert.equal(h.assignment().noticeClosedReason, null);
   for (const action of ['showDirectionNotice', 'acknowledgeDirection']) {
     fails(() => h.send(h.targetId, action, { directionId: oldId }), 'STALE_DIRECTION');
     fails(() => h.send(h.directorId, action, { directionId: h.assignment().id }), 'SECRET_DIRECTION_UNAVAILABLE');
@@ -128,21 +138,23 @@ test('swap opens a fresh notice; old assignment and another player cannot read o
   }
   h.notice('showDirectionNotice');
   assert.equal(h.assignment().noticeUnlockAt, h.now() + 30000);
-  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_NOTICE_LOCKED');
+  fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
 });
 
 test('notice metadata is recipient-private and never goes to Director or finished public recap', () => {
   const h = fixture();
   const directorAbility = JSON.stringify(h.view(h.directorId).private.wolfAbility);
-  h.notice('showDirectionNotice'); h.advance(30000); h.notice('acknowledgeDirection');
+  h.notice('showDirectionNotice'); h.advance(30000); h.send('p0', 'endTalk');
   const privateNotice = h.view().private.secretDirection;
-  assert.equal(privateNotice.noticeAcknowledgedAt, h.now());
+  assert.equal(privateNotice.noticeClosedAt, h.now());
+  assert.equal(privateNotice.noticeClosedReason, 'meeting');
   assert.equal(JSON.stringify(h.view(h.directorId).private.wolfAbility), directorAbility);
   for (const p of Object.values(h.room.players)) {
     const v = h.view(p.id);
     assert.equal(JSON.stringify(v.public).includes('noticeShownAt'), false);
     assert.equal(JSON.stringify(v.public).includes('noticeUnlockAt'), false);
     assert.equal(JSON.stringify(v.public).includes('noticeAcknowledgedAt'), false);
+    assert.equal(JSON.stringify(v.public).includes('noticeClosedAt'), false);
     if (p.id !== h.targetId) {
       assert.equal(v.private.secretDirection, null);
       assert.equal(v.private.actions.canShowDirectionNotice, false);
@@ -161,13 +173,14 @@ test('notice metadata is recipient-private and never goes to Director or finishe
 
 test('pre-update running directions initialize a notice safely and zero timestamps remain valid', () => {
   const h = fixture();
-  for (const key of ['noticeShownAt', 'noticeUnlockAt', 'noticeAcknowledgedAt']) delete h.assignment()[key];
+  for (const key of ['noticeShownAt', 'noticeUnlockAt', 'noticeAcknowledgedAt', 'noticeClosedAt', 'noticeClosedReason']) delete h.assignment()[key];
   assert.equal(h.view().private.secretDirection.noticeShownAt, null);
   assert.equal(h.view().private.actions.canShowDirectionNotice, true);
   h.setTime(0); h.notice('showDirectionNotice');
   assert.equal(h.assignment().noticeShownAt, 0); assert.equal(h.assignment().noticeUnlockAt, 30000);
   h.setTime(10000); h.notice('showDirectionNotice');
   assert.equal(h.assignment().noticeShownAt, 0);
-  h.setTime(30000); h.notice('acknowledgeDirection');
-  assert.equal(h.assignment().noticeAcknowledgedAt, 30000);
+  h.setTime(30000); fails(() => h.notice('acknowledgeDirection'), 'DIRECTION_MUST_COMPLETE');
+  h.notice('completeDirection');
+  assert.equal(h.assignment().noticeClosedAt, 30000);
 });

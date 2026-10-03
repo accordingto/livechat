@@ -5,6 +5,8 @@ const CONTENT = typeof module === 'object' && module.exports ? require('./chat-w
 const contentFor = room => (room.flowVersion || 3) < 4 && CONTENT.legacy ? CONTENT.legacy : CONTENT;
 const PHASES = Object.freeze(Object.fromEntries(['LOBBY', 'ROLE_REVEAL', 'TALK', 'WRAP_UP', 'FINAL_CLUES', 'MEETING_DISCUSS', 'MEETING_TURNS', 'VOTING', 'JUDGE_DECISION', 'FINISHED'].map(p => [p, p])));
 const DIRECTION_NOTICE_DELAY_MS = 30000;
+const DIRECTION_FOLD_PHASES = Object.freeze([PHASES.FINAL_CLUES, PHASES.MEETING_DISCUSS,
+  PHASES.MEETING_TURNS, PHASES.VOTING, PHASES.JUDGE_DECISION]);
 const clone = value => JSON.parse(JSON.stringify(value));
 class GameError extends Error {
   constructor(code, status = 400) { super(code); this.name = 'GameError'; this.code = code; this.status = status; }
@@ -100,6 +102,16 @@ function compatible(task, topic) {
 function sameSet(a, b) { return a.length === b.length && new Set(a).size === a.length && a.every(id => b.includes(id)); }
 function stage(room, phase, now, seconds = null) {
   if (room.temporaryTopic && phase !== PHASES.TALK) endTemporaryTopic(room);
+  // The reminder is persistent throughout chat, but a meeting must not hide
+  // the recipient's turn or ballot. Closing it never completes the direction.
+  // Also cover older snapshots already in a meeting when the upgrade lands.
+  if (DIRECTION_FOLD_PHASES.includes(phase) || DIRECTION_FOLD_PHASES.includes(room.phase)) {
+    for (const player of Object.values(room.players)) {
+      if (player.secretDirection && player.secretDirection.noticeClosedAt == null) {
+        closeDirectionNotice(player.secretDirection, now, player.secretDirection.completed ? 'completed' : 'meeting');
+      }
+    }
+  }
   room.phase = phase; room.phaseVersion = (room.phaseVersion || 0) + 1;
   room.deadlineAt = seconds == null ? null : now + seconds * 1000;
   room.paused = false; room.pausedRemainingMs = null;
@@ -212,36 +224,52 @@ function selectWolfTasks(room, pool, allowRecentRepeat = false) {
   function search(candidates) {
     const wanted = { interaction: room.settings.interactionTaskCount,
       self_action: room.settings.taskCount - room.settings.interactionTaskCount };
+    const minimumTells = Math.ceil(room.settings.taskCount / 2);
+    // Prefer the requested clue-bearing balance without making it a maximum:
+    // a stricter history window may leave only valid all-tell combinations.
+    let preferredTellMaximum = minimumTells;
     const groups = new Set(), keys = new Set(), selected = [];
-    function fits(task, generic, voice) {
+    function fits(task, generic, voice, tells) {
       return !groups.has(task.variantGroup) && !keys.has(taskKey(task)) &&
+        tells + Number(task.noticeableTell === true) <= preferredTellMaximum &&
         generic + Number(task.isGeneric) <= policy.maxGeneric &&
         voice + Number(task.type === 'self_action' && task.performanceGroup === 'voice') <= policy.maxVoicePerformance;
     }
-    function visit(remainingI, remainingS, startI, startS, generic, voice) {
-      if (!remainingI && !remainingS) return selected.slice();
+    function visit(remainingI, remainingS, startI, startS, generic, voice, tells) {
+      if (!remainingI && !remainingS) return tells >= minimumTells ? selected.slice() : null;
       const byType = {};
       for (const type of ['interaction', 'self_action']) {
         const minimum = type === 'interaction' ? startI : startS;
         byType[type] = candidates.map((task, index) => ({ task, index })).filter(v =>
-          v.index >= minimum && v.task.type === type && fits(v.task, generic, voice));
+          v.index >= minimum && v.task.type === type && fits(v.task, generic, voice, tells));
         const needed = type === 'interaction' ? remainingI : remainingS;
         if (new Set(byType[type].map(v => v.task.variantGroup)).size < needed) return null;
         if (needed && byType[type].filter(v => !v.task.isGeneric).length + (policy.maxGeneric - generic) < needed) return null;
         if (type === 'self_action' && needed && byType[type].filter(v => v.task.performanceGroup !== 'voice').length + (policy.maxVoicePerformance - voice) < needed) return null;
       }
+      const possibleTells = Math.min(remainingI, byType.interaction.filter(v => v.task.noticeableTell === true).length) +
+        Math.min(remainingS, byType.self_action.filter(v => v.task.noticeableTell === true).length);
+      if (tells + possibleTells < minimumTells) return null;
+      const possibleOrdinary = Math.min(remainingI, byType.interaction.filter(v => v.task.noticeableTell !== true).length) +
+        Math.min(remainingS, byType.self_action.filter(v => v.task.noticeableTell !== true).length);
+      if (remainingI + remainingS - (preferredTellMaximum - tells) > possibleOrdinary) return null;
       const type = remainingI && (!remainingS || byType.interaction.length <= byType.self_action.length) ? 'interaction' : 'self_action';
       for (const { task, index } of byType[type]) {
+        if (minimumTells - tells === remainingI + remainingS && task.noticeableTell !== true) continue;
         selected.push(task); groups.add(task.variantGroup); keys.add(taskKey(task));
         const result = visit(remainingI - Number(type === 'interaction'), remainingS - Number(type === 'self_action'),
           type === 'interaction' ? index + 1 : startI, type === 'self_action' ? index + 1 : startS,
-          generic + Number(task.isGeneric), voice + Number(task.type === 'self_action' && task.performanceGroup === 'voice'));
+          generic + Number(task.isGeneric), voice + Number(task.type === 'self_action' && task.performanceGroup === 'voice'),
+          tells + Number(task.noticeableTell === true));
         if (result) return result;
         selected.pop(); groups.delete(task.variantGroup); keys.delete(taskKey(task));
       }
       return null;
     }
-    return visit(wanted.interaction, wanted.self_action, 0, 0, 0, 0);
+    const preferred = visit(wanted.interaction, wanted.self_action, 0, 0, 0, 0, 0);
+    if (preferred) return preferred;
+    preferredTellMaximum = Infinity;
+    return visit(wanted.interaction, wanted.self_action, 0, 0, 0, 0, 0);
   }
   let selected = search(ordered.filter(t => blockedAt(t) < 0));
   if (selected) return { tasks: selected, exception: false };
@@ -330,17 +358,43 @@ function requireDirectionNotice(room, actor, assignmentId) {
   if (assignmentId !== actor.secretDirection.id) fail('STALE_DIRECTION', 409);
   return actor.secretDirection;
 }
+function closeDirectionNotice(direction, now, reason) {
+  if (direction.noticeClosedAt != null) return;
+  direction.noticeClosedAt = direction.completed?.at ?? now;
+  direction.noticeClosedReason = reason;
+}
+function directionNoticeClosure(room, direction) {
+  if (direction.noticeClosedAt != null) return { noticeClosedAt: direction.noticeClosedAt,
+    noticeClosedReason: direction.noticeClosedReason || (direction.completed ? 'completed' : 'meeting') };
+  if (direction.completed) return { noticeClosedAt: direction.completed.at,
+    noticeClosedReason: 'completed' };
+  // A pre-upgrade direction may have crossed a meeting before these fields
+  // existed. Infer only a real meeting/round boundary, never an old "Got it".
+  const recap = (room.directionRecap || []).find(row => row.id === direction.recapId);
+  const assignmentRound = direction.assignedRound ?? (recap && !recap.swappedAt ? recap.round : null);
+  const assignmentAt = recap?.swappedAt ?? recap?.sentAt;
+  const meeting = recap && (room.voteHistory || []).find(vote => assignmentRound != null ? vote.round >= assignmentRound :
+    assignmentAt != null && (vote.closedAt ?? vote.resolvedAt ?? 0) >= assignmentAt);
+  if (DIRECTION_FOLD_PHASES.includes(room.phase) || meeting || (assignmentRound != null && room.round > assignmentRound)) {
+    return { noticeClosedAt: meeting?.resolvedAt ?? meeting?.closedAt ?? room.updatedAt,
+      noticeClosedReason: 'meeting' };
+  }
+  return { noticeClosedAt: null, noticeClosedReason: null };
+}
 function showDirectionNotice(room, actor, payload, now) {
   const direction = requireDirectionNotice(room, actor, payload.directionId);
   // Receipt starts when the player's popup is actually displayed, not when
   // the Director sends it to a disconnected or background player. Save this
   // once so refreshes and other devices cannot restart or shorten the lock.
-  if (direction.noticeShownAt != null || direction.noticeAcknowledgedAt != null) return;
+  if (direction.noticeShownAt != null) return;
   direction.noticeShownAt = now;
   direction.noticeUnlockAt = now + DIRECTION_NOTICE_DELAY_MS;
 }
 function acknowledgeDirection(room, actor, payload, now) {
   const direction = requireDirectionNotice(room, actor, payload.directionId);
+  if (!direction.completed && [PHASES.TALK, PHASES.WRAP_UP].includes(room.phase)) {
+    fail('DIRECTION_MUST_COMPLETE', 409);
+  }
   if (direction.noticeAcknowledgedAt != null) return;
   if (direction.noticeShownAt == null || direction.noticeUnlockAt == null || now < direction.noticeUnlockAt) {
     fail('DIRECTION_NOTICE_LOCKED', 409);
@@ -359,8 +413,9 @@ function sendDirection(room, actor, payload, now) {
   const recapId = `${room.matchId}-direction-${Math.floor(random(room) * 0x100000000).toString(16).padStart(8, '0')}`;
   const assignmentId = `${recapId}-1`;
   target.secretDirection = { ...clone(direction), id: assignmentId, directionKey: direction.id,
-    recapId, completed: null, swapsRemaining: 1,
-    noticeShownAt: null, noticeUnlockAt: null, noticeAcknowledgedAt: null };
+    recapId, assignedRound: room.round, completed: null, swapsRemaining: 1,
+    noticeShownAt: null, noticeUnlockAt: null, noticeAcknowledgedAt: null,
+    noticeClosedAt: null, noticeClosedReason: null };
   room.directionRecap.push({ id: recapId, assignmentId, directorId: actor.id, targetId: target.id,
     originalDirection: clone(direction), currentDirection: clone(direction), sentAt: now,
     round: room.round, completed: null, swappedAt: null });
@@ -370,6 +425,7 @@ function completeDirection(room, actor, payload, now) {
   const direction = requireDirection(room, actor, payload.directionId);
   if (direction.completed) return;
   direction.completed = { at: now, round: room.round };
+  closeDirectionNotice(direction, now, 'completed');
   const recap = room.directionRecap.find(row => row.id === direction.recapId);
   recap.completed = clone(direction.completed);
   // This deliberately never calls personalTask or updates shared wolf progress.
@@ -387,8 +443,9 @@ function swapDirection(room, actor, payload, now) {
   if (!next) fail('DIRECTION_SWAP_UNAVAILABLE', 409);
   const assignmentId = `${current.recapId}-2`;
   actor.secretDirection = { ...clone(next), id: assignmentId, directionKey: next.id,
-    recapId: current.recapId, completed: null, swapsRemaining: 0,
-    noticeShownAt: null, noticeUnlockAt: null, noticeAcknowledgedAt: null };
+    recapId: current.recapId, assignedRound: room.round, completed: null, swapsRemaining: 0,
+    noticeShownAt: null, noticeUnlockAt: null, noticeAcknowledgedAt: null,
+    noticeClosedAt: null, noticeClosedReason: null };
   const recap = room.directionRecap.find(row => row.id === current.recapId);
   recap.assignmentId = assignmentId; recap.currentDirection = clone(next); recap.swappedAt = now;
 }
@@ -443,7 +500,7 @@ function startGame(room, now, keepTopic = false, changeTopic = false, allowRecen
   const pool = CONTENT.wolfTasks.filter(t => compatible(t, room.topic) && (t.requiredOtherPlayerCount || 0) <= nonWolfCount);
   const selected = selectWolfTasks(room, pool, allowRecentRepeat);
   room.contentRepeatException = selected.exception;
-  room.tasks = selected.tasks.map(task => ({ ...clone(task), completed: null }));
+  room.tasks = selected.tasks.map(task => ({ ...clone(task), completed: null, volunteerIds: [] }));
   for (const player of Object.values(room.players)) {
     if (!player.profession) continue;
     const card = clone(chooseVillageTask(room, CONTENT.villageTasks.filter(t => t.roleId === player.profession && compatible(t, room.topic))));
@@ -810,6 +867,21 @@ function applyCommand(room, actorId, action, payload, now) {
       }
       break;
     }
+    case 'volunteerTask':
+    case 'withdrawTaskVolunteer': {
+      requirePhase(room, PHASES.ROLE_REVEAL, PHASES.TALK);
+      if (room.tasksFrozen) fail('TASKS_FROZEN', 409);
+      if (actor.role !== 'WOLF') fail('WOLF_ONLY', 403);
+      const task = room.tasks.find(candidate => candidate.id === payload.taskId);
+      if (!task) fail('TASK_NOT_AVAILABLE', 403);
+      const volunteers = new Set((task.volunteerIds || []).filter(id => room.players[id]?.role === 'WOLF'));
+      if (action === 'volunteerTask') volunteers.add(actor.id);
+      else volunteers.delete(actor.id);
+      task.volunteerIds = [...volunteers].sort();
+      // Non-exclusive coordination only: either wolf can still complete it,
+      // and a volunteered card has no effect on progress, rewards or results.
+      break;
+    }
     case 'undoTask': {
       requirePhase(room, ...completionPhases(room));
       if (room.tasksFrozen) fail('TASKS_FROZEN', 409);
@@ -896,6 +968,7 @@ function projectState(room, actorId, now = Date.now()) {
   const talk = completionPhases(room).includes(room.phase) && !room.tasksFrozen && !room.paused;
   const abilityTalk = room.phase === PHASES.TALK && !room.paused && !room.tasksFrozen;
   const notice = active && actor.role !== 'WOLF' ? actor.secretDirection : null;
+  const noticeClosure = notice ? directionNoticeClosure(room, notice) : null;
   const reward = rewardView(room, actor);
   const actions = {
     canReady: room.phase === PHASES.LOBBY, canSettings: host && room.phase === PHASES.LOBBY,
@@ -920,9 +993,11 @@ function projectState(room, actorId, now = Date.now()) {
     canChangeTopic: abilityTalk && actor.role === 'WOLF' && actor.wolfProfession === 'topic_shifter' && actor.wolfAbility?.type === 'topic_shifter' && !actor.wolfAbility.used && !room.temporaryTopic,
     canCompleteDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed,
     canSwapDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed && actor.secretDirection.swapsRemaining > 0,
-    canShowDirectionNotice: !!notice && notice.noticeAcknowledgedAt == null && notice.noticeShownAt == null,
-    canAcknowledgeDirection: !!notice && notice.noticeAcknowledgedAt == null && notice.noticeShownAt != null &&
-      notice.noticeUnlockAt != null && now >= notice.noticeUnlockAt,
+    canShowDirectionNotice: !!notice && noticeClosure.noticeClosedAt == null && notice.noticeShownAt == null,
+    canAcknowledgeDirection: !!notice && (notice.completed || ![PHASES.TALK, PHASES.WRAP_UP].includes(room.phase)) &&
+      notice.noticeAcknowledgedAt == null && notice.noticeShownAt != null && notice.noticeUnlockAt != null && now >= notice.noticeUnlockAt,
+    canVolunteerTask: active && actor.role === 'WOLF' && !room.paused && !room.tasksFrozen &&
+      [PHASES.ROLE_REVEAL, PHASES.TALK].includes(room.phase),
     canCompleteTask: talk && (actor.role === 'WOLF' || !!actor.villageTask),
     canUndoTask: talk && (actor.role === 'WOLF' || (!!actor.villageTask?.completed && !actor.reward?.used)),
     canRerollTask: room.phase === PHASES.ROLE_REVEAL && !!actor.villageTask && actor.rerollsUsed < room.settings.rerollLimit,
@@ -982,9 +1057,11 @@ function projectState(room, actorId, now = Date.now()) {
       swapsRemaining: actor.secretDirection.swapsRemaining,
       noticeShownAt: actor.secretDirection.noticeShownAt == null ? null : actor.secretDirection.noticeShownAt,
       noticeUnlockAt: actor.secretDirection.noticeUnlockAt == null ? null : actor.secretDirection.noticeUnlockAt,
-      noticeAcknowledgedAt: actor.secretDirection.noticeAcknowledgedAt == null ? null : actor.secretDirection.noticeAcknowledgedAt } : null,
+      noticeAcknowledgedAt: actor.secretDirection.noticeAcknowledgedAt == null ? null : actor.secretDirection.noticeAcknowledgedAt,
+      ...noticeClosure } : null,
     wolfTeam: actor.role === 'WOLF' ? Object.values(room.players).filter(p => p.role === 'WOLF').map(p => ({ id: p.id, name: p.name })) : null,
-    tasks: actor.role === 'WOLF' ? room.tasks.map(taskView) : null,
+    tasks: actor.role === 'WOLF' ? room.tasks.map(task => ({ ...taskView(task),
+      ...(active ? { volunteerIds: (task.volunteerIds || []).filter(id => room.players[id]?.role === 'WOLF').slice().sort() } : {}) })) : null,
     villageTask: actor.villageTask ? taskView(actor.villageTask) : null,
     rerollRemaining: actor.villageTask ? Math.max(0, room.settings.rerollLimit - actor.rerollsUsed) : 0,
     talkReminder: host && room.phase === PHASES.TALK && room.talkReminder ? clone(room.talkReminder) : null,

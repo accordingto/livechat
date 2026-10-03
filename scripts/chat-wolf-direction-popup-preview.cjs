@@ -8,7 +8,7 @@ const E = require('../chat-wolf-v3-engine.js');
 const root = path.resolve(__dirname, '..');
 const PORT = 8093;
 const ORIGIN = `http://127.0.0.1:${PORT}`;
-const allowedActions = new Set(['showDirectionNotice', 'acknowledgeDirection', 'completeDirection', 'swapDirection']);
+const allowedActions = new Set(['showDirectionNotice', 'completeDirection', 'swapDirection']);
 const assets = new Map([
   ['/chat-wolf.css', 'text/css; charset=utf-8'],
   ['/chat-wolf-copy.js', 'text/javascript; charset=utf-8'],
@@ -42,8 +42,12 @@ function html(res, body) {
 }
 const wrapper = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Local Director notice test</title><style>
 html{background:#0d0d1a;color:#b8b8d4;font:12px system-ui}body{box-sizing:border-box;margin:0;padding:8px;display:flex;flex-direction:column;align-items:center;min-height:100dvh}header{padding:2px 0 6px}#content{width:100%;max-width:760px}.chat-wolf-frame{display:block;width:100%;height:calc(100dvh - 24px);border:0;border-radius:16px}
-</style></head><body><header>LOCAL SYNTHETIC TEST — no real players</header><main id="content"><iframe class="chat-wolf-frame" id="wolf-card" src="/card" title="Local Chat Wolf player card" referrerpolicy="no-referrer"></iframe></main><script>
+</style></head><body><header>LOCAL SYNTHETIC TEST — no real players <button id="local-meeting">Start test meeting</button></header><main id="content"><iframe class="chat-wolf-frame" id="wolf-card" src="/card" title="Local Chat Wolf player card" referrerpolicy="no-referrer"></iframe></main><script>
 const wolfCardFrame=document.getElementById('wolf-card');
+document.getElementById('local-meeting').addEventListener('click',async()=>{
+  const response=await fetch('/meeting',{method:'POST'});
+  if(response.ok)document.getElementById('local-meeting').disabled=true;
+});
 window.addEventListener('message',event=>{
   if(!wolfCardFrame||event.origin!==location.origin||event.source!==wolfCardFrame.contentWindow||event.data?.type!=='chat-wolf-direction-notice')return;
   wolfCardFrame.scrollIntoView({block:'start',behavior:'instant'});
@@ -116,6 +120,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && url.pathname === '/') { html(res, wrapper); return; }
   if (req.method === 'GET' && url.pathname === '/card') { html(res, card); return; }
   if (req.method === 'GET' && url.pathname === '/state') { json(res, 200, state()); return; }
+  if (req.method === 'POST' && url.pathname === '/meeting') {
+    if (req.headers.origin !== ORIGIN) { json(res, 403, { error: 'LOCAL_ORIGIN_ONLY' }); return; }
+    try { E.dispatch(room, 'p0', 'endTalk', {}, Date.now()); json(res, 200, state()); }
+    catch (error) { json(res, 409, { error: error.code || 'LOCAL_MEETING_FAILED' }); }
+    return;
+  }
   if (req.method === 'POST' && url.pathname === '/action') {
     // Browser pages on another origin cannot drive this local fixture.
     if (req.headers.origin && req.headers.origin !== ORIGIN) { json(res, 403, { error: 'LOCAL_ORIGIN_ONLY' }); return; }

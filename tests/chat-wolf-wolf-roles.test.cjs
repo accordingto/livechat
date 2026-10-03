@@ -17,7 +17,8 @@ function harness() {
       canonicalTaskKey: `task-${i}`, variantGroup: `group-${i}`, mechanicKey: `group-${i}`,
       family: `family-${i % 20}`, type: i < 140 ? 'self_action' : 'interaction',
       active: true, status: 'active', reviewed: true, compatibleTopicIds: ['fixture'],
-      isGeneric: false, requiredOtherPlayerCount: i < 140 ? 0 : 1, actionTags: [], positiveClues: [] })) };
+      isGeneric: false, noticeableTell: i % 2 === 0,
+      requiredOtherPlayerCount: i < 140 ? 0 : 1, actionTags: [], positiveClues: [] })) };
   const context = { module: { exports: {} }, require: name => name.includes('rules') ? RULES : content };
   vm.runInNewContext(source, context);
   const E = context.module.exports;
@@ -107,7 +108,7 @@ test('Director sends once to Jester, refresh keeps stable options and usage, rec
   assert.ok(privateTarget);
   assert.equal(privateTarget.completed, null); assert.equal(privateTarget.swapsRemaining, 1);
   assert.equal(privateTarget.id.includes(p.id), false);
-  assert.deepEqual(Object.keys(privateTarget).sort(), ['completed', 'id', 'noticeAcknowledgedAt', 'noticeShownAt', 'noticeUnlockAt', 'swapsRemaining', 'text', 'textZh']);
+  assert.deepEqual(Object.keys(privateTarget).sort(), ['completed', 'id', 'noticeAcknowledgedAt', 'noticeClosedAt', 'noticeClosedReason', 'noticeShownAt', 'noticeUnlockAt', 'swapsRemaining', 'text', 'textZh']);
   for (const other of all(r).filter(player => player.id !== target.id)) {
     const view = h.E.projectState(r, other.id);
     assert.equal(view.private.secretDirection, null);

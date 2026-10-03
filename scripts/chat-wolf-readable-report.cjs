@@ -109,10 +109,10 @@ const report={version:C.version,scope:'Authored content and engine-only tests, n
   perTopic,repeatTests:{sameTopicRestart:runSequence('restart'),sameTopicNormal:runSequence('normal'),changingTopics:runSequence('changing')},
   editorialNotes:[
     'Word count measures English letter/number tokens with internal apostrophes/hyphens as one word.',
-    'The root editor read all 120 final sample rows; a second editor read all B and C-authored task groups were checked during authoring. Independent A review covered its initial 232 rows and final additions.',
+    'The earlier readable release received a 120-row editorial review and independent bank checks. The V7 small-tell overlay is separately authored and reviewed; the current sample below is regenerated from the actual active pool, not an automatic clarity or balance rating.',
     'Review fixes included car/aisle-seat mismatch, generic shop/food assumptions, vague physical actions, weak past-moment mappings and an exact duplicate across banks.',
     'Near variants still exist (for example different concrete help offers, preferences and thank-you actions). They share normalized mechanics, cannot coexist in a deal and are excluded for three recent deals; the report does not claim every card has an entirely unique mechanic.',
-    'No active task asks for object roleplay, object apologies, naming, nicknames or invented words. Some public topics remain imaginative, as requested; their wolf instructions are ordinary actions.',
+    'Active wolf tasks are short personal spoken actions. The V7 update deliberately includes slightly odd concrete proposals, comparisons and audible wording; it does not require inventing names or lengthy creative writing.',
     'The former 60-card target is not enforced: the user explicitly prioritizes quality over pool size.',
     'Existing dealt cards remain immutable until the next deal. Roles, rewards, rounds and outcomes are unchanged.'
   ],limitations:[

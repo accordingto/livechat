@@ -206,7 +206,7 @@ test('Director reaches only the chosen Jester card, stays private after refresh,
   for(const result of race.filter(r=>r.status==='rejected'))assert.ok(['ACTION_PENDING','ACTION_CONFLICT','WOLF_ABILITY_ALREADY_USED'].includes(result.reason.code));
   const direction=(await s.read(target)).private.secretDirection;
   assert.ok(direction);assert.equal(direction.id.includes(director.id),false);
-  assert.deepEqual(Object.keys(direction).sort(),['completed','id','noticeAcknowledgedAt','noticeShownAt','noticeUnlockAt','swapsRemaining','text','textZh']);
+  assert.deepEqual(Object.keys(direction).sort(),['completed','id','noticeAcknowledgedAt','noticeClosedAt','noticeClosedReason','noticeShownAt','noticeUnlockAt','swapsRemaining','text','textZh']);
   const canonical=(await s.data()).room;
   assert.equal(canonical.directionRecap.length,1);assert.equal(canonical.players[director.id].wolfAbility.used,true);
   for(const p of s.players){

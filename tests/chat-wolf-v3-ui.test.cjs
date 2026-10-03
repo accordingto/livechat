@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const RULES = require('../chat-wolf-v3-rules.js');
 const rootPath = path.resolve(__dirname, '..');
 
-function harness(overrides = {}, embeddedCard = false) {
+function harness(overrides = {}, embeddedCard = false, extraContext = {}) {
   let now=1000;
   const context = { window: {}, console };
   context.window.CHAT_WOLF_V3_RULES = RULES;
@@ -41,60 +41,115 @@ function harness(overrides = {}, embeddedCard = false) {
     esc:htmlEsc,getState:()=>current,now:()=>now,embeddedCard,playerName:id=>players.find(p=>p.id===id)?.name || 'Unknown',
     action:async(action,payload)=>{calls.push({action,payload});return true;},
     roomBar:()=>'<header>Room</header>',timer:()=>'<div class="timer">10:00</div>',playerRows:()=>'<div>Players</div>',
-    showToast:()=>{},rerender:()=>{},privateCardUrl:()=>'/chat-wolf.html?card=1#session=private',
+    showToast:()=>{},rerender:()=>{},privateCardUrl:()=>'/chat-wolf.html?card=1#session=private',...extraContext,
   });
   return {api,current,calls,context,setNow:value=>{now=value;}};
 }
 
-test('new private direction opens a central dialog without a render-time request; premature Got it is ignored',async()=>{
+test('pending direction remains central after 30 seconds and old Got it cannot dismiss it; completion is separate',async()=>{
   const {api,current,calls,setNow}=harness({public:{flowVersion:4},private:{role:'JESTER',tasks:null,
     secretDirection:{id:'notice-1',text:'Start with “Breaking news!”',noticeShownAt:null,noticeUnlockAt:null,noticeAcknowledgedAt:null,swapsRemaining:1},
     actions:{canCompleteDirection:true,canShowDirectionNotice:true}}});
   let html=api.render();
-  assert.match(html,/role="dialog" aria-modal="true"/);assert.match(html,/Got it · 30s/);
-  assert.match(html,/data-direction-notice-close disabled/);assert.equal(calls.length,0);
+  assert.match(html,/role="dialog" aria-modal="true"/);assert.match(html,/Keep this direction open/);
+  assert.doesNotMatch(html,/data-direction-notice-close|Got it/);assert.equal(calls.length,0);
   const click=()=>api.handleClick({target:{closest:()=>({dataset:{v3Action:'acknowledgeDirection',directionId:'notice-1'},disabled:false})}});
-  await click();assert.equal(calls.length,0,'forged enabled button cannot bypass missing server receipt');
+  await click();assert.equal(calls.length,0,'old or forged Got it cannot dismiss a pending instruction');
   Object.assign(current.private.secretDirection,{noticeShownAt:1000,noticeUnlockAt:31000});setNow(30999);
-  html=api.render();assert.match(html,/Got it · 1s/);await click();assert.equal(calls.length,0);
-  setNow(31000);html=api.render();assert.match(html,/data-direction-notice-close class|data-direction-notice-close>/);
-  await click();assert.equal(calls[0].action,'acknowledgeDirection');assert.equal(calls[0].payload.directionId,'notice-1');
-  assert.ok(!calls.some(c=>c.action==='completeDirection'||c.action==='completeTask'));
+  html=api.render();assert.match(html,/role="dialog"/);await click();assert.equal(calls.length,0);
+  setNow(31000);html=api.render();assert.doesNotMatch(html,/data-direction-notice-close|Got it/);
+  await click();assert.equal(calls.length,0);
+  assert.match(html,/data-v3-action="completeDirection"/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'completeDirection',directionId:'notice-1'}})}});
+  assert.equal(calls[0].action,'completeDirection');assert.equal(calls[0].payload.directionId,'notice-1');
+  current.private.secretDirection.completed={at:31000,round:1};
+  assert.doesNotMatch(api.render(),/role="dialog"/);
 });
 
-test('acknowledged direction folds below the card and a fixed reopen control does not impose another lock',async()=>{
+test('meeting-closed direction folds below and remains readable without obstructing the next round',async()=>{
   const {api,current,calls}=harness({public:{flowVersion:4},private:{role:'VILLAGER',tasks:null,
-    secretDirection:{id:'notice-1',text:'Sing one sentence.',noticeAcknowledgedAt:100,swapsRemaining:1},actions:{}}});
+    secretDirection:{id:'notice-1',text:'Sing one sentence.',noticeClosedAt:100,noticeClosedReason:'meeting',swapsRemaining:1},actions:{}}});
   let html=api.render();assert.doesNotMatch(html,/role="dialog"/);
   assert.match(html,/<details class="panel v6-secret-direction" data-detail="saved-secret-direction">/);
   assert.match(html,/id="direction-notice-reopen"/);
   await api.handleClick({target:{closest:()=>({dataset:{v3Action:'openDirectionNotice',directionId:'notice-1'},disabled:false})}});
   html=api.render();assert.match(html,/role="dialog"/);assert.doesNotMatch(html,/Got it · 30s/);
-  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'acknowledgeDirection',directionId:'notice-1'},disabled:false})}});
-  assert.equal(calls.length,0,'rereading already acknowledged text needs no server command');
+  assert.match(html,/Back to my card/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'closeDirectionNotice',directionId:'notice-1'},disabled:false})}});
+  assert.equal(calls.length,0,'rereading a meeting-folded direction needs no server command');
   assert.doesNotMatch(api.render(),/role="dialog"/);
   current.private.secretDirection={id:'notice-2',text:'Start with “Plot twist!”',noticeAcknowledgedAt:null};
-  html=api.render();assert.match(html,/Got it · 30s/);assert.match(html,/data-direction-notice-id="notice-2"/);
+  html=api.render();assert.match(html,/Keep this direction open/);assert.match(html,/data-direction-notice-id="notice-2"/);
+  current.public.phase='MEETING_DISCUSS';
+  assert.doesNotMatch(api.render(),/role="dialog"/,'meetings fold immediately, even on pre-upgrade data');
 });
 
-test('visible popup starts one receipt request, traps keyboard focus and updates the button without rerendering',async()=>{
+test('visible persistent popup starts one receipt, traps focus and does not gain a timed close button',async()=>{
   const {api,current,calls,context,setNow}=harness({public:{flowVersion:4},private:{role:'JESTER',tasks:null,
     secretDirection:{id:'notice-1',text:'Sing one sentence.',noticeShownAt:null,noticeUnlockAt:null,noticeAcknowledgedAt:null}}});
   api.render();
   const background={inert:false},header={inert:false},help={textContent:''};let focusCount=0;
   const doc={hidden:true,activeElement:{id:'old-control'},body:{classList:{toggle(){}}}};
-  const heading={focus(){doc.activeElement=heading;focusCount++;}},language={dataset:{v3Action:'toggleTaskLanguage'},disabled:false,focus(){doc.activeElement=language;}},close={dataset:{v3Action:'acknowledgeDirection'},disabled:true,focus(){doc.activeElement=close;}};
+  const heading={focus(){doc.activeElement=heading;focusCount++;}},language={dataset:{v3Action:'toggleTaskLanguage'},disabled:false,focus(){doc.activeElement=language;}},close={dataset:{v3Action:'completeDirection'},disabled:false,focus(){doc.activeElement=close;}};
   const popup={contains:e=>[heading,language,close].includes(e),querySelector:selector=>selector==='[data-direction-notice-close]'?close:selector==='[data-direction-notice-help]'?help:heading,
     querySelectorAll:()=>[language,close].filter(b=>!b.disabled)};
   doc.querySelector=()=>popup;doc.querySelectorAll=selector=>selector==='.site-header'?[header]:[background,popup];context.window.document=doc;
   api.updateDirectionNotice();assert.equal(calls.length,0,'background tabs do not start the reading window');
   doc.hidden=false;api.updateDirectionNotice();api.updateDirectionNotice();
   assert.equal(calls.length,1);assert.equal(calls[0].action,'showDirectionNotice');assert.equal(focusCount,1);
-  assert.equal(background.inert,true);assert.equal(header.inert,true);assert.equal(close.disabled,true);
+  assert.equal(background.inert,true);assert.equal(header.inert,true);
   current.private.secretDirection.noticeShownAt=1000;current.private.secretDirection.noticeUnlockAt=31000;
-  setNow(31000);api.updateDirectionNotice();assert.equal(close.disabled,false);assert.equal(close.textContent,'Got it');assert.equal(focusCount,1);
+  setNow(31000);api.updateDirectionNotice();assert.equal(help.textContent.includes('Keep this direction open'),true);assert.equal(focusCount,1);
   let prevented=0;doc.activeElement=close;api.handleKeydown({key:'Tab',shiftKey:false,preventDefault(){prevented++;}});assert.equal(doc.activeElement,language);
   api.handleKeydown({key:'Escape',preventDefault(){prevented++;},stopPropagation(){}});assert.equal(prevented,2);
+  await Promise.resolve();
+});
+
+test('wolf task volunteers show teammates privately, allow undo, and do not replace the completion button',async()=>{
+  const {api,current,calls}=harness({public:{flowVersion:4},private:{actions:{canCompleteTask:true,canVolunteerTask:true},
+    tasks:[{id:'w1',text:'Say “Plot twist!”',volunteerIds:['b'],completed:null}]}},true);
+  let html=api.render();assert.match(html,/Planning to do it: Player 2/);assert.match(html,/I&#039;ll do it/);
+  assert.match(html,/data-v3-action="completeTask"/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'volunteerTask',taskId:'w1'}})}});
+  assert.equal(calls[0].action,'volunteerTask');assert.equal(calls[0].payload.taskId,'w1');
+  current.private.tasks[0].volunteerIds=['a','b'];html=api.render();
+  assert.match(html,/Planning to do it: Player 1, Player 2/);assert.match(html,/I&#039;m doing it · Undo/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'withdrawTaskVolunteer',taskId:'w1'}})}});
+  assert.equal(calls[1].action,'withdrawTaskVolunteer');assert.equal(calls[1].payload.taskId,'w1');
+  current.private.actions.canVolunteerTask=false;assert.doesNotMatch(api.render(),/data-v3-action="volunteerTask"|data-v3-action="withdrawTaskVolunteer"/);
+});
+
+test('village tasks and host presentation never get wolf volunteer controls or names',()=>{
+  const village=harness({public:{flowVersion:4},private:{role:'VILLAGER',tasks:null,profession:'judge',
+    villageTask:{id:'v1',text:'Give your opinion.',volunteerIds:['b']},actions:{canCompleteTask:true,canVolunteerTask:true}}},true);
+  assert.doesNotMatch(village.api.render(),/Planning to do it|data-task-volunteers|volunteerTask/);
+  const host=harness({public:{flowVersion:4},private:{isHost:true,actions:{canVolunteerTask:true}}});
+  assert.doesNotMatch(host.api.render(),/Planning to do it|data-task-volunteers|volunteerTask/);
+});
+
+test('saved V3 wolf cards render cooperation with base copy rather than requiring V4 copy',async()=>{
+  const {api,calls}=harness({private:{actions:{canVolunteerTask:true,canCompleteTask:true},
+    tasks:[{id:'w1',text:'Say one odd sentence.',volunteerIds:['a','b'],completed:null}]}},true);
+  const html=api.render();
+  assert.match(html,/Planning to do it: Player 1, Player 2/);
+  assert.match(html,/I&#039;m doing it · Undo/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'withdrawTaskVolunteer',taskId:'w1'}})}});
+  assert.equal(calls[0].action,'withdrawTaskVolunteer');
+});
+
+test('new popup waits for a running swap request before sending its display receipt',async()=>{
+  let ready=false;
+  const {api,calls,context}=harness({public:{flowVersion:4},private:{role:'JESTER',tasks:null,
+    secretDirection:{id:'after-swap',text:'Sing one sentence.',noticeShownAt:null}}},true,
+    {canStartAction:()=>ready});
+  api.render();
+  const heading={focus(){}};
+  const popup={querySelector:()=>heading,querySelectorAll:()=>[],contains:()=>true};
+  context.window.document={hidden:false,activeElement:heading,body:{classList:{toggle(){}}},
+    querySelector:()=>popup,querySelectorAll:()=>[]};
+  api.updateDirectionNotice();assert.equal(calls.length,0);
+  ready=true;api.updateDirectionNotice();api.updateDirectionNotice();
+  assert.equal(calls.length,1);assert.equal(calls[0].action,'showDirectionNotice');
   await Promise.resolve();
 });
 

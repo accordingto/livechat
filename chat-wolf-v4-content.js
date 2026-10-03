@@ -5675,7 +5675,7 @@
  // Keep the former bank as migration/audit data, never as a fallback draw pool.
  // Already-dealt rooms retain their own immutable card snapshots.
  const previousWolfTasks = taxonomy.normalize(appendixTasks.concat(...supplements.map(s => Array.isArray(s) ? s : s.tasks)));
- const version='chat-wolf-special-wolves-v6';
+ const version='chat-wolf-noticeable-wolves-v7';
  const topicUpdates=Object.assign({},...readable.map(bank=>bank.topicUpdates||{}));
  for(const topic of topics) Object.assign(topic,topicUpdates[topic.id]||{},{contentVersion:version});
  const previousReadableWolfTasks=taxonomy.normalize(readable.flatMap(bank=>bank.tasks));
@@ -5684,7 +5684,9 @@
  // Old interaction cards are migration/audit data, never a formal fallback.
  // Already-dealt rooms retain their immutable card snapshots.
  const experimentalWolfTasks=taxonomy.normalize(updatedReadable.filter(task=>task.type==='interaction'));
- const wolfTasks=taxonomy.normalize(updatedReadable.filter(task=>task.type==='self_action').concat(softTells.newTasks.map(task=>({...task,contentVersion:version}))));
+ const wolfTasks=taxonomy.normalize(updatedReadable.filter(task=>task.type==='self_action').concat(softTells.newTasks.map(task=>({...task,contentVersion:version}))))
+   .map(task=>({...task,noticeableTell:task.noticeableTell===true}));
+ const previousNoticeableWolfTasks=taxonomy.normalize(softTells.previousNoticeableTasks||[]);
  const directorDirections=directions.directions;
  const exclusionClues = Object.fromEntries(Object.entries(clueInfo).map(([key,value])=>[key,value[2]]));
  const exclusionCluesZh = Object.fromEntries(Object.entries(clueInfo).map(([key,value])=>[key,value[3]]));
@@ -5693,7 +5695,7 @@
    if (supplement.exclusionCluesZh) Object.assign(exclusionCluesZh,supplement.exclusionCluesZh);
  }
  return {version,releaseStage:'release',contentPolicy:'self-soft-tell',topics,wolfTasks,villageTasks,directorDirections,
-   previousWolfTasks,previousReadableWolfTasks,previousVillageTasks,experimentalWolfTasks,
+   previousWolfTasks,previousReadableWolfTasks,previousNoticeableWolfTasks,previousVillageTasks,experimentalWolfTasks,
    villageAudit:revisedVillage.audit,softTellAudit:softTells.audit,
    normalizeGroup:taxonomy.normalizeGroup,normalizeFamily:taxonomy.normalizeFamily,normalizeHistoryEntry:taxonomy.normalizeHistoryEntry,
    normalizeTasks:taxonomy.normalize,

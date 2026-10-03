@@ -1,8 +1,8 @@
-# Chat Wolf v6 content QA
+# Chat Wolf current content QA
 
-Client date: 2026-10-03. Content version: chat-wolf-special-wolves-v6. Generated UTC: 2026-10-02T21:36:30.278Z.
+Client date: 2026-10-04. Content version: chat-wolf-noticeable-wolves-v7. Generated UTC: 2026-10-03T20:57:24.903Z.
 
-Current-revision content review and actual deterministic engine calls. No cloud, browser or physical-device claim.
+Current-revision content review and actual deterministic engine calls. Every new deal must include at least ceil(taskCount / 2) explicitly reviewed audible small-tell cards; default 3 means at least 2. The capacity run checks that quota together with the unchanged history and generic/voice caps. No cloud, browser or physical-device claim.
 
 ## Village tasks
 
@@ -19,9 +19,11 @@ The removed associations have new explicitly matched replacement cards. Current 
 
 ## Formal wolf task pool
 
-501 active self-action cards; 0 interaction cards are selectable in formal mode. 246 older interaction cards remain archived. The targeted overlay has 42 wording/goal overrides and 80 additions. 625 earlier authored wordings were left intact before formal-pool filtering.
+501 active self-action cards; 0 interaction cards are selectable in formal mode. 246 older interaction cards remain archived. The targeted overlay has 262 content/metadata overrides (257 changed English instructions and 5 classification-only cards) and 80 additions. 410 earlier authored wordings were left intact before formal-pool filtering.
 
-English mean 8.5 words, median 9; over 14 words 0. Near variants share mechanic groups and cannot evade recent-history exclusion.
+328 tasks have reviewed audible small tells. Every new deal requires at least half (rounded up); the default three-task deal requires at least 2.
+
+English mean 8.87 words, median 9; over 14 words 0. Near variants share mechanic groups and cannot evade recent-history exclusion.
 
 | Formal mechanic group | Cards |
 | --- | ---: |
@@ -32,7 +34,8 @@ English mean 8.5 words, median 9; over 14 words 0. Near variants share mechanic 
 | ask_permission | 7 |
 | ask_topic_question | 27 |
 | challenge_concrete_claim | 8 |
-| compare_real_options | 17 |
+| compare_real_options | 2 |
+| compare_unlike_things | 15 |
 | correct_own_statement | 14 |
 | describe_past_example | 18 |
 | disagree_with_choice | 6 |
@@ -46,22 +49,22 @@ English mean 8.5 words, median 9; over 14 words 0. Near variants share mechanic 
 | make_specific_plan | 8 |
 | mention_specific_detail | 34 |
 | numbered_statement | 1 |
-| offer_concrete_exchange | 14 |
-| offer_concrete_help | 19 |
+| offer_concrete_exchange | 15 |
+| offer_concrete_help | 18 |
 | paraphrase_concrete_idea | 7 |
 | point_out_downside | 4 |
 | practical_suggestion | 5 |
 | prepared_one_line | 37 |
 | propose_simple_change | 33 |
 | propose_simple_rule | 12 |
-| reclassify_everyday_experience | 1 |
+| reclassify_everyday_experience | 2 |
 | repeat_spoken_words | 14 |
 | set_a_specific_limit | 27 |
 | short_sound_effect | 3 |
 | sing_short_phrase | 1 |
 | state_a_regret | 6 |
 | state_personal_number | 16 |
-| state_personal_stance | 41 |
+| state_personal_stance | 40 |
 | stretch_one_word | 1 |
 | thank_a_person | 15 |
 | three_audible_beats | 1 |
@@ -100,54 +103,54 @@ All planned sequences completed without exhaustion.
 
 | Topic | Self cards | Topic-specific | Mechanic groups | Village cards by role |
 | --- | ---: | ---: | ---: | --- |
-| topic_v2_01 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_02 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_03 | 50 | 34 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_04 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_05 | 68 | 52 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_06 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_07 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_08 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_09 | 48 | 32 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_10 | 96 | 80 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_11 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_12 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_13 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_14 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_15 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_16 | 46 | 30 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_17 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_18 | 48 | 32 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_19 | 48 | 32 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_20 | 68 | 52 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_21 | 48 | 32 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_22 | 45 | 29 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_23 | 49 | 33 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_24 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_25 | 73 | 57 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_26 | 49 | 33 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_27 | 51 | 35 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_28 | 48 | 32 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_29 | 76 | 60 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_01 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_02 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_03 | 50 | 34 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_04 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_05 | 68 | 52 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_06 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_07 | 48 | 32 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_08 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_09 | 48 | 32 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_10 | 96 | 80 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_11 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_12 | 48 | 32 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_13 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_14 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_15 | 48 | 32 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_16 | 46 | 30 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_17 | 48 | 32 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_18 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_19 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_20 | 53 | 37 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_21 | 48 | 32 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_22 | 45 | 29 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_23 | 49 | 33 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_24 | 48 | 32 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_25 | 73 | 57 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_26 | 49 | 33 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_27 | 51 | 35 | 33 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_28 | 48 | 32 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_29 | 61 | 45 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
 | topic_v2_30 | 47 | 31 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_31 | 53 | 37 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_32 | 73 | 57 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_33 | 49 | 33 | 25 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_34 | 53 | 37 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_35 | 48 | 32 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_36 | 49 | 33 | 27 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_37 | 50 | 34 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_31 | 53 | 37 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_32 | 73 | 57 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_33 | 49 | 33 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_34 | 53 | 37 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_35 | 48 | 32 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_36 | 49 | 33 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_37 | 50 | 34 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
 | topic_v2_38 | 50 | 34 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_39 | 48 | 32 | 25 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_40 | 62 | 46 | 25 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_41 | 57 | 41 | 30 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_42 | 58 | 42 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_43 | 54 | 38 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_44 | 57 | 41 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_45 | 48 | 32 | 27 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_46 | 47 | 31 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_47 | 62 | 46 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
-| topic_v2_48 | 67 | 51 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_39 | 48 | 32 | 27 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_40 | 62 | 46 | 26 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_41 | 57 | 41 | 32 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_42 | 58 | 42 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_43 | 54 | 38 | 27 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_44 | 57 | 41 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_45 | 48 | 32 | 28 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_46 | 47 | 31 | 29 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_47 | 62 | 46 | 27 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
+| topic_v2_48 | 67 | 51 | 31 | reporter: 2, veteran: 2, bait: 2, dreamer: 2, contrarian: 2, judge: 2 |
 
 ## Verification limits
 

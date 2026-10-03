@@ -11,10 +11,10 @@ function fixtureContent() {
   const topics = ['a', 'b'].map(id => ({ id, category: 'Fixture', shortTitle: id,
     mainQuestion: `Fixture question ${id}?`, mainQuestionZh: '測試題', entryPrompts: [], tags: ['fixture'],
     followUps: Array.from({ length: 8 }, (_, i) => ({ id: `${id}-${i}`, text: `Follow-up ${i}?` })) }));
-  const wolfTasks = Array.from({ length: 64 }, (_, i) => ({ id: `w-${i}`, canonicalTaskKey: `key-${i}`,
+  const wolfTasks = Array.from({ length: 100 }, (_, i) => ({ id: `w-${i}`, canonicalTaskKey: `key-${i}`,
     variantGroup: `group-${i}`, mechanicKey: `group-${i}`, family: `family-${i % 8}`,
     type: i < 24 ? 'interaction' : 'self_action', text: `Test task ${i}.`, textZh: `測試 ${i}`,
-    active: true, status: 'active', reviewed: true, compatibleTopicIds: ['a', 'b'],
+    active: true, status: 'active', reviewed: true, noticeableTell: i % 2 === 0, compatibleTopicIds: ['a', 'b'],
     isGeneric: i % 20 === 0, performanceGroup: i >= 24 && i < 30 ? 'voice' : null,
     requiredOtherPlayerCount: i < 24 ? 1 : 0, actionTags: [`tag-${i % 8}`], positiveClues: [`A task uses method ${i % 8}.`] }));
   const villageTasks = RULES.professions.flatMap(role => [0, 1].map(i => ({ id: `v-${role.id}-${i}`,
@@ -267,7 +267,7 @@ test('complete combination search backtracks rather than falsely reporting short
 });
 
 test('exhaustion is nonsecret and atomic; explicit relaxation restores oldest history without clearing it', () => {
-  const content = fixtureContent(); content.wolfTasks = [content.wolfTasks[31], content.wolfTasks[32], content.wolfTasks[33]];
+  const content = fixtureContent(); content.wolfTasks = [content.wolfTasks[30], content.wolfTasks[32], content.wolfTasks[33]];
   const h = harness(content), r = h.started({ enabledProfessions: [] }); const before = JSON.stringify(r);
   fails(() => h.host(r, 'restart', { keepTopic: true }), 'CONTENT_EXHAUSTED'); assert.equal(JSON.stringify(r), before);
   h.host(r, 'restart', { keepTopic: true, allowRecentRepeat: true });

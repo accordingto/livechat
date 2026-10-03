@@ -391,3 +391,6 @@ body.v6-direction-notice-open { overflow: hidden; }
 .v6-direction-reopen { position: fixed; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); z-index: 30; background: #ffd36a; color: #142033; box-shadow: 0 4px 22px #0007; }
 .v6-secret-direction > summary { font-weight: 700; color: #ffdc73; }
 .v6-secret-direction > summary + .v4-task-toolbar { margin-top: 18px; }
+.v7-task-cooperation { margin: 12px 0; }
+.v7-task-cooperation p { margin: 0 0 8px; }
+.v7-task-cooperation [aria-pressed="true"] { border-color: var(--red); color: #ff8996; }

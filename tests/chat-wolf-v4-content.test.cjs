@@ -135,7 +135,15 @@ test('formal draw pool contains only curated self actions; old interactions rema
 test('shortened same-goal cards retain old canonical identities and normalized variant groups',()=>{
   const prior=new Map(C.previousWolfTasks.map(t=>[t.id,t]));
   const rewritten=C.wolfTasks.filter(t=>t.replaces?.length);
-  assert.ok(rewritten.length>0);
+  // A new odd goal must not be labelled as a same-goal shortening. This pool
+  // may contain no wording-only replacements after the V7 goal rewrite.
+  const unchanged=C.wolfTasks.filter(t=>C.previousReadableWolfTasks.some(old=>old.id===t.id&&old.text===t.text));
+  assert.ok(unchanged.length>0);
+  for(const task of unchanged){
+    const old=C.previousReadableWolfTasks.find(t=>t.id===task.id);
+    assert.equal(task.canonicalTaskKey,old.canonicalTaskKey);
+    assert.equal(task.variantGroup,C.normalizeGroup(old.variantGroup));
+  }
   for(const task of rewritten)for(const id of task.replaces){
     const old=prior.get(id);
     assert.ok(old,id+': replacement refers to a real prior card');
