@@ -43,6 +43,7 @@
     restart:['原房間再玩一局','Another game in this room'], restartConfirm:['保留玩家，重新準備並洗牌？','Keep the players and prepare a fresh shuffled game?'],
     cancelGame:['取消這局','Cancel game'], cancelConfirm:['確定取消？不會判任何人獲勝。','Cancel this game? No winner will be declared.'],
     cardsCount:['{n} 張手牌','{n} cards'], deckCount:['牌庫 {n} · 棄牌 {d}','Deck {n} · Discard {d}'], noStory:['還沒有出牌。直接開口說故事，不用輸入文字。','No cards played yet. Tell the story aloud—no typing required.'],
+    recent:['最新 {n} 張／共 {total} 張','Latest {n} of {total}'], earlier:['較早的 {n} 張牌','Earlier cards ({n})'],
     noHand:['故事手牌已全部出完。','You have played all your Story Cards.'], waitingDeal:['等主持人發牌。','Waiting for the host to deal.'],
     select:['選這張牌','Select card'], close:['關閉','Close'], cancel:['取消','Cancel'], confirm:['確認','Confirm'],
     help:['玩法／繁中說明','Rules / How to play'], log:['操作紀錄（不是故事逐字稿）','Action log (not a story transcript)'],
@@ -81,7 +82,7 @@
     const ending=!card.category,cat=ending?'ending':card.category,label=ending?'ENDING':category(cat).label;
     const tag=opts.interactive?'button':'article';
     const large=variant==='full',src=large?card.imagePath:card.thumbnailPath||card.imagePath;
-    const sizes=large?'300px':variant==='ending'?'(max-width: 760px) 80px, 264px':variant==='history'?'(max-width: 760px) 112px, 138px':'138px';
+    const sizes=large?'300px':variant==='ending'?'(max-width: 760px) 118px, 168px':variant==='history'?'(max-width: 760px) 80px, 168px':'(max-width: 760px) 96px, 122px';
     const responsive=card.thumbnailPath?' srcset="'+esc(card.thumbnailPath)+' 384w, '+esc(card.imagePath)+' 768w" sizes="'+sizes+'"':'';
     const imageAttrs=' src="'+esc(src)+'"'+responsive+' alt="" loading="'+(large?'eager':'lazy')+'" decoding="async"';
     return '<'+tag+(opts.interactive?' type="button" data-once-card="'+esc(card.id)+'" aria-label="'+esc(card.title||card.text)+'" aria-pressed="'+!!opts.selected+'"':'')+' class="once-card once-card--'+variant+' once-cat-'+esc(cat)+(opts.selected?' is-selected':'')+'"><span class="once-card-category">'+(ending?'<span aria-hidden="true">✦</span>':icon(cat))+esc(label)+'</span><span class="once-card-art"><img class="once-card-art-fill"'+imageAttrs+' aria-hidden="true"><img'+imageAttrs+'></span><span class="once-card-title">'+esc(card.title||card.text)+'</span>'+(card.isInterrupt?'<span class="once-interrupt-mark">'+esc(t('interruptTag'))+'</span>':'')+'</'+tag+'>';
@@ -112,20 +113,20 @@
     if(s.phase==='PASS_DISCARD')body+='<p class="once-notice">'+esc(t(s.storyteller===s.playerNum?'discardHint':'waitingDiscard'))+'</p>';
     if(s.interrupt&&s.phase==='STORYTELLING')body+='<div class="once-notice once-interrupt-notice"><span>'+esc(t('tookOver',{name:name(s,s.interrupt.interrupter),title:s.interrupt.card?.title||deck().storyById?.[s.interrupt.cardId]?.title||s.interrupt.cardId}))+'</span>'+(a.dispute?button('dispute','dispute','',true):'')+'</div>';
     if(s.categoryOpportunity&&s.phase==='STORYTELLING')body+='<p class="once-muted once-opportunity">'+esc(t('matchOpen',{category:category(s.categoryOpportunity.category).label}))+'</p>';
-    const history=list(s.history);
-    body+='<div class="once-table-grid"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></div><div class="once-carousel once-history" aria-label="'+esc(t('story'))+'">'+(history.length?history.map((event,i)=>'<div class="once-history-item"><span class="once-history-number">'+(i+1)+' · '+esc(name(s,event.playerNum??event.actor))+'</span>'+cardHTML(event.card||deck().storyById?.[event.cardId],'history')+(event.mode==='category'?'<small>'+esc(t('categoryInterrupt'))+'</small>':'')+'</div>').join(''):'<p class="once-empty">'+esc(t('noStory'))+'</p>')+'</div></section>';
-    if(!host&&s.ending)body+='<aside class="once-panel once-ending-panel"><div class="once-section-heading"><h2>'+esc(t('ending'))+'</h2><span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span></div>'+cardHTML(s.ending,'ending',{interactive:true})+(a.ending?button('ending','playEnding'):'')+'</aside>';
-    else if(host)body+='<aside class="once-panel once-private-note"><img src="assets/once-upon-a-time/card-backs/ending-back.svg" alt=""><p>'+esc(t('private'))+'</p><p class="once-muted">'+esc(t('hostHint'))+'</p></aside>';
-    body+='</div>';
+    const history=list(s.history),offset=Math.max(0,history.length-4);
+    const historyItem=(event,i)=>'<div class="once-history-item"><span class="once-history-number">'+(i+1)+' · '+esc(name(s,event.playerNum??event.actor))+'</span>'+cardHTML(event.card||deck().storyById?.[event.cardId],'history')+(event.mode==='category'?'<small>'+esc(t('categoryInterrupt'))+'</small>':'')+'</div>';
+    body+='<div class="once-table-grid"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('recent',{n:Math.min(4,history.length),total:history.length}))+'</span></div><div class="once-history once-history-latest" aria-label="'+esc(t('story'))+'">'+(history.length?history.slice(offset).map((event,i)=>historyItem(event,offset+i)).join(''):'<p class="once-empty">'+esc(t('noStory'))+'</p>')+'</div>'+(offset?'<details class="once-history-archive" data-once-detail="history"><summary>'+esc(t('earlier',{n:offset}))+'</summary><div class="once-history">'+history.slice(0,offset).map(historyItem).join('')+'</div></details>':'')+'<span class="once-deck-count once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></section></div>';
     if(!host&&s.phase!=='LOBBY'){
       const selected=hand.find(c=>c.id===options.selectedId);
+      const selectedEnding=!!s.ending&&s.ending.id===options.selectedId;
       const categoryOK=selected?.isInterrupt&&s.categoryOpportunity?.category===selected.category;
-      body+='<section class="once-panel once-hand-panel"><div class="once-section-heading"><h2>'+esc(t('hand'))+'</h2><span>'+hand.length+'</span></div><div class="once-carousel once-hand" aria-label="'+esc(t('hand'))+'">'+(hand.length?hand.map(card=>cardHTML(card,'mini',{interactive:true,selected:card.id===options.selectedId})).join(''):'<p class="once-empty">'+esc(t(['CHOOSING_FIRST','LOBBY'].includes(s.phase)?'waitingDeal':'noHand'))+'</p>')+'</div><div class="once-actions once-hand-actions">'+
-        (a.play?button('play','play','',false,!selected):'')+(a.interrupt?button('interrupt','interrupt','data-mode="normal"',false,!selected):'')+(a.categoryInterrupt&&categoryOK?button('interrupt','categoryInterrupt','data-mode="category"',true):'')+
+      const endingAction=selectedEnding||a.ending;
+      body+='<section class="once-panel once-hand-panel"><div class="once-section-heading"><h2>'+esc(t('hand'))+'</h2><span class="once-muted">'+hand.length+'</span></div><div class="once-hand-layout"'+(s.ending?' data-has-ending':'')+'><div class="once-carousel once-hand" aria-label="'+esc(t('hand'))+'">'+(hand.length?hand.map(card=>cardHTML(card,'mini',{interactive:true,selected:card.id===options.selectedId})).join(''):'<p class="once-empty">'+esc(t(['CHOOSING_FIRST','LOBBY'].includes(s.phase)?'waitingDeal':'noHand'))+'</p>')+'</div>'+(s.ending?'<aside class="once-ending-dock"><span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span>'+cardHTML(s.ending,'ending',{interactive:true,selected:selectedEnding})+'</aside>':'')+'</div><div class="once-actions once-hand-actions">'+
+        (a.play||a.ending?button(endingAction?'ending':'play',endingAction?'playEnding':'play','',false,endingAction?!a.ending||!selectedEnding:!selected):'')+(a.interrupt?button('interrupt','interrupt','data-mode="normal"',false,!selected):'')+(a.categoryInterrupt&&categoryOK?button('interrupt','categoryInterrupt','data-mode="category"',true):'')+
         (a.discard?button('discard','discard','',false,!selected):'')+(a.keepAll?button('keepAll','keep','',true):'')+(a.pass?button('pass','pass','',true):'')+(a.challenge?button('challenge','challenge','',true):'')+(a.continueStory&&(s.interrupt||s.categoryOpportunity)?button('continueStory','continue','',true):'')+'</div></section>';
     }
     if(host&&a.cancel)body+='<div class="once-host-tools">'+button('cancel','cancelGame','',true)+'</div>';
-    return '<div class="once-game"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML()+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
+    return '<div class="once-game once-game--compact"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML()+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
   }
   function errorText(code){
     if(/offline|network/.test(code))return t('offline');
@@ -147,7 +148,7 @@
       if(old?.sessionId!==next.sessionId){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';}
       if(this.confirm&&old?.turnId!==next.turnId){this.confirm=null;this.error=t('changed');}
       this.data=data;
-      if(this.selectedId&&!list(next.hand).some(c=>c.id===this.selectedId))this.selectedId=null;
+      if(this.selectedId&&!list(next.hand).some(c=>c.id===this.selectedId)&&next.ending?.id!==this.selectedId)this.selectedId=null;
       if(this.preview&&!list(next.hand).some(c=>c.id===this.preview.id)&&next.ending?.id!==this.preview.id)this.preview=null;
       if(this.pending&&next.reply?.id===this.pending.command.id){this.error=next.reply.error?errorText(next.reply.error):'';this.pending=null;}
       this.render();
@@ -162,10 +163,9 @@
       this.el.querySelectorAll('.once-carousel').forEach((x,i)=>{x.scrollLeft=scrolls[i]||0;});
       this.el.querySelectorAll('[data-once-detail]').forEach(x=>{x.open=openDetails.includes(x.dataset.onceDetail);});
       const firstSelect=this.el.querySelector('[data-once-first-player]');if(firstSelect&&firstPlayer)firstSelect.value=firstPlayer;
-      if(this.preview)this.el.insertAdjacentHTML('beforeend','<div class="once-modal-backdrop" data-once-action="closePreview"><section class="once-modal" role="dialog" aria-modal="true" aria-label="'+esc(this.preview.title||t('ending'))+'"><button class="once-modal-close" data-once-action="closePreview" aria-label="'+esc(t('close'))+'">×</button>'+cardHTML(this.preview,'full')+(this.preview.category?'<div class="once-actions">'+button('select','select')+'</div>':'')+'</section></div>');
       if(this.confirm)this.el.insertAdjacentHTML('beforeend','<div class="once-modal-backdrop"><section class="once-modal once-confirm" role="dialog" aria-modal="true" aria-label="'+esc(t('confirm'))+'"><h2>'+esc(this.confirm.text)+'</h2>'+(this.confirm.type==='interrupt'&&this.confirm.extra.mode==='normal'?'<p>'+esc(t('normalHelp'))+'</p>':'')+(this.confirm.type==='challenge'&&this.data.once.returnableCard?'<label class="once-check"><input type="checkbox" data-once-return-latest'+(this.confirm.returnLatest?' checked':'')+'> '+esc(t('returnLatest'))+' <strong>'+esc(this.data.once.returnableCard.title)+'</strong></label>':'')+'<div class="once-actions">'+button('confirm','confirm')+button('closeConfirm','cancel','',true)+'</div></section></div>');
-      if(this.pending)this.el.querySelectorAll('[data-once-action]:not([data-once-action="closePreview"]):not([data-once-action="closeConfirm"])').forEach(b=>b.disabled=true);
-      if(this.options.disabled?.())this.el.querySelectorAll('[data-once-action]').forEach(b=>b.disabled=true);
+      if(this.pending)this.el.querySelectorAll('[data-once-card],[data-once-action]:not([data-once-action="closeConfirm"])').forEach(b=>b.disabled=true);
+      if(this.options.disabled?.())this.el.querySelectorAll('[data-once-action],[data-once-card]').forEach(b=>b.disabled=true);
       this.paint();
       if(this.preview||this.confirm){const modal=this.el.querySelector('.once-modal');modal?.querySelector('button')?.focus();}
     }
@@ -188,14 +188,17 @@
     click(event){
       const card=event.target.closest('[data-once-card]');
       if(card&&this.el.contains(card)){
-        const s=this.data.once;this.preview=list(s.hand).find(c=>c.id===card.dataset.onceCard)|| (s.ending?.id===card.dataset.onceCard?s.ending:null);this.render();return;
+        if(this.options.host||this.pending||this.confirm||this.options.disabled?.())return;
+        const s=this.data.once,id=card.dataset.onceCard;
+        if(!list(s.hand).some(c=>c.id===id)&&s.ending?.id!==id)return;
+        this.selectedId=id;this.preview=null;this.error='';this.render();
+        this.el.querySelectorAll('[data-once-card]').forEach(node=>{if(node.dataset.onceCard===id)node.focus?.({preventScroll:true});});return;
       }
       const b=event.target.closest('[data-once-action]');if(!b||!this.el.contains(b)||b.disabled)return;
       const type=b.dataset.onceAction,s=this.data.once;
       if(b.classList.contains('once-modal-backdrop')&&event.target!==b)return;
       if(type==='closePreview'){this.preview=null;this.render();return;}
       if(type==='closeConfirm'){this.confirm=null;this.render();return;}
-      if(type==='select'){this.selectedId=this.preview?.id;this.preview=null;this.render();return;}
       if(type==='retry'){this.retry();return;}
       if(type==='confirm'){
         const c=this.confirm;if(!c)return;const extra={...c.extra};if(c.type==='challenge')extra.returnLatest=!!this.el.querySelector('[data-once-return-latest]')?.checked;
@@ -205,6 +208,7 @@
       if(type==='chooseFirst'){this.send(type,{playerNum:Number(this.el.querySelector('[data-once-first-player]').value)});return;}
       if(type==='vote'||type==='resolveSocial'){this.send(type,{voteId:s.vote.id,choice:b.dataset.choice});return;}
       if(type==='play'||type==='discard'){if(this.selectedId)this.send(type,{cardId:this.selectedId});return;}
+      if(type==='ending'&&(!s.actions?.ending||s.ending?.id!==this.selectedId))return;
       const extra=type==='interrupt'?{cardId:this.selectedId,mode:b.dataset.mode||'normal',...(s.categoryOpportunity?{opportunityId:s.categoryOpportunity.id}:{})}:type==='dispute'?{interruptId:s.interrupt?.id}:type==='finishVote'?{voteId:s.vote?.id}:{};
       const texts={interrupt:extra.mode==='category'?t('categoryConfirm'):t('interruptConfirm',{title:list(s.hand).find(c=>c.id===this.selectedId)?.title||''}),pass:t('passConfirm'),challenge:t('challengeConfirm'),dispute:t('disputeConfirm'),ending:t('endingConfirm'),cancel:t('cancelConfirm'),restart:t('restartConfirm'),finishVote:t('finishConfirm')};
       if(texts[type]){this.confirm={type,extra,text:texts[type],captured:{sessionId:s.sessionId,turnId:s.turnId}};this.render();return;}

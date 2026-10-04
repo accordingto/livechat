@@ -1,4 +1,4 @@
-# Once Upon a Time — V2 artwork / optional Ready
+# Once Upon a Time — V2 artwork / compact table
 
 An incremental, English storytelling card game inside IceBreak Hub. The menu
 entry is last, after Kangaroo Court (Beta). No existing game is replaced.
@@ -16,8 +16,17 @@ missions, classes, or additional rounds are used.
    signals, not a prerequisite for starting or receiving cards.
 5. A random Story Card is revealed and discarded. The host chooses who looks
    most like it to begin; **Choose randomly instead** is an optional alternative.
-6. Tell one continuous story. Tap a hand card to enlarge it, select it, then use
-   the available action. Only the current Storyteller may play or pass.
+6. Tell one continuous story. Tap a hand card to highlight it, then tap **Play
+   card** (or another available action). There is no enlarged-card/Select step.
+   Only the current Storyteller may play or pass.
+
+The compact table shows the **latest four** played cards in order, with their
+original story numbers. Earlier cards are in an optional expandable history;
+there is no table carousel to scroll to the latest play. The private Ending is
+pinned to the right of the player's hand, with its complete sentence visible.
+Only a long hand scrolls horizontally. Select the Ending itself when it becomes
+playable, then use **Play Ending** and the existing confirmation. The host's
+shared table never shows a private hand or unrevealed Ending.
 
 The host page is a shared table, not a private hand. A participating host uses
 their own original player-card link to play. Keep the host page open; on normal
@@ -108,7 +117,7 @@ card content remains English learning material.
 
 The three supplied visual references guide this update: antique-gold corner
 ornaments, parchment HTML titles, and Character gold / Thing green / Place orange /
-Aspect blue / Event purple category identities. Full/mini/history/Ending/preview
+Aspect blue / Event purple category identities. Full/mini/history/Ending
 variants share one component. The references do not change gameplay rules.
 
 All **165 cards now have their own meaning-matched illustration**, generated
@@ -120,7 +129,7 @@ the same artwork fills any side space. The five category fallbacks from V1 are
 not used by current card rendering, including saved older host projections.
 
 Every illustration has a 768px-wide WebP and a 384px-wide thumbnail. Small cards
-lazy-load the thumbnail; enlarged previews can use the main image. Print-sized
+lazy-load the thumbnail; the full-size card component can use the main image. Print-sized
 original PNGs remain locally preserved and are not deployed. Titles, category
 labels and frame ornaments remain separate HTML/SVG, not baked into paintings.
 The complete 330-file main/thumbnail set is 46.53 MiB; a game loads only the
@@ -203,9 +212,9 @@ menu visually shows Once Upon a Time last. A real Firebase browser host opened
 a two-player lobby, resumed it after refresh, and cancelled it without declaring
 a winner; this is separate from the synthetic demo.
 
-- **Local automated checks:** all 408 tests passed in two runs: 86 focused
-  game tests (44 engine, 17 sync, 19 UI, 6 deck/art) and 322 existing tests
-  run sequentially. The artwork checks require 165 unique main-image hashes,
+- **Local automated checks:** all 414 tests passed together in the latest
+  sequential run: 92 focused game tests (44 engine, 17 sync, 25 UI, 6 deck/art)
+  and 322 existing tests. The artwork checks require 165 unique main-image hashes,
   all 330 correctly sized WebPs, and complete semantic/prompt provenance.
   Covers 2/4/6-player setup, repeated plays, both interruption modes, concurrent
   requests, invalid rollback, challenge success/failure/latest-card return,
@@ -225,14 +234,30 @@ a winner; this is separate from the synthetic demo.
 - **Browser UI:** a local synthetic four-player full game passed through actual
   buttons; phone-width pages and card previews did not overflow horizontally.
   This is one in-app browser, not independent browser engines or physical phones.
-- **V2 UI checks:** desktop and 320/375/390px phone-width previews preserve
+- **V2 artwork checks (previous release):** desktop and 320/375/390px phone-width previews preserve
   complete subjects and readable category/Interrupt labels. Preview, selection
   and sequential plays still work; a real two-player browser host dealt directly
   while both players were Not ready, then cancelled the isolated test game.
 
+- **Compact UI update:** direct card selection highlights the card without a
+  preview or Select step. Added regressions for latest-four history/older-only
+  archive/global numbering, private pinned Ending, locked vs available Ending
+  selection, stale selection/session reset and disabled/pending card taps.
+- **Actual player browser check:** in the isolated existing two-player test
+  room, the host restarted/dealt with both players Not ready, selected a first
+  Storyteller and received five consecutive plays from that player's original private link.
+  The player saw only their own hand/Ending; the host showed public counts and
+  cards. This uses actual Firebase and separate tabs, not the synthetic demo.
+  Refresh retained the same player, hand, Ending and public history. Latest four
+  showed cards 2–5, while expanding earlier history showed only card 1. The test
+  game was cancelled afterward without declaring a winner.
+- **Compact layout browser check:** actual player page at 1280×720, 320×667,
+  375×812 and 390×844 kept the main table, private hand/Ending and Play/Pass
+  controls within the first screen with history collapsed. Latest-four history
+  had no horizontal overflow, and the full Ending sentence was not clipped.
+  Rules/log/earlier history can deliberately expand the page; a long hand still
+  scrolls sideways. This is viewport testing, not physical-phone verification.
+
 Not claimed: physical-phone play, two different browser engines, a live spoken
-group playtest, or full balance testing. The test
-browser's clipboard did not expose usable invitation URLs, so a browser-driven
-real-player end-to-end run was not completed. The independent-token backend test
-and UI integration tests cover that interface separately; neither is labelled
-as a real-device playtest.
+group playtest, or full balance testing. Same-browser tabs and resized viewports
+are not labelled as different-device or different-browser-engine tests.

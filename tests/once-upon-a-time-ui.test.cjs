@@ -37,6 +37,22 @@ const action = (html, type, mode) => buttons(html).find(b => b.type === type && 
 function noActions(html, types) {
   for (const type of types) assert.equal(action(html, type), undefined, type + ' should not be offered');
 }
+function elementHTML(html, className) {
+  const openings = /<([a-z][\w:-]*)\b[^>]*\bclass="([^"]*)"[^>]*>/gi;
+  let opening;
+  while ((opening = openings.exec(html))) {
+    if (!opening[2].split(/\s+/).includes(className)) continue;
+    const tags = new RegExp('</?' + opening[1] + '\\b[^>]*>', 'gi');
+    tags.lastIndex = openings.lastIndex;
+    let depth = 1, tag;
+    while ((tag = tags.exec(html))) {
+      depth += tag[0][1] === '/' ? -1 : 1;
+      if (depth === 0) return html.slice(opening.index, tags.lastIndex);
+    }
+    return '';
+  }
+  return '';
+}
 function give(s, seat, cardId) {
   for (const key of ['storyDeck', 'storyDiscard', 'storyHeld']) s[key] = s[key].filter(id => id !== cardId);
   for (const hand of Object.keys(s.hands)) s.hands[hand] = s.hands[hand].filter(id => id !== cardId);
@@ -81,11 +97,10 @@ test('2, 4 and 6 seat lobby has optional readiness and direct host deal with cla
   }
 });
 
-test('each player sees their own exact hand/ending while public host sees only counts and backs', () => {
+test('each player sees their own exact hand/ending while public host sees only public counts', () => {
   for (const count of [2, 4, 6]) {
     const s = started(count), publicHTML = htmlFor(s);
-    assert.match(publicHTML, /Only on your private card/);
-    assert.match(publicHTML, /card-backs\/ending-back\.svg/);
+    assert.match(publicHTML, /cards/);
     assert.doesNotMatch(publicHTML, /data-once-card=|class="once-panel once-hand-panel"/);
     for (const p of s.roster) {
       const ownHTML = htmlFor(s, p.playerNum), ownEnding = D.endingById[s.endings[p.playerNum]];
@@ -105,6 +120,28 @@ test('each player sees their own exact hand/ending while public host sees only c
     const hostWithOwnProjection = UI.tableHTML(E.view(s, 1), { host: true });
     assert.doesNotMatch(hostWithOwnProjection, /data-once-card=/);
     assert.ok(!hostWithOwnProjection.includes(D.endingById[s.endings[1]].text));
+  }
+});
+
+test('private Ending is pinned after the hand in the same dock, never in the public host table', () => {
+  for (const count of [2, 4, 6]) {
+    const s = started(count);
+    for (const p of s.roster) {
+      const html = htmlFor(s, p.playerNum), ending = D.endingById[s.endings[p.playerNum]];
+      const handPanel = elementHTML(html, 'once-hand-panel');
+      const layout = elementHTML(handPanel, 'once-hand-layout');
+      const dock = elementHTML(layout, 'once-ending-dock');
+      assert.ok(handPanel && layout && dock, 'Ending belongs to the private hand panel');
+      assert.ok(layout.indexOf('once-hand"') < layout.indexOf('once-ending-dock'), 'Ending is after the Story hand');
+      assert.ok(dock.includes('data-once-card="' + ending.id + '"'));
+      assert.ok(dock.includes(UI.esc(ending.text)), 'the full private Ending remains readable in the dock');
+      assert.doesNotMatch(html, /once-ending-panel/);
+      noActions(html, ['ending']);
+    }
+    for (const html of [htmlFor(s), UI.tableHTML(E.view(s, 1), { host: true })]) {
+      assert.doesNotMatch(html, /once-ending-dock|once-hand-panel|data-once-card=/);
+      for (const p of s.roster) assert.ok(!html.includes(D.endingById[s.endings[p.playerNum]].text));
+    }
   }
 });
 
@@ -157,6 +194,44 @@ test('a normal takeover offers dispute only to others and retains chronological 
   assert.ok(action(htmlFor(s, 2), 'continueStory'));
   s = act(s, 'continueStory', 2);
   assert.equal(action(htmlFor(s, 1), 'dispute'), undefined);
+});
+
+test('the table shows only the newest four cards immediately, with earlier numbered history collapsed', () => {
+  let s = started(2);
+  const played = s.hands[1].slice(0, 7);
+  for (const id of played) s = act(s, 'play', 1, { cardId: id });
+  for (const seat of [0, 1, 2]) {
+    const html = htmlFor(s, seat), latest = elementHTML(html, 'once-history-latest');
+    const archive = elementHTML(html, 'once-history-archive');
+    assert.ok(latest && archive);
+    assert.doesNotMatch(latest, /once-carousel/);
+    assert.equal((latest.match(/class="once-history-item"/g) || []).length, 4);
+    assert.equal((archive.match(/class="once-history-item"/g) || []).length, 3);
+    assert.match(archive, /^<details\b/);
+    assert.doesNotMatch(archive.slice(0, archive.indexOf('>') + 1), /\sopen(?:\s|=|>)/, 'old history starts collapsed');
+    for (const [i, id] of played.entries()) {
+      const title = '>' + UI.esc(D.storyById[id].title) + '</span>';
+      const active = i < 3 ? archive : latest, other = i < 3 ? latest : archive;
+      assert.ok(active.includes(title), 'card ' + (i + 1) + ' is in its correct history region');
+      assert.ok(!other.includes(title), 'recent cards are not duplicated in the archive');
+      assert.ok(active.includes('>' + (i + 1) + ' · Seat 1</span>'), 'original chronological numbering is retained');
+    }
+    for (let i = 4; i < played.length; i++) {
+      assert.ok(latest.indexOf('>' + D.storyById[played[i - 1]].title + '</span>') < latest.indexOf('>' + D.storyById[played[i]].title + '</span>'));
+    }
+  }
+});
+
+test('zero through four public plays need no hidden history and the newest play is immediately visible', () => {
+  let s = started(2);
+  for (let total = 0; total <= 4; total++) {
+    const html = htmlFor(s), latest = elementHTML(html, 'once-history-latest');
+    assert.ok(latest);
+    assert.equal((latest.match(/class="once-history-item"/g) || []).length, total);
+    assert.equal(elementHTML(html, 'once-history-archive'), '');
+    if (total) assert.ok(latest.includes(UI.esc(D.storyById[s.history.at(-1).cardId].title)));
+    if (total < 4) s = act(s, 'play', 1, { cardId: s.hands[1][0] });
+  }
 });
 
 test('PASS_DISCARD gives only the passer the optional discard/keep choice', () => {
@@ -353,16 +428,42 @@ function harness(data, options = {}) {
   return { card, element, sent, timers, clock: value => { now = value; } };
 }
 
-test('Card preview/select and normal/category confirmation capture exact hand/turn/opportunity IDs', () => {
+test('a Story card tap selects and highlights immediately; Play submits it without a preview/select step', () => {
+  for (const count of [2, 4, 6]) {
+    const s = started(count), h = harness(E.view(s, 1)), [first, second] = s.hands[1];
+    try {
+      h.card.click({ target: target({ onceCard: first }) });
+      assert.equal(h.card.selectedId, first);
+      assert.equal(h.card.preview, null);
+      assert.equal(h.card.confirm, null);
+      assert.equal(h.sent.length, 0, 'selecting does not play the card');
+      assert.match(h.element.innerHTML, new RegExp('data-once-card="' + first + '"[^>]*aria-pressed="true"'));
+      assert.doesNotMatch(h.element.innerHTML, /once-modal|once-card--full|data-once-action="select"/);
+      assert.equal(action(h.element.innerHTML, 'play').disabled, false);
+      h.card.click({ target: target({ onceCard: second }) });
+      assert.equal(h.card.selectedId, second);
+      assert.match(h.element.innerHTML, new RegExp('data-once-card="' + first + '"[^>]*aria-pressed="false"'));
+      assert.match(h.element.innerHTML, new RegExp('data-once-card="' + second + '"[^>]*aria-pressed="true"'));
+      click(h.card, 'play');
+      assert.equal(h.sent.length, 1);
+      assert.equal(h.sent[0].type, 'play');
+      assert.equal(h.sent[0].cardId, second);
+      assert.equal(h.sent[0].sessionId, s.sessionId);
+      assert.equal(h.sent[0].turnId, s.turnId);
+      assert.equal(h.card.preview, null);
+      assert.equal(h.card.confirm, null, 'ordinary Play needs no extra confirmation');
+    } finally { h.card.destroy(); }
+  }
+});
+
+test('direct selection retains normal/category interrupt confirmation with exact hand/turn/opportunity IDs', () => {
   for (const mode of ['normal', 'category']) {
     const { s, special } = categoryFixture(), data = E.view(s, 2), h = harness(data);
     try {
       h.card.click({ target: target({ onceCard: special.id }) });
-      assert.equal(h.card.preview.id, special.id);
-      assert.match(h.element.innerHTML, /once-card--full/);
-      click(h.card, 'select');
       assert.equal(h.card.selectedId, special.id);
       assert.equal(h.card.preview, null);
+      assert.doesNotMatch(h.element.innerHTML, /once-modal|data-once-action="select"/);
       click(h.card, 'interrupt', { mode });
       assert.equal(h.sent.length, 0, 'confirmation is required before sending');
       assert.equal(h.card.confirm.extra.cardId, special.id);
@@ -383,7 +484,7 @@ test('Card preview/select and normal/category confirmation capture exact hand/tu
   }
 });
 
-test('a stale turn/session closes a confirmation and removed private cards close their preview', () => {
+test('a stale turn/session closes confirmations and removed private cards clear direct selection', () => {
   let s = started(), h = harness(E.view(s, 1));
   try {
     click(h.card, 'pass');
@@ -396,16 +497,87 @@ test('a stale turn/session closes a confirmation and removed private cards close
     assert.equal(h.sent.length, 0);
     const removed = s.hands[1][0];
     h.card.click({ target: target({ onceCard: removed }) });
-    h.card.selectedId = removed;
+    assert.equal(h.card.selectedId, removed);
+    assert.equal(h.card.preview, null);
     s = act(s, 'play', 1, { cardId: removed });
     h.card.update(E.view(s, 1));
     assert.equal(h.card.preview, null);
     assert.equal(h.card.selectedId, null);
     click(h.card, 'pass');
+    const stillOwned = s.hands[1][0];
+    h.card.selectedId = stillOwned;
     h.card.update(E.view(started(), 1));
     assert.equal(h.card.confirm, null);
+    assert.equal(h.card.selectedId, null, 'a new session cannot reuse old selected IDs');
     assert.equal(h.card.error, '');
   } finally { h.card.destroy(); }
+});
+
+test('Ending taps select directly but cannot play until the empty-handed storyteller confirms', () => {
+  let s = started(), h = harness(E.view(s, 1));
+  const endingId = s.endings[1];
+  try {
+    h.card.click({ target: target({ onceCard: endingId }) });
+    assert.equal(h.card.selectedId, endingId);
+    assert.equal(h.card.preview, null);
+    assert.equal(h.card.confirm, null);
+    assert.doesNotMatch(h.element.innerHTML, /once-modal|once-card--full|data-once-action="select"/);
+    assert.equal(action(h.element.innerHTML, 'ending').disabled, true, 'an Ending cannot be played while Story Cards remain');
+    noActions(h.element.innerHTML, ['play']);
+    click(h.card, 'ending');
+    assert.equal(h.card.confirm, null, 'the locked Ending cannot open a submission confirmation');
+    assert.equal(h.sent.length, 0);
+    for (const cardId of s.hands[1].slice()) s = act(s, 'play', 1, { cardId });
+    h.card.update(E.view(s, 1));
+    assert.equal(h.card.selectedId, endingId, 'the same private Ending survives ordinary hand updates');
+    assert.equal(action(h.element.innerHTML, 'ending').disabled, false);
+    click(h.card, 'ending');
+    assert.ok(h.card.confirm);
+    assert.equal(h.card.confirm.type, 'ending');
+    assert.equal(h.card.confirm.captured.sessionId, s.sessionId);
+    assert.equal(h.card.confirm.captured.turnId, s.turnId);
+    assert.equal(h.sent.length, 0, 'the existing Ending confirmation remains');
+    click(h.card, 'confirm');
+    assert.equal(h.sent.length, 1);
+    assert.equal(h.sent[0].type, 'ending');
+    assert.equal(h.sent[0].sessionId, s.sessionId);
+    assert.equal(h.sent[0].turnId, s.turnId);
+    const next = act(s, 'ending', 1);
+    h.card.update(E.view(next, 1));
+    noActions(h.element.innerHTML, ['play', 'ending']);
+  } finally { h.card.destroy(); }
+  let empty = started();
+  for (const cardId of empty.hands[1].slice()) empty = act(empty, 'play', 1, { cardId });
+  assert.equal(action(htmlFor(empty, 1), 'ending').disabled, true, 'explicit Ending selection is required');
+});
+
+test('card selection ignores foreign IDs, host projections, disabled seats, pending work and modal confirms', () => {
+  const s = started(), h = harness(E.view(s, 1)), [first, second] = s.hands[1];
+  try {
+    h.card.click({ target: target({ onceCard: s.hands[2][0] }) });
+    assert.equal(h.card.selectedId, null);
+    h.card.click({ target: target({ onceCard: first }) });
+    click(h.card, 'pass');
+    assert.ok(h.card.confirm);
+    h.card.click({ target: target({ onceCard: second }) });
+    assert.equal(h.card.selectedId, first, 'confirmation cannot silently change its selected card');
+    click(h.card, 'closeConfirm');
+    click(h.card, 'play');
+    assert.ok(h.card.pending);
+    h.card.click({ target: target({ onceCard: second }) });
+    assert.equal(h.card.selectedId, first, 'pending work keeps the submitted selection stable');
+    click(h.card, 'play');
+    assert.equal(h.sent.length, 1, 'pending Play cannot create a second request');
+  } finally { h.card.destroy(); }
+  for (const options of [{ host: true }, { disabled: () => true }]) {
+    const blocked = harness(E.view(s, 1), options);
+    try {
+      blocked.card.click({ target: target({ onceCard: first }) });
+      assert.equal(blocked.card.selectedId, null);
+      assert.equal(blocked.card.preview, null);
+      assert.equal(blocked.sent.length, 0);
+    } finally { blocked.card.destroy(); }
+  }
 });
 
 test('Card captures dispute/vote IDs and the explicit latest-card return choice', () => {
