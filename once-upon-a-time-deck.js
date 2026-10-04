@@ -8,15 +8,15 @@
 
   // Original, hand-authored core deck. A title, its language and its art can change
   // independently of the rules. The final boolean marks a category Interrupt card.
-  // V1 intentionally shares one painting within each category; artKey stays unique
-  // so any of the 165 cards can receive its own illustration without changing IDs.
+  // Each card has its own meaning-matched painting and a small mobile thumbnail.
+  // Text, art and rules remain independently editable; card IDs never change.
   const assetRoot = 'assets/once-upon-a-time/';
   const categories = Object.freeze([
-    { id: 'character', label: 'Character', color: '#d9b45f', iconKey: 'crown' },
-    { id: 'thing', label: 'Thing', color: '#55996d', iconKey: 'sword' },
-    { id: 'place', label: 'Place', color: '#ce804c', iconKey: 'location' },
-    { id: 'aspect', label: 'Aspect', color: '#6b91c7', iconKey: 'star' },
-    { id: 'event', label: 'Event', color: '#ad7ec6', iconKey: 'bolt' }
+    { id: 'character', label: 'Character', color: '#d4af37', iconKey: 'crown' },
+    { id: 'thing', label: 'Thing', color: '#22c55e', iconKey: 'cube' },
+    { id: 'place', label: 'Place', color: '#f97316', iconKey: 'location' },
+    { id: 'aspect', label: 'Aspect', color: '#3b82f6', iconKey: 'eye' },
+    { id: 'event', label: 'Event', color: '#a855f7', iconKey: 'bolt' }
   ].map(category => Object.freeze(category)));
 
   const storyGroups = [
@@ -153,7 +153,8 @@
       category,
       isInterrupt,
       artKey: 'story.' + category + '.' + slug,
-      imagePath: assetRoot + category + '/fallback.png'
+      imagePath: assetRoot + category + '/' + slug + '-v2.webp',
+      thumbnailPath: assetRoot + category + '/' + slug + '-v2-thumb.webp'
     }))));
 
   // One broad sentence each: hopeful, unusual, ironic and gently dark conclusions.
@@ -215,7 +216,8 @@
     id: 'once-ending-' + slug,
     text,
     artKey: 'ending.' + slug,
-    imagePath: assetRoot + 'ending/fallback.png'
+    imagePath: assetRoot + 'ending/' + slug + '-v2.webp',
+    thumbnailPath: assetRoot + 'ending/' + slug + '-v2-thumb.webp'
   })));
 
   const storyById = Object.freeze(Object.fromEntries(storyCards.map(card => [card.id, card])));

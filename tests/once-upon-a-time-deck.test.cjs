@@ -32,7 +32,9 @@ test('every story and ending has simple English content, a stable ID and indepen
     assert.match(card.title, /^[A-Za-z]+(?: [A-Za-z]+){0,3}$/);
     assert.ok(card.title.length <= 32, card.id);
     assert.equal(card.artKey, 'story.' + card.category + '.' + card.id.replace('once-' + card.category + '-', ''));
-    assert.equal(card.imagePath, 'assets/once-upon-a-time/' + card.category + '/fallback.png');
+    const slug=card.id.replace('once-'+card.category+'-','');
+    assert.equal(card.imagePath, 'assets/once-upon-a-time/' + card.category + '/'+slug+'-v2.webp');
+    assert.equal(card.thumbnailPath, 'assets/once-upon-a-time/' + card.category + '/'+slug+'-v2-thumb.webp');
     assert.equal(DECK.storyById[card.id], card);
     assert.ok(Object.isFrozen(card));
   }
@@ -42,7 +44,9 @@ test('every story and ending has simple English content, a stable ID and indepen
     assert.ok(card.text.split(/\s+/).length <= 18, card.id);
     assert.ok(card.text.length <= 115, card.id);
     assert.equal(card.artKey, 'ending.' + card.id.replace('once-ending-', ''));
-    assert.equal(card.imagePath, 'assets/once-upon-a-time/ending/fallback.png');
+    const slug=card.id.replace('once-ending-','');
+    assert.equal(card.imagePath, 'assets/once-upon-a-time/ending/'+slug+'-v2.webp');
+    assert.equal(card.thumbnailPath, 'assets/once-upon-a-time/ending/'+slug+'-v2-thumb.webp');
     assert.equal(DECK.endingById[card.id], card);
     assert.ok(Object.isFrozen(card));
   }
@@ -50,18 +54,18 @@ test('every story and ending has simple English content, a stable ID and indepen
   assert.ok(Object.isFrozen(DECK.endingCards));
 });
 
-test('art manifest accounts for all 165 cards honestly as category fallbacks', () => {
+test('art manifest accounts for all 165 individual reviewed meaning-matched paintings', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'assets/once-upon-a-time/art-manifest.json'), 'utf8'));
-  assert.equal(manifest.version, 1);
-  assert.equal(manifest.uniqueIllustrationCount, 6);
+  assert.equal(manifest.version, 2);
+  assert.equal(manifest.uniqueIllustrationCount, 165);
   assert.equal(Object.keys(manifest.cards).length, 165);
-  assert.match(manifest.note, /not 165 unique/i);
-  for (const category of [...Object.keys(categoryCounts), 'ending']) {
-    assert.equal(manifest.categoryDefaults[category].imagePath, 'assets/once-upon-a-time/' + category + '/fallback.png');
-    assert.equal(manifest.categoryDefaults[category].status, 'category-fallback');
-  }
+  assert.match(manifest.note, /meaning-matched/);
+  assert.equal(manifest.mainWidth,768);assert.equal(manifest.thumbnailWidth,384);
   for (const card of [...DECK.storyCards, ...DECK.endingCards]) {
-    assert.deepEqual(manifest.cards[card.id], { artKey: card.artKey, imagePath: card.imagePath, status: 'category-fallback' });
+    const record=manifest.cards[card.id];
+    assert.equal(record.artKey,card.artKey);assert.equal(record.imagePath,card.imagePath);
+    assert.equal(record.thumbnailPath,card.thumbnailPath);assert.equal(record.status,'semantic-illustration');
+    assert.ok(record.semanticDescription.length>20,card.id+' needs its own literal scene');
   }
 });
 
@@ -80,16 +84,23 @@ test('Story and Ending backs are distinct original navy and gold SVGs', () => {
   assert.match(backs[1], /crescent moon above a closed book/);
 });
 
-test('all six shared fallback paintings are project-local square PNG assets', () => {
+test('all165 paintings and330 main/thumbnail WebPs exist, are distinct and optimized for cards', () => {
   const uniquePaths = new Set([...DECK.storyCards, ...DECK.endingCards].map(card => card.imagePath));
-  assert.equal(uniquePaths.size, 6);
+  assert.equal(uniquePaths.size,165);
+  const hashes=new Set();let totalBytes=0;
   for (const file of uniquePaths) {
-    const png = fs.readFileSync(path.join(repoRoot, file));
-    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', file);
-    const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
-    assert.equal(width, height, file);
-    assert.ok(width >= 512, file);
+    for(const [asset,expectedWidth] of [[file,768],[file.replace('.webp','-thumb.webp'),384]]){
+      const bytes=fs.readFileSync(path.join(repoRoot,asset));
+      assert.equal(bytes.subarray(0,4).toString(),'RIFF',asset);assert.equal(bytes.subarray(8,12).toString(),'WEBP',asset);
+      assert.equal(bytes.subarray(12,16).toString(),'VP8 ',asset);
+      assert.equal(bytes.readUInt16LE(26)&0x3fff,expectedWidth,asset);
+      assert.equal(bytes.readUInt16LE(28)&0x3fff,expectedWidth*1.5,asset);
+      totalBytes+=bytes.length;
+      if(expectedWidth===768)hashes.add(require('node:crypto').createHash('sha256').update(bytes).digest('hex'));
+    }
   }
+  assert.equal(hashes.size,165,'no generic or duplicated painting substitutes');
+  assert.ok(totalBytes<80*1024*1024,'optimized artwork must remain under80MiB');
 });
 
 test('the same deck loads as a browser global without CommonJS', () => {

@@ -1,4 +1,39 @@
-# Once Upon a Time fallback artwork
+# Once Upon a Time artwork provenance
+
+## V2 — individual meaning-matched paintings (2026-10-05)
+
+The current deck uses **165 distinct original illustrations**, not category
+fallbacks: 114 Story Cards and 51 Endings. Each was generated separately with
+the built-in `image_gen` tool, then visually inspected against its English title
+or full Ending sentence. The three user-supplied reference images informed the
+fairy-tale painting and ornate gold-frame presentation. No commercial card scan
+was copied, no CLI/API-key generator was used, and no AI runs during gameplay.
+
+Exact per-image prompts, semantic descriptions, inspection notes, saved source
+paths and native generated output paths are preserved in:
+
+- [Character, Thing and first nine Endings](art-v2-character-thing.json)
+- [Place, Aspect and next nine Endings](art-v2-place-aspect.json)
+- [Event and remaining Endings](art-v2-event-ending.json)
+
+Current deployable paths are
+`assets/once-upon-a-time/<category>/<slug>-v2.webp` (768px width) and
+`<slug>-v2-thumb.webp` (384px width). The exact paths are also mapped by stable
+card ID in `art-manifest.json`. Original `<slug>-v2.png` paintings remain locally
+preserved and gitignored, alongside the unchanged native generated output files.
+The build script only resizes/encodes deployment copies to WebP; it does not
+invent, alter or replace the visual subjects. It needs Sharp only at build time.
+
+Card labels/titles are HTML. `card-backs/card-frame.svg` and the two card backs
+are original code-native UI ornaments, separate from generated illustrations.
+Portraits are shown intact in all variants; a dim blurred copy of the same
+image fills any side area. This avoids cutting off a giant's head, a broken
+blade, or an object needed to understand the word.
+
+The following V1 records are retained as historical provenance. Those generic
+paintings are no longer assigned to cards by the current deck/renderer.
+
+## V1 — category fallback artwork
 
 Six distinct original category paintings were generated with the built-in `image_gen` tool on 2026-10-05. No CLI, API key, commercial card scan, or reference artwork was used. The paintings are shared category fallbacks, not 165 unique illustrations. Each card retains a distinct `artKey` for future replacement.
 

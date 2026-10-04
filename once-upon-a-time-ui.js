@@ -9,7 +9,7 @@
     theirTurn:['仔細聽故事；適合時可以用手牌打斷。','Listen for your cards. Interrupt when their elements are mentioned.'],
     sharedTurn:['大家一起延續同一個故事。','Keep one continuous story going.'],
     lobby:['準備一起說故事','Get ready to tell a story'], ready:['準備好了','Ready'], notReady:['尚未準備','Not ready'],
-    unready:['取消準備','Not ready yet'], readyHint:['準備好後，在你自己的卡片上按下準備。','Tap Ready on your own card when you are ready.'],
+    unready:['取消準備','Not ready yet'], readyHint:['準備按鈕僅供參考；主持人可直接發牌開始。','Ready is optional. The host can deal cards and begin at any time.'],
     deal:['發牌','Deal cards'], first:['誰最像這張牌？','Who looks most like this card?'],
     firstHelp:['這張牌已公開丟棄。主持人選出最像這張牌的人，開始故事。','This card is revealed and discarded. The host chooses who looks most like it to begin.'],
     chooseFirst:['選為第一位說故事的人','Choose first Storyteller'], random:['改為隨機選人','Choose randomly instead'],
@@ -69,14 +69,22 @@
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const list=v=>Array.isArray(v)?v:Object.values(v||{});
   const deck=()=>root.ONCE_DECK||(typeof module==='object'&&module.exports?require('./once-upon-a-time-deck.js'):{});
-  const paths={character:'M3 8l3 3 6-7 6 7 3-3-2 12H5L3 8zm2 15h14',thing:'M4 7l8-4 8 4v10l-8 4-8-4V7zm0 0l8 5 8-5M12 12v9',place:'M12 22s8-8 8-13a8 8 0 00-16 0c0 5 8 13 8 13zm0-10a3 3 0 100-6 3 3 0 000 6',aspect:'M12 3l3 6 6 3-6 3-3 6-3-6-6-3 6-3 3-6',event:'M13 2L4 14h7l-1 8 10-13h-7l1-7'};
+  const paths={character:'M3 8l3 3 6-7 6 7 3-3-2 12H5L3 8zm2 15h14',thing:'M4 7l8-4 8 4v10l-8 4-8-4V7zm0 0l8 5 8-5M12 12v9',place:'M12 22s8-8 8-13a8 8 0 00-16 0c0 5 8 13 8 13zm0-10a3 3 0 100-6 3 3 0 000 6',aspect:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7zm10 4a4 4 0 100-8 4 4 0 000 8',event:'M13 2L4 14h7l-1 8 10-13h-7l1-7'};
   const icon=cat=>'<svg viewBox="0 0 24 26" aria-hidden="true"><path d="'+paths[cat]+'"/></svg>';
   function category(cat){return list(deck().categories).find(c=>c.id===cat)||{label:cat||'Ending'};}
   function cardHTML(card,variant='mini',opts={}){
     if(!card)return '';
+    // A refreshed player may receive a saved projection from an older host tab.
+    // Prefer this release's artwork for the same immutable card ID.
+    const current=deck().storyById?.[card.id]||deck().endingById?.[card.id];
+    if(current)card={...card,imagePath:current.imagePath,thumbnailPath:current.thumbnailPath};
     const ending=!card.category,cat=ending?'ending':card.category,label=ending?'ENDING':category(cat).label;
     const tag=opts.interactive?'button':'article';
-    return '<'+tag+(opts.interactive?' type="button" data-once-card="'+esc(card.id)+'" aria-label="'+esc(card.title||card.text)+'" aria-pressed="'+!!opts.selected+'"':'')+' class="once-card once-card--'+variant+' once-cat-'+esc(cat)+(opts.selected?' is-selected':'')+'"><span class="once-card-category">'+(ending?'<span aria-hidden="true">✦</span>':icon(cat))+esc(label)+'</span><span class="once-card-art"><img src="'+esc(card.imagePath)+'" alt="" loading="lazy"></span><span class="once-card-title">'+esc(card.title||card.text)+'</span>'+(card.isInterrupt?'<span class="once-interrupt-mark">'+esc(t('interruptTag'))+'</span>':'')+'</'+tag+'>';
+    const large=variant==='full',src=large?card.imagePath:card.thumbnailPath||card.imagePath;
+    const sizes=large?'300px':variant==='ending'?'(max-width: 760px) 80px, 264px':variant==='history'?'(max-width: 760px) 112px, 138px':'138px';
+    const responsive=card.thumbnailPath?' srcset="'+esc(card.thumbnailPath)+' 384w, '+esc(card.imagePath)+' 768w" sizes="'+sizes+'"':'';
+    const imageAttrs=' src="'+esc(src)+'"'+responsive+' alt="" loading="'+(large?'eager':'lazy')+'" decoding="async"';
+    return '<'+tag+(opts.interactive?' type="button" data-once-card="'+esc(card.id)+'" aria-label="'+esc(card.title||card.text)+'" aria-pressed="'+!!opts.selected+'"':'')+' class="once-card once-card--'+variant+' once-cat-'+esc(cat)+(opts.selected?' is-selected':'')+'"><span class="once-card-category">'+(ending?'<span aria-hidden="true">✦</span>':icon(cat))+esc(label)+'</span><span class="once-card-art"><img class="once-card-art-fill"'+imageAttrs+' aria-hidden="true"><img'+imageAttrs+'></span><span class="once-card-title">'+esc(card.title||card.text)+'</span>'+(card.isInterrupt?'<span class="once-interrupt-mark">'+esc(t('interruptTag'))+'</span>':'')+'</'+tag+'>';
   }
   function button(type,label,extra='',secondary=false,disabled=false){return '<button type="button" class="once-button'+(secondary?' once-button--secondary':'')+'" data-once-action="'+esc(type)+'" '+extra+(disabled?' disabled':'')+'>'+esc(t(label))+'</button>';}
   const player=(s,num)=>list(s.roster).find(p=>p.playerNum===num||p.id===num);

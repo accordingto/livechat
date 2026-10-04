@@ -57,11 +57,11 @@ function endingReview(count = 4) {
   return act(s, 'ending', 1);
 }
 
-test('2, 4 and 6 seat lobby/deal screens use readiness and classic host choice', () => {
+test('2, 4 and 6 seat lobby has optional readiness and direct host deal with classic choice', () => {
   for (const count of [2, 4, 6]) {
     let s = create(count);
     const host = htmlFor(s);
-    assert.equal(action(host, 'deal').disabled, true);
+    assert.equal(action(host, 'deal').disabled, false);
     assert.equal(action(htmlFor(s, 1), 'ready').disabled, false);
     noActions(host, ['ready', 'play', 'interrupt', 'pass', 'challenge', 'ending']);
     noActions(htmlFor(s, 1), ['deal', 'chooseFirst', 'randomFirst', 'play', 'interrupt']);
@@ -264,7 +264,10 @@ test('card variants keep the real artwork separate from escaped titles/category/
     assert.ok(html.includes('data-once-card="' + card.id + '"'));
     assert.match(html, /aria-pressed="true"/);
     assert.match(html, /is-selected/);
-    assert.ok(html.includes('<img src="' + card.imagePath + '" alt="" loading="lazy">'));
+    const src=variant==='full'?card.imagePath:card.thumbnailPath;
+    assert.ok(html.includes('<img src="' + src + '"'));
+    assert.ok(html.includes('srcset="'+card.thumbnailPath+' 384w, '+card.imagePath+' 768w"'));
+    assert.ok(html.includes('loading="'+(variant==='full'?'eager':'lazy')+'" decoding="async"'));
     assert.ok(html.includes('<span class="once-card-title">' + UI.esc(card.title || card.text) + '</span>'));
     assert.ok(html.includes(card.category ? 'Character' : 'ENDING'));
     assert.ok(fs.existsSync(path.join(root, card.imagePath)));
@@ -276,9 +279,21 @@ test('card variants keep the real artwork separate from escaped titles/category/
     assert.match(html, /<svg viewBox="0 0 24 26"/);
   }
   assert.match(css, /\.once-card\s*\{[^}]*border:3px solid/);
-  assert.match(css, /\.once-card::before,\.once-card::after/);
-  assert.match(css, /\.once-card-title\s*\{[^}]*background:linear-gradient/);
+  assert.match(css, /card-frame\.svg/);
+  assert.match(css, /\.once-card-title\s*\{[^}]*background:radial-gradient/);
+  assert.match(css, /\.once-card-art img\s*\{[^}]*object-fit:contain/);
+  assert.match(css, /\.once-card-art \.once-card-art-fill\s*\{[^}]*object-fit:cover/);
+  assert.match(css, /\.once-card-art\s*\{[^}]*isolation:isolate/);
+  assert.match(css, /\.once-interrupt-mark\s*\{[^}]*z-index:2/);
   assert.equal(UI.cardHTML(null), '');
+});
+
+test('saved older host projections use current meaning-matched art while keeping escaped card text', () => {
+  const card={...D.storyCards[0],imagePath:'assets/once-upon-a-time/character/fallback.png',thumbnailPath:null};
+  const html=UI.cardHTML(card,'mini');
+  assert.ok(html.includes(D.storyCards[0].thumbnailPath));
+  assert.ok(!html.includes('/fallback.png'));
+  assert.ok(html.includes(UI.esc(card.title)));
 });
 
 test('names, logs, card IDs/titles/image attributes and public ending text are HTML-escaped', () => {

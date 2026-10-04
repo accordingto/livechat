@@ -3,3 +3,5 @@ node_modules/
 .env
 .env.local
 .vercel/
+# Generated print-sized originals are preserved locally; deploy optimized WebP assets.
+assets/once-upon-a-time/*/*-v2.png

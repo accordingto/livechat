@@ -3,10 +3,11 @@
 // ?demo=1 is the explicit synthetic mode with no database connection.
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'..');
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.json':'application/json'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.json':'application/json'};
 http.createServer((req,res)=>{
   let relative;try{relative=decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'once-upon-a-time.html';}catch(e){res.writeHead(400);res.end();return;}
-  const permitted=/^[a-z][a-z0-9.-]*\.(html|css|js|png|json)$/.test(relative)||/^assets\/once-upon-a-time\/(?:[a-z-]+\/)?[a-z0-9.-]+\.(png|svg|json)$/.test(relative);
+  if(relative==='once-art-gallery.html'){res.writeHead(200,{'Content-Type':mime['.html'],'Cache-Control':'no-store'});res.end(require('./once-upon-a-time-art-gallery.cjs')());return;}
+  const permitted=/^[a-z][a-z0-9.-]*\.(html|css|js|png|webp|json)$/.test(relative)||/^assets\/once-upon-a-time\/(?:[a-z-]+\/)?[a-z0-9.-]+\.(png|webp|svg|json)$/.test(relative);
   if(!permitted){res.writeHead(404);res.end('Not found');return;}
   const file=path.resolve(root,relative);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end('Not found');return;}

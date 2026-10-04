@@ -196,7 +196,6 @@ var ONCE_ENGINE = (() => {
         break;
       case 'deal': {
         if (s.phase !== 'LOBBY') { reject('not_available'); break; }
-        if (!s.roster.every(p => s.readiness[p.playerNum] === true)) { reject('not_ready'); break; }
         s.storyDeck = randomize(s, storyCards.map(card => card.id), cmd, 'story-deal');
         s.endingDeck = randomize(s, endingCards.map(card => card.id), cmd, 'ending-deal');
         const count = Math.max(5, 11 - s.roster.length);
@@ -325,7 +324,7 @@ var ONCE_ENGINE = (() => {
       case 'restart': {
         const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now });
         Object.assign(s, fresh); advance(s);
-        log(s, cmd, 'restart', 'A new game is waiting for everyone to get ready.');
+        log(s, cmd, 'restart', 'A new game is ready for the host to deal.');
         break;
       }
       case 'cancel':
@@ -347,7 +346,7 @@ var ONCE_ENGINE = (() => {
     const vote = s.vote, pending = s.interrupt;
     const mayReturn = !!(s.latestPlay && s.latestPlay.playerNum === s.storyteller && s.storyHeld.includes(s.latestPlay.cardId));
     const actions = {
-      ready: player && s.phase === 'LOBBY', deal: host && s.phase === 'LOBBY' && s.roster.every(p => s.readiness[p.playerNum] === true),
+      ready: player && s.phase === 'LOBBY', deal: host && s.phase === 'LOBBY',
       chooseFirst: host && s.phase === 'CHOOSING_FIRST', randomFirst: host && s.phase === 'CHOOSING_FIRST',
       play: story && speaking && hand.length > 0, interrupt: story && player && !speaking && hand.length > 0,
       categoryInterrupt: story && player && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),

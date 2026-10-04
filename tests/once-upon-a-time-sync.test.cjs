@@ -134,10 +134,23 @@ test('actor identity comes from the seat listener; concurrent readiness is ackno
   assert.equal(f.card(1).once.roster[3].ready, false);
   assert.equal(f.card(1).once.reply.id, commands[0].id);
   assert.equal(f.card(2).once.reply.id, commands[1].id);
-  await assert.rejects(h.command('deal'), /ready/);
   const denied = await f.send(h, 1, 'deal', { actor: 0 });
   assert.equal(f.card(1).once.reply.id, denied.id); assert.ok(f.card(1).once.reply.error);
   assert.equal(h.doc.state.phase, 'LOBBY');
+  await h.command('deal'); await settle(h);
+  assert.equal(h.doc.state.phase, 'CHOOSING_FIRST', 'host deals despite two unready seats');
+  assert.equal(f.card(4).once.hand.length, 7, 'unready player still receives the original private hand');
+});
+
+test('host can deal immediately with nobody ready and retries cannot redeal', async t => {
+  const f = setup(t, 6), h = f.host(); await f.lobby(h);
+  assert.ok(h.doc.state.roster.every(player => !h.doc.state.readiness[player.playerNum]));
+  const envelope = { id:'direct-host-deal', sessionId:h.doc.state.sessionId, turnId:h.doc.state.turnId };
+  await h.command('deal', envelope); await settle(h);
+  const before = clone(h.doc.state.hands);
+  await h.command('deal', envelope); await settle(h);
+  assert.deepEqual(h.doc.state.hands, before);
+  for(let seat=1;seat<=6;seat++) assert.equal(f.card(seat).once.hand.length,5);
 });
 
 test('duplicate play and pass requests never remove a second card or draw twice', async t => {

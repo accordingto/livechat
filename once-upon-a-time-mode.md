@@ -1,4 +1,4 @@
-# Once Upon a Time — V1
+# Once Upon a Time — V2 artwork / optional Ready
 
 An incremental, English storytelling card game inside IceBreak Hub. The menu
 entry is last, after Kangaroo Court (Beta). No existing game is replaced.
@@ -12,7 +12,8 @@ missions, classes, or additional rounds are used.
 2. Send each participant their existing **private player link**. Do not put all
    private links in a public chat. The same links work when switching games.
 3. Choose the last game, **Once Upon a Time**, then **Open this table**.
-4. Each player taps **Ready** on their own card. The host taps **Deal cards**.
+4. The host taps **Deal cards** directly. Player **Ready** buttons are optional
+   signals, not a prerequisite for starting or receiving cards.
 5. A random Story Card is revealed and discarded. The host chooses who looks
    most like it to begin; **Choose randomly instead** is an optional alternative.
 6. Tell one continuous story. Tap a hand card to enlarge it, select it, then use
@@ -105,19 +106,33 @@ card content remains English learning material.
 | Event | 22 | 4 |
 | Total | 114 | 20 |
 
-The text attachment did not include the referenced visual mockups. The supplied
-written art direction was followed: Hub navy/cyan shell, antique-gold frames,
-category colors/icons, painterly artwork and parchment HTML titles. Reusable
-full/mini/history/Ending/preview variants share the same component.
+The three supplied visual references guide this update: antique-gold corner
+ornaments, parchment HTML titles, and Character gold / Thing green / Place orange /
+Aspect blue / Event purple category identities. Full/mini/history/Ending/preview
+variants share one component. The references do not change gameplay rules.
 
-The image-generation skill produced **six static original category paintings**
-(five Story categories plus Ending). All 165 cards currently use this polished
-category fallback art, **not 165 unique illustrations**. Two original SVG backs
-are separate. Art provenance/prompts and per-card status are in
-`assets/once-upon-a-time/art-prompts.md` and `art-manifest.json`. Images contain
-no baked card text and can be replaced without changing rules. No AI is called
-during gameplay. The six PNGs total about 18.5 MB; they are lazy-loaded and reused
-from cache, but first-load artwork may be slow on a weak mobile connection.
+All **165 cards now have their own meaning-matched illustration**, generated
+with the built-in image tool and visually inspected. A Glass Knight wears glass
+armour, a Broken Sword is visibly broken, Frozen depicts actual ice, and each
+Ending depicts its sentence rather than reusing a generic cottage. Full images
+remain visible without cropping away the defining subject; a subdued copy of
+the same artwork fills any side space. The five category fallbacks from V1 are
+not used by current card rendering, including saved older host projections.
+
+Every illustration has a 768px-wide WebP and a 384px-wide thumbnail. Small cards
+lazy-load the thumbnail; enlarged previews can use the main image. Print-sized
+original PNGs remain locally preserved and are not deployed. Titles, category
+labels and frame ornaments remain separate HTML/SVG, not baked into paintings.
+The complete 330-file main/thumbnail set is 46.53 MiB; a game loads only the
+cards currently displayed, not the whole collection.
+Two original SVG backs and a new original gold-frame SVG are separate UI assets.
+No AI is called during gameplay; there is no model key, fee or new service setup.
+
+`assets/once-upon-a-time/art-manifest.json` maps all card IDs to their public
+artwork. `art-prompts.md` documents the process, and the three `art-v2-*.json`
+files retain every exact prompt, semantic description, inspection record and
+original output path. The local-only `/once-art-gallery.html` route displays the
+public card pool for visual QA, never real players' private hands or assignments.
 
 ## Files
 
@@ -126,7 +141,8 @@ from cache, but first-load artwork may be slow on a weak mobile connection.
 - `once-upon-a-time-sync.js`: adapter using the existing Hub transactions/lease.
 - `once-upon-a-time-ui.js`: cards, table, confirmations, own-card actions, I18N.
 - `once-upon-a-time-host.js`, `.html`, `.css`: host integration/responsive shell.
-- `assets/once-upon-a-time/`: six paintings, two backs, manifest and provenance.
+- `assets/once-upon-a-time/`: 165 meaning-matched paintings with thumbnails,
+  two backs, gold-frame ornament, public manifest and prompt provenance.
 - `index.html`: appends the final game entry; no unrelated entries removed.
 - `play.html`: adds the Once renderer and own-token command mailbox; old game
   renderers retain their existing routes and clean up when switching.
@@ -136,6 +152,9 @@ from cache, but first-load artwork may be slow on a weak mobile connection.
 - `scripts/once-upon-a-time-live-test.cjs`: opt-in isolated six-seat real Firebase
   integration check; cleans only its own newly created token paths.
 - `scripts/once-upon-a-time-verify-release.cjs`: read-only production asset hashes.
+- `scripts/once-upon-a-time-encode-art.cjs`: optional build-time WebP encoding
+  using installed/bundled Sharp; not required to run the game.
+- `scripts/once-upon-a-time-art-gallery.cjs`: local-only public-deck visual QA.
 
 ## Local launch and verification
 
@@ -143,8 +162,10 @@ Node 20+ is sufficient; no package installation, API key, or extra environment
 setup is required for the existing configured Hub.
 
 ```sh
-npm run dev:once-upon-a-time
+node scripts/once-upon-a-time-dev-server.cjs
 ```
+
+With npm available, `npm run dev:once-upon-a-time` is the equivalent shortcut.
 
 Open `http://127.0.0.1:8095/index.html`, set up 2–6 players and use the last game.
 For multiple local browsers, use each original player link on the same origin.
@@ -157,7 +178,7 @@ connection**, resets on reload, and cannot inspect/control real players. It is
 for UI/rule trials, never proof of cross-device synchronization.
 
 ```sh
-npm run test:once-upon-a-time
+node --test tests/once-upon-a-time-*.test.cjs
 node --test --test-concurrency=1 tests/*.test.cjs
 ```
 
@@ -182,14 +203,17 @@ menu visually shows Once Upon a Time last. A real Firebase browser host opened
 a two-player lobby, resumed it after refresh, and cancelled it without declaring
 a winner; this is separate from the synthetic demo.
 
-- **Local automated checks:** all 405 tests passed, sequentially, including 83
-  new game tests (43 engine, 16 sync, 18 UI, 6 deck/art) and 322 existing tests.
+- **Local automated checks:** all 408 tests passed in two runs: 86 focused
+  game tests (44 engine, 17 sync, 19 UI, 6 deck/art) and 322 existing tests
+  run sequentially. The artwork checks require 165 unique main-image hashes,
+  all 330 correctly sized WebPs, and complete semantic/prompt provenance.
   Covers 2/4/6-player setup, repeated plays, both interruption modes, concurrent
   requests, invalid rollback, challenge success/failure/latest-card return,
   optional discard/keep, both Ending results/ties, restart, privacy and reconnect.
 - **Actual Firebase backend:** an opt-in six-independent-token REST integration
   test passed against the existing database. Verified filtered private views,
-  trusted actor identity, ready/deal, category interruption, competing interrupts
+  trusted actor identity, direct deal with zero Ready signals and five unready
+  players (all still receive private hands), category interruption, competing interrupts
   (one winner/no late penalty), concurrent ballots and exact invalid rollback,
   failed challenge, keep-all pass, empty-hand Ending win, competing host leases,
   reconnect preserving hands/Endings, restart clearing old mailboxes, and
@@ -201,9 +225,13 @@ a winner; this is separate from the synthetic demo.
 - **Browser UI:** a local synthetic four-player full game passed through actual
   buttons; phone-width pages and card previews did not overflow horizontally.
   This is one in-app browser, not independent browser engines or physical phones.
+- **V2 UI checks:** desktop and 320/375/390px phone-width previews preserve
+  complete subjects and readable category/Interrupt labels. Preview, selection
+  and sequential plays still work; a real two-player browser host dealt directly
+  while both players were Not ready, then cancelled the isolated test game.
 
 Not claimed: physical-phone play, two different browser engines, a live spoken
-group playtest, unique art for every card, or full balance testing. The test
+group playtest, or full balance testing. The test
 browser's clipboard did not expose usable invitation URLs, so a browser-driven
 real-player end-to-end run was not completed. The independent-token backend test
 and UI integration tests cover that interface separately; neither is labelled

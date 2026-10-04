@@ -28,8 +28,9 @@ host is sharing.
 **Once Upon a Time** is the final entry in the Hub game menu. It reuses the
 original room and private player links. See [`once-upon-a-time-mode.md`](once-upon-a-time-mode.md)
 for its rules, deck/art counts, trusted-host limits, launch steps and verification.
-The host keeps its shared table open; each participant taps Ready and plays from
-their own existing card. `?demo=1` is a clearly labelled synthetic preview only.
+The host keeps its shared table open and can deal immediately without waiting
+for everyone to tap Ready. Participants play from their own existing cards.
+`?demo=1` is a clearly labelled synthetic preview only.
 
 - `index.html` is the menu; each game has its own host page.
 - `play.html` is the single player card page shared by **the seven games and Let's Talk** — it

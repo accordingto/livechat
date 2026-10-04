@@ -1,868 +1,1165 @@
 {
-  "version": 1,
-  "note": "V1 uses six shared category paintings, not 165 unique paintings. Every card has a unique artKey for replacement.",
-  "uniqueIllustrationCount": 6,
-  "categoryDefaults": {
-    "character": {
-      "artKey": "fallback.character",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
-    },
-    "thing": {
-      "artKey": "fallback.thing",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
-    },
-    "place": {
-      "artKey": "fallback.place",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
-    },
-    "aspect": {
-      "artKey": "fallback.aspect",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
-    },
-    "event": {
-      "artKey": "fallback.event",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
-    },
-    "ending": {
-      "artKey": "fallback.ending",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
-    }
-  },
-  "cardBacks": {
-    "story": "assets/once-upon-a-time/card-backs/story-back.svg",
-    "ending": "assets/once-upon-a-time/card-backs/ending-back.svg"
-  },
+  "version": 2,
+  "uniqueIllustrationCount": 165,
+  "note": "165 individually generated, visually reviewed meaning-matched paintings. Each has an optimized main image and mobile thumbnail. Original PNGs are preserved locally; all card text and frames remain HTML/SVG.",
+  "generator": "built-in image_gen",
+  "mainWidth": 768,
+  "thumbnailWidth": 384,
   "cards": {
     "once-character-candle-keeper": {
       "artKey": "story.character.candle-keeper",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/candle-keeper-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/candle-keeper-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An elderly caretaker tends a glowing candle in a stone sanctuary."
     },
     "once-character-lost-heir": {
       "artKey": "story.character.lost-heir",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/lost-heir-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/lost-heir-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A young traveler in worn clothes holds a small royal signet pendant, standing lost at a fork in a misty forest, with a distant ruined palace behind. The young heir, travel uncertainty and royal pendant must be visible."
     },
     "once-character-hill-giant": {
       "artKey": "story.character.hill-giant",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/hill-giant-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/hill-giant-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A friendly enormous giant rises above rolling green hills, his massive boot beside a tiny stone cottage emphasizing his size. Full giant face and torso recognizable, grassy hill environment."
     },
     "once-character-quiet-prince": {
       "artKey": "story.character.quiet-prince",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/quiet-prince-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/quiet-prince-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A contemplative young prince wearing a delicate crown sits quietly alone at a palace window, hands folded, closed mouth, thoughtful peaceful expression, no shouting or heroic combat."
     },
     "once-character-river-witch": {
       "artKey": "story.character.river-witch",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/river-witch-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/river-witch-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A mysterious adult witch kneels beside a flowing river, trailing one hand above the water and stirring luminous ripples with a willow wand. Long layered robe and river reeds, visible water magic."
     },
     "once-character-young-miller": {
       "artKey": "story.character.young-miller",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/young-miller-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/young-miller-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A young flour-dusted miller in an apron carries a sack of grain beside a turning wooden mill wheel, warm daylight through the old mill. Youthful face, flour and milling tools unmistakable."
     },
     "once-character-fox": {
       "artKey": "story.character.fox",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/fox-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/fox-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single beautiful red fox with pointed ears and a bushy white-tipped tail stands among moss and ferns in a fairy-tale forest. The fox fills most of the portrait, detailed fur, attentive amber eyes."
     },
     "once-character-woodcutter": {
       "artKey": "story.character.woodcutter",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/woodcutter-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/woodcutter-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A sturdy woodcutter in simple medieval working clothes holds a broad axe beside a freshly cut log in a woodland clearing. Show axe head and timber plainly, no swords or royal finery."
     },
     "once-character-glass-knight": {
       "artKey": "story.character.glass-knight",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/glass-knight-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/glass-knight-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A noble knight wearing translucent clear glass armor and a glass helmet stands in a sunlit courtyard. The transparent armor refracts rainbow light and reveals clothing underneath; unmistakable glass material, elegant not robotic."
     },
     "once-character-moon-cat": {
       "artKey": "story.character.moon-cat",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/moon-cat-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/moon-cat-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A luminous silver cat sits on an old roof under a full moon, pale fur touched by moonlight, crescent-shaped silver glow on its brow. Cat clearly dominant and entirely feline, magical moonlit fairy-tale city backdrop."
     },
     "once-character-royal-cook": {
       "artKey": "story.character.royal-cook",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/royal-cook-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/royal-cook-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A cheerful castle cook in a flour-white hat and warm apron carries a steaming copper pot in a richly appointed medieval palace kitchen. Ladle, hearth and royal kitchen visible, cook dominant."
     },
     "once-character-wandering-singer": {
       "artKey": "story.character.wandering-singer",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/wandering-singer-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/wandering-singer-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A traveling singer in a weathered cloak sings while playing a small lute on a winding country road, mouth gently open, melody suggested by pose rather than symbols or text. Pack at shoulder, distant village."
     },
     "once-character-old-shepherd": {
       "artKey": "story.character.old-shepherd",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/old-shepherd-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/old-shepherd-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An elderly shepherd with white beard holds a crooked wooden staff while tending woolly sheep on a green hillside. Gentle face, sheep close by, traditional rustic clothing."
     },
     "once-character-masked-guest": {
       "artKey": "story.character.masked-guest",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/masked-guest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/masked-guest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A mysterious guest in an ornate half-face masquerade mask and dark velvet cloak pauses at the doorway of a candlelit castle feast. Mask and guest dominate, subtle ballroom behind."
     },
     "once-character-forest-child": {
       "artKey": "story.character.forest-child",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/forest-child-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/forest-child-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A young child in simple earth-toned clothes stands barefoot among roots and ferns in a sun-dappled enchanted forest, holding a leaf and looking curiously upward. Innocent age-appropriate depiction, woodland is central."
     },
     "once-character-wise-crow": {
       "artKey": "story.character.wise-crow",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/wise-crow-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/wise-crow-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A black crow with bright intelligent eyes perches on a branch above an open ancient book, with dignified posture in a forest. Clearly a crow with black feathers and stout beak, not a person."
     },
     "once-character-tiny-dragon": {
       "artKey": "story.character.tiny-dragon",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/tiny-dragon-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/tiny-dragon-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A tiny jewel-green dragon no bigger than a human hand perches on a teacup, delicate wings and curled tail visible, a small puff of harmless smoke. The cup emphasizes the dragon's tiny scale."
     },
     "once-character-gate-guard": {
       "artKey": "story.character.gate-guard",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/gate-guard-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/gate-guard-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A vigilant medieval guard with a spear and shield stands directly before a tall iron-barred castle gate. Steel helmet, guard posture and gate clearly readable, warm torchlight."
     },
     "once-character-sea-sister": {
       "artKey": "story.character.sea-sister",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/sea-sister-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/sea-sister-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A graceful sea-dwelling fairy-tale woman with a shimmering fishtail rises from turquoise waves beside a shore, seashell jewelry and flowing dark hair. Friendly mystical sea character, full relevant tail and ocean visible, modest depiction."
     },
     "once-character-travelling-judge": {
       "artKey": "story.character.travelling-judge",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/travelling-judge-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/travelling-judge-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An older traveling judge in dignified robes carries a small balance scale and a leather case while walking a country lane. Fair thoughtful face, scales prominent, no written documents."
     },
     "once-character-talking-hare": {
       "artKey": "story.character.talking-hare",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/talking-hare-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/talking-hare-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A large brown hare with long upright ears appears to speak animatedly to a listening traveler in a mossy glade, mouth open and one forepaw raised expressively. Hare dominant, entirely animal, no speech bubble or text."
     },
     "once-character-poor-tailor": {
       "artKey": "story.character.poor-tailor",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/poor-tailor-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/poor-tailor-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A humble tailor in patched clothing sews a worn coat with needle and thread in a small sparse candlelit workshop. Hands stitching, scissors and cloth scraps visible, modest not luxurious."
     },
     "once-character-sleepy-king": {
       "artKey": "story.character.sleepy-king",
-      "imagePath": "assets/once-upon-a-time/character/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/character/sleepy-king-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/sleepy-king-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An elderly crowned king dozes on a carved throne, eyes fully closed, head tilted and relaxed hands, royal red mantle. Gentle humorous sleepy mood, no danger."
     },
     "once-thing-silver-needle": {
       "artKey": "story.thing.silver-needle",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/silver-needle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/silver-needle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One polished silver sewing needle threaded with a delicate thread lies prominently on dark velvet with a small piece of embroidered cloth. Enlarged close-up with eye and pointed tip unmistakable, no unrelated weapon."
     },
     "once-thing-empty-crown": {
       "artKey": "story.thing.empty-crown",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/empty-crown-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/empty-crown-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An ornate golden crown rests alone on an empty royal chair, no head inside it and no ruler anywhere. Crown is the large central subject with velvet lining and jewel detail."
     },
     "once-thing-wishing-coin": {
       "artKey": "story.thing.wishing-coin",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/wishing-coin-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/wishing-coin-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single golden wishing coin hovers just above a fountain's water in a cupped hand, faint magical sparkles reflecting from it. Clear round coin, no lettering or stamped readable text."
     },
     "once-thing-broken-sword": {
       "artKey": "story.thing.broken-sword",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/broken-sword-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/broken-sword-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A medieval sword with a clearly snapped blade lies on a mossy stone; separate broken tip lies beside it. Both fracture edges unmistakable, detailed hilt, forest background."
     },
     "once-thing-green-bottle": {
       "artKey": "story.thing.green-bottle",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/green-bottle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/green-bottle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single translucent emerald-green glass bottle with a cork stopper stands on an old wooden table, sunlight passing through the green glass. No label, no text, bottle is central."
     },
     "once-thing-red-ribbon": {
       "artKey": "story.thing.red-ribbon",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/red-ribbon-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/red-ribbon-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A vibrant red silk ribbon tied into a delicate bow trails across a carved wooden box and parchment-colored table. The crimson ribbon dominates, soft folds clearly visible, no writing."
     },
     "once-thing-wooden-flute": {
       "artKey": "story.thing.wooden-flute",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/wooden-flute-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/wooden-flute-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A handcrafted wooden flute with clear finger holes rests diagonally on moss beside leaves, warm polished grain and carved mouthpiece prominent. No metal flute, no extra instrument."
     },
     "once-thing-locked-chest": {
       "artKey": "story.thing.locked-chest",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/locked-chest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/locked-chest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An old wooden treasure chest reinforced with iron bands and a large closed padlock stands in a dim castle chamber. Chest fully closed, locked clasp very clear, no visible treasure contents."
     },
     "once-thing-walking-boots": {
       "artKey": "story.thing.walking-boots",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/walking-boots-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/walking-boots-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A pair of sturdy worn brown leather walking boots with tied laces stands on a woodland trail, dust and travel scuffs, forest path softly behind. Both boots visible, no legs or extra footwear."
     },
     "once-thing-golden-apple": {
       "artKey": "story.thing.golden-apple",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/golden-apple-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/golden-apple-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One glowing golden apple hangs on a leafy branch, unmistakable apple shape and single stem with leaf, metallic golden skin catching sunlight. No crown, no orange fruit."
     },
     "once-thing-old-map": {
       "artKey": "story.thing.old-map",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/old-map-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/old-map-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An aged parchment map is unrolled across a wooden table, winding inked roads, mountains, river shapes and compass illustration but absolutely no words or letters. Weathered edges, map is central."
     },
     "once-thing-glass-bell": {
       "artKey": "story.thing.glass-bell",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/glass-bell-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/glass-bell-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A transparent handbell made entirely of clear glass stands on a dark velvet cushion. Visible bell shape, curved handle, glass clapper and luminous refractions, no opaque metal bell."
     },
     "once-thing-warm-cloak": {
       "artKey": "story.thing.warm-cloak",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/warm-cloak-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/warm-cloak-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A thick woolen cloak with a soft fur-lined collar hangs beside a warm cottage hearth. Rich folded fabric, practical clasp, cozy firelight, cloak fills the image."
     },
     "once-thing-black-feather": {
       "artKey": "story.thing.black-feather",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/black-feather-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/black-feather-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single long jet-black feather lies against pale stone, every delicate barb and quill clearly detailed, glistening blue-black highlights. No bird as dominant subject, just the feather."
     },
     "once-thing-secret-letter": {
       "artKey": "story.thing.secret-letter",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/secret-letter-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/secret-letter-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A folded parchment letter with a deep red wax seal is partly tucked into the hollow of an old tree. No visible writing, a mysterious secret message implied by concealed placement and closed seal."
     },
     "once-thing-stone-ring": {
       "artKey": "story.thing.stone-ring",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/stone-ring-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/stone-ring-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One finger-sized ring carved from smooth gray stone rests on moss, visible circular hole and polished solid stone band. Ring clearly jewelry-sized, no circle of standing stones."
     },
     "once-thing-lantern": {
       "artKey": "story.thing.lantern",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/lantern-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/lantern-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single ornate iron lantern with glowing candle inside hangs from a branch on a twilight forest path. Warm central light, glass panels and metal handle visible, lantern fills frame."
     },
     "once-thing-sleeping-potion": {
       "artKey": "story.thing.sleeping-potion",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/sleeping-potion-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/sleeping-potion-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A small unlabeled crystal vial of dreamy violet potion beside a sleeping cap and closed eyelids of a peacefully resting fairy-tale traveler softly in background. Potion vial prominent, moonlit lavender magic, no text."
     },
     "once-thing-copper-mirror": {
       "artKey": "story.thing.copper-mirror",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/copper-mirror-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/copper-mirror-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An antique hand mirror with a burnished copper frame and copper handle rests on a dressing table. Reflective central glass catches candlelight, warm reddish metallic copper unmistakable."
     },
     "once-thing-bread-basket": {
       "artKey": "story.thing.bread-basket",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/bread-basket-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/bread-basket-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A woven wicker basket brimming with fresh rustic loaves and bread rolls rests on a simple cottage table. Crisp bread crusts, flour dust and linen lining, basket clearly central."
     },
     "once-thing-spinning-wheel": {
       "artKey": "story.thing.spinning-wheel",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/spinning-wheel-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/spinning-wheel-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A traditional wooden spinning wheel with large round wheel, spindle and wool thread stands in a warm cottage by a window. Entire apparatus visible and readable, no sewing machine."
     },
     "once-thing-pocket-watch": {
       "artKey": "story.thing.pocket-watch",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/pocket-watch-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/pocket-watch-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An open antique gold pocket watch with its looping chain lies on dark velvet. Round hinged watch case and clock hands obvious; the dial uses small unlettered marks, no readable numerals or text."
     },
     "once-thing-pearl": {
       "artKey": "story.thing.pearl",
-      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/thing/pearl-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/pearl-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One luminous white pearl rests inside an open oyster shell on a smooth coastal rock, subtle iridescence and clear round shape dominant. Gentle sea light, no pearl necklace."
     },
     "once-place-thorn-garden": {
       "artKey": "story.place.thorn-garden",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/thorn-garden-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/thorn-garden-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Dense walled rose garden filled with clearly visible sharp thorn-covered tangled vines and a narrow inviting path."
     },
     "once-place-lonely-tower": {
       "artKey": "story.place.lonely-tower",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/lonely-tower-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/lonely-tower-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single tall lonely stone tower standing isolated on an empty remote hill; no surrounding castle or village."
     },
     "once-place-deep-well": {
       "artKey": "story.place.deep-well",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/deep-well-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/deep-well-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A weathered circular stone well with wooden bucket and rope, seen close enough to show a very deep dark shaft inside."
     },
     "once-place-misty-bridge": {
       "artKey": "story.place.misty-bridge",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/misty-bridge-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/misty-bridge-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An old arched stone bridge crosses a ravine, surrounded by thick rolling mist; bridge is the dominant clearly visible subject."
     },
     "once-place-hidden-valley": {
       "artKey": "story.place.hidden-valley",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/hidden-valley-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/hidden-valley-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A lush secret valley enclosed between tall rocky mountains, glimpsed through a narrow rock opening, showing green fields and a tiny stream."
     },
     "once-place-old-mill": {
       "artKey": "story.place.old-mill",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/old-mill-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/old-mill-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An ancient weathered watermill beside a stream with a large wooden waterwheel, mossy stone walls and a shingled roof."
     },
     "once-place-royal-kitchen": {
       "artKey": "story.place.royal-kitchen",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/royal-kitchen-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/royal-kitchen-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "The grand kitchen inside a medieval royal palace, copper pots, huge stone hearth, carved cupboards, lavish pastries and a cook preparing a banquet."
     },
     "once-place-snowy-pass": {
       "artKey": "story.place.snowy-pass",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/snowy-pass-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/snowy-pass-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A narrow mountain pass winding between steep snowy cliffs, with deep snowdrifts and an icy path clearly leading through the peaks."
     },
     "once-place-moonlit-lake": {
       "artKey": "story.place.moonlit-lake",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/moonlit-lake-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/moonlit-lake-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A serene forest lake under a large full moon, moonlight visibly reflecting across the lake water, dark trees lining its shores."
     },
     "once-place-empty-village": {
       "artKey": "story.place.empty-village",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/empty-village-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/empty-village-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A completely empty medieval village lane of small cottages, shuttered doors and unused market stalls; no people anywhere, visibly deserted."
     },
     "once-place-stone-circle": {
       "artKey": "story.place.stone-circle",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/stone-circle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/stone-circle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A circular arrangement of large weathered standing stones in a grassy clearing, unmistakable complete ring of megaliths."
     },
     "once-place-secret-tunnel": {
       "artKey": "story.place.secret-tunnel",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/secret-tunnel-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/secret-tunnel-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A concealed opening behind a hinged bookcase reveals a long narrow underground stone tunnel lit by small lanterns; visible tunnel is central subject."
     },
     "once-place-high-mountain": {
       "artKey": "story.place.high-mountain",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/high-mountain-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/high-mountain-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single towering dramatic snow-capped mountain rising high above small foothills and clouds, summit dominates image, no buildings."
     },
     "once-place-market-square": {
       "artKey": "story.place.market-square",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/market-square-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/market-square-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A busy medieval market square with many colorful cloth stalls selling fruit and baskets, townspeople shopping around a central fountain."
     },
     "once-place-island-castle": {
       "artKey": "story.place.island-castle",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/island-castle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/island-castle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A majestic fairy-tale stone castle occupying a small island visibly surrounded on all sides by blue lake water, shore and water ring clearly readable."
     },
     "once-place-dark-attic": {
       "artKey": "story.place.dark-attic",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/dark-attic-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/dark-attic-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A dark dusty attic directly under sloping wooden roof beams, old trunks and cobwebs, one narrow shaft of dim light from a small attic window. No modern furnishings."
     },
     "once-place-riverbank": {
       "artKey": "story.place.riverbank",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/riverbank-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/riverbank-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A lush grassy riverbank at the edge of a gently flowing river, reeds and rounded stones at the water's edge, riverbank foreground dominant."
     },
     "once-place-wild-meadow": {
       "artKey": "story.place.wild-meadow",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/wild-meadow-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/wild-meadow-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An expansive uncultivated wildflower meadow with tall grasses and colorful daisies, butterflies, no cottages or castles; open natural meadow dominates scene."
     },
     "once-place-seaside-cave": {
       "artKey": "story.place.seaside-cave",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/seaside-cave-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/seaside-cave-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "View from inside a rocky seaside cave looking out toward ocean waves breaking at its mouth, rough curved cave walls clearly frame blue sea."
     },
     "once-place-golden-hall": {
       "artKey": "story.place.golden-hall",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/golden-hall-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/golden-hall-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A magnificent medieval palace hall lined with glowing gold columns and gilded arches, polished golden details and warm candlelight, grand empty interior dominant."
     },
     "once-place-crossroads": {
       "artKey": "story.place.crossroads",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/crossroads-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/crossroads-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A clear forked crossroads where four dirt paths meet in a woodland clearing; rustic signpost has blank wooden directional arrows with absolutely no writing."
     },
     "once-place-abandoned-chapel": {
       "artKey": "story.place.abandoned-chapel",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/abandoned-chapel-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/abandoned-chapel-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A clearly abandoned small medieval stone chapel in a forest, ruined roof, empty broken arched windows, weeds and ivy reclaiming cracked walls, no people."
     },
     "once-place-tree-house": {
       "artKey": "story.place.tree-house",
-      "imagePath": "assets/once-upon-a-time/place/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/place/tree-house-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/tree-house-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A cozy wooden house built high among the branches of a huge living tree, visible sturdy platform and rope ladder reaching ground; tree house is unmistakable."
     },
     "once-aspect-invisible": {
       "artKey": "story.aspect.invisible",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/invisible-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/invisible-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An enchanted traveler becoming invisible: their head and raised forearm have fully vanished, background clearly visible through their empty hood and sleeve; boots leave luminous footprints. The missing transparent body effect must be obvious, not just a dark hooded face. No castle."
     },
     "once-aspect-merciful": {
       "artKey": "story.aspect.merciful",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/merciful-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/merciful-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A compassionate medieval ruler offering an open forgiving hand to a kneeling defeated soldier while lowering the sword safely away; soldier visibly relieved, scene conveys mercy instead of battle. Central close human interaction."
     },
     "once-aspect-jealous": {
       "artKey": "story.aspect.jealous",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/jealous-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/jealous-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A fairy-tale young courtier with clearly envious frown and crossed arms watches another person happily receive a bright beautiful jewel, jealous person's unhappy face dominant. Show jealousy, not anger or celebration."
     },
     "once-aspect-shy": {
       "artKey": "story.aspect.shy",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/shy-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/shy-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A shy fairy-tale young person partially hiding behind a doorway, blushing cheeks, eyes downcast and hands nervously holding cloak, quietly avoiding attention. Intimate readable body language."
     },
     "once-aspect-bewitched": {
       "artKey": "story.aspect.bewitched",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/bewitched-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/bewitched-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A fairy-tale traveler visibly under an enchantment: shimmering purple magical tendrils coil around their body, glowing spelllight in startled eyes, a nearby sorcerer's wand directs the spell. The enchanted person is central, no writing or runes."
     },
     "once-aspect-honest": {
       "artKey": "story.aspect.honest",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/honest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/honest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An honest young medieval villager openly returns a found coin purse to its grateful elderly owner, purse and truthful warm expression clear in foreground, market backdrop secondary."
     },
     "once-aspect-frozen": {
       "artKey": "story.aspect.frozen",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/frozen-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/frozen-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A medieval stone fountain visibly frozen solid, thick translucent blue ice encasing the bowl and sculptures, long hanging icicles and snowy base. Close prominent ice textures make frozen unmistakable."
     },
     "once-aspect-fearless": {
       "artKey": "story.aspect.fearless",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/fearless-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/fearless-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A calm brave young knight stands confidently face-to-face with an enormous dragon, chin up and relaxed open hand, no cowering or running. Dragon and fearless person centered, nonviolent fairy tale."
     },
     "once-aspect-forgotten": {
       "artKey": "story.aspect.forgotten",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/forgotten-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/forgotten-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A long-forgotten worn teddy bear and small wooden toy knight abandoned in the dustiest corner of an unused nursery, thick dust and cobwebs clearly coating them, no people. Forgotten objects dominate."
     },
     "once-aspect-greedy": {
       "artKey": "story.aspect.greedy",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/greedy-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/greedy-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A greedy medieval merchant hunched possessively over piles of gold coins, both arms clutching treasure to chest, covetous intense expression, illuminated coins central. No writing on coins."
     },
     "once-aspect-silent": {
       "artKey": "story.aspect.silent",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/silent-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/silent-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A medieval librarian making an unmistakable quiet gesture with index finger gently held upright against closed lips; calm hush expression, candlelit library background. No letters or writing on book spines."
     },
     "once-aspect-gentle": {
       "artKey": "story.aspect.gentle",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/gentle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/gentle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A kind elderly woodland traveler very gently cradles a tiny injured sparrow in cupped hands, soft compassionate expression and careful delicate touch. Bird safely resting and unharmed, no gore."
     },
     "once-aspect-lonely": {
       "artKey": "story.aspect.lonely",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/lonely-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/lonely-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One solitary medieval traveler sitting alone on a large empty bench at dusk, head bowed and hands clasped, wide empty space around them, no other people. Clear poignant loneliness."
     },
     "once-aspect-wild": {
       "artKey": "story.aspect.wild",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/wild-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/wild-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An untamed wild black horse galloping freely across windswept natural moorland, mane flying, powerful unrestrained motion. No rider, saddle, bridle or fences."
     },
     "once-aspect-unlucky": {
       "artKey": "story.aspect.unlucky",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/unlucky-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/unlucky-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An unlucky medieval villager has stepped into a muddy puddle and dropped their basket of apples in the mud while a tiny storm cloud pours rain only on them; frustrated rueful face. Physical bad luck clearly visible."
     },
     "once-aspect-golden": {
       "artKey": "story.aspect.golden",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/golden-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/golden-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single exquisite apple made entirely of bright gleaming solid gold, metallic warm reflections across its surface, resting on a dark rich velvet cloth. Literal golden material unmistakable."
     },
     "once-aspect-tired": {
       "artKey": "story.aspect.tired",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/tired-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/tired-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An exhausted medieval traveler slumped asleep at a wooden table with head resting on folded arms, heavy closed eyelids, dusty travel cloak and boots; visibly tired rather than wounded. Intimate central figure."
     },
     "once-aspect-tiny": {
       "artKey": "story.aspect.tiny",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/tiny-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/tiny-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A truly tiny fairy-tale person no taller than a strawberry stands beside an enormous ordinary acorn and daisy, size comparison unmistakable, macro-scale grass around them."
     },
     "once-aspect-disguised": {
       "artKey": "story.aspect.disguised",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/disguised-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/disguised-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A fairy-tale royal traveler disguised as a humble old beggar: one hand lifts the false grey beard away to reveal youthful face, plain patched cloak with hidden fine royal clothing peeking beneath. The costume disguise must be obvious."
     },
     "once-aspect-broken": {
       "artKey": "story.aspect.broken",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/broken-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/broken-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A shattered clay water jug on a rustic stone floor, many clearly separated sharp pottery pieces and spilled water, broken handle detached, unmistakable broken object close-up."
     },
     "once-aspect-patient": {
       "artKey": "story.aspect.patient",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/patient-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/patient-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A calm elderly villager waits patiently on a bench outside a closed cottage, hands resting gently on knees and peaceful unhurried expression, beside slowly budding potted flowers. Shows contented waiting rather than loneliness."
     },
     "once-aspect-beautiful": {
       "artKey": "story.aspect.beautiful",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/beautiful-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/beautiful-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An exquisitely beautiful flowering rose bush with lush perfect pink and red blooms, dew sparkling on petals in morning sunlight, a breathtaking garden beauty vignette. Flowers dominate clearly."
     },
     "once-aspect-hungry": {
       "artKey": "story.aspect.hungry",
-      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/aspect/hungry-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/hungry-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A hungry medieval traveler at a wooden table stares longingly at an empty wooden bowl, one hand holding their stomach and the other a spoon; hungry hopeful face and empty plate central, no feast."
     },
     "once-event-unexpected-guest": {
       "artKey": "story.event.unexpected-guest",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/unexpected-guest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/unexpected-guest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An Unexpected Guest: a medieval household at supper abruptly turns in surprise as an unfamiliar cloaked traveler stands at the suddenly opened cottage door, torchlight and night outside. The surprising arrival, host faces and guest silhouette must be obvious."
     },
     "once-event-broken-promise": {
       "artKey": "story.event.broken-promise",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/broken-promise-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/broken-promise-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Broken Promise: a sorrowful young traveler at an agreed meeting-place holds a torn friendship ribbon; the promised companion is visibly departing in the distance rather than meeting them. Focus on abandoned agreement and disappointed expression, clearly unfulfilled promise, no readable writing."
     },
     "once-event-secret-meeting": {
       "artKey": "story.event.secret-meeting",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/secret-meeting-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/secret-meeting-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Secret Meeting: two cloaked medieval figures whisper closely and exchange a sealed message behind a moonlit ruined arch, furtively looking away from distant lantern-bearing guards. The secret rendezvous is the single central action."
     },
     "once-event-brave-choice": {
       "artKey": "story.event.brave-choice",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/brave-choice-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/brave-choice-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Brave Choice: a frightened but determined young villager steps onto a frail rope bridge over a great chasm to rescue a stranded child; they visibly choose courage despite the danger."
     },
     "once-event-sudden-storm": {
       "artKey": "story.event.sudden-storm",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/sudden-storm-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/sudden-storm-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Sudden Storm: travelers on a sunlit woodland road suddenly caught by a towering dark storm cloud, lightning and driving rain, capes and branches whipped by abrupt wind; dramatic surprising weather is central."
     },
     "once-event-wedding": {
       "artKey": "story.event.wedding",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/wedding-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/wedding-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Wedding: a medieval bride and groom joyfully exchange rings beneath a garland arch, family witnesses close by, flowers and warm candlelight. The vows and wedding couple are clear."
     },
     "once-event-gift": {
       "artKey": "story.event.gift",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/gift-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/gift-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Gift: a cloaked traveler warmly offers a beautifully wrapped small parcel with ribbon to a delighted villager, two pairs of hands meeting around the present in foreground."
     },
     "once-event-mistake": {
       "artKey": "story.event.mistake",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/mistake-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/mistake-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Mistake: a startled apprentice has knocked over a potion flask in a medieval workshop; spilled glowing liquid runs across the bench, their embarrassed face and raised hands make the accident obvious."
     },
     "once-event-narrow-escape": {
       "artKey": "story.event.narrow-escape",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/narrow-escape-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/narrow-escape-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Narrow Escape: an exhausted traveler leaps through a narrow stone gate just as the heavy portcullis drops behind them, cloak caught briefly, imminent peril avoided without injury."
     },
     "once-event-long-sleep": {
       "artKey": "story.event.long-sleep",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/long-sleep-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/long-sleep-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Long Sleep: an enchanted sleeper rests deeply in a secluded medieval chamber thick with settled dust and vines growing through the window, candles burned down, sense of many years passing."
     },
     "once-event-search": {
       "artKey": "story.event.search",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/search-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/search-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Search: medieval travelers with lanterns actively search the dark forest floor and under roots, one kneeling to inspect tracks, another peering into trees, clear purposeful search not generic walking."
     },
     "once-event-farewell": {
       "artKey": "story.event.farewell",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/farewell-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/farewell-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Farewell: two medieval friends at a village gate give each other a final embrace; one wears a travel pack and is departing, the other tearfully waves goodbye as dawn lights the road."
     },
     "once-event-feast": {
       "artKey": "story.event.feast",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/feast-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/feast-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Feast: villagers joyfully gather around an abundant long medieval banquet table, roast food, bread, fruit and goblets, generous shared celebration clearly central."
     },
     "once-event-warning": {
       "artKey": "story.event.warning",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/warning-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/warning-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Warning: a concerned medieval guide urgently holds up a hand to stop a traveler approaching a visibly unsafe broken bridge, pointing toward falling stones and the chasm. Clear stop-and-warn action."
     },
     "once-event-wish-granted": {
       "artKey": "story.event.wish-granted",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/wish-granted-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/wish-granted-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Wish Granted: a humble child gazes delighted as a small wish-star releases golden magic and a once barren sapling bursts into blossom before their outstretched hands. A fairy-tale wish visibly becoming real."
     },
     "once-event-lost-path": {
       "artKey": "story.event.lost-path",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/lost-path-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/lost-path-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Lost Path: a bewildered traveler with a walking staff stands where the woodland path disappears into thick tangled roots and mist, looking back and forth, clearly unable to find the road."
     },
     "once-event-change-of-heart": {
       "artKey": "story.event.change-of-heart",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/change-of-heart-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/change-of-heart-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Change of Heart: a stern armored ruler lowers their raised sword and instead reaches out gently to help a kneeling weary stranger stand; remorseful softened expression, clear decision toward kindness."
     },
     "once-event-race": {
       "artKey": "story.event.race",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/race-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/race-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Race: two medieval runners dash side by side down a forest track toward a village gate, leaning forward in competitive effort, energetic motion, no numbers or banners with text."
     },
     "once-event-trade": {
       "artKey": "story.event.trade",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/trade-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/trade-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Trade: two medieval merchants at a market exchange a woven basket of fruit and a pouch of coins, both hands meeting with goods visibly changing owners, smiling fair bargain."
     },
     "once-event-return": {
       "artKey": "story.event.return",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/return-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/return-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Return: a weary traveler carrying a dusty pack arrives at their familiar cottage doorway and is joyfully greeted by family, open welcoming arms, return home visibly central."
     },
     "once-event-door-opens": {
       "artKey": "story.event.door-opens",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/door-opens-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/door-opens-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Door Opens: a heavy ancient wooden door visibly swings open in the foreground, the turning brass handle and hinge reveal a shaft of golden light and a mysterious passage beyond, main subject door opening."
     },
     "once-event-hidden-truth": {
       "artKey": "story.event.hidden-truth",
-      "imagePath": "assets/once-upon-a-time/event/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/event/hidden-truth-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/hidden-truth-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A Hidden Truth: a medieval investigator pulls a dark cloth off a concealed portrait showing the same royal face as a surprised common traveler standing beside it, a discovered identity revealed through image not text."
     },
     "once-ending-shared-table": {
       "artKey": "ending.shared-table",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/shared-table-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/shared-table-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two former disputants sit peacefully across one rustic shared table, offering bread to each other with relieved smiles, fairy-tale tavern candlelight. Central single table, reconciled people, no fighting."
     },
     "once-ending-smallest-voice": {
       "artKey": "ending.smallest-voice",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/smallest-voice-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/smallest-voice-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A very small fairy-tale child stands confidently speaking on palace steps while a grand crowd, nobles and villagers turn attentively to listen. Child central and much smaller than adults, kingdom towers behind."
     },
     "once-ending-safe-road": {
       "artKey": "ending.safe-road",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/safe-road-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/safe-road-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A small group of tired travelers follows a clearly visible winding road toward welcoming familiar cottages at rosy sunrise. Safe, peaceful dawn, homes at path's end, no danger."
     },
     "once-ending-empty-throne": {
       "artKey": "ending.empty-throne",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/empty-throne-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/empty-throne-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An unoccupied throne with a crown resting on its seat stands beside an open palace balcony; beyond it villagers peacefully gather and garden in a sunlit town. No ruler, clear peaceful community."
     },
     "once-ending-kindness-returned": {
       "artKey": "ending.kindness-returned",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/kindness-returned-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/kindness-returned-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An elderly traveler who has fallen on a cold road is gently helped upright by a grateful young person offering a warm cloak. Clear timely helping gesture and relief, reciprocal kindness suggested by mutual recognition, no words."
     },
     "once-ending-garden-of-friends": {
       "artKey": "ending.garden-of-friends",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/garden-of-friends-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/garden-of-friends-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two formerly rival fairy-tale adults in contrasting cloaks kneel side by side planting young flowers together, setting aside crossed swords on a distant fence. Friendly cooperative faces, lush newly planted garden."
     },
     "once-ending-lasting-friendship": {
       "artKey": "ending.lasting-friendship",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/lasting-friendship-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/lasting-friendship-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two close fairy-tale friends hold hands warmly as the last faint magical golden spark dissolves above an empty wishing fountain. Friendship is bright and central, fading wish visibly secondary."
     },
     "once-ending-another-treasure": {
       "artKey": "ending.another-treasure",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/another-treasure-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/another-treasure-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A group of fairy-tale treasure seekers sits around a clearly empty wooden treasure chest, happily sharing bread, laughter and friendship after the search. Empty chest visible, no gold treasure, collective contentment."
     },
     "once-ending-cost-of-truth": {
       "artKey": "ending.cost-of-truth",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/cost-of-truth-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/cost-of-truth-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two worn travelers emerge through an opened prison gate into bright morning light; broken shackles left behind, one clutches a simple torn sealed parchment without readable text. Their relieved faces show freedom after costly honesty, no violence."
     },
     "once-ending-welcome-stranger": {
       "artKey": "ending.welcome-stranger",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/welcome-stranger-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/welcome-stranger-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: The stranger was welcomed as one of their own. A formerly lone cloak-wearing traveler is warmly embraced by villagers at a communal meal; people make space at the table and offer food, traveler smiling in relief. This is belonging, not a lonely cottage."
     },
     "once-ending-open-doors": {
       "artKey": "ending.open-doors",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/open-doors-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/open-doors-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: From that day, no door was closed to a traveler. Several medieval cottage doors stand wide open along a warm village lane, residents gladly beckon weary travelers inside; welcoming open doorways unmistakable. No closed doors or text."
     },
     "once-ending-ordinary-wonder": {
       "artKey": "ending.ordinary-wonder",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/ordinary-wonder-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/ordinary-wonder-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: They chose an ordinary life and called it wonderful. Two happy former fairy-tale adventurers in plain linen clothes tend a small vegetable garden together beside a modest cottage, simple domestic joy, no crowns, jewels, palace or magical effects."
     },
     "once-ending-changed-return": {
       "artKey": "ending.changed-return",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/changed-return-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/changed-return-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: What had been lost returned in a different form. A grieving fairy-tale gardener smiles with recognition as a beautiful glowing young sapling emerges from the stump of the old lost tree; their hand lovingly touches new leaves. Old tree stump and fresh living growth clearly visible, renewal replacing loss."
     },
     "once-ending-laughing-curse": {
       "artKey": "ending.laughing-curse",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/laughing-curse-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/laughing-curse-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: The curse ended with a laugh. A fairy-tale traveler laughs joyfully while dark magical shackles dissolve into sparkling light around them; companions laughing in relief, curse visibly broken and fading. No angry battle, text or runes."
     },
     "once-ending-promise-kept": {
       "artKey": "ending.promise-kept",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/promise-kept-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/promise-kept-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: The last promise was kept, even after many years. An elderly grey-haired knight finally returns a cherished ring tied to an old faded blue ribbon to an elderly companion waiting at a cottage gate; both clasp hands with tears of joy, weathered faces and long-kept memento central."
     },
     "once-ending-listening-heart": {
       "artKey": "ending.listening-heart",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/listening-heart-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/listening-heart-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: The lonely heart found someone willing to listen. A once-sad young traveler sits beside a compassionate elderly friend on a quiet bench, speaking softly while friend turns attentively toward them with kind eye contact and a hand on their shoulder. Warm intimate companionship, no crowd."
     },
     "once-ending-unknown-savior": {
       "artKey": "ending.unknown-savior",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/unknown-savior-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/unknown-savior-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: The kingdom celebrated without knowing who had saved it. Joyful citizens celebrate with ribbons in a restored medieval town square, while a humble hooded heroic traveler quietly walks away at the edge of the scene unnoticed, no one pointing or cheering at that traveler."
     },
     "once-ending-gift-passed-on": {
       "artKey": "ending.gift-passed-on",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/gift-passed-on-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/gift-passed-on-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Illustrate the complete conclusion: The gift was passed on to someone who needed it. A fairy-tale traveler kindly hands a warm woolen cloak to a shivering poor villager, who accepts gratefully and wraps it around their shoulders; generosity and recipient's genuine need visibly central."
     },
     "once-ending-full-circle": {
       "artKey": "ending.full-circle",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/full-circle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/full-circle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A weary medieval traveler returns at sunset to the same familiar village well and little cottage from which a worn looping road leads away and back. Their dusty pack and warm recognition make a journey coming full circle clear."
     },
     "once-ending-beyond-the-palace": {
       "artKey": "ending.beyond-the-palace",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/beyond-the-palace-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/beyond-the-palace-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A smiling pair of former palace residents walk away from a grand castle into a sunny modest countryside cottage garden, expensive cloaks folded away, visibly happy with simple freedom outside the palace."
     },
     "once-ending-silent-bells": {
       "artKey": "ending.silent-bells",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/silent-bells-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/silent-bells-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A peaceful medieval town square at sunrise, villagers relaxed and unarmed, a prominently visible old bell tower above them with still silent bells and bell ropes removed. Tranquility after strife, no ringing movement."
     },
     "once-ending-buried-secret": {
       "artKey": "ending.buried-secret",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/buried-secret-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/buried-secret-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A medieval traveler finishes burying a small locked secret chest beneath the roots of a freshly planted sapling; earth and spade foreground, the chest almost covered, young tree centered in hopeful light."
     },
     "once-ending-waiting-light": {
       "artKey": "ending.waiting-light",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/waiting-light-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/waiting-light-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single warmly glowing oil lamp waits on the sill of a cottage window every night, a quiet figure patiently looking out at an empty moonlit road, luminous light as the emotional center."
     },
     "once-ending-hollow-victory": {
       "artKey": "ending.hollow-victory",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/hollow-victory-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/hollow-victory-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An armored victorious ruler sits alone in a vast empty hall, a won trophy and crown resting beside them, slumped shoulders and unsatisfied wistful face despite the treasures. Victory without fulfillment."
     },
     "once-ending-quiet-mirror": {
       "artKey": "ending.quiet-mirror",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/quiet-mirror-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/quiet-mirror-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An ornate enchanted mirror now completely plain and silent sits neglected on a medieval room wall; villagers happily talk and decide among themselves around a nearby table, ignoring the mirror."
     },
     "once-ending-borrowed-magic": {
       "artKey": "ending.borrowed-magic",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/borrowed-magic-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/borrowed-magic-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Golden and emerald enchanted lights visibly flow out of an empty traveler's wand and satchel back into ancient forest trees, illuminating roots and leaves; the traveler peacefully releases borrowed magic."
     },
     "once-ending-last-laugh": {
       "artKey": "ending.last-laugh",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/last-laugh-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/last-laugh-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A colorful medieval jester gently laughs with a relieved king and villagers, offering a friendly hand rather than mockery; warm communal joyful laughter in a castle courtyard, fool central."
     },
     "once-ending-unfinished-map": {
       "artKey": "ending.unfinished-map",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/unfinished-map-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/unfinished-map-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two hopeful travelers drop their old map into a small campfire then step toward a sunlit untrodden path together, hands linked, no readable markings on burning parchment; free choice of a new direction."
     },
     "once-ending-passing-seasons": {
       "artKey": "ending.passing-seasons",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/passing-seasons-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/passing-seasons-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A once mournful traveler rests under a tree that has fresh spring blossoms amid fallen autumn leaves and melting last snow; softened hopeful expression, gentle cycle of seasons in one natural scene, no split panels."
     },
     "once-ending-locked-door": {
       "artKey": "ending.locked-door",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/locked-door-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/locked-door-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A massive ancient castle door permanently sealed with an iron lock and growing vines, while cheerful medieval villagers work and children play outside in bright daylight; barred threshold left behind, ordinary life flourishing."
     },
     "once-ending-new-song": {
       "artKey": "ending.new-song",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/new-song-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/new-song-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A gentle medieval bard sings and plays a lute to smiling villagers and children in a cottage courtyard, their shared story turned into a warm joyful song; no musical notes, writing or text."
     },
     "once-ending-different-names": {
       "artKey": "ending.different-names",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/different-names-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/different-names-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two old friends joyfully recognize each other again after many years, both changed in appearance and simple medieval clothing, touching hands beside a village bridge, discarded old disguise masks at their feet suggest transformed identities; reunion central."
     },
     "once-ending-simple-supper": {
       "artKey": "ending.simple-supper",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/simple-supper-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/simple-supper-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A warmly smiling family and traveler share humble bread and soup around a cottage table, close affection and candlelight central; an overflowing treasure chest stands unopened and unimportant in the shadows."
     },
     "once-ending-gentle-ruler": {
       "artKey": "ending.gentle-ruler",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/gentle-ruler-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/gentle-ruler-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A crowned medieval ruler respectfully kneels to listen to an ordinary villager, relaxed open palms requesting help instead of raised command, kind attentive face and surprised but comfortable villager in royal courtyard."
     },
     "once-ending-vanished-footprints": {
       "artKey": "ending.vanished-footprints",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/vanished-footprints-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/vanished-footprints-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Close foreground of a few mysterious three-toed creature footprints in fresh morning frost leading away from an empty cottage garden, soft dawn light; no creature or people remaining, only the curious tracks."
     },
     "once-ending-unasked-question": {
       "artKey": "ending.unasked-question",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/unasked-question-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/unasked-question-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Contented medieval friends share a peaceful picnic, leaving an enigmatic closed sealed box untouched nearby; nobody inspects it, smiles and satisfied calm show they are happy without solving the remaining mystery."
     },
     "once-ending-broken-spell": {
       "artKey": "ending.broken-spell",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/broken-spell-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/broken-spell-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A medieval traveler waves a heartfelt farewell to a departing loved one; shimmering magical chains around them visibly shatter into harmless golden sparks as the goodbye is spoken, freeing the traveler."
     },
     "once-ending-earned-rest": {
       "artKey": "ending.earned-rest",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/earned-rest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/earned-rest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two exhausted medieval travelers have finally fallen asleep comfortably by a warm cottage hearth beneath recognizable worn wooden roof beams, muddy boots and travel packs set aside, safe familiar rest."
     },
     "once-ending-better-bargain": {
       "artKey": "ending.better-bargain",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/better-bargain-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/better-bargain-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two medieval merchants smile in pleasant surprise after a fair exchange, each carrying an unexpectedly generous basket of goods and an extra small gift, hands parting after friendly bargain, market setting."
     },
     "once-ending-forgotten-name": {
       "artKey": "ending.forgotten-name",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/forgotten-name-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/forgotten-name-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A thriving medieval village market flourishes around an overlooked weathered statue of a once heroic traveler, ivy and dust covering the plain unmarked plinth; townspeople happily pass without remembering the hero."
     },
     "once-ending-shared-burden": {
       "artKey": "ending.shared-burden",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/shared-burden-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/shared-burden-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two medieval companions carry a large travel bundle together on a shared wooden pole, one at each end; their relaxed smiling faces and easy stride show the once-heavy burden made light by mutual help."
     },
     "once-ending-unlikely-home": {
       "artKey": "ending.unlikely-home",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/unlikely-home-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/unlikely-home-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A once frightening dark stone castle now shelters a relaxed traveler by a glowing welcoming hearth, ominous exterior glimpsed through an arch contrasts with kind warmth, open home and safe smile inside."
     },
     "once-ending-changed-wish": {
       "artKey": "ending.changed-wish",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/changed-wish-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/changed-wish-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An older fairy-tale traveler releases the last glowing wish-star from their hands toward a fresh sapling and a sunrise road, setting aside a broken old crown, peaceful hopeful readiness for a completely new beginning."
     },
     "once-ending-quiet-monster": {
       "artKey": "ending.quiet-monster",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/quiet-monster-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/quiet-monster-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A large gentle horned fairy-tale monster in simple clothes quietly tends vegetables beside its modest remote cottage beyond rolling green hills, peaceful expression, watering can, no frightening attack."
     },
     "once-ending-second-chance": {
       "artKey": "ending.second-chance",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/second-chance-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/second-chance-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two former medieval enemies place their swords on the ground and clasp hands in sincere reconciliation; behind them a formerly thorn-covered forest path opens into golden light, clear forgiveness instead of revenge."
     },
     "once-ending-invisible-gift": {
       "artKey": "ending.invisible-gift",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/invisible-gift-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/invisible-gift-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Medieval villagers stand together with empty open hands, gently smiling and feeling a warm luminous breeze of kindness around them; no visible physical gift or object, a shared sensation shown through relieved faces and subtle light."
     },
     "once-ending-watchful-moon": {
       "artKey": "ending.watchful-moon",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/watchful-moon-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/watchful-moon-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two quiet fairy-tale companions whisper their shared secret beside a remote moonlit lake, the large watchful full moon reflected above and in still water, timeless secrecy, no written message or public witnesses."
     },
     "once-ending-keeper-of-keys": {
       "artKey": "ending.keeper-of-keys",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/keeper-of-keys-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/keeper-of-keys-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An elderly medieval gatekeeper gratefully gives a heavy ring of iron keys to a younger successor, then steps away freely through an open gate toward a bright road, relieved unburdened face, key handover central."
     },
     "once-ending-strange-peace": {
       "artKey": "ending.strange-peace",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/strange-peace-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/strange-peace-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Medieval travelers calmly sit in peaceful companionship beside a mysterious gentle floating luminous creature of unfamiliar form in a forest clearing, weapons set aside, curiosity and acceptance rather than fear or explanation."
     },
     "once-ending-last-candle": {
       "artKey": "ending.last-candle",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/last-candle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/last-candle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A guardian quietly extinguishes the final candle in a safe cottage room; thin smoke rises from the dark wick, all family members asleep peacefully together behind it, dawn light providing reassurance."
     },
     "once-ending-new-beginning": {
       "artKey": "ending.new-beginning",
-      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
-      "status": "category-fallback"
+      "imagePath": "assets/once-upon-a-time/ending/new-beginning-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/ending/new-beginning-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An old medieval storyteller hands an open unlettered storybook and travel staff to a young new adventurer who steps eagerly onto a sunlit winding road, passing the tale to the next person, hopeful new adventure."
     }
   }
 }

@@ -80,12 +80,12 @@ test('2, 4, and 6 players receive correct private hands/endings and one public d
   }
 });
 
-test('lobby readiness and classic first-teller selection are host-controlled', () => {
+test('optional lobby readiness and classic first-teller selection are host-controlled', () => {
   let s = create();
-  s = act(s, 'deal'); assert.equal(s.replies[0].error, 'not_ready'); assert.equal(s.phase, 'LOBBY');
+  assert.equal(E.view(s, 0, 0).once.actions.deal, true);
   s = act(s, 'ready', 0, { value: true }); assert.equal(s.replies[0].error, 'not_available');
   for (const p of s.roster) s = act(s, 'ready', p.playerNum, { value: true });
-  s = act(s, 'ready', 4, { value: false }); assert.equal(E.view(s, 0, 0).once.actions.deal, false);
+  s = act(s, 'ready', 4, { value: false }); assert.equal(E.view(s, 0, 0).once.actions.deal, true);
   s = act(s, 'ready', 4, { value: true }); assert.equal(E.view(s, 0, 0).once.actions.deal, true);
   s = act(s, 'deal', 1); assert.equal(s.phase, 'LOBBY');
   s = act(s, 'deal'); assert.equal(s.storyteller, null);
@@ -93,6 +93,24 @@ test('lobby readiness and classic first-teller selection are host-controlled', (
   s = act(s, 'chooseFirst', 2, { playerNum: 2 }); assert.equal(s.replies[2].error, 'not_available');
   s = act(s, 'chooseFirst', 0, { playerNum: 3 }); assert.equal(s.storyteller, 3);
   assert.equal(s.phase, 'STORYTELLING'); conservation(s);
+});
+
+test('host may deal with zero or partial readiness; absent players retain their private cards', () => {
+  for (const count of [2, 4, 6]) for (const partial of [false, true]) {
+    let s = create(count);
+    if (partial) s = act(s, 'ready', 1, { value: true });
+    assert.equal(E.view(s, 0, 0).once.actions.deal, true);
+    const unauthorized = act(s, 'deal', 2);
+    assert.equal(unauthorized.phase, 'LOBBY');
+    assert.equal(unauthorized.replies[2].error, 'not_available');
+    const cmd = command(s, 'deal'); s = E.apply(s, cmd);
+    assert.equal(s.phase, 'CHOOSING_FIRST'); assert.equal(s.replies[0].error, '');
+    for (const player of s.roster) {
+      assert.equal(E.view(s, player.playerNum).once.hand.length, Math.max(5, 11 - count));
+      assert.ok(E.view(s, player.playerNum).once.ending);
+    }
+    assert.equal(E.apply(s, cmd), s, 'retry must not redeal'); conservation(s);
+  }
 });
 
 test('independent shuffle, random first selection and transaction retries are deterministic', () => {
@@ -411,7 +429,7 @@ test('restart resets readiness/private cards/history, retains seat identities, a
   s = act(s, 'restart'); assert.notEqual(s.sessionId, old.sessionId); assert.deepEqual(s.roster, roster(4));
   assert.equal(s.phase, 'LOBBY'); assert.deepEqual(s.hands, {}); assert.deepEqual(s.endings, {}); assert.deepEqual(s.readiness, {});
   assert.deepEqual(s.history, []); assert.deepEqual(s.storyDeck, []); assert.equal(s.storyteller, null);
-  assert.equal(E.apply(s, old), s); assert.equal(E.view(s, 0, 0).once.actions.deal, false);
+  assert.equal(E.apply(s, old), s); assert.equal(E.view(s, 0, 0).once.actions.deal, true);
   for (const p of s.roster) s = act(s, 'ready', p.playerNum, { value: true });
   s = act(s, 'deal'); conservation(s);
 });

@@ -151,11 +151,17 @@ async function main() {
   const first = host();
   await waitFor(() => first.own && Object.keys(room.answers).length === 6, 'host lease and player-node reads');
   await first.start(); await waitFor(async () => (await card(6))?.once?.phase === 'LOBBY', 'all six lobby projections');
+  assert.ok(E.list(first.doc.state.roster).every(player=>!first.doc.state.readiness?.[player.playerNum]));
+  await first.command('deal'); await drain(first);
+  for(let seat=1;seat<=6;seat++)assert.equal((await card(seat)).once.hand.length,5);
+  console.log('PASS host immediately deals with zero ready players; all six original private cards receive hands.');
+  await first.command('restart'); await drain(first);
   await send(1, 'ready', { value: true, actor: 6 }, first);
   assert.equal(first.doc.state.readiness[1], true); assert.notEqual(first.doc.state.readiness[6], true);
-  const ready = await Promise.all([2, 3, 4, 5, 6].map(async seat => ({ seat, command: makeCommand(await card(seat), 'ready', { value: true }) })));
+  const ready = await Promise.all([2, 3, 4, 5, 6].map(async seat => ({ seat, command: makeCommand(await card(seat), 'ready', { value: false }) })));
   await Promise.all(ready.map(({ seat, command }) => submit(seat, command)));
   await Promise.all(ready.map(({ seat, command }) => acknowledged(seat, command, first)));
+  assert.ok([2,3,4,5,6].every(seat=>first.doc.state.readiness?.[seat]!==true));
   await first.command('deal'); await drain(first);
   for (let seat = 1; seat <= 6; seat++) {
     const value = await card(seat), serialized = JSON.stringify(value);
@@ -168,7 +174,7 @@ async function main() {
     assert.equal(serialized.includes(control), false);
   }
   assert.equal(first.latest.once.hand, undefined); assert.equal(first.latest.once.ending, undefined);
-  console.log('PASS six private projections, separate control token, trusted seat identity, and ready/deal over real Firebase.');
+  console.log('PASS six private projections, separate control token, trusted seat identity, concurrent optional readiness, and direct host deal with five unready players over real Firebase.');
   // Find a real pair in the dealt cards; if necessary start another isolated
   // game rather than injecting artificial hands into authoritative state.
   let pair = null;
