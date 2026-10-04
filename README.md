@@ -21,8 +21,15 @@ host is sharing.
 | 🤔 Sophie's Choice | 2+ | A morally impossible situation with two extreme choices — pick one and defend it, or take option C and argue your own |
 | 🤝 Persuade Together! | 3+ | One player is dealt the judge, everyone else teams up to convince them |
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
+| 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
 
 ## How it works
+
+**Once Upon a Time** is the final entry in the Hub game menu. It reuses the
+original room and private player links. See [`once-upon-a-time-mode.md`](once-upon-a-time-mode.md)
+for its rules, deck/art counts, trusted-host limits, launch steps and verification.
+The host keeps its shared table open; each participant taps Ready and plays from
+their own existing card. `?demo=1` is a clearly labelled synthetic preview only.
 
 - `index.html` is the menu; each game has its own host page.
 - `play.html` is the single player card page shared by **the seven games and Let's Talk** — it

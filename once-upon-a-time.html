@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="An original fairy-tale storytelling card game in Ice Breaking Hub. Play cards, take over the story, and reach your own ending.">
+  <title>Once Upon a Time · IceBreak Hub</title>
+  <link rel="icon" href="apple-touch-icon.png">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="once-upon-a-time.css?v=once-v1-1">
+</head>
+<body class="once-page">
+  <div class="topbar"><a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a><span id="once-room-label"></span></div>
+  <main class="once-shell">
+    <div class="once-demo-bar" id="once-demo-bar" hidden>
+      <strong>LOCAL DEMO — synthetic players; no room connection</strong>
+      <label>View <select id="once-demo-view"><option value="0">Shared table</option></select></label>
+      <a href="once-upon-a-time.html">Use a real Hub room</a>
+    </div>
+    <p id="once-host-status" class="once-muted" role="status"></p>
+    <section class="once-panel once-setup-panel" id="once-setup">
+      <p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1>
+      <p id="once-setup-help"></p>
+      <div class="once-actions"><button class="once-button" id="once-open">Open this table</button><a class="back" href="index.html" id="once-setup-link">Set up room in Hub</a></div>
+      <a class="back" href="once-upon-a-time.html?demo=1" id="once-demo-link">Try a clearly labelled local demo</a>
+    </section>
+    <div id="once-table"></div>
+    <div id="once-room-mount" hidden></div>
+  </main>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="qrcode.js"></script>
+  <script src="room.js"></script>
+  <script src="once-upon-a-time-deck.js?v=once-v1-1"></script>
+  <script src="once-upon-a-time-engine.js?v=once-v1-1"></script>
+  <script src="talk-sync.js"></script>
+  <script src="once-upon-a-time-sync.js?v=once-v1-1"></script>
+  <script src="once-upon-a-time-ui.js?v=once-v1-1"></script>
+  <script src="once-upon-a-time-host.js?v=once-v1-1"></script>
+</body>
+</html>

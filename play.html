@@ -8,6 +8,7 @@
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="talk.css">
+  <link rel="stylesheet" href="once-upon-a-time.css?v=once-v1-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -875,6 +876,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="talk-ui.js"></script>
   <script src="chat-wolf-cards.js"></script>
+  <script src="once-upon-a-time-deck.js?v=once-v1-1"></script>
+  <script src="once-upon-a-time-ui.js?v=once-v1-1"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -2429,6 +2432,7 @@
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
+    let onceCard = null;
     let wolfCardFrame = null;
     // A private instruction can only ask its own same-origin frame to become
     // visible. Never pass role, sender, instruction text or card data upstream.
@@ -2447,6 +2451,27 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      const isOnce = data.game === 'onceupon' && data.once?.version === 1;
+      document.body.classList.toggle('once-card-page', isOnce);
+      if (onceCard && !isOnce) { onceCard.destroy(); onceCard = null; }
+      if (isOnce) {
+        document.body.classList.remove('chat-wolf-card');
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (!onceCard) onceCard = new ONCE_UI.Card(el, {
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'onceupon' || current.once?.sessionId !== command.sessionId) return;
+            // Votes share a ballot, not a local turn timestamp. All other
+            // commands must still refer to the story point the player saw.
+            if (command.type === 'vote' ? current.once.vote?.id !== command.voteId : current.once.turnId !== command.turnId) return;
+            return Object.assign({}, current, { onceAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        onceCard.update(data);
+        return;
+      }
       const wolfURL = data.game === 'chatwolf' ? CHAT_WOLF_CARDS.frameURL(data.chatWolf, location.href) : null;
       document.body.classList.toggle('chat-wolf-card', !!wolfURL);
       if (wolfURL) {
@@ -2670,9 +2695,11 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
+      if (onceCard) { onceCard.destroy(); onceCard = null; }
       if (talkCard) { talkCard.destroy(); talkCard = null; }
       if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
       document.body.classList.remove('chat-wolf-card');
+      document.body.classList.remove('once-card-page');
       lastErrorKey = key;
       lastErrorData = data || null;
       el.innerHTML = WAITING_KEYS.has(key)
@@ -2700,7 +2727,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

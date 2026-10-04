@@ -1,0 +1,868 @@
+{
+  "version": 1,
+  "note": "V1 uses six shared category paintings, not 165 unique paintings. Every card has a unique artKey for replacement.",
+  "uniqueIllustrationCount": 6,
+  "categoryDefaults": {
+    "character": {
+      "artKey": "fallback.character",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "thing": {
+      "artKey": "fallback.thing",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "place": {
+      "artKey": "fallback.place",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "aspect": {
+      "artKey": "fallback.aspect",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "event": {
+      "artKey": "fallback.event",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "ending": {
+      "artKey": "fallback.ending",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    }
+  },
+  "cardBacks": {
+    "story": "assets/once-upon-a-time/card-backs/story-back.svg",
+    "ending": "assets/once-upon-a-time/card-backs/ending-back.svg"
+  },
+  "cards": {
+    "once-character-candle-keeper": {
+      "artKey": "story.character.candle-keeper",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-lost-heir": {
+      "artKey": "story.character.lost-heir",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-hill-giant": {
+      "artKey": "story.character.hill-giant",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-quiet-prince": {
+      "artKey": "story.character.quiet-prince",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-river-witch": {
+      "artKey": "story.character.river-witch",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-young-miller": {
+      "artKey": "story.character.young-miller",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-fox": {
+      "artKey": "story.character.fox",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-woodcutter": {
+      "artKey": "story.character.woodcutter",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-glass-knight": {
+      "artKey": "story.character.glass-knight",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-moon-cat": {
+      "artKey": "story.character.moon-cat",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-royal-cook": {
+      "artKey": "story.character.royal-cook",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-wandering-singer": {
+      "artKey": "story.character.wandering-singer",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-old-shepherd": {
+      "artKey": "story.character.old-shepherd",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-masked-guest": {
+      "artKey": "story.character.masked-guest",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-forest-child": {
+      "artKey": "story.character.forest-child",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-wise-crow": {
+      "artKey": "story.character.wise-crow",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-tiny-dragon": {
+      "artKey": "story.character.tiny-dragon",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-gate-guard": {
+      "artKey": "story.character.gate-guard",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-sea-sister": {
+      "artKey": "story.character.sea-sister",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-travelling-judge": {
+      "artKey": "story.character.travelling-judge",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-talking-hare": {
+      "artKey": "story.character.talking-hare",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-poor-tailor": {
+      "artKey": "story.character.poor-tailor",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-character-sleepy-king": {
+      "artKey": "story.character.sleepy-king",
+      "imagePath": "assets/once-upon-a-time/character/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-silver-needle": {
+      "artKey": "story.thing.silver-needle",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-empty-crown": {
+      "artKey": "story.thing.empty-crown",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-wishing-coin": {
+      "artKey": "story.thing.wishing-coin",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-broken-sword": {
+      "artKey": "story.thing.broken-sword",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-green-bottle": {
+      "artKey": "story.thing.green-bottle",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-red-ribbon": {
+      "artKey": "story.thing.red-ribbon",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-wooden-flute": {
+      "artKey": "story.thing.wooden-flute",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-locked-chest": {
+      "artKey": "story.thing.locked-chest",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-walking-boots": {
+      "artKey": "story.thing.walking-boots",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-golden-apple": {
+      "artKey": "story.thing.golden-apple",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-old-map": {
+      "artKey": "story.thing.old-map",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-glass-bell": {
+      "artKey": "story.thing.glass-bell",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-warm-cloak": {
+      "artKey": "story.thing.warm-cloak",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-black-feather": {
+      "artKey": "story.thing.black-feather",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-secret-letter": {
+      "artKey": "story.thing.secret-letter",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-stone-ring": {
+      "artKey": "story.thing.stone-ring",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-lantern": {
+      "artKey": "story.thing.lantern",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-sleeping-potion": {
+      "artKey": "story.thing.sleeping-potion",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-copper-mirror": {
+      "artKey": "story.thing.copper-mirror",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-bread-basket": {
+      "artKey": "story.thing.bread-basket",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-spinning-wheel": {
+      "artKey": "story.thing.spinning-wheel",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-pocket-watch": {
+      "artKey": "story.thing.pocket-watch",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-thing-pearl": {
+      "artKey": "story.thing.pearl",
+      "imagePath": "assets/once-upon-a-time/thing/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-thorn-garden": {
+      "artKey": "story.place.thorn-garden",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-lonely-tower": {
+      "artKey": "story.place.lonely-tower",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-deep-well": {
+      "artKey": "story.place.deep-well",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-misty-bridge": {
+      "artKey": "story.place.misty-bridge",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-hidden-valley": {
+      "artKey": "story.place.hidden-valley",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-old-mill": {
+      "artKey": "story.place.old-mill",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-royal-kitchen": {
+      "artKey": "story.place.royal-kitchen",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-snowy-pass": {
+      "artKey": "story.place.snowy-pass",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-moonlit-lake": {
+      "artKey": "story.place.moonlit-lake",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-empty-village": {
+      "artKey": "story.place.empty-village",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-stone-circle": {
+      "artKey": "story.place.stone-circle",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-secret-tunnel": {
+      "artKey": "story.place.secret-tunnel",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-high-mountain": {
+      "artKey": "story.place.high-mountain",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-market-square": {
+      "artKey": "story.place.market-square",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-island-castle": {
+      "artKey": "story.place.island-castle",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-dark-attic": {
+      "artKey": "story.place.dark-attic",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-riverbank": {
+      "artKey": "story.place.riverbank",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-wild-meadow": {
+      "artKey": "story.place.wild-meadow",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-seaside-cave": {
+      "artKey": "story.place.seaside-cave",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-golden-hall": {
+      "artKey": "story.place.golden-hall",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-crossroads": {
+      "artKey": "story.place.crossroads",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-abandoned-chapel": {
+      "artKey": "story.place.abandoned-chapel",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-place-tree-house": {
+      "artKey": "story.place.tree-house",
+      "imagePath": "assets/once-upon-a-time/place/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-invisible": {
+      "artKey": "story.aspect.invisible",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-merciful": {
+      "artKey": "story.aspect.merciful",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-jealous": {
+      "artKey": "story.aspect.jealous",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-shy": {
+      "artKey": "story.aspect.shy",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-bewitched": {
+      "artKey": "story.aspect.bewitched",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-honest": {
+      "artKey": "story.aspect.honest",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-frozen": {
+      "artKey": "story.aspect.frozen",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-fearless": {
+      "artKey": "story.aspect.fearless",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-forgotten": {
+      "artKey": "story.aspect.forgotten",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-greedy": {
+      "artKey": "story.aspect.greedy",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-silent": {
+      "artKey": "story.aspect.silent",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-gentle": {
+      "artKey": "story.aspect.gentle",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-lonely": {
+      "artKey": "story.aspect.lonely",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-wild": {
+      "artKey": "story.aspect.wild",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-unlucky": {
+      "artKey": "story.aspect.unlucky",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-golden": {
+      "artKey": "story.aspect.golden",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-tired": {
+      "artKey": "story.aspect.tired",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-tiny": {
+      "artKey": "story.aspect.tiny",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-disguised": {
+      "artKey": "story.aspect.disguised",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-broken": {
+      "artKey": "story.aspect.broken",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-patient": {
+      "artKey": "story.aspect.patient",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-beautiful": {
+      "artKey": "story.aspect.beautiful",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-aspect-hungry": {
+      "artKey": "story.aspect.hungry",
+      "imagePath": "assets/once-upon-a-time/aspect/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-unexpected-guest": {
+      "artKey": "story.event.unexpected-guest",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-broken-promise": {
+      "artKey": "story.event.broken-promise",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-secret-meeting": {
+      "artKey": "story.event.secret-meeting",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-brave-choice": {
+      "artKey": "story.event.brave-choice",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-sudden-storm": {
+      "artKey": "story.event.sudden-storm",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-wedding": {
+      "artKey": "story.event.wedding",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-gift": {
+      "artKey": "story.event.gift",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-mistake": {
+      "artKey": "story.event.mistake",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-narrow-escape": {
+      "artKey": "story.event.narrow-escape",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-long-sleep": {
+      "artKey": "story.event.long-sleep",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-search": {
+      "artKey": "story.event.search",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-farewell": {
+      "artKey": "story.event.farewell",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-feast": {
+      "artKey": "story.event.feast",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-warning": {
+      "artKey": "story.event.warning",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-wish-granted": {
+      "artKey": "story.event.wish-granted",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-lost-path": {
+      "artKey": "story.event.lost-path",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-change-of-heart": {
+      "artKey": "story.event.change-of-heart",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-race": {
+      "artKey": "story.event.race",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-trade": {
+      "artKey": "story.event.trade",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-return": {
+      "artKey": "story.event.return",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-door-opens": {
+      "artKey": "story.event.door-opens",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-event-hidden-truth": {
+      "artKey": "story.event.hidden-truth",
+      "imagePath": "assets/once-upon-a-time/event/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-shared-table": {
+      "artKey": "ending.shared-table",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-smallest-voice": {
+      "artKey": "ending.smallest-voice",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-safe-road": {
+      "artKey": "ending.safe-road",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-empty-throne": {
+      "artKey": "ending.empty-throne",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-kindness-returned": {
+      "artKey": "ending.kindness-returned",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-garden-of-friends": {
+      "artKey": "ending.garden-of-friends",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-lasting-friendship": {
+      "artKey": "ending.lasting-friendship",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-another-treasure": {
+      "artKey": "ending.another-treasure",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-cost-of-truth": {
+      "artKey": "ending.cost-of-truth",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-welcome-stranger": {
+      "artKey": "ending.welcome-stranger",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-open-doors": {
+      "artKey": "ending.open-doors",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-ordinary-wonder": {
+      "artKey": "ending.ordinary-wonder",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-changed-return": {
+      "artKey": "ending.changed-return",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-laughing-curse": {
+      "artKey": "ending.laughing-curse",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-promise-kept": {
+      "artKey": "ending.promise-kept",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-listening-heart": {
+      "artKey": "ending.listening-heart",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-unknown-savior": {
+      "artKey": "ending.unknown-savior",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-gift-passed-on": {
+      "artKey": "ending.gift-passed-on",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-full-circle": {
+      "artKey": "ending.full-circle",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-beyond-the-palace": {
+      "artKey": "ending.beyond-the-palace",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-silent-bells": {
+      "artKey": "ending.silent-bells",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-buried-secret": {
+      "artKey": "ending.buried-secret",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-waiting-light": {
+      "artKey": "ending.waiting-light",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-hollow-victory": {
+      "artKey": "ending.hollow-victory",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-quiet-mirror": {
+      "artKey": "ending.quiet-mirror",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-borrowed-magic": {
+      "artKey": "ending.borrowed-magic",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-last-laugh": {
+      "artKey": "ending.last-laugh",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-unfinished-map": {
+      "artKey": "ending.unfinished-map",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-passing-seasons": {
+      "artKey": "ending.passing-seasons",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-locked-door": {
+      "artKey": "ending.locked-door",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-new-song": {
+      "artKey": "ending.new-song",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-different-names": {
+      "artKey": "ending.different-names",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-simple-supper": {
+      "artKey": "ending.simple-supper",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-gentle-ruler": {
+      "artKey": "ending.gentle-ruler",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-vanished-footprints": {
+      "artKey": "ending.vanished-footprints",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-unasked-question": {
+      "artKey": "ending.unasked-question",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-broken-spell": {
+      "artKey": "ending.broken-spell",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-earned-rest": {
+      "artKey": "ending.earned-rest",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-better-bargain": {
+      "artKey": "ending.better-bargain",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-forgotten-name": {
+      "artKey": "ending.forgotten-name",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-shared-burden": {
+      "artKey": "ending.shared-burden",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-unlikely-home": {
+      "artKey": "ending.unlikely-home",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-changed-wish": {
+      "artKey": "ending.changed-wish",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-quiet-monster": {
+      "artKey": "ending.quiet-monster",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-second-chance": {
+      "artKey": "ending.second-chance",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-invisible-gift": {
+      "artKey": "ending.invisible-gift",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-watchful-moon": {
+      "artKey": "ending.watchful-moon",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-keeper-of-keys": {
+      "artKey": "ending.keeper-of-keys",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-strange-peace": {
+      "artKey": "ending.strange-peace",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-last-candle": {
+      "artKey": "ending.last-candle",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    },
+    "once-ending-new-beginning": {
+      "artKey": "ending.new-beginning",
+      "imagePath": "assets/once-upon-a-time/ending/fallback.png",
+      "status": "category-fallback"
+    }
+  }
+}

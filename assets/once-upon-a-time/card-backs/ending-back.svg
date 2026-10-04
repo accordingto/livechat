@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 720" role="img" aria-labelledby="title desc">
+  <title id="title">Ending Card back</title>
+  <desc id="desc">An original antique gold crescent moon above a closed book on deep navy with matching botanical ornaments.</desc>
+  <defs>
+    <radialGradient id="navy"><stop stop-color="#26334f"/><stop offset="1" stop-color="#0b1425"/></radialGradient>
+    <linearGradient id="gold" x2="1" y2="1"><stop stop-color="#e4ce8a"/><stop offset=".5" stop-color="#a27c36"/><stop offset="1" stop-color="#d8bd73"/></linearGradient>
+    <pattern id="seeds" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M17 9 19 17 17 25 15 17Z" fill="#9f8142" opacity=".12"/><circle cx="0" cy="0" r="1" fill="#cbb275" opacity=".2"/></pattern>
+    <g id="corner" fill="none" stroke="url(#gold)" stroke-width="2.4" stroke-linecap="round">
+      <path d="M0 90V0h90M13 70V13h57M23 57c-2-22 12-32 34-34-8 24-28 28-31 11 16-4 21 7 16 18-7 16-22 21-32 27"/>
+      <path d="M42 9c9 9 20 5 25 1M9 42c9 9 5 20 1 25M43 43l17 17m-8-17 9 18-18-9"/>
+      <circle cx="20" cy="20" r="3"/>
+    </g>
+  </defs>
+  <rect width="480" height="720" rx="27" fill="url(#navy)"/>
+  <rect x="20" y="20" width="440" height="680" rx="16" fill="url(#seeds)" stroke="url(#gold)" stroke-width="3"/>
+  <rect x="33" y="33" width="414" height="654" rx="8" fill="none" stroke="#ae8e4d" stroke-width="1"/>
+  <use href="#corner" x="45" y="45"/><use href="#corner" transform="translate(435 45) scale(-1 1)"/><use href="#corner" transform="translate(45 675) scale(1 -1)"/><use href="#corner" transform="translate(435 675) scale(-1 -1)"/>
+  <g fill="none" stroke="url(#gold)">
+    <path d="M240 95c-36 31-48 67-25 99m25-99c36 31 48 67 25 99M240 536c-36 30-48 65 0 90 48-25 36-60 0-90Z" stroke-width="2"/>
+    <ellipse cx="240" cy="350" rx="149" ry="174" stroke-width="2"/><ellipse cx="240" cy="350" rx="139" ry="164" stroke-width="1"/>
+    <path d="M117 340c13 87 49 144 123 158 74-14 110-71 123-158M134 372c14 52 42 91 86 108m126-108c-14 52-42 91-86 108" stroke-width="2"/>
+    <path d="M139 395c-10-1-16-8-15-20 13 1 18 7 15 20m13 28c-13 1-20-6-21-17 14-1 21 5 21 17m17 23c-14 4-23-1-27-13 14-4 23 1 27 13m18 19c-12 6-23 3-29-9 14-6 24-2 29 9m154-70c10-1 16-8 15-20-13 1-18 7-15 20m-13 28c13 1 20-6 21-17-14-1-21 5-21 17m-17 23c14 4 23-1 27-13-14-4-23 1-27 13m-18 19c12 6 23 3 29-9-14-6-24-2-29 9" stroke-width="1.5"/>
+  </g>
+  <path d="M262 235c-46-12-86 25-77 72 8 43 62 64 100 37-47 9-78-46-53-81 8-12 18-20 30-28Z" fill="url(#gold)" stroke="#ddc584" stroke-width="1"/>
+  <g fill="#d6bb76"><path d="m292 278 4 10 10 4-10 4-4 10-4-10-10-4 10-4Zm-25-68 3 6 6 3-6 3-3 6-3-6-6-3 6-3Zm-35 122 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><circle cx="310" cy="245" r="2"/><circle cx="172" cy="328" r="2"/></g>
+  <g fill="#142238" stroke="url(#gold)" stroke-width="2" stroke-linejoin="round">
+    <path d="m177 393 48-27 77 25v49l-47 28-78-25Z"/>
+    <path d="m177 393 78 24 47-26m-47 26v51M183 437l70 22 42-24" fill="none"/>
+    <path d="m216 372 77 25-11 7-77-25Z" fill="#b39958" stroke-width="1"/>
+    <path d="m221 407 14 4v30l-7-7-7 3Z" fill="#d8bd73" stroke-width="1"/>
+  </g>
+  <path d="m240 565 3 6 6 3-6 3-3 6-3-6-6-3 6-3Z" fill="#d6bb76"/>
+</svg>
