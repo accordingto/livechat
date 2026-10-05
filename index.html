@@ -771,8 +771,8 @@
       step2Badge: { zh: '步驟 2', en: 'Step 2' },
       step2Title: { zh: '選擇遊戲', en: 'Choose a game' },
       guideOptLabel: { zh: '進入遊戲前先顯示玩法說明', en: 'Show the how-to-play screen before each game' },
-      guideOptDesc: { zh: '預設顯示：每一款遊戲點進去都會先看到一頁玩法說明，讀完按「開始遊戲」才進去——帶新手時好用。取消勾選就直接進入遊戲畫面，老班底通常不需要再看一次。這個選擇會記在這台裝置上。',
-                      en: 'On by default: every game starts with a page explaining how it works, which you dismiss with "Start the game" — useful with newcomers. Untick it to open straight into the game, which is usually what regulars want. The choice is remembered on this device.' },
+      guideOptDesc: { zh: '預設不勾選：直接進入遊戲畫面。勾選後，每一款遊戲點進去都會先看到一頁玩法說明，讀完按「開始遊戲」才進去——帶新手時好用。這個選擇會記在這台裝置上。',
+                      en: 'Off by default: games open straight into play. Tick it and every game starts with a page explaining how it works, which you dismiss with "Start the game" — useful with newcomers. The choice is remembered on this device.' },
       editSetupBtn: { zh: '✏️ 編輯房間設定', en: '✏️ Edit room setup' },
       sheetResetBtn:  { zh: '↺ 恢復預設題庫', en: '↺ Back to built-in prompts' },
       sheetLoadBtn:   { zh: '📄 讀取線上題庫', en: '📄 Load prompts' },
@@ -1109,13 +1109,13 @@
     initSetupWizard();
 
     /* Shared browser-wide with site-lang, and read by guide.js on every game page.
-       Unset means ON — the briefing shows until someone turns it off, so the same
+       Unset means OFF — the briefing shows only once someone ticks it, so the same
        comparison has to be used in both places or the checkbox and the game pages
        would disagree on a device that has never touched this box. */
     (function initGuideOpt() {
       const box = document.getElementById('guide-opt');
       if (!box) return;
-      const read = () => { try { return localStorage.getItem('site-guide') !== '0'; } catch (e) { return true; } };
+      const read = () => { try { return localStorage.getItem('site-guide') === '1'; } catch (e) { return false; } };
       box.checked = read();
       box.onchange = () => {
         try { localStorage.setItem('site-guide', box.checked ? '1' : '0'); } catch (e) { /* private mode: this session only */ }
