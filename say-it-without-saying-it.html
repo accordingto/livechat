@@ -195,6 +195,12 @@
        than one of" is not something the host should have to test by clicking. Only
        the difficulty row gets .is-check. */
     .level-btn.is-check { padding-left: 9px; }
+    /* The read-only player list room.js draws under the away cards repeated what each
+       scoreboard tile already shows (role + card preview), so it is hidden here. */
+    #room-mount #room-links { display: none; }
+    .view-check { align-self: flex-start; text-align: left; }
+    .view-check { font-size: .9rem; padding-top: 9px; padding-bottom: 9px; }
+    .level-btn.view-check .lb-box { width: 22px; height: 22px; font-size: 1rem; border-radius: 5px; margin-right: 10px; vertical-align: -5px; }
     .level-btn .lb-box {
       display: inline-flex; align-items: center; justify-content: center;
       width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px;
@@ -350,6 +356,7 @@
          the upper bound, not a fixed size a small phone would be forced into. */
       min-width: 240px; max-width: min(420px, calc(100vw - 24px));
       max-height: min(80vh, 640px); overflow-y: auto;
+      -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
       background: var(--surface); border: 2px solid var(--border-2); border-radius: 16px;
       padding: 16px;
       box-shadow: 0 14px 34px rgba(0,0,0,.5);
@@ -608,6 +615,17 @@
       font-size: .74rem; font-weight: 700; line-height: 1.3;
       color: var(--text-muted); opacity: .7;
     }
+    .cp-secrets { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+    .cp-target {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: var(--bg); border: 1px solid rgba(99,102,241,.4); border-radius: 8px;
+      padding: 6px 10px; color: var(--text); font-size: .85rem;
+    }
+    .cp-forbidden { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    .cp-pill {
+      background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.4); color: var(--bad-text-soft);
+      border-radius: 8px; padding: 3px 8px; font-size: .72rem; font-weight: 800;
+    }
     .cp-btn-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
     .cp-btn {
       display: inline-block; border-radius: 8px; padding: 5px 10px;
@@ -809,8 +827,9 @@
          placed last so it reads as its own group after the four rules above. -->
     <div class="rules-group" id="rules-group-view">
       <span class="rules-group-label" data-i18n="taboo.viewSettingsLabel">👁️ Host screen</span>
-      <button type="button" class="deck-toggle" id="scores-hidden-toggle"></button>
-      <button type="button" class="deck-toggle" id="card-preview-toggle"></button>
+      <button type="button" class="level-btn is-check view-check" id="scores-hidden-toggle" role="checkbox"></button>
+      <button type="button" class="level-btn is-check view-check" id="card-preview-toggle" role="checkbox"></button>
+      <button type="button" class="level-btn is-check view-check" id="secrets-toggle" role="checkbox"></button>
     </div>
   </div>
 
@@ -856,8 +875,7 @@
       dealFirstPreviewBtn: { zh: '🎬 發第一個題目', en: '🎬 Deal the first word' },
       dealNextPreviewBtn: { zh: '🎬 發下一個題目', en: '🎬 Deal the next word' },
       resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
-      hideScoresBtn: { zh: '🙈 隱藏分數', en: '🙈 Hide scores' },
-      showScoresBtn: { zh: '👁️ 顯示分數', en: '👁️ Show scores' },
+      showScoresChk: { zh: '顯示分數', en: 'Show scores' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
       nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
@@ -904,8 +922,9 @@
       boostNote: { zh: '🔥 ×2 落後加分：分數比全場平均低 {n} 分以上的人，這輪得分加倍', en: '🔥 ×2 catch-up bonus: anyone {n}+ points below the room average scores double' },
       timeUpResult: { zh: '⏰ 時間到 — 這輪不計分。', en: "⏰ Time's up — no points this round." },
       roundOverResult: { zh: '⏭️ 這輪結束 — 不計分。', en: '⏭️ Round over — no points.' },
-      showCardsBtn: { zh: '👁️ 顯示玩家卡片狀態', en: '👁️ Show player card status' },
-      hideCardsBtn: { zh: '🙈 隱藏玩家卡片狀態', en: '🙈 Hide player card status' },
+      showCardsChk: { zh: '顯示玩家卡片狀態', en: 'Show player card status' },
+      showSecretsChk: { zh: '⚠️ 顯示目標字與禁字（暴雷）', en: '⚠️ Show secret words (spoiler)' },
+      noForbiddenPreview: { zh: '（這輪沒有禁字）', en: '(no forbidden words this round)' },
       linksNote: {
         zh: '每一輪會發出一位描述者（題目＋禁字＋✅／❌ 判定鈕）與一位裁判（禁字＋Taboo! 按鈕）。其他人只有搶答鈕 — 他們看不到禁字，這樣清單才不會洩漏答案。2 人局沒有裁判 — 禁字功能關閉。',
         en: "Each round deals a clue giver (word + forbidden words + the ✅ / ❌ buttons) and a referee (forbidden words + the Taboo! button). Everyone else just gets a buzzer — they never see the forbidden words, so the list can't give the answer away. 2-player games skip the referee — forbidden words are off.",
@@ -1052,6 +1071,12 @@
        spoiler peek the moment the secrets came out of it. */
     let cardPreviewOn = true;
 
+    /* Opt-in spoiler view: also prints each card's target word and forbidden list
+       inside the card preview, so the host can read every card's full content (as
+       earlier versions allowed). OFF by default and the button says "spoilers" — the
+       host screen is usually being shared. Persisted like the other host prefs. */
+    let secretsOn = false;
+
     /* Hides just the score number (and the ⚡ catch-up badge, which is a score
        detail) from every scoreboard tile — the role tag and any colour
        highlight stay, since those aren't the number the host wanted gone.
@@ -1092,6 +1117,7 @@
       if (saved && BOARD_MODES.includes(saved.boardMode)) boardMode = saved.boardMode;
       if (saved && typeof saved.scoresHidden === 'boolean') scoresHidden = saved.scoresHidden;
       if (saved && typeof saved.cardPreviewOn === 'boolean') cardPreviewOn = saved.cardPreviewOn;
+      if (saved && typeof saved.secretsOn === 'boolean') secretsOn = saved.secretsOn;
       /* `levels` is the current shape. A session saved before difficulty became a
          multi-select still holds a single `level` string, so read that too: 'all'
          was the whole deck, anything else was that one level. */
@@ -1117,7 +1143,7 @@
     } catch (e) { /* ignore */ }
 
     function saveOptions() {
-      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, boardMode, scoresHidden, cardPreviewOn, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(OPTIONS_KEY, JSON.stringify({ forbiddenOn, levels, bannedCount, boardMode, scoresHidden, cardPreviewOn, secretsOn, used, deckLen: DECK.length })); } catch (e) { /* ignore */ }
     }
 
     /* the indices of every card at a ticked difficulty — the union, so ticking all
@@ -1204,15 +1230,23 @@
       if (!btn || !pop) return;
       const margin = 12;
       const r = btn.getBoundingClientRect();
+      pop.style.maxHeight = '';   // measure the natural size, not last open's cap
       const popRect = pop.getBoundingClientRect(); // already unhidden by the caller, so this is its real size
-      // flip above the button when there isn't room below, rather than running off
-      // the bottom of a short phone screen
-      if (r.bottom + 8 + popRect.height > window.innerHeight - margin) {
-        pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
-        pop.style.top = '';
-      } else {
+      // Open on whichever side of the button has more room, and cap the popover's
+      // height to that room (it scrolls inside). Flipping above without capping let a
+      // tall popover run off the TOP of an iPad screen, so the first group
+      // (Difficulty) could not be reached or scrolled to.
+      const spaceBelow = window.innerHeight - r.bottom - 8 - margin;
+      const spaceAbove = r.top - 8 - margin;
+      const below = popRect.height <= spaceBelow || spaceBelow >= spaceAbove;
+      const room = Math.max(120, below ? spaceBelow : spaceAbove);
+      pop.style.maxHeight = Math.min(room, 640) + 'px';
+      if (below) {
         pop.style.top = (r.bottom + 8) + 'px';
         pop.style.bottom = '';
+      } else {
+        pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+        pop.style.top = '';
       }
       // right-aligned to the button by default (Dare Conquest's behaviour), then
       // clamped so it never runs past either edge — the button here can be
@@ -1425,10 +1459,16 @@
        word or the forbidden list, so there's nothing left in it that a shared screen
        needs to hide. Button itself is static HTML inside #rules-group-view, in
        #settings-popover; this just drives it. */
+    /* checkbox look for the three host-screen options: ticked = the thing is ON.
+       One fixed label per option, so the label never flips between "show"/"hide" */
+    function paintCheck(id, on, label) {
+      const b = document.getElementById(id);
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.innerHTML = `<span class="lb-box">${on ? '✓' : ''}</span>${label}`;
+    }
     function renderPreviewToggle() {
-      document.getElementById('card-preview-toggle').textContent = cardPreviewOn
-        ? tt('hideCardsBtn')
-        : tt('showCardsBtn');
+      paintCheck('card-preview-toggle', cardPreviewOn, tt('showCardsChk'));
     }
     document.getElementById('card-preview-toggle').onclick = () => {
       cardPreviewOn = !cardPreviewOn;
@@ -1438,14 +1478,25 @@
     };
     renderPreviewToggle();
 
+    function renderSecretsToggle() {
+      paintCheck('secrets-toggle', secretsOn, tt('showSecretsChk'));
+    }
+    document.getElementById('secrets-toggle').onclick = () => {
+      secretsOn = !secretsOn;
+      if (secretsOn) cardPreviewOn = true;   // secrets live inside the preview
+      saveOptions();
+      renderPreviewToggle();
+      renderSecretsToggle();
+      renderAll();
+    };
+    renderSecretsToggle();
+
     /* Hides just the number (and the ⚡ catch-up badge) on every scoreboard tile —
        off by default, since the card preview above already shows the host what's
        happening without it. A host preference, persisted like cardPreviewOn (see
        saveOptions()); button itself is static HTML alongside it in #rules-group-view. */
     function renderScoresToggleLabel() {
-      document.getElementById('scores-hidden-toggle').textContent = scoresHidden
-        ? tt('showScoresBtn')
-        : tt('hideScoresBtn');
+      paintCheck('scores-hidden-toggle', !scoresHidden, tt('showScoresChk'));
     }
     document.getElementById('scores-hidden-toggle').onclick = () => {
       scoresHidden = !scoresHidden;
@@ -1608,11 +1659,6 @@
         else if (i === giverIdx) info = { cls: 'is-giver-link', answer: tt('cluegiverRole') };
         else if (i === refIdx) info = { cls: 'is-ref-link', answer: tt('refereeRole') };
         else if (queue[0] === num) info = { marked: true, answer: tt('buzzedInRole') };
-      }
-      if (cardPreviewOn) {
-        info = Object.assign({}, info, {
-          answer: (info.answer ? info.answer + '<br>' : '') + `<div class="cp-preview">${cardPreviewText(i)}</div>`,
-        });
       }
       // room.js's read-only roster shows this player's role only once info.answer is
       // set (see above), but whenever it does, it should show whoever is actually
@@ -2463,7 +2509,21 @@
        (Buzz in!, Taboo!, the ✅/❌ verdicts, dealing the next word) is a real button
        here too — see previewAction() above — not a static mockup, so the host can
        drive a stuck player's turn straight from this screen. */
+    /* spoiler content, only when the host switched secretsOn (see top of file) */
     function cardPreviewText(i) {
+      const p = payloadFor(i);
+      let secrets = '';
+      if (secretsOn) {
+        if (p.isGiver && p.target) secrets += `<div class="cp-target"><span>${p.emoji || ''}</span><b>${p.target}</b></div>`;
+        if (p.forbidden) secrets += `<div class="cp-forbidden">${p.forbidden.map(w => `<span class="cp-pill">${w}</span>`).join('')}</div>`;
+        // "no forbidden words" only when the rule is really off — while the word is
+        // still sealed the list is null too, and saying "none" then is wrong
+        else if ((p.isGiver || p.isRef) && p.state === 'playing' && p.forbiddenOn === false) secrets += `<div class="cp-note">${tt('noForbiddenPreview')}</div>`;
+      }
+      if (secrets) secrets = `<div class="cp-secrets">${secrets}</div>`;
+      return secrets + cardPreviewBody(i);
+    }
+    function cardPreviewBody(i) {
       const p = payloadFor(i);
       // between rounds the card's one control is the deal button — the preview is a
       // miniature of the card, so it has to show that rather than "nothing dealt yet"
@@ -2740,6 +2800,7 @@
     I18N.onChange(() => {
       renderFbWarning();
       renderPreviewToggle();
+      renderSecretsToggle();
       renderScoresToggleLabel();
       renderForbiddenToggle();
       renderAwayBtns();
