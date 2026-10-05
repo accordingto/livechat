@@ -1,4 +1,4 @@
-# Once Upon a Time — V2 artwork / compact table
+# Once Upon a Time — V2 artwork / balanced table
 
 An incremental, English storytelling card game inside IceBreak Hub. The menu
 entry is last, after Kangaroo Court (Beta). No existing game is replaced.
@@ -20,13 +20,20 @@ missions, classes, or additional rounds are used.
    card** (or another available action). There is no enlarged-card/Select step.
    Only the current Storyteller may play or pass.
 
-The compact table shows the **latest four** played cards in order, with their
-original story numbers. Earlier cards are in an optional expandable history;
-there is no table carousel to scroll to the latest play. The private Ending is
-pinned to the right of the player's hand, with its complete sentence visible.
-Only a long hand scrolls horizontally. Select the Ending itself when it becomes
-playable, then use **Play Ending** and the existing confirmation. The host's
-shared table never shows a private hand or unrevealed Ending.
+The table shows the **latest four** played cards in order, with their original
+story numbers. Earlier cards form a small decorative pile on the left; tap it
+to expand or close the older-only history below. This is a local view change,
+not a draw/discard or a change to canonical story history. There is no table
+carousel to scroll to the latest play. Mobile uses two rows of recent cards
+instead of tiny text. On the narrowest screens the pile moves to the upper left.
+
+The private Ending is the last card at the right end of the hand carousel,
+not a tall table sidebar. **Your Ending →** brings it into view without selecting
+or playing it. Desktop Story/hand cards retain the original 138×214 size;
+no viewport-height compression forces the whole game into one screen. Select
+the Ending itself when it becomes playable, then use **Play Ending** and the
+existing confirmation. The host's shared table never shows a private hand or
+unrevealed Ending.
 
 The host page is a shared table, not a private hand. A participating host uses
 their own original player-card link to play. Keep the host page open; on normal
@@ -212,8 +219,8 @@ menu visually shows Once Upon a Time last. A real Firebase browser host opened
 a two-player lobby, resumed it after refresh, and cancelled it without declaring
 a winner; this is separate from the synthetic demo.
 
-- **Local automated checks:** all 414 tests passed together in the latest
-  sequential run: 92 focused game tests (44 engine, 17 sync, 25 UI, 6 deck/art)
+- **Local automated checks:** all 417 tests passed together in the latest
+  sequential run: 95 focused game tests (44 engine, 17 sync, 28 UI, 6 deck/art)
   and 322 existing tests. The artwork checks require 165 unique main-image hashes,
   all 330 correctly sized WebPs, and complete semantic/prompt provenance.
   Covers 2/4/6-player setup, repeated plays, both interruption modes, concurrent
@@ -239,9 +246,9 @@ a winner; this is separate from the synthetic demo.
   and sequential plays still work; a real two-player browser host dealt directly
   while both players were Not ready, then cancelled the isolated test game.
 
-- **Compact UI update:** direct card selection highlights the card without a
+- **Direct-selection update:** direct card selection highlights the card without a
   preview or Select step. Added regressions for latest-four history/older-only
-  archive/global numbering, private pinned Ending, locked vs available Ending
+  archive/global numbering, private Ending placement, locked vs available Ending
   selection, stale selection/session reset and disabled/pending card taps.
 - **Actual player browser check:** in the isolated existing two-player test
   room, the host restarted/dealt with both players Not ready, selected a first
@@ -251,12 +258,27 @@ a winner; this is separate from the synthetic demo.
   Refresh retained the same player, hand, Ending and public history. Latest four
   showed cards 2–5, while expanding earlier history showed only card 1. The test
   game was cancelled afterward without declaring a winner.
-- **Compact layout browser check:** actual player page at 1280×720, 320×667,
+- **Previous compact layout browser check (superseded):** actual player page at 1280×720, 320×667,
   375×812 and 390×844 kept the main table, private hand/Ending and Play/Pass
   controls within the first screen with history collapsed. Latest-four history
   had no horizontal overflow, and the full Ending sentence was not clipped.
   Rules/log/earlier history can deliberately expand the page; a long hand still
   scrolls sideways. This is viewport testing, not physical-phone verification.
+- **Balanced layout restoration (current):** restored original card sizes,
+  readable headings/buttons and panel spacing, removed all short-viewport
+  compression and the table's forced minimum/sidebar height. Earlier public
+  cards use a decorative left pile, with a local-only expand/collapse action;
+  the newest four remain in order. The Ending is last in the private hand row,
+  with a local shortcut, full sentence and immediate visibility when empty.
+  Chrome synthetic-demo browser checks passed for consecutive direct plays,
+  old-only expansion, the Ending shortcut without selection/submission, mobile
+  two-row history, empty hand and the unchanged Ending confirmation. Desktop
+  cards measure 138×214; 320×667 and 375×812 viewports do not overflow horizontally
+  or clip the full Ending sentence. Scrolling is allowed; fitting one screen
+  is no longer asserted. A read-only check of the existing cancelled test
+  player's original private link also passed in the real play.html shell on
+  desktop and at 375px; no room data was changed for that check. This is not a
+  physical-device or spoken group test.
 
 Not claimed: physical-phone play, two different browser engines, a live spoken
 group playtest, or full balance testing. Same-browser tabs and resized viewports

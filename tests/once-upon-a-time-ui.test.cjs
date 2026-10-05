@@ -123,23 +123,26 @@ test('each player sees their own exact hand/ending while public host sees only p
   }
 });
 
-test('private Ending is pinned after the hand in the same dock, never in the public host table', () => {
+test('private Ending is the final hand-carousel card with a local shortcut, never in the public host table', () => {
   for (const count of [2, 4, 6]) {
     const s = started(count);
     for (const p of s.roster) {
       const html = htmlFor(s, p.playerNum), ending = D.endingById[s.endings[p.playerNum]];
       const handPanel = elementHTML(html, 'once-hand-panel');
-      const layout = elementHTML(handPanel, 'once-hand-layout');
-      const dock = elementHTML(layout, 'once-ending-dock');
-      assert.ok(handPanel && layout && dock, 'Ending belongs to the private hand panel');
-      assert.ok(layout.indexOf('once-hand"') < layout.indexOf('once-ending-dock'), 'Ending is after the Story hand');
+      const hand = elementHTML(handPanel, 'once-hand');
+      const dock = elementHTML(hand, 'once-ending-dock');
+      assert.ok(handPanel && hand && dock, 'Ending belongs to the same private hand carousel');
+      assert.equal(elementHTML(handPanel, 'once-hand-layout'), '', 'there is no separate pinned Ending sidebar');
+      assert.ok(hand.indexOf('once-card--mini') < hand.indexOf('once-ending-dock'), 'Ending follows the Story Cards');
+      assert.doesNotMatch(hand.slice(hand.indexOf(dock) + dock.length), /data-once-card=|once-card--mini/, 'Ending is the final card');
       assert.ok(dock.includes('data-once-card="' + ending.id + '"'));
       assert.ok(dock.includes(UI.esc(ending.text)), 'the full private Ending remains readable in the dock');
+      assert.ok(action(handPanel, 'showEnding'), 'players can jump directly to their own Ending');
       assert.doesNotMatch(html, /once-ending-panel/);
       noActions(html, ['ending']);
     }
     for (const html of [htmlFor(s), UI.tableHTML(E.view(s, 1), { host: true })]) {
-      assert.doesNotMatch(html, /once-ending-dock|once-hand-panel|data-once-card=/);
+      assert.doesNotMatch(html, /once-ending-dock|once-hand-panel|data-once-card=|data-once-action="showEnding"/);
       for (const p of s.roster) assert.ok(!html.includes(D.endingById[s.endings[p.playerNum]].text));
     }
   }
@@ -196,24 +199,29 @@ test('a normal takeover offers dispute only to others and retains chronological 
   assert.equal(action(htmlFor(s, 1), 'dispute'), undefined);
 });
 
-test('the table shows only the newest four cards immediately, with earlier numbered history collapsed', () => {
+test('the table shows the newest four with an earlier-card pile on the left and older-only numbered expansion', () => {
   let s = started(2);
   const played = s.hands[1].slice(0, 7);
   for (const id of played) s = act(s, 'play', 1, { cardId: id });
   for (const seat of [0, 1, 2]) {
-    const html = htmlFor(s, seat), latest = elementHTML(html, 'once-history-latest');
-    const archive = elementHTML(html, 'once-history-archive');
-    assert.ok(latest && archive);
+    const html = htmlFor(s, seat), board = elementHTML(html, 'once-history-board');
+    const latest = elementHTML(board, 'once-history-latest'), pile = elementHTML(board, 'once-history-pile');
+    const expandedHTML = htmlFor(s, seat, { historyOpen: true }), expanded = elementHTML(expandedHTML, 'once-history-expanded');
+    assert.ok(board && latest && pile && expanded);
+    assert.ok(board.indexOf(pile) < board.indexOf(latest), 'the old-card pile is before the recent cards');
+    assert.match(pile, /^<button\b[^>]*data-once-action="toggleHistory"/);
+    assert.match(pile, /aria-expanded="false"/);
+    assert.match(elementHTML(expandedHTML, 'once-history-pile'), /aria-expanded="true"/);
+    assert.equal(elementHTML(html, 'once-history-expanded'), '', 'old cards are hidden initially');
     assert.doesNotMatch(latest, /once-carousel/);
     assert.equal((latest.match(/class="once-history-item"/g) || []).length, 4);
-    assert.equal((archive.match(/class="once-history-item"/g) || []).length, 3);
-    assert.match(archive, /^<details\b/);
-    assert.doesNotMatch(archive.slice(0, archive.indexOf('>') + 1), /\sopen(?:\s|=|>)/, 'old history starts collapsed');
+    assert.equal((expanded.match(/class="once-history-item"/g) || []).length, 3);
+    assert.doesNotMatch(html, /once-history-archive/);
     for (const [i, id] of played.entries()) {
       const title = '>' + UI.esc(D.storyById[id].title) + '</span>';
-      const active = i < 3 ? archive : latest, other = i < 3 ? latest : archive;
+      const active = i < 3 ? expanded : latest, other = i < 3 ? latest : expanded;
       assert.ok(active.includes(title), 'card ' + (i + 1) + ' is in its correct history region');
-      assert.ok(!other.includes(title), 'recent cards are not duplicated in the archive');
+      assert.ok(!other.includes(title), 'recent cards are not duplicated in the expanded older history');
       assert.ok(active.includes('>' + (i + 1) + ' · Seat 1</span>'), 'original chronological numbering is retained');
     }
     for (let i = 4; i < played.length; i++) {
@@ -228,7 +236,10 @@ test('zero through four public plays need no hidden history and the newest play 
     const html = htmlFor(s), latest = elementHTML(html, 'once-history-latest');
     assert.ok(latest);
     assert.equal((latest.match(/class="once-history-item"/g) || []).length, total);
-    assert.equal(elementHTML(html, 'once-history-archive'), '');
+    assert.equal(elementHTML(html, 'once-history-pile'), '');
+    assert.equal(elementHTML(html, 'once-history-expanded'), '');
+    assert.equal(action(html, 'toggleHistory'), undefined);
+    assert.equal(elementHTML(htmlFor(s, 0, { historyOpen: true }), 'once-history-expanded'), '', 'opening history cannot create nonexistent older cards');
     if (total) assert.ok(latest.includes(UI.esc(D.storyById[s.history.at(-1).cardId].title)));
     if (total < 4) s = act(s, 'play', 1, { cardId: s.hands[1][0] });
   }
@@ -399,6 +410,8 @@ class ElementDouble {
     this.status = { textContent: '', classList: { toggle() {} } };
     this.request = { innerHTML: '', textContent: '' };
     this.returnLatest = { checked: false };
+    this.endingScrolls = [];
+    this.endingDock = { scrollIntoView: options => this.endingScrolls.push(copy(options)) };
   }
   addEventListener(type, fn) { this.listeners.set(type, fn); }
   removeEventListener(type, fn) { if (this.listeners.get(type) === fn) this.listeners.delete(type); }
@@ -406,6 +419,7 @@ class ElementDouble {
   querySelector(selector) {
     return selector === '.once-connection' ? this.status : selector === '.once-request-status' ? this.request :
       selector === '[data-once-return-latest]' ? this.returnLatest : selector === '[data-once-first-player]' ? { value: '2' } :
+      selector === '.once-ending-dock' && this.innerHTML.includes('once-ending-dock') ? this.endingDock :
       selector === '.once-modal' ? { querySelector: () => ({ focus() {} }) } : null;
   }
   insertAdjacentHTML(_, html) { this.innerHTML += html; }
@@ -427,6 +441,94 @@ function harness(data, options = {}) {
   card.update(data);
   return { card, element, sent, timers, clock: value => { now = value; } };
 }
+
+test('old-card pile toggles locally, survives ordinary updates and resets on a new session or no older cards', () => {
+  let s = started(2);
+  for (const id of s.hands[1].slice(0, 7)) s = act(s, 'play', 1, { cardId: id });
+  for (const seat of [0, 1, 2]) {
+    const data = E.view(s, seat), h = harness(data, { host: seat === 0 }), original = copy(data);
+    try {
+      assert.equal(h.card.historyOpen, false);
+      assert.equal(elementHTML(h.element.innerHTML, 'once-history-expanded'), '');
+      assert.match(elementHTML(h.element.innerHTML, 'once-history-pile'), /aria-expanded="false"/);
+      click(h.card, 'toggleHistory');
+      assert.equal(h.card.historyOpen, true);
+      assert.match(elementHTML(h.element.innerHTML, 'once-history-pile'), /aria-expanded="true"/);
+      assert.equal((elementHTML(h.element.innerHTML, 'once-history-expanded').match(/class="once-history-item"/g) || []).length, 3);
+      assert.equal(h.sent.length, 0, 'opening history never creates a game command');
+      assert.deepEqual(data, original, 'opening history does not mutate the authoritative projection');
+      h.card.update(copy(data));
+      assert.equal(h.card.historyOpen, true, 'sync refresh retains this viewer’s local expansion');
+      click(h.card, 'toggleHistory');
+      assert.equal(h.card.historyOpen, false);
+      assert.equal(elementHTML(h.element.innerHTML, 'once-history-expanded'), '');
+      click(h.card, 'toggleHistory');
+      const shortened = copy(data); shortened.once.history = shortened.once.history.slice(0, 4);
+      h.card.update(shortened);
+      assert.equal(h.card.historyOpen, false, 'a removed latest card can empty the older-card pile');
+      assert.equal(action(h.element.innerHTML, 'toggleHistory'), undefined);
+      h.card.update(copy(data));
+      assert.equal(h.card.historyOpen, false, 'older cards returning do not unexpectedly expand the table');
+      click(h.card, 'toggleHistory');
+      assert.equal(h.card.historyOpen, true);
+      h.card.update(E.view(started(2), seat));
+      assert.equal(h.card.historyOpen, false, 'replay cannot inherit an old game’s open history');
+      assert.equal(h.sent.length, 0);
+    } finally { h.card.destroy(); }
+  }
+});
+
+test('history windows recompute from current canonical plays when the latest card is returned', () => {
+  let s = started(2);
+  const played = s.hands[1].slice(0, 7);
+  for (const id of played) s = act(s, 'play', 1, { cardId: id });
+  const data = E.view(s, 0); data.once.history.pop();
+  const html = UI.tableHTML(data, { host: true, historyOpen: true });
+  const recent = elementHTML(html, 'once-history-latest'), older = elementHTML(html, 'once-history-expanded');
+  assert.equal((recent.match(/class="once-history-item"/g) || []).length, 4);
+  assert.equal((older.match(/class="once-history-item"/g) || []).length, 2);
+  assert.ok(!html.includes('>' + UI.esc(D.storyById[played[6]].title) + '</span>'), 'a returned play cannot remain on the table');
+  for (let i = 0; i < 6; i++) {
+    const region = i < 2 ? older : recent;
+    assert.ok(region.includes('>' + UI.esc(D.storyById[played[i]].title) + '</span>'));
+    assert.ok(region.includes('>' + (i + 1) + ' · Seat 1</span>'));
+  }
+});
+
+test('the Ending shortcut scrolls to the private final hand card without selecting, submitting or opening a modal', () => {
+  const s = started(), data = E.view(s, 1), h = harness(data), original = copy(data);
+  try {
+    assert.ok(action(h.element.innerHTML, 'showEnding'));
+    h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
+    const selected = h.card.selectedId;
+    click(h.card, 'showEnding');
+    assert.equal(h.element.endingScrolls.length, 1);
+    assert.equal(h.element.endingScrolls[0].block, 'nearest');
+    assert.equal(h.element.endingScrolls[0].inline, 'end');
+    assert.equal(h.card.selectedId, selected, 'looking at the Ending does not change the player’s current card choice');
+    assert.equal(h.card.confirm, null);
+    assert.equal(h.card.preview, null);
+    assert.equal(h.sent.length, 0);
+    assert.deepEqual(data, original);
+    assert.doesNotMatch(h.element.innerHTML, /once-modal|data-once-action="select"/);
+    h.card.click({ target: target({ onceCard: s.endings[1] }) });
+    click(h.card, 'showEnding');
+    assert.equal(h.card.selectedId, s.endings[1]);
+    assert.equal(h.element.endingScrolls.length, 2);
+    const withoutEnding = copy(data); withoutEnding.once.ending = null;
+    h.card.update(withoutEnding);
+    assert.equal(action(h.element.innerHTML, 'showEnding'), undefined, 'no jump button remains when an Ending is unavailable');
+  } finally { h.card.destroy(); }
+  for (const host of [harness(E.view(s, 0), { host: true }), harness(E.view(s, 1), { host: true })]) {
+    try {
+      assert.equal(action(host.element.innerHTML, 'showEnding'), undefined);
+      assert.equal(host.element.innerHTML.includes('once-ending-dock'), false);
+      click(host.card, 'showEnding');
+      assert.equal(host.element.endingScrolls.length, 0, 'host presentations have no private Ending to navigate to');
+      assert.equal(host.sent.length, 0);
+    } finally { host.card.destroy(); }
+  }
+});
 
 test('a Story card tap selects and highlights immediately; Play submits it without a preview/select step', () => {
   for (const count of [2, 4, 6]) {

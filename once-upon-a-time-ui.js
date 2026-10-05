@@ -4,7 +4,7 @@
   'use strict';
   const dict={
     host:['共同畫面','Shared table'], story:['故事走到這裡','Story so far'], hand:['你的手牌','Your hand'],
-    ending:['你的結局','Your ending'], private:['只在你的私人連結顯示','Only on your private card'],
+    ending:['你的結局','Your ending'], showEnding:['看結局 →','Your Ending →'], private:['只在你的私人連結顯示','Only on your private card'],
     storyteller:['說故事的人：{name}','Storyteller: {name}'], yourTurn:['輪到你接著說故事。','Your turn to continue the story.'],
     theirTurn:['仔細聽故事；適合時可以用手牌打斷。','Listen for your cards. Interrupt when their elements are mentioned.'],
     sharedTurn:['大家一起延續同一個故事。','Keep one continuous story going.'],
@@ -82,7 +82,7 @@
     const ending=!card.category,cat=ending?'ending':card.category,label=ending?'ENDING':category(cat).label;
     const tag=opts.interactive?'button':'article';
     const large=variant==='full',src=large?card.imagePath:card.thumbnailPath||card.imagePath;
-    const sizes=large?'300px':variant==='ending'?'(max-width: 760px) 118px, 168px':variant==='history'?'(max-width: 760px) 80px, 168px':'(max-width: 760px) 96px, 122px';
+    const sizes=large?'300px':variant==='ending'?'(max-width: 760px) 168px, 180px':variant==='history'?'(max-width: 760px) 112px, 138px':'138px';
     const responsive=card.thumbnailPath?' srcset="'+esc(card.thumbnailPath)+' 384w, '+esc(card.imagePath)+' 768w" sizes="'+sizes+'"':'';
     const imageAttrs=' src="'+esc(src)+'"'+responsive+' alt="" loading="'+(large?'eager':'lazy')+'" decoding="async"';
     return '<'+tag+(opts.interactive?' type="button" data-once-card="'+esc(card.id)+'" aria-label="'+esc(card.title||card.text)+'" aria-pressed="'+!!opts.selected+'"':'')+' class="once-card once-card--'+variant+' once-cat-'+esc(cat)+(opts.selected?' is-selected':'')+'"><span class="once-card-category">'+(ending?'<span aria-hidden="true">✦</span>':icon(cat))+esc(label)+'</span><span class="once-card-art"><img class="once-card-art-fill"'+imageAttrs+' aria-hidden="true"><img'+imageAttrs+'></span><span class="once-card-title">'+esc(card.title||card.text)+'</span>'+(card.isInterrupt?'<span class="once-interrupt-mark">'+esc(t('interruptTag'))+'</span>':'')+'</'+tag+'>';
@@ -115,18 +115,19 @@
     if(s.categoryOpportunity&&s.phase==='STORYTELLING')body+='<p class="once-muted once-opportunity">'+esc(t('matchOpen',{category:category(s.categoryOpportunity.category).label}))+'</p>';
     const history=list(s.history),offset=Math.max(0,history.length-4);
     const historyItem=(event,i)=>'<div class="once-history-item"><span class="once-history-number">'+(i+1)+' · '+esc(name(s,event.playerNum??event.actor))+'</span>'+cardHTML(event.card||deck().storyById?.[event.cardId],'history')+(event.mode==='category'?'<small>'+esc(t('categoryInterrupt'))+'</small>':'')+'</div>';
-    body+='<div class="once-table-grid"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('recent',{n:Math.min(4,history.length),total:history.length}))+'</span></div><div class="once-history once-history-latest" aria-label="'+esc(t('story'))+'">'+(history.length?history.slice(offset).map((event,i)=>historyItem(event,offset+i)).join(''):'<p class="once-empty">'+esc(t('noStory'))+'</p>')+'</div>'+(offset?'<details class="once-history-archive" data-once-detail="history"><summary>'+esc(t('earlier',{n:offset}))+'</summary><div class="once-history">'+history.slice(0,offset).map(historyItem).join('')+'</div></details>':'')+'<span class="once-deck-count once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></section></div>';
+    const pile=offset?'<button type="button" class="once-history-pile" data-once-action="toggleHistory" aria-expanded="'+!!options.historyOpen+'"'+(options.historyOpen?' aria-controls="once-earlier-history"':'')+' aria-label="'+esc(t('earlier',{n:offset}))+'"><span class="once-pile-visual" aria-hidden="true"><img src="'+esc(deck().cardBacks?.story||'assets/once-upon-a-time/card-backs/story-back.svg')+'" alt=""><span class="once-pile-count">'+offset+'</span></span><span class="once-pile-label">'+esc(t('earlier',{n:offset}))+'</span></button>':'';
+    body+='<div class="once-table-grid"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('recent',{n:Math.min(4,history.length),total:history.length}))+'</span></div><div class="once-history-board'+(offset?' has-pile':'')+'">'+pile+'<div class="once-history once-history-latest" aria-label="'+esc(t('story'))+'">'+(history.length?history.slice(offset).map((event,i)=>historyItem(event,offset+i)).join(''):'<p class="once-empty">'+esc(t('noStory'))+'</p>')+'</div></div>'+(offset&&options.historyOpen?'<div class="once-history-expanded" id="once-earlier-history"><div class="once-history once-history-older">'+history.slice(0,offset).map(historyItem).join('')+'</div></div>':'')+'<span class="once-deck-count once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></section></div>';
     if(!host&&s.phase!=='LOBBY'){
       const selected=hand.find(c=>c.id===options.selectedId);
       const selectedEnding=!!s.ending&&s.ending.id===options.selectedId;
       const categoryOK=selected?.isInterrupt&&s.categoryOpportunity?.category===selected.category;
       const endingAction=selectedEnding||a.ending;
-      body+='<section class="once-panel once-hand-panel"><div class="once-section-heading"><h2>'+esc(t('hand'))+'</h2><span class="once-muted">'+hand.length+'</span></div><div class="once-hand-layout"'+(s.ending?' data-has-ending':'')+'><div class="once-carousel once-hand" aria-label="'+esc(t('hand'))+'">'+(hand.length?hand.map(card=>cardHTML(card,'mini',{interactive:true,selected:card.id===options.selectedId})).join(''):'<p class="once-empty">'+esc(t(['CHOOSING_FIRST','LOBBY'].includes(s.phase)?'waitingDeal':'noHand'))+'</p>')+'</div>'+(s.ending?'<aside class="once-ending-dock"><span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span>'+cardHTML(s.ending,'ending',{interactive:true,selected:selectedEnding})+'</aside>':'')+'</div><div class="once-actions once-hand-actions">'+
+      body+='<section class="once-panel once-hand-panel"><div class="once-section-heading"><h2>'+esc(t('hand'))+'</h2><div class="once-hand-meta"><span class="once-muted">'+hand.length+'</span>'+(s.ending?'<button type="button" class="once-ending-jump" data-once-action="showEnding">'+esc(t('showEnding'))+'</button>':'')+'</div></div><div class="once-carousel once-hand" aria-label="'+esc(t('hand'))+'">'+(hand.length?hand.map(card=>cardHTML(card,'mini',{interactive:true,selected:card.id===options.selectedId})).join(''):'<p class="once-empty">'+esc(t(['CHOOSING_FIRST','LOBBY'].includes(s.phase)?'waitingDeal':'noHand'))+'</p>')+(s.ending?'<aside class="once-ending-dock"><span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span>'+cardHTML(s.ending,'ending',{interactive:true,selected:selectedEnding})+'</aside>':'')+'</div><div class="once-actions once-hand-actions">'+
         (a.play||a.ending?button(endingAction?'ending':'play',endingAction?'playEnding':'play','',false,endingAction?!a.ending||!selectedEnding:!selected):'')+(a.interrupt?button('interrupt','interrupt','data-mode="normal"',false,!selected):'')+(a.categoryInterrupt&&categoryOK?button('interrupt','categoryInterrupt','data-mode="category"',true):'')+
         (a.discard?button('discard','discard','',false,!selected):'')+(a.keepAll?button('keepAll','keep','',true):'')+(a.pass?button('pass','pass','',true):'')+(a.challenge?button('challenge','challenge','',true):'')+(a.continueStory&&(s.interrupt||s.categoryOpportunity)?button('continueStory','continue','',true):'')+'</div></section>';
     }
     if(host&&a.cancel)body+='<div class="once-host-tools">'+button('cancel','cancelGame','',true)+'</div>';
-    return '<div class="once-game once-game--compact"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML()+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
+    return '<div class="once-game once-game--balanced"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML()+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
   }
   function errorText(code){
     if(/offline|network/.test(code))return t('offline');
@@ -138,14 +139,15 @@
   }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.data=null;
+      this.el=el;this.options=options;this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.data=null;this.historyOpen=false;
       this.clickHandler=e=>this.click(e);this.keyHandler=e=>{if(e.key==='Escape'&&(this.preview||this.confirm)){this.preview=null;this.confirm=null;this.render();}};
       el.addEventListener('click',this.clickHandler);el.addEventListener('keydown',this.keyHandler);
       this.timer=setInterval(()=>this.paint(),1000);
     }
     update(data){
       const old=this.data?.once,next=data.once;
-      if(old?.sessionId!==next.sessionId){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';}
+      if(old?.sessionId!==next.sessionId){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.historyOpen=false;}
+      if(list(next.history).length<=4)this.historyOpen=false;
       if(this.confirm&&old?.turnId!==next.turnId){this.confirm=null;this.error=t('changed');}
       this.data=data;
       if(this.selectedId&&!list(next.hand).some(c=>c.id===this.selectedId)&&next.ending?.id!==this.selectedId)this.selectedId=null;
@@ -159,7 +161,7 @@
       const openDetails=Array.from(this.el.querySelectorAll('[data-once-detail][open]')).map(x=>x.dataset.onceDetail);
       const firstPlayer=this.el.querySelector('[data-once-first-player]')?.value;
       if(this.confirm)this.confirm.returnLatest=this.el.querySelector('[data-once-return-latest]')?.checked??this.confirm.returnLatest;
-      this.el.innerHTML=tableHTML(this.data,{host:this.options.host,selectedId:this.selectedId});
+      this.el.innerHTML=tableHTML(this.data,{host:this.options.host,selectedId:this.selectedId,historyOpen:this.historyOpen});
       this.el.querySelectorAll('.once-carousel').forEach((x,i)=>{x.scrollLeft=scrolls[i]||0;});
       this.el.querySelectorAll('[data-once-detail]').forEach(x=>{x.open=openDetails.includes(x.dataset.onceDetail);});
       const firstSelect=this.el.querySelector('[data-once-first-player]');if(firstSelect&&firstPlayer)firstSelect.value=firstPlayer;
@@ -199,6 +201,8 @@
       if(b.classList.contains('once-modal-backdrop')&&event.target!==b)return;
       if(type==='closePreview'){this.preview=null;this.render();return;}
       if(type==='closeConfirm'){this.confirm=null;this.render();return;}
+      if(type==='toggleHistory'){if(list(s.history).length>4)this.historyOpen=!this.historyOpen;this.render();this.el.querySelector('[data-once-action="toggleHistory"]')?.focus?.({preventScroll:true});return;}
+      if(type==='showEnding'){this.el.querySelector('.once-ending-dock')?.scrollIntoView?.({behavior:root.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'nearest',inline:'end'});return;}
       if(type==='retry'){this.retry();return;}
       if(type==='confirm'){
         const c=this.confirm;if(!c)return;const extra={...c.extra};if(c.type==='challenge')extra.returnLatest=!!this.el.querySelector('[data-once-return-latest]')?.checked;

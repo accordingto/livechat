@@ -132,108 +132,66 @@ button.once-card { cursor:pointer; }
 }
 @media(prefers-reduced-motion:reduce){.once-card{scroll-behavior:auto;}}
 
-/* Compact shared table + private hand. Only the hand scrolls horizontally;
-   recent public cards and the private Ending stay in view without a tall sidebar. */
-.once-page { padding:12px 14px 20px; }
-.once-page .topbar { margin-bottom:10px; gap:10px; font-size:.78rem; }
+/* Restore the original comfortable card sizes and spacing. The table no
+   longer shares its height with a large Ending sidebar. No viewport-height
+   compression: small screens wrap public cards instead of making them tiny. */
 .once-page #once-host-status:empty { display:none; }
-.once-card-page { padding:8px 10px 18px !important; }
 .once-card-page #content { display:block; padding:0; }
-.once-card-page #i18n-toggle { margin-bottom:6px; }
-.once-game--compact { width:100%; }
-.once-game--compact .once-game-header { margin-bottom:9px; gap:12px; }
-.once-game--compact .once-game-header h1 { font-size:clamp(1.15rem,2.3vw,1.75rem); margin:0; }
-.once-game--compact .once-game-header .once-kicker { font-size:.62rem; margin-bottom:2px; }
-.once-game--compact .once-player-meta { font-size:.82rem; gap:2px; }
-.once-game--compact .once-panel { padding:10px 12px; margin-bottom:10px; border-radius:12px; }
-.once-game--compact .once-section-heading { margin-bottom:6px; gap:8px; }
-.once-game--compact h2 { font-size:.94rem; }
-.once-game--compact .once-section-heading .once-muted { font-size:.72rem; }
-.once-game--compact .once-storyteller { padding:7px 12px; border-radius:10px; display:flex; align-items:center; }
-.once-game--compact .once-storyteller > div { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-.once-game--compact .once-storyteller .once-kicker { margin:0; font-size:.69rem; }
-.once-game--compact .once-storyteller h2 { margin:0; font-size:.83rem; }
-.once-game--compact .once-roster { gap:6px; margin:7px 0; }
-.once-game--compact .once-seat { padding:4px 8px; gap:5px; font-size:.7rem; }
-.once-game--compact .once-notice { margin-bottom:8px; padding:7px 10px; font-size:.78rem; }
-.once-game--compact .once-opportunity { margin:0 0 6px; font-size:.72rem; }
-.once-game--compact .once-table-grid { display:block; }
-.once-game--compact .once-history-panel { height:auto; min-height:0; }
-.once-history { display:grid; grid-template-columns:repeat(4,minmax(0,168px)); gap:10px; overflow:visible; }
-.once-game--compact .once-history-item { width:100%; min-width:0; gap:3px; }
-.once-game--compact .once-history-number { font-size:.65rem; }
-.once-game--compact .once-history-item > small { font-size:.6rem; }
-.once-game--compact .once-card--history { width:100%; height:172px; }
-.once-history .once-empty { grid-column:1/-1; padding:13px 4px; margin:0; font-size:.8rem; }
-.once-history-archive { margin-top:7px; border-top:1px solid #344155; padding-top:7px; }
-.once-history-archive summary { color:#bcd6e3; font-size:.73rem; cursor:pointer; }
-.once-history-archive[open] .once-history { margin-top:8px; }
-.once-deck-count { display:block; font-size:.65rem; margin-top:4px; text-align:right; }
-.once-hand-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:end; }
-.once-hand-layout[data-has-ending] { grid-template-columns:minmax(0,1fr) 168px; }
-.once-game--compact .once-carousel { padding:5px 4px 10px; gap:10px; }
-.once-game--compact .once-card--mini { width:122px; height:178px; }
-.once-ending-dock { min-width:0; border-left:1px solid #4e4a3c; padding-left:10px; }
-.once-ending-dock .once-ending-state { display:block; font-size:.65rem; line-height:1.3; margin-bottom:5px; }
-.once-ending-dock .once-card--ending { display:flex; width:100%; height:190px; min-height:0; }
-.once-ending-dock .once-card-category { min-height:23px; padding:4px 2px; font-size:.62rem; }
+.once-game--balanced { width:100%; }
+.once-game--balanced .once-table-grid { display:block; }
+.once-game--balanced .once-history-panel { height:auto; min-height:0; }
+.once-history-board.has-pile { display:grid; grid-template-columns:96px minmax(0,1fr); gap:18px; align-items:center; }
+.once-history { display:grid; grid-template-columns:repeat(4,minmax(0,138px)); gap:14px; min-width:0; }
+.once-history-item { width:100%; min-width:0; }
+.once-card--history { width:100%; height:214px; }
+.once-history .once-empty { grid-column:1/-1; margin:0; padding:16px 8px; }
+.once-history-expanded { margin-top:20px; padding-top:20px; border-top:1px solid #344155; }
+.once-history-older { grid-template-columns:repeat(auto-fill,minmax(112px,138px)); }
+.once-deck-count { display:block; margin-top:14px; font-size:.75rem; text-align:right; }
+.once-history-pile { appearance:none; display:flex; flex-direction:column; align-items:center; gap:14px; padding:12px 2px; border:0; border-radius:10px; background:transparent; color:#dcc89e; font:inherit; cursor:pointer; min-width:0; }
+.once-history-pile:focus-visible { outline:3px solid #a6f3eb; outline-offset:3px; }
+.once-pile-visual { position:relative; display:block; width:72px; height:112px; isolation:isolate; }
+.once-pile-visual::before,.once-pile-visual::after { content:''; position:absolute; inset:0; border:1px solid #c5a04f; border-radius:6px; background:#0c2142 url('assets/once-upon-a-time/card-backs/story-back.svg') center/100% 100%; box-shadow:0 5px 10px #0008; transition:transform .18s ease; }
+.once-pile-visual::before { transform:rotate(-10deg) translate(-4px,1px); z-index:-2; }
+.once-pile-visual::after { transform:rotate(-4deg) translate(-1px,1px); z-index:-1; }
+.once-pile-visual > img { display:block; width:100%; height:100%; border-radius:6px; box-shadow:0 5px 10px #0008; transform:rotate(3deg); transition:transform .18s ease; }
+.once-history-pile:hover .once-pile-visual::before,.once-history-pile[aria-expanded="true"] .once-pile-visual::before { transform:rotate(-14deg) translate(-6px,0); }
+.once-history-pile:hover .once-pile-visual > img,.once-history-pile[aria-expanded="true"] .once-pile-visual > img { transform:rotate(7deg); }
+.once-pile-count { position:absolute; left:50%; bottom:10px; transform:translateX(-50%); display:grid; place-items:center; min-width:27px; height:27px; padding:0 5px; border:1px solid #e4c16b; border-radius:50%; background:#152841; color:#fff0c5; font:750 .8rem/1 'Segoe UI',sans-serif; box-shadow:0 2px 5px #0008; }
+.once-pile-label { font-size:.78rem; line-height:1.4; text-align:center; }
+.once-hand { align-items:flex-end; }
+.once-hand > .once-empty { flex:1 1 0; min-width:0; width:auto; padding:16px 8px; }
+.once-hand-meta { display:flex; align-items:center; gap:14px; }
+.once-ending-jump { appearance:none; min-height:44px; padding:8px 2px; border:0; background:transparent; color:#ecd19a; font:600 .85rem/1.3 'Segoe UI',sans-serif; cursor:pointer; }
+.once-ending-jump:hover { color:#fff0bf; text-decoration:underline; }
+.once-ending-jump:focus-visible { outline:3px solid #a6f3eb; outline-offset:3px; border-radius:4px; }
+.once-ending-dock { display:flex; flex-direction:column; width:180px; min-width:0; padding-left:14px; border-left:1px solid #4e4a3c; }
+.once-ending-dock .once-ending-state { display:block; line-height:1.4; margin-bottom:8px; }
+.once-ending-dock .once-card--ending { display:flex; width:100%; height:238px; min-height:0; }
+.once-ending-dock .once-card-category { min-height:26px; font-size:.64rem; }
 .once-ending-dock .once-card-art { min-height:0; }
-.once-ending-dock .once-card-title { flex-shrink:0; min-height:80px; padding:6px 5px; font-size:.84rem; line-height:1.25; }
-.once-game--compact .once-card.is-selected { outline:3px solid #91fff0; outline-offset:2px; box-shadow:0 0 15px #64f8dc88,0 6px 14px #0007; }
-.once-game--compact .once-hand-actions { position:static; padding:0; margin-top:7px; background:none; gap:8px; }
-.once-game--compact .once-button { min-height:42px; padding:9px 14px; font-size:.86rem; }
-.once-game--compact .once-help { margin:7px 0; padding:8px 11px; font-size:.78rem; }
-.once-demo-bar { padding:6px 10px; margin:5px 0 8px; gap:10px; font-size:.68rem; }
-.once-demo-bar select { min-height:30px; font-size:.8rem; padding:4px 8px; }
-@media(min-width:761px) and (max-height:800px){
-  .once-game--compact .once-panel { padding:8px 10px; margin-bottom:6px; }
-  .once-game--compact .once-card--history { height:132px; }
-  .once-game--compact .once-card--history .once-card-category { min-height:23px; padding:4px 2px; font-size:.6rem; }
-  .once-game--compact .once-card--history .once-card-title { min-height:36px; padding:4px; font-size:.85rem; }
-  .once-game--compact .once-card--history .once-interrupt-mark { top:34px; font-size:.55rem; }
-  .once-game--compact .once-card--mini { height:154px; }
-  .once-ending-dock .once-card--ending { height:166px; }
-}
+.once-ending-dock .once-card-title { flex-shrink:0; min-height:82px; padding:9px 6px; font-size:.95rem; line-height:1.3; }
+.once-game--balanced .once-card.is-selected { outline:3px solid #91fff0; outline-offset:3px; box-shadow:0 0 14px #64f8dc66,0 7px 16px #0007; }
 @media(max-width:760px){
-  .once-page { padding:8px 10px 16px; }
-  .once-page .topbar { margin-bottom:6px; }
-  .once-game--compact .once-panel { padding:8px; margin-bottom:8px; }
-  .once-game--compact .once-storyteller { padding:6px 8px; }
-  .once-game--compact .once-storyteller > div { gap:3px 8px; }
-  .once-game--compact .once-storyteller h2 { font-size:.73rem; }
-  .once-game--compact .once-player-meta { font-size:.72rem; }
-  .once-game--compact .once-roster { margin:5px 0; gap:4px; }
-  .once-game--compact .once-roster { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
-  .once-game--compact .once-seat { flex-shrink:0; font-size:.62rem; padding:3px 6px; }
-  .once-history { grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }
-  .once-game--compact .once-history-number { font-size:.56rem; }
-  .once-game--compact .once-card--history { height:112px; padding:3px; border-width:2px; border-radius:7px; }
-  .once-game--compact .once-card--history .once-card-category { min-height:18px; font-size:.44rem; padding:3px 0; gap:1px; letter-spacing:0; }
-  .once-game--compact .once-card--history .once-card-category svg { width:9px; height:11px; }
-  .once-game--compact .once-card--history .once-card-title { min-height:33px; padding:4px 1px; font-size:.7rem; }
-  .once-game--compact .once-card--history .once-interrupt-mark { left:5px; right:5px; top:25px; font-size:.43rem; padding:1px 0; }
-  .once-game--compact .once-history-item > small { font-size:.51rem; }
-  .once-hand-layout { gap:6px; }
-  .once-hand-layout[data-has-ending] { grid-template-columns:minmax(0,1fr) 124px; }
-  .once-game--compact .once-card--mini { width:96px; height:154px; padding:4px; }
-  .once-game--compact .once-card--mini .once-card-category { min-height:21px; font-size:.5rem; padding:4px 1px; gap:2px; letter-spacing:0; }
-  .once-game--compact .once-card--mini .once-card-category svg { width:11px; height:13px; }
-  .once-game--compact .once-card--mini .once-card-title { font-size:.8rem; min-height:36px; padding:5px 2px; }
-  .once-game--compact .once-card--mini .once-interrupt-mark { top:30px; left:6px; right:6px; font-size:.46rem; }
-  .once-ending-dock { padding-left:5px; }
-  .once-ending-dock .once-card--ending { display:flex; height:auto; min-height:166px; }
-  .once-ending-dock .once-card-category { min-height:21px; font-size:.55rem; }
-  .once-ending-dock .once-card-art { height:48px; flex:0 0 48px; }
-  .once-ending-dock .once-card-title { grid-column:auto; min-height:83px; padding:5px 3px; font-size:.74rem; line-height:1.2; }
-  .once-game--compact .once-hand-actions .once-button { flex:1 1 auto; padding:8px 10px; font-size:.8rem; }
+  .once-history-board.has-pile { grid-template-columns:52px minmax(0,1fr); gap:12px; }
+  .once-history { grid-template-columns:repeat(2,minmax(0,112px)); gap:14px 11px; }
+  .once-card--history { height:166px; }
+  .once-history-older { grid-template-columns:repeat(auto-fill,minmax(100px,112px)); }
+  .once-history-pile { gap:12px; padding:8px 0; }
+  .once-pile-visual { width:40px; height:62px; }
+  .once-pile-count { min-width:21px; height:21px; bottom:6px; font-size:.68rem; }
+  .once-pile-label { font-size:.68rem; }
+  .once-ending-dock { width:168px; padding-left:12px; }
+  .once-ending-dock .once-card-title { grid-column:auto; font-size:.92rem; }
+  .once-hand-meta { gap:10px; }
+  .once-ending-jump { font-size:.8rem; }
 }
 @media(max-width:360px){
-  .once-game--compact .once-card--history .once-card-title { font-size:.62rem; }
+  .once-history-board.has-pile { grid-template-columns:minmax(0,1fr); gap:14px; }
+  .once-history-pile { flex-direction:row; justify-self:start; gap:14px; padding:4px 8px; }
+  .once-pile-visual { width:36px; height:56px; }
+  .once-pile-label { text-align:left; }
 }
-@media(max-height:700px) and (max-width:760px){
-  .once-game--compact .once-storyteller h2 { display:none; }
-  .once-game--compact .once-card--history { height:100px; }
-  .once-game--compact .once-card--mini { height:140px; }
-  .once-ending-dock .once-card--ending { min-height:152px; }
-  .once-ending-dock .once-card-art { height:34px; flex-basis:34px; }
+@media(prefers-reduced-motion:reduce){
+  .once-pile-visual::before,.once-pile-visual::after,.once-pile-visual > img { transition:none; }
 }
