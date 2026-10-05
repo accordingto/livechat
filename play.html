@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="talk.css">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-balanced-1">
-  <link rel="stylesheet" href="dixit.css?v=dixit-3">
+  <link rel="stylesheet" href="dixit.css?v=dixit-4">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -879,8 +879,12 @@
   <script src="chat-wolf-cards.js"></script>
   <script src="once-upon-a-time-deck.js?v=once-v2-balanced-1"></script>
   <script src="once-upon-a-time-ui.js?v=once-v2-balanced-1"></script>
-  <script src="dixit-deck.js?v=dixit-3"></script>
-  <script src="dixit-ui.js?v=dixit-3"></script>
+  <script src="dixit-deck.js?v=dixit-4"></script>
+  <script src="dixit-ui.js?v=dixit-4"></script>
+  <script src="dixit-engine.js?v=dixit-4"></script>
+  <script src="talk-sync.js"></script>
+  <script src="dixit-sync.js?v=dixit-4"></script>
+  <script src="dixit-card-host.js?v=dixit-4"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -2437,6 +2441,7 @@
     let talkCard = null;
     let onceCard = null;
     let dixitCard = null;
+    let dixitHostBridge = null;
     let wolfCardFrame = null;
     // A private instruction can only ask its own same-origin frame to become
     // visible. Never pass role, sender, instruction text or card data upstream.
@@ -2458,6 +2463,7 @@
       const isDixit = data.game === 'dixit' && data.dixit?.version === 1;
       document.body.classList.toggle('dixit-card-page', isDixit);
       if (dixitCard && !isDixit) { dixitCard.destroy(); dixitCard = null; }
+      if (!isDixit && dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (isDixit) {
         document.body.classList.remove('chat-wolf-card', 'once-card-page');
         if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -2472,6 +2478,9 @@
           }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
         });
         dixitCard.update(data);
+        if (!dixitHostBridge) dixitHostBridge = new DIXIT_CARD_HOST.Bridge({ roomCode: session, playerToken: token, db,
+          onStatus: () => dixitCard?.paint() });
+        dixitHostBridge.update(data);
         return;
       }
       const isOnce = data.game === 'onceupon' && data.once?.version === 1;
@@ -2718,6 +2727,7 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
+      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
       if (talkCard) { talkCard.destroy(); talkCard = null; }
@@ -2735,6 +2745,9 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
+    document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; });
+    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit') tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;

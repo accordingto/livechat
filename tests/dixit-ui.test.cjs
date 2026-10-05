@@ -57,8 +57,8 @@ test('shared host renderer cannot expose private hands or private controls, even
         assert.doesNotMatch(accidentallyPrivate, /dx-hand|data-dx-card=|data-dx-clue|dx-own/);
         noActions(accidentallyPrivate, ['story', 'submit', 'vote']);
         for (const id of s.hands[player.playerNum]) {
-          assert.ok(!host.includes('data-dx-zoom="' + id + '"'));
-          assert.ok(!accidentallyPrivate.includes('data-dx-zoom="' + id + '"'));
+          assert.ok(!host.includes('data-dx-picture="' + id + '"'));
+          assert.ok(!accidentallyPrivate.includes('data-dx-picture="' + id + '"'));
         }
       }
     }
@@ -74,7 +74,7 @@ test('phase-specific private renderer shows only the owning hand and legal card 
   const hand = htmlFor(submit, 2);
   assert.equal(cardButtons(hand).length, 6); assert.ok(action(hand, 'submit').disabled);
   assert.equal(cardButtons(htmlFor(submit, 1)).length, 0);
-  for (const id of submit.hands[3]) assert.ok(!hand.includes('data-dx-zoom="' + id + '"'));
+  for (const id of submit.hands[3]) assert.ok(!hand.includes('data-dx-picture="' + id + '"'));
   const table = cardButtons(htmlFor(vote, 2));
   assert.equal(table.length, 4);
   assert.ok(table.find(tag => tag.includes('data-dx-card="' + vote.submissions[2][0] + '"')).includes(' disabled'));
@@ -114,9 +114,12 @@ test('reveal prints the actual answer, owners, votes and base/bonus/total scores
     const s = scored(outcome), result = s.lastRound, html = htmlFor(s);
     assert.ok(html.includes(UI.esc(UI.t(outcome))));
     assert.ok(html.includes('class="dx-picture is-answer"'));
-    assert.equal((html.match(/class="dx-owner"/g) || []).length, 4);
+    const gallery = html.slice(html.indexOf('<details class="dx-round-gallery"'));
+    assert.equal((gallery.match(/class="dx-owner"/g) || []).length, 4);
+    assert.doesNotMatch(html, /class="dx-answer"/, 'the Storyteller heading is not repeated over the artwork');
     assert.ok(action(html, 'nextRound')); noActions(htmlFor(s, 2), ['nextRound', 'vote', 'submit']);
     for (const row of result.rows) {
+      for (const id of row.cardIds) assert.ok(gallery.includes('data-dx-picture="' + id + '"><div class="dx-owner">Seat ' + row.playerNum + ' '), 'each played picture identifies its owner above the image');
       const vote = row.playerNum === 1 ? '✦' : '#' + (result.table.indexOf(row.voteCardId) + 1) + (row.correct ? ' ✓' : '');
       const expected = '<tr><th>Seat ' + row.playerNum + '</th><td>' + vote + '</td><td>+' + row.base + '</td><td>+' + row.bonus + '</td><td><strong>' + row.score + '</strong> <small>(+' + row.delta + ')</small></td></tr>';
       assert.ok(html.includes(expected), 'render the awarded engine score, including vote bonuses in ' + outcome);
@@ -154,6 +157,9 @@ test('names, legacy clues and image descriptions are escaped without visible pic
   assert.equal(UI.errorText('paused'), UI.t('paused')); assert.equal(UI.errorText('offline'), UI.t('failed'));
   assert.equal(UI.errorText('invalid_card'), UI.t('invalid')); assert.doesNotMatch(UI.errorText('invalid_card'), /invalid_card/);
   assert.match(UI.rulesHTML(), /84 original illustrations|unofficial adaptation/i);
+  const owned = context.DIXIT_UI.cardHTML('d001', 1, { owner: hostile, answer: true });
+  assert.ok(owned.includes('<div class="dx-owner">' + UI.esc(hostile) + '</div><div class="dx-picture is-answer">'));
+  assert.doesNotMatch(owned, /onerror="alert|class="dx-answer"/);
 });
 
 // Small DOM double retains live disabled flags, datasets and form inputs.
@@ -314,40 +320,22 @@ test('legacy games retain the atlas card faces while newly created games use sta
   assert.match(context.DIXIT_UI.tableHTML(E.view(fresh, 1)), /dx-art-atlas/, 'old deck script remains usable during staggered deployment');
 });
 
-test('focus gallery views only permitted cards with next, previous and overview controls without changing selection or sending', async () => {
-  const s = dealt(), h = harness(E.view(s, 1));
-  try {
-    const [first, second] = s.hands[1];
-    await h.click('[data-dx-card="' + first + '"]');
-    const zoom = h.element.querySelector('[data-dx-zoom="' + second + '"]'); zoom.focus();
-    await h.click('[data-dx-zoom="' + second + '"]');
-    assert.ok(h.card.modal); assert.equal(h.card.modal.attributes.role, 'dialog'); assert.equal(h.card.modal.attributes['aria-modal'], 'true');
-    assert.equal(h.card.focusIndex, 1); assert.deepEqual([...h.card.selected], [first]); assert.equal(h.sent.length, 0);
-    assert.equal(h.element.ownerDocument.body.style.overflow, 'hidden');
-    assert.doesNotMatch(h.card.modal.innerHTML, /data-dx-card=|data-dx-action=/);
-    await h.click('[data-dx-focus-step="1"]'); assert.equal(h.card.focusIndex, 2);
-    await h.click('[data-dx-focus-step="-1"]'); assert.equal(h.card.focusIndex, 1);
-    await h.click('[data-dx-focus-index="5"]'); assert.equal(h.card.focusIndex, 5);
-    assert.equal(h.element.querySelector('[data-dx-focus-step="1"]').disabled, true);
-    h.card.key({ key: 'ArrowLeft', preventDefault() {} }); assert.equal(h.card.focusIndex, 4);
-    const focusButtons = h.card.modal.querySelectorAll('button:not([disabled])');
-    focusButtons.at(-1).focus(); h.card.key({ key: 'Tab', shiftKey: false, preventDefault() {} });
-    assert.equal(h.element.ownerDocument.activeElement, focusButtons[0], 'Tab stays inside the gallery');
-    h.card.key({ key: 'Escape', preventDefault() {} }); assert.equal(h.card.modal, null);
-    assert.equal(h.element.ownerDocument.activeElement, zoom); assert.equal(h.element.ownerDocument.body.style.overflow, '');
-    assert.deepEqual([...h.card.selected], [first]); assert.equal(h.sent.length, 0);
-    h.card.openModal(s.hands[2][0], 'hand'); assert.equal(h.card.modal, null, 'another player’s card cannot be opened');
-  } finally { h.card.destroy(); }
+test('large pictures have no separate enlargement controls in hands, voting or revealed results', () => {
+  for (const s of [dealt(), submitted(), voting(), scored()]) for (const seat of [0, 1, 2]) {
+    assert.doesNotMatch(htmlFor(s, seat), /data-dx-zoom|dx-zoom|Enlarge picture|Picture focus view|data-dx-focus|dx-modal/);
+  }
+  const hand = htmlFor(dealt(), 1);
+  assert.equal(cardButtons(hand).length, 6);
+  assert.match(hand, /Tap a picture to select it, then confirm your choice/);
 });
 
-test('a new session releases pending work and closes a focus view containing the previous private hand', async () => {
+test('a new session releases pending work and clears the previous private card selection', async () => {
   const s = dealt(), h = harness(E.view(s, 1));
   try {
     await h.click('[data-dx-card="' + s.hands[1][0] + '"]'); await h.click('[data-dx-action="story"]');
     assert.ok(h.card.pending);
-    h.card.openModal(s.hands[1][1], 'hand'); assert.ok(h.card.modal);
     const restarted = act(s, 'restart'); h.card.update(E.view(restarted, 1));
-    assert.equal(h.card.pending, null); assert.equal(h.card.modal, null); assert.equal(h.card.selected.size, 0);
+    assert.equal(h.card.pending, null); assert.equal(h.card.selected.size, 0);
     assert.equal(h.element.ownerDocument.body.style.overflow, ''); assert.equal(h.card.error, '');
   } finally { h.card.destroy(); }
 });
@@ -428,13 +416,16 @@ test('answer stage centers only the actual Storyteller card; top votes and score
   const html = UI.tableHTML(E.view(s, 2, started.revealAnswerAt), { now: started.revealAnswerAt });
   assert.match(html, /data-dx-reveal-stage="answer"/);
   assert.match(html, /class="dx-story-reveal"/);
-  assert.match(html, new RegExp('data-dx-zoom="' + answer + '"'));
-  assert.equal((html.match(/data-dx-zoom=/g) || []).length, 1, 'only the answer picture competes for attention');
-  assert.doesNotMatch(html, /dx-popular-reveal|dx-result|dx-owner|data-dx-countdown/);
+  assert.match(html, new RegExp('data-dx-picture="' + answer + '"'));
+  assert.equal((html.match(/data-dx-picture=/g) || []).length, 1, 'only the answer picture competes for attention');
+  assert.match(html, /<h2>The Storyteller’s card<\/h2>.*?<div class="dx-owner">Seat 1<\/div><div class="dx-picture is-answer">/);
+  assert.doesNotMatch(html, /dx-popular-reveal|dx-result|class="dx-answer"|data-dx-countdown/);
   const final = finishReveal(s), finalHTML = htmlFor(final, 2);
   assert.match(finalHTML, /data-dx-reveal-stage="popular"/);
   assert.ok(finalHTML.indexOf('class="dx-story-reveal"') < finalHTML.indexOf('class="dx-popular-reveal"'));
   assert.match(finalHTML, /Most-voted picture/);
+  const popular = finalHTML.slice(finalHTML.indexOf('class="dx-popular-reveal"'), finalHTML.indexOf('<section class="dx-panel dx-result'));
+  assert.match(popular, /<div class="dx-owner">Seat 2<\/div><div class="dx-picture">/);
   assert.ok(finalHTML.indexOf('dx-popular-reveal') < finalHTML.indexOf('dx-result'));
   const context = { DIXIT_DECK: { version: 2, cards: Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp' })) } };
   vm.runInNewContext(source, context);
@@ -448,8 +439,11 @@ test('all tied most-voted pictures appear, including the answer when it ties; le
   assert.equal(s.lastRound.popularCardIds.length, 3);
   const feature = html.slice(html.indexOf('data-dx-reveal-stage="popular"'), html.indexOf('<section class="dx-panel dx-result'));
   assert.match(feature, /Tied most-voted pictures/);
-  for (const id of s.lastRound.popularCardIds) assert.match(feature, new RegExp('data-dx-zoom="' + id + '"'));
-  assert.equal((feature.match(new RegExp('data-dx-zoom="' + s.lastRound.answerCardId + '"', 'g')) || []).length, 2, 'the same picture can be answer and top-voted');
+  for (const id of s.lastRound.popularCardIds) {
+    const owner = s.lastRound.rows.find(row => row.cardIds.includes(id));
+    assert.ok(feature.includes('data-dx-picture="' + id + '"><div class="dx-owner">Seat ' + owner.playerNum + '</div>'), 'each tied top picture has its owner above it');
+  }
+  assert.equal((feature.match(new RegExp('data-dx-picture="' + s.lastRound.answerCardId + '"', 'g')) || []).length, 2, 'the same picture can be answer and top-voted');
   const legacy = E.view(s, 2); delete legacy.dixit.revealStage; delete legacy.dixit.revealStartedAt; delete legacy.dixit.revealAnswerAt; delete legacy.dixit.revealPopularAt;
   delete legacy.dixit.result.popularCardIds; delete legacy.dixit.result.maxVotes;
   const legacyHTML = UI.tableHTML(legacy);

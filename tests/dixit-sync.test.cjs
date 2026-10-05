@@ -57,9 +57,9 @@ function setup(t, count = 4) {
   const context = vm.createContext({ crypto, Date: { now: () => clock }, DIXIT_ENGINE: E, setInterval: () => 1, clearInterval() {} });
   vm.runInContext(fs.readFileSync(require.resolve('../talk-sync.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(require.resolve('../dixit-sync.js'), 'utf8'), context);
-  function host() {
+  function host(options = {}) {
     const h = new context.DIXIT_SYNC.Host({ db, room,
-      onChange: payload => { h.latest = payload; }, onStatus: status => { h.lastStatus = status; } });
+      onChange: payload => { h.latest = payload; }, onStatus: status => { h.lastStatus = status; }, ...options });
     hosts.push(h); h.connect(); return h;
   }
   paths.forEach((path, i) => db.ref(path).on('value', s => {
@@ -380,4 +380,246 @@ test('paused countdown is inert until its shifted deadline and respects the exis
   const otherGame = { game: 'chainstory', story: 'A different game now owns this seat.' }; f.db.put(f.paths[1], otherGame); await settle(h);
   f.clock(64200); await h.tickReveal(); await settle(h);
   assert.equal(h.suspended, true); assert.deepEqual(f.card(2), otherGame); assert.equal(h.doc.state.phase, 'REVEALING');
+});
+
+test('foreground private HOST immediately takes a live shared lease and keeps playing after the shared page closes', async t => {
+  const f = setup(t), shared = f.host(); await f.dealt(shared);
+  const before = clone(shared.doc.state), oldLease = shared.doc.leaseUntil;
+  const cardHost = f.host({ mode: 'private' }); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true); assert.equal(shared.own, false);
+  assert.equal(shared.lastStatus, 'host_card_active'); assert.equal(cardHost.doc.ownerMode, 'private');
+  assert.equal(cardHost.doc.leaseUntil, oldLease, 'takeover does not wait for the old fourteen-second lease to expire');
+  assert.deepEqual(cardHost.doc.state, before); assert.ok(cardHost.doc.leaseEpoch > 1);
+  shared.close(); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true); assert.equal(cardHost.doc.leaseUntil, oldLease, 'closing an old screen cannot release the new executor');
+  f.clock(70000); await cardHost.renew(); await settle(cardHost);
+  assert.equal(cardHost.own, true); assert.ok(f.card(1).dixit.hostLiveUntil > 70000);
+  await f.send(cardHost, 1, 'story', { cardId: before.hands[1][0], clueMode: 'spoken' });
+  assert.equal(cardHost.doc.state.phase, 'SUBMIT'); assert.equal(f.card(2).dixit.phase, 'SUBMIT');
+  assert.equal(f.card(1).dixit.hostEpoch, cardHost.doc.leaseEpoch);
+});
+
+test('private HOST also preempts legacy shared leases and equal-priority private tabs never fight', async t => {
+  const f = setup(t), shared = f.host(); await f.dealt(shared);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  const legacy = clone(f.db.values.get(path)); delete legacy.ownerMode; delete legacy.leaseEpoch;
+  f.db.put(path, legacy); await settle(shared);
+  const first = f.host({ mode: 'private' }); await settle(shared, first);
+  const second = f.host({ mode: 'private' }); await settle(shared, first, second);
+  assert.equal(first.own, true); assert.equal(second.own, false); assert.equal(shared.own, false);
+  const owner = first.doc.owner, epoch = first.doc.leaseEpoch;
+  for (const now of [12000, 16000, 20000]) {
+    f.clock(now); await Promise.all([shared.renew(), first.renew(), second.renew()]); await settle(shared, first, second);
+    assert.equal(first.doc.owner, owner); assert.equal(first.doc.leaseEpoch, epoch);
+    assert.equal(second.lastStatus, 'host_card_active'); assert.equal(shared.lastStatus, 'host_card_active');
+  }
+  await assert.rejects(second.command('cancel'), /not_available/);
+});
+
+test('hidden private HOST relinquishes its lease immediately, stops all work, and resumes ahead of the shared fallback', async t => {
+  const f = setup(t), shared = f.host(); await f.dealt(shared);
+  let visible = true;
+  const cardHost = f.host({ mode: 'private', isActive: () => visible }); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true);
+  visible = false; await cardHost.setActive(false); await settle(shared, cardHost);
+  assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'inactive'); assert.equal(shared.own, true);
+  const fallbackEpoch = shared.doc.leaseEpoch, before = clone(shared.doc.state);
+  await cardHost.renew(); cardHost.project(); await cardHost.tickReveal(); await settle(shared, cardHost);
+  await assert.rejects(cardHost.command('pause'), /not_available/);
+  assert.deepEqual(shared.doc.state, before); assert.equal(shared.doc.leaseEpoch, fallbackEpoch);
+  visible = true; await cardHost.setActive(true); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true); assert.equal(shared.own, false); assert.ok(cardHost.doc.leaseEpoch > fallbackEpoch);
+  await f.send(cardHost, 1, 'pause'); assert.equal(cardHost.doc.state.paused, true);
+  cardHost.close(); await settle(shared, cardHost);
+  assert.equal(shared.own, true); assert.equal(shared.lastStatus, 'ready');
+  assert.equal(shared.doc.state.paused, true); assert.equal(shared.doc.state.sessionId, before.sessionId);
+});
+
+test('an initially hidden private tab cannot acquire or project, and real connectivity loss resumes the same game', async t => {
+  const f = setup(t), shared = f.host(); await f.voting(shared);
+  let visible = false;
+  const cardHost = f.host({ mode: 'private', isActive: () => visible }); await settle(shared, cardHost);
+  assert.equal(shared.own, true); assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'inactive');
+  visible = true; await cardHost.setActive(true); await settle(shared, cardHost);
+  const before = clone(cardHost.doc.state);
+  f.db.put('.info/connected', false); await settle(shared, cardHost);
+  assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'offline');
+  await assert.rejects(cardHost.command('cancel'), /offline/);
+  f.clock(50000); f.db.put('.info/connected', true); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true); assert.equal(shared.own, false); assert.deepEqual(cardHost.doc.state, before);
+  await f.send(cardHost, 2, 'vote', { cardId: f.card(1).dixit.ownSubmitted[0] });
+  assert.equal(f.card(2).dixit.ownVote, f.card(1).dixit.ownSubmitted[0]);
+});
+
+test('slow player projection coalesces heartbeat snapshots and stamps only the current lease', async t => {
+  const f = setup(t, 8), h = f.host(); await f.dealt(h);
+  let unblock, entered;
+  const gate = new Promise(resolve => { unblock = resolve; });
+  const started = new Promise(resolve => { entered = resolve; });
+  const writes = new Map();
+  let block = true;
+  f.db.before = async path => {
+    if (!f.paths.includes(path)) return;
+    writes.set(path, (writes.get(path) || 0) + 1);
+    if (block && path === f.paths[0]) { block = false; entered(); await gate; }
+  };
+  f.clock(11000); await h.renew(); await started;
+  for (const now of [15000, 19000, 23000, 27000]) {
+    f.clock(now); await h.renew(); await tick();
+    await Promise.all([...h.projectionTasks].filter(([seat]) => seat !== 1).map(([, task]) => task));
+    for (let n = 2; n <= 8; n++) assert.equal(f.card(n).dixit.hostLiveUntil, h.doc.leaseUntil, 'healthy seats receive fresh heartbeats while one seat stays blocked');
+  }
+  let actionTimer;
+  try {
+    await Promise.race([h.command('pause'), new Promise((resolve, reject) => { actionTimer = setTimeout(() => reject(new Error('host action was held by a slow player projection')), 500); })]);
+    await tick(); await Promise.all([...h.projectionTasks].filter(([seat]) => seat !== 1).map(([, task]) => task));
+    assert.equal(f.card(2).dixit.paused, true);
+  } finally { clearTimeout(actionTimer); unblock(); }
+  const latestLease = h.doc.leaseUntil;
+  await settle(h);
+  for (let n = 1; n <= 8; n++) {
+    assert.equal(f.card(n).dixit.hostLiveUntil, latestLease);
+  }
+  assert.ok((writes.get(f.paths[0]) || 0) <= 2, 'the blocked seat attempts only its in-flight snapshot and latest coalesced snapshot');
+});
+
+test('a projection queued by an old shared owner aborts when the private HOST takes over', async t => {
+  const f = setup(t, 8), shared = f.host(); await f.dealt(shared);
+  let unblock, entered;
+  const gate = new Promise(resolve => { unblock = resolve; });
+  const started = new Promise(resolve => { entered = resolve; });
+  let block = true;
+  f.db.before = async path => {
+    if (block && path === f.paths[0]) { block = false; entered(); await gate; }
+  };
+  f.clock(11000); await shared.renew(); await started;
+  const cardHost = f.host({ mode: 'private' }); await tick(); await tick();
+  assert.equal(shared.own, false); assert.equal(cardHost.own, true);
+  const privateEpoch = cardHost.doc.leaseEpoch;
+  unblock(); await settle(shared, cardHost);
+  assert.equal(shared.lastStatus, 'host_card_active');
+  for (let n = 1; n <= 8; n++) assert.equal(f.card(n).dixit.hostEpoch, privateEpoch);
+  shared.close(); await settle(cardHost); assert.equal(cardHost.own, true);
+});
+
+test('a delayed renewal commits a fresh lease immediately instead of leaving an expired captured deadline', async t => {
+  const f = setup(t), h = f.host({ mode: 'private' }); await f.dealt(h);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  let delayed = false;
+  f.db.before = async current => {
+    if (current === path && !delayed) { delayed = true; f.clock(50000); }
+  };
+  f.clock(11000); await h.renew(); await settle(h);
+  assert.equal(h.own, true); assert.equal(h.doc.leaseUntil, 64000);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.hostLiveUntil, 64000);
+  await f.send(h, 1, 'story', { cardId: h.doc.state.hands[1][0], clueMode: 'spoken' });
+  assert.equal(h.doc.state.phase, 'SUBMIT');
+});
+
+test('a failed renewal preserves the game and a later heartbeat recovers without replacing cards', async t => {
+  const f = setup(t), h = f.host({ mode: 'private' }); await f.voting(h);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  const before = clone(h.doc.state);
+  let failed = false;
+  f.db.before = async current => { if (current === path && !failed) { failed = true; throw new Error('simulated connection interruption'); } };
+  f.clock(15000); await h.renew(); assert.equal(h.lastStatus, 'error');
+  f.clock(20000); await h.renew(); await settle(h);
+  assert.equal(h.own, true); assert.equal(h.lastStatus, 'ready'); assert.deepEqual(h.doc.state, before);
+  assert.equal(f.card(1).dixit.hostLiveUntil, 34000);
+});
+
+test('a cached legacy shared page cannot inherit private priority from a previous executor', async t => {
+  const f = setup(t), cardHost = f.host({ mode: 'private' }); await f.dealt(cardHost);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  await cardHost.setActive(false); await settle(cardHost);
+  // The previous adapter changes only owner and leaseUntil, preserving any
+  // unfamiliar mode metadata written by a newer private executor.
+  await f.db.ref(path).transaction(doc => ({ ...doc, owner: 'cached-legacy-shared', leaseUntil: 24000 }));
+  await settle(cardHost);
+  assert.equal(cardHost.doc.ownerMode, 'private'); assert.notEqual(cardHost.doc.ownerModeClient, cardHost.doc.owner);
+  await cardHost.setActive(true); await settle(cardHost);
+  assert.equal(cardHost.own, true); assert.equal(cardHost.doc.owner, cardHost.client);
+  assert.equal(cardHost.doc.ownerModeClient, cardHost.client);
+});
+
+test('refresh keeps its tab resume group and immediately replaces its live private lease without old-client fights', async t => {
+  const f = setup(t), group = '1'.repeat(32);
+  const old = f.host({ mode: 'private', resumeGroup: group }); await f.dealt(old);
+  const before = clone(old.doc.state), lease = old.doc.leaseUntil;
+  const refreshed = f.host({ mode: 'private', resumeGroup: group }); await settle(old, refreshed);
+  assert.notEqual(refreshed.client, old.client); assert.equal(refreshed.own, true); assert.equal(old.own, false);
+  assert.equal(old.resumeSuperseded, true); assert.equal(refreshed.doc.ownerResumeGroup, group);
+  assert.equal(refreshed.doc.leaseUntil, lease, 'refresh takes over immediately instead of waiting fourteen seconds');
+  assert.deepEqual(refreshed.doc.state, before);
+  const other = f.host({ mode: 'private', resumeGroup: '2'.repeat(32) }); await settle(old, refreshed, other);
+  assert.equal(other.own, false); assert.equal(other.lastStatus, 'host_card_active');
+  await Promise.all([old.renew(), other.renew()]); await settle(old, refreshed, other);
+  assert.equal(refreshed.own, true); assert.equal(refreshed.doc.owner, refreshed.client);
+  old.close(); await settle(refreshed, other);
+  assert.equal(refreshed.own, true); assert.equal(refreshed.doc.leaseUntil, lease);
+  await f.send(refreshed, 1, 'story', { cardId: before.hands[1][0], clueMode: 'spoken' });
+  assert.equal(refreshed.doc.state.phase, 'SUBMIT');
+});
+
+for (const restarting of [false, true]) test(`${restarting ? 'restart' : 'opening'} bootstrap survives private takeover before another seat receives its new session`, async t => {
+  const f = setup(t), shared = f.host(); await settle(shared);
+  if (restarting) await f.dealt(shared);
+  const oldCards = Array.from({ length: 4 }, (_, i) => f.card(i + 1));
+  let unblock, entered;
+  const gate = new Promise(resolve => { unblock = resolve; });
+  const started = new Promise(resolve => { entered = resolve; });
+  let block = true;
+  f.db.before = async path => {
+    if (block && path === f.paths[1]) { block = false; entered(); await gate; }
+  };
+  if (restarting) await shared.command('restart'); else await shared.start();
+  await started; await tick();
+  const session = shared.doc.state.sessionId;
+  assert.equal(f.card(1).dixit.sessionId, session);
+  assert.deepEqual(f.card(2), oldCards[1]);
+  assert.equal(shared.doc.openingProjection.sessionId, session);
+  assert.deepEqual(clone(shared.doc.openingProjection.cards[2]), oldCards[1]);
+  const cardHost = f.host({ mode: 'private' }); await tick(); await tick();
+  assert.equal(cardHost.own, true); assert.equal(cardHost.initialSession, session);
+  unblock(); await settle(shared, cardHost);
+  assert.equal(cardHost.suspended, false); assert.equal(cardHost.initialSession, null);
+  for (let n = 1; n <= 4; n++) {
+    assert.equal(f.card(n).dixit.sessionId, session); assert.equal(f.card(n).dixitAction, undefined);
+    assert.equal(JSON.stringify(f.card(n)).includes('openingProjection'), false);
+  }
+  await cardHost.renew(); await settle(cardHost); assert.equal(cardHost.initialSession, null, 'heartbeats do not reload completed bootstrap');
+});
+
+test('legacy opening without durable snapshots waits for all canonical cards before private takeover', async t => {
+  const f = setup(t), shared = f.host(); await f.lobby(shared);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  const doc = clone(shared.doc); delete doc.openingProjection;
+  f.db.put(path, doc); await settle(shared);
+  const secondCard = f.card(2), otherGame = { game: 'chainstory', story: 'Opening still pending.' };
+  f.db.put(f.paths[1], otherGame); await tick();
+  // A refreshed legacy executor knows its previous canonical state but has
+  // not seen this seat in the new session, as during an opening projection.
+  shared.suspended = false; shared.seenCards.delete(2);
+  const cardHost = f.host({ mode: 'private' }); await settle(shared, cardHost);
+  assert.equal(cardHost.own, false); assert.equal(shared.doc.owner, shared.client);
+  f.db.put(f.paths[1], secondCard); await tick(); await cardHost.renew(); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true); assert.equal(cardHost.suspended, false);
+});
+
+test('durable bootstrap replacement preserves a concurrent selection of another game', async t => {
+  const f = setup(t), shared = f.host(); await settle(shared);
+  let unblock, entered;
+  const gate = new Promise(resolve => { unblock = resolve; });
+  const started = new Promise(resolve => { entered = resolve; });
+  let block = true;
+  f.db.before = async path => {
+    if (block && path === f.paths[1]) { block = false; entered(); await gate; }
+  };
+  await shared.start(); await started; await tick();
+  const cardHost = f.host({ mode: 'private' }); await tick(); await tick();
+  assert.equal(cardHost.own, true);
+  const otherGame = { game: 'chainstory', story: 'Selected after this opening started.' };
+  f.db.put(f.paths[1], otherGame); unblock(); await settle(shared, cardHost);
+  assert.equal(cardHost.suspended, true); assert.equal(cardHost.lastStatus, 'switched');
+  assert.deepEqual(f.card(2), otherGame);
 });

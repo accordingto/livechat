@@ -6,6 +6,7 @@
     seatHint:{zh:'這位玩家可以在自己的卡片發牌、揭曉與換下一輪。',en:'This player can deal, reveal and start the next round from their own card.'},
     ownCard:{zh:'開啟我的 HOST 玩家卡片',en:'Open my host player card'},
     room:{zh:'房間 {code} · {n} 人',en:'Room {code} · {n} players'},
+    hostCardActive:{zh:'HOST 玩家卡片正在同步遊戲。',en:'Your host player card is keeping the game in sync.'},
   });
   const ht=(key,params={})=>I18N.t('dixitHost',key).replace(/\{(\w+)\}/g,(_,name)=>params[name]??'');
   let sync=null,card=null,payload=null,state=null,status='loading',busy=false,problem='',demoTimer=null;
@@ -30,7 +31,7 @@
   function labels(){
     byId('dx-host-seat-label').textContent=ht('seat');byId('dx-host-seat-hint').textContent=ht('seatHint');byId('dx-own-card').textContent=ht('ownCard');
     byId('dx-setup-help').textContent=t(status==='setupNeeded'?'setupHint':'lobbyHint');
-    byId('dx-host-status').textContent=problem||({setupNeeded:t('setupHint'),noFirebase:t('offline'),offline:t('offline'),other_host:t('otherHost'),switched:t('switched'),error:t('offline'),loading:'',ready:''}[status]||'');
+    byId('dx-host-status').textContent=problem||({setupNeeded:t('setupHint'),noFirebase:t('offline'),offline:t('offline'),other_host:t('otherHost'),host_card_active:ht('hostCardActive'),switched:t('switched'),error:t('offline'),loading:'',ready:''}[status]||'');
     byId('dx-open').disabled=busy||!demo&&(!sync||!sync.own||status!=='ready');byId('dx-setup-link').hidden=demo;byId('dx-setup').hidden=!!payload&&status!=='switched';
     byId('dx-host-seat-field').hidden=status==='setupNeeded'||status==='noFirebase';
     if(!demo&&ROOM.code)byId('dx-room-label').textContent=ht('room',{code:ROOM.code,n:ROOM.count});
@@ -70,5 +71,7 @@
     labels();
   }
   I18N.onChange(()=>{labels();if(payload)card?.render();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync?.renew();});
+  window.addEventListener('focus',()=>sync?.renew());
   window.addEventListener('pagehide',()=>{clearInterval(demoTimer);card?.destroy();sync?.close();});window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 })();

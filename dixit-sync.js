@@ -19,7 +19,7 @@ var DIXIT_SYNC = (() => {
     });
   }
   class Host extends TALK_SYNC.Host {
-    constructor({ room, db, onChange = () => {}, onStatus = () => {} }) {
+    constructor({ room, db, mode = 'shared', resumeGroup = '', isActive = () => true, onChange = () => {}, onStatus = () => {} }) {
       let host;
       super({ room: roomAdapter(room), db, onStatus,
         // The public host screen receives the same strictly filtered view as
@@ -35,6 +35,137 @@ var DIXIT_SYNC = (() => {
       this.openingCards = null;
       this.restartingSession = null;
       this.revealAdvancing = null;
+      this.mode = mode === 'private' ? 'private' : 'shared';
+      this.resumeGroup = /^[a-f0-9]{32}$/.test(resumeGroup) ? resumeGroup : '';
+      this.privateAcquired = false;
+      this.resumeSuperseded = false;
+      this.isActive = isActive;
+      this.active = true;
+      this.pendingProjections = new Map();
+      this.projectionTasks = new Map();
+      this.projectedSeats = new Map();
+      this.loadedBootstrapSession = null;
+      // A foreground private HOST card is the preferred executor. The shared
+      // screen observes it and remains a fallback, without competing for a
+      // live private lease. Hidden private tabs relinquish their own lease.
+      this.connectedHandler = snap => {
+        this.connected = snap.val() === true;
+        this.own = this.liveOwner();
+        if (this.connected && this.canAcquire(this.doc)) this.renew();
+        else this.reportStatus();
+      };
+      this.valueHandler = snap => {
+        this.doc = snap.val();
+        if (this.mode === 'private' && this.privateAcquired && this.resumeGroup && this.doc?.owner !== this.client
+          && this.privateOwner(this.doc) && this.doc.ownerResumeGroup === this.resumeGroup) this.resumeSuperseded = true;
+        this.own = this.liveOwner();
+        if (this.mode === 'private' && this.own) this.privateAcquired = true;
+        if (this.own) this.loadBootstrap();
+        this.reportStatus();
+        if (this.doc?.state) this.onChange(this.doc.state);
+        if (this.own && !this.suspended && this.doc?.state) {
+          this.project();
+          Object.entries(this.room.answers).forEach(([n, data]) => this.receive(Number(n), data));
+        } else if (this.connected && this.canAcquire(this.doc)) this.renew();
+      };
+    }
+    foreground() { return this.mode !== 'private' || (this.active && this.isActive()); }
+    liveOwner(doc = this.doc, now = this.now()) {
+      return !!(this.connected && !this.stopped && !this.resumeSuperseded && this.foreground() && doc?.owner === this.client && doc.leaseUntil > now);
+    }
+    privateOwner(doc) { return doc?.ownerMode === 'private' && doc.ownerModeClient === doc.owner; }
+    bootstrap(doc) {
+      const initial = doc?.openingProjection;
+      if (!doc?.state?.sessionId || initial?.sessionId !== doc.state.sessionId || !initial.cards || Array.isArray(initial.cards)) return null;
+      return DIXIT_ENGINE.list(doc.state.roster).every(p => Object.prototype.hasOwnProperty.call(initial.cards, p.playerNum)) ? initial : null;
+    }
+    loadBootstrap() {
+      const session = this.doc?.state?.sessionId;
+      if (!session || this.loadedBootstrapSession === session) return;
+      this.loadedBootstrapSession = session;
+      const initial = this.bootstrap(this.doc);
+      if (!initial) return;
+      // Exact previous seat snapshots stay only under the secret control
+      // token. A replacement can safely finish a partially opened session.
+      this.initialSession = session; this.openingCards = clone(initial.cards);
+      this.seenCards.clear(); this.projectedSeats.clear();
+    }
+    legacyOpeningComplete(doc) {
+      return DIXIT_ENGINE.list(doc.state.roster).every(p => {
+        const data = this.room.answers[p.playerNum];
+        return data?.game === 'dixit' && data.dixit?.version === 1 && data.dixit.sessionId === doc.state.sessionId;
+      });
+    }
+    canAcquire(doc, now = this.now()) {
+      if (this.stopped || this.resumeSuperseded || !this.foreground()) return false;
+      if (this.mode === 'private' && doc?.state && !this.privateOwner(doc) && !this.bootstrap(doc) && !this.legacyOpeningComplete(doc)) return false;
+      if (!doc?.owner || doc.owner === this.client || !(doc.leaseUntil > now)) return true;
+      if (this.mode !== 'private') return false;
+      if (!this.privateOwner(doc)) return true;
+      // A refresh gets a fresh client identity but keeps this tab's resume
+      // group. Only the replacement, which has never owned a lease, may
+      // preempt its predecessor; the old instance cannot take it back.
+      return !!(this.resumeGroup && doc.ownerResumeGroup === this.resumeGroup && !this.privateAcquired);
+    }
+    reportStatus() {
+      const privateOwner = this.privateOwner(this.doc) && this.doc.owner !== this.client && this.doc.leaseUntil > this.now();
+      this.status(this.suspended ? 'switched' : !this.connected ? 'offline' : !this.foreground() ? 'inactive'
+        : this.own ? 'ready' : privateOwner ? 'host_card_active' : 'other_host');
+    }
+    async release() {
+      if (!this.connected) return;
+      try {
+        await this.ref.transaction(doc => doc?.owner === this.client
+          ? Object.assign({}, doc, { leaseUntil: 0 }) : undefined, undefined, false);
+      } catch (error) { if (!this.stopped && this.foreground()) this.status('error'); }
+    }
+    setActive(value) {
+      this.active = value === true;
+      this.own = this.liveOwner();
+      if (!this.foreground()) {
+        this.pendingProjections.clear(); this.own = false; this.reportStatus();
+        return this.release();
+      }
+      if (this.connected && !this.stopped) return this.renew();
+      return Promise.resolve();
+    }
+    async renew() {
+      if (!this.connected || this.stopped || !this.foreground() || this.renewing) return;
+      this.renewing = true;
+      const now = this.now();
+      let expiredCommit = false;
+      try {
+        const result = await this.ref.transaction(doc => {
+          doc = doc || {};
+          if (!this.foreground() || this.stopped || !this.connected || !this.canAcquire(doc, now)) return;
+          const changedOwner = doc.owner !== this.client;
+          return Object.assign({}, doc, { owner: this.client, ownerMode: this.mode, ownerModeClient: this.client,
+            ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '', leaseUntil: now + 14000,
+            leaseEpoch: (doc.leaseEpoch || 0) + (changedOwner ? 1 : 0) });
+        }, undefined, false);
+        if (!result.committed) { this.own = this.liveOwner(); this.reportStatus(); }
+        else expiredCommit = result.snapshot.val()?.leaseUntil <= this.now();
+      } catch (error) { if (!this.stopped && this.foreground()) this.status('error'); }
+      finally { this.renewing = false; }
+      // A delayed Firebase retry can commit a deadline captured more than
+      // fourteen seconds ago. Refresh it immediately with a fresh timestamp.
+      if (expiredCommit && this.connected && !this.stopped && this.foreground()) return this.renew();
+    }
+    async change(fn) {
+      if (!this.connected || this.stopped) throw new Error('offline');
+      if (!this.foreground()) throw new Error('not_available');
+      const now = this.now();
+      const result = await this.ref.transaction(doc => {
+        if (!this.liveOwner(doc, now)) return;
+        const next = fn(doc.state || null);
+        if (!next || next === doc.state) return;
+        const opening = next.sessionId !== doc.state?.sessionId && this.openingCards
+          ? { openingProjection: { sessionId: next.sessionId, cards: clone(this.openingCards) } } : {};
+        return Object.assign({}, doc, opening, { state: next, revision: (doc.revision || 0) + 1,
+          ownerMode: this.mode, ownerModeClient: this.client, ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '', leaseUntil: now + 14000 });
+      }, undefined, false);
+      if (!result.committed) throw new Error('not_available');
+      return result.snapshot.val().state;
     }
     connect() {
       super.connect();
@@ -42,7 +173,7 @@ var DIXIT_SYNC = (() => {
     }
     tickReveal() {
       const state = this.doc?.state;
-      if (!state || state.phase !== 'REVEALING' || state.paused || !this.own || !this.connected || this.stopped || this.suspended) return Promise.resolve(null);
+      if (!state || state.phase !== 'REVEALING' || state.paused || !this.liveOwner() || this.suspended) return Promise.resolve(null);
       const deadline = state.revealStage === 'answer' ? state.revealPopularAt : state.revealAnswerAt;
       if (this.now() < deadline) return Promise.resolve(null);
       if (this.revealAdvancing) return this.revealAdvancing;
@@ -52,14 +183,13 @@ var DIXIT_SYNC = (() => {
       }).finally(() => { this.revealAdvancing = null; });
       return this.revealAdvancing;
     }
-    close() { clearInterval(this.revealTimer); super.close(); }
+    close() { clearInterval(this.revealTimer); this.pendingProjections.clear(); super.close(); }
     captureOpeningCards() {
       this.openingCards = {};
       for (let n = 1; n <= this.room.count; n++) this.openingCards[n] = clone(this.room.answers[n]);
     }
     start({ hostPlayerNum = 1 } = {}) {
       return this.enqueue(async () => {
-        await this.outgoing;
         if (!Number.isInteger(this.room.count) || this.room.count < 3 || this.room.count > 8) throw new Error('player_count');
         const id = uid(), randomSeed = seed(), now = this.now();
         const roster = Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
@@ -83,7 +213,6 @@ var DIXIT_SYNC = (() => {
         turnId: extra.turnId == null ? state.turnId : extra.turnId, now: this.now(), seed: seed() });
       return this.enqueue(async () => {
         if (this.suspended) throw new Error('not_available');
-        await this.outgoing;
         if (this.doc?.state?.sessionId === command.sessionId && DIXIT_ENGINE.list(this.doc.state.seen?.[0]).includes(command.id)) {
           const reply = this.doc.state.replies?.[0];
           if (reply?.id === command.id && reply.error) throw new Error(reply.error);
@@ -103,7 +232,7 @@ var DIXIT_SYNC = (() => {
     }
     receive(playerNum, data) {
       const state = this.doc?.state;
-      if (!state || !this.own || this.suspended || this.stopped) return;
+      if (!state || !this.liveOwner() || this.suspended) return;
       if (!Number.isInteger(playerNum) || !DIXIT_ENGINE.list(state.roster).some(p => p.playerNum === playerNum)) return;
       const ours = data?.game === 'dixit' && data.dixit?.version === 1 && data.dixit.sessionId === state.sessionId;
       if (!ours) {
@@ -121,9 +250,9 @@ var DIXIT_SYNC = (() => {
       this.incoming.add(key);
       const command = Object.assign({}, action, { actor: playerNum, now: this.now(), seed: seed() });
       this.enqueue(async () => {
-        if (this.suspended || this.stopped) return null;
+        if (this.suspended || !this.liveOwner()) return null;
         const restarting = command.type === 'restart' && playerNum === (this.doc?.state?.hostPlayerNum || 1);
-        if (restarting) { await this.outgoing; this.captureOpeningCards(); this.restartingSession = command.sessionId; }
+        if (restarting) { this.captureOpeningCards(); this.restartingSession = command.sessionId; }
         try { return await this.change(current => DIXIT_ENGINE.apply(current, command)); }
         finally { if (restarting) this.restartingSession = null; }
       })
@@ -132,46 +261,68 @@ var DIXIT_SYNC = (() => {
     }
     project() {
       const doc = this.doc;
-      if (!doc?.state) return;
+      if (!doc?.state || !this.liveOwner() || this.suspended) return;
       this.tickReveal();
       if (this.restartingSession && doc.state.sessionId !== this.restartingSession) {
-        this.initialSession = doc.state.sessionId; this.seenCards.clear();
+        this.initialSession = doc.state.sessionId; this.seenCards.clear(); this.projectedSeats.clear();
       }
-      this.outgoing = this.outgoing.then(async () => {
-        if (!this.own || this.suspended || this.stopped || this.doc?.state?.sessionId !== doc.state.sessionId) return;
-        const initial = this.initialSession === doc.state.sessionId;
-        let complete = true;
-        // Project only the immutable session's seats, never an unexpected
-        // changed Hub roster or a room-wide state/deck document.
-        for (const player of DIXIT_ENGINE.list(doc.state.roster)) {
-          if (this.doc?.state?.sessionId !== doc.state.sessionId || this.suspended || !this.own || this.stopped) return;
-          const playerNum = player.playerNum, ref = this.room.playerRef(playerNum - 1);
-          if (!ref) { complete = false; continue; }
-          const payload = DIXIT_ENGINE.view(doc.state, playerNum, this.now());
-          payload.dixit.version = 1;
-          payload.dixit.revision = doc.revision || 0;
-          payload.dixit.hostLiveUntil = doc.leaseUntil;
-          const result = await ref.transaction(old => {
-            if (!this.own || this.stopped || this.suspended || this.doc?.state?.sessionId !== doc.state.sessionId) return;
-            const currentSession = old?.game === 'dixit' && old.dixit?.sessionId === doc.state.sessionId;
-            if (!currentSession && (!initial || !same(old, this.openingCards?.[playerNum]))) return;
-            if (currentSession && old.dixit.revision > payload.dixit.revision) return;
-            if (currentSession && old.dixit.revision === payload.dixit.revision && old.dixit.hostLiveUntil > payload.dixit.hostLiveUntil) return;
-            // Opening a session clears another game's/old session's mailbox.
-            // Every same-session projection preserves concurrent dixitAction.
-            return currentSession ? Object.assign({}, old, payload) : payload;
-          }, undefined, false);
-          if (!result.committed) {
-            complete = false;
-            const other = result.snapshot.val();
-            const currentSession = other?.game === 'dixit' && other.dixit?.sessionId === doc.state.sessionId;
-            if (!currentSession && (!initial || !same(other, this.openingCards?.[playerNum]))) {
-              this.suspended = true; this.status('switched'); break;
-            }
+      // Each private seat has one in-flight write and one latest snapshot.
+      // A slow seat never holds the other players' heartbeat or an action.
+      for (const player of DIXIT_ENGINE.list(doc.state.roster)) {
+        const seat = player.playerNum;
+        this.pendingProjections.set(seat, { doc, initial: this.initialSession === doc.state.sessionId, openingCards: this.openingCards });
+        if (this.projectionTasks.has(seat)) continue;
+        const task = (async () => {
+          while (this.pendingProjections.has(seat)) {
+            const next = this.pendingProjections.get(seat); this.pendingProjections.delete(seat);
+            await this.projectSeat(seat, next);
           }
+        })().catch(() => { if (this.liveOwner() && !this.suspended) this.status('error'); }).finally(() => {
+          this.projectionTasks.delete(seat);
+          if (this.pendingProjections.has(seat)) this.project();
+        });
+        this.projectionTasks.set(seat, task);
+      }
+      this.outgoing = Promise.all([...this.projectionTasks.values()]).then(() => {});
+    }
+    currentProjection(doc) {
+      return this.liveOwner() && !this.suspended && this.doc?.state?.sessionId === doc.state.sessionId
+        && this.doc.revision === doc.revision && this.doc.leaseUntil === doc.leaseUntil
+        && (this.doc.leaseEpoch || 0) === (doc.leaseEpoch || 0);
+    }
+    async projectSeat(playerNum, { doc, initial, openingCards }) {
+      if (!this.currentProjection(doc)) return;
+      const ref = this.room.playerRef(playerNum - 1);
+      if (!ref) return;
+      const payload = DIXIT_ENGINE.view(doc.state, playerNum, this.now());
+      payload.dixit.version = 1;
+      payload.dixit.revision = doc.revision || 0;
+      payload.dixit.hostLiveUntil = doc.leaseUntil;
+      payload.dixit.hostEpoch = doc.leaseEpoch || 0;
+      const result = await ref.transaction(old => {
+        if (!this.currentProjection(doc)) return;
+        const currentSession = old?.game === 'dixit' && old.dixit?.sessionId === doc.state.sessionId;
+        if (!currentSession && (!initial || !same(old, openingCards?.[playerNum]))) return;
+        if (currentSession && (old.dixit.hostEpoch || 0) > payload.dixit.hostEpoch) return;
+        if (currentSession && old.dixit.revision > payload.dixit.revision) return;
+        if (currentSession && old.dixit.revision === payload.dixit.revision && old.dixit.hostLiveUntil > payload.dixit.hostLiveUntil) return;
+        // Every same-session projection preserves concurrent dixitAction.
+        return currentSession ? Object.assign({}, old, payload) : payload;
+      }, undefined, false);
+      if (!result.committed && this.currentProjection(doc)) {
+        const other = result.snapshot.val();
+        const currentSession = other?.game === 'dixit' && other.dixit?.sessionId === doc.state.sessionId;
+        if (!currentSession && (!initial || !same(other, openingCards?.[playerNum]))) {
+          this.suspended = true; this.status('switched');
         }
-        if (initial && complete) { this.initialSession = null; this.openingCards = null; }
-      }).catch(() => this.status('error'));
+      }
+      if (initial && result.committed && this.currentProjection(doc)) {
+        const key = [doc.state.sessionId, doc.revision, doc.leaseUntil, doc.leaseEpoch || 0].join(':');
+        this.projectedSeats.set(playerNum, key);
+        if (DIXIT_ENGINE.list(doc.state.roster).every(p => this.projectedSeats.get(p.playerNum) === key)) {
+          this.initialSession = null; this.openingCards = null; this.projectedSeats.clear();
+        }
+      }
     }
   }
   return { Host, uid };

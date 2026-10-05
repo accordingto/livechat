@@ -11,11 +11,11 @@
     submitted:['已秘密出牌。等其他玩家選牌。','Cards submitted. Waiting for the other players.'], voteHint:['猜哪張是說書人的圖卡。不能投自己出的牌。','Which card belongs to the Storyteller? You cannot vote for your own cards.'],
     vote:['確認秘密投票','Confirm secret vote'], voted:['已投票，揭曉前不會公開你的選擇。','Vote submitted. Your choice stays secret until the reveal.'], tellerVote:['說書人不投票。等其他玩家猜你的圖卡。','The Storyteller does not vote. Wait for everyone to guess your card.'],
     ownCard:['你的圖卡，不能投票','Your card — you cannot vote for it'], hand:['你的手牌','Your hand'], table:['展示的圖卡','Revealed picture cards'],
-    selectCount:['已選 {n}／{total} 張','Selected {n} / {total}'], selectHint:['點圖卡選牌；「放大看牌」只看圖，不會出牌。','Tap a picture to select it. Enlarge only views the picture; it never submits a card.'], ready:['準備好了','Ready'], unready:['取消準備','Not ready'], readyStatus:['已準備','Ready'], notReady:['等待準備','Not ready'],
+    selectCount:['已選 {n}／{total} 張','Selected {n} / {total}'], selectHint:['點圖卡選牌，選好後再確認。','Tap a picture to select it, then confirm your choice.'], ready:['準備好了','Ready'], unready:['取消準備','Not ready'], readyStatus:['已準備','Ready'], notReady:['等待準備','Not ready'],
     deal:['發牌並開始','Deal and start'], first:['首位說書人','First Storyteller'], random:['隨機','Random'], lobby:['每人打開自己的玩家卡片','Open your own player card'],
     lobbyHint:['使用首頁原本的玩家連結。主持人若也玩，請從自己的玩家卡片選牌與投票。','Use your existing Hub player links. Hosts who are playing use their own player card to choose cards and vote.'],
     shared:['共同牌桌','Shared table'], private:['{name} 的私人手牌','{name}’s private hand'], open:['開啟這桌遊戲','Open this table'], setup:['回首頁設定房間','Set up room in Hub'],
-    setupHint:['請先在首頁設定 3–8 人房間。','Set up a 3–8-player room in the Hub first.'], keepOpen:['共同牌桌保持開啟；所有主持操作都能在自己的玩家卡片完成。','Keep the shared table open; manage the game from your own player card.'],
+    setupHint:['請先在首頁設定 3–8 人房間。','Set up a 3–8-player room in the Hub first.'], keepOpen:['請用開房間時的同一個瀏覽器開啟 HOST 玩家卡片，卡片會自動維持遊戲同步。','Open your host player card in the browser used to create this room; your card will keep the game in sync.'],
     reveal:['揭曉並計分','Reveal and score'], next:['補牌，下一輪','Refill and start next round'], pause:['暫停','Pause'], resume:['繼續','Resume'], paused:['遊戲已暫停','Game paused'], cancel:['結束這局','Cancel game'], restart:['原班人馬再玩一局','Play again with the same players'],
     confirmCancel:['確定結束這局？這局不會產生勝者。','Cancel this game? This game will have no winner.'], confirmRestart:['重新發牌並清除這局分數？','Deal again and clear this game’s scores?'],
     progressSubmit:['已出牌 {n}／{total} 人','Cards submitted: {n} / {total}'], progressVote:['已投票 {n}／{total} 人','Votes received: {n} / {total}'],
@@ -27,7 +27,7 @@
     rule3:['非說書人各秘密投 1 票，不能投自己的牌。全員投完才揭曉圖卡主人、選票和分數。','Each non-Storyteller votes once, secretly, never for their own card. Owners, votes, and points are revealed only after everyone votes.'],
     rule4:['用過的牌棄掉，補滿手牌，由下一位接任說書人。牌庫不足時重洗棄牌。有人在輪末達到 30 分即結束，最高分獲勝，同分並列。','Discard played cards, refill hands, and pass the Storyteller role to the next player. Reshuffle discards when needed. End after a round with a score of 30 or more. Highest score wins; ties share the win.'],
     artNote:['84 張原創插畫；玩法依據 Dixit 現行基本版。這是非官方改編，卡面不是原版圖卡。','84 original illustrations using the current Dixit base-game rules. An unofficial adaptation; the art is independently created.'],
-    sources:['官方規則','Official rules'], enlarge:['放大圖卡 {n}','Enlarge card {n}'], inspect:['放大看牌','Enlarge picture'], focus:['全畫面看牌','Picture focus view'], previous:['上一張圖卡','Previous picture'], following:['下一張圖卡','Next picture'], overview:['所有圖卡','All pictures'], viewOnly:['只看圖，不會選牌或送出','Viewing only — no cards are selected or submitted'], close:['回到牌桌','Back to table'], card:['圖卡 {n}','Card {n}'], answer:['說書人的圖卡','The Storyteller’s card'],
+    sources:['官方規則','Official rules'], card:['圖卡 {n}','Card {n}'], answer:['說書人的圖卡','The Storyteller’s card'],
     scoreTarget:['先到 30 分，最高分獲勝','Reach 30; highest score wins'], deck:['牌庫：{n} 張','Draw pile: {n}'],
     offline:['暫時離線，操作已停用。','Connection lost. Actions are paused.'], hostAway:['主持頁未連線，請主持人重新開啟。','The host page is offline. Ask the host to reopen it.'], otherHost:['另一個主持分頁正在管理。','Another host tab is managing this table.'], switched:['玩家卡片已切到其他遊戲。','Player cards have switched to another game.'],
     pending:['已送出，等待同步…','Sent. Waiting for confirmation…'], failed:['無法送出，請確認連線後重試。','Could not send. Check your connection and try again.'], stale:['牌局已更新，請重新選擇。','The game has moved on. Please choose again.'], invalid:['這個階段不能這樣操作，請重新選擇。','That action is not available now. Please choose again.'],
@@ -50,7 +50,7 @@
   function art(id,artworkVersion=2,eager=false){const p=picture(id,artworkVersion);return p.atlas?'<span class="dx-art dx-art-atlas" role="img" aria-label="'+esc(p.alt)+'" style="background-image:url(&quot;'+esc(p.src)+'&quot;);background-position:'+(p.col*100/3)+'% '+(p.row*50)+'%"></span>':'<img class="dx-art" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" loading="'+(eager?'eager':'lazy')+'" decoding="async" width="768" height="1024">';}
   function cardHTML(id,n,{interactive=false,selected=false,disabled=false,own=false,answer=false,owner='',votes=null,artworkVersion=2,eager=false}={}){
     const tag=interactive?'button':'div';
-    return '<div class="dx-card-wrap"><'+tag+' class="dx-picture'+(selected?' is-selected':'')+(answer?' is-answer':'')+'"'+(interactive?' type="button" data-dx-card="'+esc(id)+'" aria-label="'+esc(t('card',{n})+(own?' — '+t('ownCard'):''))+'" aria-pressed="'+selected+'"'+(disabled?' disabled':''):'')+'>'+art(id,artworkVersion,eager)+'<span class="dx-number">'+n+'</span>'+(own?'<span class="dx-own">'+esc(t('ownCard'))+'</span>':'')+(answer?'<span class="dx-answer">'+esc(t('answer'))+'</span>':'')+'</'+tag+'><button type="button" class="dx-zoom" data-dx-zoom="'+esc(id)+'" aria-label="'+esc(t('enlarge',{n}))+'"><span aria-hidden="true">⤢</span> '+esc(t('inspect'))+'</button>'+(owner?'<div class="dx-owner">'+esc(owner)+(votes!=null?' · '+esc(t('votes',{n:votes})): '')+'</div>':'')+'</div>';
+    return '<div class="dx-card-wrap" data-dx-picture="'+esc(id)+'">'+(owner?'<div class="dx-owner">'+esc(owner)+(votes!=null?' <span>· '+esc(t('votes',{n:votes}))+'</span>':'')+'</div>':'')+'<'+tag+' class="dx-picture'+(selected?' is-selected':'')+(answer?' is-answer':'')+'"'+(interactive?' type="button" data-dx-card="'+esc(id)+'" aria-label="'+esc(t('card',{n})+(own?' — '+t('ownCard'):''))+'" aria-pressed="'+selected+'"'+(disabled?' disabled':''):'')+'>'+art(id,artworkVersion,eager)+'<span class="dx-number">'+n+'</span>'+(own?'<span class="dx-own">'+esc(t('ownCard'))+'</span>':'')+'</'+tag+'></div>';
   }
   const btn=(type,label,disabled=false,secondary=false)=>'<button type="button" class="dx-button'+(secondary?' dx-secondary':'')+'" data-dx-action="'+type+'"'+(disabled?' disabled':'')+'>'+esc(t(label))+'</button>';
   function rulesHTML(){return '<details class="dx-help" data-dx-rules><summary>'+esc(t('help'))+'</summary>'+['rule1','rule2','rule3','some','all','none','bonusRule','rule4'].map(k=>'<p>'+esc(t(k))+'</p>').join('')+'<p class="dx-muted">'+esc(t('artNote'))+' <a href="https://www.libellud.com/game/dixit/" target="_blank" rel="noopener noreferrer">'+esc(t('sources'))+'</a></p></details>';}
@@ -88,7 +88,7 @@
     if(!answer)return '';
     const rows=list(s.result?.rows),voteCounts=table.map(id=>({id,count:rows.filter(p=>p.voteCardId===id).length})),maxVotes=s.result?.maxVotes??Math.max(0,...voteCounts.map(p=>p.count));
     const popular=finished?popularCards(s).slice().sort((left,right)=>Number(left===answer)-Number(right===answer)):[];
-    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout" data-dx-gallery="result"><div class="dx-story-reveal"><h2>'+esc(t('answer'))+'</h2>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><h2>'+esc(t(popular.length>1?'mostVotedTie':'mostVoted'))+' <span>'+esc(t('votes',{n:maxVotes}))+'</span></h2><div class="dx-popular-gallery">'+popular.map(id=>cardHTML(id,table.indexOf(id)+1,{artworkVersion:s.artworkVersion||1,eager:true})).join('')+'</div></div>':'')+'</div></section>';
+    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><h2>'+esc(t('answer'))+'</h2>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,owner:name(s,s.storyteller),artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><h2>'+esc(t(popular.length>1?'mostVotedTie':'mostVoted'))+' <span>'+esc(t('votes',{n:maxVotes}))+'</span></h2><div class="dx-popular-gallery">'+popular.map(id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return cardHTML(id,table.indexOf(id)+1,{owner:owner?name(s,owner.playerNum):id===answer?name(s,s.storyteller):'',artworkVersion:s.artworkVersion||1,eager:true});}).join('')+'</div></div>':'')+'</div></section>';
   }
   function tableHTML(payload,options={}){
     const s=payload.dixit||payload,host=!!options.host,controls=host||s.hostControls===true,a={...s.actions},selected=options.selected||new Set(),now=clockNow(options);
@@ -105,7 +105,7 @@
       else if(s.clue)body='<blockquote class="dx-clue">'+esc(s.clue)+'</blockquote>';
       if(s.phase==='REVEALING'||finished)body+=revealHTML(s,now);
       let played='';
-      if(table.length&&s.phase!=='REVEALING')played='<section class="dx-panel dx-card-panel"><h2>'+esc(t('table'))+'</h2>'+choiceBar({vote:a.vote},selected,count)+'<div class="dx-table" data-dx-gallery="table">'+table.map((id,i)=>{
+      if(table.length&&s.phase!=='REVEALING')played='<section class="dx-panel dx-card-panel"><h2>'+esc(t('table'))+'</h2>'+choiceBar({vote:a.vote},selected,count)+'<div class="dx-table">'+table.map((id,i)=>{
         const own=!host&&list(s.ownSubmitted).includes(id),owner=rows.find(p=>list(p.cardIds).includes(id));
         return cardHTML(id,i+1,{interactive:!!a.vote,selected:selected.has(id),disabled:own,own:own&&!finished,answer:finished&&s.result?.answerCardId===id,owner:finished&&owner?name(s,owner.playerNum):'',votes:finished?rows.filter(p=>p.voteCardId===id).length:null,artworkVersion:s.artworkVersion||1});
       }).join('')+'</div>'+(!host&&s.phase==='VOTE'&&voted===others.length?'<p>'+esc(t('waitingReveal'))+'</p>':'')+'</section>';
@@ -118,7 +118,7 @@
       }
       if(!host&&list(s.hand).length&&!['REVEALING','REVEAL','FINISHED'].includes(s.phase)){
         const can=!!(a.story||a.submit);
-        body+='<section class="dx-panel dx-hand"><h2>'+esc(t('hand'))+'</h2>'+choiceBar({story:a.story,submit:a.submit},selected,count)+(can?'<p class="dx-select-hint">'+esc(t('selectHint'))+'</p>':'')+'<div class="dx-hand-grid" data-dx-gallery="hand">'+list(s.hand).map((id,i)=>cardHTML(id,i+1,{interactive:can,selected:selected.has(id),artworkVersion:s.artworkVersion||1})).join('')+'</div></section>';
+        body+='<section class="dx-panel dx-hand"><h2>'+esc(t('hand'))+'</h2>'+choiceBar({story:a.story,submit:a.submit},selected,count)+(can?'<p class="dx-select-hint">'+esc(t('selectHint'))+'</p>':'')+'<div class="dx-hand-grid">'+list(s.hand).map((id,i)=>cardHTML(id,i+1,{interactive:can,selected:selected.has(id),artworkVersion:s.artworkVersion||1})).join('')+'</div></section>';
       }
     }
     const primary=controls&&s.phase==='VOTE'?btn('reveal','reveal',!a.reveal):a.nextRound?btn('nextRound','next'):'';
@@ -128,26 +128,13 @@
   }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.error='';this.errorCode='';this.signature='';this.modal=null;this.focusCards=[];this.confirmation='';this.revealVisualSignature='';this.timer=setInterval(()=>this.paint(),200);
+      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.timer=setInterval(()=>this.paint(),200);
       this.click=e=>this.onClick(e);el.addEventListener('click',this.click);
-      this.key=e=>{
-        if(!this.modal)return;
-        if(e.key==='Escape'){e.preventDefault();this.closeModal();}
-        else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();this.stepFocus(e.key==='ArrowLeft'?-1:1);}
-        else if(e.key==='Tab'){
-          const buttons=Array.from(this.modal.querySelectorAll('button:not([disabled])')),active=this.el.ownerDocument.activeElement;
-          if(!buttons.length)return;
-          const index=buttons.indexOf(active);
-          if(e.shiftKey&&index<=0){e.preventDefault();buttons[buttons.length-1].focus();}
-          else if(!e.shiftKey&&(index===buttons.length-1||index<0)){e.preventDefault();buttons[0].focus();}
-        }
-      };
-      el.addEventListener('keydown',this.key);
     }
     update(payload){
       const previous=this.payload?.dixit,next=payload?.dixit;this.payload=payload;if(!next)return;
-      if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.selected.clear();this.error='';this.errorCode='';this.confirmation='';this.closeModal(false);}
-      if(next.phase==='REVEALING'&&previous?.phase!=='REVEALING'){this.selected.clear();this.closeModal(false);}
+      if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.selected.clear();this.error='';this.errorCode='';this.confirmation='';}
+      if(next.phase==='REVEALING'&&previous?.phase!=='REVEALING')this.selected.clear();
       if(this.pending&&next.reply?.id===this.pending.id){this.errorCode=next.reply.error||'';this.error=this.errorCode?errorText(this.errorCode):'';this.pending=null;clearTimeout(this.pendingTimer);}
       else if(this.pending&&(this.pending.sessionId!==next.sessionId||this.pending.turnId!==next.turnId)){this.pending=null;clearTimeout(this.pendingTimer);}
       const clean={...next};delete clean.revision;delete clean.hostLiveUntil;
@@ -163,26 +150,20 @@
       const message=this.el.querySelector('[data-dx-message]');if(message)message.textContent=this.error||this.pending&&t('pending')||'';
       const bar=this.el.querySelector('[data-dx-phase]');if(bar?.getBoundingClientRect&&this.el.style?.setProperty)this.el.style.setProperty('--dx-phase-height',Math.ceil(bar.getBoundingClientRect().height)+'px');
       if(root.innerWidth>760&&this.el.style?.setProperty){
-        const picture=this.el.querySelector('.dx-story-reveal .dx-picture'),zoom=this.el.querySelector('.dx-story-reveal .dx-zoom');
-        if(picture?.getBoundingClientRect){const available=Math.max(180,root.innerHeight-picture.getBoundingClientRect().top-(zoom?.getBoundingClientRect().height||44)-25);this.el.style.setProperty('--dx-reveal-picture-width',Math.floor(available*3/4)+'px');}
+        const picture=this.el.querySelector('.dx-story-reveal .dx-picture');
+        if(picture?.getBoundingClientRect){const available=Math.max(180,root.innerHeight-picture.getBoundingClientRect().top-25);this.el.style.setProperty('--dx-reveal-picture-width',Math.floor(available*3/4)+'px');}
       }
       this.el.querySelectorAll('[data-dx-action],[data-dx-card]').forEach(b=>{if(blocked){if(!b.disabled)b.dataset.dxBlocked='1';b.disabled=true;}else if(b.dataset.dxBlocked){b.disabled=false;delete b.dataset.dxBlocked;}});
     }
     render(){
       if(!this.payload)return;
-      const open=this.el.querySelector('[data-dx-rules]')?.open,detailsOpen=this.el.querySelector('[data-dx-details]')?.open,focusId=this.modal&&this.focusCards[this.focusIndex],group=this.focusGroup;
+      const open=this.el.querySelector('[data-dx-rules]')?.open,detailsOpen=this.el.querySelector('[data-dx-details]')?.open;
       this.revealVisualSignature=revealVisual(this.payload.dixit,clockNow(this.options));
-      this.closeModal(false);this.el.innerHTML=tableHTML(this.payload,{...this.options,selected:this.selected,confirmation:this.confirmation});
+      this.el.innerHTML=tableHTML(this.payload,{...this.options,selected:this.selected,confirmation:this.confirmation});
       if(open)this.el.querySelector('[data-dx-rules]').open=true;if(detailsOpen)this.el.querySelector('[data-dx-details]').open=true;this.paint();
-      if(focusId)this.openModal(focusId,group);
     }
     async onClick(e){
-      const zoom=e.target.closest('[data-dx-zoom]');if(zoom){this.openModal(zoom.dataset.dxZoom,zoom.closest('[data-dx-gallery]')?.dataset.dxGallery);return;}
-      if(e.target.closest('[data-dx-close]')){this.closeModal();return;}
-      const step=e.target.closest('[data-dx-focus-step]');if(step){if(!step.disabled)this.stepFocus(Number(step.dataset.dxFocusStep));return;}
-      const overview=e.target.closest('[data-dx-focus-index]');if(overview){this.focusIndex=Number(overview.dataset.dxFocusIndex);this.renderFocus();return;}
       if(e.target.closest('[data-dx-dismiss-confirm]')){this.confirmation='';this.render();return;}
-      if(this.modal)return;
       const c=e.target.closest('[data-dx-card]');
       if(c&&!c.disabled&&!this.blocked()){
         const s=this.payload.dixit,id=c.dataset.dxCard,a=s.actions||{},max=a.story||a.vote?1:s.submitCount;
@@ -206,34 +187,7 @@
       this.pendingTimer=setTimeout(()=>{if(this.pending?.id===command.id){this.pending=null;this.errorCode='offline';this.error=t('failed');this.render();}},15000);
       try{await this.options.send(command);}catch(err){clearTimeout(this.pendingTimer);this.pending=null;this.errorCode=err.message;this.error=errorText(err.message);this.render();}
     }
-    openModal(id,group){
-      const s=this.payload?.dixit;if(!s)return;
-      const hand=!this.options.host?list(s.hand):[],table=list(s.table),result=[s.answerCardId||s.result?.answerCardId,...(s.result?popularCards(s):[])].filter(Boolean);
-      group=['hand','table','result'].includes(group)?group:hand.includes(id)?'hand':'table';
-      const cards=group==='hand'?hand:group==='result'?[...new Set(result)]:table;if(!cards.includes(id))return;
-      this.closeModal();this.focusBefore=this.el.ownerDocument.activeElement;this.focusCards=cards.slice();this.focusIndex=cards.indexOf(id);this.focusGroup=group;
-      const modal=this.el.ownerDocument.createElement('div');modal.className='dx-modal';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label',t('focus'));
-      this.scrollBefore=this.el.ownerDocument.body?.style.overflow;
-      if(this.el.ownerDocument.body)this.el.ownerDocument.body.style.overflow='hidden';
-      this.modal=modal;this.el.append(modal);this.renderFocus();modal.querySelector('[data-dx-close]')?.focus();
-    }
-    renderFocus(){
-      if(!this.modal||!this.focusCards.length)return;
-      const index=Math.max(0,Math.min(this.focusCards.length-1,this.focusIndex)),id=this.focusCards[index];this.focusIndex=index;
-      const active=this.el.ownerDocument.activeElement,step=active?.dataset?.dxFocusStep,overview=active?.dataset?.dxFocusIndex;
-      this.modal.innerHTML='<div class="dx-modal-top"><strong>'+esc(t(this.focusGroup==='hand'?'hand':this.focusGroup==='result'?'revealFocus':'table'))+'</strong><button type="button" class="dx-button dx-secondary dx-modal-close" data-dx-close>'+esc(t('close'))+' <span aria-hidden="true">✕</span></button></div>'+
-        '<div class="dx-focus-stage"><button type="button" class="dx-focus-nav" data-dx-focus-step="-1" aria-label="'+esc(t('previous'))+'"'+(index===0?' disabled':'')+'>‹</button><div class="dx-modal-picture">'+art(id,this.payload.dixit.artworkVersion||1,true)+'</div><button type="button" class="dx-focus-nav" data-dx-focus-step="1" aria-label="'+esc(t('following'))+'"'+(index===this.focusCards.length-1?' disabled':'')+'>›</button></div>'+
-        '<div class="dx-focus-footer"><p class="dx-focus-count" role="status">'+(index+1)+' / '+this.focusCards.length+' <span>'+esc(t('viewOnly'))+'</span></p><div class="dx-focus-overview" aria-label="'+esc(t('overview'))+'">'+this.focusCards.map((card,i)=>'<button type="button" data-dx-focus-index="'+i+'" aria-label="'+esc(t('card',{n:i+1}))+'"'+(i===index?' aria-current="true"':'')+'>'+art(card,this.payload.dixit.artworkVersion||1)+'<span class="dx-number">'+(i+1)+'</span></button>').join('')+'</div></div>';
-      if(step!=null){const button=this.modal.querySelector('[data-dx-focus-step="'+step+'"]');if(button&&!button.disabled)button.focus();else this.modal.querySelector('[data-dx-close]')?.focus();}
-      else if(overview!=null)this.modal.querySelector('[data-dx-focus-index="'+overview+'"]')?.focus();
-    }
-    stepFocus(step){if(!this.modal)return;const next=this.focusIndex+step;if(next<0||next>=this.focusCards.length)return;this.focusIndex=next;this.renderFocus();}
-    closeModal(restore=true){
-      if(!this.modal)return;this.modal.remove();this.modal=null;this.focusCards=[];
-      if(this.el.ownerDocument.body)this.el.ownerDocument.body.style.overflow=this.scrollBefore||'';
-      if(restore)this.focusBefore?.focus?.({preventScroll:true});
-    }
-    destroy(){clearInterval(this.timer);clearTimeout(this.pendingTimer);this.el.removeEventListener('click',this.click);this.el.removeEventListener('keydown',this.key);this.closeModal();}
+    destroy(){clearInterval(this.timer);clearTimeout(this.pendingTimer);this.el.removeEventListener('click',this.click);}
   }
   function errorText(error){return ['stale_turn','stale_session'].includes(error)?t('stale'):error==='paused'?t('paused'):error==='invalid_clue'?t('refreshHost'):['offline','not_available'].includes(error)?t('failed'):t('invalid');}
   root.DIXIT_UI={Card,t,esc,tableHTML,cardHTML,rulesHTML,errorText,picture,phaseInfo,revealVisual};
