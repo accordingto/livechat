@@ -7,13 +7,15 @@
   let sync=null,card=null,payload=null,state=null,status='loading',busy=false,problem='';
   const roster=[{playerNum:1,name:'Alex'},{playerNum:2,name:'Jamie'},{playerNum:3,name:'Sam'},{playerNum:4,name:'Riley'}];
   const seed=()=>crypto.getRandomValues(new Uint32Array(1))[0];
+  const canOpen=()=>demo||!!(sync?.connected&&sync.own&&['ready','switched'].includes(status));
   function labels(){
     byId('once-open').textContent=t('openTable');byId('once-setup-link').textContent=t('setup');
-    byId('once-setup-help').textContent=t(status==='setupNeeded'?'tableNeeded':'hostHint');
+    byId('once-setup-help').textContent=t(status==='switched'?'switchTableHint':status==='setupNeeded'?'tableNeeded':'hostHint');
     byId('once-host-status').textContent=problem||({setupNeeded:t('tableNeeded'),noFirebase:t('offline'),offline:t('offline'),other_host:t('otherHost'),switched:t('switched'),error:t('offline'),loading:'',ready:''}[status]||'');
-    byId('once-open').disabled=busy||!demo&&(!sync||!sync.own||status!=='ready');
+    byId('once-open').disabled=busy||!canOpen();
     byId('once-setup-link').hidden=demo;
     byId('once-setup').hidden=!!payload&&status!=='switched';
+    byId('once-table').hidden=status==='switched';
     if(card){card.options.disabled=()=>!demo&&status!=='ready';card.render();}
   }
   function show(next){
@@ -31,7 +33,7 @@
     card.update(next);labels();
   }
   byId('once-open').addEventListener('click',async()=>{
-    if(busy||!demo&&status!=='ready')return;busy=true;problem='';labels();
+    if(busy||!canOpen())return;busy=true;problem='';labels();
     try{
       if(demo){state=ONCE_ENGINE.create({id:crypto.randomUUID(),roster,seed:seed(),now:Date.now()});show(ONCE_ENGINE.view(state,0,Date.now()));}
       else await sync.start();

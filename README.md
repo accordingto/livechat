@@ -43,6 +43,9 @@ buttons or repeated Storyteller label cover the cards. Both reveal headings show
 their vote counts. A five-second score popup follows each new reveal, then leaves
 the pictures until the host continues. Players and scores appear below the cards.
 The host chooses a winning score from 5–100 before dealing (default 30).
+To switch into Dixit or Once Upon a Time from another game, open its host page
+and click **Open this table**. The existing player links switch to the new lobby;
+the previous game does not need an End button.
 See [`dixit-mode.md`](dixit-mode.md) for rules, original artwork, privacy, and validation.
 
 **Once Upon a Time** reuses the

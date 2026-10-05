@@ -63,6 +63,7 @@
     choosePlayer:['選一位玩家','Choose a player'], tableNeeded:['請先在首頁設定 2–6 人房間。','Set up a 2–6-player room in the Hub first.'],
     setup:['回首頁設定房間','Set up room in Hub'], openTable:['開啟這桌遊戲','Open this table'], hostHint:['沿用原玩家連結。主持若也參加，請用自己的玩家卡片操作。保持這頁開啟。','Use the existing player links. If you are playing too, use your own player card. Keep this page open.'],
     otherHost:['另一個主持分頁正在管理這桌。','Another host tab is managing this table.'], switched:['玩家卡片已切到其他遊戲。','Player cards have switched to another game.'],
+    switchTableHint:['玩家目前在其他遊戲。按「開啟這桌遊戲」即可把原玩家卡片切換過來。','Players are in another game. Open this table to switch their existing cards to Once Upon a Time.'],
     artNote:['通用分類插畫，尚非每張牌專屬插畫。','Shared category artwork; not unique illustrations for every card yet.']
   };
   if(typeof I18N!=='undefined')I18N.registerDict('once',Object.fromEntries(Object.entries(dict).map(([k,v])=>[k,{zh:v[0],en:v[1]}])));

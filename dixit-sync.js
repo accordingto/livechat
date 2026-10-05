@@ -9,6 +9,23 @@ var DIXIT_SYNC = (() => {
   const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
   const same = (a, b) => JSON.stringify(a || null) === JSON.stringify(b || null);
   const LEASE_MS = 90000;
+  const has = (value, key) => value != null && Object.prototype.hasOwnProperty.call(value, key);
+  function openingIdentity(data) {
+    const game = data?.game, nested = { dixit: 'dixit', onceupon: 'once', letstalk: 'talk' }[game];
+    if (nested && typeof data[nested]?.sessionId === 'string' && data[nested].sessionId) return [game, nested, data[nested].sessionId];
+    if (game === 'chatwolf' && typeof data.chatWolf?.room === 'string' && typeof data.chatWolf?.token === 'string') return [game, data.chatWolf.room, data.chatWolf.token];
+    if (game === 'buttoncheck' && has(data, 'id')) return [game, data.id];
+    if (['taboo', 'hottake', 'sophies', 'persuade'].includes(game) && has(data, 'round') && has(data, 'voteId')) return [game, data.round, data.voteId];
+    if (['scene', 'conquest'].includes(game) && has(data, 'round')) return [game, data.round];
+    if (game === 'kangaroo' && has(data, 'case')) return [game, data.case];
+    if (game === 'crack' && has(data, 'roundId')) return [game, data.roundId];
+    return null;
+  }
+  function sameOpening(old, previous) {
+    if (same(old, previous)) return true;
+    const identity = openingIdentity(previous);
+    return !!identity && same(openingIdentity(old), identity);
+  }
   function roomAdapter(room) {
     return new Proxy(room, {
       get(target, key) {
@@ -34,12 +51,14 @@ var DIXIT_SYNC = (() => {
       });
       host = this;
       this.openingCards = null;
+      this.openingIntent = null;
       this.restartingSession = null;
       this.revealAdvancing = null;
       this.mode = mode === 'private' ? 'private' : 'shared';
       this.resumeGroup = /^[a-f0-9]{32}$/.test(resumeGroup) ? resumeGroup : '';
       this.browserGroup = /^[a-f0-9]{32}$/.test(browserGroup) ? browserGroup : '';
       this.privateAcquired = false;
+      this.hasAcquired = false;
       this.resumeSuperseded = false;
       this.isActive = isActive;
       this.active = true;
@@ -47,6 +66,7 @@ var DIXIT_SYNC = (() => {
       this.projectionTasks = new Map();
       this.projectedSeats = new Map();
       this.loadedBootstrapSession = null;
+      this.observedCards = new Map();
       // Hidden pages keep executing instead of intentionally dropping the
       // game. A visible host context may replace a hidden executor; the
       // background predecessor cannot steal a live foreground lease back.
@@ -61,13 +81,26 @@ var DIXIT_SYNC = (() => {
         if (this.mode === 'private' && this.privateAcquired && this.resumeGroup && this.doc?.owner !== this.client
           && this.privateOwner(this.doc) && this.doc.ownerResumeGroup === this.resumeGroup) this.resumeSuperseded = true;
         this.own = this.liveOwner();
+        if (this.own) this.hasAcquired = true;
         if (this.mode === 'private' && this.own) this.privateAcquired = true;
+        // Firebase may deliver a renewal of the preceding canonical state
+        // while this explicit opening transaction is awaiting the server.
+        // Only its exact creation ID may clear that temporary suspension,
+        // once; later foreign-card rejection must stay suspended.
+        if (this.own && this.openingIntent === this.doc?.state?.sessionId) {
+          this.suspended = false; this.openingIntent = null;
+        }
+        if (this.own && this.restartingSession && this.doc?.state?.sessionId !== this.restartingSession
+          && this.doc?.openingProjection?.sessionId === this.doc?.state?.sessionId) {
+          this.initialSession = this.doc.state.sessionId; this.seenCards.clear(); this.projectedSeats.clear();
+        }
         if (this.own) this.loadBootstrap();
+        if (this.canonicalSwitched()) this.suspended = true;
         this.reportStatus();
         if (this.doc?.state) this.onChange(this.doc.state);
         if (this.own && !this.suspended && this.doc?.state) {
           this.project();
-          Object.entries(this.room.answers).forEach(([n, data]) => this.receive(Number(n), data));
+          this.observedCards.forEach((data, n) => this.receive(n, data));
         } else if (this.connected && this.canAcquire(this.doc)) this.renew();
       };
     }
@@ -83,15 +116,37 @@ var DIXIT_SYNC = (() => {
     }
     bootstrap(doc) {
       const initial = doc?.openingProjection;
-      if (!doc?.state?.sessionId || initial?.sessionId !== doc.state.sessionId || !initial.cards || Array.isArray(initial.cards)) return null;
-      return DIXIT_ENGINE.list(doc.state.roster).every(p => Object.prototype.hasOwnProperty.call(initial.cards, p.playerNum)) ? initial : null;
+      if (!doc?.state?.sessionId || initial?.complete === true || initial?.sessionId !== doc.state.sessionId) return null;
+      const cards = {}, players = DIXIT_ENGINE.list(doc.state.roster);
+      if (initial.format === 2) {
+        for (const player of players) {
+          const saved = initial.cards?.['seat' + player.playerNum];
+          if (saved?.captured !== true) return null;
+          cards[player.playerNum] = clone(saved.value);
+        }
+      } else {
+        // Earlier writes used numeric keys. RTDB can return those as an
+        // array, omit null seats, or omit cards entirely for an empty room.
+        if (initial.cards != null && typeof initial.cards !== 'object') return null;
+        players.forEach(player => { cards[player.playerNum] = clone(initial.cards?.[player.playerNum]); });
+      }
+      return { ...initial, cards };
     }
     loadBootstrap() {
       const session = this.doc?.state?.sessionId;
       if (!session || this.loadedBootstrapSession === session) return;
+      if (!this.cardsRead(this.doc)) return;
       this.loadedBootstrapSession = session;
       const initial = this.bootstrap(this.doc);
       if (!initial) return;
+      // A newly opened page must not replay an old bootstrap into a room
+      // already showing another game, including pre-completion-marker rooms.
+      // A starter has explicit intent; a replacement must see at least one
+      // current-session seat before finishing an interrupted opening.
+      if (this.initialSession !== session && !DIXIT_ENGINE.list(this.doc.state.roster).some(p => {
+        const data = this.observedCards.get(p.playerNum);
+        return data?.game === 'dixit' && data.dixit?.sessionId === session;
+      })) return;
       // Exact previous seat snapshots stay only under the secret control
       // token. A replacement can safely finish a partially opened session.
       this.initialSession = session; this.openingCards = clone(initial.cards);
@@ -103,11 +158,52 @@ var DIXIT_SYNC = (() => {
         return data?.game === 'dixit' && data.dixit?.version === 1 && data.dixit.sessionId === doc.state.sessionId;
       });
     }
+    rosterChanged(doc = this.doc) {
+      const previousCount = DIXIT_ENGINE.list(doc?.state?.roster).length;
+      return !!(previousCount && Number.isInteger(this.room.count) && this.room.count > 0 && this.room.count !== previousCount);
+    }
+    canonicalSwitched(doc = this.doc) {
+      if (!doc?.state) return false;
+      if (this.rosterChanged(doc)) return true;
+      // Explicit local intent is already authorized and has real snapshots;
+      // it cannot depend on the server's serialization of bootstrap metadata.
+      if (this.initialSession === doc.state.sessionId && this.openingCards) return false;
+      const roster = DIXIT_ENGINE.list(doc.state.roster);
+      return roster.length > 0 && roster.every(p => {
+        if (!this.observedCards.has(p.playerNum)) return false;
+        const data = this.observedCards.get(p.playerNum);
+        return data?.game !== 'dixit' || data.dixit?.sessionId !== doc.state.sessionId;
+      });
+    }
+    observe(playerNum, data) {
+      this.observedCards.set(playerNum, clone(data));
+      if (this.own) this.loadBootstrap();
+      if (this.canonicalSwitched()) { this.suspended = true; this.reportStatus(); }
+      if (this.connected && !this.own && this.canAcquire(this.doc)) this.renew();
+    }
+    cardsRead(doc = this.doc) {
+      return !!doc?.state && !this.rosterChanged(doc) && DIXIT_ENGINE.list(doc.state.roster).every(p => this.observedCards.has(p.playerNum));
+    }
+    async readPlayerCards(count = this.room.count) {
+      if (!this.connected || this.stopped) throw new Error('offline');
+      const cards = {};
+      await Promise.all(Array.from({ length: count }, async (_, i) => {
+        const ref = this.room.playerRef(i); if (!ref) throw new Error('not_available');
+        const snapshot = await ref.once('value');
+        cards[i + 1] = clone(snapshot.val()); this.observe(i + 1, cards[i + 1]);
+      }));
+      return cards;
+    }
     canAcquire(doc, now = this.now()) {
       if (this.stopped || this.resumeSuperseded) return false;
       if (this.mode === 'private' && doc?.state && !this.privateOwner(doc) && !this.bootstrap(doc) && !this.legacyOpeningComplete(doc)) return false;
       if (!doc?.owner || doc.owner === this.client || !(doc.leaseUntil > now)) return true;
+      if (this.suspended && this.hasAcquired) return false;
       if (!this.foreground()) return false;
+      // Only a newly opened main page may reclaim a disconnected old table.
+      // Existing executors cannot repeatedly steal a newer live lease while
+      // their cached seats still show the preceding game.
+      if (this.mode === 'shared' && !this.hasAcquired && this.canonicalSwitched(doc)) return true;
       if (this.hiddenOwner(doc)) return true;
       if (this.mode !== 'private') return false;
       if (!this.privateOwner(doc)) return true;
@@ -161,6 +257,7 @@ var DIXIT_SYNC = (() => {
         if (!result.committed) { this.own = this.liveOwner(); this.reportStatus(); }
         else {
           const committed = result.snapshot.val();
+          if (committed?.owner === this.client) this.hasAcquired = true;
           if (this.mode === 'private' && committed?.owner === this.client) this.privateAcquired = true;
           expiredCommit = committed?.leaseUntil <= this.now();
         }
@@ -178,7 +275,8 @@ var DIXIT_SYNC = (() => {
         const next = fn(doc.state || null);
         if (!next || next === doc.state) return;
         const opening = next.sessionId !== doc.state?.sessionId && this.openingCards
-          ? { openingProjection: { sessionId: next.sessionId, cards: clone(this.openingCards) } } : {};
+          ? { openingProjection: { sessionId: next.sessionId, format: 2, cards: Object.fromEntries(DIXIT_ENGINE.list(next.roster)
+            .map(player => ['seat' + player.playerNum, { captured: true, value: clone(this.openingCards[player.playerNum]) }])) } } : {};
         return Object.assign({}, doc, opening, { state: next, revision: (doc.revision || 0) + 1,
           ownerMode: this.mode, ownerModeClient: this.client, ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '',
           ownerBrowserGroup: this.mode === 'private' ? this.browserGroup : '', ownerBrowserGroupClient: this.client,
@@ -190,6 +288,12 @@ var DIXIT_SYNC = (() => {
     connect() {
       super.connect();
       this.revealTimer = setInterval(() => this.tickReveal(), 200);
+      this.connectedCardsHandler = snap => {
+        if (snap.val() === true) this.readPlayerCards().then(() => {
+          if (this.own && !this.suspended) this.project();
+        }).catch(() => { if (!this.stopped) this.status('error'); });
+      };
+      this.connectedRef.on('value', this.connectedCardsHandler);
     }
     tickReveal() {
       const state = this.doc?.state;
@@ -203,23 +307,20 @@ var DIXIT_SYNC = (() => {
       }).finally(() => { this.revealAdvancing = null; });
       return this.revealAdvancing;
     }
-    close() { clearInterval(this.revealTimer); this.pendingProjections.clear(); super.close(); }
-    captureOpeningCards() {
-      this.openingCards = {};
-      for (let n = 1; n <= this.room.count; n++) this.openingCards[n] = clone(this.room.answers[n]);
-    }
+    close() { clearInterval(this.revealTimer); this.pendingProjections.clear(); if (this.connectedCardsHandler) this.connectedRef.off('value', this.connectedCardsHandler); super.close(); }
+    async captureOpeningCards() { this.openingCards = await this.readPlayerCards(); }
     start({ hostPlayerNum = 1, targetScore = 30 } = {}) {
       return this.enqueue(async () => {
         if (!Number.isInteger(this.room.count) || this.room.count < 3 || this.room.count > 8) throw new Error('player_count');
         const id = uid(), randomSeed = seed(), now = this.now();
         const roster = Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
         const hostSeat = roster.some(p => p.playerNum === Number(hostPlayerNum)) ? Number(hostPlayerNum) : 1;
-        this.captureOpeningCards();
-        this.initialSession = id; this.suspended = false; this.seenCards.clear();
+        await this.captureOpeningCards();
+        this.initialSession = id; this.openingIntent = id; this.suspended = false; this.seenCards.clear();
         try {
           return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now, hostPlayerNum: hostSeat, targetScore }));
         } catch (error) {
-          this.initialSession = null; this.openingCards = null; throw error;
+          this.initialSession = null; this.openingIntent = null; this.openingCards = null; throw error;
         }
       });
     }
@@ -239,7 +340,7 @@ var DIXIT_SYNC = (() => {
           return this.doc.state;
         }
         if (type === 'restart') {
-          this.captureOpeningCards();
+          await this.captureOpeningCards();
           this.restartingSession = command.sessionId;
         }
         try {
@@ -251,6 +352,7 @@ var DIXIT_SYNC = (() => {
       });
     }
     receive(playerNum, data) {
+      if (Number.isInteger(playerNum) && playerNum >= 1 && playerNum <= this.room.count && !this.stopped) this.observe(playerNum, data);
       const state = this.doc?.state;
       if (!state || !this.liveOwner() || this.suspended) return;
       if (!Number.isInteger(playerNum) || !DIXIT_ENGINE.list(state.roster).some(p => p.playerNum === playerNum)) return;
@@ -272,7 +374,7 @@ var DIXIT_SYNC = (() => {
       this.enqueue(async () => {
         if (this.suspended || !this.liveOwner()) return null;
         const restarting = command.type === 'restart' && playerNum === (this.doc?.state?.hostPlayerNum || 1);
-        if (restarting) { this.captureOpeningCards(); this.restartingSession = command.sessionId; }
+        if (restarting) { await this.captureOpeningCards(); this.restartingSession = command.sessionId; }
         try { return await this.change(current => DIXIT_ENGINE.apply(current, command)); }
         finally { if (restarting) this.restartingSession = null; }
       })
@@ -281,11 +383,8 @@ var DIXIT_SYNC = (() => {
     }
     project() {
       const doc = this.doc;
-      if (!doc?.state || !this.liveOwner() || this.suspended) return;
+      if (!doc?.state || !this.cardsRead(doc) || !this.liveOwner() || this.suspended) return;
       this.tickReveal();
-      if (this.restartingSession && doc.state.sessionId !== this.restartingSession) {
-        this.initialSession = doc.state.sessionId; this.seenCards.clear(); this.projectedSeats.clear();
-      }
       // Each private seat has one in-flight write and one latest snapshot.
       // A slow seat never holds the other players' heartbeat or an action.
       for (const player of DIXIT_ENGINE.list(doc.state.roster)) {
@@ -322,17 +421,18 @@ var DIXIT_SYNC = (() => {
       const result = await ref.transaction(old => {
         if (!this.currentProjection(doc)) return;
         const currentSession = old?.game === 'dixit' && old.dixit?.sessionId === doc.state.sessionId;
-        if (!currentSession && (!initial || !same(old, openingCards?.[playerNum]))) return;
+        if (!currentSession && (!initial || !sameOpening(old, openingCards?.[playerNum]))) return;
         if (currentSession && (old.dixit.hostEpoch || 0) > payload.dixit.hostEpoch) return;
         if (currentSession && old.dixit.revision > payload.dixit.revision) return;
         if (currentSession && old.dixit.revision === payload.dixit.revision && old.dixit.hostLiveUntil > payload.dixit.hostLiveUntil) return;
         // Every same-session projection preserves concurrent dixitAction.
         return currentSession ? Object.assign({}, old, payload) : payload;
       }, undefined, false);
+      if (result.committed && this.currentProjection(doc)) this.observedCards.set(playerNum, clone(result.snapshot.val()));
       if (!result.committed && this.currentProjection(doc)) {
         const other = result.snapshot.val();
         const currentSession = other?.game === 'dixit' && other.dixit?.sessionId === doc.state.sessionId;
-        if (!currentSession && (!initial || !same(other, openingCards?.[playerNum]))) {
+        if (!currentSession && (!initial || !sameOpening(other, openingCards?.[playerNum]))) {
           this.suspended = true; this.status('switched');
         }
       }
@@ -341,6 +441,9 @@ var DIXIT_SYNC = (() => {
         this.projectedSeats.set(playerNum, key);
         if (DIXIT_ENGINE.list(doc.state.roster).every(p => this.projectedSeats.get(p.playerNum) === key)) {
           this.initialSession = null; this.openingCards = null; this.projectedSeats.clear();
+          await this.ref.transaction(current => this.liveOwner(current) && current?.state?.sessionId === doc.state.sessionId
+            && current.openingProjection?.sessionId === doc.state.sessionId && current.openingProjection.complete !== true
+            ? { ...current, openingProjection: { ...current.openingProjection, complete: true } } : undefined, undefined, false);
         }
       }
     }

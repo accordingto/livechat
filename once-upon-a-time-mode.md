@@ -280,6 +280,14 @@ a winner; this is separate from the synthetic demo.
   desktop and at 375px; no room data was changed for that check. This is not a
   physical-device or spoken group test.
 
+## Switching from an unfinished Hub game
+
+Open the game's host page and click Open this table to switch the existing player links to its lobby. The previous game does not need an End control. A restored table whose players have already moved to another game exposes Open again while keeping its old gameplay controls inactive.
+
+The old opening guard compared entire snapshots from the asynchronously filled ROOM.answers cache. Unread cards and normal previous-game timer/vote/receipt/heartbeat changes could be misidentified as a later game selection. Explicit start and restart now await actual reads of each known private token, then compare the active previous game's own stable session/round identity. Different games, sessions or legacy rounds still block stale writes. Merely restoring a saved canonical table leaves foreign player cards untouched; the host must explicitly open a new table. A fresh host page can reclaim an inactive old lease while the previous executor cannot fight it back.
+
+All 588 repository tests passed after the switching fixes, including complete host entry-script tests, unread-card and mutable previous-game fixtures, inactive lease recovery and changed rosters. Actual Firebase QA used three original private links to switch Pick a Side → Once Upon a Time → Dixit → Once Upon a Time while the older host pages stayed open. Direct dealing and a Once card play worked; a fresh Once host page also took over its inactive old lease, opened a new lobby and dealt without waiting for the earlier host to close. Previous games were not ended and links were not reissued. The synthetic room was cancelled afterward.
+
 Not claimed: physical-phone play, two different browser engines, a live spoken
 group playtest, or full balance testing. Same-browser tabs and resized viewports
 are not labelled as different-device or different-browser-engine tests.

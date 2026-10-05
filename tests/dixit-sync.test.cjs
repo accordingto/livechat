@@ -8,6 +8,22 @@ const E = require('../dixit-engine.js');
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 const snap = value => ({ val: () => clone(value) });
 
+// Realtime Database omits null/empty nodes and returns dense integer-keyed
+// children as arrays, even when the write used an object with numeric keys.
+function firebaseValue(value) {
+  if (value == null) return null;
+  if (typeof value !== 'object') return value;
+  const entries = Object.entries(value).map(([key, child]) => [key, firebaseValue(child)]).filter(([, child]) => child !== null);
+  if (!entries.length) return null;
+  const integerKeys = entries.every(([key]) => /^(0|[1-9][0-9]*)$/.test(key));
+  const max = integerKeys ? Math.max(...entries.map(([key]) => Number(key))) : 0;
+  if (integerKeys && entries.length > (max + 1) / 2) {
+    const result = Array(max + 1).fill(null);
+    entries.forEach(([key, child]) => { result[Number(key)] = child; }); return result;
+  }
+  return Object.fromEntries(entries);
+}
+
 // Asynchronous atomic transactions model the existing private Firebase paths.
 // Each callback runs twice, exercising retry-safe captured seeds and clocks.
 function database() {
@@ -16,6 +32,7 @@ function database() {
   const db = {
     values, before: null,
     put(path, value) {
+      if (db.shape) value = db.shape(value);
       values.set(path, clone(value));
       for (const cb of listeners.get(path) || []) queueMicrotask(() => cb(snap(value)));
     },
@@ -26,13 +43,14 @@ function database() {
           listeners.get(path).add(cb); queueMicrotask(() => cb(snap(values.get(path))));
         },
         off(event, cb) { listeners.get(path)?.delete(cb); },
+        async once() { if (db.beforeRead) await db.beforeRead(path); return snap(values.get(path)); },
         transaction(update) {
           const task = (tails.get(path) || Promise.resolve()).then(async () => {
             if (db.before) await db.before(path);
             const first = update(clone(values.get(path))), next = update(clone(values.get(path)));
             assert.deepEqual(next, first, 'transaction retries must reuse captured randomness/time');
             if (next === undefined) return { committed: false, snapshot: snap(values.get(path)) };
-            db.put(path, next); return { committed: true, snapshot: snap(next) };
+            db.put(path, next); return { committed: true, snapshot: snap(values.get(path)) };
           });
           tails.set(path, task.catch(() => {})); return task;
         },
@@ -597,7 +615,7 @@ for (const restarting of [false, true]) test(`${restarting ? 'restart' : 'openin
   assert.equal(f.card(1).dixit.sessionId, session);
   assert.deepEqual(f.card(2), oldCards[1]);
   assert.equal(shared.doc.openingProjection.sessionId, session);
-  assert.deepEqual(clone(shared.doc.openingProjection.cards[2]), oldCards[1]);
+  assert.deepEqual(clone(shared.bootstrap(shared.doc).cards[2]), oldCards[1]);
   const cardHost = f.host({ mode: 'private' }); await tick(); await tick();
   assert.equal(cardHost.own, true); assert.equal(cardHost.initialSession, session);
   unblock(); await settle(shared, cardHost);
@@ -762,4 +780,277 @@ test('trusted browser identity migrates a legacy private lease once while ordina
   assert.equal(migrated.own, true); assert.equal(migrated.doc.ownerBrowserGroup, 'a'.repeat(32));
   const different = f.host({ mode: 'private', browserGroup: 'b'.repeat(32), resumeGroup: '4'.repeat(32) }); await settle(old, migrated, different);
   assert.equal(different.own, false); assert.equal(old.own, false);
+});
+
+test('explicit opening reads actual player refs before capturing cards and tolerates an unread ROOM cache', async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  const previous = { game: 'hottake', round: 1, voteId: 'still-playing', phase: 'voting' };
+  f.paths.forEach(path => f.db.put(path, previous)); await settle(h);
+  f.room.answers = {}; h.observedCards.clear();
+  let enter, release;
+  const reading = new Promise(resolve => { enter = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  f.db.beforeRead = async path => { if (path === f.paths[2]) { enter(); await gate; } };
+  const opening = h.start(); await reading; await tick();
+  assert.equal(h.doc.state, undefined, 'canonical opening waits for every private seat read');
+  for (let n = 1; n <= 4; n++) assert.deepEqual(f.card(n), previous);
+  release(); await opening; await settle(h);
+  assert.equal(h.suspended, false);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.sessionId, h.doc.state.sessionId);
+});
+
+const previousGames = [
+  { game: 'onceupon', once: { sessionId: 'previous' } },
+  { game: 'dixit', dixit: { sessionId: 'previous' } },
+  { game: 'letstalk', talk: { sessionId: 'previous' } },
+  ...['taboo', 'hottake', 'sophies', 'persuade'].map(game => ({ game, round: 1, voteId: 'previous' })),
+  ...['scene', 'conquest'].map(game => ({ game, round: 1 })),
+  { game: 'kangaroo', case: 1 }, { game: 'crack', roundId: 'previous' },
+  { game: 'buttoncheck', id: 'previous' },
+  { game: 'chatwolf', chatWolf: { room: 'CW-ROOM', token: 'private-player-token' } },
+];
+for (const previous of previousGames) test(`opening from ${previous.game} tolerates its same-session runtime updates`, async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  f.paths.forEach(path => f.db.put(path, previous)); await settle(h);
+  let updated = false;
+  f.db.before = async path => {
+    if (path === f.paths[1] && !updated) {
+      updated = true;
+      f.db.put(path, { ...previous, phase: 'next-normal-phase', serverNow: 98765, hostLiveUntil: 100001,
+        action: { id: 'normal-request' }, reply: { id: 'normal-reply' }, prevoteId: 'new-prevote', finalVoteId: 'new-final-vote',
+        conquest: { id: 'new-challenge' }, stale: true });
+    }
+  };
+  await h.start(); await settle(h);
+  assert.equal(updated, true); assert.equal(h.suspended, false);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.sessionId, h.doc.state.sessionId);
+  assert.equal(h.doc.openingProjection.complete, true);
+  assert.equal(JSON.stringify(f.card(2)).includes('private-player-token'), false);
+});
+
+const changedGames = [
+  [{ game: 'letstalk', talk: { sessionId: 'previous' } }, { game: 'letstalk', talk: { sessionId: 'newer' } }],
+  [{ game: 'onceupon', once: { sessionId: 'previous' } }, { game: 'onceupon', once: { sessionId: 'newer' } }],
+  [{ game: 'dixit', dixit: { sessionId: 'previous' } }, { game: 'dixit', dixit: { sessionId: 'newer' } }],
+  [{ game: 'hottake', round: 1, voteId: 'previous' }, { game: 'hottake', round: 2, voteId: 'newer' }],
+  [{ game: 'sophies', round: 1, voteId: 'previous' }, { game: 'sophies', round: 1, voteId: 'newer' }],
+  [{ game: 'conquest', round: 1 }, { game: 'conquest', round: 2 }],
+  [{ game: 'kangaroo', case: 1 }, { game: 'kangaroo', case: 2 }],
+  [{ game: 'scene', round: 1, dixit: { sessionId: 'stale' } }, { game: 'hottake', round: 1, voteId: 'newer', dixit: { sessionId: 'stale' } }],
+  [{ game: 'unknown', round: 1, sessionId: 'stale' }, { game: 'unknown', round: 1, sessionId: 'stale', content: 'changed' }],
+];
+for (const [previous, newer] of changedGames) test(`opening preserves a newer ${newer.game} game identity or unknown payload`, async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  f.paths.forEach(path => f.db.put(path, previous)); await settle(h);
+  let updated = false;
+  f.db.before = async path => { if (path === f.paths[1] && !updated) { updated = true; f.db.put(path, newer); } };
+  await h.start(); await settle(h);
+  assert.equal(updated, true); assert.equal(h.suspended, true); assert.equal(h.lastStatus, 'switched');
+  assert.deepEqual(f.card(2), newer);
+  await h.renew(); await settle(h); assert.deepEqual(f.card(2), newer);
+});
+
+for (const mode of ['shared', 'private']) test(`a fresh main page reclaims a switched ${mode} ghost lease without automatically changing cards`, async t => {
+  const f = setup(t), old = f.host({ mode }); await f.lobby(old);
+  const session = old.doc.state.sessionId, oldOwner = old.client;
+  const foreign = { game: 'hottake', round: 1, voteId: 'ongoing', phase: 'voting' };
+  f.paths.forEach(path => f.db.put(path, foreign)); await settle(old);
+  assert.equal(old.suspended, true); assert.equal(old.doc.owner, oldOwner);
+  const next = f.host(); await settle(old, next);
+  assert.equal(next.own, true); assert.equal(next.lastStatus, 'switched'); assert.equal(old.own, false);
+  for (let n = 1; n <= 4; n++) assert.deepEqual(f.card(n), foreign);
+  const leaseOwner = next.client;
+  for (const now of [20000, 30000, 40000]) {
+    f.clock(now); await Promise.all([old.renew(), next.renew()]); await settle(old, next);
+    assert.equal(next.doc.owner, leaseOwner, 'previously acquired executors cannot fight a fresh owner');
+  }
+  await next.start(); await settle(old, next);
+  assert.notEqual(next.doc.state.sessionId, session); assert.equal(next.suspended, false);
+  assert.equal(old.own, false); assert.equal(next.doc.owner, leaseOwner);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.sessionId, next.doc.state.sessionId);
+});
+
+for (const completeMarker of [true, false]) test(`a completed ${completeMarker ? 'marked' : 'legacy unmarked'} opening never replays its previous game snapshots on refresh`, async t => {
+  const f = setup(t), first = f.host(); await settle(first);
+  const foreign = { game: 'hottake', round: 1, voteId: 'revisited' };
+  f.paths.forEach(path => f.db.put(path, foreign)); await settle(first);
+  await first.start(); await settle(first);
+  assert.equal(first.doc.openingProjection.complete, true);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  if (!completeMarker) await f.db.ref(path).transaction(doc => {
+    const openingProjection = { ...doc.openingProjection }; delete openingProjection.complete;
+    return { ...doc, openingProjection };
+  });
+  f.paths.forEach(playerPath => f.db.put(playerPath, { ...foreign, phase: 'later-runtime-state' })); await settle(first);
+  first.close(); await settle(first);
+  const next = f.host(); await settle(next);
+  assert.equal(next.own, true); assert.equal(next.lastStatus, 'switched'); assert.equal(next.initialSession, null);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).game, foreign.game);
+  await next.renew(); await settle(next);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).game, foreign.game);
+  await next.start(); await settle(next);
+  assert.equal(next.suspended, false);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.sessionId, next.doc.state.sessionId);
+});
+
+test('a failed authoritative opening read preserves the previous canonical session and all player cards', async t => {
+  const f = setup(t), h = f.host(); await f.dealt(h);
+  const before = clone(h.doc), cards = f.paths.map((_, i) => f.card(i + 1));
+  f.db.beforeRead = async path => { if (path === f.paths[2]) throw new Error('temporary-read-failure'); };
+  await assert.rejects(h.start(), /temporary-read-failure/); await settle(h);
+  assert.deepEqual(h.doc, before); cards.forEach((card, i) => assert.deepEqual(f.card(i + 1), card));
+  assert.equal(h.suspended, false);
+});
+
+test('a changed Hub roster leaves the old canonical table inert and explicit opening uses only current player refs', async t => {
+  const f = setup(t), old = f.host(); await f.dealt(old);
+  const removedCard = f.card(4), oldSession = old.doc.state.sessionId;
+  f.room.count = 3;
+  const playerRef = f.room.playerRef;
+  f.room.playerRef = i => {
+    assert.ok(i < 3, 'the removed private player link must not be read or projected');
+    return playerRef(i);
+  };
+  const next = f.host(); await settle(old, next);
+  assert.equal(next.own, true); assert.equal(next.lastStatus, 'switched');
+  assert.equal(next.doc.state.roster.length, 4, 'opening a host page must not silently change an existing table');
+  await next.start(); await settle(old, next);
+  assert.equal(next.suspended, false); assert.equal(next.doc.state.roster.length, 3);
+  assert.notEqual(next.doc.state.sessionId, oldSession); assert.deepEqual(f.card(4), removedCard);
+  for (let n = 1; n <= 3; n++) assert.equal(f.card(n).dixit.sessionId, next.doc.state.sessionId);
+});
+
+test('replacement waits for initial authoritative reads before safely finishing a partially opened session', async t => {
+  const f = setup(t), shared = f.host(); await settle(shared);
+  let projected, releaseWrite, readStarted, releaseRead;
+  const writing = new Promise(resolve => { projected = resolve; });
+  const writeGate = new Promise(resolve => { releaseWrite = resolve; });
+  const reading = new Promise(resolve => { readStarted = resolve; });
+  const readGate = new Promise(resolve => { releaseRead = resolve; });
+  let blocked = false;
+  f.db.before = async path => { if (path === f.paths[1] && !blocked) { blocked = true; projected(); await writeGate; } };
+  await shared.start(); await writing; await tick();
+  const session = shared.doc.state.sessionId;
+  f.db.beforeRead = async path => { if (path === f.paths[1]) { readStarted(); await readGate; } };
+  const cardHost = f.host({ mode: 'private' }); await reading; await tick(); await tick();
+  try {
+    assert.equal(cardHost.own, true); assert.equal(cardHost.cardsRead(), false);
+    assert.equal(cardHost.suspended, false, 'unread cards cannot be interpreted as a foreign selection');
+    assert.equal(f.card(2), null);
+    releaseRead(); await tick(); await tick();
+    assert.equal(cardHost.initialSession, session);
+    releaseWrite(); await settle(shared, cardHost);
+    assert.equal(cardHost.suspended, false); assert.equal(cardHost.initialSession, null);
+    assert.equal(cardHost.doc.openingProjection.complete, true);
+    for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.sessionId, session);
+  } finally { releaseRead(); releaseWrite(); }
+});
+
+test('one foreign seat does not let a fresh main page steal an otherwise current private table', async t => {
+  const f = setup(t), cardHost = f.host({ mode: 'private' }); await f.dealt(cardHost);
+  const before = clone(cardHost.doc.state), foreign = { game: 'hottake', round: 1, voteId: 'newer' };
+  f.db.put(f.paths[0], foreign); await settle(cardHost);
+  const shared = f.host(); await settle(shared, cardHost);
+  assert.equal(shared.own, false); assert.equal(shared.doc.owner, cardHost.client);
+  assert.equal(shared.lastStatus, 'host_card_active'); assert.deepEqual(shared.doc.state, before);
+  await assert.rejects(shared.start(), /not_available/); await settle(shared, cardHost);
+  assert.deepEqual(f.card(1), foreign); assert.deepEqual(shared.doc.state, before);
+});
+
+test('explicit opening survives an old canonical value callback while its creation transaction is pending', async t => {
+  const f = setup(t, 3), previousHost = f.host(); await f.lobby(previousHost);
+  const once = { game: 'onceupon', once: { sessionId: 'active-once', revision: 18, hostLiveUntil: 100000 } };
+  f.paths.forEach(path => f.db.put(path, once)); await settle(previousHost);
+  const h = f.host(); await settle(previousHost, h);
+  assert.equal(h.own, true); assert.equal(h.lastStatus, 'switched');
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  let notified = false;
+  f.db.before = async refPath => {
+    if (refPath === path && !notified) {
+      notified = true; f.db.put(path, clone(h.doc)); await tick();
+    }
+  };
+  await h.start(); await settle(previousHost, h);
+  assert.equal(notified, true); assert.equal(h.suspended, false);
+  assert.equal(h.lastStatus, 'ready');
+  for (let n = 1; n <= 3; n++) assert.equal(f.card(n).dixit.sessionId, h.doc.state.sessionId);
+});
+
+for (const newerSelection of [false, true]) test(`opening can return before its first canonical event${newerSelection ? ' while preserving a later foreign selection' : ' and still resume projection'}`, async t => {
+  const f = setup(t, 3), previousHost = f.host(); await f.lobby(previousHost);
+  const once = { game: 'onceupon', once: { sessionId: 'active-once' } };
+  f.paths.forEach(path => f.db.put(path, once)); await settle(previousHost);
+  const h = f.host(); await settle(previousHost, h);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`, oldSession = h.doc.state.sessionId;
+  const publish = f.db.put.bind(f.db);
+  let holding = true, oldNotified = false;
+  f.db.put = (refPath, value) => {
+    if (holding && refPath === path && value.state?.sessionId !== oldSession) f.db.values.set(refPath, clone(value));
+    else publish(refPath, value);
+  };
+  f.db.before = async refPath => {
+    if (refPath === path && !oldNotified) { oldNotified = true; publish(path, clone(h.doc)); await tick(); }
+  };
+  const state = await h.start();
+  assert.notEqual(state.sessionId, oldSession); assert.equal(h.openingIntent, state.sessionId);
+  assert.equal(h.doc.state.sessionId, oldSession, 'transaction completion can precede its value listener');
+  const newer = { game: 'onceupon', once: { sessionId: 'newer-once' } };
+  if (newerSelection) publish(f.paths[1], newer);
+  holding = false; publish(path, clone(f.db.values.get(path))); await settle(previousHost, h);
+  assert.equal(h.openingIntent, null, 'the exact creation callback consumes intent only once');
+  if (newerSelection) {
+    assert.equal(h.suspended, true); assert.deepEqual(f.card(2), newer);
+    await h.renew(); await settle(h);
+    assert.equal(h.suspended, true); assert.deepEqual(f.card(2), newer, 'a later heartbeat cannot clear foreign rejection');
+  } else {
+    assert.equal(h.suspended, false); assert.equal(h.lastStatus, 'ready');
+    for (let n = 1; n <= 3; n++) assert.equal(f.card(n).dixit.sessionId, state.sessionId);
+  }
+});
+
+for (const emptyCards of [false, true]) test(`real Firebase numeric-array and null-node shapes support ${emptyCards ? 'a first empty-room' : 'an active Once-to-Dixit'} opening`, async t => {
+  const f = setup(t, 3), h = f.host(); await settle(h);
+  f.db.shape = firebaseValue;
+  if (!emptyCards) {
+    const previous = { game: 'onceupon', once: { sessionId: 'still-active-once' } };
+    f.paths.forEach(path => f.db.put(path, previous)); await settle(h);
+  }
+  await h.start(); await settle(h);
+  assert.equal(h.suspended, false); assert.equal(h.lastStatus, 'ready');
+  assert.equal(h.doc.openingProjection.complete, true);
+  for (let n = 1; n <= 3; n++) assert.equal(f.card(n).dixit.sessionId, h.doc.state.sessionId);
+});
+
+for (const emptyCards of [false, true]) for (const newerSelection of [false, true]) test(`legacy RTDB ${emptyCards ? 'omitted null' : 'array'} bootstrap ${newerSelection ? 'preserves a newer game' : 'survives private takeover'}`, async t => {
+  const f = setup(t, 3), shared = f.host(); await settle(shared); f.db.shape = firebaseValue;
+  const previous = emptyCards ? null : { game: 'onceupon', once: { sessionId: 'old-once' } };
+  f.paths.forEach(path => f.db.put(path, previous)); await settle(shared);
+  let entered, release;
+  const waiting = new Promise(resolve => { entered = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  let blocked = false;
+  f.db.before = async path => { if (path === f.paths[1] && !blocked) { blocked = true; entered(); await gate; } };
+  await shared.start(); await waiting; await tick();
+  const session = shared.doc.state.sessionId;
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  f.db.put(path, { ...clone(shared.doc), openingProjection: { sessionId: session, cards: { 1: previous, 2: previous, 3: previous } } });
+  await tick();
+  assert.equal(Array.isArray(shared.doc.openingProjection.cards), !emptyCards);
+  if (emptyCards) assert.equal(shared.doc.openingProjection.cards, undefined, 'RTDB drops the entire all-null cards node');
+  const privateHost = f.host({ mode: 'private' }); await tick(); await tick();
+  try {
+    assert.equal(privateHost.own, true); assert.equal(privateHost.initialSession, session);
+    const newer = { game: 'onceupon', once: { sessionId: 'newer-once' } };
+    if (newerSelection) f.db.put(f.paths[1], newer);
+    release(); await settle(shared, privateHost);
+    if (newerSelection) {
+      assert.equal(privateHost.suspended, true); assert.deepEqual(f.card(2), newer);
+      await privateHost.renew(); await settle(privateHost); assert.deepEqual(f.card(2), newer);
+    } else {
+      assert.equal(privateHost.suspended, false); assert.equal(privateHost.initialSession, null);
+      assert.equal(privateHost.doc.openingProjection.complete, true);
+      for (let n = 1; n <= 3; n++) assert.equal(f.card(n).dixit.sessionId, session);
+    }
+    for (let n = 1; n <= 3; n++) assert.equal(JSON.stringify(f.card(n)).includes('openingProjection'), false);
+  } finally { release(); }
 });

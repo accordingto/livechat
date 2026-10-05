@@ -10,6 +10,7 @@
     targetScore:{zh:'勝利分數',en:'Winning score'},
     targetHint:{zh:'5–100 分；這輪結束時達標，以最高分獲勝。預設 30 分。',en:'5–100 points; the highest score wins when the target is reached at round end. Default: 30.'},
     invalidTarget:{zh:'請輸入 5–100 的整數勝利分數。',en:'Enter a whole-number winning score from 5 to 100.'},
+    switchHint:{zh:'玩家目前在其他遊戲。按「開啟這桌遊戲」即可把原玩家卡片切換過來。',en:'Players are in another game. Open this table to switch their existing cards to Dixit.'},
   });
   const ht=(key,params={})=>I18N.t('dixitHost',key).replace(/\{(\w+)\}/g,(_,name)=>params[name]??'');
   let sync=null,card=null,payload=null,state=null,status='loading',busy=false,problem='',demoTimer=null;
@@ -17,6 +18,7 @@
   const roster=['Alex','Jamie','Sam','Riley','Taylor','Robin','Morgan','Casey'].slice(0,count).map((name,i)=>({playerNum:i+1,name}));
   const seed=()=>crypto.getRandomValues(new Uint32Array(1))[0],demoView=()=>Number(byId('dx-demo-view').value);
   const validTarget=value=>Number.isInteger(Number(value))&&Number(value)>=5&&Number(value)<=100;
+  const canOpen=()=>demo||!!(sync?.connected&&sync.own&&['ready','switched'].includes(status));
   function targetScore(){const value=Number(byId('dx-target-score').value);if(!validTarget(value))throw new Error('invalid_target_score');return value;}
   function setSeats(players,selected){
     byId('dx-host-seat').innerHTML=players.map(p=>'<option value="'+p.playerNum+'">'+DIXIT_UI.esc(p.name)+'</option>').join('');
@@ -24,7 +26,7 @@
   }
   function hostLink(){
     const link=byId('dx-own-card');link.hidden=true;
-    if(demo||!payload||!ROOM.code)return;
+    if(demo||!payload||!ROOM.code||status==='switched')return;
     const seat=payload.dixit.hostPlayerNum;
     try{
       const saved=JSON.parse(localStorage.getItem('room-session-'+ROOM.code)||'null'),token=saved?.tokens?.[seat-1];
@@ -36,9 +38,10 @@
   function labels(){
     byId('dx-host-seat-label').textContent=ht('seat');byId('dx-host-seat-hint').textContent=ht('seatHint');byId('dx-own-card').textContent=ht('ownCard');
     byId('dx-target-score-label').textContent=ht('targetScore');byId('dx-target-score-hint').textContent=ht('targetHint');
-    byId('dx-setup-help').textContent=t(status==='setupNeeded'?'setupHint':'lobbyHint');
+    byId('dx-setup-help').textContent=status==='switched'?ht('switchHint'):t(status==='setupNeeded'?'setupHint':'lobbyHint');
     byId('dx-host-status').textContent=problem||({setupNeeded:t('setupHint'),noFirebase:t('offline'),offline:t('offline'),other_host:t('otherHost'),host_card_active:ht('hostCardActive'),switched:t('switched'),error:t('offline'),loading:'',ready:''}[status]||'');
-    byId('dx-open').disabled=busy||!demo&&(!sync||!sync.own||status!=='ready');byId('dx-setup-link').hidden=demo;byId('dx-setup').hidden=!!payload&&status!=='switched';
+    byId('dx-open').disabled=busy||!canOpen();byId('dx-setup-link').hidden=demo;byId('dx-setup').hidden=!!payload&&status!=='switched';
+    byId('dx-table').hidden=status==='switched';
     byId('dx-host-seat-field').hidden=status==='setupNeeded'||status==='noFirebase';
     byId('dx-target-score-field').hidden=status==='setupNeeded'||status==='noFirebase';
     if(!demo&&ROOM.code)byId('dx-room-label').textContent=ht('room',{code:ROOM.code,n:ROOM.count});
@@ -53,7 +56,7 @@
   });card.update(next);labels();}
   byId('dx-host-seat').addEventListener('change',()=>{if(!demo&&ROOM.code)ROOM.setExtra('dixitHostPlayerNum',Number(byId('dx-host-seat').value));});
   byId('dx-target-score').addEventListener('change',()=>{try{const target=targetScore();problem='';if(!demo&&ROOM.code)ROOM.setExtra('dixitTargetScore',target);}catch(error){problem=ht('invalidTarget');}labels();});
-  byId('dx-open').addEventListener('click',async()=>{if(busy||!demo&&status!=='ready')return;busy=true;problem='';labels();try{
+  byId('dx-open').addEventListener('click',async()=>{if(busy||!canOpen())return;busy=true;problem='';labels();try{
     const hostPlayerNum=Number(byId('dx-host-seat').value),target=targetScore();
     if(demo){state=DIXIT_ENGINE.create({id:crypto.randomUUID(),roster,seed:seed(),now:Date.now(),hostPlayerNum,targetScore:target});show(DIXIT_ENGINE.view(state,demoView(),Date.now()));}
     else await sync.start({hostPlayerNum,targetScore:target});
