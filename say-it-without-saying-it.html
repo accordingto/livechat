@@ -727,7 +727,7 @@
           </span>
         </div>
       </section>
-      <div class="cb-dial"><div class="timer-dial" id="timer-dial">90</div></div>
+      <div class="cb-dial"><div class="timer-dial" id="timer-dial">120</div></div>
       <section class="cb-sect rules">
         <div class="settings-popover-wrap" id="settings-popover-wrap">
           <button type="button" class="settings-toggle-btn" id="settings-toggle-btn" onclick="toggleSettingsPopover()" data-i18n="taboo.settingsToggleTitle" data-i18n-attr="title" title="Game settings: difficulty, forbidden words, timer">
@@ -814,7 +814,7 @@
       <span class="rules-group-label" data-i18n="taboo.roundTimer">⏱️ Round timer</span>
       <span class="secs-field" id="secs-field">
         <button class="secs-step" id="secs-minus" onclick="stepSeconds(-1)" data-i18n="taboo.secsMinusAria" data-i18n-attr="aria-label" aria-label="30 seconds less">−</button>
-        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="90" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
+        <input id="timer-secs" inputmode="numeric" autocomplete="off" value="120" data-i18n="taboo.secsFieldAria" data-i18n-attr="aria-label" aria-label="Seconds">
         <span class="secs-unit" data-i18n="taboo.secUnit">sec</span>
         <button class="secs-step" id="secs-plus" onclick="stepSeconds(1)" data-i18n="taboo.secsPlusAria" data-i18n-attr="aria-label" aria-label="30 seconds more">+</button>
       </span>
@@ -1107,9 +1107,9 @@
     // own name and score — see compactBoardFor() and play.html's rendering of it
     const BOARD_MODES = ['full', 'none', 'compact'];
     let forbiddenOn = true;
-    let levels = ['medium'];
+    let levels = ['easy', 'medium'];
     let bannedCount = 4;
-    let boardMode = 'full';
+    let boardMode = 'compact';
     const isLevelOn = id => levels.includes(id);
     try {
       const saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || 'null');
@@ -1410,7 +1410,7 @@
        expired the first time it runs, and the visibility handler below catches it the
        moment the host comes back. It also stops the host's dial and the cards' dials
        drifting apart over a long round, which plain tick-counting guarantees. */
-    const timer = { total: 90, left: 90, running: false, seq: 0, iv: null, endsAt: 0 };
+    const timer = { total: 120, left: 120, running: false, seq: 0, iv: null, endsAt: 0 };
 
     ROOM.init({
       mount: 'room-mount',
@@ -1675,7 +1675,7 @@
       const n = Number(raw);
       const field = document.getElementById('timer-secs');
       if (!snap && (!n || n < 5 || n > 900)) return;
-      const secs = Math.max(5, Math.min(900, Math.round(n) || 90));
+      const secs = Math.max(5, Math.min(900, Math.round(n) || 120));
       if (snap) field.value = secs;
       timer.total = secs;
       if (!timer.running) timer.left = secs;
