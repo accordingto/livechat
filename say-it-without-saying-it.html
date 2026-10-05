@@ -195,6 +195,9 @@
        than one of" is not something the host should have to test by clicking. Only
        the difficulty row gets .is-check. */
     .level-btn.is-check { padding-left: 9px; }
+    /* The read-only player list room.js draws under the away cards repeated what each
+       scoreboard tile already shows (role + card preview), so it is hidden here. */
+    #room-mount #room-links { display: none; }
     .view-check { align-self: flex-start; text-align: left; }
     .view-check { font-size: .9rem; padding-top: 9px; padding-bottom: 9px; }
     .level-btn.view-check .lb-box { width: 22px; height: 22px; font-size: 1rem; border-radius: 5px; margin-right: 10px; vertical-align: -5px; }
@@ -1655,11 +1658,6 @@
         else if (i === giverIdx) info = { cls: 'is-giver-link', answer: tt('cluegiverRole') };
         else if (i === refIdx) info = { cls: 'is-ref-link', answer: tt('refereeRole') };
         else if (queue[0] === num) info = { marked: true, answer: tt('buzzedInRole') };
-      }
-      if (cardPreviewOn) {
-        info = Object.assign({}, info, {
-          answer: (info.answer ? info.answer + '<br>' : '') + `<div class="cp-preview">${cardPreviewText(i)}</div>`,
-        });
       }
       // room.js's read-only roster shows this player's role only once info.answer is
       // set (see above), but whenever it does, it should show whoever is actually
