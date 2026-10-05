@@ -195,6 +195,9 @@
        than one of" is not something the host should have to test by clicking. Only
        the difficulty row gets .is-check. */
     .level-btn.is-check { padding-left: 9px; }
+    .view-check { align-self: flex-start; text-align: left; }
+    .view-check { font-size: .9rem; padding-top: 9px; padding-bottom: 9px; }
+    .level-btn.view-check .lb-box { width: 22px; height: 22px; font-size: 1rem; border-radius: 5px; margin-right: 10px; vertical-align: -5px; }
     .level-btn .lb-box {
       display: inline-flex; align-items: center; justify-content: center;
       width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px;
@@ -820,9 +823,9 @@
          placed last so it reads as its own group after the four rules above. -->
     <div class="rules-group" id="rules-group-view">
       <span class="rules-group-label" data-i18n="taboo.viewSettingsLabel">👁️ Host screen</span>
-      <button type="button" class="deck-toggle" id="scores-hidden-toggle"></button>
-      <button type="button" class="deck-toggle" id="card-preview-toggle"></button>
-      <button type="button" class="deck-toggle" id="secrets-toggle"></button>
+      <button type="button" class="level-btn is-check view-check" id="scores-hidden-toggle" role="checkbox"></button>
+      <button type="button" class="level-btn is-check view-check" id="card-preview-toggle" role="checkbox"></button>
+      <button type="button" class="level-btn is-check view-check" id="secrets-toggle" role="checkbox"></button>
     </div>
   </div>
 
@@ -868,8 +871,7 @@
       dealFirstPreviewBtn: { zh: '🎬 發第一個題目', en: '🎬 Deal the first word' },
       dealNextPreviewBtn: { zh: '🎬 發下一個題目', en: '🎬 Deal the next word' },
       resetScoresBtn: { zh: '↺ 重設分數', en: '↺ Reset scores' },
-      hideScoresBtn: { zh: '🙈 隱藏分數', en: '🙈 Hide scores' },
-      showScoresBtn: { zh: '👁️ 顯示分數', en: '👁️ Show scores' },
+      showScoresChk: { zh: '顯示分數', en: 'Show scores' },
       linksNeededBtn: { zh: '🔗 需要玩家連結', en: '🔗 Player links needed' },
       endTurnBtn: { zh: "🛑 結束 {name} 的回合", en: "🛑 End {name}'s turn" },
       nextRoundBtn: { zh: '▶️ 下一回合 — 換一位描述者', en: '▶️ Next Round — new clue giver' },
@@ -916,11 +918,9 @@
       boostNote: { zh: '🔥 ×2 落後加分：分數比全場平均低 {n} 分以上的人，這輪得分加倍', en: '🔥 ×2 catch-up bonus: anyone {n}+ points below the room average scores double' },
       timeUpResult: { zh: '⏰ 時間到 — 這輪不計分。', en: "⏰ Time's up — no points this round." },
       roundOverResult: { zh: '⏭️ 這輪結束 — 不計分。', en: '⏭️ Round over — no points.' },
-      showCardsBtn: { zh: '👁️ 顯示玩家卡片狀態', en: '👁️ Show player card status' },
-      showSecretsBtn: { zh: '⚠️ 顯示目標字與禁字（暴雷 — 分享畫面時請勿開啟）', en: '⚠️ Show target & forbidden words (spoilers — not while sharing)' },
-      hideSecretsBtn: { zh: '🙈 隱藏目標字與禁字', en: '🙈 Hide target & forbidden words' },
+      showCardsChk: { zh: '顯示玩家卡片狀態', en: 'Show player card status' },
+      showSecretsChk: { zh: '⚠️ 顯示目標字與禁字（暴雷 — 分享畫面時請勿開啟）', en: '⚠️ Show target & forbidden words (spoilers — not while sharing)' },
       noForbiddenPreview: { zh: '（這輪沒有禁字）', en: '(no forbidden words this round)' },
-      hideCardsBtn: { zh: '🙈 隱藏玩家卡片狀態', en: '🙈 Hide player card status' },
       linksNote: {
         zh: '每一輪會發出一位描述者（題目＋禁字＋✅／❌ 判定鈕）與一位裁判（禁字＋Taboo! 按鈕）。其他人只有搶答鈕 — 他們看不到禁字，這樣清單才不會洩漏答案。2 人局沒有裁判 — 禁字功能關閉。',
         en: "Each round deals a clue giver (word + forbidden words + the ✅ / ❌ buttons) and a referee (forbidden words + the Taboo! button). Everyone else just gets a buzzer — they never see the forbidden words, so the list can't give the answer away. 2-player games skip the referee — forbidden words are off.",
@@ -1455,10 +1455,16 @@
        word or the forbidden list, so there's nothing left in it that a shared screen
        needs to hide. Button itself is static HTML inside #rules-group-view, in
        #settings-popover; this just drives it. */
+    /* checkbox look for the three host-screen options: ticked = the thing is ON.
+       One fixed label per option, so the label never flips between "show"/"hide" */
+    function paintCheck(id, on, label) {
+      const b = document.getElementById(id);
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.innerHTML = `<span class="lb-box">${on ? '✓' : ''}</span>${label}`;
+    }
     function renderPreviewToggle() {
-      document.getElementById('card-preview-toggle').textContent = cardPreviewOn
-        ? tt('hideCardsBtn')
-        : tt('showCardsBtn');
+      paintCheck('card-preview-toggle', cardPreviewOn, tt('showCardsChk'));
     }
     document.getElementById('card-preview-toggle').onclick = () => {
       cardPreviewOn = !cardPreviewOn;
@@ -1469,7 +1475,7 @@
     renderPreviewToggle();
 
     function renderSecretsToggle() {
-      document.getElementById('secrets-toggle').textContent = secretsOn ? tt('hideSecretsBtn') : tt('showSecretsBtn');
+      paintCheck('secrets-toggle', secretsOn, tt('showSecretsChk'));
     }
     document.getElementById('secrets-toggle').onclick = () => {
       secretsOn = !secretsOn;
@@ -1486,9 +1492,7 @@
        happening without it. A host preference, persisted like cardPreviewOn (see
        saveOptions()); button itself is static HTML alongside it in #rules-group-view. */
     function renderScoresToggleLabel() {
-      document.getElementById('scores-hidden-toggle').textContent = scoresHidden
-        ? tt('showScoresBtn')
-        : tt('hideScoresBtn');
+      paintCheck('scores-hidden-toggle', !scoresHidden, tt('showScoresChk'));
     }
     document.getElementById('scores-hidden-toggle').onclick = () => {
       scoresHidden = !scoresHidden;
