@@ -40,8 +40,10 @@ device sleeps, queued actions resume when a host page wakes.
 Host cards on another device use the open shared table for synchronization.
 Revealed pictures identify their owners above the artwork; no enlargement
 buttons or repeated Storyteller label cover the cards. Both reveal headings show
-their vote counts. A five-second score popup follows each new reveal, then leaves
-the pictures until the host continues. Players and scores appear below the cards.
+their vote counts. Round points stay beside the pictures on the left until the
+host continues; phones show them below the pictures. Players and scores appear
+below the cards, expanded by default. Private-hand identity and duplicate spoken
+clue labels are omitted so the pictures start higher on the page.
 The host chooses a winning score from 5–100 before dealing (default 30).
 To switch into Dixit or Once Upon a Time from another game, open its host page
 and click **Open this table**. The existing player links switch to the new lobby;

@@ -106,7 +106,8 @@ test('story uses voice only and requires a selected card before the separate spo
   assert.match(htmlFor(s, 1), /I have spoken my clue/);
   assert.doesNotMatch(htmlFor(s, 1), /data-dx-clue|data-dx-spoken|type="checkbox"|<input/);
   const spoken = submitted(), publicHTML = htmlFor(spoken);
-  assert.match(publicHTML, /Listen to the Storyteller’s spoken clue/); assert.doesNotMatch(publicHTML, /<blockquote/);
+  assert.match(htmlFor(spoken, 2), /Listen to the spoken clue and select/);
+  assert.doesNotMatch(publicHTML, /class="dx-spoken"|Listen to the Storyteller’s spoken clue|<blockquote/);
 });
 
 test('reveal prints the actual answer, owners, votes and base/bonus/total scores for every scoring branch', () => {
@@ -182,7 +183,7 @@ class ElementDouble {
       for (const attr of tag.matchAll(/data-dx-([\w-]+)(?:="([^"]*)")?/g)) dataset['dx' + attr[1].split('-').map(part => part[0].toUpperCase() + part.slice(1)).join('')] = attr[2] || '';
       const document = this.ownerDocument;
       const node = { dataset, tag, disabled: /\sdisabled(?:\s|>)/.test(tag), value: tag.match(/\bvalue="([^"]*)"/)?.[1] || '',
-        checked: /\schecked(?:\s|>)/.test(tag), open: false, textContent: '',
+        checked: /\schecked(?:\s|>)/.test(tag), open: /\sopen(?:\s|>)/.test(tag), textContent: '',
         focus() { document.activeElement = this; },
         matches(selector) {
           if (selector === 'button:not([disabled])') return tag.startsWith('<button') && !this.disabled;
@@ -368,7 +369,8 @@ test('the current phase leads the information bar and gives each role its next a
   const clue = dealt(), submit = submitted(), vote = voting();
   for (const [s, label] of [[create(), 'Waiting to start'], [clue, 'Storyteller speaks'], [submit, 'Secret card selection'], [vote, 'Secret voting']]) {
     const html = htmlFor(s, 2);
-    assert.ok(html.indexOf('class="dx-phase-bar') < html.indexOf('class="dx-identity'), 'phase is the first visual information');
+    assert.ok(html.indexOf('class="dx-phase-bar') < html.indexOf('data-dx-message'), 'phase is the first visual information');
+    assert.doesNotMatch(html, /class="dx-identity"|class="dx-spoken"|Private hand:/, 'extra identity and spoken-clue lines do not compete with the phase bar');
     assert.doesNotMatch(html, /dx-header|dx-kicker|<h1>Dixit<\/h1>|Round \d+ · Storyteller:/);
     assert.match(html, new RegExp('data-dx-phase="' + s.phase + '"'));
     assert.ok(html.includes('<h2>' + label + '</h2>'));
@@ -487,85 +489,120 @@ test('player projections cannot gain host controls from forged action flags, and
   } finally { h.card.destroy(); }
 });
 
-function popupStorage() {
-  const values = new Map();
-  return { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value) };
-}
-const popupPart = html => html.slice(html.indexOf('<aside class="dx-score-popup'), html.indexOf('</aside>') + 8);
+const roundPointsPart = html => html.match(/<aside\b[^>]*\bdata-dx-round-scores(?:="[^"]*")?[^>]*>[\s\S]*?<\/aside>/)?.[0] || '';
+const unusableScoreStorage = {
+  getItem() { throw new Error('Round points must not depend on popup storage'); },
+  setItem() { throw new Error('Round points must not record popup display state'); },
+};
 
-test('all-player points appear after the cards, expire after five seconds and do not restart on heartbeats or refresh', () => {
-  const s = finishReveal(startedReveal()), data = E.view(s, 1), storage = popupStorage();
+test('all-player round points stay beside the revealed pictures through time, heartbeats and refresh without a popup', () => {
+  const s = finishReveal(startedReveal()), data = E.view(s, 1);
   data.dixit.result.revealedAt = 30000;
-  let now = 30699;
-  const h = harness(data, { now: () => now }, { sessionStorage: storage });
+  let now = 30000;
+  const h = harness(data, { now: () => now }, { sessionStorage: unusableScoreStorage });
   try {
-    assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
-    now = 30700; h.card.paint();
-    const popup = popupPart(h.element.innerHTML);
-    assert.match(popup, /This round’s points/);
-    assert.equal((popup.match(/data-dx-score-player=/g) || []).length, 4);
+    const points = roundPointsPart(h.element.innerHTML);
+    assert.match(points, /This round’s points/);
+    assert.equal((points.match(/data-dx-score-player=/g) || []).length, 4);
     for (const row of data.dixit.result.rows) {
-      assert.ok(popup.includes('data-dx-score-player="' + row.playerNum + '"'));
-      assert.ok(popup.includes('Seat ' + row.playerNum));
-      assert.ok(popup.includes('aria-label="Round gain">+' + row.delta + '</strong>'));
-      assert.ok(popup.includes('Total <strong>' + row.score + '</strong>'));
-      assert.ok(popup.includes('Base +' + row.base)); assert.ok(popup.includes('Bonus +' + row.bonus));
+      assert.ok(points.includes('data-dx-score-player="' + row.playerNum + '"'));
+      assert.ok(points.includes('Seat ' + row.playerNum));
+      assert.ok(points.includes('aria-label="Round gain">+' + row.delta + '</strong>'));
+      assert.ok(points.includes('Total <strong>' + row.score + '</strong>'));
+      assert.ok(points.includes('Base +' + row.base)); assert.ok(points.includes('Bonus +' + row.bonus));
     }
-    assert.match(popup, />\+0<\/strong>/, 'zero-point players remain visible');
-    assert.doesNotMatch(popup, />-0|>\+-|aria-modal|role="dialog"/);
-    assert.equal(h.element.querySelector('[data-dx-action="nextRound"]').disabled, false, 'the popup does not block host control');
-    const heartbeat = copy(data); heartbeat.dixit.revision = 999; heartbeat.dixit.hostLiveUntil = 90000;
-    now = 33000; h.card.update(heartbeat); assert.match(h.element.innerHTML, /data-dx-score-popup/);
-    const refreshed = harness(heartbeat, { now: () => now }, { sessionStorage: storage });
-    try { assert.doesNotMatch(refreshed.element.innerHTML, /data-dx-score-popup/, 'an already displayed round does not replay after refresh'); }
-    finally { refreshed.card.destroy(); }
-    now = 35699; h.card.paint(); assert.match(h.element.innerHTML, /data-dx-score-popup/);
-    now = 35700; h.card.paint(); assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
-    assert.match(h.element.innerHTML, /data-dx-reveal-stage="popular"/); assert.match(h.element.innerHTML, /data-dx-picture=/);
-    now = 60000; h.card.update(heartbeat); assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
-    assert.equal(h.sent.length, 0, 'showing and hiding points never changes the game');
-  } finally { h.card.destroy(); }
-});
-
-test('point popups are dismissible, preserve open review details and allow a new session to show its own points', async () => {
-  const s = scored('none'), data = E.view(s, 1), storage = popupStorage(); data.dixit.result.revealedAt = 30000;
-  const h = harness(data, { now: () => 31000 }, { sessionStorage: storage });
-  try {
-    assert.match(h.element.innerHTML, /data-dx-score-popup/);
-    h.element.querySelector('[data-dx-result-details]').open = true;
-    h.element.querySelector('[data-dx-details]').open = true;
-    await h.click('[data-dx-dismiss-score]');
-    assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
-    assert.equal(h.element.querySelector('[data-dx-result-details]').open, true);
-    assert.equal(h.element.querySelector('[data-dx-details]').open, true);
+    assert.match(points, />\+0<\/strong>/, 'zero-point players remain visible');
+    assert.doesNotMatch(points, />-0|>\+-|aria-modal|role="dialog"/);
+    const revealArea = h.element.innerHTML.match(/<section\b[^>]*data-dx-reveal-stage="popular"[^>]*>[\s\S]*?<\/section>/)?.[0] || '';
+    assert.ok(revealArea.includes(points), 'round points participate in the reveal layout beside its card area');
+    assert.doesNotMatch(points, /data-dx-picture|class="dx-art"/, 'the points panel does not contain or replace the artwork');
     assert.equal(h.element.querySelector('[data-dx-action="nextRound"]').disabled, false);
-    h.card.update(data); h.card.paint(); assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
-    const nextSession = copy(data); nextSession.dixit.sessionId += '-new'; h.card.update(nextSession);
-    assert.match(h.element.innerHTML, /data-dx-score-popup/); assert.equal(h.sent.length, 0);
+    const heartbeat = copy(data); heartbeat.dixit.revision = 999; heartbeat.dixit.hostLiveUntil = 90000;
+    for (const at of [30699, 30700, 35699, 35700, 60000, 3600000]) {
+      now = at; h.card.update(heartbeat); h.card.paint();
+      assert.equal(roundPointsPart(h.element.innerHTML), points, 'points persist at ' + at + ' until the next round');
+      assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup|data-dx-dismiss-score|dx-score-popup-layer/);
+      assert.match(h.element.innerHTML, /data-dx-reveal-stage="popular"/); assert.match(h.element.innerHTML, /data-dx-picture=/);
+    }
+    const refreshed = harness(heartbeat, { now: () => now }, { sessionStorage: unusableScoreStorage });
+    try { assert.equal(roundPointsPart(refreshed.element.innerHTML), points, 'refresh retains the revealed round points'); }
+    finally { refreshed.card.destroy(); }
+    assert.equal(h.sent.length, 0, 'displaying points never changes the game');
   } finally { h.card.destroy(); }
 });
 
-test('finished games can show final points, while expired and legacy reveals never replay a popup', () => {
-  const data = E.view(scored(), 2); data.dixit.phase = 'FINISHED'; data.dixit.result.revealedAt = 30000;
-  const final = harness(data, { now: () => 35000 });
-  try { assert.match(final.element.innerHTML, /data-dx-score-popup/); noActions(final.element.innerHTML, ['nextRound']); }
-  finally { final.card.destroy(); }
-  for (const at of [30000, undefined]) {
-    const older = copy(data); if (at === undefined) delete older.dixit.result.revealedAt;
-    const h = harness(older, { now: () => 60000 });
-    try { assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/); assert.match(h.element.innerHTML, /data-dx-result-details/); }
-    finally { h.card.destroy(); }
-  }
-  const answer = act(startedReveal(), 'advanceReveal', 0, { now: 13000 });
-  const early = UI.tableHTML(E.view(answer, 2, 13000), { now: 13000, scorePopup: true });
-  assert.doesNotMatch(early, /data-dx-score-popup|vote\(s\)|data-dx-result-details/, 'votes and points stay secret until the complete reveal');
+test('player totals start expanded and preserve manual collapse while round points and review details repaint', () => {
+  const s = scored('none'), data = E.view(s, 1);
+  const h = harness(data);
+  try {
+    assert.match(h.element.innerHTML, /data-dx-round-scores/);
+    assert.equal(h.element.querySelector('[data-dx-details]').open, true, 'the score section starts expanded');
+    assert.equal(h.element.querySelector('[data-dx-result-details]').open, false, 'the detailed vote review starts collapsed');
+    h.element.querySelector('[data-dx-result-details]').open = true;
+    h.element.querySelector('[data-dx-details]').open = false;
+    h.card.render(); h.card.paint(); h.card.update(data);
+    assert.equal(h.element.querySelector('[data-dx-result-details]').open, true);
+    assert.equal(h.element.querySelector('[data-dx-details]').open, false, 'a paint does not undo the player’s collapse');
+    assert.equal(h.element.querySelector('[data-dx-action="nextRound"]').disabled, false);
+    const changedName = copy(data); changedName.dixit.roster[1].name = 'New name'; h.card.update(changedName);
+    assert.equal(h.element.querySelector('[data-dx-result-details]').open, true);
+    assert.equal(h.element.querySelector('[data-dx-details]').open, false, 'a synchronization repaint retains the collapse');
+    assert.match(roundPointsPart(h.element.innerHTML), /New name/);
+    h.element.querySelector('[data-dx-details]').open = true; h.card.render();
+    assert.equal(h.element.querySelector('[data-dx-details]').open, true, 'manual expansion is retained as well');
+    assert.equal(h.sent.length, 0);
+  } finally { h.card.destroy(); }
 });
 
-test('card groups lead score details and full round points remain available in a collapsed review', () => {
-  for (const s of [dealt(), voting(), scored()]) {
+test('finished games and older completed reveals always keep their final round points available', () => {
+  for (const phase of ['REVEAL', 'FINISHED']) {
+    for (const at of [30000, undefined]) {
+      const data = E.view(scored(), 2); data.dixit.phase = phase;
+      if (at === undefined) delete data.dixit.result.revealedAt; else data.dixit.result.revealedAt = at;
+      const h = harness(data, { now: () => 3600000 }, { sessionStorage: unusableScoreStorage });
+      try {
+        assert.match(h.element.innerHTML, /data-dx-round-scores/); assert.match(h.element.innerHTML, /data-dx-result-details/);
+        assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup|data-dx-dismiss-score/);
+        assert.equal(h.element.querySelector('[data-dx-details]').open, true);
+        if (phase === 'FINISHED') noActions(h.element.innerHTML, ['nextRound']);
+      } finally { h.card.destroy(); }
+    }
+  }
+});
+
+test('round points cannot appear before the complete reveal even if a stale result or popup flag is supplied', () => {
+  const started = startedReveal(), answer = act(started, 'advanceReveal', 0, { now: started.revealAnswerAt });
+  const priorResult = E.view(scored(), 2).dixit.result;
+  for (const s of [create(), dealt(), submitted(), voting(), started, answer, act(dealt(), 'cancel')]) {
+    const data = E.view(s, 2); data.dixit.result = copy(priorResult);
+    const html = UI.tableHTML(data, { now: s.revealAnswerAt || 10000, scorePopup: true });
+    assert.doesNotMatch(html, /data-dx-round-scores|data-dx-score-player|data-dx-score-popup|data-dx-result-details/, 'no old or premature points in ' + s.phase);
+    if (s.phase === 'REVEALING') assert.doesNotMatch(html, /vote\(s\)/, 'votes stay secret until the complete reveal');
+  }
+});
+
+test('entering the next round or restarting removes the previous round points from the live card', () => {
+  const s = scored(), h = harness(E.view(s, 1));
+  try {
+    assert.match(h.element.innerHTML, /data-dx-round-scores/);
+    const next = act(s, 'nextRound'); h.card.update(E.view(next, 1));
+    assert.doesNotMatch(h.element.innerHTML, /data-dx-round-scores|data-dx-score-player|data-dx-result-details/);
+    assert.match(h.element.innerHTML, /data-dx-phase="CLUE"/);
+    h.card.update(E.view(s, 1)); assert.match(h.element.innerHTML, /data-dx-round-scores/);
+    h.card.update(E.view(act(s, 'restart'), 1));
+    assert.doesNotMatch(h.element.innerHTML, /data-dx-round-scores|data-dx-score-player|data-dx-result-details/);
+    assert.match(h.element.innerHTML, /data-dx-phase="LOBBY"/);
+    assert.equal(h.sent.length, 0);
+  } finally { h.card.destroy(); }
+});
+
+test('card groups lead expanded player totals and full round points also remain available in a collapsed review', () => {
+  for (const s of [create(), dealt(), voting(), scored()]) {
     const html = htmlFor(s, 2);
-    assert.ok(html.indexOf('data-dx-picture=') < html.indexOf('data-dx-details'), 'pictures precede player totals');
-    assert.doesNotMatch(html, /<header|<h1>Dixit<\/h1>|Round \d+ · Storyteller:/);
+    if (html.includes('data-dx-picture=')) assert.ok(html.indexOf('data-dx-picture=') < html.indexOf('data-dx-details'), 'pictures precede player totals');
+    const totalsTag = html.match(/<details\b[^>]*\bdata-dx-details[^>]*>/)?.[0] || '';
+    assert.match(totalsTag, /\sopen(?:\s|>)/, 'player totals are expanded by default in ' + s.phase);
+    assert.doesNotMatch(html, /<header|<h1>Dixit<\/h1>|Round \d+ · Storyteller:|class="dx-identity"|class="dx-spoken"/);
   }
   const html = htmlFor(scored('none'), 2);
   assert.match(html, /class="dx-story-reveal"><h2>The Storyteller’s card <span>0 vote\(s\)<\/span><\/h2>/);
@@ -604,7 +641,7 @@ test('invalid target drafts send no deal and give a readable validation instruct
   assert.equal(UI.errorText('invalid_target_score'), UI.t('invalidTarget'));
 });
 
-test('eight-player point popups include every player and bring the viewing player first without changing result order', () => {
+test('eight-player round side panels include every player and bring the viewing player first without changing result order', () => {
   let s = voting(8);
   for (let seat = 2; seat <= 8; seat++) s = act(s, 'vote', seat, { cardId: s.submissions[1][0] });
   s = finishReveal(act(s, 'reveal', 1, { now: 10000 }));
@@ -612,10 +649,10 @@ test('eight-player point popups include every player and bring the viewing playe
   data.dixit.result.revealedAt = 30000;
   const h = harness(data, { now: () => 31000 });
   try {
-    const popup = popupPart(h.element.innerHTML);
-    assert.match(popup, /has-many-players/); assert.equal((popup.match(/data-dx-score-player=/g) || []).length, 8);
-    assert.match(popup, /class="dx-score-change is-me" data-dx-score-player="8"/);
-    assert.equal(popup.match(/data-dx-score-player="(\d+)"/)[1], '8');
+    const points = roundPointsPart(h.element.innerHTML);
+    assert.equal((points.match(/data-dx-score-player=/g) || []).length, 8);
+    assert.match(points, /class="dx-score-change is-me" data-dx-score-player="8"/);
+    assert.equal(points.match(/data-dx-score-player="(\d+)"/)[1], '8');
     assert.deepEqual(data.dixit.result.rows.map(row => row.playerNum), canonicalOrder);
   } finally { h.card.destroy(); }
 });

@@ -6,7 +6,6 @@
     subtitle:['妙語說書人','Picture storytelling'], round:['第 {n} 輪','Round {n}'], storyteller:['說書人：{name}','Storyteller: {name}'],
     yourTurn:['輪到你當說書人','You are the Storyteller'], waitingClue:['等 {name} 選牌，直接說出提示。','Wait for {name} to select a card and speak the clue.'],
     storyHint:['選一張圖卡，直接說出提示。說完後再確認出牌。讓部分人猜中，但別讓所有人都猜中。','Select one picture, then say your clue aloud. Confirm your card after speaking. Aim for some people to guess it, but not everyone.'],
-    spokenClue:['聽說書人的口頭提示','Listen to the Storyteller’s spoken clue'],
     tell:['已說完提示，確認出牌','I have spoken my clue — confirm card'], submit:['確認秘密出牌','Confirm secret cards'], submitHint:['聽口頭提示，選 {n} 張符合提示的圖卡。選好後再確認出牌。','Listen to the spoken clue and select {n} matching picture card(s). Confirm after choosing.'],
     submitted:['已秘密出牌。等其他玩家選牌。','Cards submitted. Waiting for the other players.'], voteHint:['猜哪張是說書人的圖卡。不能投自己出的牌。','Which card belongs to the Storyteller? You cannot vote for your own cards.'],
     vote:['確認秘密投票','Confirm secret vote'], voted:['已投票，揭曉前不會公開你的選擇。','Vote submitted. Your choice stays secret until the reveal.'], tellerVote:['說書人不投票。等其他玩家猜你的圖卡。','The Storyteller does not vote. Wait for everyone to guess your card.'],
@@ -14,7 +13,7 @@
     selectCount:['已選 {n}／{total} 張','Selected {n} / {total}'], selectHint:['點圖卡選牌，選好後再確認。','Tap a picture to select it, then confirm your choice.'], ready:['準備好了','Ready'], unready:['取消準備','Not ready'], readyStatus:['已準備','Ready'], notReady:['等待準備','Not ready'],
     deal:['發牌並開始','Deal and start'], first:['首位說書人','First Storyteller'], random:['隨機','Random'], lobby:['每人打開自己的玩家卡片','Open your own player card'],
     lobbyHint:['使用首頁原本的玩家連結。主持人若也玩，請從自己的玩家卡片選牌與投票。','Use your existing Hub player links. Hosts who are playing use their own player card to choose cards and vote.'],
-    shared:['共同牌桌','Shared table'], private:['{name} 的私人手牌','{name}’s private hand'], open:['開啟這桌遊戲','Open this table'], setup:['回首頁設定房間','Set up room in Hub'],
+    shared:['共同牌桌','Shared table'], open:['開啟這桌遊戲','Open this table'], setup:['回首頁設定房間','Set up room in Hub'],
     setupHint:['請先在首頁設定 3–8 人房間。','Set up a 3–8-player room in the Hub first.'], keepOpen:['請用開房間時的同一個瀏覽器開啟 HOST 玩家卡片，卡片會自動維持遊戲同步。','Open your host player card in the browser used to create this room; your card will keep the game in sync.'],
     reveal:['揭曉並計分','Reveal and score'], next:['補牌，下一輪','Refill and start next round'], pause:['暫停','Pause'], resume:['繼續','Resume'], paused:['遊戲已暫停','Game paused'], cancel:['結束這局','Cancel game'], restart:['原班人馬再玩一局','Play again with the same players'],
     confirmCancel:['確定結束這局？這局不會產生勝者。','Cancel this game? This game will have no winner.'], confirmRestart:['重新發牌並清除這局分數？','Deal again and clear this game’s scores?'],
@@ -37,7 +36,7 @@
     currentStage:['目前階段','Current stage'], phaseLobby:['等待開始','Waiting to start'], phaseClue:['說書人說提示','Storyteller speaks'], phaseSubmit:['秘密出牌','Secret card selection'], phaseVote:['秘密投票','Secret voting'], phaseRevealing:['準備揭曉','The reveal'], phaseAnswer:['說書人的圖卡','The Storyteller’s card'], phaseReveal:['揭曉結果','Round revealed'], phaseFinished:['遊戲結束','Game finished'], phaseCancelled:['這局已取消','Game cancelled'],
     phaseStoryOwn:['選一張圖卡 → 口頭說出提示 → 確認出牌。','Choose a picture → say your clue aloud → confirm your card.'], phaseStoryWait:['聽 {name} 的口頭提示，等說書人確認出牌。','Listen to {name}’s spoken clue and wait for their card confirmation.'], phaseHostLobby:['玩家到齊後，選首位說書人並開始發牌。','When everyone is here, choose the first Storyteller and deal.'], phaseLobbyPlayer:['準備好後按「準備好了」，等待主持人開始。','Mark yourself ready, then wait for the host to start.'], phaseReady:['你已準備好，等待主持人發牌。','You are ready. Waiting for the host to deal.'], phaseAllVotesHost:['全員投票完成。按下揭曉，大家一起倒數。','All votes are in. Start the reveal for everyone.'], phaseAllVotesPlayer:['全員投票完成，等待主持人開始倒數。','All votes are in. Waiting for the host to start the countdown.'], phaseCountdown:['一起倒數，說書人的圖卡即將揭曉。','Count down together. The Storyteller’s picture is about to appear.'], phaseAnswerWait:['先看說書人的圖卡，接著揭曉最高票。','Look at the Storyteller’s picture. The most-voted picture is next.'], phaseNextHost:['結果已揭曉，準備好後開始下一輪。','The result is revealed. Start the next round when everyone is ready.'], phaseNextPlayer:['看看大家投了哪張牌，等待主持人開始下一輪。','See everyone’s guesses, then wait for the next round.'], phaseFinishedHost:['最高分獲勝。可以用原班人馬再玩一局。','The highest score wins. Play again with the same players.'], phaseFinishedPlayer:['最高分獲勝，等待主持人再開一局。','The highest score wins. Wait for the host to start another game.'], phaseCancelledHost:['可以用原班人馬重新開始。','You can start again with the same players.'], phaseCancelledPlayer:['等待主持人重新開始。','Wait for the host to start again.'],
     gameDetails:['玩家與分數','Players and scores'], roundSummary:['第 {n} 輪 · 說書人：{name}','Round {n} · Storyteller: {name}'], readyProgress:['已準備 {n}／{total} 人','Ready: {n} / {total}'], mostVoted:['最高票圖卡','Most-voted picture'], mostVotedTie:['並列最高票圖卡','Tied most-voted pictures'], allPlayed:['這輪所有圖卡','All pictures from this round'], revealFocus:['揭曉圖卡','Reveal pictures'], confirmYes:['確定','Confirm'], confirmNo:['返回遊戲','Keep playing'], hostControls:['主持操作','Host controls'],
-    roundGain:['本輪分數變化','This round’s points'], pointsChange:['本輪得分','Round gain'], dismissScore:['收起分數','Dismiss points'],
+    roundGain:['本輪分數變化','This round’s points'], pointsChange:['本輪得分','Round gain'],
     winningScore:['勝利目標分數','Winning score'], scoreRange:['5–100 分；基本版為 30 分。','5–100 points; the base game uses 30.'],
   };
   if(typeof I18N!=='undefined')I18N.registerDict('dixit',Object.fromEntries(Object.entries(dict).map(([k,v])=>[k,{zh:v[0],en:v[1]}])));
@@ -91,12 +90,12 @@
     if(!answer)return '';
     const rows=list(s.result?.rows),voteCounts=table.map(id=>({id,count:rows.filter(p=>p.voteCardId===id).length})),maxVotes=s.result?.maxVotes??Math.max(0,...voteCounts.map(p=>p.count));
     const popular=finished?popularCards(s).slice().sort((left,right)=>Number(left===answer)-Number(right===answer)):[];
-    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><h2>'+esc(t('answer'))+(finished?' <span>'+esc(t('votes',{n:voteCounts.find(p=>p.id===answer)?.count||0}))+'</span>':'')+'</h2>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,owner:name(s,s.storyteller),artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><h2>'+esc(t(popular.length>1?'mostVotedTie':'mostVoted'))+' <span>'+esc(t('votes',{n:maxVotes}))+'</span></h2><div class="dx-popular-gallery">'+popular.map(id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return cardHTML(id,table.indexOf(id)+1,{owner:owner?name(s,owner.playerNum):id===answer?name(s,s.storyteller):'',artworkVersion:s.artworkVersion||1,eager:true});}).join('')+'</div></div>':'')+'</div></section>';
+    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><h2>'+esc(t('answer'))+(finished?' <span>'+esc(t('votes',{n:voteCounts.find(p=>p.id===answer)?.count||0}))+'</span>':'')+'</h2>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,owner:name(s,s.storyteller),artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><h2>'+esc(t(popular.length>1?'mostVotedTie':'mostVoted'))+' <span>'+esc(t('votes',{n:maxVotes}))+'</span></h2><div class="dx-popular-gallery">'+popular.map(id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return cardHTML(id,table.indexOf(id)+1,{owner:owner?name(s,owner.playerNum):id===answer?name(s,s.storyteller):'',artworkVersion:s.artworkVersion||1,eager:true});}).join('')+'</div></div>'+roundScoresHTML(s):'')+'</div></section>';
   }
   const gain=n=>'+'+Math.max(0,Number(n)||0);
-  function scorePopupHTML(s){
+  function roundScoresHTML(s){
     const rows=list(s.result?.rows).slice().sort((left,right)=>Number(right.playerNum===s.playerNum)-Number(left.playerNum===s.playerNum));
-    return '<div class="dx-score-popup-layer"><aside class="dx-score-popup'+(rows.length>4?' has-many-players':'')+'" data-dx-score-popup role="status" aria-live="polite" aria-atomic="true" aria-label="'+esc(t('roundGain'))+'"><div class="dx-score-popup-header"><h2>'+esc(t('roundGain'))+'</h2><button type="button" class="dx-score-dismiss" data-dx-dismiss-score aria-label="'+esc(t('dismissScore'))+'">×</button></div><div class="dx-score-changes">'+rows.map(r=>'<div class="dx-score-change'+(r.playerNum===s.playerNum?' is-me':'')+'" data-dx-score-player="'+r.playerNum+'"><strong class="dx-score-name">'+esc(name(s,r.playerNum))+'</strong><strong class="dx-score-gain" aria-label="'+esc(t('pointsChange'))+'">'+gain(r.delta)+'</strong><span class="dx-score-total">'+esc(t('total'))+' <strong>'+Math.max(0,Number(r.score)||0)+'</strong></span><div class="dx-score-breakdown"><span>'+esc(t('base'))+' '+gain(r.base)+'</span><span>'+esc(t('bonus'))+' '+gain(r.bonus)+'</span></div></div>').join('')+'</div></aside></div>';
+    return '<aside class="dx-round-scores" data-dx-round-scores aria-label="'+esc(t('roundGain'))+'"><h2>'+esc(t('roundGain'))+'</h2><div class="dx-score-changes">'+rows.map(r=>'<div class="dx-score-change'+(r.playerNum===s.playerNum?' is-me':'')+'" data-dx-score-player="'+r.playerNum+'"><strong class="dx-score-name">'+esc(name(s,r.playerNum))+'</strong><strong class="dx-score-gain" aria-label="'+esc(t('pointsChange'))+'">'+gain(r.delta)+'</strong><span class="dx-score-total">'+esc(t('total'))+' <strong>'+Math.max(0,Number(r.score)||0)+'</strong></span><div class="dx-score-breakdown"><span>'+esc(t('base'))+' '+gain(r.base)+'</span><span>'+esc(t('bonus'))+' '+gain(r.bonus)+'</span></div></div>').join('')+'</div></aside>';
   }
   function tableHTML(payload,options={}){
     const s=payload.dixit||payload,host=!!options.host,controls=host||s.hostControls===true,a={...s.actions},selected=options.selected||new Set(),now=clockNow(options);
@@ -109,8 +108,7 @@
     if(s.phase==='LOBBY')body='<section class="dx-panel"><h2>'+esc(t('lobby'))+'</h2><p>'+esc(t('lobbyHint'))+'</p>'+(controls?'<div class="dx-lobby-target"><label>'+esc(t('winningScore'))+' <input type="number" data-dx-target-score min="5" max="100" step="1" inputmode="numeric" required value="'+(Number(s.targetScore)||30)+'" aria-label="'+esc(t('winningScore'))+'" aria-describedby="dx-lobby-target-hint"></label><p class="dx-muted" id="dx-lobby-target-hint">'+esc(t('scoreRange'))+'</p></div>':'')+'<div class="dx-actions">'+(controls?'<label>'+esc(t('first'))+' <select data-dx-first><option value="0">'+esc(t('random'))+'</option>'+roster.map(p=>'<option value="'+p.playerNum+'">'+esc(p.name)+'</option>').join('')+'</select></label>'+btn('deal','deal',!a.deal):'')+(!host&&a.ready?btn('ready',roster.find(p=>p.playerNum===s.playerNum)?.ready?'unready':'ready'): '')+'</div></section>';
     else if(s.phase==='CANCELLED')body='<section class="dx-panel"><h2>'+esc(t('cancelled'))+'</h2></section>';
     else{
-      if(s.clueMode==='spoken'&&['CLUE','SUBMIT','VOTE'].includes(s.phase))body='<p class="dx-spoken"><span aria-hidden="true">◉</span> '+esc(t('spokenClue'))+'</p>';
-      else if(s.clue)body='<blockquote class="dx-clue">'+esc(s.clue)+'</blockquote>';
+      if(s.clueMode!=='spoken'&&s.clue)body='<blockquote class="dx-clue">'+esc(s.clue)+'</blockquote>';
       if(s.phase==='REVEALING'||finished)body+=revealHTML(s,now);
       let played='';
       if(table.length&&s.phase!=='REVEALING')played='<section class="dx-panel dx-card-panel"><h2>'+esc(t('table'))+'</h2>'+choiceBar({vote:a.vote},selected,count)+'<div class="dx-table">'+table.map((id,i)=>{
@@ -133,12 +131,12 @@
     const primary=controls&&s.phase==='VOTE'?btn('reveal','reveal',!a.reveal):a.nextRound?btn('nextRound','next'):'';
     const phase='<section class="dx-phase-bar'+(s.paused?' is-paused':'')+'" data-dx-phase="'+esc(s.phase)+'" aria-label="'+esc(t('currentStage'))+'"><div class="dx-phase-main"><span class="dx-phase-kicker">'+esc(t('currentStage'))+'</span><h2>'+esc(info.title)+'</h2><p class="dx-phase-instruction" role="status">'+esc(info.instruction)+'</p><span class="dx-connection" data-dx-connection role="status"></span></div><div class="dx-phase-progress">'+(info.progress?'<strong>'+esc(info.progress)+'</strong>':'')+primary+'</div></section>';
     const confirmation=options.confirmation?'<div class="dx-confirm" role="alertdialog" aria-label="'+esc(t(options.confirmation==='cancel'?'confirmCancel':'confirmRestart'))+'"><p>'+esc(t(options.confirmation==='cancel'?'confirmCancel':'confirmRestart'))+'</p><div class="dx-actions"><button type="button" class="dx-button" data-dx-action="'+options.confirmation+'" data-dx-confirm="'+options.confirmation+'">'+esc(t('confirmYes'))+'</button><button type="button" class="dx-button dx-secondary" data-dx-dismiss-confirm>'+esc(t('confirmNo'))+'</button></div></div>':'';
-    const details='<details class="dx-game-details" data-dx-details><summary>'+esc(t('gameDetails'))+'</summary>'+scores+'<p class="dx-muted dx-goal">'+esc(t('scoreTarget',{n:Number(s.targetScore)||30}))+' · '+esc(t('deck',{n:s.deckCount??84}))+'</p></details>';
-    return '<div class="dx-game'+(s.phase==='REVEALING'||finished?' is-reveal-phase':'')+'">'+phase+(!host?'<p class="dx-identity">'+esc(t('private',{name:name(s,s.playerNum)}))+'</p>':'')+'<p class="dx-message" data-dx-message role="status"></p>'+body+details+(controls?'<div class="dx-host-controls" aria-label="'+esc(t('hostControls'))+'">'+(a.pause?btn('pause','pause',false,true):a.resume?btn('resume','resume',false,true):'')+(a.cancel?btn('cancel','cancel',false,true):'')+(a.restart?btn('restart','restart',false,true):'')+'</div>'+confirmation+'<p class="dx-muted dx-keep-open">'+esc(t('keepOpen'))+'</p>':'')+rulesHTML(s)+(finished&&s.result&&options.scorePopup?scorePopupHTML(s):'')+'</div>';
+    const details='<details class="dx-game-details" data-dx-details open><summary>'+esc(t('gameDetails'))+'</summary>'+scores+'<p class="dx-muted dx-goal">'+esc(t('scoreTarget',{n:Number(s.targetScore)||30}))+' · '+esc(t('deck',{n:s.deckCount??84}))+'</p></details>';
+    return '<div class="dx-game'+(s.phase==='REVEALING'||finished?' is-reveal-phase':'')+'">'+phase+'<p class="dx-message" data-dx-message role="status"></p>'+body+details+(controls?'<div class="dx-host-controls" aria-label="'+esc(t('hostControls'))+'">'+(a.pause?btn('pause','pause',false,true):a.resume?btn('resume','resume',false,true):'')+(a.cancel?btn('cancel','cancel',false,true):'')+(a.restart?btn('restart','restart',false,true):'')+'</div>'+confirmation+'<p class="dx-muted dx-keep-open">'+esc(t('keepOpen'))+'</p>':'')+rulesHTML(s)+'</div>';
   }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.pendingWaiting=false;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.scoreActiveKey='';this.scorePopupSignature='';this.scoreSeenKeys=new Set();this.timer=setInterval(()=>this.paint(),200);
+      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.pendingWaiting=false;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.timer=setInterval(()=>this.paint(),200);
       this.click=e=>this.onClick(e);el.addEventListener('click',this.click);
     }
     update(payload){
@@ -158,20 +156,9 @@
       if(enteringReveal)this.el.scrollIntoView?.({block:'start',behavior:'instant'});
     }
     blocked(){return !!this.pending||this.options.disabled?.()||this.options.connected?.()===false;}
-    scorePopup(now=clockNow(this.options)){
-      const s=this.payload?.dixit,at=Number(s?.result?.revealedAt);
-      if(!['REVEAL','FINISHED'].includes(s?.phase)||!(at>0)||now<at+700||now>=at+5700){this.scoreActiveKey='';return '';}
-      const key='dixit-score-popup:'+s.sessionId+':'+(s.result.round??s.round)+':'+(s.playerNum||0);
-      if(this.scoreActiveKey===key)return key;
-      if(this.scoreSeenKeys.has(key))return '';
-      try{if((this.options.scoreStorage||root.sessionStorage)?.getItem(key)==='shown'){this.scoreSeenKeys.add(key);return '';}}catch(error){}
-      this.scoreSeenKeys.add(key);this.scoreActiveKey=key;
-      try{(this.options.scoreStorage||root.sessionStorage)?.setItem(key,'shown');}catch(error){}
-      return key;
-    }
     paint(){
-      if(!this.payload)return;const s=this.payload.dixit,blocked=this.blocked(),now=clockNow(this.options),visual=revealVisual(s,now),popup=this.scorePopup(now);
-      if(visual!==this.revealVisualSignature||popup!==this.scorePopupSignature){this.render();return;}
+      if(!this.payload)return;const s=this.payload.dixit,blocked=this.blocked(),now=clockNow(this.options),visual=revealVisual(s,now);
+      if(visual!==this.revealVisualSignature){this.render();return;}
       const connection=this.el.querySelector('[data-dx-connection]');
       if(connection)connection.textContent=this.options.connected?.()===false?t('offline'):!this.options.host&&s.hostLiveUntil>0&&s.hostLiveUntil<clockNow(this.options)?t('hostAway'):'';
       if(this.errorCode)this.error=errorText(this.errorCode);
@@ -190,14 +177,12 @@
       const retainTarget=s.phase==='LOBBY'&&this.renderedSessionId===s.sessionId&&this.renderedTargetScore===s.targetScore;
       this.renderedSessionId=s.sessionId;this.renderedTargetScore=s.targetScore;
       this.revealVisualSignature=revealVisual(this.payload.dixit,clockNow(this.options));
-      this.scorePopupSignature=this.scorePopup();
-      this.el.innerHTML=tableHTML(this.payload,{...this.options,selected:this.selected,confirmation:this.confirmation,scorePopup:!!this.scorePopupSignature});
+      this.el.innerHTML=tableHTML(this.payload,{...this.options,selected:this.selected,confirmation:this.confirmation});
       if(retainTarget&&targetDraft!=null){const input=this.el.querySelector('[data-dx-target-score]');if(input)input.value=targetDraft;}
-      for(const [key,open] of disclosures)if(open){const detail=this.el.querySelector('[data-dx-'+key+']');if(detail)detail.open=true;}
+      for(const [key,open] of disclosures)if(typeof open==='boolean'){const detail=this.el.querySelector('[data-dx-'+key+']');if(detail)detail.open=open;}
       this.paint();
     }
     async onClick(e){
-      if(e.target.closest('[data-dx-dismiss-score]')){this.scoreActiveKey='';this.render();return;}
       if(e.target.closest('[data-dx-dismiss-confirm]')){this.confirmation='';this.render();return;}
       const c=e.target.closest('[data-dx-card]');
       if(c&&!c.disabled&&!this.blocked()){
