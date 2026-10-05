@@ -37,10 +37,10 @@ var DIXIT_ENGINE = (() => {
     if (players.some(p => !p || !Number.isInteger(p.playerNum) || p.playerNum < 1) ||
         new Set(players.map(p => p.playerNum)).size !== players.length) throw new Error('invalid_roster');
     return {
-      version: 1, sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
+      version: 1, artworkVersion: 2, sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       paused: false, readiness: {}, hands: {}, submissions: {}, votes: {}, table: [],
-      deck: [], discard: [], storyteller: null, round: 0, clue: '', scores: {},
+      deck: [], discard: [], storyteller: null, round: 0, clue: '', clueMode: '', scores: {},
       lastRound: null, winners: [], rngState: seedValue(seed), createdAt: Number(now) || 0,
       seen: {}, replies: {},
     };
@@ -53,6 +53,9 @@ var DIXIT_ENGINE = (() => {
     }
     for (const actor of Object.keys(s.seen)) s.seen[actor] = list(s.seen[actor]);
     s.lastRound = s.lastRound || null; s.storyteller = s.storyteller == null ? null : s.storyteller;
+    s.clue = typeof s.clue === 'string' ? s.clue : '';
+    s.clueMode = s.clueMode === 'spoken' ? 'spoken' : s.clue ? 'text' : '';
+    if (s.clueMode === 'spoken') s.clue = '';
     for (const player of s.roster) {
       const seat = player.playerNum;
       s.hands[seat] = list(s.hands[seat]);
@@ -60,6 +63,9 @@ var DIXIT_ENGINE = (() => {
       if (s.votes[seat] == null) delete s.votes[seat];
     }
     if (s.lastRound) {
+      s.lastRound.clue = typeof s.lastRound.clue === 'string' ? s.lastRound.clue : '';
+      s.lastRound.clueMode = s.lastRound.clueMode === 'spoken' ? 'spoken' : s.lastRound.clue ? 'text' : '';
+      if (s.lastRound.clueMode === 'spoken') s.lastRound.clue = '';
       s.lastRound.table = list(s.lastRound.table);
       s.lastRound.rows = list(s.lastRound.rows).map(row => ({ ...row, cardIds: list(row.cardIds), voteCardId: row.voteCardId || null }));
     }
@@ -106,7 +112,7 @@ var DIXIT_ENGINE = (() => {
       return { playerNum: seat, cardIds, voteCardId, correct, base, bonus, delta, score };
     });
     s.lastRound = {
-      round: s.round, storyteller: s.storyteller, clue: s.clue, table: s.table.slice(),
+      round: s.round, storyteller: s.storyteller, clue: s.clue, clueMode: s.clueMode, table: s.table.slice(),
       answerCardId, correctCount, totalVoters: eligible.length,
       outcome: partial ? 'some' : correctCount === 0 ? 'none' : 'all', rows,
     };
@@ -147,12 +153,16 @@ var DIXIT_ENGINE = (() => {
       }
       case 'story': {
         if (host || actor !== s.storyteller || s.phase !== 'CLUE') { reject('not_available'); break; }
-        if (typeof cmd.clue !== 'string' || !cmd.clue.trim() || Array.from(cmd.clue.trim()).length > 180) {
+        const clueMode = cmd.clueMode === 'spoken' ? 'spoken' :
+          cmd.clueMode == null || cmd.clueMode === 'text' ? 'text' : null;
+        if (!clueMode || clueMode === 'text' &&
+            (typeof cmd.clue !== 'string' || !cmd.clue.trim() || Array.from(cmd.clue.trim()).length > 180)) {
           reject('invalid_clue'); break;
         }
         if (!s.hands[actor].includes(cmd.cardId)) { reject('invalid_card'); break; }
         s.hands[actor] = s.hands[actor].filter(id => id !== cmd.cardId);
-        s.submissions[actor] = [cmd.cardId]; s.clue = cmd.clue.trim(); transition(s, 'SUBMIT');
+        s.submissions[actor] = [cmd.cardId]; s.clueMode = clueMode;
+        s.clue = clueMode === 'spoken' ? '' : cmd.clue.trim(); transition(s, 'SUBMIT');
         break;
       }
       case 'submit': {
@@ -185,7 +195,7 @@ var DIXIT_ENGINE = (() => {
         break;
       case 'nextRound': {
         if (s.phase !== 'REVEAL') { reject('not_available'); break; }
-        s.discard.push(...held(s)); s.submissions = {}; s.votes = {}; s.table = []; s.clue = ''; s.lastRound = null;
+        s.discard.push(...held(s)); s.submissions = {}; s.votes = {}; s.table = []; s.clue = ''; s.clueMode = ''; s.lastRound = null;
         replenish(s, cmd);
         s.storyteller = s.roster[(s.roster.findIndex(p => p.playerNum === s.storyteller) + 1) % s.roster.length].playerNum;
         s.round++; transition(s, 'CLUE');
@@ -233,9 +243,9 @@ var DIXIT_ENGINE = (() => {
       pause: host && !s.paused && !ended, resume: host && s.paused && !ended,
     };
     const dixit = {
-      version: 1, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
+      version: 1, artworkVersion: Number(s.artworkVersion)||1, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
       phase: s.phase, paused: s.paused === true, round: s.round, storyteller: s.storyteller,
-      clue: s.clue, playerNum: player ? actor : 0,
+      clue: s.clue, clueMode: s.clueMode, playerNum: player ? actor : 0,
       roster: s.roster.map(p => ({
         playerNum: p.playerNum, name: p.name, score: Number(s.scores[p.playerNum]) || 0,
         ready: s.readiness[p.playerNum] === true, submitted: has(s.submissions, p.playerNum),

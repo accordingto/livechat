@@ -192,7 +192,7 @@ node --test tests/*.test.cjs
 
 ## Dixit picture storytelling
 
-The final Hub game supports3–8 players,84 original surreal picture cards, secret submissions and votes, automatic current base-game scoring, and replay. It uses the same player links as the other games. The public host table never renders private hands; keep it open during play. See [dixit-mode.md](dixit-mode.md) for rules, source links, the trusted-host transport, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
+The final Hub game supports3–8 players, spoken clues without a text field,84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards and a focus gallery keep pictures central on desktop and phones. It uses the same player links as the other games. The public host table never renders private hands; keep it open during play. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, the trusted-host transport, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
 
 ## License
 

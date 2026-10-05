@@ -21,7 +21,7 @@ function act(s, type, actor = 0, extra = {}) {
 const dealt = (count = 4) => act(create(count), 'deal', 0, { firstPlayerNum: 1 });
 const submitted = (count = 4) => {
   const s = dealt(count);
-  return act(s, 'story', 1, { cardId: s.hands[1][0], clue: 'The moon keeps a secret.' });
+  return act(s, 'story', 1, { cardId: s.hands[1][0], clueMode: 'spoken' });
 };
 function voting(count = 4) {
   let s = submitted(count);
@@ -92,18 +92,20 @@ test('lobby has host start and player readiness, and three-player submission req
     noActions(htmlFor(s, 1), ['deal', 'reveal', 'nextRound', 'pause', 'restart']);
   }
   const s = submitted(3), [first, second] = s.hands[2];
-  assert.match(htmlFor(s, 2), /Choose 2 picture card/);
+  assert.match(htmlFor(s, 2), /select 2 matching picture card/);
   assert.equal(action(htmlFor(s, 2, { selected: new Set([first]) }), 'submit').disabled, true);
   assert.equal(action(htmlFor(s, 2, { selected: new Set([first, second]) }), 'submit').disabled, false);
   assert.equal(action(htmlFor(s, 2, { selected: new Set(s.hands[2].slice(0, 3)) }), 'submit').disabled, true);
 });
 
-test('story clue requires a selected card and either text or an explicit spoken clue', () => {
+test('story uses voice only and requires a selected card before the separate spoken confirmation', () => {
   const s = dealt(), id = s.hands[1][0];
-  assert.equal(action(htmlFor(s, 1, { clue: 'a river' }), 'story').disabled, true);
-  assert.equal(action(htmlFor(s, 1, { selected: new Set([id]), clue: '  ' }), 'story').disabled, true);
-  assert.equal(action(htmlFor(s, 1, { selected: new Set([id]), clue: 'a river' }), 'story').disabled, false);
-  assert.equal(action(htmlFor(s, 1, { selected: new Set([id]), spoken: true }), 'story').disabled, false);
+  assert.equal(action(htmlFor(s, 1), 'story').disabled, true);
+  assert.equal(action(htmlFor(s, 1, { selected: new Set([id]) }), 'story').disabled, false);
+  assert.match(htmlFor(s, 1), /I have spoken my clue/);
+  assert.doesNotMatch(htmlFor(s, 1), /data-dx-clue|data-dx-spoken|type="checkbox"|<input/);
+  const spoken = submitted(), publicHTML = htmlFor(spoken);
+  assert.match(publicHTML, /Listen to the Storyteller’s spoken clue/); assert.doesNotMatch(publicHTML, /<blockquote/);
 });
 
 test('reveal prints the actual answer, owners, votes and base/bonus/total scores for every scoring branch', () => {
@@ -135,18 +137,18 @@ test('finish displays all tied winners and prevents another round; cancellation 
   assert.match(htmlFor(cancelled), /Game cancelled/); assert.doesNotMatch(htmlFor(cancelled, 2), /dx-hand|data-dx-card=/);
 });
 
-test('names, clues, image descriptions and input values are escaped, and errors use user-facing wording', () => {
+test('names, legacy clues and image descriptions are escaped without visible picture captions', () => {
   let s = submitted();
   const hostile = '<img src=x onerror="alert(1)"> & \'\"';
-  s.roster[0].name = hostile; s.clue = hostile;
+  s.roster[0].name = hostile; s.clue = hostile; s.clueMode = 'text';
   const html = htmlFor(s, 2);
   assert.ok(html.includes(UI.esc(hostile))); assert.doesNotMatch(html, /<img|onerror="alert/);
-  const input = htmlFor(dealt(), 1, { clue: hostile });
-  assert.ok(input.includes('value="' + UI.esc(hostile) + '"'));
-  const context = { DIXIT_DECK: { cards: [{ description: hostile, image: 'assets/dixit/atlas-1.png' }] } };
+  const context = { DIXIT_DECK: { version: 2, cards: [{ description: hostile, image: 'assets/dixit-v2/d001.webp' }] } };
   vm.runInNewContext(source, context);
   const picture = context.DIXIT_UI.cardHTML('d001', 1);
-  assert.ok(picture.includes('aria-label="' + UI.esc(hostile) + '"')); assert.doesNotMatch(picture, /<img|onerror="alert/);
+  assert.ok(picture.includes('alt="' + UI.esc(hostile) + '"')); assert.doesNotMatch(picture, /onerror="alert|<figcaption/);
+  assert.equal(picture.split(UI.esc(hostile)).length - 1, 1, 'description appears only in the accessible image alt');
+  assert.match(picture, /<img class="dx-art" src="assets\/dixit-v2\/d001.webp"/);
   assert.equal(UI.errorText('stale_turn'), UI.t('stale')); assert.equal(UI.errorText('stale_session'), UI.t('stale'));
   assert.equal(UI.errorText('paused'), UI.t('paused')); assert.equal(UI.errorText('offline'), UI.t('failed'));
   assert.equal(UI.errorText('invalid_card'), UI.t('invalid')); assert.doesNotMatch(UI.errorText('invalid_card'), /invalid_card/);
@@ -156,17 +158,29 @@ test('names, clues, image descriptions and input values are escaped, and errors 
 // Small DOM double retains live disabled flags, datasets and form inputs.
 // It drives the real Card event handler rather than copying its decisions.
 class ElementDouble {
-  constructor() { this.listeners = new Map(); this.ownerDocument = { activeElement: null }; this.nodes = []; this._html = ''; }
+  constructor(document) {
+    this.listeners = new Map(); this.children = []; this.attributes = {}; this.nodes = []; this._html = '';
+    this.ownerDocument = document || { activeElement: null, body: { style: { overflow: '' } } };
+    if (!this.ownerDocument.createElement) this.ownerDocument.createElement = () => new ElementDouble(this.ownerDocument);
+  }
+  setAttribute(key, value) { this.attributes[key] = value; }
+  append(child) { child.parentElement = this; this.children.push(child); }
+  remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this); }
   addEventListener(type, fn) { this.listeners.set(type, fn); }
   removeEventListener(type) { this.listeners.delete(type); }
   set innerHTML(html) {
-    this._html = html; this.nodes = [];
+    this._html = html; this.nodes = []; this.children = [];
     for (const tag of html.match(/<(?:button|input|select|details|span|p)\b[^>]*>/g) || []) {
       const dataset = {};
       for (const attr of tag.matchAll(/data-dx-([\w-]+)(?:="([^"]*)")?/g)) dataset['dx' + attr[1].split('-').map(part => part[0].toUpperCase() + part.slice(1)).join('')] = attr[2] || '';
-      const node = { dataset, disabled: /\sdisabled(?:\s|>)/.test(tag), value: tag.match(/\bvalue="([^"]*)"/)?.[1] || '',
+      const document = this.ownerDocument;
+      const node = { dataset, tag, disabled: /\sdisabled(?:\s|>)/.test(tag), value: tag.match(/\bvalue="([^"]*)"/)?.[1] || '',
         checked: /\schecked(?:\s|>)/.test(tag), open: false, textContent: '',
-        matches(selector) { return selector.startsWith('[data-dx-') && Object.hasOwn(this.dataset, selector.slice(9, -1).split('-').map((part, i) => i ? part[0].toUpperCase() + part.slice(1) : 'dx' + part[0].toUpperCase() + part.slice(1)).join('')); },
+        focus() { document.activeElement = this; },
+        matches(selector) {
+          if (selector === 'button:not([disabled])') return tag.startsWith('<button') && !this.disabled;
+          return selector.startsWith('[data-dx-') && Object.hasOwn(this.dataset, selector.slice(9, -1).split('-').map((part, i) => i ? part[0].toUpperCase() + part.slice(1) : 'dx' + part[0].toUpperCase() + part.slice(1)).join(''));
+        },
         closest(selector) { return this.matches(selector) ? this : null; } };
       this.nodes.push(node);
     }
@@ -176,12 +190,12 @@ class ElementDouble {
     const exact = selector.match(/^\[data-dx-([\w-]+)="([^"]+)"\]$/);
     if (exact) {
       const key = 'dx' + exact[1].split('-').map(part => part[0].toUpperCase() + part.slice(1)).join('');
-      return this.nodes.find(node => node.dataset[key] === exact[2]) || null;
+      return this.nodes.find(node => node.dataset[key] === exact[2]) || this.children.map(child => child.querySelector(selector)).find(Boolean) || null;
     }
-    if (selector.startsWith('.')) return null;
-    return this.nodes.find(node => node.matches(selector)) || null;
+    if (selector.startsWith('.')) return this.children.find(child => child.className === selector.slice(1)) || null;
+    return this.nodes.find(node => node.matches(selector)) || this.children.map(child => child.querySelector(selector)).find(Boolean) || null;
   }
-  querySelectorAll(selector) { return this.nodes.filter(node => selector.split(',').some(part => node.matches(part))); }
+  querySelectorAll(selector) { return this.nodes.filter(node => selector.split(',').some(part => node.matches(part))).concat(this.children.flatMap(child => child.querySelectorAll(selector))); }
 }
 function harness(data, options = {}, globals = {}) {
   const timers = new Map(), sent = [], context = { crypto: { randomUUID: () => 'ui-mailbox-' + (++serial) },
@@ -193,11 +207,10 @@ function harness(data, options = {}, globals = {}) {
   card.update(data);
   return { card, element, sent, timers,
     async click(selector) { const target = element.querySelector(selector); assert.ok(target, selector + ' exists'); await card.onClick({ target }); },
-    input(selector, value) { const target = element.querySelector(selector); assert.ok(target); target.value = value; card.input({ target }); },
   };
 }
 
-test('changing language repaints the same player projection and preserves the selected card and clue', async () => {
+test('changing language repaints the same player projection and preserves the selected card', async () => {
   let locale = 'en';
   const dictionaries = new Map(), I18N = {
     registerDict(namespace, dictionary) { dictionaries.set(namespace, dictionary); },
@@ -206,16 +219,15 @@ test('changing language repaints the same player projection and preserves the se
   const s = dealt(), projection = E.view(s, 1), h = harness(projection, {}, { I18N });
   try {
     const id = s.hands[1][0];
-    await h.click('[data-dx-card="' + id + '"]'); h.input('[data-dx-clue]', 'Stars at noon');
+    await h.click('[data-dx-card="' + id + '"]');
     assert.match(h.element.innerHTML, /Your hand/);
     locale = 'zh'; h.card.update(projection);
-    assert.match(h.element.innerHTML, /你的手牌/); assert.match(h.element.innerHTML, /確認圖卡與提示/);
+    assert.match(h.element.innerHTML, /你的手牌/); assert.match(h.element.innerHTML, /已說完提示，確認出牌/);
     assert.doesNotMatch(h.element.innerHTML, />Your hand</);
-    assert.deepEqual([...h.card.selected], [id]); assert.equal(h.card.clue, 'Stars at noon');
-    assert.equal(h.element.querySelector('[data-dx-clue]').value, 'Stars at noon');
+    assert.deepEqual([...h.card.selected], [id]);
     assert.equal(h.element.querySelector('[data-dx-action="story"]').disabled, false);
     locale = 'en'; h.card.update(projection);
-    assert.match(h.element.innerHTML, /Your hand/); assert.match(h.element.innerHTML, /Send card and clue/);
+    assert.match(h.element.innerHTML, /Your hand/); assert.match(h.element.innerHTML, /I have spoken my clue/);
     assert.deepEqual([...h.card.selected], [id]); assert.equal(h.sent.length, 0);
   } finally { h.card.destroy(); }
 });
@@ -256,20 +268,21 @@ test('disabled own cards cannot be selected, and a vote command captures exactly
   } finally { h.card.destroy(); }
 });
 
-test('story submission preserves selected card and trimmed clue; reconnect never enables an empty clue', async () => {
+test('story selection never submits immediately; explicit spoken confirmation survives reconnect and sends no invented text', async () => {
   const s = dealt(); let connected = true;
   const h = harness(E.view(s, 1), { connected: () => connected });
   try {
     await h.click('[data-dx-card="' + s.hands[1][0] + '"]');
-    h.input('[data-dx-clue]', '  Stars at noon  ');
+    assert.equal(h.sent.length, 0);
     assert.equal(h.element.querySelector('[data-dx-action="story"]').disabled, false);
-    connected = false; h.card.paint(); h.input('[data-dx-clue]', '');
-    connected = true; h.card.paint();
+    connected = false; h.card.paint();
     assert.equal(h.element.querySelector('[data-dx-action="story"]').disabled, true);
-    h.input('[data-dx-clue]', '  Stars at noon  '); await h.click('[data-dx-action="story"]');
-    assert.equal(h.sent[0].cardId, s.hands[1][0]); assert.equal(h.sent[0].clue, 'Stars at noon');
+    connected = true; h.card.paint();
+    assert.equal(h.element.querySelector('[data-dx-action="story"]').disabled, false);
+    await h.click('[data-dx-action="story"]');
+    assert.equal(h.sent[0].cardId, s.hands[1][0]); assert.equal(h.sent[0].clueMode, 'spoken'); assert.equal(h.sent[0].clue, undefined);
     const next = act(s, 'story', 1, h.sent[0]); h.card.update(E.view(next, 1));
-    assert.equal(h.card.pending, null); assert.equal(h.card.selected.size, 0); assert.equal(h.card.clue, '');
+    assert.equal(h.card.pending, null); assert.equal(h.card.selected.size, 0); assert.equal(next.clue, '');
   } finally { h.card.destroy(); }
 });
 
@@ -285,4 +298,76 @@ test('paused, expired host lease and transport rejection disable actions and exp
   const failed = harness(E.view(create(), 1), { send: async () => { throw new Error('offline'); } });
   try { await failed.click('[data-dx-action="ready"]'); assert.equal(failed.card.pending, null); assert.equal(failed.card.error, UI.t('failed')); }
   finally { failed.card.destroy(); }
+});
+
+test('legacy games retain the atlas card faces while newly created games use standalone artwork', () => {
+  const oldCards = Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit/atlas-' + (Math.floor(i / 12) + 1) + '.webp', description: 'Old art ' + i }));
+  const newCards = Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp', description: 'Independent picture ' + i }));
+  const context = { DIXIT_DECK: { version: 2, cards: newCards, legacyCards: oldCards } }; vm.runInNewContext(source, context);
+  const fresh = dealt(), legacy = copy(fresh); delete legacy.artworkVersion;
+  assert.equal(E.view(fresh, 1).dixit.artworkVersion, 2); assert.equal(E.view(legacy, 1).dixit.artworkVersion, 1);
+  const freshHTML = context.DIXIT_UI.tableHTML(E.view(fresh, 1)), legacyHTML = context.DIXIT_UI.tableHTML(E.view(legacy, 1));
+  assert.match(freshHTML, /<img class="dx-art" src="assets\/dixit-v2\/d\d{3}\.webp"/); assert.doesNotMatch(freshHTML, /atlas-\d/);
+  assert.match(legacyHTML, /dx-art-atlas/); assert.doesNotMatch(legacyHTML, /assets\/dixit-v2/);
+  context.DIXIT_DECK = { version: 1, cards: oldCards };
+  assert.match(context.DIXIT_UI.tableHTML(E.view(fresh, 1)), /dx-art-atlas/, 'old deck script remains usable during staggered deployment');
+});
+
+test('focus gallery views only permitted cards with next, previous and overview controls without changing selection or sending', async () => {
+  const s = dealt(), h = harness(E.view(s, 1));
+  try {
+    const [first, second] = s.hands[1];
+    await h.click('[data-dx-card="' + first + '"]');
+    const zoom = h.element.querySelector('[data-dx-zoom="' + second + '"]'); zoom.focus();
+    await h.click('[data-dx-zoom="' + second + '"]');
+    assert.ok(h.card.modal); assert.equal(h.card.modal.attributes.role, 'dialog'); assert.equal(h.card.modal.attributes['aria-modal'], 'true');
+    assert.equal(h.card.focusIndex, 1); assert.deepEqual([...h.card.selected], [first]); assert.equal(h.sent.length, 0);
+    assert.equal(h.element.ownerDocument.body.style.overflow, 'hidden');
+    assert.doesNotMatch(h.card.modal.innerHTML, /data-dx-card=|data-dx-action=/);
+    await h.click('[data-dx-focus-step="1"]'); assert.equal(h.card.focusIndex, 2);
+    await h.click('[data-dx-focus-step="-1"]'); assert.equal(h.card.focusIndex, 1);
+    await h.click('[data-dx-focus-index="5"]'); assert.equal(h.card.focusIndex, 5);
+    assert.equal(h.element.querySelector('[data-dx-focus-step="1"]').disabled, true);
+    h.card.key({ key: 'ArrowLeft', preventDefault() {} }); assert.equal(h.card.focusIndex, 4);
+    const focusButtons = h.card.modal.querySelectorAll('button:not([disabled])');
+    focusButtons.at(-1).focus(); h.card.key({ key: 'Tab', shiftKey: false, preventDefault() {} });
+    assert.equal(h.element.ownerDocument.activeElement, focusButtons[0], 'Tab stays inside the gallery');
+    h.card.key({ key: 'Escape', preventDefault() {} }); assert.equal(h.card.modal, null);
+    assert.equal(h.element.ownerDocument.activeElement, zoom); assert.equal(h.element.ownerDocument.body.style.overflow, '');
+    assert.deepEqual([...h.card.selected], [first]); assert.equal(h.sent.length, 0);
+    h.card.openModal(s.hands[2][0], 'hand'); assert.equal(h.card.modal, null, 'another player’s card cannot be opened');
+  } finally { h.card.destroy(); }
+});
+
+test('a new session releases pending work and closes a focus view containing the previous private hand', async () => {
+  const s = dealt(), h = harness(E.view(s, 1));
+  try {
+    await h.click('[data-dx-card="' + s.hands[1][0] + '"]'); await h.click('[data-dx-action="story"]');
+    assert.ok(h.card.pending);
+    h.card.openModal(s.hands[1][1], 'hand'); assert.ok(h.card.modal);
+    const restarted = act(s, 'restart'); h.card.update(E.view(restarted, 1));
+    assert.equal(h.card.pending, null); assert.equal(h.card.modal, null); assert.equal(h.card.selected.size, 0);
+    assert.equal(h.element.ownerDocument.body.style.overflow, ''); assert.equal(h.card.error, '');
+  } finally { h.card.destroy(); }
+});
+
+test('an old host rejecting a spoken clue gives a bilingual refresh instruction and preserves the card for retry', async () => {
+  let locale = 'en'; const dictionaries = new Map(), I18N = {
+    registerDict(namespace, dictionary) { dictionaries.set(namespace, dictionary); },
+    t(namespace, key) { return dictionaries.get(namespace)?.[key]?.[locale] || key; },
+  };
+  const s = dealt(), h = harness(E.view(s, 1), {}, { I18N });
+  try {
+    const id = s.hands[1][0]; await h.click('[data-dx-card="' + id + '"]'); await h.click('[data-dx-action="story"]');
+    const rejected = E.view(s, 1); rejected.dixit.reply = { id: h.sent[0].id, error: 'invalid_clue' }; h.card.update(rejected);
+    assert.equal(h.card.pending, null); assert.deepEqual([...h.card.selected], [id]);
+    assert.match(h.element.querySelector('[data-dx-message]').textContent, /host to refresh the game page to enable spoken clues/i);
+    assert.doesNotMatch(h.element.innerHTML, /data-dx-clue|<input/);
+    assert.equal(h.element.querySelector('[data-dx-action="story"]').disabled, false);
+    locale = 'zh'; h.card.update(rejected);
+    assert.match(h.element.querySelector('[data-dx-message]').textContent, /請主持人重新整理遊戲頁面/);
+    await h.click('[data-dx-action="story"]'); assert.equal(h.sent.length, 2);
+    assert.equal(h.sent[1].clueMode, 'spoken'); assert.equal(h.sent[1].clue, undefined); assert.equal(h.sent[1].cardId, id);
+    assert.notEqual(h.sent[1].id, h.sent[0].id);
+  } finally { h.card.destroy(); }
 });

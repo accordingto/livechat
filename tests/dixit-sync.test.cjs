@@ -154,6 +154,17 @@ test('duplicate host deal and storyteller requests do not advance or consume car
   assert.equal(f.card(1).dixit.reply.id, story.id); assert.equal(f.card(1).dixit.reply.error, '');
 });
 
+test('a spoken clue crosses the private transport as a mode without publishing invented clue text', async t => {
+  const f = setup(t), h = f.host(); await f.dealt(h);
+  const cardId = h.doc.state.hands[1][0], command = await f.send(h, 1, 'story', { cardId, clueMode: 'spoken' });
+  assert.equal(h.doc.state.phase, 'SUBMIT'); assert.equal(h.doc.state.clue, '');
+  assert.equal(f.card(1).dixit.reply.id, command.id); assert.equal(f.card(1).dixit.reply.error, '');
+  for (const view of [h.latest, ...Array.from({ length: 4 }, (_, i) => f.card(i + 1))]) {
+    assert.equal(view.dixit.clueMode, 'spoken'); assert.equal(view.dixit.clue, ''); assert.equal(view.dixit.artworkVersion, 2);
+  }
+  for (let seat = 2; seat <= 4; seat++) assert.equal(JSON.stringify(f.card(seat)).includes(JSON.stringify(cardId)), false);
+});
+
 for (const count of [3, 4, 8]) test(`${count}-player concurrent submissions produce one shared anonymous voting table`, async t => {
   const f = setup(t, count), h = f.host(); await f.dealt(h);
   const target = h.doc.state.hands[1][0];

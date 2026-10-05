@@ -31,8 +31,8 @@ function conservation(s) {
   assert.equal(new Set(physical).size, 84);
   assert.deepEqual(physical.slice().sort(), Array.from({ length: 84 }, (_, i) => 'd' + String(i + 1).padStart(3, '0')));
 }
-function tableReady(s) {
-  s = act(s, 'story', s.storyteller, { cardId: s.hands[s.storyteller][0], clue: 'A distant memory' });
+function tableReady(s, story = { clue: 'A distant memory' }) {
+  s = act(s, 'story', s.storyteller, { cardId: s.hands[s.storyteller][0], ...story });
   for (const player of s.roster.filter(p => p.playerNum !== s.storyteller)) {
     s = act(s, 'submit', player.playerNum, { cardIds: s.hands[player.playerNum].slice(0, s.roster.length === 3 ? 2 : 1) });
   }
@@ -46,10 +46,22 @@ function ballots(s, targets) {
 }
 function scores(s) { return s.lastRound.rows.map(row => row.delta); }
 
+test('artwork version stays legacy throughout an existing game and changes only on a fresh session or restart', () => {
+  const fresh = create(); assert.equal(fresh.artworkVersion, 2); assert.equal(E.view(fresh, 0).dixit.artworkVersion, 2);
+  let legacy = started(); delete legacy.artworkVersion;
+  assert.equal(E.view(legacy, 1).dixit.artworkVersion, 1);
+  legacy = act(legacy, 'story', 1, { cardId: legacy.hands[1][0], clueMode: 'spoken' });
+  assert.equal(E.view(legacy, 2).dixit.artworkVersion, 1, 'a new action never changes existing card faces');
+  const restarted = act(legacy, 'restart');
+  assert.equal(restarted.artworkVersion, 2); assert.notEqual(restarted.sessionId, legacy.sessionId);
+  assert.equal(E.view(restarted, 1).dixit.artworkVersion, 2);
+});
+
 test('setup accepts only unique positive 3–8 seat rosters', () => {
   for (const count of [3, 4, 8]) {
     const s = create(count);
     assert.equal(s.phase, 'LOBBY'); assert.equal(s.round, 0); assert.equal(s.storyteller, null);
+    assert.equal(s.clueMode, ''); assert.equal(s.clue, '');
     assert.deepEqual(s.roster, roster(count)); assert.deepEqual(s.hands, {});
     assert.equal(E.view(s, 0).dixit.actions.deal, true);
   }
@@ -97,18 +109,94 @@ test('random dealing, first teller, table shuffle, and repeated transactions are
   assert.equal(E.apply(E.apply(ready, submit), submit).phase, 'VOTE');
 });
 
-test('story requires the storyteller, a held card, and a nonempty clue of at most 180 characters', () => {
+test('text story requires the storyteller, a held card, and a nonempty clue of at most 180 characters', () => {
   const s = started(), cardId = s.hands[1][0];
   for (const [actor, extra, error] of [[0, { cardId, clue: 'x' }, 'not_available'],
     [2, { cardId, clue: 'x' }, 'not_available'], [1, { cardId: s.hands[2][0], clue: 'x' }, 'invalid_card'],
-    [1, { cardId, clue: '  ' }, 'invalid_clue'], [1, { cardId, clue: null }, 'invalid_clue'],
+    [1, { cardId }, 'invalid_clue'], [1, { cardId, clue: '  ' }, 'invalid_clue'], [1, { cardId, clue: null }, 'invalid_clue'],
+    [1, { cardId, clueMode: 'text' }, 'invalid_clue'], [1, { cardId, clueMode: 'unknown', clue: 'x' }, 'invalid_clue'],
     [1, { cardId, clue: 'x'.repeat(181) }, 'invalid_clue']]) {
     const next = act(s, 'story', actor, extra);
     assert.equal(next.replies[actor].error, error); assert.deepEqual(gameplay(next), gameplay(s));
   }
   const good = act(s, 'story', 1, { cardId, clue: '  🌙'.trim().repeat(180) + '  ' });
   assert.equal(good.phase, 'SUBMIT'); assert.equal(Array.from(good.clue).length, 180);
+  assert.equal(good.clueMode, 'text'); assert.equal(E.view(good, 0).dixit.clueMode, 'text');
   assert.deepEqual(good.submissions[1], [cardId]); assert.equal(good.hands[1].includes(cardId), false); conservation(good);
+  const explicit = act(s, 'story', 1, { cardId, clueMode: 'text', clue: '  A memory  ' });
+  assert.equal(explicit.clueMode, 'text'); assert.equal(explicit.clue, 'A memory');
+});
+
+test('spoken story submits a held card with no text and explicitly exposes its mode to every seat', () => {
+  const s = freeze(started()), cardId = s.hands[1][0];
+  const cmd = freeze(command(s, 'story', 1, { cardId, clueMode: 'spoken' }));
+  const spoken = E.apply(s, cmd);
+  assert.equal(spoken.phase, 'SUBMIT'); assert.equal(spoken.clueMode, 'spoken'); assert.equal(spoken.clue, '');
+  assert.deepEqual(spoken.submissions[1], [cardId]); assert.equal(spoken.hands[1].includes(cardId), false);
+  assert.equal(spoken.replies[1].error, ''); assert.equal(E.apply(spoken, cmd), spoken);
+  assert.equal(s.phase, 'CLUE'); assert.equal(s.clueMode, ''); assert.equal(s.clue, ''); conservation(spoken);
+  for (const actor of [0, 1, 2, 3, 4, 99]) {
+    const v = E.view(spoken, actor).dixit;
+    assert.equal(v.clueMode, 'spoken'); assert.equal(v.clue, ''); assert.equal(v.result, null);
+    if (actor !== 1) assert.equal(JSON.stringify(v).includes('"' + cardId + '"'), false);
+  }
+  const extraText = act(s, 'story', 1, { cardId, clueMode: 'spoken', clue: 'Fabricated transcript' });
+  assert.equal(extraText.phase, 'SUBMIT'); assert.equal(extraText.clue, '');
+  assert.equal(JSON.stringify(extraText).includes('Fabricated transcript'), false);
+});
+
+test('spoken story enforces storyteller identity and held-card validation', () => {
+  const s = started(), cardId = s.hands[1][0];
+  for (const [actor, submittedCard, error] of [[0, cardId, 'not_available'], [2, cardId, 'not_available'],
+    [1, s.hands[2][0], 'invalid_card'], [1, undefined, 'invalid_card']]) {
+    const denied = act(s, 'story', actor, { cardId: submittedCard, clueMode: 'spoken' });
+    assert.equal(denied.replies[actor].error, error); assert.deepEqual(gameplay(denied), gameplay(s));
+  }
+});
+
+test('spoken rounds preserve their mode through scoring and clear it before the next story or restart', () => {
+  let s = tableReady(started(), { clueMode: 'spoken' });
+  assert.equal(s.clueMode, 'spoken'); assert.equal(E.view(s, 0).dixit.clue, '');
+  s = act(ballots(s, { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  assert.equal(s.lastRound.clueMode, 'spoken'); assert.equal(s.lastRound.clue, '');
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const v = E.view(s, actor).dixit;
+    assert.equal(v.clueMode, 'spoken'); assert.equal(v.result.clueMode, 'spoken'); assert.equal(v.result.clue, '');
+  }
+  s = act(s, 'nextRound');
+  assert.equal(s.clueMode, ''); assert.equal(s.clue, ''); assert.equal(s.lastRound, null);
+  assert.equal(E.view(s, 0).dixit.clueMode, ''); conservation(s);
+  s = act(s, 'story', s.storyteller, { cardId: s.hands[s.storyteller][0], clue: 'A new text clue' });
+  assert.equal(s.clueMode, 'text'); assert.equal(s.clue, 'A new text clue');
+  const restarted = act(tableReady(started(), { clueMode: 'spoken' }), 'restart');
+  assert.equal(restarted.phase, 'LOBBY'); assert.equal(restarted.clueMode, ''); assert.equal(restarted.clue, '');
+});
+
+test('old saved text rounds without clueMode normalize to text without changing their clue', () => {
+  let s = tableReady(started());
+  delete s.clueMode;
+  const snapshot = clone(s), v = E.view(wire(s), 2).dixit;
+  assert.equal(v.clueMode, 'text'); assert.equal(v.clue, 'A distant memory'); assert.deepEqual(s, snapshot);
+  s = act(ballots(s, { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  assert.equal(s.clueMode, 'text'); assert.equal(s.lastRound.clueMode, 'text');
+  delete s.clueMode; delete s.lastRound.clueMode;
+  const result = E.view(wire(s), 0).dixit.result;
+  assert.equal(result.clueMode, 'text'); assert.equal(result.clue, 'A distant memory');
+});
+
+test('spoken stories preserve stale-session, stale-turn, and pause protections', () => {
+  let s = started(), cardId = s.hands[1][0];
+  for (const extra of [{ sessionId: 'old', error: 'stale_session' }, { turnId: s.turnId - 1, error: 'stale_turn' }]) {
+    const denied = act(s, 'story', 1, { cardId, clueMode: 'spoken', ...extra });
+    assert.equal(denied.replies[1].error, extra.error); assert.deepEqual(gameplay(denied), gameplay(s));
+  }
+  const pending = command(s, 'story', 1, { cardId, clueMode: 'spoken' });
+  s = act(s, 'pause');
+  const stale = E.apply(s, pending), paused = act(s, 'story', 1, { cardId, clueMode: 'spoken' });
+  assert.equal(stale.replies[1].error, 'stale_turn'); assert.deepEqual(gameplay(stale), gameplay(s));
+  assert.equal(paused.replies[1].error, 'paused'); assert.deepEqual(gameplay(paused), gameplay(s));
+  s = act(s, 'resume'); s = act(s, 'story', 1, { cardId, clueMode: 'spoken' });
+  assert.equal(s.phase, 'SUBMIT'); assert.equal(s.clueMode, 'spoken'); assert.equal(s.clue, ''); conservation(s);
 });
 
 test('3-player decoys require two distinct held cards and only the last submission reveals the table', () => {
@@ -194,7 +282,7 @@ test('nextRound discards played cards, refills private hands, clears secrets, an
   assert.equal(s.phase, 'CLUE'); assert.equal(s.storyteller, 3); assert.equal(s.round, 2);
   assert.deepEqual(s.discard.slice().sort(), table.slice().sort()); assert.deepEqual(s.scores, oldScores);
   assert.deepEqual(s.submissions, {}); assert.deepEqual(s.votes, {}); assert.deepEqual(s.table, []);
-  assert.equal(s.lastRound, null); assert.equal(s.clue, '');
+  assert.equal(s.lastRound, null); assert.equal(s.clue, ''); assert.equal(s.clueMode, '');
   for (const p of s.roster) assert.equal(s.hands[p.playerNum].length, 6); conservation(s);
 });
 
@@ -279,6 +367,7 @@ test('cancel is host-only and restart resets gameplay, readiness, receipts, and 
   assert.equal(s.phase, 'LOBBY'); assert.equal(s.turnId, oldTurn + 1); assert.notEqual(s.sessionId, oldSession);
   assert.deepEqual(s.roster, oldRoster); assert.deepEqual(s.readiness, {}); assert.deepEqual(s.hands, {});
   assert.deepEqual(s.deck, []); assert.deepEqual(s.scores, {}); assert.equal(s.round, 0); assert.equal(s.lastRound, null);
+  assert.equal(s.clueMode, ''); assert.equal(s.clue, '');
   assert.deepEqual(Object.keys(s.replies), ['0']); assert.equal(E.apply(s, cmd), s);
   s = act(s, 'deal', 0, { firstPlayerNum: 1 }); assert.equal(s.phase, 'CLUE'); conservation(s);
 });

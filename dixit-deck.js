@@ -1,7 +1,429 @@
-/* 84 independently created dream illustrations. Public IDs identify cards, never owners or answers. */
+/* Original picture cards. Versioned artwork preserves in-progress games. */
 var DIXIT_DECK = {
-  "version": 1,
+  "version": 2,
   "cards": [
+    {
+      "id": "d001",
+      "image": "assets/dixit-v2/d001.webp",
+      "description": "A giant keyhole cut into a green hill reveals an impossible waterfall."
+    },
+    {
+      "id": "d002",
+      "image": "assets/dixit-v2/d002.webp",
+      "description": "A red apple secured by a tiny brass padlock floats over an empty white plate."
+    },
+    {
+      "id": "d003",
+      "image": "assets/dixit-v2/d003.webp",
+      "description": "A solitary whale glides among pink clouds with rainbows beneath its fins."
+    },
+    {
+      "id": "d004",
+      "image": "assets/dixit-v2/d004.webp",
+      "description": "A glass hourglass holds a green meadow above a snowy landscape."
+    },
+    {
+      "id": "d005",
+      "image": "assets/dixit-v2/d005.webp",
+      "description": "An empty midnight theater presents one sunflower beside curtain-shaped shadows."
+    },
+    {
+      "id": "d006",
+      "image": "assets/dixit-v2/d006.webp",
+      "description": "A broken ladder reaches toward an open door floating in a blank snowy sky."
+    },
+    {
+      "id": "d007",
+      "image": "assets/dixit-v2/d007.webp",
+      "description": "A raven's nest on an orange roof contains one glowing starry egg."
+    },
+    {
+      "id": "d008",
+      "image": "assets/dixit-v2/d008.webp",
+      "description": "An ivory chess king melts into a blue puddle while a small pawn remains upright."
+    },
+    {
+      "id": "d009",
+      "image": "assets/dixit-v2/d009.webp",
+      "description": "A porcelain teacup catches rain from a tiny cloud hovering indoors."
+    },
+    {
+      "id": "d010",
+      "image": "assets/dixit-v2/d010.webp",
+      "description": "An empty toy train waits on a small bridge that ends in yellow sky."
+    },
+    {
+      "id": "d011",
+      "image": "assets/dixit-v2/d011.webp",
+      "description": "A full moon tied to a red thread spool hangs above an indigo sea."
+    },
+    {
+      "id": "d012",
+      "image": "assets/dixit-v2/d012.webp",
+      "description": "Two mismatched cactus plants share tangled exposed roots in a white desert."
+    },
+    {
+      "id": "d013",
+      "image": "assets/dixit-v2/d013.webp",
+      "description": "A small paper boat casts the shadow of a huge sailing ship."
+    },
+    {
+      "id": "d014",
+      "image": "assets/dixit-v2/d014.webp",
+      "description": "A staircase made of water leads upward toward a red balloon."
+    },
+    {
+      "id": "d015",
+      "image": "assets/dixit-v2/d015.webp",
+      "description": "Plants reclaim a quiet golden carousel filled with empty animal mounts."
+    },
+    {
+      "id": "d016",
+      "image": "assets/dixit-v2/d016.webp",
+      "description": "Closed umbrellas bloom like wildflowers over an emerald hillside beneath a storm."
+    },
+    {
+      "id": "d017",
+      "image": "assets/dixit-v2/d017.webp",
+      "description": "A single orange flame burns inside a clear ice cube on a dark table."
+    },
+    {
+      "id": "d018",
+      "image": "assets/dixit-v2/d018.webp",
+      "description": "An open book in a bookcase reveals a vast peach-colored ocean."
+    },
+    {
+      "id": "d019",
+      "image": "assets/dixit-v2/d019.webp",
+      "description": "A deer has blank road signs for antlers at a purple crossroads."
+    },
+    {
+      "id": "d020",
+      "image": "assets/dixit-v2/d020.webp",
+      "description": "An empty birdcage contains a miniature thunderstorm and one lightning bolt."
+    },
+    {
+      "id": "d021",
+      "image": "assets/dixit-v2/d021.webp",
+      "description": "A blue quilt on an empty bed becomes a range of snowy mountains."
+    },
+    {
+      "id": "d022",
+      "image": "assets/dixit-v2/d022.webp",
+      "description": "A horseshoe magnet draws fallen silver stars from a dark sky."
+    },
+    {
+      "id": "d023",
+      "image": "assets/dixit-v2/d023.webp",
+      "description": "Ivy wraps an old red telephone while a butterfly rests on the receiver."
+    },
+    {
+      "id": "d024",
+      "image": "assets/dixit-v2/d024.webp",
+      "description": "A luminous constellation fish leaps from a black ocean into the stars."
+    },
+    {
+      "id": "d025",
+      "image": "assets/dixit-v2/d025.webp",
+      "description": "Blank ceramic mask shapes hang among leaves like fruit on a tree."
+    },
+    {
+      "id": "d026",
+      "image": "assets/dixit-v2/d026.webp",
+      "description": "A black swan on a white lake reflects a golden crown."
+    },
+    {
+      "id": "d027",
+      "image": "assets/dixit-v2/d027.webp",
+      "description": "A cracked gold coin holds a crescent moon orbiting inside."
+    },
+    {
+      "id": "d028",
+      "image": "assets/dixit-v2/d028.webp",
+      "description": "A simple pulley balances a huge red balloon against a tiny anchor."
+    },
+    {
+      "id": "d029",
+      "image": "assets/dixit-v2/d029.webp",
+      "description": "A submarine stranded in a yellow desert sits among seashell-shaped footprints."
+    },
+    {
+      "id": "d030",
+      "image": "assets/dixit-v2/d030.webp",
+      "description": "A white hourglass pours an avalanche of dark stones into its lower chamber."
+    },
+    {
+      "id": "d031",
+      "image": "assets/dixit-v2/d031.webp",
+      "description": "Four open drawers in one cabinet reveal four different seasons."
+    },
+    {
+      "id": "d032",
+      "image": "assets/dixit-v2/d032.webp",
+      "description": "An empty chair sits on a tiny island surrounded by floating blank envelopes."
+    },
+    {
+      "id": "d033",
+      "image": "assets/dixit-v2/d033.webp",
+      "description": "Two mismatched shoes grow lush grass on a simple doorstep."
+    },
+    {
+      "id": "d034",
+      "image": "assets/dixit-v2/d034.webp",
+      "description": "A chessboard folds into a flying origami crane above a red checkered shadow."
+    },
+    {
+      "id": "d035",
+      "image": "assets/dixit-v2/d035.webp",
+      "description": "Roots pass through the keyhole of a rusty lock and end in a green leaf."
+    },
+    {
+      "id": "d036",
+      "image": "assets/dixit-v2/d036.webp",
+      "description": "A giant snail carries a transparent cathedral shell that casts colored light on sand."
+    },
+    {
+      "id": "d037",
+      "image": "assets/dixit-v2/d037.webp",
+      "description": "An orange koi in a round bowl casts a huge dragon-shaped shadow."
+    },
+    {
+      "id": "d038",
+      "image": "assets/dixit-v2/d038.webp",
+      "description": "An empty suit of armor holds a bouquet of delicate paper butterflies."
+    },
+    {
+      "id": "d039",
+      "image": "assets/dixit-v2/d039.webp",
+      "description": "An upside-down lighthouse shines its beam into the deep sea."
+    },
+    {
+      "id": "d040",
+      "image": "assets/dixit-v2/d040.webp",
+      "description": "A pair of scissors opens a sunny patch inside a rainy landscape."
+    },
+    {
+      "id": "d041",
+      "image": "assets/dixit-v2/d041.webp",
+      "description": "An enormous underwater bell sends out glowing concentric sound rings."
+    },
+    {
+      "id": "d042",
+      "image": "assets/dixit-v2/d042.webp",
+      "description": "A doorway in a black cube opens onto a sunlit wheat field."
+    },
+    {
+      "id": "d043",
+      "image": "assets/dixit-v2/d043.webp",
+      "description": "A galaxy fills an upside-down umbrella in a coral desert."
+    },
+    {
+      "id": "d044",
+      "image": "assets/dixit-v2/d044.webp",
+      "description": "A locked icy gate casts a shadow of flying red birds."
+    },
+    {
+      "id": "d045",
+      "image": "assets/dixit-v2/d045.webp",
+      "description": "A seashell holds an evergreen forest and tiny treehouse."
+    },
+    {
+      "id": "d046",
+      "image": "assets/dixit-v2/d046.webp",
+      "description": "A stairway descends into a mirror where stairs climb toward yellow sky."
+    },
+    {
+      "id": "d047",
+      "image": "assets/dixit-v2/d047.webp",
+      "description": "A porcelain rabbit grows a fern through its ear beside a golden repaired crack."
+    },
+    {
+      "id": "d048",
+      "image": "assets/dixit-v2/d048.webp",
+      "description": "White swans swim across the keys of an empty grand piano."
+    },
+    {
+      "id": "d049",
+      "image": "assets/dixit-v2/d049.webp",
+      "description": "A bronze compass points at a floating purple mountain."
+    },
+    {
+      "id": "d050",
+      "image": "assets/dixit-v2/d050.webp",
+      "description": "A fire burns underwater inside a green glass bell jar."
+    },
+    {
+      "id": "d051",
+      "image": "assets/dixit-v2/d051.webp",
+      "description": "A deserted Ferris wheel carries moons as passenger baskets."
+    },
+    {
+      "id": "d052",
+      "image": "assets/dixit-v2/d052.webp",
+      "description": "An orange fox's tail becomes a spiral of autumn leaves in snow."
+    },
+    {
+      "id": "d053",
+      "image": "assets/dixit-v2/d053.webp",
+      "description": "A zipper in blue sky opens into a warm library."
+    },
+    {
+      "id": "d054",
+      "image": "assets/dixit-v2/d054.webp",
+      "description": "A crystal die marked with a star, moon, and leaf rests in pink cloud."
+    },
+    {
+      "id": "d055",
+      "image": "assets/dixit-v2/d055.webp",
+      "description": "A broken porcelain bowl spills night sky onto a red table."
+    },
+    {
+      "id": "d056",
+      "image": "assets/dixit-v2/d056.webp",
+      "description": "A blue moth has window wings, one shining with golden light."
+    },
+    {
+      "id": "d057",
+      "image": "assets/dixit-v2/d057.webp",
+      "description": "A wooden boat rests in yellow grass while blue fish fly overhead."
+    },
+    {
+      "id": "d058",
+      "image": "assets/dixit-v2/d058.webp",
+      "description": "A red shoe with paper sails floats on a violet puddle."
+    },
+    {
+      "id": "d059",
+      "image": "assets/dixit-v2/d059.webp",
+      "description": "A yellow feather balances a massive boulder on a golden scale."
+    },
+    {
+      "id": "d060",
+      "image": "assets/dixit-v2/d060.webp",
+      "description": "A leaf-shaped green maze has dewdrops and an open center."
+    },
+    {
+      "id": "d061",
+      "image": "assets/dixit-v2/d061.webp",
+      "description": "An empty hammock hangs between clouds above a cobalt abyss."
+    },
+    {
+      "id": "d062",
+      "image": "assets/dixit-v2/d062.webp",
+      "description": "A hollow old tree contains a staircase and red lantern."
+    },
+    {
+      "id": "d063",
+      "image": "assets/dixit-v2/d063.webp",
+      "description": "A bottle spills a full moon into an orange sea."
+    },
+    {
+      "id": "d064",
+      "image": "assets/dixit-v2/d064.webp",
+      "description": "A red balloon casts a castle shadow on grey sand."
+    },
+    {
+      "id": "d065",
+      "image": "assets/dixit-v2/d065.webp",
+      "description": "A polar bear sleeps on tree canopy while snow falls underneath."
+    },
+    {
+      "id": "d066",
+      "image": "assets/dixit-v2/d066.webp",
+      "description": "Chessboard candles bend their flames toward a closed silver door."
+    },
+    {
+      "id": "d067",
+      "image": "assets/dixit-v2/d067.webp",
+      "description": "Blank book pages turn into black birds in a golden sunrise."
+    },
+    {
+      "id": "d068",
+      "image": "assets/dixit-v2/d068.webp",
+      "description": "An hourglass mountain carries an orange river into a pool hiding the sun."
+    },
+    {
+      "id": "d069",
+      "image": "assets/dixit-v2/d069.webp",
+      "description": "A rainbow glass bridge spans icebergs but its center is missing."
+    },
+    {
+      "id": "d070",
+      "image": "assets/dixit-v2/d070.webp",
+      "description": "A pink flamingo stands among gears and casts a clockwork shadow."
+    },
+    {
+      "id": "d071",
+      "image": "assets/dixit-v2/d071.webp",
+      "description": "A rooted green gift box grows a white flower from its knot."
+    },
+    {
+      "id": "d072",
+      "image": "assets/dixit-v2/d072.webp",
+      "description": "An empty red rocking chair floats in a soap bubble outside the rain."
+    },
+    {
+      "id": "d073",
+      "image": "assets/dixit-v2/d073.webp",
+      "description": "A purple telescope points into a puddle full of galaxies."
+    },
+    {
+      "id": "d074",
+      "image": "assets/dixit-v2/d074.webp",
+      "description": "A red hallway door's keyhole reveals green forest light."
+    },
+    {
+      "id": "d075",
+      "image": "assets/dixit-v2/d075.webp",
+      "description": "A yellow umbrella casts a leafless tree shadow on snow."
+    },
+    {
+      "id": "d076",
+      "image": "assets/dixit-v2/d076.webp",
+      "description": "Faceless blue nesting shells reveal a golden beehive inside."
+    },
+    {
+      "id": "d077",
+      "image": "assets/dixit-v2/d077.webp",
+      "description": "Glass ocean waves arch around a dry orange path."
+    },
+    {
+      "id": "d078",
+      "image": "assets/dixit-v2/d078.webp",
+      "description": "A black crow carries a folded-paper sun through pink fog."
+    },
+    {
+      "id": "d079",
+      "image": "assets/dixit-v2/d079.webp",
+      "description": "A dandelion releases miniature floating islands instead of seeds."
+    },
+    {
+      "id": "d080",
+      "image": "assets/dixit-v2/d080.webp",
+      "description": "A blue clock tower over orange sea has stairs becoming dominoes."
+    },
+    {
+      "id": "d081",
+      "image": "assets/dixit-v2/d081.webp",
+      "description": "An orange butterfly is enclosed in a melting hollow ice sphere."
+    },
+    {
+      "id": "d082",
+      "image": "assets/dixit-v2/d082.webp",
+      "description": "A turquoise teapot pours a river over folded blank parchment."
+    },
+    {
+      "id": "d083",
+      "image": "assets/dixit-v2/d083.webp",
+      "description": "Two seashells are joined by red string across a midnight desert."
+    },
+    {
+      "id": "d084",
+      "image": "assets/dixit-v2/d084.webp",
+      "description": "A cloud-shaped pillow casts a coral garden shadow."
+    }
+  ],
+  "legacyCards": [
     {
       "id": "d001",
       "image": "assets/dixit/atlas-1.webp",
