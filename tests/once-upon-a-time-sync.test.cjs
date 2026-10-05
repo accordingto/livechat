@@ -14,7 +14,7 @@ function database() {
   const values = new Map([['.info/connected', true], ['.info/serverTimeOffset', 0]]);
   const listeners = new Map(), tails = new Map();
   const db = {
-    values, before: null,
+    values, before: null, beforeRead: null,
     put(path, value) {
       values.set(path, clone(value));
       for (const cb of listeners.get(path) || []) queueMicrotask(() => cb(snap(value)));
@@ -26,6 +26,10 @@ function database() {
           listeners.get(path).add(cb); queueMicrotask(() => cb(snap(values.get(path))));
         },
         off(event, cb) { listeners.get(path)?.delete(cb); },
+        async once() {
+          if (db.beforeRead) await db.beforeRead(path);
+          return snap(values.get(path));
+        },
         transaction(update) {
           const task = (tails.get(path) || Promise.resolve()).then(async () => {
             if (db.before) await db.before(path);
@@ -246,6 +250,188 @@ test('a game switch during opening is detected before the new projection can ove
   await h.start(); await settle(h);
   assert.equal(h.suspended, true); assert.deepEqual(f.card(3), otherGame);
   await h.renew(); await settle(h); assert.deepEqual(f.card(3), otherGame);
+});
+
+test('explicit opening reads actual private cards before creating a session even when the listener cache is unread', async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  for (const [i, path] of f.paths.entries()) f.db.put(path, { game: 'taboo', round: 3, voteId: 'taboo-3', playerNum: i + 1 });
+  await settle(h);
+  for (const seat of [1, 2, 3, 4]) delete f.room.answers[seat];
+  let unblock, entered;
+  const gate = new Promise(resolve => { unblock = resolve; }), readStarted = new Promise(resolve => { entered = resolve; });
+  const readPaths = [];
+  f.db.beforeRead = async path => { readPaths.push(path); if (path === f.paths[1]) { entered(); await gate; } };
+  const opening = h.start(); await readStarted;
+  try { assert.equal(h.doc.state, undefined, 'no canonical opening commits before every private read finishes'); }
+  finally { unblock(); }
+  await opening; await settle(h);
+  assert.deepEqual(readPaths.sort(), f.paths.slice().sort()); assert.equal(h.suspended, false);
+  for (let seat = 1; seat <= 4; seat++) assert.equal(f.card(seat).once.sessionId, h.doc.state.sessionId);
+  assert.equal(h.initialSession, null);
+});
+
+test('normal prior-game heartbeats, actions and timers do not prevent an explicit opening or leak old mailbox fields', async t => {
+  const examples = [
+    { game: 'dixit', dixit: { sessionId: 'old-dixit', turnId: 1, hostLiveUntil: 1 } },
+    { game: 'letstalk', talk: { sessionId: 'old-talk', turnId: 1 } },
+    { game: 'onceupon', once: { sessionId: 'old-once', turnId: 1 } },
+    { game: 'taboo', round: 4, voteId: 'taboo-4', state: 'running', timer: { remaining: 30 } },
+    { game: 'hottake', round: 4, voteId: 'hot-4' },
+    { game: 'sophies', round: 4, voteId: 'sophie-4' },
+    { game: 'persuade', round: 4, voteId: 'persuade-4' },
+    { game: 'scene', round: 4 },
+    { game: 'kangaroo', case: 4, phase: 'talk' },
+    { game: 'conquest', round: 4, conquest: { id: 'conquest-4', state: 'idle' } },
+  ];
+  for (const example of examples) {
+    const f = setup(t), h = f.host(); await settle(h);
+    for (const path of f.paths) f.db.put(path, example);
+    await settle(h);
+    const changed = new Set();
+    f.db.before = async path => {
+      if (!f.paths.includes(path) || changed.has(path)) return;
+      changed.add(path);
+      const old = clone(f.db.values.get(path)), nested = { ...old };
+      for (const key of ['dixit', 'talk', 'once']) if (nested[key]) nested[key] = { ...nested[key], turnId: 9, revision: 9, hostLiveUntil: Date.now() + 14000 };
+      f.db.put(path, { ...nested, name: 'Updated name', vote: { id: 'old-vote', choice: 'yes' }, timer: { remaining: 27 },
+        state: 'voting', phase: 'voting', onceAction: { id: 'old-request' }, dixitAction: { id: 'old-dixit-request' } });
+    };
+    await h.start(); await settle(h);
+    assert.equal(h.suspended, false, example.game); assert.equal(h.initialSession, null, example.game);
+    for (let seat = 1; seat <= 4; seat++) {
+      const card = f.card(seat); assert.equal(card.game, 'onceupon', example.game);
+      assert.equal(card.once.sessionId, h.doc.state.sessionId); assert.equal(card.onceAction, undefined);
+      assert.equal(card.dixitAction, undefined); assert.equal(card.vote, undefined); assert.equal(card.timer, undefined);
+    }
+  }
+});
+
+test('legacy game identity ignores leftover foreign session fields but preserves a genuinely newer legacy round', async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  const prior = { game: 'taboo', round: 2, voteId: 'taboo-2', dixit: { sessionId: 'leftover-a' }, once: { sessionId: 'leftover-b' } };
+  for (const path of f.paths) f.db.put(path, prior); await settle(h);
+  let updated = false;
+  f.db.before = async path => {
+    if (!updated && path === f.paths[0]) { updated = true; f.db.put(path, { ...prior, dixit: { sessionId: 'leftover-c' }, once: { sessionId: 'leftover-d' } }); }
+  };
+  await h.start(); await settle(h); assert.equal(h.suspended, false);
+  await h.command('cancel'); await settle(h);
+  for (const path of f.paths) f.db.put(path, prior); await settle(h);
+  const newer = { ...prior, round: 3, voteId: 'taboo-3' }; updated = false;
+  f.db.before = async path => { if (!updated && path === f.paths[2]) { updated = true; f.db.put(path, newer); } };
+  await h.start(); await settle(h);
+  assert.equal(h.suspended, true); assert.equal(h.lastStatus, 'switched'); assert.deepEqual(f.card(3), newer);
+  await h.renew(); await settle(h); assert.deepEqual(f.card(3), newer);
+});
+
+test('a later session of the same previous game cannot be overwritten by an opening executor', async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  const prior = { game: 'dixit', dixit: { version: 1, sessionId: 'earlier', turnId: 2 } };
+  for (const path of f.paths) f.db.put(path, prior); await settle(h);
+  let updated = false;
+  const newer = { ...prior, dixit: { ...prior.dixit, sessionId: 'later', turnId: 0 } };
+  f.db.before = async path => { if (!updated && path === f.paths[1]) { updated = true; f.db.put(path, newer); } };
+  await h.start(); await settle(h);
+  assert.equal(h.suspended, true); assert.deepEqual(f.card(2), newer);
+  await h.renew(); await settle(h); assert.deepEqual(f.card(2), newer);
+});
+
+test('loading an older canonical Once game leaves foreign cards untouched until the host explicitly starts again', async t => {
+  const f = setup(t), old = f.host(); await f.story(old);
+  const canonical = clone(old.doc.state); old.close(); await settle(old);
+  const otherGame = { game: 'dixit', dixit: { version: 1, sessionId: 'current-dixit', turnId: 3, hostLiveUntil: 1 } };
+  for (const path of f.paths) f.db.put(path, otherGame); await settle(old);
+  const resumed = f.host(); await settle(resumed);
+  assert.equal(resumed.suspended, true); assert.equal(resumed.lastStatus, 'switched');
+  assert.deepEqual(resumed.doc.state, canonical);
+  for (let seat = 1; seat <= 4; seat++) assert.deepEqual(f.card(seat), otherGame);
+  await resumed.start(); await settle(resumed);
+  assert.equal(resumed.suspended, false); assert.notEqual(resumed.doc.state.sessionId, canonical.sessionId);
+  assert.equal(resumed.doc.state.phase, 'LOBBY');
+  for (let seat = 1; seat <= 4; seat++) assert.equal(f.card(seat).once.sessionId, resumed.doc.state.sessionId);
+});
+
+test('a fresh host reclaims only an entirely inactive canonical table and the switched predecessor cannot take it back', async t => {
+  const f = setup(t), old = f.host(); await f.story(old);
+  const canonical = clone(old.doc.state), foreign = { game: 'taboo', round: 9, voteId: 'taboo-9', state: 'running' };
+  f.db.put(f.paths[0], foreign); await settle(old);
+  const next = f.host(); await settle(old, next);
+  assert.equal(next.own, false, 'a partially current Once table still honors its live owner');
+  assert.equal(old.doc.owner, old.client);
+  for (const path of f.paths.slice(1)) f.db.put(path, foreign); await settle(old, next);
+  await old.renew(); await settle(old, next);
+  const ghostLease = old.doc.leaseUntil; assert.ok(ghostLease > Date.now());
+  await next.renew(); await settle(old, next);
+  assert.equal(next.own, true); assert.equal(next.lastStatus, 'switched'); assert.equal(old.own, false);
+  assert.deepEqual(next.doc.state, canonical, 'taking control does not automatically revive the old game');
+  for (let seat = 1; seat <= 4; seat++) assert.deepEqual(f.card(seat), foreign);
+  for (let i = 0; i < 3; i++) { await old.renew(); await settle(old, next); assert.equal(next.doc.owner, next.client); }
+  await next.start(); await settle(old, next);
+  assert.equal(next.suspended, false); assert.notEqual(next.doc.state.sessionId, canonical.sessionId);
+  await old.renew(); await settle(old, next); assert.equal(next.doc.owner, next.client);
+  for (let seat = 1; seat <= 4; seat++) assert.equal(f.card(seat).once.sessionId, next.doc.state.sessionId);
+});
+
+test('connecting waits for every actual card read before deciding whether a live canonical lease is inactive', async t => {
+  const f = setup(t), old = f.host(); await f.story(old);
+  const foreign = { game: 'dixit', dixit: { version: 1, sessionId: 'current-table' } };
+  for (const path of f.paths) f.db.put(path, foreign); await settle(old);
+  let unblock, entered;
+  const gate = new Promise(resolve => { unblock = resolve; }), started = new Promise(resolve => { entered = resolve; });
+  f.db.beforeRead = async path => { if (path === f.paths[2]) { entered(); await gate; } };
+  const next = f.host(); await started;
+  try { assert.equal(next.cardsReady, false); assert.equal(next.own, false); assert.equal(old.doc.owner, old.client); }
+  finally { unblock(); }
+  await settle(old, next);
+  assert.equal(next.cardsReady, true); assert.equal(next.own, true); assert.equal(next.lastStatus, 'switched');
+  for (let seat = 1; seat <= 4; seat++) assert.deepEqual(f.card(seat), foreign);
+});
+
+test('a fresh host uses actual current-session reads even when the old ROOM cache is empty or foreign', async t => {
+  const f = setup(t), old = f.host(); await f.story(old);
+  const canonical = clone(old.doc.state); old.close(); await settle(old);
+  for (let seat = 1; seat <= 4; seat++) f.room.answers[seat] = { game: 'taboo', round: 0 };
+  const resumed = f.host(); await settle(resumed);
+  assert.equal(resumed.own, true); assert.equal(resumed.suspended, false); assert.equal(resumed.lastStatus, 'ready');
+  assert.deepEqual(resumed.doc.state, canonical);
+  for (let seat = 1; seat <= 4; seat++) assert.equal(f.card(seat).once.sessionId, canonical.sessionId);
+});
+
+test('unknown prior-game payload changes retain exact protection instead of being treated as a heartbeat', async t => {
+  const f = setup(t), h = f.host(); await settle(h);
+  const prior = { game: 'future-game', selection: 'old' }, newer = { game: 'future-game', selection: 'new' };
+  for (const path of f.paths) f.db.put(path, prior); await settle(h);
+  let changed = false;
+  f.db.before = async path => { if (!changed && path === f.paths[2]) { changed = true; f.db.put(path, newer); } };
+  await h.start(); await settle(h);
+  assert.equal(h.suspended, true); assert.deepEqual(f.card(3), newer);
+});
+
+test('a changed Hub roster leaves the old canonical game inactive and opens the current seats without reading removed tokens', async t => {
+  const f = setup(t), old = f.host(); await f.story(old);
+  const oldSession = old.doc.state.sessionId, removedCard = f.card(4), readPaths = [];
+  f.room.count = 3; f.room.playerRef = i => i < f.room.count ? f.db.ref(f.paths[i]) : null;
+  f.db.beforeRead = async path => { readPaths.push(path); };
+  const next = f.host(); await settle(old, next);
+  assert.equal(next.own, true); assert.equal(next.lastStatus, 'switched'); assert.equal(next.suspended, true);
+  assert.equal(next.doc.state.sessionId, oldSession); assert.equal(next.doc.state.roster.length, 4);
+  assert.equal(readPaths.includes(f.paths[3]), false, 'the removed seat is never read to decide readiness');
+  await next.start(); await settle(old, next);
+  assert.equal(next.suspended, false); assert.equal(next.doc.state.roster.length, 3); assert.notEqual(next.doc.state.sessionId, oldSession);
+  assert.equal(readPaths.includes(f.paths[3]), false);
+  for (let seat = 1; seat <= 3; seat++) assert.equal(f.card(seat).once.sessionId, next.doc.state.sessionId);
+  assert.deepEqual(f.card(4), removedCard, 'new opening writes only the current immutable roster');
+  await old.renew(); await settle(old, next); assert.equal(next.doc.owner, next.client);
+});
+
+test('a failed opening read changes neither the prior canonical game nor its player cards and can be retried', async t => {
+  const f = setup(t), h = f.host(); await f.story(h);
+  const before = clone(h.doc.state), cards = f.paths.map((_, i) => f.card(i + 1));
+  f.db.beforeRead = async path => { if (path === f.paths[1]) throw new Error('network_read_failed'); };
+  await assert.rejects(h.start(), /network_read_failed/); await settle(h);
+  assert.deepEqual(h.doc.state, before); assert.deepEqual(f.paths.map((_, i) => f.card(i + 1)), cards);
+  f.db.beforeRead = null; await h.start(); await settle(h);
+  assert.notEqual(h.doc.state.sessionId, before.sessionId); assert.equal(h.suspended, false);
 });
 
 test('old revisions and shorter leases never overwrite a newer player view', async t => {

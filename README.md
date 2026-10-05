@@ -22,10 +22,35 @@ host is sharing.
 | 🤝 Persuade Together! | 3+ | One player is dealt the judge, everyone else teams up to convince them |
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
 | 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
+| 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
 
 ## How it works
 
-**Once Upon a Time** is the final entry in the Hub game menu. It reuses the
+**Dixit** is the final entry in the Hub game menu. Its prominent phase bar tells
+each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card
+before the highest-voted pictures. Designate the host player when opening the
+table; that player's private card handles every game control as well as their
+own hand and vote. A host card in the browser that owns the saved Hub room also
+runs synchronization while hidden whenever the browser permits execution, so
+the shared table may be hidden or closed. A visible host page can immediately
+take over a hidden executor. Reopening the HOST card in a new tab in the same
+trusted browser recovers immediately, including when closing the old tab could
+not finish releasing its lease. If the browser suspends every host page or the
+device sleeps, queued actions resume when a host page wakes.
+Host cards on another device use the open shared table for synchronization.
+Revealed pictures identify their owners above the artwork; no enlargement
+buttons or repeated Storyteller label cover the cards. Both reveal headings show
+their vote counts. Round points stay beside the pictures on the left until the
+host continues; phones show them below the pictures. Players and scores appear
+below the cards, expanded by default. Private-hand identity and duplicate spoken
+clue labels are omitted so the pictures start higher on the page.
+The host chooses a winning score from 5–100 before dealing (default 30).
+To switch into Dixit or Once Upon a Time from another game, open its host page
+and click **Open this table**. The existing player links switch to the new lobby;
+the previous game does not need an End button.
+See [`dixit-mode.md`](dixit-mode.md) for rules, original artwork, privacy, and validation.
+
+**Once Upon a Time** reuses the
 original room and private player links. See [`once-upon-a-time-mode.md`](once-upon-a-time-mode.md)
 for its rules, deck/art counts, trusted-host limits, launch steps and verification.
 The host keeps its shared table open and can deal immediately without waiting
@@ -189,6 +214,10 @@ Rule and transport regression tests require only Node.js:
 ```sh
 node --test tests/*.test.cjs
 ```
+
+## Dixit picture storytelling
+
+The final Hub game supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
 
 ## License
 
