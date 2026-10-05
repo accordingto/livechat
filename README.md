@@ -30,11 +30,16 @@ host is sharing.
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card
 before the highest-voted pictures. Designate the host player when opening the
 table; that player's private card handles every game control as well as their
-own hand and vote. A foreground host card in the browser that owns the saved Hub
-room also runs synchronization, so the shared table may be hidden or closed.
+own hand and vote. A host card in the browser that owns the saved Hub room also
+runs synchronization while hidden whenever the browser permits execution, so
+the shared table may be hidden or closed. A visible host page can immediately
+take over a hidden executor.
 Host cards on another device use the open shared table for synchronization.
 Revealed pictures identify their owners above the artwork; no enlargement
-buttons or repeated Storyteller label cover the cards.
+buttons or repeated Storyteller label cover the cards. Both reveal headings show
+their vote counts. A five-second score popup follows each new reveal, then leaves
+the pictures until the host continues. Players and scores appear below the cards.
+The host chooses a winning score from 5–100 before dealing (default 30).
 See [`dixit-mode.md`](dixit-mode.md) for rules, original artwork, privacy, and validation.
 
 **Once Upon a Time** reuses the
@@ -204,7 +209,7 @@ node --test tests/*.test.cjs
 
 ## Dixit picture storytelling
 
-The final Hub game supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's foreground private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
+The final Hub game supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
 
 ## License
 

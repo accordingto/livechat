@@ -132,6 +132,53 @@ test('text story requires the storyteller, a held card, and a nonempty clue of a
   assert.equal(explicit.clueMode, 'text'); assert.equal(explicit.clue, 'A memory');
 });
 
+test('winning targets validate at setup, project to every viewer, and default older games to 30', () => {
+  assert.equal(create().targetScore, 30);
+  for (const targetScore of [5, 37, 100, '50']) {
+    const s = E.create({ id: 'target-setup', roster: roster(4), targetScore });
+    assert.equal(s.targetScore, Number(targetScore));
+    for (const actor of [0, 1, 2, 3, 4]) assert.equal(E.view(wire(s), actor).dixit.targetScore, Number(targetScore));
+  }
+  for (const targetScore of [4, 101, 5.5, NaN, Infinity, null, '', '30x', true, {}, [5]]) {
+    assert.throws(() => E.create({ id: 'bad-target', roster: roster(4), targetScore }), /invalid_target_score/);
+  }
+  const legacy = create(); delete legacy.targetScore;
+  assert.equal(E.view(legacy, 2).dixit.targetScore, 30);
+  assert.equal(act(legacy, 'ready', 2, { value: true }).targetScore, 30);
+  assert.equal(E.view({ ...legacy, targetScore: 500 }, 0).dixit.targetScore, 30);
+});
+
+test('only the trusted host can adjust a valid target in the unpaused lobby', () => {
+  let s = E.create({ id: 'target-host', roster: roster(4), hostPlayerNum: 3, targetScore: 40 });
+  s = act(s, 'ready', 3, { value: false });
+  for (const actor of [0, 1, 2, 3, 4]) assert.equal(E.view(s, actor).dixit.actions.setTargetScore, actor === 0 || actor === 3);
+  let denied = act(s, 'setTargetScore', 2, { targetScore: 5, actor: 2, hostControls: true, hostPlayerNum: 2 });
+  assert.equal(denied.replies[2].error, 'not_available'); assert.deepEqual(gameplay(denied), gameplay(s));
+  for (const targetScore of [4, 101, 12.5, 'bad', null, [30]]) {
+    denied = act(s, 'setTargetScore', 3, { targetScore });
+    assert.equal(denied.replies[3].error, 'invalid_target_score'); assert.deepEqual(gameplay(denied), gameplay(s));
+  }
+  const change = command(s, 'setTargetScore', 3, { targetScore: 75 });
+  s = E.apply(s, change); assert.equal(s.targetScore, 75); assert.strictEqual(E.apply(s, change), s);
+  s = act(s, 'pause'); assert.equal(E.view(s, 3).dixit.actions.setTargetScore, false);
+  assert.equal(act(s, 'setTargetScore', 3, { targetScore: 10 }).replies[3].error, 'paused');
+  s = act(s, 'resume'); s = act(s, 'setTargetScore', 0, { targetScore: 60 }); assert.equal(s.targetScore, 60);
+  const stale = command(s, 'setTargetScore', 3, { targetScore: 5 });
+  s = act(s, 'deal'); assert.equal(E.view(s, 3).dixit.actions.setTargetScore, false);
+  assert.equal(E.apply(s, stale).replies[3].error, 'stale_turn');
+  denied = act(s, 'setTargetScore', 3, { targetScore: 5 });
+  assert.equal(denied.replies[3].error, 'not_available'); assert.equal(denied.targetScore, 60); conservation(denied);
+});
+
+test('restart preserves the configured target through Firebase reconstruction and ignores an injected replacement', () => {
+  let s = E.create({ id: 'target-restart', roster: roster(3), hostPlayerNum: 2, targetScore: 55 });
+  s = act(s, 'deal', 2); s = act(s, 'cancel', 2);
+  s = act(wire(s), 'restart', 2, { targetScore: 5 });
+  assert.equal(s.phase, 'LOBBY'); assert.equal(s.targetScore, 55); assert.equal(E.view(s, 0).dixit.targetScore, 55);
+  const legacy = clone(s); delete legacy.targetScore;
+  assert.equal(act(legacy, 'restart', 2).targetScore, 30);
+});
+
 test('spoken story submits a held card with no text and explicitly exposes its mode to every seat', () => {
   const s = freeze(started()), cardId = s.hands[1][0];
   const cmd = freeze(command(s, 'story', 1, { cardId, clueMode: 'spoken' }));
@@ -423,6 +470,22 @@ test('apply and view do not mutate input states or commands, and public results 
   assert.equal(JSON.stringify(revealed).includes('d999'), false);
 });
 
+test('round-end finish uses the configured target and selects all highest scorers only when reached', () => {
+  const round = (targetScore, initialScores) => {
+    let s = E.create({ id: 'target-finish-' + targetScore, roster: roster(4), seed: 731, targetScore });
+    s = tableReady(act(s, 'deal', 0, { firstPlayerNum: 1 })); s.scores = initialScores;
+    return finishReveal(ballots(s, { 2: 1, 3: 2, 4: 2 }));
+  };
+  let s = round(5, { 1: 0, 2: 0, 3: 0, 4: 0 });
+  assert.equal(s.phase, 'FINISHED'); assert.deepEqual(s.winners, [2]); assert.equal(s.scores[2], 5);
+  s = round(40, { 1: 27, 2: 25, 3: 0, 4: 0 });
+  assert.equal(s.phase, 'REVEAL'); assert.deepEqual(s.winners, []); assert.equal(E.view(s, 0).dixit.actions.nextRound, true);
+  assert.equal(act(s, 'nextRound').targetScore, 40);
+  s = round(100, { 1: 97, 2: 95, 3: 0, 4: 0 });
+  assert.equal(s.phase, 'FINISHED'); assert.deepEqual(s.winners, [1, 2]); assert.equal(E.view(s, 0).dixit.targetScore, 100);
+  assert.equal(act(s, 'restart').targetScore, 100); conservation(s);
+});
+
 test('shared reveal deadlines hide the answer, owners, ballots, popularity and scores until each guarded stage', () => {
   let s = ballots(tableReady(started()), { 2: 1, 3: 2, 4: 2 });
   const oldScores = clone(s.scores), answer = s.submissions[1][0], popular = s.submissions[2][0];
@@ -450,9 +513,27 @@ test('shared reveal deadlines hide the answer, owners, ballots, popularity and s
   denied = act(s, 'advanceReveal', 0, { now: 14199 }); assert.equal(denied.replies[0].error, 'reveal_not_ready');
   const final = command(s, 'advanceReveal', 0, { now: 14200 }); s = E.apply(s, final);
   assert.equal(s.phase, 'REVEAL'); assert.equal(s.revealStage, 'complete');
+  assert.equal(s.lastRound.revealedAt, 14200);
   assert.deepEqual(s.lastRound.popularCardIds, [popular]); assert.equal(s.lastRound.maxVotes, 2);
   assert.deepEqual(scores(s), [3, 5, 0, 0]); assert.strictEqual(E.apply(s, final), s, 'scoring happens only once');
   assert.deepEqual(E.view(s, 2, 14200).dixit.result, s.lastRound);
+  assert.equal(E.view(wire(s), 2, 50000).dixit.result.revealedAt, 14200, 'refresh preserves the original scored timestamp');
+  const legacy = clone(s); delete legacy.lastRound.revealedAt;
+  assert.equal(E.view(legacy, 2, 50000).dixit.result.revealedAt, undefined, 'legacy results never receive an invented fresh reveal time');
+});
+
+test('private host deals with its chosen target atomically; invalid choices never deal cards', () => {
+  const s = E.create({ id: 'target-deal', roster: roster(3), hostPlayerNum: 2, now: 1000 });
+  const invalid = act(s, 'deal', 2, { targetScore: 4 });
+  assert.equal(invalid.replies[2].error, 'invalid_target_score');
+  assert.equal(invalid.phase, 'LOBBY'); assert.equal(invalid.targetScore, 30);
+  assert.deepEqual(invalid.deck, []); assert.equal(Object.values(invalid.hands).flat().length, 0);
+  const denied = act(s, 'deal', 3, { targetScore: 5 });
+  assert.equal(denied.replies[3].error, 'not_available'); assert.equal(denied.targetScore, 30);
+  const dealt = act(s, 'deal', 2, { targetScore: 5, firstPlayerNum: 3 });
+  assert.equal(dealt.targetScore, 5); assert.equal(dealt.storyteller, 3); assert.equal(dealt.phase, 'CLUE');
+  for (const seat of [0,1,2,3]) assert.equal(E.view(dealt,seat,1000).dixit.targetScore,5);
+  conservation(dealt);
 });
 
 test('most-voted cards include every tie and include the storyteller card when it wins the vote', () => {

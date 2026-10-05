@@ -13,7 +13,9 @@ var DIXIT_ENGINE = (() => {
   const has = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
   const seatNumber = value => (typeof value === 'number' || typeof value === 'string' && /^\d+$/.test(value)) ? Number(value) : NaN;
   const cards = Array.from({ length: 84 }, (_, i) => 'd' + String(i + 1).padStart(3, '0'));
-  const HOST_TYPES = ['deal', 'reveal', 'advanceReveal', 'nextRound', 'cancel', 'restart', 'pause', 'resume'];
+  const HOST_TYPES = ['deal', 'setTargetScore', 'reveal', 'advanceReveal', 'nextRound', 'cancel', 'restart', 'pause', 'resume'];
+  const targetValue = value => (typeof value === 'number' || typeof value === 'string' && /^\d+$/.test(value.trim())) &&
+    Number.isInteger(Number(value)) && Number(value) >= 5 && Number(value) <= 100 ? Number(value) : null;
   const boundHost = s => s.roster.some(p => p.playerNum === seatNumber(s.hostPlayerNum)) ? seatNumber(s.hostPlayerNum) :
     s.roster.find(p => p.playerNum === 1)?.playerNum || s.roster[0]?.playerNum;
 
@@ -33,13 +35,14 @@ var DIXIT_ENGINE = (() => {
     }
     return result;
   }
-  function create({ id, roster, seed, now, hostPlayerNum = 1 } = {}) {
+  function create({ id, roster, seed, now, hostPlayerNum = 1, targetScore = 30 } = {}) {
     const players = list(roster);
     if (!id || players.length < 3 || players.length > 8) throw new Error('invalid_setup');
     if (players.some(p => !p || !Number.isInteger(p.playerNum) || p.playerNum < 1) ||
         new Set(players.map(p => p.playerNum)).size !== players.length) throw new Error('invalid_roster');
+    if (targetValue(targetScore) == null) throw new Error('invalid_target_score');
     return {
-      version: 1, artworkVersion: 2, hostPlayerNum: boundHost({ roster: players, hostPlayerNum }), sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
+      version: 1, artworkVersion: 2, hostPlayerNum: boundHost({ roster: players, hostPlayerNum }), targetScore: targetValue(targetScore), sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       paused: false, readiness: {}, hands: {}, submissions: {}, votes: {}, table: [],
       deck: [], discard: [], storyteller: null, round: 0, clue: '', clueMode: '', scores: {},
@@ -51,6 +54,7 @@ var DIXIT_ENGINE = (() => {
     const s = copy(current);
     for (const key of ['roster', 'table', 'deck', 'discard', 'winners']) s[key] = list(s[key]);
     s.hostPlayerNum = boundHost(s);
+    s.targetScore = targetValue(s.targetScore) || 30;
     for (const key of ['readiness', 'hands', 'submissions', 'votes', 'scores', 'seen', 'replies']) {
       s[key] = Object.fromEntries(Object.entries(s[key] || {}).filter(([, value]) => value != null));
     }
@@ -100,7 +104,7 @@ var DIXIT_ENGINE = (() => {
       while (hand.length < handSize(s) && s.deck.length) hand.push(s.deck.shift());
     }
   }
-  function scoreRound(s) {
+  function scoreRound(s, cmd) {
     const answerCardId = s.submissions[s.storyteller][0], eligible = voters(s);
     const correctCount = eligible.filter(seat => s.votes[seat] === answerCardId).length;
     const partial = correctCount > 0 && correctCount < eligible.length;
@@ -116,7 +120,7 @@ var DIXIT_ENGINE = (() => {
       return { playerNum: seat, cardIds, voteCardId, correct, base, bonus, delta, score };
     });
     s.lastRound = {
-      round: s.round, storyteller: s.storyteller, clue: s.clue, clueMode: s.clueMode, table: s.table.slice(),
+      round: s.round, revealedAt: Number(cmd.now), storyteller: s.storyteller, clue: s.clue, clueMode: s.clueMode, table: s.table.slice(),
       answerCardId, correctCount, totalVoters: eligible.length,
       outcome: partial ? 'some' : correctCount === 0 ? 'none' : 'all', rows,
     };
@@ -124,8 +128,8 @@ var DIXIT_ENGINE = (() => {
     s.lastRound.maxVotes = Math.max(...Object.values(voteCounts));
     s.lastRound.popularCardIds = s.table.filter(id => voteCounts[id] === s.lastRound.maxVotes);
     const high = Math.max(...rows.map(row => row.score));
-    s.winners = high >= 30 ? rows.filter(row => row.score === high).map(row => row.playerNum) : [];
-    s.revealStage = 'complete'; transition(s, high >= 30 ? 'FINISHED' : 'REVEAL');
+    s.winners = high >= s.targetScore ? rows.filter(row => row.score === high).map(row => row.playerNum) : [];
+    s.revealStage = 'complete'; transition(s, high >= s.targetScore ? 'FINISHED' : 'REVEAL');
   }
   function apply(current, input) {
     if (!current || !input || typeof input.id !== 'string' || !input.id || input.id.length > 100) return current;
@@ -144,11 +148,18 @@ var DIXIT_ENGINE = (() => {
         if (actor === 0 || s.phase !== 'LOBBY' || typeof cmd.value !== 'boolean') { reject('not_available'); break; }
         s.readiness[actor] = cmd.value;
         break;
+      case 'setTargetScore':
+        if (s.phase !== 'LOBBY') { reject('not_available'); break; }
+        if (targetValue(cmd.targetScore) == null) { reject('invalid_target_score'); break; }
+        s.targetScore = targetValue(cmd.targetScore);
+        break;
       case 'deal': {
         if (s.phase !== 'LOBBY') { reject('not_available'); break; }
         if (cmd.firstPlayerNum != null && !s.roster.some(p => p.playerNum === Number(cmd.firstPlayerNum))) {
           reject('invalid_player'); break;
         }
+        if (cmd.targetScore != null && targetValue(cmd.targetScore) == null) { reject('invalid_target_score'); break; }
+        if (cmd.targetScore != null) s.targetScore = targetValue(cmd.targetScore);
         s.deck = randomize(s, cards, cmd, 'deal');
         for (const player of s.roster) {
           s.hands[player.playerNum] = s.deck.splice(0, handSize(s)); s.scores[player.playerNum] = 0;
@@ -206,7 +217,7 @@ var DIXIT_ENGINE = (() => {
       case 'advanceReveal':
         if (s.phase !== 'REVEALING') { reject('not_available'); break; }
         if (!Number.isFinite(Number(cmd.now)) || Number(cmd.now) < s.revealAnswerAt) { reject('reveal_not_ready'); break; }
-        if (Number(cmd.now) >= s.revealPopularAt) scoreRound(s);
+        if (Number(cmd.now) >= s.revealPopularAt) scoreRound(s, cmd);
         else if (s.revealStage === 'countdown') { s.revealStage = 'answer'; s.turnId++; }
         else reject('reveal_not_ready');
         break;
@@ -224,7 +235,7 @@ var DIXIT_ENGINE = (() => {
         s.paused = false; transition(s, 'CANCELLED');
         break;
       case 'restart': {
-        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, hostPlayerNum: s.hostPlayerNum });
+        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, hostPlayerNum: s.hostPlayerNum, targetScore: s.targetScore });
         Object.assign(s, fresh); s.turnId = Number(current.turnId) + 1;
         break;
       }
@@ -256,7 +267,7 @@ var DIXIT_ENGINE = (() => {
     const live = !s.paused, ended = ['FINISHED', 'CANCELLED'].includes(s.phase);
     const revealed = ['REVEAL', 'FINISHED'].includes(s.phase);
     const actions = {
-      ready: live && player && s.phase === 'LOBBY', deal: live && host && s.phase === 'LOBBY',
+      ready: live && player && s.phase === 'LOBBY', deal: live && host && s.phase === 'LOBBY', setTargetScore: live && host && s.phase === 'LOBBY',
       story: live && telling && s.phase === 'CLUE',
       submit: live && player && !telling && s.phase === 'SUBMIT' && !has(s.submissions, actor),
       vote: live && player && !telling && s.phase === 'VOTE' && !has(s.votes, actor),
@@ -268,7 +279,7 @@ var DIXIT_ENGINE = (() => {
     };
     const dixit = {
       version: 1, artworkVersion: Number(s.artworkVersion)||1, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
-      phase: s.phase, paused: s.paused === true, round: s.round, storyteller: s.storyteller, hostPlayerNum: s.hostPlayerNum, hostControls: !!host,
+      phase: s.phase, paused: s.paused === true, round: s.round, storyteller: s.storyteller, hostPlayerNum: s.hostPlayerNum, targetScore: s.targetScore, hostControls: !!host,
       revealStage: s.revealStage || '', revealStartedAt: s.revealStartedAt || 0, revealAnswerAt: s.revealAnswerAt || 0, revealPopularAt: s.revealPopularAt || 0, revealPausedAt: s.revealPausedAt || 0,
       clue: s.clue, clueMode: s.clueMode, playerNum: player ? actor : 0,
       roster: s.roster.map(p => ({

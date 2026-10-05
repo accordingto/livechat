@@ -339,6 +339,24 @@ test('trusted host binding gives one private seat administrative controls withou
   const before = clone(h.doc.state); await f.send(h, 3, 'restart', restart); assert.deepEqual(h.doc.state, before, 'old-session mailbox retry never restarts twice');
 });
 
+test('configured winning target and private host lobby adjustment reach every seat and survive restart', async t => {
+  const f = setup(t), h = f.host(); await f.lobby(h, { hostPlayerNum: 3, targetScore: 5 });
+  assert.equal(h.doc.state.targetScore, 5); assert.equal(h.latest.dixit.targetScore, 5);
+  for (let seat = 1; seat <= 4; seat++) assert.equal(f.card(seat).dixit.targetScore, 5);
+  const adjusted = await f.send(h, 3, 'setTargetScore', { targetScore: 12 });
+  assert.equal(f.card(3).dixit.reply.id, adjusted.id); assert.equal(f.card(3).dixit.reply.error, '');
+  assert.equal(h.doc.state.targetScore, 12); assert.equal(h.latest.dixit.targetScore, 12);
+  for (let seat = 1; seat <= 4; seat++) assert.equal(f.card(seat).dixit.targetScore, 12);
+  const oldSession = h.doc.state.sessionId, restarted = await f.send(h, 3, 'restart', { targetScore: 5 });
+  assert.notEqual(h.doc.state.sessionId, oldSession); assert.equal(h.doc.state.phase, 'LOBBY');
+  assert.equal(h.doc.state.targetScore, 12); assert.equal(h.latest.dixit.targetScore, 12);
+  assert.equal(f.card(3).dixit.reply.id, restarted.id); assert.equal(f.card(3).dixit.reply.error, '');
+  assert.equal(h.suspended, false);
+  for (let seat = 1; seat <= 4; seat++) {
+    assert.equal(f.card(seat).dixit.sessionId, h.doc.state.sessionId); assert.equal(f.card(seat).dixit.targetScore, 12);
+  }
+});
+
 test('shared deadline projections survive host refresh and reconnect without restarting countdown or scoring twice', async t => {
   const f = setup(t), first = f.host(); await f.voting(first);
   const answer = f.card(1).dixit.ownSubmitted[0];
@@ -388,7 +406,7 @@ test('foreground private HOST immediately takes a live shared lease and keeps pl
   const cardHost = f.host({ mode: 'private' }); await settle(shared, cardHost);
   assert.equal(cardHost.own, true); assert.equal(shared.own, false);
   assert.equal(shared.lastStatus, 'host_card_active'); assert.equal(cardHost.doc.ownerMode, 'private');
-  assert.equal(cardHost.doc.leaseUntil, oldLease, 'takeover does not wait for the old fourteen-second lease to expire');
+  assert.equal(cardHost.doc.leaseUntil, oldLease, 'takeover does not wait for the previous live lease to expire');
   assert.deepEqual(cardHost.doc.state, before); assert.ok(cardHost.doc.leaseEpoch > 1);
   shared.close(); await settle(shared, cardHost);
   assert.equal(cardHost.own, true); assert.equal(cardHost.doc.leaseUntil, oldLease, 'closing an old screen cannot release the new executor');
@@ -416,13 +434,14 @@ test('private HOST also preempts legacy shared leases and equal-priority private
   await assert.rejects(second.command('cancel'), /not_available/);
 });
 
-test('hidden private HOST relinquishes its lease immediately, stops all work, and resumes ahead of the shared fallback', async t => {
+test('visible shared HOST replaces a hidden private owner immediately without background ownership fights', async t => {
   const f = setup(t), shared = f.host(); await f.dealt(shared);
   let visible = true;
   const cardHost = f.host({ mode: 'private', isActive: () => visible }); await settle(shared, cardHost);
   assert.equal(cardHost.own, true);
   visible = false; await cardHost.setActive(false); await settle(shared, cardHost);
-  assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'inactive'); assert.equal(shared.own, true);
+  assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'other_host'); assert.equal(shared.own, true);
+  assert.equal(shared.doc.ownerVisible, true); assert.equal(shared.doc.ownerVisibilityClient, shared.client);
   const fallbackEpoch = shared.doc.leaseEpoch, before = clone(shared.doc.state);
   await cardHost.renew(); cardHost.project(); await cardHost.tickReveal(); await settle(shared, cardHost);
   await assert.rejects(cardHost.command('pause'), /not_available/);
@@ -435,11 +454,11 @@ test('hidden private HOST relinquishes its lease immediately, stops all work, an
   assert.equal(shared.doc.state.paused, true); assert.equal(shared.doc.state.sessionId, before.sessionId);
 });
 
-test('an initially hidden private tab cannot acquire or project, and real connectivity loss resumes the same game', async t => {
+test('an initially hidden private tab cannot preempt a visible shared owner, and connectivity recovery preserves the game', async t => {
   const f = setup(t), shared = f.host(); await f.voting(shared);
   let visible = false;
   const cardHost = f.host({ mode: 'private', isActive: () => visible }); await settle(shared, cardHost);
-  assert.equal(shared.own, true); assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'inactive');
+  assert.equal(shared.own, true); assert.equal(cardHost.own, false); assert.equal(cardHost.lastStatus, 'other_host');
   visible = true; await cardHost.setActive(true); await settle(shared, cardHost);
   const before = clone(cardHost.doc.state);
   f.db.put('.info/connected', false); await settle(shared, cardHost);
@@ -464,7 +483,7 @@ test('slow player projection coalesces heartbeat snapshots and stamps only the c
     if (block && path === f.paths[0]) { block = false; entered(); await gate; }
   };
   f.clock(11000); await h.renew(); await started;
-  for (const now of [15000, 19000, 23000, 27000]) {
+  for (const now of [71000, 131000, 191000, 251000]) {
     f.clock(now); await h.renew(); await tick();
     await Promise.all([...h.projectionTasks].filter(([seat]) => seat !== 1).map(([, task]) => task));
     for (let n = 2; n <= 8; n++) assert.equal(f.card(n).dixit.hostLiveUntil, h.doc.leaseUntil, 'healthy seats receive fresh heartbeats while one seat stays blocked');
@@ -507,11 +526,11 @@ test('a delayed renewal commits a fresh lease immediately instead of leaving an 
   const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
   let delayed = false;
   f.db.before = async current => {
-    if (current === path && !delayed) { delayed = true; f.clock(50000); }
+    if (current === path && !delayed) { delayed = true; f.clock(150000); }
   };
   f.clock(11000); await h.renew(); await settle(h);
-  assert.equal(h.own, true); assert.equal(h.doc.leaseUntil, 64000);
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.hostLiveUntil, 64000);
+  assert.equal(h.own, true); assert.equal(h.doc.leaseUntil, 240000);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).dixit.hostLiveUntil, 240000);
   await f.send(h, 1, 'story', { cardId: h.doc.state.hands[1][0], clueMode: 'spoken' });
   assert.equal(h.doc.state.phase, 'SUBMIT');
 });
@@ -525,7 +544,7 @@ test('a failed renewal preserves the game and a later heartbeat recovers without
   f.clock(15000); await h.renew(); assert.equal(h.lastStatus, 'error');
   f.clock(20000); await h.renew(); await settle(h);
   assert.equal(h.own, true); assert.equal(h.lastStatus, 'ready'); assert.deepEqual(h.doc.state, before);
-  assert.equal(f.card(1).dixit.hostLiveUntil, 34000);
+  assert.equal(f.card(1).dixit.hostLiveUntil, 110000);
 });
 
 test('a cached legacy shared page cannot inherit private priority from a previous executor', async t => {
@@ -549,7 +568,7 @@ test('refresh keeps its tab resume group and immediately replaces its live priva
   const refreshed = f.host({ mode: 'private', resumeGroup: group }); await settle(old, refreshed);
   assert.notEqual(refreshed.client, old.client); assert.equal(refreshed.own, true); assert.equal(old.own, false);
   assert.equal(old.resumeSuperseded, true); assert.equal(refreshed.doc.ownerResumeGroup, group);
-  assert.equal(refreshed.doc.leaseUntil, lease, 'refresh takes over immediately instead of waiting fourteen seconds');
+  assert.equal(refreshed.doc.leaseUntil, lease, 'refresh takes over immediately instead of waiting for the old lease');
   assert.deepEqual(refreshed.doc.state, before);
   const other = f.host({ mode: 'private', resumeGroup: '2'.repeat(32) }); await settle(old, refreshed, other);
   assert.equal(other.own, false); assert.equal(other.lastStatus, 'host_card_active');
@@ -622,4 +641,68 @@ test('durable bootstrap replacement preserves a concurrent selection of another 
   f.db.put(f.paths[1], otherGame); unblock(); await settle(shared, cardHost);
   assert.equal(cardHost.suspended, true); assert.equal(cardHost.lastStatus, 'switched');
   assert.deepEqual(f.card(2), otherGame);
+});
+
+test('private HOST keeps processing in the background after the shared page closes and tolerates sixty-second heartbeat gaps', async t => {
+  const f = setup(t), shared = f.host(); await f.dealt(shared);
+  let visible = true;
+  const cardHost = f.host({ mode: 'private', isActive: () => visible }); await settle(shared, cardHost);
+  shared.close(); await settle(cardHost);
+  visible = false; await cardHost.setActive(false); await settle(cardHost);
+  assert.equal(cardHost.own, true); assert.equal(cardHost.lastStatus, 'ready');
+  assert.equal(cardHost.doc.ownerVisible, false); assert.equal(cardHost.doc.ownerVisibilityClient, cardHost.client);
+  const epoch = cardHost.doc.leaseEpoch;
+  for (const now of [80000, 140000, 200000]) {
+    f.clock(now); assert.equal(cardHost.liveOwner(), true, 'background heartbeat delays do not expire the ninety-second lease');
+    await cardHost.renew(); await settle(cardHost);
+    assert.equal(cardHost.doc.leaseUntil, now + 90000); assert.equal(cardHost.doc.leaseEpoch, epoch);
+  }
+  await f.send(cardHost, 1, 'story', { cardId: cardHost.doc.state.hands[1][0], clueMode: 'spoken' });
+  await Promise.all([2, 3, 4].map(seat => f.action(seat, 'submit', { cardIds: [cardHost.doc.state.hands[seat][0]] })));
+  await settle(cardHost);
+  assert.equal(cardHost.doc.state.phase, 'VOTE'); assert.equal(f.card(2).dixit.phase, 'VOTE');
+  assert.equal(cardHost.doc.ownerVisible, false, 'player requests do not invent foreground visibility');
+});
+
+test('when both host pages are hidden the existing private executor keeps its lease and receives other players requests', async t => {
+  const f = setup(t); let sharedVisible = true, privateVisible = true;
+  const shared = f.host({ isActive: () => sharedVisible }); await f.dealt(shared);
+  sharedVisible = false; await shared.setActive(false); await settle(shared);
+  const cardHost = f.host({ mode: 'private', isActive: () => privateVisible }); await settle(shared, cardHost);
+  privateVisible = false; await cardHost.setActive(false); await settle(shared, cardHost);
+  assert.equal(cardHost.own, true); assert.equal(shared.own, false);
+  const owner = cardHost.doc.owner;
+  await shared.renew(); await settle(shared, cardHost); assert.equal(cardHost.doc.owner, owner);
+  const story = await f.send(cardHost, 1, 'story', { cardId: cardHost.doc.state.hands[1][0], clueMode: 'spoken' });
+  assert.equal(f.card(1).dixit.reply.id, story.id); assert.equal(f.card(1).dixit.reply.error, '');
+  await f.send(cardHost, 2, 'submit', { cardIds: [cardHost.doc.state.hands[2][0]] });
+  assert.equal(f.card(2).dixit.ownSubmitted.length, 1);
+});
+
+test('a foreground private page may replace a hidden private owner while background tabs cannot reclaim its live lease', async t => {
+  const f = setup(t); let oldVisible = true;
+  const old = f.host({ mode: 'private', resumeGroup: '1'.repeat(32), isActive: () => oldVisible }); await f.dealt(old);
+  oldVisible = false; await old.setActive(false); await settle(old);
+  const next = f.host({ mode: 'private', resumeGroup: '2'.repeat(32) }); await settle(old, next);
+  assert.equal(next.own, true); assert.equal(old.own, false);
+  const owner = next.doc.owner;
+  for (const now of [20000, 40000, 70000]) { f.clock(now); await Promise.all([old.renew(), next.renew()]); await settle(old, next); assert.equal(next.doc.owner, owner); }
+  assert.equal(next.doc.ownerVisible, true); assert.equal(old.resumeSuperseded, false);
+  old.close(); await settle(next); assert.equal(next.own, true);
+});
+
+test('if every host executor is suspended a mailbox stays pending and is applied exactly once when a host resumes', async t => {
+  const f = setup(t); let visible = true;
+  const cardHost = f.host({ mode: 'private', isActive: () => visible }); await f.voting(cardHost);
+  visible = false; await cardHost.setActive(false); await settle(cardHost);
+  const before = clone(cardHost.doc.state);
+  f.clock(200000); // No executor timer or callback ran while the browser froze.
+  const action = await f.action(2, 'vote', { cardId: f.card(1).dixit.ownSubmitted[0] }); await settle(cardHost);
+  assert.deepEqual(cardHost.doc.state, before); assert.notEqual(f.card(2).dixit.reply.id, action.id);
+  assert.equal(f.card(2).dixitAction.id, action.id); assert.equal(f.card(2).dixit.ownVote, null);
+  visible = true; await cardHost.setActive(true); await settle(cardHost);
+  assert.equal(cardHost.own, true); assert.equal(f.card(2).dixit.reply.id, action.id); assert.equal(f.card(2).dixit.reply.error, '');
+  assert.equal(f.card(2).dixit.ownVote, action.cardId);
+  const processed = clone(cardHost.doc.state); await cardHost.renew(); await settle(cardHost);
+  assert.deepEqual(cardHost.doc.state, processed);
 });

@@ -8,6 +8,7 @@ var DIXIT_SYNC = (() => {
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
   const same = (a, b) => JSON.stringify(a || null) === JSON.stringify(b || null);
+  const LEASE_MS = 90000;
   function roomAdapter(room) {
     return new Proxy(room, {
       get(target, key) {
@@ -45,9 +46,9 @@ var DIXIT_SYNC = (() => {
       this.projectionTasks = new Map();
       this.projectedSeats = new Map();
       this.loadedBootstrapSession = null;
-      // A foreground private HOST card is the preferred executor. The shared
-      // screen observes it and remains a fallback, without competing for a
-      // live private lease. Hidden private tabs relinquish their own lease.
+      // Hidden pages keep executing instead of intentionally dropping the
+      // game. A visible host context may replace a hidden executor; the
+      // background predecessor cannot steal a live foreground lease back.
       this.connectedHandler = snap => {
         this.connected = snap.val() === true;
         this.own = this.liveOwner();
@@ -69,11 +70,12 @@ var DIXIT_SYNC = (() => {
         } else if (this.connected && this.canAcquire(this.doc)) this.renew();
       };
     }
-    foreground() { return this.mode !== 'private' || (this.active && this.isActive()); }
+    foreground() { return this.active && this.isActive(); }
     liveOwner(doc = this.doc, now = this.now()) {
-      return !!(this.connected && !this.stopped && !this.resumeSuperseded && this.foreground() && doc?.owner === this.client && doc.leaseUntil > now);
+      return !!(this.connected && !this.stopped && !this.resumeSuperseded && doc?.owner === this.client && doc.leaseUntil > now);
     }
     privateOwner(doc) { return doc?.ownerMode === 'private' && doc.ownerModeClient === doc.owner; }
+    hiddenOwner(doc) { return doc?.ownerVisible === false && doc.ownerVisibilityClient === doc.owner; }
     bootstrap(doc) {
       const initial = doc?.openingProjection;
       if (!doc?.state?.sessionId || initial?.sessionId !== doc.state.sessionId || !initial.cards || Array.isArray(initial.cards)) return null;
@@ -97,9 +99,11 @@ var DIXIT_SYNC = (() => {
       });
     }
     canAcquire(doc, now = this.now()) {
-      if (this.stopped || this.resumeSuperseded || !this.foreground()) return false;
+      if (this.stopped || this.resumeSuperseded) return false;
       if (this.mode === 'private' && doc?.state && !this.privateOwner(doc) && !this.bootstrap(doc) && !this.legacyOpeningComplete(doc)) return false;
       if (!doc?.owner || doc.owner === this.client || !(doc.leaseUntil > now)) return true;
+      if (!this.foreground()) return false;
+      if (this.hiddenOwner(doc)) return true;
       if (this.mode !== 'private') return false;
       if (!this.privateOwner(doc)) return true;
       // A refresh gets a fresh client identity but keeps this tab's resume
@@ -109,7 +113,7 @@ var DIXIT_SYNC = (() => {
     }
     reportStatus() {
       const privateOwner = this.privateOwner(this.doc) && this.doc.owner !== this.client && this.doc.leaseUntil > this.now();
-      this.status(this.suspended ? 'switched' : !this.connected ? 'offline' : !this.foreground() ? 'inactive'
+      this.status(this.suspended ? 'switched' : !this.connected ? 'offline'
         : this.own ? 'ready' : privateOwner ? 'host_card_active' : 'other_host');
     }
     async release() {
@@ -117,43 +121,40 @@ var DIXIT_SYNC = (() => {
       try {
         await this.ref.transaction(doc => doc?.owner === this.client
           ? Object.assign({}, doc, { leaseUntil: 0 }) : undefined, undefined, false);
-      } catch (error) { if (!this.stopped && this.foreground()) this.status('error'); }
+      } catch (error) { if (!this.stopped) this.status('error'); }
     }
     setActive(value) {
       this.active = value === true;
       this.own = this.liveOwner();
-      if (!this.foreground()) {
-        this.pendingProjections.clear(); this.own = false; this.reportStatus();
-        return this.release();
-      }
+      this.reportStatus();
       if (this.connected && !this.stopped) return this.renew();
       return Promise.resolve();
     }
     async renew() {
-      if (!this.connected || this.stopped || !this.foreground() || this.renewing) return;
+      if (!this.connected || this.stopped || this.renewing) return;
       this.renewing = true;
       const now = this.now();
       let expiredCommit = false;
       try {
         const result = await this.ref.transaction(doc => {
           doc = doc || {};
-          if (!this.foreground() || this.stopped || !this.connected || !this.canAcquire(doc, now)) return;
+          if (this.stopped || !this.connected || !this.canAcquire(doc, now)) return;
           const changedOwner = doc.owner !== this.client;
           return Object.assign({}, doc, { owner: this.client, ownerMode: this.mode, ownerModeClient: this.client,
-            ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '', leaseUntil: now + 14000,
+            ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '',
+            ownerVisible: this.foreground(), ownerVisibilityClient: this.client, leaseUntil: now + LEASE_MS,
             leaseEpoch: (doc.leaseEpoch || 0) + (changedOwner ? 1 : 0) });
         }, undefined, false);
         if (!result.committed) { this.own = this.liveOwner(); this.reportStatus(); }
         else expiredCommit = result.snapshot.val()?.leaseUntil <= this.now();
-      } catch (error) { if (!this.stopped && this.foreground()) this.status('error'); }
+      } catch (error) { if (!this.stopped) this.status('error'); }
       finally { this.renewing = false; }
       // A delayed Firebase retry can commit a deadline captured more than
-      // fourteen seconds ago. Refresh it immediately with a fresh timestamp.
-      if (expiredCommit && this.connected && !this.stopped && this.foreground()) return this.renew();
+      // the lease duration ago. Refresh it with a fresh timestamp immediately.
+      if (expiredCommit && this.connected && !this.stopped) return this.renew();
     }
     async change(fn) {
       if (!this.connected || this.stopped) throw new Error('offline');
-      if (!this.foreground()) throw new Error('not_available');
       const now = this.now();
       const result = await this.ref.transaction(doc => {
         if (!this.liveOwner(doc, now)) return;
@@ -162,7 +163,8 @@ var DIXIT_SYNC = (() => {
         const opening = next.sessionId !== doc.state?.sessionId && this.openingCards
           ? { openingProjection: { sessionId: next.sessionId, cards: clone(this.openingCards) } } : {};
         return Object.assign({}, doc, opening, { state: next, revision: (doc.revision || 0) + 1,
-          ownerMode: this.mode, ownerModeClient: this.client, ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '', leaseUntil: now + 14000 });
+          ownerMode: this.mode, ownerModeClient: this.client, ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '',
+          ownerVisible: this.foreground(), ownerVisibilityClient: this.client, leaseUntil: now + LEASE_MS });
       }, undefined, false);
       if (!result.committed) throw new Error('not_available');
       return result.snapshot.val().state;
@@ -188,7 +190,7 @@ var DIXIT_SYNC = (() => {
       this.openingCards = {};
       for (let n = 1; n <= this.room.count; n++) this.openingCards[n] = clone(this.room.answers[n]);
     }
-    start({ hostPlayerNum = 1 } = {}) {
+    start({ hostPlayerNum = 1, targetScore = 30 } = {}) {
       return this.enqueue(async () => {
         if (!Number.isInteger(this.room.count) || this.room.count < 3 || this.room.count > 8) throw new Error('player_count');
         const id = uid(), randomSeed = seed(), now = this.now();
@@ -197,7 +199,7 @@ var DIXIT_SYNC = (() => {
         this.captureOpeningCards();
         this.initialSession = id; this.suspended = false; this.seenCards.clear();
         try {
-          return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now, hostPlayerNum: hostSeat }));
+          return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now, hostPlayerNum: hostSeat, targetScore }));
         } catch (error) {
           this.initialSession = null; this.openingCards = null; throw error;
         }
@@ -325,7 +327,7 @@ var DIXIT_SYNC = (() => {
       }
     }
   }
-  return { Host, uid };
+  return { Host, uid, leaseMs: LEASE_MS };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = DIXIT_SYNC;
 

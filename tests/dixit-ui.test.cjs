@@ -293,13 +293,16 @@ test('story selection never submits immediately; explicit spoken confirmation su
   } finally { h.card.destroy(); }
 });
 
-test('paused, expired host lease and transport rejection disable actions and expose readable status', async () => {
+test('an expired executor lease permits queued player actions; pause and transport loss still disable actions', async () => {
   const s = dealt(), data = E.view(s, 1); data.dixit.hostLiveUntil = 2000;
   const h = harness(data);
   try {
     const button = h.element.querySelector('[data-dx-card="' + s.hands[1][0] + '"]');
-    assert.equal(button.disabled, true); assert.equal(h.element.querySelector('[data-dx-connection]').textContent, UI.t('hostAway'));
-    await h.click('[data-dx-card="' + s.hands[1][0] + '"]'); assert.equal(h.card.selected.size, 0);
+    assert.equal(button.disabled, false); assert.equal(h.element.querySelector('[data-dx-connection]').textContent, UI.t('hostAway'));
+    assert.match(h.element.querySelector('[data-dx-connection]').textContent, /Reconnecting game sync/);
+    await h.click('[data-dx-card="' + s.hands[1][0] + '"]'); assert.equal(h.card.selected.size, 1);
+    await h.click('[data-dx-action="story"]'); assert.equal(h.sent.length, 1); assert.equal(h.sent[0].type, 'story');
+    assert.ok(h.card.pending); assert.equal(h.element.querySelector('[data-dx-action="story"]').disabled, true, 'pending actions still cannot be duplicated');
   } finally { h.card.destroy(); }
   const paused = act(s, 'pause'); noActions(htmlFor(paused, 1), ['story']); assert.ok(action(htmlFor(paused), 'resume'));
   const failed = harness(E.view(create(), 1), { send: async () => { throw new Error('offline'); } });
@@ -365,7 +368,8 @@ test('the current phase leads the information bar and gives each role its next a
   const clue = dealt(), submit = submitted(), vote = voting();
   for (const [s, label] of [[create(), 'Waiting to start'], [clue, 'Storyteller speaks'], [submit, 'Secret card selection'], [vote, 'Secret voting']]) {
     const html = htmlFor(s, 2);
-    assert.ok(html.indexOf('class="dx-phase-bar') < html.indexOf('class="dx-header'), 'phase is the first visual information');
+    assert.ok(html.indexOf('class="dx-phase-bar') < html.indexOf('class="dx-identity'), 'phase is the first visual information');
+    assert.doesNotMatch(html, /dx-header|dx-kicker|<h1>Dixit<\/h1>|Round \d+ · Storyteller:/);
     assert.match(html, new RegExp('data-dx-phase="' + s.phase + '"'));
     assert.ok(html.includes('<h2>' + label + '</h2>'));
     assert.match(html, /<details class="dx-game-details"/, 'scores and deck details stay secondary');
@@ -424,9 +428,10 @@ test('answer stage centers only the actual Storyteller card; top votes and score
   assert.match(finalHTML, /data-dx-reveal-stage="popular"/);
   assert.ok(finalHTML.indexOf('class="dx-story-reveal"') < finalHTML.indexOf('class="dx-popular-reveal"'));
   assert.match(finalHTML, /Most-voted picture/);
-  const popular = finalHTML.slice(finalHTML.indexOf('class="dx-popular-reveal"'), finalHTML.indexOf('<section class="dx-panel dx-result'));
+  const popular = finalHTML.slice(finalHTML.indexOf('class="dx-popular-reveal"'), finalHTML.indexOf('<details class="dx-panel dx-result'));
   assert.match(popular, /<div class="dx-owner">Seat 2<\/div><div class="dx-picture">/);
   assert.ok(finalHTML.indexOf('dx-popular-reveal') < finalHTML.indexOf('dx-result'));
+  assert.match(finalHTML, /class="dx-story-reveal"><h2>The Storyteller’s card <span>1 vote\(s\)<\/span><\/h2>/);
   const context = { DIXIT_DECK: { version: 2, cards: Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp' })) } };
   vm.runInNewContext(source, context);
   const eagerHTML = context.DIXIT_UI.tableHTML(E.view(s, 2, started.revealAnswerAt), { now: started.revealAnswerAt });
@@ -437,7 +442,7 @@ test('answer stage centers only the actual Storyteller card; top votes and score
 test('all tied most-voted pictures appear, including the answer when it ties; legacy revealed rounds never replay a countdown', () => {
   const s = finishReveal(startedReveal({ tied: true })), html = htmlFor(s, 2);
   assert.equal(s.lastRound.popularCardIds.length, 3);
-  const feature = html.slice(html.indexOf('data-dx-reveal-stage="popular"'), html.indexOf('<section class="dx-panel dx-result'));
+  const feature = html.slice(html.indexOf('data-dx-reveal-stage="popular"'), html.indexOf('<details class="dx-panel dx-result'));
   assert.match(feature, /Tied most-voted pictures/);
   for (const id of s.lastRound.popularCardIds) {
     const owner = s.lastRound.rows.find(row => row.cardIds.includes(id));
@@ -480,4 +485,190 @@ test('player projections cannot gain host controls from forged action flags, and
     await h.click('[data-dx-action="restart"]'); assert.equal(h.sent.length, 0);
     await h.click('[data-dx-confirm="restart"]'); assert.equal(h.sent.length, 1); assert.equal(h.sent[0].type, 'restart');
   } finally { h.card.destroy(); }
+});
+
+function popupStorage() {
+  const values = new Map();
+  return { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value) };
+}
+const popupPart = html => html.slice(html.indexOf('<aside class="dx-score-popup'), html.indexOf('</aside>') + 8);
+
+test('all-player points appear after the cards, expire after five seconds and do not restart on heartbeats or refresh', () => {
+  const s = finishReveal(startedReveal()), data = E.view(s, 1), storage = popupStorage();
+  data.dixit.result.revealedAt = 30000;
+  let now = 30699;
+  const h = harness(data, { now: () => now }, { sessionStorage: storage });
+  try {
+    assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
+    now = 30700; h.card.paint();
+    const popup = popupPart(h.element.innerHTML);
+    assert.match(popup, /This round’s points/);
+    assert.equal((popup.match(/data-dx-score-player=/g) || []).length, 4);
+    for (const row of data.dixit.result.rows) {
+      assert.ok(popup.includes('data-dx-score-player="' + row.playerNum + '"'));
+      assert.ok(popup.includes('Seat ' + row.playerNum));
+      assert.ok(popup.includes('aria-label="Round gain">+' + row.delta + '</strong>'));
+      assert.ok(popup.includes('Total <strong>' + row.score + '</strong>'));
+      assert.ok(popup.includes('Base +' + row.base)); assert.ok(popup.includes('Bonus +' + row.bonus));
+    }
+    assert.match(popup, />\+0<\/strong>/, 'zero-point players remain visible');
+    assert.doesNotMatch(popup, />-0|>\+-|aria-modal|role="dialog"/);
+    assert.equal(h.element.querySelector('[data-dx-action="nextRound"]').disabled, false, 'the popup does not block host control');
+    const heartbeat = copy(data); heartbeat.dixit.revision = 999; heartbeat.dixit.hostLiveUntil = 90000;
+    now = 33000; h.card.update(heartbeat); assert.match(h.element.innerHTML, /data-dx-score-popup/);
+    const refreshed = harness(heartbeat, { now: () => now }, { sessionStorage: storage });
+    try { assert.doesNotMatch(refreshed.element.innerHTML, /data-dx-score-popup/, 'an already displayed round does not replay after refresh'); }
+    finally { refreshed.card.destroy(); }
+    now = 35699; h.card.paint(); assert.match(h.element.innerHTML, /data-dx-score-popup/);
+    now = 35700; h.card.paint(); assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
+    assert.match(h.element.innerHTML, /data-dx-reveal-stage="popular"/); assert.match(h.element.innerHTML, /data-dx-picture=/);
+    now = 60000; h.card.update(heartbeat); assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
+    assert.equal(h.sent.length, 0, 'showing and hiding points never changes the game');
+  } finally { h.card.destroy(); }
+});
+
+test('point popups are dismissible, preserve open review details and allow a new session to show its own points', async () => {
+  const s = scored('none'), data = E.view(s, 1), storage = popupStorage(); data.dixit.result.revealedAt = 30000;
+  const h = harness(data, { now: () => 31000 }, { sessionStorage: storage });
+  try {
+    assert.match(h.element.innerHTML, /data-dx-score-popup/);
+    h.element.querySelector('[data-dx-result-details]').open = true;
+    h.element.querySelector('[data-dx-details]').open = true;
+    await h.click('[data-dx-dismiss-score]');
+    assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
+    assert.equal(h.element.querySelector('[data-dx-result-details]').open, true);
+    assert.equal(h.element.querySelector('[data-dx-details]').open, true);
+    assert.equal(h.element.querySelector('[data-dx-action="nextRound"]').disabled, false);
+    h.card.update(data); h.card.paint(); assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/);
+    const nextSession = copy(data); nextSession.dixit.sessionId += '-new'; h.card.update(nextSession);
+    assert.match(h.element.innerHTML, /data-dx-score-popup/); assert.equal(h.sent.length, 0);
+  } finally { h.card.destroy(); }
+});
+
+test('finished games can show final points, while expired and legacy reveals never replay a popup', () => {
+  const data = E.view(scored(), 2); data.dixit.phase = 'FINISHED'; data.dixit.result.revealedAt = 30000;
+  const final = harness(data, { now: () => 35000 });
+  try { assert.match(final.element.innerHTML, /data-dx-score-popup/); noActions(final.element.innerHTML, ['nextRound']); }
+  finally { final.card.destroy(); }
+  for (const at of [30000, undefined]) {
+    const older = copy(data); if (at === undefined) delete older.dixit.result.revealedAt;
+    const h = harness(older, { now: () => 60000 });
+    try { assert.doesNotMatch(h.element.innerHTML, /data-dx-score-popup/); assert.match(h.element.innerHTML, /data-dx-result-details/); }
+    finally { h.card.destroy(); }
+  }
+  const answer = act(startedReveal(), 'advanceReveal', 0, { now: 13000 });
+  const early = UI.tableHTML(E.view(answer, 2, 13000), { now: 13000, scorePopup: true });
+  assert.doesNotMatch(early, /data-dx-score-popup|vote\(s\)|data-dx-result-details/, 'votes and points stay secret until the complete reveal');
+});
+
+test('card groups lead score details and full round points remain available in a collapsed review', () => {
+  for (const s of [dealt(), voting(), scored()]) {
+    const html = htmlFor(s, 2);
+    assert.ok(html.indexOf('data-dx-picture=') < html.indexOf('data-dx-details'), 'pictures precede player totals');
+    assert.doesNotMatch(html, /<header|<h1>Dixit<\/h1>|Round \d+ · Storyteller:/);
+  }
+  const html = htmlFor(scored('none'), 2);
+  assert.match(html, /class="dx-story-reveal"><h2>The Storyteller’s card <span>0 vote\(s\)<\/span><\/h2>/);
+  assert.match(html, /<details class="dx-panel dx-result" data-dx-result-details>/);
+  assert.ok(html.indexOf('data-dx-result-details') < html.indexOf('data-dx-details'));
+});
+
+test('the host sets a score target in the same deal action and a readiness repaint retains the unsaved value', async () => {
+  const s = create(), data = E.view(s, 1), h = harness(data);
+  try {
+    assert.equal(h.element.querySelector('[data-dx-target-score]').value, '30');
+    h.element.querySelector('[data-dx-target-score]').value = '12';
+    const ready = act(s, 'ready', 2, { value: true }); h.card.update(E.view(ready, 1));
+    assert.equal(h.element.querySelector('[data-dx-target-score]').value, '12');
+    h.card.render(); assert.equal(h.element.querySelector('[data-dx-target-score]').value, '12');
+    h.element.querySelector('[data-dx-first]').value = '2';
+    await h.click('[data-dx-action="deal"]');
+    assert.equal(h.sent.length, 1); assert.equal(h.sent[0].targetScore, 12); assert.equal(h.sent[0].firstPlayerNum, 2);
+    const started = act(ready, 'deal', 1, h.sent[0]); assert.equal(started.targetScore, 12); h.card.update(E.view(started, 1));
+    assert.equal(h.card.pending, null); assert.match(h.element.innerHTML, /Reach 12; highest score wins/);
+    assert.match(h.element.innerHTML, /End after a round with a score of 12 or more/); assert.match(h.element.innerHTML, /custom variation/);
+  } finally { h.card.destroy(); }
+  assert.doesNotMatch(htmlFor(s, 2), /data-dx-target-score/);
+});
+
+test('invalid target drafts send no deal and give a readable validation instruction', async () => {
+  const h = harness(E.view(create(), 1));
+  try {
+    for (const value of ['', '4', '101', '12.5']) {
+      h.element.querySelector('[data-dx-target-score]').value = value;
+      await h.click('[data-dx-action="deal"]'); assert.equal(h.sent.length, 0); assert.equal(h.card.pending, null);
+      assert.match(h.element.querySelector('[data-dx-message]').textContent, /whole-number score target from 5 to 100/);
+      assert.equal(h.element.querySelector('[data-dx-target-score]').value, value, 'the draft remains editable');
+    }
+  } finally { h.card.destroy(); }
+  assert.equal(UI.errorText('invalid_target_score'), UI.t('invalidTarget'));
+});
+
+test('eight-player point popups include every player and bring the viewing player first without changing result order', () => {
+  let s = voting(8);
+  for (let seat = 2; seat <= 8; seat++) s = act(s, 'vote', seat, { cardId: s.submissions[1][0] });
+  s = finishReveal(act(s, 'reveal', 1, { now: 10000 }));
+  const data = E.view(s, 8), canonicalOrder = data.dixit.result.rows.map(row => row.playerNum);
+  data.dixit.result.revealedAt = 30000;
+  const h = harness(data, { now: () => 31000 });
+  try {
+    const popup = popupPart(h.element.innerHTML);
+    assert.match(popup, /has-many-players/); assert.equal((popup.match(/data-dx-score-player=/g) || []).length, 8);
+    assert.match(popup, /class="dx-score-change is-me" data-dx-score-player="8"/);
+    assert.equal(popup.match(/data-dx-score-player="(\d+)"/)[1], '8');
+    assert.deepEqual(data.dixit.result.rows.map(row => row.playerNum), canonicalOrder);
+  } finally { h.card.destroy(); }
+});
+
+test('a submitted action remains pending beyond fifteen seconds and clears only when the resumed host acknowledges it', async () => {
+  const s = dealt(); let now = 3000;
+  const h = harness(E.view(s, 1), { now: () => now });
+  try {
+    await h.click('[data-dx-card="' + s.hands[1][0] + '"]'); await h.click('[data-dx-action="story"]');
+    const command = copy(h.sent[0]);
+    now = 20000; h.timers.get(h.card.pendingTimer)();
+    assert.equal(h.card.pending.id, command.id); assert.equal(h.card.pendingWaiting, true);
+    assert.equal(h.card.error, ''); assert.equal(h.card.errorCode, '');
+    assert.match(h.element.querySelector('[data-dx-message]').textContent, /Action sent\. Waiting for game sync to resume/);
+    assert.doesNotMatch(h.element.querySelector('[data-dx-message]').textContent, /Could not send/);
+    await h.click('[data-dx-action="story"]'); assert.equal(h.sent.length, 1, 'waiting never overwrites or duplicates the mailbox');
+    const unrelated = E.view(s, 1); unrelated.dixit.reply = { id: 'previous-action', error: '' }; h.card.update(unrelated);
+    assert.equal(h.card.pending.id, command.id);
+    const accepted = act(s, 'story', 1, command); h.card.update(E.view(accepted, 1));
+    assert.equal(h.card.pending, null); assert.equal(h.card.pendingWaiting, false); assert.equal(h.card.error, '');
+    assert.equal(h.card.selected.size, 0); assert.match(h.element.innerHTML, /Secret card selection/);
+  } finally { h.card.destroy(); }
+  assert.equal(h.timers.size, 0);
+});
+
+test('refresh restores an unacknowledged private mailbox without resending and drops it on a receipt or stale turn', async () => {
+  const s = dealt(), original = harness(E.view(s, 1)); let queued;
+  try {
+    await original.click('[data-dx-card="' + s.hands[1][0] + '"]'); await original.click('[data-dx-action="story"]');
+    queued = E.view(s, 1); queued.dixitAction = copy(original.sent[0]);
+  } finally { original.card.destroy(); }
+  const refreshed = harness(queued);
+  try {
+    assert.equal(refreshed.card.pending.id, queued.dixitAction.id); assert.equal(refreshed.card.pendingWaiting, true);
+    assert.equal(refreshed.element.querySelector('[data-dx-action="story"]').disabled, true);
+    await refreshed.click('[data-dx-card="' + s.hands[1][1] + '"]'); await refreshed.click('[data-dx-action="story"]');
+    refreshed.card.update(queued); assert.equal(refreshed.sent.length, 0);
+    const accepted = act(s, 'story', 1, queued.dixitAction), receipt = E.view(accepted, 1); receipt.dixitAction = queued.dixitAction;
+    refreshed.card.update(receipt); assert.equal(refreshed.card.pending, null); assert.equal(refreshed.card.pendingWaiting, false);
+    assert.equal(refreshed.sent.length, 0, 'restoring a request reads the mailbox rather than publishing it again');
+  } finally { refreshed.card.destroy(); }
+  const stale = harness(queued);
+  try {
+    const next = E.view(act(s, 'pause', 1), 1); next.dixitAction = queued.dixitAction;
+    stale.card.update(next); assert.equal(stale.card.pending, null); assert.equal(stale.card.pendingWaiting, false);
+    const restarted = E.view(act(s, 'restart', 1), 1); restarted.dixitAction = queued.dixitAction;
+    stale.card.update(restarted); assert.equal(stale.card.pending, null); assert.equal(stale.sent.length, 0);
+  } finally { stale.card.destroy(); }
+  const alreadyAcknowledged = copy(queued); alreadyAcknowledged.dixit.reply = { id: queued.dixitAction.id, error: '' };
+  const done = harness(alreadyAcknowledged);
+  try { assert.equal(done.card.pending, null); assert.equal(done.sent.length, 0); }
+  finally { done.card.destroy(); }
+  const publicView = harness(queued, { host: true });
+  try { assert.equal(publicView.card.pending, null, 'the shared screen never adopts a player mailbox'); }
+  finally { publicView.card.destroy(); }
 });

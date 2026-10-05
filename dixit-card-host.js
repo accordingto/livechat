@@ -64,7 +64,9 @@ var DIXIT_CARD_HOST = (() => {
       }
       host.connect(); return true;
     }
-    setActive(active) { this.host?.setActive(active); }
+    // Visibility affects executor preference, not whether the HOST keeps
+    // processing background requests. Only stop/close tears it down.
+    setActive(active) { return this.host?.setActive(active); }
     stop() {
       this.host?.close(); this.host = null; this.binding = '';
       for (const [ref, listener] of this.listeners) ref.off('value', listener);
