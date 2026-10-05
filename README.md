@@ -33,7 +33,10 @@ table; that player's private card handles every game control as well as their
 own hand and vote. A host card in the browser that owns the saved Hub room also
 runs synchronization while hidden whenever the browser permits execution, so
 the shared table may be hidden or closed. A visible host page can immediately
-take over a hidden executor.
+take over a hidden executor. Reopening the HOST card in a new tab in the same
+trusted browser recovers immediately, including when closing the old tab could
+not finish releasing its lease. If the browser suspends every host page or the
+device sleeps, queued actions resume when a host page wakes.
 Host cards on another device use the open shared table for synchronization.
 Revealed pictures identify their owners above the artwork; no enlargement
 buttons or repeated Storyteller label cover the cards. Both reveal headings show

@@ -706,3 +706,60 @@ test('if every host executor is suspended a mailbox stays pending and is applied
   const processed = clone(cardHost.doc.state); await cardHost.renew(); await settle(cardHost);
   assert.deepEqual(cardHost.doc.state, processed);
 });
+
+test('a new trusted tab in the same browser immediately replaces an un-released closed-tab lease', async t => {
+  const f = setup(t), browserGroup = 'a'.repeat(32);
+  const old = f.host({ mode: 'private', browserGroup, resumeGroup: '1'.repeat(32) }); await f.voting(old);
+  const before = clone(old.doc.state), lease = old.doc.leaseUntil, owner = old.doc.owner;
+  // Tab teardown is not guaranteed time to finish its asynchronous release.
+  old.connected = false; old.close(); await settle(old);
+  assert.equal(old.doc.owner, owner); assert.equal(old.doc.leaseUntil, lease);
+  const next = f.host({ mode: 'private', browserGroup, resumeGroup: '2'.repeat(32) }); await settle(old, next);
+  assert.equal(next.own, true); assert.notEqual(next.client, old.client);
+  assert.equal(next.doc.leaseUntil, lease, 'new tab takes over without waiting ninety seconds');
+  assert.equal(next.doc.ownerBrowserGroup, browserGroup); assert.equal(next.doc.ownerBrowserGroupClient, next.client);
+  assert.deepEqual(next.doc.state, before);
+  const otherBrowser = f.host({ mode: 'private', browserGroup: 'b'.repeat(32), resumeGroup: '3'.repeat(32) }); await settle(next, otherBrowser);
+  assert.equal(otherBrowser.own, false); assert.equal(otherBrowser.lastStatus, 'host_card_active');
+  await f.send(next, 2, 'vote', { cardId: f.card(1).dixit.ownSubmitted[0] });
+  assert.equal(f.card(2).dixit.ownVote, f.card(1).dixit.ownSubmitted[0]);
+  for (const view of [next.latest, ...[1, 2, 3, 4].map(n => f.card(n))]) {
+    assert.equal(JSON.stringify(view).includes(browserGroup), false);
+    assert.equal(JSON.stringify(view).includes(next.resumeGroup), false);
+  }
+  old.close(); await settle(next); assert.equal(next.own, true);
+});
+
+test('same-browser replacement never fights an older tab and that older tab can resume after hiding or closing it', async t => {
+  const f = setup(t), browserGroup = 'a'.repeat(32);
+  const old = f.host({ mode: 'private', browserGroup, resumeGroup: '1'.repeat(32) }); await f.dealt(old);
+  let nextVisible = true;
+  const next = f.host({ mode: 'private', browserGroup, resumeGroup: '2'.repeat(32), isActive: () => nextVisible }); await settle(old, next);
+  assert.equal(next.own, true); assert.equal(old.own, false); assert.equal(old.resumeSuperseded, false);
+  const before = clone(next.doc.state), owner = next.client;
+  for (const now of [20000, 40000, 70000]) {
+    f.clock(now); await Promise.all([old.renew(), next.renew()]); await settle(old, next);
+    assert.equal(next.doc.owner, owner); assert.equal(old.own, false);
+  }
+  nextVisible = false; await next.setActive(false); await settle(old, next);
+  assert.equal(old.own, true); assert.equal(next.own, false); assert.equal(old.resumeSuperseded, false);
+  assert.deepEqual(old.doc.state, before);
+  nextVisible = true; await next.setActive(true); await settle(old, next); assert.equal(old.own, true, 'previous owners cannot replace another live foreground owner');
+  await old.setActive(false); await settle(old, next); assert.equal(next.own, true);
+  await old.setActive(true); await settle(old, next); assert.equal(old.own, false);
+  next.close(); await settle(old, next);
+  assert.equal(old.own, true); assert.equal(old.resumeSuperseded, false); assert.deepEqual(old.doc.state, before);
+});
+
+test('trusted browser identity migrates a legacy private lease once while ordinary cards and other browsers remain blocked', async t => {
+  const f = setup(t), old = f.host({ mode: 'private', resumeGroup: '1'.repeat(32) }); await f.dealt(old);
+  const path = `rooms/${f.room.code}/players/${f.room.getExtra('dixitControlToken')}`;
+  const legacy = clone(old.doc); delete legacy.ownerBrowserGroup; delete legacy.ownerBrowserGroupClient;
+  f.db.put(path, legacy); await settle(old);
+  const noBrowserIdentity = f.host({ mode: 'private', resumeGroup: '3'.repeat(32) }); await settle(old, noBrowserIdentity);
+  assert.equal(noBrowserIdentity.own, false);
+  const migrated = f.host({ mode: 'private', browserGroup: 'a'.repeat(32), resumeGroup: '2'.repeat(32) }); await settle(old, noBrowserIdentity, migrated);
+  assert.equal(migrated.own, true); assert.equal(migrated.doc.ownerBrowserGroup, 'a'.repeat(32));
+  const different = f.host({ mode: 'private', browserGroup: 'b'.repeat(32), resumeGroup: '4'.repeat(32) }); await settle(old, migrated, different);
+  assert.equal(different.own, false); assert.equal(old.own, false);
+});

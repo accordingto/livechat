@@ -20,7 +20,7 @@ var DIXIT_SYNC = (() => {
     });
   }
   class Host extends TALK_SYNC.Host {
-    constructor({ room, db, mode = 'shared', resumeGroup = '', isActive = () => true, onChange = () => {}, onStatus = () => {} }) {
+    constructor({ room, db, mode = 'shared', resumeGroup = '', browserGroup = '', isActive = () => true, onChange = () => {}, onStatus = () => {} }) {
       let host;
       super({ room: roomAdapter(room), db, onStatus,
         // The public host screen receives the same strictly filtered view as
@@ -38,6 +38,7 @@ var DIXIT_SYNC = (() => {
       this.revealAdvancing = null;
       this.mode = mode === 'private' ? 'private' : 'shared';
       this.resumeGroup = /^[a-f0-9]{32}$/.test(resumeGroup) ? resumeGroup : '';
+      this.browserGroup = /^[a-f0-9]{32}$/.test(browserGroup) ? browserGroup : '';
       this.privateAcquired = false;
       this.resumeSuperseded = false;
       this.isActive = isActive;
@@ -76,6 +77,10 @@ var DIXIT_SYNC = (() => {
     }
     privateOwner(doc) { return doc?.ownerMode === 'private' && doc.ownerModeClient === doc.owner; }
     hiddenOwner(doc) { return doc?.ownerVisible === false && doc.ownerVisibilityClient === doc.owner; }
+    browserOwnerGroup(doc) {
+      return this.privateOwner(doc) && doc.ownerBrowserGroupClient === doc.owner && /^[a-f0-9]{32}$/.test(doc.ownerBrowserGroup || '')
+        ? doc.ownerBrowserGroup : '';
+    }
     bootstrap(doc) {
       const initial = doc?.openingProjection;
       if (!doc?.state?.sessionId || initial?.sessionId !== doc.state.sessionId || !initial.cards || Array.isArray(initial.cards)) return null;
@@ -109,7 +114,14 @@ var DIXIT_SYNC = (() => {
       // A refresh gets a fresh client identity but keeps this tab's resume
       // group. Only the replacement, which has never owned a lease, may
       // preempt its predecessor; the old instance cannot take it back.
-      return !!(this.resumeGroup && doc.ownerResumeGroup === this.resumeGroup && !this.privateAcquired);
+      if (this.privateAcquired) return false;
+      if (this.resumeGroup && doc.ownerResumeGroup === this.resumeGroup) return true;
+      // A newly opened tab in the same trusted browser also replaces a ghost
+      // lease when the preceding tab's asynchronous close could not finish.
+      // Separate per-tab resume groups keep a still-open predecessor eligible
+      // again after this replacement hides/closes, without a live-tab fight.
+      const previousBrowser = this.browserOwnerGroup(doc);
+      return !!(this.browserGroup && (!previousBrowser || previousBrowser === this.browserGroup));
     }
     reportStatus() {
       const privateOwner = this.privateOwner(this.doc) && this.doc.owner !== this.client && this.doc.leaseUntil > this.now();
@@ -142,11 +154,16 @@ var DIXIT_SYNC = (() => {
           const changedOwner = doc.owner !== this.client;
           return Object.assign({}, doc, { owner: this.client, ownerMode: this.mode, ownerModeClient: this.client,
             ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '',
+            ownerBrowserGroup: this.mode === 'private' ? this.browserGroup : '', ownerBrowserGroupClient: this.client,
             ownerVisible: this.foreground(), ownerVisibilityClient: this.client, leaseUntil: now + LEASE_MS,
             leaseEpoch: (doc.leaseEpoch || 0) + (changedOwner ? 1 : 0) });
         }, undefined, false);
         if (!result.committed) { this.own = this.liveOwner(); this.reportStatus(); }
-        else expiredCommit = result.snapshot.val()?.leaseUntil <= this.now();
+        else {
+          const committed = result.snapshot.val();
+          if (this.mode === 'private' && committed?.owner === this.client) this.privateAcquired = true;
+          expiredCommit = committed?.leaseUntil <= this.now();
+        }
       } catch (error) { if (!this.stopped) this.status('error'); }
       finally { this.renewing = false; }
       // A delayed Firebase retry can commit a deadline captured more than
@@ -164,6 +181,7 @@ var DIXIT_SYNC = (() => {
           ? { openingProjection: { sessionId: next.sessionId, cards: clone(this.openingCards) } } : {};
         return Object.assign({}, doc, opening, { state: next, revision: (doc.revision || 0) + 1,
           ownerMode: this.mode, ownerModeClient: this.client, ownerResumeGroup: this.mode === 'private' ? this.resumeGroup : '',
+          ownerBrowserGroup: this.mode === 'private' ? this.browserGroup : '', ownerBrowserGroupClient: this.client,
           ownerVisible: this.foreground(), ownerVisibilityClient: this.client, leaseUntil: now + LEASE_MS });
       }, undefined, false);
       if (!result.committed) throw new Error('not_available');

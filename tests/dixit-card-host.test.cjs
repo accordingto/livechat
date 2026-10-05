@@ -16,7 +16,8 @@ function fixture() {
     setActive(active) { this.active = active; }
     receive(seat, data) { this.commands.push({ seat, data }); }
   }
-  const context = vm.createContext({ DIXIT_ENGINE: E, DIXIT_SYNC: { Host, uid: () => 'e'.repeat(32) }, localStorage: storage, document: { hidden: false } });
+  let groupCounter = 0;
+  const context = vm.createContext({ DIXIT_ENGINE: E, DIXIT_SYNC: { Host, uid: () => (++groupCounter).toString(16).padStart(32, 'e') }, localStorage: storage, document: { hidden: false } });
   vm.runInContext(fs.readFileSync(require.resolve('../dixit-card-host.js'), 'utf8'), context);
   const bridge = new context.DIXIT_CARD_HOST.Bridge({ roomCode: code, playerToken: tokens[0], db, storage });
   const state = E.create({ id: 'bridge-test', seed: 7, now: 1000, hostPlayerNum: 1,
@@ -86,4 +87,22 @@ test('the same tab keeps its refresh handoff group separate from saved room cred
   assert.equal(f.hosts[1].options.resumeGroup, first);
   assert.equal(f.storage.getItem('room-session-' + f.code), saved);
   assert.equal(values.size, 1);
+});
+
+test('a new private tab keeps the browser executor identity while receiving a separate refresh group', () => {
+  const f = fixture(), firstTab = new Map(), secondTab = new Map();
+  const tabStorage = values => ({ getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) });
+  const saved = f.storage.getItem('room-session-' + f.code), payload = E.view(f.state, 1), before = JSON.stringify(payload);
+  f.bridge.tabStorage = tabStorage(firstTab); f.bridge.update(payload);
+  const first = f.hosts[0].options;
+  assert.match(first.browserGroup, /^[a-f0-9]{32}$/); assert.match(first.resumeGroup, /^[a-f0-9]{32}$/);
+  assert.notEqual(first.browserGroup, first.resumeGroup);
+  f.bridge.close(); f.bridge.tabStorage = tabStorage(secondTab); f.bridge.update(payload);
+  const next = f.hosts[1].options;
+  assert.equal(next.browserGroup, first.browserGroup); assert.notEqual(next.resumeGroup, first.resumeGroup);
+  assert.equal(f.storage.getItem('dixit-executor-browser-' + f.code + '-1'), first.browserGroup);
+  assert.equal(f.storage.getItem('room-session-' + f.code), saved, 'existing control credentials remain unchanged');
+  assert.equal(JSON.stringify(payload), before, 'neither executor group is added to player data');
+  assert.equal(JSON.stringify(payload).includes(first.browserGroup), false);
+  assert.equal(JSON.stringify(payload).includes(first.resumeGroup), false);
 });

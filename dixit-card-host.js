@@ -24,6 +24,14 @@ var DIXIT_CARD_HOST = (() => {
         const group = DIXIT_SYNC.uid(); this.tabStorage.setItem(key, group); return group;
       } catch (error) { return undefined; }
     }
+    browserExecutionGroup(seat) {
+      const key = 'dixit-executor-browser-' + this.code + '-' + seat;
+      try {
+        const existing = this.storage.getItem(key);
+        if (/^[a-f0-9]{32}$/.test(existing || '')) return existing;
+        const group = DIXIT_SYNC.uid(); this.storage.setItem(key, group); return group;
+      } catch (error) { return undefined; }
+    }
     trusted(data) {
       const s = data?.dixit, saved = this.saved(), roster = DIXIT_ENGINE.list(s?.roster);
       if (data?.game !== 'dixit' || s?.version !== 1 || s.hostControls !== true ||
@@ -53,7 +61,8 @@ var DIXIT_CARD_HOST = (() => {
         },
         playerRef: i => refs.get(i + 1),
       };
-      const host = this.host = new DIXIT_SYNC.Host({ room, db: this.db, mode: 'private', resumeGroup: this.executionGroup(seat), isActive: this.isActive,
+      const host = this.host = new DIXIT_SYNC.Host({ room, db: this.db, mode: 'private', resumeGroup: this.executionGroup(seat),
+        browserGroup: this.browserExecutionGroup(seat), isActive: this.isActive,
         onStatus: status => this.onStatus(status), onChange: () => {} });
       for (const [playerNum, ref] of refs) {
         const listener = snapshot => {
