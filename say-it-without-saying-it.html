@@ -615,6 +615,7 @@
       font-size: .74rem; font-weight: 700; line-height: 1.3;
       color: var(--text-muted); opacity: .7;
     }
+    .cp-secrets { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
     .cp-target {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       background: var(--bg); border: 1px solid rgba(99,102,241,.4); border-radius: 8px;
@@ -2515,8 +2516,11 @@
       if (secretsOn) {
         if (p.isGiver && p.target) secrets += `<div class="cp-target"><span>${p.emoji || ''}</span><b>${p.target}</b></div>`;
         if (p.forbidden) secrets += `<div class="cp-forbidden">${p.forbidden.map(w => `<span class="cp-pill">${w}</span>`).join('')}</div>`;
-        else if (p.isGiver || p.isRef) secrets += `<div class="cp-note">${tt('noForbiddenPreview')}</div>`;
+        // "no forbidden words" only when the rule is really off — while the word is
+        // still sealed the list is null too, and saying "none" then is wrong
+        else if ((p.isGiver || p.isRef) && p.state === 'playing' && p.forbiddenOn === false) secrets += `<div class="cp-note">${tt('noForbiddenPreview')}</div>`;
       }
+      if (secrets) secrets = `<div class="cp-secrets">${secrets}</div>`;
       return secrets + cardPreviewBody(i);
     }
     function cardPreviewBody(i) {
