@@ -22,10 +22,18 @@ host is sharing.
 | 🤝 Persuade Together! | 3+ | One player is dealt the judge, everyone else teams up to convince them |
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
 | 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
+| 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
 
 ## How it works
 
-**Once Upon a Time** is the final entry in the Hub game menu. It reuses the
+**Dixit** is the final entry in the Hub game menu. Its prominent phase bar tells
+each player what to do, and a shared3–2–1 reveal presents the Storyteller's card
+before the highest-voted pictures. Designate the host player when opening the
+table; that player's private card handles every game control as well as their
+own hand and vote. Keep the shared table open/awake for synchronization.
+See [`dixit-mode.md`](dixit-mode.md) for rules, original artwork, privacy, and validation.
+
+**Once Upon a Time** reuses the
 original room and private player links. See [`once-upon-a-time-mode.md`](once-upon-a-time-mode.md)
 for its rules, deck/art counts, trusted-host limits, launch steps and verification.
 The host keeps its shared table open and can deal immediately without waiting

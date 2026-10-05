@@ -33,8 +33,9 @@ function scored(outcome = 'some') {
   const answer = s.submissions[1][0], second = s.submissions[2][0], third = s.submissions[3][0];
   const votes = outcome === 'all' ? [answer, answer, answer] : outcome === 'none' ? [third, second, second] : [answer, second, second];
   for (let seat = 2; seat <= 4; seat++) s = act(s, 'vote', seat, { cardId: votes[seat - 2] });
-  return act(s, 'reveal');
+  return finishReveal(act(s, 'reveal'));
 }
+function finishReveal(s) { return act(s, 'advanceReveal', 0, { now: s.revealPopularAt }); }
 const htmlFor = (s, seat = 0, options = {}) => UI.tableHTML(E.view(s, seat, 3000), { host: seat === 0, ...options });
 function buttons(html) {
   return (html.match(/<button\b[^>]*\bdata-dx-action="[^"]+"[^>]*>/g) || []).map(tag => ({
@@ -89,7 +90,7 @@ test('lobby has host start and player readiness, and three-player submission req
     assert.equal(action(htmlFor(s), 'deal').disabled, false);
     assert.equal(action(htmlFor(s, 1), 'ready').disabled, false);
     noActions(htmlFor(s), ['ready', 'story', 'submit', 'vote']);
-    noActions(htmlFor(s, 1), ['deal', 'reveal', 'nextRound', 'pause', 'restart']);
+    noActions(htmlFor(s, 2), ['deal', 'reveal', 'nextRound', 'pause', 'restart']);
   }
   const s = submitted(3), [first, second] = s.hands[2];
   assert.match(htmlFor(s, 2), /select 2 matching picture card/);
@@ -129,7 +130,7 @@ test('finish displays all tied winners and prevents another round; cancellation 
   let s = voting();
   s.scores = { 1: 27, 2: 25, 3: 0, 4: 0 };
   for (const [seat, cardId] of [[2, s.submissions[1][0]], [3, s.submissions[2][0]], [4, s.submissions[2][0]]]) s = act(s, 'vote', seat, { cardId });
-  s = act(s, 'reveal');
+  s = finishReveal(act(s, 'reveal'));
   assert.equal(s.phase, 'FINISHED'); assert.match(htmlFor(s), /Shared winners: Seat 1, Seat 2/);
   noActions(htmlFor(s), ['nextRound', 'deal', 'pause', 'cancel']);
   assert.doesNotMatch(htmlFor(s, 2), /dx-hand/);
@@ -369,5 +370,120 @@ test('an old host rejecting a spoken clue gives a bilingual refresh instruction 
     await h.click('[data-dx-action="story"]'); assert.equal(h.sent.length, 2);
     assert.equal(h.sent[1].clueMode, 'spoken'); assert.equal(h.sent[1].clue, undefined); assert.equal(h.sent[1].cardId, id);
     assert.notEqual(h.sent[1].id, h.sent[0].id);
+  } finally { h.card.destroy(); }
+});
+
+test('the current phase leads the information bar and gives each role its next action and progress', () => {
+  const clue = dealt(), submit = submitted(), vote = voting();
+  for (const [s, label] of [[create(), 'Waiting to start'], [clue, 'Storyteller speaks'], [submit, 'Secret card selection'], [vote, 'Secret voting']]) {
+    const html = htmlFor(s, 2);
+    assert.ok(html.indexOf('class="dx-phase-bar') < html.indexOf('class="dx-header'), 'phase is the first visual information');
+    assert.match(html, new RegExp('data-dx-phase="' + s.phase + '"'));
+    assert.ok(html.includes('<h2>' + label + '</h2>'));
+    assert.match(html, /<details class="dx-game-details"/, 'scores and deck details stay secondary');
+  }
+  assert.match(htmlFor(clue, 1), /Choose a picture → say your clue aloud → confirm your card/);
+  assert.match(htmlFor(clue, 2), /Listen to Seat 1’s spoken clue/);
+  assert.match(htmlFor(submit, 2), /Cards submitted: 0 \/ 3/);
+  assert.match(htmlFor(vote, 2), /Votes received: 0 \/ 3/);
+  const afterVote = act(vote, 'vote', 2, { cardId: vote.submissions[1][0] });
+  assert.match(htmlFor(afterVote, 2), /Vote submitted/);
+  assert.match(htmlFor(afterVote, 3), /Which card belongs to the Storyteller/);
+});
+
+function startedReveal({ tied = false } = {}) {
+  let s = voting();
+  const cards = tied ? [s.submissions[1][0], s.submissions[2][0], s.submissions[3][0]] : [s.submissions[1][0], s.submissions[2][0], s.submissions[2][0]];
+  for (let seat = 2; seat <= 4; seat++) s = act(s, 'vote', seat, { cardId: cards[seat - 2] });
+  return act(s, 'reveal', 1, { now: 10000 });
+}
+
+test('countdown uses the shared deadline, continues correctly after refresh, and reveals no answer or vote result', () => {
+  const s = startedReveal();
+  assert.equal(s.phase, 'REVEALING');
+  for (const [now, number] of [[10000, 3], [10999, 3], [11000, 2], [12000, 1], [13050, 1]]) {
+    const html = UI.tableHTML(E.view(s, 2, now), { now });
+    assert.match(html, new RegExp('data-dx-countdown>' + number + '</span>'));
+    assert.doesNotMatch(html, /dx-story-reveal|dx-popular-reveal|dx-result|dx-owner|dx-hand/);
+  }
+  let now = 10000; const h = harness(E.view(s, 2, now), { now: () => now });
+  try {
+    assert.match(h.element.innerHTML, /data-dx-countdown>3<\/span>/);
+    now = 11000; h.card.paint(); assert.match(h.element.innerHTML, /data-dx-countdown>2<\/span>/);
+    now = 12000; h.card.paint(); assert.match(h.element.innerHTML, /data-dx-countdown>1<\/span>/);
+    const refreshed = harness(E.view(s, 2, now), { now: () => now });
+    try { assert.match(refreshed.element.innerHTML, /data-dx-countdown>1<\/span>/); }
+    finally { refreshed.card.destroy(); }
+    assert.equal(h.sent.length, 0, 'a display timer never sends or advances a reveal');
+  } finally { h.card.destroy(); }
+  const paused = act(s, 'pause', 1, { now: 11500 });
+  const html = UI.tableHTML(E.view(paused, 2, 40000), { now: 40000 });
+  assert.match(html, /data-dx-countdown>2<\/span>/);
+  assert.match(html, /Game paused/);
+});
+
+test('answer stage centers only the actual Storyteller card; top votes and scores appear at the later stage', () => {
+  const started = startedReveal(), answer = started.submissions[1][0];
+  const s = act(started, 'advanceReveal', 1, { now: started.revealAnswerAt });
+  const html = UI.tableHTML(E.view(s, 2, started.revealAnswerAt), { now: started.revealAnswerAt });
+  assert.match(html, /data-dx-reveal-stage="answer"/);
+  assert.match(html, /class="dx-story-reveal"/);
+  assert.match(html, new RegExp('data-dx-zoom="' + answer + '"'));
+  assert.equal((html.match(/data-dx-zoom=/g) || []).length, 1, 'only the answer picture competes for attention');
+  assert.doesNotMatch(html, /dx-popular-reveal|dx-result|dx-owner|data-dx-countdown/);
+  const final = finishReveal(s), finalHTML = htmlFor(final, 2);
+  assert.match(finalHTML, /data-dx-reveal-stage="popular"/);
+  assert.ok(finalHTML.indexOf('class="dx-story-reveal"') < finalHTML.indexOf('class="dx-popular-reveal"'));
+  assert.match(finalHTML, /Most-voted picture/);
+  assert.ok(finalHTML.indexOf('dx-popular-reveal') < finalHTML.indexOf('dx-result'));
+  const context = { DIXIT_DECK: { version: 2, cards: Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp' })) } };
+  vm.runInNewContext(source, context);
+  const eagerHTML = context.DIXIT_UI.tableHTML(E.view(s, 2, started.revealAnswerAt), { now: started.revealAnswerAt });
+  assert.match(eagerHTML, /<img class="dx-art"[^>]+loading="eager"/);
+  assert.doesNotMatch(eagerHTML, /loading="lazy"/, 'the reveal picture loads eagerly during its short exclusive stage');
+});
+
+test('all tied most-voted pictures appear, including the answer when it ties; legacy revealed rounds never replay a countdown', () => {
+  const s = finishReveal(startedReveal({ tied: true })), html = htmlFor(s, 2);
+  assert.equal(s.lastRound.popularCardIds.length, 3);
+  const feature = html.slice(html.indexOf('data-dx-reveal-stage="popular"'), html.indexOf('<section class="dx-panel dx-result'));
+  assert.match(feature, /Tied most-voted pictures/);
+  for (const id of s.lastRound.popularCardIds) assert.match(feature, new RegExp('data-dx-zoom="' + id + '"'));
+  assert.equal((feature.match(new RegExp('data-dx-zoom="' + s.lastRound.answerCardId + '"', 'g')) || []).length, 2, 'the same picture can be answer and top-voted');
+  const legacy = E.view(s, 2); delete legacy.dixit.revealStage; delete legacy.dixit.revealStartedAt; delete legacy.dixit.revealAnswerAt; delete legacy.dixit.revealPopularAt;
+  delete legacy.dixit.result.popularCardIds; delete legacy.dixit.result.maxVotes;
+  const legacyHTML = UI.tableHTML(legacy);
+  assert.doesNotMatch(legacyHTML, /data-dx-countdown/); assert.match(legacyHTML, /Tied most-voted pictures/);
+});
+
+test('a private host retains their own hand and player actions while controlling deal, reveal, pause and next round', async () => {
+  const lobby = create(), hostLobby = htmlFor(lobby, 1), otherLobby = htmlFor(lobby, 2);
+  assert.ok(action(hostLobby, 'deal')); assert.ok(action(hostLobby, 'ready'));
+  noActions(otherLobby, ['deal', 'pause', 'cancel', 'restart']);
+  const s = dealt(), h = harness(E.view(s, 1));
+  try {
+    assert.equal(cardButtons(h.element.innerHTML).length, 6);
+    assert.ok(action(h.element.innerHTML, 'pause')); assert.ok(action(h.element.innerHTML, 'cancel'));
+    await h.click('[data-dx-card="' + s.hands[1][0] + '"]'); await h.click('[data-dx-action="story"]');
+    assert.equal(h.sent.length, 1); assert.equal(h.sent[0].type, 'story');
+  } finally { h.card.destroy(); }
+  const start = startedReveal(), final = finishReveal(start);
+  assert.ok(action(htmlFor(final, 1), 'nextRound')); noActions(htmlFor(final, 2), ['nextRound']);
+  const vote = voting();
+  for (const seat of [2, 3, 4]) vote.votes[seat] = vote.submissions[1][0];
+  assert.equal(action(htmlFor(vote, 1), 'reveal').disabled, false);
+  noActions(htmlFor(vote, 2), ['reveal']);
+});
+
+test('player projections cannot gain host controls from forged action flags, and confirmation stays inside the card', async () => {
+  const s = dealt(), forged = E.view(s, 2); forged.dixit.actions = { ...forged.dixit.actions, pause: true, cancel: true, restart: true };
+  noActions(UI.tableHTML(forged), ['pause', 'cancel', 'restart']);
+  const h = harness(E.view(s, 1), {}, { confirm: () => { throw new Error('Native confirmation is prohibited'); } });
+  try {
+    await h.click('[data-dx-action="cancel"]'); assert.equal(h.sent.length, 0);
+    assert.match(h.element.innerHTML, /role="alertdialog"/); assert.match(h.element.innerHTML, /Cancel this game/);
+    await h.click('[data-dx-dismiss-confirm]'); assert.equal(h.sent.length, 0); assert.equal(h.card.confirmation, '');
+    await h.click('[data-dx-action="restart"]'); assert.equal(h.sent.length, 0);
+    await h.click('[data-dx-confirm="restart"]'); assert.equal(h.sent.length, 1); assert.equal(h.sent[0].type, 'restart');
   } finally { h.card.destroy(); }
 });

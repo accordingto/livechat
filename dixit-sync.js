@@ -34,21 +34,40 @@ var DIXIT_SYNC = (() => {
       host = this;
       this.openingCards = null;
       this.restartingSession = null;
+      this.revealAdvancing = null;
     }
+    connect() {
+      super.connect();
+      this.revealTimer = setInterval(() => this.tickReveal(), 200);
+    }
+    tickReveal() {
+      const state = this.doc?.state;
+      if (!state || state.phase !== 'REVEALING' || state.paused || !this.own || !this.connected || this.stopped || this.suspended) return Promise.resolve(null);
+      const deadline = state.revealStage === 'answer' ? state.revealPopularAt : state.revealAnswerAt;
+      if (this.now() < deadline) return Promise.resolve(null);
+      if (this.revealAdvancing) return this.revealAdvancing;
+      this.revealAdvancing = this.command('advanceReveal').catch(error => {
+        if (!['stale_turn', 'stale_session', 'paused', 'reveal_not_ready', 'not_available', 'offline'].includes(error.message)) this.status('error');
+        return null;
+      }).finally(() => { this.revealAdvancing = null; });
+      return this.revealAdvancing;
+    }
+    close() { clearInterval(this.revealTimer); super.close(); }
     captureOpeningCards() {
       this.openingCards = {};
       for (let n = 1; n <= this.room.count; n++) this.openingCards[n] = clone(this.room.answers[n]);
     }
-    start() {
+    start({ hostPlayerNum = 1 } = {}) {
       return this.enqueue(async () => {
         await this.outgoing;
         if (!Number.isInteger(this.room.count) || this.room.count < 3 || this.room.count > 8) throw new Error('player_count');
         const id = uid(), randomSeed = seed(), now = this.now();
         const roster = Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
+        const hostSeat = roster.some(p => p.playerNum === Number(hostPlayerNum)) ? Number(hostPlayerNum) : 1;
         this.captureOpeningCards();
         this.initialSession = id; this.suspended = false; this.seenCards.clear();
         try {
-          return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now }));
+          return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now, hostPlayerNum: hostSeat }));
         } catch (error) {
           this.initialSession = null; this.openingCards = null; throw error;
         }
@@ -101,13 +120,20 @@ var DIXIT_SYNC = (() => {
       if (this.incoming.has(key)) return;
       this.incoming.add(key);
       const command = Object.assign({}, action, { actor: playerNum, now: this.now(), seed: seed() });
-      this.enqueue(() => this.suspended || this.stopped ? null : this.change(current => DIXIT_ENGINE.apply(current, command)))
+      this.enqueue(async () => {
+        if (this.suspended || this.stopped) return null;
+        const restarting = command.type === 'restart' && playerNum === (this.doc?.state?.hostPlayerNum || 1);
+        if (restarting) { await this.outgoing; this.captureOpeningCards(); this.restartingSession = command.sessionId; }
+        try { return await this.change(current => DIXIT_ENGINE.apply(current, command)); }
+        finally { if (restarting) this.restartingSession = null; }
+      })
         .catch(error => { if (error.message !== 'not_available') this.status('error'); })
         .finally(() => this.incoming.delete(key));
     }
     project() {
       const doc = this.doc;
       if (!doc?.state) return;
+      this.tickReveal();
       if (this.restartingSession && doc.state.sessionId !== this.restartingSession) {
         this.initialSession = doc.state.sessionId; this.seenCards.clear();
       }

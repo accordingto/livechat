@@ -45,6 +45,11 @@ function ballots(s, targets) {
   return s;
 }
 function scores(s) { return s.lastRound.rows.map(row => row.delta); }
+function finishReveal(s) {
+  if (s.phase === 'VOTE') s = act(s, 'reveal');
+  s = act(s, 'advanceReveal', 0, { now: s.revealAnswerAt });
+  return act(s, 'advanceReveal', 0, { now: s.revealPopularAt });
+}
 
 test('artwork version stays legacy throughout an existing game and changes only on a fresh session or restart', () => {
   const fresh = create(); assert.equal(fresh.artworkVersion, 2); assert.equal(E.view(fresh, 0).dixit.artworkVersion, 2);
@@ -80,8 +85,8 @@ test('optional readiness and host-controlled deals create correct private hand s
     s = act(s, 'ready', 1, { value: true });
     assert.equal(E.view(s, 1).dixit.roster[0].ready, true);
     assert.equal(E.view(s, 0).dixit.actions.deal, true, 'readiness is optional');
-    const denied = act(s, 'deal', 1);
-    assert.equal(denied.phase, 'LOBBY'); assert.equal(denied.replies[1].error, 'not_available');
+    const denied = act(s, 'deal', 2);
+    assert.equal(denied.phase, 'LOBBY'); assert.equal(denied.replies[2].error, 'not_available');
     s = act(s, 'deal', 0, { firstPlayerNum: 2 });
     assert.equal(s.phase, 'CLUE'); assert.equal(s.storyteller, 2); assert.equal(s.round, 1);
     for (const p of s.roster) {
@@ -157,7 +162,7 @@ test('spoken story enforces storyteller identity and held-card validation', () =
 test('spoken rounds preserve their mode through scoring and clear it before the next story or restart', () => {
   let s = tableReady(started(), { clueMode: 'spoken' });
   assert.equal(s.clueMode, 'spoken'); assert.equal(E.view(s, 0).dixit.clue, '');
-  s = act(ballots(s, { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  s = finishReveal(ballots(s, { 2: 1, 3: 2, 4: 2 }));
   assert.equal(s.lastRound.clueMode, 'spoken'); assert.equal(s.lastRound.clue, '');
   for (const actor of [0, 1, 2, 3, 4]) {
     const v = E.view(s, actor).dixit;
@@ -177,7 +182,7 @@ test('old saved text rounds without clueMode normalize to text without changing 
   delete s.clueMode;
   const snapshot = clone(s), v = E.view(wire(s), 2).dixit;
   assert.equal(v.clueMode, 'text'); assert.equal(v.clue, 'A distant memory'); assert.deepEqual(s, snapshot);
-  s = act(ballots(s, { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  s = finishReveal(ballots(s, { 2: 1, 3: 2, 4: 2 }));
   assert.equal(s.clueMode, 'text'); assert.equal(s.lastRound.clueMode, 'text');
   delete s.clueMode; delete s.lastRound.clueMode;
   const result = E.view(wire(s), 0).dixit.result;
@@ -234,7 +239,7 @@ test('host must wait for all votes and cannot score or reveal twice', () => {
   s = ballots(s, { 2: 1, 3: 2, 4: 2 });
   assert.equal(s.phase, 'VOTE'); assert.equal(E.view(s, 0).dixit.actions.reveal, true);
   denied = act(s, 'reveal', 2); assert.equal(denied.replies[2].error, 'not_available');
-  s = act(s, 'reveal'); assert.equal(s.phase, 'REVEAL');
+  s = finishReveal(s); assert.equal(s.phase, 'REVEAL');
   denied = act(s, 'reveal'); assert.deepEqual(gameplay(denied), gameplay(s));
   assert.equal(denied.replies[0].error, 'not_available');
 });
@@ -244,7 +249,7 @@ test('current and classic base scoring vectors: some, all, and no correct guesse
     [{ 2: 1, 3: 1, 4: 1 }, [0, 2, 2, 2], 'all'],
     [{ 2: 3, 3: 2, 4: 2 }, [0, 4, 3, 2], 'none']];
   for (const [targets, expected, outcome] of examples) {
-    const s = act(ballots(tableReady(started()), targets), 'reveal');
+    const s = finishReveal(ballots(tableReady(started()), targets));
     assert.deepEqual(scores(s), expected); assert.equal(s.lastRound.outcome, outcome);
     assert.equal(s.lastRound.answerCardId, s.submissions[1][0]); conservation(s);
   }
@@ -260,7 +265,7 @@ test('3-player base scoring includes bonuses from both decoys and replenishes 1/
       const target = targets[seat], index = target === 1 ? 0 : 1;
       s = act(s, 'vote', seat, { cardId: s.submissions[target][index] });
     }
-    s = act(s, 'reveal'); assert.deepEqual(scores(s), expected);
+    s = finishReveal(s); assert.deepEqual(scores(s), expected);
     const before = s.deck.length; s = act(s, 'nextRound');
     assert.deepEqual(s.roster.map(p => s.hands[p.playerNum].length), [7, 7, 7]);
     assert.equal(s.deck.length, before - 5); assert.equal(s.storyteller, 2); conservation(s);
@@ -270,14 +275,14 @@ test('3-player base scoring includes bonuses from both decoys and replenishes 1/
 test('current 8-player basic rules have uncapped decoy bonuses, including when nobody is correct', () => {
   let s = tableReady(started(8));
   const targets = { 2: 3, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2 };
-  s = act(ballots(s, targets), 'reveal');
+  s = finishReveal(ballots(s, targets));
   assert.deepEqual(scores(s), [0, 8, 3, 2, 2, 2, 2, 2]);
   assert.equal(s.lastRound.rows[1].bonus, 6, 'the Odyssey three-point cap does not apply'); conservation(s);
 });
 
 test('nextRound discards played cards, refills private hands, clears secrets, and rotates in roster order', () => {
   let s = started(); s.roster = [s.roster[0], s.roster[2], s.roster[1], s.roster[3]];
-  s = act(ballots(tableReady(s), { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  s = finishReveal(ballots(tableReady(s), { 2: 1, 3: 2, 4: 2 }));
   const table = s.table.slice(), oldScores = clone(s.scores); s = act(s, 'nextRound');
   assert.equal(s.phase, 'CLUE'); assert.equal(s.storyteller, 3); assert.equal(s.round, 2);
   assert.deepEqual(s.discard.slice().sort(), table.slice().sort()); assert.deepEqual(s.scores, oldScores);
@@ -296,7 +301,7 @@ test('draw-pile shortage reshuffles the remaining cards with discards, conservin
       s.scores = {};
       const eligible = s.roster.filter(p => p.playerNum !== s.storyteller).map(p => p.playerNum);
       const targets = Object.fromEntries(eligible.map((seat, index) => [seat, eligible[(index + 1) % eligible.length]]));
-      s = act(ballots(s, targets), 'reveal');
+      s = finishReveal(ballots(s, targets));
       const need = count === 3 ? 5 : count, shortage = s.deck.length < need;
       const cmd = command(s, 'nextRound'); assert.deepEqual(E.apply(s, cmd), E.apply(s, cmd));
       s = E.apply(s, cmd); conservation(s);
@@ -309,13 +314,13 @@ test('draw-pile shortage reshuffles the remaining cards with discards, conservin
 
 test('round-end 30-point finish chooses the highest score and supports shared winners', () => {
   let s = tableReady(started()); s.scores = { 1: 27, 2: 25, 3: 0, 4: 0 };
-  s = act(ballots(s, { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  s = finishReveal(ballots(s, { 2: 1, 3: 2, 4: 2 }));
   assert.equal(s.phase, 'FINISHED'); assert.deepEqual(s.winners, [1, 2]);
   assert.deepEqual(E.view(s, 0).dixit.winners, [1, 2]);
   assert.equal(E.view(s, 0).dixit.actions.nextRound, false);
   assert.equal(act(s, 'nextRound').replies[0].error, 'not_available'); conservation(s);
   s = tableReady(started()); s.scores = { 1: 28, 2: 29, 3: 0, 4: 0 };
-  s = act(ballots(s, { 2: 1, 3: 2, 4: 2 }), 'reveal');
+  s = finishReveal(ballots(s, { 2: 1, 3: 2, 4: 2 }));
   assert.deepEqual(s.winners, [2]); assert.equal(s.scores[2], 34);
 });
 
@@ -330,7 +335,7 @@ test('phase transitions alone advance the turn; concurrent submissions and votes
   const votes = [2, 3, 4].map(actor => command(s, 'vote', actor, { cardId: answer }));
   for (const cmd of votes) s = E.apply(s, cmd);
   assert.equal(s.turnId, voteTurn); assert.equal(s.phase, 'VOTE');
-  s = act(s, 'reveal'); assert.equal(s.turnId, voteTurn + 1);
+  s = act(s, 'reveal'); assert.equal(s.turnId, voteTurn + 1); assert.equal(s.phase, 'REVEALING');
 });
 
 test('known actors receive stale session/turn receipts; invalid identities and duplicate ids cannot act', () => {
@@ -392,7 +397,7 @@ test('views hide all other hands, card owners, answers, deck order, and ballots 
   assert.deepEqual(host.table, s.table); assert.equal(host.result, null); assert.equal(other.ownVote, null);
   assert.equal(own.ownVote, s.submissions[1][0]); assert.equal('votes' in host, false);
   s = act(s, 'vote', 3, { cardId: s.submissions[2][0] });
-  s = act(s, 'vote', 4, { cardId: s.submissions[2][0] }); s = act(s, 'reveal');
+  s = act(s, 'vote', 4, { cardId: s.submissions[2][0] }); s = finishReveal(s);
   assert.deepEqual(E.view(s, 0).dixit.result, s.lastRound);
   s = act(s, 'nextRound'); assert.equal(E.view(s, 0).dixit.result, null); assert.deepEqual(E.view(s, 2).dixit.ownSubmitted, []);
 });
@@ -413,7 +418,82 @@ test('apply and view do not mutate input states or commands, and public results 
   const s = freeze(started()), cmd = freeze(command(s, 'story', 1, { cardId: s.hands[1][0], clue: 'Pure' }));
   assert.equal(E.apply(s, cmd).phase, 'SUBMIT'); assert.equal(s.phase, 'CLUE');
   E.view(s, 1); assert.equal(s.phase, 'CLUE');
-  const revealed = freeze(act(ballots(tableReady(started()), { 2: 1, 3: 2, 4: 2 }), 'reveal'));
+  const revealed = freeze(finishReveal(ballots(tableReady(started()), { 2: 1, 3: 2, 4: 2 })));
   const v = E.view(revealed, 2); v.dixit.result.rows[0].cardIds.push('d999'); v.dixit.hand.push('d999');
   assert.equal(JSON.stringify(revealed).includes('d999'), false);
+});
+
+test('shared reveal deadlines hide the answer, owners, ballots, popularity and scores until each guarded stage', () => {
+  let s = ballots(tableReady(started()), { 2: 1, 3: 2, 4: 2 });
+  const oldScores = clone(s.scores), answer = s.submissions[1][0], popular = s.submissions[2][0];
+  const start = command(s, 'reveal', 1, { now: 10000 }); s = E.apply(s, start);
+  assert.equal(s.phase, 'REVEALING'); assert.equal(s.revealStage, 'countdown');
+  assert.equal(s.revealStartedAt, 10000); assert.equal(s.revealAnswerAt, 13000); assert.equal(s.revealPopularAt, 14200);
+  assert.strictEqual(E.apply(s, start), s, 'retrying reveal never restarts the countdown');
+  for (const now of [10000, 12999, 50000]) for (const actor of [0, 1, 2, 3, 4]) {
+    const v = E.view(s, actor, now).dixit;
+    assert.equal(v.answerCardId, undefined); assert.equal(v.result, null); assert.equal(v.popularCardIds, undefined);
+    assert.equal(v.votes, undefined); assert.equal(v.submissions, undefined); assert.equal(v.tableOwners, undefined);
+    assert.deepEqual(v.roster.map(p => p.score), [0, 0, 0, 0]);
+  }
+  let denied = act(s, 'advanceReveal', 0, { now: 12999 }); assert.equal(denied.replies[0].error, 'reveal_not_ready');
+  assert.deepEqual(gameplay(denied), gameplay(s));
+  denied = act(s, 'advanceReveal', 2, { now: 50000, hostControls: true }); assert.equal(denied.replies[2].error, 'not_available');
+  s = act(s, 'advanceReveal', 0, { now: 13000 }); assert.equal(s.revealStage, 'answer'); assert.equal(s.phase, 'REVEALING');
+  assert.equal(E.view(s, 0, 12999).dixit.answerCardId, undefined);
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const v = E.view(s, actor, 13000).dixit;
+    assert.equal(v.answerCardId, answer); assert.equal(v.result, null); assert.equal(v.popularCardIds, undefined);
+    assert.deepEqual(v.roster.map(p => p.score), [0, 0, 0, 0]);
+  }
+  assert.deepEqual(s.scores, oldScores);
+  denied = act(s, 'advanceReveal', 0, { now: 14199 }); assert.equal(denied.replies[0].error, 'reveal_not_ready');
+  const final = command(s, 'advanceReveal', 0, { now: 14200 }); s = E.apply(s, final);
+  assert.equal(s.phase, 'REVEAL'); assert.equal(s.revealStage, 'complete');
+  assert.deepEqual(s.lastRound.popularCardIds, [popular]); assert.equal(s.lastRound.maxVotes, 2);
+  assert.deepEqual(scores(s), [3, 5, 0, 0]); assert.strictEqual(E.apply(s, final), s, 'scoring happens only once');
+  assert.deepEqual(E.view(s, 2, 14200).dixit.result, s.lastRound);
+});
+
+test('most-voted cards include every tie and include the storyteller card when it wins the vote', () => {
+  let s = tableReady(started()); s = ballots(s, { 2: 1, 3: 4, 4: 2 }); s = finishReveal(s);
+  const expected = [s.submissions[1][0], s.submissions[4][0], s.submissions[2][0]];
+  assert.deepEqual(new Set(s.lastRound.popularCardIds), new Set(expected)); assert.equal(s.lastRound.maxVotes, 1);
+  s = finishReveal(ballots(tableReady(started()), { 2: 1, 3: 1, 4: 1 }));
+  assert.deepEqual(s.lastRound.popularCardIds, [s.submissions[1][0]]); assert.equal(s.lastRound.maxVotes, 3);
+});
+
+test('pause freezes reveal and resume shifts the shared deadlines without exposing or scoring early', () => {
+  let s = act(ballots(tableReady(started()), { 2: 1, 3: 2, 4: 2 }), 'reveal', 0, { now: 10000 });
+  const pending = command(s, 'advanceReveal', 0, { now: 13000 });
+  s = act(s, 'pause', 1, { now: 11000 }); assert.equal(s.revealPausedAt, 11000);
+  const denied = act(s, 'advanceReveal', 0, { now: 60000 }); assert.equal(denied.replies[0].error, 'paused');
+  assert.equal(E.view(s, 0, 60000).dixit.answerCardId, undefined); assert.equal(s.lastRound, null);
+  s = act(s, 'resume', 1, { now: 61000 });
+  assert.equal(s.revealStartedAt, 60000); assert.equal(s.revealAnswerAt, 63000); assert.equal(s.revealPopularAt, 64200); assert.equal(s.revealPausedAt, 0);
+  assert.equal(E.apply(s, pending).replies[0].error, 'stale_turn');
+  s = act(s, 'advanceReveal', 0, { now: 63000 }); assert.equal(E.view(s, 2, 63000).dixit.answerCardId, s.submissions[1][0]);
+  s = act(s, 'advanceReveal', 0, { now: 64200 }); assert.equal(s.phase, 'REVEAL'); conservation(s);
+});
+
+test('the bound host uses administrative controls from their own private seat while retaining normal game actions', () => {
+  let s = E.create({ id: 'private-host', roster: roster(4), hostPlayerNum: 3, seed: 71, now: 1000 });
+  assert.equal(s.hostPlayerNum, 3);
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const v = E.view(s, actor, 1000).dixit;
+    assert.equal(v.hostControls, actor === 0 || actor === 3); assert.equal(v.actions.deal, actor === 0 || actor === 3);
+    assert.equal(v.actions.ready, actor !== 0);
+  }
+  let denied = act(s, 'deal', 2, { hostPlayerNum: 2, hostControls: true, actor: 2 });
+  assert.equal(denied.replies[2].error, 'not_available'); assert.equal(denied.hostPlayerNum, 3);
+  s = act(s, 'ready', 3, { value: true }); s = act(s, 'deal', 3, { firstPlayerNum: 3 });
+  const own = E.view(s, 3, 2000).dixit;
+  assert.equal(own.hostControls, true); assert.equal(own.actions.story, true); assert.deepEqual(own.hand, s.hands[3]);
+  assert.equal(own.actions.pause, true); assert.equal(own.actions.cancel, true); assert.equal(own.hands, undefined);
+  const visible = JSON.stringify(own); for (const p of s.roster.filter(p => p.playerNum !== 3)) for (const id of s.hands[p.playerNum]) assert.equal(visible.includes(JSON.stringify(id)), false);
+  s = act(s, 'story', 3, { cardId: s.hands[3][0], clueMode: 'spoken' }); assert.equal(s.phase, 'SUBMIT');
+  s = act(s, 'pause', 3); s = act(s, 'resume', 3); s = act(s, 'cancel', 3); assert.equal(s.phase, 'CANCELLED');
+  s = act(s, 'restart', 3, { hostPlayerNum: 2 }); assert.equal(s.hostPlayerNum, 3); assert.equal(s.phase, 'LOBBY');
+  const legacy = clone(s); delete legacy.hostPlayerNum; assert.equal(E.view(legacy, 1).dixit.hostControls, true);
+  assert.equal(E.create({ id: 'clamped', roster: roster(4), hostPlayerNum: 99 }).hostPlayerNum, 1);
 });
