@@ -8,7 +8,9 @@
     "test:chat-wolf": "node --test tests/chat-wolf-*.test.cjs",
     "dev:chat-wolf": "node scripts/chat-wolf-dev-server.cjs",
     "test:once-upon-a-time": "node --test tests/once-upon-a-time-*.test.cjs",
-    "dev:once-upon-a-time": "node scripts/once-upon-a-time-dev-server.cjs"
+    "dev:once-upon-a-time": "node scripts/once-upon-a-time-dev-server.cjs",
+    "test:dixit": "node --test tests/dixit-*.test.cjs",
+    "dev:dixit": "node scripts/dixit-dev-server.cjs"
   },
   "engines": {
     "node": ">=20"
