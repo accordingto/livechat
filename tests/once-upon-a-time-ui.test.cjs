@@ -123,18 +123,23 @@ test('each player sees their own exact hand/ending while public host sees only p
   }
 });
 
-test('private Ending is the final hand-carousel card with a local shortcut, never in the public host table', () => {
+test('private Ending sits once beside the story table with a local shortcut, never in another hand or host/lobby view', () => {
   for (const count of [2, 4, 6]) {
     const s = started(count);
     for (const p of s.roster) {
       const html = htmlFor(s, p.playerNum), ending = D.endingById[s.endings[p.playerNum]];
       const handPanel = elementHTML(html, 'once-hand-panel');
       const hand = elementHTML(handPanel, 'once-hand');
-      const dock = elementHTML(hand, 'once-ending-dock');
-      assert.ok(handPanel && hand && dock, 'Ending belongs to the same private hand carousel');
-      assert.equal(elementHTML(handPanel, 'once-hand-layout'), '', 'there is no separate pinned Ending sidebar');
-      assert.ok(hand.indexOf('once-card--mini') < hand.indexOf('once-ending-dock'), 'Ending follows the Story Cards');
-      assert.doesNotMatch(hand.slice(hand.indexOf(dock) + dock.length), /data-once-card=|once-card--mini/, 'Ending is the final card');
+      const table = elementHTML(html, 'once-table-grid');
+      const history = elementHTML(table, 'once-history-panel');
+      const dock = elementHTML(table, 'once-ending-dock');
+      assert.ok(handPanel && hand && table && history && dock, 'Ending is a private sibling of the public story panel');
+      assert.match(table, /^<div\b[^>]*class="[^"]*\bhas-ending\b/);
+      assert.ok(table.indexOf(history) < table.indexOf(dock), 'Ending follows the story panel in desktop/mobile reading order');
+      assert.equal(elementHTML(history, 'once-ending-dock'), '', 'private Ending is not part of the public story history');
+      assert.equal(elementHTML(handPanel, 'once-ending-dock'), '', 'Ending is not duplicated in the hand or its actions');
+      assert.ok(html.indexOf(table) < html.indexOf(handPanel), 'the hand follows the story/Ending table');
+      assert.equal((html.match(new RegExp('data-once-card="' + ending.id + '"', 'g')) || []).length, 1, 'own Ending is rendered exactly once');
       assert.ok(dock.includes('data-once-card="' + ending.id + '"'));
       assert.ok(dock.includes(UI.esc(ending.text)), 'the full private Ending remains readable in the dock');
       assert.ok(action(handPanel, 'showEnding'), 'players can jump directly to their own Ending');
@@ -145,6 +150,58 @@ test('private Ending is the final hand-carousel card with a local shortcut, neve
       assert.doesNotMatch(html, /once-ending-dock|once-hand-panel|data-once-card=|data-once-action="showEnding"/);
       for (const p of s.roster) assert.ok(!html.includes(D.endingById[s.endings[p.playerNum]].text));
     }
+    const lobby = E.view(create(count), 1);
+    lobby.once.ending = D.endingById[s.endings[1]];
+    for (const host of [false, true]) {
+      const html = UI.tableHTML(lobby, { host });
+      assert.doesNotMatch(html, /once-ending-dock|once-hand-panel|data-once-card=|data-once-action="showEnding"/);
+      assert.ok(!html.includes(UI.esc(lobby.once.ending.text)), 'lobby cannot render even an accidentally retained private Ending');
+    }
+  }
+});
+
+test('reference table keeps the Story hand and its existing actions in separate columns without duplicating cards', () => {
+  for (const count of [2, 4, 6]) {
+    const s = started(count);
+    for (const seat of [1, 2]) {
+      const html = htmlFor(s, seat, { selectedId: s.hands[seat][0] });
+      assert.match(html, /^<div class="once-game once-game--reference">/);
+      const turnStrip = elementHTML(html, 'once-turn-strip');
+      assert.ok(elementHTML(turnStrip, 'once-storyteller'));
+      assert.ok(elementHTML(turnStrip, 'once-roster'));
+      const handPanel = elementHTML(html, 'once-hand-panel'), layout = elementHTML(handPanel, 'once-hand-layout');
+      const hand = elementHTML(layout, 'once-hand'), controls = elementHTML(layout, 'once-hand-controls');
+      const actions = elementHTML(controls, 'once-hand-actions');
+      assert.ok(hand && controls && actions);
+      assert.ok(layout.indexOf(hand) < layout.indexOf(controls), 'card carousel precedes the action rail');
+      assert.equal((hand.match(/data-once-card=/g) || []).length, s.hands[seat].length, 'only own Story Cards are in the carousel');
+      assert.doesNotMatch(controls, /data-once-card=|once-card--mini|once-ending-dock/);
+      assert.equal(action(actions, seat === 1 ? 'play' : 'interrupt').disabled, false);
+      assert.ok(action(actions, seat === 1 ? 'pass' : 'challenge'));
+      assert.match(elementHTML(handPanel, 'once-hand-title'), /Tap a card to select\./);
+      assert.match(elementHTML(controls, 'once-action-hint'), seat === 1 ? /Choose a card to continue your story\./ : /Listen, then choose your moment\./);
+      assert.match(elementHTML(handPanel, 'once-hand-meta'), new RegExp(s.hands[seat].length + ' cards'));
+    }
+    assert.equal(elementHTML(htmlFor(s), 'once-hand-layout'), '', 'public host has no private action rail');
+  }
+});
+
+test('an empty reference story table gives an English opening prompt until the first actual card play', () => {
+  let s = started(2);
+  for (const seat of [0, 1, 2]) {
+    const html = htmlFor(s, seat), latest = elementHTML(html, 'once-history-latest');
+    const opening = elementHTML(latest, 'once-story-opening');
+    assert.ok(opening);
+    assert.match(elementHTML(opening, 'once-opening-title'), /Once upon a time…/);
+    assert.match(opening, /The first card will open the story\. Speak freely, then play an element from your hand\./);
+    assert.doesNotMatch(latest, /class="once-history-item"|data-once-card=/);
+  }
+  const cardId = s.hands[1][0]; s = act(s, 'play', 1, { cardId });
+  for (const seat of [0, 1, 2]) {
+    const latest = elementHTML(htmlFor(s, seat), 'once-history-latest');
+    assert.equal(elementHTML(latest, 'once-story-opening'), '');
+    assert.equal((latest.match(/class="once-history-item"/g) || []).length, 1);
+    assert.ok(latest.includes(UI.esc(D.storyById[cardId].title)));
   }
 });
 
@@ -251,6 +308,7 @@ test('PASS_DISCARD gives only the passer the optional discard/keep choice', () =
     s = act(s, 'pass', 1);
     assert.equal(s.phase, 'PASS_DISCARD');
     const passer = htmlFor(s, 1), listener = htmlFor(s, 2), host = htmlFor(s);
+    for (const html of [passer, listener, host]) assert.equal(elementHTML(html, 'once-action-hint'), '', 'discard waits must not use active-story guidance');
     assert.match(passer, /You have drawn one card/);
     assert.equal(action(passer, 'discard').disabled, true);
     assert.equal(action(htmlFor(s, 1, { selectedId: s.hands[1][0] }), 'discard').disabled, false);
@@ -271,6 +329,7 @@ test('votes show submitted count/own acknowledgement without revealing another v
   assert.deepEqual(buttons(htmlFor(s, 3)).filter(b => b.type === 'vote').map(b => b.choice), ['lose', 'continue']);
   s = act(s, 'vote', 3, { voteId, choice: 'lose' });
   const own = htmlFor(s, 3), other = htmlFor(s, 4), host = htmlFor(s);
+  for (const html of [own, other, host]) assert.equal(elementHTML(html, 'once-action-hint'), '', 'voting must not tell players to play or interrupt');
   assert.match(own, /Your vote is submitted/);
   assert.equal(action(own, 'vote'), undefined);
   assert.match(other, /Submitted: 1 \/ 4/);
@@ -315,6 +374,7 @@ test('only an empty-handed storyteller may end; review reveals that ending and b
   for (const seat of [0, 1, 2, 3, 4]) {
     const html = htmlFor(s, seat);
     assert.ok(html.includes(UI.esc(text)), 'played ending is public during review');
+    assert.equal(elementHTML(html, 'once-action-hint'), '', 'Ending review has no active-story action hint');
     noActions(html, ['play', 'interrupt', 'pass', 'challenge', 'ending', 'dispute']);
     for (const other of s.roster.filter(p => p.playerNum !== seat && p.playerNum !== 1)) {
       assert.ok(!html.includes(D.endingById[s.endings[other.playerNum]].text), 'unplayed endings remain private');
@@ -337,7 +397,11 @@ test('FINISHED and CANCELLED replace play controls with the host’s replay acti
   for (const s of [finished, cancelled]) {
     assert.ok(action(htmlFor(s), 'restart'));
     noActions(htmlFor(s), ['cancel', 'play', 'interrupt', 'pass', 'challenge', 'ending', 'vote']);
-    for (const seat of [1, 2]) noActions(htmlFor(s, seat), ['restart', 'play', 'interrupt', 'pass', 'challenge', 'ending', 'vote']);
+    for (const seat of [1, 2]) {
+      const html = htmlFor(s, seat);
+      noActions(html, ['restart', 'play', 'interrupt', 'pass', 'challenge', 'ending', 'vote']);
+      assert.equal(elementHTML(html, 'once-action-hint'), '', 'finished/cancelled games cannot retain active-story guidance');
+    }
   }
 });
 
@@ -495,7 +559,7 @@ test('history windows recompute from current canonical plays when the latest car
   }
 });
 
-test('the Ending shortcut scrolls to the private final hand card without selecting, submitting or opening a modal', () => {
+test('the Ending shortcut scrolls to the private story-table dock without selecting, submitting or opening a modal', () => {
   const s = started(), data = E.view(s, 1), h = harness(data), original = copy(data);
   try {
     assert.ok(action(h.element.innerHTML, 'showEnding'));
@@ -621,6 +685,7 @@ test('Ending taps select directly but cannot play until the empty-handed storyte
   try {
     h.card.click({ target: target({ onceCard: endingId }) });
     assert.equal(h.card.selectedId, endingId);
+    assert.match(elementHTML(h.element.innerHTML, 'once-ending-dock'), new RegExp('data-once-card="' + endingId + '"[^>]*aria-pressed="true"'), 'the private story-table Ending is directly highlighted');
     assert.equal(h.card.preview, null);
     assert.equal(h.card.confirm, null);
     assert.doesNotMatch(h.element.innerHTML, /once-modal|once-card--full|data-once-action="select"/);
@@ -632,6 +697,7 @@ test('Ending taps select directly but cannot play until the empty-handed storyte
     for (const cardId of s.hands[1].slice()) s = act(s, 'play', 1, { cardId });
     h.card.update(E.view(s, 1));
     assert.equal(h.card.selectedId, endingId, 'the same private Ending survives ordinary hand updates');
+    assert.equal(elementHTML(h.element.innerHTML, 'once-hand').includes('data-once-card="' + endingId + '"'), false, 'an empty hand does not duplicate the available Ending');
     assert.equal(action(h.element.innerHTML, 'ending').disabled, false);
     click(h.card, 'ending');
     assert.ok(h.card.confirm);
