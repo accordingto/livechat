@@ -238,7 +238,7 @@ live Firebase assertions apply to the original-card release; this UI update did
 not repeat that entire network suite. Browser tests are automated clients, not
 a claim that a human group completed a game.
 
-The production verifier checks eleven exact assets including the binary WebP, SVG and
+The production verifier checks fourteen exact assets including the binary WebP, SVGs and
 four development-only paths excluded from deployment.
 
 ## Party branding and live action guidance (2026-10-07)
@@ -266,6 +266,33 @@ The Thinker card fits 1366 × 768 and the listener card fits 390 × 844 without
 horizontal or vertical scrolling. The production check covers eleven assets
 and four excluded development paths. The isolated browser-test nodes are
 removed after verification; these checks do not claim a human group playtest.
+
+## Simplified illustrated role cards (2026-10-07)
+
+The owner's card no longer has a Your role / Private heading row. It leads with
+one clear role title, an original scalable illustration and a one-sentence goal.
+The Thinker uses a luminous brain, the Truth Teller an open book with a check,
+and the Bluffer a friendly theatrical mask. Illustrations and subtle watermarks
+only describe the current owner's role; they never color the public roster.
+
+The Truth Teller receives the complete answer and every supporting fact directly
+on the card, with a brief reminder not to invent uncertain details. No expansion
+is needed to read the evidence. Sources and scoring explanations at reveal keep
+their existing disclosure controls. Thinker and Bluffer cards stay concise.
+The chips retain the same live public-state logic, with Anytime beside Follow up
+and Question. Longer contextual hints remain accessible through the group label.
+Hide removes the entire role identity, illustration, watermark, goal, evidence
+and action cues together. Engine, scoring, stored credentials and links are unchanged.
+
+The five-minute Thinker reminder is now a compact no-rush caption beside the
+clock, with the original suggestion available on hover. It adds no new row and
+never advances play. Verification: **659 repository tests** passed, including
+**60 focused Bluff tests**. Real Firebase browser checks used three original
+player links, confirmed live Spotlight/guide updates and Hide/Show privacy, and
+checked 1366 × 768 desktop and 390 × 844 mobile layouts. The genuine longer
+Truth Teller answer, both facts, tip and roster fit together without scrolling.
+All three role SVGs are included in the fourteen-asset production verifier.
+These are automated-client checks, not a claim of a completed human playtest.
 
 ## Main files
 
