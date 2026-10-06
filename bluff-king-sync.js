@@ -64,7 +64,9 @@
       if (this.storage.getItem('icebreak.bluff.host.' + this.code)) await this.connect(this.code); else await this.create(this.code, { name: 'Host', participate: false });
       if (!this.isHost) { const e = new Error('Only the current host can use this original Hub roster.'); e.code = 'host_only'; throw e; }
       await this._cas(this._roomPath('players/' + this.hostToken), state => {
-        const room = state.rooms[this.code]; const prior = state.transport.cardRoster || [];
+        const room = state.rooms[this.code];
+        if (room.hostIdentityId !== this.identity.id) { const e = new Error('The host has changed. Only the current host can import the original player cards.'); e.code = 'host_only'; throw e; }
+        const prior = state.transport.cardRoster || [];
         if (room.phase !== 'lobby') { if (prior.length !== count || prior.some((p, i) => p.originalToken !== tokens[i])) { const e = new Error('The current game has a fixed roster. Finish it before importing the original player cards.'); e.code = 'roster_locked'; throw e; } return { state }; }
         const priorMap = new Map(prior.map(p => [p.originalToken, p])); const newMembers = []; const newSessions = {};
         const hostMember = room.members.find(p => p.identityId === this.identity.id); const hostHasOriginalSeat = prior.some(p => p.identityId === this.identity.id && tokens.includes(p.originalToken)); if (!hostHasOriginalSeat) { hostMember.seated = false; hostMember.wantsSeat = false; newMembers.push(hostMember); } newSessions[this.identity.id] = state.transport.members[this.identity.id];

@@ -14,6 +14,12 @@ Firebase 儲存真實多人狀態與跨房間個人曝光歷史；同一瀏覽�
 但靜態題庫並非防惡意讀取的秘密邊界。規則、預設值、維護與驗證詳見
 `bluff-king-mode.md`；勿重新加入 Opening、Final Defense、投票或固定發言倒數。
 
+**Bluff King 簡潔圖卡（2026-10-07）**：題目／Spotlight／私人角色集中顯示，玩法與
+管理用 dialog；想想以兩個主按鈕開完整姓名＋固定座位編號的選人視窗，再二次確認。
+回合更換必須關閉舊選人視窗；原 `play.html` 小卡與公開桌面同版面，公開不顯示秘密。
+背景是通用夜景而非題目插畫，不能讓圖像提示正解；座位圖示不能依秘密角色上色。
+只有補充事實、來源與計分理由收合，老實人正解始終可見，原卡高度以 body 內容計算。
+
 **Chat Wolf free-chat v3 (2026-09-30)**: Incremental new mode, not a project rewrite.
 New rooms use `free-chat-v3` / `rulesVersion: 3`; legacy rooms remain compatible and
 can explicitly upgrade from LOBBY or FINISHED. Defaults: 3 × 600-second free-chat

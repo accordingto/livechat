@@ -206,6 +206,41 @@ After publishing, verify exact production assets and excluded development paths:
 node scripts/bluff-verify-release.cjs <release-commit>
 ```
 
+## Compact card interface (2026-10-07)
+
+The English-first screen now groups the illustrated public topic with the current
+speaker and the player's private card. The two Thinker actions open a full-name,
+numbered-seat picker, then a separate confirmation. Final choice still waits for
+every Spotlight opportunity; a modal begun in an old round is closed on a round
+change. Rules and room management open only on demand. Facts, sources and score
+reasons are expandable. The visible Truth Teller answer is never clipped.
+
+The generic night-garden background is `assets/bluff/topic-night-v1.webp`,
+1672 × 941 and 160,134 bytes. It was made with built-in image generation; the full
+prompt and generation mode are recorded in `topic-night-v1.source.json`. It does
+not illustrate any specific topic or expose a topic answer. Numeric colored
+avatars depend only on stable seat order, never secret roles.
+
+Original `play.html` cards use the same compact screen. Their frame reports the
+body's intrinsic height, so earlier long layouts do not leave a permanent blank
+scroll area. Legacy participating hosts can still open their private card before
+dealing to report a known topic. Unseated original-Hub moderators receive no extra
+seat. Roster import also rechecks host authority inside its compare-and-swap to
+reject an import racing a host transfer.
+
+UI update validation: **643 repository tests passed** before the additional
+pre-deal private-link regression; the final focused suite passed **54/54**.
+This includes 23 UI tests and five HTTP transport suites. Actual Firebase browser
+fixtures checked three original cards and a nine-seat room with long names,
+desktop and 390 × 844 mobile layouts, private-role visibility, selection and
+confirmation, manual Spotlight progress, and original-frame sizing. Earlier 121
+live Firebase assertions apply to the original-card release; this UI update did
+not repeat that entire network suite. Browser tests are automated clients, not
+a claim that a human group completed a game.
+
+The production verifier checks ten exact assets including the binary WebP and
+four development-only paths excluded from deployment.
+
 ## Main files
 
 `index.html` adds the final menu card. `play.html` recognizes `game: 'bluffking'`
