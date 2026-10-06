@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const crypto = require('node:crypto').webcrypto;
 const E = require('../bluff-king-engine.js');
+const cardsPath = require('node:path').resolve(__dirname, '../bluff-king-cards.js');
 const clone = value => JSON.parse(JSON.stringify(value));
 const bank = Array.from({ length: 12 }, (_, i) => ({ id: `ui-test-${i}`, canonicalKnowledgeId: `ui-test-knowledge-${i}`, locale: 'en', term: `Test term ${i}`, publicPrompt: 'What does this mean?', hintMode: 'choices', publicHints: ['Nature', 'Music', 'Food'], secretAnswer: `PRIVATE_TEST_ANSWER_${i}`, supportingFacts: ['Private fact one', 'Private fact two'], revealExplanation: 'Only a test fixture.', sources: [{ title: 'Test source', url: 'https://example.invalid/test' }], verificationStatus: 'verified', verifiedAt: '2026-10-06', enabled: true }));
 let serial = 0;
@@ -46,25 +47,32 @@ class NodeDouble {
   }
   get innerHTML() { return this._html; }
 }
-async function harness(initialView, { card = false } = {}) {
+async function harness(initialView, { card = false, setup = null, hash = '', transport = {} } = {}) {
   const nodes = new Map(), document = { nodes, dynamicIds: new Set(), buttons: [], activeElement: null, listeners: new Map(), addEventListener(type, fn) { this.listeners.set(type, fn); }, getElementById(id) { return nodes.get(id) || null; }, createElement() { return new NodeDouble(this); } };
   for (const id of ['bk-app', 'bk-rule-copy', 'bk-room-label', 'bk-connection', 'bk-error', 'bk-confirm', 'bk-confirm-title', 'bk-confirm-text', 'bk-confirm-send', 'room-mount']) nodes.set(id, new NodeDouble(document, id));
   document.body = new NodeDouble(document); document.head = { append: script => queueMicrotask(() => script.onload?.()) };
-  const dictionary = new Map(), storage = new Map(), sent = [], creates = [], intervals = [], statuses = [];
+  const dictionary = new Map(), storage = new Map(), sent = [], creates = [], cardCreates = [], cardConnections = [], joins = [], connections = [], publications = [], loadedScripts = [], intervals = [], statuses = [];
+  if (setup) { storage.set('room-last-session', setup.code); storage.set('room-session-' + setup.code, JSON.stringify(setup)); }
   let transportOptions;
-  const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html?room=UITEST' + (card ? '&card=1' : ''), search: '?room=UITEST' + (card ? '&card=1' : ''), hash: '' }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
+  const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html?room=UITEST' + (card ? '&card=1' : '') + hash, origin: 'https://example.test', search: '?room=UITEST' + (card ? '&card=1' : ''), hash }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
     constructor(opts) { transportOptions = opts; }
-    async connect() { if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('hosting'); return initialView; }
+    async connect(...args) { connections.push(args); if (transport.connectError) throw transport.connectError; if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('hosting'); return initialView; }
     async refresh() { return initialView; }
     async command(input) { sent.push(clone(input)); return initialView; }
     async create(code, settings) { creates.push({ code, ...settings }); return initialView; }
-    async join() { return initialView; }
+    async createFromCards(code, settings) { cardCreates.push({ code, setup: clone(settings) }); const next = transport.createdView || initialView; if (next) transportOptions.onView(clone(next)); return next; }
+    async getCardSessions() { return clone(transport.sessions || []); }
+    async connectCard(code, credential) { cardConnections.push({ code, credential: clone(credential) }); if (transport.cardError) throw transport.cardError; if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('connected'); return initialView; }
+    async join(...args) { joins.push(args); return initialView; }
     close() {}
   } } };
+  if (fs.existsSync(cardsPath)) context.BLUFF_CARDS = require(cardsPath);
+  if (setup) context.ROOM = { enabled: true, code: setup.code, count: setup.playerCount, init() {}, name: i => setup.names[i], publish: fn => { publications.push(setup.tokens.slice(0, setup.playerCount).map((_, i) => clone(fn(i)))); } };
+  document.head = { append: script => { loadedScripts.push(script.src); queueMicrotask(() => script.onload?.()); } };
   context.window = context;
   vm.runInNewContext(fs.readFileSync(require.resolve('../bluff-king-ui.js'), 'utf8'), context);
-  for (let i = 0; i < 10; i++) await Promise.resolve();
-  return { document, sent, creates, context, intervals, html: () => nodes.get('bk-app').innerHTML, button: action => document.buttons.find(b => b.dataset.bkAction === action), node: id => nodes.get(id), update: view => transportOptions.onView(clone(view)), status: value => transportOptions.onStatus(value), async click(action) { const button = document.buttons.find(b => b.dataset.bkAction === action); assert.ok(button, action + ' exists'); await nodes.get('bk-app').listeners.get('click')({ target: button }); for (let i = 0; i < 8; i++) await Promise.resolve(); }, async confirm() { nodes.get('bk-confirm-send').listeners.get('click')(); for (let i = 0; i < 8; i++) await Promise.resolve(); } };
+  for (let i = 0; i < 40; i++) await Promise.resolve();
+  return { document, sent, creates, cardCreates, cardConnections, joins, connections, publications, loadedScripts, storage, context, intervals, html: () => nodes.get('bk-app').innerHTML, button: action => document.buttons.find(b => b.dataset.bkAction === action), node: id => nodes.get(id), update: view => transportOptions.onView(clone(view)), status: value => transportOptions.onStatus(value), async click(action) { const button = document.buttons.find(b => b.dataset.bkAction === action); assert.ok(button, action + ' exists'); await nodes.get('bk-app').listeners.get('click')({ target: button }); for (let i = 0; i < 16; i++) await Promise.resolve(); }, async confirm() { nodes.get('bk-confirm-send').listeners.get('click')(); for (let i = 0; i < 16; i++) await Promise.resolve(); } };
 }
 test('shared host presentation hides a supplied private role and answer during preparation and discussion', async () => {
   for (const phase of ['prepare', 'discussion']) {
@@ -146,4 +154,96 @@ test('host and waiting-host transport statuses render readable connection state'
   const h = await harness(project(fixture('lobby')));
   h.status('hosting'); assert.equal(h.node('bk-connection').classes.has('is-offline'), false);
   h.status('waiting_for_host'); assert.match(h.node('bk-connection').textContent, /host.*reconnect/i);
+});
+
+function originalSetup(count = 3) {
+  return { code: 'UITEST', playerCount: count, tokens: Array.from({ length: count }, (_, i) => (i + 1).toString(16).padStart(20, '0')), names: Array.from({ length: count }, (_, i) => ['Sam', 'Sam', 'A&B <player>'][i] || 'Player ' + (i + 1)) };
+}
+function originalSessions(setup) {
+  return setup.tokens.map((originalToken, i) => ({ originalToken, name: setup.names[i], playerId: 'original-seat-' + i, credential: { version: 2, room: setup.code, token: (i + 1).toString(16).padStart(64, '0'), identityId: (i + 101).toString(16).padStart(40, '0'), historyToken: (i + 201).toString(16).padStart(64, '0') } }));
+}
+function moderatorView(setup, phase = 'lobby') {
+  const state = E.blankStore();
+  E.applyCommand(state, 'moderator', { room: 'UITEST', action: 'create', name: 'Host', participate: false }, bank, options);
+  for (let i = 0; i < setup.playerCount; i++) E.applyCommand(state, 'original-' + i, { room: 'UITEST', action: 'join', name: setup.names[i], participate: true }, bank, options);
+  if (phase !== 'lobby') act(state, 'start', 'moderator');
+  if (['prepare', 'discussion'].includes(phase)) act(state, 'confirmTopic', 'moderator');
+  if (phase === 'discussion') act(state, 'beginDiscussion', 'moderator');
+  return project(state, 'moderator');
+}
+test('original Hub names and all 3, 6 or 9 seats carry over without a second registration', async () => {
+  for (const count of [3, 6, 9]) {
+    const setup = originalSetup(count), hostView = moderatorView(setup), sessions = originalSessions(setup);
+    const h = await harness(null, { setup, transport: { createdView: hostView, sessions } });
+    assert.equal(h.cardCreates.length, 1);
+    assert.deepEqual(h.cardCreates[0], { code: setup.code, setup });
+    assert.equal(h.creates.length, 0); assert.equal(h.joins.length, 0);
+    assert.equal(h.node('bk-name'), undefined); assert.equal(h.node('bk-participate'), undefined);
+    assert.equal(h.button('create'), undefined); assert.equal(h.button('join'), undefined); assert.equal(h.button('watch'), undefined);
+    assert.equal(hostView.players.filter(p => p.seated).length, count);
+    assert.equal(hostView.self.isFormal, false, 'the shared moderator adds no extra formal seat');
+    assert.ok(h.button('start')); assert.equal(h.button('start').disabled, false);
+    assert.doesNotMatch(h.html(), /Open my private card/);
+    assert.match(h.html(), /A&amp;B &lt;player&gt;/);
+    assert.ok(h.publications.length >= 1);
+    const published = h.publications.at(-1);
+    assert.equal(published.length, count);
+    for (let i = 0; i < count; i++) {
+      assert.equal(published[i].name, setup.names[i]);
+      assert.deepEqual(published[i].bluff, sessions[i].credential);
+      assert.equal(published[i].game, 'bluffking');
+      for (let j = 0; j < count; j++) if (i !== j) assert.equal(JSON.stringify(published[i]).includes(sessions[j].credential.token), false, 'a shared card receives only its own bearer');
+    }
+    assert.equal(h.sent.length, 0, 'adopting the Hub roster waits for Start');
+    await h.click('start');
+    assert.equal(h.sent.length, 1); assert.equal(h.sent[0].action, 'start'); assert.equal(h.sent[0].expectedVersion, hostView.version);
+  }
+});
+test('restoring an existing Hub game never resets, replaces or automatically starts it', async () => {
+  const setup = originalSetup(6), existing = moderatorView(setup, 'discussion'), sessions = originalSessions(setup);
+  const h = await harness(existing, { setup, transport: { sessions } });
+  assert.equal(h.creates.length, 0); assert.equal(h.joins.length, 0); assert.equal(h.sent.length, 0);
+  assert.equal(h.node('bk-name'), undefined); assert.equal(h.button('start'), undefined);
+  assert.match(h.html(), /Live conversation/);
+  assert.equal(existing.phase, 'discussion');
+  assert.doesNotMatch(h.html(), /Open my private card/);
+});
+test('v2 original private card connects its assigned seat automatically and never asks for a name', async () => {
+  const state = fixture('prepare'), view = project(state, 'identity-1'), credential = originalSessions(originalSetup())[1].credential;
+  const hash = '#session=' + credential.token + '&identity=' + credential.identityId + '&history=' + credential.historyToken;
+  const h = await harness(view, { card: true, hash });
+  assert.deepEqual(h.cardConnections, [{ code: 'UITEST', credential }]);
+  assert.equal(h.connections.length, 0); assert.equal(h.joins.length, 0); assert.equal(h.creates.length, 0); assert.equal(h.cardCreates.length, 0);
+  assert.equal(h.node('bk-name'), undefined); assert.equal(h.button('join'), undefined); assert.equal(h.button('watch'), undefined);
+  assert.match(h.html(), /PRIVATE · FOR YOUR EYES ONLY/);
+  assert.equal(h.loadedScripts.some(src => /bluff-king-(?:engine|topics)\.js/.test(src)), false, 'a private card does not load the host bank or engine');
+});
+test('malformed private-card credentials show an error without starting a replacement join flow', async () => {
+  const h = await harness(null, { card: true, hash: '#session=bad&identity=bad&history=bad' });
+  assert.equal(h.cardConnections.length, 0); assert.equal(h.joins.length, 0); assert.equal(h.creates.length, 0);
+  assert.equal(h.node('bk-error').hidden, false);
+  assert.equal(h.node('bk-name'), undefined); assert.equal(h.button('join'), undefined); assert.equal(h.button('watch'), undefined);
+  assert.equal(h.sent.length, 0);
+});
+test('legacy v1 private invitations retain standalone joining when no Hub credentials exist', async () => {
+  const h = await harness(null, { card: true });
+  assert.equal(h.cardConnections.length, 0);
+  assert.equal(h.connections.length, 1);
+  assert.ok(h.node('bk-name')); assert.ok(h.button('join')); assert.ok(h.button('watch'));
+});
+test('a transferred original-seat host opens a public table without registration or role exposure', async () => {
+  const state = fixture('prepare'), privateView = project(state, 'identity-1'), credential = originalSessions(originalSetup())[1].credential;
+  privateView.self.isHost = true;
+  const hash = '#session=' + credential.token + '&identity=' + credential.identityId + '&history=' + credential.historyToken;
+  const card = await harness(privateView, { card: true, hash });
+  const hostLink = card.html().match(/<a\b[^>]*href="([^"]+)"[^>]*>Open host table/);
+  assert.ok(hostLink, 'the transferred host receives a table link');
+  const url = new URL(hostLink[1].replaceAll('&amp;', '&'));
+  assert.equal(url.searchParams.has('card'), false);
+  assert.equal(url.hash, '', 'host identity is restored from its saved room binding');
+  const table = await harness(privateView);
+  assert.equal(table.connections.length, 1);
+  assert.equal(table.joins.length, 0); assert.equal(table.creates.length, 0);
+  assert.equal(table.node('bk-name'), undefined);
+  assert.doesNotMatch(table.html(), /PRIVATE_TEST_ANSWER_|Private fact|class="bk-private"|id="bk-role"/);
 });

@@ -3,7 +3,7 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..'),base='https://livechat-two-alpha.vercel.app/';
 const release=process.argv[2]||'bluff-king';
-const assets=['index.html','play.html','bluff-king-live-chat.html','bluff-king.css','bluff-king-ui.js','bluff-king-engine.js','bluff-king-sync.js','bluff-king-topics.js'];
+const assets=['index.html','play.html','bluff-king-live-chat.html','bluff-king.css','bluff-king-ui.js','bluff-king-engine.js','bluff-king-sync.js','bluff-king-topics.js','bluff-king-cards.js'];
 const hash=bytes=>crypto.createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g,'\n')).digest('hex');
 (async()=>{
   const results=await Promise.all(assets.map(async file=>{

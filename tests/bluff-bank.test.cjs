@@ -78,7 +78,7 @@ test('Bluff King is the final playable game card in the Hub menu', () => {
   assert.equal(cards.filter(match => match[1] === 'bluff-king-live-chat.html').length, 1);
 });
 
-test('existing player links open an English private frame using only room and display name', () => {
+test('existing player links open legacy and original-seat private frames without host credentials', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '../play.html'), 'utf8');
   const start = source.indexOf('function renderCard(data) {');
   const finish = source.indexOf("      const isDixit = data.game === 'dixit'", start);
@@ -86,7 +86,7 @@ test('existing player links open an English private frame using only room and di
   const classes = new Set();
   const frames = [];
   const context = vm.createContext({
-    URL, location: { href: 'https://hub.example/play.html?s=EXISTING&p=player-bearer#session=old-host-secret' },
+    URL, BLUFF_CARDS: require('../bluff-king-cards.js'), location: { href: 'https://hub.example/play.html?s=EXISTING&p=player-bearer#session=old-host-secret' },
     document: { body: { classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), remove: (...names) => names.forEach(name => classes.delete(name)) } },
       createElement: kind => { assert.equal(kind, 'iframe'); return { remove() { this.removed = true; } }; } },
     setCardTitle() {}, urlName: 'Existing player', el: { replaceChildren: frame => frames.push(frame) },
@@ -109,6 +109,15 @@ test('existing player links open an English private frame using only room and di
   assert.equal(frames[0].src.includes('player-bearer'), false);
   context.renderCard(marker);
   assert.equal(frames.length, 1, 'a repeated marker keeps the existing private frame');
+  const assigned = { version: 2, room: 'BKROOM', token: 'a'.repeat(64), identityId: 'b'.repeat(40), historyToken: 'c'.repeat(64) };
+  context.renderCard({ ...marker, bluff: { ...assigned, hostToken: 'do-not-forward', otherSeats: ['do-not-forward'] } });
+  assert.equal(frames.length, 2);
+  const assignedURL = new URL(frames[1].src);
+  assert.deepEqual([...assignedURL.searchParams.keys()].sort(), ['card', 'name', 'room']);
+  assert.deepEqual(require('../bluff-king-cards.js').readCard(assignedURL.hash, 'BKROOM'), assigned);
+  assert.equal(assignedURL.search.includes(assigned.token), false);
+  assert.equal(assignedURL.href.includes('do-not-forward'), false);
+  assert.equal(assignedURL.href.includes('old-host-secret'), false);
   const html = fs.readFileSync(path.resolve(__dirname, '../bluff-king-live-chat.html'), 'utf8');
   assert.match(html, /<html lang="en">/);
 });

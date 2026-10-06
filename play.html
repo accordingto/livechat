@@ -881,6 +881,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="talk-ui.js"></script>
   <script src="chat-wolf-cards.js"></script>
+  <script src="bluff-king-cards.js?v=2"></script>
   <script src="once-upon-a-time-deck.js?v=once-v2-switch-2"></script>
   <script src="once-upon-a-time-ui.js?v=once-v2-switch-2"></script>
   <script src="dixit-deck.js?v=dixit-8"></script>
@@ -2470,7 +2471,8 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
-      const isBluff = data.game === 'bluffking' && data.bluff?.version === 1 && /^[A-Z0-9]{4,12}$/.test(data.bluff.room || '');
+      const bluffURL = data.game === 'bluffking' ? BLUFF_CARDS.frameURL(data.bluff, location.href) : null;
+      const isBluff = !!bluffURL;
       document.body.classList.toggle('bluff-king-card', isBluff);
       if (bluffCardFrame && !isBluff) { bluffCardFrame.remove(); bluffCardFrame = null; }
       if (isBluff) {
@@ -2480,9 +2482,7 @@
         if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
         if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
         if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        const frameURL = new URL('bluff-king-live-chat.html', location.href);
-        frameURL.searchParams.set('card', '1');
-        frameURL.searchParams.set('room', data.bluff.room);
+        const frameURL = new URL(bluffURL);
         frameURL.searchParams.set('name', data.name || urlName || '');
         if (!bluffCardFrame || bluffCardFrame.src !== frameURL.href) {
           bluffCardFrame = document.createElement('iframe');
