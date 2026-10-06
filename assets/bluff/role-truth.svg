@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="truth-pages" x1="28" y1="33" x2="93" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF2C9"/><stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+    <linearGradient id="truth-cover" x1="21" y1="56" x2="106" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A797F0"/><stop offset="1" stop-color="#6854AA"/>
+    </linearGradient>
+    <radialGradient id="truth-aura" cx="0" cy="0" r="1" gradientTransform="translate(65 61) rotate(90) scale(48)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD166" stop-opacity=".2"/><stop offset="1" stop-color="#FFD166" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="65" cy="61" r="48" fill="url(#truth-aura)"/>
+  <path d="M19 48c18-6 32-3 45 7 13-10 27-13 45-7v51c-18-5-32-2-45 7-13-9-27-12-45-7V48Z" fill="url(#truth-cover)" stroke="#243458" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M26 40c14-3 28 0 38 10 10-10 24-13 38-10v50c-15-3-28 0-38 10-10-10-23-13-38-10V40Z" fill="url(#truth-pages)" stroke="#243458" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M64 50v50" stroke="#BE9047" stroke-width="3" stroke-linecap="round"/>
+  <path d="M34 49c7 0 14 2 20 6M34 60c7 0 14 2 20 6M34 71c7 0 14 2 20 6M74 78c6-3 12-4 20-4M74 87c6-3 12-4 20-4" stroke="#C29955" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M31 86c8 0 15 2 21 5M74 94c6-3 13-4 21-4" stroke="#FFF8E3" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="87" cy="48" r="20" fill="#8475D9" stroke="#243458" stroke-width="4"/>
+  <circle cx="87" cy="48" r="15" stroke="#BDB0FF" stroke-width="1.5"/>
+  <path d="m78 48 6 6 12-13" stroke="#FFF2C9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m54 13 2.5 6.5L63 22l-6.5 2.5L54 31l-2.5-6.5L45 22l6.5-2.5L54 13Z" fill="#FFD166"/>
+  <path d="M20 25v8M16 29h8M112 73v7M108.5 76.5h7" stroke="#BDB0FF" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="m72 24 3-6M84 21l1-7" stroke="#FFD166" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="15" cy="84" r="2" fill="#FFD166"/><circle cx="104" cy="110" r="2" fill="#BDB0FF"/>
+</svg>

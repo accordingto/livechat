@@ -70,7 +70,7 @@ test('unverified and disabled cards cannot enter either the loaded bank or the n
   }
 });
 
-test('Bluff King is the final playable game card in the Hub menu', () => {
+test('BLUFF PARTY is the final playable game card in the Hub menu', () => {
   const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
   const cards = [...html.matchAll(/<a\b[^>]*\bclass="[^"]*\bgame-card\b[^"]*"[^>]*\bhref="([^"]+)"[^>]*>/g)];
   assert.ok(cards.length > 5);

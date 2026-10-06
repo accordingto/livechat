@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="thinker-brain" x1="34" y1="27" x2="87" y2="101" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D5C6FF"/><stop offset=".48" stop-color="#A797F0"/><stop offset="1" stop-color="#7965C3"/>
+    </linearGradient>
+    <radialGradient id="thinker-aura" cx="0" cy="0" r="1" gradientTransform="translate(64 62) rotate(90) scale(49)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B19AF8" stop-opacity=".26"/><stop offset="1" stop-color="#B19AF8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="64" cy="63" r="49" fill="url(#thinker-aura)"/>
+  <path d="M32 39a41 41 0 0 1 66 5M100 84a41 41 0 0 1-69 7" stroke="#A799DE" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>
+  <path d="M64 34c-4-10-17-12-24-3-11-1-18 9-16 19-10 7-11 22-2 31-1 11 7 19 18 19 7 10 21 7 24-3 3 10 17 13 24 3 11 0 19-8 18-19 9-9 8-24-2-31 2-10-5-20-16-19-7-9-20-7-24 3Z" fill="url(#thinker-brain)" stroke="#243458" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M64 34v63M41 32c-3 6-1 13 5 16M24 50c8-4 16-1 19 7M22 81c8 3 16-1 19-9M40 100c-2-8 2-14 9-17M87 32c3 6 1 13-5 16M104 50c-8-4-16-1-19 7M106 81c-8 3-16-1-19-9M88 100c2-8-2-14-9-17" stroke="#514477" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M49 49c6 3 8 10 4 16M44 74c4-6 11-8 17-6M79 49c-6 3-8 10-4 16M84 74c-4-6-11-8-17-6" stroke="#514477" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M36 46c0-6 5-10 10-9M31 61c-5 3-6 9-3 13M79 37c5-2 11 1 13 5" stroke="#F1E9FF" stroke-width="3" stroke-linecap="round"/>
+  <path d="m64 8 2.7 7.3L74 18l-7.3 2.7L64 28l-2.7-7.3L54 18l7.3-2.7L64 8Z" fill="#FFD166"/>
+  <path d="M17 35v8M13 39h8M112 59v7M108.5 62.5h7" stroke="#FFD166" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="104" cy="27" r="2.5" fill="#BDB0FF"/><circle cx="22" cy="104" r="2" fill="#FFD166"/><circle cx="97" cy="108" r="2" fill="#BDB0FF"/>
+</svg>
