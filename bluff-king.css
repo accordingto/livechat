@@ -14,3 +14,4 @@
 @media(max-width:680px){.bk-page .bk-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:7px}.bk-heading{width:100%;gap:5px}.bk-heading h1{font-size:18px}.bk-crown{font-size:25px}.bk-header-meta{grid-column:1/-1;justify-content:flex-start;padding-right:38px;gap:14px}.bk-header-meta span{white-space:nowrap}.bk-header-meta #bk-room-label{font-size:10px}.bk-connection{position:absolute;right:0;bottom:1px}.bk-page .bk-header .bk-text-link{margin:0}}
 .bk-own-card-link{display:block;text-align:right;margin:-30px 0 13px;min-height:20px}.bk-offline-note{color:#d4c7a3;border-color:#81714a;background:#5c492d30}@media(max-width:680px){.bk-own-card-link{margin:0 0 8px}}
 .bk-page .bk-header{animation:none}.bk-page{transition:none}.bk-player.is-current{border-color:#edc36c}@media(max-width:680px){.bk-speaker-control button{min-height:44px}}
+.bk-secondary:empty{display:none}
