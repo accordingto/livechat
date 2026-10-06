@@ -345,6 +345,8 @@ cached clients; no gameplay phase requires that optional button.
 
 Follow-up local regressions: **659/659** repository tests and **110/110**
 Once tests (**32 UI**) pass. The engine, sync and card data are unchanged.
+After merging the latest unrelated BLUFF PARTY updates, the complete merged-tree
+regression also passes: **661/661**, no failures or skips.
 Browser checks confirm a single Current marker on the actual newest card,
 movement after the next play, older-only expansion without another marker,
 zero Continue buttons and no Ending pseudo-frames. Desktop and 320/375px layouts
