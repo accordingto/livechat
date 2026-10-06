@@ -327,6 +327,29 @@ pool, recording or paid API has been added.
 - Recent remote Dixit/BLUFF PARTY additions and story-game switching fixes are
   retained by a normal merge; they were not rolled back with the presentation.
 
+### Current-card / Ending frame follow-up
+
+The final canonical Story history event has a static gold outline and an
+**↑ Current card** label outside its artwork. Exactly one public card is marked;
+empty stories and expanded older cards are not marked. Returning the last card
+or rolling back an invalid interruption recomputes the marker from actual history.
+The Ending no longer uses the portrait-ratio SVG overlay or duplicate inset
+pseudo-frame, and its outer dock has no panel border; its actual card edge and
+keyboard/selection outline remain. This also fixes the spurious portrait rectangle
+inside the tablet/phone horizontal Ending.
+
+**Continue story** is removed from the player action rail. No automatic command
+replaces it: Play, Pass, Ending and Challenge close opportunities normally, while
+an unacted-on opportunity remains open. The engine command is retained for older
+cached clients; no gameplay phase requires that optional button.
+
+Follow-up local regressions: **659/659** repository tests and **110/110**
+Once tests (**32 UI**) pass. The engine, sync and card data are unchanged.
+Browser checks confirm a single Current marker on the actual newest card,
+movement after the next play, older-only expansion without another marker,
+zero Continue buttons and no Ending pseudo-frames. Desktop and 320/375px layouts
+retain complete Ending text without document/table horizontal overflow.
+
 Not claimed: physical-phone play, two different browser engines, a live spoken
 group playtest, or full balance testing. Same-browser tabs and resized viewports
 are not labelled as different-device or different-browser-engine tests.

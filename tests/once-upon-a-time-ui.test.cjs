@@ -53,6 +53,23 @@ function elementHTML(html, className) {
   }
   return '';
 }
+const historyTags = html => html.match(/<div\b[^>]*\bclass="[^"]*\bonce-history-item\b[^"]*"[^>]*>/g) || [];
+function currentHistory(html, event, globalNumber) {
+  const latest = elementHTML(html, 'once-history-latest');
+  const older = elementHTML(html, 'once-history-expanded');
+  const current = elementHTML(latest, 'is-current');
+  const tags = historyTags(html).filter(tag => /\bis-current\b/.test(tag));
+  assert.equal(tags.length, event ? 1 : 0, 'there is exactly one current cue when a real play exists');
+  assert.equal((html.match(/aria-current="step"/g) || []).length, event ? 1 : 0);
+  assert.equal((html.match(/class="once-current-label"/g) || []).length, event ? 1 : 0);
+  assert.equal(elementHTML(older, 'is-current'), '', 'older history never owns the current cue');
+  if (event) {
+    assert.match(tags[0], /aria-current="step"/);
+    assert.match(elementHTML(current, 'once-current-label'), /\bCurrent card<\/span>/);
+    assert.ok(current.includes('>' + UI.esc(D.storyById[event.cardId].title) + '</span>'));
+    assert.ok(current.includes('>' + globalNumber + ' · Seat ' + event.playerNum + '</span>'), 'the cue keeps the original global history index');
+  } else assert.equal(current, '');
+}
 function give(s, seat, cardId) {
   for (const key of ['storyDeck', 'storyDiscard', 'storyHeld']) s[key] = s[key].filter(id => id !== cardId);
   for (const hand of Object.keys(s.hands)) s.hands[hand] = s.hands[hand].filter(id => id !== cardId);
@@ -200,7 +217,7 @@ test('an empty reference story table gives an English opening prompt until the f
   for (const seat of [0, 1, 2]) {
     const latest = elementHTML(htmlFor(s, seat), 'once-history-latest');
     assert.equal(elementHTML(latest, 'once-story-opening'), '');
-    assert.equal((latest.match(/class="once-history-item"/g) || []).length, 1);
+    assert.equal(historyTags(latest).length, 1);
     assert.ok(latest.includes(UI.esc(D.storyById[cardId].title)));
   }
 });
@@ -235,6 +252,7 @@ test('category takeover appears only for a selected matching special and closes 
   assert.equal(action(htmlFor(s, 3), 'interrupt', 'category'), undefined);
   assert.match(htmlFor(s), /Category interrupt/);
   assert.equal(action(htmlFor(s, 3), 'dispute'), undefined);
+  for (const seat of [0, 1, 2, 3, 4]) assert.equal(action(htmlFor(s, seat), 'continueStory'), undefined, 'no role gets an extra Continue story button');
 });
 
 test('a normal takeover offers dispute only to others and retains chronological public history', () => {
@@ -251,7 +269,7 @@ test('a normal takeover offers dispute only to others and retains chronological 
   assert.ok(action(htmlFor(s, 3), 'dispute'));
   assert.equal(action(htmlFor(s, 2), 'dispute'), undefined);
   assert.equal(action(host, 'dispute'), undefined);
-  assert.ok(action(htmlFor(s, 2), 'continueStory'));
+  for (const seat of [0, 1, 2, 3, 4]) assert.equal(action(htmlFor(s, seat), 'continueStory'), undefined, 'ordinary Play/Pass/Interrupt remain the player actions');
   s = act(s, 'continueStory', 2);
   assert.equal(action(htmlFor(s, 1), 'dispute'), undefined);
 });
@@ -271,8 +289,8 @@ test('the table shows the newest four with an earlier-card pile on the left and 
     assert.match(elementHTML(expandedHTML, 'once-history-pile'), /aria-expanded="true"/);
     assert.equal(elementHTML(html, 'once-history-expanded'), '', 'old cards are hidden initially');
     assert.doesNotMatch(latest, /once-carousel/);
-    assert.equal((latest.match(/class="once-history-item"/g) || []).length, 4);
-    assert.equal((expanded.match(/class="once-history-item"/g) || []).length, 3);
+    assert.equal(historyTags(latest).length, 4);
+    assert.equal(historyTags(expanded).length, 3);
     assert.doesNotMatch(html, /once-history-archive/);
     for (const [i, id] of played.entries()) {
       const title = '>' + UI.esc(D.storyById[id].title) + '</span>';
@@ -292,7 +310,7 @@ test('zero through four public plays need no hidden history and the newest play 
   for (let total = 0; total <= 4; total++) {
     const html = htmlFor(s), latest = elementHTML(html, 'once-history-latest');
     assert.ok(latest);
-    assert.equal((latest.match(/class="once-history-item"/g) || []).length, total);
+    assert.equal(historyTags(latest).length, total);
     assert.equal(elementHTML(html, 'once-history-pile'), '');
     assert.equal(elementHTML(html, 'once-history-expanded'), '');
     assert.equal(action(html, 'toggleHistory'), undefined);
@@ -300,6 +318,54 @@ test('zero through four public plays need no hidden history and the newest play 
     if (total) assert.ok(latest.includes(UI.esc(D.storyById[s.history.at(-1).cardId].title)));
     if (total < 4) s = act(s, 'play', 1, { cardId: s.hands[1][0] });
   }
+});
+
+test('exactly the newest canonical Story event has a public Current card cue in every view, never in private cards or older history', () => {
+  for (const count of [2, 4, 6]) {
+    let s = started(count);
+    const played = s.hands[1].slice();
+    for (let total = 0; total <= played.length; total++) {
+      for (const seat of [0, ...s.roster.map(p => p.playerNum)]) {
+        const data = E.view(s, seat), original = copy(data);
+        const html = UI.tableHTML(data, { host: seat === 0, historyOpen: true });
+        currentHistory(html, s.history.at(-1), total);
+        assert.deepEqual(data, original, 'rendering the public cue never mutates or adds secret projection fields');
+        for (const region of ['once-hand-panel', 'once-ending-dock']) {
+          assert.doesNotMatch(elementHTML(html, region), /is-current|aria-current=|once-current-label/);
+        }
+        assert.equal(action(html, 'continueStory'), undefined);
+      }
+      if (total < played.length) s = act(s, 'play', 1, { cardId: played[total] });
+    }
+  }
+});
+
+test('the Current card cue returns to the true latest play after a challenged card or invalid interrupt is rolled back', () => {
+  const viewEverySeat = state => {
+    for (const seat of [0, ...state.roster.map(p => p.playerNum)]) {
+      currentHistory(htmlFor(state, seat, { historyOpen: true }), state.history.at(-1), state.history.length);
+    }
+  };
+  let challenged = started(4);
+  for (const id of challenged.hands[1].slice(0, 3)) challenged = act(challenged, 'play', 1, { cardId: id });
+  const removed = challenged.history.at(-1).cardId;
+  challenged = act(challenged, 'challenge', 2, { returnLatest: true });
+  const challengeVote = challenged.vote.id;
+  for (const seat of challenged.vote.eligible.slice()) challenged = act(challenged, 'vote', seat, { voteId: challengeVote, choice: 'lose' });
+  assert.equal(challenged.history.length, 2);
+  assert.notEqual(challenged.history.at(-1).cardId, removed);
+  viewEverySeat(challenged);
+
+  let interrupted = started(4);
+  for (const id of interrupted.hands[1].slice(0, 3)) interrupted = act(interrupted, 'play', 1, { cardId: id });
+  const previousLast = interrupted.history.at(-1).cardId, interruptCard = interrupted.hands[2][0];
+  interrupted = act(interrupted, 'interrupt', 2, { cardId: interruptCard, mode: 'normal' });
+  viewEverySeat(interrupted);
+  interrupted = act(interrupted, 'dispute', 1, { interruptId: interrupted.interrupt.id });
+  const disputeVote = interrupted.vote.id;
+  for (const seat of interrupted.vote.eligible.slice()) interrupted = act(interrupted, 'vote', seat, { voteId: disputeVote, choice: 'invalid' });
+  assert.equal(interrupted.history.at(-1).cardId, previousLast);
+  viewEverySeat(interrupted);
 });
 
 test('PASS_DISCARD gives only the passer the optional discard/keep choice', () => {
@@ -518,7 +584,7 @@ test('old-card pile toggles locally, survives ordinary updates and resets on a n
       click(h.card, 'toggleHistory');
       assert.equal(h.card.historyOpen, true);
       assert.match(elementHTML(h.element.innerHTML, 'once-history-pile'), /aria-expanded="true"/);
-      assert.equal((elementHTML(h.element.innerHTML, 'once-history-expanded').match(/class="once-history-item"/g) || []).length, 3);
+      assert.equal(historyTags(elementHTML(h.element.innerHTML, 'once-history-expanded')).length, 3);
       assert.equal(h.sent.length, 0, 'opening history never creates a game command');
       assert.deepEqual(data, original, 'opening history does not mutate the authoritative projection');
       h.card.update(copy(data));
@@ -549,8 +615,8 @@ test('history windows recompute from current canonical plays when the latest car
   const data = E.view(s, 0); data.once.history.pop();
   const html = UI.tableHTML(data, { host: true, historyOpen: true });
   const recent = elementHTML(html, 'once-history-latest'), older = elementHTML(html, 'once-history-expanded');
-  assert.equal((recent.match(/class="once-history-item"/g) || []).length, 4);
-  assert.equal((older.match(/class="once-history-item"/g) || []).length, 2);
+  assert.equal(historyTags(recent).length, 4);
+  assert.equal(historyTags(older).length, 2);
   assert.ok(!html.includes('>' + UI.esc(D.storyById[played[6]].title) + '</span>'), 'a returned play cannot remain on the table');
   for (let i = 0; i < 6; i++) {
     const region = i < 2 ? older : recent;
