@@ -1,7 +1,7 @@
-# Once Upon a Time — V2 artwork / balanced table
+# Once Upon a Time — V2 artwork / reference table
 
-An incremental, English storytelling card game inside IceBreak Hub. The menu
-entry is last, after Kangaroo Court (Beta). No existing game is replaced.
+An incremental, English storytelling card game inside IceBreak Hub. Its existing
+menu entry and private player links are retained. No existing game is replaced.
 Players speak through their existing voice service; the app manages cards and
 state, not speech. No microphone, transcript, AI judge, paid model call, points,
 missions, classes, or additional rounds are used.
@@ -27,13 +27,18 @@ not a draw/discard or a change to canonical story history. There is no table
 carousel to scroll to the latest play. Mobile uses two rows of recent cards
 instead of tiny text. On the narrowest screens the pile moves to the upper left.
 
-The private Ending is the last card at the right end of the hand carousel,
-not a tall table sidebar. **Your Ending →** brings it into view without selecting
-or playing it. Desktop Story/hand cards retain the original 138×214 size;
-no viewport-height compression forces the whole game into one screen. Select
+The private Ending is a smaller **right-side table card on desktop**, independent
+of the Story panel's height. At tablet/phone widths it becomes a short horizontal
+card below Story So Far. **Your ending** brings it into view without selecting
+or playing it. Desktop Story/hand cards measure 144×224, with ivory frames and
+cream name plates; category icons retain subtle distinguishing colors. No
+viewport-height compression forces the whole game into one screen. Select
 the Ending itself when it becomes playable, then use **Play Ending** and the
 existing confirmation. The host's shared table never shows a private hand or
-unrevealed Ending.
+unrevealed Ending. The hand follows the table with a right-side action rail on
+desktop; narrower screens place the same controls below the hand. The header,
+turn indicator and public counts are compact, without shrinking button targets
+or adding Korean/language-learning controls.
 
 The host page is a shared table, not a private hand. A participating host uses
 their own original player-card link to play. Keep the host page open; on normal
@@ -122,10 +127,12 @@ card content remains English learning material.
 | Event | 22 | 4 |
 | Total | 114 | 20 |
 
-The three supplied visual references guide this update: antique-gold corner
+The original three artwork references guided V2: antique-gold corner
 ornaments, parchment HTML titles, and Character gold / Thing green / Place orange /
 Aspect blue / Event purple category identities. Full/mini/history/Ending
 variants share one component. The references do not change gameplay rules.
+The 2026-10-07 real-game photos now guide a quieter navy/ivory presentation,
+not new card data or replacement illustrations. Semantic artwork is unchanged.
 
 All **165 cards now have their own meaning-matched illustration**, generated
 with the built-in image tool and visually inspected. A Glass Knight wears glass
@@ -264,7 +271,7 @@ a winner; this is separate from the synthetic demo.
   had no horizontal overflow, and the full Ending sentence was not clipped.
   Rules/log/earlier history can deliberately expand the page; a long hand still
   scrolls sideways. This is viewport testing, not physical-phone verification.
-- **Balanced layout restoration (current):** restored original card sizes,
+- **Balanced layout restoration (previous release):** restored original card sizes,
   readable headings/buttons and panel spacing, removed all short-viewport
   compression and the table's forced minimum/sidebar height. Earlier public
   cards use a decorative left pile, with a local-only expand/collapse action;
@@ -287,6 +294,38 @@ Open the game's host page and click Open this table to switch the existing playe
 The old opening guard compared entire snapshots from the asynchronously filled ROOM.answers cache. Unread cards and normal previous-game timer/vote/receipt/heartbeat changes could be misidentified as a later game selection. Explicit start and restart now await actual reads of each known private token, then compare the active previous game's own stable session/round identity. Different games, sessions or legacy rounds still block stale writes. Merely restoring a saved canonical table leaves foreign player cards untouched; the host must explicitly open a new table. A fresh host page can reclaim an inactive old lease while the previous executor cannot fight it back.
 
 All 588 repository tests passed after the switching fixes, including complete host entry-script tests, unread-card and mutable previous-game fixtures, inactive lease recovery and changed rosters. Actual Firebase QA used three original private links to switch Pick a Side → Once Upon a Time → Dixit → Once Upon a Time while the older host pages stayed open. Direct dealing and a Once card play worked; a fresh Once host page also took over its inactive old lease, opened a new lobby and dealt without waiting for the earlier host to close. Previous games were not ended and links were not reissued. The synthetic room was cancelled afterward.
+
+## Reference UI refresh (2026-10-07)
+
+This is a presentation-only follow-up using the user's real-game photo
+references. Navy panels, thin ivory frames, cream titles, quieter category colors,
+a compact turn/roster strip and the right-hand action rail replace the bright
+gold/teal presentation. The private Ending is rendered exactly once beside the
+desktop story panel and below it on smaller screens; it is never included in a
+shared/host or lobby view. Earlier cards remain a local-only left pile, with the
+latest four immediately visible. No Korean, new translation system, content
+pool, recording or paid API has been added.
+
+- Final local checks: **657/657** repository tests pass, including **108/108**
+  Once tests (**30 UI**). The existing Bluff topic generator was run to restore
+  its checkout's LF formatting for a Windows byte-comparison check; its output
+  matches origin/main exactly and no topic content changed.
+- UI regressions pass for the new Ending placement, direct selection/jump,
+  private host/lobby exclusion, action rail, English empty-story prompt and all
+  existing action/phase/confirmation permissions.
+- Chrome browser checks pass at 1280/1001/800/375/320px viewport widths: no
+  document/table horizontal overflow, complete longest Story title and Ending
+  sentence, and wrapping long player names. A temporary synthetic public-deck
+  fixture was used for extreme text lengths and is not part of the release.
+- The synthetic four-player browser game completed through direct hand plays,
+  local pile expansion/collapse, empty hand, Ending confirmation, three eligible
+  votes and the accepted result. This is not a cross-device claim.
+- The existing cancelled test player's original play.html link was inspected
+  read-only on desktop and at 375px: the shell's content remains block layout,
+  latest four cards and one private Ending display without clipping/overflow.
+  No existing game or player state was changed in this check.
+- Recent remote Dixit/BLUFF PARTY additions and story-game switching fixes are
+  retained by a normal merge; they were not rolled back with the presentation.
 
 Not claimed: physical-phone play, two different browser engines, a live spoken
 group playtest, or full balance testing. Same-browser tabs and resized viewports
