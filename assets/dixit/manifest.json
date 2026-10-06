@@ -1,0 +1,927 @@
+{
+  "version": 1,
+  "collection": "ICEBREAKING HUB original dream picture cards",
+  "provenance": "Original images generated with the built-in imagegen tool; no commercial board game images used as references.",
+  "generatedDate": "2026-10-05",
+  "grid": {
+    "columns": 4,
+    "rows": 3,
+    "cardAspectRatio": "3/4",
+    "order": "top-left row-major",
+    "cssBackgroundSize": "400% 300%"
+  },
+  "sheets": [
+    {
+      "id": "atlas-1",
+      "sheet": 1,
+      "filename": "atlas-1.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d001",
+        "d002",
+        "d003",
+        "d004",
+        "d005",
+        "d006",
+        "d007",
+        "d008",
+        "d009",
+        "d010",
+        "d011",
+        "d012"
+      ]
+    },
+    {
+      "id": "atlas-2",
+      "sheet": 2,
+      "filename": "atlas-2.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d013",
+        "d014",
+        "d015",
+        "d016",
+        "d017",
+        "d018",
+        "d019",
+        "d020",
+        "d021",
+        "d022",
+        "d023",
+        "d024"
+      ]
+    },
+    {
+      "id": "atlas-3",
+      "sheet": 3,
+      "filename": "atlas-3.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d025",
+        "d026",
+        "d027",
+        "d028",
+        "d029",
+        "d030",
+        "d031",
+        "d032",
+        "d033",
+        "d034",
+        "d035",
+        "d036"
+      ]
+    },
+    {
+      "id": "atlas-4",
+      "sheet": 4,
+      "filename": "atlas-4.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d037",
+        "d038",
+        "d039",
+        "d040",
+        "d041",
+        "d042",
+        "d043",
+        "d044",
+        "d045",
+        "d046",
+        "d047",
+        "d048"
+      ]
+    },
+    {
+      "id": "atlas-5",
+      "sheet": 5,
+      "filename": "atlas-5.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d049",
+        "d050",
+        "d051",
+        "d052",
+        "d053",
+        "d054",
+        "d055",
+        "d056",
+        "d057",
+        "d058",
+        "d059",
+        "d060"
+      ]
+    },
+    {
+      "id": "atlas-6",
+      "sheet": 6,
+      "filename": "atlas-6.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d061",
+        "d062",
+        "d063",
+        "d064",
+        "d065",
+        "d066",
+        "d067",
+        "d068",
+        "d069",
+        "d070",
+        "d071",
+        "d072"
+      ]
+    },
+    {
+      "id": "atlas-7",
+      "sheet": 7,
+      "filename": "atlas-7.webp",
+      "width": 1254,
+      "height": 1254,
+      "cardCount": 12,
+      "cardIds": [
+        "d073",
+        "d074",
+        "d075",
+        "d076",
+        "d077",
+        "d078",
+        "d079",
+        "d080",
+        "d081",
+        "d082",
+        "d083",
+        "d084"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "d001",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "A child tends an ocean in a cracked bowl beneath a floating jellyfish and paper boats."
+    },
+    {
+      "id": "d002",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A white deer has branching stairway antlers, where a traveler climbs toward lanterns."
+    },
+    {
+      "id": "d003",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "A woman shelters under an umbrella as fish swim through a waterfall pouring from a picture frame."
+    },
+    {
+      "id": "d004",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "A giant peach opens to reveal a glowing village, watched by a fox beside a silver fork."
+    },
+    {
+      "id": "d005",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "An old musician rides a giant snail over snow, playing glowing suns from his trumpet."
+    },
+    {
+      "id": "d006",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A cherry tree grows inside a diving helmet on the seabed, surrounded by luminous moths."
+    },
+    {
+      "id": "d007",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A blue door opens to a warm kitchen on a whale flying above the clouds."
+    },
+    {
+      "id": "d008",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "Two people stand apart on a frozen lake while their shadows exchange a red thread."
+    },
+    {
+      "id": "d009",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A black cat climbs a ladder into a hollow orange moon above a sleeping blue city."
+    },
+    {
+      "id": "d010",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A person pushes a wheelbarrow of rain clouds containing tiny houses and a red kite."
+    },
+    {
+      "id": "d011",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "A marble statue waters a miniature gardener in a flowerpot beside windows opening into space."
+    },
+    {
+      "id": "d012",
+      "sheet": 1,
+      "atlas": "atlas-1.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "A rooted piano fills a greenhouse with transparent birds while a girl listens."
+    },
+    {
+      "id": "d013",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "A masked acrobat crosses the spine of an enormous book above a canyon, followed by tiny umbrellas."
+    },
+    {
+      "id": "d014",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A boy catches snowflakes in a warm desert tent while camel shadows resemble sailing ships."
+    },
+    {
+      "id": "d015",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "A teacup lighthouse illuminates a boat carrying a sleeping lion wrapped in a quilt."
+    },
+    {
+      "id": "d016",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "An elderly woman repairs a wooden crane's wing with golden thread as feathers become clouds."
+    },
+    {
+      "id": "d017",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "A dressed white rabbit holds a blue-burning candle while sitting on a red chair underwater."
+    },
+    {
+      "id": "d018",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A traveler faces a giant stone hand with colorful tents suspended between its fingers."
+    },
+    {
+      "id": "d019",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A transparent elephant contains a garden maze with two searching figures and a bird on its back."
+    },
+    {
+      "id": "d020",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "A woman points a telescope into an autumn puddle containing a luminous spiral galaxy."
+    },
+    {
+      "id": "d021",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A silver train winds around the sleeping face of a cliff beneath migrating umbrellas."
+    },
+    {
+      "id": "d022",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A child pulls a floating wooden house filled with red flowers through turquoise water."
+    },
+    {
+      "id": "d023",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "A clown sits at empty plates beside a tall tower of butterflies in a candlelit banquet hall."
+    },
+    {
+      "id": "d024",
+      "sheet": 2,
+      "atlas": "atlas-2.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "A giant fig pours golden sand into a hand above a moonlit town and a red bicycle."
+    },
+    {
+      "id": "d025",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "A baker rolls dough containing snowy mountains while lanterns glow in a tropical night outside."
+    },
+    {
+      "id": "d026",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A child peers through a giant keyhole into a forest and a floating root castle."
+    },
+    {
+      "id": "d027",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "Small turtles carry a wedding veil through a flowering orchard toward two empty shoes."
+    },
+    {
+      "id": "d028",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "A blue octopus conducts floating stones while an audience watches from a giant seashell."
+    },
+    {
+      "id": "d029",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "A woman in a dress made of folded maps reaches for an apple in a waterfall of feathers."
+    },
+    {
+      "id": "d030",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A mountaineer climbs a staircase on a huge egg beneath a weather vane and red eclipse."
+    },
+    {
+      "id": "d031",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A lonely robot tends flowers below empty swings hanging from a moss-covered planet's rings."
+    },
+    {
+      "id": "d032",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "An old fisherman emerges from a clock-shaped doorway with a net of glowing stars."
+    },
+    {
+      "id": "d033",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A scarf-wearing bear pours a glowing liquid from a kettle into a winding forest river."
+    },
+    {
+      "id": "d034",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A woman carries a transparent suitcase holding a winter forest through a market of mannequins."
+    },
+    {
+      "id": "d035",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "A blindfolded child listens beside an enormous shell in a library as insects cross the floor."
+    },
+    {
+      "id": "d036",
+      "sheet": 3,
+      "atlas": "atlas-3.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "A fox-shaped cloud shelters a town from red beads while a child climbs toward it on a rope."
+    },
+    {
+      "id": "d037",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "Candle-carrying snails cross a spoon bridge toward a castle built from stacked cushions."
+    },
+    {
+      "id": "d038",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A girl opens a wardrobe into an ocean while sheep swim through her room."
+    },
+    {
+      "id": "d039",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "A knight made of leaves rests within a giant pink rose beside a fallen crown."
+    },
+    {
+      "id": "d040",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "A floating tortoise island carries an orchard of glass pears above a mother and child in a paper boat."
+    },
+    {
+      "id": "d041",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "A blacksmith forges a delicate bubble beneath hanging clouds as a dragon sleeps in a birdcage."
+    },
+    {
+      "id": "d042",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A white horse walks among giant empty birdcages while its shadow becomes a girl with keys."
+    },
+    {
+      "id": "d043",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A diver climbs giant bubbles toward an upside-down room with a table set for two."
+    },
+    {
+      "id": "d044",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "A child in a wicker basket sails a river of quilts beneath paper wolves and a glowing tree window."
+    },
+    {
+      "id": "d045",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A person flies a sun-shaped kite over a beach where shells cast tree shadows and shoes grow grass."
+    },
+    {
+      "id": "d046",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A girl turns a crank on a cracked marble bust where hummingbirds nest and rainbows emerge."
+    },
+    {
+      "id": "d047",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "Animal guests gather for a tea party on a giant moth whose ribbons trail into twilight."
+    },
+    {
+      "id": "d048",
+      "sheet": 4,
+      "atlas": "atlas-4.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "A woman carries a mountain and tiny train on a tray through a corridor of seasonal doorways."
+    },
+    {
+      "id": "d049",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "A gardener plants a silver bell beneath a huge ear-shaped flower and green aurora."
+    },
+    {
+      "id": "d050",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A child watches lightning escape from a giant bottle containing a thunderstorm on sunny steps."
+    },
+    {
+      "id": "d051",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "A goat harvests glowing lanterns from a rooftop tree above a flooded town of hanging boats."
+    },
+    {
+      "id": "d052",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "An old traveler warms himself at red petals while sheltering inside an overturned crown in snow."
+    },
+    {
+      "id": "d053",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "An ice-cream castle stands on a lunar shore beside a forest-reflecting mirror and ants carrying a glove."
+    },
+    {
+      "id": "d054",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A woman rows a bathtub across golden clouds while a crocodile carries a chandelier below."
+    },
+    {
+      "id": "d055",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A tiny keeper looks through a window in a heart-shaped stone under migrating pink cranes."
+    },
+    {
+      "id": "d056",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "A sleeping black dog rests on a quilt whose folds become mountains with a miniature train."
+    },
+    {
+      "id": "d057",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A child plays a ladder like a violin as blue birds perch on it and spoons cover a hillside outside."
+    },
+    {
+      "id": "d058",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A white-suited traveler frees red balloons rising from a deep-sea coral garden."
+    },
+    {
+      "id": "d059",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "A figure carries a huge glass water drop along a bridge of domino tiles across sunflowers."
+    },
+    {
+      "id": "d060",
+      "sheet": 5,
+      "atlas": "atlas-5.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "Animals share a candlelit banquet inside a hollow walnut beneath a mysterious animal shadow."
+    },
+    {
+      "id": "d061",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "A woman washes a small glowing star in a bowl while a huge fish swims through snow outside."
+    },
+    {
+      "id": "d062",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A young gardener waters a sleeping stone giant's fingers beneath a castle on its shoulder."
+    },
+    {
+      "id": "d063",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "A red fox peers into a crystal ball holding an empty station while smoke trains wind through a forest."
+    },
+    {
+      "id": "d064",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "A ladybird pushes clouds through a desert garden contained in an open violin case."
+    },
+    {
+      "id": "d065",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "A feather-cloaked traveler waits beside ribbon-shaped tracks with a transparent suitcase of fireflies."
+    },
+    {
+      "id": "d066",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A duckling stands beside a giant pearl before curtains opening onto a snowy orchard and swing."
+    },
+    {
+      "id": "d067",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A girl follows a small tiger across lily pads inside a flooded grand room."
+    },
+    {
+      "id": "d068",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "A tiny king waits in a flowerpot castle as a cat watches through towering grass."
+    },
+    {
+      "id": "d069",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A woman carries a wheel of crescent moons across a root bridge over floating illuminated houses."
+    },
+    {
+      "id": "d070",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A giant spinning top with tiny houses balances on a fingertip above a city."
+    },
+    {
+      "id": "d071",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "A robed figure sweeps clouds into a basket on a mountain terrace beside an orange squid."
+    },
+    {
+      "id": "d072",
+      "sheet": 6,
+      "atlas": "atlas-6.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "A girl shelters under a feather umbrella as winged porcelain cups fly over a green valley."
+    },
+    {
+      "id": "d073",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 0,
+      "column": 0,
+      "backgroundPosition": "0% 0%",
+      "alt": "A sculptor carves a bird from clear ice while its shadow forms a warm desert arch."
+    },
+    {
+      "id": "d074",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 0,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 0%",
+      "alt": "A staircase grows from a seed toward a floating fern garden with a red mailbox."
+    },
+    {
+      "id": "d075",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 0,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 0%",
+      "alt": "A small explorer stands among violet flowers inside a broken hourglass as giant insects carry glass."
+    },
+    {
+      "id": "d076",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 0,
+      "column": 3,
+      "backgroundPosition": "100% 0%",
+      "alt": "A girl and bear share a floating sofa in a flooded hall beneath a star-filled chandelier."
+    },
+    {
+      "id": "d077",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 1,
+      "column": 0,
+      "backgroundPosition": "0% 50%",
+      "alt": "A farmer offers a tomato to a huge sleeping dragon curled beside a vegetable garden."
+    },
+    {
+      "id": "d078",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 1,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 50%",
+      "alt": "A young person stitches a torn night sky with golden thread while dawn shines through and a cat sleeps."
+    },
+    {
+      "id": "d079",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 1,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 50%",
+      "alt": "A rider crosses a glowing mushroom ballroom on a giant white beetle beneath a hanging ship."
+    },
+    {
+      "id": "d080",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 1,
+      "column": 3,
+      "backgroundPosition": "100% 50%",
+      "alt": "A girl holds a shell to a wooden puppet whose chest opens into a meadow and windmill."
+    },
+    {
+      "id": "d081",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 2,
+      "column": 0,
+      "backgroundPosition": "0% 100%",
+      "alt": "A village of stitched houses rides a giant leaf over a waterfall as a resident reaches for a key."
+    },
+    {
+      "id": "d082",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 2,
+      "column": 1,
+      "backgroundPosition": "33.333333333333336% 100%",
+      "alt": "A dancer balances on a lotus before mirrors that reflect different animals."
+    },
+    {
+      "id": "d083",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 2,
+      "column": 2,
+      "backgroundPosition": "66.66666666666667% 100%",
+      "alt": "A white crane lifts a red ribbon from a luminous mountain lake beside a floating paper crown."
+    },
+    {
+      "id": "d084",
+      "sheet": 7,
+      "atlas": "atlas-7.webp",
+      "row": 2,
+      "column": 3,
+      "backgroundPosition": "100% 100%",
+      "alt": "A child opens a wooden box on a rooftop, revealing a staircase of peach clouds toward the sun."
+    }
+  ]
+}

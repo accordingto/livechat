@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="talk.css">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-reference-1">
+  <link rel="stylesheet" href="dixit.css?v=dixit-9">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -22,6 +23,10 @@
     body.chat-wolf-card #content { max-width: 760px; }
     body.chat-wolf-card #i18n-toggle { display: none; }
     .chat-wolf-frame { width: 100%; height: calc(100dvh - 24px); border: 0; border-radius: 16px; }
+    body.bluff-king-card { padding: 0; justify-content: flex-start; }
+    body.bluff-king-card #content { max-width: 1440px; }
+    body.bluff-king-card #i18n-toggle, body.bluff-king-card .name-banner { display: none; }
+    .bluff-king-frame { width: 100%; height: 100dvh; border: 0; }
     /* The language pill floats over the top-right corner here — this page has no top
        row to dock into, and a row of its own cost more height than the control is
        worth. It has no --accent either, so name one, or the lit side falls back to
@@ -876,8 +881,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="talk-ui.js"></script>
   <script src="chat-wolf-cards.js"></script>
+  <script src="bluff-king-cards.js?v=2"></script>
   <script src="once-upon-a-time-deck.js?v=once-v2-reference-1"></script>
   <script src="once-upon-a-time-ui.js?v=once-v2-reference-1"></script>
+  <script src="dixit-deck.js?v=dixit-9"></script>
+  <script src="dixit-ui.js?v=dixit-9"></script>
+  <script src="dixit-engine.js?v=dixit-9"></script>
+  <script src="talk-sync.js"></script>
+  <script src="dixit-sync.js?v=dixit-9"></script>
+  <script src="dixit-card-host.js?v=dixit-9"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -2433,6 +2445,9 @@
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
     let onceCard = null;
+    let dixitCard = null;
+    let dixitHostBridge = null;
+    let bluffCardFrame = null;
     let wolfCardFrame = null;
     // A private instruction can only ask its own same-origin frame to become
     // visible. Never pass role, sender, instruction text or card data upstream.
@@ -2443,6 +2458,11 @@
       window.scrollTo({top:0,behavior:'instant'});
     });
     let talkConnected = true;
+    window.addEventListener('message', event => {
+      if (!bluffCardFrame || event.origin !== location.origin || event.source !== bluffCardFrame.contentWindow ||
+          event.data?.type !== 'bluff-king-size' || !Number.isFinite(event.data.height)) return;
+      bluffCardFrame.style.height = Math.max(500, Math.min(16000, event.data.height)) + 'px';
+    });
     let talkClockOffset = 0;
     function showCard(data) {
       renderCard(data);
@@ -2451,6 +2471,53 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      const bluffURL = data.game === 'bluffking' ? BLUFF_CARDS.frameURL(data.bluff, location.href) : null;
+      const isBluff = !!bluffURL;
+      document.body.classList.toggle('bluff-king-card', isBluff);
+      if (bluffCardFrame && !isBluff) { bluffCardFrame.remove(); bluffCardFrame = null; }
+      if (isBluff) {
+        document.title = `${data.name || urlName || 'Player'} · BLUFF PARTY`;
+        document.body.classList.remove('chat-wolf-card', 'once-card-page', 'dixit-card-page');
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        const frameURL = new URL(bluffURL);
+        frameURL.searchParams.set('name', data.name || urlName || '');
+        if (!bluffCardFrame || bluffCardFrame.src !== frameURL.href) {
+          bluffCardFrame = document.createElement('iframe');
+          bluffCardFrame.className = 'bluff-king-frame';
+          bluffCardFrame.title = 'BLUFF PARTY player card';
+          bluffCardFrame.referrerPolicy = 'no-referrer';
+          bluffCardFrame.src = frameURL.href;
+          el.replaceChildren(bluffCardFrame);
+        }
+        return;
+      }
+      const isDixit = data.game === 'dixit' && data.dixit?.version === 1;
+      document.body.classList.toggle('dixit-card-page', isDixit);
+      if (dixitCard && !isDixit) { dixitCard.destroy(); dixitCard = null; }
+      if (!isDixit && dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+      if (isDixit) {
+        document.body.classList.remove('chat-wolf-card', 'once-card-page');
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (!dixitCard) dixitCard = new DIXIT_UI.Card(el, {
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'dixit' || current.dixit?.sessionId !== command.sessionId || current.dixit?.turnId !== command.turnId) return;
+            return Object.assign({}, current, { dixitAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        dixitCard.update(data);
+        if (!dixitHostBridge) dixitHostBridge = new DIXIT_CARD_HOST.Bridge({ roomCode: session, playerToken: token, db,
+          onStatus: () => dixitCard?.paint() });
+        dixitHostBridge.update(data);
+        return;
+      }
       const isOnce = data.game === 'onceupon' && data.once?.version === 1;
       document.body.classList.toggle('once-card-page', isOnce);
       if (onceCard && !isOnce) { onceCard.destroy(); onceCard = null; }
@@ -2695,11 +2762,16 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
+      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+      if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
       if (talkCard) { talkCard.destroy(); talkCard = null; }
       if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+      if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+      document.body.classList.remove('bluff-king-card');
       document.body.classList.remove('chat-wolf-card');
       document.body.classList.remove('once-card-page');
+      document.body.classList.remove('dixit-card-page');
       lastErrorKey = key;
       lastErrorData = data || null;
       el.innerHTML = WAITING_KEYS.has(key)
@@ -2710,6 +2782,9 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
+    document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; });
+    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit') tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -2727,7 +2802,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

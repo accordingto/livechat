@@ -1,5 +1,31 @@
 ## 專案背景
 
+**BLUFF PARTY（2026-10-07）**：使用者將 Bluff King 改名為 BLUFF PARTY，換派對聊天
+圖標；原 URL、bluffking protocol 與玩家卡憑證不變。欄位改成 Your role／你的角色。
+使用者明確確認僅想想公開，老實人／瞎掰人留到揭曉；不要公開秘密角色或正解。
+依公開 Spotlight 狀態顯示 Explain／Defend 或 Follow up／Question，別人發言時
+所有人也能立即追問。提示是原語音聊天中的行動，不能偽造聊天室或改成發言權流程。
+
+**Bluff King · Live Chat（2026-10-07）**：新增於 Hub 最下面、Dixit 之後，
+英文為主，3–9 人，每個正式座位當一次 Thinker；同一 discussion 內手動換
+Spotlight、一次公開質疑，確認後揭曉計分。60 道已查核英文題，沒有 AI 或內建語音。
+使用者明確同意現有房主信任模式，不要求後端或伺服器秘密值：房主正常公開
+投影沒有秘密卡，房主以另開私人卡遊玩；房主瀏覽器仍持有權威狀態，須保持開啟。
+Firebase 儲存真實多人狀態與跨房間個人曝光歷史；同一瀏覽器身分不因暱稱而改變。
+`play.html` 原連結接入同一私人頁，不能傳房主憑證。依使用者最新要求，進入
+本遊戲即自動匯入原房間全部3–9個座位與姓名、發每張原卡自己的v2憑證，不再
+要求玩家登記／加入；房主桌面是未入座主持，房主用自己的原卡遊玩。
+`bluff-king-cards.js` 驗證原名單與片段憑證；不同原卡在同一瀏覽器仍是不同座位。
+舊版已開始的牌局先維持原名單，完成後再匯入，不能重設本輪角色。題庫只於房主頁載入，
+但靜態題庫並非防惡意讀取的秘密邊界。規則、預設值、維護與驗證詳見
+`bluff-king-mode.md`；勿重新加入 Opening、Final Defense、投票或固定發言倒數。
+
+**Bluff King 簡潔圖卡（2026-10-07）**：題目／Spotlight／私人角色集中顯示，玩法與
+管理用 dialog；想想以兩個主按鈕開完整姓名＋固定座位編號的選人視窗，再二次確認。
+回合更換必須關閉舊選人視窗；原 `play.html` 小卡與公開桌面同版面，公開不顯示秘密。
+背景是通用夜景而非題目插畫，不能讓圖像提示正解；座位圖示不能依秘密角色上色。
+只有補充事實、來源與計分理由收合，老實人正解始終可見，原卡高度以 body 內容計算。
+
 **Chat Wolf free-chat v3 (2026-09-30)**: Incremental new mode, not a project rewrite.
 New rooms use `free-chat-v3` / `rulesVersion: 3`; legacy rooms remain compatible and
 can explicitly upgrade from LOBBY or FINISHED. Defaults: 3 × 600-second free-chat
