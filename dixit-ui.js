@@ -34,9 +34,15 @@
     refreshHost:['請主持人重新整理遊戲頁面，啟用口頭提示後再確認出牌。','Ask the host to refresh the game page to enable spoken clues, then confirm your card again.'],
     demo:['單機示範：模擬玩家，沒有房間同步','LOCAL DEMO — synthetic players; no room connection'], view:['視角','View'], real:['使用真正的 Hub 房間','Use a real Hub room'],
     currentStage:['目前階段','Current stage'], phaseLobby:['等待開始','Waiting to start'], phaseClue:['說書人說提示','Storyteller speaks'], phaseSubmit:['秘密出牌','Secret card selection'], phaseVote:['秘密投票','Secret voting'], phaseRevealing:['準備揭曉','The reveal'], phaseAnswer:['說書人的圖卡','The Storyteller’s card'], phaseReveal:['揭曉結果','Round revealed'], phaseFinished:['遊戲結束','Game finished'], phaseCancelled:['這局已取消','Game cancelled'],
-    phaseStoryOwn:['選一張圖卡 → 口頭說出提示 → 確認出牌。','Choose a picture → say your clue aloud → confirm your card.'], phaseStoryWait:['聽 {name} 的口頭提示，等說書人確認出牌。','Listen to {name}’s spoken clue and wait for their card confirmation.'], phaseHostLobby:['玩家到齊後，選首位說書人並開始發牌。','When everyone is here, choose the first Storyteller and deal.'], phaseLobbyPlayer:['準備好後按「準備好了」，等待主持人開始。','Mark yourself ready, then wait for the host to start.'], phaseReady:['你已準備好，等待主持人發牌。','You are ready. Waiting for the host to deal.'], phaseAllVotesHost:['全員投票完成。按下揭曉，大家一起倒數。','All votes are in. Start the reveal for everyone.'], phaseAllVotesPlayer:['全員投票完成，等待主持人開始倒數。','All votes are in. Waiting for the host to start the countdown.'], phaseCountdown:['一起倒數，說書人的圖卡即將揭曉。','Count down together. The Storyteller’s picture is about to appear.'], phaseAnswerWait:['先看說書人的圖卡，接著揭曉最高票。','Look at the Storyteller’s picture. The most-voted picture is next.'], phaseNextHost:['結果已揭曉，準備好後開始下一輪。','The result is revealed. Start the next round when everyone is ready.'], phaseNextPlayer:['看看大家投了哪張牌，等待主持人開始下一輪。','See everyone’s guesses, then wait for the next round.'], phaseFinishedHost:['最高分獲勝。可以用原班人馬再玩一局。','The highest score wins. Play again with the same players.'], phaseFinishedPlayer:['最高分獲勝，等待主持人再開一局。','The highest score wins. Wait for the host to start another game.'], phaseCancelledHost:['可以用原班人馬重新開始。','You can start again with the same players.'], phaseCancelledPlayer:['等待主持人重新開始。','Wait for the host to start again.'],
+    phaseStoryOwn:['選一張圖卡 → 口頭說出提示 → 確認出牌。','Choose a picture → say your clue aloud → confirm your card.'], phaseStoryWait:['聽 {name} 的口頭提示，等說書人確認出牌。','Listen to {name}’s spoken clue and wait for their card confirmation.'], phaseHostLobby:['玩家到齊後，選首位說書人並開始發牌。','When everyone is here, choose the first Storyteller and deal.'], phaseLobbyPlayer:['準備好後按「準備好了」，等待主持人開始。','Mark yourself ready, then wait for the host to start.'], phaseReady:['你已準備好，等待主持人發牌。','You are ready. Waiting for the host to deal.'], phaseAllVotesHost:['全員投票完成。按下揭曉，大家一起倒數。','All votes are in. Start the reveal for everyone.'], phaseAllVotesPlayer:['全員投票完成，等待主持人開始倒數。','All votes are in. Waiting for the host to start the countdown.'], phaseCountdown:['一起倒數，說書人的圖卡即將揭曉。','Count down together. The Storyteller’s picture is about to appear.'], phaseAnswerWait:['先看說書人的圖卡，接著揭曉第二高票。','Look at the Storyteller’s picture. The second-highest card is next.'], phaseNextHost:['結果已揭曉，準備好後開始下一輪。','The result is revealed. Start the next round when everyone is ready.'], phaseNextPlayer:['看看大家投了哪張牌，等待主持人開始下一輪。','See everyone’s guesses, then wait for the next round.'], phaseFinishedHost:['最高分獲勝。可以用原班人馬再玩一局。','The highest score wins. Play again with the same players.'], phaseFinishedPlayer:['最高分獲勝，等待主持人再開一局。','The highest score wins. Wait for the host to start another game.'], phaseCancelledHost:['可以用原班人馬重新開始。','You can start again with the same players.'], phaseCancelledPlayer:['等待主持人重新開始。','Wait for the host to start again.'],
     gameDetails:['玩家與分數','Players and scores'], roundSummary:['第 {n} 輪 · 說書人：{name}','Round {n} · Storyteller: {name}'], readyProgress:['已準備 {n}／{total} 人','Ready: {n} / {total}'], mostVoted:['最高票圖卡','Most-voted picture'], mostVotedTie:['並列最高票圖卡','Tied most-voted pictures'], allPlayed:['這輪所有圖卡','All pictures from this round'], revealFocus:['揭曉圖卡','Reveal pictures'], confirmYes:['確定','Confirm'], confirmNo:['返回遊戲','Keep playing'], hostControls:['主持操作','Host controls'],
-    roundGain:['本輪分數變化','This round’s points'], pointsChange:['本輪得分','Round gain'],
+    roundGain:['本輪得分','Round points'], pointsChange:['本輪得分','Round gain'],
+    roundFound:['{n}／{total} 人猜中說書人的圖卡。','{n} of {total} found the Storyteller’s card.'],
+    scoreStory:['部分人猜中你的牌','Some, not all, found your card'], scoreCorrect:['猜中說書人的牌','Correct guess'],
+    scoreAll:['所有人都猜中','Everyone guessed right'], scoreNone:['沒有人猜中','Nobody guessed right'],
+    scoreVoteOne:['你的牌得到 1 票','1 vote for your card'], scoreVoteMany:['你的牌得到 {n} 票','{n} votes for your card'],
+    secondVoted:['第二高票圖卡','Second-highest card'], secondVotedTie:['並列第二高票圖卡','Tied for second'], tiedPictures:['並列圖卡','Tied pictures'],
+    secondIsAnswer:['第二高票是說書人的圖卡。','The second-highest card is the Storyteller’s card.'],
     winningScore:['勝利目標分數','Winning score'], scoreRange:['5–100 分；基本版為 30 分。','5–100 points; the base game uses 30.'],
   };
   if(typeof I18N!=='undefined')I18N.registerDict('dixit',Object.fromEntries(Object.entries(dict).map(([k,v])=>[k,{zh:v[0],en:v[1]}])));
@@ -79,23 +85,31 @@
     if(s.phase==='CANCELLED')instruction=t(controls?'phaseCancelledHost':'phaseCancelledPlayer');
     return {title:t(title),instruction:s.paused?t('paused'):instruction,progress,submitted,voted,others};
   }
-  function popularCards(s){
-    if(Array.isArray(s.result?.popularCardIds))return s.result.popularCardIds;
-    const rows=list(s.result?.rows),counts=list(s.table).map(id=>({id,count:rows.filter(p=>p.voteCardId===id).length})),max=Math.max(0,...counts.map(p=>p.count));
-    return counts.filter(p=>p.count===max).map(p=>p.id);
+  function secondaryCards(s,answer){
+    const rows=list(s.result?.rows),table=list(s.table).length?list(s.table):list(s.result?.table);
+    const counts=table.map(id=>({id,count:rows.filter(p=>p.voteCardId===id).length}));
+    const levels=[...new Set(counts.map(p=>p.count))].sort((left,right)=>right-left),count=levels[1]??levels[0]??0;
+    const ranked=counts.filter(p=>p.count===count);
+    return {count,counts,ids:ranked.filter(p=>p.id!==answer).map(p=>p.id),title:levels.length<2?'tiedPictures':ranked.length>1?'secondVotedTie':'secondVoted'};
   }
   function revealHTML(s,now){
     const visual=revealVisual(s,now),finished=['REVEAL','FINISHED'].includes(s.phase),answer=finished?s.result?.answerCardId:s.answerCardId,table=list(s.table);
     if(visual.startsWith('countdown:'))return '<section class="dx-reveal-focus is-counting" data-dx-reveal-stage="countdown" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-countdown" role="status" aria-live="polite"><span data-dx-countdown>'+visual.split(':')[1]+'</span><p>'+esc(t('phaseCountdown'))+'</p></div></section>';
     if(!answer)return '';
-    const rows=list(s.result?.rows),voteCounts=table.map(id=>({id,count:rows.filter(p=>p.voteCardId===id).length})),maxVotes=s.result?.maxVotes??Math.max(0,...voteCounts.map(p=>p.count));
-    const popular=finished?popularCards(s).slice().sort((left,right)=>Number(left===answer)-Number(right===answer)):[];
-    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><h2>'+esc(t('answer'))+(finished?' <span>'+esc(t('votes',{n:voteCounts.find(p=>p.id===answer)?.count||0}))+'</span>':'')+'</h2>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,owner:name(s,s.storyteller),artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><h2>'+esc(t(popular.length>1?'mostVotedTie':'mostVoted'))+' <span>'+esc(t('votes',{n:maxVotes}))+'</span></h2><div class="dx-popular-gallery">'+popular.map(id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return cardHTML(id,table.indexOf(id)+1,{owner:owner?name(s,owner.playerNum):id===answer?name(s,s.storyteller):'',artworkVersion:s.artworkVersion||1,eager:true});}).join('')+'</div></div>'+roundScoresHTML(s):'')+'</div></section>';
+    const rows=list(s.result?.rows),secondary=secondaryCards(s,answer),ownerFor=id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return owner?name(s,owner.playerNum):'';};
+    const firstOwner=secondary.ids.length?'<div class="dx-owner">'+esc(ownerFor(secondary.ids[0]))+'</div>':'';
+    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('answer'))+(finished?' <span>'+esc(t('votes',{n:secondary.counts.find(p=>p.id===answer)?.count||0}))+'</span>':'')+'</h2></div>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><div class="dx-reveal-heading"><h2>'+esc(t(secondary.title))+' <span>'+esc(t('votes',{n:secondary.count}))+'</span></h2>'+firstOwner+'</div><div class="dx-popular-gallery">'+(secondary.ids.length?secondary.ids.map((id,i)=>cardHTML(id,table.indexOf(id)+1,{owner:i?ownerFor(id):'',artworkVersion:s.artworkVersion||1,eager:true})).join(''):'<p class="dx-secondary-note">'+esc(t('secondIsAnswer'))+'</p>')+'</div></div>'+roundScoresHTML(s):'')+'</div></section>';
   }
   const gain=n=>'+'+Math.max(0,Number(n)||0);
   function roundScoresHTML(s){
     const rows=list(s.result?.rows).slice().sort((left,right)=>Number(right.playerNum===s.playerNum)-Number(left.playerNum===s.playerNum));
-    return '<aside class="dx-round-scores" data-dx-round-scores aria-label="'+esc(t('roundGain'))+'"><h2>'+esc(t('roundGain'))+'</h2><div class="dx-score-changes">'+rows.map(r=>'<div class="dx-score-change'+(r.playerNum===s.playerNum?' is-me':'')+'" data-dx-score-player="'+r.playerNum+'"><strong class="dx-score-name">'+esc(name(s,r.playerNum))+'</strong><strong class="dx-score-gain" aria-label="'+esc(t('pointsChange'))+'">'+gain(r.delta)+'</strong><span class="dx-score-total">'+esc(t('total'))+' <strong>'+Math.max(0,Number(r.score)||0)+'</strong></span><div class="dx-score-breakdown"><span>'+esc(t('base'))+' '+gain(r.base)+'</span><span>'+esc(t('bonus'))+' '+gain(r.bonus)+'</span></div></div>').join('')+'</div></aside>';
+    const others=rows.filter(r=>r.playerNum!==s.storyteller),correct=others.filter(r=>r.correct||r.voteCardId===s.result?.answerCardId).length;
+    return '<aside class="dx-round-scores" data-dx-round-scores aria-label="'+esc(t('roundGain'))+'"><div class="dx-reveal-heading"><h2>'+esc(t('roundGain'))+'</h2><p class="dx-score-outcome">'+esc(t('roundFound',{n:correct,total:others.length}))+'</p></div><div class="dx-score-changes">'+rows.map(r=>{
+      const delta=Math.max(0,Number(r.delta)||0),reasons=[];
+      if(delta>0&&Number(r.base)>0)reasons.push({label:t(r.playerNum===s.storyteller?'scoreStory':Number(r.base)===3?'scoreCorrect':correct===0?'scoreNone':'scoreAll'),points:r.base});
+      if(delta>0&&Number(r.bonus)>0)reasons.push({label:t(Number(r.bonus)===1?'scoreVoteOne':'scoreVoteMany',{n:r.bonus}),points:r.bonus});
+      return '<div class="dx-score-change'+(r.playerNum===s.playerNum?' is-me':'')+(delta===0?' is-zero':'')+'" data-dx-score-player="'+r.playerNum+'"><div class="dx-score-person"><strong class="dx-score-name">'+esc(name(s,r.playerNum))+'</strong><strong class="dx-score-gain" aria-label="'+esc(t('pointsChange'))+'">'+(delta?gain(delta):'0')+'</strong></div>'+reasons.map(reason=>'<div class="dx-score-reason"><span>'+esc(reason.label)+'</span><strong>'+gain(reason.points)+'</strong></div>').join('')+'</div>';
+    }).join('')+'</div></aside>';
   }
   function tableHTML(payload,options={}){
     const s=payload.dixit||payload,host=!!options.host,controls=host||s.hostControls===true,a={...s.actions},selected=options.selected||new Set(),now=clockNow(options);
@@ -164,7 +178,7 @@
       if(this.errorCode)this.error=errorText(this.errorCode);
       const message=this.el.querySelector('[data-dx-message]');if(message)message.textContent=this.error||(this.pending?t(this.pendingWaiting?'pendingResume':'pending'):'');
       const bar=this.el.querySelector('[data-dx-phase]');if(bar?.getBoundingClientRect&&this.el.style?.setProperty)this.el.style.setProperty('--dx-phase-height',Math.ceil(bar.getBoundingClientRect().height)+'px');
-      if(root.innerWidth>760&&this.el.style?.setProperty){
+      if(root.innerWidth>600&&this.el.style?.setProperty){
         const picture=this.el.querySelector('.dx-story-reveal .dx-picture');
         if(picture?.getBoundingClientRect){const available=Math.max(180,root.innerHeight-picture.getBoundingClientRect().top-25);this.el.style.setProperty('--dx-reveal-picture-width',Math.floor(available*3/4)+'px');}
       }

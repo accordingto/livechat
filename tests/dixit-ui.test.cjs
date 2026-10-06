@@ -45,6 +45,17 @@ function buttons(html) {
 const action = (html, type) => buttons(html).find(b => b.type === type);
 function noActions(html, types) { for (const type of types) assert.equal(action(html, type), undefined, type + ' must not be offered'); }
 const cardButtons = html => html.match(/<button\b[^>]*\bdata-dx-card="[^"]+"[^>]*>/g) || [];
+const visibleText = html => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+function secondaryPart(html) {
+  const start = html.indexOf('class="dx-popular-reveal"');
+  if (start < 0) return '';
+  const end = html.indexOf('<aside', start);
+  return html.slice(start, end < 0 ? html.indexOf('<details class="dx-panel dx-result', start) : end);
+}
+function scorePlayerParts(points) {
+  const starts = [...points.matchAll(/<div\b[^>]*\bdata-dx-score-player="(\d+)"[^>]*>/g)];
+  return new Map(starts.map((match, i) => [Number(match[1]), points.slice(match.index, starts[i + 1]?.index ?? points.length)]));
+}
 
 test('shared host renderer cannot expose private hands or private controls, even with a player projection', () => {
   for (const count of [3, 4, 8]) {
@@ -416,7 +427,7 @@ test('countdown uses the shared deadline, continues correctly after refresh, and
   assert.match(html, /Game paused/);
 });
 
-test('answer stage centers only the actual Storyteller card; top votes and scores appear at the later stage', () => {
+test('answer stage centers only the actual Storyteller card without repeating its owner; second-place votes and points appear later', () => {
   const started = startedReveal(), answer = started.submissions[1][0];
   const s = act(started, 'advanceReveal', 1, { now: started.revealAnswerAt });
   const html = UI.tableHTML(E.view(s, 2, started.revealAnswerAt), { now: started.revealAnswerAt });
@@ -424,16 +435,19 @@ test('answer stage centers only the actual Storyteller card; top votes and score
   assert.match(html, /class="dx-story-reveal"/);
   assert.match(html, new RegExp('data-dx-picture="' + answer + '"'));
   assert.equal((html.match(/data-dx-picture=/g) || []).length, 1, 'only the answer picture competes for attention');
-  assert.match(html, /<h2>The Storyteller’s card<\/h2>.*?<div class="dx-owner">Seat 1<\/div><div class="dx-picture is-answer">/);
+  assert.match(html, /<h2>The Storyteller’s card<\/h2>.*?<div class="dx-picture is-answer">/);
+  assert.doesNotMatch(html, /class="dx-owner"/, 'the Storyteller heading already identifies the answer');
   assert.doesNotMatch(html, /dx-popular-reveal|dx-result|class="dx-answer"|data-dx-countdown/);
   const final = finishReveal(s), finalHTML = htmlFor(final, 2);
   assert.match(finalHTML, /data-dx-reveal-stage="popular"/);
   assert.ok(finalHTML.indexOf('class="dx-story-reveal"') < finalHTML.indexOf('class="dx-popular-reveal"'));
-  assert.match(finalHTML, /Most-voted picture/);
-  const popular = finalHTML.slice(finalHTML.indexOf('class="dx-popular-reveal"'), finalHTML.indexOf('<details class="dx-panel dx-result'));
-  assert.match(popular, /<div class="dx-owner">Seat 2<\/div><div class="dx-picture">/);
+  const secondary = secondaryPart(finalHTML);
+  assert.match(visibleText(secondary), /The second-highest card is the Storyteller’s card\./);
+  assert.doesNotMatch(secondary, /data-dx-picture=/, 'the second-place answer is represented by a short note instead of repeating the central picture');
   assert.ok(finalHTML.indexOf('dx-popular-reveal') < finalHTML.indexOf('dx-result'));
-  assert.match(finalHTML, /class="dx-story-reveal"><h2>The Storyteller’s card <span>1 vote\(s\)<\/span><\/h2>/);
+  const centre = finalHTML.slice(finalHTML.indexOf('class="dx-story-reveal"'), finalHTML.indexOf('class="dx-popular-reveal"'));
+  assert.match(centre, /<h2>The Storyteller’s card <span>1 vote\(s\)<\/span><\/h2>/);
+  assert.doesNotMatch(centre, /class="dx-owner"/);
   const context = { DIXIT_DECK: { version: 2, cards: Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp' })) } };
   vm.runInNewContext(source, context);
   const eagerHTML = context.DIXIT_UI.tableHTML(E.view(s, 2, started.revealAnswerAt), { now: started.revealAnswerAt });
@@ -441,20 +455,61 @@ test('answer stage centers only the actual Storyteller card; top votes and score
   assert.doesNotMatch(eagerHTML, /loading="lazy"/, 'the reveal picture loads eagerly during its short exclusive stage');
 });
 
-test('all tied most-voted pictures appear, including the answer when it ties; legacy revealed rounds never replay a countdown', () => {
+test('the right side shows the second distinct vote level rather than tied first place, including zero votes in legacy rounds', () => {
   const s = finishReveal(startedReveal({ tied: true })), html = htmlFor(s, 2);
   assert.equal(s.lastRound.popularCardIds.length, 3);
-  const feature = html.slice(html.indexOf('data-dx-reveal-stage="popular"'), html.indexOf('<details class="dx-panel dx-result'));
-  assert.match(feature, /Tied most-voted pictures/);
-  for (const id of s.lastRound.popularCardIds) {
-    const owner = s.lastRound.rows.find(row => row.cardIds.includes(id));
-    assert.ok(feature.includes('data-dx-picture="' + id + '"><div class="dx-owner">Seat ' + owner.playerNum + '</div>'), 'each tied top picture has its owner above it');
-  }
-  assert.equal((feature.match(new RegExp('data-dx-picture="' + s.lastRound.answerCardId + '"', 'g')) || []).length, 2, 'the same picture can be answer and top-voted');
+  const right = secondaryPart(html), unvoted = s.submissions[4][0];
+  assert.match(right, /0 vote\(s\)/);
+  assert.equal((right.match(/data-dx-picture=/g) || []).length, 1);
+  assert.ok(right.includes('data-dx-picture="' + unvoted + '"'));
+  assert.ok(right.indexOf('Seat 4') < right.indexOf('class="dx-picture"'), 'the second-place owner appears above their artwork');
+  for (const id of s.lastRound.popularCardIds) assert.ok(!right.includes('data-dx-picture="' + id + '"'), 'first-place ties are not the second vote level');
   const legacy = E.view(s, 2); delete legacy.dixit.revealStage; delete legacy.dixit.revealStartedAt; delete legacy.dixit.revealAnswerAt; delete legacy.dixit.revealPopularAt;
   delete legacy.dixit.result.popularCardIds; delete legacy.dixit.result.maxVotes;
   const legacyHTML = UI.tableHTML(legacy);
-  assert.doesNotMatch(legacyHTML, /data-dx-countdown/); assert.match(legacyHTML, /Tied most-voted pictures/);
+  assert.doesNotMatch(legacyHTML, /data-dx-countdown/);
+  assert.equal(secondaryPart(legacyHTML), right, 'legacy vote rows produce the same second-place group without new ranking metadata');
+});
+
+test('everyone finding the answer leaves all zero-vote non-Storyteller pictures tied in second place', () => {
+  const s = scored('all'), html = htmlFor(s, 2), right = secondaryPart(html);
+  assert.match(right, /0 vote\(s\)/);
+  assert.equal((right.match(/data-dx-picture=/g) || []).length, 3);
+  assert.ok(!right.includes('data-dx-picture="' + s.lastRound.answerCardId + '"'));
+  for (const row of s.lastRound.rows.filter(row => row.playerNum !== s.storyteller)) {
+    const pictureIndex = right.indexOf('data-dx-picture="' + row.cardIds[0] + '"');
+    assert.ok(pictureIndex >= 0, 'each zero-vote picture remains visible');
+    const ownerIndex = right.indexOf('Seat ' + row.playerNum), artworkIndex = right.indexOf('class="dx-picture"', pictureIndex);
+    assert.ok(ownerIndex >= 0 && ownerIndex < artworkIndex, 'each tied second-place picture identifies its owner above its artwork');
+  }
+  const centre = html.slice(html.indexOf('class="dx-story-reveal"'), html.indexOf('class="dx-popular-reveal"'));
+  assert.match(centre, /3 vote\(s\)/); assert.doesNotMatch(centre, /class="dx-owner"/);
+});
+
+test('second-place display uses card votes and handles a single tied level honestly', () => {
+  const s = scored('none'), right = secondaryPart(htmlFor(s, 2));
+  assert.match(right, /1 vote\(s\)/);
+  assert.equal((right.match(/data-dx-picture=/g) || []).length, 1);
+  assert.ok(right.includes('data-dx-picture="' + s.submissions[3][0] + '"'));
+  assert.ok(!right.includes('data-dx-picture="' + s.submissions[2][0] + '"'), 'the two-vote first-place card is excluded');
+  const singleLevel = E.view(s, 2); singleLevel.dixit.result.rows.forEach(row => { row.voteCardId = null; });
+  const tied = secondaryPart(UI.tableHTML(singleLevel));
+  assert.match(tied, /Tied pictures/); assert.match(tied, /0 vote\(s\)/);
+  assert.equal((tied.match(/data-dx-picture=/g) || []).length, 3);
+  assert.ok(!tied.includes('data-dx-picture="' + s.lastRound.answerCardId + '"'), 'the answer stays only in the centre');
+});
+
+test('a second-place tie removes the answer while retaining other tied owners and pictures', () => {
+  let s = voting(5);
+  for (const [seat, owner] of [[2, 1], [3, 2], [4, 2], [5, 3]]) s = act(s, 'vote', seat, { cardId: s.submissions[owner][0] });
+  s = finishReveal(act(s, 'reveal'));
+  const right = secondaryPart(htmlFor(s, 2));
+  assert.match(right, /1 vote\(s\)/);
+  assert.equal((right.match(/data-dx-picture=/g) || []).length, 1);
+  assert.ok(right.includes('data-dx-picture="' + s.submissions[3][0] + '"'));
+  assert.ok(right.indexOf('Seat 3') < right.indexOf('class="dx-picture"'), 'the remaining second-place picture’s owner leads its artwork');
+  assert.ok(!right.includes('data-dx-picture="' + s.lastRound.answerCardId + '"'));
+  assert.ok(!right.includes('data-dx-picture="' + s.submissions[2][0] + '"'));
 });
 
 test('a private host retains their own hand and player actions while controlling deal, reveal, pause and next round', async () => {
@@ -502,17 +557,15 @@ test('all-player round points stay beside the revealed pictures through time, he
   const h = harness(data, { now: () => now }, { sessionStorage: unusableScoreStorage });
   try {
     const points = roundPointsPart(h.element.innerHTML);
-    assert.match(points, /This round’s points/);
+    assert.ok(points.includes(UI.esc(UI.t('roundGain'))));
     assert.equal((points.match(/data-dx-score-player=/g) || []).length, 4);
     for (const row of data.dixit.result.rows) {
       assert.ok(points.includes('data-dx-score-player="' + row.playerNum + '"'));
       assert.ok(points.includes('Seat ' + row.playerNum));
-      assert.ok(points.includes('aria-label="Round gain">+' + row.delta + '</strong>'));
-      assert.ok(points.includes('Total <strong>' + row.score + '</strong>'));
-      assert.ok(points.includes('Base +' + row.base)); assert.ok(points.includes('Bonus +' + row.bonus));
+      assert.ok(points.includes('aria-label="Round gain">' + (row.delta ? '+' : '') + row.delta + '</strong>'));
     }
-    assert.match(points, />\+0<\/strong>/, 'zero-point players remain visible');
-    assert.doesNotMatch(points, />-0|>\+-|aria-modal|role="dialog"/);
+    assert.match(points, />0<\/strong>/, 'zero-point players remain visible');
+    assert.doesNotMatch(points, />\+0|>-0|>\+-|aria-modal|role="dialog"|Total|Base|Bonus/);
     const revealArea = h.element.innerHTML.match(/<section\b[^>]*data-dx-reveal-stage="popular"[^>]*>[\s\S]*?<\/section>/)?.[0] || '';
     assert.ok(revealArea.includes(points), 'round points participate in the reveal layout beside its card area');
     assert.doesNotMatch(points, /data-dx-picture|class="dx-art"/, 'the points panel does not contain or replace the artwork');
@@ -529,6 +582,74 @@ test('all-player round points stay beside the revealed pictures through time, he
     finally { refreshed.card.destroy(); }
     assert.equal(h.sent.length, 0, 'displaying points never changes the game');
   } finally { h.card.destroy(); }
+});
+
+test('compact round points explain only awarded points and keep zero-point players to their name and zero', () => {
+  const expected = {
+    some: {
+      1: ['Some, not all, found your card +3'],
+      2: ['Correct guess +3', '2 votes for your card +2'],
+      3: [], 4: [],
+    },
+    all: {
+      1: [], 2: ['Everyone guessed right +2'], 3: ['Everyone guessed right +2'], 4: ['Everyone guessed right +2'],
+    },
+    none: {
+      1: [],
+      2: ['Nobody guessed right +2', '2 votes for your card +2'],
+      3: ['Nobody guessed right +2', '1 vote for your card +1'],
+      4: ['Nobody guessed right +2'],
+    },
+  };
+  for (const outcome of ['some', 'all', 'none']) {
+    const s = scored(outcome), points = roundPointsPart(htmlFor(s, 2)), players = scorePlayerParts(points);
+    assert.equal(players.size, 4);
+    assert.doesNotMatch(visibleText(points), /Total|Base|Bonus|0 votes|\+0/, 'left points list only this round and positive reasons');
+    for (const row of s.lastRound.rows) {
+      const text = visibleText(players.get(row.playerNum) || '');
+      const reasons = expected[outcome][row.playerNum];
+      assert.equal(text, 'Seat ' + row.playerNum + ' ' + (row.delta ? '+' : '') + row.delta + (reasons.length ? ' ' + reasons.join(' ') : ''), 'compact awarded points for ' + outcome + ' / Seat ' + row.playerNum);
+      for (const other of s.roster.filter(player => player.playerNum !== row.playerNum)) assert.ok(!text.includes(other.name), 'no voter names are listed under a player’s points');
+    }
+  }
+});
+
+test('round explanations use awarded deltas rather than accumulated totals and preserve uncapped vote bonuses', () => {
+  let s = voting(8);
+  s.scores = Object.fromEntries(s.roster.map(player => [player.playerNum, 10 + player.playerNum]));
+  for (let seat = 2; seat <= 8; seat++) s = act(s, 'vote', seat, { cardId: seat === 2 ? s.submissions[1][0] : s.submissions[2][0] });
+  s = finishReveal(act(s, 'reveal'));
+  const html = htmlFor(s, 2), points = roundPointsPart(html), players = scorePlayerParts(points), row = s.lastRound.rows.find(row => row.playerNum === 2);
+  assert.equal(row.bonus, 6); assert.equal(row.delta, 9); assert.equal(row.score, 21);
+  assert.equal(visibleText(players.get(2)), 'Seat 2 +9 Correct guess +3 6 votes for your card +6');
+  assert.doesNotMatch(points, /Total|Base|Bonus|>21<|>\+21</);
+  const totals = html.slice(html.indexOf('data-dx-details'));
+  assert.match(totals, /Seat 2<\/span><strong>21<\/strong>/, 'accumulated totals stay in Players and scores below the cards');
+});
+
+test('three-player double submissions combine vote bonuses while ranking each individual picture separately', () => {
+  let s = voting(3);
+  s = act(s, 'vote', 2, { cardId: s.submissions[3][0] });
+  s = act(s, 'vote', 3, { cardId: s.submissions[2][1] });
+  s = finishReveal(act(s, 'reveal'));
+  const html = htmlFor(s, 2), points = roundPointsPart(html), players = scorePlayerParts(points), right = secondaryPart(html);
+  assert.equal(s.table.length, 5);
+  assert.equal(visibleText(players.get(1)), 'Seat 1 0');
+  for (const seat of [2, 3]) assert.equal(visibleText(players.get(seat)), 'Seat ' + seat + ' +3 Nobody guessed right +2 1 vote for your card +1');
+  assert.match(right, /0 vote\(s\)/); assert.equal((right.match(/data-dx-picture=/g) || []).length, 2);
+  for (const [seat, cardIndex] of [[2, 0], [3, 1]]) assert.ok(right.includes('data-dx-picture="' + s.submissions[seat][cardIndex] + '"'), 'unvoted individual submitted cards tie in the second vote level');
+  assert.ok(!right.includes('data-dx-picture="' + s.lastRound.answerCardId + '"'), 'the central answer is not repeated');
+});
+
+test('legacy object-shaped score rows retain the same concise reasons and second-place pictures', () => {
+  const s = scored('none'), data = E.view(s, 2), original = UI.tableHTML(data);
+  data.dixit.result.rows = Object.fromEntries(data.dixit.result.rows.map((row, i) => [i, row]));
+  for (const key of ['popularCardIds', 'maxVotes', 'revealedAt']) delete data.dixit.result[key];
+  for (const key of ['revealStage', 'revealStartedAt', 'revealAnswerAt', 'revealPopularAt']) delete data.dixit[key];
+  const restored = UI.tableHTML(data);
+  assert.equal(roundPointsPart(restored), roundPointsPart(original));
+  assert.equal(secondaryPart(restored), secondaryPart(original));
+  assert.doesNotMatch(restored, /data-dx-countdown/);
 });
 
 test('player totals start expanded and preserve manual collapse while round points and review details repaint', () => {
@@ -605,7 +726,8 @@ test('card groups lead expanded player totals and full round points also remain 
     assert.doesNotMatch(html, /<header|<h1>Dixit<\/h1>|Round \d+ · Storyteller:|class="dx-identity"|class="dx-spoken"/);
   }
   const html = htmlFor(scored('none'), 2);
-  assert.match(html, /class="dx-story-reveal"><h2>The Storyteller’s card <span>0 vote\(s\)<\/span><\/h2>/);
+  const centre = html.slice(html.indexOf('class="dx-story-reveal"'), html.indexOf('class="dx-popular-reveal"'));
+  assert.match(centre, /<h2>The Storyteller’s card <span>0 vote\(s\)<\/span><\/h2>/);
   assert.match(html, /<details class="dx-panel dx-result" data-dx-result-details>/);
   assert.ok(html.indexOf('data-dx-result-details') < html.indexOf('data-dx-details'));
 });
