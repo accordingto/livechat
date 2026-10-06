@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d1a">
+  <meta name="description" content="One strange topic. One real expert. Everyone else makes it up. A live conversation game for 3–9 friends with private roles and automatic scoring.">
+  <meta name="referrer" content="same-origin">
+  <title>Bluff King · Live Chat · IceBreak Hub</title>
+  <link rel="icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="bluff-king.css?v=1">
+  <script src="i18n.js"></script>
+</head>
+<body class="bk-page">
+  <nav class="topbar"><a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a><span id="bk-room-label"></span></nav>
+  <main class="bk-shell">
+    <header class="bk-heading"><span class="bk-crown" aria-hidden="true">♛</span><div><p class="bk-eyebrow">ICEBREAK HUB · 3–9 PLAYERS</p><h1>Bluff King <span>· Live Chat</span></h1><p data-i18n="bluff.tagline">One real expert. A room full of convincing stories.</p></div></header>
+    <div class="bk-connection" id="bk-connection" role="status" aria-live="polite">Connecting…</div>
+    <div class="bk-error" id="bk-error" role="alert" hidden></div>
+    <div id="bk-app" aria-live="polite"></div>
+    <details class="bk-rules" id="bk-rules"><summary data-i18n="bluff.how">How to play</summary><div id="bk-rule-copy"></div></details>
+    <footer class="bk-footer" data-i18n="bluff.footer">Talk in your usual voice chat, or around the same table. A conversation adaptation with original topic cards.</footer>
+  </main>
+  <div id="room-mount" hidden></div>
+  <dialog class="bk-dialog" id="bk-confirm"><form method="dialog"><p class="bk-eyebrow" data-i18n="bluff.check">CHECK YOUR CHOICE</p><h2 id="bk-confirm-title"></h2><p id="bk-confirm-text"></p><div class="bk-actions"><button value="cancel" data-i18n="bluff.goBack">Go back</button><button type="button" class="bk-primary" id="bk-confirm-send" data-i18n="bluff.confirm">Confirm</button></div></form></dialog>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script src="bluff-king-ui.js?v=1"></script>
+</body></html>

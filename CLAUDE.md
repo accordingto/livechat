@@ -1,5 +1,15 @@
 ## 專案背景
 
+**Bluff King · Live Chat（2026-10-07）**：新增於 Hub 最下面、Dixit 之後，
+英文為主，3–9 人，每個正式座位當一次 Thinker；同一 discussion 內手動換
+Spotlight、一次公開質疑，確認後揭曉計分。60 道已查核英文題，沒有 AI 或內建語音。
+使用者明確同意現有房主信任模式，不要求後端或伺服器秘密值：房主正常公開
+投影沒有秘密卡，房主以另開私人卡遊玩；房主瀏覽器仍持有權威狀態，須保持開啟。
+Firebase 儲存真實多人狀態與跨房間個人曝光歷史；同一瀏覽器身分不因暱稱而改變。
+`play.html` 原連結接入同一私人頁，不能傳房主憑證。題庫只於房主頁載入，
+但靜態題庫並非防惡意讀取的秘密邊界。規則、預設值、維護與驗證詳見
+`bluff-king-mode.md`；勿重新加入 Opening、Final Defense、投票或固定發言倒數。
+
 **Chat Wolf free-chat v3 (2026-09-30)**: Incremental new mode, not a project rewrite.
 New rooms use `free-chat-v3` / `rulesVersion: 3`; legacy rooms remain compatible and
 can explicitly upgrade from LOBBY or FINISHED. Defaults: 3 × 600-second free-chat

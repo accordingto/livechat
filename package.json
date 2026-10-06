@@ -10,7 +10,11 @@
     "test:once-upon-a-time": "node --test tests/once-upon-a-time-*.test.cjs",
     "dev:once-upon-a-time": "node scripts/once-upon-a-time-dev-server.cjs",
     "test:dixit": "node --test tests/dixit-*.test.cjs",
-    "dev:dixit": "node scripts/dixit-dev-server.cjs"
+    "dev:dixit": "node scripts/dixit-dev-server.cjs",
+    "test:bluff": "node --test tests/bluff-*.test.cjs",
+    "dev:bluff": "node scripts/bluff-dev-server.cjs",
+    "build:bluff-topics": "node scripts/bluff-compile-topics.cjs",
+    "validate:bluff-topics": "node scripts/bluff-compile-topics.cjs --check"
   },
   "engines": {
     "node": ">=20"

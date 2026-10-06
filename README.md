@@ -23,10 +23,13 @@ host is sharing.
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
 | 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
 | 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
+| ♛ Bluff King · Live Chat | 3–9 | One strange topic, one real expert: make up explanations, question each other, and find the truth in one continuous conversation |
 
 ## How it works
 
-**Dixit** is the final entry in the Hub game menu. Its prominent phase bar tells
+**Bluff King · Live Chat** is the final entry in the Hub game menu. It uses the existing room/player links, with 60 verified English topics, private roles, manual Spotlight, one public challenge, and automatic scoring. Keep the trusted host table open. See [`bluff-king-mode.md`](bluff-king-mode.md) for launch steps, rules, knowledge history, and the explicitly accepted host trust boundary. No new environment variables or backend credentials are required.
+
+**Dixit** retains its original Hub entry. Its prominent phase bar tells
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card
 before the highest-voted pictures. Designate the host player when opening the
 table; that player's private card handles every game control as well as their
@@ -217,7 +220,7 @@ node --test tests/*.test.cjs
 
 ## Dixit picture storytelling
 
-The final Hub game supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
+Dixit supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
 
 ## License
 

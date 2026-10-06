@@ -1,0 +1,906 @@
+[
+  {
+    "id": "bk-nature-001",
+    "canonicalKnowledgeId": "bk-nature-001",
+    "locale": "en",
+    "term": "Virga",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Weather"
+    ],
+    "secretAnswer": "Virga is rain or snow that falls from a cloud but disappears before reaching the ground.",
+    "supportingFacts": [
+      "Dry air below the cloud makes the falling water disappear into the air.",
+      "It can look like thin tails hanging from a cloud."
+    ],
+    "revealExplanation": "The disappearing water cools the air around it.",
+    "sources": [
+      {
+        "title": "NOAA National Weather Service: Owlie's Weird Weather",
+        "url": "https://www.weather.gov/owlie/weird-weather"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "precipitation"
+    ]
+  },
+  {
+    "id": "bk-nature-002",
+    "canonicalKnowledgeId": "bk-nature-002",
+    "locale": "en",
+    "term": "Snow roller",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Weather",
+      "Animal behavior",
+      "Food"
+    ],
+    "secretAnswer": "A snow roller is a roll of snow formed naturally by wind or by rolling downhill.",
+    "supportingFacts": [
+      "The snow must be sticky enough to hold together.",
+      "Strong wind can break the roll apart."
+    ],
+    "revealExplanation": "Some rollers have a hollow middle and look like doughnuts.",
+    "sources": [
+      {
+        "title": "NOAA National Weather Service: Owlie's Weird Weather",
+        "url": "https://www.weather.gov/owlie/weird-weather"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "snow"
+    ]
+  },
+  {
+    "id": "bk-nature-003",
+    "canonicalKnowledgeId": "bk-nature-003",
+    "locale": "en",
+    "term": "Hair ice",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Hair ice is a mass of very thin ice threads that grows on dead wood with help from a fungus.",
+    "supportingFacts": [
+      "It can form on cold, damp nights.",
+      "Chemicals from the fungus help keep the ice in thin strands."
+    ],
+    "revealExplanation": "It often melts in the morning.",
+    "sources": [
+      {
+        "title": "NOAA National Weather Service: Owlie's Weird Weather",
+        "url": "https://www.weather.gov/owlie/weird-weather"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "ice",
+      "fungus"
+    ]
+  },
+  {
+    "id": "bk-nature-004",
+    "canonicalKnowledgeId": "bk-nature-004",
+    "locale": "en",
+    "term": "Lenticular cloud",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Weather"
+    ],
+    "secretAnswer": "A lenticular cloud is a lens-shaped cloud formed in waves of air, often behind mountains.",
+    "supportingFacts": [
+      "Moist air rises in a standing wave and forms the cloud.",
+      "Its shape can look like a flying saucer."
+    ],
+    "revealExplanation": "The air nearby can be rough for aircraft.",
+    "sources": [
+      {
+        "title": "Met Office: Unusual cloud formations",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/types-of-weather/clouds/unusual-cloud-formations"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "clouds"
+    ]
+  },
+  {
+    "id": "bk-nature-005",
+    "canonicalKnowledgeId": "bk-nature-005",
+    "locale": "en",
+    "term": "Nacreous cloud",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Weather",
+      "Jewelry",
+      "Sea life"
+    ],
+    "secretAnswer": "A nacreous cloud is a very high cloud that shines with pearl-like colors near sunrise or sunset.",
+    "supportingFacts": [
+      "It forms in the lower stratosphere over polar regions.",
+      "Its small ice particles scatter light."
+    ],
+    "revealExplanation": "Sunlight can still reach it when the sun is below the horizon.",
+    "sources": [
+      {
+        "title": "Met Office: Unusual cloud formations",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/types-of-weather/clouds/unusual-cloud-formations"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "clouds"
+    ]
+  },
+  {
+    "id": "bk-nature-006",
+    "canonicalKnowledgeId": "bk-nature-006",
+    "locale": "en",
+    "term": "Noctilucent cloud",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A noctilucent cloud is a very high cloud of ice crystals that can still shine after sunset.",
+    "supportingFacts": [
+      "It is in the mesosphere, above ordinary clouds.",
+      "Its great height lets it keep reflecting sunlight."
+    ],
+    "revealExplanation": "These clouds are too high to change weather on the ground.",
+    "sources": [
+      {
+        "title": "Met Office: Unusual cloud formations",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/types-of-weather/clouds/unusual-cloud-formations"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "clouds"
+    ]
+  },
+  {
+    "id": "bk-nature-007",
+    "canonicalKnowledgeId": "bk-nature-007",
+    "locale": "en",
+    "term": "Mammatus",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Weather"
+    ],
+    "secretAnswer": "Mammatus are rounded, pouch-like shapes hanging from the underside of a cloud.",
+    "supportingFacts": [
+      "They often appear below a large thunderstorm cloud.",
+      "They can also appear on other types of cloud."
+    ],
+    "revealExplanation": "Their name comes from a Latin word for an udder or breast.",
+    "sources": [
+      {
+        "title": "Met Office: Unusual cloud formations",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/types-of-weather/clouds/unusual-cloud-formations"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "clouds"
+    ]
+  },
+  {
+    "id": "bk-nature-008",
+    "canonicalKnowledgeId": "bk-nature-008",
+    "locale": "en",
+    "term": "Brocken spectre",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Light and vision",
+      "Folklore",
+      "Sea life"
+    ],
+    "secretAnswer": "A Brocken spectre is a person's shadow on mist or cloud that appears like a huge distant figure.",
+    "supportingFacts": [
+      "The sun is behind the person.",
+      "People often see it from mountain tops."
+    ],
+    "revealExplanation": "It was named after a mountain in Germany.",
+    "sources": [
+      {
+        "title": "Met Office: Optical effects",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "light",
+      "weather"
+    ]
+  },
+  {
+    "id": "bk-nature-009",
+    "canonicalKnowledgeId": "bk-nature-009",
+    "locale": "en",
+    "term": "Parhelion",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A parhelion is a bright spot beside the sun caused by sunlight passing through ice crystals.",
+    "supportingFacts": [
+      "The crystals have six sides.",
+      "These spots are also called sun dogs."
+    ],
+    "revealExplanation": "They can appear with a ring of light around the sun.",
+    "sources": [
+      {
+        "title": "Met Office: Optical effects",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "light",
+      "weather"
+    ]
+  },
+  {
+    "id": "bk-nature-010",
+    "canonicalKnowledgeId": "bk-nature-010",
+    "locale": "en",
+    "term": "Circumzenithal arc",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Light and vision"
+    ],
+    "secretAnswer": "A circumzenithal arc is a colored arc in the sky that looks like an upside-down rainbow.",
+    "supportingFacts": [
+      "Sunlight passes through flat ice crystals.",
+      "Lower clouds can hide the arc."
+    ],
+    "revealExplanation": "The crystals bend light rather than raindrops making a rainbow.",
+    "sources": [
+      {
+        "title": "Met Office: Optical effects",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "light",
+      "weather"
+    ]
+  },
+  {
+    "id": "bk-nature-011",
+    "canonicalKnowledgeId": "bk-nature-011",
+    "locale": "en",
+    "term": "Fogbow",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Light and vision",
+      "Sea navigation",
+      "Food"
+    ],
+    "secretAnswer": "A fogbow is a pale, often almost white bow of light made by tiny water drops in fog or mist.",
+    "supportingFacts": [
+      "Its water drops are smaller than raindrops.",
+      "It is wider than a typical rainbow."
+    ],
+    "revealExplanation": "The tiny drops spread the colors so they are hard to see.",
+    "sources": [
+      {
+        "title": "Met Office: Rainbows",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "light",
+      "weather"
+    ]
+  },
+  {
+    "id": "bk-nature-012",
+    "canonicalKnowledgeId": "bk-nature-012",
+    "locale": "en",
+    "term": "Moonbow",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A moonbow is a rainbow made by moonlight instead of sunlight.",
+    "supportingFacts": [
+      "It often looks white to our eyes because its light is weak.",
+      "A nearly full, low moon and water drops can make one possible."
+    ],
+    "revealExplanation": "A long-exposure photo can show its faint colors.",
+    "sources": [
+      {
+        "title": "Met Office: Rainbows",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "light",
+      "weather"
+    ]
+  },
+  {
+    "id": "bk-nature-013",
+    "canonicalKnowledgeId": "bk-nature-013",
+    "locale": "en",
+    "term": "Alexander's band",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Light and vision"
+    ],
+    "secretAnswer": "Alexander's band is the darker area between the two bows of a double rainbow.",
+    "supportingFacts": [
+      "The outer rainbow is fainter than the inner one.",
+      "The outer bow's colors run in the opposite order."
+    ],
+    "revealExplanation": "Less rainbow light reaches your eyes from the area between the bows.",
+    "sources": [
+      {
+        "title": "Met Office: Rainbows",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "light",
+      "weather"
+    ]
+  },
+  {
+    "id": "bk-nature-014",
+    "canonicalKnowledgeId": "bk-nature-014",
+    "locale": "en",
+    "term": "Tafoni",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Rock formations",
+      "Cooking",
+      "Musical instruments"
+    ],
+    "secretAnswer": "Tafoni are small, rounded holes in a rock surface that can look like a honeycomb.",
+    "supportingFacts": [
+      "Groups of holes can make the rock look like a sponge.",
+      "They often occur in dry or partly dry areas."
+    ],
+    "revealExplanation": "At Arches, water helps weaken the material holding sandstone together.",
+    "sources": [
+      {
+        "title": "National Park Service: Tafoni",
+        "url": "https://home.nps.gov/articles/tafoni.htm"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "weathering"
+    ]
+  },
+  {
+    "id": "bk-nature-015",
+    "canonicalKnowledgeId": "bk-nature-015",
+    "locale": "en",
+    "term": "Fulgurite",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A fulgurite is glass formed when lightning melts sand in the ground.",
+    "supportingFacts": [
+      "In sand dunes, it can form dark glass tubes.",
+      "The name comes from the Latin word for lightning."
+    ],
+    "revealExplanation": "The tubes preserve part of the path of a lightning strike through sand.",
+    "sources": [
+      {
+        "title": "National Park Service: Fulgurites",
+        "url": "https://home.nps.gov/articles/grsa-fulgurites.htm"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "lightning"
+    ]
+  },
+  {
+    "id": "bk-nature-016",
+    "canonicalKnowledgeId": "bk-nature-016",
+    "locale": "en",
+    "term": "Fallstreak hole",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Weather"
+    ],
+    "secretAnswer": "A fallstreak hole is a large round or oval gap that forms when ice grows and falls out of a cloud.",
+    "supportingFacts": [
+      "The cloud can contain liquid drops colder than freezing.",
+      "An aircraft passing through can help start the freezing."
+    ],
+    "revealExplanation": "The gap can grow as nearby drops freeze and fall.",
+    "sources": [
+      {
+        "title": "NOAA National Weather Service: Fallstreaks",
+        "url": "https://www.weather.gov/arx/why_fallstreaks"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "weather",
+      "clouds"
+    ]
+  },
+  {
+    "id": "bk-nature-017",
+    "canonicalKnowledgeId": "bk-nature-017",
+    "locale": "en",
+    "term": "Desert varnish",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Rock formations",
+      "Painting",
+      "Cooking"
+    ],
+    "secretAnswer": "Desert varnish is a thin natural coating that gives exposed rocks dark or reddish colors.",
+    "supportingFacts": [
+      "It may contain clay and iron or manganese oxides.",
+      "Its material is different from the rock beneath it."
+    ],
+    "revealExplanation": "People have made rock carvings by cutting through the dark surface to reveal lighter rock.",
+    "sources": [
+      {
+        "title": "National Park Service: Desert Varnish",
+        "url": "https://www.nps.gov/articles/desertvarnish.htm"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "rock-surfaces"
+    ]
+  },
+  {
+    "id": "bk-nature-018",
+    "canonicalKnowledgeId": "bk-nature-018",
+    "locale": "en",
+    "term": "Pillow lava",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Pillow lava is rounded lumps of rock formed when lava cools quickly in water.",
+    "supportingFacts": [
+      "The outside cools into a glassy skin.",
+      "Hot lava inside can keep making the lump larger."
+    ],
+    "revealExplanation": "The lumps can pile up in thick stacks.",
+    "sources": [
+      {
+        "title": "US Geological Survey: Pillow lava",
+        "url": "https://www.usgs.gov/observatories/calvo/news/dont-try-have-a-pillow-fight-these-pillows"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "volcanoes"
+    ]
+  },
+  {
+    "id": "bk-nature-019",
+    "canonicalKnowledgeId": "bk-nature-019",
+    "locale": "en",
+    "term": "Yardang",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Rock formations"
+    ],
+    "secretAnswer": "A yardang is a ridge of rock shaped by wind wearing away the surrounding material.",
+    "supportingFacts": [
+      "Wind can carry away loose sand grains from the rock.",
+      "NASA has photographed yardangs on Mars."
+    ],
+    "revealExplanation": "Their shape records the action of rock-wearing winds.",
+    "sources": [
+      {
+        "title": "NASA: Wind Erosion in Tithonium",
+        "url": "https://science.nasa.gov/photojournal/wind-erosion-in-tithonium/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "wind"
+    ]
+  },
+  {
+    "id": "bk-nature-020",
+    "canonicalKnowledgeId": "bk-nature-020",
+    "locale": "en",
+    "term": "Helictite",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Rock formations",
+      "Sea life",
+      "Clothing"
+    ],
+    "secretAnswer": "A helictite is a twisted mineral growth in a cave that can grow in many directions.",
+    "supportingFacts": [
+      "It can grow on cave ceilings or walls.",
+      "Water moves through tiny channels inside it."
+    ],
+    "revealExplanation": "Some look like thin branches or antlers rather than straight hanging points.",
+    "sources": [
+      {
+        "title": "National Park Service: Speleothems",
+        "url": "https://home.nps.gov/subjects/caves/speleothems.htm"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "caves"
+    ]
+  },
+  {
+    "id": "bk-nature-021",
+    "canonicalKnowledgeId": "bk-nature-021",
+    "locale": "en",
+    "term": "Pele's hair",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Pele's hair is thin strands of volcanic glass made when liquid lava is stretched and cools in air.",
+    "supportingFacts": [
+      "It forms from very fluid lava.",
+      "Wind can carry the light strands away from a volcano."
+    ],
+    "revealExplanation": "The strands are fragile and can break into sharp glass pieces.",
+    "sources": [
+      {
+        "title": "US Geological Survey: Pele's hairs",
+        "url": "https://www.usgs.gov/observatories/hvo/news/volcano-watch-peles-hairs-a-beautiful-hazard-island-hawaii"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "volcanoes"
+    ]
+  },
+  {
+    "id": "bk-nature-022",
+    "canonicalKnowledgeId": "bk-nature-022",
+    "locale": "en",
+    "term": "Pele's tears",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Rock formations"
+    ],
+    "secretAnswer": "Pele's tears are small droplets of volcanic glass made from liquid lava.",
+    "supportingFacts": [
+      "They can occur in a cloud of cooled lava pieces above a lava fountain.",
+      "They are droplets, while Pele's hair forms thin strands."
+    ],
+    "revealExplanation": "Very fluid lava can form drops rather than long strings.",
+    "sources": [
+      {
+        "title": "US Geological Survey: Hawaiian lava fountain and volcanic glass",
+        "url": "https://www.usgs.gov/media/images/lava-fountain-reaches-high-445-m-1460-ft-during-episode-30"
+      },
+      {
+        "title": "US Geological Survey: Pele's hairs",
+        "url": "https://www.usgs.gov/observatories/hvo/news/volcano-watch-peles-hairs-a-beautiful-hazard-island-hawaii"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "geology",
+      "volcanoes"
+    ]
+  },
+  {
+    "id": "bk-nature-023",
+    "canonicalKnowledgeId": "bk-nature-023",
+    "locale": "en",
+    "term": "Kleptoplasty",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Living things",
+      "Crime",
+      "Metalworking"
+    ],
+    "secretAnswer": "Kleptoplasty is when an organism takes the light-catching parts of its food and keeps using them in its own cells.",
+    "supportingFacts": [
+      "Some sea slugs take these parts from algae they eat.",
+      "The stolen parts can still use sunlight to provide energy."
+    ],
+    "revealExplanation": "The name's first part comes from a Greek word for thief.",
+    "sources": [
+      {
+        "title": "University of Hawaii: Kleptoplasty",
+        "url": "https://manoa.hawaii.edu/exploringourfluidearth/biological/aquatic-plants-and-algae/structure-and-function/weird-science-kleptoplasty"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "biology",
+      "sea-slugs"
+    ]
+  },
+  {
+    "id": "bk-nature-024",
+    "canonicalKnowledgeId": "bk-nature-024",
+    "locale": "en",
+    "term": "Witch's broom",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A witch's broom is a dense bunch of unusually short shoots growing together on a tree or other woody plant.",
+    "supportingFacts": [
+      "Diseases, mites, or mutations can cause it.",
+      "Many short shoots can grow after a main growing point dies."
+    ],
+    "revealExplanation": "Some caused by mutations are used to grow dwarf plants.",
+    "sources": [
+      {
+        "title": "University of Maryland Extension: Witches' Broom on Trees",
+        "url": "https://www.extension.umd.edu/resource/witches-broom-trees"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "plants",
+      "growth"
+    ]
+  },
+  {
+    "id": "bk-nature-025",
+    "canonicalKnowledgeId": "bk-nature-025",
+    "locale": "en",
+    "term": "Guttation",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Plant behavior"
+    ],
+    "secretAnswer": "Guttation is when pressure in a plant's roots pushes liquid water out at the edges of its leaves.",
+    "supportingFacts": [
+      "It can be seen on lawn grass.",
+      "The drops often appear in the morning after little water has evaporated."
+    ],
+    "revealExplanation": "The water comes from inside the plant.",
+    "sources": [
+      {
+        "title": "Nature Education: Water Uptake and Transport in Vascular Plants",
+        "url": "https://www.nature.com/scitable/knowledge/library/water-uptake-and-transport-in-vascular-plants-103016037/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "plants",
+      "water"
+    ]
+  },
+  {
+    "id": "bk-nature-026",
+    "canonicalKnowledgeId": "bk-nature-026",
+    "locale": "en",
+    "term": "Countershading",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Animal adaptations",
+      "Painting",
+      "Architecture"
+    ],
+    "secretAnswer": "Countershading is coloring with a dark upper side and a light lower side that helps an animal blend in.",
+    "supportingFacts": [
+      "From above, the dark side can match deep water.",
+      "From below, the light side can match the bright surface."
+    ],
+    "revealExplanation": "Tuna, sharks, dolphins, and sea turtles use this form of camouflage.",
+    "sources": [
+      {
+        "title": "Monterey Bay Aquarium: Open ocean",
+        "url": "https://www.montereybayaquarium.org/animals-the-ocean/ecosystems/open-ocean"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "animals",
+      "camouflage"
+    ]
+  },
+  {
+    "id": "bk-nature-027",
+    "canonicalKnowledgeId": "bk-nature-027",
+    "locale": "en",
+    "term": "Marcescence",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Marcescence is when a plant keeps dead leaves attached instead of dropping them at the usual time.",
+    "supportingFacts": [
+      "Oaks and beech trees can keep dead leaves through winter.",
+      "New spring growth can push the old leaves off."
+    ],
+    "revealExplanation": "Researchers have several ideas about its benefits, but the reason is not settled.",
+    "sources": [
+      {
+        "title": "University of Georgia Extension: Trees that hold their leaves",
+        "url": "https://site.extension.uga.edu/forsyth/trees-that-hold-their-leaves/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "plants",
+      "leaves"
+    ]
+  },
+  {
+    "id": "bk-nature-028",
+    "canonicalKnowledgeId": "bk-nature-028",
+    "locale": "en",
+    "term": "Plant vivipary",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Plant behavior"
+    ],
+    "secretAnswer": "Plant vivipary is when a seed starts growing while still inside or attached to its parent plant.",
+    "supportingFacts": [
+      "It can happen inside a tomato.",
+      "For some mangroves, it is a normal way to develop."
+    ],
+    "revealExplanation": "A mangrove seedling can drop with a long root that sticks into soft wet soil.",
+    "sources": [
+      {
+        "title": "University of Florida: Vivipary",
+        "url": "https://propg.ifas.ufl.edu/04-seeds/01-development/11-seedsdevelopment-vivipary.html"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "plants",
+      "seeds"
+    ]
+  },
+  {
+    "id": "bk-nature-029",
+    "canonicalKnowledgeId": "bk-nature-029",
+    "locale": "en",
+    "term": "Nyctinasty",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Plant behavior",
+      "Dance",
+      "Body language"
+    ],
+    "secretAnswer": "Nyctinasty is the daily movement of some plant leaves as day turns to night.",
+    "supportingFacts": [
+      "Shamrock plants fold their leaves at night and open them in morning light.",
+      "Special cells at the leaf base swell or shrink to move it."
+    ],
+    "revealExplanation": "The leaves can look as if they are going to sleep.",
+    "sources": [
+      {
+        "title": "University of Missouri Extension: Shamrock plants",
+        "url": "https://extension.missouri.edu/news/shamrock-plants-rockin-by-day-dozin-at-night"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "plants",
+      "movement"
+    ]
+  },
+  {
+    "id": "bk-nature-030",
+    "canonicalKnowledgeId": "bk-nature-030",
+    "locale": "en",
+    "term": "Masting",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Masting is when trees or shrubs produce a huge seed crop in some years and much less in others.",
+    "supportingFacts": [
+      "Their fruits and seeds are an important food for wildlife.",
+      "Oaks and beech trees have years with heavy nut crops."
+    ],
+    "revealExplanation": "Weather, species, and genetics all help affect how much seed is produced.",
+    "sources": [
+      {
+        "title": "University of New Hampshire Extension: Mast",
+        "url": "https://extension.unh.edu/goodforestry/html/6-1.htm"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "plants",
+      "seeds"
+    ]
+  }
+]

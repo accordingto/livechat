@@ -1,0 +1,944 @@
+[
+  {
+    "id": "bk-culture-001",
+    "canonicalKnowledgeId": "bk-culture-001",
+    "locale": "en",
+    "term": "Puzzle jug",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Historical tableware"
+    ],
+    "secretAnswer": "A puzzle jug is a drinking vessel with holes and hidden passages that make it hard to drink without spilling.",
+    "supportingFacts": [
+      "Its neck has holes, so simply tipping it does not work.",
+      "It was used for drinking games in taverns."
+    ],
+    "revealExplanation": "The V&A's recreated jug has a hidden route under the handle. Covering all but one spout lets the drinker use suction.",
+    "sources": [
+      {
+        "title": "V&A — How was it made? A puzzle jug",
+        "url": "https://www.vam.ac.uk/articles/how-was-it-made-a-puzzle-jug/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "tableware",
+      "drinking-games"
+    ]
+  },
+  {
+    "id": "bk-culture-002",
+    "canonicalKnowledgeId": "bk-culture-002",
+    "locale": "en",
+    "term": "Fuddling cup",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Historical tableware",
+      "A theatre costume",
+      "A wedding custom"
+    ],
+    "secretAnswer": "A fuddling cup joins several drinking cups inside, so emptying one can draw liquid from all of them.",
+    "supportingFacts": [
+      "The cups look separate but their inner spaces are connected.",
+      "Such cups were used as joke drinking pots in English taverns."
+    ],
+    "revealExplanation": "A drinker who expects one small cup can end up drinking the contents of the whole group.",
+    "sources": [
+      {
+        "title": "Seattle Art Museum — Object of the Week: Triplicate vase",
+        "url": "https://samblog.seattleartmuseum.org/2018/11/triplicate-vase/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "tableware",
+      "drinking-games"
+    ]
+  },
+  {
+    "id": "bk-culture-003",
+    "canonicalKnowledgeId": "bk-culture-003",
+    "locale": "en",
+    "term": "Vinaigrette box",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A vinaigrette box is a small container for a sponge soaked in scented vinegar.",
+    "supportingFacts": [
+      "A lid with small holes holds the sponge while letting its smell out.",
+      "People could wear it at the waist or neck, or carry it in a pocket."
+    ],
+    "revealExplanation": "Silver examples had gold-covered interiors to protect the silver from the vinegar.",
+    "sources": [
+      {
+        "title": "The Met — William Thompson II, Vinaigrette",
+        "url": "https://www.metmuseum.org/art/collection/search/207454"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "accessories",
+      "scent"
+    ]
+  },
+  {
+    "id": "bk-culture-004",
+    "canonicalKnowledgeId": "bk-culture-004",
+    "locale": "en",
+    "term": "Netsuke",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Clothing accessory"
+    ],
+    "secretAnswer": "A netsuke is a small toggle that helps hold a hanging container on a Japanese kimono's waist sash.",
+    "supportingFacts": [
+      "A cord links the toggle to the container.",
+      "Wood and ivory were common materials, and many examples are tiny carved figures."
+    ],
+    "revealExplanation": "These useful objects also let their owners show wealth through fine materials and skilled carving.",
+    "sources": [
+      {
+        "title": "The Met — Netsuke: From Fashion Fobs to Coveted Collectibles",
+        "url": "https://www.metmuseum.org/essays/netsuke-from-fashion-fobs-to-coveted-collectibles"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "japan",
+      "clothing"
+    ]
+  },
+  {
+    "id": "bk-culture-005",
+    "canonicalKnowledgeId": "bk-culture-005",
+    "locale": "en",
+    "term": "Aquamanile",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Historical vessel",
+      "A writing method",
+      "A street celebration"
+    ],
+    "secretAnswer": "An aquamanile is a vessel used to pour water over someone's hands for washing.",
+    "supportingFacts": [
+      "Medieval examples could be shaped like animals or a mounted knight.",
+      "They were used by priests and by people at the dining table."
+    ],
+    "revealExplanation": "On the Met's knight-shaped example, the helmet opens for filling, and water comes out near the horse's head.",
+    "sources": [
+      {
+        "title": "The Met — Aquamanile in the Form of a Mounted Knight",
+        "url": "https://www.metmuseum.org/art/collection/search/468633"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "medieval",
+      "washing"
+    ]
+  },
+  {
+    "id": "bk-culture-006",
+    "canonicalKnowledgeId": "bk-culture-006",
+    "locale": "en",
+    "term": "Chatelaine",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A chatelaine is a waist hook with chains that carry small useful objects.",
+    "supportingFacts": [
+      "Its chains could hold keys, scissors, a watch or a small purse.",
+      "It attaches to a belt, sash or waistband."
+    ],
+    "revealExplanation": "It could also show the authority of the person who kept the keys of a large household.",
+    "sources": [
+      {
+        "title": "ASU FIDM Museum — Chatelaine purse",
+        "url": "https://fidmmuseum.org/learn/articles/chatelaine-purse"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "accessories",
+      "household"
+    ]
+  },
+  {
+    "id": "bk-culture-007",
+    "canonicalKnowledgeId": "bk-culture-007",
+    "locale": "en",
+    "term": "Miser's purse",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Historical accessory"
+    ],
+    "secretAnswer": "A miser's purse is a long coin purse with a small middle opening that sliding rings close.",
+    "supportingFacts": [
+      "Coins can be kept in either end of the purse.",
+      "Many examples were knitted or crocheted, often with beads."
+    ],
+    "revealExplanation": "Some had differently shaped ends so the owner could find the right coins by touch in poor light.",
+    "sources": [
+      {
+        "title": "National Museum, Bloemfontein — The Miser's purse",
+        "url": "https://nationalmuseumpublications.co.za/the-misers-purse/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "accessories",
+      "money"
+    ]
+  },
+  {
+    "id": "bk-culture-008",
+    "canonicalKnowledgeId": "bk-culture-008",
+    "locale": "en",
+    "term": "Porte-bouquet",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Fashion accessory",
+      "A sailing tool",
+      "A musical form"
+    ],
+    "secretAnswer": "A porte-bouquet is a small decorative holder for a bunch of fresh flowers.",
+    "supportingFacts": [
+      "It is also called a posy holder.",
+      "Holders were made from materials such as silver, gold and mother-of-pearl."
+    ],
+    "revealExplanation": "They could be gifts for important occasions; Queen Victoria received a rich example during a visit to France.",
+    "sources": [
+      {
+        "title": "The Fan Museum — Come to the Ball: Posy Holders and Pretty Fans",
+        "url": "https://www.thefanmuseum.org.uk/exhibitions/come-to-the-ball"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "flowers",
+      "fashion"
+    ]
+  },
+  {
+    "id": "bk-culture-009",
+    "canonicalKnowledgeId": "bk-culture-009",
+    "locale": "en",
+    "term": "Burghley Nef",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "The Burghley Nef is a rich salt container made in the shape of a ship.",
+    "supportingFacts": [
+      "Its hull is a nautilus shell with silver mounts partly covered in gold.",
+      "It was made in Paris in the sixteenth century."
+    ],
+    "revealExplanation": "Ship-shaped table objects like this could mark the place of a host or honoured guest and show their status.",
+    "sources": [
+      {
+        "title": "V&A on Google Arts & Culture — The Burghley Nef",
+        "url": "https://artsandculture.google.com/asset/the-burghley-nef/sQGK5XT8Bs5O0Q?hl=en"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "tableware",
+      "design"
+    ]
+  },
+  {
+    "id": "bk-culture-010",
+    "canonicalKnowledgeId": "bk-culture-010",
+    "locale": "en",
+    "term": "Epergne",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Table decoration"
+    ],
+    "secretAnswer": "An epergne is a table centrepiece used to display fruit, sweets or flowers.",
+    "supportingFacts": [
+      "The Met has an example made from bronze covered in gold.",
+      "That example belonged to a set with matching candle holders."
+    ],
+    "revealExplanation": "The Met's example was owned by Elizabeth Schuyler, Alexander Hamilton's widow.",
+    "sources": [
+      {
+        "title": "The Met — Richmond Room, Epergne",
+        "url": "https://www.metmuseum.org/about-the-met/collection-areas/the-american-wing/period-rooms/richmond-room"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "tableware",
+      "design"
+    ]
+  },
+  {
+    "id": "bk-culture-011",
+    "canonicalKnowledgeId": "bk-culture-011",
+    "locale": "en",
+    "term": "Noken",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Traditional craft",
+      "A singing contest",
+      "A food dish"
+    ],
+    "secretAnswer": "A noken is a knotted or woven bag made by communities in Papua, Indonesia.",
+    "supportingFacts": [
+      "It is made by hand from wood fibre or leaves.",
+      "People use it to carry things such as food, firewood and even babies."
+    ],
+    "revealExplanation": "A noken can also be worn at traditional celebrations or given as a peace offering.",
+    "sources": [
+      {
+        "title": "UNESCO — Noken multifunctional knotted or woven bag",
+        "url": "https://ich.unesco.org/en/USL/noken-multifunctional-knotted-or-woven-bag-handicraft-of-the-peoples-of-papua-00619"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "indonesia",
+      "craft"
+    ]
+  },
+  {
+    "id": "bk-culture-012",
+    "canonicalKnowledgeId": "bk-culture-012",
+    "locale": "en",
+    "term": "Silbo Gomero",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Silbo Gomero is a way of communicating Spanish words through whistles on the island of La Gomera.",
+    "supportingFacts": [
+      "Different whistle sounds stand for vowels and consonants.",
+      "Pitch and breaks in the whistles help listeners tell the sounds apart."
+    ],
+    "revealExplanation": "It is passed from skilled users to learners and has also been taught in schools.",
+    "sources": [
+      {
+        "title": "UNESCO — Whistled language of La Gomera, the Silbo Gomero",
+        "url": "https://ich.unesco.org/en/RL/whistled-language-of-the-island-of-la-gomera-canary-islands-the-silbo-gomero-00172"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "language",
+      "spain"
+    ]
+  },
+  {
+    "id": "bk-culture-013",
+    "canonicalKnowledgeId": "bk-culture-013",
+    "locale": "en",
+    "term": "Yimakan",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Storytelling tradition"
+    ],
+    "secretAnswer": "Yimakan is Hezhen storytelling that mixes spoken stories and singing without musical instruments.",
+    "supportingFacts": [
+      "Performers use different melodies for different characters and parts of a story.",
+      "Stories include heroes, battles and the defeat of monsters."
+    ],
+    "revealExplanation": "The practice also carries community history and customs, and learners often train with an experienced storyteller.",
+    "sources": [
+      {
+        "title": "UNESCO — Decision 20.COM 7.c.2, Hezhen Yimakan storytelling",
+        "url": "https://ich.unesco.org/en/Decisions/20.COM/7.c.2"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "china",
+      "storytelling"
+    ]
+  },
+  {
+    "id": "bk-culture-014",
+    "canonicalKnowledgeId": "bk-culture-014",
+    "locale": "en",
+    "term": "Momoeria",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Seasonal celebration",
+      "A writing tool",
+      "A cheese-making method"
+    ],
+    "secretAnswer": "Momoeria is a New Year celebration with dance, acting and music in villages in northern Greece.",
+    "supportingFacts": [
+      "Performers move through village streets and visit homes.",
+      "The celebration runs from Christmas Day into early January."
+    ],
+    "revealExplanation": "Its dancers wear helmets, pleated skirts and traditional shoes, and carry sticks.",
+    "sources": [
+      {
+        "title": "UNESCO — Decision 11.COM 10.b.16, Momoeria",
+        "url": "https://ich.unesco.org/en/Decisions/11.COM/10.b.16"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "greece",
+      "celebration"
+    ]
+  },
+  {
+    "id": "bk-culture-015",
+    "canonicalKnowledgeId": "bk-culture-015",
+    "locale": "en",
+    "term": "Al-Qatt Al-Asiri",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Al-Qatt Al-Asiri is a tradition of painting geometric patterns on interior walls in Asir, Saudi Arabia.",
+    "supportingFacts": [
+      "Guest rooms are a special focus for this decoration.",
+      "The patterns are usually made on a white gypsum base."
+    ],
+    "revealExplanation": "Women have traditionally taught the skill by inviting female relatives to help decorate their homes.",
+    "sources": [
+      {
+        "title": "UNESCO — Al-Qatt Al-Asiri, interior wall decoration in Asir",
+        "url": "https://ich.unesco.org/en/RL/al-qatt-al-asiri-female-traditional-interior-wall-decoration-in-asir-saudi-arabia-01261?RL=01261"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "saudi-arabia",
+      "design"
+    ]
+  },
+  {
+    "id": "bk-culture-016",
+    "canonicalKnowledgeId": "bk-culture-016",
+    "locale": "en",
+    "term": "Aitysh / Aitys",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Poetry tradition"
+    ],
+    "secretAnswer": "Aitysh is a contest where two performers invent spoken or sung poems in response to each other.",
+    "supportingFacts": [
+      "The performers sit opposite each other and respond to topics chosen by the audience.",
+      "They accompany their verses with traditional string instruments."
+    ],
+    "revealExplanation": "This tradition in Kazakhstan and Kyrgyzstan values humour, quick thinking and thoughtful ideas.",
+    "sources": [
+      {
+        "title": "UNESCO — Aitysh/Aitys, art of improvisation",
+        "url": "https://ich.unesco.org/en/RL/aitysh-aitys-art-of-improvisation-00997?RL=00997"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "poetry",
+      "central-asia"
+    ]
+  },
+  {
+    "id": "bk-culture-017",
+    "canonicalKnowledgeId": "bk-culture-017",
+    "locale": "en",
+    "term": "Táncház",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Dance tradition",
+      "A writing tool",
+      "A food dish"
+    ],
+    "secretAnswer": "Táncház is a Hungarian way of learning folk dance and music through active group practice.",
+    "supportingFacts": [
+      "Learners watch and copy experienced dancers while live music plays.",
+      "People can take part regardless of age or previous dance experience."
+    ],
+    "revealExplanation": "The name means dance house. Singing lessons and craft activities can also accompany the dancing.",
+    "sources": [
+      {
+        "title": "UNESCO — Táncház method: a Hungarian model",
+        "url": "https://ich.unesco.org/en/BSP/tanchaz-method-a-hungarian-model-for-the-transmission-of-intangible-cultural-heritage-00515"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "hungary",
+      "dance"
+    ]
+  },
+  {
+    "id": "bk-culture-018",
+    "canonicalKnowledgeId": "bk-culture-018",
+    "locale": "en",
+    "term": "Bourdaloue vessel",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A bourdaloue is an oval portable chamber pot designed for a woman to use.",
+    "supportingFacts": [
+      "Examples could be made from decorated porcelain.",
+      "The Holburne Museum's example was made at the Meissen factory."
+    ],
+    "revealExplanation": "One museum example was altered after damage and may later have been mistaken for a plant pot.",
+    "sources": [
+      {
+        "title": "The Holburne Museum — Meissen Porcelain Bourdaloue",
+        "url": "https://holburne.org/meissen-porcelain-bourdaloue/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "household",
+      "porcelain"
+    ]
+  },
+  {
+    "id": "bk-culture-019",
+    "canonicalKnowledgeId": "bk-culture-019",
+    "locale": "en",
+    "term": "Stay busk",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Clothing accessory"
+    ],
+    "secretAnswer": "A stay busk is a stiff piece placed at the front of a corset to help it keep its shape.",
+    "supportingFacts": [
+      "The Met has a curved wooden example.",
+      "Busks could be decorated with rare wood or mother-of-pearl."
+    ],
+    "revealExplanation": "Makers sometimes put great effort into decorating this piece even though it was usually hidden by clothing.",
+    "sources": [
+      {
+        "title": "The Met — Busk",
+        "url": "https://www.metmuseum.org/art/collection/search/84189"
+      },
+      {
+        "title": "London Museum — Busk, stay busk, scrimshaw",
+        "url": "https://www.londonmuseum.org.uk/collections/v/object-71694/busk-stay-busk-scrimshaw/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "clothing",
+      "design"
+    ]
+  },
+  {
+    "id": "bk-culture-020",
+    "canonicalKnowledgeId": "bk-culture-020",
+    "locale": "en",
+    "term": "Niddy-noddy",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Textile tool",
+      "A festival character",
+      "A drinking vessel"
+    ],
+    "secretAnswer": "A niddy-noddy is a tool for winding yarn into loose bundles called hanks or skeins.",
+    "supportingFacts": [
+      "Yarn is wound in a figure of eight around crosspieces at its ends.",
+      "The Highland museum's example is made of wood."
+    ],
+    "revealExplanation": "It helped prepare spun wool for knitting. The museum's old example has darkened after years in peat smoke.",
+    "sources": [
+      {
+        "title": "Museum of the Highlands — Crios-iarna or Niddy-noddy",
+        "url": "https://museumofthehighlands.org/project/crios-iarna-or-niddy-noddy"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "textiles",
+      "tools"
+    ]
+  },
+  {
+    "id": "bk-culture-021",
+    "canonicalKnowledgeId": "bk-culture-021",
+    "locale": "en",
+    "term": "Lucet",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A lucet is a small fork-shaped tool used to make braided cord from thread.",
+    "supportingFacts": [
+      "A typical lucet has two prongs at one end.",
+      "Its cord is strong, slightly springy and square in shape."
+    ],
+    "revealExplanation": "The basic technique uses one continuous thread; the cord can serve as clothing laces or bag ties.",
+    "sources": [
+      {
+        "title": "Hyland House Museum — Build a Lucet Tool and Braid Cords",
+        "url": "https://hylandhouse.org/at-home-activities/how-to-make-cording-on-a-lucet-tool/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "textiles",
+      "tools"
+    ]
+  },
+  {
+    "id": "bk-culture-022",
+    "canonicalKnowledgeId": "bk-culture-022",
+    "locale": "en",
+    "term": "Pounce pot",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Writing equipment"
+    ],
+    "secretAnswer": "A pounce pot holds powder that is sprinkled on paper to help prepare it for writing or dry ink.",
+    "supportingFacts": [
+      "Small holes in its top let the powder fall through.",
+      "A shallow dish on top can catch extra powder."
+    ],
+    "revealExplanation": "Pounce could be made from materials such as pumice, tree resin or ground cuttlefish bone.",
+    "sources": [
+      {
+        "title": "The Village at Black Creek — Pounce Pot",
+        "url": "https://blackcreek.ca/exhibits/out-of-the-box-exploring-artifacts/pounce-pot/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "writing",
+      "tools"
+    ]
+  },
+  {
+    "id": "bk-culture-023",
+    "canonicalKnowledgeId": "bk-culture-023",
+    "locale": "en",
+    "term": "Spill vase",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Historical household object",
+      "A language custom",
+      "A dance form"
+    ],
+    "secretAnswer": "A spill vase stores thin wood strips or rolled paper used to carry a flame to a candle or lamp.",
+    "supportingFacts": [
+      "These strips or rolls are called spills.",
+      "They offered a cheap way to light things when matches were expensive."
+    ],
+    "revealExplanation": "The Brunel Museum's example has a flat back so it can stand neatly against a wall on a mantelpiece.",
+    "sources": [
+      {
+        "title": "Brunel Museum — Why doesn't this vase have room for flowers?",
+        "url": "https://thebrunelmuseum.com/why-doesnt-this-vase-have-room-for-flowers/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "household",
+      "lighting"
+    ]
+  },
+  {
+    "id": "bk-culture-024",
+    "canonicalKnowledgeId": "bk-culture-024",
+    "locale": "en",
+    "term": "Clog almanac",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A clog almanac is a wooden calendar marked with days and symbols for important dates.",
+    "supportingFacts": [
+      "Its symbols can mark saints' feast days.",
+      "It can also mark important dates in the farming year."
+    ],
+    "revealExplanation": "The British Museum holds a Norwegian example with marks for days and weeks.",
+    "sources": [
+      {
+        "title": "British Museum — Clog-almanac, 1928,0313.1",
+        "url": "https://www.britishmuseum.org/collection/object/H_1928-0313-1"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "calendar",
+      "wood"
+    ]
+  },
+  {
+    "id": "bk-culture-025",
+    "canonicalKnowledgeId": "bk-culture-025",
+    "locale": "en",
+    "term": "Hornbook",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Learning equipment"
+    ],
+    "secretAnswer": "A hornbook is a small handled board that carries a protected sheet for children learning letters and numbers.",
+    "supportingFacts": [
+      "A thin clear layer of horn, or sometimes mica, protects the printed sheet.",
+      "Many sheets also include the Lord's Prayer."
+    ],
+    "revealExplanation": "The small board could hang from a child's belt so its lessons stayed close at hand.",
+    "sources": [
+      {
+        "title": "Library of Congress — A Child's Introduction to the Alphabet",
+        "url": "https://www.loc.gov/exhibitions/treasures-from-the-library-of-congress/about-this-exhibition/guiding-memory/a-childs-introduction-to-the-alphabet/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "reading",
+      "education"
+    ]
+  },
+  {
+    "id": "bk-culture-026",
+    "canonicalKnowledgeId": "bk-culture-026",
+    "locale": "en",
+    "term": "Syllabub",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Food and drink",
+      "A verse form",
+      "A weaving tool"
+    ],
+    "secretAnswer": "Syllabub is a sweet English treat made by mixing wine with cream or milk to form a light froth.",
+    "supportingFacts": [
+      "Historical recipes could add sugar and lemon.",
+      "Some versions have creamy foam above a layer of wine."
+    ],
+    "revealExplanation": "An everlasting syllabub used more cream and less wine, making a thicker dessert.",
+    "sources": [
+      {
+        "title": "US National Library of Medicine — Sup on a Syllabub",
+        "url": "https://circulatingnow.nlm.nih.gov/2016/12/29/sup-on-a-syllabub/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "food",
+      "dessert"
+    ]
+  },
+  {
+    "id": "bk-culture-027",
+    "canonicalKnowledgeId": "bk-culture-027",
+    "locale": "en",
+    "term": "Hidden fore-edge painting",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A hidden fore-edge painting is a picture on a book's page edges that appears when the pages are fanned out.",
+    "supportingFacts": [
+      "The artist paints the pages while they are fanned and held in a clamp.",
+      "Gold is applied to the closed edges to hide the picture."
+    ],
+    "revealExplanation": "Some books have two hidden pictures, with a different scene revealed when the pages are fanned the other way.",
+    "sources": [
+      {
+        "title": "University of Sydney Library — Hidden Fore-edge Paintings",
+        "url": "https://www.library.sydney.edu.au/stories/hidden-fore-edge-paintings"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "books",
+      "art"
+    ]
+  },
+  {
+    "id": "bk-culture-028",
+    "canonicalKnowledgeId": "bk-culture-028",
+    "locale": "en",
+    "term": "Misericord",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "category",
+    "publicHints": [
+      "Historical church furniture"
+    ],
+    "secretAnswer": "A misericord is a small ledge under a folding church seat that supports a person when the seat is raised.",
+    "supportingFacts": [
+      "It is part of a hinged seat in the choir stalls.",
+      "Its underside can carry carved scenes, sometimes with comic or rude subjects."
+    ],
+    "revealExplanation": "The Art Fund's Bristol example is carved in oak and shows a joke involving an archer.",
+    "sources": [
+      {
+        "title": "Art Fund — Misericord, Bristol Museum & Art Gallery",
+        "url": "https://www.artfund.org/our-purpose/art-funded-by-you/misericord"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "furniture",
+      "church"
+    ]
+  },
+  {
+    "id": "bk-culture-029",
+    "canonicalKnowledgeId": "bk-culture-029",
+    "locale": "en",
+    "term": "Frumenty",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Historical food",
+      "A writing tool",
+      "A dance step"
+    ],
+    "secretAnswer": "Frumenty is a thick dish of wheat cooked in milk or broth.",
+    "supportingFacts": [
+      "Some versions are sweetened and flavoured with cinnamon.",
+      "Its name comes from the Latin word for grain."
+    ],
+    "revealExplanation": "A medieval recipe book includes a version served with porpoise, showing how different old menus could be.",
+    "sources": [
+      {
+        "title": "Weston Museum — Recipes Through Time: Frumenty",
+        "url": "https://westonmuseum.org/recipes-through-time-frumenty/"
+      },
+      {
+        "title": "London Museum — A Sainsbury's history of Christmas pudding",
+        "url": "https://www.londonmuseum.org.uk/blog/christmas-pudding-history-sainsburys/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "food",
+      "medieval"
+    ]
+  },
+  {
+    "id": "bk-culture-030",
+    "canonicalKnowledgeId": "bk-culture-030",
+    "locale": "en",
+    "term": "Mazer",
+    "publicPrompt": "What does this mean?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "A mazer is a wooden drinking bowl, often made from maple and fitted with a metal rim.",
+    "supportingFacts": [
+      "Surviving examples have rims made of silver or silver covered in gold.",
+      "Some have words or decorative designs on them."
+    ],
+    "revealExplanation": "One bowl in the Met advises its drinker to think a lot and speak less.",
+    "sources": [
+      {
+        "title": "Cambridge University Press — On the English medieval drinking bowls called Mazers",
+        "url": "https://www.cambridge.org/core/journals/archaeologia/article/abs/xion-the-english-medieval-drinking-bowls-called-mazers/B0579ED83F7E21B3DB31543D258261BB"
+      },
+      {
+        "title": "The Met — Drinking Bowl, 55.25",
+        "url": "https://www.metmuseum.org/art/collection/search/471558"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-06",
+    "enabled": true,
+    "tags": [
+      "culture",
+      "tableware",
+      "wood"
+    ]
+  }
+]
