@@ -105,6 +105,7 @@ test('existing player links open legacy and original-seat private frames without
   assert.equal(url.searchParams.get('room'), 'BKROOM');
   assert.equal(url.searchParams.get('name'), marker.name);
   assert.equal(frames[0].referrerPolicy, 'no-referrer');
+  assert.match(frames[0].title, /BLUFF PARTY/i);
   assert.equal(frames[0].src.includes('do-not-forward'), false);
   assert.equal(frames[0].src.includes('player-bearer'), false);
   context.renderCard(marker);
@@ -131,4 +132,19 @@ test('the shared player-card marker publishes no role, answer or host credential
     hostToken: 'secret-host-path', secretAnswer: 'secret-answer', privateKey: 'secret-host-key' });
   vm.runInContext(publication[0], context);
   assert.deepEqual(JSON.parse(JSON.stringify(marker)), { game: 'bluffking', bluff: { version: 1, room: 'BKROOM' }, name: 'Player 1' });
+});
+
+test('the Hub card and game page use the BLUFF PARTY name consistently', () => {
+  const page = fs.readFileSync(path.resolve(__dirname, '../bluff-king-live-chat.html'), 'utf8');
+  const hub = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  const card = hub.match(/<a\b[^>]*href="bluff-king-live-chat\.html"[^>]*>([\s\S]*?)<\/a>/)?.[1];
+  const title = page.match(/<title>([^<]+)<\/title>/)?.[1];
+  const heading = page.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  assert.ok(card); assert.match(card, /BLUFF PARTY/i);
+  assert.match(title, /BLUFF PARTY/i); assert.match(heading, /BLUFF PARTY/i);
+  assert.doesNotMatch(title + heading + card, /Bluff King/);
+  const icon = page.match(/<img\b[^>]*class="bk-brand-mark"[^>]*src="([^"]+)"/)?.[1];
+  assert.ok(icon, 'the renamed game has its party mark');
+  assert.ok(card.includes(icon), 'the Hub and game page share the same party icon');
+  assert.ok(fs.statSync(path.resolve(__dirname, '..', icon)).size > 0, 'the party icon is included in the local release');
 });

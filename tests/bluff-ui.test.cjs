@@ -28,7 +28,7 @@ class NodeDouble {
   constructor(document, id = '') { this.document = document; this.id = id; this.listeners = new Map(); this.dataset = {}; this.value = ''; this.checked = false; this.disabled = false; this.hidden = false; this.open = false; this.textContent = ''; this.classes = new Set(); this.classList = { toggle: (name, active) => active ? this.classes.add(name) : this.classes.delete(name) }; this._html = ''; }
   addEventListener(type, handler) { this.listeners.set(type, handler); }
   focus() { this.document.activeElement = this; }
-  closest(selector) { return selector === '[data-bk-action]' && this.dataset.bkAction ? this : null; }
+  closest(selector) { return selector.includes('[data-bk-action]') && this.dataset.bkAction || selector.includes('[data-bk-voice]') && this.dataset.bkVoice ? this : null; }
   showModal() { this.open = true; }
   close() { this.open = false; this.listeners.get('close')?.(); }
   set innerHTML(value) {
@@ -37,14 +37,14 @@ class NodeDouble {
     const previousIds = this.document.dynamicIdsByContainer.get(this.id) || new Set();
     for (const id of previousIds) this.document.nodes.delete(id);
     const ids = new Set(), buttons = [];
-    for (const tag of value.match(/<(?:button|input|select|details|span|p|a|div)\b[^>]*>/g) || []) {
+    for (const tag of value.match(/<(?:button|input|select|details|span|p|a|div|section|aside|h1|h2)\b[^>]*>/g) || []) {
       const id = tag.match(/\bid="([^"]+)"/)?.[1] || '';
       const node = new NodeDouble(this.document, id);
       node.containerId = this.id;
       node.disabled = /\sdisabled(?:\s|>)/.test(tag); node.checked = /\schecked(?:\s|>)/.test(tag); node.open = /\sopen(?:\s|>)/.test(tag); node.hidden = /\shidden(?:\s|>)/.test(tag); node.value = tag.match(/\bvalue="([^"]*)"/)?.[1] || '';
       for (const m of tag.matchAll(/data-bk-([\w-]+)="([^"]*)"/g)) node.dataset['bk' + m[1].split('-').map(s => s[0].toUpperCase() + s.slice(1)).join('')] = m[2];
       if (id) { this.document.nodes.set(id, node); ids.add(id); }
-      if (node.dataset.bkAction) buttons.push(node);
+      if (node.dataset.bkAction || node.dataset.bkVoice) buttons.push(node);
     }
     this.document.dynamicIdsByContainer.set(this.id, ids);
     this.document.buttonsByContainer.set(this.id, buttons);
@@ -88,22 +88,30 @@ async function harness(initialView, { card = false, setup = null, hash = '', tra
     await handler({ target: button });
     for (let i = 0; i < 16; i++) await Promise.resolve();
   }
-  return { document, sent, creates, cardCreates, cardConnections, joins, connections, publications, loadedScripts, storage, context, intervals, html: () => nodes.get('bk-app').innerHTML, content: id => nodes.get(id)?.innerHTML || '', button: action => document.buttons.find(b => b.dataset.bkAction === action), node: id => nodes.get(id), update: view => transportOptions.onView(clone(view)), status: value => transportOptions.onStatus(value), click, async confirm() { nodes.get('bk-confirm-send').listeners.get('click')(); for (let i = 0; i < 16; i++) await Promise.resolve(); } };
+  async function clickVoice(key) {
+    const cue = document.buttons.find(node => node.dataset.bkVoice === key);
+    assert.ok(cue, key + ' cue exists');
+    await nodes.get('bk-app').listeners.get('click')({ target: cue });
+    for (let i = 0; i < 16; i++) await Promise.resolve();
+  }
+  return { document, sent, creates, cardCreates, cardConnections, joins, connections, publications, loadedScripts, storage, context, intervals, html: () => nodes.get('bk-app').innerHTML, content: id => nodes.get(id)?.innerHTML || '', button: action => document.buttons.find(b => b.dataset.bkAction === action), voiceCues: () => document.buttons.filter(node => node.dataset.bkVoice).map(node => node.dataset.bkVoice), node: id => nodes.get(id), update: view => transportOptions.onView(clone(view)), status: value => transportOptions.onStatus(value), click, clickVoice, async confirm() { nodes.get('bk-confirm-send').listeners.get('click')(); for (let i = 0; i < 16; i++) await Promise.resolve(); } };
 }
 test('shared host presentation hides a supplied private role and answer during preparation and discussion', async () => {
   for (const phase of ['prepare', 'discussion']) {
     const state = fixture(phase), truth = state.rooms.UITEST.members.find(p => p.id === state.rooms.UITEST.round.truthfulId), view = project(state, truth.identityId);
     view.self.isHost = true;
     const h = await harness(view);
-    assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact|Only you can see this|class="bk-role-title"|id="bk-role"/);
+    assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact|Your role|class="bk-role-title"|id="bk-role"/);
     assert.equal(h.button('challenge'), undefined); assert.equal(h.button('identify'), undefined); assert.match(h.html(), /Open my private card/);
+    if (phase === 'discussion') { assert.match(h.html(), /data-bk-guidance="public"/); assert.deepEqual(h.voiceCues(), ['followup', 'question']); }
+    else assert.doesNotMatch(h.html(), /Review the answer, then tap Ready/);
   }
 });
 test('private cards show the owner role; only the Truth Teller receives answer details', async () => {
   const state = fixture('prepare');
   for (const identityId of ['identity-0', 'identity-1', 'identity-2']) {
     const view = project(state, identityId), h = await harness(view, { card: true });
-    assert.match(h.html(), /class="bk-private"/); assert.match(h.html(), /Only you can see this/);
+    assert.match(h.html(), /class="bk-private"/); assert.match(h.html(), /Your role/); assert.doesNotMatch(h.html(), /Only you can see this/);
     if (view.privateCard.role === 'truthful') { assert.match(h.html(), /PRIVATE_TEST_ANSWER_|Private fact one/); assert.match(h.html(), /do not invent new facts/); }
     else assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact/);
     assert.ok(h.button('ready')); assert.equal(h.button('challenge'), undefined);
@@ -232,7 +240,7 @@ test('v2 original private card connects its assigned seat automatically and neve
   assert.deepEqual(h.cardConnections, [{ code: 'UITEST', credential }]);
   assert.equal(h.connections.length, 0); assert.equal(h.joins.length, 0); assert.equal(h.creates.length, 0); assert.equal(h.cardCreates.length, 0);
   assert.equal(h.node('bk-name'), undefined); assert.equal(h.button('join'), undefined); assert.equal(h.button('watch'), undefined);
-  assert.match(h.html(), /Only you can see this/);
+  assert.match(h.html(), /Your role/);
   assert.equal(h.loadedScripts.some(src => /bluff-king-(?:engine|topics)\.js/.test(src)), false, 'a private card does not load the host bank or engine');
 });
 test('malformed private-card credentials show an error without starting a replacement join flow', async () => {
@@ -262,7 +270,7 @@ test('a transferred original-seat host opens a public table without registration
   assert.equal(table.connections.length, 1);
   assert.equal(table.joins.length, 0); assert.equal(table.creates.length, 0);
   assert.equal(table.node('bk-name'), undefined);
-  assert.doesNotMatch(table.html(), /PRIVATE_TEST_ANSWER_|Private fact|Only you can see this|class="bk-role-title"|id="bk-role"/);
+  assert.doesNotMatch(table.html(), /PRIVATE_TEST_ANSWER_|Private fact|Your role|class="bk-role-title"|id="bk-role"/);
 });
 test('finishing a Hub game then restarting adopts and republishes the original cards without auto-starting', async () => {
   const setup = originalSetup(), sessions = originalSessions(setup), state = fixture('discussion');
@@ -355,4 +363,50 @@ test('standalone participating host can open their own card before the deal; kno
     assert.doesNotMatch(moderator.html(), /Open my private card/);
     assert.equal(moderator.button('knowTopic'), undefined, 'the original Hub moderator adds no formal player');
   }
+});
+test('conversation guidance follows Thinker, current speaker and listener as the Spotlight moves', async () => {
+  const state = fixture('discussion', 4), room = state.rooms.UITEST, firstView = project(state);
+  const speaker = room.members.find(p => p.id === firstView.round.currentSpotlightId);
+  const listener = room.members.find(p => p.id !== room.round.thinkerId && p.id !== speaker.id);
+  const thinkerUI = await harness(firstView, { card: true });
+  const speakerUI = await harness(project(state, speaker.identityId), { card: true });
+  const listenerUI = await harness(project(state, listener.identityId), { card: true });
+  assert.match(thinkerUI.html(), /data-bk-guidance="thinker"/); assert.match(thinkerUI.html(), /Ask anytime\. Lead the conversation\./);
+  assert.deepEqual(thinkerUI.voiceCues(), ['followup', 'question']);
+  assert.match(speakerUI.html(), /data-bk-guidance="speaking"/); assert.match(speakerUI.html(), /Your turn\. Others can ask anytime\./);
+  assert.deepEqual(speakerUI.voiceCues(), ['yourTurn', 'defend']);
+  assert.match(listenerUI.html(), /data-bk-guidance="listening"/); assert.match(listenerUI.html(), /Jump in while someone else is speaking\./);
+  assert.deepEqual(listenerUI.voiceCues(), ['followup', 'question']);
+  act(state, 'nextSpotlight');
+  speakerUI.update(project(state, speaker.identityId)); listenerUI.update(project(state, listener.identityId));
+  assert.match(speakerUI.html(), /data-bk-guidance="listening"/); assert.deepEqual(speakerUI.voiceCues(), ['followup', 'question']);
+  assert.match(listenerUI.html(), /data-bk-guidance="speaking"/); assert.deepEqual(listenerUI.voiceCues(), ['yourTurn', 'defend']);
+  for (const ui of [thinkerUI, speakerUI, listenerUI]) {
+    for (const cue of ui.voiceCues()) await ui.clickVoice(cue);
+    assert.equal(ui.sent.length, 0, 'conversation cues never send room commands');
+  }
+});
+test('private preparation guidance matches the owner role and disappears when the card is hidden', async () => {
+  const state = fixture('prepare');
+  for (const member of state.rooms.UITEST.members) {
+    const view = project(state, member.identityId), h = await harness(view, { card: true });
+    const expected = { thinker: /Think of questions, then tap Ready\./, truthful: /Review the answer, then tap Ready\./, bluffer: /Think of your explanation, then tap Ready\./ }[view.privateCard.role];
+    assert.match(h.html(), /data-bk-guidance="prepare"/); assert.match(h.html(), expected);
+    assert.deepEqual(h.voiceCues(), []); assert.ok(h.button('ready'));
+    await h.click('toggleRole');
+    assert.doesNotMatch(h.html(), /data-bk-guidance="prepare"|PRIVATE_TEST_ANSWER_|Review the answer|Think of your explanation|Think of questions/);
+    assert.equal(h.sent.length, 0);
+  }
+});
+test('everyone heard and reveal guidance keep conversation open while progression stays manual', async () => {
+  const state = fixture(), room = state.rooms.UITEST;
+  act(state, 'nextSpotlight'); act(state, 'nextSpotlight');
+  const thinker = await harness(project(state), { card: true }), other = await harness(project(state, 'identity-2'), { card: true });
+  assert.match(thinker.html(), /data-bk-guidance="thinker"/); assert.match(thinker.html(), /Ask more, or choose the truth\./);
+  assert.match(other.html(), /data-bk-guidance="open"/); assert.match(other.html(), /Keep questioning or defend your version\./);
+  assert.deepEqual(other.voiceCues(), ['followup', 'question']); assert.equal(thinker.button('identify').disabled, false);
+  act(state, 'identify', 'identity-0', { targetId: room.round.truthfulId });
+  const revealed = await harness(project(state));
+  assert.match(revealed.html(), /data-bk-guidance="reveal"/); assert.match(revealed.html(), /Discuss the answer\. Continue when everyone is ready\./);
+  assert.deepEqual(revealed.voiceCues(), []); assert.ok(revealed.button('nextRound')); assert.equal(revealed.sent.length, 0);
 });

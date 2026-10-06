@@ -23,11 +23,11 @@ host is sharing.
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
 | 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
 | 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
-| ♛ Bluff King · Live Chat | 3–9 | One strange topic, one real expert: make up explanations, question each other, and find the truth in one continuous conversation |
+| 🎉 BLUFF PARTY | 3–9 | One strange topic, one real expert: make up explanations, question each other, and find the truth in one continuous conversation |
 
 ## How it works
 
-**Bluff King · Live Chat** is the final entry in the Hub game menu. It uses the existing room/player links, with 60 verified English topics, private roles, manual Spotlight, one public challenge, and automatic scoring. Keep the trusted host table open. See [`bluff-king-mode.md`](bluff-king-mode.md) for launch steps, rules, knowledge history, and the explicitly accepted host trust boundary. No new environment variables or backend credentials are required.
+**BLUFF PARTY** is the final entry in the Hub game menu. It uses the existing room/player links, with 60 verified English topics, private roles, manual Spotlight, one public challenge, and automatic scoring. Keep the trusted host table open. See [`bluff-king-mode.md`](bluff-king-mode.md) for launch steps, rules, knowledge history, and the explicitly accepted host trust boundary. No new environment variables or backend credentials are required.
 
 **Dixit** retains its original Hub entry. Its prominent phase bar tells
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card

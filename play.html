@@ -2476,6 +2476,7 @@
       document.body.classList.toggle('bluff-king-card', isBluff);
       if (bluffCardFrame && !isBluff) { bluffCardFrame.remove(); bluffCardFrame = null; }
       if (isBluff) {
+        document.title = `${data.name || urlName || 'Player'} · BLUFF PARTY`;
         document.body.classList.remove('chat-wolf-card', 'once-card-page', 'dixit-card-page');
         if (talkCard) { talkCard.destroy(); talkCard = null; }
         if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -2487,7 +2488,7 @@
         if (!bluffCardFrame || bluffCardFrame.src !== frameURL.href) {
           bluffCardFrame = document.createElement('iframe');
           bluffCardFrame.className = 'bluff-king-frame';
-          bluffCardFrame.title = 'Bluff King private player card';
+          bluffCardFrame.title = 'BLUFF PARTY player card';
           bluffCardFrame.referrerPolicy = 'no-referrer';
           bluffCardFrame.src = frameURL.href;
           el.replaceChildren(bluffCardFrame);

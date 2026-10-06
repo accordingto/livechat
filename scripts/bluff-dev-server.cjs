@@ -11,4 +11,4 @@ http.createServer((req, res) => {
   if (/^\/(server|tests|scripts|private|api|work)(\/|$)/i.test(pathname) || pathname.includes('/.') || pathname.includes('\\')) { res.statusCode = 404; return res.end('Not found'); }
   const file = path.resolve(root, '.' + (pathname === '/' ? '/bluff-king-live-chat.html' : pathname)); if (!file.startsWith(root + path.sep)) { res.statusCode = 404; return res.end('Not found'); }
   fs.stat(file, (err, stat) => { if (err || !stat.isFile()) { res.statusCode = 404; return res.end('Not found'); } res.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream'); res.setHeader('Cache-Control', 'no-store'); fs.createReadStream(file).pipe(res); });
-}).listen(port, '0.0.0.0', () => console.log(`Bluff King static preview: http://localhost:${port}/bluff-king-live-chat.html (real Firebase; keep host table open)`));
+}).listen(port, '0.0.0.0', () => console.log(`BLUFF PARTY static preview: http://localhost:${port}/bluff-king-live-chat.html (real Firebase; keep host table open)`));

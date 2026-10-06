@@ -46,7 +46,7 @@
       if (!root.BLUFF_ENGINE || !root.BLUFF_QUESTIONS) throw new Error('The host game engine and verified topics must be loaded.');
       await this._loadHistory();
       const existing = (await this._request(this._roomPath('roster/joinPublic'))).data;
-      if (existing) { const e = new Error('This room already has a Bluff King host. Join it using its room code.'); e.code = 'room_exists'; throw e; }
+      if (existing) { const e = new Error('This room already has a BLUFF PARTY host. Join it using its room code.'); e.code = 'room_exists'; throw e; }
       const keys = await root.crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['encrypt', 'decrypt']);
       const publicKey = await root.crypto.subtle.exportKey('jwk', keys.publicKey); const privateKey = await root.crypto.subtle.exportKey('jwk', keys.privateKey); const hostToken = random(); const roomToken = random();
       const state = root.BLUFF_ENGINE.blankStore(); state.identities[this.identity.id] = mergeHistory(this.identity.history); root.BLUFF_ENGINE.applyCommand(state, this.identity.id, { room: this.code, action: 'create', name, participate }, root.BLUFF_QUESTIONS);
@@ -93,7 +93,7 @@
     }
     async connectCard(code, credential) {
       const roomCode = cleanCode(code);
-      if (credential?.version !== 2 || credential.room !== roomCode || !/^[a-f0-9]{64}$/.test(credential.token || '') || !/^[a-f0-9]{40}$/.test(credential.identityId || '') || !/^[a-f0-9]{64}$/.test(credential.historyToken || '')) { const e = new Error('This original player card has an invalid game session. Ask the host to reopen Bluff King.'); e.code = 'invalid_card_session'; throw e; }
+      if (credential?.version !== 2 || credential.room !== roomCode || !/^[a-f0-9]{64}$/.test(credential.token || '') || !/^[a-f0-9]{40}$/.test(credential.identityId || '') || !/^[a-f0-9]{64}$/.test(credential.historyToken || '')) { const e = new Error('This original player card has an invalid game session. Ask the host to reopen BLUFF PARTY.'); e.code = 'invalid_card_session'; throw e; }
       this.code = roomCode; this.closed = false;
       const node = (await this._request(this._roomPath('players/' + credential.token))).data; const binding = node?.sessionBinding;
       if (!binding || binding.room !== roomCode || binding.identityId !== credential.identityId || binding.historyToken !== credential.historyToken) { const e = new Error('This player card is not bound to this game seat. Ask the host to republish the original cards.'); e.code = 'invalid_card_session'; throw e; }
@@ -105,7 +105,7 @@
     }
     async join(code, { name, participate = true } = {}) {
       this.code = cleanCode(code); this.closed = false; this.isHost = false; this.hostToken = null; await this._loadHistory();
-      const meta = (await this._request(this._roomPath('roster/joinPublic'))).data; if (!meta?.publicKey) { const e = new Error('The host has not opened this Bluff King room yet.'); e.code = 'room_not_found'; throw e; }
+      const meta = (await this._request(this._roomPath('roster/joinPublic'))).data; if (!meta?.publicKey) { const e = new Error('The host has not opened this BLUFF PARTY room yet.'); e.code = 'room_not_found'; throw e; }
       const roomToken = this.identity.rooms[this.code]?.token || random(); this.roomToken = roomToken; this.identity.rooms[this.code] = { token: roomToken, name: String(name || '').trim() }; this._saveIdentity();
       const payload = { identityId: this.identity.id, token: roomToken, historyToken: this.identity.historyToken, history: this.identity.history, name: String(name || '').trim().slice(0, 40), participate: !!participate };
       const aes = await root.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']); const iv = new Uint8Array(12); root.crypto.getRandomValues(iv); const cipher = await root.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aes, enc.encode(JSON.stringify(payload))); const publicKey = await root.crypto.subtle.importKey('jwk', meta.publicKey, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']); const wrapped = await root.crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, await root.crypto.subtle.exportKey('raw', aes));

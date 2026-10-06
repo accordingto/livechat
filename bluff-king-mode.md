@@ -1,4 +1,4 @@
-# Bluff King · Live Chat
+# BLUFF PARTY · Live Chat
 
 An original conversation adaptation for **3–9 real players**, appended after
 Dixit at the bottom of the existing IceBreak Hub menu. English topic cards;
@@ -6,7 +6,7 @@ English controls by default, with the existing Traditional Chinese switch.
 
 ## Starting a game
 
-1. Use the existing Hub room setup and open **Bluff King · Live Chat**.
+1. Use the existing Hub room setup and open **BLUFF PARTY**.
 2. The existing 3–9 participants and seat order are imported automatically.
    Keep the host table open and the device awake throughout the game.
 3. Existing `play.html` links switch automatically to each original player's
@@ -238,8 +238,34 @@ live Firebase assertions apply to the original-card release; this UI update did
 not repeat that entire network suite. Browser tests are automated clients, not
 a claim that a human group completed a game.
 
-The production verifier checks ten exact assets including the binary WebP and
+The production verifier checks eleven exact assets including the binary WebP, SVG and
 four development-only paths excluded from deployment.
+
+## Party branding and live action guidance (2026-10-07)
+
+The public name is now **BLUFF PARTY**, with an original confetti/chat-bubble SVG
+shared by the Hub card, game header, lobby and browser icon. Existing URLs,
+`bluffking` room markers and all stored credentials remain compatible.
+The player panel is labeled **Your role**. The user confirmed only the Thinker
+is public during play; Truth Teller and Bluffer identities remain secret until
+the reveal, and only the Truth Teller receives the unrevealed answer.
+
+Compact guidance follows the public state: the current speaker can Explain and
+Defend; listeners and the Thinker can Follow up and Question even while another
+player speaks. After everyone is heard, the Thinker is prompted to continue
+asking or choose. Preparation cues explain what to think about before Ready.
+These chips describe things to say in the group's existing conversation; they
+do not simulate chat messages, introduce speaking permissions or send room
+commands. The real Thinker controls retain their original guards.
+
+Validation: all **655 repository tests** passed, including **58 focused Bluff
+tests**. A three-player real Firebase browser check used the original player
+links and confirmed that moving the Spotlight changes a listener's guidance
+from Explain / Defend to Follow up / Question without exposing other roles.
+The Thinker card fits 1366 × 768 and the listener card fits 390 × 844 without
+horizontal or vertical scrolling. The production check covers eleven assets
+and four excluded development paths. The isolated browser-test nodes are
+removed after verification; these checks do not claim a human group playtest.
 
 ## Main files
 

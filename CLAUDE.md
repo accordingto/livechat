@@ -1,5 +1,11 @@
 ## 專案背景
 
+**BLUFF PARTY（2026-10-07）**：使用者將 Bluff King 改名為 BLUFF PARTY，換派對聊天
+圖標；原 URL、bluffking protocol 與玩家卡憑證不變。欄位改成 Your role／你的角色。
+使用者明確確認僅想想公開，老實人／瞎掰人留到揭曉；不要公開秘密角色或正解。
+依公開 Spotlight 狀態顯示 Explain／Defend 或 Follow up／Question，別人發言時
+所有人也能立即追問。提示是原語音聊天中的行動，不能偽造聊天室或改成發言權流程。
+
 **Bluff King · Live Chat（2026-10-07）**：新增於 Hub 最下面、Dixit 之後，
 英文為主，3–9 人，每個正式座位當一次 Thinker；同一 discussion 內手動換
 Spotlight、一次公開質疑，確認後揭曉計分。60 道已查核英文題，沒有 AI 或內建語音。

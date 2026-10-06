@@ -3,8 +3,8 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..'),base='https://livechat-two-alpha.vercel.app/';
 const release=process.argv[2]||'bluff-king';
-const assets=['index.html','play.html','bluff-king-live-chat.html','bluff-king.css','bluff-king-ui.js','bluff-king-engine.js','bluff-king-sync.js','bluff-king-topics.js','bluff-king-cards.js','assets/bluff/topic-night-v1.webp'];
-const hash=(bytes,file)=>crypto.createHash('sha256').update(/\.(html|css|js|json)$/.test(file)?bytes.toString('utf8').replace(/\r\n/g,'\n'):bytes).digest('hex');
+const assets=['index.html','play.html','bluff-king-live-chat.html','bluff-king.css','bluff-king-ui.js','bluff-king-engine.js','bluff-king-sync.js','bluff-king-topics.js','bluff-king-cards.js','assets/bluff/topic-night-v1.webp','assets/bluff/party-mark.svg'];
+const hash=(bytes,file)=>crypto.createHash('sha256').update(/\.(html|css|js|json|svg)$/.test(file)?bytes.toString('utf8').replace(/\r\n/g,'\n'):bytes).digest('hex');
 (async()=>{
   const results=await Promise.all(assets.map(async file=>{
     const response=await fetch(base+file+'?release='+encodeURIComponent(release),{signal:AbortSignal.timeout(30000)});
