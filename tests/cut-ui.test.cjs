@@ -26,6 +26,20 @@ test('CUT reveals the next name only after interruption and final CUT leaves no 
   assert.match(final, /CUT!/); assert.doesNotMatch(final, /cut-speaker/);
 });
 
+test('non-final CUT holds on the next name with a manual handoff action and no countdown', () => {
+  const cut = sample({ phase: 'cut', nextSpeaker: 2, canBegin: true, cutEvent: { id: 'manual-cut', final: false } });
+  const host = UI.scene(cut, 0), player = UI.scene(cut, 1);
+  for (const html of [host, player]) {
+    assert.match(html, /CUT!.*下一位.*Jason.*準備好.*開始接話/s);
+    assert.doesNotMatch(html, /data-cut-countdown|GO!/);
+  }
+  assert.doesNotMatch(host, /data-cut-action="begin"/);
+  assert.match(player, /Jason.*data-cut-action="begin"[^>]*>開始接話/s);
+  assert.doesNotMatch(UI.scene({ ...cut, canBegin: false }, 2), /data-cut-action="begin"/);
+  const final = UI.scene({ ...cut, nextSpeaker: null, canBegin: false, cutEvent: { id: 'final-cut', final: true } }, 2);
+  assert.doesNotMatch(final, /開始接話|data-cut-action="begin"|data-cut-countdown|cut-speaker/);
+});
+
 test('prep counts down while paused and stopped have no countdown', () => {
   const prep = sample({ phase: 'handoff', nextSpeaker: 2, phaseUntil: 4000 });
   assert.equal(UI.countdown(prep, 1100), 3);
@@ -161,6 +175,56 @@ test('stale player Begin shows a recoverable message; existing pending request s
   } finally { f.card.destroy(); }
 });
 
+test('player can start a waiting CUT once and pending handoff survives refresh until speaking confirmation', async () => {
+  const sent = [], f = playerCard(async command => sent.push(command));
+  const cut = { ...f.payload.cut, phase: 'cut', turnId: 4, nextSpeaker: 2, cutEvent: { id: 'waiting-cut', final: false } };
+  const request = { id: 'existing-handoff', sessionId: 'session', turnId: 4, type: 'begin' };
+  try {
+    f.card.update({ ...f.payload, cut, cutAction: request });
+    f.click(); assert.equal(sent.length, 0); assert.equal(f.card.pending, request);
+    f.card.update({ ...f.payload, cut: { ...cut, reply: { id: request.id, error: 'stale_turn' } } });
+    assert.equal(f.card.pending, null);
+    f.click(); f.click(); await Promise.resolve();
+    assert.equal(sent.length, 1); assert.equal(sent[0].turnId, 4); assert.equal(sent[0].type, 'begin');
+    assert.equal(f.nodes.button.disabled, true);
+    f.card.update({ ...f.payload, cut: { ...cut, phase: 'speaking', turnId: 5, nextSpeaker: null, canBegin: false, reply: { id: sent[0].id, error: '' } } });
+    assert.equal(f.card.pending, null); assert.equal(f.nodes.feedback.textContent, '');
+    assert.doesNotMatch(f.element.innerHTML, /data-cut-countdown|data-cut-action="begin"/);
+  } finally { f.card.destroy(); }
+});
+
+test('waiting CUT preserves its DOM through heartbeats and does not replay its animation on roster updates', () => {
+  const f = playerCard(async () => {}), cut = { ...f.payload.cut, phase: 'cut', nextSpeaker: 2, cutEvent: { id: 'one-animation', final: false } };
+  try {
+    f.card.update({ ...f.payload, cut });
+    const initial = f.element.innerHTML;
+    assert.doesNotMatch(initial, /cut-static/);
+    f.card.update({ ...f.payload, cut: { ...cut, hostLiveUntil: 90000, revision: 2 } });
+    assert.equal(f.element.innerHTML, initial);
+    f.card.update({ ...f.payload, cut: { ...cut, turnId: 3, roster: [{ playerNum: 1, name: 'Amy', active: false }, { playerNum: 2, name: 'Jason', active: true }] } });
+    assert.match(f.element.innerHTML, /cut-static/);
+    assert.match(f.element.innerHTML, /CUT!.*Jason/s);
+    f.card.update({ ...f.payload, cut: { ...cut, turnId: 6, cutEvent: { id: 'new-animation', final: false } } });
+    assert.doesNotMatch(f.element.innerHTML, /cut-static/);
+  } finally { f.card.destroy(); }
+});
+
+test('manual CUT handoff plays CUT once, stays silent while waiting and plays GO once on Begin', () => {
+  const sound = new UI.Sound(), cues = [];
+  sound.cue = cue => cues.push(cue);
+  sound.update(sample(), 1000);
+  const cut = sample({ phase: 'cut', turnId: 3, nextSpeaker: 2, canBegin: true, cutEvent: { id: 'manual-sound', final: false } });
+  sound.update(cut, 12000);
+  assert.deepEqual(cues, ['cut', 'reveal']);
+  for (const time of [13000, 17000, 90000]) sound.update(cut, time);
+  sound.update({ ...cut, turnId: 4 }, 90001);
+  assert.deepEqual(cues, ['cut', 'reveal']);
+  sound.update(sample({ turnId: 5, speaker: 2 }), 90002);
+  sound.update(sample({ turnId: 5, speaker: 2 }), 90003);
+  assert.deepEqual(cues, ['cut', 'reveal', 'go']);
+  sound.close();
+});
+
 test('topic reveal stays silent until the explicit Begin transition starts countdown cues', () => {
   const sound = new UI.Sound(), cues = [];
   sound.cue = cue => cues.push(cue);
@@ -228,6 +292,18 @@ test('host can return to settings mid-speech, preserve the topic and wait again 
   assert.match(scene(), /data-cut-phase="ready"/);
   assert.equal(scene().match(/<h2>(.*?)<\/h2>/s)[1], topic);
   time += 120000; interval(); assert.match(scene(), /data-cut-phase="ready"/);
+  await click('begin'); time += 3000; interval();
+  assert.match(scene(), /data-cut-phase="speaking"/);
+  time += 50000; interval();
+  assert.match(scene(), /data-cut-phase="cut"/);
+  assert.equal(element('cut-begin').hidden, false);
+  assert.equal(element('cut-begin').textContent, UI.t('beginHandoff'));
+  const heldCut = scene();
+  time += 120000; interval();
+  assert.equal(scene(), heldCut);
+  await click('begin');
+  assert.match(scene(), /data-cut-phase="speaking"/);
+  assert.doesNotMatch(scene(), /data-cut-countdown/);
   await click('settings-open');
   assert.equal(element('cut-speed').value, 'chill');
   element('cut-speed').value = 'chaos';

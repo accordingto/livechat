@@ -102,12 +102,33 @@ async function main() {
   const firstSpeaker = host.state.speaker;
   await until(() => host.state?.phase === 'cut', 'real normal CUT', 20000); values = await projectReady();
   check('Normal timer CUT reveals one different next player to all clients', () => { assert.equal(new Set(values.map(value => value.cut.nextSpeaker)).size, 1); assert.notEqual(values[0].cut.nextSpeaker, firstSpeaker); assert.ok(values[0].cut.cutEvent); });
-  await until(() => host.state?.phase === 'handoff', 'reaction buffer');
-  check('Handoff has a three second buffer before speaking', () => assert.ok(host.state.phaseUntil - Date.now() > 1500));
+  const waitingCut = clone(host.state);
+  await sleep(5000); values = await projectReady();
+  check('CUT and the revealed next speaker stay visible until someone presses Start', () => {
+    assert.equal(host.state.phase, 'cut'); assert.equal(host.state.turnId, waitingCut.turnId);
+    assert.equal(host.state.nextSpeaker, waitingCut.nextSpeaker); assert.equal(host.state.deadline, null);
+    assert.deepEqual(host.state.stats, waitingCut.stats);
+    for (const value of values) { assert.equal(value.cut.canBegin, true); assert.equal(value.cut.phaseUntil, undefined); assert.equal(value.cut.nextSpeaker, waitingCut.nextSpeaker); }
+  });
   await hostCommand('pause'); await projectReady(); const paused = clone(host.state);
   await sleep(600); check('Pause stops automatic transitions', () => { assert.equal(host.state.phase, 'paused'); assert.equal(host.state.turnId, paused.turnId); });
   await hostCommand('resume'); await projectReady();
-  await until(() => host.state?.phase === 'speaking', 'resumed GO');
+  check('Resuming a paused CUT returns to manual waiting with the same next speaker', () => { assert.equal(host.state.phase, 'cut'); assert.equal(host.state.nextSpeaker, waitingCut.nextSpeaker); assert.equal(host.state.deadline, null); });
+  const cutSession = host.state.sessionId;
+  host.close(); await host.serial; await host.outgoing;
+  replacement = device(database(), room); host = replacement; host.connect();
+  await until(() => host.own && host.state?.sessionId === cutSession, 'replacement host restores waiting CUT');
+  await projectReady();
+  check('Reloading the host keeps CUT waiting without a countdown or new speaker draw', () => { assert.equal(host.state.phase, 'cut'); assert.equal(host.state.nextSpeaker, waitingCut.nextSpeaker); assert.equal(host.state.cutEvent.id, waitingCut.cutEvent.id); });
+  const handoffTurn = host.state.turnId;
+  await Promise.all([playerAction(db, 0, 'begin'), playerAction(db, 1, 'begin')]);
+  await until(() => host.state?.phase === 'speaking', 'manual player handoff GO'); values = await projectReady();
+  check('Concurrent player handoff Starts go directly to one speaking turn without a countdown', () => {
+    assert.equal(host.state.turnId, handoffTurn + 1); assert.equal(host.state.speaker, waitingCut.nextSpeaker);
+    assert.equal(host.state.speakerSequence, waitingCut.speakerSequence + 1);
+    assert.ok(host.state.deadline > host.state.lastChangeAt);
+    for (const value of values) { assert.equal(value.cut.phase, 'speaking'); assert.equal(value.cut.phaseUntil, undefined); }
+  });
   const topicBeforeSettings = host.state.topic.id, countsBeforeSettings = clone(host.state.stats);
   await hostCommand('settings'); values = await projectReady();
   check('Returning to settings freezes the round and disables every player Start button', () => { assert.equal(host.state.phase, 'setup'); assert.equal(host.state.deadline, null); assert.equal(host.state.phaseUntil, null); assert.equal(host.state.topic.id, topicBeforeSettings); for (const value of values) assert.equal(value.cut.canBegin, false); });
@@ -122,9 +143,20 @@ async function main() {
   check('Host reload restores the waiting topic and selected pace without starting it', () => { assert.equal(host.state.sessionId, savedSession); assert.equal(host.state.phase, 'ready'); assert.equal(host.state.speed, 'chaos'); assert.equal(host.state.topic.id, topicBeforeSettings); });
   await hostCommand('begin'); await until(() => host.state?.phase === 'speaking', 'host starts resumed topic');
   await hostCommand('exclude', { playerNum: host.state.speaker, active: false }); values = await projectReady();
-  check('A departing speaker is replaced after preparation, with no self handoff', () => { assert.notEqual(host.state.phase, 'speaking'); assert.equal(values[0].cut.roster.filter(player => player.active).length, 2); });
-  await until(() => host.state?.phase === 'break', 'complete real round', 120000); values = await projectReady();
-  check('Real automatic round ends without a score or story summary', () => { assert.equal(values[0].cut.phase, 'break'); assert.equal(values[0].cut.score, undefined); assert.equal(values[0].cut.summary, undefined); });
+  check('A departing speaker is replaced and waits for manual Start', () => { assert.equal(host.state.phase, 'ready'); assert.equal(values[0].cut.roster.filter(player => player.active).length, 2); });
+  await hostCommand('begin');
+  await until(() => host.state?.phase === 'speaking', 'replacement speaker manually starts');
+  for (let turn = 0; turn < 10 && host.state?.phase !== 'break'; turn++) {
+    await until(() => ['cut', 'break'].includes(host.state?.phase), 'next CUT in real round', 20000);
+    if (host.state.phase === 'break') break;
+    if (host.state.cutEvent?.final) { await until(() => host.state.phase === 'break', 'final CUT closes topic'); break; }
+    await projectReady();
+    const seat = host.state.roster.find(player => player.active).playerNum;
+    await playerAction(db, seat - 1, 'begin');
+    await until(() => host.state?.phase === 'speaking', 'player manually starts next segment');
+  }
+  values = await projectReady();
+  check('Manual handoffs finish at the final CUT without a score or story summary', () => { assert.equal(values[0].cut.phase, 'break'); assert.equal(values[0].cut.score, undefined); assert.equal(values[0].cut.summary, undefined); });
   const previousTopic = host.state.topic.id; await hostCommand('next'); values = await projectReady();
   check('Manual Next reveals a new topic and waits for host or player Start', () => { assert.notEqual(host.state.topic.id, previousTopic); assert.equal(new Set(values.map(value => value.cut.topic.id)).size, 1); assert.equal(host.state.phase, 'ready'); });
   const changed = 'rooms/' + code + '/players/' + tokens[0]; await request(changed, 'PUT', { game: 'cardcheck', name: 'Amy', word: 'QA switch' });

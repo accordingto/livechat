@@ -84,7 +84,14 @@ function setup() {
   };
 }
 
-test('exact canonical JSON and filtered cards wait for Begin, then run an authoritative countdown, CUT and handoff', async () => {
+async function firstCut(f, host) {
+  await host.command('begin'); await settle(host);
+  await f.advance(host, host.latest.phaseUntil);
+  await f.advance(host, host.latest.deadline);
+  assert.equal(host.latest.phase, 'cut'); assert.equal(host.latest.cutEvent.final, false);
+}
+
+test('exact canonical JSON and filtered cards wait for Begin, then keep CUT and NEXT until manual speaking starts', async () => {
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   const raw = f.db.values.get(`rooms/CUTTEST/players/${f.extras.cutControlToken}`);
   assert.equal(typeof raw.stateJson, 'string'); assert.equal(raw.state, undefined);
@@ -112,11 +119,28 @@ test('exact canonical JSON and filtered cards wait for Begin, then run an author
   await f.advance(h, deadline); assert.equal(h.latest.phase, 'cut');
   assert.notEqual(h.latest.nextSpeaker, speaker); assert.equal(h.latest.sessionId, session);
   assert.equal(f.card(2).cut.cutEvent.id, h.latest.cutEvent.id);
-  const cutEvent = h.latest.cutEvent.id;
-  await f.advance(h, f.now); assert.equal(h.latest.cutEvent.id, cutEvent, 'the same due clock is not applied twice');
-  await f.advance(h, h.latest.phaseUntil); assert.equal(h.latest.phase, 'handoff');
-  await f.advance(h, h.latest.phaseUntil); assert.equal(h.latest.phase, 'speaking');
-  assert.notEqual(h.latest.speaker, speaker); h.close();
+  const cutEvent = clone(h.latest.cutEvent), waitingTurn = h.latest.turnId, next = h.latest.nextSpeaker;
+  await f.advance(h, f.now); assert.equal(h.latest.cutEvent.id, cutEvent.id, 'the same due clock is not applied twice');
+  await f.advance(h, f.now + 180000);
+  assert.equal(h.latest.phase, 'cut'); assert.equal(h.latest.turnId, waitingTurn);
+  assert.deepEqual(clone(h.latest.cutEvent), cutEvent); assert.equal(h.latest.nextSpeaker, next);
+  assert.equal(h.latest.deadline, null); assert.equal(h.latest.phaseUntil, null);
+  for (let n = 1; n <= 4; n++) {
+    const card = f.card(n).cut;
+    assert.equal(card.phase, 'cut'); assert.equal(card.nextSpeaker, next);
+    assert.deepEqual(card.cutEvent, cutEvent); assert.equal(card.canBegin, true);
+    assert.equal(card.phaseUntil, undefined); assert.equal(card.deadline, undefined);
+  }
+  const writes = f.db.writes;
+  for (let index = 0; index < 100; index++) h.pulse(); await settle(h);
+  assert.equal(f.db.writes, writes, 'waiting CUT pulses perform no network writes');
+  const count = h.latest.stats[next]?.count || 0, sequence = h.latest.speakerSequence;
+  await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'speaking');
+  assert.equal(h.latest.turnId, waitingTurn + 1); assert.equal(h.latest.speaker, next);
+  assert.equal(h.latest.nextSpeaker, null); assert.equal(h.latest.phaseUntil, null);
+  assert.ok(h.latest.deadline > f.now); assert.equal(h.latest.stats[next].count, count + 1);
+  assert.equal(h.latest.speakerSequence, sequence + 1);
+  assert.equal(f.card(1).cut.deadline, undefined); assert.equal(f.card(1).cut.phaseUntil, undefined); h.close();
 });
 
 test('one host lease owns RNG and clocks; replacement retains the exact ongoing state', async () => {
@@ -132,6 +156,41 @@ test('one host lease owns RNG and clocks; replacement retains the exact ongoing 
   assert.deepEqual([second.latest.sessionId, second.latest.turnId, second.latest.speaker, second.latest.deadline], original);
   first.close(); await settle(second); assert.equal(second.own, true);
   await second.command('pause'); await settle(second); assert.equal(second.latest.phase, 'paused');
+  second.close();
+});
+
+test('lease acquisition upgrades a legacy automatic handoff once; a blocked host cannot migrate it', async () => {
+  const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first); await firstCut(f, first);
+  const controlPath = `rooms/CUTTEST/players/${f.extras.cutControlToken}`;
+  const waiting = f.state(), originalRaw = clone(f.db.values.get(controlPath));
+  const legacy = { ...waiting, phase: 'handoff', speaker: waiting.nextSpeaker, nextSpeaker: waiting.nextSpeaker,
+    countOnGo: true, pendingDurationMs: null, phaseUntil: f.now + 3000, deadline: null,
+    turnId: waiting.turnId + 1, lastChangeAt: f.now };
+  f.db.put(controlPath, { ...originalRaw, stateJson: JSON.stringify(legacy) }); await settle(first);
+  const legacyJson = f.db.values.get(controlPath).stateJson, revision = originalRaw.revision;
+  const second = f.host(); await settle(first, second); assert.equal(second.own, false);
+  await second.renew(); await settle(first, second);
+  assert.equal(f.db.values.get(controlPath).stateJson, legacyJson);
+  assert.equal(f.db.values.get(controlPath).revision, revision);
+  assert.equal(f.state().phase, 'handoff', 'a rejected lease cannot rewrite the canonical legacy state');
+  first.close(); await settle(first, second); await second.renew(); await settle(second);
+  assert.equal(second.own, true);
+  const upgradedRaw = clone(f.db.values.get(controlPath)), upgraded = f.state();
+  assert.equal(typeof upgradedRaw.stateJson, 'string'); assert.equal(upgradedRaw.state, undefined);
+  assert.equal(upgradedRaw.revision, revision + 1); assert.equal(upgraded.phase, 'cut');
+  assert.equal(upgraded.turnId, legacy.turnId + 1); assert.equal(upgraded.lastChangeAt, f.now);
+  assert.equal(upgraded.nextSpeaker, legacy.nextSpeaker); assert.equal(upgraded.speaker, legacy.cutEvent.from);
+  assert.deepEqual(upgraded.topic, legacy.topic); assert.deepEqual(upgraded.cutEvent, legacy.cutEvent);
+  assert.deepEqual(upgraded.stats, legacy.stats); assert.deepEqual(upgraded.recent, legacy.recent);
+  assert.deepEqual(upgraded.topicHistory, legacy.topicHistory); assert.equal(upgraded.speakerSequence, legacy.speakerSequence);
+  assert.equal(upgraded.cutsCompleted, legacy.cutsCompleted); assert.equal(upgraded.phaseUntil, null); assert.equal(upgraded.deadline, null);
+  for (let n = 1; n <= 4; n++) {
+    assert.equal(f.card(n).cut.phase, 'cut'); assert.equal(f.card(n).cut.nextSpeaker, legacy.nextSpeaker);
+    assert.equal(f.card(n).cut.phaseUntil, undefined); assert.equal(f.card(n).cut.canBegin, true);
+  }
+  f.now += 1000; await second.renew(); await settle(second); await second.renew(); await settle(second);
+  assert.equal(f.db.values.get(controlPath).stateJson, upgradedRaw.stateJson);
+  assert.equal(f.db.values.get(controlPath).revision, revision + 1, 'renewal is idempotent after the first migration');
   second.close();
 });
 
@@ -173,6 +232,66 @@ test('simultaneous host and active-player Begin requests start one countdown and
   await f.advance(h, h.latest.phaseUntil);
   assert.equal(h.latest.phase, 'speaking'); assert.equal(h.latest.turnId, countdownTurn + 1);
   h.close();
+});
+
+test('simultaneous manual CUT starts select the published NEXT once and stale requests cannot start another turn', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h); await firstCut(f, h);
+  const waiting = { sessionId: h.latest.sessionId, turnId: h.latest.turnId };
+  const next = h.latest.nextSpeaker, count = h.latest.stats[next]?.count || 0, sequence = h.latest.speakerSequence;
+  const results = await Promise.allSettled([
+    f.action(1, 'begin', waiting), f.action(2, 'begin', waiting), h.command('begin'),
+  ]); await settle(h);
+  assert.equal(h.latest.phase, 'speaking'); assert.equal(h.latest.turnId, waiting.turnId + 1);
+  assert.equal(h.latest.speaker, next); assert.equal(h.latest.nextSpeaker, null);
+  assert.equal(h.latest.stats[next].count, count + 1); assert.equal(h.latest.speakerSequence, sequence + 1);
+  assert.equal(h.latest.phaseUntil, null); assert.ok(h.latest.deadline > f.now);
+  assert.equal(f.card(2).cut.phaseUntil, undefined); assert.equal(f.card(2).cut.deadline, undefined);
+  const actions = results.slice(0, 2).map(result => result.value); assert.ok(actions.every(Boolean));
+  for (let n = 1; n <= 2; n++) {
+    assert.equal(f.card(n).cut.reply.id, actions[n - 1].id);
+    assert.ok(['', undefined, 'stale_turn'].includes(f.card(n).cut.reply.error));
+  }
+  assert.equal([0, 1, 2].map(n => h.latest.replies[n]).filter(reply => !reply.error).length, 1);
+  const deadline = h.latest.deadline, speaker = h.latest.speaker;
+  await f.action(3, 'begin', waiting); await settle(h);
+  assert.equal(f.card(3).cut.reply.error, 'stale_turn'); assert.equal(h.latest.deadline, deadline);
+  assert.equal(h.latest.speaker, speaker); assert.equal(h.latest.stats[next].count, count + 1);
+  const writes = f.db.writes;
+  await f.db.ref(f.paths[0]).transaction(old => ({ ...old, cutAction: actions[0] })); await settle(h);
+  assert.equal(f.db.writes, writes + 1, 'replaying an acknowledged start only writes the submitted player intent'); h.close();
+});
+
+test('waiting CUT survives pause, NEXT dropout and host reload without an automatic handoff', async () => {
+  const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first); await firstCut(f, first);
+  const originalEvent = clone(first.latest.cutEvent), originalNext = first.latest.nextSpeaker;
+  const count = first.latest.speakerSequence;
+  await first.command('pause'); await settle(first); assert.equal(first.latest.phase, 'paused');
+  await f.advance(first, f.now + 60000); assert.equal(first.latest.phase, 'paused');
+  await first.command('resume'); await settle(first);
+  assert.equal(first.latest.phase, 'cut'); assert.equal(first.latest.nextSpeaker, originalNext);
+  assert.deepEqual(clone(first.latest.cutEvent), originalEvent); assert.equal(first.latest.phaseUntil, null);
+  assert.equal(first.latest.deadline, null); assert.equal(first.latest.speakerSequence, count);
+  await first.command('exclude', { playerNum: originalNext, active: false }); await settle(first);
+  assert.equal(first.latest.phase, 'cut'); assert.notEqual(first.latest.nextSpeaker, originalNext);
+  const replacement = first.latest.nextSpeaker, replacedEvent = clone(first.latest.cutEvent);
+  assert.equal(replacedEvent.to, replacement); assert.equal(replacedEvent.id, originalEvent.id);
+  assert.equal(replacedEvent.at, originalEvent.at); assert.equal(replacedEvent.from, originalEvent.from);
+  assert.equal(first.latest.phaseUntil, null); assert.equal(first.latest.deadline, null);
+  assert.equal(f.card(originalNext).cut.canBegin, false);
+  await f.action(originalNext, 'begin', { actor: 0 }); await settle(first);
+  assert.equal(first.latest.phase, 'cut'); assert.equal(f.card(originalNext).cut.reply.error, 'not_available');
+  const session = first.latest.sessionId, waitingTurn = first.latest.turnId;
+  first.close(); await settle(first); const restored = f.host(); await settle(restored);
+  assert.equal(restored.own, true); assert.equal(restored.latest.sessionId, session);
+  assert.equal(restored.latest.phase, 'cut'); assert.equal(restored.latest.turnId, waitingTurn);
+  assert.equal(restored.latest.nextSpeaker, replacement); assert.deepEqual(clone(restored.latest.cutEvent), replacedEvent);
+  await f.advance(restored, f.now + 120000);
+  assert.equal(restored.latest.phase, 'cut'); assert.equal(restored.latest.nextSpeaker, replacement);
+  assert.equal(restored.latest.speakerSequence, count); assert.deepEqual(clone(restored.latest.cutEvent), replacedEvent);
+  const activePlayer = restored.latest.roster.find(player => player.active).playerNum;
+  await f.action(activePlayer, 'begin'); await settle(restored);
+  assert.equal(restored.latest.phase, 'speaking'); assert.equal(restored.latest.speaker, replacement);
+  assert.equal(restored.latest.speakerSequence, count + 1); assert.ok(restored.latest.deadline > f.now); restored.close();
 });
 
 test('inactive players cannot Begin or impersonate host controls; an active player can Begin', async () => {
@@ -271,7 +390,17 @@ test('restart rejects old session intents and completes a round with no score or
   await f.action(1, 'begin'); await settle(h);
   assert.equal(h.latest.phase, 'countdown');
   for (let index = 0; index < 40 && h.latest.phase !== 'break'; index++) {
-    await f.advance(h, h.latest.phase === 'speaking' ? h.latest.deadline : h.latest.phaseUntil);
+    if (h.latest.phase === 'cut' && !h.latest.cutEvent.final) {
+      await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'speaking');
+    } else {
+      if (h.latest.phase === 'cut') {
+        assert.equal(h.latest.cutEvent.final, true); assert.equal(h.latest.phaseUntil, h.latest.cutEvent.at + 900);
+        assert.equal(f.card(1).cut.canBegin, false);
+        await f.action(1, 'begin'); await settle(h); assert.equal(h.latest.phase, 'cut');
+        assert.equal(f.card(1).cut.reply.error, 'not_available');
+      }
+      await f.advance(h, h.latest.phase === 'speaking' ? h.latest.deadline : h.latest.phaseUntil);
+    }
   }
   assert.equal(h.latest.phase, 'break'); assert.equal(h.latest.cutsCompleted, h.latest.targetCuts);
   assert.equal(f.card(1).cut.score, undefined); assert.equal(f.timers.size, 2);

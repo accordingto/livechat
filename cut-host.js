@@ -6,7 +6,7 @@
   const demoRoster = ['Amy', 'Kevin', 'Jason', 'Willy'].map((name, i) => ({ playerNum: i + 1, name, active: true }));
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null;
-  let startingSession = null, editing = false;
+  let startingSession = null, editing = false, animatedCut = '';
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -46,8 +46,14 @@
     if (cut && !switched) {
       const actor = demo ? Number(byId('demo-view').value) : 0;
       const key = JSON.stringify([actor, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
-      if (key !== sceneKey) { byId('scene').innerHTML = scene(cut, actor, now()); sceneKey = key; }
-      byId('begin').hidden = cut.phase !== 'ready';
+      if (key !== sceneKey) {
+        const cutKey = cut.phase === 'cut' ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
+        const animate = !cutKey || cutKey !== animatedCut;
+        if (cutKey) animatedCut = cutKey;
+        byId('scene').innerHTML = scene(cut, actor, now(), { animate }); sceneKey = key;
+      }
+      byId('begin').hidden = cut.phase !== 'ready' && !(cut.phase === 'cut' && cut.canBegin);
+      byId('begin').textContent = t(cut.phase === 'cut' ? 'beginHandoff' : 'begin');
       byId('begin').disabled = busy || !canControl() || !cut.canBegin;
       byId('pause').hidden = ['setup', 'ready', 'break', 'finished', 'stopped'].includes(cut.phase);
       byId('pause').textContent = t(cut.phase === 'paused' ? 'resume' : 'pause');

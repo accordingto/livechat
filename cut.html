@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-2">
+  <link rel="stylesheet" href="cut.css?v=cut-3">
 </head>
 <body class="cut-page">
   <div class="topbar">
@@ -51,7 +51,7 @@
     <section id="cut-session" hidden aria-label="CUT!">
       <div id="cut-scene"></div>
       <div class="cut-actions cut-session-actions">
-        <button type="button" class="cut-button cut-primary" id="cut-begin" hidden data-i18n="cut.begin">開始說話</button>
+        <button type="button" class="cut-button cut-primary" id="cut-begin" hidden>開始說話</button>
         <button type="button" class="cut-button" id="cut-pause" data-i18n="cut.pause">暫停</button>
         <button type="button" class="cut-button cut-primary" id="cut-next" hidden data-i18n="cut.next">下一題</button>
         <button type="button" class="cut-button" id="cut-settings-open" data-i18n="cut.settings">返回設定</button>
@@ -66,7 +66,7 @@
     <details class="cut-rules">
       <summary data-i18n="cut.rules">怎麼玩</summary>
       <p data-i18n="cut.rule1">先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。</p>
-      <p data-i18n="cut.rule2">下一位假裝自己就是上一個人，直接接那半句；不要重新回答題目。</p>
+      <p data-i18n="cut.rule2">CUT 會停在下一位的名字，準備好後主持人或玩家按「開始接話」。下一位假裝自己就是上一個人，直接接那半句，不要重新回答題目。</p>
       <p data-i18n="cut.rule3">可以亂編、互虧和自由吐槽。一題結束，先笑一笑，主持人再按下一題。</p>
       <p data-i18n="cut.ruleExample">例如：「他把——」CUT！「——護照丟進了垃圾桶。」</p>
     </details>
@@ -87,12 +87,12 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="cut-config.js?v=cut-2"></script>
-  <script src="cut-random.js?v=cut-2"></script>
-  <script src="cut-topics.js?v=cut-2"></script>
-  <script src="cut-engine.js?v=cut-2"></script>
-  <script src="cut-ui.js?v=cut-2"></script>
-  <script src="cut-sync.js?v=cut-2"></script>
-  <script src="cut-host.js?v=cut-2"></script>
+  <script src="cut-config.js?v=cut-3"></script>
+  <script src="cut-random.js?v=cut-3"></script>
+  <script src="cut-topics.js?v=cut-3"></script>
+  <script src="cut-engine.js?v=cut-3"></script>
+  <script src="cut-ui.js?v=cut-3"></script>
+  <script src="cut-sync.js?v=cut-3"></script>
+  <script src="cut-host.js?v=cut-3"></script>
 </body>
 </html>

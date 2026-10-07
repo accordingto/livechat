@@ -12,12 +12,13 @@ var CUT_ENGINE = (() => {
   const active = state => list(state.roster).filter(player => player.active !== false);
   const isActive = (state, number) => active(state).some(player => player.playerNum === number);
   const publicTimedPhases = ['countdown', 'cut', 'handoff'];
+  const waitingCut = state => state.phase === 'cut' && state.cutsCompleted < state.targetCuts;
   function phase(state, name, now, durationMs) {
     state.phase = name;
     state.turnId++;
     state.lastChangeAt = now;
     state.deadline = null;
-    state.phaseUntil = publicTimedPhases.includes(name) ? now + durationMs : null;
+    state.phaseUntil = publicTimedPhases.includes(name) && Number.isFinite(durationMs) ? now + durationMs : null;
   }
   function chooseSpeaker(state, excluded, rng) {
     return random.speaker(state.roster, excluded, state.stats, state.recent, state.speakerSequence, rng);
@@ -31,7 +32,7 @@ var CUT_ENGINE = (() => {
     state.topic = copy(chosen);
     state.topicHistory = [...state.topicHistory, chosen.id].slice(-config.topicHistorySize);
   }
-  function prepare(state, playerNum, now, name = 'handoff', remainingMs = null, countOnGo = true) {
+  function prepare(state, playerNum, now, name = 'ready', remainingMs = null, countOnGo = true) {
     state.speaker = playerNum;
     state.nextSpeaker = name === 'handoff' ? playerNum : null;
     state.pendingDurationMs = remainingMs;
@@ -94,11 +95,19 @@ var CUT_ENGINE = (() => {
     if (saved.phase === 'cut' && state.cutsCompleted >= state.targetCuts) {
       state.pause = null; state.pauseReason = ''; phase(state, 'cut', now, saved.remainingMs); return;
     }
+    if (saved.phase === 'cut') {
+      state.speaker = saved.speaker;
+      state.nextSpeaker = isActive(state, saved.nextSpeaker) ? saved.nextSpeaker : chooseSpeaker(state, saved.speaker, rng);
+      if (state.cutEvent) state.cutEvent.to = state.nextSpeaker;
+      state.pendingDurationMs = null; state.pause = null; state.pauseReason = '';
+      phase(state, 'cut', now);
+      return;
+    }
     if (saved.refreshSpeaker || !isActive(state, saved.speaker) || (saved.phase === 'cut' && saved.nextSpeaker != null && !isActive(state, saved.nextSpeaker))) {
       const oldSpeaker = saved.speaker;
       const next = chooseSpeaker(state, oldSpeaker, rng);
       state.previousSpeaker = oldSpeaker;
-      prepare(state, next, now);
+      prepare(state, next, now, 'ready');
       return;
     }
     state.speaker = saved.speaker;
@@ -114,6 +123,40 @@ var CUT_ENGINE = (() => {
       state.countOnGo = saved.countOnGo !== false;
       phase(state, saved.phase, now, saved.remainingMs);
     }
+  }
+  function upgrade(current, now) {
+    if (!current || current.version !== 1 || !Number.isFinite(now) || current.cutsCompleted >= current.targetCuts) return current;
+    const standardHandoff = saved => saved?.phase === 'handoff' && saved.countOnGo !== false && !Number.isFinite(saved.pendingDurationMs);
+    const legacyCut = waitingCut(current) && Number.isFinite(current.phaseUntil);
+    const legacyHandoff = standardHandoff(current);
+    const legacyPausedCut = current.phase === 'paused' && current.pause?.phase === 'cut' && Number(current.pause.remainingMs) > 0;
+    const legacyPausedHandoff = current.phase === 'paused' && standardHandoff(current.pause);
+    if (!legacyCut && !legacyHandoff && !legacyPausedCut && !legacyPausedHandoff) return current;
+    const state = copy(current);
+    if (legacyHandoff || legacyPausedHandoff) {
+      const saved = legacyPausedHandoff ? state.pause : state;
+      const nextSpeaker = saved.nextSpeaker ?? saved.speaker ?? null;
+      const previousSpeaker = state.cutEvent?.from ?? state.previousSpeaker ?? null;
+      state.speaker = previousSpeaker;
+      state.nextSpeaker = nextSpeaker;
+      state.pendingDurationMs = null;
+      state.countOnGo = true;
+      state.speakingDurationMs = null;
+      state.cutEvent = state.cutEvent ? { ...state.cutEvent, to: nextSpeaker, final: false } : {
+        id: state.sessionId + ':' + state.turnId + ':upgrade', turnId: state.turnId,
+        at: state.lastChangeAt, from: previousSpeaker, to: nextSpeaker, final: false,
+      };
+      if (legacyPausedHandoff) {
+        state.pause = { ...state.pause, phase: 'cut', speaker: previousSpeaker, nextSpeaker,
+          remainingMs: 0, pendingDurationMs: null, countOnGo: true };
+      } else state.phase = 'cut';
+    }
+    if (legacyPausedCut) state.pause.remainingMs = 0;
+    state.deadline = null;
+    state.phaseUntil = null;
+    state.turnId++;
+    state.lastChangeAt = now;
+    return state;
   }
   function create({ id, roster, speed = 'normal', category = 'mixed', now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < config.minPlayers || roster.length > config.maxPlayers) throw new Error('invalid_setup');
@@ -143,6 +186,9 @@ var CUT_ENGINE = (() => {
     // Idle ticks and ticks already consumed by another transaction perform no
     // write. On reconnection, one live phase starts now; missed CUTs do not replay.
     if (input.type === 'tick' && host) {
+      // A saved v1 non-final CUT may still carry its old automatic deadline.
+      // It now waits for a manual handoff, without committing idle tick writes.
+      if (waitingCut(current)) return current;
       const due = current.phase === 'speaking' ? current.deadline : current.phaseUntil;
       if (input.turnId !== current.turnId || !Number.isFinite(input.now) || !['speaking', ...publicTimedPhases].includes(current.phase) || !Number.isFinite(due) || input.now < due) return current;
     }
@@ -161,8 +207,16 @@ var CUT_ENGINE = (() => {
     else if (!Number.isFinite(now) || now < state.lastChangeAt) error = 'invalid_time';
     else switch (input.type) {
       case 'begin':
-        if (state.phase !== 'ready') error = 'not_available';
+        if (state.phase !== 'ready' && !waitingCut(state)) error = 'not_available';
         else if (active(state).length < config.minPlayers) error = 'not_enough_players';
+        else if (waitingCut(state)) {
+          if (!isActive(state, state.nextSpeaker)) error = 'not_available';
+          else {
+            state.speaker = state.nextSpeaker;
+            state.pendingDurationMs = null; state.countOnGo = true;
+            beginSpeaking(state, now, rng);
+          }
+        }
         else {
           if (!isActive(state, state.speaker)) {
             state.speaker = chooseSpeaker(state, state.previousSpeaker, rng);
@@ -172,7 +226,9 @@ var CUT_ENGINE = (() => {
         }
         break;
       case 'settings': {
-        const speaker = isActive(state, state.speaker) ? state.speaker :
+        const pausedCut = state.phase === 'paused' && state.pause?.phase === 'cut' && state.cutsCompleted < state.targetCuts;
+        const intendedSpeaker = waitingCut(state) ? state.nextSpeaker : pausedCut ? state.pause.nextSpeaker : state.speaker;
+        const speaker = isActive(state, intendedSpeaker) ? intendedSpeaker :
           chooseSpeaker(state, state.previousSpeaker, rng) ?? active(state)[0]?.playerNum ?? null;
         const completed = state.cutsCompleted >= state.targetCuts;
         const endedTurn = state.phase === 'cut' || (state.phase === 'paused' && state.pause?.phase === 'cut');
@@ -200,7 +256,7 @@ var CUT_ENGINE = (() => {
       case 'tick':
         if (state.phase === 'countdown' || state.phase === 'handoff') {
           if (active(state).length < config.minPlayers) pause(state, now, 'not_enough_players');
-          else if (!isActive(state, state.speaker)) prepare(state, chooseSpeaker(state, state.speaker, rng), now);
+          else if (!isActive(state, state.speaker)) prepare(state, chooseSpeaker(state, state.speaker, rng), now, 'ready');
           else beginSpeaking(state, now, rng);
         } else if (state.phase === 'speaking') {
           state.previousDurationMs = state.speakingDurationMs;
@@ -209,12 +265,11 @@ var CUT_ENGINE = (() => {
           const final = state.cutsCompleted >= state.targetCuts;
           state.nextSpeaker = final ? null : chooseSpeaker(state, state.speaker, rng);
           state.cutEvent = { id: state.sessionId + ':' + state.turnId, turnId: state.turnId, at: now, from: state.speaker, to: state.nextSpeaker, final };
-          phase(state, 'cut', now, config.cutRevealMs);
+          phase(state, 'cut', now, final ? config.cutRevealMs : undefined);
         } else if (state.phase === 'cut') {
           if (state.cutsCompleted >= state.targetCuts) {
             state.speaker = null; state.nextSpeaker = null; phase(state, 'break', now);
-          } else if (active(state).length < config.minPlayers) pause(state, now, 'not_enough_players');
-          else prepare(state, isActive(state, state.nextSpeaker) ? state.nextSpeaker : chooseSpeaker(state, state.previousSpeaker, rng), now);
+          }
         }
         break;
       case 'next':
@@ -253,10 +308,16 @@ var CUT_ENGINE = (() => {
         } else if ((state.phase === 'ready' || state.phase === 'setup') && !isActive(state, state.speaker)) {
           state.previousSpeaker = state.speaker;
           prepare(state, chooseSpeaker(state, state.speaker, rng), now, state.phase);
-        } else if ((['speaking', 'countdown', 'handoff'].includes(state.phase) && !isActive(state, state.speaker)) || (state.phase === 'cut' && state.nextSpeaker != null && !isActive(state, state.nextSpeaker))) {
-          const oldSpeaker = state.phase === 'cut' ? state.previousSpeaker : state.speaker;
+        } else if (waitingCut(state)) {
+          if (!isActive(state, state.nextSpeaker)) {
+            state.nextSpeaker = chooseSpeaker(state, state.speaker, rng);
+            if (state.cutEvent) state.cutEvent.to = state.nextSpeaker;
+          }
+          phase(state, 'cut', now);
+        } else if (['speaking', 'countdown', 'handoff'].includes(state.phase) && !isActive(state, state.speaker)) {
+          const oldSpeaker = state.speaker;
           state.previousSpeaker = oldSpeaker;
-          prepare(state, chooseSpeaker(state, oldSpeaker, rng), now);
+          prepare(state, chooseSpeaker(state, oldSpeaker, rng), now, 'ready');
         } else { state.turnId++; state.lastChangeAt = now; }
         break;
       }
@@ -278,12 +339,13 @@ var CUT_ENGINE = (() => {
       previousSpeaker: state.previousSpeaker ?? null, roster,
       cutEvent: state.cutEvent ? copy(state.cutEvent) : null,
       pauseReason: state.pauseReason || '', reply: (state.replies || {})[playerNum] || null,
-      canBegin: state.phase === 'ready' && active(state).length >= config.minPlayers && (playerNum === 0 || mine?.active === true),
+      canBegin: (state.phase === 'ready' || (waitingCut(state) && isActive(state, state.nextSpeaker))) &&
+        active(state).length >= config.minPlayers && (playerNum === 0 || mine?.active === true),
     };
-    if (publicTimedPhases.includes(state.phase)) cut.phaseUntil = state.phaseUntil;
+    if (publicTimedPhases.includes(state.phase) && !waitingCut(state)) cut.phaseUntil = state.phaseUntil;
     if (state.phase === 'cut' || state.phase === 'handoff') cut.nextSpeaker = state.nextSpeaker ?? null;
     return { game: 'cut', playerNum, name: mine?.name || null, cut };
   }
-  return { create, apply, view, list };
+  return { create, apply, view, upgrade, list };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_ENGINE;

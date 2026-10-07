@@ -80,7 +80,15 @@
           if (this.stopped || !this.connected || !this.sameRoom()) return;
           raw ||= {};
           if (raw.owner && raw.owner !== this.client && raw.leaseUntil > now) return;
-          return Object.assign({}, raw, { owner: this.client, leaseUntil: now + CONFIG.leaseMs });
+          const next = Object.assign({}, raw, { owner: this.client, leaseUntil: now + CONFIG.leaseMs });
+          const current = stateOf(raw);
+          const upgraded = this.suspended ? current : root.CUT_ENGINE.upgrade(current, now);
+          if (upgraded !== current) {
+            next.stateJson = JSON.stringify(upgraded);
+            next.revision = (raw.revision || 0) + 1;
+            delete next.state;
+          }
+          return next;
         }, undefined, false);
         if (!result.committed && !this.stopped) { this.own = false; this.status('other_host'); }
       } catch (_) { if (!this.stopped) { this.own = false; this.status('error'); } }
@@ -130,7 +138,10 @@
     pulse() {
       if (this.stopped || this.suspended || !this.own || !this.connected || this.ticking || !this.sameRoom()) return;
       const state = this.doc?.state;
-      const due = state?.phase === 'speaking' ? state.deadline : ['countdown', 'cut', 'handoff'].includes(state?.phase) ? state.phaseUntil : null;
+      const timedPrep = state?.phase === 'countdown' ||
+        (state?.phase === 'cut' && state.cutsCompleted >= state.targetCuts) ||
+        (state?.phase === 'handoff' && (state.countOnGo === false || Number.isFinite(state.pendingDurationMs)));
+      const due = state?.phase === 'speaking' ? state.deadline : timedPrep ? state.phaseUntil : null;
       if (!(due > 0) || this.now() < due) return;
       this.ticking = true;
       this.command('tick').catch(error => { if (error.message !== 'not_available' && !this.stopped) this.status('error'); }).finally(() => { this.ticking = false; });

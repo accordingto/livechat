@@ -5,7 +5,7 @@ var CUT_UI = (() => {
     intro: ['講到一半突然 CUT！下一位直接把你的半句話接下去。', 'A sudden CUT! Someone else has to finish your unfinished sentence.'],
     speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（9–18 秒）', 'Normal · 9–18 seconds'], chill: ['Chill · 輕鬆（12–24 秒）', 'Chill · 12–24 seconds'], chaos: ['Chaos · 瘋狂（5–12 秒）', 'Chaos · 5–12 seconds'],
     category: ['題目類型', 'Topics'], mixed: ['生活＋荒謬', 'Life + absurd situations'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'],
-    start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
+    start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], beginHandoff: ['開始接話', 'Start the handoff'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
     waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
     manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'], restart: ['重新開始', 'Restart'], stop: ['結束遊戲', 'End game'],
@@ -14,6 +14,7 @@ var CUT_UI = (() => {
     go: ['GO! 開始說！', 'GO! KEEP TALKING'], listen: ['聽著，隨時可能輪到你。', 'Listen. Your turn can come at any moment.'],
     speakHint: ['自然地講下去，CUT 出現就停。', 'Keep talking naturally. Stop as soon as CUT appears.'],
     cutHint: ['停！話交給下一位。', 'STOP! Hand over the unfinished thought.'],
+    waitingHandoff: ['下一位先想想怎麼接，準備好後由主持人或任一玩家按「開始接話」。', 'Let the next player think of a continuation. When ready, the host or any player can tap “Start the handoff”.'],
     breakTitle: ['先笑一笑，聊一下。', 'TAKE A BREATHER'], breakHint: ['主持人按下一題顯示新話題，準備好再按開始。', 'The host reveals the next topic. Tap Start when everyone is ready.'],
     finalCut: ['這題到這裡！', 'THAT’S IT FOR THIS TOPIC!'], paused: ['已暫停', 'PAUSED'], pausedHint: ['繼續聊天，主持人準備好就恢復。', 'Keep chatting. The host will resume when you’re ready.'],
     finished: ['今天的話先說到這裡！', 'THAT’S A WRAP!'], finishedHint: ['想繼續玩，請主持人重新開始。', 'Ask the host to restart for more CUT!'],
@@ -24,7 +25,7 @@ var CUT_UI = (() => {
     soundUnsupported: ['這個瀏覽器無法播放提示音，請依畫面接棒。', 'This browser can’t play cues. Follow the screen to pass the turn.'],
     rules: ['怎麼玩', 'How to play'],
     rule1: ['先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。', 'Read the topic, then the host or a player taps “Start talking” to start the countdown. Speak on GO and stop on CUT.'],
-    rule2: ['下一位假裝自己就是上一個人，直接接那半句；不要重新回答題目。', 'Pretend you are the previous speaker. Continue their half-sentence, rather than starting a new answer.'],
+    rule2: ['CUT 會停在下一位的名字，準備好後主持人或玩家按「開始接話」。下一位假裝自己就是上一個人，直接接那半句，不要重新回答題目。', 'CUT holds on the next player’s name until the host or a player taps “Start the handoff”. Pretend you are the previous speaker and continue the half-sentence without restarting the answer.'],
     rule3: ['可以亂編、互虧和自由吐槽。一題結束，先笑一笑，主持人再按下一題。', 'Make things up, tease each other, and jump in. Laugh between topics, then the host moves on.'],
     ruleExample: ['例如：「他把——」CUT！「——護照丟進了垃圾桶。」', 'For example: “He threw his—” CUT! “—passport into the bin.”'],
     rosterHint: ['暫時離開的人可以先休息，回來再加入抽選。', 'Let someone sit out if they leave, and add them back when they return.'],
@@ -58,7 +59,7 @@ var CUT_UI = (() => {
   const countdown = (cut, now) => ['countdown', 'handoff'].includes(cut.phase)
     ? Math.max(0, Math.ceil((Number(cut.phaseUntil) - now) / 1000)) : null;
 
-  function scene(cut, actor = 0, now = Date.now()) {
+  function scene(cut, actor = 0, now = Date.now(), { animate = true } = {}) {
     if (!cut) return '';
     const phase = cut.phase;
     const handoff = phase === 'handoff';
@@ -73,7 +74,13 @@ var CUT_UI = (() => {
       if (phase === 'ready' && Number(actor) > 0 && cut.canBegin) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="begin">${esc(t('begin'))}</button>`;
     } else if (isCut) {
       floor = `<div class="cut-burst" aria-label="CUT!"><strong>CUT!</strong><p>${esc(t(cut.cutEvent?.final ? 'finalCut' : 'cutHint'))}</p></div>`;
-      if (next) floor += speaker(cut, next, t('nextPlayer'), Number(actor) === Number(next), 'cut-reveal');
+      if (next) {
+        floor += speaker(cut, next, t('nextPlayer'), Number(actor) === Number(next), 'cut-reveal');
+        if (!cut.cutEvent?.final) {
+          floor += `<p class="cut-cue cut-waiting">${esc(t('waitingHandoff'))}</p>`;
+          if (Number(actor) > 0 && cut.canBegin) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="begin">${esc(t('beginHandoff'))}</button>`;
+        }
+      }
     } else if (inPlay) {
       floor = speaker(cut, shownSpeaker, t(handoff ? 'nextPlayer' : 'current'), personal);
       if (phase === 'countdown' || handoff) floor += `<p class="cut-cue">${esc(t(handoff ? 'continue' : 'getReady'))}</p><div class="cut-countdown" data-cut-countdown aria-live="off">${countdown(cut, now) || 'GO!'}</div>`;
@@ -85,7 +92,7 @@ var CUT_UI = (() => {
       floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? '✂️' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(t(hint))}</p></div>`;
     }
     const excluded = actor && list(cut.roster).find(p => Number(p.playerNum) === Number(actor))?.active === false;
-    return `<div class="cut-stage${isCut ? ' cut-is-cut' : ''}${personal && inPlay ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
+    return `<div class="cut-stage${isCut ? ' cut-is-cut' : ''}${isCut && !animate ? ' cut-static' : ''}${personal && inPlay ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
       <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2></div>
       <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
       ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
@@ -98,7 +105,7 @@ var CUT_UI = (() => {
   class Card {
     constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '', send = null } = {}) {
       this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send;
-      this.data = null; this.destroyed = false; this.renderKey = ''; this.pending = null; this.error = '';
+      this.data = null; this.destroyed = false; this.renderKey = ''; this.pending = null; this.error = ''; this.animatedCut = '';
       this.click = event => {
         const button = event.target.closest('[data-cut-action="begin"]');
         if (button && !button.disabled) this.begin();
@@ -117,11 +124,14 @@ var CUT_UI = (() => {
         this.pending = null;
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
-      if (!this.pending && cut.phase === 'ready' && request?.type === 'begin' && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      if (!this.pending && ['ready', 'cut'].includes(cut.phase) && request?.type === 'begin' && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
       const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (this.renderKey !== key) {
         this.renderKey = key;
-        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now())}</div><p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        const cutKey = cut.phase === 'cut' ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
+        const animate = !cutKey || cutKey !== this.animatedCut;
+        if (cutKey) this.animatedCut = cutKey;
+        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div><p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
       }
       this.paint();
     }
@@ -139,7 +149,7 @@ var CUT_UI = (() => {
     }
     canBegin() {
       const cut = this.data?.cut;
-      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && cut?.phase === 'ready' && cut.canBegin === true && (!cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
+      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && ['ready', 'cut'].includes(cut?.phase) && cut.canBegin === true && (!cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
     }
     async begin() {
       if (!this.canBegin()) return;
@@ -217,7 +227,7 @@ var CUT_UI = (() => {
           if (cut.phase === 'cut') {
             if (newCut) { this.cue('cut'); if (cut.nextSpeaker) this.cue('reveal'); }
           }
-          else if (cut.phase === 'speaking' && ['countdown', 'handoff'].includes(previous?.phase)) this.cue('go');
+          else if (cut.phase === 'speaking' && ['countdown', 'handoff', 'cut'].includes(previous?.phase)) this.cue('go');
           else if (cut.phase === 'countdown' && (fresh || previous?.phase !== 'countdown' || previous?.sessionId !== cut.sessionId)) this.cue('round');
           else if (['setup', 'ready', 'paused', 'finished', 'stopped'].includes(cut.phase)) this.silence();
         }
