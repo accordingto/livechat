@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="talk.css">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-reference-2">
   <link rel="stylesheet" href="dixit.css?v=dixit-9">
+  <link rel="stylesheet" href="cut.css?v=cut-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -882,6 +883,7 @@
   <script src="talk-ui.js"></script>
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
+  <script src="cut-ui.js?v=cut-1"></script>
   <script src="once-upon-a-time-deck.js?v=once-v2-reference-2"></script>
   <script src="once-upon-a-time-ui.js?v=once-v2-reference-2"></script>
   <script src="dixit-deck.js?v=dixit-9"></script>
@@ -2444,6 +2446,7 @@
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
+    let cutCard = null;
     let onceCard = null;
     let dixitCard = null;
     let dixitHostBridge = null;
@@ -2471,6 +2474,30 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      const isCut = data.game === 'cut' && data.cut?.version === 1;
+      document.body.classList.toggle('cut-card-page', isCut);
+      if (cutCard && !isCut) { cutCard.destroy(); cutCard = null; }
+      if (isCut) {
+        document.title = `${data.name || urlName || 'Player'} · CUT!`;
+        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page');
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (!cutCard) cutCard = new CUT_UI.Card(el, {
+          nameBanner,
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'cut' || current.cut?.sessionId !== command.sessionId || current.cut?.turnId !== command.turnId) return;
+            return Object.assign({}, current, { cutAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        cutCard.update(data);
+        return;
+      }
       const bluffURL = data.game === 'bluffking' ? BLUFF_CARDS.frameURL(data.bluff, location.href) : null;
       const isBluff = !!bluffURL;
       document.body.classList.toggle('bluff-king-card', isBluff);
@@ -2762,6 +2789,8 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
+      if (cutCard) { cutCard.destroy(); cutCard = null; }
+      document.body.classList.remove('cut-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -2783,8 +2812,8 @@
     let db = null;
     let latestData = null;
     document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; });
-    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit') tryRenderCard(); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; });
+    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit' || latestData?.game === 'cut') tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -2802,7 +2831,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

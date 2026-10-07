@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CUT! · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="cut.css">
+</head>
+<body class="cut-page">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← 返回主選單</a>
+    <span class="cut-meta" id="cut-room-label"></span>
+  </div>
+  <div class="header"><h1>✂️ CUT!</h1><p class="cut-subtitle">話別說完</p></div>
+  <main class="cut-shell">
+    <div class="cut-panel cut-demo" id="cut-demo-bar" hidden>
+      <p class="cut-kicker" data-i18n="cut.demo">操作示範・單機模擬</p>
+      <label class="cut-field"><span data-i18n="cut.demoView">切換示範視角</span><select id="cut-demo-view"></select></label>
+      <a class="back" href="cut.html" data-i18n="cut.liveLink">使用正式房間</a>
+    </div>
+    <p class="cut-feedback" id="cut-status" role="status"></p>
+    <div class="cut-panel" id="cut-setup-needed" hidden>
+      <p class="cut-soft" data-i18n="cut.setupNeeded">先到主選單設定房間與玩家連結。</p>
+      <a class="cut-button cut-primary" href="index.html?step=1" data-i18n="cut.setUpRoom">設定房間與玩家</a>
+    </div>
+    <form class="cut-panel cut-setup" id="cut-setup">
+      <p class="cut-intro" data-i18n="cut.intro">講到一半突然 CUT！下一位直接把你的半句話接下去。</p>
+      <div class="cut-settings">
+        <label class="cut-field"><span data-i18n="cut.speed">遊戲速度</span><select id="cut-speed">
+          <option value="normal" selected data-i18n="cut.normal">Normal · 正常</option>
+          <option value="chill" data-i18n="cut.chill">Chill · 輕鬆</option>
+          <option value="chaos" data-i18n="cut.chaos">Chaos · 快節奏</option>
+        </select></label>
+        <label class="cut-field"><span data-i18n="cut.category">題目類型</span><select id="cut-category">
+          <option value="mixed" selected data-i18n="cut.mixed">生活＋荒謬</option>
+          <option value="real" data-i18n="cut.real">生活情境</option>
+          <option value="absurd" data-i18n="cut.absurd">荒謬想像</option>
+        </select></label>
+      </div>
+      <button type="submit" class="cut-button cut-primary" id="cut-start" data-i18n="cut.start">開始 CUT!</button>
+      <p class="cut-soft" data-i18n="cut.soundHint">音效由這個主持頁播放。共用畫面時請分享電腦音訊。</p>
+    </form>
+    <section id="cut-session" hidden aria-label="CUT!">
+      <div id="cut-scene"></div>
+      <div class="cut-actions cut-session-actions">
+        <button type="button" class="cut-button" id="cut-pause" data-i18n="cut.pause">暫停</button>
+        <button type="button" class="cut-button cut-primary" id="cut-next" hidden data-i18n="cut.next">下一題</button>
+        <button type="button" class="cut-button" id="cut-manage-open" data-i18n="cut.manage">主持管理</button>
+      </div>
+    </section>
+    <p class="cut-feedback" id="cut-error" role="status"></p>
+    <div class="cut-bottom-actions">
+      <button type="button" class="cut-button cut-sound" id="cut-sound" aria-pressed="true">🔊 音效開啟</button>
+      <p class="cut-soft" id="cut-sound-status" role="status"></p>
+    </div>
+    <details class="cut-rules">
+      <summary data-i18n="cut.rules">怎麼玩</summary>
+      <p data-i18n="cut.rule1">看到 GO 就開口。CUT 一出現立刻停下，畫面才會公布下一位。</p>
+      <p data-i18n="cut.rule2">下一位假裝自己就是上一個人，直接接那半句；不要重新回答題目。</p>
+      <p data-i18n="cut.rule3">可以亂編、互虧和自由吐槽。一題結束，先笑一笑，主持人再按下一題。</p>
+      <p data-i18n="cut.ruleExample">例如：「他把——」CUT！「——護照丟進了垃圾桶。」</p>
+    </details>
+    <a class="back" id="cut-demo-link" href="cut.html?demo=1" data-i18n="cut.demoLink">先試操作示範</a>
+  </main>
+  <dialog class="cut-dialog" id="cut-manage" aria-labelledby="cut-manage-title">
+    <form method="dialog" class="cut-dialog-header"><h2 id="cut-manage-title" data-i18n="cut.manage">主持管理</h2><button class="cut-button" data-i18n="cut.close">關閉</button></form>
+    <p class="cut-soft" data-i18n="cut.rosterHint">暫時離開的人可以先休息，回來再加入抽選。</p>
+    <div class="cut-roster" id="cut-roster"></div>
+    <div class="cut-actions">
+      <button type="button" class="cut-button" id="cut-restart" data-i18n="cut.restart">重新開始</button>
+      <button type="button" class="cut-button cut-stop" id="cut-stop" data-i18n="cut.stop">結束遊戲</button>
+    </div>
+  </dialog>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js"></script>
+  <script src="cut-config.js"></script>
+  <script src="cut-random.js"></script>
+  <script src="cut-topics.js"></script>
+  <script src="cut-engine.js"></script>
+  <script src="cut-ui.js"></script>
+  <script src="cut-sync.js"></script>
+  <script src="cut-host.js"></script>
+</body>
+</html>

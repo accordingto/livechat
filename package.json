@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "Voice-first online icebreaker games",
   "scripts": {
+    "test:cut": "node --test tests/cut-*.test.cjs",
+    "dev:cut": "node scripts/cut-dev-server.cjs",
     "test": "node --test tests/*.test.cjs",
     "test:chat-wolf": "node --test tests/chat-wolf-*.test.cjs",
     "dev:chat-wolf": "node scripts/chat-wolf-dev-server.cjs",
