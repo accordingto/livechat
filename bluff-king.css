@@ -26,3 +26,5 @@
 @media(max-width:680px){.bk-topic{min-height:156px}.bk-hints{gap:5px}.bk-hint{font-size:10px;padding:4px 6px}}
 
 .bk-clock-group{display:flex;align-items:center;gap:4px;white-space:nowrap}.bk-clock-reminder{font-size:11px;color:#ffe1a0}.bk-spotlight .bk-clock-group #bk-nudge{margin:0}@media(max-width:680px){.bk-clock-reminder{font-size:10px}}
+
+.bk-voice-sentence{font-size:13px;line-height:1.45;color:#e0e3f6;margin:0!important}@media(max-width:680px){.bk-voice-sentence{font-size:12px}}
