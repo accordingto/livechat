@@ -30,6 +30,8 @@ queue; participants do not receive judgment or Next controls.
 - `open-mic-ui.js` / `open-mic.css`: shared host and participant renderer, stage,
   preview dialog, song browser, custom-song form, duet choice, and responsive UI.
 - `open-mic-host.js`: room/session connection and an isolated `?demo=1` mode.
+- `open-mic-lyrics.js`: public LRCLIB search, metadata cleanup, plain-text/LRC
+  normalization, cancellation, timeout, and rate-limit handling.
 - `play.html`: renders this same UI with the original card's own seat identity.
 
 State and favorites survive host reload within the same session. Starting a new
@@ -52,12 +54,22 @@ Private playlists, unavailable videos, and network failures show a link to
 YouTube. This is not an embedded Home feed or Data API search/trending feed.
 
 The stage includes a lyrics reading area and a larger reading dialog. The host
-or current active Spotlight can explicitly save multiline plain text with
-`setLyrics { videoId, lyrics }`, up to 16,000 characters per known song. This is a
-manual lyrics field with links to find lyrics or lyric videos, not an automatic
-lyrics service. Text is shared with every player's card and saved by video ID
+tries LRCLIB when a song without saved lyrics is selected. Only a confident
+title/artist match is loaded automatically; equivalent duplicates are collapsed.
+In-game search lets the host or current Spotlight adjust the title/artist,
+preview available versions, and apply a result without leaving the game.
+Missing lyrics or network failures leave search and manual editing available.
+The service requires no account or API key; availability varies by song.
+
+The host or current active Spotlight can explicitly save multiline plain text
+with `setLyrics { videoId, lyrics }`, up to 16,000 characters per known song.
+Automatic imports use `onlyIfEmpty: true`, checked by the authoritative engine
+so a concurrent manual save cannot be overwritten. Text is shared with every
+player's card and saved by video ID
 in `songLyrics` for this session, survives turns/reload, and resets in a new
-session. Empty text clears lyrics. Local drafts are never published implicitly.
+session. Empty text clears lyrics. Local drafts are never published implicitly
+and prevent automatic imports. Async searches are fenced against song, session,
+round, and turn changes; search can be cancelled.
 Lyrics updates leave the stage iframe, timer, score, duet, and turn token intact.
 Old rooms with no `songLyrics` are supported. Lyrics transport alone has a
 34,000-character action envelope so valid escaped text fits; ordinary commands
@@ -77,9 +89,9 @@ Run `node --test tests/open-mic-*.test.cjs` for rules and Firebase-fake coverage
 run `node --test tests/*.test.cjs` for regressions. New-menu assertions retain
 BLUFF PARTY and CUT in their original order, with Open Mic Rescue last.
 
-2026-10-08 lyrics/discovery validation: 41 Open Mic checks and 768 full-site
-checks pass. Browser QA loaded a real public playlist, resolved and added its
-current video, saved/read shared lyrics, preserved a real room's lyrics after
-host reload, and checked the 390px reading layout. Latest CUT changes are retained.
-Automatic lyrics retrieval and in-game personal Home recommendation feeds are
-not implemented; the corresponding links open the source websites.
+2026-10-08 embedded lyrics validation: 65 Open Mic tests and 792 full-site tests
+pass, including the lyric service, authority guard, and stale-search/manual-edit
+protections. Browser QA automatically loads an English song, previews and applies
+a Mandarin version inside the stage, and checks the 390px search layout without
+horizontal overflow. Latest CUT changes are retained. YouTube personal Home
+recommendations remain on YouTube; lyrics are read within the game.

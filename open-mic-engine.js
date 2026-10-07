@@ -185,6 +185,7 @@ var OPEN_MIC_ENGINE = (() => {
         if (!isSpotlight) { error = 'not_available'; break; }
         if (!state.songLibrary.some(song => song.videoId === input.videoId)) { error = 'invalid_song'; break; }
         if (typeof input.lyrics !== 'string' || input.lyrics.length > MAX_LYRICS_CHARS || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(input.lyrics)) { error = 'invalid_lyrics'; break; }
+        if (input.onlyIfEmpty === true && typeof state.songLyrics[input.videoId] === 'string' && state.songLyrics[input.videoId].trim()) { error = 'lyrics_exists'; break; }
         const lyrics = input.lyrics.replace(/\r\n?/g, '\n');
         if (lyrics.trim()) state.songLyrics[input.videoId] = lyrics;
         else delete state.songLyrics[input.videoId];

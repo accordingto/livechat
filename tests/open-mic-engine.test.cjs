@@ -298,3 +298,19 @@ test('empty lyrics clear saved text and older room states migrate without resett
   s = act(s, 'setLyrics', { videoId: secondVideoId, lyrics: '' }); assert.deepEqual(s.songLyrics, {});
   assert.equal(s.turnId, turnId); assert.equal(s.phase, 'choice'); assert.equal(s.teamScore, 2);
 });
+
+test('automatic imports cannot overwrite an existing lyric edit but deliberate saves remain available', () => {
+  let s = singing(); const videoId = s.selectedSong.videoId;
+  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Imported draft', onlyIfEmpty: true });
+  assert.equal(error(s, 1), ''); assert.equal(s.songLyrics[videoId], 'Imported draft');
+  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Our manual correction' });
+  const turnId = s.turnId, startedAt = s.singingStartedAt, score = s.teamScore;
+  const rejected = act(s, 'setLyrics', { actor: 0, videoId, lyrics: 'Delayed automatic result', onlyIfEmpty: true });
+  assert.equal(error(rejected), 'lyrics_exists'); assert.equal(rejected.songLyrics[videoId], 'Our manual correction');
+  assert.equal(rejected.turnId, turnId); assert.equal(rejected.singingStartedAt, startedAt); assert.equal(rejected.teamScore, score);
+  s = act(rejected, 'setLyrics', { actor: 0, videoId, lyrics: 'Intentional replacement' });
+  assert.equal(error(s), ''); assert.equal(s.songLyrics[videoId], 'Intentional replacement');
+  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: '' });
+  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Fresh import after clearing', onlyIfEmpty: true });
+  assert.equal(s.songLyrics[videoId], 'Fresh import after clearing');
+});

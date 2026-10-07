@@ -106,11 +106,10 @@
     invalid_playlist: { en: 'Paste a YouTube playlist link containing list=…', zh: '請貼上含有 list=… 的 YouTube 播放清單連結。' },
     playlistWaiting: { en: 'Choose a video in the playlist first.', zh: '請先在播放清單裡選一支影片。' },
     lyrics: { en: 'Lyrics', zh: '歌詞' },
-    lyricsEmpty: { en: 'No lyrics have been added for this song yet.', zh: '這首歌還沒有加入歌詞。' },
-    lyricsHint: { en: 'Shared lyrics for this session. The host or Spotlight player can paste or update them.', zh: '本次遊戲的共用歌詞，由主持人或本輪主角貼上或更新。' },
+    lyricsEmpty: { en: 'Lyrics will appear here. Use the in-game search if a match needs choosing.', zh: '歌詞會顯示在這裡。若需要選擇版本，可以直接在遊戲裡搜尋。' },
+    lyricsHint: { en: 'Matching lyrics load here for everyone. The host or Spotlight player can choose another version or paste their own.', zh: '符合的歌詞會直接載入，讓大家一起閱讀。主持人或本輪主角也能選其他版本或自行貼上。' },
     lyricsEdit: { en: 'Paste / edit lyrics', zh: '貼上／編輯歌詞' },
     lyricsRead: { en: 'Expand lyrics', zh: '放大閱讀歌詞' },
-    lyricsSearch: { en: 'Find lyrics ↗', zh: '搜尋歌詞 ↗' },
     lyricVideoSearch: { en: 'Find a lyric video ↗', zh: '找有歌詞的影片 ↗' },
     lyricsEditorTitle: { en: 'Lyrics for {title}', zh: '{title} 的歌詞' },
     lyricsEditorHint: { en: 'Paste the lyrics you want the room to read. Only Save shares them. An empty text clears the shared lyrics.', zh: '貼上想讓大家閱讀的歌詞，按儲存才會分享。儲存空白內容會清除共用歌詞。' },
@@ -120,7 +119,27 @@
     lyricsSaved: { en: 'Lyrics shared with the room.', zh: '歌詞已分享給房間。' },
     lyricsSavedNewerDraft: { en: 'Lyrics shared. Your newer edits are still an unsaved draft.', zh: '歌詞已分享，剛才新修改的內容仍是尚未儲存的草稿。' },
     lyricsLarger: { en: 'Larger text', zh: '放大字體' }, lyricsSmaller: { en: 'Smaller text', zh: '縮小字體' },
-    invalid_lyrics: { en: 'Use plain text lyrics, up to 16,000 characters.', zh: '請使用純文字歌詞，最多 16,000 個字。' }
+    invalid_lyrics: { en: 'Use plain text lyrics, up to 16,000 characters.', zh: '請使用純文字歌詞，最多 16,000 個字。' },
+    lyrics_exists: { en: 'Lyrics are already available for this song.', zh: '這首歌已經有歌詞了。' },
+    lyricsFind: { en: 'Find lyrics in game', zh: '在遊戲裡找歌詞' },
+    lyricsChoose: { en: 'Choose lyrics', zh: '選擇歌詞' },
+    lyricsLookupTitle: { en: 'Find your song’s lyrics', zh: '找這首歌的歌詞' },
+    lyricsLookupHint: { en: 'Lyrics load here from LRCLIB. Check the song and artist, preview a match, then share it with the room.', zh: '透過 LRCLIB 直接載入歌詞。確認歌名與歌手，預覽正確的版本，再分享給房間。' },
+    lyricsLookupSearch: { en: 'Search lyrics', zh: '搜尋歌詞' },
+    lyricsTrack: { en: 'Song title', zh: '歌名' }, lyricsArtist: { en: 'Artist', zh: '歌手' },
+    lyricsLoading: { en: 'Finding lyrics for this song…', zh: '正在找這首歌的歌詞…' },
+    lyricsImporting: { en: 'Loading matching lyrics into the room…', zh: '正在把符合的歌詞載入房間…' },
+    lyricsImported: { en: 'Lyrics loaded from LRCLIB.', zh: '已從 LRCLIB 載入歌詞。' },
+    lyricsChooseHint: { en: 'Choose the right version below. Nothing is shared until you choose it.', zh: '請在下方選擇正確版本，選好後才會分享歌詞。' },
+    lyricsNotFound: { en: 'No lyrics found yet. Try a simpler title or paste lyrics here.', zh: '還沒找到歌詞。可以試試較簡單的歌名，或直接在這裡貼上歌詞。' },
+    lyricsLookupUnavailable: { en: 'Lyrics search is unavailable right now. Try again or paste lyrics here.', zh: '歌詞搜尋暫時無法使用，可以再試一次，或直接在這裡貼上歌詞。' },
+    lyricsRateLimit: { en: 'Lyrics search is taking a short break. Try again in {n} seconds, or paste lyrics here.', zh: '歌詞搜尋暫時忙碌，約 {n} 秒後再試，或直接在這裡貼上歌詞。' },
+    lyricsInvalidQuery: { en: 'Enter a song title. Add the artist to narrow the search.', zh: '請輸入歌名，可加上歌手縮小範圍。' },
+    lyricsPreview: { en: 'Preview lyrics', zh: '預覽歌詞' },
+    lyricsUse: { en: 'Use these lyrics', zh: '使用這份歌詞' },
+    lyricsManual: { en: 'Paste lyrics instead', zh: '改成直接貼上歌詞' },
+    lyricsSource: { en: 'Lyrics search: LRCLIB ↗', zh: '歌詞搜尋來源：LRCLIB ↗' },
+    lyricsSearchWaiting: { en: 'The host or Spotlight player can share a selected version with the room.', zh: '主持人或本輪主角可以把選好的版本分享給房間。' }
   };
   if (global.I18N) global.I18N.registerDict('openmic', dict);
   var fallbackCategories = [
@@ -172,6 +191,10 @@
       this.playlistPlayer = null; this.playlistGeneration = 0; this.playlistBusy = false;
       this.playlistSelected = null; this.playlistTitleDirty = false;
       this.lyricsDrafts = {}; this.lyricsFont = 24; this.lyricsEditVideo = null; this.lyricsEditSession = null; this.lyricsEditGeneration = 0;
+      this.lyricsLookupRecords = []; this.lyricsLookupPicked = null; this.lyricsLookupGeneration = 0;
+      this.lyricsLookupAbort = null; this.lyricsLookupBusy = false; this.lyricsLookupMode = null;
+      this.lyricsLookupStatus = null; this.lyricsLookupSong = null; this.lyricsAutoAttemptKey = null;
+      this.lyricsLookupContext = null; this.lyricsFindGeneration = 0;
       this.build();
       this.onClick = this.handleClick.bind(this);
       this.onInput = this.handleInput.bind(this);
@@ -201,6 +224,13 @@
       this.playlistDialog = this.find('[data-om-modal="playlist"]');
       this.lyricsEditDialog = this.find('[data-om-modal="lyricsEdit"]');
       this.lyricsReadDialog = this.find('[data-om-modal="lyricsRead"]');
+      this.find('[data-om-lyrics-search]').outerHTML = '<button type="button" class="om-button om-primary" data-om-action="lyricsFind"></button>';
+      this.find('.om-lyrics-actions').prepend(this.find('[data-om-action="lyricsFind"]'));
+      this.find('[data-om-lyrics-copy]').insertAdjacentHTML('beforebegin', '<p class="om-feedback om-lyrics-load-status" data-om-lyrics-load-status role="status"></p>');
+      this.find('.om-lyrics-links').insertAdjacentHTML('beforeend', '<a class="back om-lyrics-source" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer" data-om-lyrics-source></a>');
+      this.element.insertAdjacentHTML('beforeend', '<dialog class="om-modal om-lyrics-find" data-om-modal="lyricsFind"><header><h2 data-om-lyrics-lookup-title></h2><button type="button" class="om-button" data-om-action="closeLyricsFind"></button></header><p class="om-soft" data-om-lyrics-lookup-hint></p><form class="om-form om-lyrics-search-form" data-om-lyrics-search-form><label class="om-field"><span data-om-lyrics-track-label></span><input name="trackTitle" type="text" maxlength="200" autocomplete="off"></label><label class="om-field"><span data-om-lyrics-artist-label></span><input name="artistName" type="text" maxlength="200" autocomplete="off"></label><button type="submit" class="om-button om-primary" data-om-lyrics-search-submit></button></form><p class="om-feedback" data-om-lyrics-search-status role="status"></p><div class="om-lyrics-results" data-om-lyrics-results></div><section class="om-lyrics-candidate" data-om-lyrics-candidate hidden><h3 data-om-lyrics-candidate-title></h3><p class="om-soft" data-om-lyrics-candidate-artist></p><div class="om-lyrics-text" data-om-lyrics-candidate-preview tabindex="0"></div><button type="button" class="om-button om-primary" data-om-action="lyricsUse"></button><p class="om-soft" data-om-lyrics-use-hint></p></section><div class="om-lyrics-find-footer"><button type="button" class="om-button" data-om-action="lyricsManual"></button><a class="back" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer" data-om-lyrics-lookup-source></a></div></dialog>');
+      this.lyricsFindDialog = this.find('[data-om-modal="lyricsFind"]');
+      this.lyricsFindDialog.addEventListener('close', () => { if (!this.destroyed && !this.lyricsFindDialog.open) { this.lyricsFindGeneration++; if (this.lyricsLookupMode === 'manual') this.cancelLyricsLookup(); } });
     }
     find(selector) { return this.element.querySelector(selector); }
     set(selector, html) { var el = this.find(selector); if (el) el.innerHTML = html; }
@@ -220,15 +250,22 @@
       var prevSession = this.data && this.data.sessionId;
       var previousSong = this.data && this.data.selectedSong && this.data.selectedSong.videoId;
       var previousRound = this.data && this.data.round;
+      var previousLyricsContext = this.lyricsContext();
       this.data = data;
+      if (previousLyricsContext && !this.sameLyricsContext(previousLyricsContext)) {
+        this.cancelLyricsLookup(); this.lyricsLookupRecords = []; this.lyricsLookupPicked = null;
+        this.lyricsLookupStatus = null; this.lyricsLookupSong = null; this.lyricsLookupContext = null;
+      }
       if (prevSession && prevSession !== data.sessionId) { this.category = 'for-you'; this.error = ''; this.notice = ''; this.close(this.previewDialog); this.close(this.duetDialog); }
       if (prevSession && (prevSession !== data.sessionId || previousRound !== data.round)) this.close(this.playlistDialog);
       if (prevSession && (prevSession !== data.sessionId || previousSong !== (data.selectedSong && data.selectedSong.videoId))) {
         this.close(this.lyricsEditDialog); this.close(this.lyricsReadDialog);
+        this.close(this.lyricsFindDialog); this.lyricsLookupRecords = []; this.lyricsLookupPicked = null;
+        this.lyricsLookupStatus = null; this.lyricsLookupSong = null;
       }
       if (data.reply && data.reply.id !== this.replyId) {
         this.replyId = data.reply.id;
-        this.error = data.reply.error ? t(dict[data.reply.error] ? data.reply.error : 'error') : '';
+        this.error = data.reply.error && !(this.quietLyricsExists && data.reply.error === 'lyrics_exists') ? t(dict[data.reply.error] ? data.reply.error : 'error') : '';
         this.setText('[data-om-form-error]', this.error);
       }
       this.render();
@@ -243,7 +280,7 @@
       this.renderExtraLabels();
     }
     renderExtraLabels() {
-      var labels = { '[data-om-starter-hint]': 'starterHint', '[data-om-youtube-home]': 'youtubeHome', '[data-om-youtube-search]': 'youtubeSearch', '[data-om-action="playlistOpen"]': 'playlistOpen', '[data-om-playlist-title]': 'playlistTitle', '[data-om-action="closePlaylist"]': 'close', '[data-om-playlist-hint]': 'playlistHint', '[data-om-playlist-url-label]': 'playlistURL', '[data-om-playlist-load]': 'playlistLoad', '[data-om-action="playlistCurrent"]': 'playlistCurrent', '[data-om-playlist-song-label]': 'playlistSongTitle', '[data-om-action="playlistAdd"]': 'playlistAdd', '[data-om-playlist-video-link]': 'youtubeLink', '[data-om-lyrics-label]': 'lyrics', '[data-om-lyrics-hint]': 'lyricsHint', '[data-om-action="lyricsEdit"]': 'lyricsEdit', '[data-om-action="lyricsRead"]': 'lyricsRead', '[data-om-lyrics-search]': 'lyricsSearch', '[data-om-lyric-video-search]': 'lyricVideoSearch', '[data-om-lyrics-editor-hint]': 'lyricsEditorHint', '[data-om-lyrics-save]': 'lyricsSave', '[data-om-action="closeLyricsEdit"]': 'close', '[data-om-action="closeLyricsRead"]': 'close' };
+      var labels = { '[data-om-starter-hint]': 'starterHint', '[data-om-youtube-home]': 'youtubeHome', '[data-om-youtube-search]': 'youtubeSearch', '[data-om-action="playlistOpen"]': 'playlistOpen', '[data-om-playlist-title]': 'playlistTitle', '[data-om-action="closePlaylist"]': 'close', '[data-om-playlist-hint]': 'playlistHint', '[data-om-playlist-url-label]': 'playlistURL', '[data-om-playlist-load]': 'playlistLoad', '[data-om-action="playlistCurrent"]': 'playlistCurrent', '[data-om-playlist-song-label]': 'playlistSongTitle', '[data-om-action="playlistAdd"]': 'playlistAdd', '[data-om-playlist-video-link]': 'youtubeLink', '[data-om-lyrics-label]': 'lyrics', '[data-om-lyrics-hint]': 'lyricsHint', '[data-om-action="lyricsEdit"]': 'lyricsEdit', '[data-om-action="lyricsRead"]': 'lyricsRead', '[data-om-lyric-video-search]': 'lyricVideoSearch', '[data-om-lyrics-editor-hint]': 'lyricsEditorHint', '[data-om-lyrics-save]': 'lyricsSave', '[data-om-action="closeLyricsEdit"]': 'close', '[data-om-action="closeLyricsRead"]': 'close' };
       Object.keys(labels).forEach(s => this.setText(s, t(labels[s])));
       this.find('[data-om-online-query]').placeholder = t('youtubeSearchPlaceholder');
       this.find('[data-om-online-query]').setAttribute('aria-label', t('youtubeSearchPlaceholder'));
@@ -254,6 +291,8 @@
       if (this.lyricsEditSong) this.setText('[data-om-lyrics-editor-title]', t('lyricsEditorTitle', { title: this.lyricsEditSong.title }));
       this.updateOnlineSearch();
       this.renderPlaylistControls();
+      var lyricLabels = { '[data-om-action="lyricsFind"]': 'lyricsFind', '[data-om-lyrics-source]': 'lyricsSource', '[data-om-lyrics-lookup-source]': 'lyricsSource', '[data-om-lyrics-lookup-title]': 'lyricsLookupTitle', '[data-om-lyrics-lookup-hint]': 'lyricsLookupHint', '[data-om-action="closeLyricsFind"]': 'close', '[data-om-lyrics-track-label]': 'lyricsTrack', '[data-om-lyrics-artist-label]': 'lyricsArtist', '[data-om-lyrics-search-submit]': 'lyricsLookupSearch', '[data-om-action="lyricsUse"]': 'lyricsUse', '[data-om-action="lyricsManual"]': 'lyricsManual', '[data-om-lyrics-use-hint]': 'lyricsSearchWaiting' };
+      Object.keys(lyricLabels).forEach(s => this.setText(s, t(lyricLabels[s])));
     }
     button(action, label, css, extra, allowed) {
       var disabled = allowed === false || (action !== 'preview' && (this.pending || !this.canControl()));
@@ -283,6 +322,7 @@
       this.setText('[data-om-feedback]', this.error || this.notice);
       this.find('[data-om-feedback]').classList.toggle('om-error', !!this.error);
       this.paint();
+      this.maybeAutoLyrics();
     }
     renderStage() {
       var data = this.data, song = data.selectedSong, controller = this.controller(), host = this.host();
@@ -450,6 +490,157 @@
       var value = this.data && this.data.songLyrics && this.data.songLyrics[videoId];
       return typeof value === 'string' ? value : '';
     }
+    lyricsContext() {
+      if (!this.data || !this.data.selectedSong) return null;
+      return { sessionId: this.data.sessionId, round: this.data.round, turnId: this.data.turnId, videoId: this.data.selectedSong.videoId, actor: this.actor };
+    }
+    sameLyricsContext(context) {
+      var current = this.lyricsContext();
+      return !this.destroyed && !!context && !!current && Object.keys(context).every(key => context[key] === current[key]);
+    }
+    hasLyricsDraft(videoId) {
+      var draft = this.loadDraft(this.draftKey(videoId));
+      return !!(draft && draft.dirty) || !!(this.lyricsEditDialog && this.lyricsEditDialog.open && this.lyricsEditVideo === videoId);
+    }
+    canAutoLyrics(context) {
+      return this.actor === 0 && this.canControl() && !this.pending && this.sameLyricsContext(context) && !this.getLyrics(context.videoId).trim() && !this.hasLyricsDraft(context.videoId);
+    }
+    cancelLyricsLookup() {
+      this.lyricsLookupGeneration++;
+      if (this.lyricsLookupAbort) this.lyricsLookupAbort.abort();
+      this.lyricsLookupAbort = null; this.lyricsLookupBusy = false; this.lyricsLookupMode = null;
+    }
+    maybeAutoLyrics() {
+      var context = this.lyricsContext();
+      if (!context || !this.canAutoLyrics(context) || !global.OPEN_MIC_LYRICS) return;
+      var key = JSON.stringify(context);
+      if (this.lyricsAutoAttemptKey === key || this.lyricsLookupBusy) return;
+      this.lyricsAutoAttemptKey = key;
+      var fields = global.OPEN_MIC_LYRICS.infer(this.data.selectedSong);
+      Promise.resolve().then(() => { if (this.canAutoLyrics(context)) this.searchLyrics(fields, 'auto'); });
+    }
+    lyricNormalize(value) {
+      return String(value || '').normalize('NFKC').toLowerCase().replace(/[’‘']/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    }
+    uniqueLyrics(records) {
+      var seen = new Set();
+      return records.filter(record => {
+        var lyrics = String(record.lyrics || '').replace(/\r\n?/g, '\n').trim();
+        var key = this.lyricNormalize(record.title) + '\n' + this.lyricNormalize(record.artist) + '\n' + lyrics;
+        if (seen.has(key)) return false;
+        seen.add(key); return true;
+      });
+    }
+    exactLyricsMatches(records, fields) {
+      var title = this.lyricNormalize(fields.title), artist = this.lyricNormalize(fields.artist);
+      if (!title || !artist) return [];
+      return this.uniqueLyrics(records.filter(record => !record.instrumental && record.lyrics && this.lyricNormalize(record.title) === title && this.lyricNormalize(record.artist) === artist));
+    }
+    setLyricsLookupStatus(key, vars, error) {
+      this.lyricsLookupStatus = key ? { key: key, vars: vars || {}, error: !!error } : null;
+      this.renderLyricsLookup();
+    }
+    async searchLyrics(fields, mode) {
+      mode = mode || 'manual';
+      var context = this.lyricsContext();
+      if (!context || !global.OPEN_MIC_LYRICS) { this.setLyricsLookupStatus('lyricsLookupUnavailable', {}, true); return; }
+      this.cancelLyricsLookup();
+      var generation = this.lyricsLookupGeneration;
+      this.lyricsLookupAbort = new AbortController(); this.lyricsLookupMode = mode; this.lyricsLookupBusy = true;
+      this.lyricsLookupRecords = []; this.lyricsLookupPicked = null;
+      this.lyricsLookupSong = context.sessionId + ':' + context.videoId;
+      this.lyricsLookupContext = context;
+      this.setLyricsLookupStatus('lyricsLoading');
+      try {
+        var records = await global.OPEN_MIC_LYRICS.search(fields, { signal: this.lyricsLookupAbort.signal });
+        if (generation !== this.lyricsLookupGeneration || !this.sameLyricsContext(context)) return;
+        records = this.uniqueLyrics(values(records).filter(record => record && typeof record.lyrics === 'string' && record.lyrics.trim() && !record.instrumental));
+        this.lyricsLookupRecords = records; this.lyricsLookupBusy = false;
+        if (!records.length) { this.setLyricsLookupStatus('lyricsNotFound'); return; }
+        var exact = this.exactLyricsMatches(records, fields);
+        if (mode === 'auto' && exact.length === 1 && this.canAutoLyrics(context)) {
+          this.lyricsLookupPicked = exact[0].id;
+          this.setLyricsLookupStatus('lyricsImporting');
+          // The engine's condition protects manual lyrics saved by another device.
+          if (generation !== this.lyricsLookupGeneration || !this.canAutoLyrics(context)) return;
+          var ok = await this.action('setLyrics', { videoId: context.videoId, lyrics: exact[0].lyrics, onlyIfEmpty: true });
+          if (generation !== this.lyricsLookupGeneration || !this.sameLyricsContext(context)) return;
+          if (ok && !this.error) this.setLyricsLookupStatus('lyricsImported');
+          else if (this.getLyrics(context.videoId).trim() || !this.error) { this.error = ''; this.setLyricsLookupStatus(null); this.render(); }
+          else this.setLyricsLookupStatus('lyricsLookupUnavailable', {}, true);
+        } else {
+          if (mode === 'auto' && !this.canControl()) this.lyricsAutoAttemptKey = null;
+          this.setLyricsLookupStatus('lyricsChooseHint');
+        }
+      } catch (failure) {
+        if (generation !== this.lyricsLookupGeneration || !this.sameLyricsContext(context) || failure && failure.name === 'AbortError') return;
+        this.lyricsLookupBusy = false;
+        if (failure && failure.code === 'lyrics_rate_limit') this.setLyricsLookupStatus('lyricsRateLimit', { n: Math.max(1, Number(failure.retryAfter) || 60) }, true);
+        else if (failure && failure.code === 'invalid_lyrics_query') this.setLyricsLookupStatus('lyricsInvalidQuery', {}, true);
+        else this.setLyricsLookupStatus('lyricsLookupUnavailable', {}, true);
+      } finally {
+        if (!this.destroyed && generation === this.lyricsLookupGeneration) { this.lyricsLookupBusy = false; this.renderLyricsLookup(); }
+      }
+    }
+    openLyricsSearch() {
+      if (!this.data || !this.data.selectedSong) return;
+      var song = this.data.selectedSong, api = global.OPEN_MIC_LYRICS;
+      var fields = api ? api.infer(song) : { title: song.title || '', artist: song.artist || '', query: '' };
+      if (!this.lyricsFindDialog.open) {
+        this.lyricsFindGeneration++;
+        this.find('[data-om-lyrics-search-form] input[name="trackTitle"]').value = fields.title || fields.query || '';
+        this.find('[data-om-lyrics-search-form] input[name="artistName"]').value = fields.artist || '';
+      }
+      this.show(this.lyricsFindDialog); this.renderLyricsLookup();
+      if (!this.lyricsLookupBusy && (!this.lyricsLookupRecords.length || this.lyricsLookupSong !== this.data.sessionId + ':' + song.videoId)) this.searchLyrics(fields, 'manual');
+    }
+    chooseLyrics(id) {
+      var record = this.lyricsLookupRecords.find(record => String(record.id) === String(id));
+      if (!record) return;
+      this.lyricsLookupPicked = record.id; this.renderLyricsLookup();
+    }
+    async useLyricsCandidate() {
+      var context = this.lyricsContext();
+      var record = this.lyricsLookupRecords.find(record => String(record.id) === String(this.lyricsLookupPicked));
+      if (!context || !record || !this.controller() || !this.canControl() || !this.sameLyricsContext(this.lyricsLookupContext) || this.lyricsLookupSong !== context.sessionId + ':' + context.videoId) return;
+      var key = this.draftKey(context.videoId), beforeDraft = this.loadDraft(key), dialogGeneration = this.lyricsFindGeneration;
+      var ok = await this.action('setLyrics', { videoId: context.videoId, lyrics: record.lyrics });
+      if (!this.sameLyricsContext(context)) return;
+      if (ok && !this.error) {
+        var unchangedDraft = this.loadDraft(key) === beforeDraft;
+        if (unchangedDraft) this.storeDraft(key, { text: record.lyrics, dirty: false });
+        if (unchangedDraft && this.lyricsFindGeneration === dialogGeneration) this.close(this.lyricsFindDialog);
+        this.setLyricsLookupStatus('lyricsImported'); this.render();
+      } else this.setLyricsLookupStatus('lyricsLookupUnavailable', {}, true);
+    }
+    renderLyricsLookup() {
+      if (this.destroyed) return;
+      var status = this.lyricsLookupStatus;
+      var message = status ? t(status.key, status.vars) : '';
+      this.setText('[data-om-lyrics-load-status]', message);
+      this.setText('[data-om-lyrics-search-status]', message);
+      var statusNode = this.find('[data-om-lyrics-search-status]');
+      if (statusNode) statusNode.classList.toggle('om-error', !!(status && status.error));
+      var findButton = this.find('[data-om-action="lyricsFind"]');
+      if (findButton) findButton.textContent = t(this.lyricsLookupRecords.length && !this.getLyrics(this.data && this.data.selectedSong && this.data.selectedSong.videoId) ? 'lyricsChoose' : 'lyricsFind');
+      var searchButton = this.find('[data-om-lyrics-search-submit]');
+      if (searchButton) searchButton.disabled = !!this.lyricsLookupBusy;
+      var record = this.lyricsLookupRecords.find(record => String(record.id) === String(this.lyricsLookupPicked));
+      var candidate = this.find('[data-om-lyrics-candidate]');
+      if (candidate) candidate.hidden = !record;
+      if (record) {
+        this.setText('[data-om-lyrics-candidate-title]', record.title);
+        this.setText('[data-om-lyrics-candidate-artist]', record.artist + (record.album ? ' · ' + record.album : ''));
+        this.setText('[data-om-lyrics-candidate-preview]', record.lyrics);
+      }
+      var useButton = this.find('[data-om-action="lyricsUse"]');
+      if (useButton) { useButton.hidden = !this.controller(); useButton.disabled = !record || this.pending || !this.canControl(); }
+      var manualButton = this.find('[data-om-action="lyricsManual"]');
+      if (manualButton) { manualButton.hidden = !this.controller(); manualButton.disabled = this.pending || !this.canControl(); }
+      var hint = this.find('[data-om-lyrics-use-hint]');
+      if (hint) hint.hidden = this.controller();
+      this.set('[data-om-lyrics-results]', this.lyricsLookupRecords.map(item => '<article class="om-lyrics-result"><div><h3>' + esc(item.title) + '</h3><p>' + esc(item.artist) + (item.album ? ' · ' + esc(item.album) : '') + '</p></div><button type="button" class="om-button" data-om-action="lyricsCandidate" data-record="' + esc(item.id) + '">' + esc(t('lyricsPreview')) + '</button></article>').join(''));
+    }
     draftKey(videoId, sessionId) { return String(sessionId || this.data && this.data.sessionId || '') + ':' + this.actor + ':' + videoId; }
     storeDraft(key, draft) {
       this.lyricsDrafts[key] = draft;
@@ -478,7 +669,6 @@
         this.find('[data-om-action="lyricsEdit"]').hidden = !this.controller();
         this.find('[data-om-action="lyricsEdit"]').disabled = this.pending || !this.canControl();
         var query = [song.title, song.artist || '', 'lyrics'].filter(Boolean).join(' ');
-        this.find('[data-om-lyrics-search]').href = 'https://www.google.com/search?q=' + encodeURIComponent(query);
         this.find('[data-om-lyric-video-search]').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
         this.setText('[data-om-lyrics-reader-title]', song.title + ' · ' + t('lyrics'));
         this.setText('[data-om-lyrics-reading]', lyrics || t('lyricsEmpty'));
@@ -489,9 +679,11 @@
       this.element.querySelectorAll('[data-om-action="lyricsLarger"]').forEach(el => { el.disabled = this.lyricsFont >= 42; });
       var draft = this.lyricsEditVideo && this.lyricsDrafts[this.draftKey(this.lyricsEditVideo, this.lyricsEditSession)];
       this.setText('[data-om-lyrics-draft-status]', draft && draft.dirty ? t('lyricsDraft') : '');
+      this.renderLyricsLookup();
     }
     openLyricsEditor() {
       if (!this.data || !this.data.selectedSong || !this.controller() || !this.canControl()) return;
+      this.cancelLyricsLookup();
       var song = this.data.selectedSong, key = this.draftKey(song.videoId);
       this.lyricsEditGeneration++;
       this.lyricsEditVideo = song.videoId; this.lyricsEditSession = this.data.sessionId; this.lyricsEditSong = song;
@@ -546,6 +738,7 @@
       if (dialog === this.previewDialog) { this.set('[data-om-preview-video]', ''); this.previewSong = null; }
       if (dialog === this.playlistDialog) this.destroyPlaylist();
       if (dialog === this.lyricsEditDialog) { this.lyricsEditGeneration++; this.lyricsEditVideo = null; this.lyricsEditSession = null; }
+      if (dialog === this.lyricsFindDialog) { this.lyricsFindGeneration++; if (this.lyricsLookupMode === 'manual') this.cancelLyricsLookup(); }
     }
     preview(videoId) {
       var song = this.library().find(s => s.videoId === videoId);
@@ -559,13 +752,17 @@
     async action(type, extra) {
       if (this.pending || this.destroyed || !this.canControl()) return false;
       this.pending = true; this.error = ''; this.notice = '';
+      this.quietLyricsExists = type === 'setLyrics' && extra && extra.onlyIfEmpty === true;
       this.render();
       try {
         var result = await this.send(type, extra || {});
-        if (result && result.error) { this.error = t(dict[result.error] ? result.error : 'error'); this.setText('[data-om-form-error]', this.error); return false; }
+        if (result && result.error) {
+          this.error = this.quietLyricsExists && result.error === 'lyrics_exists' ? '' : t(dict[result.error] ? result.error : 'error');
+          this.setText('[data-om-form-error]', this.error); return false;
+        }
         return true;
-      } catch (failure) { this.error = failure && dict[failure.message] ? t(failure.message) : this.error || t('error'); this.setText('[data-om-form-error]', this.error); return false; }
-      finally { this.pending = false; if (!this.destroyed) this.render(); }
+      } catch (failure) { this.error = this.quietLyricsExists && failure && failure.message === 'lyrics_exists' ? '' : failure && dict[failure.message] ? t(failure.message) : this.error || t('error'); this.setText('[data-om-form-error]', this.error); return false; }
+      finally { this.pending = false; if (!this.destroyed) this.render(); this.quietLyricsExists = false; }
     }
     handleInput(event) {
       if (event.target.matches('[data-om-search]')) { this.query = event.target.value; this.renderSongs(); }
@@ -593,6 +790,11 @@
       if (action === 'playlistCurrent') { this.refreshPlaylistVideo(); return; }
       if (action === 'playlistAdd') { this.addPlaylistVideo(); return; }
       if (action === 'lyricsEdit') { this.openLyricsEditor(); return; }
+      if (action === 'lyricsFind') { this.openLyricsSearch(); return; }
+      if (action === 'closeLyricsFind') { this.close(this.lyricsFindDialog); return; }
+      if (action === 'lyricsCandidate') { this.chooseLyrics(target.dataset.record); return; }
+      if (action === 'lyricsUse') { this.useLyricsCandidate(); return; }
+      if (action === 'lyricsManual') { this.close(this.lyricsFindDialog); this.openLyricsEditor(); return; }
       if (action === 'closeLyricsEdit') { this.close(this.lyricsEditDialog); return; }
       if (action === 'lyricsRead') { this.renderLyrics(); this.show(this.lyricsReadDialog); return; }
       if (action === 'closeLyricsRead') { this.close(this.lyricsReadDialog); return; }
@@ -603,6 +805,10 @@
       this.action(action);
     }
     async handleSubmit(event) {
+      if (event.target.matches('[data-om-lyrics-search-form]')) {
+        event.preventDefault();
+        this.searchLyrics({ title: event.target.elements.trackTitle.value.trim(), artist: event.target.elements.artistName.value.trim(), query: '' }, 'manual'); return;
+      }
       if (event.target.matches('[data-om-playlist-form]')) { event.preventDefault(); this.loadPlaylist(event.target.elements.playlistUrl.value.trim()); return; }
       if (event.target.matches('[data-om-lyrics-form]')) { event.preventDefault(); this.saveLyrics(); return; }
       if (!event.target.matches('[data-om-add-form]')) return;
@@ -621,6 +827,7 @@
       this.element.removeEventListener('submit', this.onSubmit);
       this.close(this.previewDialog); this.close(this.addDialog); this.close(this.duetDialog);
       this.close(this.playlistDialog); this.close(this.lyricsEditDialog); this.close(this.lyricsReadDialog);
+      this.cancelLyricsLookup(); this.close(this.lyricsFindDialog);
       this.element.innerHTML = '';
       this.data = null;
     }

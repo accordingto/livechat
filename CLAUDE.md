@@ -1,10 +1,12 @@
 ## 專案背景
 
 **Open Mic 歌詞與 YouTube 選歌（2026-10-08）**：音樂舞台新增每首歌共用歌詞，
-由主持／本輪主角明確儲存，所有玩家能放大閱讀，換人／重連保留；不自動抓歌詞。
+主持選歌後透過 LRCLIB 嘗試載入明確符合的歌詞；也可在遊戲內搜尋、預覽並套用，
+或由主持／本輪主角貼上儲存，所有玩家能放大閱讀，換人／重連保留。
 YouTube 首頁／搜尋開啟原站，公開歌單透過官方 IFrame API 即時試聽並加入我的歌單。
 內建推薦不是 YouTube 個人化首頁推薦；無 Data API key，未聲稱內嵌首頁或即時搜尋。
-新增 `open-mic-youtube.js`，詳見 `open-mic-mode.md`；歌詞更新不重載歌曲／計時／計分。
+新增 `open-mic-youtube.js`／`open-mic-lyrics.js`，詳見 `open-mic-mode.md`；
+自動載入不覆蓋已存歌詞或草稿，歌詞更新不重載歌曲／計時／計分。
 
 **Open Mic Rescue / 開麥救場（2026-10-08）**：新遊戲 `open-mic-rescue.html`
 放在首頁 CUT! 後面最下方，沿用原房間與 `play.html` 玩家卡。2–9 人，18 個
