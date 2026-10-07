@@ -36,6 +36,8 @@
 
 ### v0.6 驗證
 
+- 全站順序回歸：原工作樹 919／919；保留並合併同期 Open Mic 更新後，
+  最終工作樹 930／930，全數通過、沒有跳過。其餘遊戲不回退。
 - `node --test tests/talk-*.test.cjs`：57 項涵蓋題庫、正常規則、排程、私人投影、
   暫停／重連、台詞確認、原玩家頁交易與小卡介面。
 - `LETS_TALK_LIVE_TEST=1 node scripts/talk-live-test.cjs`：新建隔離三人測試房間，
