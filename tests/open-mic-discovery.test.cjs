@@ -6,11 +6,11 @@ const fixture = (overrides = {}) => ({ source: 'youtube', region: 'TW', fetchedA
 const response = (body, status = 200, retryAfter) => ({ ok: status === 200, status,
   headers: { get: () => retryAfter ?? null }, json: async () => body });
 
-test('discovery uses the same-origin route for normalized queries without any browser credential', async () => {
+test('discovery uses the owner-managed service for normalized queries without cookies or browser credentials', async () => {
   const calls = [], client = service.createClient({ fetch: async (...args) => { calls.push(args); return response(fixture()); } });
   const data = await client.search('  Our   Party Song  ', { region: 'TW' });
-  assert.equal(calls[0][0], '/api/open-mic-discovery?mode=search&region=TW&q=Our%20Party%20Song');
-  assert.equal(calls[0][1].credentials, 'same-origin');
+  assert.equal(calls[0][0], 'https://icebreaker-youtube-search.vercel.app/api/open-mic-discovery?mode=search&region=TW&q=Our%20Party%20Song');
+  assert.equal(calls[0][1].credentials, 'omit');
   assert.deepEqual(Object.keys(calls[0][1].headers), ['Accept']);
   assert.equal(data.songs[0].title, 'Our Party Song');
 });
@@ -19,7 +19,7 @@ test('public music discovery preserves its region and validated update timestamp
   let url;
   const client = service.createClient({ fetch: async input => { url = input; return response(fixture({ region: 'KR' })); } });
   const data = await client.popular({ region: 'KR' });
-  assert.equal(url, '/api/open-mic-discovery?mode=popular&region=KR');
+  assert.equal(url, 'https://icebreaker-youtube-search.vercel.app/api/open-mic-discovery?mode=popular&region=KR');
   assert.equal(data.source, 'youtube'); assert.equal(data.fetchedAt, '2026-10-08T00:00:00.000Z');
 });
 

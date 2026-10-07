@@ -32,8 +32,9 @@ queue; participants do not receive judgment or Next controls.
 - `open-mic-host.js`: room/session connection and an isolated `?demo=1` mode.
 - `open-mic-lyrics.js`: public LRCLIB search, metadata cleanup, plain-text/LRC
   normalization, cancellation, timeout, and rate-limit handling.
-- `open-mic-discovery.js` / `api/open-mic-discovery.js`: same-origin music
-  discovery client and official YouTube metadata service with server-only key.
+- `open-mic-discovery.js`: calls the owner's standalone official YouTube
+  metadata service without cookies or browser credentials. The original
+  `api/open-mic-discovery.js` is retained as the reusable server core source.
 - `play.html`: renders this same UI with the original card's own seat identity.
 
 State and favorites survive host reload within the same session. Starting a new
@@ -55,7 +56,7 @@ points. Channel names are not stored as artist names; the full safe video title
 is retained for lyrics lookup. The existing host/Spotlight selection rules apply.
 
 The service uses the official `search.list` and `videos.list` APIs through a
-server-only `YOUTUBE_API_KEY`, with fixed provider URLs, bounded metadata, safe
+server-only key (`YOUTUBE_API_KEY`, or `YOUTUBE_KEY` as an alias), with fixed provider URLs, bounded metadata, safe
 video IDs, music category filtering, and an 8-second upstream timeout. Search
 results cache for 10 minutes and public popular music for 15 minutes; displayed
 timestamps describe when metadata was fetched. Repeated requests share work and
@@ -81,15 +82,25 @@ YouTube. Playlist playback is separate from the new Data API discovery service.
 
 ### Enable live discovery
 
+The current game uses the owner-managed Vercel project
+`willintaiwan/icebreaker-youtube-search` at
+`https://icebreaker-youtube-search.vercel.app/api/open-mic-discovery`. Its
+Production Secret holds the key; the original game deployment needs no secret.
+The standalone service permits browser reads only from
+`https://livechat-two-alpha.vercel.app`, exposes `Retry-After`, and receives no
+cookies. CORS is not authentication or a distributed quota limit. Only the API
+is routed publicly; server source, configuration, and private files return 404.
+
 1. In a Google Cloud project, enable YouTube Data API v3, create a dedicated API
    key, and restrict its API access to YouTube Data API v3. Leave the existing
    Firebase key unchanged. This server function does not use browser referrers;
    a key restricted to website referrers will fail server-side requests.
-2. In the Vercel project Settings → Environment Variables, set `YOUTUBE_API_KEY`
+2. In the standalone Vercel project Settings → Environment Variables, set
+   `YOUTUBE_API_KEY` (or the existing `YOUTUBE_KEY`)
    for Production. Keep the value in the deployment environment, never in client
    scripts, Git, chat, or a `NEXT_PUBLIC_` variable.
 3. Deploy the current code after saving the variable, or redeploy if the code
-   was already deployed. Verify `/api/open-mic-discovery?mode=popular&region=TW`
+   was already deployed. Verify the standalone `/api/open-mic-discovery?mode=popular&region=TW`
    and an in-game keyword search return `source: "youtube"` with current records.
    Without the variable the route returns HTTP 503 `discovery_setup_needed`.
 

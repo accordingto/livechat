@@ -1,9 +1,17 @@
 ## 專案背景
 
+**Open Mic 獨立搜尋服務（2026-10-08）**：使用者自行管理的 Vercel 專案
+`willintaiwan/icebreaker-youtube-search` 已部署正式搜尋 API，原站遊戲網址保留。
+`open-mic-discovery.js`（om-2）改呼叫
+`https://icebreaker-youtube-search.vercel.app/api/open-mic-discovery`，不傳 cookies。
+金鑰只在獨立服務的 Production Secret，支援 `YOUTUBE_API_KEY`／`YOUTUBE_KEY`；
+固定 CORS 允許原站。搜尋／熱門實測 HTTP 200；原 repo 的同站 API 保留作部署來源，
+現行前端不使用該路由。發佈與私密設定由使用者帳號分開管理，沒有前端金鑰。
+
 **Open Mic 遊戲內找歌（2026-10-08）**：歌單區新增頁內 YouTube 搜尋、
 台灣／美國／韓國公開熱門音樂與更新時間，結果可試聽、加入本人的 My Songs。
 搜尋和試聽只在本機，按加入才沿用既有 addSong，同步／選唱／計分不變。
-`open-mic-discovery.js` 接同站 `api/open-mic-discovery.js`；正式啟用需網站後台的
+初版 `open-mic-discovery.js` 接同站 `api/open-mic-discovery.js`；當時啟用需網站後台的
 `YOUTUBE_API_KEY`，金鑰不能放入前端或聊天。未設定時保留原歌單與自然提示。
 `.vercelignore` 只允許這個公開讀取 API，其餘 API／私有路徑維持排除。
 推薦是地區公開熱門音樂，不是 YouTube 個人首頁。設定與快取詳見 `open-mic-mode.md`。

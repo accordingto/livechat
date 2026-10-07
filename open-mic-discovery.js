@@ -3,6 +3,7 @@
   else root.OPEN_MIC_DISCOVERY = factory(root);
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (global) {
   'use strict';
+  var discoveryEndpoint = 'https://icebreaker-youtube-search.vercel.app/api/open-mic-discovery';
   var regions = ['TW', 'US', 'KR'];
   var videoPattern = /^[A-Za-z0-9_-]{11}$/;
   function failure(code, retryAfter) {
@@ -53,10 +54,10 @@
       var onCancel = function () { abort.abort(); };
       if (settings.signal) settings.signal.addEventListener('abort', onCancel, { once: true });
       var timer = later(function () { timedOut = true; abort.abort(); }, 10000);
-      var url = '/api/open-mic-discovery?mode=' + mode + '&region=' + region;
+      var url = discoveryEndpoint + '?mode=' + mode + '&region=' + region;
       if (mode === 'search') url += '&q=' + encodeURIComponent(query);
       try {
-        var response = await fetcher(url, { signal: abort.signal, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        var response = await fetcher(url, { signal: abort.signal, headers: { Accept: 'application/json' }, credentials: 'omit' });
         if (settings.signal && settings.signal.aborted) throw cancelled();
         if (timedOut) throw failure('discovery_unavailable');
         if (!response.ok) {
