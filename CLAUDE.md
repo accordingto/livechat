@@ -1,5 +1,11 @@
 ## 專案背景
 
+**Open Mic 搜尋直接點播（2026-10-08）**：搜尋／熱門結果新增主要的「直接點播」；
+主持／當輪主角可在選唱階段直接選到舞台，不需先加入 My Songs。
+`selectSong {videoId,title}` 以單次驗證與更新登記歌曲並選取，不改個人收藏；
+已有歌曲沿用原紀錄與歌詞。「加入我的歌單」仍可提前預選。
+只有點播者本機嘗試播放 MV；其他卡片同步選曲，唱歌計時仍由原按鈕開始。
+
 **Open Mic 獨立搜尋服務（2026-10-08）**：使用者自行管理的 Vercel 專案
 `willintaiwan/icebreaker-youtube-search` 已部署正式搜尋 API，原站遊戲網址保留。
 `open-mic-discovery.js`（om-2）改呼叫

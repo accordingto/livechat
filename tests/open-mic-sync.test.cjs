@@ -337,3 +337,115 @@ test('invalid lyrics are acknowledged without damage; clearing text removes it f
   assert.deepEqual(singingProgress(f.state()), progress);
   h.close(); await settle(h);
 });
+
+test('Spotlight can put a discovery song directly on the shared stage without saving or starting it', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  await h.command('failed'); await settle(h);
+  const before = f.state(), progress = singingProgress(before), revision = f.raw().revision;
+  const videoId = 'searchsong1', title = 'A song for our party', observations = [];
+  h.onChange = state => { h.latest = state; observations.push(clone(state)); };
+  const action = await f.action(1, 'selectSong', { videoId, title }); await settle(h);
+  const selected = f.state();
+  assert.equal(f.card(1).openmic.reply.id, action.id); assert.equal(f.card(1).openmic.reply.error, '');
+  assert.equal(f.raw().revision, revision + 1, 'selection and library registration commit together');
+  assert.equal(selected.songLibrary.length, before.songLibrary.length + 1);
+  const song = selected.songLibrary.find(candidate => candidate.videoId === videoId);
+  assert.ok(song); assert.equal(song.title, title); assert.equal(song.artist, '');
+  assert.equal(song.url, 'https://www.youtube.com/watch?v=' + videoId);
+  assert.deepEqual(selected.selectedSong, song); assert.deepEqual(selected.mySongs, before.mySongs);
+  assert.deepEqual(singingProgress(selected), { ...progress, turnId: progress.turnId + 1 });
+  assert.equal(selected.singingAwarded, false); assert.equal(selected.singingStartedAt, null);
+  assert.ok(observations.length > 0);
+  for (const state of observations) {
+    if (state.selectedSong?.videoId === videoId) {
+      assert.ok(state.songLibrary.some(candidate => candidate.videoId === videoId), 'no canonical snapshot selects an unregistered song');
+      assert.deepEqual(state.mySongs, before.mySongs);
+    }
+  }
+  for (let n = 1; n <= 4; n++) {
+    const view = f.card(n).openmic;
+    assert.deepEqual(view.selectedSong, normalize(song)); assert.equal(view.phase, 'choice');
+    assert.equal(view.singingStartedAt ?? null, null); assert.equal(view.teamScore, 0);
+    assert.equal(view.songLibrary.filter(candidate => candidate.videoId === videoId).length, 1);
+    assert.deepEqual(Object.values(view.mySongs || {}).flat(), [], 'direct playback does not create a personal favorite');
+  }
+  const selectedProgress = singingProgress(selected), lyrics = 'We bring a little tune.\nOur friends sing along.';
+  const lyricsAction = await f.action(1, 'setLyrics', { videoId, lyrics }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, lyricsAction.id); assert.equal(f.card(1).openmic.reply.error, '');
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], lyrics);
+  assert.deepEqual(singingProgress(f.state()), selectedProgress);
+  assert.deepEqual(f.state().mySongs, before.mySongs);
+  h.close(); await settle(h);
+});
+
+test('replayed direct selection is acknowledged once and another selection keeps one canonical song', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  await h.command('success'); await settle(h);
+  await f.action(2, 'toggleFavorite', { videoId: h.latest.songLibrary[0].videoId }); await settle(h);
+  const videoId = 'searchsong2', baseline = f.state();
+  const action = await f.action(1, 'selectSong', { videoId, title: 'Our first title' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.error, ''); const once = f.state(), revision = f.raw().revision;
+  await f.db.ref(f.paths[0]).transaction(old => ({ ...old, openmicAction: action })); await settle(h);
+  assert.equal(f.raw().revision, revision); assert.deepEqual(f.state(), once);
+  assert.equal(f.card(1).openmic.reply.id, action.id);
+  await f.action(1, 'setLyrics', { videoId, lyrics: 'The room keeps our own little line.' }); await settle(h);
+  const again = await f.action(1, 'selectSong', { videoId, title: 'A later discovery title' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, again.id); assert.equal(f.card(1).openmic.reply.error, '');
+  assert.equal(f.state().songLibrary.length, baseline.songLibrary.length + 1);
+  assert.equal(f.state().songLibrary.filter(song => song.videoId === videoId).length, 1);
+  assert.equal(h.latest.selectedSong.title, 'Our first title', 'an existing room song retains its canonical metadata');
+  assert.equal(f.state().songLyrics[videoId], 'The room keeps our own little line.');
+  assert.deepEqual(f.state().mySongs, baseline.mySongs);
+  assert.equal(h.latest.phase, 'choice'); assert.equal(h.latest.teamScore, 2);
+  assert.equal(h.latest.singingState, 'idle'); assert.equal(h.latest.singingStartedAt, null);
+  h.close(); await settle(h);
+});
+
+test('direct discovery registration rejects spoofed listeners and every unavailable stage phase', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  async function rejectSelection(player, videoId, extra = {}) {
+    const before = f.state(), progress = singingProgress(before);
+    const action = await f.action(player, 'selectSong', { videoId, title: 'A rejected room song', ...extra }); await settle(h);
+    assert.equal(f.card(player).openmic.reply.id, action.id); assert.equal(f.card(player).openmic.reply.error, 'not_available');
+    assert.deepEqual(f.state().songLibrary, before.songLibrary); assert.deepEqual(f.state().mySongs, before.mySongs);
+    assert.deepEqual(f.state().selectedSong, before.selectedSong); assert.deepEqual(singingProgress(f.state()), progress);
+  }
+  await rejectSelection(1, 'searchsong3', { actor: 0 });
+  await h.command('failed'); await settle(h);
+  await rejectSelection(2, 'searchsong4', { actor: 0 });
+  await rejectSelection(3, 'searchsong5', { actor: 1 });
+  await f.action(1, 'selectSong', { videoId: 'searchsong6', title: 'Our allowed stage song' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.error, '');
+  await f.action(1, 'startSinging'); await settle(h);
+  await rejectSelection(1, 'searchsong7');
+  const singing = f.state();
+  await assert.rejects(h.command('selectSong', { videoId: 'searchsong8', title: 'Host cannot replace a live song' }), /not_available/);
+  await settle(h); assert.deepEqual(f.state().songLibrary, singing.songLibrary);
+  assert.deepEqual(singingProgress(f.state()), singingProgress(singing));
+  await f.action(1, 'skip'); await settle(h);
+  await rejectSelection(1, 'searchsong9');
+  assert.equal(h.latest.teamScore, 0, 'rejected choices and skipping never award a singing point');
+  h.close(); await settle(h);
+});
+
+test('old turn and session discovery choices cannot inject new songs into the current room', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  const oldTurn = h.latest.turnId; await h.command('failed'); await settle(h);
+  const before = f.state();
+  const stale = await f.action(1, 'selectSong', { videoId: 'stalesong01', title: 'An old result', turnId: oldTurn }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, stale.id); assert.equal(f.card(1).openmic.reply.error, 'stale_turn');
+  assert.deepEqual(f.state().songLibrary, before.songLibrary); assert.deepEqual(f.state().mySongs, before.mySongs);
+  assert.deepEqual(singingProgress(f.state()), singingProgress(before));
+  const revision = f.raw().revision, rejectedState = f.state();
+  const oldSession = await f.action(1, 'selectSong', { videoId: 'stalesong02', title: 'A different session', sessionId: 'expired-party' }); await settle(h);
+  assert.equal(f.raw().revision, revision); assert.deepEqual(f.state(), rejectedState);
+  assert.notEqual(f.card(1).openmic.reply.id, oldSession.id, 'another session never receives a current-room acknowledgement');
+  const accepted = await f.action(1, 'selectSong', { videoId: 'stalesong03', title: 'The current choice' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, accepted.id); assert.equal(f.card(1).openmic.reply.error, '');
+  const selected = f.state();
+  const delayed = await f.action(1, 'selectSong', { videoId: 'stalesong04', title: 'A delayed second result', turnId: accepted.turnId }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, delayed.id); assert.equal(f.card(1).openmic.reply.error, 'stale_turn');
+  assert.deepEqual(f.state().songLibrary, selected.songLibrary); assert.deepEqual(f.state().selectedSong, selected.selectedSong);
+  assert.deepEqual(singingProgress(f.state()), singingProgress(selected)); assert.deepEqual(f.state().mySongs, before.mySongs);
+  h.close(); await settle(h);
+});

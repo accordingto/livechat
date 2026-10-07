@@ -150,10 +150,20 @@ var OPEN_MIC_ENGINE = (() => {
         else { chooseChallenge(state, rng); changed(state, now); }
         break;
       case 'selectSong': {
-        const selected = state.songLibrary.find(song => song.videoId === input.videoId);
-        if (!isSpotlight || state.phase !== 'choice') error = 'not_available';
-        else if (!selected) error = 'invalid_song';
-        else { state.selectedSong = copy(selected); changed(state, now); }
+        if (!isSpotlight || state.phase !== 'choice') { error = 'not_available'; break; }
+        let selected = state.songLibrary.find(song => song.videoId === input.videoId);
+        if (!selected) {
+          if (typeof input.videoId !== 'string' || input.videoId.length !== 11 || !videoIdPattern.test(input.videoId) || !Object.hasOwn(input, 'title')) { error = 'invalid_song'; break; }
+          const title = typeof input.title === 'string' ? input.title.trim() : '';
+          if (!title || title.length > 140 || /[\u0000-\u001f\u007f]/.test(input.title)) { error = 'invalid_title'; break; }
+          if (state.songLibrary.length >= MAX_SONGS) { error = 'library_full'; break; }
+          selected = { id: input.videoId, videoId: input.videoId, title, artist: '', tags: [],
+            thumbnail: 'https://i.ytimg.com/vi/' + input.videoId + '/hqdefault.jpg',
+            url: 'https://www.youtube.com/watch?v=' + input.videoId, ownerPlayerNum: state.spotlight, custom: true };
+          // A direct stage selection joins the shared library, never favorites.
+          state.songLibrary.push(selected);
+        }
+        state.selectedSong = copy(selected); changed(state, now);
         break;
       }
       case 'startSinging':

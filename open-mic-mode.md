@@ -50,10 +50,14 @@ The starter recommendations remain a curated room library. Above them, in-game
 YouTube search and public popular music for Taiwan, the United States, and South
 Korea provide current videos, channel labels, and a fetch timestamp. This is
 public regional discovery rather than a personal Home feed. Every viewer can
-search and preview without leaving the game; only an explicit Add to My Songs
-writes a song to the room. Joining a song does not select it, sing, or award
-points. Channel names are not stored as artist names; the full safe video title
-is retained for lyrics lookup. The existing host/Spotlight selection rules apply.
+search and preview without leaving the game. Play on Stage lets the host or
+current active Spotlight select a result during the choice phase without first
+saving it. A single `selectSong {videoId,title}` command validates and registers
+an unknown video in the shared library and selects it, leaving every player's
+My Songs unchanged. Existing videos retain their metadata and shared lyrics.
+Add to My Songs remains a separate option for advance preparation. Channel names
+are not stored as artist names; a bounded safe video title supports lyrics lookup.
+The existing host/Spotlight selection rules apply.
 
 The service uses the official `search.list` and `videos.list` APIs through a
 server-only key (`YOUTUBE_API_KEY`, or `YOUTUBE_KEY` as an alias), with fixed provider URLs, bounded metadata, safe
@@ -67,9 +71,13 @@ remain inside the game and leave the original room library available.
 
 Queries and discovery results stay local. Superseded searches and input changes
 cancel or fence older responses. Session changes and teardown clear requests;
-late add completions cannot alter the next player's view. The stage iframe,
-lyrics, score, timer, and turn state are unchanged by discovery. External search
-and Home buttons have been replaced by this in-game interface.
+late add or selection completions cannot alter the next player's view. Searching,
+previewing, and adding a favorite leave stage playback and scoring unchanged.
+Direct selection changes the stage song and attempts autoplay only on the device
+that requested it; other viewers receive the selected song without autoplay.
+Browser playback restrictions may still require pressing the video's play button.
+Selection never starts the singing timer or awards points. External search and
+Home buttons have been replaced by this in-game interface.
 
 A public playlist URL under Other ways to add songs can still load its current
 videos in a separate, live YouTube playlist player.
@@ -187,3 +195,11 @@ remaining CDN expiry, concurrent deduplication, rate limits, stale response/add
 completion fences, local preview, and unchanged stage/scoring authority. Local
 browser QA uses explicit server-side fixtures; real provider activation requires
 the deployment key and a subsequent live search/popular verification.
+
+2026-10-08 direct stage selection validation: 132 Open Mic cases and 859 full-site
+tests pass. New cases cover atomic unknown-video registration without favorites,
+shared selection and lyrics, stale/duplicate/forged commands, and both orders of
+command acknowledgement and room projection. Local autoplay is consumed once;
+failed, expired, disconnected, or superseded requests remain passive. Browser QA
+directly selects an unsaved search result, then confirms optional saving and a
+passive second-player view. Chinese and English controls fit a 375px viewport.

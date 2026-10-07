@@ -613,3 +613,166 @@ test('an unavailable discovery client keeps the built-in playlist, manual song f
   f.click('addOpen'); assert.equal(f.g.addDialog.open, true);
   assert.equal(JSON.stringify(f.g.data), original); assert.equal(f.videoWrites.length, writes); assert.equal(f.sent.length, 0);
 });
+
+function directDiscovery(actor = 0) {
+  const f = discovery(actor), song = discoveredSong(); let complete, reject, scrolls = 0;
+  f.g.discoverySongs = [song]; f.g.category = 'k-pop'; f.g.render();
+  const original = JSON.parse(JSON.stringify(f.g.data));
+  f.node('.om-stage').scrollIntoView = () => { scrolls++; };
+  f.g.send = (type, extra) => { f.sent.push({ type, extra }); return new Promise((resolve, fail) => { complete = resolve; reject = fail; }); };
+  return { ...f, song, original, scrolls: () => scrolls,
+    complete: value => complete(value), reject: error => reject(error),
+    selected(overrides = {}) {
+      return { ...original, turnId: original.turnId + 1, selectedSong: { videoId: song.videoId, title: song.title, artist: '', tags: [] },
+        songLibrary: [...original.songLibrary, { videoId: song.videoId, title: song.title, artist: '', tags: [] }], ...overrides };
+    } };
+}
+
+test('direct discovery play sends one select command without saving a favorite or starting the singing timer', async () => {
+  for (const actor of [0, 1]) {
+    const f = directDiscovery(actor), work = f.g.selectDiscoverySong(f.song.videoId);
+    assert.equal(f.sent.length, 1); assert.equal(f.sent[0].type, 'selectSong');
+    assert.deepEqual(JSON.parse(JSON.stringify(f.sent[0].extra)), { videoId: f.song.videoId, title: f.song.title });
+    f.g.update({ openmic: f.selected() });
+    assert.equal(f.videoWrites.length, 1, 'the new player waits for the command acknowledgement');
+    f.complete(); await work;
+    assert.equal(f.sent.length, 1); assert.equal(f.g.category, 'k-pop');
+    assert.deepEqual(JSON.parse(JSON.stringify(f.g.data.mySongs)), {});
+    assert.equal(f.g.data.phase, 'choice'); assert.equal(f.g.data.singingState, 'idle');
+    assert.equal(f.g.data.singingStartedAt, null); assert.equal(f.g.data.teamScore, f.original.teamScore);
+    assert.equal(f.videoWrites.length, 2); assert.match(f.videoWrites[1], /autoplay=1/);
+    assert.equal(f.scrolls(), 1); assert.equal(f.g.stagePlayIntent, null);
+  }
+});
+
+test('a busy host keeps its play intent when the selected view arrives before acknowledgement', async () => {
+  const f = directDiscovery(), work = f.g.selectDiscoverySong(f.song.videoId);
+  f.control.available = false;
+  f.g.update({ openmic: f.selected() });
+  assert.equal(f.g.pending, true); assert.ok(f.g.stagePlayIntent);
+  assert.equal(f.videoWrites.length, 1); assert.equal(f.scrolls(), 0);
+  f.control.available = true; f.complete(); await work;
+  assert.equal(f.videoWrites.length, 2); assert.match(f.videoWrites[1], /autoplay=1/);
+  assert.equal(f.scrolls(), 1); assert.equal(f.g.stagePlayIntent, null);
+});
+
+test('an acknowledgement arriving before the selected view waits, then autoplays only on the originating device', async () => {
+  const f = directDiscovery(1), work = f.g.selectDiscoverySong(f.song.videoId);
+  f.complete(); await work;
+  assert.equal(f.videoWrites.length, 1); assert.equal(f.scrolls(), 0); assert.equal(f.g.stagePlayIntent.confirmed, true);
+  f.g.update({ openmic: f.selected() });
+  assert.equal(f.videoWrites.length, 2); assert.match(f.videoWrites[1], /autoplay=1/); assert.equal(f.scrolls(), 1);
+  f.g.render(); f.g.renderFocus(); f.g.lyricsFont = 32; f.g.renderLyrics();
+  f.g.update({ openmic: { ...f.g.data, songLyrics: { [f.song.videoId]: originalFixture }, mySongs: { 1: [f.song.videoId] } } });
+  f.g.update({ openmic: { ...f.g.data, phase: 'singing', singingState: 'singing', singingStartedAt: 100000, turnId: f.g.data.turnId + 1 } });
+  assert.equal(f.videoWrites.length, 2, 'later lyrics, font, favorite, and singing updates keep the playing iframe');
+  assert.equal(f.scrolls(), 1);
+  const remote = discovery(2); remote.g.render(); remote.g.update({ openmic: f.selected() });
+  assert.equal(remote.videoWrites.length, 2); assert.doesNotMatch(remote.videoWrites[1], /autoplay=1/);
+  remote.g.previewTrack(f.song); assert.doesNotMatch(remote.node('[data-om-preview-video]').innerHTML, /autoplay=1/);
+  assert.equal(remote.sent.length, 0);
+});
+
+test('failed or stale direct-play acknowledgements never autoplay or scroll even if a matching view appeared', async () => {
+  for (const failed of ['response', 'reject']) {
+    const f = directDiscovery(), work = f.g.selectDiscoverySong(f.song.videoId);
+    f.g.update({ openmic: f.selected() }); assert.equal(f.videoWrites.length, 1);
+    if (failed === 'response') f.complete({ error: 'stale_turn' }); else f.reject(new Error('stale_turn'));
+    await work;
+    assert.equal(f.sent.length, 1); assert.equal(f.videoWrites.length, 2);
+    assert.doesNotMatch(f.videoWrites.join(' '), /autoplay=1/); assert.equal(f.scrolls(), 0); assert.equal(f.g.stagePlayIntent, null);
+    assert.equal(f.g.category, 'k-pop');
+  }
+});
+
+test('late direct-play work cannot autoplay or scroll after its session, player, turn, results, connection, or lifetime changes', async () => {
+  const changes = [
+    f => f.g.update({ openmic: f.selected({ sessionId: 'next-session' }) }),
+    f => f.g.update({ openmic: f.selected({ round: f.original.round + 1 }) }),
+    f => { f.g.actor = 1; f.g.update({ openmic: f.selected() }); },
+    f => f.g.update({ openmic: f.selected({ spotlight: 2 }) }),
+    f => f.g.update({ openmic: f.selected({ turnId: f.original.turnId + 2 }) }),
+    f => f.g.update({ openmic: f.selected({ selectedSong: f.original.selectedSong }) }),
+    f => { f.g.cancelDiscovery(); f.g.update({ openmic: f.selected() }); },
+    f => f.g.update({ openmic: f.selected({ phase: 'singing', singingState: 'singing' }) }),
+    f => f.g.update({ openmic: f.selected({ roster: f.original.roster.map(p => ({ ...p, active: false })) }) }),
+    f => { f.g.now = () => 115001; f.g.update({ openmic: f.selected() }); },
+    f => { f.control.available = false; f.g.update({ openmic: f.selected() }); },
+    f => f.g.destroy(),
+  ];
+  for (const change of changes) {
+    const f = directDiscovery(), work = f.g.selectDiscoverySong(f.song.videoId);
+    change(f); const currentCategory = f.g.category; f.complete(); await work;
+    assert.equal(f.sent.length, 1); assert.equal(f.scrolls(), 0); assert.doesNotMatch(f.videoWrites.join(' '), /autoplay=1/);
+    assert.equal(f.g.stagePlayIntent, null); assert.equal(f.g.category, currentCategory);
+  }
+});
+
+test('direct stage play enforces the current Spotlight, challenge result, choice phase, and connection before sending', async () => {
+  const changes = [
+    f => { f.g.actor = 2; }, f => { f.g.actor = 1; f.g.data.roster[0].active = false; },
+    f => { f.g.data.challengeResult = null; }, f => { f.g.data.phase = 'challenge'; },
+    f => { f.g.data.phase = 'singing'; }, f => { f.g.data.phase = 'finished'; },
+    f => { f.control.available = false; }, f => { f.g.pending = true; },
+    f => { f.g.discoverySongs = []; }, f => { f.g.discoverySongs[0].title = '   '; },
+    f => { f.g.discoverySongs[0].title = '\u0000\n'; }, f => { f.g.data.selectedSong = f.song; },
+    f => { f.g.data.turnId = Number.MAX_SAFE_INTEGER; },
+  ];
+  for (const change of changes) {
+    const f = directDiscovery(); change(f); await f.g.selectDiscoverySong(f.song.videoId);
+    assert.equal(f.sent.length, 0); assert.equal(f.scrolls(), 0); assert.doesNotMatch(f.videoWrites.join(' '), /autoplay=1/);
+  }
+});
+
+test('discovery results show a primary direct-play action, keep personal addition optional, and mark the selected video', () => {
+  for (const actor of [0, 1, 2]) {
+    const f = directDiscovery(actor); f.g.renderDiscovery();
+    const html = f.node('[data-om-discovery-results]').innerHTML;
+    const play = html.match(/<button\b[^>]*data-om-action="discoverySelect"[^>]*>[\s\S]*?<\/button>/)[0];
+    const add = html.match(/<button\b[^>]*data-om-action="discoveryAdd"[^>]*>[\s\S]*?<\/button>/)[0];
+    assert.match(play, /om-primary/); assert.match(play, /Play on Stage/); assert.equal(/ disabled/.test(play), actor === 2);
+    assert.doesNotMatch(add, /om-primary/); assert.doesNotMatch(add, / disabled/);
+    f.g.data.selectedSong = f.song; f.g.renderDiscovery();
+    const selected = f.node('[data-om-discovery-results]').innerHTML;
+    assert.match(selected, /om-selected/); assert.match(selected, /data-om-action="discoverySelect"[^>]* disabled>Selected/);
+  }
+});
+
+test('the direct-play click uses only a safe video ID and bounded plain title, and ignores a repeated pending click', async () => {
+  const f = directDiscovery(), unsafe = '<img onerror="alert(1)">\u0000\n' + 'x'.repeat(200);
+  f.g.discoverySongs[0] = discoveredSong({ title: unsafe, channelTitle: 'Do not send this as artist', url: 'javascript:alert(2)' });
+  const target = { dataset: { omAction: 'discoverySelect', video: f.song.videoId }, disabled: false };
+  const event = { target: { closest: selector => selector === '[data-om-action]' ? target : null } };
+  f.g.handleClick(event); f.g.handleClick(event);
+  assert.equal(f.sent.length, 1); assert.equal(f.sent[0].type, 'selectSong');
+  assert.deepEqual(Object.keys(f.sent[0].extra).sort(), ['title', 'videoId']);
+  assert.equal(f.sent[0].extra.title.length, 140); assert.doesNotMatch(f.sent[0].extra.title, /[\u0000-\u001f\u007f]/);
+  f.g.update({ openmic: f.selected({ selectedSong: { videoId: f.song.videoId, title: f.sent[0].extra.title } }) });
+  f.complete(); await nextTask();
+  assert.doesNotMatch(f.videoWrites[1], /<img|javascript:/); assert.match(f.videoWrites[1], /&lt;img/);
+  const bad = directDiscovery(); bad.g.discoverySongs = [discoveredSong({ videoId: '\" onload=\"bad' })];
+  await bad.g.selectDiscoverySong('\" onload=\"bad'); assert.equal(bad.sent.length, 0);
+  bad.g.discoverySongs = [discoveredSong({ videoId: f.song.videoId + '\n' })];
+  await bad.g.selectDiscoverySong(f.song.videoId + '\n'); assert.equal(bad.sent.length, 0);
+});
+
+test('an acknowledged local request that becomes offline before its matching view remains a passive player', async () => {
+  for (const otherActionPending of [false, true]) {
+    const f = directDiscovery(), work = f.g.selectDiscoverySong(f.song.videoId);
+    f.complete(); await work; assert.equal(f.g.stagePlayIntent.confirmed, true);
+    f.control.available = false; f.g.pending = otherActionPending;
+    f.g.update({ openmic: f.selected() });
+    assert.equal(f.videoWrites.length, 2); assert.doesNotMatch(f.videoWrites[1], /autoplay=1/);
+    assert.equal(f.g.stagePlayIntent, null); assert.equal(f.scrolls(), 0);
+    f.control.available = true; f.g.pending = false; f.g.render(); assert.equal(f.videoWrites.length, 2); assert.equal(f.scrolls(), 0);
+  }
+});
+
+test('ordinary library selection keeps its original command and never acquires discovery autoplay', async () => {
+  const f = directDiscovery(), target = { dataset: { omAction: 'selectSong', video: f.song.videoId }, disabled: false };
+  f.g.handleClick({ target: { closest: selector => selector === '[data-om-action]' ? target : null } });
+  assert.equal(f.sent.length, 1); assert.deepEqual(JSON.parse(JSON.stringify(f.sent[0].extra)), { videoId: f.song.videoId });
+  f.g.update({ openmic: f.selected() });
+  assert.equal(f.videoWrites.length, 2); assert.doesNotMatch(f.videoWrites[1], /autoplay=1/);
+  f.complete(); await nextTask(); assert.equal(f.videoWrites.length, 2); assert.equal(f.scrolls(), 0);
+});
