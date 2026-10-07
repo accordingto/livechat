@@ -10,6 +10,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 const privateMarkup = html => html.match(/<section\b[^>]*class="(?=[^\"]*\bbk-private\b)[^\"]*"[^>]*>([\s\S]*?)<\/section>/)?.[1] || '';
 const expandedMarkup = html => html.replace(/<details\b([^>]*)>[\s\S]*?<\/details>/g, (block, attributes) => /\bopen(?:\s|=|$)/.test(attributes) ? block : '');
 const textMarkup = html => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const actionSentence = html => html.match(/<p\b[^>]*class="(?=[^\"]*\bbk-voice-sentence\b)[^\"]*"[^>]*>([\s\S]*?)<\/p>/)?.[1] || '';
 const bank = Array.from({ length: 12 }, (_, i) => ({ id: `ui-test-${i}`, canonicalKnowledgeId: `ui-test-knowledge-${i}`, locale: 'en', term: `Test term ${i}`, publicPrompt: 'What does this mean?', hintMode: 'choices', publicHints: ['Nature', 'Music', 'Food'], secretAnswer: `PRIVATE_TEST_ANSWER_${i}`, supportingFacts: ['Private fact one', 'Private fact two'], revealExplanation: 'Only a test fixture.', sources: [{ title: 'Test source', url: 'https://example.invalid/test' }], verificationStatus: 'verified', verifiedAt: '2026-10-06', enabled: true }));
 let serial = 0;
 const options = { now: 1000, rng: () => 0, uuid: () => 'ui-seat-' + (++serial) };
@@ -39,7 +40,7 @@ class NodeDouble {
     if (!this.id) return;
     const previousIds = this.document.dynamicIdsByContainer.get(this.id) || new Set();
     for (const id of previousIds) this.document.nodes.delete(id);
-    const ids = new Set(), buttons = [];
+    const ids = new Set(), buttons = [], sentences = [];
     for (const tag of value.match(/<(?:button|input|select|details|span|p|a|div|section|aside|h1|h2)\b[^>]*>/g) || []) {
       const id = tag.match(/\bid="([^"]+)"/)?.[1] || '';
       const node = new NodeDouble(this.document, id);
@@ -48,15 +49,18 @@ class NodeDouble {
       for (const m of tag.matchAll(/data-bk-([\w-]+)="([^"]*)"/g)) node.dataset['bk' + m[1].split('-').map(s => s[0].toUpperCase() + s.slice(1)).join('')] = m[2];
       if (id) { this.document.nodes.set(id, node); ids.add(id); }
       if (node.dataset.bkAction || node.dataset.bkVoice) buttons.push(node);
+      if (/\bclass="[^\"]*\bbk-voice-sentence\b[^\"]*"/.test(tag)) sentences.push(node);
     }
     this.document.dynamicIdsByContainer.set(this.id, ids);
     this.document.buttonsByContainer.set(this.id, buttons);
     this.document.buttons = [...this.document.buttonsByContainer.values()].flat();
+    this.document.sentencesByContainer.set(this.id, sentences);
+    this.document.sentences = [...this.document.sentencesByContainer.values()].flat();
   }
   get innerHTML() { return this._html; }
 }
 async function harness(initialView, { card = false, setup = null, hash = '', transport = {}, now = () => Date.now() } = {}) {
-  const nodes = new Map(), document = { nodes, dynamicIdsByContainer: new Map(), buttonsByContainer: new Map(), buttons: [], activeElement: null, listeners: new Map(), addEventListener(type, fn) { this.listeners.set(type, fn); }, getElementById(id) { return nodes.get(id) || null; }, createElement() { return new NodeDouble(this); } };
+  const nodes = new Map(), document = { nodes, dynamicIdsByContainer: new Map(), buttonsByContainer: new Map(), sentencesByContainer: new Map(), buttons: [], sentences: [], activeElement: null, listeners: new Map(), addEventListener(type, fn) { this.listeners.set(type, fn); }, getElementById(id) { return nodes.get(id) || null; }, createElement() { return new NodeDouble(this); } };
   const pageHTML = fs.readFileSync(require.resolve('../bluff-king-live-chat.html'), 'utf8');
   const fixedIds = [...pageHTML.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   for (const id of new Set([...fixedIds, 'bk-app', 'bk-rule-copy', 'bk-room-label', 'bk-connection', 'bk-error', 'bk-confirm', 'bk-confirm-title', 'bk-confirm-text', 'bk-confirm-send', 'room-mount'])) nodes.set(id, new NodeDouble(document, id));
@@ -91,22 +95,22 @@ async function harness(initialView, { card = false, setup = null, hash = '', tra
     await handler({ target: button });
     for (let i = 0; i < 16; i++) await Promise.resolve();
   }
-  async function clickVoice(key) {
-    const cue = document.buttons.find(node => node.dataset.bkVoice === key);
-    assert.ok(cue, key + ' cue exists');
-    await nodes.get('bk-app').listeners.get('click')({ target: cue });
+  async function clickGuidance() {
+    const sentence = document.sentences.find(node => node.containerId === 'bk-app');
+    assert.ok(sentence, 'the visible action sentence exists');
+    await nodes.get('bk-app').listeners.get('click')({ target: sentence });
     for (let i = 0; i < 16; i++) await Promise.resolve();
   }
-  return { document, sent, creates, cardCreates, cardConnections, joins, connections, publications, loadedScripts, storage, context, intervals, html: () => nodes.get('bk-app').innerHTML, content: id => nodes.get(id)?.innerHTML || '', button: action => document.buttons.find(b => b.dataset.bkAction === action), voiceCues: () => document.buttons.filter(node => node.dataset.bkVoice).map(node => node.dataset.bkVoice), node: id => nodes.get(id), update: view => transportOptions.onView(clone(view)), status: value => transportOptions.onStatus(value), click, clickVoice, async confirm() { nodes.get('bk-confirm-send').listeners.get('click')(); for (let i = 0; i < 16; i++) await Promise.resolve(); } };
+  return { document, sent, creates, cardCreates, cardConnections, joins, connections, publications, loadedScripts, storage, context, intervals, html: () => nodes.get('bk-app').innerHTML, content: id => nodes.get(id)?.innerHTML || '', button: action => document.buttons.find(b => b.dataset.bkAction === action), voiceCues: () => document.buttons.filter(node => node.dataset.bkVoice).map(node => node.dataset.bkVoice), node: id => nodes.get(id), update: view => transportOptions.onView(clone(view)), status: value => transportOptions.onStatus(value), click, clickGuidance, async confirm() { nodes.get('bk-confirm-send').listeners.get('click')(); for (let i = 0; i < 16; i++) await Promise.resolve(); } };
 }
 test('shared host presentation hides a supplied private role and answer during preparation and discussion', async () => {
   for (const phase of ['prepare', 'discussion']) {
     const state = fixture(phase), truth = state.rooms.UITEST.members.find(p => p.id === state.rooms.UITEST.round.truthfulId), view = project(state, truth.identityId);
     view.self.isHost = true;
     const h = await harness(view);
-    assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact|Your role|class="bk-role-title"|id="bk-role"/);
+    assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact|Your role|YOU ARE|class="bk-role-title"|id="bk-role"/);
     assert.equal(h.button('challenge'), undefined); assert.equal(h.button('identify'), undefined); assert.match(h.html(), /Open my private card/);
-    if (phase === 'discussion') { assert.match(h.html(), /data-bk-guidance="public"/); assert.deepEqual(h.voiceCues(), ['followup', 'question']); }
+    if (phase === 'discussion') { assert.match(h.html(), /data-bk-guidance="public"/); assert.equal(textMarkup(actionSentence(h.html())), 'Ask questions or follow up while others speak.'); assert.deepEqual(h.voiceCues(), []); }
     else assert.doesNotMatch(h.html(), /Review the answer, then tap Ready/);
   }
 });
@@ -125,7 +129,8 @@ test('private cards show the owner role; only the Truth Teller receives answer d
     assert.equal((ownerCard.match(/class="bk-role-purpose"/g) || []).length, 1, 'the illustrated role has one purpose sentence');
     const purpose = ownerCard.match(/<p\b[^>]*class="bk-role-purpose"[^>]*>([\s\S]*?)<\/p>/)?.[1];
     assert.ok(textMarkup(purpose || '').length > 10); purposes.push(textMarkup(purpose));
-    assert.doesNotMatch(ownerCard, /bk-private-heading|bk-private-label|bk-role-kicker|Your role|You are|Only you can see this/);
+    assert.match(ownerCard, /<p class="bk-role-kicker">YOU ARE<\/p>[\s\S]*<h2 class="bk-role-title">/);
+    assert.doesNotMatch(ownerCard, /bk-private-heading|bk-private-label|Your role|Only you can see this/);
     if (view.privateCard.role === 'truthful') { assert.match(h.html(), /PRIVATE_TEST_ANSWER_|Private fact one/); assert.match(ownerCard, /class="bk-truth-tip"/); }
     else assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact/);
     assert.ok(h.button('ready')); assert.equal(h.button('challenge'), undefined);
@@ -172,6 +177,7 @@ test('Bluffers and spectators see progress but cannot operate Thinker controls',
     assert.ok(h.node('bk-clock')); assert.match(h.html(), /class="bk-coverage">0 \/ 2/);
     for (const action of ['nextSpotlight', 'challenge', 'identify', 'inspiration']) assert.equal(h.button(action), undefined, action + ' is Thinker-only');
     assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_|Private fact/);
+    assert.equal(h.html().includes('YOU ARE'), identityId !== 'spectator', 'only the owner of a formal role sees YOU ARE');
   }
 });
 test('final choice uses a second confirmation and preserves its round/version snapshot', async () => {
@@ -444,29 +450,34 @@ test('conversation guidance follows Thinker, current speaker and listener as the
   const thinkerUI = await harness(firstView, { card: true });
   const speakerUI = await harness(project(state, speaker.identityId), { card: true });
   const listenerUI = await harness(project(state, listener.identityId), { card: true });
-  assert.match(thinkerUI.html(), /data-bk-guidance="thinker"/); assert.match(thinkerUI.html(), /aria-label="Ask anytime\. Lead the conversation\."/);
-  assert.deepEqual(thinkerUI.voiceCues(), ['followup', 'question']);
-  assert.match(textMarkup(privateMarkup(thinkerUI.html())), /Anytime/);
-  assert.match(speakerUI.html(), /data-bk-guidance="speaking"/); assert.match(speakerUI.html(), /aria-label="Your turn\. Others can ask anytime\."/);
-  assert.deepEqual(speakerUI.voiceCues(), ['yourTurn', 'defend']);
-  assert.doesNotMatch(textMarkup(privateMarkup(speakerUI.html())), /Anytime/);
-  assert.match(listenerUI.html(), /data-bk-guidance="listening"/); assert.match(listenerUI.html(), /aria-label="Jump in while someone else is speaking\."/);
-  assert.deepEqual(listenerUI.voiceCues(), ['followup', 'question']);
-  assert.match(textMarkup(privateMarkup(listenerUI.html())), /Anytime/);
-  for (const ui of [thinkerUI, speakerUI, listenerUI]) {
-    assert.doesNotMatch(privateMarkup(ui.html()), /bk-now-label/);
-    assert.doesNotMatch(textMarkup(privateMarkup(ui.html())), /Now you can|Ask anytime\. Lead the conversation\.|Your turn\. Others can ask anytime\.|Jump in while someone else is speaking\./, 'the compact role card keeps long context in accessible group text');
+  const cases = [
+    [thinkerUI, 'thinker', 'Ask questions anytime. Find who knows the truth.'],
+    [speakerUI, 'speaking', 'Explain your answer. Respond to questions.'],
+    [listenerUI, 'listening', 'Ask questions or follow up while others speak.'],
+  ];
+  for (const [ui, mode, sentence] of cases) {
+    assert.ok(ui.html().includes(`data-bk-guidance="${mode}"`));
+    assert.equal(textMarkup(actionSentence(ui.html())), sentence, 'the current action appears as a visible sentence');
+    assert.ok(ui.html().includes(`aria-label="${sentence}"`), 'the visible action and accessible group agree');
+    const sentenceTag = ui.html().match(/<p\b[^>]*class="[^\"]*\bbk-voice-sentence\b[^\"]*"[^>]*>/)?.[0];
+    assert.ok(sentenceTag); assert.doesNotMatch(sentenceTag, /\bhidden\b|aria-hidden="true"|data-bk-action/);
+    assert.deepEqual(ui.voiceCues(), []);
+    assert.doesNotMatch(privateMarkup(ui.html()), /bk-now-label|bk-voice-tag|bk-voice-anytime|data-bk-voice=/);
   }
   act(state, 'nextSpotlight');
   speakerUI.update(project(state, speaker.identityId)); listenerUI.update(project(state, listener.identityId));
-  assert.match(speakerUI.html(), /data-bk-guidance="listening"/); assert.deepEqual(speakerUI.voiceCues(), ['followup', 'question']);
-  assert.match(listenerUI.html(), /data-bk-guidance="speaking"/); assert.deepEqual(listenerUI.voiceCues(), ['yourTurn', 'defend']);
+  assert.match(speakerUI.html(), /data-bk-guidance="listening"/); assert.equal(textMarkup(actionSentence(speakerUI.html())), 'Ask questions or follow up while others speak.');
+  assert.match(listenerUI.html(), /data-bk-guidance="speaking"/); assert.equal(textMarkup(actionSentence(listenerUI.html())), 'Explain your answer. Respond to questions.');
   for (const ui of [thinkerUI, speakerUI, listenerUI]) {
-    for (const cue of ui.voiceCues()) await ui.clickVoice(cue);
-    assert.equal(ui.sent.length, 0, 'conversation cues never send room commands');
+    const shownSentence = textMarkup(actionSentence(ui.html()));
+    await ui.clickGuidance();
+    assert.equal(ui.sent.length, 0, 'reading or clicking a guidance sentence never sends room commands');
     await ui.click('toggleRole');
-    assert.deepEqual(ui.voiceCues(), [], 'hiding the role card also hides its conversation chips');
-    assert.doesNotMatch(privateMarkup(ui.html()), /bk-role-title|bk-role-art|bk-role-purpose|data-bk-guidance|PRIVATE_TEST_ANSWER_|Private fact/);
+    assert.equal(actionSentence(ui.html()), '', 'hiding the role card also hides its action sentence');
+    assert.doesNotMatch(privateMarkup(ui.html()), /YOU ARE|bk-role-title|bk-role-art|bk-role-purpose|data-bk-guidance|PRIVATE_TEST_ANSWER_|Private fact/);
+    await ui.click('toggleRole');
+    assert.match(privateMarkup(ui.html()), /<p class="bk-role-kicker">YOU ARE<\/p>/);
+    assert.equal(textMarkup(actionSentence(ui.html())), shownSentence, 'Show restores the latest Spotlight guidance');
     assert.equal(ui.sent.length, 0, 'hiding a card stays local');
   }
 });
@@ -478,17 +489,20 @@ test('private preparation guidance matches the owner role and disappears when th
     assert.match(h.html(), /data-bk-guidance="prepare"/); assert.match(h.html(), expected);
     assert.deepEqual(h.voiceCues(), []); assert.ok(h.button('ready'));
     await h.click('toggleRole');
-    assert.doesNotMatch(h.html(), /data-bk-guidance="prepare"|PRIVATE_TEST_ANSWER_|Review the answer|Think of your explanation|Think of questions|bk-role-art|bk-role-title|bk-role-purpose/);
+    assert.doesNotMatch(h.html(), /YOU ARE|data-bk-guidance="prepare"|PRIVATE_TEST_ANSWER_|Review the answer|Think of your explanation|Think of questions|bk-role-art|bk-role-title|bk-role-purpose/);
     assert.equal(h.sent.length, 0);
   }
 });
 test('everyone heard and reveal guidance keep conversation open while progression stays manual', async () => {
   const state = fixture(), room = state.rooms.UITEST;
   act(state, 'nextSpotlight'); act(state, 'nextSpotlight');
-  const thinker = await harness(project(state), { card: true }), other = await harness(project(state, 'identity-2'), { card: true });
-  assert.match(thinker.html(), /data-bk-guidance="thinker"/); assert.match(thinker.html(), /Ask more, or choose the truth\./);
-  assert.match(other.html(), /data-bk-guidance="open"/); assert.match(other.html(), /Keep questioning or defend your version\./);
-  assert.deepEqual(other.voiceCues(), ['followup', 'question']); assert.equal(thinker.button('identify').disabled, false);
+  const thinker = await harness(project(state), { card: true }), other = await harness(project(state, 'identity-2'), { card: true }), shared = await harness(project(state));
+  assert.match(thinker.html(), /data-bk-guidance="thinker"/); assert.equal(textMarkup(actionSentence(thinker.html())), 'Ask more questions, or choose the Truth Teller.');
+  assert.match(other.html(), /data-bk-guidance="open"/); assert.equal(textMarkup(actionSentence(other.html())), 'Ask more questions, or defend your answer.');
+  assert.match(shared.html(), /data-bk-guidance="public"/); assert.equal(textMarkup(actionSentence(shared.html())), 'Ask questions and compare everyone’s answers.');
+  assert.doesNotMatch(shared.html(), /YOU ARE|PRIVATE_TEST_ANSWER_|Private fact/);
+  assert.deepEqual(other.voiceCues(), []); assert.equal(thinker.button('identify').disabled, false);
+  for (const ui of [thinker, other, shared]) { await ui.clickGuidance(); assert.equal(ui.sent.length, 0); }
   act(state, 'identify', 'identity-0', { targetId: room.round.truthfulId });
   const revealed = await harness(project(state));
   assert.match(revealed.html(), /data-bk-guidance="reveal"/); assert.match(revealed.html(), /Discuss the answer\. Continue when everyone is ready\./);

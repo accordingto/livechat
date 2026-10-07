@@ -1,4 +1,4 @@
-# BLUFF PARTY · Live Chat
+# BLUFF PARTY
 
 An original conversation adaptation for **3–9 real players**, appended after
 Dixit at the bottom of the existing IceBreak Hub menu. English topic cards;
@@ -293,6 +293,28 @@ checked 1366 × 768 desktop and 390 × 844 mobile layouts. The genuine longer
 Truth Teller answer, both facts, tip and roster fit together without scrolling.
 All three role SVGs are included in the fourteen-asset production verifier.
 These are automated-client checks, not a claim of a completed human playtest.
+
+## Clear role identity and action sentences (2026-10-07)
+
+The own-card heading now says **YOU ARE** above Thinker, Truth Teller or Bluffer.
+It does not restore the extra Your role / Private label row. The public table
+still names the current Thinker without presenting that role as the viewer's own.
+The page heading and browser title use BLUFF PARTY without a Live Chat suffix.
+
+Discussion chips are replaced by one visible short instruction. The speaker
+reads “Explain your answer. Respond to questions.” Other players read “Ask
+questions or follow up while others speak.” The Thinker can ask questions
+anytime; after everyone is heard, their sentence offers the final choice.
+Other players and the public table retain conversation guidance without final
+choice permissions. Preparation instructions and complete Truth Teller evidence
+remain visible. Hide removes YOU ARE and the instruction with the private card.
+These are spoken conversation cues; they never create messages or room commands.
+
+Validation: all **661 repository tests** passed, including **60 focused Bluff
+tests**. The original player link was checked against a real Firebase room at
+390 × 844: YOU ARE, the longer Hornbook answer, every fact, the short instruction
+and roster fit without scrolling. Hide/Show removes and restores the whole card;
+the Chinese toggle displays the corresponding role label and instruction.
 
 ## Main files
 
