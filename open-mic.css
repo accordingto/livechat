@@ -87,13 +87,30 @@
 .om-tab.om-active { background: #a5a0ff; color: #0d0d1a; border-color: #a5a0ff; }
 .om-search { display: block; width: 100%; min-height: 46px; padding: 12px 14px; margin-top: 9px; border: 1px solid #343054; border-radius: 12px; background: #0f0f23; color: #fff; font: .86rem 'Segoe UI', system-ui, sans-serif; }
 .om-search::placeholder, .om-field input::placeholder { color: #9999bb; opacity: 1; }
-.om-online { margin-top: 16px; padding: 15px; background: #0f0f23; border: 1px solid #343054; border-radius: 13px; }
-.om-online > .om-soft { margin-bottom: 12px; font-size: .78rem; }
-.om-online .om-actions { gap: 8px; }
-.om-online .om-button { font-size: .76rem; }
-.om-online-search { display: flex; gap: 8px; margin-top: 9px; align-items: center; }
-.om-online-search .om-search { flex: 1; margin-top: 0; min-width: 0; }
-.om-online-search .om-button { flex-shrink: 0; }
+.om-discovery { margin-top: 16px; padding: 16px; background: #0f0f23; border: 1px solid #343054; border-radius: 13px; }
+.om-discovery h3 { font-size: 1rem; color: #e4e1ff; }
+.om-discovery > .om-soft { font-size: .78rem; line-height: 1.6; margin-top: 8px; }
+.om-discovery-form { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(110px, 160px) auto auto; align-items: end; gap: 10px; margin-top: 14px; }
+.om-discovery-form .om-field { min-width: 0; font-size: .76rem; }
+.om-discovery-form .om-search { min-width: 0; margin: 0; min-height: 48px; }
+.om-discovery-form .om-button { min-height: 48px; font-size: .78rem; padding: 10px 14px; }
+.om-discovery-form .om-field select { font-size: .86rem; }
+.om-discovery-form[aria-busy="true"] .om-primary { border-color: #d6d3ff; }
+.om-discovery-meta:empty, .om-discovery-results:empty { display: none; }
+.om-discovery-meta { color: #b8b3d2; }
+.om-discovery-results { max-height: 620px; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; scrollbar-width: thin; padding: 1px 4px 4px 1px; }
+.om-discovery-song { display: flex; flex-direction: column; }
+.om-discovery-song .om-thumb { flex-shrink: 0; }
+.om-discovery-song .om-song-info { display: flex; flex-direction: column; flex: 1 1 auto; }
+.om-discovery-song h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.om-discovery-song .om-artist { overflow-wrap: anywhere; line-height: 1.5; font-size: .73rem; margin-bottom: 12px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.om-discovery-song .om-actions { margin-top: auto; }
+.om-discovery-other { margin-top: 10px; }
+.om-discovery-other summary { min-height: 44px; display: flex; align-items: center; gap: 7px; color: #bcb6d5; font-size: .78rem; font-weight: 650; cursor: pointer; list-style: none; }
+.om-discovery-other summary::before { content: '▸'; color: #a5a0ff; }
+.om-discovery-other[open] summary::before { content: '▾'; }
+.om-discovery-other summary:focus-visible { outline: 3px solid #a5a0ff; outline-offset: 2px; border-radius: 6px; }
+.om-discovery-other .om-button { font-size: .78rem; }
 .om-playlist-form { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px; margin-top: 18px; }
 .om-playlist-form .om-button { min-height: 48px; }
 .om-playlist-player { position: relative; width: 100%; min-height: 200px; aspect-ratio: 16 / 9; background: #090913; border-radius: 12px; overflow: hidden; }
@@ -262,6 +279,7 @@
   .om-score-rules { margin-top: 6px; }
   .om-queue { padding-top: 12px; margin-top: 12px; }
   .om-song-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .om-discovery-form { grid-template-columns: minmax(0, 1fr) minmax(110px, 160px); }
   .om-has-song .om-stage-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .om-stage-lyrics-column [data-om-lyrics-copy] { height: 240px; max-height: 260px; }
   .om-is-focused .om-left { grid-template-columns: minmax(0, 1fr) minmax(130px, .4fr); }
@@ -319,10 +337,12 @@
   .om-duration { font-size: .73rem; }
   .om-start-panel { padding: 24px 20px; }
   .om-modal { padding: 18px; }
-  .om-online { padding: 12px; }
-  .om-online-search { flex-wrap: wrap; }
-  .om-online-search .om-search { flex-basis: 100%; }
-  .om-online-search .om-button { width: 100%; }
+  .om-discovery { padding: 12px; }
+  .om-discovery-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 8px; }
+  .om-discovery-query { grid-column: 1 / -1; }
+  .om-discovery-region { grid-column: 1 / -1; }
+  .om-discovery-results { max-height: 540px; }
+  .om-discovery-song .om-song-info { height: auto; }
   .om-playlist-form { grid-template-columns: 1fr; }
   .om-lyrics-search-form { grid-template-columns: 1fr; }
   .om-lyrics-result { flex-wrap: wrap; gap: 10px; }

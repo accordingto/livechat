@@ -32,6 +32,8 @@ queue; participants do not receive judgment or Next controls.
 - `open-mic-host.js`: room/session connection and an isolated `?demo=1` mode.
 - `open-mic-lyrics.js`: public LRCLIB search, metadata cleanup, plain-text/LRC
   normalization, cancellation, timeout, and rate-limit handling.
+- `open-mic-discovery.js` / `api/open-mic-discovery.js`: same-origin music
+  discovery client and official YouTube metadata service with server-only key.
 - `play.html`: renders this same UI with the original card's own seat identity.
 
 State and favorites survive host reload within the same session. Starting a new
@@ -43,15 +45,61 @@ Open on YouTube link. Sing using the existing call or real-world setup.
 
 ## YouTube discovery and shared lyrics
 
-The starter recommendations are a curated list, not YouTube's personal Home
-feed. Home and keyword searches open the real YouTube website. A public playlist
-URL can load its current videos in a separate, live YouTube playlist player.
+The starter recommendations remain a curated room library. Above them, in-game
+YouTube search and public popular music for Taiwan, the United States, and South
+Korea provide current videos, channel labels, and a fetch timestamp. This is
+public regional discovery rather than a personal Home feed. Every viewer can
+search and preview without leaving the game; only an explicit Add to My Songs
+writes a song to the room. Joining a song does not select it, sing, or award
+points. Channel names are not stored as artist names; the full safe video title
+is retained for lyrics lookup. The existing host/Spotlight selection rules apply.
+
+The service uses the official `search.list` and `videos.list` APIs through a
+server-only `YOUTUBE_API_KEY`, with fixed provider URLs, bounded metadata, safe
+video IDs, music category filtering, and an 8-second upstream timeout. Search
+results cache for 10 minutes and public popular music for 15 minutes; displayed
+timestamps describe when metadata was fetched. Repeated requests share work and
+cached responses retain their original expiry. Cache and admission limits are
+best-effort per server instance, with CDN caching; they are not distributed
+quota controls. Unconfigured, empty, unavailable, and rate-limited responses
+remain inside the game and leave the original room library available.
+
+Queries and discovery results stay local. Superseded searches and input changes
+cancel or fence older responses. Session changes and teardown clear requests;
+late add completions cannot alter the next player's view. The stage iframe,
+lyrics, score, timer, and turn state are unchanged by discovery. External search
+and Home buttons have been replaced by this in-game interface.
+
+A public playlist URL under Other ways to add songs can still load its current
+videos in a separate, live YouTube playlist player.
 `open-mic-youtube.js` loads the official IFrame API on demand; the current video
 is read using `getVideoUrl`, with optional oEmbed title lookup and editable title
 fallback. Choosing a playlist video adds it to My Songs; it does not select the
-stage song or start singing. No Data API key or account permission is required.
+stage song or start singing. Playlist playback needs no Data API key or account permission.
 Private playlists, unavailable videos, and network failures show a link to
-YouTube. This is not an embedded Home feed or Data API search/trending feed.
+YouTube. Playlist playback is separate from the new Data API discovery service.
+
+### Enable live discovery
+
+1. In a Google Cloud project, enable YouTube Data API v3, create a dedicated API
+   key, and restrict its API access to YouTube Data API v3. Leave the existing
+   Firebase key unchanged. This server function does not use browser referrers;
+   a key restricted to website referrers will fail server-side requests.
+2. In the Vercel project Settings → Environment Variables, set `YOUTUBE_API_KEY`
+   for Production. Keep the value in the deployment environment, never in client
+   scripts, Git, chat, or a `NEXT_PUBLIC_` variable.
+3. Deploy the current code after saving the variable, or redeploy if the code
+   was already deployed. Verify `/api/open-mic-discovery?mode=popular&region=TW`
+   and an in-game keyword search return `source: "youtube"` with current records.
+   Without the variable the route returns HTTP 503 `discovery_setup_needed`.
+
+Provider quotas apply and may change; consult the project's actual Google Cloud
+quota. The UI does not offer a player-facing credential or login form.
+
+Official references: [search.list](https://developers.google.com/youtube/v3/docs/search/list),
+[videos.list](https://developers.google.com/youtube/v3/docs/videos/list),
+[Google credentials](https://developers.google.com/youtube/registering_an_application),
+[Vercel environment variables](https://vercel.com/docs/environment-variables/managing-environment-variables).
 
 The stage includes a lyrics reading area and a larger reading dialog. The host
 tries LRCLIB when a song without saved lyrics is selected. Only a confident
@@ -93,8 +141,9 @@ Changing focus, lyric size, or saved text keeps the current stage iframe mounted
 
 ## Synchronization and checks
 
-Keep the host page open, following the Hub's trusted-host model. No new account,
-voice system, database rules, payment, AI service, or environment secret is used.
+Keep the host page open, following the Hub's trusted-host model. No new player
+account, voice system, database rules, payment, or AI service is used. The
+discovery key stays in the server's deployment environment.
 Participants cannot acquire the host control token through their projection.
 The host uses the card's real seat rather than a client-supplied actor. Old
 sessions/turns and duplicate clicks do not award points twice. Switching games
@@ -119,3 +168,11 @@ unchanged authority, and session teardown. Local browser QA verifies desktop
 columns, a 375px phone with no horizontal overflow, a 200px video and 220px
 scrolling lyrics area at 26px type, passive-view focus, and normal +1 singing
 completion followed by restored host challenge controls on the next turn.
+
+2026-10-08 discovery validation: 111 Open Mic tests and 838 full-site tests pass.
+New client, API, and UI cases cover official request construction, secret-free
+errors, bounded metadata, input validation, cancellation, timeout, caching and
+remaining CDN expiry, concurrent deduplication, rate limits, stale response/add
+completion fences, local preview, and unchanged stage/scoring authority. Local
+browser QA uses explicit server-side fixtures; real provider activation requires
+the deployment key and a subsequent live search/popular verification.

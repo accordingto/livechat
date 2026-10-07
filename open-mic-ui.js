@@ -88,10 +88,28 @@
     noFirebase: { en: 'Player pages are unavailable. Check your connection and reload.', zh: '目前無法連線到玩家頁，請檢查網路後重新整理。' },
     roomChanged: { en: 'The room changed. Reload this page to use the new room.', zh: '房間已變更，請重新載入此頁使用新房間。' },
     added: { en: 'Song added to My Songs.', zh: '歌曲已加入我的歌單。' }, ready: { en: '', zh: '' },
-    starterHint: { en: 'These are starter picks and songs added in this room. Open YouTube for your current recommendations.', zh: '下方是起始歌單和房間加入的歌曲。想看即時個人推薦，可以開啟 YouTube。' },
-    youtubeHome: { en: 'YouTube recommendations ↗', zh: 'YouTube 即時推薦 ↗' },
-    youtubeSearch: { en: 'Search YouTube ↗', zh: '到 YouTube 搜尋 ↗' },
-    youtubeSearchPlaceholder: { en: 'Find a song or artist on YouTube…', zh: '到 YouTube 找歌名或歌手…' },
+    starterHint: { en: 'Search YouTube here, or refresh public popular music by region. These are public picks, rather than your personal homepage.', zh: '直接在這裡搜尋 YouTube，或更新各地公開熱門音樂。這裡提供公開熱門歌曲，不是個人首頁推薦。' },
+    discoveryTitle: { en: 'Discover music on YouTube', zh: '在遊戲裡找歌' },
+    discoveryQuery: { en: 'Song title or artist', zh: '歌名或歌手' },
+    discoveryPlaceholder: { en: 'Search songs, artists, or lyric videos…', zh: '搜尋歌名、歌手或有歌詞的影片…' },
+    discoverySearch: { en: 'Search in game', zh: '在遊戲裡搜尋' },
+    discoveryPopular: { en: 'Refresh popular music', zh: '更新熱門音樂' },
+    discoveryRegion: { en: 'Region', zh: '地區' },
+    discoveryTW: { en: 'Taiwan', zh: '台灣' }, discoveryUS: { en: 'United States', zh: '美國' }, discoveryKR: { en: 'South Korea', zh: '韓國' },
+    discoveryOther: { en: 'Other ways to add songs', zh: '其他加入方式' },
+    discoveryIdle: { en: 'Search a song or load the latest public popular music.', zh: '搜尋一首歌，或取得最新公開熱門音樂。' },
+    discoveryLoading: { en: 'Finding music…', zh: '正在找歌…' },
+    discoveryEmpty: { en: 'No videos found. Try another song title or artist.', zh: '沒有找到影片，試試其他歌名或歌手。' },
+    discoveryChannel: { en: 'Channel: {name}', zh: '頻道：{name}' },
+    discoveryResults: { en: 'YouTube search · {query}', zh: 'YouTube 搜尋・{query}' },
+    discoveryPopularResults: { en: 'YouTube public popular music · {region}', zh: 'YouTube 公開熱門音樂・{region}' },
+    discoveryUpdated: { en: 'Updated {time}', zh: '更新時間：{time}' },
+    discoveryAdded: { en: 'In My Songs', zh: '已在我的歌單' },
+    discovery_setup_needed: { en: 'Live song discovery is not available yet. Choose from the playlist below for now.', zh: '即時找歌尚未開放，先從下方歌單選歌。' },
+    discovery_rate_limit: { en: 'Song discovery is busy. Try again in {n} seconds, or choose a song below.', zh: '即時找歌目前忙碌，約 {n} 秒後再試，或先從下方選歌。' },
+    discovery_unavailable: { en: 'Live song discovery is temporarily unavailable. Try again or choose a song below.', zh: '即時找歌暫時無法使用，可以再試一次，或先從下方選歌。' },
+    discovery_invalid_query: { en: 'Enter a song title or artist to search (up to 100 characters).', zh: '請輸入歌名或歌手（最多 100 個字）。' },
+    discovery_invalid_region: { en: 'Choose Taiwan, the United States, or South Korea.', zh: '請選擇台灣、美國或韓國。' },
     playlistOpen: { en: 'Browse a public playlist', zh: '瀏覽公開播放清單' },
     playlistTitle: { en: 'Your YouTube playlist', zh: '你的 YouTube 播放清單' },
     playlistURL: { en: 'Public or unlisted playlist URL', zh: '公開或不公開的播放清單網址' },
@@ -200,6 +218,10 @@
       this.lyricsLookupContext = null; this.lyricsFindGeneration = 0;
       this.focusPreferred = false;
       try { this.focusPreferred = global.localStorage && global.localStorage.getItem('openmic-focus.v1') === 'true'; } catch (_) {}
+      this.discoverySongs = []; this.discoveryQuery = ''; this.discoveryRegion = 'TW'; this.discoveryMode = 'popular';
+      this.discoveryGeneration = 0; this.discoveryAbort = null; this.discoveryBusy = false;
+      this.discoveryStatus = { key: 'discoveryIdle' }; this.discoveryFetchedAt = null;
+      this.discoveryResultQuery = ''; this.discoveryResultRegion = 'TW'; this.discoveryStarted = false;
       this.build();
       this.onClick = this.handleClick.bind(this);
       this.onInput = this.handleInput.bind(this);
@@ -207,7 +229,7 @@
       this.element.addEventListener('click', this.onClick);
       this.element.addEventListener('input', this.onInput);
       this.element.addEventListener('submit', this.onSubmit);
-      this.previewDialog.addEventListener('close', () => { this.previewDialog.querySelector('[data-om-preview-video]').innerHTML = ''; this.previewSong = null; });
+      this.previewDialog.addEventListener('close', () => { if (!this.destroyed && !this.previewDialog.open) { this.set('[data-om-preview-video]', ''); this.previewSong = null; } });
       this.playlistDialog.addEventListener('close', () => { if (!this.destroyed && !this.playlistDialog.open) this.destroyPlaylist(); });
       this.lyricsEditDialog.addEventListener('close', () => { if (!this.lyricsEditDialog.open) { this.lyricsEditGeneration++; this.lyricsEditVideo = null; this.lyricsEditSession = null; } });
       if (global.I18N) global.I18N.onChange(() => { if (!this.destroyed) { this.language = lang(); this.render(); } });
@@ -223,7 +245,7 @@
       this.renderLabels();
     }
     buildExtras() {
-      this.find('[data-om-tabs]').insertAdjacentHTML('beforebegin', '<div class="om-online"><p class="om-soft" data-om-starter-hint></p><div class="om-actions"><a class="om-button" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" data-om-youtube-home></a><button type="button" class="om-button" data-om-action="playlistOpen"></button></div><div class="om-online-search"><input type="search" class="om-search" data-om-online-query autocomplete="off"><a class="om-button" href="https://www.youtube.com/results?search_query=music" target="_blank" rel="noopener noreferrer" data-om-youtube-search></a></div></div>');
+      this.find('[data-om-tabs]').insertAdjacentHTML('beforebegin', '<section class="om-discovery" data-om-discovery><div class="om-panel-head"><h3 data-om-discovery-title></h3></div><p class="om-soft" data-om-starter-hint></p><form class="om-discovery-form" data-om-discovery-form><label class="om-field om-discovery-query"><span data-om-discovery-query-label></span><input type="search" class="om-search" name="discoveryQuery" data-om-discovery-query maxlength="100" autocomplete="off"></label><label class="om-field om-discovery-region"><span data-om-discovery-region-label></span><select name="discoveryRegion" data-om-discovery-region><option value="TW" data-om-region-tw></option><option value="US" data-om-region-us></option><option value="KR" data-om-region-kr></option></select></label><button type="submit" class="om-button om-primary" data-om-discovery-search></button><button type="button" class="om-button" data-om-action="discoveryPopular"></button></form><p class="om-feedback" data-om-discovery-status role="status"></p><p class="om-soft om-discovery-meta" data-om-discovery-meta></p><div class="om-song-list om-discovery-results" data-om-discovery-results></div><details class="om-discovery-other"><summary data-om-discovery-other></summary><button type="button" class="om-button" data-om-action="playlistOpen"></button></details></section>');
       this.find('.om-stage-bottom').insertAdjacentHTML('beforeend', '<section class="om-stage-lyrics" data-om-lyrics-panel hidden><div class="om-panel-head"><h3 data-om-lyrics-label></h3><div class="om-font-controls"><button type="button" class="om-button" data-om-action="lyricsSmaller" aria-label="Smaller text">A−</button><button type="button" class="om-button" data-om-action="lyricsLarger" aria-label="Larger text">A+</button></div></div><p class="om-soft" data-om-lyrics-hint></p><div class="om-lyrics-text" data-om-lyrics-copy tabindex="0"></div><div class="om-actions om-lyrics-actions"><button type="button" class="om-button" data-om-action="lyricsRead"></button><button type="button" class="om-button" data-om-action="lyricsEdit"></button></div><div class="om-lyrics-links"><a class="back" data-om-lyrics-search target="_blank" rel="noopener noreferrer"></a><a class="back" data-om-lyric-video-search target="_blank" rel="noopener noreferrer"></a></div></section>');
       this.element.insertAdjacentHTML('beforeend', '<dialog class="om-modal om-playlist-modal" data-om-modal="playlist"><header><h2 data-om-playlist-title></h2><button type="button" class="om-button" data-om-action="closePlaylist"></button></header><p class="om-soft" data-om-playlist-hint></p><form class="om-form om-playlist-form" data-om-playlist-form><label class="om-field"><span data-om-playlist-url-label></span><input name="playlistUrl" type="url" required placeholder="https://www.youtube.com/playlist?list=…" inputmode="url" autocomplete="off"></label><button type="submit" class="om-button om-primary" data-om-playlist-load></button></form><p class="om-feedback" data-om-playlist-status role="status"></p><div class="om-playlist-player" data-om-playlist-player hidden></div><div class="om-playlist-selection" data-om-playlist-selection hidden><button type="button" class="om-button" data-om-action="playlistCurrent"></button><label class="om-field"><span data-om-playlist-song-label></span><input type="text" data-om-playlist-song-title maxlength="120" autocomplete="off"></label><p class="om-soft" data-om-playlist-current-title></p><a class="back" data-om-playlist-video-link target="_blank" rel="noopener noreferrer" hidden></a><button type="button" class="om-button om-primary" data-om-action="playlistAdd"></button></div></dialog><dialog class="om-modal om-lyrics-editor" data-om-modal="lyricsEdit"><header><h2 data-om-lyrics-editor-title></h2><button type="button" class="om-button" data-om-action="closeLyricsEdit"></button></header><p class="om-soft" data-om-lyrics-editor-hint></p><form class="om-form" data-om-lyrics-form><textarea class="om-lyrics-input" data-om-lyrics-editor maxlength="16000" rows="14"></textarea><p class="om-soft" data-om-lyrics-draft-status></p><p class="om-form-error" data-om-lyrics-error role="alert"></p><button type="submit" class="om-button om-primary" data-om-lyrics-save></button></form></dialog><dialog class="om-modal om-lyrics-reader" data-om-modal="lyricsRead"><header><h2 data-om-lyrics-reader-title></h2><button type="button" class="om-button" data-om-action="closeLyricsRead"></button></header><div class="om-font-controls"><button type="button" class="om-button" data-om-action="lyricsSmaller" aria-label="Smaller text">A−</button><button type="button" class="om-button" data-om-action="lyricsLarger" aria-label="Larger text">A+</button></div><div class="om-lyrics-text" data-om-lyrics-reading tabindex="0"></div></dialog>');
       this.playlistDialog = this.find('[data-om-modal="playlist"]');
@@ -301,7 +323,7 @@
         this.cancelLyricsLookup(); this.lyricsLookupRecords = []; this.lyricsLookupPicked = null;
         this.lyricsLookupStatus = null; this.lyricsLookupSong = null; this.lyricsLookupContext = null;
       }
-      if (prevSession && prevSession !== data.sessionId) { this.category = 'for-you'; this.error = ''; this.notice = ''; this.close(this.previewDialog); this.close(this.duetDialog); }
+      if (prevSession && prevSession !== data.sessionId) { this.category = 'for-you'; this.error = ''; this.notice = ''; this.close(this.previewDialog); this.close(this.duetDialog); this.resetDiscovery(); }
       if (prevSession && (prevSession !== data.sessionId || previousRound !== data.round)) this.close(this.playlistDialog);
       if (prevSession && (prevSession !== data.sessionId || previousSong !== (data.selectedSong && data.selectedSong.videoId))) {
         this.close(this.lyricsEditDialog); this.close(this.lyricsReadDialog);
@@ -326,16 +348,15 @@
       this.renderFocus();
     }
     renderExtraLabels() {
-      var labels = { '[data-om-starter-hint]': 'starterHint', '[data-om-youtube-home]': 'youtubeHome', '[data-om-youtube-search]': 'youtubeSearch', '[data-om-action="playlistOpen"]': 'playlistOpen', '[data-om-playlist-title]': 'playlistTitle', '[data-om-action="closePlaylist"]': 'close', '[data-om-playlist-hint]': 'playlistHint', '[data-om-playlist-url-label]': 'playlistURL', '[data-om-playlist-load]': 'playlistLoad', '[data-om-action="playlistCurrent"]': 'playlistCurrent', '[data-om-playlist-song-label]': 'playlistSongTitle', '[data-om-action="playlistAdd"]': 'playlistAdd', '[data-om-playlist-video-link]': 'youtubeLink', '[data-om-lyrics-label]': 'lyrics', '[data-om-lyrics-hint]': 'lyricsHint', '[data-om-action="lyricsEdit"]': 'lyricsEdit', '[data-om-action="lyricsRead"]': 'lyricsRead', '[data-om-lyric-video-search]': 'lyricVideoSearch', '[data-om-lyrics-editor-hint]': 'lyricsEditorHint', '[data-om-lyrics-save]': 'lyricsSave', '[data-om-action="closeLyricsEdit"]': 'close', '[data-om-action="closeLyricsRead"]': 'close' };
+      var labels = { '[data-om-starter-hint]': 'starterHint', '[data-om-discovery-title]': 'discoveryTitle', '[data-om-discovery-query-label]': 'discoveryQuery', '[data-om-discovery-region-label]': 'discoveryRegion', '[data-om-discovery-search]': 'discoverySearch', '[data-om-action="discoveryPopular"]': 'discoveryPopular', '[data-om-region-tw]': 'discoveryTW', '[data-om-region-us]': 'discoveryUS', '[data-om-region-kr]': 'discoveryKR', '[data-om-discovery-other]': 'discoveryOther', '[data-om-action="playlistOpen"]': 'playlistOpen', '[data-om-playlist-title]': 'playlistTitle', '[data-om-action="closePlaylist"]': 'close', '[data-om-playlist-hint]': 'playlistHint', '[data-om-playlist-url-label]': 'playlistURL', '[data-om-playlist-load]': 'playlistLoad', '[data-om-action="playlistCurrent"]': 'playlistCurrent', '[data-om-playlist-song-label]': 'playlistSongTitle', '[data-om-action="playlistAdd"]': 'playlistAdd', '[data-om-playlist-video-link]': 'youtubeLink', '[data-om-lyrics-label]': 'lyrics', '[data-om-lyrics-hint]': 'lyricsHint', '[data-om-action="lyricsEdit"]': 'lyricsEdit', '[data-om-action="lyricsRead"]': 'lyricsRead', '[data-om-lyric-video-search]': 'lyricVideoSearch', '[data-om-lyrics-editor-hint]': 'lyricsEditorHint', '[data-om-lyrics-save]': 'lyricsSave', '[data-om-action="closeLyricsEdit"]': 'close', '[data-om-action="closeLyricsRead"]': 'close' };
       Object.keys(labels).forEach(s => this.setText(s, t(labels[s])));
-      this.find('[data-om-online-query]').placeholder = t('youtubeSearchPlaceholder');
-      this.find('[data-om-online-query]').setAttribute('aria-label', t('youtubeSearchPlaceholder'));
+      this.find('[data-om-discovery-query]').placeholder = t('discoveryPlaceholder');
       this.find('[data-om-lyrics-editor]').placeholder = t('lyricsPlaceholder');
       this.find('[data-om-lyrics-editor]').setAttribute('aria-label', t('lyrics'));
       this.element.querySelectorAll('[data-om-action="lyricsSmaller"]').forEach(el => { el.setAttribute('aria-label', t('lyricsSmaller')); el.title = t('lyricsSmaller'); });
       this.element.querySelectorAll('[data-om-action="lyricsLarger"]').forEach(el => { el.setAttribute('aria-label', t('lyricsLarger')); el.title = t('lyricsLarger'); });
       if (this.lyricsEditSong) this.setText('[data-om-lyrics-editor-title]', t('lyricsEditorTitle', { title: this.lyricsEditSong.title }));
-      this.updateOnlineSearch();
+      this.renderDiscovery();
       this.renderPlaylistControls();
       var lyricLabels = { '[data-om-action="lyricsFind"]': 'lyricsFind', '[data-om-lyrics-source]': 'lyricsSource', '[data-om-lyrics-lookup-source]': 'lyricsSource', '[data-om-lyrics-lookup-title]': 'lyricsLookupTitle', '[data-om-lyrics-lookup-hint]': 'lyricsLookupHint', '[data-om-action="closeLyricsFind"]': 'close', '[data-om-lyrics-track-label]': 'lyricsTrack', '[data-om-lyrics-artist-label]': 'lyricsArtist', '[data-om-lyrics-search-submit]': 'lyricsLookupSearch', '[data-om-action="lyricsUse"]': 'lyricsUse', '[data-om-action="lyricsManual"]': 'lyricsManual', '[data-om-lyrics-use-hint]': 'lyricsSearchWaiting' };
       Object.keys(lyricLabels).forEach(s => this.setText(s, t(lyricLabels[s])));
@@ -373,6 +394,7 @@
       this.find('[data-om-feedback]').classList.toggle('om-error', !!this.error);
       this.paint();
       this.maybeAutoLyrics();
+      if (!this.discoveryStarted) { this.discoveryStarted = true; this.requestDiscovery('popular'); }
     }
     renderStage() {
       var data = this.data, song = data.selectedSong, controller = this.controller(), host = this.host();
@@ -430,9 +452,83 @@
       var players = this.roster().filter(p => p.active !== false && Number(p.playerNum) !== Number(this.data.spotlight));
       this.set('[data-om-duets]', '<div style="height:12px"></div>' + this.button('inviteDuet', t('duetNone'), '', ' data-player=""', this.controller()) + players.map(p => this.button('inviteDuet', p.name || t('player', { n: p.playerNum }), Number(this.data.duet) === Number(p.playerNum) ? 'om-primary' : '', ' data-player="' + Number(p.playerNum) + '"', this.controller())).join('') + (!players.length ? '<p class="om-soft">' + esc(t('noDuet')) + '</p>' : ''));
     }
-    updateOnlineSearch() {
-      var query = this.find('[data-om-online-query]').value.trim() || 'music';
-      this.find('[data-om-youtube-search]').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+    cancelDiscovery() {
+      this.discoveryGeneration = (this.discoveryGeneration || 0) + 1;
+      if (this.discoveryAbort) this.discoveryAbort.abort();
+      this.discoveryAbort = null; this.discoveryBusy = false;
+    }
+    resetDiscovery() {
+      this.cancelDiscovery(); this.discoverySongs = []; this.discoveryFetchedAt = null;
+      this.discoveryStatus = { key: 'discoveryIdle' }; this.discoveryStarted = false;
+    }
+    discoveryContext() {
+      return this.data ? { sessionId: this.data.sessionId, round: this.data.round, actor: this.actor, owner: this.owner() } : null;
+    }
+    sameDiscoveryContext(context, includeTurn) {
+      var current = this.discoveryContext();
+      return !this.destroyed && !!context && !!current && context.sessionId === current.sessionId && (!includeTurn || (context.round === current.round && context.actor === current.actor && context.owner === current.owner));
+    }
+    async requestDiscovery(mode, query) {
+      if (this.destroyed || !this.data) return;
+      this.discoveryStarted = true;
+      mode = mode === 'search' ? 'search' : 'popular';
+      query = String(query == null ? this.discoveryQuery || '' : query).trim();
+      this.cancelDiscovery();
+      this.discoveryMode = mode; this.discoverySongs = []; this.discoveryFetchedAt = null;
+      var api = global.OPEN_MIC_DISCOVERY, region = this.discoveryRegion || 'TW';
+      if (['TW', 'US', 'KR'].indexOf(region) < 0) { this.discoveryStatus = { key: 'discovery_invalid_region', error: true }; this.renderDiscovery(); return; }
+      if (mode === 'search' && (!query || query.length > 100)) { this.discoveryStatus = { key: 'discovery_invalid_query', error: true }; this.renderDiscovery(); return; }
+      if (!api) { this.discoveryStatus = { key: 'discovery_setup_needed' }; this.renderDiscovery(); return; }
+      var generation = this.discoveryGeneration, context = this.discoveryContext();
+      this.discoveryAbort = new AbortController(); this.discoveryBusy = true;
+      this.discoveryStatus = { key: 'discoveryLoading' }; this.renderDiscovery();
+      try {
+        var result = await (mode === 'search' ? api.search(query, { region: region, signal: this.discoveryAbort.signal }) : api.popular({ region: region, signal: this.discoveryAbort.signal }));
+        if (generation !== this.discoveryGeneration || !this.sameDiscoveryContext(context)) return;
+        var seen = new Set();
+        this.discoverySongs = values(result && result.songs).filter(song => {
+          if (!song || !validVideo(song.videoId) || typeof song.title !== 'string' || !song.title.trim() || seen.has(song.videoId)) return false;
+          seen.add(song.videoId); return true;
+        }).slice(0, 40).map(song => ({ videoId: song.videoId, title: song.title.slice(0, 500), channelTitle: typeof song.channelTitle === 'string' ? song.channelTitle.slice(0, 200) : '', publishedAt: song.publishedAt || '' }));
+        this.discoveryResultQuery = query; this.discoveryResultRegion = region;
+        this.discoveryFetchedAt = result && result.fetchedAt || null;
+        this.discoveryStatus = this.discoverySongs.length ? null : { key: 'discoveryEmpty' };
+      } catch (failure) {
+        if (generation !== this.discoveryGeneration || !this.sameDiscoveryContext(context) || failure && failure.name === 'AbortError') return;
+        var code = failure && failure.code;
+        this.discoveryStatus = { key: ['discovery_setup_needed', 'discovery_rate_limit', 'discovery_invalid_query', 'discovery_invalid_region'].indexOf(code) >= 0 ? code : 'discovery_unavailable', vars: { n: Math.max(1, Math.ceil(Number(failure && failure.retryAfter) || 60)) }, error: code !== 'discovery_setup_needed' };
+      } finally {
+        if (!this.destroyed && generation === this.discoveryGeneration && this.sameDiscoveryContext(context)) { this.discoveryBusy = false; this.discoveryAbort = null; this.renderDiscovery(); }
+      }
+    }
+    renderDiscovery() {
+      if (this.destroyed) return;
+      var status = this.discoveryStatus;
+      this.setText('[data-om-discovery-status]', status ? t(status.key, status.vars) : '');
+      var statusNode = this.find('[data-om-discovery-status]');
+      if (statusNode) statusNode.classList.toggle('om-error', !!(status && status.error));
+      var songs = this.discoverySongs || [], favorites = this.favorites(), canAdd = this.canControl() && this.owner() > 0 && !this.pending;
+      var region = this.discoveryResultRegion || this.discoveryRegion || 'TW';
+      var regionName = t(region === 'US' ? 'discoveryUS' : region === 'KR' ? 'discoveryKR' : 'discoveryTW');
+      var meta = songs.length || this.discoveryFetchedAt ? t(this.discoveryMode === 'search' ? 'discoveryResults' : 'discoveryPopularResults', { query: this.discoveryResultQuery || '', region: regionName }) : '';
+      if (this.discoveryFetchedAt && Number.isFinite(Date.parse(this.discoveryFetchedAt))) meta += ' · ' + t('discoveryUpdated', { time: new Date(this.discoveryFetchedAt).toLocaleString(lang() === 'zh' ? 'zh-TW' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) });
+      this.setText('[data-om-discovery-meta]', meta);
+      this.set('[data-om-discovery-results]', songs.map(song => {
+        var saved = favorites.indexOf(song.videoId) >= 0;
+        return '<article class="om-song om-discovery-song"><div class="om-thumb"><img src="https://i.ytimg.com/vi/' + encodeURIComponent(song.videoId) + '/hqdefault.jpg" alt="" loading="lazy"></div><div class="om-song-info"><h3>' + esc(song.title) + '</h3><p class="om-artist">' + esc(t('discoveryChannel', { name: song.channelTitle || 'YouTube' })) + '</p><div class="om-actions"><button type="button" class="om-button" data-om-action="discoveryPreview" data-video="' + esc(song.videoId) + '">' + esc(t('preview')) + '</button><button type="button" class="om-button om-primary" data-om-action="discoveryAdd" data-video="' + esc(song.videoId) + '"' + (!canAdd || saved ? ' disabled' : '') + '>' + esc(t(saved ? 'discoveryAdded' : 'add')) + '</button></div></div></article>';
+      }).join(''));
+      var form = this.find('[data-om-discovery-form]');
+      if (form) form.setAttribute('aria-busy', String(!!this.discoveryBusy));
+    }
+    async addDiscoverySong(videoId) {
+      var song = (this.discoverySongs || []).find(song => song.videoId === videoId);
+      if (!song || !validVideo(song.videoId) || this.destroyed || this.pending || !this.canControl() || this.owner() < 1) return;
+      var context = this.discoveryContext(), generation = this.discoveryGeneration;
+      if (!context) return;
+      var ok = await this.action('addSong', { title: song.title.trim().slice(0, 120), url: youtube(song.videoId) });
+      if (!ok || this.error || !this.sameDiscoveryContext(context, true) || generation !== this.discoveryGeneration) return;
+      this.category = 'my-songs'; this.query = ''; this.find('[data-om-search]').value = '';
+      this.notice = t('added'); this.render();
     }
     renderPlaylistControls() {
       this.find('[data-om-playlist-load]').disabled = this.playlistBusy;
@@ -792,7 +888,10 @@
     }
     preview(videoId) {
       var song = this.library().find(s => s.videoId === videoId);
-      if (!song) return;
+      this.previewTrack(song);
+    }
+    previewTrack(song) {
+      if (this.destroyed || !song || !validVideo(song.videoId)) return;
       this.previewSong = song;
       this.setText('[data-om-preview-title]', song.title);
       this.set('[data-om-preview-video]', iframe(song));
@@ -816,7 +915,16 @@
     }
     handleInput(event) {
       if (event.target.matches('[data-om-search]')) { this.query = event.target.value; this.renderSongs(); }
-      if (event.target.matches('[data-om-online-query]')) this.updateOnlineSearch();
+      if (event.target.matches('[data-om-discovery-query]')) {
+        this.discoveryQuery = event.target.value; this.discoveryStarted = true;
+        this.cancelDiscovery(); this.discoverySongs = []; this.discoveryFetchedAt = null;
+        this.discoveryStatus = { key: 'discoveryIdle' }; this.renderDiscovery();
+      }
+      if (event.target.matches('[data-om-discovery-region]')) {
+        this.discoveryRegion = event.target.value; this.discoveryStarted = true;
+        this.cancelDiscovery(); this.discoverySongs = []; this.discoveryFetchedAt = null;
+        this.discoveryStatus = { key: 'discoveryIdle' }; this.renderDiscovery();
+      }
       if (event.target.matches('[data-om-playlist-song-title]')) this.playlistTitleDirty = true;
       if (event.target.matches('[data-om-lyrics-editor]') && this.lyricsEditVideo) {
         this.storeDraft(this.draftKey(this.lyricsEditVideo, this.lyricsEditSession), { text: event.target.value, dirty: event.target.value !== this.getLyrics(this.lyricsEditVideo) });
@@ -829,6 +937,9 @@
       var target = event.target.closest('[data-om-action]');
       if (!target || !this.element.contains(target) || target.disabled) return;
       var action = target.dataset.omAction;
+      if (action === 'discoveryPopular') { this.discoveryStarted = true; this.requestDiscovery('popular'); return; }
+      if (action === 'discoveryPreview') { this.previewTrack((this.discoverySongs || []).find(song => song.videoId === target.dataset.video)); return; }
+      if (action === 'discoveryAdd') { this.addDiscoverySong(target.dataset.video); return; }
       if (action === 'focusToggle') { this.toggleFocus(); return; }
       if (action === 'preview') { this.preview(target.dataset.video); return; }
       if (action === 'closePreview') { this.close(this.previewDialog); return; }
@@ -856,6 +967,12 @@
       this.action(action);
     }
     async handleSubmit(event) {
+      if (event.target.matches('[data-om-discovery-form]')) {
+        event.preventDefault(); this.discoveryStarted = true;
+        this.discoveryQuery = event.target.elements.discoveryQuery.value;
+        this.discoveryRegion = event.target.elements.discoveryRegion.value;
+        this.requestDiscovery('search', this.discoveryQuery); return;
+      }
       if (event.target.matches('[data-om-lyrics-search-form]')) {
         event.preventDefault();
         this.searchLyrics({ title: event.target.elements.trackTitle.value.trim(), artist: event.target.elements.artistName.value.trim(), query: '' }, 'manual'); return;
@@ -879,6 +996,7 @@
       this.close(this.previewDialog); this.close(this.addDialog); this.close(this.duetDialog);
       this.close(this.playlistDialog); this.close(this.lyricsEditDialog); this.close(this.lyricsReadDialog);
       this.cancelLyricsLookup(); this.close(this.lyricsFindDialog);
+      this.cancelDiscovery(); this.discoverySongs = [];
       this.element.innerHTML = '';
       this.data = null;
     }

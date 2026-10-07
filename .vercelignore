@@ -3,4 +3,5 @@ tests/
 scripts/
 private/
 work/
-api/
+api/*
+!api/open-mic-discovery.js

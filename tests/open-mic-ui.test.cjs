@@ -240,8 +240,8 @@ test('results fetched for an earlier turn or round cannot be reused as the curre
   }
 });
 
-function presentation(actor = 0) {
-  const f = setup(), g = Object.create(f.Game.prototype), nodes = new Map(), classes = new Set(), sent = [], videoWrites = [];
+function presentation(actor = 0, extraGlobals = {}) {
+  const f = setup(extraGlobals), g = Object.create(f.Game.prototype), nodes = new Map(), classes = new Set(), sent = [], videoWrites = [];
   let mounted = true;
   function node(selector) {
     if (nodes.has(selector)) return nodes.get(selector);
@@ -269,6 +269,8 @@ function presentation(actor = 0) {
       selectedSong: song, songLibrary: [song], mySongs: {}, songLyrics: { [song.videoId]: originalFixture },
       challenge: { title: 'Our small challenge', situation: 'It is our party.', challenge: 'Say hello.', successRule: 'Say hello.' } },
     previewSong: null, playlistPlayer: null, playlistBusy: false, playlistGeneration: 0,
+    discoverySongs: [], discoveryGeneration: 0, discoveryAbort: null, discoveryBusy: false,
+    discoveryStatus: null, discoveryMode: null, discoveryRegion: 'TW', discoveryFetchedAt: null,
     lyricsDrafts: {}, lyricsEditVideo: null, lyricsEditSession: null, lyricsEditGeneration: 0,
     lyricsLookupRecords: [], lyricsLookupPicked: null, lyricsLookupGeneration: 0, lyricsLookupAbort: null,
     lyricsLookupBusy: false, lyricsLookupMode: null, lyricsLookupStatus: null, lyricsLookupSong: null,
@@ -379,4 +381,235 @@ test('a real session change remounts its player and teardown cannot revive the f
   assert.doesNotThrow(() => { f.g.toggleFocus(); f.g.render(); });
   assert.equal(f.g.destroyed, true); assert.equal(f.g.data, null); assert.equal(f.videoWrites.length, writes);
   assert.equal(f.sent.length, 0);
+});
+
+function discoveredSong(overrides = {}) {
+  return { videoId: 'JGwWNGJdvx8', title: 'Our newly discovered song', channelTitle: 'Our Music Channel',
+    publishedAt: '2026-10-01T12:00:00.000Z', thumbnail: 'https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg', ...overrides };
+}
+
+function discovery(actor = 0) {
+  const requests = [], control = { available: true };
+  const request = (mode, query, options = {}) => {
+    let resolve, reject;
+    const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+    requests.push({ mode, query, region: options.region, signal: options.signal, resolve, reject }); return promise;
+  };
+  const api = { search: (query, options) => request('search', query, options),
+    popular: options => request('popular', null, options) };
+  const f = presentation(actor, { OPEN_MIC_DISCOVERY: api });
+  f.g.discoveryStarted = true;
+  f.g.canControl = () => control.available;
+  return { ...f, requests, control,
+    result(songs = [discoveredSong()], region = 'TW') {
+      return { songs, fetchedAt: '2026-10-08T10:00:00.000Z', source: 'youtube', region };
+    } };
+}
+
+test('the newest search or popular request owns the discovery results even when canceled requests resolve late', async () => {
+  for (const modes of [['search', 'search'], ['popular', 'search'], ['search', 'popular']]) {
+    const f = discovery(), first = f.g.requestDiscovery(modes[0], 'Earlier original song');
+    const second = f.g.requestDiscovery(modes[1], 'Latest original song');
+    assert.equal(f.requests.length, 2); assert.equal(f.requests[0].signal.aborted, true);
+    assert.equal(f.requests[1].region, 'TW');
+    f.requests[1].resolve(f.result([discoveredSong({ title: 'Latest original song' })])); await second;
+    f.requests[0].resolve(f.result([discoveredSong({ title: 'Earlier original song' })])); await first;
+    assert.equal(f.g.discoverySongs.length, 1); assert.equal(f.g.discoverySongs[0].title, 'Latest original song');
+    assert.equal(f.g.discoveryBusy, false); assert.equal(f.sent.length, 0);
+  }
+});
+
+test('session replacement and teardown abort discovery and discard late responses without reviving old results', async () => {
+  for (const change of ['session', 'destroy']) {
+    const f = discovery(); f.g.render(); const work = f.g.requestDiscovery('search', 'Our song');
+    if (change === 'session') f.g.update({ openmic: { ...f.g.data, sessionId: 'new-discovery-session' } });
+    else f.g.destroy();
+    const writes = f.videoWrites.length;
+    assert.equal(f.requests[0].signal.aborted, true);
+    f.requests[0].resolve(f.result()); await work;
+    assert.equal(f.g.discoverySongs.length, 0); assert.equal(f.sent.length, 0);
+    assert.equal(f.videoWrites.length, writes);
+    if (change === 'destroy') assert.equal(f.g.data, null);
+  }
+});
+
+test('host, Spotlight, and listeners search and preview locally even when shared game controls are unavailable', async () => {
+  for (const actor of [0, 1, 2]) {
+    const f = discovery(actor); f.g.render(); const state = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+    f.control.available = false; f.g.pending = true;
+    const work = f.g.requestDiscovery('search', 'Our song');
+    f.requests[0].resolve(f.result()); await work;
+    f.g.previewTrack(f.g.discoverySongs[0]);
+    assert.equal(f.g.previewDialog.open, true); assert.equal(f.g.previewSong.videoId, discoveredSong().videoId);
+    assert.match(f.node('[data-om-preview-video]').innerHTML, /youtube\.com\/embed\/JGwWNGJdvx8/);
+    assert.doesNotMatch(f.node('[data-om-preview-video]').innerHTML, /autoplay=1/);
+    assert.equal(f.sent.length, 0); assert.equal(JSON.stringify(f.g.data), state); assert.equal(f.videoWrites.length, writes);
+    assert.equal(f.g.data.selectedSong.videoId, 'nfWlot6h_JM', 'previewing a result never selects it for the turn');
+  }
+});
+
+test('discovery addition saves only the chosen title and canonical video URL without selecting or scoring it', async () => {
+  for (const actor of [0, 1, 2]) {
+    const f = discovery(actor); f.g.render(); const before = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+    const song = discoveredSong({ title: 'Our complete YouTube title', channelTitle: 'Our Channel', ownerPlayerNum: 99,
+      artist: 'Untrusted guessed artist', url: 'javascript:alert(1)' });
+    f.g.discoverySongs = [song]; await f.g.addDiscoverySong(song.videoId);
+    assert.equal(f.sent.length, 1); assert.equal(f.sent[0].type, 'addSong');
+    assert.deepEqual(JSON.parse(JSON.stringify(f.sent[0].extra)), { title: song.title,
+      url: 'https://www.youtube.com/watch?v=JGwWNGJdvx8' });
+    assert.equal(f.g.category, 'my-songs'); assert.equal(JSON.stringify(f.g.data), before);
+    assert.equal(f.videoWrites.length, writes);
+  }
+});
+
+test('late discovery-add completion cannot switch the new session, owner, round, actor, or newer results into My Songs', async () => {
+  const changes = [
+    f => { f.g.data.sessionId = 'another-discovery-session'; },
+    f => { f.g.data.spotlight = 2; },
+    f => { f.g.data.round++; },
+    f => { f.g.actor = 1; },
+    f => { f.g.discoveryGeneration++; },
+    f => { f.g.destroy(); },
+  ];
+  for (const change of changes) {
+    const f = discovery(); f.g.discoverySongs = [discoveredSong()]; f.g.category = 'english-pop';
+    let complete; f.g.send = (type, extra) => { f.sent.push({ type, extra }); return new Promise(resolve => { complete = resolve; }); };
+    const work = f.g.addDiscoverySong(discoveredSong().videoId); assert.equal(f.sent.length, 1);
+    change(f); complete(); await work;
+    assert.equal(f.g.category, 'english-pop'); assert.equal(f.sent.length, 1);
+    assert.equal(f.sent[0].type, 'addSong', 'the old completion must not follow up with selectSong');
+  }
+});
+
+test('discovery cannot add a missing result, invalid video ID, or song while game writes are unavailable', async () => {
+  for (const blocked of ['offline', 'pending', 'missing', 'invalid']) {
+    const f = discovery(2); f.g.discoverySongs = [discoveredSong()];
+    if (blocked === 'offline') f.control.available = false;
+    if (blocked === 'pending') f.g.pending = true;
+    if (blocked === 'missing') f.g.discoverySongs = [];
+    if (blocked === 'invalid') f.g.discoverySongs = [discoveredSong({ videoId: '\" onload=\"bad' })];
+    await f.g.addDiscoverySong(blocked === 'invalid' ? '\" onload=\"bad' : discoveredSong().videoId);
+    assert.equal(f.sent.length, 0); assert.equal(f.g.category, 'for-you');
+  }
+});
+
+test('discovery metadata is displayed as text and untrusted URLs cannot enter a preview iframe', async () => {
+  const f = discovery(), work = f.g.requestDiscovery('search', 'Our song');
+  const song = discoveredSong({ title: '<img src=x onerror="alert(1)">', channelTitle: '<script>alert(2)</script>',
+    thumbnail: 'javascript:alert(3)', url: 'https://evil.example/iframe', ownerPlayerNum: 0 });
+  f.requests[0].resolve(f.result([song])); await work; f.g.renderDiscovery();
+  const results = f.node('[data-om-discovery-results]').innerHTML;
+  assert.doesNotMatch(results, /<script\b|<img\b[^>]*\bonerror\s*=|(?:src|href)=["']javascript:/i);
+  assert.match(results, /&lt;img/); assert.match(results, /&lt;script/);
+  f.g.previewTrack(song); const preview = f.node('[data-om-preview-video]').innerHTML;
+  assert.match(preview, /https:\/\/www\.youtube\.com\/embed\/JGwWNGJdvx8/);
+  assert.doesNotMatch(preview, /evil\.example|javascript:|<script\b/i);
+  const previous = preview; f.g.previewTrack(discoveredSong({ videoId: '\" onload=\"bad' }));
+  assert.equal(f.node('[data-om-preview-video]').innerHTML, previous);
+  assert.equal(f.sent.length, 0);
+});
+
+test('empty discovery and service failures explain a useful in-game retry or manual-add fallback without exposing setup secrets', async () => {
+  const cases = [null, 'discovery_setup_needed', 'discovery_rate_limit', 'discovery_unavailable', 'discovery_invalid_query', 'discovery_invalid_region'];
+  for (const code of cases) {
+    const f = discovery(); f.g.render(); const work = f.g.requestDiscovery('search', 'Our song');
+    if (code) f.requests[0].reject(Object.assign(new Error('sensitive server setup details'), { code, retryAfter: 23 }));
+    else f.requests[0].resolve(f.result([]));
+    await work; f.g.renderDiscovery();
+    const text = Array.from(f.nodes.values()).map(node => node.textContent + ' ' + node.innerHTML).join(' ');
+    assert.equal(f.g.discoveryBusy, false); assert.equal(f.g.discoverySongs.length, 0); assert.equal(f.sent.length, 0);
+    assert.doesNotMatch(text, /sensitive server setup details|discovery_setup_needed|API[_ -]?KEY|AIza/);
+    assert.match(text, /song|search|again|try|playlist|link|歌|搜尋|再試|網址|播放清單/i);
+    assert.equal(f.node('[data-om-action="addOpen"]').disabled, false, 'manual in-game song addition remains available');
+  }
+});
+
+test('changing the search text or region invalidates in-flight discovery without changing the game or current player', async () => {
+  for (const selector of ['[data-om-discovery-query]', '[data-om-discovery-region]']) {
+    const f = discovery(); f.g.render(); const original = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+    const work = f.g.requestDiscovery('search', 'Earlier original song');
+    const input = { value: selector.includes('region') ? 'US' : 'Our edited search', matches: value => value === selector };
+    f.g.handleInput({ target: input });
+    assert.equal(f.requests[0].signal.aborted, true); assert.equal(f.g.discoverySongs.length, 0);
+    f.requests[0].resolve(f.result()); await work;
+    assert.equal(f.g.discoverySongs.length, 0); assert.equal(f.g.discoveryBusy, false);
+    assert.equal(JSON.stringify(f.g.data), original); assert.equal(f.videoWrites.length, writes); assert.equal(f.sent.length, 0);
+    if (selector.includes('region')) assert.equal(f.g.discoveryRegion, 'US');
+    else assert.equal(f.g.discoveryQuery, 'Our edited search');
+  }
+});
+
+test('public popular music loads once per session and room updates keep the local results and selected player intact', async () => {
+  const f = discovery(2); f.g.discoveryStarted = false; f.g.render();
+  assert.equal(f.requests.length, 1); assert.equal(f.requests[0].mode, 'popular');
+  f.requests[0].resolve(f.result()); await nextTask(); const song = f.g.discoverySongs[0], writes = f.videoWrites.length;
+  f.g.render(); f.g.update({ openmic: { ...f.g.data, revision: 20, mySongs: { 2: ['nfWlot6h_JM'] } } });
+  assert.equal(f.requests.length, 1); assert.equal(f.g.discoverySongs[0], song); assert.equal(f.videoWrites.length, writes);
+  assert.equal(f.g.data.teamScore, 2); assert.equal(f.sent.length, 0);
+  f.g.update({ openmic: { ...f.g.data, sessionId: 'another-popular-session' } });
+  assert.equal(f.requests.length, 2); assert.equal(f.requests[1].mode, 'popular');
+  f.requests[1].resolve(f.result([discoveredSong({ title: 'A new public song' })])); await nextTask();
+  assert.equal(f.g.discoverySongs[0].title, 'A new public song');
+});
+
+test('discovery rejects empty, oversized searches and unsupported regions before making a request', async () => {
+  for (const input of ['', ' '.repeat(4), 'x'.repeat(101), 'unsupported-region']) {
+    const f = discovery(); if (input === 'unsupported-region') f.g.discoveryRegion = 'XX';
+    await f.g.requestDiscovery('search', input === 'unsupported-region' ? 'Our song' : input);
+    assert.equal(f.requests.length, 0); assert.equal(f.g.discoveryBusy, false); assert.equal(f.sent.length, 0);
+    assert.equal(f.g.discoverySongs.length, 0);
+    assert.match(f.node('[data-om-discovery-status]').textContent, /song|artist|Taiwan|歌|台灣/);
+  }
+});
+
+test('a queued native preview close cannot clear a reopened preview and remains safe after teardown', () => {
+  const f = setup(), queued = [], nodes = new Map(); let mounted = true;
+  const node = selector => {
+    if (!nodes.has(selector)) nodes.set(selector, { innerHTML: '', textContent: '', value: '', hidden: false, disabled: false,
+      classList: { toggle() {}, add() {} }, setAttribute() {}, removeAttribute() {} });
+    return nodes.get(selector);
+  };
+  const dialog = () => {
+    const handlers = new Map();
+    return { open: false, addEventListener: (type, callback) => handlers.set(type, callback),
+      querySelector: () => node('[data-om-preview-video]'), showModal() { this.open = true; },
+      close() { this.open = false; const callback = handlers.get('close'); if (callback) queued.push(callback); } };
+  };
+  const element = { addEventListener() {}, removeEventListener() {}, querySelector: selector => mounted ? node(selector) : null,
+    get innerHTML() { return ''; }, set innerHTML(_value) { mounted = false; } };
+  class PreviewGame extends f.Game {
+    build() {
+      this.previewDialog = dialog(); this.addDialog = dialog(); this.duetDialog = dialog(); this.playlistDialog = dialog();
+      this.lyricsEditDialog = dialog(); this.lyricsReadDialog = dialog(); this.lyricsFindDialog = dialog();
+    }
+  }
+  const g = new PreviewGame(element, {});
+  g.previewTrack(discoveredSong()); g.previewDialog.close();
+  g.previewTrack(discoveredSong({ videoId: 'nfWlot6h_JM', title: 'Our next preview' }));
+  const current = node('[data-om-preview-video]').innerHTML;
+  queued.shift()();
+  assert.equal(g.previewDialog.open, true); assert.equal(g.previewSong.videoId, 'nfWlot6h_JM');
+  assert.equal(node('[data-om-preview-video]').innerHTML, current);
+  g.destroy(); assert.doesNotThrow(() => queued.forEach(callback => callback())); assert.equal(f.timers.size, 0);
+});
+
+test('service query and region errors provide their specific correction while keeping the entered query', async () => {
+  for (const code of ['discovery_invalid_query', 'discovery_invalid_region']) {
+    const f = discovery(), input = f.node('[data-om-discovery-query]'); input.value = 'Our original query';
+    const work = f.g.requestDiscovery('search', input.value);
+    f.requests[0].reject(Object.assign(new Error('private provider details'), { code })); await work;
+    assert.equal(f.node('[data-om-discovery-status]').textContent,
+      f.context.OPEN_MIC_UI.t(code));
+    assert.equal(input.value, 'Our original query'); assert.equal(f.g.discoveryBusy, false); assert.equal(f.sent.length, 0);
+  }
+});
+
+test('an unavailable discovery client keeps the built-in playlist, manual song form, and live stage usable', async () => {
+  const f = presentation(2); f.g.discoveryStarted = true; f.g.render(); const original = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+  await f.g.requestDiscovery('search', 'Our original song');
+  assert.equal(f.node('[data-om-discovery-status]').textContent, f.context.OPEN_MIC_UI.t('discovery_setup_needed'));
+  assert.match(f.node('[data-om-songs]').innerHTML, /Our Party Song/);
+  assert.equal(f.node('[data-om-action="addOpen"]').disabled, false);
+  f.click('addOpen'); assert.equal(f.g.addDialog.open, true);
+  assert.equal(JSON.stringify(f.g.data), original); assert.equal(f.videoWrites.length, writes); assert.equal(f.sent.length, 0);
 });
