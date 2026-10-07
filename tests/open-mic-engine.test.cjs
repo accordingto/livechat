@@ -233,3 +233,68 @@ test('public projections expose only gameplay plus actor-specific reply, with de
   projected.openmic.songLibrary[0].title = 'Changed'; projected.openmic.challenge.title.en = 'Changed'; projected.openmic.reply.error = 'Changed';
   assert.equal(JSON.stringify(s), before);
 });
+
+test('shared lyrics preserve multiline text and leave the singing stage, score, and phase token untouched', () => {
+  let s = singing(); const videoId = s.selectedSong.videoId;
+  const before = JSON.stringify(s);
+  const stage = { turnId: s.turnId, round: s.round, phase: s.phase, selectedSong: s.selectedSong,
+    teamScore: s.teamScore, singingStartedAt: s.singingStartedAt, singingState: s.singingState, duet: s.duet };
+  const updated = act(s, 'setLyrics', { actor: 1, videoId, lyrics: ' First original line\r\nSecond line\rThird\tline ' });
+  assert.equal(error(updated, 1), ''); assert.equal(JSON.stringify(s), before);
+  assert.equal(updated.songLyrics[videoId], ' First original line\nSecond line\nThird\tline ');
+  for (const [key, value] of Object.entries(stage)) assert.deepEqual(updated[key], value, key);
+  for (const actor of [0, 1, 2, 3]) assert.equal(E.view(updated, actor).openmic.songLyrics[videoId], updated.songLyrics[videoId]);
+  const projected = E.view(updated, 2).openmic;
+  projected.songLyrics[videoId] = 'Changed only in projection';
+  assert.equal(updated.songLyrics[videoId], ' First original line\nSecond line\nThird\tline ');
+  s = act(updated, 'next'); assert.equal(s.songLyrics[videoId], updated.songLyrics[videoId]);
+  s = act(s, 'failed'); s = act(s, 'selectSong', { actor: 2, videoId });
+  assert.equal(E.view(JSON.parse(JSON.stringify(s)), 2).openmic.songLyrics[videoId], updated.songLyrics[videoId]);
+});
+
+test('only host or current active Spotlight may edit shared lyrics, including after Spotlight rotates', () => {
+  let s = create(); const videoId = s.songLibrary[0].videoId;
+  assert.equal(error(act(s, 'setLyrics', { actor: 2, videoId, lyrics: 'Unauthorized' }), 2), 'not_available');
+  s = act(s, 'setLyrics', { videoId, lyrics: 'Host draft' }); assert.equal(s.songLyrics[videoId], 'Host draft');
+  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Spotlight edit' }); assert.equal(s.songLyrics[videoId], 'Spotlight edit');
+  s = act(s, 'next');
+  assert.equal(error(act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Old Spotlight' }), 1), 'not_available');
+  s = act(s, 'setLyrics', { actor: 2, videoId, lyrics: 'New Spotlight' }); assert.equal(s.songLyrics[videoId], 'New Spotlight');
+  s = act(s, 'exclude', { playerNum: 2, active: false });
+  assert.equal(error(act(s, 'setLyrics', { actor: 2, videoId, lyrics: 'Excluded Spotlight' }), 2), 'not_available');
+  s = act(s, 'setLyrics', { actor: 0, videoId, lyrics: 'Host revision' }); assert.equal(s.songLyrics[videoId], 'Host revision');
+});
+
+test('lyrics edits reject unknown songs, oversized text, hidden controls, and stale commands atomically', () => {
+  let s = create(); const videoId = s.songLibrary[0].videoId;
+  s = act(s, 'setLyrics', { videoId, lyrics: 'Existing text' });
+  for (const lyrics of [null, undefined, 42, {}, 'a'.repeat(E.MAX_LYRICS_CHARS + 1), 'hidden\u0000character', 'hidden\u001bcharacter']) {
+    const rejected = act(s, 'setLyrics', { videoId, lyrics });
+    assert.equal(error(rejected), 'invalid_lyrics'); assert.equal(rejected.songLyrics[videoId], 'Existing text');
+  }
+  assert.equal(error(act(s, 'setLyrics', { videoId: 'abcdefghijk', lyrics: 'Unknown song' })), 'invalid_song');
+  const stale = act(s, 'setLyrics', { videoId, lyrics: 'Old edit', turnId: s.turnId - 1 });
+  assert.equal(error(stale), 'stale_turn'); assert.equal(stale.songLyrics[videoId], 'Existing text');
+  assert.equal(act(s, 'setLyrics', { videoId, lyrics: 'Old session', sessionId: 'different-session' }), s);
+  const badTime = act(s, 'setLyrics', { videoId, lyrics: 'Old time', now: s.lastChangeAt - 1 });
+  assert.equal(error(badTime), 'invalid_time'); assert.equal(badTime.songLyrics[videoId], 'Existing text');
+  const command = { actor: 0, type: 'setLyrics', id: 'lyrics-once', sessionId: s.sessionId, turnId: s.turnId,
+    now: s.lastChangeAt + 1, videoId, lyrics: 'Same transaction' };
+  const once = E.apply(s, command);
+  assert.deepEqual(E.apply(s, command), once); assert.equal(E.apply(once, command), once);
+  s = act(s, 'setLyrics', { videoId, lyrics: 'x'.repeat(E.MAX_LYRICS_CHARS) });
+  assert.equal(s.songLyrics[videoId].length, E.MAX_LYRICS_CHARS);
+});
+
+test('empty lyrics clear saved text and older room states migrate without resetting the game', () => {
+  let s = choice(); const videoId = s.songLibrary[0].videoId, secondVideoId = s.songLibrary[1].videoId;
+  delete s.songLyrics;
+  assert.deepEqual(E.view(s, 1).openmic.songLyrics, {});
+  const turnId = s.turnId;
+  s = act(s, 'setLyrics', { videoId, lyrics: 'Song one text' });
+  s = act(s, 'setLyrics', { videoId: secondVideoId, lyrics: 'Song two text' });
+  s = act(s, 'setLyrics', { videoId, lyrics: ' \t\r\n ' });
+  assert.equal(Object.hasOwn(s.songLyrics, videoId), false); assert.equal(s.songLyrics[secondVideoId], 'Song two text');
+  s = act(s, 'setLyrics', { videoId: secondVideoId, lyrics: '' }); assert.deepEqual(s.songLyrics, {});
+  assert.equal(s.turnId, turnId); assert.equal(s.phase, 'choice'); assert.equal(s.teamScore, 2);
+});

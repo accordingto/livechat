@@ -254,3 +254,86 @@ test('elapsed time and offline cannot advance singing; room change and close sto
   const closedWrites = f.db.writes;
   await h.renew(); h.connect(); await settle(h); assert.equal(f.db.writes, closedWrites);
 });
+
+function singingProgress(state) {
+  return { sessionId: state.sessionId, turnId: state.turnId, spotlight: state.spotlight, round: state.round,
+    phase: state.phase, teamScore: state.teamScore, challengeResult: state.challengeResult,
+    singingState: state.singingState, singingStartedAt: state.singingStartedAt, duration: state.duration };
+}
+
+test('host lyrics fan out to every player and survive host replacement without moving the singing turn', async () => {
+  const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first);
+  const videoId = first.latest.songLibrary[0].videoId;
+  await first.command('success'); await first.command('selectSong', { videoId });
+  await first.command('startSinging'); await settle(first);
+  const progress = singingProgress(f.state()), lyrics = 'Our voices fill the room.\r\nA little song, a little smile.\rTogether we go.';
+  const expected = lyrics.replace(/\r\n?/g, '\n');
+  f.now += 1000;
+  await first.command('setLyrics', { videoId, lyrics }); await settle(first);
+  assert.equal(f.state().songLyrics[videoId], expected);
+  assert.deepEqual(singingProgress(f.state()), progress);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], expected);
+  const original = f.state(); first.close(); await settle(first);
+  const restored = f.host(); await settle(restored);
+  assert.equal(restored.own, true); assert.deepEqual(f.state(), original);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], expected);
+  f.now += 120000; await restored.renew(); await settle(restored);
+  assert.deepEqual(singingProgress(f.state()), progress, 'lyrics and elapsed time never score or advance');
+  restored.close(); await settle(restored);
+});
+
+test('lyrics permissions use the real player card and stale previous-turn text cannot replace saved lyrics', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  const videoId = h.latest.songLibrary[0].videoId, originalText = 'We have a song to share.';
+  await h.command('setLyrics', { videoId, lyrics: originalText }); await settle(h);
+  const progress = singingProgress(f.state());
+  const spoof = await f.action(2, 'setLyrics', { actor: 0, videoId, lyrics: 'A listener cannot replace the text.' }); await settle(h);
+  assert.equal(f.state().songLyrics[videoId], originalText);
+  assert.equal(f.card(2).openmic.reply.id, spoof.id); assert.equal(f.card(2).openmic.reply.error, 'not_available');
+  assert.deepEqual(singingProgress(f.state()), progress);
+  const spotlightText = 'Spotlight adds a little line.\nEveryone can read along.';
+  const update = await f.action(1, 'setLyrics', { videoId, lyrics: spotlightText }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, update.id); assert.equal(f.card(1).openmic.reply.error, '');
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], spotlightText);
+  assert.deepEqual(singingProgress(f.state()), progress);
+  const revision = f.raw().revision;
+  await f.db.ref(f.paths[0]).transaction(old => ({ ...old, openmicAction: update })); await settle(h);
+  assert.equal(f.raw().revision, revision, 'replayed lyrics have no second canonical mutation');
+  await h.command('next'); await settle(h); assert.equal(h.latest.spotlight, 2);
+  const nextProgress = singingProgress(f.state());
+  const stale = await f.action(1, 'setLyrics', { actor: 0, videoId, lyrics: 'An old turn must not overwrite.', turnId: update.turnId }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, stale.id); assert.equal(f.card(1).openmic.reply.error, 'stale_turn');
+  assert.equal(f.state().songLyrics[videoId], spotlightText);
+  assert.deepEqual(singingProgress(f.state()), nextProgress);
+  h.close(); await settle(h);
+});
+
+test('Spotlight can sync the full 16000-character lyrics allowance, including JSON-escaped formatting', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  const videoId = h.latest.songLibrary[0].videoId, lyrics = '"Party"\n'.repeat(2000);
+  assert.equal(lyrics.length, 16000); const progress = singingProgress(f.state());
+  const action = await f.action(1, 'setLyrics', { videoId, lyrics }); await settle(h);
+  assert.equal(f.card(1).openmic.reply?.id, action.id, 'a valid large action must receive an acknowledgement');
+  assert.equal(f.card(1).openmic.reply.error, '');
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], lyrics);
+  assert.deepEqual(singingProgress(f.state()), progress);
+  h.close(); await settle(h);
+});
+
+test('invalid lyrics are acknowledged without damage; clearing text removes it from all views', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  const videoId = h.latest.songLibrary[0].videoId, lyrics = 'This line belongs to our party.';
+  await h.command('setLyrics', { videoId, lyrics }); await settle(h);
+  const progress = singingProgress(f.state());
+  await assert.rejects(h.command('setLyrics', { videoId, lyrics: 'x'.repeat(16001) }), /invalid_lyrics/);
+  await settle(h); assert.equal(f.state().songLyrics[videoId], lyrics);
+  const invalid = await f.action(1, 'setLyrics', { videoId, lyrics: 'Hidden\u0000control' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, invalid.id); assert.equal(f.card(1).openmic.reply.error, 'invalid_lyrics');
+  assert.equal(f.state().songLyrics[videoId], lyrics);
+  const cleared = await f.action(1, 'setLyrics', { videoId, lyrics: '\n \t\n' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, cleared.id); assert.equal(f.card(1).openmic.reply.error, '');
+  assert.deepEqual(f.state().songLyrics, {});
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics?.[videoId], undefined);
+  assert.deepEqual(singingProgress(f.state()), progress);
+  h.close(); await settle(h);
+});
