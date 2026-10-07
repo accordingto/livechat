@@ -268,9 +268,9 @@ test('invalid direct-selection IDs or titles cannot change a current stage or li
   assert.equal(error(boundary, 1), ''); assert.equal(boundary.selectedSong.title.length, 140);
 });
 
-test('direct selection cannot import videos outside choice and singing or for another or inactive participant', () => {
+test('direct selection cannot import videos during challenge or for another or inactive participant', () => {
   const candidate = { videoId: 'abcdefghijk', title: 'Must not enter library' };
-  for (const initial of [create(), act(choice(), 'skip')]) {
+  for (const initial of [create()]) {
     for (const actor of [0, 1]) {
       const rejected = act(initial, 'selectSong', { actor, ...candidate });
       assert.equal(error(rejected, actor), 'not_available'); assert.deepEqual(rejected.songLibrary, initial.songLibrary);
@@ -453,7 +453,7 @@ test('clear and replace respect actors, inactive Spotlight, stale sessions and p
   }
 });
 
-test('repeated singing replacements and cancellations award only one eventual completion and finished turns stay locked', () => {
+test('repeated singing replacements and cancellations award only one eventual completion and finished scoring stays locked', () => {
   for (const result of ['success', 'failed']) {
     let s = singing(result); const baseline = s.teamScore, round = s.round;
     for (let i = 0; i < 3; i++) {
@@ -466,7 +466,7 @@ test('repeated singing replacements and cancellations award only one eventual co
     }
     s = act(s, 'finishSinging', { actor: 1 }); assert.equal(s.teamScore, baseline + 1);
     for (const actor of [0, 1]) {
-      for (const type of ['clearSong', 'selectSong']) {
+      for (const type of ['startSinging', 'finishSinging']) {
         const denied = act(s, type, { actor, videoId: 'abcdefghijk', title: 'Cannot reopen' });
         assert.equal(error(denied, actor), 'not_available'); sameStage(denied, s);
       }
@@ -483,6 +483,120 @@ test('changed song or clear invalidates queued finish, start and lyric intents b
     for (const type of ['finishSinging', 'startSinging', 'setLyrics']) {
       const queued = act(changed, type, { actor: 1, turnId: initial.turnId, videoId: nextId, lyrics: 'Old queued draft.' });
       assert.equal(error(queued, 1), 'stale_turn'); sameStage(queued, snapshot);
+    }
+  }
+});
+
+function completedStage(result = 'success', operation = 'finishSinging') {
+  let s = act(singing(result), 'inviteDuet', { playerNum: 2 });
+  s = act(s, 'setLyrics', { videoId: s.selectedSong.videoId, lyrics: 'An original saved draft.' });
+  s = act(s, 'toggleFavorite', { actor: 3, videoId: s.selectedSong.videoId });
+  return act(s, operation);
+}
+
+test('finished rounds allow host or Spotlight to select existing and new videos for playback without reopening scoring', () => {
+  for (const result of ['success', 'failed']) {
+    for (const operation of ['finishSinging', 'skip']) {
+      for (const actor of [0, 1]) {
+        for (const unknown of [false, true]) {
+          const initial = completedStage(result, operation), before = JSON.stringify(initial);
+          const target = unknown ? { videoId: 'abcdefghijk', title: 'A song after the round' }
+            : { videoId: initial.songLibrary[1].videoId, title: 'Keep existing metadata' };
+          const selected = act(initial, 'selectSong', { actor, ...target });
+          assert.equal(error(selected, actor), ''); assert.equal(JSON.stringify(initial), before);
+          assert.equal(selected.selectedSong.videoId, target.videoId); assert.equal(selected.singingStartedAt, null);
+          assert.equal(selected.turnId, initial.turnId + 1);
+          for (const field of ['phase', 'singingState', 'singingAwarded', 'challengeAwarded', 'challengeResult',
+            'teamScore', 'round', 'spotlight', 'duet', 'songLyrics', 'mySongs']) assert.deepEqual(selected[field], initial[field], field);
+          assert.equal(selected.phase, 'finished'); assert.equal(selected.singingState, 'finished');
+          assert.equal(selected.songLibrary.length, initial.songLibrary.length + Number(unknown));
+          if (!unknown) assert.deepEqual(selected.selectedSong, initial.songLibrary[1]);
+          for (const type of ['startSinging', 'finishSinging', 'skip']) {
+            const denied = act(selected, type, { actor });
+            assert.equal(error(denied, actor), 'not_available'); sameStage(denied, selected);
+          }
+          const next = act(selected, 'next'); assert.equal(next.teamScore, initial.teamScore);
+          assert.equal(next.phase, 'challenge'); assert.equal(next.round, initial.round + 1);
+        }
+      }
+    }
+  }
+});
+
+test('finished clear removes only stage playback and duet while preserving awards, library, lyrics and favorites', () => {
+  for (const result of ['success', 'failed']) {
+    for (const operation of ['finishSinging', 'skip']) {
+      for (const actor of [0, 1]) {
+        const initial = completedStage(result, operation);
+        const command = { id: 'clear-finished-once', type: 'clearSong', actor, sessionId: initial.sessionId,
+          turnId: initial.turnId, now: initial.lastChangeAt + 1 };
+        const cleared = E.apply(initial, command);
+        assert.equal(error(cleared, actor), ''); assert.equal(cleared.selectedSong, null); assert.equal(cleared.duet, null);
+        assert.equal(cleared.singingStartedAt, null); assert.equal(cleared.turnId, initial.turnId + 1);
+        for (const field of ['phase', 'singingState', 'singingAwarded', 'challengeAwarded', 'challengeResult',
+          'teamScore', 'round', 'spotlight', 'songLibrary', 'songLyrics', 'mySongs']) assert.deepEqual(cleared[field], initial[field], field);
+        assert.equal(E.apply(cleared, command), cleared);
+        const empty = act(cleared, 'clearSong', { actor });
+        assert.equal(error(empty, actor), ''); assert.equal(empty.phase, 'finished'); assert.equal(empty.teamScore, initial.teamScore);
+        const missingId = act(empty, 'selectSong', { actor });
+        assert.equal(error(missingId, actor), 'invalid_song'); sameStage(missingId, empty);
+        const selected = act(empty, 'selectSong', { actor, videoId: 'abcdefghijk', title: 'Playback after clearing' });
+        assert.equal(error(selected, actor), ''); assert.equal(selected.phase, 'finished'); assert.equal(selected.teamScore, initial.teamScore);
+        assert.deepEqual(selected.mySongs, initial.mySongs); assert.deepEqual(selected.songLyrics, initial.songLyrics);
+      }
+    }
+  }
+});
+
+test('reselecting the current finished video is a no-op for metadata, scores, timer and phase token', () => {
+  for (const operation of ['finishSinging', 'skip']) {
+    for (const actor of [0, 1]) {
+      const initial = completedStage('success', operation);
+      const repeated = act(initial, 'selectSong', { actor, videoId: initial.selectedSong.videoId, title: 'Ignored provider metadata' });
+      assert.equal(error(repeated, actor), ''); sameStage(repeated, initial);
+    }
+  }
+});
+
+test('finished playback mutations preserve atomic validation, actor and stale-command protections', () => {
+  const initial = completedStage();
+  for (const [extra, expected] of [[{ videoId: 'short', title: 'Invalid' }, 'invalid_song'],
+    [{ videoId: 'abcdefghijk\n', title: 'Invalid' }, 'invalid_song'], [{ videoId: 'abcdefghijk' }, 'invalid_song'],
+    [{ videoId: 'abcdefghijk', title: '' }, 'invalid_title'], [{ videoId: 'abcdefghijk', title: 'x'.repeat(141) }, 'invalid_title'],
+    [{ videoId: 'abcdefghijk', title: 'Control\ncharacter' }, 'invalid_title']]) {
+    const denied = act(initial, 'selectSong', { actor: 1, ...extra });
+    assert.equal(error(denied, 1), expected); sameStage(denied, initial);
+  }
+  for (const type of ['selectSong', 'clearSong']) {
+    const extra = { videoId: 'abcdefghijk', title: 'Finished playback' };
+    const denied = act(initial, type, { actor: 2, ...extra, ownerPlayerNum: 1 });
+    assert.equal(error(denied, 2), 'not_available'); sameStage(denied, initial);
+    const inactive = { ...initial, roster: initial.roster.map(p => ({ ...p, active: p.playerNum !== 1 })) };
+    const inactiveDenied = act(inactive, type, { actor: 1, ...extra });
+    assert.equal(error(inactiveDenied, 1), 'not_available'); sameStage(inactiveDenied, inactive);
+    const stale = act(initial, type, { actor: 1, ...extra, turnId: initial.turnId - 1 });
+    assert.equal(error(stale, 1), 'stale_turn'); sameStage(stale, initial);
+    assert.equal(act(initial, type, { actor: 1, ...extra, sessionId: 'old-session' }), initial);
+  }
+  const full = structuredClone(initial);
+  while (full.songLibrary.length < 120) {
+    const videoId = String(full.songLibrary.length).padStart(11, '0');
+    full.songLibrary.push({ id: videoId, videoId, title: 'Capacity fixture', artist: '', tags: [] });
+  }
+  const fullDenied = act(full, 'selectSong', { actor: 1, videoId: 'abcdefghijk', title: 'Beyond capacity' });
+  assert.equal(error(fullDenied, 1), 'library_full'); sameStage(fullDenied, full);
+  const existing = act(full, 'selectSong', { actor: 1, videoId: full.songLibrary[1].videoId });
+  assert.equal(error(existing, 1), ''); assert.equal(existing.phase, 'finished'); assert.equal(existing.teamScore, full.teamScore);
+});
+
+test('new finished playback fences queued score and lyric commands without making the round singable', () => {
+  const initial = completedStage();
+  for (const type of ['selectSong', 'clearSong']) {
+    const changed = act(initial, type, { actor: 1, videoId: initial.songLibrary[1].videoId });
+    for (const queuedType of ['startSinging', 'finishSinging', 'setLyrics']) {
+      const queued = act(changed, queuedType, { actor: 1, turnId: initial.turnId,
+        videoId: initial.songLibrary[1].videoId, lyrics: 'An old queued edit.' });
+      assert.equal(error(queued, 1), 'stale_turn'); sameStage(queued, changed);
     }
   }
 });

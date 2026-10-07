@@ -150,9 +150,9 @@ var OPEN_MIC_ENGINE = (() => {
         else { chooseChallenge(state, rng); changed(state, now); }
         break;
       case 'selectSong': {
-        if (!isSpotlight || !['choice', 'singing'].includes(state.phase)) { error = 'not_available'; break; }
-        // Re-selecting the live video must never restart or stop its timer.
-        if (state.phase === 'singing' && state.selectedSong?.videoId === input.videoId) break;
+        if (!isSpotlight || !['choice', 'singing', 'finished'].includes(state.phase)) { error = 'not_available'; break; }
+        // Re-selecting a live or finished video leaves playback and timing alone.
+        if (['singing', 'finished'].includes(state.phase) && state.selectedSong && state.selectedSong.videoId === input.videoId) break;
         let selected = state.songLibrary.find(song => song.videoId === input.videoId);
         if (!selected) {
           if (typeof input.videoId !== 'string' || input.videoId.length !== 11 || !videoIdPattern.test(input.videoId) || !Object.hasOwn(input, 'title')) { error = 'invalid_song'; break; }
@@ -168,14 +168,16 @@ var OPEN_MIC_ENGINE = (() => {
         state.selectedSong = copy(selected);
         if (state.phase === 'singing') {
           state.phase = 'choice'; state.singingState = 'idle'; state.singingStartedAt = null;
-        }
+        } else if (state.phase === 'finished') state.singingStartedAt = null;
         changed(state, now);
         break;
       }
       case 'clearSong': {
-        if (!isSpotlight || !['choice', 'singing'].includes(state.phase)) { error = 'not_available'; break; }
+        if (!isSpotlight || !['choice', 'singing', 'finished'].includes(state.phase)) { error = 'not_available'; break; }
+        const finished = state.phase === 'finished';
         state.selectedSong = null; state.duet = null;
-        state.phase = 'choice'; state.singingState = 'idle'; state.singingStartedAt = null;
+        state.phase = finished ? 'finished' : 'choice';
+        state.singingState = finished ? 'finished' : 'idle'; state.singingStartedAt = null;
         changed(state, now);
         break;
       }
