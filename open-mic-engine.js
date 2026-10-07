@@ -150,7 +150,9 @@ var OPEN_MIC_ENGINE = (() => {
         else { chooseChallenge(state, rng); changed(state, now); }
         break;
       case 'selectSong': {
-        if (!isSpotlight || state.phase !== 'choice') { error = 'not_available'; break; }
+        if (!isSpotlight || !['choice', 'singing'].includes(state.phase)) { error = 'not_available'; break; }
+        // Re-selecting the live video must never restart or stop its timer.
+        if (state.phase === 'singing' && state.selectedSong?.videoId === input.videoId) break;
         let selected = state.songLibrary.find(song => song.videoId === input.videoId);
         if (!selected) {
           if (typeof input.videoId !== 'string' || input.videoId.length !== 11 || !videoIdPattern.test(input.videoId) || !Object.hasOwn(input, 'title')) { error = 'invalid_song'; break; }
@@ -163,7 +165,18 @@ var OPEN_MIC_ENGINE = (() => {
           // A direct stage selection joins the shared library, never favorites.
           state.songLibrary.push(selected);
         }
-        state.selectedSong = copy(selected); changed(state, now);
+        state.selectedSong = copy(selected);
+        if (state.phase === 'singing') {
+          state.phase = 'choice'; state.singingState = 'idle'; state.singingStartedAt = null;
+        }
+        changed(state, now);
+        break;
+      }
+      case 'clearSong': {
+        if (!isSpotlight || !['choice', 'singing'].includes(state.phase)) { error = 'not_available'; break; }
+        state.selectedSong = null; state.duet = null;
+        state.phase = 'choice'; state.singingState = 'idle'; state.singingStartedAt = null;
+        changed(state, now);
         break;
       }
       case 'startSinging':

@@ -42,6 +42,8 @@
     challengeFirst: { en: 'Browse while the challenge is happening. Singing opens after the host chooses the result.', zh: '挑戰時也可以先看歌單。主持人判定結果後，就能選歌或跳過。' },
     selectionWait: { en: '{name} can choose a song or skip. Everyone can preview.', zh: '由 {name} 選歌或跳過。每個人都能試聽。' },
     startSinging: { en: '🎤 Start Singing', zh: '🎤 開始唱' }, finishSinging: { en: '✓ Finished singing · +1', zh: '✓ 唱完了・+1' },
+    changeSong: { en: '↻ Change song', zh: '↻ 換一首歌' }, clearSong: { en: 'Remove song', zh: '取消選歌' },
+    changeSongHint: { en: 'Changing or removing the song stops this timer. Start singing again after choosing.', zh: '換歌或取消會停止這段計時，選好新歌後再按「開始唱」。' },
     inviteDuet: { en: '👥 Invite Duet', zh: '👥 邀人合唱' }, skip: { en: 'Skip Singing', zh: '跳過唱歌' },
     timerRunning: { en: 'A short section is enough.', zh: '唱一小段就好。' },
     timerZero: { en: 'Finish the phrase naturally. Nothing cuts off.', zh: '自然唱完這一句，音樂不會被切掉。' },
@@ -128,11 +130,11 @@
     invalid_playlist: { en: 'Paste a YouTube playlist link containing list=…', zh: '請貼上含有 list=… 的 YouTube 播放清單連結。' },
     playlistWaiting: { en: 'Choose a video in the playlist first.', zh: '請先在播放清單裡選一支影片。' },
     lyrics: { en: 'Lyrics', zh: '歌詞' },
-    lyricsEmpty: { en: 'Lyrics will appear here. Use the in-game search if a match needs choosing.', zh: '歌詞會顯示在這裡。若需要選擇版本，可以直接在遊戲裡搜尋。' },
+    lyricsEmpty: { en: 'No lyrics shared yet. Search here, find a lyric video, or paste the lyrics.', zh: '這首歌還沒有共用歌詞。可以在這裡找歌詞、找歌詞影片，或自行貼上。' },
     lyricsHint: { en: 'Matching lyrics load here for everyone. The host or Spotlight player can choose another version or paste their own.', zh: '符合的歌詞會直接載入，讓大家一起閱讀。主持人或本輪主角也能選其他版本或自行貼上。' },
     lyricsEdit: { en: 'Paste / edit lyrics', zh: '貼上／編輯歌詞' },
     lyricsRead: { en: 'Expand lyrics', zh: '放大閱讀歌詞' },
-    lyricVideoSearch: { en: 'Find a lyric video ↗', zh: '找有歌詞的影片 ↗' },
+    lyricVideoSearch: { en: 'Find a lyric video in game', zh: '在遊戲裡找歌詞影片' },
     lyricsEditorTitle: { en: 'Lyrics for {title}', zh: '{title} 的歌詞' },
     lyricsEditorHint: { en: 'Paste the lyrics you want the room to read. Only Save shares them. An empty text clears the shared lyrics.', zh: '貼上想讓大家閱讀的歌詞，按儲存才會分享。儲存空白內容會清除共用歌詞。' },
     lyricsPlaceholder: { en: 'Paste lyrics here…', zh: '在這裡貼上歌詞…' },
@@ -153,7 +155,7 @@
     lyricsImporting: { en: 'Loading matching lyrics into the room…', zh: '正在把符合的歌詞載入房間…' },
     lyricsImported: { en: 'Lyrics loaded from LRCLIB.', zh: '已從 LRCLIB 載入歌詞。' },
     lyricsChooseHint: { en: 'Choose the right version below. Nothing is shared until you choose it.', zh: '請在下方選擇正確版本，選好後才會分享歌詞。' },
-    lyricsNotFound: { en: 'No lyrics found yet. Try a simpler title or paste lyrics here.', zh: '還沒找到歌詞。可以試試較簡單的歌名，或直接在這裡貼上歌詞。' },
+    lyricsNotFound: { en: 'The lyrics library has no match for this search. Try a simpler title, find a lyric video, or paste lyrics here.', zh: '歌詞庫沒有符合的結果。可改用較簡單的歌名、找歌詞影片，或自行貼上。' },
     lyricsLookupUnavailable: { en: 'Lyrics search is unavailable right now. Try again or paste lyrics here.', zh: '歌詞搜尋暫時無法使用，可以再試一次，或直接在這裡貼上歌詞。' },
     lyricsRateLimit: { en: 'Lyrics search is taking a short break. Try again in {n} seconds, or paste lyrics here.', zh: '歌詞搜尋暫時忙碌，約 {n} 秒後再試，或直接在這裡貼上歌詞。' },
     lyricsInvalidQuery: { en: 'Enter a song title. Add the artist to narrow the search.', zh: '請輸入歌名，可加上歌手縮小範圍。' },
@@ -254,6 +256,7 @@
       this.lyricsEditDialog = this.find('[data-om-modal="lyricsEdit"]');
       this.lyricsReadDialog = this.find('[data-om-modal="lyricsRead"]');
       this.find('[data-om-lyrics-search]').outerHTML = '<button type="button" class="om-button om-primary" data-om-action="lyricsFind"></button>';
+      this.find('[data-om-lyric-video-search]').outerHTML = '<button type="button" class="om-button" data-om-lyric-video-search data-om-action="lyricsVideoFind"></button>';
       this.find('.om-lyrics-actions').prepend(this.find('[data-om-action="lyricsFind"]'));
       this.find('[data-om-lyrics-copy]').insertAdjacentHTML('beforebegin', '<p class="om-feedback om-lyrics-load-status" data-om-lyrics-load-status role="status"></p>');
       this.find('.om-lyrics-links').insertAdjacentHTML('beforeend', '<a class="back om-lyrics-source" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer" data-om-lyrics-source></a>');
@@ -422,10 +425,12 @@
       if (after && !finished && controller) {
         if (data.singingState === 'singing') buttons += this.button('finishSinging', t('finishSinging'), 'om-success');
         else buttons += this.button('startSinging', t('startSinging'), 'om-primary', '', !!song);
+        if (song && ['choice', 'singing'].indexOf(data.phase) >= 0) buttons += this.button('changeSong', t('changeSong'), '', '', this.canSelectDiscovery()) + this.button('clearSong', t('clearSong'), '', '', this.canSelectDiscovery());
         buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       }
       if (host && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '', '', true);
       if (after && ((!finished && controller) || host)) buttons += '</div>';
+      if (data.phase === 'singing' && controller) buttons += '<p class="om-soft om-change-song-hint">' + esc(t('changeSongHint')) + '</p>';
       if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
       else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('nextHint')) + '</p>';
       else if (!controller) buttons += '<p class="om-waiting">' + esc(t('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
@@ -442,7 +447,7 @@
       else if (this.category !== 'for-you') library = library.filter(s => values(s.tags).concat(values(s.categories)).indexOf(this.category) >= 0);
       else library.sort((a, b) => (values(b.tags).indexOf('for-you') >= 0 ? 1 : 0) - (values(a.tags).indexOf('for-you') >= 0 ? 1 : 0));
       if (q) library = library.filter(s => (s.title + ' ' + (s.artist || '') + ' ' + values(s.tags).map(categoryName).join(' ')).toLowerCase().indexOf(q) >= 0);
-      var allowed = this.controller() && !!this.data.challengeResult && this.data.phase === 'choice';
+      var allowed = this.canSelectDiscovery();
       var canSave = this.canControl() && this.owner() > 0;
       this.set('[data-om-songs]', library.length ? library.map(song => {
         var saved = favorites.indexOf(String(song.videoId)) >= 0, current = selected && selected.videoId === song.videoId;
@@ -539,14 +544,15 @@
     canSelectDiscovery() {
       var data = this.data;
       var spotlight = data && this.roster().find(player => Number(player.playerNum) === this.actor && player.active !== false);
-      return !this.destroyed && !!data && this.canControl() && !this.pending && data.phase === 'choice' && !!data.challengeResult && (this.host() || (this.actor === Number(data.spotlight) && !!spotlight));
+      return !this.destroyed && !!data && this.canControl() && !this.pending && ['choice', 'singing'].indexOf(data.phase) >= 0 && !!data.challengeResult && (this.host() || (this.actor === Number(data.spotlight) && !!spotlight));
     }
     validStagePlayIntent() {
       var intent = this.stagePlayIntent, data = this.data;
       if (!intent) return null;
       var active = data && this.roster().some(player => Number(player.playerNum) === Number(data.spotlight) && player.active !== false);
-      var live = !this.destroyed && !!data && this.sameDiscoveryContext(intent.context, true) && Number(data.spotlight) === intent.spotlight && active && intent.generation === this.discoveryGeneration && ((!intent.confirmed && this.pending) || this.canControl()) && data.phase === 'choice' && !!data.challengeResult && this.now() <= intent.expiresAt;
       var turn = data && data.turnId;
+      var phaseMatches = data && (turn === intent.fromTurnId ? data.phase === intent.fromPhase : data.phase === 'choice');
+      var live = !this.destroyed && !!data && this.sameDiscoveryContext(intent.context, true) && Number(data.spotlight) === intent.spotlight && active && intent.generation === this.discoveryGeneration && ((!intent.confirmed && this.pending) || this.canControl()) && phaseMatches && !!data.challengeResult && this.now() <= intent.expiresAt;
       if (!live || (turn !== intent.fromTurnId && turn !== intent.expectedTurnId) || (turn === intent.expectedTurnId && (!data.selectedSong || data.selectedSong.videoId !== intent.videoId))) { this.stagePlayIntent = null; return null; }
       return intent;
     }
@@ -562,13 +568,39 @@
       if (!song || !validVideo(song.videoId) || typeof song.title !== 'string' || !song.title.trim() || !this.canSelectDiscovery() || this.data.selectedSong && this.data.selectedSong.videoId === videoId || !Number.isSafeInteger(this.data.turnId) || this.data.turnId < 0 || this.data.turnId >= Number.MAX_SAFE_INTEGER) return;
       var title = song.title.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140);
       if (!title) return;
-      var intent = { context: this.discoveryContext(), spotlight: Number(this.data.spotlight), generation: this.discoveryGeneration, videoId: videoId, fromTurnId: this.data.turnId, expectedTurnId: this.data.turnId + 1, expiresAt: this.now() + 15000, confirmed: false };
+      var intent = { context: this.discoveryContext(), spotlight: Number(this.data.spotlight), generation: this.discoveryGeneration, videoId: videoId, fromPhase: this.data.phase, fromTurnId: this.data.turnId, expectedTurnId: this.data.turnId + 1, expiresAt: this.now() + 15000, confirmed: false };
       this.stagePlayIntent = intent;
       var ok = await this.action('selectSong', { videoId: videoId, title: title });
       if (this.stagePlayIntent !== intent) return;
       if (!ok || this.error || !this.validStagePlayIntent()) { this.stagePlayIntent = null; if (!this.destroyed) this.render(); return; }
       intent.confirmed = true;
       this.render();
+    }
+    showSongBrowser() {
+      this.focusPreferred = false; this.renderFocus();
+      var browser = this.find('.om-browser');
+      if (browser && typeof browser.scrollIntoView === 'function') browser.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    changeStageSong() {
+      if (!this.canSelectDiscovery() || !this.data.selectedSong) return;
+      this.showSongBrowser();
+      var query = this.find('[data-om-discovery-query]');
+      if (query && typeof query.focus === 'function') query.focus({ preventScroll: true });
+    }
+    clearStageSong() {
+      if (!this.canSelectDiscovery() || !this.data.selectedSong) return;
+      this.stagePlayIntent = null;
+      return this.action('clearSong');
+    }
+    findLyricVideo() {
+      if (this.destroyed || !this.data || !this.data.selectedSong) return;
+      var song = this.data.selectedSong, api = global.OPEN_MIC_LYRICS;
+      var fields = api ? api.infer(song) : { title: song.title || '', artist: song.artist || '' };
+      var query = [fields.artist, fields.title, 'lyrics 歌詞'].filter(Boolean).join(' ').slice(0, 100);
+      this.discoveryQuery = query;
+      this.find('[data-om-discovery-query]').value = query;
+      this.showSongBrowser();
+      this.requestDiscovery('search', query);
     }
     renderPlaylistControls() {
       this.find('[data-om-playlist-load]').disabled = this.playlistBusy;
@@ -720,7 +752,7 @@
     exactLyricsMatches(records, fields) {
       var title = this.lyricNormalize(fields.title), artist = this.lyricNormalize(fields.artist);
       if (!title || !artist) return [];
-      return this.uniqueLyrics(records.filter(record => !record.instrumental && record.lyrics && this.lyricNormalize(record.title) === title && this.lyricNormalize(record.artist) === artist));
+      return this.uniqueLyrics(records.filter(record => record.autoEligible !== false && !record.instrumental && record.lyrics && this.lyricNormalize(record.title) === title && this.lyricNormalize(record.artist) === artist));
     }
     setLyricsLookupStatus(key, vars, error) {
       this.lyricsLookupStatus = key ? { key: key, vars: vars || {}, error: !!error } : null;
@@ -854,8 +886,6 @@
         this.find('[data-om-action="lyricsRead"]').disabled = !lyrics;
         this.find('[data-om-action="lyricsEdit"]').hidden = !this.controller();
         this.find('[data-om-action="lyricsEdit"]').disabled = this.pending || !this.canControl();
-        var query = [song.title, song.artist || '', 'lyrics'].filter(Boolean).join(' ');
-        this.find('[data-om-lyric-video-search]').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
         this.setText('[data-om-lyrics-reader-title]', song.title + ' · ' + t('lyrics'));
         this.setText('[data-om-lyrics-reading]', lyrics || t('lyricsEmpty'));
       }
@@ -981,6 +1011,8 @@
       if (action === 'discoveryPreview') { this.previewTrack((this.discoverySongs || []).find(song => song.videoId === target.dataset.video)); return; }
       if (action === 'discoveryAdd') { this.addDiscoverySong(target.dataset.video); return; }
       if (action === 'discoverySelect') { this.selectDiscoverySong(target.dataset.video); return; }
+      if (action === 'changeSong') { this.changeStageSong(); return; }
+      if (action === 'clearSong') { this.clearStageSong(); return; }
       if (action === 'focusToggle') { this.toggleFocus(); return; }
       if (action === 'preview') { this.preview(target.dataset.video); return; }
       if (action === 'closePreview') { this.close(this.previewDialog); return; }
@@ -994,6 +1026,7 @@
       if (action === 'playlistAdd') { this.addPlaylistVideo(); return; }
       if (action === 'lyricsEdit') { this.openLyricsEditor(); return; }
       if (action === 'lyricsFind') { this.openLyricsSearch(); return; }
+      if (action === 'lyricsVideoFind') { this.findLyricVideo(); return; }
       if (action === 'closeLyricsFind') { this.close(this.lyricsFindDialog); return; }
       if (action === 'lyricsCandidate') { this.chooseLyrics(target.dataset.record); return; }
       if (action === 'lyricsUse') { this.useLyricsCandidate(); return; }

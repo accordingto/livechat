@@ -19,6 +19,17 @@ awards the song point once. Host Next while singing also finalizes that point
 before rotating. Skip while singing awards nothing. Only the host advances the
 queue; participants do not receive judgment or Next controls.
 
+Change Song opens the local song browser, including from Focus on singing.
+During choice or singing, the host or current active Spotlight may select a
+different library/discovered song to replace the stage. Replacing a singing
+performance stops its timer and returns to choice without awarding a point;
+Start Singing can then begin the new song. Reselecting the same song during
+singing is an acknowledged no-op and preserves the timer. Remove Song uses
+`clearSong` to clear the stage, timer, and duet while retaining the shared
+library, lyrics, and personal favorites. Completed rounds cannot reopen through
+selection or removal; the host advances with Next. Stale completion commands
+cannot finalize a replaced or removed performance.
+
 ## Implementation
 
 - `open-mic-content.js`: 18 original short challenges, 13 starter songs, and 8
@@ -51,7 +62,7 @@ YouTube search and public popular music for Taiwan, the United States, and South
 Korea provide current videos, channel labels, and a fetch timestamp. This is
 public regional discovery rather than a personal Home feed. Every viewer can
 search and preview without leaving the game. Play on Stage lets the host or
-current active Spotlight select a result during the choice phase without first
+current active Spotlight select a result during choice or singing without first
 saving it. A single `selectSong {videoId,title}` command validates and registers
 an unknown video in the shared library and selects it, leaving every player's
 My Songs unchanged. Existing videos retain their metadata and shared lyrics.
@@ -128,6 +139,17 @@ preview available versions, and apply a result without leaving the game.
 Missing lyrics or network failures leave search and manual editing available.
 The service requires no account or API key; availability varies by song.
 
+Video metadata cleanup recognizes explicit bilingual artist names and keeps the
+appropriate original alias for the song title, such as `WAIT` / `E.SO` from
+`瘦子E.SO【WAIT】Official Music Video`. No artist is inferred from an upload
+channel. When structured search has no confident match, one bounded title-keyword
+fallback supplies manually selectable candidates (`autoEligible: false`);
+fallback errors preserve any primary candidates, and cancellation still discards
+the response. Both requests share a 12-second deadline. Missing-library messages
+offer in-game lyric-video search or pasting text. The lyric-video button fills the
+existing YouTube search on this page; choosing its result replaces the stage
+under the same authority and timing rules.
+
 The host or current active Spotlight can explicitly save multiline plain text
 with `setLyrics { videoId, lyrics }`, up to 16,000 characters per known song.
 Automatic imports use `onlyIfEmpty: true`, checked by the authoritative engine
@@ -203,3 +225,11 @@ command acknowledgement and room projection. Local autoplay is consumed once;
 failed, expired, disconnected, or superseded requests remain passive. Browser QA
 directly selects an unsaved search result, then confirms optional saving and a
 passive second-player view. Chinese and English controls fit a 375px viewport.
+
+2026-10-08 editable-stage/lyrics validation: 159 Open Mic cases and 886 full-site
+tests pass. Real LRCLIB verification resolves the official WAIT video metadata to
+WAIT / E.SO and returns two records with lyrics. Native synchronization cases
+cover replacement/removal fanout, timer reset, immutable favorites/lyrics,
+same-song no-op, completed-round protection, forged/stale commands, and a queued
+finish after replacement. Browser QA covers change from focus mode, live-song
+replacement, empty-stage removal, and in-game lyric-video discovery.

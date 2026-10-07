@@ -29,14 +29,15 @@ test('browser global and CommonJS exports expose the same small search API', () 
 });
 
 test('structured search uses encoded track and optional artist fields on the official endpoint without credentials', async () => {
-  const h = setup(async () => response([track()]));
+  const h = setup(async () => response([track(1, { trackName: 'Our Song & Friends', artistName: 'A/B Artist' })]));
   const result = await h.L.search({ title: ' Our Song & Friends ', artist: 'A/B Artist' });
   const [requestURL, options] = h.calls[0]; const url = new URL(requestURL);
   assert.equal(url.origin + url.pathname, 'https://lrclib.net/api/search');
   assert.equal(url.searchParams.get('track_name'), 'Our Song & Friends'); assert.equal(url.searchParams.get('artist_name'), 'A/B Artist');
   assert.equal(url.searchParams.has('q'), false); assert.equal(options.credentials, 'omit'); assert.equal(options.method, 'GET');
   assert.equal(options.mode, 'cors'); assert.ok(options.signal instanceof AbortSignal);
-  assert.deepEqual(plain(result[0]), { id: '1', title: 'Example Song', artist: 'Example Artist', album: 'Example Album',
+  assert.equal(h.calls.length, 1, 'an exact structured match needs no broad fallback');
+  assert.deepEqual(plain(result[0]), { id: '1', title: 'Our Song & Friends', artist: 'A/B Artist', album: 'Example Album',
     lyrics: 'A made-up first line\nAn invented second line', instrumental: false });
   assert.equal(h.timers.size, 0);
 });
@@ -190,4 +191,124 @@ test('infer searches Mandarin original titles and artist names rather than displ
   assert.deepEqual(plain(L.infer({ title: '周杰倫 - 稻香 / Rice Field (Official MV)' })), { title: '稻香', artist: '周杰倫', query: '' });
   assert.deepEqual(plain(L.infer({ title: 'Song / Version', artist: 'A/B Artist' })), { title: 'Song / Version', artist: 'A/B Artist', query: '' });
   assert.deepEqual(plain(L.infer(null)), { title: '', artist: '', query: '' });
+});
+
+test('infer chooses only an explicitly written artist alias for WAIT and cleans compact official titles', () => {
+  const { L } = setup(async () => response([]));
+  for (const [song, expected] of [
+    [{ title: '瘦子E.SO【WAIT】Official Music Video' }, { title: 'WAIT', artist: 'E.SO', query: '' }],
+    [{ title: 'WAIT', artist: '瘦子 E.SO' }, { title: 'WAIT', artist: 'E.SO', query: '' }],
+    [{ title: 'WAIT (Lyric Video)', artist: '瘦子E.SO' }, { title: 'WAIT', artist: 'E.SO', query: '' }],
+    [{ title: '稻香/Love the Fields', artist: '周杰倫Jay Chou' }, { title: '稻香', artist: '周杰倫', query: '' }],
+    [{ title: 'Our Fictional English Song', artist: 'Example Artist 原創歌手' }, { title: 'Our Fictional English Song', artist: 'Example Artist', query: '' }],
+    [{ title: '原創中文歌', artist: 'Example Artist 原創歌手' }, { title: '原創中文歌', artist: '原創歌手', query: '' }],
+    [{ title: '周杰倫-稻香 (Official MV)' }, { title: '稻香', artist: '周杰倫', query: '' }],
+    [{ title: 'WAIT', artist: '瘦子' }, { title: 'WAIT', artist: '瘦子', query: '' }],
+    [{ title: '瘦子 WAIT', channelTitle: 'An unrelated upload channel' }, { title: '瘦子 WAIT', artist: '', query: '' }],
+    [{ title: '虛構中文-另一段' }, { title: '虛構中文-另一段', artist: '', query: '' }],
+    [{ title: 'DDU-DU DDU-DU (Official Music Video)' }, { title: 'DDU-DU DDU-DU', artist: '', query: '' }],
+    [{ title: 'Our Song (Live Remix)', artist: 'Example Artist' }, { title: 'Our Song (Live Remix)', artist: 'Example Artist', query: '' }],
+  ]) assert.deepEqual(plain(L.infer(song)), expected);
+});
+
+test('the explicitly named E.SO WAIT signature stays a precise one-request lookup', async () => {
+  const h = setup(async () => response([track(71, { trackName: 'WAIT', artistName: 'E.SO' }),
+    track(72, { trackName: 'WAIT', artistName: 'E.SO', albumName: 'Another synthetic album' })]));
+  const fields = h.L.infer({ title: '瘦子E.SO【WAIT】Official Music Video' });
+  const matches = await h.L.search(fields);
+  assert.equal(h.calls.length, 1); const url = new URL(h.calls[0][0]);
+  assert.equal(url.searchParams.get('track_name'), 'WAIT'); assert.equal(url.searchParams.get('artist_name'), 'E.SO');
+  assert.equal(matches.length, 2); assert.ok(matches.every(record => record.autoEligible !== false));
+});
+
+test('a mismatching romanized artist retries the original title broadly with manual-only candidates', async () => {
+  const h = setup(async url => new URL(url).searchParams.has('q')
+    ? response([track(8, { trackName: '原創歌名', artistName: '原創歌手' })]) : response([]));
+  const matches = await h.L.search({ title: '原創歌名', artist: 'Explicit Romanized Artist' });
+  assert.equal(h.calls.length, 2); const precise = new URL(h.calls[0][0]), broad = new URL(h.calls[1][0]);
+  assert.equal(precise.searchParams.get('artist_name'), 'Explicit Romanized Artist');
+  assert.equal(broad.searchParams.get('q'), '原創歌名'); assert.equal([...broad.searchParams].length, 1);
+  assert.equal(matches[0].title, '原創歌名'); assert.equal(matches[0].artist, '原創歌手'); assert.equal(matches[0].autoEligible, false);
+});
+
+test('a compact mixed-language keyword can use all metadata fields without guessing an upload artist', async () => {
+  const h = setup(async url => new URL(url).searchParams.has('q')
+    ? response([track(17, { trackName: 'WAIT', artistName: '原創歌手' })]) : response([]));
+  const input = h.L.infer({ title: '原創歌手WAIT', channelTitle: 'Upload Channel' });
+  assert.equal(input.artist, '');
+  const matches = await h.L.search(input);
+  assert.equal(new URL(h.calls[1][0]).searchParams.get('q'), '原創歌手 WAIT');
+  assert.equal(matches[0].autoEligible, false); assert.equal(matches[0].artist, '原創歌手');
+});
+
+test('broader results are deduplicated by metadata and text, preserve distinct versions, and remain capped at twenty', async () => {
+  const h = setup(async url => new URL(url).searchParams.has('q') ? response([
+    track(2, { trackName: 'Original Song', artistName: 'Alternate Artist' }),
+    track(3, { trackName: 'Original Song', artistName: 'Alternate Artist', plainLyrics: 'A different invented version' }),
+    track(4, { trackName: 'Original Song', artistName: 'Alternate Artist' }),
+  ]) : response([track(1, { trackName: 'Original Song', artistName: 'Alternate Artist' })]));
+  const matches = await h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+  assert.deepEqual(Array.from(matches, record => record.id), ['2', '3']);
+  assert.ok(matches.every(record => record.autoEligible === false));
+  matches[0].lyrics = 'A client edit';
+  const repeated = await h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+  assert.equal(h.calls.length, 2); assert.notEqual(repeated[0].lyrics, 'A client edit');
+  const capped = setup(async url => response(Array.from({ length: 30 }, (_, i) => track(i + (new URL(url).searchParams.has('q') ? 100 : 1),
+    { trackName: 'Different Song ' + i, artistName: 'Different Artist ' + i }))));
+  const many = await capped.L.search({ title: 'Missing Song', artist: 'Declared Artist' });
+  assert.equal(capped.calls.length, 2); assert.equal(many.length, 20); assert.ok(many.every(record => record.autoEligible === false));
+});
+
+test('an empty library match stays empty after only one bounded fallback without inventing script or artist mappings', async () => {
+  const h = setup(async () => response([]));
+  const fields = { title: '虛構繁體歌名', artist: '明示歌手' };
+  const matches = await h.L.search(fields);
+  assert.equal(matches.length, 0); assert.equal(h.calls.length, 2);
+  assert.equal(new URL(h.calls[1][0]).searchParams.get('q'), fields.title);
+  await h.L.search(fields); assert.equal(h.calls.length, 2, 'both successful empty requests use the bounded cache');
+  h.advance(300001); await h.L.search(fields); assert.equal(h.calls.length, 4);
+  const direct = setup(async () => response([track()]));
+  const free = await direct.L.search({ query: 'A chosen manual keyword', title: 'Example Song', artist: 'Example Artist' });
+  assert.equal(direct.calls.length, 1); assert.equal(free[0].autoEligible, false);
+});
+
+test('the fallback shares the original twelve-second deadline and cancellation prevents late results or extra attempts', async () => {
+  const pendingResponses = [], h = setup(() => new Promise(resolve => pendingResponses.push(resolve)));
+  const work = h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+  h.advance(4000); pendingResponses[0](response([])); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.calls.length, 2); assert.equal(h.timers.size, 1);
+  assert.equal(h.timers.values().next().value.ms, 8000);
+  const signal = h.calls[1][1].signal;
+  h.timers.values().next().value.callback();
+  await assert.rejects(work, { code: 'lyrics_unavailable' }); assert.equal(signal.aborted, true); assert.equal(h.timers.size, 0);
+  const aborted = setup(() => new Promise(resolve => pendingResponses.push(resolve))), controller = new AbortController();
+  const canceledWork = aborted.L.search({ title: 'Original Song', artist: 'Declared Artist' }, { signal: controller.signal });
+  pendingResponses[2](response([])); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(aborted.calls.length, 2); controller.abort();
+  await assert.rejects(canceledWork, { name: 'AbortError' });
+  assert.equal(aborted.calls[1][1].signal.aborted, true); assert.equal(aborted.timers.size, 0);
+  pendingResponses[3](response([track(44)])); await new Promise(resolve => setImmediate(resolve));
+  aborted.context.fetch = async () => response([track(45)]);
+  const fresh = await aborted.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+  assert.equal(fresh[0].id, '45', 'the abandoned broad response must not populate its cache');
+});
+
+test('a failed broad lookup keeps useful primary candidates manual, while primary failure and cancellation stay errors', async () => {
+  for (const status of [429, 503]) {
+    const h = setup(async url => new URL(url).searchParams.has('q') ? response([], status, { 'Retry-After': '15' })
+      : response([track(9, { trackName: 'Original Song', artistName: 'Alternate Artist' })]));
+    const matches = await h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+    assert.equal(h.calls.length, 2); assert.equal(matches.length, 1); assert.equal(matches[0].autoEligible, false);
+    assert.equal(matches[0].id, '9'); assert.equal(h.timers.size, 0);
+  }
+  const firstFailure = setup(async () => response([], 429));
+  await assert.rejects(firstFailure.L.search({ title: 'Original Song', artist: 'Declared Artist' }), { code: 'lyrics_rate_limit' });
+  assert.equal(firstFailure.calls.length, 1);
+  let finish;
+  const canceledFallback = setup(async url => new URL(url).searchParams.has('q') ? new Promise(resolve => { finish = resolve; })
+    : response([track(9, { trackName: 'Original Song', artistName: 'Alternate Artist' })]));
+  const cancel = new AbortController(), work = canceledFallback.L.search({ title: 'Original Song', artist: 'Declared Artist' }, { signal: cancel.signal });
+  await new Promise(resolve => setImmediate(resolve)); cancel.abort();
+  await assert.rejects(work, { name: 'AbortError' }); finish(response([track(10)]));
+  assert.equal(canceledFallback.timers.size, 0);
 });

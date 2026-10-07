@@ -248,6 +248,8 @@
 .om-stage-lyrics-column .om-lyrics-actions .om-button { min-height: 44px; padding: 9px 10px; font-size: .73rem; }
 .om-stage-lyrics-column .om-lyrics-links { margin-top: 3px; gap: 6px 14px; }
 .om-stage-lyrics-column .om-lyrics-links a { font-size: .72rem; }
+.om-stage-lyrics-column .om-lyrics-links .om-button { font-size: .72rem; min-height: 44px; padding: 8px 10px; }
+.om-change-song-hint { margin-top: 9px; font-size: .75rem; }
 .om-stage-lyrics-column .om-lyrics-load-status:not(:empty) { padding: 6px 0 0; font-size: .75rem; }
 .om-has-lyrics .om-stage-lyrics-column > [data-om-lyrics-hint] { display: none; }
 .om-stage-session { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); align-items: center; gap: 16px; padding: 15px 18px 18px; }

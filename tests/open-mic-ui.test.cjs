@@ -708,11 +708,11 @@ test('late direct-play work cannot autoplay or scroll after its session, player,
   }
 });
 
-test('direct stage play enforces the current Spotlight, challenge result, choice phase, and connection before sending', async () => {
+test('direct stage play enforces the current Spotlight, challenge result, available phase, and connection before sending', async () => {
   const changes = [
     f => { f.g.actor = 2; }, f => { f.g.actor = 1; f.g.data.roster[0].active = false; },
     f => { f.g.data.challengeResult = null; }, f => { f.g.data.phase = 'challenge'; },
-    f => { f.g.data.phase = 'singing'; }, f => { f.g.data.phase = 'finished'; },
+    f => { f.g.data.phase = 'finished'; },
     f => { f.control.available = false; }, f => { f.g.pending = true; },
     f => { f.g.discoverySongs = []; }, f => { f.g.discoverySongs[0].title = '   '; },
     f => { f.g.discoverySongs[0].title = '\u0000\n'; }, f => { f.g.data.selectedSong = f.song; },
@@ -775,4 +775,95 @@ test('ordinary library selection keeps its original command and never acquires d
   f.g.update({ openmic: f.selected() });
   assert.equal(f.videoWrites.length, 2); assert.doesNotMatch(f.videoWrites[1], /autoplay=1/);
   f.complete(); await nextTask(); assert.equal(f.videoWrites.length, 2); assert.equal(f.scrolls(), 0);
+});
+
+test('stage change and removal stay visible in focus mode during choice and singing only for the controller', () => {
+  for (const phase of ['choice', 'singing']) {
+    for (const actor of [0, 1, 2]) {
+      const f = presentation(actor); f.g.data.phase = phase; f.g.data.singingState = phase === 'singing' ? 'singing' : 'idle';
+      f.g.focusPreferred = true; f.g.render();
+      assert.equal(f.classes.has('om-is-focused'), true);
+      assert.equal(/data-om-action="changeSong"/.test(f.controls()), actor !== 2);
+      assert.equal(/data-om-action="clearSong"/.test(f.controls()), actor !== 2);
+    }
+  }
+  for (const phase of ['challenge', 'finished']) {
+    const f = presentation(); f.g.data.phase = phase; f.g.render();
+    assert.doesNotMatch(f.controls(), /data-om-action="(?:changeSong|clearSong)"/);
+  }
+});
+
+test('change song opens the local browser without removing or restarting the current singing performance', () => {
+  const f = presentation(1); let scrolls = 0;
+  f.node('.om-browser').scrollIntoView = () => { scrolls++; };
+  f.g.data.phase = 'singing'; f.g.data.singingState = 'singing'; f.g.data.singingStartedAt = 99000;
+  f.g.focusPreferred = true; f.g.render(); const current = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+  f.click('changeSong');
+  assert.equal(f.g.focusPreferred, false); assert.equal(f.classes.has('om-is-focused'), false);
+  assert.equal(scrolls, 1); assert.equal(f.sent.length, 0); assert.equal(JSON.stringify(f.g.data), current);
+  assert.equal(f.videoWrites.length, writes);
+});
+
+function statefulStage(actor = 1) {
+  const E = require('../open-mic-engine.js'), f = presentation(actor); let number = 0;
+  let state = E.create({ id: 'editable-stage', roster: f.g.data.roster, now: 100000, seed: 1 });
+  function apply(type, extra = {}, by = actor) {
+    const input = { ...extra, type, actor: by, id: 'stage-command-' + (++number), sessionId: state.sessionId, turnId: state.turnId, now: 100000 };
+    state = E.apply(state, input); return state.replies[by]?.error;
+  }
+  apply('success', {}, 0); apply('selectSong', { videoId: 'nfWlot6h_JM' });
+  apply('setLyrics', { videoId: 'nfWlot6h_JM', lyrics: originalFixture });
+  f.g.discoveryStarted = true; f.g.update(E.view(state, actor, 100000));
+  f.g.send = async (type, extra) => {
+    f.sent.push({ type, extra }); const error = apply(type, extra);
+    f.g.update(E.view(state, actor, 100000)); if (error) throw new Error(error);
+  };
+  return { ...f, state: () => state };
+}
+
+test('a live singing result can be overwritten from discovery and canceled without favorites or scoring changes', async () => {
+  const f = statefulStage(); await f.g.action('startSinging');
+  f.g.discoverySongs = [{ videoId: 'ymvUlfZCrbw', title: 'Our Replacement Song' }];
+  await f.g.selectDiscoverySong('ymvUlfZCrbw');
+  assert.equal(f.g.data.selectedSong.videoId, 'ymvUlfZCrbw'); assert.equal(f.g.data.phase, 'choice');
+  assert.equal(f.g.data.singingStartedAt, null); assert.equal(f.g.data.teamScore, 2);
+  assert.match(f.node('[data-om-stage-video]').innerHTML, /ymvUlfZCrbw.*autoplay=1/);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.g.data.mySongs)), { 1: [], 2: [] });
+  await f.g.action('startSinging'); await f.g.clearStageSong();
+  assert.equal(f.g.data.selectedSong, null); assert.equal(f.g.data.phase, 'choice');
+  assert.equal(f.g.data.singingStartedAt, null); assert.equal(f.g.data.teamScore, 2);
+  assert.doesNotMatch(f.node('[data-om-stage-video]').innerHTML, /<iframe/);
+  assert.equal(f.g.data.songLyrics.nfWlot6h_JM, originalFixture);
+  assert.equal(f.g.data.songLibrary.some(song => song.videoId === 'ymvUlfZCrbw'), true);
+});
+
+test('offline, pending, inactive, finished, and other-player attempts cannot remove or change a selected stage', async () => {
+  const changes = [f => { f.g.actor = 2; }, f => { f.g.data.roster[0].active = false; },
+    f => { f.g.canControl = () => false; }, f => { f.g.pending = true; },
+    f => { f.g.data.phase = 'finished'; }, f => { f.g.data.selectedSong = null; }];
+  for (const change of changes) {
+    const f = presentation(1); f.g.focusPreferred = true; change(f);
+    f.g.changeStageSong(); await f.g.clearStageSong();
+    assert.equal(f.sent.length, 0); assert.equal(f.g.focusPreferred, true);
+  }
+});
+
+test('a broadened lyric candidate is available for manual choice but cannot be automatically shared', async () => {
+  const f = lyricsLookup(); await f.response([lyricRecord({ autoEligible: false })]);
+  assert.equal(f.sent.length, 0); assert.equal(f.g.lyricsLookupRecords.length, 1);
+  f.g.chooseLyrics('101'); await f.g.useLyricsCandidate();
+  assert.equal(f.sent.length, 1); assert.equal(f.sent[0].type, 'setLyrics');
+  assert.equal(f.g.getLyrics('nfWlot6h_JM'), originalFixture);
+});
+
+test('a lyric video search stays inside the game and does not change the selected song or shared lyrics', async () => {
+  const f = discovery(2); f.g.focusPreferred = true; f.g.render();
+  const before = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+  f.g.findLyricVideo();
+  assert.equal(f.requests.length, 1); assert.equal(f.requests[0].mode, 'search');
+  assert.match(f.requests[0].query, /Our Party Song.*lyrics 歌詞/);
+  assert.equal(f.g.focusPreferred, false); assert.equal(f.sent.length, 0);
+  assert.equal(JSON.stringify(f.g.data), before); assert.equal(f.videoWrites.length, writes);
+  f.requests[0].resolve({ songs: [discoveredSong()] }); await nextTask();
+  assert.equal(f.g.discoverySongs.length, 1); assert.equal(f.sent.length, 0);
 });
