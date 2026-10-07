@@ -84,7 +84,43 @@
     switched: { en: 'The room has switched games. Start Open Mic Rescue to play again.', zh: '房間已切換到其他遊戲，按「開始開麥救場」可以再玩。' },
     noFirebase: { en: 'Player pages are unavailable. Check your connection and reload.', zh: '目前無法連線到玩家頁，請檢查網路後重新整理。' },
     roomChanged: { en: 'The room changed. Reload this page to use the new room.', zh: '房間已變更，請重新載入此頁使用新房間。' },
-    added: { en: 'Song added to My Songs.', zh: '歌曲已加入我的歌單。' }, ready: { en: '', zh: '' }
+    added: { en: 'Song added to My Songs.', zh: '歌曲已加入我的歌單。' }, ready: { en: '', zh: '' },
+    starterHint: { en: 'These are starter picks and songs added in this room. Open YouTube for your current recommendations.', zh: '下方是起始歌單和房間加入的歌曲。想看即時個人推薦，可以開啟 YouTube。' },
+    youtubeHome: { en: 'YouTube recommendations ↗', zh: 'YouTube 即時推薦 ↗' },
+    youtubeSearch: { en: 'Search YouTube ↗', zh: '到 YouTube 搜尋 ↗' },
+    youtubeSearchPlaceholder: { en: 'Find a song or artist on YouTube…', zh: '到 YouTube 找歌名或歌手…' },
+    playlistOpen: { en: 'Browse a public playlist', zh: '瀏覽公開播放清單' },
+    playlistTitle: { en: 'Your YouTube playlist', zh: '你的 YouTube 播放清單' },
+    playlistURL: { en: 'Public or unlisted playlist URL', zh: '公開或不公開的播放清單網址' },
+    playlistHint: { en: 'Paste a YouTube playlist, browse it in the player, then add the current song to My Songs. Private playlists may not play.', zh: '貼上 YouTube 播放清單，在播放器裡瀏覽，再把目前的歌加入「我的歌單」。私人播放清單可能無法播放。' },
+    playlistLoad: { en: 'Load playlist', zh: '開啟播放清單' },
+    playlistCurrent: { en: 'Use current video', zh: '取得目前歌曲' },
+    playlistAdd: { en: 'Add current song to My Songs', zh: '把目前歌曲加入我的歌單' },
+    playlistSongTitle: { en: 'Song title (you can edit it)', zh: '歌名（可以自行修改）' },
+    playlistLoading: { en: 'Loading playlist…', zh: '正在開啟播放清單…' },
+    playlistReady: { en: 'Browse with the player’s playlist button. Tap “Use current video” after changing songs.', zh: '用播放器內的清單按鈕選歌。換歌後按「取得目前歌曲」。' },
+    playlistFetching: { en: 'Reading the current video…', zh: '正在取得目前歌曲…' },
+    playlistNoTitle: { en: 'The video is ready. Enter a song title below to add it.', zh: '影片已準備好，填入下方歌名就能加入。' },
+    playlistChanged: { en: 'A different video is playing. Check the title, then tap Add again.', zh: '目前已換成另一支影片，確認歌名後再按加入。' },
+    playlistError: { en: 'This playlist could not load here. Open it on YouTube or try another playlist.', zh: '這個播放清單無法在這裡開啟。可以到 YouTube 播放，或换另一個清單。' },
+    invalid_playlist: { en: 'Paste a YouTube playlist link containing list=…', zh: '請貼上含有 list=… 的 YouTube 播放清單連結。' },
+    playlistWaiting: { en: 'Choose a video in the playlist first.', zh: '請先在播放清單裡選一支影片。' },
+    lyrics: { en: 'Lyrics', zh: '歌詞' },
+    lyricsEmpty: { en: 'No lyrics have been added for this song yet.', zh: '這首歌還沒有加入歌詞。' },
+    lyricsHint: { en: 'Shared lyrics for this session. The host or Spotlight player can paste or update them.', zh: '本次遊戲的共用歌詞，由主持人或本輪主角貼上或更新。' },
+    lyricsEdit: { en: 'Paste / edit lyrics', zh: '貼上／編輯歌詞' },
+    lyricsRead: { en: 'Expand lyrics', zh: '放大閱讀歌詞' },
+    lyricsSearch: { en: 'Find lyrics ↗', zh: '搜尋歌詞 ↗' },
+    lyricVideoSearch: { en: 'Find a lyric video ↗', zh: '找有歌詞的影片 ↗' },
+    lyricsEditorTitle: { en: 'Lyrics for {title}', zh: '{title} 的歌詞' },
+    lyricsEditorHint: { en: 'Paste the lyrics you want the room to read. Only Save shares them. An empty text clears the shared lyrics.', zh: '貼上想讓大家閱讀的歌詞，按儲存才會分享。儲存空白內容會清除共用歌詞。' },
+    lyricsPlaceholder: { en: 'Paste lyrics here…', zh: '在這裡貼上歌詞…' },
+    lyricsDraft: { en: 'Your unsaved draft stays on this device.', zh: '尚未儲存的草稿會保留在這個裝置。' },
+    lyricsSave: { en: 'Save & share lyrics', zh: '儲存並分享歌詞' },
+    lyricsSaved: { en: 'Lyrics shared with the room.', zh: '歌詞已分享給房間。' },
+    lyricsSavedNewerDraft: { en: 'Lyrics shared. Your newer edits are still an unsaved draft.', zh: '歌詞已分享，剛才新修改的內容仍是尚未儲存的草稿。' },
+    lyricsLarger: { en: 'Larger text', zh: '放大字體' }, lyricsSmaller: { en: 'Smaller text', zh: '縮小字體' },
+    invalid_lyrics: { en: 'Use plain text lyrics, up to 16,000 characters.', zh: '請使用純文字歌詞，最多 16,000 個字。' }
   };
   if (global.I18N) global.I18N.registerDict('openmic', dict);
   var fallbackCategories = [
@@ -104,7 +140,7 @@
   function text(value) { return typeof value === 'object' && value ? value[lang()] || value.en || value.zh || '' : String(value || ''); }
   function challengeText(value) { return typeof value === 'object' && value ? value.en || text(value) : String(value || ''); }
   function validVideo(id) { return /^[A-Za-z0-9_-]{11}$/.test(String(id || '')); }
-  function embed(id) { return 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?playsinline=1&rel=0'; }
+  function embed(id) { return 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?playsinline=1&rel=0&cc_load_policy=1'; }
   function youtube(id) { return 'https://www.youtube.com/watch?v=' + encodeURIComponent(id); }
   function iframe(song) {
     if (!song || !validVideo(song.videoId)) return '';
@@ -112,6 +148,7 @@
   }
   function parseVideo(url) {
     if (global.OPEN_MIC_ENGINE && global.OPEN_MIC_ENGINE.parseYouTube) return global.OPEN_MIC_ENGINE.parseYouTube(url);
+    if (global.OPEN_MIC_YOUTUBE && global.OPEN_MIC_YOUTUBE.parseVideoURL) return global.OPEN_MIC_YOUTUBE.parseVideoURL(url);
     try {
       var u = new URL(String(url).trim());
       if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
@@ -132,6 +169,9 @@
       this.category = 'for-you'; this.query = ''; this.data = null; this.destroyed = false;
       this.previewSong = null; this.pending = false; this.videoKey = null; this.replyId = null;
       this.error = ''; this.notice = ''; this.language = lang();
+      this.playlistPlayer = null; this.playlistGeneration = 0; this.playlistBusy = false;
+      this.playlistSelected = null; this.playlistTitleDirty = false;
+      this.lyricsDrafts = {}; this.lyricsFont = 24; this.lyricsEditVideo = null; this.lyricsEditSession = null; this.lyricsEditGeneration = 0;
       this.build();
       this.onClick = this.handleClick.bind(this);
       this.onInput = this.handleInput.bind(this);
@@ -140,6 +180,8 @@
       this.element.addEventListener('input', this.onInput);
       this.element.addEventListener('submit', this.onSubmit);
       this.previewDialog.addEventListener('close', () => { this.previewDialog.querySelector('[data-om-preview-video]').innerHTML = ''; this.previewSong = null; });
+      this.playlistDialog.addEventListener('close', () => { if (!this.destroyed && !this.playlistDialog.open) this.destroyPlaylist(); });
+      this.lyricsEditDialog.addEventListener('close', () => { if (!this.lyricsEditDialog.open) { this.lyricsEditGeneration++; this.lyricsEditVideo = null; this.lyricsEditSession = null; } });
       if (global.I18N) global.I18N.onChange(() => { if (!this.destroyed) { this.language = lang(); this.render(); } });
       this.timer = setInterval(() => this.paint(), 250);
     }
@@ -149,7 +191,16 @@
       this.previewDialog = this.find('[data-om-modal="preview"]');
       this.addDialog = this.find('[data-om-modal="add"]');
       this.duetDialog = this.find('[data-om-modal="duet"]');
+      this.buildExtras();
       this.renderLabels();
+    }
+    buildExtras() {
+      this.find('[data-om-tabs]').insertAdjacentHTML('beforebegin', '<div class="om-online"><p class="om-soft" data-om-starter-hint></p><div class="om-actions"><a class="om-button" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" data-om-youtube-home></a><button type="button" class="om-button" data-om-action="playlistOpen"></button></div><div class="om-online-search"><input type="search" class="om-search" data-om-online-query autocomplete="off"><a class="om-button" href="https://www.youtube.com/results?search_query=music" target="_blank" rel="noopener noreferrer" data-om-youtube-search></a></div></div>');
+      this.find('.om-stage-bottom').insertAdjacentHTML('beforeend', '<section class="om-stage-lyrics" data-om-lyrics-panel hidden><div class="om-panel-head"><h3 data-om-lyrics-label></h3><div class="om-font-controls"><button type="button" class="om-button" data-om-action="lyricsSmaller" aria-label="Smaller text">A−</button><button type="button" class="om-button" data-om-action="lyricsLarger" aria-label="Larger text">A+</button></div></div><p class="om-soft" data-om-lyrics-hint></p><div class="om-lyrics-text" data-om-lyrics-copy tabindex="0"></div><div class="om-actions om-lyrics-actions"><button type="button" class="om-button" data-om-action="lyricsRead"></button><button type="button" class="om-button" data-om-action="lyricsEdit"></button></div><div class="om-lyrics-links"><a class="back" data-om-lyrics-search target="_blank" rel="noopener noreferrer"></a><a class="back" data-om-lyric-video-search target="_blank" rel="noopener noreferrer"></a></div></section>');
+      this.element.insertAdjacentHTML('beforeend', '<dialog class="om-modal om-playlist-modal" data-om-modal="playlist"><header><h2 data-om-playlist-title></h2><button type="button" class="om-button" data-om-action="closePlaylist"></button></header><p class="om-soft" data-om-playlist-hint></p><form class="om-form om-playlist-form" data-om-playlist-form><label class="om-field"><span data-om-playlist-url-label></span><input name="playlistUrl" type="url" required placeholder="https://www.youtube.com/playlist?list=…" inputmode="url" autocomplete="off"></label><button type="submit" class="om-button om-primary" data-om-playlist-load></button></form><p class="om-feedback" data-om-playlist-status role="status"></p><div class="om-playlist-player" data-om-playlist-player hidden></div><div class="om-playlist-selection" data-om-playlist-selection hidden><button type="button" class="om-button" data-om-action="playlistCurrent"></button><label class="om-field"><span data-om-playlist-song-label></span><input type="text" data-om-playlist-song-title maxlength="120" autocomplete="off"></label><p class="om-soft" data-om-playlist-current-title></p><a class="back" data-om-playlist-video-link target="_blank" rel="noopener noreferrer" hidden></a><button type="button" class="om-button om-primary" data-om-action="playlistAdd"></button></div></dialog><dialog class="om-modal om-lyrics-editor" data-om-modal="lyricsEdit"><header><h2 data-om-lyrics-editor-title></h2><button type="button" class="om-button" data-om-action="closeLyricsEdit"></button></header><p class="om-soft" data-om-lyrics-editor-hint></p><form class="om-form" data-om-lyrics-form><textarea class="om-lyrics-input" data-om-lyrics-editor maxlength="16000" rows="14"></textarea><p class="om-soft" data-om-lyrics-draft-status></p><p class="om-form-error" data-om-lyrics-error role="alert"></p><button type="submit" class="om-button om-primary" data-om-lyrics-save></button></form></dialog><dialog class="om-modal om-lyrics-reader" data-om-modal="lyricsRead"><header><h2 data-om-lyrics-reader-title></h2><button type="button" class="om-button" data-om-action="closeLyricsRead"></button></header><div class="om-font-controls"><button type="button" class="om-button" data-om-action="lyricsSmaller" aria-label="Smaller text">A−</button><button type="button" class="om-button" data-om-action="lyricsLarger" aria-label="Larger text">A+</button></div><div class="om-lyrics-text" data-om-lyrics-reading tabindex="0"></div></dialog>');
+      this.playlistDialog = this.find('[data-om-modal="playlist"]');
+      this.lyricsEditDialog = this.find('[data-om-modal="lyricsEdit"]');
+      this.lyricsReadDialog = this.find('[data-om-modal="lyricsRead"]');
     }
     find(selector) { return this.element.querySelector(selector); }
     set(selector, html) { var el = this.find(selector); if (el) el.innerHTML = html; }
@@ -167,8 +218,14 @@
       var data = payload.openmic || (payload.version && payload.roster ? payload : null);
       if (!data) return;
       var prevSession = this.data && this.data.sessionId;
+      var previousSong = this.data && this.data.selectedSong && this.data.selectedSong.videoId;
+      var previousRound = this.data && this.data.round;
       this.data = data;
       if (prevSession && prevSession !== data.sessionId) { this.category = 'for-you'; this.error = ''; this.notice = ''; this.close(this.previewDialog); this.close(this.duetDialog); }
+      if (prevSession && (prevSession !== data.sessionId || previousRound !== data.round)) this.close(this.playlistDialog);
+      if (prevSession && (prevSession !== data.sessionId || previousSong !== (data.selectedSong && data.selectedSong.videoId))) {
+        this.close(this.lyricsEditDialog); this.close(this.lyricsReadDialog);
+      }
       if (data.reply && data.reply.id !== this.replyId) {
         this.replyId = data.reply.id;
         this.error = data.reply.error ? t(dict[data.reply.error] ? data.reply.error : 'error') : '';
@@ -183,6 +240,20 @@
       this.find('[data-om-search]').setAttribute('aria-label', t('search'));
       this.find('[data-om-add-form] input[name="title"]').placeholder = t('titlePlaceholder');
       if (this.previewSong) this.setText('[data-om-preview-title]', this.previewSong.title);
+      this.renderExtraLabels();
+    }
+    renderExtraLabels() {
+      var labels = { '[data-om-starter-hint]': 'starterHint', '[data-om-youtube-home]': 'youtubeHome', '[data-om-youtube-search]': 'youtubeSearch', '[data-om-action="playlistOpen"]': 'playlistOpen', '[data-om-playlist-title]': 'playlistTitle', '[data-om-action="closePlaylist"]': 'close', '[data-om-playlist-hint]': 'playlistHint', '[data-om-playlist-url-label]': 'playlistURL', '[data-om-playlist-load]': 'playlistLoad', '[data-om-action="playlistCurrent"]': 'playlistCurrent', '[data-om-playlist-song-label]': 'playlistSongTitle', '[data-om-action="playlistAdd"]': 'playlistAdd', '[data-om-playlist-video-link]': 'youtubeLink', '[data-om-lyrics-label]': 'lyrics', '[data-om-lyrics-hint]': 'lyricsHint', '[data-om-action="lyricsEdit"]': 'lyricsEdit', '[data-om-action="lyricsRead"]': 'lyricsRead', '[data-om-lyrics-search]': 'lyricsSearch', '[data-om-lyric-video-search]': 'lyricVideoSearch', '[data-om-lyrics-editor-hint]': 'lyricsEditorHint', '[data-om-lyrics-save]': 'lyricsSave', '[data-om-action="closeLyricsEdit"]': 'close', '[data-om-action="closeLyricsRead"]': 'close' };
+      Object.keys(labels).forEach(s => this.setText(s, t(labels[s])));
+      this.find('[data-om-online-query]').placeholder = t('youtubeSearchPlaceholder');
+      this.find('[data-om-online-query]').setAttribute('aria-label', t('youtubeSearchPlaceholder'));
+      this.find('[data-om-lyrics-editor]').placeholder = t('lyricsPlaceholder');
+      this.find('[data-om-lyrics-editor]').setAttribute('aria-label', t('lyrics'));
+      this.element.querySelectorAll('[data-om-action="lyricsSmaller"]').forEach(el => { el.setAttribute('aria-label', t('lyricsSmaller')); el.title = t('lyricsSmaller'); });
+      this.element.querySelectorAll('[data-om-action="lyricsLarger"]').forEach(el => { el.setAttribute('aria-label', t('lyricsLarger')); el.title = t('lyricsLarger'); });
+      if (this.lyricsEditSong) this.setText('[data-om-lyrics-editor-title]', t('lyricsEditorTitle', { title: this.lyricsEditSong.title }));
+      this.updateOnlineSearch();
+      this.renderPlaylistControls();
     }
     button(action, label, css, extra, allowed) {
       var disabled = allowed === false || (action !== 'preview' && (this.pending || !this.canControl()));
@@ -206,6 +277,7 @@
       this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(t('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);
       if (manageOpen && this.find('.om-manage')) this.find('.om-manage').open = true;
       this.renderStage();
+      this.renderLyrics();
       this.renderSongs();
       if (this.duetDialog.open) this.renderDuets();
       this.setText('[data-om-feedback]', this.error || this.notice);
@@ -268,6 +340,186 @@
       var players = this.roster().filter(p => p.active !== false && Number(p.playerNum) !== Number(this.data.spotlight));
       this.set('[data-om-duets]', '<div style="height:12px"></div>' + this.button('inviteDuet', t('duetNone'), '', ' data-player=""', this.controller()) + players.map(p => this.button('inviteDuet', p.name || t('player', { n: p.playerNum }), Number(this.data.duet) === Number(p.playerNum) ? 'om-primary' : '', ' data-player="' + Number(p.playerNum) + '"', this.controller())).join('') + (!players.length ? '<p class="om-soft">' + esc(t('noDuet')) + '</p>' : ''));
     }
+    updateOnlineSearch() {
+      var query = this.find('[data-om-online-query]').value.trim() || 'music';
+      this.find('[data-om-youtube-search]').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+    }
+    renderPlaylistControls() {
+      this.find('[data-om-playlist-load]').disabled = this.playlistBusy;
+      this.find('[data-om-action="playlistCurrent"]').disabled = !this.playlistPlayer || this.playlistBusy;
+      this.find('[data-om-action="playlistAdd"]').disabled = !this.playlistPlayer || this.playlistBusy || this.pending || !this.canControl() || this.owner() < 1;
+    }
+    playlistStatus(key, error) {
+      this.setText('[data-om-playlist-status]', t(key));
+      this.find('[data-om-playlist-status]').classList.toggle('om-error', !!error);
+    }
+    destroyPlaylist() {
+      this.playlistGeneration++;
+      if (this.playlistAbort) this.playlistAbort.abort();
+      this.playlistAbort = null;
+      if (this.playlistPlayer) this.playlistPlayer.destroy();
+      this.playlistPlayer = null; this.playlistSelected = null; this.playlistBusy = false; this.playlistTitleDirty = false;
+      this.find('[data-om-playlist-player]').innerHTML = '';
+      this.find('[data-om-playlist-player]').hidden = true;
+      this.find('[data-om-playlist-selection]').hidden = true;
+      this.find('[data-om-playlist-song-title]').value = '';
+      this.setText('[data-om-playlist-current-title]', '');
+      this.setText('[data-om-playlist-status]', '');
+      this.renderPlaylistControls();
+    }
+    async loadPlaylist(url) {
+      var api = global.OPEN_MIC_YOUTUBE;
+      var id = api && api.parsePlaylistURL(url);
+      if (!id) { this.playlistStatus('invalid_playlist', true); return; }
+      this.destroyPlaylist();
+      var generation = this.playlistGeneration;
+      this.playlistAbort = new AbortController();
+      this.playlistBusy = true;
+      this.find('[data-om-playlist-player]').hidden = false;
+      this.playlistStatus('playlistLoading'); this.renderPlaylistControls();
+      try {
+        var player = await api.createPlaylistPlayer(this.find('[data-om-playlist-player]'), id, {
+          signal: this.playlistAbort.signal,
+          onError: () => { if (!this.destroyed && generation === this.playlistGeneration) this.playlistStatus('playlistError', true); }
+        });
+        if (this.destroyed || generation !== this.playlistGeneration || !this.playlistDialog.open) { player.destroy(); return; }
+        this.playlistPlayer = player; this.playlistBusy = false;
+        this.find('[data-om-playlist-selection]').hidden = false;
+        this.playlistStatus('playlistReady'); this.renderPlaylistControls();
+        await this.refreshPlaylistVideo();
+      } catch (failure) {
+        if (!this.destroyed && generation === this.playlistGeneration && this.playlistDialog.open) {
+          this.playlistBusy = false; this.playlistStatus(failure && failure.message === 'invalid_playlist' ? 'invalid_playlist' : 'playlistError', true); this.renderPlaylistControls();
+        }
+      }
+    }
+    applyPlaylistVideo(video) {
+      var changed = !this.playlistSelected || this.playlistSelected.videoId !== video.videoId;
+      if (!this.playlistTitleDirty || (changed && this.playlistSelected)) {
+        this.find('[data-om-playlist-song-title]').value = video.title || '';
+        this.playlistTitleDirty = false;
+      }
+      this.playlistSelected = video;
+      this.setText('[data-om-playlist-current-title]', video.title || video.videoId);
+      this.find('[data-om-playlist-video-link]').href = youtube(video.videoId);
+      this.find('[data-om-playlist-video-link]').hidden = false;
+      this.playlistStatus(video.title ? 'playlistReady' : 'playlistNoTitle');
+      return changed;
+    }
+    async refreshPlaylistVideo() {
+      if (!this.playlistPlayer || this.playlistBusy) return;
+      var generation = this.playlistGeneration, player = this.playlistPlayer;
+      this.playlistBusy = true; this.playlistStatus('playlistFetching'); this.renderPlaylistControls();
+      try {
+        var video = await player.currentVideo();
+        if (this.destroyed || generation !== this.playlistGeneration || !this.playlistDialog.open) return;
+        if (!video || !validVideo(video.videoId)) { this.playlistStatus('playlistWaiting', true); return; }
+        this.applyPlaylistVideo(video);
+      } catch (_) {
+        if (!this.destroyed && generation === this.playlistGeneration) this.playlistStatus('playlistWaiting', true);
+      } finally {
+        if (!this.destroyed && generation === this.playlistGeneration) { this.playlistBusy = false; this.renderPlaylistControls(); }
+      }
+    }
+    async addPlaylistVideo() {
+      if (!this.playlistPlayer || this.playlistBusy || this.pending || !this.canControl() || !this.data) return;
+      var generation = this.playlistGeneration, owner = this.owner(), session = this.data.sessionId;
+      var typedTitle = this.find('[data-om-playlist-song-title]').value.trim();
+      var selectedId = this.playlistSelected && this.playlistSelected.videoId;
+      this.playlistBusy = true; this.playlistStatus('playlistFetching'); this.renderPlaylistControls();
+      try {
+        var video = await this.playlistPlayer.currentVideo();
+        if (this.destroyed || generation !== this.playlistGeneration || !this.playlistDialog.open || !this.data || this.data.sessionId !== session || this.owner() !== owner) return;
+        if (!video || !validVideo(video.videoId)) { this.playlistStatus('playlistWaiting', true); return; }
+        if (selectedId && video.videoId !== selectedId) { this.applyPlaylistVideo(video); this.playlistStatus('playlistChanged'); return; }
+        var title = typedTitle || video.title || '';
+        if (!title || title.length > 120) { this.applyPlaylistVideo(video); this.playlistStatus(title ? 'invalid_title' : 'playlistNoTitle', true); this.find('[data-om-playlist-song-title]').focus(); return; }
+        var ok = await this.action('addSong', { title: title, url: youtube(video.videoId) });
+        if (this.destroyed || generation !== this.playlistGeneration || !this.playlistDialog.open) return;
+        if (ok && !this.error) {
+          this.category = 'my-songs'; this.query = ''; this.find('[data-om-search]').value = '';
+          this.playlistStatus('added'); this.notice = t('added'); this.render();
+        } else { this.setText('[data-om-playlist-status]', this.error || t('error')); this.find('[data-om-playlist-status]').classList.add('om-error'); }
+      } catch (_) {
+        if (!this.destroyed && generation === this.playlistGeneration) this.playlistStatus('playlistWaiting', true);
+      } finally {
+        if (!this.destroyed && generation === this.playlistGeneration) { this.playlistBusy = false; this.renderPlaylistControls(); }
+      }
+    }
+    getLyrics(videoId) {
+      var value = this.data && this.data.songLyrics && this.data.songLyrics[videoId];
+      return typeof value === 'string' ? value : '';
+    }
+    draftKey(videoId, sessionId) { return String(sessionId || this.data && this.data.sessionId || '') + ':' + this.actor + ':' + videoId; }
+    storeDraft(key, draft) {
+      this.lyricsDrafts[key] = draft;
+      try {
+        if (draft.dirty) global.sessionStorage.setItem('openmic-lyrics-draft:' + key, JSON.stringify(draft));
+        else global.sessionStorage.removeItem('openmic-lyrics-draft:' + key);
+      } catch (_) {}
+    }
+    loadDraft(key) {
+      if (this.lyricsDrafts[key]) return this.lyricsDrafts[key];
+      try {
+        var draft = JSON.parse(global.sessionStorage.getItem('openmic-lyrics-draft:' + key) || 'null');
+        if (draft && draft.dirty && typeof draft.text === 'string' && draft.text.length <= 16000) return this.lyricsDrafts[key] = draft;
+      } catch (_) {}
+      return null;
+    }
+    renderLyrics() {
+      if (!this.data) return;
+      var song = this.data.selectedSong, panel = this.find('[data-om-lyrics-panel]');
+      panel.hidden = !song;
+      if (song) {
+        var lyrics = this.getLyrics(song.videoId);
+        this.setText('[data-om-lyrics-copy]', lyrics || t('lyricsEmpty'));
+        this.find('[data-om-lyrics-copy]').classList.toggle('om-lyrics-empty', !lyrics);
+        this.find('[data-om-action="lyricsRead"]').disabled = !lyrics;
+        this.find('[data-om-action="lyricsEdit"]').hidden = !this.controller();
+        this.find('[data-om-action="lyricsEdit"]').disabled = this.pending || !this.canControl();
+        var query = [song.title, song.artist || '', 'lyrics'].filter(Boolean).join(' ');
+        this.find('[data-om-lyrics-search]').href = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+        this.find('[data-om-lyric-video-search]').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+        this.setText('[data-om-lyrics-reader-title]', song.title + ' · ' + t('lyrics'));
+        this.setText('[data-om-lyrics-reading]', lyrics || t('lyricsEmpty'));
+      }
+      this.find('[data-om-lyrics-save]').disabled = this.pending || !this.canControl() || !this.controller() || !this.lyricsEditVideo || this.lyricsEditSession !== this.data.sessionId;
+      this.element.querySelectorAll('[data-om-lyrics-copy], [data-om-lyrics-reading]').forEach(el => { el.style.fontSize = this.lyricsFont + 'px'; });
+      this.element.querySelectorAll('[data-om-action="lyricsSmaller"]').forEach(el => { el.disabled = this.lyricsFont <= 18; });
+      this.element.querySelectorAll('[data-om-action="lyricsLarger"]').forEach(el => { el.disabled = this.lyricsFont >= 42; });
+      var draft = this.lyricsEditVideo && this.lyricsDrafts[this.draftKey(this.lyricsEditVideo, this.lyricsEditSession)];
+      this.setText('[data-om-lyrics-draft-status]', draft && draft.dirty ? t('lyricsDraft') : '');
+    }
+    openLyricsEditor() {
+      if (!this.data || !this.data.selectedSong || !this.controller() || !this.canControl()) return;
+      var song = this.data.selectedSong, key = this.draftKey(song.videoId);
+      this.lyricsEditGeneration++;
+      this.lyricsEditVideo = song.videoId; this.lyricsEditSession = this.data.sessionId; this.lyricsEditSong = song;
+      var draft = this.loadDraft(key);
+      if (!draft || !draft.dirty) this.lyricsDrafts[key] = draft = { text: this.getLyrics(song.videoId), dirty: false };
+      this.find('[data-om-lyrics-editor]').value = draft.text;
+      this.setText('[data-om-lyrics-editor-title]', t('lyricsEditorTitle', { title: song.title }));
+      this.setText('[data-om-lyrics-error]', ''); this.renderLyrics(); this.show(this.lyricsEditDialog);
+    }
+    async saveLyrics() {
+      if (!this.data || !this.lyricsEditVideo || this.lyricsEditSession !== this.data.sessionId || !this.data.selectedSong || this.data.selectedSong.videoId !== this.lyricsEditVideo || !this.controller() || !this.canControl()) return;
+      var id = this.lyricsEditVideo, session = this.lyricsEditSession, key = this.draftKey(id, session), generation = this.lyricsEditGeneration;
+      var lyrics = this.find('[data-om-lyrics-editor]').value;
+      this.storeDraft(key, { text: lyrics, dirty: lyrics !== this.getLyrics(id) });
+      if (lyrics.length > 16000 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(lyrics)) { this.setText('[data-om-lyrics-error]', t('invalid_lyrics')); return; }
+      this.setText('[data-om-lyrics-error]', '');
+      var ok = await this.action('setLyrics', { videoId: id, lyrics: lyrics });
+      if (this.destroyed) return;
+      if (ok && !this.error) {
+        var currentDraft = this.lyricsDrafts[key];
+        var newer = currentDraft && currentDraft.text !== lyrics;
+        if (!newer) {
+          this.storeDraft(key, { text: lyrics, dirty: false });
+          if (this.lyricsEditVideo === id && this.lyricsEditSession === session && this.lyricsEditGeneration === generation) this.close(this.lyricsEditDialog);
+        }
+        this.notice = t(newer ? 'lyricsSavedNewerDraft' : 'lyricsSaved'); this.render();
+      } else if (this.lyricsEditVideo === id && this.lyricsEditSession === session && this.lyricsEditGeneration === generation) this.setText('[data-om-lyrics-error]', this.error || t('error'));
+    }
     paint() {
       if (this.destroyed || !this.data) return;
       var data = this.data, timer = this.find('[data-om-timer]');
@@ -292,6 +544,8 @@
     close(dialog) {
       if (dialog.open) { if (typeof dialog.close === 'function') dialog.close(); else dialog.removeAttribute('open'); }
       if (dialog === this.previewDialog) { this.set('[data-om-preview-video]', ''); this.previewSong = null; }
+      if (dialog === this.playlistDialog) this.destroyPlaylist();
+      if (dialog === this.lyricsEditDialog) { this.lyricsEditGeneration++; this.lyricsEditVideo = null; this.lyricsEditSession = null; }
     }
     preview(videoId) {
       var song = this.library().find(s => s.videoId === videoId);
@@ -315,6 +569,12 @@
     }
     handleInput(event) {
       if (event.target.matches('[data-om-search]')) { this.query = event.target.value; this.renderSongs(); }
+      if (event.target.matches('[data-om-online-query]')) this.updateOnlineSearch();
+      if (event.target.matches('[data-om-playlist-song-title]')) this.playlistTitleDirty = true;
+      if (event.target.matches('[data-om-lyrics-editor]') && this.lyricsEditVideo) {
+        this.storeDraft(this.draftKey(this.lyricsEditVideo, this.lyricsEditSession), { text: event.target.value, dirty: event.target.value !== this.getLyrics(this.lyricsEditVideo) });
+        this.setText('[data-om-lyrics-draft-status]', t('lyricsDraft'));
+      }
     }
     handleClick(event) {
       var category = event.target.closest('[data-om-category]');
@@ -328,12 +588,23 @@
       if (action === 'closeAdd') { this.close(this.addDialog); return; }
       if (action === 'duetOpen') { this.renderDuets(); this.show(this.duetDialog); return; }
       if (action === 'closeDuet') { this.close(this.duetDialog); return; }
+      if (action === 'playlistOpen') { this.show(this.playlistDialog); return; }
+      if (action === 'closePlaylist') { this.close(this.playlistDialog); return; }
+      if (action === 'playlistCurrent') { this.refreshPlaylistVideo(); return; }
+      if (action === 'playlistAdd') { this.addPlaylistVideo(); return; }
+      if (action === 'lyricsEdit') { this.openLyricsEditor(); return; }
+      if (action === 'closeLyricsEdit') { this.close(this.lyricsEditDialog); return; }
+      if (action === 'lyricsRead') { this.renderLyrics(); this.show(this.lyricsReadDialog); return; }
+      if (action === 'closeLyricsRead') { this.close(this.lyricsReadDialog); return; }
+      if (action === 'lyricsSmaller' || action === 'lyricsLarger') { this.lyricsFont = Math.max(18, Math.min(42, this.lyricsFont + (action === 'lyricsLarger' ? 2 : -2))); this.renderLyrics(); return; }
       if (action === 'selectSong' || action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
       if (action === 'inviteDuet') { this.action(action, { playerNum: target.dataset.player ? Number(target.dataset.player) : null }).then(ok => { if (ok) this.close(this.duetDialog); }); return; }
       if (action === 'exclude') { this.action(action, { playerNum: Number(target.dataset.player), active: target.dataset.active === 'true' }); return; }
       this.action(action);
     }
     async handleSubmit(event) {
+      if (event.target.matches('[data-om-playlist-form]')) { event.preventDefault(); this.loadPlaylist(event.target.elements.playlistUrl.value.trim()); return; }
+      if (event.target.matches('[data-om-lyrics-form]')) { event.preventDefault(); this.saveLyrics(); return; }
       if (!event.target.matches('[data-om-add-form]')) return;
       event.preventDefault();
       var title = event.target.elements.title.value.trim(), url = event.target.elements.url.value.trim();
@@ -349,6 +620,7 @@
       this.element.removeEventListener('input', this.onInput);
       this.element.removeEventListener('submit', this.onSubmit);
       this.close(this.previewDialog); this.close(this.addDialog); this.close(this.duetDialog);
+      this.close(this.playlistDialog); this.close(this.lyricsEditDialog); this.close(this.lyricsReadDialog);
       this.element.innerHTML = '';
       this.data = null;
     }

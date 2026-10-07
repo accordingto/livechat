@@ -39,6 +39,30 @@ normalized to safe 11-character video IDs. No audio download or extraction.
 YouTube playback is device-local with `playsinline=1`; restricted embeds have an
 Open on YouTube link. Sing using the existing call or real-world setup.
 
+## YouTube discovery and shared lyrics
+
+The starter recommendations are a curated list, not YouTube's personal Home
+feed. Home and keyword searches open the real YouTube website. A public playlist
+URL can load its current videos in a separate, live YouTube playlist player.
+`open-mic-youtube.js` loads the official IFrame API on demand; the current video
+is read using `getVideoUrl`, with optional oEmbed title lookup and editable title
+fallback. Choosing a playlist video adds it to My Songs; it does not select the
+stage song or start singing. No Data API key or account permission is required.
+Private playlists, unavailable videos, and network failures show a link to
+YouTube. This is not an embedded Home feed or Data API search/trending feed.
+
+The stage includes a lyrics reading area and a larger reading dialog. The host
+or current active Spotlight can explicitly save multiline plain text with
+`setLyrics { videoId, lyrics }`, up to 16,000 characters per known song. This is a
+manual lyrics field with links to find lyrics or lyric videos, not an automatic
+lyrics service. Text is shared with every player's card and saved by video ID
+in `songLyrics` for this session, survives turns/reload, and resets in a new
+session. Empty text clears lyrics. Local drafts are never published implicitly.
+Lyrics updates leave the stage iframe, timer, score, duet, and turn token intact.
+Old rooms with no `songLyrics` are supported. Lyrics transport alone has a
+34,000-character action envelope so valid escaped text fits; ordinary commands
+retain their 4,000-character limit and actor/session/turn checks.
+
 ## Synchronization and checks
 
 Keep the host page open, following the Hub's trusted-host model. No new account,
@@ -52,3 +76,10 @@ the host preserves an ongoing game and can resume after its lease expires.
 Run `node --test tests/open-mic-*.test.cjs` for rules and Firebase-fake coverage;
 run `node --test tests/*.test.cjs` for regressions. New-menu assertions retain
 BLUFF PARTY and CUT in their original order, with Open Mic Rescue last.
+
+2026-10-08 lyrics/discovery validation: 41 Open Mic checks and 768 full-site
+checks pass. Browser QA loaded a real public playlist, resolved and added its
+current video, saved/read shared lyrics, preserved a real room's lyrics after
+host reload, and checked the 390px reading layout. Latest CUT changes are retained.
+Automatic lyrics retrieval and in-game personal Home recommendation feeds are
+not implemented; the corresponding links open the source websites.

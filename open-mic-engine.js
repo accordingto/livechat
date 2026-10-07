@@ -10,6 +10,7 @@ var OPEN_MIC_ENGINE = (() => {
   const player = (state, number) => list(state.roster).find(candidate => candidate.playerNum === number);
   const videoIdPattern = /^[A-Za-z0-9_-]{11}$/;
   const MAX_SONGS = 120;
+  const MAX_LYRICS_CHARS = 16000;
   const SCORE = Object.freeze({ challenge: 2, singing: 1 });
 
   function random(seed) {
@@ -106,7 +107,7 @@ var OPEN_MIC_ENGINE = (() => {
       spotlight: null, round: 0, phase: 'challenge', challenge: null, challengeHistory: [], challengeResult: null,
       teamScore: 0, challengeAwarded: false, singingAwarded: false,
       selectedSong: null, singingState: 'idle', singingStartedAt: null, duration: singingDuration, duet: null,
-      songLibrary, mySongs: {}, lastChangeAt: now, seen: {}, replies: {},
+      songLibrary, songLyrics: {}, mySongs: {}, lastChangeAt: now, seen: {}, replies: {},
     };
     if (active(state).length < 2) throw new Error('not_enough_players');
     for (const candidate of state.roster) state.mySongs[candidate.playerNum] = [];
@@ -125,7 +126,8 @@ var OPEN_MIC_ENGINE = (() => {
     const state = copy(current);
     state.roster = list(state.roster); state.songLibrary = list(state.songLibrary);
     state.challengeHistory = list(state.challengeHistory);
-    state.mySongs = state.mySongs || {}; state.seen = state.seen || {}; state.replies = state.replies || {};
+    state.mySongs = state.mySongs || {}; state.songLyrics = state.songLyrics || {};
+    state.seen = state.seen || {}; state.replies = state.replies || {};
     const host = actor === 0;
     const isSpotlight = host || (actor === state.spotlight && player(state, actor)?.active !== false);
     const now = input.now;
@@ -177,6 +179,17 @@ var OPEN_MIC_ENGINE = (() => {
         if (!isSpotlight || !['choice', 'singing'].includes(state.phase)) error = 'not_available';
         else if (input.playerNum != null && (!partner || partner.active === false || partner.playerNum === state.spotlight)) error = 'invalid_player';
         else { state.duet = partner?.playerNum ?? null; changed(state, now); }
+        break;
+      }
+      case 'setLyrics': {
+        if (!isSpotlight) { error = 'not_available'; break; }
+        if (!state.songLibrary.some(song => song.videoId === input.videoId)) { error = 'invalid_song'; break; }
+        if (typeof input.lyrics !== 'string' || input.lyrics.length > MAX_LYRICS_CHARS || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(input.lyrics)) { error = 'invalid_lyrics'; break; }
+        const lyrics = input.lyrics.replace(/\r\n?/g, '\n');
+        if (lyrics.trim()) state.songLyrics[input.videoId] = lyrics;
+        else delete state.songLyrics[input.videoId];
+        // Shared text edits preserve the live song, its timer, and phase token.
+        state.lastChangeAt = now;
         break;
       }
       case 'next': {
@@ -255,10 +268,10 @@ var OPEN_MIC_ENGINE = (() => {
         singingState: state.singingState, singingStartedAt: state.singingStartedAt ?? null,
         singingAwarded: state.singingAwarded === true,
         duration: state.duration, duet: state.duet ?? null,
-        songLibrary: list(state.songLibrary).map(copy), mySongs,
+        songLibrary: list(state.songLibrary).map(copy), songLyrics: copy(state.songLyrics || {}), mySongs,
         reply: (state.replies || {})[playerNum] ? copy(state.replies[playerNum]) : null,
       } };
   }
-  return { create, apply, view, list, parseYouTube, SCORE };
+  return { create, apply, view, list, parseYouTube, SCORE, MAX_LYRICS_CHARS };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = OPEN_MIC_ENGINE;
