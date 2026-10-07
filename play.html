@@ -2835,7 +2835,7 @@
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();
-        if (!data) { showError('waitingDeal'); return; }
+        if (!data) { latestData = null; showError('waitingDeal'); return; }
         latestData = data;
         tryRenderCard();
       }, () => {
@@ -2863,7 +2863,7 @@
         cardWasHidden = false;
         db.ref(`rooms/${session}/players/${token}`).once('value').then(snap => {
           const data = snap.val();
-          if (!data) { showError('waitingDeal'); return; }
+          if (!data) { latestData = null; showError('waitingDeal'); return; }
           latestData = data;
           tryRenderCard();
         }).catch(() => {});

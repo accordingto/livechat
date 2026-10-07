@@ -18,3 +18,15 @@ test('CUT host loads independent modules in dependency order and assets exist', 
   for (const file of files) { assert.ok(fs.existsSync(path.join(root, file))); new vm.Script(fs.readFileSync(path.join(root, file), 'utf8')); }
   assert.ok(fs.existsSync(path.join(root, 'cut.css')));
 });
+test('cleared card data cannot resurrect a stale CUT card on page restore', () => {
+  const source = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
+  const live = source.match(/\.on\('value', snap => \{\s*const data = snap\.val\(\);([\s\S]*?)\n\s*\}, \(\) =>/)[1];
+  const refresh = source.match(/\.once\('value'\)\.then\(snap => \{\s*const data = snap\.val\(\);([\s\S]*?)\n\s*\}\)\.catch/)[1];
+  for (const body of [live, refresh]) {
+    let errors = 0, renders = 0;
+    const context = vm.createContext({ latestData: { game: 'cut', cut: { phase: 'speaking' } }, showError: key => { assert.equal(key, 'waitingDeal'); errors++; }, tryRenderCard: () => { renders++; } });
+    vm.runInContext('(function(data){' + body + '})(null)', context);
+    vm.runInContext("if (latestData?.game === 'dixit' || latestData?.game === 'cut') tryRenderCard()", context);
+    assert.equal(context.latestData, null); assert.equal(errors, 1); assert.equal(renders, 0);
+  }
+});
