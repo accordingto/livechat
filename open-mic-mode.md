@@ -175,8 +175,9 @@ retain their 4,000-character limit and actor/session/turn checks.
 When shared text and local drafts are empty, every device can automatically
 search official Genius metadata through the separate service at
 `https://icebreaker-youtube-search.vercel.app/api/open-mic-lyrics`. The server
-uses `GENIUS_ACCESS_TOKEN`; the browser never receives this credential or sends
-room credentials. The main-repository API core is retained for service packaging
+uses `GENIUS_ACCESS_TOKEN` (the independent deployment also accepts its existing
+`Willie` secret as a legacy alias); the browser never receives this credential or
+sends room credentials. The main-repository API core is retained for service packaging
 and tests; the main site's current deployment does not expose that unused route.
 
 Exactly one complete song with a matching title and artist displays the official
@@ -270,9 +271,15 @@ same-song no-op, completed-round protection, forged/stale commands, and a queued
 finish after replacement. Browser QA covers change from focus mode, live-song
 replacement, empty-stage removal, and in-game lyric-video discovery.
 
-2026-10-08 official Genius validation: 981 full-site tests and 58 independent
+2026-10-08 official Genius validation: 981 full-site tests and 62 independent
 service tests pass. Browser QA uses fixed song metadata and the real official
 Genius widget: lyrics load beside the MV, the original combined stage-action row
 is retained, and the reading view opens/closes without losing the loaded widget.
-Production metadata validation requires a correctly named service credential;
-the service returns a readable setup-needed response until that is configured.
+The public production service now returns authenticated Genius metadata and
+existing YouTube search results, rejects foreign origins, and keeps source,
+environment files, and static output unavailable. Production browser QA in the
+isolated demo displays Sia's Chandelier official widget beside its MV without
+using a real room. WAIT / E.SO resolves through LRCLIB; its two identical text
+records reduce to one exact candidate for automatic import. Genius has no
+verified exact WAIT match in the tested queries, so it is not used for that song.
+Both public game entry points and all 15 release assets match the tested version.
