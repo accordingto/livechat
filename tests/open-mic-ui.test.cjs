@@ -319,8 +319,8 @@ test('side-by-side stage layout moves the existing video and lyrics nodes withou
   g.buildStageLayout();
   const layout = stage.children[1], videoColumn = layout.children[0];
   assert.equal(layout.attributes.get('data-om-stage-layout'), '');
-  assert.equal(videoColumn.children[0].attributes.get('data-om-song-controls'), '');
-  assert.equal(videoColumn.children[1], video); assert.equal(videoColumn.children[2], info);
+  assert.equal(videoColumn.children[0], video); assert.equal(videoColumn.children[1], info);
+  assert.equal(videoColumn.children.length, 2, 'the stage has no separate song toolbar above the player');
   assert.equal(layout.children[1], lyrics); assert.equal(video.children[0], iframe);
   assert.equal(stage.children[2], footer); assert.equal(footer.children[0], controls);
   assert.equal(contentWrites, 0, 'moving wrappers must keep the existing player and lyrics content');
@@ -831,31 +831,36 @@ test('direct and replacement labels match the visible stage for both library and
   assert.match(f.node('[data-om-discovery-results]').innerHTML, /▶ Play on Stage/);
 });
 
-test('the toolbar stays above the video and visible in choice, singing, and finished with role explanations', () => {
+test('song change and removal share the original operation row in choice, singing, and finished', () => {
   for (const phase of ['choice', 'singing', 'finished']) {
     for (const actor of [0, 1, 2]) {
       const f = presentation(actor); f.g.data.phase = phase; f.g.data.singingState = phase === 'singing' ? 'singing' : 'idle';
       f.g.focusPreferred = true; f.g.render();
       assert.equal(f.classes.has('om-is-focused'), true);
-      const toolbar = f.node('[data-om-song-controls]').innerHTML;
+      const controls = f.controls();
+      assert.equal((controls.match(/class="om-actions"/g) || []).length, actor === 2 ? 0 : 1);
       for (const action of ['changeSong', 'clearSong']) {
-        const button = toolbar.match(new RegExp('<button[^>]*data-om-action="' + action + '"[^>]*>[\\s\\S]*?<\\/button>'))[0];
-        assert.equal(/ disabled/.test(button), actor === 2);
+        const button = controls.match(new RegExp('<button[^>]*data-om-action="' + action + '"[^>]*>[\\s\\S]*?<\\/button>'));
+        assert.equal(!!button, actor !== 2);
+        if (button) assert.doesNotMatch(button[0], / disabled/);
       }
-      if (actor === 2) assert.ok(toolbar.includes(f.context.OPEN_MIC_UI.t('forbidden')));
       if (phase === 'finished') {
         assert.ok(f.controls().includes(f.context.OPEN_MIC_UI.t('finishedPlaybackHint')));
         assert.doesNotMatch(f.controls(), /data-om-action="(?:startSinging|finishSinging|skip|duetOpen)"/);
         assert.equal(/data-om-action="next"/.test(f.controls()), actor === 0);
+      } else if (actor !== 2) {
+        assert.ok(controls.indexOf('data-om-action="' + (phase === 'singing' ? 'finishSinging' : 'startSinging') + '"') < controls.indexOf('data-om-action="changeSong"'));
+        assert.ok(controls.indexOf('data-om-action="changeSong"') < controls.indexOf('data-om-action="clearSong"'));
+        assert.ok(controls.indexOf('data-om-action="clearSong"') < controls.indexOf('data-om-action="duetOpen"'));
+        assert.ok(controls.indexOf('data-om-action="duetOpen"') < controls.indexOf('data-om-action="skip"'));
       }
-      assert.doesNotMatch(f.controls(), /data-om-action="(?:changeSong|clearSong)"/);
+      assert.equal(f.nodes.has('[data-om-song-controls]'), false);
     }
   }
   for (const change of [f => { f.g.data.phase = 'challenge'; f.g.data.challengeResult = null; }, f => { f.g.data.selectedSong = null; }]) {
     const f = presentation(); change(f); f.g.render();
-    const toolbar = f.node('[data-om-song-controls]').innerHTML;
-    assert.match(toolbar, /data-om-action="changeSong"[^>]* disabled/); assert.match(toolbar, /data-om-action="clearSong"[^>]* disabled/);
-    assert.ok(toolbar.includes(f.context.OPEN_MIC_UI.t(f.g.data.selectedSong ? 'challengeFirst' : 'chooseSong')));
+    assert.doesNotMatch(f.controls(), /data-om-action="(?:changeSong|clearSong)"/);
+    if (f.g.data.phase === 'challenge') assert.ok(f.controls().includes(f.context.OPEN_MIC_UI.t('challengeFirst')));
   }
 });
 
@@ -928,7 +933,7 @@ test('finished controllers replace and cancel songs for playback while preservin
     assert.equal(f.g.data.selectedSong, null); assert.equal(f.g.data.phase, 'finished'); assert.equal(f.g.data.singingState, 'finished');
     assert.equal(f.g.data.singingStartedAt, null); assert.equal(f.g.data.teamScore, 3); assert.equal(f.g.data.singingAwarded, true);
     assert.equal(JSON.stringify(f.g.data.mySongs), originalFavorites); assert.equal(JSON.stringify(f.g.data.songLyrics), originalLyrics);
-    assert.match(f.node('[data-om-song-controls]').innerHTML, /data-om-action="clearSong"[^>]* disabled/);
+    assert.doesNotMatch(f.controls(), /data-om-action="(?:changeSong|clearSong)"/);
     assert.equal(f.classes.has('om-is-focused'), false);
     if (actor === 0) {
       await f.g.action('next'); assert.equal(f.g.data.phase, 'challenge'); assert.equal(f.g.data.teamScore, 3);

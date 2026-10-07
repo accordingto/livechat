@@ -145,7 +145,7 @@
   }
   function mergeCandidates(primary, fallback) {
     var seenIds = new Set(), seenText = new Set(), result = [];
-    // Broad-search candidates are choices, never evidence for automatic sharing.
+    // Reversed and broad-search candidates require a choice before sharing.
     fallback.concat(primary).forEach(function (record) {
       var key = normalized(record.title) + '\n' + normalized(record.artist) + '\n' + record.lyrics + '\n' + record.instrumental;
       if (result.length >= 20 || seenIds.has(record.id) || seenText.has(key)) return;
@@ -159,6 +159,19 @@
     var primary = await request(queryURL(fields), options, deadline);
     if (fields.query) return primary.map(function (record) { return Object.assign({}, record, { autoEligible: false }); });
     if (hasExact(primary, fields) || (!fields.artist && primary.some(function (record) { return !record.instrumental && record.lyrics; }))) return primary;
+    // Upload titles can put the track before the artist. Keep infer conservative:
+    // reversing a lookup offers manual candidates, never rewrites song metadata.
+    if (fields.artist) {
+      var reversedFields = { title: fields.artist, artist: fields.title, query: '' };
+      var reversed;
+      try { reversed = await request(queryURL(reversedFields), options, deadline); }
+      catch (error) {
+        if (error && error.name === 'AbortError' || options && options.signal && options.signal.aborted) throw error;
+        if (primary.some(function (record) { return !record.instrumental && record.lyrics; })) return mergeCandidates(primary, []);
+        throw error;
+      }
+      if (hasExact(reversed, reversedFields)) return mergeCandidates(primary, reversed);
+    }
     // A mismatching romanized artist, display alias or CJK title format can make
     // the structured phrase query too narrow. q searches all metadata fields.
     var query = cleanTitle(fields.title).replace(/([\u3400-\u9fff\uf900-\ufaff])([A-Za-z])/g, '$1 $2').replace(/([A-Za-z])([\u3400-\u9fff\uf900-\ufaff])/g, '$1 $2').trim();

@@ -233,10 +233,6 @@
 .om-stage-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 0 18px; align-items: start; }
 .om-has-song .om-stage-layout { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
 .om-stage-video-column { min-width: 0; }
-.om-song-controls { margin-bottom: 10px; padding: 10px; border: 1px solid #46406b; border-radius: 12px; background: #201d38; }
-.om-song-controls .om-actions { gap: 8px; }
-.om-song-controls .om-button { flex: 1 1 120px; min-height: 44px; padding: 9px 12px; font-size: .8rem; }
-.om-song-controls .om-song-control-hint { margin-top: 7px; font-size: .74rem; line-height: 1.5; }
 .om-stage-video-column .om-video { overflow: hidden; border: 1px solid #343054; border-radius: 13px; }
 .om-stage-video-column [data-om-stage-info] { padding: 12px 2px 0; }
 .om-stage-track { margin-bottom: 6px; }

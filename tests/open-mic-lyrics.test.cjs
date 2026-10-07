@@ -48,6 +48,7 @@ test('free search q overrides structured fields and never allows a supplied URL 
   const url = new URL(h.calls[0][0]);
   assert.equal(url.searchParams.get('q'), 'Chinese 歌曲 &track_name=anything'); assert.equal([...url.searchParams].length, 1);
   assert.equal(url.hostname, 'lrclib.net');
+  assert.equal(h.calls.length, 1, 'an explicit manual query never reverses metadata or adds a fallback');
   await h.L.search({ title: 'Only song' }); assert.equal(new URL(h.calls[1][0]).searchParams.has('artist_name'), false);
 });
 
@@ -221,12 +222,104 @@ test('the explicitly named E.SO WAIT signature stays a precise one-request looku
   assert.equal(matches.length, 2); assert.ok(matches.every(record => record.autoEligible !== false));
 });
 
+test('a track-first upload can yield reversed exact candidates without guessing metadata or allowing automatic sharing', async () => {
+  const primary = track(90, { trackName: 'A different synthetic song', artistName: 'AIYOU' });
+  const h = setup(async url => new URL(url).searchParams.get('track_name') === 'AIYOU' ? response([
+    track(81, { trackName: 'AIYOU', artistName: 'Eve' }),
+    track(82, { trackName: 'AIYOU', artistName: 'Eve', albumName: 'Another invented album' }),
+    track(83, { trackName: 'AIYOU', artistName: 'Eve', plainLyrics: 'A different invented version' }), primary,
+  ]) : response([primary]));
+  const inferred = h.L.infer({ title: 'AIYOU - Eve Music Video' });
+  assert.deepEqual(plain(inferred), { title: 'Eve', artist: 'AIYOU', query: '' });
+  const before = plain(inferred); Object.freeze(inferred);
+  const matches = await h.L.search(inferred);
+  assert.equal(h.calls.length, 2, 'a readable reversed exact match avoids the broad third request');
+  const reverse = new URL(h.calls[1][0]);
+  assert.equal(reverse.searchParams.get('track_name'), 'AIYOU'); assert.equal(reverse.searchParams.get('artist_name'), 'Eve');
+  assert.equal(reverse.searchParams.has('q'), false);
+  assert.deepEqual(Array.from(matches, record => record.id), ['81', '83', '90']);
+  assert.ok(matches.every(record => record.autoEligible === false), 'even exact reversed results require a manual choice');
+  assert.deepEqual(plain(inferred), before, 'candidate discovery does not rewrite the original inferred metadata');
+  matches[0].lyrics = 'A local draft';
+  const repeated = await h.L.search(inferred);
+  assert.equal(h.calls.length, 2); assert.notEqual(repeated[0].lyrics, 'A local draft');
+  assert.ok(repeated.every(record => record.autoEligible === false), 'cached reversed matches stay manual-only');
+});
+
+test('reversed exact candidate merges stay capped at twenty and instrumental matches still reach the broad fallback', async () => {
+  const h = setup(async url => new URL(url).searchParams.get('track_name') === 'AIYOU'
+    ? response(Array.from({ length: 30 }, (_, i) => track(i + 1,
+      { trackName: 'AIYOU', artistName: 'Eve', plainLyrics: 'Invented candidate version ' + i })))
+    : response([track(91, { trackName: 'Other track', artistName: 'Other artist' })]));
+  const matches = await h.L.search({ title: 'Eve', artist: 'AIYOU' });
+  assert.equal(h.calls.length, 2); assert.equal(matches.length, 20); assert.equal(matches[0].id, '1');
+  assert.ok(matches.every(record => record.autoEligible === false));
+  const instrumental = setup(async url => {
+    const params = new URL(url).searchParams;
+    if (params.has('q')) return response([]);
+    return params.get('track_name') === 'AIYOU'
+      ? response([track(51, { trackName: 'AIYOU', artistName: 'Eve', instrumental: true })])
+      : response([track(52, { trackName: 'A readable other song', artistName: 'Other artist' })]);
+  });
+  const readable = await instrumental.L.search({ title: 'Eve', artist: 'AIYOU' });
+  assert.equal(instrumental.calls.length, 3, 'a reversed instrumental match is not readable exact evidence');
+  assert.equal(new URL(instrumental.calls[2][0]).searchParams.get('q'), 'Eve');
+  assert.equal(readable[0].id, '52'); assert.equal(readable[0].autoEligible, false);
+});
+
+test('reverse lookup errors preserve readable primary candidates and do not retry after a provider failure', async () => {
+  for (const reverse of [async () => response([], 429, { 'Retry-After': '17' }), async () => response([], 503),
+    async () => { throw new TypeError('network failed'); }, async () => response({ malformed: true })]) {
+    const h = setup(async url => new URL(url).searchParams.get('track_name') === 'Original Song'
+      ? response([track(9, { trackName: 'Original Song', artistName: 'Alternate Artist' })]) : reverse());
+    const matches = await h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+    assert.equal(h.calls.length, 2); assert.equal(h.timers.size, 0);
+    assert.equal(matches.length, 1); assert.equal(matches[0].id, '9'); assert.equal(matches[0].autoEligible, false);
+  }
+  const empty = setup(async url => new URL(url).searchParams.get('track_name') === 'Original Song'
+    ? response([]) : response([], 429, { 'Retry-After': '17' }));
+  await assert.rejects(empty.L.search({ title: 'Original Song', artist: 'Declared Artist' }),
+    error => error.code === 'lyrics_rate_limit' && error.retryAfter === 17);
+  assert.equal(empty.calls.length, 2, 'without readable primary candidates the provider error remains visible');
+});
+
+test('a reversed timeout preserves primary candidates but caller cancellation still rejects them', async () => {
+  const h = setup(async url => new URL(url).searchParams.get('track_name') === 'Original Song'
+    ? response([track(9, { trackName: 'Original Song', artistName: 'Alternate Artist' })]) : new Promise(() => {}));
+  const work = h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.calls.length, 2); h.timers.values().next().value.callback();
+  const matches = await work;
+  assert.equal(matches[0].id, '9'); assert.equal(matches[0].autoEligible, false);
+  assert.equal(h.calls[1][1].signal.aborted, true); assert.equal(h.calls.length, 2); assert.equal(h.timers.size, 0);
+  const controller = new AbortController(), canceledWork = h.L.search({ title: 'Original Song', artist: 'Declared Artist' }, { signal: controller.signal });
+  await new Promise(resolve => setImmediate(resolve)); controller.abort();
+  await assert.rejects(canceledWork, { name: 'AbortError' });
+  assert.equal(h.calls.at(-1)[1].signal.aborted, true); assert.equal(h.timers.size, 0);
+});
+
+test('primary, reverse, and broad requests consume one twelve-second deadline rather than restarting it', async () => {
+  const pendingResponses = [], h = setup(() => new Promise(resolve => pendingResponses.push(resolve)));
+  const work = h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
+  assert.equal(h.timers.values().next().value.ms, 12000);
+  h.advance(4000); pendingResponses[0](response([])); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.timers.values().next().value.ms, 8000);
+  h.advance(3000); pendingResponses[1](response([])); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.calls.length, 3); assert.equal(h.timers.values().next().value.ms, 5000);
+  assert.equal(new URL(h.calls[2][0]).searchParams.get('q'), 'Original Song');
+  h.timers.values().next().value.callback();
+  await assert.rejects(work, { code: 'lyrics_unavailable' });
+  assert.equal(h.calls.length, 3); assert.equal(h.calls[2][1].signal.aborted, true); assert.equal(h.timers.size, 0);
+});
+
 test('a mismatching romanized artist retries the original title broadly with manual-only candidates', async () => {
   const h = setup(async url => new URL(url).searchParams.has('q')
     ? response([track(8, { trackName: '原創歌名', artistName: '原創歌手' })]) : response([]));
   const matches = await h.L.search({ title: '原創歌名', artist: 'Explicit Romanized Artist' });
-  assert.equal(h.calls.length, 2); const precise = new URL(h.calls[0][0]), broad = new URL(h.calls[1][0]);
+  assert.equal(h.calls.length, 3); const precise = new URL(h.calls[0][0]), reversed = new URL(h.calls[1][0]), broad = new URL(h.calls[2][0]);
   assert.equal(precise.searchParams.get('artist_name'), 'Explicit Romanized Artist');
+  assert.equal(reversed.searchParams.get('track_name'), 'Explicit Romanized Artist');
+  assert.equal(reversed.searchParams.get('artist_name'), '原創歌名'); assert.equal(reversed.searchParams.has('q'), false);
   assert.equal(broad.searchParams.get('q'), '原創歌名'); assert.equal([...broad.searchParams].length, 1);
   assert.equal(matches[0].title, '原創歌名'); assert.equal(matches[0].artist, '原創歌手'); assert.equal(matches[0].autoEligible, false);
 });
@@ -237,6 +330,7 @@ test('a compact mixed-language keyword can use all metadata fields without guess
   const input = h.L.infer({ title: '原創歌手WAIT', channelTitle: 'Upload Channel' });
   assert.equal(input.artist, '');
   const matches = await h.L.search(input);
+  assert.equal(h.calls.length, 2, 'an empty artist skips the reversed structured lookup');
   assert.equal(new URL(h.calls[1][0]).searchParams.get('q'), '原創歌手 WAIT');
   assert.equal(matches[0].autoEligible, false); assert.equal(matches[0].artist, '原創歌手');
 });
@@ -252,27 +346,27 @@ test('broader results are deduplicated by metadata and text, preserve distinct v
   assert.ok(matches.every(record => record.autoEligible === false));
   matches[0].lyrics = 'A client edit';
   const repeated = await h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
-  assert.equal(h.calls.length, 2); assert.notEqual(repeated[0].lyrics, 'A client edit');
+  assert.equal(h.calls.length, 3); assert.notEqual(repeated[0].lyrics, 'A client edit');
   const capped = setup(async url => response(Array.from({ length: 30 }, (_, i) => track(i + (new URL(url).searchParams.has('q') ? 100 : 1),
     { trackName: 'Different Song ' + i, artistName: 'Different Artist ' + i }))));
   const many = await capped.L.search({ title: 'Missing Song', artist: 'Declared Artist' });
-  assert.equal(capped.calls.length, 2); assert.equal(many.length, 20); assert.ok(many.every(record => record.autoEligible === false));
+  assert.equal(capped.calls.length, 3); assert.equal(many.length, 20); assert.ok(many.every(record => record.autoEligible === false));
 });
 
-test('an empty library match stays empty after only one bounded fallback without inventing script or artist mappings', async () => {
+test('empty matches use at most one reverse and one broad fallback without inventing script or artist mappings', async () => {
   const h = setup(async () => response([]));
   const fields = { title: '虛構繁體歌名', artist: '明示歌手' };
   const matches = await h.L.search(fields);
-  assert.equal(matches.length, 0); assert.equal(h.calls.length, 2);
-  assert.equal(new URL(h.calls[1][0]).searchParams.get('q'), fields.title);
-  await h.L.search(fields); assert.equal(h.calls.length, 2, 'both successful empty requests use the bounded cache');
-  h.advance(300001); await h.L.search(fields); assert.equal(h.calls.length, 4);
+  assert.equal(matches.length, 0); assert.equal(h.calls.length, 3);
+  assert.equal(new URL(h.calls[2][0]).searchParams.get('q'), fields.title);
+  await h.L.search(fields); assert.equal(h.calls.length, 3, 'all successful empty requests use the bounded cache');
+  h.advance(300001); await h.L.search(fields); assert.equal(h.calls.length, 6);
   const direct = setup(async () => response([track()]));
   const free = await direct.L.search({ query: 'A chosen manual keyword', title: 'Example Song', artist: 'Example Artist' });
   assert.equal(direct.calls.length, 1); assert.equal(free[0].autoEligible, false);
 });
 
-test('the fallback shares the original twelve-second deadline and cancellation prevents late results or extra attempts', async () => {
+test('the reversed lookup shares the original deadline and cancellation prevents late results or extra attempts', async () => {
   const pendingResponses = [], h = setup(() => new Promise(resolve => pendingResponses.push(resolve)));
   const work = h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
   h.advance(4000); pendingResponses[0](response([])); await new Promise(resolve => setImmediate(resolve));
@@ -290,7 +384,7 @@ test('the fallback shares the original twelve-second deadline and cancellation p
   pendingResponses[3](response([track(44)])); await new Promise(resolve => setImmediate(resolve));
   aborted.context.fetch = async () => response([track(45)]);
   const fresh = await aborted.L.search({ title: 'Original Song', artist: 'Declared Artist' });
-  assert.equal(fresh[0].id, '45', 'the abandoned broad response must not populate its cache');
+  assert.equal(fresh[0].id, '45', 'the abandoned reversed response must not populate its cache');
 });
 
 test('a failed broad lookup keeps useful primary candidates manual, while primary failure and cancellation stay errors', async () => {
@@ -298,7 +392,7 @@ test('a failed broad lookup keeps useful primary candidates manual, while primar
     const h = setup(async url => new URL(url).searchParams.has('q') ? response([], status, { 'Retry-After': '15' })
       : response([track(9, { trackName: 'Original Song', artistName: 'Alternate Artist' })]));
     const matches = await h.L.search({ title: 'Original Song', artist: 'Declared Artist' });
-    assert.equal(h.calls.length, 2); assert.equal(matches.length, 1); assert.equal(matches[0].autoEligible, false);
+    assert.equal(h.calls.length, 3); assert.equal(matches.length, 1); assert.equal(matches[0].autoEligible, false);
     assert.equal(matches[0].id, '9'); assert.equal(h.timers.size, 0);
   }
   const firstFailure = setup(async () => response([], 429));

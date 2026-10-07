@@ -19,8 +19,9 @@ awards the song point once. Host Next while singing also finalizes that point
 before rotating. Skip while singing awards nothing. Only the host advances the
 queue; participants do not receive judgment or Next controls.
 
-Change Song and Remove Song stay visible above the MV with a reason when
-unavailable. Change Song opens the local song browser, including from Focus on
+Change Song and Remove Song share the original stage action row with singing,
+duet, skip, and host Next controls. They remain available to the controller
+after the round finishes. Change Song opens the local song browser, including from Focus on
 singing. During choice, singing, or finished, the host or current active
 Spotlight may select a different library/discovered song to replace the stage.
 Replacing a singing performance stops its timer and returns to choice without

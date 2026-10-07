@@ -46,7 +46,6 @@
     changeSongHint: { en: 'Changing or removing the song stops this timer. Start singing again after choosing.', zh: '換歌或取消會停止這段計時，選好新歌後再按「開始唱」。' },
     songControlsHint: { en: 'Choose another song below to replace this one. Removing it does not change your score.', zh: '從下方選另一首就能直接取代。取消選歌不會改變分數。' },
     finishedPlaybackHint: { en: 'This round is settled. You can still change songs and play freely; choose Next Player to continue.', zh: '本輪已結算，仍可自由換歌播放；按「下一位」繼續。' },
-    songUpdating: { en: 'Updating the song…', zh: '正在更新選歌…' },
     inviteDuet: { en: '👥 Invite Duet', zh: '👥 邀人合唱' }, skip: { en: 'Skip Singing', zh: '跳過唱歌' },
     timerRunning: { en: 'A short section is enough.', zh: '唱一小段就好。' },
     timerZero: { en: 'Finish the phrase naturally. Nothing cuts off.', zh: '自然唱完這一句，音樂不會被切掉。' },
@@ -272,11 +271,9 @@
     buildStageLayout() {
       var stage = this.find('.om-stage'), footer = this.find('.om-stage-bottom');
       var doc = this.element.ownerDocument || global.document;
-      var layout = doc.createElement('div'), videoColumn = doc.createElement('div'), songControls = doc.createElement('div');
+      var layout = doc.createElement('div'), videoColumn = doc.createElement('div');
       layout.className = 'om-stage-layout'; layout.setAttribute('data-om-stage-layout', '');
       videoColumn.className = 'om-stage-video-column';
-      songControls.className = 'om-song-controls'; songControls.setAttribute('data-om-song-controls', '');
-      videoColumn.appendChild(songControls);
       videoColumn.appendChild(this.find('[data-om-stage-video]'));
       videoColumn.appendChild(this.find('[data-om-stage-info]'));
       layout.appendChild(videoColumn);
@@ -408,7 +405,8 @@
       if (!this.discoveryStarted) { this.discoveryStarted = true; this.requestDiscovery('popular'); }
     }
     renderStage() {
-      var data = this.data, song = data.selectedSong, controller = this.controller(), host = this.host();
+      var data = this.data, song = data.selectedSong, host = this.host();
+      var controller = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
       var after = !!data.challengeResult, finished = data.phase === 'finished';
       this.setText('[data-om-duration]', t('duration', { n: Number(data.duration) || 35 }));
       var key = [data.sessionId, data.round, data.spotlight, song && song.videoId || 'empty'].join(':');
@@ -425,23 +423,23 @@
       var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div><p class="om-soft">' + esc(t('embedHint')) + ' <a class="back" href="' + youtube(song.videoId) + '" target="_blank" rel="noopener noreferrer">' + esc(t('youtubeLink')) + '</a></p>' : '';
       if (data.duet) info += '<p class="om-stage-hint om-soft">👥 ' + esc(t('duetWith', { name: this.name(data.duet) })) + '</p>';
       this.set('[data-om-stage-info]', info);
-      var activeController = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
       var canChange = !!song && this.canSelectDiscovery();
-      var controlHint = !after || data.phase === 'challenge' ? t('challengeFirst') : !activeController ? t('forbidden') : !this.canControl() ? t('offline') : this.pending ? t('songUpdating') : !song ? t('chooseSong') : t(finished ? 'finishedPlaybackHint' : data.phase === 'singing' ? 'changeSongHint' : 'songControlsHint');
-      this.set('[data-om-song-controls]', '<div class="om-actions">' + this.button('changeSong', t('changeSong'), '', '', canChange) + this.button('clearSong', t('clearSong'), '', '', canChange) + '</div><p class="om-soft om-song-control-hint">' + esc(controlHint) + '</p>');
       this.set('[data-om-stage-timer]', data.singingState === 'singing' ? '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>' : '');
       var buttons = '';
-      if (after && ((!finished && controller) || host)) buttons += '<div class="om-actions">';
+      var showActions = after && controller && (!finished || !!song || host);
+      if (showActions) buttons += '<div class="om-actions">';
       if (after && !finished && controller) {
         if (data.singingState === 'singing') buttons += this.button('finishSinging', t('finishSinging'), 'om-success');
         else buttons += this.button('startSinging', t('startSinging'), 'om-primary', '', !!song);
-        buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       }
+      if (after && controller && song && ['choice', 'singing', 'finished'].indexOf(data.phase) >= 0) buttons += this.button('changeSong', t('changeSong'), '', '', canChange) + this.button('clearSong', t('clearSong'), '', '', canChange);
+      if (after && !finished && controller) buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       if (host && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '', '', true);
-      if (after && ((!finished && controller) || host)) buttons += '</div>';
+      if (showActions) buttons += '</div>';
       if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
       else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
       else if (!controller) buttons += '<p class="om-waiting">' + esc(t('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
+      else if (song) buttons += '<p class="om-waiting">' + esc(t(data.phase === 'singing' ? 'changeSongHint' : 'songControlsHint')) + '</p>';
       this.set('[data-om-stage-controls]', buttons);
     }
     renderSongs() {
