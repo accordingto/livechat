@@ -7,6 +7,7 @@
   let state = null, sync = null, demoCard = null, status = demo ? 'ready' : 'offline', busy = false, autoStart = false;
   let error = '';
   let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '';
+  let firstDraw = true;
   const draftKey = 'lets-talk-topic-draft.v1';
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
@@ -18,6 +19,11 @@
     byId('starter-toggle').checked = starterPending ?? startersOn();
     byId('starter-toggle').disabled = busy || (activeSession() && !canControl());
     byId('host-view').classList.toggle('talk-starters-off', !startersOn());
+  }
+  function renderModeSettings() {
+    const crazy = byId('game-mode').value === 'crazy';
+    byId('crazy-frequency').hidden = !crazy;
+    byId('mode-hint').textContent = t(crazy ? 'crazyHint' : 'normalHint');
   }
   const now = () => sync ? sync.now() : Date.now();
   const canControl = () => demo || (!!sync?.own && sync.connected);
@@ -31,8 +37,11 @@
     byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><p>${esc(q.question)}</p></li>`).join('');
   }
   function drawTopic() {
-    const topic = TALK_LIBRARY.draw(byId('category').value, byId('search').value,
-      [byId('topic-select').value, state?.topic.id], () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296);
+    const random = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+    const scenarios = firstDraw && !byId('category').value && !byId('search').value ? TALK_TOPICS.filter(topic => topic.source === 'chatwolf') : [];
+    const topic = scenarios.length ? scenarios[Math.floor(random() * scenarios.length)] : TALK_LIBRARY.draw(byId('category').value, byId('search').value,
+      [byId('topic-select').value, state?.topic.id], random);
+    firstDraw = false;
     if (topic) byId('topic-select').value = topic.id;
     previewTopic();
     return topic;
@@ -115,10 +124,12 @@
     if (byId('draft-status').dataset.message) byId('draft-status').textContent = t(byId('draft-status').dataset.message);
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('seconds').querySelectorAll('option').forEach(o => { o.textContent = t('seconds', { n: o.value }); });
+    byId('crazy-seconds').querySelectorAll('option').forEach(o => { o.textContent = t('minutes', { n: Number(o.value) / 60 }); });
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
   function render() {
     renderStarters();
+    renderModeSettings();
     byId('host-status').textContent = status === 'ready' ? '' : t(status);
     byId('open').disabled = busy || !canControl() || (source === 'library' && !selectedTopic());
     byId('session').hidden = !state || !byId('setup').hidden;
@@ -133,6 +144,11 @@
       exploreOpen = false; exploreKey = ''; byId('live-followup').value = ''; renderedSession = state.sessionId;
     }
     const s = TALK_ENGINE.view(state, 0, now()).talk;
+    byId('crazy-host').hidden = s.gameMode !== 'crazy';
+    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyHostStatus', { minutes: s.crazy.intervalSeconds / 60, n: s.crazy.pendingCount }) : '';
+    byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
+    byId('crazy-send').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking' || !!s.crazy?.paused || s.crazy?.pendingCount >= list(s.roster).length;
+    byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
     byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
     byId('question').textContent = state.topic.question;
     byId('starter').textContent = s.extended && s.starter === s.topic.followUp ? '' : s.starter;
@@ -186,7 +202,8 @@
     try {
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
-      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value), showStarters: startersOn() };
+      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value), showStarters: startersOn(),
+        gameMode: byId('game-mode').value, crazySeconds: Number(byId('crazy-seconds').value) };
       if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
@@ -194,6 +211,9 @@
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
+  byId('game-mode').addEventListener('change', renderModeSettings);
+  byId('crazy-send').addEventListener('click', () => command('crazySend'));
+  byId('crazy-pause').addEventListener('click', () => command('crazyPause', { paused: !state?.crazy?.paused }));
   byId('starter-toggle').addEventListener('change', async event => {
     const show = event.target.checked;
     if (activeSession()) {
@@ -242,6 +262,11 @@
   byId('demo-view').addEventListener('change', render);
   function paintClock() {
     if (!state) return;
+    if (demo && !busy && TALK_ENGINE.crazyDue(state, now())) {
+      state = TALK_ENGINE.apply(state, { id: TALK_SYNC.uid(), type: 'crazyTick', actor: 0, sessionId: state.sessionId,
+        now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] });
+      render();
+    }
     byId('clock').textContent = state.phase === 'thinking' ? t('secondsLeft', { n: Math.max(0, Math.ceil((state.deadline - now()) / 1000)) }) : '';
     byId('interest').querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now()) e.remove(); });
     if (state.phase === 'thinking' && now() >= state.deadline && canControl() && status !== 'switched' && !busy && !autoStart) {
@@ -271,7 +296,11 @@
           const newSession = state?.sessionId !== next.sessionId;
           if (state?.turnId !== next.turnId) error = '';
           state = next;
-          if (newSession) byId('setup').hidden = true;
+          if (newSession) {
+            byId('setup').hidden = true;
+            byId('game-mode').value = next.gameMode === 'crazy' ? 'crazy' : 'normal';
+            byId('crazy-seconds').value = String(next.crazy?.intervalSeconds || 120);
+          }
           render();
         },
         onStatus: next => { status = next; if (next === 'switched') byId('setup').hidden = false; render(); },

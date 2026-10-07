@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css">
+  <link rel="stylesheet" href="talk.css?v=talk-crazy-1">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-reference-2">
   <link rel="stylesheet" href="dixit.css?v=dixit-9">
   <link rel="stylesheet" href="cut.css?v=cut-4">
@@ -883,7 +883,7 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="talk-ui.js"></script>
+  <script src="talk-ui.js?v=talk-crazy-1"></script>
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
   <script src="cut-ui.js?v=cut-4"></script>
@@ -2643,9 +2643,12 @@
           now: () => Date.now() + talkClockOffset,
           connected: () => talkConnected,
           send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId || current.talk.turnId !== command.turnId) return;
+            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId) return;
+            if (TALK_UI.crazyAction(command.type)) {
+              if (current.talk.gameMode !== 'crazy' || current.talk.crazy?.prompt?.id !== command.promptId || current.talk.crazy.prompt.status !== 'pending') return;
+            } else if (current.talk.turnId !== command.turnId) return;
             return Object.assign({}, current, { talkAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+          }, undefined, false).then(result => { if (!result.committed) throw new Error(TALK_UI.crazyAction(command.type) ? 'stale_prompt' : 'stale_turn'); }),
         });
         talkCard.update(data);
         return;

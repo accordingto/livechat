@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css">
+  <link rel="stylesheet" href="talk.css?v=talk-crazy-1">
 </head>
 <body class="talk-page">
   <div class="topbar">
@@ -30,6 +30,11 @@
       </div>
       <form id="talk-setup" class="talk-panel talk-setup">
         <p class="talk-soft" data-i18n="talk.intro">每人都有分享的機會；不用精彩，也不用講很長。</p>
+        <div class="talk-mode-settings">
+          <label class="talk-field"><span data-i18n="talk.gameMode">聊天模式</span><select id="talk-game-mode"><option value="normal" data-i18n="talk.normalMode">Normal Talk</option><option value="crazy" data-i18n="talk.crazyMode">Crazy Talk</option></select></label>
+          <p id="talk-mode-hint" class="talk-soft"></p>
+          <label id="talk-crazy-frequency" class="talk-field" hidden><span data-i18n="talk.crazyFrequency">台詞頻率</span><select id="talk-crazy-seconds"><option value="60">約每 1 分鐘</option><option value="120" selected>約每 2 分鐘</option><option value="180">約每 3 分鐘</option></select></label>
+        </div>
         <div class="talk-actions" role="group" aria-label="Topic source">
           <button type="button" class="talk-button" id="talk-source-library" aria-pressed="true" data-i18n="talk.fromLibrary">從題庫選</button>
           <button type="button" class="talk-button" id="talk-source-custom" aria-pressed="false" data-i18n="talk.writeTopic">自己出題</button>
@@ -68,6 +73,11 @@
         <button class="talk-button" type="button" id="talk-cancel-setup" hidden data-i18n="talk.cancelSetup">返回目前話題</button>
       </form>
       <section id="talk-session" hidden>
+        <div id="talk-crazy-host" class="talk-panel talk-crazy-host" hidden>
+          <div><h2 data-i18n="talk.crazyTitle">🎧 Crazy Talk</h2><p id="talk-crazy-status" class="talk-soft" role="status"></p></div>
+          <p class="talk-soft" data-i18n="talk.crazyHostHint"></p>
+          <div class="talk-actions"><button type="button" id="talk-crazy-send" class="talk-button talk-primary" data-i18n="talk.crazySend">現在派發台詞</button><button type="button" id="talk-crazy-pause" class="talk-button" data-i18n="talk.crazyPause">暫停派發</button></div>
+        </div>
         <div class="talk-panel talk-topic">
           <p class="talk-kicker" id="talk-topic-title"></p>
           <h2 id="talk-question"></h2>
@@ -139,10 +149,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="talk-engine.js"></script>
-  <script src="talk-topics.js"></script>
-  <script src="talk-ui.js"></script>
-  <script src="talk-sync.js"></script>
-  <script src="talk-host.js"></script>
+  <script src="talk-crazy.js?v=talk-crazy-1"></script>
+  <script src="talk-engine.js?v=talk-crazy-1"></script>
+  <script src="talk-topics.js?v=talk-crazy-1"></script>
+  <script src="talk-ui.js?v=talk-crazy-1"></script>
+  <script src="talk-sync.js?v=talk-crazy-1"></script>
+  <script src="talk-host.js?v=talk-crazy-1"></script>
 </body>
 </html>

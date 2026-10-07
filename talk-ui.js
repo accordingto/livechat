@@ -44,6 +44,21 @@ var TALK_UI = (() => {
     setupTopic: ['這次聊什麼', 'Choose a topic'], setupMode: ['怎麼開始', 'How to begin'],
     thinkMode: ['先想一想，不用打字', 'Think first, no writing'], writeMode: ['可以寫一句想法', 'Optionally write a thought'],
     thinkingTime: ['思考時間', 'Thinking time'], seconds: ['{n} 秒', '{n} seconds'],
+    gameMode: ['聊天模式', 'Conversation mode'], normalMode: ['Normal Talk · 正常聊天', 'Normal Talk'], crazyMode: ['Crazy Talk · 搞笑台詞', 'Crazy Talk'],
+    normalHint: ['照原本方式自在分享與追問，不會派發搞笑台詞。', 'Share and ask questions as usual. No surprise lines.'],
+    crazyHint: ['每人小卡會隨機收到搞笑英文台詞。輪到自己或受邀提問時說出來，可隨時略過；純粹娛樂，不計分。', 'Get a private silly English line on your card. Say it on your turn or in an invited question. Skip anytime. Just for fun, no scoring.'],
+    crazyFrequency: ['台詞頻率（每人，時間隨機錯開）', 'Line frequency (per person, randomly staggered)'], minutes: ['約每 {n} 分鐘', 'About every {n} min'],
+    crazyTitle: ['🎧 Crazy Talk', '🎧 Crazy Talk'], crazyPrivate: ['你的秘密台詞', 'Your secret line'],
+    crazySayHint: ['輪到自己或受邀提問時，把這句說出來。想一本正經或演得誇張都可以！', 'Say this on your turn or in an invited question. A serious face or a big performance is welcome!'],
+    crazyDone: ['我說完了！', 'Said it!'], crazySkip: ['略過這句', 'Skip this line'],
+    crazyWaiting: ['台詞會突然出現在這裡，先照常聊天。', 'Your surprise line will appear here. Keep chatting.'],
+    crazyCompleted: ['這句說完了，下一句稍後來。', 'Line complete. Your next surprise comes later.'],
+    crazySkipped: ['已略過，下一句稍後來。', 'Skipped. Your next surprise comes later.'],
+    crazyPaused: ['已暫停新台詞；手上的台詞仍可完成或略過。', 'New lines are paused. You can still use or skip your current line.'],
+    crazySend: ['現在派發台詞', 'Send lines now'], crazyPause: ['暫停派發', 'Pause new lines'], crazyResume: ['繼續派發', 'Resume new lines'],
+    crazyHostStatus: ['約每 {minutes} 分鐘／人 · {n} 人有待說台詞', 'About every {minutes} minutes per person · {n} pending lines'],
+    crazyHostHint: ['每人收到自己的台詞，這個共享畫面不顯示內容。未完成的台詞不會被蓋掉。', 'Each card gets its own line, not shown on this shared screen. Pending lines are never replaced.'],
+    stale_prompt: ['這句台詞已更新，請依現在卡片操作。', 'That line has changed. Use the current card.'],
     openTopic: ['開啟話題', 'Open the topic'], newTopic: ['換個話題', 'Choose another topic'],
     start: ['開始分享', 'Start sharing'], extend: ['延伸這個話題', 'Explore a little further'],
     hideExtend: ['收起延伸題', 'Hide the follow-up'], help: ['流程協助', 'Flow controls'],
@@ -84,7 +99,7 @@ var TALK_UI = (() => {
     chooseManually: ['手動選題', 'Choose a question'],
     browseLibrary: ['到頁尾看完整題庫 ↓', 'Browse the full library below ↓'],
     fullLibrary: ['完整問題庫', 'Full question library'],
-    libraryHint: ['先看完整問題，再決定聊哪一題。每題下方可展開四個延伸問題；選題後仍可修改。', 'Read each question before choosing. Expand its four follow-ups below. You can still edit it after selecting.'],
+    libraryHint: ['情境題可以一起想像，也保留原本的日常議題。展開延伸問題，再選適合當下的一題；選題後仍可修改。', 'Imagine a situation together, or choose an everyday question. Expand its follow-ups below. You can still edit a topic after selecting.'],
     useTopic: ['選這題', 'Use this question'],
     other_host: ['另一個主持頁正在控制這個房間；關閉那頁後，這裡會自動接續。', 'Another host tab is controlling this room. Close it to continue here.'],
     switched: ['玩家頁已切換到其他活動。要回來聊，可以重新開啟話題。', 'Player pages have switched activities. Open a topic to return here.'],
@@ -121,7 +136,19 @@ var TALK_UI = (() => {
     if (s.activeQuestion) return t('asking', { name: name(s, s.activeQuestion.playerNum) });
     return s.speaker === me ? t('yourTurn') : t('speaking', { name: name(s, s.speaker) });
   }
-  return { t, esc, list, name, button, notes, interests, status };
+  const crazyAction = type => type === 'crazyDone' || type === 'crazySkip';
+  function crazyHTML(s) {
+    if (s.gameMode !== 'crazy' || !s.crazy?.enabled) return '';
+    const prompt = s.crazy.prompt;
+    if (prompt?.status === 'pending') return `<section class="talk-crazy-prompt" data-talk-prompt="${esc(prompt.id)}" aria-label="${esc(t('crazyPrivate'))}">
+      <div class="talk-crazy-heading"><strong>${esc(t('crazyTitle'))}</strong><span>${esc(t('crazyPrivate'))}</span></div>
+      <blockquote aria-live="polite">${esc(prompt.text)}</blockquote><p>${esc(t('crazySayHint'))}</p>
+      <div class="talk-actions">${button('crazyDone','crazyDone',`data-prompt-id="${esc(prompt.id)}"`,true)}${button('crazySkip','crazySkip',`data-prompt-id="${esc(prompt.id)}"`)}</div>
+      ${s.crazy.paused ? `<small>${esc(t('crazyPaused'))}</small>` : ''}
+    </section>`;
+    return `<div class="talk-crazy-wait" role="status"><strong>${esc(t('crazyTitle'))}</strong><p>${esc(t(s.crazy.paused ? 'crazyPaused' : prompt?.status === 'done' ? 'crazyCompleted' : prompt?.status === 'skipped' ? 'crazySkipped' : 'crazyWaiting'))}</p></div>`;
+  }
+  return { t, esc, list, name, button, notes, interests, status, crazyAction, crazyHTML };
 })();
 
 var TALK_PLAYER = (() => {
@@ -137,6 +164,7 @@ var TALK_PLAYER = (() => {
         if (type === 'retry') { this.deliver(); return; }
         this.act(type === 'forceEnd' ? 'end' : type, {
           ...(b.dataset.target ? { target: b.dataset.target } : {}),
+          ...(b.dataset.promptId ? { promptId: b.dataset.promptId } : {}),
           ...(type === 'note' ? { text: this.draft } : {}),
           ...(type === 'forceEnd' ? { confirm: true } : {}),
         });
@@ -151,12 +179,15 @@ var TALK_PLAYER = (() => {
       this.data = data;
       // Recover an unacknowledged request after a card refresh. A second
       // action must not overwrite the first while the host is reconnecting.
-      if (!this.pending && data.talkAction?.sessionId === data.talk.sessionId && data.talkAction.turnId === data.talk.turnId
+      const actionCurrent = action => TALK_UI.crazyAction(action?.type)
+        ? data.talk.crazy?.prompt?.id === action.promptId && data.talk.crazy.prompt.status === 'pending'
+        : action?.turnId === data.talk.turnId;
+      if (!this.pending && data.talkAction?.sessionId === data.talk.sessionId && actionCurrent(data.talkAction)
           && data.talk.reply?.id !== data.talkAction.id) {
         this.pending = data.talkAction; this.sentAt = this.now();
       }
       if (this.pending && data.talk.reply?.id === this.pending.id) { this.error = data.talk.reply.error || ''; this.pending = null; }
-      if (this.pending && this.pending.turnId !== data.talk.turnId) { this.pending = null; }
+      if (this.pending && !actionCurrent(this.pending)) { this.pending = null; }
       this.render(!changedSession);
     }
     act(type, extra = {}) {
@@ -171,7 +202,7 @@ var TALK_PLAYER = (() => {
       const command = this.pending;
       Promise.resolve().then(() => this.send(command)).catch(e => {
         if (this.pending?.id !== command.id) return;
-        this.error = e.message === 'stale_turn' ? 'stale_turn' : 'error';
+        this.error = ['stale_turn','stale_prompt'].includes(e.message) ? e.message : 'error';
         this.pending = null; this.render(true);
       });
     }
@@ -204,8 +235,12 @@ var TALK_PLAYER = (() => {
       const notesOpen = preserveInput && this.element.querySelector('.talk-shared')?.open;
       if (keep) keep.remove();
       const myTurn = s.phase === 'talking' && s.speaker === me && !s.activeQuestion;
+      const prompt = s.crazy?.prompt;
+      const newPrompt = s.gameMode === 'crazy' && prompt?.status === 'pending' && this.shownPrompt !== prompt.id;
+      this.shownPrompt = prompt?.status === 'pending' ? prompt.id : null;
       this.element.innerHTML = `<div class="secret-card talk-player${myTurn ? ' talk-my-turn' : ''}">
         ${this.nameBanner(data)}
+        ${TALK_UI.crazyHTML(s)}
         ${myTurn ? `<div class="talk-turn-alert" role="status"><span aria-hidden="true">🎤</span><strong>${esc(t('turnAlert'))}</strong><p>${esc(t('turnHint'))}</p></div>` : ''}
         <span class="talk-kicker">Let's Talk</span>
         <p class="talk-player-topic">${esc(s.topic.question)}</p>
@@ -227,6 +262,7 @@ var TALK_PLAYER = (() => {
         if (focused) keep.focus({ preventScroll: true });
       }
       if (notesOpen && this.element.querySelector('.talk-shared')) this.element.querySelector('.talk-shared').open = true;
+      if (newPrompt) this.element.querySelector('.talk-crazy-prompt')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
       document.title = (myTurn ? t('turnAlert') + ' · ' : '') + t('title', { name: data.name || t('player', { n: me }) });
       this.paint();
     }

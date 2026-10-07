@@ -96,6 +96,19 @@
 .talk-demo-card .name-banner { display: inline-block; border-radius: 99px; padding: 8px 17px; color: #161321; background: #c5b2f0; font-size: 1rem; font-weight: 600; }
 .talk-demo-card .secret-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .talk-page [hidden], .talk-player [hidden] { display: none !important; }
+.talk-mode-settings { display:grid; gap:12px; padding:18px; border:1px solid #5b4a79; border-radius:14px; background:#201a35; }
+.talk-crazy-host { display:grid; gap:12px; border-color:#ad6bab; background:#251831; }
+.talk-crazy-host h2 { color:#f8c2ea; font-size:1.15rem; }
+.talk-crazy-prompt { width:100%; box-sizing:border-box; display:grid; gap:14px; text-align:left; padding:18px; border:2px solid #f9b4df; border-radius:16px; background:#382035; color:#fff0f9; box-shadow:0 0 22px #f19ed328; scroll-margin-top:12px; }
+.talk-crazy-heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px 12px; }
+.talk-crazy-heading strong { color:#ffd09f; font-size:1.05rem; }
+.talk-crazy-heading span { font-size:.8rem; color:#edbcda; }
+.talk-crazy-prompt blockquote { margin:0; font-size:clamp(1.2rem,5vw,1.55rem); font-weight:700; line-height:1.5; overflow-wrap:anywhere; white-space:pre-wrap; }
+.talk-crazy-prompt p,.talk-crazy-prompt small { font-size:.85rem; line-height:1.55; color:#e7cbdc; margin:0; }
+.talk-crazy-prompt .talk-primary { background:#ffd09f; border-color:#ffd09f; color:#34211c; }
+.talk-crazy-wait { width:100%; padding:12px; border-radius:12px; background:#2b1b32; border:1px solid #754c78; text-align:left; }
+.talk-crazy-wait strong { color:#f6bcdf; font-size:.95rem; }
+.talk-crazy-wait p { color:#d9bfd5; font-size:.85rem; line-height:1.5; margin-top:5px; }
 @media (max-width: 520px) {
   .talk-panel { padding: 20px 17px; }
   .talk-host-floor { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }

@@ -7,6 +7,49 @@ var TALK_ENGINE = (() => {
   'use strict';
   const list = value => Array.isArray(value) ? value.filter(x => x != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
+  const crazyPool = () => typeof TALK_CRAZY !== 'undefined' ? TALK_CRAZY.pool
+    : typeof require === 'function' ? require('./talk-crazy.js').pool : [];
+  const crazyEnabled = s => s?.gameMode === 'crazy' && !!s.crazy;
+  const crazyDue = (s, now) => crazyEnabled(s) && s.phase === 'talking' && !s.crazy.paused
+    && list(s.roster).some(p => s.crazy.prompts?.[p.playerNum]?.status !== 'pending'
+      && Number(s.crazy.nextAt?.[p.playerNum]) > 0 && Number(s.crazy.nextAt[p.playerNum]) <= now);
+  function crazyRandom(seed, salt) {
+    let n = ((Number(seed) >>> 0) ^ Math.imul(Number(salt) || 1, 2654435761)) >>> 0;
+    n ^= n << 13; n ^= n >>> 17; n ^= n << 5;
+    return (n >>> 0) / 4294967296;
+  }
+  const crazyDelay = (s, seed, num) => Math.round(s.crazy.intervalSeconds * 1000 * (0.8 + crazyRandom(seed, num) * 0.4));
+  function startCrazy(s, input) {
+    if (!crazyEnabled(s)) return;
+    const players = shuffle(s.roster.map(p => p.playerNum), input.seed);
+    const span = 60000 / players.length;
+    players.forEach((num, i) => {
+      s.crazy.nextAt[num] = (Number(input.now) || 0) + Math.round(30000 + i * span + crazyRandom(input.seed, num) * span);
+    });
+  }
+  function assignCrazy(s, input, immediate) {
+    const c = s.crazy, now = Number(input.now) || 0, pool = crazyPool();
+    if (!pool.length) return false;
+    let changed = false;
+    for (const p of s.roster) {
+      const num = p.playerNum;
+      if (c.prompts[num]?.status === 'pending' || (!immediate && !(c.nextAt[num] > 0 && c.nextAt[num] <= now))) continue;
+      const recent = list(c.recent[num]);
+      const pending = list(c.prompts).filter(prompt => prompt.status === 'pending').map(prompt => prompt.lineId);
+      let choices = pool.filter(line => !recent.includes(line.id) && !pending.includes(line.id));
+      if (!choices.length) choices = pool.filter(line => !recent.includes(line.id));
+      if (!choices.length) choices = pool;
+      const line = choices[Math.floor(crazyRandom(input.seed, num + (c.sequence[num] || 0) * 101) * choices.length)];
+      const sequence = (c.sequence[num] || 0) + 1;
+      c.sequence[num] = sequence;
+      c.prompts[num] = { id: `${s.sessionId}:crazy:${num}:${sequence}`, lineId: line.id,
+        text: line.text, kind: line.kind, at: now, status: 'pending' };
+      c.recent[num] = [...recent, line.id].slice(-12);
+      c.nextAt[num] = 0;
+      changed = true;
+    }
+    return changed;
+  }
   const followUps = topic => {
     const items = list(topic?.followUps).map(q => typeof q === 'string' ? { stage: 'custom', question: q } : q)
       .filter(q => q && typeof q.question === 'string' && q.question.trim());
@@ -23,17 +66,23 @@ var TALK_ENGINE = (() => {
     return result;
   }
   const starter = topic => typeof topic?.starter === 'string' ? topic.starter.trim().slice(0, 600) : '';
-  function create({ id, topic, roster, mode = 'think', seconds = 45, showStarters = true, now }) {
+  function create({ id, topic, roster, mode = 'think', seconds = 45, showStarters = true, gameMode = 'normal', crazySeconds = 120, now }) {
     if (!id || !topic || !topic.question || !Array.isArray(roster) || roster.length < 2 || roster.length > 9) throw new Error('invalid_setup');
     if (new Set(roster.map(p => p.playerNum)).size !== roster.length || roster.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
-    return {
+    const state = {
       version: 1, sessionId: String(id), topic: copy(topic), showStarters: showStarters === true,
+      gameMode: gameMode === 'crazy' ? 'crazy' : 'normal',
       roster: roster.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').slice(0, 80) })),
       mode: mode === 'write' ? 'write' : 'think', phase: 'thinking', round: 0, turnId: 0,
       deadline: now + Math.max(15, Math.min(120, Number(seconds) || 45)) * 1000,
       speaker: null, remaining: [], spoken: [], readiness: {}, notes: {}, intents: {},
       questions: [], activeQuestion: null, interests: {}, replies: {}, seen: {}, extended: false,
     };
+    if (state.gameMode === 'crazy') state.crazy = {
+      intervalSeconds: [60, 120, 180].includes(Number(crazySeconds)) ? Number(crazySeconds) : 120,
+      paused: false, prompts: {}, nextAt: {}, sequence: {}, recent: {},
+    };
+    return state;
   }
   function order(state) {
     const remaining = list(state.remaining);
@@ -65,9 +114,15 @@ var TALK_ENGINE = (() => {
     const actor = Number(input.actor);
     if (actor !== 0 && !list(current.roster).some(p => p.playerNum === actor)) return current;
     if (list((current.seen || {})[actor]).includes(input.id)) return current;
+    // Idle scheduler checks do not produce revisions, acknowledgements or writes.
+    if (input.type === 'crazyTick' && actor === 0 && crazyEnabled(current)
+        && current.phase === 'talking' && !current.crazy.paused && !crazyDue(current, Number(input.now) || 0)) return current;
     const s = copy(current);
     for (const key of ['readiness', 'notes', 'intents', 'interests', 'replies', 'seen']) s[key] = s[key] || {};
     s.roster = list(s.roster); s.remaining = list(s.remaining); s.spoken = list(s.spoken); s.questions = list(s.questions);
+    if (crazyEnabled(s)) {
+      for (const key of ['prompts', 'nextAt', 'sequence', 'recent']) s.crazy[key] = s.crazy[key] || {};
+    }
     const host = actor === 0;
     const speaking = actor === s.speaker;
     let error = '';
@@ -97,6 +152,7 @@ var TALK_ENGINE = (() => {
         // their random relative order. Every person stays in this round.
         if (ready.length) s.remaining = [ready[0], ...s.remaining.filter(n => n !== ready[0])];
         nextSpeaker(s, input.seed);
+        startCrazy(s, input);
         break;
       }
       case 'ask':
@@ -150,6 +206,29 @@ var TALK_ENGINE = (() => {
         s.topic.starter = text;
         break;
       }
+      case 'crazyTick':
+      case 'crazySend':
+        if (!host || !crazyEnabled(s) || s.phase !== 'talking' || s.crazy.paused) { reject('not_available'); break; }
+        if (!assignCrazy(s, input, input.type === 'crazySend')) reject('not_available');
+        break;
+      case 'crazyPause':
+        if (!host || !crazyEnabled(s) || s.phase !== 'talking' || typeof input.paused !== 'boolean') { reject('not_available'); break; }
+        if (s.crazy.paused && !input.paused) {
+          for (const p of s.roster) if (s.crazy.prompts[p.playerNum]?.status !== 'pending') {
+            s.crazy.nextAt[p.playerNum] = (Number(input.now) || 0) + crazyDelay(s, input.seed, p.playerNum);
+          }
+        }
+        s.crazy.paused = input.paused;
+        break;
+      case 'crazyDone':
+      case 'crazySkip': {
+        if (host || !crazyEnabled(s) || s.phase !== 'talking') { reject('not_available'); break; }
+        const prompt = s.crazy.prompts[actor];
+        if (!prompt || prompt.status !== 'pending' || input.promptId !== prompt.id) { reject('stale_prompt'); break; }
+        prompt.status = input.type === 'crazyDone' ? 'done' : 'skipped';
+        s.crazy.nextAt[actor] = s.crazy.paused ? 0 : (Number(input.now) || 0) + crazyDelay(s, input.seed, actor);
+        break;
+      }
       case 'starters':
         if (!host || typeof input.show !== 'boolean') { reject('not_available'); break; }
         s.showStarters = input.show;
@@ -184,6 +263,16 @@ var TALK_ENGINE = (() => {
       game: 'letstalk', playerNum, name: mine?.name || null,
       talk: {
         version: 1, sessionId: s.sessionId, mode: s.mode, phase: s.phase, round: s.round,
+        gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
+        crazy: {
+          enabled: crazyEnabled(s), paused: crazyEnabled(s) ? !!s.crazy.paused : false,
+          intervalSeconds: crazyEnabled(s) ? s.crazy.intervalSeconds : 120,
+          prompt: crazyEnabled(s) && mine && s.crazy.prompts?.[playerNum] ? (() => {
+            const p = s.crazy.prompts[playerNum];
+            return { id: p.id, text: p.text, kind: p.kind, at: p.at, status: p.status };
+          })() : null,
+          pendingCount: crazyEnabled(s) ? list(s.crazy.prompts).filter(p => p.status === 'pending').length : 0,
+        },
         turnId: s.turnId, deadline: s.deadline, showStarters: !!s.showStarters, starter: starter(s.topic),
         // Keep the original followUp field in cards so already-open v0.1
         // player pages can display the newly selected question as well.
@@ -200,6 +289,6 @@ var TALK_ENGINE = (() => {
       },
     };
   }
-  return { create, apply, view, order, shuffle, list, followUps, starter };
+  return { create, apply, view, order, shuffle, list, followUps, starter, crazyDue };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_ENGINE;
