@@ -22,7 +22,10 @@
 .cut-feedback { font-size: .95rem; line-height: 1.6; color: #ffd39f; margin: 12px 0; }
 .cut-feedback:empty, #cut-sound-status:empty { display: none; }
 .cut-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.cut-setup-actions .cut-primary { flex: 1; }
+.cut-settings-hint { text-align: center; }
 .cut-session-actions { justify-content: center; margin: 18px 0; }
+.cut-session-actions .cut-primary { min-width: 160px; }
 .cut-bottom-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 18px 0; }
 .cut-sound { font-size: .88rem; }
 .cut-rules { padding: 6px 0 18px; }
@@ -37,6 +40,8 @@
 .cut-speaker h3 { font-size: clamp(2.7rem, 8vw, 5.4rem); font-weight: 850; line-height: 1.15; letter-spacing: -.04em; color: #fff0ed; margin-top: 12px; overflow-wrap: anywhere; }
 .cut-you { display: inline-block; padding: 6px 13px; margin-top: 16px; border-radius: 99px; color: #271014; background: #ff9689; font-size: .85rem; font-weight: 800; }
 .cut-cue { color: #dac7ca; font-size: 1.05rem; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+.cut-waiting { max-width: 40ch; font-weight: 500; line-height: 1.7; }
+.cut-begin { min-width: 170px; margin-top: 4px; }
 .cut-go { color: #c3e9c4; }
 .cut-countdown { font-size: 3.5rem; font-weight: 900; line-height: 1.1; color: #f6d9a8; min-height: 62px; }
 .cut-is-you { border: 2px solid #ff9386; }

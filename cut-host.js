@@ -6,7 +6,7 @@
   const demoRoster = ['Amy', 'Kevin', 'Jason', 'Willy'].map((name, i) => ({ playerNum: i + 1, name, active: true }));
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null;
-  let startingSession = null;
+  let startingSession = null, editing = false;
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -35,18 +35,24 @@
     const switched = status === 'switched';
     byId('status').textContent = ['setupNeeded', 'ready'].includes(status) ? '' : t(status);
     byId('setup-needed').hidden = status !== 'setupNeeded';
-    byId('setup').hidden = status === 'setupNeeded' || (!!cut && !switched);
-    byId('session').hidden = !cut || switched;
+    byId('setup').hidden = status === 'setupNeeded' || (!!cut && !switched && !editing);
+    byId('session').hidden = !cut || switched || editing;
+    byId('start').textContent = t(editing ? 'saveSettings' : 'start');
     byId('start').disabled = busy || !canControl();
+    byId('setup-close').hidden = !editing;
+    byId('setup-close').disabled = busy || !canControl();
+    byId('settings-hint').hidden = !editing;
     byId('error').textContent = error ? t(error) : '';
     if (cut && !switched) {
       const actor = demo ? Number(byId('demo-view').value) : 0;
-      const key = JSON.stringify([actor, cut.sessionId, cut.turnId, cut.phase, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      const key = JSON.stringify([actor, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (key !== sceneKey) { byId('scene').innerHTML = scene(cut, actor, now()); sceneKey = key; }
-      byId('pause').hidden = ['break', 'finished', 'stopped'].includes(cut.phase);
+      byId('begin').hidden = cut.phase !== 'ready';
+      byId('begin').disabled = busy || !canControl() || !cut.canBegin;
+      byId('pause').hidden = ['setup', 'ready', 'break', 'finished', 'stopped'].includes(cut.phase);
       byId('pause').textContent = t(cut.phase === 'paused' ? 'resume' : 'pause');
       byId('next').hidden = cut.phase !== 'break';
-      for (const id of ['pause', 'next', 'restart', 'stop']) byId(id).disabled = busy || !canControl();
+      for (const id of ['pause', 'next', 'settings-open', 'restart', 'stop']) byId(id).disabled = busy || !canControl();
       byId('manage-open').disabled = busy || !canControl();
       renderRoster(cut);
     }
@@ -70,38 +76,64 @@
     if (fresh) startingSession = null;
   }
   async function command(type, extra = {}) {
-    if (busy || !state || !canControl()) return;
+    if (busy || !state || !canControl()) return false;
     busy = true; error = ''; render();
+    let succeeded = false;
     try {
       if (demo) {
         state = CUT_ENGINE.apply(state, { ...extra, id: uid(), type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: now(), seed: seed() });
         error = state.replies?.[0]?.error || '';
       } else await sync.command(type, extra);
+      succeeded = !error;
     } catch (e) { error = knownError(e.message); }
     finally { busy = false; render(); }
+    return succeeded;
   }
-  async function start() {
+  async function start(restart = false) {
     if (busy || !canControl()) return;
-    // This call runs inside the Start click gesture, allowing Web Audio on mobile.
+    // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
     const audioReady = sound.enabled ? sound.unlock() : Promise.resolve(false);
+    if (editing && !restart) {
+      const saved = await command('configure', { speed: byId('speed').value, category: byId('category').value });
+      if (saved) { editing = false; render(); }
+      return;
+    }
     busy = true; error = ''; render();
     try {
       await audioReady;
       if (!canControl()) return;
-      const options = { speed: byId('speed').value, category: byId('category').value };
+      const options = restart && state ? { speed: state.speed, category: state.category } : { speed: byId('speed').value, category: byId('category').value };
       startingSession = state?.sessionId || '';
       if (demo) {
         state = CUT_ENGINE.create({ ...options, id: uid(), roster: demoRoster, now: now(), seed: seed() });
       } else await sync.start(options);
+      editing = false;
       byId('manage').close();
     } catch (e) { startingSession = null; error = knownError(e.message); }
     finally { busy = false; render(); }
   }
+  async function openSettings() {
+    if (await command('settings')) {
+      byId('speed').value = state.speed;
+      byId('category').value = state.category;
+      editing = true; byId('manage').close(); sound.silence(); render();
+      byId('speed').focus();
+    }
+  }
+  async function closeSettings() {
+    if (await command('cancelSettings')) { editing = false; render(); }
+  }
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
+  byId('setup-close').addEventListener('click', closeSettings);
+  byId('settings-open').addEventListener('click', openSettings);
+  byId('begin').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('begin'); });
+  byId('scene').addEventListener('click', event => {
+    if (event.target.closest('[data-cut-action="begin"]')) { if (sound.enabled) sound.unlock(); command('begin'); }
+  });
   byId('pause').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command(state?.phase === 'paused' ? 'resume' : 'pause'); });
   byId('next').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('next'); });
   byId('manage-open').addEventListener('click', () => { if (state) byId('manage').showModal(); });
-  byId('restart').addEventListener('click', start);
+  byId('restart').addEventListener('click', () => start(true));
   byId('stop').addEventListener('click', async () => { await command('stop'); byId('manage').close(); });
   byId('roster').addEventListener('click', event => {
     const button = event.target.closest('[data-cut-roster]');
@@ -126,8 +158,14 @@
     else {
       ROOM.init({ mount: 'room-mount', hideSetup: true, accent: '#ff7a6e', counts: [2, 3, 4, 5, 6, 7, 8, 9], defaultCount: 4 });
       sync = new CUT_SYNC.Host({ room: ROOM, db: firebase.database(),
-        onChange: next => { if (state?.turnId !== next?.turnId) error = ''; state = next; render(); },
-        onStatus: next => { status = next; if (next === 'switched') { sound.silence(); sceneKey = ''; byId('manage').close(); } render(); },
+        onChange: next => {
+          if (state?.turnId !== next?.turnId) error = '';
+          if (next?.phase === 'setup' && (state?.phase !== 'setup' || state?.sessionId !== next?.sessionId)) {
+            byId('speed').value = next.speed; byId('category').value = next.category;
+          }
+          editing = next?.phase === 'setup'; state = next; render();
+        },
+        onStatus: next => { status = next; if (next === 'switched') { editing = false; sound.silence(); sceneKey = ''; byId('manage').close(); } render(); },
       });
       sync.connect();
     }
@@ -137,7 +175,7 @@
   timer = setInterval(() => {
     if (closed) return;
     // Simulation alone advances locally. Live rooms have one authoritative sync host.
-    if (demo && state && !busy && !['paused', 'break', 'finished', 'stopped'].includes(state.phase)) {
+    if (demo && state && !busy && !['setup', 'ready', 'paused', 'break', 'finished', 'stopped'].includes(state.phase)) {
       const next = CUT_ENGINE.apply(state, { id: uid(), type: 'tick', actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: now(), seed: seed() });
       if (next.turnId !== state.turnId || next.phase !== state.phase) { state = next; render(); }
       else state = next;

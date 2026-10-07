@@ -3,16 +3,18 @@ var CUT_UI = (() => {
   'use strict';
   const dict = {
     intro: ['講到一半突然 CUT！下一位直接把你的半句話接下去。', 'A sudden CUT! Someone else has to finish your unfinished sentence.'],
-    speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常', 'Normal'], chill: ['Chill · 輕鬆', 'Chill'], chaos: ['Chaos · 快節奏', 'Chaos'],
+    speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（9–18 秒）', 'Normal · 9–18 seconds'], chill: ['Chill · 輕鬆（12–24 秒）', 'Chill · 12–24 seconds'], chaos: ['Chaos · 瘋狂（5–12 秒）', 'Chaos · 5–12 seconds'],
     category: ['題目類型', 'Topics'], mixed: ['生活＋荒謬', 'Life + absurd situations'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'],
-    start: ['開始 CUT!', 'Start CUT!'], pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
+    start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
+    waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
+    pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
     manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'], restart: ['重新開始', 'Restart'], stop: ['結束遊戲', 'End game'],
     topic: ['這次聊什麼', 'THE TOPIC'], current: ['目前發言者', 'CURRENT SPEAKER'], nextPlayer: ['下一位', 'NEXT PLAYER'],
     you: ['是你！', 'THAT’S YOU!'], getReady: ['準備開口…', 'Get ready to speak…'], continue: ['接著那半句說！', 'CONTINUE THE HALF-SENTENCE!'],
     go: ['GO! 開始說！', 'GO! KEEP TALKING'], listen: ['聽著，隨時可能輪到你。', 'Listen. Your turn can come at any moment.'],
     speakHint: ['自然地講下去，CUT 出現就停。', 'Keep talking naturally. Stop as soon as CUT appears.'],
     cutHint: ['停！話交給下一位。', 'STOP! Hand over the unfinished thought.'],
-    breakTitle: ['先笑一笑，聊一下。', 'TAKE A BREATHER'], breakHint: ['主持人準備好就換下一題。', 'Chat and laugh. The host will start the next topic.'],
+    breakTitle: ['先笑一笑，聊一下。', 'TAKE A BREATHER'], breakHint: ['主持人按下一題顯示新話題，準備好再按開始。', 'The host reveals the next topic. Tap Start when everyone is ready.'],
     finalCut: ['這題到這裡！', 'THAT’S IT FOR THIS TOPIC!'], paused: ['已暫停', 'PAUSED'], pausedHint: ['繼續聊天，主持人準備好就恢復。', 'Keep chatting. The host will resume when you’re ready.'],
     finished: ['今天的話先說到這裡！', 'THAT’S A WRAP!'], finishedHint: ['想繼續玩，請主持人重新開始。', 'Ask the host to restart for more CUT!'],
     sittingOut: ['你目前先休息，仍然可以自由聊天。', 'You’re sitting out of the draw. Keep chatting freely.'],
@@ -21,7 +23,7 @@ var CUT_UI = (() => {
     soundBlocked: ['按「啟用音效」讓瀏覽器播放提示音。', 'Tap “Enable sound” to allow the browser to play cues.'],
     soundUnsupported: ['這個瀏覽器無法播放提示音，請依畫面接棒。', 'This browser can’t play cues. Follow the screen to pass the turn.'],
     rules: ['怎麼玩', 'How to play'],
-    rule1: ['看到 GO 就開口。CUT 一出現立刻停下，畫面才會公布下一位。', 'Speak on GO. Stop immediately on CUT. Only then is the next player revealed.'],
+    rule1: ['先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。', 'Read the topic, then the host or a player taps “Start talking” to start the countdown. Speak on GO and stop on CUT.'],
     rule2: ['下一位假裝自己就是上一個人，直接接那半句；不要重新回答題目。', 'Pretend you are the previous speaker. Continue their half-sentence, rather than starting a new answer.'],
     rule3: ['可以亂編、互虧和自由吐槽。一題結束，先笑一笑，主持人再按下一題。', 'Make things up, tease each other, and jump in. Laugh between topics, then the host moves on.'],
     ruleExample: ['例如：「他把——」CUT！「——護照丟進了垃圾桶。」', 'For example: “He threw his—” CUT! “—passport into the bin.”'],
@@ -34,7 +36,7 @@ var CUT_UI = (() => {
     offline: ['連線暫時中斷，正在重新連線…', 'Connection lost. Reconnecting…'], ready: ['', ''], connecting: ['正在連線…', 'Connecting…'],
     hostAway: ['等待主持頁重新連線。先自由聊天。', 'Waiting for the host to reconnect. Keep chatting.'],
     other_host: ['另一個主持頁正在控制房間。關閉那頁後，這裡會接續。', 'Another host tab is controlling this room. Close it to continue here.'],
-    switched: ['房間已切換到其他遊戲。按「開始 CUT!」可以再玩。', 'The room has switched to another game. Start CUT! to play again.'],
+    switched: ['房間已切換到其他遊戲。按「顯示話題」可以再玩。', 'The room has switched to another game. Tap “Show topic” to play again.'],
     noFirebase: ['目前無法連線到玩家頁，請檢查網路後重新整理。', 'Player pages are unavailable. Check your connection and reload.'],
     roomChanged: ['房間已變更。重新載入此頁以使用新房間。', 'The room changed. Reload this page to use the new room.'],
     not_enough_players: ['至少要有兩位參與抽選的玩家。', 'At least two players must be in the draw.'],
@@ -66,7 +68,10 @@ var CUT_UI = (() => {
     const personal = Number(actor) > 0 && Number(actor) === Number(shownSpeaker);
     const inPlay = ['countdown', 'speaking', 'handoff'].includes(phase);
     let floor;
-    if (isCut) {
+    if (phase === 'ready' || phase === 'setup') {
+      floor = speaker(cut, shownSpeaker, t('current'), personal) + `<p class="cut-cue cut-waiting">${esc(t(phase === 'setup' ? 'configuring' : 'waitingBegin'))}</p>`;
+      if (phase === 'ready' && Number(actor) > 0 && cut.canBegin) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="begin">${esc(t('begin'))}</button>`;
+    } else if (isCut) {
       floor = `<div class="cut-burst" aria-label="CUT!"><strong>CUT!</strong><p>${esc(t(cut.cutEvent?.final ? 'finalCut' : 'cutHint'))}</p></div>`;
       if (next) floor += speaker(cut, next, t('nextPlayer'), Number(actor) === Number(next), 'cut-reveal');
     } else if (inPlay) {
@@ -91,19 +96,32 @@ var CUT_UI = (() => {
   }
 
   class Card {
-    constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '' } = {}) {
-      this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner;
-      this.data = null; this.destroyed = false; this.renderKey = '';
+    constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '', send = null } = {}) {
+      this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send;
+      this.data = null; this.destroyed = false; this.renderKey = ''; this.pending = null; this.error = '';
+      this.click = event => {
+        const button = event.target.closest('[data-cut-action="begin"]');
+        if (button && !button.disabled) this.begin();
+      };
+      this.element.addEventListener('click', this.click);
       this.timer = setInterval(() => this.paint(), 150);
     }
     update(data) {
       if (this.destroyed || !data?.cut) return;
+      const previous = this.data?.cut;
       this.data = data;
       const cut = data.cut;
-      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      if (previous?.sessionId !== cut.sessionId || previous?.turnId !== cut.turnId) this.error = '';
+      if (this.pending && cut.reply?.id === this.pending.id) {
+        this.error = cut.reply.error ? t(['stale_turn', 'not_available', 'not_enough_players'].includes(cut.reply.error) ? cut.reply.error : 'error') : '';
+        this.pending = null;
+      } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
+      const request = data.cutAction;
+      if (!this.pending && cut.phase === 'ready' && request?.type === 'begin' && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (this.renderKey !== key) {
         this.renderKey = key;
-        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now())}</div><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now())}</div><p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
       }
       this.paint();
     }
@@ -114,8 +132,28 @@ var CUT_UI = (() => {
       if (clock) clock.textContent = countdown(cut, now) || 'GO!';
       const connection = this.element.querySelector('[data-cut-connection]');
       if (connection) connection.textContent = !this.connected() ? t('offline') : cut.hostLiveUntil && now > cut.hostLiveUntil ? t('hostAway') : '';
+      const button = this.element.querySelector('[data-cut-action="begin"]');
+      if (button) button.disabled = !this.canBegin();
+      const feedback = this.element.querySelector('[data-cut-action-status]');
+      if (feedback) feedback.textContent = this.error || (this.pending ? t('sending') : '');
     }
-    destroy() { clearInterval(this.timer); this.data = null; this.destroyed = true; }
+    canBegin() {
+      const cut = this.data?.cut;
+      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && cut?.phase === 'ready' && cut.canBegin === true && (!cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
+    }
+    async begin() {
+      if (!this.canBegin()) return;
+      const cut = this.data.cut;
+      const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cut-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const command = { id, sessionId: cut.sessionId, turnId: cut.turnId, type: 'begin' };
+      this.pending = command; this.error = ''; this.paint();
+      try { await this.send(command); }
+      catch (e) {
+        if (this.destroyed || this.pending?.id !== command.id) return;
+        this.pending = null; this.error = t(e.message === 'stale_turn' ? 'stale_turn' : 'error'); this.paint();
+      }
+    }
+    destroy() { clearInterval(this.timer); this.element.removeEventListener('click', this.click); this.data = null; this.pending = null; this.destroyed = true; }
   }
 
   /* Cues are synthesized locally, with no asset downloads or microphone use.
@@ -181,7 +219,7 @@ var CUT_UI = (() => {
           }
           else if (cut.phase === 'speaking' && ['countdown', 'handoff'].includes(previous?.phase)) this.cue('go');
           else if (cut.phase === 'countdown' && (fresh || previous?.phase !== 'countdown' || previous?.sessionId !== cut.sessionId)) this.cue('round');
-          else if (['paused', 'finished', 'stopped'].includes(cut.phase)) this.silence();
+          else if (['setup', 'ready', 'paused', 'finished', 'stopped'].includes(cut.phase)) this.silence();
         }
       }
       const seconds = countdown(cut, now);

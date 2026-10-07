@@ -13,7 +13,7 @@ test('CUT is the final Hub game and original player cards have lifecycle cleanup
 });
 test('CUT host loads independent modules in dependency order and assets exist', () => {
   const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
-  const files = [...html.matchAll(/<script src="(cut-[^\"]+\.js)"/g)].map(match => match[1]);
+  const files = [...html.matchAll(/<script src="(cut-[^\"]+\.js)(?:\?[^\"]*)?"/g)].map(match => match[1]);
   assert.deepEqual(files, ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-ui.js', 'cut-sync.js', 'cut-host.js']);
   for (const file of files) { assert.ok(fs.existsSync(path.join(root, file))); new vm.Script(fs.readFileSync(path.join(root, file), 'utf8')); }
   assert.ok(fs.existsSync(path.join(root, 'cut.css')));

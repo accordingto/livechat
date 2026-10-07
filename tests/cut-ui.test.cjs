@@ -1,6 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
 const UI = require('../cut-ui.js');
+const ENGINE = require('../cut-engine.js');
 const sample = (extra = {}) => ({
   sessionId: 'session', turnId: 1, phase: 'speaking', speaker: 1,
   topic: { question: 'I opened the door and saw…' },
@@ -27,7 +30,23 @@ test('prep counts down while paused and stopped have no countdown', () => {
   const prep = sample({ phase: 'handoff', nextSpeaker: 2, phaseUntil: 4000 });
   assert.equal(UI.countdown(prep, 1100), 3);
   assert.match(UI.scene(prep, 2, 1100), /data-cut-countdown[^>]*>3</);
-  for (const phase of ['paused', 'stopped', 'break']) assert.doesNotMatch(UI.scene(sample({ phase, phaseUntil: 4000 })), /data-cut-countdown/);
+  for (const phase of ['setup', 'ready', 'paused', 'stopped', 'break']) assert.doesNotMatch(UI.scene(sample({ phase, phaseUntil: 4000 })), /data-cut-countdown/);
+});
+
+test('revealed topic waits for an explicit start and only eligible player views offer Begin', () => {
+  const ready = sample({ phase: 'ready', canBegin: true });
+  const host = UI.scene(ready, 0), player = UI.scene(ready, 2);
+  for (const html of [host, player]) {
+    assert.match(html, /I opened the door and saw/);
+    assert.match(html, /主持人或任一玩家/);
+    assert.doesNotMatch(html, /data-cut-countdown|GO!/);
+  }
+  assert.doesNotMatch(host, /data-cut-action="begin"/);
+  assert.match(player, /data-cut-action="begin"/);
+  assert.doesNotMatch(UI.scene({ ...ready, canBegin: false }, 2), /data-cut-action="begin"/);
+  const editing = UI.scene({ ...ready, phase: 'setup', canBegin: false }, 2);
+  assert.match(editing, /正在調整設定/);
+  assert.doesNotMatch(editing, /data-cut-action="begin"|data-cut-countdown/);
 });
 
 test('topic and player names are escaped on host and player surfaces', () => {
@@ -63,8 +82,8 @@ test('sound cues run once per CUT event and never replay upon reconnect or roste
 });
 
 test('card heartbeat preserves current DOM and destroy clears its only paint interval', () => {
-  let html = '', writes = 0, intervalCount = 0, clears = 0;
-  const element = { get innerHTML() { return html; }, set innerHTML(value) { html = value; writes++; }, querySelector() { return null; } };
+  let html = '', writes = 0, intervalCount = 0, clears = 0, added, removed;
+  const element = { get innerHTML() { return html; }, set innerHTML(value) { html = value; writes++; }, querySelector() { return null; }, addEventListener(type, fn) { assert.equal(type, 'click'); added = fn; }, removeEventListener(type, fn) { assert.equal(type, 'click'); removed = fn; } };
   const originalSet = global.setInterval, originalClear = global.clearInterval;
   global.setInterval = () => { intervalCount++; return 42; };
   global.clearInterval = id => { assert.equal(id, 42); clears++; };
@@ -73,6 +92,147 @@ test('card heartbeat preserves current DOM and destroy clears its only paint int
     const payload = { playerNum: 1, name: 'Amy', cut: sample() };
     card.update(payload); card.update({ ...payload, cut: { ...payload.cut, hostLiveUntil: 5000, revision: 2 } });
     assert.equal(writes, 1); assert.equal(intervalCount, 1);
-    card.destroy(); card.update(payload); assert.equal(writes, 1); assert.equal(clears, 1);
+    card.destroy(); card.update(payload); assert.equal(writes, 1); assert.equal(clears, 1); assert.equal(added, removed);
   } finally { global.setInterval = originalSet; global.clearInterval = originalClear; }
+});
+
+function playerCard(send, extra = {}) {
+  const nodes = { button: { disabled: false }, feedback: { textContent: '' }, connection: { textContent: '' } };
+  let click;
+  const element = {
+    innerHTML: '',
+    querySelector(selector) { return selector === '[data-cut-action="begin"]' ? nodes.button : selector === '[data-cut-action-status]' ? nodes.feedback : selector === '[data-cut-connection]' ? nodes.connection : null; },
+    addEventListener(type, handler) { click = handler; },
+    removeEventListener(type, handler) { assert.equal(handler, click); click = null; },
+  };
+  const card = new UI.Card(element, { send, now: () => 1000, ...extra });
+  const payload = { playerNum: 2, name: 'Jason', cut: sample({ phase: 'ready', canBegin: true, hostLiveUntil: 5000 }) };
+  card.update(payload);
+  return { card, nodes, element, payload, click: () => click?.({ target: { closest: () => nodes.button } }) };
+}
+
+test('player Begin sends current session and turn once, waits for acknowledgement and removes handler on destroy', async () => {
+  const sent = [], f = playerCard(async command => sent.push(command));
+  try {
+    f.click(); f.click();
+    await Promise.resolve();
+    assert.equal(sent.length, 1);
+    assert.match(sent[0].id, /^[\w-]{8,100}$/);
+    assert.deepEqual({ ...sent[0], id: 'id' }, { id: 'id', sessionId: 'session', turnId: 1, type: 'begin' });
+    assert.equal(f.nodes.button.disabled, true);
+    assert.match(f.nodes.feedback.textContent, /等待同步/);
+    f.card.update({ ...f.payload, cut: { ...f.payload.cut, turnId: 2, phase: 'countdown', reply: { id: sent[0].id, error: '' } } });
+    assert.equal(f.card.pending, null);
+    assert.equal(f.nodes.feedback.textContent, '');
+    f.card.destroy(); f.click();
+    assert.equal(sent.length, 1);
+  } finally { if (!f.card.destroyed) f.card.destroy(); }
+});
+
+test('player Begin is blocked while disconnected, host lease expired, sitting out, or settings are open', async () => {
+  let clock = 1000, online = true;
+  const sent = [], f = playerCard(async command => sent.push(command), { now: () => clock, connected: () => online });
+  try {
+    online = false; f.card.paint(); f.click();
+    assert.equal(f.nodes.button.disabled, true); assert.match(f.nodes.connection.textContent, /連線/);
+    online = true; clock = 6000; f.card.paint(); f.click();
+    assert.equal(f.nodes.button.disabled, true); assert.match(f.nodes.connection.textContent, /主持頁/);
+    clock = 1000;
+    for (const cut of [{ ...f.payload.cut, canBegin: false }, { ...f.payload.cut, phase: 'setup', canBegin: false }, { ...f.payload.cut, phase: 'speaking' }]) {
+      f.card.update({ ...f.payload, cut }); f.click();
+      assert.equal(f.nodes.button.disabled, true);
+    }
+    await Promise.resolve(); assert.equal(sent.length, 0);
+  } finally { f.card.destroy(); }
+});
+
+test('stale player Begin shows a recoverable message; existing pending request survives a card refresh', async () => {
+  const request = { id: 'pending-cut-action', sessionId: 'session', turnId: 1, type: 'begin' };
+  const sent = [], f = playerCard(async command => { sent.push(command); throw new Error('stale_turn'); });
+  try {
+    f.card.update({ ...f.payload, cutAction: request });
+    assert.equal(f.card.pending, request); f.click(); assert.equal(sent.length, 0);
+    f.card.update({ ...f.payload, cutAction: request, cut: { ...f.payload.cut, reply: { id: request.id, error: 'stale_turn' } } });
+    assert.equal(f.card.pending, null); assert.match(f.nodes.feedback.textContent, /畫面已更新/);
+    await f.card.begin();
+    assert.equal(sent.length, 1); assert.equal(f.card.pending, null);
+    assert.match(f.nodes.feedback.textContent, /畫面已更新/);
+    assert.equal(f.nodes.button.disabled, false);
+  } finally { f.card.destroy(); }
+});
+
+test('topic reveal stays silent until the explicit Begin transition starts countdown cues', () => {
+  const sound = new UI.Sound(), cues = [];
+  sound.cue = cue => cues.push(cue);
+  sound.update(sample({ phase: 'ready', canBegin: true }), 1000, true);
+  sound.update(sample({ phase: 'ready', canBegin: true }), 90000);
+  assert.deepEqual(cues, []);
+  sound.update(sample({ turnId: 2, phase: 'countdown', phaseUntil: 93000 }), 90000);
+  assert.deepEqual(cues, ['round', 'tick']);
+  sound.close();
+});
+
+test('host can return to settings mid-speech, preserve the topic and wait again after saving or cancelling', async () => {
+  let time = 1000, serial = 0, interval;
+  const elements = new Map();
+  function element(id) {
+    if (!elements.has(id)) elements.set(id, {
+      innerHTML: '', textContent: '', value: id === 'cut-speed' ? 'normal' : id === 'cut-category' ? 'mixed' : '0', hidden: false, disabled: false,
+      events: {}, addEventListener(type, callback) { this.events[type] = callback; }, setAttribute() {}, querySelector() { return null; },
+      close() {}, showModal() {}, focus() {},
+    });
+    return elements.get(id);
+  }
+  class QuietSound {
+    constructor() { this.enabled = false; this.context = null; }
+    unlock() { return Promise.resolve(false); } update() {} silence() {} close() {} toggle() {}
+  }
+  const context = {
+    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: ENGINE, CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
+    I18N: { applyStatic() {}, onChange() {} }, document: { getElementById: element }, location: { search: '?demo=1' },
+    URLSearchParams, crypto: { getRandomValues: array => { array[0] = 314; return array; } },
+    Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {},
+    window: { addEventListener() {} },
+  };
+  vm.runInNewContext(fs.readFileSync(require.resolve('../cut-host.js'), 'utf8'), context);
+  const click = async id => {
+    element('cut-' + id).events.click?.({ target: { closest: () => null } });
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+  };
+  const submit = async () => {
+    element('cut-setup').events.submit({ preventDefault() {} });
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+  };
+  const scene = () => element('cut-scene').innerHTML;
+  assert.equal(element('cut-start').textContent, UI.t('start'));
+  await submit();
+  assert.match(scene(), /data-cut-phase="ready"/);
+  const topic = scene().match(/<h2>(.*?)<\/h2>/s)[1];
+  time += 60000; interval();
+  assert.match(scene(), /data-cut-phase="ready"/);
+  assert.equal(element('cut-begin').hidden, false);
+  await click('begin');
+  assert.match(scene(), /data-cut-phase="countdown"/);
+  time += 3000; interval();
+  assert.match(scene(), /data-cut-phase="speaking"/);
+  assert.equal(element('cut-settings-open').hidden, false);
+  await click('settings-open');
+  assert.equal(element('cut-setup').hidden, false); assert.equal(element('cut-session').hidden, true);
+  assert.equal(element('cut-start').textContent, UI.t('saveSettings'));
+  assert.equal(element('cut-speed').value, 'normal');
+  time += 120000; interval();
+  assert.match(scene(), /data-cut-phase="setup"/);
+  element('cut-speed').value = 'chill';
+  await submit();
+  assert.equal(element('cut-setup').hidden, true); assert.equal(element('cut-session').hidden, false);
+  assert.match(scene(), /data-cut-phase="ready"/);
+  assert.equal(scene().match(/<h2>(.*?)<\/h2>/s)[1], topic);
+  time += 120000; interval(); assert.match(scene(), /data-cut-phase="ready"/);
+  await click('settings-open');
+  assert.equal(element('cut-speed').value, 'chill');
+  element('cut-speed').value = 'chaos';
+  await click('setup-close');
+  assert.match(scene(), /data-cut-phase="ready"/);
+  await click('settings-open');
+  assert.equal(element('cut-speed').value, 'chill', 'cancel keeps the last saved pace');
 });

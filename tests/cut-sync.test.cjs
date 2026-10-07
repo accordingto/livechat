@@ -84,12 +84,19 @@ function setup() {
   };
 }
 
-test('exact canonical JSON and filtered cards run an authoritative countdown, CUT and handoff', async () => {
+test('exact canonical JSON and filtered cards wait for Begin, then run an authoritative countdown, CUT and handoff', async () => {
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   const raw = f.db.values.get(`rooms/CUTTEST/players/${f.extras.cutControlToken}`);
   assert.equal(typeof raw.stateJson, 'string'); assert.equal(raw.state, undefined);
   assert.ok(Array.isArray(f.state().roster)); assert.ok(Array.isArray(f.state().recent));
-  assert.equal(f.card(1).game, 'cut'); assert.equal(f.card(4).cut.phase, 'countdown');
+  assert.equal(f.card(1).game, 'cut'); assert.equal(f.card(4).cut.phase, 'ready');
+  const readyTurn = h.latest.turnId, topic = h.latest.topic.id, firstSpeaker = h.latest.speaker;
+  await f.advance(h, f.now + 60000);
+  assert.equal(h.latest.phase, 'ready'); assert.equal(h.latest.turnId, readyTurn);
+  assert.equal(h.latest.topic.id, topic); assert.equal(h.latest.speaker, firstSpeaker);
+  assert.equal(h.latest.deadline, null); assert.equal(h.latest.phaseUntil, null);
+  assert.equal(f.card(4).cut.canBegin, true); assert.equal(f.card(4).cut.phaseUntil, undefined);
+  await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'countdown');
   const session = h.latest.sessionId, countdown = h.latest.phaseUntil;
   await f.advance(h, countdown - 1); assert.equal(h.latest.phase, 'countdown');
   await f.advance(h, countdown); assert.equal(h.latest.phase, 'speaking');
@@ -114,6 +121,7 @@ test('exact canonical JSON and filtered cards run an authoritative countdown, CU
 
 test('one host lease owns RNG and clocks; replacement retains the exact ongoing state', async () => {
   const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first);
+  await first.command('begin'); await settle(first);
   await f.advance(first, first.latest.phaseUntil);
   const original = [first.latest.sessionId, first.latest.turnId, first.latest.speaker, first.latest.deadline];
   const second = f.host(); await settle(first, second);
@@ -138,6 +146,78 @@ test('player actor spoofing cannot pause or advance and concurrent projection pr
   await f.db.ref(f.paths[1]).transaction(old => ({ ...old, cutAction: action })); await settle(h);
   assert.equal(f.card(1).cut.revision, revision, 'repeated action does not cause another canonical write');
   h.close();
+});
+
+test('simultaneous host and active-player Begin requests start one countdown and cannot consume it twice', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  const initial = { sessionId: h.latest.sessionId, turnId: h.latest.turnId };
+  const originalSpeaker = h.latest.speaker;
+  const results = await Promise.allSettled([
+    f.action(1, 'begin', initial), f.action(2, 'begin', initial), h.command('begin'),
+  ]);
+  await settle(h);
+  assert.equal(h.latest.phase, 'countdown'); assert.equal(h.latest.turnId, initial.turnId + 1);
+  assert.equal(h.latest.speaker, originalSpeaker); assert.equal(h.latest.phaseUntil, f.now + 3000);
+  const playerActions = results.slice(0, 2).map(result => result.value);
+  assert.ok(playerActions.every(Boolean));
+  for (let n = 1; n <= 2; n++) {
+    assert.equal(f.card(n).cut.reply.id, playerActions[n - 1].id);
+    assert.ok(['', undefined, 'stale_turn'].includes(f.card(n).cut.reply.error));
+  }
+  const accepted = Object.values(h.latest.replies).filter(reply => !reply.error);
+  assert.equal(accepted.length, 1);
+  const countdownTurn = h.latest.turnId;
+  await f.action(3, 'begin', initial); await settle(h);
+  assert.equal(h.latest.turnId, countdownTurn); assert.equal(h.latest.phase, 'countdown');
+  assert.equal(f.card(3).cut.reply.error, 'stale_turn');
+  await f.advance(h, h.latest.phaseUntil);
+  assert.equal(h.latest.phase, 'speaking'); assert.equal(h.latest.turnId, countdownTurn + 1);
+  h.close();
+});
+
+test('inactive players cannot Begin or impersonate host controls; an active player can Begin', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  await h.command('exclude', { playerNum: 4, active: false }); await settle(h);
+  assert.equal(f.card(4).cut.canBegin, false); assert.equal(f.card(3).cut.canBegin, true);
+  const turnId = h.latest.turnId;
+  const excludedBegin = await f.action(4, 'begin', { actor: 0 }); await settle(h);
+  assert.equal(h.latest.phase, 'ready'); assert.equal(h.latest.turnId, turnId);
+  assert.equal(f.card(4).cut.reply.id, excludedBegin.id); assert.equal(f.card(4).cut.reply.error, 'not_available');
+  await f.action(3, 'settings', { actor: 0 }); await settle(h);
+  assert.equal(h.latest.phase, 'ready'); assert.equal(f.card(3).cut.reply.error, 'not_available');
+  await f.action(3, 'begin'); await settle(h);
+  assert.equal(h.latest.phase, 'countdown'); assert.equal(h.latest.turnId, turnId + 1);
+  assert.equal(f.card(3).cut.reply.error ?? '', ''); h.close();
+});
+
+test('host Settings holds setup indefinitely and blocks player Begin until Configure or Cancel returns ready', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  const topic = h.latest.topic.id, session = h.latest.sessionId;
+  await h.command('settings'); await settle(h);
+  assert.equal(h.latest.phase, 'setup'); const setupTurn = h.latest.turnId;
+  await f.advance(h, f.now + 60000);
+  assert.equal(h.latest.phase, 'setup'); assert.equal(h.latest.turnId, setupTurn);
+  assert.equal(h.latest.deadline, null); assert.equal(h.latest.phaseUntil, null);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).cut.canBegin, false);
+  await f.action(1, 'begin'); await settle(h);
+  assert.equal(h.latest.phase, 'setup'); assert.equal(f.card(1).cut.reply.error, 'not_available');
+  await f.action(2, 'configure', { actor: 0, speed: 'chaos', category: 'absurd' }); await settle(h);
+  assert.equal(h.latest.phase, 'setup'); assert.equal(h.latest.speed, 'normal');
+  assert.equal(f.card(2).cut.reply.error, 'not_available');
+  await h.command('configure', { speed: 'chaos', category: 'absurd' }); await settle(h);
+  assert.equal(h.latest.phase, 'ready'); assert.equal(h.latest.speed, 'chaos'); assert.equal(h.latest.category, 'absurd');
+  assert.equal(h.latest.topic.id, topic); assert.equal(h.latest.sessionId, session);
+  await f.advance(h, f.now + 60000); assert.equal(h.latest.phase, 'ready');
+  await f.action(2, 'begin'); await settle(h); assert.equal(h.latest.phase, 'countdown');
+  await f.advance(h, h.latest.phaseUntil); assert.equal(h.latest.phase, 'speaking');
+  assert.ok(h.latest.deadline > f.now); assert.equal(f.card(2).cut.deadline, undefined);
+  await h.command('settings'); await settle(h); assert.equal(h.latest.phase, 'setup');
+  assert.equal(h.latest.deadline, null); assert.equal(f.card(2).cut.phaseUntil, undefined);
+  await f.action(3, 'begin'); await settle(h); assert.equal(h.latest.phase, 'setup');
+  await h.command('cancelSettings'); await settle(h); assert.equal(h.latest.phase, 'ready');
+  assert.equal(h.latest.speed, 'chaos'); assert.equal(h.latest.category, 'absurd');
+  await f.advance(h, f.now + 60000); assert.equal(h.latest.phase, 'ready');
+  await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'countdown'); h.close();
 });
 
 test('switching games suspends publishing/ticks; an explicit new game restores the original cards', async () => {
@@ -187,13 +267,19 @@ test('restart rejects old session intents and completes a round with no score or
   await h.start({ category: 'real' }); await settle(h);
   assert.notEqual(h.latest.sessionId, previous.sessionId);
   await f.action(1, 'stop', { sessionId: previous.sessionId, turnId: previous.turnId, actor: 0 }); await settle(h);
+  assert.equal(h.latest.phase, 'ready');
+  await f.action(1, 'begin'); await settle(h);
   assert.equal(h.latest.phase, 'countdown');
   for (let index = 0; index < 40 && h.latest.phase !== 'break'; index++) {
     await f.advance(h, h.latest.phase === 'speaking' ? h.latest.deadline : h.latest.phaseUntil);
   }
   assert.equal(h.latest.phase, 'break'); assert.equal(h.latest.cutsCompleted, h.latest.targetCuts);
   assert.equal(f.card(1).cut.score, undefined); assert.equal(f.timers.size, 2);
-  await h.command('next'); await settle(h); assert.equal(h.latest.phase, 'countdown'); assert.equal(h.latest.round, 2);
+  await h.command('next'); await settle(h); assert.equal(h.latest.phase, 'ready'); assert.equal(h.latest.round, 2);
+  const nextTurn = h.latest.turnId, nextTopic = h.latest.topic.id;
+  await f.advance(h, f.now + 60000);
+  assert.equal(h.latest.phase, 'ready'); assert.equal(h.latest.turnId, nextTurn); assert.equal(h.latest.topic.id, nextTopic);
+  await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'countdown');
   h.close(); assert.equal(f.timers.size, 0);
 });
 
@@ -201,6 +287,7 @@ test('early pulses do no network writes; disconnect, close and room changes stop
   const f = setup(), h = f.host(); await settle(h); h.connect(); assert.equal(f.timers.size, 2);
   await h.start(); await settle(h); const writes = f.db.writes;
   for (let n = 0; n < 50; n++) h.pulse(); await settle(h); assert.equal(f.db.writes, writes);
+  await h.command('begin'); await settle(h);
   f.db.put('.info/connected', false); await settle(h);
   f.now = h.latest.phaseUntil; h.pulse(); await settle(h); assert.equal(h.latest.phase, 'countdown');
   f.db.put('.info/connected', true); await settle(h); h.pulse(); await settle(h); assert.equal(h.latest.phase, 'speaking');

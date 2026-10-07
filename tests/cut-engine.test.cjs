@@ -11,40 +11,43 @@ const act = (s, type, extra = {}) => E.apply(s, { id: 'command-' + ++serial, ses
   seed: serial * 753, now: s.lastChangeAt + 1, actor: 0, type, ...extra });
 const due = s => s.phase === 'speaking' ? s.deadline : s.phaseUntil;
 const tick = (s, extra = {}) => act(s, 'tick', { now: due(s), ...extra });
-const speaking = (count = 4, extra = {}) => tick(create(count, extra));
+const begin = s => act(s, 'begin', { now: s.lastChangeAt });
+const speaking = (count = 4, extra = {}) => tick(begin(create(count, extra)));
 const finishRound = state => {
-  let s = state;
+  let s = state.phase === 'ready' ? begin(state) : state;
   for (let guard = 0; guard < 100 && s.phase !== 'break'; guard++) s = tick(s);
   assert.equal(s.phase, 'break'); return s;
 };
 
 test('Normal weighted bins have the requested distribution, safety period and hard maximum', () => {
-  assert.deepEqual(C.speeds.normal.bins.map(b => [b.from, b.to, b.weight]), [[4, 7, .15], [7, 10, .35], [10, 12, .30], [12, 15, .20]]);
-  const bins = [0, 0, 0, 0]; let total = 0;
+  assert.deepEqual(C.speeds.normal.bins.map(b => [b.from, b.to, b.weight]), [[9, 12, .20], [12, 15, .45], [15, 18, .35]]);
+  const bins = [0, 0, 0]; let total = 0;
   for (let seed = 0; seed < 50000; seed++) {
     const duration = R.duration('normal', 0, R.create(seed));
-    assert.ok(duration >= 4000 && duration <= 15000);
-    bins[duration < 7000 ? 0 : duration < 10000 ? 1 : duration < 12000 ? 2 : 3]++;
+    assert.ok(duration >= 9000 && duration <= 18000);
+    bins[duration < 12000 ? 0 : duration < 15000 ? 1 : 2]++;
     total += duration;
   }
-  bins.forEach((count, i) => assert.ok(Math.abs(count / 50000 - [.15, .35, .30, .20][i]) < .015));
-  assert.ok(total / 50000 >= 9000 && total / 50000 <= 11000);
+  bins.forEach((count, i) => assert.ok(Math.abs(count / 50000 - [.20, .45, .35][i]) < .015));
+  assert.ok(total / 50000 >= 13000 && total / 50000 <= 15000);
 });
 
 test('anti-repeat reduces both kinds of repeated extremes without eliminating them', () => {
   const rates = { baseShort: 0, repeatedShort: 0, baseLong: 0, repeatedLong: 0 };
   for (let seed = 0; seed < 20000; seed++) {
     const base = R.duration('normal', 0, R.create(seed));
-    if (base < 6000) rates.baseShort++;
+    if (R.duration('chaos', 0, R.create(seed)) < 6000) rates.baseShort++;
     if (base >= 13000) rates.baseLong++;
-    if (R.duration('normal', 5000, R.create(seed)) < 6000) rates.repeatedShort++;
+    if (R.duration('chaos', 5000, R.create(seed)) < 6000) rates.repeatedShort++;
     if (R.duration('normal', 14000, R.create(seed)) >= 13000) rates.repeatedLong++;
   }
   assert.ok(rates.repeatedShort > 0 && rates.repeatedShort < rates.baseShort * .75);
-  assert.ok(rates.repeatedLong > 0 && rates.repeatedLong < rates.baseLong * .75);
+  assert.ok(rates.repeatedLong > 0 && rates.repeatedLong < rates.baseLong * .9);
 });
 
-test('optional speed modes remain within their own bounds', () => {
+test('Chill is slower and Chaos is slightly longer; both remain within their own bounds', () => {
+  assert.deepEqual(C.speeds.chill.bins.map(b => [b.from, b.to, b.weight]), [[12, 16, .20], [16, 20, .45], [20, 24, .35]]);
+  assert.deepEqual(C.speeds.chaos.bins.map(b => [b.from, b.to, b.weight]), [[5, 7, .30], [7, 9, .45], [9, 12, .25]]);
   for (const speed of ['chill', 'chaos']) for (let seed = 1; seed <= 1000; seed++) {
     const ms = R.duration(speed, 0, R.create(seed));
     assert.ok(ms >= C.speeds[speed].minSeconds * 1000 && ms <= C.speeds[speed].maxSeconds * 1000);
@@ -60,13 +63,168 @@ test('extensible topic bank contains 60 easy English openings at a 60/40 split',
   for (const category of ['real', 'absurd']) assert.equal(create(4, { category }).topic.category, category);
 });
 
+test('new topics show their question and first speaker until the host or any active player starts', () => {
+  for (const actor of [0, 1, 2, 3, 4]) {
+    let s = create();
+    assert.equal(s.version, 1); assert.equal(s.phase, 'ready');
+    assert.ok(s.topic.question); assert.ok(s.speaker); assert.equal(s.speakerSequence, 0);
+    assert.equal(s.phaseUntil, null); assert.equal(s.deadline, null);
+    assert.equal(act(s, 'tick', { now: 999999 }), s);
+    for (const player of [0, 1, 2, 3, 4]) {
+      const view = E.view(s, player, 999999).cut;
+      assert.equal(view.canBegin, true);
+      for (const key of ['phaseUntil', 'deadline', 'nextSpeaker']) assert.equal(key in view, false);
+    }
+    assert.equal(E.view(s, 88, 999999).cut.canBegin, false);
+    const question = s.topic.question, speaker = s.speaker;
+    s = act(s, 'begin', { actor, now: 999999 });
+    assert.equal(s.phase, 'countdown'); assert.equal(s.phaseUntil, 1002999);
+    assert.equal(s.topic.question, question); assert.equal(s.speaker, speaker);
+    assert.equal(E.view(s, actor, 1000000).cut.canBegin, false);
+    s = tick(s); assert.equal(s.phase, 'speaking'); assert.equal(s.speakerSequence, 1);
+  }
+});
+
+test('manual Begin is guarded against replay, competing starts, excluded seats and extra player controls', () => {
+  const initial = create();
+  const command = { id: 'manual-begin', sessionId: initial.sessionId, turnId: initial.turnId,
+    actor: 2, type: 'begin', now: 2000, seed: 222 };
+  const once = E.apply(initial, command);
+  assert.equal(once.phase, 'countdown'); assert.equal(once.phaseUntil, 5000);
+  assert.deepEqual(E.apply(initial, command), once);
+  assert.equal(E.apply(once, command), once);
+  const competing = E.apply(once, { ...command, id: 'another-begin', actor: 3 });
+  assert.equal(competing.phase, 'countdown'); assert.equal(competing.phaseUntil, 5000);
+  assert.equal(competing.replies[3].error, 'stale_turn');
+  assert.equal(act(once, 'begin', { actor: 1 }).replies[1].error, 'not_available');
+  for (const type of ['settings', 'configure', 'cancelSettings', 'pause', 'resume', 'next', 'stop', 'exclude']) {
+    const rejected = act(initial, type, { actor: 1, speed: 'chill', playerNum: 2, active: false });
+    assert.equal(rejected.phase, 'ready'); assert.equal(rejected.replies[1].error, 'not_available');
+  }
+  const excluded = act(initial, 'exclude', { playerNum: 2, active: false });
+  assert.equal(E.view(excluded, 2, 2000).cut.canBegin, false);
+  assert.equal(act(excluded, 'begin', { actor: 2 }).replies[2].error, 'not_available');
+  assert.equal(act(initial, 'begin', { actor: 88 }), initial);
+});
+
+test('returning to settings from every game phase blocks starts and preserves the topic, roster and fairness', () => {
+  const ready = create(), countdown = begin(ready), live = tick(countdown);
+  const cut = tick(live), handoff = tick(cut), completed = finishRound(live);
+  const states = [ready, countdown, live, cut, handoff, completed, act(live, 'pause'), act(live, 'stop')];
+  for (const before of states) {
+    const after = act(before, 'settings');
+    assert.equal(after.phase, 'setup'); assert.equal(after.version, 1);
+    assert.deepEqual(after.topic, before.topic); assert.deepEqual(after.topicHistory, before.topicHistory);
+    assert.equal(after.round, before.round); assert.equal(after.targetCuts, before.targetCuts);
+    assert.deepEqual(after.roster, before.roster); assert.deepEqual(after.stats, before.stats);
+    assert.deepEqual(after.recent, before.recent); assert.equal(after.speakerSequence, before.speakerSequence);
+    assert.equal(after.cutsCompleted, before.phase === 'break' ? 0 : before.cutsCompleted);
+    assert.equal(after.deadline, null); assert.equal(after.phaseUntil, null);
+    assert.equal(after.pendingDurationMs, null); assert.equal(after.speakingDurationMs, null);
+    assert.equal(after.cutEvent, null); assert.equal(after.pause, null); assert.equal(after.nextSpeaker, null);
+    if (before.speaker != null) assert.equal(after.speaker, before.speaker);
+    else assert.ok(after.roster.some(player => player.active && player.playerNum === after.speaker));
+    assert.equal(act(after, 'tick', { now: after.lastChangeAt + 900000 }), after);
+    for (const actor of [0, 1, 2, 3, 4]) {
+      assert.equal(E.view(after, actor, 0).cut.canBegin, false);
+      assert.equal(act(after, 'begin', { actor }).phase, 'setup');
+    }
+  }
+});
+
+test('saving or cancelling settings waits for Begin; changed category applies only to the next topic', () => {
+  const live = speaking(); const speaker = live.speaker, topic = live.topic;
+  const stats = structuredClone(live.stats), sequence = live.speakerSequence;
+  let s = act(live, 'settings');
+  s = act(s, 'configure', { speed: 'chill', category: 'absurd' });
+  assert.equal(s.phase, 'ready'); assert.equal(s.speed, 'chill'); assert.equal(s.category, 'absurd');
+  assert.deepEqual(s.topic, topic); assert.equal(s.speaker, speaker);
+  assert.deepEqual(s.stats, stats); assert.equal(s.speakerSequence, sequence);
+  assert.equal(s.phaseUntil, null); assert.equal(s.deadline, null);
+  assert.equal(act(s, 'tick', { now: 999999 }), s);
+  s = tick(begin(s));
+  assert.equal(s.phase, 'speaking'); assert.equal(s.speaker, speaker);
+  assert.ok(s.deadline - s.lastChangeAt >= 12000 && s.deadline - s.lastChangeAt <= 24000);
+  assert.deepEqual(s.stats, stats); assert.equal(s.speakerSequence, sequence);
+  s = finishRound(s); s = act(s, 'next');
+  assert.equal(s.phase, 'ready'); assert.equal(s.topic.category, 'absurd');
+  assert.notEqual(s.topic.id, topic.id);
+  s = act(s, 'settings'); s = act(s, 'cancelSettings');
+  assert.equal(s.phase, 'ready'); assert.equal(s.speed, 'chill'); assert.equal(s.category, 'absurd');
+  assert.equal(s.deadline, null); assert.equal(s.phaseUntil, null);
+});
+
+test('invalid or stale settings saves cannot change preferences or release the edit lock', () => {
+  const s = act(create(), 'settings');
+  for (const extra of [{ speed: 'fast', category: 'real' }, { speed: 'chill', category: 'unknown' }]) {
+    const denied = act(s, 'configure', extra);
+    assert.equal(denied.phase, 'setup'); assert.equal(denied.speed, s.speed); assert.equal(denied.category, s.category);
+    assert.equal(denied.replies[0].error, 'invalid_setup');
+  }
+  const stale = act(s, 'configure', { turnId: s.turnId - 1, speed: 'chill' });
+  assert.equal(stale.phase, 'setup'); assert.equal(stale.replies[0].error, 'stale_turn');
+  assert.equal(act(create(), 'configure', { speed: 'chill' }).replies[0].error, 'not_available');
+  assert.equal(act(create(), 'cancelSettings').replies[0].error, 'not_available');
+});
+
+test('ready and settings dropouts and pause/resume never start a countdown', () => {
+  for (const edit of [false, true]) {
+    let s = edit ? act(create(3), 'settings') : create(3);
+    const expected = edit ? 'setup' : 'ready';
+    const removed = s.speaker;
+    s = act(s, 'exclude', { playerNum: removed, active: false });
+    assert.equal(s.phase, expected); assert.notEqual(s.speaker, removed);
+    assert.equal(s.phaseUntil, null); assert.equal(s.deadline, null); assert.equal(s.speakerSequence, 0);
+    const speaker = s.speaker;
+    s = act(s, 'pause'); s = act(s, 'resume');
+    assert.equal(s.phase, expected); assert.equal(s.speaker, speaker); assert.equal(s.phaseUntil, null);
+    const other = s.roster.find(player => player.active && player.playerNum !== s.speaker).playerNum;
+    s = act(s, 'exclude', { playerNum: other, active: false });
+    assert.equal(s.phase, 'paused'); assert.equal(s.pause.phase, expected);
+    s = act(s, 'exclude', { playerNum: other, active: true });
+    s = act(s, 'resume'); assert.equal(s.phase, expected); assert.equal(s.speaker, speaker);
+    assert.equal(s.deadline, null); assert.equal(s.phaseUntil, null);
+  }
+  let s = act(create(2), 'exclude', { playerNum: 2, active: false });
+  s = act(s, 'settings'); s = act(s, 'configure', { speed: 'chaos' });
+  assert.equal(s.phase, 'ready'); assert.equal(E.view(s, 0, 0).cut.canBegin, false);
+  assert.equal(act(s, 'begin').replies[0].error, 'not_enough_players');
+});
+
+test('completed and stopped topics can be replayed after editing without resetting session fairness', () => {
+  const completed = finishRound(create());
+  const finalCut = { ...completed, phase: 'cut', speaker: completed.previousSpeaker };
+  for (const terminal of [completed, finalCut, act(completed, 'stop'), act(finalCut, 'pause')]) {
+    let s = act(terminal, 'settings');
+    assert.equal(s.cutsCompleted, 0); assert.deepEqual(s.stats, completed.stats);
+    assert.deepEqual(s.topic, completed.topic); assert.equal(s.round, completed.round);
+    s = act(s, 'configure', { speed: 'normal' }); s = tick(begin(s));
+    assert.equal(s.speakerSequence, completed.speakerSequence + 1);
+    s = finishRound(s); assert.equal(s.cutsCompleted, s.targetCuts);
+  }
+});
+
+test('editing during a completed non-final CUT counts the restarted speaker as a fresh turn', () => {
+  const cut = tick(speaking());
+  assert.ok(cut.cutsCompleted < cut.targetCuts);
+  for (const before of [cut, act(cut, 'pause')]) {
+    const speaker = before.speaker, count = before.stats[speaker].count;
+    let s = act(before, 'settings');
+    assert.equal(s.cutsCompleted, before.cutsCompleted); assert.equal(s.speaker, speaker);
+    assert.deepEqual(s.stats, before.stats);
+    s = act(s, 'configure', { speed: 'normal' }); s = tick(begin(s));
+    assert.equal(s.stats[speaker].count, count + 1);
+    assert.equal(s.speakerSequence, before.speakerSequence + 1);
+  }
+});
+
 test('countdown starts a fresh hidden timer only at GO; public projections contain no private clock', () => {
-  let s = create(); const countdownSpeaker = s.speaker;
+  let s = begin(create()); const countdownSpeaker = s.speaker;
   assert.equal(s.phase, 'countdown'); assert.equal(s.phaseUntil, 4000); assert.equal(s.deadline, null);
   assert.equal(E.view(s, 1, 1001).cut.phaseUntil, 4000);
   assert.equal(act(s, 'tick', { now: 3999 }), s);
   s = tick(s); assert.equal(s.speaker, countdownSpeaker); assert.equal(s.phase, 'speaking');
-  assert.ok(s.deadline >= 8000 && s.deadline <= 19000);
+  assert.ok(s.deadline >= 13000 && s.deadline <= 22000);
   assert.equal(act(s, 'tick', { now: s.deadline - 1 }), s);
   for (const actor of [0, 1, 2, 3, 4]) {
     const publicView = E.view(s, actor, 4000).cut;
@@ -88,7 +246,7 @@ test('CUT reveals the next speaker once and gives a complete handoff before thei
   assert.equal(go, speakingEnd + C.cutRevealMs + C.handoffMs); assert.equal(s.deadline, null);
   assert.equal(act(s, 'tick', { now: go - 1 }), s);
   s = tick(s); assert.equal(s.phase, 'speaking'); assert.equal(s.speaker, next);
-  assert.ok(s.deadline - go >= 4000 && s.deadline - go <= 15000);
+  assert.ok(s.deadline - go >= 9000 && s.deadline - go <= 18000);
   assert.equal('nextSpeaker' in E.view(s, 1, go).cut, false);
 });
 
@@ -106,9 +264,9 @@ test('transaction retries, duplicate ticks and old-session or old-turn commands 
 });
 
 test('late reconnect advances one phase, giving the new speaker full prep or speaking time', () => {
-  let s = create();
+  let s = begin(create());
   s = tick(s, { now: 100000 }); assert.equal(s.phase, 'speaking');
-  assert.ok(s.deadline >= 104000 && s.deadline <= 115000);
+  assert.ok(s.deadline >= 109000 && s.deadline <= 118000);
   s = tick(s, { now: 300000 }); assert.equal(s.phase, 'cut'); assert.equal(s.cutsCompleted, 1);
   assert.equal(s.phaseUntil, 300900);
   s = tick(s, { now: 600000 }); assert.equal(s.phase, 'handoff'); assert.equal(s.phaseUntil, 603000);
@@ -123,7 +281,7 @@ test('every topic ends after its target CUT count; next is manual and retains wh
     assert.equal(s.speakerSequence, target); assert.equal(s.speaker, null);
     const stats = JSON.stringify(s.stats), sequence = s.speakerSequence, topic = s.topic.id;
     assert.equal(act(s, 'tick', { now: s.lastChangeAt + 100000 }), s);
-    s = act(s, 'next'); assert.equal(s.round, 2); assert.equal(s.phase, 'countdown');
+    s = act(s, 'next'); assert.equal(s.round, 2); assert.equal(s.phase, 'ready');
     assert.equal(s.cutsCompleted, 0); assert.equal(s.cutEvent, null); assert.notEqual(s.topic.id, topic);
     assert.equal(JSON.stringify(s.stats), stats); assert.equal(s.speakerSequence, sequence);
   }
@@ -175,7 +333,7 @@ test('pausing freezes hidden speaking time; resume preserves speaker and gives 3
 });
 
 test('pausing the opening countdown keeps its remaining prep time and does not consume a speaking turn', () => {
-  let s = act(create(), 'pause', { now: 2500 }); assert.equal(s.pause.remainingMs, 1500);
+  let s = act(begin(create()), 'pause', { now: 2500 }); assert.equal(s.pause.remainingMs, 1500);
   s = act(s, 'resume', { now: 10000 }); assert.equal(s.phase, 'countdown'); assert.equal(s.phaseUntil, 11500);
   assert.equal(s.speakerSequence, 0); s = tick(s); assert.equal(s.speakerSequence, 1);
 });
@@ -186,7 +344,7 @@ test('removing an active speaker replaces them with fresh prep and invalidates t
   assert.equal(s.phase, 'handoff'); assert.notEqual(s.speaker, removed); assert.equal(s.deadline, null);
   assert.equal(s.phaseUntil, 8000); assert.equal(s.speakingDurationMs, null);
   assert.equal(E.apply(s, { id: 'old-deadline', sessionId: s.sessionId, turnId: oldTurn, actor: 0, type: 'tick', now: oldEnd, seed: 1 }), s);
-  const fresh = tick(s); assert.ok(fresh.deadline >= fresh.lastChangeAt + 4000);
+  const fresh = tick(s); assert.ok(fresh.deadline >= fresh.lastChangeAt + 9000);
   assert.equal(fresh.roster.find(p => p.playerNum === removed).active, false);
   assert.equal(fresh.cutsCompleted, 0);
 });
@@ -239,11 +397,11 @@ test('Firebase omission of empty containers preserves timing and controls', () =
     if (!entries.length) return null;
     return Array.isArray(value) ? entries.map(([, v]) => v) : Object.fromEntries(entries);
   };
-  let s = tick(wire(create()));
+  let s = tick(wire(begin(create())));
   s = tick(wire(s)); s = tick(wire(s)); s = tick(wire(s));
   assert.equal(s.phase, 'speaking'); assert.equal(s.speakerSequence, 2);
   s = act(wire(s), 'pause'); s = act(wire(s), 'resume'); s = tick(wire(s));
   assert.equal(s.phase, 'speaking'); assert.equal(s.speakerSequence, 2);
-  s = finishRound(wire(s)); s = act(wire(s), 'next'); assert.equal(s.phase, 'countdown');
+  s = finishRound(wire(s)); s = act(wire(s), 'next'); assert.equal(s.phase, 'ready');
   assert.ok(E.view(wire(s), 1, 0).cut.topic.question);
 });
