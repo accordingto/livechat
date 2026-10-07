@@ -51,7 +51,9 @@ test('completion of an older lyrics save cannot close a newly reopened editor fo
 });
 
 test('queued native dialog close events after teardown cannot access removed playlist controls', () => {
-  const f = setup(), events = [], nodes = new Map(); let mounted = true, destroyedPlayer = 0;
+  const messages = new Set(), f = setup({ addEventListener: (type, handler) => { if (type === 'message') messages.add(handler); },
+    removeEventListener: (type, handler) => { if (type === 'message') messages.delete(handler); } });
+  const events = [], nodes = new Map(); let mounted = true, destroyedPlayer = 0;
   function node() { return { innerHTML: '', value: '', hidden: false, disabled: false,
     classList: { toggle() {} }, setAttribute() {}, removeAttribute() {} }; }
   function dialog() {
@@ -74,9 +76,11 @@ test('queued native dialog close events after teardown cannot access removed pla
     }
   }
   const g = new MountedGame(element, {});
+  assert.equal(messages.size, 1);
   g.playlistDialog.open = true;
   g.playlistPlayer = { destroy() { destroyedPlayer++; } };
   g.destroy(); assert.equal(destroyedPlayer, 1); assert.equal(f.timers.size, 0);
+  assert.equal(messages.size, 0, 'the Genius message listener must not survive game teardown');
   assert.doesNotThrow(() => events.forEach(fn => fn()), 'a delayed close event must be safe after DOM removal');
   assert.equal(destroyedPlayer, 1);
 });
@@ -984,4 +988,228 @@ test('a lyric video search stays inside the game and does not change the selecte
   assert.equal(JSON.stringify(f.g.data), before); assert.equal(f.videoWrites.length, writes);
   f.requests[0].resolve({ songs: [discoveredSong()] }); await nextTask();
   assert.equal(f.g.discoverySongs.length, 1); assert.equal(f.sent.length, 0);
+});
+
+function geniusFixture(actor = 0) {
+  const client = require('../open-mic-genius.js'), requests = [], frames = [], moves = [], listeners = new Map(), control = { available: true };
+  const api = {
+    matches: client.matches, embedDocument: client.embedDocument,
+    search(fields, { signal }) {
+      let resolve, reject;
+      const work = new Promise((yes, no) => { resolve = yes; reject = no; });
+      requests.push({ fields, signal, resolve, reject }); return work;
+    },
+  };
+  const f = presentation(actor, { OPEN_MIC_GENIUS: api,
+    addEventListener: (type, handler) => listeners.set(type, handler),
+    removeEventListener: (type, handler) => { if (listeners.get(type) === handler) listeners.delete(type); },
+  });
+  f.g.data.songLyrics = {}; f.g.discoveryStarted = true; f.g.canControl = () => control.available;
+  f.g.maybeAutoGenius = () => {};
+  for (const selector of ['[data-om-genius-widget]', '[data-om-genius-reader]']) {
+    const container = f.node(selector); container.children = [];
+    container.appendChild = child => {
+      moves.push({ method: 'appendChild', container: selector });
+      if (child.parentNode) child.parentNode.removeChild(child);
+      container.children.push(child); child.parentNode = container; return child;
+    };
+    container.removeChild = child => { container.children.splice(container.children.indexOf(child), 1); child.parentNode = null; };
+    container.moveBefore = (child, before) => {
+      assert.equal(before, null); moves.push({ method: 'moveBefore', container: selector });
+      if (child.parentNode) child.parentNode.removeChild(child);
+      container.children.push(child); child.parentNode = container;
+    };
+  }
+  f.g.element.ownerDocument = { createElement(type) {
+    assert.equal(type, 'iframe');
+    const attributes = new Map(), source = {}, frame = { parentNode: null, contentWindow: source, writes: [], title: '',
+      setAttribute: (key, value) => attributes.set(key, String(value)), getAttribute: key => attributes.get(key),
+      remove() { if (this.parentNode) this.parentNode.removeChild(this); } };
+    Object.defineProperty(frame, 'srcdoc', { get: () => frame.writes.at(-1), set: value => frame.writes.push(value) });
+    frames.push(frame); return frame;
+  } };
+  f.g.render();
+  const fields = () => ({ title: f.g.data.selectedSong.title, artist: f.g.data.selectedSong.artist });
+  return { ...f, requests, frames, moves, listeners, control, fields,
+    async response(records, mode = 'auto') {
+      const work = f.g.searchGenius(fields(), mode), request = requests.at(-1);
+      request.resolve(records); await work;
+    },
+    message(type, overrides = {}) {
+      const event = { source: f.g.geniusFrame?.contentWindow, origin: 'null',
+        data: { source: 'openmic-genius', type, songId: f.g.geniusChosen?.id }, ...overrides };
+      f.g.handleGeniusMessage(event);
+    },
+  };
+}
+
+function geniusSong(overrides = {}) {
+  return { id: '378195', title: 'Our Party Song', artist: 'Our Players',
+    url: 'https://genius.com/Our-players-our-party-song-lyrics', lyricsState: 'complete', ...overrides };
+}
+
+test('every role automatically displays one exact complete official Genius widget without writing room state', async () => {
+  for (const actor of [0, 1, 2]) {
+    const f = geniusFixture(actor), original = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+    f.g.maybeAutoGenius = f.Game.prototype.maybeAutoGenius;
+    f.g.render(); await nextTask(); assert.equal(f.requests.length, 1);
+    assert.deepEqual(JSON.parse(JSON.stringify(f.requests[0].fields)), f.fields());
+    f.requests[0].resolve([geniusSong()]); await nextTask();
+    assert.equal(f.frames.length, 1); assert.equal(f.frames[0].writes.length, 1);
+    assert.equal(f.frames[0].getAttribute('sandbox'), 'allow-scripts allow-popups allow-popups-to-escape-sandbox');
+    assert.equal(f.frames[0].getAttribute('referrerpolicy'), 'origin');
+    assert.match(f.frames[0].srcdoc, /https:\/\/genius\.com\/songs\/378195\/embed/);
+    assert.doesNotMatch(f.frames[0].getAttribute('sandbox'), /allow-same-origin/);
+    assert.equal(f.node('[data-om-lyrics-copy]').hidden, true); assert.equal(f.node('[data-om-genius-widget]').hidden, false);
+    assert.equal(f.node('[data-om-action="lyricsRead"]').disabled, false); assert.equal(f.classes.has('om-using-genius'), true);
+    assert.equal(f.g.geniusStatus.key, 'geniusWidgetLoading'); f.message('ready'); assert.equal(f.g.geniusStatus.key, 'geniusReady');
+    assert.equal(JSON.stringify(f.g.data), original); assert.equal(f.sent.length, 0); assert.equal(f.videoWrites.length, writes);
+    f.g.render(); await nextTask(); assert.equal(f.requests.length, 1); assert.equal(f.frames[0].writes.length, 1);
+    f.g.destroy();
+  }
+});
+
+test('ambiguous, incomplete, and mismatched Genius songs require local manual choice instead of automatic display', async () => {
+  for (const records of [[geniusSong(), geniusSong({ id: '378196' })], [geniusSong({ lyricsState: 'unknown' })], [geniusSong({ artist: 'Another Original Band' })]]) {
+    const f = geniusFixture(2), before = JSON.stringify(f.g.data);
+    await f.response(records); assert.equal(f.frames.length, 0); assert.equal(f.g.geniusStatus.key, 'geniusChoose');
+    assert.match(f.node('[data-om-genius-results]').innerHTML, /data-om-action="geniusChoose"/);
+    assert.doesNotMatch(f.node('[data-om-genius-results]').innerHTML, / disabled/);
+    f.g.lyricsFindDialog.open = true; f.g.chooseGenius(records[0].id);
+    assert.equal(f.frames.length, 1); assert.equal(f.g.lyricsFindDialog.open, false);
+    assert.equal(JSON.stringify(f.g.data), before); assert.equal(f.sent.length, 0);
+    f.g.destroy();
+  }
+});
+
+test('Genius metadata responses cannot display after session, round, turn, video, actor, connection, draft, or lifetime changes', async () => {
+  const changes = [
+    f => f.g.update({ openmic: { ...f.g.data, sessionId: 'new-genius-session' } }),
+    f => f.g.update({ openmic: { ...f.g.data, round: 2 } }),
+    f => f.g.update({ openmic: { ...f.g.data, turnId: f.g.data.turnId + 1 } }),
+    f => f.g.update({ openmic: { ...f.g.data, selectedSong: { ...f.g.data.selectedSong, videoId: 'JGwWNGJdvx8' } } }),
+    f => { f.g.actor = 2; f.g.render(); },
+    f => { f.control.available = false; f.g.render(); },
+    f => { f.g.storeDraft(f.g.draftKey(f.g.data.selectedSong.videoId), { text: 'Our newer draft line.', dirty: true }); f.g.render(); },
+    f => f.g.update({ openmic: { ...f.g.data, songLyrics: { nfWlot6h_JM: originalFixture } } }),
+    f => f.g.destroy(),
+  ];
+  for (const change of changes) {
+    const f = geniusFixture(), work = f.g.searchGenius(f.fields(), 'auto');
+    change(f); assert.equal(f.requests[0].signal.aborted, true);
+    f.requests[0].resolve([geniusSong()]); await work;
+    assert.equal(f.frames.length, 0); assert.equal(f.sent.length, 0);
+    if (!f.g.destroyed) f.g.destroy();
+  }
+});
+
+test('shared lyrics and drafts prevent automatic Genius requests and take priority over an already displayed widget', async () => {
+  for (const priority of ['shared', 'draft']) {
+    const f = geniusFixture(1);
+    if (priority === 'shared') f.g.data.songLyrics.nfWlot6h_JM = originalFixture;
+    else f.g.storeDraft(f.g.draftKey('nfWlot6h_JM'), { text: 'Our unsaved local verse.', dirty: true });
+    f.g.maybeAutoGenius = f.Game.prototype.maybeAutoGenius; f.g.render(); await nextTask();
+    assert.equal(f.requests.length, 0); assert.equal(f.frames.length, 0); assert.equal(f.sent.length, 0);
+  }
+  const f = geniusFixture(); await f.response([geniusSong()]); const frame = f.g.geniusFrame, writes = f.videoWrites.length;
+  f.g.update({ openmic: { ...f.g.data, songLyrics: { nfWlot6h_JM: originalFixture } } });
+  assert.equal(f.g.geniusFrame, null); assert.equal(frame.parentNode, null); assert.equal(frame.srcdoc, '');
+  assert.equal(f.node('[data-om-lyrics-copy]').hidden, false); assert.equal(f.node('[data-om-lyrics-copy]').textContent, originalFixture);
+  assert.equal(f.classes.has('om-using-genius'), false); assert.equal(f.videoWrites.length, writes); assert.equal(f.sent.length, 0);
+  const draft = geniusFixture(); await draft.response([geniusSong()]);
+  draft.g.openLyricsEditor(); assert.equal(draft.g.geniusFrame, null);
+  assert.equal(draft.g.lyricsEditDialog.open, true); assert.equal(draft.sent.length, 0);
+});
+
+test('official widget reading and same-song game updates retain the identical iframe and reject forged readiness messages', async () => {
+  const f = geniusFixture(2); await f.response([geniusSong()]); const frame = f.g.geniusFrame, writes = f.videoWrites.length;
+  f.message('ready', { source: {} }); assert.equal(f.g.geniusStatus.key, 'geniusWidgetLoading');
+  f.message('ready', { origin: 'https://genius.com' }); assert.equal(f.g.geniusStatus.key, 'geniusWidgetLoading');
+  f.message('ready', { data: { source: 'openmic-genius', type: 'ready', songId: '378196' } }); assert.equal(f.g.geniusStatus.key, 'geniusWidgetLoading');
+  f.message('ready'); assert.equal(f.g.geniusStatus.key, 'geniusReady');
+  f.g.openLyricsReader(); assert.equal(frame.parentNode, f.node('[data-om-genius-reader]'));
+  f.g.close(f.g.lyricsReadDialog); assert.equal(frame.parentNode, f.node('[data-om-genius-widget]'));
+  assert.deepEqual(f.moves.map(move => move.method), ['appendChild', 'moveBefore', 'moveBefore'], 'loaded iframes must use the state-preserving DOM move API');
+  f.g.render(); f.g.lyricsFont = 34; f.g.renderLyrics(); f.g.toggleFocus();
+  f.g.update({ openmic: { ...f.g.data, phase: 'singing', singingState: 'singing', singingStartedAt: 100000, turnId: 6 } });
+  f.g.update({ openmic: { ...f.g.data, phase: 'finished', singingState: 'finished', singingAwarded: true, teamScore: 3, turnId: 7 } });
+  assert.equal(f.g.geniusFrame, frame); assert.equal(f.frames.length, 1); assert.equal(frame.writes.length, 1);
+  assert.equal(f.videoWrites.length, writes); assert.equal(f.sent.length, 0);
+  f.message('fail'); assert.equal(f.g.geniusFrame, null); assert.equal(f.g.geniusStatus.key, 'genius_unavailable');
+  assert.equal(frame.srcdoc, ''); assert.equal(f.node('[data-om-genius-widget]').hidden, true);
+});
+
+test('browsers without state-preserving iframe movement expand Genius in place rather than reinsert it', async () => {
+  const f = geniusFixture(2); await f.response([geniusSong()]); const frame = f.g.geniusFrame;
+  delete f.node('[data-om-genius-widget]').moveBefore; delete f.node('[data-om-genius-reader]').moveBefore;
+  f.g.openLyricsReader();
+  assert.equal(f.g.lyricsReadDialog.open, false); assert.equal(f.classes.has('om-genius-expanded'), true);
+  assert.equal(frame.parentNode, f.node('[data-om-genius-widget]'));
+  assert.equal(f.node('[data-om-action="lyricsRead"]').textContent, f.context.OPEN_MIC_UI.t('geniusCollapse'));
+  f.g.openLyricsReader(); assert.equal(f.classes.has('om-genius-expanded'), false);
+  assert.equal(frame.parentNode, f.node('[data-om-genius-widget]')); assert.equal(frame.writes.length, 1);
+  assert.deepEqual(f.moves.map(move => move.method), ['appendChild']); assert.equal(f.sent.length, 0);
+});
+
+test('an automatic Genius response skipped during a pending command can retry after acknowledgement', async () => {
+  const f = geniusFixture(2); f.g.maybeAutoGenius = f.Game.prototype.maybeAutoGenius;
+  f.g.render(); await nextTask(); assert.equal(f.requests.length, 1);
+  f.g.pending = true; f.requests[0].resolve([geniusSong()]); await nextTask();
+  assert.equal(f.frames.length, 0); assert.equal(f.g.geniusAutoAttemptKey, null);
+  f.g.pending = false; f.g.render(); await nextTask(); assert.equal(f.requests.length, 2);
+  f.requests[1].resolve([geniusSong()]); await nextTask(); assert.equal(f.frames.length, 1); assert.equal(f.sent.length, 0);
+});
+
+test('closing an empty lyrics editor resumes automatic Genius lookup while a newer unsaved draft suppresses it', async () => {
+  for (const typed of [false, true]) {
+    const f = geniusFixture(); await f.response([geniusSong()]);
+    f.g.maybeAutoGenius = f.Game.prototype.maybeAutoGenius;
+    f.g.openLyricsEditor(); assert.equal(f.g.geniusFrame, null);
+    if (typed) f.g.storeDraft(f.g.draftKey('nfWlot6h_JM'), { text: 'Our brand new unsaved line.', dirty: true });
+    f.g.close(f.g.lyricsEditDialog); await nextTask();
+    assert.equal(f.requests.length, typed ? 1 : 2);
+    if (!typed) { f.requests[1].resolve([geniusSong()]); await nextTask(); assert.equal(f.frames.length, 2); }
+    else assert.equal(f.g.loadDraft(f.g.draftKey('nfWlot6h_JM')).text, 'Our brand new unsaved line.');
+    assert.equal(f.sent.length, 0); f.g.destroy();
+  }
+});
+
+test('Genius candidate metadata cannot inject markup, URLs, or a nonnumeric official embed ID', async () => {
+  const f = geniusFixture(2);
+  await f.response([geniusSong({ id: 'bad" onload="alert(1)' }), geniusSong({ title: '<img onerror="alert(2)">', artist: '<svg onload="alert(3)">', url: 'javascript:alert(4)' })], 'manual');
+  assert.equal(f.g.geniusRecords.length, 1); assert.equal(f.frames.length, 0);
+  const html = f.node('[data-om-genius-results]').innerHTML;
+  assert.doesNotMatch(html, /<img|<svg|javascript:/); assert.match(html, /&lt;img/);
+  f.g.chooseGenius('bad" onload="alert(1)'); assert.equal(f.frames.length, 0);
+  f.g.chooseGenius('378195'); assert.equal(f.frames.length, 1);
+  assert.match(f.frames[0].srcdoc, /https:\/\/genius\.com\/songs\/378195\/embed/);
+  assert.doesNotMatch(f.frames[0].srcdoc, /alert\(|<img|<svg|javascript:/); assert.equal(f.sent.length, 0);
+});
+
+test('new Genius searches and edited manual fields cancel old results without clearing drafts or changing the stage', async () => {
+  const f = geniusFixture(2), before = JSON.stringify(f.g.data), writes = f.videoWrites.length;
+  const old = f.g.searchGenius(f.fields(), 'auto');
+  const next = f.g.searchGenius({ title: 'Our New Song', artist: 'Our Players' }, 'manual');
+  assert.equal(f.requests[0].signal.aborted, true);
+  f.requests[1].resolve([geniusSong({ id: '378196', title: 'Our New Song' })]); await next;
+  f.requests[0].resolve([geniusSong()]); await old;
+  assert.equal(f.g.geniusRecords.length, 1); assert.equal(f.g.geniusRecords[0].id, '378196'); assert.equal(f.frames.length, 0);
+  const search = f.g.searchGenius(f.fields(), 'manual');
+  f.g.handleInput({ target: { value: 'Updated title', matches: selector => selector.includes('input[name="trackTitle"]') } });
+  assert.equal(f.requests[2].signal.aborted, true);
+  f.requests[2].resolve([geniusSong()]); await search;
+  assert.equal(f.g.geniusRecords.length, 0); assert.equal(f.frames.length, 0);
+  assert.equal(JSON.stringify(f.g.data), before); assert.equal(f.videoWrites.length, writes); assert.equal(f.sent.length, 0);
+});
+
+test('Genius service errors and no matches stay truthful and never add lyrics or scores to the room', async () => {
+  for (const code of ['genius_setup_needed', 'genius_rate_limit', 'genius_unavailable', 'genius_invalid_query']) {
+    const f = geniusFixture(2), before = JSON.stringify(f.g.data), work = f.g.searchGenius(f.fields(), 'auto');
+    f.requests[0].reject(Object.assign(new Error(code), { code, retryAfter: 7 })); await work;
+    assert.equal(f.g.geniusStatus.key, code); assert.equal(f.frames.length, 0); assert.equal(f.sent.length, 0);
+    assert.equal(JSON.stringify(f.g.data), before); assert.ok(f.node('[data-om-genius-status]').textContent.length > 0);
+  }
+  const f = geniusFixture(2); await f.response([]);
+  assert.equal(f.g.geniusStatus.key, 'geniusNotFound'); assert.equal(f.frames.length, 0); assert.equal(f.sent.length, 0);
+  f.g.openLyricsEditor(); assert.equal(f.g.lyricsEditDialog.open, false, 'a listener keeps the usual shared-edit permissions');
 });

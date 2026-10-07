@@ -129,6 +129,16 @@
 .om-lyrics-links { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 11px; }
 .om-lyrics-links a { display: inline-flex; align-items: center; min-height: 44px; color: #c7c4ff; font-size: .82rem; }
 .om-lyrics-source { font-size: .75rem !important; color: #aaaac6 !important; }
+.om-genius-widget { overflow: hidden; margin-top: 8px; border: 1px solid #343054; border-radius: 12px; background: #fff; }
+.om-genius-widget > iframe { display: block; width: 100%; height: clamp(240px, 24vw, 340px); border: 0; background: #fff; }
+.om-genius-status { margin-top: 7px; font-size: .75rem; }
+.om-genius-results-panel { margin-top: 18px; padding-top: 14px; border-top: 1px solid #343054; }
+.om-genius-results-panel > .om-soft { margin: 6px 0 10px; font-size: .78rem; }
+.om-genius-results-panel > .om-feedback { margin-bottom: 10px; }
+.om-genius-reader > iframe { height: calc(100dvh - 140px); min-height: 260px; }
+.om-genius-expanded .om-stage-lyrics-column .om-genius-widget > iframe { height: min(70dvh, 640px); min-height: 300px; }
+.om-using-genius .om-stage-lyrics-column .om-font-controls,
+.om-lyrics-reader.om-using-genius > .om-font-controls { display: none; }
 .om-lyrics-load-status:not(:empty) { color: #c7c4ff; padding: 0 0 12px; font-size: .84rem; }
 .om-lyrics-search-form { margin-top: 16px; grid-template-columns: 1fr 1fr; }
 .om-lyrics-search-form > button { grid-column: 1 / -1; }
@@ -283,6 +293,7 @@
   .om-discovery-form { grid-template-columns: minmax(0, 1fr) minmax(110px, 160px); }
   .om-has-song .om-stage-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .om-stage-lyrics-column [data-om-lyrics-copy] { height: 240px; max-height: 260px; }
+  .om-stage-lyrics-column .om-genius-widget > iframe { height: 240px; }
   .om-is-focused .om-left { grid-template-columns: minmax(0, 1fr) minmax(130px, .4fr); }
 }
 @media (max-width: 620px) {
@@ -308,6 +319,7 @@
   .om-stage-session .om-actions .om-button { flex-basis: calc(50% - 8px); }
   .om-stage-lyrics-column { padding: 10px; }
   .om-stage-lyrics-column [data-om-lyrics-copy] { height: 220px; max-height: 260px; }
+  .om-stage-lyrics-column .om-genius-widget > iframe { height: 220px; }
   .om-stage-video-column [data-om-stage-info] { padding-top: 8px; }
   .om-stage-track { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; }
   .om-stage-track h3 { font-size: .9rem; }

@@ -150,7 +150,8 @@ appropriate original alias for the song title, such as `WAIT` / `E.SO` from
 channel. When structured search has no confident match, one bounded title-keyword
 fallback supplies manually selectable candidates (`autoEligible: false`);
 fallback errors preserve any primary candidates, and cancellation still discards
-the response. Both requests share a 12-second deadline. Missing-library messages
+the response. Reversed title/artist lookup is also bounded and never eligible for
+automatic text imports. At most three requests share a 12-second deadline. Missing-library messages
 offer in-game lyric-video search or pasting text. The lyric-video button fills the
 existing YouTube search on this page; choosing its result replaces the stage
 under the same authority and timing rules.
@@ -168,6 +169,36 @@ Lyrics updates leave the stage iframe, timer, score, duet, and turn token intact
 Old rooms with no `songLyrics` are supported. Lyrics transport alone has a
 34,000-character action envelope so valid escaped text fits; ordinary commands
 retain their 4,000-character limit and actor/session/turn checks.
+
+## Official Genius lyrics
+
+When shared text and local drafts are empty, every device can automatically
+search official Genius metadata through the separate service at
+`https://icebreaker-youtube-search.vercel.app/api/open-mic-lyrics`. The server
+uses `GENIUS_ACCESS_TOKEN`; the browser never receives this credential or sends
+room credentials. The main-repository API core is retained for service packaging
+and tests; the main site's current deployment does not expose that unused route.
+
+Exactly one complete song with a matching title and artist displays the official
+Genius widget beside the MV. Explicit bilingual aliases and reversed title/artist
+pairs are supported; other matches remain manually selectable inside the lyric
+finder. Catalog gaps, translated versions, and ambiguous results are not treated
+as exact. This improves coverage without guaranteeing lyrics for every song.
+
+The official widget retains its branding, links, and provider behavior in an
+opaque sandboxed iframe. No Genius lyric body is copied into `songLyrics`,
+Firebase, client metadata caches, or server responses. Shared plain text and
+dirty local drafts take priority. Pending responses are fenced by song, session,
+round, turn, actor, connection, and lifetime. Timer and score changes preserve an
+already mounted widget. Reading enlargement uses state-preserving DOM movement
+where available and expands in place on older browsers; it does not reinsert a
+loaded iframe with `appendChild`.
+
+The service caches bounded metadata for five minutes, deduplicates concurrent
+queries, enforces per-instance admission limits, and includes fixed original-site
+CORS headers on success and errors. Missing credentials, limits, provider errors,
+and widget failures have separate readable states. The current Hub is free and
+noncommercial; no payment or commercial lyrics agreement was created.
 
 ## MV and lyrics layout
 
@@ -238,3 +269,10 @@ cover replacement/removal fanout, timer reset, immutable favorites/lyrics,
 same-song no-op, completed-round protection, forged/stale commands, and a queued
 finish after replacement. Browser QA covers change from focus mode, live-song
 replacement, empty-stage removal, and in-game lyric-video discovery.
+
+2026-10-08 official Genius validation: 981 full-site tests and 58 independent
+service tests pass. Browser QA uses fixed song metadata and the real official
+Genius widget: lyrics load beside the MV, the original combined stage-action row
+is retained, and the reading view opens/closes without losing the loaded widget.
+Production metadata validation requires a correctly named service credential;
+the service returns a readable setup-needed response until that is configured.
