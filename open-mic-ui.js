@@ -34,6 +34,9 @@
     queue: { en: 'TURN QUEUE', zh: '輪流順序' }, manage: { en: 'Manage players', zh: '管理玩家' },
     sitOut: { en: 'Sit out', zh: '先休息' }, rejoin: { en: 'Rejoin', zh: '重新加入' }, sittingOut: { en: 'Sitting out', zh: '休息中' },
     stage: { en: 'The music stage', zh: '音樂舞台' }, duration: { en: '{n}s, at your pace', zh: '{n} 秒，唱完這一句就好' },
+    focusSinging: { en: 'Focus on singing', zh: '專注唱歌' }, focusExit: { en: 'Show full game', zh: '顯示完整遊戲' },
+    focusHint: { en: 'Choose a song to focus on the music and lyrics.', zh: '選歌後，就能專心看 MV 和歌詞。' },
+    viewChallenge: { en: 'View challenge', zh: '查看挑戰' },
     chooseSong: { en: 'Choose a song from the playlist.', zh: '從歌單選一首想唱的歌。' },
     stageEmptyHint: { en: 'Your song, your choice. Preview a few first.', zh: '選你喜歡的歌，也可以先試聽幾首。' },
     challengeFirst: { en: 'Browse while the challenge is happening. Singing opens after the host chooses the result.', zh: '挑戰時也可以先看歌單。主持人判定結果後，就能選歌或跳過。' },
@@ -195,6 +198,8 @@
       this.lyricsLookupAbort = null; this.lyricsLookupBusy = false; this.lyricsLookupMode = null;
       this.lyricsLookupStatus = null; this.lyricsLookupSong = null; this.lyricsAutoAttemptKey = null;
       this.lyricsLookupContext = null; this.lyricsFindGeneration = 0;
+      this.focusPreferred = false;
+      try { this.focusPreferred = global.localStorage && global.localStorage.getItem('openmic-focus.v1') === 'true'; } catch (_) {}
       this.build();
       this.onClick = this.handleClick.bind(this);
       this.onInput = this.handleInput.bind(this);
@@ -231,6 +236,46 @@
       this.element.insertAdjacentHTML('beforeend', '<dialog class="om-modal om-lyrics-find" data-om-modal="lyricsFind"><header><h2 data-om-lyrics-lookup-title></h2><button type="button" class="om-button" data-om-action="closeLyricsFind"></button></header><p class="om-soft" data-om-lyrics-lookup-hint></p><form class="om-form om-lyrics-search-form" data-om-lyrics-search-form><label class="om-field"><span data-om-lyrics-track-label></span><input name="trackTitle" type="text" maxlength="200" autocomplete="off"></label><label class="om-field"><span data-om-lyrics-artist-label></span><input name="artistName" type="text" maxlength="200" autocomplete="off"></label><button type="submit" class="om-button om-primary" data-om-lyrics-search-submit></button></form><p class="om-feedback" data-om-lyrics-search-status role="status"></p><div class="om-lyrics-results" data-om-lyrics-results></div><section class="om-lyrics-candidate" data-om-lyrics-candidate hidden><h3 data-om-lyrics-candidate-title></h3><p class="om-soft" data-om-lyrics-candidate-artist></p><div class="om-lyrics-text" data-om-lyrics-candidate-preview tabindex="0"></div><button type="button" class="om-button om-primary" data-om-action="lyricsUse"></button><p class="om-soft" data-om-lyrics-use-hint></p></section><div class="om-lyrics-find-footer"><button type="button" class="om-button" data-om-action="lyricsManual"></button><a class="back" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer" data-om-lyrics-lookup-source></a></div></dialog>');
       this.lyricsFindDialog = this.find('[data-om-modal="lyricsFind"]');
       this.lyricsFindDialog.addEventListener('close', () => { if (!this.destroyed && !this.lyricsFindDialog.open) { this.lyricsFindGeneration++; if (this.lyricsLookupMode === 'manual') this.cancelLyricsLookup(); } });
+      this.buildStageLayout();
+    }
+    buildStageLayout() {
+      var stage = this.find('.om-stage'), footer = this.find('.om-stage-bottom');
+      var doc = this.element.ownerDocument || global.document;
+      var layout = doc.createElement('div'), videoColumn = doc.createElement('div');
+      layout.className = 'om-stage-layout'; layout.setAttribute('data-om-stage-layout', '');
+      videoColumn.className = 'om-stage-video-column';
+      videoColumn.appendChild(this.find('[data-om-stage-video]'));
+      videoColumn.appendChild(this.find('[data-om-stage-info]'));
+      layout.appendChild(videoColumn);
+      var lyrics = this.find('[data-om-lyrics-panel]');
+      lyrics.classList.add('om-stage-lyrics-column'); layout.appendChild(lyrics);
+      stage.insertBefore(layout, footer);
+      footer.classList.add('om-stage-session');
+      footer.insertAdjacentHTML('afterbegin', '<div data-om-stage-timer></div>');
+      this.find('.om-stage-top').insertAdjacentHTML('beforeend', '<button type="button" class="om-button om-focus-toggle" data-om-action="focusToggle" aria-pressed="false"></button>');
+    }
+    focusAvailable() {
+      return !!(this.data && this.data.selectedSong && (this.data.phase === 'choice' || this.data.phase === 'singing'));
+    }
+    toggleFocus() {
+      if (this.destroyed || !this.focusAvailable()) return;
+      this.focusPreferred = !this.focusPreferred;
+      try { if (global.localStorage) global.localStorage.setItem('openmic-focus.v1', String(this.focusPreferred)); } catch (_) {}
+      this.renderFocus();
+    }
+    renderFocus() {
+      if (this.destroyed) return;
+      var available = this.focusAvailable(), focused = available && !!this.focusPreferred;
+      this.element.classList.toggle('om-is-focused', focused);
+      this.element.classList.toggle('om-has-song', !!(this.data && this.data.selectedSong));
+      this.element.classList.toggle('om-has-lyrics', !!(this.data && this.data.selectedSong && this.getLyrics(this.data.selectedSong.videoId).trim()));
+      var button = this.find('[data-om-action="focusToggle"]');
+      if (button) {
+        button.textContent = t(focused ? 'focusExit' : 'focusSinging');
+        button.setAttribute('aria-pressed', String(focused));
+        button.disabled = !available;
+        button.title = available ? '' : t('focusHint');
+      }
     }
     find(selector) { return this.element.querySelector(selector); }
     set(selector, html) { var el = this.find(selector); if (el) el.innerHTML = html; }
@@ -278,6 +323,7 @@
       this.find('[data-om-add-form] input[name="title"]').placeholder = t('titlePlaceholder');
       if (this.previewSong) this.setText('[data-om-preview-title]', this.previewSong.title);
       this.renderExtraLabels();
+      this.renderFocus();
     }
     renderExtraLabels() {
       var labels = { '[data-om-starter-hint]': 'starterHint', '[data-om-youtube-home]': 'youtubeHome', '[data-om-youtube-search]': 'youtubeSearch', '[data-om-action="playlistOpen"]': 'playlistOpen', '[data-om-playlist-title]': 'playlistTitle', '[data-om-action="closePlaylist"]': 'close', '[data-om-playlist-hint]': 'playlistHint', '[data-om-playlist-url-label]': 'playlistURL', '[data-om-playlist-load]': 'playlistLoad', '[data-om-action="playlistCurrent"]': 'playlistCurrent', '[data-om-playlist-song-label]': 'playlistSongTitle', '[data-om-action="playlistAdd"]': 'playlistAdd', '[data-om-playlist-video-link]': 'youtubeLink', '[data-om-lyrics-label]': 'lyrics', '[data-om-lyrics-hint]': 'lyricsHint', '[data-om-action="lyricsEdit"]': 'lyricsEdit', '[data-om-action="lyricsRead"]': 'lyricsRead', '[data-om-lyric-video-search]': 'lyricVideoSearch', '[data-om-lyrics-editor-hint]': 'lyricsEditorHint', '[data-om-lyrics-save]': 'lyricsSave', '[data-om-action="closeLyricsEdit"]': 'close', '[data-om-action="closeLyricsRead"]': 'close' };
@@ -306,8 +352,12 @@
       var result = data.challengeResult, after = !!result, finished = data.phase === 'finished';
       var personName = this.name(data.spotlight), avatar = Array.from(personName.trim())[0] || '♪';
       var controls = '';
-      if (host && data.phase === 'challenge') controls = '<div class="om-challenge-controls"><div class="om-actions">' + this.button('success', t('success'), 'om-success') + this.button('failed', t('failed'), 'om-fail') + '</div>' + this.button('newChallenge', t('newChallenge')) + '</div>';
-      this.set('[data-om-challenge]', '<div class="om-panel-head"><p class="om-kicker">' + esc(t('spotlight')) + '</p><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div><h3 class="om-challenge-title">' + esc(challengeText(challenge.title)) + '</h3><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div><p class="om-success-rule">' + esc(t('successRule', { rule: challengeText(challenge.successRule) })) + '</p>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(t(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(t(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
+      if (host && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', t('success'), 'om-success') + this.button('failed', t('failed'), 'om-fail') + this.button('newChallenge', t('newChallenge')) + '</div>';
+      var disclosure = this.find('[data-om-challenge-details]');
+      var disclosureKey = [data.sessionId, data.round, challenge.id, data.phase === 'challenge' ? 'challenge' : 'result'].join(':');
+      var disclosureOpen = this.challengeDisclosureKey === disclosureKey && disclosure ? disclosure.open : data.phase === 'challenge';
+      this.challengeDisclosureKey = disclosureKey;
+      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div></div><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><details class="om-challenge-details" data-om-challenge-details' + (disclosureOpen ? ' open' : '') + '><summary><span>' + esc(t('viewChallenge')) + '</span><strong>' + esc(challengeText(challenge.title)) + '</strong></summary><div class="om-challenge-body"><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div><p class="om-success-rule">' + esc(t('successRule', { rule: challengeText(challenge.successRule) })) + '</p></div></details>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(t(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(t(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
       var roster = this.roster(), active = roster.filter(p => p.active !== false), current = active.findIndex(p => Number(p.playerNum) === Number(data.spotlight));
       var ordered = current >= 0 ? active.slice(current).concat(active.slice(0, current)) : active;
       var queue = ordered.concat(roster.filter(p => p.active === false)).map(p => '<li class="' + (Number(p.playerNum) === Number(data.spotlight) ? 'om-current' : p.active === false ? 'om-inactive' : '') + '">' + (Number(p.playerNum) === Number(data.spotlight) ? '<span class="om-dot" aria-hidden="true"></span>' : '') + esc(p.name || t('player', { n: p.playerNum })) + (p.active === false ? ' · ' + esc(t('sittingOut')) : '') + '</li>').join('');
@@ -338,17 +388,17 @@
       }
       var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div><p class="om-soft">' + esc(t('embedHint')) + ' <a class="back" href="' + youtube(song.videoId) + '" target="_blank" rel="noopener noreferrer">' + esc(t('youtubeLink')) + '</a></p>' : '';
       if (data.duet) info += '<p class="om-stage-hint om-soft">👥 ' + esc(t('duetWith', { name: this.name(data.duet) })) + '</p>';
-      if (data.singingState === 'singing') info += '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>';
       this.set('[data-om-stage-info]', info);
+      this.set('[data-om-stage-timer]', data.singingState === 'singing' ? '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>' : '');
       var buttons = '';
+      if (after && ((!finished && controller) || host)) buttons += '<div class="om-actions">';
       if (after && !finished && controller) {
-        buttons += '<div class="om-actions">';
         if (data.singingState === 'singing') buttons += this.button('finishSinging', t('finishSinging'), 'om-success');
         else buttons += this.button('startSinging', t('startSinging'), 'om-primary', '', !!song);
         buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
-        buttons += '</div>';
       }
-      if (host && after) buttons += '<div class="om-actions" style="margin-top:10px">' + this.button('next', t('next'), finished ? 'om-primary' : '', '', true) + '</div>';
+      if (host && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '', '', true);
+      if (after && ((!finished && controller) || host)) buttons += '</div>';
       if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
       else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('nextHint')) + '</p>';
       else if (!controller) buttons += '<p class="om-waiting">' + esc(t('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
@@ -779,6 +829,7 @@
       var target = event.target.closest('[data-om-action]');
       if (!target || !this.element.contains(target) || target.disabled) return;
       var action = target.dataset.omAction;
+      if (action === 'focusToggle') { this.toggleFocus(); return; }
       if (action === 'preview') { this.preview(target.dataset.video); return; }
       if (action === 'closePreview') { this.close(this.previewDialog); return; }
       if (action === 'addOpen') { this.setText('[data-om-form-error]', ''); this.show(this.addDialog); return; }

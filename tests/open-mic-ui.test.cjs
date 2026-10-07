@@ -239,3 +239,144 @@ test('results fetched for an earlier turn or round cannot be reused as the curre
     assert.equal(f.g.lyricsLookupPicked, null); await f.g.useLyricsCandidate(); assert.equal(f.sent.length, 0);
   }
 });
+
+function presentation(actor = 0) {
+  const f = setup(), g = Object.create(f.Game.prototype), nodes = new Map(), classes = new Set(), sent = [], videoWrites = [];
+  let mounted = true;
+  function node(selector) {
+    if (nodes.has(selector)) return nodes.get(selector);
+    const attributes = new Map(), localClasses = new Set();
+    const entry = { value: '', textContent: '', innerHTML: '', hidden: false, disabled: false, open: false, style: {},
+      classList: { toggle: (name, on) => on ? localClasses.add(name) : localClasses.delete(name),
+        add: name => localClasses.add(name), remove: name => localClasses.delete(name), contains: name => localClasses.has(name) },
+      setAttribute: (key, value) => attributes.set(key, String(value)), getAttribute: key => attributes.get(key) ?? null,
+      scrollIntoView() {}, focus() {}, removeAttribute: key => attributes.delete(key) };
+    nodes.set(selector, entry); return entry;
+  }
+  const element = { contains: () => true, addEventListener() {}, removeEventListener() {},
+    classList: { toggle: (name, on) => on ? classes.add(name) : classes.delete(name),
+      add: name => classes.add(name), remove: name => classes.delete(name), contains: name => classes.has(name) },
+    querySelector: selector => mounted ? node(selector) : null,
+    querySelectorAll: selector => mounted ? selector.split(',').map(part => node(part.trim())) : [],
+    get innerHTML() { return ''; }, set innerHTML(_value) { mounted = false; } };
+  const dialog = () => ({ open: false, close() { this.open = false; }, showModal() { this.open = true; } });
+  const song = { videoId: 'nfWlot6h_JM', title: 'Our Party Song', artist: 'Our Players', tags: [] };
+  Object.assign(g, { element, actor, destroyed: false, pending: false, error: '', notice: '', query: '', category: 'for-you',
+    focusPreferred: false, videoKey: null, lyricsFont: 24, lastControl: true,
+    data: { version: 1, sessionId: 'presentation-session', turnId: 5, round: 1, spotlight: 1,
+      roster: [{ playerNum: 1, name: 'Amy', active: true }, { playerNum: 2, name: 'Bob', active: true }],
+      phase: 'choice', challengeResult: 'success', teamScore: 2, singingState: 'idle', singingStartedAt: null, duration: 35,
+      selectedSong: song, songLibrary: [song], mySongs: {}, songLyrics: { [song.videoId]: originalFixture },
+      challenge: { title: 'Our small challenge', situation: 'It is our party.', challenge: 'Say hello.', successRule: 'Say hello.' } },
+    previewSong: null, playlistPlayer: null, playlistBusy: false, playlistGeneration: 0,
+    lyricsDrafts: {}, lyricsEditVideo: null, lyricsEditSession: null, lyricsEditGeneration: 0,
+    lyricsLookupRecords: [], lyricsLookupPicked: null, lyricsLookupGeneration: 0, lyricsLookupAbort: null,
+    lyricsLookupBusy: false, lyricsLookupMode: null, lyricsLookupStatus: null, lyricsLookupSong: null,
+    lyricsLookupContext: null, lyricsAutoAttemptKey: null, lyricsFindGeneration: 0,
+    lyricsEditDialog: dialog(), lyricsFindDialog: dialog(), previewDialog: dialog(), addDialog: dialog(), duetDialog: dialog(),
+    playlistDialog: dialog(), lyricsReadDialog: dialog(), canControl: () => true, now: () => 100000,
+    send: async (type, extra) => { sent.push({ type, extra }); },
+    set: (selector, html) => { node(selector).innerHTML = html; if (selector === '[data-om-stage-video]') videoWrites.push(html); },
+  });
+  return { ...f, g, nodes, node, classes, sent, videoWrites,
+    click(action) {
+      const target = node('[data-om-action="' + action + '"]'); target.dataset = { omAction: action };
+      const origin = { closest: selector => selector === '[data-om-action]' ? target : null };
+      g.handleClick({ target: origin });
+    },
+    controls: () => node('[data-om-stage-controls]').innerHTML,
+    challenge: () => node('[data-om-challenge]').innerHTML,
+  };
+}
+
+test('side-by-side stage layout moves the existing video and lyrics nodes without replacing their contents', () => {
+  const f = setup(), g = Object.create(f.Game.prototype); let contentWrites = 0;
+  function treeNode(name) {
+    const node = { name, children: [], parentNode: null, attributes: new Map(),
+      classList: { add() {} }, setAttribute(key, value) { this.attributes.set(key, value); },
+      appendChild(child) {
+        if (child.parentNode) child.parentNode.children.splice(child.parentNode.children.indexOf(child), 1);
+        this.children.push(child); child.parentNode = this; return child;
+      },
+      insertBefore(child, before) {
+        if (child.parentNode) child.parentNode.children.splice(child.parentNode.children.indexOf(child), 1);
+        this.children.splice(this.children.indexOf(before), 0, child); child.parentNode = this;
+      },
+      insertAdjacentHTML() {},
+    };
+    Object.defineProperty(node, 'innerHTML', { get: () => '', set: () => { contentWrites++; } });
+    return node;
+  }
+  const stage = treeNode('stage'), top = treeNode('top'), video = treeNode('video'), iframe = treeNode('playing iframe');
+  const footer = treeNode('footer'), info = treeNode('track info'), lyrics = treeNode('lyrics'), controls = treeNode('controls');
+  stage.appendChild(top); stage.appendChild(video); stage.appendChild(footer); video.appendChild(iframe);
+  footer.appendChild(info); footer.appendChild(controls); footer.appendChild(lyrics);
+  const nodes = new Map([['.om-stage', stage], ['.om-stage-bottom', footer], ['.om-stage-top', top],
+    ['[data-om-stage-video]', video], ['[data-om-stage-info]', info], ['[data-om-lyrics-panel]', lyrics]]);
+  g.element = { ownerDocument: { createElement: () => treeNode('new wrapper') } }; g.find = selector => nodes.get(selector);
+  g.buildStageLayout();
+  const layout = stage.children[1], videoColumn = layout.children[0];
+  assert.equal(layout.attributes.get('data-om-stage-layout'), '');
+  assert.equal(videoColumn.children[0], video); assert.equal(videoColumn.children[1], info);
+  assert.equal(layout.children[1], lyrics); assert.equal(video.children[0], iframe);
+  assert.equal(stage.children[2], footer); assert.equal(footer.children[0], controls);
+  assert.equal(contentWrites, 0, 'moving wrappers must keep the existing player and lyrics content');
+});
+
+test('focus toggle stays local for host, Spotlight, and listeners, including offline or pending controls', async () => {
+  for (const actor of [0, 1, 2]) {
+    const f = presentation(actor); f.g.render();
+    const original = JSON.stringify(f.g.data), originalWrites = f.videoWrites.length;
+    f.g.pending = true; f.g.canControl = () => false; f.g.renderFocus();
+    assert.equal(f.node('[data-om-action="focusToggle"]').disabled, false);
+    f.click('focusToggle');
+    assert.equal(f.classes.has('om-is-focused'), true);
+    assert.equal(f.node('[data-om-action="focusToggle"]').getAttribute('aria-pressed'), 'true');
+    f.click('focusToggle'); await nextTask();
+    assert.equal(f.classes.has('om-is-focused'), false);
+    assert.equal(f.node('[data-om-action="focusToggle"]').getAttribute('aria-pressed'), 'false');
+    assert.equal(f.sent.length, 0); assert.equal(JSON.stringify(f.g.data), original);
+    assert.equal(f.videoWrites.length, originalWrites);
+  }
+});
+
+test('focus, font size, shared lyrics, and singing phase updates preserve the mounted player', () => {
+  const f = presentation(); f.g.render(); const videoNode = f.node('[data-om-stage-video]'), lyricsNode = f.node('[data-om-lyrics-copy]');
+  assert.equal(f.videoWrites.length, 1);
+  f.click('focusToggle'); f.click('lyricsLarger');
+  assert.equal(f.g.lyricsFont, 26); assert.equal(lyricsNode.style.fontSize, '26px');
+  f.g.update({ openmic: { ...f.g.data, phase: 'singing', singingState: 'singing', singingStartedAt: 100000, turnId: 6,
+    songLyrics: { nfWlot6h_JM: 'An updated original line for our party.' } } });
+  assert.equal(f.node('[data-om-stage-video]'), videoNode); assert.equal(f.node('[data-om-lyrics-copy]'), lyricsNode);
+  assert.equal(lyricsNode.textContent, 'An updated original line for our party.'); assert.equal(f.videoWrites.length, 1);
+  f.g.update({ openmic: { ...f.g.data, phase: 'finished', singingState: 'finished', turnId: 7 } });
+  assert.equal(f.classes.has('om-is-focused'), false); assert.equal(f.videoWrites.length, 1);
+  assert.equal(f.g.data.teamScore, 2); assert.equal(f.sent.length, 0);
+});
+
+test('focus preserves host judgment and Spotlight singing permissions in both presentations', () => {
+  for (const actor of [0, 1, 2]) {
+    const f = presentation(actor); f.g.render(); const normalControls = f.controls();
+    f.click('focusToggle'); f.g.render(); assert.equal(f.controls(), normalControls);
+    assert.equal(normalControls.includes('data-om-action="startSinging"'), actor !== 2);
+    assert.equal(normalControls.includes('data-om-action="skip"'), actor !== 2);
+    assert.equal(normalControls.includes('data-om-action="duetOpen"'), actor !== 2);
+    assert.equal(normalControls.includes('data-om-action="next"'), actor === 0);
+    f.g.update({ openmic: { ...f.g.data, phase: 'challenge', challengeResult: null, selectedSong: null, turnId: 8 } });
+    assert.equal(f.node('[data-om-action="focusToggle"]').disabled, true); assert.equal(f.classes.has('om-is-focused'), false);
+    assert.equal(f.challenge().includes('data-om-action="success"'), actor === 0);
+    assert.equal(f.challenge().includes('data-om-action="failed"'), actor === 0);
+    f.click('focusToggle'); assert.equal(f.sent.length, 0);
+  }
+});
+
+test('a real session change remounts its player and teardown cannot revive the focused view', () => {
+  const f = presentation(); f.g.render(); f.click('focusToggle');
+  assert.equal(f.videoWrites.length, 1);
+  f.g.update({ openmic: { ...f.g.data, sessionId: 'new-presentation-session' } });
+  assert.equal(f.videoWrites.length, 2, 'a new session starts its own stage player');
+  const writes = f.videoWrites.length; f.g.destroy();
+  assert.doesNotThrow(() => { f.g.toggleFocus(); f.g.render(); });
+  assert.equal(f.g.destroyed, true); assert.equal(f.g.data, null); assert.equal(f.videoWrites.length, writes);
+  assert.equal(f.sent.length, 0);
+});

@@ -7,8 +7,9 @@
 .om-subtitle { color: var(--text-dim); margin-top: 10px; font-size: 1rem; }
 .om-shell { width: 100%; max-width: 1240px; }
 .om-app { --accent: #a5a0ff; --accent-text: #c7c4ff; color: var(--text, #eee); width: 100%; text-align: left; }
-.om-grid { display: grid; grid-template-columns: minmax(280px, .9fr) minmax(0, 1.45fr); align-items: start; gap: 20px; }
+.om-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; }
 .om-left, .om-right { display: grid; gap: 16px; min-width: 0; }
+.om-left { grid-template-columns: minmax(0, 1.7fr) minmax(240px, .65fr); align-items: start; }
 .om-panel { padding: 22px; background: var(--surface, #13132b); border: 1px solid var(--border-2, #2e2e5e); border-radius: 20px; min-width: 0; }
 .om-kicker { color: var(--accent-text, #c7c4ff); font-size: .72rem; line-height: 1.6; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
 .om-soft { color: var(--text-dim, #9999bb); font-size: .84rem; line-height: 1.6; }
@@ -136,7 +137,7 @@
 .om-lyrics-reader [data-om-lyrics-reading] { padding: 10px 6px 30px; }
 .om-video { min-height: 200px; }
 .om-owner { color: #aaaac6; font-size: .77rem; margin: 11px 0 3px; line-height: 1.55; }
-.om-song-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.om-song-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
 .om-song { overflow: hidden; min-width: 0; border: 1px solid #343054; border-radius: 13px; background: #1a1a38; }
 .om-song.om-selected { border-color: #a5a0ff; box-shadow: 0 0 0 1px #a5a0ff; }
 .om-thumb { aspect-ratio: 16 / 9; position: relative; background: #090913; overflow: hidden; }
@@ -181,15 +182,89 @@
 .om-player-wrap { width: 100%; max-width: 1240px; }
 .om-player-wrap .om-grid { margin-top: 16px; }
 .om-player-wrap .om-name-banner { padding-bottom: 12px; }
+/* Keep the music and shared lyrics together, with one persistent player node. */
+.om-challenge, .om-score-panel { padding: 16px 20px; }
+.om-challenge-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.om-challenge-meta .om-spotlight { margin: 0; gap: 10px; min-width: 0; }
+.om-challenge-meta .om-avatar { width: 40px; height: 40px; flex-basis: 40px; border-radius: 12px; font-size: 1rem; }
+.om-challenge-meta .om-spotlight h2 { font-size: 1.16rem; line-height: 1.3; margin: 0; }
+.om-challenge-meta .om-kicker { font-size: .65rem; }
+.om-challenge-details { margin-top: 10px; }
+.om-challenge-details summary { display: flex; align-items: center; gap: 10px; min-height: 44px; color: #ddd9ff; cursor: pointer; list-style: none; }
+.om-challenge-details summary::before { content: '▸'; color: #a5a0ff; flex-shrink: 0; }
+.om-challenge-details[open] summary::before { content: '▾'; }
+.om-challenge-details summary > span { font-size: .75rem; color: #aaaac6; flex-shrink: 0; }
+.om-challenge-details summary > strong { font-size: .95rem; font-weight: 700; overflow-wrap: anywhere; }
+.om-challenge-details summary:focus-visible { outline: 3px solid #a5a0ff; outline-offset: 2px; border-radius: 6px; }
+.om-challenge-body { padding-top: 8px; }
+.om-challenge-controls { margin-top: 12px; }
+.om-challenge-controls .om-button { min-height: 44px; padding: 10px 14px; }
+.om-result { padding: 9px 12px; margin-top: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.om-result strong { font-size: .85rem; margin: 0; }
+.om-result p { font-size: .76rem; flex: 1 1 260px; }
+.om-score-number { font-size: 2.2rem; }
+.om-score-rules { margin-top: 5px; font-size: .73rem; }
+.om-queue { padding-top: 10px; margin-top: 10px; }
+.om-queue-list { gap: 5px; margin-top: 6px; }
+.om-queue-list li { padding: 5px 8px; font-size: .72rem; }
+.om-manage { margin-top: 6px; }
+.om-manage summary { font-size: .75rem; }
+.om-stage-top { padding: 13px 18px; flex-wrap: wrap; }
+.om-stage-top h2 { font-size: 1rem; margin-right: auto; }
+.om-focus-toggle { min-height: 44px; padding: 9px 12px; font-size: .78rem; }
+.om-focus-toggle[aria-pressed="true"] { color: #dedbff; border-color: #a5a0ff; background: #302a54; }
+.om-stage-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 0 18px; align-items: start; }
+.om-has-song .om-stage-layout { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
+.om-stage-video-column { min-width: 0; }
+.om-stage-video-column .om-video { overflow: hidden; border: 1px solid #343054; border-radius: 13px; }
+.om-stage-video-column [data-om-stage-info] { padding: 12px 2px 0; }
+.om-stage-track { margin-bottom: 6px; }
+.om-stage-track h3 { font-size: 1rem; line-height: 1.4; }
+.om-stage-track p { margin-top: 3px; font-size: .78rem; }
+[data-om-stage-info] > .om-soft { font-size: .73rem; }
+.om-stage-hint { margin-top: 6px; }
+.om-stage-lyrics-column { min-width: 0; margin: 0; padding: 12px; border: 1px solid #343054; border-radius: 13px; background: #101023; }
+.om-stage-lyrics-column .om-panel-head h3 { font-size: 1rem; }
+.om-stage-lyrics-column > .om-soft { margin: 6px 0 8px; font-size: .73rem; }
+.om-stage-lyrics-column [data-om-lyrics-copy] { height: clamp(240px, 24vw, 340px); max-height: 340px; padding: 12px; margin-top: 8px; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+.om-stage-lyrics-column .om-lyrics-actions { margin-top: 9px; gap: 6px; }
+.om-stage-lyrics-column .om-lyrics-actions .om-button { min-height: 44px; padding: 9px 10px; font-size: .73rem; }
+.om-stage-lyrics-column .om-lyrics-links { margin-top: 3px; gap: 6px 14px; }
+.om-stage-lyrics-column .om-lyrics-links a { font-size: .72rem; }
+.om-stage-lyrics-column .om-lyrics-load-status:not(:empty) { padding: 6px 0 0; font-size: .75rem; }
+.om-has-lyrics .om-stage-lyrics-column > [data-om-lyrics-hint] { display: none; }
+.om-stage-session { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); align-items: center; gap: 16px; padding: 15px 18px 18px; }
+.om-stage-session > [data-om-stage-timer]:empty { display: none; }
+.om-stage-session > [data-om-stage-timer]:empty + [data-om-stage-controls] { grid-column: 1 / -1; }
+.om-stage-session .om-timer-line { margin: 0 0 6px; gap: 10px; }
+.om-stage-session .om-timer { font-size: 1.9rem; }
+.om-stage-session .om-timer-label { font-size: .73rem; }
+.om-stage-session .om-progress { margin-bottom: 0; }
+.om-stage-session .om-actions .om-button { flex: 1 1 auto; min-height: 46px; font-size: .79rem; }
+.om-stage-session .om-waiting { padding-top: 7px; font-size: .76rem; }
+.om-is-focused .om-challenge-details, .om-is-focused .om-challenge-controls, .om-is-focused .om-result,
+.om-is-focused .om-score-rules, .om-is-focused .om-queue, .om-is-focused .om-manage, .om-is-focused .om-browser { display: none; }
+.om-is-focused .om-left { align-items: stretch; }
+.om-is-focused .om-score-panel { display: grid; align-items: center; }
+.om-is-focused.om-has-lyrics .om-stage-lyrics-column > .om-lyrics-load-status,
+.om-is-focused.om-has-lyrics .om-stage-lyrics-column > .om-lyrics-links { display: none; }
+.om-page.om-playing .topbar { margin-bottom: 12px; }
+.om-page.om-playing .om-header { display: flex; align-items: center; margin-bottom: 12px; }
+.om-page.om-playing .om-header h1 { font-size: 1.4rem; }
+.om-page.om-playing .om-header > .om-kicker, .om-page.om-playing .om-subtitle { display: none; }
+.open-mic-card-page .name-banner { font-size: .8rem; padding: 5px 10px; margin-bottom: 5px; }
 @media (max-width: 860px) {
   .om-grid { grid-template-columns: 1fr; }
-  .om-left { gap: 12px; }
+  .om-left { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .om-score-panel { padding: 16px 20px; }
   .om-score-row { align-items: center; }
   .om-score-number { font-size: 2rem; }
   .om-score-rules { margin-top: 6px; }
   .om-queue { padding-top: 12px; margin-top: 12px; }
   .om-song-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .om-has-song .om-stage-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .om-stage-lyrics-column [data-om-lyrics-copy] { height: 240px; max-height: 260px; }
+  .om-is-focused .om-left { grid-template-columns: minmax(0, 1fr) minmax(130px, .4fr); }
 }
 @media (max-width: 620px) {
   .om-page { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
@@ -203,6 +278,31 @@
   .om-stage { padding: 0; }
   .om-stage-top { padding: 16px 18px; }
   .om-stage-bottom { padding: 16px 18px 18px; }
+  .om-stage-layout { padding: 0 12px; gap: 12px; }
+  .om-stage-top { padding: 10px 12px; gap: 8px; }
+  .om-stage-top h2 { font-size: .88rem; }
+  .om-stage-top .om-duration { display: none; }
+  .om-focus-toggle { font-size: .73rem; padding: 9px 10px; }
+  .om-stage-session { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .om-stage-session .om-timer-line { justify-content: flex-start; }
+  .om-stage-session .om-timer-label { text-align: left; }
+  .om-stage-session .om-actions .om-button { flex-basis: calc(50% - 8px); }
+  .om-stage-lyrics-column { padding: 10px; }
+  .om-stage-lyrics-column [data-om-lyrics-copy] { height: 220px; max-height: 260px; }
+  .om-stage-video-column [data-om-stage-info] { padding-top: 8px; }
+  .om-stage-track { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; }
+  .om-stage-track h3 { font-size: .9rem; }
+  .om-stage-track p { font-size: .73rem; margin: 0; }
+  .om-stage-video-column [data-om-stage-info] > .om-soft { font-size: .68rem; }
+  .om-is-focused .om-left { grid-template-columns: minmax(0, 1fr) 110px; gap: 8px; }
+  .om-is-focused .om-challenge, .om-is-focused .om-score-panel { padding: 10px; }
+  .om-is-focused .om-challenge-meta { gap: 6px; }
+  .om-is-focused .om-challenge-meta .om-avatar { display: none; }
+  .om-is-focused .om-challenge-meta .om-spotlight h2 { font-size: .97rem; }
+  .om-is-focused .om-round { display: none; }
+  .om-is-focused .om-score-row { gap: 6px; }
+  .om-is-focused .om-score-row .om-kicker { font-size: .56rem; letter-spacing: .025em; }
+  .om-is-focused .om-score-number { font-size: 1.8rem; }
   .om-spotlight { margin: 13px 0 16px; gap: 10px; }
   .om-spotlight h2 { font-size: 1.4rem; }
   .om-avatar { width: 43px; height: 43px; flex-basis: 43px; border-radius: 13px; font-size: 1rem; }

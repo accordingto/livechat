@@ -27,6 +27,7 @@
     byId('start-panel').hidden = status === 'setupNeeded' || (!!state && status !== 'switched');
     byId('start').disabled = busy || closed || !(demo || (sync?.connected && sync?.own));
     byId('game').hidden = !state || status === 'switched';
+    document.body.classList.toggle('om-playing', !!state && status !== 'switched');
     byId('room-label').textContent = demo ? (I18N.lang === 'zh' ? '單機試玩' : 'Local demo') : roomCode ? 'Room ' + roomCode : '';
     if (state && status !== 'switched') {
       const actor = demo ? Number(byId('demo-view')?.value || 0) : 0;

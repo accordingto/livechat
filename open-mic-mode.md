@@ -75,6 +75,22 @@ Old rooms with no `songLyrics` are supported. Lyrics transport alone has a
 34,000-character action envelope so valid escaped text fits; ordinary commands
 retain their 4,000-character limit and actor/session/turn checks.
 
+## MV and lyrics layout
+
+The approved stage layout puts the MV and lyrics side by side on desktop and
+stacks MV above lyrics on phones. Lyrics have their own bounded reading scroll;
+the video remains visible while reading. Compact challenge/score information
+sits above the full-width stage, with the song library below it. Small video
+areas keep a 200px minimum height and preserve the full video frame.
+
+Singing focus is a local presentation preference: it collapses the challenge
+and song browser while retaining the Spotlight, score, MV, lyrics, timer, and
+permitted stage actions. It is available to every viewer once a song is selected
+in the choice or singing phase, including viewers whose room controls are
+temporarily unavailable. The preference is saved on the device; a new challenge
+restores the challenge and browser automatically. It sends no gameplay command.
+Changing focus, lyric size, or saved text keeps the current stage iframe mounted.
+
 ## Synchronization and checks
 
 Keep the host page open, following the Hub's trusted-host model. No new account,
@@ -95,3 +111,11 @@ protections. Browser QA automatically loads an English song, previews and applie
 a Mandarin version inside the stage, and checks the 390px search layout without
 horizontal overflow. Latest CUT changes are retained. YouTube personal Home
 recommendations remain on YouTube; lyrics are read within the game.
+
+2026-10-08 stage layout validation: 70 Open Mic tests and 797 full-site tests
+pass. The five new UI regressions cover persistent video/lyrics nodes, local
+focus for every role with unavailable room controls, font/lyrics/phase updates,
+unchanged authority, and session teardown. Local browser QA verifies desktop
+columns, a 375px phone with no horizontal overflow, a 200px video and 220px
+scrolling lyrics area at 26px type, passive-view focus, and normal +1 singing
+completion followed by restored host challenge controls on the next turn.
