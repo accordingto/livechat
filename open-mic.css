@@ -233,6 +233,10 @@
 .om-stage-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 0 18px; align-items: start; }
 .om-has-song .om-stage-layout { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
 .om-stage-video-column { min-width: 0; }
+.om-song-controls { margin-bottom: 10px; padding: 10px; border: 1px solid #46406b; border-radius: 12px; background: #201d38; }
+.om-song-controls .om-actions { gap: 8px; }
+.om-song-controls .om-button { flex: 1 1 120px; min-height: 44px; padding: 9px 12px; font-size: .8rem; }
+.om-song-controls .om-song-control-hint { margin-top: 7px; font-size: .74rem; line-height: 1.5; }
 .om-stage-video-column .om-video { overflow: hidden; border: 1px solid #343054; border-radius: 13px; }
 .om-stage-video-column [data-om-stage-info] { padding: 12px 2px 0; }
 .om-stage-track { margin-bottom: 6px; }
@@ -249,7 +253,6 @@
 .om-stage-lyrics-column .om-lyrics-links { margin-top: 3px; gap: 6px 14px; }
 .om-stage-lyrics-column .om-lyrics-links a { font-size: .72rem; }
 .om-stage-lyrics-column .om-lyrics-links .om-button { font-size: .72rem; min-height: 44px; padding: 8px 10px; }
-.om-change-song-hint { margin-top: 9px; font-size: .75rem; }
 .om-stage-lyrics-column .om-lyrics-load-status:not(:empty) { padding: 6px 0 0; font-size: .75rem; }
 .om-has-lyrics .om-stage-lyrics-column > [data-om-lyrics-hint] { display: none; }
 .om-stage-session { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); align-items: center; gap: 16px; padding: 15px 18px 18px; }

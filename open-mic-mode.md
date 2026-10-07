@@ -19,15 +19,17 @@ awards the song point once. Host Next while singing also finalizes that point
 before rotating. Skip while singing awards nothing. Only the host advances the
 queue; participants do not receive judgment or Next controls.
 
-Change Song opens the local song browser, including from Focus on singing.
-During choice or singing, the host or current active Spotlight may select a
-different library/discovered song to replace the stage. Replacing a singing
-performance stops its timer and returns to choice without awarding a point;
-Start Singing can then begin the new song. Reselecting the same song during
-singing is an acknowledged no-op and preserves the timer. Remove Song uses
+Change Song and Remove Song stay visible above the MV with a reason when
+unavailable. Change Song opens the local song browser, including from Focus on
+singing. During choice, singing, or finished, the host or current active
+Spotlight may select a different library/discovered song to replace the stage.
+Replacing a singing performance stops its timer and returns to choice without
+awarding a point; Start Singing can then begin the new song. Reselecting the
+same song during singing or finished is an acknowledged no-op. Remove Song uses
 `clearSong` to clear the stage, timer, and duet while retaining the shared
-library, lyrics, and personal favorites. Completed rounds cannot reopen through
-selection or removal; the host advances with Next. Stale completion commands
+library, lyrics, and personal favorites. In a finished round, selection or
+removal is playback-only: the round remains finished with its awarded score,
+and singing cannot restart. The host advances with Next. Stale completion commands
 cannot finalize a replaced or removed performance.
 
 ## Implementation
@@ -62,7 +64,7 @@ YouTube search and public popular music for Taiwan, the United States, and South
 Korea provide current videos, channel labels, and a fetch timestamp. This is
 public regional discovery rather than a personal Home feed. Every viewer can
 search and preview without leaving the game. Play on Stage lets the host or
-current active Spotlight select a result during choice or singing without first
+current active Spotlight select a result during choice, singing, or finished without first
 saving it. A single `selectSong {videoId,title}` command validates and registers
 an unknown video in the shared library and selects it, leaving every player's
 My Songs unchanged. Existing videos retain their metadata and shared lyrics.
@@ -84,7 +86,9 @@ Queries and discovery results stay local. Superseded searches and input changes
 cancel or fence older responses. Session changes and teardown clear requests;
 late add or selection completions cannot alter the next player's view. Searching,
 previewing, and adding a favorite leave stage playback and scoring unchanged.
-Direct selection changes the stage song and attempts autoplay only on the device
+Library, My Songs, and discovery use the same direct selection flow, labeled
+Replace & Play when a different song is already on stage. Selection changes the
+stage song and attempts autoplay only on the device
 that requested it; other viewers receive the selected song without autoplay.
 Browser playback restrictions may still require pressing the video's play button.
 Selection never starts the singing timer or awards points. External search and

@@ -319,7 +319,8 @@ test('side-by-side stage layout moves the existing video and lyrics nodes withou
   g.buildStageLayout();
   const layout = stage.children[1], videoColumn = layout.children[0];
   assert.equal(layout.attributes.get('data-om-stage-layout'), '');
-  assert.equal(videoColumn.children[0], video); assert.equal(videoColumn.children[1], info);
+  assert.equal(videoColumn.children[0].attributes.get('data-om-song-controls'), '');
+  assert.equal(videoColumn.children[1], video); assert.equal(videoColumn.children[2], info);
   assert.equal(layout.children[1], lyrics); assert.equal(video.children[0], iframe);
   assert.equal(stage.children[2], footer); assert.equal(footer.children[0], controls);
   assert.equal(contentWrites, 0, 'moving wrappers must keep the existing player and lyrics content');
@@ -352,7 +353,7 @@ test('focus, font size, shared lyrics, and singing phase updates preserve the mo
   assert.equal(f.node('[data-om-stage-video]'), videoNode); assert.equal(f.node('[data-om-lyrics-copy]'), lyricsNode);
   assert.equal(lyricsNode.textContent, 'An updated original line for our party.'); assert.equal(f.videoWrites.length, 1);
   f.g.update({ openmic: { ...f.g.data, phase: 'finished', singingState: 'finished', turnId: 7 } });
-  assert.equal(f.classes.has('om-is-focused'), false); assert.equal(f.videoWrites.length, 1);
+  assert.equal(f.classes.has('om-is-focused'), true); assert.equal(f.videoWrites.length, 1);
   assert.equal(f.g.data.teamScore, 2); assert.equal(f.sent.length, 0);
 });
 
@@ -712,7 +713,6 @@ test('direct stage play enforces the current Spotlight, challenge result, availa
   const changes = [
     f => { f.g.actor = 2; }, f => { f.g.actor = 1; f.g.data.roster[0].active = false; },
     f => { f.g.data.challengeResult = null; }, f => { f.g.data.phase = 'challenge'; },
-    f => { f.g.data.phase = 'finished'; },
     f => { f.control.available = false; }, f => { f.g.pending = true; },
     f => { f.g.discoverySongs = []; }, f => { f.g.discoverySongs[0].title = '   '; },
     f => { f.g.discoverySongs[0].title = '\u0000\n'; }, f => { f.g.data.selectedSong = f.song; },
@@ -730,7 +730,7 @@ test('discovery results show a primary direct-play action, keep personal additio
     const html = f.node('[data-om-discovery-results]').innerHTML;
     const play = html.match(/<button\b[^>]*data-om-action="discoverySelect"[^>]*>[\s\S]*?<\/button>/)[0];
     const add = html.match(/<button\b[^>]*data-om-action="discoveryAdd"[^>]*>[\s\S]*?<\/button>/)[0];
-    assert.match(play, /om-primary/); assert.match(play, /Play on Stage/); assert.equal(/ disabled/.test(play), actor === 2);
+    assert.match(play, /om-primary/); assert.match(play, /Replace &amp; Play/); assert.equal(/ disabled/.test(play), actor === 2);
     assert.doesNotMatch(add, /om-primary/); assert.doesNotMatch(add, / disabled/);
     f.g.data.selectedSong = f.song; f.g.renderDiscovery();
     const selected = f.node('[data-om-discovery-results]').innerHTML;
@@ -768,28 +768,94 @@ test('an acknowledged local request that becomes offline before its matching vie
   }
 });
 
-test('ordinary library selection keeps its original command and never acquires discovery autoplay', async () => {
-  const f = directDiscovery(), target = { dataset: { omAction: 'selectSong', video: f.song.videoId }, disabled: false };
-  f.g.handleClick({ target: { closest: selector => selector === '[data-om-action]' ? target : null } });
-  assert.equal(f.sent.length, 1); assert.deepEqual(JSON.parse(JSON.stringify(f.sent[0].extra)), { videoId: f.song.videoId });
-  f.g.update({ openmic: f.selected() });
-  assert.equal(f.videoWrites.length, 2); assert.doesNotMatch(f.videoWrites[1], /autoplay=1/);
-  f.complete(); await nextTask(); assert.equal(f.videoWrites.length, 2); assert.equal(f.scrolls(), 0);
+test('My Songs and the shared library use the same single local play request without changing favorites', async () => {
+  for (const category of ['my-songs', 'for-you']) {
+    const f = directLibrary(1); f.g.category = category; f.g.renderSongs();
+    assert.match(f.node('[data-om-songs]').innerHTML, /data-om-action="selectSong"[^>]*>▶ Replace &amp; Play/);
+    const target = { dataset: { omAction: 'selectSong', video: f.song.videoId }, disabled: false };
+    const event = { target: { closest: selector => selector === '[data-om-action]' ? target : null } };
+    f.g.handleClick(event); f.g.handleClick(event);
+    assert.equal(f.sent.length, 1); assert.deepEqual(JSON.parse(JSON.stringify(f.sent[0].extra)), { videoId: f.song.videoId, title: f.song.title });
+    f.g.update({ openmic: f.selected() }); assert.equal(f.videoWrites.length, 1);
+    f.complete(); await nextTask();
+    assert.equal(f.videoWrites.length, 2); assert.match(f.videoWrites[1], /autoplay=1/); assert.equal(f.scrolls(), 1);
+    assert.equal(f.g.category, category); assert.deepEqual(JSON.parse(JSON.stringify(f.g.data.mySongs)), f.original.mySongs);
+    assert.equal(f.sent.some(command => command.type !== 'selectSong'), false);
+    f.g.renderSongs();
+    assert.match(f.node('[data-om-songs]').innerHTML, /data-om-action="selectSong"[^>]* disabled>Selected/);
+    f.g.lyricsFont = 32; f.g.render(); f.g.update({ openmic: { ...f.g.data, songLyrics: { [f.song.videoId]: originalFixture } } });
+    assert.equal(f.videoWrites.length, 2); assert.equal(f.scrolls(), 1);
+  }
 });
 
-test('stage change and removal stay visible in focus mode during choice and singing only for the controller', () => {
-  for (const phase of ['choice', 'singing']) {
+function directLibrary(actor = 0) {
+  const f = directDiscovery(actor), known = { ...f.song, artist: 'Our Original Artist', tags: [] };
+  f.g.data.songLibrary.push(known); f.original.songLibrary.push(known);
+  f.g.data.mySongs = { 1: [known.videoId] }; f.original.mySongs = { 1: [known.videoId] };
+  return f;
+}
+
+test('library playback uses the same session, round, actor, exact-turn, request, and failure fences', async () => {
+  const changes = [
+    f => f.g.update({ openmic: f.selected({ sessionId: 'library-next-session' }) }),
+    f => f.g.update({ openmic: f.selected({ round: f.original.round + 1 }) }),
+    f => { f.g.actor = 2; f.g.update({ openmic: f.selected() }); },
+    f => f.g.update({ openmic: f.selected({ turnId: f.original.turnId + 2 }) }),
+    f => { f.g.cancelDiscovery(); f.g.update({ openmic: f.selected() }); },
+    f => { f.control.available = false; f.g.update({ openmic: f.selected() }); },
+    f => f.g.destroy(),
+  ];
+  for (const change of changes) {
+    const f = directLibrary(), work = f.g.selectStageSong(f.g.library().find(song => song.videoId === f.song.videoId));
+    assert.equal(f.sent.length, 1); change(f); f.complete(); await work;
+    assert.equal(f.scrolls(), 0); assert.doesNotMatch(f.videoWrites.join(' '), /autoplay=1/); assert.equal(f.g.stagePlayIntent, null);
+    assert.equal(f.sent.length, 1);
+  }
+  const failed = directLibrary(), work = failed.g.selectStageSong(failed.g.library().find(song => song.videoId === failed.song.videoId));
+  failed.g.update({ openmic: failed.selected() }); failed.complete({ error: 'stale_turn' }); await work;
+  assert.doesNotMatch(failed.videoWrites.join(' '), /autoplay=1/); assert.equal(failed.scrolls(), 0);
+  for (const change of [f => { f.g.actor = 2; }, f => { f.g.data.phase = 'challenge'; }, f => { f.g.data.roster[0].active = false; }, f => { f.control.available = false; }]) {
+    const f = directLibrary(1); change(f); await f.g.selectStageSong(f.g.library().find(song => song.videoId === f.song.videoId));
+    assert.equal(f.sent.length, 0); assert.equal(f.scrolls(), 0);
+  }
+});
+
+test('direct and replacement labels match the visible stage for both library and search results', () => {
+  const f = directLibrary(); f.g.category = 'for-you'; f.g.renderSongs(); f.g.renderDiscovery();
+  assert.match(f.node('[data-om-songs]').innerHTML, /▶ Replace &amp; Play/);
+  assert.match(f.node('[data-om-discovery-results]').innerHTML, /▶ Replace &amp; Play/);
+  f.g.data.selectedSong = null; f.g.renderSongs(); f.g.renderDiscovery();
+  assert.doesNotMatch(f.node('[data-om-songs]').innerHTML, /Replace &amp; Play/);
+  assert.doesNotMatch(f.node('[data-om-discovery-results]').innerHTML, /Replace &amp; Play/);
+  assert.match(f.node('[data-om-songs]').innerHTML, /▶ Play on Stage/);
+  assert.match(f.node('[data-om-discovery-results]').innerHTML, /▶ Play on Stage/);
+});
+
+test('the toolbar stays above the video and visible in choice, singing, and finished with role explanations', () => {
+  for (const phase of ['choice', 'singing', 'finished']) {
     for (const actor of [0, 1, 2]) {
       const f = presentation(actor); f.g.data.phase = phase; f.g.data.singingState = phase === 'singing' ? 'singing' : 'idle';
       f.g.focusPreferred = true; f.g.render();
       assert.equal(f.classes.has('om-is-focused'), true);
-      assert.equal(/data-om-action="changeSong"/.test(f.controls()), actor !== 2);
-      assert.equal(/data-om-action="clearSong"/.test(f.controls()), actor !== 2);
+      const toolbar = f.node('[data-om-song-controls]').innerHTML;
+      for (const action of ['changeSong', 'clearSong']) {
+        const button = toolbar.match(new RegExp('<button[^>]*data-om-action="' + action + '"[^>]*>[\\s\\S]*?<\\/button>'))[0];
+        assert.equal(/ disabled/.test(button), actor === 2);
+      }
+      if (actor === 2) assert.ok(toolbar.includes(f.context.OPEN_MIC_UI.t('forbidden')));
+      if (phase === 'finished') {
+        assert.ok(f.controls().includes(f.context.OPEN_MIC_UI.t('finishedPlaybackHint')));
+        assert.doesNotMatch(f.controls(), /data-om-action="(?:startSinging|finishSinging|skip|duetOpen)"/);
+        assert.equal(/data-om-action="next"/.test(f.controls()), actor === 0);
+      }
+      assert.doesNotMatch(f.controls(), /data-om-action="(?:changeSong|clearSong)"/);
     }
   }
-  for (const phase of ['challenge', 'finished']) {
-    const f = presentation(); f.g.data.phase = phase; f.g.render();
-    assert.doesNotMatch(f.controls(), /data-om-action="(?:changeSong|clearSong)"/);
+  for (const change of [f => { f.g.data.phase = 'challenge'; f.g.data.challengeResult = null; }, f => { f.g.data.selectedSong = null; }]) {
+    const f = presentation(); change(f); f.g.render();
+    const toolbar = f.node('[data-om-song-controls]').innerHTML;
+    assert.match(toolbar, /data-om-action="changeSong"[^>]* disabled/); assert.match(toolbar, /data-om-action="clearSong"[^>]* disabled/);
+    assert.ok(toolbar.includes(f.context.OPEN_MIC_UI.t(f.g.data.selectedSong ? 'challengeFirst' : 'chooseSong')));
   }
 });
 
@@ -837,10 +903,57 @@ test('a live singing result can be overwritten from discovery and canceled witho
   assert.equal(f.g.data.songLibrary.some(song => song.videoId === 'ymvUlfZCrbw'), true);
 });
 
-test('offline, pending, inactive, finished, and other-player attempts cannot remove or change a selected stage', async () => {
+test('finished controllers replace and cancel songs for playback while preserving the settled round and next-player controls', async () => {
+  for (const actor of [0, 1]) {
+    const f = statefulStage(actor); await f.g.action('startSinging'); await f.g.action('finishSinging');
+    assert.equal(f.g.data.teamScore, 3); assert.equal(f.g.data.singingAwarded, true);
+    const originalFavorites = JSON.stringify(f.g.data.mySongs), originalLyrics = JSON.stringify(f.g.data.songLyrics);
+    const replacement = f.g.library().find(song => song.videoId !== f.g.data.selectedSong.videoId), count = f.sent.length;
+    const writes = f.videoWrites.length; f.g.focusPreferred = true; f.g.render();
+    f.g.changeStageSong(); assert.equal(f.g.focusPreferred, false); assert.equal(f.sent.length, count);
+    await f.g.selectStageSong(replacement);
+    assert.equal(f.sent.length, count + 1); assert.equal(f.sent[count].type, 'selectSong');
+    assert.equal(f.g.data.selectedSong.videoId, replacement.videoId); assert.equal(f.g.data.selectedSong.artist, replacement.artist);
+    assert.equal(f.g.data.phase, 'finished'); assert.equal(f.g.data.singingState, 'finished'); assert.equal(f.g.data.singingStartedAt, null);
+    assert.equal(f.g.data.teamScore, 3); assert.equal(f.g.data.singingAwarded, true);
+    assert.equal(JSON.stringify(f.g.data.mySongs), originalFavorites); assert.equal(JSON.stringify(f.g.data.songLyrics), originalLyrics);
+    assert.equal(f.videoWrites.length, writes + 1); assert.match(f.videoWrites.at(-1), /autoplay=1/);
+    assert.doesNotMatch(f.controls(), /data-om-action="(?:startSinging|finishSinging|skip|duetOpen)"/);
+    assert.equal(/data-om-action="next"/.test(f.controls()), actor === 0);
+    assert.ok(f.controls().includes(f.context.OPEN_MIC_UI.t('finishedPlaybackHint')));
+    f.g.toggleFocus(); assert.equal(f.classes.has('om-is-focused'), true);
+    f.g.renderLyrics(); f.g.render(); assert.equal(f.videoWrites.length, writes + 1);
+    await f.g.selectStageSong(replacement); assert.equal(f.sent.length, count + 1, 'the current song cannot restart its iframe');
+    await f.g.clearStageSong();
+    assert.equal(f.g.data.selectedSong, null); assert.equal(f.g.data.phase, 'finished'); assert.equal(f.g.data.singingState, 'finished');
+    assert.equal(f.g.data.singingStartedAt, null); assert.equal(f.g.data.teamScore, 3); assert.equal(f.g.data.singingAwarded, true);
+    assert.equal(JSON.stringify(f.g.data.mySongs), originalFavorites); assert.equal(JSON.stringify(f.g.data.songLyrics), originalLyrics);
+    assert.match(f.node('[data-om-song-controls]').innerHTML, /data-om-action="clearSong"[^>]* disabled/);
+    assert.equal(f.classes.has('om-is-focused'), false);
+    if (actor === 0) {
+      await f.g.action('next'); assert.equal(f.g.data.phase, 'challenge'); assert.equal(f.g.data.teamScore, 3);
+      assert.equal(f.g.data.selectedSong, null); assert.match(f.challenge(), /data-om-action="success"/);
+    }
+  }
+});
+
+test('finished direct-play intent accepts only an acknowledged finished view and never revives a settled singing timer', async () => {
+  for (const stale of [false, true]) {
+    const f = directDiscovery(1); f.g.data.phase = 'finished'; f.g.data.singingState = 'finished'; f.g.data.singingAwarded = true; f.g.data.teamScore = 3;
+    const work = f.g.selectDiscoverySong(f.song.videoId);
+    assert.equal(f.g.stagePlayIntent.expectedPhase, 'finished');
+    f.complete(); await work; assert.equal(f.videoWrites.length, 1);
+    f.g.update({ openmic: f.selected({ phase: stale ? 'choice' : 'finished', singingState: 'finished', singingAwarded: true, teamScore: 3 }) });
+    assert.equal(f.videoWrites.length, 2); assert.equal(f.scrolls(), stale ? 0 : 1);
+    assert.equal(/autoplay=1/.test(f.videoWrites.at(-1)), !stale); assert.equal(f.g.stagePlayIntent, null);
+    assert.equal(f.g.data.teamScore, 3); assert.equal(f.g.data.singingStartedAt, null); assert.equal(f.sent.length, 1);
+  }
+});
+
+test('offline, pending, inactive, challenge, and other-player attempts cannot remove or change a selected stage', async () => {
   const changes = [f => { f.g.actor = 2; }, f => { f.g.data.roster[0].active = false; },
     f => { f.g.canControl = () => false; }, f => { f.g.pending = true; },
-    f => { f.g.data.phase = 'finished'; }, f => { f.g.data.selectedSong = null; }];
+    f => { f.g.data.phase = 'challenge'; }, f => { f.g.data.selectedSong = null; }];
   for (const change of changes) {
     const f = presentation(1); f.g.focusPreferred = true; change(f);
     f.g.changeStageSong(); await f.g.clearStageSong();

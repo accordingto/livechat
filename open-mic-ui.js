@@ -44,6 +44,9 @@
     startSinging: { en: '🎤 Start Singing', zh: '🎤 開始唱' }, finishSinging: { en: '✓ Finished singing · +1', zh: '✓ 唱完了・+1' },
     changeSong: { en: '↻ Change song', zh: '↻ 換一首歌' }, clearSong: { en: 'Remove song', zh: '取消選歌' },
     changeSongHint: { en: 'Changing or removing the song stops this timer. Start singing again after choosing.', zh: '換歌或取消會停止這段計時，選好新歌後再按「開始唱」。' },
+    songControlsHint: { en: 'Choose another song below to replace this one. Removing it does not change your score.', zh: '從下方選另一首就能直接取代。取消選歌不會改變分數。' },
+    finishedPlaybackHint: { en: 'This round is settled. You can still change songs and play freely; choose Next Player to continue.', zh: '本輪已結算，仍可自由換歌播放；按「下一位」繼續。' },
+    songUpdating: { en: 'Updating the song…', zh: '正在更新選歌…' },
     inviteDuet: { en: '👥 Invite Duet', zh: '👥 邀人合唱' }, skip: { en: 'Skip Singing', zh: '跳過唱歌' },
     timerRunning: { en: 'A short section is enough.', zh: '唱一小段就好。' },
     timerZero: { en: 'Finish the phrase naturally. Nothing cuts off.', zh: '自然唱完這一句，音樂不會被切掉。' },
@@ -108,6 +111,7 @@
     discoveryUpdated: { en: 'Updated {time}', zh: '更新時間：{time}' },
     discoveryAdded: { en: 'In My Songs', zh: '已在我的歌單' },
     discoveryPlay: { en: '▶ Play on Stage', zh: '▶ 直接點播' },
+    replacePlay: { en: '▶ Replace & Play', zh: '▶ 播放並取代' },
     discovery_setup_needed: { en: 'Live song discovery is not available yet. Choose from the playlist below for now.', zh: '即時找歌尚未開放，先從下方歌單選歌。' },
     discovery_rate_limit: { en: 'Song discovery is busy. Try again in {n} seconds, or choose a song below.', zh: '即時找歌目前忙碌，約 {n} 秒後再試，或先從下方選歌。' },
     discovery_unavailable: { en: 'Live song discovery is temporarily unavailable. Try again or choose a song below.', zh: '即時找歌暫時無法使用，可以再試一次，或先從下方選歌。' },
@@ -268,9 +272,11 @@
     buildStageLayout() {
       var stage = this.find('.om-stage'), footer = this.find('.om-stage-bottom');
       var doc = this.element.ownerDocument || global.document;
-      var layout = doc.createElement('div'), videoColumn = doc.createElement('div');
+      var layout = doc.createElement('div'), videoColumn = doc.createElement('div'), songControls = doc.createElement('div');
       layout.className = 'om-stage-layout'; layout.setAttribute('data-om-stage-layout', '');
       videoColumn.className = 'om-stage-video-column';
+      songControls.className = 'om-song-controls'; songControls.setAttribute('data-om-song-controls', '');
+      videoColumn.appendChild(songControls);
       videoColumn.appendChild(this.find('[data-om-stage-video]'));
       videoColumn.appendChild(this.find('[data-om-stage-info]'));
       layout.appendChild(videoColumn);
@@ -282,7 +288,7 @@
       this.find('.om-stage-top').insertAdjacentHTML('beforeend', '<button type="button" class="om-button om-focus-toggle" data-om-action="focusToggle" aria-pressed="false"></button>');
     }
     focusAvailable() {
-      return !!(this.data && this.data.selectedSong && (this.data.phase === 'choice' || this.data.phase === 'singing'));
+      return !!(this.data && this.data.selectedSong && ['choice', 'singing', 'finished'].indexOf(this.data.phase) >= 0);
     }
     toggleFocus() {
       if (this.destroyed || !this.focusAvailable()) return;
@@ -419,20 +425,22 @@
       var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div><p class="om-soft">' + esc(t('embedHint')) + ' <a class="back" href="' + youtube(song.videoId) + '" target="_blank" rel="noopener noreferrer">' + esc(t('youtubeLink')) + '</a></p>' : '';
       if (data.duet) info += '<p class="om-stage-hint om-soft">👥 ' + esc(t('duetWith', { name: this.name(data.duet) })) + '</p>';
       this.set('[data-om-stage-info]', info);
+      var activeController = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
+      var canChange = !!song && this.canSelectDiscovery();
+      var controlHint = !after || data.phase === 'challenge' ? t('challengeFirst') : !activeController ? t('forbidden') : !this.canControl() ? t('offline') : this.pending ? t('songUpdating') : !song ? t('chooseSong') : t(finished ? 'finishedPlaybackHint' : data.phase === 'singing' ? 'changeSongHint' : 'songControlsHint');
+      this.set('[data-om-song-controls]', '<div class="om-actions">' + this.button('changeSong', t('changeSong'), '', '', canChange) + this.button('clearSong', t('clearSong'), '', '', canChange) + '</div><p class="om-soft om-song-control-hint">' + esc(controlHint) + '</p>');
       this.set('[data-om-stage-timer]', data.singingState === 'singing' ? '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>' : '');
       var buttons = '';
       if (after && ((!finished && controller) || host)) buttons += '<div class="om-actions">';
       if (after && !finished && controller) {
         if (data.singingState === 'singing') buttons += this.button('finishSinging', t('finishSinging'), 'om-success');
         else buttons += this.button('startSinging', t('startSinging'), 'om-primary', '', !!song);
-        if (song && ['choice', 'singing'].indexOf(data.phase) >= 0) buttons += this.button('changeSong', t('changeSong'), '', '', this.canSelectDiscovery()) + this.button('clearSong', t('clearSong'), '', '', this.canSelectDiscovery());
         buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       }
       if (host && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '', '', true);
       if (after && ((!finished && controller) || host)) buttons += '</div>';
-      if (data.phase === 'singing' && controller) buttons += '<p class="om-soft om-change-song-hint">' + esc(t('changeSongHint')) + '</p>';
       if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
-      else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('nextHint')) + '</p>';
+      else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
       else if (!controller) buttons += '<p class="om-waiting">' + esc(t('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
       this.set('[data-om-stage-controls]', buttons);
     }
@@ -453,7 +461,7 @@
         var saved = favorites.indexOf(String(song.videoId)) >= 0, current = selected && selected.videoId === song.videoId;
         var thumbnail = 'https://i.ytimg.com/vi/' + encodeURIComponent(song.videoId) + '/hqdefault.jpg';
         var tags = values(song.tags).filter(tag => tag !== 'for-you').slice(0, 3);
-        return '<article class="om-song ' + (current ? 'om-selected' : '') + '"><div class="om-thumb"><img src="' + thumbnail + '" alt="" loading="lazy"><button type="button" class="om-star ' + (saved ? 'om-saved' : '') + '" data-om-action="toggleFavorite" data-video="' + esc(song.videoId) + '" aria-label="' + esc(t(saved ? 'unsaveSong' : 'saveSong')) + '" aria-pressed="' + saved + '"' + (!canSave || this.pending ? ' disabled' : '') + '>' + (saved ? '★' : '☆') + '</button></div><div class="om-song-info"><h3>' + esc(song.title) + '</h3><p class="om-artist">' + esc(song.artist || '') + '</p><div class="om-tags">' + tags.map(tag => '<span class="om-tag">' + esc(categoryName(tag)) + '</span>').join('') + '</div><div class="om-actions">' + this.button('preview', t('preview'), '', ' data-video="' + esc(song.videoId) + '"', true) + this.button('selectSong', t(current ? 'selected' : 'singThis'), current ? '' : 'om-primary', ' data-video="' + esc(song.videoId) + '"', allowed) + '</div></div></article>';
+        return '<article class="om-song ' + (current ? 'om-selected' : '') + '"><div class="om-thumb"><img src="' + thumbnail + '" alt="" loading="lazy"><button type="button" class="om-star ' + (saved ? 'om-saved' : '') + '" data-om-action="toggleFavorite" data-video="' + esc(song.videoId) + '" aria-label="' + esc(t(saved ? 'unsaveSong' : 'saveSong')) + '" aria-pressed="' + saved + '"' + (!canSave || this.pending ? ' disabled' : '') + '>' + (saved ? '★' : '☆') + '</button></div><div class="om-song-info"><h3>' + esc(song.title) + '</h3><p class="om-artist">' + esc(song.artist || '') + '</p><div class="om-tags">' + tags.map(tag => '<span class="om-tag">' + esc(categoryName(tag)) + '</span>').join('') + '</div><div class="om-actions">' + this.button('preview', t('preview'), '', ' data-video="' + esc(song.videoId) + '"', true) + this.button('selectSong', t(current ? 'selected' : selected ? 'replacePlay' : 'discoveryPlay'), current ? '' : 'om-primary', ' data-video="' + esc(song.videoId) + '"', allowed && !current) + '</div></div></article>';
       }).join('') : '<p class="om-empty">' + esc(t(q ? 'noSearch' : 'noSongs')) + '</p>');
       this.find('[data-om-action="addOpen"]').disabled = !canSave || this.pending;
     }
@@ -526,7 +534,7 @@
       this.setText('[data-om-discovery-meta]', meta);
       this.set('[data-om-discovery-results]', songs.map(song => {
         var saved = favorites.indexOf(song.videoId) >= 0, current = selected && selected.videoId === song.videoId;
-        return '<article class="om-song om-discovery-song' + (current ? ' om-selected' : '') + '"><div class="om-thumb"><img src="https://i.ytimg.com/vi/' + encodeURIComponent(song.videoId) + '/hqdefault.jpg" alt="" loading="lazy"></div><div class="om-song-info"><h3>' + esc(song.title) + '</h3><p class="om-artist">' + esc(t('discoveryChannel', { name: song.channelTitle || 'YouTube' })) + '</p><div class="om-actions"><button type="button" class="om-button om-primary" data-om-action="discoverySelect" data-video="' + esc(song.videoId) + '"' + (!canSelect || current ? ' disabled' : '') + '>' + esc(t(current ? 'selected' : 'discoveryPlay')) + '</button><button type="button" class="om-button" data-om-action="discoveryPreview" data-video="' + esc(song.videoId) + '">' + esc(t('preview')) + '</button><button type="button" class="om-button" data-om-action="discoveryAdd" data-video="' + esc(song.videoId) + '"' + (!canAdd || saved ? ' disabled' : '') + '>' + esc(t(saved ? 'discoveryAdded' : 'add')) + '</button></div></div></article>';
+        return '<article class="om-song om-discovery-song' + (current ? ' om-selected' : '') + '"><div class="om-thumb"><img src="https://i.ytimg.com/vi/' + encodeURIComponent(song.videoId) + '/hqdefault.jpg" alt="" loading="lazy"></div><div class="om-song-info"><h3>' + esc(song.title) + '</h3><p class="om-artist">' + esc(t('discoveryChannel', { name: song.channelTitle || 'YouTube' })) + '</p><div class="om-actions"><button type="button" class="om-button om-primary" data-om-action="discoverySelect" data-video="' + esc(song.videoId) + '"' + (!canSelect || current ? ' disabled' : '') + '>' + esc(t(current ? 'selected' : selected ? 'replacePlay' : 'discoveryPlay')) + '</button><button type="button" class="om-button" data-om-action="discoveryPreview" data-video="' + esc(song.videoId) + '">' + esc(t('preview')) + '</button><button type="button" class="om-button" data-om-action="discoveryAdd" data-video="' + esc(song.videoId) + '"' + (!canAdd || saved ? ' disabled' : '') + '>' + esc(t(saved ? 'discoveryAdded' : 'add')) + '</button></div></div></article>';
       }).join(''));
       var form = this.find('[data-om-discovery-form]');
       if (form) form.setAttribute('aria-busy', String(!!this.discoveryBusy));
@@ -544,31 +552,34 @@
     canSelectDiscovery() {
       var data = this.data;
       var spotlight = data && this.roster().find(player => Number(player.playerNum) === this.actor && player.active !== false);
-      return !this.destroyed && !!data && this.canControl() && !this.pending && ['choice', 'singing'].indexOf(data.phase) >= 0 && !!data.challengeResult && (this.host() || (this.actor === Number(data.spotlight) && !!spotlight));
+      return !this.destroyed && !!data && this.canControl() && !this.pending && ['choice', 'singing', 'finished'].indexOf(data.phase) >= 0 && !!data.challengeResult && (this.host() || (this.actor === Number(data.spotlight) && !!spotlight));
     }
     validStagePlayIntent() {
       var intent = this.stagePlayIntent, data = this.data;
       if (!intent) return null;
       var active = data && this.roster().some(player => Number(player.playerNum) === Number(data.spotlight) && player.active !== false);
       var turn = data && data.turnId;
-      var phaseMatches = data && (turn === intent.fromTurnId ? data.phase === intent.fromPhase : data.phase === 'choice');
+      var phaseMatches = data && (turn === intent.fromTurnId ? data.phase === intent.fromPhase : data.phase === intent.expectedPhase);
       var live = !this.destroyed && !!data && this.sameDiscoveryContext(intent.context, true) && Number(data.spotlight) === intent.spotlight && active && intent.generation === this.discoveryGeneration && ((!intent.confirmed && this.pending) || this.canControl()) && phaseMatches && !!data.challengeResult && this.now() <= intent.expiresAt;
       if (!live || (turn !== intent.fromTurnId && turn !== intent.expectedTurnId) || (turn === intent.expectedTurnId && (!data.selectedSong || data.selectedSong.videoId !== intent.videoId))) { this.stagePlayIntent = null; return null; }
       return intent;
     }
     stageIntentMatches(intent) {
-      return !!(this.data && this.data.turnId === intent.expectedTurnId && this.data.selectedSong && this.data.selectedSong.videoId === intent.videoId);
+      return !!(this.data && this.data.turnId === intent.expectedTurnId && this.data.phase === intent.expectedPhase && this.data.selectedSong && this.data.selectedSong.videoId === intent.videoId);
     }
     scrollStage() {
       var stage = this.find('.om-stage');
       if (stage && typeof stage.scrollIntoView === 'function') stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    async selectDiscoverySong(videoId) {
-      var song = (this.discoverySongs || []).find(song => song.videoId === videoId);
-      if (!song || !validVideo(song.videoId) || typeof song.title !== 'string' || !song.title.trim() || !this.canSelectDiscovery() || this.data.selectedSong && this.data.selectedSong.videoId === videoId || !Number.isSafeInteger(this.data.turnId) || this.data.turnId < 0 || this.data.turnId >= Number.MAX_SAFE_INTEGER) return;
+    selectDiscoverySong(videoId) {
+      return this.selectStageSong((this.discoverySongs || []).find(song => song.videoId === videoId));
+    }
+    async selectStageSong(song) {
+      if (!song || !validVideo(song.videoId) || typeof song.title !== 'string' || !song.title.trim() || !this.canSelectDiscovery() || this.data.selectedSong && this.data.selectedSong.videoId === song.videoId || !Number.isSafeInteger(this.data.turnId) || this.data.turnId < 0 || this.data.turnId >= Number.MAX_SAFE_INTEGER) return;
+      var videoId = song.videoId;
       var title = song.title.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140);
       if (!title) return;
-      var intent = { context: this.discoveryContext(), spotlight: Number(this.data.spotlight), generation: this.discoveryGeneration, videoId: videoId, fromPhase: this.data.phase, fromTurnId: this.data.turnId, expectedTurnId: this.data.turnId + 1, expiresAt: this.now() + 15000, confirmed: false };
+      var intent = { context: this.discoveryContext(), spotlight: Number(this.data.spotlight), generation: this.discoveryGeneration, videoId: videoId, fromPhase: this.data.phase, expectedPhase: this.data.phase === 'finished' ? 'finished' : 'choice', fromTurnId: this.data.turnId, expectedTurnId: this.data.turnId + 1, expiresAt: this.now() + 15000, confirmed: false };
       this.stagePlayIntent = intent;
       var ok = await this.action('selectSong', { videoId: videoId, title: title });
       if (this.stagePlayIntent !== intent) return;
@@ -1035,7 +1046,8 @@
       if (action === 'lyricsRead') { this.renderLyrics(); this.show(this.lyricsReadDialog); return; }
       if (action === 'closeLyricsRead') { this.close(this.lyricsReadDialog); return; }
       if (action === 'lyricsSmaller' || action === 'lyricsLarger') { this.lyricsFont = Math.max(18, Math.min(42, this.lyricsFont + (action === 'lyricsLarger' ? 2 : -2))); this.renderLyrics(); return; }
-      if (action === 'selectSong' || action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
+      if (action === 'selectSong') { this.selectStageSong(this.library().find(song => song.videoId === target.dataset.video)); return; }
+      if (action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
       if (action === 'inviteDuet') { this.action(action, { playerNum: target.dataset.player ? Number(target.dataset.player) : null }).then(ok => { if (ok) this.close(this.duetDialog); }); return; }
       if (action === 'exclude') { this.action(action, { playerNum: Number(target.dataset.player), active: target.dataset.active === 'true' }); return; }
       this.action(action);
