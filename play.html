@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-reference-2">
   <link rel="stylesheet" href="dixit.css?v=dixit-9">
   <link rel="stylesheet" href="cut.css?v=cut-2">
+  <link rel="stylesheet" href="open-mic.css?v=om-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -20,6 +21,8 @@
     /* the wrapper had no width of its own, so `width:100%` on the card resolved against
        shrink-to-fit content — the card ended up a different width in every state */
     #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
+    body.open-mic-card-page { padding: 72px 16px 24px; justify-content: flex-start; }
+    body.open-mic-card-page #content { display: block; max-width: 1280px; }
     body.chat-wolf-card { padding: 8px; justify-content: flex-start; }
     body.chat-wolf-card #content { max-width: 760px; }
     body.chat-wolf-card #i18n-toggle { display: none; }
@@ -884,6 +887,8 @@
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
   <script src="cut-ui.js?v=cut-2"></script>
+  <script src="open-mic-content.js?v=om-1"></script>
+  <script src="open-mic-ui.js?v=om-1"></script>
   <script src="once-upon-a-time-deck.js?v=once-v2-reference-2"></script>
   <script src="once-upon-a-time-ui.js?v=once-v2-reference-2"></script>
   <script src="dixit-deck.js?v=dixit-9"></script>
@@ -2447,6 +2452,8 @@
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
     let cutCard = null;
+    let openMicCard = null;
+    let openMicTimer = null;
     let onceCard = null;
     let dixitCard = null;
     let dixitHostBridge = null;
@@ -2474,6 +2481,52 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      const isOpenMic = data.game === 'openmic' && data.openmic?.version === 1;
+      document.body.classList.toggle('open-mic-card-page', isOpenMic);
+      if (openMicCard && !isOpenMic) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+      if (isOpenMic) {
+        document.title = `${data.name || urlName || 'Player'} · OPEN MIC RESCUE`;
+        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
+        if (cutCard) { cutCard.destroy(); cutCard = null; }
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (!openMicCard) {
+          openMicCard = new OPEN_MIC_UI.Game(el, {
+            actor: Number(data.playerNum),
+            now: () => Date.now() + talkClockOffset,
+            canControl: () => talkConnected && latestData?.game === 'openmic' && latestData.openmic?.hostLiveUntil > Date.now() + talkClockOffset,
+            send: async (type, extra = {}) => {
+              const currentView = latestData?.openmic;
+              if (!currentView || !talkConnected) throw new Error('offline');
+              const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+              const command = { ...extra, id, type, sessionId: currentView.sessionId, turnId: currentView.turnId };
+              const ref = db.ref(`rooms/${session}/players/${token}`);
+              const result = await ref.transaction(current => {
+                if (current?.game !== 'openmic' || current.openmic?.sessionId !== command.sessionId || current.openmic?.turnId !== command.turnId) return;
+                return Object.assign({}, current, { openmicAction: command });
+              }, undefined, false);
+              if (!result.committed) throw new Error('stale_turn');
+              await new Promise((resolve, reject) => {
+                const finish = error => { clearTimeout(timeout); ref.off('value', handler); error ? reject(new Error(error)) : resolve(); };
+                const handler = snapshot => {
+                  const value = snapshot.val();
+                  if (value?.game !== 'openmic' || value.openmic?.sessionId !== command.sessionId) { finish('stale_turn'); return; }
+                  if (value.openmic?.reply?.id === id) finish(value.openmic.reply.error);
+                };
+                const timeout = setTimeout(() => finish('offline'), 12000);
+                ref.on('value', handler, () => finish('offline'));
+              });
+            },
+          });
+          openMicTimer = setInterval(() => openMicCard?.paint(), 250);
+        }
+        openMicCard.update(data);
+        return;
+      }
       const isCut = data.game === 'cut' && data.cut?.version === 1;
       document.body.classList.toggle('cut-card-page', isCut);
       if (cutCard && !isCut) { cutCard.destroy(); cutCard = null; }
@@ -2789,6 +2842,8 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
+      if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+      document.body.classList.remove('open-mic-card-page');
       if (cutCard) { cutCard.destroy(); cutCard = null; }
       document.body.classList.remove('cut-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
@@ -2812,8 +2867,8 @@
     let db = null;
     let latestData = null;
     document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; });
-    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit' || latestData?.game === 'cut') tryRenderCard(); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
+    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;

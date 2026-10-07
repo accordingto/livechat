@@ -1,10 +1,10 @@
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
-test('CUT is the final Hub game and original player cards have lifecycle cleanup', () => {
+test('CUT remains before Open Mic Rescue and original player cards have lifecycle cleanup', () => {
   const hub = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const links = [...hub.matchAll(/<a class="game-card[^\"]*" href="([^\"]+)"/g)].map(match => match[1]);
-  assert.equal(links.at(-1), 'cut.html'); assert.ok(links.indexOf('bluff-king-live-chat.html') < links.indexOf('cut.html'));
+  assert.equal(links.at(-2), 'cut.html'); assert.equal(links.at(-1), 'open-mic-rescue.html'); assert.ok(links.indexOf('bluff-king-live-chat.html') < links.indexOf('cut.html'));
   const cards = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
   assert.match(cards, /new CUT_UI\.Card/); assert.match(cards, /cutCard\.destroy\(\)/);
   assert.match(cards, /current\.cut\?\.sessionId !== command\.sessionId/);
