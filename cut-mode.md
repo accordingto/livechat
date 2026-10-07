@@ -75,10 +75,10 @@
 
 ## 驗證
 
-- `node --test tests/cut-*.test.cjs`：36 項通過。
-- `node --test tests/*.test.cjs`：697 項通過，包含原遊戲回歸。
+- `node --test tests/cut-*.test.cjs`：37 項通過。
+- `node --test tests/*.test.cjs`：698 項通過，包含合併最新版後的原遊戲回歸。
 - `node scripts/cut-live-test.cjs`：11 項真實 Firebase 檢查通過；三張原卡、主持權威、Normal CUT、接棒、暫停、離席、重載、完整回合、下一題、切換遊戲；本次產生節點已清除。
-- 瀏覽器驗證開局、正常發言、手機 390px 視角；沒有橫向溢出或遊戲 console error。語音內容與玩家是否遵守接話規則需真人試玩。
+- 瀏覽器驗證從原首頁房間進入正式 CUT 開局／結束，以及示範的正常發言、手機 390px 視角；沒有橫向溢出或遊戲 console error。語音內容與玩家是否遵守接話規則需真人試玩。
 
 ## 最適合實測後微調
 
