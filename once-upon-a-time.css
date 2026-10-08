@@ -169,6 +169,9 @@ button.once-card { cursor:pointer; }
 .once-game--reference .once-storyteller .once-kicker { overflow-wrap:anywhere; }
 .once-game--reference .once-table-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:start; margin-bottom:12px; }
 .once-game--reference .once-table-grid.has-ending { grid-template-columns:minmax(0,1fr) 208px; }
+.once-table-grid > .once-history-panel { grid-column:1; grid-row:1; }
+.once-table-grid > .once-hand-panel { grid-column:1/-1; grid-row:2; }
+.once-table-grid > .once-ending-dock { grid-column:2; grid-row:1; }
 .once-game--reference .once-history-panel { min-height:0; height:auto; }
 .once-game--reference .once-section-heading { margin-bottom:12px; gap:8px; }
 .once-game--reference .once-section-heading h2 { margin:0; }
@@ -214,8 +217,13 @@ button.once-card { cursor:pointer; }
 .once-history-pile:hover .once-pile-visual > img,.once-history-pile[aria-expanded="true"] .once-pile-visual > img { transform:rotate(7deg); }
 .once-pile-count { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:grid; place-items:center; min-width:24px; height:24px; padding:0 5px; border:1px solid #ddd0b7; border-radius:50%; background:#243653; color:#fff2d8; font:750 .72rem/1 'Segoe UI',sans-serif; box-shadow:0 2px 5px #0008; }
 .once-pile-label { font-size:.72rem; line-height:1.4; text-align:center; }
-.once-game--reference .once-ending-dock { display:flex; flex-direction:column; gap:9px; padding:16px; width:100%; min-width:0; border:0; background:transparent; box-shadow:none; }
-.once-ending-dock h2 { margin:0; }
+.once-game--reference .once-ending-dock { display:block; padding:12px; width:100%; min-width:0; border:0; background:transparent; box-shadow:none; }
+.once-ending-dock > summary { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; min-height:44px; cursor:pointer; list-style:none; color:#f1e7d7; font:500 1rem/1.4 Georgia,serif; }
+.once-ending-dock > summary::-webkit-details-marker { display:none; }
+.once-ending-dock > summary::after { content:'⌄'; margin-left:auto; font:700 1rem/1 system-ui,sans-serif; }
+.once-ending-dock[open] > summary::after { content:'⌃'; }
+.once-ending-dock > summary:focus-visible { outline:3px solid #e4edff; outline-offset:3px; border-radius:5px; }
+.once-ending-content { margin-top:8px; }
 .once-ending-dock .once-ending-state { display:block; color:#d1d9e9; font-size:.71rem; line-height:1.4; }
 .once-game--reference .once-ending-dock .once-card--ending { display:flex; width:100%; height:224px; min-height:0; }
 .once-game--reference .once-ending-dock .once-card--ending::before,.once-game--reference .once-ending-dock .once-card--ending::after { content:none; }
@@ -242,10 +250,9 @@ button.once-card { cursor:pointer; }
 .once-game--reference .once-first,.once-game--reference .once-winner { margin-bottom:12px; }
 @media(max-width:1000px){
   .once-game--reference .once-table-grid.has-ending { grid-template-columns:minmax(0,1fr); }
-  .once-game--reference .once-ending-dock { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); align-items:center; gap:8px 16px; }
-  .once-game--reference .once-ending-dock h2 { grid-column:1; grid-row:1; }
-  .once-ending-dock .once-ending-state { grid-column:1; grid-row:2; }
-  .once-game--reference .once-ending-dock .once-card--ending { grid-column:2; grid-row:1/3; display:grid; grid-template-columns:90px minmax(0,1fr); grid-template-rows:25px auto; height:134px; min-height:134px; }
+  .once-game--reference .once-ending-dock { grid-column:1; grid-row:3; padding:0 12px; border:1px solid #a7bad43d; border-radius:8px; }
+  .once-game--reference .once-ending-dock[open] { padding-bottom:12px; }
+  .once-game--reference .once-ending-dock .once-card--ending { display:grid; grid-template-columns:90px minmax(0,1fr); grid-template-rows:25px minmax(100px,auto); height:auto; min-height:134px; }
   .once-game--reference .once-ending-dock .once-card-category { grid-column:1/-1; min-height:25px; }
   .once-game--reference .once-ending-dock .once-card-art { grid-column:1; min-height:0; }
   .once-game--reference .once-ending-dock .once-card-title { grid-column:2; min-height:0; padding:10px; font-size:.92rem; }
@@ -263,21 +270,30 @@ button.once-card { cursor:pointer; }
   .once-turn-strip { align-items:flex-start; flex-direction:column; gap:9px; padding:10px; }
   .once-game--reference .once-roster { gap:5px; }
   .once-game--reference .once-seat { font-size:.7rem; padding:5px 7px; }
-  .once-history-board.has-pile { grid-template-columns:minmax(0,1fr); gap:12px; }
-  .once-history { grid-template-columns:repeat(2,minmax(0,128px)); gap:12px; }
-  .once-game--reference .once-card--history { height:192px; }
+  .once-history-board.has-pile { grid-template-columns:minmax(0,1fr); gap:6px; }
+  .once-history { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  /* Public history is a compact 2x2 set. Private hand cards keep their size. */
+  .once-game--reference .once-history-latest .once-card--history { display:grid; grid-template-columns:44px minmax(0,1fr); grid-template-rows:20px 58px; height:88px; min-height:88px; }
+  .once-game--reference .once-history-latest .once-card--history::before,.once-game--reference .once-history-latest .once-card--history::after { content:none; }
+  .once-game--reference .once-history-latest .once-card-category { grid-column:1/-1; grid-row:1; min-height:20px; }
+  .once-game--reference .once-history-latest .once-card-art { grid-column:1; grid-row:2; min-height:58px; }
+  .once-game--reference .once-history-latest .once-card--history .once-card-title { grid-column:2; grid-row:2; min-height:0; padding:6px 4px; font-size:.82rem; line-height:1.25; overflow-wrap:anywhere; }
+  .once-game--reference .once-history-latest .once-interrupt-mark { top:25px; left:7px; right:auto; width:38px; overflow-wrap:anywhere; font-size:.45rem; padding:2px; }
+  .once-game--reference .once-history-number { font-size:.64rem; margin-top:2px; }
+  .once-current-label { min-height:20px; padding:3px; font-size:.63rem; }
+  .once-history-latest .once-history-item { gap:4px; }
   .once-game--reference .once-card--history .once-card-title { font-size:.93rem; min-height:45px; }
   .once-game--reference .once-card--history .once-card-category { font-size:.54rem; }
   .once-history-older { grid-template-columns:repeat(auto-fill,minmax(110px,128px)); }
-  .once-history-pile { flex-direction:row; justify-self:start; gap:12px; padding:4px 8px; }
-  .once-pile-visual { width:32px; height:50px; }
+  .once-history-pile { flex-direction:row; justify-self:start; gap:10px; min-height:44px; padding:4px 8px; }
+  .once-pile-visual { width:22px; height:32px; }
   .once-pile-count { min-width:20px; height:20px; bottom:4px; font-size:.65rem; }
   .once-pile-label { text-align:left; }
-  .once-game--reference .once-ending-dock { grid-template-columns:minmax(0,1fr); gap:8px; }
-  .once-game--reference .once-ending-dock h2 { grid-column:1; grid-row:1; }
-  .once-game--reference .once-ending-dock .once-card--ending { grid-column:1; grid-row:2; }
-  .once-ending-dock .once-ending-state { grid-column:1; grid-row:3; }
-  .once-game--reference .once-story-opening { min-height:190px; }
+  .once-game--reference .once-story-opening { min-height:120px; gap:8px; padding:10px; }
+  .once-game--reference .once-section-heading { margin-bottom:8px; }
+  .once-game--reference .once-table-grid { gap:8px; }
+  .once-deck-count { margin-top:6px; padding-top:6px; }
+  .once-game--reference .once-hand-actions { position:sticky; bottom:max(0px,env(safe-area-inset-bottom)); padding:8px 0; background:#18284cf2; z-index:4; }
   .once-hand-title { gap:4px 9px; }
   .once-hand-meta { gap:8px; }
   .once-ending-jump { font-size:.7rem; }

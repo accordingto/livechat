@@ -120,16 +120,19 @@
     const pile=offset?'<button type="button" class="once-history-pile" data-once-action="toggleHistory" aria-expanded="'+!!options.historyOpen+'"'+(options.historyOpen?' aria-controls="once-earlier-history"':'')+' aria-label="'+esc(t('earlier',{n:offset}))+'"><span class="once-pile-visual" aria-hidden="true"><img src="'+esc(deck().cardBacks?.story||'assets/once-upon-a-time/card-backs/story-back.svg')+'" alt=""><span class="once-pile-count">'+offset+'</span></span><span class="once-pile-label">'+esc(t('earlier',{n:offset}))+'</span></button>':'';
     const privateEnding=!host&&s.phase!=='LOBBY'&&s.ending;
     const selectedEnding=!!privateEnding&&s.ending.id===options.selectedId;
-    const endingDock=privateEnding?'<aside class="once-panel once-ending-dock"><h2>'+esc(t('ending'))+'</h2>'+cardHTML(s.ending,'ending',{interactive:true,selected:selectedEnding})+'<span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span></aside>':'';
-    body+='<div class="once-table-grid'+(privateEnding?' has-ending':'')+'"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('recent',{n:Math.min(4,history.length),total:history.length}))+'</span></div><div class="once-history-board'+(offset?' has-pile':'')+'">'+pile+'<div class="once-history once-history-latest" aria-label="'+esc(t('story'))+'">'+(history.length?history.slice(offset).map((event,i)=>historyItem(event,offset+i)).join(''):'<div class="once-empty once-story-opening"><svg viewBox="0 0 48 40" aria-hidden="true"><path d="M24 8C18 3 9 3 3 5v28c7-2 15-1 21 4m0-29c6-5 15-5 21-3v28c-7-2-15-1-21 4V8Z"/></svg><p class="once-opening-title">'+esc(t('storyOpening'))+'</p><p>'+esc(t('noStory'))+'</p></div>')+'</div></div>'+(offset&&options.historyOpen?'<div class="once-history-expanded" id="once-earlier-history"><div class="once-history once-history-older">'+history.slice(0,offset).map(historyItem).join('')+'</div></div>':'')+'<span class="once-deck-count once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></section>'+endingDock+'</div>';
+    // Single private Ending: after the hand in reading order, beside Story on desktop.
+    const endingOpen=options.endingOpen??(!hand.length||selectedEnding);
+    const endingDock=privateEnding?'<details class="once-panel once-ending-dock" data-once-ending id="once-private-ending"'+(endingOpen?' open':'')+'><summary data-once-action="toggleEnding"><span>'+esc(t('ending'))+'</span><span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span></summary><div class="once-ending-content">'+cardHTML(s.ending,'ending',{interactive:true,selected:selectedEnding})+'</div></details>':'';
+    body+='<div class="once-table-grid'+(privateEnding?' has-ending':'')+'"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('recent',{n:Math.min(4,history.length),total:history.length}))+'</span></div><div class="once-history-board'+(offset?' has-pile':'')+'">'+pile+'<div class="once-history once-history-latest" aria-label="'+esc(t('story'))+'">'+(history.length?history.slice(offset).map((event,i)=>historyItem(event,offset+i)).join(''):'<div class="once-empty once-story-opening"><svg viewBox="0 0 48 40" aria-hidden="true"><path d="M24 8C18 3 9 3 3 5v28c7-2 15-1 21 4m0-29c6-5 15-5 21-3v28c-7-2-15-1-21 4V8Z"/></svg><p class="once-opening-title">'+esc(t('storyOpening'))+'</p><p>'+esc(t('noStory'))+'</p></div>')+'</div></div>'+(offset&&options.historyOpen?'<div class="once-history-expanded" id="once-earlier-history"><div class="once-history once-history-older">'+history.slice(0,offset).map(historyItem).join('')+'</div></div>':'')+'<span class="once-deck-count once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></section>';
     if(!host&&s.phase!=='LOBBY'){
       const selected=hand.find(c=>c.id===options.selectedId);
       const categoryOK=selected?.isInterrupt&&s.categoryOpportunity?.category===selected.category;
       const endingAction=selectedEnding||a.ending;
-      body+='<section class="once-panel once-hand-panel"><div class="once-section-heading"><div class="once-hand-title"><h2>'+esc(t('hand'))+'</h2><span class="once-muted">'+esc(t('handHint'))+'</span></div><div class="once-hand-meta"><span class="once-muted">'+esc(t('cardsCount',{n:hand.length}))+'</span>'+(s.ending?'<button type="button" class="once-ending-jump" data-once-action="showEnding">'+esc(t('showEnding'))+'</button>':'')+'</div></div><div class="once-hand-layout"><div class="once-carousel once-hand" aria-label="'+esc(t('hand'))+'">'+(hand.length?hand.map(card=>cardHTML(card,'mini',{interactive:true,selected:card.id===options.selectedId})).join(''):'<p class="once-empty">'+esc(t(['CHOOSING_FIRST','LOBBY'].includes(s.phase)?'waitingDeal':'noHand'))+'</p>')+'</div><div class="once-hand-controls">'+(s.phase==='STORYTELLING'?'<p class="once-muted once-action-hint">'+esc(t(s.storyteller===s.playerNum?'chooseCard':'listenHint'))+'</p>':'')+'<div class="once-actions once-hand-actions">'+
+      body+='<section class="once-panel once-hand-panel"><div class="once-section-heading"><div class="once-hand-title"><h2>'+esc(t('hand'))+'</h2><span class="once-muted">'+esc(t('handHint'))+'</span></div><div class="once-hand-meta"><span class="once-muted">'+esc(t('cardsCount',{n:hand.length}))+'</span>'+(s.ending?'<button type="button" class="once-ending-jump" data-once-action="showEnding" aria-controls="once-private-ending" aria-expanded="'+!!endingOpen+'">'+esc(t('showEnding'))+'</button>':'')+'</div></div><div class="once-hand-layout"><div class="once-carousel once-hand" aria-label="'+esc(t('hand'))+'">'+(hand.length?hand.map(card=>cardHTML(card,'mini',{interactive:true,selected:card.id===options.selectedId})).join(''):'<p class="once-empty">'+esc(t(['CHOOSING_FIRST','LOBBY'].includes(s.phase)?'waitingDeal':'noHand'))+'</p>')+'</div><div class="once-hand-controls">'+(s.phase==='STORYTELLING'?'<p class="once-muted once-action-hint">'+esc(t(s.storyteller===s.playerNum?'chooseCard':'listenHint'))+'</p>':'')+'<div class="once-actions once-hand-actions">'+
         (a.play||a.ending?button(endingAction?'ending':'play',endingAction?'playEnding':'play','',false,endingAction?!a.ending||!selectedEnding:!selected):'')+(a.interrupt?button('interrupt','interrupt','data-mode="normal"',false,!selected):'')+(a.categoryInterrupt&&categoryOK?button('interrupt','categoryInterrupt','data-mode="category"',true):'')+
         (a.discard?button('discard','discard','',false,!selected):'')+(a.keepAll?button('keepAll','keep','',true):'')+(a.pass?button('pass','pass','',true):'')+(a.challenge?button('challenge','challenge','',true):'')+'</div></div></div></section>';
     }
+    body+=endingDock+'</div>';
     if(host&&a.cancel)body+='<div class="once-host-tools">'+button('cancel','cancelGame','',true)+'</div>';
     return '<div class="once-game once-game--reference"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML()+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
   }
@@ -143,14 +146,15 @@
   }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.data=null;this.historyOpen=false;
+      this.el=el;this.options=options;this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.data=null;this.historyOpen=false;this.endingOpen=null;
       this.clickHandler=e=>this.click(e);this.keyHandler=e=>{if(e.key==='Escape'&&(this.preview||this.confirm)){this.preview=null;this.confirm=null;this.render();}};
       el.addEventListener('click',this.clickHandler);el.addEventListener('keydown',this.keyHandler);
       this.timer=setInterval(()=>this.paint(),1000);
     }
     update(data){
       const old=this.data?.once,next=data.once;
-      if(old?.sessionId!==next.sessionId){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.historyOpen=false;}
+      if(old?.sessionId!==next.sessionId){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.historyOpen=false;this.endingOpen=null;}
+      else if(list(old?.hand).length&&!list(next.hand).length)this.endingOpen=true;
       if(list(next.history).length<=4)this.historyOpen=false;
       if(this.confirm&&old?.turnId!==next.turnId){this.confirm=null;this.error=t('changed');}
       this.data=data;
@@ -165,7 +169,8 @@
       const openDetails=Array.from(this.el.querySelectorAll('[data-once-detail][open]')).map(x=>x.dataset.onceDetail);
       const firstPlayer=this.el.querySelector('[data-once-first-player]')?.value;
       if(this.confirm)this.confirm.returnLatest=this.el.querySelector('[data-once-return-latest]')?.checked??this.confirm.returnLatest;
-      this.el.innerHTML=tableHTML(this.data,{host:this.options.host,selectedId:this.selectedId,historyOpen:this.historyOpen});
+      const endingOpen=this.endingOpen??(!!root.matchMedia?.('(min-width: 1001px)').matches||!list(this.data.once.hand).length||this.data.once.ending?.id===this.selectedId);
+      this.el.innerHTML=tableHTML(this.data,{host:this.options.host,selectedId:this.selectedId,historyOpen:this.historyOpen,endingOpen});
       this.el.querySelectorAll('.once-carousel').forEach((x,i)=>{x.scrollLeft=scrolls[i]||0;});
       this.el.querySelectorAll('[data-once-detail]').forEach(x=>{x.open=openDetails.includes(x.dataset.onceDetail);});
       const firstSelect=this.el.querySelector('[data-once-first-player]');if(firstSelect&&firstPlayer)firstSelect.value=firstPlayer;
@@ -200,13 +205,16 @@
         this.selectedId=id;this.preview=null;this.error='';this.render();
         this.el.querySelectorAll('[data-once-card]').forEach(node=>{if(node.dataset.onceCard===id)node.focus?.({preventScroll:true});});return;
       }
-      const b=event.target.closest('[data-once-action]');if(!b||!this.el.contains(b)||b.disabled)return;
+      const b=event.target.closest('[data-once-action]');
+      if(b&&this.el.contains(b)&&b.dataset.onceAction==='toggleEnding')event.preventDefault?.();
+      if(!b||!this.el.contains(b)||b.disabled)return;
       const type=b.dataset.onceAction,s=this.data.once;
       if(b.classList.contains('once-modal-backdrop')&&event.target!==b)return;
       if(type==='closePreview'){this.preview=null;this.render();return;}
       if(type==='closeConfirm'){this.confirm=null;this.render();return;}
       if(type==='toggleHistory'){if(list(s.history).length>4)this.historyOpen=!this.historyOpen;this.render();this.el.querySelector('[data-once-action="toggleHistory"]')?.focus?.({preventScroll:true});return;}
-      if(type==='showEnding'){this.el.querySelector('.once-ending-dock')?.scrollIntoView?.({behavior:root.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'nearest',inline:'end'});return;}
+      if(type==='showEnding'){this.endingOpen=true;this.render();this.el.querySelector('.once-ending-dock')?.scrollIntoView?.({behavior:root.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'nearest',inline:'end'});return;}
+      if(type==='toggleEnding'){this.endingOpen=!this.el.querySelector('.once-ending-dock')?.open;this.render();this.el.querySelector('[data-once-action="toggleEnding"]')?.focus?.({preventScroll:true});return;}
       if(type==='retry'){this.retry();return;}
       if(type==='confirm'){
         const c=this.confirm;if(!c)return;const extra={...c.extra};if(c.type==='challenge')extra.returnLatest=!!this.el.querySelector('[data-once-return-latest]')?.checked;

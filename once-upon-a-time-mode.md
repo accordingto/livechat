@@ -24,15 +24,18 @@ The table shows the **latest four** played cards in order, with their original
 story numbers. Earlier cards form a small decorative pile on the left; tap it
 to expand or close the older-only history below. This is a local view change,
 not a draw/discard or a change to canonical story history. There is no table
-carousel to scroll to the latest play. Mobile uses two rows of recent cards
-instead of tiny text. On the narrowest screens the pile moves to the upper left.
+carousel to scroll to the latest play. Mobile uses a compact 2×2 landscape set
+with complete titles and thumbnails. On phones the earlier pile is a small button.
 
 The private Ending is a smaller **right-side table card on desktop**, independent
-of the Story panel's height. At tablet/phone widths it becomes a short horizontal
-card below Story So Far. **Your ending** brings it into view without selecting
+of the Story panel's height. At tablet/phone widths it becomes a collapsed drawer
+**after the hand/actions**, not between the Story table and hand. **Your ending**
+opens it and brings it into view without selecting
 or playing it. Desktop Story/hand cards measure 144×224, with ivory frames and
 cream name plates; category icons retain subtle distinguishing colors. No
-viewport-height compression forces the whole game into one screen. Select
+viewport-height compression forces the whole game into one screen. The drawer
+opens when the last Story Card leaves the hand, without auto-selecting or playing
+the Ending; it can still be manually closed. Select
 the Ending itself when it becomes playable, then use **Play Ending** and the
 existing confirmation. The host's shared table never shows a private hand or
 unrevealed Ending. The hand follows the table with a right-side action rail on
@@ -116,7 +119,12 @@ All **114 original Story Cards + 51 original Endings** are in a dedicated data
 file, with stable IDs and `artKey` / `imagePath` fields. No commercial deck or
 card-back artwork was copied. Story titles are short English fairy-tale terms.
 Interface/help follows the Hub's existing EN / Traditional Chinese switch;
-card content remains English learning material.
+card content remains English learning material. The 2026-10-09 vocabulary refresh
+simplifies 79 titles to core depicted elements (Prince, Bottle, Bridge, Storm).
+98/114 titles are single words and 112/114 have at most two words; a small set of
+fairy-tale combinations remains (Glass Knight, Golden Apple, Change of Heart).
+All card IDs, artwork, categories, 20 Interrupt flags and 51 Ending sentences
+are unchanged. Legacy slugs describe original art; they are not display titles.
 
 | Category | Story Cards | Special Interrupt cards (included) |
 | --- | ---: | ---: |
@@ -355,3 +363,50 @@ retain complete Ending text without document/table horizontal overflow.
 Not claimed: physical-phone play, two different browser engines, a live spoken
 group playtest, or full balance testing. Same-browser tabs and resized viewports
 are not labelled as different-device or different-browser-engine tests.
+
+## Phone flow and flexible vocabulary (2026-10-09)
+
+The single private Ending is now a native local drawer after hand/actions in
+reading order. Desktop places it on the right and initially opens it; widths
+at or below 1000px initially collapse it. The hand's **Your ending** shortcut
+opens/scrolls to it without selecting a card or sending a game command. Drawer
+choice survives ordinary sync updates, resets on a new session, and opens once
+when the last Story Card leaves the hand. Players may subsequently close it.
+No Ending/hand is added to the public host view. Phone Story cards are 88px-high
+landscape tiles, keeping the latest four and one Current marker; private hand
+portraits retain 144×224 sizing. The older-card pile remains locally expandable.
+All canonical history, interruption opportunities and rules are unchanged.
+
+79 Story titles were shortened to flexible core depicted elements. The artwork
+manifest was checked for all 114 Story Cards, and their IDs/art/Interrupt pool
+are unchanged; there are no additional decks, modes, AI calls or service keys.
+New cache token `once-mobile-words-1` is shared by host and original play.html.
+
+Verification in this update:
+
+- **Local focused tests:** 116/116 pass (44 engine, 28 sync, 36 UI, 8 deck/art).
+- **Full merged repository regression:** 929/929 pass, no failures or skips;
+  the latest unrelated Open Mic changes from origin/main were retained.
+- **Chrome automated browser:** five synthetic complete games at 320×667,
+  375×812, 390×844, 800×900 and 1280×800, using direct selection, Play, older-pile
+  expansion, Ending drawer/confirmation and all three acceptance ballots. All
+  pass, with one Current cue, unchanged hand size and no horizontal overflow or
+  clipped recent titles. Phone Story-to-hand gap is 8px (12px on larger layouts).
+- **Full text-fit fixtures:** all 114 Story titles and all 51 Ending sentences
+  fit without clipped text at 320px and 375px widths.
+- This uses a fresh headless Chrome profile and the explicitly labelled demo,
+  with Firebase room traffic blocked. It is not physical-device or live-room
+  synchronization proof. Browser UI helper was unavailable this turn, so the
+  opt-in independent browser runner was used instead; no user game was touched.
+
+Repeat the optional browser check with an installed Chrome and Playwright:
+
+```powershell
+$env:PLAYWRIGHT_MODULE_PATH='absolute/path/to/playwright'
+node scripts/once-upon-a-time-mobile-test.cjs
+```
+
+Run the local server above first. `ONCE_UI_BASE` may be set to the published site
+for the same demo-only check. Optional `ONCE_UI_PROOF_DIR` saves rendered 375px /
+1280px screenshots to an existing chosen output directory. This test is not
+part of the game runtime and is never available to normal players.

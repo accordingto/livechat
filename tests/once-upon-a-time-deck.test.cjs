@@ -54,6 +54,52 @@ test('every story and ending has simple English content, a stable ID and indepen
   assert.ok(Object.isFrozen(DECK.endingCards));
 });
 
+test('Story vocabulary mostly uses flexible core words with a small set of fairy-tale twists', () => {
+  const singleWords = DECK.storyCards.filter(card => card.title.split(/\s+/).length === 1);
+  const shortTitles = DECK.storyCards.filter(card => card.title.split(/\s+/).length <= 2);
+  assert.ok(singleWords.length >= DECK.storyCards.length * 0.8, 'at least 80% should be single core words');
+  assert.ok(shortTitles.length >= DECK.storyCards.length * 0.95, 'almost all titles should be one or two words');
+  for (const card of DECK.storyCards) {
+    assert.doesNotMatch(card.title, /^(?:A|An|The)\b|\b(?:who|whose|with|wearing)\b/i, card.id);
+  }
+  for (const title of ['Prince', 'Witch', 'Cat', 'Cook', 'Child', 'Dragon', 'Mermaid',
+    'Crown', 'Map', 'Letter', 'Mirror', 'Garden', 'Bridge', 'Village', 'Castle', 'Storm', 'Escape']) {
+    assert.ok(DECK.storyCards.some(card => card.title === title), title + ' remains a broad story element');
+  }
+  for (const title of ['Glass Knight', 'Golden Apple', 'Spinning Wheel', 'Change of Heart']) {
+    assert.ok(DECK.storyCards.some(card => card.title === title), title + ' retains some variety');
+  }
+});
+
+test('vocabulary refresh retains legacy card identities, artwork and the original Interrupt pool', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'assets/once-upon-a-time/art-manifest.json'), 'utf8'));
+  assert.deepEqual(DECK.storyCards.map(card => card.id).sort(),
+    Object.keys(manifest.cards).filter(id => !id.startsWith('once-ending-')).sort());
+  const interruptIds = {
+    character: ['candle-keeper', 'river-witch', 'glass-knight', 'forest-child'],
+    thing: ['silver-needle', 'green-bottle', 'walking-boots', 'secret-letter'],
+    place: ['thorn-garden', 'hidden-valley', 'moonlit-lake', 'island-castle'],
+    aspect: ['invisible', 'bewitched', 'forgotten', 'unlucky'],
+    event: ['unexpected-guest', 'sudden-storm', 'narrow-escape', 'wish-granted']
+  };
+  const expected = Object.entries(interruptIds).flatMap(([category, slugs]) =>
+    slugs.map(slug => 'once-' + category + '-' + slug));
+  assert.deepEqual(DECK.storyCards.filter(card => card.isInterrupt).map(card => card.id).sort(), expected.sort());
+  const renamed = {
+    'once-character-quiet-prince': 'Prince',
+    'once-character-sea-sister': 'Mermaid',
+    'once-thing-old-map': 'Map',
+    'once-place-island-castle': 'Castle',
+    'once-event-lost-path': 'Getting Lost'
+  };
+  for (const [id, title] of Object.entries(renamed)) {
+    const card = DECK.storyById[id];
+    assert.equal(card.title, title);
+    assert.equal(card.imagePath, manifest.cards[id].imagePath);
+    assert.equal(card.thumbnailPath, manifest.cards[id].thumbnailPath);
+  }
+});
+
 test('art manifest accounts for all 165 individual reviewed meaning-matched paintings', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'assets/once-upon-a-time/art-manifest.json'), 'utf8'));
   assert.equal(manifest.version, 2);

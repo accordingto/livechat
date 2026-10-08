@@ -140,7 +140,7 @@ test('each player sees their own exact hand/ending while public host sees only p
   }
 });
 
-test('private Ending sits once beside the story table with a local shortcut, never in another hand or host/lobby view', () => {
+test('the workspace puts hand immediately after Story and one local Ending drawer last, never in another hand or host/lobby view', () => {
   for (const count of [2, 4, 6]) {
     const s = started(count);
     for (const p of s.roster) {
@@ -150,16 +150,18 @@ test('private Ending sits once beside the story table with a local shortcut, nev
       const table = elementHTML(html, 'once-table-grid');
       const history = elementHTML(table, 'once-history-panel');
       const dock = elementHTML(table, 'once-ending-dock');
-      assert.ok(handPanel && hand && table && history && dock, 'Ending is a private sibling of the public story panel');
+      assert.ok(handPanel && hand && table && history && dock, 'Story, hand and private Ending share one responsive workspace');
       assert.match(table, /^<div\b[^>]*class="[^"]*\bhas-ending\b/);
-      assert.ok(table.indexOf(history) < table.indexOf(dock), 'Ending follows the story panel in desktop/mobile reading order');
+      assert.ok(table.indexOf(history) < table.indexOf(handPanel), 'Story comes before the hand');
+      assert.ok(table.indexOf(handPanel) < table.indexOf(dock), 'Ending cannot separate Story from the hand in phone reading order');
+      assert.match(dock, /^<details\b[^>]*\bdata-once-ending\b/);
+      assert.match(dock, /<summary\b[^>]*data-once-action="toggleEnding"/);
       assert.equal(elementHTML(history, 'once-ending-dock'), '', 'private Ending is not part of the public story history');
       assert.equal(elementHTML(handPanel, 'once-ending-dock'), '', 'Ending is not duplicated in the hand or its actions');
-      assert.ok(html.indexOf(table) < html.indexOf(handPanel), 'the hand follows the story/Ending table');
       assert.equal((html.match(new RegExp('data-once-card="' + ending.id + '"', 'g')) || []).length, 1, 'own Ending is rendered exactly once');
       assert.ok(dock.includes('data-once-card="' + ending.id + '"'));
       assert.ok(dock.includes(UI.esc(ending.text)), 'the full private Ending remains readable in the dock');
-      assert.ok(action(handPanel, 'showEnding'), 'players can jump directly to their own Ending');
+      assert.ok(action(handPanel, 'showEnding'), 'players can open their own Ending from the hand');
       assert.doesNotMatch(html, /once-ending-panel/);
       noActions(html, ['ending']);
     }
@@ -175,6 +177,41 @@ test('private Ending sits once beside the story table with a local shortcut, nev
       assert.ok(!html.includes(UI.esc(lobby.once.ending.text)), 'lobby cannot render even an accidentally retained private Ending');
     }
   }
+});
+
+test('Ending drawer supports explicit open/closed presentation and an empty hand opens it without auto-selection', () => {
+  let s = started();
+  const endingId = s.endings[1];
+  for (const open of [false, true]) {
+    const html = htmlFor(s, 1, { endingOpen: open });
+    const dock = elementHTML(html, 'once-ending-dock');
+    assert.equal(/^<details\b[^>]*\sopen(?:\s|>)/.test(dock), open);
+    assert.equal((html.match(new RegExp('data-once-card="' + endingId + '"', 'g')) || []).length, 1);
+  }
+  const selected = elementHTML(htmlFor(s, 1, { selectedId: endingId }), 'once-ending-dock');
+  assert.match(selected, /^<details\b[^>]*\sopen(?:\s|>)/, 'a directly selected Ending is visible');
+  for (const id of s.hands[1].slice()) s = act(s, 'play', 1, { cardId: id });
+  const html = htmlFor(s, 1), dock = elementHTML(html, 'once-ending-dock');
+  assert.match(dock, /^<details\b[^>]*\sopen(?:\s|>)/);
+  assert.match(dock, /aria-pressed="false"/);
+  assert.equal(action(html, 'ending').disabled, true, 'opening never selects or plays an Ending');
+  assert.doesNotMatch(elementHTML(htmlFor(s, 1, { endingOpen: false }), 'once-ending-dock'), /^<details\b[^>]*\sopen(?:\s|>)/, 'an explicit local close remains possible with an empty hand');
+});
+
+test('responsive workspace keeps desktop portrait proportions but puts a compact recent Story directly above phone hand', () => {
+  const css = fs.readFileSync(path.join(root, 'once-upon-a-time.css'), 'utf8');
+  const phone = css.slice(css.lastIndexOf('@media(max-width:760px)'));
+  const tablet = css.slice(css.lastIndexOf('@media(max-width:1000px)'), css.lastIndexOf('@media(max-width:760px)'));
+  assert.match(css, /\.once-table-grid > \.once-history-panel\s*\{[^}]*grid-row:1/);
+  assert.match(css, /\.once-table-grid > \.once-hand-panel\s*\{[^}]*grid-column:1\/\-1;[^}]*grid-row:2/);
+  assert.match(css, /\.once-table-grid > \.once-ending-dock\s*\{[^}]*grid-column:2;[^}]*grid-row:1/);
+  assert.match(tablet, /\.once-ending-dock\s*\{[^}]*grid-column:1;[^}]*grid-row:3/);
+  assert.match(css, /\.once-game--reference \.once-card\s*\{[^}]*width:144px;[^}]*height:224px/);
+  assert.match(phone, /\.once-history\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(phone, /\.once-history-latest \.once-card--history\s*\{[^}]*display:grid;[^}]*grid-template-rows:20px 58px;[^}]*height:88px;[^}]*min-height:88px/);
+  assert.match(phone, /\.once-history-latest \.once-card--history \.once-card-title\s*\{[^}]*min-height:0;[^}]*font-size:\.82rem;[^}]*overflow-wrap:anywhere/);
+  assert.doesNotMatch(phone, /\.once-card--mini\s*\{[^}]*height:/, 'phone history compaction must not shrink private hand cards');
+  assert.doesNotMatch(phone, /\.once-history-latest\s*\{[^}]*overflow-x:(auto|scroll)/, 'newest plays do not require scrolling a table carousel');
 });
 
 test('reference table keeps the Story hand and its existing actions in separate columns without duplicating cards', () => {
@@ -542,6 +579,8 @@ class ElementDouble {
     this.returnLatest = { checked: false };
     this.endingScrolls = [];
     this.endingDock = { scrollIntoView: options => this.endingScrolls.push(copy(options)) };
+    Object.defineProperty(this.endingDock, 'open', { get: () => /^<details\b[^>]*\sopen(?:\s|>)/.test(elementHTML(this.innerHTML, 'once-ending-dock')) });
+    this.endingSummary = { focus() {} };
   }
   addEventListener(type, fn) { this.listeners.set(type, fn); }
   removeEventListener(type, fn) { if (this.listeners.get(type) === fn) this.listeners.delete(type); }
@@ -549,7 +588,8 @@ class ElementDouble {
   querySelector(selector) {
     return selector === '.once-connection' ? this.status : selector === '.once-request-status' ? this.request :
       selector === '[data-once-return-latest]' ? this.returnLatest : selector === '[data-once-first-player]' ? { value: '2' } :
-      selector === '.once-ending-dock' && this.innerHTML.includes('once-ending-dock') ? this.endingDock :
+      ['.once-ending-dock', '[data-once-ending]'].includes(selector) && this.innerHTML.includes('once-ending-dock') ? this.endingDock :
+      selector === '[data-once-action="toggleEnding"]' && this.innerHTML.includes('once-ending-dock') ? this.endingSummary :
       selector === '.once-modal' ? { querySelector: () => ({ focus() {} }) } : null;
   }
   insertAdjacentHTML(_, html) { this.innerHTML += html; }
@@ -563,6 +603,7 @@ function target(dataset = {}) {
 const click = (card, type, extra = {}) => card.click({ target: target({ onceAction: type, ...extra }) });
 function harness(data, options = {}) {
   const timers = new Set(), sent = [], context = { ONCE_DECK: D, crypto: { randomUUID: () => 'mailbox-' + (++serial) },
+    matchMedia: query => ({ matches: query.includes('max-width') ? !!options.mobile : query.includes('min-width') ? !options.mobile : false }),
     setInterval: () => { const id = ++serial; timers.add(id); return id; }, clearInterval: id => timers.delete(id) };
   vm.runInNewContext(uiSource, context);
   const element = new ElementDouble();
@@ -625,13 +666,16 @@ test('history windows recompute from current canonical plays when the latest car
   }
 });
 
-test('the Ending shortcut scrolls to the private story-table dock without selecting, submitting or opening a modal', () => {
-  const s = started(), data = E.view(s, 1), h = harness(data), original = copy(data);
+test('the Ending shortcut opens and scrolls to the private drawer without selecting, submitting or opening a modal', () => {
+  const s = started(), data = E.view(s, 1), h = harness(data, { mobile: true }), original = copy(data);
   try {
     assert.ok(action(h.element.innerHTML, 'showEnding'));
+    assert.equal(h.element.endingDock.open, false, 'phone Ending begins out of the Story-to-hand reading path');
     h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
     const selected = h.card.selectedId;
     click(h.card, 'showEnding');
+    assert.equal(h.card.endingOpen, true);
+    assert.equal(h.element.endingDock.open, true);
     assert.equal(h.element.endingScrolls.length, 1);
     assert.equal(h.element.endingScrolls[0].block, 'nearest');
     assert.equal(h.element.endingScrolls[0].inline, 'end');
@@ -658,6 +702,69 @@ test('the Ending shortcut scrolls to the private story-table dock without select
       assert.equal(host.sent.length, 0);
     } finally { host.card.destroy(); }
   }
+});
+
+test('Ending summary toggles only this viewer, survives sync refresh and resets its default on replay', () => {
+  for (const mobile of [false, true]) {
+    const s = started(), data = E.view(s, 1), h = harness(data, { mobile }), original = copy(data);
+    try {
+      assert.equal(h.element.endingDock.open, !mobile, 'desktop opens its side dock; phone collapses its below-hand drawer');
+      const initial = h.element.endingDock.open;
+      let prevented = 0;
+      h.card.click({ target: target({ onceAction: 'toggleEnding' }), preventDefault() { prevented++; } });
+      assert.equal(prevented, 1, 'native details click is cancelled so exactly one local toggle happens');
+      assert.equal(h.card.endingOpen, !initial);
+      assert.equal(h.element.endingDock.open, !initial);
+      assert.equal(h.card.selectedId, null);
+      assert.equal(h.card.preview, null);
+      assert.equal(h.card.confirm, null);
+      assert.equal(h.sent.length, 0);
+      assert.deepEqual(data, original, 'local disclosure cannot mutate a private game projection');
+      h.card.update(copy(data));
+      assert.equal(h.element.endingDock.open, !initial, 'an ordinary room update preserves the viewer’s choice');
+      click(h.card, 'toggleEnding');
+      assert.equal(h.element.endingDock.open, initial);
+      h.card.update(E.view(started(), 1));
+      assert.equal(h.element.endingDock.open, !mobile, 'a new game does not inherit the old drawer state');
+      assert.equal(h.sent.length, 0);
+    } finally { h.card.destroy(); }
+  }
+  const host = harness(E.view(started(), 1), { host: true, mobile: true });
+  try {
+    click(host.card, 'toggleEnding');
+    click(host.card, 'showEnding');
+    assert.equal(elementHTML(host.element.innerHTML, 'once-ending-dock'), '');
+    assert.equal(host.element.endingScrolls.length, 0);
+    assert.equal(host.sent.length, 0);
+  } finally { host.card.destroy(); }
+});
+
+test('clearing Story hand reveals the Ending once, without selecting it or reopening an intentional later close', () => {
+  let s = started();
+  const h = harness(E.view(s, 1), { mobile: true });
+  try {
+    assert.equal(h.element.endingDock.open, false);
+    h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
+    for (const id of s.hands[1].slice()) s = act(s, 'play', 1, { cardId: id });
+    const empty = E.view(s, 1), original = copy(empty);
+    h.card.update(empty);
+    assert.equal(h.element.endingDock.open, true, 'nonempty-to-empty transition brings the final card into view');
+    assert.equal(h.card.selectedId, null, 'a removed Story selection is cleared; Ending is not selected automatically');
+    assert.equal(action(h.element.innerHTML, 'ending').disabled, true);
+    assert.equal(h.card.confirm, null);
+    assert.equal(h.sent.length, 0);
+    click(h.card, 'toggleEnding');
+    assert.equal(h.element.endingDock.open, false);
+    h.card.update(copy(empty));
+    assert.equal(h.element.endingDock.open, false, 'refreshing an empty hand cannot reopen a locally closed drawer');
+    assert.deepEqual(empty, original);
+    const reconnected = harness(copy(empty), { mobile: true });
+    try {
+      assert.equal(reconnected.element.endingDock.open, true, 'first render of an empty hand also exposes its available Ending');
+      assert.equal(reconnected.card.selectedId, null);
+      assert.equal(reconnected.sent.length, 0);
+    } finally { reconnected.card.destroy(); }
+  } finally { h.card.destroy(); }
 });
 
 test('a Story card tap selects and highlights immediately; Play submits it without a preview/select step', () => {
@@ -751,7 +858,7 @@ test('Ending taps select directly but cannot play until the empty-handed storyte
   try {
     h.card.click({ target: target({ onceCard: endingId }) });
     assert.equal(h.card.selectedId, endingId);
-    assert.match(elementHTML(h.element.innerHTML, 'once-ending-dock'), new RegExp('data-once-card="' + endingId + '"[^>]*aria-pressed="true"'), 'the private story-table Ending is directly highlighted');
+    assert.match(elementHTML(h.element.innerHTML, 'once-ending-dock'), new RegExp('data-once-card="' + endingId + '"[^>]*aria-pressed="true"'), 'the private Ending drawer card is directly highlighted');
     assert.equal(h.card.preview, null);
     assert.equal(h.card.confirm, null);
     assert.doesNotMatch(h.element.innerHTML, /once-modal|once-card--full|data-once-action="select"/);
