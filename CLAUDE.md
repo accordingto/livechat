@@ -1,3 +1,19 @@
+## CURRENT: Open Mic Rescue text activities (2026-10-09)
+
+Open Mic Rescue now renders text titles and original activity prompts only.
+Video/audio embeds, previews, thumbnails, live playlist players, all lyrics
+lookup/display/import/editing, and automatic playback are retired. Keep the
+same-row choice/change/remove controls, favorites, metadata search/popular
+results, direct replacement, role permissions, and cooperative scoring.
+Use song memories, original improvisation, and rhythm relay as the activities;
+manual additions accept only title and optional artist. Optional canonical
+YouTube source links are explicit external navigation and never link `omtxt`
+text-card IDs. The lyrics route returns HTTP 410 `lyrics_retired`, public
+projections expose empty `songLyrics`, and `setLyrics` is unavailable.
+Player projections accept newer host lease timestamps at an equal revision.
+Already open host/player pages must refresh. See `open-mic-mode.md` for the
+current behavior; older media/lyrics notes below are historical.
+
 ## 專案背景
 
 **Open Mic 換歌／取消與歌詞補查（2026-10-08）**：舞台新增「換一首歌」與

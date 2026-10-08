@@ -1,9 +1,12 @@
 {
   "rewrites": [
-    { "source": "/server/:path*", "destination": "/bluff-private-unavailable" },
-    { "source": "/tests/:path*", "destination": "/bluff-private-unavailable" },
-    { "source": "/scripts/:path*", "destination": "/bluff-private-unavailable" },
-    { "source": "/private/:path*", "destination": "/bluff-private-unavailable" },
-    { "source": "/work/:path*", "destination": "/bluff-private-unavailable" }
+    {"source": "/open-mic-genius.js", "destination": "/bluff-private-unavailable"},
+    {"source": "/open-mic-lyrics.js", "destination": "/bluff-private-unavailable"},
+    {"source": "/open-mic-youtube.js", "destination": "/bluff-private-unavailable"},
+    {"source": "/server/: path*", "destination": "/bluff-private-unavailable"},
+    {"source": "/tests/: path*", "destination": "/bluff-private-unavailable"},
+    {"source": "/scripts/: path*", "destination": "/bluff-private-unavailable"},
+    {"source": "/private/: path*", "destination": "/bluff-private-unavailable"},
+    {"source": "/work/: path*", "destination": "/bluff-private-unavailable"}
   ]
 }

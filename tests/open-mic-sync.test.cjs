@@ -255,6 +255,17 @@ test('elapsed time and offline cannot advance singing; room change and close sto
   await h.renew(); h.connect(); await settle(h); assert.equal(f.db.writes, closedWrites);
 });
 
+function referenceSong(song) {
+  return { id: song.id ?? song.videoId, videoId: song.videoId, title: song.title, artist: song.artist || '', tags: song.tags || [] };
+}
+async function seedLegacyLyrics(f, h, { videoId, lyrics }) {
+  const state = f.state(), raw = f.raw();
+  state.songLyrics = { ...(state.songLyrics || {}), [videoId]: lyrics };
+  f.db.put('rooms/MIC_TEST/players/' + f.extras.openMicControlToken,
+    { ...raw, stateJson: JSON.stringify(state), revision: (raw.revision || 0) + 1 });
+  await settle(h);
+}
+
 function singingProgress(state) {
   return { sessionId: state.sessionId, turnId: state.turnId, spotlight: state.spotlight, round: state.round,
     phase: state.phase, teamScore: state.teamScore, challengeResult: state.challengeResult,
@@ -268,80 +279,58 @@ function closedProgress(state) {
     challenge: state.challenge, duration: state.duration };
 }
 
-test('host lyrics fan out to every player and survive host replacement without moving the singing turn', async () => {
-  const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first);
-  const videoId = first.latest.songLibrary[0].videoId;
-  await first.command('success'); await first.command('selectSong', { videoId });
-  await first.command('startSinging'); await settle(first);
-  const progress = singingProgress(f.state()), lyrics = 'Our voices fill the room.\r\nA little song, a little smile.\rTogether we go.';
-  const expected = lyrics.replace(/\r\n?/g, '\n');
-  f.now += 1000;
-  await first.command('setLyrics', { videoId, lyrics }); await settle(first);
-  assert.equal(f.state().songLyrics[videoId], expected);
+
+test('retired lyric commands reject host and Spotlight requests while preserving legacy state privately', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
+  await h.command('success'); const videoId = h.latest.songLibrary[0].videoId;
+  await h.command('selectSong', { videoId }); await h.command('startSinging'); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId, lyrics: 'Private legacy words' });
+  const progress = singingProgress(f.state());
+  await assert.rejects(h.command('setLyrics', { videoId, lyrics: 'Host replacement' }), /not_available/);
+  const action = await f.action(1, 'setLyrics', { videoId, lyrics: 'Spotlight replacement' }); await settle(h);
+  assert.equal(f.card(1).openmic.reply.id, action.id); assert.equal(f.card(1).openmic.reply.error, 'not_available');
+  assert.equal(f.state().songLyrics[videoId], 'Private legacy words');
   assert.deepEqual(singingProgress(f.state()), progress);
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], expected);
-  const original = f.state(); first.close(); await settle(first);
+  for (let n = 1; n <= 4; n++) assert.deepEqual(f.card(n).openmic.songLyrics || {}, {});
+  h.close(); await settle(h);
+});
+
+test('host replacement and renewal replace stale player lyrics without resetting canonical progress', async () => {
+  const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first);
+  await first.command('success'); const videoId = first.latest.songLibrary[0].videoId;
+  await first.command('selectSong', { videoId }); await first.command('startSinging'); await settle(first);
+  await seedLegacyLyrics(f, first, { videoId, lyrics: 'Private restored words' });
+  const original = f.state();
+  first.close(); await settle(first);
+  for (let n = 1; n <= 4; n++) f.db.put(f.paths[n - 1], { ...f.card(n), openmic: { ...f.card(n).openmic, songLyrics: { [videoId]: 'Stale public words' } } });
   const restored = f.host(); await settle(restored);
   assert.equal(restored.own, true); assert.deepEqual(f.state(), original);
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], expected);
-  f.now += 120000; await restored.renew(); await settle(restored);
-  assert.deepEqual(singingProgress(f.state()), progress, 'lyrics and elapsed time never score or advance');
+  for (let n = 1; n <= 4; n++) {
+    assert.deepEqual(f.card(n).openmic.songLyrics || {}, {});
+    assert.ok(!JSON.stringify(f.card(n).openmic).includes('Private restored words'));
+    assert.ok(!JSON.stringify(f.card(n).openmic).includes('Stale public words'));
+  }
+  f.now += 60000; await restored.renew(); await settle(restored);
+  assert.deepEqual(f.state(), original);
   restored.close(); await settle(restored);
 });
 
-test('lyrics permissions use the real player card and stale previous-turn text cannot replace saved lyrics', async () => {
+test('oversized retired lyric envelopes cannot mutate the host while normal text commands still acknowledge', async () => {
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
-  const videoId = h.latest.songLibrary[0].videoId, originalText = 'We have a song to share.';
-  await h.command('setLyrics', { videoId, lyrics: originalText }); await settle(h);
-  const progress = singingProgress(f.state());
-  const spoof = await f.action(2, 'setLyrics', { actor: 0, videoId, lyrics: 'A listener cannot replace the text.' }); await settle(h);
-  assert.equal(f.state().songLyrics[videoId], originalText);
-  assert.equal(f.card(2).openmic.reply.id, spoof.id); assert.equal(f.card(2).openmic.reply.error, 'not_available');
-  assert.deepEqual(singingProgress(f.state()), progress);
-  const spotlightText = 'Spotlight adds a little line.\nEveryone can read along.';
-  const update = await f.action(1, 'setLyrics', { videoId, lyrics: spotlightText }); await settle(h);
-  assert.equal(f.card(1).openmic.reply.id, update.id); assert.equal(f.card(1).openmic.reply.error, '');
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], spotlightText);
-  assert.deepEqual(singingProgress(f.state()), progress);
-  const revision = f.raw().revision;
-  await f.db.ref(f.paths[0]).transaction(old => ({ ...old, openmicAction: update })); await settle(h);
-  assert.equal(f.raw().revision, revision, 'replayed lyrics have no second canonical mutation');
-  await h.command('next'); await settle(h); assert.equal(h.latest.spotlight, 2);
-  const nextProgress = singingProgress(f.state());
-  const stale = await f.action(1, 'setLyrics', { actor: 0, videoId, lyrics: 'An old turn must not overwrite.', turnId: update.turnId }); await settle(h);
-  assert.equal(f.card(1).openmic.reply.id, stale.id); assert.equal(f.card(1).openmic.reply.error, 'stale_turn');
-  assert.equal(f.state().songLyrics[videoId], spotlightText);
-  assert.deepEqual(singingProgress(f.state()), nextProgress);
-  h.close(); await settle(h);
-});
-
-test('Spotlight can sync the full 16000-character lyrics allowance, including JSON-escaped formatting', async () => {
-  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
-  const videoId = h.latest.songLibrary[0].videoId, lyrics = '"Party"\n'.repeat(2000);
-  assert.equal(lyrics.length, 16000); const progress = singingProgress(f.state());
-  const action = await f.action(1, 'setLyrics', { videoId, lyrics }); await settle(h);
-  assert.equal(f.card(1).openmic.reply?.id, action.id, 'a valid large action must receive an acknowledgement');
-  assert.equal(f.card(1).openmic.reply.error, '');
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], lyrics);
-  assert.deepEqual(singingProgress(f.state()), progress);
-  h.close(); await settle(h);
-});
-
-test('invalid lyrics are acknowledged without damage; clearing text removes it from all views', async () => {
-  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
-  const videoId = h.latest.songLibrary[0].videoId, lyrics = 'This line belongs to our party.';
-  await h.command('setLyrics', { videoId, lyrics }); await settle(h);
-  const progress = singingProgress(f.state());
-  await assert.rejects(h.command('setLyrics', { videoId, lyrics: 'x'.repeat(16001) }), /invalid_lyrics/);
-  await settle(h); assert.equal(f.state().songLyrics[videoId], lyrics);
-  const invalid = await f.action(1, 'setLyrics', { videoId, lyrics: 'Hidden\u0000control' }); await settle(h);
-  assert.equal(f.card(1).openmic.reply.id, invalid.id); assert.equal(f.card(1).openmic.reply.error, 'invalid_lyrics');
-  assert.equal(f.state().songLyrics[videoId], lyrics);
-  const cleared = await f.action(1, 'setLyrics', { videoId, lyrics: '\n \t\n' }); await settle(h);
-  assert.equal(f.card(1).openmic.reply.id, cleared.id); assert.equal(f.card(1).openmic.reply.error, '');
-  assert.deepEqual(f.state().songLyrics, {});
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics?.[videoId], undefined);
-  assert.deepEqual(singingProgress(f.state()), progress);
+  const before = f.state(), revision = f.raw().revision, videoId = h.latest.songLibrary[0].videoId;
+  const action = await f.action(1, 'setLyrics', { videoId, lyrics: '"Party"\n'.repeat(2000) }); await settle(h);
+  assert.equal(f.raw().revision, revision); assert.deepEqual(f.state(), before);
+  assert.notEqual(f.card(1).openmic.reply?.id, action.id);
+  const added = await f.action(2, 'addSong', { title: 'Our text title', artist: 'Our artist' }); await settle(h);
+  assert.equal(f.card(2).openmic.reply.id, added.id); assert.equal(f.card(2).openmic.reply.error, '');
+  const song = f.state().songLibrary.at(-1);
+  assert.match(song.videoId, /^omtxt[a-z0-9]{6}$/); assert.equal(song.url, undefined); assert.equal(song.thumbnail, undefined);
+  for (let n = 1; n <= 4; n++) {
+    const view = f.card(n).openmic;
+    assert.equal(view.songLibrary.find(candidate => candidate.videoId === song.videoId).title, 'Our text title');
+    assert.deepEqual(view.mySongs[2], [song.videoId]);
+  }
+  assert.deepEqual(singingProgress(f.state()), singingProgress(before));
   h.close(); await settle(h);
 });
 
@@ -358,7 +347,7 @@ test('Spotlight can put a discovery song directly on the shared stage without sa
   assert.equal(selected.songLibrary.length, before.songLibrary.length + 1);
   const song = selected.songLibrary.find(candidate => candidate.videoId === videoId);
   assert.ok(song); assert.equal(song.title, title); assert.equal(song.artist, '');
-  assert.equal(song.url, 'https://www.youtube.com/watch?v=' + videoId);
+  assert.equal(song.url, undefined); assert.equal(song.thumbnail, undefined);
   assert.deepEqual(selected.selectedSong, song); assert.deepEqual(selected.mySongs, before.mySongs);
   assert.deepEqual(singingProgress(selected), { ...progress, turnId: progress.turnId + 1 });
   assert.equal(selected.singingAwarded, false); assert.equal(selected.singingStartedAt, null);
@@ -371,15 +360,15 @@ test('Spotlight can put a discovery song directly on the shared stage without sa
   }
   for (let n = 1; n <= 4; n++) {
     const view = f.card(n).openmic;
-    assert.deepEqual(view.selectedSong, normalize(song)); assert.equal(view.phase, 'choice');
+    assert.deepEqual(view.selectedSong, normalize(referenceSong(song))); assert.equal(view.phase, 'choice');
     assert.equal(view.singingStartedAt ?? null, null); assert.equal(view.teamScore, 0);
     assert.equal(view.songLibrary.filter(candidate => candidate.videoId === videoId).length, 1);
     assert.deepEqual(Object.values(view.mySongs || {}).flat(), [], 'direct playback does not create a personal favorite');
   }
   const selectedProgress = singingProgress(selected), lyrics = 'We bring a little tune.\nOur friends sing along.';
   const lyricsAction = await f.action(1, 'setLyrics', { videoId, lyrics }); await settle(h);
-  assert.equal(f.card(1).openmic.reply.id, lyricsAction.id); assert.equal(f.card(1).openmic.reply.error, '');
-  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], lyrics);
+  assert.equal(f.card(1).openmic.reply.id, lyricsAction.id); assert.equal(f.card(1).openmic.reply.error, 'not_available');
+  for (let n = 1; n <= 4; n++) assert.deepEqual(f.card(n).openmic.songLyrics || {}, {});
   assert.deepEqual(singingProgress(f.state()), selectedProgress);
   assert.deepEqual(f.state().mySongs, before.mySongs);
   h.close(); await settle(h);
@@ -395,7 +384,7 @@ test('replayed direct selection is acknowledged once and another selection keeps
   await f.db.ref(f.paths[0]).transaction(old => ({ ...old, openmicAction: action })); await settle(h);
   assert.equal(f.raw().revision, revision); assert.deepEqual(f.state(), once);
   assert.equal(f.card(1).openmic.reply.id, action.id);
-  await f.action(1, 'setLyrics', { videoId, lyrics: 'The room keeps our own little line.' }); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId, lyrics: 'The room keeps our own little line.' });
   const again = await f.action(1, 'selectSong', { videoId, title: 'A later discovery title' }); await settle(h);
   assert.equal(f.card(1).openmic.reply.id, again.id); assert.equal(f.card(1).openmic.reply.error, '');
   assert.equal(f.state().songLibrary.length, baseline.songLibrary.length + 1);
@@ -436,7 +425,7 @@ test('Spotlight replacement during singing resets every card timer without savin
   await h.command('success'); await settle(h);
   const firstVideo = h.latest.songLibrary[0].videoId, secondVideo = h.latest.songLibrary[1].videoId;
   await f.action(1, 'selectSong', { videoId: firstVideo }); await settle(h);
-  await f.action(1, 'setLyrics', { videoId: firstVideo, lyrics: 'We keep the first little tune.' }); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId: firstVideo, lyrics: 'We keep the first little tune.' });
   await f.action(1, 'toggleFavorite', { videoId: firstVideo }); await settle(h);
   await f.action(1, 'inviteDuet', { playerNum: 2 }); await settle(h);
   await f.action(1, 'startSinging'); await settle(h);
@@ -467,7 +456,7 @@ test('Spotlight replacement during singing resets every card timer without savin
     assert.equal(view.selectedSong.videoId, videoId); assert.equal(view.phase, 'choice'); assert.equal(view.singingState, 'idle');
     assert.equal(view.singingStartedAt ?? null, null); assert.equal(view.teamScore, 2); assert.equal(view.duet, 2);
     assert.equal(view.songLibrary.filter(song => song.videoId === videoId).length, 1);
-    assert.deepEqual(view.mySongs, normalize(original.mySongs)); assert.equal(view.songLyrics[firstVideo], original.songLyrics[firstVideo]);
+    assert.deepEqual(view.mySongs, normalize(original.mySongs)); assert.deepEqual(view.songLyrics || {}, {});
   }
   h.close(); await settle(h);
 });
@@ -476,7 +465,7 @@ test('Spotlight cancellation clears the stage and duet but retains songs, lyrics
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   await h.command('success'); await settle(h); const videoId = h.latest.songLibrary[0].videoId;
   await f.action(1, 'selectSong', { videoId }); await settle(h);
-  await f.action(1, 'setLyrics', { videoId, lyrics: 'Our friends keep the words we wrote.' }); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId, lyrics: 'Our friends keep the words we wrote.' });
   await f.action(2, 'toggleFavorite', { videoId }); await settle(h);
   await f.action(1, 'inviteDuet', { playerNum: 2 }); await settle(h);
   await f.action(1, 'startSinging'); await settle(h);
@@ -493,7 +482,7 @@ test('Spotlight cancellation clears the stage and duet but retains songs, lyrics
     const view = f.card(n).openmic;
     assert.equal(view.selectedSong ?? null, null); assert.equal(view.singingStartedAt ?? null, null); assert.equal(view.duet ?? null, null);
     assert.equal(view.phase, 'choice'); assert.equal(view.singingState, 'idle'); assert.equal(view.teamScore, 2);
-    assert.equal(view.songLyrics[videoId], original.songLyrics[videoId]); assert.deepEqual(view.mySongs, normalize(original.mySongs));
+    assert.deepEqual(view.songLyrics || {}, {}); assert.deepEqual(view.mySongs, normalize(original.mySongs));
   }
   await f.db.ref(f.paths[0]).transaction(old => ({ ...old, openmicAction: cancelled })); await settle(h);
   assert.equal(f.raw().revision, revision); assert.deepEqual(f.state(), cleared, 'replayed cancellation does not advance its fence twice');
@@ -522,7 +511,7 @@ test('finished Spotlight playback changes fan out while preserving both awarded 
     await h.command(completed ? 'success' : 'failed'); await settle(h);
     const originalVideo = h.latest.songLibrary[0].videoId;
     await f.action(1, 'selectSong', { videoId: originalVideo }); await settle(h);
-    await f.action(1, 'setLyrics', { videoId: originalVideo, lyrics: 'Our words remain after the last note.' }); await settle(h);
+    await seedLegacyLyrics(f, h, { videoId: originalVideo, lyrics: 'Our words remain after the last note.' });
     await f.action(2, 'toggleFavorite', { videoId: originalVideo }); await settle(h);
     await f.action(1, 'inviteDuet', { playerNum: 2 }); await settle(h);
     await f.action(1, 'startSinging'); await settle(h); f.now += 6000;
@@ -550,9 +539,9 @@ test('finished Spotlight playback changes fan out while preserving both awarded 
     assert.equal(f.card(1).openmic.reply.id, same.id); assert.equal(f.card(1).openmic.reply.error, '');
     assert.deepEqual(singingProgress(f.state()), singingProgress(playback));
     assert.deepEqual(f.state().selectedSong, playback.selectedSong); assert.deepEqual(f.state().songLibrary, playback.songLibrary);
-    await f.action(1, 'setLyrics', { videoId, lyrics: 'We listen together after our turn.' }); await settle(h);
+    await seedLegacyLyrics(f, h, { videoId, lyrics: 'We listen together after our turn.' });
     const beforeClear = f.state();
-    for (let n = 1; n <= 4; n++) assert.equal(f.card(n).openmic.songLyrics[videoId], 'We listen together after our turn.');
+    for (let n = 1; n <= 4; n++) assert.deepEqual(f.card(n).openmic.songLyrics || {}, {});
     assert.deepEqual(closedProgress(beforeClear), result);
     const cancel = await f.action(1, 'clearSong'); await settle(h);
     assert.equal(f.card(1).openmic.reply.id, cancel.id); assert.equal(f.card(1).openmic.reply.error, '');
@@ -566,8 +555,8 @@ test('finished Spotlight playback changes fan out while preserving both awarded 
       assert.equal(view.selectedSong ?? null, null); assert.equal(view.duet ?? null, null); assert.equal(view.singingStartedAt ?? null, null);
       assert.equal(view.phase, 'finished'); assert.equal(view.singingState, 'finished'); assert.equal(view.singingAwarded, completed);
       assert.equal(view.teamScore, finished.teamScore); assert.equal(view.round, finished.round); assert.equal(view.spotlight, finished.spotlight);
-      assert.deepEqual(view.songLibrary, normalize(beforeClear.songLibrary)); assert.deepEqual(view.mySongs, normalize(beforeClear.mySongs));
-      assert.deepEqual(view.songLyrics, beforeClear.songLyrics);
+      assert.deepEqual(view.songLibrary, normalize(beforeClear.songLibrary.map(referenceSong))); assert.deepEqual(view.mySongs, normalize(beforeClear.mySongs));
+      assert.deepEqual(view.songLyrics || {}, {});
     }
     await f.db.ref(f.paths[0]).transaction(old => ({ ...old, openmicAction: cancel })); await settle(h);
     assert.equal(f.raw().revision, revision); assert.deepEqual(f.state(), cleared, 'a repeated playback cancellation advances only once');
@@ -586,7 +575,7 @@ test('closed-round playback rejects malformed or spoofed edits and fences queued
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   await h.command('success'); await settle(h); const videoId = h.latest.songLibrary[0].videoId;
   await f.action(1, 'selectSong', { videoId }); await settle(h);
-  await f.action(1, 'setLyrics', { videoId, lyrics: 'The final chorus stays in our room.' }); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId, lyrics: 'The final chorus stays in our room.' });
   await f.action(2, 'toggleFavorite', { videoId }); await settle(h);
   await f.action(1, 'inviteDuet', { playerNum: 2 }); await settle(h);
   await f.action(1, 'startSinging'); await settle(h); f.now += 1000;
@@ -636,7 +625,7 @@ test('closed-round playback rejects malformed or spoofed edits and fences queued
     const view = f.card(n).openmic;
     assert.equal(view.phase, 'finished'); assert.equal(view.singingState, 'finished'); assert.equal(view.selectedSong ?? null, null);
     assert.equal(view.singingStartedAt ?? null, null); assert.equal(view.singingAwarded, true); assert.equal(view.teamScore, 3);
-    assert.equal(view.turnId, fenced.turnId); assert.deepEqual(view.songLibrary, normalize(finished.songLibrary));
+    assert.equal(view.turnId, fenced.turnId); assert.deepEqual(view.songLibrary, normalize(finished.songLibrary.map(referenceSong)));
   }
   h.close(); await settle(h);
 });
@@ -645,7 +634,7 @@ test('forged, malformed and stale replacement or cancel requests preserve the li
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   await h.command('failed'); await settle(h); const videoId = h.latest.songLibrary[0].videoId;
   await f.action(1, 'selectSong', { videoId }); await settle(h);
-  await f.action(1, 'setLyrics', { videoId, lyrics: 'Our current song stays in the room.' }); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId, lyrics: 'Our current song stays in the room.' });
   await f.action(1, 'inviteDuet', { playerNum: 2 }); await settle(h);
   await f.action(1, 'startSinging'); await settle(h); const original = f.state(); f.now += 5000;
   const requests = [
@@ -680,7 +669,7 @@ test('a finish already queued behind replacement cannot score or restart the rep
   await h.command('success'); await settle(h);
   const videoId = h.latest.songLibrary[0].videoId, nextVideo = h.latest.songLibrary[1].videoId;
   await f.action(1, 'selectSong', { videoId }); await settle(h);
-  await f.action(1, 'setLyrics', { videoId, lyrics: 'Keep our original little verse.' }); await settle(h);
+  await seedLegacyLyrics(f, h, { videoId, lyrics: 'Keep our original little verse.' });
   await f.action(1, 'startSinging'); await settle(h); const original = f.state();
   let enter, release; const entered = new Promise(resolve => { enter = resolve; });
   const waiting = new Promise(resolve => { release = resolve; });

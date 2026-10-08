@@ -13,6 +13,7 @@ const singing = (result = 'success') => {
   return act(s, 'startSinging', { actor: s.spotlight });
 };
 const error = (s, actor = 0) => s.replies[actor]?.error;
+const legacyLyrics = (s, extra) => { const next = structuredClone(s); next.songLyrics = { ...(next.songLyrics || {}), [extra.videoId]: extra.lyrics }; return next; };
 
 test('create starts a named Spotlight with bilingual challenge and 35-second optional singing', () => {
   const s = create();
@@ -180,7 +181,7 @@ test('custom songs immediately join their owner favorites and duplicates never e
   assert.equal(error(s, 2), ''); assert.equal(s.songLibrary.length, count + 1); assert.equal(s.turnId, turn);
   assert.deepEqual(s.mySongs[2], ['abcdefghijk']); assert.deepEqual(s.mySongs[1], []);
   const song = s.songLibrary.at(-1);
-  assert.equal(song.ownerPlayerNum, 2); assert.equal(song.custom, true); assert.equal(song.url, 'https://www.youtube.com/watch?v=abcdefghijk');
+  assert.equal(song.ownerPlayerNum, 2); assert.equal(song.custom, true); assert.equal(song.url, undefined); assert.equal(song.thumbnail, undefined);
   s = act(s, 'addSong', { actor: 3, title: 'Another name', url: 'https://youtube.com/shorts/abcdefghijk' });
   assert.equal(s.songLibrary.length, count + 1); assert.equal(s.songLibrary.at(-1).title, 'My comfortable song');
   assert.deepEqual(s.mySongs[3], ['abcdefghijk']);
@@ -202,8 +203,8 @@ test('host and Spotlight can atomically select an unknown video without favorite
       assert.equal(selected.songLibrary.length, count + 1); assert.deepEqual(selected.mySongs, favorites);
       assert.deepEqual(selected.selectedSong, selected.songLibrary.at(-1));
       assert.equal(selected.selectedSong.title, 'A discovered song'); assert.equal(selected.selectedSong.ownerPlayerNum, 1);
-      assert.equal(selected.selectedSong.url, 'https://www.youtube.com/watch?v=abcdefghijk');
-      assert.equal(selected.selectedSong.thumbnail, 'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg');
+      assert.equal(selected.selectedSong.url, undefined);
+      assert.equal(selected.selectedSong.thumbnail, undefined);
       assert.equal(selected.selectedSong.artist, ''); assert.deepEqual(selected.selectedSong.tags, []);
       assert.equal(selected.turnId, initial.turnId + 1);
       for (const field of ['phase', 'round', 'challengeResult', 'challengeAwarded', 'teamScore', 'singingState',
@@ -217,7 +218,7 @@ test('host and Spotlight can atomically select an unknown video without favorite
 
 test('direct selection of an existing video keeps its metadata, lyrics and favorites', () => {
   let initial = choice(); const original = structuredClone(initial.songLibrary[0]);
-  initial = act(initial, 'setLyrics', { actor: 1, videoId: original.videoId, lyrics: 'An original lyric draft.' });
+  initial = legacyLyrics(initial, { actor: 1, videoId: original.videoId, lyrics: 'An original lyric draft.' });
   initial = act(initial, 'toggleFavorite', { actor: 3, videoId: original.videoId });
   const favorites = structuredClone(initial.mySongs), count = initial.songLibrary.length;
   const selected = act(initial, 'selectSong', { actor: 1, videoId: original.videoId, title: 'Different provider title',
@@ -306,10 +307,10 @@ test('a full library rejects a new direct selection atomically while allowing an
 test('a directly selected video supports shared lyrics and later turns without first adding favorites', () => {
   let s = act(choice(), 'selectSong', { actor: 1, videoId: 'abcdefghijk', title: 'A direct song with lyrics' });
   const turn = s.turnId, score = s.teamScore;
-  s = act(s, 'setLyrics', { actor: 1, videoId: 'abcdefghijk', lyrics: 'A shared original draft.\nAnother line.', onlyIfEmpty: true });
-  assert.equal(error(s, 1), ''); assert.equal(s.turnId, turn); assert.equal(s.teamScore, score);
+  s = legacyLyrics(s, { actor: 1, videoId: 'abcdefghijk', lyrics: 'A shared original draft.\nAnother line.', onlyIfEmpty: true });
+  assert.equal(s.turnId, turn); assert.equal(s.teamScore, score);
   assert.equal(s.phase, 'choice'); assert.equal(s.singingStartedAt, null);
-  assert.equal(E.view(s, 2).openmic.songLyrics.abcdefghijk, 'A shared original draft.\nAnother line.');
+  assert.deepEqual(E.view(s, 2).openmic.songLyrics, {});
   for (const favorites of Object.values(s.mySongs)) assert.deepEqual(favorites, []);
   s = act(s, 'next'); s = act(s, 'failed');
   s = act(s, 'selectSong', { actor: 2, videoId: 'abcdefghijk' });
@@ -331,7 +332,7 @@ test('clearing a choice-stage song preserves saved material and leaves a fresh s
   for (const actor of [0, 1]) {
     let initial = act(choice(), 'selectSong', { videoId: C.songs[0].videoId });
     initial = act(initial, 'inviteDuet', { playerNum: 2 });
-    initial = act(initial, 'setLyrics', { videoId: initial.selectedSong.videoId, lyrics: 'Our saved draft.' });
+    initial = legacyLyrics(initial, { videoId: initial.selectedSong.videoId, lyrics: 'Our saved draft.' });
     initial = act(initial, 'toggleFavorite', { actor: 3, videoId: initial.selectedSong.videoId });
     const before = JSON.stringify(initial);
     const cleared = act(initial, 'clearSong', { actor });
@@ -354,7 +355,7 @@ test('host and Spotlight can replace a live song atomically, stopping its timer 
       for (const unknown of [false, true]) {
         let initial = singing(result);
         initial = act(initial, 'inviteDuet', { playerNum: 2 });
-        initial = act(initial, 'setLyrics', { videoId: initial.selectedSong.videoId, lyrics: 'Keep the old song draft.' });
+        initial = legacyLyrics(initial, { videoId: initial.selectedSong.videoId, lyrics: 'Keep the old song draft.' });
         initial = act(initial, 'toggleFavorite', { actor: 3, videoId: initial.selectedSong.videoId });
         const before = JSON.stringify(initial), target = unknown ? { videoId: 'abcdefghijk', title: 'New live choice' }
           : { videoId: initial.songLibrary[1].videoId, title: 'Do not override library metadata' };
@@ -386,7 +387,7 @@ test('clearing a live song stops timing and duet without points or deleting save
     for (const actor of [0, 1]) {
       let initial = singing(result);
       initial = act(initial, 'inviteDuet', { playerNum: 2 });
-      initial = act(initial, 'setLyrics', { videoId: initial.selectedSong.videoId, lyrics: 'Shared original draft.' });
+      initial = legacyLyrics(initial, { videoId: initial.selectedSong.videoId, lyrics: 'Shared original draft.' });
       initial = act(initial, 'toggleFavorite', { actor: 1, videoId: initial.selectedSong.videoId });
       const cleared = act(initial, 'clearSong', { actor, now: initial.singingStartedAt + 40000 });
       assert.equal(error(cleared, actor), ''); assert.equal(cleared.selectedSong, null); assert.equal(cleared.duet, null);
@@ -489,7 +490,7 @@ test('changed song or clear invalidates queued finish, start and lyric intents b
 
 function completedStage(result = 'success', operation = 'finishSinging') {
   let s = act(singing(result), 'inviteDuet', { playerNum: 2 });
-  s = act(s, 'setLyrics', { videoId: s.selectedSong.videoId, lyrics: 'An original saved draft.' });
+  s = legacyLyrics(s, { videoId: s.selectedSong.videoId, lyrics: 'An original saved draft.' });
   s = act(s, 'toggleFavorite', { actor: 3, videoId: s.selectedSong.videoId });
   return act(s, operation);
 }
@@ -626,7 +627,7 @@ test('song titles and library size are bounded, while existing favorites work at
   }
   assert.equal(s.songLibrary.length, 120);
   assert.equal(error(act(s, 'addSong', { title: 'One too many', url: 'https://youtu.be/abcdefghijk' })), 'library_full');
-  s = act(s, 'addSong', { actor: 2, title: 'Existing is okay', url: s.songLibrary[0].url });
+  s = act(s, 'addSong', { actor: 2, title: 'Existing is okay', url: 'https://youtu.be/' + s.songLibrary[0].videoId });
   assert.equal(error(s, 2), ''); assert.equal(s.songLibrary.length, 120); assert.ok(s.mySongs[2].includes(s.songLibrary[0].videoId));
 });
 
@@ -645,83 +646,94 @@ test('public projections expose only gameplay plus actor-specific reply, with de
   assert.equal(JSON.stringify(s), before);
 });
 
-test('shared lyrics preserve multiline text and leave the singing stage, score, and phase token untouched', () => {
-  let s = singing(); const videoId = s.selectedSong.videoId;
-  const before = JSON.stringify(s);
-  const stage = { turnId: s.turnId, round: s.round, phase: s.phase, selectedSong: s.selectedSong,
-    teamScore: s.teamScore, singingStartedAt: s.singingStartedAt, singingState: s.singingState, duet: s.duet };
-  const updated = act(s, 'setLyrics', { actor: 1, videoId, lyrics: ' First original line\r\nSecond line\rThird\tline ' });
-  assert.equal(error(updated, 1), ''); assert.equal(JSON.stringify(s), before);
-  assert.equal(updated.songLyrics[videoId], ' First original line\nSecond line\nThird\tline ');
-  for (const [key, value] of Object.entries(stage)) assert.deepEqual(updated[key], value, key);
-  for (const actor of [0, 1, 2, 3]) assert.equal(E.view(updated, actor).openmic.songLyrics[videoId], updated.songLyrics[videoId]);
-  const projected = E.view(updated, 2).openmic;
-  projected.songLyrics[videoId] = 'Changed only in projection';
-  assert.equal(updated.songLyrics[videoId], ' First original line\nSecond line\nThird\tline ');
-  s = act(updated, 'next'); assert.equal(s.songLyrics[videoId], updated.songLyrics[videoId]);
-  s = act(s, 'failed'); s = act(s, 'selectSong', { actor: 2, videoId });
-  assert.equal(E.view(JSON.parse(JSON.stringify(s)), 2).openmic.songLyrics[videoId], updated.songLyrics[videoId]);
-});
 
-test('only host or current active Spotlight may edit shared lyrics, including after Spotlight rotates', () => {
-  let s = create(); const videoId = s.songLibrary[0].videoId;
-  assert.equal(error(act(s, 'setLyrics', { actor: 2, videoId, lyrics: 'Unauthorized' }), 2), 'not_available');
-  s = act(s, 'setLyrics', { videoId, lyrics: 'Host draft' }); assert.equal(s.songLyrics[videoId], 'Host draft');
-  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Spotlight edit' }); assert.equal(s.songLyrics[videoId], 'Spotlight edit');
-  s = act(s, 'next');
-  assert.equal(error(act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Old Spotlight' }), 1), 'not_available');
-  s = act(s, 'setLyrics', { actor: 2, videoId, lyrics: 'New Spotlight' }); assert.equal(s.songLyrics[videoId], 'New Spotlight');
-  s = act(s, 'exclude', { playerNum: 2, active: false });
-  assert.equal(error(act(s, 'setLyrics', { actor: 2, videoId, lyrics: 'Excluded Spotlight' }), 2), 'not_available');
-  s = act(s, 'setLyrics', { actor: 0, videoId, lyrics: 'Host revision' }); assert.equal(s.songLyrics[videoId], 'Host revision');
-});
-
-test('lyrics edits reject unknown songs, oversized text, hidden controls, and stale commands atomically', () => {
-  let s = create(); const videoId = s.songLibrary[0].videoId;
-  s = act(s, 'setLyrics', { videoId, lyrics: 'Existing text' });
-  for (const lyrics of [null, undefined, 42, {}, 'a'.repeat(E.MAX_LYRICS_CHARS + 1), 'hidden\u0000character', 'hidden\u001bcharacter']) {
-    const rejected = act(s, 'setLyrics', { videoId, lyrics });
-    assert.equal(error(rejected), 'invalid_lyrics'); assert.equal(rejected.songLyrics[videoId], 'Existing text');
+test('retired lyric commands are rejected for every actor without changing legacy words or stage progress', () => {
+  const initial = singing();
+  initial.songLyrics[initial.selectedSong.videoId] = 'Private legacy fixture';
+  const before = JSON.stringify(initial);
+  for (const actor of [0, 1, 2, 3]) {
+    for (const lyrics of ['Replacement', '', 'x'.repeat(E.MAX_LYRICS_CHARS + 1), null]) {
+      const rejected = act(initial, 'setLyrics', { actor, videoId: initial.selectedSong.videoId, lyrics, onlyIfEmpty: true });
+      assert.equal(error(rejected, actor), 'not_available');
+      assert.deepEqual(rejected.songLyrics, initial.songLyrics);
+      for (const field of ['turnId', 'phase', 'teamScore', 'singingState', 'singingStartedAt', 'selectedSong', 'lastChangeAt']) {
+        assert.deepEqual(rejected[field], initial[field], field);
+      }
+      assert.deepEqual(E.view(rejected, actor).openmic.songLyrics, {});
+    }
   }
-  assert.equal(error(act(s, 'setLyrics', { videoId: 'abcdefghijk', lyrics: 'Unknown song' })), 'invalid_song');
-  const stale = act(s, 'setLyrics', { videoId, lyrics: 'Old edit', turnId: s.turnId - 1 });
-  assert.equal(error(stale), 'stale_turn'); assert.equal(stale.songLyrics[videoId], 'Existing text');
-  assert.equal(act(s, 'setLyrics', { videoId, lyrics: 'Old session', sessionId: 'different-session' }), s);
-  const badTime = act(s, 'setLyrics', { videoId, lyrics: 'Old time', now: s.lastChangeAt - 1 });
-  assert.equal(error(badTime), 'invalid_time'); assert.equal(badTime.songLyrics[videoId], 'Existing text');
-  const command = { actor: 0, type: 'setLyrics', id: 'lyrics-once', sessionId: s.sessionId, turnId: s.turnId,
-    now: s.lastChangeAt + 1, videoId, lyrics: 'Same transaction' };
-  const once = E.apply(s, command);
-  assert.deepEqual(E.apply(s, command), once); assert.equal(E.apply(once, command), once);
-  s = act(s, 'setLyrics', { videoId, lyrics: 'x'.repeat(E.MAX_LYRICS_CHARS) });
-  assert.equal(s.songLyrics[videoId].length, E.MAX_LYRICS_CHARS);
+  assert.equal(JSON.stringify(initial), before);
 });
 
-test('empty lyrics clear saved text and older room states migrate without resetting the game', () => {
-  let s = choice(); const videoId = s.songLibrary[0].videoId, secondVideoId = s.songLibrary[1].videoId;
-  delete s.songLyrics;
-  assert.deepEqual(E.view(s, 1).openmic.songLyrics, {});
-  const turnId = s.turnId;
-  s = act(s, 'setLyrics', { videoId, lyrics: 'Song one text' });
-  s = act(s, 'setLyrics', { videoId: secondVideoId, lyrics: 'Song two text' });
-  s = act(s, 'setLyrics', { videoId, lyrics: ' \t\r\n ' });
-  assert.equal(Object.hasOwn(s.songLyrics, videoId), false); assert.equal(s.songLyrics[secondVideoId], 'Song two text');
-  s = act(s, 'setLyrics', { videoId: secondVideoId, lyrics: '' }); assert.deepEqual(s.songLyrics, {});
-  assert.equal(s.turnId, turnId); assert.equal(s.phase, 'choice'); assert.equal(s.teamScore, 2);
+test('text-only projections omit legacy lyrics, media URLs, thumbnails and unrelated song fields', () => {
+  const initial = singing(), id = initial.selectedSong.videoId;
+  initial.songLyrics = { [id]: 'Legacy words must stay private' };
+  Object.assign(initial.songLibrary[0], { url: 'https://video.invalid/', thumbnail: 'https://image.invalid/', lyrics: 'Inline secret', secret: { code: 'private' } });
+  initial.selectedSong = structuredClone(initial.songLibrary[0]);
+  const before = JSON.stringify(initial);
+  for (const actor of [0, 1, 2, 3]) {
+    const view = E.view(initial, actor).openmic;
+    assert.deepEqual(view.songLyrics, {});
+    for (const song of [...view.songLibrary, view.selectedSong]) {
+      assert.deepEqual(Object.keys(song).sort(), ['artist', 'id', 'tags', 'title', 'videoId']);
+    }
+    const serialized = JSON.stringify(view);
+    for (const hidden of ['Legacy words must stay private', 'video.invalid', 'image.invalid', 'Inline secret', 'private']) assert.ok(!serialized.includes(hidden));
+    view.selectedSong.tags.push('only projection');
+    view.songLibrary[0].title = 'only projection';
+  }
+  assert.equal(JSON.stringify(initial), before);
+  delete initial.songLyrics;
+  assert.deepEqual(E.view(initial, 1).openmic.songLyrics, {});
 });
 
-test('automatic imports cannot overwrite an existing lyric edit but deliberate saves remain available', () => {
-  let s = singing(); const videoId = s.selectedSong.videoId;
-  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Imported draft', onlyIfEmpty: true });
-  assert.equal(error(s, 1), ''); assert.equal(s.songLyrics[videoId], 'Imported draft');
-  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Our manual correction' });
-  const turnId = s.turnId, startedAt = s.singingStartedAt, score = s.teamScore;
-  const rejected = act(s, 'setLyrics', { actor: 0, videoId, lyrics: 'Delayed automatic result', onlyIfEmpty: true });
-  assert.equal(error(rejected), 'lyrics_exists'); assert.equal(rejected.songLyrics[videoId], 'Our manual correction');
-  assert.equal(rejected.turnId, turnId); assert.equal(rejected.singingStartedAt, startedAt); assert.equal(rejected.teamScore, score);
-  s = act(rejected, 'setLyrics', { actor: 0, videoId, lyrics: 'Intentional replacement' });
-  assert.equal(error(s), ''); assert.equal(s.songLyrics[videoId], 'Intentional replacement');
-  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: '' });
-  s = act(s, 'setLyrics', { actor: 1, videoId, lyrics: 'Fresh import after clearing', onlyIfEmpty: true });
-  assert.equal(s.songLyrics[videoId], 'Fresh import after clearing');
+test('pure song names create stable opaque references and favorites without saving media', () => {
+  const initial = create();
+  const command = { id: 'text-song-once', type: 'addSong', actor: 2, sessionId: initial.sessionId,
+    turnId: initial.turnId, now: initial.lastChangeAt + 1, title: '  Our title  ', artist: '  Our artist  ' };
+  const next = E.apply(initial, command), song = next.songLibrary.at(-1);
+  assert.equal(error(next, 2), '');
+  assert.match(song.videoId, /^omtxt[a-z0-9]{6}$/);
+  assert.equal(song.videoId.length, 11);
+  assert.equal(song.id, song.videoId); assert.equal(song.title, 'Our title'); assert.equal(song.artist, 'Our artist');
+  assert.equal(song.url, undefined); assert.equal(song.thumbnail, undefined);
+  assert.equal(song.ownerPlayerNum, 2); assert.deepEqual(next.mySongs[2], [song.videoId]);
+  assert.equal(next.turnId, initial.turnId); assert.equal(next.phase, initial.phase); assert.equal(next.teamScore, initial.teamScore);
+  assert.deepEqual(E.apply(initial, command), next); assert.equal(E.apply(next, command), next);
+  const duplicate = act(next, 'addSong', { actor: 3, title: 'Our title', artist: 'Our artist' });
+  assert.equal(duplicate.songLibrary.length, next.songLibrary.length); assert.deepEqual(duplicate.mySongs[3], [song.videoId]);
+  let selected = act(next, 'success');
+  selected = act(selected, 'selectSong', { actor: 1, videoId: song.videoId });
+  selected = act(selected, 'startSinging', { actor: 1 });
+  assert.equal(selected.phase, 'singing'); assert.equal(selected.selectedSong.title, song.title);
+  selected = act(selected, 'finishSinging', { actor: 1 });
+  assert.equal(selected.teamScore, 3);
+});
+
+test('pure song names enforce ownership, text bounds, capacity and deterministic collision recovery', () => {
+  let initial = create();
+  for (const extra of [{ title: '' }, { title: 'x'.repeat(141) }, { title: 'line\nline' }, { title: 'Valid', artist: 42 },
+    { title: 'Valid', artist: 'x'.repeat(141) }, { title: 'Valid', artist: 'Hidden\u0000control' }]) {
+    const rejected = act(initial, 'addSong', { actor: 2, ...extra });
+    assert.equal(error(rejected, 2), 'invalid_title'); assert.deepEqual(rejected.songLibrary, initial.songLibrary);
+  }
+  const wrongOwner = act(initial, 'addSong', { actor: 2, ownerPlayerNum: 1, title: 'No impersonation' });
+  assert.equal(error(wrongOwner, 2), 'not_available');
+  const firstCommand = { id: 'collision-fixture', type: 'addSong', actor: 0, sessionId: initial.sessionId,
+    turnId: initial.turnId, now: initial.lastChangeAt + 1, title: 'First title' };
+  const first = E.apply(initial, firstCommand);
+  initial.songLibrary.push({ ...first.songLibrary.at(-1), title: 'Already occupied' });
+  const recovered = E.apply(initial, firstCommand);
+  assert.notEqual(recovered.songLibrary.at(-1).videoId, first.songLibrary.at(-1).videoId);
+  assert.deepEqual(E.apply(initial, firstCommand), recovered);
+  while (initial.songLibrary.length < 120) {
+    const id = 'omtxt' + initial.songLibrary.length.toString(36).padStart(6, '0');
+    if (!initial.songLibrary.some(song => song.videoId === id)) initial.songLibrary.push({ id, videoId: id, title: 'Capacity ' + id, artist: '', tags: [] });
+    else initial.songLibrary.push({ id: 'capacity-' + initial.songLibrary.length, videoId: String(initial.songLibrary.length).padStart(11, '0'), title: 'Capacity fallback', artist: '', tags: [] });
+  }
+  const full = act(initial, 'addSong', { title: 'Too many', artist: '' });
+  assert.equal(error(full), 'library_full'); assert.deepEqual(full.songLibrary, initial.songLibrary);
+  const existing = initial.songLibrary.find(song => /^omtxt/.test(song.videoId));
+  const favorite = act(initial, 'addSong', { actor: 2, title: existing.title, artist: existing.artist || '' });
+  assert.equal(error(favorite, 2), ''); assert.equal(favorite.songLibrary.length, 120); assert.ok(favorite.mySongs[2].includes(existing.videoId));
 });

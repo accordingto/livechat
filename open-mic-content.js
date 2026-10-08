@@ -9,13 +9,14 @@
 
   var categories = [
     { id: 'for-you', label: bilingual('For You', '為你精選') },
+    { id: 'original', label: bilingual('Original prompts', '原創互動') },
     { id: 'my-songs', label: bilingual('My Songs', '我的歌單') },
     { id: 'english-pop', label: bilingual('English Pop', '英文流行') },
     { id: 'k-pop', label: bilingual('K-Pop', '韓國流行') },
     { id: 'mandarin', label: bilingual('Mandarin', '華語歌曲') },
     { id: 'everyone-knows', label: bilingual('Everyone Knows', '大家都熟') },
     { id: 'hype', label: bilingual('Hype', '一起嗨') },
-    { id: 'chill', label: bilingual('Chill', '輕鬆唱') }
+    { id: 'chill', label: bilingual('Chill', '輕鬆聊') }
   ];
 
   var challenges = [
@@ -165,8 +166,11 @@
     }
   ];
 
-  // Starter IDs were checked against the official YouTube videos. Only metadata is stored.
+  // Text prompts and song names only. This library contains no media or lyrics.
   var songs = [
+    { id: 'omtxt000001', videoId: 'omtxt000001', title: 'Original tune / 即興原創', artist: 'Your own creation / 自己創作', tags: ['for-you', 'original'] },
+    { id: 'omtxt000002', videoId: 'omtxt000002', title: 'Rhythm relay / 節奏接龍', artist: 'Your own creation / 自己創作', tags: ['for-you', 'original'] },
+    { id: 'omtxt000003', videoId: 'omtxt000003', title: 'Song memories / 歌名聊回憶', artist: 'Your own story / 自己的故事', tags: ['for-you', 'original'] },
     { id: 'nfWlot6h_JM', videoId: 'nfWlot6h_JM', title: 'Shake It Off', artist: 'Taylor Swift', tags: ['for-you', 'english-pop', 'everyone-knows', 'hype'] },
     { id: 'JGwWNGJdvx8', videoId: 'JGwWNGJdvx8', title: 'Shape of You', artist: 'Ed Sheeran', tags: ['english-pop', 'everyone-knows', 'chill'] },
     { id: 'OPf0YbXqDm0', videoId: 'OPf0YbXqDm0', title: 'Uptown Funk', artist: 'Mark Ronson ft. Bruno Mars', tags: ['for-you', 'english-pop', 'everyone-knows', 'hype'] },
@@ -180,11 +184,7 @@
     { id: 'bu7nU9Mhpyo', videoId: 'bu7nU9Mhpyo', title: '告白氣球 / Love Confession', artist: '周杰倫 Jay Chou', tags: ['for-you', 'mandarin', 'everyone-knows', 'chill'] },
     { id: 'sHD_z90ZKV0', videoId: 'sHD_z90ZKV0', title: '稻香 / Rice Field', artist: '周杰倫 Jay Chou', tags: ['mandarin', 'everyone-knows', 'chill'] },
     { id: '6D79CYTxvOM', videoId: '6D79CYTxvOM', title: '愛人錯過 / Somewhere in Time', artist: '告五人 Accusefive', tags: ['for-you', 'mandarin', 'everyone-knows', 'hype'] }
-  ].map(function (song) {
-    song.thumbnail = 'https://i.ytimg.com/vi/' + song.videoId + '/hqdefault.jpg';
-    song.url = 'https://www.youtube.com/watch?v=' + song.videoId;
-    return song;
-  });
+  ];
 
   return { challenges: challenges, songs: songs, categories: categories };
 }));

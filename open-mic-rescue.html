@@ -8,14 +8,14 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="open-mic.css?v=om-9">
+  <link rel="stylesheet" href="open-mic.css?v=om-11">
 </head>
 <body class="om-page">
   <div class="topbar">
     <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
     <span class="om-soft" id="om-room-label"></span>
   </div>
-  <header class="header om-header"><p class="om-kicker" data-i18n="openmic.brandLine">ONE CHALLENGE. ONE SONG. YOUR CALL.</p><h1>🎤 Open Mic Rescue</h1><p class="om-subtitle" data-i18n="openmic.subtitle">A small challenge. An optional singing moment.</p></header>
+  <header class="header om-header"><p class="om-kicker" data-i18n="openmic.brandLine">ONE CHALLENGE. YOUR STORY. YOUR CREATION.</p><h1>🎤 Open Mic Rescue</h1><p class="om-subtitle" data-i18n="openmic.subtitle">A small challenge. A story, an original tune, or a rhythm.</p></header>
   <main class="om-shell">
     <div class="om-panel om-demo" id="om-demo-bar" hidden>
       <span class="om-kicker" data-i18n="openmic.demo">Interactive demo · one-device simulation</span>
@@ -29,8 +29,8 @@
     </div>
     <section class="om-panel om-start-panel" id="om-start-panel">
       <div class="om-start-mark" aria-hidden="true">🎤</div>
-      <h2 data-i18n="openmic.startTitle">Give singing a little excuse.</h2>
-      <p data-i18n="openmic.intro">One player takes a short social challenge. Pass for +2, then sing for +1 or simply skip. Miss the challenge? A song can rescue +1.</p>
+      <h2 data-i18n="openmic.startTitle">Give your creativity a little excuse.</h2>
+      <p data-i18n="openmic.intro">One player takes a short social challenge. Pass for +2, then share a song memory, create an original tune, or clap an original rhythm for +1. Skipping is always okay.</p>
       <button type="button" class="om-button om-primary" id="om-start" data-i18n="openmic.start">Start Open Mic Rescue</button>
       <p class="om-soft" data-i18n="openmic.noPressure">No voice judging. No mandatory performances. Just a shared team score.</p>
     </section>
@@ -38,9 +38,9 @@
     <p class="om-feedback om-error" id="om-error" role="alert"></p>
     <details class="om-rules"><summary data-i18n="openmic.rules">How to play</summary>
       <p data-i18n="openmic.rule1">The Spotlight player tries the challenge while everyone chats, asks questions, and reacts. The host chooses Success or Failed.</p>
-      <p data-i18n="openmic.rule2">Success adds +2 to your team. Singing a short section adds +1 after either result. Skipping is always okay.</p>
-      <p data-i18n="openmic.rule3">Browse and preview songs, pick one you know, then start the 35-second visual timer. At zero, finish the phrase naturally. The host moves to the next player.</p>
-      <p class="om-soft" data-i18n="openmic.audioHint">Sing through your usual call or in the room. YouTube playback stays on each device; share computer audio if you want the group to hear the music.</p>
+      <p data-i18n="openmic.rule2">Success adds +2 to your team. Complete a short original creation or story for +1 after either result. Skipping is always okay.</p>
+      <p data-i18n="openmic.rule3">Choose a text prompt or song name, then use the 35-second timer to share a memory or create an original tune or rhythm. Finish naturally; the host moves to the next player.</p>
+      <p class="om-soft" data-i18n="openmic.audioHint">Speak or create through your usual call or in the room. This game does not play videos or display lyrics. YouTube links open separately when you choose them.</p>
     </details>
     <a class="back om-demo-link" id="om-demo-link" href="open-mic-rescue.html?demo=1" data-i18n="openmic.demoLink">Try the interactive demo</a>
   </main>
@@ -50,14 +50,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="open-mic-content.js"></script>
-  <script src="open-mic-engine.js?v=om-6"></script>
-  <script src="open-mic-sync.js?v=om-2"></script>
-  <script src="open-mic-youtube.js?v=om-2"></script>
-  <script src="open-mic-lyrics.js?v=om-5"></script>
-  <script src="open-mic-genius.js?v=om-1"></script>
+  <script src="open-mic-content.js?v=om-2"></script>
+  <script src="open-mic-engine.js?v=om-7"></script>
+  <script src="open-mic-sync.js?v=om-3"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
-  <script src="open-mic-ui.js?v=om-10"></script>
+  <script src="open-mic-ui.js?v=om-12"></script>
   <script src="open-mic-host.js?v=om-4"></script>
 </body>
 </html>

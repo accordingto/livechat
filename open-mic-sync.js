@@ -133,9 +133,8 @@
       if (!ours) { if (this.seenCards.has(playerNum)) { this.suspended = true; this.status('switched'); } return; }
       this.seenCards.add(playerNum);
       const action = data.openmicAction;
-      // Pasted lyrics can contain 16,000 characters plus JSON escapes. Keep the
-      // smaller envelope for other commands; the engine still validates lyrics.
-      const actionLimit = action?.type === 'setLyrics' ? root.OPEN_MIC_ENGINE.MAX_LYRICS_CHARS * 2 + 2000 : 4000;
+      // Media and lyrics are retired; all remaining commands use a small envelope.
+      const actionLimit = 4000;
       if (!action || typeof action.id !== 'string' || action.id.length < 8 || action.id.length > 100 || action.sessionId !== state.sessionId || JSON.stringify(action).length > actionLimit) return;
       if (seen(state.seen?.[playerNum]).includes(action.id) || state.replies?.[playerNum]?.id === action.id) return;
       const key = playerNum + ':' + action.id; if (this.incoming.has(key)) return;

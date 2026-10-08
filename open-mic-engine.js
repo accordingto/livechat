@@ -11,7 +11,23 @@ var OPEN_MIC_ENGINE = (() => {
   const videoIdPattern = /^[A-Za-z0-9_-]{11}$/;
   const MAX_SONGS = 120;
   const MAX_LYRICS_CHARS = 16000;
+
   const SCORE = Object.freeze({ challenge: 2, singing: 1 });
+
+  // Old video IDs remain opaque library keys; a projected card carries text only.
+  const songReference = song => ({ id: typeof song.id === 'string' ? song.id : song.videoId,
+    videoId: song.videoId, title: typeof song.title === 'string' ? song.title : '',
+    artist: typeof song.artist === 'string' ? song.artist : '',
+    tags: list(song.tags).filter(tag => typeof tag === 'string').map(tag => tag.slice(0, 80)).slice(0, 32) });
+  function textSongId(state, commandId) {
+    let hash = 2166136261;
+    for (const character of commandId) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+    let number = (hash >>> 0) % 2176782336;
+    let id;
+    do { id = 'omtxt' + number.toString(36).padStart(6, '0'); number = (number + 1) % 2176782336; }
+    while (state.songLibrary.some(song => song.videoId === id));
+    return id;
+  }
 
   function random(seed) {
     let value = 2166136261;
@@ -160,8 +176,7 @@ var OPEN_MIC_ENGINE = (() => {
           if (!title || title.length > 140 || /[\u0000-\u001f\u007f]/.test(input.title)) { error = 'invalid_title'; break; }
           if (state.songLibrary.length >= MAX_SONGS) { error = 'library_full'; break; }
           selected = { id: input.videoId, videoId: input.videoId, title, artist: '', tags: [],
-            thumbnail: 'https://i.ytimg.com/vi/' + input.videoId + '/hqdefault.jpg',
-            url: 'https://www.youtube.com/watch?v=' + input.videoId, ownerPlayerNum: state.spotlight, custom: true };
+            ownerPlayerNum: state.spotlight, custom: true };
           // A direct stage selection joins the shared library, never favorites.
           state.songLibrary.push(selected);
         }
@@ -207,15 +222,8 @@ var OPEN_MIC_ENGINE = (() => {
         break;
       }
       case 'setLyrics': {
-        if (!isSpotlight) { error = 'not_available'; break; }
-        if (!state.songLibrary.some(song => song.videoId === input.videoId)) { error = 'invalid_song'; break; }
-        if (typeof input.lyrics !== 'string' || input.lyrics.length > MAX_LYRICS_CHARS || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(input.lyrics)) { error = 'invalid_lyrics'; break; }
-        if (input.onlyIfEmpty === true && typeof state.songLyrics[input.videoId] === 'string' && state.songLyrics[input.videoId].trim()) { error = 'lyrics_exists'; break; }
-        const lyrics = input.lyrics.replace(/\r\n?/g, '\n');
-        if (lyrics.trim()) state.songLyrics[input.videoId] = lyrics;
-        else delete state.songLyrics[input.videoId];
-        // Shared text edits preserve the live song, its timer, and phase token.
-        state.lastChangeAt = now;
+        // Retired commands never change or re-publish saved room lyrics.
+        error = 'not_available';
         break;
       }
       case 'next': {
@@ -257,15 +265,22 @@ var OPEN_MIC_ENGINE = (() => {
           if (!state.songLibrary.some(song => song.videoId === input.videoId)) { error = 'invalid_song'; break; }
           state.mySongs[owner] = favorites.includes(input.videoId) ? favorites.filter(id => id !== input.videoId) : [...favorites, input.videoId];
         } else {
-          const videoId = parseYouTube(input.url);
           const title = typeof input.title === 'string' ? input.title.trim() : '';
-          if (!videoId) { error = 'invalid_url'; break; }
           if (!title || title.length > 140 || /[\u0000-\u001f\u007f]/.test(title)) { error = 'invalid_title'; break; }
+          const artist = input.artist == null ? '' : typeof input.artist === 'string' ? input.artist.trim() : null;
+          if (artist == null || artist.length > 140 || /[\u0000-\u001f\u007f]/.test(artist)) { error = 'invalid_title'; break; }
+          let videoId;
+          if (Object.hasOwn(input, 'url')) {
+            // Legacy clients may still identify a song by URL; no media is saved.
+            videoId = parseYouTube(input.url);
+            if (!videoId) { error = 'invalid_url'; break; }
+          } else {
+            const existing = state.songLibrary.find(song => /^omtxt[a-z0-9]{6}$/.test(song.videoId || '') && song.title === title && (song.artist || '') === artist);
+            videoId = existing ? existing.videoId : textSongId(state, input.id);
+          }
           if (!state.songLibrary.some(song => song.videoId === videoId)) {
             if (state.songLibrary.length >= MAX_SONGS) { error = 'library_full'; break; }
-            state.songLibrary.push({ id: videoId, videoId, title, artist: '', tags: [],
-              thumbnail: 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg',
-              url: 'https://www.youtube.com/watch?v=' + videoId, ownerPlayerNum: owner, custom: true });
+            state.songLibrary.push({ id: videoId, videoId, title, artist, tags: [], ownerPlayerNum: owner, custom: true });
           }
           state.mySongs[owner] = favorites.includes(videoId) ? favorites : [...favorites, videoId];
         }
@@ -290,11 +305,11 @@ var OPEN_MIC_ENGINE = (() => {
         version: 1, sessionId: state.sessionId, turnId: state.turnId, roster,
         spotlight: state.spotlight ?? null, round: state.round, phase: state.phase,
         challenge: state.challenge ? copy(state.challenge) : null, challengeResult: state.challengeResult ?? null,
-        teamScore: state.teamScore, selectedSong: state.selectedSong ? copy(state.selectedSong) : null,
+        teamScore: state.teamScore, selectedSong: state.selectedSong ? songReference(state.selectedSong) : null,
         singingState: state.singingState, singingStartedAt: state.singingStartedAt ?? null,
         singingAwarded: state.singingAwarded === true,
         duration: state.duration, duet: state.duet ?? null,
-        songLibrary: list(state.songLibrary).map(copy), songLyrics: copy(state.songLyrics || {}), mySongs,
+        songLibrary: list(state.songLibrary).map(songReference), songLyrics: {}, mySongs,
         reply: (state.replies || {})[playerNum] ? copy(state.replies[playerNum]) : null,
       } };
   }
