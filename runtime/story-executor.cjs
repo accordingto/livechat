@@ -41,7 +41,9 @@ function boundCommand(state, command, ctx) {
   const seed = Number.isFinite(Number(ctx?.seed)) ? Number(ctx.seed) : Number.parseInt(crypto.createHash('sha256').update(String(state.sessionId) + ':' + String(command.id)).digest('hex').slice(0, 8), 16);
   return { ...command, actor, seed, now: now(ctx), onlineNums: online(state, ctx),
     sessionId: command.sessionId == null ? state.sessionId : command.sessionId,
-    turnId: command.turnId == null ? state.turnId : command.turnId };
+    // Player-written prompts belong to the turn visible when the sender typed
+    // them; do not bind an omitted turn to a newer speaker after delivery.
+    turnId: command.type === 'crazyAssign' ? command.turnId : command.turnId == null ? state.turnId : command.turnId };
 }
 function tick(state, type, ctx, marker) {
   const digest = crypto.createHash('sha256').update(JSON.stringify([state.sessionId, state.turnId, type, marker])).digest('hex');

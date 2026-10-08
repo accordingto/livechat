@@ -525,6 +525,19 @@
     }
 
 
+
+    .talk-home-entry { border-radius: 18px; border: 1px solid #74629b55; background: #17142a; overflow: hidden; }
+    .talk-home-entry .game-card { border: 0; border-radius: 0; box-shadow: none; transform: none; }
+    .talk-home-crazy { color: #d3b9fb; font-size: .7em; font-weight: 500; }
+    .talk-home-settings { padding: 16px 22px 18px; border-top: 1px solid #74629b33; }
+    .talk-home-settings h3 { color: #d9cef0; font-size: .85rem; font-weight: 600; margin: 0 0 12px; }
+    .talk-home-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .talk-home-fields label { min-width: 0; display: grid; gap: 7px; color: #b9aecb; font-size: .78rem; }
+    .talk-home-fields select { min-width: 0; width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #655278; border-radius: 10px; color: #f0eafa; background: #12101f; font: inherit; font-size: 14px; }
+    .talk-home-fields select:focus-visible { outline: 3px solid #d6b5ff; outline-offset: 2px; }
+    .talk-home-fields [hidden] { display: none !important; }
+    .talk-home-settings > p { margin: 11px 0 0; color: #a89bbd; font-size: .75rem; line-height: 1.5; }
+    @media (max-width: 520px) { .talk-home-settings { padding: 15px; } .talk-home-fields { grid-template-columns: 1fr; } .talk-home-crazy { display: block; margin-top: 3px; } }
   </style>
 </head>
 <body>
@@ -600,16 +613,27 @@
 
   <div class="game-list hidden" id="game-list">
 
+    <div class="talk-home-entry">
     <a class="game-card card-purple" href="lets-talk.html">
       <div class="card-icon-col"><span class="icon">💬</span></div>
       <div class="card-body">
         <div class="card-meta"><span class="tag" data-i18n="index.tagConversation">談話</span><span class="tag">👥 2–9</span></div>
-        <h2>Let's Talk</h2>
-        <p data-i18n="index.descLetsTalk">先想一想，再聊彼此的想法。每人都有分享機會，也能口頭追問與接話。</p>
+        <h2>Let's Talk <span class="talk-home-crazy">/ Crazy Talk</span></h2>
+        <p data-i18n="index.descLetsTalk">一起聊一題，或加點荒謬挑戰。卡片顯示話題、談話狀態與參與者。</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
-
+    <section class="talk-home-settings" data-talk-preferences aria-labelledby="talk-home-title">
+      <h3 id="talk-home-title" data-i18n="talkSettings.settings">談話設定</h3>
+      <div class="talk-home-fields">
+        <label><span data-i18n="talkSettings.gameMode">玩法</span><select data-talk-pref="gameMode"><option value="normal" data-i18n="talkSettings.normal">Let's Talk · 一起聊</option><option value="crazy" data-i18n="talkSettings.crazy">Crazy Talk · 荒謬挑戰</option></select></label>
+        <label><span data-i18n="talkSettings.conversationMode">談話方式</span><select data-talk-pref="conversationMode"><option value="assigned" data-i18n="talkSettings.assigned">依序輪流</option><option value="random" data-i18n="talkSettings.random">隨機點名</option><option value="free" data-i18n="talkSettings.free">自由談話</option></select></label>
+        <label data-talk-crazy-setting hidden><span data-i18n="talkSettings.crazySource">挑戰來源</span><select data-talk-pref="crazySource"><option value="mixed" data-i18n="talkSettings.mixed">系統＋玩家</option><option value="system" data-i18n="talkSettings.system">系統出題</option><option value="players" data-i18n="talkSettings.players">玩家互相出題</option></select></label>
+        <label data-talk-system-setting hidden><span data-i18n="talkSettings.frequency">系統出題頻率</span><select data-talk-pref="crazySeconds"><option value="60" data-i18n="talkSettings.minute1">約每人 1 分鐘</option><option value="120" data-i18n="talkSettings.minute2">約每人 2 分鐘</option><option value="180" data-i18n="talkSettings.minute3">約每人 3 分鐘</option></select></label>
+      </div>
+      <p data-i18n="talkSettings.saved">選好後，按上方卡片進入選題。</p>
+    </section>
+    </div>
     <a class="game-card card-red" href="chat-wolf.html">
       <div class="card-icon-col"><span class="icon">🐺</span></div>
       <div class="card-body">
@@ -789,6 +813,7 @@
 
   <footer>IceBreak Hub · <span data-i18n="index.footerTagline">All games are free &amp; no sign-up required</span></footer>
 
+  <script src="talk-settings.js?v=talk-board-1"></script>
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="sheet-data.js"></script>
@@ -805,7 +830,7 @@
       tagBluff: { zh: '瞎掰與推理', en: 'Bluff & discover' },
       descDixit: { zh: '口頭說出提示，從 84 張夢境圖卡中猜出說書人的牌。大幅清楚插畫、秘密投票與自動計分。', en: 'Say your clue aloud, explore 84 dreamlike picture cards, and guess the Storyteller’s card. Large clear illustrations, secret votes, and automatic scoring.' },
       tagConversation: { zh: '談話', en: 'Conversation' },
-      descLetsTalk: { zh: '先想一想，再聊彼此的想法。每人都有分享機會，也能口頭追問與接話。', en: 'Take a moment to think, then share what matters to you. Everyone has a turn, with room for spoken questions and new thoughts.' },
+      descLetsTalk: { zh: '一起聊一題，或加點荒謬挑戰。卡片顯示話題、談話狀態與參與者。', en: 'Pick a topic and chat together, or add absurd challenges. Your card shows the conversation, topic and participants.' },
       descChatWolf: { zh: '輪流聊同一個生活情境，找出刻意引導話題的狼隊；沒有淘汰。這款會在下一頁建立專屬安全房間。', en: 'Discuss one shared scenario and spot the team steering the conversation. Nobody is eliminated; this game creates its own secure room.' },
       descKangarooBeta: { zh: '獨立的測試版本，可調整題目、玩法與玩家卡片。請使用 Beta 專用房間和玩家連結。', en: 'An independent test version with its own room and player links.' },
       step1Badge: { zh: '步驟 1', en: 'Step 1' },

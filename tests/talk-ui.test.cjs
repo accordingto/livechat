@@ -60,15 +60,16 @@ function fixture(send = async () => {}, options = {}) {
     if (button) handlers.get('click')?.({ target: { closest: () => button } });
   };
   const field = (kind, key, value, eventType = 'input') => {
-    const target = { dataset: { [kind === 'editor' ? 'talkEditorField' : 'talkSharedInput']: key }, value, checked: value === true, matches: () => false };
+    const target = { dataset: { [kind === 'editor' ? 'talkEditorField' : kind === 'assignment' ? 'talkAssignmentField' : 'talkSharedInput']: key }, value, checked: value === true, matches: () => false };
     handlers.get(eventType)?.({ target });
   };
   return { card, element, context, update, click, node, timers, handlers, buttons: () => buttons,
+    assignmentField: (key,value,eventType = 'input') => field('assignment',key,value,eventType),
     editorField: (key, value, eventType) => field('editor', key, value, eventType), sharedField: (key, value, eventType = 'change') => field('shared', key, value, eventType), setLanguage: value => { language = value; },
     scrolls: () => scrolls, focusedAction: () => focusedAction, setClock: value => { clock = value; }, setOnline: value => { online = value; } };
 }
 
-test('Normal Talk keeps thinking, main-turn, question and listener controls without any Crazy notice', () => {
+test('Normal Talk shows topic, state and participants without speaking requests', () => {
   const f = fixture();
   try {
     for (const talk of [sample({ phase: 'thinking' }), sample({ speaker: 2 }), sample({ activeQuestion: { id: 'q', playerNum: 2 } }), sample()]) {
@@ -76,9 +77,9 @@ test('Normal Talk keeps thinking, main-turn, question and listener controls with
       assert.doesNotMatch(f.element.innerHTML, /talk-crazy-|data-prompt-id|crazyDone|crazySkip/);
     }
     f.update(sample({ phase: 'thinking', mode: 'write' }));
-    assert.match(f.element.innerHTML, /data-talk-note/); assert.match(f.element.innerHTML, /data-talk-action="ready"/);
+    assert.match(f.element.innerHTML, /data-talk-note/); assert.doesNotMatch(f.element.innerHTML, /data-talk-action="(?:ready|wait|ask|share|more)"/);
     f.update(sample({ speaker: 2 })); assert.match(f.element.innerHTML, /data-talk-action="end"/);
-    f.update(sample()); assert.match(f.element.innerHTML, /data-talk-action="ask"/); assert.match(f.element.innerHTML, /data-talk-action="share"/);
+    f.update(sample()); assert.match(f.element.innerHTML, /At the table/); assert.match(f.element.innerHTML, /Alex/); assert.match(f.element.innerHTML, /Listening/); assert.doesNotMatch(f.element.innerHTML, /data-talk-action="(?:ask|share|more)"/);
     f.update(sample({ crazy: { enabled: true, prompt: prompt() } }));
     assert.doesNotMatch(f.element.innerHTML, /talk-crazy-prompt|My soup/);
   } finally { f.card.destroy(); }
@@ -95,7 +96,7 @@ test('Own private silly line appears prominently above normal topic and is escap
     assert.doesNotMatch(html, /<img|<script/);
     assert.match(html, /data-talk-action="crazyDone"[^>]*data-prompt-id="ui-topic:crazy:2:1"/);
     assert.match(html, /data-talk-action="crazySkip"[^>]*data-prompt-id="ui-topic:crazy:2:1"/);
-    assert.match(html, /data-talk-action="ask"/);
+    assert.doesNotMatch(html, /data-talk-action="(?:ask|share|more)"/);
     assert.equal(f.scrolls(), 1);
   } finally { f.card.destroy(); }
 });
@@ -175,7 +176,7 @@ test('Updates and heartbeat never acknowledge a line and scroll a newly received
     f.update({ ...crazy(), turnId: 3, speaker: 2 }); f.update({ ...crazy(), turnId: 4 });
     await Promise.resolve(); assert.equal(sent.length, 0); assert.equal(f.scrolls(), 1);
     f.update(crazy({ prompt: prompt({ id: 'new-prompt' }) })); assert.equal(f.scrolls(), 2);
-    f.update(crazy({ prompt: null })); assert.doesNotMatch(f.element.innerHTML, /blockquote|data-talk-action="crazy/);
+    f.update(crazy({ prompt: null })); assert.doesNotMatch(f.element.innerHTML, /blockquote|data-talk-action="crazy(?:Done|Skip)/);
     assert.equal(sent.length, 0);
     f.card.destroy(); assert.equal(f.timers.size, 0); assert.equal(f.handlers.size, 0);
   } finally { if (f.timers.size) f.card.destroy(); }
@@ -225,8 +226,8 @@ test('Host and original player page load current Talk UI; private action gate di
   assert.ok(host.indexOf('talk-crazy.js') < host.indexOf('talk-engine.js'));
   assert.match(host, /id="talk-game-mode"/); assert.match(host, /value="normal"/); assert.match(host, /value="crazy"/);
   assert.match(host, /id="talk-crazy-seconds"/); assert.match(host, /value="120" selected/);
-  assert.match(controller, /gameMode: byId\('game-mode'\)\.value/);
-  assert.match(controller, /crazySeconds: Number\(byId\('crazy-seconds'\)\.value\)/);
+  assert.match(controller, /gameMode: 'game-mode'/); assert.match(controller, /setupPreferences\(\)/);
+  assert.match(controller, /crazySeconds: 'crazy-seconds'/);
   assert.match(controller, /TALK_ENGINE\.view\(state, 0/);
   assert.doesNotMatch(controller, /state\.crazy\.prompts|state\.crazy\?\.prompts|JSON\.stringify\(state\)/);
   const start = player.indexOf("if (data.game === 'letstalk'");
@@ -267,12 +268,12 @@ test('Original player transport accepts prompt acknowledgements across turns but
   }
 });
 
-test('server-mode private card retains readiness and shared start while an old host heartbeat expires', async () => {
+test('server-mode private card retains shared start while an old host heartbeat expires', async () => {
   const sent = [], f = fixture(async command => { sent.push(clone(command)); });
   try {
     f.setClock(20000);
     f.update(sample({ phase: 'thinking', sharedControls: true, hostControls: true, hostLiveUntil: 10000, actions: { start: true } }));
-    assert.match(f.element.innerHTML, /data-talk-action="ready"/);
+    assert.doesNotMatch(f.element.innerHTML, /data-talk-action="(?:ready|wait|ask|share|more)"/);
     const start = f.buttons().find(b => b.dataset.talkAction === 'start');
     assert.ok(start); assert.equal(start.disabled, false);
     assert.equal(f.node('.talk-connection').textContent, '');
@@ -362,4 +363,50 @@ test('invalid settings never publish, changing turns clears opening confirmation
     f.update(sample({ hostControls: true, actions: { newTopic: true, starters: true, extend: true } }));
     assert.doesNotMatch(f.element.innerHTML, /data-talk-editor|data-talk-shared-input|class="talk-management"/);
   } finally { f.card.destroy(); }
+});
+
+
+test('free conversation has no nominated speaker, turn action or request buttons', () => {
+  const f=fixture();
+  try { f.update(shared({conversationMode:'free',speaker:null,actions:{end:false,newTopic:true}}));
+    assert.match(f.element.innerHTML,/The floor is open/);
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="(?:end|ask|share|more|ready|wait)"|Participant 0/);
+    assert.equal((f.element.innerHTML.match(/Join in/g)||[]).length,2);
+  } finally { f.card.destroy(); }
+});
+
+test('typed player mission stays local through redraws, sends once and clears only after acknowledgement', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk={...crazy({source:'players',prompt:null}),conversationMode:'free',speaker:null};
+    f.update(talk); f.assignmentField('target','1'); f.assignmentField('kind','task','change');
+    f.assignmentField('text','<b>Report the conversation like a weather presenter.</b>');
+    f.update({...talk,revision:3}); assert.equal(sent.length,0);
+    assert.match(f.element.innerHTML,/&lt;b&gt;Report/); assert.doesNotMatch(f.element.innerHTML,/<b>Report/);
+    f.click('crazyAssign');f.click('crazyAssign');await flush();assert.equal(sent.length,1);
+    assert.deepEqual({...sent[0],id:'request'},{id:'request',type:'crazyAssign',target:1,kind:'task',text:'<b>Report the conversation like a weather presenter.</b>',sessionId:'ui-topic',turnId:2});
+    assert.ok(f.card.crazyDraft.text);
+    f.update({...talk,reply:{id:sent[0].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');assert.match(f.element.innerHTML,/Mission sent/);
+  } finally { f.card.destroy(); }
+});
+
+test('busy recipient keeps draft, displays actionable feedback and system-only mode hides composer', async () => {
+  const f=fixture(async()=>{throw Error('recipient_busy')});
+  try {
+    f.update(crazy({source:'mixed'}));f.assignmentField('text','Announce a silly new holiday.');f.click('crazyAssign');await flush();
+    assert.equal(f.card.error,'recipient_busy');assert.equal(f.card.crazyDraft.text,'Announce a silly new holiday.');assert.match(f.element.innerHTML,/They still have a mission/);
+    f.update(crazy({source:'system'}));assert.doesNotMatch(f.element.innerHTML,/data-talk-assignment-field|data-talk-action="crazyAssign"/);
+  } finally {f.card.destroy();}
+});
+
+
+test('paused dispatch preserves mission draft while disabling send, and Chinese composition defers redraw', () => {
+ const f=fixture();try {
+  f.update(crazy({source:'mixed',paused:true,canAssign:false}));
+  assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyAssign').disabled,true);
+  f.assignmentField('text','用主播的口吻聊剛才的話');const html=f.element.innerHTML;
+  f.handlers.get('compositionstart')();f.update({...crazy({source:'mixed',paused:true,canAssign:false}),revision:2});
+  assert.equal(f.element.innerHTML,html);assert.equal(f.card.crazyDraft.text,'用主播的口吻聊剛才的話');
+  f.handlers.get('compositionend')();assert.match(f.element.innerHTML,/用主播的口吻聊剛才的話/);
+ } finally {f.card.destroy();}
 });

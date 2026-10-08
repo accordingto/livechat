@@ -12,6 +12,20 @@
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
   let explanationSession = null;
+  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazySeconds: 'crazy-seconds', mode: 'mode', seconds: 'seconds' };
+  const savedPreferences = TALK_SETTINGS.read();
+  let applyHomePreferences = TALK_SETTINGS.consumePending();
+  function setSetupPreference(key, value) {
+    const field = byId(preferenceFields[key]);
+    if (key === 'seconds' && Number.isInteger(Number(value)) && Number(value) >= 15 && Number(value) <= 120
+        && !Array.from(field.options).some(option => option.value === String(value))) {
+      const option = document.createElement('option'); option.value = String(value); option.textContent = t('seconds', { n: value }); field.append(option);
+    }
+    field.value = String(value);
+  }
+  Object.entries(savedPreferences).forEach(([key, value]) => setSetupPreference(key, value));
+  const setupPreferences = () => TALK_SETTINGS.normalize(Object.fromEntries(Object.entries(preferenceFields).map(([key, id]) => [key, byId(id).value])));
+  const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
   try { starterPreference = localStorage.getItem(startersKey) !== 'false'; } catch (e) {}
   const activeSession = () => !!state && status !== 'switched';
   const startersOn = () => activeSession() ? !!state.showStarters : starterPreference;
@@ -22,8 +36,15 @@
   }
   function renderModeSettings() {
     const crazy = byId('game-mode').value === 'crazy';
-    byId('crazy-frequency').hidden = !crazy;
+    byId('crazy-source-field').hidden = !crazy;
+    byId('crazy-frequency').hidden = !crazy || byId('crazy-source').value === 'players';
     byId('mode-hint').textContent = t(crazy ? 'crazyHint' : 'normalHint');
+    const style = byId('conversation-mode').value;
+    byId('conversation-hint').textContent = t(style === 'assigned' ? 'conversationHintAssigned' : style === 'free' ? 'conversationHintFree' : 'conversationHintRandom');
+    const visibleCrazy = activeSession() && byId('setup').hidden ? state.gameMode === 'crazy' : crazy;
+    document.body.classList.toggle('talk-is-crazy', visibleCrazy);
+    byId('brand').textContent = visibleCrazy ? 'CRAZY TALK' : 'LET’S TALK';
+    document.title = (visibleCrazy ? 'Crazy Talk' : "Let's Talk") + ' · IceBreak Hub';
   }
   const now = () => sync ? sync.now() : Date.now();
   const canControl = () => demo || (!!(sync?.own || sync?.doc?.executor?.v === 1) && sync.connected);
@@ -145,8 +166,10 @@
     }
     const s = TALK_ENGINE.view(state, 0, now()).talk;
     byId('crazy-host').hidden = s.gameMode !== 'crazy';
-    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyHostStatus', { minutes: s.crazy.intervalSeconds / 60, n: s.crazy.pendingCount }) : '';
+    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.source === 'players' ? t('crazyPlayersHostStatus', { n: s.crazy.pendingCount }) : (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyHostStatus', { minutes: s.crazy.intervalSeconds / 60, n: s.crazy.pendingCount })) : '';
     byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
+    byId('crazy-send').hidden = s.crazy?.source === 'players';
+    byId('crazy-pause').hidden = s.crazy?.source === 'players';
     byId('crazy-send').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking' || !!s.crazy?.paused || s.crazy?.pendingCount >= list(s.roster).length;
     byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
     byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
@@ -155,9 +178,8 @@
     byId('follow-up').hidden = !state.extended;
     byId('follow-up').textContent = s.topic.followUp;
     byId('floor').textContent = TALK_UI.status(s, 0);
-    byId('question-return').textContent = s.activeQuestion ? t('returnTo', { name: name(s, s.speaker) }) : '';
-    byId('question-requests').textContent = list(s.questions).filter(q => q.id !== s.activeQuestion?.id).map(q => t('wantsAsk', { name: name(s, q.playerNum) }) + (q.deferred ? ' · ' + t('held') : '')).join(' · ');
-    byId('interest').innerHTML = TALK_UI.interests(s, now());
+    byId('session-style').textContent = t(s.conversationMode === 'assigned' ? 'assignedMode' : s.conversationMode === 'free' ? 'freeMode' : 'randomMode');
+    byId('participants-content').innerHTML = TALK_UI.participantsHTML(s, 0);
     byId('notes').hidden = !list(s.notes).length;
     byId('notes-content').innerHTML = TALK_UI.notes(s);
     byId('start').hidden = s.phase !== 'thinking';
@@ -165,8 +187,8 @@
     byId('extend').textContent = t(exploreOpen ? 'closeExplore' : 'extend');
     byId('extend').setAttribute('aria-expanded', String(exploreOpen));
     renderExplore();
-    byId('help').hidden = s.phase !== 'talking';
-    byId('help-end').hidden = !!s.activeQuestion;
+    byId('help').hidden = s.phase !== 'talking' || s.conversationMode === 'free';
+    byId('help-end').hidden = !!s.activeQuestion || s.conversationMode === 'free';
     byId('help-resume').hidden = !s.activeQuestion;
     for (const id of ['start', 'extend', 'new', 'help-end', 'help-resume', 'force-end', 'show-followup', 'show-custom-followup', 'hide-followup']) byId(id).disabled = busy || !canControl() || status === 'switched';
     if (demo && me) {
@@ -202,8 +224,7 @@
     try {
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
-      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value), showStarters: startersOn(),
-        gameMode: byId('game-mode').value, crazySeconds: Number(byId('crazy-seconds').value) };
+      const options = { topic, ...rememberSettings(), showStarters: startersOn() };
       if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
@@ -211,7 +232,8 @@
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
-  byId('game-mode').addEventListener('change', renderModeSettings);
+  Object.values(preferenceFields).forEach(id => byId(id).addEventListener('change', () => { rememberSettings(); renderModeSettings(); }));
+  byId('browse-library').addEventListener('click', () => { byId('question-bank').open = true; });
   byId('crazy-send').addEventListener('click', () => command('crazySend'));
   byId('crazy-pause').addEventListener('click', () => command('crazyPause', { paused: !state?.crazy?.paused }));
   byId('starter-toggle').addEventListener('change', async event => {
@@ -268,7 +290,7 @@
       render();
     }
     byId('clock').textContent = state.phase === 'thinking' ? t('secondsLeft', { n: Math.max(0, Math.ceil((state.deadline - now()) / 1000)) }) : '';
-    byId('interest').querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now()) e.remove(); });
+
     if (state.phase === 'thinking' && now() >= state.deadline && canControl() && status !== 'switched' && !busy && !autoStart) {
       autoStart = true; command('start').finally(() => { autoStart = false; });
     }
@@ -297,9 +319,16 @@
           if (state?.turnId !== next.turnId) error = '';
           state = next;
           if (newSession) {
-            byId('setup').hidden = true;
+            const fromHome = applyHomePreferences; applyHomePreferences = false;
+            byId('setup').hidden = !fromHome;
+            if (!fromHome) {
             byId('game-mode').value = next.gameMode === 'crazy' ? 'crazy' : 'normal';
             byId('crazy-seconds').value = String(next.crazy?.intervalSeconds || 120);
+            byId('crazy-source').value = next.crazy?.source || 'mixed';
+            byId('conversation-mode').value = next.conversationMode || 'random';
+            byId('mode').value = next.mode || 'think';
+            setSetupPreference('seconds', next.seconds || 45);
+            }
           }
           render();
         },

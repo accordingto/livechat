@@ -16,12 +16,12 @@ const begin = options => act(create(options), 'start');
 const conversation = s => JSON.stringify([s.phase, s.round, s.turnId, s.speaker, s.remaining, s.spoken,
   s.questions, s.activeQuestion, s.notes, s.intents, s.topic, s.extension, s.extended, s.deadline]);
 
-test('pool contains at least 48 unique, short, literal English spoken lines', () => {
+test('pool contains at least 48 unique, short, simple English lines and tasks', () => {
   assert.ok(C.pool.length >= 48);
   assert.equal(new Set(C.pool.map(p => p.id)).size, C.pool.length);
   assert.equal(new Set(C.pool.map(p => p.text)).size, C.pool.length);
   for (const p of C.pool) {
-    assert.equal(p.kind, 'line'); assert.ok(p.text.length <= 150);
+    assert.ok(['line', 'task'].includes(p.kind)); assert.ok(p.text.length <= 240);
     assert.match(p.text, /^[\x20-\x7e]+$/);
     assert.doesNotMatch(p.text, /drink alcohol|take off|hit someone|kill|phone number|password/i);
   }
@@ -302,4 +302,87 @@ test('switching activities suspends Crazy timer and new normal topic clears priv
   await f.action(1, 'crazyDone', { promptId: old.crazy.prompt.id, sessionId: old.sessionId }); await settle(h);
   assert.equal(h.latest.crazy, undefined); assert.equal(h.latest.phase, 'thinking');
   h.close();
+});
+
+test('player-written lines and tasks are private, retry-stable and do not consume a conversation turn', () => {
+  const initial = begin({ crazySource: 'players' }), text = 'Please explain why your soup needs a small hat.';
+  const input = { id: 'custom-once', type: 'crazyAssign', actor: 1, sessionId: initial.sessionId,
+    turnId: initial.turnId, target: 2, text: '  ' + text + '  ', kind: 'task', now: 5000 };
+  const state = E.apply(initial, input);
+  assert.deepEqual(state, E.apply(initial, input)); assert.equal(E.apply(state, input), state);
+  assert.equal(conversation(state), conversation(initial)); assert.deepEqual(initial.crazy.prompts, {});
+  assert.equal(state.crazy.prompts[2].text, text); assert.equal(state.crazy.prompts[2].kind, 'task');
+  assert.equal(state.crazy.prompts[2].assignedBy, 1); assert.equal(state.crazy.prompts[2].source, 'player');
+  for (let seat = 0; seat <= 4; seat++) {
+    const view = E.view(state, seat, 0).talk;
+    assert.equal(view.crazy.canAssign, seat > 0); assert.equal(view.crazy.pendingCount, 1);
+    assert.equal(JSON.stringify(view).includes(text), seat === 2);
+    assert.deepEqual(view.reply, seat === 1 ? { id: input.id, error: '' } : E.view(initial, seat, 0).talk.reply);
+    if (seat === 2) assert.equal(view.crazy.prompt.assignedBy, 1);
+    else assert.equal(view.crazy.prompt, null);
+  }
+  let next = act(state, 'crazyDone', 2, { promptId: state.crazy.prompts[2].id });
+  next = act(next, 'crazyAssign', 3, { target: 2, text: 'My chair is the boss today.', kind: 'line' });
+  assert.equal(next.crazy.prompts[2].kind, 'line'); assert.equal(next.crazy.sequence[2], 2);
+  assert.notEqual(next.crazy.prompts[2].id, state.crazy.prompts[2].id);
+});
+
+test('custom assignment rejects invalid targets and malformed or overlong text without truncating it', () => {
+  const initial = begin({ crazySource: 'players' });
+  const base = { target: 2, text: 'A tiny hat for soup.', kind: 'line' };
+  for (const target of [0, 1, 9, '2', 2.5, null]) {
+    const state = act(initial, 'crazyAssign', 1, { ...base, target });
+    assert.equal(state.replies[1].error, 'invalid_target'); assert.deepEqual(state.crazy.prompts, {});
+  }
+  for (const extra of [{ text: '' }, { text: '   ' }, { text: false }, { text: 'x'.repeat(241) }, { kind: 'other' }, { kind: null }]) {
+    const state = act(initial, 'crazyAssign', 1, { ...base, ...extra });
+    assert.equal(state.replies[1].error, 'invalid_prompt'); assert.deepEqual(state.crazy.prompts, {});
+  }
+  const state = act(initial, 'crazyAssign', 1, { ...base, text: 'x'.repeat(240) });
+  assert.equal(state.crazy.prompts[2].text.length, 240); assert.equal(state.replies[1].error, '');
+});
+
+test('custom assignment requires a real player, an allowed source and the current session and turn', () => {
+  const initial = begin({ crazySource: 'mixed' }), base = { target: 2, text: 'Ask the chair for a job.', kind: 'task' };
+  const host = act(initial, 'crazyAssign', 0, base); assert.equal(host.replies[0].error, 'not_available');
+  assert.equal(act(initial, 'crazyAssign', 9, base), initial);
+  assert.equal(act(initial, 'crazyAssign', 1, { ...base, sessionId: 'older-topic' }), initial);
+  for (const turnId of [initial.turnId - 1, undefined]) {
+    const state = act(initial, 'crazyAssign', 1, { ...base, turnId });
+    assert.equal(state.replies[1].error, 'stale_turn'); assert.deepEqual(state.crazy.prompts, {});
+  }
+  for (const state of [begin({ gameMode: 'normal' }), begin({ crazySource: 'system' }),
+    act(initial, 'crazyPause', 0, { paused: true })]) {
+    const next = act(state, 'crazyAssign', 1, base); assert.equal(next.replies[1].error, 'not_available');
+  }
+  const thinking = act(create({ crazySource: 'players' }), 'crazyAssign', 1, base);
+  assert.equal(thinking.replies[1].error, 'stale_turn'); assert.deepEqual(thinking.crazy.prompts, {});
+});
+
+test('pending custom and system assignments cannot overwrite each other', () => {
+  let state = act(begin({ crazySource: 'mixed' }), 'crazyAssign', 1,
+    { target: 2, text: 'Give a serious speech about a lost sock.', kind: 'task' });
+  const first = clone(state.crazy.prompts[2]);
+  state = act(state, 'crazyAssign', 3, { target: 2, text: 'Something else.', kind: 'line' });
+  assert.equal(state.replies[3].error, 'recipient_busy'); assert.deepEqual(state.crazy.prompts[2], first);
+  state = act(state, 'crazySend'); assert.deepEqual(state.crazy.prompts[2], first);
+  const system = clone(state.crazy.prompts[4]);
+  state = act(state, 'crazyAssign', 1, { target: 4, text: 'New line.', kind: 'line' });
+  assert.equal(state.replies[1].error, 'recipient_busy'); assert.deepEqual(state.crazy.prompts[4], system);
+  state = act(state, 'crazyDone', 2, { promptId: first.id });
+  state = act(state, 'crazySend');
+  assert.equal(state.crazy.prompts[2].source, 'system'); assert.notEqual(state.crazy.prompts[2].id, first.id);
+});
+
+test('players-only source keeps automatic scheduling idle before and after acknowledgements and pause', () => {
+  let state = begin({ crazySource: 'players' });
+  assert.deepEqual(state.crazy.nextAt, {}); assert.equal(E.crazyDue(state, 999999999), false);
+  assert.equal(act(state, 'crazyTick', 0, { now: 999999999 }), state);
+  state = act(state, 'crazySend'); assert.equal(state.replies[0].error, 'not_available');
+  state = act(state, 'crazyAssign', 1, { target: 2, text: 'I am the mayor of this chair.', kind: 'line' });
+  state = act(state, 'crazyDone', 2, { promptId: state.crazy.prompts[2].id });
+  assert.equal(state.crazy.nextAt[2], 0);
+  state = act(state, 'crazyPause', 0, { paused: true }); state = act(state, 'crazyPause', 0, { paused: false });
+  assert.equal(Object.values(state.crazy.nextAt).every(time => time === 0), true);
+  assert.equal(E.crazyDue(state, 999999999), false);
 });

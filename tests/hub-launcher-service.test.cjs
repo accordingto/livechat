@@ -42,7 +42,7 @@ function fixture(t,{count=4,ready=true,failRegister=false,afterService=null,over
  const context=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,Uint32Array,AbortSignal,URL,btoa,atob,structuredClone,Date,Promise,
   localStorage,ROOM:room,location:{href:'https://hub.invalid/index.html',assign:url=>navigation.push(url)},
   FIREBASE_CONFIG:{databaseURL:'https://test.firebaseio.com'},firebase:{database:()=>db},
-  GAME_DATA:{},document:{hidden:false,documentElement:{lang:'en'},addEventListener(){},getElementById(){return null;}},
+  GAME_DATA:{},document:{querySelectorAll:()=>[],hidden:false,documentElement:{lang:'en'},addEventListener(){},getElementById(){return null;}},
   setInterval(fn,ms){intervals.push({fn,ms});return intervals.length;},clearInterval(id){if(intervals[id-1])intervals[id-1].cleared=true;},
   setTimeout(fn,ms){const id=setTimeout(()=>{timeouts.delete(id);fn();},ms);timeouts.add(id);return id;},clearTimeout(id){clearTimeout(id);timeouts.delete(id);},
   async fetch(url,input={}){
@@ -253,3 +253,11 @@ for(const change of ['name','count','token','other-game']){
   assert.ok(Object.values(started.scores).every(score=>score===0));
  });
 }
+
+
+test('optional Talk launcher applies saved homepage free conversation and player missions to canonical state',async t=>{
+ const f=fixture(t);f.context.localStorage.setItem('lets-talk-settings.v2',JSON.stringify({gameMode:'crazy',conversationMode:'free',crazySource:'players',crazySeconds:60,mode:'think',seconds:30}));
+ await f.launcher.launch('letstalk',2);const raw=f.db.get('rooms/ABC234/players/'+f.extras.letsTalkControlToken),state=raw.state;
+ assert.equal(state.gameMode,'crazy');assert.equal(state.conversationMode,'free');assert.equal(state.crazy.source,'players');assert.equal(state.crazy.intervalSeconds,60);
+ const card=await f.refs[1].once();assert.equal(card.val().talk.conversationMode,'free');
+});

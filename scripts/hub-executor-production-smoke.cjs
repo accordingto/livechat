@@ -12,7 +12,7 @@ const fail = () => { throw new Error('smoke_failed'); };
 const must = value => { if (!value) fail(); };
 async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r => setTimeout(r, ms)), now = Date.now } = {}) {
   const fixtures = [], attempted = new Set();
-  const report = { ok: false, passed: 0, phase: 'initializing', cleaned: 0, cleanupFailed: 0 };
+  const report = { ok: false, passed: 0, step: 'initial', phase: 'initializing', cleaned: 0, cleanupFailed: 0 };
   const check = value => { must(value); report.passed++; };
   async function http(url, options = {}) {
     return fetchImpl(url, { credentials: 'omit', signal: AbortSignal.timeout(20000), ...options });
@@ -134,6 +134,31 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
       command: { id: uid(), type: 'start', sessionId: talk.initialSession, turnId: oldCard.talk.turnId } }, 'stale_session'); report.passed++;
     await pulse(talk, 3); value = await command(talk, 3, 'start'); check(value.talk.phase === 'talking' && list(value.talk.roster).some(p => p.playerNum === value.talk.speaker));
     await command(talk, 2, 'starters', { show: false }); check((await card(talk, 3)).talk.showStarters === false);
+    report.step='free-player-mode';
+    value = await command(talk, 2, 'newTopic', { confirm:true, topic:{id:'smoke-crazy',question:'Invent a very silly shop.'},
+      mode:'think',seconds:120,gameMode:'crazy',crazySeconds:60,showStarters:false,conversationMode:'free',crazySource:'players' });
+    check(value.talk.conversationMode==='free' && value.talk.crazy.source==='players');
+    report.step='free-start';
+    value=await command(talk,3,'start');check(value.talk.speaker===null && !value.talk.actions.end);
+    report.step='private-assignment';
+    const privateMission='Report the imaginary shop like a weather presenter.';
+    value=await command(talk,2,'crazyAssign',{target:3,text:privateMission,kind:'task'});
+    check(!JSON.stringify(value.talk).includes(privateMission));
+    const recipient=await card(talk,3);check(recipient.talk.crazy.prompt.text===privateMission && recipient.talk.crazy.prompt.kind==='task');
+    check(!JSON.stringify((await card(talk,1)).talk).includes(privateMission));
+    value=await command(talk,2,'crazyAssign',{target:3,text:'Another task.',kind:'task'},'recipient_busy');
+    check((await card(talk,3)).talk.crazy.prompt.id===recipient.talk.crazy.prompt.id);
+    value=await command(talk,3,'crazyDone',{promptId:recipient.talk.crazy.prompt.id});check(value.talk.crazy.prompt.status==='done');
+    report.step='assigned-system-mode';
+    value=await command(talk,2,'newTopic',{confirm:true,topic:{id:'smoke-assigned',question:'What would we imagine next?'},
+      mode:'think',seconds:120,gameMode:'crazy',crazySeconds:60,showStarters:false,conversationMode:'assigned',crazySource:'system'});
+    await pulse(talk,1);
+    report.step='assigned-start';
+    value=await command(talk,3,'start');check(value.talk.speaker===1 && !value.talk.crazy.canAssign);
+    report.step='assigned-handover';
+    value=await command(talk,2,'end');check(value.talk.speaker===2);
+    report.step='system-mission';
+    value=await command(talk,3,'crazySend');check(!!value.talk.crazy.prompt && value.talk.crazy.prompt.source==='system');
     report.ok = true;
   } catch (_) { report.ok = false; }
   finally {

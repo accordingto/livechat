@@ -9,7 +9,7 @@
   'use strict';
   const VERSION = 'hub-launch-1';
   const specs = Object.freeze({
-    letstalk: { href:'lets-talk.html', min:2, max:9, sync:'TALK_SYNC', scripts:['talk-crazy.js','talk-engine.js','talk-topics.js','talk-sync.js'] },
+    letstalk: { href:'lets-talk.html', min:2, max:9, sync:'TALK_SYNC', scripts:['talk-settings.js','talk-crazy.js','talk-engine.js','talk-topics.js','talk-sync.js'] },
     onceupon: { href:'once-upon-a-time.html', min:2, max:6, sync:'ONCE_SYNC', scripts:['once-upon-a-time-deck.js','once-upon-a-time-engine.js','talk-sync.js','once-upon-a-time-sync.js'] },
     dixit: { href:'dixit.html', min:3, max:8, sync:'DIXIT_SYNC', scripts:['dixit-deck.js','dixit-engine.js','talk-sync.js','dixit-sync.js'] },
     cut: { href:'cut.html', min:2, max:9, sync:'CUT_SYNC', scripts:['cut-config.js','cut-random.js','cut-topics.js','cut-engine.js','cut-sync.js'] },
@@ -53,7 +53,7 @@
     const promise = new Promise((resolve,reject) => {
       const script = root.document.createElement('script');
       const timer = root.setTimeout(() => { script.remove(); reject(Object.assign(new Error('script_failed'),{code:'script_failed'})); },15000);
-      script.src = file + '?v=' + (file.startsWith('cut-') ? 'cut-9' : VERSION);
+      script.src = file + '?v=' + (file.startsWith('cut-') ? 'cut-9' : file.startsWith('talk-') ? 'talk-board-1' : VERSION);
       script.onload = () => { root.clearTimeout(timer); resolve(); };
       script.onerror = () => { root.clearTimeout(timer); script.remove(); reject(Object.assign(new Error('script_failed'),{code:'script_failed'})); };
       root.document.head.append(script);
@@ -134,7 +134,7 @@
           else if (game==='letstalk') {
             const library = typeof TALK_LIBRARY !== 'undefined' ? TALK_LIBRARY : root.TALK_LIBRARY;
             const topic = library?.draw(); if (!topic) fail('invalid_roster');
-            options={topic,mode:'think',seconds:30,showStarters:true,gameMode:'normal',crazySeconds:120};
+            options={topic,showStarters:true,...root.TALK_SETTINGS.read(storage)};
           } else if (game==='cut') options={speed:'normal',category:'mixed'};
           else if (game==='openmic') options={singingDuration:35};
           const started = await initializer.start(options);

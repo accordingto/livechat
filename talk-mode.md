@@ -1,3 +1,39 @@
+# Current: simplified Talk board and player missions — 2026-10-09
+
+The homepage saves game and conversation preferences in `lets-talk-settings.v2`;
+`talk-settings.js` normalizes them for host setup and the optional initializer.
+Conversation modes: assigned follows the roster order, random gives everyone
+one turn per round, free has no nominated speaker or handover controls.
+Old rooms default to random. Host and shared player settings both support these
+options; newTopic preserves them when a legacy caller omits the new fields.
+
+Player cards now show topic, current conversation state and participants.
+Speaking/question requests and reaction controls have been removed from the UI.
+Legacy commands remain compatible with existing saved rooms; resume and explicit
+handover confirmation handle any previously pending question without stranding play.
+Explanations, topic changes and custom follow-ups are available in compact details.
+
+Crazy Talk has 96 original English prompts: 60 lines and 36 verbal improv tasks.
+Sources are system, players, or mixed (default). Players/mixed permits each valid
+player to type a line or task, select another participant and send `crazyAssign`
+with target, text (1–240 trimmed characters), kind line/task and current turnId.
+Only the recipient projection receives the assignment; others and host see counts.
+A pending mission is never overwritten. Duplicate delivery, obsolete turn/session,
+invalid recipient and forged actor are rejected. Pausing stops new assignments
+while existing missions may still be completed or skipped. No scoring or audio API.
+
+Drafts remain local during sync, clear only after successful acknowledgement,
+and remain on busy/rejected sends. Chinese IME composition defers redraw. Mobile
+and desktop use the same topic/status/participant hierarchy. Runtime changes
+require redeploying the existing independent service as well as the frontend.
+
+Validation: all 1239 project tests pass after integrating the concurrent Bluff
+publication fix. Real Chrome demo verifies private Chinese player-assigned tasks,
+no request buttons, 375px/320px layouts with no overflow, zero page errors and
+preserved custom thinking time (20 seconds).
+
+The earlier descriptions below document historical versions.
+
 > Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
 
 # Let's Talk v0.7 · Normal Talk / Crazy Talk

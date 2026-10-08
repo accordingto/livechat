@@ -1,3 +1,20 @@
+## CURRENT: Talk simplified board and custom missions — 2026-10-09
+
+Let's Talk / Crazy Talk now use a cream topic card, compact status and participant
+roster, with removed speaking/question request controls. Homepage preferences
+persist via talk-settings.js; conversationMode is assigned/random/free (random
+default). Assigned follows roster; free keeps speaker null and has no handover.
+Crazy source is system/players/mixed (mixed default); 96 system prompts include
+60 spoken lines and 36 improv missions. Player-only disables system scheduling.
+Authenticated crazyAssign {target,text,kind,turnId} sends 1–240 characters only
+to another player's private projection; never overwrite pending missions. Pausing
+stops all new missions, while done/skip remain prompt-bound across turns.
+Keep original links, shared controls, old room fallback and private projections.
+See talk-mode.md. Both independent runtime deployment and frontend publication
+are required; keep the stable existing service secret unchanged. Full regression:
+1239/1239 passed; real Chrome desktop/375px/320px demo and private Chinese
+assignment delivery pass with no page errors or horizontal overflow.
+
 ## CURRENT: Bluff authoritative card publication — 2026-10-09
 
 Native Hub opening captures and publishes each exact original player node with
