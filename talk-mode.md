@@ -30,7 +30,10 @@ require redeploying the existing independent service as well as the frontend.
 Validation: all 1239 project tests pass after integrating the concurrent Bluff
 publication fix. Real Chrome demo verifies private Chinese player-assigned tasks,
 no request buttons, 375px/320px layouts with no overflow, zero page errors and
-preserved custom thinking time (20 seconds).
+preserved custom thinking time (20 seconds). The same browser checks pass on
+the public production demo. Production RPC smoke passes 59 checks using two
+fresh three-player fixtures; all eight exact owned nodes were cleaned, with
+zero cleanup failures. Both Talk and full-site deployment asset checks pass.
 
 The earlier descriptions below document historical versions.
 

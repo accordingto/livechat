@@ -13,7 +13,9 @@ Keep original links, shared controls, old room fallback and private projections.
 See talk-mode.md. Both independent runtime deployment and frontend publication
 are required; keep the stable existing service secret unchanged. Full regression:
 1239/1239 passed; real Chrome desktop/375px/320px demo and private Chinese
-assignment delivery pass with no page errors or horizontal overflow.
+assignment delivery pass with no page errors or horizontal overflow. Independent
+service is deployed; production RPC smoke 59/59, eight fresh owned test nodes
+cleaned with zero failures. Talk 17/17 and full-site 45/45 assets match production.
 
 ## CURRENT: Bluff authoritative card publication — 2026-10-09
 

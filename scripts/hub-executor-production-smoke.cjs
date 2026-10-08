@@ -139,7 +139,7 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
       mode:'think',seconds:120,gameMode:'crazy',crazySeconds:60,showStarters:false,conversationMode:'free',crazySource:'players' });
     check(value.talk.conversationMode==='free' && value.talk.crazy.source==='players');
     report.step='free-start';
-    value=await command(talk,3,'start');check(value.talk.speaker===null && !value.talk.actions.end);
+    value=await command(talk,3,'start');check(value.talk.speaker==null && !value.talk.actions.end);
     report.step='private-assignment';
     const privateMission='Report the imaginary shop like a weather presenter.';
     value=await command(talk,2,'crazyAssign',{target:3,text:privateMission,kind:'task'});
