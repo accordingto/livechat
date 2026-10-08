@@ -37,7 +37,7 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
   config.functions ||= {}; config.functions['api/hub-executor.js'] = { maxDuration: 60 };
   config.routes = [
     { src: '^/api/hub-executor/?$', dest: '/api/hub-executor.js' },
-    ...config.routes
+    ...config.routes.filter(route => route.src !== "^/api/hub-executor/?$")
   ];
   fs.writeFileSync(path.join(output, 'vercel.json'), JSON.stringify(config, null, 2) + '\n'); files.add('vercel.json');
   fs.writeFileSync(path.join(output, '.vercelignore'), ['*', ...[...files].flatMap(file => {

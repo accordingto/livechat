@@ -109,3 +109,13 @@ Implementation references: [Firebase conditional writes](https://firebase.google
 [Vercel Node functions](https://vercel.com/docs/functions/runtimes/node-js),
 [Vercel routing order](https://vercel.com/docs/project-configuration/vercel-json#routes), and
 [Vercel environment variables](https://vercel.com/docs/environment-variables).
+
+Production was verified on 2026-10-09: all 45 public frontend assets match the
+release, the owned executor is ready and private source routes remain blocked.
+The ordinary suite passed 1157 tests; the existing search service passed 39.
+The manual production smoke uses only new random fixture nodes, registers once,
+then performs player-only CUT timing/settings/restart and Talk ticket rotation.
+All 28 checks passed and all eight created nodes were safely removed. It never
+reads or changes an existing user room, lists room contents or logs credentials.
+The independent source project retains the deployed runtime so later search
+releases cannot accidentally remove the game route.
