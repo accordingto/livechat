@@ -1,3 +1,16 @@
+## Homepage manager access restored — 2026-10-09
+
+Game cards open original host/settings pages with no own-name selector.
+Managers and player cards both control registered games through the existing
+independent service. A normal manager start waits for available registration
+before completing; the optional deferred launcher still explicitly registers.
+Unavailable service keeps the prior legacy fallback. Browser helper version 3
+is loaded by every game/player page. Chat Wolf's exact connect-src allowlist now
+includes the approved independent service so hosted and embedded cards can reach
+it. No independent runtime/secret changes are required for this frontend update.
+Full regression: 1180/1180; real Talk/CUT manager close, player continuation and
+manager reconnection, held startup registration and all page CSP checks pass.
+
 ## CURRENT: Once opening variety — 2026-10-09
 
 Once has 129 original Story Cards plus 51 unchanged Endings. Fifteen new ordinary
@@ -19,10 +32,12 @@ installed as a server secret. Never print, export, commit or rotate it for a cod
 deployment; never reuse the unrelated YouTube key. The original site's backend
 needs no setting. Preserve original room/player/card links.
 
-Homepage `hub-launcher.js` initializes via existing constructors, waits for
-service registration and every private card, closes its temporary connection,
-then opens the selected player's original link. Regular play, settings and
-recovery belong in private cards; do not restore a persistent manager-page lease.
+Homepage game cards open the original game host/settings pages without an
+own-player name or seat selection. Hosts may operate those pages; player cards
+also retain shared settings, regular play and recovery in registered games.
+Host controls use the independent service rather than a persistent browser lease,
+so closing a management page does not stop play. `hub-launcher.js` remains an
+optional player-card initializer; it is not installed on the homepage.
 
 **Runtime rule/engine/content changes need an independent-service deployment as
 well as the frontend push.** Use `scripts/hub-executor-package-service.cjs` with

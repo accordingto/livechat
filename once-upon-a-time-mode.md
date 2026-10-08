@@ -13,9 +13,10 @@ missions, classes, or additional rounds are used.
 1. Open the Hub and complete the usual room setup for **2–6 players**.
 2. Send each participant their existing **private player link**. Do not put all
    private links in a public chat. The same links work when switching games.
-3. Choose **Once Upon a Time** in the Hub and select your own existing seat.
-   The Hub opens your original player card after independent registration.
-   The older shared manager page remains available as a recovery/fallback route.
+3. Choose **Once Upon a Time** in the Hub to open its shared host/settings
+   page. No own-name or seat selection is required in the homepage game menu.
+   Open the table there; registered games can be managed from that page or
+   player cards, and keep working after the management page closes.
 4. The host taps **Deal cards** directly. Player **Ready** buttons are optional
    signals, not a prerequisite for starting or receiving cards.
 5. A random Story Card is revealed and discarded. The host chooses who looks
@@ -56,7 +57,7 @@ with local focus, scroll and disclosures retained. New sessions or seat changes
 clear the old private DOM and local selection/confirmation before showing the
 new seat. Pending and connection-permission fences still update immediately.
 
-The legacy host page is a shared table, not a private hand. A participating host uses
+The host page is a shared table, not a private hand. A participating host uses
 their own original player-card link to play. In legacy fallback only, keep it open; on normal
 refresh it resumes the saved game rather than re-dealing. If it disconnects,
 players wait for it to reconnect. Another host tab cannot simultaneously control
