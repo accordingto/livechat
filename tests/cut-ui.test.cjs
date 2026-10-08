@@ -534,4 +534,3 @@ test('shared player settings include both new categories while topic browsing re
     assert.doesNotMatch(f.element.innerHTML, /cut-library|Browse topics|查看題庫/);
   } finally { f.card.destroy(); }
 });
-

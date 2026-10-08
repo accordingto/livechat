@@ -74,4 +74,3 @@ test('host topic browser stays collapsed at the bottom and CUT caches are consis
   for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], 'cut-9', asset[1]);
   for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
 });
-

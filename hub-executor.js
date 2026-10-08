@@ -129,7 +129,7 @@ var HUB_EXECUTOR = (() => {
     const metadata = host => ({ capsule: host.doc.executor.capsule, token: host.ref.key });
     const register = host => {
       if (host.executorStarting || host.executorDeferred || host.executorRegistering || host.stopped || !host.doc?.state || isServer(host) || Date.now() < (host.executorRetryAt || 0)) return;
-      void ensureHost(host, game).catch(() => { host.executorRetryAt = Date.now() + 60000; });
+      return ensureHost(host, game).catch(() => { host.executorRetryAt = Date.now() + 60000; });
     };
     p.project = function (...args) {
       if (isServer(this) || this.executorRegistering) return;
@@ -168,7 +168,12 @@ var HUB_EXECUTOR = (() => {
           await originals.renew.call(this);
         }
         return await originals.start.apply(this, args);
-      } finally { this.executorStarting = false; void register(this); }
+      } finally {
+        this.executorStarting = false;
+        // Finish available service migration before the manager's start action
+        // completes, so immediately closing that page still leaves cards ready.
+        await register(this);
+      }
     };
     p.status = function (status) {
       if (isServer(this) && this.connected && status !== 'switched') status = 'ready';

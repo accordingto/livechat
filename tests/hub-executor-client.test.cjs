@@ -118,6 +118,26 @@ test('restarting a server room releases it before dynamic local bootstrap and se
   assert.deepEqual(operations, ['release', 'register']); assert.ok(host.local.includes('change:cut'));
 });
 
+test('manager start waits for available service registration before completing and deferred player-card launch remains explicit', async () => {
+  let finishRegistration;
+  const f = sandbox({ respond: call => call.method === 'GET'
+    ? { ok: true, json: async () => ({ ready: true }) }
+    : new Promise(resolve => { finishRegistration = resolve; }) });
+  const Host = hosts(f).cut, host = new Host();
+  let completed = false;
+  const starting = host.start().then(state => { completed = true; return state; });
+  await flush();
+  assert.equal(completed, false, 'manager must not report a finished start while service registration is pending');
+  assert.equal(host.executorRegistering, true);
+  assert.equal(f.post().length, 1); assert.equal(f.post()[0].body.operation, 'register');
+  finishRegistration({ ok: true, json: async () => ({ capsule: 'ready-ticket' }) });
+  assert.equal((await starting).sessionId, 'cut-new-session'); assert.equal(completed, true);
+  assert.equal(host.executorRegistering, false);
+  const deferred = new Host(); deferred.executorDeferred = true;
+  await deferred.start(); await flush();
+  assert.equal(f.post().length, 1, 'optional card launcher owns its own explicit registration step');
+});
+
 test('failed registration backs off without blocking subsequent legacy host operations', async () => {
   const f = sandbox({ respond: call => ({ ok: call.method === 'GET', json: async () => call.method === 'GET' ? { ready: true } : { error: 'storage_unavailable' } }) });
   const Host = hosts(f).mic, host = new Host(); await host.start(); await flush();

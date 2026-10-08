@@ -43,15 +43,25 @@ function fixture({ready=true,registrationFails=false}={}){
  return {context,room,names,tokens,refs,state,elements,anchors,scripts,storage,stored,change,navigations,ui,
   failLoading(value){loadFailure=value;},hold(value){holdRegistration=value;},calls:()=>({ensureCalls,closed,starts})};
 }
-test('only seven independent-game anchors intercept clicks; old games and deliberate new tabs keep original navigation',async()=>{
+test('optional player-card launcher intercepts its seven games and preserves deliberate new-tab navigation',async()=>{
  const f=fixture();assert.equal(f.anchors.filter(a=>a.events.click).length,7);
  assert.equal(f.anchors[7].events.click,undefined);
  const event=await f.anchors[5].fire('click',{ctrlKey:true});assert.equal(event.prevented,undefined);
  assert.deepEqual(f.scripts,[]);assert.equal(f.navigations.length,0);
- const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
- assert.match(html,/id="hub-player-seat"/);assert.match(html,/HUB_LAUNCHER\.install\(\{room:ROOM,executor:HUB_EXECUTOR\}\)/);
- assert.match(html,/hub-executor\.js\?v=2/);assert.match(html,/hub-launcher\.js\?v=1/);
 });
+
+test('homepage opens every independent game management page without a player selection or automatic game start',()=>{
+ const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
+ const helper=require('../hub-launcher.js');
+ for(const spec of Object.values(helper.specs)){
+  assert.ok(html.includes('href="'+spec.href+'"'),'original host/settings link: '+spec.href);
+  const manager=fs.readFileSync(require.resolve('../'+spec.href),'utf8');
+  assert.match(manager,/hub-executor\.js\?v=/,'host page keeps independent execution: '+spec.href);
+ }
+ assert.doesNotMatch(html,/id="hub-player-seat"|hub-launcher\.js|HUB_LAUNCHER/);
+ assert.doesNotMatch(html,/<script[^>]+src="hub-executor\.js/,'homepage selection does not initialize a game');
+});
+
 test('own card must be chosen explicitly, malicious-looking names are text, and failed selection never starts a room',async()=>{
  const f=fixture(),select=f.elements['hub-player-seat'];
  assert.equal(select.value,'');assert.equal(select.children[1].textContent,f.names[0]);

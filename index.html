@@ -333,25 +333,6 @@
     }
     .edit-setup-btn:hover { border-color: #e94560; color: var(--accent-text); }
 
-    .hub-player-launch {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-      padding: 14px 18px; margin: 0 0 20px;
-    }
-    .hub-player-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .hub-player-row label { font-size: .86rem; font-weight: 800; }
-    .hub-player-row select {
-      flex: 1; min-width: 170px; max-width: 380px; padding: 11px 14px;
-      border: 1px solid var(--border-3); border-radius: 10px; background: var(--btn-face);
-      color: var(--text); font: inherit; font-size: .9rem;
-    }
-    .hub-player-row select:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
-    .hub-player-launch p { font-size: .82rem; line-height: 1.65; margin-top: 9px; color: var(--text-dim); }
-    #hub-launch-status { color: var(--info-text); }
-    #hub-launch-error { color: var(--bad-text-soft); }
-    #hub-launch-legacy { display: inline-block; font-size: .8rem; margin-top: 9px; color: var(--text-dim); }
-    #hub-launch-legacy[hidden] { display: none; }
-    .game-card[aria-disabled="true"] { opacity: .65; cursor: wait; }
-
     .guide-opt {
       display: flex; align-items: flex-start; gap: 11px; cursor: pointer;
       background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
@@ -558,8 +539,9 @@
 
   <!-- Step 1: every game shares the same room code and player links, so
        setup happens once here, before picking a game — not re-explained on
-       separate game pages. Independent games initialize only after an explicit
-       game choice; everyone keeps the same private player link. -->
+       separate game pages. Game cards open the existing host/settings page
+       without asking which player the host is. Registered games continue
+       through the independent service after that page closes. -->
   <div class="step-wrap" id="step-setup">
     <div class="step-hdr"><span class="step-num" data-i18n="index.step1Badge">Step 1</span><h2 data-i18n="index.step1Title">Set up your room</h2></div>
     <p class="step-sub" data-i18n="index.step1Sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
@@ -603,16 +585,6 @@
       <span id="setup-summary-text"></span>
       <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
-    <div class="hub-player-launch">
-      <div class="hub-player-row">
-        <label id="hub-player-label" for="hub-player-seat">Your player card</label>
-        <select id="hub-player-seat" aria-describedby="hub-launch-help"><option value="">Choose your name</option></select>
-      </div>
-      <p id="hub-launch-help">Choose your card, then a game. Everyone continues on their original link. Change game settings on your own card.</p>
-      <p id="hub-launch-status" role="status" aria-live="polite" hidden></p>
-      <p id="hub-launch-error" role="alert" hidden></p>
-      <a id="hub-launch-legacy" hidden>Open this game's setup page</a>
-    </div>
     <!-- Off by default: the briefing is a wall of text in front of a game the
          regulars already know. A host running this weekly was reading past it
          every time, so it is now something you ask for. -->
@@ -643,7 +615,7 @@
       <div class="card-body">
         <div class="card-meta"><span class="tag">Deduction</span><span class="tag">👥 3–12 · Best with 6–8</span></div>
         <h2>Chat Wolf</h2>
-        <p>Talk, respond, and find the wolves. No one is removed. Start and manage the game from your own player card.</p>
+        <p>Talk, respond, and find the wolves. No one is removed. Manage the game on the host page or your player card.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -939,7 +911,6 @@
         ? I18N.t('index', 'summaryWithRoom').replace('{code}', ROOM.code)
         : I18N.t('index', 'summaryNoRoom')
       ).replace('{count}', ROOM.count);
-      window.HUB_LAUNCHER?.refresh();
     }
     renderSetupSummary();
     I18N.onChange(renderSetupSummary);
@@ -1310,8 +1281,5 @@
     })();
   </script>
 
-  <script src="hub-executor.js?v=2"></script>
-  <script src="hub-launcher.js?v=1"></script>
-  <script>HUB_LAUNCHER.install({room:ROOM,executor:HUB_EXECUTOR});</script>
 </body>
 </html>
