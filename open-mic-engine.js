@@ -145,6 +145,7 @@ var OPEN_MIC_ENGINE = (() => {
     state.mySongs = state.mySongs || {}; state.songLyrics = state.songLyrics || {};
     state.seen = state.seen || {}; state.replies = state.replies || {};
     const host = actor === 0;
+    const manager = host || (state.sharedControls === true && player(state, actor)?.active !== false);
     const isSpotlight = host || (actor === state.spotlight && player(state, actor)?.active !== false);
     const now = input.now;
     const rng = random(input.seed);
@@ -154,7 +155,7 @@ var OPEN_MIC_ENGINE = (() => {
     else switch (input.type) {
       case 'success':
       case 'failed':
-        if (!host || state.phase !== 'challenge') error = 'not_available';
+        if (!manager || state.phase !== 'challenge') error = 'not_available';
         else {
           state.challengeResult = input.type;
           if (input.type === 'success') award(state, 'challenge');
@@ -162,7 +163,7 @@ var OPEN_MIC_ENGINE = (() => {
         }
         break;
       case 'newChallenge':
-        if (!host || state.phase !== 'challenge') error = 'not_available';
+        if (!manager || state.phase !== 'challenge') error = 'not_available';
         else { chooseChallenge(state, rng); changed(state, now); }
         break;
       case 'selectSong': {
@@ -227,7 +228,7 @@ var OPEN_MIC_ENGINE = (() => {
         break;
       }
       case 'next': {
-        if (!host) { error = 'not_available'; break; }
+        if (!manager) { error = 'not_available'; break; }
         const next = nextPlayer(state);
         if (next == null) { error = 'not_enough_players'; break; }
         if (state.phase === 'singing') award(state, 'singing');
@@ -236,7 +237,8 @@ var OPEN_MIC_ENGINE = (() => {
       }
       case 'exclude': {
         const candidate = player(state, Number(input.playerNum));
-        if (!host) { error = 'not_available'; break; }
+        const selfReturn = state.sharedControls === true && Number(input.playerNum) === actor && input.active === true;
+        if (!manager && !selfReturn) { error = 'not_available'; break; }
         if (!candidate || typeof input.active !== 'boolean') { error = 'invalid_player'; break; }
         if (candidate.active === input.active) break;
         candidate.active = input.active;
@@ -303,6 +305,7 @@ var OPEN_MIC_ENGINE = (() => {
     return { game: 'openmic', playerNum, name: roster.find(candidate => candidate.playerNum === playerNum)?.name || null,
       openmic: {
         version: 1, sessionId: state.sessionId, turnId: state.turnId, roster,
+        ...(state.sharedControls === true ? { sharedControls: true, canManage: playerNum === 0 || !!player(state, playerNum) && player(state, playerNum).active !== false } : {}),
         spotlight: state.spotlight ?? null, round: state.round, phase: state.phase,
         challenge: state.challenge ? copy(state.challenge) : null, challengeResult: state.challengeResult ?? null,
         teamScore: state.teamScore, selectedSong: state.selectedSong ? songReference(state.selectedSong) : null,

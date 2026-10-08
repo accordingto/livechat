@@ -1,3 +1,5 @@
+> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+
 # Dixit / 妙語說書人
 
 The last game on the Hub list. Uses existing Hub room/player links and the current standard Dixit base-game rules (3–8 players), with 84 independently generated original picture cards. This is an unofficial adaptation. No original commercial card art, logo, or branded board is included.

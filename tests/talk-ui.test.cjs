@@ -257,3 +257,19 @@ test('Original player transport accepts prompt acknowledgements across turns but
     }
   }
 });
+
+test('server-mode private card retains readiness and shared start while an old host heartbeat expires', async () => {
+  const sent = [], f = fixture(async command => { sent.push(clone(command)); });
+  try {
+    f.setClock(20000);
+    f.update(sample({ phase: 'thinking', sharedControls: true, hostControls: true, hostLiveUntil: 10000, actions: { start: true } }));
+    assert.match(f.element.innerHTML, /data-talk-action="ready"/);
+    const start = f.buttons().find(b => b.dataset.talkAction === 'start');
+    assert.ok(start); assert.equal(start.disabled, false);
+    assert.equal(f.node('.talk-connection').textContent, '');
+    f.click('start'); await Promise.resolve(); await Promise.resolve();
+    assert.equal(sent.length, 1); assert.equal(sent[0].type, 'start'); assert.equal(sent[0].actor, undefined);
+    f.setOnline(false); f.card.paint();
+    assert.ok(f.buttons().filter(b => b.dataset.talkAction !== 'retry').every(b => b.disabled));
+  } finally { f.card.destroy(); }
+});

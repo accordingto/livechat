@@ -397,6 +397,10 @@
     "en": "Connection lost. Reconnecting…",
     "zh": "連線暫時中斷，正在重新連線…"
   },
+  "recover": {
+    "en": "Skip offline players",
+    "zh": "略過離線玩家"
+  },
   "hostAway": {
     "en": "Waiting for the host to reconnect. Keep chatting.",
     "zh": "等待主持頁重新連線，先自由聊天。"
@@ -627,7 +631,7 @@
       this.renderDiscovery();
     }
     renderStage() {
-      var data = this.data, song = data.selectedSong, host = this.host();
+      var data = this.data, song = data.selectedSong, host = this.host(), manager = this.manager();
       var controller = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
       var after = !!data.challengeResult, finished = data.phase === 'finished';
       this.setText('[data-om-duration]', t('duration', { n: Number(data.duration) || 35 }));
@@ -638,12 +642,12 @@
       this.set('[data-om-stage-info]', info);
       var canChange = !!song && this.canSelectDiscovery();
       this.set('[data-om-stage-timer]', data.singingState === 'singing' ? '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>' : '');
-      var buttons = '', showActions = after && controller && (!finished || !!song || host);
+      var buttons = '', showActions = after && (controller || manager) && (!finished || !!song || manager);
       if (showActions) buttons += '<div class="om-actions">';
       if (after && !finished && controller) buttons += data.singingState === 'singing' ? this.button('finishSinging', t('finishSinging'), 'om-success') : this.button('startSinging', t('startSinging'), 'om-primary', '', !!song);
       if (after && controller && song && ['choice', 'singing', 'finished'].indexOf(data.phase) >= 0) buttons += this.button('changeSong', t('changeSong'), '', '', canChange) + this.button('clearSong', t('clearSong'), '', '', canChange);
       if (after && !finished && controller) buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
-      if (host && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '');
+      if (manager && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '');
       if (showActions) buttons += '</div>';
       if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
       else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
@@ -742,7 +746,7 @@
       if (action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
       if (action === 'inviteDuet') { this.action(action, { playerNum: target.dataset.player ? Number(target.dataset.player) : null }).then(ok => { if (ok) this.close(this.duetDialog); }); return; }
       if (action === 'exclude') { this.action(action, { playerNum: Number(target.dataset.player), active: target.dataset.active === 'true' }); return; }
-      if (['success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next'].indexOf(action) >= 0) this.action(action);
+      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next'].indexOf(action) >= 0) this.action(action);
     }
     async handleSubmit(event) {
       if (event.target.matches('[data-om-discovery-form]')) {
@@ -776,6 +780,7 @@
     owner() { return this.actor || Number(this.data && this.data.spotlight) || 0; }
     controller() { return !this.actor || Number(this.data && this.data.spotlight) === this.actor; }
     host() { return !this.actor; }
+    manager() { return this.host() || this.data?.sharedControls === true && this.roster().some(p => Number(p.playerNum) === this.actor && p.active !== false); }
     favorites() { return values(this.data && this.data.mySongs && this.data.mySongs[this.owner()]).map(String); }
     library() { return values(this.data && this.data.songLibrary).filter(s => validVideo(s.videoId)); }
     categories() { return global.OPEN_MIC_CONTENT && global.OPEN_MIC_CONTENT.categories || fallbackCategories; }
@@ -787,11 +792,11 @@
       if (this.destroyed) return;
       this.renderLabels();
       if (!this.data) return;
-      var data = this.data, challenge = data.challenge || {}, controller = this.controller(), host = this.host();
+      var data = this.data, challenge = data.challenge || {}, controller = this.controller(), host = this.host(), manager = this.manager();
       var result = data.challengeResult, after = !!result, finished = data.phase === 'finished';
       var personName = this.name(data.spotlight), avatar = Array.from(personName.trim())[0] || '♪';
       var controls = '';
-      if (host && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', t('success'), 'om-success') + this.button('failed', t('failed'), 'om-fail') + this.button('newChallenge', t('newChallenge')) + '</div>';
+      if (manager && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', t('success'), 'om-success') + this.button('failed', t('failed'), 'om-fail') + this.button('newChallenge', t('newChallenge')) + '</div>';
       var disclosure = this.find('[data-om-challenge-details]');
       var disclosureKey = [data.sessionId, data.round, challenge.id, data.phase === 'challenge' ? 'challenge' : 'result'].join(':');
       var disclosureOpen = this.challengeDisclosureKey === disclosureKey && disclosure ? disclosure.open : data.phase === 'challenge';
@@ -800,9 +805,12 @@
       var roster = this.roster(), active = roster.filter(p => p.active !== false), current = active.findIndex(p => Number(p.playerNum) === Number(data.spotlight));
       var ordered = current >= 0 ? active.slice(current).concat(active.slice(0, current)) : active;
       var queue = ordered.concat(roster.filter(p => p.active === false)).map(p => '<li class="' + (Number(p.playerNum) === Number(data.spotlight) ? 'om-current' : p.active === false ? 'om-inactive' : '') + '">' + (Number(p.playerNum) === Number(data.spotlight) ? '<span class="om-dot" aria-hidden="true"></span>' : '') + esc(p.name || t('player', { n: p.playerNum })) + (p.active === false ? ' · ' + esc(t('sittingOut')) : '') + '</li>').join('');
-      var manage = host ? '<details class="om-manage"><summary>' + esc(t('manage')) + '</summary><div class="om-roster">' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div></details>' : '';
+      var manage = manager ? '<details class="om-manage"><summary>' + esc(t('manage')) + '</summary><div class="om-roster">' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div></details>' : '';
       var manageEl = this.find('.om-manage'), manageOpen = manageEl && manageEl.open;
       this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(t('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);
+      if (data.sharedControls === true) {
+        this.set('[data-om-score]', this.find('[data-om-score]').innerHTML + '<div class="om-actions">' + this.button('recover', t('recover')) + (!manager ? this.button('exclude', t('rejoin'), '', ' data-player="' + this.actor + '" data-active="true"') : '') + '</div>');
+      }
       if (manageOpen && this.find('.om-manage')) this.find('.om-manage').open = true;
       this.renderStage();
       this.renderSongs();
@@ -906,7 +914,7 @@
       if (!dialog.open) { if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', ''); }
     }
     async action(type, extra) {
-      if (['success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'selectSong', 'clearSong', 'toggleFavorite', 'inviteDuet', 'exclude', 'addSong'].indexOf(type) < 0) return false;
+      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'selectSong', 'clearSong', 'toggleFavorite', 'inviteDuet', 'exclude', 'addSong'].indexOf(type) < 0) return false;
       if (this.pending || this.destroyed || !this.canControl()) return false;
       this.pending = true; this.error = ''; this.notice = '';
       this.render();

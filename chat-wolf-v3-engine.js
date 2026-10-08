@@ -62,7 +62,7 @@ function createRoom({ code, hostPlayerId, hostSessionHash, hostName, settings, n
 }
 function ids(room) { return Object.keys(room.players || {}); }
 function requireActor(room, id) { const p = room.players && room.players[id]; if (!p) fail('NOT_A_MEMBER', 403); return p; }
-function requireHost(room, id) { const p = requireActor(room, id); if (!p.isHost || room.hostPlayerId !== id) fail('HOST_ONLY', 403); }
+function requireHost(room, id) { const p = requireActor(room, id); if (!room.sharedControls && (!p.isHost || room.hostPlayerId !== id)) fail('HOST_ONLY', 403); }
 function requirePhase(room, ...phases) { if (!phases.includes(room.phase)) fail('WRONG_PHASE', 409); }
 function completionPhases(room) { return (room.flowVersion || 3) >= 4 ? [PHASES.TALK] : RULES.completionPhases; }
 function touch(room, now) { room.updatedAt = now; room.revision = (room.revision || 0) + 1; }
@@ -964,6 +964,7 @@ function rewardView(room, actor) {
 function projectState(room, actorId, now = Date.now()) {
   const actor = requireActor(room, actorId);
   const host = actor.isHost && room.hostPlayerId === actorId;
+  const manager = host || !!room.sharedControls;
   const active = ![PHASES.LOBBY, PHASES.FINISHED].includes(room.phase);
   const talk = completionPhases(room).includes(room.phase) && !room.tasksFrozen && !room.paused;
   const abilityTalk = room.phase === PHASES.TALK && !room.paused && !room.tasksFrozen;
@@ -971,24 +972,24 @@ function projectState(room, actorId, now = Date.now()) {
   const noticeClosure = notice ? directionNoticeClosure(room, notice) : null;
   const reward = rewardView(room, actor);
   const actions = {
-    canReady: room.phase === PHASES.LOBBY, canSettings: host && room.phase === PHASES.LOBBY,
-    canStart: host && room.phase === PHASES.LOBBY && ids(room).length === room.settings.playerCount,
+    canReady: room.phase === PHASES.LOBBY, canSettings: manager && room.phase === PHASES.LOBBY,
+    canStart: manager && room.phase === PHASES.LOBBY && ids(room).length === room.settings.playerCount,
     canAckRole: room.phase === PHASES.ROLE_REVEAL && !actor.roleAcknowledged,
-    canBeginTalk: host && room.phase === PHASES.ROLE_REVEAL,
-    canEndTalk: host && !room.paused && [PHASES.TALK, PHASES.WRAP_UP].includes(room.phase), canExtendTalk: host && [PHASES.TALK, PHASES.WRAP_UP].includes(room.phase),
-    canEndClues: host && !room.paused && room.phase === PHASES.FINAL_CLUES,
-    canEndMeeting: host && !room.paused && [PHASES.MEETING_DISCUSS, PHASES.MEETING_TURNS].includes(room.phase),
-    canEndMeetingTurn: !room.paused && room.phase === PHASES.MEETING_TURNS && (host || room.meeting.order[room.meeting.speakerIndex] === actorId),
-    canSkipMeetingTurn: !room.paused && room.phase === PHASES.MEETING_TURNS && (host || room.meeting.order[room.meeting.speakerIndex] === actorId),
-    canSetMeetingTurnSeconds: host && room.phase === PHASES.MEETING_TURNS,
-    canEndVote: host && !room.paused && room.phase === PHASES.VOTING,
-    canPause: host && !room.paused && (room.deadlineAt != null || (room.flowVersion >= 4 && room.phase === PHASES.TALK)),
-    canResume: host && !!room.paused,
-    canRestart: host && ![PHASES.LOBBY, PHASES.JUDGE_DECISION].includes(room.phase),
-    canCancel: host && active && room.phase !== PHASES.JUDGE_DECISION, canReplay: host && room.phase === PHASES.FINISHED,
-    canFollowUp: host && talk && room.topic.followUps.some(t => !room.usedFollowUpIds.includes(t.id)),
-    canClearFollowUp: host && talk && !!room.activeFollowUp,
-    canEndTemporaryTopic: host && abilityTalk && !!room.temporaryTopic,
+    canBeginTalk: manager && room.phase === PHASES.ROLE_REVEAL,
+    canEndTalk: manager && !room.paused && [PHASES.TALK, PHASES.WRAP_UP].includes(room.phase), canExtendTalk: manager && [PHASES.TALK, PHASES.WRAP_UP].includes(room.phase),
+    canEndClues: manager && !room.paused && room.phase === PHASES.FINAL_CLUES,
+    canEndMeeting: manager && !room.paused && [PHASES.MEETING_DISCUSS, PHASES.MEETING_TURNS].includes(room.phase),
+    canEndMeetingTurn: !room.paused && room.phase === PHASES.MEETING_TURNS && (manager || room.meeting.order[room.meeting.speakerIndex] === actorId),
+    canSkipMeetingTurn: !room.paused && room.phase === PHASES.MEETING_TURNS && (manager || room.meeting.order[room.meeting.speakerIndex] === actorId),
+    canSetMeetingTurnSeconds: manager && room.phase === PHASES.MEETING_TURNS,
+    canEndVote: manager && !room.paused && room.phase === PHASES.VOTING,
+    canPause: manager && !room.paused && (room.deadlineAt != null || (room.flowVersion >= 4 && room.phase === PHASES.TALK)),
+    canResume: manager && !!room.paused,
+    canRestart: manager && ![PHASES.LOBBY, PHASES.JUDGE_DECISION].includes(room.phase),
+    canCancel: manager && active && room.phase !== PHASES.JUDGE_DECISION, canReplay: manager && room.phase === PHASES.FINISHED,
+    canFollowUp: manager && talk && room.topic.followUps.some(t => !room.usedFollowUpIds.includes(t.id)),
+    canClearFollowUp: manager && talk && !!room.activeFollowUp,
+    canEndTemporaryTopic: manager && abilityTalk && !!room.temporaryTopic,
     canSendDirection: abilityTalk && actor.role === 'WOLF' && actor.wolfProfession === 'director' && actor.wolfAbility?.type === 'director' && !actor.wolfAbility.used,
     canChangeTopic: abilityTalk && actor.role === 'WOLF' && actor.wolfProfession === 'topic_shifter' && actor.wolfAbility?.type === 'topic_shifter' && !actor.wolfAbility.used && !room.temporaryTopic,
     canCompleteDirection: abilityTalk && actor.role !== 'WOLF' && !!actor.secretDirection && !actor.secretDirection.completed,
@@ -1005,7 +1006,7 @@ function projectState(room, actorId, now = Date.now()) {
     canSubmitVote: !room.paused && room.phase === PHASES.VOTING && !Object.prototype.hasOwnProperty.call(room.ballots || {}, actor.id),
     canJudgeVote: !room.paused && room.phase === PHASES.JUDGE_DECISION && room.judge.judges.includes(actor.id) && !room.judge.nominations[actor.id],
   };
-  const publicState = { version: 3, rulesVersion: 3, flowVersion: room.flowVersion || 3,
+  const publicState = { sharedControls: !!room.sharedControls, version: 3, rulesVersion: 3, flowVersion: room.flowVersion || 3,
     releaseStage: (room.flowVersion || 3) >= 4 ? CONTENT.releaseStage || 'stable' : 'stable',
     contentVersion: room.contentVersion || 'legacy-v3', code: room.code, revision: room.revision,
     matchId: room.matchId, phaseVersion: room.phaseVersion, gameNumber: room.gameNumber,
@@ -1046,7 +1047,7 @@ function projectState(room, actorId, now = Date.now()) {
       judgeResult: clone((room.voteHistory || []).find(v => v.type === 'FINAL')?.judgeResult || null),
       jester: (room.voteHistory || []).some(v => v.type === 'FINAL') ? jesterStatus(room, room.voteHistory.find(v => v.type === 'FINAL')) : null };
   }
-  const privateState = { playerId: actor.id, name: actor.name, isHost: host, ready: !!actor.ready,
+  const privateState = { playerId: actor.id, name: actor.name, isHost: host, canManage: manager, ready: !!actor.ready,
     role: actor.role, roleAcknowledged: !!actor.roleAcknowledged, profession: actor.profession,
     wolfProfession: actor.role === 'WOLF' ? actor.wolfProfession || 'normal' : null,
     wolfAbility: wolfAbilityView(room, actor),

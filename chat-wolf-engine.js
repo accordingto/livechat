@@ -226,7 +226,7 @@ function requireActor(room, actorId) {
 
 function requireHost(room, actorId) {
   const actor = requireActor(room, actorId);
-  if (!actor.isHost || room.hostPlayerId !== actorId) fail('HOST_ONLY', 403);
+  if (!room.sharedControls && (!actor.isHost || room.hostPlayerId !== actorId)) fail('HOST_ONLY', 403);
   return actor;
 }
 
@@ -632,11 +632,11 @@ function dispatch(room, actorId, action, payload = {}, now = Date.now()) {
       if (room.paused) fail('GAME_PAUSED', 409);
       if (room.phase === PHASES.TALK) {
         const currentId = room.currentRoundState.order[room.currentRoundState.speakerIndex];
-        if (actorId !== currentId && !actor.isHost) fail('CURRENT_SPEAKER_ONLY', 403);
+        if (actorId !== currentId && !actor.isHost && !room.sharedControls) fail('CURRENT_SPEAKER_ONLY', 403);
         finishCurrentTalk(room, now, actorId === currentId ? 'ended' : 'host-skipped');
       } else if (room.phase === PHASES.MEETING_DISCUSS) {
         const currentId = room.meeting.order[room.meeting.speakerIndex];
-        if (actorId !== currentId && !actor.isHost) fail('CURRENT_SPEAKER_ONLY', 403);
+        if (actorId !== currentId && !actor.isHost && !room.sharedControls) fail('CURRENT_SPEAKER_ONLY', 403);
         finishCurrentMeetingSpeaker(room, now, actorId === currentId ? 'ended' : 'host-skipped');
       } else fail('WRONG_PHASE', 409);
       break;
@@ -862,10 +862,12 @@ function timerProjection(room) {
 function projectState(room, actorId, now = Date.now()) {
   if (isV3(room)) return v3Engine().projectState(room, actorId, now);
   const actor = requireActor(room, actorId);
+  const manager = !!room.sharedControls || !!actor.isHost;
   const reveal = [PHASES.TASK_REVIEW, PHASES.FINISHED].includes(room.phase);
   const players = playerIds(room).map((id) => playerSummary(room, room.players[id], now));
   const names = Object.fromEntries(players.map((player) => [player.id, player.name]));
   const publicState = {
+    sharedControls: !!room.sharedControls,
     version: room.version,
     revision: room.revision,
     serverNow: now,
@@ -953,6 +955,7 @@ function projectState(room, actorId, now = Date.now()) {
     playerId: actorId,
     name: actor.name,
     isHost: !!actor.isHost,
+    canManage: manager,
     role: room.phase === PHASES.LOBBY ? null : actor.role,
     roleAcknowledged: !!actor.roleAcknowledged,
     wolfTeam: actor.role === 'WOLF' && room.phase !== PHASES.LOBBY
@@ -961,25 +964,25 @@ function projectState(room, actorId, now = Date.now()) {
     tasks: actor.role === 'WOLF' && !reveal ? (room.tasks || []).map((task) => wolfTask(room, task)) : null,
     myVoteSubmitted: !!(room.voting && room.voting.submitted && room.voting.submitted[actorId]),
     actions: {
-      canStart: actor.isHost && room.phase === PHASES.LOBBY,
+      canStart: manager && room.phase === PHASES.LOBBY,
       canAckRole: room.phase === PHASES.ROLE_REVEAL && !actor.roleAcknowledged,
-      canBeginTalk: actor.isHost && room.phase === PHASES.ROLE_REVEAL,
+      canBeginTalk: manager && room.phase === PHASES.ROLE_REVEAL,
       canEndTurn: !room.paused && currentSpeakerId === actorId,
-      canHostEndTurn: !room.paused && actor.isHost && !!currentSpeakerId && currentSpeakerId !== actorId,
+      canHostEndTurn: !room.paused && manager && !!currentSpeakerId && currentSpeakerId !== actorId,
       canRingBell: canBell,
-      canEndFreeTalk: actor.isHost && room.phase === PHASES.FREE_TALK && !room.paused,
-      canFollowUp: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.followUpsRemaining > 0,
-      canNewTopic: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.relatedTopicsRemaining > 0,
-      canPause: actor.isHost && [PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase) && !room.paused,
-      canResume: actor.isHost && !!room.paused,
-      canCancel: actor.isHost && room.phase !== PHASES.FINISHED,
+      canEndFreeTalk: manager && room.phase === PHASES.FREE_TALK && !room.paused,
+      canFollowUp: manager && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.followUpsRemaining > 0,
+      canNewTopic: manager && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && publicState.talk && publicState.talk.relatedTopicsRemaining > 0,
+      canPause: manager && [PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase) && !room.paused,
+      canResume: manager && !!room.paused,
+      canCancel: manager && room.phase !== PHASES.FINISHED,
       canEditTaskNote: actor.role === 'WOLF' && !room.tasksFrozen
         && [PHASES.ROLE_REVEAL, PHASES.TALK, PHASES.FREE_TALK, PHASES.MEETING_DISCUSS, PHASES.VOTING].includes(room.phase)
         && !(room.phase === PHASES.VOTING && room.voting && room.voting.type === 'FINAL'),
       canClaimTasks: actor.role === 'WOLF' && [PHASES.TALK, PHASES.FREE_TALK].includes(room.phase) && !room.tasksFrozen,
       canSubmitVote: room.phase === PHASES.VOTING && !room.paused && !(room.voting && room.voting.submitted[actorId]),
-      canReviewTasks: actor.isHost && room.phase === PHASES.TASK_REVIEW,
-      canReplay: actor.isHost && room.phase === PHASES.FINISHED,
+      canReviewTasks: manager && room.phase === PHASES.TASK_REVIEW,
+      canReplay: manager && room.phase === PHASES.FINISHED,
     },
   };
   return { public: publicState, private: privateState };

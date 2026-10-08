@@ -1,3 +1,22 @@
+## CURRENT: Independent game execution (2026-10-09)
+
+The recent games now have an optional server executor: `api/hub-executor.js`,
+`runtime/*-executor.cjs`, and `hub-executor.js`. It is enabled ONLY when the
+hosting project's Production `HUB_EXECUTOR_SECRET` is configured. Keep the
+same original player links, bearer rules, private projections, command receipts,
+and game/phase fences. Remaining players may share management in service mode;
+legacy rooms keep their previous permissions until explicitly registered.
+Presence has a 60-second reconnect grace and recovery is an explicit player
+operation. Never invent votes, selections or scores. Keep the minimum-player
+rules, manual social judgments and Thinker/Spotlight role decisions. CUT hidden
+deadlines remain private, with one online card driving server checks at 500ms.
+Chat Wolf MUST retain its complete HistoryScope allocation/journal coordinator;
+never replace it with a plain engine CAS or best-effort history merge. The
+browser must not resume authority while a server epoch is present. Missing
+configuration keeps legacy browser execution usable; do not claim host-free
+production play until `/api/hub-executor` is ready and room migration is verified.
+See `hub-executor-mode.md` for activation, trust limits, recovery and maintenance.
+
 ## CURRENT: Open Mic Rescue text activities (2026-10-09)
 
 Open Mic Rescue now renders text titles and original activity prompts only.

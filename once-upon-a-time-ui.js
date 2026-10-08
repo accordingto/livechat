@@ -55,8 +55,11 @@
     rulePass:['交棒時抽一張，可選擇丟一張或全部保留，再交給左邊玩家。','Pass: draw one, optionally discard one, then hand the story to the player on your left.'],
     ruleChallenge:['質疑時口頭討論，由未直接參與的玩家判斷。成功則原說故事的人抽一張，交給左邊的人；失敗無懲罰。兩人局由口頭共識與主持確認。','Challenge: discuss aloud, then uninvolved players decide. Success makes the Storyteller draw one and pass left; failure has no penalty. With no uninvolved voter, agree aloud and the host confirms.'],
     ruleEnding:['手牌清空且輪到你才能出結局，不能被打斷。其他玩家過半拒絕才不成立；平票接受。拒絕後換結局、抽一張故事牌並交給左邊的人。','Only the current Storyteller with an empty hand can play an ending. It cannot be interrupted. A majority must reject it; ties accept. Rejection replaces the ending, draws one Story Card and passes left.'],
+    ruleSharedTrust:['用既有語音房聊天，玩家可共同管理牌局。確定有人離線後可處理缺席玩家；缺席者的票算棄權。兩人局的社會判定仍須口頭同意並明確確認。不要分享私人卡片畫面。','Use your existing voice room. Players can manage the table together. Handle confirmed absences when needed; missing votes abstain. Two-player social decisions still require spoken agreement and explicit confirmation. Do not screen-share private cards.'],
+    pendingShared:['仍在等待同步，可以重試同一次操作。','Still waiting for confirmation. You can retry the same action.'],
     ruleTrust:['用既有語音房聊天。網頁不聽錄音、不判語意；主持頁需要保持開啟。不要分享私人卡片畫面。','Use your existing voice room. The app does not record or judge speech. Keep the trusted host page open. Do not screen-share your private card.'],
     online:['已同步','Connected'], offline:['連線中斷，正在重連','Offline—reconnecting'], waitingHost:['等待主持頁重新連線','Waiting for the host page'],
+    awayPlayers:['至少需要兩位玩家在線，請等候其他人回來。','At least two players must be online. Wait for another player to return.'], awayVotes:['在線玩家還沒投完票，請等候他們的選擇。','Online players have not finished voting. Wait for their choices.'],
     sending:['送出中…','Sending…'], retry:['重試這次操作','Retry this action'], pending:['仍在等待主持頁確認，可重試同一次操作。','Still waiting for the host. You can retry the same action.'],
     changed:['故事狀態已改變，請重新選擇操作。','The story has moved on. Choose your action again.'], unavailable:['目前不能執行這個操作。','This action is not available now.'],
     notYourTurn:['目前不是你說故事。','You are not the current Storyteller.'], invalidCard:['請選擇你仍持有的故事牌。','Select a Story Card still in your hand.'],
@@ -92,25 +95,26 @@
   function button(type,label,extra='',secondary=false,disabled=false){return '<button type="button" class="once-button'+(secondary?' once-button--secondary':'')+'" data-once-action="'+esc(type)+'" '+extra+(disabled?' disabled':'')+'>'+esc(t(label))+'</button>';}
   const player=(s,num)=>list(s.roster).find(p=>p.playerNum===num||p.id===num);
   const name=(s,num)=>player(s,num)?.name||'Player '+num;
-  function rulesHTML(){return '<details class="once-help" data-once-detail="rules"><summary>'+esc(t('help'))+'</summary><p>'+esc(t('ruleGoal'))+'</p><div class="once-category-key">'+list(deck().categories).map(c=>'<span class="once-cat-'+esc(c.id)+'">'+icon(c.id)+esc(c.label)+'</span>').join('')+'</div>'+['ruleStory','ruleNormal','ruleSpecial','rulePass','ruleChallenge','ruleEnding','ruleTrust'].map(k=>'<p>'+esc(t(k))+'</p>').join('')+'</details>';}
+  function rulesHTML(s={}){return '<details class="once-help" data-once-detail="rules"><summary>'+esc(t('help'))+'</summary><p>'+esc(t('ruleGoal'))+'</p><div class="once-category-key">'+list(deck().categories).map(c=>'<span class="once-cat-'+esc(c.id)+'">'+icon(c.id)+esc(c.label)+'</span>').join('')+'</div>'+['ruleStory','ruleNormal','ruleSpecial','rulePass','ruleChallenge','ruleEnding',s.sharedControls===true?'ruleSharedTrust':'ruleTrust'].map(k=>'<p>'+esc(t(k))+'</p>').join('')+'</details>';}
   function voteHTML(s,host){
     if(!s.vote)return '';
+    const manager=host||s.sharedControls===true&&s.hostControls===true;
     const v=s.vote,kind=v.kind,ending=kind==='ending',challenge=kind==='challenge';
     const options=ending?[['accept','accept'],['reject','reject']]:challenge?[['lose','lose'],['continue','keepStory']]:[['valid','valid'],['invalid','invalid']];
     const can=s.actions?.vote,received=Array.isArray(v.received)?v.received.length:Number(v.received||0);
     return '<section class="once-panel once-decision" aria-live="polite"><h2>'+esc(t(ending?'endQuestion':challenge?'challengeQuestion':'disputeQuestion'))+'</h2>'+(ending?'<p class="once-ending-review">'+esc((s.endingCard||v.endingCard)?.text||'')+'</p>':'')+(v.returnLatest?'<p class="once-muted">'+esc(t('returnLatest'))+'</p>':'')+
       (v.requiresSocial?'<p>'+esc(t('social'))+'</p>':'<p class="once-muted">'+esc(t('voteCount',{n:received,total:v.totalVoters??list(v.eligible).length}))+'</p><p class="once-muted">'+esc(t('voteHint'))+'</p>')+
       (can?'<div class="once-actions">'+options.map(([value,label])=>button('vote',label,'data-choice="'+value+'"',value==='invalid'||value==='reject'||value==='continue')).join('')+'</div>':!host?'<p>'+esc(t(v.ownChoice?'voteSent':'voteWaiting'))+'</p>':'')+
-      (host&&s.actions?.resolveSocial?'<div class="once-actions">'+options.map(([value,label])=>button('resolveSocial',label,'data-choice="'+value+'"',value==='invalid'||value==='reject'||value==='continue')).join('')+'</div>':'')+
-      (host&&s.actions?.finishVote?'<div class="once-actions">'+button('finishVote','finishVote','',true)+'</div>':'')+'</section>';
+      (manager&&s.actions?.resolveSocial?'<div class="once-actions">'+options.map(([value,label])=>button('resolveSocial',label,'data-choice="'+value+'"',value==='invalid'||value==='reject'||value==='continue')).join('')+'</div>':'')+
+      (manager&&s.actions?.finishVote?'<div class="once-actions">'+button('finishVote','finishVote','',true)+'</div>':'')+'</section>';
   }
   function tableHTML(payload,options={}){
-    const s=payload?.once||payload,host=!!options.host,a=s.actions||{},hand=list(s.hand),who=name(s,s.storyteller);
+    const s=payload?.once||payload,host=!!options.host,manager=host||s.sharedControls===true&&s.hostControls===true,a=s.actions||{},hand=list(s.hand),who=name(s,s.storyteller);
     const roster='<div class="once-roster">'+list(s.roster).map(p=>'<span class="once-seat'+(s.storyteller===p.playerNum?' is-storyteller':'')+'"><strong>'+esc(p.name)+'</strong><span>'+esc(s.phase==='LOBBY'?t(p.ready?'ready':'notReady'):t('cardsCount',{n:p.handCount??0}))+'</span></span>').join('')+'</div>';
     let body='';
-    if(s.phase==='LOBBY')body='<section class="once-panel"><h2>'+esc(t('lobby'))+'</h2>'+roster+'<p class="once-muted">'+esc(t('readyHint'))+'</p><div class="once-actions">'+(host?button('deal','deal','',false,!a.deal):a.ready?button('ready',player(s,s.playerNum)?.ready?'unready':'ready'):'')+'</div></section>';
-    else if(s.phase==='CHOOSING_FIRST')body='<section class="once-panel once-first"><div><h2>'+esc(t('first'))+'</h2><p class="once-muted">'+esc(t('firstHelp'))+'</p>'+(host?'<label>'+esc(t('choosePlayer'))+'<select data-once-first-player>'+list(s.roster).map(p=>'<option value="'+p.playerNum+'">'+esc(p.name)+'</option>').join('')+'</select></label><div class="once-actions">'+button('chooseFirst','chooseFirst')+button('randomFirst','random','',true)+'</div>':'<p>'+esc(t('waitingFirst'))+'</p>')+'</div>'+cardHTML(s.starterCard,'history')+'</section>';
-    else if(['FINISHED','CANCELLED'].includes(s.phase))body='<section class="once-panel once-winner"><h2>'+esc(s.winner?t('winner',{name:name(s,s.winner)}):t('cancelled'))+'</h2>'+(s.endingCard?'<p class="once-ending-review">'+esc(s.endingCard.text)+'</p>':'')+(host?'<div class="once-actions">'+button('restart','restart')+'</div>':'')+'</section>';
+    if(s.phase==='LOBBY')body='<section class="once-panel"><h2>'+esc(t('lobby'))+'</h2>'+roster+'<p class="once-muted">'+esc(t('readyHint'))+'</p><div class="once-actions">'+(manager?button('deal','deal','',false,!a.deal):'')+(!host&&a.ready?button('ready',player(s,s.playerNum)?.ready?'unready':'ready'):'')+'</div></section>';
+    else if(s.phase==='CHOOSING_FIRST')body='<section class="once-panel once-first"><div><h2>'+esc(t('first'))+'</h2><p class="once-muted">'+esc(t('firstHelp'))+'</p>'+(manager?'<label>'+esc(t('choosePlayer'))+'<select data-once-first-player>'+list(s.roster).map(p=>'<option value="'+p.playerNum+'">'+esc(p.name)+'</option>').join('')+'</select></label><div class="once-actions">'+button('chooseFirst','chooseFirst')+button('randomFirst','random','',true)+'</div>':'<p>'+esc(t('waitingFirst'))+'</p>')+'</div>'+cardHTML(s.starterCard,'history')+'</section>';
+    else if(['FINISHED','CANCELLED'].includes(s.phase))body='<section class="once-panel once-winner"><h2>'+esc(s.winner?t('winner',{name:name(s,s.winner)}):t('cancelled'))+'</h2>'+(s.endingCard?'<p class="once-ending-review">'+esc(s.endingCard.text)+'</p>':'')+(manager?'<div class="once-actions">'+button('restart','restart')+'</div>':'')+'</section>';
     else body='<div class="once-turn-strip"><section class="once-storyteller'+(s.storyteller===s.playerNum?' is-mine':'')+'"><div><p class="once-kicker">'+esc(t('storyteller',{name:who}))+'</p><h2>'+esc(t(host?'sharedTurn':s.storyteller===s.playerNum?'yourTurn':'theirTurn'))+'</h2></div></section>'+roster+'</div>'+voteHTML(s,host);
     if(s.phase==='PASS_DISCARD')body+='<p class="once-notice">'+esc(t(s.storyteller===s.playerNum?'discardHint':'waitingDiscard'))+'</p>';
     if(s.interrupt&&s.phase==='STORYTELLING')body+='<div class="once-notice once-interrupt-notice"><span>'+esc(t('tookOver',{name:name(s,s.interrupt.interrupter),title:s.interrupt.card?.title||deck().storyById?.[s.interrupt.cardId]?.title||s.interrupt.cardId}))+'</span>'+(a.dispute?button('dispute','dispute','',true):'')+'</div>';
@@ -133,10 +137,13 @@
         (a.discard?button('discard','discard','',false,!selected):'')+(a.keepAll?button('keepAll','keep','',true):'')+(a.pass?button('pass','pass','',true):'')+(a.challenge?button('challenge','challenge','',true):'')+'</div></div></div></section>';
     }
     body+=endingDock+'</div>';
-    if(host&&a.cancel)body+='<div class="once-host-tools">'+button('cancel','cancelGame','',true)+'</div>';
-    return '<div class="once-game once-game--reference"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML()+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
+    if(manager&&a.cancel)body+='<div class="once-host-tools">'+button('cancel','cancelGame','',true)+'</div>';
+    return '<div class="once-game once-game--reference"><header class="once-game-header"><div><p class="once-kicker">Ice Breaking Hub</p><h1>Once Upon a Time</h1></div><div class="once-player-meta"><strong>'+esc(host?t('host'):payload.name||name(s,s.playerNum))+'</strong><span class="once-connection" role="status">'+esc(t('online'))+'</span></div></header><div class="once-request-status" aria-live="polite"></div>'+body+rulesHTML(s)+'<details class="once-help" data-once-detail="log"><summary>'+esc(t('log'))+'</summary><ol class="once-log">'+list(s.log).slice(-12).map(item=>'<li>'+esc(typeof item==='string'?item:item.text||'')+'</li>').join('')+'</ol></details></div>';
   }
   function errorText(code){
+    if(code==='waiting_players')return t('awayPlayers');
+    if(code==='waiting_votes')return t('awayVotes');
+    if(code==='social_agreement_required')return t('social');
     if(/offline|network/.test(code))return t('offline');
     if(/stale|turn|session|opportunity/.test(code))return t('changed');
     if(/ending_locked|hand_not_empty|cards_remaining/.test(code))return t('emptyRequired');
@@ -183,10 +190,10 @@
     paint(){
       if(!this.data)return;
       const now=this.options.now?.()||Date.now(),s=this.data.once,online=this.options.connected?.()!==false;
-      const alive=!s.hostLiveUntil||s.hostLiveUntil>now;
+      const alive=s.sharedControls===true||!s.hostLiveUntil||s.hostLiveUntil>now;
       const status=this.el.querySelector('.once-connection');if(status){status.textContent=t(!online?'offline':!alive?'waitingHost':'online');status.classList.toggle('is-offline',!online||!alive);}
       const node=this.el.querySelector('.once-request-status');if(!node)return;
-      if(this.pending){const wait=now-this.pending.at>6500;node.innerHTML='<p>'+esc(t(wait?'pending':'sending'))+'</p>'+(wait?button('retry','retry','',true):'');}
+      if(this.pending){const wait=now-this.pending.at>6500;node.innerHTML='<p>'+esc(t(wait?(s.sharedControls===true?'pendingShared':'pending'):'sending'))+'</p>'+(wait?button('retry','retry','',true):'');}
       else node.textContent=this.error;
     }
     async send(type,extra={},captured){

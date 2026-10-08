@@ -314,7 +314,7 @@
   }
 
   function hostControls() {
-    if (!state.private.isHost || ['LOBBY', 'ROLE_REVEAL', 'TASK_REVIEW', 'FINISHED'].includes(state.public.phase)) return '';
+    if (!(state.private.canManage || state.private.isHost) || ['LOBBY', 'ROLE_REVEAL', 'TASK_REVIEW', 'FINISHED'].includes(state.public.phase)) return '';
     const actions = state.private.actions;
     return `<div class="host-controls">
       ${actions.canPause ? `<button class="btn secondary small" type="button" data-action="pause">${esc(C.pause)}</button>` : ''}
@@ -407,16 +407,16 @@
       <div class="game-grid">
         <div class="main-stack">
           <section class="panel"><div class="panel-header"><div><h2>${esc(C.lobby)}</h2><p>${esc(C.lobbyHelp)}</p></div><span class="phase-chip">${esc(C.waitingForPlayers(current, state.public.settings.playerCount))}</span></div>
-            ${playerRows(state.private.isHost)}
+            ${playerRows(state.private.canManage || state.private.isHost)}
             <div class="button-row" style="margin-top:14px">
               <button class="btn ${ready ? 'ghost' : ''}" type="button" data-action="ready" data-ready="${ready ? 'false' : 'true'}">${esc(ready ? C.cancelReady : C.setReady)}</button>
-              ${state.private.isHost ? `<button class="btn warning" type="button" data-action="startGame"${canStart ? '' : ' disabled'}>${esc(C.startGame)}</button>` : ''}
+              ${(state.private.canManage || state.private.isHost) ? `<button class="btn warning" type="button" data-action="startGame"${canStart ? '' : ' disabled'}>${esc(C.startGame)}</button>` : ''}
             </div>
           </section>
           <details class="panel" data-detail="question-preview"><summary><strong>${esc(C.previewQuestions)}</strong></summary><ol>${questions.map((round) => `<li style="margin:10px 0;line-height:1.5">${esc(round.question)}</li>`).join('')}</ol></details>
         </div>
         <div class="side-stack">
-          ${state.private.isHost ? `<form class="panel" id="settings-form"><div class="panel-header"><h3>${esc(C.saveSettings)}</h3></div>
+          ${(state.private.canManage || state.private.isHost) ? `<form class="panel" id="settings-form"><div class="panel-header"><h3>${esc(C.saveSettings)}</h3></div>
             <div class="inline-fields"><label class="field"><span>${esc(C.playerCount)}</span><select name="playerCount">${options(3, 12, settings.playerCount, { 6: C.recommended, 7: C.recommended, 8: C.recommended })}</select></label><label class="field"><span>${esc(C.wolfCount)}</span><select name="wolfCount">${options(1, Math.max(1, Number(settings.playerCount) - 2), settings.wolfCount)}</select></label></div>
             <label class="check-line"><input name="bellEnabled" type="checkbox"${settings.bellEnabled ? ' checked' : ''}><span>${esc(C.bellSetting)}</span></label>
             <div class="inline-fields"><label class="field"><span>${esc(C.talkSeconds)}</span><input name="talkSeconds" type="number" min="20" max="180" value="${esc(settings.talkSeconds)}"></label><label class="field"><span>${esc(C.meetingSeconds)}</span><input name="meetingSeconds" type="number" min="10" max="60" value="${esc(settings.meetingSeconds)}"></label></div>
@@ -609,7 +609,7 @@
     const connection = document.getElementById('host-connection');
     if (connection) {
       connection.hidden = !state;
-      connection.textContent = !state ? '' : Date.now() + serverOffset > state.public.hostLiveUntil
+      connection.textContent = !state ? '' : state.public.sharedControls ? (Date.now() + serverOffset > state.public.hostLiveUntil ? C.independentReconnecting : C.independentConnected) : Date.now() + serverOffset > state.public.hostLiveUntil
         ? C.hostUnavailable : state.private.isHost ? (embeddedCard ? C.keepMainHostOpen : C.keepHostOpen) : C.hostConnected;
     }
     document.querySelectorAll('[data-deadline]').forEach((element) => {

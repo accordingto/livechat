@@ -18,7 +18,7 @@
   const roster=['Alex','Jamie','Sam','Riley','Taylor','Robin','Morgan','Casey'].slice(0,count).map((name,i)=>({playerNum:i+1,name}));
   const seed=()=>crypto.getRandomValues(new Uint32Array(1))[0],demoView=()=>Number(byId('dx-demo-view').value);
   const validTarget=value=>Number.isInteger(Number(value))&&Number(value)>=5&&Number(value)<=100;
-  const canOpen=()=>demo||!!(sync?.connected&&sync.own&&['ready','switched'].includes(status));
+  const canOpen=()=>demo||!!(sync?.connected&&(sync.own || sync.doc?.executor?.v === 1)&&['ready','switched'].includes(status));
   function targetScore(){const value=Number(byId('dx-target-score').value);if(!validTarget(value))throw new Error('invalid_target_score');return value;}
   function setSeats(players,selected){
     byId('dx-host-seat').innerHTML=players.map(p=>'<option value="'+p.playerNum+'">'+DIXIT_UI.esc(p.name)+'</option>').join('');

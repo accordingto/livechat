@@ -202,7 +202,11 @@ var CUT_ENGINE = (() => {
     const now = input.now;
     const rng = random.create(input.seed);
     let error = '';
-    if (!host && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
+    const sharedManager = state.sharedControls === true && isActive(state, actor) &&
+      ['begin', 'next', 'pause', 'resume', 'exclude'].includes(input.type);
+    const selfReturn = state.sharedControls === true && input.type === 'exclude' &&
+      Number(input.playerNum) === actor && input.active === true;
+    if (!host && !sharedManager && !selfReturn && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
     else if (input.turnId !== state.turnId) error = 'stale_turn';
     else if (!Number.isFinite(now) || now < state.lastChangeAt) error = 'invalid_time';
     else switch (input.type) {
@@ -339,6 +343,7 @@ var CUT_ENGINE = (() => {
       previousSpeaker: state.previousSpeaker ?? null, roster,
       cutEvent: state.cutEvent ? copy(state.cutEvent) : null,
       pauseReason: state.pauseReason || '', reply: (state.replies || {})[playerNum] || null,
+      ...(state.sharedControls === true ? { sharedControls: true, canManage: mine?.active === true } : {}),
       canBegin: (state.phase === 'ready' || (waitingCut(state) && isActive(state, state.nextSpeaker))) &&
         active(state).length >= config.minPlayers && (playerNum === 0 || mine?.active === true),
     };

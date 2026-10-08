@@ -195,7 +195,7 @@ var DIXIT_SYNC = (() => {
       return cards;
     }
     canAcquire(doc, now = this.now()) {
-      if (this.stopped || this.resumeSuperseded) return false;
+      if (doc?.executor?.v === 1 || this.stopped || this.resumeSuperseded) return false;
       if (this.mode === 'private' && doc?.state && !this.privateOwner(doc) && !this.bootstrap(doc) && !this.legacyOpeningComplete(doc)) return false;
       if (!doc?.owner || doc.owner === this.client || !(doc.leaseUntil > now)) return true;
       if (this.suspended && this.hasAcquired) return false;
@@ -246,6 +246,7 @@ var DIXIT_SYNC = (() => {
       try {
         const result = await this.ref.transaction(doc => {
           doc = doc || {};
+          if (doc.executor?.v === 1) return;
           if (this.stopped || !this.connected || !this.canAcquire(doc, now)) return;
           const changedOwner = doc.owner !== this.client;
           return Object.assign({}, doc, { owner: this.client, ownerMode: this.mode, ownerModeClient: this.client,
@@ -271,7 +272,7 @@ var DIXIT_SYNC = (() => {
       if (!this.connected || this.stopped) throw new Error('offline');
       const now = this.now();
       const result = await this.ref.transaction(doc => {
-        if (!this.liveOwner(doc, now)) return;
+        if (doc?.executor?.v === 1 || !this.liveOwner(doc, now)) return;
         const next = fn(doc.state || null);
         if (!next || next === doc.state) return;
         const opening = next.sessionId !== doc.state?.sessionId && this.openingCards

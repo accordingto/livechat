@@ -84,8 +84,22 @@
     put(path, value, etag) { return this.call(path, 'PUT', value, etag); }
   }
 
+
+function sourceBinding(source) {
+  if (!source || typeof source !== 'object') return JSON.stringify(null);
+  const game = typeof source.game === 'string' ? source.game : null;
+  const key = ({ onceupon:'once', letstalk:'talk', bluffking:'bluff', chatwolf:'chatWolf' })[game] || game;
+  const node = source[key] && typeof source[key] === 'object' ? source[key] : {};
+  // Phase, points, deadline and retained executor metadata are allowed to
+  // change while registration waits for its first correct Hub publication.
+  const fields = Object.fromEntries(['sessionId','room','token','identityId','historyToken','version']
+    .filter(name => node[name] != null && ['string','number','boolean'].includes(typeof node[name]))
+    .map(name => [name,node[name]]));
+  return JSON.stringify([game,source.sessionId || null,fields]);
+}
+
   class Client {
-    constructor({ databaseURL, store, storage, clock = () => Date.now(), interval = 1500, allowHostRecovery = true, hostPresentation = false } = {}) {
+    constructor({ databaseURL, store, storage, clock = () => Date.now(), interval = 1500, allowHostRecovery = true, hostPresentation = false, serverExecutor = null } = {}) {
       this.store = store || new FirebaseREST(databaseURL);
       this.storage = storage || root.localStorage;
       this.now = clock;
@@ -93,6 +107,7 @@
       this.allowHostRecovery = allowHostRecovery;
       this.hostPresentation = hostPresentation;
       this.owner = uid();
+      this.serverExecutor = serverExecutor;
       this.host = null;
       this.lastView = null;
       this.running = null;
@@ -225,6 +240,7 @@
       }
       const card = (await this.store.get(this.path(code, token))).value;
       if (!card) fail('INVALID_SESSION');
+      if (root.HUB_EXECUTOR?.observe) root.HUB_EXECUTOR.observe(card, token);
       return this.accept(card);
     }
     async command(code, token, body, displayedView) {
@@ -263,13 +279,18 @@
           body: protectedBody, bodyJson: JSON.stringify(protectedBody) };
         if (JSON.stringify(request).length > 12000) fail('REQUEST_TOO_LARGE');
         const result = await this.store.put(path, { ...card, request }, old.etag);
-        if (!result.conflict) break;
+        if (!result.conflict) {
+          if (root.HUB_EXECUTOR?.observe) root.HUB_EXECUTOR.observe(result.value || { ...card, request }, token);
+          if (root.HUB_EXECUTOR?.pulse) void root.HUB_EXECUTOR.pulse().catch(() => {});
+          break;
+        }
         if (attempt === 7) fail('ACTION_CONFLICT');
       }
       if (this.host) await this.cycle();
       const start = Date.now();
       while (Date.now() - start < 18000) {
         const card = (await this.store.get(path)).value;
+        if (root.HUB_EXECUTOR?.observe) root.HUB_EXECUTOR.observe(card, token);
         if (card?.reply?.seq >= seq) {
           if (card.reply.id !== requestId) fail('ACTION_CONFLICT');
           if (card.reply.error) fail(card.reply.error);
@@ -294,20 +315,50 @@
       const old = await this.store.get(path), doc = old.value;
       if (!doc?.data) fail('ROOM_NOT_FOUND');
       const now = this.now();
+      if (this.serverExecutor) {
+        if (doc.executor?.epoch !== this.serverExecutor.epoch || doc.executor?.capsule !== this.serverExecutor.capsule) fail('STALE_EXECUTOR');
+      } else {
+        if (root.HUB_EXECUTOR?.registerWolf && await root.HUB_EXECUTOR.registerWolf(this, doc)) return;
+        // An obsolete browser cannot overwrite server state, even after its lease.
+        if (doc.executor?.v === 1) return;
+      }
       if (doc.owner !== this.owner && doc.leaseUntil > now) return;
       const data = JSON.parse(doc.data);
       const room = data.room;
+      if (this.serverExecutor) {
+        room.sharedControls = true;
+        // Before the first original-card publication, a new game may still show
+        // the previous game. Once observed, a switched source card fences this
+        // coordinator permanently until the original game is explicitly reopened.
+        if (data.cardLinks?.length) {
+          if (!/^[A-Z0-9]{4,12}$/.test(data.legacyRoom || '')) fail('INVALID_CARD_SETUP');
+          doc.executor.originalCardsSeen ||= {};
+          doc.executor.originalCardBaselines ||= {};
+          for (const link of data.cardLinks) {
+            if (!/^[A-Za-z0-9_-]{12,128}$/.test(link.sourceToken || '')) fail('INVALID_CARD_SETUP');
+            const source = (await this.store.get('rooms/' + data.legacyRoom + '/players/' + link.sourceToken)).value;
+            const matching = source?.game === 'chatwolf' && source.chatWolf?.room === code && source.chatWolf?.token === link.token;
+            if (matching) doc.executor.originalCardsSeen[link.playerNum] = true;
+            else if (doc.executor.originalCardsSeen[link.playerNum]) fail('GAME_SWITCHED');
+            else {
+              const signature = sourceBinding(source), prior = doc.executor.originalCardBaselines[link.playerNum];
+              if (prior == null) doc.executor.originalCardBaselines[link.playerNum] = signature;
+              else if (prior !== signature) fail('GAME_SWITCHED');
+            }
+          }
+        }
+      }
       // After a sleeping/closed host returns, preserve the last known remaining
       // time instead of silently timing out everybody during its absence.
-      if (doc.leaseUntil < now && room.deadlineAt != null && !room.paused) {
+      if (!this.serverExecutor && doc.leaseUntil < now && room.deadlineAt != null && !room.paused) {
         room.deadlineAt = now + Math.max(0, room.deadlineAt - doc.lastHostAt);
         room.revision++;
       }
-      if (doc.leaseUntil < now && room.temporaryTopic?.deadlineAt != null && !room.paused) {
+      if (!this.serverExecutor && doc.leaseUntil < now && room.temporaryTopic?.deadlineAt != null && !room.paused) {
         room.temporaryTopic.deadlineAt = now + Math.max(0, room.temporaryTopic.deadlineAt - doc.lastHostAt);
         room.revision++;
       }
-      if (doc.leaseUntil < now && room.flowVersion >= 4 && room.phase === 'TALK' && !room.paused && room.talkClock?.activeSince != null) {
+      if (!this.serverExecutor && doc.leaseUntil < now && room.flowVersion >= 4 && room.phase === 'TALK' && !room.paused && room.talkClock?.activeSince != null) {
         room.talkClock.elapsedMs += Math.max(0, doc.lastHostAt - room.talkClock.activeSince);
         room.talkClock.activeSince = now;
         room.revision++;
@@ -378,7 +429,8 @@
         } catch (e) { channel.reply.error = e.code || 'INVALID_REQUEST'; }
       }
       const revision = doc.revision + 1;
-      const nextDoc = { data: JSON.stringify(data), revision,
+      if (this.serverExecutor) room.sharedControls = true;
+      const nextDoc = { ...doc, data: JSON.stringify(data), revision,
         ...(doc.historyTransactionId ? { historyTransactionId: doc.historyTransactionId } : {}),
         owner: this.owner, leaseUntil: now + 10000, lastHostAt: now };
       let committed;
@@ -389,15 +441,23 @@
         if (historyScope) await historyScope.release();
         committed = await this.store.put(path, nextDoc, old.etag);
       }
-      if (committed.conflict || this.stopped) return;
+      if (committed.conflict || this.stopped) return { conflict: !!committed.conflict };
       await Promise.all(Object.entries(data.channels).map(async ([token, channel]) => {
         const view = room.players[channel.playerId] && !channel.error ? E.projectState(room, channel.playerId, now) : null;
         if (view) Object.assign(view.public, { syncRevision: revision, hostLiveUntil: now + 10000, transportRound: room.round || 0,
           legacyCardRoom: data.legacyRoom || null });
         for (let attempt = 0; attempt < 4; attempt++) {
           const ref = this.path(code, token), oldCard = await this.store.get(ref);
+          if (this.serverExecutor) {
+            const current = (await this.store.get(path)).value;
+            if (current?.executor?.epoch !== this.serverExecutor.epoch || current?.executor?.capsule !== this.serverExecutor.capsule) return;
+          }
           if ((oldCard.value?.revision || 0) > revision || this.stopped) return;
-          const result = await this.store.put(ref, { ...oldCard.value, revision,
+          const serverSeat = this.serverExecutor?.seats?.find(s => s.token === token);
+          const marker = serverSeat ? { hubExecutor: { v: 1, game: 'chatwolf', sessionId: this.serverExecutor.sessionId,
+            capsule: this.serverExecutor.capsule, revision, publishedAt: now,
+            absentNums: this.serverExecutor.seats.filter(s => now - (doc.executor.presence?.[s.playerNum] || doc.executor.createdAt) >= 60000).map(s => s.playerNum) } } : {};
+          const result = await this.store.put(ref, { ...oldCard.value, revision, ...marker,
             view: view ? JSON.stringify(view) : null,
             error: view ? null : channel.error || 'INVALID_SESSION',
             reply: channel.reply || { seq: channel.seq, id: '', error: null },
@@ -405,6 +465,7 @@
           if (!result.conflict) return;
         }
       }));
+      return { committed: true, revision };
     }
     async connectCards() {
       if (!this.host) fail('HOST_ONLY');

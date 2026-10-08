@@ -14,7 +14,7 @@ var ONCE_ENGINE = (() => {
   const storyCards = list(deck.storyCards), endingCards = list(deck.endingCards);
   const storyById = Object.fromEntries(storyCards.map(card => [card.id, card]));
   const endingById = Object.fromEntries(endingCards.map(card => [card.id, card]));
-  const HOST_TYPES = ['deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel'];
+  const HOST_TYPES = ['deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
   const TURN_FREE = ['ready', 'vote', 'finishVote', 'resolveSocial'];
   function seedValue(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return (value >>> 0) || 1;
@@ -32,7 +32,7 @@ var ONCE_ENGINE = (() => {
     }
     return result;
   }
-  function create({ id, roster, seed, now } = {}) {
+  function create({ id, roster, seed, now, sharedControls = false } = {}) {
     const players = list(roster);
     if (!id || players.length < 2 || players.length > 6) throw new Error('invalid_setup');
     if (new Set(players.map(p => p.playerNum)).size !== players.length ||
@@ -45,6 +45,7 @@ var ONCE_ENGINE = (() => {
       starterCard: null, history: [], log: [], lastAction: null, categoryOpportunity: null,
       latestPlay: null, interrupt: null, vote: null, passPlayer: null, endingPlayed: null,
       rngState: seedValue(seed), createdAt: Number(now) || 0, replies: {}, seen: {},
+      ...(sharedControls === true ? { sharedControls: true } : {}),
     };
   }
   function normalize(current) {
@@ -69,7 +70,16 @@ var ONCE_ENGINE = (() => {
     return s;
   }
   const name = (s, actor) => s.roster.find(p => p.playerNum === actor)?.name || 'Host';
-  const left = (s, actor) => s.roster[(s.roster.findIndex(p => p.playerNum === actor) + 1) % s.roster.length].playerNum;
+  const onlinePlayers = (s, cmd) => cmd.onlineNums == null ? s.roster.map(p => p.playerNum) :
+    s.roster.filter(p => list(cmd.onlineNums).includes(p.playerNum)).map(p => p.playerNum);
+  const left = (s, actor) => {
+    const i = s.roster.findIndex(p => p.playerNum === actor), online = s.sharedControls === true && s.availablePlayerNums != null ? list(s.availablePlayerNums) : s.roster.map(p => p.playerNum);
+    for (let step = 1; step <= s.roster.length; step++) {
+      const n = s.roster[(i + step) % s.roster.length].playerNum;
+      if (online.includes(n)) return n;
+    }
+    return null;
+  };
   function log(s, cmd, type, text) {
     const item = { id: cmd.id + ':' + type, type, actor: Number(cmd.actor), at: Number(cmd.now) || 0, text };
     s.log = [...s.log, item].slice(-128); s.lastAction = item;
@@ -183,11 +193,13 @@ var ONCE_ENGINE = (() => {
     const actor = Number(input.actor);
     if (!Number.isInteger(actor) || (actor !== 0 && !list(current.roster).some(p => p.playerNum === actor))) return current;
     if (list((current.seen || {})[actor]).includes(input.id)) return current;
-    const s = normalize(current), cmd = { ...input, actor }, host = actor === 0;
+    const s = normalize(current), cmd = { ...input, actor }, host = actor === 0, manager = host || s.sharedControls === true;
+    const online = onlinePlayers(s, cmd);
+    if (s.sharedControls === true && online.length >= 2) s.availablePlayerNums = online;
     let error = '';
     const reject = code => { error = code; };
     const story = s.phase === 'STORYTELLING', speaking = actor === s.storyteller;
-    if (HOST_TYPES.includes(cmd.type) && !host) reject('not_available');
+    if (HOST_TYPES.includes(cmd.type) && !manager) reject('not_available');
     else if (!TURN_FREE.includes(cmd.type) && cmd.turnId !== s.turnId) reject('stale_turn');
     else switch (cmd.type) {
       case 'ready':
@@ -196,6 +208,7 @@ var ONCE_ENGINE = (() => {
         break;
       case 'deal': {
         if (s.phase !== 'LOBBY') { reject('not_available'); break; }
+        if (s.sharedControls === true && online.length < 2) { reject('waiting_players'); break; }
         s.storyDeck = randomize(s, storyCards.map(card => card.id), cmd, 'story-deal');
         s.endingDeck = randomize(s, endingCards.map(card => card.id), cmd, 'ending-deal');
         const count = Math.max(5, 11 - s.roster.length);
@@ -211,7 +224,8 @@ var ONCE_ENGINE = (() => {
       case 'chooseFirst':
       case 'randomFirst': {
         if (s.phase !== 'CHOOSING_FIRST') { reject('not_available'); break; }
-        const chosen = cmd.type === 'randomFirst' ? randomize(s, s.roster.map(p => p.playerNum), cmd, 'first')[0] : Number(cmd.playerNum);
+        const chosen = cmd.type === 'randomFirst' ? randomize(s, s.sharedControls === true ? online : s.roster.map(p => p.playerNum), cmd, 'first')[0] : Number(cmd.playerNum);
+        if (s.sharedControls === true && (online.length < 2 || !online.includes(chosen))) { reject('waiting_players'); break; }
         if (!s.roster.some(p => p.playerNum === chosen)) { reject('invalid_player'); break; }
         s.storyteller = chosen; s.phase = 'STORYTELLING'; advance(s);
         log(s, cmd, 'first', name(s, chosen) + ' begins the story.');
@@ -321,8 +335,29 @@ var ONCE_ENGINE = (() => {
         }
         break;
       }
+      case 'recover': {
+        if (s.sharedControls !== true || ['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase)) { reject('not_available'); break; }
+        if (online.length < 2) { reject('waiting_players'); break; }
+        if (s.vote) {
+          if (!s.vote.eligible.length) { reject('social_agreement_required'); break; }
+          if (s.vote.eligible.some(n => online.includes(n) && !Object.prototype.hasOwnProperty.call(s.vote.votes, n))) { reject('waiting_votes'); break; }
+          // Preserve the original eligible denominator: missing players abstain.
+          resolveVote(s, cmd);
+        }
+        if (s.phase === 'PASS_DISCARD' && !online.includes(s.passPlayer)) {
+          const absent = s.passPlayer; s.passPlayer = null; s.storyteller = left(s, absent);
+          s.phase = 'STORYTELLING'; closeOpportunities(s); advance(s);
+          log(s, cmd, 'awayPass', name(s, absent) + ' is away; their cards were kept and the story passes left.');
+        } else if (s.phase === 'STORYTELLING' && !online.includes(s.storyteller)) {
+          const absent = s.storyteller;
+          closeOpportunities(s); drawStory(s, absent, 1, cmd);
+          s.storyteller = left(s, absent); advance(s);
+          log(s, cmd, 'awayPass', name(s, absent) + ' is away; the story passes left without discarding a private card.');
+        }
+        break;
+      }
       case 'restart': {
-        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now });
+        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, sharedControls: s.sharedControls });
         Object.assign(s, fresh); advance(s);
         log(s, cmd, 'restart', 'A new game is ready for the host to deal.');
         break;
@@ -341,13 +376,13 @@ var ONCE_ENGINE = (() => {
   }
   function view(current, playerNum, now) {
     const s = normalize(current), actor = Number(playerNum), mine = s.roster.find(p => p.playerNum === actor), host = actor === 0;
-    const player = !!mine, speaking = player && actor === s.storyteller, story = s.phase === 'STORYTELLING';
+    const player = !!mine, manager = host || player && s.sharedControls === true, speaking = player && actor === s.storyteller, story = s.phase === 'STORYTELLING';
     const hand = player ? s.hands[actor].filter(id => storyById[id]).map(id => copy(storyById[id])) : [];
     const vote = s.vote, pending = s.interrupt;
     const mayReturn = !!(s.latestPlay && s.latestPlay.playerNum === s.storyteller && s.storyHeld.includes(s.latestPlay.cardId));
     const actions = {
-      ready: player && s.phase === 'LOBBY', deal: host && s.phase === 'LOBBY',
-      chooseFirst: host && s.phase === 'CHOOSING_FIRST', randomFirst: host && s.phase === 'CHOOSING_FIRST',
+      ready: player && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
+      chooseFirst: manager && s.phase === 'CHOOSING_FIRST', randomFirst: manager && s.phase === 'CHOOSING_FIRST',
       play: story && speaking && hand.length > 0, interrupt: story && player && !speaking && hand.length > 0,
       categoryInterrupt: story && player && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
       dispute: story && player && !!pending && actor !== pending.interrupter,
@@ -356,8 +391,9 @@ var ONCE_ENGINE = (() => {
       discard: s.phase === 'PASS_DISCARD' && actor === s.passPlayer && hand.length > 0,
       keepAll: s.phase === 'PASS_DISCARD' && actor === s.passPlayer,
       vote: player && !!vote && vote.eligible.includes(actor) && !Object.prototype.hasOwnProperty.call(vote.votes, actor),
-      finishVote: host && !!vote && vote.eligible.length > 0, resolveSocial: host && !!vote && !vote.eligible.length,
-      restart: host, cancel: host && !['FINISHED', 'CANCELLED'].includes(s.phase),
+      finishVote: manager && !!vote && vote.eligible.length > 0, resolveSocial: manager && !!vote && !vote.eligible.length,
+      restart: manager, cancel: manager && !['FINISHED', 'CANCELLED'].includes(s.phase),
+      recover: manager && s.sharedControls === true && !['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase),
     };
     const once = {
       version: 1, playerNum: player ? actor : 0, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
@@ -377,6 +413,7 @@ var ONCE_ENGINE = (() => {
       deckCounts: { story: s.storyDeck.length, storyDiscard: s.storyDiscard.length, ending: s.endingDeck.length, endingDiscard: s.endingDiscard.length },
       readiness: player && s.readiness[actor] === true, actions, log: copy(s.log), lastAction: s.lastAction ? copy(s.lastAction) : null,
       reply: s.replies[actor] ? copy(s.replies[actor]) : null,
+      ...(s.sharedControls === true ? { sharedControls: true, hostControls: manager } : {}),
     };
     // Only a real roster member gets private keys, even when the requested seat
     // is unknown. No deck order, other hands/endings, ballots, tokens, or rollback.

@@ -7,7 +7,7 @@
   let sync=null,card=null,payload=null,state=null,status='loading',busy=false,problem='';
   const roster=[{playerNum:1,name:'Alex'},{playerNum:2,name:'Jamie'},{playerNum:3,name:'Sam'},{playerNum:4,name:'Riley'}];
   const seed=()=>crypto.getRandomValues(new Uint32Array(1))[0];
-  const canOpen=()=>demo||!!(sync?.connected&&sync.own&&['ready','switched'].includes(status));
+  const canOpen=()=>demo||!!(sync?.connected&&(sync.own || sync.doc?.executor?.v === 1)&&['ready','switched'].includes(status));
   function labels(){
     byId('once-open').textContent=t('openTable');byId('once-setup-link').textContent=t('setup');
     byId('once-setup-help').textContent=t(status==='switched'?'switchTableHint':status==='setupNeeded'?'tableNeeded':'hostHint');

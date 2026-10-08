@@ -579,3 +579,38 @@ test('v4 exhaustion offers no secret details and requires explicit one-deal repe
   assert.equal(calls[0].payload.allowRecentRepeat,true);
   assert.equal(calls[0].payload.keepTopic,true);
 });
+
+
+test('independent embedded private cards keep their role and tasks while managing public phases', async () => {
+  const { api, current, calls } = harness({ public: { flowVersion:4, sharedControls:true, phase:'ROLE_REVEAL' },
+    private: { isHost:false, canManage:true, roleAcknowledged:false, actions:{canBeginTalk:true,canCompleteTask:true,canCancel:true} } }, true);
+  let html=api.render();
+  assert.match(html,/<h2 class="role-title wolf">Wolf<\/h2>/);
+  assert.match(html,/Secret wolf action one/); assert.match(html,/data-v3-action="beginTalk"/);
+  assert.match(html,/data-v3-action="ackRole"/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'beginTalk'}})}});
+  assert.equal(calls[0].action,'beginTalk');
+  assert.equal(current.private.isHost,false);
+  current.public.phase='TALK';
+  current.private.actions={canCompleteTask:true,canEndTalk:true,canPause:true,canShowFollowUp:true};
+  html=api.render(); assert.match(html,/Secret wolf action one/);
+  assert.match(html,/data-v3-action="endTalk"/); assert.match(html,/data-task-id="w1"/);
+});
+
+test('remaining players can skip an absent meeting speaker and still cast their own private ballot', async () => {
+  const meeting={id:'m1',order:['a','b','c','d','e','f'],speakerIndex:0,currentSpeakerId:'a',nextSpeakerId:'b',completedPlayerIds:[],turnSeconds:60,nextTurnSeconds:45};
+  const { api, current, calls } = harness({ public:{flowVersion:4,sharedControls:true,phase:'MEETING_TURNS',meeting},
+    private:{playerId:'c',isHost:false,canManage:true,role:'VILLAGER',tasks:null,wolfTeam:null,
+      actions:{canSkipMeetingTurn:true,canEndMeeting:true,canSetMeetingTurnSeconds:true}} },true);
+  let html=api.render(); assert.match(html,/Skip \/ end this speaker/);
+  assert.match(html,/End remaining turns and start voting/);
+  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'skipMeetingTurn'}})}});
+  assert.equal(calls[0].action,'skipMeetingTurn'); assert.equal(current.private.isHost,false);
+  current.public.phase='VOTING';
+  current.public.voting={id:'v1',type:'MID',requiredSelections:2}; current.private.myVoteSubmitted=false;
+  current.private.actions={canSubmitVote:true,canEndVote:true};
+  html=api.render();
+  assert.match(html,/data-v3-action="endVote"/);
+  assert.match(html,/<form id="v3-vote-form"/);
+  assert.doesNotMatch(html,/id="v3-c"/);
+});

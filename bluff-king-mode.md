@@ -1,3 +1,5 @@
+> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+
 # BLUFF PARTY
 
 An original conversation adaptation for **3–9 real players**, appended after

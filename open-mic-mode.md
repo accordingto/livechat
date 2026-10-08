@@ -1,3 +1,5 @@
+> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+
 # Open Mic Rescue / 開麥救場
 
 ## Current mode: text prompts and original activities

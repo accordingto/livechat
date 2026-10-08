@@ -10,7 +10,7 @@
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
-  const canControl = () => !closed && (demo || !!(sync?.connected && sync?.own));
+  const canControl = () => !closed && !sync?.suspended && (demo || !!(sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)));
   const sound = new CUT_UI.Sound(paintSound);
   const view = () => state ? CUT_ENGINE.view(state, 0, now()).cut : null;
   const knownError = message => message === 'invalid_setup' ? 'invalid_roster' : message === 'invalid_player' ? 'not_available'

@@ -26,7 +26,7 @@
     byId('mode-hint').textContent = t(crazy ? 'crazyHint' : 'normalHint');
   }
   const now = () => sync ? sync.now() : Date.now();
-  const canControl = () => demo || (!!sync?.own && sync.connected);
+  const canControl = () => demo || (!!(sync?.own || sync?.doc?.executor?.v === 1) && sync.connected);
   const selectedTopic = () => TALK_TOPICS.find(topic => topic.id === byId('topic-select').value);
   function previewTopic() {
     const topic = selectedTopic();

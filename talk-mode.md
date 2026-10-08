@@ -1,3 +1,5 @@
+> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+
 # Let's Talk v0.6 · Normal Talk / Crazy Talk
 
 ## v0.6 情境題與 Crazy Talk（2026-10-08）

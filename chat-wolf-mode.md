@@ -1,3 +1,5 @@
+> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+
 # 聊天狼人 v2 — 沿用既有 Firebase 的主持人模式
 
 > 2026-09-30：新房間已改用 v3 自由聊天版。最新規則、設定與驗證請看

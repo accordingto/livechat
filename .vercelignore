@@ -5,6 +5,7 @@ private/
 work/
 api/*
 !api/open-mic-discovery.js
+!api/hub-executor.js
 open-mic-youtube.js
 open-mic-lyrics.js
 open-mic-genius.js

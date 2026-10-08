@@ -111,6 +111,7 @@ var ONCE_SYNC = (() => {
       try {
         const result = await this.ref.transaction(doc => {
           doc = doc || {};
+          if (doc.executor?.v === 1) return;
           if (doc.owner && doc.owner !== this.client && doc.leaseUntil > now &&
               (this.hasHeldLease || !this.inactiveSession(doc))) return;
           return Object.assign({}, doc, { owner: this.client, leaseUntil: now + 14000 });

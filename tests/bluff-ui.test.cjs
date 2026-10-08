@@ -508,3 +508,33 @@ test('everyone heard and reveal guidance keep conversation open while progressio
   assert.match(revealed.html(), /data-bk-guidance="reveal"/); assert.match(revealed.html(), /Discuss the answer\. Continue when everyone is ready\./);
   assert.deepEqual(revealed.voiceCues(), []); assert.ok(revealed.button('nextRound')); assert.equal(revealed.sent.length, 0);
 });
+
+test('service-enabled original cards can start and prepare without host-only controls', async () => {
+  for (const phase of ['lobby', 'prepare']) {
+    const state = fixture(phase, 4); state.rooms.UITEST.sharedControls = true;
+    const h = await harness(project(state, 'identity-3'), { card: true });
+    const action = phase === 'lobby' ? 'start' : 'beginDiscussion';
+    assert.ok(h.button(action)); assert.ok(h.button('manage')); assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_/);
+    await h.click(action); assert.equal(h.sent.at(-1).action, action);
+    assert.equal(h.button('identify'), undefined);
+  }
+});
+test('service-enabled reveal allows an online Bluffer to continue, while its own role stays private', async () => {
+  const state = fixture('discussion', 4); state.rooms.UITEST.sharedControls = true;
+  for (let i = 0; i < 3; i++) act(state, 'nextSpotlight');
+  act(state, 'identify', 'identity-0', { targetId: state.rooms.UITEST.round.truthfulId });
+  const h = await harness(project(state, 'identity-3'), { card: true });
+  assert.ok(h.button('nextRound')); await h.click('nextRound'); assert.equal(h.sent.at(-1).action, 'nextRound');
+});
+test('offline recovery is a confirmed card action after grace and needs three connected players', async () => {
+  const state = fixture('discussion', 4), room = state.rooms.UITEST; room.sharedControls = true;
+  for (const p of room.members) if (p.identityId !== 'identity-0') p.lastSeen = 70001;
+  const view = E.projectView(state, 'identity-3', 'UITEST', bank, { private: true, now: 70001 });
+  const h = await harness(view, { card: true }); assert.ok(h.button('recover')); assert.equal(h.button('recover').disabled, false);
+  await h.click('recover'); assert.equal(h.sent.length, 0); assert.equal(h.node('bk-confirm').open, true); await h.confirm();
+  assert.equal(h.sent.at(-1).action, 'recover'); assert.equal(h.sent.at(-1).roundId, room.round.id);
+  assert.equal(h.button('identify'), undefined); assert.doesNotMatch(h.html(), /PRIVATE_TEST_ANSWER_/);
+  const two = clone(view); two.players[1].connected = false; const waiting = await harness(two, { card: true });
+  assert.equal(waiting.button('recover').disabled, true); assert.match(waiting.html(), /At least 3 players/);
+  const grace = clone(view); grace.recovery.available = false; const short = await harness(grace, { card: true }); assert.equal(short.button('recover'), undefined);
+});

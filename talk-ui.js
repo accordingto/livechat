@@ -38,6 +38,8 @@ var TALK_UI = (() => {
     pending_questions: ['還有人想追問。可以先請對方問，或直接交棒。', 'Someone is waiting to ask. Invite them, or hand over the turn.'],
     question_open: ['目前有人在提問，請先回到原發言者。', 'A question is open. Return to the original speaker first.'],
     forceEnd: ['直接結束，下一位', 'End turn, next person'],
+    waitingServer: ['等待同步確認…', 'Waiting for confirmation…'],
+    waiting_players: ['至少需要兩位玩家在線，請等候其他人回來。', 'At least two players must be online. Wait for another player to return.'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check the connection and try again.'],
     title: ['{name} 的談話頁', "{name}'s conversation"], player: ['參加者 {n}', 'Participant {n}'],
     room: ['房間 {code}', 'Room {code}'],
@@ -167,6 +169,8 @@ var TALK_PLAYER = (() => {
           ...(b.dataset.promptId ? { promptId: b.dataset.promptId } : {}),
           ...(type === 'note' ? { text: this.draft } : {}),
           ...(type === 'forceEnd' ? { confirm: true } : {}),
+          ...(type === 'crazyPause' ? { paused: !this.data.talk.crazy.paused } : {}),
+          ...(type === 'extend' ? { show: !this.data.talk.extended } : {}),
         });
       };
       this.inputHandler = event => { if (event.target.matches('[data-talk-note]')) this.draft = event.target.value; };
@@ -202,7 +206,7 @@ var TALK_PLAYER = (() => {
       const command = this.pending;
       Promise.resolve().then(() => this.send(command)).catch(e => {
         if (this.pending?.id !== command.id) return;
-        this.error = ['stale_turn','stale_prompt'].includes(e.message) ? e.message : 'error';
+        this.error = ['stale_turn','stale_prompt','waiting_players'].includes(e.message) ? e.message : 'error';
         this.pending = null; this.render(true);
       });
     }
@@ -228,6 +232,15 @@ var TALK_PLAYER = (() => {
         controls += `<div class="talk-listener-actions">${button('more', 'more')}${button(question ? 'cancelAsk' : 'ask', question ? 'cancelAsk' : 'ask')}${button(s.intentRound ? 'cancelShare' : 'share', s.intentRound ? 'cancelShare' : 'share')}</div>`;
         if (question) controls += `<p class="talk-soft">${esc(t(question.deferred ? 'askLater' : 'askPending'))}</p>`;
         controls += `<p class="talk-soft">${esc(t(s.intentRound ? (s.intentRound > s.round ? 'shareNextRound' : 'shareThisRound') : s.isNext ? 'next' : 'listening'))}</p>`;
+      }
+      if (s.sharedControls === true && s.hostControls) {
+        controls += '<div class="talk-actions talk-flow-controls">' +
+          (s.actions?.start ? button('start', 'start', '', true) : '') +
+          (s.actions?.end && s.speaker !== me && !s.activeQuestion ? button('helpEnd', 'end') : '') +
+          (s.actions?.resume && s.activeQuestion && s.activeQuestion.playerNum !== me && s.speaker !== me ? button('asked', 'resume') : '') +
+          (s.actions?.extend ? button(s.extended ? 'hideExtend' : 'extend', 'extend') : '') +
+          (s.actions?.crazySend ? button('crazySend', 'crazySend') : '') +
+          (s.actions?.crazyPause ? button(s.crazy.paused ? 'crazyResume' : 'crazyPause', 'crazyPause') : '') + '</div>';
       }
       const active = this.element.querySelector('[data-talk-note]');
       const keep = preserveInput && active && s.phase === 'thinking' && s.mode === 'write' ? active : null;
@@ -270,8 +283,8 @@ var TALK_PLAYER = (() => {
       if (!this.data) return;
       const s = this.data.talk, now = this.now();
       const offline = !this.connected();
-      const hostAway = !!s.hostLiveUntil && now > s.hostLiveUntil;
-      const message = offline ? 'offline' : hostAway ? 'hostAway' : this.pending ? (now - this.sentAt > 2000 ? 'waitingHost' : 'waiting') : '';
+      const hostAway = s.sharedControls !== true && !!s.hostLiveUntil && now > s.hostLiveUntil;
+      const message = offline ? 'offline' : hostAway ? 'hostAway' : this.pending ? (now - this.sentAt > 2000 ? (s.sharedControls === true ? 'waitingServer' : 'waitingHost') : 'waiting') : '';
       const status = this.element.querySelector('.talk-connection');
       if (status) status.textContent = message ? t(message) : '';
       this.element.querySelectorAll('[data-talk-action]').forEach(b => {

@@ -1,3 +1,5 @@
+> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+
 # CUT! · DON’T FINISH THAT — 節奏、手動開始與手動接話（2026-10-08）
 
 英文副標題使用「DON’T FINISH THAT」。CUT 提示保留「STOP! Hand over the unfinished thought.」，下一位提示簡化為「Continue the unfinished sentence. Press Start when ready.」。

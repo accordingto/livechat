@@ -8,6 +8,7 @@ var CUT_UI = (() => {
     start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], beginHandoff: ['開始接話', 'Start'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
     waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
+    sharedManage: ['玩家管理', 'Player controls'], recover: ['略過離線玩家', 'Skip offline players'], sharedBreak: ['準備好後，任一玩家可以按下一題。', 'Any player can reveal the next topic when everyone is ready.'], sharedPaused: ['準備好後，任一玩家可以繼續。', 'Any player can resume when everyone is ready.'],
     manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'], restart: ['重新開始', 'Restart'], stop: ['結束遊戲', 'End game'],
     topic: ['這次聊什麼', 'THE TOPIC'], current: ['目前發言者', 'CURRENT SPEAKER'], nextPlayer: ['下一位', 'NEXT PLAYER'],
     you: ['是你！', 'THAT’S YOU!'], getReady: ['準備開口…', 'Get ready to speak…'], continue: ['接著那半句說！', 'CONTINUE THE HALF-SENTENCE!'],
@@ -88,7 +89,7 @@ var CUT_UI = (() => {
     } else {
       const finished = ['finished', 'stopped'].includes(phase);
       const title = phase === 'paused' ? 'paused' : finished ? 'finished' : 'breakTitle';
-      const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : 'pausedHint' : finished ? 'finishedHint' : 'breakHint';
+      const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : cut.sharedControls ? 'sharedPaused' : 'pausedHint' : finished ? 'finishedHint' : cut.sharedControls ? 'sharedBreak' : 'breakHint';
       floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? '✂️' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(t(hint))}</p></div>`;
     }
     const excluded = actor && list(cut.roster).find(p => Number(p.playerNum) === Number(actor))?.active === false;
@@ -102,13 +103,28 @@ var CUT_UI = (() => {
     return `<div class="cut-speaker ${extra}"><p class="cut-kicker">${esc(label)}</p><h3>${esc(name(cut, num))}</h3>${personal ? `<span class="cut-you">${esc(t('you'))}</span>` : ''}</div>`;
   }
 
+  function sharedPanel(cut, actor) {
+    if (cut.sharedControls !== true || !actor || cut.phase === 'stopped') return '';
+    const mine = list(cut.roster).find(p => Number(p.playerNum) === Number(actor));
+    const button = (action, label, extra = '') => `<button type="button" class="cut-button" data-cut-action="${action}"${extra}>${esc(t(label))}</button>`;
+    let actions = button('recover', 'recover');
+    if (mine?.active === false) return `<div class="cut-controls">${actions}${button('exclude', 'reinclude', ` data-player="${Number(actor)}" data-active="true"`)}</div>`;
+    if (cut.phase === 'break') actions += button('next', 'next');
+    actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
+    const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
+    return `<div class="cut-controls">${actions}</div><details class="cut-player-management"><summary>${esc(t('sharedManage'))}</summary><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
+  }
+
   class Card {
     constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '', send = null } = {}) {
       this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send;
       this.data = null; this.destroyed = false; this.renderKey = ''; this.pending = null; this.error = ''; this.animatedCut = '';
       this.click = event => {
-        const button = event.target.closest('[data-cut-action="begin"]');
-        if (button && !button.disabled) this.begin();
+        const button = event.target.closest('[data-cut-action]');
+        if (button && !button.disabled) {
+          const type = button.dataset?.cutAction || 'begin';
+          this.action(type, type === 'exclude' ? { playerNum: Number(button.dataset.player), active: button.dataset.active === 'true' } : {});
+        }
       };
       this.element.addEventListener('click', this.click);
       this.timer = setInterval(() => this.paint(), 150);
@@ -124,14 +140,14 @@ var CUT_UI = (() => {
         this.pending = null;
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
-      if (!this.pending && ['ready', 'cut'].includes(cut.phase) && request?.type === 'begin' && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
-      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.sharedControls, cut.canManage, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const cutKey = cut.phase === 'cut' ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
         const animate = !cutKey || cutKey !== this.animatedCut;
         if (cutKey) this.animatedCut = cutKey;
-        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div><p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
       }
       this.paint();
     }
@@ -141,21 +157,39 @@ var CUT_UI = (() => {
       const clock = this.element.querySelector('[data-cut-countdown]');
       if (clock) clock.textContent = countdown(cut, now) || 'GO!';
       const connection = this.element.querySelector('[data-cut-connection]');
-      if (connection) connection.textContent = !this.connected() ? t('offline') : cut.hostLiveUntil && now > cut.hostLiveUntil ? t('hostAway') : '';
+      if (connection) connection.textContent = !this.connected() ? t('offline') : !cut.sharedControls && cut.hostLiveUntil && now > cut.hostLiveUntil ? t('hostAway') : '';
       const button = this.element.querySelector('[data-cut-action="begin"]');
       if (button) button.disabled = !this.canBegin();
+      for (const control of this.element.querySelectorAll?.('[data-cut-action]') || []) {
+        control.disabled = !this.canAction(control.dataset.cutAction, control.dataset.cutAction === 'exclude' ? { playerNum: Number(control.dataset.player), active: control.dataset.active === 'true' } : {});
+      }
       const feedback = this.element.querySelector('[data-cut-action-status]');
       if (feedback) feedback.textContent = this.error || (this.pending ? t('sending') : '');
     }
     canBegin() {
       const cut = this.data?.cut;
-      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && ['ready', 'cut'].includes(cut?.phase) && cut.canBegin === true && (!cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
+      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && ['ready', 'cut'].includes(cut?.phase) && cut.canBegin === true && (cut.sharedControls === true || !cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
     }
-    async begin() {
-      if (!this.canBegin()) return;
+    canAction(type, extra = {}) {
+      if (type === 'begin') return this.canBegin();
+      const cut = this.data?.cut, actor = Number(this.data?.playerNum);
+      if (this.destroyed || this.pending || typeof this.send !== 'function' || !this.connected() || cut?.sharedControls !== true || cut.phase === 'stopped') return false;
+      const mine = list(cut.roster).find(p => Number(p.playerNum) === actor);
+      if (!mine) return false;
+      if (type === 'recover') return true;
+      if (type === 'exclude' && Number(extra.playerNum) === actor && extra.active === true) return true;
+      if (mine.active === false) return false;
+      if (type === 'next') return cut.phase === 'break';
+      if (type === 'pause') return cut.phase !== 'paused';
+      if (type === 'resume') return cut.phase === 'paused';
+      return type === 'exclude' && typeof extra.active === 'boolean' && list(cut.roster).some(p => Number(p.playerNum) === Number(extra.playerNum));
+    }
+    begin() { return this.action('begin'); }
+    async action(type, extra = {}) {
+      if (!this.canAction(type, extra)) return;
       const cut = this.data.cut;
       const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cut-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const command = { id, sessionId: cut.sessionId, turnId: cut.turnId, type: 'begin' };
+      const command = { ...extra, id, sessionId: cut.sessionId, turnId: cut.turnId, type };
       this.pending = command; this.error = ''; this.paint();
       try { await this.send(command); }
       catch (e) {

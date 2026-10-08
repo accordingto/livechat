@@ -312,3 +312,32 @@ test('host can return to settings mid-speech, preserve the topic and wait again 
   await click('settings-open');
   assert.equal(element('cut-speed').value, 'chill', 'cancel keeps the last saved pace');
 });
+
+
+test('server-operated CUT cards remain usable after the legacy host lease expires', async () => {
+  const sent = [], f = playerCard(async command => sent.push(command), { now: () => 6000 });
+  try {
+    assert.equal(f.card.canBegin(), false);
+    f.card.update({ ...f.payload, cut: { ...f.payload.cut, sharedControls: true, canManage: true } });
+    assert.equal(f.card.canBegin(), true); assert.equal(f.nodes.connection.textContent, '');
+    assert.match(f.element.innerHTML, /data-cut-action="pause"/); assert.match(f.element.innerHTML, /data-cut-action="recover"/);
+    await f.card.action('pause'); assert.equal(sent.length, 1); assert.equal(sent[0].type, 'pause');
+    assert.equal(f.card.canAction('recover'), false, 'a pending command cannot be overwritten');
+    f.card.update({ ...f.payload, cut: { ...f.payload.cut, sharedControls: true, phase: 'paused', turnId: 2, reply: { id: sent[0].id, error: '' } } });
+    assert.equal(f.card.canAction('resume'), true); assert.equal(f.card.canAction('next'), false);
+    f.card.update({ ...f.payload, cut: { ...f.payload.cut, sharedControls: true, phase: 'break', turnId: 3 } });
+    assert.match(f.element.innerHTML, /data-cut-action="next"/); assert.equal(f.card.canAction('next'), true);
+  } finally { f.card.destroy(); }
+});
+
+test('a sitting-out CUT seat can return or recover but cannot manage another player', async () => {
+  const sent = [], f = playerCard(async command => sent.push(command));
+  try {
+    f.card.update({ ...f.payload, cut: { ...f.payload.cut, sharedControls: true, roster: [{ playerNum: 1, name: 'Amy', active: true }, { playerNum: 2, name: '<img>', active: false }] } });
+    assert.equal(f.card.canAction('pause'), false); assert.equal(f.card.canAction('exclude', { playerNum: 1, active: false }), false);
+    assert.equal(f.card.canAction('recover'), true); assert.equal(f.card.canAction('exclude', { playerNum: 2, active: true }), true);
+    assert.doesNotMatch(f.element.innerHTML, /data-cut-action="pause"|<img>/);
+    await f.card.action('exclude', { playerNum: 2, active: true });
+    assert.deepEqual({ ...sent[0], id: 'id' }, { playerNum: 2, active: true, id: 'id', sessionId: 'session', turnId: 1, type: 'exclude' });
+  } finally { f.card.destroy(); }
+});

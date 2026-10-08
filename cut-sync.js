@@ -79,6 +79,7 @@
         const result = await this.ref.transaction(raw => {
           if (this.stopped || !this.connected || !this.sameRoom()) return;
           raw ||= {};
+          if (raw.executor?.v === 1) return;
           if (raw.owner && raw.owner !== this.client && raw.leaseUntil > now) return;
           const next = Object.assign({}, raw, { owner: this.client, leaseUntil: now + CONFIG.leaseMs });
           const current = stateOf(raw);
@@ -101,7 +102,7 @@
       const now = this.now(); let noChange = false;
       const result = await this.ref.transaction(raw => {
         noChange = false;
-        if (this.stopped || !this.connected || !this.sameRoom() || (this.suspended && !allowSwitched) || raw?.owner !== this.client || raw.leaseUntil <= now) return;
+        if (this.stopped || !this.connected || !this.sameRoom() || (this.suspended && !allowSwitched) || raw?.executor?.v === 1 || raw?.owner !== this.client || raw.leaseUntil <= now) return;
         const current = stateOf(raw), next = fn(current);
         if (!next || next === current || JSON.stringify(next) === raw.stateJson) { noChange = true; return; }
         const doc = Object.assign({}, raw, { stateJson: JSON.stringify(next), revision: (raw.revision || 0) + 1, leaseUntil: now + CONFIG.leaseMs });
@@ -186,7 +187,7 @@
           }
         }
         if (initial && complete && valid()) await this.ref.transaction(raw => {
-          if (!valid() || raw?.owner !== this.client || raw.opening?.sessionId !== doc.state.sessionId) return;
+          if (!valid() || raw?.executor?.v === 1 || raw?.owner !== this.client || raw.opening?.sessionId !== doc.state.sessionId) return;
           const next = Object.assign({}, raw); delete next.opening; return next;
         }, undefined, false);
       }).catch(() => { if (!this.stopped) this.status('error'); });

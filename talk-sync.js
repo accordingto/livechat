@@ -51,6 +51,7 @@ var TALK_SYNC = (() => {
       try {
         const result = await this.ref.transaction(doc => {
           doc = doc || {};
+          if (doc.executor?.v === 1) return;
           if (doc.owner && doc.owner !== this.client && doc.leaseUntil > now) return;
           return Object.assign({}, doc, { owner: this.client, leaseUntil: now + 14000 });
         }, undefined, false);
@@ -67,6 +68,7 @@ var TALK_SYNC = (() => {
       if (!this.connected || this.stopped) throw new Error('offline');
       const now = this.now();
       const result = await this.ref.transaction(doc => {
+        if (doc?.executor?.v === 1) return;
         if (!doc || doc.owner !== this.client || doc.leaseUntil <= now) return;
         const next = fn(doc.state || null);
         if (!next || next === doc.state) return;

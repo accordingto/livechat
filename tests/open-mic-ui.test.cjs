@@ -223,3 +223,26 @@ test('the command boundary also rejects retired lyric commands or unknown operat
   assert.equal(await f.g.action('unknown'), false);
   assert.equal(f.sent.length, 0);
 });
+
+
+test('server-managed listeners can judge, move to the next turn and recover without taking Spotlight choice authority', async () => {
+  const f = fixture({ actor: 2 }); f.g.data.sharedControls = true;
+  f.g.data.phase = 'challenge'; f.g.data.challengeResult = null; f.g.render();
+  assert.match(f.html('[data-om-challenge]'), /data-om-action="success".*data-om-action="failed"/s);
+  assert.match(f.html('[data-om-score]'), /data-om-action="recover"/);
+  f.g.data.phase = 'choice'; f.g.data.challengeResult = 'success'; f.g.renderStage();
+  assert.match(f.html('[data-om-stage-controls]'), /data-om-action="next"/);
+  assert.doesNotMatch(f.html('[data-om-stage-controls]'), /data-om-action="(?:startSinging|changeSong|clearSong)"/);
+  assert.equal(f.g.canSelectDiscovery(), false);
+  await f.g.action('recover'); assert.equal(f.sent[0].type, 'recover');
+  f.g.destroy(); assert.equal(f.timers.size, 0);
+});
+
+test('server-managed inactive listeners only see their return and recovery controls', () => {
+  const f = fixture({ actor: 2 }); f.g.data.sharedControls = true; f.g.data.roster[1].active = false;
+  f.g.data.phase = 'challenge'; f.g.data.challengeResult = null; f.g.render();
+  assert.doesNotMatch(f.html('[data-om-challenge]'), /data-om-action="(?:success|failed)"/);
+  assert.match(f.html('[data-om-score]'), /data-om-action="recover"/);
+  assert.match(f.html('[data-om-score]'), /data-om-action="exclude" data-player="2" data-active="true"/);
+  assert.equal(f.g.manager(), false); f.g.destroy();
+});

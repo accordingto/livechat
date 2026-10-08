@@ -6,7 +6,7 @@
   let state = null, sync = null, game = null, busy = false, closed = false;
   let status = demo ? 'ready' : 'connecting', error = '', roomCode = null;
   const now = () => sync ? sync.now() : Date.now();
-  const canControl = () => !closed && !busy && (demo || !!(sync?.connected && sync?.own && !sync?.suspended));
+  const canControl = () => !closed && !busy && (demo || !!(sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1) && !sync?.suspended));
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const copy = {
     connecting: ['Connecting to your room…', '正在連線房間…'],
@@ -25,7 +25,7 @@
     byId('error').textContent = error;
     byId('setup-needed').hidden = status !== 'setupNeeded';
     byId('start-panel').hidden = status === 'setupNeeded' || (!!state && status !== 'switched');
-    byId('start').disabled = busy || closed || !(demo || (sync?.connected && sync?.own));
+    byId('start').disabled = busy || closed || !(demo || (sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)));
     byId('game').hidden = !state || status === 'switched';
     document.body.classList.toggle('om-playing', !!state && status !== 'switched');
     byId('room-label').textContent = demo ? (I18N.lang === 'zh' ? '單機試玩' : 'Local demo') : roomCode ? 'Room ' + roomCode : '';
@@ -54,7 +54,7 @@
     } finally { busy = false; render(); }
   }
   async function start() {
-    if (busy || closed || !(demo || (sync?.connected && sync?.own))) return;
+    if (busy || closed || !(demo || (sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)))) return;
     busy = true; error = '';
     try {
       if (demo) state = OPEN_MIC_ENGINE.create({ id: OPEN_MIC_SYNC.uid(), roster, now: now(), seed: seed(), singingDuration: 35 });

@@ -7,6 +7,8 @@ window.CHAT_WOLF_COPY = Object.freeze({
   keepHostOpen:'Host: keep this page open and your device awake.',
   keepMainHostOpen:'Keep the main host page open. This card is for playing.',
   hostConnected:'Connected to host.', hostUnavailable:'Waiting for the host to return. Your place is saved.',
+  independentConnected:'Live · continue on your own card', independentReconnecting:'Reconnecting…',
+  independentCopyZh:{connected:'遊戲進行中 · 可在自己的卡片繼續操作',reconnecting:'重新連線中…',gameSwitched:'遊戲已切換，請回到目前的玩家卡片。'},
   externalVoiceNote:'Use your usual voice room. This page cannot mute microphones.',
   createRoom:'Create a room', useCards:'Use the player cards already sent from the Hub',
   hostSeat:'Your player card (the host also plays)', cardsLinked:'Original player cards connected.',
@@ -76,6 +78,7 @@ window.CHAT_WOLF_COPY = Object.freeze({
   },
   phases:{LOBBY:'Lobby',ROLE_REVEAL:'Roles',TALK:'Speaking turn',FREE_TALK:'Free talk',MEETING_DISCUSS:'Meeting',VOTING:'Vote',TASK_REVIEW:'Task review',FINISHED:'Result'},
   errors:{
+    GAME_SWITCHED:'The game changed. Return to your current player card.', game_switched:'The game changed. Return to your current player card.',
     INVALID_CARD_SETUP:'Set up at least 3 player cards in the Hub first.', INVALID_ROOM_CODE:'Enter a valid room code.',
     INVALID_NAME:'Use a name with 1–24 characters.', NAME_TAKEN:'That name is already in use.', ROOM_NOT_FOUND:'Room not found.',
     ROOM_FULL:'This room is full.', GAME_ALREADY_STARTED:'This game has started. Please wait for the next game.',

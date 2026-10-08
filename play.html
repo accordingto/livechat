@@ -7,10 +7,10 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-crazy-1">
-  <link rel="stylesheet" href="once-upon-a-time.css?v=once-mobile-words-1">
-  <link rel="stylesheet" href="dixit.css?v=dixit-9">
-  <link rel="stylesheet" href="cut.css?v=cut-4">
+  <link rel="stylesheet" href="talk.css?v=talk-crazy-2">
+  <link rel="stylesheet" href="once-upon-a-time.css?v=once-mobile-words-executor-1">
+  <link rel="stylesheet" href="dixit.css?v=dixit-10">
+  <link rel="stylesheet" href="cut.css?v=cut-5">
   <link rel="stylesheet" href="open-mic.css?v=om-11">
   <style>
     body {
@@ -883,21 +883,22 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="talk-ui.js?v=talk-crazy-1"></script>
+  <script src="talk-ui.js?v=talk-crazy-2"></script>
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
-  <script src="cut-ui.js?v=cut-4"></script>
+  <script src="cut-ui.js?v=cut-5"></script>
   <script src="open-mic-content.js?v=om-2"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
-  <script src="open-mic-ui.js?v=om-12"></script>
-  <script src="once-upon-a-time-deck.js?v=once-mobile-words-1"></script>
-  <script src="once-upon-a-time-ui.js?v=once-mobile-words-1"></script>
-  <script src="dixit-deck.js?v=dixit-9"></script>
-  <script src="dixit-ui.js?v=dixit-9"></script>
-  <script src="dixit-engine.js?v=dixit-9"></script>
-  <script src="talk-sync.js"></script>
-  <script src="dixit-sync.js?v=dixit-9"></script>
-  <script src="dixit-card-host.js?v=dixit-9"></script>
+  <script src="open-mic-ui.js?v=om-13"></script>
+  <script src="once-upon-a-time-deck.js?v=once-mobile-words-executor-1"></script>
+  <script src="once-upon-a-time-ui.js?v=once-mobile-words-executor-1"></script>
+  <script src="dixit-deck.js?v=dixit-10"></script>
+  <script src="dixit-ui.js?v=dixit-10"></script>
+  <script src="dixit-engine.js?v=dixit-10"></script>
+  <script src="talk-sync.js?v=executor-1"></script>
+  <script src="dixit-sync.js?v=dixit-10"></script>
+  <script src="hub-executor.js?v=1"></script><script>HUB_EXECUTOR.install();</script>
+  <script src="dixit-card-host.js?v=dixit-10"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -2021,8 +2022,10 @@
        so it survives re-renders in a plain module-level flag instead, and every
        toggle here re-invokes showCard(latestData) rather than waiting on Firebase. */
     let tabooAwaySelfConfirm = false;
-    function tabooAskAway() { tabooAwaySelfConfirm = true; if (latestData) showCard(latestData); }
-    function tabooCancelAway() { tabooAwaySelfConfirm = false; if (latestData) showCard(latestData); }
+    function tabooAskAway() { tabooAwaySelfConfirm = true; if (latestData) showCard(latestData);
+      HUB_EXECUTOR.observe(latestData, token); }
+    function tabooCancelAway() { tabooAwaySelfConfirm = false; if (latestData) showCard(latestData);
+      HUB_EXECUTOR.observe(latestData, token); }
     // no round id to quote — going away isn't tied to any particular round, and the
     // host applies it (toggleAway()) the moment it arrives, any time, round or no round
     function tabooRequestAway(btn) {
@@ -2499,7 +2502,7 @@
           openMicCard = new OPEN_MIC_UI.Game(el, {
             actor: Number(data.playerNum),
             now: () => Date.now() + talkClockOffset,
-            canControl: () => talkConnected && latestData?.game === 'openmic' && latestData.openmic?.hostLiveUntil > Date.now() + talkClockOffset,
+            canControl: () => talkConnected && latestData?.game === 'openmic' && (latestData.openmic?.sharedControls === true || latestData.openmic?.hostLiveUntil > Date.now() + talkClockOffset),
             send: async (type, extra = {}) => {
               const currentView = latestData?.openmic;
               if (!currentView || !talkConnected) throw new Error('offline');
@@ -2877,6 +2880,7 @@
     function tryRenderCard() {
       if (!latestData) return;
       showCard(latestData);
+      HUB_EXECUTOR.observe(latestData, token);
     }
     I18N.onChange(() => {
       if (latestData) { setCardTitle(latestData.name || urlName); tryRenderCard(); }
