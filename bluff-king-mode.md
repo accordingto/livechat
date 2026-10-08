@@ -340,3 +340,19 @@ returning after another game, persisted cross-tab changes, delayed old-game
 publication, complete registration and unchanged active reconnection are covered.
 Real Client/service integration verifies old epochs cannot modify the new table
 and a current player can start it after the management page closes.
+
+
+## Authoritative original-card publication — 2026-10-09
+
+Opening uses exact-token server reads and ETag conditional writes, rather than
+SDK transaction callbacks that may initially contain uncached null. Normal
+presence updates causing 412 are reread/retried. Newer game/round bindings remain
+protected, matching cards keep their mailbox and metadata, and all cards are
+rechecked before service registration. UI version 9 includes this correction.
+
+Primary behavior references: [SDK transaction initial values](https://firebase.google.com/docs/database/web/read-and-write#save_data_as_transactions)
+and [REST conditional requests](https://firebase.google.com/docs/database/rest/save-data#section-conditional-requests).
+
+Validation: full regression 1213/1213; UI 43/43. The prior UI reproduces the
+reported game-switch error with a provisional-null SDK callback; authoritative
+publication passes the same controlled scenario.

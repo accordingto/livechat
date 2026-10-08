@@ -1,3 +1,18 @@
+## CURRENT: Bluff authoritative card publication — 2026-10-09
+
+Native Hub opening captures and publishes each exact original player node with
+Client._request REST reads, X-Firebase-ETag and conditional If-Match PUTs. Never
+use SDK transaction cache values to decide a game switch: an initial callback
+may be null while the remote card exists. Reread and retry ordinary ETag 412
+conflicts, preserving semantic game/round guards and complete Hub setup checks.
+Already-matching cards remain untouched. Verify all authoritative source
+bindings once more before explicit service registration and showing the lobby.
+Bluff UI cache version is 9; helper v4 and sync hub-roster-1 remain current.
+No runtime, independent-service deployment or secret changes are required.
+Full regression: 1213/1213 passed. The prior UI reproduces the exact reported
+game-switched message for a provisional-null SDK callback; this UI passes the
+same scenario and all 43 UI checks.
+
 ## CURRENT: Bluff current Hub roster — 2026-10-09
 
 Opening Bluff from the homepage uses ROOM after initialization and validates the

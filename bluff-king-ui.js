@@ -62,8 +62,8 @@
   async function captureHubSources(){
     checkHubSetup();
     if(typeof ROOM.playerRef!=='function'){hubSources=null;return;}
-    const refs=setup.tokens.map((token,i)=>{const ref=ROOM.playerRef(i);if(ref?.key!==token)throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});return ref;});
-    hubSources=await Promise.all(refs.map(async ref=>({ref,stamp:sourceStamp((await ref.once('value')).val())})));
+    const paths=setup.tokens.map((token,i)=>{if(ROOM.playerRef(i)?.key!==token)throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});return '/rooms/'+code+'/players/'+token;});
+    hubSources=await Promise.all(paths.map(async path=>({path,stamp:sourceStamp((await client._request(path)).data)})));
     checkHubSetup();
   }
   async function connectLegacy(){
@@ -75,18 +75,28 @@
       throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});
     // Older standalone transport doubles have no per-card atomic API.
     if(!hubSources){ROOM.publish(i=>({game:'bluffking',bluff:sessions[i].credential,name:setup.names[i]}));return true;}
-    await Promise.all(hubSources.map(async({ref,stamp},i)=>{
+    await Promise.all(hubSources.map(async({path,stamp},i)=>{
       const slot=sessions[i];
-      const result=await ref.transaction(current=>{
+      // REST ETags read the server directly. SDK transaction callbacks may
+      // start with uncached null, which must never count as a game switch.
+      for(let attempt=0;attempt<8;attempt++){
         checkHubSetup();
-        if(matchesSlot(current,slot,i))return;
-        if(sourceStamp(current)!==stamp)return;
-        return {game:'bluffking',playerNum:i+1,name:setup.names[i],bluff:slot.credential};
-      },undefined,false);
-      checkHubSetup();
-      if(!matchesSlot(result.snapshot.val(),slot,i))throw Object.assign(new Error(t('game_switched')),{code:'game_switched'});
+        const read=await client._request(path,{getETag:true});checkHubSetup();
+        if(matchesSlot(read.data,slot,i))return;
+        if(sourceStamp(read.data)!==stamp)throw Object.assign(new Error(t('game_switched')),{code:'game_switched'});
+        if(!read.etag)throw new Error('The room storage did not provide a safe update token. Please retry.');
+        const payload={game:'bluffking',playerNum:i+1,name:setup.names[i],bluff:slot.credential};
+        const result=await client._request(path,{method:'PUT',body:payload,etag:read.etag});checkHubSetup();
+        if(result.conflict)continue;
+        if(matchesSlot(result.data,slot,i))return;
+        throw Object.assign(new Error(t('game_switched')),{code:'game_switched'});
+      }
+      throw new Error('The player card is still being updated. Please retry opening this table.');
     }));
     checkHubSetup();
+    const published=await Promise.all(hubSources.map(({path})=>client._request(path)));
+    checkHubSetup();
+    if(published.some((read,i)=>!matchesSlot(read.data,sessions[i],i)))throw Object.assign(new Error(t('game_switched')),{code:'game_switched'});
     if(window.HUB_EXECUTOR?.ensureBluff&&await HUB_EXECUTOR.ready()){
       await HUB_EXECUTOR.ensureBluff(client);checkHubSetup();await client.refresh();
     }
