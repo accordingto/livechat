@@ -59,7 +59,7 @@ class NodeDouble {
   }
   get innerHTML() { return this._html; }
 }
-async function harness(initialView, { card = false, setup = null, hash = '', transport = {}, now = () => Date.now() } = {}) {
+async function harness(initialView, { card = false, setup = null, hash = '', transport = {}, search = null, now = () => Date.now() } = {}) {
   const nodes = new Map(), document = { nodes, dynamicIdsByContainer: new Map(), buttonsByContainer: new Map(), sentencesByContainer: new Map(), buttons: [], sentences: [], activeElement: null, listeners: new Map(), addEventListener(type, fn) { this.listeners.set(type, fn); }, getElementById(id) { return nodes.get(id) || null; }, createElement() { return new NodeDouble(this); } };
   const pageHTML = fs.readFileSync(require.resolve('../bluff-king-live-chat.html'), 'utf8');
   const fixedIds = [...pageHTML.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -68,13 +68,13 @@ async function harness(initialView, { card = false, setup = null, hash = '', tra
   const dictionary = new Map(), storage = new Map(), sent = [], creates = [], cardCreates = [], cardConnections = [], joins = [], connections = [], publications = [], loadedScripts = [], intervals = [], statuses = [];
   if (setup) { storage.set('room-last-session', setup.code); storage.set('room-session-' + setup.code, JSON.stringify(setup)); }
   let transportOptions;
-  const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html?room=UITEST' + (card ? '&card=1' : '') + hash, origin: 'https://example.test', search: '?room=UITEST' + (card ? '&card=1' : ''), hash }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date: class extends Date { static now() { return now(); } }, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
-    constructor(opts) { transportOptions = opts; }
+  const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html'+(search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')))+hash, origin: 'https://example.test', search: search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')), hash }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date: class extends Date { static now() { return now(); } }, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
+    constructor(opts) { transportOptions = opts; transport.client=this; }
     async connect(...args) { connections.push(args); if (transport.connectError) throw transport.connectError; if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('hosting'); return initialView; }
     async refresh() { return initialView; }
     async command(input) { sent.push(clone(input)); return initialView; }
     async create(code, settings) { creates.push({ code, ...settings }); return initialView; }
-    async createFromCards(code, settings) { cardCreates.push({ code, setup: clone(settings) }); const next = transport.createdView || initialView; if (next) transportOptions.onView(clone(next)); return next; }
+    async createFromCards(code, settings, options) { cardCreates.push({ code, setup: clone(settings), options: clone(options||{}) }); if(transport.importError)throw transport.importError;if(transport.beforeImport)await transport.beforeImport({storage,context}); const next = transport.createdView || initialView; if (next) transportOptions.onView(clone(next)); return next; }
     async getCardSessions() { return clone(transport.sessions || []); }
     async connectCard(code, credential) { cardConnections.push({ code, credential: clone(credential) }); if (transport.cardError) throw transport.cardError; if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('connected'); return initialView; }
     async join(...args) { joins.push(args); return initialView; }
@@ -84,6 +84,9 @@ async function harness(initialView, { card = false, setup = null, hash = '', tra
   if (setup) context.ROOM = { enabled: true, code: setup.code, count: setup.playerCount, init() {}, name: i => setup.names[i], publish: fn => { publications.push(setup.tokens.slice(0, setup.playerCount).map((_, i) => clone(fn(i)))); } };
   document.head = { append: script => { loadedScripts.push(script.src); queueMicrotask(() => script.onload?.()); } };
   context.window = context;
+  if(transport.room)context.ROOM=transport.room;
+  if(transport.initializedSetup){const init=context.ROOM.init.bind(context.ROOM);context.ROOM.init=(...args)=>{init(...args);storage.set('room-last-session',transport.initializedSetup.code);storage.set('room-session-'+transport.initializedSetup.code,JSON.stringify(transport.initializedSetup));};}
+  if(transport.executor)context.HUB_EXECUTOR=transport.executor;
   vm.runInNewContext(fs.readFileSync(require.resolve('../bluff-king-ui.js'), 'utf8'), context);
   for (let i = 0; i < 40; i++) await Promise.resolve();
   async function click(action, targetId) {
@@ -276,7 +279,7 @@ test('original Hub names and all 3, 6 or 9 seats carry over without a second reg
     const setup = originalSetup(count), hostView = moderatorView(setup), sessions = originalSessions(setup);
     const h = await harness(null, { setup, transport: { createdView: hostView, sessions } });
     assert.equal(h.cardCreates.length, 1);
-    assert.deepEqual(h.cardCreates[0], { code: setup.code, setup });
+    assert.deepEqual(h.cardCreates[0], { code: setup.code, setup, options: { replaceActive: true } });
     assert.equal(h.creates.length, 0); assert.equal(h.joins.length, 0);
     assert.equal(h.node('bk-name'), undefined); assert.equal(h.node('bk-participate'), undefined);
     assert.equal(h.button('create'), undefined); assert.equal(h.button('join'), undefined); assert.equal(h.button('watch'), undefined);
@@ -364,7 +367,7 @@ test('finishing a Hub game then restarting adopts and republishes the original c
   await h.click('restart');
   assert.deepEqual(h.sent.map(command => command.action), ['restart']);
   assert.equal(h.cardCreates.length, imports + 1);
-  assert.deepEqual(h.cardCreates.at(-1), { code: setup.code, setup });
+  assert.deepEqual(h.cardCreates.at(-1), { code: setup.code, setup, options: { replaceActive: true } });
   assert.equal(h.publications.length, publications + 1);
   assert.deepEqual(h.publications.at(-1).map(marker => marker.bluff), sessions.map(slot => slot.credential));
   assert.ok(h.button('start')); assert.equal(h.button('start').disabled, false);
@@ -537,4 +540,88 @@ test('offline recovery is a confirmed card action after grace and needs three co
   const two = clone(view); two.players[1].connected = false; const waiting = await harness(two, { card: true });
   assert.equal(waiting.button('recover').disabled, true); assert.match(waiting.html(), /At least 3 players/);
   const grace = clone(view); grace.recovery.available = false; const short = await harness(grace, { card: true }); assert.equal(short.button('recover'), undefined);
+});
+
+function currentHubTest(count=3){
+ const setup={code:'UITEST',playerCount:count,tokens:Array.from({length:count},(_,i)=>(i+1).toString(16).repeat(20)),names:Array.from({length:count},(_,i)=>'New Hub '+(i+1))};
+ const sessions=setup.tokens.map((originalToken,i)=>({originalToken,name:setup.names[i],playerId:'assigned-'+i,credential:{version:2,room:setup.code,token:(i+1).toString(16).repeat(64),identityId:(i+1).toString(16).repeat(40),historyToken:(i+5).toString(16).repeat(64)}}));
+ const values=new Map(setup.tokens.map(token=>[token,{game:'scene',round:'scene-round-one',name:'Old scene player'}])),writes=[];
+ const room={enabled:true,code:setup.code,count,name:i=>setup.names[i],init(){},playerRef(i){const token=setup.tokens[i];return {key:token,once:async()=>({val:()=>clone(values.get(token))}),async transaction(update){
+   const old=clone(values.get(token)),next=update(old);if(next!==undefined){values.set(token,clone(next));writes.push(token);}
+   return {committed:next!==undefined,snapshot:{val:()=>clone(values.get(token))}};
+ }}}};
+ const lobby=project(fixture('lobby'));lobby.players=setup.names.map((name,i)=>({id:'assigned-'+i,name,seated:true,connected:true,score:0}));lobby.self={name:'Host',isHost:true,isFormal:false};
+ return {setup,sessions,values,writes,room,lobby};
+}
+const flushUI=async()=>{for(let i=0;i<120;i++)await Promise.resolve();};
+test('Hub opening uses the current ROOM after init rather than saved old-room members, and explicit invite URLs preserve their selected room',async()=>{
+ const f=currentHubTest(),old={...f.setup,code:'OLDTAB',names:['Older A','Older B','Older C']};
+ const room={...f.room,init(){}};const h=await harness(f.lobby,{setup:old,transport:{room,sessions:f.sessions,initializedSetup:f.setup}});
+ // current ROOM is authoritative at import, even if the earlier stored setup was another table.
+ assert.equal(h.cardCreates[0].code,f.setup.code);assert.deepEqual(h.cardCreates[0].setup,f.setup);
+ assert.doesNotMatch(h.html(),/Older A|Older B|Older C/);
+ const invite=await harness(project(fixture()),{setup:f.setup,search:'?room=INVITE'});
+ assert.equal(invite.cardCreates.length,0);assert.deepEqual(invite.connections,[['INVITE']]);
+});
+test('obsolete roster import errors stay pending instead of reconnecting and exposing the old game',async()=>{
+ const f=currentHubTest(),h=await harness(project(fixture('prepare')),{setup:f.setup,transport:{importError:{code:'roster_locked',message:'Old roster cannot be adopted'}}});
+ assert.equal(h.connections.length,0);assert.equal(h.publications.length,0);assert.doesNotMatch(h.html(),/Player 1|Alex/);
+ assert.match(h.node('bk-error').textContent,/already underway/);
+});
+test('Hub import waits for all exact-card CAS publications and service registration before showing the new lobby',async()=>{
+ const f=currentHubTest();let release;const gate=new Promise(resolve=>{release=resolve;}),registered=[];
+ const h=await harness(project(fixture('prepare')),{setup:f.setup,transport:{room:f.room,sessions:f.sessions,createdView:f.lobby,executor:{
+  install(){},async ready(){return true;},async ensureBluff(){registered.push(f.setup.tokens.every(token=>f.values.get(token).game==='bluffking'));await gate;}
+ }}});
+ assert.deepEqual(registered,[true]);assert.doesNotMatch(h.html(),/New Hub|Alex|Player 1/);
+ assert.equal(f.writes.length,3);release();await flushUI();assert.match(h.html(),/New Hub 1/);assert.ok(h.button('start'));assert.equal(h.sent.length,0);
+});
+test('same active original bindings are left untouched, retaining mailbox and presence while reconnecting',async()=>{
+ const f=currentHubTest();
+ f.sessions.forEach((slot,i)=>f.values.set(slot.originalToken,{game:'bluffking',name:f.setup.names[i],playerNum:i+1,bluff:slot.credential,keep:'private original metadata',heartbeat:123,bluffAction:{action:'ready'}}));
+ const before=clone([...f.values.entries()]);
+ const h=await harness(project(fixture('prepare')),{setup:f.setup,transport:{room:f.room,sessions:f.sessions}});
+ assert.deepEqual([...f.values.entries()],before);assert.deepEqual(f.writes,[]);assert.ok(h.button('beginDiscussion'));assert.equal(h.sent.length,0);
+});
+test('a newer scene round wins against an old delayed import, while ordinary same-round presence or phase changes may continue',async()=>{
+ for(const newer of [true,false]){
+  const f=currentHubTest(),h=await harness(f.lobby,{setup:f.setup,transport:{room:f.room,sessions:f.sessions,beforeImport(){
+   const card=f.values.get(f.setup.tokens[0]);f.values.set(f.setup.tokens[0],{...card,round:newer?'scene-round-two':card.round,phase:'VOTE',heartbeat:999,votes:{2:'yes'}});
+  }}});
+  if(newer){assert.equal(f.values.get(f.setup.tokens[0]).round,'scene-round-two');assert.ok(!f.writes.includes(f.setup.tokens[0]));assert.match(h.node('bk-error').textContent,/another game/);assert.doesNotMatch(h.html(),/New Hub/);}
+  else{assert.equal(f.writes.length,3);assert.match(h.html(),/New Hub 1/);}
+ }
+});
+test('another Hub tab changing the stored code, names or tokens aborts old-card publication even when ROOM remains stale',async()=>{
+ for(const change of ['code','names','tokens']){
+  const f=currentHubTest(),h=await harness(f.lobby,{setup:f.setup,transport:{room:f.room,sessions:f.sessions,beforeImport({storage}){
+   const next=clone(f.setup);if(change==='code'){next.code='NEWTAB';storage.set('room-last-session',next.code);}
+   else if(change==='names')next.names[0]='Different person';else next.tokens[0]='f'.repeat(20);
+   storage.set('room-session-'+next.code,JSON.stringify(next));
+  }}});
+  assert.equal(f.writes.length,0);assert.match(h.node('bk-error').textContent,/Hub room changed/);assert.doesNotMatch(h.html(),/New Hub/);
+ }
+});
+test('an existing unsupported Hub count is rejected before ROOM.init can silently clamp and rewrite its roster',async()=>{
+ for(const count of [2,3.5]){const f=currentHubTest(count);let initialized=0;f.room.init=()=>{initialized++;f.room.count=3;};
+ const h=await harness(null,{setup:f.setup,transport:{room:f.room}});
+ assert.equal(initialized,0);assert.equal(h.cardCreates.length,0);assert.equal(f.writes.length,0);assert.equal(f.room.count,count);
+ assert.equal(h.storage.get('room-session-'+f.setup.code),JSON.stringify(f.setup));
+ assert.match(h.node('bk-error').textContent,/Three to nine/);}
+});
+
+test('a held original-card CAS keeps import deferred until explicit registration completes, including reconnect refreshes',async()=>{
+ const f=currentHubTest();let releaseCAS,releaseService;
+ const casGate=new Promise(resolve=>{releaseCAS=resolve;}),serviceGate=new Promise(resolve=>{releaseService=resolve;});
+ const originalRef=f.room.playerRef.bind(f.room);
+ f.room.playerRef=i=>{const ref=originalRef(i);if(i===0){const transaction=ref.transaction;ref.transaction=async(...args)=>{await casGate;return transaction(...args);};}return ref;};
+ const registrations=[],transport={room:f.room,sessions:f.sessions,createdView:f.lobby,executor:{
+  install(){},async ready(){return true;},async ensureBluff(client){registrations.push({deferred:client.executorDeferred,allPublished:f.setup.tokens.every(token=>f.values.get(token).game==='bluffking')});await serviceGate;}
+ }};
+ const h=await harness(project(fixture('prepare')),{setup:f.setup,transport});
+ assert.equal(transport.client.executorDeferred,true);assert.equal(registrations.length,0);
+ await transport.client.refresh();assert.equal(transport.client.executorDeferred,true);assert.equal(registrations.length,0);
+ assert.doesNotMatch(h.html(),/Alex|New Hub/);releaseCAS();await flushUI();
+ assert.deepEqual(registrations,[{deferred:true,allPublished:true}]);assert.equal(transport.client.executorDeferred,true);
+ releaseService();await flushUI();assert.equal(transport.client.executorDeferred,false);assert.match(h.html(),/New Hub 1/);
 });

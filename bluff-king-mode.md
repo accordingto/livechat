@@ -9,8 +9,11 @@ English controls by default, with the existing Traditional Chinese switch.
 ## Starting a game
 
 1. Use the existing Hub room setup and open **BLUFF PARTY**.
-2. The existing 3–9 participants and seat order are imported automatically.
-   Keep the host table open and the device awake throughout the game.
+2. The current Hub's 3–9 participants and seat order are imported automatically.
+   Changed names, seat count or original links open a fresh lobby, as does
+   returning after the original cards switched to another game. An unchanged
+   active table reconnects to its existing round. In registered service mode,
+   the management page may close after opening completes.
 3. Existing `play.html` links switch automatically to each original player's
    own card. There is no second name form, login, or join button.
 4. The host table is an unseated moderator and adds no extra playing seat.
@@ -30,10 +33,11 @@ available to that browser in future rooms. Only distribute a person's own link.
 
 Opening the game outside an existing Hub room retains the separate invitation
 flow: open a host table and invite friends. Late invitees watch an ongoing game
-and can join the formal roster next game. Existing active games created before
-original-card integration retain their fixed roster until completion; the host
-can then click **Play another game** to import the original Hub seats. Restoring
-an integrated active table never resets its roles, scores or Spotlight.
+and can join the formal roster next game. Standalone imports keep their fixed
+active-roster guard. The trusted Hub manager can replace an outdated group with
+its current roster without finishing the previous group's game. Restoring an
+unchanged integrated active table keeps its service epoch, roles, scores,
+Spotlight and knowledge history.
 
 ## The conversation
 
@@ -328,3 +332,11 @@ frame URL and restores fragment credentials. New files:
 `bluff-king-engine.js`, `bluff-king-sync.js`, `bluff-king-topics.js`, question
 source/validator files, tests, and preview/content/live-verification scripts.
 Other games retain their existing architecture and rules.
+
+## Current Hub roster verification — 2026-10-09
+
+Full regression: 1209/1209 passed. Current-room import, changed names/count/tokens,
+returning after another game, persisted cross-tab changes, delayed old-game
+publication, complete registration and unchanged active reconnection are covered.
+Real Client/service integration verifies old epochs cannot modify the new table
+and a current player can start it after the management page closes.

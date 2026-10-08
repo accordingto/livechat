@@ -1,3 +1,20 @@
+## CURRENT: Bluff current Hub roster — 2026-10-09
+
+Opening Bluff from the homepage uses ROOM after initialization and validates the
+complete persisted Hub setup throughout import/publication. A changed name,
+count or original token, or returning after original cards moved to another
+game, explicitly replaces the obsolete active group with a fresh lobby without
+scoring. Keep persistent known/seen histories and credentials for retained seats.
+An unchanged active table reconnects without releasing its sealed service epoch,
+round, roles, scores or mailbox. Standalone fixed-roster imports remain guarded.
+Exact original-card transactions preserve newer game/round markers and existing
+matching cards; await publication and service registration before revealing the
+manager UI. Invalid Hub counts fail before ROOM can clamp/save them. Bluff loads
+helper v4, UI v8 and sync hub-roster-1. Browser-only changes need no independent
+runtime deployment or secret change. CUT is being maintained separately.
+Full regression: 1209/1209 passed, including held publication/registration,
+real HTTP roster replacement, sealed-epoch reconnection and late old tickets.
+
 ## CURRENT: CUT expanded topics — 2026-10-09
 
 CUT now has 100 simple-English topics: all original 36 everyday / 24 absurd

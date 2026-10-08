@@ -356,3 +356,18 @@ test('independent execution uses the approved owned HTTPS service and never brow
     assert.equal(call.input.credentials,'omit');
   }
 });
+
+
+test('Bluff periodic refresh cannot register while original-card publication is deferred; explicit completed publication registers once',async()=>{
+ const f=sandbox(),Client=bluff(f),raw={data:JSON.stringify({transport:{cardRoster:[{token:'1'.repeat(32)},{token:'2'.repeat(32)}]}})};
+ const client=new Client(raw);client.executorDeferred=true;
+ for(let i=0;i<3;i++)await client.refresh();
+ assert.equal(f.post().length,0,'periodic refresh must not seal partially published original cards');
+ assert.equal(client.executorTicket??null,null);
+ await f.H.ensureBluff(client);
+ assert.equal(f.post().length,1);assert.equal(f.post()[0].body.operation,'register');
+ assert.equal(client.executorTicket.capsule,'sealed-capsule');
+ client.executorDeferred=false;
+ await client.command({action:'start',commandId:'after-original-publication'});
+ assert.equal(f.post().at(-1).body.operation,'execute');
+});

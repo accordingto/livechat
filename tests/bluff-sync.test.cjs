@@ -97,3 +97,56 @@ test('card-roster import rechecks canonical host authority when a transfer races
   await assert.rejects(host.client.createFromCards('RACE', { ...setup, names: ['Replaced A', 'Replaced B', 'Replaced C'] }), e => e.code === 'host_only');
   const state = JSON.parse(fb.get(['rooms', 'bluffking-RACE', 'players', hostToken]).data); assert.equal(state.rooms.RACE.hostIdentityId, cards[1].credential.identityId); assert.equal(state.rooms.RACE.version, originalVersion + 1); assert.deepEqual(state.transport.cardRoster.map(p => p.name), setup.names); assert.deepEqual(state.rooms.RACE.members.filter(p => p.seated).map(p => p.name), setup.names);
 });
+
+test('trusted current Hub import replaces obsolete active names/count/tokens without erasing truths; unchanged bindings resume the same round', {timeout:60000}, async t=>{
+ const fb=await firebase();t.after(()=>new Promise(resolve=>fb.server.close(resolve)));
+ const host=device(fb.url,memoryStorage(),true),players=[device(fb.url),device(fb.url),device(fb.url)];
+ t.after(()=>[host,...players].forEach(d=>d.client.close()));
+ const setup={names:['Current A','Current B','Current C'],tokens:['a'.repeat(20),'b'.repeat(20),'c'.repeat(20)],playerCount:3};
+ await host.client.createFromCards('CURHUB',setup);
+ let slots=await host.client.getCardSessions();
+ async function publish(){for(let i=0;i<slots.length;i++)await host.client._request('/rooms/CURHUB/players/'+slots[i].originalToken,{method:'PUT',body:{game:'bluffking',playerNum:i+1,name:slots[i].name,bluff:slots[i].credential}});}
+ await publish();for(let i=0;i<3;i++)await players[i].client.connectCard('CURHUB',slots[i].credential);
+ await host.client.refresh();
+ async function start(){await host.client.command({action:'start',commandId:'current_hub_start_'+crypto.randomUUID(),expectedVersion:host.client.lastView.version});await host.client.command({action:'confirmTopic',commandId:'current_hub_confirm_'+crypto.randomUUID(),expectedVersion:host.client.lastView.version,roundId:host.client.lastView.round.id});}
+ const canonical=()=>JSON.parse(fb.get(['rooms','bluffking-CURHUB','players',host.client.hostToken]).data);
+ await start();const first=canonical(),round=first.rooms.CURHUB.round.id,truth=first.rooms.CURHUB.round.truthfulId;
+ const truthIdentity=first.rooms.CURHUB.members.find(m=>m.id===truth).identityId;
+ assert.ok(Object.keys(first.identities[truthIdentity].known).length);
+ await host.client.createFromCards('CURHUB',setup,{replaceActive:true});
+ assert.equal(host.client.lastView.phase,'prepare');assert.equal(host.client.lastView.round.id,round);
+ assert.deepEqual(canonical().identities[truthIdentity].known,first.identities[truthIdentity].known);
+ const renamed={...setup,names:['Renamed A','Current B','Current C']};
+ await assert.rejects(host.client.createFromCards('CURHUB',renamed),{code:'roster_locked'});
+ assert.equal(host.client.lastView.round.id,round);
+ await host.client.createFromCards('CURHUB',renamed,{replaceActive:true});
+ assert.equal(host.client.lastView.phase,'lobby');assert.equal(host.client.lastView.round,null);
+ assert.deepEqual(Array.from(host.client.lastView.players.filter(p=>p.seated),p=>p.name),renamed.names);
+ assert.deepEqual(Array.from(await host.client.getCardSessions(),s=>s.credential.token),Array.from(slots,s=>s.credential.token));
+ assert.deepEqual(canonical().identities[truthIdentity].known,first.identities[truthIdentity].known);
+ slots=await host.client.getCardSessions();await publish();await start();
+ const replacement={names:['New C','New A','Fresh D','New B'],tokens:[setup.tokens[2],setup.tokens[0],'d'.repeat(20),setup.tokens[1]],playerCount:4};
+ await host.client.createFromCards('CURHUB',replacement,{replaceActive:true});
+ assert.equal(host.client.lastView.phase,'lobby');
+ const newer=await host.client.getCardSessions();assert.deepEqual(Array.from(newer,s=>s.originalToken),replacement.tokens);
+ assert.deepEqual(Array.from(newer,s=>s.name),replacement.names);
+ assert.equal(newer[0].credential.identityId,slots[2].credential.identityId);
+ assert.equal(newer[1].credential.historyToken,slots[0].credential.historyToken);
+ assert.ok(canonical().identities[truthIdentity].known);assert.equal(Object.keys(host.client.lastView.scores).length,0);
+ assert.ok(!JSON.stringify(host.client.lastView).includes('PRIVATE_TEST_SECRET_'));
+});
+test('trusted explicit reopen after original cards moved to another game cancels the old round; ordinary invite reload never inspects Hub cards', {timeout:60000},async t=>{
+ const fb=await firebase();t.after(()=>new Promise(resolve=>fb.server.close(resolve)));
+ const host=device(fb.url,memoryStorage(),true),players=[device(fb.url),device(fb.url),device(fb.url)];
+ t.after(()=>[host,...players].forEach(d=>d.client.close()));
+ const setup={names:['One','Two','Three'],tokens:['1'.repeat(20),'2'.repeat(20),'3'.repeat(20)],playerCount:3};
+ await host.client.createFromCards('MOVED',setup);const slots=await host.client.getCardSessions();
+ for(let i=0;i<3;i++)await players[i].client.connectCard('MOVED',slots[i].credential);
+ await host.client.refresh();await host.client.command({action:'start',commandId:'moved_start_command',expectedVersion:host.client.lastView.version});
+ const oldRound=host.client.lastView.round.id;
+ await host.client.createFromCards('MOVED',setup);assert.equal(host.client.lastView.round.id,oldRound);
+ for(const token of setup.tokens)await host.client._request('/rooms/MOVED/players/'+token,{method:'PUT',body:{game:'scene',round:'new-scene-round'}});
+ await host.client.createFromCards('MOVED',setup,{replaceActive:true});
+ assert.equal(host.client.lastView.phase,'lobby');assert.equal(host.client.lastView.round,null);
+ assert.deepEqual(Array.from(await host.client.getCardSessions(),s=>JSON.parse(JSON.stringify(s.credential))),Array.from(slots,s=>JSON.parse(JSON.stringify(s.credential))));
+});

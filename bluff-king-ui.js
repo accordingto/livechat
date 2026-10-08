@@ -9,6 +9,8 @@
   Object.assign(D,{readyDone:['Ready','準備好了'],talkThinker:['Ask questions anytime. Find who knows the truth.','隨時提問，找出真正知道答案的人。'],talkChoose:['Ask more questions, or choose the Truth Teller.','繼續追問，或選出老實人。'],talkSpeaking:['Explain your answer. Respond to questions.','說明你的答案，並回應大家的問題。'],talkListening:['Ask questions or follow up while others speak.','別人發言時，也可以提問或追問。'],talkOpen:['Ask more questions, or defend your answer.','繼續追問，或回應對你說法的質疑。'],talkPublic:['Ask questions and compare everyone’s answers.','提問並比較大家的說法。'],prepareThinker:['Think of questions, then tap Ready.','想好要問什麼，再按準備好了。'],prepareTruth:['Review the answer, then tap Ready.','讀完正解，再按準備好了。'],prepareBluff:['Think of your explanation, then tap Ready.','想好自己的說法，再按準備好了。']});
   Object.assign(D,{youAre:['YOU ARE','你是'],truthShort:['Explain the truth in your own words.','用自己的話說明真正的意思。'],answerLabel:['The answer','正解'],factsShort:['Useful facts','補充事實'],truthTip:['Unsure about a detail? Say so. Don’t invent facts.','不確定的細節就說不確定，不要編造事實。'],cardHidden:['Your card is hidden','卡片已隱藏'],noRush:['no rush','慢慢聊']});
   Object.assign(D,{continueOffline:['Continue without offline players','不等待離線玩家，繼續遊戲'],recoverConfirm:['Continue with the connected players?','要與仍在線的玩家繼續嗎？'],recoverRule:['Skip unavailable turns. If this round cannot continue fairly, replace it without scoring. Earned points stay the same.','跳過無法參與的輪次；若本輪無法公平繼續，將換題且本輪不計分。已獲得的分數保留。'],needConnected:['At least 3 players must reconnect to continue.','至少需要 3 位玩家在線才能繼續。'],serviceTrust:['Players can continue from their own cards when the host leaves. Keep other players’ roles private.','主持人離開後，玩家可以從自己的卡片繼續。請保密其他人的角色。'],recovery_required:['A player needed for this round is offline. Use Continue without offline players.','本輪需要的玩家已離線，請使用「不等待離線玩家，繼續遊戲」。'],no_offline_player:['Everyone is connected again.','所有人已重新連線。'],no_blocked_turn:['No offline player is blocking this stage. Continue normally.','目前階段沒有被離線玩家阻塞，可以照常繼續。']});
+  D.room_changed=['The Hub room changed. Return to the Hub and open this game again.','首頁房間設定已改變，請回到首頁重新開啟遊戲。'];
+  D.game_switched=['These player cards now belong to another game. Return to the Hub to open a new table.','玩家卡片已切換到其他遊戲，請回到首頁重新開桌。'];
   I18N.registerDict('bluff', Object.fromEntries(Object.entries(D).map(([k,v]) => [k,{en:v[0],zh:v[1]}])));
   const t = k => I18N.t('bluff',k);
   const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,7 +23,8 @@
   let code=(params.get('room') || (!card && setup?.code) || '').toUpperCase();
   if (!/^[A-Z0-9]{4,12}$/.test(code)) code='';
   if (!code && !card) { const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; const bytes=crypto.getRandomValues(new Uint8Array(6)); code=Array.from(bytes,b=>chars[b%chars.length]).join(''); }
-  const hubMode=!card&&setup?.code===code;
+  const hubEntry=!card&&!params.has('room')&&(()=>{try{const saved=JSON.parse(localStorage.getItem('room-session-'+localStorage.getItem('room-last-session')));return Array.isArray(saved)||Array.isArray(saved?.tokens);}catch(_){return false;}})();
+  let hubMode=hubEntry,hubOpening=hubMode,stagedView=null,hubSources=null,hubStoredSetup=null;
   const cardSession=card?BLUFF_CARDS.readCard(location.hash,code):null;
   let view=null,client=null,busy=false,online=false,opened=false,lastSignature='',followup='',privateOpen=true,confirmAction=null,errorText='',rememberedName=params.get('name') || '',choosingAction=null,nudgeShown=new Set();
   const prompts=[['Could you give a concrete example?','能舉一個具體例子嗎？'],['What is the biggest difference between your version and theirs?','你和別人的版本，最主要差在哪裡？'],['Why would it have this name?','為什麼會有這個名稱？'],['How would someone use it in everyday life?','在生活中會怎麼使用？'],['Which part of your explanation are you least sure about?','你的解釋哪一部分最不確定？']];
@@ -30,11 +33,69 @@
   function playerName(id){return view?.players?.find(p=>p.id===id)?.name || '…';}
   function ownLink(){if(client?.identityStorageKey?.startsWith('icebreak.bluff.card.v2.')){const url=BLUFF_CARDS.frameURL({version:2,room:code,token:client.roomToken,identityId:client.identity.id,historyToken:client.identity.historyToken},location.href);if(url)return url;}const u=new URL('bluff-king-live-chat.html',location.href);u.searchParams.set('room',code);u.searchParams.set('card','1');u.hash='';return u.href;}
   function tableLink(){const u=new URL(ownLink());u.searchParams.delete('card');u.hash='';return u.href;}
-  async function connectLegacy(){if(typeof ROOM!=='undefined'&&ROOM.enabled&&ROOM.code===code){const sessions=hubMode?await client.getCardSessions():null;ROOM.publish(i=>{const slot=sessions?.find(s=>s.originalToken===setup.tokens[i]);return slot?{game:'bluffking',bluff:slot.credential,name:ROOM.name(i)}:sessions?null:{game:'bluffking',bluff:{version:1,room:code},name:ROOM.name(i)};});return true;}return false;}
+  function currentHubSetup(){
+    if(typeof ROOM==='undefined'||!ROOM.enabled)return null;
+    const saved=BLUFF_CARDS.readSetup(localStorage);
+    return BLUFF_CARDS.normalize({code:ROOM.code,playerCount:ROOM.count,
+      tokens:typeof ROOM.playerRef==='function'?Array.from({length:ROOM.count},(_,i)=>ROOM.playerRef(i)?.key):saved?.tokens,
+      names:Array.from({length:ROOM.count},(_,i)=>ROOM.name(i))});
+  }
+  function checkHubSetup(){
+    const current=currentHubSetup(),stored=BLUFF_CARDS.readSetup(localStorage);
+    if(!stored||!hubStoredSetup||stored.code!==hubStoredSetup.code||stored.playerCount!==hubStoredSetup.playerCount||stored.tokens.some((token,i)=>token!==hubStoredSetup.tokens[i])||stored.names.some((name,i)=>name!==hubStoredSetup.names[i]))throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});
+    if(!current||current.code!==setup.code||current.playerCount!==setup.playerCount||
+      current.tokens.some((token,i)=>token!==setup.tokens[i])||current.names.some((name,i)=>name!==setup.names[i]))
+      throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});
+  }
+  function sourceStamp(node){
+    const game=node?.game||'',key=({letstalk:'talk',onceupon:'once',bluffking:'bluff',chatwolf:'chatWolf'})[game]||game,binding=node?.[key]||{};
+    const rounds={scene:['round'],conquest:['round'],hottake:['round','voteId'],taboo:['round','voteId'],sophies:['round','voteId'],persuade:['round','voteId'],crack:['roundId','dealId','chooseId'],kangaroo:['case'],buttoncheck:['id'],cardcheck:['word','emoji']}[game];
+    if(rounds)return JSON.stringify([game,...rounds.map(key=>node?.[key]??null)]);
+    if(!['bluffking','chatwolf','dixit','onceupon','letstalk','cut','openmic'].includes(game))return JSON.stringify(node??null);
+    return JSON.stringify([game,node?.playerNum??null,node?.name??null,...['version','sessionId','room','token','identityId','historyToken'].map(key=>binding[key]??null)]);
+  }
+  function matchesSlot(node,slot,i){
+    const binding=node?.bluff,expected=slot.credential;
+    return node?.game==='bluffking'&&node.playerNum===i+1&&node.name===setup.names[i]&&
+      ['version','room','token','identityId','historyToken'].every(key=>binding?.[key]===expected[key]);
+  }
+  async function captureHubSources(){
+    checkHubSetup();
+    if(typeof ROOM.playerRef!=='function'){hubSources=null;return;}
+    const refs=setup.tokens.map((token,i)=>{const ref=ROOM.playerRef(i);if(ref?.key!==token)throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});return ref;});
+    hubSources=await Promise.all(refs.map(async ref=>({ref,stamp:sourceStamp((await ref.once('value')).val())})));
+    checkHubSetup();
+  }
+  async function connectLegacy(){
+    if(typeof ROOM==='undefined'||!ROOM.enabled||ROOM.code!==code)return false;
+    if(!hubMode){ROOM.publish(i=>({game:'bluffking',bluff:{version:1,room:code},name:ROOM.name(i)}));return true;}
+    checkHubSetup();
+    const sessions=await client.getCardSessions();checkHubSetup();
+    if(sessions.length!==setup.playerCount||sessions.some((slot,i)=>slot.originalToken!==setup.tokens[i]||slot.name!==setup.names[i]))
+      throw Object.assign(new Error(t('room_changed')),{code:'room_changed'});
+    // Older standalone transport doubles have no per-card atomic API.
+    if(!hubSources){ROOM.publish(i=>({game:'bluffking',bluff:sessions[i].credential,name:setup.names[i]}));return true;}
+    await Promise.all(hubSources.map(async({ref,stamp},i)=>{
+      const slot=sessions[i];
+      const result=await ref.transaction(current=>{
+        checkHubSetup();
+        if(matchesSlot(current,slot,i))return;
+        if(sourceStamp(current)!==stamp)return;
+        return {game:'bluffking',playerNum:i+1,name:setup.names[i],bluff:slot.credential};
+      },undefined,false);
+      checkHubSetup();
+      if(!matchesSlot(result.snapshot.val(),slot,i))throw Object.assign(new Error(t('game_switched')),{code:'game_switched'});
+    }));
+    checkHubSetup();
+    if(window.HUB_EXECUTOR?.ensureBluff&&await HUB_EXECUTOR.ready()){
+      await HUB_EXECUTOR.ensureBluff(client);checkHubSetup();await client.refresh();
+    }
+    return true;
+  }
   function rules(){const zh=I18N.lang==='zh';$('bk-rule-copy').innerHTML=zh?`<ol><li>一起看陌生題目；原本知道答案的人先提出換題。</li><li>每輪一位想想、一位秘密老實人，其餘都是互相競爭的瞎掰人。</li><li>Spotlight 只標示主要聽誰。任何人都能立即追問、吐槽、抓漏洞；自己的完整版本輪到自己再展開。</li><li>想想手動換下一位，讓每個人都說明一次。之後繼續追問或選出老實人。</li><li>想想每輪最多一次「公三小」，不揭身分、不淘汰，仍能選中被質疑的人。</li><li>指認確認後揭曉，留在原頁聊天。${view?.sharedControls?'仍在線的玩家可從自己的卡片開始下一輪。':'下一輪由想想或房主手動開始。'}</li></ol><h3>角色</h3><div class="bk-rule-role"><strong>想想</strong><span>不知道答案；帶動聊天、切換 Spotlight、最後指認。</span></div><div class="bk-rule-role"><strong>老實人</strong><span>知道正解。用自己的話說，不確定就說不確定，不編新事實。</span></div><div class="bk-rule-role"><strong>瞎掰人</strong><span>當場掰出可信的說法，可以改口補洞。讓想想選中自己就得分。</span></div><h3>計分（本改編版）</h3><ul><li>指認正確：想想 +2、老實人 +2。選錯：被選中的瞎掰人 +2。</li><li>質疑到瞎掰人且指認正確：想想另 +1。質疑到老實人：想想 −2。</li><li>被質疑的人不扣分，允許負分，同分並列。每人當一次想想。</li></ul><h3>簡短桌規</h3><ul><li>不要求看別人的螢幕，不問卡片排版或第幾行字；判斷的是說法。</li><li>不查題、不私下通氣。任何角色都能說「我不確定」。</li><li>${esc(t(view?.sharedControls?'serviceTrust':'hostTrust'))}</li></ul>`:`<ol><li>Meet a strange real topic. If you already know its meaning, ask for a new one before roles are dealt.</li><li>One Thinker does not know the answer. One secret Truth Teller knows it. Everyone else is a Bluffer competing for themselves.</li><li>The Spotlight says whose version you are mainly hearing. Everyone can immediately ask questions, point out gaps, or joke. Save your full version for your opportunity.</li><li>The Thinker manually moves the Spotlight so everyone has a chance. Then keep asking, or choose the real expert.</li><li>The Thinker may call one bluff at any time during the conversation. It reveals no role and removes nobody.</li><li>Confirm the final choice, reveal the truth, and enjoy the conversation. ${view?.sharedControls?'Any connected player can continue to the next round.':'The next round starts only when the Thinker or host continues.'}</li></ol><h3>Three roles</h3><div class="bk-rule-role"><strong>Thinker</strong><span>Ask questions, move the Spotlight, and find the real expert.</span></div><div class="bk-rule-role"><strong>Truth Teller</strong><span>Use your own words. If a detail is unknown, say so; do not invent facts as evidence.</span></div><div class="bk-rule-role"><strong>Bluffer</strong><span>Make it believable. Borrow ideas, change your mind, and fill the gaps. Get selected to earn points.</span></div><h3>Scoring in this adaptation</h3><ul><li>Correct choice: Thinker +2, Truth Teller +2. Wrong choice: the selected Bluffer +2.</li><li>Challenge a Bluffer and choose correctly: Thinker earns another +1. Challenge the Truth Teller: Thinker −2.</li><li>A challenged player loses no points. Negative scores are allowed; ties share a rank. Everyone is Thinker once.</li></ul><h3>Table rules</h3><ul><li>No looking at other screens or asking about card layout or line numbers. Judge the explanation.</li><li>No searching the topic or secret messages. Every role may say “I’m not sure”.</li><li>${esc(t(view?.sharedControls?'serviceTrust':'hostTrust'))}</li></ul>`;}
   function showError(error){const key=error?.code || error?.error?.code;errorText=D[key]?t(key):error?.message||error?.error?.message||t('offlineError');$('bk-error').hidden=false;$('bk-error').textContent=errorText;}
   function status(value){const state=typeof value==='string'?value:value?.state;online=['ready','connected','live','hosting'].includes(state);$('bk-connection').classList.toggle('is-offline',!online);$('bk-connection').textContent=t(online?'connected':state==='not_joined'?'notJoined':['waiting_host','waiting_for_host'].includes(state)?'waitingHost':'offline');}
-  function update(next){if(choosingAction&&(view?.round?.id!==next?.round?.id||next.phase!=='discussion'||!card||next.self?.playerId!==next.round?.thinkerId))$('bk-picker')?.close();view=next;opened=true;const sig=JSON.stringify(next, (key,val)=>['serverTime','lastSeen'].includes(key)?undefined:val);if(sig===lastSignature)return;lastSignature=sig;paint();}
+  function update(next){if(hubOpening){stagedView=next;return;}if(choosingAction&&(view?.round?.id!==next?.round?.id||next.phase!=='discussion'||!card||next.self?.playerId!==next.round?.thinkerId))$('bk-picker')?.close();view=next;opened=true;const sig=JSON.stringify(next, (key,val)=>['serverTime','lastSeen'].includes(key)?undefined:val);if(sig===lastSignature)return;lastSignature=sig;paint();}
   function lobbySetup(){if(hubMode||cardSession||(card&&location.hash))return `<section class="bk-panel"><p class="bk-eyebrow">${esc(t('room'))} ${esc(code)}</p><h2>${esc(t(hubMode?'hubSetup':'cardConnecting'))}</h2><p class="bk-sub">${esc(t('hubCards'))}</p>${hubMode?`<p>${setup.names.map(esc).join(' · ')}</p>`:''}</section>`;const isNew=!opened;return `<section class="bk-panel"><p class="bk-eyebrow">${esc(isNew&&!card?'LET THE STORIES BEGIN':t('room')+' '+code)}</p><h2>${esc(!card&&isNew?t('openIntro'):t('joinIntro'))}</h2><p class="bk-sub">${esc(t('openNote'))}</p><label class="bk-field"><span>${esc(t('hostName'))}</span><input id="bk-name" maxlength="40" value="${esc(rememberedName)}" autocomplete="nickname" placeholder="Alex"></label>${!card&&isNew?`<label class="bk-check"><input type="checkbox" id="bk-participate" checked>${esc(t('participate'))}</label>`:''}<div class="bk-actions">${button(!card&&isNew?'create':'join',t(!card&&isNew?'open':'join'),'bk-primary',!code)}${card||opened?button('watch',t('watch')):''}</div></section>`;}
   function icon(kind){const paths={mic:'<rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',brain:'<path d="M12 4a4 4 0 0 0-7-1 4 4 0 0 0-3 6 5 5 0 0 0 1 8 4 4 0 0 0 9 3V4Zm0 0a4 4 0 0 1 7-1 4 4 0 0 1 3 6 5 5 0 0 1-1 8 4 4 0 0 1-9 3M6 8l3 2M5 15h3M16 8l-1 3M16 16l3-1"/>',card:'<rect x="5" y="3" width="14" height="18" rx="3"/><path d="m12 7 3 5-3 5-3-5 3-5Z"/>',crown:'<path d="m3 5 4 5 5-7 5 7 4-5-2 14H5L3 5ZM5 22h14"/>',question:'<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01"/>',people:'<circle cx="9" cy="7" r="3"/><path d="M3 21v-4a6 6 0 0 1 12 0v4M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v3"/>',alert:'<path d="m12 3 10 18H2L12 3ZM12 9v5M12 17h.01"/>'};return `<svg class="bk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[kind]||paths.card}</svg>`;}
   function seatNumber(id){return view.players.filter(p=>view.roster?.includes(p.id)||(!view.roster?.length&&p.seated)).findIndex(p=>p.id===id)+1;}
@@ -62,7 +123,7 @@
   function results(){const sorted=view.players.filter(p=>view.roster.includes(p.id)).slice().sort((a,b)=>(view.scores[b.id]||0)-(view.scores[a.id]||0));let prior=null,rank=0;return `<section class="bk-panel bk-results"><p class="bk-eyebrow">${esc(t('results'))}</p><h2>${icon('crown')}${esc(sorted.filter(p=>view.scores[p.id]===view.scores[sorted[0]?.id]).map(p=>p.name).join(' & '))}</h2><ul class="bk-score-list">${sorted.map((p,i)=>{const score=view.scores[p.id]||0;if(score!==prior)rank=i+1;prior=score;return `<li><div><span class="bk-rank">${rank}</span><strong>${esc(p.name)}</strong></div><span class="bk-delta ${score<0?'is-negative':''}">${score}</span></li>`;}).join('')}</ul>${canManage()?`<div class="bk-actions">${button('restart',t('again'),'bk-primary')}</div>`:''}</section>`;}
   function history(){const entries=view.history||[];if(!entries.length)return '';return `<details class="bk-history"><summary>${esc(t('history'))} (${entries.length})</summary>${entries.map(h=>`<div class="bk-panel"><strong>${esc(h.term||h.topic?.term||'')}</strong><p class="bk-sub">${esc(h.secretAnswer||h.answer||'')}</p></div>`).join('')}</details>`;}
   function admin(){if(!canManage())return '';const candidates=view.self?.isHost?view.players.filter(p=>!p.isHost):[];return `<div class="bk-management">${['topic_check','prepare','discussion'].includes(view.phase)?button('cancelRound',t('cancel'),'bk-danger'):''}${view.phase==='lobby'?`<div class="bk-manage-seats">${view.players.map(p=>`<div><span>${esc(p.name)}${seatNumber(p.id)?` · ${esc(t('seatLabel'))} ${seatNumber(p.id)}`:''}</span>${button('setSeat',t(p.seated?'unseat':'seat'),'bk-quiet-button',false,`data-bk-target="${esc(p.id)}" data-bk-seated="${!p.seated}"`)}</div>`).join('')}</div>`:''}${candidates.length?`<label class="bk-field"><span>${esc(t('transfer'))}</span><select id="bk-host-target">${candidates.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${esc(t('seatLabel'))} ${seatNumber(p.id)||'–'}</option>`).join('')}</select></label><div class="bk-actions">${button('transferHost',t('transfer'),'bk-quiet-button')}</div>`:''}<p class="bk-sub">${esc(t(view?.sharedControls?'serviceTrust':'hostTrust'))}</p></div>`;}
-  function paint(){rules();$('bk-room-label').textContent=code?`${t('room')} ${code}`:'';const v=view,r=v?.round;if($('bk-meta'))$('bk-meta').textContent=v?`${r?`${t('round')} ${r.number}/${r.total} · `:''}${v.availability?`${v.availability.remaining} ${t('remainingShort')}`:''}`:'';if(!v){$('bk-app').innerHTML=lobbySetup();return;}
+  function paint(){if(hubOpening){$('bk-app').innerHTML='<section class="bk-panel"><p>'+esc(errorText||t('connecting'))+'</p></section>';$('bk-meta').textContent='';return;}rules();$('bk-room-label').textContent=code?`${t('room')} ${code}`:'';const v=view,r=v?.round;if($('bk-meta'))$('bk-meta').textContent=v?`${r?`${t('round')} ${r.number}/${r.total} · `:''}${v.availability?`${v.availability.remaining} ${t('remainingShort')}`:''}`:'';if(!v){$('bk-app').innerHTML=lobbySetup();return;}
     const isThinker=v.self?.playerId===r?.thinkerId,leader=canManage()||(card&&isThinker);let html=`<div class="bk-phase"><strong>${esc(t(v.phase))}</strong>${r?`<span>♛ ${esc(t('thinker'))}: ${esc(playerName(r.thinkerId))}</span>`:''}${card&&v.self?.isHost?`<a class="bk-text-link" href="${esc(tableLink())}" target="_blank" rel="noopener">${I18N.lang==='zh'?'房主桌面 ↗':'Host table ↗'}</a>`:''}</div>`;
     if(!v.self)html+=lobbySetup();
     if(!card&&v.self?.isFormal&&['lobby','topic_check','results'].includes(v.phase))html+=`<a class="bk-text-link bk-own-card-link" href="${esc(ownLink())}" target="_blank" rel="noopener">${esc(t('privateLink'))}</a>`;
@@ -84,7 +145,7 @@
   }
 
   function clock(){const r=view?.round;if(view?.phase!=='discussion'||!r?.discussionStartedAt)return;const seconds=Math.max(0,Math.floor((Date.now()-r.discussionStartedAt)/1000)),remind=card&&view.self?.playerId===r.thinkerId&&seconds>=(r.rules?.discussionReminderSeconds||300);const node=$('bk-clock');if(node)node.textContent=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}${remind?'':` · ${t('time')}`}`;const n=$('bk-nudge');if(n)n.hidden=!remind;if(remind)nudgeShown.add(r.id);}
-  async function send(action,payload={},snapshot){if(busy||!client)return;busy=true;paint();try{await client.command({room:code,action,commandId:crypto.randomUUID().replace(/-/g,''),expectedVersion:snapshot?.version??view?.version,roundId:snapshot?.roundId??view?.round?.id,...payload});if(action==='restart'&&hubMode){await client.createFromCards(code,setup);await connectLegacy();}$('bk-error').hidden=true;errorText='';}catch(e){showError(e);await client.refresh().catch(()=>{});}finally{busy=false;lastSignature='';paint();}}
+  async function send(action,payload={},snapshot){if(busy||!client)return;busy=true;paint();try{if(action==='restart'&&hubMode){checkHubSetup();client.executorDeferred=true;hubOpening=true;paint();}await client.command({room:code,action,commandId:crypto.randomUUID().replace(/-/g,''),expectedVersion:snapshot?.version??view?.version,roundId:snapshot?.roundId??view?.round?.id,...payload});if(action==='restart'&&hubMode){await captureHubSources();await client.createFromCards(code,setup,{replaceActive:true});await connectLegacy();client.executorDeferred=false;hubOpening=false;const next=stagedView||client.lastView;stagedView=null;if(next)update(next);}$('bk-error').hidden=true;errorText='';}catch(e){showError(e);if(action==='restart'&&hubMode){client.close();view=null;stagedView=null;hubOpening=true;}else await client.refresh().catch(()=>{});}finally{busy=false;lastSignature='';paint();}}
   function confirm(action,target,title,text,extra={}){confirmAction={action,target,extra,version:view.version,roundId:view.round?.id};$('bk-confirm-title').textContent=title;$('bk-confirm-text').textContent=text;$('bk-confirm').showModal();}
   async function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.append(s);});}
   async function ensureHost(){if(!window.BLUFF_ENGINE)await loadScript('bluff-king-engine.js?v=executor-1');if(!window.BLUFF_QUESTIONS)await loadScript('bluff-king-topics.js?v=1');}
@@ -103,7 +164,40 @@
   $('bk-confirm').addEventListener('close',()=>{confirmAction=null;});
   I18N.onChange(()=>{lastSignature='';paint();status(online?'ready':'offline');});
   setInterval(clock,1000);
-  async function boot(){paint();try{if(!code)throw {message:t('room_not_found')};if(!card){await ensureHost();if(typeof ROOM!=='undefined'&&document.getElementById('room-mount'))ROOM.init({mount:'room-mount',hideSetup:true,counts:[3,4,5,6,7,8,9],defaultCount:5,accent:'#fbbf24'});}await loadScript('bluff-king-sync.js?v=executor-1');if(window.HUB_EXECUTOR)HUB_EXECUTOR.install();client=new BLUFF_SYNC.Client({databaseURL:FIREBASE_CONFIG.databaseURL,storage:localStorage,hostPresentation:!card,onView:update,onStatus:status});if(hubMode){try{await client.createFromCards(code,setup);await connectLegacy();}catch(e){if(e?.code!=='roster_locked')throw e;await client.connect(code);showError(e);}}else if(cardSession){await client.connectCard(code,cardSession);}else if(card&&location.hash){throw {code:'invalid_card'};}else await client.connect(code);if(view?.self)opened=true;else if(card)opened=true;paint();}catch(e){if(e?.code==='room_not_found'){opened=card;status('waiting_host');paint();}else{showError(e);status('offline');}}}
+  async function boot(){
+    paint();
+    try{
+      if(!card){
+        await ensureHost();
+        if(hubEntry){const stored=JSON.parse(localStorage.getItem('room-session-'+localStorage.getItem('room-last-session')));const count=Number(Array.isArray(stored)?stored.length:stored?.playerCount);if(!Number.isInteger(count)||count<3||count>9)throw Object.assign(new Error(t('player_count')),{code:'player_count'});}
+        if(typeof ROOM!=='undefined'&&document.getElementById('room-mount'))ROOM.init({mount:'room-mount',hideSetup:true,counts:[3,4,5,6,7,8,9],defaultCount:5,accent:'#fbbf24'});
+        if(hubEntry){
+          const current=currentHubSetup();
+          if(current){setup=current;hubStoredSetup=BLUFF_CARDS.readSetup(localStorage);code=current.code;hubMode=true;hubOpening=true;paint();}
+          else if(typeof ROOM!=='undefined'&&ROOM.enabled)throw Object.assign(new Error(t('invalid_card_roster')),{code:'invalid_card_roster'});
+        }
+      }
+      if(!code)throw {message:t('room_not_found')};
+      await loadScript('bluff-king-sync.js?v=hub-roster-1');
+      if(window.HUB_EXECUTOR)HUB_EXECUTOR.install();
+      client=new BLUFF_SYNC.Client({databaseURL:FIREBASE_CONFIG.databaseURL,storage:localStorage,hostPresentation:!card,onView:update,onStatus:status});
+      if(hubMode){
+        client.executorDeferred=true;
+        await captureHubSources();
+        await client.createFromCards(code,setup,{replaceActive:true});
+        await connectLegacy();
+        client.executorDeferred=false;
+        hubOpening=false;const next=stagedView||client.lastView;stagedView=null;if(next)update(next);
+      }else if(cardSession)await client.connectCard(code,cardSession);
+      else if(card&&location.hash)throw {code:'invalid_card'};
+      else await client.connect(code);
+      if(view?.self||card)opened=true;paint();
+    }catch(e){
+      if(hubMode){client?.close();view=null;stagedView=null;hubOpening=true;showError(e);status('offline');paint();}
+      else if(e?.code==='room_not_found'){opened=card;status('waiting_host');paint();}
+      else{showError(e);status('offline');}
+    }
+  }
   if(card&&window.parent!==window&&typeof ResizeObserver==='function')new ResizeObserver(()=>window.parent.postMessage({type:'bluff-king-size',height:Math.ceil(document.body.getBoundingClientRect().height)},location.origin)).observe(document.body);
   window.addEventListener('pagehide',()=>client?.close());
   window.addEventListener('pageshow',event=>{if(event.persisted)client?.connect(code).catch(showError);});

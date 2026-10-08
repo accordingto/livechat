@@ -185,16 +185,37 @@ var HUB_EXECUTOR = (() => {
     const p = Client.prototype;
     p.executorPatched = true;
     const original = p._hostRefresh, originalCommand = p.command, originalCards = p.createFromCards;
-    p.createFromCards = async function (code, setup) {
+    p.createFromCards = async function (code, setup, options = {}) {
       this.executorStarting = true;
       try {
         if (this.executorPromise) { try { await this.executorPromise; } catch (_) {} }
-        const token = this.storage.getItem('icebreak.bluff.host.' + String(code).trim().toUpperCase());
+        const roomCode = String(code).trim().toUpperCase();
+        const token = this.storage.getItem('icebreak.bluff.host.' + roomCode);
         if (token) {
-          const raw = (await this._request('/rooms/bluffking-' + String(code).trim().toUpperCase() + '/players/' + token)).data;
-          if (raw?.executor?.v === 1) await request({ operation: 'release', capsule: raw.executor.capsule, token });
+          const raw = (await this._request('/rooms/bluffking-' + roomCode + '/players/' + token)).data;
+          if (raw?.executor?.v === 1) {
+            const state = typeof raw.data === 'string' ? JSON.parse(raw.data) : raw;
+            const room = state.rooms?.[roomCode], prior = state.transport?.cardRoster;
+            const count = Number(setup?.playerCount ?? setup?.names?.length);
+            const sameRoster = Array.isArray(prior) && count >= 3 && count <= 9 && prior.length === count &&
+              setup?.tokens?.length === count && setup?.names?.length === count && prior.every((entry, i) =>
+                /^[A-Za-z0-9_-]{12,128}$/.test(entry.originalToken || '') && entry.originalToken === setup.tokens[i] &&
+                entry.name === setup.names[i] && room?.members?.find(member => member.identityId === entry.identityId)?.name === setup.names[i]);
+            if (sameRoster) {
+              const originals = await Promise.all(prior.map(entry => this._request('/rooms/' + roomCode + '/players/' + entry.originalToken)));
+              const sameCards = originals.every(({ data }, i) => {
+                const card = data?.bluff, entry = prior[i];
+                return data?.game === 'bluffking' && card?.version === 2 && card.room === roomCode &&
+                  card.token === entry.token && card.identityId === entry.identityId && card.historyToken === entry.historyToken;
+              });
+              // A manager reload of the same active table is a reconnection,
+              // not a release/import. Keep the epoch and private cards intact.
+              if (sameCards) return await this.connect(roomCode);
+            }
+            await request({ operation: 'release', capsule: raw.executor.capsule, token });
+          }
         }
-        this.executorTicket = null; return await originalCards.call(this, code, setup);
+        this.executorTicket = null; return await originalCards.call(this, code, setup, options);
       } finally { this.executorStarting = false; }
     };
     p._hostRefresh = async function () {
@@ -208,7 +229,7 @@ var HUB_EXECUTOR = (() => {
       this.executorTicket = null;
       const view = await original.call(this);
       const state = typeof raw?.data === 'string' ? JSON.parse(raw.data) : raw;
-      if (state?.transport?.cardRoster?.length && !this.executorStarting && !this.executorRegistering && await ready()) {
+      if (state?.transport?.cardRoster?.length && !this.executorStarting && !this.executorDeferred && !this.executorRegistering && await ready()) {
         try { await ensureBluff(this); } catch (_) {}
       }
       return view;

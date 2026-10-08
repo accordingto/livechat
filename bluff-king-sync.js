@@ -57,17 +57,32 @@
       this._saveHostIdentity();
       const view = await this.refresh(); this._schedule(); return view;
     }
-    async createFromCards(code, setup) {
+    async createFromCards(code, setup, { replaceActive = false } = {}) {
       const names = setup?.names, tokens = setup?.tokens; const count = Number(setup?.playerCount ?? names?.length);
       if (!Array.isArray(names) || !Array.isArray(tokens) || !Number.isInteger(count) || count < 3 || count > 9 || names.length !== count || tokens.length !== count || names.some(n => typeof n !== 'string' || !n.trim() || n.length > 40) || tokens.some(t => typeof t !== 'string' || !/^[A-Za-z0-9_-]{12,128}$/.test(t)) || new Set(tokens).size !== count) { const e = new Error('The existing Hub roster needs three to nine names and distinct original player links.'); e.code = 'invalid_card_roster'; throw e; }
       this.code = cleanCode(code); this.closed = false;
+      const originals = replaceActive ? await Promise.all(tokens.map(token => this._request('/rooms/' + this.code + '/players/' + token).then(read => read.data))) : null;
       if (this.storage.getItem('icebreak.bluff.host.' + this.code)) await this.connect(this.code); else await this.create(this.code, { name: 'Host', participate: false });
       if (!this.isHost) { const e = new Error('Only the current host can use this original Hub roster.'); e.code = 'host_only'; throw e; }
       await this._cas(this._roomPath('players/' + this.hostToken), state => {
         const room = state.rooms[this.code];
         if (room.hostIdentityId !== this.identity.id) { const e = new Error('The host has changed. Only the current host can import the original player cards.'); e.code = 'host_only'; throw e; }
         const prior = state.transport.cardRoster || [];
-        if (room.phase !== 'lobby') { if (prior.length !== count || prior.some((p, i) => p.originalToken !== tokens[i])) { const e = new Error('The current game has a fixed roster. Finish it before importing the original player cards.'); e.code = 'roster_locked'; throw e; } return { state }; }
+        const changed = prior.length !== count || prior.some((p, i) => p.originalToken !== tokens[i] || p.name !== names[i] || room.members.find(m => m.identityId === p.identityId)?.name !== names[i]);
+        const moved = originals?.some((card, i) => {
+          const entry = prior[i], binding = card?.bluff;
+          return card?.game !== 'bluffking' || binding?.version !== 2 || binding.room !== this.code ||
+            binding.token !== entry?.token || binding.identityId !== entry?.identityId || binding.historyToken !== entry?.historyToken;
+        });
+        if (room.phase !== 'lobby') {
+          if (!changed && !moved) return { state };
+          if (!replaceActive) { const e = new Error('The current game has a fixed roster. Finish it before importing the original player cards.'); e.code = 'roster_locked'; throw e; }
+          // An explicit current-Hub import abandons an obsolete table without
+          // scoring. Persistent truth/seen histories stay in state.identities.
+          room.phase = 'lobby'; room.round = null; room.roster = []; room.thinkerOrder = [];
+          room.scores = {}; room.roundIndex = 0; room.history = []; room.usedKnowledgeIds = [];
+          room.version++;
+        }
         const priorMap = new Map(prior.map(p => [p.originalToken, p])); const newMembers = []; const newSessions = {};
         const hostMember = room.members.find(p => p.identityId === this.identity.id); const hostHasOriginalSeat = prior.some(p => p.identityId === this.identity.id && tokens.includes(p.originalToken)); if (!hostHasOriginalSeat) { hostMember.seated = false; hostMember.wantsSeat = false; newMembers.push(hostMember); } newSessions[this.identity.id] = state.transport.members[this.identity.id];
         const cardRoster = tokens.map((originalToken, i) => {
