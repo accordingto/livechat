@@ -1,4 +1,4 @@
-> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+> Current production (2026-10-09): the configured owned room service executes the game with the original private-card links, without keeping a host page open. The 129-card deck and varied dealing are deployed to that service as well as the frontend. See [service activation and recovery](hub-executor-mode.md). Browser-host requirements below apply only to the legacy fallback.
 
 # Once Upon a Time — varied opening hands / V2 reference table
 
@@ -13,7 +13,9 @@ missions, classes, or additional rounds are used.
 1. Open the Hub and complete the usual room setup for **2–6 players**.
 2. Send each participant their existing **private player link**. Do not put all
    private links in a public chat. The same links work when switching games.
-3. Choose the last game, **Once Upon a Time**, then **Open this table**.
+3. Choose **Once Upon a Time** in the Hub and select your own existing seat.
+   The Hub opens your original player card after independent registration.
+   The older shared manager page remains available as a recovery/fallback route.
 4. The host taps **Deal cards** directly. Player **Ready** buttons are optional
    signals, not a prerequisite for starting or receiving cards.
 5. A random Story Card is revealed and discarded. The host chooses who looks
@@ -54,8 +56,8 @@ with local focus, scroll and disclosures retained. New sessions or seat changes
 clear the old private DOM and local selection/confirmation before showing the
 new seat. Pending and connection-permission fences still update immediately.
 
-The host page is a shared table, not a private hand. A participating host uses
-their own original player-card link to play. Keep the host page open; on normal
+The legacy host page is a shared table, not a private hand. A participating host uses
+their own original player-card link to play. In legacy fallback only, keep it open; on normal
 refresh it resumes the saved game rather than re-dealing. If it disconnects,
 players wait for it to reconnect. Another host tab cannot simultaneously control
 the same game. The host may finish a stalled vote, cancel without a winner, or
@@ -104,6 +106,12 @@ start another shuffled game once finished/cancelled.
   cards are held out until their dispute/challenge opportunity closes.
 
 ## Architecture and privacy
+
+Production uses the existing owned independent executor described in
+`hub-executor-mode.md`. It reuses the same rule engine, original cards, private
+projections and trusted-host boundary, with server ETag authority. No new model
+key, per-game fee or original-site backend setting is needed for this update.
+The following browser transport remains the compatible legacy fallback:
 
 The existing vanilla static Hub, `ROOM`, `play.html`, Firebase configuration,
 and `TALK_SYNC.Host` transaction/lease mechanism are reused. There is no new
@@ -215,6 +223,9 @@ public card pool for visual QA, never real players' private hands or assignments
 - `scripts/once-upon-a-time-dev-server.cjs`: read-only local static preview.
 - `scripts/once-upon-a-time-live-test.cjs`: opt-in isolated six-seat real Firebase
   integration check; cleans only its own newly created token paths.
+- `scripts/once-upon-a-time-service-test.cjs`: opt-in six-seat production-service
+  check; authenticates only fresh test credentials and conditionally cleans
+  its seven exact, marker/session-verified nodes. Never imported by players.
 - `scripts/once-upon-a-time-verify-release.cjs`: read-only production asset hashes.
 - `scripts/once-upon-a-time-encode-art.cjs`: optional build-time WebP encoding
   using installed/bundled Sharp; not required to run the game.
@@ -257,6 +268,11 @@ It creates only fresh randomized test paths after preflight, uses independent
 player credentials and real Firebase REST transactions, and removes only those
 test paths in `finally`. It never reads a whole room/database or uses an existing
 player's credential. Do not enable this flag in a production player page.
+
+For the actual independent service, set `ONCE_UPON_SERVICE_TEST=1` and run
+`node scripts/once-upon-a-time-service-test.cjs`. This opt-in test creates
+only fresh exact nodes, proves null before creation, preserves server secrets,
+and uses marker/session plus ETag-conditional cleanup. It never lists rooms.
 
 ## Verification status (2026-10-05)
 
@@ -504,6 +520,8 @@ cards. No seat is promised an action/character/Interrupt quota.
 Executed verification:
 
 - Focused Once + Story-service + game-switch regression: **173/173**.
+- Final complete repository regression after preserving remote Hub changes:
+  **1163/1163**, no failures or skips.
 - 10,000 seeded deals / 40,000 hands: every opening meets both safeguards;
   category compositions and Interrupt counts still vary. This tests starting
   variety, not human storytelling enjoyment or competitive balance.
@@ -523,3 +541,8 @@ Executed verification:
   in `assets/once-upon-a-time/art-v2-flexible-elements.json`.
 - Physical phones, Safari/Firefox and live human gameplay balance are not
   verified by these automation checks. Host/player pages need one refresh.
+- Independent production service published to its existing project, without
+  reading or rotating server secrets. Six fresh original-seat credentials:
+  **212 checks passed**, including a server-side 129-card deal, category variety,
+  own-hand/Ending privacy, management from original cards, real play and reconnect.
+  All seven temporary nodes were ownership/ETag checked and cleaned.

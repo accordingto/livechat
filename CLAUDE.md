@@ -1,3 +1,14 @@
+## CURRENT: Once opening variety — 2026-10-09
+
+Once has 129 original Story Cards plus 51 unchanged Endings. Fifteen new ordinary
+elements and their literal original paintings are additive. Opening hands only:
+4/4/4/3/3 categories minimum and 4/4/3/3/2 single-category maximum for 2–6 seats,
+without fixed category or Interrupt quotas. Keep original hand counts, later
+draws, starter/Ending/voting rules, saved old decks and private projections.
+The existing independent service must receive the same deck/engine as the Hub.
+Host/player Once imports use `once-varied-deal-executor-1`. See
+`once-upon-a-time-mode.md` for sources, card provenance and verification.
+
 ## Current independent game deployment — 2026-10-09
 
 Dixit, Once Upon a Time, Let's Talk, CUT, Open Mic, Bluff Party and Chat Wolf
