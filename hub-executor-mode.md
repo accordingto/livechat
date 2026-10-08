@@ -83,6 +83,11 @@ regression and `node scripts/hub-executor-verify-release.cjs <commit>` to check
 production assets, API readiness and blocked server-source paths without
 accessing any room.
 
+The production routing configuration returns 404 for server-only paths before
+the filesystem phase. Ordinary rewrites do not override existing static files;
+keep this ordering when changing deployment routes.
+
 Implementation references: [Firebase conditional writes](https://firebase.google.com/docs/database/rest/save-data#section-conditional-requests),
-[Vercel Node functions](https://vercel.com/docs/functions/runtimes/node-js), and
+[Vercel Node functions](https://vercel.com/docs/functions/runtimes/node-js),
+[Vercel routing order](https://vercel.com/docs/project-configuration/vercel-json#routes), and
 [Vercel environment variables](https://vercel.com/docs/environment-variables).
