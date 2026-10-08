@@ -11,8 +11,11 @@ var CUT_ENGINE = (() => {
   const copy = value => JSON.parse(JSON.stringify(value));
   const active = state => list(state.roster).filter(player => player.active !== false);
   const isActive = (state, number) => active(state).some(player => player.playerNum === number);
-  const publicTimedPhases = ['countdown', 'cut', 'handoff'];
-  const waitingCut = state => state.phase === 'cut' && state.cutsCompleted < state.targetCuts;
+  const publicTimedPhases = ['countdown', 'handoff'];
+  const waitingCut = state => state.phase === 'cut';
+  const validSpeed = speed => speed === 'custom' || Object.hasOwn(config.speeds, speed);
+  const validTiming = (min, max) => Number.isInteger(min) && Number.isInteger(max) &&
+    min >= config.customTiming.minSeconds && max <= config.customTiming.maxSeconds && min <= max;
   function phase(state, name, now, durationMs) {
     state.phase = name;
     state.turnId++;
@@ -44,7 +47,9 @@ var CUT_ENGINE = (() => {
   }
   function beginSpeaking(state, now, rng) {
     const resumed = Number.isFinite(state.pendingDurationMs);
-    const durationMs = resumed ? Math.max(0, state.pendingDurationMs) : random.duration(state.speed, state.previousDurationMs, rng);
+    const durationMs = resumed ? Math.max(0, state.pendingDurationMs) : state.speed === 'custom'
+      ? Math.round((state.customMinSeconds + rng() * (state.customMaxSeconds - state.customMinSeconds)) * 1000)
+      : random.duration(state.speed, state.previousDurationMs, rng);
     if (state.countOnGo !== false) {
       state.speakerSequence++;
       const record = state.stats[state.speaker] || { count: 0, lastTurn: 0 };
@@ -61,7 +66,7 @@ var CUT_ENGINE = (() => {
   function startRound(state, now, rng) {
     state.round++;
     state.cutsCompleted = 0;
-    state.targetCuts = random.targetCuts(active(state).length, rng);
+    state.targetCuts = null;
     state.cutEvent = null;
     chooseTopic(state, rng);
     const speaker = chooseSpeaker(state, state.previousSpeaker, rng);
@@ -92,13 +97,10 @@ var CUT_ENGINE = (() => {
     if (saved.phase === 'break') {
       state.pause = null; state.pauseReason = ''; phase(state, 'break', now); return;
     }
-    if (saved.phase === 'cut' && state.cutsCompleted >= state.targetCuts) {
-      state.pause = null; state.pauseReason = ''; phase(state, 'cut', now, saved.remainingMs); return;
-    }
     if (saved.phase === 'cut') {
       state.speaker = saved.speaker;
       state.nextSpeaker = isActive(state, saved.nextSpeaker) ? saved.nextSpeaker : chooseSpeaker(state, saved.speaker, rng);
-      if (state.cutEvent) state.cutEvent.to = state.nextSpeaker;
+      if (state.cutEvent) { state.cutEvent.to = state.nextSpeaker; state.cutEvent.final = false; }
       state.pendingDurationMs = null; state.pause = null; state.pauseReason = '';
       phase(state, 'cut', now);
       return;
@@ -125,50 +127,62 @@ var CUT_ENGINE = (() => {
     }
   }
   function upgrade(current, now) {
-    if (!current || current.version !== 1 || !Number.isFinite(now) || current.cutsCompleted >= current.targetCuts) return current;
+    if (!current || current.version !== 1 || !Number.isFinite(now)) return current;
     const standardHandoff = saved => saved?.phase === 'handoff' && saved.countOnGo !== false && !Number.isFinite(saved.pendingDurationMs);
+    const oldRules = current.rulesVersion !== 2 || current.targetCuts !== null;
     const legacyCut = waitingCut(current) && Number.isFinite(current.phaseUntil);
     const legacyHandoff = standardHandoff(current);
     const legacyPausedCut = current.phase === 'paused' && current.pause?.phase === 'cut' && Number(current.pause.remainingMs) > 0;
     const legacyPausedHandoff = current.phase === 'paused' && standardHandoff(current.pause);
-    if (!legacyCut && !legacyHandoff && !legacyPausedCut && !legacyPausedHandoff) return current;
+    const missingTiming = !validTiming(current.customMinSeconds, current.customMaxSeconds);
+    if (!oldRules && !legacyCut && !legacyHandoff && !legacyPausedCut && !legacyPausedHandoff && !missingTiming) return current;
     const state = copy(current);
+    state.roster = list(state.roster); state.recent = list(state.recent);
+    state.rulesVersion = 2; state.targetCuts = null;
+    if (missingTiming) {
+      state.customMinSeconds = config.customTiming.defaultMinSeconds;
+      state.customMaxSeconds = config.customTiming.defaultMaxSeconds;
+    }
     if (legacyHandoff || legacyPausedHandoff) {
       const saved = legacyPausedHandoff ? state.pause : state;
       const nextSpeaker = saved.nextSpeaker ?? saved.speaker ?? null;
       const previousSpeaker = state.cutEvent?.from ?? state.previousSpeaker ?? null;
-      state.speaker = previousSpeaker;
-      state.nextSpeaker = nextSpeaker;
-      state.pendingDurationMs = null;
-      state.countOnGo = true;
-      state.speakingDurationMs = null;
+      state.speaker = previousSpeaker; state.nextSpeaker = nextSpeaker;
+      state.pendingDurationMs = null; state.countOnGo = true; state.speakingDurationMs = null;
       state.cutEvent = state.cutEvent ? { ...state.cutEvent, to: nextSpeaker, final: false } : {
         id: state.sessionId + ':' + state.turnId + ':upgrade', turnId: state.turnId,
         at: state.lastChangeAt, from: previousSpeaker, to: nextSpeaker, final: false,
       };
-      if (legacyPausedHandoff) {
-        state.pause = { ...state.pause, phase: 'cut', speaker: previousSpeaker, nextSpeaker,
-          remainingMs: 0, pendingDurationMs: null, countOnGo: true };
-      } else state.phase = 'cut';
+      if (legacyPausedHandoff) state.pause = { ...state.pause, phase: 'cut', speaker: previousSpeaker, nextSpeaker,
+        remainingMs: 0, pendingDurationMs: null, countOnGo: true };
+      else state.phase = 'cut';
     }
-    if (legacyPausedCut) state.pause.remainingMs = 0;
-    state.deadline = null;
-    state.phaseUntil = null;
-    state.turnId++;
-    state.lastChangeAt = now;
+    const pausedCut = state.phase === 'paused' && state.pause?.phase === 'cut';
+    if (waitingCut(state) || pausedCut) {
+      const saved = pausedCut ? state.pause : state;
+      const nextSpeaker = isActive(state, saved.nextSpeaker) ? saved.nextSpeaker :
+        chooseSpeaker(state, saved.speaker, random.create(state.sessionId + ':' + state.turnId + ':unlimited'));
+      state.nextSpeaker = nextSpeaker;
+      if (state.cutEvent) { state.cutEvent.to = nextSpeaker; state.cutEvent.final = false; }
+      state.pendingDurationMs = null; state.phaseUntil = null; state.deadline = null;
+      if (pausedCut) state.pause = { ...state.pause, nextSpeaker, remainingMs: 0, pendingDurationMs: null };
+    }
+    if (state.phase === 'break' || state.phase === 'stopped') state.cutEvent = null;
+    state.turnId++; state.lastChangeAt = now;
     return state;
   }
-  function create({ id, roster, speed = 'normal', category = 'mixed', now, seed } = {}) {
+  function create({ id, roster, speed = 'normal', category = 'mixed',
+    customMinSeconds = config.customTiming.defaultMinSeconds, customMaxSeconds = config.customTiming.defaultMaxSeconds, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < config.minPlayers || roster.length > config.maxPlayers) throw new Error('invalid_setup');
     if (roster.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1) || new Set(roster.map(player => player.playerNum)).size !== roster.length) throw new Error('invalid_roster');
+    if (!validSpeed(speed) || !topics.categories.includes(category) || !validTiming(customMinSeconds, customMaxSeconds)) throw new Error('invalid_options');
     const state = {
-      version: 1, sessionId: String(id), turnId: 0,
-      speed: Object.hasOwn(config.speeds, speed) ? speed : 'normal',
-      category: topics.categories.includes(category) ? category : 'mixed',
+      version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0,
+      speed, category, customMinSeconds, customMaxSeconds,
       roster: roster.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
       phase: 'ready', phaseUntil: null, deadline: null, lastChangeAt: now,
       speaker: null, nextSpeaker: null, previousSpeaker: null,
-      round: 0, cutsCompleted: 0, targetCuts: 0, cutEvent: null,
+      round: 0, cutsCompleted: 0, targetCuts: null, cutEvent: null,
       topic: null, topicHistory: [], stats: {}, recent: [], speakerSequence: 0,
       previousDurationMs: 0, speakingDurationMs: null, pendingDurationMs: null, countOnGo: true,
       pause: null, pauseReason: '', seen: {}, replies: {},
@@ -203,7 +217,7 @@ var CUT_ENGINE = (() => {
     const rng = random.create(input.seed);
     let error = '';
     const sharedManager = state.sharedControls === true && isActive(state, actor) &&
-      ['begin', 'next', 'pause', 'resume', 'exclude'].includes(input.type);
+      ['begin', 'next', 'endTopic', 'pause', 'resume', 'exclude'].includes(input.type);
     const selfReturn = state.sharedControls === true && input.type === 'exclude' &&
       Number(input.playerNum) === actor && input.active === true;
     if (!host && !sharedManager && !selfReturn && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
@@ -230,29 +244,31 @@ var CUT_ENGINE = (() => {
         }
         break;
       case 'settings': {
-        const pausedCut = state.phase === 'paused' && state.pause?.phase === 'cut' && state.cutsCompleted < state.targetCuts;
+        const pausedCut = state.phase === 'paused' && state.pause?.phase === 'cut';
         const intendedSpeaker = waitingCut(state) ? state.nextSpeaker : pausedCut ? state.pause.nextSpeaker : state.speaker;
         const speaker = isActive(state, intendedSpeaker) ? intendedSpeaker :
           chooseSpeaker(state, state.previousSpeaker, rng) ?? active(state)[0]?.playerNum ?? null;
-        const completed = state.cutsCompleted >= state.targetCuts;
         const endedTurn = state.phase === 'cut' || (state.phase === 'paused' && state.pause?.phase === 'cut');
-        const countOnGo = completed || endedTurn || speaker !== state.speaker || state.countOnGo !== false;
+        const countOnGo = endedTurn || speaker !== state.speaker || state.countOnGo !== false;
         state.cutEvent = null;
         state.speakingDurationMs = null;
-        if (completed) state.cutsCompleted = 0;
         prepare(state, speaker, now, 'setup', null, countOnGo);
         break;
       }
-      case 'configure':
+      case 'configure': {
+        const min = input.customMinSeconds === undefined ? state.customMinSeconds : input.customMinSeconds;
+        const max = input.customMaxSeconds === undefined ? state.customMaxSeconds : input.customMaxSeconds;
         if (state.phase !== 'setup') error = 'not_available';
-        else if ((input.speed != null && !Object.hasOwn(config.speeds, input.speed)) ||
-          (input.category != null && !topics.categories.includes(input.category))) error = 'invalid_setup';
+        else if ((input.speed != null && !validSpeed(input.speed)) ||
+          (input.category != null && !topics.categories.includes(input.category)) || !validTiming(min, max)) error = 'invalid_options';
         else {
           if (input.speed != null) state.speed = input.speed;
           if (input.category != null) state.category = input.category;
+          state.customMinSeconds = min; state.customMaxSeconds = max;
           phase(state, 'ready', now);
         }
         break;
+      }
       case 'cancelSettings':
         if (state.phase !== 'setup') error = 'not_available';
         else phase(state, 'ready', now);
@@ -266,14 +282,19 @@ var CUT_ENGINE = (() => {
           state.previousDurationMs = state.speakingDurationMs;
           state.previousSpeaker = state.speaker;
           state.cutsCompleted++;
-          const final = state.cutsCompleted >= state.targetCuts;
-          state.nextSpeaker = final ? null : chooseSpeaker(state, state.speaker, rng);
-          state.cutEvent = { id: state.sessionId + ':' + state.turnId, turnId: state.turnId, at: now, from: state.speaker, to: state.nextSpeaker, final };
-          phase(state, 'cut', now, final ? config.cutRevealMs : undefined);
-        } else if (state.phase === 'cut') {
-          if (state.cutsCompleted >= state.targetCuts) {
-            state.speaker = null; state.nextSpeaker = null; phase(state, 'break', now);
-          }
+          state.nextSpeaker = chooseSpeaker(state, state.speaker, rng);
+          state.cutEvent = { id: state.sessionId + ':' + state.turnId, turnId: state.turnId, at: now,
+            from: state.speaker, to: state.nextSpeaker, final: false };
+          phase(state, 'cut', now);
+        }
+        break;
+      case 'endTopic':
+        if (!state.topic || ['break', 'stopped', 'finished'].includes(state.phase)) error = 'not_available';
+        else {
+          if (state.countOnGo === false && state.speaker != null) state.previousSpeaker = state.speaker;
+          state.speaker = null; state.nextSpeaker = null; state.pause = null; state.pauseReason = '';
+          state.pendingDurationMs = null; state.speakingDurationMs = null; state.cutEvent = null;
+          phase(state, 'break', now);
         }
         break;
       case 'next':
@@ -336,14 +357,18 @@ var CUT_ENGINE = (() => {
     const roster = list(state.roster).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active !== false }));
     const mine = roster.find(player => player.playerNum === playerNum);
     const cut = {
-      version: 1, sessionId: state.sessionId, turnId: state.turnId,
+      version: 1, rulesVersion: state.rulesVersion || 1, sessionId: state.sessionId, turnId: state.turnId,
       speed: state.speed, category: state.category, phase: state.phase,
+      customMinSeconds: state.customMinSeconds ?? config.customTiming.defaultMinSeconds,
+      customMaxSeconds: state.customMaxSeconds ?? config.customTiming.defaultMaxSeconds,
       round: state.round, cutsCompleted: state.cutsCompleted, targetCuts: state.targetCuts,
       topic: copy(state.topic), speaker: state.speaker ?? null,
       previousSpeaker: state.previousSpeaker ?? null, roster,
       cutEvent: state.cutEvent ? copy(state.cutEvent) : null,
       pauseReason: state.pauseReason || '', reply: (state.replies || {})[playerNum] || null,
       ...(state.sharedControls === true ? { sharedControls: true, canManage: mine?.active === true } : {}),
+      canEndTopic: !!state.topic && !['break', 'stopped', 'finished'].includes(state.phase) &&
+        (playerNum === 0 || (state.sharedControls === true && mine?.active === true)),
       canBegin: (state.phase === 'ready' || (waitingCut(state) && isActive(state, state.nextSpeaker))) &&
         active(state).length >= config.minPlayers && (playerNum === 0 || mine?.active === true),
     };

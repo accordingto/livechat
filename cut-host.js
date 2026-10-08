@@ -6,7 +6,7 @@
   const demoRoster = ['Amy', 'Kevin', 'Jason', 'Willy'].map((name, i) => ({ playerNum: i + 1, name, active: true }));
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null;
-  let startingSession = null, editing = false, animatedCut = '';
+  let startingSession = null, editing = false, animatedCut = '', customError = false, endTarget = null;
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -30,6 +30,49 @@
     byId('room-label').textContent = demo || !sync ? '' : t('room', { code: ROOM.code });
     sceneKey = ''; rosterKey = ''; paintSound();
   }
+  function renderCustom() {
+    const custom = byId('speed').value === 'custom';
+    byId('custom').hidden = !custom;
+    for (const id of ['custom-min', 'custom-max']) {
+      byId(id).disabled = !custom || busy; byId(id).required = custom;
+      byId(id).setAttribute('aria-invalid', String(custom && customError));
+    }
+    byId('custom-error').textContent = custom && customError ? t('customRangeError') : '';
+  }
+  function restoreOptions(current) {
+    byId('speed').value = current.speed; byId('category').value = current.category;
+    byId('custom-min').value = String(current.customMinSeconds ?? 15);
+    byId('custom-max').value = String(current.customMaxSeconds ?? 25);
+    customError = false;
+  }
+  function setupOptions() {
+    const speed = byId('speed').value, min = Number(byId('custom-min').value), max = Number(byId('custom-max').value);
+    const minValid = Number.isInteger(min) && min >= 5 && min <= 120;
+    const maxValid = Number.isInteger(max) && max >= 5 && max <= 120;
+    const valid = minValid && maxValid && min <= max;
+    if (speed === 'custom' && !valid) {
+      customError = true; render(); byId(!minValid || min > max ? 'custom-min' : 'custom-max').focus(); return null;
+    }
+    customError = false;
+    return { speed, category: byId('category').value,
+      customMinSeconds: valid ? min : state?.customMinSeconds ?? 15,
+      customMaxSeconds: valid ? max : state?.customMaxSeconds ?? 25 };
+  }
+  function sameEndTarget(cut) {
+    return !!(cut && endTarget && cut.sessionId === endTarget.sessionId && cut.round === endTarget.round && (cut.topic?.id || cut.topic?.question || '') === endTarget.topic);
+  }
+  function closeEndDialog() { endTarget = null; byId('end-confirm').close(); }
+  function openEndDialog() {
+    const cut = view();
+    if (busy || !canControl() || !cut?.canEndTopic) return;
+    endTarget = { sessionId: cut.sessionId, round: cut.round, topic: cut.topic?.id || cut.topic?.question || '' };
+    byId('end-confirm').showModal(); render();
+  }
+  async function endTopic() {
+    const cut = view();
+    if (!sameEndTarget(cut) || !cut.canEndTopic) { closeEndDialog(); return; }
+    if (await command('endTopic')) { sound.silence(); closeEndDialog(); }
+  }
   function render() {
     const cut = view();
     const switched = status === 'switched';
@@ -42,6 +85,9 @@
     byId('setup-close').hidden = !editing;
     byId('setup-close').disabled = busy || !canControl();
     byId('settings-hint').hidden = !editing;
+    renderCustom();
+    if (endTarget && (!sameEndTarget(cut) || !cut.canEndTopic || switched)) closeEndDialog();
+    byId('end-accept').disabled = busy || !canControl() || !cut?.canEndTopic;
     byId('error').textContent = error ? t(error) : '';
     if (cut && !switched) {
       const actor = demo ? Number(byId('demo-view').value) : 0;
@@ -58,6 +104,8 @@
       byId('pause').hidden = ['setup', 'ready', 'break', 'finished', 'stopped'].includes(cut.phase);
       byId('pause').textContent = t(cut.phase === 'paused' ? 'resume' : 'pause');
       byId('next').hidden = cut.phase !== 'break';
+      byId('end-topic').hidden = !cut.canEndTopic;
+      byId('end-topic').disabled = busy || !canControl();
       for (const id of ['pause', 'next', 'settings-open', 'restart', 'stop']) byId(id).disabled = busy || !canControl();
       byId('manage-open').disabled = busy || !canControl();
       renderRoster(cut);
@@ -97,10 +145,12 @@
   }
   async function start(restart = false) {
     if (busy || !canControl()) return;
+    const options = restart && state ? { speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25 } : setupOptions();
+    if (!options) return;
     // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
     const audioReady = sound.enabled ? sound.unlock() : Promise.resolve(false);
     if (editing && !restart) {
-      const saved = await command('configure', { speed: byId('speed').value, category: byId('category').value });
+      const saved = await command('configure', options);
       if (saved) { editing = false; render(); }
       return;
     }
@@ -108,7 +158,6 @@
     try {
       await audioReady;
       if (!canControl()) return;
-      const options = restart && state ? { speed: state.speed, category: state.category } : { speed: byId('speed').value, category: byId('category').value };
       startingSession = state?.sessionId || '';
       if (demo) {
         state = CUT_ENGINE.create({ ...options, id: uid(), roster: demoRoster, now: now(), seed: seed() });
@@ -120,8 +169,7 @@
   }
   async function openSettings() {
     if (await command('settings')) {
-      byId('speed').value = state.speed;
-      byId('category').value = state.category;
+      restoreOptions(state);
       editing = true; byId('manage').close(); sound.silence(); render();
       byId('speed').focus();
     }
@@ -130,6 +178,13 @@
     if (await command('cancelSettings')) { editing = false; render(); }
   }
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
+  byId('speed').addEventListener('change', () => { customError = false; renderCustom(); });
+  for (const id of ['custom-min', 'custom-max']) byId(id).addEventListener('input', () => { customError = false; renderCustom(); });
+  byId('end-topic').addEventListener('click', openEndDialog);
+  byId('end-accept').addEventListener('click', endTopic);
+  byId('end-cancel').addEventListener('click', closeEndDialog);
+  byId('end-confirm').addEventListener('cancel', () => { endTarget = null; });
+  byId('end-confirm').addEventListener('click', event => { if (event.target === byId('end-confirm')) closeEndDialog(); });
   byId('setup-close').addEventListener('click', closeSettings);
   byId('settings-open').addEventListener('click', openSettings);
   byId('begin').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('begin'); });
@@ -167,7 +222,7 @@
         onChange: next => {
           if (state?.turnId !== next?.turnId) error = '';
           if (next?.phase === 'setup' && (state?.phase !== 'setup' || state?.sessionId !== next?.sessionId)) {
-            byId('speed').value = next.speed; byId('category').value = next.category;
+            restoreOptions(next);
           }
           editing = next?.phase === 'setup'; state = next; render();
         },
@@ -189,7 +244,7 @@
     paint();
   }, 100);
   function close() {
-    closed = true; clearInterval(timer); sync?.close(); sound.close();
+    closed = true; clearInterval(timer); sync?.close(); sound.close(); closeEndDialog();
   }
   window.addEventListener('storage', event => {
     if (!demo && event.key === 'room-last-session' && event.newValue !== roomCode) {

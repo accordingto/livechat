@@ -236,14 +236,15 @@ test('topic reveal stays silent until the explicit Begin transition starts count
   sound.close();
 });
 
-test('host can return to settings mid-speech, preserve the topic and wait again after saving or cancelling', async () => {
+function hostDemo() {
   let time = 1000, serial = 0, interval;
-  const elements = new Map();
+  const elements = new Map(), creations = [], commands = [];
+  const defaults = { 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25' };
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
-      innerHTML: '', textContent: '', value: id === 'cut-speed' ? 'normal' : id === 'cut-category' ? 'mixed' : '0', hidden: false, disabled: false,
-      events: {}, addEventListener(type, callback) { this.events[type] = callback; }, setAttribute() {}, querySelector() { return null; },
-      close() {}, showModal() {}, focus() {},
+      innerHTML: '', textContent: '', value: defaults[id] || '0', hidden: false, disabled: false, open: false, attributes: {},
+      events: {}, addEventListener(type, callback) { this.events[type] = callback; }, setAttribute(name, value) { this.attributes[name] = value; }, querySelector() { return null; },
+      close() { this.open = false; }, showModal() { this.open = true; }, focus() { this.focused = true; },
     });
     return elements.get(id);
   }
@@ -251,55 +252,61 @@ test('host can return to settings mid-speech, preserve the topic and wait again 
     constructor() { this.enabled = false; this.context = null; }
     unlock() { return Promise.resolve(false); } update() {} silence() {} close() {} toggle() {}
   }
+  const trackedEngine = { ...ENGINE,
+    create(options) { creations.push(options); return ENGINE.create(options); },
+    apply(state, command) { if (command.type !== 'tick') commands.push(command); return ENGINE.apply(state, command); },
+  };
   const context = {
-    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: ENGINE, CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
+    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: trackedEngine, CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
     I18N: { applyStatic() {}, onChange() {} }, document: { getElementById: element }, location: { search: '?demo=1' },
     URLSearchParams, crypto: { getRandomValues: array => { array[0] = 314; return array; } },
     Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {},
     window: { addEventListener() {} },
   };
   vm.runInNewContext(fs.readFileSync(require.resolve('../cut-host.js'), 'utf8'), context);
-  const click = async id => {
-    element('cut-' + id).events.click?.({ target: { closest: () => null } });
-    for (let i = 0; i < 5; i++) await Promise.resolve();
+  const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
+  const click = async id => { element('cut-' + id).events.click?.({ target: { closest: () => null } }); await settle(); };
+  const submit = async () => { element('cut-setup').events.submit({ preventDefault() {} }); await settle(); };
+  return { element, click, submit, creations, commands, scene: () => element('cut-scene').innerHTML,
+    advance: milliseconds => { time += milliseconds; interval(); },
+    change: (id, value) => { const node = element('cut-' + id); node.value = value; node.events.change?.(); node.events.input?.(); },
   };
-  const submit = async () => {
-    element('cut-setup').events.submit({ preventDefault() {} });
-    for (let i = 0; i < 5; i++) await Promise.resolve();
-  };
-  const scene = () => element('cut-scene').innerHTML;
+}
+
+test('host can return to settings mid-speech, preserve the topic and wait again after saving or cancelling', async () => {
+  const { element, click, submit, scene, advance } = hostDemo();
   assert.equal(element('cut-start').textContent, UI.t('start'));
   await submit();
   assert.match(scene(), /data-cut-phase="ready"/);
   const topic = scene().match(/<h2>(.*?)<\/h2>/s)[1];
-  time += 60000; interval();
+  advance(60000);
   assert.match(scene(), /data-cut-phase="ready"/);
   assert.equal(element('cut-begin').hidden, false);
   await click('begin');
   assert.match(scene(), /data-cut-phase="countdown"/);
-  time += 3000; interval();
+  advance(3000);
   assert.match(scene(), /data-cut-phase="speaking"/);
   assert.equal(element('cut-settings-open').hidden, false);
   await click('settings-open');
   assert.equal(element('cut-setup').hidden, false); assert.equal(element('cut-session').hidden, true);
   assert.equal(element('cut-start').textContent, UI.t('saveSettings'));
   assert.equal(element('cut-speed').value, 'normal');
-  time += 120000; interval();
+  advance(120000);
   assert.match(scene(), /data-cut-phase="setup"/);
   element('cut-speed').value = 'chill';
   await submit();
   assert.equal(element('cut-setup').hidden, true); assert.equal(element('cut-session').hidden, false);
   assert.match(scene(), /data-cut-phase="ready"/);
   assert.equal(scene().match(/<h2>(.*?)<\/h2>/s)[1], topic);
-  time += 120000; interval(); assert.match(scene(), /data-cut-phase="ready"/);
-  await click('begin'); time += 3000; interval();
+  advance(120000); assert.match(scene(), /data-cut-phase="ready"/);
+  await click('begin'); advance(3000);
   assert.match(scene(), /data-cut-phase="speaking"/);
-  time += 50000; interval();
+  advance(50000);
   assert.match(scene(), /data-cut-phase="cut"/);
   assert.equal(element('cut-begin').hidden, false);
   assert.equal(element('cut-begin').textContent, UI.t('beginHandoff'));
   const heldCut = scene();
-  time += 120000; interval();
+  advance(120000);
   assert.equal(scene(), heldCut);
   await click('begin');
   assert.match(scene(), /data-cut-phase="speaking"/);
@@ -340,4 +347,129 @@ test('a sitting-out CUT seat can return or recover but cannot manage another pla
     await f.card.action('exclude', { playerNum: 2, active: true });
     assert.deepEqual({ ...sent[0], id: 'id' }, { playerNum: 2, active: true, id: 'id', sessionId: 'session', turnId: 1, type: 'exclude' });
   } finally { f.card.destroy(); }
+});
+
+
+test('custom timing rejects blank, fractional, out-of-range and reversed bounds, but allows a fixed duration', async () => {
+  const f = hostDemo();
+  f.change('speed', 'custom');
+  assert.equal(f.element('cut-custom').hidden, false);
+  assert.equal(f.element('cut-custom-min').disabled, false);
+  for (const [min, max] of [['', '25'], ['4', '25'], ['15.5', '25'], ['15', '121'], ['26', '25']]) {
+    f.change('custom-min', min); f.change('custom-max', max);
+    await f.submit();
+    assert.equal(f.creations.length, 0);
+    assert.match(f.element('cut-custom-error').textContent, /5–120/);
+    assert.equal(f.element('cut-custom-min').attributes['aria-invalid'], 'true');
+  }
+  f.change('custom-min', '25'); f.change('custom-max', '25');
+  await f.submit();
+  assert.equal(f.creations.length, 1);
+  assert.equal(f.creations[0].speed, 'custom');
+  assert.equal(f.creations[0].customMinSeconds, 25);
+  assert.equal(f.creations[0].customMaxSeconds, 25);
+  assert.match(f.scene(), /data-cut-phase="ready"/);
+  await f.click('begin'); f.advance(3000);
+  f.advance(24999); assert.match(f.scene(), /data-cut-phase="speaking"/);
+  f.advance(1); assert.match(f.scene(), /data-cut-phase="cut"/);
+});
+
+test('switching to a preset disables invalid custom inputs and clears their error without blocking topic creation', async () => {
+  const f = hostDemo();
+  f.change('speed', 'custom'); f.change('custom-min', '130'); f.change('custom-max', '');
+  await f.submit(); assert.equal(f.creations.length, 0);
+  f.change('speed', 'normal');
+  assert.equal(f.element('cut-custom').hidden, true);
+  assert.equal(f.element('cut-custom-min').disabled, true);
+  assert.equal(f.element('cut-custom-max').disabled, true);
+  assert.equal(f.element('cut-custom-min').required, false);
+  assert.equal(f.element('cut-custom-error').textContent, '');
+  await f.submit();
+  assert.equal(f.creations.length, 1);
+  assert.equal(f.creations[0].speed, 'normal');
+  assert.equal(f.creations[0].customMinSeconds, 15);
+  assert.equal(f.creations[0].customMaxSeconds, 25);
+});
+
+test('custom bounds return in mid-topic settings, cancel retains the saved range, and restart preserves it', async () => {
+  const f = hostDemo();
+  f.change('speed', 'custom'); f.change('custom-min', '30'); f.change('custom-max', '45');
+  await f.submit(); await f.click('begin'); f.advance(3000);
+  await f.click('settings-open');
+  assert.equal(f.element('cut-speed').value, 'custom');
+  assert.equal(f.element('cut-custom-min').value, '30');
+  assert.equal(f.element('cut-custom-max').value, '45');
+  f.change('custom-min', '35'); f.change('custom-max', '50'); await f.submit();
+  const saved = f.commands.find(command => command.type === 'configure');
+  assert.equal(saved.customMinSeconds, 35); assert.equal(saved.customMaxSeconds, 50);
+  await f.click('settings-open');
+  f.change('custom-min', '60'); f.change('custom-max', '80'); await f.click('setup-close');
+  await f.click('settings-open');
+  assert.equal(f.element('cut-custom-min').value, '35');
+  assert.equal(f.element('cut-custom-max').value, '50');
+  await f.click('setup-close'); await f.click('restart');
+  assert.equal(f.creations.length, 2);
+  assert.equal(f.creations[1].speed, 'custom');
+  assert.equal(f.creations[1].customMinSeconds, 35);
+  assert.equal(f.creations[1].customMaxSeconds, 50);
+});
+
+test('host continues the same topic beyond twenty CUTs and ends only after explicit topic confirmation', async () => {
+  const f = hostDemo();
+  await f.submit();
+  const topic = f.scene().match(/<h2>(.*?)<\/h2>/s)[1];
+  await f.click('begin'); f.advance(3000);
+  for (let turn = 0; turn < 20; turn++) {
+    f.advance(60000);
+    assert.match(f.scene(), /data-cut-phase="cut"/);
+    assert.equal(f.scene().match(/<h2>(.*?)<\/h2>/s)[1], topic);
+    assert.equal(f.element('cut-next').hidden, true);
+    await f.click('begin');
+    assert.match(f.scene(), /data-cut-phase="speaking"/);
+  }
+  assert.equal(f.element('cut-end-topic').hidden, false);
+  await f.click('end-topic');
+  assert.equal(f.element('cut-end-confirm').open, true);
+  assert.equal(f.commands.filter(command => command.type === 'endTopic').length, 0);
+  await f.click('end-cancel');
+  assert.equal(f.element('cut-end-confirm').open, false);
+  assert.match(f.scene(), /data-cut-phase="speaking"/);
+  await f.click('end-topic'); await f.click('end-accept');
+  assert.equal(f.commands.filter(command => command.type === 'endTopic').length, 1);
+  assert.equal(f.element('cut-end-confirm').open, false);
+  assert.match(f.scene(), /data-cut-phase="break"/);
+  assert.equal(f.element('cut-next').hidden, false);
+  await f.click('next');
+  assert.match(f.scene(), /data-cut-phase="ready"/);
+  assert.notEqual(f.scene().match(/<h2>(.*?)<\/h2>/s)[1], topic);
+});
+
+test('active shared players can end a topic after verbal-agreement confirmation; legacy and sitting-out cards cannot', async () => {
+  const originalWindow = global.window, sent = [];
+  let agreed = false, questions = 0;
+  global.window = { confirm(question) { assert.equal(question, UI.t('endTopicQuestion')); questions++; return agreed; } };
+  const f = playerCard(async command => sent.push(command));
+  try {
+    const cut = { ...f.payload.cut, phase: 'speaking', canBegin: false, sharedControls: true, canEndTopic: true };
+    f.card.update({ ...f.payload, cut });
+    assert.match(f.element.innerHTML, /data-cut-action="endTopic"/);
+    assert.equal(f.card.canAction('endTopic'), true);
+    await f.card.action('endTopic');
+    assert.equal(questions, 1); assert.equal(sent.length, 0); assert.equal(f.card.pending, null);
+    agreed = true;
+    await f.card.action('endTopic'); await f.card.action('endTopic');
+    assert.equal(questions, 2); assert.equal(sent.length, 1);
+    assert.equal(sent[0].type, 'endTopic'); assert.equal(sent[0].turnId, cut.turnId);
+    f.card.update({ ...f.payload, cut: { ...cut, phase: 'break', turnId: 2, canEndTopic: false, reply: { id: sent[0].id, error: '' } } });
+    assert.equal(f.card.pending, null); assert.equal(f.card.canAction('next'), true);
+    f.card.update({ ...f.payload, cut: { ...cut, sharedControls: false } });
+    assert.equal(f.card.canAction('endTopic'), false);
+    assert.doesNotMatch(f.element.innerHTML, /data-cut-action="endTopic"/);
+    f.card.update({ ...f.payload, cut: { ...cut, roster: [{ playerNum: 1, name: 'Amy', active: true }, { playerNum: 2, name: 'Jason', active: false }] } });
+    assert.equal(f.card.canAction('endTopic'), false);
+    assert.doesNotMatch(f.element.innerHTML, /data-cut-action="endTopic"/);
+  } finally {
+    f.card.destroy();
+    if (originalWindow === undefined) delete global.window; else global.window = originalWindow;
+  }
 });

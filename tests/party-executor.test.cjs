@@ -26,23 +26,51 @@ test('party adapters load original engines and preserve canonical document metad
   }
 });
 
-test('CUT begins, advances the hidden timer, and opens another topic with no host browser', () => {
+test('CUT stays on the same topic through unlimited server-driven handoffs until players agree to end it', () => {
   let state = create(CUT);
   state = act(A.cut, state, 'begin'); assert.equal(state.phase, 'countdown');
   state = A.cut.pulse(state, context(state, 2, { now: state.phaseUntil })); assert.equal(state.phase, 'speaking');
-  const speaker = state.speaker, deadline = state.deadline;
-  state = A.cut.pulse(state, context(state, 2, { now: deadline }));
-  assert.equal(state.phase, 'cut'); assert.equal(state.cutEvent.from, speaker);
-  const waiting = state;
-  assert.equal(A.cut.pulse(state, context(state, 2, { now: deadline + 1000000 })), waiting, 'manual handoff remains manual');
-  for (let guard = 0; guard < 40 && state.phase !== 'break'; guard++) {
-    if (state.phase === 'cut' && !state.cutEvent.final) state = act(A.cut, state, 'begin', 3);
-    else state = A.cut.pulse(state, context(state, 3, { now: state.phase === 'speaking' ? state.deadline : state.phaseUntil }));
+  const topic = state.topic.id, round = state.round;
+  for (let turn = 0; turn < 25; turn++) {
+    const speaker = state.speaker, deadline = state.deadline;
+    state = A.cut.pulse(state, context(state, 2, { now: deadline }));
+    assert.equal(state.phase, 'cut'); assert.equal(state.cutEvent.from, speaker);
+    assert.equal(state.cutEvent.final, false); assert.equal(state.topic.id, topic); assert.equal(state.round, round);
+    assert.equal(A.cut.pulse(state, context(state, 2, { now: deadline + 1000000 })), state, 'waiting does not end this topic');
+    const earlyNext = act(A.cut, state, 'next', 3);
+    assert.equal(earlyNext.replies[3].error, 'not_available'); assert.equal(earlyNext.topic.id, topic);
+    state = act(A.cut, state, 'begin', 3); assert.equal(state.phase, 'speaking');
   }
-  assert.equal(state.phase, 'break'); const round = state.round;
+  assert.equal(state.cutsCompleted, 25);
+  const ending = cmd(state, 'endTopic');
+  state = A.cut.apply(state, ending, context(state, 3)); assert.equal(state.phase, 'break');
+  assert.equal(state.deadline, null); assert.equal(state.topic.id, topic);
+  assert.equal(A.cut.apply(state, ending, context(state, 3)), state, 'repeated consent click has no second effect');
+  const endedStats = state.stats;
   state = act(A.cut, state, 'next', 3); assert.equal(state.round, round + 1); assert.equal(state.phase, 'ready');
+  assert.notEqual(state.topic.id, topic); assert.deepEqual(state.stats, endedStats);
   state = act(A.cut, state, 'pause', 4); assert.equal(state.phase, 'paused');
   state = act(A.cut, state, 'resume', 3); assert.equal(state.phase, 'ready');
+});
+
+test('custom time survives server execution, settings and next topic while each hidden deadline stays private', () => {
+  let state = CUT.create({ id: 'custom-runtime-room', roster, now: 1000, seed: 456,
+    speed: 'custom', customMinSeconds: 18, customMaxSeconds: 18 });
+  state = act(A.cut, state, 'begin');
+  state = A.cut.pulse(state, context(state, 2, { now: state.phaseUntil }));
+  assert.equal(state.deadline - state.lastChangeAt, 18000);
+  const payload = A.cut.project(state, { playerNum: 2 }, context(state));
+  assert.equal(payload.cut.customMinSeconds, 18); assert.equal(payload.cut.customMaxSeconds, 18);
+  assert.equal(payload.cut.deadline, undefined); assert.equal(payload.cut.speakingDurationMs, undefined);
+  const topic = state.topic.id;
+  state = act(A.cut, state, 'settings', 0);
+  state = act(A.cut, state, 'configure', 0, { speed: 'custom', customMinSeconds: 30, customMaxSeconds: 30 });
+  assert.equal(state.phase, 'ready'); assert.equal(state.topic.id, topic);
+  state = act(A.cut, state, 'begin', 1);
+  state = A.cut.pulse(state, context(state, 1, { now: state.phaseUntil }));
+  assert.equal(state.deadline - state.lastChangeAt, 30000);
+  state = act(A.cut, state, 'endTopic', 2); state = act(A.cut, state, 'next', 1);
+  assert.equal(state.speed, 'custom'); assert.equal(state.customMinSeconds, 30); assert.equal(state.customMaxSeconds, 30);
 });
 
 test('server controls do not expose CUT timing, next draw, room paths, or credentials', () => {

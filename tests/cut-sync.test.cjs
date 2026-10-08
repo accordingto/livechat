@@ -380,29 +380,30 @@ test('a replacement host completes an interrupted opening without resetting the 
   assert.equal(raw.opening, undefined); restored.close();
 });
 
-test('restart rejects old session intents and completes a round with no score or extra timer', async () => {
+test('restart rejects old sessions; repeated handoffs keep the topic until an explicit End topic', async () => {
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   const previous = f.card(1).cut;
   await h.start({ category: 'real' }); await settle(h);
   assert.notEqual(h.latest.sessionId, previous.sessionId);
   await f.action(1, 'stop', { sessionId: previous.sessionId, turnId: previous.turnId, actor: 0 }); await settle(h);
-  assert.equal(h.latest.phase, 'ready');
+  assert.equal(h.latest.phase, 'ready'); const topic = h.latest.topic.id;
   await f.action(1, 'begin'); await settle(h);
-  assert.equal(h.latest.phase, 'countdown');
-  for (let index = 0; index < 40 && h.latest.phase !== 'break'; index++) {
-    if (h.latest.phase === 'cut' && !h.latest.cutEvent.final) {
-      await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'speaking');
-    } else {
-      if (h.latest.phase === 'cut') {
-        assert.equal(h.latest.cutEvent.final, true); assert.equal(h.latest.phaseUntil, h.latest.cutEvent.at + 900);
-        assert.equal(f.card(1).cut.canBegin, false);
-        await f.action(1, 'begin'); await settle(h); assert.equal(h.latest.phase, 'cut');
-        assert.equal(f.card(1).cut.reply.error, 'not_available');
-      }
-      await f.advance(h, h.latest.phase === 'speaking' ? h.latest.deadline : h.latest.phaseUntil);
-    }
+  await f.advance(h, h.latest.phaseUntil); assert.equal(h.latest.phase, 'speaking');
+  for (let index = 0; index < 30; index++) {
+    await f.advance(h, h.latest.deadline);
+    assert.equal(h.latest.phase, 'cut'); assert.equal(h.latest.cutsCompleted, index + 1);
+    assert.equal(h.latest.targetCuts, null); assert.equal(h.latest.cutEvent.final, false);
+    assert.equal(h.latest.topic.id, topic); assert.equal(h.latest.round, 1);
+    assert.equal(f.card(1).cut.canBegin, true); assert.equal(f.card(1).cut.phaseUntil, undefined);
+    await h.command('begin'); await settle(h); assert.equal(h.latest.phase, 'speaking');
   }
-  assert.equal(h.latest.phase, 'break'); assert.equal(h.latest.cutsCompleted, h.latest.targetCuts);
+  const stats = clone(h.latest.stats), sequence = h.latest.speakerSequence;
+  await assert.rejects(h.command('next'), /not_available/);
+  await h.command('endTopic'); await settle(h);
+  assert.equal(h.latest.phase, 'break'); assert.equal(h.latest.cutsCompleted, 30);
+  assert.equal(h.latest.deadline, null); assert.equal(h.latest.phaseUntil, null); assert.equal(h.latest.cutEvent, null);
+  assert.equal(h.latest.topic.id, topic); assert.deepEqual(clone(h.latest.stats), stats); assert.equal(h.latest.speakerSequence, sequence);
+  await f.advance(h, f.now + 60000); assert.equal(h.latest.phase, 'break'); assert.equal(h.latest.topic.id, topic);
   assert.equal(f.card(1).cut.score, undefined); assert.equal(f.timers.size, 2);
   await h.command('next'); await settle(h); assert.equal(h.latest.phase, 'ready'); assert.equal(h.latest.round, 2);
   const nextTurn = h.latest.turnId, nextTopic = h.latest.topic.id;
@@ -424,4 +425,72 @@ test('early pulses do no network writes; disconnect, close and room changes stop
   assert.equal(h.suspended, true); assert.equal(h.own, false); assert.equal(h.latest.phase, 'speaking');
   const turnId = h.latest.turnId; h.close(); h.pulse(); await h.renew(); await settle(h);
   assert.equal(h.latest.turnId, turnId); assert.equal(f.timers.size, 0);
+});
+
+test('custom timing survives start, settings and host replacement while private speaking deadlines remain hidden', async () => {
+  const f = setup(), first = f.host(); await settle(first);
+  await first.start({ speed: 'custom', customMinSeconds: 37, customMaxSeconds: 37 }); await settle(first);
+  assert.equal(first.latest.rulesVersion, 2); assert.equal(first.latest.speed, 'custom');
+  for (let n = 1; n <= 4; n++) {
+    assert.equal(f.card(n).cut.customMinSeconds, 37); assert.equal(f.card(n).cut.customMaxSeconds, 37);
+    assert.equal(f.card(n).cut.deadline, undefined); assert.equal(f.card(n).cut.speakingDurationMs, undefined);
+    assert.equal(f.card(n).cut.canEndTopic, false);
+  }
+  await first.command('begin'); await settle(first); await f.advance(first, first.latest.phaseUntil);
+  assert.equal(first.latest.deadline - f.now, 37000);
+  const topic = first.latest.topic.id, stats = clone(first.latest.stats), sequence = first.latest.speakerSequence;
+  await first.command('settings'); await settle(first);
+  await assert.rejects(first.command('configure', { speed: 'custom', customMinSeconds: 45, customMaxSeconds: 44 }), /invalid_options/);
+  assert.equal(first.latest.phase, 'setup'); assert.equal(first.latest.customMinSeconds, 37); assert.equal(first.latest.customMaxSeconds, 37);
+  await first.command('configure', { speed: 'custom', customMinSeconds: 50, customMaxSeconds: 60 }); await settle(first);
+  assert.equal(first.latest.phase, 'ready'); assert.equal(first.latest.topic.id, topic);
+  first.close(); await settle(first); const restored = f.host(); await settle(restored);
+  assert.equal(restored.own, true); assert.equal(restored.latest.phase, 'ready'); assert.equal(restored.latest.customMinSeconds, 50);
+  assert.equal(restored.latest.customMaxSeconds, 60); assert.deepEqual(clone(restored.latest.stats), stats);
+  await restored.command('begin'); await settle(restored); await f.advance(restored, restored.latest.phaseUntil);
+  assert.ok(restored.latest.deadline - f.now >= 50000 && restored.latest.deadline - f.now <= 60000);
+  assert.equal(restored.latest.speakerSequence, sequence);
+  assert.equal(f.card(1).cut.deadline, undefined); assert.equal(f.card(1).cut.speakingDurationMs, undefined);
+  restored.close();
+});
+
+test('legacy host controls reject player End topic while active shared controllers can end it exactly once', async () => {
+  const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h); await firstCut(f, h);
+  const before = h.latest.turnId, topic = h.latest.topic.id;
+  await f.action(1, 'endTopic', { actor: 0 }); await settle(h);
+  assert.equal(h.latest.phase, 'cut'); assert.equal(h.latest.turnId, before); assert.equal(f.card(1).cut.reply.error, 'not_available');
+  const controlPath = 'rooms/CUTTEST/players/' + f.extras.cutControlToken;
+  const raw = clone(f.db.values.get(controlPath)), shared = JSON.parse(raw.stateJson); shared.sharedControls = true;
+  f.db.put(controlPath, { ...raw, stateJson: JSON.stringify(shared) }); await settle(h);
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).cut.canEndTopic, true);
+  await h.command('exclude', { playerNum: 4, active: false }); await settle(h);
+  assert.equal(f.card(4).cut.canEndTopic, false);
+  await f.action(4, 'endTopic', { actor: 0 }); await settle(h);
+  assert.equal(h.latest.phase, 'cut'); assert.equal(f.card(4).cut.reply.error, 'not_available');
+  const waiting = { sessionId: h.latest.sessionId, turnId: h.latest.turnId }, stats = clone(h.latest.stats);
+  const requests = await Promise.all([f.action(1, 'endTopic', waiting), f.action(2, 'endTopic', waiting)]); await settle(h);
+  assert.equal(h.latest.phase, 'break'); assert.equal(h.latest.turnId, waiting.turnId + 1);
+  assert.equal(h.latest.topic.id, topic); assert.deepEqual(clone(h.latest.stats), stats); assert.equal(h.latest.cutEvent, null);
+  assert.equal(Object.values(h.latest.replies).filter(reply => requests.some(request => request.id === reply.id) && !reply.error).length, 1);
+  assert.equal(f.card(1).cut.canEndTopic, false); assert.equal(f.card(1).cut.canBegin, false); h.close();
+});
+
+test('reopening a saved final CUT removes the old automatic topic limit without changing its topic or fairness', async () => {
+  const f = setup(), first = f.host(); await settle(first); await first.start(); await settle(first); await firstCut(f, first);
+  const controlPath = 'rooms/CUTTEST/players/' + f.extras.cutControlToken;
+  const raw = clone(f.db.values.get(controlPath)), old = JSON.parse(raw.stateJson);
+  old.rulesVersion = 1; old.targetCuts = old.cutsCompleted; old.nextSpeaker = null;
+  old.cutEvent.final = true; old.cutEvent.to = null; old.phaseUntil = f.now + 900;
+  delete old.customMinSeconds; delete old.customMaxSeconds;
+  f.db.put(controlPath, { ...raw, stateJson: JSON.stringify(old) }); await settle(first);
+  first.close(); await settle(first); const restored = f.host(); await settle(restored);
+  assert.equal(restored.latest.rulesVersion, 2); assert.equal(restored.latest.targetCuts, null);
+  assert.equal(restored.latest.phase, 'cut'); assert.equal(restored.latest.phaseUntil, null); assert.equal(restored.latest.cutEvent.final, false);
+  assert.notEqual(restored.latest.nextSpeaker, old.speaker); assert.equal(restored.latest.cutEvent.id, old.cutEvent.id);
+  assert.equal(restored.latest.topic.id, old.topic.id); assert.deepEqual(clone(restored.latest.stats), old.stats);
+  await f.advance(restored, f.now + 60000); assert.equal(restored.latest.phase, 'cut');
+  await restored.command('begin'); await settle(restored); assert.equal(restored.latest.phase, 'speaking');
+  await f.advance(restored, restored.latest.deadline); assert.equal(restored.latest.phase, 'cut');
+  assert.equal(restored.latest.cutsCompleted, old.cutsCompleted + 1); assert.equal(restored.latest.topic.id, old.topic.id);
+  restored.close();
 });
