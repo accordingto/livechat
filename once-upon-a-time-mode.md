@@ -451,6 +451,8 @@ Host and original player imports share cache token
 Executed verification:
 
 - Local complete repository regression: **1078/1078**, no failures or skips.
+- Subsequent remote CUT changes were preserved through a normal merge; all
+  affected CUT/Hub/Once/Story-service checks pass again, **305/305**.
 - Focused Once + Story-service regression: **159/159**; UI alone **41/41**.
 - Fresh-profile Chrome: five complete synthetic games at 320×667, 375×812,
   390×844, 800×900 and 1280×800. Portrait order, one Current cue, default-open
