@@ -42,3 +42,14 @@ test('packager rejects overlapping source directories, occupied output and escap
   f.put(f.gameRoot,'api/hub-executor.js',"module.exports=require('../../outside.js');");
   assert.throws(()=>packageService({...f,output:path.join(f.root,'new-package')}),/Invalid runtime dependency/);
 });
+
+
+test('refreshing an already extended service retains exactly one game route', t => {
+  const f=fixture(t);const configFile=path.join(f.serviceRoot,'vercel.json');
+  const config=JSON.parse(fs.readFileSync(configFile,'utf8'));
+  config.routes.unshift({src:'^/api/hub-executor/?$',dest:'/api/hub-executor.js'});
+  fs.writeFileSync(configFile,JSON.stringify(config)); packageService(f);
+  const updated=JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8'));
+  assert.equal(updated.routes.filter(route=>route.src==='^/api/hub-executor/?$').length,1);
+  assert.equal(updated.routes.at(-1).status,404);
+});

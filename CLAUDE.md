@@ -44,6 +44,26 @@ player visible until manual Start. Preserve existing shared player controls,
 server execution and hidden speaking deadlines; do not add automated votes.
 New state rulesVersion 2 / targetCuts null; upgrade legacy CUT caps without
 resetting the current topic or fairness. See cut-mode.md for current rules.
+## Independent release verification — 2026-10-09
+
+Release `6e2a9cc` frontend is live: 45/45 public game assets match the checkout.
+The owned service is deployed and readiness returns true. Hub CORS passes,
+invalid synthetic tickets are rejected, runtime URLs return 404, search returns
+200 and the lyrics retirement route returns 410. Full regression: 1157/1157;
+independent service's existing suite: 39/39. Packaging re-run validation: 3/3.
+
+`scripts/hub-executor-production-smoke.cjs` also passed 28 checks against the
+actual service with fresh generated test nodes only. After initial registration,
+all CUT/Talk operations used seats 2/3 with no browser Host; clocks, stop/restart,
+old-turn rejection, ticket rotation and continued play worked. Its eight exact
+nodes were ownership/ETag checked and deleted, with zero cleanup failures.
+It must never list rooms, use existing player credentials or print capabilities.
+
+The original independent source project now includes the deployed game runtime,
+API and route/ignore manifest. Keep these when deploying future search changes;
+refresh runtime from this checkout with the package script. Its environment and
+login files were neither copied into packages nor committed.
+
 ## CURRENT: Independent game execution (2026-10-09)
 
 The recent games now have an optional server executor: `api/hub-executor.js`,
