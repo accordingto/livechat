@@ -70,7 +70,7 @@
   }
   function drawTopic() {
     const random = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-    const scenarios = firstDraw && !byId('category').value && !byId('search').value ? TALK_TOPICS.filter(topic => topic.source === 'chatwolf') : [];
+    const scenarios = firstDraw && !byId('category').value && !byId('search').value ? TALK_TOPICS.filter(topic => topic.sourceTopicId) : [];
     const topic = scenarios.length ? scenarios[Math.floor(random() * scenarios.length)] : TALK_LIBRARY.draw(byId('category').value, byId('search').value,
       [byId('topic-select').value, state?.topic.id], random);
     firstDraw = false;

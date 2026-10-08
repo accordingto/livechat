@@ -75,7 +75,20 @@ The real Client/helper/core reproduces the reported stale-ticket/host-blocked
 state and verifies repair, slow registration and queued-callback protection.
 Final full regression after integrating current Talk updates: 1247/1247 passed.
 
-## CURRENT: Talk independent random timers and queued missions — 2026-10-09
+## CURRENT: Talk shared discussion topics and timed missions — 2026-10-09
+
+The topic library uses shared situations that the whole
+table can discuss and shape together: concrete plans, rules, trade-offs,
+imagined games and playful decisions. Main questions, explanations and
+follow-ups should invite people to respond to one another, negotiate or build
+on a proposal, rather than interview each person about private experiences.
+Keep all 96 stable topic IDs and 13 category IDs. Both original 48 topics and
+48 Chat Wolf-derived topics receive new wording. Adapted topics keep their
+sourceTopicId trace and use source='chatwolf-adapted'; Talk remains independent
+of Chat Wolf roles, secret missions and runtime. All main questions are at most 26 words; explanations at most 26 words.
+The 672 main/follow-up questions are distinct and invite shared decisions,
+reactions and building on proposals. Content changes do not alter conversation
+modes, their defaults or Crazy Talk scheduling.
 
 Let's Talk / Crazy Talk use a cream topic card, compact state and participant
 roster, with speaking/question requests removed. Homepage preferences persist
@@ -109,7 +122,7 @@ even if the canonical snapshot is unchanged; failed, closed or switched managers
 are not revived. Runtime changes require deploying the independent service and
 frontend; retain the stable existing service secret.
 
-Current timer/queue release verification: all 1282 project tests passed after integrating
+Previous timer/queue release verification (before this topic revision): all 1282 project tests passed after integrating
 concurrent Bluff updates. Real Chrome checks on localhost and production verified
 queued-not-immediate delivery, random non-author and explicit recipients, pause-time
 queueing, Chinese IME, 375px/320px layouts without overflow, custom 7–233-second
