@@ -66,6 +66,19 @@ var TALK_ENGINE = (() => {
     return result;
   }
   const starter = topic => typeof topic?.starter === 'string' ? topic.starter.trim().slice(0, 600) : '';
+  function cleanTopic(topic) {
+    if (!topic || typeof topic !== 'object') throw new Error('invalid_topic');
+    const text = (key, max, required = false) => {
+      const value = topic[key] == null ? '' : topic[key];
+      if (typeof value !== 'string' || value.trim().length > max || (required && !value.trim())) throw new Error('invalid_topic');
+      return value.trim();
+    };
+    const questions = followUps(topic);
+    if (questions.length > 8 || questions.some(q => q.question.trim().length > 300)) throw new Error('invalid_topic');
+    return { id: text('id', 100) || 'custom', emoji: text('emoji', 16) || '✏️', title: text('title', 80),
+      question: text('question', 500, true), starter: text('starter', 600),
+      followUp: questions[0]?.question.trim() || '', followUps: questions.map(q => ({ stage: 'custom', question: q.question.trim() })) };
+  }
   function create({ id, topic, roster, mode = 'think', seconds = 45, showStarters = true, gameMode = 'normal', crazySeconds = 120, now, sharedControls = false }) {
     if (!id || !topic || !topic.question || !Array.isArray(roster) || roster.length < 2 || roster.length > 9) throw new Error('invalid_setup');
     if (new Set(roster.map(p => p.playerNum)).size !== roster.length || roster.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
@@ -75,6 +88,7 @@ var TALK_ENGINE = (() => {
       gameMode: gameMode === 'crazy' ? 'crazy' : 'normal',
       roster: roster.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').slice(0, 80) })),
       mode: mode === 'write' ? 'write' : 'think', phase: 'thinking', round: 0, turnId: 0,
+      seconds: Math.max(15, Math.min(120, Number(seconds) || 45)),
       deadline: now + Math.max(15, Math.min(120, Number(seconds) || 45)) * 1000,
       speaker: null, remaining: [], spoken: [], readiness: {}, notes: {}, intents: {},
       questions: [], activeQuestion: null, interests: {}, replies: {}, seen: {}, extended: false,
@@ -132,9 +146,24 @@ var TALK_ENGINE = (() => {
     const speaking = actor === s.speaker;
     let error = '';
     const reject = code => { error = code; };
-    const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover'];
-    if (turnTypes.includes(input.type) && (s.phase !== 'talking' || input.turnId !== s.turnId)) reject('stale_turn');
+    const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover', 'newTopic'];
+    if (turnTypes.includes(input.type) && ((input.type !== 'newTopic' && s.phase !== 'talking') || input.turnId !== s.turnId)) reject('stale_turn');
     else switch (input.type) {
+      case 'newTopic': {
+        if (!manager) { reject('not_available'); break; }
+        if (input.confirm !== true) { reject('confirmation_required'); break; }
+        let topic;
+        try { topic = cleanTopic(input.topic); } catch (_) { reject('invalid_topic'); break; }
+        const seconds = Number(input.seconds), crazySeconds = Number(input.crazySeconds);
+        if (!['think', 'write'].includes(input.mode) || !['normal', 'crazy'].includes(input.gameMode)
+            || !Number.isInteger(seconds) || seconds < 15 || seconds > 120 || ![60, 120, 180].includes(crazySeconds)
+            || typeof input.showStarters !== 'boolean') { reject('invalid_settings'); break; }
+        const fresh = create({ id: s.sessionId + ':topic:' + input.id, topic, roster: s.roster, mode: input.mode, seconds,
+          gameMode: input.gameMode, crazySeconds, showStarters: input.showStarters, now: Number(input.now) || 0,
+          sharedControls: s.sharedControls });
+        fresh.seen[actor] = [input.id]; fresh.replies[actor] = { id: input.id, error: '' };
+        return fresh;
+      }
       case 'ready':
       case 'wait':
         if (host || s.phase !== 'thinking') { reject('not_available'); break; }
@@ -280,7 +309,7 @@ var TALK_ENGINE = (() => {
         ...(s.sharedControls === true ? { sharedControls: true, hostControls: !!mine, actions: {
           start: !!mine && s.phase === 'thinking', end: !!mine && s.phase === 'talking',
           resume: !!mine && !!s.activeQuestion, extend: !!mine && s.phase === 'talking',
-          starters: !!mine, crazySend: !!mine && crazyEnabled(s) && s.phase === 'talking' && !s.crazy.paused,
+          starters: !!mine, newTopic: !!mine, crazySend: !!mine && crazyEnabled(s) && s.phase === 'talking' && !s.crazy.paused,
           crazyPause: !!mine && crazyEnabled(s) && s.phase === 'talking', recover: !!mine && s.phase === 'talking',
         } } : {}),
         gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
@@ -293,7 +322,7 @@ var TALK_ENGINE = (() => {
           })() : null,
           pendingCount: crazyEnabled(s) ? list(s.crazy.prompts).filter(p => p.status === 'pending').length : 0,
         },
-        turnId: s.turnId, deadline: s.deadline, showStarters: !!s.showStarters, starter: starter(s.topic),
+        turnId: s.turnId, seconds: Number(s.seconds) || 45, deadline: s.deadline, showStarters: !!s.showStarters, starter: starter(s.topic),
         // Keep the original followUp field in cards so already-open v0.1
         // player pages can display the newly selected question as well.
         topic: Object.assign({}, s.topic, { followUp: s.extension || s.topic.followUp || '' }), extended: !!s.extended,

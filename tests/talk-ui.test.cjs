@@ -15,7 +15,8 @@ const prompt = (extra = {}) => ({ id: 'ui-topic:crazy:2:1', text: 'My soup has a
 const crazy = (extra = {}) => sample({ gameMode: 'crazy', crazy: { enabled: true, paused: false, intervalSeconds: 120,
   prompt: prompt(), pendingCount: 1, ...extra } });
 function fixture(send = async () => {}, options = {}) {
-  let html = '', buttons = [], scrolls = 0, clock = 1000, online = true;
+  let html = '', buttons = [], scrolls = 0, clock = 1000, online = true, language = 'en';
+  const dictionaries = {}; let focusedAction = null;
   const handlers = new Map(), nodes = new Map(), timers = new Set();
   const node = selector => {
     if (!nodes.has(selector)) nodes.set(selector, { textContent: '', open: false, scrollIntoView() { scrolls++; } });
@@ -27,13 +28,15 @@ function fixture(send = async () => {}, options = {}) {
       html = value;
       buttons = [...html.matchAll(/<button\b([^>]*)>/g)].map(match => {
         const attributes = Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/g)].map(entry => [entry[1], entry[2]]));
-        return { disabled: /(?:^|\s)disabled(?:\s|$)/.test(match[1]), hidden: false,
+        return { focus() { focusedAction = this.dataset.talkAction; }, disabled: /(?:^|\s)disabled(?:\s|$)/.test(match[1]), hidden: false,
           dataset: Object.fromEntries(Object.entries(attributes).filter(([key]) => key.startsWith('data-')).map(([key, value]) => [key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase()), value])) };
       });
     },
     contains: button => buttons.includes(button),
     querySelector(selector) {
+      const action = selector.match(/^\[data-talk-action="([^"]+)"\]$/); if (action) return buttons.find(b => b.dataset.talkAction === action[1]) || null;
       if (selector === '.talk-crazy-prompt') return /class="talk-crazy-prompt"/.test(html) ? node(selector) : null;
+      if (selector === '.talk-management') return html.includes('class="talk-management"') ? node(selector) : null;
       if (selector === '[data-talk-note]' || selector === '.talk-shared') return null;
       return node(selector);
     },
@@ -43,11 +46,12 @@ function fixture(send = async () => {}, options = {}) {
   };
   const context = vm.createContext({ crypto: webcrypto, document: { title: '', activeElement: null },
     setInterval(callback) { timers.add(callback); return callback; }, clearInterval(callback) { timers.delete(callback); },
-    I18N: { registerDict() {}, t(namespace, key) { return english[key] || key; } } });
+    I18N: { registerDict(namespace, dict) { dictionaries[namespace] = dict; }, get lang() { return language; }, t(namespace, key) { return language === 'en' && english[key] || dictionaries[namespace]?.[key]?.[language] || key; } } });
   const english = { crazyTitle: 'Crazy Talk', crazyPrivate: 'Your secret line', crazyDone: 'Said it!', crazySkip: 'Skip this line',
     crazyCompleted: 'Line complete', crazySkipped: 'Skipped', crazyPaused: 'New lines are paused', crazyWaiting: 'Your surprise line will appear here',
     end: "I'm done", offline: 'Connection lost', hostAway: 'Waiting for the host page', stale_turn: 'The conversation has moved on',
     error: 'Could not sync', ready: 'I have an idea', wait: 'I need more time', noteLabel: 'A short thought', sendNote: 'Share this thought' };
+  vm.runInContext(fs.readFileSync(require.resolve('../talk-topics.js'), 'utf8'), context);
   vm.runInContext(source, context, { filename: 'talk-ui.js' });
   const card = new context.TALK_PLAYER.Card(element, { send, nameBanner: () => '<span>Sam</span>', now: () => clock, connected: () => online, ...options });
   const update = (talk = sample(), extra = {}) => card.update({ game: 'letstalk', playerNum: 2, name: 'Sam', talk: clone(talk), ...extra });
@@ -55,8 +59,13 @@ function fixture(send = async () => {}, options = {}) {
     const button = buttons.find(value => value.dataset.talkAction === action);
     if (button) handlers.get('click')?.({ target: { closest: () => button } });
   };
+  const field = (kind, key, value, eventType = 'input') => {
+    const target = { dataset: { [kind === 'editor' ? 'talkEditorField' : 'talkSharedInput']: key }, value, checked: value === true, matches: () => false };
+    handlers.get(eventType)?.({ target });
+  };
   return { card, element, context, update, click, node, timers, handlers, buttons: () => buttons,
-    scrolls: () => scrolls, setClock: value => { clock = value; }, setOnline: value => { online = value; } };
+    editorField: (key, value, eventType) => field('editor', key, value, eventType), sharedField: (key, value, eventType = 'change') => field('shared', key, value, eventType), setLanguage: value => { language = value; },
+    scrolls: () => scrolls, focusedAction: () => focusedAction, setClock: value => { clock = value; }, setOnline: value => { online = value; } };
 }
 
 test('Normal Talk keeps thinking, main-turn, question and listener controls without any Crazy notice', () => {
@@ -271,5 +280,86 @@ test('server-mode private card retains readiness and shared start while an old h
     assert.equal(sent.length, 1); assert.equal(sent[0].type, 'start'); assert.equal(sent[0].actor, undefined);
     f.setOnline(false); f.card.paint();
     assert.ok(f.buttons().filter(b => b.dataset.talkAction !== 'retry').every(b => b.disabled));
+  } finally { f.card.destroy(); }
+});
+
+
+const shared = (extra = {}) => sample({ sharedControls: true, hostControls: true, hostLiveUntil: 0,
+  actions: { end: true, extend: true, starters: true, newTopic: true }, ...extra });
+const flush = () => new Promise(resolve => setImmediate(resolve));
+
+test('shared handover with waiting questions needs a deliberate confirmation and stale confirmation is cleared', async () => {
+  const sent = [], f = fixture(async command => sent.push(clone(command)));
+  try {
+    const talk = shared({ questions: [{ id: 'q', playerNum: 1 }] });
+    f.update(talk); f.click('end');
+    assert.equal(sent.length, 0); assert.equal(f.focusedAction(), 'confirmEnd'); assert.equal(f.scrolls(), 1); assert.match(f.element.innerHTML, /role="alertdialog"/); assert.match(f.element.innerHTML, /Skip these requests/);
+    f.click('cancelConfirm'); assert.equal(sent.length, 0); assert.doesNotMatch(f.element.innerHTML, /role="alertdialog"/);
+    f.click('end'); f.update({ ...talk, turnId: 3 });
+    assert.doesNotMatch(f.element.innerHTML, /data-talk-action="confirmEnd"/);
+    f.click('end'); f.click('confirmEnd'); await flush();
+    assert.equal(sent.length, 1); assert.equal(sent[0].type, 'end'); assert.equal(sent[0].confirm, true); assert.equal(sent[0].actor, undefined); assert.equal(sent[0].turnId, 3);
+  } finally { f.card.destroy(); }
+});
+
+test('pending-question rejection gives a clear confirmation instead of a generic connection failure', async () => {
+  const f = fixture(async () => { throw new Error('pending_questions'); });
+  try {
+    f.update(shared()); f.click('end'); await flush();
+    assert.equal(f.card.pending, null); assert.equal(f.card.error, 'pending_questions');
+    assert.match(f.element.innerHTML, /Someone is waiting to ask/); assert.match(f.element.innerHTML, /data-talk-action="confirmEnd"/);
+  } finally { f.card.destroy(); }
+});
+
+test('new topic preview and custom settings stay local through updates until explicit opening confirmation', async () => {
+  const sent = [], f = fixture(async command => sent.push(clone(command)));
+  try {
+    f.update(shared()); f.node('.talk-management').open = true; f.click('randomTopic');
+    assert.equal(sent.length, 0); assert.equal(f.card.editor.source, 'library'); assert.ok(f.card.editor.topicId);
+    f.editorField('source', 'custom', 'change');
+    f.editorField('question', '<img src=x onerror="boom"> What can we imagine?');
+    f.editorField('title', 'Our next idea'); f.editorField('starter', 'Imagine freely.'); f.editorField('followUps', 'Who would join?\nWhat next?');
+    f.editorField('mode', 'write', 'change'); f.editorField('seconds', '30', 'change'); f.editorField('gameMode', 'crazy', 'change');
+    f.editorField('crazySeconds', '60', 'change'); f.editorField('showStarters', true, 'change');
+    f.update(shared({ interests: [{ playerNum: 1, until: 8000 }] }));
+    assert.match(f.element.innerHTML, /&lt;img src=x onerror=&quot;boom&quot;&gt;/); assert.doesNotMatch(f.element.innerHTML, /<img/);
+    assert.equal(f.card.editor.question, '<img src=x onerror="boom"> What can we imagine?'); assert.equal(sent.length, 0);
+    f.click('openTopic'); assert.equal(sent.length, 0); assert.equal(f.focusedAction(), 'confirmTopic'); assert.equal(f.scrolls(), 1); assert.match(f.element.innerHTML, /Current turns, questions/);
+    f.click('confirmTopic'); await flush();
+    assert.equal(sent.length, 1); const command = sent[0];
+    assert.equal(command.type, 'newTopic'); assert.equal(command.confirm, true); assert.equal(command.seconds, 30); assert.equal(command.mode, 'write');
+    assert.equal(command.gameMode, 'crazy'); assert.equal(command.crazySeconds, 60); assert.equal(command.showStarters, true);
+    assert.equal(command.topic.followUps.length, 2); assert.equal(command.actor, undefined); assert.equal(command.sessionId, 'ui-topic');
+    f.update(shared({ sessionId: 'new-topic', phase: 'thinking', turnId: 0 }));
+    assert.equal(f.card.pending, null); assert.equal(f.card.settingsOpen, false); assert.equal(f.card.editor, null);
+  } finally { f.card.destroy(); }
+});
+
+test('shared cards choose actual follow-ups, publish a custom follow-up and toggle explanations without host credentials', async () => {
+  const sent = [], f = fixture(async command => sent.push(clone(command)));
+  const talk = shared({ topic: { question: 'What would you build?', followUps: [{ question: 'For whom?' }, { question: 'Where?' }] } });
+  const ack = () => f.update({ ...talk, reply: { id: sent.at(-1).id, error: '' } });
+  try {
+    f.update(talk); f.sharedField('followup', '1'); f.click('showFollowUp'); await flush();
+    assert.equal(sent[0].type, 'extend'); assert.equal(sent[0].index, 1); ack();
+    f.sharedField('extension', 'How would we begin?', 'input'); f.update(talk); f.click('showCustomFollowUp'); await flush();
+    assert.equal(sent[1].type, 'extend'); assert.equal(sent[1].text, 'How would we begin?'); ack();
+    f.sharedField('starters', false); await flush(); assert.equal(sent[2].type, 'starters'); assert.equal(sent[2].show, false);
+    assert.ok(sent.every(command => command.actor === undefined && command.controlToken === undefined));
+  } finally { f.card.destroy(); }
+});
+
+test('invalid settings never publish, changing turns clears opening confirmation and the shared editor is bilingual', () => {
+  const f = fixture();
+  try {
+    f.update(shared()); f.click('settings'); f.editorField('source', 'custom', 'change'); f.editorField('question', 'A useful question?');
+    f.editorField('seconds', '14', 'change'); f.click('openTopic');
+    assert.equal(f.card.confirmation, null); assert.equal(f.card.error, 'invalid_settings'); assert.match(f.element.innerHTML, /15 to 120/);
+    f.editorField('seconds', '45', 'change'); f.click('openTopic'); assert.equal(f.card.confirmation, 'topic');
+    f.update(shared({ turnId: 3 })); assert.equal(f.card.confirmation, null);
+    f.setLanguage('zh'); f.update(shared({ turnId: 3 })); assert.match(f.element.innerHTML, /話題與設定/); assert.match(f.element.innerHTML, /想聊的問題/);
+    assert.equal(f.card.editor.question, 'A useful question?');
+    f.update(sample({ hostControls: true, actions: { newTopic: true, starters: true, extend: true } }));
+    assert.doesNotMatch(f.element.innerHTML, /data-talk-editor|data-talk-shared-input|class="talk-management"/);
   } finally { f.card.destroy(); }
 });

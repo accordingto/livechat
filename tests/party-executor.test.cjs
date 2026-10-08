@@ -95,7 +95,7 @@ test('server binds actor, timestamp and randomness instead of trusting mailbox a
   const result = A.cut.apply(state, command, context(state));
   assert.equal(result.replies[2].error, 'not_available'); assert.equal(result.phase, 'ready');
   assert.equal(result.replies[0], undefined);
-  for (const type of ['settings', 'stop', 'configure']) assert.equal(act(A.cut, state, type).replies[2].error, 'not_available');
+  assert.equal(act(A.cut, state, 'tick').replies[2].error, 'not_available');
 });
 
 test('CUT recovery skips only confirmed missing seats and replaces the absent speaker without counting a turn', () => {

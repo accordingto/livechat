@@ -9,7 +9,9 @@ rules also waited on a fixed roster's submissions or current speaker.
 
 ## New service
 
-`api/hub-executor.js` runs the existing rules on the website server. An original
+`api/hub-executor.js` runs the existing rules on the owned independent service
+`https://icebreaker-youtube-search.vercel.app/api/hub-executor`. The original
+website project needs no backend setting. An original
 player card wakes it every five seconds and after reconnecting. One recently
 connected card checks active CUT clocks and Dixit reveals every 500 ms; other
 cards keep the regular heartbeat. Hidden CUT deadlines are never sent to players. Remaining players
@@ -19,8 +21,12 @@ performance results. Each game retains its existing player-count rules; with few
 waits or continues individual interaction according to those rules. With no connected player, no page is required to stay open;
 the next connected card catches up the stored deadlines.
 
-The initial host page registers the room once. It sends the existing canonical
-and seat credentials to the service over HTTPS. The service encrypts them in an
+The homepage lets the setup owner select their own existing seat and initialize
+a game directly. A temporary initializer sends the existing canonical and seat
+credentials to the service over HTTPS. It waits for registration and every
+private card publication, closes its connection, and opens the selected original
+player link. No manager page needs to be opened or kept online. Legacy manager
+links remain available as a recovery option. The service encrypts them in an
 AES-256-GCM ticket. Each card receives an opaque ticket and authenticates using
 only its own existing token. Neither the host control token nor another player's
 private cards or credentials are added to player links or public views.
@@ -49,28 +55,40 @@ Remaining players receive management actions without changing their host
 identity, role, profession, private tasks or vote. Original-card game switches
 stop the preceding coordinator; host sleep no longer extends server deadlines.
 
-## Activation
+## Deployment
 
-The service is **disabled until configured**. Missing configuration leaves the
-legacy browser executor active and does not falsely advertise independent play.
+The user approved the owned independent service processing room capabilities,
+private hands, roles and progress. Production configuration was installed with
+the existing authenticated deployment connection. `HUB_EXECUTOR_SECRET` is a
+fresh 32-byte random service-only key, stored as a Vercel secret. It is never
+printed, saved locally, committed, embedded in frontend code or reused from
+YouTube. Keep it stable while sealed rooms are active. No original-site backend
+access, Firebase Admin credential, or database-rule change is required.
 
-In the Vercel project hosting this repository, set a Production environment
-variable named `HUB_EXECUTOR_SECRET` to a newly generated 32-byte random value
-encoded as 64 hexadecimal characters. Store it only in the deployment's server
-environment. Do not put it in frontend files, Git, chat, or player links. No
-Firebase Admin key or database-rule change is required for this capability-based
-transport. Keep this value stable across deployments while rooms are active.
+The browser uses the explicit owned HTTPS endpoint and `credentials: 'omit'`.
+CORS allows only the established Hub origin and explicitly supported local
+preview origins. `GET /api/hub-executor` reports only readiness/version. The
+independent deployment retains the existing song-title search and the 410 lyrics
+retirement endpoint; all other routes, including runtime source, return 404.
 
-Redeploy, verify `GET /api/hub-executor` returns `{"ready":true,"version":1}`,
-and refresh the participating host/player pages once. Open the existing room's
-game table to register or migrate it. The original player-card links continue
-working. Do not remove the deployment variable while active rooms use the
-service; encrypted active tickets require the same key to remain readable.
+`scripts/hub-executor-package-service.cjs` packages the existing service handlers
+plus the game's exact transitive runtime dependencies into an isolated deployment
+directory. It excludes environment files, login material and local project links.
+Use the deployment's existing project connection separately, keep its server
+secret, deploy, then verify readiness and blocked runtime paths. Runtime changes
+must reach this independent deployment as well as the original frontend.
 
-The default browser endpoint is the same-origin `/api/hub-executor`. A separately
-owned deployment needs this repository's runtime/game dependencies and an
-explicit endpoint/CORS update; the YouTube search key is unrelated and is not
-reused as a game secret.
+Missing service configuration still leaves legacy manager execution usable.
+Homepage independent launch reports an error and offers the existing game table
+if registration or publication fails. It never redirects early or claims a room
+is independent before its cards and sealed session match. Refresh participating
+pages after release. The original player links and room/player names are retained.
+
+In registered games, Dixit/Once private cards already provide round management
+and setup. Let's Talk cards now provide topic/settings, concrete/custom extensions,
+starters and explicit confirmation before skipping pending questions. CUT cards
+provide configure/cancel, end/restart and optional local audio. Open Mic cards
+provide end/restart while retaining Spotlight authority for personal choices.
 
 ## Validation
 

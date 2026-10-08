@@ -152,7 +152,22 @@ var OPEN_MIC_ENGINE = (() => {
     let error = '';
     if (input.turnId !== state.turnId) error = 'stale_turn';
     else if (!Number.isFinite(now) || now < state.lastChangeAt) error = 'invalid_time';
+    else if (state.phase === 'stopped' && !['restart', 'stop', 'exclude', 'addSong', 'toggleFavorite'].includes(input.type)) error = 'not_available';
     else switch (input.type) {
+      case 'stop':
+        if (!manager) error = 'not_available';
+        else if (state.phase !== 'stopped') { state.phase = 'stopped'; state.singingState = 'idle'; state.singingStartedAt = null; changed(state, now); }
+        break;
+      case 'restart': {
+        if (!manager) { error = 'not_available'; break; }
+        if (active(state).length < 2) { error = 'not_enough_players'; break; }
+        const previousTurn = state.turnId, seen = state.seen, replies = state.replies;
+        const fresh = create({ id: state.sessionId, roster: state.roster, now, seed: input.seed, singingDuration: state.duration });
+        const preserve = { sharedControls: state.sharedControls, runtimeOfflineNums: state.runtimeOfflineNums,
+          songLibrary: state.songLibrary, mySongs: state.mySongs, seen, replies, turnId: previousTurn + 1 };
+        Object.assign(state, fresh, preserve);
+        break;
+      }
       case 'success':
       case 'failed':
         if (!manager || state.phase !== 'challenge') error = 'not_available';
@@ -243,6 +258,7 @@ var OPEN_MIC_ENGINE = (() => {
         if (candidate.active === input.active) break;
         candidate.active = input.active;
         if (state.duet === candidate.playerNum && !input.active) state.duet = null;
+        if (state.phase === 'stopped') { changed(state, now); break; }
         if (state.spotlight === candidate.playerNum && !input.active) {
           const next = nextPlayer(state);
           // An excluded singer did not finish: preserve earned challenge points only.

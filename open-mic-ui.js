@@ -21,6 +21,9 @@
     "en": "One player takes a short social challenge. Pass for +2, then share a music memory, invent an original melody, or pass a rhythm for +1. Skipping is always okay.",
     "zh": "一位玩家接受社交小挑戰。成功 +2，再分享音樂回憶、自創旋律或節奏接龍 +1。隨時可以跳過。"
   },
+  "stopGame": { "en": "End game", "zh": "結束遊戲" },
+  "restartGame": { "en": "Reset score & start new game", "zh": "分數歸零並開始新局" },
+  "gameStopped": { "en": "Game ended. Start a new game from your card.", "zh": "遊戲已結束，可從自己的卡片開始新局。" },
   "start": {
     "en": "Start Open Mic Rescue",
     "zh": "開始開麥救場"
@@ -633,7 +636,7 @@
     renderStage() {
       var data = this.data, song = data.selectedSong, host = this.host(), manager = this.manager();
       var controller = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
-      var after = !!data.challengeResult, finished = data.phase === 'finished';
+      var after = data.phase !== 'stopped' && !!data.challengeResult, finished = data.phase === 'finished';
       this.setText('[data-om-duration]', t('duration', { n: Number(data.duration) || 35 }));
       var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div>' : '<div class="om-empty-stage"><span aria-hidden="true">♪</span><h3>' + esc(t('chooseSong')) + '</h3><p class="om-soft">' + esc(t('stageEmptyHint')) + '</p></div>';
       var suggested = song && song.videoId === 'omtxt000001' ? 'original' : song && song.videoId === 'omtxt000002' ? 'rhythm' : 'story';
@@ -649,7 +652,8 @@
       if (after && !finished && controller) buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       if (manager && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '');
       if (showActions) buttons += '</div>';
-      if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
+      if (data.phase === 'stopped') buttons += '<p class="om-waiting">' + esc(t('gameStopped')) + '</p>';
+      else if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
       else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
       else if (!controller) buttons += '<p class="om-waiting">' + esc(t('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
       else if (song) buttons += '<p class="om-waiting">' + esc(t(data.phase === 'singing' ? 'changeSongHint' : 'songControlsHint')) + '</p>';
@@ -746,7 +750,7 @@
       if (action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
       if (action === 'inviteDuet') { this.action(action, { playerNum: target.dataset.player ? Number(target.dataset.player) : null }).then(ok => { if (ok) this.close(this.duetDialog); }); return; }
       if (action === 'exclude') { this.action(action, { playerNum: Number(target.dataset.player), active: target.dataset.active === 'true' }); return; }
-      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next'].indexOf(action) >= 0) this.action(action);
+      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'stop', 'restart'].indexOf(action) >= 0) this.action(action);
     }
     async handleSubmit(event) {
       if (event.target.matches('[data-om-discovery-form]')) {
@@ -793,7 +797,7 @@
       this.renderLabels();
       if (!this.data) return;
       var data = this.data, challenge = data.challenge || {}, controller = this.controller(), host = this.host(), manager = this.manager();
-      var result = data.challengeResult, after = !!result, finished = data.phase === 'finished';
+      var result = data.challengeResult, after = data.phase !== 'stopped' && !!result, finished = data.phase === 'finished';
       var personName = this.name(data.spotlight), avatar = Array.from(personName.trim())[0] || '♪';
       var controls = '';
       if (manager && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', t('success'), 'om-success') + this.button('failed', t('failed'), 'om-fail') + this.button('newChallenge', t('newChallenge')) + '</div>';
@@ -806,6 +810,7 @@
       var ordered = current >= 0 ? active.slice(current).concat(active.slice(0, current)) : active;
       var queue = ordered.concat(roster.filter(p => p.active === false)).map(p => '<li class="' + (Number(p.playerNum) === Number(data.spotlight) ? 'om-current' : p.active === false ? 'om-inactive' : '') + '">' + (Number(p.playerNum) === Number(data.spotlight) ? '<span class="om-dot" aria-hidden="true"></span>' : '') + esc(p.name || t('player', { n: p.playerNum })) + (p.active === false ? ' · ' + esc(t('sittingOut')) : '') + '</li>').join('');
       var manage = manager ? '<details class="om-manage"><summary>' + esc(t('manage')) + '</summary><div class="om-roster">' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div></details>' : '';
+      if (data.sharedControls === true && manager) manage += '<details class="om-manage"><summary>' + esc(t('restartGame')) + '</summary><div class="om-actions">' + this.button('restart', t('restartGame')) + (data.phase !== 'stopped' ? this.button('stop', t('stopGame')) : '') + '</div></details>';
       var manageEl = this.find('.om-manage'), manageOpen = manageEl && manageEl.open;
       this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(t('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);
       if (data.sharedControls === true) {
@@ -914,7 +919,7 @@
       if (!dialog.open) { if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', ''); }
     }
     async action(type, extra) {
-      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'selectSong', 'clearSong', 'toggleFavorite', 'inviteDuet', 'exclude', 'addSong'].indexOf(type) < 0) return false;
+      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'selectSong', 'clearSong', 'toggleFavorite', 'inviteDuet', 'exclude', 'addSong', 'stop', 'restart'].indexOf(type) < 0) return false;
       if (this.pending || this.destroyed || !this.canControl()) return false;
       this.pending = true; this.error = ''; this.notice = '';
       this.render();

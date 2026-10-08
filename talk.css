@@ -121,3 +121,22 @@
   .talk-note { display: block; }
   .talk-note span { display: block; max-width: none; }
 }
+
+/* Shared controls stay inside the original private card. */
+.talk-management, .talk-card-explore { width:100%; min-width:0; text-align:left; }
+.talk-management { border-top:1px solid #514564; padding-top:10px; }
+.talk-management summary, .talk-card-explore summary { color:#d6c3f5; cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:600; }
+.talk-management-body, .talk-card-editor { display:grid; gap:14px; min-width:0; }
+.talk-management-body { padding-top:10px; }
+.talk-card-editor { padding:16px; border:1px solid #5a496c; border-radius:14px; background:#171325; }
+.talk-card-editor .talk-preview { min-width:0; padding:14px; overflow-wrap:anywhere; }
+.talk-card-editor .talk-field { text-align:left; }
+.talk-card-editor .talk-field input, .talk-card-editor .talk-field select, .talk-card-editor .talk-field textarea { box-sizing:border-box; max-width:100%; }
+.talk-card-check { display:flex; align-items:center; gap:10px; min-height:44px; text-align:left; color:#d7cce6; font-size:.9rem; line-height:1.5; }
+.talk-card-check input { width:20px; height:20px; flex-shrink:0; accent-color:#c5b2f0; }
+.talk-card-confirm { width:100%; box-sizing:border-box; display:grid; gap:14px; padding:16px; border:2px solid #e5bc61; border-radius:14px; color:#f4dfb0; background:#292016; text-align:left; line-height:1.6; }
+.talk-card-confirm .talk-player-topic { margin:0; }
+@media (max-width:520px) { .talk-card-editor { padding:13px; } .talk-management-body .talk-actions { flex-direction:column; } }
+
+.talk-management summary::after, .talk-card-explore summary::after { content:"⌄"; margin-left:auto; padding-left:10px; }
+.talk-management[open] > summary::after, .talk-card-explore[open] > summary::after { content:"⌃"; }

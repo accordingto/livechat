@@ -78,7 +78,7 @@ test('an unavailable or unconfigured service leaves host projection and bootstra
     const f = sandbox({ respond: call => ({ ok: !unavailable, json: async () => ({ ready: false, error: 'executor_not_configured' }) }) });
     const Host = hosts(f).cut, host = new Host();
     const started = await host.start(); await flush();
-    assert.equal(started.sessionId, 'cut-new-session'); assert.equal(host.executorRegistering, undefined);
+    assert.equal(started.sessionId, 'cut-new-session'); assert.equal(host.executorRegistering, false);
     assert.ok(host.local.some(value => value.startsWith('project'))); assert.equal(f.post().length, 0);
     await host.command('begin'); assert.ok(host.local.includes('command:begin'));
   }
@@ -287,4 +287,52 @@ test('a newly published clock phase wakes every card immediately so the next dri
   f.H.observe(revealing, 'own-seat'); await flush(); assert.equal(f.post().length, 2);
   f.H.observe({ ...revealing, dixit: { ...revealing.dixit, revealStage: 'answer' } }, 'own-seat'); await flush();
   assert.equal(f.post().length, 3, 'answer-to-popular transition can keep the reveal clock moving');
+});
+
+
+test('homepage registration waits for queued private projection and coalesces with background bootstrap', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const f = sandbox(), Host = hosts(f).dixit, host = new Host();
+  host.outgoing = gate;
+  const pending = f.H.ensureHost(host, 'dixit');
+  const duplicate = f.H.ensureHost(host, 'dixit');
+  await flush(); assert.equal(f.post().length, 0);
+  release(); const result = await pending; await duplicate;
+  assert.equal(result.capsule, 'sealed-capsule');
+  assert.equal(f.post().filter(call => call.body.operation === 'register').length, 1);
+  assert.equal(host.executorRegistering, false);
+});
+
+test('homepage initialization fails explicitly for unavailable service, changed sessions and incomplete registration', async () => {
+  const offline = sandbox({ respond: () => ({ ok: true, json: async () => ({ ready: false }) }) });
+  const OfflineHost = hosts(offline).cut;
+  await assert.rejects(offline.H.ensureHost(new OfflineHost(), 'cut'), /executor_unavailable/);
+  assert.equal(offline.post().length, 0);
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  const f = sandbox(), Host = hosts(f).cut, host = new Host(); host.outgoing = gate;
+  const pending = f.H.ensureHost(host, 'cut'); await flush();
+  host.doc.state.sessionId = 'another-session'; release();
+  await assert.rejects(pending, /stale_session/); assert.equal(f.post().length, 0);
+  const broken = sandbox({ respond: call => ({ ok: true, json: async () => call.method === 'GET' ? { ready: true } : { sessionId: 'wrong-session', capsule: 'capsule' } }) });
+  const BrokenHost = hosts(broken).once;
+  await assert.rejects(broken.H.ensureHost(new BrokenHost(), 'onceupon'), /registration_incomplete/);
+});
+
+test('homepage Bluff initialization rejects unavailable service without creating a fake ticket', async () => {
+  const f = sandbox({ respond: () => ({ ok: true, json: async () => ({ ready: false }) }) });
+  const Client = bluff(f), client = new Client({ data: '{}' });
+  await assert.rejects(f.H.ensureBluff(client), /executor_unavailable/);
+  assert.equal(client.executorTicket, undefined); assert.equal(f.post().length, 0);
+});
+
+
+test('independent execution uses the approved owned HTTPS service and never browser cookies', async () => {
+  const f=sandbox(); await f.H.ready();
+  f.H.observe({ game:'cut', cut:{turnId:1}, hubExecutor:{v:1,game:'cut',sessionId:'test',capsule:'opaque'} },'own-token');
+  await flush();
+  for (const call of f.calls) {
+    assert.equal(call.url,'https://icebreaker-youtube-search.vercel.app/api/hub-executor');
+    assert.equal(call.input.credentials,'omit');
+  }
 });

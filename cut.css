@@ -70,6 +70,10 @@
 .cut-end-dialog:not([open]) { display: none; }
 .cut-roster { display: grid; gap: 8px; margin: 16px 0 24px; }
 .cut-controls { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.cut-card-settings { display: grid; gap: 14px; width: 100%; text-align: left; }
+.cut-card-settings .cut-settings { grid-template-columns: 1fr; gap: 12px; }
+.cut-card-settings .cut-controls > .cut-button { flex: 1; }
+.cut-management-actions { margin: 14px 0; }
 .cut-player-management { width: 100%; text-align: left; }
 .cut-player-management summary { cursor: pointer; color: #ffd4cb; }
 .cut-player-management .cut-roster-row > span { min-width: 0; overflow-wrap: anywhere; }

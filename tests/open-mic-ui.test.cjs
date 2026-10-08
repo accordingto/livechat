@@ -246,3 +246,17 @@ test('server-managed inactive listeners only see their return and recovery contr
   assert.match(f.html('[data-om-score]'), /data-om-action="exclude" data-player="2" data-active="true"/);
   assert.equal(f.g.manager(), false); f.g.destroy();
 });
+
+
+test('shared players can end and reopen a new game from their card while stopped stage actions stay hidden', async () => {
+  const f = fixture({ actor: 2 }); f.g.data.sharedControls = true;
+  f.g.render(); assert.match(f.html('[data-om-score]'), /data-om-action="stop"/); assert.match(f.html('[data-om-score]'), /Reset score &amp; start new game/);
+  await f.g.action('stop'); assert.equal(f.sent[0].type, 'stop');
+  f.g.data.phase = 'stopped'; f.g.render();
+  assert.match(f.html('[data-om-score]'), /data-om-action="restart"/);
+  assert.doesNotMatch(f.html('[data-om-stage-controls]'), /data-om-action="(?:next|startSinging|finishSinging)"/);
+  await f.g.action('restart'); assert.equal(f.sent[1].type, 'restart');
+  f.g.data.roster[1].active = false; f.g.render();
+  assert.doesNotMatch(f.html('[data-om-score]'), /data-om-action="(?:stop|restart)"/);
+  f.g.destroy();
+});

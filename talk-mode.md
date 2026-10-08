@@ -1,6 +1,14 @@
 > Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
 
-# Let's Talk v0.6 · Normal Talk / Crazy Talk
+# Let's Talk v0.7 · Normal Talk / Crazy Talk
+
+## v0.7 玩家卡片共同操作（2026-10-09）
+
+- 獨立服務啟用後，每個有效玩家都能在原卡片的「話題與設定」內選題、搜尋／分類、隨機預覽、改寫或自訂主題；可選 think/write、15–120 整數秒、Normal/Crazy 及每人 1／2／3 分鐘。此設定用於新話題，先本機預覽，按開啟並確認才同步；會重新思考並清空目前分享、待問、已送出想法與搞笑台詞。
+- canonical `newTopic` 接受 `{topic,mode,seconds,gameMode,crazySeconds,showStarters,confirm:true}`，驗證身份、原 session 與 turn；服務 epoch／ticket 隨新 session 原子旋轉，原連結保持不變。有效玩家共享管理不等於讀取別人的台詞；view 0 仍沒有私人 prompt 或玩家控制。
+- 卡片也可立即切換題目說明、選擇實際延伸問句、發佈自訂延伸；這些動作保留目前話題、分享者、輪次及台詞。未送出的設定與延伸草稿保留於本機卡片，普通同步重繪不清除、不自動發佈。
+- 有待問請求時按結束分享，先顯示明確確認：保留並讓對方問，或確認略過後交棒。進行中的口頭提問必須先返回分享者；不能藉強制結束跳過。換 turn/session 取消過期的確認。
+- legacy 房間維持原權限與主持頁流程；只有 sharedControls 的卡片顯示此管理面板。首次建立 canonical 並完成 service registration 仍由 Hub／開局入口負責，玩家卡片可接續日常操作與換題。
 
 ## v0.6 情境題與 Crazy Talk（2026-10-08）
 
