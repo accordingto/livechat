@@ -14,8 +14,15 @@ var HUB_EXECUTOR = (() => {
     return readyValue;
   }
   async function request(input) {
-    const r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input), credentials: 'omit', cache: 'no-store', signal: AbortSignal.timeout(12000) });
+    // The service can spend up to 60 seconds finishing guarded publication.
+    // Aborting at 12 seconds stranded an otherwise successful registration.
+    let r;
+    try { r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input), credentials: 'omit', cache: 'no-store', signal: AbortSignal.timeout(65000) }); }
+    catch (error) {
+      if (error.name === 'TimeoutError') throw Object.assign(new Error('The room sync took too long. Retry the connection.'), { code: 'connection_timeout' });
+      throw error;
+    }
     const data = await r.json(); if (!r.ok) throw Object.assign(new Error(data.error || 'executor_unavailable'), { code: data.error });
     return data;
   }
@@ -104,8 +111,13 @@ var HUB_EXECUTOR = (() => {
       const raw = (await client._request(client._roomPath('players/' + client.hostToken))).data;
       let result;
       if (raw?.executor?.v === 1) {
-        await request({ operation: 'execute', capsule: raw.executor.capsule, token: client.hostToken });
-        result = { capsule: raw.executor.capsule, game: 'bluffking', sessionId: raw.executor.sessionId };
+        const verified = client.executorTicket?.capsule === raw.executor.capsule && client.executorTicket.token === client.hostToken &&
+          client.lastView?.room === client.code && client.lastView.sharedControls === true && client.lastView.self?.isHost === true;
+        // Native reconnect already executed and validated this same epoch.
+        // Reuse its returned view instead of repeating a full publication.
+        const current = verified ? null : await request({ operation: 'execute', capsule: raw.executor.capsule, token: client.hostToken });
+        result = { capsule: raw.executor.capsule, game: 'bluffking', sessionId: raw.executor.sessionId,
+          ...(current?.payload ? { payload: current.payload } : {}) };
       } else {
         const state = typeof raw?.data === 'string' ? JSON.parse(raw.data) : raw;
         if (!state?.transport?.cardRoster?.length) throw new Error('original_cards_required');
@@ -114,6 +126,8 @@ var HUB_EXECUTOR = (() => {
       }
       if (!result?.capsule) throw new Error('registration_incomplete');
       client.executorTicket = { capsule: result.capsule, token: client.hostToken };
+      const view = result.payload?.viewJson ? JSON.parse(result.payload.viewJson) : result.payload?.view;
+      if (view) client._emit(view);
       return result;
     })();
     client.executorPromise = task;

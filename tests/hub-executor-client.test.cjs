@@ -14,7 +14,7 @@ function sandbox(options = {}) {
     getElementById: id => elements.get(id), addEventListener: (name, fn) => { events[name] = fn; },
     createElement() { return { style: {}, append(button) { this.firstChild = button; }, remove() { elements.delete(this.id); } }; },
     body: { append(element) { elements.set(element.id, element); } } };
-  const context = vm.createContext({ AbortSignal, Promise, console, document, TextEncoder, TextDecoder, btoa, atob, structuredClone,
+  const context = vm.createContext({ AbortSignal: options.AbortSignal || AbortSignal, Promise, console, document, TextEncoder, TextDecoder, btoa, atob, structuredClone,
     Date: class extends Date { static now() { return time; } },
     crypto: { subtle: crypto.subtle, getRandomValues: value => crypto.getRandomValues(value), randomUUID: () => 'test-request-' + ++uid },
     setInterval(fn, ms) { timers.push({ fn, ms }); return timers.length; }, clearInterval() {},
@@ -370,4 +370,50 @@ test('Bluff periodic refresh cannot register while original-card publication is 
  client.executorDeferred=false;
  await client.command({action:'start',commandId:'after-original-publication'});
  assert.equal(f.post().at(-1).body.operation,'execute');
+});
+
+
+test('a valid Bluff execute taking longer than the old browser deadline still returns its host view', async () => {
+  let networkTime = 0;
+  const f = sandbox({ AbortSignal: { timeout(ms) { return { expiresAt: networkTime + ms }; } },
+    respond(call) {
+      if (call.method === 'GET') return { ok: true, json: async () => ({ ready: true }) };
+      // Guarded reads, publication and a CAS retry complete after 14 seconds.
+      networkTime += 14000;
+      if (call.input.signal.expiresAt <= networkTime) throw Object.assign(new Error('Signal timed out'), { name: 'TimeoutError' });
+      return { ok: true, json: async () => ({ ok: true, payload: { viewJson: JSON.stringify({ room: 'ROOM', version: 18, sharedControls: true, self: { isHost: true }, privateCard: null }) } }) };
+    }
+  });
+  const Client = bluff(f), client = new Client({ executor: { v: 1, capsule: 'slow-valid-epoch' } });
+  const view = await client.refresh();
+  assert.equal(view.sharedControls, true); assert.equal(view.self.isHost, true); assert.equal(view.version, 18);
+  assert.equal(f.post().length, 1); assert.ok(!client.local.includes('legacy-refresh'));
+});
+
+test('Bluff native reconnect reuses the successfully verified current epoch and registration view', async () => {
+  const f = sandbox(), Client = bluff(f), raw = { executor: { v: 1, capsule: 'verified-current', sessionId: 'same-round' } }, client = new Client(raw);
+  client.executorTicket = { capsule: raw.executor.capsule, token: client.hostToken };
+  client.lastView = { room: client.code, sharedControls: true, self: { isHost: true }, version: 18 };
+  await f.H.ensureBluff(client);
+  assert.equal(f.post().length, 0, 'a successful same-epoch reconnect must not repeat guarded publication');
+  assert.equal(client.lastView.version, 18);
+  for (const boundary of ['capsule','token','room','sharedControls','host']) {
+    client.executorTicket = { capsule: raw.executor.capsule, token: client.hostToken };
+    client.lastView = { room: client.code, sharedControls: true, self: { isHost: true } };
+    if (boundary === 'capsule') client.executorTicket.capsule = 'obsolete';
+    if (boundary === 'token') client.executorTicket.token = 'other-control';
+    if (boundary === 'room') client.lastView.room = 'OTHER';
+    if (boundary === 'sharedControls') client.lastView.sharedControls = false;
+    if (boundary === 'host') client.lastView.self.isHost = false;
+    const before = f.post().length; await f.H.ensureBluff(client); assert.equal(f.post().length, before + 1, boundary);
+  }
+});
+
+test('Bluff completed registration emits its returned public host projection without another execute', async () => {
+  const view = { room: 'ROOM', version: 18, sharedControls: true, self: { isHost: true }, privateCard: null };
+  const f = sandbox({ respond(call) { return { ok: true, json: async () => call.method === 'GET' ? { ready: true } : { capsule: 'registered-epoch', payload: { viewJson: JSON.stringify(view) } } }; } });
+  const Client = bluff(f), client = new Client({ data: JSON.stringify({ transport: { cardRoster: [{ token: '1'.repeat(32) }, { token: '2'.repeat(32) }] } }) });
+  await f.H.ensureBluff(client);
+  assert.deepEqual(structuredClone(client.lastView), view); assert.equal(client.executorTicket.capsule, 'registered-epoch');
+  assert.equal(f.post().length, 1); assert.equal(f.post()[0].body.operation, 'register');
 });

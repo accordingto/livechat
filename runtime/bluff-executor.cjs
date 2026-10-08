@@ -74,7 +74,13 @@ const bluffking = {
     if (!entries.length) fail('invalid_card_session', 'This projection does not belong to a current Bluff seat.');
     for (const entry of entries) {
       if (!/^[A-Za-z0-9_-]{12,128}$/.test(entry.originalToken || '')) fail('original_cards_required', 'This Bluff seat is missing its original Hub card.', 409);
-      const source = await ctx.read('rooms/' + room.code + '/players/' + entry.originalToken);
+    }
+    // Every path is an independently bound source card. Read one network wave
+    // before checking them in roster order; CAS retries and publication still
+    // perform their own fresh guard, including the exact target-only guard.
+    const sources = await Promise.all(entries.map(entry => ctx.read('rooms/' + room.code + '/players/' + entry.originalToken)));
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i], source = sources[i];
       const card = source?.bluff;
       const matching = source?.game === 'bluffking' && card?.version === 2 && card.room === room.code &&
         card.token === entry.token && card.identityId === entry.identityId && card.historyToken === entry.historyToken;

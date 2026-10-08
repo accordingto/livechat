@@ -70,10 +70,10 @@ async function harness(initialView, { card = false, setup = null, hash = '', tra
   if (setup) { storage.set('room-last-session', setup.code); storage.set('room-session-' + setup.code, JSON.stringify(setup)); }
   let transportOptions;
   const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html'+(search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')))+hash, origin: 'https://example.test', search: search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')), hash }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date: class extends Date { static now() { return now(); } }, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setTimeout: transport.setTimeout || setTimeout, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
-    constructor(opts) { transportOptions = opts; transport.client=this; transport.configureClient?.(this); }
+    constructor(opts) { transportOptions = opts; transport.client=this; transport.configureClient?.(this,opts); }
     _schedule() { transport.schedule?.(this); }
     async connect(...args) { connections.push(args); if (transport.connectError) throw transport.connectError; if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('hosting'); return initialView; }
-    async refresh() { return initialView; }
+    async refresh() { transport.refresh?.(this); return initialView; }
     async _request(...args) { const request=transport.request || transport.room?.restRequest; assert.equal(typeof request,'function','exact-card REST transport is available'); return request(...args); }
     async command(input) { sent.push(clone(input)); return initialView; }
     async create(code, settings) { creates.push({ code, ...settings }); return initialView; }
@@ -709,4 +709,29 @@ test('failed service registration keeps the obsolete poll paused and the manager
  const h=await harness(f.lobby,{setup:f.setup,transport});
  assert.deepEqual(scheduled,[true]);assert.equal(transport.client.executorDeferred,true);
  assert.doesNotMatch(h.html(),/New Hub/);assert.match(h.node('bk-error').textContent,/held registration failed/);
+});
+
+
+test('Hub opening displays the verified service view without a second full host refresh',async()=>{
+ const f=currentHubTest();f.lobby.sharedControls=true;let refreshed=0;
+ const transport={room:f.room,sessions:f.sessions,createdView:f.lobby,refresh(){refreshed++;},
+  executor:{install(){},async ready(){return true;},async ensureBluff(client){client.lastView=clone(f.lobby);}}
+ };
+ const h=await harness(f.lobby,{setup:f.setup,transport});
+ assert.equal(refreshed,0);assert.match(h.html(),/New Hub 1/);assert.ok(h.button('start'));assert.equal(h.node('bk-error').hidden,true);
+});
+
+test('a timed-out host opening offers in-page reconnection and recovers the same original roster without starting a game',async()=>{
+ const f=currentHubTest();f.lobby.sharedControls=true;let attempts=0,opts;
+ const transport={room:f.room,sessions:f.sessions,createdView:f.lobby,configureClient(client,options){opts=options;},
+  executor:{install(){},async ready(){return true;},async ensureBluff(client){
+   if(++attempts===1)throw Object.assign(new Error('Signal timed out'),{name:'TimeoutError'});
+   client.lastView=clone(f.lobby);opts.onView(clone(f.lobby));
+  }}
+ };
+ const h=await harness(f.lobby,{setup:f.setup,transport});
+ assert.match(h.node('bk-error').textContent,/sync took too long/);assert.ok(h.button('reconnect'));assert.doesNotMatch(h.html(),/Connecting/);
+ const originals=clone([...f.values.entries()]);await h.click('reconnect');
+ assert.equal(attempts,2);assert.match(h.html(),/New Hub 1/);assert.ok(h.button('start'));assert.equal(h.node('bk-error').hidden,true);
+ assert.deepEqual([...f.values.entries()],originals);assert.deepEqual(h.sent,[]);
 });

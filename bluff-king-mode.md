@@ -47,6 +47,12 @@ still belong to this table. This keeps its active round, roles, scores and perso
 knowledge history. A valid existing epoch reconnects normally; a newer game's
 original cards are not overwritten during this repair.
 
+A completed registration returns its public host view, and reconnect uses one
+verified service synchronization rather than repeating full publications.
+Independent original cards are checked in parallel, including fresh checks on
+write conflicts. The browser waits for the service's supported execution window.
+An interrupted Hub connection shows Retry connection and retains the same roster.
+
 ## The conversation
 
 `lobby → topic_check → prepare → discussion → reveal → results`

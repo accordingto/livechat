@@ -118,8 +118,9 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
       return next;
     });
     // Registration finishes projecting before a browser releases its authority.
-    await execute({ capsule, token: ticket.controlToken });
-    return { capsule, game: ticket.game, sessionId: raw.executor.sessionId };
+    const initialized = await execute({ capsule, token: ticket.controlToken });
+    return { capsule, game: ticket.game, sessionId: raw.executor.sessionId,
+      ...(ticket.game === 'bluffking' ? { payload: initialized.payload } : {}) };
   }
   async function execute(body) {
     const timestamp = now(), ticket = unseal(body.capsule, key), adapter = registry[ticket.game];

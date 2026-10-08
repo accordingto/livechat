@@ -1,3 +1,23 @@
+## CURRENT: Bluff host synchronization timeout — 2026-10-09
+
+The repaired live room already had matching service projections/sharedControls,
+but a host reconnect could still time out: the browser aborted RPCs at 12 seconds
+while the deployed service has a 60-second execution budget. Bluff guard read
+original sources sequentially, and native reconnect repeated a full guarded
+publication up to three times. Concurrent player pulses/CAS retries compounded it.
+Source guard now reads independent exact cards in parallel, with fresh checks at
+every canonical retry and private publication. Register returns its completed
+public Bluff host projection; ensureBluff emits it and reuses an already verified
+matching ticket/view. Native UI refreshes again only for legacy service responses
+without that valid view. Keep all source/epoch, seat, history and private guards.
+RPC timeout is 65 seconds to cover service completion and network reply; health
+checks remain short. Host timeout feedback offers in-page Retry connection with
+its same Hub roster. Bluff loads helper v6/UI v11/sync host-publication-2.
+Runtime changes require independent-service deployment AND frontend publication;
+keep the existing Production secret and all current Talk/CUT/Once dependencies.
+Full regression: 1261/1261 passed, including 14 new timeout, duplicate-RPC,
+retry, parallel verification, CAS conflict and private-projection checks.
+
 ## CURRENT: Bluff host registration recovery — 2026-10-09
 
 The remaining native-host error was a publication race: executorDeferred stopped

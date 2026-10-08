@@ -145,7 +145,7 @@ test('the Hub card and game page use the BLUFF PARTY name consistently', () => {
   assert.ok(card); assert.match(card, /BLUFF PARTY/i);
   assert.equal(title, 'BLUFF PARTY · IceBreak Hub'); assert.equal(heading, 'BLUFF PARTY');
   assert.match(page, /href="bluff-king\.css\?v=6"/);
-  assert.match(page, /src="bluff-king-ui\.js\?v=10"/);
+  assert.match(page, /src="bluff-king-ui\.js\?v=11"/);
   assert.doesNotMatch(title + heading + card, /Bluff King/);
   const icon = page.match(/<img\b[^>]*class="bk-brand-mark"[^>]*src="([^"]+)"/)?.[1];
   assert.ok(icon, 'the renamed game has its party mark');
