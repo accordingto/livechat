@@ -737,3 +737,33 @@ test('pure song names enforce ownership, text bounds, capacity and deterministic
   const favorite = act(initial, 'addSong', { actor: 2, title: existing.title, artist: existing.artist || '' });
   assert.equal(error(favorite, 2), ''); assert.equal(favorite.songLibrary.length, 120); assert.ok(favorite.mySongs[2].includes(existing.videoId));
 });
+
+
+test('shared players can end and restart without a host while preserving saved songs and fencing old commands', () => {
+  let s = { ...singing(), sharedControls: true };
+  const score = s.teamScore, session = s.sessionId, library = JSON.stringify(s.songLibrary);
+  s = act(s, 'stop', { actor: 2 });
+  assert.equal(error(s, 2), ''); assert.equal(s.phase, 'stopped'); assert.equal(s.teamScore, score);
+  assert.equal(s.singingStartedAt, null); assert.equal(s.singingState, 'idle');
+  const staleTurn = s.turnId;
+  assert.equal(error(act(s, 'next', { actor: 2 }), 2), 'not_available');
+  s = act(s, 'exclude', { actor: 2, playerNum: 1, active: false });
+  assert.equal(s.phase, 'stopped');
+  s = act(s, 'restart', { actor: 2, id: 'reset-once' });
+  assert.equal(error(s, 2), ''); assert.equal(s.phase, 'challenge'); assert.equal(s.teamScore, 0);
+  assert.equal(s.sessionId, session); assert.equal(s.sharedControls, true); assert.equal(s.spotlight, 2);
+  assert.equal(JSON.stringify(s.songLibrary), library); assert.ok(s.turnId > staleTurn);
+  assert.equal(act(s, 'restart', { actor: 2, id: 'reset-once' }), s, 'duplicate reset cannot create another round');
+  assert.equal(error(act(s, 'success', { actor: 2, turnId: staleTurn }), 2), 'stale_turn');
+});
+
+test('new game controls reject legacy players and inactive players and require enough active seats', () => {
+  const original = create();
+  for (const type of ['stop', 'restart']) assert.equal(error(act(original, type, { actor: 2 }), 2), 'not_available');
+  let s = { ...create(), sharedControls: true };
+  s = act(s, 'exclude', { actor: 1, playerNum: 3, active: false });
+  assert.equal(error(act(s, 'restart', { actor: 3 }), 3), 'not_available');
+  s = act(s, 'exclude', { actor: 1, playerNum: 2, active: false });
+  const before = s.teamScore;
+  s = act(s, 'restart', { actor: 1 }); assert.equal(error(s, 1), 'not_enough_players'); assert.equal(s.teamScore, before);
+});

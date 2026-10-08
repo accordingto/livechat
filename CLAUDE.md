@@ -1,3 +1,28 @@
+## Current independent game deployment — 2026-10-09
+
+Dixit, Once Upon a Time, Let's Talk, CUT, Open Mic, Bluff Party and Chat Wolf
+execute at `https://icebreaker-youtube-search.vercel.app/api/hub-executor`.
+The user explicitly approved this owned service processing room capabilities
+and private game state. Its stable Production `HUB_EXECUTOR_SECRET` is already
+installed as a server secret. Never print, export, commit or rotate it for a code
+deployment; never reuse the unrelated YouTube key. The original site's backend
+needs no setting. Preserve original room/player/card links.
+
+Homepage `hub-launcher.js` initializes via existing constructors, waits for
+service registration and every private card, closes its temporary connection,
+then opens the selected player's original link. Regular play, settings and
+recovery belong in private cards; do not restore a persistent manager-page lease.
+
+**Runtime rule/engine/content changes need an independent-service deployment as
+well as the frontend push.** Use `scripts/hub-executor-package-service.cjs` with
+the existing service source at `C:/Users/user/Documents/Codex/2026-10-07/new-chat-2/work/youtube-search-service`
+and an isolated output directory. Its existing project metadata and authenticated
+CLI connection are in that sibling workspace; keep login files out of packages
+and Git. Preserve search and the 410 lyrics retirement endpoint. Verify readiness,
+Hub CORS, rejected synthetic tickets and blocked runtime URLs after deployment.
+`node scripts/hub-executor-verify-release.cjs <release>` reads public deployment
+assets/health only and never accesses existing room data.
+
 ## CURRENT: CUT continued conversation (2026-10-09)
 
 CUT keeps one topic through unlimited handoffs. Only explicit End topic after
@@ -12,7 +37,7 @@ resetting the current topic or fairness. See cut-mode.md for current rules.
 
 The recent games now have an optional server executor: `api/hub-executor.js`,
 `runtime/*-executor.cjs`, and `hub-executor.js`. It is enabled ONLY when the
-hosting project's Production `HUB_EXECUTOR_SECRET` is configured. Keep the
+owned independent project's Production `HUB_EXECUTOR_SECRET` is configured. Keep the
 same original player links, bearer rules, private projections, command receipts,
 and game/phase fences. Remaining players may share management in service mode;
 legacy rooms keep their previous permissions until explicitly registered.
@@ -24,7 +49,7 @@ Chat Wolf MUST retain its complete HistoryScope allocation/journal coordinator;
 never replace it with a plain engine CAS or best-effort history merge. The
 browser must not resume authority while a server epoch is present. Missing
 configuration keeps legacy browser execution usable; do not claim host-free
-production play until `/api/hub-executor` is ready and room migration is verified.
+production play until the owned endpoint is ready and room migration is verified.
 See `hub-executor-mode.md` for activation, trust limits, recovery and maintenance.
 
 ## CURRENT: Open Mic Rescue text activities (2026-10-09)

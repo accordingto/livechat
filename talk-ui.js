@@ -35,9 +35,18 @@ var TALK_UI = (() => {
     retry: ['重試傳送', 'Retry sending'],
     stale_turn: ['已經換到下一段分享，請依現在畫面操作。', 'The conversation has moved on. Please use the current controls.'],
     not_available: ['這個動作目前無法使用，請看最新畫面。', 'That action is no longer available. Check the current view.'],
-    pending_questions: ['還有人想追問。可以先請對方問，或直接交棒。', 'Someone is waiting to ask. Invite them, or hand over the turn.'],
+    pending_questions: ['還有人想追問。可以先請對方問，或確認略過這些追問後交棒。', 'Someone is waiting to ask. Invite them, or confirm skipping the requests before handing over.'],
     question_open: ['目前有人在提問，請先回到原發言者。', 'A question is open. Return to the original speaker first.'],
-    forceEnd: ['直接結束，下一位', 'End turn, next person'],
+    forceEnd: ['略過追問，下一位', 'Skip requests, next person'],
+    confirmEnd: ['還有 {n} 位想追問。略過這些追問並讓下一位分享？', '{n} people still want to ask. Skip these requests and move to the next speaker?'],
+    confirmSkip: ['確認略過並交棒', 'Confirm skip and hand over'],
+    confirmNewTopic: ['開啟這個話題？目前的分享、追問、已送出的想法與搞笑台詞都會清空。', 'Open this topic? Current turns, questions, submitted thoughts and surprise lines will be cleared.'],
+    confirmOpen: ['確認開啟', 'Confirm and open'], cancel: ['取消', 'Cancel'],
+    topicSettings: ['話題與設定', 'Topic and settings'],
+    newTopicNotice: ['先預覽並調整設定。按開啟並確認後才換題，所有玩家會重新開始思考。', 'Preview the topic and settings first. Opening and confirming starts a new thinking period for everyone.'],
+    invalid_settings: ['思考時間請填 15–120 的整數秒；台詞頻率請選 1、2 或 3 分鐘。', 'Choose a whole thinking time from 15 to 120 seconds, and a line interval of 1, 2 or 3 minutes.'],
+    confirmation_required: ['請先確認這個操作。', 'Please confirm this action first.'],
+    libraryUnavailable: ['題庫尚未載入，請重新整理，或自行輸入話題。', 'The topic library has not loaded. Refresh, or write your own topic.'],
     waitingServer: ['等待同步確認…', 'Waiting for confirmation…'],
     waiting_players: ['至少需要兩位玩家在線，請等候其他人回來。', 'At least two players must be online. Wait for another player to return.'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check the connection and try again.'],
@@ -155,15 +164,100 @@ var TALK_UI = (() => {
 
 var TALK_PLAYER = (() => {
   const { t, esc, list, name, button } = TALK_UI;
+  const followUps = topic => {
+    const items = list(topic?.followUps).map(q => typeof q === 'string' ? { question: q } : q).filter(q => typeof q?.question === 'string' && q.question.trim());
+    return items.length ? items : topic?.followUp ? [{ question: topic.followUp }] : [];
+  };
+  const topicLibrary = () => typeof TALK_LIBRARY !== 'undefined' ? TALK_LIBRARY : null;
+  const libraryTopics = (category = '', query = '') => topicLibrary()?.search(category, query) || [];
+  const topicById = id => libraryTopics().find(topic => topic.id === id);
+  const customTopic = editor => {
+    const question = String(editor.question || '').trim(), title = String(editor.title || '').trim(), starter = String(editor.starter || '').trim();
+    const questions = String(editor.followUps || '').split(/\r?\n/).map(q => q.trim()).filter(Boolean);
+    if (!question || question.length > 500 || title.length > 80 || starter.length > 600 || questions.length > 8 || questions.some(q => q.length > 300)) throw new Error('invalid_topic');
+    return { id: 'custom', emoji: '✏️', title, question, starter, followUp: questions[0] || '', followUps: questions.map(question => ({ stage: 'custom', question })) };
+  };
+  const editTopic = topic => ({ title: topic.title || '', question: topic.question || '', starter: topic.starter || '', followUps: followUps(topic).map(q => q.question).join('\n') });
+  const editorState = s => ({ ...editTopic(s.topic), source: topicById(s.topic.id) ? 'library' : 'custom', topicId: s.topic.id || '', category: '', search: '',
+    mode: s.mode === 'write' ? 'write' : 'think', seconds: Number(s.seconds) || 45, gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
+    crazySeconds: Number(s.crazy?.intervalSeconds) || 120, showStarters: !!s.showStarters });
+  const option = (value, label, current) => '<option value="' + esc(value) + '"' + (String(value) === String(current) ? ' selected' : '') + '>' + esc(label) + '</option>';
+  function settingsHTML(editor) {
+    const select = (key, field, values) => '<label class="talk-field">' + esc(t(key)) + '<select data-talk-editor-field="' + field + '">' + values + '</select></label>';
+    const area = (key, field, max, rows) => '<label class="talk-field">' + esc(t(key)) + '<textarea data-talk-editor-field="' + field + '" maxlength="' + max + '" rows="' + rows + '">' + esc(editor[field]) + '</textarea></label>';
+    const matches = libraryTopics(editor.category, editor.search), selected = topicById(editor.topicId);
+    const categories = typeof TALK_CATEGORIES !== 'undefined' ? TALK_CATEGORIES : [];
+    const language = typeof I18N !== 'undefined' ? I18N.lang : 'zh';
+    const choices = selected && !matches.some(q => q.id === selected.id) ? [selected, ...matches] : matches;
+    const library = select('category', 'category', option('', t('allCategories'), editor.category) + categories.map(c => option(c.id, c[language] || c.en, editor.category)).join('')) +
+      '<label class="talk-field">' + esc(t('searchTopics')) + '<input type="search" data-talk-editor-field="search" value="' + esc(editor.search) + '"></label>' +
+      select('chooseManually', 'topicId', option('', t('chooseManually'), editor.topicId) + choices.map(q => option(q.id, q.question, editor.topicId)).join('')) +
+      '<div class="talk-actions">' + button('randomTopic', 'randomTopic') + (selected ? button('editTopic', 'adaptTopic') : '') + '</div>' +
+      (!matches.length ? '<p class="talk-soft">' + esc(t(topicLibrary() ? 'noTopics' : 'libraryUnavailable')) + '</p>' : '') +
+      (selected ? '<div class="talk-preview"><p>' + esc(selected.question) + '</p>' + (selected.starter ? '<p class="talk-starter">' + esc(selected.starter) + '</p>' : '') + '<details class="talk-details"><summary>' + esc(t('previewPath')) + '</summary>' + followUps(selected).map(q => '<p>' + esc(q.question) + '</p>').join('') + '</details></div>' : '');
+    return '<section class="talk-card-editor" data-talk-editor><p class="talk-soft">' + esc(t('newTopicNotice')) + '</p>' +
+      select('topicSource', 'source', option('library', t('fromLibrary'), editor.source) + option('custom', t('writeTopic'), editor.source)) +
+      (editor.source === 'library' ? library : area('customTitle', 'title', 80, 1) + area('customQuestion', 'question', 500, 3) + area('customStarter', 'starter', 600, 3) + area('customFollowUps', 'followUps', 2408, 4)) +
+      select('setupMode', 'mode', option('think', t('thinkMode'), editor.mode) + option('write', t('writeMode'), editor.mode)) +
+      '<label class="talk-field">' + esc(t('thinkingTime')) + '<input type="number" data-talk-editor-field="seconds" min="15" max="120" step="1" inputmode="numeric" value="' + esc(editor.seconds) + '"></label>' +
+      select('gameMode', 'gameMode', option('normal', t('normalMode'), editor.gameMode) + option('crazy', t('crazyMode'), editor.gameMode)) +
+      (editor.gameMode === 'crazy' ? select('crazyFrequency', 'crazySeconds', [60, 120, 180].map(n => option(n, t('minutes', { n: n / 60 }), editor.crazySeconds)).join('')) : '') +
+      '<label class="talk-card-check"><input type="checkbox" data-talk-editor-field="showStarters"' + (editor.showStarters ? ' checked' : '') + '> ' + esc(t('showStarters')) + '</label>' +
+      '<div class="talk-actions">' + button('openTopic', 'openTopic', '', true) + button('cancelSetup', 'closeSettings') + '</div></section>';
+  }
+  function managementHTML(s, card) {
+    if (s.sharedControls !== true || !s.hostControls) return '';
+    const choices = followUps(s.topic);
+    return '<details class="talk-management"' + (card.managementOpen ? ' open' : '') + '><summary>' + esc(t('topicSettings')) + '</summary><div class="talk-management-body">' +
+      (s.actions?.starters ? '<label class="talk-card-check"><input type="checkbox" data-talk-shared-input="starters"' + (s.showStarters ? ' checked' : '') + '> ' + esc(t('showStarters')) + '</label>' : '') +
+      (s.actions?.extend ? '<details class="talk-card-explore"><summary>' + esc(t('exploreTitle')) + '</summary><div class="talk-card-editor"><p class="talk-soft">' + esc(t('exploreHint')) + '</p>' +
+        (choices.length ? '<label class="talk-field">' + esc(t('exploreDirection')) + '<select data-talk-shared-input="followup">' + choices.map((q, i) => option(i, q.question, card.followupIndex)).join('') + '</select></label>' + button('showFollowUp', 'showFollowUp') : '') +
+        '<label class="talk-field">' + esc(t('liveFollowUp')) + '<textarea data-talk-shared-input="extension" rows="2" maxlength="300">' + esc(card.extensionDraft) + '</textarea></label>' + button('showCustomFollowUp', 'showCustomFollowUp') + '</div></details>' : '') +
+      (s.actions?.newTopic ? '<div class="talk-actions">' + button('newTopic', 'settings') + button('randomNew', 'randomTopic') + '</div>' : '') +
+      (card.settingsOpen && card.editor ? settingsHTML(card.editor) : '') + '</div></details>';
+  }
   class Card {
     constructor(element, { send, nameBanner, now = () => Date.now(), connected = () => true }) {
       this.element = element; this.send = send; this.nameBanner = nameBanner; this.now = now; this.connected = connected;
       this.pending = null; this.error = ''; this.draft = ''; this.data = null;
+      this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.clickHandler = event => {
         const b = event.target.closest('[data-talk-action]');
         if (!b || !this.element.contains(b) || b.disabled) return;
         const type = b.dataset.talkAction;
         if (type === 'retry') { this.deliver(); return; }
+        const s = this.data.talk, manager = s.sharedControls === true && s.hostControls;
+        if (type === 'cancelConfirm') { this.confirmation = null; this.topicToOpen = null; this.render(true); return; }
+        if (type === 'confirmEnd') { if (this.confirmation === 'end') { this.confirmation = null; this.act('end', { confirm: true }); } return; }
+        if (type === 'confirmTopic') { if (manager && this.confirmation === 'topic' && this.topicToOpen) { const next = this.topicToOpen; this.confirmation = null; this.topicToOpen = null; this.act('newTopic', { ...next, confirm: true }); } return; }
+        if (['settings', 'randomTopic', 'adaptTopic', 'openTopic', 'closeSettings', 'showFollowUp', 'showCustomFollowUp'].includes(type)) {
+          if (!manager || this.pending) return;
+          if (type === 'closeSettings') { this.settingsOpen = false; this.render(true); return; }
+          if (type === 'showFollowUp') { this.act('extend', { index: this.followupIndex }); return; }
+          if (type === 'showCustomFollowUp') { this.act('extend', { text: this.extensionDraft }); return; }
+          if (!s.actions?.newTopic) return;
+          this.editor ||= editorState(s); this.settingsOpen = true; this.managementOpen = true;
+          if (type === 'randomTopic') {
+            const topic = topicLibrary()?.draw(this.editor.category, this.editor.search, [s.topic.id, this.editor.topicId]);
+            if (topic) { this.editor.source = 'library'; this.editor.topicId = topic.id; }
+            else this.error = 'noTopics';
+          } else if (type === 'adaptTopic') {
+            const topic = topicById(this.editor.topicId); if (topic) { Object.assign(this.editor, editTopic(topic)); this.editor.source = 'custom'; }
+          } else if (type === 'openTopic') {
+            try {
+              const topic = this.editor.source === 'library' ? topicById(this.editor.topicId) : customTopic(this.editor);
+              if (!topic) throw new Error('invalid_topic');
+              const seconds = Number(this.editor.seconds), crazySeconds = Number(this.editor.crazySeconds);
+              if (!Number.isInteger(seconds) || seconds < 15 || seconds > 120 || ![60, 120, 180].includes(crazySeconds)) throw new Error('invalid_settings');
+              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameMode: this.editor.gameMode, crazySeconds, showStarters: !!this.editor.showStarters };
+              this.confirmation = 'topic'; this.error = '';
+            } catch (error) { this.error = error.message; }
+          }
+          this.render(true); if (this.confirmation) this.focusConfirmation(); return;
+        }
+        if (['end', 'forceEnd'].includes(type) && !s.activeQuestion && list(s.questions).length) {
+          this.confirmation = 'end'; this.render(true); this.focusConfirmation(); return;
+        }
         this.act(type === 'forceEnd' ? 'end' : type, {
           ...(b.dataset.target ? { target: b.dataset.target } : {}),
           ...(b.dataset.promptId ? { promptId: b.dataset.promptId } : {}),
@@ -173,13 +267,29 @@ var TALK_PLAYER = (() => {
           ...(type === 'extend' ? { show: !this.data.talk.extended } : {}),
         });
       };
-      this.inputHandler = event => { if (event.target.matches('[data-talk-note]')) this.draft = event.target.value; };
-      element.addEventListener('click', this.clickHandler); element.addEventListener('input', this.inputHandler);
+      this.inputHandler = event => {
+        const target = event.target;
+        if (target.matches('[data-talk-note]')) this.draft = target.value;
+        const field = target.dataset?.talkEditorField;
+        if (field && this.editor) { this.editor[field] = field === 'showStarters' ? target.checked : target.value; if (field === 'search') this.render(true); }
+        if (target.dataset?.talkSharedInput === 'extension') this.extensionDraft = target.value;
+      };
+      this.changeHandler = event => {
+        const target = event.target, s = this.data?.talk;
+        if (s?.sharedControls !== true || !s.hostControls || this.pending) return;
+        const field = target.dataset?.talkEditorField;
+        if (field && this.editor) { this.editor[field] = field === 'showStarters' ? target.checked : target.value; this.render(true); }
+        if (target.dataset?.talkSharedInput === 'starters') this.act('starters', { show: !!target.checked });
+        if (target.dataset?.talkSharedInput === 'followup') this.followupIndex = Number(target.value);
+      };
+      element.addEventListener('click', this.clickHandler); element.addEventListener('input', this.inputHandler); element.addEventListener('change', this.changeHandler);
       this.timer = setInterval(() => this.paint(), 1000);
     }
     update(data) {
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId;
-      if (changedSession) { this.pending = null; this.error = ''; this.draft = data.talk.myNote || ''; }
+      if (changedSession) { this.pending = null; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
+      else if (this.data.talk.turnId !== data.talk.turnId) { this.confirmation = null; this.topicToOpen = null; }
+      if (this.confirmation === 'end' && (!list(data.talk.questions).length || data.talk.activeQuestion)) this.confirmation = null;
       this.data = data;
       // Recover an unacknowledged request after a card refresh. A second
       // action must not overwrite the first while the host is reconnecting.
@@ -194,6 +304,11 @@ var TALK_PLAYER = (() => {
       if (this.pending && !actionCurrent(this.pending)) { this.pending = null; }
       this.render(!changedSession);
     }
+    focusConfirmation() {
+      const action = this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic';
+      this.element.querySelector('[data-talk-action="' + action + '"]')?.focus?.({ preventScroll: true });
+      this.element.querySelector('.talk-card-confirm')?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }
     act(type, extra = {}) {
       if (this.pending || !this.data) return;
       const s = this.data.talk;
@@ -206,8 +321,9 @@ var TALK_PLAYER = (() => {
       const command = this.pending;
       Promise.resolve().then(() => this.send(command)).catch(e => {
         if (this.pending?.id !== command.id) return;
-        this.error = ['stale_turn','stale_prompt','waiting_players'].includes(e.message) ? e.message : 'error';
-        this.pending = null; this.render(true);
+        this.error = ['stale_turn','stale_prompt','waiting_players','pending_questions','question_open','not_available','invalid_topic','invalid_extension','invalid_settings','confirmation_required'].includes(e.message) ? e.message : 'error';
+        if (this.error === 'pending_questions') this.confirmation = 'end';
+        this.pending = null; this.render(true); if (this.confirmation) this.focusConfirmation();
       });
     }
     render(preserveInput) {
@@ -237,7 +353,7 @@ var TALK_PLAYER = (() => {
         controls += '<div class="talk-actions talk-flow-controls">' +
           (s.actions?.start ? button('start', 'start', '', true) : '') +
           (s.actions?.end && s.speaker !== me && !s.activeQuestion ? button('helpEnd', 'end') : '') +
-          (s.actions?.resume && s.activeQuestion && s.activeQuestion.playerNum !== me && s.speaker !== me ? button('asked', 'resume') : '') +
+          (s.actions?.resume && s.activeQuestion && s.activeQuestion.playerNum !== me && s.speaker !== me ? button('helpResume', 'resume') : '') +
           (s.actions?.extend ? button(s.extended ? 'hideExtend' : 'extend', 'extend') : '') +
           (s.actions?.crazySend ? button('crazySend', 'crazySend') : '') +
           (s.actions?.crazyPause ? button(s.crazy.paused ? 'crazyResume' : 'crazyPause', 'crazyPause') : '') + '</div>';
@@ -246,6 +362,10 @@ var TALK_PLAYER = (() => {
       const keep = preserveInput && active && s.phase === 'thinking' && s.mode === 'write' ? active : null;
       const focused = keep && document.activeElement === keep;
       const notesOpen = preserveInput && this.element.querySelector('.talk-shared')?.open;
+      if (preserveInput && this.element.querySelector('.talk-management')) this.managementOpen = !!this.element.querySelector('.talk-management').open;
+      const activeField = document.activeElement?.dataset?.talkEditorField || document.activeElement?.dataset?.talkSharedInput;
+      const fieldKind = document.activeElement?.dataset?.talkEditorField ? 'editor-field' : 'shared-input';
+      const selectionStart = document.activeElement?.selectionStart, selectionEnd = document.activeElement?.selectionEnd;
       if (keep) keep.remove();
       const myTurn = s.phase === 'talking' && s.speaker === me && !s.activeQuestion;
       const prompt = s.crazy?.prompt;
@@ -263,6 +383,8 @@ var TALK_PLAYER = (() => {
         ${s.phase === 'thinking' ? '<p class="talk-soft" data-talk-clock></p>' : ''}
         <div class="talk-interest" aria-live="polite">${TALK_UI.interests(s, this.now())}</div>
         <div class="talk-controls">${controls}</div>
+        ${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
+        ${managementHTML(s, this)}
         <p class="talk-feedback" role="status">${this.error ? esc(t(this.error)) : ''}</p>
         ${this.error === 'pending_questions' ? button('forceEnd', 'forceEnd') : ''}
         <p class="talk-connection" role="status"></p>
@@ -273,6 +395,11 @@ var TALK_PLAYER = (() => {
       if (keep) {
         this.element.querySelector('[data-talk-note]')?.replaceWith(keep);
         if (focused) keep.focus({ preventScroll: true });
+      }
+      if (activeField) {
+        const next = this.element.querySelector('[data-talk-' + fieldKind + '="' + activeField + '"]');
+        next?.focus?.({ preventScroll: true });
+        if (Number.isInteger(selectionStart) && typeof next?.setSelectionRange === 'function' && ['text', 'search', 'textarea'].includes(next.type)) next.setSelectionRange(selectionStart, selectionEnd);
       }
       if (notesOpen && this.element.querySelector('.talk-shared')) this.element.querySelector('.talk-shared').open = true;
       if (newPrompt) this.element.querySelector('.talk-crazy-prompt')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
@@ -291,12 +418,13 @@ var TALK_PLAYER = (() => {
         b.disabled = offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry');
         if (b.dataset.talkAction === 'retry') b.hidden = now - this.sentAt < 6000;
       });
+      this.element.querySelectorAll('[data-talk-editor-field], [data-talk-shared-input]').forEach(input => { input.disabled = offline || hostAway || !!this.pending; });
       const clock = this.element.querySelector('[data-talk-clock]');
       if (clock) clock.textContent = t('secondsLeft', { n: Math.max(0, Math.ceil((s.deadline - now) / 1000)) });
       this.element.querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now) e.remove(); });
     }
     destroy() {
-      clearInterval(this.timer); this.element.removeEventListener('click', this.clickHandler); this.element.removeEventListener('input', this.inputHandler);
+      clearInterval(this.timer); this.element.removeEventListener('click', this.clickHandler); this.element.removeEventListener('input', this.inputHandler); this.element.removeEventListener('change', this.changeHandler);
     }
   }
   return { Card };

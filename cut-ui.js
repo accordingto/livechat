@@ -10,6 +10,7 @@ var CUT_UI = (() => {
     waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
     endTopic: ['結束話題', 'End topic'], endTopicQuestion: ['大家都同意結束這個話題了嗎？', 'Has everyone agreed to end this topic?'], endTopicHint: ['先口頭確認。結束後才能換下一題。', 'Check with everyone first. Then end the topic.'], endTopicConfirm: ['是，結束話題', 'Yes, end the topic'], keepTopic: ['繼續這個話題', 'Keep this topic'],
+    sharedConfiguring: ['任一玩家都可以儲存設定，或返回話題繼續。', 'Any player can save the settings or return to the topic.'], sharedFinished: ['想繼續玩，任一玩家都可以重新開始。', 'Any player can restart when everyone is ready for more CUT!'],
     sharedManage: ['玩家管理', 'Player controls'], recover: ['略過離線玩家', 'Skip offline players'], sharedBreak: ['準備好後，任一玩家可以按下一題。', 'Any player can reveal the next topic when everyone is ready.'], sharedPaused: ['準備好後，任一玩家可以繼續。', 'Any player can resume when everyone is ready.'],
     manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'], restart: ['重新開始', 'Restart'], stop: ['結束遊戲', 'End game'],
     topic: ['這次聊什麼', 'THE TOPIC'], current: ['目前發言者', 'CURRENT SPEAKER'], nextPlayer: ['下一位', 'NEXT PLAYER'],
@@ -24,6 +25,7 @@ var CUT_UI = (() => {
     sittingOut: ['你目前先休息，仍然可以自由聊天。', 'You’re sitting out of the draw. Keep chatting freely.'],
     soundOn: ['🔊 音效開啟', '🔊 Sound on'], soundOff: ['🔇 音效關閉', '🔇 Sound off'], enableSound: ['🔊 啟用音效', '🔊 Enable sound'],
     soundHint: ['音效由這個主持頁播放。共用畫面時請分享電腦音訊。', 'This host screen plays the cues. Share computer audio when sharing your screen.'],
+    cardSoundHint: ['音效只在你的裝置播放。', 'Cues play only on this device.'],
     soundBlocked: ['按「啟用音效」讓瀏覽器播放提示音。', 'Tap “Enable sound” to allow the browser to play cues.'],
     soundUnsupported: ['這個瀏覽器無法播放提示音，請依畫面接棒。', 'This browser can’t play cues. Follow the screen to pass the turn.'],
     rules: ['怎麼玩', 'How to play'],
@@ -73,7 +75,7 @@ var CUT_UI = (() => {
     const inPlay = ['countdown', 'speaking', 'handoff'].includes(phase);
     let floor;
     if (phase === 'ready' || phase === 'setup') {
-      floor = speaker(cut, shownSpeaker, t('current'), personal) + `<p class="cut-cue cut-waiting">${esc(t(phase === 'setup' ? 'configuring' : 'waitingBegin'))}</p>`;
+      floor = speaker(cut, shownSpeaker, t('current'), personal) + `<p class="cut-cue cut-waiting">${esc(t(phase === 'setup' ? cut.sharedControls ? 'sharedConfiguring' : 'configuring' : 'waitingBegin'))}</p>`;
       if (phase === 'ready' && Number(actor) > 0 && cut.canBegin) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="begin">${esc(t('begin'))}</button>`;
     } else if (isCut) {
       floor = `<div class="cut-burst" aria-label="CUT!"><strong>CUT!</strong><p>${esc(t(cut.cutEvent?.final ? 'finalCut' : 'cutHint'))}</p></div>`;
@@ -91,7 +93,7 @@ var CUT_UI = (() => {
     } else {
       const finished = ['finished', 'stopped'].includes(phase);
       const title = phase === 'paused' ? 'paused' : finished ? 'finished' : 'breakTitle';
-      const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : cut.sharedControls ? 'sharedPaused' : 'pausedHint' : finished ? 'finishedHint' : cut.sharedControls ? 'sharedBreak' : 'breakHint';
+      const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : cut.sharedControls ? 'sharedPaused' : 'pausedHint' : finished ? cut.sharedControls ? 'sharedFinished' : 'finishedHint' : cut.sharedControls ? 'sharedBreak' : 'breakHint';
       floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? '✂️' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(t(hint))}</p></div>`;
     }
     const excluded = actor && list(cut.roster).find(p => Number(p.playerNum) === Number(actor))?.active === false;
@@ -106,30 +108,52 @@ var CUT_UI = (() => {
   }
 
   function sharedPanel(cut, actor) {
-    if (cut.sharedControls !== true || !actor || cut.phase === 'stopped') return '';
+    if (cut.sharedControls !== true || !actor) return '';
     const mine = list(cut.roster).find(p => Number(p.playerNum) === Number(actor));
-    const button = (action, label, extra = '') => `<button type="button" class="cut-button" data-cut-action="${action}"${extra}>${esc(t(label))}</button>`;
+    if (!mine) return '';
+    const button = (action, label, extra = '', css = '') => `<button type="button" class="cut-button ${css}" data-cut-action="${action}"${extra}>${esc(t(label))}</button>`;
     let actions = button('recover', 'recover');
-    if (mine?.active === false) return `<div class="cut-controls">${actions}${button('exclude', 'reinclude', ` data-player="${Number(actor)}" data-active="true"`)}</div>`;
-    if (cut.phase === 'break') actions += button('next', 'next');
+    if (mine.active === false) return `<div class="cut-controls">${actions}${button('exclude', 'reinclude', ` data-player="${Number(actor)}" data-active="true"`)}</div>`;
+    const stopped = cut.phase === 'stopped';
+    if (stopped) actions = button('restart', 'restart', '', 'cut-primary') + actions;
+    else if (cut.phase === 'break') actions += button('next', 'next');
     if (cut.canEndTopic) actions += button('endTopic', 'endTopic');
-    actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
+    if (!stopped && cut.phase !== 'setup') actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
+    const options = (values, selected) => values.map(value => `<option value="${value}"${selected === value ? ' selected' : ''}>${esc(t(value))}</option>`).join('');
+    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd'], cut.category)}</select></label></div><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
-    return `<div class="cut-controls">${actions}</div><details class="cut-player-management"><summary>${esc(t('sharedManage'))}</summary><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
+    const management = (cut.phase === 'setup' ? '' : button('settings', 'settings')) + (stopped ? '' : button('restart', 'restart') + button('stop', 'stop', '', 'cut-stop'));
+    return `${settings}<div class="cut-controls">${actions}</div><details class="cut-player-management" data-cut-management><summary>${esc(t('sharedManage'))}</summary><div class="cut-controls cut-management-actions">${management}</div><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
   }
 
   class Card {
     constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '', send = null } = {}) {
       this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send;
-      this.data = null; this.destroyed = false; this.renderKey = ''; this.pending = null; this.error = ''; this.animatedCut = '';
+      this.data = null; this.destroyed = false; this.renderKey = ''; this.pending = null; this.error = ''; this.animatedCut = ''; this.sound = null;
       this.click = event => {
+        const soundButton = event.target.closest('[data-cut-sound]');
+        if (soundButton && this.sound && !this.destroyed) {
+          // Web Audio is unlocked synchronously from this explicit user gesture.
+          this.sound.toggle().then(() => this.paintSound());
+          return;
+        }
         const button = event.target.closest('[data-cut-action]');
         if (button && !button.disabled) {
           const type = button.dataset?.cutAction || 'begin';
           this.action(type, type === 'exclude' ? { playerNum: Number(button.dataset.player), active: button.dataset.active === 'true' } : {});
         }
       };
+      this.submit = event => {
+        const form = event.target.closest('[data-cut-settings]');
+        if (!form) return;
+        event.preventDefault();
+        this.action('configure', this.settingsInput(form));
+      };
+      this.change = event => { if (event.target.closest('[data-cut-settings]')) this.paint(); };
       this.element.addEventListener('click', this.click);
+      this.element.addEventListener('submit', this.submit);
+      this.element.addEventListener('input', this.change);
+      this.element.addEventListener('change', this.change);
       this.timer = setInterval(() => this.paint(), 150);
     }
     update(data) {
@@ -137,20 +161,26 @@ var CUT_UI = (() => {
       const previous = this.data?.cut;
       this.data = data;
       const cut = data.cut;
+      if (cut.sharedControls === true) {
+        if (!this.sound) { this.sound = new Sound(() => this.paintSound()); this.sound.enabled = false; }
+        if (previous?.sessionId !== cut.sessionId) { this.sound.previous = null; this.sound.seen.clear(); }
+      } else if (this.sound) { this.sound.close(); this.sound = null; }
       if (previous?.sessionId !== cut.sessionId || previous?.turnId !== cut.turnId) this.error = '';
       if (this.pending && cut.reply?.id === this.pending.id) {
-        this.error = cut.reply.error ? t(['stale_turn', 'not_available', 'not_enough_players'].includes(cut.reply.error) ? cut.reply.error : 'error') : '';
+        this.error = cut.reply.error ? t(cut.reply.error === 'invalid_setup' ? 'invalid_options' : ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options'].includes(cut.reply.error) ? cut.reply.error : 'error') : '';
         this.pending = null;
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
-      if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
-      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (this.renderKey !== key) {
         this.renderKey = key;
+        const managementOpen = this.element.querySelector('[data-cut-management]')?.open;
         const cutKey = cut.phase === 'cut' ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
         const animate = !cutKey || cutKey !== this.animatedCut;
         if (cutKey) this.animatedCut = cutKey;
-        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}${this.sound ? `<div class="cut-controls"><button type="button" class="cut-button cut-sound" data-cut-sound title="${esc(t('cardSoundHint'))}" aria-pressed="false">${esc(t('soundOff'))}</button></div><p class="cut-feedback" data-cut-sound-status role="status"></p>` : ''}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        if (managementOpen && this.element.querySelector('[data-cut-management]')) this.element.querySelector('[data-cut-management]').open = true;
       }
       this.paint();
     }
@@ -166,8 +196,55 @@ var CUT_UI = (() => {
       for (const control of this.element.querySelectorAll?.('[data-cut-action]') || []) {
         control.disabled = !this.canAction(control.dataset.cutAction, control.dataset.cutAction === 'exclude' ? { playerNum: Number(control.dataset.player), active: control.dataset.active === 'true' } : {});
       }
+      const form = this.element.querySelector('[data-cut-settings]');
+      if (form) {
+        const settings = this.settingsInput(form), custom = settings.speed === 'custom';
+        const enabled = this.canAction('cancelSettings'), valid = this.validTiming(settings);
+        const save = form.querySelector('[data-cut-settings-save]');
+        if (save) save.disabled = !this.canAction('configure', settings);
+        for (const field of form.querySelectorAll('[data-cut-setting]')) field.disabled = !enabled;
+        const customFields = form.querySelector('[data-cut-custom-fields]');
+        if (customFields) customFields.hidden = !custom;
+        for (const name of ['customMinSeconds', 'customMaxSeconds']) {
+          const field = form.querySelector(`[name="${name}"]`);
+          if (field) { field.disabled = !enabled || !custom; field.required = custom;
+            field.setAttribute?.('aria-invalid', String(custom && !valid)); }
+        }
+        const message = form.querySelector('[data-cut-custom-error]');
+        if (message) message.textContent = custom && !valid ? t('customRangeError') : '';
+      }
       const feedback = this.element.querySelector('[data-cut-action-status]');
       if (feedback) feedback.textContent = this.error || (this.pending ? t('sending') : '');
+      if (this.sound) {
+        const audible = this.sound.enabled && this.sound.context?.state === 'running' && this.connected() &&
+          (typeof document === 'undefined' || document.hidden !== true);
+        if (!audible) this.sound.silence();
+        this.sound.update(cut, now, false, audible);
+        this.paintSound();
+      }
+    }
+    paintSound() {
+      if (this.destroyed || !this.sound) return;
+      const button = this.element.querySelector('[data-cut-sound]');
+      if (!button) return;
+      const sound = this.sound, waiting = sound.enabled && !sound.unsupported && (sound.blocked || !sound.context);
+      button.textContent = t(waiting ? 'enableSound' : sound.enabled ? 'soundOn' : 'soundOff');
+      button.setAttribute('aria-pressed', String(sound.enabled));
+      const status = this.element.querySelector('[data-cut-sound-status]');
+      if (status) status.textContent = sound.unsupported ? t('soundUnsupported') : waiting ? t('soundBlocked') : '';
+    }
+    settingsInput(form) {
+      const speed = form.querySelector('[name="speed"]')?.value;
+      const seconds = name => {
+        const value = form.querySelector(`[name="${name}"]`)?.value;
+        return typeof value === 'string' && value.trim() ? Number(value) : NaN;
+      };
+      return { speed, category: form.querySelector('[name="category"]')?.value,
+        customMinSeconds: speed === 'custom' ? seconds('customMinSeconds') : this.data.cut.customMinSeconds ?? 15,
+        customMaxSeconds: speed === 'custom' ? seconds('customMaxSeconds') : this.data.cut.customMaxSeconds ?? 25 };
+    }
+    validTiming({ customMinSeconds: min, customMaxSeconds: max }) {
+      return Number.isInteger(min) && Number.isInteger(max) && min >= 5 && max <= 120 && min <= max;
     }
     canBegin() {
       const cut = this.data?.cut;
@@ -176,15 +253,20 @@ var CUT_UI = (() => {
     canAction(type, extra = {}) {
       if (type === 'begin') return this.canBegin();
       const cut = this.data?.cut, actor = Number(this.data?.playerNum);
-      if (this.destroyed || this.pending || typeof this.send !== 'function' || !this.connected() || cut?.sharedControls !== true || cut.phase === 'stopped') return false;
+      if (this.destroyed || this.pending || typeof this.send !== 'function' || !this.connected() || cut?.sharedControls !== true) return false;
       const mine = list(cut.roster).find(p => Number(p.playerNum) === actor);
       if (!mine) return false;
       if (type === 'recover') return true;
       if (type === 'exclude' && Number(extra.playerNum) === actor && extra.active === true) return true;
       if (mine.active === false) return false;
       if (type === 'endTopic') return cut.canEndTopic === true;
+      if (type === 'restart') return list(cut.roster).filter(p => p.active !== false).length >= 2;
+      if (type === 'settings') return cut.phase !== 'setup';
+      if (type === 'cancelSettings') return cut.phase === 'setup';
+      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd'].includes(extra.category) && this.validTiming(extra);
+      if (type === 'stop') return cut.phase !== 'stopped';
       if (type === 'next') return cut.phase === 'break';
-      if (type === 'pause') return cut.phase !== 'paused';
+      if (type === 'pause') return !['paused', 'stopped', 'setup'].includes(cut.phase);
       if (type === 'resume') return cut.phase === 'paused';
       return type === 'exclude' && typeof extra.active === 'boolean' && list(cut.roster).some(p => Number(p.playerNum) === Number(extra.playerNum));
     }
@@ -202,11 +284,11 @@ var CUT_UI = (() => {
         this.pending = null; this.error = t(e.message === 'stale_turn' ? 'stale_turn' : 'error'); this.paint();
       }
     }
-    destroy() { clearInterval(this.timer); this.element.removeEventListener('click', this.click); this.data = null; this.pending = null; this.destroyed = true; }
+    destroy() { this.destroyed = true; clearInterval(this.timer); this.sound?.close(); this.sound = null; this.element.removeEventListener('click', this.click); this.element.removeEventListener('submit', this.submit); this.element.removeEventListener('input', this.change); this.element.removeEventListener('change', this.change); this.data = null; this.pending = null; }
   }
 
   /* Cues are synthesized locally, with no asset downloads or microphone use.
-     Only the host creates a Sound instance. Players never play automatic cues. */
+     Shared player cards may opt into their own muted-by-default Sound instance. */
   class Sound {
     constructor(onChange = () => {}) {
       this.context = null; this.enabled = true; this.blocked = false; this.unsupported = false;

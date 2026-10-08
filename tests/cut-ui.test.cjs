@@ -96,8 +96,8 @@ test('sound cues run once per CUT event and never replay upon reconnect or roste
 });
 
 test('card heartbeat preserves current DOM and destroy clears its only paint interval', () => {
-  let html = '', writes = 0, intervalCount = 0, clears = 0, added, removed;
-  const element = { get innerHTML() { return html; }, set innerHTML(value) { html = value; writes++; }, querySelector() { return null; }, addEventListener(type, fn) { assert.equal(type, 'click'); added = fn; }, removeEventListener(type, fn) { assert.equal(type, 'click'); removed = fn; } };
+  let html = '', writes = 0, intervalCount = 0, clears = 0; const added = {}, removed = {};
+  const element = { get innerHTML() { return html; }, set innerHTML(value) { html = value; writes++; }, querySelector() { return null; }, addEventListener(type, fn) { added[type] = fn; }, removeEventListener(type, fn) { removed[type] = fn; } };
   const originalSet = global.setInterval, originalClear = global.clearInterval;
   global.setInterval = () => { intervalCount++; return 42; };
   global.clearInterval = id => { assert.equal(id, 42); clears++; };
@@ -106,7 +106,7 @@ test('card heartbeat preserves current DOM and destroy clears its only paint int
     const payload = { playerNum: 1, name: 'Amy', cut: sample() };
     card.update(payload); card.update({ ...payload, cut: { ...payload.cut, hostLiveUntil: 5000, revision: 2 } });
     assert.equal(writes, 1); assert.equal(intervalCount, 1);
-    card.destroy(); card.update(payload); assert.equal(writes, 1); assert.equal(clears, 1); assert.equal(added, removed);
+    card.destroy(); card.update(payload); assert.equal(writes, 1); assert.equal(clears, 1); assert.deepEqual(Object.keys(added).sort(), ['change', 'click', 'input', 'submit']); assert.deepEqual(added, removed);
   } finally { global.setInterval = originalSet; global.clearInterval = originalClear; }
 });
 
@@ -116,13 +116,13 @@ function playerCard(send, extra = {}) {
   const element = {
     innerHTML: '',
     querySelector(selector) { return selector === '[data-cut-action="begin"]' ? nodes.button : selector === '[data-cut-action-status]' ? nodes.feedback : selector === '[data-cut-connection]' ? nodes.connection : null; },
-    addEventListener(type, handler) { click = handler; },
-    removeEventListener(type, handler) { assert.equal(handler, click); click = null; },
+    addEventListener(type, handler) { if (type === 'click') click = handler; },
+    removeEventListener(type, handler) { if (type === 'click') { assert.equal(handler, click); click = null; } },
   };
   const card = new UI.Card(element, { send, now: () => 1000, ...extra });
   const payload = { playerNum: 2, name: 'Jason', cut: sample({ phase: 'ready', canBegin: true, hostLiveUntil: 5000 }) };
   card.update(payload);
-  return { card, nodes, element, payload, click: () => click?.({ target: { closest: () => nodes.button } }) };
+  return { card, nodes, element, payload, click: () => click?.({ target: { closest: selector => selector === '[data-cut-action]' ? nodes.button : null } }) };
 }
 
 test('player Begin sends current session and turn once, waits for acknowledgement and removes handler on destroy', async () => {

@@ -192,3 +192,14 @@ Official discovery references:
 [videos.list](https://developers.google.com/youtube/v3/docs/videos/list),
 [Google credentials](https://developers.google.com/youtube/registering_an_application),
 and [Vercel environment variables](https://vercel.com/docs/environment-variables/managing-environment-variables).
+
+
+## Player-card management
+
+In a registered independent room, active players can judge challenges, advance,
+manage sit-outs, end the game, or reset the team score and start a new game from
+their own original card. Ending retains the final score and card contents;
+restarting preserves saved song names, favorites and sit-outs. Both operations
+use the current session/turn and deduplicate command IDs. A queued action from
+the preceding turn cannot score the new game. Spotlight song/activity choices
+remain the Spotlight player's own actions. Legacy rooms retain their host rules.

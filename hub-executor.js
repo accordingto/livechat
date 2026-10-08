@@ -3,7 +3,7 @@
  */
 var HUB_EXECUTOR = (() => {
   'use strict';
-  const endpoint = '/api/hub-executor';
+  const endpoint = 'https://icebreaker-youtube-search.vercel.app/api/hub-executor';
   const uid = () => crypto.randomUUID();
   let retiredCapsule = null;
   let current = null, lastPulse = 0, inflight = null, active = false, pollAfterMs = 5000, pendingWake = false, readyUntil = 0, readyValue = false;
@@ -64,6 +64,62 @@ var HUB_EXECUTOR = (() => {
     row.firstChild.textContent = document.documentElement.lang.startsWith('zh') ? '跳過缺席玩家，接續遊戲' : 'Continue without absent players';
   }
   function isIndependent(data) { return data?.hubExecutor?.v === 1 || data?.sharedControls === true; }
+  async function ensureHost(host, game) {
+    if (!host || host.stopped || !host.doc?.state || host.executorStarting) throw new Error('room_not_ready');
+    if (host.executorPromise) return host.executorPromise;
+    const sessionId = host.doc.state.sessionId;
+    host.executorRegistering = true;
+    const task = (async () => {
+      if (!await ready()) throw new Error('executor_unavailable');
+      await host.outgoing;
+      if (host.projectionTasks) await Promise.all(host.projectionTasks.values());
+      if (host.stopped || host.doc?.state?.sessionId !== sessionId) throw new Error('stale_session');
+      let result;
+      if (host.doc.executor?.v === 1 && host.doc.executor.sessionId === sessionId) {
+        await request({ operation: 'execute', capsule: host.doc.executor.capsule, token: host.ref.key });
+        result = { capsule: host.doc.executor.capsule, game, sessionId };
+      } else {
+        const seats = Array.from({ length: host.room.count }, (_, i) => ({ playerNum: i + 1, token: host.room.playerRef(i)?.key }));
+        result = await request({ operation: 'register', game, code: host.room.code, controlToken: host.ref.key, sessionId, seats });
+      }
+      if (!result?.capsule || result.sessionId && result.sessionId !== sessionId) throw new Error('registration_incomplete');
+      if (typeof host.ref.once === 'function') {
+        const raw = (await host.ref.once('value')).val();
+        const state = raw?.state || (raw?.stateJson ? JSON.parse(raw.stateJson) : null);
+        if (raw?.executor?.v !== 1 || raw.executor.capsule !== result.capsule || state?.sessionId !== sessionId) throw new Error('registration_incomplete');
+        host.doc = { ...raw, state }; host.own = false;
+      }
+      return result;
+    })();
+    host.executorPromise = task;
+    try { return await task; }
+    finally { if (host.executorPromise === task) host.executorPromise = null; host.executorRegistering = false; }
+  }
+  async function ensureBluff(client) {
+    if (!client?.hostToken || !client.code) throw new Error('room_not_ready');
+    if (client.executorPromise) return client.executorPromise;
+    client.executorRegistering = true;
+    const task = (async () => {
+      if (!await ready()) throw new Error('executor_unavailable');
+      const raw = (await client._request(client._roomPath('players/' + client.hostToken))).data;
+      let result;
+      if (raw?.executor?.v === 1) {
+        await request({ operation: 'execute', capsule: raw.executor.capsule, token: client.hostToken });
+        result = { capsule: raw.executor.capsule, game: 'bluffking', sessionId: raw.executor.sessionId };
+      } else {
+        const state = typeof raw?.data === 'string' ? JSON.parse(raw.data) : raw;
+        if (!state?.transport?.cardRoster?.length) throw new Error('original_cards_required');
+        result = await request({ operation: 'register', game: 'bluffking', code: client.code, controlToken: client.hostToken,
+          seats: state.transport.cardRoster.map((s, i) => ({ playerNum: i + 1, token: s.token })) });
+      }
+      if (!result?.capsule) throw new Error('registration_incomplete');
+      client.executorTicket = { capsule: result.capsule, token: client.hostToken };
+      return result;
+    })();
+    client.executorPromise = task;
+    try { return await task; }
+    finally { if (client.executorPromise === task) client.executorPromise = null; client.executorRegistering = false; }
+  }
   function patchHost(Host, game) {
     if (!Host || Object.prototype.hasOwnProperty.call(Host.prototype, 'executorPatched')) return;
     const p = Host.prototype;
@@ -71,17 +127,9 @@ var HUB_EXECUTOR = (() => {
     const originals = Object.fromEntries(['project', 'renew', 'change', 'command', 'start', 'status'].map(k => [k, p[k]]));
     const isServer = host => host.doc?.executor?.v === 1;
     const metadata = host => ({ capsule: host.doc.executor.capsule, token: host.ref.key });
-    const register = async host => {
-      if (host.executorStarting || host.executorRegistering || host.stopped || !host.doc?.state || isServer(host) || Date.now() < (host.executorRetryAt || 0)) return;
-      if (!await ready()) return;
-      host.executorRegistering = true;
-      try {
-        await host.outgoing;
-        if (host.projectionTasks) await Promise.all(host.projectionTasks.values());
-        const seats = Array.from({ length: host.room.count }, (_, i) => ({ playerNum: i + 1, token: host.room.playerRef(i)?.key }));
-        await request({ operation: 'register', game, code: host.room.code, controlToken: host.ref.key, sessionId: host.doc.state.sessionId, seats });
-      } catch (_) { host.executorRetryAt = Date.now() + 60000; }
-      finally { host.executorRegistering = false; }
+    const register = host => {
+      if (host.executorStarting || host.executorDeferred || host.executorRegistering || host.stopped || !host.doc?.state || isServer(host) || Date.now() < (host.executorRetryAt || 0)) return;
+      void ensureHost(host, game).catch(() => { host.executorRetryAt = Date.now() + 60000; });
     };
     p.project = function (...args) {
       if (isServer(this) || this.executorRegistering) return;
@@ -113,6 +161,7 @@ var HUB_EXECUTOR = (() => {
     p.start = async function (...args) {
       this.executorStarting = true;
       try {
+        if (this.executorPromise) { try { await this.executorPromise; } catch (_) {} }
         if (isServer(this)) {
           await request({ operation: 'release', ...metadata(this) });
           this.doc = { ...this.doc }; delete this.doc.executor;
@@ -132,12 +181,16 @@ var HUB_EXECUTOR = (() => {
     p.executorPatched = true;
     const original = p._hostRefresh, originalCommand = p.command, originalCards = p.createFromCards;
     p.createFromCards = async function (code, setup) {
-      const token = this.storage.getItem('icebreak.bluff.host.' + String(code).trim().toUpperCase());
-      if (token) {
-        const raw = (await this._request('/rooms/bluffking-' + String(code).trim().toUpperCase() + '/players/' + token)).data;
-        if (raw?.executor?.v === 1) await request({ operation: 'release', capsule: raw.executor.capsule, token });
-      }
-      this.executorTicket = null; return originalCards.call(this, code, setup);
+      this.executorStarting = true;
+      try {
+        if (this.executorPromise) { try { await this.executorPromise; } catch (_) {} }
+        const token = this.storage.getItem('icebreak.bluff.host.' + String(code).trim().toUpperCase());
+        if (token) {
+          const raw = (await this._request('/rooms/bluffking-' + String(code).trim().toUpperCase() + '/players/' + token)).data;
+          if (raw?.executor?.v === 1) await request({ operation: 'release', capsule: raw.executor.capsule, token });
+        }
+        this.executorTicket = null; return await originalCards.call(this, code, setup);
+      } finally { this.executorStarting = false; }
     };
     p._hostRefresh = async function () {
       const raw = (await this._request(this._roomPath('players/' + this.hostToken))).data;
@@ -150,13 +203,8 @@ var HUB_EXECUTOR = (() => {
       this.executorTicket = null;
       const view = await original.call(this);
       const state = typeof raw?.data === 'string' ? JSON.parse(raw.data) : raw;
-      if (state?.transport?.cardRoster?.length && !this.executorRegistering && await ready()) {
-        this.executorRegistering = true;
-        try {
-          const registered = await request({ operation: 'register', game: 'bluffking', code: this.code, controlToken: this.hostToken,
-            seats: state.transport.cardRoster.map((s, i) => ({ playerNum: i + 1, token: s.token })) });
-          this.executorTicket = { capsule: registered.capsule, token: this.hostToken };
-        } catch (_) {} finally { this.executorRegistering = false; }
+      if (state?.transport?.cardRoster?.length && !this.executorStarting && !this.executorRegistering && await ready()) {
+        try { await ensureBluff(this); } catch (_) {}
       }
       return view;
     };
@@ -200,6 +248,6 @@ var HUB_EXECUTOR = (() => {
     window.addEventListener('online', () => { lastPulse = 0; backgroundPulse(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPulse = 0; backgroundPulse(); } });
   }
-  return { request, ready, registerWolf, observe, pulse, recover, isIndependent, install };
+  return { request, ready, ensureHost, ensureBluff, registerWolf, observe, pulse, recover, isIndependent, install };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = HUB_EXECUTOR;

@@ -111,10 +111,10 @@ test('CAS conflicts retry simultaneous starts without starting a second turn or 
 
 test('authenticated seat context defeats mailbox actor and direct-command actor spoofing', async () => {
   const f = fixture(); await f.register();
-  f.mailbox(2, 'stop', { actor: 0, now: 99999999, sharedControls: true }); await f.pulse(2);
+  f.mailbox(2, 'tick', { actor: 0, now: 99999999, sharedControls: true }); await f.pulse(2);
   assert.equal(f.state().phase, 'ready'); assert.equal(f.card(2).cut.reply.error, 'not_available');
   const capsule = f.card(2).hubExecutor.capsule;
-  await f.service.execute({ capsule, token: f.seats[1].token, command: { id: 'direct-spoof', type: 'settings', actor: 0, sessionId: f.state().sessionId, turnId: f.state().turnId } });
+  await f.service.execute({ capsule, token: f.seats[1].token, command: { id: 'direct-spoof', type: 'tick', actor: 0, sessionId: f.state().sessionId, turnId: f.state().turnId } });
   assert.equal(f.state().phase, 'ready'); assert.equal(f.card(2).cut.reply.error, 'not_available');
   await assert.rejects(f.service.execute({ capsule, token: 'f'.repeat(32) }), e => e.code === 'wrong_player');
 });
@@ -286,4 +286,21 @@ test('party executors reject inherited tickets on another game or a newer sessio
       assert.deepEqual(f.card(1), newer);
     }
   }
+});
+
+
+test('Open Mic card-only end and restart keep the sealed room and reject queued old-turn scoring', async () => {
+  const f=fixture('openmic'); await f.register();
+  f.mailbox(2,'success'); await f.pulse(2);
+  assert.equal(f.state().teamScore,2); const oldTurn=f.state().turnId;
+  const capsule=f.card(2).hubExecutor.capsule;
+  f.mailbox(3,'stop'); await f.pulse(3);
+  assert.equal(f.card(1).openmic.phase,'stopped'); assert.equal(f.state().teamScore,2);
+  f.mailbox(2,'restart'); await f.pulse(2);
+  assert.equal(f.card(3).openmic.phase,'challenge'); assert.equal(f.state().teamScore,0);
+  assert.equal(f.card(3).hubExecutor.capsule,capsule);
+  f.mailbox(3,'success',{turnId:oldTurn}); await f.pulse(3);
+  assert.equal(f.state().teamScore,0); assert.equal(f.card(3).openmic.reply.error,'stale_turn');
+  const wire=JSON.stringify(f.card(2)); assert.doesNotMatch(wire,new RegExp(f.controlToken));
+  assert.doesNotMatch(wire,new RegExp(f.seats[2].token));
 });

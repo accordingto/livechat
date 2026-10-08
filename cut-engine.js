@@ -217,7 +217,7 @@ var CUT_ENGINE = (() => {
     const rng = random.create(input.seed);
     let error = '';
     const sharedManager = state.sharedControls === true && isActive(state, actor) &&
-      ['begin', 'next', 'endTopic', 'pause', 'resume', 'exclude'].includes(input.type);
+      ['begin', 'next', 'endTopic', 'pause', 'resume', 'exclude', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(input.type);
     const selfReturn = state.sharedControls === true && input.type === 'exclude' &&
       Number(input.playerNum) === actor && input.active === true;
     if (!host && !sharedManager && !selfReturn && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
@@ -311,6 +311,19 @@ var CUT_ENGINE = (() => {
         else if (active(state).length < config.minPlayers) error = 'not_enough_players';
         else resume(state, now, rng);
         break;
+      case 'restart':
+        if (state.sharedControls !== true) error = 'not_available';
+        else if (active(state).length < config.minPlayers) error = 'not_enough_players';
+        else {
+          // Keep the sealed room session and dedup ledger, but advance its fence.
+          // Old timers and competing pre-restart commands cannot affect the new game.
+          const restarted = create({ id: state.sessionId, roster: state.roster,
+            speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds,
+            customMaxSeconds: state.customMaxSeconds, now, seed: input.seed });
+          Object.assign(state, restarted, { turnId: current.turnId + 1,
+            seen: state.seen, replies: state.replies });
+        }
+        break;
       case 'stop':
         if (state.phase === 'stopped') error = 'not_available';
         else {
@@ -321,10 +334,13 @@ var CUT_ENGINE = (() => {
         break;
       case 'exclude': {
         const player = state.roster.find(candidate => candidate.playerNum === Number(input.playerNum));
-        if (!player || typeof input.active !== 'boolean' || state.phase === 'stopped') { error = 'invalid_player'; break; }
+        if (!player || typeof input.active !== 'boolean' || (state.phase === 'stopped' && state.sharedControls !== true)) { error = 'invalid_player'; break; }
         if (player.active === input.active) break;
         player.active = input.active;
-        if (active(state).length < config.minPlayers) {
+        if (state.phase === 'stopped') {
+          // Returning seats can prepare a restart without starting a stopped game.
+          state.turnId++; state.lastChangeAt = now;
+        } else if (active(state).length < config.minPlayers) {
           pause(state, now, 'not_enough_players');
           if (!isActive(state, state.pause?.speaker)) state.pause.refreshSpeaker = true;
         } else if (state.phase === 'paused') {

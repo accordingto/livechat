@@ -173,3 +173,41 @@ test('host can refresh the explanation in an existing topic without changing the
   const old = act(s, 'explain', 0, {text:'Old description',sessionId:'older-topic'});
   assert.equal(old, s);
 });
+
+
+test('shared players can confirm a fresh topic with settings while legacy and stale requests cannot', () => {
+  const options = { topic: { ...topic, question: 'What would make a quiet street fun?', controlToken: 'never-project-this', followUps: ['Why?'] },
+    mode: 'write', seconds: 30, showStarters: false, gameMode: 'crazy', crazySeconds: 60, confirm: true };
+  let legacy = act(create(), 'newTopic', 2, options);
+  assert.equal(legacy.sessionId, 'topic-one'); assert.equal(legacy.replies[2].error, 'not_available');
+  let s = { ...act(create(), 'start'), sharedControls: true };
+  s = act(s, 'ask', E.order(s)[0]); const oldSession = s.sessionId, oldTurn = s.turnId;
+  const pending = act(s, 'newTopic', 2, { ...options, confirm: false });
+  assert.equal(pending.sessionId, oldSession); assert.equal(pending.questions.length, 1); assert.equal(pending.replies[2].error, 'confirmation_required');
+  const stale = act(s, 'newTopic', 2, { ...options, turnId: oldTurn - 1 });
+  assert.equal(stale.sessionId, oldSession); assert.equal(stale.replies[2].error, 'stale_turn');
+  s = act(s, 'newTopic', 2, options);
+  assert.notEqual(s.sessionId, oldSession); assert.equal(s.sharedControls, true); assert.equal(s.phase, 'thinking');
+  assert.equal(s.mode, 'write'); assert.equal(s.seconds, 30); assert.equal(s.gameMode, 'crazy'); assert.equal(s.crazy.intervalSeconds, 60);
+  assert.deepEqual(s.questions, []); assert.deepEqual(s.notes, {}); assert.equal(s.showStarters, false);
+  assert.equal(s.deadline - (2000 + serial), 30000);
+  assert.equal(s.topic.controlToken, undefined); assert.deepEqual(s.roster.map(p => p.playerNum), [1, 2, 3, 4]);
+  const saved = JSON.stringify(s);
+  assert.equal(E.apply(s, { id: 'old-turn', type: 'end', actor: 2, sessionId: oldSession, turnId: oldTurn }), s);
+  assert.equal(JSON.stringify(E.apply(s, { id: s.replies[2].id, type: 'newTopic', actor: 2, sessionId: s.sessionId, turnId: s.turnId, ...options })), saved);
+  assert.equal(E.view(s, 2, 0).talk.actions.newTopic, true); assert.equal(E.view(s, 0, 0).talk.hostControls, false);
+  assert.doesNotMatch(JSON.stringify(E.view(s, 2, 0)), /never-project-this|controlToken|nextAt|recent/);
+});
+
+test('new topics reject malformed text and settings without clearing the existing conversation', () => {
+  const base = { ...create(), sharedControls: true };
+  const options = { topic, mode: 'think', seconds: 45, gameMode: 'normal', crazySeconds: 120, showStarters: true, confirm: true };
+  for (const extra of [{ seconds: 14 }, { seconds: 121 }, { seconds: 30.5 }, { mode: 'other' }, { crazySeconds: 90 }, { showStarters: 'true' },
+    { topic: { ...topic, question: '' } }, { topic: { ...topic, title: 'x'.repeat(81) } }, { topic: { ...topic, followUps: Array(9).fill('Why?') } }]) {
+    const s = act(base, 'newTopic', 1, { ...options, ...extra });
+    assert.equal(s.sessionId, base.sessionId); assert.equal(s.deadline, base.deadline); assert.deepEqual(s.topic, base.topic);
+    assert.ok(['invalid_topic', 'invalid_settings'].includes(s.replies[1].error));
+  }
+  const thinking = act(base, 'newTopic', 1, options);
+  assert.notEqual(thinking.sessionId, base.sessionId); assert.equal(thinking.phase, 'thinking');
+});
