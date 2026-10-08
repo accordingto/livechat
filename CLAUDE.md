@@ -9,7 +9,8 @@ New categories are selectable in host and shared player settings; changing
 category applies to the next topic. cut.html has a collapsed bottom library
 with category and question/starter search. Browse never mutates game state.
 All CUT imports and launcher assets use cut-9. This content/engine update needs
-both independent runtime deployment and frontend publication. See cut-mode.md.
+both independent runtime deployment and frontend publication. Full regression
+1185/1185 passed after integrating the latest homepage manager access. See cut-mode.md.
 
 ## Homepage manager access restored — 2026-10-09
 
