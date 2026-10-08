@@ -394,6 +394,12 @@ Verification in this update:
   clipped recent titles. Phone Story-to-hand gap is 8px (12px on larger layouts).
 - **Full text-fit fixtures:** all 114 Story titles and all 51 Ending sentences
   fit without clipped text at 320px and 375px widths.
+- **Published runtime:** commit `a7b8c27` pushed to the existing main branch;
+  GitHub's Vercel status reports successful deployment. Read-only production
+  comparison passes **358/358** assets. The same five viewport/full-game checks
+  and all165 text-fit fixtures pass on the actual HTTPS site, still demo-only.
+  Production 375px/1280px screenshots were inspected. Physical phones, different
+  browser engines and real-device multiplayer were not retested in this update.
 - This uses a fresh headless Chrome profile and the explicitly labelled demo,
   with Firebase room traffic blocked. It is not physical-device or live-room
   synchronization proof. Browser UI helper was unavailable this turn, so the
