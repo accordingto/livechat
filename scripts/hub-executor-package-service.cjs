@@ -34,7 +34,10 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
   }
   dependency(path.join(gameRoot, 'api/hub-executor.js'));
   const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'vercel.json'), 'utf8'));
-  config.functions ||= {}; config.functions['api/hub-executor.js'] = { maxDuration: 60 };
+  config.functions ||= {};
+  // RTDB is in asia-southeast1: avoid a US-to-Singapore round trip for every
+  // guarded read/write. Preserve the unrelated search function configuration.
+  config.functions['api/hub-executor.js'] = { ...config.functions['api/hub-executor.js'], maxDuration: 60, regions: ['sin1'] };
   config.routes = [
     { src: '^/api/hub-executor/?$', dest: '/api/hub-executor.js' },
     ...config.routes.filter(route => route.src !== "^/api/hub-executor/?$")

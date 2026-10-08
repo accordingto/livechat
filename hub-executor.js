@@ -113,8 +113,8 @@ var HUB_EXECUTOR = (() => {
       if (raw?.executor?.v === 1) {
         const verified = client.executorTicket?.capsule === raw.executor.capsule && client.executorTicket.token === client.hostToken &&
           client.lastView?.room === client.code && client.lastView.sharedControls === true && client.lastView.self?.isHost === true;
-        // Native reconnect already executed and validated this same epoch.
-        // Reuse its returned view instead of repeating a full publication.
+        // Native reconnect already validated this same published epoch.
+        // Reuse its public view instead of repeating a full publication.
         const current = verified ? null : await request({ operation: 'execute', capsule: raw.executor.capsule, token: client.hostToken });
         result = { capsule: raw.executor.capsule, game: 'bluffking', sessionId: raw.executor.sessionId,
           ...(current?.payload ? { payload: current.payload } : {}) };
@@ -253,12 +253,16 @@ var HUB_EXECUTOR = (() => {
       const raw = (await this._request(this._roomPath('players/' + this.hostToken))).data;
       if (raw?.executor?.v === 1) {
         this.executorTicket = { capsule: raw.executor.capsule, token: this.hostToken };
+        // Opening/observing an already published table only needs its verified
+        // public snapshot. Commands and player pulses remain service-owned.
+        const snapshot = typeof this._readHostSnapshot === 'function' ? await this._readHostSnapshot(raw) : null;
+        if (snapshot) return this._emit(snapshot);
         const result = await request({ operation: 'execute', ...this.executorTicket });
         const view = result.payload?.viewJson ? JSON.parse(result.payload.viewJson) : result.payload?.view;
         return view ? this._emit(view) : this.lastView;
       }
       this.executorTicket = null;
-      const view = await original.call(this);
+      const view = await original.call(this, raw);
       const state = typeof raw?.data === 'string' ? JSON.parse(raw.data) : raw;
       if (state?.transport?.cardRoster?.length && !this.executorStarting && !this.executorDeferred && !this.executorRegistering && await ready()) {
         try { await ensureBluff(this); } catch (_) {}

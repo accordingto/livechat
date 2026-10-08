@@ -68,7 +68,8 @@ test('a slow service registration cannot be interleaved by a deferred host polli
  assert.equal(legacyPolls.length,0,'deferred import must not leave a legacy polling writer scheduled');
  const registered=f.db.get(f.canonical);assert.equal(registered.executor.v,1);
  assert.equal(f.state().rooms[f.code].round.id,before.rooms[f.code].round.id);
- assert.deepEqual(f.state().identities,before.identities);
+ for(const [id,history] of Object.entries(before.identities))for(const field of ['known','seen'])for(const [key,value] of Object.entries(history[field]||{}))assert.deepEqual(f.state().identities[id][field][key],value,'existing exposure history is retained');
+ assert.ok(Object.values(f.state().identities).some(history=>Object.keys(history.known||{}).length),'registration persists the newly delivered truthful answer');
  for(const seat of f.sessions){const node=f.db.get('rooms/bluffking-'+f.code+'/players/'+seat.credential.token);assert.equal(node.hubExecutor.capsule,registered.executor.capsule);
   await f.service.execute({capsule:node.hubExecutor.capsule,token:seat.credential.token});}
  f.manager.executorDeferred=false;f.manager._schedule();assert.equal([...f.timers.values()].filter(timer=>timer.ms===1500).length,1,'normal polling resumes only after service publication');
@@ -81,7 +82,7 @@ test('a matching-source reopen repairs a partial poisoned registration while pre
  const registration=f.context.HUB_EXECUTOR.ensureBluff(f.manager);registration.catch(()=>{});await gate.entered;
  // Force the historical writer explicitly. The first test ensures current
  // scheduling cannot cause this; this test repairs users already affected.
- await f.manager.refresh();gate.resume();
+ f.manager.executorDeferred=false;try{await f.manager.refresh();}finally{f.manager.executorDeferred=true;f.manager._schedule();}gate.resume();
  await assert.rejects(registration,{code:'game_switched'});
  const poisoned=f.db.get(f.canonical);assert.equal(poisoned.executor.v,1);
  const staleCard=f.db.get('rooms/bluffking-'+f.code+'/players/'+f.sessions[0].credential.token);
@@ -94,7 +95,7 @@ test('a matching-source reopen repairs a partial poisoned registration while pre
  const repaired=f.db.get(f.canonical),after=f.state();
  assert.notEqual(repaired.executor.capsule,poisoned.executor.capsule,'the obsolete partial epoch is replaced');
  assert.equal(after.rooms[f.code].phase,'prepare');assert.equal(after.rooms[f.code].round.id,before.rooms[f.code].round.id);
- assert.deepEqual(after.rooms[f.code].scores,before.rooms[f.code].scores);assert.deepEqual(after.identities,before.identities);
+ assert.deepEqual(after.rooms[f.code].scores,before.rooms[f.code].scores);assert.deepEqual(after.identities,JSON.parse(poisoned.data).identities,'repair retains all exposures including the forced historical writer');
  assert.ok(f.calls.some(call=>call.operation==='release'&&call.capsule===poisoned.executor.capsule));
  for(let i=0;i<f.sessions.length;i++){const seat=f.sessions[i],node=f.db.get('rooms/bluffking-'+f.code+'/players/'+seat.credential.token);
   assert.deepEqual(f.db.get('rooms/'+f.code+'/players/'+f.setup.tokens[i]).bluff,copy(seat.credential),'existing original-card credentials survive repair');
@@ -104,7 +105,7 @@ test('a matching-source reopen repairs a partial poisoned registration while pre
 test('partial-epoch repair rechecks every original binding and leaves a newer game untouched',async t=>{
  const f=await fixture(t),gate=f.pauseRegistration();
  const registration=f.context.HUB_EXECUTOR.ensureBluff(f.manager);registration.catch(()=>{});await gate.entered;
- await f.manager.refresh();gate.resume();await assert.rejects(registration,{code:'game_switched'});
+ f.manager.executorDeferred=false;try{await f.manager.refresh();}finally{f.manager.executorDeferred=true;f.manager._schedule();}gate.resume();await assert.rejects(registration,{code:'game_switched'});
  const poisoned=f.db.get(f.canonical),releasedBefore=f.calls.filter(call=>call.operation==='release').length;
  const sourcePath='rooms/'+f.code+'/players/'+f.setup.tokens[0];
  const newer={game:'dixit',playerNum:1,name:'Amy',dixit:{sessionId:'newer-dixit-table'}};let replaced=false;

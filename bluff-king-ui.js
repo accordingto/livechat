@@ -168,7 +168,11 @@
   async function send(action,payload={},snapshot){if(busy||!client)return;busy=true;paint();try{if(action==='restart'&&hubMode){checkHubSetup();hubOpening=true;paint();await deferHub();}await client.command({room:code,action,commandId:crypto.randomUUID().replace(/-/g,''),expectedVersion:snapshot?.version??view?.version,roundId:snapshot?.roundId??view?.round?.id,...payload});if(action==='restart'&&hubMode){await captureHubSources();await client.createFromCards(code,setup,{replaceActive:true});await connectLegacy();resumeHub();hubOpening=false;const next=stagedView||client.lastView;stagedView=null;if(next)update(next);}$('bk-error').hidden=true;errorText='';}catch(e){showError(e);if(action==='restart'&&hubMode){client.close();view=null;stagedView=null;hubOpening=true;}else await client.refresh().catch(()=>{});}finally{busy=false;lastSignature='';paint();}}
   function confirm(action,target,title,text,extra={}){confirmAction={action,target,extra,version:view.version,roundId:view.round?.id};$('bk-confirm-title').textContent=title;$('bk-confirm-text').textContent=text;$('bk-confirm').showModal();}
   async function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.append(s);});}
-  async function ensureHost(){if(!window.BLUFF_ENGINE)await loadScript('bluff-king-engine.js?v=executor-1');if(!window.BLUFF_QUESTIONS)await loadScript('bluff-king-topics.js?v=1');}
+  async function ensureHost(){await Promise.all([
+    !window.BLUFF_ENGINE&&loadScript('bluff-king-engine.js?v=executor-1'),
+    !window.BLUFF_QUESTIONS&&loadScript('bluff-king-topics.js?v=1'),
+    !window.BLUFF_SYNC&&loadScript('bluff-king-sync.js?v=host-snapshot-3')
+  ]);}
   async function open(){if(busy)return;rememberedName=$('bk-name')?.value.trim()||'';const participate=$('bk-participate')?.checked!==false;if(!rememberedName){$('bk-name')?.focus();return;}busy=true;paint();try{await ensureHost();await client.create(code,{name:rememberedName,participate});opened=true;if(typeof ROOM!=='undefined'&&ROOM.enabled&&ROOM.code===code){ROOM.publish(i=>({game:'bluffking',bluff:{version:1,room:code},name:ROOM.name(i)}));}await client.refresh();}catch(e){showError(e);}finally{busy=false;paint();}}
   async function join(participate){if(busy)return;rememberedName=$('bk-name')?.value.trim()||'';if(!rememberedName){$('bk-name')?.focus();return;}busy=true;paint();try{await client.join(code,{name:rememberedName,participate});opened=true;await client.refresh();$('bk-error').hidden=true;}catch(e){showError(e);}finally{busy=false;paint();}}
   function canChoose(action){const r=view?.round;return !busy&&card&&view?.self?.isFormal&&view.self.playerId===r?.thinkerId&&view.phase==='discussion'&&(action==='challenge'?!r.challengeId:action==='identify'&&r.allCovered);}
@@ -198,7 +202,7 @@
         }
       }
       if(!code)throw {message:t('room_not_found')};
-      await loadScript('bluff-king-sync.js?v=host-publication-2');
+      if(!window.BLUFF_SYNC)await loadScript('bluff-king-sync.js?v=host-snapshot-3');
       if(window.HUB_EXECUTOR)HUB_EXECUTOR.install();
       client=new BLUFF_SYNC.Client({databaseURL:FIREBASE_CONFIG.databaseURL,storage:localStorage,hostPresentation:!card,onView:update,onStatus:status});
       if(hubMode){

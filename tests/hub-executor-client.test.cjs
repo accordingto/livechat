@@ -417,3 +417,22 @@ test('Bluff completed registration emits its returned public host projection wit
   assert.deepEqual(structuredClone(client.lastView), view); assert.equal(client.executorTicket.capsule, 'registered-epoch');
   assert.equal(f.post().length, 1); assert.equal(f.post()[0].body.operation, 'register');
 });
+
+
+test('verified public Bluff snapshots open and poll without executing a full service publication, while commands still use the service',async()=>{
+ const f=sandbox(),Client=bluff(f),client=new Client({executor:{v:1,capsule:'published-epoch'}});
+ const view={room:'ROOM',version:18,sharedControls:true,self:{isHost:true},privateCard:null};let reads=0;
+ client._readHostSnapshot=async()=>{reads++;return structuredClone(view);};
+ assert.deepEqual(structuredClone(await client.refresh()),view);await client.refresh();
+ assert.equal(reads,2);assert.equal(f.post().length,0);assert.equal(client.executorTicket.capsule,'published-epoch');
+ await client.command({action:'start',commandId:'snapshot-service-command'});
+ assert.equal(f.post().length,1);assert.equal(f.post()[0].body.operation,'execute');assert.equal(f.post()[0].body.command.commandId,'snapshot-service-command');
+});
+
+test('incomplete Bluff snapshot publication falls back to guarded service repair and moved cards never display a snapshot',async()=>{
+ const f=sandbox(),Client=bluff(f),client=new Client({executor:{v:1,capsule:'incomplete-epoch'}});
+ client._readHostSnapshot=async()=>null;
+ await client.refresh();assert.equal(f.post().length,1,'incomplete private epoch must still finish guarded publication');
+ client._readHostSnapshot=async()=>{throw Object.assign(new Error('game changed'),{code:'game_switched'});};
+ await assert.rejects(client.refresh(),{code:'game_switched'});assert.equal(f.post().length,1);
+});

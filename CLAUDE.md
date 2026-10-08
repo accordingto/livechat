@@ -1,3 +1,27 @@
+## CURRENT: Bluff fast host opening — 2026-10-09
+
+Bluff was slower than the other game managers because opening/polling waited for
+full guarded service execution, private publications and histories. A fresh
+455faa1 synthetic baseline measured first opening 7.7s, reconnect 4.8s and host
+poll 3.8s; its Firebase canonical read alone took about 58ms. Host display now
+reads the sealed canonical plus every exact original/formal private seat in one
+parallel wave, verifies the same published epoch/bindings, and projects only a
+cloned public view. No private role, source credential or history write is
+emitted. Same-epoch private phase/revision lag is allowed; missing, legacy or
+wrong-epoch projections still fall back to guarded service repair. Changed
+original cards still fail game_switched. Commands and all player pulses remain
+owned by the independent service; closing the manager is supported.
+Deferred initial import seeds only absent formal private nodes with per-node
+ETag CAS. Existing cards/mailboxes and global histories are untouched; final
+registration merges histories and publishes every complete seat. Ordinary legacy
+standalone refresh behavior remains unchanged. Engine/topics/sync preload in
+parallel. Bluff uses helper v8, UI v12 and sync host-snapshot-3.
+Package only api/hub-executor.js in sin1 beside the existing Singapore RTDB,
+retaining unrelated service functions, settings and the stable Production secret.
+Preserve the latest Talk timed mission release when deploying the whole runtime.
+Both independent service deployment and frontend publication are required.
+Full regression after integrating the latest Talk release: 1297/1297 passed.
+
 ## CURRENT: Bluff host synchronization timeout — 2026-10-09
 
 The repaired live room already had matching service projections/sharedControls,

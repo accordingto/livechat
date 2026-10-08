@@ -47,10 +47,18 @@ still belong to this table. This keeps its active round, roles, scores and perso
 knowledge history. A valid existing epoch reconnects normally; a newer game's
 original cards are not overwritten during this repair.
 
-A completed registration returns its public host view, and reconnect uses one
-verified service synchronization rather than repeating full publications.
-Independent original cards are checked in parallel, including fresh checks on
-write conflicts. The browser waits for the service's supported execution window.
+A completed registration returns its public host view. Reopening and observing
+an already published table reads the canonical state and verifies every exact
+original/private seat binding in parallel, then displays a cloned public view
+without running a full service synchronization or saving knowledge history.
+Private roles remain hidden. A private projection may briefly lag a same-epoch
+action; an absent, legacy or wrong-epoch card still triggers guarded service
+repair. Every actual command and each player pulse continues through the service.
+Deferred opening seeds only missing formal private cards with conditional writes,
+preserving existing mailboxes and history until complete registration. The Hub
+function runs beside the Singapore database to reduce guarded read/write latency.
+Independent original cards are checked afresh on write conflicts. The browser
+waits for the service's supported execution window when a command needs it.
 An interrupted Hub connection shows Retry connection and retains the same roster.
 
 ## The conversation

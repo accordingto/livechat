@@ -40,6 +40,51 @@
         return this.refresh().catch(e => { this.onStatus({ state: 'disconnected', error: safeError(e) }); }).finally(() => this._schedule());
       }, 1500);
     }
+    async _readHostSnapshot(raw) {
+      if (!this.hostPresentation || !this.isHost || !this.hostToken || !root.BLUFF_ENGINE || !root.BLUFF_QUESTIONS) return null;
+      const executor = raw?.executor;
+      if (raw?.owner !== 'server' || executor?.v !== 1 || executor.game !== 'bluffking' || typeof executor.capsule !== 'string' || !executor.capsule || !/^[\w-]{1,24000}$/.test(executor.capsule) || typeof executor.epoch !== 'string' || !executor.epoch || typeof executor.sessionId !== 'string' || !executor.sessionId || !Number.isFinite(executor.createdAt) || executor.createdAt <= 0) return null;
+      let state;
+      try { state = decodeState(structuredClone(raw)); } catch (_) { return null; }
+      const room = state?.rooms?.[this.code], transport = state?.transport, roster = transport?.cardRoster;
+      if (!room || !Array.isArray(room.members) || !Array.isArray(room.roster) || room.hostIdentityId !== this.identity.id || transport?.executorSessionId !== executor.sessionId || room.sharedControls !== true || !Array.isArray(roster) || roster.length < 3 || roster.length > 9) return null;
+      const privateTokens = new Set(), originalTokens = new Set();
+      const members = [];
+      for (const entry of roster) {
+        if (!/^[A-Za-z0-9_-]{12,128}$/.test(entry.originalToken || '') || !/^[a-f0-9]{64}$/.test(entry.token || '') || !/^[a-f0-9]{40}$/.test(entry.identityId || '') || !/^[a-f0-9]{64}$/.test(entry.historyToken || '') || privateTokens.has(entry.token) || originalTokens.has(entry.originalToken)) return null;
+        const binding = transport.members?.[entry.identityId], member = room.members?.find(player => player.identityId === entry.identityId);
+        if (!member || binding?.token !== entry.token || binding.historyToken !== entry.historyToken) return null;
+        privateTokens.add(entry.token); originalTokens.add(entry.originalToken); members.push(member);
+      }
+      // Initial readiness verifies the existing epoch in one parallel read wave.
+      // A committed same-epoch action may be newer than the private projections;
+      // their phase/revision may lag while the service publishes that action.
+      const cards = await Promise.all(roster.map(async entry => {
+        const [source, projection] = await Promise.all([
+          this._request('/rooms/' + this.code + '/players/' + entry.originalToken),
+          this._request(this._roomPath('players/' + entry.token))
+        ]);
+        return { source: source.data, projection: projection.data };
+      }));
+      let ready = true;
+      for (let i = 0; i < roster.length; i++) {
+        const entry = roster[i], source = cards[i].source, binding = source?.bluff;
+        if (source?.game !== 'bluffking' || binding?.version !== 2 || binding.room !== this.code || binding.token !== entry.token || binding.identityId !== entry.identityId || binding.historyToken !== entry.historyToken) {
+          const error = new Error('The original player cards have moved to another game.'); error.code = 'game_switched'; throw error;
+        }
+        const node = cards[i].projection, ticket = node?.hubExecutor, seat = node?.sessionBinding;
+        let privateView; try { privateView = decodeView(node); } catch (_) {}
+        if (ticket?.v !== 1 || ticket.game !== 'bluffking' || ticket.capsule !== executor.capsule || ticket.sessionId !== executor.sessionId || seat?.room !== this.code || seat.identityId !== entry.identityId || seat.historyToken !== entry.historyToken || privateView?.sharedControls !== true || privateView.room !== this.code || privateView.self?.playerId !== members[i].id) ready = false;
+      }
+      if (!ready) return null;
+      // projectView records exposure even for public views. Its clone stays
+      // local: viewing the manager never writes history or private projections.
+      const now = Date.now(), view = root.BLUFF_ENGINE.projectView(state, room.hostIdentityId, this.code, root.BLUFF_QUESTIONS, { private: false, now });
+      const onlinePlayers = new Set(roster.filter((_, i) => now - (executor.presence?.[i + 1] || executor.createdAt) < 60000).map(entry => room.members.find(player => player.identityId === entry.identityId).id));
+      for (const player of view.players) if (room.roster.includes(player.id) || player.seated) player.connected = onlinePlayers.has(player.id);
+      view.recovery.available = ['topic_check', 'prepare', 'discussion'].includes(room.phase) && room.roster.some(id => !onlinePlayers.has(id));
+      return view;
+    }
     async connect(code) {
       this.code = cleanCode(code); this.closed = false; const savedHost = this.storage.getItem('icebreak.bluff.host.' + this.code); this.isHost = this.hostPresentation && !!savedHost; this.hostToken = this.isHost ? savedHost : null; this.roomToken = this.identity.rooms[this.code]?.token;
       if (this.isHost) { let meta, profile; try { meta = JSON.parse(this.storage.getItem('icebreak.bluff.host-identity.' + this.code)); profile = meta?.identityStorageKey && JSON.parse(this.storage.getItem(meta.identityStorageKey)); } catch {} if (profile?.id === meta?.identityId && profile.rooms?.[this.code]?.token) { this.identityStorageKey = meta.identityStorageKey; this.identity = profile; this.roomToken = profile.rooms[this.code].token; } }
@@ -136,7 +181,32 @@
       await this.refresh(); this._schedule(); return this.lastView;
     }
     async _decode(packet) { if (!packet || JSON.stringify(packet).length > 160000) throw new Error('Invalid join packet.'); const raw = await root.crypto.subtle.decrypt({ name: 'RSA-OAEP' }, this.privateKey, unbase64(packet.key)); const key = await root.crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']); return JSON.parse(dec.decode(await root.crypto.subtle.decrypt({ name: 'AES-GCM', iv: unbase64(packet.iv) }, key, unbase64(packet.cipher)))); }
-    async _hostRefresh() {
+    async _hostRefresh(rawSnapshot) {
+      if (this.executorDeferred) {
+        const raw = rawSnapshot ?? (await this._request(this._roomPath('players/' + this.hostToken))).data;
+        if (raw?.executor?.v !== 1) {
+          const state = decodeState(raw), room = state?.rooms?.[this.code];
+          if (!state?.transport || !room) throw new Error('The host room could not be restored.');
+          if (room.hostIdentityId !== this.identity.id) { const error = new Error('The host has changed.'); error.code = 'host_only'; throw error; }
+          const roster = state.transport.cardRoster || [];
+          await Promise.all(roster.map(async entry => {
+            const binding = state.transport.members?.[entry.identityId];
+            if (!/^[a-f0-9]{64}$/.test(entry.token || '') || entry.token === this.hostToken || !/^[a-f0-9]{40}$/.test(entry.identityId || '') || !/^[a-f0-9]{64}$/.test(entry.historyToken || '') || binding?.token !== entry.token || binding.historyToken !== entry.historyToken || !room.members.some(member => member.identityId === entry.identityId)) { const error = new Error('An original card is not bound to this game seat.'); error.code = 'invalid_card_session'; throw error; }
+            // Bootstrap only an absent seat so the original card can connect.
+            // Existing mailboxes, projections and global histories stay intact.
+            // Registration merges histories and publishes every complete seat.
+            const local = structuredClone(state);
+            const view = root.BLUFF_ENGINE.projectView(local, entry.identityId, this.code, root.BLUFF_QUESTIONS, { private: true, now: Date.now() });
+            await this._cas(this._roomPath('players/' + entry.token), current => current != null ? { state: current } : {
+              state: { view: null, viewJson: JSON.stringify(view), ack: state.transport.acknowledgements?.[entry.identityId] || null,
+                history: mergeHistory(local.identities[entry.identityId]), sessionBinding: { room: this.code, identityId: entry.identityId, historyToken: entry.historyToken },
+                hostGrant: null, publicationRevision: Number(state.transport.publicationRevision) || 0 }
+            });
+          }));
+          const view = root.BLUFF_ENGINE.projectView(structuredClone(state), this.identity.id, this.code, root.BLUFF_QUESTIONS, { private: false, now: Date.now() });
+          return this._emit(view);
+        }
+      }
       const joins = (await this._request(this._roomPath('roster/requests'))).data || {}; const decoded = [];
       for (const [requestId, packet] of Object.entries(joins).slice(0, 100)) { try { const p = await this._decode(packet); if (!/^[a-f0-9]{40}$/.test(p.identityId || '') || !/^[a-f0-9]{64}$/.test(p.token || '') || !/^[a-f0-9]{64}$/.test(p.historyToken || '')) throw new Error('Invalid join credentials.'); decoded.push({ requestId, p }); } catch { await this._request(this._roomPath('roster/requests/' + requestId), { method: 'DELETE' }); } }
       const snapshot = decodeState((await this._request(this._roomPath('players/' + this.hostToken))).data); if (!snapshot?.transport) throw new Error('The host room could not be restored.');
