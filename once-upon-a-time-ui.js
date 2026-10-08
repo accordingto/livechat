@@ -90,7 +90,7 @@
     const sizes=large?'300px':variant==='ending'?'(max-width: 1000px) 90px, 176px':variant==='history'?'(max-width: 760px) 128px, 144px':'144px';
     const responsive=card.thumbnailPath?' srcset="'+esc(card.thumbnailPath)+' 384w, '+esc(card.imagePath)+' 768w" sizes="'+sizes+'"':'';
     const imageAttrs=' src="'+esc(src)+'"'+responsive+' alt="" loading="'+(large?'eager':'lazy')+'" decoding="async"';
-    return '<'+tag+(opts.interactive?' type="button" data-once-card="'+esc(card.id)+'" aria-label="'+esc(card.title||card.text)+'" aria-pressed="'+!!opts.selected+'"':'')+' class="once-card once-card--'+variant+' once-cat-'+esc(cat)+(opts.selected?' is-selected':'')+'"><span class="once-card-category">'+(ending?'<span aria-hidden="true">✦</span>':icon(cat))+esc(label)+'</span><span class="once-card-art"><img class="once-card-art-fill"'+imageAttrs+' aria-hidden="true"><img'+imageAttrs+'></span><span class="once-card-title">'+esc(card.title||card.text)+'</span>'+(card.isInterrupt?'<span class="once-interrupt-mark">'+esc(t('interruptTag'))+'</span>':'')+'</'+tag+'>';
+    return '<'+tag+' data-once-render-key="card.'+esc(variant)+'.'+esc(card.id)+'"'+(opts.interactive?' type="button" data-once-card="'+esc(card.id)+'" aria-label="'+esc(card.title||card.text)+'" aria-pressed="'+!!opts.selected+'"':'')+' class="once-card once-card--'+variant+' once-cat-'+esc(cat)+(opts.selected?' is-selected':'')+'"><span class="once-card-category">'+(ending?'<span aria-hidden="true">✦</span>':icon(cat))+esc(label)+'</span><span class="once-card-art"><img class="once-card-art-fill"'+imageAttrs+' aria-hidden="true"><img'+imageAttrs+'></span><span class="once-card-title">'+esc(card.title||card.text)+'</span>'+(card.isInterrupt?'<span class="once-interrupt-mark">'+esc(t('interruptTag'))+'</span>':'')+'</'+tag+'>';
   }
   function button(type,label,extra='',secondary=false,disabled=false){return '<button type="button" class="once-button'+(secondary?' once-button--secondary':'')+'" data-once-action="'+esc(type)+'" '+extra+(disabled?' disabled':'')+'>'+esc(t(label))+'</button>';}
   const player=(s,num)=>list(s.roster).find(p=>p.playerNum===num||p.id===num);
@@ -120,12 +120,12 @@
     if(s.interrupt&&s.phase==='STORYTELLING')body+='<div class="once-notice once-interrupt-notice"><span>'+esc(t('tookOver',{name:name(s,s.interrupt.interrupter),title:s.interrupt.card?.title||deck().storyById?.[s.interrupt.cardId]?.title||s.interrupt.cardId}))+'</span>'+(a.dispute?button('dispute','dispute','',true):'')+'</div>';
     if(s.categoryOpportunity&&s.phase==='STORYTELLING')body+='<p class="once-muted once-opportunity">'+esc(t('matchOpen',{category:category(s.categoryOpportunity.category).label}))+'</p>';
     const history=list(s.history),offset=Math.max(0,history.length-4);
-    const historyItem=(event,i)=>'<div class="once-history-item'+(i===history.length-1?' is-current':'')+'"'+(i===history.length-1?' aria-current="step"':'')+'><span class="once-history-number">'+(i+1)+' · '+esc(name(s,event.playerNum??event.actor))+'</span>'+cardHTML(event.card||deck().storyById?.[event.cardId],'history')+(i===history.length-1?'<span class="once-current-label"><span aria-hidden="true">↑</span> '+esc(t('currentCard'))+'</span>':'')+(event.mode==='category'?'<small>'+esc(t('categoryInterrupt'))+'</small>':'')+'</div>';
+    const historyItem=(event,i)=>'<div data-once-render-key="history.'+i+'" class="once-history-item'+(i===history.length-1?' is-current':'')+'"'+(i===history.length-1?' aria-current="step"':'')+'><span class="once-history-number">'+(i+1)+' · '+esc(name(s,event.playerNum??event.actor))+'</span>'+cardHTML(event.card||deck().storyById?.[event.cardId],'history')+(i===history.length-1?'<span class="once-current-label"><span aria-hidden="true">↑</span> '+esc(t('currentCard'))+'</span>':'')+(event.mode==='category'?'<small>'+esc(t('categoryInterrupt'))+'</small>':'')+'</div>';
     const pile=offset?'<button type="button" class="once-history-pile" data-once-action="toggleHistory" aria-expanded="'+!!options.historyOpen+'"'+(options.historyOpen?' aria-controls="once-earlier-history"':'')+' aria-label="'+esc(t('earlier',{n:offset}))+'"><span class="once-pile-visual" aria-hidden="true"><img src="'+esc(deck().cardBacks?.story||'assets/once-upon-a-time/card-backs/story-back.svg')+'" alt=""><span class="once-pile-count">'+offset+'</span></span><span class="once-pile-label">'+esc(t('earlier',{n:offset}))+'</span></button>':'';
     const privateEnding=!host&&s.phase!=='LOBBY'&&s.ending;
     const selectedEnding=!!privateEnding&&s.ending.id===options.selectedId;
     // Single private Ending: after the hand in reading order, beside Story on desktop.
-    const endingOpen=options.endingOpen??(!hand.length||selectedEnding);
+    const endingOpen=options.endingOpen??true;
     const endingDock=privateEnding?'<details class="once-panel once-ending-dock" data-once-ending id="once-private-ending"'+(endingOpen?' open':'')+'><summary data-once-action="toggleEnding"><span>'+esc(t('ending'))+'</span><span class="once-ending-state">'+esc(t(hand.length?'locked':'readyEnd'))+'</span></summary><div class="once-ending-content">'+cardHTML(s.ending,'ending',{interactive:true,selected:selectedEnding})+'</div></details>':'';
     body+='<div class="once-table-grid'+(privateEnding?' has-ending':'')+'"><section class="once-panel once-history-panel"><div class="once-section-heading"><h2>'+esc(t('story'))+'</h2><span class="once-muted">'+esc(t('recent',{n:Math.min(4,history.length),total:history.length}))+'</span></div><div class="once-history-board'+(offset?' has-pile':'')+'">'+pile+'<div class="once-history once-history-latest" aria-label="'+esc(t('story'))+'">'+(history.length?history.slice(offset).map((event,i)=>historyItem(event,offset+i)).join(''):'<div class="once-empty once-story-opening"><svg viewBox="0 0 48 40" aria-hidden="true"><path d="M24 8C18 3 9 3 3 5v28c7-2 15-1 21 4m0-29c6-5 15-5 21-3v28c-7-2-15-1-21 4V8Z"/></svg><p class="once-opening-title">'+esc(t('storyOpening'))+'</p><p>'+esc(t('noStory'))+'</p></div>')+'</div></div>'+(offset&&options.historyOpen?'<div class="once-history-expanded" id="once-earlier-history"><div class="once-history once-history-older">'+history.slice(0,offset).map(historyItem).join('')+'</div></div>':'')+'<span class="once-deck-count once-muted">'+esc(t('deckCount',{n:s.deckCounts?.story??0,d:s.deckCounts?.storyDiscard??0}))+'</span></section>';
     if(!host&&s.phase!=='LOBBY'){
@@ -151,16 +151,61 @@
     if(/card|not_in_hand/.test(code))return t('invalidCard');
     return t('unavailable');
   }
+  // Reconcile within this private card only. Stable images stay mounted across
+  // selections and real table changes; keys never reuse another seat's private DOM.
+  function renderNodeKey(node){
+    if(node.nodeType!==1)return null;
+    const explicit=node.getAttribute('data-once-render-key');if(explicit)return explicit;
+    if(node.id)return 'id:'+node.id;
+    const detail=node.getAttribute('data-once-detail');if(detail)return 'detail:'+detail;
+    const action=node.getAttribute('data-once-action');
+    if(action)return 'action:'+action+':'+(node.getAttribute('data-choice')||'')+':'+(node.getAttribute('data-mode')||'');
+    const kind=Array.from(node.classList).find(c=>c.startsWith('once-')&&!['once-panel','once-muted','once-button'].includes(c));
+    return kind?'class:'+kind:null;
+  }
+  function patchChildren(parent,desired){
+    const old=Array.from(parent.childNodes),used=new Set();
+    const compatible=(a,b)=>a.nodeType===b.nodeType&&(a.nodeType!==1||a.tagName===b.tagName);
+    const pairs=Array.from(desired.childNodes).map(wanted=>{
+      const key=renderNodeKey(wanted);
+      const node=old.find(candidate=>!used.has(candidate)&&compatible(candidate,wanted)&&renderNodeKey(candidate)===key);
+      if(node)used.add(node);
+      return {node,wanted};
+    });
+    // Remove obsolete nodes before ordering survivors, so removing a played hand
+    // card does not needlessly move every image that follows it.
+    old.forEach(node=>{if(!used.has(node))node.remove();});
+    let cursor=parent.firstChild;
+    for(const pair of pairs){
+      let node=pair.node;
+      if(!node){node=pair.wanted.cloneNode(true);parent.insertBefore(node,cursor);}
+      else{
+        if(node!==cursor)parent.insertBefore(node,cursor);
+        if(node.nodeType===1){
+          for(const attr of Array.from(node.attributes))if(!pair.wanted.hasAttribute(attr.name))node.removeAttribute(attr.name);
+          for(const attr of Array.from(pair.wanted.attributes))if(node.getAttribute(attr.name)!==attr.value)node.setAttribute(attr.name,attr.value);
+          patchChildren(node,pair.wanted);
+        }else if(node.nodeValue!==pair.wanted.nodeValue)node.nodeValue=pair.wanted.nodeValue;
+      }
+      cursor=node.nextSibling;
+    }
+  }
+  function patchMarkup(el,html,reset,openDetails){
+    if(reset||!el.ownerDocument?.createElement){el.innerHTML=html;return;}
+    const template=el.ownerDocument.createElement('template');template.innerHTML=html;
+    template.content.querySelectorAll('[data-once-detail]').forEach(node=>{node.open=openDetails.includes(node.dataset.onceDetail);});
+    patchChildren(el,template.content);
+  }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.data=null;this.historyOpen=false;this.endingOpen=null;
+      this.el=el;this.options=options;this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.data=null;this.historyOpen=false;this.endingOpen=null;this.lastRenderKey=null;this.renderIdentity=null;
       this.clickHandler=e=>this.click(e);this.keyHandler=e=>{if(e.key==='Escape'&&(this.preview||this.confirm)){this.preview=null;this.confirm=null;this.render();}};
       el.addEventListener('click',this.clickHandler);el.addEventListener('keydown',this.keyHandler);
       this.timer=setInterval(()=>this.paint(),1000);
     }
     update(data){
       const old=this.data?.once,next=data.once;
-      if(old?.sessionId!==next.sessionId){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.historyOpen=false;this.endingOpen=null;}
+      if(old?.sessionId!==next.sessionId||old?.playerNum!==next.playerNum){this.selectedId=null;this.preview=null;this.confirm=null;this.pending=null;this.error='';this.historyOpen=false;this.endingOpen=null;}
       else if(list(old?.hand).length&&!list(next.hand).length)this.endingOpen=true;
       if(list(next.history).length<=4)this.historyOpen=false;
       if(this.confirm&&old?.turnId!==next.turnId){this.confirm=null;this.error=t('changed');}
@@ -172,20 +217,33 @@
     }
     render(){
       if(!this.data)return;
-      const scrolls=Array.from(this.el.querySelectorAll('.once-carousel')).map(x=>x.scrollLeft);
-      const openDetails=Array.from(this.el.querySelectorAll('[data-once-detail][open]')).map(x=>x.dataset.onceDetail);
-      const firstPlayer=this.el.querySelector('[data-once-first-player]')?.value;
+      const identity=JSON.stringify([this.data.once.sessionId,this.data.once.playerNum,!!this.options.host]);
+      const reset=identity!==this.renderIdentity;
+      const scrolls=reset&&this.renderIdentity!==null?[]:Array.from(this.el.querySelectorAll('.once-carousel')).map(x=>x.scrollLeft);
+      const openDetails=reset?[]:Array.from(this.el.querySelectorAll('[data-once-detail][open]')).map(x=>x.dataset.onceDetail);
+      const firstPlayer=reset?null:this.el.querySelector('[data-once-first-player]')?.value;
       if(this.confirm)this.confirm.returnLatest=this.el.querySelector('[data-once-return-latest]')?.checked??this.confirm.returnLatest;
-      const endingOpen=this.endingOpen??(!!root.matchMedia?.('(min-width: 1001px)').matches||!list(this.data.once.hand).length||this.data.once.ending?.id===this.selectedId);
-      this.el.innerHTML=tableHTML(this.data,{host:this.options.host,selectedId:this.selectedId,historyOpen:this.historyOpen,endingOpen});
+      const endingOpen=this.endingOpen??true;
+      let html=tableHTML(this.data,{host:this.options.host,selectedId:this.selectedId,historyOpen:this.historyOpen,endingOpen});
+      if(this.confirm)html+='<div class="once-modal-backdrop"><section class="once-modal once-confirm" role="dialog" aria-modal="true" aria-label="'+esc(t('confirm'))+'"><h2>'+esc(this.confirm.text)+'</h2>'+(this.confirm.type==='interrupt'&&this.confirm.extra.mode==='normal'?'<p>'+esc(t('normalHelp'))+'</p>':'')+(this.confirm.type==='challenge'&&this.data.once.returnableCard?'<label class="once-check"><input type="checkbox" data-once-return-latest'+(this.confirm.returnLatest?' checked':'')+'> '+esc(t('returnLatest'))+' <strong>'+esc(this.data.once.returnableCard.title)+'</strong></label>':'')+'<div class="once-actions">'+button('confirm','confirm')+button('closeConfirm','cancel','',true)+'</div></section></div>';
+      const blocked=!!this.options.disabled?.();
+      const renderKey=JSON.stringify([identity,html,!!this.pending,blocked]);
+      // Revision, lease timestamps and mailbox receipts are not visual state.
+      // Still paint live connection/request status without rebuilding the cards.
+      if(renderKey===this.lastRenderKey){this.paint();return;}
+      const oldModal=reset?null:this.el.querySelector('.once-modal');
+      patchMarkup(this.el,html,reset,openDetails);
+      this.renderIdentity=identity;this.lastRenderKey=renderKey;
       this.el.querySelectorAll('.once-carousel').forEach((x,i)=>{x.scrollLeft=scrolls[i]||0;});
       this.el.querySelectorAll('[data-once-detail]').forEach(x=>{x.open=openDetails.includes(x.dataset.onceDetail);});
       const firstSelect=this.el.querySelector('[data-once-first-player]');if(firstSelect&&firstPlayer)firstSelect.value=firstPlayer;
-      if(this.confirm)this.el.insertAdjacentHTML('beforeend','<div class="once-modal-backdrop"><section class="once-modal once-confirm" role="dialog" aria-modal="true" aria-label="'+esc(t('confirm'))+'"><h2>'+esc(this.confirm.text)+'</h2>'+(this.confirm.type==='interrupt'&&this.confirm.extra.mode==='normal'?'<p>'+esc(t('normalHelp'))+'</p>':'')+(this.confirm.type==='challenge'&&this.data.once.returnableCard?'<label class="once-check"><input type="checkbox" data-once-return-latest'+(this.confirm.returnLatest?' checked':'')+'> '+esc(t('returnLatest'))+' <strong>'+esc(this.data.once.returnableCard.title)+'</strong></label>':'')+'<div class="once-actions">'+button('confirm','confirm')+button('closeConfirm','cancel','',true)+'</div></section></div>');
+      // Summary has no native disabled attribute: clear its pending-only property
+      // explicitly when retaining DOM, then apply the current control fence.
+      this.el.querySelectorAll('[data-once-action]:not(button),[data-once-card]:not(button)').forEach(node=>{node.disabled=false;});
       if(this.pending)this.el.querySelectorAll('[data-once-card],[data-once-action]:not([data-once-action="closeConfirm"])').forEach(b=>b.disabled=true);
-      if(this.options.disabled?.())this.el.querySelectorAll('[data-once-action],[data-once-card]').forEach(b=>b.disabled=true);
+      if(blocked)this.el.querySelectorAll('[data-once-action],[data-once-card]').forEach(b=>b.disabled=true);
       this.paint();
-      if(this.preview||this.confirm){const modal=this.el.querySelector('.once-modal');modal?.querySelector('button')?.focus();}
+      if(this.preview||this.confirm){const modal=this.el.querySelector('.once-modal');if(modal!==oldModal)modal?.querySelector('button')?.focus();}
     }
     paint(){
       if(!this.data)return;

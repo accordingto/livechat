@@ -26,13 +26,15 @@ The table shows the **latest four** played cards in order, with their original
 story numbers. Earlier cards form a small decorative pile on the left; tap it
 to expand or close the older-only history below. This is a local view change,
 not a draw/discard or a change to canonical story history. There is no table
-carousel to scroll to the latest play. Mobile uses a compact 2×2 landscape set
-with complete titles and thumbnails. On phones the earlier pile is a small button.
+carousel to scroll to the latest play. Mobile uses upright 128×200 cards in a
+2×2 grid, ordered left-to-right then top-to-bottom. On phones the earlier pile
+is a small button. The latest canonical play retains the gold Current card cue.
 
 The private Ending is a smaller **right-side table card on desktop**, independent
-of the Story panel's height. At tablet/phone widths it becomes a collapsed drawer
-**after the hand/actions**, not between the Story table and hand. **Your ending**
-opens it and brings it into view without selecting
+of the Story panel's height. At tablet/phone widths it becomes a smaller drawer
+**after the hand/actions**, not between the Story table and hand. The Ending is
+**open by default at every screen size**; players can still close it locally.
+**Your ending** opens it and brings it into view without selecting
 or playing it. Desktop Story/hand cards measure 144×224, with ivory frames and
 cream name plates; category icons retain subtle distinguishing colors. No
 viewport-height compression forces the whole game into one screen. The drawer
@@ -44,6 +46,13 @@ unrevealed Ending. The hand follows the table with a right-side action rail on
 desktop; narrower screens place the same controls below the hand. The header,
 turn indicator and public counts are compact, without shrinking button targets
 or adding Korean/language-learning controls.
+
+Background lease/revision/receipt updates only repaint live status when the
+visible table is unchanged. Real selections and game changes reconcile the
+existing private DOM: unchanged card images keep the same nodes and sources,
+with local focus, scroll and disclosures retained. New sessions or seat changes
+clear the old private DOM and local selection/confirmation before showing the
+new seat. Pending and connection-permission fences still update immediately.
 
 The host page is a shared table, not a private hand. A participating host uses
 their own original player-card link to play. Keep the host page open; on normal
@@ -418,3 +427,39 @@ Run the local server above first. `ONCE_UI_BASE` may be set to the published sit
 for the same demo-only check. Optional `ONCE_UI_PROOF_DIR` saves rendered 375px /
 1280px screenshots to an existing chosen output directory. This test is not
 part of the game runtime and is never available to normal players.
+
+## Stable mobile images and upright Story cards (2026-10-09)
+
+This supersedes the earlier phone landscape/default-collapsed notes above.
+Phones show the latest four Story cards as 128×200 portraits, in chronological
+2×2 row-major order, with one gold Current card marker. Hand cards remain
+144×224, and the Story-to-hand gap stays 8px. The private Ending is initially
+visible at every size, still after the hand/actions on mobile and locally
+collapsible. No rules, card identities, artwork or multiplayer authority changed.
+
+The image refresh cause was unconditional root innerHTML replacement on every
+private projection, including equal-revision host leases. Rendering now skips
+identical visible output and uses parent-scoped DOM reconciliation on actual
+changes. Source attributes are written only if changed; reused history card IDs
+are keyed by canonical history position. Pending/disabled control changes still
+render, including restoring the native Ending summary's non-native disabled
+property after an acknowledgement. New seat/session identity clears old private
+nodes and local work. Existing optional server-executor changes are retained.
+Host and original player imports share cache token
+`once-stable-portraits-executor-1`; already-open pages must refresh once.
+
+Executed verification:
+
+- Local complete repository regression: **1078/1078**, no failures or skips.
+- Focused Once + Story-service regression: **159/159**; UI alone **41/41**.
+- Fresh-profile Chrome: five complete synthetic games at 320×667, 375×812,
+  390×844, 800×900 and 1280×800. Portrait order, one Current cue, default-open
+  Ending, manual collapse, last-card reveal and existing ballots all pass.
+- All 114 Story titles and 51 Ending sentences fit at 320px and 375px.
+- Native DOM fixture: 16 loaded images/8 cards remain mounted across 20 lease/
+  revision updates and selection, with **zero image insertions/removals or src/
+  srcset rewrites**. Actual plays preserve untouched hand and history images;
+  switching seats or sessions removes the old private DOM.
+- Local phone/desktop screenshots inspected. Browser tests use isolated,
+  explicitly synthetic demo/fixtures with room traffic blocked; physical phones,
+  Safari/Firefox and live-device multiplayer are not retested in this update.

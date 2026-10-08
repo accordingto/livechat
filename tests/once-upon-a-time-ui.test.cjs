@@ -179,9 +179,10 @@ test('the workspace puts hand immediately after Story and one local Ending drawe
   }
 });
 
-test('Ending drawer supports explicit open/closed presentation and an empty hand opens it without auto-selection', () => {
+test('Ending defaults open, supports explicit local close and an empty hand does not auto-select it', () => {
   let s = started();
   const endingId = s.endings[1];
+  assert.match(elementHTML(htmlFor(s, 1), 'once-ending-dock'), /^<details\b[^>]*\sopen(?:\s|>)/, 'the private Ending is visible by default while Story Cards remain');
   for (const open of [false, true]) {
     const html = htmlFor(s, 1, { endingOpen: open });
     const dock = elementHTML(html, 'once-ending-dock');
@@ -198,7 +199,7 @@ test('Ending drawer supports explicit open/closed presentation and an empty hand
   assert.doesNotMatch(elementHTML(htmlFor(s, 1, { endingOpen: false }), 'once-ending-dock'), /^<details\b[^>]*\sopen(?:\s|>)/, 'an explicit local close remains possible with an empty hand');
 });
 
-test('responsive workspace keeps desktop portrait proportions but puts a compact recent Story directly above phone hand', () => {
+test('responsive workspace keeps portrait recent Story cards directly above phone hand in a chronological 2 by 2 grid', () => {
   const css = fs.readFileSync(path.join(root, 'once-upon-a-time.css'), 'utf8');
   const phone = css.slice(css.lastIndexOf('@media(max-width:760px)'));
   const tablet = css.slice(css.lastIndexOf('@media(max-width:1000px)'), css.lastIndexOf('@media(max-width:760px)'));
@@ -208,8 +209,10 @@ test('responsive workspace keeps desktop portrait proportions but puts a compact
   assert.match(tablet, /\.once-ending-dock\s*\{[^}]*grid-column:1;[^}]*grid-row:3/);
   assert.match(css, /\.once-game--reference \.once-card\s*\{[^}]*width:144px;[^}]*height:224px/);
   assert.match(phone, /\.once-history\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(phone, /\.once-history-latest \.once-card--history\s*\{[^}]*display:grid;[^}]*grid-template-rows:20px 58px;[^}]*height:88px;[^}]*min-height:88px/);
-  assert.match(phone, /\.once-history-latest \.once-card--history \.once-card-title\s*\{[^}]*min-height:0;[^}]*font-size:\.82rem;[^}]*overflow-wrap:anywhere/);
+  assert.match(phone, /\.once-history-latest\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,128px\)\);[^}]*justify-content:center/, 'the latest four remain a centered chronological 2 by 2 portrait grid');
+  assert.match(phone, /\.once-game--reference \.once-history-latest \.once-card--history\s*\{[^}]*display:flex;[^}]*flex-direction:column;[^}]*height:200px;[^}]*min-height:200px/, 'recent Story cards keep their upright 128 by 200 proportions');
+  assert.doesNotMatch(phone, /\.once-history-latest \.once-card--history\s*\{[^}]*(?:grid-template-rows:20px 58px|height:88px|min-height:88px)/, 'recent Story cards must not use the previous landscape strip layout');
+  assert.doesNotMatch(phone, /\.once-history-latest \.once-card--history\s*\{[^}]*grid-template-columns:(?:62px|[0-9]+px) minmax\(0,1fr\)/, 'card art and title retain portrait reading order');
   assert.doesNotMatch(phone, /\.once-card--mini\s*\{[^}]*height:/, 'phone history compaction must not shrink private hand cards');
   assert.doesNotMatch(phone, /\.once-history-latest\s*\{[^}]*overflow-x:(auto|scroll)/, 'newest plays do not require scrolling a table carousel');
 });
@@ -571,7 +574,8 @@ test('names, logs, card IDs/titles/image attributes and public ending text are H
 // The root task verifies native browser layout separately.
 class ElementDouble {
   constructor() {
-    this.innerHTML = '';
+    this._html = '';
+    this.htmlAssignments = 0;
     this.listeners = new Map();
     this.carousels = [{ scrollLeft: 31 }, { scrollLeft: 57 }];
     this.status = { textContent: '', classList: { toggle() {} } };
@@ -582,9 +586,15 @@ class ElementDouble {
     Object.defineProperty(this.endingDock, 'open', { get: () => /^<details\b[^>]*\sopen(?:\s|>)/.test(elementHTML(this.innerHTML, 'once-ending-dock')) });
     this.endingSummary = { focus() {} };
   }
+  get innerHTML() { return this._html; }
+  set innerHTML(value) { this._html = value; this.htmlAssignments++; }
   addEventListener(type, fn) { this.listeners.set(type, fn); }
   removeEventListener(type, fn) { if (this.listeners.get(type) === fn) this.listeners.delete(type); }
-  querySelectorAll(selector) { return selector === '.once-carousel' ? this.carousels : []; }
+  querySelectorAll(selector) {
+    if (selector === '.once-carousel') return this.carousels;
+    const controls = ['[data-once-action]:not(button),[data-once-card]:not(button)', '[data-once-card],[data-once-action]:not([data-once-action="closeConfirm"])', '[data-once-action],[data-once-card]'];
+    return controls.includes(selector) && this.innerHTML.includes('once-ending-dock') ? [this.endingSummary] : [];
+  }
   querySelector(selector) {
     return selector === '.once-connection' ? this.status : selector === '.once-request-status' ? this.request :
       selector === '[data-once-return-latest]' ? this.returnLatest : selector === '[data-once-first-player]' ? { value: '2' } :
@@ -612,6 +622,164 @@ function harness(data, options = {}) {
   card.update(data);
   return { card, element, sent, timers, clock: value => { now = value; } };
 }
+
+test('lease, revision and unrelated mailbox updates paint status without recreating card markup', () => {
+  const data = E.view(started(), 1), h = harness(data, { mobile: true });
+  try {
+    const initial = h.element.htmlAssignments;
+    assert.equal(initial, 1, 'the initial fallback render assigns the complete view once');
+    h.card.render();
+    assert.equal(h.element.htmlAssignments, initial, 'a duplicate host-label render is also a no-op');
+    const renewed = copy(data);
+    renewed.once.hostLiveUntil = 15000;
+    renewed.once.revision = 17;
+    renewed.once.reply = { id: 'other-request', error: '' };
+    renewed.onceAction = { id: 'unrelated-mailbox', type: 'ready' };
+    h.card.update(renewed);
+    assert.equal(h.card.data.once.hostLiveUntil, 15000, 'the live projection is still replaced before painting');
+    assert.equal(h.element.htmlAssignments, initial, 'heartbeat metadata cannot rebuild hand or table images');
+    assert.equal(h.element.status.textContent, 'Connected');
+    h.clock(16000); h.card.paint();
+    assert.equal(h.element.status.textContent, 'Waiting for the host page');
+    assert.equal(h.element.htmlAssignments, initial, 'connection painting is independent of card markup');
+    renewed.once.hostLiveUntil = 32000;
+    renewed.once.revision++;
+    h.card.update(copy(renewed));
+    assert.equal(h.element.status.textContent, 'Connected');
+    assert.equal(h.element.htmlAssignments, initial);
+    assert.deepEqual(h.element.carousels.map(c => c.scrollLeft), [31, 57]);
+  } finally { h.card.destroy(); }
+});
+
+test('render cache distinguishes pending and disabled control states, then restores acknowledged controls', () => {
+  const data = E.view(create(), 1);
+  let blocked = false;
+  const h = harness(data, { disabled: () => blocked });
+  try {
+    let renders = h.element.htmlAssignments;
+    click(h.card, 'ready');
+    assert.equal(h.element.htmlAssignments, ++renders, 'pending state must update control locks even with identical game markup');
+    assert.ok(h.card.pending);
+    const request = h.card.pending.command.id;
+    const unrelated = copy(data); unrelated.once.reply = { id: 'unrelated-reply', error: '' };
+    h.card.update(unrelated);
+    assert.equal(h.element.htmlAssignments, renders, 'unrelated replies do not unlock or rebuild controls');
+    assert.equal(h.card.pending.command.id, request);
+    const reply = copy(data); reply.once.reply = { id: request, error: '' };
+    h.card.update(reply);
+    assert.equal(h.card.pending, null, 'the no-op optimization cannot skip matching reply bookkeeping');
+    assert.equal(h.element.htmlAssignments, ++renders, 'acknowledgement restores canonical enabled states');
+    blocked = true; h.card.render();
+    assert.equal(h.element.htmlAssignments, ++renders, 'host-control loss must lock the unchanged view');
+    h.card.render();
+    assert.equal(h.element.htmlAssignments, renders, 'unchanged disabled state is cached');
+    blocked = false; h.card.render();
+    assert.equal(h.element.htmlAssignments, ++renders, 'host-control restoration must not leave controls stuck');
+    h.card.update(copy(reply));
+    assert.equal(h.element.htmlAssignments, renders);
+  } finally { h.card.destroy(); }
+});
+
+test('Ending summary clears its non-native disabled property after acknowledgement and control restoration', () => {
+  const s = started(), data = E.view(s, 1);
+  let blocked = false;
+  const h = harness(data, { disabled: () => blocked });
+  try {
+    assert.equal(h.element.endingSummary.disabled, false);
+    h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
+    click(h.card, 'play');
+    assert.equal(h.element.endingSummary.disabled, true, 'pending actions temporarily lock the disclosure');
+    const reply = copy(data); reply.once.reply = { id: h.card.pending.command.id, error: '' };
+    h.card.update(reply);
+    assert.equal(h.element.endingSummary.disabled, false, 'a non-button disclosure has no reflected disabled attribute to clear automatically');
+    blocked = true; h.card.render();
+    assert.equal(h.element.endingSummary.disabled, true);
+    blocked = false; h.card.render();
+    assert.equal(h.element.endingSummary.disabled, false, 'restoring controls also clears the summary expando');
+    click(h.card, 'toggleEnding');
+    assert.equal(h.element.endingDock.open, false, 'the restored Ending disclosure can still be used');
+  } finally { h.card.destroy(); }
+});
+
+test('real card, story-turn and vote changes still refresh the view while private identity changes invalidate its cache', () => {
+  let s = started(), h = harness(E.view(s, 1));
+  try {
+    let renders = h.element.htmlAssignments;
+    h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
+    assert.equal(h.element.htmlAssignments, ++renders, 'selection updates its border and action availability');
+    s = act(s, 'play', 1, { cardId: s.hands[1][0] });
+    h.card.update(E.view(s, 1));
+    assert.equal(h.element.htmlAssignments, ++renders, 'a card leaves the hand and enters chronological history');
+    assert.equal(h.card.selectedId, null);
+    s = act(s, 'interrupt', 2, { cardId: s.hands[2][0], mode: 'normal' });
+    h.card.update(E.view(s, 1));
+    assert.equal(h.element.htmlAssignments, ++renders, 'storyteller transfer exposes the listener actions');
+    assert.ok(action(h.element.innerHTML, 'interrupt'));
+    s = act(s, 'dispute', 1, { interruptId: s.interrupt.id });
+    h.card.update(E.view(s, 1));
+    assert.equal(h.element.htmlAssignments, ++renders, 'a real decision phase must appear');
+    assert.match(h.element.innerHTML, /Was this interrupt valid/);
+    h.card.update(E.view(s, 1));
+    assert.equal(h.element.htmlAssignments, renders);
+  } finally { h.card.destroy(); }
+  const data = E.view(create(), 1), identity = harness(data);
+  try {
+    let renders = identity.element.htmlAssignments;
+    const newSession = copy(data); newSession.once.sessionId += '-new';
+    assert.equal(UI.tableHTML(data), UI.tableHTML(newSession), 'session fixture deliberately keeps visible markup identical');
+    identity.card.update(newSession);
+    assert.equal(identity.element.htmlAssignments, ++renders, 'a new private session cannot reuse the prior session cache');
+    const newSeat = copy(newSession); newSeat.once.playerNum = 2;
+    assert.equal(UI.tableHTML(newSession), UI.tableHTML(newSeat), 'seat fixture deliberately keeps visible lobby markup identical');
+    identity.card.update(newSeat);
+    assert.equal(identity.element.htmlAssignments, ++renders, 'a different private owner also invalidates equal visible markup');
+    identity.card.update(copy(newSeat));
+    assert.equal(identity.element.htmlAssignments, renders);
+  } finally { identity.card.destroy(); }
+});
+
+test('switching private seats clears selection, captured commands and disclosure choices even within one session', () => {
+  let s = started(2);
+  for (const cardId of s.hands[1].slice(0, 7)) s = act(s, 'play', 1, { cardId });
+  const oldCard = s.hands[1][0], oldEnding = s.endings[1];
+  for (const pending of [false, true]) {
+    const h = harness(E.view(s, 1), { mobile: true });
+    try {
+      h.card.click({ target: target({ onceCard: oldCard }) });
+      click(h.card, 'toggleHistory');
+      click(h.card, 'toggleEnding');
+      assert.equal(h.card.selectedId, oldCard);
+      assert.equal(h.card.historyOpen, true);
+      assert.equal(h.card.endingOpen, false);
+      if (pending) {
+        click(h.card, 'play');
+        assert.ok(h.card.pending, 'fixture holds a command from the previous private owner');
+      } else {
+        click(h.card, 'pass');
+        assert.ok(h.card.confirm, 'fixture holds a confirmation captured for the previous private owner');
+      }
+      h.card.error = 'previous-owner-only-error';
+      const next = E.view(s, 2), original = copy(next), sent = h.sent.length;
+      assert.equal(next.once.sessionId, h.card.data.once.sessionId, 'only the private seat changes');
+      h.card.update(next);
+      assert.equal(h.card.selectedId, null);
+      assert.equal(h.card.preview, null);
+      assert.equal(h.card.confirm, null, 'the prior seat cannot keep its captured confirmation');
+      assert.equal(h.card.pending, null, 'the new owner cannot retry a prior private command');
+      assert.equal(h.card.error, '');
+      assert.equal(h.card.historyOpen, false);
+      assert.equal(h.card.endingOpen, null, 'a new private owner starts with the fresh visible default');
+      assert.equal(h.element.endingDock.open, true);
+      assert.ok(!h.element.innerHTML.includes('data-once-card="' + oldEnding + '"'), 'the previous private Ending is removed');
+      assert.ok(!h.element.innerHTML.includes('data-once-card="' + oldCard + '"'), 'the previous private hand is removed');
+      click(h.card, 'confirm');
+      h.card.click({ target: target({ onceCard: oldCard }) });
+      assert.equal(h.card.selectedId, null, 'a card owned by the old seat is no longer selectable');
+      assert.equal(h.sent.length, sent, 'switching a seat cannot submit a captured or accidental action');
+      assert.deepEqual(next, original, 'the local reset leaves the authoritative projection unchanged');
+    } finally { h.card.destroy(); }
+  }
+});
 
 test('old-card pile toggles locally, survives ordinary updates and resets on a new session or no older cards', () => {
   let s = started(2);
@@ -670,7 +838,7 @@ test('the Ending shortcut opens and scrolls to the private drawer without select
   const s = started(), data = E.view(s, 1), h = harness(data, { mobile: true }), original = copy(data);
   try {
     assert.ok(action(h.element.innerHTML, 'showEnding'));
-    assert.equal(h.element.endingDock.open, false, 'phone Ending begins out of the Story-to-hand reading path');
+    assert.equal(h.element.endingDock.open, true, 'phone Ending is visible by default after the hand, not between Story and hand');
     h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
     const selected = h.card.selectedId;
     click(h.card, 'showEnding');
@@ -708,7 +876,7 @@ test('Ending summary toggles only this viewer, survives sync refresh and resets 
   for (const mobile of [false, true]) {
     const s = started(), data = E.view(s, 1), h = harness(data, { mobile }), original = copy(data);
     try {
-      assert.equal(h.element.endingDock.open, !mobile, 'desktop opens its side dock; phone collapses its below-hand drawer');
+      assert.equal(h.element.endingDock.open, true, 'desktop and phone both show their private Ending by default');
       const initial = h.element.endingDock.open;
       let prevented = 0;
       h.card.click({ target: target({ onceAction: 'toggleEnding' }), preventDefault() { prevented++; } });
@@ -725,7 +893,7 @@ test('Ending summary toggles only this viewer, survives sync refresh and resets 
       click(h.card, 'toggleEnding');
       assert.equal(h.element.endingDock.open, initial);
       h.card.update(E.view(started(), 1));
-      assert.equal(h.element.endingDock.open, !mobile, 'a new game does not inherit the old drawer state');
+      assert.equal(h.element.endingDock.open, true, 'a new game reopens its Ending regardless of the previous local drawer state');
       assert.equal(h.sent.length, 0);
     } finally { h.card.destroy(); }
   }
@@ -743,7 +911,9 @@ test('clearing Story hand reveals the Ending once, without selecting it or reope
   let s = started();
   const h = harness(E.view(s, 1), { mobile: true });
   try {
-    assert.equal(h.element.endingDock.open, false);
+    assert.equal(h.element.endingDock.open, true, 'the private Ending begins visible while Story Cards remain');
+    click(h.card, 'toggleEnding');
+    assert.equal(h.element.endingDock.open, false, 'the player can intentionally close the visible Ending');
     h.card.click({ target: target({ onceCard: s.hands[1][0] }) });
     for (const id of s.hands[1].slice()) s = act(s, 'play', 1, { cardId: id });
     const empty = E.view(s, 1), original = copy(empty);

@@ -272,13 +272,14 @@ button.once-card { cursor:pointer; }
   .once-game--reference .once-seat { font-size:.7rem; padding:5px 7px; }
   .once-history-board.has-pile { grid-template-columns:minmax(0,1fr); gap:6px; }
   .once-history { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-  /* Public history is a compact 2x2 set. Private hand cards keep their size. */
-  .once-game--reference .once-history-latest .once-card--history { display:grid; grid-template-columns:44px minmax(0,1fr); grid-template-rows:20px 58px; height:88px; min-height:88px; }
-  .once-game--reference .once-history-latest .once-card--history::before,.once-game--reference .once-history-latest .once-card--history::after { content:none; }
-  .once-game--reference .once-history-latest .once-card-category { grid-column:1/-1; grid-row:1; min-height:20px; }
-  .once-game--reference .once-history-latest .once-card-art { grid-column:1; grid-row:2; min-height:58px; }
-  .once-game--reference .once-history-latest .once-card--history .once-card-title { grid-column:2; grid-row:2; min-height:0; padding:6px 4px; font-size:.82rem; line-height:1.25; overflow-wrap:anywhere; }
-  .once-game--reference .once-history-latest .once-interrupt-mark { top:25px; left:7px; right:auto; width:38px; overflow-wrap:anywhere; font-size:.45rem; padding:2px; }
+  /* Keep the familiar upright cards in chronological, row-major order. The
+     2x2 grid never scrolls horizontally; the hand directly follows this set. */
+  .once-history-latest { grid-template-columns:repeat(2,minmax(0,128px)); justify-content:center; }
+  .once-game--reference .once-history-latest .once-card--history { display:flex; flex-direction:column; height:200px; min-height:200px; }
+  .once-game--reference .once-history-latest .once-card-category { min-height:25px; }
+  .once-game--reference .once-history-latest .once-card-art { flex:1; min-height:0; }
+  .once-game--reference .once-history-latest .once-card--history .once-card-title { min-height:45px; padding:7px 4px; font-size:.93rem; line-height:1.2; overflow-wrap:anywhere; }
+  .once-game--reference .once-history-latest .once-interrupt-mark { top:34px; left:8px; right:8px; font-size:.54rem; padding:3px 2px; }
   .once-game--reference .once-history-number { font-size:.64rem; margin-top:2px; }
   .once-current-label { min-height:20px; padding:3px; font-size:.63rem; }
   .once-history-latest .once-history-item { gap:4px; }
