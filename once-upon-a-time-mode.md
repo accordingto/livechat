@@ -521,7 +521,7 @@ Executed verification:
 
 - Focused Once + Story-service + game-switch regression: **173/173**.
 - Final complete repository regression after preserving remote Hub changes:
-  **1163/1163**, no failures or skips.
+  **1164/1164**, no failures or skips, including the subsequent service-packaging update.
 - 10,000 seeded deals / 40,000 hands: every opening meets both safeguards;
   category compositions and Interrupt counts still vary. This tests starting
   variety, not human storytelling enjoyment or competitive balance.
@@ -546,3 +546,11 @@ Executed verification:
   **212 checks passed**, including a server-side 129-card deal, category variety,
   own-hand/Ending privacy, management from original cards, real play and reconnect.
   All seven temporary nodes were ownership/ETag checked and cleaned.
+- Production frontend: **390/390** game/art assets match, **45/45** shared
+  executor assets match. Five complete synthetic Chrome games and all 180
+  card-text fixtures pass on the actual HTTPS site. API readiness, Hub CORS,
+  invalid-ticket rejection, blocked server sources, preserved title search
+  (200) and retired lyrics (410) all pass.
+- Only the two changed Once deck/engine files were also patched into the
+  independent source project after verifying its released baseline, so later
+  service deployments retain this update. Credentials/settings were untouched.
