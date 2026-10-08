@@ -1,4 +1,4 @@
-/* Easy English story openings: 36 everyday situations and 24 wild situations.
+/* Easy English story openings: 36 everyday, 24 wild, 20 personal, and 20 idea prompts.
  * "Real" describes the starting situation; everyone is free to make it up.
  * Add prompts here without changing the screens or the game rules.
  */
@@ -68,10 +68,55 @@ var CUT_TOPICS = (() => {
     ['We enter a talent show on another planet. Why do the aliens laugh?', 'Our performance starts well until…'],
     ['Gravity stops working only in this room. What do we do?', 'Someone tries to stand up and…'],
   ];
+  const personal = [
+    ['Tell us about a small skill you tried to learn.', 'I decided to learn…'],
+    ['Tell us about a game you played as a child.', 'I used to play…'],
+    ['Talk about a place you like to go when you have free time.', 'I usually go there when…'],
+    ['Tell us about a simple meal you tried making for yourself.', 'I decided to make…'],
+    ['Tell us about a word or phrase you learned recently.', 'I first heard those words when…'],
+    ['Talk about a small habit you have during the day.', 'I always seem to…'],
+    ['Tell us about a time you tried something for the first time.', 'I had never tried it before, so…'],
+    ['Tell us about a small thing you like to keep.', 'I keep this little thing because…'],
+    ['Talk about a sound that reminds you of a place.', 'I hear that sound and remember…'],
+    ['Tell us about a time you helped someone with something small.', 'I noticed they needed help with…'],
+    ['Tell us about a time you chose to take a different route.', 'I usually go one way, but that day…'],
+    ['Talk about something you enjoyed doing after school.', 'I would finish school and then…'],
+    ['Tell us about a plant you tried to grow.', 'I put the plant…'],
+    ['Talk about a small change you made to your room.', 'I moved one thing in my room…'],
+    ['Tell us about a time you watched something being made.', 'I stopped to watch someone make…'],
+    ['Talk about a part of your weekend routine.', 'My weekend usually begins when…'],
+    ['Tell us about a time you asked a question in a new place.', 'I did not know where to start, so I asked…'],
+    ['Talk about something small that made you curious.', 'I noticed this little thing and wondered…'],
+    ['Tell us about something you chose to read just for fun.', 'I opened it because…'],
+    ['Talk about a small choice you made without planning it.', 'I had one plan, but then I chose to…'],
+  ];
+  const ideas = [
+    ['What would you add to a small park?', 'I would put…'],
+    ['What could make waiting in a line more fun?', 'My first idea is to…'],
+    ['How would you make a rainy day at home more interesting?', 'I would start the day by…'],
+    ['What is one simple way to welcome a new person to a group?', 'I would welcome them by…'],
+    ['What would you change about a normal school day?', 'I would change the part where…'],
+    ['What could make a bus ride more enjoyable?', 'I would add something that…'],
+    ['What would you put in a tiny shop that you run?', 'My shop would have…'],
+    ['What would make a useful gift for someone you have just met?', 'I would give them…'],
+    ['How would you make a shared kitchen easier to use?', 'I would begin by…'],
+    ['What would you add to a library besides books?', 'I would add a place where…'],
+    ['What is one small rule you would add to a board game?', 'My new rule would be…'],
+    ['What would you include in a box for a quiet afternoon?', 'I would put something in the box that…'],
+    ['How would you make a simple walk more interesting?', 'I would try walking…'],
+    ['What should a comfortable chair be able to do?', 'My ideal chair would…'],
+    ['What could help people learn a new word more easily?', 'I would help them by…'],
+    ['What would you put on a sign to make people smile?', 'My sign would say…'],
+    ['How would you turn an empty room into a place to relax?', 'I would make space for…'],
+    ['What would you add to a calendar to make an ordinary week more fun?', 'I would make one day for…'],
+    ['What is a simple thing people could share with their neighbors?', 'I would start by sharing…'],
+    ['Which everyday object would you change, and how?', 'I would change the way it…'],
+  ];
   const make = (rows, category) => rows.map(([question, starter], index) => Object.freeze({
     id: 'cut-' + category + '-' + String(index + 1).padStart(2, '0'), category, question, starter,
   }));
-  const items = Object.freeze([...make(real, 'real'), ...make(absurd, 'absurd')]);
-  return Object.freeze({ items, categories: Object.freeze(['mixed', 'real', 'absurd']) });
+  const items = Object.freeze([...make(real, 'real'), ...make(absurd, 'absurd'),
+    ...make(personal, 'personal'), ...make(ideas, 'ideas')]);
+  return Object.freeze({ items, categories: Object.freeze(['mixed', 'real', 'absurd', 'personal', 'ideas']) });
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_TOPICS;

@@ -28,7 +28,18 @@
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('demo-view').value = actor;
     byId('room-label').textContent = demo || !sync ? '' : t('room', { code: ROOM.code });
+    const libraryCategory = byId('library-category').value || 'mixed';
+    const library = CUT_UI.topicLibrary(CUT_TOPICS.items);
+    byId('library-category').innerHTML = CUT_TOPICS.categories.map(category => '<option value="' + esc(category) + '">' + esc(t(category)) + ' (' + (library.counts[category] || 0) + ')</option>').join('');
+    byId('library-category').value = CUT_TOPICS.categories.includes(libraryCategory) ? libraryCategory : 'mixed';
+    byId('library-list').setAttribute('aria-label', t('browseTopics'));
+    renderLibrary();
     sceneKey = ''; rosterKey = ''; paintSound();
+  }
+  function renderLibrary() {
+    const library = CUT_UI.topicLibrary(CUT_TOPICS.items, byId('library-category').value || 'mixed', byId('library-search').value || '');
+    byId('library-count').textContent = t('libraryCount', { shown: library.count, total: library.total });
+    byId('library-list').innerHTML = library.html;
   }
   function renderCustom() {
     const custom = byId('speed').value === 'custom';
@@ -177,6 +188,9 @@
   async function closeSettings() {
     if (await command('cancelSettings')) { editing = false; render(); }
   }
+  byId('library-category').addEventListener('change', renderLibrary);
+  byId('library-search').addEventListener('input', renderLibrary);
+  byId('library').addEventListener('toggle', () => { if (byId('library').open) renderLibrary(); });
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
   byId('speed').addEventListener('change', () => { customError = false; renderCustom(); });
   for (const id of ['custom-min', 'custom-max']) byId(id).addEventListener('input', () => { customError = false; renderCustom(); });

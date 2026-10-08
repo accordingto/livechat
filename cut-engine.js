@@ -27,7 +27,10 @@ var CUT_ENGINE = (() => {
     return random.speaker(state.roster, excluded, state.stats, state.recent, state.speakerSequence, rng);
   }
   function chooseTopic(state, rng) {
-    const category = state.category === 'mixed' ? (rng() < config.realTopicWeight ? 'real' : 'absurd') : state.category;
+    const available = topics.categories.filter(category => category !== 'mixed' && topics.items.some(topic => topic.category === category));
+    const category = state.category === 'mixed'
+      ? random.weighted(available, category => config.mixedTopicWeights[category] || 0, rng)
+      : state.category;
     const pool = topics.items.filter(topic => topic.category === category);
     const unseen = pool.filter(topic => !state.topicHistory.includes(topic.id));
     const choices = unseen.length ? unseen : pool;

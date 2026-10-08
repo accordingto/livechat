@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cards-2">
+  <link rel="stylesheet" href="cut.css?v=cut-9">
 </head>
 <body class="cut-page">
   <div class="topbar">
@@ -37,9 +37,11 @@
           <option value="custom" data-i18n="cut.custom">Custom · 自訂秒數</option>
         </select></label>
         <label class="cut-field"><span data-i18n="cut.category">題目類型</span><select id="cut-category">
-          <option value="mixed" selected data-i18n="cut.mixed">生活＋荒謬</option>
+          <option value="mixed" selected data-i18n="cut.mixed">全部混合</option>
           <option value="real" data-i18n="cut.real">生活情境</option>
           <option value="absurd" data-i18n="cut.absurd">荒謬想像</option>
+          <option value="personal" data-i18n="cut.personal">個人經驗</option>
+          <option value="ideas" data-i18n="cut.ideas">想法與喜好</option>
         </select></label>
       </div>
       <div class="cut-custom" id="cut-custom" hidden>
@@ -81,6 +83,15 @@
       <p data-i18n="cut.ruleExample">例如：「他把——」CUT！「——護照丟進了垃圾桶。」</p>
     </details>
     <a class="back" id="cut-demo-link" href="cut.html?demo=1" data-i18n="cut.demoLink">先試操作示範</a>
+    <details class="cut-library" id="cut-library">
+      <summary data-i18n="cut.browseTopics">查看題庫</summary>
+      <div class="cut-library-controls">
+        <label class="cut-field"><span data-i18n="cut.libraryFilter">分類</span><select id="cut-library-category"></select></label>
+        <label class="cut-field"><span data-i18n="cut.librarySearch">搜尋題目或開場句</span><input id="cut-library-search" type="search" autocomplete="off"></label>
+      </div>
+      <p class="cut-library-count" id="cut-library-count" role="status"></p>
+      <div class="cut-library-list" id="cut-library-list" tabindex="0" aria-label="Topics"></div>
+    </details>
   </main>
   <dialog class="cut-dialog" id="cut-manage" aria-labelledby="cut-manage-title">
     <form method="dialog" class="cut-dialog-header"><h2 id="cut-manage-title" data-i18n="cut.manage">主持管理</h2><button class="cut-button" data-i18n="cut.close">關閉</button></form>
@@ -105,13 +116,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="cut-config.js?v=cut-6"></script>
-  <script src="cut-random.js?v=cut-6"></script>
-  <script src="cut-topics.js?v=cut-6"></script>
-  <script src="cut-engine.js?v=cards-2"></script>
-  <script src="cut-ui.js?v=cards-2"></script>
-  <script src="cut-sync.js?v=cut-6"></script>
+  <script src="cut-config.js?v=cut-9"></script>
+  <script src="cut-random.js?v=cut-9"></script>
+  <script src="cut-topics.js?v=cut-9"></script>
+  <script src="cut-engine.js?v=cut-9"></script>
+  <script src="cut-ui.js?v=cut-9"></script>
+  <script src="cut-sync.js?v=cut-9"></script>
   <script src="hub-executor.js?v=2"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-6"></script>
+<script src="cut-host.js?v=cut-9"></script>
 </body>
 </html>

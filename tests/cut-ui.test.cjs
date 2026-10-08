@@ -239,10 +239,10 @@ test('topic reveal stays silent until the explicit Begin transition starts count
 function hostDemo() {
   let time = 1000, serial = 0, interval;
   const elements = new Map(), creations = [], commands = [];
-  const defaults = { 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25' };
+  const defaults = { 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25', 'cut-library-category': 'mixed', 'cut-library-search': '' };
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
-      innerHTML: '', textContent: '', value: defaults[id] || '0', hidden: false, disabled: false, open: false, attributes: {},
+      innerHTML: '', textContent: '', value: defaults[id] ?? '0', hidden: false, disabled: false, open: false, attributes: {},
       events: {}, addEventListener(type, callback) { this.events[type] = callback; }, setAttribute(name, value) { this.attributes[name] = value; }, querySelector() { return null; },
       close() { this.open = false; }, showModal() { this.open = true; }, focus() { this.focused = true; },
     });
@@ -257,7 +257,7 @@ function hostDemo() {
     apply(state, command) { if (command.type !== 'tick') commands.push(command); return ENGINE.apply(state, command); },
   };
   const context = {
-    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: trackedEngine, CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
+    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: trackedEngine, CUT_TOPICS: require('../cut-topics.js'), CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
     I18N: { applyStatic() {}, onChange() {} }, document: { getElementById: element }, location: { search: '?demo=1' },
     URLSearchParams, crypto: { getRandomValues: array => { array[0] = 314; return array; } },
     Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {},
@@ -473,3 +473,65 @@ test('active shared players can end a topic after verbal-agreement confirmation;
     if (originalWindow === undefined) delete global.window; else global.window = originalWindow;
   }
 });
+
+
+test('topic browser filters by category and searches English questions or starters without exposing selection actions', () => {
+  const rows = [
+    { category: 'real', question: 'The bus leaves early.', starter: 'I run to the bus.' },
+    { category: 'personal', question: 'Tell us about your first job.', starter: 'My first day begins with...' },
+    { category: 'ideas', question: 'Would you choose a quiet home?', starter: 'A quiet place makes me...' },
+    { category: 'absurd', question: '<script>bad()</script>', starter: '<img onerror="bad()"> & "test"' },
+  ];
+  const all = UI.topicLibrary(rows);
+  assert.equal(all.count, 4); assert.equal(all.total, 4);
+  assert.deepEqual(all.counts, { mixed: 4, real: 1, personal: 1, ideas: 1, absurd: 1 });
+  assert.match(all.html, /個人經驗/); assert.match(all.html, /想法與喜好/);
+  assert.doesNotMatch(all.html, /<script|<img|<button|data-cut-action|data-cut-topic/);
+  assert.match(all.html, /&lt;script&gt;/); assert.match(all.html, /&amp;/);
+  const personal = UI.topicLibrary(rows, 'personal');
+  assert.equal(personal.count, 1); assert.match(personal.html, /first job/); assert.doesNotMatch(personal.html, /quiet home/);
+  assert.equal(UI.topicLibrary(rows, 'mixed', 'FIRST DAY').count, 1, 'search also matches the starter');
+  assert.equal(UI.topicLibrary(rows, 'ideas', 'first').count, 0);
+  assert.match(UI.topicLibrary(rows, 'mixed', 'no match').html, /沒有符合/);
+});
+
+test('host topic browsing preserves live topic and setup category, and the clock never redraws its list', async () => {
+  const f = hostDemo(), topics = require('../cut-topics.js');
+  const list = f.element('cut-library-list'), initial = list.innerHTML;
+  assert.equal((initial.match(/class="cut-library-item"/g) || []).length, topics.items.length);
+  assert.equal(f.element('cut-library-count').textContent, UI.t('libraryCount', { shown: topics.items.length, total: topics.items.length }));
+  assert.equal(f.element('cut-library').open, false);
+  await f.submit(); await f.click('begin'); f.advance(3000);
+  const scene = f.scene(), before = f.commands.length;
+  f.change('library-category', 'real');
+  assert.equal(f.element('cut-category').value, 'mixed');
+  assert.equal(f.scene(), scene); assert.equal(f.commands.length, before);
+  const realCount = topics.items.filter(topic => topic.category === 'real').length;
+  assert.equal((list.innerHTML.match(/class="cut-library-item"/g) || []).length, realCount);
+  const phrase = topics.items.find(topic => topic.category === 'real').starter;
+  f.change('library-search', phrase);
+  assert.ok(list.innerHTML.includes(UI.esc(phrase))); assert.equal(f.scene(), scene);
+  assert.equal(f.commands.length, before); assert.equal(f.creations.length, 1);
+  let html = list.innerHTML, writes = 0;
+  Object.defineProperty(list, 'innerHTML', { get: () => html, set: value => { html = value; writes++; }, configurable: true });
+  for (let i = 0; i < 20; i++) f.advance(100);
+  assert.equal(writes, 0, 'clock and live-state paints must leave the topic browser alone');
+  f.change('library-search', 'nothing-matches-this-query');
+  assert.equal(writes, 1); assert.match(html, /沒有符合/);
+});
+
+test('shared player settings include both new categories while topic browsing remains host-only', () => {
+  const f = playerCard(async () => {});
+  try {
+    const cut = { ...f.payload.cut, phase: 'setup', sharedControls: true, category: 'personal' };
+    f.card.update({ ...f.payload, cut });
+    assert.match(f.element.innerHTML, /<option value="personal" selected>個人經驗/);
+    assert.match(f.element.innerHTML, /<option value="ideas">想法與喜好/);
+    assert.match(f.element.innerHTML, /<option value="mixed">全部混合/);
+    for (const category of ['personal', 'ideas']) {
+      assert.equal(f.card.canAction('configure', { speed: 'normal', category, customMinSeconds: 15, customMaxSeconds: 25 }), true);
+    }
+    assert.doesNotMatch(f.element.innerHTML, /cut-library|Browse topics|查看題庫/);
+  } finally { f.card.destroy(); }
+});
+

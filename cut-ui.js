@@ -5,7 +5,8 @@ var CUT_UI = (() => {
     intro: ['講到一半突然 CUT！下一位直接把你的半句話接下去。', 'A sudden CUT! Someone else has to finish your unfinished sentence.'],
     speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（15–25 秒）', 'Normal · 15–25 seconds'], chill: ['Chill · 輕鬆（25–40 秒）', 'Chill · 25–40 seconds'], chaos: ['Chaos · 瘋狂（8–16 秒）', 'Chaos · 8–16 seconds'], custom: ['Custom · 自訂秒數', 'Custom · Choose your seconds'],
     customMin: ['最短秒數', 'Minimum seconds'], customMax: ['最長秒數', 'Maximum seconds'], customHint: ['各填 5–120 的整秒；填相同秒數就是固定時間。', 'Use whole seconds from 5 to 120. Use the same number for a fixed time.'], customRangeError: ['請填入 5–120 的整秒，最短秒數不能大於最長秒數。', 'Use whole seconds from 5 to 120. The minimum must not exceed the maximum.'],
-    category: ['題目類型', 'Topics'], mixed: ['生活＋荒謬', 'Life + absurd situations'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'],
+    category: ['題目類型', 'Topics'], mixed: ['全部混合', 'All topics'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'], personal: ['個人經驗', 'Personal stories'], ideas: ['想法與喜好', 'Thoughts & choices'],
+    browseTopics: ['查看題庫', 'Browse topics'], libraryFilter: ['分類', 'Category'], librarySearch: ['搜尋題目或開場句', 'Search questions or opening lines'], libraryCount: ['顯示 {shown}／共 {total} 題', '{shown} of {total} topics'], libraryEmpty: ['沒有符合的題目。', 'No matching topics.'], libraryStarter: ['開場句', 'Opening line'],
     start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], beginHandoff: ['開始接話', 'Start'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
     waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
@@ -64,6 +65,14 @@ var CUT_UI = (() => {
   const countdown = (cut, now) => ['countdown', 'handoff'].includes(cut.phase)
     ? Math.max(0, Math.ceil((Number(cut.phaseUntil) - now) / 1000)) : null;
 
+  function topicLibrary(items, category = 'mixed', search = '') {
+    const rows = list(items), term = String(search || '').trim().toLocaleLowerCase();
+    const counts = { mixed: rows.length };
+    for (const row of rows) counts[row.category] = (counts[row.category] || 0) + 1;
+    const filtered = rows.filter(row => (category === 'mixed' || row.category === category) && (!term || (String(row.question || '') + ' ' + String(row.starter || '')).toLocaleLowerCase().includes(term)));
+    const html = filtered.length ? filtered.map(row => '<article class="cut-library-item"><p class="cut-library-category">' + esc(t(row.category)) + '</p><h3>' + esc(row.question) + '</h3><p class="cut-library-starter"><span>' + esc(t('libraryStarter')) + '</span> ' + esc(row.starter) + '</p></article>').join('') : '<p class="cut-soft cut-library-empty">' + esc(t('libraryEmpty')) + '</p>';
+    return { html, count: filtered.length, total: rows.length, counts };
+  }
   function scene(cut, actor = 0, now = Date.now(), { animate = true } = {}) {
     if (!cut) return '';
     const phase = cut.phase;
@@ -120,7 +129,7 @@ var CUT_UI = (() => {
     if (cut.canEndTopic) actions += button('endTopic', 'endTopic');
     if (!stopped && cut.phase !== 'setup') actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
     const options = (values, selected) => values.map(value => `<option value="${value}"${selected === value ? ' selected' : ''}>${esc(t(value))}</option>`).join('');
-    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd'], cut.category)}</select></label></div><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
+    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
     const management = (cut.phase === 'setup' ? '' : button('settings', 'settings')) + (stopped ? '' : button('restart', 'restart') + button('stop', 'stop', '', 'cut-stop'));
     return `${settings}<div class="cut-controls">${actions}</div><details class="cut-player-management" data-cut-management><summary>${esc(t('sharedManage'))}</summary><div class="cut-controls cut-management-actions">${management}</div><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
@@ -263,7 +272,7 @@ var CUT_UI = (() => {
       if (type === 'restart') return list(cut.roster).filter(p => p.active !== false).length >= 2;
       if (type === 'settings') return cut.phase !== 'setup';
       if (type === 'cancelSettings') return cut.phase === 'setup';
-      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd'].includes(extra.category) && this.validTiming(extra);
+      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd', 'personal', 'ideas'].includes(extra.category) && this.validTiming(extra);
       if (type === 'stop') return cut.phase !== 'stopped';
       if (type === 'next') return cut.phase === 'break';
       if (type === 'pause') return !['paused', 'stopped', 'setup'].includes(cut.phase);
@@ -364,6 +373,6 @@ var CUT_UI = (() => {
     }
     close() { this.silence(); this.previous = null; this.context?.close().catch(() => {}); this.context = null; }
   }
-  return { t, esc, list, name, countdown, scene, Card, Sound };
+  return { t, esc, list, name, countdown, topicLibrary, scene, Card, Sound };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_UI;

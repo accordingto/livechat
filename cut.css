@@ -33,6 +33,20 @@
 .cut-rules { padding: 6px 0 18px; }
 .cut-rules summary { color: #c8bed6; padding: 10px 0; line-height: 1.5; cursor: pointer; }
 .cut-rules p { color: #bdb8cf; line-height: 1.65; font-size: .94rem; margin: 9px 0; max-width: 68ch; }
+.cut-library { margin-top: 42px; padding-top: 8px; border-top: 1px solid #2d2a3e; color: #a6a1b5; font-size: .82rem; }
+.cut-library > summary { padding: 12px 0; cursor: pointer; }
+.cut-library-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; margin: 12px 0; }
+.cut-library .cut-field { font-size: .8rem; }
+.cut-library-count { padding: 8px 0 12px; }
+.cut-library-list { max-height: 420px; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px; border: 1px solid #302c42; border-radius: 12px; }
+.cut-library-item { padding: 16px 0; border-bottom: 1px solid #302c42; }
+.cut-library-item:last-child { border-bottom: 0; }
+.cut-library-category { color: #aaa3bc; font-size: .72rem; margin-bottom: 7px; }
+.cut-library-item h3 { color: #d8d2e1; font-size: .95rem; line-height: 1.6; font-weight: 500; overflow-wrap: anywhere; }
+.cut-library-starter { color: #b2a8bf; line-height: 1.65; margin-top: 7px; overflow-wrap: anywhere; }
+.cut-library-starter > span { color: #898397; font-size: .72rem; margin-right: 5px; }
+.cut-library-empty { padding: 18px 0; }
+.cut-library summary:focus-visible, .cut-library-list:focus-visible { outline: 3px solid #f4cf92; outline-offset: 3px; }
 .cut-kicker { color: #c5c2d5; font-size: .78rem; font-weight: 600; letter-spacing: .13em; line-height: 1.6; }
 .cut-stage { background: #13132b; border: 1px solid #34334b; border-radius: 24px; overflow: hidden; width: 100%; text-align: center; }
 .cut-topic { padding: 26px 28px; border-bottom: 1px solid #333148; background: #17162f; }
@@ -100,7 +114,7 @@ body.cut-card-page #i18n-toggle { --accent: #ff887b; }
 @keyframes cut-reveal { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (max-width: 520px) {
   .cut-panel { padding: 22px 18px; }
-  .cut-settings { grid-template-columns: 1fr; }
+  .cut-settings, .cut-library-controls { grid-template-columns: 1fr; }
   .cut-topic { padding: 22px 19px; }
   .cut-floor { min-height: 290px; padding: 30px 18px; }
   .cut-session-actions .cut-button { flex: 1; }

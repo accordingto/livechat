@@ -113,6 +113,16 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     value = await command(cut, 2, 'stop'); check(value.cut.phase === 'stopped');
     value = await command(cut, 3, 'restart'); check(value.cut.phase === 'ready' && value.cut.cutsCompleted === 0);
     value = await command(cut, 2, 'begin', { turnId: oldTurn }, 'stale_turn'); check(value.cut.phase === 'ready');
+    // Check the exact newly deployed topic data through ordinary player controls.
+    for (const category of ['personal','ideas']) {
+      await command(cut, 2, 'settings');
+      value = await command(cut, 3, 'configure', { speed:'custom', category, customMinSeconds:5, customMaxSeconds:5 });
+      check(value.cut.phase==='ready' && value.cut.category===category);
+      await command(cut, 2, 'endTopic');
+      value = await command(cut, 3, 'next');
+      const bank = require('../cut-topics.js').items;
+      check(value.cut.phase==='ready' && value.cut.topic.category===category && bank.some(topic=>topic.id===value.cut.topic.id && topic.question===value.cut.topic.question));
+    }
     const talk = fixture('letstalk', TALK, startTime); await open(talk);
     const oldCard = await card(talk, 3), oldCapsule = oldCard.hubExecutor.capsule;
     value = await command(talk, 2, 'newTopic', { confirm: true, topic: { id: 'smoke-next', question: 'Imagine a welcoming shop. What belongs inside?', followUps: ['Who visits?'] },

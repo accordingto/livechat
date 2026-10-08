@@ -1,3 +1,16 @@
+## CURRENT: CUT expanded topics — 2026-10-09
+
+CUT now has 100 simple-English topics: all original 36 everyday / 24 absurd
+prompts remain identical, plus 20 personal stories and 20 thoughts/choices.
+All topics mixes the four groups at 36/24/20/20 weights with existing recent-ID
+avoidance. Preserve original first-60 order, IDs, categories, questions and
+starters; tests/fixtures/cut-original-topics.json locks this user requirement.
+New categories are selectable in host and shared player settings; changing
+category applies to the next topic. cut.html has a collapsed bottom library
+with category and question/starter search. Browse never mutates game state.
+All CUT imports and launcher assets use cut-9. This content/engine update needs
+both independent runtime deployment and frontend publication. See cut-mode.md.
+
 ## CURRENT: Once opening variety — 2026-10-09
 
 Once has 129 original Story Cards plus 51 unchanged Endings. Fifteen new ordinary

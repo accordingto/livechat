@@ -56,3 +56,22 @@ test('CUT has accessible custom-time inputs and explicit topic-ending confirmati
   assert.match(ui, /data-cut-action/);
   assert.doesNotMatch(html, /cut-(?:vote|ballot)/);
 });
+
+
+test('host topic browser stays collapsed at the bottom and CUT caches are consistent', () => {
+  const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
+  const cards = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'cut.css'), 'utf8');
+  const section = html.match(/<details class="cut-library" id="cut-library"[^>]*>[\s\S]*?<\/details>/)?.[0];
+  assert.ok(section);
+  assert.doesNotMatch(section.split('>')[0], /\bopen\b/);
+  assert.ok(html.indexOf('id="cut-library"') > html.indexOf('id="cut-demo-link"'));
+  assert.ok(html.indexOf('id="cut-library"') < html.indexOf('</main>'));
+  for (const id of ['cut-library-category', 'cut-library-search', 'cut-library-count', 'cut-library-list']) assert.ok(section.includes('id="' + id + '"'));
+  assert.doesNotMatch(section, /<button|data-cut-action|data-cut-topic/);
+  assert.doesNotMatch(cards, /id="cut-library"|class="cut-library"/);
+  assert.match(css, /\.cut-library-list[^}]*max-height: 420px[^}]*overflow-y: auto/);
+  for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], 'cut-9', asset[1]);
+  for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
+});
+
