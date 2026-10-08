@@ -4,25 +4,60 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const crypto = require('node:crypto');
 const DECK = require('../once-upon-a-time-deck.js');
 const repoRoot = path.join(__dirname, '..');
-const categoryCounts = { character: 23, thing: 23, place: 23, aspect: 23, event: 22 };
+const categoryCounts = { character: 26, thing: 26, place: 25, aspect: 24, event: 28 };
+const storyCount = Object.values(categoryCounts).reduce((sum, count) => sum + count, 0);
+const endingCount = 51;
+const totalCount = storyCount + endingCount;
+const newStoryElements = {
+  character: ['Friend', 'Thief', 'Dog'],
+  thing: ['Key', 'Rope', 'Book'],
+  place: ['Forest', 'River'],
+  aspect: ['Happy'],
+  event: ['Rescue', 'Chase', 'Discovery', 'Quarrel', 'Laughter', 'Repair']
+};
+const addedIds = new Set(Object.entries(newStoryElements).flatMap(([category, titles]) =>
+  titles.map(title => 'once-' + category + '-' + title.toLowerCase())));
 
-test('core deck contains 114 story cards and 51 distinct endings with balanced categories', () => {
-  assert.equal(DECK.storyCards.length, 114);
-  assert.equal(DECK.endingCards.length, 51);
+test('expanded deck contains 129 story cards and 51 distinct endings with varied category totals', () => {
+  assert.equal(storyCount, 129);
+  assert.equal(DECK.storyCards.length, storyCount);
+  assert.equal(DECK.endingCards.length, endingCount);
   assert.deepEqual(DECK.categories.map(category => category.id), Object.keys(categoryCounts));
   const allCards = [...DECK.storyCards, ...DECK.endingCards];
-  assert.equal(new Set(allCards.map(card => card.id)).size, 165);
-  assert.equal(new Set(allCards.map(card => card.artKey)).size, 165);
-  assert.equal(new Set(DECK.storyCards.map(card => card.title.toLowerCase())).size, 114);
-  assert.equal(new Set(DECK.endingCards.map(card => card.text.toLowerCase())).size, 51);
+  assert.equal(new Set(allCards.map(card => card.id)).size, totalCount);
+  assert.equal(new Set(allCards.map(card => card.artKey)).size, totalCount);
+  assert.equal(new Set(DECK.storyCards.map(card => card.title.toLowerCase())).size, storyCount);
+  assert.equal(new Set(DECK.endingCards.map(card => card.text.toLowerCase())).size, endingCount);
   for (const [category, expected] of Object.entries(categoryCounts)) {
     const cards = DECK.storyCards.filter(card => card.category === category);
     assert.equal(cards.length, expected, category);
     assert.equal(cards.filter(card => card.isInterrupt).length, 4, category + ' Interrupt cards');
   }
   assert.equal(DECK.storyCards.filter(card => card.isInterrupt).length, 20);
+});
+
+test('15 original additions supply short story hooks without replacing released cards or adding Interrupts', () => {
+  assert.equal(addedIds.size, 15);
+  for (const [category, titles] of Object.entries(newStoryElements)) {
+    for (const title of titles) {
+      const id = 'once-' + category + '-' + title.toLowerCase();
+      const card = DECK.storyById[id];
+      assert.ok(card, id);
+      assert.equal(card.title, title);
+      assert.equal(card.category, category);
+      assert.equal(card.isInterrupt, false, id + ' is a normal Story card');
+    }
+  }
+  const released = DECK.storyCards.filter(card => !addedIds.has(card.id));
+  assert.equal(released.length, 114);
+  const rows = released.map(card => [card.id, card.title, card.category, card.isInterrupt,
+    card.artKey, card.imagePath, card.thumbnailPath]).sort((a, b) => a[0].localeCompare(b[0]));
+  // Snapshot of all 114 released records before this additive content update.
+  assert.equal(crypto.createHash('sha256').update(JSON.stringify(rows)).digest('hex'),
+    'af48f07cd8893a02e48a58d7d18bcba8456fc104aee7bdd65b2d45402130db2b');
 });
 
 test('every story and ending has simple English content, a stable ID and independently swappable art', () => {
@@ -100,11 +135,11 @@ test('vocabulary refresh retains legacy card identities, artwork and the origina
   }
 });
 
-test('art manifest accounts for all 165 individual reviewed meaning-matched paintings', () => {
+test('art manifest accounts for every individual reviewed meaning-matched painting', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'assets/once-upon-a-time/art-manifest.json'), 'utf8'));
   assert.equal(manifest.version, 2);
-  assert.equal(manifest.uniqueIllustrationCount, 165);
-  assert.equal(Object.keys(manifest.cards).length, 165);
+  assert.equal(manifest.uniqueIllustrationCount, totalCount);
+  assert.equal(Object.keys(manifest.cards).length, totalCount);
   assert.match(manifest.note, /meaning-matched/);
   assert.equal(manifest.mainWidth,768);assert.equal(manifest.thumbnailWidth,384);
   for (const card of [...DECK.storyCards, ...DECK.endingCards]) {
@@ -130,9 +165,9 @@ test('Story and Ending backs are distinct original navy and gold SVGs', () => {
   assert.match(backs[1], /crescent moon above a closed book/);
 });
 
-test('all165 paintings and330 main/thumbnail WebPs exist, are distinct and optimized for cards', () => {
+test('all paintings and main/thumbnail WebPs exist, are distinct and optimized for cards', () => {
   const uniquePaths = new Set([...DECK.storyCards, ...DECK.endingCards].map(card => card.imagePath));
-  assert.equal(uniquePaths.size,165);
+  assert.equal(uniquePaths.size,totalCount);
   const hashes=new Set();let totalBytes=0;
   for (const file of uniquePaths) {
     for(const [asset,expectedWidth] of [[file,768],[file.replace('.webp','-thumb.webp'),384]]){
@@ -142,17 +177,17 @@ test('all165 paintings and330 main/thumbnail WebPs exist, are distinct and optim
       assert.equal(bytes.readUInt16LE(26)&0x3fff,expectedWidth,asset);
       assert.equal(bytes.readUInt16LE(28)&0x3fff,expectedWidth*1.5,asset);
       totalBytes+=bytes.length;
-      if(expectedWidth===768)hashes.add(require('node:crypto').createHash('sha256').update(bytes).digest('hex'));
+      if(expectedWidth===768)hashes.add(crypto.createHash('sha256').update(bytes).digest('hex'));
     }
   }
-  assert.equal(hashes.size,165,'no generic or duplicated painting substitutes');
+  assert.equal(hashes.size,totalCount,'no generic or duplicated painting substitutes');
   assert.ok(totalBytes<80*1024*1024,'optimized artwork must remain under80MiB');
 });
 
 test('the same deck loads as a browser global without CommonJS', () => {
   const context = {};
   vm.runInNewContext(fs.readFileSync(path.join(repoRoot, 'once-upon-a-time-deck.js'), 'utf8'), context);
-  assert.equal(context.ONCE_DECK.storyCards.length, 114);
-  assert.equal(context.ONCE_DECK.endingCards.length, 51);
+  assert.equal(context.ONCE_DECK.storyCards.length, storyCount);
+  assert.equal(context.ONCE_DECK.endingCards.length, endingCount);
   assert.equal(context.ONCE_DECK.storyById[DECK.storyCards[0].id].title, DECK.storyCards[0].title);
 });

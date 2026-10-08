@@ -1,6 +1,6 @@
 > Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
 
-# Once Upon a Time — V2 artwork / reference table
+# Once Upon a Time — varied opening hands / V2 reference table
 
 An incremental, English storytelling card game inside IceBreak Hub. Its existing
 menu entry and private player links are retained. No existing game is replaced.
@@ -65,6 +65,12 @@ start another shuffled game once finished/cancelled.
 
 - Each player gets one private Ending and `max(5, 11 - playerCount)` Story Cards:
   9 / 8 / 7 / 6 / 5 cards for 2 / 3 / 4 / 5 / 6 players.
+- Opening hands retain at least four categories with 7–9 cards, or three with
+  5–6 cards. One category can fill at most `ceil(handCount * 0.4)` slots. The
+  seat order and physical deck are shuffled; eligible cards are taken in deck
+  order, not a fixed category recipe. No required category or Interrupt quota.
+  Later draws stay ordinary random draws. This Hub-specific opening safeguard
+  applies only to newly dealt games; saved hands are never reallocated.
 - Normal Story Cards leave the hand and appear chronologically in Story So Far.
   Players judge aloud whether the element really matters to the story.
 - A non-Storyteller can manually interrupt with a mentioned hand element. The
@@ -126,25 +132,41 @@ not an authoritative game copy. Do not screen-share private player cards.
 
 ## Deck and art
 
-All **114 original Story Cards + 51 original Endings** are in a dedicated data
+All **129 original Story Cards + 51 original Endings** are in a dedicated data
 file, with stable IDs and `artKey` / `imagePath` fields. No commercial deck or
 card-back artwork was copied. Story titles are short English fairy-tale terms.
 Interface/help follows the Hub's existing EN / Traditional Chinese switch;
 card content remains English learning material. The 2026-10-09 vocabulary refresh
 simplifies 79 titles to core depicted elements (Prince, Bottle, Bridge, Storm).
-98/114 titles are single words and 112/114 have at most two words; a small set of
+113/129 titles are single words and 127/129 have at most two words; a small set of
 fairy-tale combinations remains (Glass Knight, Golden Apple, Change of Heart).
-All card IDs, artwork, categories, 20 Interrupt flags and 51 Ending sentences
-are unchanged. Legacy slugs describe original art; they are not display titles.
+The released 114 Story records, artwork, categories, 20 Interrupt flags and 51
+Ending sentences remain unchanged. Fifteen ordinary Story Cards add flexible
+hooks: Friend, Thief, Dog, Key, Rope, Book, Forest, River, Happy, Rescue, Chase,
+Discovery, Quarrel, Laughter and Repair. They each have a matching new painting;
+none adds a special ability. Legacy slugs are art identities, not display titles.
 
 | Category | Story Cards | Special Interrupt cards (included) |
 | --- | ---: | ---: |
-| Character | 23 | 4 |
-| Thing | 23 | 4 |
-| Place | 23 | 4 |
-| Aspect | 23 | 4 |
-| Event | 22 | 4 |
-| Total | 114 | 20 |
+| Character | 26 | 4 |
+| Thing | 26 | 4 |
+| Place | 25 | 4 |
+| Aspect | 24 | 4 |
+| Event | 28 | 4 |
+| Total | 129 | 20 |
+
+Official reference, not a copied/licensed expansion: the [third-edition core
+product](https://www.atlas-games.com/product_tables/AG1030) has 114 Story and
+51 Ending cards. Counting its [official card list](https://www.atlas-games.com/pdf_storage/OUAT3CoreCardlistWEB.pdf)
+gives Character/Thing/Place/Aspect/Event totals 24/21/20/24/25. Expansion products
+each add 38 Story and 17 Ending cards, with nonidentical category proportions:
+[Enchanting Tales](https://www.atlas-games.com/product_tables/AG1032) 7/8/7/8/8,
+[Animal Tales](https://www.atlas-games.com/product_tables/AG1035) 8/8/7/8/7,
+and [Fairy Tales](https://www.atlas-games.com/product_tables/AG1036) 7/7/8/8/8.
+The [official rules](https://www.atlas-games.com/atlas-cms/resources/pdfs/ouat3rulesweb.pdf)
+shuffle Story and Interrupt together without category guarantees. Hub's soft
+opening safeguards are intentionally its own variant, not a claim about the
+official rules. No commercial illustrations or full expansion lists are used.
 
 The original three artwork references guided V2: antique-gold corner
 ornaments, parchment HTML titles, and Character gold / Thing green / Place orange /
@@ -153,7 +175,7 @@ variants share one component. The references do not change gameplay rules.
 The 2026-10-07 real-game photos now guide a quieter navy/ivory presentation,
 not new card data or replacement illustrations. Semantic artwork is unchanged.
 
-All **165 cards now have their own meaning-matched illustration**, generated
+All **180 cards now have their own meaning-matched illustration**, generated
 with the built-in image tool and visually inspected. A Glass Knight wears glass
 armour, a Broken Sword is visibly broken, Frozen depicts actual ice, and each
 Ending depicts its sentence rather than reusing a generic cottage. Full images
@@ -165,13 +187,13 @@ Every illustration has a 768px-wide WebP and a 384px-wide thumbnail. Small cards
 lazy-load the thumbnail; the full-size card component can use the main image. Print-sized
 original PNGs remain locally preserved and are not deployed. Titles, category
 labels and frame ornaments remain separate HTML/SVG, not baked into paintings.
-The complete 330-file main/thumbnail set is 46.53 MiB; a game loads only the
+The complete 360-file main/thumbnail set is 50.89 MiB; a game loads only the
 cards currently displayed, not the whole collection.
 Two original SVG backs and a new original gold-frame SVG are separate UI assets.
 No AI is called during gameplay; there is no model key, fee or new service setup.
 
 `assets/once-upon-a-time/art-manifest.json` maps all card IDs to their public
-artwork. `art-prompts.md` documents the process, and the three `art-v2-*.json`
+artwork. `art-prompts.md` documents the process, and the four `art-v2-*.json`
 files retain every exact prompt, semantic description, inspection record and
 original output path. The local-only `/once-art-gallery.html` route displays the
 public card pool for visual QA, never real players' private hands or assignments.
@@ -183,7 +205,7 @@ public card pool for visual QA, never real players' private hands or assignments
 - `once-upon-a-time-sync.js`: adapter using the existing Hub transactions/lease.
 - `once-upon-a-time-ui.js`: cards, table, confirmations, own-card actions, I18N.
 - `once-upon-a-time-host.js`, `.html`, `.css`: host integration/responsive shell.
-- `assets/once-upon-a-time/`: 165 meaning-matched paintings with thumbnails,
+- `assets/once-upon-a-time/`: 180 meaning-matched paintings with thumbnails,
   two backs, gold-frame ornament, public manifest and prompt provenance.
 - `index.html`: appends the final game entry; no unrelated entries removed.
 - `play.html`: adds the Once renderer and own-token command mailbox; old game
@@ -465,3 +487,39 @@ Executed verification:
 - Local phone/desktop screenshots inspected. Browser tests use isolated,
   explicitly synthetic demo/fixtures with room traffic blocked; physical phones,
   Safari/Firefox and live-device multiplayer are not retested in this update.
+
+## Flexible story elements and opening variety (2026-10-09)
+
+Fifteen original ordinary Story Cards expand the pool from 114 to 129. The
+category totals are 26/26/25/24/28, not equal quotas. The existing 20 special
+Interrupts, 51 Endings, starter selection, hand counts and all later play/draw/
+vote rules are retained. Existing dealt sessions retain their saved physical
+decks and private hands; new cards and opening safeguards start at the next deal.
+
+The guardrail keeps 4/4/4/3/3 categories minimum and 4/4/3/3/2 single-category
+maximum for 2/3/4/5/6 players. Random seat order and first-eligible physical cards
+preserve nonidentical compositions and the relative random order of untouched
+cards. No seat is promised an action/character/Interrupt quota.
+
+Executed verification:
+
+- Focused Once + Story-service + game-switch regression: **173/173**.
+- 10,000 seeded deals / 40,000 hands: every opening meets both safeguards;
+  category compositions and Interrupt counts still vary. This tests starting
+  variety, not human storytelling enjoyment or competitive balance.
+- Independent old-save comparison: 1,895 later actions, including reshuffles,
+  and 276 public/private projections match the released engine. The released
+  114 Story records and all 51 Endings are identical.
+- Five fresh-profile Chrome synthetic complete games, widths 320/375/390/800/
+  1280; all 180 card texts fit at 320/375. Loaded unchanged images stay mounted.
+- Live Firebase: six isolated original-seat credentials receive their own
+  varied hands; simultaneous requests, interruption/dispute rollback, ballots,
+  Ending result, host replacement, reconnect and restart all pass. Only the
+  seven newly created temporary token paths were used and cleaned.
+- The live harness now supports Firebase `once('value')`. Once also disables
+  the inherited Crazy Talk timer, without loading or altering that other game.
+- The new paintings were independently generated with imagegen and individually
+  visually reviewed. Exact prompts, saved source/output paths and reviews are
+  in `assets/once-upon-a-time/art-v2-flexible-elements.json`.
+- Physical phones, Safari/Firefox and live human gameplay balance are not
+  verified by these automation checks. Host/player pages need one refresh.

@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "uniqueIllustrationCount": 165,
-  "note": "165 individually generated, visually reviewed meaning-matched paintings. Each has an optimized main image and mobile thumbnail. Original PNGs are preserved locally; all card text and frames remain HTML/SVG.",
+  "uniqueIllustrationCount": 180,
+  "note": "180 individually generated, visually reviewed meaning-matched paintings. Each has an optimized main image and mobile thumbnail. Original PNGs are preserved locally; all card text and frames remain HTML/SVG.",
   "generator": "built-in image_gen",
   "mainWidth": 768,
   "thumbnailWidth": 384,
@@ -167,6 +167,27 @@
       "status": "semantic-illustration",
       "semanticDescription": "An elderly crowned king dozes on a carved throne, eyes fully closed, head tilted and relaxed hands, royal red mantle. Gentle humorous sleepy mood, no danger."
     },
+    "once-character-friend": {
+      "artKey": "story.character.friend",
+      "imagePath": "assets/once-upon-a-time/character/friend-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/friend-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "FRIEND: two adult traveling companions in plain fairy-tale clothing, one warmly offering a hand to the other as they sit together sharing bread on a low stone wall, friendly trust and supportive companionship, no romance."
+    },
+    "once-character-thief": {
+      "artKey": "story.character.thief",
+      "imagePath": "assets/once-upon-a-time/character/thief-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/thief-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "THIEF: a furtive adult figure in a simple dark cloak discreetly slipping a small coin pouch from a distracted merchant's belt into their own hand in a village market, sneaky action unmistakable, no violence, no weapons."
+    },
+    "once-character-dog": {
+      "artKey": "story.character.dog",
+      "imagePath": "assets/once-upon-a-time/character/dog-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/dog-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "DOG: one friendly brown-and-white dog with floppy ears and a clearly canine muzzle sits alert in a village garden by an old wooden gate, dog large central and full body recognizable."
+    },
     "once-thing-silver-needle": {
       "artKey": "story.thing.silver-needle",
       "imagePath": "assets/once-upon-a-time/thing/silver-needle-v2.webp",
@@ -327,6 +348,27 @@
       "thumbnailPath": "assets/once-upon-a-time/thing/pearl-v2-thumb.webp",
       "status": "semantic-illustration",
       "semanticDescription": "One luminous white pearl rests inside an open oyster shell on a smooth coastal rock, subtle iridescence and clear round shape dominant. Gentle sea light, no pearl necklace."
+    },
+    "once-thing-key": {
+      "artKey": "story.thing.key",
+      "imagePath": "assets/once-upon-a-time/thing/key-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/key-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "KEY: one large ornate brass key with its bow, shaft and unmistakable toothed end resting diagonally on a dark wooden tabletop, tactile antique metal, a closed wooden door softly blurred behind, no other dominant object."
+    },
+    "once-thing-rope": {
+      "artKey": "story.thing.rope",
+      "imagePath": "assets/once-upon-a-time/thing/rope-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/rope-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "ROPE: a thick coil of natural hemp rope, one end running free and another with a simple visible knot, resting on a wooden dock, clearly textured fibers, rope fills the central portrait, no snake or chains."
+    },
+    "once-thing-book": {
+      "artKey": "story.thing.book",
+      "imagePath": "assets/once-upon-a-time/thing/book-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/book-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "BOOK: one well-used leather-bound storybook resting open on a rustic wooden desk in a cozy old cottage, visible spine and thick cream pages with NO legible writing or letters, warm window light, the book unmistakably main subject."
     },
     "once-place-thorn-garden": {
       "artKey": "story.place.thorn-garden",
@@ -489,6 +531,20 @@
       "status": "semantic-illustration",
       "semanticDescription": "A cozy wooden house built high among the branches of a huge living tree, visible sturdy platform and rope ladder reaching ground; tree house is unmistakable."
     },
+    "once-place-forest": {
+      "artKey": "story.place.forest",
+      "imagePath": "assets/once-upon-a-time/place/forest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/forest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "FOREST: a dense lush fairy-tale forest of tall old trees, thick canopy, moss, ferns and a narrow winding footpath into the trees, sunlight shafts, no buildings or people, trees and woodland cover most of image."
+    },
+    "once-place-river": {
+      "artKey": "story.place.river",
+      "imagePath": "assets/once-upon-a-time/place/river-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/river-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "RIVER: a broad winding flowing river seen between green wooded banks and distant hills, clear water current in foreground, small rocks and reeds, sparkling sunlight, no dominant bridge or boat, river unmistakably main subject."
+    },
     "once-aspect-invisible": {
       "artKey": "story.aspect.invisible",
       "imagePath": "assets/once-upon-a-time/aspect/invisible-v2.webp",
@@ -650,6 +706,13 @@
       "status": "semantic-illustration",
       "semanticDescription": "A hungry medieval traveler at a wooden table stares longingly at an empty wooden bowl, one hand holding their stomach and the other a spoon; hungry hopeful face and empty plate central, no feast."
     },
+    "once-aspect-happy": {
+      "artKey": "story.aspect.happy",
+      "imagePath": "assets/once-upon-a-time/aspect/happy-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/happy-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "HAPPY: a single cheerful adult village traveler with a broad joyful smile and bright welcoming eyes in a sunlit flower garden, relaxed open posture, emotion unmistakable in central visible face, no dramatic action or crowd."
+    },
     "once-event-unexpected-guest": {
       "artKey": "story.event.unexpected-guest",
       "imagePath": "assets/once-upon-a-time/event/unexpected-guest-v2.webp",
@@ -803,6 +866,48 @@
       "thumbnailPath": "assets/once-upon-a-time/event/hidden-truth-v2-thumb.webp",
       "status": "semantic-illustration",
       "semanticDescription": "A Hidden Truth: a medieval investigator pulls a dark cloth off a concealed portrait showing the same royal face as a surprised common traveler standing beside it, a discovered identity revealed through image not text."
+    },
+    "once-event-rescue": {
+      "artKey": "story.event.rescue",
+      "imagePath": "assets/once-upon-a-time/event/rescue-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/rescue-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A traveler pulls another stranded traveler from a rocky woodland stream onto the safe bank."
+    },
+    "once-event-chase": {
+      "artKey": "story.event.chase",
+      "imagePath": "assets/once-upon-a-time/event/chase-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/chase-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "CHASE: a cloak-wearing traveler running along a village lane while another traveler clearly pursues just behind, lively safe nonviolent chase, movement readable, no weapons."
+    },
+    "once-event-discovery": {
+      "artKey": "story.event.discovery",
+      "imagePath": "assets/once-upon-a-time/event/discovery-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/discovery-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "DISCOVERY: a curious traveler kneeling in a forest clearing uncovering a small glowing jewel under an overturned stone, surprised expression, discovery action and revealed object clear."
+    },
+    "once-event-quarrel": {
+      "artKey": "story.event.quarrel",
+      "imagePath": "assets/once-upon-a-time/event/quarrel-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/quarrel-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "QUARREL: two village neighbors facing each other, expressive frowns and raised gesturing hands as they argue beside a wooden fence, no violence, no text speech bubbles."
+    },
+    "once-event-laughter": {
+      "artKey": "story.event.laughter",
+      "imagePath": "assets/once-upon-a-time/event/laughter-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/laughter-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "LAUGHTER: three friends in simple fairy-tale village clothing around a table, clearly laughing with joyful open mouths, crinkled eyes and delighted gestures, no alcohol focus."
+    },
+    "once-event-repair": {
+      "artKey": "story.event.repair",
+      "imagePath": "assets/once-upon-a-time/event/repair-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/repair-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "REPAIR: a village craftsperson crouches beside a wooden cart, fitting a replacement spoke into its clearly damaged wheel using a small wooden mallet; practical fixing action is the focal subject, no magic."
     },
     "once-ending-shared-table": {
       "artKey": "ending.shared-table",

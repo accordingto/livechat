@@ -74,6 +74,9 @@ var ONCE_SYNC = (() => {
         }
       };
     }
+    // Reuse the transport/lease, never the other game's scheduled prompts.
+    // Once does not load TALK_ENGINE or have a Crazy Talk phase.
+    tickCrazy() { return false; }
     async readCards(players = Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1 }))) {
       const snapshots = await Promise.all(players.map(async player => {
         const ref = this.room.playerRef(player.playerNum - 1);

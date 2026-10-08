@@ -1,0 +1,157 @@
+{
+  "version": 2,
+  "tool": "built-in image_gen",
+  "note": "15 independently generated original, visually reviewed story-element paintings. No runtime AI or commercial card artwork.",
+  "entries": [
+    {
+      "id": "once-event-rescue",
+      "imagePath": "assets/once-upon-a-time/event/rescue-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/rescue-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/event/rescue-v2.png",
+      "semanticDescription": "A traveler pulls another stranded traveler from a rocky woodland stream onto the safe bank.",
+      "prompt": "Use case: illustration-story. Asset type: one original portrait painting for an English storytelling card game, full-bleed artwork without any card frame. Primary request: RESCUE, a traveler at the edge of a rocky woodland stream extending a hand and pulling another stranded traveler up onto the safe bank, with a visibly reassuring helpful action. Subject/action unmistakable even at a 128px thumbnail. Style: rich painterly old fairy-tale storybook, natural anatomy, textured gouache/oil wash, warm golden light, deep forest greens and navy shadows, detailed but uncluttered. Composition: 2:3 vertical portrait, central action and both clasped hands within the central crop, feet and stream readable. No text, typography, numbers, labels, logos, frame, panel grid, or watermark. Original design, not an imitation of any named artist or commercial card.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-ff55a617-4c91-4470-8c1c-4734dee972de.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-event-chase",
+      "imagePath": "assets/once-upon-a-time/event/chase-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/chase-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/event/chase-v2.png",
+      "semanticDescription": "CHASE: a cloak-wearing traveler running along a village lane while another traveler clearly pursues just behind, lively safe nonviolent chase, movement readable, no weapons.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal action unmistakable at128px, important faces and hands inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: CHASE: a cloak-wearing traveler running along a village lane while another traveler clearly pursues just behind, lively safe nonviolent chase, movement readable, no weapons.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-0af1b183-8dd6-481c-8706-a52b66e4ad62.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-event-discovery",
+      "imagePath": "assets/once-upon-a-time/event/discovery-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/discovery-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/event/discovery-v2.png",
+      "semanticDescription": "DISCOVERY: a curious traveler kneeling in a forest clearing uncovering a small glowing jewel under an overturned stone, surprised expression, discovery action and revealed object clear.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal action unmistakable at128px, important faces and hands inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: DISCOVERY: a curious traveler kneeling in a forest clearing uncovering a small glowing jewel under an overturned stone, surprised expression, discovery action and revealed object clear.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-a4e45a50-a60d-4206-862a-2f354fbd5747.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-event-quarrel",
+      "imagePath": "assets/once-upon-a-time/event/quarrel-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/quarrel-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/event/quarrel-v2.png",
+      "semanticDescription": "QUARREL: two village neighbors facing each other, expressive frowns and raised gesturing hands as they argue beside a wooden fence, no violence, no text speech bubbles.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal action unmistakable at128px, important faces and hands inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: QUARREL: two village neighbors facing each other, expressive frowns and raised gesturing hands as they argue beside a wooden fence, no violence, no text speech bubbles.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-4b90fcc8-9701-4bee-8ef6-2ce706b40085.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-event-laughter",
+      "imagePath": "assets/once-upon-a-time/event/laughter-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/laughter-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/event/laughter-v2.png",
+      "semanticDescription": "LAUGHTER: three friends in simple fairy-tale village clothing around a table, clearly laughing with joyful open mouths, crinkled eyes and delighted gestures, no alcohol focus.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal action unmistakable at128px, important faces and hands inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: LAUGHTER: three friends in simple fairy-tale village clothing around a table, clearly laughing with joyful open mouths, crinkled eyes and delighted gestures, no alcohol focus.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-1d418a97-49f3-4099-9925-28dcd38cecc8.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-event-repair",
+      "imagePath": "assets/once-upon-a-time/event/repair-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/repair-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/event/repair-v2.png",
+      "semanticDescription": "REPAIR: a village craftsperson crouches beside a wooden cart, fitting a replacement spoke into its clearly damaged wheel using a small wooden mallet; practical fixing action is the focal subject, no magic.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: REPAIR: a village craftsperson crouches beside a wooden cart, fitting a replacement spoke into its clearly damaged wheel using a small wooden mallet; practical fixing action is the focal subject, no magic.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-050bd602-47d1-495b-9657-81fcd5ab7e3e.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-character-friend",
+      "imagePath": "assets/once-upon-a-time/character/friend-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/friend-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/character/friend-v2.png",
+      "semanticDescription": "FRIEND: two adult traveling companions in plain fairy-tale clothing, one warmly offering a hand to the other as they sit together sharing bread on a low stone wall, friendly trust and supportive companionship, no romance.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: FRIEND: two adult traveling companions in plain fairy-tale clothing, one warmly offering a hand to the other as they sit together sharing bread on a low stone wall, friendly trust and supportive companionship, no romance.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-cafaee9f-5144-4acc-8450-5912b1e2da93.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-character-thief",
+      "imagePath": "assets/once-upon-a-time/character/thief-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/thief-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/character/thief-v2.png",
+      "semanticDescription": "THIEF: a furtive adult figure in a simple dark cloak discreetly slipping a small coin pouch from a distracted merchant's belt into their own hand in a village market, sneaky action unmistakable, no violence, no weapons.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: THIEF: a furtive adult figure in a simple dark cloak discreetly slipping a small coin pouch from a distracted merchant's belt into their own hand in a village market, sneaky action unmistakable, no violence, no weapons.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-0fd25211-6b6e-49a6-a2c8-01071c83430c.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-character-dog",
+      "imagePath": "assets/once-upon-a-time/character/dog-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/dog-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/character/dog-v2.png",
+      "semanticDescription": "DOG: one friendly brown-and-white dog with floppy ears and a clearly canine muzzle sits alert in a village garden by an old wooden gate, dog large central and full body recognizable.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: DOG: one friendly brown-and-white dog with floppy ears and a clearly canine muzzle sits alert in a village garden by an old wooden gate, dog large central and full body recognizable.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-19c1b643-8c75-4192-bcb0-75015954aab7.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-thing-key",
+      "imagePath": "assets/once-upon-a-time/thing/key-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/key-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/thing/key-v2.png",
+      "semanticDescription": "KEY: one large ornate brass key with its bow, shaft and unmistakable toothed end resting diagonally on a dark wooden tabletop, tactile antique metal, a closed wooden door softly blurred behind, no other dominant object.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: KEY: one large ornate brass key with its bow, shaft and unmistakable toothed end resting diagonally on a dark wooden tabletop, tactile antique metal, a closed wooden door softly blurred behind, no other dominant object.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-02c00fb5-4cce-412a-b55e-cc58e2b2972e.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-thing-rope",
+      "imagePath": "assets/once-upon-a-time/thing/rope-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/rope-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/thing/rope-v2.png",
+      "semanticDescription": "ROPE: a thick coil of natural hemp rope, one end running free and another with a simple visible knot, resting on a wooden dock, clearly textured fibers, rope fills the central portrait, no snake or chains.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: ROPE: a thick coil of natural hemp rope, one end running free and another with a simple visible knot, resting on a wooden dock, clearly textured fibers, rope fills the central portrait, no snake or chains.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-825af625-dcb1-405f-882a-218a37bd3406.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-thing-book",
+      "imagePath": "assets/once-upon-a-time/thing/book-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/book-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/thing/book-v2.png",
+      "semanticDescription": "BOOK: one well-used leather-bound storybook resting open on a rustic wooden desk in a cozy old cottage, visible spine and thick cream pages with NO legible writing or letters, warm window light, the book unmistakably main subject.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: BOOK: one well-used leather-bound storybook resting open on a rustic wooden desk in a cozy old cottage, visible spine and thick cream pages with NO legible writing or letters, warm window light, the book unmistakably main subject.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-7693b29a-8f39-4cf9-8201-5223fc9917e3.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-place-forest",
+      "imagePath": "assets/once-upon-a-time/place/forest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/forest-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/place/forest-v2.png",
+      "semanticDescription": "FOREST: a dense lush fairy-tale forest of tall old trees, thick canopy, moss, ferns and a narrow winding footpath into the trees, sunlight shafts, no buildings or people, trees and woodland cover most of image.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: FOREST: a dense lush fairy-tale forest of tall old trees, thick canopy, moss, ferns and a narrow winding footpath into the trees, sunlight shafts, no buildings or people, trees and woodland cover most of image.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-d81683cc-cfc6-41c7-a514-04deb40aaa6f.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-place-river",
+      "imagePath": "assets/once-upon-a-time/place/river-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/river-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/place/river-v2.png",
+      "semanticDescription": "RIVER: a broad winding flowing river seen between green wooded banks and distant hills, clear water current in foreground, small rocks and reeds, sparkling sunlight, no dominant bridge or boat, river unmistakably main subject.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: RIVER: a broad winding flowing river seen between green wooded banks and distant hills, clear water current in foreground, small rocks and reeds, sparkling sunlight, no dominant bridge or boat, river unmistakably main subject.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-4c40de5d-e980-49b1-9961-bd3470c00878.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    },
+    {
+      "id": "once-aspect-happy",
+      "imagePath": "assets/once-upon-a-time/aspect/happy-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/happy-v2-thumb.webp",
+      "sourceImagePath": "assets/once-upon-a-time/aspect/happy-v2.png",
+      "semanticDescription": "HAPPY: a single cheerful adult village traveler with a broad joyful smile and bright welcoming eyes in a sunlit flower garden, relaxed open posture, emotion unmistakable in central visible face, no dramatic action or crowd.",
+      "prompt": "Use case: illustration-story. Asset type: one original full-bleed fairy-tale card painting, no card frame. Style: lush painterly classical storybook realism, textured gouache/oil, golden light, rich forest green and navy shadows, natural anatomy and tactile detail, coherent with premium ivory-frame fairy-tale cards. Composition: one 2:3 vertical portrait, simple central focal subject unmistakable at128px, important faces/hands/objects inside middle80%, uncluttered background. Constraints: original scene, no named-artist imitation, no commercial artwork, no text, lettering, numbers, UI, labels, borders, panel grid, logos or watermark. Primary request: HAPPY: a single cheerful adult village traveler with a broad joyful smile and bright welcoming eyes in a sunlit flower garden, relaxed open posture, emotion unmistakable in central visible face, no dramatic action or crowd.",
+      "originalOutput": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-5ad9557f-cb60-4214-8701-05881605e2ae.png",
+      "inspection": "Individually visually reviewed: central subject matches the short English card title, with no generated text or frame."
+    }
+  ]
+}

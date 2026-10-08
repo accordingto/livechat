@@ -2,8 +2,10 @@
 
 ## V2 — individual meaning-matched paintings (2026-10-05)
 
-The current deck uses **165 distinct original illustrations**, not category
-fallbacks: 114 Story Cards and 51 Endings. Each was generated separately with
+The current deck uses **180 distinct original illustrations**, not category
+fallbacks: 129 Story Cards and 51 Endings. The 2026-10-09 expansion adds 15
+literal paintings of common, flexible story elements; the previous 165 are
+unchanged. Each was generated separately with
 the built-in `image_gen` tool, then visually inspected against its English title
 or full Ending sentence. The three user-supplied reference images informed the
 fairy-tale painting and ornate gold-frame presentation. No commercial card scan
@@ -15,6 +17,7 @@ paths and native generated output paths are preserved in:
 - [Character, Thing and first nine Endings](art-v2-character-thing.json)
 - [Place, Aspect and next nine Endings](art-v2-place-aspect.json)
 - [Event and remaining Endings](art-v2-event-ending.json)
+- [15 flexible story elements added 2026-10-09](art-v2-flexible-elements.json)
 
 Current deployable paths are
 `assets/once-upon-a-time/<category>/<slug>-v2.webp` (768px width) and

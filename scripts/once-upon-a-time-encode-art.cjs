@@ -17,7 +17,7 @@ const sharp=process.env.ONCE_SHARP_PATH?require(process.env.ONCE_SHARP_PATH):req
     }
   }
   console.log(`Encoded ${converted} matching paintings, main + thumbnail: ${(bytes/1024/1024).toFixed(2)} MiB. Original PNGs preserved.`);
-  const records=['character-thing','place-aspect','event-ending'].flatMap(group=>{
+  const records=['character-thing','place-aspect','event-ending','flexible-elements'].flatMap(group=>{
     const file=path.join(assetDir,'art-v2-'+group+'.json');
     if(!fs.existsSync(file))return [];
     const source=JSON.parse(fs.readFileSync(file,'utf8'));return source.entries||source.assets||[];
@@ -35,6 +35,6 @@ const sharp=process.env.ONCE_SHARP_PATH?require(process.env.ONCE_SHARP_PATH):req
     cards[card.id]={artKey:card.artKey,imagePath:card.imagePath,thumbnailPath:card.thumbnailPath,status:'semantic-illustration',semanticDescription};
   }
   // Mechanical build of a public deployment manifest from reviewed art records.
-  fs.writeFileSync(path.join(assetDir,'art-manifest.json'),JSON.stringify({version:2,uniqueIllustrationCount:165,note:'165 individually generated, visually reviewed meaning-matched paintings. Each has an optimized main image and mobile thumbnail. Original PNGs are preserved locally; all card text and frames remain HTML/SVG.',generator:'built-in image_gen',mainWidth:768,thumbnailWidth:384,cards},null,2)+'\n');
-  console.log('Complete semantic art manifest built: 165/165.');
+  fs.writeFileSync(path.join(assetDir,'art-manifest.json'),JSON.stringify({version:2,uniqueIllustrationCount:all.length,note:all.length+' individually generated, visually reviewed meaning-matched paintings. Each has an optimized main image and mobile thumbnail. Original PNGs are preserved locally; all card text and frames remain HTML/SVG.',generator:'built-in image_gen',mainWidth:768,thumbnailWidth:384,cards},null,2)+'\n');
+  console.log('Complete semantic art manifest built: '+all.length+'/'+all.length+'.');
 })().catch(error=>{console.error(error.message);process.exitCode=1;});

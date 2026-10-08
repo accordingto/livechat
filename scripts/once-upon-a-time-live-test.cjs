@@ -57,6 +57,11 @@ function compatibilityDatabase() {
       const info = path === '.info/connected' || path === '.info/serverTimeOffset';
       if (!info) check(path);
       return {
+        async once(event) {
+          assert.equal(event, 'value');
+          if (info) return snap(path === '.info/connected' ? true : 0);
+          return tracked(async () => snap((await store.get(path)).value));
+        },
         on(event, callback, error) {
           assert.equal(event, 'value');
           if (info) { queueMicrotask(() => callback(snap(path === '.info/connected' ? true : 0))); return; }
@@ -167,8 +172,8 @@ async function main() {
     const value = await card(seat), serialized = JSON.stringify(value);
     assert.equal(value.once.hand.length, 5); assert.equal(value.once.ending.id, first.doc.state.endings[seat]);
     for (let other = 1; other <= 6; other++) if (other !== seat) {
-      first.doc.state.hands[other].forEach(id => assert.equal(serialized.includes(id), false));
-      assert.equal(serialized.includes(first.doc.state.endings[other]), false);
+      first.doc.state.hands[other].forEach(id => assert.equal(serialized.includes(JSON.stringify(id)), false));
+      assert.equal(serialized.includes(JSON.stringify(first.doc.state.endings[other])), false);
       assert.equal(serialized.includes(playerTokens[other - 1]), false);
     }
     assert.equal(serialized.includes(control), false);

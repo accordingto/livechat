@@ -13,6 +13,8 @@
   // Most titles are flexible, familiar story elements rather than a prescribed
   // character description. A small set of fairy-tale twists keeps the deck varied.
   // Legacy slugs stay stable for saved games and still use their literal artwork.
+  // Original additions favor broad actions and reusable story hooks; category
+  // totals need not match. Existing cards and Interrupt flags remain unchanged.
   const assetRoot = 'assets/once-upon-a-time/';
   const categories = Object.freeze([
     { id: 'character', label: 'Character', color: '#d4af37', iconKey: 'crown' },
@@ -46,7 +48,10 @@
       ['travelling-judge', 'Judge', false],
       ['talking-hare', 'Talking Hare', false],
       ['poor-tailor', 'Tailor', false],
-      ['sleepy-king', 'King', false]
+      ['sleepy-king', 'King', false],
+      ['friend', 'Friend', false],
+      ['thief', 'Thief', false],
+      ['dog', 'Dog', false]
     ]],
     ['thing', [
       ['silver-needle', 'Needle', true],
@@ -71,7 +76,10 @@
       ['bread-basket', 'Bread', false],
       ['spinning-wheel', 'Spinning Wheel', false],
       ['pocket-watch', 'Watch', false],
-      ['pearl', 'Pearl', false]
+      ['pearl', 'Pearl', false],
+      ['key', 'Key', false],
+      ['rope', 'Rope', false],
+      ['book', 'Book', false]
     ]],
     ['place', [
       ['thorn-garden', 'Garden', true],
@@ -96,7 +104,9 @@
       ['golden-hall', 'Hall', false],
       ['crossroads', 'Crossroads', false],
       ['abandoned-chapel', 'Chapel', false],
-      ['tree-house', 'Tree House', false]
+      ['tree-house', 'Tree House', false],
+      ['forest', 'Forest', false],
+      ['river', 'River', false]
     ]],
     ['aspect', [
       ['invisible', 'Invisible', true],
@@ -121,7 +131,8 @@
       ['broken', 'Broken', false],
       ['patient', 'Patient', false],
       ['beautiful', 'Beautiful', false],
-      ['hungry', 'Hungry', false]
+      ['hungry', 'Hungry', false],
+      ['happy', 'Happy', false]
     ]],
     ['event', [
       ['unexpected-guest', 'Arrival', true],
@@ -145,7 +156,13 @@
       ['trade', 'Trade', false],
       ['return', 'Return', false],
       ['door-opens', 'Door Opens', false],
-      ['hidden-truth', 'Secret Revealed', false]
+      ['hidden-truth', 'Secret Revealed', false],
+      ['rescue', 'Rescue', false],
+      ['chase', 'Chase', false],
+      ['discovery', 'Discovery', false],
+      ['quarrel', 'Quarrel', false],
+      ['laughter', 'Laughter', false],
+      ['repair', 'Repair', false]
     ]]
   ];
 

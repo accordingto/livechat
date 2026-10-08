@@ -162,10 +162,10 @@ const proof=process.env.ONCE_UI_PROOF_DIR;
       const endings=deck.endingCards.map(c=>'<details class="once-panel once-ending-dock" open><summary>Your ending</summary><div class="once-ending-content">'+ui.cardHTML(c,'ending')+'</div></details>').join('');
       await page.setContent('<!doctype html><html><head><base href="'+base+'"><link rel="stylesheet" href="shared.css"><link rel="stylesheet" href="once-upon-a-time.css"></head><body class="once-card-page"><div id="content"><div class="once-game once-game--reference"><div class="once-panel"><div class="once-history once-history-latest">'+cards+'</div></div>'+endings+'</div></div></body></html>',{waitUntil:'load'});
       const clipped=await page.locator('.once-card-title').evaluateAll(elements=>elements.filter(el=>el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1).map(el=>el.textContent));
-      assert.deepEqual(clipped,[],width+'px: all 114 Story titles and 51 Ending sentences fit');
+      assert.deepEqual(clipped,[],width+'px: all '+deck.storyCards.length+' Story titles and '+deck.endingCards.length+' Ending sentences fit');
       await context.close();
     }
     console.log(JSON.stringify(reports.map(r=>({width:r.width,height:r.height,storyHeight:r.story.height,storyToHandGap:r.hand.top-r.story.bottom,handCard:[r.handCard.width,r.handCard.height],overflow:r.overflow})),null,2));
-    console.log('ONCE BROWSER UI: 5 viewport layouts, portrait chronological phone tables, default-visible Endings, 5 complete synthetic games, all165 card texts at320/375px passed');
+    console.log('ONCE BROWSER UI: 5 viewport layouts, portrait chronological phone tables, default-visible Endings, 5 complete synthetic games, all'+(deck.storyCards.length+deck.endingCards.length)+' card texts at320/375px passed');
   }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

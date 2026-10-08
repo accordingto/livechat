@@ -105,6 +105,30 @@ var ONCE_ENGINE = (() => {
     log(s, cmd, 'draw', name(s, actor) + ' drew ' + ids.length + ' Story Card' + (ids.length === 1 ? '.' : 's.'));
     return ids;
   }
+  function dealOpeningHands(s, count, cmd) {
+    // This is a light opening-hand safeguard, not five equal category quotas.
+    // Pick the first eligible physical card from the genuinely shuffled deck;
+    // the untouched remainder keeps its random order for all later draws.
+    const minimumKinds = count >= 7 ? 4 : 3;
+    const categoryCap = Math.ceil(count * 0.4);
+    const seats = randomize(s, s.roster.map(player => player.playerNum), cmd, 'opening-seats');
+    const counts = Object.fromEntries(seats.map(seat => [seat, {}]));
+    for (const seat of seats) s.hands[seat] = [];
+    for (let round = 0; round < count; round++) for (const seat of seats) {
+      const kinds = counts[seat], slotsAfter = count - round - 1;
+      const index = s.storyDeck.findIndex(id => {
+        const category = storyById[id].category, already = kinds[category] || 0;
+        return already < categoryCap && Object.keys(kinds).length + (already ? 0 : 1) + slotsAfter >= minimumKinds;
+      });
+      // A smaller future authored pool must not clone cards or block dealing.
+      // The normal complete deck always supplies an eligible category.
+      const cardId = s.storyDeck.splice(index < 0 ? 0 : index, 1)[0];
+      if (!cardId) continue;
+      s.hands[seat].push(cardId);
+      const category = storyById[cardId].category;
+      kinds[category] = (kinds[category] || 0) + 1;
+    }
+  }
   function releaseHeld(s) { s.storyDiscard.push(...s.storyHeld); s.storyHeld = []; }
   function closeOpportunities(s, keepLatest = false) {
     s.categoryOpportunity = null; s.interrupt = null;
@@ -212,8 +236,8 @@ var ONCE_ENGINE = (() => {
         s.storyDeck = randomize(s, storyCards.map(card => card.id), cmd, 'story-deal');
         s.endingDeck = randomize(s, endingCards.map(card => card.id), cmd, 'ending-deal');
         const count = Math.max(5, 11 - s.roster.length);
+        dealOpeningHands(s, count, cmd);
         for (const player of s.roster) {
-          s.hands[player.playerNum] = draw(s, 'story', count, cmd);
           s.endings[player.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
         }
         s.starterCard = draw(s, 'story', 1, cmd)[0]; s.storyDiscard.push(s.starterCard);
