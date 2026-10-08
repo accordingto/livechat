@@ -21,6 +21,17 @@ retaining unrelated service functions, settings and the stable Production secret
 Preserve the latest Talk timed mission release when deploying the whole runtime.
 Both independent service deployment and frontend publication are required.
 Full regression after integrating the latest Talk release: 1297/1297 passed.
+Production service deployment dpl_A3tfDEDkEDuhtu6CWZ88Cpr77MXR is READY;
+actual response confirms sin1. Frontend release 91c58d3 matches all 45/45 assets;
+health/CORS, invalid-ticket rejection and blocked runtime URLs pass. One fresh
+three-player real-service profile passes 44/44: first opening 7.7s -> 2.2s,
+reconnect 4.8s -> 0.7s, host poll 3.8s -> 0.12s. Registration RPC 4.26s -> 0.23s,
+actual start command 3.50s -> 0.20s. Reconnect/poll perform zero execute RPCs;
+commands still execute once. Exact cleanup tracked 13 disposable nodes, deleted
+11 nonempty owned nodes, found 2 empty, and had zero failures. These are single
+synthetic-room flow measurements, not a promise for every network/browser load.
+The approved service source retains its Hub-only Singapore region for later
+search deployments; its stable Production secret was unchanged.
 
 ## CURRENT: Bluff host synchronization timeout — 2026-10-09
 
