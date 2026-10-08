@@ -85,10 +85,20 @@ on a proposal, rather than interview each person about private experiences.
 Keep all 96 stable topic IDs and 13 category IDs. Both original 48 topics and
 48 Chat Wolf-derived topics receive new wording. Adapted topics keep their
 sourceTopicId trace and use source='chatwolf-adapted'; Talk remains independent
-of Chat Wolf roles, secret missions and runtime. All main questions are at most 26 words; explanations at most 26 words.
+of Chat Wolf roles, secret missions and runtime. All main questions and
+explanations are at most 26 words.
 The 672 main/follow-up questions are distinct and invite shared decisions,
 reactions and building on proposals. Content changes do not alter conversation
 modes, their defaults or Crazy Talk scheduling.
+
+Topic revision verification: all 1298 project tests passed after integrating
+current Bluff changes. Real Chrome on localhost and production verified six
+preview samples, scenario-first random draws, eighth follow-up selection,
+shared player topics/participants in both Talk modes, free conversation,
+375px/320px layouts without overflow and zero page errors. Production assets
+matched Talk 17/17 and full-site 45/45, with API readiness and runtime privacy
+checks passing. Content and browser changes published; backend unchanged.
+Existing active topics remain saved until explicit newTopic.
 
 Let's Talk / Crazy Talk use a cream topic card, compact state and participant
 roster, with speaking/question requests removed. Homepage preferences persist
