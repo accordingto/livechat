@@ -8,15 +8,17 @@
 .cut-panel { background: var(--surface, #13132b); border: 1px solid #33334c; border-radius: 22px; padding: 26px; margin-bottom: 18px; }
 .cut-setup, .cut-demo { display: grid; gap: 22px; }
 .cut-intro { font-size: 1.2rem; line-height: 1.65; color: #f1eef4; text-align: center; text-wrap: balance; }
+.cut-custom { display: grid; gap: 12px; }
+.cut-field input[aria-invalid="true"] { border-color: #ffad9f; }
 .cut-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .cut-field { display: grid; gap: 9px; min-width: 0; color: #dbd8e5; font-size: .95rem; text-align: left; }
-.cut-field select { width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; background: #0d0d1a; color: #f2eef6; border: 1px solid #575168; border-radius: 12px; padding: 12px; }
+.cut-field select, .cut-field input { width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; background: #0d0d1a; color: #f2eef6; border: 1px solid #575168; border-radius: 12px; padding: 12px; }
 .cut-button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; font: inherit; font-size: .97rem; font-weight: 650; line-height: 1.4; border: 1px solid #55516b; border-radius: 12px; padding: 12px 18px; color: #f0eaf2; background: #24223c; cursor: pointer; text-decoration: none; }
 .cut-button:hover:not(:disabled) { background: #343049; border-color: #dd988f; }
 .cut-button.cut-primary { background: #ff887b; border-color: #ff887b; color: #1b1013; }
 .cut-button.cut-primary:hover:not(:disabled) { background: #ffa397; }
 .cut-button:disabled { opacity: .45; cursor: default; }
-.cut-button:focus-visible, .cut-field select:focus-visible, .cut-rules summary:focus-visible { outline: 3px solid #f4cf92; outline-offset: 3px; }
+.cut-button:focus-visible, .cut-field select:focus-visible, .cut-field input:focus-visible, .cut-rules summary:focus-visible { outline: 3px solid #f4cf92; outline-offset: 3px; }
 .cut-soft { font-size: .92rem; line-height: 1.65; color: #bab7cd; }
 .cut-meta { color: #bab7cd; font-size: .9rem; }
 .cut-feedback { font-size: .95rem; line-height: 1.6; color: #ffd39f; margin: 12px 0; }
@@ -64,6 +66,8 @@
 .cut-dialog::backdrop { background: #070712c9; }
 .cut-dialog-header { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 18px; }
 .cut-dialog h2 { font-size: 1.3rem; }
+.cut-end-dialog { display: grid; gap: 20px; }
+.cut-end-dialog:not([open]) { display: none; }
 .cut-roster { display: grid; gap: 8px; margin: 16px 0 24px; }
 .cut-controls { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 .cut-player-management { width: 100%; text-align: left; }

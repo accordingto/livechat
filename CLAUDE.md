@@ -1,3 +1,13 @@
+## CURRENT: CUT continued conversation (2026-10-09)
+
+CUT keeps one topic through unlimited handoffs. Only explicit End topic after
+verbal agreement opens a break; Next topic then reveals a new question.
+Normal 15–25s, Chill 25–40s, Chaos 8–16s; Custom accepts integer minimum and
+maximum 5–120s with min <= max (equal values mean fixed time). Keep CUT/next
+player visible until manual Start. Preserve existing shared player controls,
+server execution and hidden speaking deadlines; do not add automated votes.
+New state rulesVersion 2 / targetCuts null; upgrade legacy CUT caps without
+resetting the current topic or fairness. See cut-mode.md for current rules.
 ## CURRENT: Independent game execution (2026-10-09)
 
 The recent games now have an optional server executor: `api/hub-executor.js`,

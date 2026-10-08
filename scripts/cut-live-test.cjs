@@ -100,7 +100,7 @@ async function main() {
   await until(() => host.state?.phase === 'speaking', 'initial GO'); values = await projectReady();
   check('Speaking projections hide the CUT deadline, duration and next player', () => { for (const value of values) { assert.equal(value.cut.deadline, undefined); assert.equal(value.cut.duration, undefined); assert.equal(value.cut.phaseUntil, undefined); assert.ok(!value.cut.nextSpeaker); assert.ok(!JSON.stringify(value).includes(extra.cutControlToken)); } });
   const firstSpeaker = host.state.speaker;
-  await until(() => host.state?.phase === 'cut', 'real normal CUT', 20000); values = await projectReady();
+  await until(() => host.state?.phase === 'cut', 'real normal CUT', 30000); values = await projectReady();
   check('Normal timer CUT reveals one different next player to all clients', () => { assert.equal(new Set(values.map(value => value.cut.nextSpeaker)).size, 1); assert.notEqual(values[0].cut.nextSpeaker, firstSpeaker); assert.ok(values[0].cut.cutEvent); });
   const waitingCut = clone(host.state);
   await sleep(5000); values = await projectReady();
@@ -135,28 +135,37 @@ async function main() {
   const blockedBegin = await playerAction(db, 2, 'begin');
   await until(() => host.state?.replies?.[3]?.id === blockedBegin.id, 'player Start rejected while editing');
   check('Players cannot start while the host is adjusting the pace', () => { assert.equal(host.state.phase, 'setup'); assert.equal(host.state.replies[3].error, 'not_available'); });
-  await hostCommand('configure', { speed: 'chaos', category: 'mixed' }); values = await projectReady();
-  check('Saving a new pace preserves the topic and fairness, then waits for Start', () => { assert.equal(host.state.phase, 'ready'); assert.equal(host.state.speed, 'chaos'); assert.equal(host.state.topic.id, topicBeforeSettings); assert.deepEqual(host.state.stats, countsBeforeSettings); });
+  await hostCommand('configure', { speed: 'custom', category: 'mixed', customMinSeconds: 5, customMaxSeconds: 5 }); values = await projectReady();
+  check('Saving custom time preserves the topic and fairness, then waits for Start', () => { assert.equal(host.state.customMinSeconds, 5); assert.equal(host.state.customMaxSeconds, 5); assert.equal(host.state.phase, 'ready'); assert.equal(host.state.speed, 'custom'); assert.equal(host.state.topic.id, topicBeforeSettings); assert.deepEqual(host.state.stats, countsBeforeSettings); });
   await sleep(3400); check('Saving settings does not automatically restart the countdown', () => assert.equal(host.state.phase, 'ready'));
   const savedSession = host.state.sessionId; host.close(); await host.serial; await host.outgoing;
   replacement = device(database(), room); host = replacement; host.connect(); await until(() => host.own && host.state?.sessionId === savedSession, 'replacement host restores saved round');
-  check('Host reload restores the waiting topic and selected pace without starting it', () => { assert.equal(host.state.sessionId, savedSession); assert.equal(host.state.phase, 'ready'); assert.equal(host.state.speed, 'chaos'); assert.equal(host.state.topic.id, topicBeforeSettings); });
+  check('Host reload restores the waiting topic and selected pace without starting it', () => { assert.equal(host.state.sessionId, savedSession); assert.equal(host.state.phase, 'ready'); assert.equal(host.state.speed, 'custom'); assert.equal(host.state.topic.id, topicBeforeSettings); });
   await hostCommand('begin'); await until(() => host.state?.phase === 'speaking', 'host starts resumed topic');
   await hostCommand('exclude', { playerNum: host.state.speaker, active: false }); values = await projectReady();
   check('A departing speaker is replaced and waits for manual Start', () => { assert.equal(host.state.phase, 'ready'); assert.equal(values[0].cut.roster.filter(player => player.active).length, 2); });
   await hostCommand('begin');
   await until(() => host.state?.phase === 'speaking', 'replacement speaker manually starts');
-  for (let turn = 0; turn < 10 && host.state?.phase !== 'break'; turn++) {
-    await until(() => ['cut', 'break'].includes(host.state?.phase), 'next CUT in real round', 20000);
-    if (host.state.phase === 'break') break;
-    if (host.state.cutEvent?.final) { await until(() => host.state.phase === 'break', 'final CUT closes topic'); break; }
+  const continuingTopic = host.state.topic.id;
+  for (let turn = 0; turn < 9; turn++) {
+    await until(() => host.state?.phase === 'cut', 'next CUT on same topic', 10000);
+    assert.equal(host.state.cutEvent.final, false); assert.equal(host.state.topic.id, continuingTopic);
+    assert.equal(host.state.speakingDurationMs, 5000, 'custom fixed time applies to every fresh turn');
     await projectReady();
     const seat = host.state.roster.find(player => player.active).playerNum;
     await playerAction(db, seat - 1, 'begin');
     await until(() => host.state?.phase === 'speaking', 'player manually starts next segment');
   }
   values = await projectReady();
-  check('Manual handoffs finish at the final CUT without a score or story summary', () => { assert.equal(values[0].cut.phase, 'break'); assert.equal(values[0].cut.score, undefined); assert.equal(values[0].cut.summary, undefined); });
+  check('Nine further real CUT handoffs keep the topic without automatically ending it', () => {
+    assert.equal(values[0].cut.phase, 'speaking'); assert.equal(host.state.topic.id, continuingTopic);
+    assert.ok(host.state.cutsCompleted >= 9); assert.equal(values[0].cut.score, undefined); assert.equal(values[0].cut.summary, undefined);
+  });
+  await hostCommand('endTopic'); values = await projectReady();
+  check('Explicit End topic stops timing and publishes the same break to all original cards', () => {
+    assert.equal(host.state.phase, 'break'); assert.equal(host.state.deadline, null);
+    for (const value of values) { assert.equal(value.cut.phase, 'break'); assert.equal(value.cut.topic.id, continuingTopic); }
+  });
   const previousTopic = host.state.topic.id; await hostCommand('next'); values = await projectReady();
   check('Manual Next reveals a new topic and waits for host or player Start', () => { assert.notEqual(host.state.topic.id, previousTopic); assert.equal(new Set(values.map(value => value.cut.topic.id)).size, 1); assert.equal(host.state.phase, 'ready'); });
   const changed = 'rooms/' + code + '/players/' + tokens[0]; await request(changed, 'PUT', { game: 'cardcheck', name: 'Amy', word: 'QA switch' });

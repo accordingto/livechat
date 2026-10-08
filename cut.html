@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-5">
+  <link rel="stylesheet" href="cut.css?v=cut-6">
 </head>
 <body class="cut-page">
   <div class="topbar">
@@ -27,19 +27,28 @@
       <p class="cut-soft" data-i18n="cut.setupNeeded">先到主選單設定房間與玩家連結。</p>
       <a class="cut-button cut-primary" href="index.html?step=1" data-i18n="cut.setUpRoom">設定房間與玩家</a>
     </div>
-    <form class="cut-panel cut-setup" id="cut-setup">
+    <form class="cut-panel cut-setup" id="cut-setup" novalidate>
       <p class="cut-intro" data-i18n="cut.intro">講到一半突然 CUT！下一位直接把你的半句話接下去。</p>
       <div class="cut-settings">
         <label class="cut-field"><span data-i18n="cut.speed">遊戲速度</span><select id="cut-speed">
-          <option value="normal" selected data-i18n="cut.normal">Normal · 正常（9–18 秒）</option>
-          <option value="chill" data-i18n="cut.chill">Chill · 輕鬆（12–24 秒）</option>
-          <option value="chaos" data-i18n="cut.chaos">Chaos · 瘋狂（5–12 秒）</option>
+          <option value="normal" selected data-i18n="cut.normal">Normal · 正常（15–25 秒）</option>
+          <option value="chill" data-i18n="cut.chill">Chill · 輕鬆（25–40 秒）</option>
+          <option value="chaos" data-i18n="cut.chaos">Chaos · 瘋狂（8–16 秒）</option>
+          <option value="custom" data-i18n="cut.custom">Custom · 自訂秒數</option>
         </select></label>
         <label class="cut-field"><span data-i18n="cut.category">題目類型</span><select id="cut-category">
           <option value="mixed" selected data-i18n="cut.mixed">生活＋荒謬</option>
           <option value="real" data-i18n="cut.real">生活情境</option>
           <option value="absurd" data-i18n="cut.absurd">荒謬想像</option>
         </select></label>
+      </div>
+      <div class="cut-custom" id="cut-custom" hidden>
+        <div class="cut-settings">
+          <label class="cut-field"><span data-i18n="cut.customMin">最短秒數</span><input id="cut-custom-min" type="number" inputmode="numeric" min="5" max="120" step="1" value="15" disabled aria-describedby="cut-custom-hint cut-custom-error"></label>
+          <label class="cut-field"><span data-i18n="cut.customMax">最長秒數</span><input id="cut-custom-max" type="number" inputmode="numeric" min="5" max="120" step="1" value="25" disabled aria-describedby="cut-custom-hint cut-custom-error"></label>
+        </div>
+        <p class="cut-soft" id="cut-custom-hint" data-i18n="cut.customHint">各填 5–120 的整秒；填相同秒數就是固定時間。</p>
+        <p class="cut-feedback" id="cut-custom-error" role="status"></p>
       </div>
       <p class="cut-soft cut-settings-hint" id="cut-settings-hint" hidden data-i18n="cut.settingsHint">調整好節奏後儲存，再按「開始說話」繼續這個話題。</p>
       <div class="cut-actions cut-setup-actions">
@@ -54,6 +63,7 @@
         <button type="button" class="cut-button cut-primary" id="cut-begin" hidden>開始說話</button>
         <button type="button" class="cut-button" id="cut-pause" data-i18n="cut.pause">暫停</button>
         <button type="button" class="cut-button cut-primary" id="cut-next" hidden data-i18n="cut.next">下一題</button>
+        <button type="button" class="cut-button cut-stop" id="cut-end-topic" hidden data-i18n="cut.endTopic">結束話題</button>
         <button type="button" class="cut-button" id="cut-settings-open" data-i18n="cut.settings">返回設定</button>
         <button type="button" class="cut-button" id="cut-manage-open" data-i18n="cut.manage">主持管理</button>
       </div>
@@ -67,7 +77,7 @@
       <summary data-i18n="cut.rules">怎麼玩</summary>
       <p data-i18n="cut.rule1">先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。</p>
       <p data-i18n="cut.rule2">CUT 會停在下一位的名字，準備好後主持人或玩家按「開始接話」。下一位假裝自己就是上一個人，直接接那半句，不要重新回答題目。</p>
-      <p data-i18n="cut.rule3">可以亂編、互虧和自由吐槽。一題結束，先笑一笑，主持人再按下一題。</p>
+      <p data-i18n="cut.rule3">同一話題可以一直接下去。大家口頭同意後，主持人或玩家按「結束話題」，再換下一題。</p>
       <p data-i18n="cut.ruleExample">例如：「他把——」CUT！「——護照丟進了垃圾桶。」</p>
     </details>
     <a class="back" id="cut-demo-link" href="cut.html?demo=1" data-i18n="cut.demoLink">先試操作示範</a>
@@ -81,19 +91,27 @@
       <button type="button" class="cut-button cut-stop" id="cut-stop" data-i18n="cut.stop">結束遊戲</button>
     </div>
   </dialog>
+  <dialog class="cut-dialog cut-end-dialog" id="cut-end-confirm" aria-labelledby="cut-end-title" aria-describedby="cut-end-hint">
+    <h2 id="cut-end-title" data-i18n="cut.endTopicQuestion">大家都同意結束這個話題了嗎？</h2>
+    <p class="cut-soft" id="cut-end-hint" data-i18n="cut.endTopicHint">先口頭確認。結束後才能換下一題。</p>
+    <div class="cut-actions">
+      <button type="button" class="cut-button" id="cut-end-cancel" data-i18n="cut.keepTopic">繼續這個話題</button>
+      <button type="button" class="cut-button cut-primary" id="cut-end-accept" data-i18n="cut.endTopicConfirm">是，結束話題</button>
+    </div>
+  </dialog>
   <div id="room-mount" hidden></div>
   <script src="qrcode.js"></script>
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="cut-config.js?v=cut-5"></script>
-  <script src="cut-random.js?v=cut-5"></script>
-  <script src="cut-topics.js?v=cut-5"></script>
-  <script src="cut-engine.js?v=cut-5"></script>
-  <script src="cut-ui.js?v=cut-5"></script>
-  <script src="cut-sync.js?v=cut-5"></script>
+  <script src="cut-config.js?v=cut-6"></script>
+  <script src="cut-random.js?v=cut-6"></script>
+  <script src="cut-topics.js?v=cut-6"></script>
+  <script src="cut-engine.js?v=cut-6"></script>
+  <script src="cut-ui.js?v=cut-6"></script>
+  <script src="cut-sync.js?v=cut-6"></script>
   <script src="hub-executor.js?v=1"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-5"></script>
+<script src="cut-host.js?v=cut-6"></script>
 </body>
 </html>

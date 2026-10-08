@@ -3,11 +3,13 @@ var CUT_UI = (() => {
   'use strict';
   const dict = {
     intro: ['講到一半突然 CUT！下一位直接把你的半句話接下去。', 'A sudden CUT! Someone else has to finish your unfinished sentence.'],
-    speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（9–18 秒）', 'Normal · 9–18 seconds'], chill: ['Chill · 輕鬆（12–24 秒）', 'Chill · 12–24 seconds'], chaos: ['Chaos · 瘋狂（5–12 秒）', 'Chaos · 5–12 seconds'],
+    speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（15–25 秒）', 'Normal · 15–25 seconds'], chill: ['Chill · 輕鬆（25–40 秒）', 'Chill · 25–40 seconds'], chaos: ['Chaos · 瘋狂（8–16 秒）', 'Chaos · 8–16 seconds'], custom: ['Custom · 自訂秒數', 'Custom · Choose your seconds'],
+    customMin: ['最短秒數', 'Minimum seconds'], customMax: ['最長秒數', 'Maximum seconds'], customHint: ['各填 5–120 的整秒；填相同秒數就是固定時間。', 'Use whole seconds from 5 to 120. Use the same number for a fixed time.'], customRangeError: ['請填入 5–120 的整秒，最短秒數不能大於最長秒數。', 'Use whole seconds from 5 to 120. The minimum must not exceed the maximum.'],
     category: ['題目類型', 'Topics'], mixed: ['生活＋荒謬', 'Life + absurd situations'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'],
     start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], beginHandoff: ['開始接話', 'Start'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
     waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
+    endTopic: ['結束話題', 'End topic'], endTopicQuestion: ['大家都同意結束這個話題了嗎？', 'Has everyone agreed to end this topic?'], endTopicHint: ['先口頭確認。結束後才能換下一題。', 'Check with everyone first. Then end the topic.'], endTopicConfirm: ['是，結束話題', 'Yes, end the topic'], keepTopic: ['繼續這個話題', 'Keep this topic'],
     sharedManage: ['玩家管理', 'Player controls'], recover: ['略過離線玩家', 'Skip offline players'], sharedBreak: ['準備好後，任一玩家可以按下一題。', 'Any player can reveal the next topic when everyone is ready.'], sharedPaused: ['準備好後，任一玩家可以繼續。', 'Any player can resume when everyone is ready.'],
     manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'], restart: ['重新開始', 'Restart'], stop: ['結束遊戲', 'End game'],
     topic: ['這次聊什麼', 'THE TOPIC'], current: ['目前發言者', 'CURRENT SPEAKER'], nextPlayer: ['下一位', 'NEXT PLAYER'],
@@ -27,7 +29,7 @@ var CUT_UI = (() => {
     rules: ['怎麼玩', 'How to play'],
     rule1: ['先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。', 'Read the topic, then the host or a player taps “Start talking” to start the countdown. Speak on GO and stop on CUT.'],
     rule2: ['CUT 會停在下一位的名字，準備好後主持人或玩家按「開始接話」。下一位假裝自己就是上一個人，直接接那半句，不要重新回答題目。', 'CUT holds on the next player’s name until the host or a player taps “Start”. Pretend you are the previous speaker and continue the half-sentence without restarting the answer.'],
-    rule3: ['可以亂編、互虧和自由吐槽。一題結束，先笑一笑，主持人再按下一題。', 'Make things up, tease each other, and jump in. Laugh between topics, then the host moves on.'],
+    rule3: ['同一話題可以一直接下去。大家口頭同意後，主持人或玩家按「結束話題」，再換下一題。', 'Keep going with the same topic as long as you like. When everyone agrees, end the topic before choosing the next one.'],
     ruleExample: ['例如：「他把——」CUT！「——護照丟進了垃圾桶。」', 'For example: “He threw his—” CUT! “—passport into the bin.”'],
     rosterHint: ['暫時離開的人可以先休息，回來再加入抽選。', 'Let someone sit out if they leave, and add them back when they return.'],
     exclude: ['先休息', 'Sit out'], reinclude: ['加入抽選', 'Join the draw'], inactive: ['休息中', 'Sitting out'], active: ['參與中', 'In the draw'],
@@ -110,6 +112,7 @@ var CUT_UI = (() => {
     let actions = button('recover', 'recover');
     if (mine?.active === false) return `<div class="cut-controls">${actions}${button('exclude', 'reinclude', ` data-player="${Number(actor)}" data-active="true"`)}</div>`;
     if (cut.phase === 'break') actions += button('next', 'next');
+    if (cut.canEndTopic) actions += button('endTopic', 'endTopic');
     actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
     return `<div class="cut-controls">${actions}</div><details class="cut-player-management"><summary>${esc(t('sharedManage'))}</summary><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
@@ -140,8 +143,8 @@ var CUT_UI = (() => {
         this.pending = null;
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
-      if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
-      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.sharedControls, cut.canManage, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const cutKey = cut.phase === 'cut' ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
@@ -179,6 +182,7 @@ var CUT_UI = (() => {
       if (type === 'recover') return true;
       if (type === 'exclude' && Number(extra.playerNum) === actor && extra.active === true) return true;
       if (mine.active === false) return false;
+      if (type === 'endTopic') return cut.canEndTopic === true;
       if (type === 'next') return cut.phase === 'break';
       if (type === 'pause') return cut.phase !== 'paused';
       if (type === 'resume') return cut.phase === 'paused';
@@ -187,6 +191,7 @@ var CUT_UI = (() => {
     begin() { return this.action('begin'); }
     async action(type, extra = {}) {
       if (!this.canAction(type, extra)) return;
+      if (type === 'endTopic' && (typeof window === 'undefined' || typeof window.confirm !== 'function' || !window.confirm(t('endTopicQuestion')))) return;
       const cut = this.data.cut;
       const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cut-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const command = { ...extra, id, sessionId: cut.sessionId, turnId: cut.turnId, type };

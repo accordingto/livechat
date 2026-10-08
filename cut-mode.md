@@ -1,95 +1,62 @@
-> Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
+# CUT! · DON’T FINISH THAT — 持續接話與自訂時間（2026-10-09）
 
-# CUT! · DON’T FINISH THAT — 節奏、手動開始與手動接話（2026-10-08）
-
-英文副標題使用「DON’T FINISH THAT」。CUT 提示保留「STOP! Hand over the unfinished thought.」，下一位提示簡化為「Continue the unfinished sentence. Press Start when ready.」。
-
-入口為 `cut.html`，放在 ICEBREAK HUB 的 BLUFF PARTY 後面、Open Mic Rescue 前面。支援 2–9 人，沿用首頁房間、姓名、原玩家連結及英文為主／繁體中文切換。題目固定使用簡單英文。所有對話仍在原本的語音聊天室進行。
+英文副標題為「DON’T FINISH THAT」。CUT 提示保留「STOP! Hand over the unfinished thought.」，下一位提示為「Continue the unfinished sentence. Press Start when ready.」。入口 `cut.html`，沿用 ICEBREAK HUB 原房間、姓名與玩家卡，支援 2–9 人。介面預設英文、可切換繁體中文；題目固定使用簡單英文，所有對話仍透過原語音聊天室進行。
 
 ## 使用方式
 
 1. 在首頁設定房間、姓名，讓大家打開原本的玩家連結。
-2. 到遊戲列表最下面選 CUT!，預設 Normal 與混合題庫，按 Show topic 顯示話題。
-3. 先看話題與第一位發言者，主持人或任一參與抽選的玩家按 Start talking，才開始 3、2、1；看到 GO 再開口。講話期間沒有倒數或進度條。
-4. CUT! 動畫／短促綜藝音效出現時，原發言者立即停下。此時才公布下一位。
-5. CUT 畫面維持顯示下一位姓名，等下一位想好，主持人或任一參與抽選的玩家按 Start（開始接話），才立即看到 GO、啟動發言計時。沒有自動接棒或接棒倒數。下一位假裝自己就是上一個人，直接接那半句話。
-6. 每題 4–8 次 CUT 後休息、笑、自由聊天。主持人按 Next topic 顯示下一題，再等大家手動按 Start talking。
+2. 選 CUT!，設定節奏與題目類型，再按 Show topic 顯示話題。
+3. 話題與第一位發言者先停在畫面上；主持人或任一有效玩家按 Start talking 才開始三秒準備。看到 GO 再開口，發言期間不顯示倒數或進度條。
+4. CUT! 出現就停下，此時才公布下一位。CUT 與姓名一直顯示，等下一位想好後按 Start，立即接話；沒有接棒倒數。
+5. 下一位假裝自己就是上一個人，接著他的半句說。同一話題不限 CUT 次數，大家可一直接下去。
+6. 大家口頭同意結束這一題後，按 End topic 並確認。畫面停在休息；按 Next topic 才顯示新話題，等大家再次按 Start talking。
 
-任何階段都可按 Back to settings 返回設定，立即停止倒數與 CUT 計時。儲存新節奏或返回話題後會等候手動開始，保留目前話題、名單及公平紀錄。題目類型的變更從下一題套用。已完成的話題可返回設定後重玩同題，清除該題 CUT 次數，保留整場公平紀錄。
+End topic 的確認提示是口頭共識提醒，不是線上投票或自動判斷同意。原主持模式由主持頁控制結束；獨立執行服務模式中的有效玩家也能操作。未結束的話題不提供 Next topic。
 
-主持管理提供重新開始、結束遊戲、玩家暫離／回來；主要畫面有暫停／繼續。少於兩位參與抽選時自動暫停，補回玩家後由主持人恢復。這裡的「先休息」是主持人記錄離席，不是淘汰。
+## 節奏與手動時間
 
-音效只由持有控制權的主持頁播放，避免每台玩家裝置一起發聲。分享畫面時請一併分享電腦音訊。按 Show topic／Start talking 的手勢啟用 Web Audio，瀏覽器擋住音訊時會顯示 Enable sound，亦可靜音。CUT! 不會切斷麥克風。`?demo=1` 是標示清楚、不寫 Firebase 的單機示範。
+| 節奏 | 每次發言的時間範圍 |
+| --- | --- |
+| Normal | 15–25 秒 |
+| Chill | 25–40 秒 |
+| Chaos | 8–16 秒 |
+| Custom | 自訂最短／最長，各 5–120 整秒 |
 
-## 狀態流程
+Custom 最短不得大於最長；兩個數字相同就使用固定時間，例如 30／30 為每人 30 秒。範圍模式會每次重新抽時間，抽到的截止時間保留於權威狀態，玩家看不到發言倒數或當次抽出的時間。預設節奏沿用加權區間及避免连续極端時間的機制；自訂範圍採均勻抽選。
 
-`ready → (主持人／玩家 Begin) → countdown → speaking → cut（等候） → (主持人／玩家 Begin) → speaking … → final cut → break → (Next) → ready`
+任何階段都可 Back to settings，立即凍結計時。儲存或取消後回到同一話題等候手動開始，保留名單、公平抽人紀錄與已公布的下一位。自訂數字會回填，重新開始與下一題保留設定；題目類型從下一題生效。少於兩位有效玩家時暫停，補回後手動恢復。
 
-- `ready`：顯示話題與第一位，沒有截止時間；任一有效玩家或主持人手動 Begin 才倒數。
-- `setup`：主持人調整設定，無計時且所有 Begin 都被阻擋；Configure／Cancel 回到 ready。
-- `countdown`：第一位發言者的三秒準備；尚未啟動 CUT 計時。
-- `speaking`：GO 時才抽出、開始新的隱藏計時。
-- `cut`：強烈提示出現後才抽下一位，CUT 和姓名維持顯示，沒有截止時間；手動 Begin 才直接開始下一位的發言。最後一棒不再抽下一位或提供接話按鈕，保留 900ms 動畫後進入自由聊天。
-- `handoff`：只用於恢復暫停中的原發言者，保留三秒準備；一般 CUT 接棒不再使用此倒數。
-- `break`：不整理故事、不計分；主持人手動下一題。
-- `paused`：凍結剩餘時間。發言中恢復會先給三秒準備，再延續原發言者剩餘的隱藏時間，不重算發言次數。
-- `stopped`：結束；主持人可重新開始，或返回設定後繼續目前話題。
+## 狀態與相容性
 
-玩家離席時，如果他是已公布的下一位，會重新挑人並停留在同一 CUT 等待開始，保留事件 ID；目前發言者離席則顯示替代玩家，等候手動開始。ready／setup 仍留在等候畫面。過期的 session／turn 指令不會觸發舊 CUT。重連／背景分頁醒來只推進一個階段，不連續重播錯過的 CUT。
+`ready → Begin → countdown → speaking → cut（等候） → Begin → speaking …`
 
-## 計時演算法
+`End topic → break → Next topic → ready`
 
-`cut-config.js` 集中所有參數，`cut-random.js` 執行抽選。Normal 改為原本 Chill 的節奏，Chill 再放慢，Chaos 稍微延長。先按權重挑區間，再在區間均勻抽毫秒：
+- `ready` 沒有截止時間；只有手動 Begin 才開始。
+- `setup` 無計時且禁止 Begin；Configure／Cancel 回 ready。
+- `speaking` 每次 GO 才抽隱藏時間。
+- `cut` 永遠等待手動接話，不再以 4–8 次 CUT 自動結束。
+- `handoff` 只用於恢復暫停中的原發言者，保留三秒準備與剩餘時間。
+- `break` 只由 End topic 進入；不計分、不整理故事，Next topic 才換題。
+- `paused` 凍結時間；`stopped` 結束遊戲，可重新開始或返回設定。
 
-| 節奏 | 區間（秒）與權重 | 範圍 |
-| --- | --- | --- |
-| Normal | 9–12：20%；12–15：45%；15–18：35% | 9–18 秒 |
-| Chill | 12–16：20%；16–20：45%；20–24：35% | 12–24 秒 |
-| Chaos | 5–7：30%；7–9：45%；9–12：25% | 5–12 秒 |
+新規則 `rulesVersion: 2`、`targetCuts: null`。舊正在進行的題目升級後取消 CUT 次數上限，保留話題、名單與公平紀錄；舊最後 CUT 改為等候接話。已在 break 的舊題目保留休息，仍需手動下一題。升級不重新抽題或重計發言次數。
 
-倒數、CUT 動畫和接棒緩衝都不計入發言時間。Normal 未加極端折扣的理論平均約 13.95 秒。
+公平抽人仍排除當前發言者，依發言次數、等待棒數與近期出現折扣抽選；只有 GO 才增加次數。多人同時按 Start、End topic 或 Next topic 時，由 session／turn 與重送防護確保只生效一次。
 
-上一棒少於六秒時，下一棒早期區間權重乘以 0.45；上一棒至少十三秒時，晚期區間權重乘以 0.45，再重新正規化。短、長 CUT 仍有機會發生，維持原有 anti-repeat 規則。
+## 同步與維護
 
-## 公平抽人
+沿用 `rooms/{CODE}/players/{token}` 原卡投影，不公布其他玩家 token。純規則在 `cut-engine.js`，參數與抽選在 `cut-config.js`／`cut-random.js`；`cut-ui.js` 共用主持與玩家畫面，`cut-host.js` 負責設定及確認。
 
-目前發言者完全排除，其餘人的權重為：
+獨立執行服務沿用 `runtime/party-executor.cjs`，只在已有的 HUB_EXECUTOR_SECRET 設定就緒時啟用；保留原持票者驗證、原子更新、sharedControls 與私人計時。舊模式由持有租約的主持瀏覽器執行，主持頁需保持開啟。詳見 `hub-executor-mode.md`，本次不變更任何秘密設定。
 
-`(最高發言次數 − 本人發言次數 + 1)² × (1 + min(5, 未被選的棒數 × 0.35)) × 最近發言折扣`
+玩家離席時替換已公布的下一位，仍停在同一題等待手動開始。重連只推進一個到期階段，不連續補播 CUT；過期操作、換房、換遊戲與失去控制權不能覆寫新版投影。音效只在主持頁播放，CUT 不會切斷麥克風。`?demo=1` 是不寫入 Firebase 的單機操作示範。
 
-最近出現的三位折扣依序為 0.25、0.55、0.8，最低權重仍大於零，因此可以很快再輪到某個人，卻不會變成固定輪流。發言次數在 GO 時增加，公平紀錄保留到後續題目；重新開始才清空。中途返回設定後同一位繼續發言不重複計次，CUT 等候期間不增加發言統計；手動接話時下一位才正常計次。CUT 期間返回設定會保留已公布的下一位。
+## 驗證方式
 
-## 多人權威與計時清理
+- `node --test tests/cut-*.test.cjs tests/party-executor.test.cjs tests/hub-executor*.test.cjs`：規則、持續接話、自訂時間、舊狀態升級、多人競爭、共用 UI 與背景執行整合。
+- `node scripts/cut-live-test.cjs`：僅用新建獨立 Firebase 測試節點，驗證原卡同步、九次後仍同題、固定時間、手動結束與換題，最後清除測試節點。
+- 瀏覽器檢查自訂設定、同題接話、結束確認與取消、返回設定回填、中英介面。口頭共識與接話內容需由真人決定。
+## 本次驗證結果（2026-10-09）
 
-只有持有 Firebase 控制租約的主持瀏覽器能抽題、抽 CUT 時間、抽下一位。玩家可送 Begin 請求，主持端原子驗證 session、turn、參與資格與 ready／非最後 CUT 階段；多人同時按開始只建立一次倒數或一次接話。其餘控制仍限主持人。玩家只收到公開投影，沒有私有 `deadline`、已抽出的時間、抽選權重或未公布的下一位。
-
-沿用 `rooms/{CODE}/players/{token}` 與原玩家卡片。主持控制 token 僅保存於本機房間資料；權威狀態使用 `stateJson` 保存精確空陣列。Firebase transaction 提供原子更新，14 秒租約每四秒續期，150ms 檢查一次是否到時；未到時不寫入牌局。這是原專案的信任主持人模式，主持頁需要保持開啟、電腦不要休眠。
-
-重新開啟主持頁時，舊版正在自動 CUT／接棒倒數的狀態會一次升級為手動等候，保留目前題目、下一位、事件與公平紀錄。
-
-離開頁面會清除主持檢查／續期與畫面 interval，停止音效、移除 Firebase listeners；玩家卡切換遊戲時會 destroy。投影驗證 session、revision 和開局前卡片指紋，防止舊主持頁覆寫後來的遊戲。另一個主持分頁、失去連線、換房或原卡已切換遊戲，都不能继续抽選。
-
-## 檔案
-
-- `cut.html`、`cut.css`：主持入口與限定本遊戲的樣式／動畫。
-- `cut-host.js`、`cut-ui.js`：主持操作、音效、共用公開畫面與原玩家卡片。
-- `cut-config.js`、`cut-random.js`：可調計時、速度、公平抽選。
-- `cut-topics.js`：60 題，36 題生活情境、24 題荒謬情境；獨立 ID／category／question，可直接新增。
-- `cut-engine.js`：純狀態規則、公開投影、暫停與離席處理。
-- `cut-sync.js`：原房間的權威狀態／租約／單一抽選與同步。
-- `scripts/cut-dev-server.cjs`、`scripts/cut-live-test.cjs`：本機預覽、真實 Firebase 獨立測試房間驗收。
-- `tests/cut-{engine,sync,ui,integration}.test.cjs`：計時分布、抽選公平、階段、同步競爭、畫面與接入測試。
-- 修改 `index.html`、`play.html`、`package.json`；更新 `tests/bluff-bank.test.cjs` 的列表順序與測試環境，保留原 BLUFF 私人卡驗证。
-
-## 驗證
-
-- `node --test tests/cut-*.test.cjs`：66 項通過，包括新增的舊狀態原子升級驗證。
-- `node --test tests/*.test.cjs`：752 項通過，包含最新 Open Mic Rescue 整合後的所有原遊戲回歸。
-- `node scripts/cut-live-test.cjs`：20 項真實 Firebase 檢查通過；包括 CUT 畫面與下一位持續等候、等待時的暫停／恢復、主持重載、多人同時手動接話直接發言、節奏設定與完整手動接棒回合。測試使用新建獨立節點，結束清除。
-- 瀏覽器驗證話題等待、CUT 畫面持續顯示下一位、玩家開始接話後直接 GO（沒有接棒倒數）、中途返回設定與儲存節奏；語音內容與玩家是否遵守接話規則需真人試玩。
-
-## 最適合實測後微調
-
-Normal 各區間權重／安全期、極端時間折扣、第一位準備時間、每題 CUT 次數、公平權重的次數平方／等待加成／最近折扣，以及题目是否容易讲到「because／but／and then」。先收真人體感，再調這些集中參數。
-
-第一版有意不加入語音辨識、麥克風 API、AI 語意／CUT 判斷、說話紀錄、真假揭曉、評分、勝負、懲罰、淘汰或故事總結。沒有擅自增加私人角色任務，也不需要額外服務、API key 或音效素材下載。
+完整專案測試 1092／1092 通過；獨立 Firebase 測試房間 21 項檢查通過並完成測試節點清除。包含超過原本 CUT 上限後持續同題、自訂固定時間、重新連線、手動結束／換題，以及既有其他遊戲回歸。主持操作與玩家控制的確認／取消由 UI 自動測試覆蓋；此次桌面瀏覽器檢視工具未能啟動，未聲稱已完成新的畫面截圖或真人語音驗收。

@@ -30,3 +30,29 @@ test('cleared card data cannot resurrect a stale CUT card on page restore', () =
     assert.equal(context.latestData, null); assert.equal(errors, 1); assert.equal(renders, 0);
   }
 });
+
+
+test('CUT has accessible custom-time inputs and explicit topic-ending confirmation without changing approved copy', () => {
+  const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
+  const ui = fs.readFileSync(path.join(root, 'cut-ui.js'), 'utf8');
+  const host = fs.readFileSync(path.join(root, 'cut-host.js'), 'utf8');
+  assert.match(html, /<p class="cut-subtitle">DON’T FINISH THAT<\/p>/);
+  assert.match(ui, /cutHint: \['停！話交給下一位。', 'STOP! Hand over the unfinished thought\.'\]/);
+  assert.match(ui, /beginHandoff: \['開始接話', 'Start'\]/);
+  assert.match(html, /<form[^>]*id="cut-setup"[^>]*novalidate/);
+  assert.match(html, /<option value="custom"/);
+  for (const id of ['cut-custom-min', 'cut-custom-max']) {
+    const input = html.match(new RegExp('<input[^>]*id="' + id + '"[^>]*>'))?.[0];
+    assert.ok(input, id + ' must be a real form field');
+    assert.match(input, /type="number"/); assert.match(input, /min="5"/); assert.match(input, /max="120"/); assert.match(input, /step="1"/);
+    assert.match(input, /disabled/); assert.match(input, /aria-describedby="cut-custom-hint cut-custom-error"/);
+  }
+  for (const id of ['cut-end-topic', 'cut-end-confirm', 'cut-end-title', 'cut-end-hint', 'cut-end-cancel', 'cut-end-accept', 'cut-custom-error']) {
+    assert.ok(html.includes('id="' + id + '"'), id + ' must exist for host controls');
+  }
+  assert.match(html, /<dialog[^>]*id="cut-end-confirm"[^>]*aria-labelledby="cut-end-title"/);
+  assert.match(host, /command\('endTopic'\)/);
+  assert.match(ui, /window\.confirm\(t\('endTopicQuestion'\)\)/);
+  assert.match(ui, /data-cut-action/);
+  assert.doesNotMatch(html, /cut-(?:vote|ballot)/);
+});

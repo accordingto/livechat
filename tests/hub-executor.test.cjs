@@ -73,11 +73,15 @@ test('CUT registration followed by player-only pulses completes timed turns with
   f.advance(f.state().phaseUntil); await f.pulse(3); assert.equal(f.state().phase, 'speaking');
   f.advance(f.state().deadline); await f.pulse(4); assert.equal(f.state().phase, 'cut');
   assert.ok(f.card(1).cut.nextSpeaker); assert.equal(f.card(1).cut.deadline, undefined);
-  for (let guard = 0; guard < 40 && f.state().phase !== 'break'; guard++) {
-    if (f.state().phase === 'cut' && !f.state().cutEvent.final) f.mailbox(2, 'begin');
-    else f.advance(f.state().phase === 'speaking' ? f.state().deadline : f.state().phaseUntil);
-    await f.pulse(2);
+  const topic = f.state().topic.id;
+  for (let turn = 0; turn < 12; turn++) {
+    assert.equal(f.state().phase, 'cut'); assert.equal(f.state().cutEvent.final, false);
+    assert.equal(f.state().topic.id, topic);
+    f.mailbox(2, 'begin'); await f.pulse(2);
+    f.advance(f.state().deadline); await f.pulse(2);
   }
+  assert.equal(f.state().phase, 'cut'); assert.equal(f.state().topic.id, topic);
+  f.mailbox(3, 'endTopic'); await f.pulse(3);
   assert.equal(f.state().phase, 'break'); const round = f.state().round;
   f.mailbox(3, 'next'); await f.pulse(3); assert.equal(f.state().round, round + 1); assert.equal(f.state().phase, 'ready');
 });
@@ -251,19 +255,22 @@ test('a fast driver retries a partially failed publication immediately instead o
 });
 
 
-test('CUT resumed prep and final reveal use the adaptive driver until their short public transition finishes', async () => {
+test('CUT resumed prep uses fast checks while unlimited handoffs wait on the normal heartbeat', async () => {
   const f = fixture(); await f.register(); f.mailbox(2, 'begin'); await f.pulse(2);
   f.advance(f.state().phaseUntil); await f.pulse(2); f.mailbox(2, 'pause'); await f.pulse(2);
   assert.equal(f.state().phase, 'paused'); f.mailbox(3, 'resume'); await f.pulse(3);
   assert.equal(f.state().phase, 'handoff'); assert.equal((await f.pulse(2)).pollAfterMs, 500);
   f.advance(f.state().phaseUntil); await f.pulse(2);
-  for (let guard = 0; guard < 40 && !(f.state().phase === 'cut' && f.state().cutEvent.final); guard++) {
-    if (f.state().phase === 'cut') f.mailbox(2, 'begin');
-    else f.advance(f.state().phase === 'speaking' ? f.state().deadline : f.state().phaseUntil);
-    await f.pulse(2);
-  }
-  assert.equal(f.state().cutEvent.final, true); assert.equal((await f.pulse(2)).pollAfterMs, 500);
-  f.advance(f.state().phaseUntil); assert.equal((await f.pulse(2)).pollAfterMs, 5000); assert.equal(f.state().phase, 'break');
+  f.advance(f.state().deadline); const cut = await f.pulse(2);
+  assert.equal(f.state().phase, 'cut'); assert.equal(f.state().cutEvent.final, false);
+  assert.equal(cut.pollAfterMs, 5000, 'an indefinite CUT needs no rapid clock checks');
+  const topic = f.state().topic.id;
+  f.advance(f.clock() + 600000); await f.pulse(2);
+  assert.equal(f.state().phase, 'cut'); assert.equal(f.state().topic.id, topic);
+  f.mailbox(2, 'begin'); const began = await f.pulse(2);
+  assert.equal(f.state().phase, 'speaking'); assert.equal(began.pollAfterMs, 500);
+  f.mailbox(3, 'endTopic'); await f.pulse(3);
+  assert.equal(f.state().phase, 'break'); assert.equal((await f.pulse(2)).pollAfterMs, 5000);
 });
 
 
