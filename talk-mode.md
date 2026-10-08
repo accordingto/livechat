@@ -15,7 +15,7 @@ Legacy commands remain compatible with saved rooms; resume and explicit
 handover confirmation clear old question state without stranding play.
 Explanations, topic changes and custom follow-ups use compact details.
 
-Crazy Talk has 96 original English prompts: 60 lines and 36 verbal improv tasks.
+Crazy Talk has 96 original English prompts: 60 lines and 36 verbal improv tasks, all at most 9 words and 48 characters.
 Sources are system, players, or mixed (default). Every participant has an
 independent random timer configured by crazyMinSeconds/crazyMaxSeconds.
 The default range is 60–180 seconds; both bounds must be integers from 5 to 300
@@ -39,7 +39,8 @@ and the host see aggregate counts. An unfinished mission is never overwritten.
 Obsolete turn/session, invalid recipient and forged actor are rejected.
 Pause stops delivery and still accepts submissions; existing missions remain
 available for done/skip. Resume schedules future timers without catch-up bulk
-delivery. There is no immediate-send UI; deprecated crazySend redraws future
+delivery. Each tick delivers at most one mission, at least four seconds apart.
+There is no immediate-send UI; deprecated crazySend redraws future
 timers and exposes actions.crazySend=false. No scoring or audio API is used.
 
 Drafts remain local during sync, clear only after successful acknowledgement,
@@ -48,6 +49,15 @@ Mobile and desktop use the same topic/status/participant hierarchy. A server-own
 manager reconnect reports ready after a successful service pulse even when no
 canonical snapshot changes; failed, closed or switched managers are not revived.
 Runtime changes require redeploying the independent service and frontend.
+
+Current timer/queue release verification: all 1282 project tests passed after integrating
+concurrent Bluff updates. Real Chrome checks on localhost and production verified
+queued-not-immediate delivery, random non-author and explicit recipients, pause-time
+queueing, Chinese IME, 375px/320px layouts without overflow, custom 7–233-second
+range restoration, and zero page errors. Production RPC smoke passed 66 checks;
+eight exact owned nodes were cleaned, with no cleanup failures. Talk assets 17/17
+and full-site assets 45/45 matched; API readiness, CORS, synthetic-ticket rejection
+and private-runtime 404 checks passed. Frontend and independent service published.
 
 Previous board release validation (before this scheduling follow-up): all 1239
 project tests passed after the concurrent Bluff publication fix. Real Chrome

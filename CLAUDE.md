@@ -51,7 +51,7 @@ roster order; free keeps speaker null with no handover. Keep old-room recovery,
 original private links, shared controls and projection privacy.
 
 Crazy source is system/players/mixed (mixed default); 96 system prompts contain
-60 lines and 36 improv tasks. Each participant has independent random future
+60 lines and 36 improv tasks, all at most 9 words and 48 characters. Each participant has independent random future
 deadlines from crazyMinSeconds/crazyMaxSeconds: default 60–180 seconds, integer
 bounds 5–300, minimum <= maximum. Equal bounds are valid. Legacy crazySeconds
 migrates to 80–120% without clearing pending missions or saved deadlines.
@@ -65,13 +65,25 @@ Mixed falls back to system prompts; players-only uses the same timers without
 system fallback. The author sees myQueuedCount; only recipients see delivered
 private text. Never overwrite pending missions. Pause affects delivery only;
 done/skip remain prompt-bound, and resume creates future deadlines without
-bulk catch-up. Remove immediate-send UI; legacy crazySend reschedules only and
+bulk catch-up. Each tick delivers at most one mission, at least four seconds apart.
+Remove immediate-send UI; legacy crazySend reschedules only and
 actions.crazySend stays false. See talk-mode.md.
 
 Server-owned manager reconnect reports ready after a successful service pulse
 even if the canonical snapshot is unchanged; failed, closed or switched managers
 are not revived. Runtime changes require deploying the independent service and
-frontend; retain the stable existing service secret. Previous board release verification (before
+frontend; retain the stable existing service secret.
+
+Current timer/queue release verification: all 1282 project tests passed after integrating
+concurrent Bluff updates. Real Chrome checks on localhost and production verified
+queued-not-immediate delivery, random non-author and explicit recipients, pause-time
+queueing, Chinese IME, 375px/320px layouts without overflow, custom 7–233-second
+range restoration, and zero page errors. Production RPC smoke passed 66 checks;
+eight exact owned nodes were cleaned, with no cleanup failures. Talk assets 17/17
+and full-site assets 45/45 matched; API readiness, CORS, synthetic-ticket rejection
+and private-runtime 404 checks passed. Frontend and independent service published.
+
+Previous board release verification (before
 this timer/queue follow-up): 1239/1239 tests, desktop/375px/320px Chrome checks,
 production RPC smoke 59/59 with eight owned nodes cleaned, and matching Talk
 17/17 and full-site 45/45 assets.
