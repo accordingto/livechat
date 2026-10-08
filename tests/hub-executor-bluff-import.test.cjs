@@ -4,7 +4,7 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), vm = require('node:vm'), { webcrypto } = require('node:crypto');
 const source = fs.readFileSync(require.resolve('../hub-executor.js'), 'utf8');
 const clone = value => value == null ? null : structuredClone(value);
-function fixture({ readError = '', releaseError = false } = {}) {
+function fixture({ readError = '', releaseError = false, connectError = null } = {}) {
   const code = 'ROOM', control = 'a'.repeat(64), trace = [], posts = [];
   const setup = { playerCount: 3, names: ['Amy', 'Amy', 'Bob'], tokens: ['1'.repeat(20), '2'.repeat(20), '3'.repeat(20)] };
   const prior = setup.tokens.map((originalToken, i) => ({ originalToken, name: setup.names[i], token: String(i + 4).repeat(64), identityId: String(i + 4).repeat(40), historyToken: String(i + 7).repeat(64) }));
@@ -15,7 +15,7 @@ function fixture({ readError = '', releaseError = false } = {}) {
   class Client {
     constructor() { this.storage = { getItem: key => key === 'icebreak.bluff.host.ROOM' ? control : null }; this.executorTicket = { capsule: raw.executor.capsule, token: control }; }
     async _request(path) { trace.push({ type: 'read', path }); if (readError === path) throw new Error('synthetic_read_failure'); return { data: path === canonical ? clone(raw) : clone(originals.get(path)) }; }
-    async connect(room) { trace.push({ type: 'connect', room }); return { continued: true }; }
+    async connect(room) { trace.push({ type: 'connect', room }); if (connectError) throw connectError; return { continued: true }; }
     async createFromCards(room, receivedSetup, options) { trace.push({ type: 'import', room, setup: receivedSetup, options, starting: this.executorStarting }); return { imported: true }; }
     async _hostRefresh() { return null; }
     async command() { return null; }
@@ -105,4 +105,28 @@ test('an existing registration settles before any import decision reads or relea
   const opening = f.client.createFromCards('ROOM', f.setup);
   await Promise.resolve(); await Promise.resolve(); assert.equal(f.trace.length, 0); assert.equal(f.client.executorStarting, true);
   settle(); await opening; assert.equal(released(f).length, 0); assert.equal(imported(f), undefined); assert.ok(f.trace.some(item => item.type === 'connect'));
+});
+
+
+test('only an explicit current-Hub reopen can repair a matching partial epoch; other connection errors never release it', async () => {
+  for (const code of ['connection_error', 'stale_session', 'host_only', 'game_switched']) {
+    for (const replaceActive of [false, true]) {
+      const f = fixture({ connectError: Object.assign(new Error(code), { code }) });
+      if (code === 'game_switched' && replaceActive) {
+        await f.client.createFromCards('ROOM', f.setup, { replaceActive });
+        assert.equal(released(f).length, 1); assert.ok(imported(f));
+      } else {
+        await assert.rejects(f.client.createFromCards('ROOM', f.setup, { replaceActive }), { code });
+        assert.equal(released(f).length, 0); assert.equal(imported(f), undefined);
+      }
+    }
+  }
+});
+
+test('a failed authoritative source reread aborts partial-epoch repair without releasing or importing', async () => {
+  const f = fixture({ connectError: Object.assign(new Error('game_switched'), { code: 'game_switched' }) });
+  const original = f.client._request.bind(f.client), path = '/rooms/ROOM/players/' + f.setup.tokens[0]; let reads = 0;
+  f.client._request = async (...args) => { if (args[0] === path && ++reads === 2) throw new Error('repair_read_failed'); return original(...args); };
+  await assert.rejects(f.client.createFromCards('ROOM', f.setup, { replaceActive: true }), /repair_read_failed/);
+  assert.equal(released(f).length, 0); assert.equal(imported(f), undefined); assert.equal(f.client.executorStarting, false);
 });

@@ -31,7 +31,15 @@
     async _cas(path, change) { const canonical = this.hostToken && path === this._roomPath('players/' + this.hostToken); for (let i = 0; i < 10; i++) { const read = await this._request(path, { getETag: true }); if (!read.etag) throw new Error('The storage does not support safe room updates.'); if (canonical && read.data?.executor?.v === 1) throw Object.assign(new Error('The server is processing this room.'), { code: 'server_owned' }); const old = JSON.stringify(read.data); const working = read.data == null ? null : structuredClone(canonical ? decodeState(read.data) : read.data); const result = await change(working); const next = canonical ? { data: JSON.stringify(result.state) } : result.state; if (JSON.stringify(next) === old) return result.value; const write = await this._request(path, { method: 'PUT', body: next, etag: read.etag }); if (!write.conflict) return result.value; await new Promise(r => setTimeout(r, 30 + Math.random() * 100)); } throw new Error('The room is busy. Please try again.'); }
     async _loadHistory() { const remote = (await this._request(this._historyPath())).data; this.identity.history = mergeHistory(this.identity.history, remote); this._saveIdentity(); }
     _emit(view) { if (this.lastView?.room === view.room && this.lastView.version > view.version) return this.lastView; this.lastView = view; this.onView(view); this.onStatus(this.isHost ? 'hosting' : 'connected'); return view; }
-    _schedule() { clearTimeout(this.timer); if (!this.closed) this.timer = setTimeout(() => this.refresh().catch(e => { this.onStatus({ state: 'disconnected', error: safeError(e) }); }).finally(() => this._schedule()), 1500); }
+    _schedule() {
+      clearTimeout(this.timer);
+      // Hub import/publication owns the private projections until registration
+      // finishes. A legacy poll here can invalidate the service's baselines.
+      if (!this.closed && !this.executorDeferred) this.timer = setTimeout(() => {
+        if (this.closed || this.executorDeferred) return;
+        return this.refresh().catch(e => { this.onStatus({ state: 'disconnected', error: safeError(e) }); }).finally(() => this._schedule());
+      }, 1500);
+    }
     async connect(code) {
       this.code = cleanCode(code); this.closed = false; const savedHost = this.storage.getItem('icebreak.bluff.host.' + this.code); this.isHost = this.hostPresentation && !!savedHost; this.hostToken = this.isHost ? savedHost : null; this.roomToken = this.identity.rooms[this.code]?.token;
       if (this.isHost) { let meta, profile; try { meta = JSON.parse(this.storage.getItem('icebreak.bluff.host-identity.' + this.code)); profile = meta?.identityStorageKey && JSON.parse(this.storage.getItem(meta.identityStorageKey)); } catch {} if (profile?.id === meta?.identityId && profile.rooms?.[this.code]?.token) { this.identityStorageKey = meta.identityStorageKey; this.identity = profile; this.roomToken = profile.rooms[this.code].token; } }

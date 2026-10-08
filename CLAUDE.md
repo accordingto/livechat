@@ -1,3 +1,25 @@
+## CURRENT: Bluff host registration recovery — 2026-10-09
+
+The remaining native-host error was a publication race: executorDeferred stopped
+automatic registration but left the legacy 1500ms polling writer running. During
+slow registration it could alter private-card fingerprints after the service
+captured its opening snapshots, leaving a sealed partial epoch. Players could
+still display a legacy lobby with sharedControls=false and an old hubExecutor,
+but their ticket returned stale_session; the manager then returned game_switched.
+Bluff scheduling now suppresses deferred timers and already-queued callbacks.
+Native opening/restart clears polling and drains an in-flight private projection
+before source capture/import; only successful publication/registration resumes
+polling. A matching active table normally keeps its epoch. An explicit current-Hub
+replaceActive reopen may repair game_switched only after rereading every original
+binding; release uses its existing manager credential and sealed epoch. Other
+connection errors or changed source bindings never authorize that repair. Keep
+round, roles, scores, original credentials and persistent knowledge histories.
+Bluff loads helper v5, UI v10 and sync host-publication-2. Browser-only change;
+no independent runtime deployment or secret change. CUT is maintained separately.
+The real Client/helper/core reproduces the reported stale-ticket/host-blocked
+state and verifies repair, slow registration and queued-callback protection.
+Final full regression after integrating current Talk updates: 1247/1247 passed.
+
 ## CURRENT: Talk simplified board and custom missions — 2026-10-09
 
 Let's Talk / Crazy Talk now use a cream topic card, compact status and participant
@@ -26,7 +48,8 @@ may be null while the remote card exists. Reread and retry ordinary ETag 412
 conflicts, preserving semantic game/round guards and complete Hub setup checks.
 Already-matching cards remain untouched. Verify all authoritative source
 bindings once more before explicit service registration and showing the lobby.
-Bluff UI cache version is 9; helper v4 and sync hub-roster-1 remain current.
+That publication release used UI v9, helper v4 and sync hub-roster-1;
+the host-registration recovery above supersedes those browser cache versions.
 No runtime, independent-service deployment or secret changes are required.
 Full regression: 1213/1213 passed. The prior UI reproduces the exact reported
 game-switched message for a provisional-null SDK callback; this UI passes the

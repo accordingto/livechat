@@ -202,15 +202,25 @@ var HUB_EXECUTOR = (() => {
                 /^[A-Za-z0-9_-]{12,128}$/.test(entry.originalToken || '') && entry.originalToken === setup.tokens[i] &&
                 entry.name === setup.names[i] && room?.members?.find(member => member.identityId === entry.identityId)?.name === setup.names[i]);
             if (sameRoster) {
-              const originals = await Promise.all(prior.map(entry => this._request('/rooms/' + roomCode + '/players/' + entry.originalToken)));
-              const sameCards = originals.every(({ data }, i) => {
-                const card = data?.bluff, entry = prior[i];
-                return data?.game === 'bluffking' && card?.version === 2 && card.room === roomCode &&
-                  card.token === entry.token && card.identityId === entry.identityId && card.historyToken === entry.historyToken;
-              });
-              // A manager reload of the same active table is a reconnection,
-              // not a release/import. Keep the epoch and private cards intact.
-              if (sameCards) return await this.connect(roomCode);
+              const cardsMatch = async () => {
+                const originals = await Promise.all(prior.map(entry => this._request('/rooms/' + roomCode + '/players/' + entry.originalToken)));
+                return originals.every(({ data }, i) => {
+                  const card = data?.bluff, entry = prior[i];
+                  return data?.game === 'bluffking' && card?.version === 2 && card.room === roomCode &&
+                    card.token === entry.token && card.identityId === entry.identityId && card.historyToken === entry.historyToken;
+                });
+              };
+              // A valid active table retains its epoch, round and private cards.
+              if (await cardsMatch()) {
+                try { return await this.connect(roomCode); }
+                catch (error) {
+                  // A prior interrupted registration can seal the canonical
+                  // state before publishing its new private cards. The current
+                  // Hub manager may repair only that same original-card table.
+                  // Reread after failure so a newer game's cards stay protected.
+                  if (!options.replaceActive || error.code !== 'game_switched' || !await cardsMatch()) throw error;
+                }
+              }
             }
             await request({ operation: 'release', capsule: raw.executor.capsule, token });
           }

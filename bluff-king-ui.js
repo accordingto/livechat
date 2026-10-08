@@ -59,6 +59,13 @@
     return node?.game==='bluffking'&&node.playerNum===i+1&&node.name===setup.names[i]&&
       ['version','room','token','identityId','historyToken'].every(key=>binding?.[key]===expected[key]);
   }
+  async function deferHub(){
+    client.executorDeferred=true;
+    client._schedule?.();
+    // Drain a refresh already writing private cards before changing its epoch.
+    while(client.processing)await new Promise(resolve=>setTimeout(resolve,25));
+  }
+  function resumeHub(){client.executorDeferred=false;client._schedule?.();}
   async function captureHubSources(){
     checkHubSetup();
     if(typeof ROOM.playerRef!=='function'){hubSources=null;return;}
@@ -155,7 +162,7 @@
   }
 
   function clock(){const r=view?.round;if(view?.phase!=='discussion'||!r?.discussionStartedAt)return;const seconds=Math.max(0,Math.floor((Date.now()-r.discussionStartedAt)/1000)),remind=card&&view.self?.playerId===r.thinkerId&&seconds>=(r.rules?.discussionReminderSeconds||300);const node=$('bk-clock');if(node)node.textContent=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}${remind?'':` · ${t('time')}`}`;const n=$('bk-nudge');if(n)n.hidden=!remind;if(remind)nudgeShown.add(r.id);}
-  async function send(action,payload={},snapshot){if(busy||!client)return;busy=true;paint();try{if(action==='restart'&&hubMode){checkHubSetup();client.executorDeferred=true;hubOpening=true;paint();}await client.command({room:code,action,commandId:crypto.randomUUID().replace(/-/g,''),expectedVersion:snapshot?.version??view?.version,roundId:snapshot?.roundId??view?.round?.id,...payload});if(action==='restart'&&hubMode){await captureHubSources();await client.createFromCards(code,setup,{replaceActive:true});await connectLegacy();client.executorDeferred=false;hubOpening=false;const next=stagedView||client.lastView;stagedView=null;if(next)update(next);}$('bk-error').hidden=true;errorText='';}catch(e){showError(e);if(action==='restart'&&hubMode){client.close();view=null;stagedView=null;hubOpening=true;}else await client.refresh().catch(()=>{});}finally{busy=false;lastSignature='';paint();}}
+  async function send(action,payload={},snapshot){if(busy||!client)return;busy=true;paint();try{if(action==='restart'&&hubMode){checkHubSetup();hubOpening=true;paint();await deferHub();}await client.command({room:code,action,commandId:crypto.randomUUID().replace(/-/g,''),expectedVersion:snapshot?.version??view?.version,roundId:snapshot?.roundId??view?.round?.id,...payload});if(action==='restart'&&hubMode){await captureHubSources();await client.createFromCards(code,setup,{replaceActive:true});await connectLegacy();resumeHub();hubOpening=false;const next=stagedView||client.lastView;stagedView=null;if(next)update(next);}$('bk-error').hidden=true;errorText='';}catch(e){showError(e);if(action==='restart'&&hubMode){client.close();view=null;stagedView=null;hubOpening=true;}else await client.refresh().catch(()=>{});}finally{busy=false;lastSignature='';paint();}}
   function confirm(action,target,title,text,extra={}){confirmAction={action,target,extra,version:view.version,roundId:view.round?.id};$('bk-confirm-title').textContent=title;$('bk-confirm-text').textContent=text;$('bk-confirm').showModal();}
   async function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.append(s);});}
   async function ensureHost(){if(!window.BLUFF_ENGINE)await loadScript('bluff-king-engine.js?v=executor-1');if(!window.BLUFF_QUESTIONS)await loadScript('bluff-king-topics.js?v=1');}
@@ -188,15 +195,15 @@
         }
       }
       if(!code)throw {message:t('room_not_found')};
-      await loadScript('bluff-king-sync.js?v=hub-roster-1');
+      await loadScript('bluff-king-sync.js?v=host-publication-2');
       if(window.HUB_EXECUTOR)HUB_EXECUTOR.install();
       client=new BLUFF_SYNC.Client({databaseURL:FIREBASE_CONFIG.databaseURL,storage:localStorage,hostPresentation:!card,onView:update,onStatus:status});
       if(hubMode){
-        client.executorDeferred=true;
+        await deferHub();
         await captureHubSources();
         await client.createFromCards(code,setup,{replaceActive:true});
         await connectLegacy();
-        client.executorDeferred=false;
+        resumeHub();
         hubOpening=false;const next=stagedView||client.lastView;stagedView=null;if(next)update(next);
       }else if(cardSession)await client.connectCard(code,cardSession);
       else if(card&&location.hash)throw {code:'invalid_card'};

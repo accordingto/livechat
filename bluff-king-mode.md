@@ -39,6 +39,14 @@ its current roster without finishing the previous group's game. Restoring an
 unchanged integrated active table keeps its service epoch, roles, scores,
 Spotlight and knowledge history.
 
+Hub opening and restart pause legacy polling until original-card publication and
+service registration finish, including any private refresh already in progress.
+If an earlier interrupted registration left a partial service epoch, the current
+Hub manager can rebuild that epoch after confirming all original seat bindings
+still belong to this table. This keeps its active round, roles, scores and personal
+knowledge history. A valid existing epoch reconnects normally; a newer game's
+original cards are not overwritten during this repair.
+
 ## The conversation
 
 `lobby → topic_check → prepare → discussion → reveal → results`

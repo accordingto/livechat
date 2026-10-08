@@ -69,8 +69,9 @@ async function harness(initialView, { card = false, setup = null, hash = '', tra
   const dictionary = new Map(), storage = new Map(), sent = [], creates = [], cardCreates = [], cardConnections = [], joins = [], connections = [], publications = [], loadedScripts = [], intervals = [], statuses = [];
   if (setup) { storage.set('room-last-session', setup.code); storage.set('room-session-' + setup.code, JSON.stringify(setup)); }
   let transportOptions;
-  const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html'+(search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')))+hash, origin: 'https://example.test', search: search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')), hash }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date: class extends Date { static now() { return now(); } }, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
-    constructor(opts) { transportOptions = opts; transport.client=this; }
+  const context = { document, location: { href: 'https://example.test/bluff-king-live-chat.html'+(search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')))+hash, origin: 'https://example.test', search: search??(setup&&!card?'':'?room=UITEST'+(card?'&card=1':'')), hash }, URL, URLSearchParams, crypto, Uint8Array, Promise, queueMicrotask, Date: class extends Date { static now() { return now(); } }, navigator: { clipboard: { writeText: async () => {} } }, prompt() {}, localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) }, I18N: { lang: 'en', registerDict: (name, dict) => dictionary.set(name, dict), t: (name, key) => dictionary.get(name)?.[key]?.en || key, onChange() {} }, FIREBASE_CONFIG: { databaseURL: 'https://test.firebaseio.com' }, BLUFF_ENGINE: E, BLUFF_QUESTIONS: bank, setTimeout: transport.setTimeout || setTimeout, setInterval: fn => (intervals.push(fn), intervals.length), addEventListener() {}, BLUFF_SYNC: { Client: class {
+    constructor(opts) { transportOptions = opts; transport.client=this; transport.configureClient?.(this); }
+    _schedule() { transport.schedule?.(this); }
     async connect(...args) { connections.push(args); if (transport.connectError) throw transport.connectError; if (initialView) transportOptions.onView(clone(initialView)); transportOptions.onStatus('hosting'); return initialView; }
     async refresh() { return initialView; }
     async _request(...args) { const request=transport.request || transport.room?.restRequest; assert.equal(typeof request,'function','exact-card REST transport is available'); return request(...args); }
@@ -680,4 +681,32 @@ test('a source changed after its publication is detected by final all-card verif
  const h=await harness(f.lobby,{setup:f.setup,transport:{room:f.room,sessions:f.sessions,executor:{install(){},async ready(){return true;},async ensureBluff(){registered++;}}}});
  assert.equal(changed,true);assert.equal(f.writes.length,3);assert.deepEqual(f.values.get(f.setup.tokens[0]),replacement);assert.equal(registered,0);
  assert.match(h.node('bk-error').textContent,/another game/);assert.doesNotMatch(h.html(),/New Hub/);assert.equal(h.button('start'),undefined);
+});
+
+
+test('native opening drains an in-flight private-card refresh before reading sources and resumes polling only after registration',async()=>{
+ const f=currentHubTest(),waits=[],scheduled=[];let release;
+ const gate=new Promise(resolve=>{release=resolve;});
+ const transport={room:f.room,sessions:f.sessions,createdView:f.lobby,
+  configureClient(client){client.processing=true;},setTimeout(callback,ms){waits.push({callback,ms});},
+  schedule(client){scheduled.push(client.executorDeferred);},
+  executor:{install(){},async ready(){return true;},async ensureBluff(){await gate;}}
+ };
+ const h=await harness(f.lobby,{setup:f.setup,transport});
+ assert.equal(transport.client.executorDeferred,true);assert.deepEqual(scheduled,[true]);
+ assert.equal(f.requests.length,0,'source snapshots wait for existing private writes');assert.equal(h.cardCreates.length,0);
+ assert.equal(waits[0].ms,25);transport.client.processing=false;waits[0].callback();await flushUI();
+ assert.equal(h.cardCreates.length,1);assert.equal(f.writes.length,3);assert.deepEqual(scheduled,[true]);
+ assert.doesNotMatch(h.html(),/New Hub/);release();await flushUI();
+ assert.deepEqual(scheduled,[true,false]);assert.match(h.html(),/New Hub 1/);
+});
+
+test('failed service registration keeps the obsolete poll paused and the manager lobby hidden',async()=>{
+ const f=currentHubTest(),scheduled=[],transport={room:f.room,sessions:f.sessions,createdView:f.lobby,
+  schedule(client){scheduled.push(client.executorDeferred);},
+  executor:{install(){},async ready(){return true;},async ensureBluff(){throw Object.assign(new Error('held registration failed'),{code:'connection_error'});}}
+ };
+ const h=await harness(f.lobby,{setup:f.setup,transport});
+ assert.deepEqual(scheduled,[true]);assert.equal(transport.client.executorDeferred,true);
+ assert.doesNotMatch(h.html(),/New Hub/);assert.match(h.node('bk-error').textContent,/held registration failed/);
 });
