@@ -533,8 +533,13 @@
     .talk-home-settings h3 { color: #d9cef0; font-size: .85rem; font-weight: 600; margin: 0 0 12px; }
     .talk-home-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .talk-home-fields label { min-width: 0; display: grid; gap: 7px; color: #b9aecb; font-size: .78rem; }
-    .talk-home-fields select { min-width: 0; width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #655278; border-radius: 10px; color: #f0eafa; background: #12101f; font: inherit; font-size: 14px; }
-    .talk-home-fields select:focus-visible { outline: 3px solid #d6b5ff; outline-offset: 2px; }
+    .talk-home-fields select, .talk-home-fields input { min-width: 0; width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #655278; border-radius: 10px; color: #f0eafa; background: #12101f; font: inherit; font-size: 14px; }
+    .talk-home-fields select:focus-visible, .talk-home-fields input:focus-visible { outline: 3px solid #d6b5ff; outline-offset: 2px; }
+    .talk-home-range { grid-column: 1 / -1; display: grid; gap: 8px; }
+    .talk-home-range > span { color: #b9aecb; font-size: .78rem; }
+    .talk-home-range > p { font-size: .75rem; line-height: 1.5; color: #a89bbd; margin: 0; }
+    .talk-home-range > [data-talk-range-error] { color: #ffcfac; }
+    .talk-home-fields input[aria-invalid="true"] { border-color: #ffc09c; }
     .talk-home-fields [hidden] { display: none !important; }
     .talk-home-settings > p { margin: 11px 0 0; color: #a89bbd; font-size: .75rem; line-height: 1.5; }
     @media (max-width: 520px) { .talk-home-settings { padding: 15px; } .talk-home-fields { grid-template-columns: 1fr; } .talk-home-crazy { display: block; margin-top: 3px; } }
@@ -629,7 +634,15 @@
         <label><span data-i18n="talkSettings.gameMode">玩法</span><select data-talk-pref="gameMode"><option value="normal" data-i18n="talkSettings.normal">Let's Talk · 一起聊</option><option value="crazy" data-i18n="talkSettings.crazy">Crazy Talk · 荒謬挑戰</option></select></label>
         <label><span data-i18n="talkSettings.conversationMode">談話方式</span><select data-talk-pref="conversationMode"><option value="assigned" data-i18n="talkSettings.assigned">依序輪流</option><option value="random" data-i18n="talkSettings.random">隨機點名</option><option value="free" data-i18n="talkSettings.free">自由談話</option></select></label>
         <label data-talk-crazy-setting hidden><span data-i18n="talkSettings.crazySource">挑戰來源</span><select data-talk-pref="crazySource"><option value="mixed" data-i18n="talkSettings.mixed">系統＋玩家</option><option value="system" data-i18n="talkSettings.system">系統出題</option><option value="players" data-i18n="talkSettings.players">玩家互相出題</option></select></label>
-        <label data-talk-system-setting hidden><span data-i18n="talkSettings.frequency">系統出題頻率</span><select data-talk-pref="crazySeconds"><option value="60" data-i18n="talkSettings.minute1">約每人 1 分鐘</option><option value="120" data-i18n="talkSettings.minute2">約每人 2 分鐘</option><option value="180" data-i18n="talkSettings.minute3">約每人 3 分鐘</option></select></label>
+        <div class="talk-home-range" data-talk-crazy-setting hidden>
+          <span data-i18n="talkSettings.interval">隨機間隔（秒）</span>
+          <div class="talk-home-fields">
+            <label><span data-i18n="talkSettings.minSeconds">最短</span><input type="number" inputmode="numeric" min="5" max="300" step="1" data-talk-pref="crazyMinSeconds" value="60" required aria-describedby="talk-home-schedule-hint talk-home-range-error"></label>
+            <label><span data-i18n="talkSettings.maxSeconds">最長</span><input type="number" inputmode="numeric" min="5" max="300" step="1" data-talk-pref="crazyMaxSeconds" value="180" required aria-describedby="talk-home-schedule-hint talk-home-range-error"></label>
+          </div>
+          <p id="talk-home-schedule-hint" data-i18n="talkSettings.scheduleHint">每人各自隨機計時；玩家投稿先排隊，時間到優先派發。</p>
+          <p id="talk-home-range-error" data-talk-range-error role="status" hidden></p>
+        </div>
       </div>
       <p data-i18n="talkSettings.saved">選好後，按上方卡片進入選題。</p>
     </section>
@@ -813,7 +826,7 @@
 
   <footer>IceBreak Hub · <span data-i18n="index.footerTagline">All games are free &amp; no sign-up required</span></footer>
 
-  <script src="talk-settings.js?v=talk-board-1"></script>
+  <script src="talk-settings.js?v=talk-queue-1"></script>
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="sheet-data.js"></script>

@@ -74,12 +74,13 @@ function fixture({ saved = {}, initial = null, pending = false } = {}) {
   return { elements, created, commands, storage, host, click: id => elements['talk-' + id].fire('click'), submit: () => elements['talk-setup'].fire('submit') };
 }
 test('saved custom seconds and homepage modes survive host hydration and opening the topic', async () => {
-  const f = fixture({ saved: { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', seconds: 20, crazySeconds: 60 } });
+  const f = fixture({ saved: { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', seconds: 20, crazyMinSeconds: 10, crazyMaxSeconds: 45 } });
   assert.equal(f.elements['talk-seconds'].value, '20');
   assert.ok(f.elements['talk-seconds'].options.some(option => option.value === '20'));
   await f.submit();
   assert.equal(f.created[0].seconds, 20); assert.equal(f.created[0].conversationMode, 'free');
   assert.equal(f.created[0].crazySource, 'players'); assert.equal(f.created[0].gameMode, 'crazy');
+  assert.equal(f.created[0].crazyMinSeconds, 10); assert.equal(f.created[0].crazyMaxSeconds, 45);
 });
 test('restored player settings remain selected when the host opens the next topic', async () => {
   const initial = E.create({ id: 'old', now: 1000, topic: { question: 'Choose a cafe.' }, seconds: 23,
@@ -128,5 +129,29 @@ test('explicit homepage changes open setup over an active topic until the organi
   assert.equal(f.host.doc.state.gameMode, 'normal');
   await f.click('new'); await f.submit();
   assert.equal(f.created[0].gameMode, 'crazy'); assert.equal(f.created[0].conversationMode, 'free');
+  assert.equal(f.created[0].crazySource, 'players');
+});
+
+test('host rejects invalid intervals without creating a topic and starts after the range is corrected', async () => {
+  const f = fixture({ saved: { gameMode: 'crazy', crazyMinSeconds: 20, crazyMaxSeconds: 90 } });
+  f.elements['talk-crazy-min-seconds'].value = '150';
+  await f.elements['talk-crazy-min-seconds'].fire('change'); await f.submit();
+  assert.equal(f.created.length, 0);
+  assert.equal(preferences.read(f.storage).crazyMinSeconds, 20);
+  assert.ok(f.elements['talk-crazy-interval-error'].textContent);
+  f.elements['talk-crazy-max-seconds'].value = '180';
+  await f.elements['talk-crazy-max-seconds'].fire('change'); await f.submit();
+  assert.equal(f.created[0].crazyMinSeconds, 150);
+  assert.equal(f.created[0].crazyMaxSeconds, 180);
+});
+test('host restores a custom range from player settings into the next topic', async () => {
+  const initial = E.create({ id: 'custom-range', now: 1000, topic: { question: 'A silly cafe.' }, gameMode: 'crazy',
+    crazySource: 'players', crazyMinSeconds: 7, crazyMaxSeconds: 233, roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
+  const f = fixture({ initial });
+  assert.equal(f.elements['talk-crazy-min-seconds'].value, '7');
+  assert.equal(f.elements['talk-crazy-max-seconds'].value, '233');
+  await f.click('new'); await f.submit();
+  assert.equal(f.created[0].crazyMinSeconds, 7);
+  assert.equal(f.created[0].crazyMaxSeconds, 233);
   assert.equal(f.created[0].crazySource, 'players');
 });

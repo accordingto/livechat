@@ -153,7 +153,14 @@ var HUB_EXECUTOR = (() => {
       if (!isServer(this)) return originals.renew.apply(this, args);
       if (this.stopped || !this.connected || this.executorPulsing) return Promise.resolve();
       this.executorPulsing = true;
-      return request({ operation: 'execute', ...metadata(this) }).catch(error => { if (error.code === 'game_switched') { this.suspended = true; this.status('switched'); } }).finally(() => { this.executorPulsing = false; });
+      const ticket = metadata(this);
+      return request({ operation: 'execute', ...ticket }).then(() => {
+        // A successful pulse may leave the canonical document unchanged. The
+        // initial value listener can run before Firebase reports connectivity,
+        // so report readiness here rather than waiting for another snapshot.
+        if (!this.stopped && this.connected && !this.suspended && isServer(this)
+            && this.doc.executor.capsule === ticket.capsule) this.status('ready');
+      }).catch(error => { if (error.code === 'game_switched') { this.suspended = true; this.status('switched'); } }).finally(() => { this.executorPulsing = false; });
     };
     p.change = function (...args) {
       if (isServer(this) || this.executorRegistering) return Promise.reject(new Error('not_available'));

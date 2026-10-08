@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-board-1">
+  <link rel="stylesheet" href="talk.css?v=talk-queue-1">
 </head>
 <body class="talk-page">
   <div class="topbar">
@@ -32,7 +32,15 @@
           <p id="talk-mode-hint" class="talk-soft"></p>
           <p id="talk-conversation-hint" class="talk-soft"></p>
           <label id="talk-crazy-source-field" class="talk-field" hidden><span data-i18n="talk.crazySource">挑戰來源</span><select id="talk-crazy-source"><option value="mixed" selected data-i18n="talk.crazySourceMixed">系統＋玩家</option><option value="system" data-i18n="talk.crazySourceSystem">系統出題</option><option value="players" data-i18n="talk.crazySourcePlayers">玩家互相出題</option></select></label>
-          <label id="talk-crazy-frequency" class="talk-field" hidden><span data-i18n="talk.crazyFrequency">系統出題頻率</span><select id="talk-crazy-seconds"><option value="60">約每 1 分鐘</option><option value="120" selected>約每 2 分鐘</option><option value="180">約每 3 分鐘</option></select></label>
+          <div id="talk-crazy-frequency" class="talk-interval-settings" hidden>
+            <p class="talk-kicker" data-i18n="talk.crazyInterval">隨機間隔（秒）</p>
+            <div class="talk-settings-row">
+              <label class="talk-field"><span data-i18n="talk.crazyMinSeconds">最短</span><input id="talk-crazy-min-seconds" type="number" inputmode="numeric" min="5" max="300" step="1" value="60" required aria-describedby="talk-crazy-schedule-hint talk-crazy-interval-error"></label>
+              <label class="talk-field"><span data-i18n="talk.crazyMaxSeconds">最長</span><input id="talk-crazy-max-seconds" type="number" inputmode="numeric" min="5" max="300" step="1" value="180" required aria-describedby="talk-crazy-schedule-hint talk-crazy-interval-error"></label>
+            </div>
+            <p id="talk-crazy-schedule-hint" class="talk-soft" data-i18n="talk.crazyScheduleHint">每人各自隨機計時；玩家投稿先排隊，時間到優先派發。</p>
+            <p id="talk-crazy-interval-error" class="talk-feedback" role="status"></p>
+          </div>
         </div>
         <div class="talk-actions" role="group" aria-label="Topic source">
           <button type="button" class="talk-button" id="talk-source-library" aria-pressed="true" data-i18n="talk.fromLibrary">從題庫選</button>
@@ -96,7 +104,7 @@
             </div>
             <div id="talk-crazy-host" class="talk-panel talk-crazy-host" hidden>
               <div><h2 data-i18n="talk.crazyTitle">Crazy Talk</h2><p id="talk-crazy-status" class="talk-soft" role="status"></p></div>
-              <div class="talk-actions"><button type="button" id="talk-crazy-send" class="talk-button talk-primary" data-i18n="talk.crazySend">現在派發挑戰</button><button type="button" id="talk-crazy-pause" class="talk-button" data-i18n="talk.crazyPause">暫停派發</button></div>
+              <div class="talk-actions"><button type="button" id="talk-crazy-pause" class="talk-button" data-i18n="talk.crazyPause">暫停派發</button></div>
             </div>
           </div>
         </div>
@@ -146,13 +154,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="talk-settings.js?v=talk-board-1"></script>
-  <script src="talk-crazy.js?v=talk-board-1"></script>
-  <script src="talk-engine.js?v=talk-board-1"></script>
-  <script src="talk-topics.js?v=talk-board-1"></script>
-  <script src="talk-ui.js?v=talk-board-1"></script>
-  <script src="talk-sync.js?v=talk-board-1"></script>
+  <script src="talk-settings.js?v=talk-queue-1"></script>
+  <script src="talk-crazy.js?v=talk-queue-1"></script>
+  <script src="talk-engine.js?v=talk-queue-1"></script>
+  <script src="talk-topics.js?v=talk-queue-1"></script>
+  <script src="talk-ui.js?v=talk-queue-1"></script>
+  <script src="talk-sync.js?v=talk-queue-1"></script>
   <script src="hub-executor.js?v=3"></script><script>HUB_EXECUTOR.install();</script>
-  <script src="talk-host.js?v=talk-board-1"></script>
+  <script src="talk-host.js?v=talk-queue-1"></script>
 </body>
 </html>

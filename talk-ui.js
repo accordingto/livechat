@@ -44,7 +44,8 @@ var TALK_UI = (() => {
     confirmOpen: ['確認開啟', 'Confirm and open'], cancel: ['取消', 'Cancel'],
     topicSettings: ['話題與設定', 'Topic and settings'],
     newTopicNotice: ['先預覽並調整設定。按開啟並確認後才換題，所有玩家會重新開始思考。', 'Preview the topic and settings first. Opening and confirming starts a new thinking period for everyone.'],
-    invalid_settings: ['思考時間請填 15–120 的整數秒；台詞頻率請選 1、2 或 3 分鐘。', 'Choose a whole thinking time from 15 to 120 seconds, and a line interval of 1, 2 or 3 minutes.'],
+    invalid_settings: ['思考時間請填 15–120 的整數秒。', 'Choose a whole thinking time from 15 to 120 seconds.'],
+    invalid_crazy_interval: ['任務間隔請填 5–300 的整數秒，最短時間不能大於最長時間。', 'Use whole seconds from 5 to 300. The minimum cannot exceed the maximum.'],
     confirmation_required: ['請先確認這個操作。', 'Please confirm this action first.'],
     libraryUnavailable: ['題庫尚未載入，請重新整理，或自行輸入話題。', 'The topic library has not loaded. Refresh, or write your own topic.'],
     waitingServer: ['等待同步確認…', 'Waiting for confirmation…'],
@@ -57,18 +58,21 @@ var TALK_UI = (() => {
     thinkingTime: ['思考時間', 'Thinking time'], seconds: ['{n} 秒', '{n} seconds'],
     gameMode: ['玩法', 'Game'], normalMode: ['Let’s Talk · 一起聊', 'Let’s Talk'], crazyMode: ['Crazy Talk · 搞笑台詞', 'Crazy Talk'],
     normalHint: ['一起分享想法，想追問或接話就自然開口。', 'Share ideas. Ask and respond naturally.'],
-    crazyHint: ['邊聊邊收到荒謬台詞與即興任務，也能寫一張卡給朋友。隨時可以略過，不計分。', 'Unexpected lines and improv missions arrive as you chat. Write one for a friend too. Skip anytime, no scoring.'],
+    crazyHint: ['邊聊邊收到短短的搞笑任務，也能寫一張放進待派佇列。隨時可以略過。', 'Short, silly missions arrive while you chat. Add your own to the queue. Skip anytime.'],
+    crazyInterval: ['隨機任務間隔', 'Random mission interval'], crazyMinSeconds: ['最短（秒）', 'Minimum (seconds)'], crazyMaxSeconds: ['最長（秒）', 'Maximum (seconds)'],
+    crazyScheduleHint: ['每位玩家各自隨機計時，錯開派發；手寫卡優先。', 'Each player has a separate random timer. Deliveries are staggered; player cards go first.'],
+    crazyScheduledHostStatus: ['{min}–{max} 秒隨機間隔 · {n} 人有待完成任務', '{min}–{max}s random interval · {n} pending missions'],
     crazyFrequency: ['台詞頻率（每人，時間隨機錯開）', 'Line frequency (per person, randomly staggered)'], minutes: ['約每 {n} 分鐘', 'About every {n} min'],
     crazyTitle: ['🎧 Crazy Talk', '🎧 Crazy Talk'], crazyPrivate: ['只有你看得到', 'Only you can see this'],
-    crazySayHint: ['找個自然的時機插入這句話，越一本正經越好。', 'Slip this into the conversation. Keep a perfectly serious face.'],
+    crazySayHint: ['找個時機說出這句話。', 'Say this when you find your moment.'],
     crazyDone: ['完成了！', 'Done!'], crazySkip: ['略過這張', 'Skip this card'],
-    crazyWaiting: ['台詞會突然出現在這裡，先照常聊天。', 'Your surprise line will appear here. Keep chatting.'],
+    crazyWaiting: ['先繼續聊，任務會在隨機時間出現。', 'Keep chatting. A mission will arrive at a random time.'],
     crazyCompleted: ['這句說完了，下一句稍後來。', 'Line complete. Your next surprise comes later.'],
     crazySkipped: ['已略過，下一句稍後來。', 'Skipped. Your next surprise comes later.'],
-    crazyPaused: ['已暫停新台詞；手上的台詞仍可完成或略過。', 'New lines are paused. You can still use or skip your current line.'],
-    crazySend: ['現在派發台詞', 'Send lines now'], crazyPause: ['暫停派發', 'Pause new lines'], crazyResume: ['繼續派發', 'Resume new lines'],
+    crazyPaused: ['派發已暫停，仍可寫卡排隊、完成或略過手上的任務。', 'Delivery is paused. You can still queue cards, finish or skip your mission.'],
+    crazySend: ['現在派發台詞', 'Send lines now'], crazyPause: ['暫停派發', 'Pause delivery'], crazyResume: ['繼續派發', 'Resume delivery'],
     crazyHostStatus: ['約每 {minutes} 分鐘／人 · {n} 人有待說台詞', 'About every {minutes} minutes per person · {n} pending lines'],
-    crazyHostHint: ['每人收到自己的台詞，這個共享畫面不顯示內容。未完成的台詞不會被蓋掉。', 'Each card gets its own line, not shown on this shared screen. Pending lines are never replaced.'],
+    crazyHostHint: ['每人獨立計時，一次派一張；手寫卡優先，未完成的卡不會被蓋掉。', 'Separate timers, one card at a time. Player cards take priority. Pending cards stay until done or skipped.'],
     stale_prompt: ['這句台詞已更新，請依現在卡片操作。', 'That line has changed. Use the current card.'],
     openTopic: ['開啟話題', 'Open the topic'], newTopic: ['換個話題', 'Choose another topic'],
     start: ['開始分享', 'Start sharing'], extend: ['延伸這個話題', 'Explore a little further'],
@@ -139,19 +143,21 @@ var TALK_UI = (() => {
     participantWaiting: ['聆聽中', 'Listening'], participantSpeaking: ['分享中', 'Sharing'], participantYou: ['你', 'You'],
     freeStatus: ['大家自由聊', 'The floor is open'], freeParticipant: ['自由參與', 'Join in'],
     taskKind: ['即興任務', 'Improv mission'], lineKind: ['插入這句話', 'Slip in this line'],
-    crazyTaskHint: ['找個自然的時機演出來，怎麼詮釋由你決定。', 'Find your moment. Make the performance your own.'],
-    composeMission: ['寫張任務卡給別人', 'Write a mission for someone'], missionRecipient: ['交給誰', 'Who gets it'],
-    missionType: ['卡片類型', 'Card type'], missionText: ['台詞或任務（最多 240 字）', 'Line or mission (up to 240 characters)'],
-    missionPlaceholder: ['例如：用天氣主播的口吻，播報剛剛那句話。', 'Try: Report the last thing someone said like a weather presenter.'],
-    missionSend: ['送出任務卡', 'Send mission'], missionSent: ['任務卡已送出。', 'Mission sent.'],
-    missionHint: ['只有對方會收到。對方還有未完成的任務時，請稍後再送。', 'Only the recipient receives it. Wait if they already have a mission.'],
-    invalid_crazy_assignment: ['請選另一位玩家，並輸入 1–240 字的台詞或任務。', 'Choose another player and write a line or mission of 1–240 characters.'],
+    crazyTaskHint: ['照著做就好。', 'Just do what the card says.'],
+    composeMission: ['寫張搞笑任務卡', 'Write a silly mission'], missionRecipient: ['交給誰', 'Who gets it'],
+    randomRecipient: ['隨機玩家', 'Random player'], missionType: ['卡片類型', 'Card type'], missionText: ['一句台詞或任務（最多 120 字）', 'One line or mission (up to 120 characters)'],
+    missionPlaceholder: ['例如：學雞叫。／說「我愛上我的杯子了」。', 'Try: Cluck like a chicken. / Say “I’m in love with my cup.”'],
+    missionSend: ['加入待派佇列', 'Add to queue'], missionSent: ['已排隊，輪到系統派發時會優先使用。', 'Queued. It will take priority at a scheduled delivery.'],
+    missionQueuedCount: ['你有 {n} 張卡等待派發', 'Your cards waiting: {n}'],
+    missionHint: ['先排隊，隨機時間到才派發。預設隨機給別人，也可以選人。', 'Queued until a random delivery time. Goes to someone else at random, unless you choose a player.'],
+    invalid_crazy_assignment: ['請輸入 1–120 字，對象選隨機或另一位玩家。', 'Write 1–120 characters and choose random or another player.'],
     invalid_target: ['請選擇另一位仍在房間裡的玩家。', 'Choose another player in this room.'],
-    invalid_prompt: ['請輸入 1–240 字，並選擇台詞或即興任務。', 'Write 1–240 characters and choose a line or improv mission.'],
+    invalid_prompt: ['請輸入 1–120 字，並選擇台詞或即興任務。', 'Write 1–120 characters and choose a line or mission.'],
+    queue_full: ['待派任務已滿，等一些卡派發後再加入。', 'The queue is full. Add more after some cards are delivered.'],
     recipient_busy: ['對方還有未完成的任務，稍後再送。', 'They still have a mission. Try again later.'],
     target_busy: ['對方還有未完成的任務，稍後再送。', 'They still have a mission. Try again later.'],
     crazyPlayersHostStatus: ['玩家互派 · {n} 人有待完成任務', 'Player assignments · {n} pending missions'],
-    crazyPlayersWaiting: ['等朋友的任務卡，先繼續聊。', 'Keep chatting while friends write your next mission.'],
+    crazyPlayersWaiting: ['先繼續聊，朋友寫的卡也會排隊等隨機派發。', 'Keep chatting. Player cards wait for a random scheduled delivery too.'],
   };
   if (typeof I18N !== 'undefined') I18N.registerDict('talk', Object.fromEntries(Object.entries(dict).map(([k, v]) => [k, { zh: v[0], en: v[1] }])));
   const list = v => Array.isArray(v) ? v.filter(x => x != null) : Object.values(v || {});
@@ -217,7 +223,8 @@ var TALK_PLAYER = (() => {
   const editorState = s => ({ ...editTopic(s.topic), source: topicById(s.topic.id) ? 'library' : 'custom', topicId: s.topic.id || '', category: '', search: '',
     mode: s.mode === 'write' ? 'write' : 'think', seconds: Number(s.seconds) || 45, gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
     conversationMode: s.conversationMode || 'random', crazySource: s.crazy?.source || 'mixed',
-    crazySeconds: Number(s.crazy?.intervalSeconds) || 120, showStarters: !!s.showStarters });
+    crazyMinSeconds: Number(s.crazy?.minSeconds) || (s.crazy?.intervalSeconds ? Math.round(s.crazy.intervalSeconds * .8) : 60),
+    crazyMaxSeconds: Number(s.crazy?.maxSeconds) || (s.crazy?.intervalSeconds ? Math.round(s.crazy.intervalSeconds * 1.2) : 180), showStarters: !!s.showStarters });
   const option = (value, label, current) => '<option value="' + esc(value) + '"' + (String(value) === String(current) ? ' selected' : '') + '>' + esc(label) + '</option>';
   function settingsHTML(editor) {
     const select = (key, field, values) => '<label class="talk-field">' + esc(t(key)) + '<select data-talk-editor-field="' + field + '">' + values + '</select></label>';
@@ -240,7 +247,7 @@ var TALK_PLAYER = (() => {
       select('gameMode', 'gameMode', option('normal', t('normalMode'), editor.gameMode) + option('crazy', t('crazyMode'), editor.gameMode)) +
       select('conversationMode', 'conversationMode', ['assigned', 'random', 'free'].map(mode => option(mode, t(mode + 'Mode'), editor.conversationMode)).join('')) +
       (editor.gameMode === 'crazy' ? select('crazySource', 'crazySource', ['system', 'players', 'mixed'].map(source => option(source, t('crazySource' + source[0].toUpperCase() + source.slice(1)), editor.crazySource)).join('')) : '') +
-      (editor.gameMode === 'crazy' && editor.crazySource !== 'players' ? select('crazyFrequency', 'crazySeconds', [60, 120, 180].map(n => option(n, t('minutes', { n: n / 60 }), editor.crazySeconds)).join('')) : '') +
+      (editor.gameMode === 'crazy' ? '<div class="talk-interval-settings"><span>' + esc(t('crazyInterval')) + '</span><div class="talk-settings-row">' + ['Min','Max'].map(bound => '<label class="talk-field">' + esc(t('crazy' + bound + 'Seconds')) + '<input type="number" data-talk-editor-field="crazy' + bound + 'Seconds" min="5" max="300" step="1" inputmode="numeric" value="' + esc(editor['crazy' + bound + 'Seconds']) + '"></label>').join('') + '</div><p class="talk-soft">' + esc(t('crazyScheduleHint')) + '</p></div>' : '') +
       '<label class="talk-card-check"><input type="checkbox" data-talk-editor-field="showStarters"' + (editor.showStarters ? ' checked' : '') + '> ' + esc(t('showStarters')) + '</label>' +
       '<div class="talk-actions">' + button('openTopic', 'openTopic', '', true) + button('cancelSetup', 'closeSettings') + '</div></section>';
   }
@@ -259,17 +266,17 @@ var TALK_PLAYER = (() => {
     constructor(element, { send, nameBanner, now = () => Date.now(), connected = () => true }) {
       this.element = element; this.send = send; this.nameBanner = nameBanner; this.now = now; this.connected = connected;
       this.pending = null; this.error = ''; this.draft = ''; this.data = null; this.composing = false;
-      this.crazyDraft = { target: '', text: '', kind: 'line' }; this.assignmentOpen = false; this.assignmentNotice = '';
+      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = false; this.assignmentNotice = '';
       this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.clickHandler = event => {
         const b = event.target.closest('[data-talk-action]');
         if (!b || !this.element.contains(b) || b.disabled) return;
         const type = b.dataset.talkAction;
         if (type === 'crazyAssign') {
-          if (this.data.talk.crazy?.paused || this.data.talk.crazy?.canAssign === false) return;
-          const draft = this.crazyDraft, text = draft.text.trim(), target = Number(draft.target);
-          if (!text || text.length > 240 || target === this.data.playerNum || !list(this.data.talk.roster).some(p => p.playerNum === target)) { this.error = 'invalid_crazy_assignment'; this.render(true); return; }
-          this.assignmentNotice = ''; this.act('crazyAssign', { target, text, kind: draft.kind }); return;
+          if (this.data.talk.crazy?.canAssign === false) return;
+          const draft = this.crazyDraft, text = draft.text.trim(), random = draft.target === 'random', target = Number(draft.target);
+          if (!text || text.length > 120 || (!random && (target === this.data.playerNum || !list(this.data.talk.roster).some(p => p.playerNum === target)))) { this.error = 'invalid_crazy_assignment'; this.render(true); return; }
+          this.assignmentNotice = ''; this.act('crazyAssign', { ...(random ? {} : { target }), text, kind: draft.kind }); return;
         }
         if (type === 'retry') { this.deliver(); return; }
         const s = this.data.talk, manager = s.sharedControls === true && s.hostControls;
@@ -293,9 +300,13 @@ var TALK_PLAYER = (() => {
             try {
               const topic = this.editor.source === 'library' ? topicById(this.editor.topicId) : customTopic(this.editor);
               if (!topic) throw new Error('invalid_topic');
-              const seconds = Number(this.editor.seconds), crazySeconds = Number(this.editor.crazySeconds);
-              if (!Number.isInteger(seconds) || seconds < 15 || seconds > 120 || ![60, 120, 180].includes(crazySeconds)) throw new Error('invalid_settings');
-              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameMode: this.editor.gameMode, crazySeconds, conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
+              const seconds = Number(this.editor.seconds);
+              let crazyMinSeconds = Number(this.editor.crazyMinSeconds), crazyMaxSeconds = Number(this.editor.crazyMaxSeconds);
+              if (!Number.isInteger(seconds) || seconds < 15 || seconds > 120) throw new Error('invalid_settings');
+              const validInterval = Number.isInteger(crazyMinSeconds) && Number.isInteger(crazyMaxSeconds) && crazyMinSeconds >= 5 && crazyMaxSeconds <= 300 && crazyMinSeconds <= crazyMaxSeconds;
+              if (this.editor.gameMode === 'crazy' && !validInterval) throw new Error('invalid_crazy_interval');
+              if (!validInterval) { crazyMinSeconds = 60; crazyMaxSeconds = 180; }
+              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
               this.confirmation = 'topic'; this.error = '';
             } catch (error) { this.error = error.message; }
           }
@@ -340,7 +351,7 @@ var TALK_PLAYER = (() => {
     }
     update(data) {
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId;
-      if (changedSession) { this.crazyDraft = { target: '', text: '', kind: 'line' }; this.assignmentNotice = ''; this.assignmentOpen = false; this.pending = null; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
+      if (changedSession) { this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = false; this.pending = null; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
       else if (this.data.talk.turnId !== data.talk.turnId) { this.confirmation = null; this.topicToOpen = null; }
       if (this.confirmation === 'end' && (!list(data.talk.questions).length || data.talk.activeQuestion)) this.confirmation = null;
       this.data = data;
@@ -376,7 +387,7 @@ var TALK_PLAYER = (() => {
       const command = this.pending;
       Promise.resolve().then(() => this.send(command)).catch(e => {
         if (this.pending?.id !== command.id) return;
-        this.error = ['stale_turn','stale_prompt','waiting_players','pending_questions','question_open','not_available','invalid_topic','invalid_extension','invalid_settings','confirmation_required','invalid_crazy_assignment','target_busy','invalid_target','invalid_prompt','recipient_busy'].includes(e.message) ? e.message : 'error';
+        this.error = ['stale_turn','stale_prompt','waiting_players','pending_questions','question_open','not_available','invalid_topic','invalid_extension','invalid_settings','invalid_crazy_interval','confirmation_required','invalid_crazy_assignment','target_busy','invalid_target','invalid_prompt','recipient_busy','queue_full'].includes(e.message) ? e.message : 'error';
         if (this.error === 'pending_questions') this.confirmation = 'end';
         this.pending = null; this.render(true); if (this.confirmation) this.focusConfirmation();
       });
@@ -397,15 +408,15 @@ var TALK_PLAYER = (() => {
           (s.actions?.end && s.conversationMode !== 'free' && s.speaker !== me && !s.activeQuestion ? button('helpEnd', 'end') : '') +
           (s.actions?.resume && s.activeQuestion && s.activeQuestion.playerNum !== me && s.speaker !== me ? button('helpResume', 'resume') : '') + '</div>';
       }
-      const allowAssignment = s.gameMode === 'crazy' && s.phase === 'talking' && s.crazy?.source !== 'system';
+      const allowAssignment = s.gameMode === 'crazy' && ['thinking', 'talking'].includes(s.phase) && s.crazy?.source !== 'system';
       const recipients = list(s.roster).filter(p => p.playerNum !== me);
-      if (!recipients.some(p => String(p.playerNum) === String(this.crazyDraft.target))) this.crazyDraft.target = String(recipients[0]?.playerNum || '');
+      if (this.crazyDraft.target !== 'random' && !recipients.some(p => String(p.playerNum) === String(this.crazyDraft.target))) this.crazyDraft.target = 'random';
       if (preserveInput && this.element.querySelector('.talk-assignment')) this.assignmentOpen = !!this.element.querySelector('.talk-assignment').open;
       const assignment = allowAssignment ? `<details class="talk-assignment"${this.assignmentOpen ? ' open' : ''}><summary>${esc(t('composeMission'))}</summary><div class="talk-assignment-body">
-        <div class="talk-settings-row"><label class="talk-field">${esc(t('missionRecipient'))}<select data-talk-assignment-field="target">${recipients.map(p => option(p.playerNum, p.name || name(s,p.playerNum), this.crazyDraft.target)).join('')}</select></label>
+        <div class="talk-settings-row"><label class="talk-field">${esc(t('missionRecipient'))}<select data-talk-assignment-field="target">${option('random', t('randomRecipient'), this.crazyDraft.target)}${recipients.map(p => option(p.playerNum, p.name || name(s,p.playerNum), this.crazyDraft.target)).join('')}</select></label>
         <label class="talk-field">${esc(t('missionType'))}<select data-talk-assignment-field="kind">${option('line',t('lineKind'),this.crazyDraft.kind)}${option('task',t('taskKind'),this.crazyDraft.kind)}</select></label></div>
-        <label class="talk-field">${esc(t('missionText'))}<textarea data-talk-assignment-field="text" maxlength="240" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
-        <p class="talk-soft">${esc(t('missionHint'))}</p>${button('missionSend','crazyAssign',s.crazy?.paused || s.crazy?.canAssign === false ? 'data-talk-blocked="true" disabled' : '',true)}
+        <label class="talk-field">${esc(t('missionText'))}<textarea data-talk-assignment-field="text" maxlength="120" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
+        <p class="talk-soft">${esc(t('missionHint'))}</p>${button('missionSend','crazyAssign',s.crazy?.canAssign === false ? 'data-talk-blocked="true" disabled' : '',true)}
         ${this.assignmentNotice ? `<p class="talk-soft" role="status">${esc(t(this.assignmentNotice))}</p>` : ''}</div></details>` : '';
       const active = this.element.querySelector('[data-talk-note]');
       const keep = preserveInput && active && s.phase === 'thinking' && s.mode === 'write' ? active : null;
@@ -433,7 +444,7 @@ var TALK_PLAYER = (() => {
         <p class="talk-soft">${esc(t(s.phase === 'thinking' ? 'thinking' : s.conversationMode === 'free' ? 'conversationHintFree' : myTurn ? 'turnHint' : 'listening'))}</p>
         <div class="talk-controls">${controls}</div></section>
         <section class="talk-card-roster"><div class="talk-section-label"><span>${esc(t('participantsTitle'))}</span><span>${list(s.roster).length}</span></div>${TALK_UI.participantsHTML(s, me)}</section>
-        ${assignment}
+        ${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}${assignment}
         ${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
         ${managementHTML(s, this)}
         <p class="talk-feedback" role="status">${this.error ? esc(t(this.error)) : ''}</p>

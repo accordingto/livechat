@@ -139,3 +139,8 @@
 
 .talk-card-top .name-banner { min-width:0; overflow-wrap:anywhere; }
 .talk-card-top .talk-kicker { flex-shrink:0; }
+
+.talk-interval-settings { grid-column: 1 / -1; display: grid; gap: 8px; }
+.talk-interval-settings > span { font-size: .9rem; font-weight: 700; }
+.talk-interval-settings .talk-soft { margin: 0; }
+.talk-queue-count { margin: 0; padding: 10px 16px; color: var(--talk-muted, #c4cfde); font-size: .85rem; }

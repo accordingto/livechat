@@ -78,7 +78,8 @@ const adapters = {
     if (state?.phase === 'thinking' && now(ctx) >= Number(state.deadline) && online(state, ctx).length >= 2) return TALK.apply(state, tick(state, 'start', ctx, state.deadline));
     if (!TALK.crazyDue(state, now(ctx))) return state;
     return TALK.apply(state, tick(state, 'crazyTick', ctx,
-      [state.crazy.nextAt, state.crazy.sequence]));
+      [state.crazy.nextAt, state.crazy.sequence, state.crazy.nextDeliveryAt,
+        list(state.crazy.queue).map(item => [item.id, item.assignedBy, item.target, item.at])]));
   }),
 };
 module.exports = { adapters };

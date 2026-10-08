@@ -40,24 +40,41 @@ The real Client/helper/core reproduces the reported stale-ticket/host-blocked
 state and verifies repair, slow registration and queued-callback protection.
 Final full regression after integrating current Talk updates: 1247/1247 passed.
 
-## CURRENT: Talk simplified board and custom missions — 2026-10-09
+## CURRENT: Talk independent random timers and queued missions — 2026-10-09
 
-Let's Talk / Crazy Talk now use a cream topic card, compact status and participant
-roster, with removed speaking/question request controls. Homepage preferences
-persist via talk-settings.js; conversationMode is assigned/random/free (random
-default). Assigned follows roster; free keeps speaker null and has no handover.
-Crazy source is system/players/mixed (mixed default); 96 system prompts include
-60 spoken lines and 36 improv missions. Player-only disables system scheduling.
-Authenticated crazyAssign {target,text,kind,turnId} sends 1–240 characters only
-to another player's private projection; never overwrite pending missions. Pausing
-stops all new missions, while done/skip remain prompt-bound across turns.
-Keep original links, shared controls, old room fallback and private projections.
-See talk-mode.md. Both independent runtime deployment and frontend publication
-are required; keep the stable existing service secret unchanged. Full regression:
-1239/1239 passed; real Chrome desktop/375px/320px demo and private Chinese
-assignment delivery pass with no page errors or horizontal overflow. Independent
-service is deployed; production RPC smoke 59/59, eight fresh owned test nodes
-cleaned with zero failures. Talk 17/17 and full-site 45/45 assets match production.
+Let's Talk / Crazy Talk use a cream topic card, compact state and participant
+roster, with speaking/question requests removed. Homepage preferences persist
+via talk-settings.js; explicit homepage edits seed host setup without replacing
+an active topic until the user opens it. Preparation times remain intact.
+conversationMode is assigned/random/free (random default): assigned follows
+roster order; free keeps speaker null with no handover. Keep old-room recovery,
+original private links, shared controls and projection privacy.
+
+Crazy source is system/players/mixed (mixed default); 96 system prompts contain
+60 lines and 36 improv tasks. Each participant has independent random future
+deadlines from crazyMinSeconds/crazyMaxSeconds: default 60–180 seconds, integer
+bounds 5–300, minimum <= maximum. Equal bounds are valid. Legacy crazySeconds
+migrates to 80–120% without clearing pending missions or saved deadlines.
+
+Authenticated crazyAssign {target,text,kind,turnId} queues 1–120 trimmed
+characters during thinking/talking, including while delivery is paused.
+Omitted/null target means a random other recipient at delivery; numeric target
+chooses another seat. Room queue limit is 20 and each author's limit is 10.
+Eligible player submissions take priority at a recipient's independent due time.
+Mixed falls back to system prompts; players-only uses the same timers without
+system fallback. The author sees myQueuedCount; only recipients see delivered
+private text. Never overwrite pending missions. Pause affects delivery only;
+done/skip remain prompt-bound, and resume creates future deadlines without
+bulk catch-up. Remove immediate-send UI; legacy crazySend reschedules only and
+actions.crazySend stays false. See talk-mode.md.
+
+Server-owned manager reconnect reports ready after a successful service pulse
+even if the canonical snapshot is unchanged; failed, closed or switched managers
+are not revived. Runtime changes require deploying the independent service and
+frontend; retain the stable existing service secret. Previous board release verification (before
+this timer/queue follow-up): 1239/1239 tests, desktop/375px/320px Chrome checks,
+production RPC smoke 59/59 with eight owned nodes cleaned, and matching Talk
+17/17 and full-site 45/45 assets.
 
 ## CURRENT: Bluff authoritative card publication — 2026-10-09
 

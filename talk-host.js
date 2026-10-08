@@ -12,7 +12,7 @@
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
   let explanationSession = null;
-  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazySeconds: 'crazy-seconds', mode: 'mode', seconds: 'seconds' };
+  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazyMinSeconds: 'crazy-min-seconds', crazyMaxSeconds: 'crazy-max-seconds', mode: 'mode', seconds: 'seconds' };
   const savedPreferences = TALK_SETTINGS.read();
   let applyHomePreferences = TALK_SETTINGS.consumePending();
   function setSetupPreference(key, value) {
@@ -24,7 +24,11 @@
     field.value = String(value);
   }
   Object.entries(savedPreferences).forEach(([key, value]) => setSetupPreference(key, value));
-  const setupPreferences = () => TALK_SETTINGS.normalize(Object.fromEntries(Object.entries(preferenceFields).map(([key, id]) => [key, byId(id).value])));
+  const setupPreferences = () => {
+    const values = Object.fromEntries(Object.entries(preferenceFields).map(([key, id]) => [key, byId(id).value]));
+    if (values.gameMode === 'crazy' && !TALK_SETTINGS.validInterval(values.crazyMinSeconds, values.crazyMaxSeconds)) throw new Error('invalid_crazy_interval');
+    return TALK_SETTINGS.normalize(values);
+  };
   const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
   try { starterPreference = localStorage.getItem(startersKey) !== 'false'; } catch (e) {}
   const activeSession = () => !!state && status !== 'switched';
@@ -37,7 +41,14 @@
   function renderModeSettings() {
     const crazy = byId('game-mode').value === 'crazy';
     byId('crazy-source-field').hidden = !crazy;
-    byId('crazy-frequency').hidden = !crazy || byId('crazy-source').value === 'players';
+    byId('crazy-frequency').hidden = !crazy;
+    const intervalValid = !crazy || TALK_SETTINGS.validInterval(byId('crazy-min-seconds').value, byId('crazy-max-seconds').value);
+    for (const id of ['crazy-min-seconds', 'crazy-max-seconds']) {
+      byId(id).disabled = !crazy;
+      byId(id).setCustomValidity?.(intervalValid ? '' : t('invalid_crazy_interval'));
+      byId(id).setAttribute('aria-invalid', String(!intervalValid));
+    }
+    byId('crazy-interval-error').textContent = intervalValid ? '' : t('invalid_crazy_interval');
     byId('mode-hint').textContent = t(crazy ? 'crazyHint' : 'normalHint');
     const style = byId('conversation-mode').value;
     byId('conversation-hint').textContent = t(style === 'assigned' ? 'conversationHintAssigned' : style === 'free' ? 'conversationHintFree' : 'conversationHintRandom');
@@ -145,7 +156,7 @@
     if (byId('draft-status').dataset.message) byId('draft-status').textContent = t(byId('draft-status').dataset.message);
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('seconds').querySelectorAll('option').forEach(o => { o.textContent = t('seconds', { n: o.value }); });
-    byId('crazy-seconds').querySelectorAll('option').forEach(o => { o.textContent = t('minutes', { n: Number(o.value) / 60 }); });
+
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
   function render() {
@@ -166,11 +177,10 @@
     }
     const s = TALK_ENGINE.view(state, 0, now()).talk;
     byId('crazy-host').hidden = s.gameMode !== 'crazy';
-    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.source === 'players' ? t('crazyPlayersHostStatus', { n: s.crazy.pendingCount }) : (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyHostStatus', { minutes: s.crazy.intervalSeconds / 60, n: s.crazy.pendingCount })) : '';
+    const interval = TALK_SETTINGS.normalize(s.crazy?.minSeconds != null ? { crazyMinSeconds: s.crazy.minSeconds, crazyMaxSeconds: s.crazy.maxSeconds } : { crazySeconds: s.crazy?.intervalSeconds });
+    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyScheduledHostStatus', { min: interval.crazyMinSeconds, max: interval.crazyMaxSeconds, n: s.crazy.pendingCount }) : '';
     byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
-    byId('crazy-send').hidden = s.crazy?.source === 'players';
-    byId('crazy-pause').hidden = s.crazy?.source === 'players';
-    byId('crazy-send').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking' || !!s.crazy?.paused || s.crazy?.pendingCount >= list(s.roster).length;
+
     byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
     byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
     byId('question').textContent = state.topic.question;
@@ -228,13 +238,14 @@
       if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
-    } catch (e) { error = ['offline', 'invalid_topic'].includes(e.message) ? e.message : 'error'; }
+    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval'].includes(e.message) ? e.message : 'error'; }
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
-  Object.values(preferenceFields).forEach(id => byId(id).addEventListener('change', () => { rememberSettings(); renderModeSettings(); }));
+  Object.values(preferenceFields).forEach(id => byId(id).addEventListener('change', () => {
+    error = ''; try { rememberSettings(); } catch (e) { error = e.message; } render();
+  }));
   byId('browse-library').addEventListener('click', () => { byId('question-bank').open = true; });
-  byId('crazy-send').addEventListener('click', () => command('crazySend'));
   byId('crazy-pause').addEventListener('click', () => command('crazyPause', { paused: !state?.crazy?.paused }));
   byId('starter-toggle').addEventListener('change', async event => {
     const show = event.target.checked;
@@ -323,7 +334,9 @@
             byId('setup').hidden = !fromHome;
             if (!fromHome) {
             byId('game-mode').value = next.gameMode === 'crazy' ? 'crazy' : 'normal';
-            byId('crazy-seconds').value = String(next.crazy?.intervalSeconds || 120);
+            const interval = TALK_SETTINGS.normalize(next.crazy?.minSeconds != null ? { crazyMinSeconds: next.crazy.minSeconds, crazyMaxSeconds: next.crazy.maxSeconds } : { crazySeconds: next.crazy?.intervalSeconds });
+            setSetupPreference('crazyMinSeconds', interval.crazyMinSeconds);
+            setSetupPreference('crazyMaxSeconds', interval.crazyMaxSeconds);
             byId('crazy-source').value = next.crazy?.source || 'mixed';
             byId('conversation-mode').value = next.conversationMode || 'random';
             byId('mode').value = next.mode || 'think';

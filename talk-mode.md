@@ -1,39 +1,61 @@
-# Current: simplified Talk board and player missions — 2026-10-09
+# Current: independent Crazy Talk timers and queued missions — 2026-10-09
 
 The homepage saves game and conversation preferences in `lets-talk-settings.v2`;
 `talk-settings.js` normalizes them for host setup and the optional initializer.
-Conversation modes: assigned follows the roster order, random gives everyone
-one turn per round, free has no nominated speaker or handover controls.
-Old rooms default to random. Host and shared player settings both support these
-options; newTopic preserves them when a legacy caller omits the new fields.
+Conversation modes: assigned follows roster order, random gives everyone one
+turn per round, free has no nominated speaker or handover controls. Old rooms
+default to random. Host and shared player settings both support these options;
+newTopic preserves them when a legacy caller omits the new fields. Explicit
+homepage edits open the next host setup with saved values; returning to the
+current topic keeps the active session. Custom preparation times are preserved.
 
-Player cards now show topic, current conversation state and participants.
-Speaking/question requests and reaction controls have been removed from the UI.
-Legacy commands remain compatible with existing saved rooms; resume and explicit
-handover confirmation handle any previously pending question without stranding play.
-Explanations, topic changes and custom follow-ups are available in compact details.
+Player cards show the topic, current conversation state and participants.
+Speaking/question requests and reaction controls are removed from the UI.
+Legacy commands remain compatible with saved rooms; resume and explicit
+handover confirmation clear old question state without stranding play.
+Explanations, topic changes and custom follow-ups use compact details.
 
 Crazy Talk has 96 original English prompts: 60 lines and 36 verbal improv tasks.
-Sources are system, players, or mixed (default). Players/mixed permits each valid
-player to type a line or task, select another participant and send `crazyAssign`
-with target, text (1–240 trimmed characters), kind line/task and current turnId.
-Only the recipient projection receives the assignment; others and host see counts.
-A pending mission is never overwritten. Duplicate delivery, obsolete turn/session,
-invalid recipient and forged actor are rejected. Pausing stops new assignments
-while existing missions may still be completed or skipped. No scoring or audio API.
+Sources are system, players, or mixed (default). Every participant has an
+independent random timer configured by crazyMinSeconds/crazyMaxSeconds.
+The default range is 60–180 seconds; both bounds must be integers from 5 to 300
+with minimum no greater than maximum. Equal bounds give a fixed interval.
+Legacy saved crazySeconds values convert to 80–120% of that interval, while
+existing pending missions and saved deadlines survive ordinary synchronization.
+
+Players/mixed permits an authenticated player to queue a handwritten line or
+task during preparation or conversation, including while delivery is paused.
+crazyAssign accepts text (1–120 trimmed characters), kind line/task and the
+current turnId. Omitted/null target selects a random other participant at
+delivery; a numeric target chooses a specific other participant. Submissions
+are queued, never delivered immediately. The room holds at most 20 submissions
+and each author at most 10. Eligible player submissions take priority at the
+recipient's next independent timer. Mixed mode falls back to system prompts
+when no eligible submission exists; players mode schedules the same timers
+without system fallback. The author sees only their own queued count.
+
+Only the recipient projection receives the delivered mission; other players
+and the host see aggregate counts. An unfinished mission is never overwritten.
+Obsolete turn/session, invalid recipient and forged actor are rejected.
+Pause stops delivery and still accepts submissions; existing missions remain
+available for done/skip. Resume schedules future timers without catch-up bulk
+delivery. There is no immediate-send UI; deprecated crazySend redraws future
+timers and exposes actions.crazySend=false. No scoring or audio API is used.
 
 Drafts remain local during sync, clear only after successful acknowledgement,
-and remain on busy/rejected sends. Chinese IME composition defers redraw. Mobile
-and desktop use the same topic/status/participant hierarchy. Runtime changes
-require redeploying the existing independent service as well as the frontend.
+and remain on rejected submissions. Chinese IME composition defers redraw.
+Mobile and desktop use the same topic/status/participant hierarchy. A server-owned
+manager reconnect reports ready after a successful service pulse even when no
+canonical snapshot changes; failed, closed or switched managers are not revived.
+Runtime changes require redeploying the independent service and frontend.
 
-Validation: all 1239 project tests pass after integrating the concurrent Bluff
-publication fix. Real Chrome demo verifies private Chinese player-assigned tasks,
-no request buttons, 375px/320px layouts with no overflow, zero page errors and
-preserved custom thinking time (20 seconds). The same browser checks pass on
-the public production demo. Production RPC smoke passes 59 checks using two
-fresh three-player fixtures; all eight exact owned nodes were cleaned, with
-zero cleanup failures. Both Talk and full-site deployment asset checks pass.
+Previous board release validation (before this scheduling follow-up): all 1239
+project tests passed after the concurrent Bluff publication fix. Real Chrome
+demo and production checks verified private Chinese player missions, removed
+request buttons, 375px/320px layouts without overflow, zero page errors and
+preserved custom preparation time. Production RPC smoke passed 59 checks using
+two fresh three-player fixtures; eight owned nodes were cleaned without failure.
+Both Talk and full-site deployment asset checks passed.
 
 The earlier descriptions below document historical versions.
 

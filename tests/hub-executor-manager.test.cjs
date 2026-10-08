@@ -31,14 +31,20 @@ function fixture(t, game, { readiness = null } = {}) {
   const room = { code: 'MGR234', count: 3, answers: {}, name: i => 'Person ' + (i + 1),
     getExtra: key => extras[key], setExtra: (key, value) => { extras[key] = value; }, playerRef: i => db.ref('rooms/MGR234/players/' + tokens[i]) };
   tokens.forEach((token, i) => { const path = 'rooms/MGR234/players/' + token; put(path, { game: 'scene', round: 1, playerNum: i + 1 }); db.ref(path).on('value', node => { room.answers[i + 1] = node.val(); }); });
-  const service = createExecutor({ secret: '56'.repeat(32), databaseURL: 'http://localhost', fetchImpl: databaseFetch, now: () => Date.now(), games });
-  const context = vm.createContext({ crypto: webcrypto, Date, Promise, AbortSignal, URL, Response, TextEncoder, TextDecoder, Uint8Array, Uint32Array, btoa, atob, structuredClone,
+  let clock = Date.now(), nextPulseFailure = null;
+  class FixtureDate extends Date { static now() { return clock; } }
+  const service = createExecutor({ secret: '56'.repeat(32), databaseURL: 'http://localhost', fetchImpl: databaseFetch, now: () => clock, games });
+  const context = vm.createContext({ crypto: webcrypto, Date: FixtureDate, Promise, AbortSignal, URL, Response, TextEncoder, TextDecoder, Uint8Array, Uint32Array, btoa, atob, structuredClone,
     document: { hidden: false, documentElement: { lang: 'en' }, getElementById: () => null, addEventListener() {} },
     window: { addEventListener() {} }, setInterval: () => 1, clearInterval() {},
     async fetch(url, input = {}) {
       if (new URL(url).pathname !== '/api/hub-executor') return databaseFetch(url, input);
       if (!input.method) { if (readiness) await readiness; return new Response(JSON.stringify({ ready: true })); }
       const body = JSON.parse(input.body); calls.push(body);
+      if (body.operation === 'execute' && !body.command && nextPulseFailure) {
+        const code = nextPulseFailure; nextPulseFailure = null;
+        return new Response(JSON.stringify({ error: code }), { status: code === 'game_switched' ? 409 : 503 });
+      }
       try { return new Response(JSON.stringify(await service[body.operation](body))); }
       catch (error) { return new Response(JSON.stringify({ error: error.code || error.message }), { status: error.status || 500 }); }
     }
@@ -58,20 +64,43 @@ function fixture(t, game, { readiness = null } = {}) {
       assert.ok(!JSON.stringify(view).includes(JSON.stringify(host.ref.key)), 'private card must not receive the manager credential'); }
   };
   t.after(() => managers.forEach(host => host.close()));
-  return { context, manager, service, calls, statuses, card, state, playerCommand, assertIndependent, game };
+  return { context, manager, service, calls, statuses, card, state, playerCommand, assertIndependent, game, now: () => clock, setClock: value => { clock = value; }, failNextPulse: code => { nextPulseFailure = code; } };
 }
 
-test('Talk original manager can control a server-owned session, close while players continue, and reconnect without taking a browser lease', async t => {
+test('Talk manager schedules queued missions independently and players continue after it closes', async t => {
   const f = fixture(t, 'letstalk'), host = f.manager(); await flush(); assert.equal(host.own, true);
-  await host.start({ topic: { id: 'manager-topic', question: 'What makes a welcoming place?', followUps: ['Who would visit?'] }, mode: 'think', seconds: 120, showStarters: true, gameMode: 'crazy', crazySeconds: 60 });
+  await host.start({ topic: { id: 'manager-topic', question: 'What makes a welcoming place?', followUps: ['Who would visit?'] },
+    mode: 'think', seconds: 120, showStarters: true, gameMode: 'crazy', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 9 });
   await f.context.HUB_EXECUTOR.ensureHost(host, 'letstalk'); await flush(); f.assertIndependent(host);
+  assert.equal(f.card(2).talk.crazy.minSeconds, 5); assert.equal(f.card(2).talk.crazy.maxSeconds, 9);
+  await f.playerCommand(2, 'crazyAssign', { target: 3, text: 'Report the conversation like a weather presenter.', kind: 'task' });
+  assert.equal(f.state(host).crazy.queue.length, 1); assert.equal(f.card(2).talk.crazy.myQueuedCount, 1);
+  assert.equal(f.card(3).talk.crazy.prompt, null, 'submitting a mission queues it during preparation');
   await host.command('start'); assert.equal(f.state(host).phase, 'talking');
+  assert.ok(Object.values(f.state(host).crazy.nextAt).every(at => at >= f.now() + 5000 && at <= f.now() + 9000));
   await host.command('crazySend');
-  const publicView = f.context.TALK_ENGINE.view(f.state(host), 0, Date.now()).talk;
-  assert.equal(publicView.crazy.prompt, null, 'manager presentation still filters private Crazy prompts');
+  assert.equal(Object.keys(f.state(host).crazy.prompts).length, 0, 'legacy send redraws timers without bulk delivery');
+  const publicView = f.context.TALK_ENGINE.view(f.state(host), 0, f.now()).talk;
+  assert.equal(publicView.crazy.prompt, null); assert.equal(publicView.crazy.queue, undefined);
+  assert.equal(publicView.actions.crazySend, false);
+  await host.command('crazyPause', { paused: true });
+  await f.playerCommand(2, 'crazyAssign', { text: 'Give a serious advertisement for an imaginary umbrella.', kind: 'task' });
+  assert.equal(f.state(host).crazy.queue.length, 2, 'paused delivery still accepts player submissions');
   const session = f.state(host).sessionId, registerCount = f.calls.filter(call => call.operation === 'register').length;
-  host.close(); await f.playerCommand(2, 'starters', { show: false });
-  assert.equal(f.card(3).talk.showStarters, false, 'ordinary card changes settings with the manager closed');
+  host.close();
+  f.setClock(Math.max(...Object.values(f.state(host).crazy.nextAt)) + 1000);
+  await f.playerCommand(2, 'starters', { show: false });
+  assert.equal(f.card(3).talk.showStarters, false);
+  assert.equal(f.card(3).talk.crazy.prompt, null, 'a paused clock does not deliver overdue missions');
+  await f.playerCommand(2, 'crazyPause', { paused: false });
+  f.setClock(f.state(host).crazy.nextAt[3] + 1);
+  await f.playerCommand(2, 'starters', { show: false });
+  assert.equal(f.card(3).talk.crazy.prompt.text, 'Report the conversation like a weather presenter.');
+  assert.equal(f.card(3).talk.crazy.prompt.source, 'player');
+  assert.equal(Object.values(f.state(host).crazy.prompts).filter(prompt => prompt.status === 'pending').length, 1);
+  assert.equal(f.state(host).crazy.queue.length, 1);
+  assert.equal(f.card(2).talk.crazy.myQueuedCount, 1);
+  for (const num of [1, 2]) assert.ok(!JSON.stringify(f.card(num)).includes('Report the conversation like a weather presenter.'));
   const reopened = f.manager(); await flush(); f.assertIndependent(reopened); assert.equal(f.state(reopened).sessionId, session);
   await reopened.command('extend', { text: 'Which small detail would make people feel included?' });
   assert.equal(f.card(2).talk.topic.followUp, 'Which small detail would make people feel included?');
@@ -106,3 +135,24 @@ test('the original manager start waits for available service registration before
     host.close(); await f.playerCommand(2, 'begin'); assert.equal(f.card(3).cut.phase, 'countdown');
   } finally { release(); await starting; }
 });
+
+
+for (const game of ['letstalk', 'cut']) {
+  test(game + ' reconnect marks ready only after a successful pulse and preserves switched status', async t => {
+    const f = fixture(t, game), host = f.manager(); await flush();
+    await host.start(game === 'letstalk'
+      ? { topic: { id: 'reconnect-topic', question: 'What would you invent?' }, mode: 'think', seconds: 45 }
+      : { speed: 'normal', category: 'mixed' });
+    await f.context.HUB_EXECUTOR.ensureHost(host, game); await flush(); f.assertIndependent(host);
+    host.close(); const priorStatuses = f.statuses.length;
+    f.failNextPulse('executor_unavailable');
+    const reopened = f.manager(); await flush();
+    assert.ok(!f.statuses.slice(priorStatuses).includes('ready'), 'failed initial pulse cannot report readiness');
+    assert.equal(reopened.suspended, false); assert.equal(reopened.own, false);
+    await reopened.renew(); f.assertIndependent(reopened);
+    f.failNextPulse('game_switched'); await reopened.renew();
+    assert.equal(reopened.suspended, true); assert.equal(f.statuses.at(-1), 'switched');
+    await reopened.renew();
+    assert.equal(f.statuses.at(-1), 'switched', 'later successful pulses cannot reactivate a switched manager');
+  });
+}

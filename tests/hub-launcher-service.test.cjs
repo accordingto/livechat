@@ -258,6 +258,21 @@ for(const change of ['name','count','token','other-game']){
 test('optional Talk launcher applies saved homepage free conversation and player missions to canonical state',async t=>{
  const f=fixture(t);f.context.localStorage.setItem('lets-talk-settings.v2',JSON.stringify({gameMode:'crazy',conversationMode:'free',crazySource:'players',crazySeconds:60,mode:'think',seconds:30}));
  await f.launcher.launch('letstalk',2);const raw=f.db.get('rooms/ABC234/players/'+f.extras.letsTalkControlToken),state=raw.state;
- assert.equal(state.gameMode,'crazy');assert.equal(state.conversationMode,'free');assert.equal(state.crazy.source,'players');assert.equal(state.crazy.intervalSeconds,60);
+ assert.equal(state.gameMode,'crazy');assert.equal(state.conversationMode,'free');assert.equal(state.crazy.source,'players');assert.equal(state.crazy.minSeconds,48);assert.equal(state.crazy.maxSeconds,72);
  const card=await f.refs[1].once();assert.equal(card.val().talk.conversationMode,'free');
+});
+
+test('optional Talk launcher propagates custom random intervals to the sealed service and every original card', async t => {
+ const f=fixture(t); f.context.localStorage.setItem('lets-talk-settings.v2', JSON.stringify({
+  gameMode:'crazy', conversationMode:'random', crazySource:'mixed', crazyMinSeconds:7, crazyMaxSeconds:233, mode:'write', seconds:23
+ }));
+ await f.launcher.launch('letstalk',2);
+ const state=f.db.get('rooms/ABC234/players/'+f.extras.letsTalkControlToken).state;
+ assert.equal(state.crazy.minSeconds,7); assert.equal(state.crazy.maxSeconds,233); assert.equal(state.seconds,23);
+ for (const ref of f.refs) {
+  const card=(await ref.once()).val();
+  assert.equal(card.talk.crazy.minSeconds,7); assert.equal(card.talk.crazy.maxSeconds,233);
+  assert.equal(card.talk.crazy.prompt,null); assert.equal(card.talk.crazy.myQueuedCount,0);
+  assert.equal(card.talk.actions.crazySend,false);
+ }
 });

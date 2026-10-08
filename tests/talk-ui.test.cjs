@@ -205,9 +205,9 @@ test('Normal turn requests keep their stale-turn reset while Crazy requests reta
 
 test('Real engine projections render no other player line and host receives only safe counts', () => {
   let state = E.create({ id: 'private-ui', topic: { question: 'What should our cafe sell?' },
-    gameMode: 'crazy', roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
-  const command = (type, extra = {}) => { state = E.apply(state, { type, id: 'ui-' + type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: 782, ...extra }); };
-  command('start'); command('crazySend');
+    gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5, roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
+  const command = (type, extra = {}) => { state = E.apply(state, { type, id: 'ui-' + type + '-' + (extra.now || 0), actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: 782, ...extra }); };
+  command('start'); command('crazyTick', { now: 7000 }); command('crazyTick', { now: 11000 });
   const own = E.view(state, 2, 2000), other = E.view(state, 1, 2000), host = E.view(state, 0, 2000), f = fixture();
   try {
     f.card.update(own);
@@ -225,9 +225,9 @@ test('Host and original player page load current Talk UI; private action gate di
   const controller = fs.readFileSync(require.resolve('../talk-host.js'), 'utf8');
   assert.ok(host.indexOf('talk-crazy.js') < host.indexOf('talk-engine.js'));
   assert.match(host, /id="talk-game-mode"/); assert.match(host, /value="normal"/); assert.match(host, /value="crazy"/);
-  assert.match(host, /id="talk-crazy-seconds"/); assert.match(host, /value="120" selected/);
+  assert.match(host, /id="talk-crazy-min-seconds"/); assert.match(host, /id="talk-crazy-max-seconds"/); assert.doesNotMatch(host, /id="talk-crazy-send"/);
   assert.match(controller, /gameMode: 'game-mode'/); assert.match(controller, /setupPreferences\(\)/);
-  assert.match(controller, /crazySeconds: 'crazy-seconds'/);
+  assert.match(controller, /crazyMinSeconds: 'crazy-min-seconds'/); assert.match(controller, /crazyMaxSeconds: 'crazy-max-seconds'/);
   assert.match(controller, /TALK_ENGINE\.view\(state, 0/);
   assert.doesNotMatch(controller, /state\.crazy\.prompts|state\.crazy\?\.prompts|JSON\.stringify\(state\)/);
   const start = player.indexOf("if (data.game === 'letstalk'");
@@ -321,7 +321,7 @@ test('new topic preview and custom settings stay local through updates until exp
     f.editorField('question', '<img src=x onerror="boom"> What can we imagine?');
     f.editorField('title', 'Our next idea'); f.editorField('starter', 'Imagine freely.'); f.editorField('followUps', 'Who would join?\nWhat next?');
     f.editorField('mode', 'write', 'change'); f.editorField('seconds', '30', 'change'); f.editorField('gameMode', 'crazy', 'change');
-    f.editorField('crazySeconds', '60', 'change'); f.editorField('showStarters', true, 'change');
+    f.editorField('crazyMinSeconds', '60', 'change'); f.editorField('crazyMaxSeconds', '180', 'change'); f.editorField('showStarters', true, 'change');
     f.update(shared({ interests: [{ playerNum: 1, until: 8000 }] }));
     assert.match(f.element.innerHTML, /&lt;img src=x onerror=&quot;boom&quot;&gt;/); assert.doesNotMatch(f.element.innerHTML, /<img/);
     assert.equal(f.card.editor.question, '<img src=x onerror="boom"> What can we imagine?'); assert.equal(sent.length, 0);
@@ -329,7 +329,7 @@ test('new topic preview and custom settings stay local through updates until exp
     f.click('confirmTopic'); await flush();
     assert.equal(sent.length, 1); const command = sent[0];
     assert.equal(command.type, 'newTopic'); assert.equal(command.confirm, true); assert.equal(command.seconds, 30); assert.equal(command.mode, 'write');
-    assert.equal(command.gameMode, 'crazy'); assert.equal(command.crazySeconds, 60); assert.equal(command.showStarters, true);
+    assert.equal(command.gameMode, 'crazy'); assert.equal(command.crazyMinSeconds, 60); assert.equal(command.crazyMaxSeconds, 180); assert.equal(command.crazySeconds, undefined); assert.equal(command.showStarters, true);
     assert.equal(command.topic.followUps.length, 2); assert.equal(command.actor, undefined); assert.equal(command.sessionId, 'ui-topic');
     f.update(shared({ sessionId: 'new-topic', phase: 'thinking', turnId: 0 }));
     assert.equal(f.card.pending, null); assert.equal(f.card.settingsOpen, false); assert.equal(f.card.editor, null);
@@ -375,7 +375,7 @@ test('free conversation has no nominated speaker, turn action or request buttons
   } finally { f.card.destroy(); }
 });
 
-test('typed player mission stays local through redraws, sends once and clears only after acknowledgement', async () => {
+test('typed player mission stays local through redraws, queues once and clears only after acknowledgement', async () => {
   const sent=[],f=fixture(async command=>sent.push(clone(command)));
   try {
     const talk={...crazy({source:'players',prompt:null}),conversationMode:'free',speaker:null};
@@ -386,27 +386,81 @@ test('typed player mission stays local through redraws, sends once and clears on
     f.click('crazyAssign');f.click('crazyAssign');await flush();assert.equal(sent.length,1);
     assert.deepEqual({...sent[0],id:'request'},{id:'request',type:'crazyAssign',target:1,kind:'task',text:'<b>Report the conversation like a weather presenter.</b>',sessionId:'ui-topic',turnId:2});
     assert.ok(f.card.crazyDraft.text);
-    f.update({...talk,reply:{id:sent[0].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');assert.match(f.element.innerHTML,/Mission sent/);
+    f.update({...talk,reply:{id:sent[0].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');assert.match(f.element.innerHTML,/Queued/);
   } finally { f.card.destroy(); }
 });
 
-test('busy recipient keeps draft, displays actionable feedback and system-only mode hides composer', async () => {
-  const f=fixture(async()=>{throw Error('recipient_busy')});
+test('full queue keeps draft, displays actionable feedback and system-only mode hides composer', async () => {
+  const f=fixture(async()=>{throw Error('queue_full')});
   try {
     f.update(crazy({source:'mixed'}));f.assignmentField('text','Announce a silly new holiday.');f.click('crazyAssign');await flush();
-    assert.equal(f.card.error,'recipient_busy');assert.equal(f.card.crazyDraft.text,'Announce a silly new holiday.');assert.match(f.element.innerHTML,/They still have a mission/);
+    assert.equal(f.card.error,'queue_full');assert.equal(f.card.crazyDraft.text,'Announce a silly new holiday.');assert.match(f.element.innerHTML,/The queue is full/);
     f.update(crazy({source:'system'}));assert.doesNotMatch(f.element.innerHTML,/data-talk-assignment-field|data-talk-action="crazyAssign"/);
   } finally {f.card.destroy();}
 });
 
 
-test('paused dispatch preserves mission draft while disabling send, and Chinese composition defers redraw', () => {
+test('paused dispatch allows queueing and preserves mission draft, and Chinese composition defers redraw', () => {
  const f=fixture();try {
-  f.update(crazy({source:'mixed',paused:true,canAssign:false}));
-  assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyAssign').disabled,true);
+  f.update(crazy({source:'mixed',paused:true,canAssign:true}));
+  assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyAssign').disabled,false);
   f.assignmentField('text','用主播的口吻聊剛才的話');const html=f.element.innerHTML;
-  f.handlers.get('compositionstart')();f.update({...crazy({source:'mixed',paused:true,canAssign:false}),revision:2});
+  f.handlers.get('compositionstart')();f.update({...crazy({source:'mixed',paused:true,canAssign:true}),revision:2});
   assert.equal(f.element.innerHTML,html);assert.equal(f.card.crazyDraft.text,'用主播的口吻聊剛才的話');
   f.handlers.get('compositionend')();assert.match(f.element.innerHTML,/用主播的口吻聊剛才的話/);
  } finally {f.card.destroy();}
+});
+
+
+test('handwritten missions default to a random recipient, remain invisible as prompts on acknowledgement and show only own queued count', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk=crazy({source:'mixed',prompt:null,myQueuedCount:0,canAssign:true});
+  f.update(talk);
+  assert.match(f.element.innerHTML, /value="random" selected/);assert.equal(f.card.crazyDraft.kind,'task');
+  f.assignmentField('text','Cluck like a chicken.');f.click('crazyAssign');await flush();
+  assert.equal(sent[0].target,undefined);assert.equal(sent[0].kind,'task');
+  f.update({...talk,crazy:{...talk.crazy,myQueuedCount:1},reply:{id:sent[0].id,error:''}});
+  assert.match(f.element.innerHTML,/Your cards waiting: 1/);assert.doesNotMatch(f.element.innerHTML,/blockquote/);
+  assert.equal(f.card.crazyDraft.target,'random');
+ }finally{f.card.destroy();}
+});
+
+test('thinking and paused cards can enqueue; a departed chosen recipient returns to random and overlong text is never sent', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk={...crazy({source:'players',paused:true,canAssign:true,prompt:null}),phase:'thinking',turnId:0};
+  f.update(talk);f.assignmentField('target','1');
+  f.update({...talk,roster:[{playerNum:2,name:'Sam'},{playerNum:3,name:'Jo'}]});
+  assert.equal(f.card.crazyDraft.target,'random');
+  f.assignmentField('text','x'.repeat(121));f.click('crazyAssign');await flush();
+  assert.equal(sent.length,0);assert.equal(f.card.error,'invalid_crazy_assignment');
+  f.assignmentField('text','Sing your next sentence.');f.click('crazyAssign');await flush();
+  assert.equal(sent.length,1);assert.equal(sent[0].turnId,0);assert.equal(sent[0].target,undefined);
+ }finally{f.card.destroy();}
+});
+
+test('shared range fields stay visible for player-only missions and invalid ranges cannot open a topic', () => {
+ const f=fixture();try {
+  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');f.editorField('crazySource','players','change');
+  assert.match(f.element.innerHTML,/data-talk-editor-field="crazyMinSeconds"/);assert.match(f.element.innerHTML,/data-talk-editor-field="crazyMaxSeconds"/);
+  for(const [min,max] of [[4,10],[30,20],[5,301],[5.5,10]]) {
+   f.editorField('crazyMinSeconds',String(min),'change');f.editorField('crazyMaxSeconds',String(max),'change');f.click('openTopic');
+   assert.equal(f.card.error,'invalid_crazy_interval');assert.equal(f.card.confirmation,null);
+  }
+  f.editorField('crazyMinSeconds','5','change');f.editorField('crazyMaxSeconds','5','change');f.click('openTopic');
+  assert.equal(f.card.confirmation,'topic');assert.equal(f.card.topicToOpen.crazyMinSeconds,5);
+ }finally{f.card.destroy();}
+});
+
+
+test('switching back to Normal Talk cannot publish an invalid hidden Crazy range', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');
+  f.editorField('crazyMinSeconds','30','change');f.editorField('crazyMaxSeconds','20','change');
+  f.editorField('gameMode','normal','change');f.click('openTopic');assert.equal(f.card.confirmation,'topic');
+  f.click('confirmTopic');await flush();
+  assert.equal(sent[0].gameMode,'normal');assert.equal(sent[0].crazyMinSeconds,60);assert.equal(sent[0].crazyMaxSeconds,180);
+ }finally{f.card.destroy();}
 });

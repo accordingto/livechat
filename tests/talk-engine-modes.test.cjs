@@ -42,11 +42,14 @@ test('free conversation starts with all participants and never assigns or advanc
   state = act(state, 'end', 2); assert.equal(state.replies[2].error, 'not_available');
   state = act(state, 'recover', 5, { onlineNums: [2, 5] });
   assert.equal(state.speaker, null); assert.equal(state.turnId, turn);
-  state = act(state, 'crazySend', 2); assert.equal(Object.keys(state.crazy.prompts).length, 3);
+  state = act(state, 'crazySend', 2); assert.deepEqual(state.crazy.prompts, {});
+  state = act(state, 'crazyTick', 2, { now: Math.max(...Object.values(state.crazy.nextAt)) });
+  assert.equal(Object.keys(state.crazy.prompts).length, 1); assert.equal(state.speaker, null);
 });
 
 test('legacy states retain random conversation and mixed prompts without losing saved assignments', () => {
-  let state = act(create({ gameMode: 'crazy' }), 'start'); state = act(state, 'crazySend');
+  let state = act(create({ gameMode: 'crazy' }), 'start');
+  state = act(state, 'crazyTick', 0, { now: Math.max(...Object.values(state.crazy.nextAt)) });
   delete state.conversationMode; delete state.crazy.source;
   const previous = JSON.stringify(state.crazy.prompts);
   const view = E.view(state, 2, 0).talk;
@@ -56,13 +59,15 @@ test('legacy states retain random conversation and mixed prompts without losing 
 
 test('new topic accepts, preserves and validates both conversation and Crazy prompt-source settings', () => {
   const options = { confirm: true, topic, mode: 'think', seconds: 45, gameMode: 'crazy', crazySeconds: 60,
-    showStarters: true, conversationMode: 'free', crazySource: 'players' };
+    showStarters: true, conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 300 };
   let state = act(create({ sharedControls: true }), 'newTopic', 2, options);
   assert.equal(state.conversationMode, 'free'); assert.equal(state.crazy.source, 'players');
-  const { conversationMode, crazySource, ...legacyOptions } = options;
+  const { conversationMode, crazySource, crazySeconds, crazyMinSeconds, crazyMaxSeconds, ...legacyOptions } = options;
   state = act(state, 'newTopic', 5, legacyOptions);
   assert.equal(state.conversationMode, 'free'); assert.equal(state.crazy.source, 'players');
-  for (const extra of [{ conversationMode: 'unknown' }, { crazySource: 'unknown' }, { crazySource: true }]) {
+  assert.equal(state.crazy.minSeconds, 5); assert.equal(state.crazy.maxSeconds, 300);
+  for (const extra of [{ conversationMode: 'unknown' }, { crazySource: 'unknown' }, { crazySource: true },
+    { crazyMinSeconds: 4 }, { crazyMaxSeconds: 301 }, { crazyMinSeconds: 10, crazyMaxSeconds: 5 }, { crazyMinSeconds: 5.5 }]) {
     const next = act(state, 'newTopic', 2, { ...options, ...extra });
     assert.equal(next.sessionId, state.sessionId); assert.equal(next.replies[2].error, 'invalid_settings');
   }
