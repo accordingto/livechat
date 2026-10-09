@@ -1,7 +1,7 @@
 /* Original, short English prompts for the optional Crazy Talk mode.
  * Lines are ready to say. Tasks give one clear, immediate spoken action.
  * No physical dares or real accusations. The public pool is not a secret;
- * only each saved assignment is private. Keep the original first-60 line IDs.
+ * only each saved assignment is private. Keep the original 96 prompts and IDs unchanged.
  */
 var TALK_CRAZY = (() => {
   'use strict';
@@ -105,9 +105,56 @@ var TALK_CRAZY = (() => {
     'Ask "Would you date a chicken?"',
     'Make a kissing sound, then say "Oops."',
   ];
+  const extraTasks = [
+    "Quack like a dramatic duck.",
+    "Ask \"Are your toes single?\"",
+    "Tell someone \"Your elbows look romantic.\"",
+    "Sing \"I miss my socks.\"",
+    "Say \"Help!\" like a tiny mouse.",
+    "Ask everyone to say \"banana\" together.",
+    "Say \"I love noodles\" like a love song.",
+    "Whisper \"My cup left me.\"",
+    "Ask \"Can your feet sing?\"",
+    "Say \"Please clap for my belly.\"",
+    "Sing \"Sorry\" in a very sad voice.",
+    "Say \"Yummy\" like an evil witch.",
+    "Make a tiny dinosaur roar.",
+    "Say \"Good morning\" like a confused rooster.",
+    "Ask \"Would you marry a noodle?\"",
+    "Tell someone \"Your ears look delicious.\"",
+    "Sing someone's name.",
+    "Say \"Excuse me\" like a fart.",
+    "Scream \"My cup wants to marry me!\"",
+    "Ask \"Is my nose famous?\"",
+    "Say \"I'm shy\" in your loudest voice.",
+    "Say \"Meow meow\" like a love song.",
+    "Make a fake sneeze.",
+    "Ask \"Who wants to date my eyebrows?\"",
+    "Tell someone \"I trust your knees.\"",
+    "Say \"We are married now\" very seriously.",
+    "Beg everyone to clap for your voice.",
+    "Say \"I'm a goose\" in a fancy voice.",
+    "Make a sad trumpet sound.",
+    "Ask \"Does your belly have a name?\""
+  ];
+  const extraLines = [
+    "My burps sound like love songs.",
+    "My nose thinks you smell delicious.",
+    "My cup doesn't love me anymore.",
+    "I want new eyebrows. These are broken.",
+    "My butt is a famous singer.",
+    "My socks are fighting over you.",
+    "Please clap for my chicken voice.",
+    "Please clap for my beautiful fart.",
+    "I would marry your eyebrows.",
+    "My parents are singing ducks."
+  ];
   const pool = Object.freeze([
     ...lines.map(text => ({ kind: 'line', text })),
     ...tasks.map(text => ({ kind: 'task', text })),
+    // Append after the complete original bank so saved mission IDs stay stable.
+    ...extraTasks.map(text => ({ kind: 'task', text })),
+    ...extraLines.map(text => ({ kind: 'line', text })),
   ].map((prompt, i) => Object.freeze({
     id: 'crazy-' + String(i + 1).padStart(3, '0'), ...prompt,
   })));

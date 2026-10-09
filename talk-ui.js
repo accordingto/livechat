@@ -292,8 +292,8 @@ var TALK_PLAYER = (() => {
   class Card {
     constructor(element, { send, nameBanner, now = () => Date.now(), connected = () => true }) {
       this.element = element; this.send = send; this.nameBanner = nameBanner; this.now = now; this.connected = connected;
-      this.pending = null; this.error = ''; this.draft = ''; this.data = null; this.composing = false;
-      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = false; this.assignmentNotice = '';
+      this.pending = null; this.error = ''; this.draft = ''; this.data = null; this.composing = false; this.settledActions = new Set();
+      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = false; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
       this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.clickHandler = event => {
         const b = event.target.closest('[data-talk-action]');
@@ -366,13 +366,26 @@ var TALK_PLAYER = (() => {
       this.changeHandler = event => {
         const target = event.target, s = this.data?.talk;
         const assignment = target.dataset?.talkAssignmentField;
-        if (assignment) { this.crazyDraft[assignment] = target.value; this.assignmentNotice = ''; return; }
+        if (assignment) {
+          this.crazyDraft[assignment] = target.value; this.assignmentNotice = '';
+          if (target.tagName === 'SELECT') { this.assignmentSelection = null; this.render(true); }
+          return;
+        }
         if (s?.sharedControls !== true || !s.hostControls || this.pending) return;
         const field = target.dataset?.talkEditorField;
         if (field && this.editor) { this.editor[field] = field === 'showStarters' ? target.checked : target.value; this.render(true); }
         if (target.dataset?.talkSharedInput === 'starters') this.act('starters', { show: !!target.checked });
         if (target.dataset?.talkSharedInput === 'followup') this.followupIndex = Number(target.value);
       };
+      this.selectionStart = event => {
+        if (event.target.tagName === 'SELECT' && event.target.dataset?.talkAssignmentField) this.assignmentSelection = event.target;
+      };
+      this.selectionEnd = event => {
+        if (this.assignmentSelection !== event.target) return;
+        this.assignmentSelection = null;
+        if (!this.destroyed && this.data?.talk.phase !== 'ended') this.render(true);
+      };
+      element.addEventListener('pointerdown', this.selectionStart); element.addEventListener('keydown', this.selectionStart); element.addEventListener('focusout', this.selectionEnd);
       this.compositionStart = () => { this.composing = true; };
       this.compositionEnd = () => { this.composing = false; this.render(true); };
       element.addEventListener('compositionstart', this.compositionStart); element.addEventListener('compositionend', this.compositionEnd);
@@ -381,21 +394,27 @@ var TALK_PLAYER = (() => {
     }
     update(data) {
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId;
-      if (changedSession) { this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = false; this.pending = null; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
+      if (changedSession) { this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = false; this.assignmentSelection = null; this.pending = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
       else if (this.data.talk.turnId !== data.talk.turnId) { this.confirmation = null; this.topicToOpen = null; }
       if (this.confirmation === 'end' && (!list(data.talk.questions).length || data.talk.activeQuestion)) this.confirmation = null;
       this.data = data;
+      if (data.talk.reply?.id) this.settledActions.add(data.talk.reply.id);
       // Recover an unacknowledged request after a card refresh. A second
       // action must not overwrite the first while the host is reconnecting.
       const actionCurrent = action => (data.talk.phase !== 'ended' || ['newTopic','starters','explain'].includes(action?.type)) && (TALK_UI.crazyAction(action?.type)
         ? data.talk.crazy?.prompt?.id === action.promptId && data.talk.crazy.prompt.status === 'pending'
         : action?.turnId === data.talk.turnId);
       if (!this.pending && data.talkAction?.sessionId === data.talk.sessionId && actionCurrent(data.talkAction)
-          && data.talk.reply?.id !== data.talkAction.id) {
+          && data.talk.reply?.id !== data.talkAction.id && !this.settledActions.has(data.talkAction.id)) {
         this.pending = data.talkAction; this.sentAt = this.now();
       }
       if (this.pending && data.talk.reply?.id === this.pending.id) {
-        if (this.pending.type === 'crazyAssign' && !data.talk.reply.error) { this.crazyDraft.text = ''; this.assignmentNotice = 'missionSent'; }
+        this.settledActions.add(this.pending.id);
+        if (this.pending.type === 'crazyAssign' && !data.talk.reply.error) {
+          const sameTarget = this.crazyDraft.target === 'random' ? this.pending.target == null : Number(this.crazyDraft.target) === Number(this.pending.target);
+          if (!this.composing && sameTarget && this.crazyDraft.kind === this.pending.kind && this.crazyDraft.text.trim() === this.pending.text) this.crazyDraft.text = '';
+          this.assignmentNotice = 'missionSent';
+        }
         this.error = data.talk.reply.error || ''; this.pending = null; }
       if (this.pending && !actionCurrent(this.pending)) { this.pending = null; }
       this.render(!changedSession);
@@ -424,7 +443,7 @@ var TALK_PLAYER = (() => {
     }
     render(preserveInput) {
       const data = this.data; if (!data) return;
-      if (preserveInput && this.composing) { this.paint(); return; }
+      if (preserveInput && this.composing && data.talk.phase !== 'ended') { this.paint(); return; }
       const s = data.talk, me = data.playerNum;
       let controls = '';
       if (s.phase === 'thinking') {
@@ -443,12 +462,12 @@ var TALK_PLAYER = (() => {
       const recipients = list(s.roster).filter(p => p.playerNum !== me);
       if (this.crazyDraft.target !== 'random' && !recipients.some(p => String(p.playerNum) === String(this.crazyDraft.target))) this.crazyDraft.target = 'random';
       if (preserveInput && this.element.querySelector('.talk-assignment')) this.assignmentOpen = !!this.element.querySelector('.talk-assignment').open;
-      const assignment = allowAssignment ? `<details class="talk-assignment"${this.assignmentOpen ? ' open' : ''}><summary>${esc(t('composeMission'))}</summary><div class="talk-assignment-body">
-        <div class="talk-settings-row"><label class="talk-field">${esc(t('missionRecipient'))}<select data-talk-assignment-field="target">${option('random', t('randomRecipient'), this.crazyDraft.target)}${recipients.map(p => option(p.playerNum, p.name || name(s,p.playerNum), this.crazyDraft.target)).join('')}</select></label>
-        <label class="talk-field">${esc(t('missionType'))}<select data-talk-assignment-field="kind">${option('line',t('lineKind'),this.crazyDraft.kind)}${option('task',t('taskKind'),this.crazyDraft.kind)}</select></label></div>
-        <label class="talk-field">${esc(t('missionText'))}<textarea data-talk-assignment-field="text" maxlength="120" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
-        <p class="talk-soft">${esc(t('missionHint'))}</p>${button('missionSend','crazyAssign',s.crazy?.canAssign === false ? 'data-talk-blocked="true" disabled' : '',true)}
-        ${this.assignmentNotice ? `<p class="talk-soft" role="status">${esc(t(this.assignmentNotice))}</p>` : ''}</div></details>` : '';
+      const assignment = allowAssignment ? `<details class="talk-assignment"${this.assignmentOpen ? ' open' : ''}><summary data-talk-assignment-label="composeMission">${esc(t('composeMission'))}</summary><div class="talk-assignment-body">
+        <div class="talk-settings-row"><label class="talk-field"><span data-talk-assignment-label="missionRecipient">${esc(t('missionRecipient'))}</span><select data-talk-assignment-field="target">${option('random', t('randomRecipient'), this.crazyDraft.target)}${recipients.map(p => option(p.playerNum, p.name || name(s,p.playerNum), this.crazyDraft.target)).join('')}</select></label>
+        <label class="talk-field"><span data-talk-assignment-label="missionType">${esc(t('missionType'))}</span><select data-talk-assignment-field="kind">${option('line',t('lineKind'),this.crazyDraft.kind)}${option('task',t('taskKind'),this.crazyDraft.kind)}</select></label></div>
+        <label class="talk-field"><span data-talk-assignment-label="missionText">${esc(t('missionText'))}</span><textarea data-talk-assignment-field="text" maxlength="120" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
+        <p class="talk-soft" data-talk-assignment-label="missionHint">${esc(t('missionHint'))}</p>${button('missionSend','crazyAssign',s.crazy?.canAssign === false ? 'data-talk-blocked="true" disabled' : '',true)}
+        <p class="talk-soft" role="status" data-talk-assignment-notice${this.assignmentNotice ? '' : ' hidden'}>${this.assignmentNotice ? esc(t(this.assignmentNotice)) : ''}</p></div></details>` : '';
       const active = this.element.querySelector('[data-talk-note]');
       const keep = preserveInput && active && s.phase === 'thinking' && s.mode === 'write' ? active : null;
       const focused = keep && document.activeElement === keep;
@@ -457,6 +476,7 @@ var TALK_PLAYER = (() => {
       const activeField = document.activeElement?.dataset?.talkEditorField || document.activeElement?.dataset?.talkSharedInput || document.activeElement?.dataset?.talkAssignmentField;
       const fieldKind = document.activeElement?.dataset?.talkEditorField ? 'editor-field' : document.activeElement?.dataset?.talkAssignmentField ? 'assignment-field' : 'shared-input';
       const activeEditorNode = preserveInput && activeField && ['text', 'search', 'textarea'].includes(document.activeElement?.type) ? document.activeElement : null;
+      const editing = !!activeField || this.composing || !!this.element.querySelector('.talk-assignment')?.contains?.(document.activeElement);
       const openPanels = ['.talk-card-explore', '.talk-topic-explanation'].filter(selector => preserveInput && this.element.querySelector(selector)?.open);
       const selectionStart = document.activeElement?.selectionStart, selectionEnd = document.activeElement?.selectionEnd;
       if (keep) keep.remove();
@@ -464,8 +484,8 @@ var TALK_PLAYER = (() => {
       const prompt = s.crazy?.prompt;
       const newPrompt = s.gameMode === 'crazy' && prompt?.status === 'pending' && this.shownPrompt !== prompt.id;
       this.shownPrompt = prompt?.status === 'pending' ? prompt.id : null;
-      this.element.innerHTML = `<div class="secret-card talk-player${myTurn ? ' talk-my-turn' : ''}${s.gameMode === 'crazy' ? ' talk-is-crazy' : ''}">
-        <div class="talk-card-top">${this.nameBanner(data)}<span class="talk-kicker">${s.gameMode === 'crazy' ? 'CRAZY TALK' : 'LET’S TALK'}</span></div>
+      const cardClass = `secret-card talk-player${myTurn ? ' talk-my-turn' : ''}${s.gameMode === 'crazy' ? ' talk-is-crazy' : ''}`;
+      const mainHTML = `<div class="talk-card-top">${this.nameBanner(data)}<span class="talk-kicker">${s.gameMode === 'crazy' ? 'CRAZY TALK' : 'LET’S TALK'}</span></div>
         ${s.phase === 'talking' ? '<div class="talk-round-strip"><span data-talk-round-clock></span>' + (s.gameMode === 'crazy' ? '<small>' + esc(t('scoreHint')) + '</small>' : '') + '</div>' : ''}
         ${TALK_UI.crazyHTML(s)}
         ${s.phase === 'ended' ? `<section class="talk-rest-card"><span class="talk-rest-icon" aria-hidden="true">☕</span><h2>${esc(t('roundRest'))}</h2><p>${esc(t('roundFinished'))}</p><p class="talk-soft">${esc(t('restHint'))}</p></section>${TALK_UI.scoreboardHTML(s,me)}${s.sharedControls === true && s.actions?.newTopic ? '<div class="talk-actions">' + button('newRound','settings','',true) + '</div>' : ''}` : `<section class="talk-topic-card"><span class="talk-kicker">${esc(t('setupTopic'))}</span><p class="talk-player-topic">${esc(s.topic.question)}</p>
@@ -476,19 +496,37 @@ var TALK_PLAYER = (() => {
         <p class="talk-soft">${esc(t(s.phase === 'ended' ? 'restHint' : s.phase === 'thinking' ? 'thinking' : s.conversationMode === 'free' ? 'conversationHintFree' : myTurn ? 'turnHint' : 'listening'))}</p>
         <div class="talk-controls">${controls}</div></section>` : ''}
         ${s.phase !== 'ended' || s.gameMode !== 'crazy' ? `<section class="talk-card-roster"><div class="talk-section-label"><span>${esc(t('participantsTitle'))}</span><span>${list(s.roster).length}</span></div>${TALK_UI.participantsHTML(s, me)}</section>` : ''}
-        ${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}${assignment}
-        ${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
+        ${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}`;
+      const footerHTML = `${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
         ${managementHTML(s, this)}
         <p class="talk-feedback" role="status">${this.error ? esc(t(this.error)) : ''}</p>
         ${this.error === 'pending_questions' ? button('forceEnd', 'forceEnd') : ''}
         <p class="talk-connection" role="status"></p>${this.pending ? button('retry', 'retry') : ''}
         ${list(s.notes).length ? `<details class="talk-shared"><summary>${esc(t('sharedNotes'))}</summary>${TALK_UI.notes(s)}</details>` : ''}
-      </div>`;
+      `;
+      const main = this.element.querySelector('[data-talk-card-main]'), footer = this.element.querySelector('[data-talk-card-footer]');
+      const assignmentSlot = this.element.querySelector('[data-talk-card-assignment]');
+      // Keep the composer and every ancestor connected. Detaching and restoring
+      // a select also closes its native popup during a live state update.
+      const retainCard = preserveInput && main && typeof main.innerHTML === 'string' && footer && assignmentSlot;
+      const retainedAssignment = retainCard && allowAssignment && assignmentSlot.querySelector('.talk-assignment');
+      if (retainCard) {
+        // Native pickers also close when content above them changes their
+        // position. Flush these regions on select change or focusout instead.
+        if (!this.assignmentSelection || !allowAssignment) {
+          this.element.querySelector('.talk-player').className = cardClass;
+          main.innerHTML = mainHTML; footer.innerHTML = footerHTML;
+        }
+        if (retainedAssignment) this.refreshAssignment(retainedAssignment, recipients, s);
+        else assignmentSlot.innerHTML = assignment;
+      } else {
+        this.element.innerHTML = `<div class="${cardClass}"><div data-talk-card-main style="display:contents">${mainHTML}</div><div data-talk-card-assignment style="display:contents">${assignment}</div><div data-talk-card-footer style="display:contents">${footerHTML}</div></div>`;
+      }
       if (keep) {
         this.element.querySelector('[data-talk-note]')?.replaceWith(keep);
         if (focused) keep.focus({ preventScroll: true });
       }
-      if (activeField) {
+      if (activeField && !(fieldKind === 'assignment-field' && retainedAssignment)) {
         const next = this.element.querySelector('[data-talk-' + fieldKind + '="' + activeField + '"]');
         if (activeEditorNode && next) next.replaceWith(activeEditorNode);
         const restored = activeEditorNode && next ? activeEditorNode : next;
@@ -497,9 +535,39 @@ var TALK_PLAYER = (() => {
       }
       for (const selector of openPanels) { const panel = this.element.querySelector(selector); if (panel) panel.open = true; }
       if (notesOpen && this.element.querySelector('.talk-shared')) this.element.querySelector('.talk-shared').open = true;
-      if (newPrompt) this.element.querySelector('.talk-crazy-prompt')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      if (newPrompt && !editing) this.element.querySelector('.talk-crazy-prompt')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
       document.title = (myTurn ? t('turnAlert') + ' · ' : '') + t('title', { name: data.name || t('player', { n: me }) });
       this.paint();
+    }
+    refreshAssignment(composer, recipients, s) {
+      composer.querySelectorAll('[data-talk-assignment-label]').forEach(node => {
+        const label = t(node.dataset.talkAssignmentLabel);
+        if (node.textContent !== label) node.textContent = label;
+      });
+      const target = composer.querySelector('[data-talk-assignment-field="target"]');
+      const choices = [['random', t('randomRecipient')], ...recipients.map(p => [String(p.playerNum), p.name || name(s,p.playerNum)])];
+      const values = new Set(choices.map(([value]) => value));
+      Array.from(target.options).forEach(node => { if (!values.has(node.value)) node.remove(); });
+      choices.forEach(([value, label], index) => {
+        let node = Array.from(target.options).find(option => option.value === value);
+        if (!node) { node = target.ownerDocument.createElement('option'); node.value = value; }
+        if (node.textContent !== label) node.textContent = label;
+        if (target.options[index] !== node) target.insertBefore(node, target.options[index] || null);
+      });
+      if (this.assignmentSelection !== target && target.value !== String(this.crazyDraft.target)) target.value = this.crazyDraft.target;
+      const kind = composer.querySelector('[data-talk-assignment-field="kind"]');
+      Array.from(kind.options).forEach(node => { const label = t(node.value === 'line' ? 'lineKind' : 'taskKind'); if (node.textContent !== label) node.textContent = label; });
+      if (this.assignmentSelection !== kind && kind.value !== this.crazyDraft.kind) kind.value = this.crazyDraft.kind;
+      const text = composer.querySelector('[data-talk-assignment-field="text"]');
+      if (!this.composing && text.value !== this.crazyDraft.text) text.value = this.crazyDraft.text;
+      text.placeholder = t('missionPlaceholder');
+      const send = composer.querySelector('[data-talk-action="crazyAssign"]');
+      send.dataset.talkBlocked = String(s.crazy?.canAssign === false);
+      if (send.textContent !== t('missionSend')) send.textContent = t('missionSend');
+      const notice = composer.querySelector('[data-talk-assignment-notice]');
+      const message = this.assignmentNotice ? t(this.assignmentNotice) : '';
+      if (notice.textContent !== message) notice.textContent = message;
+      notice.hidden = !message;
     }
     paint() {
       if (!this.data) return;
@@ -515,16 +583,22 @@ var TALK_PLAYER = (() => {
         b.disabled = b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction));
         if (b.dataset.talkAction === 'retry') b.hidden = now - this.sentAt < 6000;
       });
-      this.element.querySelectorAll('[data-talk-editor-field], [data-talk-shared-input], [data-talk-assignment-field]').forEach(input => { input.disabled = offline || hostAway || !!this.pending; });
+      this.element.querySelectorAll('[data-talk-editor-field], [data-talk-shared-input], [data-talk-assignment-field]').forEach(input => {
+        // Prepare the next card while the previous command waits for its ACK.
+        const disabled = offline || hostAway || (input.dataset.talkAssignmentField ? roundExpired || s.crazy?.canAssign === false : !!this.pending);
+        if (input.disabled !== disabled) input.disabled = disabled;
+      });
       const clock = this.element.querySelector('[data-talk-clock]');
       if (clock) clock.textContent = t('secondsLeft', { n: Math.max(0, Math.ceil((s.deadline - now) / 1000)) });
       const roundClock = this.element.querySelector('[data-talk-round-clock]');
       if (roundClock) roundClock.textContent = t('roundClock', { time: TALK_UI.duration((s.gameDeadline - now) / 1000) });
       const taskClock = this.element.querySelector('[data-talk-task-clock]');
       if (taskClock) taskClock.textContent = t('taskClock', { time: TALK_UI.duration((s.crazy?.prompt?.expiresAt - now) / 1000) });
-      this.element.querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now) e.remove(); });
+      if (!this.assignmentSelection) this.element.querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now) e.remove(); });
     }
     destroy() {
+      this.destroyed = true; this.assignmentSelection = null;
+      this.element.removeEventListener('pointerdown', this.selectionStart); this.element.removeEventListener('keydown', this.selectionStart); this.element.removeEventListener('focusout', this.selectionEnd);
       this.element.removeEventListener('compositionstart', this.compositionStart); this.element.removeEventListener('compositionend', this.compositionEnd);
       clearInterval(this.timer); this.element.removeEventListener('click', this.clickHandler); this.element.removeEventListener('input', this.inputHandler); this.element.removeEventListener('change', this.changeHandler);
     }

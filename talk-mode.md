@@ -1,4 +1,4 @@
-# Current: shared topics and focused timed rounds — 2026-10-10
+# Current: stable challenge selection and focused timed rounds — 2026-10-10
 
 Both Talk modes have a round clock, default 15 minutes (configurable from 1 to
 60 minutes). Preparation is separate: the round clock begins when conversation
@@ -22,8 +22,10 @@ schedule. Every mission expires after 2.5 minutes by default (configurable from
 30 to 300 seconds). Pause stops new deliveries while mission and round clocks
 continue; replacements wait until delivery resumes.
 
-Sources remain system, players or mixed (default). The system bank has 96 short
-English cards: 60 lines and 36 improv tasks, at most 9 words and 48 characters.
+Sources remain system, players or mixed (default). The system bank has 136 short
+English cards: 70 lines and 66 improv tasks, at most 9 words and 48 characters.
+The latest 40 cards follow the supplied chicken sounds, cup romance, silly songs
+and body-part jokes; the original 96 IDs and text remain unchanged.
 A player can queue a handwritten line/task during preparation or conversation,
 including while delivery is paused. Submissions accept 1–120 trimmed characters,
 with at most 10 per author and 20 per room. The default recipient is a random
@@ -46,7 +48,16 @@ a clock alias; legacy `crazySend` only redraws a future shared timer.
 Player cards retain the navy/cream topic layout and private pink mission card,
 with round and mission countdowns, active mission indicators and points.
 Speaking/question request buttons are removed. Chinese IME composition and
-unsent local drafts survive ordinary synchronization. Both host and player
+unsent local drafts survive ordinary synchronization. The handwritten challenge
+composer and its ancestors stay connected during same-session updates, so an
+open recipient selector is not interrupted by another player or clock update.
+While a native recipient/type picker is being used, structural updates above
+it wait until selection or focusout; timers and connectivity controls continue.
+While a submitted card waits for confirmation, players can edit the recipient,
+kind and next draft; only sending another request waits. Retry uses the original
+submitted payload. A successful confirmation clears text only if text, recipient and kind still
+match that submission, preserving a newly prepared draft. Acknowledged request
+IDs cannot be recovered as pending by a delayed mailbox projection. Both host and player
 settings use minutes and reject fractional seconds. The homepage saves game,
 conversation and duration preferences in `lets-talk-settings.v2`; explicit home
 edits apply to the next setup while returning to an active round preserves it.
@@ -62,7 +73,7 @@ Runtime changes require publishing both the independent service and frontend.
 No audio API or automatic speech judgement is used; players mark their own
 mission complete. Only authenticated recipients can acknowledge their prompt.
 
-Local release verification: all 1325 project tests passed. Real Chrome verified
+Previous timed-round release verification: all 1325 project tests passed. Real Chrome verified
 homepage defaults of 15 minutes per round and 2.5 minutes per mission,
 the shared scheduler, queued custom priority and random non-author recipient, completion +1, immediate skip/expiry replacement,
 two-slot cap, add-time, normal/Crazy automatic rest screens and 375px/320px layouts
