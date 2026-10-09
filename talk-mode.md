@@ -15,8 +15,7 @@ mission, rather than separate timers for every player. The default range is
 maximum. One card is assigned per operation, and at most two players have pending
 missions. Known absent players are excluded when authoritative presence is available;
 fixed-target cards wait for their recipient to return. The next scheduled slot waits
-while both slots are occupied. Skipping
-or reaching a mission deadline immediately passes a replacement to a different
+while both slots are occupied. Skipping or reaching a mission deadline immediately passes a replacement to a different
 eligible player. A completed mission awards its recipient exactly one point;
 skips, expiry and cancellation award zero. Completion keeps the existing shared
 schedule. Every mission expires after 2.5 minutes by default (configurable from
@@ -64,12 +63,20 @@ No audio API or automatic speech judgement is used; players mark their own
 mission complete. Only authenticated recipients can acknowledge their prompt.
 
 Local release verification: all 1325 project tests passed. Real Chrome verified
-homepage defaults15min/2.5min, the shared scheduler, queued custom priority and
-random non-author recipient, completion+1, immediate skip/expiry replacement,
-two-slot cap, add-time, normal/Crazy automatic rest screens and375px/320px layouts
+homepage defaults of 15 minutes per round and 2.5 minutes per mission,
+the shared scheduler, queued custom priority and random non-author recipient, completion +1, immediate skip/expiry replacement,
+two-slot cap, add-time, normal/Crazy automatic rest screens and 375px/320px layouts
 without overflow or page errors. Independent review reproduced and verified fixes
-for Firebase-empty waiting state and known-absent recipients. Production results
-will be recorded after deployment verification.
+for Firebase-empty waiting state and known-absent recipients.
+
+Production frontend assets matched Talk 17/17 and full-site 45/45; API readiness,
+CORS, invalid-ticket rejection and private-runtime 404 checks passed. Real Chrome
+on production repeated all gameplay and layout checks without page errors.
+The independent service and frontend are published. Live RPC smoke passed
+82 checks, including actual automatic round expiry and mission TTL, shared
+slots, queue priority, skip replacement, duplicate-safe scores and add-time.
+All eight exact owned fixture nodes were cleaned with zero cleanup failures.
+The final content release is dbc027e; no existing user-room data was accessed.
 
 The earlier descriptions below document historical versions.
 
