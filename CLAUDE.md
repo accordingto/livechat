@@ -68,10 +68,14 @@ executor archiveEntries/ackArchive, core flushArchive, api archiveSecret binding
 and runtime/talk-archive-store.cjs in future service packages. Source/frontend
 changes require an integrated service deployment retaining current membership,
 CUT/Dixit/Bluff/Once behavior, search functions and Hub-only sin1 placement.
-New Talk script tags are talk-archive-1. Historical overwritten cards cannot be
+Talk sync uses talk-archive-1; Talk engine and dynamic helpers use talk-archive-2. Historical overwritten cards cannot be
 recovered; legacy surviving queued/pending handwriting retains only known times.
-Offline full regression passes 1421/1421; local Chrome round/timer/queue/privacy
-and mobile 320/375 checks pass. Production integration is being verified.
+Integrated full regression passes 1540/1540; local Chrome round/timer/queue/privacy
+and mobile 320/375 checks pass. Membership changes cancel relevant archived work;
+publication checks membershipRevision so delayed writes cannot restore a cancelled
+prompt. Upgrade normalization captures only unlinked queued/pending handwriting
+from older writers, even with an initialized envelope, without reviving persisted
+terminal history. Production integration is being verified.
 
 ## CURRENT: CUT topic clock — 2026-10-10
 

@@ -92,13 +92,15 @@ var TALK_ENGINE = (() => {
   function migrateArchive(s) {
     const initialize = s.challengeArchive?.version !== 1;
     s.challengeArchive = archiveEnvelope(s.challengeArchive);
-    // The envelope version is a permanent initialization marker even when
-    // Firebase omits an empty records array. Pruned terminal history stays
-    // pruned; only the first migration captures legacy active handwriting.
-    if (!initialize || !crazyEnabled(s)) return;
-    list(s.crazy.queue).forEach((item, index) => archiveQueued(s, item, true, s.sessionId + ':legacy:queue:' + index));
+    // The envelope remains initialized after terminal history is persisted.
+    // An older executor can still write unlinked tasks during an upgrade;
+    // capture those active items once without reviving linked, pruned records.
+    if (!crazyEnabled(s)) return;
+    list(s.crazy.queue).forEach((item, index) => {
+      if (initialize || !item.archiveId) archiveQueued(s, item, true, s.sessionId + ':legacy:queue:' + index);
+    });
     for (const [num, prompt] of Object.entries(s.crazy.prompts || {})) {
-      if (prompt?.source !== 'player' || prompt.status !== 'pending') continue;
+      if (prompt?.source !== 'player' || prompt.status !== 'pending' || (!initialize && prompt.archiveId)) continue;
       const id = prompt.archiveId || s.sessionId + ':legacy:' + prompt.id, at = knownArchiveTime(prompt.at);
       addArchiveRecord(s, id, { sessionId: s.sessionId, kind: prompt.kind === 'line' ? 'line' : 'task', text: prompt.text,
         author: archivePerson(s, prompt.assignedBy), recipient: archivePerson(s, Number(num)), topic: archiveTopic(s),
@@ -112,6 +114,8 @@ var TALK_ENGINE = (() => {
         || !s.scores || list(s.roster).some(p => !Number.isInteger(s.scores[p.playerNum]) || s.scores[p.playerNum] < 0)
         || !Number.isFinite(s.gameDeadline) || (s.phase === 'talking' && !(s.gameDeadline > 0))) return true;
     return crazyEnabled(s) && (s.crazy.schedulerVersion !== 2 || !validTaskSeconds(s.crazy.taskSeconds)
+      || list(s.crazy.queue).some(item => !item.archiveId)
+      || list(s.crazy.prompts).some(prompt => prompt?.source === 'player' && prompt.status === 'pending' && !prompt.archiveId)
       || !Number.isFinite(s.crazy.nextAssignAt) || (s.phase === 'talking' && !(s.crazy.nextAssignAt > 0))
       || pendingNums(s).some(num => !Number.isFinite(s.crazy.prompts[num].expiresAt)));
   }

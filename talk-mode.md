@@ -22,6 +22,12 @@ challenge details. It supports Taiwan dates and bounded result counts and never
 enumerates rooms. See scripts/talk-read-archive.md. This preserves future content;
 old overwritten player cards cannot be reconstructed. Legacy currently queued
 or pending handwriting is imported once with only its known timestamps.
+This also captures unlinked active handwriting accepted by an older writer
+during an upgrade. Sitting out cancels that recipient's pending challenge and
+queued items authored by or explicitly targeting them; other active recipients
+and unrelated random queue items remain. The private journal is updated before
+removal/publication. A membership-version fence prevents a delayed old response
+from restoring cancelled prompts, including partial card-publication retries.
 
 Both Talk modes have a round clock, default 15 minutes (configurable from 1 to
 60 minutes). Preparation is separate: the round clock begins when conversation

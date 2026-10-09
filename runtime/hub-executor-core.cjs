@@ -317,6 +317,9 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       const published = await cas(target.path, async old => {
         const authority = (await read(publicationTicket.canonicalPath)).data;
         if (authority?.executor?.capsule !== publicationCapsule || authority.executor.epoch !== publicationTicket.epoch) return;
+        // Sitting out changes membership without rotating the same-session
+        // capsule. A delayed archive writer must not restore its older roster.
+        if ((authority.executor.membershipRevision || 0) !== (raw.executor.membershipRevision || 0)) return;
         if (adapter.guard) await adapter.guard(state, { ...ctx, executor: raw.executor, target, read: async path => (await read(path)).data });
         if (!ownedCard(old, publicationTicket, publicationCapsule, raw.executor.baselines[target.playerNum], prior, target, raw.executor)) return;
         const previous = old?.hubExecutor?.revision || 0;
@@ -328,6 +331,7 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     }))).every(Boolean);
     if (publicationComplete && raw.executor.previousCapsule) await cas(ticket.canonicalPath, current => {
       if (current?.executor?.capsule !== publicationCapsule || current.executor.previousCapsule !== raw.executor.previousCapsule) return;
+      if ((current.executor.membershipRevision || 0) !== (raw.executor.membershipRevision || 0)) return;
       const executor = { ...current.executor }; delete executor.previousCapsule; delete executor.membershipPredecessor;
       return { ...current, executor };
     });
