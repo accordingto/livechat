@@ -167,3 +167,7 @@
 .talk-round-rest { display:grid; gap:16px; padding:26px; }
 .talk-round-rest h2 { color:#f0d8a6; font-size:1.6rem; font-weight:500; margin:0; }
 .talk-round-rest>p { color:#b9c7de; line-height:1.5; margin:0; font-size:.88rem; }
+
+.talk-participant.is-away { opacity:.65; }
+.talk-participant [data-talk-participant-control] { padding:7px 9px; font-size:.72rem; flex-shrink:0; }
+.talk-participant { flex-wrap:wrap; }

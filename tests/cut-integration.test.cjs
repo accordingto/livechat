@@ -71,7 +71,7 @@ test('host topic browser stays collapsed at the bottom and CUT caches are consis
   assert.doesNotMatch(section, /<button|data-cut-action|data-cut-topic/);
   assert.doesNotMatch(cards, /id="cut-library"|class="cut-library"/);
   assert.match(css, /\.cut-library-list[^}]*max-height: 420px[^}]*overflow-y: auto/);
-  for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], 'cut-10', asset[1]);
+  for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], ['cut-engine.js','cut-sync.js'].includes(asset[1]) ? 'membership-1' : 'cut-10', asset[1]);
   for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
 });
 

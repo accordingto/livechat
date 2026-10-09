@@ -211,3 +211,17 @@ test('normal-room hydration preserves a saved mission duration when the next top
   await f.elements['talk-game-mode'].fire('change'); await f.submit();
   assert.equal(f.created[0].gameMode, 'crazy'); assert.equal(f.created[0].crazyTaskSeconds, 239);
 });
+
+
+test('the home host can mark a Talk participant away from the participant board without resetting the round', async () => {
+  let initial = E.create({ id: 'home-membership', now: 1000, topic: { question: 'Keep the current plan.' }, conversationMode: 'assigned', sharedControls: true,
+    roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }, { playerNum: 3, name: 'C' }] });
+  initial = E.apply(initial, { id: 'begin', type: 'start', actor: 0, sessionId: initial.sessionId, now: 1000, seed: 5 });
+  const f = fixture({ initial }), board = f.elements['talk-participants-content'];
+  assert.match(board.innerHTML, /data-talk-action="exclude"/);
+  await board.listeners.click({ target: { closest: () => ({ disabled: false, dataset: { player: '1', active: 'false' } }) } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(f.commands.at(-1), { type: 'exclude', playerNum: 1, active: false });
+  assert.equal(f.host.doc.state.sessionId, initial.sessionId); assert.equal(f.host.doc.state.gameDeadline, initial.gameDeadline);
+  assert.equal(f.host.doc.state.roster[0].active, false); assert.equal(f.host.doc.state.speaker, 2);
+});

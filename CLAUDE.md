@@ -1,3 +1,40 @@
+## CURRENT: Mid-game membership in six games — 2026-10-10
+
+Dixit, Once Upon a Time, Bluff Party, CUT, Open Mic and Talk now retain the live
+session when Hub count/names change. Chat Wolf is explicitly excluded. Original
+seat numbers/tokens stay fixed; additions append, scores start at zero and old
+hands/scores/topics/clocks/history remain. Dixit waits for next round, Once for a
+safe narrative turn, Bluff for fresh topic/roles; party games add future turns.
+Home managers keep control without an own-name prompt or remaining open. Player
+cards can mark participants away and return via their original links; explicit
+away differs from transient absence. Game minimums and existing seat caps remain.
+
+The service exposes authenticated updateRoster/setParticipant with exact command
+receipts, source/private ETags and same-session membership capsule lineage. New
+capsules cannot inherit old-seat authority; restarts retire all membership
+lineage. A moved inactive source is ignored for continuation and never rewritten;
+every reactivation (including legacy exclude/recover) proves fresh ownership
+before committing. Exact lost requests are retried; terminal validation/switch
+errors retire pending requests. Hub checks cannot overwrite active games or race
+a new empty seat. Registered Dixit/Once/CUT/Mic managers defer cached count/source
+classification to the authoritative service. Bluff reconnect/publication respects
+away originals and retained suffix seats. Story participation controls stay below
+the cards; Talk/CUT/Mic keep their own controls. Intentional away/new status never
+pretends to be an offline blocker. See membership-mode.md.
+
+Verification: 1454/1454 repository tests passed, including all four production
+smoke harness regressions and Firebase-empty projection compatibility.
+Real local Edge checks pass 136/136 EN/ZH scenes at 320/375/1000/1440px, including
+home managers, private/away/pending actors and actual scoped button operations.
+The owned production service dpl_C6Vr7UzrpscCZEmQcNSf3vgj4LBH is READY. Fresh real
+service membership checks pass 120/120 across all six games; 39 exact disposable
+nodes were tracked, 38 deleted, 1 already empty, zero cleanup failures. An initial
+QA-only empty-hand assertion was adapted to Firebase omission; its 15 disposable
+nodes were also cleaned. No existing user room was used. Deployment preserves the
+stable Production secret, Hub-only sin1 placement and other service functions.
+Runtime graph is copied back to the owned service source for future deployments.
+Frontend publication and public-asset verification are required for this release.
+
 ## CURRENT: CUT topic clock — 2026-10-10
 
 Each CUT topic has a shared visible 10-minute clock, adjustable to integer

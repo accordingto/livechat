@@ -15,10 +15,10 @@
     html { -webkit-text-size-adjust: 100%; }
 
     /* the same tokens shared.css defines for the game pages — this is the one host
-       page that doesn't load it, and room.js (which both use) reads them. Keep the
+       page that doesn't load it, and room.js?v=membership-1 (which both use) reads them. Keep the
        two lists in step, or this page drifts away from the other ten. */
     :root {
-      /* the hub has no single game colour of its own, but room.js reads --accent,
+      /* the hub has no single game colour of its own, but room.js?v=membership-1 reads --accent,
          so it names the site red here */
       --accent: #e94560;
       --bg: #0d0d1a;
@@ -417,7 +417,7 @@
 
     /* ── Step 1's own inner wizard: room count / names / copy links / card
        check / continue are shown one at a time instead of all at once, each
-       reusing the exact same room.js-rendered elements — see initSetupWizard() */
+       reusing the exact same room.js?v=membership-1-rendered elements — see initSetupWizard() */
     .substep-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 20px; }
     .substep-dot {
       width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
@@ -544,6 +544,7 @@
     .talk-home-settings > p { margin: 11px 0 0; color: #a89bbd; font-size: .75rem; line-height: 1.5; }
     @media (max-width: 520px) { .talk-home-settings { padding: 15px; } .talk-home-fields { grid-template-columns: 1fr; } .talk-home-crazy { display: block; margin-top: 3px; } }
   </style>
+<link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body>
 
@@ -603,6 +604,7 @@
       <span id="setup-summary-text"></span>
       <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
+  <div class="hub-membership-update"><p id="hub-membership-status" role="status" hidden></p><button id="hub-membership-retry" type="button" hidden data-i18n="index.updateRoster">Update game players</button></div>
     <!-- Off by default: the briefing is a wall of text in front of a game the
          regulars already know. A host running this weekly was reading past it
          every time, so it is now something you ask for. -->
@@ -836,9 +838,11 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="room.js"></script>
+  <script src="room.js?v=membership-1"></script>
+  <script src="hub-executor.js?v=membership-1"></script>
   <script>
     I18N.registerDict('index', {
+      updateRoster: { zh: '同步遊戲名單', en: 'Update game players' },
       tagOpenMic: { en: 'Talk & create', zh: '聊天＋即興' },
       descOpenMic: { en: 'Complete a silly challenge, then share a song memory, make an original tune, or clap an original rhythm. Pair up or skip. One team, no performance judges.', zh: '完成小挑戰，再聊歌曲回憶、即興自創旋律或節奏接龍。找人搭檔，或直接跳過，一起累積團隊分數。' },
       descCut: { zh: '話別說完！聊到一半突然 CUT，隨機點名另一位接下那半句話。可以亂編、互虧、自由吐槽。', en: 'Keep talking… until CUT! A surprise player picks up your unfinished sentence. Make it up, laugh, and keep it going.' },
@@ -932,7 +936,7 @@
     });
 
     /* Every game on this site shares one room code and one set of player
-       links (see room.js) — so instead of re-explaining "set your player
+       links (see room.js?v=membership-1) — so instead of re-explaining "set your player
        count, then send links" on eight separate host pages, it happens once
        here. The independent launcher initializes supported games only when
        selected, then opens the chosen private card after all cards are ready. */
@@ -946,6 +950,8 @@
       onNameChange: renderSetupSummary,
     });
 
+    HUB_EXECUTOR.watchHub(ROOM);
+
     function renderSetupSummary() {
       const el = document.getElementById('setup-summary-text');
       el.innerHTML = (ROOM.enabled
@@ -958,7 +964,7 @@
 
     /* Step 1 used to show room count, names, Copy All Links and Send Card
        Check all at once. It now walks the host through them one at a time —
-       the same room.js-rendered elements just get moved into their own
+       the same room.js?v=membership-1-rendered elements just get moved into their own
        panel each, so nothing about how they work (state, saves, live
        re-renders on name/count change) is touched. */
     /* The sub-steps are named rather than numbered. They used to be numbered, and
@@ -1130,7 +1136,7 @@
         panel.appendChild(nav);
         mount.appendChild(panel);
       });
-      // room.js's own "🔗 Player Links (optional)" header/note are redundant
+      // room.js?v=membership-1's own "🔗 Player Links (optional)" header/note are redundant
       // here — the method intro line and each method's own description
       // already say what this step is for — but render() still reaches for
       // both by id on every call, so they have to keep existing in the

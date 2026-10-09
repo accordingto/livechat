@@ -1,0 +1,12 @@
+/* Membership controls stay below the cards and preserve their available space. */
+.hub-membership-controls,.hub-membership-update { box-sizing:border-box; margin:18px auto; max-width:1100px; width:calc(100% - 32px); padding:16px; border:1px solid currentColor; border-radius:16px; color:inherit; }
+.hub-membership-controls summary { cursor:pointer; font-weight:700; }
+.hub-membership-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:10px; padding-top:14px; }
+.hub-membership-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 0; min-width:0; }
+.hub-membership-row span { overflow-wrap:anywhere; min-width:0; }
+.hub-membership-row button,.hub-membership-update button { flex-shrink:0; padding:8px 12px; border:1px solid currentColor; border-radius:9px; background:transparent; color:inherit; cursor:pointer; font:inherit; }
+.hub-membership-row button:disabled { opacity:.45; cursor:default; }
+.hub-membership-note { font-size:.85rem; opacity:.75; line-height:1.5; margin-bottom:0; }
+.hub-membership-update { text-align:center; }
+
+.hub-membership-update:has(#hub-membership-status[hidden]):has(#hub-membership-retry[hidden]) { display:none; }

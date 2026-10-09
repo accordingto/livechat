@@ -28,7 +28,7 @@ var HUB_EXECUTOR = (() => {
   }
   function observe(data, token) {
     const ticket = data?.hubExecutor;
-    if (!ticket || ticket.v !== 1 || !token || ticket.capsule === retiredCapsule) { current = null; active = false; recoveryControl([]); return; }
+    if (!ticket || ticket.v !== 1 || !token || ticket.capsule === retiredCapsule) { current = null; active = false; recoveryControl([]); clearMembership(); return; }
     const nested = data[{ onceupon: 'once', letstalk: 'talk' }[ticket.game] || ticket.game] || {};
     const action = data.talkAction || data.onceAction || data.dixitAction || data.cutAction || data.openmicAction || data.command || data.request;
     const actionId = action?.id || action?.commandId;
@@ -36,6 +36,7 @@ var HUB_EXECUTOR = (() => {
     if (phaseKey !== current?.phaseKey || actionId && actionId !== current?.actionId) { lastPulse = 0; pendingWake = !!inflight; }
     current = { actionId, phaseKey, capsule: ticket.capsule, token, game: ticket.game, sessionId: ticket.sessionId, turnId: nested.turnId, phaseId: nested.phaseId };
     recoveryControl(['bluffking','chatwolf'].includes(ticket.game) ? [] : ticket.absentNums || []);
+    membershipControl(data, current);
     active = true; backgroundPulse();
   }
   function pulse(command) {
@@ -46,7 +47,7 @@ var HUB_EXECUTOR = (() => {
       return result;
     }).catch(error => {
       if (error.code === 'game_switched' && current?.capsule === snapshot.capsule) {
-        retiredCapsule = snapshot.capsule; current = null; active = false; recoveryControl([]);
+        retiredCapsule = snapshot.capsule; current = null; active = false; recoveryControl([]); clearMembership();
       }
       throw error;
     });
@@ -70,6 +71,161 @@ var HUB_EXECUTOR = (() => {
     }
     row.firstChild.textContent = document.documentElement.lang.startsWith('zh') ? '跳過缺席玩家，接續遊戲' : 'Continue without absent players';
   }
+  const membershipGames = ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'];
+  const controlKeys = { dixit: 'dixitControlToken', onceupon: 'onceUponControlToken', cut: 'cutControlToken', openmic: 'openMicControlToken', letstalk: 'letsTalkControlToken' };
+  const tableKey = code => 'icebreak.hub.active.' + code;
+  const pendingRosterKey = code => 'icebreak.hub.roster.pending.' + code;
+  const terminalRosterErrors = new Set(['stale_session', 'invalid_roster', 'player_count', 'game_switched', 'host_only', 'invalid_ticket', 'command_conflict', 'invalid_command']);
+  const readLocal = key => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
+  function writeTable(table) { if (!membershipGames.includes(table?.game)) return; try { localStorage.setItem(tableKey(table.code), JSON.stringify(table)); } catch {} }
+  function rememberTable(code, game, capsule, token, rows) {
+    if (!capsule || !token || !membershipGames.includes(game)) return;
+    const setup = readLocal('room-session-' + code), prior = readLocal(tableKey(code));
+    const roster = (Array.isArray(rows) ? rows : []).map((row, i) => ({ playerNum: i + 1, originalToken: setup?.tokens?.[i], name: row.name || setup?.names?.[i] || 'Player ' + (i + 1) }));
+    if (!roster.length || roster.some(row => !row.originalToken)) return;
+    writeTable({ code, game, capsule, token, roster, hubCount: prior?.capsule === capsule ? prior.hubCount : roster.length });
+  }
+  let rosterWork = Promise.resolve();
+  async function discoverTable(room) {
+    let prior = readLocal(tableKey(room.code));
+    const first = room.playerRef?.(0);
+    if (!first || typeof first.once !== 'function') return prior;
+    let card = (await first.once('value')).val();
+    if (!membershipGames.includes(card?.game) || prior?.game && card?.game !== prior.game) {
+      const others = await Promise.all(Array.from({ length: Math.max(0, room.count - 1) }, async (_, i) => { const ref = room.playerRef(i + 1); return typeof ref?.once === 'function' ? (await ref.once('value')).val() : null; }));
+      card = [card, ...others].find(node => prior?.game && node?.game === prior.game) || [card, ...others].find(node => membershipGames.includes(node?.game));
+    }
+    const game = card?.game;
+    if (!membershipGames.includes(game)) return null;
+    const saved = readLocal('room-session-' + room.code);
+    const token = game === 'bluffking' ? (() => { try { return localStorage.getItem('icebreak.bluff.host.' + room.code); } catch {} })() : saved?.[controlKeys[game]];
+    if (!token || typeof firebase === 'undefined') return prior?.game === game ? prior : null;
+    const path = 'rooms/' + (game === 'bluffking' ? 'bluffking-' : '') + room.code + '/players/' + token;
+    const raw = (await firebase.database().ref(path).once('value')).val();
+    if (raw?.executor?.v !== 1) return null;
+    const state = raw.state || (raw.stateJson ? JSON.parse(raw.stateJson) : raw.data ? JSON.parse(raw.data) : raw);
+    const rows = game === 'bluffking' ? state.transport?.cardRoster : state.roster;
+    rememberTable(room.code, game, raw.executor.capsule, token, rows);
+    return readLocal(tableKey(room.code));
+  }
+  function syncRoster(room, input) {
+    const work = async () => {
+      if (!room?.enabled) return null;
+      const setup = input || readLocal('room-session-' + room.code);
+      if (!setup?.tokens?.length || !Number.isInteger(setup.playerCount)) return null;
+      const pendingKey = pendingRosterKey(room.code), pending = readLocal(pendingKey);
+      if (pending) {
+        try {
+          const completed = await request(pending);
+          const saved = readLocal(tableKey(room.code));
+          if (saved?.game === completed.game) writeTable({ ...saved, capsule: completed.capsule, roster: pending.roster, hubCount: pending.hubCount });
+        } catch (error) { if (!terminalRosterErrors.has(error.code)) throw error; }
+        try { localStorage.removeItem(pendingKey); } catch {}
+      }
+      const table = await discoverTable(room);
+      if (!table) return null;
+      const count = setup.playerCount, old = table.roster || [];
+      if (old.some((row, i) => row.originalToken !== setup.tokens[i])) throw Object.assign(new Error('room_changed'), { code: 'room_changed' });
+      const size = Math.max(count, old.length);
+      const names = Array.from({ length: count }, (_, i) => String(setup.names?.[i] || '').trim());
+      if (names.some(name => !name)) return null;
+      const roster = Array.from({ length: size }, (_, i) => ({ playerNum: i + 1, originalToken: setup.tokens[i], name: i < count ? names[i] : old[i]?.name || setup.names?.[i] || 'Player ' + (i + 1) }));
+      if (table.hubCount === count && JSON.stringify(roster) === JSON.stringify(old)) return table;
+      const mutation = { operation: 'updateRoster', capsule: table.capsule, token: table.token, commandId: uid(), roster, hubCount: count };
+      try { localStorage.setItem(pendingKey, JSON.stringify(mutation)); } catch {}
+      let result;
+      try { result = await request(mutation); }
+      catch (error) { if (terminalRosterErrors.has(error.code)) { try { localStorage.removeItem(pendingKey); } catch {} } throw error; }
+      try { localStorage.removeItem(pendingKey); } catch {}
+      writeTable({ ...table, capsule: result.capsule, roster, hubCount: count });
+      return { ...table, ...result, roster, hubCount: count };
+    };
+    const task = rosterWork.then(work); rosterWork = task.catch(() => {}); return task;
+  }
+  function watchHub(room) {
+    if (typeof window === 'undefined') return;
+    let timer, busy = false, rerun = false;
+    const status = message => { const node = document.getElementById('hub-membership-status'); if (node) { node.textContent = message; node.hidden = !message; } };
+    const text = (en, zh) => typeof I18N !== 'undefined' && I18N.lang === 'zh' ? zh : en;
+    const run = async () => {
+      if (busy) { rerun = true; return; } busy = true;
+      try {
+        const result = await syncRoster(room);
+        const retry = document.getElementById('hub-membership-retry'); if (retry) retry.hidden = true;
+        if (result?.ok) status(text('Players updated. Keep playing; new players join at the next safe turn or round.', '玩家名單已更新，原遊戲繼續；新人會在合適的下一輪或下一次換手加入。'));
+      } catch (error) {
+        const retry = document.getElementById('hub-membership-retry'); if (retry) retry.hidden = false;
+        status(error.code === 'player_count' || error.code === 'invalid_roster' ? text('This game has reached its player limit. Keep the current table or start another game.', '目前遊戲已達人數上限，請維持原桌或選擇其他遊戲。') : text('The player update has not completed. Your game is kept; retry updating the roster.', '名單尚未更新完成，原遊戲保留；請重試同步名單。'));
+      } finally { busy = false; if (rerun) { rerun = false; schedule(); } }
+    };
+    const schedule = () => { clearTimeout(timer); timer = setTimeout(run, 700); };
+    window.addEventListener('hub-room-setup', schedule);
+    window.addEventListener('storage', event => { if (event.key === 'room-session-' + room.code) schedule(); });
+    document.getElementById('hub-membership-retry')?.addEventListener('click', run);
+    schedule();
+  }
+  let membershipBusy = false, membershipSnapshot = null, membershipSignature = '';
+  async function setParticipant(playerNum, active, ticket) {
+    const credential = ticket || current;
+    if (!credential?.capsule || !credential?.token) throw new Error('room_not_ready');
+    const result = await request({ operation: 'setParticipant', capsule: credential.capsule, token: credential.token, commandId: uid(), playerNum: Number(playerNum), active: !!active });
+    if (current?.capsule === credential.capsule) { current.capsule = result.capsule; lastPulse = 0; }
+    return result;
+  }
+  function clearMembership() {
+    if (typeof document !== 'undefined') document.getElementById('hub-membership-controls')?.remove();
+    membershipSnapshot = null; membershipSignature = '';
+  }
+  function membershipControl(data, ticket, selfNum = data?.playerNum) {
+    if (typeof document === 'undefined' || !document.createElement || !document.body) return;
+    const game = ticket?.game || data?.game;
+    if (!['dixit', 'onceupon', 'bluffking'].includes(game)) { clearMembership(); return; }
+    const nested = game === 'bluffking' ? data : data?.[game === 'onceupon' ? 'once' : game];
+    const rows = game === 'bluffking' ? nested?.players?.filter(row => Number.isInteger(row.playerNum) && row.playerNum > 0) : nested?.roster;
+    if (!nested?.membership?.enabled || !rows?.length || !ticket?.capsule) { clearMembership(); return; }
+    membershipSnapshot = { data, ticket, selfNum };
+    const zh = typeof I18N !== 'undefined' && I18N.lang === 'zh';
+    const signature = JSON.stringify([game, ticket.capsule, rows.map(row => [row.playerNum, row.name, row.active, row.pending, row.memberStatus]), selfNum, zh]);
+    if (membershipSignature === signature) return; membershipSignature = signature;
+    let panel = document.getElementById('hub-membership-controls');
+    if (!panel) {
+      panel = document.createElement('details'); panel.id = 'hub-membership-controls'; panel.className = 'hub-membership-controls';
+      const summary = document.createElement('summary'), list = document.createElement('div'), note = document.createElement('p');
+      list.className = 'hub-membership-list'; note.className = 'hub-membership-note';
+      panel.append(summary, list, note); document.body.append(panel);
+    }
+    panel.firstChild.textContent = zh ? '玩家與離席設定' : 'Players and participation';
+    panel.lastChild.textContent = zh ? '離席會保留手牌與分數。可從自己的原連結重新加入；人數不足時先等候其他玩家。' : 'Sitting out keeps cards and scores. Rejoin with your original link; play waits when there are too few players.';
+    const self = rows.find(row => row.playerNum === Number(selfNum));
+    const canManage = !selfNum || self && self.active !== false && !self.pending;
+    panel.children[1].replaceChildren(...rows.map(row => {
+      const line = document.createElement('div'), label = document.createElement('span'), button = document.createElement('button');
+      line.className = 'hub-membership-row';
+      const state = row.active === false ? (zh ? '已離席' : 'Sitting out') : row.pending ? (row.memberStatus === 'next_turn' ? (zh ? '下一次換手加入' : 'Joining next turn') : (zh ? '下一輪加入' : 'Joining next round')) : (zh ? '參與中' : 'Playing');
+      label.textContent = row.name + ' · ' + state;
+      button.type = 'button'; button.textContent = row.active === false ? (zh ? '重新加入' : 'Rejoin') : (zh ? '設為離席' : 'Sit out');
+      button.disabled = membershipBusy || !canManage && !(row.playerNum === Number(selfNum) && row.active === false);
+      button.onclick = async () => {
+        if (membershipBusy) return; membershipBusy = true; button.disabled = true;
+        try {
+          const result = await setParticipant(row.playerNum, row.active === false, ticket);
+          if (result.payload) {
+            const payload = game === 'bluffking' ? (result.payload.viewJson ? JSON.parse(result.payload.viewJson) : result.payload.view) : result.payload;
+            if (payload) { membershipSignature = ''; membershipControl(payload, { ...ticket, capsule: result.capsule }, selfNum); }
+          }
+        } catch { panel.lastChild.textContent = zh ? '尚未更新，請稍後重試。' : 'Not updated yet. Try again shortly.'; }
+        finally { membershipBusy = false; membershipSignature = ''; if (membershipSnapshot) membershipControl(membershipSnapshot.data, membershipSnapshot.ticket, membershipSnapshot.selfNum); }
+      };
+      line.append(label, button); return line;
+    }));
+  }
+  function hostMembership(host, game) {
+    const raw = host.doc, state = raw?.state;
+    if (!state || raw.executor?.v !== 1) return;
+    rememberTable(host.room.code, game, raw.executor.capsule, host.ref.key, state.roster);
+    const engine = game === 'dixit' ? (typeof DIXIT_ENGINE !== 'undefined' ? DIXIT_ENGINE : null) : game === 'onceupon' ? (typeof ONCE_ENGINE !== 'undefined' ? ONCE_ENGINE : null) : null;
+    if (engine) membershipControl(engine.view(state, 0, host.now()), { game, capsule: raw.executor.capsule, token: host.ref.key }, 0);
+  }
   function isIndependent(data) { return data?.hubExecutor?.v === 1 || data?.sharedControls === true; }
   async function ensureHost(host, game) {
     if (!host || host.stopped || !host.doc?.state || host.executorStarting) throw new Error('room_not_ready');
@@ -83,8 +239,8 @@ var HUB_EXECUTOR = (() => {
       if (host.stopped || host.doc?.state?.sessionId !== sessionId) throw new Error('stale_session');
       let result;
       if (host.doc.executor?.v === 1 && host.doc.executor.sessionId === sessionId) {
-        await request({ operation: 'execute', capsule: host.doc.executor.capsule, token: host.ref.key });
-        result = { capsule: host.doc.executor.capsule, game, sessionId };
+        const executed = await request({ operation: 'execute', capsule: host.doc.executor.capsule, token: host.ref.key });
+        result = { capsule: executed.capsule || host.doc.executor.capsule, game, sessionId };
       } else {
         const seats = Array.from({ length: host.room.count }, (_, i) => ({ playerNum: i + 1, token: host.room.playerRef(i)?.key }));
         result = await request({ operation: 'register', game, code: host.room.code, controlToken: host.ref.key, sessionId, seats });
@@ -96,6 +252,7 @@ var HUB_EXECUTOR = (() => {
         if (raw?.executor?.v !== 1 || raw.executor.capsule !== result.capsule || state?.sessionId !== sessionId) throw new Error('registration_incomplete');
         host.doc = { ...raw, state }; host.own = false;
       }
+      rememberTable(host.room.code, game, result.capsule, host.ref.key, host.doc.state.roster);
       return result;
     })();
     host.executorPromise = task;
@@ -126,6 +283,8 @@ var HUB_EXECUTOR = (() => {
       }
       if (!result?.capsule) throw new Error('registration_incomplete');
       client.executorTicket = { capsule: result.capsule, token: client.hostToken };
+      const state = typeof raw?.data === 'string' ? JSON.parse(raw.data) : raw;
+      rememberTable(client.code, 'bluffking', result.capsule, client.hostToken, state?.transport?.cardRoster);
       const view = result.payload?.viewJson ? JSON.parse(result.payload.viewJson) : result.payload?.view;
       if (view) client._emit(view);
       return result;
@@ -198,6 +357,15 @@ var HUB_EXECUTOR = (() => {
     };
     p.status = function (status) {
       if (isServer(this) && this.connected && status !== 'switched') status = 'ready';
+      if (status === 'switched') clearMembership(); else hostMembership(this, game);
+      const setup = readLocal('room-session-' + this.room?.code);
+      const savedCount = setup?.playerCount ?? this.room?.count;
+      const storedCount = this.doc?.executor?.hubCount ?? this.doc?.state?.roster?.length;
+      const changedNames = setup?.names && this.doc?.state?.roster?.slice(0, savedCount).some((row, i) => String(setup.names[i] || '').trim() && row.name !== String(setup.names[i]).trim());
+      if (isServer(this) && this.room?.enabled && !this.executorRosterSyncing && (storedCount !== savedCount || changedNames)) {
+        this.executorRosterSyncing = true;
+        void syncRoster(this.room).catch(() => {}).finally(() => { this.executorRosterSyncing = false; });
+      }
       return originals.status.call(this, status);
     };
   }
@@ -205,7 +373,8 @@ var HUB_EXECUTOR = (() => {
     if (!Client || Client.prototype.executorPatched) return;
     const p = Client.prototype;
     p.executorPatched = true;
-    const original = p._hostRefresh, originalCommand = p.command, originalCards = p.createFromCards;
+    const original = p._hostRefresh, originalCommand = p.command, originalCards = p.createFromCards, originalEmit = p._emit;
+    p._emit = function(view) { const result = originalEmit.call(this, view); if (this.executorTicket) membershipControl(view, { ...this.executorTicket, game: 'bluffking' }, this.isHost ? 0 : view.self?.playerNum || -1); return result; };
     p.createFromCards = async function (code, setup, options = {}) {
       this.executorStarting = true;
       try {
@@ -222,11 +391,19 @@ var HUB_EXECUTOR = (() => {
               setup?.tokens?.length === count && setup?.names?.length === count && prior.every((entry, i) =>
                 /^[A-Za-z0-9_-]{12,128}$/.test(entry.originalToken || '') && entry.originalToken === setup.tokens[i] &&
                 entry.name === setup.names[i] && room?.members?.find(member => member.identityId === entry.identityId)?.name === setup.names[i]);
+            const retained = Array.isArray(prior) && count >= 3 && count <= 9 && setup?.tokens?.length === count && setup?.names?.length === count && prior.slice(0, Math.min(count, prior.length)).every((entry, i) => entry.originalToken === setup.tokens[i]);
+            if (retained && !sameRoster) {
+              const roster = Array.from({ length: Math.max(count, prior.length) }, (_, i) => ({ playerNum: i + 1, originalToken: i < count ? setup.tokens[i] : prior[i].originalToken, name: i < count ? setup.names[i] : prior[i].name }));
+              const updated = await request({ operation: 'updateRoster', capsule: raw.executor.capsule, token, commandId: uid(), roster, hubCount: count });
+              rememberTable(roomCode, 'bluffking', updated.capsule, token, roster);
+              return await this.connect(roomCode);
+            }
             if (sameRoster) {
               const cardsMatch = async () => {
                 const originals = await Promise.all(prior.map(entry => this._request('/rooms/' + roomCode + '/players/' + entry.originalToken)));
                 return originals.every(({ data }, i) => {
                   const card = data?.bluff, entry = prior[i];
+                  if (room?.members?.find(member => member.identityId === entry.identityId)?.active === false) return true;
                   return data?.game === 'bluffking' && card?.version === 2 && card.room === roomCode &&
                     card.token === entry.token && card.identityId === entry.identityId && card.historyToken === entry.historyToken;
                 });
@@ -309,6 +486,6 @@ var HUB_EXECUTOR = (() => {
     window.addEventListener('online', () => { lastPulse = 0; backgroundPulse(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPulse = 0; backgroundPulse(); } });
   }
-  return { request, ready, ensureHost, ensureBluff, registerWolf, observe, pulse, recover, isIndependent, install };
+  return { request, ready, ensureHost, ensureBluff, registerWolf, observe, pulse, recover, isIndependent, install, syncRoster, watchHub, setParticipant, membershipControl, rememberTable };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = HUB_EXECUTOR;

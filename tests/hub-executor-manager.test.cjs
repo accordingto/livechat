@@ -28,13 +28,17 @@ function fixture(t, game, { readiness = null } = {}) {
     const next = JSON.parse(input.body); put(path, next); return new Response(JSON.stringify(next));
   };
   const extras = {}, tokens = ['1'.repeat(20), '2'.repeat(20), '3'.repeat(20)], calls = [], statuses = [], managers = [];
-  const room = { code: 'MGR234', count: 3, answers: {}, name: i => 'Person ' + (i + 1),
+  const room = { enabled: true, code: 'MGR234', count: 3, answers: {}, name: i => 'Person ' + (i + 1),
     getExtra: key => extras[key], setExtra: (key, value) => { extras[key] = value; }, playerRef: i => db.ref('rooms/MGR234/players/' + tokens[i]) };
   tokens.forEach((token, i) => { const path = 'rooms/MGR234/players/' + token; put(path, { game: 'scene', round: 1, playerNum: i + 1 }); db.ref(path).on('value', node => { room.answers[i + 1] = node.val(); }); });
-  let clock = Date.now(), nextPulseFailure = null;
+  let clock = Date.now(), nextPulseFailure = null, loseRosterReply = false;
   class FixtureDate extends Date { static now() { return clock; } }
   const service = createExecutor({ secret: '56'.repeat(32), databaseURL: 'http://localhost', fetchImpl: databaseFetch, now: () => clock, games });
-  const context = vm.createContext({ crypto: webcrypto, Date: FixtureDate, Promise, AbortSignal, URL, Response, TextEncoder, TextDecoder, Uint8Array, Uint32Array, btoa, atob, structuredClone,
+  const stored = new Map();
+  const storage = { getItem: key => stored.get(key) || null, setItem: (key, value) => stored.set(key, String(value)), removeItem: key => stored.delete(key) };
+  const saveSetup = () => storage.setItem('room-session-' + room.code, JSON.stringify({ tokens, playerCount: room.count, names: tokens.map((_, i) => room.name(i)), ...extras }));
+  saveSetup();
+  const context = vm.createContext({ localStorage: storage, firebase: { database: () => db }, crypto: webcrypto, Date: FixtureDate, Promise, AbortSignal, URL, Response, TextEncoder, TextDecoder, Uint8Array, Uint32Array, btoa, atob, structuredClone,
     document: { hidden: false, documentElement: { lang: 'en' }, getElementById: () => null, addEventListener() {} },
     window: { addEventListener() {} }, setInterval: () => 1, clearInterval() {},
     async fetch(url, input = {}) {
@@ -45,14 +49,19 @@ function fixture(t, game, { readiness = null } = {}) {
         const code = nextPulseFailure; nextPulseFailure = null;
         return new Response(JSON.stringify({ error: code }), { status: code === 'game_switched' ? 409 : 503 });
       }
-      try { return new Response(JSON.stringify(await service[body.operation](body))); }
+      try { const value = await service[body.operation](body); if (body.operation === 'updateRoster' && loseRosterReply) { loseRosterReply = false; return new Response(JSON.stringify({ error: 'connection_timeout' }), { status: 503 }); } return new Response(JSON.stringify(value)); }
       catch (error) { return new Response(JSON.stringify({ error: error.code || error.message }), { status: error.status || 500 }); }
     }
   });
-  const scripts = game === 'letstalk' ? ['talk-crazy.js', 'talk-engine.js', 'talk-sync.js'] : ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-sync.js'];
+  const scripts = ({
+    letstalk: ['talk-crazy.js', 'talk-engine.js', 'talk-sync.js'],
+    cut: ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-sync.js'],
+    dixit: ['dixit-deck.js', 'dixit-engine.js', 'talk-sync.js', 'dixit-sync.js'],
+    onceupon: ['once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'talk-sync.js', 'once-upon-a-time-sync.js'],
+  })[game];
   for (const file of [...scripts, 'hub-executor.js']) vm.runInContext(fs.readFileSync(require.resolve('../' + file), 'utf8'), context);
   context.HUB_EXECUTOR.install();
-  const key = game === 'letstalk' ? 'talk' : 'cut', Host = context[game === 'letstalk' ? 'TALK_SYNC' : 'CUT_SYNC'].Host;
+  const key = ({letstalk:'talk',cut:'cut',dixit:'dixit',onceupon:'once'})[game], Host = context[({letstalk:'TALK_SYNC',cut:'CUT_SYNC',dixit:'DIXIT_SYNC',onceupon:'ONCE_SYNC'})[game]].Host;
   const manager = () => { const host = new Host({ room, db, onChange() {}, onStatus: status => statuses.push(status) }); managers.push(host); host.connect(); return host; };
   const card = num => clone(values.get('rooms/MGR234/players/' + tokens[num - 1]));
   const playerCommand = async (num, type, extra = {}) => { const current = card(num); return service.execute({ capsule: current.hubExecutor.capsule, token: tokens[num - 1],
@@ -64,7 +73,7 @@ function fixture(t, game, { readiness = null } = {}) {
       assert.ok(!JSON.stringify(view).includes(JSON.stringify(host.ref.key)), 'private card must not receive the manager credential'); }
   };
   t.after(() => managers.forEach(host => host.close()));
-  return { context, manager, service, calls, statuses, card, state, playerCommand, assertIndependent, game, now: () => clock, setClock: value => { clock = value; }, failNextPulse: code => { nextPulseFailure = code; } };
+  return { context, manager, service, calls, statuses, card, state, playerCommand, assertIndependent, room, tokens, storage, saveSetup, put, loseNextRosterReply: () => { loseRosterReply = true; }, game, now: () => clock, setClock: value => { clock = value; }, failNextPulse: code => { nextPulseFailure = code; } };
 }
 
 test('Talk manager staggers queued missions and round scoring continues after it closes', async t => {
@@ -186,4 +195,88 @@ test('normal Talk round ends through a player pulse after the manager closes and
   const reopened = f.manager(); await flush(); f.assertIndependent(reopened);
   assert.equal(f.state(reopened).sessionId, session); assert.equal(f.state(reopened).phase, 'ended');
   assert.equal(f.card(2).hubExecutor.capsule, capsule);
+});
+
+for (const game of ['cut', 'letstalk']) test(game + ' Hub player-count edits append to the live table with its original manager and links', async t => {
+  const f = fixture(t, game), host = f.manager(); await flush();
+  if (game === 'cut') await host.start({ speed: 'custom', category: 'mixed', customMinSeconds: 5, customMaxSeconds: 8, topicMinutes: 10 });
+  else await host.start({ topic: { id: 'membership-manager-topic', question: 'Choose the rules for our new city.' }, mode: 'think', seconds: 120, conversationMode: 'assigned', gameMode: 'crazy', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 9, gameSeconds: 60 });
+  f.saveSetup(); await f.context.HUB_EXECUTOR.ensureHost(host, game); await flush();
+  const before = f.state(host), oldCard = f.card(1), oldCapsule = oldCard.hubExecutor.capsule;
+  f.tokens.push('4'.repeat(20)); f.room.count = 4; f.saveSetup();
+  const appended = await f.context.HUB_EXECUTOR.syncRoster(f.room); await flush();
+  assert.equal(appended.ok, true); assert.notEqual(appended.capsule, oldCapsule);
+  assert.equal(f.state(host).sessionId, before.sessionId); assert.equal(f.state(host).roster.length, 4);
+  assert.deepEqual(f.state(host).topic, before.topic); assert.equal(host.suspended, false);
+  if (game === 'cut') { assert.equal(host.sameRoom(), true); assert.deepEqual(f.state(host).topicClock, before.topicClock); }
+  else { assert.deepEqual(f.state(host).crazy.queue, before.crazy.queue); assert.deepEqual(f.state(host).crazy.prompts, before.crazy.prompts); }
+  assert.equal(f.card(4).hubExecutor.capsule, appended.capsule);
+  const key = game === 'letstalk' ? 'talk' : 'cut';
+  assert.equal(f.card(4)[key].roster.length, 4);
+  await f.service.execute({ capsule: oldCapsule, token: f.tokens[0] });
+  assert.equal(f.state(host).sessionId, before.sessionId, 'retained original link remains valid after membership rotation');
+  const again = await f.context.HUB_EXECUTOR.syncRoster(f.room); assert.equal(again.capsule, appended.capsule);
+  assert.equal(f.calls.filter(call => call.operation === 'updateRoster').length, 1, 'unchanged roster does not repeat the mutation');
+  host.close();
+  await f.playerCommand(2, game === 'cut' ? 'begin' : 'start');
+  assert.equal(f.state(host).phase, game === 'cut' ? 'countdown' : 'talking', 'player cards continue after manager closes');
+});
+
+test('a lost Hub roster response retries the exact admission receipt without duplicating or losing the new seat', async t => {
+  const f = fixture(t, 'cut'), host = f.manager(); await flush(); await host.start({ speed: 'normal', category: 'mixed' });
+  f.saveSetup(); await f.context.HUB_EXECUTOR.ensureHost(host, 'cut');
+  f.tokens.push('4'.repeat(20)); f.room.count = 4; f.saveSetup(); f.loseNextRosterReply();
+  await assert.rejects(f.context.HUB_EXECUTOR.syncRoster(f.room), { code: 'connection_timeout' });
+  assert.equal(f.state(host).roster.length, 4);
+  const next = await f.context.HUB_EXECUTOR.syncRoster(f.room); await flush();
+  const admissions = f.calls.filter(call => call.operation === 'updateRoster'); assert.equal(admissions.length, 2);
+  assert.deepEqual(admissions[1], admissions[0], 'the retry keeps original capsule, command ID, names and bindings');
+  assert.equal(f.state(host).roster.length, 4); assert.equal(f.card(4).hubExecutor.capsule, next.capsule);
+});
+test('Hub membership still updates when the first player sits out and opens another game', async t => {
+  const f = fixture(t, 'cut'), host = f.manager(); await flush(); await host.start({ speed: 'normal', category: 'mixed' });
+  f.saveSetup(); await f.context.HUB_EXECUTOR.ensureHost(host, 'cut');
+  await f.service.setParticipant({ capsule: f.card(2).hubExecutor.capsule, token: f.tokens[1], commandId: 'first-player-away', playerNum: 1, active: false }); await flush();
+  const foreign = { game: 'scene', playerNum: 1, round: 77 }; f.put('rooms/MGR234/players/' + f.tokens[0], foreign);
+  f.tokens.push('4'.repeat(20)); f.room.count = 4; f.saveSetup();
+  const joined = await f.context.HUB_EXECUTOR.syncRoster(f.room); await flush();
+  assert.equal(joined.ok, true); assert.equal(f.state(host).roster.length, 4); assert.equal(f.state(host).roster[0].active, false);
+  assert.deepEqual(f.card(1), foreign); assert.equal(f.card(4).hubExecutor.capsule, joined.capsule);
+});
+
+test('a player-limit rejection retires its queue so correcting Hub count can update the current table', async t => {
+ const f=fixture(t,'cut'),host=f.manager();await flush();await host.start({speed:'normal',category:'mixed'});f.saveSetup();await f.context.HUB_EXECUTOR.ensureHost(host,'cut');
+ for(let n=4;n<=10;n++)f.tokens.push(String(n).padStart(20,'0'));f.room.count=10;f.saveSetup();
+ await assert.rejects(f.context.HUB_EXECUTOR.syncRoster(f.room),{code:'invalid_roster'});
+ assert.equal(f.storage.getItem('icebreak.hub.roster.pending.MGR234'),null);
+ f.room.count=4;f.saveSetup();const joined=await f.context.HUB_EXECUTOR.syncRoster(f.room);
+ assert.equal(joined.ok,true);assert.equal(f.state(host).roster.length,4);
+});
+test('a prior terminal game-switch request is retired before discovering the current Hub table', async t => {
+ const f=fixture(t,'cut'),host=f.manager();await flush();await host.start({speed:'normal',category:'mixed'});f.saveSetup();await f.context.HUB_EXECUTOR.ensureHost(host,'cut');
+ f.storage.setItem('icebreak.hub.roster.pending.MGR234',JSON.stringify({operation:'updateRoster',capsule:'invalid-synthetic-ticket',token:'a'.repeat(32),commandId:'terminal-prior-game',roster:[]}));
+ f.tokens.push('4'.repeat(20));f.room.count=4;f.saveSetup();const joined=await f.context.HUB_EXECUTOR.syncRoster(f.room);
+ assert.equal(joined.ok,true);assert.equal(f.storage.getItem('icebreak.hub.roster.pending.MGR234'),null);assert.equal(f.state(host).roster.length,4);
+});
+
+
+for(const game of ['dixit','onceupon'])test(game+' sealed manager with a cached three-player Hub remains ready after append and reopening',async t=>{
+ const f=fixture(t,game),host=f.manager();await flush();assert.equal(host.own,true);
+ await host.start();f.saveSetup();await f.context.HUB_EXECUTOR.ensureHost(host,game);await flush();f.assertIndependent(host);
+ const before=f.state(host),oldCapsule=f.card(1).hubExecutor.capsule;
+ f.tokens.push('4'.repeat(20));f.saveSetup();const currentSetup=JSON.parse(f.storage.getItem('room-session-'+f.room.code));currentSetup.playerCount=4;f.storage.setItem('room-session-'+f.room.code,JSON.stringify(currentSetup));
+ const hub={...f.room,count:4};const joined=await f.context.HUB_EXECUTOR.syncRoster(hub);await flush();
+ assert.equal(joined.ok,true);assert.equal(f.room.count,3,'open manager deliberately retains its old ROOM count');assert.equal(f.state(host).roster.length,4);assert.equal(f.state(host).sessionId,before.sessionId);
+ assert.equal(host.suspended,false);assert.equal(f.statuses.at(-1),'ready');assert.notEqual(joined.capsule,oldCapsule);
+ if(game==='dixit'){assert.equal(host.rosterChanged(),false);assert.equal(host.canonicalSwitched(),false);}else assert.equal(host.inactiveSession(host.doc),false);
+ const registrationCount=f.calls.filter(c=>c.operation==='register').length;host.close();const reopened=f.manager();await flush();f.assertIndependent(reopened);
+ assert.equal(reopened.suspended,false);assert.equal(f.state(reopened).sessionId,before.sessionId);assert.equal(f.calls.filter(c=>c.operation==='register').length,registrationCount,'reopening keeps the running sealed table');
+ await reopened.command('deal');await flush();assert.equal(f.state(reopened).phase,game==='dixit'?'CLUE':'CHOOSING_FIRST');assert.ok(f.card(4)[game==='dixit'?'dixit':'once'].hand.length>0);
+ reopened.close();await f.service.execute({capsule:oldCapsule,token:f.tokens[1]});assert.equal(f.state(reopened).sessionId,before.sessionId);
+});
+
+for(const game of ['dixit','onceupon'])test(game+' registered manager delegates real source switches to the service and stays suspended after its rejection',async t=>{
+ const f=fixture(t,game),host=f.manager();await flush();await host.start();f.saveSetup();await f.context.HUB_EXECUTOR.ensureHost(host,game);await flush();
+ f.put('rooms/MGR234/players/'+f.tokens[1],{game:'scene',playerNum:2,round:99});await flush();await host.renew();await flush();
+ assert.equal(host.suspended,true);assert.equal(f.statuses.at(-1),'switched');await host.renew();assert.equal(f.statuses.at(-1),'switched');
 });

@@ -59,7 +59,8 @@ test('homepage opens every independent game management page without a player sel
   assert.match(manager,/hub-executor\.js\?v=/,'host page keeps independent execution: '+spec.href);
  }
  assert.doesNotMatch(html,/id="hub-player-seat"|hub-launcher\.js|HUB_LAUNCHER/);
- assert.doesNotMatch(html,/<script[^>]+src="hub-executor\.js/,'homepage selection does not initialize a game');
+ assert.match(html,/HUB_EXECUTOR\.watchHub\(ROOM\)/,'homepage keeps the running table roster in sync');
+ assert.doesNotMatch(html,/HUB_EXECUTOR\.(?:ensureHost|ensureBluff|registerWolf)\(/,'homepage does not start or register a game');
 });
 
 test('own card must be chosen explicitly, malicious-looking names are text, and failed selection never starts a room',async()=>{

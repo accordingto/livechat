@@ -6,7 +6,7 @@ var OPEN_MIC_ENGINE = (() => {
   const content = typeof OPEN_MIC_CONTENT !== 'undefined' ? OPEN_MIC_CONTENT : require('./open-mic-content.js');
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
-  const active = state => list(state.roster).filter(player => player.active !== false);
+  const active = state => list(state.roster).filter(player => player.active !== false && player.pending !== true);
   const player = (state, number) => list(state.roster).find(candidate => candidate.playerNum === number);
   const videoIdPattern = /^[A-Za-z0-9_-]{11}$/;
   const MAX_SONGS = 120;
@@ -105,7 +105,7 @@ var OPEN_MIC_ENGINE = (() => {
     const start = roster.findIndex(candidate => candidate.playerNum === state.spotlight);
     for (let offset = 1; offset <= roster.length; offset++) {
       const candidate = roster[(start + offset + roster.length) % roster.length];
-      if (candidate.active !== false) return candidate.playerNum;
+      if (candidate.active !== false && candidate.pending !== true) return candidate.playerNum;
     }
     return null;
   }
@@ -145,13 +145,15 @@ var OPEN_MIC_ENGINE = (() => {
     state.mySongs = state.mySongs || {}; state.songLyrics = state.songLyrics || {};
     state.seen = state.seen || {}; state.replies = state.replies || {};
     const host = actor === 0;
-    const manager = host || (state.sharedControls === true && player(state, actor)?.active !== false);
-    const isSpotlight = host || (actor === state.spotlight && player(state, actor)?.active !== false);
+    const manager = host || (state.sharedControls === true && player(state, actor)?.active !== false && player(state, actor)?.pending !== true);
+    const isSpotlight = host || (actor === state.spotlight && player(state, actor)?.active !== false && player(state, actor)?.pending !== true);
     const now = input.now;
     const rng = random(input.seed);
     let error = '';
+    const selfReturn = state.sharedControls === true && input.type === 'exclude' && Number(input.playerNum) === actor && input.active === true;
     if (input.turnId !== state.turnId) error = 'stale_turn';
     else if (!Number.isFinite(now) || now < state.lastChangeAt) error = 'invalid_time';
+    else if (!host && state.sharedControls === true && (player(state, actor).active === false || player(state, actor).pending === true) && !selfReturn) error = 'not_available';
     else if (state.phase === 'stopped' && !['restart', 'stop', 'exclude', 'addSong', 'toggleFavorite'].includes(input.type)) error = 'not_available';
     else switch (input.type) {
       case 'stop':
@@ -233,7 +235,7 @@ var OPEN_MIC_ENGINE = (() => {
       case 'inviteDuet': {
         const partner = input.playerNum == null ? null : player(state, Number(input.playerNum));
         if (!isSpotlight || !['choice', 'singing'].includes(state.phase)) error = 'not_available';
-        else if (input.playerNum != null && (!partner || partner.active === false || partner.playerNum === state.spotlight)) error = 'invalid_player';
+        else if (input.playerNum != null && (!partner || partner.active === false || partner.pending === true || partner.playerNum === state.spotlight)) error = 'invalid_player';
         else { state.duet = partner?.playerNum ?? null; changed(state, now); }
         break;
       }
@@ -313,15 +315,47 @@ var OPEN_MIC_ENGINE = (() => {
     return state;
   }
 
+  // Membership is authenticated by the service; bearer credentials never enter
+  // the game state. Keep ordinal seats, earned progress and the live activity.
+  function membership(current, change, ctx = {}) {
+    if (!current || !Number.isFinite(ctx.now) || ctx.now < current.lastChangeAt) throw new Error('invalid_time');
+    const added = list(change?.added), names = list(change?.roster), inactive = list(change?.inactiveNums);
+    const old = list(current.roster), existing = new Set(old.map(p => p.playerNum));
+    if (old.length + added.length > 9 || added.some(p => !Number.isInteger(p?.playerNum) || p.playerNum < 1 || p.playerNum > 9 || existing.has(p.playerNum))
+        || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
+    const next = copy(current);
+    next.roster = old.map(copy).concat(added.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80), active: true })));
+    if (inactive.some(n => !Number.isInteger(n) || !next.roster.some(p => p.playerNum === n))) throw new Error('invalid_player');
+    for (const descriptor of names) {
+      const seat = next.roster.find(p => p.playerNum === descriptor.playerNum);
+      if (!seat) throw new Error('invalid_roster');
+      seat.name = String(descriptor.name || '').trim().slice(0, 80);
+    }
+    next.mySongs ||= {};
+    for (const seat of added) next.mySongs[seat.playerNum] = [];
+    let state = next;
+    const changedNums = [];
+    for (const seat of next.roster) {
+      const active = !inactive.includes(seat.playerNum);
+      if ((seat.active !== false) === active) continue;
+      changedNums.push(seat.playerNum);
+      state = apply(state, { type: 'exclude', actor: 0, id: String(ctx.id || 'membership').slice(0, 70) + ':' + seat.playerNum,
+        sessionId: state.sessionId, turnId: state.turnId, playerNum: seat.playerNum, active, now: ctx.now, seed: ctx.seed });
+      if (state.replies?.[0]?.error) throw new Error(state.replies[0].error);
+    }
+    // Explicitly selected away seats must not be returned by presence recovery.
+    state.runtimeOfflineNums = list(state.runtimeOfflineNums).filter(n => !inactive.includes(n) && !changedNums.includes(n));
+    return state;
+  }
   function view(state, actor, now) {
     const playerNum = Number(actor);
-    const roster = list(state.roster).map(candidate => ({ playerNum: candidate.playerNum, name: candidate.name, active: candidate.active !== false }));
+    const roster = list(state.roster).map(candidate => ({ playerNum: candidate.playerNum, name: candidate.name, active: candidate.active !== false, ...(candidate.pending === true ? { pending: true } : {}) }));
     const mySongs = {};
     for (const candidate of roster) mySongs[candidate.playerNum] = list((state.mySongs || {})[candidate.playerNum]);
     return { game: 'openmic', playerNum, name: roster.find(candidate => candidate.playerNum === playerNum)?.name || null,
       openmic: {
         version: 1, sessionId: state.sessionId, turnId: state.turnId, roster,
-        ...(state.sharedControls === true ? { sharedControls: true, canManage: playerNum === 0 || !!player(state, playerNum) && player(state, playerNum).active !== false } : {}),
+        ...(state.sharedControls === true ? { sharedControls: true, canManage: playerNum === 0 || !!player(state, playerNum) && player(state, playerNum).active !== false && player(state, playerNum).pending !== true } : {}),
         spotlight: state.spotlight ?? null, round: state.round, phase: state.phase,
         challenge: state.challenge ? copy(state.challenge) : null, challengeResult: state.challengeResult ?? null,
         teamScore: state.teamScore, selectedSong: state.selectedSong ? songReference(state.selectedSong) : null,
@@ -332,6 +366,6 @@ var OPEN_MIC_ENGINE = (() => {
         reply: (state.replies || {})[playerNum] ? copy(state.replies[playerNum]) : null,
       } };
   }
-  return { create, apply, view, list, parseYouTube, SCORE, MAX_LYRICS_CHARS };
+  return { create, apply, membership, view, list, parseYouTube, SCORE, MAX_LYRICS_CHARS };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = OPEN_MIC_ENGINE;

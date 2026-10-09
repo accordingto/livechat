@@ -59,6 +59,8 @@ var TALK_UI = (() => {
     newTopicNotice: ['先預覽並調整設定。確認開啟後會重新思考、計時，得分歸零。', 'Preview the topic and settings. Confirming starts fresh thinking, a new clock and zero points.'],
     invalid_settings: ['思考時間請填 15–120 的整數秒。', 'Choose a whole thinking time from 15 to 120 seconds.'],
     invalid_crazy_interval: ['任務間隔請填 5–300 的整數秒，最短時間不能大於最長時間。', 'Use whole seconds from 5 to 300. The minimum cannot exceed the maximum.'],
+    participantAway: ['已離席', 'Away'], participantPending: ['下一輪加入', 'Joining next round'],
+    sitOut: ['暫時離席', 'Sit out'], rejoin: ['重新加入', 'Rejoin'],
     confirmation_required: ['請先確認這個操作。', 'Please confirm this action first.'],
     libraryUnavailable: ['題庫尚未載入，請重新整理，或自行輸入話題。', 'The topic library has not loaded. Refresh, or write your own topic.'],
     waitingServer: ['等待同步確認…', 'Waiting for confirmation…'],
@@ -190,6 +192,7 @@ var TALK_UI = (() => {
   }
   function status(s, me) {
     if (s.phase === 'ended') return t('roundRest');
+    if (s.membership?.activeCount < 2) return t('waiting_players');
     if (s.phase === 'thinking') return t('thinking');
     if (s.conversationMode === 'free') return t('freeStatus');
     if (s.activeQuestion) return t('asking', { name: name(s, s.activeQuestion.playerNum) });
@@ -198,11 +201,13 @@ var TALK_UI = (() => {
   function participantsHTML(s, me = 0) {
     const free = s.conversationMode === 'free' && s.phase === 'talking';
     return '<div class="talk-participant-list">' + list(s.roster).map(p => {
-      const current = s.phase === 'talking' && !free && p.playerNum === s.speaker;
-      const label = s.phase === 'ended' ? 'participantResting' : s.phase === 'thinking' ? 'participantThinking' : free ? 'freeParticipant' : current ? 'participantSpeaking' : 'participantWaiting';
+      const current = p.active !== false && p.pending !== true && s.phase === 'talking' && !free && p.playerNum === s.speaker;
+      const label = p.active === false ? 'participantAway' : p.pending === true ? 'participantPending' : s.phase === 'ended' ? 'participantResting' : s.phase === 'thinking' ? 'participantThinking' : free ? 'freeParticipant' : current ? 'participantSpeaking' : 'participantWaiting';
       const score = list(s.scores).find(v => v.playerNum === p.playerNum)?.score || 0;
-      const onMission = s.phase === 'talking' && list(s.crazy?.pendingPlayerNums).includes(p.playerNum);
-      return `<div class="talk-participant${current ? ' is-speaking' : ''}${p.playerNum === me ? ' is-you' : ''}"><span class="talk-avatar" aria-hidden="true">${esc(p.playerNum)}</span><span class="talk-participant-name">${esc(p.name || name(s, p.playerNum))}${p.playerNum === me ? `<small>${esc(t('participantYou'))}</small>` : ''}</span><span class="talk-participant-state">${esc(t(onMission ? 'participantTask' : label))}</span>${s.gameMode === 'crazy' ? `<span class="talk-participant-score" aria-label="${esc(t('scorePoints',{n:score}))}">${esc(score)}</span>` : ''}</div>`;
+      const onMission = p.active !== false && p.pending !== true && s.phase === 'talking' && list(s.crazy?.pendingPlayerNums).includes(p.playerNum);
+      const controls = s.sharedControls === true && ((me === 0 || s.hostControls) || p.playerNum === me && p.active === false)
+        ? button(p.active === false ? 'rejoin' : 'sitOut', 'exclude', `data-player="${p.playerNum}" data-active="${p.active === false}" data-talk-participant-control="true"`) : '';
+      return `<div class="talk-participant${p.active === false ? ' is-away' : ''}${current ? ' is-speaking' : ''}${p.playerNum === me ? ' is-you' : ''}"><span class="talk-avatar" aria-hidden="true">${esc(p.playerNum)}</span><span class="talk-participant-name">${esc(p.name || name(s, p.playerNum))}${p.playerNum === me ? `<small>${esc(t('participantYou'))}</small>` : ''}</span><span class="talk-participant-state">${esc(t(onMission ? 'participantTask' : label))}</span>${s.gameMode === 'crazy' ? `<span class="talk-participant-score" aria-label="${esc(t('scorePoints',{n:score}))}">${esc(score)}</span>` : ''}${controls}</div>`;
     }).join('') + '</div>';
   }
   const duration = seconds => { const n = Math.max(0, Math.ceil(Number(seconds) || 0)); return Math.floor(n / 60).toString().padStart(2, '0') + ':' + (n % 60).toString().padStart(2, '0'); };
@@ -302,7 +307,7 @@ var TALK_PLAYER = (() => {
         if (type === 'crazyAssign') {
           if (this.data.talk.crazy?.canAssign === false) return;
           const draft = this.crazyDraft, text = draft.text.trim(), random = draft.target === 'random', target = Number(draft.target);
-          if (!text || text.length > 120 || (!random && (target === this.data.playerNum || !list(this.data.talk.roster).some(p => p.playerNum === target)))) { this.error = 'invalid_crazy_assignment'; this.render(true); return; }
+          if (!text || text.length > 120 || (!random && (target === this.data.playerNum || !list(this.data.talk.roster).some(p => p.playerNum === target && p.active !== false && p.pending !== true)))) { this.error = 'invalid_crazy_assignment'; this.render(true); return; }
           this.assignmentNotice = ''; this.act('crazyAssign', { ...(random ? {} : { target }), text, kind: draft.kind }); return;
         }
         if (type === 'retry') { this.deliver(); return; }
@@ -348,6 +353,7 @@ var TALK_PLAYER = (() => {
           ...(b.dataset.target ? { target: b.dataset.target } : {}),
           ...(b.dataset.promptId ? { promptId: b.dataset.promptId } : {}),
           ...(type === 'addTime' ? { seconds: 60 } : {}),
+          ...(type === 'exclude' ? { playerNum: Number(b.dataset.player), active: b.dataset.active === 'true' } : {}),
           ...(type === 'note' ? { text: this.draft } : {}),
           ...(type === 'forceEnd' ? { confirm: true } : {}),
           ...(type === 'crazyPause' ? { paused: !this.data.talk.crazy.paused } : {}),
@@ -406,7 +412,7 @@ var TALK_PLAYER = (() => {
       if (data.talk.reply?.id) this.settledActions.add(data.talk.reply.id);
       // Recover an unacknowledged request after a card refresh. A second
       // action must not overwrite the first while the host is reconnecting.
-      const actionCurrent = action => (data.talk.phase !== 'ended' || ['newTopic','starters','explain'].includes(action?.type)) && (TALK_UI.crazyAction(action?.type)
+      const actionCurrent = action => (data.talk.phase !== 'ended' || ['newTopic','starters','explain','exclude'].includes(action?.type)) && (TALK_UI.crazyAction(action?.type)
         ? data.talk.crazy?.prompt?.id === action.promptId && data.talk.crazy.prompt.status === 'pending'
         : action?.turnId === data.talk.turnId);
       if (!this.pending && data.talkAction?.sessionId === data.talk.sessionId && actionCurrent(data.talkAction)
@@ -431,7 +437,9 @@ var TALK_PLAYER = (() => {
     }
     act(type, extra = {}) {
       if (this.pending || !this.data) return;
-      const s = this.data.talk;
+      const s = this.data.talk, mine = list(s.roster).find(p => p.playerNum === this.data.playerNum);
+      if (s.sharedControls === true && (!mine || mine.active === false || mine.pending === true)
+          && !(type === 'exclude' && Number(extra.playerNum) === this.data.playerNum && extra.active === true)) return;
       this.error = '';
       this.pending = Object.assign({}, extra, { type, id: Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join(''), sessionId: s.sessionId, turnId: s.turnId });
       this.sentAt = this.now(); this.render(true); this.deliver();
@@ -451,7 +459,7 @@ var TALK_PLAYER = (() => {
       if (preserveInput && this.composing && data.talk.phase !== 'ended') { this.paint(); return; }
       const s = data.talk, me = data.playerNum;
       let controls = '';
-      if (s.phase === 'thinking') {
+      if (s.phase === 'thinking' && list(s.roster).some(p => p.playerNum === me && p.active !== false && p.pending !== true)) {
         if (s.mode === 'write') controls += `<label class="talk-field">${esc(t('noteLabel'))}<textarea data-talk-note maxlength="180" rows="3" placeholder="${esc(t('notePlaceholder'))}">${esc(this.draft)}</textarea></label>${button(s.myNote ? 'updateNote' : 'sendNote', 'note')}${s.myNote ? `<p class="talk-soft">${esc(t('noteSent'))}</p>` : ''}`;
       } else if (s.phase === 'talking' && s.conversationMode !== 'free' && s.speaker === me) {
         controls += s.activeQuestion ? button('resume', 'resume', '', true) : button('end', 'end', '', true);
@@ -464,7 +472,7 @@ var TALK_PLAYER = (() => {
           (s.actions?.resume && s.activeQuestion && s.activeQuestion.playerNum !== me && s.speaker !== me ? button('helpResume', 'resume') : '') + '</div>';
       }
       const allowAssignment = s.gameMode === 'crazy' && ['thinking', 'talking'].includes(s.phase) && s.crazy?.source !== 'system';
-      const recipients = list(s.roster).filter(p => p.playerNum !== me);
+      const recipients = list(s.roster).filter(p => p.playerNum !== me && p.active !== false && p.pending !== true);
       if (this.crazyDraft.target !== 'random' && !recipients.some(p => String(p.playerNum) === String(this.crazyDraft.target))) this.crazyDraft.target = 'random';
       if (preserveInput && this.element.querySelector('.talk-assignment')) this.assignmentOpen = !!this.element.querySelector('.talk-assignment').open;
       const assignment = allowAssignment ? `<details class="talk-assignment"${this.assignmentOpen ? ' open' : ''}><summary data-talk-assignment-label="composeMission">${esc(t('composeMission'))}</summary><div class="talk-assignment-body">

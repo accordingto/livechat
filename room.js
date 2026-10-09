@@ -117,6 +117,7 @@ const ROOM = (() => {
       localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
         Object.assign({}, prev, { tokens, playerCount: count, names: merged })));
       localStorage.setItem(LAST_SESSION_KEY, sessionCode);
+      if (typeof window !== 'undefined' && typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('hub-room-setup', { detail: { code: sessionCode } }));
     } catch (e) { /* private browsing — links still work for this session */ }
   }
 
@@ -208,10 +209,13 @@ const ROOM = (() => {
      simple word (pulled from the shared everyday-word list — 200 words, plenty
      to cover up to 8 players with none repeated) so the host can go around asking
      "what does your card say?" and catch anyone who opened the wrong link before
-     the real game starts. This overwrites whatever the current game had published,
-     same as any other publish() — dealing the real game afterward replaces it. */
+     the real game starts. Active membership games retain their cards when
+     the Hub setup is reopened to add players. */
   function sendCardCheck() {
     if (!on()) return;
+    // A membership update may be publishing a brand-new, still-empty seat.
+    // Do not race that publication with a card-check write to any seat.
+    if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
     const pool = (typeof GAME_DATA !== 'undefined' && GAME_DATA.forbidden) || [];
     if (pool.length < count) return; // not enough words to guarantee everyone different
     const shuffled = pool.slice().sort(() => Math.random() - 0.5);
@@ -221,7 +225,14 @@ const ROOM = (() => {
     // own screen until each player has said theirs out loud and
     // revealCardCheck() is pressed on purpose
     checkRevealed = false;
-    publish(i => ({ game: 'cardcheck', word: checkWords[i].word, emoji: checkWords[i].emoji }));
+    // Updating Hub names/links must not replace an ongoing registered game.
+    for (let i = 0; i < count; i++) {
+      const word = checkWords[i];
+      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).transaction(current => {
+        if (['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(current?.game)) return;
+        return { game: 'cardcheck', word: word.word, emoji: word.emoji, playerNum: i + 1, name: names[i] || null };
+      }, undefined, false);
+    }
     render();
   }
 

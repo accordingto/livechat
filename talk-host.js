@@ -248,6 +248,11 @@
     } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1, invalid_topic: 1 } ? e.message : 'error'; }
     finally { busy = false; render(); if (error === 'pending_questions') byId('force-end').focus(); }
   }
+  byId('participants-content').addEventListener('click', event => {
+    const control = event.target.closest('[data-talk-action="exclude"]');
+    if (!control || control.disabled) return;
+    command('exclude', { playerNum: Number(control.dataset.player), active: control.dataset.active === 'true' });
+  });
   byId('setup').addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !canControl()) return;
     busy = true; error = ''; render();

@@ -82,6 +82,7 @@ function project(engine, state, seat, ctx, key) {
 const adapters = {
   cut: {
     decode: read, encode, session: state => state?.sessionId,
+    membership: (state, change, ctx) => CUT.membership(shared(state), change, ctx),
     apply: (state, command, ctx) => apply(CUT, state, command, ctx),
     pulse(state, ctx) {
       if (!state) return state;
@@ -94,6 +95,7 @@ const adapters = {
   },
   openmic: {
     decode: read, encode, session: state => state?.sessionId,
+    membership: (state, change, ctx) => MIC.membership(shared(state), change, ctx),
     apply: (state, command, ctx) => apply(MIC, state, command, ctx),
     // Open Mic never judges a performance or rotates on a timer.
     pulse: state => shared(state),

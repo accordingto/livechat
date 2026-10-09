@@ -603,3 +603,37 @@ test('pointer selection handover also keeps a control when browser blur has no r
     assert.equal(sent.length,1); assert.equal(sent[0].type,'crazySkip');
   } finally {f.card.destroy();}
 });
+
+
+test('shared participant controls explain away seats and send a fenced explicit sit-out without identity fields', async () => {
+  const sent = [], f = fixture(async command => { sent.push(clone(command)); });
+  try {
+    f.update(sample({ sharedControls: true, hostControls: true }));
+    assert.match(f.element.innerHTML, /data-talk-action="exclude"[^>]*data-player="1"[^>]*data-active="false"/);
+    f.click('exclude'); await Promise.resolve();
+    assert.equal(sent.length, 1); assert.equal(sent[0].type, 'exclude'); assert.equal(sent[0].playerNum, 1); assert.equal(sent[0].active, false);
+    assert.equal(sent[0].sessionId, 'ui-topic'); assert.equal(sent[0].turnId, 2); assert.equal(sent[0].actor, undefined);
+    assert.equal(sent[0].token, undefined);
+  } finally { f.card.destroy(); }
+});
+
+test('an away Talk card offers only its own rejoin control and blocks local attempts to manage or score', async () => {
+  const sent = [], f = fixture(async command => { sent.push(clone(command)); });
+  try {
+    f.update(sample({ sharedControls: true, hostControls: false, roster: [{ playerNum: 1, name: 'Alex', active: true }, { playerNum: 2, name: 'Sam', active: false }],
+      actions: { rejoin: true }, gameMode: 'crazy', crazy: { enabled: true, prompt: null, pendingPlayerNums: [] } }));
+    assert.match(f.element.innerHTML, /Away/); assert.match(f.element.innerHTML, /data-talk-action="exclude"[^>]*data-player="2"[^>]*data-active="true"/);
+    assert.doesNotMatch(f.element.innerHTML, /data-talk-action="exclude"[^>]*data-player="1"/);
+    f.card.act('addTime', { seconds: 60 }); f.card.act('crazyDone', { promptId: 'obsolete' }); await Promise.resolve(); assert.equal(sent.length, 0);
+    f.click('exclude'); await Promise.resolve(); assert.equal(sent.length, 1); assert.equal(sent[0].active, true); assert.equal(sent[0].playerNum, 2);
+  } finally { f.card.destroy(); }
+});
+
+test('explicitly away Crazy recipients are omitted from selectors while a newcomer is available by name', () => {
+  const f = fixture();
+  try {
+    f.update(sample({ sharedControls: true, hostControls: true, gameMode: 'crazy', roster: [{ playerNum: 1, name: 'Away friend', active: false }, { playerNum: 2, name: 'Sam' }, { playerNum: 3, name: 'New friend', active: true }],
+      crazy: { enabled: true, source: 'players', canAssign: true, paused: false, prompt: null } }));
+    assert.match(f.element.innerHTML, /<option value="3"/); assert.doesNotMatch(f.element.innerHTML, /<option value="1"/);
+  } finally { f.card.destroy(); }
+});

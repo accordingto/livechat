@@ -460,7 +460,7 @@ test("every viewer sees exact ballot completion without seeing another player's 
     assert.equal(v.result, null); assert.equal(v.answerCardId, undefined);
     for (const key of ['votes', 'submissions', 'tableOwners', 'voteCounts']) assert.equal(key in v, false);
     for (const p of v.roster) {
-      assert.deepEqual(Object.keys(p).sort(), ['handCount', 'name', 'playerNum', 'ready', 'score', 'submitted', 'voted']);
+      assert.deepEqual(Object.keys(p).sort(), ['active', 'handCount', 'memberStatus', 'name', 'pending', 'playerNum', 'ready', 'score', 'submitted', 'voted']);
     }
     if (actor === 2) assert.equal(v.ownVote, s.submissions[1][0]);
     else if ([1, 3, 4].includes(actor)) assert.equal(v.ownVote, null);

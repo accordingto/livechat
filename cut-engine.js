@@ -9,7 +9,7 @@ var CUT_ENGINE = (() => {
   const topics = typeof CUT_TOPICS !== 'undefined' ? CUT_TOPICS : require('./cut-topics.js');
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
-  const active = state => list(state.roster).filter(player => player.active !== false);
+  const active = state => list(state.roster).filter(player => player.active !== false && player.pending !== true);
   const isActive = (state, number) => active(state).some(player => player.playerNum === number);
   const publicTimedPhases = ['countdown', 'handoff'];
   const waitingCut = state => state.phase === 'cut';
@@ -52,7 +52,7 @@ var CUT_ENGINE = (() => {
     state.phaseUntil = publicTimedPhases.includes(name) && Number.isFinite(durationMs) ? now + durationMs : null;
   }
   function chooseSpeaker(state, excluded, rng) {
-    return random.speaker(state.roster, excluded, state.stats, state.recent, state.speakerSequence, rng);
+    return random.speaker(list(state.roster).filter(p => p.pending !== true), excluded, state.stats, state.recent, state.speakerSequence, rng);
   }
   function chooseTopic(state, rng) {
     const available = topics.categories.filter(category => category !== 'mixed' && topics.items.some(topic => topic.category === category));
@@ -407,9 +407,39 @@ var CUT_ENGINE = (() => {
     state.replies[actor] = { id: input.id, error };
     return state;
   }
+  // Membership is authenticated by the service; bearer credentials never enter
+  // the game state. Keep ordinal seats, earned progress and the live activity.
+  function membership(current, change, ctx = {}) {
+    if (!current || !Number.isFinite(ctx.now) || ctx.now < current.lastChangeAt) throw new Error('invalid_time');
+    const added = list(change?.added), names = list(change?.roster), inactive = list(change?.inactiveNums);
+    const old = list(current.roster), existing = new Set(old.map(p => p.playerNum));
+    if (old.length + added.length > 9 || added.some(p => !Number.isInteger(p?.playerNum) || p.playerNum < 1 || p.playerNum > 9 || existing.has(p.playerNum))
+        || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
+    const next = copy(current);
+    next.roster = old.map(copy).concat(added.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80), active: true })));
+    if (inactive.some(n => !Number.isInteger(n) || !next.roster.some(p => p.playerNum === n))) throw new Error('invalid_player');
+    for (const descriptor of names) {
+      const seat = next.roster.find(p => p.playerNum === descriptor.playerNum);
+      if (!seat) throw new Error('invalid_roster');
+      seat.name = String(descriptor.name || '').trim().slice(0, 80);
+    }
+    let state = next;
+    const changedNums = [];
+    for (const seat of next.roster) {
+      const active = !inactive.includes(seat.playerNum);
+      if ((seat.active !== false) === active) continue;
+      changedNums.push(seat.playerNum);
+      state = apply(state, { type: 'exclude', actor: 0, id: String(ctx.id || 'membership').slice(0, 70) + ':' + seat.playerNum,
+        sessionId: state.sessionId, turnId: state.turnId, playerNum: seat.playerNum, active, now: ctx.now, seed: ctx.seed });
+      if (state.replies?.[0]?.error) throw new Error(state.replies[0].error);
+    }
+    // Explicitly selected away seats must not be returned by presence recovery.
+    state.runtimeOfflineNums = list(state.runtimeOfflineNums).filter(n => !inactive.includes(n) && !changedNums.includes(n));
+    return state;
+  }
   function view(state, actor, now) {
     const playerNum = Number(actor);
-    const roster = list(state.roster).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active !== false }));
+    const roster = list(state.roster).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active !== false, ...(player.pending === true ? { pending: true } : {}) }));
     const mine = roster.find(player => player.playerNum === playerNum);
     const cut = {
       version: 1, rulesVersion: state.rulesVersion || 1, sessionId: state.sessionId, turnId: state.turnId,
@@ -426,16 +456,16 @@ var CUT_ENGINE = (() => {
       previousSpeaker: state.previousSpeaker ?? null, roster,
       cutEvent: state.cutEvent ? copy(state.cutEvent) : null,
       pauseReason: state.pauseReason || '', reply: (state.replies || {})[playerNum] || null,
-      ...(state.sharedControls === true ? { sharedControls: true, canManage: mine?.active === true } : {}),
+      ...(state.sharedControls === true ? { sharedControls: true, canManage: mine?.active === true && mine.pending !== true } : {}),
       canEndTopic: !!state.topic && !['break', 'stopped', 'finished'].includes(state.phase) &&
-        (playerNum === 0 || (state.sharedControls === true && mine?.active === true)),
+        (playerNum === 0 || (state.sharedControls === true && mine?.active === true && mine.pending !== true)),
       canBegin: (state.phase === 'ready' || (waitingCut(state) && isActive(state, state.nextSpeaker))) &&
-        active(state).length >= config.minPlayers && (playerNum === 0 || mine?.active === true),
+        active(state).length >= config.minPlayers && (playerNum === 0 || mine?.active === true && mine.pending !== true),
     };
     if (publicTimedPhases.includes(state.phase) && !waitingCut(state)) cut.phaseUntil = state.phaseUntil;
     if (state.phase === 'cut' || state.phase === 'handoff') cut.nextSpeaker = state.nextSpeaker ?? null;
     return { game: 'cut', playerNum, name: mine?.name || null, cut };
   }
-  return { create, apply, view, upgrade, list };
+  return { create, apply, membership, view, upgrade, list };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_ENGINE;

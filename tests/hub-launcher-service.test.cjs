@@ -223,7 +223,7 @@ test('Bluff manager reload of the same active original cards keeps the sealed ep
 });
 
 
-for(const change of ['name','count','token','other-game']){
+for(const change of ['token','other-game']){
  test('Bluff current-Hub '+change+' replacement starts a fresh group, preserves truth history and fences the old epoch',async t=>{
   const f=fixture(t);await f.launcher.launch('bluffking',2);
   const Client=f.context.BLUFF_SYNC.Client;
@@ -292,4 +292,29 @@ test('optional Talk launcher propagates custom random intervals to the sealed se
   assert.equal(card.talk.crazy.prompt,null); assert.equal(card.talk.crazy.myQueuedCount,0);
   assert.equal(card.talk.actions.crazySend,false);
  }
+});
+
+for (const change of ['name', 'append', 'shrink']) test('Bluff Hub ' + change + ' preserves the same game and retained private links', async t => {
+  const f = fixture(t); await f.launcher.launch('bluffking', 2);
+  const Client = f.context.BLUFF_SYNC.Client, manager = new Client({ databaseURL: 'https://test.firebaseio.com', storage: f.context.localStorage, hostPresentation: true });
+  t.after(() => manager.close()); await manager.connect(f.code);
+  await manager.command({ action: 'start', commandId: 'membership-first-start', expectedVersion: manager.lastView.version });
+  const oldSessions = await manager.getCardSessions(), oldTicket = clone(manager.executorTicket), path = manager._roomPath('players/' + manager.hostToken);
+  const before = JSON.parse((await manager._request(path)).data.data);
+  const setup = { playerCount: 4, tokens: [...f.tokens], names: [...f.names] };
+  if (change === 'name') setup.names[1] = 'New display name';
+  if (change === 'append') { setup.playerCount = 5; setup.tokens.push('9'.repeat(20)); setup.names.push('Newcomer'); }
+  if (change === 'shrink') { setup.playerCount = 3; setup.tokens.pop(); setup.names.pop(); }
+  await manager.createFromCards(f.code, setup, { replaceActive: true });
+  const after = JSON.parse((await manager._request(path)).data.data);
+  assert.equal(after.transport.executorSessionId, before.transport.executorSessionId);
+  assert.deepEqual(after.rooms[f.code].history, before.rooms[f.code].history);
+  const retained = await manager.getCardSessions();
+  for (let i = 0; i < oldSessions.length; i++) assert.deepEqual(retained[i].credential, oldSessions[i].credential);
+  assert.equal(retained.length, change === 'append' ? 5 : 4);
+  if (change === 'name') assert.equal(retained[1].name, setup.names[1]);
+  if (change === 'shrink') assert.equal(after.rooms[f.code].members.find(m => m.identityId === oldSessions[3].credential.identityId).active, false);
+  await f.service.execute({ capsule: oldTicket.capsule, token: oldSessions[0].credential.token });
+  assert.equal(JSON.parse((await manager._request(path)).data.data).transport.executorSessionId, before.transport.executorSessionId);
+  if (change === 'append') assert.equal(after.rooms[f.code].scores[retained[4].playerId], 0);
 });

@@ -159,10 +159,14 @@ var DIXIT_SYNC = (() => {
       });
     }
     rosterChanged(doc = this.doc) {
+      if (doc?.executor?.v === 1) return false;
       const previousCount = DIXIT_ENGINE.list(doc?.state?.roster).length;
       return !!(previousCount && Number.isInteger(this.room.count) && this.room.count > 0 && this.room.count !== previousCount);
     }
     canonicalSwitched(doc = this.doc) {
+      // The service validates all exact active sources and membership epochs.
+      // A manager's cached Hub count cannot classify its appended seats.
+      if (doc?.executor?.v === 1) return false;
       if (!doc?.state) return false;
       if (this.rosterChanged(doc)) return true;
       // Explicit local intent is already authorized and has real snapshots;

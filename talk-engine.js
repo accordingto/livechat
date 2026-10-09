@@ -7,6 +7,8 @@ var TALK_ENGINE = (() => {
   'use strict';
   const list = value => Array.isArray(value) ? value.filter(x => x != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
+  const participants = s => list(s.roster).filter(p => p.active !== false && p.pending !== true);
+  const eligible = (s, num) => participants(s).some(p => p.playerNum === num);
   const crazyPool = () => typeof TALK_CRAZY !== 'undefined' ? TALK_CRAZY.pool
     : typeof require === 'function' ? require('./talk-crazy.js').pool : [];
   const crazyEnabled = s => s?.gameMode === 'crazy' && !!s.crazy;
@@ -31,7 +33,7 @@ var TALK_ENGINE = (() => {
   const gameSeconds = s => validGameSeconds(s?.gameSeconds) ? s.gameSeconds : 900;
   const taskSeconds = s => validTaskSeconds(s?.crazy?.taskSeconds) ? s.crazy.taskSeconds
     : validTaskSeconds(s?.crazyTaskSeconds) ? s.crazyTaskSeconds : 150;
-  const pendingNums = s => crazyEnabled(s) ? list(s.roster).map(p => p.playerNum)
+  const pendingNums = s => crazyEnabled(s) ? participants(s).map(p => p.playerNum)
     .filter(num => s.crazy.prompts?.[num]?.status === 'pending') : [];
   function needsMigration(s) {
     if (!validGameSeconds(s?.gameSeconds) || !validTaskSeconds(s?.crazyTaskSeconds)
@@ -109,7 +111,7 @@ var TALK_ENGINE = (() => {
     // period. Unknown presence retains the roster; known absent players must
     // not occupy one of the two shared task slots.
     const online = s.sharedControls === true && input.onlineNums != null ? list(input.onlineNums) : null;
-    const eligible = s.roster.map(p => p.playerNum).filter(num => (online == null || online.includes(num))
+    const eligible = participants(s).map(p => p.playerNum).filter(num => (online == null || online.includes(num))
       && !excluded.includes(num) && c.prompts[num]?.status !== 'pending');
     const avoidRepeat = nums => nums.length > 1 && nums.includes(c.lastPlayerNum) ? nums.filter(num => num !== c.lastPlayerNum) : nums;
     let queued, candidates;
@@ -226,7 +228,8 @@ var TALK_ENGINE = (() => {
       ...(sharedControls === true ? { sharedControls: true } : {}),
       gameMode: gameMode === 'crazy' ? 'crazy' : 'normal',
       conversationMode: ['assigned', 'free'].includes(discussionMode) ? discussionMode : 'random',
-      roster: roster.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').slice(0, 80) })),
+      roster: roster.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').slice(0, 80),
+        ...(p.active === false ? { active: false } : {}), ...(p.pending === true ? { pending: true } : {}) })),
       mode: mode === 'write' ? 'write' : 'think', phase: 'thinking', round: 0, turnId: 0,
       seconds: Math.max(15, Math.min(120, Number(seconds) || 45)),
       deadline: now + Math.max(15, Math.min(120, Number(seconds) || 45)) * 1000,
@@ -244,7 +247,7 @@ var TALK_ENGINE = (() => {
   }
   function order(state) {
     if (conversationMode(state) === 'free') return [];
-    const remaining = list(state.remaining);
+    const remaining = list(state.remaining).filter(n => eligible(state, n));
     if (conversationMode(state) === 'assigned') return remaining;
     const rank = num => {
       if ((state.intents || {})[num]?.round === state.round) return 0;
@@ -254,7 +257,8 @@ var TALK_ENGINE = (() => {
     };
     return remaining.slice().sort((a, b) => rank(a) - rank(b));
   }
-  const availableSeats = state => state.sharedControls === true && state.availablePlayerNums != null ? list(state.availablePlayerNums) : list(state.roster).map(p => p.playerNum);
+  const availableSeats = state => participants(state).map(p => p.playerNum).filter(n => state.sharedControls !== true
+    || state.availablePlayerNums == null || list(state.availablePlayerNums).includes(n));
   function nextSpeaker(state, seed) {
     if (state.sharedControls === true) state.remaining = list(state.remaining).filter(n => availableSeats(state).includes(n));
     if (!list(state.remaining).length) {
@@ -262,7 +266,7 @@ var TALK_ENGINE = (() => {
       state.remaining = conversationMode(state) === 'assigned' ? availableSeats(state).slice() : shuffle(availableSeats(state), seed);
       state.spoken = [];
     }
-    const next = order(state)[0];
+    const next = order(state)[0] ?? null;
     state.remaining = list(state.remaining).filter(n => n !== next);
     state.speaker = next;
     state.turnId++;
@@ -296,8 +300,8 @@ var TALK_ENGINE = (() => {
     // Firebase omits empty containers after every save. An overdue
     // preparation with fewer than two players is still idle; normalizing
     // those containers must not create an endless series of revisions.
-    const onlineCount = input.onlineNums == null ? list(current.roster).length
-      : list(current.roster).filter(p => list(input.onlineNums).includes(p.playerNum)).length;
+    const onlineCount = input.onlineNums == null ? participants(current).length
+      : participants(current).filter(p => list(input.onlineNums).includes(p.playerNum)).length;
     if ((clockCommand || duplicate) && current.phase === 'thinking' && onlineCount < 2 && !needsMigration(current)) return current;
     const s = copy(current);
     for (const key of ['readiness', 'notes', 'intents', 'interests', 'replies', 'seen']) s[key] = s[key] || {};
@@ -305,18 +309,20 @@ var TALK_ENGINE = (() => {
     migrate(s, input);
     // Expiry and the game deadline win over a late completion or extension.
     // Newly submitted custom work waits for a later scheduler slot.
-    const deliveredByClock = applyClocks(s, input, !['crazyAssign', 'crazySend', 'crazyDone', 'crazySkip', 'finish'].includes(input.type),
-      input.type !== 'crazySend' && !(input.type === 'crazyPause' && input.paused === true));
+    const deliveredByClock = applyClocks(s, input, !['crazyAssign', 'crazySend', 'crazyDone', 'crazySkip', 'finish', 'exclude'].includes(input.type),
+      !['crazySend', 'exclude'].includes(input.type) && !(input.type === 'crazyPause' && input.paused === true));
     if (duplicate) return JSON.stringify(s) === JSON.stringify(current) ? current : s;
-    const host = actor === 0, manager = host || s.sharedControls === true;
-    const online = input.onlineNums == null ? s.roster.map(p => p.playerNum) : s.roster.filter(p => list(input.onlineNums).includes(p.playerNum)).map(p => p.playerNum);
-    if (s.sharedControls === true && online.length >= 2) s.availablePlayerNums = online;
+    const host = actor === 0, manager = host || s.sharedControls === true && eligible(s, actor);
+    const online = input.onlineNums == null ? participants(s).map(p => p.playerNum) : participants(s).filter(p => list(input.onlineNums).includes(p.playerNum)).map(p => p.playerNum);
+    if (s.sharedControls === true) s.availablePlayerNums = online;
     const speaking = actor === s.speaker;
     let error = '';
     const reject = code => { error = code; };
-    const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover', 'newTopic', 'crazyAssign', 'addTime', 'finish'];
-    if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick'].includes(input.type)) reject('not_available');
-    else if (turnTypes.includes(input.type) && ((input.type !== 'newTopic' && input.type !== 'crazyAssign' && s.phase !== 'talking')
+    const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover', 'newTopic', 'crazyAssign', 'addTime', 'finish', 'exclude'];
+    const selfReturn = s.sharedControls === true && input.type === 'exclude' && Number(input.playerNum) === actor && input.active === true;
+    if (!host && !eligible(s, actor) && !selfReturn) reject('not_available');
+    else if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick', 'exclude'].includes(input.type)) reject('not_available');
+    else if (turnTypes.includes(input.type) && ((!['newTopic', 'crazyAssign', 'exclude'].includes(input.type) && s.phase !== 'talking')
         || (input.type === 'crazyAssign' && !['thinking', 'talking'].includes(s.phase)) || input.turnId !== s.turnId)) reject('stale_turn');
     else switch (input.type) {
       case 'newTopic': {
@@ -416,6 +422,13 @@ var TALK_ENGINE = (() => {
         if (conversationMode(s) !== 'free' && !online.includes(s.speaker)) nextSpeaker(s, input.seed);
         break;
       }
+      case 'exclude': {
+        const candidate = s.roster.find(p => p.playerNum === Number(input.playerNum));
+        if ((!manager && !selfReturn) || !candidate || typeof input.active !== 'boolean') { reject('not_available'); break; }
+        if ((candidate.active !== false) === input.active) break;
+        setParticipant(s, candidate.playerNum, input.active, input);
+        break;
+      }
       case 'explain': {
         if (!manager) { reject('not_available'); break; }
         const text = typeof input.text === 'string' ? input.text.trim() : '';
@@ -440,7 +453,7 @@ var TALK_ENGINE = (() => {
         if (host || !crazyEnabled(s) || crazySource(s) === 'system' || !['thinking', 'talking'].includes(s.phase)) { reject('not_available'); break; }
         const target = input.target == null || input.target === 'random' ? null : input.target;
         const text = typeof input.text === 'string' ? input.text.trim() : '', kind = input.kind == null ? 'task' : input.kind;
-        if (target != null && (!Number.isInteger(target) || target === actor || !s.roster.some(p => p.playerNum === target))) { reject('invalid_target'); break; }
+        if (target != null && (!Number.isInteger(target) || target === actor || !eligible(s, target))) { reject('invalid_target'); break; }
         if (!text || text.length > 120 || !['line', 'task'].includes(kind)) { reject('invalid_prompt'); break; }
         if (s.crazy.queue.length >= 20 || s.crazy.queue.filter(item => item.assignedBy === actor).length >= 10) { reject('queue_full'); break; }
         s.crazy.queue.push({ id: input.id, target, text, kind, assignedBy: actor, at: Number(input.now) || 0 });
@@ -499,32 +512,80 @@ var TALK_ENGINE = (() => {
     s.replies[actor] = { id: input.id, error };
     return s;
   }
+  function setParticipant(s, num, active, input) {
+    const seat = s.roster.find(p => p.playerNum === num); seat.active = active;
+    s.availablePlayerNums = list(s.availablePlayerNums).filter(n => n !== num && eligible(s, n));
+    if (active) {
+      s.availablePlayerNums.push(num);
+      if (s.phase === 'talking' && conversationMode(s) !== 'free' && num !== s.speaker && !s.spoken.includes(num) && !s.remaining.includes(num)) s.remaining.push(num);
+      if (s.phase === 'talking' && conversationMode(s) !== 'free' && s.speaker == null) nextSpeaker(s, input.seed);
+      else s.turnId++;
+      return;
+    }
+    s.remaining = list(s.remaining).filter(n => n !== num);
+    s.questions = list(s.questions).filter(q => q.playerNum !== num);
+    if (s.activeQuestion?.playerNum === num) s.activeQuestion = null;
+    for (const key of ['readiness', 'notes', 'intents', 'interests']) if (s[key]) delete s[key][num];
+    if (crazyEnabled(s)) {
+      const prompt = s.crazy.prompts?.[num];
+      if (prompt?.status === 'pending') prompt.status = 'cancelled';
+      s.crazy.queue = list(s.crazy.queue).filter(item => item.assignedBy !== num && item.target !== num);
+      s.crazy.replacementFor = list(s.crazy.replacementFor).filter(n => n !== num);
+    }
+    if (s.phase === 'talking' && conversationMode(s) !== 'free' && s.speaker === num) nextSpeaker(s, input.seed);
+    else s.turnId++;
+  }
+  // Only the authenticated coordinator calls this hook. Existing ordinals,
+  // scores, topic and deadlines stay intact while newcomers join future turns.
+  function membership(current, change, ctx = {}) {
+    if (!current || !Number.isFinite(ctx.now)) throw new Error('invalid_time');
+    const added = list(change?.added), names = list(change?.roster), inactive = list(change?.inactiveNums);
+    const existing = new Set(list(current.roster).map(p => p.playerNum));
+    if (existing.size + added.length > 9 || added.some(p => !Number.isInteger(p?.playerNum) || p.playerNum < 1 || p.playerNum > 9 || existing.has(p.playerNum))
+        || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
+    const s = copy(current);
+    s.roster = list(s.roster); s.remaining = list(s.remaining); s.spoken = list(s.spoken); s.scores ||= {};
+    for (const seat of added) {
+      s.roster.push({ playerNum: seat.playerNum, name: String(seat.name || '').trim().slice(0, 80), active: true });
+      s.scores[seat.playerNum] = 0;
+      if (s.availablePlayerNums != null) s.availablePlayerNums = [...list(s.availablePlayerNums), seat.playerNum];
+      if (s.phase === 'talking' && conversationMode(s) !== 'free') s.remaining.push(seat.playerNum);
+    }
+    if (inactive.some(n => !Number.isInteger(n) || !s.roster.some(p => p.playerNum === n))) throw new Error('invalid_player');
+    for (const descriptor of names) {
+      const seat = s.roster.find(p => p.playerNum === descriptor.playerNum); if (!seat) throw new Error('invalid_roster');
+      seat.name = String(descriptor.name || '').trim().slice(0, 80);
+    }
+    for (const seat of s.roster) if ((seat.active !== false) !== !inactive.includes(seat.playerNum)) setParticipant(s, seat.playerNum, !inactive.includes(seat.playerNum), ctx);
+    if (s.phase === 'talking' && conversationMode(s) !== 'free' && s.speaker == null && availableSeats(s).length) nextSpeaker(s, ctx.seed);
+    return s;
+  }
   function view(s, playerNum, now) {
     const roster = list(s.roster);
-    const mine = roster.find(p => p.playerNum === playerNum);
+    const mine = roster.find(p => p.playerNum === playerNum), canPlay = !!mine && eligible(s, playerNum);
     return {
       game: 'letstalk', playerNum, name: mine?.name || null,
       talk: {
-        version: 1, sessionId: s.sessionId, gameSeconds: gameSeconds(s), crazyTaskSeconds: taskSeconds(s), gameDeadline: Number(s.gameDeadline) || 0,
+        version: 1, sessionId: s.sessionId, membership: { enabled: s.sharedControls === true, minPlayers: 2, maxPlayers: 9, activeCount: participants(s).length, pendingCount: roster.filter(p => p.active !== false && p.pending === true).length }, gameSeconds: gameSeconds(s), crazyTaskSeconds: taskSeconds(s), gameDeadline: Number(s.gameDeadline) || 0,
         scores: roster.map(p => ({ playerNum: p.playerNum, score: Number(s.scores?.[p.playerNum]) || 0 })), mode: s.mode, conversationMode: conversationMode(s), phase: s.phase, round: s.round,
-        ...(s.sharedControls === true ? { sharedControls: true, hostControls: !!mine, actions: {
-          start: !!mine && s.phase === 'thinking', end: !!mine && s.phase === 'talking' && conversationMode(s) !== 'free',
-          addTime: !!mine && s.phase === 'talking', finish: !!mine && s.phase === 'talking',
-          resume: !!mine && !!s.activeQuestion, extend: !!mine && s.phase === 'talking',
-          starters: !!mine && s.phase !== 'ended', newTopic: !!mine, crazySend: false,
-          crazyAssign: !!mine && crazyEnabled(s) && crazySource(s) !== 'system' && ['thinking', 'talking'].includes(s.phase),
-          crazyPause: !!mine && crazyEnabled(s) && s.phase === 'talking', recover: !!mine && s.phase === 'talking',
+        ...(s.sharedControls === true ? { sharedControls: true, hostControls: canPlay, actions: {
+          start: canPlay && s.phase === 'thinking', end: canPlay && s.phase === 'talking' && conversationMode(s) !== 'free',
+          addTime: canPlay && s.phase === 'talking', finish: canPlay && s.phase === 'talking',
+          resume: canPlay && !!s.activeQuestion, extend: canPlay && s.phase === 'talking',
+          starters: canPlay && s.phase !== 'ended', newTopic: canPlay, exclude: canPlay, rejoin: !!mine && !canPlay, crazySend: false,
+          crazyAssign: canPlay && crazyEnabled(s) && crazySource(s) !== 'system' && ['thinking', 'talking'].includes(s.phase),
+          crazyPause: canPlay && crazyEnabled(s) && s.phase === 'talking', recover: canPlay && s.phase === 'talking',
         } } : {}),
         gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
         crazy: {
           enabled: crazyEnabled(s), source: crazySource(s),
-          canAssign: !!mine && crazyEnabled(s) && crazySource(s) !== 'system' && ['thinking', 'talking'].includes(s.phase),
+          canAssign: canPlay && crazyEnabled(s) && crazySource(s) !== 'system' && ['thinking', 'talking'].includes(s.phase),
           ...crazyRange(s), taskSeconds: taskSeconds(s), nextAssignAt: crazyEnabled(s) ? Number(s.crazy.nextAssignAt) || 0 : 0,
           pendingPlayerNums: pendingNums(s),
-          myQueuedCount: mine && crazyEnabled(s) ? list(s.crazy.queue).filter(item => item.assignedBy === playerNum).length : 0,
+          myQueuedCount: canPlay && crazyEnabled(s) ? list(s.crazy.queue).filter(item => item.assignedBy === playerNum).length : 0,
           paused: crazyEnabled(s) ? !!s.crazy.paused : false,
           intervalSeconds: crazyEnabled(s) ? s.crazy.intervalSeconds : 120,
-          prompt: crazyEnabled(s) && mine && s.crazy.prompts?.[playerNum] ? (() => {
+          prompt: crazyEnabled(s) && canPlay && s.crazy.prompts?.[playerNum] ? (() => {
             const p = s.crazy.prompts[playerNum];
             return { id: p.id, text: p.text, kind: p.kind, source: p.source === 'player' ? 'player' : 'system',
               ...(p.source === 'player' ? { assignedBy: p.assignedBy } : {}), at: p.at, expiresAt: Number(p.expiresAt) || 0, status: p.status };
@@ -547,6 +608,6 @@ var TALK_ENGINE = (() => {
       },
     };
   }
-  return { create, apply, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange };
+  return { create, apply, membership, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_ENGINE;

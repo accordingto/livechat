@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-round-1">
+  <link rel="stylesheet" href="talk.css?v=membership-1">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-varied-deal-executor-1">
   <link rel="stylesheet" href="dixit.css?v=dixit-11">
   <link rel="stylesheet" href="cut.css?v=cut-10">
@@ -394,7 +394,7 @@
     .pick-btn.verdict-wrong { background: #ef4444; border-color: #ef4444; color: #2b0505; }
     .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
 
-    /* 🔢 room.js's button check: three big equal buttons in a row rather than the
+    /* 🔢 room.js?v=membership-1's button check: three big equal buttons in a row rather than the
        stacked .pick-row list at first (three single digits read fine side by
        side) — then the numbers became two digits (see sendButtonCheck()'s own
        comment: a single digit is too easy to guess or copy off a neighbor
@@ -873,6 +873,7 @@
     .crack-team-total .ctt-score { font-size: 1.3rem; font-weight: 900; color: #fff; }
     .crack-team-total .ctt-sep { font-size: 1rem; font-weight: 700; color: #60a5fa; opacity: .6; }
   </style>
+<link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body>
 
@@ -884,7 +885,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-ui.js?v=talk-selector-1"></script>
+  <script src="talk-ui.js?v=membership-1"></script>
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
   <script src="cut-ui.js?v=cut-10"></script>
@@ -895,10 +896,10 @@
   <script src="once-upon-a-time-ui.js?v=once-varied-deal-executor-1"></script>
   <script src="dixit-deck.js?v=dixit-10"></script>
   <script src="dixit-ui.js?v=dixit-11"></script>
-  <script src="dixit-engine.js?v=dixit-10"></script>
+  <script src="dixit-engine.js?v=membership-1"></script>
   <script src="talk-sync.js?v=talk-round-1"></script>
-  <script src="dixit-sync.js?v=dixit-10"></script>
-  <script src="hub-executor.js?v=7"></script><script>HUB_EXECUTOR.install();</script>
+  <script src="dixit-sync.js?v=membership-1"></script>
+  <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
   <script src="dixit-card-host.js?v=dixit-10"></script>
   <script>
     I18N.registerDict('play', {
@@ -1086,7 +1087,7 @@
       waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
       cardCheckEyebrow: { zh: '🔍 核對卡片', en: '🔍 Card Check' },
       tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
-      // room.js's second check — three numbers, shuffled into a different order
+      // room.js?v=membership-1's second check — three numbers, shuffled into a different order
       // on every card, so the host can call one out loud and confirm every
       // phone is actually receiving taps, not just displaying a card.
       buttonCheckEyebrow: { zh: '🔢 按鈕測試', en: '🔢 Button Check' },
@@ -1504,7 +1505,7 @@
       return data.vote && data.voteId && data.vote.id === data.voteId ? data.vote.choice : null;
     }
 
-    /* 🔢 room.js's button check: writes to its own field (checkPress), not `vote` —
+    /* 🔢 room.js?v=membership-1's button check: writes to its own field (checkPress), not `vote` —
        this card isn't part of any real game round, so there's no vote/voteId to
        collide with, and keeping it separate means a future game on this same
        token can't accidentally see a stale press. Quotes data.id the same way a

@@ -25,7 +25,7 @@ function fixture({ readError = '', releaseError = false, connectError = null } =
     window: { addEventListener() {} }, setInterval: () => 1, clearInterval() {},
     async fetch(url, input = {}) { const body = input.body && JSON.parse(input.body); if (!body) return { ok: true, json: async () => ({ ready: true }) };
       posts.push(body); trace.push({ type: body.operation }); if (releaseError) return { ok: false, json: async () => ({ error: 'synthetic_release_failure' }) };
-      if (body.operation === 'release') delete raw.executor; return { ok: true, json: async () => ({ ok: true }) };
+      if (body.operation === 'release') delete raw.executor; return { ok: true, json: async () => ({ ok: true, capsule: raw.executor?.capsule }) };
     }
   });
   vm.runInContext(source, context); context.HUB_EXECUTOR.install();
@@ -43,26 +43,26 @@ test('the exact live roster and original private bindings reconnect without rele
   assert.equal(f.client.executorStarting, false); assert.equal(f.client.executorTicket.capsule, before.executor.capsule);
 });
 
-test('changed submitted names or canonical member names cannot take the same-roster fast path', async () => {
+test('changed names update the running membership without releasing or importing', async () => {
   for (const change of ['setup-name', 'entry-name', 'member-name']) {
     const f = fixture();
     if (change === 'setup-name') f.setup.names[1] = 'Changed';
     if (change === 'entry-name') { f.prior[1].name = 'Changed'; f.save(); }
     if (change === 'member-name') { f.state.rooms.ROOM.members[1].name = 'Changed'; f.save(); }
     await f.client.createFromCards('ROOM', f.setup);
-    assert.equal(released(f).length, 1, change); assert.ok(imported(f), change); assert.equal(f.trace.some(item => item.type === 'connect'), false);
+    assert.equal(released(f).length, 0, change); assert.equal(imported(f), undefined, change); assert.equal(f.posts.filter(body => body.operation === 'updateRoster').length, 1); assert.equal(f.trace.some(item => item.type === 'connect'), true);
   }
 });
 
-test('changed count, reordered original seats or a replacement token release before import', async () => {
+test('appended count updates the live table; reordered or replacement seats keep the explicit switch path', async () => {
   for (const change of ['count', 'order', 'token']) {
     const f = fixture();
     if (change === 'count') { f.setup.playerCount = 4; f.setup.names.push('Fourth'); f.setup.tokens.push('9'.repeat(20)); }
     if (change === 'order') f.setup.tokens.reverse();
     if (change === 'token') f.setup.tokens[1] = '9'.repeat(20);
     await f.client.createFromCards('ROOM', f.setup);
-    assert.equal(released(f).length, 1, change); assert.ok(imported(f));
-    assert.ok(f.trace.findIndex(item => item.type === 'release') < f.trace.findIndex(item => item.type === 'import'));
+    if (change === 'count') { assert.equal(released(f).length, 0); assert.equal(imported(f), undefined); assert.equal(f.posts[0].operation, 'updateRoster'); assert.equal(f.posts[0].roster.length, 4); assert.equal(f.posts[0].hubCount, 4); }
+    else { assert.equal(released(f).length, 1, change); assert.ok(imported(f)); assert.ok(f.trace.findIndex(item => item.type === 'release') < f.trace.findIndex(item => item.type === 'import')); }
   }
 });
 
@@ -79,7 +79,7 @@ test('all original private credential fields and the game marker must match befo
 
 test('restaging forwards the exact setup and options objects after releasing the service once', async () => {
   const f = fixture(), options = { restage: true, deferPublish: true, expectedVersion: 12, marker: { keep: true } };
-  f.setup.names[0] = 'Updated'; await f.client.createFromCards(' room ', f.setup, options);
+  f.setup.tokens[0] = '9'.repeat(20); await f.client.createFromCards(' room ', f.setup, options);
   const entry = imported(f); assert.strictEqual(entry.setup, f.setup); assert.strictEqual(entry.options, options); assert.equal(entry.room, ' room ');
   assert.equal(entry.starting, true); assert.equal(f.client.executorStarting, false); assert.equal(f.client.executorTicket, null);
   assert.deepEqual(released(f).map(body => body.operation), ['release']);
@@ -94,7 +94,7 @@ test('a failed canonical or original-card read never releases the service epoch 
 });
 
 test('a failed release blocks local import and retains the existing capability', async () => {
-  const f = fixture({ releaseError: true }); f.setup.names[0] = 'Updated';
+  const f = fixture({ releaseError: true }); f.setup.tokens[0] = '9'.repeat(20);
   await assert.rejects(f.client.createFromCards('ROOM', f.setup), /synthetic_release_failure/);
   assert.equal(released(f).length, 1); assert.equal(imported(f), undefined); assert.equal(f.raw().executor.capsule, 'sealed-existing-epoch');
   assert.equal(f.client.executorStarting, false);
@@ -129,4 +129,12 @@ test('a failed authoritative source reread aborts partial-epoch repair without r
   f.client._request = async (...args) => { if (args[0] === path && ++reads === 2) throw new Error('repair_read_failed'); return original(...args); };
   await assert.rejects(f.client.createFromCards('ROOM', f.setup, { replaceActive: true }), /repair_read_failed/);
   assert.equal(released(f).length, 0); assert.equal(imported(f), undefined); assert.equal(f.client.executorStarting, false);
+});
+
+test('an unchanged table keeps its epoch when an explicitly away original card now belongs to another game', async () => {
+  const f=fixture(); f.state.rooms.ROOM.members[1].active=false; f.save();
+  const foreign={game:'scene',playerNum:2,round:100};f.originals.set('/rooms/ROOM/players/'+f.setup.tokens[1],foreign);
+  const result=await f.client.createFromCards('ROOM',f.setup,{replaceActive:true});
+  assert.equal(result.continued,true);assert.equal(released(f).length,0);assert.equal(imported(f),undefined);
+  assert.deepEqual(f.originals.get('/rooms/ROOM/players/'+f.setup.tokens[1]),foreign);
 });

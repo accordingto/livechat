@@ -56,7 +56,7 @@
     now() { return Date.now() + this.offset; }
     status(value) { if (this.lastStatus !== value) { this.lastStatus = value; this.onStatus(value); } }
     sameRoom() {
-      if (this.room.code === this.code && this.room.count === this.count) return true;
+      if (this.room.code === this.code && (this.doc?.executor?.v === 1 || this.room.count === this.count)) return true;
       this.suspended = true; this.own = false; this.status('switched'); return false;
     }
     connect() {

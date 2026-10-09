@@ -54,6 +54,7 @@ function adapter(engine, key, actionKey, pulse) {
   return {
     decode, encode,
     session: state => state?.sessionId || null,
+    membership: (state, change, ctx) => engine.membership(state, change, ctx),
     apply: (state, command, ctx) => engine.apply(state, boundCommand(state, command, ctx)),
     pulse,
     project(state, seat, ctx) {

@@ -69,6 +69,7 @@
       let ready = true;
       for (let i = 0; i < roster.length; i++) {
         const entry = roster[i], source = cards[i].source, binding = source?.bluff;
+        if (members[i].active === false) continue;
         if (source?.game !== 'bluffking' || binding?.version !== 2 || binding.room !== this.code || binding.token !== entry.token || binding.identityId !== entry.identityId || binding.historyToken !== entry.historyToken) {
           const error = new Error('The original player cards have moved to another game.'); error.code = 'game_switched'; throw error;
         }
@@ -80,6 +81,7 @@
       // projectView records exposure even for public views. Its clone stays
       // local: viewing the manager never writes history or private projections.
       const now = Date.now(), view = root.BLUFF_ENGINE.projectView(state, room.hostIdentityId, this.code, root.BLUFF_QUESTIONS, { private: false, now });
+      for (const entry of roster) { const member = room.members.find(player => player.identityId === entry.identityId); const row = view.players.find(player => player.id === member?.id); if (row) row.playerNum = roster.indexOf(entry) + 1; if (view.self?.playerId === member?.id) view.self.playerNum = roster.indexOf(entry) + 1; }
       const onlinePlayers = new Set(roster.filter((_, i) => now - (executor.presence?.[i + 1] || executor.createdAt) < 60000).map(entry => room.members.find(player => player.identityId === entry.identityId).id));
       for (const player of view.players) if (room.roster.includes(player.id) || player.seated) player.connected = onlinePlayers.has(player.id);
       view.recovery.available = ['topic_check', 'prepare', 'discussion'].includes(room.phase) && room.roster.some(id => !onlinePlayers.has(id));
