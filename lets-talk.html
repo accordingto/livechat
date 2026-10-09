@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=membership-1">
+  <link rel="stylesheet" href="talk.css?v=talk-calm-1">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="talk-page">
@@ -98,7 +98,8 @@
             <div class="talk-panel talk-host-floor talk-host-spotlight">
               <p class="talk-kicker" data-i18n="talk.stateTitle">現在的談話</p>
               <p class="talk-floor" id="talk-floor" aria-live="polite"></p>
-              <p class="talk-round-clock" id="talk-clock" role="timer"></p>
+              <button type="button" class="talk-button talk-time-toggle" id="talk-clock-toggle" aria-controls="talk-clock" aria-expanded="false" data-i18n="talk.viewTime" hidden>查看時間</button>
+              <p class="talk-round-clock" id="talk-clock" role="timer" hidden></p>
               <div id="talk-round-controls" class="talk-actions" hidden><button type="button" class="talk-button" id="talk-add-time" data-i18n="talk.addMinute">＋1 分鐘</button><button type="button" class="talk-button" id="talk-finish" data-i18n="talk.finishRound">結束這一局</button></div>
               <p class="talk-soft" id="talk-session-style"></p>
               <div id="talk-help" class="talk-actions" hidden>
@@ -167,9 +168,9 @@
   <script src="talk-crazy.js?v=talk-selector-1"></script>
   <script src="talk-engine.js?v=talk-archive-2"></script>
   <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-ui.js?v=membership-1"></script>
+  <script src="talk-ui.js?v=talk-calm-1"></script>
   <script src="talk-sync.js?v=talk-archive-1"></script>
   <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
-  <script src="talk-host.js?v=membership-1"></script>
+  <script src="talk-host.js?v=talk-calm-1"></script>
 </body>
 </html>

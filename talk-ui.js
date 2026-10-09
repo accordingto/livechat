@@ -4,14 +4,16 @@ var TALK_UI = (() => {
     gameDuration: ['每局時間（分鐘）', 'Round length (minutes)'], crazyTaskDuration: ['任務期限（分鐘）', 'Mission limit (minutes)'],
     invalid_game_seconds: ['每局時間請填 1–60 分鐘，並以整數秒計時。', 'Choose 1–60 minutes, in whole seconds.'],
     invalid_crazy_task_seconds: ['任務期限請填 0.5–5 分鐘，並以整數秒計時。', 'Choose 0.5–5 minutes, in whole seconds.'],
-    roundClock: ['本局剩餘 {time}', 'Round remaining {time}'], taskClock: ['任務剩餘 {time}', 'Mission remaining {time}'],
+    roundClock: ['本局剩餘 {time}', 'Round remaining {time}'],
+    viewTime: ['查看時間', 'View time'], hideTime: ['收起時間', 'Hide time'],
+    crazyActiveHostStatus: ['{n}/2 個任務進行中', '{n}/2 active missions'],
     preparationClock: ['還有 {n} 秒思考時間', '{n} seconds to think'],
     roundRest: ['休息時間', 'Take a break'], roundFinished: ['這一局結束了', 'Round complete'],
     restHint: ['先休息一下，準備好再開新的一局。', 'Take a breather. Open a new round when you are ready.'],
     newRound: ['開新的一局', 'Start a new round'], roundScores: ['本局得分', 'Round scores'], scorePoints: ['{n} 分', '{n} pts'],
     addMinute: ['＋1 分鐘', '+1 minute'], finishRound: ['結束本局，休息', 'Finish and take a break'],
     participantTask: ['有任務', 'On a mission'], participantResting: ['休息中', 'Taking a break'],
-    crazyExpired: ['任務時間到了，已交給下一位。', 'Time is up. The next player takes over.'],
+    crazyExpired: ['這張任務已交給下一位，繼續聊吧。', 'This mission has passed to the next player. Keep chatting.'],
     crazyCancelled: ['這張任務已取消，先繼續聊。', 'This mission is cancelled. Keep chatting.'],
     scoreHint: ['完成 ＋1 分 · 跳過或逾時 0 分', 'Done +1 point · Skip or timeout 0 points'],
     thinking: ['先想一想', 'Take a moment'], secondsLeft: ['還有 {n} 秒思考時間', '{n} seconds to think'],
@@ -75,7 +77,7 @@ var TALK_UI = (() => {
     normalHint: ['一起提案、比較選擇、接著彼此的點子聊。', 'Make plans, compare options and build on each other’s ideas.'],
     crazyHint: ['邊聊邊收到短短的搞笑任務，也能寫一張放進待派佇列。隨時可以略過。', 'Short, silly missions arrive while you chat. Add your own to the queue. Skip anytime.'],
     crazyInterval: ['下一位的派發間隔', 'Time until the next player'], crazyMinSeconds: ['最短（秒）', 'Minimum (seconds)'], crazyMaxSeconds: ['最長（秒）', 'Maximum (seconds)'],
-    crazyScheduleHint: ['全場共用倒數，最多兩人有任務；手寫卡優先。跳過或逾時就換下一位。', 'One shared timer, at most two missions. Player cards go first. Skip or timeout passes it on.'],
+    crazyScheduleHint: ['系統隨機派給下一位，最多兩人有任務；手寫卡優先。隨時可以跳過。', 'Random delivery, at most two missions. Player cards go first. Skip anytime.'],
     crazyScheduledHostStatus: ['每 {min}–{max} 秒派給下一位 · {n}/2 個任務進行中', 'Next player every {min}–{max}s · {n}/2 active missions'],
     crazyFrequency: ['台詞頻率（每人，時間隨機錯開）', 'Line frequency (per person, randomly staggered)'], minutes: ['約每 {n} 分鐘', 'About every {n} min'],
     crazyTitle: ['🎧 Crazy Talk', '🎧 Crazy Talk'], crazyPrivate: ['只有你看得到', 'Only you can see this'],
@@ -84,7 +86,7 @@ var TALK_UI = (() => {
     crazyWaiting: ['先繼續聊，任務會在隨機時間出現。', 'Keep chatting. A mission will arrive at a random time.'],
     crazyCompleted: ['完成，獲得 1 分！繼續一起聊。', 'Complete, +1 point! Keep chatting.'],
     crazySkipped: ['已跳過，換下一位玩家。', 'Skipped. The next player takes over.'],
-    crazyPaused: ['派發已暫停，手上任務和本局仍在倒數。', 'Delivery is paused. Mission and round clocks keep running.'],
+    crazyPaused: ['新任務暫停派發，繼續聊吧。', 'New missions are paused. Keep chatting.'],
     crazySend: ['現在派發台詞', 'Send lines now'], crazyPause: ['暫停派發', 'Pause delivery'], crazyResume: ['繼續派發', 'Resume delivery'],
     crazyHostStatus: ['約每 {minutes} 分鐘／人 · {n} 人有待說台詞', 'About every {minutes} minutes per person · {n} pending lines'],
     crazyHostHint: ['一次派一張，最多兩人同時有任務。完成得 1 分；跳過或逾時就交給下一位。', 'One card at a time, at most two active. Done earns 1 point; skip or timeout passes it on.'],
@@ -222,7 +224,7 @@ var TALK_UI = (() => {
     const prompt = s.crazy.prompt;
     if (prompt?.status === 'pending') return `<section class="talk-crazy-prompt" data-talk-prompt="${esc(prompt.id)}" aria-label="${esc(t('crazyPrivate'))}">
       <div class="talk-crazy-heading"><strong>${esc(t(prompt.kind === 'task' ? 'taskKind' : 'lineKind'))}</strong><span>${esc(t('crazyPrivate'))}</span></div>
-      <blockquote aria-live="polite">${esc(prompt.text)}</blockquote>${prompt.expiresAt ? '<p class="talk-task-clock" data-talk-task-clock></p>' : ''}<p>${esc(t(prompt.kind === 'task' ? 'crazyTaskHint' : 'crazySayHint'))}</p>
+      <blockquote aria-live="polite">${esc(prompt.text)}</blockquote><p>${esc(t(prompt.kind === 'task' ? 'crazyTaskHint' : 'crazySayHint'))}</p>
       <div class="talk-actions">${button('crazyDone','crazyDone',`data-prompt-id="${esc(prompt.id)}"`,true)}${button('crazySkip','crazySkip',`data-prompt-id="${esc(prompt.id)}"`)}</div>
       ${s.crazy.paused ? `<small>${esc(t('crazyPaused'))}</small>` : ''}
     </section>`;
@@ -298,12 +300,13 @@ var TALK_PLAYER = (() => {
     constructor(element, { send, nameBanner, now = () => Date.now(), connected = () => true }) {
       this.element = element; this.send = send; this.nameBanner = nameBanner; this.now = now; this.connected = connected;
       this.pending = null; this.error = ''; this.draft = ''; this.data = null; this.composing = false; this.settledActions = new Set();
-      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = false; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
-      this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
+      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = true; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
+      this.roundClockVisible = false; this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.clickHandler = event => {
         const b = event.target.closest('[data-talk-action]');
         if (!b || !this.element.contains(b) || b.disabled) return;
         const type = b.dataset.talkAction;
+        if (type === 'viewTime') { this.roundClockVisible = !this.roundClockVisible; this.render(true); return; }
         if (type === 'crazyAssign') {
           if (this.data.talk.crazy?.canAssign === false) return;
           const draft = this.crazyDraft, text = draft.text.trim(), random = draft.target === 'random', target = Number(draft.target);
@@ -405,7 +408,7 @@ var TALK_PLAYER = (() => {
     }
     update(data) {
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId;
-      if (changedSession) { this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = false; this.assignmentSelection = null; this.pending = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
+      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = true; this.assignmentSelection = null; this.pending = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; }
       else if (this.data.talk.turnId !== data.talk.turnId) { this.confirmation = null; this.topicToOpen = null; }
       if (this.confirmation === 'end' && (!list(data.talk.questions).length || data.talk.activeQuestion)) this.confirmation = null;
       this.data = data;
@@ -476,9 +479,9 @@ var TALK_PLAYER = (() => {
       if (this.crazyDraft.target !== 'random' && !recipients.some(p => String(p.playerNum) === String(this.crazyDraft.target))) this.crazyDraft.target = 'random';
       if (preserveInput && this.element.querySelector('.talk-assignment')) this.assignmentOpen = !!this.element.querySelector('.talk-assignment').open;
       const assignment = allowAssignment ? `<details class="talk-assignment"${this.assignmentOpen ? ' open' : ''}><summary data-talk-assignment-label="composeMission">${esc(t('composeMission'))}</summary><div class="talk-assignment-body">
+        <label class="talk-field"><span data-talk-assignment-label="missionText">${esc(t('missionText'))}</span><textarea data-talk-assignment-field="text" maxlength="120" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
         <div class="talk-settings-row"><label class="talk-field"><span data-talk-assignment-label="missionRecipient">${esc(t('missionRecipient'))}</span><select data-talk-assignment-field="target">${option('random', t('randomRecipient'), this.crazyDraft.target)}${recipients.map(p => option(p.playerNum, p.name || name(s,p.playerNum), this.crazyDraft.target)).join('')}</select></label>
         <label class="talk-field"><span data-talk-assignment-label="missionType">${esc(t('missionType'))}</span><select data-talk-assignment-field="kind">${option('line',t('lineKind'),this.crazyDraft.kind)}${option('task',t('taskKind'),this.crazyDraft.kind)}</select></label></div>
-        <label class="talk-field"><span data-talk-assignment-label="missionText">${esc(t('missionText'))}</span><textarea data-talk-assignment-field="text" maxlength="120" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
         <p class="talk-soft" data-talk-assignment-label="missionHint">${esc(t('missionHint'))}</p>${button('missionSend','crazyAssign',s.crazy?.canAssign === false ? 'data-talk-blocked="true" disabled' : '',true)}
         <p class="talk-soft" role="status" data-talk-assignment-notice${this.assignmentNotice ? '' : ' hidden'}>${this.assignmentNotice ? esc(t(this.assignmentNotice)) : ''}</p></div></details>` : '';
       const active = this.element.querySelector('[data-talk-note]');
@@ -499,18 +502,19 @@ var TALK_PLAYER = (() => {
       this.shownPrompt = prompt?.status === 'pending' ? prompt.id : null;
       const cardClass = `secret-card talk-player${myTurn ? ' talk-my-turn' : ''}${s.gameMode === 'crazy' ? ' talk-is-crazy' : ''}`;
       const mainHTML = `<div class="talk-card-top">${this.nameBanner(data)}<span class="talk-kicker">${s.gameMode === 'crazy' ? 'CRAZY TALK' : 'LET’S TALK'}</span></div>
-        ${s.phase === 'talking' ? '<div class="talk-round-strip"><span data-talk-round-clock></span>' + (s.gameMode === 'crazy' ? '<small>' + esc(t('scoreHint')) + '</small>' : '') + '</div>' : ''}
-        ${TALK_UI.crazyHTML(s)}
+        ${prompt?.status === 'pending' ? TALK_UI.crazyHTML(s) : ''}
         ${s.phase === 'ended' ? `<section class="talk-rest-card"><span class="talk-rest-icon" aria-hidden="true">☕</span><h2>${esc(t('roundRest'))}</h2><p>${esc(t('roundFinished'))}</p><p class="talk-soft">${esc(t('restHint'))}</p></section>${TALK_UI.scoreboardHTML(s,me)}${s.sharedControls === true && s.actions?.newTopic ? '<div class="talk-actions">' + button('newRound','settings','',true) + '</div>' : ''}` : `<section class="talk-topic-card"><span class="talk-kicker">${esc(t('setupTopic'))}</span><p class="talk-player-topic">${esc(s.topic.question)}</p>
         ${s.showStarters && s.starter && !(s.extended && s.starter === s.topic.followUp) ? `<details class="talk-topic-explanation"><summary>${esc(t('showStarters'))}</summary><p class="talk-starter">${esc(s.starter)}</p></details>` : ''}
-        ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}</section>`}
+        ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}</section>`}`;
+      const footerHTML = `${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}
+        ${prompt?.status !== 'pending' ? TALK_UI.crazyHTML(s) : ''}
         ${s.phase !== 'ended' ? `<section class="talk-current-state${myTurn ? ' is-your-turn' : ''}"><span class="talk-kicker">${esc(t('stateTitle'))}</span><div class="talk-floor" aria-live="polite">${esc(TALK_UI.status(s, me))}</div>
         ${s.phase === 'thinking' ? '<p class="talk-soft" data-talk-clock></p>' : ''}
-        <p class="talk-soft">${esc(t(s.phase === 'ended' ? 'restHint' : s.phase === 'thinking' ? 'thinking' : s.conversationMode === 'free' ? 'conversationHintFree' : myTurn ? 'turnHint' : 'listening'))}</p>
+        <p class="talk-soft">${esc(t(s.phase === 'thinking' ? 'thinking' : s.conversationMode === 'free' ? 'conversationHintFree' : myTurn ? 'turnHint' : 'listening'))}</p>
         <div class="talk-controls">${controls}</div></section>` : ''}
         ${s.phase !== 'ended' || s.gameMode !== 'crazy' ? `<section class="talk-card-roster"><div class="talk-section-label"><span>${esc(t('participantsTitle'))}</span><span>${list(s.roster).length}</span></div>${TALK_UI.participantsHTML(s, me)}</section>` : ''}
-        ${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}`;
-      const footerHTML = `${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
+        ${s.phase === 'talking' && Number(s.gameDeadline) > 0 ? `<div class="talk-round-strip"><button type="button" class="talk-button talk-time-toggle" data-talk-action="viewTime" aria-expanded="${this.roundClockVisible}" aria-controls="talk-round-time-${me}">${esc(t(this.roundClockVisible ? 'hideTime' : 'viewTime'))}</button><span id="talk-round-time-${me}" role="timer" data-talk-round-clock${this.roundClockVisible ? '' : ' hidden'}></span></div>` : ''}
+        ${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
         ${managementHTML(s, this)}
         <p class="talk-feedback" role="status">${this.error ? esc(t(this.error)) : ''}</p>
         ${this.error === 'pending_questions' ? button('forceEnd', 'forceEnd') : ''}
@@ -593,7 +597,7 @@ var TALK_PLAYER = (() => {
       const roundExpired = s.phase === 'talking' && Number(s.gameDeadline) > 0 && now >= s.gameDeadline;
       const promptExpired = s.crazy?.prompt?.status === 'pending' && Number(s.crazy.prompt.expiresAt) > 0 && now >= s.crazy.prompt.expiresAt;
       this.element.querySelectorAll('[data-talk-action]').forEach(b => {
-        b.disabled = b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction));
+        b.disabled = b.dataset.talkAction !== 'viewTime' && (b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction)));
         if (b.dataset.talkAction === 'retry') b.hidden = now - this.sentAt < 6000;
       });
       this.element.querySelectorAll('[data-talk-editor-field], [data-talk-shared-input], [data-talk-assignment-field]').forEach(input => {
@@ -605,8 +609,6 @@ var TALK_PLAYER = (() => {
       if (clock) clock.textContent = t('secondsLeft', { n: Math.max(0, Math.ceil((s.deadline - now) / 1000)) });
       const roundClock = this.element.querySelector('[data-talk-round-clock]');
       if (roundClock) roundClock.textContent = t('roundClock', { time: TALK_UI.duration((s.gameDeadline - now) / 1000) });
-      const taskClock = this.element.querySelector('[data-talk-task-clock]');
-      if (taskClock) taskClock.textContent = t('taskClock', { time: TALK_UI.duration((s.crazy?.prompt?.expiresAt - now) / 1000) });
       if (!this.assignmentSelection) this.element.querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now) e.remove(); });
     }
     destroy() {

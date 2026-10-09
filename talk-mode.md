@@ -1,3 +1,39 @@
+# Current: composer priority and optional round time — 2026-10-10
+
+The handwritten composer sits immediately below the topic and is expanded by
+default, with the textarea before recipient/type controls. An active private
+mission remains above the topic so its recipient can act on it first. Existing
+stable composer nodes, native-picker handling, IME drafts and frozen retries are
+preserved.
+
+Round remaining time is hidden by default. Each player can use a small local
+View time / Hide time toggle below the participants; the host has an optional
+toggle beside the round controls. A new session resets visibility to hidden.
+Preparation countdown feedback remains visible. Toggling time only changes
+local presentation and never writes a room command or preference.
+
+Playing screens show no mission-expiry timer, dispatch interval or next-mission
+countdown. Mission cards, local drafts, queue counts, active indicators, scores,
+add-time and finish controls remain. Authoritative round/mission deadlines,
+scheduling, replacements, scoring, membership and private handwritten archives
+are unchanged. Timing fields remain available to internal projection/command guards without becoming visible
+mission clocks.
+
+This is a frontend-only release: play.html and lets-talk.html load Talk UI/CSS
+with talk-calm-1; lets-talk.html also uses that tag for the host script.
+Engine/sync/runtime versions are unchanged; no backend deployment, runtime
+package or secret update is needed.
+
+Validation: local real Chrome verifies the default 15-minute round and
+2.5-minute internal mission TTL, composer placement/expansion, random recipients,
+queue priority, optional round time, hidden mission timing, scoring, immediate
+skip/expiry replacement, the two-slot cap, add-time and normal/Crazy automatic
+rest. EN/ZH desktop/375px screenshots were visually inspected; 320/375px
+layouts have no horizontal overflow.
+Native-picker regression passes five submissions and ten actual popup checks,
+with connected ancestors, drafts, retries and IME preserved.
+Integrated repository regression: 1548/1548 pass, with zero failures or skips.
+
 # Current: private handwritten archive and focused timed rounds — 2026-10-10
 
 Crazy Talk now retains accepted handwritten challenges for private system
@@ -37,17 +73,20 @@ checks with zero failures. Source 1a29d38 matches 18/18 Talk and 47/47 shared
 assets; both hosts block the private archive/reader paths. The active service is
 dpl_9AXaFRDkAFDzipH2Bmhf7kW3dSa8 in sin1. No existing user room was modified.
 
-Both Talk modes have a round clock, default 15 minutes (configurable from 1 to
-60 minutes). Preparation is separate: the round clock begins when conversation
-starts. The shared screen and authenticated shared-control player cards can
-add one minute while a round is running, or finish early. At the deadline the
+Both Talk modes have an authoritative round clock, default 15 minutes
+(configurable from 1 to 60 minutes), hidden until the local View time toggle is
+used. Preparation is separate: its countdown remains visible, and the round
+clock begins when conversation starts. The shared screen and authenticated
+shared-control player cards can add one minute while a round is running, or
+finish early. At the deadline the
 round enters `ended`, pending missions are cancelled, queued cards are cleared,
 and a rest screen shows final Crazy Talk scores. Late commands cannot add time,
 earn points or resume that round. Opening a new topic starts a fresh preparation
 period, resets scores and preserves the chosen duration settings.
 
-Crazy Talk uses one shared random countdown until the next participant gets a
-mission, rather than separate timers for every player. The default range is
+Crazy Talk uses one shared internal random dispatch timer until the next
+participant gets a mission, rather than separate timers for every player.
+The playing UI does not show that timer or its interval. The default range is
 60–180 seconds; whole-second bounds may be 5–300, with minimum no greater than
 maximum. One card is assigned per operation, and at most two players have pending
 missions. Known absent players are excluded when authoritative presence is available;
@@ -71,11 +110,13 @@ scheduled delivery or skip/expiry replacement. Eligible player cards take
 priority; player-only mode never falls back to the system. Submission itself
 never reveals a card immediately. An occupied player is not overwritten.
 
-Private projections show only the recipient's mission and its deadline, and
-only the author's queued count. Shared projections expose active participant
-numbers, aggregate counts, scores and the shared next-assignment deadline,
-without another player's mission or queue text. Scores, deadlines, expiry and
-replacement selection are authoritative and deterministic across transaction
+Private data projections include only the recipient's mission and its deadline,
+and only the author's queued count. Shared data projections include active
+participant numbers, aggregate counts, scores and the shared next-assignment
+deadline, without another player's mission or queue text. Deadline fields remain
+internal to client guards; playing screens render neither mission expiry nor
+dispatch timing. Scores, deadlines, expiry and replacement selection are
+authoritative and deterministic across transaction
 retries. Repeated completion commands cannot score twice. Old saved rooms
 receive a fresh round clock and safe mission deadlines during migration; their
 private cards remain, with excess old pending cards cancelled to enforce two
@@ -83,7 +124,10 @@ slots. Legacy timing converts to the previous 80–120% range. `crazyTick` remai
 a clock alias; legacy `crazySend` only redraws a future shared timer.
 
 Player cards retain the navy/cream topic layout and private pink mission card,
-with round and mission countdowns, active mission indicators and points.
+with active mission indicators and points. The expanded, textarea-first composer
+follows the topic; an active private mission stays above it. Round time is hidden
+by default behind a local toggle below the participants, and mission countdowns
+are absent.
 Speaking/question request buttons are removed. Chinese IME composition and
 unsent local drafts survive ordinary synchronization. The handwritten challenge
 composer and its ancestors stay connected during same-session updates, so an

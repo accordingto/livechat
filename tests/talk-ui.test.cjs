@@ -26,6 +26,10 @@ function fixture(send = async () => {}, options = {}) {
     get innerHTML() { return html; },
     set innerHTML(value) {
       html = value;
+      const assignmentTag = html.match(/<details\b[^>]*class="talk-assignment"[^>]*>/)?.[0];
+      if (assignmentTag) node('.talk-assignment').open = /(?:^|\s)open(?:\s|>)/.test(assignmentTag);
+      const roundClockTag = html.match(/<span\b[^>]*data-talk-round-clock[^>]*>/)?.[0];
+      if (roundClockTag) node('[data-talk-round-clock]').hidden = /(?:^|\s)hidden(?:\s|>)/.test(roundClockTag);
       fields = [...html.matchAll(/<(?:select|textarea|input)\b([^>]*)>/g)].map(match => {
         const attributes = Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/g)].map(entry => [entry[1], entry[2]]));
         return { disabled: false, dataset: Object.fromEntries(Object.entries(attributes).filter(([key]) => key.startsWith('data-')).map(([key, value]) => [key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase()), value])) };
@@ -41,6 +45,8 @@ function fixture(send = async () => {}, options = {}) {
       const action = selector.match(/^\[data-talk-action="([^"]+)"\]$/); if (action) return buttons.find(b => b.dataset.talkAction === action[1]) || null;
       if (selector === '.talk-crazy-prompt') return /class="talk-crazy-prompt"/.test(html) ? node(selector) : null;
       if (selector === '.talk-management') return html.includes('class="talk-management"') ? node(selector) : null;
+      if (selector === '.talk-assignment') return html.includes('class="talk-assignment"') ? node(selector) : null;
+      if (selector === '[data-talk-round-clock]' || selector === '[data-talk-task-clock]') return html.includes(selector.slice(1, -1)) ? node(selector) : null;
       if (selector === '[data-talk-note]' || selector === '.talk-shared') return null;
       return node(selector);
     },
@@ -125,7 +131,7 @@ test('Done sends only the current prompt identity once, independent of the shari
     assert.ok(f.card.pending);
     f.update({ ...crazy(), turnId: 3, speaker: 2 });
     assert.equal(f.card.pending.id, sent[0].id);
-    assert.ok(f.buttons().filter(button => button.dataset.talkAction !== 'retry').every(button => button.disabled));
+    assert.ok(f.buttons().filter(button => !['retry', 'viewTime'].includes(button.dataset.talkAction)).every(button => button.disabled));
     f.update({ ...crazy({ prompt: prompt({ status: 'done' }) }), turnId: 3, reply: { id: sent[0].id, error: '' } });
     assert.equal(f.card.pending, null);
     assert.doesNotMatch(f.element.innerHTML, /My soup|data-talk-action="crazyDone"|data-talk-action="crazySkip"/);
@@ -284,7 +290,7 @@ test('server-mode private card retains shared start while an old host heartbeat 
     f.click('start'); await Promise.resolve(); await Promise.resolve();
     assert.equal(sent.length, 1); assert.equal(sent[0].type, 'start'); assert.equal(sent[0].actor, undefined);
     f.setOnline(false); f.card.paint();
-    assert.ok(f.buttons().filter(b => b.dataset.talkAction !== 'retry').every(b => b.disabled));
+    assert.ok(f.buttons().filter(b => !['retry', 'viewTime'].includes(b.dataset.talkAction)).every(b => b.disabled));
   } finally { f.card.destroy(); }
 });
 
@@ -470,15 +476,28 @@ test('switching back to Normal Talk cannot publish an invalid hidden Crazy range
 });
 
 
-test('round and mission countdowns disable expired acknowledgements without giving local points', async () => {
- const sent=[],f=fixture(async command=>sent.push(clone(command)));
- try {
-  const talk={...crazy({prompt:prompt({expiresAt:4000})}),gameDeadline:8000,scores:[{playerNum:1,score:0},{playerNum:2,score:2}]};
-  f.update(talk);assert.match(f.node('[data-talk-round-clock]').textContent,/00:07/);assert.match(f.node('[data-talk-task-clock]').textContent,/00:03/);
-  f.setClock(4000);f.card.paint();f.click('crazyDone');f.click('crazySkip');await flush();assert.equal(sent.length,0);
-  assert.match(f.node('[data-talk-task-clock]').textContent,/00:00/);assert.equal(f.card.data.talk.scores[1].score,2);
-  f.setClock(8000);f.card.paint();assert.match(f.node('[data-talk-round-clock]').textContent,/00:00/);
- }finally{f.card.destroy();}
+test('hidden mission and round deadlines still disable stale acknowledgements without giving local points', async () => {
+  for (const limits of [{ expiresAt: 4000, gameDeadline: 8000 }, { expiresAt: 12000, gameDeadline: 4000 }]) {
+    const sent = [], f = fixture(async command => sent.push(clone(command)));
+    try {
+      const talk = { ...crazy({ prompt: prompt({ expiresAt: limits.expiresAt }), nextAssignAt: 6000 }),
+        gameDeadline: limits.gameDeadline, scores: [{ playerNum: 1, score: 0 }, { playerNum: 2, score: 2 }] };
+      f.update(talk);
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-task-clock|talk-task-clock|data-talk-(?:next|assignment)-clock|Mission remaining|Next (?:mission|assignment)/);
+      for (const action of ['crazyDone', 'crazySkip']) assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, false);
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      f.setClock(3999); f.card.paint();
+      for (const action of ['crazyDone', 'crazySkip']) assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, false);
+      f.setClock(4000); f.card.paint();
+      for (const action of ['crazyDone', 'crazySkip']) {
+        assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, true); f.click(action);
+      }
+      await flush(); assert.equal(sent.length, 0); assert.equal(f.card.data.talk.scores[1].score, 2);
+      f.update({ ...talk, revision: 99 });
+      for (const action of ['crazyDone', 'crazySkip']) assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, true);
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-task-clock|talk-task-clock|00:00/);
+    } finally { f.card.destroy(); }
+  }
 });
 
 test('rest view freezes results, escapes names and offers a new round without old task or turn controls', () => {
@@ -635,5 +654,115 @@ test('explicitly away Crazy recipients are omitted from selectors while a newcom
     f.update(sample({ sharedControls: true, hostControls: true, gameMode: 'crazy', roster: [{ playerNum: 1, name: 'Away friend', active: false }, { playerNum: 2, name: 'Sam' }, { playerNum: 3, name: 'New friend', active: true }],
       crazy: { enabled: true, source: 'players', canAssign: true, paused: false, prompt: null } }));
     assert.match(f.element.innerHTML, /<option value="3"/); assert.doesNotMatch(f.element.innerHTML, /<option value="1"/);
+  } finally { f.card.destroy(); }
+});
+test('handwritten composer is open and follows the current mission and topic before secondary room controls', () => {
+  const f = fixture();
+  try {
+    for (const currentPrompt of [prompt(), null, prompt({ status: 'done' })]) {
+      const talk = { ...crazy({ source: 'mixed', canAssign: true, prompt: currentPrompt, myQueuedCount: 1 }),
+        sharedControls: true, hostControls: true, gameDeadline: 91000,
+        actions: { newTopic: true, finish: true, addTime: true } };
+      f.update(talk);
+      const html = f.element.innerHTML;
+      const markers = ['data-talk-card-main', 'talk-player-topic', 'data-talk-card-assignment',
+        'data-talk-assignment-field="text"', 'data-talk-assignment-field="target"',
+        'data-talk-assignment-field="kind"', 'data-talk-card-footer', 'talk-current-state',
+        'talk-card-roster', 'talk-round-strip', 'talk-management'];
+      for (let i = 1; i < markers.length; i++) {
+        assert.ok(html.indexOf(markers[i - 1]) >= 0, markers[i - 1] + ' must exist');
+        assert.ok(html.indexOf(markers[i - 1]) < html.indexOf(markers[i]), markers[i - 1] + ' should precede ' + markers[i]);
+      }
+      assert.equal(f.element.querySelector('.talk-assignment').open, true);
+      if (currentPrompt?.status === 'pending') assert.ok(html.indexOf('talk-crazy-prompt') < html.indexOf('talk-player-topic'));
+      else assert.ok(html.indexOf('talk-crazy-wait') > html.indexOf('data-talk-card-footer'));
+      assert.ok(html.indexOf('talk-queue-count') > html.indexOf('data-talk-card-footer'));
+    }
+    f.node('.talk-assignment').open = false;
+    f.update({ ...crazy({ source: 'mixed', canAssign: true }), revision: 2 });
+    assert.equal(f.element.querySelector('.talk-assignment').open, false);
+    f.update({ ...crazy({ source: 'mixed', canAssign: true }), sessionId: 'fresh-composer' });
+    assert.equal(f.element.querySelector('.talk-assignment').open, true);
+  } finally { f.card.destroy(); }
+});
+
+test('round time is hidden by default, toggles locally and survives updates until the next session', async () => {
+  for (const gameMode of ['normal', 'crazy']) {
+    const sent = [], f = fixture(async command => sent.push(clone(command)));
+    try {
+      const talk = { ...(gameMode === 'crazy' ? crazy() : sample()), gameDeadline: 11000 };
+      f.update(talk);
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      assert.match(f.element.innerHTML, /data-talk-action="viewTime"[^>]*aria-expanded="false"[^>]*aria-controls="talk-round-time-2"/);
+      assert.match(f.element.innerHTML, /id="talk-round-time-2"[^>]*role="timer"[^>]*data-talk-round-clock hidden/);
+      assert.match(f.element.innerHTML, />View time<\/button>/);
+      f.click('viewTime');
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+      assert.match(f.element.innerHTML, /data-talk-action="viewTime"[^>]*aria-expanded="true"/);
+      assert.match(f.element.innerHTML, />Hide time<\/button>/);
+      assert.equal(f.card.pending, null);
+      f.setClock(2000); f.card.paint();
+      assert.match(f.node('[data-talk-round-clock]').textContent, /00:09/);
+      f.update({ ...talk, turnId: 3, revision: 9, gameDeadline: 71000 });
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+      assert.match(f.node('[data-talk-round-clock]').textContent, /01:09/);
+      f.click('viewTime'); f.update({ ...talk, turnId: 4 });
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      f.click('viewTime'); f.setLanguage('zh'); f.update({ ...talk, turnId: 5 });
+      assert.match(f.element.innerHTML, />收起時間<\/button>/);
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+      f.update({ ...talk, sessionId: 'next-round', phase: 'thinking', turnId: 0, gameDeadline: 0 });
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-action="viewTime"|data-talk-round-clock/);
+      f.update({ ...talk, sessionId: 'next-round', turnId: 1 });
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      assert.match(f.element.innerHTML, />查看時間<\/button>/);
+      f.update({ ...talk, sessionId: 'next-round', phase: 'ended' });
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-action="viewTime"|data-talk-round-clock/);
+      await flush(); assert.equal(sent.length, 0); assert.equal(f.card.pending, null);
+    } finally { f.card.destroy(); }
+  }
+});
+
+test('optional round time remains usable offline and during a queued request without changing that request or the next draft', async () => {
+  const sent = [], f = fixture(async command => sent.push(clone(command)));
+  try {
+    const talk = { ...crazy({ source: 'mixed', prompt: null, canAssign: true }), gameDeadline: 21000 };
+    f.update(talk); f.assignmentField('text', 'Submitted mission'); f.click('crazyAssign'); await flush();
+    const pending = f.card.pending;
+    assert.ok(pending); assert.equal(sent.length, 1);
+    f.assignmentField('text', 'My next mission'); f.assignmentField('target', '1', 'change');
+    f.setOnline(false); f.card.paint();
+    assert.equal(f.buttons().find(b => b.dataset.talkAction === 'viewTime').disabled, false);
+    assert.equal(f.buttons().find(b => b.dataset.talkAction === 'crazyAssign').disabled, true);
+    f.click('viewTime');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+    assert.equal(f.card.pending, pending); assert.equal(f.card.crazyDraft.text, 'My next mission');
+    assert.equal(f.card.crazyDraft.target, '1'); assert.equal(f.buttons().find(b => b.dataset.talkAction === 'viewTime').disabled, false);
+    f.click('viewTime');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+    f.setOnline(true); f.update({ ...talk, reply: { id: pending.id, error: '' } });
+    assert.equal(f.card.pending, null); assert.equal(f.card.crazyDraft.text, 'My next mission');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+    f.setClock(21000); f.card.paint(); f.click('viewTime');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+    assert.match(f.node('[data-talk-round-clock]').textContent, /00:00/);
+    await flush(); assert.equal(sent.length, 1); assert.deepEqual(sent[0], clone(pending));
+  } finally { f.card.destroy(); }
+});
+
+test('player missions never show task or next-assignment countdowns in English or Chinese', () => {
+  const f = fixture();
+  try {
+    for (const language of ['en', 'zh']) {
+      f.setLanguage(language);
+      for (const currentPrompt of [prompt({ expiresAt: 49000 }), null, prompt({ status: 'done', expiresAt: 49000 }),
+        prompt({ status: 'skipped' }), prompt({ status: 'expired' }), prompt({ status: 'cancelled' })]) {
+        const talk = { ...crazy({ source: 'mixed', paused: true, prompt: currentPrompt, nextAssignAt: 83000 }), gameDeadline: 91000 };
+        f.update(talk);
+        assert.doesNotMatch(f.element.innerHTML, /data-talk-task-clock|talk-task-clock|data-talk-(?:next|assignment)-clock|Mission remaining|任務剩餘|Next (?:assignment|mission)|下次派發倒數/);
+        assert.doesNotMatch(f.context.TALK_UI.crazyHTML(talk), /role="timer"|data-talk-.*clock|49(?:000)?|83(?:000)?/);
+        if (currentPrompt?.status === 'pending') assert.match(f.element.innerHTML, /My soup has a secret plan/);
+      }
+    }
   } finally { f.card.destroy(); }
 });

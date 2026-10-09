@@ -1,3 +1,39 @@
+## CURRENT: Talk composer priority and optional round time — 2026-10-10
+
+The handwritten composer sits immediately below the topic and is expanded by
+default, with the textarea before recipient/type controls. An active private
+mission remains above the topic so its recipient can act on it first. Existing
+stable composer nodes, native-picker handling, IME drafts and frozen retries are
+preserved.
+
+Round remaining time is hidden by default. Each player can use a small local
+View time / Hide time toggle below the participants; the host has an optional
+toggle beside the round controls. A new session resets visibility to hidden.
+Preparation countdown feedback remains visible. Toggling time only changes
+local presentation and never writes a room command or preference.
+
+Playing screens show no mission-expiry timer, dispatch interval or next-mission
+countdown. Mission cards, local drafts, queue counts, active indicators, scores,
+add-time and finish controls remain. Authoritative round/mission deadlines,
+scheduling, replacements, scoring, membership and private handwritten archives
+are unchanged. Timing fields remain available to internal projection/command guards without becoming visible
+mission clocks.
+
+This is a frontend-only release: play.html and lets-talk.html load Talk UI/CSS
+with talk-calm-1; lets-talk.html also uses that tag for the host script.
+Engine/sync/runtime versions are unchanged; no backend deployment, runtime
+package or secret update is needed.
+
+Validation: local real Chrome verifies the default 15-minute round and
+2.5-minute internal mission TTL, composer placement/expansion, random recipients,
+queue priority, optional round time, hidden mission timing, scoring, immediate
+skip/expiry replacement, the two-slot cap, add-time and normal/Crazy automatic
+rest. EN/ZH desktop/375px screenshots were visually inspected; 320/375px
+layouts have no horizontal overflow.
+Native-picker regression passes five submissions and ten actual popup checks,
+with connected ancestors, drafts, retries and IME preserved.
+Integrated repository regression: 1548/1548 pass, with zero failures or skips.
+
 ## CURRENT: Mid-game membership in six games — 2026-10-10
 
 Dixit, Once Upon a Time, Bluff Party, CUT, Open Mic and Talk now retain the live
@@ -65,8 +101,8 @@ outside canonical CAS before public receipts; ACKs never discard newer updates.
 Exact authenticated retry drains pending writes even after a player game switch.
 Projection whitelists never include archive history/IDs. Keep runtime/story-
 executor archiveEntries/ackArchive, core flushArchive, api archiveSecret binding,
-and runtime/talk-archive-store.cjs in future service packages. Source/frontend
-changes require an integrated service deployment retaining current membership,
+and runtime/talk-archive-store.cjs in future service packages. Archive/runtime
+rule changes require an integrated service deployment retaining current membership,
 CUT/Dixit/Bluff/Once behavior, search functions and Hub-only sin1 placement.
 Talk sync uses talk-archive-1; Talk engine and dynamic helpers use talk-archive-2. Historical overwritten cards cannot be
 recovered; legacy surviving queued/pending handwriting retains only known times.

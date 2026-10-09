@@ -6,7 +6,7 @@
   const demoRoster = ['小安', '阿哲', '小羽', '阿凱'].map((name, i) => ({ playerNum: i + 1, name }));
   let state = null, sync = null, demoCard = null, status = demo ? 'ready' : 'offline', busy = false, autoStart = false;
   let error = '';
-  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '';
+  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '', roundClockVisible = false;
   let firstDraw = true;
   const draftKey = 'lets-talk-topic-draft.v1';
   const startersKey = 'lets-talk-starters.v1';
@@ -186,7 +186,7 @@
     byId('host-view').hidden = !!state && !!me;
     if (!state) return;
     if (renderedSession !== state.sessionId) {
-      exploreOpen = false; exploreKey = ''; byId('live-followup').value = ''; renderedSession = state.sessionId;
+      exploreOpen = false; exploreKey = ''; roundClockVisible = false; byId('live-followup').value = ''; renderedSession = state.sessionId;
     }
     const s = TALK_ENGINE.view(state, 0, now()).talk;
     const ended = s.phase === 'ended';
@@ -196,8 +196,7 @@
     byId('round-controls').hidden = s.phase !== 'talking';
     for (const id of ['add-time', 'finish']) byId(id).disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
     byId('crazy-host').hidden = s.gameMode !== 'crazy' || ended;
-    const interval = TALK_SETTINGS.normalize(s.crazy?.minSeconds != null ? { crazyMinSeconds: s.crazy.minSeconds, crazyMaxSeconds: s.crazy.maxSeconds } : { crazySeconds: s.crazy?.intervalSeconds });
-    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyScheduledHostStatus', { min: interval.crazyMinSeconds, max: interval.crazyMaxSeconds, n: s.crazy.pendingCount }) : '';
+    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyActiveHostStatus', { n: s.crazy.pendingCount }) : '';
     byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
 
     byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
@@ -267,6 +266,10 @@
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
+  byId('clock-toggle').addEventListener('click', () => {
+    if (state?.phase !== 'talking' || !state.gameDeadline) return;
+    roundClockVisible = !roundClockVisible; renderClock();
+  });
   byId('add-time').addEventListener('click', () => command('addTime', { seconds: 60 }));
   byId('finish').addEventListener('click', () => command('finish'));
   Object.values(preferenceFields).forEach(id => byId(id).addEventListener('change', () => {
@@ -320,6 +323,22 @@
   byId('new').addEventListener('click', showSetup);
   byId('cancel-setup').addEventListener('click', () => { byId('setup').hidden = true; render(); });
   byId('demo-view').addEventListener('change', render);
+  // Showing the round clock is local display state, independent of timer commands.
+  function renderClock() {
+    if (!state) return;
+    const preparation = state.phase === 'thinking';
+    const running = state.phase === 'talking' && !!state.gameDeadline;
+    const visible = preparation || (running && roundClockVisible);
+    const toggle = byId('clock-toggle');
+    toggle.hidden = !running;
+    toggle.textContent = t(roundClockVisible && running ? 'hideTime' : 'viewTime');
+    toggle.setAttribute('aria-expanded', String(running && roundClockVisible));
+    byId('clock').hidden = !visible;
+    const secondsLeft = Math.max(0, Math.ceil(((preparation ? state.deadline : state.gameDeadline) - now()) / 1000));
+    const duration = TALK_UI.duration || (seconds => Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0'));
+    byId('clock').textContent = preparation ? t('preparationClock', { n: secondsLeft })
+      : visible ? t('roundClock', { time: duration(secondsLeft) }) : '';
+  }
   function paintClock() {
     if (!state) return;
     if (demo && !busy && TALK_ENGINE.timerDue(state, now())) {
@@ -327,11 +346,7 @@
         now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] });
       render();
     }
-    const secondsLeft = Math.max(0, Math.ceil(((state.phase === 'thinking' ? state.deadline : state.gameDeadline) - now()) / 1000));
-    const duration = TALK_UI.duration || (seconds => Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0'));
-    byId('clock').textContent = state.phase === 'thinking' ? t('preparationClock', { n: secondsLeft })
-      : state.phase === 'talking' && state.gameDeadline ? t('roundClock', { time: duration(secondsLeft) })
-      : state.phase === 'ended' ? t('roundFinished') : '';
+    renderClock();
 
     if (state.phase === 'thinking' && now() >= state.deadline && canControl() && status !== 'switched' && !busy && !autoStart) {
       autoStart = true; command('start').finally(() => { autoStart = false; });
