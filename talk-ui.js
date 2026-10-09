@@ -1,6 +1,19 @@
 /* Bilingual interface shared by the host and the existing player card page. */
 var TALK_UI = (() => {
   const dict = {
+    gameDuration: ['每局時間（分鐘）', 'Round length (minutes)'], crazyTaskDuration: ['任務期限（分鐘）', 'Mission limit (minutes)'],
+    invalid_game_seconds: ['每局時間請填 1–60 分鐘，並以整數秒計時。', 'Choose 1–60 minutes, in whole seconds.'],
+    invalid_crazy_task_seconds: ['任務期限請填 0.5–5 分鐘，並以整數秒計時。', 'Choose 0.5–5 minutes, in whole seconds.'],
+    roundClock: ['本局剩餘 {time}', 'Round remaining {time}'], taskClock: ['任務剩餘 {time}', 'Mission remaining {time}'],
+    preparationClock: ['還有 {n} 秒思考時間', '{n} seconds to think'],
+    roundRest: ['休息時間', 'Take a break'], roundFinished: ['這一局結束了', 'Round complete'],
+    restHint: ['先休息一下，準備好再開新的一局。', 'Take a breather. Open a new round when you are ready.'],
+    newRound: ['開新的一局', 'Start a new round'], roundScores: ['本局得分', 'Round scores'], scorePoints: ['{n} 分', '{n} pts'],
+    addMinute: ['＋1 分鐘', '+1 minute'], finishRound: ['結束本局，休息', 'Finish and take a break'],
+    participantTask: ['有任務', 'On a mission'], participantResting: ['休息中', 'Taking a break'],
+    crazyExpired: ['任務時間到了，已交給下一位。', 'Time is up. The next player takes over.'],
+    crazyCancelled: ['這張任務已取消，先繼續聊。', 'This mission is cancelled. Keep chatting.'],
+    scoreHint: ['完成 ＋1 分 · 跳過或逾時 0 分', 'Done +1 point · Skip or timeout 0 points'],
     thinking: ['先想一想', 'Take a moment'], secondsLeft: ['還有 {n} 秒思考時間', '{n} seconds to think'],
     ready: ['我有想法', 'I have an idea'], wait: ['需要時間', 'I need more time'],
     readySet: ['已記下，你可以先準備分享。', 'You are ready. Take a moment to prepare.'],
@@ -40,10 +53,10 @@ var TALK_UI = (() => {
     forceEnd: ['略過追問，下一位', 'Skip requests, next person'],
     confirmEnd: ['還有 {n} 位想追問。略過這些追問並讓下一位分享？', '{n} people still want to ask. Skip these requests and move to the next speaker?'],
     confirmSkip: ['確認略過並交棒', 'Confirm skip and hand over'],
-    confirmNewTopic: ['開啟這個話題？目前的分享、追問、已送出的想法與搞笑台詞都會清空。', 'Open this topic? Current turns, questions, submitted thoughts and surprise lines will be cleared.'],
+    confirmNewTopic: ['開新的一局？目前的分享與任務會清空，時間和得分會重新開始。', 'Start a new round? Current turns, missions and points will reset.'],
     confirmOpen: ['確認開啟', 'Confirm and open'], cancel: ['取消', 'Cancel'],
     topicSettings: ['話題與設定', 'Topic and settings'],
-    newTopicNotice: ['先預覽並調整設定。按開啟並確認後才換題，所有玩家會重新開始思考。', 'Preview the topic and settings first. Opening and confirming starts a new thinking period for everyone.'],
+    newTopicNotice: ['先預覽並調整設定。確認開啟後會重新思考、計時，得分歸零。', 'Preview the topic and settings. Confirming starts fresh thinking, a new clock and zero points.'],
     invalid_settings: ['思考時間請填 15–120 的整數秒。', 'Choose a whole thinking time from 15 to 120 seconds.'],
     invalid_crazy_interval: ['任務間隔請填 5–300 的整數秒，最短時間不能大於最長時間。', 'Use whole seconds from 5 to 300. The minimum cannot exceed the maximum.'],
     confirmation_required: ['請先確認這個操作。', 'Please confirm this action first.'],
@@ -59,21 +72,21 @@ var TALK_UI = (() => {
     gameMode: ['玩法', 'Game'], normalMode: ['Let’s Talk · 一起聊', 'Let’s Talk'], crazyMode: ['Crazy Talk · 搞笑台詞', 'Crazy Talk'],
     normalHint: ['一起提案、比較選擇、接著彼此的點子聊。', 'Make plans, compare options and build on each other’s ideas.'],
     crazyHint: ['邊聊邊收到短短的搞笑任務，也能寫一張放進待派佇列。隨時可以略過。', 'Short, silly missions arrive while you chat. Add your own to the queue. Skip anytime.'],
-    crazyInterval: ['隨機任務間隔', 'Random mission interval'], crazyMinSeconds: ['最短（秒）', 'Minimum (seconds)'], crazyMaxSeconds: ['最長（秒）', 'Maximum (seconds)'],
-    crazyScheduleHint: ['每位玩家各自隨機計時，錯開派發；手寫卡優先。', 'Each player has a separate random timer. Deliveries are staggered; player cards go first.'],
-    crazyScheduledHostStatus: ['{min}–{max} 秒隨機間隔 · {n} 人有待完成任務', '{min}–{max}s random interval · {n} pending missions'],
+    crazyInterval: ['下一位的派發間隔', 'Time until the next player'], crazyMinSeconds: ['最短（秒）', 'Minimum (seconds)'], crazyMaxSeconds: ['最長（秒）', 'Maximum (seconds)'],
+    crazyScheduleHint: ['全場共用倒數，最多兩人有任務；手寫卡優先。跳過或逾時就換下一位。', 'One shared timer, at most two missions. Player cards go first. Skip or timeout passes it on.'],
+    crazyScheduledHostStatus: ['每 {min}–{max} 秒派給下一位 · {n}/2 個任務進行中', 'Next player every {min}–{max}s · {n}/2 active missions'],
     crazyFrequency: ['台詞頻率（每人，時間隨機錯開）', 'Line frequency (per person, randomly staggered)'], minutes: ['約每 {n} 分鐘', 'About every {n} min'],
     crazyTitle: ['🎧 Crazy Talk', '🎧 Crazy Talk'], crazyPrivate: ['只有你看得到', 'Only you can see this'],
     crazySayHint: ['找個時機說出這句話。', 'Say this when you find your moment.'],
-    crazyDone: ['完成了！', 'Done!'], crazySkip: ['略過這張', 'Skip this card'],
+    crazyDone: ['完成 ＋1 分', 'Done +1 point'], crazySkip: ['跳過，換人', 'Skip → next'],
     crazyWaiting: ['先繼續聊，任務會在隨機時間出現。', 'Keep chatting. A mission will arrive at a random time.'],
-    crazyCompleted: ['這句說完了，下一句稍後來。', 'Line complete. Your next surprise comes later.'],
-    crazySkipped: ['已略過，下一句稍後來。', 'Skipped. Your next surprise comes later.'],
-    crazyPaused: ['派發已暫停，仍可寫卡排隊、完成或略過手上的任務。', 'Delivery is paused. You can still queue cards, finish or skip your mission.'],
+    crazyCompleted: ['完成，獲得 1 分！繼續一起聊。', 'Complete, +1 point! Keep chatting.'],
+    crazySkipped: ['已跳過，換下一位玩家。', 'Skipped. The next player takes over.'],
+    crazyPaused: ['派發已暫停，手上任務和本局仍在倒數。', 'Delivery is paused. Mission and round clocks keep running.'],
     crazySend: ['現在派發台詞', 'Send lines now'], crazyPause: ['暫停派發', 'Pause delivery'], crazyResume: ['繼續派發', 'Resume delivery'],
     crazyHostStatus: ['約每 {minutes} 分鐘／人 · {n} 人有待說台詞', 'About every {minutes} minutes per person · {n} pending lines'],
-    crazyHostHint: ['每人獨立計時，一次派一張；手寫卡優先，未完成的卡不會被蓋掉。', 'Separate timers, one card at a time. Player cards take priority. Pending cards stay until done or skipped.'],
-    stale_prompt: ['這句台詞已更新，請依現在卡片操作。', 'That line has changed. Use the current card.'],
+    crazyHostHint: ['一次派一張，最多兩人同時有任務。完成得 1 分；跳過或逾時就交給下一位。', 'One card at a time, at most two active. Done earns 1 point; skip or timeout passes it on.'],
+    stale_prompt: ['這張任務已結束或更新，請看現在的卡片。', 'This mission has ended or changed. Use the current card.'],
     openTopic: ['開啟話題', 'Open the topic'], newTopic: ['換個話題', 'Choose another topic'],
     start: ['開始分享', 'Start sharing'], extend: ['延伸這個話題', 'Explore a little further'],
     hideExtend: ['收起延伸題', 'Hide the follow-up'], help: ['流程協助', 'Flow controls'],
@@ -176,6 +189,7 @@ var TALK_UI = (() => {
     return list(s.interests).filter(r => r.until > now).map(r => `<span data-talk-until="${r.until}">${esc(t('interested', { name: name(s, r.playerNum) }))}</span>`).join('');
   }
   function status(s, me) {
+    if (s.phase === 'ended') return t('roundRest');
     if (s.phase === 'thinking') return t('thinking');
     if (s.conversationMode === 'free') return t('freeStatus');
     if (s.activeQuestion) return t('asking', { name: name(s, s.activeQuestion.playerNum) });
@@ -185,23 +199,31 @@ var TALK_UI = (() => {
     const free = s.conversationMode === 'free' && s.phase === 'talking';
     return '<div class="talk-participant-list">' + list(s.roster).map(p => {
       const current = s.phase === 'talking' && !free && p.playerNum === s.speaker;
-      const label = s.phase === 'thinking' ? 'participantThinking' : free ? 'freeParticipant' : current ? 'participantSpeaking' : 'participantWaiting';
-      return `<div class="talk-participant${current ? ' is-speaking' : ''}${p.playerNum === me ? ' is-you' : ''}"><span class="talk-avatar" aria-hidden="true">${esc(p.playerNum)}</span><span class="talk-participant-name">${esc(p.name || name(s, p.playerNum))}${p.playerNum === me ? `<small>${esc(t('participantYou'))}</small>` : ''}</span><span class="talk-participant-state">${esc(t(label))}</span></div>`;
+      const label = s.phase === 'ended' ? 'participantResting' : s.phase === 'thinking' ? 'participantThinking' : free ? 'freeParticipant' : current ? 'participantSpeaking' : 'participantWaiting';
+      const score = list(s.scores).find(v => v.playerNum === p.playerNum)?.score || 0;
+      const onMission = s.phase === 'talking' && list(s.crazy?.pendingPlayerNums).includes(p.playerNum);
+      return `<div class="talk-participant${current ? ' is-speaking' : ''}${p.playerNum === me ? ' is-you' : ''}"><span class="talk-avatar" aria-hidden="true">${esc(p.playerNum)}</span><span class="talk-participant-name">${esc(p.name || name(s, p.playerNum))}${p.playerNum === me ? `<small>${esc(t('participantYou'))}</small>` : ''}</span><span class="talk-participant-state">${esc(t(onMission ? 'participantTask' : label))}</span>${s.gameMode === 'crazy' ? `<span class="talk-participant-score" aria-label="${esc(t('scorePoints',{n:score}))}">${esc(score)}</span>` : ''}</div>`;
     }).join('') + '</div>';
+  }
+  const duration = seconds => { const n = Math.max(0, Math.ceil(Number(seconds) || 0)); return Math.floor(n / 60).toString().padStart(2, '0') + ':' + (n % 60).toString().padStart(2, '0'); };
+  function scoreboardHTML(s, me = 0) {
+    if (s.gameMode !== 'crazy') return '';
+    const ranked = list(s.roster).map(p => ({ ...p, score: Number(list(s.scores).find(v => v.playerNum === p.playerNum)?.score) || 0 })).sort((a,b) => b.score - a.score || a.playerNum - b.playerNum);
+    return `<section class="talk-scoreboard"><h3>${esc(t('roundScores'))}</h3><ol>${ranked.map(p => `<li${p.playerNum === me ? ' class="is-you"' : ''}><span>${esc(p.name || name(s,p.playerNum))}${p.playerNum === me ? ` <small>${esc(t('participantYou'))}</small>` : ''}</span><strong>${esc(t('scorePoints',{n:p.score}))}</strong></li>`).join('')}</ol></section>`;
   }
   const crazyAction = type => type === 'crazyDone' || type === 'crazySkip';
   function crazyHTML(s) {
-    if (s.gameMode !== 'crazy' || !s.crazy?.enabled) return '';
+    if (s.gameMode !== 'crazy' || !s.crazy?.enabled || s.phase === 'ended') return '';
     const prompt = s.crazy.prompt;
     if (prompt?.status === 'pending') return `<section class="talk-crazy-prompt" data-talk-prompt="${esc(prompt.id)}" aria-label="${esc(t('crazyPrivate'))}">
       <div class="talk-crazy-heading"><strong>${esc(t(prompt.kind === 'task' ? 'taskKind' : 'lineKind'))}</strong><span>${esc(t('crazyPrivate'))}</span></div>
-      <blockquote aria-live="polite">${esc(prompt.text)}</blockquote><p>${esc(t(prompt.kind === 'task' ? 'crazyTaskHint' : 'crazySayHint'))}</p>
+      <blockquote aria-live="polite">${esc(prompt.text)}</blockquote>${prompt.expiresAt ? '<p class="talk-task-clock" data-talk-task-clock></p>' : ''}<p>${esc(t(prompt.kind === 'task' ? 'crazyTaskHint' : 'crazySayHint'))}</p>
       <div class="talk-actions">${button('crazyDone','crazyDone',`data-prompt-id="${esc(prompt.id)}"`,true)}${button('crazySkip','crazySkip',`data-prompt-id="${esc(prompt.id)}"`)}</div>
       ${s.crazy.paused ? `<small>${esc(t('crazyPaused'))}</small>` : ''}
     </section>`;
-    return `<div class="talk-crazy-wait" role="status"><strong>${esc(t('crazyTitle'))}</strong><p>${esc(t(s.crazy.paused ? 'crazyPaused' : prompt?.status === 'done' ? 'crazyCompleted' : prompt?.status === 'skipped' ? 'crazySkipped' : s.crazy.source === 'players' ? 'crazyPlayersWaiting' : 'crazyWaiting'))}</p></div>`;
+    return `<div class="talk-crazy-wait" role="status"><strong>${esc(t('crazyTitle'))}</strong><p>${esc(t(s.crazy.paused ? 'crazyPaused' : prompt?.status === 'done' ? 'crazyCompleted' : prompt?.status === 'skipped' ? 'crazySkipped' : prompt?.status === 'expired' ? 'crazyExpired' : prompt?.status === 'cancelled' ? 'crazyCancelled' : s.crazy.source === 'players' ? 'crazyPlayersWaiting' : 'crazyWaiting'))}</p></div>`;
   }
-  return { t, esc, list, name, button, notes, interests, status, crazyAction, crazyHTML, participantsHTML };
+  return { t, esc, list, name, button, notes, interests, status, crazyAction, crazyHTML, participantsHTML, duration, scoreboardHTML };
 })();
 
 var TALK_PLAYER = (() => {
@@ -220,9 +242,11 @@ var TALK_PLAYER = (() => {
     return { id: 'custom', emoji: '✏️', title, question, starter, followUp: questions[0] || '', followUps: questions.map(question => ({ stage: 'custom', question })) };
   };
   const editTopic = topic => ({ title: topic.title || '', question: topic.question || '', starter: topic.starter || '', followUps: followUps(topic).map(q => q.question).join('\n') });
+  const minutesToSeconds = value => { const n = Number(value) * 60, rounded = Math.round(n); return Number.isFinite(n) && Math.abs(n - rounded) < 1e-7 ? rounded : NaN; };
   const editorState = s => ({ ...editTopic(s.topic), source: topicById(s.topic.id) ? 'library' : 'custom', topicId: s.topic.id || '', category: '', search: '',
     mode: s.mode === 'write' ? 'write' : 'think', seconds: Number(s.seconds) || 45, gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
     conversationMode: s.conversationMode || 'random', crazySource: s.crazy?.source || 'mixed',
+    gameMinutes: (Number(s.gameSeconds) || 900) / 60, crazyTaskMinutes: (Number(s.crazy?.taskSeconds) || Number(s.crazyTaskSeconds) || 150) / 60,
     crazyMinSeconds: Number(s.crazy?.minSeconds) || (s.crazy?.intervalSeconds ? Math.round(s.crazy.intervalSeconds * .8) : 60),
     crazyMaxSeconds: Number(s.crazy?.maxSeconds) || (s.crazy?.intervalSeconds ? Math.round(s.crazy.intervalSeconds * 1.2) : 180), showStarters: !!s.showStarters });
   const option = (value, label, current) => '<option value="' + esc(value) + '"' + (String(value) === String(current) ? ' selected' : '') + '>' + esc(label) + '</option>';
@@ -244,10 +268,12 @@ var TALK_PLAYER = (() => {
       (editor.source === 'library' ? library : area('customTitle', 'title', 80, 1) + area('customQuestion', 'question', 500, 3) + area('customStarter', 'starter', 600, 3) + area('customFollowUps', 'followUps', 2408, 4)) +
       select('setupMode', 'mode', option('think', t('thinkMode'), editor.mode) + option('write', t('writeMode'), editor.mode)) +
       '<label class="talk-field">' + esc(t('thinkingTime')) + '<input type="number" data-talk-editor-field="seconds" min="15" max="120" step="1" inputmode="numeric" value="' + esc(editor.seconds) + '"></label>' +
+      '<label class="talk-field">' + esc(t('gameDuration')) + '<input type="number" data-talk-editor-field="gameMinutes" min="1" max="60" step="any" inputmode="decimal" value="' + esc(editor.gameMinutes) + '"></label>' +
       select('gameMode', 'gameMode', option('normal', t('normalMode'), editor.gameMode) + option('crazy', t('crazyMode'), editor.gameMode)) +
       select('conversationMode', 'conversationMode', ['assigned', 'random', 'free'].map(mode => option(mode, t(mode + 'Mode'), editor.conversationMode)).join('')) +
       (editor.gameMode === 'crazy' ? select('crazySource', 'crazySource', ['system', 'players', 'mixed'].map(source => option(source, t('crazySource' + source[0].toUpperCase() + source.slice(1)), editor.crazySource)).join('')) : '') +
       (editor.gameMode === 'crazy' ? '<div class="talk-interval-settings"><span>' + esc(t('crazyInterval')) + '</span><div class="talk-settings-row">' + ['Min','Max'].map(bound => '<label class="talk-field">' + esc(t('crazy' + bound + 'Seconds')) + '<input type="number" data-talk-editor-field="crazy' + bound + 'Seconds" min="5" max="300" step="1" inputmode="numeric" value="' + esc(editor['crazy' + bound + 'Seconds']) + '"></label>').join('') + '</div><p class="talk-soft">' + esc(t('crazyScheduleHint')) + '</p></div>' : '') +
+      (editor.gameMode === 'crazy' ? '<label class="talk-field">' + esc(t('crazyTaskDuration')) + '<input type="number" data-talk-editor-field="crazyTaskMinutes" min="0.5" max="5" step="any" inputmode="decimal" value="' + esc(editor.crazyTaskMinutes) + '"></label>' : '') +
       '<label class="talk-card-check"><input type="checkbox" data-talk-editor-field="showStarters"' + (editor.showStarters ? ' checked' : '') + '> ' + esc(t('showStarters')) + '</label>' +
       '<div class="talk-actions">' + button('openTopic', 'openTopic', '', true) + button('cancelSetup', 'closeSettings') + '</div></section>';
   }
@@ -260,6 +286,7 @@ var TALK_PLAYER = (() => {
         (choices.length ? '<label class="talk-field">' + esc(t('exploreDirection')) + '<select data-talk-shared-input="followup">' + choices.map((q, i) => option(i, q.question, card.followupIndex)).join('') + '</select></label>' + button('showFollowUp', 'showFollowUp') : '') +
         '<label class="talk-field">' + esc(t('liveFollowUp')) + '<textarea data-talk-shared-input="extension" rows="2" maxlength="300">' + esc(card.extensionDraft) + '</textarea></label>' + button('showCustomFollowUp', 'showCustomFollowUp') + '</div></details>' : '') +
       (s.actions?.newTopic ? '<div class="talk-actions">' + button('newTopic', 'settings') + button('randomNew', 'randomTopic') + '</div>' : '') +
+      (s.actions?.finish ? button('finishRound', 'finish') : '') +
       (card.settingsOpen && card.editor ? settingsHTML(card.editor) : '') + '</div></details>';
   }
   class Card {
@@ -300,13 +327,15 @@ var TALK_PLAYER = (() => {
             try {
               const topic = this.editor.source === 'library' ? topicById(this.editor.topicId) : customTopic(this.editor);
               if (!topic) throw new Error('invalid_topic');
-              const seconds = Number(this.editor.seconds);
+              const seconds = Number(this.editor.seconds), gameSeconds = minutesToSeconds(this.editor.gameMinutes), crazyTaskSeconds = minutesToSeconds(this.editor.crazyTaskMinutes);
+              if (!Number.isInteger(gameSeconds) || gameSeconds < 60 || gameSeconds > 3600) throw new Error('invalid_game_seconds');
+              if (this.editor.gameMode === 'crazy' && (!Number.isInteger(crazyTaskSeconds) || crazyTaskSeconds < 30 || crazyTaskSeconds > 300)) throw new Error('invalid_crazy_task_seconds');
               let crazyMinSeconds = Number(this.editor.crazyMinSeconds), crazyMaxSeconds = Number(this.editor.crazyMaxSeconds);
               if (!Number.isInteger(seconds) || seconds < 15 || seconds > 120) throw new Error('invalid_settings');
               const validInterval = Number.isInteger(crazyMinSeconds) && Number.isInteger(crazyMaxSeconds) && crazyMinSeconds >= 5 && crazyMaxSeconds <= 300 && crazyMinSeconds <= crazyMaxSeconds;
               if (this.editor.gameMode === 'crazy' && !validInterval) throw new Error('invalid_crazy_interval');
               if (!validInterval) { crazyMinSeconds = 60; crazyMaxSeconds = 180; }
-              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
+              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameSeconds, crazyTaskSeconds: crazyTaskSeconds >= 30 && crazyTaskSeconds <= 300 ? crazyTaskSeconds : 150, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
               this.confirmation = 'topic'; this.error = '';
             } catch (error) { this.error = error.message; }
           }
@@ -318,6 +347,7 @@ var TALK_PLAYER = (() => {
         this.act(type === 'forceEnd' ? 'end' : type, {
           ...(b.dataset.target ? { target: b.dataset.target } : {}),
           ...(b.dataset.promptId ? { promptId: b.dataset.promptId } : {}),
+          ...(type === 'addTime' ? { seconds: 60 } : {}),
           ...(type === 'note' ? { text: this.draft } : {}),
           ...(type === 'forceEnd' ? { confirm: true } : {}),
           ...(type === 'crazyPause' ? { paused: !this.data.talk.crazy.paused } : {}),
@@ -357,9 +387,9 @@ var TALK_PLAYER = (() => {
       this.data = data;
       // Recover an unacknowledged request after a card refresh. A second
       // action must not overwrite the first while the host is reconnecting.
-      const actionCurrent = action => TALK_UI.crazyAction(action?.type)
+      const actionCurrent = action => (data.talk.phase !== 'ended' || ['newTopic','starters','explain'].includes(action?.type)) && (TALK_UI.crazyAction(action?.type)
         ? data.talk.crazy?.prompt?.id === action.promptId && data.talk.crazy.prompt.status === 'pending'
-        : action?.turnId === data.talk.turnId;
+        : action?.turnId === data.talk.turnId);
       if (!this.pending && data.talkAction?.sessionId === data.talk.sessionId && actionCurrent(data.talkAction)
           && data.talk.reply?.id !== data.talkAction.id) {
         this.pending = data.talkAction; this.sentAt = this.now();
@@ -387,7 +417,7 @@ var TALK_PLAYER = (() => {
       const command = this.pending;
       Promise.resolve().then(() => this.send(command)).catch(e => {
         if (this.pending?.id !== command.id) return;
-        this.error = ['stale_turn','stale_prompt','waiting_players','pending_questions','question_open','not_available','invalid_topic','invalid_extension','invalid_settings','invalid_crazy_interval','confirmation_required','invalid_crazy_assignment','target_busy','invalid_target','invalid_prompt','recipient_busy','queue_full'].includes(e.message) ? e.message : 'error';
+        this.error = ['stale_turn','stale_prompt','waiting_players','pending_questions','question_open','not_available','invalid_topic','invalid_extension','invalid_settings','invalid_crazy_interval','invalid_game_seconds','invalid_crazy_task_seconds','confirmation_required','invalid_crazy_assignment','target_busy','invalid_target','invalid_prompt','recipient_busy','queue_full'].includes(e.message) ? e.message : 'error';
         if (this.error === 'pending_questions') this.confirmation = 'end';
         this.pending = null; this.render(true); if (this.confirmation) this.focusConfirmation();
       });
@@ -399,12 +429,13 @@ var TALK_PLAYER = (() => {
       let controls = '';
       if (s.phase === 'thinking') {
         if (s.mode === 'write') controls += `<label class="talk-field">${esc(t('noteLabel'))}<textarea data-talk-note maxlength="180" rows="3" placeholder="${esc(t('notePlaceholder'))}">${esc(this.draft)}</textarea></label>${button(s.myNote ? 'updateNote' : 'sendNote', 'note')}${s.myNote ? `<p class="talk-soft">${esc(t('noteSent'))}</p>` : ''}`;
-      } else if (s.conversationMode !== 'free' && s.speaker === me) {
+      } else if (s.phase === 'talking' && s.conversationMode !== 'free' && s.speaker === me) {
         controls += s.activeQuestion ? button('resume', 'resume', '', true) : button('end', 'end', '', true);
       }
       if (s.sharedControls === true && s.hostControls) {
         controls += '<div class="talk-actions talk-flow-controls">' +
           (s.actions?.start ? button('start', 'start', '', true) : '') +
+          (s.actions?.addTime ? button('addMinute', 'addTime') : '') +
           (s.actions?.end && s.conversationMode !== 'free' && s.speaker !== me && !s.activeQuestion ? button('helpEnd', 'end') : '') +
           (s.actions?.resume && s.activeQuestion && s.activeQuestion.playerNum !== me && s.speaker !== me ? button('helpResume', 'resume') : '') + '</div>';
       }
@@ -435,15 +466,16 @@ var TALK_PLAYER = (() => {
       this.shownPrompt = prompt?.status === 'pending' ? prompt.id : null;
       this.element.innerHTML = `<div class="secret-card talk-player${myTurn ? ' talk-my-turn' : ''}${s.gameMode === 'crazy' ? ' talk-is-crazy' : ''}">
         <div class="talk-card-top">${this.nameBanner(data)}<span class="talk-kicker">${s.gameMode === 'crazy' ? 'CRAZY TALK' : 'LET’S TALK'}</span></div>
+        ${s.phase === 'talking' ? '<div class="talk-round-strip"><span data-talk-round-clock></span>' + (s.gameMode === 'crazy' ? '<small>' + esc(t('scoreHint')) + '</small>' : '') + '</div>' : ''}
         ${TALK_UI.crazyHTML(s)}
-        <section class="talk-topic-card"><span class="talk-kicker">${esc(t('setupTopic'))}</span><p class="talk-player-topic">${esc(s.topic.question)}</p>
+        ${s.phase === 'ended' ? `<section class="talk-rest-card"><span class="talk-rest-icon" aria-hidden="true">☕</span><h2>${esc(t('roundRest'))}</h2><p>${esc(t('roundFinished'))}</p><p class="talk-soft">${esc(t('restHint'))}</p></section>${TALK_UI.scoreboardHTML(s,me)}${s.sharedControls === true && s.actions?.newTopic ? '<div class="talk-actions">' + button('newRound','settings','',true) + '</div>' : ''}` : `<section class="talk-topic-card"><span class="talk-kicker">${esc(t('setupTopic'))}</span><p class="talk-player-topic">${esc(s.topic.question)}</p>
         ${s.showStarters && s.starter && !(s.extended && s.starter === s.topic.followUp) ? `<details class="talk-topic-explanation"><summary>${esc(t('showStarters'))}</summary><p class="talk-starter">${esc(s.starter)}</p></details>` : ''}
-        ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}</section>
-        <section class="talk-current-state${myTurn ? ' is-your-turn' : ''}"><span class="talk-kicker">${esc(t('stateTitle'))}</span><div class="talk-floor" aria-live="polite">${esc(TALK_UI.status(s, me))}</div>
+        ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}</section>`}
+        ${s.phase !== 'ended' ? `<section class="talk-current-state${myTurn ? ' is-your-turn' : ''}"><span class="talk-kicker">${esc(t('stateTitle'))}</span><div class="talk-floor" aria-live="polite">${esc(TALK_UI.status(s, me))}</div>
         ${s.phase === 'thinking' ? '<p class="talk-soft" data-talk-clock></p>' : ''}
-        <p class="talk-soft">${esc(t(s.phase === 'thinking' ? 'thinking' : s.conversationMode === 'free' ? 'conversationHintFree' : myTurn ? 'turnHint' : 'listening'))}</p>
-        <div class="talk-controls">${controls}</div></section>
-        <section class="talk-card-roster"><div class="talk-section-label"><span>${esc(t('participantsTitle'))}</span><span>${list(s.roster).length}</span></div>${TALK_UI.participantsHTML(s, me)}</section>
+        <p class="talk-soft">${esc(t(s.phase === 'ended' ? 'restHint' : s.phase === 'thinking' ? 'thinking' : s.conversationMode === 'free' ? 'conversationHintFree' : myTurn ? 'turnHint' : 'listening'))}</p>
+        <div class="talk-controls">${controls}</div></section>` : ''}
+        ${s.phase !== 'ended' || s.gameMode !== 'crazy' ? `<section class="talk-card-roster"><div class="talk-section-label"><span>${esc(t('participantsTitle'))}</span><span>${list(s.roster).length}</span></div>${TALK_UI.participantsHTML(s, me)}</section>` : ''}
         ${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}${assignment}
         ${this.confirmation ? `<section class="talk-card-confirm" role="alertdialog" aria-label="${esc(t(this.confirmation === 'end' ? 'forceEnd' : 'openTopic'))}"><p>${esc(t(this.confirmation === 'end' ? 'confirmEnd' : 'confirmNewTopic', { n: list(s.questions).length }))}</p>${this.confirmation === 'topic' ? `<p class="talk-player-topic">${esc(this.topicToOpen?.topic.question)}</p>` : ''}<div class="talk-actions">${button(this.confirmation === 'end' ? 'confirmSkip' : 'confirmOpen', this.confirmation === 'end' ? 'confirmEnd' : 'confirmTopic', '', true)}${button('cancel', 'cancelConfirm')}</div></section>` : ''}
         ${managementHTML(s, this)}
@@ -477,13 +509,19 @@ var TALK_PLAYER = (() => {
       const message = offline ? 'offline' : hostAway ? 'hostAway' : this.pending ? (now - this.sentAt > 2000 ? (s.sharedControls === true ? 'waitingServer' : 'waitingHost') : 'waiting') : '';
       const status = this.element.querySelector('.talk-connection');
       if (status) status.textContent = message ? t(message) : '';
+      const roundExpired = s.phase === 'talking' && Number(s.gameDeadline) > 0 && now >= s.gameDeadline;
+      const promptExpired = s.crazy?.prompt?.status === 'pending' && Number(s.crazy.prompt.expiresAt) > 0 && now >= s.crazy.prompt.expiresAt;
       this.element.querySelectorAll('[data-talk-action]').forEach(b => {
-        b.disabled = b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry');
+        b.disabled = b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction));
         if (b.dataset.talkAction === 'retry') b.hidden = now - this.sentAt < 6000;
       });
       this.element.querySelectorAll('[data-talk-editor-field], [data-talk-shared-input], [data-talk-assignment-field]').forEach(input => { input.disabled = offline || hostAway || !!this.pending; });
       const clock = this.element.querySelector('[data-talk-clock]');
       if (clock) clock.textContent = t('secondsLeft', { n: Math.max(0, Math.ceil((s.deadline - now) / 1000)) });
+      const roundClock = this.element.querySelector('[data-talk-round-clock]');
+      if (roundClock) roundClock.textContent = t('roundClock', { time: TALK_UI.duration((s.gameDeadline - now) / 1000) });
+      const taskClock = this.element.querySelector('[data-talk-task-clock]');
+      if (taskClock) taskClock.textContent = t('taskClock', { time: TALK_UI.duration((s.crazy?.prompt?.expiresAt - now) / 1000) });
       this.element.querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now) e.remove(); });
     }
     destroy() {

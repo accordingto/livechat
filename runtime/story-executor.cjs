@@ -75,11 +75,11 @@ const adapters = {
   }),
   onceupon: adapter(ONCE, 'once', 'onceAction', state => state),
   letstalk: adapter(TALK, 'talk', 'talkAction', (state, ctx) => {
-    if (state?.phase === 'thinking' && now(ctx) >= Number(state.deadline) && online(state, ctx).length >= 2) return TALK.apply(state, tick(state, 'start', ctx, state.deadline));
-    if (!TALK.crazyDue(state, now(ctx))) return state;
-    return TALK.apply(state, tick(state, 'crazyTick', ctx,
-      [state.crazy.nextAt, state.crazy.sequence, state.crazy.nextDeliveryAt,
-        list(state.crazy.queue).map(item => [item.id, item.assignedBy, item.target, item.at])]));
+    if (!TALK.timerDue(state, now(ctx))) return state;
+    return TALK.apply(state, tick(state, 'clockTick', ctx,
+      [state.phase, state.deadline, state.gameDeadline, state.gameSeconds, state.crazy?.schedulerVersion,
+        state.crazy?.nextAssignAt, state.crazy?.scheduleSequence, state.crazy?.replacementFor,
+        list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt])]));
   }),
 };
 module.exports = { adapters };

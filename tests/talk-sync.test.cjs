@@ -194,3 +194,41 @@ test('starter preference reaches every card and survives replacing the host', as
   assert.equal(f.card(1).talk.starter, '');
   second.close();
 });
+
+test('authoritative clock starts a prepared normal round and ends every card at the shared deadline', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  let clock = Date.now(); h.now = () => clock;
+  await h.start({ topic, mode: 'think', seconds: 15, gameSeconds: 60, crazyTaskSeconds: 150 }); await settle(h);
+  assert.equal(h.latest.gameDeadline, 0); assert.equal(f.card(2).talk.gameSeconds, 60);
+  clock = h.latest.deadline; await h.renew(); await settle(h);
+  assert.equal(await h.tickClock(), true); await settle(h);
+  assert.equal(h.latest.phase, 'talking'); assert.equal(h.latest.gameDeadline, clock + 60000);
+  clock = h.latest.gameDeadline; await h.renew(); await settle(h);
+  assert.equal(await h.tickClock(), true); await settle(h);
+  for (const num of [1,2,3,4]) assert.equal(f.card(num).talk.phase, 'ended');
+  const oldSession = h.latest.sessionId;
+  await h.start({ topic: { ...topic, id: 'next-round' }, mode: 'think', seconds: 15, gameMode: 'normal', showStarters: true, gameSeconds: 120, crazyTaskSeconds: 239 });
+  await settle(h);
+  assert.notEqual(h.latest.sessionId, oldSession); assert.equal(h.latest.phase, 'thinking'); assert.equal(h.latest.gameDeadline, 0);
+  assert.equal(f.card(3).talk.gameSeconds, 120); assert.ok(f.card(3).talk.scores.every(entry => entry.score === 0));
+  h.close();
+});
+test('host clock expires a private mission, projects public score and preserves new round timing', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  let clock = Date.now(); h.now = () => clock;
+  await h.start({ topic, seconds: 15, gameMode: 'crazy', gameSeconds: 120, crazyTaskSeconds: 30,
+    crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await h.command('start'); await settle(h);
+  assert.equal(f.card(1).talk.crazy.taskSeconds, 30);
+  clock = h.latest.crazy.nextAssignAt; await h.tickClock(); await settle(h);
+  const recipient = h.latest.crazy.pendingPlayerNums?.[0] || Number(Object.keys(h.latest.crazy.prompts).find(num => h.latest.crazy.prompts[num].status === 'pending'));
+  const prompt = f.card(recipient).talk.crazy.prompt;
+  assert.equal(prompt.status, 'pending'); assert.equal(prompt.expiresAt, clock + 30000);
+  for (const num of [1,2,3,4].filter(num => num !== recipient)) assert.ok(!JSON.stringify(f.card(num)).includes(prompt.text));
+  clock = prompt.expiresAt; await h.renew(); await settle(h); await h.tickCrazy(); await settle(h);
+  assert.equal(f.card(recipient).talk.crazy.prompt.status, 'expired');
+  assert.ok(Object.values(h.latest.crazy.prompts).some(item => item.status === 'pending'), 'expiry hands a new mission to another player');
+  assert.ok(f.card(1).talk.scores.every(entry => entry.score === 0));
+  await h.command('finish'); await settle(h);
+  for (const num of [1,2,3,4]) assert.equal(f.card(num).talk.phase, 'ended');
+  h.close();
+});

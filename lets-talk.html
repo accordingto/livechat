@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-queue-1">
+  <link rel="stylesheet" href="talk.css?v=talk-round-1">
 </head>
 <body class="talk-page">
   <div class="topbar">
@@ -29,6 +29,9 @@
         <div class="talk-mode-settings">
           <label class="talk-field"><span data-i18n="talk.gameMode">玩法</span><select id="talk-game-mode"><option value="normal" data-i18n="talk.normalMode">Let's Talk</option><option value="crazy" data-i18n="talk.crazyMode">Crazy Talk</option></select></label>
           <label class="talk-field"><span data-i18n="talk.conversationMode">談話方式</span><select id="talk-conversation-mode"><option value="assigned" data-i18n="talk.assignedMode">依序輪流</option><option value="random" selected data-i18n="talk.randomMode">隨機點名</option><option value="free" data-i18n="talk.freeMode">自由談話</option></select></label>
+          <label class="talk-field"><span data-i18n="talk.gameDuration">遊戲時間（分鐘）</span><input id="talk-game-seconds" type="number" inputmode="decimal" min="1" max="60" step="any" value="15" required aria-describedby="talk-duration-error"></label>
+          <label id="talk-crazy-task-field" class="talk-field" hidden><span data-i18n="talk.crazyTaskDuration">任務時間（分鐘）</span><input id="talk-crazy-task-seconds" type="number" inputmode="decimal" min="0.5" max="5" step="any" value="2.5" required aria-describedby="talk-duration-error"></label>
+          <p id="talk-duration-error" class="talk-feedback" role="status"></p>
           <p id="talk-mode-hint" class="talk-soft"></p>
           <p id="talk-conversation-hint" class="talk-soft"></p>
           <label id="talk-crazy-source-field" class="talk-field" hidden><span data-i18n="talk.crazySource">挑戰來源</span><select id="talk-crazy-source"><option value="mixed" selected data-i18n="talk.crazySourceMixed">系統＋玩家</option><option value="system" data-i18n="talk.crazySourceSystem">系統出題</option><option value="players" data-i18n="talk.crazySourcePlayers">玩家互相出題</option></select></label>
@@ -38,7 +41,7 @@
               <label class="talk-field"><span data-i18n="talk.crazyMinSeconds">最短</span><input id="talk-crazy-min-seconds" type="number" inputmode="numeric" min="5" max="300" step="1" value="60" required aria-describedby="talk-crazy-schedule-hint talk-crazy-interval-error"></label>
               <label class="talk-field"><span data-i18n="talk.crazyMaxSeconds">最長</span><input id="talk-crazy-max-seconds" type="number" inputmode="numeric" min="5" max="300" step="1" value="180" required aria-describedby="talk-crazy-schedule-hint talk-crazy-interval-error"></label>
             </div>
-            <p id="talk-crazy-schedule-hint" class="talk-soft" data-i18n="talk.crazyScheduleHint">每人各自隨機計時；玩家投稿先排隊，時間到優先派發。</p>
+            <p id="talk-crazy-schedule-hint" class="talk-soft" data-i18n="talk.crazyScheduleHint">通常一人、最多兩人同時有任務；略過或到期就交給下一人。手寫卡優先。</p>
             <p id="talk-crazy-interval-error" class="talk-feedback" role="status"></p>
           </div>
         </div>
@@ -83,7 +86,7 @@
         <div class="talk-actions talk-setup-actions"><button class="talk-button talk-primary" type="submit" id="talk-open" data-i18n="talk.openTopic">開啟話題</button><button class="talk-button" type="button" id="talk-cancel-setup" hidden data-i18n="talk.cancelSetup">返回目前話題</button></div>
       </form>
       <section id="talk-session" hidden>
-        <div class="talk-board">
+        <div class="talk-board" id="talk-active-board">
           <div class="talk-panel talk-topic talk-session-topic">
             <p class="talk-kicker" id="talk-topic-title"></p>
             <h2 id="talk-question"></h2>
@@ -94,7 +97,8 @@
             <div class="talk-panel talk-host-floor talk-host-spotlight">
               <p class="talk-kicker" data-i18n="talk.stateTitle">現在的談話</p>
               <p class="talk-floor" id="talk-floor" aria-live="polite"></p>
-              <p class="talk-soft" id="talk-clock"></p>
+              <p class="talk-round-clock" id="talk-clock" role="timer"></p>
+              <div id="talk-round-controls" class="talk-actions" hidden><button type="button" class="talk-button" id="talk-add-time" data-i18n="talk.addMinute">＋1 分鐘</button><button type="button" class="talk-button" id="talk-finish" data-i18n="talk.finishRound">結束這一局</button></div>
               <p class="talk-soft" id="talk-session-style"></p>
               <div id="talk-help" class="talk-actions" hidden>
                 <button type="button" class="talk-button talk-primary" id="talk-help-end" data-i18n="talk.helpEnd">下一位</button>
@@ -108,7 +112,11 @@
             </div>
           </div>
         </div>
-        <div class="talk-panel talk-participants"><h3 class="talk-kicker" data-i18n="talk.participantsTitle">一起聊天的人</h3><div id="talk-participants-content"></div></div>
+        <section id="talk-round-rest" class="talk-panel talk-round-rest" hidden>
+          <h2 data-i18n="talk.roundRest">休息時間</h2><p data-i18n="talk.restHint">這一局結束了，休息一下，也可以開啟下一局。</p>
+          <div id="talk-round-scores"></div>
+        </section>
+        <div class="talk-panel talk-participants" id="talk-participants-panel"><h3 class="talk-kicker" data-i18n="talk.participantsTitle">一起聊天的人</h3><div id="talk-participants-content"></div></div>
         <details class="talk-panel talk-notes" id="talk-notes" hidden><summary data-i18n="talk.sharedNotes">一起想到的話</summary><div id="talk-notes-content"></div></details>
         <div class="talk-actions talk-session-actions">
           <button type="button" class="talk-button" id="talk-extend" data-i18n="talk.extend">延伸問題</button>
@@ -154,13 +162,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="talk-settings.js?v=talk-queue-1"></script>
+  <script src="talk-settings.js?v=talk-round-1"></script>
   <script src="talk-crazy.js?v=talk-queue-1"></script>
-  <script src="talk-engine.js?v=talk-queue-1"></script>
+  <script src="talk-engine.js?v=talk-round-1"></script>
   <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-ui.js?v=talk-group-1"></script>
-  <script src="talk-sync.js?v=talk-queue-1"></script>
+  <script src="talk-ui.js?v=talk-round-1"></script>
+  <script src="talk-sync.js?v=talk-round-1"></script>
   <script src="hub-executor.js?v=7"></script><script>HUB_EXECUTOR.install();</script>
-  <script src="talk-host.js?v=talk-group-1"></script>
+  <script src="talk-host.js?v=talk-round-1"></script>
 </body>
 </html>

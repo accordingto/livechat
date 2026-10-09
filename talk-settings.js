@@ -8,11 +8,20 @@
   const key = 'lets-talk-settings.v2';
   const pendingKey = 'lets-talk-home-settings.pending.v1';
   const defaults = Object.freeze({ gameMode: 'normal', conversationMode: 'random', crazySource: 'mixed',
-    crazyMinSeconds: 60, crazyMaxSeconds: 180, mode: 'think', seconds: 45 });
+    crazyMinSeconds: 60, crazyMaxSeconds: 180, gameSeconds: 900, crazyTaskSeconds: 150, mode: 'think', seconds: 45 });
   const intervalBounds = Object.freeze({ min: 5, max: 300 });
   function validInterval(min, max) {
     min = Number(min); max = Number(max);
     return Number.isInteger(min) && Number.isInteger(max) && min >= intervalBounds.min && max <= intervalBounds.max && min <= max;
+  }
+  const durationBounds = Object.freeze({ gameSeconds: { min: 60, max: 3600 }, crazyTaskSeconds: { min: 30, max: 300 } });
+  function validDuration(value, key) {
+    const seconds = Number(value), bounds = durationBounds[key];
+    return !!bounds && Number.isInteger(seconds) && seconds >= bounds.min && seconds <= bounds.max;
+  }
+  function minutesToSeconds(value) {
+    const seconds = Number(value) * 60, rounded = Math.round(seconds);
+    return Number.isFinite(seconds) && Math.abs(seconds - rounded) < 1e-7 ? rounded : NaN;
   }
   function normalize(value = {}) {
     value = value && typeof value === 'object' ? value : {};
@@ -26,6 +35,8 @@
       crazySource: ['system', 'players', 'mixed'].includes(value.crazySource) ? value.crazySource : defaults.crazySource,
       crazyMinSeconds: validInterval(min, max) ? min : defaults.crazyMinSeconds,
       crazyMaxSeconds: validInterval(min, max) ? max : defaults.crazyMaxSeconds,
+      gameSeconds: validDuration(value.gameSeconds, 'gameSeconds') ? Number(value.gameSeconds) : defaults.gameSeconds,
+      crazyTaskSeconds: validDuration(value.crazyTaskSeconds, 'crazyTaskSeconds') ? Number(value.crazyTaskSeconds) : defaults.crazyTaskSeconds,
       mode: value.mode === 'write' ? 'write' : 'think',
       seconds: Number.isInteger(Number(value.seconds)) && Number(value.seconds) >= 15 && Number(value.seconds) <= 120 ? Number(value.seconds) : defaults.seconds,
     };
@@ -61,10 +72,14 @@
     system: { zh: '系統出題', en: 'System challenges' },
     players: { zh: '玩家互相出題', en: 'Player challenges' },
     mixed: { zh: '系統＋玩家', en: 'System + players' },
-    interval: { zh: '隨機間隔（秒）', en: 'Random interval (seconds)' },
+    interval: { zh: '派給下一人的間隔（秒）', en: 'Interval before the next player (seconds)' },
+    gameDuration: { zh: '遊戲時間（分鐘）', en: 'Round length (minutes)' },
+    crazyTaskDuration: { zh: '任務時間（分鐘）', en: 'Mission time (minutes)' },
+    invalidGameDuration: { zh: '遊戲時間請填 1–60 分鐘，以整數秒計。', en: 'Use 1–60 minutes, in whole seconds.' },
+    invalidTaskDuration: { zh: '任務時間請填 0.5–5 分鐘，以整數秒計。', en: 'Use 0.5–5 minutes per mission, in whole seconds.' },
     minSeconds: { zh: '最短', en: 'Minimum' },
     maxSeconds: { zh: '最長', en: 'Maximum' },
-    scheduleHint: { zh: '每人各自隨機計時；玩家投稿先排隊，時間到優先派發。', en: 'Each player has an independent random timer. Player submissions queue for priority delivery when due.' },
+    scheduleHint: { zh: '通常一人、最多兩人同時有任務；略過或到期就交給下一人。手寫卡優先。', en: 'Usually one active mission, at most two. Skips and expiry move to the next player. Player cards go first.' },
     invalidInterval: { zh: '請填 5–300 的整數秒，最短不能大於最長。', en: 'Enter whole seconds from 5 to 300. Minimum cannot exceed maximum.' },
     saved: { zh: '選好後，按上方卡片進入選題。', en: 'Choose your settings, then open the card above to pick a topic.' },
   };
@@ -72,19 +87,31 @@
     if (!element) return;
     const fields = Array.from(element.querySelectorAll('[data-talk-pref]'));
     const settings = read(storage);
-    fields.forEach(field => { field.value = String(settings[field.dataset.talkPref]); });
-    const rawValues = () => ({ ...read(storage), ...Object.fromEntries(fields.map(field => [field.dataset.talkPref, field.value])) });
-    const message = () => typeof I18N === 'undefined' ? dict.invalidInterval.zh : I18N.t('talkSettings', 'invalidInterval');
+    fields.forEach(field => { field.value = String(field.dataset.talkUnit === 'minutes' ? settings[field.dataset.talkPref] / 60 : settings[field.dataset.talkPref]); });
+    const rawValues = () => ({ ...read(storage), ...Object.fromEntries(fields.map(field => [field.dataset.talkPref, field.dataset.talkUnit === 'minutes' ? minutesToSeconds(field.value) : field.value])) });
+    const message = key => typeof I18N === 'undefined' ? dict[key].zh : I18N.t('talkSettings', key);
     const paint = () => {
       const raw = rawValues(), current = normalize(raw);
-      const valid = current.gameMode !== 'crazy' || validInterval(raw.crazyMinSeconds, raw.crazyMaxSeconds);
+      const validRange = current.gameMode !== 'crazy' || validInterval(raw.crazyMinSeconds, raw.crazyMaxSeconds);
+      const validGame = validDuration(raw.gameSeconds, 'gameSeconds');
+      const validTask = current.gameMode !== 'crazy' || validDuration(raw.crazyTaskSeconds, 'crazyTaskSeconds');
+      const valid = validRange && validGame && validTask;
       element.querySelectorAll('[data-talk-crazy-setting]').forEach(node => { node.hidden = current.gameMode !== 'crazy'; });
-      fields.filter(field => ['crazyMinSeconds', 'crazyMaxSeconds'].includes(field.dataset.talkPref)).forEach(field => {
-        field.setCustomValidity?.(valid ? '' : message());
-        field.setAttribute?.('aria-invalid', String(!valid));
-      });
+      for (const field of fields) {
+        const key = field.dataset.talkPref;
+        const errorKey = ['crazyMinSeconds', 'crazyMaxSeconds'].includes(key) && !validRange ? 'invalidInterval'
+          : key === 'gameSeconds' && !validGame ? 'invalidGameDuration'
+          : key === 'crazyTaskSeconds' && !validTask ? 'invalidTaskDuration' : '';
+        field.setCustomValidity?.(errorKey ? message(errorKey) : '');
+        field.setAttribute?.('aria-invalid', String(!!errorKey));
+      }
       const error = element.querySelector?.('[data-talk-range-error]');
-      if (error) { error.hidden = valid; error.textContent = valid ? '' : message(); }
+      if (error) { error.hidden = validRange; error.textContent = validRange ? '' : message('invalidInterval'); }
+      const durationError = element.querySelector?.('[data-talk-duration-error]');
+      if (durationError) {
+        durationError.hidden = validGame && validTask;
+        durationError.textContent = !validGame ? message('invalidGameDuration') : !validTask ? message('invalidTaskDuration') : '';
+      }
       return { current, valid };
     };
     fields.forEach(field => field.addEventListener('change', () => {
@@ -95,7 +122,7 @@
     if (typeof I18N !== 'undefined') I18N.onChange?.(paint);
     paint();
   }
-  return { key, pendingKey, defaults, intervalBounds, validInterval, normalize, read, save, markPending, consumePending, bind, dict };
+  return { key, pendingKey, defaults, intervalBounds, durationBounds, validInterval, validDuration, minutesToSeconds, normalize, read, save, markPending, consumePending, bind, dict };
 });
 if (typeof document !== 'undefined' && typeof TALK_SETTINGS !== 'undefined') {
   if (typeof I18N !== 'undefined') I18N.registerDict('talkSettings', TALK_SETTINGS.dict);

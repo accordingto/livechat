@@ -1,94 +1,75 @@
-# Current: shared discussion topics and timed Crazy Talk — 2026-10-09
+# Current: shared topics and focused timed rounds — 2026-10-10
 
-The topic library uses shared situations that the whole
-table can discuss and shape together: concrete plans, rules, trade-offs,
-imagined games and playful decisions. Main questions, explanations and
-follow-ups should invite people to respond to one another, negotiate or build
-on a proposal, rather than interview each person about private experiences.
-Keep all 96 stable topic IDs and 13 category IDs. Both original 48 topics and
-48 Chat Wolf-derived topics receive new wording. Adapted topics keep their
-sourceTopicId trace and use source='chatwolf-adapted'; Talk remains independent
-of Chat Wolf roles, secret missions and runtime. All main questions and
-explanations are at most 26 words.
-The 672 main/follow-up questions are distinct and invite shared decisions,
-reactions and building on proposals. Content changes do not alter conversation
-modes, their defaults or Crazy Talk scheduling.
+Both Talk modes have a round clock, default 15 minutes (configurable from 1 to
+60 minutes). Preparation is separate: the round clock begins when conversation
+starts. The shared screen and authenticated shared-control player cards can
+add one minute while a round is running, or finish early. At the deadline the
+round enters `ended`, pending missions are cancelled, queued cards are cleared,
+and a rest screen shows final Crazy Talk scores. Late commands cannot add time,
+earn points or resume that round. Opening a new topic starts a fresh preparation
+period, resets scores and preserves the chosen duration settings.
 
-Topic revision verification: all 1298 project tests passed after integrating
-current Bluff changes. Real Chrome on localhost and production verified six
-preview samples, scenario-first random draws, eighth follow-up selection,
-shared player topics/participants in both Talk modes, free conversation,
-375px/320px layouts without overflow and zero page errors. Production assets
-matched Talk 17/17 and full-site 45/45, with API readiness and runtime privacy
-checks passing. Content and browser changes published; backend unchanged.
-Existing active topics remain saved until explicit newTopic.
+Crazy Talk uses one shared random countdown until the next participant gets a
+mission, rather than separate timers for every player. The default range is
+60–180 seconds; whole-second bounds may be 5–300, with minimum no greater than
+maximum. One card is assigned per operation, and at most two players have pending
+missions. Known absent players are excluded when authoritative presence is available;
+fixed-target cards wait for their recipient to return. The next scheduled slot waits
+while both slots are occupied. Skipping
+or reaching a mission deadline immediately passes a replacement to a different
+eligible player. A completed mission awards its recipient exactly one point;
+skips, expiry and cancellation award zero. Completion keeps the existing shared
+schedule. Every mission expires after 2.5 minutes by default (configurable from
+30 to 300 seconds). Pause stops new deliveries while mission and round clocks
+continue; replacements wait until delivery resumes.
 
-The homepage saves game and conversation preferences in `lets-talk-settings.v2`;
-`talk-settings.js` normalizes them for host setup and the optional initializer.
-Conversation modes: assigned follows roster order, random gives everyone one
-turn per round, free has no nominated speaker or handover controls. Old rooms
-default to random. Host and shared player settings both support these options;
-newTopic preserves them when a legacy caller omits the new fields. Explicit
-homepage edits open the next host setup with saved values; returning to the
-current topic keeps the active session. Custom preparation times are preserved.
+Sources remain system, players or mixed (default). The system bank has 96 short
+English cards: 60 lines and 36 improv tasks, at most 9 words and 48 characters.
+A player can queue a handwritten line/task during preparation or conversation,
+including while delivery is paused. Submissions accept 1–120 trimmed characters,
+with at most 10 per author and 20 per room. The default recipient is a random
+other player; an explicit other player is optional. Cards remain queued until a
+scheduled delivery or skip/expiry replacement. Eligible player cards take
+priority; player-only mode never falls back to the system. Submission itself
+never reveals a card immediately. An occupied player is not overwritten.
 
-Player cards show the topic, current conversation state and participants.
-Speaking/question requests and reaction controls are removed from the UI.
-Legacy commands remain compatible with saved rooms; resume and explicit
-handover confirmation clear old question state without stranding play.
-Explanations, topic changes and custom follow-ups use compact details.
+Private projections show only the recipient's mission and its deadline, and
+only the author's queued count. Shared projections expose active participant
+numbers, aggregate counts, scores and the shared next-assignment deadline,
+without another player's mission or queue text. Scores, deadlines, expiry and
+replacement selection are authoritative and deterministic across transaction
+retries. Repeated completion commands cannot score twice. Old saved rooms
+receive a fresh round clock and safe mission deadlines during migration; their
+private cards remain, with excess old pending cards cancelled to enforce two
+slots. Legacy timing converts to the previous 80–120% range. `crazyTick` remains
+a clock alias; legacy `crazySend` only redraws a future shared timer.
 
-Crazy Talk has 96 original English prompts: 60 lines and 36 verbal improv tasks, all at most 9 words and 48 characters.
-Sources are system, players, or mixed (default). Every participant has an
-independent random timer configured by crazyMinSeconds/crazyMaxSeconds.
-The default range is 60–180 seconds; both bounds must be integers from 5 to 300
-with minimum no greater than maximum. Equal bounds give a fixed interval.
-Legacy saved crazySeconds values convert to 80–120% of that interval, while
-existing pending missions and saved deadlines survive ordinary synchronization.
+Player cards retain the navy/cream topic layout and private pink mission card,
+with round and mission countdowns, active mission indicators and points.
+Speaking/question request buttons are removed. Chinese IME composition and
+unsent local drafts survive ordinary synchronization. Both host and player
+settings use minutes and reject fractional seconds. The homepage saves game,
+conversation and duration preferences in `lets-talk-settings.v2`; explicit home
+edits apply to the next setup while returning to an active round preserves it.
+Assigned, random and free conversation modes are unchanged.
 
-Players/mixed permits an authenticated player to queue a handwritten line or
-task during preparation or conversation, including while delivery is paused.
-crazyAssign accepts text (1–120 trimmed characters), kind line/task and the
-current turnId. Omitted/null target selects a random other participant at
-delivery; a numeric target chooses a specific other participant. Submissions
-are queued, never delivered immediately. The room holds at most 20 submissions
-and each author at most 10. Eligible player submissions take priority at the
-recipient's next independent timer. Mixed mode falls back to system prompts
-when no eligible submission exists; players mode schedules the same timers
-without system fallback. The author sees only their own queued count.
+The library remains 96 shared situations and 672 distinct main/follow-up
+questions across 13 categories, with all stable IDs and source traces retained.
+Questions invite group proposals, shared choices and responses to others rather
+than personal interviews. Main questions and explanations are at most 26 words.
+Existing active topics stay saved until an explicit new topic is opened.
 
-Only the recipient projection receives the delivered mission; other players
-and the host see aggregate counts. An unfinished mission is never overwritten.
-Obsolete turn/session, invalid recipient and forged actor are rejected.
-Pause stops delivery and still accepts submissions; existing missions remain
-available for done/skip. Resume schedules future timers without catch-up bulk
-delivery. Each tick delivers at most one mission, at least four seconds apart.
-There is no immediate-send UI; deprecated crazySend redraws future
-timers and exposes actions.crazySend=false. No scoring or audio API is used.
+Runtime changes require publishing both the independent service and frontend.
+No audio API or automatic speech judgement is used; players mark their own
+mission complete. Only authenticated recipients can acknowledge their prompt.
 
-Drafts remain local during sync, clear only after successful acknowledgement,
-and remain on rejected submissions. Chinese IME composition defers redraw.
-Mobile and desktop use the same topic/status/participant hierarchy. A server-owned
-manager reconnect reports ready after a successful service pulse even when no
-canonical snapshot changes; failed, closed or switched managers are not revived.
-Runtime changes require redeploying the independent service and frontend.
-
-Previous timer/queue release verification (before this topic revision): all 1282 project tests passed after integrating
-concurrent Bluff updates. Real Chrome checks on localhost and production verified
-queued-not-immediate delivery, random non-author and explicit recipients, pause-time
-queueing, Chinese IME, 375px/320px layouts without overflow, custom 7–233-second
-range restoration, and zero page errors. Production RPC smoke passed 66 checks;
-eight exact owned nodes were cleaned, with no cleanup failures. Talk assets 17/17
-and full-site assets 45/45 matched; API readiness, CORS, synthetic-ticket rejection
-and private-runtime 404 checks passed. Frontend and independent service published.
-
-Previous board release validation (before this scheduling follow-up): all 1239
-project tests passed after the concurrent Bluff publication fix. Real Chrome
-demo and production checks verified private Chinese player missions, removed
-request buttons, 375px/320px layouts without overflow, zero page errors and
-preserved custom preparation time. Production RPC smoke passed 59 checks using
-two fresh three-player fixtures; eight owned nodes were cleaned without failure.
-Both Talk and full-site deployment asset checks passed.
+Local release verification: all 1325 project tests passed. Real Chrome verified
+homepage defaults15min/2.5min, the shared scheduler, queued custom priority and
+random non-author recipient, completion+1, immediate skip/expiry replacement,
+two-slot cap, add-time, normal/Crazy automatic rest screens and375px/320px layouts
+without overflow or page errors. Independent review reproduced and verified fixes
+for Firebase-empty waiting state and known-absent recipients. Production results
+will be recorded after deployment verification.
 
 The earlier descriptions below document historical versions.
 

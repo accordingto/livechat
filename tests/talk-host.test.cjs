@@ -7,7 +7,9 @@ const { webcrypto } = require('node:crypto');
 const E = require('../talk-engine.js');
 const preferences = require('../talk-settings.js');
 const topics = require('../talk-topics.js');
-function fixture({ saved = {}, initial = null, pending = false } = {}) {
+function fixture({ saved = {}, initial = null, pending = false, time = 1000 } = {}) {
+  let clock = time; const clockTasks = [];
+  class FixtureDate extends Date { static now() { return clock; } }
   const html = fs.readFileSync(require.resolve('../lets-talk.html'), 'utf8');
   class Element {
     constructor(tag = 'DIV') {
@@ -44,23 +46,23 @@ function fixture({ saved = {}, initial = null, pending = false } = {}) {
   class Host {
     constructor(options) { this.options = options; this.connected = true; this.own = true; host = this; this.doc = { state: structuredClone(initial) }; }
     connect() { this.options.onStatus('ready'); this.options.onChange(this.doc.state); }
-    now() { return 1000; }
+    now() { return clock; }
     async start(options) {
       created.push(structuredClone(options));
-      this.doc.state = E.create({ ...options, id: 'new-host-topic', now: 1000, roster: initial.roster });
+      this.doc.state = E.create({ ...options, id: 'new-host-topic', now: clock, roster: initial.roster });
       this.options.onChange(this.doc.state); return this.doc.state;
     }
     async command(type, extra) {
       commands.push({ type, ...extra });
       this.doc.state = E.apply(this.doc.state, { ...extra, type, actor: 0, id: 'host-' + commands.length,
-        sessionId: this.doc.state.sessionId, turnId: this.doc.state.turnId, now: 1000, seed: 35 });
+        sessionId: this.doc.state.sessionId, turnId: this.doc.state.turnId, now: clock, seed: 35 });
       this.options.onChange(this.doc.state);
       const error = this.doc.state.replies[0]?.error; if (error) throw Error(error);
       return this.doc.state;
     }
   }
   const context = vm.createContext({
-    structuredClone, URLSearchParams, crypto: webcrypto, localStorage: storage, setInterval: () => 1, clearInterval() {},
+    structuredClone, URLSearchParams, Date: FixtureDate, crypto: webcrypto, localStorage: storage, setInterval: fn => { clockTasks.push(fn); return clockTasks.length; }, clearInterval() {},
     location: { search: initial ? '' : '?demo=1' }, window: { addEventListener() {} },
     document: { getElementById: id => elements[id], createElement: tag => new Element(tag.toUpperCase()), body: new Element('BODY') },
     I18N: { lang: 'en', registerDict: (ns, dict) => { dictionaries[ns] = dict; }, onChange() {}, t: (ns, key) => dictionaries[ns]?.[key]?.en || key },
@@ -71,7 +73,7 @@ function fixture({ saved = {}, initial = null, pending = false } = {}) {
   });
   vm.runInContext(fs.readFileSync(require.resolve('../talk-ui.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(require.resolve('../talk-host.js'), 'utf8'), context);
-  return { elements, created, commands, storage, host, click: id => elements['talk-' + id].fire('click'), submit: () => elements['talk-setup'].fire('submit') };
+  return { elements, created, commands, storage, host, advance: async value => { clock = value; for (const task of clockTasks) task(); await new Promise(resolve => setImmediate(resolve)); }, click: id => elements['talk-' + id].fire('click'), submit: () => elements['talk-setup'].fire('submit') };
 }
 test('saved custom seconds and homepage modes survive host hydration and opening the topic', async () => {
   const f = fixture({ saved: { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', seconds: 20, crazyMinSeconds: 10, crazyMaxSeconds: 45 } });
@@ -154,4 +156,58 @@ test('host restores a custom range from player settings into the next topic', as
   assert.equal(f.created[0].crazyMinSeconds, 7);
   assert.equal(f.created[0].crazyMaxSeconds, 233);
   assert.equal(f.created[0].crazySource, 'players');
+});
+
+test('host minute settings propagate custom round length and mission expiry without losing precision', async () => {
+  const initial = E.create({ id: 'timed-old', now: 1000, topic: { question: 'Build a silly park.' },
+    gameSeconds: 601, crazyTaskSeconds: 239, gameMode: 'crazy',
+    roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
+  const f = fixture({ initial });
+  assert.equal(Number(f.elements['talk-game-seconds'].value), 601 / 60);
+  assert.equal(Number(f.elements['talk-crazy-task-seconds'].value), 239 / 60);
+  await f.click('new'); await f.submit();
+  assert.equal(f.created[0].gameSeconds, 601); assert.equal(f.created[0].crazyTaskSeconds, 239);
+  f.elements['talk-game-seconds'].value = '0.5'; await f.submit();
+  assert.equal(f.created.length, 1); assert.ok(f.elements['talk-host-error'].textContent);
+  f.elements['talk-game-seconds'].value = '2'; f.elements['talk-crazy-task-seconds'].value = '0.1'; await f.submit();
+  assert.equal(f.created.length, 1);
+  f.elements['talk-crazy-task-seconds'].value = '2.5'; await f.submit();
+  assert.equal(f.created[1].gameSeconds, 120); assert.equal(f.created[1].crazyTaskSeconds, 150);
+});
+test('host extends and finishes a round, shows rest and resets a new topic', async () => {
+  let initial = E.create({ id: 'round-controls', now: 1000, topic: { question: 'Choose a mascot.' }, gameSeconds: 60,
+    gameMode: 'crazy', roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
+  initial = E.apply(initial, { id: 'round-start', type: 'start', actor: 0, sessionId: initial.sessionId, now: 1000 });
+  const f = fixture({ initial });
+  assert.equal(f.elements['talk-round-controls'].hidden, false);
+  await f.click('add-time');
+  assert.deepEqual(f.commands.at(-1), { type: 'addTime', seconds: 60 });
+  assert.equal(f.host.doc.state.gameDeadline, 121000);
+  await f.click('finish');
+  assert.equal(f.host.doc.state.phase, 'ended'); assert.equal(f.elements['talk-round-rest'].hidden, false);
+  assert.equal(f.elements['talk-active-board'].hidden, true);
+  assert.equal(f.elements['talk-participants-panel'].hidden, true);
+  await f.click('new'); await f.submit();
+  assert.equal(f.host.doc.state.phase, 'thinking'); assert.equal(f.host.doc.state.gameDeadline, 0);
+  assert.ok(E.view(f.host.doc.state,0,1000).talk.scores.every(entry => entry.score === 0));
+});
+test('host demo automatically ends a normal round at its authoritative deadline', async () => {
+  const f = fixture({ saved: { gameSeconds: 60 } });
+  await f.submit(); await f.click('start');
+  assert.equal(f.elements['talk-round-rest'].hidden, true);
+  await f.advance(61000);
+  assert.equal(f.elements['talk-round-rest'].hidden, false); assert.equal(f.elements['talk-active-board'].hidden, true);
+  for (const id of ['start', 'help', 'extend', 'round-controls']) assert.equal(f.elements['talk-' + id].hidden, true);
+  assert.equal(f.elements['talk-participants-panel'].hidden, false);
+});
+
+test('normal-room hydration preserves a saved mission duration when the next topic switches to Crazy', async () => {
+  const initial = E.create({ id: 'normal-saved-duration', now: 1000, topic: { question: 'Invent a team badge.' },
+    gameSeconds: 601, crazyTaskSeconds: 239, gameMode: 'normal',
+    roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
+  const f = fixture({ initial });
+  assert.equal(Number(f.elements['talk-crazy-task-seconds'].value), 239 / 60);
+  await f.click('new'); f.elements['talk-game-mode'].value = 'crazy';
+  await f.elements['talk-game-mode'].fire('change'); await f.submit();
+  assert.equal(f.created[0].gameMode, 'crazy'); assert.equal(f.created[0].crazyTaskSeconds, 239);
 });

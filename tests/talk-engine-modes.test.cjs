@@ -31,7 +31,7 @@ test('assigned recovery skips absent participants and retains roster order for t
 });
 
 test('free conversation starts with all participants and never assigns or advances an individual speaker', () => {
-  let state = act(create({ conversationMode: 'free', sharedControls: true, gameMode: 'crazy' }), 'start', 2);
+  let state = act(create({ conversationMode: 'free', sharedControls: true, gameMode: 'crazy', gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5 }), 'start', 2);
   assert.equal(state.phase, 'talking'); assert.equal(state.speaker, null); assert.equal(state.turnId, 1);
   assert.deepEqual(state.remaining, []); assert.deepEqual(E.order(state), []);
   for (const seat of state.roster) {
@@ -43,18 +43,25 @@ test('free conversation starts with all participants and never assigns or advanc
   state = act(state, 'recover', 5, { onlineNums: [2, 5] });
   assert.equal(state.speaker, null); assert.equal(state.turnId, turn);
   state = act(state, 'crazySend', 2); assert.deepEqual(state.crazy.prompts, {});
-  state = act(state, 'crazyTick', 2, { now: Math.max(...Object.values(state.crazy.nextAt)) });
+  state = act(state, 'crazyTick', 2, { now: state.crazy.nextAssignAt });
   assert.equal(Object.keys(state.crazy.prompts).length, 1); assert.equal(state.speaker, null);
+  assert.equal(state.crazy.nextAt, undefined);
+  const active = Object.values(state.crazy.prompts)[0];
+  assert.equal(active.expiresAt - active.at, 30000);
+  assert.deepEqual(E.view(state, 2, active.at).talk.scores, [7, 2, 5].map(playerNum => ({ playerNum, score: 0 })));
+  state = act(state, 'clockTick', 0, { now: state.gameDeadline });
+  assert.equal(state.phase, 'ended'); assert.equal(state.speaker, null);
+  assert.equal(Object.values(state.crazy.prompts)[0].status, 'cancelled');
 });
 
 test('legacy states retain random conversation and mixed prompts without losing saved assignments', () => {
   let state = act(create({ gameMode: 'crazy' }), 'start');
-  state = act(state, 'crazyTick', 0, { now: Math.max(...Object.values(state.crazy.nextAt)) });
+  state = act(state, 'crazyTick', 0, { now: state.crazy.nextAssignAt });
   delete state.conversationMode; delete state.crazy.source;
   const previous = JSON.stringify(state.crazy.prompts);
   const view = E.view(state, 2, 0).talk;
   assert.equal(view.conversationMode, 'random'); assert.equal(view.crazy.source, 'mixed');
-  state = act(state, 'end'); assert.equal(JSON.stringify(state.crazy.prompts), previous);
+  state = act(state, 'end', 0, { now: state.crazy.lastAssignAt + 1 }); assert.equal(JSON.stringify(state.crazy.prompts), previous);
 });
 
 test('new topic accepts, preserves and validates both conversation and Crazy prompt-source settings', () => {

@@ -633,17 +633,20 @@
       <div class="talk-home-fields">
         <label><span data-i18n="talkSettings.gameMode">玩法</span><select data-talk-pref="gameMode"><option value="normal" data-i18n="talkSettings.normal">Let's Talk · 一起聊</option><option value="crazy" data-i18n="talkSettings.crazy">Crazy Talk · 荒謬挑戰</option></select></label>
         <label><span data-i18n="talkSettings.conversationMode">談話方式</span><select data-talk-pref="conversationMode"><option value="assigned" data-i18n="talkSettings.assigned">依序輪流</option><option value="random" data-i18n="talkSettings.random">隨機點名</option><option value="free" data-i18n="talkSettings.free">自由談話</option></select></label>
+        <label><span data-i18n="talkSettings.gameDuration">遊戲時間（分鐘）</span><input type="number" inputmode="decimal" min="1" max="60" step="any" data-talk-pref="gameSeconds" data-talk-unit="minutes" value="15" required aria-describedby="talk-home-duration-error"></label>
+        <label data-talk-crazy-setting hidden><span data-i18n="talkSettings.crazyTaskDuration">任務時間（分鐘）</span><input type="number" inputmode="decimal" min="0.5" max="5" step="any" data-talk-pref="crazyTaskSeconds" data-talk-unit="minutes" value="2.5" required aria-describedby="talk-home-duration-error"></label>
         <label data-talk-crazy-setting hidden><span data-i18n="talkSettings.crazySource">挑戰來源</span><select data-talk-pref="crazySource"><option value="mixed" data-i18n="talkSettings.mixed">系統＋玩家</option><option value="system" data-i18n="talkSettings.system">系統出題</option><option value="players" data-i18n="talkSettings.players">玩家互相出題</option></select></label>
         <div class="talk-home-range" data-talk-crazy-setting hidden>
-          <span data-i18n="talkSettings.interval">隨機間隔（秒）</span>
+          <span data-i18n="talkSettings.interval">派給下一人的間隔（秒）</span>
           <div class="talk-home-fields">
             <label><span data-i18n="talkSettings.minSeconds">最短</span><input type="number" inputmode="numeric" min="5" max="300" step="1" data-talk-pref="crazyMinSeconds" value="60" required aria-describedby="talk-home-schedule-hint talk-home-range-error"></label>
             <label><span data-i18n="talkSettings.maxSeconds">最長</span><input type="number" inputmode="numeric" min="5" max="300" step="1" data-talk-pref="crazyMaxSeconds" value="180" required aria-describedby="talk-home-schedule-hint talk-home-range-error"></label>
           </div>
-          <p id="talk-home-schedule-hint" data-i18n="talkSettings.scheduleHint">每人各自隨機計時；玩家投稿先排隊，時間到優先派發。</p>
+          <p id="talk-home-schedule-hint" data-i18n="talkSettings.scheduleHint">通常一人、最多兩人同時有任務；略過或到期就交給下一人。手寫卡優先。</p>
           <p id="talk-home-range-error" data-talk-range-error role="status" hidden></p>
         </div>
       </div>
+      <p id="talk-home-duration-error" data-talk-duration-error role="status" hidden></p>
       <p data-i18n="talkSettings.saved">選好後，按上方卡片進入選題。</p>
     </section>
     </div>
@@ -826,7 +829,7 @@
 
   <footer>IceBreak Hub · <span data-i18n="index.footerTagline">All games are free &amp; no sign-up required</span></footer>
 
-  <script src="talk-settings.js?v=talk-queue-1"></script>
+  <script src="talk-settings.js?v=talk-round-1"></script>
   <script src="qrcode.js"></script>
   <script src="game-data.js"></script>
   <script src="sheet-data.js"></script>

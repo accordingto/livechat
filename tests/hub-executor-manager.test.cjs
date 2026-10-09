@@ -67,17 +67,18 @@ function fixture(t, game, { readiness = null } = {}) {
   return { context, manager, service, calls, statuses, card, state, playerCommand, assertIndependent, game, now: () => clock, setClock: value => { clock = value; }, failNextPulse: code => { nextPulseFailure = code; } };
 }
 
-test('Talk manager schedules queued missions independently and players continue after it closes', async t => {
+test('Talk manager staggers queued missions and round scoring continues after it closes', async t => {
   const f = fixture(t, 'letstalk'), host = f.manager(); await flush(); assert.equal(host.own, true);
   await host.start({ topic: { id: 'manager-topic', question: 'What makes a welcoming place?', followUps: ['Who would visit?'] },
-    mode: 'think', seconds: 120, showStarters: true, gameMode: 'crazy', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 9 });
+    mode: 'think', seconds: 120, showStarters: true, gameMode: 'crazy', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 9, gameSeconds: 60, crazyTaskSeconds: 30 });
   await f.context.HUB_EXECUTOR.ensureHost(host, 'letstalk'); await flush(); f.assertIndependent(host);
   assert.equal(f.card(2).talk.crazy.minSeconds, 5); assert.equal(f.card(2).talk.crazy.maxSeconds, 9);
   await f.playerCommand(2, 'crazyAssign', { target: 3, text: 'Report the conversation like a weather presenter.', kind: 'task' });
   assert.equal(f.state(host).crazy.queue.length, 1); assert.equal(f.card(2).talk.crazy.myQueuedCount, 1);
   assert.equal(f.card(3).talk.crazy.prompt, null, 'submitting a mission queues it during preparation');
   await host.command('start'); assert.equal(f.state(host).phase, 'talking');
-  assert.ok(Object.values(f.state(host).crazy.nextAt).every(at => at >= f.now() + 5000 && at <= f.now() + 9000));
+  assert.ok(f.state(host).crazy.nextAssignAt >= f.now() + 5000 && f.state(host).crazy.nextAssignAt <= f.now() + 9000);
+  assert.equal(f.card(2).talk.gameDeadline, f.now() + 60000); assert.equal(f.card(2).talk.crazy.taskSeconds, 30);
   await host.command('crazySend');
   assert.equal(Object.keys(f.state(host).crazy.prompts).length, 0, 'legacy send redraws timers without bulk delivery');
   const publicView = f.context.TALK_ENGINE.view(f.state(host), 0, f.now()).talk;
@@ -88,24 +89,36 @@ test('Talk manager schedules queued missions independently and players continue 
   assert.equal(f.state(host).crazy.queue.length, 2, 'paused delivery still accepts player submissions');
   const session = f.state(host).sessionId, registerCount = f.calls.filter(call => call.operation === 'register').length;
   host.close();
-  f.setClock(Math.max(...Object.values(f.state(host).crazy.nextAt)) + 1000);
+  f.setClock(f.state(host).crazy.nextAssignAt + 1000);
   await f.playerCommand(2, 'starters', { show: false });
   assert.equal(f.card(3).talk.showStarters, false);
   assert.equal(f.card(3).talk.crazy.prompt, null, 'a paused clock does not deliver overdue missions');
   await f.playerCommand(2, 'crazyPause', { paused: false });
-  f.setClock(f.state(host).crazy.nextAt[3] + 1);
-  await f.playerCommand(2, 'starters', { show: false });
   assert.equal(f.card(3).talk.crazy.prompt.text, 'Report the conversation like a weather presenter.');
   assert.equal(f.card(3).talk.crazy.prompt.source, 'player');
+  assert.equal(f.card(3).talk.crazy.prompt.expiresAt, f.now() + 30000);
+  assert.deepEqual(f.card(1).talk.crazy.pendingPlayerNums, [3]);
   assert.equal(Object.values(f.state(host).crazy.prompts).filter(prompt => prompt.status === 'pending').length, 1);
   assert.equal(f.state(host).crazy.queue.length, 1);
   assert.equal(f.card(2).talk.crazy.myQueuedCount, 1);
   for (const num of [1, 2]) assert.ok(!JSON.stringify(f.card(num)).includes('Report the conversation like a weather presenter.'));
+  f.setClock(f.now() + 1);
+  await f.playerCommand(3, 'crazyDone', { promptId: f.card(3).talk.crazy.prompt.id });
+  for (const num of [1,2,3]) assert.equal(f.card(num).talk.scores.find(entry => entry.playerNum === 3).score, 1);
+  f.setClock(f.state(host).crazy.nextAssignAt + 1);
+  await f.playerCommand(2, 'starters', { show: false });
+  assert.equal(f.card(1).talk.crazy.prompt.text, 'Give a serious advertisement for an imaginary umbrella.');
+  assert.ok(f.card(1).talk.crazy.pendingPlayerNums.length <= 2);
+  assert.equal(f.state(host).crazy.queue.length, 0);
+
   const reopened = f.manager(); await flush(); f.assertIndependent(reopened); assert.equal(f.state(reopened).sessionId, session);
   await reopened.command('extend', { text: 'Which small detail would make people feel included?' });
   assert.equal(f.card(2).talk.topic.followUp, 'Which small detail would make people feel included?');
   assert.equal(f.calls.filter(call => call.operation === 'register').length, registerCount, 'reconnect keeps the existing server epoch');
   assert.equal(f.state(reopened).sharedControls, true); assert.equal(reopened.own, false);
+  f.setClock(f.state(reopened).gameDeadline);
+  await reopened.renew(); await flush();
+  for (const num of [1,2,3]) { assert.equal(f.card(num).talk.phase, 'ended'); assert.equal(f.card(num).talk.crazy.pendingCount, 0); }
 });
 
 test('CUT original manager can open and control a server-owned game, then resume player-paused play after reconnect', async t => {
@@ -156,3 +169,19 @@ for (const game of ['letstalk', 'cut']) {
     assert.equal(f.statuses.at(-1), 'switched', 'later successful pulses cannot reactivate a switched manager');
   });
 }
+
+test('normal Talk round ends through a player pulse after the manager closes and reconnect keeps the rest state', async t => {
+  const f = fixture(t, 'letstalk'), host = f.manager(); await flush();
+  await host.start({ topic: { id: 'normal-round', question: 'Design a common room.' }, mode: 'think', seconds: 15, gameSeconds: 60 });
+  await f.context.HUB_EXECUTOR.ensureHost(host, 'letstalk'); await flush(); f.assertIndependent(host);
+  await host.command('start'); const session = f.state(host).sessionId, capsule = f.card(2).hubExecutor.capsule;
+  host.close(); f.setClock(f.state(host).gameDeadline);
+  await f.service.execute({ capsule, token: '2'.repeat(20) });
+  for (const num of [1,2,3]) {
+    assert.equal(f.card(num).talk.phase, 'ended'); assert.equal(f.card(num).talk.gameDeadline, f.now());
+    assert.equal(f.card(num).talk.actions.addTime, false); assert.equal(f.card(num).talk.actions.finish, false);
+  }
+  const reopened = f.manager(); await flush(); f.assertIndependent(reopened);
+  assert.equal(f.state(reopened).sessionId, session); assert.equal(f.state(reopened).phase, 'ended');
+  assert.equal(f.card(2).hubExecutor.capsule, capsule);
+});

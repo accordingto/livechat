@@ -144,3 +144,26 @@
 .talk-interval-settings > span { font-size: .9rem; font-weight: 700; }
 .talk-interval-settings .talk-soft { margin: 0; }
 .talk-queue-count { margin: 0; padding: 10px 16px; color: var(--talk-muted, #c4cfde); font-size: .85rem; }
+
+.talk-round-strip { display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:7px; width:100%; padding:9px 0; color:#f3d8a0; font-size:.88rem; font-variant-numeric:tabular-nums; }
+.talk-round-strip small { color:#b6c5dc; font-size:.7rem; }
+.talk-task-clock { font-variant-numeric:tabular-nums; font-weight:700; padding:7px 10px; border-radius:8px; background:#ffffff66; justify-self:start; margin:0; }
+.talk-participant-score { flex:0 0 auto; color:#f0d89f; background:#413b2f; min-width:26px; height:26px; border-radius:8px; font-size:.8rem; display:grid; place-items:center; font-variant-numeric:tabular-nums; }
+.talk-rest-card { width:100%; box-sizing:border-box; text-align:center; padding:30px 20px; border:1px solid #736752; border-radius:16px; background:linear-gradient(145deg,#f4e9d0,#e9daba); color:#313341; display:grid; gap:10px; }
+.talk-rest-icon { font-size:2.4rem; }
+.talk-rest-card h2 { font-size:1.7rem; font-family:Georgia,'Times New Roman',serif; font-weight:500; margin:0; }
+.talk-rest-card p { margin:0; }
+.talk-rest-card .talk-soft { color:#656373; }
+.talk-scoreboard { width:100%; box-sizing:border-box; display:grid; gap:12px; text-align:left; }
+.talk-scoreboard h3 { color:#dce7f8; font-size:.9rem; margin:0; }
+.talk-scoreboard ol { list-style:none; margin:0; padding:0; display:grid; gap:7px; }
+.talk-scoreboard li { display:flex; gap:12px; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid #384c69; border-radius:10px; background:#172740; color:#e3eafb; }
+.talk-scoreboard li.is-you { border-color:#ae9565; }
+.talk-scoreboard li span { min-width:0; overflow-wrap:anywhere; }
+.talk-scoreboard li small { color:#adbbd2; font-size:.7rem; }
+.talk-scoreboard li strong { flex-shrink:0; color:#edd299; font-size:.95rem; }
+
+.talk-round-clock { font-size:1.05rem; color:#f0d598; font-variant-numeric:tabular-nums; margin:0; }
+.talk-round-rest { display:grid; gap:16px; padding:26px; }
+.talk-round-rest h2 { color:#f0d8a6; font-size:1.6rem; font-weight:500; margin:0; }
+.talk-round-rest>p { color:#b9c7de; line-height:1.5; margin:0; font-size:.88rem; }

@@ -207,7 +207,7 @@ test('Real engine projections render no other player line and host receives only
   let state = E.create({ id: 'private-ui', topic: { question: 'What should our cafe sell?' },
     gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5, roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
   const command = (type, extra = {}) => { state = E.apply(state, { type, id: 'ui-' + type + '-' + (extra.now || 0), actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: 782, ...extra }); };
-  command('start'); command('crazyTick', { now: 7000 }); command('crazyTick', { now: 11000 });
+  command('start'); command('crazyTick', { now: 7000 }); command('crazyTick', { now: 12000 });
   const own = E.view(state, 2, 2000), other = E.view(state, 1, 2000), host = E.view(state, 0, 2000), f = fixture();
   try {
     f.card.update(own);
@@ -325,7 +325,7 @@ test('new topic preview and custom settings stay local through updates until exp
     f.update(shared({ interests: [{ playerNum: 1, until: 8000 }] }));
     assert.match(f.element.innerHTML, /&lt;img src=x onerror=&quot;boom&quot;&gt;/); assert.doesNotMatch(f.element.innerHTML, /<img/);
     assert.equal(f.card.editor.question, '<img src=x onerror="boom"> What can we imagine?'); assert.equal(sent.length, 0);
-    f.click('openTopic'); assert.equal(sent.length, 0); assert.equal(f.focusedAction(), 'confirmTopic'); assert.equal(f.scrolls(), 1); assert.match(f.element.innerHTML, /Current turns, questions/);
+    f.click('openTopic'); assert.equal(sent.length, 0); assert.equal(f.focusedAction(), 'confirmTopic'); assert.equal(f.scrolls(), 1); assert.match(f.element.innerHTML, /Current turns, missions/);
     f.click('confirmTopic'); await flush();
     assert.equal(sent.length, 1); const command = sent[0];
     assert.equal(command.type, 'newTopic'); assert.equal(command.confirm, true); assert.equal(command.seconds, 30); assert.equal(command.mode, 'write');
@@ -462,5 +462,46 @@ test('switching back to Normal Talk cannot publish an invalid hidden Crazy range
   f.editorField('gameMode','normal','change');f.click('openTopic');assert.equal(f.card.confirmation,'topic');
   f.click('confirmTopic');await flush();
   assert.equal(sent[0].gameMode,'normal');assert.equal(sent[0].crazyMinSeconds,60);assert.equal(sent[0].crazyMaxSeconds,180);
+ }finally{f.card.destroy();}
+});
+
+
+test('round and mission countdowns disable expired acknowledgements without giving local points', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk={...crazy({prompt:prompt({expiresAt:4000})}),gameDeadline:8000,scores:[{playerNum:1,score:0},{playerNum:2,score:2}]};
+  f.update(talk);assert.match(f.node('[data-talk-round-clock]').textContent,/00:07/);assert.match(f.node('[data-talk-task-clock]').textContent,/00:03/);
+  f.setClock(4000);f.card.paint();f.click('crazyDone');f.click('crazySkip');await flush();assert.equal(sent.length,0);
+  assert.match(f.node('[data-talk-task-clock]').textContent,/00:00/);assert.equal(f.card.data.talk.scores[1].score,2);
+  f.setClock(8000);f.card.paint();assert.match(f.node('[data-talk-round-clock]').textContent,/00:00/);
+ }finally{f.card.destroy();}
+});
+
+test('rest view freezes results, escapes names and offers a new round without old task or turn controls', () => {
+ const f=fixture();try {
+  f.update({...shared({phase:'ended',speaker:2,gameMode:'crazy',scores:[{playerNum:1,score:3},{playerNum:2,score:1}],roster:[{playerNum:1,name:'<b>Alex</b>'},{playerNum:2,name:'Sam'}],actions:{newTopic:true,addTime:false,finish:false}}),crazy:{enabled:true,prompt:prompt(),canAssign:false}});
+  assert.match(f.element.innerHTML,/Take a break|Round complete/);assert.match(f.element.innerHTML,/3 pts|1 pts/);assert.match(f.element.innerHTML,/&lt;b&gt;Alex&lt;\/b&gt;/);
+  assert.doesNotMatch(f.element.innerHTML,/<b>Alex|My soup|data-talk-action="(?:crazyDone|crazySkip|end|addTime|crazyAssign)"/);
+  f.click('settings');assert.equal(f.card.settingsOpen,true);assert.equal(f.card.editor.gameMinutes,15);assert.equal(f.card.editor.crazyTaskMinutes,2.5);
+ }finally{f.card.destroy();}
+});
+
+test('shared player can add one minute with a server command and duration settings survive topic confirmation', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk=shared({gameSeconds:900,gameDeadline:901000,actions:{newTopic:true,addTime:true,finish:true}});
+  f.update(talk);f.click('addTime');await flush();assert.equal(sent[0].type,'addTime');assert.equal(sent[0].seconds,60);assert.equal(sent[0].actor,undefined);
+  f.update({...talk,reply:{id:sent[0].id,error:''}});f.click('settings');f.editorField('source','custom','change');f.editorField('question','Which sandwich should we invent?');
+  f.editorField('gameMode','crazy','change');f.editorField('gameMinutes','15','change');f.editorField('crazyTaskMinutes','2.5','change');f.click('openTopic');f.click('confirmTopic');await flush();
+  assert.equal(sent[1].gameSeconds,900);assert.equal(sent[1].crazyTaskSeconds,150);
+ }finally{f.card.destroy();}
+});
+
+test('invalid round or task lengths keep a new topic local and give clear feedback', () => {
+ const f=fixture();try {
+  f.update(shared());f.click('settings');f.editorField('source','custom','change');f.editorField('question','What should we build?');
+  for(const value of ['0','61','abc']) {f.editorField('gameMinutes',value,'change');f.click('openTopic');assert.equal(f.card.confirmation,null);assert.equal(f.card.error,'invalid_game_seconds');}
+  f.editorField('gameMinutes','15','change');f.editorField('gameMode','crazy','change');
+  for(const value of ['0','5.1','abc']) {f.editorField('crazyTaskMinutes',value,'change');f.click('openTopic');assert.equal(f.card.confirmation,null);assert.equal(f.card.error,'invalid_crazy_task_seconds');}
  }finally{f.card.destroy();}
 });
