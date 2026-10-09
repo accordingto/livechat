@@ -71,6 +71,19 @@ test('host topic browser stays collapsed at the bottom and CUT caches are consis
   assert.doesNotMatch(section, /<button|data-cut-action|data-cut-topic/);
   assert.doesNotMatch(cards, /id="cut-library"|class="cut-library"/);
   assert.match(css, /\.cut-library-list[^}]*max-height: 420px[^}]*overflow-y: auto/);
-  for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], 'cut-9', asset[1]);
+  for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], 'cut-10', asset[1]);
   for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
+});
+
+
+test('CUT host exposes an accessible whole-minute topic reminder setting while keeping speaker deadlines hidden', () => {
+  const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
+  const input = html.match(/<input[^>]*id="cut-topic-minutes"[^>]*>/)?.[0];
+  assert.ok(input); assert.match(input, /type="number"/); assert.match(input, /min="1"/); assert.match(input, /max="60"/); assert.match(input, /step="1"/); assert.match(input, /value="10"/); assert.match(input, /required/);
+  assert.match(input, /aria-describedby="cut-topic-minutes-hint cut-topic-minutes-error"/);
+  const UI = require('../cut-ui.js');
+  const cut = { phase: 'speaking', topicClock: { durationMs: 60000, elapsedMs: 60000 }, deadline: 99999, speakingDurationMs: 15876, topic: { question: 'Topic' }, roster: [] };
+  const scene = UI.scene(cut, 0, 100000);
+  assert.match(scene, /data-cut-topic-time[^>]*>00:00</); assert.match(scene, /data-cut-topic-reminder[^>]*role="status"/);
+  assert.doesNotMatch(scene, /data-cut-countdown|99999|15876/);
 });

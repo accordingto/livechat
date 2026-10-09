@@ -113,7 +113,7 @@
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
     }
-    start({ speed = 'normal', category = 'mixed', customMinSeconds, customMaxSeconds } = {}) {
+    start({ speed = 'normal', category = 'mixed', customMinSeconds, customMaxSeconds, topicMinutes } = {}) {
       return this.enqueue(async () => {
         await this.cardsReady; await this.outgoing;
         if (!this.sameRoom() || this.stopped) throw new Error('not_available');
@@ -121,7 +121,7 @@
         const opening = { sessionId: id, baselines: Object.fromEntries(this.playerRefs.map((_, i) => [i + 1, stamp(this.cardValues.get(i + 1))])) };
         const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
         const priorSuspended = this.suspended; this.suspended = false; this.seenCards.clear();
-        try { return await this.change(() => root.CUT_ENGINE.create({ id, roster, speed, category, customMinSeconds, customMaxSeconds, now, seed: randomSeed }), { opening, allowSwitched: true }); }
+        try { return await this.change(() => root.CUT_ENGINE.create({ id, roster, speed, category, customMinSeconds, customMaxSeconds, topicMinutes, now, seed: randomSeed }), { opening, allowSwitched: true }); }
         catch (error) { this.suspended = priorSuspended; throw error; }
       });
     }

@@ -1,3 +1,23 @@
+## CURRENT: CUT topic clock — 2026-10-10
+
+Each CUT topic has a shared visible 10-minute clock, adjustable to integer
+1–60 minutes in host and shared-player settings. First GO starts it; CUT
+waiting counts, while Pause/settings/break/stopped freeze it. Return from
+settings waits for manual GO; paused CUT resumes its clock on Resume.
+Next topic and Restart reset the full current duration. Changing minutes keeps
+actual elapsed time. Zero only reminds everyone to agree before End topic;
+it never triggers CUT, ends the story or replaces the topic. Keep all original
+manual starts and private individual speaking deadlines/fairness data.
+Public topicMinutes/topicClock project only durationMs/elapsedMs/runningSince.
+Legacy active speaking/CUT starts a fresh 10-minute clock on upgrade without
+guessing old elapsed time. Reconnect must not reset it. Browser countdowns use
+existing local pulses, not per-second room writes. CUT assets use cut-10.
+Runtime rule changes require the owned service plus frontend publication,
+retaining the latest Talk/Bluff/Once runtime and sin1 deployment settings.
+Full regression 1351/1351 passed; timer expiry preserves the story and shared
+controls, with legacy/reconnect/privacy coverage. UI used DOM automation because
+the desktop browser connection could not start. See cut-mode.md.
+
 ## CURRENT: Bluff fast host opening — 2026-10-09
 
 Bluff was slower than the other game managers because opening/polling waited for

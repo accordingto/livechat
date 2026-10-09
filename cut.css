@@ -50,6 +50,11 @@
 .cut-kicker { color: #c5c2d5; font-size: .78rem; font-weight: 600; letter-spacing: .13em; line-height: 1.6; }
 .cut-stage { background: #13132b; border: 1px solid #34334b; border-radius: 24px; overflow: hidden; width: 100%; text-align: center; }
 .cut-topic { padding: 26px 28px; border-bottom: 1px solid #333148; background: #17162f; }
+.cut-topic-settings { display: grid; gap: 10px; }
+.cut-topic-clock { color: #bab7cd; margin-top: 18px; font-size: .82rem; line-height: 1.6; }
+.cut-topic-clock > p:first-child { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.cut-topic-time { font-size: 1rem; font-weight: 650; font-variant-numeric: tabular-nums; color: #e6dce4; }
+.cut-topic-reminder { color: #ffd39f; max-width: 48ch; margin: 8px auto 0; overflow-wrap: anywhere; }
 .cut-topic h2 { color: #f4edf2; margin-top: 12px; font-size: clamp(1.25rem, 3vw, 1.9rem); line-height: 1.5; font-weight: 600; text-wrap: balance; overflow-wrap: anywhere; white-space: pre-wrap; }
 .cut-floor { min-height: 310px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 38px 24px; }
 .cut-speaker { width: 100%; min-width: 0; }

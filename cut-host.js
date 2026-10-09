@@ -6,7 +6,7 @@
   const demoRoster = ['Amy', 'Kevin', 'Jason', 'Willy'].map((name, i) => ({ playerNum: i + 1, name, active: true }));
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null;
-  let startingSession = null, editing = false, animatedCut = '', customError = false, endTarget = null;
+  let startingSession = null, editing = false, animatedCut = '', customError = false, topicError = false, endTarget = null;
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -34,6 +34,7 @@
     byId('library-category').value = CUT_TOPICS.categories.includes(libraryCategory) ? libraryCategory : 'mixed';
     byId('library-list').setAttribute('aria-label', t('browseTopics'));
     renderLibrary();
+    renderTopicSettings();
     sceneKey = ''; rosterKey = ''; paintSound();
   }
   function renderLibrary() {
@@ -50,14 +51,25 @@
     }
     byId('custom-error').textContent = custom && customError ? t('customRangeError') : '';
   }
+  function renderTopicSettings() {
+    byId('topic-minutes').disabled = busy;
+    byId('topic-minutes').setAttribute('aria-invalid', String(topicError));
+    byId('topic-minutes-error').textContent = topicError ? t('topicMinutesError') : '';
+  }
   function restoreOptions(current) {
     byId('speed').value = current.speed; byId('category').value = current.category;
     byId('custom-min').value = String(current.customMinSeconds ?? 15);
     byId('custom-max').value = String(current.customMaxSeconds ?? 25);
-    customError = false;
+    byId('topic-minutes').value = String(current.topicMinutes ?? 10);
+    customError = false; topicError = false;
   }
   function setupOptions() {
     const speed = byId('speed').value, min = Number(byId('custom-min').value), max = Number(byId('custom-max').value);
+    const topicMinutes = Number(byId('topic-minutes').value);
+    if (!CUT_UI.validTopicMinutes(topicMinutes)) {
+      topicError = true; render(); byId('topic-minutes').focus(); return null;
+    }
+    topicError = false;
     const minValid = Number.isInteger(min) && min >= 5 && min <= 120;
     const maxValid = Number.isInteger(max) && max >= 5 && max <= 120;
     const valid = minValid && maxValid && min <= max;
@@ -65,7 +77,7 @@
       customError = true; render(); byId(!minValid || min > max ? 'custom-min' : 'custom-max').focus(); return null;
     }
     customError = false;
-    return { speed, category: byId('category').value,
+    return { speed, category: byId('category').value, topicMinutes,
       customMinSeconds: valid ? min : state?.customMinSeconds ?? 15,
       customMaxSeconds: valid ? max : state?.customMaxSeconds ?? 25 };
   }
@@ -96,7 +108,7 @@
     byId('setup-close').hidden = !editing;
     byId('setup-close').disabled = busy || !canControl();
     byId('settings-hint').hidden = !editing;
-    renderCustom();
+    renderCustom(); renderTopicSettings();
     if (endTarget && (!sameEndTarget(cut) || !cut.canEndTopic || switched)) closeEndDialog();
     byId('end-accept').disabled = busy || !canControl() || !cut?.canEndTopic;
     byId('error').textContent = error ? t(error) : '';
@@ -135,6 +147,7 @@
     if (!cut || status === 'switched') return;
     const clock = byId('scene').querySelector('[data-cut-countdown]');
     if (clock) clock.textContent = CUT_UI.countdown(cut, now()) || 'GO!';
+    CUT_UI.updateTopicClock(byId('scene'), cut, now());
     const fresh = startingSession !== null && cut.sessionId !== startingSession;
     if (!canControl()) sound.silence();
     sound.update(cut, now(), fresh, canControl());
@@ -156,7 +169,7 @@
   }
   async function start(restart = false) {
     if (busy || !canControl()) return;
-    const options = restart && state ? { speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25 } : setupOptions();
+    const options = restart && state ? { speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
     if (!options) return;
     // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
     const audioReady = sound.enabled ? sound.unlock() : Promise.resolve(false);
@@ -194,6 +207,7 @@
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
   byId('speed').addEventListener('change', () => { customError = false; renderCustom(); });
   for (const id of ['custom-min', 'custom-max']) byId(id).addEventListener('input', () => { customError = false; renderCustom(); });
+  byId('topic-minutes').addEventListener('input', () => { topicError = false; renderTopicSettings(); });
   byId('end-topic').addEventListener('click', openEndDialog);
   byId('end-accept').addEventListener('click', endTopic);
   byId('end-cancel').addEventListener('click', closeEndDialog);

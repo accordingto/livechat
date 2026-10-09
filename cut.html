@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-9">
+  <link rel="stylesheet" href="cut.css?v=cut-10">
 </head>
 <body class="cut-page">
   <div class="topbar">
@@ -43,6 +43,11 @@
           <option value="personal" data-i18n="cut.personal">個人經驗</option>
           <option value="ideas" data-i18n="cut.ideas">想法與喜好</option>
         </select></label>
+      </div>
+      <div class="cut-topic-settings">
+        <label class="cut-field"><span data-i18n="cut.topicTime">話題時間</span><input id="cut-topic-minutes" type="number" inputmode="numeric" min="1" max="60" step="1" value="10" required aria-describedby="cut-topic-minutes-hint cut-topic-minutes-error"></label>
+        <p class="cut-soft" id="cut-topic-minutes-hint" data-i18n="cut.topicMinutesHint">1–60 整分鐘。時間到只提醒，大家同意後再結束話題。</p>
+        <p class="cut-feedback" id="cut-topic-minutes-error" role="status"></p>
       </div>
       <div class="cut-custom" id="cut-custom" hidden>
         <div class="cut-settings">
@@ -116,13 +121,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js"></script>
-  <script src="cut-config.js?v=cut-9"></script>
-  <script src="cut-random.js?v=cut-9"></script>
-  <script src="cut-topics.js?v=cut-9"></script>
-  <script src="cut-engine.js?v=cut-9"></script>
-  <script src="cut-ui.js?v=cut-9"></script>
-  <script src="cut-sync.js?v=cut-9"></script>
+  <script src="cut-config.js?v=cut-10"></script>
+  <script src="cut-random.js?v=cut-10"></script>
+  <script src="cut-topics.js?v=cut-10"></script>
+  <script src="cut-engine.js?v=cut-10"></script>
+  <script src="cut-ui.js?v=cut-10"></script>
+  <script src="cut-sync.js?v=cut-10"></script>
   <script src="hub-executor.js?v=7"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-9"></script>
+<script src="cut-host.js?v=cut-10"></script>
 </body>
 </html>

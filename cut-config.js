@@ -14,6 +14,7 @@ var CUT_CONFIG = (() => {
     mixedTopicWeights: { real: 0.36, absurd: 0.24, personal: 0.20, ideas: 0.20 },
     antiRepeat: { shortBelowSeconds: 10, longFromSeconds: 22, repeatedExtremeWeight: 0.45 },
     customTiming: { minSeconds: 5, maxSeconds: 120, defaultMinSeconds: 15, defaultMaxSeconds: 25 },
+    topicTiming: { defaultMinutes: 10, minMinutes: 1, maxMinutes: 60 },
     fairness: { deficitPower: 2, idleBoost: 0.35, maxIdleBoost: 5, recentWeights: [0.25, 0.55, 0.8] },
     speeds: {
       normal: { label: 'Normal', minSeconds: 15, maxSeconds: 25, bins: [

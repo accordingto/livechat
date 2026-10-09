@@ -101,18 +101,27 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     const startTime = Number.isFinite(serverTime) ? serverTime - 1000 : now() - 60000;
     const cut = fixture('cut', CUT, startTime); await open(cut);
     let value = await card(cut, 2); check(value.cut.canManage === true && value.cut.phase === 'ready');
+    check(value.cut.topicMinutes===10 && value.cut.topicClock.durationMs===600000 && value.cut.topicClock.elapsedMs===0 && value.cut.topicClock.runningSince==null);
     value = await command(cut, 2, 'settings'); check(value.cut.phase === 'setup');
     value = await command(cut, 3, 'cancelSettings'); check(value.cut.phase === 'ready');
     await command(cut, 3, 'settings');
-    value = await command(cut, 2, 'configure', { speed: 'custom', category: 'mixed', customMinSeconds: 5, customMaxSeconds: 5 });
+    value = await command(cut, 2, 'configure', { speed: 'custom', category: 'mixed', customMinSeconds: 5, customMaxSeconds: 5, topicMinutes:1 });
     check(value.cut.phase === 'ready' && value.cut.customMinSeconds === 5 && value.cut.customMaxSeconds === 5);
+    check(value.cut.topicMinutes===1 && value.cut.topicClock.durationMs===60000 && value.cut.topicClock.elapsedMs===0 && value.cut.topicClock.runningSince==null);
     const oldTurn = value.cut.turnId;
     value = await command(cut, 3, 'begin'); check(value.cut.phase === 'countdown' && Number.isFinite(value.cut.phaseUntil));
     value = await phase(cut, 'speaking'); check(value.cut.phase === 'speaking');
+    const topicClockStart=value.cut.topicClock.runningSince; check(Number.isFinite(topicClockStart));
     value = await phase(cut, 'cut'); check(value.cut.cutsCompleted === 1 && value.cut.cutEvent && value.cut.nextSpeaker !== value.cut.speaker);
     for (const seat of cut.seats) await card(cut, seat.playerNum);
+    check(value.cut.topicClock.runningSince===topicClockStart);
+    value=await command(cut,2,'pause');
+    const frozenTopicTime=value.cut.topicClock.elapsedMs; check(value.cut.phase==='paused' && value.cut.topicClock.runningSince==null && frozenTopicTime>0);
+    check((await card(cut,3)).cut.topicClock.elapsedMs===frozenTopicTime);
+    value=await command(cut,3,'resume'); check(value.cut.phase==='cut' && Number.isFinite(value.cut.topicClock.runningSince) && value.cut.topicClock.elapsedMs===frozenTopicTime);
     value = await command(cut, 2, 'stop'); check(value.cut.phase === 'stopped');
     value = await command(cut, 3, 'restart'); check(value.cut.phase === 'ready' && value.cut.cutsCompleted === 0);
+    check(value.cut.topicMinutes===1 && value.cut.topicClock.durationMs===60000 && value.cut.topicClock.elapsedMs===0 && value.cut.topicClock.runningSince==null);
     value = await command(cut, 2, 'begin', { turnId: oldTurn }, 'stale_turn'); check(value.cut.phase === 'ready');
     // Check the exact newly deployed topic data through ordinary player controls.
     for (const category of ['personal','ideas']) {
@@ -122,6 +131,7 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
       await command(cut, 2, 'endTopic');
       value = await command(cut, 3, 'next');
       const bank = require('../cut-topics.js').items;
+      check(value.cut.topicMinutes===1 && value.cut.topicClock.durationMs===60000 && value.cut.topicClock.elapsedMs===0 && value.cut.topicClock.runningSince==null);
       check(value.cut.phase==='ready' && value.cut.topic.category===category && bank.some(topic=>topic.id===value.cut.topic.id && topic.question===value.cut.topic.question));
     }
     const talk = fixture('letstalk', TALK, startTime); await open(talk);

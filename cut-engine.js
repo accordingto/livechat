@@ -16,7 +16,35 @@ var CUT_ENGINE = (() => {
   const validSpeed = speed => speed === 'custom' || Object.hasOwn(config.speeds, speed);
   const validTiming = (min, max) => Number.isInteger(min) && Number.isInteger(max) &&
     min >= config.customTiming.minSeconds && max <= config.customTiming.maxSeconds && min <= max;
+  const validTopicMinutes = minutes => Number.isInteger(minutes) &&
+    minutes >= config.topicTiming.minMinutes && minutes <= config.topicTiming.maxMinutes;
+  const topicRunning = name => name === 'speaking' || name === 'cut';
+  const validTopicClock = clock => clock && !Array.isArray(clock) &&
+    Number.isFinite(clock.durationMs) && clock.durationMs > 0 &&
+    Number.isFinite(clock.elapsedMs) && clock.elapsedMs >= 0 &&
+    (clock.runningSince == null || Number.isFinite(clock.runningSince));
+  const newTopicClock = minutes => ({ durationMs: minutes * 60000, elapsedMs: 0, runningSince: null });
+  function topicClock(state) {
+    if (!validTopicMinutes(state.topicMinutes)) state.topicMinutes = config.topicTiming.defaultMinutes;
+    if (!validTopicClock(state.topicClock)) state.topicClock = newTopicClock(state.topicMinutes);
+    state.topicClock.durationMs = state.topicMinutes * 60000;
+    return state.topicClock;
+  }
+  function moveTopicClock(state, name, now) {
+    const clock = topicClock(state);
+    if (topicRunning(name)) {
+      // Keep one anchor throughout speaking and manual CUT handoffs. Reconnects
+      // and repeated phase updates must not restart or double-count this span.
+      if (clock.runningSince == null) clock.runningSince = now;
+    } else if (Number.isFinite(clock.runningSince)) {
+      // Do not cap accumulated time: extending a topic must retain time spent
+      // talking after its previous reminder reached zero.
+      clock.elapsedMs += Math.max(0, now - clock.runningSince);
+      clock.runningSince = null;
+    }
+  }
   function phase(state, name, now, durationMs) {
+    moveTopicClock(state, name, now);
     state.phase = name;
     state.turnId++;
     state.lastChangeAt = now;
@@ -67,6 +95,7 @@ var CUT_ENGINE = (() => {
     state.deadline = now + durationMs;
   }
   function startRound(state, now, rng) {
+    state.topicClock = newTopicClock(state.topicMinutes);
     state.round++;
     state.cutsCompleted = 0;
     state.targetCuts = null;
@@ -120,8 +149,8 @@ var CUT_ENGINE = (() => {
     state.pause = null;
     state.pauseReason = '';
     if (saved.phase === 'speaking') {
-      // A full, visible prep gives everyone time to return. Only the hidden
-      // speaking time is frozen; this never counts as another speaking turn.
+      // A full, visible prep gives everyone time to return. Both clocks stay
+      // frozen until GO; this never counts as another speaking turn.
       prepare(state, saved.speaker, now, 'handoff', saved.remainingMs, false);
     } else {
       state.pendingDurationMs = saved.pendingDurationMs ?? null;
@@ -138,7 +167,9 @@ var CUT_ENGINE = (() => {
     const legacyPausedCut = current.phase === 'paused' && current.pause?.phase === 'cut' && Number(current.pause.remainingMs) > 0;
     const legacyPausedHandoff = current.phase === 'paused' && standardHandoff(current.pause);
     const missingTiming = !validTiming(current.customMinSeconds, current.customMaxSeconds);
-    if (!oldRules && !legacyCut && !legacyHandoff && !legacyPausedCut && !legacyPausedHandoff && !missingTiming) return current;
+    const missingTopicClock = !validTopicMinutes(current.topicMinutes) || !validTopicClock(current.topicClock) ||
+      current.topicClock.durationMs !== current.topicMinutes * 60000;
+    if (!oldRules && !legacyCut && !legacyHandoff && !legacyPausedCut && !legacyPausedHandoff && !missingTiming && !missingTopicClock) return current;
     const state = copy(current);
     state.roster = list(state.roster); state.recent = list(state.recent);
     state.rulesVersion = 2; state.targetCuts = null;
@@ -171,17 +202,21 @@ var CUT_ENGINE = (() => {
       if (pausedCut) state.pause = { ...state.pause, nextSpeaker, remainingMs: 0, pendingDurationMs: null };
     }
     if (state.phase === 'break' || state.phase === 'stopped') state.cutEvent = null;
+    // An old room has no trustworthy overall elapsed time. A missing clock
+    // starts at this upgrade only; existing clocks retain their accumulated span.
+    moveTopicClock(state, state.phase, now);
     state.turnId++; state.lastChangeAt = now;
     return state;
   }
   function create({ id, roster, speed = 'normal', category = 'mixed',
-    customMinSeconds = config.customTiming.defaultMinSeconds, customMaxSeconds = config.customTiming.defaultMaxSeconds, now, seed } = {}) {
+    customMinSeconds = config.customTiming.defaultMinSeconds, customMaxSeconds = config.customTiming.defaultMaxSeconds,
+    topicMinutes = config.topicTiming.defaultMinutes, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < config.minPlayers || roster.length > config.maxPlayers) throw new Error('invalid_setup');
     if (roster.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1) || new Set(roster.map(player => player.playerNum)).size !== roster.length) throw new Error('invalid_roster');
-    if (!validSpeed(speed) || !topics.categories.includes(category) || !validTiming(customMinSeconds, customMaxSeconds)) throw new Error('invalid_options');
+    if (!validSpeed(speed) || !topics.categories.includes(category) || !validTiming(customMinSeconds, customMaxSeconds) || !validTopicMinutes(topicMinutes)) throw new Error('invalid_options');
     const state = {
       version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0,
-      speed, category, customMinSeconds, customMaxSeconds,
+      speed, category, customMinSeconds, customMaxSeconds, topicMinutes,
       roster: roster.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
       phase: 'ready', phaseUntil: null, deadline: null, lastChangeAt: now,
       speaker: null, nextSpeaker: null, previousSpeaker: null,
@@ -261,13 +296,14 @@ var CUT_ENGINE = (() => {
       case 'configure': {
         const min = input.customMinSeconds === undefined ? state.customMinSeconds : input.customMinSeconds;
         const max = input.customMaxSeconds === undefined ? state.customMaxSeconds : input.customMaxSeconds;
+        const minutes = input.topicMinutes === undefined ? state.topicMinutes : input.topicMinutes;
         if (state.phase !== 'setup') error = 'not_available';
         else if ((input.speed != null && !validSpeed(input.speed)) ||
-          (input.category != null && !topics.categories.includes(input.category)) || !validTiming(min, max)) error = 'invalid_options';
+          (input.category != null && !topics.categories.includes(input.category)) || !validTiming(min, max) || !validTopicMinutes(minutes)) error = 'invalid_options';
         else {
           if (input.speed != null) state.speed = input.speed;
           if (input.category != null) state.category = input.category;
-          state.customMinSeconds = min; state.customMaxSeconds = max;
+          state.customMinSeconds = min; state.customMaxSeconds = max; state.topicMinutes = minutes;
           phase(state, 'ready', now);
         }
         break;
@@ -322,7 +358,7 @@ var CUT_ENGINE = (() => {
           // Old timers and competing pre-restart commands cannot affect the new game.
           const restarted = create({ id: state.sessionId, roster: state.roster,
             speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds,
-            customMaxSeconds: state.customMaxSeconds, now, seed: input.seed });
+            customMaxSeconds: state.customMaxSeconds, topicMinutes: state.topicMinutes, now, seed: input.seed });
           Object.assign(state, restarted, { turnId: current.turnId + 1,
             seen: state.seen, replies: state.replies });
         }
@@ -380,6 +416,11 @@ var CUT_ENGINE = (() => {
       speed: state.speed, category: state.category, phase: state.phase,
       customMinSeconds: state.customMinSeconds ?? config.customTiming.defaultMinSeconds,
       customMaxSeconds: state.customMaxSeconds ?? config.customTiming.defaultMaxSeconds,
+      topicMinutes: validTopicMinutes(state.topicMinutes) ? state.topicMinutes : config.topicTiming.defaultMinutes,
+      topicClock: validTopicClock(state.topicClock) ? {
+        durationMs: state.topicClock.durationMs, elapsedMs: state.topicClock.elapsedMs,
+        runningSince: state.topicClock.runningSince ?? null,
+      } : newTopicClock(validTopicMinutes(state.topicMinutes) ? state.topicMinutes : config.topicTiming.defaultMinutes),
       round: state.round, cutsCompleted: state.cutsCompleted, targetCuts: state.targetCuts,
       topic: copy(state.topic), speaker: state.speaker ?? null,
       previousSpeaker: state.previousSpeaker ?? null, roster,

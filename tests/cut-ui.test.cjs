@@ -239,11 +239,18 @@ test('topic reveal stays silent until the explicit Begin transition starts count
 function hostDemo() {
   let time = 1000, serial = 0, interval;
   const elements = new Map(), creations = [], commands = [];
-  const defaults = { 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25', 'cut-library-category': 'mixed', 'cut-library-search': '' };
+  const topicNodes = { value: { textContent: '' }, reminder: { textContent: '', hidden: true } };
+  const defaults = { 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25', 'cut-topic-minutes': '10', 'cut-library-category': 'mixed', 'cut-library-search': '' };
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
-      innerHTML: '', textContent: '', value: defaults[id] ?? '0', hidden: false, disabled: false, open: false, attributes: {},
-      events: {}, addEventListener(type, callback) { this.events[type] = callback; }, setAttribute(name, value) { this.attributes[name] = value; }, querySelector() { return null; },
+      _html: '', writes: 0, get innerHTML() { return this._html; }, set innerHTML(value) { this._html = value; this.writes++;
+        if (id === 'cut-scene') {
+          topicNodes.value.textContent = value.match(/data-cut-topic-time[^>]*>([^<]*)</)?.[1] || '';
+          const reminder = value.match(/<p[^>]*data-cut-topic-reminder([^>]*)>([^<]*)</);
+          topicNodes.reminder.textContent = reminder?.[2] || ''; topicNodes.reminder.hidden = /hidden/.test(reminder?.[1] || '');
+        }
+      }, textContent: '', value: defaults[id] ?? '0', hidden: false, disabled: false, open: false, attributes: {},
+      events: {}, addEventListener(type, callback) { this.events[type] = callback; }, setAttribute(name, value) { this.attributes[name] = value; }, querySelector(selector) { return id === 'cut-scene' && selector === '[data-cut-topic-time]' ? topicNodes.value : id === 'cut-scene' && selector === '[data-cut-topic-reminder]' ? topicNodes.reminder : null; },
       close() { this.open = false; }, showModal() { this.open = true; }, focus() { this.focused = true; },
     });
     return elements.get(id);
@@ -267,7 +274,7 @@ function hostDemo() {
   const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
   const click = async id => { element('cut-' + id).events.click?.({ target: { closest: () => null } }); await settle(); };
   const submit = async () => { element('cut-setup').events.submit({ preventDefault() {} }); await settle(); };
-  return { element, click, submit, creations, commands, scene: () => element('cut-scene').innerHTML,
+  return { element, click, submit, creations, commands, topicNodes, scene: () => element('cut-scene').innerHTML,
     advance: milliseconds => { time += milliseconds; interval(); },
     change: (id, value) => { const node = element('cut-' + id); node.value = value; node.events.change?.(); node.events.input?.(); },
   };
@@ -533,4 +540,157 @@ test('shared player settings include both new categories while topic browsing re
     }
     assert.doesNotMatch(f.element.innerHTML, /cut-library|Browse topics|查看題庫/);
   } finally { f.card.destroy(); }
+});
+
+
+test('topic time handles running, frozen, Firebase omitted timestamps and safe legacy fallback', () => {
+  assert.deepEqual(UI.topicTime(sample(), 900000), { remainingMs: 600000, text: '10:00', expired: false });
+  assert.equal(UI.topicTime(sample({ topicMinutes: 60 }), 900000).text, '60:00');
+  assert.equal(UI.topicTime(sample({ topicMinutes: 0 }), 900000).text, '10:00');
+  assert.equal(UI.topicTime(sample({ topicClock: { durationMs: 0, elapsedMs: 0 } }), 900000).expired, false);
+  const cut = sample({ topicClock: { durationMs: 60000, elapsedMs: 500, runningSince: 0 } });
+  assert.equal(UI.topicTime(cut, 501).text, '00:59');
+  assert.equal(UI.topicTime(cut, -100).text, '01:00', 'future timestamps never subtract time');
+  assert.deepEqual(UI.topicTime(cut, 70000), { remainingMs: 0, text: '00:00', expired: true });
+  for (const clock of [{ durationMs: 60000, elapsedMs: 10000, runningSince: null }, { durationMs: 60000, elapsedMs: 10000 }]) {
+    assert.equal(UI.topicTime(sample({ phase: 'paused', topicClock: clock }), 500000).text, '00:50');
+  }
+});
+
+test('topic clock updates only its text and reminder with no action or speaker countdown', () => {
+  let writes = 0;
+  const value = { _text: '01:00', get textContent() { return this._text; }, set textContent(text) { writes++; this._text = text; } };
+  const reminder = { textContent: '', hidden: true };
+  const element = { querySelector: selector => selector === '[data-cut-topic-time]' ? value : selector === '[data-cut-topic-reminder]' ? reminder : null };
+  const cut = sample({ phase: 'cut', topicClock: { durationMs: 60000, elapsedMs: 0, runningSince: 0 } });
+  UI.updateTopicClock(element, cut, 500); UI.updateTopicClock(element, cut, 900);
+  assert.equal(writes, 0, 'same displayed second avoids DOM writes');
+  UI.updateTopicClock(element, cut, 1000); assert.equal(value.textContent, '00:59'); assert.equal(writes, 1);
+  UI.updateTopicClock(element, cut, 61000); assert.equal(value.textContent, '00:00');
+  assert.equal(reminder.hidden, false); assert.equal(reminder.textContent, UI.t('topicTimeUp'));
+  assert.equal(cut.phase, 'cut');
+  assert.match(UI.scene(cut, 2, 61000), /data-cut-topic-time[^>]*>00:00</);
+  assert.doesNotMatch(UI.scene(cut, 2, 61000), /data-cut-countdown/);
+  UI.updateTopicClock(element, sample(), 900000); assert.equal(value.textContent, '10:00'); assert.equal(reminder.hidden, true); assert.equal(reminder.textContent, '');
+});
+
+test('player clock pulses and same-phase clock snapshots preserve scene and settings DOM', () => {
+  let now = 0, pulse, writes = 0, html = '';
+  const nodes = { time: { textContent: '' }, reminder: { textContent: '', hidden: true } };
+  const element = { get innerHTML() { return html; }, set innerHTML(value) { html = value; writes++; },
+    querySelector: selector => selector === '[data-cut-topic-time]' ? nodes.time : selector === '[data-cut-topic-reminder]' ? nodes.reminder : null,
+    querySelectorAll: () => [], addEventListener() {}, removeEventListener() {} };
+  const originalSet = global.setInterval, originalClear = global.clearInterval;
+  global.setInterval = fn => { pulse = fn; return 42; }; global.clearInterval = () => {};
+  const card = new UI.Card(element, { now: () => now });
+  try {
+    const cut = sample({ phase: 'cut', topicClock: { durationMs: 60000, elapsedMs: 0, runningSince: 0 } });
+    card.update({ playerNum: 2, cut }); assert.equal(nodes.time.textContent, '01:00');
+    now = 1000; pulse(); assert.equal(nodes.time.textContent, '00:59'); assert.equal(writes, 1);
+    card.update({ playerNum: 2, cut: { ...cut, topicClock: { durationMs: 60000, elapsedMs: 1000, runningSince: 1000 } } });
+    assert.equal(writes, 1, 'clock snapshot is outside scene render key');
+    now = 60000; pulse(); assert.equal(nodes.time.textContent, '00:00'); assert.equal(nodes.reminder.hidden, false); assert.equal(writes, 1);
+    card.update({ playerNum: 2, cut: { ...cut, phase: 'setup', topicClock: { durationMs: 60000, elapsedMs: 5000 } } });
+    const setupWrites = writes;
+    now = 120000; pulse(); assert.equal(nodes.time.textContent, '00:55'); assert.equal(writes, setupWrites);
+  } finally { card.destroy(); global.setInterval = originalSet; global.clearInterval = originalClear; }
+});
+
+test('host topic minutes validate whole 1–60 minutes and persist through settings and restart', async () => {
+  const f = hostDemo();
+  for (const value of ['', '0', '61', '1.5', 'abc']) {
+    f.change('topic-minutes', value); await f.submit();
+    assert.equal(f.creations.length, 0); assert.equal(f.element('cut-topic-minutes-error').textContent, UI.t('topicMinutesError'));
+    assert.equal(f.element('cut-topic-minutes').attributes['aria-invalid'], 'true');
+  }
+  f.change('topic-minutes', '1'); await f.submit(); assert.equal(f.creations[0].topicMinutes, 1);
+  await f.click('begin'); f.advance(3000); await f.click('settings-open');
+  assert.equal(f.element('cut-topic-minutes').value, '1');
+  f.change('topic-minutes', '60'); await f.submit(); assert.equal(f.commands.find(command => command.type === 'configure').topicMinutes, 60);
+  await f.click('settings-open'); f.change('topic-minutes', '7'); await f.click('setup-close'); await f.click('settings-open');
+  assert.equal(f.element('cut-topic-minutes').value, '60');
+  await f.click('setup-close'); await f.click('restart'); assert.equal(f.creations[1].topicMinutes, 60);
+});
+
+test('host topic clock starts on GO, keeps running through CUT, freezes in settings and only reminds at zero', async () => {
+  const f = hostDemo(); f.change('topic-minutes', '1'); await f.submit();
+  assert.equal(f.topicNodes.value.textContent, '01:00');
+  f.advance(100000); assert.equal(f.topicNodes.value.textContent, '01:00');
+  await f.click('begin'); f.advance(2999); assert.equal(f.topicNodes.value.textContent, '01:00');
+  f.advance(1); assert.match(f.scene(), /data-cut-phase="speaking"/);
+  f.advance(10000); assert.equal(f.topicNodes.value.textContent, '00:50');
+  await f.click('pause'); f.advance(100000); assert.equal(f.topicNodes.value.textContent, '00:50');
+  await f.click('pause'); f.advance(3000); assert.equal(f.topicNodes.value.textContent, '00:50');
+  await f.click('settings-open'); const frozen = f.topicNodes.value.textContent;
+  f.advance(100000); assert.equal(f.topicNodes.value.textContent, frozen);
+  await f.click('setup-close'); await f.click('begin'); f.advance(3000); f.advance(60000);
+  assert.match(f.scene(), /data-cut-phase="cut"/);
+  assert.equal(f.topicNodes.value.textContent, '00:00'); assert.equal(f.topicNodes.reminder.hidden, false);
+  assert.equal(f.topicNodes.reminder.textContent, UI.t('topicTimeUp'));
+  assert.equal(f.element('cut-next').hidden, true);
+  const sceneWrites = f.element('cut-scene').writes, topic = f.scene().match(/<h2>(.*?)<\/h2>/s)[1];
+  f.advance(30000); assert.equal(f.element('cut-scene').writes, sceneWrites); assert.equal(f.scene().match(/<h2>(.*?)<\/h2>/s)[1], topic);
+  await f.click('end-topic'); await f.click('end-accept'); await f.click('next');
+  assert.equal(f.topicNodes.value.textContent, '01:00'); assert.equal(f.topicNodes.reminder.hidden, true);
+});
+
+test('shared topic-time form validates, sends whole minutes and restores saved values', async () => {
+  const sent = [], f = playerCard(async command => sent.push(command));
+  const fields = Object.fromEntries(Object.entries({ speed: 'normal', category: 'ideas', customMinSeconds: '15', customMaxSeconds: '25', topicMinutes: '10' }).map(([name, value]) => [name, { value }]));
+  const form = { querySelector: selector => fields[selector.match(/name="([^"]+)"/)?.[1]] || null };
+  try {
+    f.card.update({ ...f.payload, cut: { ...f.payload.cut, phase: 'setup', sharedControls: true, topicMinutes: 12 } });
+    assert.match(f.element.innerHTML, /name="topicMinutes"[^>]*min="1"[^>]*max="60"[^>]*step="1"[^>]*value="12"/);
+    for (const value of ['', '0', '61', '4.5']) {
+      fields.topicMinutes.value = value; const options = f.card.settingsInput(form);
+      assert.equal(f.card.canAction('configure', options), false); await f.card.action('configure', options);
+    }
+    assert.equal(sent.length, 0);
+    fields.topicMinutes.value = '7'; const options = f.card.settingsInput(form);
+    assert.equal(f.card.canAction('configure', options), true); await f.card.action('configure', options);
+    assert.equal(sent.length, 1); assert.equal(sent[0].topicMinutes, 7); assert.equal(sent[0].category, 'ideas');
+  } finally { f.card.destroy(); }
+});
+
+
+test('topic clock label and reminder follow both supported languages', () => {
+  const I18N = { lang: 'en', registerDict(_, dict) { this.dict = dict; }, t(_, key) { return this.dict[key]?.[this.lang] || key; } };
+  const context = vm.createContext({ module: { exports: {} }, I18N });
+  vm.runInContext(fs.readFileSync(require.resolve('../cut-ui.js'), 'utf8'), context);
+  const ui = context.module.exports, cut = sample({ topicClock: { durationMs: 60000, elapsedMs: 60000 } });
+  assert.match(ui.scene(cut), /Topic time.*00:00.*Time is up\. Finish when everyone agrees\./s);
+  I18N.lang = 'zh'; assert.match(ui.scene(cut), /話題時間.*00:00.*時間到了，大家同意後再結束。/s);
+});
+
+test('shared settings show minute errors, disable invalid saves and retain typed minutes during clock pulses', async () => {
+  let html = '', writes = 0, now = 1000;
+  const sent = [], fields = Object.fromEntries(['speed', 'category', 'customMinSeconds', 'customMaxSeconds', 'topicMinutes'].map(name => [name, { value: '', disabled: false, attributes: {}, setAttribute(key, value) { this.attributes[key] = value; } }]));
+  const nodes = { save: { disabled: false }, custom: { hidden: true }, customError: { textContent: '' }, topicError: { textContent: '' }, time: { textContent: '' }, reminder: { textContent: '', hidden: true } };
+  const form = { querySelector(selector) {
+    const name = selector.match(/name="([^"]+)"/)?.[1];
+    return name ? fields[name] : selector === '[data-cut-settings-save]' ? nodes.save : selector === '[data-cut-custom-fields]' ? nodes.custom : selector === '[data-cut-custom-error]' ? nodes.customError : selector === '[data-cut-topic-error]' ? nodes.topicError : null;
+  }, querySelectorAll: () => Object.values(fields) };
+  const element = { get innerHTML() { return html; }, set innerHTML(value) {
+    html = value; writes++;
+    if (value.includes('data-cut-settings')) {
+      fields.speed.value = 'normal'; fields.category.value = 'mixed'; fields.customMinSeconds.value = '15'; fields.customMaxSeconds.value = '25';
+      fields.topicMinutes.value = value.match(/name="topicMinutes"[^>]*value="([^"]+)"/)?.[1] || '';
+    }
+  }, querySelector(selector) { return selector === '[data-cut-settings]' && html.includes('data-cut-settings') ? form : selector === '[data-cut-topic-time]' ? nodes.time : selector === '[data-cut-topic-reminder]' ? nodes.reminder : null; }, querySelectorAll: () => [], addEventListener() {}, removeEventListener() {} };
+  const card = new UI.Card(element, { now: () => now, send: async command => sent.push(command) });
+  try {
+    const cut = sample({ phase: 'setup', canBegin: false, sharedControls: true, topicMinutes: 10, topicClock: { durationMs: 600000, elapsedMs: 30000 } });
+    card.update({ playerNum: 2, cut }); assert.equal(fields.topicMinutes.value, '10'); assert.equal(nodes.save.disabled, false);
+    fields.topicMinutes.value = '2.5'; card.change({ target: { closest: () => form } });
+    assert.equal(nodes.topicError.textContent, UI.t('topicMinutesError')); assert.equal(fields.topicMinutes.attributes['aria-invalid'], 'true'); assert.equal(nodes.save.disabled, true);
+    fields.topicMinutes.value = '7'; card.change({ target: { closest: () => form } });
+    assert.equal(nodes.topicError.textContent, ''); assert.equal(nodes.save.disabled, false);
+    now += 60000; card.paint(); card.update({ playerNum: 2, cut: { ...cut, revision: 9, topicClock: { durationMs: 600000, elapsedMs: 30000 } } });
+    assert.equal(fields.topicMinutes.value, '7'); assert.equal(writes, 1); assert.equal(nodes.time.textContent, '09:30');
+    card.submit({ preventDefault() {}, target: { closest: () => form } }); await Promise.resolve();
+    assert.equal(sent[0].topicMinutes, 7); assert.equal(fields.topicMinutes.disabled, true);
+    card.update({ playerNum: 2, cut: { ...cut, phase: 'ready', turnId: 2, topicMinutes: 7, reply: { id: sent[0].id, error: '' } } });
+    card.update({ playerNum: 2, cut: { ...cut, turnId: 3, topicMinutes: 7 } });
+    assert.equal(fields.topicMinutes.value, '7');
+  } finally { card.destroy(); }
 });

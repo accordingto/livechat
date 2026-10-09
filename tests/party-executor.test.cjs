@@ -178,3 +178,30 @@ test('absent Open Mic Spotlight recovery starts the next turn without awarding a
   assert.equal(view.openmic.sharedControls, true); assert.equal(view.openmic.canManage, true); assert.deepEqual(view.openmic.songLyrics, {});
   assert.equal(view.openmic.runtimeOfflineNums, undefined);
 });
+
+
+test('server topic clocks survive timeout, pauses and shared settings without exposing hidden CUT deadlines', () => {
+  let state = CUT.create({ id:'topic-clock-service', roster, now:1000, seed:456, topicMinutes:1, speed:'custom', customMinSeconds:5, customMaxSeconds:5 });
+  state = act(A.cut,state,'begin');
+  state = A.cut.pulse(state,context(state,2,{now:state.phaseUntil}));
+  const started = state.topicClock.runningSince, topic = state.topic.id, hiddenDeadline = state.deadline;
+  state = A.cut.pulse(state,context(state,2,{now:hiddenDeadline}));
+  assert.equal(state.phase,'cut'); assert.equal(state.topicClock.runningSince,started);
+  const expired = started+60001;
+  assert.equal(A.cut.pulse(state,context(state,2,{now:expired})),state,'clock expiry alone never advances CUT or writes an idle tick');
+  const view = A.cut.project(state,{playerNum:3},context(state,3,{now:expired})).cut;
+  assert.equal(view.topicMinutes,1); assert.equal(view.topicClock.durationMs,60000); assert.equal(view.topicClock.runningSince,started);
+  assert.equal(view.deadline,undefined); assert.equal(view.pendingDurationMs,undefined); assert.equal(view.speakingDurationMs,undefined);
+  state = act(A.cut,state,'begin',3,{}, {now:expired});
+  assert.equal(state.phase,'speaking'); assert.equal(state.topic.id,topic);
+  state = act(A.cut,state,'pause',2,{}, {now:expired+1});
+  const frozen = state.topicClock.elapsedMs; assert.ok(frozen>=60001); assert.equal(state.topicClock.runningSince,null);
+  const persisted = A.cut.decode(A.cut.encode({revision:1},state));
+  assert.deepEqual(persisted.topicClock,state.topicClock);
+  state = act(A.cut,persisted,'settings',3,{}, {now:expired+5000});
+  state = act(A.cut,state,'configure',2,{topicMinutes:2},{now:expired+5001});
+  assert.equal(state.topicMinutes,2); assert.equal(state.topicClock.durationMs,120000); assert.equal(state.topicClock.elapsedMs,frozen);
+  state = act(A.cut,state,'endTopic',3,{}, {now:expired+5002});
+  state = act(A.cut,state,'next',2,{}, {now:expired+5003});
+  assert.deepEqual(state.topicClock,{durationMs:120000,elapsedMs:0,runningSince:null});
+});

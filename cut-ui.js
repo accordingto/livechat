@@ -5,6 +5,7 @@ var CUT_UI = (() => {
     intro: ['講到一半突然 CUT！下一位直接把你的半句話接下去。', 'A sudden CUT! Someone else has to finish your unfinished sentence.'],
     speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（15–25 秒）', 'Normal · 15–25 seconds'], chill: ['Chill · 輕鬆（25–40 秒）', 'Chill · 25–40 seconds'], chaos: ['Chaos · 瘋狂（8–16 秒）', 'Chaos · 8–16 seconds'], custom: ['Custom · 自訂秒數', 'Custom · Choose your seconds'],
     customMin: ['最短秒數', 'Minimum seconds'], customMax: ['最長秒數', 'Maximum seconds'], customHint: ['各填 5–120 的整秒；填相同秒數就是固定時間。', 'Use whole seconds from 5 to 120. Use the same number for a fixed time.'], customRangeError: ['請填入 5–120 的整秒，最短秒數不能大於最長秒數。', 'Use whole seconds from 5 to 120. The minimum must not exceed the maximum.'],
+    topicTime: ['話題時間', 'Topic time'], topicMinutesHint: ['1–60 整分鐘。時間到只提醒，大家同意後再結束話題。', '1–60 whole minutes. A reminder only; end the topic when everyone agrees.'], topicMinutesError: ['請填入 1–60 的整分鐘。', 'Use whole minutes from 1 to 60.'], topicTimeUp: ['時間到了，大家同意後再結束。', 'Time is up. Finish when everyone agrees.'],
     category: ['題目類型', 'Topics'], mixed: ['全部混合', 'All topics'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'], personal: ['個人經驗', 'Personal stories'], ideas: ['想法與喜好', 'Thoughts & choices'],
     browseTopics: ['查看題庫', 'Browse topics'], libraryFilter: ['分類', 'Category'], librarySearch: ['搜尋題目或開場句', 'Search questions or opening lines'], libraryCount: ['顯示 {shown}／共 {total} 題', '{shown} of {total} topics'], libraryEmpty: ['沒有符合的題目。', 'No matching topics.'], libraryStarter: ['開場句', 'Opening line'],
     start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], beginHandoff: ['開始接話', 'Start'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
@@ -48,7 +49,7 @@ var CUT_UI = (() => {
     roomChanged: ['房間已變更。重新載入此頁以使用新房間。', 'The room changed. Reload this page to use the new room.'],
     not_enough_players: ['至少要有兩位參與抽選的玩家。', 'At least two players must be in the draw.'],
     invalid_roster: ['至少要有兩位玩家，請到主選單設定。', 'Set up at least two players in the hub.'],
-    invalid_options: ['請選擇有效的速度與題目類型。', 'Choose a valid pace and topic type.'],
+    invalid_options: ['請選擇有效的速度、題目類型與話題時間。', 'Choose a valid pace, topic type and topic time.'],
     stale_turn: ['畫面已更新，請再操作一次。', 'The turn has changed. Try again.'],
     not_available: ['這個動作目前無法使用，請依最新畫面操作。', 'This action isn’t available right now. Follow the current screen.'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check your connection and try again.'],
@@ -64,6 +65,30 @@ var CUT_UI = (() => {
   const name = (cut, num) => list(cut.roster).find(p => Number(p.playerNum) === Number(num))?.name || t('player', { n: num });
   const countdown = (cut, now) => ['countdown', 'handoff'].includes(cut.phase)
     ? Math.max(0, Math.ceil((Number(cut.phaseUntil) - now) / 1000)) : null;
+
+  const validTopicMinutes = value => Number.isInteger(value) && value >= 1 && value <= 60;
+  function topicTime(cut, now = Date.now()) {
+    const clock = cut?.topicClock;
+    const validClock = clock && Number.isFinite(clock.durationMs) && clock.durationMs > 0 && Number.isFinite(clock.elapsedMs) && clock.elapsedMs >= 0;
+    const durationMs = validClock ? clock.durationMs : (validTopicMinutes(cut?.topicMinutes) ? cut.topicMinutes : 10) * 60000;
+    const elapsedMs = validClock ? clock.elapsedMs + (clock.runningSince != null && Number.isFinite(clock.runningSince) ? Math.max(0, now - clock.runningSince) : 0) : 0;
+    const remainingMs = Math.max(0, durationMs - elapsedMs), seconds = Math.ceil(remainingMs / 1000);
+    const text = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    return { remainingMs, text, expired: !!validClock && remainingMs === 0 };
+  }
+  function renderTopicClock(cut, now = Date.now()) {
+    const time = topicTime(cut, now);
+    return '<div class="cut-topic-clock" data-cut-topic-clock><p><span>' + esc(t('topicTime')) + '</span> <span class="cut-topic-time" data-cut-topic-time aria-live="off">' + time.text + '</span></p><p class="cut-topic-reminder" data-cut-topic-reminder role="status"' + (time.expired ? '' : ' hidden') + '>' + (time.expired ? esc(t('topicTimeUp')) : '') + '</p></div>';
+  }
+  function updateTopicClock(element, cut, now = Date.now()) {
+    const time = topicTime(cut, now), value = element.querySelector('[data-cut-topic-time]'), reminder = element.querySelector('[data-cut-topic-reminder]');
+    if (value && value.textContent !== time.text) value.textContent = time.text;
+    if (reminder) {
+      const message = time.expired ? t('topicTimeUp') : '';
+      if (reminder.textContent !== message) reminder.textContent = message;
+      if (reminder.hidden !== !time.expired) reminder.hidden = !time.expired;
+    }
+  }
 
   function topicLibrary(items, category = 'mixed', search = '') {
     const rows = list(items), term = String(search || '').trim().toLocaleLowerCase();
@@ -107,7 +132,7 @@ var CUT_UI = (() => {
     }
     const excluded = actor && list(cut.roster).find(p => Number(p.playerNum) === Number(actor))?.active === false;
     return `<div class="cut-stage${isCut ? ' cut-is-cut' : ''}${isCut && !animate ? ' cut-static' : ''}${personal && inPlay ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
-      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2></div>
+      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderTopicClock(cut, now)}</div>
       <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
       ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
     </div>`;
@@ -129,7 +154,7 @@ var CUT_UI = (() => {
     if (cut.canEndTopic) actions += button('endTopic', 'endTopic');
     if (!stopped && cut.phase !== 'setup') actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
     const options = (values, selected) => values.map(value => `<option value="${value}"${selected === value ? ' selected' : ''}>${esc(t(value))}</option>`).join('');
-    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
+    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings novalidate><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><label class="cut-field"><span>${esc(t('topicTime'))}</span><input type="number" name="topicMinutes" data-cut-setting required min="1" max="60" step="1" inputmode="numeric" value="${esc(cut.topicMinutes ?? 10)}" aria-describedby="cut-card-topic-hint cut-card-topic-error"></label><p class="cut-soft" id="cut-card-topic-hint">${esc(t('topicMinutesHint'))}</p><p class="cut-feedback" id="cut-card-topic-error" data-cut-topic-error role="alert"></p><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
     const management = (cut.phase === 'setup' ? '' : button('settings', 'settings')) + (stopped ? '' : button('restart', 'restart') + button('stop', 'stop', '', 'cut-stop'));
     return `${settings}<div class="cut-controls">${actions}</div><details class="cut-player-management" data-cut-management><summary>${esc(t('sharedManage'))}</summary><div class="cut-controls cut-management-actions">${management}</div><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
@@ -181,7 +206,7 @@ var CUT_UI = (() => {
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
       if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
-      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topicMinutes, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const managementOpen = this.element.querySelector('[data-cut-management]')?.open;
@@ -198,6 +223,7 @@ var CUT_UI = (() => {
       const now = this.now(), cut = this.data.cut;
       const clock = this.element.querySelector('[data-cut-countdown]');
       if (clock) clock.textContent = countdown(cut, now) || 'GO!';
+      updateTopicClock(this.element, cut, now);
       const connection = this.element.querySelector('[data-cut-connection]');
       if (connection) connection.textContent = !this.connected() ? t('offline') : !cut.sharedControls && cut.hostLiveUntil && now > cut.hostLiveUntil ? t('hostAway') : '';
       const button = this.element.querySelector('[data-cut-action="begin"]');
@@ -221,6 +247,10 @@ var CUT_UI = (() => {
         }
         const message = form.querySelector('[data-cut-custom-error]');
         if (message) message.textContent = custom && !valid ? t('customRangeError') : '';
+        const topicField = form.querySelector('[name="topicMinutes"]'), topicValid = validTopicMinutes(settings.topicMinutes);
+        topicField?.setAttribute?.('aria-invalid', String(!topicValid));
+        const topicError = form.querySelector('[data-cut-topic-error]');
+        if (topicError) topicError.textContent = topicValid ? '' : t('topicMinutesError');
       }
       const feedback = this.element.querySelector('[data-cut-action-status]');
       if (feedback) feedback.textContent = this.error || (this.pending ? t('sending') : '');
@@ -248,7 +278,7 @@ var CUT_UI = (() => {
         const value = form.querySelector(`[name="${name}"]`)?.value;
         return typeof value === 'string' && value.trim() ? Number(value) : NaN;
       };
-      return { speed, category: form.querySelector('[name="category"]')?.value,
+      return { speed, category: form.querySelector('[name="category"]')?.value, topicMinutes: seconds('topicMinutes'),
         customMinSeconds: speed === 'custom' ? seconds('customMinSeconds') : this.data.cut.customMinSeconds ?? 15,
         customMaxSeconds: speed === 'custom' ? seconds('customMaxSeconds') : this.data.cut.customMaxSeconds ?? 25 };
     }
@@ -272,7 +302,7 @@ var CUT_UI = (() => {
       if (type === 'restart') return list(cut.roster).filter(p => p.active !== false).length >= 2;
       if (type === 'settings') return cut.phase !== 'setup';
       if (type === 'cancelSettings') return cut.phase === 'setup';
-      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd', 'personal', 'ideas'].includes(extra.category) && this.validTiming(extra);
+      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd', 'personal', 'ideas'].includes(extra.category) && this.validTiming(extra) && validTopicMinutes(extra.topicMinutes ?? cut.topicMinutes ?? 10);
       if (type === 'stop') return cut.phase !== 'stopped';
       if (type === 'next') return cut.phase === 'break';
       if (type === 'pause') return !['paused', 'stopped', 'setup'].includes(cut.phase);
@@ -373,6 +403,6 @@ var CUT_UI = (() => {
     }
     close() { this.silence(); this.previous = null; this.context?.close().catch(() => {}); this.context = null; }
   }
-  return { t, esc, list, name, countdown, topicLibrary, scene, Card, Sound };
+  return { t, esc, list, name, countdown, validTopicMinutes, topicTime, renderTopicClock, updateTopicClock, topicLibrary, scene, Card, Sound };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_UI;

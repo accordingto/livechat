@@ -53,7 +53,7 @@
     const promise = new Promise((resolve,reject) => {
       const script = root.document.createElement('script');
       const timer = root.setTimeout(() => { script.remove(); reject(Object.assign(new Error('script_failed'),{code:'script_failed'})); },15000);
-      script.src = file + '?v=' + (file.startsWith('cut-') ? 'cut-9' : file.startsWith('talk-') ? 'talk-group-1' : VERSION);
+      script.src = file + '?v=' + (file.startsWith('cut-') ? 'cut-10' : file.startsWith('talk-') ? 'talk-group-1' : VERSION);
       script.onload = () => { root.clearTimeout(timer); resolve(); };
       script.onerror = () => { root.clearTimeout(timer); script.remove(); reject(Object.assign(new Error('script_failed'),{code:'script_failed'})); };
       root.document.head.append(script);

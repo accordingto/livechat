@@ -123,9 +123,11 @@ test('Talk manager staggers queued missions and round scoring continues after it
 
 test('CUT original manager can open and control a server-owned game, then resume player-paused play after reconnect', async t => {
   const f = fixture(t, 'cut'), host = f.manager(); await flush(); assert.equal(host.own, true);
-  await host.start({ speed: 'custom', category: 'mixed', customMinSeconds: 5, customMaxSeconds: 5 });
+  await host.start({ speed: 'custom', category: 'mixed', customMinSeconds: 5, customMaxSeconds: 5, topicMinutes: 2 });
+  assert.equal(f.state(host).topicMinutes, 2); assert.equal(f.card(2).cut.topicClock.durationMs, 120000);
   await f.context.HUB_EXECUTOR.ensureHost(host, 'cut'); await flush(); f.assertIndependent(host);
-  await host.command('settings'); await host.command('configure', { speed: 'custom', category: 'mixed', customMinSeconds: 8, customMaxSeconds: 8 });
+  await host.command('settings'); await host.command('configure', { speed: 'custom', category: 'mixed', customMinSeconds: 8, customMaxSeconds: 8, topicMinutes: 3 });
+  assert.equal(f.card(2).cut.topicMinutes, 3); assert.equal(f.card(2).cut.topicClock.durationMs, 180000);
   await host.command('begin'); assert.equal(f.state(host).phase, 'countdown');
   const session = f.state(host).sessionId, registerCount = f.calls.filter(call => call.operation === 'register').length;
   host.close(); await f.playerCommand(3, 'pause'); assert.equal(f.card(2).cut.phase, 'paused');
