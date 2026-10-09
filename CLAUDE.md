@@ -14,7 +14,7 @@ guessing old elapsed time. Reconnect must not reset it. Browser countdowns use
 existing local pulses, not per-second room writes. CUT assets use cut-10.
 Runtime rule changes require the owned service plus frontend publication,
 retaining the latest Talk/Bluff/Once runtime and sin1 deployment settings.
-Full regression 1351/1351 passed; timer expiry preserves the story and shared
+Full regression 1359/1359 passed after integrating current Dixit UI; timer expiry preserves the story and shared
 controls, with legacy/reconnect/privacy coverage. UI used DOM automation because
 the desktop browser connection could not start. See cut-mode.md.
 
