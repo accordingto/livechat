@@ -24,10 +24,12 @@ pretends to be an offline blocker. See membership-mode.md.
 
 Verification: 1526/1526 integrated repository tests passed, including the private
 Talk archive, exact membership retries, original Hub button-check guards and
-Firebase-empty projection compatibility.
+Firebase-empty projection compatibility. The final remote test-only Firebase
+normalization addition also passed all 5 archive smoke harness cases.
 Real local Edge checks pass 136/136 EN/ZH scenes at 320/375/1000/1440px, including
 home managers, private/away/pending actors and actual scoped button operations.
-The owned production service dpl_C6Vr7UzrpscCZEmQcNSf3vgj4LBH is READY. Fresh real
+The integrated production service dpl_Du3s5dBrJyEMyEMP2j7fZhBa4eUM is READY,
+and inspect confirms the approved stable domain points to that deployment. Fresh real
 service membership checks pass 120/120 across all six games; 39 exact disposable
 nodes were tracked, 38 deleted, 1 already empty, zero cleanup failures. An initial
 QA-only empty-hand assertion was adapted to Firebase omission; its 15 disposable
@@ -37,8 +39,13 @@ The concurrent private Talk archive is integrated. Membership cancels relevant
 handwritten missions and drains committed journal updates before publication or
 receipts, including exact failed-write retries. Original Hub word/button checks
 are guarded, and room/count changes clear stale Reveal controls. Runtime graph
-must be retained in the owned service source for future deployments. Integrated
-service/frontend publication and public-asset verification are required.
+was copied back to the owned service source (44 exact game/runtime dependencies)
+for future deployments. Integrated frontend source ce99d8e is pushed to main.
+Public verification passed 47/47 executor assets and 103/103 Dixit assets; owned
+service health/CORS/synthetic ticket rejection pass, and runtime source returns
+404 on both domains. Fresh post-integration membership smoke again passes
+120/120 across all six games, with all 39 disposable nodes cleaned (38 deleted,
+1 empty, zero failures). Existing user rooms were not accessed.
 
 ## CURRENT: Private Crazy Talk handwritten archive - 2026-10-10
 
