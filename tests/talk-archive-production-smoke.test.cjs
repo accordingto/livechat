@@ -13,12 +13,26 @@ const clone = value => value == null ? null : structuredClone(value);
 const response = (status, value, headers = {}) => ({ ok: status >= 200 && status < 300, status,
   headers: new Headers(headers), json: async () => clone(value) });
 
-function harness({ uncertainCreate = false, foreignMarker = false } = {}) {
+function firebaseValue(value, observed) {
+  if (value == null) { observed.nulls++; return null; }
+  if (typeof value !== 'object') return value;
+  const entries = Object.entries(value).map(([key, item]) => [key, firebaseValue(item, observed)]).filter(([, item]) => item != null);
+  if (!entries.length) { observed.empties++; return null; }
+  const numeric = entries.every(([key]) => /^(0|[1-9]\d*)$/.test(key) && Number.isSafeInteger(Number(key)));
+  const maximum = numeric ? Math.max(...entries.map(([key]) => Number(key))) : -1;
+  if (numeric && entries.length > (maximum + 1) / 2) {
+    if (!Array.isArray(value)) observed.numericMaps++;
+    const array = []; for (const [key, item] of entries) array[Number(key)] = item; return array;
+  }
+  return Object.fromEntries(entries);
+}
+function harness({ uncertainCreate = false, foreignMarker = false, firebaseNormalization = false } = {}) {
   const nodes = new Map(), versions = new Map(), created = new Set(), deleted = [], deleteAttempts = [], pathsRead = new Set();
   const registrations = [], executions = [], states = [], archiveSnapshots = [], requests = [];
+  const normalization = { nulls: 0, empties: 0, numericMaps: 0 };
   let clock = 1760000000000, changedPath = null, lostResponse = false;
   const set = (path, value) => {
-    if (value == null) nodes.delete(path); else nodes.set(path, clone(value));
+    if (value == null) nodes.delete(path); else nodes.set(path, firebaseNormalization ? firebaseValue(clone(value), normalization) : clone(value));
     versions.set(path, (versions.get(path) || 0) + 1);
   };
   const storage = async (url, options = {}) => {
@@ -73,7 +87,7 @@ function harness({ uncertainCreate = false, foreignMarker = false } = {}) {
   return { fetchImpl, now: () => clock, delay: async milliseconds => {
     assert.equal(milliseconds, 5500, 'the only simulated wait is the first delivery slot'); clock += milliseconds;
   }, env: { CRAZY_TALK_ARCHIVE_SECRET: ARCHIVE_SECRET }, nodes, created, deleted, deleteAttempts, pathsRead,
-  registrations, executions, states, archiveSnapshots, requests, changedPath: () => changedPath, lostResponse: () => lostResponse };
+  registrations, executions, states, archiveSnapshots, requests, normalization, changedPath: () => changedPath, lostResponse: () => lostResponse };
 }
 
 test('archive production smoke completes lifecycle, scoped reader and conditional cleanup of exactly four owned nodes', async () => {
@@ -121,4 +135,16 @@ test('a missing or malformed archive key fails before creating a store or making
     assert.equal(report.ok, false); assert.equal(report.error, 'archive_key_unavailable');
     assert.equal(report.cleaned, 0); assert.equal(report.cleanupFailed, 0); assert.equal(calls, 0);
   }
+});
+
+test('complete smoke survives Firebase null/empty omission and dense numeric maps becoming arrays', async () => {
+  const f = harness({ firebaseNormalization: true }), report = await run(f);
+  assert.equal(report.ok, true, JSON.stringify(report)); assert.equal(report.step, 'complete');
+  assert.equal(report.cleaned, 4); assert.equal(report.cleanupFailed, 0); assert.equal(f.nodes.size, 0);
+  assert.equal(f.created.size, 4); assert.deepEqual(new Set(f.deleted), f.created);
+  assert.ok(f.normalization.nulls > 0, 'the wire omitted actual null fields');
+  assert.ok(f.normalization.empties > 0, 'the wire omitted actual empty containers');
+  assert.ok(f.normalization.numericMaps > 0, 'the wire converted actual numeric object maps to arrays');
+  assert.ok(f.states.some(state => Array.isArray(state.scores)), 'the real engine received array-shaped score maps');
+  assert.ok(f.archiveSnapshots.some(records => records.length === 2 && records.some(record => record.status === 'done') && records.some(record => record.status === 'cancelled')));
 });
