@@ -35,7 +35,79 @@ var TALK_ENGINE = (() => {
     : validTaskSeconds(s?.crazyTaskSeconds) ? s.crazyTaskSeconds : 150;
   const pendingNums = s => crazyEnabled(s) ? participants(s).map(p => p.playerNum)
     .filter(num => s.crazy.prompts?.[num]?.status === 'pending') : [];
+  const unresolvedArchive = record => ['queued', 'pending'].includes(record?.status);
+  const terminalArchive = record => ['done', 'skipped', 'expired', 'cancelled'].includes(record?.status);
+  const knownArchiveTime = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+  function archivePerson(s, num) {
+    const person = list(s.roster).find(p => p.playerNum === num);
+    return { playerNum: Number.isInteger(num) ? num : null, name: person?.name || '' };
+  }
+  const archiveTopic = s => ({ title: String(s.topic?.title || ''), question: String(s.topic?.question || '') });
+  function archiveEnvelope(value) { return { version: 1, records: copy(list(value?.records)) }; }
+  function archiveEntries(s) {
+    return copy(list(s?.challengeArchive?.records).filter(record => Number.isInteger(record?.version)
+      && record.version > (Number(record.persistedVersion) || 0)));
+  }
+  function ackArchive(current, acknowledgements) {
+    const s = copy(current), acks = list(acknowledgements);
+    if (!s.challengeArchive || s.challengeArchive.version !== 1) return s;
+    s.challengeArchive.records = list(s.challengeArchive.records).filter(record => {
+      const versions = acks.filter(ack => ack?.id === record.id && Number.isInteger(ack.version)
+        && ack.version > 0 && ack.version <= record.version).map(ack => ack.version);
+      if (!versions.length) return true;
+      record.persistedVersion = Math.max(Number(record.persistedVersion) || 0, ...versions);
+      return !(terminalArchive(record) && record.persistedVersion === record.version);
+    });
+    return s;
+  }
+  function addArchiveRecord(s, id, details, version = 1) {
+    const existing = s.challengeArchive.records.find(record => record.id === id);
+    if (existing) return existing;
+    const record = { id, version, persistedVersion: 0, ...details };
+    s.challengeArchive.records.push(record); return record;
+  }
+  function archiveQueued(s, item, legacy = false, fallbackId = '') {
+    const id = item.archiveId || (typeof item.id === 'string' && item.id ? s.sessionId + ':author:' + item.assignedBy + ':' + item.id : fallbackId);
+    if (!id) return;
+    const at = knownArchiveTime(item.at);
+    addArchiveRecord(s, id, { sessionId: s.sessionId, kind: item.kind === 'line' ? 'line' : 'task', text: item.text,
+      author: archivePerson(s, item.assignedBy), target: item.target == null ? null : archivePerson(s, item.target),
+      topic: archiveTopic(s), status: 'queued', ...(legacy ? { legacy: true } : {}),
+      ...(at == null ? {} : { createdAt: at, updatedAt: at }) });
+    item.archiveId = id;
+  }
+  function updateArchive(s, id, status, now, extra = {}) {
+    if (!id) return;
+    const record = s.challengeArchive?.records?.find(item => item.id === id);
+    if (!record || record.status === status) return;
+    record.version++; record.status = status; Object.assign(record, extra);
+    const at = knownArchiveTime(now);
+    if (at != null) { record.updatedAt = at; if (terminalArchive(record)) record.closedAt = at; }
+  }
+  function closeUnresolvedArchive(s, now, predicate = () => true) {
+    for (const record of list(s.challengeArchive?.records)) if (unresolvedArchive(record) && predicate(record)) {
+      updateArchive(s, record.id, 'cancelled', now);
+    }
+  }
+  function migrateArchive(s) {
+    const initialize = s.challengeArchive?.version !== 1;
+    s.challengeArchive = archiveEnvelope(s.challengeArchive);
+    // The envelope version is a permanent initialization marker even when
+    // Firebase omits an empty records array. Pruned terminal history stays
+    // pruned; only the first migration captures legacy active handwriting.
+    if (!initialize || !crazyEnabled(s)) return;
+    list(s.crazy.queue).forEach((item, index) => archiveQueued(s, item, true, s.sessionId + ':legacy:queue:' + index));
+    for (const [num, prompt] of Object.entries(s.crazy.prompts || {})) {
+      if (prompt?.source !== 'player' || prompt.status !== 'pending') continue;
+      const id = prompt.archiveId || s.sessionId + ':legacy:' + prompt.id, at = knownArchiveTime(prompt.at);
+      addArchiveRecord(s, id, { sessionId: s.sessionId, kind: prompt.kind === 'line' ? 'line' : 'task', text: prompt.text,
+        author: archivePerson(s, prompt.assignedBy), recipient: archivePerson(s, Number(num)), topic: archiveTopic(s),
+        legacy: true, status: 'pending', ...(at == null ? {} : { assignedAt: at, updatedAt: at }) }, 2);
+      prompt.archiveId = id;
+    }
+  }
   function needsMigration(s) {
+    if (s?.challengeArchive?.version !== 1) return true;
     if (!validGameSeconds(s?.gameSeconds) || !validTaskSeconds(s?.crazyTaskSeconds)
         || !s.scores || list(s.roster).some(p => !Number.isInteger(s.scores[p.playerNum]) || s.scores[p.playerNum] < 0)
         || !Number.isFinite(s.gameDeadline) || (s.phase === 'talking' && !(s.gameDeadline > 0))) return true;
@@ -72,6 +144,7 @@ var TALK_ENGINE = (() => {
   }
   function migrate(s, input) {
     const now = Number(input.now) || 0;
+    migrateArchive(s);
     s.gameSeconds = gameSeconds(s); s.crazyTaskSeconds = taskSeconds(s);
     if (!Number.isFinite(s.gameDeadline) || s.phase === 'talking' && !(s.gameDeadline > 0)) {
       // Old rooms have no reliable start timestamp. Give them a fresh clock,
@@ -87,7 +160,9 @@ var TALK_ENGINE = (() => {
     c.taskSeconds = taskSeconds(s);
     if (c.schedulerVersion !== 2) {
       const pending = pendingNums(s).sort((a, b) => (Number(c.prompts[a].at) || 0) - (Number(c.prompts[b].at) || 0));
-      for (const num of pending.slice(2)) c.prompts[num].status = 'cancelled';
+      for (const num of pending.slice(2)) {
+        c.prompts[num].status = 'cancelled'; updateArchive(s, c.prompts[num].archiveId, 'cancelled', now);
+      }
       c.schedulerVersion = 2; c.scheduleSequence = 0; c.lastAssignAt = 0;
       c.lastPlayerNum = pending[0] || null;
       c.nextAssignAt = s.phase === 'talking' ? now + crazyDelay(s, input.seed) : 0;
@@ -97,6 +172,7 @@ var TALK_ENGINE = (() => {
     for (const prompt of list(c.prompts)) if (!Number.isFinite(prompt.expiresAt)) prompt.expiresAt = now + c.taskSeconds * 1000;
   }
   function finishGame(s, now) {
+    closeUnresolvedArchive(s, now);
     s.phase = 'ended'; s.endedAt = now; s.speaker = null; s.remaining = [];
     s.questions = []; s.activeQuestion = null; s.interests = {};
     if (crazyEnabled(s)) {
@@ -134,7 +210,8 @@ var TALK_ENGINE = (() => {
     const prompt = { id: `${s.sessionId}:crazy:${recipient}:${sequence}`, at: now,
       expiresAt: now + c.taskSeconds * 1000, status: 'pending' };
     if (queued) {
-      Object.assign(prompt, { text: queued.text, kind: queued.kind, source: 'player', assignedBy: queued.assignedBy });
+      Object.assign(prompt, { text: queued.text, kind: queued.kind, source: 'player', assignedBy: queued.assignedBy, archiveId: queued.archiveId });
+      updateArchive(s, queued.archiveId, 'pending', now, { recipient: archivePerson(s, recipient), assignedAt: now });
       c.queue = c.queue.filter(item => item !== queued);
     } else {
       const recent = list(c.recent[recipient]);
@@ -177,6 +254,7 @@ var TALK_ENGINE = (() => {
     if (!crazyEnabled(s)) return false;
     for (const num of pendingNums(s)) if (s.crazy.prompts[num].expiresAt <= now) {
       s.crazy.prompts[num].status = 'expired';
+      updateArchive(s, s.crazy.prompts[num].archiveId, 'expired', now);
       if (!s.crazy.replacementFor.includes(num)) s.crazy.replacementFor.push(num);
     }
     return allowDelivery && deliverCrazy(s, input, allowScheduled);
@@ -224,6 +302,7 @@ var TALK_ENGINE = (() => {
     if (new Set(roster.map(p => p.playerNum)).size !== roster.length || roster.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
     const state = {
       version: 1, sessionId: String(id), topic: copy(topic), showStarters: showStarters === true,
+      challengeArchive: archiveEnvelope(options.challengeArchive),
       gameSeconds: duration, crazyTaskSeconds: taskDuration, gameDeadline: 0, scores: Object.fromEntries(roster.map(p => [p.playerNum, 0])),
       ...(sharedControls === true ? { sharedControls: true } : {}),
       gameMode: gameMode === 'crazy' ? 'crazy' : 'normal',
@@ -236,6 +315,7 @@ var TALK_ENGINE = (() => {
       speaker: null, remaining: [], spoken: [], readiness: {}, notes: {}, intents: {},
       questions: [], activeQuestion: null, interests: {}, replies: {}, seen: {}, extended: false,
     };
+    closeUnresolvedArchive(state, Number(now) || 0, record => record.sessionId !== state.sessionId);
     if (state.gameMode === 'crazy') state.crazy = {
       source: ['system', 'players'].includes(promptSource) ? promptSource : 'mixed',
       intervalSeconds: [60, 120, 180].includes(Number(crazySeconds)) ? Number(crazySeconds) : 120,
@@ -344,7 +424,9 @@ var TALK_ENGINE = (() => {
             || typeof input.showStarters !== 'boolean' || !['assigned', 'random', 'free'].includes(discussionMode)
             || !['system', 'players', 'mixed'].includes(promptSource) || !validCrazyRange(minSeconds, maxSeconds)
             || !validGameSeconds(duration) || !validTaskSeconds(taskDuration)) { reject('invalid_settings'); break; }
+        closeUnresolvedArchive(s, Number(input.now) || 0);
         const fresh = create({ id: s.sessionId + ':topic:' + input.id, topic, roster: s.roster, mode: input.mode, seconds,
+          challengeArchive: s.challengeArchive,
           gameMode: input.gameMode, crazySeconds, crazyMinSeconds: minSeconds, crazyMaxSeconds: maxSeconds,
           conversationMode: discussionMode, crazySource: promptSource, gameSeconds: duration, crazyTaskSeconds: taskDuration,
           showStarters: input.showStarters, now: Number(input.now) || 0,
@@ -456,7 +538,8 @@ var TALK_ENGINE = (() => {
         if (target != null && (!Number.isInteger(target) || target === actor || !eligible(s, target))) { reject('invalid_target'); break; }
         if (!text || text.length > 120 || !['line', 'task'].includes(kind)) { reject('invalid_prompt'); break; }
         if (s.crazy.queue.length >= 20 || s.crazy.queue.filter(item => item.assignedBy === actor).length >= 10) { reject('queue_full'); break; }
-        s.crazy.queue.push({ id: input.id, target, text, kind, assignedBy: actor, at: Number(input.now) || 0 });
+        const item = { id: input.id, target, text, kind, assignedBy: actor, at: Number(input.now) || 0 };
+        archiveQueued(s, item); s.crazy.queue.push(item);
         break;
       }
       case 'crazyPause':
@@ -470,6 +553,7 @@ var TALK_ENGINE = (() => {
         const prompt = s.crazy.prompts[actor];
         if (!prompt || prompt.status !== 'pending' || input.promptId !== prompt.id) { reject('stale_prompt'); break; }
         prompt.status = input.type === 'crazyDone' ? 'done' : 'skipped';
+        updateArchive(s, prompt.archiveId, prompt.status, Number(input.now) || 0);
         if (input.type === 'crazyDone') s.scores[actor]++;
         else {
           if (!s.crazy.replacementFor.includes(actor)) s.crazy.replacementFor.push(actor);
@@ -528,8 +612,13 @@ var TALK_ENGINE = (() => {
     for (const key of ['readiness', 'notes', 'intents', 'interests']) if (s[key]) delete s[key][num];
     if (crazyEnabled(s)) {
       const prompt = s.crazy.prompts?.[num];
-      if (prompt?.status === 'pending') prompt.status = 'cancelled';
-      s.crazy.queue = list(s.crazy.queue).filter(item => item.assignedBy !== num && item.target !== num);
+      if (prompt?.status === 'pending') {
+        prompt.status = 'cancelled'; updateArchive(s, prompt.archiveId, 'cancelled', Number(input.now) || 0);
+      }
+      s.crazy.queue = list(s.crazy.queue).filter(item => {
+        if (item.assignedBy !== num && item.target !== num) return true;
+        updateArchive(s, item.archiveId, 'cancelled', Number(input.now) || 0); return false;
+      });
       s.crazy.replacementFor = list(s.crazy.replacementFor).filter(n => n !== num);
     }
     if (s.phase === 'talking' && conversationMode(s) !== 'free' && s.speaker === num) nextSpeaker(s, input.seed);
@@ -544,6 +633,7 @@ var TALK_ENGINE = (() => {
     if (existing.size + added.length > 9 || added.some(p => !Number.isInteger(p?.playerNum) || p.playerNum < 1 || p.playerNum > 9 || existing.has(p.playerNum))
         || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
     const s = copy(current);
+    migrateArchive(s);
     s.roster = list(s.roster); s.remaining = list(s.remaining); s.spoken = list(s.spoken); s.scores ||= {};
     for (const seat of added) {
       s.roster.push({ playerNum: seat.playerNum, name: String(seat.name || '').trim().slice(0, 80), active: true });
@@ -608,6 +698,6 @@ var TALK_ENGINE = (() => {
       },
     };
   }
-  return { create, apply, membership, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange };
+  return { create, apply, membership, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange, archiveEntries, ackArchive };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_ENGINE;

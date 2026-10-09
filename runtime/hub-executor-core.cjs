@@ -63,8 +63,9 @@ function currentCard(node, ticket, capsule, baseline, predecessor, target) {
   return !!field && !!predecessor && (!target || predecessor.ticket.seats.some(s => s.token === target.token && s.playerNum === target.playerNum)) && node?.hubExecutor?.capsule === predecessor.capsule &&
     node.game === predecessor.ticket.game && node[field]?.sessionId === predecessor.ticket.sessionId;
 }
-function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalThis.fetch, now = Date.now, games } = {}) {
+function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetchImpl = globalThis.fetch, now = Date.now, games } = {}) {
   const key = keyFrom(secret); const registry = games || adapters();
+  const archiveStore = archiveSecret == null ? null : require('./talk-archive-store.cjs').createStore({ secret: archiveSecret, fetchImpl, databaseURL });
   if (databaseURL !== DEFAULT_DB && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(databaseURL)) fail('invalid_database');
   function predecessor(executor, ticket) {
     if (!executor.previousCapsule) return null;
@@ -127,6 +128,29 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
     }
     fail('room_busy', 409);
   }
+  async function flushArchive(ticket, adapter, raw) {
+    if (!archiveStore || !adapter?.archiveEntries || !raw) return raw;
+    const entries = adapter.archiveEntries(adapter.decode(raw));
+    if (!entries.length) return raw;
+    // Never write from a canonical CAS callback: retries may run it repeatedly.
+    // A failed sidecar write leaves the committed journal and withholds the
+    // public receipt. A later authenticated retry can drain it after a switch.
+    const versions = await archiveStore.writeRoom(ticket.code, entries);
+    await cas(ticket.canonicalPath, current => {
+      if (current?.executor?.v !== 1) return;
+      const bound = unseal(current.executor.capsule, key);
+      if (!sameBinding(bound, ticket)) return;
+      const before = adapter.decode(current), next = adapter.ackArchive(before, versions);
+      if (SAME(before, next)) return;
+      const result = adapter.encode(current, next);
+      // Journal housekeeping has no visible game change or new player receipt.
+      result.revision = current.revision;
+      return result;
+    });
+    // Publish only the snapshot whose complete journal was just persisted. A
+    // concurrent command may have accepted newer, still-unflushed records.
+    return raw;
+  }
   function validate(body) {
     const { game, code, controlToken } = body;
     if (typeof game !== 'string' || !Object.hasOwn(registry, game) || !CODE.test(code || '') || !TOKEN.test(controlToken || '')) fail('invalid_registration');
@@ -187,6 +211,9 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
       if (membershipAuthorized(authority.executor, incomingTicket, latest, body.capsule)) { ticket = latest; capsuleUsed = authority.executor.capsule; seat = ticket.seats.find(s => s.token === body.token); }
     }
     const ctx = { ...ticket, seed: crypto.randomInt(0, 0x100000000), now: timestamp, actor: host ? 0 : seat.playerNum, seat };
+    if (archiveStore && adapter.archiveEntries) {
+      if (authority?.executor?.v === 1 && sameBinding(unseal(authority.executor.capsule, key), ticket)) await flushArchive(ticket, adapter, authority);
+    }
     const cards = await Promise.all(ticket.seats.map(async s => ({ seat: s, node: (await read(s.path)).data })));
     let historySnapshots = [];
     if (adapter.historyWrites) {
@@ -273,6 +300,7 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
       if (error.code === 'membership_changed' && membershipAttempt < 7) return execute(body, membershipAttempt + 1);
       throw error;
     }
+    raw = await flushArchive(ticket, adapter, raw);
     // Only the committed epoch is used below: an ETag retry may have minted
     // several replacement tickets before one canonical write succeeded.
     const publicationCapsule = raw.executor.capsule, publicationTicket = unseal(publicationCapsule, key);
@@ -315,6 +343,9 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
   }
   async function membershipResult(raw, body) {
     const ticket = unseal(raw.executor.capsule, key), adapter = registry[ticket.game];
+    // Membership can cancel handwritten missions. Persist its committed journal
+    // before any receipt or private projection, including exact receipt retries.
+    raw = await flushArchive(ticket, adapter, raw);
     // Bluff owns a separate private channel. Bind only the exact newly admitted
     // Hub source, and never overwrite a card that moved while admission waited.
     if (ticket.game === 'bluffking') {
@@ -374,6 +405,9 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
     if (opening.executor.capsule !== body.capsule && !membershipAuthorized(opening.executor, incoming, ticket, body.capsule)) fail('stale_session', 409);
     if (operation === 'updateRoster' && opening.executor.capsule !== body.capsule && !duplicate) fail('stale_session', 409);
     if (duplicate) return membershipResult(opening, body);
+    // Drain already accepted records before changing membership. Sidecar writes
+    // stay outside CAS callbacks and the post-commit flush uses the new ticket.
+    await flushArchive(ticket, adapter, opening);
     const previousRoster = originalRoster(state, ticket, opening.executor);
     if (operation === 'updateRoster' && (requestedRoster.length < previousRoster.length || previousRoster.some((row,i) => row.originalToken !== requestedRoster[i]?.originalToken))) fail('invalid_roster');
     if (operation === 'setParticipant' && !ticket.seats.some(s => s.playerNum === body.playerNum)) fail('invalid_player');
@@ -467,6 +501,8 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
   async function release(body) {
     const ticket = unseal(body.capsule, key);
     if (body.token !== ticket.controlToken) fail('wrong_player', 403);
+    const archiveInitial = (await read(ticket.canonicalPath)).data;
+    if (archiveInitial?.executor?.capsule === body.capsule) await flushArchive(ticket, registry[ticket.game], archiveInitial);
     await cas(ticket.canonicalPath, raw => {
       if (raw?.executor?.capsule !== body.capsule) fail('stale_session', 409);
       let state = registry[ticket.game].decode(raw); if (registry[ticket.game].release) state = registry[ticket.game].release(state); delete state.sharedControls; if (state.rooms?.[ticket.code]) delete state.rooms[ticket.code].sharedControls;

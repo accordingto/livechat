@@ -258,6 +258,8 @@ const ROOM = (() => {
      numbers and calls them out, so seeing a press land live is the whole point. */
   function sendButtonCheck() {
     if (!on()) return;
+    // A retained homepage must not replace an ongoing table or its new seat.
+    if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
     // two-digit (10-99), not single digits — a lone digit is easy to guess/copy
     // without actually reading the card, which defeats a check that's meant to
     // confirm the player is looking at their own screen. The domain (90 values)
@@ -270,7 +272,13 @@ const ROOM = (() => {
     const id = checkButtonId;
     // each card gets its own independent shuffle of the same three numbers, so
     // "press 7" can't be answered by copying whichever position a neighbor pressed
-    publish(() => ({ game: 'buttoncheck', id, numbers: checkNumbers.slice().sort(() => Math.random() - 0.5) }));
+    for (let i = 0; i < count; i++) {
+      const numbers = checkNumbers.slice().sort(() => Math.random() - 0.5);
+      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).transaction(current => {
+        if (['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(current?.game)) return;
+        return { game: 'buttoncheck', id, numbers, playerNum: i + 1, name: names[i] || null };
+      }, undefined, false);
+    }
     render();
   }
 
@@ -867,7 +875,7 @@ const ROOM = (() => {
 
   function setCount(n) {
     count = n;
-    checkWords = null; // stale answer key for the old headcount
+    checkWords = null; checkRevealed = false; // stale answer key for the old headcount
     checkNumbers = null; checkButtonId = '';
     document.querySelectorAll('.room-count-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
     if (on()) ensureTokens(count);
@@ -881,7 +889,7 @@ const ROOM = (() => {
     const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!typed) return;
     sessionCode = typed;
-    checkWords = null; // stale answer key for the room we just left
+    checkWords = null; checkRevealed = false; // stale answer key for the room we just left
     checkNumbers = null; checkButtonId = '';
     const saved = loadSessionData(typed);
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
@@ -898,7 +906,7 @@ const ROOM = (() => {
 
   function newRoom() {
     sessionCode = generateSessionCode();
-    checkWords = null;
+    checkWords = null; checkRevealed = false;
     checkNumbers = null; checkButtonId = '';
     tokens = [];
     names = []; // a brand new room starts with blank names, not whoever was in the old one

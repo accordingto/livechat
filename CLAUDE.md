@@ -22,8 +22,9 @@ away originals and retained suffix seats. Story participation controls stay belo
 the cards; Talk/CUT/Mic keep their own controls. Intentional away/new status never
 pretends to be an offline blocker. See membership-mode.md.
 
-Verification: 1454/1454 repository tests passed, including all four production
-smoke harness regressions and Firebase-empty projection compatibility.
+Verification: 1526/1526 integrated repository tests passed, including the private
+Talk archive, exact membership retries, original Hub button-check guards and
+Firebase-empty projection compatibility.
 Real local Edge checks pass 136/136 EN/ZH scenes at 320/375/1000/1440px, including
 home managers, private/away/pending actors and actual scoped button operations.
 The owned production service dpl_C6Vr7UzrpscCZEmQcNSf3vgj4LBH is READY. Fresh real
@@ -32,8 +33,38 @@ nodes were tracked, 38 deleted, 1 already empty, zero cleanup failures. An initi
 QA-only empty-hand assertion was adapted to Firebase omission; its 15 disposable
 nodes were also cleaned. No existing user room was used. Deployment preserves the
 stable Production secret, Hub-only sin1 placement and other service functions.
-Runtime graph is copied back to the owned service source for future deployments.
-Frontend publication and public-asset verification are required for this release.
+The concurrent private Talk archive is integrated. Membership cancels relevant
+handwritten missions and drains committed journal updates before publication or
+receipts, including exact failed-write retries. Original Hub word/button checks
+are guarded, and room/count changes clear stale Reveal controls. Runtime graph
+must be retained in the owned service source for future deployments. Integrated
+service/frontend publication and public-asset verification are required.
+
+## CURRENT: Private Crazy Talk handwritten archive - 2026-10-10
+
+Accepted handwritten Crazy Talk challenges and their outcomes are retained for
+private operator inspiration. The user explicitly requested system-only storage;
+never add a public archive view, player export or archive-read API. Only a named
+room may be read through scripts/talk-read-archive.cjs; see its adjacent .md for
+the private env-run workflow. Never enumerate rooms or print/save environment
+keys. CRAZY_TALK_ARCHIVE_SECRET is an independent 64-hex Production backend
+configuration, installed before deployment; retain it and HUB_EXECUTOR_SECRET.
+
+Talk journals accepted queue items in the canonical state, carries them across
+new topics/fresh sessions, and versions assigned/completed/skipped/expired/
+cancelled outcomes. Private AES-GCM records live separately from replaceable
+cards under a room identity derived from HMAC. The service drains the journal
+outside canonical CAS before public receipts; ACKs never discard newer updates.
+Exact authenticated retry drains pending writes even after a player game switch.
+Projection whitelists never include archive history/IDs. Keep runtime/story-
+executor archiveEntries/ackArchive, core flushArchive, api archiveSecret binding,
+and runtime/talk-archive-store.cjs in future service packages. Source/frontend
+changes require an integrated service deployment retaining current membership,
+CUT/Dixit/Bluff/Once behavior, search functions and Hub-only sin1 placement.
+New Talk script tags are talk-archive-1. Historical overwritten cards cannot be
+recovered; legacy surviving queued/pending handwriting retains only known times.
+Offline full regression passes 1421/1421; local Chrome round/timer/queue/privacy
+and mobile 320/375 checks pass. Production integration is being verified.
 
 ## CURRENT: CUT topic clock — 2026-10-10
 
