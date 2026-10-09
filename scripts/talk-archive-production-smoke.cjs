@@ -40,7 +40,7 @@ async function run({ env = process.env, fetchImpl = globalThis.fetch, delay = ms
     await api({ operation: 'execute', capsule: card.hubExecutor.capsule, token: seats[actor - 1].token,
       command: { id: 'archive-qa-' + ++seq, type, sessionId: state.sessionId, turnId: state.turnId, ...extra } });
     const result = (await snapshot(node(actor))).value;
-    check(result.talk.reply?.error === ''); return result;
+    check(result.talk.reply?.id === 'archive-qa-' + seq && result.talk.reply?.error === ''); return result;
   }
   try {
     report.step = 'fresh-fixture';
@@ -56,7 +56,9 @@ async function run({ env = process.env, fetchImpl = globalThis.fetch, delay = ms
     await api({ operation: 'register', game: 'letstalk', code, controlToken: control, sessionId: initialSession, seats });
     report.step = 'queued-private';
     await command(1, 'crazyAssign', { text: 'Cluck like a tiny chicken.', kind: 'task', target: 2 });
-    let records = await store.readRoom(code); check(records.length === 1 && records[0].status === 'queued');
+    report.step = 'queued-read';
+    const queuedState = await current(); report.journalCount = E.archiveEntries(queuedState).length; report.queueCount = E.list(queuedState.crazy.queue).length; report.archiveJournal = { version: queuedState.challengeArchive?.version ?? null, records: E.list(queuedState.challengeArchive?.records).length, acknowledged: E.list(queuedState.challengeArchive?.records).map(r => r.persistedVersion || 0), linked: E.list(queuedState.crazy.queue).every(r => typeof r.archiveId === 'string') };
+    let records = await store.readRoom(code); report.archiveCount = records.length; check(records.length === 1 && records[0].status === 'queued');
     check(records[0].text === 'Cluck like a tiny chicken.' && records[0].author.name === 'Archive QA 1' && records[0].target.playerNum === 2);
     for (const num of [1, 2]) {
       const card = (await snapshot(node(num))).value;
