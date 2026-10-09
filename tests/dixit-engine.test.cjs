@@ -449,6 +449,76 @@ test('views hide all other hands, card owners, answers, deck order, and ballots 
   s = act(s, 'nextRound'); assert.equal(E.view(s, 0).dixit.result, null); assert.deepEqual(E.view(s, 2).dixit.ownSubmitted, []);
 });
 
+test("every viewer sees exact ballot completion without seeing another player's choice or card ownership", () => {
+  let s = tableReady(started());
+  s = act(s, 'vote', 2, { cardId: s.submissions[1][0] });
+  const snapshot = clone(s);
+  for (const actor of [0, 1, 2, 3, 4, 99]) {
+    const v = E.view(wire(s), actor).dixit;
+    assert.deepEqual(v.roster.map(p => [p.playerNum, p.voted]), [[1, false], [2, true], [3, false], [4, false]]);
+    assert.equal(v.storyteller, 1);
+    assert.equal(v.result, null); assert.equal(v.answerCardId, undefined);
+    for (const key of ['votes', 'submissions', 'tableOwners', 'voteCounts']) assert.equal(key in v, false);
+    for (const p of v.roster) {
+      assert.deepEqual(Object.keys(p).sort(), ['handCount', 'name', 'playerNum', 'ready', 'score', 'submitted', 'voted']);
+    }
+    if (actor === 2) assert.equal(v.ownVote, s.submissions[1][0]);
+    else if ([1, 3, 4].includes(actor)) assert.equal(v.ownVote, null);
+    else assert.equal('ownVote' in v, false);
+    assert.equal(v.actions.reveal, false, 'missing voters block reveal for every viewer');
+  }
+  assert.deepEqual(s, snapshot, 'completion projections never mutate canonical ballots');
+  s = act(s, 'vote', 3, { cardId: s.submissions[2][0] });
+  s = act(s, 'vote', 4, { cardId: s.submissions[2][0] });
+  for (const actor of [0, 1, 2, 3, 4, 99]) {
+    const v = E.view(s, actor).dixit;
+    assert.deepEqual(v.roster.map(p => p.voted), [false, true, true, true]);
+    assert.equal(v.result, null, 'completion alone never reveals ballots or ownership');
+  }
+  assert.equal(E.view(s, 0).dixit.actions.reveal, true);
+  s = act(finishReveal(s), 'nextRound');
+  for (const actor of [0, 1, 2, 3, 4, 99]) assert.deepEqual(E.view(wire(s), actor).dixit.roster.map(p => p.voted), [false, false, false, false]);
+});
+
+test('three-player status counts one vote per listener and exempts the storyteller with two submitted decoys', () => {
+  let s = tableReady(started(3));
+  assert.equal(s.table.length, 5);
+  assert.equal(s.submissions[2].length, 2); assert.equal(s.submissions[3].length, 2);
+  s = act(s, 'vote', 2, { cardId: s.submissions[3][0] });
+  for (const actor of [0, 1, 2, 3, 99]) {
+    const v = E.view(wire(s), actor).dixit;
+    assert.deepEqual(v.roster.map(p => p.voted), [false, true, false]);
+    assert.equal(v.actions.reveal, false); assert.equal(v.result, null);
+  }
+  s = act(s, 'vote', 3, { cardId: s.submissions[2][1] });
+  assert.deepEqual(E.view(s, 0).dixit.roster.map(p => p.voted), [false, true, true]);
+  assert.equal(E.view(s, 0).dixit.actions.reveal, true);
+  assert.equal(E.view(s, 1).dixit.actions.vote, false, 'the storyteller is exempt rather than waiting to vote');
+});
+
+test('shared round status retains an offline real voter and excludes a recovered missing voter without inventing ballots', () => {
+  let s = E.create({ id: 'vote-recovery-status', roster: roster(5), sharedControls: true, seed: 731, now: 1000 });
+  s = tableReady(act(s, 'deal', 0, { firstPlayerNum: 1 }));
+  s = act(s, 'vote', 2, { cardId: s.submissions[1][0] });
+  s = act(s, 'recover', 0, { onlineNums: [1, 3, 4] });
+  assert.deepEqual(s.roundPlayerNums, [1, 2, 3, 4]);
+  for (const actor of [0, 1, 2, 3, 4, 5, 99]) {
+    const v = E.view(wire(s), actor).dixit;
+    assert.deepEqual(v.roundPlayerNums, [1, 2, 3, 4]);
+    assert.deepEqual(v.roster.map(p => [p.playerNum, p.voted]), [[1, false], [2, true], [3, false], [4, false], [5, false]]);
+    assert.equal(v.actions.reveal, false);
+    if (actor === 5) assert.equal(v.actions.vote, false, 'recovered missing seats are outside this round');
+    assert.equal(v.result, null); assert.equal('votes' in v, false);
+  }
+  assert.equal(s.votes[5], undefined, 'recovery never invents a ballot for an excluded seat');
+  s = act(s, 'vote', 3, { cardId: s.submissions[2][0] });
+  s = act(s, 'vote', 4, { cardId: s.submissions[2][0] });
+  assert.equal(E.view(s, 0).dixit.actions.reveal, true, 'only the remaining active unvoted seats must finish');
+  const v = E.view(s, 5).dixit;
+  assert.deepEqual(v.roster.map(p => p.voted), [false, true, true, true, false]);
+  assert.equal(v.result, null, 'inactive spectators still learn no ballot choices');
+});
+
 test('Firebase omitted containers and numeric-key objects preserve rules, views, and private projection', () => {
   const lobby = create();
   assert.deepEqual(E.view(lobby, 0), E.view(wire(lobby), 0));

@@ -18,6 +18,37 @@ Full regression 1351/1351 passed; timer expiry preserves the story and shared
 controls, with legacy/reconnect/privacy coverage. UI used DOM automation because
 the desktop browser connection could not start. See cut-mode.md.
 
+## CURRENT: Dixit all voted pictures and individual vote status — 2026-10-10
+
+The previous reveal renderer intentionally selected only the second distinct vote
+count, so a higher-voted decoy could disappear. The right column now includes
+EVERY non-Storyteller picture with at least one ballot, sorted by descending
+individual card votes; equal counts keep shuffled table order. The answer stays
+once in the center with its vote count, and the compact round scores remain on
+the left with shared header/content rows. First right owner/count sit above its
+image; further large pictures and their owner/count metadata extend downward.
+Zero-vote pictures remain available in the complete round gallery rather than
+filling the focused result. Three-player double submissions count each physical
+card independently; old object-shaped result rows remain supported.
+During VOTE, the main phase bar shows every player's name and Voted / Waiting
+for vote / Storyteller (no vote required) / Sitting out this round. Public
+roster.voted and shared roundPlayerNums already provide these flags; no engine,
+runtime, private ballot or ownership publication changes are needed. An offline
+real voter retains their vote, while an excluded unvoted player is marked out.
+The status list disappears outside VOTE and refreshes bilingually. Full private
+choices remain hidden until the complete result is public. Host/private players
+use the same renderer. Both entries load CSS/UI with dixit-11; other assets keep
+their existing versions. Browser-only release; no independent service deployment
+or secret changes. Preserve concurrent Talk and Bluff work.
+Full repository regression: 1333/1333 passed, including the updated 45 UI
+cases and 38 engine cases for actual vote completion/privacy/recovery.
+Real local Edge QA passed 200 synthetic shared/private EN/ZH scenes at
+1440/1000/736/375/320px, with no page overflow, aligned first score/image
+tops, all positive-vote cards, secret ballots and accurate recovery statuses.
+Screenshots were inspected; no real room or Firebase data was used.
+Frontend release ca994b5 is published; production assets match 103/103,
+including both entry pages, renderer, styles and existing artwork versions.
+
 ## CURRENT: Bluff fast host opening — 2026-10-09
 
 Bluff was slower than the other game managers because opening/polling waited for
