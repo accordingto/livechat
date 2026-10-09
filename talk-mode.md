@@ -1,4 +1,4 @@
-# Current: stable challenge selection and focused timed rounds — 2026-10-10
+# Current: private handwritten archive and focused timed rounds — 2026-10-10
 
 Crazy Talk now retains accepted handwritten challenges for private system
 review. There is no public library, archive API or player-facing history panel.
@@ -28,6 +28,14 @@ queued items authored by or explicitly targeting them; other active recipients
 and unrelated random queue items remain. The private journal is updated before
 removal/publication. A membership-version fence prevents a delayed old response
 from restoring cancelled prompts, including partial card-publication retries.
+
+Release verification: 1540/1540 integrated repository tests pass, including
+membership/upgrade/ACK races. Local Chrome round behavior and 320/375px checks
+pass. Production private-archive flow passes 125/125; its four exact disposable
+nodes, including the encrypted archive, were removed through ownership/ETag
+checks with zero failures. Source 1a29d38 matches 18/18 Talk and 47/47 shared
+assets; both hosts block the private archive/reader paths. The active service is
+dpl_9AXaFRDkAFDzipH2Bmhf7kW3dSa8 in sin1. No existing user room was modified.
 
 Both Talk modes have a round clock, default 15 minutes (configurable from 1 to
 60 minutes). Preparation is separate: the round clock begins when conversation

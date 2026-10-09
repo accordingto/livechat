@@ -75,7 +75,17 @@ and mobile 320/375 checks pass. Membership changes cancel relevant archived work
 publication checks membershipRevision so delayed writes cannot restore a cancelled
 prompt. Upgrade normalization captures only unlinked queued/pending handwriting
 from older writers, even with an initialized envelope, without reviving persisted
-terminal history. Production integration is being verified.
+terminal history. Production service dpl_9AXaFRDkAFDzipH2Bmhf7kW3dSa8 is READY;
+the public alias resolves to that integrated sin1 deployment. A fresh owned room
+passes 125/125 live private-archive checks: queued/assigned/done/cancelled states,
+score, topic/end/game-switch retention and the exact-room operator reader. All
+four exact fixture nodes, including its encrypted sidecar, were conditionally
+cleaned; zero failures. Three initial probes caught a simultaneous pre-archive
+membership deployment; all nine nonempty fixture nodes were cleaned. No existing
+user room was modified or used for these tests. Frontend source 1a29d38 matches
+18/18 Talk and 47/47 shared assets; health/CORS/invalid-ticket checks pass. Archive
+writer/reader paths are blocked on both public hosts (4/4). The 51 approved
+service package files are retained in the owned service source for future deploys.
 
 ## CURRENT: CUT topic clock — 2026-10-10
 
