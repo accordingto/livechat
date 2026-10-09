@@ -66,4 +66,3 @@ async function run(args, { env = process.env, storeFactory = defaultStoreFactory
 }
 module.exports = { run };
 if (require.main === module) run(process.argv.slice(2)).then(code => { process.exitCode = code; }).catch(() => { process.stderr.write(READ_ERROR + '\n'); process.exitCode = 1; });
-

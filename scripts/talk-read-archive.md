@@ -20,4 +20,3 @@ Offline verification:
     node --test tests/talk-read-archive.test.cjs
 
 Tests use synthetic records and an in-memory encrypted store; they access no user room or production environment values.
-
