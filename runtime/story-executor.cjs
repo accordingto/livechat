@@ -82,4 +82,5 @@ const adapters = {
         list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt])]));
   }),
 };
+Object.assign(adapters.letstalk, { archiveEntries: TALK.archiveEntries, ackArchive: TALK.ackArchive });
 module.exports = { adapters };

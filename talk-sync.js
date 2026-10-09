@@ -83,7 +83,8 @@ var TALK_SYNC = (() => {
         const id = uid(); this.initialSession = id; this.suspended = false; this.seenCards.clear();
         const now = this.now();
         try {
-          return await this.change(() => TALK_ENGINE.create({ id, topic, mode, seconds, showStarters, gameMode, crazySeconds, crazyMinSeconds, crazyMaxSeconds, conversationMode, crazySource, gameSeconds, crazyTaskSeconds, now,
+          return await this.change(current => TALK_ENGINE.create({ id, topic, mode, seconds, showStarters, gameMode, crazySeconds, crazyMinSeconds, crazyMaxSeconds, conversationMode, crazySource, gameSeconds, crazyTaskSeconds, now,
+            challengeArchive: current?.challengeArchive,
             roster: Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) })) }));
         } catch (e) { this.initialSession = null; throw e; }
       });

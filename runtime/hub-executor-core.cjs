@@ -50,8 +50,9 @@ function currentCard(node, ticket, capsule, baseline, predecessor) {
   return !!field && !!predecessor && node?.hubExecutor?.capsule === predecessor.capsule &&
     node.game === predecessor.ticket.game && node[field]?.sessionId === predecessor.ticket.sessionId;
 }
-function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalThis.fetch, now = Date.now, games } = {}) {
+function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetchImpl = globalThis.fetch, now = Date.now, games } = {}) {
   const key = keyFrom(secret); const registry = games || adapters();
+  const archiveStore = archiveSecret == null ? null : require('./talk-archive-store.cjs').createStore({ secret: archiveSecret, fetchImpl, databaseURL });
   if (databaseURL !== DEFAULT_DB && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(databaseURL)) fail('invalid_database');
   function predecessor(executor, ticket) {
     if (!executor.previousCapsule) return null;
@@ -75,6 +76,29 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
       return next;
     }
     fail('room_busy', 409);
+  }
+  async function flushArchive(ticket, adapter, raw) {
+    if (!archiveStore || !adapter?.archiveEntries || !raw) return raw;
+    const entries = adapter.archiveEntries(adapter.decode(raw));
+    if (!entries.length) return raw;
+    // Never write from a canonical CAS callback: retries may run it repeatedly.
+    // A failed sidecar write leaves the committed journal and withholds the
+    // public receipt. A later authenticated retry can drain it after a switch.
+    const versions = await archiveStore.writeRoom(ticket.code, entries);
+    await cas(ticket.canonicalPath, current => {
+      if (current?.executor?.v !== 1) return;
+      const bound = unseal(current.executor.capsule, key);
+      if (!sameBinding(bound, ticket)) return;
+      const before = adapter.decode(current), next = adapter.ackArchive(before, versions);
+      if (SAME(before, next)) return;
+      const result = adapter.encode(current, next);
+      // Journal housekeeping has no visible game change or new player receipt.
+      result.revision = current.revision;
+      return result;
+    });
+    // Publish only the snapshot whose complete journal was just persisted. A
+    // concurrent command may have accepted newer, still-unflushed records.
+    return raw;
   }
   function validate(body) {
     const { game, code, controlToken } = body;
@@ -130,6 +154,10 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
     if (!host && !seat) fail('wrong_player', 403);
     const ctx = { ...ticket, seed: crypto.randomInt(0, 0x100000000), now: timestamp, actor: host ? 0 : seat.playerNum, seat };
     if (adapter.customExecute) return adapter.customExecute({ ticket, body, fetchImpl, databaseURL, now: timestamp });
+    if (archiveStore && adapter.archiveEntries) {
+      const initial = (await read(ticket.canonicalPath)).data;
+      if (initial?.executor?.v === 1 && sameBinding(unseal(initial.executor.capsule, key), ticket)) await flushArchive(ticket, adapter, initial);
+    }
     const cards = await Promise.all(ticket.seats.map(async s => ({ seat: s, node: (await read(s.path)).data })));
     let historySnapshots = [];
     if (adapter.historyWrites) {
@@ -137,7 +165,7 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
       historySnapshots = await Promise.all(adapter.historyWrites(initial, ctx).map(async entry => ({ ...entry, remote: (await read(entry.path)).data })));
     }
     let publishNeeded = false;
-    const raw = await cas(ticket.canonicalPath, async current => {
+    let raw = await cas(ticket.canonicalPath, async current => {
       if (current?.executor?.v !== 1) fail('stale_session', 409);
       let currentTicket = ticket, retryProjection = false;
       if (current.executor.capsule !== body.capsule) {
@@ -188,6 +216,7 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
       if (publishNeeded) { executor.lastPublicationRevision = next.revision || 0; executor.lastPublicationAt = timestamp; executor.lastAbsentNums = absent; }
       return next;
     });
+    raw = await flushArchive(ticket, adapter, raw);
     // Only the committed epoch is used below: an ETag retry may have minted
     // several replacement tickets before one canonical write succeeded.
     const publicationCapsule = raw.executor.capsule, publicationTicket = unseal(publicationCapsule, key);
@@ -230,6 +259,8 @@ function createExecutor({ secret, databaseURL = DEFAULT_DB, fetchImpl = globalTh
   async function release(body) {
     const ticket = unseal(body.capsule, key);
     if (body.token !== ticket.controlToken) fail('wrong_player', 403);
+    const archiveInitial = (await read(ticket.canonicalPath)).data;
+    if (archiveInitial?.executor?.capsule === body.capsule) await flushArchive(ticket, registry[ticket.game], archiveInitial);
     await cas(ticket.canonicalPath, raw => {
       if (raw?.executor?.capsule !== body.capsule) fail('stale_session', 409);
       let state = registry[ticket.game].decode(raw); if (registry[ticket.game].release) state = registry[ticket.game].release(state); delete state.sharedControls; if (state.rooms?.[ticket.code]) delete state.rooms[ticket.code].sharedControls;

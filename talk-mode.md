@@ -1,5 +1,28 @@
 # Current: stable challenge selection and focused timed rounds — 2026-10-10
 
+Crazy Talk now retains accepted handwritten challenges for private system
+review. There is no public library, archive API or player-facing history panel.
+Each record captures text/type, author, explicit/random target, topic, known
+creation/delivery/end times and queued/pending/done/skipped/expired/cancelled status.
+Rejected submissions and system prompts are excluded. Every accepted transition
+is journaled in the canonical state; encrypted sidecar persistence completes
+before a successful player receipt is published. Versioned CAS writes tolerate
+retries, identical IDs from different authors and concurrent updates. Unflushed
+records survive topic changes and fresh host starts; authenticated retries can
+drain them after another game replaces the player cards. Acknowledging an older
+write never removes a newer record. Completed journal entries are pruned only
+after durable storage; ongoing entries retain their monotonic versions.
+
+The sidecar uses a stable keyed room identity under the existing per-token
+Firebase rules. Text and participant details are encrypted with an independent
+`CRAZY_TALK_ARCHIVE_SECRET`, never sent to browsers or saved in the repository.
+Future operator review uses scripts/talk-read-archive.cjs through authenticated
+Vercel env run, reading only an explicitly named room and outputting sanitized
+challenge details. It supports Taiwan dates and bounded result counts and never
+enumerates rooms. See scripts/talk-read-archive.md. This preserves future content;
+old overwritten player cards cannot be reconstructed. Legacy currently queued
+or pending handwriting is imported once with only its known timestamps.
+
 Both Talk modes have a round clock, default 15 minutes (configurable from 1 to
 60 minutes). Preparation is separate: the round clock begins when conversation
 starts. The shared screen and authenticated shared-control player cards can
