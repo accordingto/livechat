@@ -73,6 +73,28 @@ Runtime changes require publishing both the independent service and frontend.
 No audio API or automatic speech judgement is used; players mark their own
 mission complete. Only authenticated recipients can acknowledge their prompt.
 
+Latest selector release verification: all 1366 project tests passed, including
+38 player-card tests. Isolated real Chrome passed five consecutive custom
+submissions and ten native recipient/type pickers kept open across live updates,
+plus first completion/skip/management clicks after Escape, pointer and keyboard
+handover, connected ancestors, next-draft preservation, frozen 200-second retries,
+queue errors, roster changes, Chinese IME, offline recovery and ended/new sessions.
+The full local round browser checks also passed at 375px and 320px without
+overflow or page errors. Independent review repeated the picker and first-click
+checks. Production service deployment dpl_EBGeShNd3YGqioRRsHYBUgTHw7m5 is READY
+in sin1 with the current Talk, CUT, Bluff and Once runtimes. Live service smoke
+passed 94 checks; all eight exact owned fixture nodes were cleaned with no
+failures. The service source contains the explicit 50 packaged files and no
+local credentials were copied. Source release: 408cb08. No existing user-room
+data was accessed. Production Talk assets match 17/17 and whole-site assets
+45/45; service health, CORS, invalid-ticket rejection and private-runtime 404
+checks pass. The same isolated Chrome fixture against the published UI passes
+five submissions, ten native pickers and first-click behavior with zero errors.
+The production round/demo flow also passes queue priority, scores, skip/expiry,
+two-slot cap, add-time, automatic rest and 375px/320px layouts without errors.
+Newly added challenges follow the earlier supplied examples,
+since the unavailable desktop connection could not retrieve today's cards.
+
 Previous timed-round release verification: all 1325 project tests passed. Real Chrome verified
 homepage defaults of 15 minutes per round and 2.5 minutes per mission,
 the shared scheduler, queued custom priority and random non-author recipient, completion +1, immediate skip/expiry replacement,
