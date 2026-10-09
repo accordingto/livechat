@@ -33,6 +33,11 @@ layouts have no horizontal overflow.
 Native-picker regression passes five submissions and ten actual popup checks,
 with connected ancestors, drafts, retries and IME preserved.
 Integrated repository regression: 1548/1548 pass, with zero failures or skips.
+Frontend source ae46248 is published on main. Production verification passes
+18/18 Talk assets and 47/47 shared assets, service health/CORS/invalid-ticket
+checks and blocked private runtime paths. Real Chrome production demo confirms
+composer placement/default expansion, hidden clocks, optional time, random
+recipient and 375px layout. No existing room was accessed for this UI release.
 
 # Current: private handwritten archive and focused timed rounds — 2026-10-10
 
