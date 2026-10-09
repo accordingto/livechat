@@ -1,3 +1,29 @@
+## CURRENT: Private Crazy Talk handwritten archive - 2026-10-10
+
+Accepted handwritten Crazy Talk challenges and their outcomes are retained for
+private operator inspiration. The user explicitly requested system-only storage;
+never add a public archive view, player export or archive-read API. Only a named
+room may be read through scripts/talk-read-archive.cjs; see its adjacent .md for
+the private env-run workflow. Never enumerate rooms or print/save environment
+keys. CRAZY_TALK_ARCHIVE_SECRET is an independent 64-hex Production backend
+configuration, installed before deployment; retain it and HUB_EXECUTOR_SECRET.
+
+Talk journals accepted queue items in the canonical state, carries them across
+new topics/fresh sessions, and versions assigned/completed/skipped/expired/
+cancelled outcomes. Private AES-GCM records live separately from replaceable
+cards under a room identity derived from HMAC. The service drains the journal
+outside canonical CAS before public receipts; ACKs never discard newer updates.
+Exact authenticated retry drains pending writes even after a player game switch.
+Projection whitelists never include archive history/IDs. Keep runtime/story-
+executor archiveEntries/ackArchive, core flushArchive, api archiveSecret binding,
+and runtime/talk-archive-store.cjs in future service packages. Source/frontend
+changes require an integrated service deployment retaining current membership,
+CUT/Dixit/Bluff/Once behavior, search functions and Hub-only sin1 placement.
+New Talk script tags are talk-archive-1. Historical overwritten cards cannot be
+recovered; legacy surviving queued/pending handwriting retains only known times.
+Offline full regression passes 1421/1421; local Chrome round/timer/queue/privacy
+and mobile 320/375 checks pass. Production integration is being verified.
+
 ## CURRENT: CUT topic clock — 2026-10-10
 
 Each CUT topic has a shared visible 10-minute clock, adjustable to integer
