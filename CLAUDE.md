@@ -26,6 +26,8 @@ Real local Edge QA passed 200 synthetic shared/private EN/ZH scenes at
 1440/1000/736/375/320px, with no page overflow, aligned first score/image
 tops, all positive-vote cards, secret ballots and accurate recovery statuses.
 Screenshots were inspected; no real room or Firebase data was used.
+Frontend release ca994b5 is published; production assets match 103/103,
+including both entry pages, renderer, styles and existing artwork versions.
 
 ## CURRENT: Bluff fast host opening — 2026-10-09
 

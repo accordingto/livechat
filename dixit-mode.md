@@ -105,3 +105,6 @@ local Edge browser QA passed 200 synthetic shared/private bilingual scenes at
 checks. Screenshots of desktop, tablet and phone views were inspected. No real
 room or Firebase data was used. The two entry pages use CSS/UI version dixit-11;
 this is a browser-only change with no service, scoring or engine modifications.
+
+Frontend release ca994b5 is published. The read-only production check matched
+103/103 Dixit assets, including the two entry pages, renderer and styles.
