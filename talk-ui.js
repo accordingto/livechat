@@ -379,10 +379,15 @@ var TALK_PLAYER = (() => {
       };
       this.selectionStart = event => {
         if (event.target.tagName === 'SELECT' && event.target.dataset?.talkAssignmentField) this.assignmentSelection = event.target;
+        else if (event.type === 'pointerdown' && this.element.contains(event.target) && event.target.closest('[data-talk-card-main], [data-talk-card-footer]')) this.assignmentSelection = null;
       };
       this.selectionEnd = event => {
         if (this.assignmentSelection !== event.target) return;
         this.assignmentSelection = null;
+        // A blur caused by a click happens before that click. Leave controls
+        // in replaceable regions connected so their first click can run.
+        const destination = event.relatedTarget?.closest?.('[data-talk-card-main], [data-talk-card-footer]');
+        if (destination && this.element.contains(destination)) return;
         if (!this.destroyed && this.data?.talk.phase !== 'ended') this.render(true);
       };
       element.addEventListener('pointerdown', this.selectionStart); element.addEventListener('keydown', this.selectionStart); element.addEventListener('focusout', this.selectionEnd);

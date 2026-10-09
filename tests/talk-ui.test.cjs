@@ -579,3 +579,27 @@ test('ACK keeps reused mission text when recipient or type was changed for the n
     f.update({...talk,reply:{id:sent.at(-1).id,error:''}}); assert.equal(f.card.crazyDraft.text,'Cluck like a chicken.');
   } finally {f.card.destroy();}
 });
+
+test('select focusout keeps a clicked control connected until its first click is handled', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    f.update(crazy()); const button=f.buttons().find(b=>b.dataset.talkAction==='crazyDone');
+    const select={tagName:'SELECT',dataset:{talkAssignmentField:'target'}}; f.card.assignmentSelection=select;
+    const region=button; f.handlers.get('focusout')({target:select,relatedTarget:{closest:()=>region}});
+    assert.equal(f.card.assignmentSelection,null); assert.ok(f.buttons().includes(button));
+    f.click('crazyDone'); await flush(); assert.equal(sent.length,1); assert.equal(sent[0].type,'crazyDone');
+  } finally {f.card.destroy();}
+});
+
+test('pointer selection handover also keeps a control when browser blur has no related target', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    f.update(crazy()); const button=f.buttons().find(b=>b.dataset.talkAction==='crazySkip');
+    const select={tagName:'SELECT',dataset:{talkAssignmentField:'target'}}; f.card.assignmentSelection=select;
+    button.tagName='BUTTON'; button.closest=()=>button;
+    f.handlers.get('pointerdown')({type:'pointerdown',target:button});
+    f.handlers.get('focusout')({target:select,relatedTarget:null});
+    assert.ok(f.buttons().includes(button)); f.click('crazySkip'); await flush();
+    assert.equal(sent.length,1); assert.equal(sent[0].type,'crazySkip');
+  } finally {f.card.destroy();}
+});

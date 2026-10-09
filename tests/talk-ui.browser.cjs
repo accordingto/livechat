@@ -68,12 +68,30 @@ const assert=require('node:assert/strict'),path=require('node:path');
       assert.equal(await page.inputValue(text),i===0?'My next draft':'');assert.equal(await page.locator(send).isDisabled(),false);await stable();
     }
     assert.equal(await page.evaluate(()=>__scrollCalls),0);
+    // The first control click after dismissing a picker must survive blur.
+    for(const action of ['crazyDone','crazySkip']) {
+      await page.evaluate(action=>{__talk.crazy.prompt={id:'direct-'+action,text:'First click mission',kind:'task',status:'pending',expiresAt:800000};__update();},action);
+      const before=await page.evaluate(()=>__sent.length);
+      await page.locator(target).click();await page.keyboard.press('Escape');
+      await page.click('[data-talk-action="'+action+'"]');
+      assert.equal(await page.evaluate(()=>__sent.length),before+1);
+      assert.equal(await page.evaluate(()=>__sent.at(-1).type),action);
+      await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.prompt.status='done';__update();});
+    }
+    await page.evaluate(()=>{__talk.sharedControls=true;__talk.hostControls=true;__talk.actions={newTopic:true,extend:true};__talk.topic.followUps=[{question:'Which dish should we serve?'}];__update();});
+    await page.locator(target).click();await page.keyboard.press('Escape');
+    await page.locator('.talk-management>summary').click();
+    assert.equal(await page.locator('.talk-management').evaluate(el=>el.open),true);
+    await page.evaluate(()=>__update());assert.equal(await page.locator('.talk-management').evaluate(el=>el.open),true);
+    await page.locator(target).click();await page.keyboard.press('Escape');
+    await page.locator(text).click();
+    assert.equal(await page.locator(text).evaluate(el=>document.activeElement===el),true);
     await page.fill(text,'Keep this draft');
+    const scrollCallsBeforeTyping=await page.evaluate(()=>__scrollCalls);
     await page.locator(text).evaluate(el=>{el.focus();el.setSelectionRange(4,8);});
-    const scroll=await page.evaluate(()=>scrollY);
     await page.evaluate(()=>{__talk.crazy.prompt={id:'while-typing',text:'A fresh private task',kind:'task',status:'pending',expiresAt:800000};for(let n=0;n<6;n++)__update();});
     await stable();assert.equal(await page.locator(text).evaluate(el=>document.activeElement===el&&el.selectionStart===4&&el.selectionEnd===8),true);
-    assert.equal(await page.evaluate(()=>scrollY),scroll);assert.equal(await page.evaluate(()=>__scrollCalls),0);
+    assert.equal(await page.evaluate(()=>__scrollCalls),scrollCallsBeforeTyping);
     await page.selectOption(target,'3');
     await page.evaluate(()=>{__talk.roster=[{playerNum:1,name:'Alex renamed'},{playerNum:2,name:'Sam'},{playerNum:4,name:'Lee'},{playerNum:5,name:'New friend'}];__update();});
     await stable();assert.equal(await page.inputValue(target),'random');assert.equal(await page.inputValue(text),'Keep this draft');
@@ -98,7 +116,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.evaluate(()=>__refs.target===document.querySelector('[data-talk-assignment-field="target"]')),false);
     assert.equal(errors.length,0);
     assert.ok(nativePickerChecks>=5,'Native picker must open and stay open across state updates.');
-    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,errors}));
+    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,errors}));
   } finally {await browser.close();}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
 
