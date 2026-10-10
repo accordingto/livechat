@@ -8,7 +8,8 @@ const files = ['index.html', 'room.js', 'hub-membership.css', 'hub-launcher.js',
   'lets-talk.html', 'talk-engine.js', 'talk-sync.js', 'talk-ui.js', 'talk-host.js', 'cut.html', 'cut-engine.js', 'cut-sync.js', 'cut-ui.js', 'cut-host.js', 'cut.css',
   'open-mic-rescue.html', 'open-mic-engine.js', 'open-mic-sync.js', 'open-mic-ui.js', 'open-mic-host.js',
   'bluff-king-live-chat.html', 'bluff-king-engine.js', 'bluff-king-sync.js', 'bluff-king-ui.js',
-  'chat-wolf.html', 'chat-wolf-copy.js', 'chat-wolf-engine.js', 'chat-wolf-sync.js', 'chat-wolf-v3-engine.js', 'chat-wolf-v3-ui.js', 'chat-wolf.js'];
+  'chat-wolf.html', 'chat-wolf-copy.js', 'chat-wolf-engine.js', 'chat-wolf-sync.js', 'chat-wolf-v3-engine.js', 'chat-wolf-v3-ui.js', 'chat-wolf.js',
+  'bomb-relay.html', 'bomb-relay.css', 'bomb-relay-deck.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js', 'assets/bomb-relay/beach.svg'];
 const hash = bytes => crypto.createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g, '\n')).digest('hex');
 (async () => {
   let next = 0;

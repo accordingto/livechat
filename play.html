@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="dixit.css?v=dixit-16">
   <link rel="stylesheet" href="cut.css?v=cut-11">
   <link rel="stylesheet" href="open-mic.css?v=om-13">
+  <link rel="stylesheet" href="bomb-relay.css?v=br-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -889,6 +890,8 @@
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
   <script src="cut-ui.js?v=cut-11"></script>
+  <script src="bomb-relay-deck.js?v=br-1"></script>
+  <script src="bomb-relay-ui.js?v=br-1"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=next-1"></script>
@@ -2458,6 +2461,7 @@
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
     let cutCard = null;
+    let bombCard = null;
     let openMicCard = null;
     let openMicTimer = null;
     let onceCard = null;
@@ -2487,6 +2491,33 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      const isBomb = data.game === 'bombrelay' && data.bomb?.version === 1;
+      document.body.classList.toggle('bomb-card-page', isBomb);
+      if (bombCard && !isBomb) { bombCard.destroy(); bombCard = null; }
+      if (isBomb) {
+        document.title = `${data.name || urlName || 'Player'} · BOMB RELAY`;
+        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page', 'open-mic-card-page');
+        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+        if (cutCard) { cutCard.destroy(); cutCard = null; }
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (!bombCard) bombCard = new BOMB_RELAY_UI.Card(el, {
+          nameBanner,
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          // One pending action per card, fenced to the turn it was drawn for.
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'bombrelay' || current.bomb?.sessionId !== command.sessionId || current.bomb?.turnId !== command.turnId) return;
+            return Object.assign({}, current, { bombAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        bombCard.update(data);
+        return;
+      }
       const isOpenMic = data.game === 'openmic' && data.openmic?.version === 1;
       document.body.classList.toggle('open-mic-card-page', isOpenMic);
       if (openMicCard && !isOpenMic) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
@@ -2855,6 +2886,8 @@
       document.body.classList.remove('open-mic-card-page');
       if (cutCard) { cutCard.destroy(); cutCard = null; }
       document.body.classList.remove('cut-card-page');
+      if (bombCard) { bombCard.destroy(); bombCard = null; }
+      document.body.classList.remove('bomb-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -2876,8 +2909,8 @@
     let db = null;
     let latestData = null;
     document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
-    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic'].includes(latestData?.game)) tryRenderCard(); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
+    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -2896,7 +2929,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

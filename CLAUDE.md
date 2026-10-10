@@ -1,3 +1,23 @@
+## CURRENT: Bomb Relay (妙傳爆趣 rules) — 2026-10-10
+
+New game `bomb-relay.html` (h1 💣 Bomb Relay), same mechanics as the board game
+《妙傳爆趣》/ Pass the Bomb Junior with 60 original scene cards: the holder lights
+the fuse on their own play.html card, says one thing that belongs in the picture
+and taps PASS (seat order, sitting-out players skipped). Anyone but the
+challenged player may tap “Didn’t count” once per answer: the bomb goes back.
+The random fuse (Classic 10–60s / Quick 8–25s / Relaxed 20–80s) exists only in
+the host control node; view() never projects explodeAt/remainingMs. Whoever
+holds it at the explosion takes the card and starts the next; after 5/10/15/20
+cards the fewest bomb cards wins. Trusted-host browser sync modeled on CUT
+(lease, opening baselines, game-switch suspend, parallel card writes); NOT on
+hub-executor, so frontend push only — no service deployment or secret change.
+Hub card sits right before BLUFF PARTY because tests lock BLUFF → CUT → Open Mic
+as the last three. First-pass art is assets/bomb-relay/<id>.svg (4:3) from
+scripts/bomb-relay-build-art.cjs; refined art replaces files by the same name
+and bumps ART_VERSION in bomb-relay-deck.js — never rerun the script over
+refined art. Assets br-1 (play.html loads bomb-relay-deck/ui + CSS). Tests
+1608/1608 after rebasing on CUT Mode 2. See bomb-relay-mode.md.
+
 ## CURRENT: CUT Mode 2 · Jump In — 2026-10-11
 
 CUT has two modes. Mode 1 · Take Over is the original game: its rules, topics,
