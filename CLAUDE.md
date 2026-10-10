@@ -1,3 +1,24 @@
+## CURRENT: CUT Mode 2 · Jump In — 2026-10-11 (local commits, not pushed or deployed)
+
+CUT has two modes. Mode 1 · Take Over is the original game: its rules, topics,
+copy and defaults are unchanged and it stays the default. Mode 2 · Jump In keeps
+ONE Main Speaker per round (state.speaker); hidden randomised CUTs bring in one
+other player with no timer, and DONE/SKIP returns the floor after a ~2.5s beat.
+State carries mode (missing = classic for old saves); Mode 2 phases are
+ready/countdown/speaking/interrupt/back/break and never use cut/handoff.
+mainClock runs only in speaking; private deadline = next CUT or end of round.
+First CUT 25–45s, then 30–55s of talking time, none in the last 12s (about 4–6
+per 4-minute round). Main Speakers rotate once each per random cycle;
+interrupters use Mode 1's weighted draw on their own ledger. Mode 2 has its own
+80-topic pool in cut-jump-topics.js, never mixed with cut-topics.js; switching
+mode in settings always opens a new topic. All tuning lives in
+CUT_CONFIG.jump. Do not redesign Mode 1 or merge the two pools.
+CUT assets cut-11; hub-launcher loads cut-jump-topics.js before the engine.
+Tests: 18 new in tests/cut-jump.test.cjs; browser-checked in cut.html?demo=1.
+ENGINE + CONTENT CHANGE: push the frontend and deploy the independent service
+together; pushing to main alone would make service rooms run Mode 2 as Mode 1.
+Not yet verified against the real service or with real voices. See cut-mode.md.
+
 ## CURRENT: Open Mic Now & Next mode — 2026-10-10 (branch claude/open-mic-now-next)
 
 Third Open Mic mode beside Life Song (memories, original 36 prompts, unchanged
