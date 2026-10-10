@@ -1,3 +1,12 @@
+## CURRENT: Dixit card-submission statuses — 2026-10-10
+
+After the Storyteller's clue (SUBMIT), the phase bar now lists every player like
+VOTE does: Card submitted / Choosing a card / Storyteller · card chosen /
+Sitting out this round, from public roster.submitted and roundPlayerNums. It
+uses data-dx-submit-* attributes (VOTE keeps data-dx-vote-*) and never shows
+which card anyone chose. dixit-ui.js loads as dixit-12 in dixit.html/play.html;
+CSS stays dixit-11. Browser-only; no engine/service change. Tests 1549/1549.
+
 ## CURRENT: Homepage cleanup — 2026-10-10
 
 Kangaroo Court (Beta版) was removed: the `kangaroo-court-beta/` folder and its

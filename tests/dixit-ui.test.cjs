@@ -933,3 +933,20 @@ test('refresh restores an unacknowledged private mailbox without resending and d
   try { assert.equal(publicView.card.pending, null, 'the shared screen never adopts a player mailbox'); }
   finally { publicView.card.destroy(); }
 });
+
+test('card submission phase lists every player status and clears before voting', () => {
+  const rows = html => new Map([...html.matchAll(/<div\b[^>]*\bdata-dx-submit-player="(\d+)"[^>]*>[\s\S]*?<\/div>/g)]
+    .map(match => [Number(match[1]), { state: match[0].match(/data-dx-submit-state="([^"]+)"/)?.[1], text: visibleText(match[0]) }]));
+  let s = submitted();
+  let html = htmlFor(s, 3), statuses = rows(html);
+  assert.match(html, /data-dx-submit-statuses[^>]*role="list"|role="list"[^>]*data-dx-submit-statuses/);
+  assert.ok(html.indexOf('data-dx-submit-statuses') < html.indexOf('data-dx-message'), 'the status list belongs to the phase bar');
+  assert.equal(statuses.get(1).state, 'storyteller');
+  for (const seat of [2, 3, 4]) assert.equal(statuses.get(seat).state, 'waiting');
+  s = act(s, 'submit', 2, { cardIds: s.hands[2].slice(0, 1) });
+  html = htmlFor(s, 3); statuses = rows(html);
+  assert.equal(statuses.get(2).state, 'submitted'); assert.equal(statuses.get(3).state, 'waiting');
+  assert.match(html, /Cards submitted: 1 \/ 3/);
+  for (const row of statuses.values()) for (const id of s.submissions[2] || []) assert.ok(!row.text.includes(id), 'statuses never reveal submitted cards');
+  assert.doesNotMatch(htmlFor(voting(), 2), /data-dx-submit-statuses|data-dx-submit-player/, 'submit statuses do not persist into voting');
+});
