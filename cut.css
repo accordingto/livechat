@@ -72,6 +72,7 @@
 .cut-main-time { color: #e6dce4; font-size: 1.15rem; font-weight: 650; font-variant-numeric: tabular-nums; }
 .cut-main[data-cut-running="false"] .cut-main-time { color: #9c98ad; }
 .cut-jump.cut-is-cut .cut-topic .cut-kicker { color: #c5c2d5; }
+.cut-extend { min-height: 38px; margin-top: 12px; padding: 7px 16px; font-size: .88rem; border-radius: 99px; }
 .cut-topic h2 { color: #f4edf2; margin-top: 12px; font-size: clamp(1.25rem, 3vw, 1.9rem); line-height: 1.5; font-weight: 600; text-wrap: balance; overflow-wrap: anywhere; white-space: pre-wrap; }
 .cut-floor { min-height: 310px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 38px 24px; }
 .cut-speaker { width: 100%; min-width: 0; }

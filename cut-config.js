@@ -45,6 +45,8 @@ var CUT_CONFIG = (() => {
       quietEndSeconds: 12, // No CUT that would leave the Main Speaker less than this.
       resumeQuietSeconds: 8, // After Pause, the pending CUT waits at least this long.
       backMs: 2500, // The "BACK TO …" beat before the clock runs again.
+      extendMinutes: 1, // One tap of "+1 minute".
+      maxExtraMinutes: 10, // Most extra time one round can collect.
       topicHistorySize: 40,
       topicWeights: { stories: 0.28, self: 0.18, opinions: 0.18, whatif: 0.20, group: 0.16 },
       repeatedCategoryWeight: 0.4, // Two topics of one kind in a row are less likely.

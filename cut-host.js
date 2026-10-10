@@ -148,7 +148,7 @@
     if (cut && !switched) {
       const actor = demo ? Number(byId('demo-view').value) : 0;
       const key = JSON.stringify([actor, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster,
-        cut.mode, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd]);
+        cut.mode, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend]);
       if (key !== sceneKey) {
         const cutKey = ['cut', 'interrupt'].includes(cut.phase) ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
         const animate = !cutKey || cutKey !== animatedCut;
@@ -163,6 +163,9 @@
         byId(id).hidden = cut.phase !== 'interrupt';
         byId(id).disabled = busy || !canControl() || !cut.canFinish;
       }
+      byId('extend').hidden = !cut.canExtend;
+      byId('extend').textContent = t('extend', { n: cut.extendMinutes || 1 });
+      byId('extend').disabled = busy || !canControl();
       byId('pause').hidden = ['setup', 'ready', 'break', 'finished', 'stopped'].includes(cut.phase);
       byId('pause').textContent = t(cut.phase === 'paused' ? 'resume' : 'pause');
       byId('next').hidden = cut.phase !== 'break';
@@ -263,9 +266,9 @@
   byId('begin').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('begin'); });
   byId('scene').addEventListener('click', event => {
     if (event.target.closest('[data-cut-action="begin"]')) { if (sound.enabled) sound.unlock(); command('begin'); }
-    for (const type of ['done', 'skip']) if (event.target.closest('[data-cut-action="' + type + '"]')) command(type);
+    for (const type of ['done', 'skip', 'extend']) if (event.target.closest('[data-cut-action="' + type + '"]')) command(type);
   });
-  for (const type of ['done', 'skip']) byId(type).addEventListener('click', () => { if (sound.enabled) sound.unlock(); command(type); });
+  for (const type of ['done', 'skip', 'extend']) byId(type).addEventListener('click', () => { if (sound.enabled) sound.unlock(); command(type); });
   byId('pause').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command(state?.phase === 'paused' ? 'resume' : 'pause'); });
   byId('next').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('next'); });
   byId('manage-open').addEventListener('click', () => { if (state) byId('manage').showModal(); });

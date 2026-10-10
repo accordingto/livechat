@@ -1,4 +1,4 @@
-## CURRENT: CUT Mode 2 · Jump In — 2026-10-11 (local commits, not pushed or deployed)
+## CURRENT: CUT Mode 2 · Jump In — 2026-10-11
 
 CUT has two modes. Mode 1 · Take Over is the original game: its rules, topics,
 copy and defaults are unchanged and it stays the default. Mode 2 · Jump In keeps
@@ -7,6 +7,10 @@ other player with no timer, and DONE/SKIP returns the floor after a ~2.5s beat.
 State carries mode (missing = classic for old saves); Mode 2 phases are
 ready/countdown/speaking/interrupt/back/break and never use cut/handoff.
 mainClock runs only in speaking; private deadline = next CUT or end of round.
+The clock NEVER ends a round by itself (user requirement): at zero the round
+waits in phase timeup until someone taps +1 minute (extend; any active player
+or host, any time in the round, max 10 extra minutes) or the table agrees and
+confirms End topic. Keep that verbal-consent confirmation; no automated vote.
 First CUT 25–45s, then 30–55s of talking time, none in the last 12s (about 4–6
 per 4-minute round). Main Speakers rotate once each per random cycle;
 interrupters use Mode 1's weighted draw on their own ledger. Mode 2 has its own
@@ -14,7 +18,7 @@ interrupters use Mode 1's weighted draw on their own ledger. Mode 2 has its own
 mode in settings always opens a new topic. All tuning lives in
 CUT_CONFIG.jump. Do not redesign Mode 1 or merge the two pools.
 CUT assets cut-11; hub-launcher loads cut-jump-topics.js before the engine.
-Tests: 18 new in tests/cut-jump.test.cjs; browser-checked in cut.html?demo=1.
+Tests: 19 new in tests/cut-jump.test.cjs; browser-checked in cut.html?demo=1.
 ENGINE + CONTENT CHANGE: push the frontend and deploy the independent service
 together; pushing to main alone would make service rooms run Mode 2 as Mode 1.
 Not yet verified against the real service or with real voices. See cut-mode.md.

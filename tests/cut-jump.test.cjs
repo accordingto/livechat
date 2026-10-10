@@ -20,7 +20,7 @@ const error = (s, actor = 0) => s.replies?.[actor]?.error || '';
 test('a round counts only the Main Speaker\'s talking time and ends when it is used up', () => {
   let s = speaking(), spoken = 0, cuts = 0; const main = s.speaker, firstCut = s.deadline - s.lastChangeAt;
   assert.equal(s.phase, 'speaking'); assert.ok(firstCut >= 25000 && firstCut <= 45000);
-  for (let guard = 0; guard < 60 && s.phase !== 'break'; guard++) {
+  for (let guard = 0; guard < 60 && s.phase !== 'timeup'; guard++) {
     if (s.phase === 'speaking') { spoken += due(s) - s.lastChangeAt; s = tick(s); }
     else if (s.phase === 'interrupt') {
       cuts++; assert.notEqual(s.interrupter, main); assert.equal(s.speaker, main);
@@ -31,8 +31,10 @@ test('a round counts only the Main Speaker\'s talking time and ends when it is u
       assert.equal(s.phase, 'back'); assert.equal(s.mainClock.elapsedMs, frozen); assert.equal(s.interrupter, null);
     } else { assert.equal(s.phase, 'back'); assert.equal(s.phaseUntil - s.lastChangeAt, C.jump.backMs); s = tick(s); }
   }
-  assert.equal(s.phase, 'break'); assert.equal(s.roundEnd, 'time'); assert.equal(spoken, 4 * 60000);
-  assert.ok(cuts >= 3 && cuts <= 7); assert.equal(s.previousSpeaker, main);
+  assert.equal(s.phase, 'timeup'); assert.equal(spoken, 4 * 60000); assert.ok(cuts >= 3 && cuts <= 7);
+  assert.equal(s.speaker, main); assert.equal(s.deadline, null); assert.equal(s.mainClock.runningSince, null);
+  assert.equal(E.apply(s, { id: 'no-auto-end', type: 'tick', actor: 0, sessionId: s.sessionId, turnId: s.turnId, now: s.lastChangeAt + 3600000, seed: 1 }), s, 'time alone never ends the topic');
+  s = act(s, 'endTopic'); assert.equal(s.phase, 'break'); assert.equal(s.roundEnd, 'ended'); assert.equal(s.previousSpeaker, main);
   s = act(s, 'next'); assert.equal(s.phase, 'ready'); assert.notEqual(s.speaker, main);
   assert.ok(J.items.some(topic => topic.id === s.topic.id));
 });
@@ -69,15 +71,15 @@ test('the two modes keep separate pools and switching in settings opens a fresh 
 const playRound = (state, finish = 'done') => {
   const log = { main: state.speaker, cuts: [], guests: [], spoken: 0 };
   let s = tick(act(state, 'begin'));
-  for (let guard = 0; guard < 80 && s.phase !== 'break'; guard++) {
+  for (let guard = 0; guard < 80 && s.phase !== 'timeup'; guard++) {
     if (s.phase === 'speaking') {
       log.spoken += due(s) - s.lastChangeAt; s = tick(s);
       if (s.phase === 'interrupt') { log.cuts.push(log.spoken / 1000); log.guests.push(s.interrupter); }
     } else if (s.phase === 'interrupt') s = act(s, finish, { now: s.lastChangeAt + 7000 });
     else s = tick(s);
   }
-  assert.equal(s.phase, 'break');
-  return { state: s, log };
+  assert.equal(s.phase, 'timeup');
+  return { state: act(s, 'endTopic'), log };
 };
 
 test('CUT gaps are random inside their range and a four-minute round has about four to six of them', () => {
@@ -124,6 +126,36 @@ test('everyone leads one round before anyone repeats, and interruptions stay bal
     assert.deepEqual([...cycle].sort(), [1, 2, 3, 4]); openings.add(cycle.join(''));
   }
   assert.ok(openings.size >= 5);
+});
+
+test('players can add time, and a finished clock waits for them instead of ending the topic', () => {
+  let s = speaking(3); const main = s.speaker, other = [1, 2, 3].find(n => n !== main), cutAt = s.deadline;
+  assert.equal(E.view(s, other, s.lastChangeAt).cut.canExtend, true); assert.equal(E.view(s, other, 0).cut.extendMinutes, 1);
+  s = act(s, 'extend', { actor: other, now: s.lastChangeAt + 5000 });
+  assert.equal(error(s, other), ''); assert.equal(s.phase, 'speaking'); assert.equal(s.mainClock.durationMs, 300000);
+  assert.equal(s.deadline, cutAt, 'adding time does not move or reveal the pending CUT');
+  s = tick(s); assert.equal(s.phase, 'interrupt');
+  s = act(s, 'extend'); assert.equal(s.phase, 'interrupt'); assert.equal(s.mainClock.durationMs, 360000);
+  let last = speaking(3, { mainMinutes: 3 });
+  for (let guard = 0; guard < 40 && !last.lastStretch; guard++) last = last.phase === 'interrupt' ? act(last, 'done') : tick(last);
+  assert.equal(last.phase, 'speaking'); assert.equal(last.lastStretch, true);
+  const stretched = act(last, 'extend', { now: last.lastChangeAt + 1000 });
+  assert.ok(stretched.deadline > last.lastChangeAt + 1000); assert.equal(stretched.mainClock.durationMs, 240000);
+  let up = tick(last); assert.equal(up.phase, 'timeup');
+  const view = E.view(up, other, up.lastChangeAt).cut;
+  assert.equal(view.canExtend, true); assert.equal(view.canEndTopic, false, 'a legacy player cannot end it alone'); assert.equal(E.view(up, 0, 0).cut.canEndTopic, true);
+  assert.match(UI.scene(view, other, up.lastChangeAt), new RegExp(UI.t('jumpTimeUp') + '.*data-cut-action="extend"', 's'));
+  assert.equal(error(act(up, 'done')), 'not_available'); assert.equal(error(act(up, 'begin')), 'not_available');
+  const resumed = act(act(up, 'pause'), 'resume'); assert.equal(resumed.phase, 'timeup');
+  up = act(up, 'extend', { actor: other }); assert.equal(up.phase, 'back'); assert.equal(up.speaker, last.speaker);
+  up = tick(up); assert.equal(up.phase, 'speaking'); assert.equal(up.deadline - up.lastChangeAt, 60000);
+  assert.equal(up.mainStats[up.speaker].count, 1);
+  let capped = speaking(3);
+  for (let i = 0; i < C.jump.maxExtraMinutes; i++) capped = act(capped, 'extend');
+  assert.equal(error(act(capped, 'extend')), 'not_available'); assert.equal(E.view(capped, 0, 0).cut.canExtend, false);
+  const next = act(act(capped, 'endTopic'), 'next'); assert.equal(next.mainClock.durationMs, 240000, 'extra time belongs to one round');
+  const classic = E.create({ id: 'c', now: 1000, seed: 2, roster: [1, 2].map(playerNum => ({ playerNum, name: 'P' })) });
+  assert.equal(error(act(classic, 'extend')), 'not_available');
 });
 
 test('Pause freezes the Main Speaker clock and resume keeps the pending CUT private', () => {
@@ -354,7 +386,7 @@ test('Mode 2 cues play the CUT once, chime on the way back and mark the end of t
   sound.update({ ...base, turnId: 4, phase: 'back', phaseUntil: 95000 }, 94500);
   sound.update({ ...base, turnId: 5, phase: 'speaking' }, 95000);
   assert.deepEqual(cues, ['cut', 'reveal', 'go']);
-  sound.update({ ...base, turnId: 6, phase: 'break', speaker: null, roundEnd: 'time' }, 99000);
+  sound.update({ ...base, turnId: 6, phase: 'timeup' }, 99000);
   assert.deepEqual(cues, ['cut', 'reveal', 'go', 'time']);
   sound.close();
 });

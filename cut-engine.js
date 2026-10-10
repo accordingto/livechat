@@ -53,7 +53,7 @@ var CUT_ENGINE = (() => {
   function mainClock(state) {
     if (!validMainMinutes(state.mainMinutes)) state.mainMinutes = config.jump.mainMinutes.default;
     if (!validTopicClock(state.mainClock)) state.mainClock = newTopicClock(state.mainMinutes);
-    state.mainClock.durationMs = state.mainMinutes * 60000;
+    state.mainClock.durationMs = state.mainMinutes * 60000 + (Number(state.mainExtraMs) || 0);
     return state.mainClock;
   }
   function moveMainClock(state, name, now) {
@@ -218,7 +218,7 @@ var CUT_ENGINE = (() => {
     state.speaker = playerNum; state.nextSpeaker = null; state.interrupter = null; state.cutEvent = null;
     state.pendingDurationMs = null; state.speakingDurationMs = null; state.previousDurationMs = 0;
     state.countOnGo = true; state.lastStretch = false; state.roundEnd = null;
-    state.pause = null; state.pauseReason = ''; state.mainClock = null;
+    state.pause = null; state.pauseReason = ''; state.mainClock = null; state.mainExtraMs = 0;
     phase(state, name, now);
   }
   function startJumpRound(state, now, rng) {
@@ -242,7 +242,7 @@ var CUT_ENGINE = (() => {
     if (active(state).length < config.minPlayers) return pause(state, now, 'not_enough_players');
     if (!isActive(state, state.speaker)) return seatMain(state, chooseMain(state, state.speaker, rng), now, 'ready');
     const remaining = mainRemaining(state, now);
-    if (remaining <= 0) return endJumpRound(state, now, 'time');
+    if (remaining <= 0) return timeUp(state, now);
     const first = state.countOnGo !== false;
     if (first) state.mainStats[state.speaker] = { count: (Number(state.mainStats[state.speaker]?.count) || 0) + 1, lastRound: state.round };
     // A paused turn keeps the CUT it was already heading for, instead of drawing again.
@@ -256,6 +256,29 @@ var CUT_ENGINE = (() => {
     phase(state, 'speaking', now);
     state.deadline = now + (state.lastStretch ? remaining : gap);
   }
+  // The clock never ends a round by itself. It waits here, with no deadline,
+  // until someone adds time or the table agrees to End topic.
+  function timeUp(state, now) {
+    state.interrupter = null; state.cutEvent = null; state.pendingDurationMs = null; state.lastStretch = false;
+    phase(state, 'timeup', now);
+  }
+  const extendable = state => state.speaker != null && ['speaking', 'interrupt', 'back', 'timeup'].includes(state.phase) &&
+    (Number(state.mainExtraMs) || 0) < config.jump.maxExtraMinutes * 60000;
+  function extend(state, now, rng) {
+    if (!extendable(state)) return 'not_available';
+    state.mainExtraMs = (Number(state.mainExtraMs) || 0) + config.jump.extendMinutes * 60000;
+    mainClock(state);
+    if (state.phase === 'timeup') return backToMain(state, now), '';
+    if (state.phase === 'speaking' && state.lastStretch) {
+      // The round was running out: with more time there is room for a CUT again.
+      const remaining = mainRemaining(state, now), gap = random.interval(false, state.previousDurationMs, rng);
+      state.speakingDurationMs = gap;
+      state.lastStretch = remaining - gap < config.jump.quietEndSeconds * 1000;
+      state.deadline = now + (state.lastStretch ? remaining : gap);
+    }
+    state.turnId++; state.lastChangeAt = now;
+    return '';
+  }
   // Being chosen counts even after SKIP, so nobody is asked again and again.
   function interrupt(state, playerNum) {
     state.interruptSequence++;
@@ -264,7 +287,7 @@ var CUT_ENGINE = (() => {
     state.interrupter = playerNum;
   }
   function cutIn(state, now, rng) {
-    if (state.lastStretch || mainRemaining(state, now) <= 0) return endJumpRound(state, now, 'time');
+    if (state.lastStretch || mainRemaining(state, now) <= 0) return timeUp(state, now);
     const chosen = chooseInterrupter(state, rng);
     if (chosen == null) return pause(state, now, 'not_enough_players');
     interrupt(state, chosen);
@@ -298,6 +321,7 @@ var CUT_ENGINE = (() => {
     }
     if (saved.phase === 'countdown') return phase(state, 'countdown', now, config.countdownMs);
     if (waiting) return phase(state, saved.phase, now);
+    if (saved.phase === 'timeup') return timeUp(state, now);
     if (saved.phase === 'interrupt') return isActive(state, state.interrupter) ? phase(state, 'interrupt', now) : replaceInterrupter(state, now, rng);
     // Paused while talking: the same beat brings everyone back before the clock runs.
     backToMain(state, now, saved.phase === 'speaking' ? saved.remainingMs : saved.pendingDurationMs);
@@ -353,6 +377,8 @@ var CUT_ENGINE = (() => {
         if (state.phase === 'speaking') cutIn(state, now, rng);
         else if (state.phase === 'countdown' || state.phase === 'back') talk(state, now, rng);
         return '';
+      case 'extend':
+        return extend(state, now, rng);
       // DONE and SKIP are one step for the rules: nothing is judged, timed or scored.
       case 'done':
       case 'skip':
@@ -489,7 +515,7 @@ var CUT_ENGINE = (() => {
       version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0, mode,
       speed, category, customMinSeconds, customMaxSeconds, topicMinutes, mainMinutes,
       // Mode 2 keeps its own clock, topic history and fairness ledgers.
-      mainClock: null, interrupter: null, roundEnd: null, lastStretch: false, jumpTopicHistory: [],
+      mainClock: null, mainExtraMs: 0, interrupter: null, roundEnd: null, lastStretch: false, jumpTopicHistory: [],
       mainStats: {}, interruptStats: {}, interruptRecent: [], interruptSequence: 0,
       roster: roster.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
       phase: 'ready', phaseUntil: null, deadline: null, lastChangeAt: now,
@@ -529,12 +555,14 @@ var CUT_ENGINE = (() => {
     const rng = random.create(input.seed);
     let error = '';
     const sharedManager = state.sharedControls === true && isActive(state, actor) &&
-      ['begin', 'next', 'endTopic', 'pause', 'resume', 'exclude', 'settings', 'configure', 'cancelSettings', 'stop', 'restart', 'done', 'skip'].includes(input.type);
+      ['begin', 'next', 'endTopic', 'pause', 'resume', 'exclude', 'settings', 'configure', 'cancelSettings', 'stop', 'restart', 'done', 'skip', 'extend'].includes(input.type);
     const selfReturn = state.sharedControls === true && input.type === 'exclude' &&
       Number(input.playerNum) === actor && input.active === true;
     // Mode 2: whoever was asked to jump in may always hand the floor back.
     const finishing = jump(state) && (input.type === 'done' || input.type === 'skip') && actor === state.interrupter && isActive(state, actor);
-    if (!host && !sharedManager && !selfReturn && !finishing && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
+    // Mode 2: any player in the draw may add time, exactly as any of them may press Start.
+    const extending = jump(state) && input.type === 'extend' && isActive(state, actor);
+    if (!host && !sharedManager && !selfReturn && !finishing && !extending && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
     else if (input.turnId !== state.turnId) error = 'stale_turn';
     else if (!Number.isFinite(now) || now < state.lastChangeAt) error = 'invalid_time';
     else if (input.type === 'configure' && input.mode != null && input.mode !== (jump(state) ? 'jump' : 'classic')) error = switchMode(state, input, now, rng);
@@ -754,6 +782,8 @@ var CUT_ENGINE = (() => {
         elapsedMs: state.mainClock.elapsedMs, runningSince: state.mainClock.runningSince ?? null } : newTopicClock(cut.mainMinutes);
       cut.interrupter = state.phase === 'interrupt' ? state.interrupter ?? null : null;
       cut.roundEnd = state.phase === 'break' ? state.roundEnd || null : null;
+      cut.extendMinutes = config.jump.extendMinutes;
+      cut.canExtend = extendable(state) && (playerNum === 0 || (mine?.active === true && mine.pending !== true));
       cut.canFinish = state.phase === 'interrupt' && (playerNum === 0 ||
         (mine?.active === true && mine.pending !== true && (state.sharedControls === true || playerNum === state.interrupter)));
     }

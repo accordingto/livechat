@@ -12,11 +12,12 @@
 2. 主講人自然地聊。主講時間 Quick 3／Normal 4（預設）／Long 5 分鐘，**只計算主講人自己說話的時間**，所以 4 分鐘的一輪實際約 5–7 分鐘。
 3. 偶爾 CUT！畫面公布一位插話者（JUMP IN!）。可以接完那句話、加細節、吐槽、提問、只說一個詞，系統不判斷內容。**插話沒有任何計時或倒數**。
 4. 插話者按 DONE（說完了）或 SKIP（跳過，沒有懲罰）。畫面顯示 BACK TO 主講人／KEEP GOING! 約 2.5 秒，之後主講時間才繼續。主講人可以接受、反駁或不理會。
-5. 主講時間用完，這一輪自動結束（TIME’S UP!）並進入休息；Next topic 換下一位主講人與新話題。大家同意時也可以 End topic 提前結束。
+5. **加時**：這一輪進行中，主持人或任何有效玩家都可以按「＋1 分鐘」，每按一次主講時間加 1 分鐘（一輪最多加 10 分鐘），不會移動或洩漏已排定的 CUT。
+6. **時間到不會自動切掉**：主講時間用完時畫面停在 TIME’S UP!（`timeup` 階段，沒有截止時間、時鐘凍結），要有人按「＋1 分鐘」繼續，或在大家口頭同意後按 End topic 並確認，才進入休息。Next topic 換下一位主講人與新話題。這仍是口頭共識提醒，不是線上投票。
 
 ### 狀態
 
-`ready → Begin → countdown → speaking ⇄（CUT → interrupt → DONE／SKIP → back）→ … → break → Next topic → ready`
+`ready → Begin → countdown → speaking ⇄（CUT → interrupt → DONE／SKIP → back）→ … → timeup →（＋1 分鐘 → back → speaking）或（End topic → break）→ Next topic → ready`
 
 - `speaker` 整輪都是主講人；`interrupter` 只在 `interrupt` 階段有值。模式 2 不使用 `cut`／`handoff` 階段與 `nextSpeaker`。
 - `interrupt` 沒有 `deadline` 也沒有 `phaseUntil`，只等 DONE／SKIP，閒置 tick 不寫入。
@@ -53,7 +54,7 @@
 
 ### 最容易調整的數值
 
-全部在 `cut-config.js` 的 `jump`：`mainMinutes`（選項與預設）、`firstCut`、`cutInterval`（範圍與區間權重）、`antiRepeat`、`quietEndSeconds`、`resumeQuietSeconds`、`backMs`、`topicWeights`、`repeatedCategoryWeight`、`topicHistorySize`。主持頁與玩家卡的主講時間選單都由 `mainMinutes.options` 產生。
+全部在 `cut-config.js` 的 `jump`：`mainMinutes`（選項與預設）、`firstCut`、`cutInterval`（範圍與區間權重）、`antiRepeat`、`quietEndSeconds`、`resumeQuietSeconds`、`backMs`、`extendMinutes`、`maxExtraMinutes`、`topicWeights`、`repeatedCategoryWeight`、`topicHistorySize`。主持頁與玩家卡的主講時間選單都由 `mainMinutes.options` 產生。
 
 ### 同步與部署
 
@@ -61,7 +62,7 @@ CUT 時機、插話者、主講時間、DONE／SKIP 與換輪全部由同一個�
 
 ### 驗證（2026-10-11）
 
-`node --test tests/cut-jump.test.cjs`（18 項）涵蓋整輪計時、間隔分布、公平性、暫停與設定、離席、舊存檔相容、題庫、服務端 adapter、舊主持時鐘、玩家卡、音效與主持頁流程。`cut.html?demo=1` 已在瀏覽器實測兩種模式、桌機與 375px、中英文，無版面溢位與 console 錯誤。尚未做真人語音試玩，也尚未對正式服務做實機驗證。
+`node --test tests/cut-jump.test.cjs`（19 項）涵蓋整輪計時、間隔分布、公平性、暫停與設定、離席、舊存檔相容、題庫、服務端 adapter、舊主持時鐘、玩家卡、音效與主持頁流程。`cut.html?demo=1` 已在瀏覽器實測兩種模式、桌機與 375px、中英文，無版面溢位與 console 錯誤。尚未做真人語音試玩，也尚未對正式服務做實機驗證。
 
 ## 原玩家卡完整操作（共用執行服務模式，2026-10-09）
 

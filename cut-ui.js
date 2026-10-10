@@ -50,7 +50,8 @@ var CUT_UI = (() => {
     jumpHold: ['先聽 {name} 說，等一下換你繼續。', 'Listen to {name}. You will go on in a moment.'],
     done: ['說完了', 'DONE'], skip: ['跳過', 'SKIP'], backToMain: ['交回主講人', 'Back to the main speaker'],
     backTo: ['交回', 'BACK TO'], keepGoing: ['繼續說！', 'KEEP GOING!'],
-    jumpTimeUp: ['時間到！', 'TIME’S UP!'], jumpThanks: ['謝謝 {name}！', 'Thank you, {name}!'],
+    jumpTimeUp: ['時間到！', 'TIME’S UP!'], extend: ['＋{n} 分鐘', '+{n} min'],
+    jumpTimeUpHint: ['還想聊就加時間。要結束話題，請先確認大家都同意。', 'Add time to keep going. End the topic only when everyone agrees.'], jumpThanks: ['謝謝 {name}！', 'Thank you, {name}!'],
     jumpBreakHint: ['主持人按下一題，換下一位主講人和新話題。', 'The host reveals the next topic and a new main speaker.'],
     sharedJumpBreak: ['準備好後，任一玩家可以按下一題，換下一位主講人。', 'Any player can reveal the next topic and a new main speaker.'],
     libraryMode: ['模式', 'Mode'], stories: ['真實故事', 'True stories'], self: ['關於你', 'About you'], opinions: ['你的看法', 'Your opinions'], whatif: ['如果…', 'What if…'], group: ['這群人', 'This group'],
@@ -169,6 +170,10 @@ var CUT_UI = (() => {
       floor = `<div class="cut-burst" aria-label="CUT!"><strong>CUT!</strong><p>${esc(t('jumpCutHint'))}</p></div>` + speaker(cut, guest, t('jumpIn'), isGuest, 'cut-reveal') +
         `<p class="cut-cue cut-waiting">${esc(isGuest || !me ? t('jumpInHint') : t(isMain ? 'jumpHold' : 'jumpInWait', { name: name(cut, guest) }))}</p>`;
       if (isGuest && cut.canFinish) floor += `<div class="cut-jump-actions"><button type="button" class="cut-button cut-primary" data-cut-action="done">${esc(t('done'))}</button><button type="button" class="cut-button" data-cut-action="skip">${esc(t('skip'))}</button></div>`;
+    } else if (phase === 'timeup') {
+      // Time alone never ends the round: someone adds time, or the table agrees to end it.
+      floor = `<div class="cut-rest"><span aria-hidden="true">⏰</span><h3>${esc(t('jumpTimeUp'))}</h3><p class="cut-soft">${esc(t('jumpTimeUpHint'))}</p></div>`;
+      if (me > 0 && cut.canExtend) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="extend">${esc(t('extend', { n: cut.extendMinutes || 1 }))}</button>`;
     } else if (phase === 'back') {
       floor = speaker(cut, main, t('backTo'), isMain, 'cut-reveal') + `<p class="cut-cue cut-go">${esc(t('keepGoing'))}</p>`;
     } else {
@@ -181,7 +186,7 @@ var CUT_UI = (() => {
     const yours = isMain && ['countdown', 'speaking', 'back'].includes(phase);
     const excluded = me > 0 && list(cut.roster).find(p => Number(p.playerNum) === me)?.active === false;
     return `<div class="cut-stage cut-jump${isIn ? ' cut-is-cut' : ''}${isIn && !animate ? ' cut-static' : ''}${yours ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
-      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderMainClock(cut, now)}</div>
+      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderMainClock(cut, now)}${me > 0 && cut.canExtend && phase !== 'timeup' ? `<button type="button" class="cut-button cut-extend" data-cut-action="extend">${esc(t('extend', { n: cut.extendMinutes || 1 }))}</button>` : ''}</div>
       <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
       ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
     </div>`;
@@ -297,9 +302,9 @@ var CUT_UI = (() => {
         this.pending = null;
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
-      if (!this.pending && (['begin', 'done', 'skip'].includes(request?.type) || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      if (!this.pending && (['begin', 'done', 'skip', 'extend'].includes(request?.type) || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
       const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topicMinutes, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster,
-        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd]);
+        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const managementOpen = this.element.querySelector('[data-cut-management]')?.open;
@@ -398,9 +403,14 @@ var CUT_UI = (() => {
       const cut = this.data?.cut;
       return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && cut?.phase === 'interrupt' && cut.canFinish === true && (cut.sharedControls === true || !cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
     }
+    canExtend() {
+      const cut = this.data?.cut;
+      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && cut?.canExtend === true && (cut.sharedControls === true || !cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
+    }
     canAction(type, extra = {}) {
       if (type === 'begin') return this.canBegin();
       if (type === 'done' || type === 'skip') return this.canFinish();
+      if (type === 'extend') return this.canExtend();
       const cut = this.data?.cut, actor = Number(this.data?.playerNum);
       if (this.destroyed || this.pending || typeof this.send !== 'function' || !this.connected() || cut?.sharedControls !== true) return false;
       const mine = list(cut.roster).find(p => Number(p.playerNum) === actor);
@@ -503,7 +513,7 @@ var CUT_UI = (() => {
           }
           // "BACK TO …" chimes once; the clock then resumes without a second cue.
           else if (cut.phase === 'back') this.cue('go');
-          else if (cut.phase === 'break' && cut.roundEnd === 'time') this.cue('time');
+          else if (cut.phase === 'timeup') this.cue('time');
           else if (cut.phase === 'speaking' && ['countdown', 'handoff', 'cut'].includes(previous?.phase)) this.cue('go');
           else if (cut.phase === 'countdown' && (fresh || previous?.phase !== 'countdown' || previous?.sessionId !== cut.sessionId)) this.cue('round');
           else if (['setup', 'ready', 'paused', 'finished', 'stopped'].includes(cut.phase)) this.silence();
