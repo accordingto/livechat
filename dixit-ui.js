@@ -43,7 +43,7 @@
     scoreStory:['部分人猜中你的牌','Some, not all, found your card'], scoreCorrect:['猜中說書人的牌','Correct guess'],
     scoreAll:['所有人都猜中','Everyone guessed right'], scoreNone:['沒有人猜中','Nobody guessed right'],
     scoreVoteOne:['你的牌得到 1 票','1 vote for your card'], scoreVoteMany:['你的牌得到 {n} 票','{n} votes for your card'],
-    votedPictures:['得票圖卡','Voted pictures'], noOtherVotes:['其他圖卡沒有得票。','No other pictures received votes.'],
+    votedPictures:['得票圖卡','Voted pictures'], votedBy:['投票的人：{names}','Voted by: {names}'], showVoters:['看看誰投了這張','See who voted for this card'], noOtherVotes:['其他圖卡沒有得票。','No other pictures received votes.'],
     votingStatuses:['每位玩家的投票狀態','Each player’s voting status'], voteDone:['已投票','Voted'], voteWaiting:['尚未投票','Waiting for vote'], voteStoryteller:['說書人 · 不用投票','Storyteller · no vote required'], voteInactive:['本輪不參與投票','Sitting out this round'],
     submitStatuses:['每位玩家的出牌狀態','Each player’s card status'], submitDone:['已出牌','Card submitted'], submitWaiting:['尚未出牌','Choosing a card'], submitStoryteller:['說書人 · 已選好圖卡','Storyteller · card chosen'], submitInactive:['本輪不參與出牌','Sitting out this round'],
     winningScore:['勝利目標分數','Winning score'], scoreRange:['5–100 分；基本版為 30 分。','5–100 points; the base game uses 30.'],
@@ -59,9 +59,9 @@
     return {src,col:slot%4,row:Math.floor(slot/4),atlas:/atlas-\d+\.(png|webp)$/.test(src),alt:card?.description||t('card',{n:n+1})};
   }
   function art(id,artworkVersion=2,eager=false){const p=picture(id,artworkVersion);return p.atlas?'<span class="dx-art dx-art-atlas" role="img" aria-label="'+esc(p.alt)+'" style="background-image:url(&quot;'+esc(p.src)+'&quot;);background-position:'+(p.col*100/3)+'% '+(p.row*50)+'%"></span>':'<img class="dx-art" src="'+esc(p.src)+'" alt="'+esc(p.alt)+'" loading="'+(eager?'eager':'lazy')+'" decoding="async" width="768" height="1024">';}
-  function cardHTML(id,n,{interactive=false,selected=false,disabled=false,own=false,answer=false,owner='',votes=null,artworkVersion=2,eager=false}={}){
+  function cardHTML(id,n,{interactive=false,selected=false,disabled=false,own=false,answer=false,owner='',votes=null,votesHTML='',artworkVersion=2,eager=false}={}){
     const tag=interactive?'button':'div';
-    return '<div class="dx-card-wrap" data-dx-picture="'+esc(id)+'">'+(owner?'<div class="dx-owner">'+esc(owner)+(votes!=null?' <span>· '+esc(t('votes',{n:votes}))+'</span>':'')+'</div>':'')+'<'+tag+' class="dx-picture'+(selected?' is-selected':'')+(answer?' is-answer':'')+'"'+(interactive?' type="button" data-dx-card="'+esc(id)+'" aria-label="'+esc(t('card',{n})+(own?' — '+t('ownCard'):''))+'" aria-pressed="'+selected+'"'+(disabled?' disabled':''):'')+'>'+art(id,artworkVersion,eager)+'<span class="dx-number">'+n+'</span>'+(own?'<span class="dx-own">'+esc(t('ownCard'))+'</span>':'')+'</'+tag+'></div>';
+    return '<div class="dx-card-wrap" data-dx-picture="'+esc(id)+'">'+(owner?'<div class="dx-owner">'+esc(owner)+(votesHTML?' <span>· </span>'+votesHTML:votes!=null?' <span>· '+esc(t('votes',{n:votes}))+'</span>':'')+'</div>':'')+'<'+tag+' class="dx-picture'+(selected?' is-selected':'')+(answer?' is-answer':'')+'"'+(interactive?' type="button" data-dx-card="'+esc(id)+'" aria-label="'+esc(t('card',{n})+(own?' — '+t('ownCard'):''))+'" aria-pressed="'+selected+'"'+(disabled?' disabled':''):'')+'>'+art(id,artworkVersion,eager)+'<span class="dx-number">'+n+'</span>'+(own?'<span class="dx-own">'+esc(t('ownCard'))+'</span>':'')+'</'+tag+'></div>';
   }
   const btn=(type,label,disabled=false,secondary=false)=>'<button type="button" class="dx-button'+(secondary?' dx-secondary':'')+'" data-dx-action="'+type+'"'+(disabled?' disabled':'')+'>'+esc(t(label))+'</button>';
   function rulesHTML(s={}){const target=Number(s.targetScore)||30;return '<details class="dx-help" data-dx-rules><summary>'+esc(t('help'))+'</summary>'+['rule1','rule2','rule3','some','all','none','bonusRule','rule4',...(s.sharedControls===true?['ruleSharedRecovery']:[])].map(k=>'<p>'+esc(t(k,{n:target}))+'</p>').join('')+(target!==30?'<p class="dx-muted">'+esc(t('targetVariant'))+'</p>':'')+'<p class="dx-muted">'+esc(t('artNote'))+' <a href="https://www.libellud.com/game/dixit/" target="_blank" rel="noopener noreferrer">'+esc(t('sources'))+'</a></p></details>';}
@@ -96,6 +96,13 @@
     const ranked=counts.filter(p=>p.id!==answer&&p.count>0).sort((left,right)=>right.count-left.count);
     return {counts,ranked};
   }
+  // Vote counts become a disclosure listing each voter. Ballots are only in
+  // s.result after the full reveal, so this never exposes a secret vote.
+  function votersHTML(s,id,slot){
+    const names=list(s.result?.rows).filter(p=>p.voteCardId===id).map(p=>name(s,p.playerNum)),label=esc(t('votes',{n:names.length}));
+    if(!names.length)return '<span class="dx-voters-count">'+label+'</span>';
+    return '<details class="dx-voters" data-dx-voters="'+esc(slot+':'+id)+'"><summary title="'+esc(t('showVoters'))+'">'+label+'</summary><span class="dx-voter-list">'+esc(t('votedBy',{names:names.join(', ')}))+'</span></details>';
+  }
   function voteStatusesHTML(s){
     const voting=s.phase==='VOTE';
     if(!voting&&s.phase!=='SUBMIT')return '';
@@ -113,7 +120,7 @@
     if(!answer)return '';
     const rows=list(s.result?.rows),voted=votedCards(s,answer),ownerFor=id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return owner?name(s,owner.playerNum):'';};
     const firstOwner=voted.ranked.length?'<div class="dx-owner">'+esc(ownerFor(voted.ranked[0].id))+'</div>':'';
-    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('answer'))+(finished?' <span>'+esc(t('votes',{n:voted.counts.find(p=>p.id===answer)?.count||0}))+'</span>':'')+'</h2></div>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('votedPictures'))+(voted.ranked.length?' <span>'+esc(t('votes',{n:voted.ranked[0].count}))+'</span>':'')+'</h2>'+firstOwner+'</div><div class="dx-popular-gallery">'+(voted.ranked.length?voted.ranked.map(({id,count},i)=>cardHTML(id,table.indexOf(id)+1,{owner:i?ownerFor(id):'',votes:i?count:null,artworkVersion:s.artworkVersion||1,eager:i===0})).join(''):'<p class="dx-secondary-note">'+esc(t('noOtherVotes'))+'</p>')+'</div></div>'+roundScoresHTML(s):'')+'</div></section>';
+    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('answer'))+(finished?' '+votersHTML(s,answer,'answer'):'')+'</h2></div>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('votedPictures'))+(voted.ranked.length?' '+votersHTML(s,voted.ranked[0].id,'popular'):'')+'</h2>'+firstOwner+'</div><div class="dx-popular-gallery">'+(voted.ranked.length?voted.ranked.map(({id,count},i)=>cardHTML(id,table.indexOf(id)+1,{owner:i?ownerFor(id):'',votes:i?count:null,votesHTML:i?votersHTML(s,id,'popular'):'',artworkVersion:s.artworkVersion||1,eager:i===0})).join(''):'<p class="dx-secondary-note">'+esc(t('noOtherVotes'))+'</p>')+'</div></div>'+roundScoresHTML(s):'')+'</div></section>';
   }
   const gain=n=>'+'+Math.max(0,Number(n)||0);
   function roundScoresHTML(s){
@@ -142,7 +149,7 @@
       let played='';
       if(table.length&&s.phase!=='REVEALING')played='<section class="dx-panel dx-card-panel"><h2>'+esc(t('table'))+'</h2>'+choiceBar({vote:a.vote},selected,count)+'<div class="dx-table">'+table.map((id,i)=>{
         const own=!host&&list(s.ownSubmitted).includes(id),owner=rows.find(p=>list(p.cardIds).includes(id));
-        return cardHTML(id,i+1,{interactive:!!a.vote,selected:selected.has(id),disabled:own,own:own&&!finished,answer:finished&&s.result?.answerCardId===id,owner:finished&&owner?name(s,owner.playerNum):'',votes:finished?rows.filter(p=>p.voteCardId===id).length:null,artworkVersion:s.artworkVersion||1});
+        return cardHTML(id,i+1,{interactive:!!a.vote,selected:selected.has(id),disabled:own,own:own&&!finished,answer:finished&&s.result?.answerCardId===id,owner:finished&&owner?name(s,owner.playerNum):'',votes:finished?rows.filter(p=>p.voteCardId===id).length:null,votesHTML:finished?votersHTML(s,id,'gallery'):'',artworkVersion:s.artworkVersion||1});
       }).join('')+'</div>'+(!host&&s.phase==='VOTE'&&voted===others.length?'<p>'+esc(t('waitingReveal'))+'</p>':'')+'</section>';
       if(!finished)body+=played;
       if(finished&&s.result){
@@ -202,6 +209,7 @@
     render(){
       if(!this.payload)return;
       const disclosures=['rules','details','result-details','round-gallery'].map(key=>[key,this.el.querySelector('[data-dx-'+key+']')?.open]);
+      const openVoters=new Set(Array.from(this.el.querySelectorAll?.('[data-dx-voters]')||[]).filter(d=>d.open).map(d=>d.dataset.dxVoters));
       const s=this.payload.dixit,targetDraft=this.el.querySelector('[data-dx-target-score]')?.value;
       const retainTarget=s.phase==='LOBBY'&&this.renderedSessionId===s.sessionId&&this.renderedTargetScore===s.targetScore;
       this.renderedSessionId=s.sessionId;this.renderedTargetScore=s.targetScore;
@@ -209,6 +217,7 @@
       this.el.innerHTML=tableHTML(this.payload,{...this.options,selected:this.selected,confirmation:this.confirmation});
       if(retainTarget&&targetDraft!=null){const input=this.el.querySelector('[data-dx-target-score]');if(input)input.value=targetDraft;}
       for(const [key,open] of disclosures)if(typeof open==='boolean'){const detail=this.el.querySelector('[data-dx-'+key+']');if(detail)detail.open=open;}
+      if(openVoters.size)this.el.querySelectorAll('[data-dx-voters]').forEach(d=>{if(openVoters.has(d.dataset.dxVoters))d.open=true;});
       this.paint();
     }
     async onClick(e){

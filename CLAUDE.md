@@ -1,3 +1,11 @@
+## CURRENT: Dixit reveal voter lists — 2026-10-10
+
+On REVEAL/FINISHED, every positive vote count (Storyteller card, voted pictures,
+round gallery) is a small expandable pill; opening it shows "Voted by: names"
+from public result.rows voteCardId, so nothing appears before the full reveal.
+Zero counts stay plain text. Open lists survive re-renders (data-dx-voters key).
+dixit.html/play.html load Dixit CSS and UI as dixit-13. Browser-only release.
+
 ## CURRENT: Dixit card-submission statuses — 2026-10-10
 
 After the Storyteller's clue (SUBMIT), the phase bar now lists every player like

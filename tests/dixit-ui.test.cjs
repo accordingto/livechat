@@ -525,7 +525,7 @@ test('answer stage centers only the actual Storyteller card without repeating it
   assert.ok(!secondary.includes('data-dx-picture="' + answer + '"'), 'the central answer is not repeated on the right');
   assert.ok(finalHTML.indexOf('dx-popular-reveal') < finalHTML.indexOf('dx-result'));
   const centre = finalHTML.slice(finalHTML.indexOf('class="dx-story-reveal"'), finalHTML.indexOf('class="dx-popular-reveal"'));
-  assert.match(centre, /<h2>The Storyteller’s card <span>1 vote\(s\)<\/span><\/h2>/);
+  assert.match(centre, /<h2>The Storyteller’s card <details class=\"dx-voters\" data-dx-voters=\"answer:[^\"]+\"><summary[^>]*>1 vote\(s\)<\/summary><span class=\"dx-voter-list\">Voted by: [^<]+<\/span><\/details><\/h2>/);
   assert.doesNotMatch(centre, /class="dx-owner"/);
   const context = { DIXIT_DECK: { version: 2, cards: Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp' })) } };
   vm.runInNewContext(source, context);
@@ -829,7 +829,7 @@ test('card groups lead expanded player totals and full round points also remain 
   }
   const html = htmlFor(scored('none'), 2);
   const centre = html.slice(html.indexOf('class="dx-story-reveal"'), html.indexOf('class="dx-popular-reveal"'));
-  assert.match(centre, /<h2>The Storyteller’s card <span>0 vote\(s\)<\/span><\/h2>/);
+  assert.match(centre, /<h2>The Storyteller’s card <span class=\"dx-voters-count\">0 vote\(s\)<\/span><\/h2>/);
   assert.match(html, /<details class="dx-panel dx-result" data-dx-result-details>/);
   assert.ok(html.indexOf('data-dx-result-details') < html.indexOf('data-dx-details'));
 });
@@ -949,4 +949,16 @@ test('card submission phase lists every player status and clears before voting',
   assert.match(html, /Cards submitted: 1 \/ 3/);
   for (const row of statuses.values()) for (const id of s.submissions[2] || []) assert.ok(!row.text.includes(id), 'statuses never reveal submitted cards');
   assert.doesNotMatch(htmlFor(voting(), 2), /data-dx-submit-statuses|data-dx-submit-player/, 'submit statuses do not persist into voting');
+});
+
+test('revealed vote counts expand to name every voter for that card, never before the full reveal', () => {
+  let s = voting();
+  const answer = s.submissions[1][0], decoy = s.submissions[2][0];
+  s = act(s, 'vote', 2, { cardId: answer }); s = act(s, 'vote', 3, { cardId: decoy }); s = act(s, 'vote', 4, { cardId: decoy });
+  assert.doesNotMatch(htmlFor(s, 3), /data-dx-voters/, 'no voter lists while voting');
+  s = act(s, 'reveal', 0); s = act(s, 'advanceReveal', 0, { now: Number.MAX_SAFE_INTEGER });
+  const html = htmlFor(s, 3);
+  const block = id => [...html.matchAll(/<details class="dx-voters" data-dx-voters="([a-z]+):([^"]+)">[\s\S]*?<\/details>/g)].filter(m => m[2] === id).map(m => visibleText(m[0]));
+  assert.ok(block(answer).some(text => text === '1 vote(s) Voted by: Seat 2'));
+  assert.ok(block(decoy).some(text => text === '2 vote(s) Voted by: Seat 3, Seat 4'));
 });
