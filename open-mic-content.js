@@ -186,8 +186,8 @@
     { id: '6D79CYTxvOM', videoId: '6D79CYTxvOM', title: '愛人錯過 / Somewhere in Time', artist: '告五人 Accusefive', tags: ['for-you', 'mandarin', 'everyone-knows', 'hype'] }
   ];
 
-  // Life Song prompts: a scene or feeling, a question about a real moment or
-  // stage of life, then a song that goes with it. Simple English on purpose.
+  // Life Song prompts: a scene or feeling, a question about a real moment,
+  // this stage of life or a hope for the future, then a song that goes with it. Simple English on purpose.
   var lifePrompts = [
     {
       id: 'life-rain-window',
@@ -476,6 +476,135 @@
       challenge: bilingual("What is the movie called? What happens in it right now?", "這部電影叫什麼？現在正演到哪裡？"),
       successRule: bilingual("Which song does this remind you of? Choose it and sing a little.", "這讓你想到哪首歌？選出來唱一小段。"),
       duration: 60, tags: ['life']
+    },
+  // Present and future: where life is now and what people hope for next.
+    {
+      id: 'life-one-word',
+      title: bilingual("Right Now in One Word", "用一個詞形容現在"),
+      situation: bilingual("Someone asks you, \"How is life these days?\"", "有人問你：「最近過得怎樣？」"),
+      challenge: bilingual("Answer with one word, then tell us why you chose it.", "先用一個詞回答，再說說為什麼選這個詞。"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-normal-day',
+      title: bilingual("A Normal Tuesday", "普通的星期二"),
+      situation: bilingual("It is a normal Tuesday in your life right now.", "現在的你，度過一個普通的星期二。"),
+      challenge: bilingual("Walk us through your day. What part do you enjoy most?", "帶我們走過你的一天。你最享受哪個部分？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-small-win',
+      title: bilingual("A Small Win", "小小的勝利"),
+      situation: bilingual("You did something this month that made you a little proud.", "這個月你做了一件讓自己有點驕傲的事。"),
+      challenge: bilingual("What was your small win? Who did you tell first?", "你的小勝利是什麼？你第一個告訴誰？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-learning',
+      title: bilingual("Still Learning", "還在學習中"),
+      situation: bilingual("You are learning something new these days.", "你最近在學一樣新東西。"),
+      challenge: bilingual("What are you learning now, and why did you start?", "你現在在學什麼？為什麼開始學？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-energy',
+      title: bilingual("Your Battery", "你的電量"),
+      situation: bilingual("Picture your energy as a phone battery.", "把你的精力想成手機電量。"),
+      challenge: bilingual("How full is your battery these days? What charges you up?", "你最近電量剩多少？什麼能幫你充電？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-changing',
+      title: bilingual("Something Is Changing", "正在改變的事"),
+      situation: bilingual("Something in your life is slowly changing.", "你的生活裡有件事正在慢慢改變。"),
+      challenge: bilingual("What is changing for you now? How do you feel about it?", "你現在正在經歷什麼改變？你對它有什麼感覺？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-busy-list',
+      title: bilingual("Your To-Do List", "你的待辦清單"),
+      situation: bilingual("You open your to-do list for this week.", "你打開這週的待辦清單。"),
+      challenge: bilingual("What is on your list right now? What do you wish was on it?", "你的清單上現在有什麼？你希望上面有什麼？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-thankful',
+      title: bilingual("Thankful Today", "今天想感謝的"),
+      situation: bilingual("You stop for a moment and feel thankful.", "你停下來，突然覺得很感恩。"),
+      challenge: bilingual("What are you thankful for at this stage of your life?", "在人生的這個階段，你感謝什麼？"),
+      successRule: bilingual("Which song fits where you are right now? Choose it and sing a little.", "哪首歌最符合你現在的狀態？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'now']
+    },
+    {
+      id: 'life-five-years',
+      title: bilingual("Five Years Later", "五年後"),
+      situation: bilingual("It is five years from today. You wake up and look around.", "五年後的某一天，你醒來看看四周。"),
+      challenge: bilingual("Where are you, and what does your day look like?", "你在哪裡？那一天是什麼樣子？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-future-letter',
+      title: bilingual("A Letter to Future You", "寫給未來的自己"),
+      situation: bilingual("You are writing a short letter to yourself in ten years.", "你正在寫一封短信給十年後的自己。"),
+      challenge: bilingual("What do you want to say? What do you hope will be true?", "你想說什麼？你希望那時候什麼已經成真？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-next-summer',
+      title: bilingual("Next Summer", "明年夏天"),
+      situation: bilingual("Next summer is coming, and you can plan anything.", "明年夏天快到了，你可以計畫任何事。"),
+      challenge: bilingual("What do you hope to do next summer, and with whom?", "你希望明年夏天做什麼？和誰一起？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-open-door',
+      title: bilingual("A New Door", "一扇新的門"),
+      situation: bilingual("A new door opens in front of you.", "一扇新的門在你面前打開。"),
+      challenge: bilingual("What new chapter do you want to start soon?", "你想很快開始哪一個人生新篇章？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-dream-day',
+      title: bilingual("Your Dream Day", "夢想中的一天"),
+      situation: bilingual("One day in the future, everything goes the way you want.", "未來的某一天，一切都照你想要的發生。"),
+      challenge: bilingual("Tell us about that perfect day, from morning to night.", "從早到晚，說說那完美的一天。"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-seed',
+      title: bilingual("Planting a Seed", "種下一顆種子"),
+      situation: bilingual("You plant a small seed today and wait for it to grow.", "你今天種下一顆小種子，等它長大。"),
+      challenge: bilingual("What are you working on now that will grow later?", "你現在在努力什麼，以後會開花結果？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-ticket',
+      title: bilingual("A Ticket to Anywhere", "去哪都可以的車票"),
+      situation: bilingual("Someone gives you a ticket to anywhere in the world.", "有人送你一張能去世界任何地方的車票。"),
+      challenge: bilingual("Where do you go, and what do you hope to find there?", "你會去哪裡？希望在那裡找到什麼？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
+    },
+    {
+      id: 'life-meet-future',
+      title: bilingual("Meeting Future You", "遇見未來的你"),
+      situation: bilingual("You meet yourself from twenty years in the future.", "你遇見二十年後的自己。"),
+      challenge: bilingual("What do you ask them? What do you hope they say?", "你會問他什麼？你希望他怎麼回答？"),
+      successRule: bilingual("Which song would play on that future day? Choose it and sing a little.", "那個未來的日子會播哪首歌？選出來唱一小段。"),
+      duration: 60, tags: ['life', 'future']
     }
   ];
 

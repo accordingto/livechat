@@ -4,8 +4,8 @@ Open Mic Rescue now has two modes. Life Song (default): a life prompt → share 
 real moment (host marks Story shared +2 / Pass) → choose the song it brings
 back and sing a little (+1). Mission Rescue is the original challenge game.
 Engine state carries mode (missing = mission for old saves), view() projects
-it, managers use setMode, restart keeps mode. 36 lifePrompts in
-open-mic-content.js. Assets life-1 / CSS om-12. Tests 1557/1557.
+it, managers use setMode, restart keeps mode. 52 lifePrompts in
+open-mic-content.js (36 memories + 8 'now' + 8 'future' tags; content life-2). Assets life-1 / CSS om-12. Tests 1557/1557.
 ENGINE CHANGE: deploy the independent service from this checkout (package
 script) together with merging this branch to main. Until then, service rooms
 would show mission wording with a life first prompt, which is why this work
