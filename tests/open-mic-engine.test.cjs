@@ -822,9 +822,3 @@ test('life prompts are bilingual, unique, short and simple', () => {
     assert.ok(p.challenge.en.split(/\s+/).length <= 20, p.id + ' question is short');
   }
 });
-
-test('life prompts include present and future questions, not only memories', () => {
-  const now = C.lifePrompts.filter(p => p.tags.includes('now')), future = C.lifePrompts.filter(p => p.tags.includes('future'));
-  assert.ok(now.length >= 6 && future.length >= 6);
-  assert.ok(now.every(p => /right now/.test(p.successRule.en)) && future.every(p => /future day/.test(p.successRule.en)));
-});

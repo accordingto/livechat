@@ -11,7 +11,7 @@ remind you of?". The host marks **Story shared +2** (engine `success`) or
 **Pass** (`failed`); the Spotlight then chooses a song from the library or
 search and sings a little for +1, exactly like the existing choice/singing
 flow. From round 2 the prompt also offers a chain option: pick one thing from
-the last story and start from there. The 52 prompts (36 memories, 8 present/now, 8 future, tagged) live in
+the last story and start from there. The 36 prompts live in
 `OPEN_MIC_CONTENT.lifePrompts` (ids `life-*`), simple English with zh copies.
 
 **Mission Rescue / 任務救場** is the original social-challenge game, unchanged.
