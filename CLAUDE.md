@@ -1,3 +1,13 @@
+## CURRENT: Open Mic Now & Next mode — 2026-10-10 (branch claude/open-mic-now-next)
+
+Third Open Mic mode beside Life Song (memories, original 36 prompts, unchanged
+on main) and Mission Rescue. Now & Next has 24 prompts (12 now / 12 future) in
+OPEN_MIC_CONTENT.nextPrompts, each with a follow-up for listeners and a
+prompt-specific song question. Engine MODES life/next/mission. Tests 1560/1560.
+ENGINE + CONTENT CHANGE: merge this branch and deploy the independent service
+together; pushing to main alone would let service rooms fall back to missions
+after the first Now & Next turn. See open-mic-mode.md.
+
 ## CURRENT: Open Mic Life Song mode — 2026-10-10 (branch claude/open-mic-life-song)
 
 Open Mic Rescue now has two modes. Life Song (default): a life prompt → share a

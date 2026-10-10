@@ -13,12 +13,13 @@ var OPEN_MIC_ENGINE = (() => {
   const MAX_LYRICS_CHARS = 16000;
 
   const SCORE = Object.freeze({ challenge: 2, singing: 1 });
-  // 'life' (Life Song, the default for new games) draws a life prompt, then a
-  // song. 'mission' keeps the original social challenges. Saved games from
-  // before modes existed have no mode field and stay on 'mission'.
-  const MODES = Object.freeze(['life', 'mission']);
-  const modeOf = state => state && state.mode === 'life' ? 'life' : 'mission';
-  const bankFor = mode => list(mode === 'life' ? content.lifePrompts : content.challenges);
+  // 'life' (Life Song, the default for new games) draws a memory prompt, then
+  // a song. 'next' (Now & Next) uses the same flow with prompts about life now
+  // and hopes for the future. 'mission' keeps the original social challenges.
+  // Saved games from before modes existed have no mode field and stay on 'mission'.
+  const MODES = Object.freeze(['life', 'next', 'mission']);
+  const modeOf = state => state && MODES.includes(state.mode) ? state.mode : 'mission';
+  const bankFor = mode => list(mode === 'life' ? content.lifePrompts : mode === 'next' ? content.nextPrompts : content.challenges);
 
   // Old video IDs remain opaque library keys; a projected card carries text only.
   const songReference = song => ({ id: typeof song.id === 'string' ? song.id : song.videoId,

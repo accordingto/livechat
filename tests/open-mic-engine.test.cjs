@@ -822,3 +822,29 @@ test('life prompts are bilingual, unique, short and simple', () => {
     assert.ok(p.challenge.en.split(/\s+/).length <= 20, p.id + ' question is short');
   }
 });
+
+test('Now & Next is its own mode with its own deck; Life Song keeps the original memory prompts', () => {
+  const nextIds = new Set(C.nextPrompts.map(p => p.id)), lifeIds = new Set(C.lifePrompts.map(p => p.id));
+  let s = create({ mode: 'next' });
+  assert.equal(s.mode, 'next'); assert.equal(E.view(s, 1, 1000).openmic.mode, 'next');
+  for (let i = 0; i < C.nextPrompts.length; i++) { assert.ok(nextIds.has(s.challenge.id)); s = act(s, 'next'); }
+  assert.ok(C.lifePrompts.length === 36 && [...lifeIds].every(id => !nextIds.has(id)), 'memory deck is unchanged and separate');
+  let life = create(); life = act(life, 'setMode', { mode: 'next' });
+  assert.ok(nextIds.has(life.challenge.id), 'switching during the prompt redraws from Now & Next');
+  life = act(life, 'restart'); assert.equal(life.mode, 'next');
+  assert.equal(E.view({ ...life, mode: 'karaoke' }, 0, life.lastChangeAt).openmic.mode, 'mission', 'unknown saved modes fall back to missions');
+});
+
+test('Now & Next prompts are bilingual, short, balanced between now and future, with a follow-up and a song hook', () => {
+  const N = C.nextPrompts;
+  assert.ok(N.length >= 20); assert.equal(new Set(N.map(p => p.id)).size, N.length);
+  assert.ok(N.filter(p => p.tags.includes('now')).length >= 10 && N.filter(p => p.tags.includes('future')).length >= 10);
+  for (const p of N) {
+    assert.ok(p.id.startsWith('next-'), p.id);
+    for (const key of ['title', 'situation', 'challenge', 'followUp', 'successRule']) {
+      assert.ok(p[key].en && p[key].zh, p.id + ' ' + key); assert.doesNotMatch(p[key].en + p[key].zh, /[<>]/);
+    }
+    assert.ok(p.challenge.en.split(/\s+/).length <= 20 && p.followUp.en.split(/\s+/).length <= 12, p.id + ' stays short');
+    assert.match(p.successRule.en, /song/i, p.id + ' ends with a song question');
+  }
+});

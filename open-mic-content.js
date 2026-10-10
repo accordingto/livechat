@@ -479,5 +479,227 @@
     }
   ];
 
-  return { challenges: challenges, lifePrompts: lifePrompts, songs: songs, categories: categories };
+  // Now & Next prompts: life right now and hopes for the future. Each has a
+  // concrete scene, an easy handle in the question, a follow-up the group can
+  // ask, and a song question tied to the prompt. Simple English on purpose.
+  var nextPrompts = [
+    {
+      id: 'next-headline',
+      title: bilingual("This Month's Headline", "這個月的頭條"),
+      situation: bilingual("A newspaper writes one headline about your life this month.", "報紙用一個標題寫你這個月的生活。"),
+      challenge: bilingual("What does the headline say? Tell us the story behind it.", "標題寫什麼？說說背後的故事。"),
+      followUp: bilingual("Is it good news, or a bit of both?", "是好消息，還是好壞都有？"),
+      successRule: bilingual("Which song is the theme music for this headline? Sing a little.", "這個頭條的主題曲是哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-battery',
+      title: bilingual("Battery Check", "電量檢查"),
+      situation: bilingual("Picture your energy these days as a phone battery.", "把你最近的精力想成手機電量。"),
+      challenge: bilingual("What percent are you at? What uses up your energy, and what charges you up?", "你現在剩幾趴？什麼讓你耗電？什麼幫你充電？"),
+      followUp: bilingual("What could charge you a little this week?", "這週有什麼能幫你充一點電？"),
+      successRule: bilingual("Which song charges your battery? Sing a little.", "哪首歌能幫你充電？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-on-repeat',
+      title: bilingual("On Repeat", "單曲循環"),
+      situation: bilingual("Some things in life play again and again, like a favorite song.", "生活裡有些東西一直重播，就像最愛的歌。"),
+      challenge: bilingual("What food, show, or habit is on repeat for you these days?", "你最近一直重複的食物、節目或習慣是什麼？"),
+      followUp: bilingual("When did it start, and why do you love it?", "什麼時候開始的？為什麼這麼喜歡？"),
+      successRule: bilingual("Which song is on repeat for you right now? Sing a little.", "你最近單曲循環哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-weekday',
+      title: bilingual("A Normal Weekday", "平凡的一天"),
+      situation: bilingual("It is a normal weekday in your life right now.", "現在的你，度過一個平凡的平日。"),
+      challenge: bilingual("Walk us through your day. Which hour is your favorite, and why?", "帶我們走過你的一天。你最喜歡哪個時段？為什麼？"),
+      followUp: bilingual("If you could change one hour, which one?", "如果能改掉一個小時，你會改哪個？"),
+      successRule: bilingual("Which song plays during your favorite hour? Sing a little.", "你最喜歡的那個時段會播哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-small-win',
+      title: bilingual("A Small Win", "小小的勝利"),
+      situation: bilingual("You did something this month that made you a little proud.", "這個月你做了一件讓自己有點驕傲的事。"),
+      challenge: bilingual("Tell us one small win from this month. Tiny wins count too!", "說一件這個月的小勝利，再小都算！"),
+      followUp: bilingual("Who was the first person you told?", "你第一個告訴誰？"),
+      successRule: bilingual("Which song would you play to celebrate it? Sing a little.", "你會放哪首歌慶祝？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-learning',
+      title: bilingual("Still Learning", "還在學習中"),
+      situation: bilingual("Everyone is learning something, even grown-ups.", "每個人都在學點什麼，大人也一樣。"),
+      challenge: bilingual("What are you learning or getting better at right now? How is it going?", "你最近在學什麼或在進步什麼？進展如何？"),
+      followUp: bilingual("What was the hardest part at the start?", "剛開始最難的是什麼？"),
+      successRule: bilingual("Which song would be your practice soundtrack? Sing a little.", "哪首歌適合當你的練習配樂？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-one-word',
+      title: bilingual("One Word for Now", "用一個詞形容現在"),
+      situation: bilingual("Someone asks you, \"How is life these days?\"", "有人問你：「最近過得怎樣？」"),
+      challenge: bilingual("Answer with just one word. Then tell us why you chose it.", "只用一個詞回答，再說說為什麼選它。"),
+      followUp: bilingual("What word would you have chosen last year?", "如果是去年，你會選哪個詞？"),
+      successRule: bilingual("Which song matches your word? Sing a little.", "哪首歌最配你這個詞？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-your-spot',
+      title: bilingual("Your Spot", "你的老地方"),
+      situation: bilingual("These days, you have a place where you like to spend time.", "最近你有一個很喜歡待的地方。"),
+      challenge: bilingual("Describe your spot. What do you do there, and how does it feel?", "描述那個地方。你在那裡做什麼？感覺如何？"),
+      followUp: bilingual("Would you take us there? What should we try?", "你會帶我們去嗎？我們該試什麼？"),
+      successRule: bilingual("Which song fits your spot? Sing a little.", "哪首歌最適合那個地方？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-changing',
+      title: bilingual("Slowly Changing", "慢慢在改變"),
+      situation: bilingual("Something in your life is slowly changing, like the seasons.", "生活裡有件事正在慢慢改變，像季節一樣。"),
+      challenge: bilingual("What is changing for you right now? Is it a good change?", "你現在有什麼正在改變？是好的改變嗎？"),
+      followUp: bilingual("When did you first notice it?", "你什麼時候開始發現的？"),
+      successRule: bilingual("Which song goes with this change? Sing a little.", "哪首歌最配這個改變？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-thankful',
+      title: bilingual("Thank You, Lately", "最近想說謝謝"),
+      situation: bilingual("You stop for a moment and feel thankful.", "你停下來，突然覺得很感恩。"),
+      challenge: bilingual("What is one thing you are thankful for lately, big or small?", "最近你感謝的一件事是什麼？大事小事都可以。"),
+      followUp: bilingual("Did you get to say thank you to anyone?", "你有機會跟誰說謝謝嗎？"),
+      successRule: bilingual("Which song feels like saying thank you? Sing a little.", "哪首歌聽起來像在說謝謝？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-weekend',
+      title: bilingual("Weekend Starts Now", "週末開始了"),
+      situation: bilingual("It is Friday night, and your weekend is starting.", "星期五晚上，你的週末開始了。"),
+      challenge: bilingual("What is the first thing you do? What makes a good weekend for you these days?", "你第一件做的事是什麼？現在的你覺得怎樣的週末才算好？"),
+      followUp: bilingual("Is that the same as five years ago?", "跟五年前一樣嗎？"),
+      successRule: bilingual("Which song starts your weekend? Sing a little.", "哪首歌是你週末的開場曲？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-your-people',
+      title: bilingual("Your People", "身邊的人"),
+      situation: bilingual("Think about the people you talk to most these days.", "想想你最近最常說話的人。"),
+      challenge: bilingual("Who do you talk to most, and what do you usually talk about?", "你最常跟誰說話？通常聊什麼？"),
+      followUp: bilingual("What do you like most about that person?", "你最喜歡那個人的哪一點？"),
+      successRule: bilingual("Which song reminds you of that person? Sing a little.", "哪首歌會讓你想到那個人？唱一小段。"),
+      duration: 60, tags: ['next', 'now']
+    },
+    {
+      id: 'next-look-forward',
+      title: bilingual("Something to Look Forward To", "值得期待的事"),
+      situation: bilingual("There is a date on your calendar that makes you smile.", "你的行事曆上有一天，想到就會微笑。"),
+      challenge: bilingual("What are you looking forward to in the next few months? Why?", "接下來幾個月，你期待什麼？為什麼？"),
+      followUp: bilingual("How will you get ready for it?", "你會怎麼準備？"),
+      successRule: bilingual("Which song matches that excited, waiting feeling? Sing a little.", "哪首歌最像那種期待的心情？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-one-year',
+      title: bilingual("One Year From Today", "一年後的今天"),
+      situation: bilingual("It is one year from today, and you look back at this year.", "一年後的今天，你回頭看這一年。"),
+      challenge: bilingual("What is one thing you hope is different by then? What is the first small step?", "你希望那時有什麼不一樣？第一個小步驟是什麼？"),
+      followUp: bilingual("Who could help you with that step?", "誰能幫你跨出這一步？"),
+      successRule: bilingual("Which song would you play to celebrate that day? Sing a little.", "你會放哪首歌慶祝那一天？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-five-years',
+      title: bilingual("Five Years Later", "五年後的早晨"),
+      situation: bilingual("You wake up five years from today and look around the room.", "五年後的某天早上，你醒來看看房間四周。"),
+      challenge: bilingual("Where are you, and what does your day look like?", "你在哪裡？那一天是什麼樣子？"),
+      followUp: bilingual("What is the first thing you do that morning?", "那天早上你第一件事做什麼？"),
+      successRule: bilingual("Which song is playing that morning? Sing a little.", "那天早上播著哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-next-summer',
+      title: bilingual("Next Summer", "明年夏天"),
+      situation: bilingual("Next summer is free, and you can plan anything you like.", "明年夏天你有空，想計畫什麼都可以。"),
+      challenge: bilingual("What do you do next summer, and who do you do it with?", "明年夏天你要做什麼？和誰一起？"),
+      followUp: bilingual("What do you need to make it happen?", "要實現它，你需要什麼？"),
+      successRule: bilingual("Which song goes on your summer playlist? Sing a little.", "哪首歌會放進你的夏日歌單？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-new-skill',
+      title: bilingual("A Skill for Later", "想學會的技能"),
+      situation: bilingual("Imagine you could learn any skill in the next few years.", "想像接下來幾年，你可以學會任何技能。"),
+      challenge: bilingual("What skill do you choose? What is the first thing you do with it?", "你選哪個技能？學會後第一件事做什麼？"),
+      followUp: bilingual("What is stopping you from starting now?", "現在是什麼讓你還沒開始？"),
+      successRule: bilingual("Which song would you play while you practice? Sing a little.", "練習的時候你會放哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-future-note',
+      title: bilingual("A Note to Future You", "寫給未來的自己"),
+      situation: bilingual("You write one short note to yourself and open it in ten years.", "你寫一張短短的紙條給自己，十年後才打開。"),
+      challenge: bilingual("What does your note say? Why those words?", "紙條上寫什麼？為什麼是這幾句話？"),
+      followUp: bilingual("What do you hope future you writes back?", "你希望未來的你回什麼？"),
+      successRule: bilingual("Which song would you send with the note? Sing a little.", "你會附上哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-perfect-day',
+      title: bilingual("A Perfect Future Day", "未來完美的一天"),
+      situation: bilingual("One day in the future, everything goes right.", "未來的某一天，一切都很順利。"),
+      challenge: bilingual("Tell us about that day, from morning to night. Where are you?", "從早到晚說說那一天。你在哪裡？"),
+      followUp: bilingual("Which part of that day could happen sooner?", "那一天的哪個部分可以早點實現？"),
+      successRule: bilingual("Which song plays at the end of that day? Sing a little.", "那一天結束時會播哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-ticket',
+      title: bilingual("A Ticket to Anywhere", "去哪都可以的機票"),
+      situation: bilingual("Someone gives you a free ticket to anywhere in the world.", "有人送你一張去世界任何地方的免費機票。"),
+      challenge: bilingual("Where do you go, and what is the first thing you do there?", "你去哪裡？到了之後第一件事做什麼？"),
+      followUp: bilingual("Who would you take with you?", "你會帶誰一起去？"),
+      successRule: bilingual("Which song do you play on the plane? Sing a little.", "在飛機上你會放哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-next-chapter',
+      title: bilingual("The Next Chapter", "下一章"),
+      situation: bilingual("Your life is a book, and you just turned to a new chapter.", "你的人生是一本書，你剛翻到新的一章。"),
+      challenge: bilingual("What is the title of the next chapter? What happens first?", "下一章叫什麼名字？一開始會發生什麼？"),
+      followUp: bilingual("Who are the important people in that chapter?", "那一章裡重要的人是誰？"),
+      successRule: bilingual("Which song opens the next chapter? Sing a little.", "哪首歌是下一章的開場曲？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-meet-future',
+      title: bilingual("Meeting Future You", "遇見未來的你"),
+      situation: bilingual("You meet yourself from twenty years in the future, in a quiet caf\u00e9.", "你在一間安靜的咖啡店，遇見二十年後的自己。"),
+      challenge: bilingual("What is the first question you ask? What do you hope they say?", "你第一個問題是什麼？你希望他怎麼回答？"),
+      followUp: bilingual("What advice might future you give you?", "未來的你可能給你什麼建議？"),
+      successRule: bilingual("Which song would future you play for you? Sing a little.", "未來的你會放哪首歌給你聽？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-future-home',
+      title: bilingual("Your Future Home", "未來的家"),
+      situation: bilingual("Picture the home you hope to live in one day.", "想像你希望有一天住的家。"),
+      challenge: bilingual("Where is it, and what is it like inside? What is your favorite room?", "它在哪裡？裡面是什麼樣子？你最喜歡哪個房間？"),
+      followUp: bilingual("Who comes over to visit?", "誰會來拜訪？"),
+      successRule: bilingual("Which song plays in that home? Sing a little.", "那個家裡會播哪首歌？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    },
+    {
+      id: 'next-promise',
+      title: bilingual("A Promise to Yourself", "給自己的承諾"),
+      situation: bilingual("You make one small promise to yourself for this year.", "你給自己這一年一個小小的承諾。"),
+      challenge: bilingual("What is your promise? Why does it matter to you now?", "你的承諾是什麼？為什麼現在對你很重要？"),
+      followUp: bilingual("How will you remember to keep it?", "你會怎麼提醒自己做到？"),
+      successRule: bilingual("Which song can remind you of your promise? Sing a little.", "哪首歌能提醒你這個承諾？唱一小段。"),
+      duration: 60, tags: ['next', 'future']
+    }
+  ];
+
+  return { challenges: challenges, lifePrompts: lifePrompts, nextPrompts: nextPrompts, songs: songs, categories: categories };
 }));

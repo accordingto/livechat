@@ -18,8 +18,8 @@
     "zh": "給開口分享一個小小的理由。"
   },
   "intro": {
-    "en": "Life Song (default): see a life prompt, share a real moment, then choose the song it reminds you of and sing a little. Mission Rescue: the original short social challenges. Skipping is always okay.",
-    "zh": "人生之歌（預設）：看一個人生情境，說一段真實回憶，再選一首它讓你想到的歌唱一小段。任務救場：原本的小小社交挑戰。隨時都可以跳過。"
+    "en": "Life Song (default): a scene, a real memory, then the song it brings back. Now & Next: talk about life now or your hopes, then pick the song that fits. Mission Rescue: the original short social challenges. Skipping is always okay.",
+    "zh": "人生之歌（預設）：一個情境、一段真實回憶，再唱它讓你想起的歌。現在與未來：聊現在的生活或對未來的期待，再選一首適合的歌。任務救場：原本的小小社交挑戰。隨時都可以跳過。"
   },
   "stopGame": { "en": "End game", "zh": "結束遊戲" },
   "restartGame": { "en": "Reset score & start new game", "zh": "分數歸零並開始新局" },
@@ -685,8 +685,8 @@
     "zh": "🎯 任務救場"
   },
   "modeLifeHint": {
-    "en": "A life prompt, a real moment, then the song it reminds you of.",
-    "zh": "人生情境 → 說一段真實回憶 → 想到哪首歌就唱。"
+    "en": "Memories: a scene, a real moment from your past, then the song it brings back.",
+    "zh": "回憶：一個情境，說一段過去的真實回憶，再唱它讓你想起的歌。"
   },
   "modeMissionHint": {
     "en": "A short social challenge, then a story or original activity.",
@@ -697,8 +697,20 @@
     "zh": "新模式會從下一位開始。"
   },
   "invalid_mode": {
-    "en": "Choose Life Song or Mission Rescue.",
-    "zh": "請選擇人生之歌或任務救場。"
+    "en": "Choose Life Song, Now & Next, or Mission Rescue.",
+    "zh": "請選擇人生之歌、現在與未來或任務救場。"
+  },
+  "modeNext": {
+    "en": "🌱 Now & Next",
+    "zh": "🌱 現在與未來"
+  },
+  "modeNextHint": {
+    "en": "Life now and hopes for the future, then the song that fits.",
+    "zh": "聊現在的生活和對未來的期待，再選一首適合的歌。"
+  },
+  "followUpLabel": {
+    "en": "Others can ask: {q}",
+    "zh": "大家可以問：{q}"
   }
 };
   if (global.I18N) global.I18N.registerDict('openmic', dict);
@@ -765,7 +777,9 @@
       this.find('[data-om-discovery-query]').placeholder = t('discoveryPlaceholder');
       this.renderDiscovery();
     }
-    life() { return !!this.data && this.data.mode === 'life'; }
+    // Life Song and Now & Next share the prompt → story → song flow and wording.
+    mode() { var mode = this.data && this.data.mode; return mode === 'life' || mode === 'next' ? mode : 'mission'; }
+    life() { return this.mode() !== 'mission'; }
     // Mode-specific copy: Life Song uses its own wording where one exists.
     lt(key, vars) { return t(this.life() && dict['life_' + key] ? 'life_' + key : key, vars); }
     renderStage() {
@@ -887,7 +901,7 @@
       if (action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
       if (action === 'inviteDuet') { this.action(action, { playerNum: target.dataset.player ? Number(target.dataset.player) : null }).then(ok => { if (ok) this.close(this.duetDialog); }); return; }
       if (action === 'exclude') { this.action(action, { playerNum: Number(target.dataset.player), active: target.dataset.active === 'true' }); return; }
-      if (action === 'setMode') { if (target.dataset.mode !== (this.life() ? 'life' : 'mission')) this.action(action, { mode: target.dataset.mode }); return; }
+      if (action === 'setMode') { if (target.dataset.mode !== this.mode()) this.action(action, { mode: target.dataset.mode }); return; }
       if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'stop', 'restart'].indexOf(action) >= 0) this.action(action);
     }
     async handleSubmit(event) {
@@ -944,16 +958,16 @@
       var disclosureKey = [data.sessionId, data.round, challenge.id, data.phase === 'challenge' ? 'challenge' : 'result'].join(':');
       var disclosureOpen = this.challengeDisclosureKey === disclosureKey && disclosure ? disclosure.open : data.phase === 'challenge';
       this.challengeDisclosureKey = disclosureKey;
-      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div></div><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><details class="om-challenge-details" data-om-challenge-details' + (disclosureOpen ? ' open' : '') + '><summary><span>' + esc(this.lt('viewChallenge')) + '</span><strong>' + esc(challengeText(challenge.title)) + '</strong></summary><div class="om-challenge-body"><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div><p class="om-success-rule">' + esc(this.lt('successRule', { rule: challengeText(challenge.successRule) })) + '</p>' + chain + '</div></details>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(this.lt(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(this.lt(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
+      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div></div><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><details class="om-challenge-details" data-om-challenge-details' + (disclosureOpen ? ' open' : '') + '><summary><span>' + esc(this.lt('viewChallenge')) + '</span><strong>' + esc(challengeText(challenge.title)) + '</strong></summary><div class="om-challenge-body"><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div>' + (challenge.followUp ? '<p class="om-followup">💬 ' + esc(t('followUpLabel', { q: challengeText(challenge.followUp) })) + '</p>' : '') + '<p class="om-success-rule">' + esc(this.lt('successRule', { rule: challengeText(challenge.successRule) })) + '</p>' + chain + '</div></details>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(this.lt(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(this.lt(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
       var roster = this.roster(), active = roster.filter(p => p.active !== false), current = active.findIndex(p => Number(p.playerNum) === Number(data.spotlight));
       var ordered = current >= 0 ? active.slice(current).concat(active.slice(0, current)) : active;
       var queue = ordered.concat(roster.filter(p => p.active === false)).map(p => '<li class="' + (Number(p.playerNum) === Number(data.spotlight) ? 'om-current' : p.active === false ? 'om-inactive' : '') + '">' + (Number(p.playerNum) === Number(data.spotlight) ? '<span class="om-dot" aria-hidden="true"></span>' : '') + esc(p.name || t('player', { n: p.playerNum })) + (p.active === false ? ' · ' + esc(t('sittingOut')) : '') + '</li>').join('');
       var manage = manager ? '<details class="om-manage"><summary>' + esc(t('manage')) + '</summary><div class="om-roster">' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div></details>' : '';
       if (data.sharedControls === true && manager) manage += '<details class="om-manage"><summary>' + esc(t('restartGame')) + '</summary><div class="om-actions">' + this.button('restart', t('restartGame')) + (data.phase !== 'stopped' ? this.button('stop', t('stopGame')) : '') + '</div></details>';
-      var modeNow = this.life() ? 'life' : 'mission';
+      var modeNow = this.mode(), modeKey = { life: 'modeLife', next: 'modeNext', mission: 'modeMission' };
       var modeRow = '<div class="om-mode"><p class="om-kicker">' + esc(t('modeLabel')) + '</p>' + (manager && data.phase !== 'stopped'
-        ? '<div class="om-mode-switch" role="group" aria-label="' + esc(t('modeLabel')) + '">' + ['life', 'mission'].map(mode => this.button('setMode', t(mode === 'life' ? 'modeLife' : 'modeMission'), mode === modeNow ? 'om-mode-on' : '', ' data-mode="' + mode + '" aria-pressed="' + (mode === modeNow) + '"')).join('') + '</div>'
-        : '<p class="om-mode-current">' + esc(t(modeNow === 'life' ? 'modeLife' : 'modeMission')) + '</p>') + '<p class="om-soft om-mode-hint">' + esc(t(modeNow === 'life' ? 'modeLifeHint' : 'modeMissionHint')) + (manager && data.phase !== 'challenge' && data.phase !== 'stopped' ? ' ' + esc(t('modeNextTurn')) : '') + '</p></div>';
+        ? '<div class="om-mode-switch" role="group" aria-label="' + esc(t('modeLabel')) + '">' + ['life', 'next', 'mission'].map(mode => this.button('setMode', t(modeKey[mode]), mode === modeNow ? 'om-mode-on' : '', ' data-mode="' + mode + '" aria-pressed="' + (mode === modeNow) + '"')).join('') + '</div>'
+        : '<p class="om-mode-current">' + esc(t(modeKey[modeNow])) + '</p>') + '<p class="om-soft om-mode-hint">' + esc(t(modeKey[modeNow] + 'Hint')) + (manager && data.phase !== 'challenge' && data.phase !== 'stopped' ? ' ' + esc(t('modeNextTurn')) : '') + '</p></div>';
       manage = modeRow + manage;
       var manageEl = this.find('.om-manage'), manageOpen = manageEl && manageEl.open;
       this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(this.lt('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);

@@ -279,3 +279,16 @@ test('missing mode (older service) keeps Mission Rescue wording and players see 
   assert.match(f.html('[data-om-challenge]'), /Success: Keep talking/);
   assert.match(f.html('[data-om-score]'), /Mission Rescue/); assert.doesNotMatch(f.html('[data-om-score]'), /data-om-action="setMode"/);
 });
+
+test('Now & Next shares Life Song wording, shows the follow-up line and offers three modes to managers', () => {
+  const f = fixture(); f.g.data = state({ mode: 'next', phase: 'challenge', challengeResult: null,
+    challenge: { id: 'next-x', title: { en: 'Battery' }, situation: 'Your energy', challenge: 'What percent?', followUp: { en: 'What charges you?', zh: '什麼幫你充電？' }, successRule: 'Which song charges you?' } });
+  f.g.render();
+  const challenge = f.html('[data-om-challenge]'), score = f.html('[data-om-score]');
+  assert.match(challenge, /Story shared \+2/); assert.match(challenge, /Others can ask: What charges you\?/); assert.match(challenge, /Then: Which song charges you\?/);
+  assert.equal((score.match(/data-om-action="setMode"/g) || []).length, 3);
+  assert.match(score, /data-mode="next"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-mode="next"/);
+  click(f.g, 'setMode', { mode: 'life' }); assert.equal(f.sent.at(-1).payload.mode, 'life');
+  f.g.data = state({ mode: 'mission', phase: 'challenge', challengeResult: null }); f.g.render();
+  assert.doesNotMatch(f.html('[data-om-challenge]'), /Others can ask/, 'missions have no follow-up line');
+});
