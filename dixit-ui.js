@@ -43,7 +43,7 @@
     scoreStory:['部分人猜中你的牌','Some, not all, found your card'], scoreCorrect:['猜中說書人的牌','Correct guess'],
     scoreAll:['所有人都猜中','Everyone guessed right'], scoreNone:['沒有人猜中','Nobody guessed right'],
     scoreVoteOne:['你的牌得到 1 票','1 vote for your card'], scoreVoteMany:['你的牌得到 {n} 票','{n} votes for your card'],
-    votedPictures:['得票圖卡','Voted pictures'], votedBy:['投票的人：{names}','Voted by: {names}'], showVoters:['看看誰投了這張','See who voted for this card'], noOtherVotes:['其他圖卡沒有得票。','No other pictures received votes.'],
+    votedPictures:['得票圖卡','Voted pictures'], votedBy:['來自 {names}','by {names}'], showVoters:['看看誰投了這張','See who voted for this card'], noOtherVotes:['其他圖卡沒有得票。','No other pictures received votes.'],
     votingStatuses:['每位玩家的投票狀態','Each player’s voting status'], voteDone:['已投票','Voted'], voteWaiting:['尚未投票','Waiting for vote'], voteStoryteller:['說書人 · 不用投票','Storyteller · no vote required'], voteInactive:['本輪不參與投票','Sitting out this round'],
     submitStatuses:['每位玩家的出牌狀態','Each player’s card status'], submitDone:['已出牌','Card submitted'], submitWaiting:['尚未出牌','Choosing a card'], submitStoryteller:['說書人 · 已選好圖卡','Storyteller · card chosen'], submitInactive:['本輪不參與出牌','Sitting out this round'],
     winningScore:['勝利目標分數','Winning score'], scoreRange:['5–100 分；基本版為 30 分。','5–100 points; the base game uses 30.'],
@@ -173,13 +173,13 @@
   }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.pendingWaiting=false;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.openVoters=new Set();this.revealSize=null;this.timer=setInterval(()=>this.paint(),200);
+      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.pendingWaiting=false;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.openVoters=new Set();this.timer=setInterval(()=>this.paint(),200);
       this.click=e=>this.onClick(e);el.addEventListener('click',this.click);
     }
     update(payload){
       const previous=this.payload?.dixit,next=payload?.dixit;this.payload=payload;if(!next)return;
       const enteringReveal=next.phase==='REVEALING'&&previous?.phase!=='REVEALING';
-      if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.openVoters.clear();this.revealSize=null;this.selected.clear();this.error='';this.errorCode='';this.confirmation='';}
+      if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.openVoters.clear();this.selected.clear();this.error='';this.errorCode='';this.confirmation='';}
       if(next.phase==='REVEALING'&&previous?.phase!=='REVEALING')this.selected.clear();
       if(this.pending&&next.reply?.id===this.pending.id){this.errorCode=next.reply.error||'';this.error=this.errorCode?errorText(this.errorCode):'';this.pending=null;this.pendingWaiting=false;clearTimeout(this.pendingTimer);}
       else if(this.pending&&(this.pending.sessionId!==next.sessionId||this.pending.turnId!==next.turnId)){this.pending=null;this.pendingWaiting=false;clearTimeout(this.pendingTimer);}
@@ -201,18 +201,6 @@
       if(this.errorCode)this.error=errorText(this.errorCode);
       const message=this.el.querySelector('[data-dx-message]');if(message)message.textContent=this.error||(this.pending?t(this.pendingWaiting?'pendingResume':'pending'):'');
       const bar=this.el.querySelector('[data-dx-phase]');if(bar?.getBoundingClientRect&&this.el.style?.setProperty)this.el.style.setProperty('--dx-phase-height',Math.ceil(bar.getBoundingClientRect().height)+'px');
-      if(root.innerWidth>600&&this.el.style?.setProperty){
-        const picture=this.el.querySelector('.dx-story-reveal .dx-picture');
-        // Measure once per round and window size. Re-measuring from the live
-        // viewport position made the picture grow and shrink while scrolling
-        // or when an expanded voter list pushed it down.
-        const viewport=root.innerWidth+'x'+root.innerHeight;
-        if(picture?.getBoundingClientRect&&this.revealSize?.viewport!==viewport){
-          const elTop=this.el.getBoundingClientRect?.().top||0,offset=Math.max(0,picture.getBoundingClientRect().top-Math.min(0,elTop));
-          const available=Math.max(180,root.innerHeight-offset-25);this.revealSize={viewport,width:Math.floor(available*3/4)};
-        }
-        if(this.revealSize)this.el.style.setProperty('--dx-reveal-picture-width',this.revealSize.width+'px');
-      }
       this.el.querySelectorAll('[data-dx-action],[data-dx-card],[data-dx-target-score]').forEach(b=>{if(blocked){if(!b.disabled)b.dataset.dxBlocked='1';b.disabled=true;}else if(b.dataset.dxBlocked){b.disabled=false;delete b.dataset.dxBlocked;}});
     }
     render(){
