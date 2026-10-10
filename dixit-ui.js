@@ -43,7 +43,7 @@
     scoreStory:['部分人猜中你的牌','Some, not all, found your card'], scoreCorrect:['猜中說書人的牌','Correct guess'],
     scoreAll:['所有人都猜中','Everyone guessed right'], scoreNone:['沒有人猜中','Nobody guessed right'],
     scoreVoteOne:['你的牌得到 1 票','1 vote for your card'], scoreVoteMany:['你的牌得到 {n} 票','{n} votes for your card'],
-    votedPictures:['得票圖卡','Voted pictures'], votedBy:['來自 {names}','by {names}'], showVoters:['看看誰投了這張','See who voted for this card'], noOtherVotes:['其他圖卡沒有得票。','No other pictures received votes.'],
+    votedPictures:['得票圖卡','Voted pictures'], votedBy:['來自：{names}','by: {names}'], showVoters:['看看誰投了這張','See who voted for this card'], noOtherVotes:['其他圖卡沒有得票。','No other pictures received votes.'],
     votingStatuses:['每位玩家的投票狀態','Each player’s voting status'], voteDone:['已投票','Voted'], voteWaiting:['尚未投票','Waiting for vote'], voteStoryteller:['說書人 · 不用投票','Storyteller · no vote required'], voteInactive:['本輪不參與投票','Sitting out this round'],
     submitStatuses:['每位玩家的出牌狀態','Each player’s card status'], submitDone:['已出牌','Card submitted'], submitWaiting:['尚未出牌','Choosing a card'], submitStoryteller:['說書人 · 已選好圖卡','Storyteller · card chosen'], submitInactive:['本輪不參與出牌','Sitting out this round'],
     winningScore:['勝利目標分數','Winning score'], scoreRange:['5–100 分；基本版為 30 分。','5–100 points; the base game uses 30.'],

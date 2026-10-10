@@ -103,7 +103,7 @@ All 1333 repository tests passed, including 45 UI and 38 engine cases. Real
 local Edge browser QA passed 200 synthetic shared/private bilingual scenes at
 1440/1000/736/375/320px with no overflow, card/score alignment and privacy/status
 checks. Screenshots of desktop, tablet and phone views were inspected. No real
-room or Firebase data was used. The two entry pages use CSS/UI dixit-15 (submit statuses, inline reveal voter lists, hand-sized reveal pictures);
+room or Firebase data was used. The two entry pages use CSS/UI dixit-16 (submit statuses, inline reveal voter lists, scroll-stable screen-fit reveal pictures);
 this is a browser-only change with no service, scoring or engine modifications.
 
 Frontend release ca994b5 is published. The read-only production check matched

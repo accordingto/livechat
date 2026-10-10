@@ -1,15 +1,18 @@
 ## CURRENT: Dixit reveal voter lists and picture size — 2026-10-10
 
 On REVEAL/FINISHED, every positive vote count (Storyteller card, voted pictures,
-round gallery) is an inline pill button; tapping shows "by names" / 「來自 names」
+round gallery) is an inline pill button; tapping shows "by: names" / 「來自：names」
 to its right on the same line (no extra row), from public result.rows
 voteCardId, so nothing appears before the full reveal. Zero counts stay plain
 text. Open lists live in Card.openVoters, survive re-renders, reset each turn.
-Desktop reveal pictures are now the same width as hand cards (one third of the
-1280px shell, capped by the column) via pure CSS; the old viewport-height
---dx-reveal-picture-width measurement was removed because it drew them tiny on
-some monitors and resized them while scrolling. Mobile stays full width.
-dixit.html/play.html load Dixit CSS and UI as dixit-15. Browser-only release.
+Desktop reveal pictures keep the original screen-fit size (whole picture visible
+when the reveal opens) but now via pure CSS: width = min(column, max(200px,
+(100svh - --dx-phase-height - 130px) * 3/4)). The old JS measured the live
+viewport position every 200ms, so pictures grew/shrank while scrolling; a later
+measure-once attempt could draw them tiny. Both JS approaches are removed.
+Verified equal to the original within 1px at 1920x950/1080, 1536x730, 1366x650,
+1280x800 and constant while scrolling. Mobile stays full width.
+dixit.html/play.html load Dixit CSS and UI as dixit-16. Browser-only release.
 
 ## CURRENT: Dixit card-submission statuses — 2026-10-10
 

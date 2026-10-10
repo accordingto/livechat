@@ -525,7 +525,7 @@ test('answer stage centers only the actual Storyteller card without repeating it
   assert.ok(!secondary.includes('data-dx-picture="' + answer + '"'), 'the central answer is not repeated on the right');
   assert.ok(finalHTML.indexOf('dx-popular-reveal') < finalHTML.indexOf('dx-result'));
   const centre = finalHTML.slice(finalHTML.indexOf('class="dx-story-reveal"'), finalHTML.indexOf('class="dx-popular-reveal"'));
-  assert.match(centre, /<h2>The Storyteller’s card <span class=\"dx-voters\" data-dx-voters=\"answer:[^\"]+\"><button[^>]*data-dx-voters-toggle[^>]*aria-expanded=\"false\"[^>]*>1 vote\(s\)<\/button><span class=\"dx-voter-list\" hidden>by [^<]+<\/span><\/span><\/h2>/);
+  assert.match(centre, /<h2>The Storyteller’s card <span class=\"dx-voters\" data-dx-voters=\"answer:[^\"]+\"><button[^>]*data-dx-voters-toggle[^>]*aria-expanded=\"false\"[^>]*>1 vote\(s\)<\/button><span class=\"dx-voter-list\" hidden>by: [^<]+<\/span><\/span><\/h2>/);
   assert.doesNotMatch(centre, /class="dx-owner"/);
   const context = { DIXIT_DECK: { version: 2, cards: Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp' })) } };
   vm.runInNewContext(source, context);
@@ -959,6 +959,6 @@ test('revealed vote counts expand to name every voter for that card, never befor
   s = act(s, 'reveal', 0); s = act(s, 'advanceReveal', 0, { now: Number.MAX_SAFE_INTEGER });
   const html = htmlFor(s, 3);
   const block = id => [...html.matchAll(/<span class="dx-voters" data-dx-voters="([a-z]+):([^"]+)">[\s\S]*?<\/span><\/span>/g)].filter(m => m[2] === id).map(m => visibleText(m[0]));
-  assert.ok(block(answer).some(text => text === '1 vote(s) by Seat 2'));
-  assert.ok(block(decoy).some(text => text === '2 vote(s) by Seat 3, Seat 4'));
+  assert.ok(block(answer).some(text => text === '1 vote(s) by: Seat 2'));
+  assert.ok(block(decoy).some(text => text === '2 vote(s) by: Seat 3, Seat 4'));
 });
