@@ -27,6 +27,21 @@ managers. Assets: content/engine/sync/UI/host `life-1`, CSS `om-12`.
 This changes the engine, so the independent service must be redeployed with
 this checkout before registered (service-mode) rooms can run Life Song.
 
+## Third mode: Now & Next — 2026-10-10 (branch claude/open-mic-now-next)
+
+**Now & Next / 現在與未來** uses the Life Song flow (prompt → story → Story
+shared +2 / Pass → choose a song and sing +1) with its own 24-prompt deck
+`OPEN_MIC_CONTENT.nextPrompts` (ids `next-*`): 12 tagged `now` (life these
+days) and 12 tagged `future` (hopes and plans). Each prompt has a concrete
+scene, a question with an easy handle (a percentage, one word, walk through a
+day), a `followUp` the listeners can ask (shown as "Others can ask: …"), and a
+song question tied to that prompt. The original 36 memory prompts stay in
+Life Song unchanged. Engine MODES are `life`/`next`/`mission`; unknown saved
+modes fall back to `mission`. Managers see three stacked mode buttons; the host
+start screen has three mode cards. Assets: content/engine/UI/host `next-1`,
+CSS `om-13`. Engine/content change: deploy the independent service together
+with merging this branch.
+
 ## Current mode: text prompts and original activities
 
 Open Mic Rescue remains the last game in the Hub menu. It uses the room set up
