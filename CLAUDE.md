@@ -1,10 +1,14 @@
 ## CURRENT: Dixit reveal voter lists — 2026-10-10
 
 On REVEAL/FINISHED, every positive vote count (Storyteller card, voted pictures,
-round gallery) is a small expandable pill; opening it shows "Voted by: names"
-from public result.rows voteCardId, so nothing appears before the full reveal.
-Zero counts stay plain text. Open lists survive re-renders (data-dx-voters key).
-dixit.html/play.html load Dixit CSS and UI as dixit-13. Browser-only release.
+round gallery) is an inline pill button; tapping shows "Voted by: names" to its
+right on the same line (no extra row), from public result.rows voteCardId, so
+nothing appears before the full reveal. Zero counts stay plain text. Open lists
+live in Card.openVoters and survive re-renders; they reset each new turn.
+The desktop reveal picture width is measured once per round and window size
+(Card.revealSize) instead of every 200ms from the live viewport position, so
+scrolling or expanding voters no longer resizes the pictures.
+dixit.html/play.html load Dixit CSS and UI as dixit-14. Browser-only release.
 
 ## CURRENT: Dixit card-submission statuses — 2026-10-10
 

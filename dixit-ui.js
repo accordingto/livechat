@@ -101,7 +101,8 @@
   function votersHTML(s,id,slot){
     const names=list(s.result?.rows).filter(p=>p.voteCardId===id).map(p=>name(s,p.playerNum)),label=esc(t('votes',{n:names.length}));
     if(!names.length)return '<span class="dx-voters-count">'+label+'</span>';
-    return '<details class="dx-voters" data-dx-voters="'+esc(slot+':'+id)+'"><summary title="'+esc(t('showVoters'))+'">'+label+'</summary><span class="dx-voter-list">'+esc(t('votedBy',{names:names.join(', ')}))+'</span></details>';
+    const key=esc(slot+':'+id);
+    return '<span class="dx-voters" data-dx-voters="'+key+'"><button type="button" class="dx-voters-toggle" data-dx-voters-toggle="'+key+'" aria-expanded="false" title="'+esc(t('showVoters'))+'">'+label+'</button><span class="dx-voter-list" hidden>'+esc(t('votedBy',{names:names.join(', ')}))+'</span></span>';
   }
   function voteStatusesHTML(s){
     const voting=s.phase==='VOTE';
@@ -172,13 +173,13 @@
   }
   class Card{
     constructor(el,options={}){
-      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.pendingWaiting=false;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.timer=setInterval(()=>this.paint(),200);
+      this.el=el;this.options=options;this.selected=new Set();this.payload=null;this.pending=null;this.pendingWaiting=false;this.error='';this.errorCode='';this.signature='';this.confirmation='';this.revealVisualSignature='';this.openVoters=new Set();this.revealSize=null;this.timer=setInterval(()=>this.paint(),200);
       this.click=e=>this.onClick(e);el.addEventListener('click',this.click);
     }
     update(payload){
       const previous=this.payload?.dixit,next=payload?.dixit;this.payload=payload;if(!next)return;
       const enteringReveal=next.phase==='REVEALING'&&previous?.phase!=='REVEALING';
-      if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.selected.clear();this.error='';this.errorCode='';this.confirmation='';}
+      if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.openVoters.clear();this.revealSize=null;this.selected.clear();this.error='';this.errorCode='';this.confirmation='';}
       if(next.phase==='REVEALING'&&previous?.phase!=='REVEALING')this.selected.clear();
       if(this.pending&&next.reply?.id===this.pending.id){this.errorCode=next.reply.error||'';this.error=this.errorCode?errorText(this.errorCode):'';this.pending=null;this.pendingWaiting=false;clearTimeout(this.pendingTimer);}
       else if(this.pending&&(this.pending.sessionId!==next.sessionId||this.pending.turnId!==next.turnId)){this.pending=null;this.pendingWaiting=false;clearTimeout(this.pendingTimer);}
@@ -202,14 +203,21 @@
       const bar=this.el.querySelector('[data-dx-phase]');if(bar?.getBoundingClientRect&&this.el.style?.setProperty)this.el.style.setProperty('--dx-phase-height',Math.ceil(bar.getBoundingClientRect().height)+'px');
       if(root.innerWidth>600&&this.el.style?.setProperty){
         const picture=this.el.querySelector('.dx-story-reveal .dx-picture');
-        if(picture?.getBoundingClientRect){const available=Math.max(180,root.innerHeight-picture.getBoundingClientRect().top-25);this.el.style.setProperty('--dx-reveal-picture-width',Math.floor(available*3/4)+'px');}
+        // Measure once per round and window size. Re-measuring from the live
+        // viewport position made the picture grow and shrink while scrolling
+        // or when an expanded voter list pushed it down.
+        const viewport=root.innerWidth+'x'+root.innerHeight;
+        if(picture?.getBoundingClientRect&&this.revealSize?.viewport!==viewport){
+          const elTop=this.el.getBoundingClientRect?.().top||0,offset=Math.max(0,picture.getBoundingClientRect().top-Math.min(0,elTop));
+          const available=Math.max(180,root.innerHeight-offset-25);this.revealSize={viewport,width:Math.floor(available*3/4)};
+        }
+        if(this.revealSize)this.el.style.setProperty('--dx-reveal-picture-width',this.revealSize.width+'px');
       }
       this.el.querySelectorAll('[data-dx-action],[data-dx-card],[data-dx-target-score]').forEach(b=>{if(blocked){if(!b.disabled)b.dataset.dxBlocked='1';b.disabled=true;}else if(b.dataset.dxBlocked){b.disabled=false;delete b.dataset.dxBlocked;}});
     }
     render(){
       if(!this.payload)return;
       const disclosures=['rules','details','result-details','round-gallery'].map(key=>[key,this.el.querySelector('[data-dx-'+key+']')?.open]);
-      const openVoters=new Set(Array.from(this.el.querySelectorAll?.('[data-dx-voters]')||[]).filter(d=>d.open).map(d=>d.dataset.dxVoters));
       const s=this.payload.dixit,targetDraft=this.el.querySelector('[data-dx-target-score]')?.value;
       const retainTarget=s.phase==='LOBBY'&&this.renderedSessionId===s.sessionId&&this.renderedTargetScore===s.targetScore;
       this.renderedSessionId=s.sessionId;this.renderedTargetScore=s.targetScore;
@@ -217,10 +225,16 @@
       this.el.innerHTML=tableHTML(this.payload,{...this.options,selected:this.selected,confirmation:this.confirmation});
       if(retainTarget&&targetDraft!=null){const input=this.el.querySelector('[data-dx-target-score]');if(input)input.value=targetDraft;}
       for(const [key,open] of disclosures)if(typeof open==='boolean'){const detail=this.el.querySelector('[data-dx-'+key+']');if(detail)detail.open=open;}
-      if(openVoters.size)this.el.querySelectorAll('[data-dx-voters]').forEach(d=>{if(openVoters.has(d.dataset.dxVoters))d.open=true;});
+      if(this.openVoters.size)this.el.querySelectorAll('[data-dx-voters-toggle]').forEach(b=>{if(this.openVoters.has(b.dataset.dxVotersToggle))this.setVoters(b,true);});
       this.paint();
     }
+    setVoters(button,open){
+      button.setAttribute('aria-expanded',String(open));
+      const names=button.nextElementSibling;if(names)names.hidden=!open;
+    }
     async onClick(e){
+      const voters=e.target.closest('[data-dx-voters-toggle]');
+      if(voters){const key=voters.dataset.dxVotersToggle,open=!this.openVoters.has(key);if(open)this.openVoters.add(key);else this.openVoters.delete(key);this.setVoters(voters,open);return;}
       if(e.target.closest('[data-dx-dismiss-confirm]')){this.confirmation='';this.render();return;}
       const c=e.target.closest('[data-dx-card]');
       if(c&&!c.disabled&&!this.blocked()){
