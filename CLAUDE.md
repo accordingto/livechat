@@ -1,3 +1,12 @@
+## CURRENT: Homepage cleanup — 2026-10-10
+
+Kangaroo Court (Beta版) was removed: the `kangaroo-court-beta/` folder and its
+homepage card are gone; root Kangaroo Court is unchanged. The homepage no longer
+shows the Let's Talk / Crazy Talk settings panel (mode, conversation, durations,
+Crazy source/interval); those settings live only on lets-talk.html's own setup.
+talk-settings.js stays for the host page; without homepage edits no one-visit
+setup intent is created, so the host uses its saved preferences. Frontend-only.
+
 ## CURRENT: Talk composer priority and optional round time — 2026-10-10
 
 The handwritten composer sits immediately below the topic and is expanded by
@@ -848,6 +857,3 @@ Let's Talk 後續介面精簡：主持畫面移除 Round 數字與 Host controls
 - 所有變更直接 commit 並 push 到 `main` branch
 - 不使用 feature branch
 
-## Kangaroo Court (Beta版)
-
-`kangaroo-court-beta/` 是 Kangaroo Court 的獨立實驗副本，入口為 `kangaroo-court-beta/index.html`。Beta 的主持人、玩家卡片、题庫、說明、房間模組、樣式與設定均使用資料夾內自己的檔案；後續 Beta 修改請限定在此資料夾，不修改根目錄原版遊戲及共用模組。初始建立時根目錄 `index.html` 只新增 Beta 入口，原本七款遊戲入口保持不變。Beta 使用獨立的 localStorage 前綴 `kangaroo-beta-` 和 Firebase 房間路徑 `rooms/kangaroo-beta-{CODE}`；原版仍用 `rooms/{CODE}`。需另外設定 Beta 人數與傳送 Beta 玩家連結，不能沿用原版卡片。詳細維護說明見 `kangaroo-court-beta/README.md`。

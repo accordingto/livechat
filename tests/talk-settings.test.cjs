@@ -72,7 +72,7 @@ test('home range remains visible in player-only mode and invalid edits do not ov
   const host = fs.readFileSync(require.resolve('../lets-talk.html'), 'utf8');
   const home = fs.readFileSync(require.resolve('../index.html'), 'utf8');
   assert.match(host, /talk-settings\.js\?v=/); assert.doesNotMatch(host, /id="talk-crazy-send"/);
-  assert.match(home, /data-talk-pref="crazyMinSeconds"/); assert.match(home, /href="lets-talk\.html"/);
+  assert.doesNotMatch(home, /data-talk-pref=/); assert.match(home, /href="lets-talk\.html"/);
 });
 test('only explicit homepage changes set the one-visit setup intent', () => {
   const saved = storage();
