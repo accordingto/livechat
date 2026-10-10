@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="open-mic.css?v=om-11">
+  <link rel="stylesheet" href="open-mic.css?v=om-12">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="om-page">
@@ -32,6 +32,11 @@
       <div class="om-start-mark" aria-hidden="true">🎤</div>
       <h2 data-i18n="openmic.startTitle">Give your creativity a little excuse.</h2>
       <p data-i18n="openmic.intro">One player takes a short social challenge. Pass for +2, then share a song memory, create an original tune, or clap an original rhythm for +1. Skipping is always okay.</p>
+      <div class="om-start-modes" role="radiogroup" aria-labelledby="om-mode-title">
+        <span class="om-kicker" id="om-mode-title" data-i18n="openmic.modeLabel" hidden>GAME MODE</span>
+        <label class="om-start-mode"><input type="radio" name="om-mode" value="life" checked><span><strong data-i18n="openmic.modeLife">🎵 Life Song</strong><span data-i18n="openmic.modeLifeHint">A life prompt, a real moment, then the song it reminds you of.</span></span></label>
+        <label class="om-start-mode"><input type="radio" name="om-mode" value="mission"><span><strong data-i18n="openmic.modeMission">🎯 Mission Rescue</strong><span data-i18n="openmic.modeMissionHint">A short social challenge, then a story or original activity.</span></span></label>
+      </div>
       <button type="button" class="om-button om-primary" id="om-start" data-i18n="openmic.start">Start Open Mic Rescue</button>
       <p class="om-soft" data-i18n="openmic.noPressure">No voice judging. No mandatory performances. Just a shared team score.</p>
     </section>
@@ -51,12 +56,12 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=membership-1"></script>
-  <script src="open-mic-content.js?v=om-2"></script>
-  <script src="open-mic-engine.js?v=membership-1"></script>
-  <script src="open-mic-sync.js?v=membership-1"></script>
+  <script src="open-mic-content.js?v=life-1"></script>
+  <script src="open-mic-engine.js?v=life-1"></script>
+  <script src="open-mic-sync.js?v=life-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
-  <script src="open-mic-ui.js?v=cards-2"></script>
+  <script src="open-mic-ui.js?v=life-1"></script>
   <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
-<script src="open-mic-host.js?v=om-5"></script>
+<script src="open-mic-host.js?v=life-1"></script>
 </body>
 </html>

@@ -104,7 +104,7 @@
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
     }
-    start({ singingDuration = 35 } = {}) {
+    start({ singingDuration = 35, mode = 'life' } = {}) {
       return this.enqueue(async () => {
         await this.cardsReady; await this.outgoing;
         if (!this.sameRoom() || this.stopped) throw new Error('not_available');
@@ -112,7 +112,7 @@
         const opening = { sessionId: id, baselines: Object.fromEntries(this.playerRefs.map((_, i) => [i + 1, stamp(this.cardValues.get(i + 1))])) };
         const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
         const priorSuspended = this.suspended; this.suspended = false; this.seenCards.clear();
-        try { return await this.change(() => root.OPEN_MIC_ENGINE.create({ id, roster, singingDuration, now, seed: randomSeed }), { opening, allowSwitched: true }); }
+        try { return await this.change(() => root.OPEN_MIC_ENGINE.create({ id, roster, singingDuration, mode, now, seed: randomSeed }), { opening, allowSwitched: true }); }
         catch (error) { this.suspended = priorSuspended; throw error; }
       });
     }

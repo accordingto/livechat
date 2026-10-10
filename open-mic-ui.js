@@ -6,20 +6,20 @@
 
   var dict = {
   "brandLine": {
-    "en": "ONE CHALLENGE. ONE STORY. YOUR CALL.",
-    "zh": "小小挑戰・音樂故事・由你決定"
+    "en": "ONE PROMPT. YOUR STORY. YOUR SONG.",
+    "zh": "一個情境・你的故事・你的歌"
   },
   "subtitle": {
-    "en": "A small challenge. Stories, original ideas, and rhythm.",
-    "zh": "一個小挑戰，一段故事、原創即興或節奏互動。"
+    "en": "Share a moment from your life, then sing the song it brings back.",
+    "zh": "說一段人生故事，再唱出它讓你想起的那首歌。"
   },
   "startTitle": {
     "en": "Give sharing a little excuse.",
     "zh": "給開口分享一個小小的理由。"
   },
   "intro": {
-    "en": "One player takes a short social challenge. Pass for +2, then share a music memory, invent an original melody, or pass a rhythm for +1. Skipping is always okay.",
-    "zh": "一位玩家接受社交小挑戰。成功 +2，再分享音樂回憶、自創旋律或節奏接龍 +1。隨時可以跳過。"
+    "en": "Life Song (default): see a life prompt, share a real moment, then choose the song it reminds you of and sing a little. Mission Rescue: the original short social challenges. Skipping is always okay.",
+    "zh": "人生之歌（預設）：看一個人生情境，說一段真實回憶，再選一首它讓你想到的歌唱一小段。任務救場：原本的小小社交挑戰。隨時都可以跳過。"
   },
   "stopGame": { "en": "End game", "zh": "結束遊戲" },
   "restartGame": { "en": "Reset score & start new game", "zh": "分數歸零並開始新局" },
@@ -37,12 +37,12 @@
     "zh": "怎麼玩"
   },
   "rule1": {
-    "en": "The Spotlight player tries the challenge while everyone chats, asks questions, and reacts. The host chooses Success or Failed.",
-    "zh": "輪到的玩家接受挑戰，大家自由聊天、提問和反應。主持人最後判定成功或失敗。"
+    "en": "The Spotlight player answers the prompt while everyone listens, asks questions, and reacts. In Life Song the host marks the story as shared; in Mission Rescue the host chooses Success or Failed.",
+    "zh": "聚光燈玩家回應題目，大家一起聽、追問、回應。人生之歌由主持人按「分享了」；任務救場由主持人判定成功或失敗。"
   },
   "rule2": {
-    "en": "Success adds +2. A short story, original idea, or rhythm turn adds +1 after either result. Skipping is always okay.",
-    "zh": "挑戰成功全隊 +2。不論結果，分享故事、原創即興或節奏互動都能再 +1，也可以跳過。"
+    "en": "A shared story or a successful challenge adds +2. Singing a little, a short story, or an original idea adds +1 after either result. Skipping is always okay.",
+    "zh": "分享故事或挑戰成功 +2。之後唱一小段、說個小故事或原創互動 +1。隨時都可以跳過。"
   },
   "rule3": {
     "en": "Choose a song title or an activity card, then start the 35-second visual timer. Finish your turn naturally. The host moves to the next player.",
@@ -567,6 +567,138 @@
   "rhythmHint": {
     "en": "Invent a clap or tap pattern. Invite someone to answer with their own pattern.",
     "zh": "自創一段拍手或敲桌節奏，邀請另一位用自己的節奏回應。"
+  },
+  "life_success": {
+    "en": "✓ Story shared +2",
+    "zh": "✓ 分享了 +2"
+  },
+  "life_failed": {
+    "en": "Pass",
+    "zh": "先跳過"
+  },
+  "life_newChallenge": {
+    "en": "↻ New prompt",
+    "zh": "↻ 換一個情境"
+  },
+  "life_viewChallenge": {
+    "en": "View life prompt",
+    "zh": "查看人生情境"
+  },
+  "life_successRule": {
+    "en": "Then: {rule}",
+    "zh": "接著：{rule}"
+  },
+  "life_challengeSuccess": {
+    "en": "✓ Story shared · +2",
+    "zh": "✓ 分享了人生故事・+2"
+  },
+  "life_challengeFailed": {
+    "en": "Passed on the story",
+    "zh": "這題先跳過"
+  },
+  "life_successHint": {
+    "en": "Thanks for sharing! Now choose the song that goes with your story and sing a little.",
+    "zh": "謝謝分享！現在選一首配得上這段故事的歌，唱一小段。"
+  },
+  "life_failedHint": {
+    "en": "No story this time? You can still choose a song that fits the prompt and sing a little for +1.",
+    "zh": "這次不想說故事？還是可以選一首符合情境的歌，唱一小段 +1。"
+  },
+  "life_scoreHint": {
+    "en": "Story +2 · Song +1 · Skip +0",
+    "zh": "故事 +2・唱歌 +1・跳過 +0"
+  },
+  "life_stage": {
+    "en": "Your life song",
+    "zh": "你的人生之歌"
+  },
+  "life_chooseSong": {
+    "en": "Choose the song that goes with your story.",
+    "zh": "選一首配得上你故事的歌。"
+  },
+  "life_stageEmptyHint": {
+    "en": "Search for a song below or add your own, then sing a little of it.",
+    "zh": "在下方搜尋或自己新增一首歌，然後唱一小段。"
+  },
+  "life_challengeFirst": {
+    "en": "Listen to the story first. Everyone can look for songs now; choosing opens after the host marks the story.",
+    "zh": "先聽故事。大家可以先找歌；主持人按下「分享了」後就能選歌。"
+  },
+  "life_selectionWait": {
+    "en": "{name} is choosing a song for their story, or can skip. Everyone can browse titles.",
+    "zh": "{name} 正在為故事選歌，也可以跳過。每個人都能瀏覽歌名。"
+  },
+  "life_startSinging": {
+    "en": "🎤 Start singing",
+    "zh": "🎤 開始唱"
+  },
+  "life_finishSinging": {
+    "en": "✓ Done singing · +1",
+    "zh": "✓ 唱完了・+1"
+  },
+  "life_timerRunning": {
+    "en": "Sing a little, or tell us why this song fits.",
+    "zh": "唱一小段，或說說為什麼選這首。"
+  },
+  "life_singingDone": {
+    "en": "You sang your life song! +1",
+    "zh": "唱出了你的人生之歌！+1"
+  },
+  "lifeChainHint": {
+    "en": "Or connect: pick one thing from the last story and start from there.",
+    "zh": "或接龍：從上一位的故事挑一個東西，從那裡開始說。"
+  },
+  "lifeSingTitle": {
+    "en": "Sing a little",
+    "zh": "唱一小段"
+  },
+  "lifeSingHint": {
+    "en": "Sing the part you remember best. A few lines are enough.",
+    "zh": "唱你最記得的那段，幾句就夠了。"
+  },
+  "lifeWhyTitle": {
+    "en": "Why this song?",
+    "zh": "為什麼是這首？"
+  },
+  "lifeWhyHint": {
+    "en": "Tell everyone how the song connects to your story.",
+    "zh": "說說這首歌和你的故事有什麼關係。"
+  },
+  "lifeTogetherTitle": {
+    "en": "Sing together",
+    "zh": "一起唱"
+  },
+  "lifeTogetherHint": {
+    "en": "Invite a partner to join the chorus with you.",
+    "zh": "邀一位夥伴陪你一起唱副歌。"
+  },
+  "modeLabel": {
+    "en": "GAME MODE",
+    "zh": "遊戲模式"
+  },
+  "modeLife": {
+    "en": "🎵 Life Song",
+    "zh": "🎵 人生之歌"
+  },
+  "modeMission": {
+    "en": "🎯 Mission Rescue",
+    "zh": "🎯 任務救場"
+  },
+  "modeLifeHint": {
+    "en": "A life prompt, a real moment, then the song it reminds you of.",
+    "zh": "人生情境 → 說一段真實回憶 → 想到哪首歌就唱。"
+  },
+  "modeMissionHint": {
+    "en": "A short social challenge, then a story or original activity.",
+    "zh": "一個小小社交挑戰，再分享故事或原創互動。"
+  },
+  "modeNextTurn": {
+    "en": "The new mode starts with the next player.",
+    "zh": "新模式會從下一位開始。"
+  },
+  "invalid_mode": {
+    "en": "Choose Life Song or Mission Rescue.",
+    "zh": "請選擇人生之歌或任務救場。"
   }
 };
   if (global.I18N) global.I18N.registerDict('openmic', dict);
@@ -633,29 +765,34 @@
       this.find('[data-om-discovery-query]').placeholder = t('discoveryPlaceholder');
       this.renderDiscovery();
     }
+    life() { return !!this.data && this.data.mode === 'life'; }
+    // Mode-specific copy: Life Song uses its own wording where one exists.
+    lt(key, vars) { return t(this.life() && dict['life_' + key] ? 'life_' + key : key, vars); }
     renderStage() {
       var data = this.data, song = data.selectedSong, host = this.host(), manager = this.manager();
       var controller = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
       var after = data.phase !== 'stopped' && !!data.challengeResult, finished = data.phase === 'finished';
       this.setText('[data-om-duration]', t('duration', { n: Number(data.duration) || 35 }));
-      var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div>' : '<div class="om-empty-stage"><span aria-hidden="true">♪</span><h3>' + esc(t('chooseSong')) + '</h3><p class="om-soft">' + esc(t('stageEmptyHint')) + '</p></div>';
-      var suggested = song && song.videoId === 'omtxt000001' ? 'original' : song && song.videoId === 'omtxt000002' ? 'rhythm' : 'story';
-      info += '<div class="om-activity-cards">' + ['story', 'original', 'rhythm'].map(mode => '<article class="om-activity-card' + (mode === suggested ? ' om-activity-selected' : '') + '"><h3>' + esc(t(mode + 'Title')) + '</h3><p>' + esc(t(mode + 'Hint')) + '</p></article>').join('') + '</div>';
+      this.setText('[data-om-stage-title]', this.lt('stage'));
+      var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div>' : '<div class="om-empty-stage"><span aria-hidden="true">♪</span><h3>' + esc(this.lt('chooseSong')) + '</h3><p class="om-soft">' + esc(this.lt('stageEmptyHint')) + '</p></div>';
+      var suggested = this.life() ? (data.duet ? 'lifeTogether' : 'lifeSing') : song && song.videoId === 'omtxt000001' ? 'original' : song && song.videoId === 'omtxt000002' ? 'rhythm' : 'story';
+      var cards = this.life() ? ['lifeSing', 'lifeWhy', 'lifeTogether'] : ['story', 'original', 'rhythm'];
+      info += '<div class="om-activity-cards">' + cards.map(mode => '<article class="om-activity-card' + (mode === suggested ? ' om-activity-selected' : '') + '"><h3>' + esc(t(mode + 'Title')) + '</h3><p>' + esc(t(mode + 'Hint')) + '</p></article>').join('') + '</div>';
       if (data.duet) info += '<p class="om-stage-hint om-soft">👥 ' + esc(t('duetWith', { name: this.name(data.duet) })) + '</p>';
       this.set('[data-om-stage-info]', info);
       var canChange = !!song && this.canSelectDiscovery();
       this.set('[data-om-stage-timer]', data.singingState === 'singing' ? '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>' : '');
       var buttons = '', showActions = after && (controller || manager) && (!finished || !!song || manager);
       if (showActions) buttons += '<div class="om-actions">';
-      if (after && !finished && controller) buttons += data.singingState === 'singing' ? this.button('finishSinging', t('finishSinging'), 'om-success') : this.button('startSinging', t('startSinging'), 'om-primary', '', !!song);
+      if (after && !finished && controller) buttons += data.singingState === 'singing' ? this.button('finishSinging', this.lt('finishSinging'), 'om-success') : this.button('startSinging', this.lt('startSinging'), 'om-primary', '', !!song);
       if (after && controller && song && ['choice', 'singing', 'finished'].indexOf(data.phase) >= 0) buttons += this.button('changeSong', t('changeSong'), '', '', canChange) + this.button('clearSong', t('clearSong'), '', '', canChange);
       if (after && !finished && controller) buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       if (manager && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '');
       if (showActions) buttons += '</div>';
       if (data.phase === 'stopped') buttons += '<p class="om-waiting">' + esc(t('gameStopped')) + '</p>';
-      else if (!after) buttons += '<p class="om-waiting">' + esc(t('challengeFirst')) + '</p>';
-      else if (finished) buttons += '<p class="om-waiting">' + esc(t(data.singingAwarded ? 'singingDone' : 'singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
-      else if (!controller) buttons += '<p class="om-waiting">' + esc(t('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
+      else if (!after) buttons += '<p class="om-waiting">' + esc(this.lt('challengeFirst')) + '</p>';
+      else if (finished) buttons += '<p class="om-waiting">' + esc(data.singingAwarded ? this.lt('singingDone') : t('singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
+      else if (!controller) buttons += '<p class="om-waiting">' + esc(this.lt('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
       else if (song) buttons += '<p class="om-waiting">' + esc(t(data.phase === 'singing' ? 'changeSongHint' : 'songControlsHint')) + '</p>';
       this.set('[data-om-stage-controls]', buttons);
     }
@@ -750,6 +887,7 @@
       if (action === 'toggleFavorite') { this.action(action, { videoId: target.dataset.video }); return; }
       if (action === 'inviteDuet') { this.action(action, { playerNum: target.dataset.player ? Number(target.dataset.player) : null }).then(ok => { if (ok) this.close(this.duetDialog); }); return; }
       if (action === 'exclude') { this.action(action, { playerNum: Number(target.dataset.player), active: target.dataset.active === 'true' }); return; }
+      if (action === 'setMode') { if (target.dataset.mode !== (this.life() ? 'life' : 'mission')) this.action(action, { mode: target.dataset.mode }); return; }
       if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'stop', 'restart'].indexOf(action) >= 0) this.action(action);
     }
     async handleSubmit(event) {
@@ -800,19 +938,25 @@
       var result = data.challengeResult, after = data.phase !== 'stopped' && !!result, finished = data.phase === 'finished';
       var personName = this.name(data.spotlight), avatar = Array.from(personName.trim())[0] || '♪';
       var controls = '';
-      if (manager && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', t('success'), 'om-success') + this.button('failed', t('failed'), 'om-fail') + this.button('newChallenge', t('newChallenge')) + '</div>';
+      if (manager && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', this.lt('success'), 'om-success') + this.button('failed', this.lt('failed'), 'om-fail') + this.button('newChallenge', this.lt('newChallenge')) + '</div>';
+      var chain = this.life() && Number(data.round) > 1 && data.phase === 'challenge' ? '<p class="om-chain-hint">🔗 ' + esc(t('lifeChainHint')) + '</p>' : '';
       var disclosure = this.find('[data-om-challenge-details]');
       var disclosureKey = [data.sessionId, data.round, challenge.id, data.phase === 'challenge' ? 'challenge' : 'result'].join(':');
       var disclosureOpen = this.challengeDisclosureKey === disclosureKey && disclosure ? disclosure.open : data.phase === 'challenge';
       this.challengeDisclosureKey = disclosureKey;
-      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div></div><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><details class="om-challenge-details" data-om-challenge-details' + (disclosureOpen ? ' open' : '') + '><summary><span>' + esc(t('viewChallenge')) + '</span><strong>' + esc(challengeText(challenge.title)) + '</strong></summary><div class="om-challenge-body"><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div><p class="om-success-rule">' + esc(t('successRule', { rule: challengeText(challenge.successRule) })) + '</p></div></details>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(t(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(t(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
+      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div></div><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><details class="om-challenge-details" data-om-challenge-details' + (disclosureOpen ? ' open' : '') + '><summary><span>' + esc(this.lt('viewChallenge')) + '</span><strong>' + esc(challengeText(challenge.title)) + '</strong></summary><div class="om-challenge-body"><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div><p class="om-success-rule">' + esc(this.lt('successRule', { rule: challengeText(challenge.successRule) })) + '</p>' + chain + '</div></details>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(this.lt(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(this.lt(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
       var roster = this.roster(), active = roster.filter(p => p.active !== false), current = active.findIndex(p => Number(p.playerNum) === Number(data.spotlight));
       var ordered = current >= 0 ? active.slice(current).concat(active.slice(0, current)) : active;
       var queue = ordered.concat(roster.filter(p => p.active === false)).map(p => '<li class="' + (Number(p.playerNum) === Number(data.spotlight) ? 'om-current' : p.active === false ? 'om-inactive' : '') + '">' + (Number(p.playerNum) === Number(data.spotlight) ? '<span class="om-dot" aria-hidden="true"></span>' : '') + esc(p.name || t('player', { n: p.playerNum })) + (p.active === false ? ' · ' + esc(t('sittingOut')) : '') + '</li>').join('');
       var manage = manager ? '<details class="om-manage"><summary>' + esc(t('manage')) + '</summary><div class="om-roster">' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div></details>' : '';
       if (data.sharedControls === true && manager) manage += '<details class="om-manage"><summary>' + esc(t('restartGame')) + '</summary><div class="om-actions">' + this.button('restart', t('restartGame')) + (data.phase !== 'stopped' ? this.button('stop', t('stopGame')) : '') + '</div></details>';
+      var modeNow = this.life() ? 'life' : 'mission';
+      var modeRow = '<div class="om-mode"><p class="om-kicker">' + esc(t('modeLabel')) + '</p>' + (manager && data.phase !== 'stopped'
+        ? '<div class="om-mode-switch" role="group" aria-label="' + esc(t('modeLabel')) + '">' + ['life', 'mission'].map(mode => this.button('setMode', t(mode === 'life' ? 'modeLife' : 'modeMission'), mode === modeNow ? 'om-mode-on' : '', ' data-mode="' + mode + '" aria-pressed="' + (mode === modeNow) + '"')).join('') + '</div>'
+        : '<p class="om-mode-current">' + esc(t(modeNow === 'life' ? 'modeLife' : 'modeMission')) + '</p>') + '<p class="om-soft om-mode-hint">' + esc(t(modeNow === 'life' ? 'modeLifeHint' : 'modeMissionHint')) + (manager && data.phase !== 'challenge' && data.phase !== 'stopped' ? ' ' + esc(t('modeNextTurn')) : '') + '</p></div>';
+      manage = modeRow + manage;
       var manageEl = this.find('.om-manage'), manageOpen = manageEl && manageEl.open;
-      this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(t('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);
+      this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(this.lt('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);
       if (data.sharedControls === true) {
         this.set('[data-om-score]', this.find('[data-om-score]').innerHTML + '<div class="om-actions">' + this.button('recover', t('recover')) + (!manager ? this.button('exclude', t('rejoin'), '', ' data-player="' + this.actor + '" data-active="true"') : '') + '</div>');
       }
@@ -906,7 +1050,7 @@
         var left = Math.max(0, Math.ceil(duration - elapsed));
         timer.textContent = '0:' + String(left).padStart(2, '0');
         timer.classList.toggle('om-zero', left === 0);
-        this.setText('[data-om-timer-label]', t(data.singingState === 'finished' ? 'singingDone' : left === 0 ? 'timerZero' : 'timerRunning'));
+        this.setText('[data-om-timer-label]', this.lt(data.singingState === 'finished' ? 'singingDone' : left === 0 ? 'timerZero' : 'timerRunning'));
         this.find('[data-om-progress]').style.width = Math.min(100, Math.max(0, left / duration * 100)) + '%';
       }
       var enabled = this.canControl();
@@ -919,7 +1063,7 @@
       if (!dialog.open) { if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', ''); }
     }
     async action(type, extra) {
-      if (['recover', 'success', 'failed', 'newChallenge', 'startSinging', 'finishSinging', 'skip', 'next', 'selectSong', 'clearSong', 'toggleFavorite', 'inviteDuet', 'exclude', 'addSong', 'stop', 'restart'].indexOf(type) < 0) return false;
+      if (['recover', 'success', 'failed', 'newChallenge', 'setMode', 'startSinging', 'finishSinging', 'skip', 'next', 'selectSong', 'clearSong', 'toggleFavorite', 'inviteDuet', 'exclude', 'addSong', 'stop', 'restart'].indexOf(type) < 0) return false;
       if (this.pending || this.destroyed || !this.canControl()) return false;
       this.pending = true; this.error = ''; this.notice = '';
       this.render();

@@ -260,3 +260,22 @@ test('shared players can end and reopen a new game from their card while stopped
   assert.doesNotMatch(f.html('[data-om-score]'), /data-om-action="(?:stop|restart)"/);
   f.g.destroy();
 });
+
+test('Life Song mode uses its own wording, life activity cards and a manager mode switch', () => {
+  const f = fixture(); f.g.data = state({ mode: 'life', phase: 'challenge', challengeResult: null, round: 2 }); f.g.render();
+  const challenge = f.html('[data-om-challenge]'), score = f.html('[data-om-score]');
+  assert.match(challenge, /Story shared \+2/); assert.match(challenge, /Then: Keep talking/); assert.match(challenge, /pick one thing from the last story/);
+  assert.doesNotMatch(challenge, /Success: /);
+  assert.match(score, /Story \+2 · Song \+1/); assert.match(score, /data-mode="life"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-mode="life"/);
+  f.g.data = state({ mode: 'life' }); f.g.renderStage();
+  assert.match(f.html('[data-om-stage-info]'), /Sing a little/); assert.doesNotMatch(f.html('[data-om-stage-info]'), /Rhythm relay/);
+  click(f.g, 'setMode', { mode: 'mission' });
+  assert.equal(f.sent.at(-1).type, 'setMode'); assert.equal(f.sent.at(-1).payload.mode, 'mission');
+  const sent = f.sent.length; click(f.g, 'setMode', { mode: 'life' }); assert.equal(f.sent.length, sent, 'current mode is not resent');
+});
+
+test('missing mode (older service) keeps Mission Rescue wording and players see the mode without a switch', () => {
+  const f = fixture({ actor: 2 }); f.g.data = state({ phase: 'challenge', challengeResult: null }); f.g.render();
+  assert.match(f.html('[data-om-challenge]'), /Success: Keep talking/);
+  assert.match(f.html('[data-om-score]'), /Mission Rescue/); assert.doesNotMatch(f.html('[data-om-score]'), /data-om-action="setMode"/);
+});

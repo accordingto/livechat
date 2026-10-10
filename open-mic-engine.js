@@ -13,6 +13,12 @@ var OPEN_MIC_ENGINE = (() => {
   const MAX_LYRICS_CHARS = 16000;
 
   const SCORE = Object.freeze({ challenge: 2, singing: 1 });
+  // 'life' (Life Song, the default for new games) draws a life prompt, then a
+  // song. 'mission' keeps the original social challenges. Saved games from
+  // before modes existed have no mode field and stay on 'mission'.
+  const MODES = Object.freeze(['life', 'mission']);
+  const modeOf = state => state && state.mode === 'life' ? 'life' : 'mission';
+  const bankFor = mode => list(mode === 'life' ? content.lifePrompts : content.challenges);
 
   // Old video IDs remain opaque library keys; a projected card carries text only.
   const songReference = song => ({ id: typeof song.id === 'string' ? song.id : song.videoId,
@@ -67,7 +73,7 @@ var OPEN_MIC_ENGINE = (() => {
   }
 
   function chooseChallenge(state, rng) {
-    const bank = list(content.challenges);
+    const bank = bankFor(modeOf(state));
     const seen = list(state.challengeHistory);
     let candidates = bank.filter(challenge => !seen.includes(challenge.id));
     if (!candidates.length) {
@@ -110,15 +116,16 @@ var OPEN_MIC_ENGINE = (() => {
     return null;
   }
 
-  function create({ id, roster, now, seed, singingDuration = 35 } = {}) {
+  function create({ id, roster, now, seed, singingDuration = 35, mode = 'life' } = {}) {
     if (typeof id !== 'string' || !id || id.length > 100 || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < 2 || roster.length > 9) throw new Error('invalid_setup');
     if (roster.some(candidate => !candidate || !Number.isInteger(candidate.playerNum) || candidate.playerNum < 1) || new Set(roster.map(candidate => candidate.playerNum)).size !== roster.length) throw new Error('invalid_roster');
     if (!Number.isFinite(singingDuration) || singingDuration < 1 || singingDuration > 600) throw new Error('invalid_duration');
-    if (!list(content.challenges).length) throw new Error('missing_challenges');
+    if (!MODES.includes(mode)) throw new Error('invalid_mode');
+    if (!bankFor(mode).length) throw new Error('missing_challenges');
     const songs = list(content.songs).filter(song => song && videoIdPattern.test(song.videoId));
     const songLibrary = songs.filter((song, index) => songs.findIndex(other => other.videoId === song.videoId) === index).slice(0, MAX_SONGS).map(copy);
     const state = {
-      version: 1, sessionId: id, turnId: 0,
+      version: 1, sessionId: id, turnId: 0, mode,
       roster: roster.map(candidate => ({ playerNum: candidate.playerNum, name: String(candidate.name || '').trim().slice(0, 80), active: candidate.active !== false })),
       spotlight: null, round: 0, phase: 'challenge', challenge: null, challengeHistory: [], challengeResult: null,
       teamScore: 0, challengeAwarded: false, singingAwarded: false,
@@ -164,7 +171,9 @@ var OPEN_MIC_ENGINE = (() => {
         if (!manager) { error = 'not_available'; break; }
         if (active(state).length < 2) { error = 'not_enough_players'; break; }
         const previousTurn = state.turnId, seen = state.seen, replies = state.replies;
-        const fresh = create({ id: state.sessionId, roster: state.roster, now, seed: input.seed, singingDuration: state.duration });
+        const mode = input.mode == null ? modeOf(state) : input.mode;
+        if (!MODES.includes(mode)) { error = 'invalid_mode'; break; }
+        const fresh = create({ id: state.sessionId, roster: state.roster, now, seed: input.seed, singingDuration: state.duration, mode });
         const preserve = { sharedControls: state.sharedControls, runtimeOfflineNums: state.runtimeOfflineNums,
           songLibrary: state.songLibrary, mySongs: state.mySongs, seen, replies, turnId: previousTurn + 1 };
         Object.assign(state, fresh, preserve);
@@ -177,6 +186,17 @@ var OPEN_MIC_ENGINE = (() => {
           state.challengeResult = input.type;
           if (input.type === 'success') award(state, 'challenge');
           state.phase = 'choice'; changed(state, now);
+        }
+        break;
+      case 'setMode':
+        // Switching during the prompt redraws it from the new deck; later in a
+        // turn the new mode starts with the next player.
+        if (!manager) error = 'not_available';
+        else if (!MODES.includes(input.mode)) error = 'invalid_mode';
+        else if (input.mode !== modeOf(state)) {
+          state.mode = input.mode;
+          if (state.phase === 'challenge') chooseChallenge(state, rng);
+          changed(state, now);
         }
         break;
       case 'newChallenge':
@@ -354,7 +374,7 @@ var OPEN_MIC_ENGINE = (() => {
     for (const candidate of roster) mySongs[candidate.playerNum] = list((state.mySongs || {})[candidate.playerNum]);
     return { game: 'openmic', playerNum, name: roster.find(candidate => candidate.playerNum === playerNum)?.name || null,
       openmic: {
-        version: 1, sessionId: state.sessionId, turnId: state.turnId, roster,
+        version: 1, sessionId: state.sessionId, turnId: state.turnId, mode: modeOf(state), roster,
         ...(state.sharedControls === true ? { sharedControls: true, canManage: playerNum === 0 || !!player(state, playerNum) && player(state, playerNum).active !== false && player(state, playerNum).pending !== true } : {}),
         spotlight: state.spotlight ?? null, round: state.round, phase: state.phase,
         challenge: state.challenge ? copy(state.challenge) : null, challengeResult: state.challengeResult ?? null,
@@ -366,6 +386,6 @@ var OPEN_MIC_ENGINE = (() => {
         reply: (state.replies || {})[playerNum] ? copy(state.replies[playerNum]) : null,
       } };
   }
-  return { create, apply, membership, view, list, parseYouTube, SCORE, MAX_LYRICS_CHARS };
+  return { create, apply, membership, view, list, parseYouTube, SCORE, MODES, MAX_LYRICS_CHARS };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = OPEN_MIC_ENGINE;
