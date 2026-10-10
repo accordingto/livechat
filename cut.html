@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-10">
+  <link rel="stylesheet" href="cut.css?v=cut-11">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="cut-page">
@@ -29,7 +29,19 @@
       <a class="cut-button cut-primary" href="index.html?step=1" data-i18n="cut.setUpRoom">設定房間與玩家</a>
     </div>
     <form class="cut-panel cut-setup" id="cut-setup" novalidate>
-      <p class="cut-intro" data-i18n="cut.intro">講到一半突然 CUT！下一位直接把你的半句話接下去。</p>
+      <div class="cut-modes" role="group" aria-labelledby="cut-mode-label">
+        <p class="cut-kicker" id="cut-mode-label" data-i18n="cut.mode">遊戲模式</p>
+        <div class="cut-mode-grid">
+          <button type="button" class="cut-mode" id="cut-mode-classic" aria-pressed="true"><strong data-i18n="cut.classic">模式 1 · 接話</strong><span data-i18n="cut.intro">講到一半突然 CUT！下一位直接把你的半句話接下去。</span></button>
+          <button type="button" class="cut-mode" id="cut-mode-jump" aria-pressed="false"><strong data-i18n="cut.jump">模式 2 · 插話</strong><span data-i18n="cut.introJump">一位主講人慢慢聊。偶爾 CUT！被點到的人隨意插一句，再交回主講人。</span></button>
+        </div>
+        <p class="cut-soft cut-settings-hint" id="cut-mode-switch-hint" hidden data-i18n="cut.modeSwitchHint">換模式會開始一個新話題。</p>
+      </div>
+      <div class="cut-mode-options" id="cut-jump-options" hidden>
+        <label class="cut-field"><span data-i18n="cut.mainTime">主講時間</span><select id="cut-main-minutes"></select></label>
+        <p class="cut-soft" data-i18n="cut.mainTimeHint">只算主講人說話的時間。有人插話時，時間會暫停。</p>
+      </div>
+      <div class="cut-mode-options" id="cut-classic-options">
       <div class="cut-settings">
         <label class="cut-field"><span data-i18n="cut.speed">遊戲速度</span><select id="cut-speed">
           <option value="normal" selected data-i18n="cut.normal">Normal · 正常（15–25 秒）</option>
@@ -58,6 +70,7 @@
         <p class="cut-soft" id="cut-custom-hint" data-i18n="cut.customHint">各填 5–120 的整秒；填相同秒數就是固定時間。</p>
         <p class="cut-feedback" id="cut-custom-error" role="status"></p>
       </div>
+      </div>
       <p class="cut-soft cut-settings-hint" id="cut-settings-hint" hidden data-i18n="cut.settingsHint">調整好節奏後儲存，再按「開始說話」繼續這個話題。</p>
       <div class="cut-actions cut-setup-actions">
         <button type="submit" class="cut-button cut-primary" id="cut-start">顯示話題</button>
@@ -69,6 +82,8 @@
       <div id="cut-scene"></div>
       <div class="cut-actions cut-session-actions">
         <button type="button" class="cut-button cut-primary" id="cut-begin" hidden>開始說話</button>
+        <button type="button" class="cut-button cut-primary" id="cut-done" hidden data-i18n="cut.done">說完了</button>
+        <button type="button" class="cut-button" id="cut-skip" hidden data-i18n="cut.skip">跳過</button>
         <button type="button" class="cut-button" id="cut-pause" data-i18n="cut.pause">暫停</button>
         <button type="button" class="cut-button cut-primary" id="cut-next" hidden data-i18n="cut.next">下一題</button>
         <button type="button" class="cut-button cut-stop" id="cut-end-topic" hidden data-i18n="cut.endTopic">結束話題</button>
@@ -83,15 +98,27 @@
     </div>
     <details class="cut-rules">
       <summary data-i18n="cut.rules">怎麼玩</summary>
+      <div id="cut-rules-classic">
       <p data-i18n="cut.rule1">先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。</p>
       <p data-i18n="cut.rule2">CUT 會停在下一位的名字，準備好後主持人或玩家按「開始接話」。下一位假裝自己就是上一個人，直接接那半句，不要重新回答題目。</p>
       <p data-i18n="cut.rule3">同一話題可以一直接下去。大家口頭同意後，主持人或玩家按「結束話題」，再換下一題。</p>
       <p data-i18n="cut.ruleExample">例如：「他把——」CUT！「——護照丟進了垃圾桶。」</p>
+      </div>
+      <div id="cut-rules-jump" hidden>
+      <p data-i18n="cut.jumpRule1">一位主講人照著話題自然地聊幾分鐘。只計算主講人自己說話的時間。</p>
+      <p data-i18n="cut.jumpRule2">偶爾會 CUT！畫面點到的人可以隨意插話：接完那句話、加細節、吐槽、提問都可以。不計時，也不用很厲害。</p>
+      <p data-i18n="cut.jumpRule3">說完按「說完了」；不想說就按「跳過」，沒有任何懲罰。接著交回主講人，他可以接受、反駁或不理會，繼續說下去。</p>
+      <p data-i18n="cut.jumpRuleExample">例如：「我第一次自己旅行其實很順利，直到我發現——」CUT！「——他忘了帶護照。」「我才沒有忘記護照！不過我真的忘了…」</p>
+      </div>
     </details>
     <a class="back" id="cut-demo-link" href="cut.html?demo=1" data-i18n="cut.demoLink">先試操作示範</a>
     <details class="cut-library" id="cut-library">
       <summary data-i18n="cut.browseTopics">查看題庫</summary>
       <div class="cut-library-controls">
+        <label class="cut-field"><span data-i18n="cut.libraryMode">模式</span><select id="cut-library-mode">
+          <option value="classic" selected data-i18n="cut.classic">模式 1 · 接話</option>
+          <option value="jump" data-i18n="cut.jump">模式 2 · 插話</option>
+        </select></label>
         <label class="cut-field"><span data-i18n="cut.libraryFilter">分類</span><select id="cut-library-category"></select></label>
         <label class="cut-field"><span data-i18n="cut.librarySearch">搜尋題目或開場句</span><input id="cut-library-search" type="search" autocomplete="off"></label>
       </div>
@@ -122,13 +149,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=membership-1"></script>
-  <script src="cut-config.js?v=cut-10"></script>
-  <script src="cut-random.js?v=cut-10"></script>
-  <script src="cut-topics.js?v=cut-10"></script>
-  <script src="cut-engine.js?v=membership-1"></script>
-  <script src="cut-ui.js?v=cut-10"></script>
-  <script src="cut-sync.js?v=membership-1"></script>
+  <script src="cut-config.js?v=cut-11"></script>
+  <script src="cut-random.js?v=cut-11"></script>
+  <script src="cut-topics.js?v=cut-11"></script>
+  <script src="cut-jump-topics.js?v=cut-11"></script>
+  <script src="cut-engine.js?v=cut-11"></script>
+  <script src="cut-ui.js?v=cut-11"></script>
+  <script src="cut-sync.js?v=cut-11"></script>
   <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-10"></script>
+<script src="cut-host.js?v=cut-11"></script>
 </body>
 </html>

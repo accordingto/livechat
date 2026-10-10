@@ -264,7 +264,8 @@ function hostDemo() {
     apply(state, command) { if (command.type !== 'tick') commands.push(command); return ENGINE.apply(state, command); },
   };
   const context = {
-    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: trackedEngine, CUT_TOPICS: require('../cut-topics.js'), CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
+    CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: trackedEngine, CUT_TOPICS: require('../cut-topics.js'),
+    CUT_CONFIG: require('../cut-config.js'), CUT_JUMP_TOPICS: require('../cut-jump-topics.js'), CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
     I18N: { applyStatic() {}, onChange() {} }, document: { getElementById: element }, location: { search: '?demo=1' },
     URLSearchParams, crypto: { getRandomValues: array => { array[0] = 314; return array; } },
     Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {},

@@ -340,7 +340,7 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       await Promise.all(adapter.historyWrites(state, ctx).map(entry => cas(entry.path, old => ({ known: { ...(old?.known || {}), ...(entry.history?.known || {}) }, seen: { ...(old?.seen || {}), ...(entry.history?.seen || {}) } }))));
     }
     const driver = ticket.seats.filter(s => raw.executor.presence?.[s.playerNum] && timestamp - raw.executor.presence[s.playerNum] < 10000).map(s => s.playerNum).sort((a,b) => a-b)[0];
-    const fast = ticket.game === 'cut' && ['countdown','speaking','handoff'].includes(state.phase) || ticket.game === 'dixit' && state.phase === 'REVEALING' && !state.paused;
+    const fast = ticket.game === 'cut' && ['countdown','speaking','handoff','back'].includes(state.phase) || ticket.game === 'dixit' && state.phase === 'REVEALING' && !state.paused;
     const pollAfterMs = fast && seat?.playerNum === driver ? 500 : 5000;
     if (host) return { ok: true, pollAfterMs, payload: await adapter.project(state, { playerNum: 0 }, ctx) };
     return { ok: true, pollAfterMs };

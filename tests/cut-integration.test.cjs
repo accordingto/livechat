@@ -14,7 +14,7 @@ test('CUT remains before Open Mic Rescue and original player cards have lifecycl
 test('CUT host loads independent modules in dependency order and assets exist', () => {
   const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
   const files = [...html.matchAll(/<script src="(cut-[^\"]+\.js)(?:\?[^\"]*)?"/g)].map(match => match[1]);
-  assert.deepEqual(files, ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-ui.js', 'cut-sync.js', 'cut-host.js']);
+  assert.deepEqual(files, ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-jump-topics.js', 'cut-engine.js', 'cut-ui.js', 'cut-sync.js', 'cut-host.js']);
   for (const file of files) { assert.ok(fs.existsSync(path.join(root, file))); new vm.Script(fs.readFileSync(path.join(root, file), 'utf8')); }
   assert.ok(fs.existsSync(path.join(root, 'cut.css')));
 });
@@ -71,7 +71,10 @@ test('host topic browser stays collapsed at the bottom and CUT caches are consis
   assert.doesNotMatch(section, /<button|data-cut-action|data-cut-topic/);
   assert.doesNotMatch(cards, /id="cut-library"|class="cut-library"/);
   assert.match(css, /\.cut-library-list[^}]*max-height: 420px[^}]*overflow-y: auto/);
-  for (const asset of [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)?\.(?:js|css))\?v=([^"]+)"/g)]) assert.equal(asset[2], ['cut-engine.js','cut-sync.js'].includes(asset[1]) ? 'membership-1' : 'cut-10', asset[1]);
+  const assets = [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)*\.(?:js|css))\?v=([^"]+)"/g), ...cards.matchAll(/(?:src|href)="(cut(?:-[a-z]+)*\.(?:js|css))\?v=([^"]+)"/g)];
+  assert.equal(assets.length, 11);
+  for (const asset of assets) assert.equal(asset[2], 'cut-11', asset[1]);
+  assert.match(fs.readFileSync(path.join(root, 'hub-launcher.js'), 'utf8'), /file\.startsWith\('cut-'\) \? 'cut-11'/);
   for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
 });
 

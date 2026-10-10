@@ -55,7 +55,7 @@ function fixture(t, game, { readiness = null } = {}) {
   });
   const scripts = ({
     letstalk: ['talk-crazy.js', 'talk-engine.js', 'talk-sync.js'],
-    cut: ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-sync.js'],
+    cut: ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-jump-topics.js', 'cut-engine.js', 'cut-sync.js'],
     dixit: ['dixit-deck.js', 'dixit-engine.js', 'talk-sync.js', 'dixit-sync.js'],
     onceupon: ['once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'talk-sync.js', 'once-upon-a-time-sync.js'],
   })[game];
