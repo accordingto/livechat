@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sketch Relay · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="sketch-relay.css?v=relay-1">
+</head>
+<body class="sr-screen">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← 返回主選單</a>
+    <span class="sr-meta" id="sr-room-label"></span>
+  </div>
+  <div class="header"><h1>🖍️ Sketch Relay</h1><p class="sr-subtitle" data-i18n="sketchrelay.tagline">DRAW · GUESS · PASS IT ON</p></div>
+  <main class="sr-shell">
+    <div class="sr-panel sr-demo" id="sr-demo-bar" hidden>
+      <p class="sr-kicker" data-i18n="sketchrelay.demo">Interactive demo</p>
+      <label class="sr-field"><span data-i18n="sketchrelay.demoView">Switch the demo view</span><select id="sr-demo-view"></select></label>
+      <button type="button" class="sr-button" id="sr-demo-auto" data-i18n="sketchrelay.demoAuto">Let the other players finish</button>
+      <a class="back" href="sketch-relay.html" data-i18n="sketchrelay.liveLink">Use your room</a>
+    </div>
+    <p class="sr-feedback" id="sr-status" role="status"></p>
+    <div class="sr-panel sr-center" id="sr-setup-needed" hidden>
+      <p class="sr-soft" data-i18n="sketchrelay.setupNeeded">Set up the room first.</p>
+      <a class="sr-button sr-primary" href="index.html?step=1" data-i18n="sketchrelay.setUpRoom">Set up room &amp; players</a>
+    </div>
+    <form class="sr-panel sr-setup" id="sr-setup" novalidate>
+      <p class="sr-intro" data-i18n="sketchrelay.intro"></p>
+      <ol class="sr-how">
+        <li data-i18n="sketchrelay.how1"></li><li data-i18n="sketchrelay.how2"></li><li data-i18n="sketchrelay.how3"></li><li data-i18n="sketchrelay.how4"></li>
+      </ol>
+      <div class="sr-settings">
+        <label class="sr-field"><span data-i18n="sketchrelay.deckLabel">Words</span><select id="sr-deck">
+          <option value="mixed" data-i18n="sketchrelay.deck_mixed"></option><option value="easy" data-i18n="sketchrelay.deck_easy"></option><option value="tricky" data-i18n="sketchrelay.deck_tricky"></option>
+        </select></label>
+        <label class="sr-field"><span data-i18n="sketchrelay.timerLabel">Drawing time</span><select id="sr-timer">
+          <option value="45" data-i18n="sketchrelay.t45"></option><option value="60" selected data-i18n="sketchrelay.t60"></option><option value="90" data-i18n="sketchrelay.t90"></option><option value="120" data-i18n="sketchrelay.t120"></option><option value="0" data-i18n="sketchrelay.t0"></option>
+        </select></label>
+        <label class="sr-field"><span data-i18n="sketchrelay.scoringLabel">Scoring</span><select id="sr-scoring">
+          <option value="friendly" data-i18n="sketchrelay.scoring_friendly"></option><option value="competitive" data-i18n="sketchrelay.scoring_competitive"></option><option value="none" data-i18n="sketchrelay.scoring_none"></option>
+        </select></label>
+      </div>
+      <p class="sr-players-line" id="sr-players-line"></p>
+      <div class="sr-actions">
+        <button type="submit" class="sr-button sr-primary sr-big" id="sr-start" data-i18n="sketchrelay.start">Deal word cards</button>
+        <button type="button" class="sr-button" id="sr-setup-close" hidden data-i18n="sketchrelay.close">Close</button>
+      </div>
+      <p class="sr-soft sr-center" data-i18n="sketchrelay.everyoneCards"></p>
+      <p class="sr-soft sr-center" data-i18n="sketchrelay.hostKeepOpen"></p>
+    </form>
+    <section id="sr-session" hidden aria-label="Sketch Relay">
+      <div id="sr-scene"></div>
+      <div class="sr-actions sr-host-actions">
+        <button type="button" class="sr-button sr-primary" id="sr-start-now" hidden data-i18n="sketchrelay.startNow">Start without waiting</button>
+        <button type="button" class="sr-button" id="sr-pause" hidden data-i18n="sketchrelay.pause">Pause</button>
+        <button type="button" class="sr-button" id="sr-skip" hidden data-i18n="sketchrelay.skipWaiting">Skip unfinished</button>
+        <button type="button" class="sr-button sr-primary" id="sr-next-round" hidden data-i18n="sketchrelay.nextRound">Play another round</button>
+        <button type="button" class="sr-button" id="sr-new-game" hidden data-i18n="sketchrelay.newGame">New game</button>
+        <button type="button" class="sr-button" id="sr-settings-open" hidden data-i18n="sketchrelay.changeSettings">Change settings</button>
+        <button type="button" class="sr-button" id="sr-manage-open" data-i18n="sketchrelay.manage">Players</button>
+        <button type="button" class="sr-button sr-stop" id="sr-end" hidden data-i18n="sketchrelay.end">End game</button>
+      </div>
+      <details class="sr-panel sr-gallery" id="sr-gallery" hidden>
+        <summary data-i18n="sketchrelay.gallery">All sketchbooks</summary>
+        <div id="sr-gallery-list"></div>
+      </details>
+    </section>
+    <p class="sr-feedback" id="sr-error" role="status"></p>
+    <details class="sr-panel sr-rules">
+      <summary data-i18n="sketchrelay.rules">How to play</summary>
+      <p data-i18n="sketchrelay.rule1"></p><p data-i18n="sketchrelay.rule2"></p><p data-i18n="sketchrelay.rule3"></p><p data-i18n="sketchrelay.rule4"></p><p data-i18n="sketchrelay.rule5"></p>
+    </details>
+    <a class="back" id="sr-demo-link" href="sketch-relay.html?demo=1" data-i18n="sketchrelay.demoLink">Try the interactive demo</a>
+  </main>
+  <dialog class="sr-dialog" id="sr-manage" aria-labelledby="sr-manage-title">
+    <form method="dialog" class="sr-dialog-header"><h2 id="sr-manage-title" data-i18n="sketchrelay.manage">Players</h2><button class="sr-button" data-i18n="sketchrelay.close">Close</button></form>
+    <p class="sr-soft" data-i18n="sketchrelay.rosterHint"></p>
+    <div id="sr-roster"></div>
+  </dialog>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js?v=membership-1"></script>
+  <script src="sketch-relay-words.js?v=relay-1"></script>
+  <script src="sketch-relay-art.js?v=relay-1"></script>
+  <script src="sketch-relay-engine.js?v=relay-1"></script>
+  <script src="sketch-relay-ui.js?v=relay-1"></script>
+  <script src="sketch-relay-sync.js?v=relay-1"></script>
+  <script src="sketch-relay-host.js?v=relay-1"></script>
+</body>
+</html>

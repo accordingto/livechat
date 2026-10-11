@@ -1,3 +1,27 @@
+## CURRENT: Sketch Relay (Telestrations-style drawing telephone) — 2026-10-11
+
+New game `sketch-relay.html` (🖍️ Sketch Relay), last homepage card, 4–9 players
+on the existing room and `play.html` links. Same concept/rules as Telestrations
+with original words/UI: private six-word card + one shared die roll (owner may
+move to the next word up to 5 times); even groups draw their own word first,
+odd groups pass it first; books move one seat after every page; drawing pages
+timed 45/60(default)/90/120 s or untimed, guesses untimed; cards hand in their
+page at the deadline; owner (or host) reveals page by page; scoring friendly
+(favourite drawing/guess + matching last guess, default), competitive
+(guesser+artist per match, owner for matching last guess) or none; next round
+keeps totals. Absent/sit-out pages are skipped (never invented) and the next
+player answers the last real page; host auto-skips a missing drawing 20 s after
+the deadline. Players draw on their phones (canvas pad, 7 colours, 4 sizes,
+eraser, undo, clear; drafts saved locally). Files: sketch-relay-words/art/
+engine/sync/ui/host .js, sketch-relay.html/.css (asset `relay-1`), play.html
+branch (`relayAction` mailbox, `relayLive` heartbeat child). Trusted-host
+legacy transport only: canonical split into lease/core/opening so lease renewal
+never rewrites drawings; NOT registered with the independent hub-executor
+service (that needs a service deployment), so the host page must stay open.
+Frontend-only release; no secret or database-rule change. Full regression
+1635/1635 (after merging Bomb Relay/CUT Mode 2); real-page Chromium e2e (4 EN / 5 ZH players, reload, timer, grace
+skip) passed on an in-memory Firebase stand-in. See sketch-relay-mode.md.
+
 ## CURRENT: Bomb Relay (妙傳爆趣 rules) — 2026-10-10
 
 New game `bomb-relay.html` (h1 💣 Bomb Relay), same mechanics as the board game

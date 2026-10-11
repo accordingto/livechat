@@ -70,13 +70,14 @@ test('unverified and disabled cards cannot enter either the loaded bank or the n
   }
 });
 
-test('BLUFF PARTY and CUT keep their order before the last Open Mic Rescue game', () => {
+test('BLUFF PARTY, CUT and Open Mic Rescue keep their order before the newest Sketch Relay game', () => {
   const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
   const cards = [...html.matchAll(/<a\b[^>]*\bclass="[^"]*\bgame-card\b[^"]*"[^>]*\bhref="([^"]+)"[^>]*>/g)];
   assert.ok(cards.length > 5);
-  assert.equal(cards.at(-3)[1], 'bluff-king-live-chat.html');
-  assert.equal(cards.at(-2)[1], 'cut.html');
-  assert.equal(cards.at(-1)[1], 'open-mic-rescue.html');
+  assert.equal(cards.at(-4)[1], 'bluff-king-live-chat.html');
+  assert.equal(cards.at(-3)[1], 'cut.html');
+  assert.equal(cards.at(-2)[1], 'open-mic-rescue.html');
+  assert.equal(cards.at(-1)[1], 'sketch-relay.html');
   assert.equal(cards.filter(match => match[1] === 'bluff-king-live-chat.html').length, 1);
 });
 
@@ -92,7 +93,7 @@ test('existing player links open legacy and original-seat private frames without
     document: { body: { classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), remove: (...names) => names.forEach(name => classes.delete(name)) } },
       createElement: kind => { assert.equal(kind, 'iframe'); return { remove() { this.removed = true; } }; } },
     setCardTitle() {}, urlName: 'Existing player', el: { replaceChildren: frame => frames.push(frame) },
-    bluffCardFrame: null, wolfCardFrame: null, talkCard: null, cutCard: null, bombCard: null, openMicCard: null, openMicTimer: null, onceCard: null, dixitCard: null, dixitHostBridge: null,
+    bluffCardFrame: null, wolfCardFrame: null, talkCard: null, cutCard: null, bombCard: null, relayCard: null, openMicCard: null, openMicTimer: null, onceCard: null, dixitCard: null, dixitHostBridge: null,
   });
   vm.runInContext(source.slice(start, finish) + 'return false;\n}', context);
   const marker = { game: 'bluffking', name: 'A&B <player>', bluff: { version: 1, room: 'BKROOM', hostToken: 'do-not-forward', privateKey: 'do-not-forward' }, session: 'do-not-forward' };
