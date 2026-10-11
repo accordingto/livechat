@@ -1,3 +1,44 @@
+## CURRENT: Sketch Relay flow, drawing and shared reveal — 2026-10-11
+
+Sketch Relay retains its simultaneous independent books and correct even/odd
+passing rules, checked against The Op's official 2025 rules. New games default
+to no scoring; the two optional scoring modes remain available. Player cards
+show the current baton, immediate prompt, passing destination and completed
+count. Drawing takes priority; the shared reveal focuses on each newly opened
+page above the earlier journey. Both languages and mobile layouts are retained.
+
+Submitting is final for that baton. Empty/erased drawings cannot be handed in
+manually; empty timed-out pages are explicitly skipped. Private draft commands
+save drawing snapshots without passing books. At deadline + 20-second network
+grace the host submits the last nonblank synced draft, even if a player tab is
+asleep; without a saved drawing it skips that page. Player inputs freeze at the
+deadline; a final submission may arrive during grace to retain the last stroke.
+Drafts remain private to the current holder. A book ending in a drawing after
+skips cannot score an earlier guess as its final answer. Pause freezes commands,
+drawing, guessing and passage; resume retains the remaining clock. Host commands
+are deduplicated and clock events are scoped to their baton.
+
+Each seat has 40 private command receipts, matching the deduplication window.
+Legacy seen requests missing a receipt receive an ACK without being replayed.
+The single player mailbox cannot
+overwrite another unacknowledged action; cards retry the same command ID. Host
+leases fence each live document so duplicated sessionStorage cannot produce
+two executors; a reload resumes while a displaced tab cannot steal ownership
+back or release the current lease. If room count changed while the host was
+closed, old books are not projected to a new roster; setup offers a fresh game.
+
+In-game confirmation dialogs replace native browser prompts; clear/leave/host
+actions are fenced against a changed page while the dialog is open. Pen taps
+retain a visible round dot. Full regression: 1,728/1,728 passing, including 55
+Sketch Relay cases. Browser demos verified full four- and five-player rounds,
+pause, hand-in locks, clear/cancel/ESC, next round and 320/375/1280 px layouts.
+Production asset verification: node scripts/sketch-relay-verify-release.cjs.
+
+Assets use relay-2. This remains the existing trusted-host Firebase transport:
+the host page must stay open. It is not registered with the independent game
+service. Publish the frontend only; preserve concurrent Once, Chat Wolf and CUT
+changes and the current service deployment/secrets. See sketch-relay-mode.md.
+
 ## CURRENT: Chat Wolf role cards + Once Modern & Future — 2026-10-11
 
 Chat Wolf private cards now use small Wolf/Jester/Village portraits (red/yellow/green),

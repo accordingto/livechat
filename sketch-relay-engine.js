@@ -30,7 +30,9 @@
   const GUESS_MAX = 40;
   const AUTO_SKIP_GRACE_MS = 20000;
   const SEEN_LIMIT = 40;
-  const TURN_TYPES = new Set(['ready', 'swapWord', 'start', 'submit', 'skip']);
+  const RECEIPT_LIMIT = SEEN_LIMIT;
+  const TURN_TYPES = new Set(['ready', 'swapWord', 'start', 'draft', 'submit', 'skip', 'tick', 'pause', 'resume']);
+  const PAUSED_TYPES = new Set(['ready', 'swapWord', 'start', 'draft', 'submit', 'skip']);
 
   const copy = value => JSON.parse(JSON.stringify(value));
   const list = value => Array.isArray(value) ? value.filter(v => v != null) : Object.values(value || {});
@@ -79,7 +81,7 @@
     Object.assign(state, {
       phase: 'word', die, turnId: (state.turnId || 0) + 1, usedWords: used.slice(-400),
       books: state.roster.map((p, i) => ({ owner: p.playerNum, card: cards[i], wordIndex: die - 1, pages: [] })),
-      ready: {}, swaps: {}, offset, steps: n - offset, step: 0, submissions: {},
+      ready: {}, swaps: {}, offset, steps: n - offset, step: 0, submissions: {}, drafts: {},
       stepStartedAt: null, deadline: null, paused: false, pausedAt: null,
       reveal: null, awards: {}, result: null, roundStartedAt: now,
     });
@@ -98,7 +100,7 @@
       roster: players.map((p, i) => ({ playerNum: nums[i], name: cleanText(p.name).slice(0, 40) || `Player ${nums[i]}`, active: true })),
       settings: { deck: settings.deck, sketchSeconds: settings.sketchSeconds, scoring: settings.scoring },
       totals: Object.fromEntries(nums.map(n => [n, Number(totals?.[n]) || 0])), usedWords: list(usedWords),
-      seen: {}, replies: {},
+      seen: {}, replies: {}, receipts: {},
     };
     return freshRound(state, { now, seed });
   }
@@ -130,15 +132,17 @@
     return text < 0 ? null : pages[text].text ?? null;
   }
   const finalGuess = pages => {
-    for (let i = pages.length - 1; i > 0; i--) if (!pages[i].skipped && pages[i].kind === 'guess') return i;
-    return -1;
+    const last = lastReal(pages);
+    // A skipped page may leave a book ending in a drawing. An earlier guess
+    // is not that book's final answer and must not earn the matching bonus.
+    return last > 0 && pages[last].kind === 'guess' ? last : -1;
   };
 
   function hasOpenSketch(state) {
     return state.books.some((_, b) => !state.submissions[b] && taskKind(state, b) === 'sketch' && isActive(state, holderOf(state, b)));
   }
   function beginStep(state, now) {
-    state.turnId++; state.submissions = {}; state.stepStartedAt = now;
+    state.turnId++; state.submissions = {}; state.drafts = {}; state.stepStartedAt = now;
     state.books.forEach((_, b) => {
       const by = holderOf(state, b);
       if (!isActive(state, by)) state.submissions[b] = { kind: taskKind(state, b), by, skipped: true };
@@ -148,7 +152,7 @@
     completeStep(state, now);
   }
   function completeStep(state, now) {
-    if (state.phase !== 'play' || state.books.some((_, b) => !state.submissions[b])) return;
+    if (state.phase !== 'play' || state.paused || state.books.some((_, b) => !state.submissions[b])) return;
     state.books.forEach((book, b) => {
       const sub = state.submissions[b];
       book.pages.push(sub.skipped ? { kind: sub.kind, by: sub.by, skipped: true }
@@ -165,10 +169,10 @@
   }
   function maybeStartPlay(state, now) {
     const active = activeNums(state);
-    if (active.length && active.every(n => state.ready[n] === true)) startPlay(state, now);
+    if (!state.paused && active.length && active.every(n => state.ready[n] === true)) startPlay(state, now);
   }
   function startReveal(state, now) {
-    state.phase = 'reveal'; state.turnId++; state.submissions = {}; state.deadline = null; state.stepStartedAt = null;
+    state.phase = 'reveal'; state.turnId++; state.submissions = {}; state.drafts = {}; state.deadline = null; state.stepStartedAt = null;
     state.paused = false; state.pausedAt = null;
     state.reveal = { book: 0, shown: 1, complete: false, startedAt: now };
   }
@@ -225,6 +229,7 @@
   function handle(state, input) {
     const { type, actor, now } = input;
     const phase = state.phase;
+    if (state.paused && PAUSED_TYPES.has(type)) return 'paused';
     switch (type) {
       case 'ready': {
         if (phase !== 'word' || actor < 1 || !isActive(state, actor)) return 'not_available';
@@ -242,21 +247,41 @@
         if (actor !== 0 || phase !== 'word') return 'not_available';
         startPlay(state, now); return '';
       }
+      case 'draft': {
+        if (phase !== 'play' || actor < 1 || !isActive(state, actor)) return 'not_available';
+        const book = Number(input.book);
+        if (!Number.isInteger(book) || book < 0 || book >= state.books.length || holderOf(state, book) !== actor || taskKind(state, book) !== 'sketch' || input.kind !== 'sketch') return 'not_available';
+        if (state.submissions[book]) return 'already_submitted';
+        if (state.deadline > 0 && now >= state.deadline + AUTO_SKIP_GRACE_MS) return 'deadline_passed';
+        if (!ART.valid(input.art)) return 'invalid_sketch';
+        // A final clear may arrive just after the client clock has frozen.
+        // Accept only blank drafts in the grace window so a saved earlier
+        // drawing is not revived by the host's automatic hand-in.
+        if (state.deadline > 0 && now >= state.deadline && !ART.isBlank(input.art)) return 'deadline_passed';
+        state.drafts ||= {};
+        state.drafts[book] = { kind: 'sketch', by: actor, art: input.art, at: now };
+        return '';
+      }
       case 'submit': {
         if (phase !== 'play' || actor < 1) return 'not_available';
         const book = Number(input.book);
         if (!Number.isInteger(book) || book < 0 || book >= state.books.length || holderOf(state, book) !== actor) return 'not_available';
         if (!isActive(state, actor) || state.submissions[book]?.skipped) return 'not_available';
+        if (state.submissions[book]) return 'already_submitted';
         const kind = taskKind(state, book);
         if (input.kind !== kind) return 'not_available';
         if (kind === 'sketch') {
-          if (!ART.valid(input.art)) return 'invalid_sketch';
+          // The grace window lets the final client submission reach the host.
+          // Beyond it the host uses the last saved draft instead.
+          if (state.deadline > 0 && now >= state.deadline + AUTO_SKIP_GRACE_MS) return 'deadline_passed';
+          if (!ART.valid(input.art) || ART.isBlank(input.art)) return 'invalid_sketch';
           state.submissions[book] = { kind, by: actor, art: input.art, at: now };
         } else {
           const text = cleanText(input.text);
           if (!text || text.length > GUESS_MAX) return 'invalid_guess';
           state.submissions[book] = { kind, by: actor, text, at: now };
         }
+        if (state.drafts) delete state.drafts[book];
         completeStep(state, now); return '';
       }
       case 'skip': {
@@ -267,7 +292,13 @@
       case 'tick': {
         if (actor !== 0 || phase !== 'play' || state.paused || !(state.deadline > 0) || now < state.deadline + AUTO_SKIP_GRACE_MS) return '';
         state.books.forEach((_, b) => {
-          if (!state.submissions[b] && taskKind(state, b) === 'sketch') state.submissions[b] = { kind: 'sketch', by: holderOf(state, b), skipped: true };
+          if (!state.submissions[b] && taskKind(state, b) === 'sketch') {
+            const draft = state.drafts?.[b];
+            state.submissions[b] = draft && ART.valid(draft.art) && !ART.isBlank(draft.art)
+              ? { kind: 'sketch', by: holderOf(state, b), art: draft.art, at: draft.at }
+              : { kind: 'sketch', by: holderOf(state, b), skipped: true };
+            if (state.drafts) delete state.drafts[b];
+          }
         });
         state.deadline = null;
         completeStep(state, now); return '';
@@ -294,8 +325,11 @@
       case 'resume': {
         if (actor !== 0) return 'not_available';
         if (!state.paused) return '';
-        if (state.deadline > 0 && state.pausedAt > 0) state.deadline += Math.max(0, now - state.pausedAt);
-        state.paused = false; state.pausedAt = null; return '';
+        if (state.deadline > 0 && Number.isFinite(state.pausedAt)) state.deadline += Math.max(0, now - state.pausedAt);
+        state.paused = false; state.pausedAt = null;
+        if (phase === 'word') maybeStartPlay(state, now);
+        else if (phase === 'play') completeStep(state, now);
+        return '';
       }
       case 'revealNext': {
         if (phase !== 'reveal' || !canPresent(state, actor)) return 'not_available';
@@ -351,9 +385,12 @@
   }
 
   function acknowledge(state, actor, id, error) {
-    state.replies ||= {}; state.seen ||= {};
-    if (actor > 0) state.seen[actor] = list(state.seen[actor]).concat(id).slice(-SEEN_LIMIT);
+    state.replies ||= {}; state.seen ||= {}; state.receipts ||= {};
+    state.seen[actor] = list(state.seen[actor]).filter(seenId => seenId !== id).concat(id).slice(-SEEN_LIMIT);
     state.replies[actor] = { id, error };
+    // Different tabs for one seat may issue commands in the same host batch.
+    // Keep each acknowledgment so the last reply cannot strand an older tab.
+    state.receipts[actor] = list(state.receipts[actor]).filter(r => r.id !== id).concat({ id, error }).slice(-RECEIPT_LIMIT);
     return state;
   }
   function apply(state, input) {
@@ -361,7 +398,14 @@
     const actor = Number(input.actor), id = input.id;
     if (typeof id !== 'string' || id.length < 8 || id.length > 100 || !Number.isFinite(input.now)) return state;
     if (actor !== 0 && !player(state, actor)) return state;
-    if (actor > 0 && list(state.seen?.[actor]).includes(id)) return state;
+    if (list(state.seen?.[actor]).includes(id)) {
+      if (list(state.receipts?.[actor]).some(r => r.id === id)) return state;
+      // Older games retained only 12 receipts while keeping 40 seen IDs.
+      // Restore an acknowledgment without ever running the command again;
+      // its outcome may be unavailable after the original reply was replaced.
+      const oldReply = state.replies?.[actor];
+      return acknowledge(copy(state), actor, id, oldReply?.id === id ? oldReply.error || '' : 'stale_turn');
+    }
     if (TURN_TYPES.has(input.type) && Number(input.turnId) !== state.turnId) return acknowledge(copy(state), actor, id, 'stale_turn');
     const next = copy(state);
     const error = handle(next, { ...input, actor, now: Math.max(input.now, state.lastChangeAt || 0) });
@@ -399,7 +443,7 @@
       settings: { ...state.settings }, die: state.die, step: state.step, steps: state.steps,
       roster: state.roster.map(p => ({ playerNum: p.playerNum, name: p.name, active: p.active !== false, status: statusOf(state, p.playerNum) })),
       paused: state.paused === true, deadline: state.phase === 'play' ? state.deadline : null,
-      pausedRemainingMs: state.paused && state.deadline > 0 ? Math.max(0, state.deadline - (state.pausedAt || now)) : null,
+      pausedRemainingMs: state.paused && state.deadline > 0 ? Math.max(0, state.deadline - (Number.isFinite(state.pausedAt) ? state.pausedAt : now)) : null,
       graceMs: AUTO_SKIP_GRACE_MS,
     };
     if (state.phase === 'play') {
@@ -437,11 +481,13 @@
           prompt: { ...pageView(state, prompt, last), skippedBefore: last < book.pages.length - 1 } };
         if (sub?.skipped) mine.task.skipped = true;
         else if (sub) mine.task.submitted = sub.kind === 'sketch' ? { kind: 'sketch', art: sub.art } : { kind: 'guess', text: sub.text };
+        else if (state.drafts?.[b]) mine.task.draft = { art: state.drafts[b].art };
       }
       if (state.phase === 'finished' && own) mine.book = own.pages.map((page, i) => pageView(state, page, i));
       relay.me = mine;
       const reply = state.replies?.[actor];
       if (reply) relay.reply = { id: reply.id, error: reply.error || '' };
+      if (state.receipts?.[actor]) relay.receipts = list(state.receipts[actor]).map(r => ({ id: r.id, error: r.error || '' }));
     }
     return { game: 'sketchrelay', ...(me ? { playerNum: actor, name: me.name } : {}), relay };
   }

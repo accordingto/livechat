@@ -118,13 +118,17 @@ test('submissions are checked: holder, kind, drawing format, guess length, stale
   s = act(s, 1, 'submit', { book: 0, kind: 'guess', text: 'cat' }); assert.equal(s.replies[1].error, 'not_available');
   s = act(s, 1, 'submit', { book: 0, kind: 'sketch', art: 'B<script>' }); assert.equal(s.replies[1].error, 'invalid_sketch');
   s = act(s, 1, 'submit', { book: 0, kind: 'sketch', art: 'x'.repeat(ART.MAX_LENGTH + 1) }); assert.equal(s.replies[1].error, 'invalid_sketch');
+  for (const art of ['', ART.encode([{ color: ART.ERASER, size: 1, points: [10, 10, 20, 20] }])]) {
+    s = act(s, 1, 'submit', { book: 0, kind: 'sketch', art }); assert.equal(s.replies[1].error, 'invalid_sketch');
+  }
   s = act(s, 1, 'submit', { book: 0, kind: 'sketch', art: '', turnId: turn - 1 }); assert.equal(s.replies[1].error, 'stale_turn');
   const first = { id: id(), type: 'submit', actor: 1, sessionId: s.sessionId, turnId: turn, now: s.lastChangeAt + 5, seed: 1, book: 0, kind: 'sketch', art: doodle() };
   s = E.apply(s, first); assert.equal(s.replies[1].error, '');
   const again = E.apply(s, { ...first, art: '' }); assert.equal(again, s, 'duplicate command ids are ignored');
-  // A blank page is a legal drawing, and redrawing before the page moves on replaces it.
+  // Handing in a page is final even while the other players are still working.
   s = act(s, 1, 'submit', { book: 0, kind: 'sketch', art: '' });
-  assert.equal(s.submissions[0].art, '');
+  assert.equal(s.replies[1].error, 'already_submitted');
+  assert.equal(s.submissions[0].art, first.art);
   s = playStep(s);
   s = act(s, 2, 'submit', { book: 0, kind: 'guess', text: '   ' }); assert.equal(s.replies[2].error, 'invalid_guess');
   s = act(s, 2, 'submit', { book: 0, kind: 'guess', text: 'a'.repeat(41) }); assert.equal(s.replies[2].error, 'invalid_guess');
@@ -132,6 +136,180 @@ test('submissions are checked: holder, kind, drawing format, guess length, stale
   assert.equal(s.submissions[0].text, 'big red dog');
   assert.equal(E.view(s, 2).relay.me.task.submitted.text, 'big red dog');
   assert.equal(E.view(s, 0).relay.roster[1].status, 'done');
+  s = act(s, 2, 'submit', { book: 0, kind: 'guess', text: 'replacement' });
+  assert.equal(s.replies[2].error, 'already_submitted'); assert.equal(s.submissions[0].text, 'big red dog');
+});
+
+test('drawing drafts are private, replaceable until the deadline, and never count as a finished page', () => {
+  let s = readyAll(game(4));
+  const drawing = doodle(123), second = doodle(321);
+  s = act(s, 2, 'draft', { book: 0, kind: 'sketch', art: drawing }); assert.equal(s.replies[2].error, 'not_available');
+  s = act(s, 1, 'draft', { book: 0, kind: 'guess', art: drawing }); assert.equal(s.replies[1].error, 'not_available');
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: '<bad>' }); assert.equal(s.replies[1].error, 'invalid_sketch');
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: drawing });
+  assert.equal(s.replies[1].error, ''); assert.equal(s.step, 0);
+  assert.equal(E.view(s, 0).relay.progress.done, 0);
+  assert.deepEqual(E.view(s, 1).relay.me.task.draft, { art: drawing });
+  for (const actor of [0, 2, 3, 4]) assert.ok(!JSON.stringify(E.view(s, actor)).includes(drawing));
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: second });
+  assert.equal(s.drafts[0].art, second);
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: '' });
+  assert.equal(s.drafts[0].art, '', 'clearing the canvas also clears its saved draft');
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: drawing }, s.deadline - 1);
+  const deadline = s.deadline;
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: second }, deadline);
+  assert.equal(s.replies[1].error, 'deadline_passed'); assert.equal(s.drafts[0].art, drawing);
+  s = act(s, 1, 'submit', { book: 0, kind: 'sketch', art: drawing }, deadline + 1);
+  assert.equal(s.replies[1].error, '', 'the final in-flight submission has a delivery grace window');
+  assert.equal(s.drafts[0], undefined); assert.equal(E.view(s, 1).relay.me.task.draft, undefined);
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: second }, deadline + 2);
+  assert.equal(s.replies[1].error, 'already_submitted'); assert.equal(s.submissions[0].art, drawing);
+});
+
+test('the host can hand in saved drawings without any player tab running its timer', () => {
+  let s = readyAll(game(4));
+  const drawing = doodle(222), erased = ART.encode([{ color: ART.ERASER, size: 1, points: [2, 2, 3, 3] }]);
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: drawing });
+  const savedAt = s.drafts[0].at;
+  s = act(s, 2, 'draft', { book: 1, kind: 'sketch', art: erased });
+  s = act(s, 3, 'draft', { book: 2, kind: 'sketch', art: doodle(333) });
+  s = act(s, 3, 'draft', { book: 2, kind: 'sketch', art: '' });
+  const expired = s.deadline + E.AUTO_SKIP_GRACE_MS;
+  s = act(s, 4, 'submit', { book: 3, kind: 'sketch', art: doodle(444) }, expired);
+  assert.equal(s.replies[4].error, 'deadline_passed'); assert.equal(s.submissions[3], undefined);
+  s = act(s, 0, 'tick', {}, expired);
+  assert.equal(s.step, 1);
+  assert.deepEqual(s.books[0].pages[1], { kind: 'sketch', by: 1, art: drawing, at: savedAt });
+  for (const b of [1, 2, 3]) assert.equal(s.books[b].pages[1].skipped, true);
+  assert.deepEqual(s.drafts, {}, 'a new holder never inherits another player\'s unfinished work');
+  assert.equal(E.view(s, 2).relay.me.task.prompt.art, drawing);
+});
+
+test('a final blank draft can clear saved ink during delivery grace without allowing extra drawing time', () => {
+  let s = readyAll(game(4));
+  const saved = doodle(555), erased = ART.encode([{ color: ART.ERASER, size: 2, points: [10, 10, 20, 20] }]);
+  for (const actor of [1, 2, 3]) s = act(s, actor, 'draft', { book: actor - 1, kind: 'sketch', art: saved });
+  const oldTurn = s.turnId, deadline = s.deadline, expired = deadline + E.AUTO_SKIP_GRACE_MS;
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: '' }, deadline);
+  assert.equal(s.replies[1].error, ''); assert.equal(s.drafts[0].art, '');
+  s = act(s, 2, 'draft', { book: 1, kind: 'sketch', art: erased }, expired - 1);
+  assert.equal(s.replies[2].error, ''); assert.equal(s.drafts[1].art, erased);
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: doodle(777) }, expired - 1);
+  assert.equal(s.replies[1].error, 'deadline_passed'); assert.equal(s.drafts[0].art, '', 'late ink cannot replace the final clear');
+  s = act(s, 3, 'draft', { book: 2, kind: 'sketch', art: '' }, expired);
+  assert.equal(s.replies[3].error, 'deadline_passed'); assert.equal(s.drafts[2].art, saved, 'grace has a firm end even for clear requests');
+  s = act(s, 0, 'tick', {}, expired);
+  assert.equal(s.step, 1);
+  for (const b of [0, 1, 3]) assert.equal(s.books[b].pages[1].skipped, true);
+  assert.equal(s.books[2].pages[1].art, saved);
+  s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: '', turnId: oldTurn }, expired + 1);
+  assert.equal(s.replies[1].error, 'stale_turn'); assert.deepEqual(s.drafts, {}, 'an old clear cannot affect the next holder');
+});
+
+test('pause freezes player commands and passage, then resume preserves the remaining drawing time', () => {
+  let s = game(4);
+  s = act(s, 0, 'pause');
+  for (const type of ['ready', 'swapWord']) { s = act(s, 1, type); assert.equal(s.replies[1].error, 'paused'); }
+  s = act(s, 0, 'start'); assert.equal(s.replies[0].error, 'paused');
+  assert.equal(s.phase, 'word'); assert.deepEqual(s.ready, {});
+  s = act(s, 0, 'resume'); s = readyAll(s);
+  s = playStep(s); s = playStep(s); // another drawing page
+  const deadline = s.deadline, step = s.step;
+  for (const actor of [1, 2]) s = act(s, actor, 'submit', { book: E.bookHeldBy(s, actor), kind: 'sketch', art: doodle(actor) });
+  const pauseAt = s.lastChangeAt + 10;
+  s = act(s, 0, 'pause', {}, pauseAt);
+  assert.equal(E.view(s, 1, pauseAt + 99999).relay.pausedRemainingMs, deadline - pauseAt);
+  for (const type of ['draft', 'submit']) {
+    s = act(s, 3, type, { book: E.bookHeldBy(s, 3), kind: 'sketch', art: doodle(3) }, pauseAt + 1000);
+    assert.equal(s.replies[3].error, 'paused');
+  }
+  s = act(s, 0, 'skip', {}, pauseAt + 1001); assert.equal(s.replies[0].error, 'paused');
+  s = act(s, 0, 'tick', {}, deadline + E.AUTO_SKIP_GRACE_MS + 1000); assert.equal(s.step, step);
+  s = act(s, 0, 'away', { playerNum: 3, away: true });
+  s = act(s, 0, 'away', { playerNum: 4, away: true });
+  assert.equal(s.step, step, 'presence changes cannot pass every book while paused');
+  const resumeAt = s.lastChangeAt + 10;
+  s = act(s, 0, 'resume', {}, resumeAt);
+  assert.equal(s.step, step + 1, 'the already complete page moves on only after resume');
+  const first = readyAll(game(4));
+  let clock = act(first, 0, 'pause', {}, first.stepStartedAt + 1000);
+  clock = act(clock, 0, 'resume', {}, first.stepStartedAt + 6000);
+  assert.equal(clock.deadline, first.deadline + 5000);
+});
+
+test('host commands are deduplicated and a stale tick cannot expire a newer page', () => {
+  let s = readyAll(game(4));
+  const skip = { id: id(), type: 'skip', actor: 0, sessionId: s.sessionId, turnId: s.turnId, now: s.lastChangeAt + 10 };
+  s = E.apply(s, skip); assert.equal(s.step, 1);
+  assert.equal(E.apply(s, { ...skip, turnId: s.turnId, now: s.lastChangeAt + 10 }), s, 're-delivered host skip does not skip two pages');
+  const olderTurn = s.turnId;
+  s = playStep(s); s = playStep(s); assert.equal(s.step, 3);
+  const deadline = s.deadline;
+  s = act(s, 0, 'tick', { turnId: olderTurn }, deadline + E.AUTO_SKIP_GRACE_MS);
+  assert.equal(s.replies[0].error, 'stale_turn'); assert.equal(s.step, 3); assert.deepEqual(s.submissions, {});
+  s = act(s, 0, 'tick', {}, deadline + E.AUTO_SKIP_GRACE_MS);
+  assert.equal(s.step, 4); assert.equal(s.phase, 'reveal');
+});
+
+test('each seat gets a bounded private acknowledgment history for batched commands from multiple tabs', () => {
+  let s = readyAll(game(4));
+  const first = { id: id(), type: 'draft', actor: 1, sessionId: s.sessionId, turnId: s.turnId, now: s.lastChangeAt + 10, book: 0, kind: 'sketch', art: doodle() };
+  const second = { ...first, id: id(), type: 'submit', now: first.now + 1 };
+  const third = { ...second, id: id(), text: 'wrong tab', kind: 'guess', now: second.now + 1 };
+  for (const command of [first, second, third]) s = E.apply(s, command);
+  const own = E.view(s, 1).relay;
+  assert.equal(own.reply.id, third.id, 'a batch still has only one latest reply');
+  assert.deepEqual(own.receipts.slice(-3), [{ id: first.id, error: '' }, { id: second.id, error: '' }, { id: third.id, error: 'already_submitted' }]);
+  for (const actor of [0, 2, 3, 4]) {
+    const other = JSON.stringify(E.view(s, actor));
+    for (const command of [first, second, third]) assert.ok(!other.includes(command.id));
+  }
+  assert.equal(E.view(s, 0).relay.receipts, undefined);
+  for (let i = 0; i < 35; i++) s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: doodle() });
+  assert.ok(E.view(s, 1).relay.receipts.some(r => r.id === first.id), 'receipts live as long as their deduplication IDs');
+  assert.equal(E.apply(s, first), s, 'a retained receipt makes retries a no-op');
+  for (let i = 0; i < 5; i++) s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: doodle() });
+  assert.equal(E.view(s, 1).relay.receipts.length, 40);
+  assert.ok(!E.view(s, 1).relay.receipts.some(r => r.id === first.id));
+  assert.equal(s.seen[1].includes(first.id), false, 'receipt and deduplication eviction stay aligned');
+});
+
+test('a seen command with a missing legacy receipt is acknowledged without re-executing', () => {
+  let s = readyAll(game(4));
+  const first = { id: id(), type: 'draft', actor: 1, sessionId: s.sessionId, turnId: s.turnId, now: s.lastChangeAt + 10, book: 0, kind: 'sketch', art: doodle(111) };
+  s = E.apply(s, first);
+  for (let i = 0; i < 15; i++) s = act(s, 1, 'draft', { book: 0, kind: 'sketch', art: doodle(222) });
+  s.receipts[1] = s.receipts[1].slice(-12);
+  const seenCount = s.seen[1].length, currentDraft = { ...s.drafts[0] };
+  assert.equal(s.seen[1].includes(first.id), true);
+  s = E.apply(s, { ...first, now: s.lastChangeAt + 1 });
+  assert.deepEqual(s.drafts[0], currentDraft, 'the old drawing cannot replace newer work');
+  assert.equal(s.seen[1].length, seenCount, 'restoring a receipt does not duplicate its seen ID');
+  assert.deepEqual(E.view(s, 1).relay.receipts.at(-1), { id: first.id, error: 'stale_turn' });
+  assert.equal(E.apply(s, first), s, 'the restored acknowledgment also deduplicates retries');
+  const latest = { id: id(), type: 'draft', actor: 1, sessionId: s.sessionId, turnId: s.turnId, now: s.lastChangeAt + 1, book: 0, kind: 'sketch', art: doodle(333) };
+  s = E.apply(s, latest); delete s.receipts[1];
+  s = E.apply(s, { ...latest, art: doodle(444) });
+  assert.equal(s.drafts[0].art, latest.art, 'a missing receipt still cannot re-run a command with a changed payload');
+  assert.deepEqual(E.view(s, 1).relay.receipts.at(-1), { id: latest.id, error: '' }, 'the original latest reply outcome is preserved when available');
+});
+
+test('a book ending with a drawing never scores an older matching guess as its final answer', () => {
+  let s = readyAll(game(4));
+  const originals = s.books.map(b => b.pages[0].text);
+  for (let turn = 0; turn < 3; turn++) s = playStep(s, (task, num) => task.kind === 'sketch' ? { art: doodle(num) } : { text: originals[task.book] });
+  s = act(s, 0, 'away', { playerNum: 4, away: true });
+  s = playStep(s, task => ({ text: originals[task.book] }));
+  assert.equal(s.phase, 'reveal');
+  assert.equal(s.books[0].pages[4].skipped, true);
+  assert.equal(E.finalGuess(s.books[0].pages), -1);
+  assert.equal(E.finalGuess(s.books[1].pages), 4);
+  s = act(s, 0, 'revealNext', { book: 0, shown: 1, all: true });
+  assert.equal(s.awards[0].final, false);
+  s = act(s, 1, 'award', { book: 0, field: 'final', value: true });
+  assert.equal(s.replies[1].error, 'not_available'); assert.equal(E.roundScores(s).points[1], 0);
+  const trailingSkipAfterGuess = [{ kind: 'word', text: 'cat' }, { kind: 'sketch' }, { kind: 'guess', text: 'cat' }, { kind: 'sketch', skipped: true }];
+  assert.equal(E.finalGuess(trailingSkipAfterGuess), 2, 'skipped pages do not hide a real final guess');
 });
 
 test('an away player is skipped and the next player answers the last real page, keeping the alternation', () => {
@@ -286,6 +464,11 @@ test('drawing codec round-trips, rejects malformed input and simplifies long str
   assert.equal(ART.isBlank(''), true);
   assert.equal(ART.isBlank(ART.encode([{ color: ART.ERASER, size: 1, points: [1, 1, 2, 2] }])), true);
   assert.equal(ART.isBlank(encoded), false);
+  const ink = { color: 0, size: 1, points: [10, 20, 100, 200, 300, 100] };
+  const eraser = { ...ink, color: ART.ERASER, size: 2 };
+  assert.equal(ART.isBlank(ART.encode([ink, eraser])), true, 'fully erased ink cannot be handed in as a blank drawing');
+  assert.equal(ART.isBlank(ART.encode([eraser, ink])), false, 'new ink after erasing is still visible');
+  assert.equal(ART.isBlank(ART.encode([ink, { ...eraser, size: 0 }])), false, 'a narrow eraser leaves ink visible');
   const line = []; for (let i = 0; i <= 100; i++) line.push(i * 10, 500);
   assert.deepEqual(ART.simplify(line), [0, 500, 1000, 500]);
   // A closed loop keeps its shape instead of collapsing to its start point.

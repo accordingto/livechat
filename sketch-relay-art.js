@@ -125,7 +125,15 @@
     const body = strokes.map(s => `<path d="${path(s.points)}" stroke="${COLORS[s.color]}" stroke-width="${WIDTHS[s.size]}"/>`).join('');
     return `<svg class="${escapeAttr(className)}" viewBox="0 0 ${SIZE} ${SIZE}" role="img" aria-label="${escapeAttr(label)}" preserveAspectRatio="xMidYMid meet"><rect width="${SIZE}" height="${SIZE}" fill="${PAPER}"/><g fill="none" stroke-linecap="round" stroke-linejoin="round">${body}</g></svg>`;
   }
-  const isBlank = art => !(decode(art) || []).some(s => s.color !== ERASER);
+  function isBlank(art) {
+    const strokes = decode(art) || [];
+    const samePath = (a, b) => a.length === b.length && a.every((p, i) => p === b[i]);
+    // An eraser following exactly the same path with the same or larger
+    // width covers all of that ink, including its round caps and joins.
+    // Later ink is checked separately, so drawing again makes the page real.
+    return !strokes.some((stroke, i) => stroke.color !== ERASER && !strokes.slice(i + 1).some(eraser =>
+      eraser.color === ERASER && WIDTHS[eraser.size] >= WIDTHS[stroke.size] && samePath(eraser.points, stroke.points)));
+  }
 
   return Object.freeze({ SIZE, PAPER, COLORS, ERASER, WIDTHS, MAX_LENGTH, MAX_STROKES, encode, encodeStroke, decode, valid, simplify, path, paint, svg, isBlank });
 });

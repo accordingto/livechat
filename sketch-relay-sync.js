@@ -52,6 +52,10 @@
     constructor({ room, db, onChange = () => {}, onStatus = () => {}, storage = root.sessionStorage, engine = root.SKETCH_RELAY_ENGINE }) {
       this.room = room; this.db = db; this.engine = engine; this.onChange = onChange; this.onStatus = onStatus;
       this.code = room.code; this.count = room.count; this.client = clientId(storage);
+      // sessionStorage survives a reload, but browsers also copy it when a tab
+      // is duplicated. Fence each live document separately. A new document may
+      // resume its stored client once; a displaced document cannot steal it back.
+      this.instance = uid(); this.claimedOnce = false;
       this.offset = 0; this.connected = false; this.stopped = false; this.suspended = false; this.started = false;
       this.lease = null; this.doc = null; this.opening = null; this.lastStatus = '';
       this.serial = Promise.resolve(); this.inbox = []; this.incoming = new Set(); this.flushQueued = false;
@@ -65,14 +69,18 @@
     }
     now() { return Date.now() + this.offset; }
     get own() {
-      return this.connected && !this.stopped && this.lease?.owner === this.client && this.lease.until > this.now() && this.doc?.owner === this.client;
+      return this.connected && !this.stopped && this.lease?.owner === this.client && this.lease.instance === this.instance && this.lease.until > this.now() && this.doc?.owner === this.client && this.doc.instance === this.instance;
     }
     get state() { return this.doc?.state || null; }
+    get rosterChanged() {
+      const roster = this.state?.roster;
+      return !!roster && (roster.length !== this.count || roster.some((p, i) => p.playerNum !== i + 1));
+    }
     status(value) { if (this.lastStatus !== value) { this.lastStatus = value; this.onStatus(value); } }
     refreshStatus() {
       if (this.stopped) return;
-      this.status(this.suspended ? 'switched' : !this.connected ? 'offline' : this.own ? 'ready'
-        : this.lease && this.lease.owner !== this.client && this.lease.until > this.now() ? 'other_host' : 'connecting');
+      this.status(this.suspended ? 'switched' : !this.connected ? 'offline' : this.own ? this.rosterChanged ? 'rosterChanged' : 'ready'
+        : this.lease && (this.lease.owner !== this.client || this.lease.instance !== this.instance) && this.lease.until > this.now() ? 'other_host' : 'connecting');
     }
     sameRoom() {
       if (this.room.code === this.code && this.room.count === this.count) return true;
@@ -93,7 +101,7 @@
         if (this.stopped) return;
         try {
           const raw = s.val();
-          this.doc = raw ? { owner: raw.owner, revision: raw.revision || 0, state: stateOf(raw) } : null;
+          this.doc = raw ? { owner: raw.owner, instance: raw.instance, revision: raw.revision || 0, state: stateOf(raw) } : null;
         } catch (_) { this.doc = null; this.status('error'); return; }
         this.refreshStatus();
         if (this.doc?.state) this.onChange(this.doc.state);
@@ -112,6 +120,7 @@
     }
     afterOwnership() {
       if (!this.own || this.suspended || !this.doc?.state || !this.sameRoom()) return;
+      if (this.rosterChanged) { this.refreshStatus(); return; }
       this.project();
       for (const [num, value] of this.cardValues) this.receive(num, value);
     }
@@ -122,13 +131,14 @@
         const now = this.now();
         const result = await this.leaseRef.transaction(raw => {
           if (this.stopped || this.suspended) return;
-          if (raw && raw.owner !== this.client && raw.until > now) return;
-          return { owner: this.client, until: now + CONFIG.leaseMs };
+          if (raw && raw.until > now && (raw.owner !== this.client || (raw.instance !== this.instance && this.claimedOnce))) return;
+          return { owner: this.client, instance: this.instance, until: now + CONFIG.leaseMs };
         }, undefined, false);
-        if (result.committed && this.doc?.owner !== this.client && !this.suspended) {
+        if (result.committed) this.claimedOnce = true;
+        if (result.committed && (this.doc?.owner !== this.client || this.doc?.instance !== this.instance) && !this.suspended) {
           await this.coreRef.transaction(raw => {
-            if (this.stopped || this.lease?.owner !== this.client) return;
-            return raw?.owner === this.client ? undefined : Object.assign({}, raw || {}, { owner: this.client });
+            if (this.stopped || this.lease?.owner !== this.client || this.lease?.instance !== this.instance) return;
+            return raw?.owner === this.client && raw?.instance === this.instance ? undefined : Object.assign({}, raw || {}, { owner: this.client, instance: this.instance });
           }, undefined, false);
         }
       } catch (_) { if (!this.stopped) this.status('error'); }
@@ -142,12 +152,12 @@
       let noChange = false;
       const result = await this.coreRef.transaction(raw => {
         noChange = false;
-        if (this.stopped || this.suspended || !this.connected || raw?.owner !== this.client || !(this.lease?.owner === this.client && this.lease.until > this.now())) return;
+        if (this.stopped || this.suspended || !this.connected || raw?.owner !== this.client || raw?.instance !== this.instance || !(this.lease?.owner === this.client && this.lease.instance === this.instance && this.lease.until > this.now())) return;
         const current = stateOf(raw), next = fn(current);
         if (!next || next === current) { noChange = true; return; }
         const json = JSON.stringify(next);
         if (json === raw.stateJson) { noChange = true; return; }
-        return { owner: this.client, stateJson: json, revision: (raw.revision || 0) + 1 };
+        return { owner: this.client, instance: this.instance, stateJson: json, revision: (raw.revision || 0) + 1 };
       }, undefined, false);
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
@@ -169,7 +179,7 @@
     }
     command(type, extra = {}) {
       const state = this.state;
-      if (!state || this.suspended || this.stopped) return Promise.reject(new Error('not_available'));
+      if (!state || this.rosterChanged || this.suspended || this.stopped) return Promise.reject(new Error('not_available'));
       const input = Object.assign({}, extra, { id: uid(), type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: this.now(), seed: seed() });
       return this.enqueue(async () => {
         const next = await this.change(current => this.engine.apply(current, Object.assign({}, input, { now: this.now() })));
@@ -179,7 +189,7 @@
       });
     }
     pulse() {
-      if (!this.own || this.suspended || this.ticking) return;
+      if (!this.own || this.rosterChanged || this.suspended || this.ticking) return;
       const state = this.state;
       if (state?.phase !== 'play' || state.paused || !(state.deadline > 0) || this.now() < state.deadline + this.engine.AUTO_SKIP_GRACE_MS) return;
       this.ticking = true;
@@ -187,7 +197,7 @@
         .finally(() => { this.ticking = false; });
     }
     receive(num, data) {
-      if (this.stopped || !this.own || this.suspended || !this.sameRoom()) return;
+      if (this.stopped || !this.own || this.rosterChanged || this.suspended || !this.sameRoom()) return;
       const state = this.state; if (!state) return;
       const ours = data?.game === GAME && data.relay?.sessionId === state.sessionId;
       if (!ours) {
@@ -198,7 +208,7 @@
       const action = data.relayAction;
       if (!action || typeof action !== 'object' || typeof action.id !== 'string' || action.id.length < 8 || action.id.length > 100) return;
       if (action.sessionId !== state.sessionId || JSON.stringify(action).length > CONFIG.maxActionLength) return;
-      if (list(state.seen?.[num]).includes(action.id) || state.replies?.[num]?.id === action.id) return;
+      if (list(state.receipts?.[num]).some(receipt => receipt?.id === action.id) || state.replies?.[num]?.id === action.id) return;
       const key = num + ':' + action.id;
       if (this.incoming.has(key)) return;
       this.incoming.add(key);
@@ -222,7 +232,7 @@
       });
     }
     project() {
-      const doc = this.doc; if (!doc?.state) return;
+      const doc = this.doc; if (!doc?.state || this.rosterChanged) return;
       const state = doc.state, now = this.now();
       this.playerRefs.forEach((ref, i) => {
         if (!ref) return;
@@ -273,7 +283,7 @@
       } catch (_) { if (!this.stopped) this.status('error'); }
     }
     heartbeat() {
-      if (!this.own || this.suspended) return;
+      if (!this.own || this.rosterChanged || this.suspended) return;
       const sessionId = this.state?.sessionId, until = this.now() + CONFIG.liveMs;
       this.playerRefs.forEach((ref, i) => {
         if (!ref || this.sent.get(i)?.sessionId !== sessionId) return;
@@ -282,11 +292,11 @@
     }
     close() {
       if (this.stopped) return;
-      const owned = this.lease?.owner === this.client && this.connected;
+      const owned = this.lease?.owner === this.client && this.lease.instance === this.instance && this.connected;
       this.stopped = true;
       this.timers?.forEach(timer => root.clearInterval(timer));
       this.listeners.forEach(({ ref, handler }) => ref.off('value', handler)); this.listeners = [];
-      if (owned) this.leaseRef.transaction(raw => raw?.owner === this.client ? { owner: this.client, until: 0 } : undefined, undefined, false).catch(() => {});
+      if (owned) this.leaseRef.transaction(raw => raw?.owner === this.client && raw?.instance === this.instance ? { owner: this.client, instance: this.instance, until: 0 } : undefined, undefined, false).catch(() => {});
     }
   }
   return { Host, CONFIG, uid, stamp, identity };

@@ -6,7 +6,7 @@ var SKETCH_RELAY_UI = (() => {
   'use strict';
   const ART = typeof SKETCH_RELAY_ART !== 'undefined' ? SKETCH_RELAY_ART : null;
   const dict = {
-    brand: ['🖍️ SKETCH RELAY', '🖍️ SKETCH RELAY'], tagline: ['畫畫傳話・畫 → 猜 → 傳下去', 'DRAW · GUESS · PASS IT ON'],
+    gameTitle: ['Sketch Relay', 'Sketch Relay'], brand: ['SKETCH RELAY', 'SKETCH RELAY'], tagline: ['畫畫傳話 · 一個詞，經過每個人，會變成什麼？', 'ONE WORD. MANY HANDS. A SURPRISE AT THE END.'],
     player: ['玩家 {n}', 'Player {n}'], you: ['你', 'you'],
     // word stage
     wordKicker: ['第一步・秘密單字', 'STEP 1 · SECRET WORD'], wordTitle: ['🎲 你的秘密單字', '🎲 Your secret word'],
@@ -17,12 +17,23 @@ var SKETCH_RELAY_UI = (() => {
     // drawing / guessing
     drawKicker: ['輪到你畫', 'YOUR TURN TO DRAW'], guessKicker: ['輪到你猜', 'YOUR TURN TO GUESS'],
     drawOwnTitle: ['✏️ 畫出你的秘密單字', '✏️ Draw your secret word'], drawTitle: ['✏️ 把這個畫出來', '✏️ Draw this'],
-    drawHint: ['只能畫圖：不能寫字、數字或符號。時間到會自動交出這一頁。', 'Pictures only: no letters, numbers or symbols. Your page is handed in when time runs out.'],
-    drawHintNoTimer: ['只能畫圖：不能寫字、數字或符號。畫好就按交出。', 'Pictures only: no letters, numbers or symbols. Hand it in when you’re done.'],
+    drawHint: ['用圖像表達，不寫文字或數字。時間到會自動交棒。', 'Draw it without letters or numbers. Your drawing passes on when time runs out.'],
+    drawHintNoTimer: ['用圖像表達，不寫文字或數字。畫好就交棒。', 'Draw it without letters or numbers. Pass it on when you’re done.'],
     guessTitle: ['💭 這張畫是什麼？', '💭 What is this drawing?'],
     guessHint: ['寫下你覺得畫的是什麼。下一位會把你寫的畫出來。', 'Write what you think it shows. The next player will draw your words.'],
-    guessPlaceholder: ['用英文寫下你的猜測', 'Type your guess in English'], guessLabel: ['你的猜測', 'Your guess'],
-    passBtn: ['完成，傳下去 ➜', 'Done — pass it on ➜'], passTo: ['下一位：{name}', 'Next: {name}'],
+    guessPlaceholder: ['你覺得畫的是什麼？', 'What do you think it is?'], guessLabel: ['寫下一個詞或短句', 'Write a word or short phrase'],
+    passBtn: ['交棒 →', 'Pass it on →'], passTo: ['交給 {name}', 'Pass to {name}'],
+    batonOf: ['第 {n} / {total} 棒', 'TURN {n} OF {total}'], thisTurn: ['這一棒', 'THIS TURN'],
+    drawShort: ['畫', 'DRAW'], guessShort: ['猜', 'GUESS'], previousOnly: ['只看上一棒，不往回偷看', 'Only the previous page. No peeking back.'],
+    readyCount: ['{done} / {total} 人已交棒', '{done} / {total} have passed'], preparedCount: ['{done} / {total} 人已準備', '{done} / {total} are ready'], waitingCount: ['等 {n} 人完成這一棒', 'Waiting for {n} to finish this turn'],
+    locked: ['已鎖定，等待一起傳下去', 'Locked in. Waiting to pass together.'],
+    drawSurface: ['在這裡畫', 'Draw here'], secretKeep: ['記住它，別讓別人看到', 'Remember it. Keep it to yourself.'],
+    revealNow: ['剛翻開的這一頁', 'THE LATEST PAGE'], revealTrail: ['這個詞的旅程', 'THE WORD’S JOURNEY'], revealEnd: ['旅程到這裡，看看它變成了什麼', 'The journey is complete. See what it became.'],
+    hostScreen: ['共同畫面', 'SHARED SCREEN'], setupKicker: ['畫得好不好不重要', 'GOOD DRAWING IS OPTIONAL'], setupTitle: ['把腦中的詞，交給下一個人。', 'Pass the picture in your head.'],
+    setupNote: ['4–9 人 · 每人使用自己的玩家連結 · 畫與猜輪流交棒', '4–9 players · One player link per person · Alternate drawing and guessing'],
+    draftLocal: ['草稿已保留在這台裝置', 'Draft kept on this device'], draftSaved: ['草稿已同步', 'Draft synced'], draftSyncing: ['正在同步草稿…', 'Syncing draft…'], draftPending: ['草稿尚未同步，連線後重試', 'Draft not synced yet. Retrying when connected.'],
+    blankTimeout: ['時間到，空白這頁將略過', 'Time is up. This blank page will be skipped.'], blankDrawing: ['先畫一點東西，再交給下一位', 'Draw something before passing it on'],
+    paused: ['⏸ 暫停中', '⏸ Paused'], pausedHint: ['主持人暫停了這一棒。草稿已保留，繼續後再畫或猜。', 'The host paused this turn. Your draft is kept; continue when play resumes.'],
     promptWord: ['你的秘密單字', 'Your secret word'], promptTheirWord: ['{name} 的秘密單字', '{name}’s secret word'], promptGuess: ['{name} 寫的', 'Written by {name}'], promptSketch: ['{name} 畫的', 'Drawn by {name}'],
     skippedBefore: ['前一頁被跳過了，所以你看到的是再前一頁。', 'The page before was skipped, so you see the one before it.'],
     doneTitle: ['✅ 交出了！', '✅ Handed in!'], doneHint: ['等大家都完成，每本畫本就會一起傳給下一位。', 'When everyone is done, every sketchbook moves on one seat together.'],
@@ -32,12 +43,12 @@ var SKETCH_RELAY_UI = (() => {
     awayTitle: ['💤 你暫時離開中', '💤 You’re sitting out'], awayHint: ['回來後按「我回來了」，從下一頁開始又會輪到你。', 'Tap “I’m back” to get pages again from the next one.'],
     imBack: ['我回來了', 'I’m back'], stepAway: ['💤 暫時離開', '💤 Sit out'], stepAwayConfirm: ['暫時離開？輪到你的頁會被跳過。', 'Sit out? Your pages will be skipped until you come back.'],
     timeUp: ['時間到！交出中…', 'Time’s up! Handing in…'], seconds: ['{n} 秒', '{n}s'], noTimer: ['不計時', 'No timer'],
-    paused: ['⏸ 暫停中', '⏸ Paused'], pausedHint: ['主持人暫停了計時，可以繼續畫。', 'The host paused the clock. You can keep going.'],
     pageOf: ['第 {n} / {total} 頁', 'Page {n} of {total}'], bookOf: ['{name} 的畫本', '{name}’s sketchbook'],
     yourBook: ['你的畫本', 'Your sketchbook'],
     // pad
     pen: ['畫筆', 'Pen'], eraser: ['橡皮擦', 'Eraser'], undo: ['↶ 復原', '↶ Undo'], clear: ['清空', 'Clear'],
     clearConfirm: ['清掉整頁？', 'Clear the whole page?'], size: ['粗細', 'Size'], color: ['顏色', 'Colour'],
+    confirmAction: ['確認這個動作', 'CONFIRM ACTION'], confirmBtn: ['確認', 'Confirm'], cancel: ['取消', 'Cancel'],
     pageFull: ['這一頁畫滿了，可以交出了。', 'This page is full — you can hand it in.'],
     colorNames: ['黑,紅,藍,綠,橘,紫,咖啡', 'black,red,blue,green,orange,purple,brown'],
     // statuses
@@ -51,7 +62,7 @@ var SKETCH_RELAY_UI = (() => {
     revealWatch: ['{name} 正在一頁一頁翻開畫本。', '{name} is showing their sketchbook, one page at a time.'],
     revealHost: ['可以由畫本主人在自己的卡片上翻頁，也可以在這裡翻。', 'The owner can turn pages on their own card, or you can turn them here.'],
     nextPage: ['翻下一頁 ▶', 'Next page ▶'], showAll: ['全部翻開', 'Show all pages'],
-    nextBook: ['下一本畫本 ▶▶', 'Next sketchbook ▶▶'], seeResults: ['看結果 🏆', 'See the results 🏆'],
+    nextBook: ['下一本畫本 →', 'Next sketchbook →'], seeResults: ['收好這一輪的回憶 →', 'Wrap up this round →'],
     bookCount: ['畫本 {n} / {total}', 'Sketchbook {n} of {total}'],
     secretWord: ['🔒 秘密單字', '🔒 Secret word'], drew: ['✏️ {name} 畫', '✏️ {name} drew'], guessed: ['💭 {name} 猜', '💭 {name} guessed'],
     skippedPage: ['⏭️ {name} 跳過了這頁', '⏭️ {name} skipped this page'], blankPage: ['（空白）', '(blank)'],
@@ -71,7 +82,7 @@ var SKETCH_RELAY_UI = (() => {
     stoppedTitle: ['遊戲結束', 'Game ended'], stoppedHint: ['主持人結束了這場遊戲。', 'The host ended this game.'],
     round: ['第 {n} 輪', 'Round {n}'],
     // host
-    intro: ['每人一個秘密單字：先畫出來，下一位猜，再下一位畫那個猜測……最後一起看看單字變成了什麼！', 'Everyone gets a secret word. Draw it, the next player guesses, the next one draws that guess… then see what your word turned into!'],
+    intro: ['每個人都拿到一個秘密單字。畫出來、傳給下一位猜，再傳給下一位畫。最後逐頁揭曉，看懂也好、猜歪也好，都是故事。', 'Everyone starts with a secret word. Draw it, pass it to the next person to guess, then pass the guess on to be drawn. Reveal the journey together at the end.'],
     how1: ['🎲 擲骰子決定每個人卡片上的秘密單字', '🎲 A die roll picks each player’s secret word'],
     how2: ['✏️ 把收到的單字或猜測畫出來（有時間限制）', '✏️ Draw the word or guess you receive (against the clock)'],
     how3: ['💭 把收到的畫猜成一個字或短句', '💭 Turn the drawing you receive into a word or phrase'],
@@ -88,7 +99,7 @@ var SKETCH_RELAY_UI = (() => {
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], skipWaiting: ['不等了，跳過未完成的', 'Don’t wait — skip unfinished pages'],
     skipConfirm: ['跳過還沒完成的玩家？他們這一頁會被跳過。', 'Skip the players who are not done? Their page is skipped.'],
     startNow: ['不等了，直接開始畫', 'Start without waiting'], manage: ['玩家管理', 'Players'], end: ['結束遊戲', 'End game'],
-    endConfirm: ['確定要結束這場遊戲嗎？', 'End this game now?'], nextRound: ['再玩一輪（保留分數）', 'Play another round (keep scores)'],
+    endConfirm: ['確定要結束這場遊戲嗎？', 'End this game now?'], nextRound: ['再玩一輪', 'Play another round'],
     newGame: ['新遊戲（分數歸零）', 'New game (reset scores)'], changeSettings: ['更改設定', 'Change settings'], close: ['關閉', 'Close'],
     gallery: ['所有畫本', 'All sketchbooks'], rosterHint: ['暫時離開的人，輪到他的頁會自動跳過；回來後從下一頁開始。', 'Pages for someone sitting out are skipped; they rejoin from the next page.'],
     sitOut: ['先休息', 'Sit out'], rejoin: ['回來', 'Rejoin'], active: ['參與中', 'Playing'], inactive: ['暫離', 'Sitting out'],
@@ -107,11 +118,14 @@ var SKETCH_RELAY_UI = (() => {
     switched: ['房間已切換到其他遊戲。按「發單字卡」可以再玩。', 'The room switched to another game. Deal word cards to play again.'],
     noFirebase: ['目前無法連線到玩家頁，請檢查網路後重新整理。', 'Player pages are unavailable. Check your connection and reload.'],
     roomChanged: ['房間已變更。重新載入此頁以使用新房間。', 'The room changed. Reload this page to use the new room.'],
+    rosterChanged: ['玩家名單已變更，請重新開始這款遊戲。', 'The player list changed. Start a new game for this group.'],
     everyoneCards: ['每個人（包括要一起玩的主持人）都用自己的玩家連結畫畫和猜。', 'Everyone — including you, if you play — draws and guesses on their own player link.'],
     hostKeepOpen: ['這個主持頁要保持開啟：遊戲在這裡執行。可以分享這個畫面給大家看進度和揭曉。', 'Keep this host page open — the game runs here. Share this screen so everyone sees progress and the reveal.'],
     hostAway: ['等待主持頁重新連線…你的畫會保留。', 'Waiting for the host page to reconnect… your drawing is kept.'],
     sending: ['送出中…', 'Sending…'],
     stale_turn: ['畫面已更新，請再操作一次。', 'The game moved on. Try again.'], not_available: ['這個動作目前無法使用。', 'That isn’t available right now.'],
+    already_submitted: ['這一棒已交出，等待大家完成。', 'This turn is already handed in. Waiting for everyone.'], deadline_passed: ['時間已到，畫布已鎖定。', 'Time is up. The drawing is locked.'],
+    action_busy: ['等待同一玩家的另一個分頁完成操作…', 'Waiting for this player’s other tab to finish…'],
     invalid_sketch: ['這張畫無法送出，請再試一次。', 'That drawing could not be sent. Try again.'], invalid_guess: ['請寫 1–40 個字的猜測。', 'Write a guess of 1–40 characters.'],
     not_enough_players: ['至少要有兩位玩家在場。', 'At least two players must stay in.'], invalid_roster: ['需要 4–9 位玩家，請到主選單設定。', 'Set up 4–9 players in the hub.'],
     invalid_options: ['請選擇有效的設定。', 'Choose valid settings.'], error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check your connection and try again.'],
@@ -129,6 +143,35 @@ var SKETCH_RELAY_UI = (() => {
   const nameOf = (relay, num) => list(relay?.roster).find(p => Number(p.playerNum) === Number(num))?.name || t('player', { n: num });
   const STATUS_ICON = { choosing: '👀', ready: '✅', drawing: '✏️', guessing: '💭', done: '✅', skipped: '⏭️', away: '💤', idle: '' };
   const uid = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'sr-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+
+  function confirmAction(message) {
+    if (typeof document === 'undefined' || typeof document.createElement !== 'function' || !document.body) return Promise.resolve(true);
+    const dialog = document.createElement('dialog');
+    const labelId = 'sr-confirm-' + uid();
+    dialog.className = 'sr-dialog sr-confirm';
+    dialog.setAttribute('role', 'alertdialog'); dialog.setAttribute('aria-labelledby', labelId);
+    dialog.innerHTML = `<p class="sr-kicker">${esc(t('confirmAction'))}</p><p class="sr-confirm-message" id="${labelId}">${esc(message)}</p><div class="sr-actions"><button type="button" class="sr-button" data-sr-cancel>${esc(t('cancel'))}</button><button type="button" class="sr-button sr-primary" data-sr-confirm>${esc(t('confirmBtn'))}</button></div>`;
+    const returnFocus = document.activeElement;
+    document.body.appendChild(dialog);
+    return new Promise(resolve => {
+      let settled = false;
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        if (dialog.open && typeof dialog.close === 'function') dialog.close();
+        dialog.remove();
+        if (returnFocus?.isConnected && typeof returnFocus.focus === 'function') returnFocus.focus({ preventScroll: true });
+        resolve(value);
+      };
+      dialog.querySelector('[data-sr-cancel]').addEventListener('click', () => finish(false));
+      dialog.querySelector('[data-sr-confirm]').addEventListener('click', () => finish(true));
+      dialog.addEventListener('cancel', event => { event.preventDefault(); finish(false); });
+      dialog.addEventListener('close', () => finish(false));
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else { dialog.setAttribute('open', ''); dialog.setAttribute('aria-modal', 'true'); }
+      dialog.querySelector('[data-sr-cancel]').focus();
+    });
+  }
 
   // ----- small building blocks -----
   function art(artText, label = '', className = 'sr-art') {
@@ -187,6 +230,15 @@ var SKETCH_RELAY_UI = (() => {
   function waitingNames(relay) {
     return list(relay.roster).filter(p => ['drawing', 'guessing', 'choosing'].includes(p.status)).map(p => p.name);
   }
+  function progressHTML(relay) {
+    const p = relay.progress || {};
+    return `<div class="sr-progress"><span data-sr-progress-label>${esc(t(relay.phase === 'word' ? 'preparedCount' : 'readyCount', { done: p.done || 0, total: p.total || list(relay.roster).length }))}</span><span class="sr-progress-track"><i data-sr-progress-fill style="width:${p.total ? Math.min(100, (p.done || 0) / p.total * 100) : 0}%"></i></span></div>`;
+  }
+  function paintProgress(element, relay) {
+    const p = relay.progress || {};
+    for (const label of element.querySelectorAll('[data-sr-progress-label]')) label.textContent = t(relay.phase === 'word' ? 'preparedCount' : 'readyCount', { done: p.done || 0, total: p.total || list(relay.roster).length });
+    for (const fill of element.querySelectorAll('[data-sr-progress-fill]')) fill.style.width = (p.total ? Math.min(100, (p.done || 0) / p.total * 100) : 0) + '%';
+  }
 
   // ----- pages and books -----
   function pageHTML(page, { owner, awards, scoring, presenter = false, book = 0, latest = false, final = -1 } = {}) {
@@ -221,7 +273,7 @@ var SKETCH_RELAY_UI = (() => {
   function bookHTML(pages, { owner, awards = null, scoring = 'none', presenter = false, book = 0, latest = -1, complete = true } = {}) {
     const items = list(pages);
     const final = complete ? finalIndex(items) : -1;
-    return `<ol class="sr-book">${items.map((page, i) => pageHTML({ ...page, index: Number.isInteger(page.index) ? page.index : i }, { owner, awards, scoring, presenter, book, latest: i === latest, final })).join('')}</ol>`;
+    return `<ol class="sr-book${latest >= 0 ? ' sr-book-live' : ''}">${items.map((page, i) => pageHTML({ ...page, index: Number.isInteger(page.index) ? page.index : i }, { owner, awards, scoring, presenter, book, latest: i === latest, final })).join('')}</ol>`;
   }
   function revealHTML(relay, actor = 0) {
     const reveal = relay.reveal; if (!reveal) return '';
@@ -246,7 +298,7 @@ var SKETCH_RELAY_UI = (() => {
     }
     const hint = mine ? t('revealHint') : actor === 0 ? t('revealHost') : t('revealWatch', { name: reveal.ownerName });
     return `<div class="sr-reveal" data-sr-reveal>
-      <div class="sr-reveal-head"><p class="sr-kicker">${esc(t('bookCount', { n: reveal.book + 1, total: reveal.books }))}</p><p class="sr-soft">${esc(hint)}</p></div>
+      <div class="sr-reveal-head"><p class="sr-kicker">${esc(t('bookCount', { n: reveal.book + 1, total: reveal.books }))}</p><p class="sr-soft">${esc(hint)}</p><p class="sr-reveal-label">${esc(t(reveal.complete ? 'revealEnd' : 'revealNow'))}</p></div>
       ${bookHTML(pages, { owner: reveal.owner, awards, scoring, presenter, book: reveal.book, latest: reveal.complete ? -1 : pages.length - 1, complete: reveal.complete })}
       ${!reveal.complete ? `<p class="sr-soft sr-more">${esc(t('pageOf', { n: reveal.shown, total: reveal.total }))}</p>` : ''}
       ${judge}
@@ -277,8 +329,8 @@ var SKETCH_RELAY_UI = (() => {
     if (relay.phase === 'play') {
       const p = relay.progress || {};
       const title = p.drawing && p.guessing ? 'hostMixedTitle' : p.guessing ? 'hostGuessTitle' : 'hostDrawTitle';
-      return stageHTML({ tone: p.guessing && !p.drawing ? 'guess' : 'draw', kicker: t('pageOf', { n: Number(relay.step) + 2, total: Number(relay.steps) + 1 }) + (relay.paused ? ' · ' + t('paused') : ''),
-        title: esc(t(title)), hint: t('hostPlayHint'), extra: `<div class="sr-stage-side">${timerHTML(relay, now, true)}${progress}</div>` });
+      return stageHTML({ tone: p.guessing && !p.drawing ? 'guess' : 'draw', kicker: t('batonOf', { n: Number(relay.step) + 1, total: Number(relay.steps) }) + (relay.paused ? ' · ' + t('paused') : ''),
+        title: esc(t(title)), hint: t(relay.paused ? 'pausedHint' : 'hostPlayHint'), extra: `<div class="sr-stage-side">${timerHTML(relay, now, true)}${progress}</div>` });
     }
     if (relay.phase === 'reveal') return stageHTML({ tone: 'reveal', kicker: t('revealKicker'), title: esc(t('revealTitle', { name: relay.reveal?.ownerName || '' })), hint: '' });
     if (relay.phase === 'finished') return stageHTML({ tone: 'results', kicker: t('resultsKicker') + ' · ' + t('round', { n: relay.round }), title: esc(t(relay.settings?.scoring === 'none' ? 'laughsTitle' : 'resultsTitle')), hint: t(relay.settings?.scoring === 'none' ? 'laughsHint' : 'resultsHint') });
@@ -288,7 +340,7 @@ var SKETCH_RELAY_UI = (() => {
   function hostScene(relay, now) {
     if (!relay) return '';
     let body = '';
-    if (relay.phase === 'word' || relay.phase === 'play') body = `${relay.phase === 'play' ? rail(relay) : ''}${rosterHTML(relay, 0)}${passOrderHTML(relay)}`;
+    if (relay.phase === 'word' || relay.phase === 'play') body = `${progressHTML(relay)}${relay.phase === 'play' ? rail(relay) : ''}${rosterHTML(relay, 0)}${passOrderHTML(relay)}`;
     else if (relay.phase === 'reveal') body = revealHTML(relay, 0);
     else if (relay.phase === 'finished') body = scoresHTML(relay, 0);
     return `${hostStage(relay, now)}<div class="sr-board">${body}</div>`;
@@ -309,7 +361,7 @@ var SKETCH_RELAY_UI = (() => {
     constructor({ strokes = [], onChange = () => {}, onFull = () => {} } = {}) {
       this.strokes = Array.isArray(strokes) ? strokes : [];
       this.onChange = onChange; this.onFull = onFull;
-      this.color = 0; this.size = 1; this.tool = 'pen'; this.disabled = false; this.active = null; this.current = null;
+      this.color = 0; this.size = 1; this.tool = 'pen'; this.disabled = false; this.externalDisabled = false; this.confirming = false; this.clearId = 0; this.destroyed = false; this.active = null; this.current = null;
       const root = this.root = document.createElement('div');
       root.className = 'sr-pad';
       const names = t('colorNames').split(',');
@@ -321,21 +373,21 @@ var SKETCH_RELAY_UI = (() => {
           <div class="sr-tool-group"><span class="sr-tool-label">${esc(t('size'))}</span>${sizes}<span class="sr-tool-spacer"></span><button type="button" class="sr-tool" data-pad="undo">${esc(t('undo'))}</button><button type="button" class="sr-tool" data-pad="clear">${esc(t('clear'))}</button></div>
         </div>`;
       this.canvas = root.querySelector('canvas'); this.paper = root.querySelector('.sr-paper');
-      this.ctx = this.canvas.getContext('2d');
+      this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
       this.down = e => this.start(e); this.move = e => this.extend(e); this.up = e => this.finish(e);
       this.canvas.addEventListener('pointerdown', this.down);
       this.canvas.addEventListener('pointermove', this.move);
       this.canvas.addEventListener('pointerup', this.up);
       this.canvas.addEventListener('pointercancel', this.up);
       this.canvas.addEventListener('lostpointercapture', this.up);
-      this.click = e => {
+      this.click = async e => {
         const swatch = e.target.closest('[data-color]'), size = e.target.closest('[data-size]'), tool = e.target.closest('[data-tool]'), op = e.target.closest('[data-pad]');
         if (this.disabled) return;
         if (swatch) { this.color = Number(swatch.dataset.color); this.tool = 'pen'; }
         else if (size) this.size = Number(size.dataset.size);
         else if (tool) this.tool = this.tool === 'eraser' ? 'pen' : 'eraser';
         else if (op?.dataset.pad === 'undo') { this.strokes.pop(); this.redraw(); this.onChange(); }
-        else if (op?.dataset.pad === 'clear') { if (this.strokes.length && (typeof confirm !== 'function' || confirm(t('clearConfirm')))) { this.strokes = []; this.redraw(); this.onChange(); } }
+        else if (op?.dataset.pad === 'clear') await this.clear();
         this.paintTools();
       };
       root.addEventListener('click', this.click);
@@ -352,7 +404,30 @@ var SKETCH_RELAY_UI = (() => {
       this.root.classList.toggle('is-disabled', this.disabled);
       this.root.classList.toggle('is-erasing', this.tool === 'eraser');
     }
-    setDisabled(value) { if (this.disabled !== !!value) { this.disabled = !!value; if (this.disabled) this.cancel(); this.paintTools(); } }
+    refreshLabels() {
+      const names = t('colorNames').split(',');
+      this.canvas.setAttribute('aria-label', t('drawSurface'));
+      for (const b of this.root.querySelectorAll('[data-color]')) b.setAttribute('aria-label', names[Number(b.dataset.color)] || '');
+      for (const b of this.root.querySelectorAll('[data-size]')) b.setAttribute('aria-label', t('size') + ' ' + (Number(b.dataset.size) + 1));
+      this.root.querySelector('[data-tool]').textContent = '🧽 ' + t('eraser');
+      this.root.querySelector('[data-pad="undo"]').textContent = t('undo');
+      this.root.querySelector('[data-pad="clear"]').textContent = t('clear');
+      this.root.querySelector('.sr-tool-label').textContent = t('size');
+    }
+    setDisabled(value) {
+      this.externalDisabled = !!value;
+      const disabled = this.externalDisabled || !!this.confirming;
+      if (this.disabled !== disabled) { this.disabled = disabled; if (this.disabled) this.finish(); this.paintTools(); }
+    }
+    async clear() {
+      if (this.disabled || this.destroyed || (!this.strokes.length && !this.current)) return;
+      const clearId = ++this.clearId;
+      this.confirming = true; this.setDisabled(this.externalDisabled);
+      const accepted = await confirmAction(t('clearConfirm'));
+      if (this.destroyed || clearId !== this.clearId) return;
+      this.confirming = false; this.setDisabled(this.externalDisabled);
+      if (accepted && !this.externalDisabled && this.root.isConnected) { this.strokes = []; this.redraw(); this.onChange(); }
+    }
     resize() {
       const width = this.paper.clientWidth; if (!width) return;
       const ratio = Math.min(3, globalThis.devicePixelRatio || 1), pixels = Math.round(width * ratio);
@@ -362,6 +437,7 @@ var SKETCH_RELAY_UI = (() => {
     redraw() {
       const pixels = this.canvas.width; if (!pixels) return;
       ART.paint(this.ctx, this.current ? this.strokes.concat([this.current]) : this.strokes, pixels);
+      this.blankCache = null;
     }
     point(e) {
       const rect = this.canvas.getBoundingClientRect();
@@ -393,14 +469,30 @@ var SKETCH_RELAY_UI = (() => {
       if (!this.current) return;
       const stroke = { ...this.current, points: ART.simplify(this.current.points, 1.2) };
       this.current = null;
-      if (stroke.points.length === 2) stroke.points.push(stroke.points[0], stroke.points[1]);
       const next = this.strokes.concat([stroke]);
       if (ART.encode(next).length > ART.MAX_LENGTH - 64 || next.length > ART.MAX_STROKES) { this.redraw(); this.onFull(); return; }
       this.strokes = next; this.redraw(); this.onChange();
     }
     cancel() { this.active = null; this.current = null; this.redraw(); }
-    encode() { return ART.encode(this.strokes); }
+    encodeRaw() {
+      if (!this.current) return ART.encode(this.strokes);
+      const stroke = { ...this.current, points: ART.simplify(this.current.points, 1.2) };
+      const value = ART.encode(this.strokes.concat([stroke]));
+      return value.length <= ART.MAX_LENGTH - 64 && this.strokes.length < ART.MAX_STROKES ? value : ART.encode(this.strokes);
+    }
+    encode() { return this.isBlank() ? '' : this.encodeRaw(); }
+    isBlank() {
+      if (typeof this.blankCache === 'boolean') return this.blankCache;
+      if (!this.ctx?.getImageData || !this.canvas.width) return ART.isBlank(this.encodeRaw());
+      const pixels = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
+      const paper = [255, 250, 240];
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i + 3] > 0 && Math.max(Math.abs(pixels[i] - paper[0]), Math.abs(pixels[i + 1] - paper[1]), Math.abs(pixels[i + 2] - paper[2])) > 24) return this.blankCache = false;
+      }
+      return this.blankCache = true;
+    }
     destroy() {
+      this.destroyed = true; this.clearId++;
       this.resizer?.disconnect();
       this.canvas.removeEventListener('pointerdown', this.down); this.canvas.removeEventListener('pointermove', this.move);
       this.canvas.removeEventListener('pointerup', this.up); this.canvas.removeEventListener('pointercancel', this.up);
@@ -417,9 +509,9 @@ var SKETCH_RELAY_UI = (() => {
   function saveDraft(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-      // keep only a handful of drafts around
+      // Enough space for nine player links on one device, plus recent turns.
       const keys = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith('sketchRelayDraft:') && k !== key) keys.push(k); }
-      keys.slice(0, Math.max(0, keys.length - 4)).forEach(k => localStorage.removeItem(k));
+      keys.slice(0, Math.max(0, keys.length - 79)).forEach(k => localStorage.removeItem(k));
     } catch (_) {}
   }
 
@@ -429,13 +521,22 @@ var SKETCH_RELAY_UI = (() => {
       this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send;
       this.data = null; this.destroyed = false; this.pending = null; this.error = ''; this.editing = '';
       this.pad = null; this.padKey = ''; this.taskKey = ''; this.shellKey = ''; this.guessDraft = ''; this.autoSent = ''; this.notice = '';
+      this.composing = false; this.draftDirty = false; this.draftChangedAt = 0; this.draftSynced = null; this.draftFailure = false; this.queuedSubmit = null;
+      this.pendingSentAt = 0; this.pendingRetryDelay = 5000; this.dispatchingId = ''; this.pendingBusy = false;
+      this.draftSnapshotAt = 0;
       this.click = event => this.onClick(event);
       this.input = event => {
         const field = event.target.closest?.('[data-sr-guess]');
         if (field) { this.guessDraft = field.value; const task = this.task(); if (task) saveDraft(draftKey(this.relay(), task), { text: field.value }); this.paint(); }
       };
-      this.submit = event => { if (event.target.closest('[data-sr-guess-form]')) { event.preventDefault(); this.submitGuess(); } };
+      this.submit = event => { if (event.target.closest('[data-sr-guess-form]')) { event.preventDefault(); if (!this.composing) this.submitGuess(); } };
+      this.composeStart = event => { if (event.target.matches?.('[data-sr-guess]')) this.composing = true; };
+      this.composeEnd = event => { if (event.target.matches?.('[data-sr-guess]')) { this.composing = false; this.input(event); } };
+      this.keydown = event => { if (event.target.matches?.('[data-sr-guess]') && event.key === 'Enter' && (event.isComposing || this.composing || event.keyCode === 229)) event.preventDefault(); };
+      this.visibility = () => { if (document.hidden) this.preserveDraft(); };
       element.addEventListener('click', this.click); element.addEventListener('input', this.input); element.addEventListener('submit', this.submit);
+      element.addEventListener('compositionstart', this.composeStart); element.addEventListener('compositionend', this.composeEnd); element.addEventListener('keydown', this.keydown);
+      document.addEventListener('visibilitychange', this.visibility);
       this.timer = setInterval(() => this.paint(), 250);
     }
     relay() { return this.data?.relay || null; }
@@ -445,20 +546,35 @@ var SKETCH_RELAY_UI = (() => {
       const previous = this.relay();
       this.data = data;
       const relay = data.relay;
-      if (previous?.sessionId !== relay.sessionId || previous?.turnId !== relay.turnId) { this.error = ''; this.editing = ''; this.notice = ''; }
-      if (this.pending && relay.reply?.id === this.pending.id) {
-        const error = relay.reply.error;
+      if (previous?.sessionId !== relay.sessionId || previous?.turnId !== relay.turnId) {
+        this.error = ''; this.editing = ''; this.notice = ''; this.composing = false; this.queuedSubmit = null; this.draftDirty = false; this.draftSynced = null; this.draftFailure = false;
+      }
+      const receipt = this.pending && (list(relay.receipts).find(r => r.id === this.pending.id) || (relay.reply?.id === this.pending.id ? relay.reply : null));
+      if (receipt) {
+        const error = receipt.error;
         this.error = error ? t(dict[error] ? error : 'error') : '';
         if (!error && this.pending.type === 'submit') this.editing = '';
-        this.pending = null;
-      } else if (this.pending && (this.pending.sessionId !== relay.sessionId || (this.pending.turnId !== relay.turnId && ['submit', 'ready', 'swapWord'].includes(this.pending.type)))) this.pending = null;
+        if (this.pending.type === 'draft') {
+          if (!error) this.draftSynced = this.pending.art;
+          this.draftDirty = !!this.pad && this.pad.encode() !== this.draftSynced;
+          this.draftFailure = !!error;
+          if (error) this.draftChangedAt = this.now();
+          this.error = '';
+        }
+        this.pending = null; this.pendingBusy = false;
+      } else if (this.pending && (this.pending.sessionId !== relay.sessionId || (this.pending.turnId !== relay.turnId && ['draft', 'submit', 'ready', 'swapWord'].includes(this.pending.type)))) { this.pending = null; this.pendingBusy = false; }
       this.render();
+      this.flushQueuedSubmit();
     }
     shell() {
       const key = JSON.stringify([lang(), this.data.name, this.data.playerNum, this.relay().sessionId]);
       if (key === this.shellKey && this.element.querySelector('[data-sr-card]')) return;
       this.shellKey = key; this.taskKey = '';
-      if (this.pad) this.pad.root.remove();
+      if (this.pad) {
+        const task = this.task();
+        if (task && this.padKey === this.padKeyFor(task)) { this.pad.finish(); this.pad.refreshLabels(); }
+        this.pad.root.remove();
+      }
       this.element.innerHTML = `<div class="sr-card" data-sr-card>
         <header class="sr-card-head">${this.nameBanner(this.data)}<span class="sr-brand">${esc(t('brand'))}</span></header>
         <div data-sr-stage></div>
@@ -488,19 +604,19 @@ var SKETCH_RELAY_UI = (() => {
     }
     stage() {
       const relay = this.relay(), me = relay.me || {}, task = this.task();
-      const page = relay.phase === 'play' ? t('pageOf', { n: Number(relay.step) + 2, total: Number(relay.steps) + 1 }) : '';
+      const page = relay.phase === 'play' ? t('batonOf', { n: Number(relay.step) + 1, total: Number(relay.steps) }) : '';
       if (me.away && ['word', 'play'].includes(relay.phase)) return stageHTML({ tone: 'idle', kicker: page || t('brand'), title: esc(t('awayTitle')), hint: t('awayHint') });
       if (relay.phase === 'word') return stageHTML({ tone: 'word', kicker: t('wordKicker'), title: esc(t('wordTitle')), hint: me.ready ? t('readyDone') : t('wordHint', { n: relay.die }), extra: `<div class="sr-stage-side">${dieFace(relay.die)}</div>` });
       if (relay.phase === 'play' && task) {
         const editing = this.editing === this.padKeyFor(task) || this.editing === 'guess:' + this.padKeyFor(task);
         if (task.skipped) return stageHTML({ tone: 'idle', kicker: page, title: esc(t('skippedTitle')), hint: t('skippedHint') });
-        if (task.submitted && !editing) {
+        if (task.submitted) {
           const waiting = waitingNames(relay);
-          return stageHTML({ tone: 'done', kicker: page, title: esc(t('doneTitle')), hint: waiting.length ? t('waitingFor', { names: waiting.join('、') }) : t('everyoneDone'), extra: `<div class="sr-stage-side">${relay.progress ? `<div class="sr-count"><strong>${relay.progress.done}</strong><span>/ ${relay.progress.total}</span></div>` : ''}</div>` });
+          return stageHTML({ tone: 'done', kicker: page, title: esc(t('doneTitle')), hint: waiting.length ? t('waitingCount', { n: waiting.length }) : t('everyoneDone'), extra: `<div class="sr-stage-side">${relay.progress ? `<div class="sr-count"><strong>${relay.progress.done}</strong><span>/ ${relay.progress.total}</span></div>` : ''}</div>` });
         }
         if (task.kind === 'sketch') return stageHTML({ tone: 'draw', kicker: t('drawKicker') + ' · ' + page + (relay.paused ? ' · ' + t('paused') : ''), title: esc(t(task.own ? 'drawOwnTitle' : 'drawTitle')),
           hint: relay.paused ? t('pausedHint') : t(relay.deadline > 0 || relay.paused ? 'drawHint' : 'drawHintNoTimer'), extra: `<div class="sr-stage-side">${timerHTML(relay, this.now(), true)}</div>` });
-        return stageHTML({ tone: 'guess', kicker: t('guessKicker') + ' · ' + page, title: esc(t('guessTitle')), hint: t('guessHint') });
+        return stageHTML({ tone: 'guess', kicker: t('guessKicker') + ' · ' + page + (relay.paused ? ' · ' + t('paused') : ''), title: esc(t('guessTitle')), hint: t(relay.paused ? 'pausedHint' : 'guessHint') });
       }
       if (relay.phase === 'reveal') {
         const mine = Number(relay.reveal?.owner) === Number(this.data.playerNum);
@@ -513,7 +629,7 @@ var SKETCH_RELAY_UI = (() => {
     renderTask() {
       const box = this.element.querySelector('[data-sr-task]');
       const relay = this.relay(), me = relay.me || {}, task = this.task();
-      const keepPad = task && task.kind === 'sketch' && !task.skipped && !me.away && (!task.submitted || this.editing === this.padKeyFor(task));
+      const keepPad = task && task.kind === 'sketch' && !task.skipped && !me.away && !task.submitted;
       if (this.pad && (!keepPad || this.padKey !== this.padKeyFor(task))) { this.pad.destroy(); this.pad = null; this.padKey = ''; }
       if (me.away && ['word', 'play'].includes(relay.phase)) {
         box.innerHTML = `<div class="sr-panel sr-center"><p class="sr-big-emoji" aria-hidden="true">💤</p><button type="button" class="sr-button sr-primary sr-big" data-sr-action="back">${esc(t('imBack'))}</button></div>`;
@@ -533,21 +649,27 @@ var SKETCH_RELAY_UI = (() => {
         const prompt = task.prompt || {};
         const promptLabel = prompt.kind === 'word' ? (task.own ? t('promptWord') : t('promptTheirWord', { name: prompt.byName })) : prompt.kind === 'guess' ? t('promptGuess', { name: prompt.byName }) : t('promptSketch', { name: prompt.byName });
         const promptBody = prompt.kind === 'sketch' ? `<div class="sr-prompt-art">${art(prompt.art, promptLabel)}</div>` : `<p class="sr-prompt-text">${esc(prompt.text)}</p>`;
-        const promptHTML = `<div class="sr-prompt sr-prompt-${esc(prompt.kind)}"><p class="sr-prompt-label">${esc(promptLabel)}</p>${promptBody}${prompt.skippedBefore ? `<p class="sr-soft">${esc(t('skippedBefore'))}</p>` : ''}</div>`;
-        const passTo = `<p class="sr-soft sr-pass-to">${esc(t('passTo', { name: task.passToName }))}</p>`;
-        if (task.submitted && this.editing !== key && this.editing !== 'guess:' + key) {
+        const promptHTML = `<div class="sr-prompt sr-prompt-${esc(prompt.kind)}"><p class="sr-prompt-label">${esc(promptLabel)}<span>${esc(t('previousOnly'))}</span></p>${promptBody}${prompt.skippedBefore ? `<p class="sr-soft">${esc(t('skippedBefore'))}</p>` : ''}</div>`;
+        const passTo = `<div class="sr-pass-to"><span>${esc(this.data.name || t('you'))}</span><b aria-hidden="true">→</b><span>${esc(task.passToName)}</span></div>`;
+        if (task.submitted) {
           const mine = task.submitted.kind === 'sketch' ? `<div class="sr-mine-art">${art(task.submitted.art, t('yourPage'))}</div>` : `<p class="sr-mine-text">${esc(task.submitted.text)}</p>`;
-          const canEdit = !(task.kind === 'sketch' && relay.deadline > 0 && !relay.paused && this.now() >= relay.deadline);
-          box.innerHTML = `<div class="sr-panel sr-done"><p class="sr-kicker">${esc(t('yourPage'))}</p>${mine}<p class="sr-soft">${esc(t('doneHint'))}</p>${canEdit ? `<button type="button" class="sr-button" data-sr-action="edit">${esc(t('changeIt'))}</button>` : ''}</div>`;
+          box.innerHTML = `<div class="sr-panel sr-done"><p class="sr-done-pill">✓ ${esc(t('locked'))}</p>${mine}${progressHTML(relay)}<p class="sr-soft">${esc(t('doneHint'))}</p>${passTo}</div>`;
           return;
         }
         if (task.kind === 'sketch') {
-          box.innerHTML = `<div class="sr-play">${promptHTML}<div data-sr-pad-slot></div><div class="sr-actions"><button type="button" class="sr-button sr-primary sr-big sr-pass" data-sr-action="submitSketch">${esc(t('passBtn'))}</button></div>${passTo}</div>`;
+          box.innerHTML = `<div class="sr-play sr-play-draw">${promptHTML}<div data-sr-pad-slot></div><div class="sr-submit-row"><p class="sr-draft-status" data-sr-draft role="status"></p><button type="button" class="sr-button sr-primary sr-big sr-pass" data-sr-action="submitSketch">${esc(t('passBtn'))}</button></div>${passTo}</div>`;
           if (!this.pad || this.padKey !== key) {
-            const draft = loadDraft(draftKey(relay, task));
-            const strokes = draft?.art ? ART.decode(draft.art) : task.submitted?.art ? ART.decode(task.submitted.art) : null;
+            const localDraftKey = draftKey(relay, task);
+            const draft = loadDraft(localDraftKey);
+            const source = typeof draft?.art === 'string' ? draft.art : task.draft?.art ?? '';
+            const strokes = ART.decode(source);
+            this.draftSynced = typeof task.draft?.art === 'string' ? task.draft.art : null;
+            this.draftDirty = source !== this.draftSynced; this.draftChangedAt = this.now();
             this.pad = new Pad({ strokes: strokes || [],
-              onChange: () => { saveDraft(draftKey(this.relay(), task), { art: this.pad.encode() }); this.notice = ''; this.paint(); },
+              onChange: () => {
+                if (!this.pad || this.padKey !== key || this.task()?.book !== task.book || this.relay()?.turnId !== relay.turnId || this.relay()?.sessionId !== relay.sessionId) return;
+                saveDraft(localDraftKey, { art: this.pad.encode() }); this.draftDirty = true; this.draftChangedAt = this.now(); this.notice = ''; this.paint();
+              },
               onFull: () => { this.notice = t('pageFull'); this.paint(); } });
             this.padKey = key;
           }
@@ -555,7 +677,7 @@ var SKETCH_RELAY_UI = (() => {
           this.pad.resize();
           return;
         }
-        const saved = this.guessDraft && this.guessKey === key ? this.guessDraft : loadDraft(draftKey(relay, task))?.text ?? task.submitted?.text ?? '';
+        const saved = this.guessKey === key ? this.guessDraft : loadDraft(draftKey(relay, task))?.text ?? '';
         this.guessKey = key; this.guessDraft = saved;
         box.innerHTML = `<div class="sr-play">${promptHTML}<form class="sr-guess" data-sr-guess-form novalidate><label class="sr-field"><span>${esc(t('guessLabel'))}</span><input type="text" data-sr-guess maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="${esc(t('guessPlaceholder'))}" value="${esc(saved)}"></label><button type="submit" class="sr-button sr-primary sr-big sr-pass" data-sr-action="submitGuess">${esc(t('passBtn'))}</button></form>${passTo}</div>`;
         return;
@@ -571,62 +693,130 @@ var SKETCH_RELAY_UI = (() => {
       if (this.destroyed || !this.relay()) return;
       const relay = this.relay(), task = this.task(), now = this.now();
       paintTimer(this.element, relay, now);
+      paintProgress(this.element, relay);
       const hostLive = Number(this.data.relayLive?.until) || 0;
       const connection = this.element.querySelector('[data-sr-connection]');
       if (connection) connection.textContent = !this.connected() ? t('offline') : hostLive && now > hostLive && ['word', 'play', 'reveal'].includes(relay.phase) ? t('hostAway') : '';
       const feedback = this.element.querySelector('[data-sr-feedback]');
-      if (feedback) feedback.textContent = this.error || this.notice || (this.pending ? t('sending') : '');
-      const busy = !!this.pending || !this.connected() || typeof this.send !== 'function';
-      for (const button of this.element.querySelectorAll('[data-sr-action]')) button.disabled = busy;
-      if (this.pad) this.pad.setDisabled(!!this.pending && this.pending.type === 'submit');
+      if (feedback) feedback.textContent = this.error || this.notice || (this.pendingBusy ? t('action_busy') : this.pending && this.pending.type !== 'draft' ? t('sending') : '');
+      const busy = (!!this.pending && this.pending.type !== 'draft') || !!this.queuedSubmit || !this.connected() || typeof this.send !== 'function';
+      const expired = task?.kind === 'sketch' && relay.deadline > 0 && !relay.paused && now >= relay.deadline;
+      const frozen = relay.phase === 'play' && (relay.paused || task?.submitted || task?.skipped);
+      for (const button of this.element.querySelectorAll('[data-sr-action]')) button.disabled = busy || (this.pending?.type === 'draft' && !['submitSketch', 'submitGuess'].includes(button.dataset.srAction)) || (['submitSketch', 'submitGuess'].includes(button.dataset.srAction) && frozen);
+      if (this.pad) this.pad.setDisabled(!!this.queuedSubmit || (!!this.pending && this.pending.type === 'submit') || frozen || expired);
+      // A long finger stroke is still a draft, even before pointerup arrives.
+      if (this.pad?.current && !frozen && !expired && now - this.draftSnapshotAt >= 750) {
+        this.draftSnapshotAt = now;
+        const snapshot = this.pad.encode();
+        saveDraft(draftKey(relay, task), { art: snapshot });
+        this.draftDirty = snapshot !== this.draftSynced;
+        this.draftChangedAt = Math.min(this.draftChangedAt, now - 750);
+      }
       const guess = this.element.querySelector('[data-sr-guess]');
       const submitGuess = this.element.querySelector('[data-sr-action="submitGuess"]');
-      if (submitGuess) submitGuess.disabled = busy || !String(guess?.value || '').trim();
+      if (guess) guess.disabled = busy || frozen;
+      if (submitGuess) submitGuess.disabled = busy || frozen || this.composing || !String(guess?.value || '').trim();
+      const submitSketch = this.element.querySelector('[data-sr-action="submitSketch"]');
+      if (submitSketch) submitSketch.disabled = busy || frozen || expired || !this.pad || this.pad.isBlank();
+      const draftStatus = this.element.querySelector('[data-sr-draft]');
+      if (draftStatus) {
+        const status = this.pending?.type === 'draft' ? 'draftSyncing' : this.draftDirty ? (!this.connected() || this.draftFailure ? 'draftPending' : 'draftLocal') : this.draftSynced !== null ? 'draftSaved' : 'draftLocal';
+        draftStatus.textContent = t(status); draftStatus.classList.toggle('is-synced', status === 'draftSaved');
+      }
+      if (this.pad && task?.kind === 'sketch' && !frozen && !expired && this.draftDirty && now - this.draftChangedAt >= 750 && !this.pending && !this.queuedSubmit && this.connected()) {
+        this.sendCommand('draft', { book: task.book, kind: 'sketch', art: this.pad.encode() });
+      }
       // Time is up: hand in whatever is on the page, once.
-      if (task && task.kind === 'sketch' && !task.skipped && relay.deadline > 0 && !relay.paused && now >= relay.deadline) {
+      if (task && task.kind === 'sketch' && !task.skipped && !task.submitted && expired) {
         const key = this.padKeyFor(task);
-        const editing = this.editing === key;
-        if ((!task.submitted || editing) && this.pad && this.autoSent !== key && !this.pending && this.connected()) {
-          this.autoSent = key; this.notice = t('timeUp');
-          this.sendCommand('submit', { book: task.book, kind: 'sketch', art: this.pad.encode() }).then(ok => { if (!ok) this.autoSent = ''; });
+        if (this.pad && this.autoSent !== key && (!this.pending || this.pending.type === 'draft') && !this.queuedSubmit && this.connected()) {
+          if (this.pad.isBlank()) {
+            this.notice = t('blankTimeout'); if (feedback) feedback.textContent = this.notice;
+            // Clear an older saved drawing too. Wait for its draft receipt so
+            // this final empty draft cannot overwrite an unprocessed command.
+            if (!this.pending) { this.autoSent = key; this.sendCommand('draft', { book: task.book, kind: 'sketch', art: '' }).then(ok => { if (!ok) this.autoSent = ''; }); }
+          } else {
+            this.autoSent = key; this.notice = t('timeUp');
+            this.sendCommand('submit', { book: task.book, kind: 'sketch', art: this.pad.encode() }).then(ok => { if (!ok) this.autoSent = ''; });
+          }
         }
       }
+      if (this.pending && this.connected() && this.dispatchingId !== this.pending.id && now - this.pendingSentAt >= this.pendingRetryDelay) this.dispatchPending(this.pending);
+    }
+    flushQueuedSubmit() {
+      const relay = this.relay();
+      if (!this.queuedSubmit || this.pending || relay?.paused) return;
+      const queued = this.queuedSubmit; this.queuedSubmit = null;
+      if (queued.sessionId === relay?.sessionId && queued.turnId === relay.turnId && !this.task()?.submitted) this.sendCommand('submit', queued.extra);
     }
     async sendCommand(type, extra = {}) {
       const relay = this.relay();
-      if (!relay || this.pending || typeof this.send !== 'function' || !this.connected()) return false;
+      if (!relay || typeof this.send !== 'function' || !this.connected()) return false;
+      if (['submit', 'draft'].includes(type) && (relay.paused || this.task()?.submitted || this.task()?.skipped)) return false;
+      if (this.pending) {
+        if (type === 'submit' && this.pending.type === 'draft') { this.queuedSubmit = { sessionId: relay.sessionId, turnId: relay.turnId, extra }; this.paint(); return true; }
+        return false;
+      }
       const command = { ...extra, id: uid(), type, sessionId: relay.sessionId, turnId: relay.turnId };
-      this.pending = command; this.error = ''; this.paint();
-      try { await this.send(command); return true; }
+      this.pending = command; this.error = ''; this.pendingBusy = false; this.pendingSentAt = this.now(); this.pendingRetryDelay = 5000;
+      this.paint();
+      return this.dispatchPending(command);
+    }
+    async dispatchPending(command) {
+      if (this.dispatchingId === command.id || this.pending?.id !== command.id || !this.connected()) return false;
+      this.dispatchingId = command.id; this.pendingSentAt = this.now();
+      try { await this.send(command); this.pendingBusy = false; this.pendingRetryDelay = 5000; return true; }
       catch (e) {
         if (this.destroyed || this.pending?.id !== command.id) return false;
-        this.pending = null; this.error = t(e.message === 'stale_turn' ? 'stale_turn' : 'error'); this.paint(); return false;
+        if (e.message === 'stale_turn') { this.pending = null; this.queuedSubmit = null; this.error = t('stale_turn'); return false; }
+        this.pendingBusy = e.message === 'action_busy'; this.pendingRetryDelay = this.pendingBusy ? 1000 : 5000;
+        if (command.type === 'draft') this.draftFailure = true;
+        this.error = this.pendingBusy || command.type === 'draft' ? '' : t('error');
+        return true; // Retain this exact command ID until a receipt or a new turn arrives.
+      } finally {
+        if (this.dispatchingId === command.id) this.dispatchingId = '';
+        if (!this.destroyed) this.paint();
       }
     }
     submitGuess() {
       const task = this.task(); const field = this.element.querySelector('[data-sr-guess]');
       const text = String(field?.value || '').trim();
-      if (!task || task.kind !== 'guess' || !text) return;
+      if (!task || task.kind !== 'guess' || task.submitted || this.relay()?.paused || this.composing || !text) return;
       this.sendCommand('submit', { book: task.book, kind: 'guess', text: text.slice(0, 40) });
     }
-    onClick(event) {
+    async onClick(event) {
       const button = event.target.closest('[data-sr-action]');
       if (!button || button.disabled) return;
       const action = button.dataset.srAction, task = this.task(), relay = this.relay();
       if (action === 'submitGuess') return; // handled by the form submit
       if (action === 'ready' || action === 'swapWord') this.sendCommand(action);
-      else if (action === 'submitSketch' && task && this.pad) this.sendCommand('submit', { book: task.book, kind: 'sketch', art: this.pad.encode() });
-      else if (action === 'edit' && task) { this.editing = task.kind === 'sketch' ? this.padKeyFor(task) : 'guess:' + this.padKeyFor(task); this.render(); }
-      else if (action === 'away') { if (typeof confirm !== 'function' || confirm(t('stepAwayConfirm'))) this.sendCommand('away', { playerNum: Number(this.data.playerNum), away: true }); }
+      else if (action === 'submitSketch' && task && this.pad && !this.pad.isBlank()) this.sendCommand('submit', { book: task.book, kind: 'sketch', art: this.pad.encode() });
+      else if (action === 'away') {
+        const sessionId = relay.sessionId, turnId = relay.turnId, playerNum = Number(this.data.playerNum);
+        const accepted = await confirmAction(t('stepAwayConfirm'));
+        if (accepted && !this.destroyed && this.relay()?.sessionId === sessionId && this.relay()?.turnId === turnId && Number(this.data?.playerNum) === playerNum && ['word', 'play'].includes(this.relay()?.phase)) this.sendCommand('away', { playerNum, away: true });
+      }
       else if (action === 'back') this.sendCommand('away', { playerNum: Number(this.data.playerNum), away: false });
       else if (action === 'revealNext' || action === 'revealAll') this.sendCommand('revealNext', { book: Number(button.dataset.book), shown: Number(button.dataset.shown), all: action === 'revealAll' });
       else if (action === 'nextBook') this.sendCommand('nextBook', { book: Number(button.dataset.book) });
       else if (action === 'award') this.sendCommand('award', awardInput(button));
       void relay;
     }
+    preserveDraft() {
+      const task = this.task(), relay = this.relay();
+      if (!task || task.submitted || task.skipped) return;
+      if (task.kind === 'sketch' && this.pad && this.padKey === this.padKeyFor(task)) saveDraft(draftKey(relay, task), { art: this.pad.encode() });
+      else if (task.kind === 'guess') {
+        const field = this.element.querySelector('[data-sr-guess]');
+        if (field) saveDraft(draftKey(relay, task), { text: field.value });
+      }
+    }
     destroy() {
+      this.preserveDraft();
       this.destroyed = true; clearInterval(this.timer); this.pad?.destroy(); this.pad = null;
       this.element.removeEventListener('click', this.click); this.element.removeEventListener('input', this.input); this.element.removeEventListener('submit', this.submit);
+      this.element.removeEventListener('compositionstart', this.composeStart); this.element.removeEventListener('compositionend', this.composeEnd); this.element.removeEventListener('keydown', this.keydown);
+      document.removeEventListener('visibilitychange', this.visibility);
       this.data = null; this.pending = null;
     }
   }
@@ -637,6 +827,6 @@ var SKETCH_RELAY_UI = (() => {
     return out;
   }
 
-  return { dict, t, esc, list, art, dieFace, followReveal, timerHTML, paintTimer, rail, rosterHTML, passOrderHTML, bookHTML, revealHTML, scoresHTML, hostStage, hostScene, Pad, Card, awardInput, nameOf, clockText };
+  return { dict, t, esc, list, confirm: confirmAction, art, dieFace, followReveal, timerHTML, paintTimer, rail, rosterHTML, passOrderHTML, progressHTML, paintProgress, bookHTML, revealHTML, scoresHTML, hostStage, hostScene, Pad, Card, awardInput, nameOf, clockText };
 })();
 if (typeof module === 'object' && module.exports) module.exports = SKETCH_RELAY_UI;

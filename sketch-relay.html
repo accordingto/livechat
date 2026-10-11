@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Sketch Relay · IceBreak Hub</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <meta name="theme-color" content="#0d0d1a">
+  <meta name="theme-color" content="#111a23">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="sketch-relay.css?v=relay-1">
+  <link rel="stylesheet" href="sketch-relay.css?v=relay-2">
 </head>
 <body class="sr-screen">
   <div class="topbar">
     <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← 返回主選單</a>
     <span class="sr-meta" id="sr-room-label"></span>
   </div>
-  <div class="header"><h1>🖍️ Sketch Relay</h1><p class="sr-subtitle" data-i18n="sketchrelay.tagline">DRAW · GUESS · PASS IT ON</p></div>
+  <div class="header sr-header"><p class="sr-kicker">ICEBREAK HUB · SKETCH RELAY</p><h1 data-i18n="sketchrelay.gameTitle">Sketch Relay</h1><p class="sr-subtitle" data-i18n="sketchrelay.tagline">畫畫傳話 · 一個詞，經過每個人，會變成什麼？</p></div>
   <main class="sr-shell">
     <div class="sr-panel sr-demo" id="sr-demo-bar" hidden>
       <p class="sr-kicker" data-i18n="sketchrelay.demo">Interactive demo</p>
@@ -29,7 +29,15 @@
       <a class="sr-button sr-primary" href="index.html?step=1" data-i18n="sketchrelay.setUpRoom">Set up room &amp; players</a>
     </div>
     <form class="sr-panel sr-setup" id="sr-setup" novalidate>
-      <p class="sr-intro" data-i18n="sketchrelay.intro"></p>
+      <div class="sr-setup-hero">
+        <div class="sr-setup-copy"><p class="sr-kicker" data-i18n="sketchrelay.setupKicker"></p><h2 data-i18n="sketchrelay.setupTitle"></h2><p class="sr-intro" data-i18n="sketchrelay.intro"></p></div>
+        <div class="sr-cover" aria-hidden="true">
+          <div class="sr-cover-sheet sr-cover-word"><small>01 · WORD</small><strong>CAT</strong><span>→</span></div>
+          <div class="sr-cover-sheet sr-cover-draw"><small>02 · DRAW</small><svg viewBox="0 0 160 140"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M42 67 35 25 64 46Q80 37 98 46L129 23 117 68Q139 120 82 123 28 119 42 67Z"/><path d="M63 79h2m31 0h2M75 95l7 5 7-5M82 100v8m-30-13-23-4m22 13-24 4m84-13 23-4m-23 13 24 4"/></g></svg></div>
+          <div class="sr-cover-sheet sr-cover-guess"><small>03 · GUESS</small><strong>BAT?</strong><span>↗</span></div>
+        </div>
+      </div>
+      <p class="sr-setup-note" data-i18n="sketchrelay.setupNote"></p>
       <ol class="sr-how">
         <li data-i18n="sketchrelay.how1"></li><li data-i18n="sketchrelay.how2"></li><li data-i18n="sketchrelay.how3"></li><li data-i18n="sketchrelay.how4"></li>
       </ol>
@@ -41,7 +49,7 @@
           <option value="45" data-i18n="sketchrelay.t45"></option><option value="60" selected data-i18n="sketchrelay.t60"></option><option value="90" data-i18n="sketchrelay.t90"></option><option value="120" data-i18n="sketchrelay.t120"></option><option value="0" data-i18n="sketchrelay.t0"></option>
         </select></label>
         <label class="sr-field"><span data-i18n="sketchrelay.scoringLabel">Scoring</span><select id="sr-scoring">
-          <option value="friendly" data-i18n="sketchrelay.scoring_friendly"></option><option value="competitive" data-i18n="sketchrelay.scoring_competitive"></option><option value="none" data-i18n="sketchrelay.scoring_none"></option>
+          <option value="none" selected data-i18n="sketchrelay.scoring_none"></option><option value="friendly" data-i18n="sketchrelay.scoring_friendly"></option><option value="competitive" data-i18n="sketchrelay.scoring_competitive"></option>
         </select></label>
       </div>
       <p class="sr-players-line" id="sr-players-line"></p>
@@ -87,11 +95,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=membership-1"></script>
-  <script src="sketch-relay-words.js?v=relay-1"></script>
-  <script src="sketch-relay-art.js?v=relay-1"></script>
-  <script src="sketch-relay-engine.js?v=relay-1"></script>
-  <script src="sketch-relay-ui.js?v=relay-1"></script>
-  <script src="sketch-relay-sync.js?v=relay-1"></script>
-  <script src="sketch-relay-host.js?v=relay-1"></script>
+  <script src="sketch-relay-words.js?v=relay-2"></script>
+  <script src="sketch-relay-art.js?v=relay-2"></script>
+  <script src="sketch-relay-engine.js?v=relay-2"></script>
+  <script src="sketch-relay-ui.js?v=relay-2"></script>
+  <script src="sketch-relay-sync.js?v=relay-2"></script>
+  <script src="sketch-relay-host.js?v=relay-2"></script>
 </body>
 </html>

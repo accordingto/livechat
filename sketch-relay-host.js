@@ -39,7 +39,7 @@
   }
   function render() {
     const view = relay();
-    const switched = status === 'switched';
+    const switched = status === 'switched' || status === 'rosterChanged';
     const count = demo ? demoCount : playerCount;
     $('status').textContent = ['setupNeeded', 'ready', 'needPlayers'].includes(status) ? '' : t(status);
     $('setup-needed').hidden = status !== 'setupNeeded';
@@ -54,9 +54,9 @@
       renderScene(view);
       const phase = view.phase;
       const show = (id, on) => { $(id).hidden = !on; $(id).disabled = busy || !canControl(); };
-      show('start-now', phase === 'word');
+      show('start-now', phase === 'word'); $('start-now').disabled ||= view.paused;
       show('pause', ['word', 'play'].includes(phase)); $('pause').textContent = t(view.paused ? 'resume' : 'pause');
-      show('skip', phase === 'play');
+      show('skip', phase === 'play'); $('skip').disabled ||= view.paused;
       show('next-round', phase === 'finished');
       show('new-game', ['finished', 'stopped'].includes(phase));
       show('settings-open', ['finished', 'stopped'].includes(phase));
@@ -119,6 +119,11 @@
     } catch (e) { error = knownError(e.message); return false; }
     finally { busy = false; render(); }
   }
+  async function confirmCommand(type, message) {
+    if (!state || busy || !canControl()) return;
+    const sessionId = state.sessionId, turnId = state.turnId;
+    if (await UI.confirm(message) && state?.sessionId === sessionId && state?.turnId === turnId) command(type);
+  }
   async function start(options = settings()) {
     if (busy || !canControl()) return;
     busy = true; error = ''; render();
@@ -137,7 +142,7 @@
   }
   function demoData(actor) {
     const data = E.view(state, actor, now());
-    data.relayLive = { sessionId: state.sessionId, until: now() + 60000 };
+    data.relayLive = { sessionId: state.sessionId, until: 0 };
     return data;
   }
   async function demoSend(cmd) {
@@ -176,11 +181,11 @@
   $('setup-close').addEventListener('click', () => { editing = false; render(); });
   $('start-now').addEventListener('click', () => command('start'));
   $('pause').addEventListener('click', () => command(state?.paused ? 'resume' : 'pause'));
-  $('skip').addEventListener('click', () => { if (confirm(t('skipConfirm'))) command('skip'); });
+  $('skip').addEventListener('click', () => confirmCommand('skip', t('skipConfirm')));
   $('next-round').addEventListener('click', () => command('nextRound'));
   $('new-game').addEventListener('click', () => start(state?.settings || settings()));
   $('settings-open').addEventListener('click', () => { restoreSettings(state); editing = true; render(); $('deck').focus(); });
-  $('end').addEventListener('click', () => { if (confirm(t('endConfirm'))) command('stop'); });
+  $('end').addEventListener('click', () => confirmCommand('stop', t('endConfirm')));
   $('manage-open').addEventListener('click', () => { if (state) $('manage').showModal(); });
   $('manage').addEventListener('click', event => { if (event.target === $('manage')) $('manage').close(); });
   $('roster').addEventListener('click', event => {

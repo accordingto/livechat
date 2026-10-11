@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="cut.css?v=cut-12">
   <link rel="stylesheet" href="open-mic.css?v=om-cards-1">
   <link rel="stylesheet" href="bomb-relay.css?v=br-1">
-  <link rel="stylesheet" href="sketch-relay.css?v=relay-1">
+  <link rel="stylesheet" href="sketch-relay.css?v=relay-2">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -893,8 +893,8 @@
   <script src="cut-ui.js?v=cut-12"></script>
   <script src="bomb-relay-deck.js?v=br-1"></script>
   <script src="bomb-relay-ui.js?v=br-1"></script>
-  <script src="sketch-relay-art.js?v=relay-1"></script>
-  <script src="sketch-relay-ui.js?v=relay-1"></script>
+  <script src="sketch-relay-art.js?v=relay-2"></script>
+  <script src="sketch-relay-ui.js?v=relay-2"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=om-cards-1"></script>
@@ -2519,9 +2519,19 @@
           connected: () => talkConnected,
           send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
             if (current?.game !== 'sketchrelay' || current.relay?.sessionId !== command.sessionId) return;
-            if (['submit', 'ready', 'swapWord'].includes(command.type) && current.relay.turnId !== command.turnId) return;
+            if (['draft', 'submit', 'ready', 'swapWord'].includes(command.type) && current.relay.turnId !== command.turnId) return;
+            const oldAction = current.relayAction;
+            const acknowledged = [current.relay.reply, ...Object.values(current.relay.receipts || {})];
+            // A second tab using the same player link must wait for the first
+            // request's receipt, even while the host is temporarily offline.
+            if (oldAction?.id && oldAction.id !== command.id && !acknowledged.some(r => r?.id === oldAction.id)) return;
             return Object.assign({}, current, { relayAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+          }, undefined, false).then(result => {
+            if (result.committed) return;
+            const current = result.snapshot.val();
+            const sameTurn = !['draft', 'submit', 'ready', 'swapWord'].includes(command.type) || current?.relay?.turnId === command.turnId;
+            throw new Error(current?.game === 'sketchrelay' && current.relay?.sessionId === command.sessionId && sameTurn ? 'action_busy' : 'stale_turn');
+          }),
         });
         relayCard.update(data);
         return;

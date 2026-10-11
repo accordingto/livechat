@@ -253,3 +253,164 @@ test('heartbeat only touches the small relayLive child of cards in this game', a
   assert.ok(f.card(1).relayLive.until > until);
   h.close();
 });
+
+test('synced drafts survive a sleeping player card and stay private until the book passes', async () => {
+  const f = setup(4); const h = f.host(); await settle(h);
+  await h.start({ deck: 'easy', sketchSeconds: 45, scoring: 'none' }); await settle(h);
+  await ready(f, h);
+  const task = f.card(1).relay.me.task, drawing = doodle(6);
+  const before = f.db.log.length;
+  const saved = await f.send(1, 'draft', { book: task.book, kind: 'sketch', art: drawing }); await settle(h);
+  assert.equal(f.card(1).relay.reply.id, saved.id);
+  assert.equal(f.card(1).relay.reply.error, '');
+  assert.equal(f.card(1).relay.me.task.draft.art, drawing);
+  assert.equal(h.latest.step, 0, 'saving a draft never passes a book');
+  assert.equal(f.card(1).relay.progress.done, 0);
+  for (let p = 2; p <= 4; p++) assert.ok(!JSON.stringify(f.card(p)).includes(drawing), 'draft private from player ' + p);
+  assert.ok(!JSON.stringify(E.view(h.latest, 0, f.now)).includes(drawing), 'draft hidden from the shared projection');
+  assert.ok(f.db.log.slice(before).every(w => w.path === f.paths[0] || w.path.endsWith('/core')), 'only the sender card updates');
+  const deadline = h.latest.deadline;
+  // No submit command arrives from player 1: their browser went to sleep.
+  for (let p = 2; p <= 4; p++) {
+    await f.send(p, 'submit', { book: f.card(p).relay.me.task.book, kind: 'sketch', art: doodle(p) }); await settle(h);
+  }
+  f.now = deadline + E.AUTO_SKIP_GRACE_MS; await h.renew(); h.pulse(); await settle(h);
+  assert.equal(h.latest.step, 1);
+  assert.equal(h.latest.books[0].pages[1].art, drawing);
+  assert.equal(f.card(2).relay.me.task.prompt.art, drawing, 'next person gets the preserved drawing');
+  assert.ok(!f.card(2).relay.me.task.draft, 'a previous holder draft is never projected to a new task');
+  h.close();
+});
+
+test('the mailbox cannot replace a submitted drawing or save a draft while paused', async () => {
+  const f = setup(4); const h = f.host(); await settle(h);
+  await h.start({ deck: 'mixed', sketchSeconds: 60, scoring: 'none' }); await settle(h);
+  await ready(f, h);
+  const task = f.card(1).relay.me.task;
+  await f.send(1, 'submit', { book: task.book, kind: 'sketch', art: doodle(1) }); await settle(h);
+  await f.send(1, 'submit', { book: task.book, kind: 'sketch', art: doodle(2) }); await settle(h);
+  assert.equal(f.card(1).relay.me.task.submitted.art, doodle(1));
+  assert.equal(f.card(1).relay.reply.error, 'already_submitted');
+  await h.command('pause'); await settle(h);
+  const other = f.card(2).relay.me.task;
+  await f.send(2, 'draft', { book: other.book, kind: 'sketch', art: doodle(2) }); await settle(h);
+  assert.ok(f.card(2).relay.reply.error);
+  assert.ok(!f.card(2).relay.me.task.draft);
+  await h.command('resume'); await settle(h);
+  await f.send(2, 'draft', { book: other.book, kind: 'sketch', art: doodle(2) }); await settle(h);
+  assert.equal(f.card(2).relay.me.task.draft.art, doodle(2));
+  h.close();
+});
+
+test('duplicated host tabs with copied sessionStorage cannot both execute the game', async () => {
+  const f = setup(4), memory = new Map();
+  const storage = { getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v) };
+  const a = f.host(storage); await settle(a);
+  await a.start({ deck: 'easy', sketchSeconds: 60, scoring: 'none' }); await settle(a);
+  const session = a.latest.sessionId;
+  const b = f.host(storage); await settle(a, b);
+  assert.equal(a.client, b.client, 'a browser duplicates this storage');
+  assert.notEqual(a.instance, b.instance, 'each live document has a separate fence');
+  assert.equal(a.own, false); assert.equal(b.own, true);
+  assert.equal(a.lastStatus, 'other_host');
+  assert.equal(b.latest.sessionId, session, 'the second tab resumes the same game');
+  await a.renew(); await settle(a, b);
+  assert.equal(a.own, false, 'a displaced tab must not steal the lease back');
+  await assert.rejects(a.command('pause'), /other_host/);
+  a.close(); await settle(b);
+  assert.equal(b.own, true, 'closing the displaced tab must not release the live owner');
+  await b.command('pause'); await settle(b);
+  assert.equal(b.latest.paused, true);
+  b.close();
+});
+
+test('two requests from one seat both get private receipts instead of stranding the first tab', async () => {
+  const f = setup(4), h = f.host(); await settle(h);
+  await h.start({ deck: 'easy', sketchSeconds: 60, scoring: 'none' }); await settle(h);
+  const first = await f.send(1, 'swapWord'); await settle(h);
+  const second = await f.send(1, 'ready'); await settle(h);
+  const receipts = f.card(1).relay.receipts;
+  assert.ok(receipts.some(r => r.id === first.id && !r.error));
+  assert.ok(receipts.some(r => r.id === second.id && !r.error));
+  assert.ok(!JSON.stringify(f.card(2)).includes(first.id), 'other seats do not see receipts');
+  h.close();
+});
+
+test('a changed room roster can open a fresh game without projecting the old books onto new seats', async () => {
+  for (const count of [4, 6]) {
+    const f = setup(5), memory = new Map();
+    const storage = { getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v) };
+    const a = f.host(storage); await settle(a);
+    await a.start({ deck: 'easy', sketchSeconds: 60, scoring: 'none' }); await settle(a);
+    const oldSession = a.latest.sessionId;
+    a.close(); await settle(a);
+    f.room.count = count;
+    f.room.playerRef = i => f.db.ref(`rooms/RELAY/players/card-${i + 1}`);
+    const b = f.host(storage); await settle(b);
+    assert.equal(b.lastStatus, 'rosterChanged');
+    assert.equal(b.suspended, false, 'a roster mismatch is recoverable from the setup screen');
+    assert.equal(b.own, true);
+    await assert.rejects(b.command('start'), /not_available/);
+    if (count === 6) assert.equal(f.db.get('rooms/RELAY/players/card-6'), null, 'old game not projected into a new seat');
+    await b.start({ deck: 'mixed', sketchSeconds: 60, scoring: 'none' }); await settle(b);
+    assert.equal(b.lastStatus, 'ready');
+    assert.equal(b.latest.roster.length, count);
+    assert.notEqual(b.latest.sessionId, oldSession);
+    for (let p = 1; p <= count; p++) {
+      const card = f.db.get(`rooms/RELAY/players/card-${p}`);
+      assert.equal(card.relay.sessionId, b.latest.sessionId);
+      assert.equal(card.playerNum, p);
+      assert.equal(card.relay.me.card.length, 6);
+    }
+    b.close();
+  }
+});
+
+test('the real player-page mailbox guard never overwrites an unacknowledged request from another tab', () => {
+  const source = fs.readFileSync(require.resolve('../play.html'), 'utf8');
+  const start = source.indexOf("if (current?.game !== 'sketchrelay'");
+  const end = source.indexOf('}, undefined, false).then(result => {', start);
+  assert.ok(start > 0 && end > start);
+  const update = new Function('current', 'command', source.slice(start, end));
+  const first = { id: 'first-request', type: 'ready', sessionId: 'room-session', turnId: 2 };
+  const second = { id: 'second-request', type: 'swapWord', sessionId: 'room-session', turnId: 2 };
+  const card = { game: 'sketchrelay', relay: { sessionId: 'room-session', turnId: 2 }, relayAction: first };
+  assert.equal(update(card, second), undefined, 'an offline host cannot cause a request to be lost');
+  assert.equal(update(card, first).relayAction.id, first.id, 'same-ID retry is allowed');
+  card.relay.receipts = { 0: { id: first.id, error: '' } };
+  assert.equal(update(card, second).relayAction.id, second.id, 'a receipt releases the mailbox');
+  assert.equal(update(card, { ...second, type: 'draft', turnId: 1 }), undefined, 'stale drafts never overwrite a newer turn');
+  assert.equal(update({ ...card, game: 'dixit' }, second), undefined, 'game takeover is preserved');
+});
+
+test('retrying a seen request with an evicted legacy receipt releases the real mailbox without replaying the command', async () => {
+  const f = setup(4), h = f.host(); await settle(h);
+  await h.start({ deck: 'easy', sketchSeconds: 60, scoring: 'none' }); await settle(h);
+  await ready(f, h);
+  const book = f.card(1).relay.me.task.book;
+  const sleepingTab = await f.send(1, 'draft', { book, kind: 'sketch', art: doodle(1) }); await settle(h);
+  for (let i = 0; i < 15; i++) { await f.send(1, 'draft', { book, kind: 'sketch', art: doodle(2) }); await settle(h); }
+  const corePath = f.base() + '/core', core = clone(f.db.get(corePath)), legacy = JSON.parse(core.stateJson);
+  legacy.receipts[1] = legacy.receipts[1].slice(-12);
+  assert.ok(legacy.seen[1].includes(sleepingTab.id));
+  assert.ok(!legacy.receipts[1].some(r => r.id === sleepingTab.id));
+  f.db.set(corePath, { ...core, stateJson: JSON.stringify(legacy), revision: core.revision + 1 }); await settle(h);
+  const source = fs.readFileSync(require.resolve('../play.html'), 'utf8');
+  const start = source.indexOf("if (current?.game !== 'sketchrelay'");
+  const end = source.indexOf('}, undefined, false).then(result => {', start);
+  const mailbox = new Function('current', 'command', source.slice(start, end));
+  const retry = await f.db.ref(f.paths[0]).transaction(current => mailbox(current, sleepingTab));
+  assert.equal(retry.committed, true, 'the sleeping tab can retry its original command');
+  await settle(h);
+  const restored = f.card(1).relay.receipts.find(r => r.id === sleepingTab.id);
+  assert.deepEqual(restored, { id: sleepingTab.id, error: 'stale_turn' }, 'the host restores the missing acknowledgment');
+  assert.equal(h.latest.drafts[book].art, doodle(2), 'old draft replay cannot roll back the other tab\'s work');
+  assert.equal(h.latest.step, 0);
+  const next = { id: crypto.randomUUID(), type: 'draft', sessionId: sleepingTab.sessionId, turnId: sleepingTab.turnId, book, kind: 'sketch', art: doodle(3) };
+  const released = await f.db.ref(f.paths[0]).transaction(current => mailbox(current, next));
+  assert.equal(released.committed, true, 'the restored receipt frees the mailbox for a new command');
+  await settle(h);
+  assert.equal(h.latest.drafts[book].art, doodle(3));
+  assert.ok(f.card(1).relay.receipts.some(r => r.id === next.id && !r.error));
+  h.close();
+});
