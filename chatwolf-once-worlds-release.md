@@ -84,3 +84,16 @@ temporary nodes, with zero cleanup failures. The first checker attempt exposed
 RTDB omission of empty lobby hands; only the checker was normalized, then rerun.
 Both legacy service engine/deck source files matched the current upstream before
 the patch; the updated sources and new deck are retained for future deployments.
+
+Frontend release 0923db8 is published and preserved in the subsequent upstream
+Sketch Relay update e453e57. Read-only production checks matched all 550/550 Once
+assets (including the entire new pack) and 61/61 shared executor/role-card assets.
+Production endpoint, CORS and invalid-ticket rejection passed; private runtime
+files return 404 on both sites. The production-page synthetic Chrome test also
+passed five complete Modern & Future games at five viewport sizes, all 258 texts
+at 320/375px, and image-node/source stability. No existing room was entered.
+
+Final full regression at the integrated card-world release: 1,700/1,700 passed,
+no failures or skips. After fast-forwarding the newer unrelated Sketch Relay
+release, another 58 targeted loader/world/privacy/UI tests passed. The production
+checks compare against that newer player page, not an obsolete local copy.

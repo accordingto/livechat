@@ -63,6 +63,11 @@ chatwolf-once-worlds-release.md and world-aware isolated service/browser scripts
 Independent service READY dpl_EiHZJHMv7sShbZNoUX1zag1N7G5A; fresh production
 Once checks Classic/auto 471 and Modern & Future/9 711 passed, each clean7/7.
 RTDB empty-array omission is normalized by QA only, not by changing game rules.
+Frontend published (0923db8, preserved in newer e453e57 player page). Final full
+release regression 1700/1700; newer upstream integration targeted58/58. Production
+Once550/550 and executor/role61/61 assets match; production Chrome synthetic new
+world games/text/image-stability pass. Actual physical cross-device play remains
+unverified. Neither current nor prior live rooms were used by these QA checks.
 
 ## CURRENT: Open Mic card presentation (2026-10-11)
 

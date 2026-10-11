@@ -19,11 +19,18 @@ function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry
   const results=[];let next=0;
   async function worker(){while(next<assets.length){const asset=assets[next++];
     const file=asset.split('?')[0],local=fs.readFileSync(path.join(root,file));
-    const response=await fetch(base+asset+(asset.includes('?')?'&':'?')+'release='+encodeURIComponent(release),{signal:AbortSignal.timeout(30000)});
-    const remote=Buffer.from(await response.arrayBuffer());
-    results.push({asset,status:response.status,matches:response.ok&&hash(local,file)===hash(remote,file)});
+    let result;
+    for(let attempt=0;attempt<3;attempt++){
+      try{
+        const response=await fetch(base+asset+(asset.includes('?')?'&':'?')+'release='+encodeURIComponent(release),{signal:AbortSignal.timeout(45000)});
+        const remote=Buffer.from(await response.arrayBuffer());
+        result={asset,status:response.status,matches:response.ok&&hash(local,file)===hash(remote,file)};
+        if(response.ok||attempt===2)break;
+      }catch(error){result={asset,status:'network-timeout',matches:false};}
+    }
+    results.push(result);
   }}
-  await Promise.all(Array.from({length:8},worker));
+  await Promise.all(Array.from({length:4},worker));
   const matched=results.filter(result=>result.matches).length;
   results.filter(result=>!result.matches).forEach(result=>console.log('NOT CURRENT',result));
   console.log(`ONCE PRODUCTION ASSETS ${matched}/${assets.length}`);
