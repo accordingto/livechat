@@ -15,6 +15,20 @@
 .once-player-meta { display:flex; flex-direction:column; align-items:flex-end; gap:5px; font-size:.95rem; }
 .once-connection { color:#9be8be; font-size:.78rem; }
 .once-connection.is-offline { color:#ffce85; }
+.once-world-tag { display:inline-block; color:#b7d5e6; font-size:.72rem; line-height:1.4; margin-top:6px; }
+.once-lobby-settings { padding:14px; border:1px solid #718fa04d; border-radius:10px; background:#0b192b5c; margin:12px 0; }
+.once-settings-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.once-settings-fields label { display:grid; gap:6px; font-size:.81rem; color:#d5dfed; font-weight:650; min-width:0; }
+.once-settings-fields select { appearance:auto; min-height:44px; width:100%; min-width:0; padding:8px 10px; border:1px solid #687f9b; border-radius:8px; color:#f0f4fa; background:#1b304a; font:inherit; }
+.once-settings-fields select:focus-visible { outline:3px solid #a6f3eb; outline-offset:2px; }
+.once-settings-fields select:disabled { opacity:.55; }
+.once-settings-summary { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:12px; }
+.once-settings-summary .once-button { min-height:40px; padding:8px 12px; font-size:.8rem; }
+.once-opening-count { margin:0; color:#ecd8aa; font-size:.82rem; }
+.once-worlds-note { margin:8px 0 0; font-size:.74rem; }
+.once-lobby-settings--readonly { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.once-lobby-settings--readonly .once-world-tag { margin-top:0; }
+@media(max-width:480px){ .once-settings-fields { grid-template-columns:minmax(0,1fr); gap:10px; } }
 .once-panel { background:#182334; border:1px solid #324155; border-radius:18px; padding:22px; margin:0 0 18px; min-width:0; }
 .once-game h2 { font-size:1.15rem; line-height:1.4; margin:0 0 12px; color:#f0f3f8; letter-spacing:0; }
 .once-game p { line-height:1.55; }

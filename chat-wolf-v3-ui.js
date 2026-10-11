@@ -7,6 +7,20 @@
     const seconds=Math.floor(Math.max(0,Number(ms)||0)/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
     return hours?hours+':'+String(minutes%60).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0'):minutes+':'+String(seconds%60).padStart(2,'0');
   }
+  // Role art is decorative and chosen only from the viewer's private role.
+  // No art or role-dependent styling belongs on the public host presentation.
+  const roleArt = Object.freeze({WOLF:'wolf',JESTER:'jester',VILLAGER:'villager'});
+  function mountRoleCard(container, html) {
+    const template=container.ownerDocument.createElement('template');
+    template.innerHTML=html;
+    const previous=container.querySelector('[data-wolf-role-art]');
+    const next=template.content.querySelector('[data-wolf-role-art]');
+    if(previous && next && previous.dataset.wolfRoleArt===next.dataset.wolfRoleArt &&
+      previous.getAttribute('src')===next.getAttribute('src')) next.replaceWith(previous);
+    // Moving the unchanged loaded image before committing avoids another
+    // fetch/decode flash on receipts, presence updates and task cooperation.
+    container.replaceChildren(template.content);
+  }
   function create(ctx) {
     let C = root.CHAT_WOLF_COPY_V3;
     const esc = ctx.esc;
@@ -39,6 +53,12 @@
     const profession = id => professions().find(item => item.id === id || item.roleId === id);
     const topics = () => (root.CHAT_WOLF_V4_CONTENT || root.CHAT_WOLF_V3_CONTENT).topics;
     const names = ids => (ids || []).map(name).map(esc).join(', ') || esc(C.nobody);
+    const rolePortrait = role => {
+      const art=Object.hasOwn(roleArt,role)?roleArt[role]:null;
+      if(!art || isHost())return '';
+      const key=JSON.stringify([pub().matchId||'',me().playerId||'',role]);
+      return '<div class="v8-role-portrait"><img src="assets/chat-wolf/roles/'+art+'-v1.webp" alt="" aria-hidden="true" width="160" height="200" decoding="async" data-wolf-role-art="'+esc(key)+'"></div>';
+    };
     const button = (action, label, extra, style) => '<button type="button" class="btn '+(style || '')+'" data-v3-action="'+esc(action)+'" '+(extra || '')+'>'+esc(label)+'</button>';
     const field = (key, value, min, max) => {
       const limits = root.CHAT_WOLF_V3_RULES.limits[key] || [min,max];
@@ -292,7 +312,7 @@
       const roleName=role==='VILLAGER'?(villageRole?.name || C.ordinary):role==='WOLF'?wolfRoleName(person.wolfProfession):C.roles[role];
       const progress=role==='WOLF'?C.teamTasks((person.tasks||[]).filter(task=>task.completed).length,(person.tasks||[]).length):'';
       const roleClass=role==='WOLF'?'wolf':role==='JESTER'?'jester':'villager';
-      let html='<div class="v4-private-layout"><header class="panel v4-role-header v5-role-'+roleClass+'"><div><div class="eyebrow">'+esc(team)+'</div><h2 class="role-title '+roleClass+'">'+esc(roleName)+'</h2></div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
+      let html='<div class="v4-private-layout v8-private-card v8-camp-'+roleClass+'"><header class="panel v4-role-header v5-role-'+roleClass+'"><div class="v8-role-identity">'+rolePortrait(role)+'<div class="v8-role-copy"><div class="eyebrow">'+esc(team)+'</div><h2 class="role-title '+roleClass+'">'+esc(roleName)+'</h2></div></div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
       if(['MEETING_TURNS','FINAL_CLUES','VOTING','JUDGE_DECISION'].includes(p.phase))html+=phasePanel();
       html+=topicCard(true);
       if(hasTasks)html+='<section class="panel v4-private-tasks"><div class="v4-task-toolbar"><h3>'+esc(role==='WOLF'?progress:roleName+' · task')+'</h3>'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'aria-pressed="'+(taskLanguage==='zh')+'"','ghost small')+'</div>';
@@ -535,7 +555,7 @@
       }
       return false;
     }
-    return {render,entryFields,readSettings,handleClick,handleChange,handleInput,handleSubmit,onActionError,updateDirectionNotice,handleKeydown};
+    return {render,mount:container=>mountRoleCard(container,render()),entryFields,readSettings,handleClick,handleChange,handleInput,handleSubmit,onActionError,updateDirectionNotice,handleKeydown};
   }
-  root.CHAT_WOLF_V3_UI=Object.freeze({create,elapsedMilliseconds,formatElapsed});
+  root.CHAT_WOLF_V3_UI=Object.freeze({create,elapsedMilliseconds,formatElapsed,mountRoleCard});
 }(window));

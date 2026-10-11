@@ -581,7 +581,7 @@
     if (!state) return;
     if (state.public.rulesVersion >= 3) {
       const preserve=app.dataset.matchId===(state.public.matchId || '')?captureInteraction():null;
-      app.innerHTML = v3.render();
+      v3.mount(app);
       app.dataset.matchId=state.public.matchId || '';
       restoreInteraction(preserve);
       paintTimers();

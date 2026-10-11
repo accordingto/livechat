@@ -10,7 +10,7 @@
   const VERSION = 'hub-launch-1';
   const specs = Object.freeze({
     letstalk: { href:'lets-talk.html', min:2, max:9, sync:'TALK_SYNC', scripts:['talk-crazy.js','talk-engine.js','talk-topics.js','talk-sync.js'] },
-    onceupon: { href:'once-upon-a-time.html', min:2, max:6, sync:'ONCE_SYNC', scripts:['once-upon-a-time-deck.js','once-upon-a-time-engine.js','talk-sync.js','once-upon-a-time-sync.js'] },
+    onceupon: { href:'once-upon-a-time.html', min:2, max:6, sync:'ONCE_SYNC', scripts:['once-upon-a-time-modern-future-deck.js','once-upon-a-time-deck.js','once-upon-a-time-engine.js','talk-sync.js','once-upon-a-time-sync.js'] },
     dixit: { href:'dixit.html', min:3, max:8, sync:'DIXIT_SYNC', scripts:['dixit-deck.js','dixit-engine.js','talk-sync.js','dixit-sync.js'] },
     cut: { href:'cut.html', min:2, max:9, sync:'CUT_SYNC', scripts:['cut-config.js','cut-random.js','cut-topics.js','cut-engine.js','cut-sync.js'] },
     openmic: { href:'open-mic-rescue.html', min:2, max:9, sync:'OPEN_MIC_SYNC', scripts:['open-mic-content.js','open-mic-engine.js','open-mic-sync.js'] },

@@ -12,9 +12,15 @@ var ONCE_ENGINE = (() => {
       .map(key => value[key]).filter(x => x != null);
   const copy = value => JSON.parse(JSON.stringify(value));
   const storyCards = list(deck.storyCards), endingCards = list(deck.endingCards);
-  const storyById = Object.fromEntries(storyCards.map(card => [card.id, card]));
-  const endingById = Object.fromEntries(endingCards.map(card => [card.id, card]));
-  const HOST_TYPES = ['deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
+  // Global id lookups support saved cards from either world. Physical piles
+  // are selected only once at deal time and are never mixed between worlds.
+  const storyById = deck.storyById || Object.fromEntries(storyCards.map(card => [card.id, card]));
+  const endingById = deck.endingById || Object.fromEntries(endingCards.map(card => [card.id, card]));
+  const worldPool = id => typeof deck.getWorld === 'function' ? deck.getWorld(id) :
+    id === 'classic' ? { id: 'classic', storyCards, endingCards } : null;
+  const validHandSize = value => value === null || Number.isInteger(value) && value >= 3 && value <= 9;
+  const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - s.roster.length) : s.handSize;
+  const HOST_TYPES = ['configure', 'deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
   const TURN_FREE = ['ready', 'vote', 'finishVote', 'resolveSocial'];
   function seedValue(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return (value >>> 0) || 1;
@@ -32,13 +38,16 @@ var ONCE_ENGINE = (() => {
     }
     return result;
   }
-  function create({ id, roster, seed, now, sharedControls = false } = {}) {
+  function create({ id, roster, seed, now, sharedControls = false, world = 'classic', handSize = null } = {}) {
     const players = list(roster);
     if (!id || players.length < 2 || players.length > 6) throw new Error('invalid_setup');
     if (new Set(players.map(p => p.playerNum)).size !== players.length ||
         players.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
+    if (typeof world !== 'string' || !worldPool(world)) throw new Error('invalid_world');
+    if (!validHandSize(handSize)) throw new Error('invalid_hand_size');
     return {
       version: 1, sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
+      world, handSize, resolvedHandSize: handSize == null ? Math.max(5, 11 - players.length) : handSize,
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       readiness: {}, hands: {}, endings: {}, storyteller: null, winner: null,
       storyDeck: [], storyDiscard: [], storyHeld: [], endingDeck: [], endingDiscard: [],
@@ -50,9 +59,14 @@ var ONCE_ENGINE = (() => {
   }
   function normalize(current) {
     const s = copy(current);
+    // Existing sessions keep every already-dealt card. Missing metadata only
+    // describes their original classic/automatic setup; it never triggers a deal.
+    if (s.world == null) s.world = 'classic';
+    if (s.handSize == null) s.handSize = null;
     for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log']) s[key] = list(s[key]);
     for (const key of ['readiness', 'hands', 'endings', 'replies', 'seen']) s[key] = s[key] || {};
     for (const player of s.roster) s.hands[player.playerNum] = list(s.hands[player.playerNum]);
+    if (s.resolvedHandSize == null) s.resolvedHandSize = resolvedHandSize(s);
     if (s.interrupt?.rollback) {
       const rollback = s.interrupt.rollback;
       for (const key of ['storyDeck', 'storyDiscard', 'storyHeld']) rollback[key] = list(rollback[key]);
@@ -109,7 +123,7 @@ var ONCE_ENGINE = (() => {
     // This is a light opening-hand safeguard, not five equal category quotas.
     // Pick the first eligible physical card from the genuinely shuffled deck;
     // the untouched remainder keeps its random order for all later draws.
-    const minimumKinds = count >= 7 ? 4 : 3;
+    const minimumKinds = Math.min(count, count >= 7 ? 4 : 3);
     const categoryCap = Math.ceil(count * 0.4);
     const seats = randomize(s, s.roster.map(player => player.playerNum), cmd, 'opening-seats');
     const counts = Object.fromEntries(seats.map(seat => [seat, {}]));
@@ -226,6 +240,23 @@ var ONCE_ENGINE = (() => {
     if (HOST_TYPES.includes(cmd.type) && !manager) reject('not_available');
     else if (!TURN_FREE.includes(cmd.type) && cmd.turnId !== s.turnId) reject('stale_turn');
     else switch (cmd.type) {
+      case 'configure': {
+        if (s.phase !== 'LOBBY') { reject('not_available'); break; }
+        const hasWorld = Object.prototype.hasOwnProperty.call(cmd, 'world');
+        const hasSize = Object.prototype.hasOwnProperty.call(cmd, 'handSize');
+        if (!hasWorld && !hasSize) { reject('invalid_settings'); break; }
+        const world = hasWorld ? cmd.world : s.world, handSize = hasSize ? cmd.handSize : s.handSize;
+        if (typeof world !== 'string' || !worldPool(world)) { reject('invalid_world'); break; }
+        if (!validHandSize(handSize)) { reject('invalid_hand_size'); break; }
+        // Validate both values before changing either; a concurrent stale
+        // configure or deal cannot silently replace the acknowledged settings.
+        if (s.world !== world || s.handSize !== handSize) {
+          s.world = world; s.handSize = handSize; s.resolvedHandSize = resolvedHandSize(s);
+          advance(s);
+          log(s, cmd, 'configure', 'The next game settings were updated.');
+        }
+        break;
+      }
       case 'ready':
         if (host || s.phase !== 'LOBBY' || typeof cmd.value !== 'boolean') { reject('not_available'); break; }
         s.readiness[actor] = cmd.value;
@@ -233,9 +264,13 @@ var ONCE_ENGINE = (() => {
       case 'deal': {
         if (s.phase !== 'LOBBY') { reject('not_available'); break; }
         if (s.sharedControls === true && online.length < 2) { reject('waiting_players'); break; }
-        s.storyDeck = randomize(s, storyCards.map(card => card.id), cmd, 'story-deal');
-        s.endingDeck = randomize(s, endingCards.map(card => card.id), cmd, 'ending-deal');
-        const count = Math.max(5, 11 - s.roster.length);
+        const pool = worldPool(s.world), count = resolvedHandSize(s);
+        if (!pool) { reject('invalid_world'); break; }
+        if (!validHandSize(s.handSize)) { reject('invalid_hand_size'); break; }
+        if (list(pool.storyCards).length < s.roster.length * count + 1 || list(pool.endingCards).length < s.roster.length) { reject('insufficient_cards'); break; }
+        s.storyDeck = randomize(s, list(pool.storyCards).map(card => card.id), cmd, 'story-deal');
+        s.endingDeck = randomize(s, list(pool.endingCards).map(card => card.id), cmd, 'ending-deal');
+        s.resolvedHandSize = count;
         dealOpeningHands(s, count, cmd);
         for (const player of s.roster) {
           s.endings[player.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
@@ -381,7 +416,7 @@ var ONCE_ENGINE = (() => {
         break;
       }
       case 'restart': {
-        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, sharedControls: s.sharedControls });
+        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, sharedControls: s.sharedControls, world: s.world, handSize: s.handSize });
         Object.assign(s, fresh); advance(s);
         log(s, cmd, 'restart', 'A new game is ready for the host to deal.');
         break;
@@ -405,7 +440,7 @@ var ONCE_ENGINE = (() => {
     const vote = s.vote, pending = s.interrupt;
     const mayReturn = !!(s.latestPlay && s.latestPlay.playerNum === s.storyteller && s.storyHeld.includes(s.latestPlay.cardId));
     const actions = {
-      ready: player && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
+      ready: player && s.phase === 'LOBBY', configure: manager && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
       chooseFirst: manager && s.phase === 'CHOOSING_FIRST', randomFirst: manager && s.phase === 'CHOOSING_FIRST',
       play: story && speaking && hand.length > 0, interrupt: story && player && !speaking && hand.length > 0,
       categoryInterrupt: story && player && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
@@ -422,6 +457,7 @@ var ONCE_ENGINE = (() => {
     const once = {
       version: 1, playerNum: player ? actor : 0, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
       phase: s.phase, storyteller: s.storyteller || null, winner: s.winner || null,
+      world: s.world, handSize: s.handSize, resolvedHandSize: s.resolvedHandSize,
       roster: s.roster.map(p => ({ ...p, handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
       starterCard: s.starterCard ? copy(storyById[s.starterCard]) : null,
       history: s.history.map(event => ({ ...event, card: copy(storyById[event.cardId]) })),

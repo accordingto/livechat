@@ -42,14 +42,16 @@ const server=http.createServer((req,res)=>{
     const ui=CHAT_WOLF_V3_UI.create({esc:escapeText,getState:()=>state,embeddedCard:${role!=='HOST'},
       playerName:id=>state.public.players.find(p=>p.id===id)?.name||'Player',
       roomBar:()=>'<div class="room-bar">Host presentation · SAMPLE</div>',playerRows:()=>'',timer:()=>'<span class="timer">0:45</span>',
-      action:async()=>{},showToast:()=>{},rerender:()=>document.querySelector('#app').innerHTML=ui.render(),privateCardUrl:()=>'/'});
-    document.querySelector('#app').innerHTML=ui.render();
+      action:async()=>{},showToast:()=>{},rerender:()=>ui.mount(document.querySelector('#app')),privateCardUrl:()=>'/'});
+    ui.mount(document.querySelector('#app'));
     document.addEventListener('click',event=>ui.handleClick(event));
     </script></body></html>`);return;
   }
   const name=url.pathname.slice(1);
-  if(!['chat-wolf.css','chat-wolf-copy.js','chat-wolf-v3-rules.js','chat-wolf-v3-ui.js'].includes(name)){res.writeHead(404);res.end();return;}
-  res.writeHead(200,{'Content-Type':name.endsWith('.css')?'text/css':'text/javascript','Cache-Control':'no-store'});
+  const artwork=/^assets\/chat-wolf\/roles\/(wolf|jester|villager)-v1\.webp$/.test(name);
+  if(!artwork&&!['chat-wolf.css','chat-wolf-copy.js','chat-wolf-v3-rules.js','chat-wolf-v3-ui.js'].includes(name)){res.writeHead(404);res.end();return;}
+  if(!fs.existsSync(path.join(root,name))){res.writeHead(404);res.end();return;}
+  res.writeHead(200,{'Content-Type':artwork?'image/webp':name.endsWith('.css')?'text/css':'text/javascript','Cache-Control':'no-store'});
   fs.createReadStream(path.join(root,name)).pipe(res);
 });
-server.listen(8091,'127.0.0.1',()=>console.log('Local sample cards: http://127.0.0.1:8091/ — no Firebase connection'));
+server.listen(Number(process.env.CHAT_WOLF_UI_PREVIEW_PORT??8091),'127.0.0.1',()=>console.log('Local sample cards: http://127.0.0.1:'+server.address().port+'/ — no Firebase connection'));
