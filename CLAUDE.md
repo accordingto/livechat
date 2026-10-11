@@ -1,3 +1,14 @@
+## CURRENT: Open Mic card presentation (2026-10-11)
+
+Open Mic landing uses three original illustrated mode cards (Life Song, Now & Next,
+Mission Rescue). Host and original player cards share a task-first paper card,
+Spotlight/role/phase cues, compact score, and progressive disclosure for chooser,
+completed prompts, queue, mode and room tools. Active questions remain immediately
+visible; source prompts remain English. Keep current sharedControls permissions,
+all three modes, scoring, favorites, direct selection/replacement and same-row
+change/remove intact. Alternative activity cues and disclosure are local presentation
+only. Media/lyrics remain retired. UI/CSS cache: om-cards-1 in both entry pages.
+
 ## CURRENT: CUT Mode 2 manual interruption timing - 2026-10-11
 
 Mode 2 now accepts firstCutMinSeconds / firstCutMaxSeconds (default 25-45)

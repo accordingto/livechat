@@ -2,6 +2,34 @@
 
 # Open Mic Rescue / 開麥救場
 
+## Card presentation — 2026-10-11
+
+The three existing modes use original illustrated radio cards on the landing
+screen, with distinct colors and a visible selection check. Host and original
+player pages share the same task card: Spotlight, your role, phase cue, scene,
+question, success condition and applicable follow-up stay immediately visible
+during the challenge. Prompts remain English; interface labels are bilingual.
+
+After a result, the completed prompt becomes an expandable recap. The selected
+title and one activity suggestion become the main interaction, with the timer
+and existing change/remove buttons in the same action row. Other suggestions
+are local presentation choices and never send game commands.
+
+Team score stays visible. Scoring details, turn order, mode selection, roster
+and room tools are expandable; all current manager/sharedControls permissions
+and recovery/rejoin actions remain available. The title chooser opens when the
+controller needs a choice and closes on selection. Manual disclosure survives
+ordinary updates. Change opens and focuses it; remove exposes the choice again.
+Metadata search, favorites and direct replacement retain their existing behavior.
+
+UI/CSS version `om-cards-1` is used by both entry pages. Reload existing pages
+to load the design. Engine, decks, room execution and scores are unchanged;
+video and lyrics remain retired. Artwork is original SVG rather than song art.
+
+Validation: the full suite passed 1,659 tests, and the final focused UI/engine/
+sync run passed 114 tests. Windows Computer Use stopped because it could not
+confirm the browser URL, so this release has no browser visual QA evidence.
+
 ## Game modes: Life Song (default) and Mission Rescue — 2026-10-10
 
 New games start in **Life Song / 人生之歌**. Each turn shows a life prompt (a

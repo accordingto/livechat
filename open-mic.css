@@ -277,3 +277,223 @@
 .om-start-mode span { display: block; color: var(--text-dim, #9999bb); font-size: .8rem; line-height: 1.5; margin-top: 3px; }
 @media (max-width: 760px) { .om-start-modes { grid-template-columns: 1fr; } }
 .om-followup { margin: 10px 0 0; color: #d9d6ff; font-size: .86rem; line-height: 1.55; }
+
+/* Card presentation: one visible task, with optional tools below the table. */
+.om-page, .open-mic-card-page { --om-ink: #38283d; --om-paper: #fff4df; --om-coral: #f19a88; --om-mint: #a9d7be; --om-violet: #cab6ee; background: radial-gradient(ellipse at 14% 8%, #44314f66, transparent 46%), radial-gradient(ellipse at 90% 78%, #334e4560, transparent 46%), #171321; }
+.om-page .topbar { max-width: 1120px; margin-bottom: 18px; }
+.om-shell { max-width: 1120px; }
+.om-header { width: 100%; max-width: 1120px; text-align: left; margin-bottom: 24px; }
+.om-header h1 { color: #fff4df; font-size: clamp(1.6rem, 4vw, 2.3rem); display: flex; align-items: center; gap: 12px; }
+.om-title-star { color: #f19a88; font-size: 1.15em; }
+.om-start-panel { border: 0; padding: 30px 0 18px; background: none; text-align: center; }
+.om-start-heading { max-width: 660px; margin: 0 auto; }
+.om-start-heading .om-kicker { color: #d6bcf3; font-size: .72rem; }
+.om-start-heading h2 { color: #fff4df; font-size: clamp(1.9rem, 4.4vw, 3rem); font-weight: 850; line-height: 1.15; text-wrap: balance; letter-spacing: -.045em; margin: 10px 0 12px; }
+.om-start-lead { color: #c9bfd2; font-size: 1rem; line-height: 1.5; }
+.om-start-modes { max-width: 970px; margin: 30px auto 24px; gap: 22px; }
+.om-start-mode { --mode-fill: #f3c6ad; position: relative; display: flex; flex-direction: column; gap: 0; padding: 12px 12px 22px; border: 3px solid transparent; border-radius: 24px; background: #fff4df; color: #38283d; box-shadow: 0 9px 0 #07050c55, 0 18px 32px #0003; transition: transform .18s ease, border-color .18s ease; }
+.om-start-mode:nth-of-type(1) { transform: rotate(-2deg); }
+.om-start-mode:nth-of-type(3) { transform: rotate(2deg); }
+.om-start-mode:hover { transform: translateY(-5px); }
+.om-start-mode:has(input:checked) { border-color: #f19a88; background: #fff4df; transform: translateY(-7px); box-shadow: 0 9px 0 #b2665855, 0 20px 38px #0005; }
+.om-mode-next { --mode-fill: #d4e7cd; }
+.om-mode-mission { --mode-fill: #dfd2f2; }
+.om-start-mode input { position: absolute; top: 22px; right: 21px; z-index: 2; width: 19px; height: 19px; accent-color: #734270; }
+.om-start-mode:focus-within { outline: 3px solid #cab6ee; outline-offset: 5px; }
+.om-start-mode .om-mode-art { display: grid; place-items: center; width: 100%; margin: 0; border-radius: 14px; background: var(--mode-fill); aspect-ratio: 1.65; }
+.om-mode-art svg { display: block; width: 100%; max-height: 175px; }
+.om-start-mode .om-mode-copy { display: block; padding: 15px 10px 0; margin: 0; width: 100%; }
+.om-start-mode .om-mode-number { font-size: .65rem; font-weight: 900; color: #765968; margin: 0 0 7px; letter-spacing: .15em; }
+.om-start-mode strong { color: #38283d; font-size: 1.23rem; line-height: 1.25; }
+.om-start-mode .om-mode-copy > span:last-child { color: #654d60; font-size: .87rem; line-height: 1.55; margin-top: 9px; }
+.om-start-mode .om-mode-check { position: absolute; bottom: -12px; right: 16px; margin: 0; background: #f19a88; border: 3px solid #171321; border-radius: 50%; width: 29px; height: 29px; display: none; place-items: center; color: #38283d; font-weight: 900; }
+.om-start-mode:has(input:checked) .om-mode-check { display: grid; }
+#om-start { min-width: min(300px, 100%); min-height: 56px; font-size: 1rem; border-radius: 16px; background: #f19a88; border-color: #f19a88; color: #38283d; box-shadow: 0 7px 18px #0003; }
+#om-start:hover:not(:disabled) { background: #ffb29f; }
+.om-start-footer { color: #c4b6ce; font-size: .78rem; margin-top: 15px; }
+.om-rules { border-color: #514359; max-width: 1120px; }
+.om-rules summary { color: #d9c9e5; }
+.om-demo-link { color: #d9c9e5; font-size: .85rem; }
+.om-app { --accent: #cab6ee; --accent-text: #e1cbfa; --text-dim: #c0b4cb; color: #f5edf8; }
+.om-grid, .om-left, .om-right { gap: 18px; }
+.om-left { grid-template-columns: minmax(0, 1fr); }
+.om-score-panel { order: -1; background: #261f33; border-color: #4b3c59; padding: 14px 18px; border-radius: 18px; }
+.om-score-row { gap: 12px; align-items: center; }
+.om-score-row .om-kicker { font-size: .65rem; color: #d9c8ed; }
+.om-score-number { font-size: 1.65rem; color: #f3ba99; }
+.om-score-rules { font-size: .73rem; line-height: 1.4; color: #cec0d9; }
+.om-score-panel .om-manage { border-top: 1px solid #4b3c59; padding-top: 5px; margin-top: 8px; }
+.om-score-panel > details { margin-top: 8px; }
+.om-queue-disclosure, .om-mode-disclosure, .om-manage { color: #d8cbe3; }
+.om-queue-disclosure summary, .om-mode-disclosure summary, .om-alternate-activities summary, .om-chooser-summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 9px; list-style: none; font-weight: 750; }
+.om-queue-disclosure summary::after, .om-mode-disclosure summary::after, .om-alternate-activities summary::after, .om-chooser-summary::after { content: '+'; margin-left: auto; font-size: 1.15rem; font-weight: 500; }
+.om-queue-disclosure[open] > summary::after, .om-mode-disclosure[open] > summary::after, .om-alternate-activities[open] > summary::after, .om-song-chooser[open] > summary::after { content: '−'; }
+.om-queue-disclosure summary { font-size: .8rem; }
+.om-queue-list li { background: #30273d; border-color: #564764; color: #d8cbe3; }
+.om-queue-list li.om-current { color: #fff4df; border-color: #c2a5d9; background: #574163; }
+.om-mode-switch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.om-mode-switch .om-button { padding: 10px; font-size: .79rem; }
+.om-challenge-card, .om-challenge { position: relative; overflow: hidden; padding: 24px 28px; background: #fff4df; border: 2px solid #f2d9bd; border-radius: 25px; color: #38283d; box-shadow: 0 9px 0 #07050c66, 0 18px 38px #0003; }
+.om-challenge .om-kicker, .om-challenge .om-round { color: #755870; }
+.om-challenge .om-spotlight { margin: 0; }
+.om-challenge .om-avatar { color: #38283d; background: #e0caee; border: 2px solid #38283d22; box-shadow: 3px 3px 0 #38283d22; }
+.om-challenge .om-spotlight h2 { color: #38283d; font-size: clamp(1.2rem, 2.6vw, 1.7rem); }
+.om-challenge .om-you { background: #38283d; color: #fff4df; }
+.om-role-badge { display: inline-flex; padding: 5px 10px; border-radius: 999px; background: #e2ccef; color: #52385e; font-size: .73rem; font-weight: 800; }
+.om-phase-cue { color: #655164; font-size: .86rem; line-height: 1.5; margin-top: 12px; }
+.om-card-body { display: grid; grid-template-columns: minmax(0, 1fr) 150px; align-items: start; gap: 10px 22px; margin: 20px 0 10px; }
+.om-card-heading { display: block; color: #38283d; font-size: clamp(1.5rem, 3.2vw, 2.25rem); font-weight: 850; letter-spacing: -.035em; line-height: 1.2; margin: 0; }
+.om-card-body > .om-card-art { grid-column: 2; grid-row: 1 / span 3; width: 150px; height: 130px; align-self: center; justify-self: end; }
+.om-card-body > :not(.om-card-art) { grid-column: 1; }
+.om-card-body > .om-task, .om-card-body > .om-success-rule, .om-card-body > .om-followup, .om-card-body > .om-chain-hint { grid-column: 1 / -1; }
+.om-mode-tag { color: #755870; font-size: .73rem; font-weight: 800; letter-spacing: .025em; }
+.om-card-art { min-width: 0; border-radius: 26px; background: #ecd7ed; transform: rotate(4deg); }
+.om-card-art svg { width: 100%; max-width: 160px; height: auto; display: block; }
+.om-card-art--life { background: #f3c6ad; }
+.om-card-art--next { background: #d4e7cd; }
+.om-card-art--mission { background: #dfd2f2; }
+.om-card-prompt, .om-challenge-title { color: #38283d; font-size: clamp(1.55rem, 3.5vw, 2.5rem); font-weight: 900; letter-spacing: -.035em; line-height: 1.15; overflow-wrap: anywhere; text-wrap: balance; margin: 0; }
+.om-card-context, .om-situation { color: #755870; font-size: .93rem; line-height: 1.6; margin: 10px 0 0; }
+.om-challenge .om-task { border: 0; border-radius: 15px; background: #f0dfc6; color: #38283d; padding: 18px 20px; font-size: clamp(1.06rem, 2.4vw, 1.4rem); font-weight: 700; line-height: 1.6; }
+.om-challenge .om-success-rule { color: #3c6750; font-size: .87rem; font-weight: 650; margin-top: 12px; }
+.om-challenge .om-followup { color: #684e70; }
+.om-challenge .om-chain-hint { color: #684e70; border-color: #a58ba8; background: #f5e8f1; }
+.om-challenge .om-button { border-color: #bb9dad; background: #ead8e9; color: #38283d; font-size: .9rem; }
+.om-challenge .om-success { background: #b8dcbd; border-color: #8cb196; }
+.om-challenge .om-fail { background: #f3d5bd; border-color: #d3af91; }
+.om-challenge .om-result { background: #e0eacb; border-color: #b6c597; color: #3d5139; }
+.om-challenge .om-result-failed { background: #f1dfd3; border-color: #d4b8a3; color: #6a4940; }
+.om-challenge .om-result p { color: inherit; }
+.om-challenge .om-challenge-details summary { color: #684e70; }
+.om-app[data-om-phase="challenge"] .om-stage { display: none; }
+.om-app:not([data-om-phase="challenge"]) .om-challenge { padding: 18px 22px; }
+.om-app:not([data-om-phase="challenge"]) .om-challenge .om-card-heading { font-size: 1.25rem; }
+.om-app:not([data-om-phase="challenge"]) .om-challenge .om-card-prompt { font-size: 1.25rem; }
+.om-stage { border: 1px solid #6c5476; border-radius: 25px; background: linear-gradient(130deg, #3e2e50, #261e35); box-shadow: 0 12px 28px #0003; }
+.om-stage-top { padding: 18px 24px; border-bottom: 1px solid #6b557633; }
+.om-stage-top h2 { font-size: 1rem; color: #e5d4f2; }
+.om-duration { color: #d0bfdc; }
+.om-text-stage { padding: 22px 24px 12px; }
+.om-stage-track { margin-bottom: 14px; }
+.om-stage-track h3 { color: #fff4df; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 850; }
+.om-stage-track p { color: #e1cced; margin-top: 6px; font-size: .85rem; }
+.om-suggested-activity { border-radius: 15px; background: #ffffff0b; border: 1px solid #a483b055; padding: 17px 18px; }
+.om-suggested-activity h3 { color: #f8d5b4; font-size: 1.08rem; margin-bottom: 7px; }
+.om-suggested-activity p { color: #e1d0ea; font-size: 1rem; line-height: 1.6; max-width: 65ch; }
+.om-alternate-activities { margin-top: 9px; font-size: .81rem; color: #d7c5e4; }
+.om-activity-cards { gap: 10px; margin: 6px 0 12px; }
+.om-activity-option { text-align: left; display: flex; align-items: flex-start; flex-direction: column; gap: 7px; border: 1px solid #8b729955; border-radius: 14px; padding: 15px; background: #30273f; color: #f2e5fa; font: inherit; cursor: pointer; }
+.om-activity-option strong { color: #f3cfab; font-size: .88rem; }
+.om-activity-option span { color: #d7c5e4; line-height: 1.6; font-size: .82rem; }
+.om-activity-option.om-activity-selected { border-color: #f2b899; background: #49304d; }
+.om-activity-option.om-option-current { border-color: #f2b899; background: #49304d; }
+.om-activity-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 6px 0 12px; }
+.om-turn-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+.om-challenge-recap > summary { min-height: 44px; display: flex; align-items: center; gap: 12px; color: #684e70; cursor: pointer; list-style: none; font-size: .87rem; }
+.om-challenge-recap > summary::after { content: '+'; margin-left: auto; font-weight: 700; font-size: 1.15rem; }
+.om-challenge-recap[open] > summary::after { content: '−'; }
+.om-completed-prompt .om-card-body { grid-template-columns: minmax(0, 1fr); }
+.om-score-panel { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 24px; }
+.om-score-mini { display: flex; align-items: center; justify-content: flex-start; gap: 10px; min-height: 44px; margin-right: auto; }
+.om-score-panel > details { margin: 0; border: 0; padding: 0; }
+.om-score-panel > details > summary { font-size: .78rem; min-height: 44px; display: flex; align-items: center; gap: 12px; }
+.om-score-panel > details[open] { flex-basis: 100%; }
+.om-session-tools { margin-top: 15px; }
+.om-chooser-symbol { display: grid; place-items: center; width: 30px; height: 30px; background: #6c4d7d; border-radius: 9px; font-size: 1.25rem; }
+.om-chooser-heading { display: block; }
+.om-chooser-status { display: block; margin-top: 4px; font-size: .75rem; line-height: 1.45; color: #d2bedf; overflow-wrap: anywhere; }
+.om-chooser-summary > span:nth-child(2) { min-width: 0; }
+.om-chooser-chevron { display: none; }
+.om-discovery > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #e5d4f2; list-style: none; }
+.om-discovery > summary::after { content: '↗'; margin-left: auto; }
+.om-discovery[open] > summary::after { content: '−'; }
+.om-app[data-om-mode="life"] .om-card-art { background: #f3c6ad; }
+.om-app[data-om-mode="next"] .om-card-art { background: #d4e7cd; }
+.om-stage-session { grid-template-columns: minmax(0, 145px) minmax(0, 1fr); gap: 20px; padding: 12px 24px 23px; }
+.om-stage-session .om-timer { color: #f3cfab; font-size: 2.4rem; }
+.om-stage-session .om-timer-label { color: #d7c5e4; }
+.om-progress { background: #6b507d; }
+.om-progress > span { background: #f2b899; }
+.om-stage .om-actions .om-button { min-height: 47px; border-color: #8b7299; background: #4c3a5e; font-size: .85rem; }
+.om-stage .om-actions .om-primary { background: #f19a88; border-color: #f19a88; color: #38283d; flex-basis: auto; }
+.om-stage .om-actions .om-success { background: #a9d7be; border-color: #a9d7be; color: #203c31; }
+.om-waiting { color: #d7c5e4; }
+.om-song-chooser { padding: 0; background: #261f33; border-color: #4b3c59; border-radius: 18px; }
+.om-chooser-summary { padding: 15px 20px; color: #f3e7fb; font-size: .94rem; }
+.om-chooser-summary::-webkit-details-marker { display: none; }
+.om-chooser-content { border-top: 1px solid #4b3c59; padding: 20px; }
+.om-browser .om-panel-head h2 { font-size: 1rem; }
+.om-discovery { background: #1e192a; border-color: #51405f; margin-top: 15px; padding: 16px; }
+.om-discovery-form { grid-template-columns: minmax(0, 1fr) 125px auto auto; }
+.om-discovery h3 { font-size: .9rem; }
+.om-tab { background: #362a45; border-color: #695379; color: #deceea; }
+.om-tab.om-active { background: #cab6ee; border-color: #cab6ee; color: #38283d; }
+.om-search, .om-field input, .om-field select { background: #1c1627; border-color: #695379; color: #f3e7fb; }
+.om-search::placeholder, .om-field input::placeholder { color: #b6a3c5; }
+.om-song-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.om-song { border: 1px solid #60496a; border-radius: 15px; background: linear-gradient(135deg, #3d304c, #2f263e); box-shadow: 0 4px 0 #0002; }
+.om-song.om-selected { border-color: #f2b899; box-shadow: 0 0 0 1px #f2b899; }
+.om-song-info { padding: 15px; }
+.om-song h3 { font-size: 1rem; color: #fff4df; }
+.om-artist { color: #d4c0e1; }
+.om-song .om-button { font-size: .76rem; padding: 10px; background: #53405f; border-color: #7b608a; }
+.om-song .om-primary { background: #d4bdf0; border-color: #d4bdf0; color: #38283d; }
+.om-song .om-tags { display: none; }
+.om-source-link { color: #d4c0e1; font-size: .72rem; }
+.om-owner, .om-empty { color: #d4c0e1; }
+.om-modal { background: #261f33; border-color: #8b7299; }
+.om-modal h2 { color: #fff4df; }
+.om-app summary:focus-visible, .om-activity-option:focus-visible { outline: 3px solid #cab6ee; outline-offset: 3px; border-radius: 10px; }
+.om-page.om-playing .om-header { margin-bottom: 14px; }
+.om-page.om-playing .om-header h1 { font-size: 1.4rem; }
+.open-mic-card-page #content { max-width: 1000px; }
+.open-mic-card-page .name-banner { color: #ead8f4; }
+@media (max-width: 860px) {
+  .om-start-modes { gap: 16px; }
+  .om-discovery-form { grid-template-columns: minmax(0, 1fr) 125px; }
+  .om-song-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .om-start-panel { padding-top: 10px; }
+  .om-start-modes { grid-template-columns: 1fr; gap: 15px; margin: 24px auto; max-width: 530px; }
+  .om-start-mode, .om-start-mode:nth-of-type(1), .om-start-mode:nth-of-type(3), .om-start-mode:has(input:checked) { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 17px; transform: none; padding: 11px 30px 11px 11px; border-radius: 20px; }
+  .om-start-mode .om-mode-copy { padding: 4px 0; }
+  .om-start-mode .om-mode-art { aspect-ratio: 1; }
+  .om-start-mode strong { font-size: 1.08rem; }
+  .om-start-mode .om-mode-copy > span:last-child { font-size: .8rem; margin-top: 6px; }
+  .om-start-mode input { right: 12px; top: 12px; width: 16px; height: 16px; }
+  .om-start-mode .om-mode-number { font-size: .6rem; margin-bottom: 4px; }
+}
+@media (max-width: 620px) {
+  .om-card-body { grid-template-columns: minmax(0, 1fr) 85px; gap: 10px 12px; }
+  .om-card-body > .om-card-art { width: 85px; height: 80px; }
+  .om-challenge { padding: 20px 18px; border-radius: 22px; }
+  .om-challenge .om-task { padding: 16px; font-size: 1.07rem; }
+  .om-challenge .om-challenge-meta { flex-wrap: wrap; }
+  .om-score-panel { padding: 12px 16px; }
+  .om-text-stage { padding: 20px 18px 9px; }
+  .om-stage-top { padding: 15px 18px; }
+  .om-stage-session { grid-template-columns: 1fr; padding: 12px 18px 20px; gap: 12px; }
+  .om-stage-session .om-actions .om-button { flex-basis: calc(50% - 8px); }
+  .om-activity-cards { grid-template-columns: 1fr; }
+  .om-activity-options { grid-template-columns: 1fr; }
+  .om-chooser-content { padding: 15px; }
+  .om-discovery-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .om-song-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .om-song-info { padding: 12px; }
+  .om-song h3 { font-size: .93rem; }
+  .om-mode-switch { grid-template-columns: 1fr; }
+  .om-role-badge { font-size: .7rem; }
+}
+@media (max-width: 390px) {
+  .om-start-mode, .om-start-mode:has(input:checked) { grid-template-columns: 80px minmax(0, 1fr); gap: 12px; }
+  .om-start-mode .om-mode-copy > span:last-child { font-size: .76rem; }
+  .om-card-body { grid-template-columns: minmax(0, 1fr) 64px; }
+  .om-card-body > .om-card-art { width: 64px; height: 68px; }
+  .om-song-list { grid-template-columns: 1fr; }
+  .om-text-song { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .om-start-mode, .om-button, .om-progress > span { transition: none; }
+  .om-start-mode, .om-start-mode:hover, .om-start-mode:has(input:checked) { transform: none; }
+}
