@@ -111,7 +111,7 @@
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
     }
-    start({ fuse = 'classic', cards = 10, category = 'mixed' } = {}) {
+    start({ fuse = 'classic', cards = 10, category = 'mixed', weights, familyWindow } = {}) {
       return this.enqueue(async () => {
         await this.cardsReady; await this.outgoing;
         if (!this.sameRoom() || this.stopped) throw new Error('not_available');
@@ -119,7 +119,12 @@
         const opening = { sessionId: id, baselines: Object.fromEntries(this.playerRefs.map((_, i) => [i + 1, stamp(this.cardValues.get(i + 1))])) };
         const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
         const priorSuspended = this.suspended; this.suspended = false; this.seenCards.clear();
-        try { return await this.change(() => ENGINE().create({ id, roster, fuse, cards, category, now, seed: randomSeed }), { opening, allowSwitched: true }); }
+        // The control node belongs to this Hub room/activity, not a single
+        // scored game. Restart, settings edits and reopening keep draw history.
+        // A genuinely new Hub room has a new control node and starts it empty.
+        try { return await this.change(current => ENGINE().create({ id, roster, fuse, cards, category, now, seed: randomSeed,
+          promptHistory: current?.promptHistory, weights: weights ?? current?.promptWeights,
+          familyWindow: familyWindow ?? current?.familyWindow }), { opening, allowSwitched: true }); }
         catch (error) { this.suspended = priorSuspended; throw error; }
       });
     }

@@ -10,7 +10,7 @@ const files = ['index.html', 'room.js', 'hub-membership.css', 'hub-launcher.js',
   'bluff-king-live-chat.html', 'bluff-king-engine.js', 'bluff-king-sync.js', 'bluff-king-ui.js',
   'chat-wolf.html', 'chat-wolf.css', 'chat-wolf-copy.js', 'chat-wolf-engine.js', 'chat-wolf-sync.js', 'chat-wolf-v3-engine.js', 'chat-wolf-v3-ui.js', 'chat-wolf.js',
   'assets/chat-wolf/roles/wolf-v1.webp', 'assets/chat-wolf/roles/jester-v1.webp', 'assets/chat-wolf/roles/villager-v1.webp', 'assets/chat-wolf/roles/art-prompts-v1.json',
-  'bomb-relay.html', 'bomb-relay.css', 'bomb-relay-deck.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js', 'assets/bomb-relay/beach.svg'];
+  'bomb-relay.html', 'bomb-relay.css', 'bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js', 'assets/bomb-relay/beach.svg'];
 const hash = (bytes, file) => crypto.createHash('sha256').update(/\.(?:html|js|css|svg|json)$/.test(file) ? bytes.toString('utf8').replace(/\r\n/g, '\n') : bytes).digest('hex');
 (async () => {
   let next = 0;

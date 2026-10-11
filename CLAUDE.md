@@ -1,3 +1,49 @@
+## CURRENT: Bomb Relay shared prompts — 2026-10-12
+
+Real entry remains index.html -> bomb-relay.html and original play.html cards.
+The old 60 scene titles caused place-heavy answers; Mixed used an unweighted
+shuffle, with no remote load/fallback or special place filter identified.
+The single formal source bomb-relay-deck.js now contains the supplied 120
+bilingual prompts (Everyday60/Playful60), plus lookup-only retained legacy60.
+Browser/CJS bomb-relay-selector.js retains the attachment's pure algorithm.
+Host page must load deck -> selector -> engine -> sync -> UI -> host.
+Player page loads deck/UI only; clients never draw. Cache br-prompts-2.
+
+Leased host stateJson.promptHistory in the existing bombRelayControlToken node
+retains returned seen/recent IDs/families across passes, language changes,
+reconnect, settings, game switches and ordinary Restart/Play again. New Hub
+Room starts a new activity/history. One lazy draw per new ready bomb; host
+reroll only during ready, consuming skipped prompts too. Mixed defaults1:1,
+familyWindow3, configurable state weights; eligible exhaustion precedes ratio,
+family fallback is best-effort. Manual ready/Light remains the reading preview.
+One prompt through explosion; text/paper cards and neutral bomb leave answers
+open. English always main, Chinese helper on zh. Ordinary short answers count,
+funny optional/no bonus; no answer/voice/AI/recording subsystem.
+
+Fuses unchanged: Classic10-60(default)/Quick8-25/Relaxed20-80 seconds, original
+uniform seeded draw rounded to milliseconds. Seat-order handoff, optional
+bounce, penalties/fewest-wins, 4.5s boom, pause/resume2.5s floor and audio remain.
+Fixed expired-holder sit-out escaping explosion; stale ticks are turn-fenced.
+Legacy active prompt/fuse/scores and actual old totals stay; roundCards carries
+legacy truncated totals without invalidating configured20-card Restart. Future
+legacy bombs draw new prompts; untouched old category Restart maps to Mixed.
+Old art files remain; art builder explicitly uses legacyItems, never new prompts.
+
+Validation: original attachment17/17 first, original Bomb Relay29/29 baseline;
+integrated Bomb Relay67/67, full repository1777/1777. Formal bank matches all
+120 attachment rows exactly. Local real host + four real play links on isolated
+Firebase stand-in verified same prompt, passes/bounce/deadline, reload/lease,
+five full speech-only rounds, once-only scoring, Play again history, packs,
+language and audio cues. Browser QA script tests/bomb-relay-ui.browser.cjs;
+12 browser checks and 40 EN/ZH captures passed, including longest supplied
+prompt at player320x568 (prompt/PASS together),375x667/740 and desktop1280x800.
+Short host320x568 uses normal scrolling, preventing sticky controls covering
+the prompt; elementFromPoint occlusion checks and visual review passed.
+repeatable readonly publication check scripts/bomb-relay-verify-release.cjs.
+Physical devices, real Firebase/network lag and human voice-session playtests
+remain unverified. Frontend-only release; no service/secrets change. See
+bomb-relay-mode.md. Preserve other Hub games and both CUT modes.
+
 ## CURRENT: Dixit original 42-card expansion — 2026-10-12
 
 New sessions use 126 original pictures: unchanged base d001–d084 plus expansion

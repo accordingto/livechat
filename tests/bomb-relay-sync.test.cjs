@@ -160,3 +160,137 @@ test('opening replaces the card it captured when the game started', async () => 
   assert.equal(s.card(2).game, 'bombrelay', 'the opening may replace what it captured');
   h.close();
 });
+
+test('the formal pool is selected once on the authority and every player keeps that prompt throughout the fuse', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5, category: 'playful' }); await settle(h);
+  const first = s.state(), promptId = first.order[0];
+  assert.equal(DECK.get(promptId).pack, 'playful');
+  assert.equal(first.promptHistory.seenIds.length, 1, 'draw only the revealed prompt');
+  assert.deepEqual([1, 2, 3, 4].map(i => s.card(i).bomb.cardId), Array(4).fill(promptId));
+  assert.equal(s.card(1).bomb.canReroll, false, 'reroll belongs to host preview');
+  await s.action(first.holder, 'reroll'); await settle(h);
+  assert.equal(s.state().order[0], promptId);
+  await h.command('reroll'); await settle(h);
+  const rerolled = s.state().order[0];
+  assert.notEqual(rerolled, promptId);
+  assert.deepEqual(s.state().promptHistory.seenIds, [promptId, rerolled]);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  const at = s.state().explodeAt;
+  const history = clone(s.state().promptHistory);
+  for (let n = 0; n < 6; n++) {
+    await s.action(s.state().holder, 'pass'); await settle(h);
+    assert.equal(s.state().explodeAt, at);
+    assert.deepEqual(s.state().promptHistory, history);
+    assert.deepEqual([1, 2, 3, 4].map(i => s.card(i).bomb.cardId), Array(4).fill(rerolled));
+  }
+  await assert.rejects(h.command('reroll'), /not_available/);
+  assert.equal(s.state().order[0], rerolled);
+  h.close();
+});
+
+test('ordinary start/restart, mode change and host reconnection retain the room prompt history', async () => {
+  const s = setup(); let h = s.host(); await settle(h);
+  await h.start({ cards: 5, category: 'everyday' }); await settle(h);
+  const firstId = s.state().order[0];
+  await h.start({ cards: 10, category: 'playful' }); await settle(h);
+  const secondId = s.state().order[0];
+  assert.equal(DECK.get(secondId).pack, 'playful');
+  assert.deepEqual(s.state().promptHistory.seenIds, [firstId, secondId]);
+  await h.command('restart', { category: 'mixed' }); await settle(h);
+  const beforeReload = clone(s.state());
+  assert.ok(beforeReload.promptHistory.seenIds.includes(firstId));
+  assert.ok(beforeReload.promptHistory.seenIds.includes(secondId));
+  h.close(); await settle(h);
+  h = s.host(); await settle(h);
+  assert.deepEqual(s.state(), beforeReload, 'lease reacquisition does not draw/reset anything');
+  await h.start({ cards: 5 }); await settle(h);
+  assert.equal(s.state().promptHistory.seenIds.length, beforeReload.promptHistory.seenIds.length + 1);
+  h.close();
+  const other = setup(), otherHost = other.host(); await settle(otherHost);
+  await otherHost.start({ cards: 5 }); await settle(otherHost);
+  assert.equal(other.state().promptHistory.seenIds.length, 1, 'new room starts its own history');
+  otherHost.close();
+});
+
+test('reconnecting a ticking host retains one deadline and explosion settles once for every player', async () => {
+  const s = setup(); let h = s.host(); await settle(h);
+  await h.start({ cards: 5, fuse: 'quick' }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  const before = clone(s.state());
+  h.close(); await settle(h);
+  h = s.host(); await settle(h);
+  assert.equal(s.state().explodeAt, before.explodeAt);
+  assert.deepEqual(s.state().promptHistory, before.promptHistory);
+  const other = s.host(); await settle(h, other);
+  assert.equal(other.own, false);
+  s.now = before.explodeAt;
+  await h.renew(); await settle(h, other);
+  await s.action(before.holder, 'pass'); await settle(h, other);
+  h.pulse(); other.pulse(); await settle(h, other);
+  assert.equal(s.state().phase, 'boom');
+  assert.equal(s.state().boom.loser, before.holder);
+  assert.equal(s.state().history.length, 1);
+  assert.deepEqual(s.state().penalties[before.holder], [before.order[0]]);
+  for (const i of [1, 2, 3, 4]) {
+    assert.equal(s.card(i).bomb.boom.loser, before.holder);
+    assert.equal(s.card(i).bomb.cardId, before.order[0]);
+  }
+  h.close(); other.close();
+});
+
+test('duplicate requests and a stale second pass cannot advance the bomb twice', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5 }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  const firstHolder = s.state().holder;
+  const { command } = await s.action(firstHolder, 'pass'); await settle(h);
+  const afterPass = clone(s.state());
+  // Retry and a second tab send the same shown turn. The host deduplicates
+  // one request and rejects the stale turn, even though it now sees a new holder.
+  const node = s.card(firstHolder);
+  s.db.put(s.paths[firstHolder - 1], { ...node, bombAction: command }); await settle(h);
+  assert.equal(s.state().passes, 1);
+  s.db.put(s.paths[firstHolder - 1], { ...s.card(firstHolder), bombAction: { ...command, id: 'new-stale-request-xxxx' } }); await settle(h);
+  assert.equal(s.state().passes, 1);
+  assert.equal(s.state().holder, afterPass.holder);
+  assert.equal(s.state().explodeAt, afterPass.explodeAt);
+  h.close();
+});
+
+test('stop and restart invalidate old pending clock events without discarding prompt history', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5 }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  const old = clone(s.state());
+  await h.command('stop'); await settle(h);
+  s.now = old.explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'finished');
+  assert.equal(s.state().history.length, 0);
+  await h.start({ cards: 5 }); await settle(h);
+  const newPrompt = s.state().order[0];
+  assert.notEqual(newPrompt, old.order[0]);
+  assert.ok(s.state().promptHistory.seenIds.includes(old.order[0]));
+  h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  assert.equal(s.state().explodeAt, null);
+  h.close();
+});
+
+test('switching back to Bomb Relay retains the activity history and configured Mixed weights', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5, weights: { everyday: 0, playful: 2 }, familyWindow: 2 }); await settle(h);
+  const old = s.state();
+  assert.equal(DECK.get(old.order[0]).pack, 'playful');
+  s.db.put(s.paths[0], { game: 'cut', name: 'Amy', playerNum: 1, cut: { version: 1, sessionId: 'other' } }); await settle(h);
+  assert.equal(h.suspended, true);
+  await h.start({ cards: 5 }); await settle(h);
+  const next = s.state();
+  assert.equal(h.suspended, false);
+  assert.equal(DECK.get(next.order[0]).pack, 'playful');
+  assert.deepEqual(next.promptWeights, old.promptWeights);
+  assert.equal(next.familyWindow, 2);
+  assert.deepEqual(next.promptHistory.seenIds, [old.order[0], next.order[0]]);
+  for (const i of [1, 2, 3, 4]) assert.equal(s.card(i).bomb.cardId, next.order[0]);
+  h.close();
+});

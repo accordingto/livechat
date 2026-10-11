@@ -1,58 +1,123 @@
-# 💣 Bomb Relay — 規則與維護說明
+# 💣 Bomb Relay / 妙傳爆趣 — shared prompt edition
 
-玩法完全比照桌遊《妙傳爆趣》（Pass the Bomb Junior）：看場景卡、說出一樣場景裡
-會有的東西、把炸彈傳給下一位；炸彈的引信長度保密且隨機，爆炸時拿著炸彈的人拿走
-那張卡，全部卡片玩完後炸彈卡最少的人獲勝。題目（場景卡）與圖片全部是原創。
+Read one shared prompt, say one fitting answer, and pass the hidden-fuse bomb.
+An ordinary answer counts. A word, person, object, action, phrase, short line or
+simple English description is enough; funny answers earn no extra points.
+Full grammar, a true personal experience and private stories are not required.
+Avoid obvious repeated answers within one bomb; specific elaborations can count.
+The next bomb permits previous answers again. Players judge loosely by voice;
+there is no answer input, recognition, recording, AI or automatic judging.
 
-## 規則對照
+## Real entry and why old prompts were places
 
-| 原版 | 線上版做法 |
-|------|-----------|
-| 翻開一張場景卡 | 主持畫面與每張玩家卡同時顯示同一張圖卡與英文場景名（中文介面多一行中文） |
-| 按下炸彈底部按鈕開始 | 拿著炸彈的人在自己卡片按「🔥 點燃引信」；主持頁有「代 X 點燃」備援 |
-| 說一樣東西就傳給左手邊 | 說完按「傳給 X」，炸彈依座位編號順序傳給下一位在場玩家 |
-| 答案不能重複；別人可以質疑 | 除了被質疑的人，任何人可按「不算！退回給 X」：炸彈退回、他要換一個說；同一個答案只能退回一次，計時照跑 |
-| 炸彈 10–60 秒隨機爆炸 | 引信秒數只存在主持頁的權威狀態，玩家卡片收不到；經典 10–60 秒、快速 8–25 秒、悠閒 20–80 秒 |
-| 爆炸時拿著的人拿走卡片，並開始下一張 | 同上；爆炸畫面停 4.5 秒（任何人可按「下一張」跳過），輸的人點燃下一張 |
-| 抽完 10 張，卡最少的人贏 | 每局 5／10／15／20 張（預設 10），最少的人並列皆為贏家 |
+`index.html` links directly to `bomb-relay.html`. This game uses its existing
+trusted host, not the independent `hub-executor` service or `hub-launcher`.
+Original player links still open `play.html`, whose `bombrelay` branch mounts
+`BOMB_RELAY_UI.Card` from the authority's filtered projection.
 
-- 滴答聲固定節奏，不會越來越快（否則等於洩漏剩餘時間）。聲音由主持頁播放（分享畫面時要分享電腦音訊）；玩家卡片可自行打開手機滴答聲，預設關閉（通話麥克風可能收音）。
-- 拿到炸彈時手機會短震動；卡片會把炸彈區塊與「傳出」按鈕排在圖片上方，不用捲動。
-- 主持管理：暫時離開的人可「先休息」，炸彈會略過他；如果正拿著炸彈會直接交給下一位。至少要留兩位玩家。暫停會凍結並保留剩餘引信（恢復時至少再給 2.5 秒）。
+The former `bomb-relay-deck.js` contained 60 short scene titles: everyday 22,
+nature 14, fun 14, fantasy 10. Nearly every title was a place or situated event.
+The default Mixed used an unweighted shuffle of these 60 cards; it did not
+filter to everyday, favor a category, or fetch a remote bank. English titles
+always remained the main content; Chinese mode added a translation. Inspection
+found no storage cache or load-failure fallback selecting a different bank.
+Place-heavy content and the old “name one thing in the picture” instruction
+caused the narrow impression, rather than an identified sampling bug.
 
-## 檔案
+## Source and drawing
 
-| 檔案 | 說明 |
-|------|------|
-| `bomb-relay.html` | 主持頁（檔名＝標題 slug）。`?demo=1` 是不寫 Firebase 的單機示範，可切換成任一玩家的卡片視角 |
-| `bomb-relay-deck.js` | 60 張場景卡：`{ id, category, emoji, en, zh, art }`，四類 everyday 22／nature 14／fun 14／fantasy 10 |
-| `bomb-relay-engine.js` | 純規則：`create / apply / view`。`view()` 永遠不輸出 `explodeAt`／`remainingMs` |
-| `bomb-relay-sync.js` | 沿用 CUT 的「信任主持頁 + 私人玩家節點」架構：主持控制節點（`bombRelayControlToken`）有租約，只有持有租約的主持頁跑時鐘與亂數；所有玩家卡片平行寫入，下一位在一次往返內就看到炸彈 |
-| `bomb-relay-ui.js` | 主持畫面、玩家卡片與音效（Web Audio 合成，不需音檔） |
-| `bomb-relay-host.js` | 主持頁控制器 |
-| `bomb-relay.css` | 樣式（前綴 `br-`），玩家卡片在 `play.html` 用 `body.bomb-card-page` |
-| `assets/bomb-relay/*.svg` | 初版場景圖，由 `scripts/bomb-relay-build-art.cjs` 產生 |
-| `tests/bomb-relay-*.test.cjs` | 規則、同步（假 Firebase）、牌組與卡片 UI 測試 |
+- `bomb-relay-deck.js` is the one authoritative 120-prompt source, mechanically
+  adapted from the supplied attachment: stable ID, pack, family, English and
+  Traditional Chinese. No second editable JSON/MJS copy is shipped.
+- Everyday / 日常聯想: 60 prompts, 15 families. Playful / 趣味聯想: 60 prompts,
+  15 families. Mixed / 混合 is the initial default with relative weights 1:1.
+  This is a playtest starting point, not a validated optimum or alternation.
+- `bomb-relay-selector.js` adapts the supplied pure selector to the existing
+  classic browser/CJS architecture. It owns no storage, timer or network.
+- `bomb-relay-engine.js` calls it once when preparing each new bomb, or for a
+  host-only preview reroll. Future prompts are not predealt. `order` stores
+  revealed IDs only; `promptHistory` stores the returned selector history.
+- Configurable `CONFIG.promptWeights` and `familyWindow` (default 3) are copied
+  into the canonical state. Sync `start` can set weights/familyWindow and keeps
+  current values when omitted; engine restart can update them too.
+- Exact ID reuse waits until the enabled pool is exhausted. Mixed draws the
+  other pack when one is exhausted; only eligible seen IDs recycle. Recent
+  families are avoided within the selected pack when alternatives exist;
+  fallback is finite and avoids immediately repeating the last ID if possible.
+- Unknown filters have an empty pool and invalid settings are rejected. Missing
+  prompts show a reload message, with no silent fallback to old scenes.
 
-玩家用原本的 `play.html` 連結，資料寫在 `rooms/{code}/players/{token}`：`{ game: 'bombrelay', playerNum, name, bomb: {...} }`，
-卡片只會寫回自己節點的 `bombAction = { id, type, sessionId, turnId }`，而且 transaction 會先確認 turnId 仍是畫面上那一手，
-晚到的「傳出」不會傳錯人。主持頁處理時以「收到的時間」對照秘密引信：爆炸前收到的傳遞有效，之後的一律算拿著的人爆炸。
+The old 60 cards remain as `legacyItems` and their SVGs remain on disk for
+comparison and saved-card lookup. They are excluded from every new pool.
+Legacy in-progress saves keep their displayed card, fuse, score and actual old
+game length; future bombs use the new bank. Old category names map to Mixed
+for future prompts. The legacy art builder uses `legacyItems` only.
 
-這款是瀏覽器主持模式（跟 CUT 早期一樣），**主持頁要保持開啟**；沒有接上獨立服務 hub-executor，所以只要推前端即可，不需要部署獨立服務或改任何 secret。
+## Reading, timer, passing and scores
 
-## 換成精緻插畫
+The existing `ready` phase is an untimed full-table reading preview. Once
+everyone understands the prompt, the holder lights it on their original
+player card; the host retains the proxy Light button. The host can Change
+prompt only during `ready`. Skipped previews also consume history. No extra
+three-second timer is needed because this existing explicit preview is retained.
 
-每張圖卡是 `assets/bomb-relay/<id>.svg`。精緻版可以直接覆蓋：
+One prompt remains visible to everyone from preview through explosion. English
+is always shown; Chinese UI adds a static understanding aid. Language changes
+do not issue commands or draw prompts. Text cards replace specific scene art
+so visuals do not suggest an answer list. Neutral bomb marks, existing palette,
+explosion animation, vibration and Web Audio cues remain.
 
-1. 保持同樣檔名與 4:3 比例（400 × 300 viewBox，或 1200 × 900 px）。也可以換成同名 `.webp`，但要同步改 `bomb-relay-deck.js` 的 `art` 路徑。
-2. 圖裡要看得到好幾樣可以說出來的東西（例如海灘：陽傘、沙堡、螃蟹、貝殼、衝浪板），這是遊戲提示的來源；不要放文字題目或答案清單。
-3. 覆蓋後把 `bomb-relay-deck.js` 的 `ART_VERSION` 改成新版本（例如 `art-2`），避免瀏覽器快取舊圖。
-4. **覆蓋精緻圖之後不要再無參數執行 `node scripts/bomb-relay-build-art.cjs`**，它會重畫全部 60 張。只想重畫某幾張草圖時用 `node scripts/bomb-relay-build-art.cjs beach zoo`。
-5. 圖檔不可含 script、事件屬性或外部連結（測試會檢查）。
+Fuse ranges are unchanged: Classic 10–60 s (default), Quick 8–25 s, Relaxed
+20–80 s. The original formula is `round((min + seededRandom * (max-min))*1000)`.
+`explodeAt`, remaining time and RNG seed never reach player projections; no
+remaining-time counter or progress bar is rendered. Host ticks check every
+100 ms, but the absolute deadline determines late actions.
 
-## 驗證紀錄（2026-10-10）
+Passing follows numbered seat order, skipping sitting-out players. Only the
+holder can pass on a player card; existing host proxy passing remains. Every
+pass, bounce and pre-deadline sit-out keeps the same fuse and prompt. The old
+challenge button returns an obvious repeated/off-topic answer to its speaker
+once, without pausing. No skip, per-person countdown or handoff grace is added.
+Duplicate command IDs and stale turns are rejected. Late pass/bounce/pause and
+now sit-out check expiry first; an expired holder cannot escape by sitting out.
+Old tick requests are scoped to their turn, so restart invalidates them.
 
-- 規則／同步／牌組／卡片 UI 測試 29 項；全站 `node --test tests/*.test.cjs` 1608/1608 通過（已併入 CUT Mode 2 之後的 main）。
-- 本機瀏覽器：主持頁 + 4 張真正的 `play.html` 卡片接同一個記憶體假 Firebase（沙盒連不到正式 Firebase），一張卡傳了 17–21 次、含一次退回，炸彈在秘密時間爆在拿著的人身上，下一張由輸的人開始；提早結束顯示並列贏家。玩家節點從未出現 `explodeAt`。
-- 320／390px、中英文的主持頁、所有玩家狀態、結算、題庫、主持管理皆無水平溢位；文字對比全數 ≥ 4.5:1（BOOM! 是黃底深字，量測工具看不到偽元素底色）。1366×768 分享畫面在遊戲中可一屏看完圖卡、炸彈與全員。
-- 尚未在正式房間實測真實網路延遲；第一次正式使用請先用 2–3 張自己的手機試一輪。
+The existing host emergency pause is retained (resume floor 2.5 s); it is not
+a thinking aid or an automatic answer-dispute pause. Stop invalidates the fuse.
+Explosion settles once: holder takes one card, then starts the next bomb.
+The 4.5 s explosion display and existing Next shortcut remain. After 5/10/15/20
+cards (default 10), lowest card count wins, including ties. Ordinary Restart
+clears that game's penalties and results, but preserves activity draw history.
+
+## Authority and history lifecycle
+
+The leased host writes the existing canonical Firebase document at
+`rooms/{roomCode}/players/{bombRelayControlToken}`, JSON in `stateJson`.
+`stateJson.promptHistory` has `seenIds`, `recentIds`, `recentFamilies`; recent
+lists cap at 24. Only that host draws and runs the existing deadline pulse.
+Player nodes receive the same current `cardId` via `engine.view`, never a
+selector instance or a secret fuse. Firebase transaction retries use the same
+captured time/seed and cannot consume another prompt.
+
+History survives pass, language changes, pause/resume, reconnect, host lease
+takeover, game switch back, settings edits, ordinary Restart and Play again.
+New Room in the Hub starts a new activity/control token and fresh history.
+Loading an older room resumes its retained history. Enabled-pool exhaustion
+recycles only its seen IDs as described above; it does not clear other packs.
+No cross-room or cross-user tracking is added.
+
+The host page must stay open. Closing it does not reset or rerandomize the fuse;
+on reconnect an overdue bomb settles under the existing host-authority model.
+This remains a frontend-only release; no service deployment or secret change.
+
+## Verification
+
+Run attachment tests first: `node --test talk-bomb-selector.test.mjs` (17 cases).
+In the repository: `node --test tests/bomb-relay-*.test.cjs` and
+`node --test tests/*.test.cjs`. Browser regression:
+`node tests/bomb-relay-ui.browser.cjs <path-to-playwright>` uses disposable local
+fixtures and a Firebase stand-in, never user rooms. Read-only production assets:
+`node scripts/bomb-relay-verify-release.cjs <commit>`.
+
+Record actual release test counts and browser limits in `CLAUDE.md`. Unit tests
+alone do not prove physical mobile or real multi-device voice-session behavior.

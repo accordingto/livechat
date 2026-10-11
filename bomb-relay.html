@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="bomb-relay.css?v=br-1">
+  <link rel="stylesheet" href="bomb-relay.css?v=br-prompts-2">
 </head>
 <body class="br-page">
   <div class="topbar">
@@ -29,26 +29,26 @@
     </div>
     <form class="br-panel br-setup" id="br-setup" novalidate>
       <div class="br-setup-hero" aria-hidden="true">
-        <img src="assets/bomb-relay/beach.svg?v=art-1" alt=""><img src="assets/bomb-relay/kitchen.svg?v=art-1" alt=""><img src="assets/bomb-relay/outer-space.svg?v=art-1" alt="">
-        <span class="br-setup-bomb">💣</span>
+        <span class="br-setup-paper"></span><span class="br-setup-paper"></span><span class="br-setup-paper"></span><span class="br-setup-bomb">💣</span>
       </div>
-      <p class="br-intro" data-i18n="bomb.intro">Look at the picture. Say one thing you can find there, then pass the bomb. Nobody knows when it will explode!</p>
+      <p class="br-intro" data-i18n="bomb.intro">Read the prompt. Say one fitting answer, then pass the bomb. Ordinary answers count. Nobody knows when it will explode!</p>
       <div class="br-settings">
         <label class="br-field"><span data-i18n="bomb.fuse">Fuse length</span><select id="br-fuse"></select></label>
         <label class="br-field"><span data-i18n="bomb.cards">Cards in this game</span><select id="br-cards"></select></label>
-        <label class="br-field"><span data-i18n="bomb.category">Scene set</span><select id="br-category"></select></label>
+        <label class="br-field"><span data-i18n="bomb.category">Prompt pack</span><select id="br-category"></select></label>
       </div>
       <div class="br-actions br-setup-actions">
         <button type="submit" class="br-button br-primary" id="br-start" data-i18n="bomb.start">Start Bomb Relay</button>
         <button type="button" class="br-button" id="br-setup-cancel" hidden data-i18n="bomb.close">Close</button>
       </div>
-      <p class="br-soft br-center" data-i18n="bomb.noPressure">No wrong answers — just say it and pass it fast.</p>
+      <p class="br-soft br-center" data-i18n="bomb.noPressure">One word is enough. Funny is optional.</p>
       <p class="br-soft br-center" data-i18n="bomb.soundHint">This host screen plays the ticking and the BOOM. Share computer audio when you share your screen.</p>
     </form>
     <section id="br-game" hidden aria-label="Bomb Relay">
       <div id="br-scene"></div>
       <div class="br-actions br-session-actions">
         <button type="button" class="br-button br-primary" id="br-light" hidden></button>
+        <button type="button" class="br-button" id="br-reroll" hidden data-i18n="bomb.reroll">Change prompt</button>
         <button type="button" class="br-button" id="br-pass" hidden></button>
         <button type="button" class="br-button br-primary" id="br-next" hidden></button>
         <button type="button" class="br-button br-primary" id="br-again" hidden data-i18n="bomb.playAgain">Play again</button>
@@ -65,18 +65,19 @@
     <details class="br-rules">
       <summary data-i18n="bomb.rules">How to play</summary>
       <ol>
-        <li data-i18n="bomb.rule1">Each card is a scene. The bomb holder lights the fuse on their own card (the host can do it too).</li>
-        <li data-i18n="bomb.rule2">Holding the bomb? Say one thing that belongs in the scene, then tap PASS. No repeats!</li>
-        <li data-i18n="bomb.rule3">If an answer repeats or doesn’t fit, anyone else can tap “Didn’t count” — the bomb goes back and that player must say another.</li>
+        <li data-i18n="bomb.rule1">Read the same prompt together. The host can change it before the holder (or host) lights the fuse. One prompt stays for the whole bomb.</li>
+        <li data-i18n="bomb.rule2">Say one fitting answer and tap PASS. A word, person, action, phrase, line or simple English description counts. Full grammar is optional. Funny earns no extra points.</li>
+        <li data-i18n="bomb.rule3">Avoid clear repeats this round; specific elaborations can count, and the next round starts fresh. For clear repeats or off-topic answers, another player can send it back while the fuse keeps running.</li>
         <li data-i18n="bomb.rule4">The fuse is secret and random. Whoever holds the bomb when it explodes takes the card and starts the next one.</li>
         <li data-i18n="bomb.rule5">After the last card, the fewest bomb cards wins.</li>
+        <li data-i18n="bomb.rule6">Keep thinking if you get stuck; the bomb keeps running. Passing keeps the same prompt and fuse. Everyday knowledge or imagination is enough; personal stories are optional.</li>
       </ol>
     </details>
     <a class="back br-demo-link" id="br-demo-link" href="bomb-relay.html?demo=1" data-i18n="bomb.demoLink">Try the interactive demo</a>
     <details class="br-library" id="br-library">
-      <summary data-i18n="bomb.library">Browse the scene cards</summary>
+      <summary data-i18n="bomb.library">Browse the prompts</summary>
       <div class="br-library-controls">
-        <label class="br-field"><span data-i18n="bomb.category">Scene set</span><select id="br-library-category"></select></label>
+        <label class="br-field"><span data-i18n="bomb.category">Prompt pack</span><select id="br-library-category"></select></label>
         <p class="br-soft" id="br-library-count" role="status"></p>
       </div>
       <div class="br-library-list" id="br-library-list"></div>
@@ -97,10 +98,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=membership-1"></script>
-  <script src="bomb-relay-deck.js?v=br-1"></script>
-  <script src="bomb-relay-engine.js?v=br-1"></script>
-  <script src="bomb-relay-sync.js?v=br-1"></script>
-  <script src="bomb-relay-ui.js?v=br-1"></script>
-  <script src="bomb-relay-host.js?v=br-1"></script>
+  <script src="bomb-relay-deck.js?v=br-prompts-2"></script>
+  <script src="bomb-relay-selector.js?v=br-prompts-2"></script>
+  <script src="bomb-relay-engine.js?v=br-prompts-2"></script>
+  <script src="bomb-relay-sync.js?v=br-prompts-2"></script>
+  <script src="bomb-relay-ui.js?v=br-prompts-2"></script>
+  <script src="bomb-relay-host.js?v=br-prompts-2"></script>
 </body>
 </html>

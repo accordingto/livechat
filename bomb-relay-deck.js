@@ -1,22 +1,138 @@
-/* Bomb Relay scene cards — original scenes, same job as the picture cards in a
- * "pass the bomb" party game: everyone names one thing that belongs in the
- * picture before passing the hidden-fuse bomb.
- *
- * Every card is a broad, familiar place or moment, so even beginners can name
- * at least fifteen different things for it in simple English. The scene title
- * is English (the teaching material); zh is only a small helper line on
- * Chinese UI screens.
- *
- * Pictures live at assets/bomb-relay/<id>.svg and are first-pass art made by
- * scripts/bomb-relay-build-art.cjs. A refined illustration may replace any
- * file as long as it keeps the same file name and a 4:3 picture (400 × 300
- * viewBox or 1200 × 900 pixels). Bump ART_VERSION when replacing pictures.
+/* Talk Bomb editorial bank: one authoritative source for 120 bilingual prompts.
+ * Stable IDs and family labels come from the supplied upgrade pack.
+ * The old 60 scene cards remain below for comparison and reading saved games;
+ * they are never included in a new game's prompt pool.
  */
 var BOMB_RELAY_DECK = (() => {
   'use strict';
   const ART_VERSION = 'art-1';
-  const categories = ['mixed', 'everyday', 'nature', 'fun', 'fantasy'];
-  const raw = [
+  const categories = Object.freeze(['mixed', 'everyday', 'playful']);
+  const PROMPTS = Object.freeze([
+  Object.freeze({"id": "tb-everyday-001", "pack": "everyday", "family": "home", "en": "Something you keep in the kitchen.", "zhHant": "你會放在廚房裡的東西。"}),
+  Object.freeze({"id": "tb-everyday-002", "pack": "everyday", "family": "home", "en": "Something you might find under a bed.", "zhHant": "床底下可能找到的東西。"}),
+  Object.freeze({"id": "tb-everyday-003", "pack": "everyday", "family": "home", "en": "Something you use to make your home more comfortable.", "zhHant": "讓家裡更舒服的東西。"}),
+  Object.freeze({"id": "tb-everyday-004", "pack": "everyday", "family": "home", "en": "Something you do when you move into a new home.", "zhHant": "搬進新家時會做的事。"}),
+  Object.freeze({"id": "tb-everyday-005", "pack": "everyday", "family": "food", "en": "Something people eat for breakfast.", "zhHant": "人們早餐會吃的東西。"}),
+  Object.freeze({"id": "tb-everyday-006", "pack": "everyday", "family": "food", "en": "Something you might eat late at night.", "zhHant": "深夜可能會吃的東西。"}),
+  Object.freeze({"id": "tb-everyday-007", "pack": "everyday", "family": "food", "en": "Something you can put in a sandwich.", "zhHant": "可以放進三明治的東西。"}),
+  Object.freeze({"id": "tb-everyday-008", "pack": "everyday", "family": "food", "en": "Food you can share at a party.", "zhHant": "適合在派對上分享的食物。"}),
+  Object.freeze({"id": "tb-everyday-009", "pack": "everyday", "family": "routines", "en": "Something people do before bed.", "zhHant": "人們睡前會做的事。"}),
+  Object.freeze({"id": "tb-everyday-010", "pack": "everyday", "family": "routines", "en": "Something people do after waking up.", "zhHant": "人們起床後會做的事。"}),
+  Object.freeze({"id": "tb-everyday-011", "pack": "everyday", "family": "routines", "en": "Something you can do while waiting.", "zhHant": "等待的時候可以做的事。"}),
+  Object.freeze({"id": "tb-everyday-012", "pack": "everyday", "family": "routines", "en": "Something people do when they cannot sleep.", "zhHant": "人們睡不著時會做的事。"}),
+  Object.freeze({"id": "tb-everyday-013", "pack": "everyday", "family": "travel", "en": "Something you pack for a trip.", "zhHant": "旅行時會帶的東西。"}),
+  Object.freeze({"id": "tb-everyday-014", "pack": "everyday", "family": "travel", "en": "Something you might see at an airport.", "zhHant": "在機場可能看到的東西或人物。"}),
+  Object.freeze({"id": "tb-everyday-015", "pack": "everyday", "family": "travel", "en": "Something you can do on a long journey.", "zhHant": "長途旅程中可以做的事。"}),
+  Object.freeze({"id": "tb-everyday-016", "pack": "everyday", "family": "travel", "en": "Something people forget to pack.", "zhHant": "人們打包時容易忘記帶的東西。"}),
+  Object.freeze({"id": "tb-everyday-017", "pack": "everyday", "family": "shopping", "en": "Something you can buy at a supermarket.", "zhHant": "在超市可以買到的東西。"}),
+  Object.freeze({"id": "tb-everyday-018", "pack": "everyday", "family": "shopping", "en": "Something you might buy at the last minute.", "zhHant": "最後一刻才可能去買的東西。"}),
+  Object.freeze({"id": "tb-everyday-019", "pack": "everyday", "family": "shopping", "en": "Something you can give as a gift.", "zhHant": "可以當成禮物的東西。"}),
+  Object.freeze({"id": "tb-everyday-020", "pack": "everyday", "family": "shopping", "en": "A reason someone might return something to a shop.", "zhHant": "有人把商品退回店裡的理由。"}),
+  Object.freeze({"id": "tb-everyday-021", "pack": "everyday", "family": "free-time", "en": "Something you can do indoors on a rainy day.", "zhHant": "下雨天可以在室內做的事。"}),
+  Object.freeze({"id": "tb-everyday-022", "pack": "everyday", "family": "free-time", "en": "Something people do on a Sunday afternoon.", "zhHant": "人們星期日下午會做的事。"}),
+  Object.freeze({"id": "tb-everyday-023", "pack": "everyday", "family": "free-time", "en": "Something friends can do together without spending money.", "zhHant": "朋友可以一起做、不用花錢的事。"}),
+  Object.freeze({"id": "tb-everyday-024", "pack": "everyday", "family": "free-time", "en": "Something you enjoy doing alone.", "zhHant": "你喜歡一個人做的事。"}),
+  Object.freeze({"id": "tb-everyday-025", "pack": "everyday", "family": "technology", "en": "Something people use their phones for.", "zhHant": "人們會用手機做的事。"}),
+  Object.freeze({"id": "tb-everyday-026", "pack": "everyday", "family": "technology", "en": "Something that needs charging.", "zhHant": "需要充電的東西。"}),
+  Object.freeze({"id": "tb-everyday-027", "pack": "everyday", "family": "technology", "en": "Something people take photos of.", "zhHant": "人們會拍照的東西或對象。"}),
+  Object.freeze({"id": "tb-everyday-028", "pack": "everyday", "family": "technology", "en": "Something you might receive on your phone.", "zhHant": "你可能在手機上收到的東西。"}),
+  Object.freeze({"id": "tb-everyday-029", "pack": "everyday", "family": "outdoors", "en": "Something you might see at a beach.", "zhHant": "在海灘可能看到的東西或人物。"}),
+  Object.freeze({"id": "tb-everyday-030", "pack": "everyday", "family": "outdoors", "en": "Something people do in a park.", "zhHant": "人們在公園會做的事。"}),
+  Object.freeze({"id": "tb-everyday-031", "pack": "everyday", "family": "outdoors", "en": "Something useful on a rainy day.", "zhHant": "下雨天派得上用場的東西。"}),
+  Object.freeze({"id": "tb-everyday-032", "pack": "everyday", "family": "outdoors", "en": "Something people do to cool down.", "zhHant": "人們為了涼快一點會做的事。"}),
+  Object.freeze({"id": "tb-everyday-033", "pack": "everyday", "family": "possessions", "en": "Something people carry in a bag.", "zhHant": "人們會放在包包裡帶著的東西。"}),
+  Object.freeze({"id": "tb-everyday-034", "pack": "everyday", "family": "possessions", "en": "Something people often lose.", "zhHant": "人們常弄丟的東西。"}),
+  Object.freeze({"id": "tb-everyday-035", "pack": "everyday", "family": "possessions", "en": "Something you might borrow from a friend.", "zhHant": "你可能向朋友借的東西。"}),
+  Object.freeze({"id": "tb-everyday-036", "pack": "everyday", "family": "possessions", "en": "Something people keep even when it is old.", "zhHant": "即使舊了，人們仍會留著的東西。"}),
+  Object.freeze({"id": "tb-everyday-037", "pack": "everyday", "family": "people", "en": "A job that helps other people.", "zhHant": "能幫助別人的工作。"}),
+  Object.freeze({"id": "tb-everyday-038", "pack": "everyday", "family": "people", "en": "A reason to call a friend.", "zhHant": "打電話給朋友的理由。"}),
+  Object.freeze({"id": "tb-everyday-039", "pack": "everyday", "family": "people", "en": "A small favor you might ask someone to do.", "zhHant": "你可能請別人幫的小忙。"}),
+  Object.freeze({"id": "tb-everyday-040", "pack": "everyday", "family": "people", "en": "Someone you might meet at a party.", "zhHant": "你在派對上可能遇到的人，可以說身分或關係。"}),
+  Object.freeze({"id": "tb-everyday-041", "pack": "everyday", "family": "feelings", "en": "Something people do when they are tired.", "zhHant": "人們累的時候會做的事。"}),
+  Object.freeze({"id": "tb-everyday-042", "pack": "everyday", "family": "feelings", "en": "Something people do when they are excited.", "zhHant": "人們興奮時會做的事。"}),
+  Object.freeze({"id": "tb-everyday-043", "pack": "everyday", "family": "feelings", "en": "Something people do when they are nervous.", "zhHant": "人們緊張時會做的事。"}),
+  Object.freeze({"id": "tb-everyday-044", "pack": "everyday", "family": "feelings", "en": "Something that helps people relax.", "zhHant": "能幫助人放鬆的東西或事情。"}),
+  Object.freeze({"id": "tb-everyday-045", "pack": "everyday", "family": "celebrations", "en": "Something you might receive on your birthday.", "zhHant": "生日可能收到的東西。"}),
+  Object.freeze({"id": "tb-everyday-046", "pack": "everyday", "family": "celebrations", "en": "Something you might see at a wedding.", "zhHant": "在婚禮可能看到的東西或人物。"}),
+  Object.freeze({"id": "tb-everyday-047", "pack": "everyday", "family": "celebrations", "en": "Something people use to decorate for a party.", "zhHant": "人們會用來布置派對的東西。"}),
+  Object.freeze({"id": "tb-everyday-048", "pack": "everyday", "family": "celebrations", "en": "A reason to celebrate.", "zhHant": "值得慶祝的理由。"}),
+  Object.freeze({"id": "tb-everyday-049", "pack": "everyday", "family": "communication", "en": "Something you might text a friend.", "zhHant": "你可能傳訊息跟朋友說的事。"}),
+  Object.freeze({"id": "tb-everyday-050", "pack": "everyday", "family": "communication", "en": "Something you might ask someone you have just met.", "zhHant": "你可能問剛認識的人的事。"}),
+  Object.freeze({"id": "tb-everyday-051", "pack": "everyday", "family": "communication", "en": "A reason someone might say sorry.", "zhHant": "有人會道歉的理由。"}),
+  Object.freeze({"id": "tb-everyday-052", "pack": "everyday", "family": "communication", "en": "Something you might say when leaving a party.", "zhHant": "離開派對時可能會說的話。"}),
+  Object.freeze({"id": "tb-everyday-053", "pack": "everyday", "family": "work-study", "en": "Something people keep on a desk.", "zhHant": "人們會放在桌上的東西。"}),
+  Object.freeze({"id": "tb-everyday-054", "pack": "everyday", "family": "work-study", "en": "Something you might bring to a meeting.", "zhHant": "你可能帶去開會的東西。"}),
+  Object.freeze({"id": "tb-everyday-055", "pack": "everyday", "family": "work-study", "en": "Something people do during a break.", "zhHant": "人們休息時間會做的事。"}),
+  Object.freeze({"id": "tb-everyday-056", "pack": "everyday", "family": "work-study", "en": "Something you can learn from another person.", "zhHant": "你可以向別人學的東西或技能。"}),
+  Object.freeze({"id": "tb-everyday-057", "pack": "everyday", "family": "getting-around", "en": "Something you might see on a city street.", "zhHant": "在城市街道上可能看到的東西或人物。"}),
+  Object.freeze({"id": "tb-everyday-058", "pack": "everyday", "family": "getting-around", "en": "Something you can do while waiting for a bus.", "zhHant": "等公車時可以做的事。"}),
+  Object.freeze({"id": "tb-everyday-059", "pack": "everyday", "family": "getting-around", "en": "Something that makes a journey more comfortable.", "zhHant": "讓旅程更舒服的東西或事情。"}),
+  Object.freeze({"id": "tb-everyday-060", "pack": "everyday", "family": "getting-around", "en": "A reason to leave home early.", "zhHant": "提早出門的理由。"}),
+  Object.freeze({"id": "tb-playful-001", "pack": "playful", "family": "work-study", "en": "Something people complain about at work.", "zhHant": "人們上班時會抱怨的事。"}),
+  Object.freeze({"id": "tb-playful-002", "pack": "playful", "family": "work-study", "en": "Something that could make a meeting worse.", "zhHant": "可能讓會議更糟的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-003", "pack": "playful", "family": "work-study", "en": "Something you probably should not say to your boss.", "zhHant": "你大概不該對老闆說的話。"}),
+  Object.freeze({"id": "tb-playful-004", "pack": "playful", "family": "work-study", "en": "Something people do at work when nobody is watching.", "zhHant": "沒人注意時，人們在工作中可能做的事。"}),
+  Object.freeze({"id": "tb-playful-005", "pack": "playful", "family": "dating", "en": "Something you probably should not say on a first date.", "zhHant": "第一次約會大概不該說的話，也可以只說話題。"}),
+  Object.freeze({"id": "tb-playful-006", "pack": "playful", "family": "dating", "en": "Something that could make a date awkward.", "zhHant": "可能讓約會尷尬的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-007", "pack": "playful", "family": "dating", "en": "A reason someone might leave a date early.", "zhHant": "有人提早結束約會的理由。"}),
+  Object.freeze({"id": "tb-playful-008", "pack": "playful", "family": "dating", "en": "Something surprising to bring on a date.", "zhHant": "帶去約會會讓人驚訝的東西。"}),
+  Object.freeze({"id": "tb-playful-009", "pack": "playful", "family": "home", "en": "Something roommates might argue about.", "zhHant": "室友可能會爭執的事。"}),
+  Object.freeze({"id": "tb-playful-010", "pack": "playful", "family": "home", "en": "Something you would hide before guests arrive.", "zhHant": "客人來之前，你會先藏起來的東西。"}),
+  Object.freeze({"id": "tb-playful-011", "pack": "playful", "family": "home", "en": "Something you would not want to find in your bed.", "zhHant": "你不想在床上發現的東西。"}),
+  Object.freeze({"id": "tb-playful-012", "pack": "playful", "family": "home", "en": "A reason someone might knock on your door late at night.", "zhHant": "有人深夜敲你家門的理由。"}),
+  Object.freeze({"id": "tb-playful-013", "pack": "playful", "family": "mornings", "en": "Something that can ruin your morning.", "zhHant": "可能毀掉你早晨的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-014", "pack": "playful", "family": "mornings", "en": "A reason someone might keep pressing snooze.", "zhHant": "有人一直按掉鬧鐘繼續睡的理由。"}),
+  Object.freeze({"id": "tb-playful-015", "pack": "playful", "family": "mornings", "en": "Something you might do before you are fully awake.", "zhHant": "還沒完全清醒時可能會做的事。"}),
+  Object.freeze({"id": "tb-playful-016", "pack": "playful", "family": "mornings", "en": "Something that would make getting up easier.", "zhHant": "能讓起床比較容易的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-017", "pack": "playful", "family": "parties", "en": "Something that could make a party awkward.", "zhHant": "可能讓派對尷尬的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-018", "pack": "playful", "family": "parties", "en": "Something that could make a boring party better.", "zhHant": "能讓無聊派對變好玩的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-019", "pack": "playful", "family": "parties", "en": "Something you would not expect someone to bring to a party.", "zhHant": "你沒想到有人會帶去派對的東西。"}),
+  Object.freeze({"id": "tb-playful-020", "pack": "playful", "family": "parties", "en": "A reason a party might end early.", "zhHant": "派對可能提早結束的理由。"}),
+  Object.freeze({"id": "tb-playful-021", "pack": "playful", "family": "travel", "en": "Something that could ruin a vacation.", "zhHant": "可能搞砸假期的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-022", "pack": "playful", "family": "travel", "en": "Something you would not want to hear on a plane.", "zhHant": "你不想在飛機上聽到的話，也可以只說事情。"}),
+  Object.freeze({"id": "tb-playful-023", "pack": "playful", "family": "travel", "en": "Something you would not want to find in your hotel room.", "zhHant": "你不想在飯店房間發現的東西。"}),
+  Object.freeze({"id": "tb-playful-024", "pack": "playful", "family": "travel", "en": "Something that could make a long trip more fun.", "zhHant": "能讓長途旅行更好玩的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-025", "pack": "playful", "family": "restaurants", "en": "Something people complain about at a restaurant.", "zhHant": "人們在餐廳會抱怨的事。"}),
+  Object.freeze({"id": "tb-playful-026", "pack": "playful", "family": "restaurants", "en": "Something you would not want to find in your food.", "zhHant": "你不想在食物裡發現的東西。"}),
+  Object.freeze({"id": "tb-playful-027", "pack": "playful", "family": "restaurants", "en": "Something you would not want a waiter to say.", "zhHant": "你不想聽到服務生說的話，也可以只說事情。"}),
+  Object.freeze({"id": "tb-playful-028", "pack": "playful", "family": "restaurants", "en": "A reason someone might pretend to like a meal.", "zhHant": "有人會假裝喜歡一餐的理由。"}),
+  Object.freeze({"id": "tb-playful-029", "pack": "playful", "family": "technology", "en": "Something you would not want to send to the wrong person.", "zhHant": "你不想傳錯人的東西或訊息。"}),
+  Object.freeze({"id": "tb-playful-030", "pack": "playful", "family": "technology", "en": "Something that can go wrong during a video call.", "zhHant": "視訊通話中可能出錯的事情。"}),
+  Object.freeze({"id": "tb-playful-031", "pack": "playful", "family": "technology", "en": "Something people complain about in a group chat.", "zhHant": "人們會在群組裡抱怨的事。"}),
+  Object.freeze({"id": "tb-playful-032", "pack": "playful", "family": "technology", "en": "A reason someone might delete a message.", "zhHant": "有人刪掉訊息的理由。"}),
+  Object.freeze({"id": "tb-playful-033", "pack": "playful", "family": "shopping", "en": "Something people buy and then never use.", "zhHant": "人們買了卻從來不用的東西。"}),
+  Object.freeze({"id": "tb-playful-034", "pack": "playful", "family": "shopping", "en": "Something people spend too much money on.", "zhHant": "人們容易花太多錢的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-035", "pack": "playful", "family": "shopping", "en": "Something you would be surprised to get as a free gift.", "zhHant": "收到會讓你驚訝的贈品。"}),
+  Object.freeze({"id": "tb-playful-036", "pack": "playful", "family": "shopping", "en": "A reason someone might hide a shopping bag.", "zhHant": "有人會把購物袋藏起來的理由。"}),
+  Object.freeze({"id": "tb-playful-037", "pack": "playful", "family": "neighbors", "en": "Something a neighbor might complain about.", "zhHant": "鄰居可能抱怨的事。"}),
+  Object.freeze({"id": "tb-playful-038", "pack": "playful", "family": "neighbors", "en": "Something you would not expect to see in an elevator.", "zhHant": "你沒想到會在電梯裡看到的東西或人物。"}),
+  Object.freeze({"id": "tb-playful-039", "pack": "playful", "family": "neighbors", "en": "A reason someone might avoid their neighbor.", "zhHant": "有人想避開鄰居的理由。"}),
+  Object.freeze({"id": "tb-playful-040", "pack": "playful", "family": "neighbors", "en": "Something that could make you everyone's favorite neighbor.", "zhHant": "能讓你成為大家最喜歡的鄰居的東西或做法。"}),
+  Object.freeze({"id": "tb-playful-041", "pack": "playful", "family": "friendship", "en": "Something friends might tease each other about.", "zhHant": "朋友之間可能互相吐槽的事。"}),
+  Object.freeze({"id": "tb-playful-042", "pack": "playful", "family": "friendship", "en": "A reason someone might avoid answering a phone call.", "zhHant": "有人不想接電話的理由。"}),
+  Object.freeze({"id": "tb-playful-043", "pack": "playful", "family": "friendship", "en": "Something that could save a boring weekend.", "zhHant": "能拯救無聊週末的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-044", "pack": "playful", "family": "friendship", "en": "Something that would make you say, \"That's a good friend.\"", "zhHant": "會讓你說「這才是好朋友」的事。"}),
+  Object.freeze({"id": "tb-playful-045", "pack": "playful", "family": "pets", "en": "Something a pet might complain about if it could talk.", "zhHant": "寵物如果會說話，可能會抱怨的事。"}),
+  Object.freeze({"id": "tb-playful-046", "pack": "playful", "family": "pets", "en": "Something you would not trust a pet to look after.", "zhHant": "你不放心交給寵物看顧的東西。"}),
+  Object.freeze({"id": "tb-playful-047", "pack": "playful", "family": "pets", "en": "A reason someone might blame their pet.", "zhHant": "有人把事情怪到寵物身上的理由。"}),
+  Object.freeze({"id": "tb-playful-048", "pack": "playful", "family": "pets", "en": "Something a pet could do to become famous.", "zhHant": "寵物可能因此出名的事。"}),
+  Object.freeze({"id": "tb-playful-049", "pack": "playful", "family": "small-disasters", "en": "Something that could go wrong right before an important event.", "zhHant": "重要活動開始前，可能突然出錯的事情。"}),
+  Object.freeze({"id": "tb-playful-050", "pack": "playful", "family": "small-disasters", "en": "Something that would make you say, \"Not again!\"", "zhHant": "會讓你說「怎麼又來了」的事。"}),
+  Object.freeze({"id": "tb-playful-051", "pack": "playful", "family": "small-disasters", "en": "Something you would not want to drop into a toilet.", "zhHant": "你不想掉進馬桶裡的東西。"}),
+  Object.freeze({"id": "tb-playful-052", "pack": "playful", "family": "small-disasters", "en": "A reason everyone might suddenly go quiet.", "zhHant": "所有人突然安靜下來的理由。"}),
+  Object.freeze({"id": "tb-playful-053", "pack": "playful", "family": "little-luxuries", "en": "Something you would pay someone else to do for you.", "zhHant": "你會願意花錢請別人替你做的事。"}),
+  Object.freeze({"id": "tb-playful-054", "pack": "playful", "family": "little-luxuries", "en": "Something you would ask a helpful robot to do.", "zhHant": "你會請一台熱心機器人做的事。"}),
+  Object.freeze({"id": "tb-playful-055", "pack": "playful", "family": "little-luxuries", "en": "Something you wish came with an undo button.", "zhHant": "你希望能有「復原」按鈕的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-056", "pack": "playful", "family": "little-luxuries", "en": "Something that would make you feel rich for a day.", "zhHant": "能讓你覺得自己當了一天有錢人的東西或事情。"}),
+  Object.freeze({"id": "tb-playful-057", "pack": "playful", "family": "awkward-moments", "en": "Something you would not want your microphone to pick up.", "zhHant": "你不想被麥克風收進去的聲音或話語。"}),
+  Object.freeze({"id": "tb-playful-058", "pack": "playful", "family": "awkward-moments", "en": "Something you might say after forgetting someone's name.", "zhHant": "忘記對方名字後，你可能會說的話。"}),
+  Object.freeze({"id": "tb-playful-059", "pack": "playful", "family": "awkward-moments", "en": "A reason someone might pretend to be busy.", "zhHant": "有人假裝很忙的理由。"}),
+  Object.freeze({"id": "tb-playful-060", "pack": "playful", "family": "awkward-moments", "en": "Something you would not want to appear behind you on a video call.", "zhHant": "視訊時，你不想在身後出現的東西或人物。"})
+]);
+  const items = Object.freeze(PROMPTS.map(prompt => Object.freeze(Object.assign({}, prompt, {
+    category: prompt.pack, zh: prompt.zhHant, emoji: '💣',
+  }))));
+  const legacyRaw = [
     // Everyday places
     ['kitchen', 'everyday', '🍳', 'In the Kitchen', '廚房'],
     ['bathroom', 'everyday', '🛁', 'In the Bathroom', '浴室'],
@@ -82,14 +198,14 @@ var BOMB_RELAY_DECK = (() => {
     ['desert-island', 'fantasy', '🏝️', 'On a Desert Island', '無人島'],
     ['robot-factory', 'fantasy', '🤖', 'In a Robot Factory', '機器人工廠'],
   ];
-  const items = Object.freeze(raw.map(([id, category, emoji, en, zh]) => Object.freeze({
+  const legacyItems = Object.freeze(legacyRaw.map(([id, category, emoji, en, zh]) => Object.freeze({
     id, category, emoji, en, zh, art: `assets/bomb-relay/${id}.svg?v=${ART_VERSION}`,
   })));
-  const byId = new Map(items.map(card => [card.id, card]));
+  const byId = new Map([...legacyItems, ...items].map(card => [card.id, card]));
   return Object.freeze({
-    ART_VERSION, categories: Object.freeze(categories), items,
+    ART_VERSION, categories, items, legacyItems,
     get: id => byId.get(id) || null,
-    pool: category => category === 'mixed' || !categories.includes(category) ? items : items.filter(card => card.category === category),
+    pool: mode => mode === 'mixed' ? items : categories.includes(mode) ? items.filter(prompt => prompt.pack === mode) : [],
   });
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = BOMB_RELAY_DECK;

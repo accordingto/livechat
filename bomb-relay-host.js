@@ -26,7 +26,8 @@
   }
   function restoreOptions(current) {
     if (!current) return;
-    byId('fuse').value = current.fuse; byId('cards').value = String(current.cards); byId('category').value = current.category;
+    byId('fuse').value = current.fuse; byId('cards').value = String(current.cards);
+    byId('category').value = BOMB_RELAY_DECK.categories.includes(current.category) ? current.category : 'mixed';
   }
   function labels() {
     I18N.applyStatic(document);
@@ -77,6 +78,7 @@
       const hostView = !actor;
       byId('light').hidden = !hostView || bomb.phase !== 'ready';
       byId('light').textContent = t('lightFor', { name: holder });
+      byId('reroll').hidden = !hostView || bomb.phase !== 'ready';
       byId('pass').hidden = !hostView || bomb.phase !== 'ticking';
       byId('pass').textContent = t('passFor', { name: holder });
       byId('next').hidden = !hostView || bomb.phase !== 'boom';
@@ -86,7 +88,8 @@
       byId('again').hidden = !hostView || bomb.phase !== 'finished';
       byId('settings').hidden = !hostView || bomb.phase !== 'finished';
       byId('manage-open').hidden = !hostView;
-      for (const id of ['light', 'pass', 'next', 'pause', 'again', 'settings', 'manage-open', 'restart', 'stop']) byId(id).disabled = busy || !canControl();
+      for (const id of ['light', 'reroll', 'pass', 'next', 'pause', 'again', 'settings', 'manage-open', 'restart', 'stop']) byId(id).disabled = busy || !canControl();
+      byId('reroll').disabled ||= !bomb.canReroll;
       byId('stop').disabled ||= bomb.phase === 'finished';
       renderRoster(bomb);
     } else if (demoCard) { demoCard.destroy(); demoCard = null; demoCardActor = 0; }
@@ -136,11 +139,14 @@
   }
   async function start({ restart = false } = {}) {
     if (busy || !canControl()) return;
-    const chosen = restart && state ? { fuse: state.fuse, cards: state.cards, category: state.category } : options();
+    const chosen = restart && state ? { fuse: state.fuse, cards: state.cards,
+      category: BOMB_RELAY_DECK.categories.includes(state.category) ? state.category : 'mixed',
+      weights: state.promptWeights, familyWindow: state.familyWindow } : options();
     if (sound.enabled) sound.ensure(); // inside the click: unlocks Web Audio
     busy = true; error = ''; render();
     try {
-      if (demo) state = BOMB_RELAY_ENGINE.create({ ...chosen, id: uid(), roster: demoRoster, now: now(), seed: seed() });
+      if (demo) state = BOMB_RELAY_ENGINE.create({ ...chosen, id: uid(), roster: demoRoster, now: now(), seed: seed(),
+        promptHistory: state?.promptHistory, weights: state?.promptWeights, familyWindow: state?.familyWindow });
       else await sync.start(chosen);
       editing = false; byId('manage').close();
     } catch (e) { error = knownError(e.message); }
@@ -150,6 +156,7 @@
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
   byId('setup-cancel').addEventListener('click', () => { editing = false; render(); });
   byId('light').addEventListener('click', () => { if (sound.enabled) sound.ensure(); command('light', { turnId: turn() }); });
+  byId('reroll').addEventListener('click', () => command('reroll', { turnId: turn() }));
   byId('pass').addEventListener('click', () => command('pass', { turnId: turn() }));
   byId('next').addEventListener('click', () => command('next', { turnId: turn() }));
   byId('pause').addEventListener('click', () => command(state?.phase === 'paused' ? 'resume' : 'pause'));

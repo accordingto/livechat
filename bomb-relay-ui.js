@@ -5,19 +5,21 @@ var BOMB_RELAY_UI = (() => {
   'use strict';
   const dict = {
     brand: ['💣 BOMB RELAY', '💣 BOMB RELAY'], subtitle: ['說出來．傳出去．別在你手上爆炸', 'NAME IT. PASS IT. DON’T GET CAUGHT.'],
-    intro: ['看圖說出一樣這個場景裡會有的東西，說完立刻把炸彈傳給下一位。沒人知道它什麼時候爆炸！', 'Look at the picture. Say one thing you can find there, then pass the bomb. Nobody knows when it will explode!'],
+    intro: ['看題目，說一個符合題目的答案，再把炸彈傳出去。普通答案就可以，沒人知道炸彈何時爆炸！', 'Read the prompt. Say one fitting answer, then pass the bomb. Ordinary answers count. Nobody knows when it will explode!'],
     fuse: ['引信長度', 'Fuse length'], quick: ['快速 · 8–25 秒', 'Quick · 8–25 seconds'], classic: ['經典 · 10–60 秒', 'Classic · 10–60 seconds'], long: ['悠閒 · 20–80 秒', 'Relaxed · 20–80 seconds'],
     cards: ['這局幾張卡', 'Cards in this game'], cardsN: ['{n} 張', '{n} cards'],
-    category: ['場景類型', 'Scene set'], mixed: ['全部混合', 'All scenes'], everyday: ['生活場所', 'Everyday places'], nature: ['自然戶外', 'Nature & outdoors'], fun: ['節日活動', 'Fun & events'], fantasy: ['奇幻冒險', 'Fantasy & adventure'],
-    start: ['開始遊戲', 'Start Bomb Relay'], noPressure: ['沒有對錯，只要說得出、傳得快。', 'No wrong answers — just say it and pass it fast.'],
+    category: ['題包', 'Prompt pack'], mixed: ['混合', 'Mixed'], everyday: ['日常聯想', 'Everyday'], playful: ['趣味聯想', 'Playful'],
+    start: ['開始遊戲', 'Start Bomb Relay'], noPressure: ['一個詞就夠，搞笑隨意。', 'One word is enough. Funny is optional.'],
     soundHint: ['滴答聲與爆炸聲由這個主持頁播放。共用畫面時請分享電腦音訊。', 'This host screen plays the ticking and the BOOM. Share computer audio when you share your screen.'],
     cardOf: ['第 {n}／{total} 張', 'CARD {n} / {total}'], answers: ['已說 {n} 個', '{n} answers'], answer: ['已說 {n} 個', '{n} answer'],
-    prompt: ['說出一樣這裡會有的東西', 'NAME SOMETHING YOU CAN FIND HERE'],
-    starter: ['先開始', 'STARTS THIS CARD'], readyHint: ['大家先看圖。{name} 點燃引信後說出第一個。', 'Everyone look at the picture. {name} lights the fuse and says the first thing.'],
-    holdsTitle: ['炸彈在', 'THE BOMB IS WITH'], holdsHint: ['說一樣東西，馬上傳！', 'Say one thing, then pass!'], next: ['下一位：{name}', 'Next: {name}'],
+    prompt: ['這輪題目', 'THIS ROUND’S PROMPT'], legacyPrompt: ['說出一樣這裡會有的東西', 'Name something you can find here.'],
+    promptUnavailable: ['題目無法載入，請重新整理。', 'The prompt is unavailable. Please reload.'],
+    starter: ['先開始', 'STARTS THIS CARD'], readyHint: ['大家先看清楚題目。{name} 點燃引信後說出第一個答案。', 'Read the prompt together. {name} lights the fuse and says the first answer.'],
+    reroll: ['換一題', 'Change prompt'],
+    holdsTitle: ['炸彈在', 'THE BOMB IS WITH'], holdsHint: ['說一個符合的答案，馬上傳！', 'Say one fitting answer, then pass!'], next: ['下一位：{name}', 'Next: {name}'],
     bounced: ['↩️ {by} 說不算！炸彈退回 {to}，請換一個說。', '↩️ {by} said that didn’t count — back to {to}! Say a different one.'],
     bouncedHost: ['↩️ 不算！退回 {to}', '↩️ Didn’t count — back to {to}'],
-    boom: ['BOOM!', 'BOOM!'], takes: ['拿走這張卡', 'takes this card'], boomPasses: ['這張卡大家說了 {n} 個。', 'The table named {n} things.'],
+    boom: ['BOOM!', 'BOOM!'], takes: ['拿走這張卡', 'takes this card'], boomPasses: ['這張卡大家說了 {n} 個答案。', 'The table gave {n} answers.'],
     boomLast: ['這是最後一張！', 'That was the last card!'], nextCard: ['下一張', 'Next card'], showResults: ['看結果', 'See the results'],
     paused: ['已暫停', 'PAUSED'], pausedHint: ['引信暫停中，主持人準備好就會繼續。', 'The fuse is frozen. The host will resume when everyone is ready.'],
     finished: ['遊戲結束！', 'GAME OVER!'], stoppedEarly: ['主持人提早結束了這局。', 'The host ended this game early.'],
@@ -26,11 +28,11 @@ var BOMB_RELAY_UI = (() => {
     you: ['你', 'YOU'], out: ['休息中', 'Sitting out'],
     light: ['🔥 點燃引信', '🔥 Light the fuse'], lightFor: ['🔥 代 {name} 點燃', '🔥 Light it for {name}'], passFor: ['💣 代 {name} 傳出', '💣 Pass for {name}'],
     pass: ['傳給 {name} 💣', 'PASS to {name} 💣'], passing: ['傳送中…', 'Passing…'],
-    youHave: ['炸彈在你手上！', 'YOU HAVE THE BOMB!'], youHaveHint: ['說一樣圖裡會有的東西，說完馬上傳！', 'Say one thing from the picture — then PASS!'],
+    youHave: ['炸彈在你手上！', 'YOU HAVE THE BOMB!'], youHaveHint: ['說一個符合的答案，然後傳！', 'Say one fitting answer, then PASS!'],
     youNext: ['下一個就是你，先想好！', 'You’re next — think of one now!'], otherHolds: ['💣 炸彈在 {name} 手上', '💣 {name} has the bomb'],
-    youStart: ['你先開始！', 'YOU START!'], youStartHint: ['等大家看完圖，點燃引信並說出第一個。', 'When everyone has seen the picture, light the fuse and say the first thing.'],
+    youStart: ['你先開始！', 'YOU START!'], youStartHint: ['等大家看清楚題目，點燃引信並說出第一個答案。', 'Once everyone has read the prompt, light the fuse and say the first answer.'],
     waitStart: ['等 {name} 點燃引信…', 'Waiting for {name} to light the fuse…'],
-    bounce: ['↩️ 不算！退回給 {name}', '↩️ Didn’t count — back to {name}'], bounceHint: ['重複了或不符合圖片？可以退回。', 'Repeated, or doesn’t fit the picture? Send it back.'],
+    bounce: ['↩️ 不算！退回給 {name}', '↩️ Didn’t count — back to {name}'], bounceHint: ['只針對明顯重複或離題；具體延伸不一定算重複。', 'For clear repeats or off-topic answers; a specific elaboration can still count.'],
     youBoom: ['你拿到這張卡', 'You take this card'], otherBoom: ['{name} 拿到這張卡', '{name} takes this card'],
     yourCards: ['你的炸彈卡', 'Your bomb cards'], yourRank: ['你是第 {n} 名', 'You placed #{n}'],
     soundOn: ['🔊 音效開啟', '🔊 Sound on'], soundOff: ['🔇 音效關閉', '🔇 Sound off'], enableSound: ['🔊 啟用音效', '🔊 Enable sound'],
@@ -41,12 +43,13 @@ var BOMB_RELAY_UI = (() => {
     rosterHint: ['離開語音的人可以先休息，炸彈會略過他。', 'Let someone sit out if they leave the call; the bomb skips them.'],
     sitOut: ['先休息', 'Sit out'], rejoin: ['回來玩', 'Join again'], playing: ['遊戲中', 'Playing'],
     rules: ['怎麼玩', 'How to play'],
-    rule1: ['每張卡是一個場景。拿到炸彈的人在自己的卡片點燃引信（主持人也可以代按）。', 'Each card is a scene. The bomb holder lights the fuse on their own card (the host can do it too).'],
-    rule2: ['炸彈在你手上：說出一樣這個場景會有的東西，然後按「傳」。說過的不能再說！', 'Holding the bomb? Say one thing that belongs in the scene, then tap PASS. No repeats!'],
-    rule3: ['有人重複或說的不符合場景，其他人可以按「不算」，炸彈退回給他，要換一個說。', 'If an answer repeats or doesn’t fit, anyone else can tap “Didn’t count” — the bomb goes back and that player must say another.'],
+    rule1: ['全場先看清楚同一題，主持人可以在點燃前換題。持有者（或主持人）點燃引信後，這顆炸彈全程用同一題。', 'Read the same prompt together. The host can change it before the holder (or host) lights the fuse. One prompt stays for the whole bomb.'],
+    rule2: ['說一個符合題目的普通答案就能按「傳」。單字、人物、動作、短語、台詞、簡單英文描述都可以，不要求完整文法。搞笑隨意，不加分。', 'Say one fitting answer and tap PASS. A word, person, action, phrase, line or simple English description counts. Full grammar is optional. Funny earns no extra points.'],
+    rule3: ['同一輪避免明顯重複；具體延伸不自動算重複，下一輪可以再用。若明顯重複或離題，其他玩家可沿用「不算」退回，炸彈仍繼續跑。', 'Avoid clear repeats this round; specific elaborations can count, and the next round starts fresh. For clear repeats or off-topic answers, another player can send it back while the fuse keeps running.'],
     rule4: ['引信長度是秘密，隨機爆炸。爆炸時炸彈在誰手上，誰就拿走這張卡，並開始下一張。', 'The fuse is secret and random. Whoever holds the bomb when it explodes takes the card and starts the next one.'],
     rule5: ['全部卡片玩完，炸彈卡最少的人獲勝。', 'After the last card, the fewest bomb cards wins.'],
-    library: ['查看場景卡', 'Browse the scene cards'], libraryCount: ['共 {n} 張', '{n} cards'],
+    rule6: ['想不到可以繼續想，炸彈照常跑。傳遞不換題、不重新計時。可以用生活常識或想像，不需要說自己的經驗。', 'Keep thinking if you get stuck; the bomb keeps running. Passing keeps the same prompt and fuse. Everyday knowledge or imagination is enough; personal stories are optional.'],
+    library: ['查看題庫', 'Browse the prompts'], libraryCount: ['共 {n} 題', '{n} prompts'],
     demo: ['操作示範・單機模擬', 'Interactive demo · one-device simulation'], demoView: ['切換示範視角', 'Switch the demo view'], hostView: ['共同畫面', 'Shared screen'],
     liveLink: ['使用正式房間', 'Use your room'], demoLink: ['先試操作示範', 'Try the interactive demo'],
     setupNeeded: ['先到主選單設定房間與玩家連結。', 'Set up the room and player links in the hub first.'], setUpRoom: ['設定房間與玩家', 'Set up room & players'],
@@ -80,18 +83,15 @@ var BOMB_RELAY_UI = (() => {
   const nameOf = (bomb, n) => seatsOf(bomb).find(p => p.playerNum === n)?.name || t('player', { n });
   const errorKey = code => ['stale_turn', 'too_late', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster'].includes(code) ? code : 'error';
 
-  function picture(cardId, cls = '') {
-    const card = deck().get(cardId);
-    if (!card) return '';
-    return `<figure class="br-picture ${cls}"><img src="${esc(card.art)}" alt="${esc(card.en)}" width="400" height="300" decoding="async"><span class="br-picture-emoji" aria-hidden="true">${esc(card.emoji)}</span></figure>`;
-  }
   function sceneTitle(cardId, size = '') {
-    const card = deck().get(cardId); if (!card) return '';
-    return `<div class="br-scene-title ${size}"><span class="br-kicker">${esc(t('prompt'))}</span><h2 lang="en">${esc(card.en)}</h2>${lang() === 'zh' ? `<p class="br-zh">${esc(card.zh)}</p>` : ''}</div>`;
+    const card = deck().get(cardId);
+    if (!card) return `<div class="br-scene-title ${size}"><p role="status">${esc(t('promptUnavailable'))}</p></div>`;
+    const english = card.pack ? card.en : `${dict.legacyPrompt[1]} ${card.en}`;
+    return `<div class="br-scene-title ${size}" data-br-prompt-id="${esc(card.id)}"><span class="br-kicker">${esc(t('prompt'))}</span><h2 lang="en">${esc(english)}</h2>${lang() === 'zh' ? `<p class="br-zh" lang="zh-Hant">${esc(card.zhHant || card.zh)}</p>` : ''}</div>`;
   }
   function thumbs(cardIds, max = 6) {
     const ids = list(cardIds);
-    const shown = ids.slice(-max).map(id => { const card = deck().get(id); return card ? `<img src="${esc(card.art)}" alt="${esc(card.en)}" title="${esc(card.en)}">` : ''; }).join('');
+    const shown = ids.slice(-max).map(id => { const card = deck().get(id); return card ? `<span class="br-taken-card" title="${esc(card.en)}" aria-label="${esc(card.en)}"><span aria-hidden="true">💣</span></span>` : ''; }).join('');
     return ids.length ? `<span class="br-thumbs">${shown}${ids.length > max ? `<span class="br-thumbs-more">+${ids.length - max}</span>` : ''}</span>` : '';
   }
   function strip(bomb) {
@@ -128,7 +128,7 @@ var BOMB_RELAY_UI = (() => {
     return `<div class="br-bomb${live ? ' is-live' : ''}${phase === 'paused' ? ' is-paused' : ''}" aria-hidden="true"><span class="br-bomb-body">💣</span>${live ? '<span class="br-spark"></span>' : ''}</div>`;
   }
 
-  // The shared host screen: the picture, who holds the bomb, everyone's pile.
+  // The shared host screen: the prompt, who holds the bomb, everyone's pile.
   function stage(bomb, { animate = true } = {}) {
     if (!bomb) return '';
     if (bomb.phase === 'finished') return `<div class="br-stage br-phase-finished">${standings(bomb, 0)}</div>`;
@@ -142,7 +142,7 @@ var BOMB_RELAY_UI = (() => {
       focus = `<div class="br-burst" aria-hidden="true"><span>💥</span><strong>${esc(t('boom'))}</strong></div><h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>`;
     }
     const cls = ['br-stage', `br-phase-${bomb.phase}`, bomb.phase === 'boom' && animate ? 'br-exploding' : '', animate ? '' : 'br-static'].filter(Boolean).join(' ');
-    return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${picture(bomb.boom?.cardId || bomb.cardId, bomb.phase === 'boom' ? 'is-blown' : '')}${sceneTitle(bomb.boom?.cardId || bomb.cardId)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
+    return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
   }
 
   // Web Audio cues, synthesized: steady tick-tock (never speeds up, so the
@@ -248,7 +248,11 @@ var BOMB_RELAY_UI = (() => {
       if (key !== this.renderKey) { this.renderKey = key; this.element.innerHTML = this.html(data); this.paintSound(); }
       if (arrived) {
         const button = this.element.querySelector('[data-br-action="pass"]'), box = button?.getBoundingClientRect?.();
-        if (box && (box.top < 0 || box.bottom > (window.innerHeight || 0))) button.scrollIntoView({ block: 'center', behavior: 'instant' });
+        if (box && (box.top < 0 || box.bottom > (window.innerHeight || 0))) {
+          // Bring the prompt and its nearby action into view together.
+          const prompt = this.element.querySelector('.br-card-scene');
+          (prompt || button).scrollIntoView({ block: 'start', behavior: 'instant' });
+        }
       }
       this.paint();
     }
@@ -259,11 +263,11 @@ var BOMB_RELAY_UI = (() => {
       if (bomb.phase === 'finished') body = standings(bomb, me);
       else {
         const sceneId = bomb.boom?.cardId || bomb.cardId;
-        const scene = `<div class="br-card-scene">${picture(sceneId, bomb.phase === 'boom' ? 'is-blown' : '')}${sceneTitle(sceneId, 'is-compact')}</div>`;
+        const scene = `<div class="br-card-scene">${sceneTitle(sceneId, 'is-compact')}</div>`;
         const { zone, cls } = this.zone(bomb, me);
         theme = cls;
-        // Holding the bomb, the PASS button comes first: no scrolling under pressure.
-        body = cls === 'is-holder' ? zone + scene : scene + zone;
+        // A compact text card keeps the prompt and the pass action together.
+        body = scene + zone;
       }
       const pile = mine && mine.count && bomb.phase !== 'finished' ? `<div class="br-mine"><span class="br-kicker">${esc(t('yourCards'))} · ${esc(t('count', { n: mine.count }))}</span>${thumbs(mine.cards, 8)}</div>` : '';
       const table = bomb.phase !== 'finished' ? seats(bomb, me) : '';
@@ -305,9 +309,9 @@ var BOMB_RELAY_UI = (() => {
   }
 
   function libraryHTML(category = 'mixed') {
-    return deck().pool(category).map(card => `<figure class="br-library-card"><img src="${esc(card.art)}" alt="" loading="lazy" width="400" height="300"><figcaption><strong lang="en">${esc(card.en)}</strong><span>${esc(card.zh)}</span></figcaption></figure>`).join('');
+    return deck().pool(category).map(card => `<article class="br-library-card" data-br-prompt-id="${esc(card.id)}"><span class="br-kicker">${esc(t(card.pack))}</span><strong lang="en">${esc(card.en)}</strong>${lang() === 'zh' ? `<span lang="zh-Hant">${esc(card.zhHant || card.zh)}</span>` : ''}</article>`).join('');
   }
 
-  return { t, esc, list, stage, standings, seats, picture, sceneTitle, Sound, Card, libraryHTML, colorOf, nameOf, errorKey };
+  return { t, esc, list, stage, standings, seats, sceneTitle, Sound, Card, libraryHTML, colorOf, nameOf, errorKey };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = BOMB_RELAY_UI;

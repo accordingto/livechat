@@ -1,13 +1,13 @@
 /* Bomb Relay — pure authoritative rules. No DOM, Firebase, audio or timers.
  *
- * Mechanics follow the classic "pass the bomb" picture-card party game:
- *   1. A scene card is revealed. The bomb holder lights the fuse.
- *   2. The holder says ONE thing that belongs in the scene, then passes the
+ * Mechanics follow the classic "pass the bomb" party game:
+ *   1. One shared prompt is revealed for reading. The holder lights the fuse.
+ *   2. The holder says ONE fitting answer, then passes the
  *      bomb to the next player. Answers may not repeat.
  *   3. Anyone may challenge the last answer ("doesn't fit" / "already said"):
  *      the bomb goes straight back to that player, who must say another.
  *   4. The fuse is secret and random. Whoever holds the bomb when it explodes
- *      takes the scene card. They start the next card.
+ *      takes the prompt card. They start the next card.
  *   5. After the agreed number of cards, the fewest bomb cards wins.
  *
  * The explosion time (explodeAt / remainingMs) exists only in the host's
@@ -18,11 +18,13 @@
 var BOMB_RELAY_ENGINE = (() => {
   'use strict';
   const deck = typeof BOMB_RELAY_DECK !== 'undefined' ? BOMB_RELAY_DECK : require('./bomb-relay-deck.js');
+  const selector = typeof BOMB_RELAY_SELECTOR !== 'undefined' ? BOMB_RELAY_SELECTOR : require('./bomb-relay-selector.js');
   const CONFIG = Object.freeze({
     minPlayers: 2, maxPlayers: 9,
     // Seconds, like the electronic bomb: nobody knows when it goes off.
     fuses: Object.freeze({ quick: [8, 25], classic: [10, 60], long: [20, 80] }),
     cardOptions: Object.freeze([5, 10, 15, 20]), defaultCards: 10,
+    promptWeights: selector.DEFAULT_WEIGHTS, familyWindow: 3,
     boomHoldMs: 4500,
     // A resumed bomb never explodes in the same instant it starts ticking.
     resumeFloorMs: 2500,
@@ -45,11 +47,6 @@ var BOMB_RELAY_ENGINE = (() => {
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-  function shuffle(items, random) {
-    const out = items.slice();
-    for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
-    return out;
-  }
   // Seat order is the pass direction: the next active seat after `from`.
   function nextActive(state, from) {
     const seats = roster(state).map(player => player.playerNum).sort((a, b) => a - b);
@@ -64,9 +61,43 @@ var BOMB_RELAY_ENGINE = (() => {
   const validFuse = fuse => Object.hasOwn(CONFIG.fuses, fuse);
   const validCards = cards => CONFIG.cardOptions.includes(cards);
   const validCategory = category => deck.categories.includes(category);
-  function drawOrder(category, cards, random) {
-    const pool = deck.pool(category).map(card => card.id);
-    return shuffle(pool, random).slice(0, Math.min(cards, pool.length));
+  // Legacy category deals could be shorter than the configured card count.
+  // Keep their actual total separately so Restart still has a valid setting.
+  const totalCards = state => state.roundCards ?? (state.promptRotationVersion !== 1 ? list(state.order).length || state.cards : state.cards);
+  // Firebase omits empty arrays. Restore the serializable selector contract
+  // without creating shared mutable state or clearing the activity's history.
+  function promptHistory(value) {
+    return Object.fromEntries(['seenIds', 'recentIds', 'recentFamilies'].map(key =>
+      [key, list(value?.[key]).filter(item => typeof item === 'string')]));
+  }
+  function validPromptOptions(weights, familyWindow, category) {
+    if (!weights || typeof weights !== 'object' || Array.isArray(weights)
+      || !Number.isInteger(familyWindow) || familyWindow < 0 || familyWindow > 24) return false;
+    const effective = Object.assign({}, CONFIG.promptWeights, weights);
+    if (['everyday', 'playful'].some(pack => !Number.isFinite(effective[pack]) || effective[pack] < 0)) return false;
+    return category !== 'mixed' || effective.everyday > 0 || effective.playful > 0;
+  }
+  function drawPrompt(state, random) {
+    if (state.promptRotationVersion !== 1) {
+      state.order = state.order.slice(0, state.cardIndex);
+      state.promptRotationVersion = 1;
+    }
+    const result = selector.selectPrompt({ mode: state.category,
+      history: state.promptHistory, weights: state.promptWeights,
+      familyWindow: state.familyWindow, random });
+    state.promptHistory = result.history;
+    state.order[state.cardIndex] = result.prompt.id;
+  }
+  function normalizePromptState(state) {
+    state.promptHistory = promptHistory(state.promptHistory);
+    if (state.promptRotationVersion !== 1) {
+      // Keep the currently displayed legacy card and its live fuse. Future old
+      // predealt cards are replaced only when the next bomb is prepared.
+      state.roundCards = state.order.length || state.cards;
+      if (!validCategory(state.category)) state.category = 'mixed';
+    }
+    state.promptWeights = Object.assign({}, CONFIG.promptWeights, state.promptWeights || {});
+    state.familyWindow = Number.isInteger(state.familyWindow) ? state.familyWindow : CONFIG.familyWindow;
   }
   function fuseMs(state, random) {
     const [min, max] = CONFIG.fuses[state.fuse] || CONFIG.fuses.classic;
@@ -75,7 +106,8 @@ var BOMB_RELAY_ENGINE = (() => {
   function bump(state, now) { state.turnId++; state.lastChangeAt = now; }
 
   function dealGame(state, now, random) {
-    state.order = drawOrder(state.category, state.cards, random);
+    state.order = [];
+    state.roundCards = null;
     state.cardIndex = 0;
     state.penalties = {};
     state.history = [];
@@ -83,9 +115,10 @@ var BOMB_RELAY_ENGINE = (() => {
     state.boom = null;
     const players = active(state);
     const starter = players[Math.floor(random() * players.length)]?.playerNum ?? null;
-    readyCard(state, starter, now);
+    readyCard(state, starter, now, random);
   }
-  function readyCard(state, holder, now) {
+  function readyCard(state, holder, now, random) {
+    drawPrompt(state, random);
     state.phase = 'ready'; state.holder = holder; state.starter = holder;
     state.passes = 0; state.lastPass = null; state.bounce = null;
     state.explodeAt = null; state.remainingMs = null; state.litAt = null;
@@ -98,20 +131,20 @@ var BOMB_RELAY_ENGINE = (() => {
     state.penalties[loser] = [...list(state.penalties[loser]), cardId];
     state.history = [...list(state.history), { cardId, loser, passes: state.passes }];
     state.boom = { id: `${state.sessionId}:${state.cardIndex}`, loser, cardId, passes: state.passes,
-      last: state.cardIndex + 1 >= state.order.length };
+      last: state.cardIndex + 1 >= totalCards(state) };
     state.phase = 'boom'; state.phaseUntil = now + CONFIG.boomHoldMs;
     state.explodeAt = null; state.remainingMs = null; state.lastPass = null; state.bounce = null;
     bump(state, now);
   }
-  function afterBoom(state, now) {
+  function afterBoom(state, now, random) {
     const boom = state.boom;
     state.lastBoom = boom ? { loser: boom.loser, cardId: boom.cardId, passes: boom.passes } : null;
     state.boom = null;
     state.cardIndex++;
-    if (state.cardIndex >= state.order.length) { finish(state, now, false); return; }
+    if (state.cardIndex >= totalCards(state)) { finish(state, now, false); return; }
     // The player who exploded starts the next card, like picking up the bomb.
     const starter = boom && isActive(state, boom.loser) ? boom.loser : nextActive(state, boom?.loser ?? state.holder);
-    readyCard(state, starter, now);
+    readyCard(state, starter, now, random);
   }
   function finish(state, now, stopped) {
     state.phase = 'finished'; state.stopped = !!stopped;
@@ -123,14 +156,18 @@ var BOMB_RELAY_ENGINE = (() => {
   // host after the explosion moment cannot rescue its sender.
   const due = (state, now) => state.phase === 'ticking' && Number.isFinite(state.explodeAt) && now >= state.explodeAt;
 
-  function create({ id, roster: seats, fuse = 'classic', cards = CONFIG.defaultCards, category = 'mixed', now, seed } = {}) {
+  function create({ id, roster: seats, fuse = 'classic', cards = CONFIG.defaultCards, category = 'mixed',
+    promptHistory: priorPromptHistory, weights = CONFIG.promptWeights, familyWindow = CONFIG.familyWindow, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(seats) || seats.length < CONFIG.minPlayers || seats.length > CONFIG.maxPlayers) throw new Error('invalid_roster');
     if (seats.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1 || player.playerNum > CONFIG.maxPlayers)
       || new Set(seats.map(player => player.playerNum)).size !== seats.length) throw new Error('invalid_roster');
-    if (!validFuse(fuse) || !validCards(cards) || !validCategory(category)) throw new Error('invalid_options');
+    if (!validFuse(fuse) || !validCards(cards) || !validCategory(category)
+      || !validPromptOptions(weights, familyWindow, category)) throw new Error('invalid_options');
     const state = {
       version: 1, sessionId: String(id), turnId: 0, lastChangeAt: now,
-      fuse, cards, category,
+      fuse, cards, category, promptRotationVersion: 1,
+      promptHistory: promptHistory(priorPromptHistory),
+      promptWeights: Object.assign({}, CONFIG.promptWeights, weights), familyWindow,
       roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
       order: [], cardIndex: 0, phase: 'ready', holder: null, starter: null,
       passes: 0, lastPass: null, bounce: null, boom: null, lastBoom: null,
@@ -152,12 +189,13 @@ var BOMB_RELAY_ENGINE = (() => {
     if (!Number.isFinite(now)) return current;
     // Idle host ticks perform no write at all.
     if (input.type === 'tick') {
-      if (!host) return current;
+      if (!host || input.turnId !== current.turnId) return current;
       const boomDone = current.phase === 'boom' && Number.isFinite(current.phaseUntil) && now >= current.phaseUntil;
       if (!due(current, now) && !boomDone) return current;
     }
     const state = copy(current);
     state.roster = roster(state); state.order = list(state.order); state.history = list(state.history);
+    normalizePromptState(state);
     state.penalties = state.penalties || {}; state.seen = state.seen || {}; state.replies = state.replies || {};
     for (const key of Object.keys(state.penalties)) state.penalties[key] = list(state.penalties[key]);
     const random = rng(input.seed);
@@ -167,7 +205,12 @@ var BOMB_RELAY_ENGINE = (() => {
     switch (input.type) {
       case 'tick':
         if (due(state, now)) explode(state, now);
-        else afterBoom(state, now);
+        else afterBoom(state, now, random);
+        break;
+      case 'reroll':
+        if (!host || state.phase !== 'ready' || !fresh) { error = 'not_available'; break; }
+        drawPrompt(state, random);
+        bump(state, now);
         break;
       case 'light':
         if (state.phase !== 'ready' || !fresh || !mayAct || (!host && actor !== state.holder) || !isActive(state, state.holder)) { error = 'not_available'; break; }
@@ -198,7 +241,7 @@ var BOMB_RELAY_ENGINE = (() => {
       }
       case 'next':
         if (state.phase !== 'boom' || !fresh || !mayAct) { error = 'not_available'; break; }
-        afterBoom(state, now);
+        afterBoom(state, now, random);
         break;
       case 'pause':
         if (!host || !['ready', 'ticking'].includes(state.phase)) { error = 'not_available'; break; }
@@ -218,6 +261,10 @@ var BOMB_RELAY_ENGINE = (() => {
         bump(state, now);
         break;
       case 'exclude': {
+        if (!host) { error = 'not_available'; break; }
+        // A removal received after the deadline cannot rescue the holder by
+        // moving the bomb. Settle their explosion before changing membership.
+        if (due(state, now)) explode(state, now);
         const number = Number(input.playerNum), want = input.active === true;
         const seat = state.roster.find(player => player.playerNum === number);
         if (!host || !seat || (seat.active !== false) === want) { error = 'not_available'; break; }
@@ -240,9 +287,15 @@ var BOMB_RELAY_ENGINE = (() => {
         if (input.fuse !== undefined && !validFuse(input.fuse)) { error = 'invalid_options'; break; }
         if (input.cards !== undefined && !validCards(input.cards)) { error = 'invalid_options'; break; }
         if (input.category !== undefined && !validCategory(input.category)) { error = 'invalid_options'; break; }
+        const category = input.category ?? state.category;
+        const weights = input.weights ?? state.promptWeights;
+        const familyWindow = input.familyWindow ?? state.familyWindow;
+        if (!validPromptOptions(weights, familyWindow, category)) { error = 'invalid_options'; break; }
         if (input.fuse !== undefined) state.fuse = input.fuse;
         if (input.cards !== undefined) state.cards = input.cards;
         if (input.category !== undefined) state.category = input.category;
+        state.promptWeights = Object.assign({}, CONFIG.promptWeights, weights);
+        state.familyWindow = familyWindow;
         state.stopped = false;
         dealGame(state, now, random);
         break;
@@ -281,7 +334,7 @@ var BOMB_RELAY_ENGINE = (() => {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, phase: state.phase,
       fuse: state.fuse, cards: state.cards, category: state.category,
       cardId: state.phase === 'finished' ? null : state.order[state.cardIndex] ?? null,
-      cardNo: Math.min(state.cardIndex + 1, state.order.length), cardsTotal: state.order.length,
+      cardNo: Math.min(state.cardIndex + 1, totalCards(state)), cardsTotal: totalCards(state),
       holder: ['ready', 'ticking', 'paused'].includes(state.phase) ? state.holder : null,
       next: ticking ? nextActive(state, state.holder) : null,
       passes: state.passes, pausedFrom: state.phase === 'paused' ? state.pausedFrom : null,
@@ -294,6 +347,7 @@ var BOMB_RELAY_ENGINE = (() => {
       roster: seats, standings: standings(state),
       history: list(state.history).map(entry => ({ cardId: entry.cardId, loser: entry.loser, passes: entry.passes })),
       canLight: state.phase === 'ready' && me && (playerNum === 0 || playerNum === state.holder) && isActive(state, state.holder),
+      canReroll: state.phase === 'ready' && playerNum === 0,
       canPass: ticking && me && (playerNum === 0 || playerNum === state.holder),
       canBounce: !!challengeable && me && playerNum !== last.from,
       canNext: state.phase === 'boom' && me,

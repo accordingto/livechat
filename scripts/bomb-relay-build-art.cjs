@@ -161,9 +161,9 @@ ${vignette()}
 function main() {
   const only = process.argv.slice(2);
   fs.mkdirSync(OUT, { recursive: true });
-  const cards = DECK.items.filter(card => !only.length || only.includes(card.id));
+  const cards = DECK.legacyItems.filter(card => !only.length || only.includes(card.id));
   for (const card of cards) fs.writeFileSync(path.join(OUT, `${card.id}.svg`), render(card));
-  const missing = DECK.items.filter(card => !SCENES[card.id]).map(card => card.id);
+  const missing = DECK.legacyItems.filter(card => !SCENES[card.id]).map(card => card.id);
   if (missing.length) throw new Error('Missing art specs: ' + missing.join(', '));
   console.log(`Wrote ${cards.length} scene pictures to ${path.relative(process.cwd(), OUT)}`);
 }
