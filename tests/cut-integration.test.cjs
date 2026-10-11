@@ -4,7 +4,7 @@ const root = path.resolve(__dirname, '..');
 test('CUT remains before Open Mic Rescue and original player cards have lifecycle cleanup', () => {
   const hub = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const links = [...hub.matchAll(/<a class="game-card[^\"]*" href="([^\"]+)"/g)].map(match => match[1]);
-  assert.equal(links.at(-2), 'cut.html'); assert.equal(links.at(-1), 'open-mic-rescue.html'); assert.ok(links.indexOf('bluff-king-live-chat.html') < links.indexOf('cut.html'));
+  assert.equal(links.at(-3), 'cut.html'); assert.equal(links.at(-2), 'open-mic-rescue.html'); assert.equal(links.at(-1), 'sketch-relay.html'); assert.ok(links.indexOf('bluff-king-live-chat.html') < links.indexOf('cut.html'));
   const cards = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
   assert.match(cards, /new CUT_UI\.Card/); assert.match(cards, /cutCard\.destroy\(\)/);
   assert.match(cards, /current\.cut\?\.sessionId !== command\.sessionId/);
@@ -14,7 +14,7 @@ test('CUT remains before Open Mic Rescue and original player cards have lifecycl
 test('CUT host loads independent modules in dependency order and assets exist', () => {
   const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
   const files = [...html.matchAll(/<script src="(cut-[^\"]+\.js)(?:\?[^\"]*)?"/g)].map(match => match[1]);
-  assert.deepEqual(files, ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-ui.js', 'cut-sync.js', 'cut-host.js']);
+  assert.deepEqual(files, ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-jump-topics.js', 'cut-engine.js', 'cut-ui.js', 'cut-sync.js', 'cut-host.js']);
   for (const file of files) { assert.ok(fs.existsSync(path.join(root, file))); new vm.Script(fs.readFileSync(path.join(root, file), 'utf8')); }
   assert.ok(fs.existsSync(path.join(root, 'cut.css')));
 });
@@ -55,4 +55,38 @@ test('CUT has accessible custom-time inputs and explicit topic-ending confirmati
   assert.match(ui, /window\.confirm\(t\('endTopicQuestion'\)\)/);
   assert.match(ui, /data-cut-action/);
   assert.doesNotMatch(html, /cut-(?:vote|ballot)/);
+});
+
+
+test('host topic browser stays collapsed at the bottom and CUT caches are consistent', () => {
+  const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
+  const cards = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'cut.css'), 'utf8');
+  const section = html.match(/<details class="cut-library" id="cut-library"[^>]*>[\s\S]*?<\/details>/)?.[0];
+  assert.ok(section);
+  assert.doesNotMatch(section.split('>')[0], /\bopen\b/);
+  assert.ok(html.indexOf('id="cut-library"') > html.indexOf('id="cut-demo-link"'));
+  assert.ok(html.indexOf('id="cut-library"') < html.indexOf('</main>'));
+  for (const id of ['cut-library-category', 'cut-library-search', 'cut-library-count', 'cut-library-list']) assert.ok(section.includes('id="' + id + '"'));
+  assert.doesNotMatch(section, /<button|data-cut-action|data-cut-topic/);
+  assert.doesNotMatch(cards, /id="cut-library"|class="cut-library"/);
+  assert.match(css, /\.cut-library-list[^}]*max-height: 420px[^}]*overflow-y: auto/);
+  const assets = [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)*\.(?:js|css))\?v=([^"]+)"/g), ...cards.matchAll(/(?:src|href)="(cut(?:-[a-z]+)*\.(?:js|css))\?v=([^"]+)"/g)];
+  assert.equal(assets.length, 11);
+  for (const asset of assets) assert.equal(asset[2], 'cut-12', asset[1]);
+  assert.match(fs.readFileSync(path.join(root, 'hub-launcher.js'), 'utf8'), /file\.startsWith\('cut-'\) \? 'cut-12'/);
+  for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
+});
+
+
+test('CUT host exposes an accessible whole-minute topic reminder setting while keeping speaker deadlines hidden', () => {
+  const html = fs.readFileSync(path.join(root, 'cut.html'), 'utf8');
+  const input = html.match(/<input[^>]*id="cut-topic-minutes"[^>]*>/)?.[0];
+  assert.ok(input); assert.match(input, /type="number"/); assert.match(input, /min="1"/); assert.match(input, /max="60"/); assert.match(input, /step="1"/); assert.match(input, /value="10"/); assert.match(input, /required/);
+  assert.match(input, /aria-describedby="cut-topic-minutes-hint cut-topic-minutes-error"/);
+  const UI = require('../cut-ui.js');
+  const cut = { phase: 'speaking', topicClock: { durationMs: 60000, elapsedMs: 60000 }, deadline: 99999, speakingDurationMs: 15876, topic: { question: 'Topic' }, roster: [] };
+  const scene = UI.scene(cut, 0, 100000);
+  assert.match(scene, /data-cut-topic-time[^>]*>00:00</); assert.match(scene, /data-cut-topic-reminder[^>]*role="status"/);
+  assert.doesNotMatch(scene, /data-cut-countdown|99999|15876/);
 });

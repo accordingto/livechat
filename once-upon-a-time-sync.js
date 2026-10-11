@@ -98,6 +98,9 @@ var ONCE_SYNC = (() => {
       return this.connecting;
     }
     inactiveSession(doc) {
+      // Registered membership is owned by the service, including retained
+      // away seats and new players outside this manager's cached count.
+      if (doc?.executor?.v === 1) return false;
       const state = doc?.state, players = ONCE_ENGINE.list(state?.roster);
       if (!this.cardsReady || !state?.sessionId || players.length < 2 || players.length > 6) return false;
       if (Number.isInteger(this.room.count) && this.room.count >= 2 && this.room.count <= 6 && this.room.count !== players.length) return true;

@@ -1,433 +1,3629 @@
-/* Original plain-English topics. Follow-ups are choices, not a required interview. */
+/* Short, shared discussion situations. Everyone can suggest, disagree and build on ideas.
+ * Chat Wolf-derived scenes are editorial adaptations with trace IDs only.
+ * This standalone public library never loads roles or private missions.
+ */
 const TALK_CATEGORIES = [
-  {id:'connection',zh:'人際與信任',en:'Connection & trust'},
-  {id:'self',zh:'自我與成長',en:'Self & growth'},
-  {id:'belonging',zh:'群體與界線',en:'Belonging & boundaries'},
-  {id:'work',zh:'工作與金錢',en:'Work & money'},
-  {id:'fairness',zh:'公平與自由',en:'Fairness & freedom'},
-  {id:'digital',zh:'科技與網路生活',en:'Technology & online life'},
-  {id:'ethics',zh:'日常倫理與選擇',en:'Everyday ethics & choices'},
-  {id:'future',zh:'社會與未來',en:'Society & the future'},
-  {id:'shared-living',zh:'一起生活與旅行',en:'Living & travelling together'},
-  {id:'shared-planning',zh:'一起做點有趣的事',en:'Making something together'},
-  {id:'light-fantasy',zh:'如果日常有點奇幻',en:'A little everyday fantasy'},
-  {id:'everyday-choices',zh:'朋友間的小選擇',en:'Small choices with friends'},
-  {id:'personal-experiences',zh:'日常故事與小怪癖',en:'Everyday stories & small quirks'},
+  {
+    "id": "connection",
+    "zh": "人際與信任",
+    "en": "Connection & trust"
+  },
+  {
+    "id": "self",
+    "zh": "一起嘗試與改變",
+    "en": "Trying and changing together"
+  },
+  {
+    "id": "belonging",
+    "zh": "群體與界線",
+    "en": "Belonging & boundaries"
+  },
+  {
+    "id": "work",
+    "zh": "工作與金錢",
+    "en": "Work & money"
+  },
+  {
+    "id": "fairness",
+    "zh": "公平與自由",
+    "en": "Fairness & freedom"
+  },
+  {
+    "id": "digital",
+    "zh": "科技與網路生活",
+    "en": "Technology & online life"
+  },
+  {
+    "id": "ethics",
+    "zh": "日常倫理與選擇",
+    "en": "Everyday ethics & choices"
+  },
+  {
+    "id": "future",
+    "zh": "社會與未來",
+    "en": "Society & the future"
+  },
+  {
+    "id": "shared-living",
+    "zh": "一起生活與旅行",
+    "en": "Living & travelling together"
+  },
+  {
+    "id": "shared-planning",
+    "zh": "一起做點有趣的事",
+    "en": "Making something together"
+  },
+  {
+    "id": "light-fantasy",
+    "zh": "如果日常有點奇幻",
+    "en": "A little everyday fantasy"
+  },
+  {
+    "id": "everyday-choices",
+    "zh": "朋友間的小選擇",
+    "en": "Small choices with friends"
+  },
+  {
+    "id": "personal-experiences",
+    "zh": "一起應付小意外",
+    "en": "Everyday surprises together"
+  }
 ];
-// Explain the main question itself: its meaning, scope, and a way to answer.
-// Keep examples optional and leave room for different views; do not add a new task.
-const TALK_EXPLANATIONS = {
-  comfortable: 'Here, "be yourself" means feeling able to speak, act, or show feelings without trying hard to make a good impression. The question asks what another person does, or what they are like, that gives you that freedom.\n\nYou could name one thing, such as accepting disagreement or being comfortable with silence, and explain how it helps you feel at ease.',
-  support: 'This question asks what kind of support you personally find helpful when something is worrying or upsetting you. Support could mean listening, offering advice, helping with a task, or giving you some space.\n\nChoose the response you would want and explain what it gives you. Your answer can depend on the situation; you do not need to describe a private problem.',
-  cancel: 'The question asks which part of a last-minute cancellation affects how you feel about it. That could be why the friend cancelled, how they told you, how often it happens, or the time you had set aside.\n\nYou can begin by choosing the detail that matters most to you and explaining why. Different details may make the same cancellation feel understandable or disappointing.',
-  care: 'This asks how you recognize care in an everyday action. A small action might be remembering a preference, noticing that you are tired, or making time to reply. Its meaning can matter more than its size or cost.\n\nName an action that would make you feel cared for, then explain what you would understand from it: perhaps that someone notices you, remembers you, or wants to help.',
-  contact: 'The question is about what keeps a friendship feeling close when regular conversation is not possible. Staying close might mean trusting each other, feeling remembered, or being able to reconnect easily.\n\nYou could describe a habit or an understanding between friends that would help you. Explain how it supports the connection, even when messages or meetings are infrequent.',
-  help: 'This asks what your first response would be when you notice a possible need but have not been invited to help. You might ask what is needed, make a small offer, help directly, or wait.\n\nExplain which response you would choose and why it fits. You can include what you would need to know before acting, especially if you are unsure whether the person wants help.',
-  space: 'There are two connected parts to this question: when you need time alone, and what you want other people to understand about that need. Time alone could help you rest, think, enjoy something, or recover after being around people.\n\nYou can describe one situation and explain what being alone does for you. Then say what you would want a friend to understand about it.',
-  change: 'Changing your mind means revising an opinion or decision after seeing it differently. This question asks what makes that process easier: useful evidence, a patient conversation, time to reflect, or feeling free to admit uncertainty.\n\nChoose something that helps you reconsider a view and explain why. You can speak generally without sharing a belief you would rather keep private.',
-  time: 'This question asks what you would choose to do with a few hours that suddenly became yours. A good use of that time could be rest, enjoyment, connection, finishing something, or having no plan.\n\nSay how you would like to spend the afternoon and what makes that choice appealing. The reason behind your choice helps others understand what you need or value at the moment.',
-  enough: 'Here, "enough" means the point at which you feel satisfied with something you want, such as money, free time, recognition, or possessions. The question asks how you would recognize that point.\n\nPick one kind of thing and describe a sign that you had enough of it. Your sign might be an amount, a feeling of security, or the freedom to stop worrying about getting more.',
-  approval: 'To "shape our choices" means to influence what we decide to do. The question asks how much weight other people\'s opinions should have compared with our own needs, values, and judgment.\n\nYou could use an ordinary choice, such as work or how to spend time, to explain whose opinion you would consider and how much influence you would give it. Your own balance may depend on the decision.',
-  uncertainty: 'The question asks when acting with some uncertainty is better than waiting to feel more certain. Feeling sure can mean having enough information, confidence in your choice, or confidence about the result.\n\nYou could describe a type of decision and explain why you would act now or wait. How serious the possible result is, and whether you can change course later, may affect your answer.',
-  different: 'This asks which differences can feel enjoyable or comfortable within a friendship. Differences might involve interests, habits, personality, tastes, or ways of seeing the world. Enjoying a difference can mean learning from it or simply liking that you are not the same.\n\nChoose one kind of difference and explain what makes it easy for you to appreciate.',
-  welcome: 'Feeling welcome means sensing that there is a place for you in a group and that your presence is wanted. The question asks what helps create that feeling when you are new.\n\nYou could name a small action, a way people talk, or an atmosphere that would help you join in comfortably. Explain what that would communicate to you, such as interest, patience, or room to participate at your own pace.',
-  travel: 'The question asks what friends should discuss and agree on before travelling together. An agreement is a shared expectation about something that could affect everyone, such as budget, pace, meals, or time apart.\n\nChoose one or two matters you would want to settle first and explain why. You can focus on what would help you enjoy the trip, rather than planning a whole journey.',
-  family: 'Family expectations are hopes or beliefs about how an adult should live, such as their work, relationships, or responsibilities. This question asks how much influence those expectations should have on the adult\'s choices.\n\nYou could explain an area where family input seems valuable to you, or a limit you would want to keep. Describe the balance you find reasonable and the reason for it.',
-  tradition: 'A tradition is something people keep doing and pass on, such as a celebration, a meal, or a shared custom. The question asks what gives it enough value to continue.\n\nYou could identify a reason for keeping a tradition, such as connection, shared memory, enjoyment, or a belief it expresses. Explain why that reason matters to you; you can also say when changing part of the tradition would still preserve its value.',
-  boundaries: 'This asks what makes declining a request or invitation feel respectful to the person receiving the answer. Saying no sets a limit, but tone, clarity, timing, or a brief explanation can affect how that limit is understood.\n\nDescribe what you would appreciate when someone says no to you, or how you would want to say it yourself. Explain what makes that approach feel considerate.',
-  pay: 'This asks which reasons should guide how much a job pays. Possible reasons include the effort involved, the skills required, the risks, and how much the work helps others. Different people may find different reasons more important.\n\nYou can choose one reason you consider important and explain why it should affect pay. If two reasons point to different amounts, you can say which you think should matter more.',
-  ambition: 'A "good career" here means working life that feels worthwhile or suitable for the person doing it. The question asks what makes it good beyond salary and the status of a job title.\n\nYou could focus on freedom, learning, stability, relationships, useful work, or time for the rest of life. Choose something that matters to you and explain how it would improve your experience of working.',
-  rest: 'To "earn their rest" means having to do enough work or achieve enough before a break feels deserved. The question asks whether rest should depend on what a person has done, or whether needing rest can be a sufficient reason.\n\nExplain the view you find reasonable and why. You can use an ordinary workday or day at home to show what your view would mean in practice.',
-  teamwork: 'Sharing credit means deciding how people\'s contributions are recognized when a team succeeds. Contributions can differ in time, skill, ideas, responsibility, or support that is less visible.\n\nThe question asks what a fair way of giving recognition would look like. You could explain one principle you would use and how it would recognize people whose contributions are different.',
-  failure: 'The question asks what allows a mistake to help someone learn. That might involve understanding what went wrong, getting useful feedback, having a chance to try again, or changing how a task is done.\n\nChoose a condition you think matters and explain how it turns the experience into learning. You can use a simple or imagined mistake; a personal failure story is not required.',
-  meaning: 'For work to give life meaning, it might provide a sense of purpose, identity, or doing something worthwhile. This question asks whether you need that feeling to come from your job.\n\nYou could explain how important meaning at work is to you and why. It is also possible to value a job for supporting other meaningful parts of life, such as relationships, interests, or community.',
-  rules: 'Treating everyone the same can mean applying the same rules or giving everyone the same amount of help. Being fair can also involve considering differences in people\'s needs or circumstances.\n\nThe question asks whether equal treatment is always enough for fairness. You can use one simple example to explain when the same treatment seems fair to you, or when a difference in treatment seems reasonable.',
-  chances: 'A "fair chance" means having a reasonable opportunity to take part or work toward a goal. People may have different amounts of time, money, health, knowledge, or support at the start.\n\nThis question asks what would need to be true for you to call the opportunity fair. You can focus on one area, such as learning or finding work, and explain which starting conditions matter most.',
-  freedom: 'Personal freedom means being able to make choices about your own life and behavior. A shared space is somewhere those choices also affect other people, such as a home, workplace, or public area.\n\nThe question asks where you would place a reasonable limit. You could choose one shared situation and explain which choices people should be free to make, and what effect on others would justify a boundary.',
-  voice: 'To "have a say" means having some influence over a decision. That could mean being listened to, helping shape the options, voting, or making the final choice.\n\nThis question asks who should have that influence when a decision affects a group. You could choose a simple group decision and explain whose views should count and why. You can distinguish being heard from having the final authority.',
-  secondchance: 'A second chance means being allowed to try again after a mistake or harmful action. The question asks what, if anything, someone should do before others are willing to offer that opportunity.\n\nYou could consider acknowledging the problem, making repairs, apologizing, or showing changed behavior. Explain which step would matter most to you and what it would demonstrate.',
-  merit: 'Effort refers to what someone works at or chooses to do. Luck includes helpful or difficult circumstances they did not choose, such as timing, opportunities, or their starting point.\n\nThe question asks how you see the influence of each on success. Choose a kind of success and explain what role you think effort and luck play. You can describe their relationship without giving an exact percentage.',
-  privacy: 'Personal information can include your location, habits, contacts, or other details about your life. Sharing it may make a service easier to use or give you a benefit.\n\nThe question asks what would make that exchange acceptable to you. You can name a situation in which you would share, or a boundary you would keep, and explain how the benefit, the information, or your trust in the recipient affects your choice.',
-  ai: 'This asks where you would welcome help from AI and where you would prefer to do the thinking or work yourself. Help can range from suggesting ideas to completing a task or recommending a decision.\n\nChoose a task and explain what kind of help, if any, you would want. Accuracy, privacy, learning, personal expression, or responsibility for the result could all influence your preference.',
-  onlinefriend: 'An online friendship may develop mainly through messages, voice, or shared activities on the internet. "Feel real" means that the connection matters to you and feels like a friendship you can rely on.\n\nThe question asks what gives it that quality. You could focus on trust, consistency, shared experiences, or mutual care, and explain why your chosen quality makes the connection meaningful.',
-  news: 'Trusting information means being willing to believe it is accurate enough to rely on. Online, that judgment may depend on who created it, the evidence offered, and whether other reliable sources support it.\n\nThe question asks what gives you confidence in a claim. Describe a sign you look for or a check you would make, and explain why it makes the information more believable to you.',
-  attention: 'Our attention is the time and focus we give to something. Choosing freely online means having meaningful control over what we notice and how long we stay with it. Features such as recommendations or notifications may also influence that choice.\n\nThe question asks how much control you think we have. You can describe an ordinary online habit and explain what feels chosen, influenced, or difficult to stop.',
-  publicmistakes: 'An old online mistake might be a post or comment that continues to affect how someone is treated years later. "Follow someone" means that it keeps influencing their relationships, reputation, or opportunities.\n\nThe question asks how long that past action should remain relevant. Explain what would matter to your judgment, such as the harm, how long ago it happened, or what the person has done since.',
-  honesty: 'The question asks whether telling the truth is always the kinder choice. Kindness here can include caring about someone\'s feelings, helping them understand a situation, or giving them information they need.\n\nYou could explain a situation in which honesty seems caring, or one in which the way or timing of telling the truth matters. Use it to show what you consider when judging kindness.',
-  loyalty: 'Loyalty means standing by someone or remaining committed to a relationship. This question asks what that commitment should look like when you believe your friend has made a wrong choice.\n\nYou could explain whether support would mean agreeing, disagreeing privately, speaking up, or helping them take responsibility. Choose the response that best fits your understanding of being a loyal friend and explain why.',
-  giving: 'The question assumes your ability to help is limited, so you cannot meet every need. Help might mean time, money, practical work, or emotional support. It asks how you decide where that limited help should go.\n\nExplain a reason that would guide your choice, such as urgency, closeness, or the difference you could make. You can speak generally without describing your own finances or circumstances.',
-  promise: 'A promise creates an expectation that someone will do what they said. Calling it "reasonable" to break a promise means believing there is a strong enough reason to change that commitment.\n\nThe question asks what kind of reason could justify this. You could describe a change in circumstances and explain why it would, or would not, be enough to release someone from their promise.',
-  goodintentions: 'Good intentions mean that someone meant to help or do something positive, even though their action caused harm. The question asks how much their intention should affect our judgment of what happened.\n\nYou can explain the weight you would give to what they meant compared with the actual effect. You may also describe what their intention changes about how you think they should respond afterward.',
-  smallchoices: 'Everyday purchases can affect people or places beyond the buyer, such as the people making a product or the waste it creates. This question asks how much attention we should give those effects when choosing what to buy.\n\nExplain the level of responsibility you find reasonable. You could consider what a buyer can know and what choices are available within their time or budget.',
-  climate: 'Sharing the effort means deciding who should make which changes or carry which costs to protect the environment. The work could be shared among individuals, businesses, communities, or governments.\n\nThe question asks what would make that division reasonable. You could explain one basis for sharing it, such as ability to act, resources, or contribution to the problem, and why that basis matters.',
-  city: 'A good place to live could offer safety, housing, transport, green space, services, or a sense of belonging. "Everyone" asks you to consider people with different ages, resources, and daily needs.\n\nThe question is asking which things you think all residents should be able to access. Choose something you see as essential and explain how it helps people live well, even if their lives are different.',
-  generations: 'People who live after us include future generations whose choices may be affected by what we do today. What we "owe" them means the responsibilities we have toward their well-being and opportunities.\n\nThe question asks what those responsibilities should include. You could choose something we might preserve, improve, or avoid damaging, and explain why it matters for people we may never meet.',
-  education: 'To "prepare people for" something means helping them develop knowledge or abilities they can use later. Education might prepare people for work, independent living, relationships, public life, or continued learning.\n\nThe question asks which purposes should matter most. Choose an ability or part of life you think education should support, and explain what makes it valuable.',
-  animals: 'Responsibilities are things we believe people should do, or avoid doing, because animals can be affected by our choices. They might involve care, living conditions, protection from harm, or the places animals live.\n\nThe question asks what those duties should be. You can focus on pets, farm animals, or wildlife, then explain a responsibility you think people have and why.',
-  communitychange: 'A small shared action is something a group does together on a limited scale. For it to "matter," it might improve a few lives, create a useful habit, or contribute to a larger change.\n\nThis question asks what helps people believe the action is worth taking. You could name a sign of progress or a reason to participate, and explain how it makes the possible impact feel real.',
-};
-const TALK_ORIGINAL_TOPICS = Object.entries({
-  connection: [
-    ['comfortable','🌿','Feeling at ease','自在 真實 信任 朋友',
-      'What helps you feel that you can be yourself around someone?',
-      'What does being yourself mean when you are with other people?',
-      'Can changing how you act for someone be a form of care?',
-      'Where is the line between being honest and being unkind?',
-      'What could a group do to make it easier to disagree openly?'],
-    ['support','☕','Being there','支持 傾聽 建議 關心',
-      'When something is bothering you, what do you want a friend to do?',
-      'What makes listening feel different from simply staying quiet?',
-      'Why might useful advice still feel unwelcome?',
-      'When should a friend challenge you instead of taking your side?',
-      'How could you ask what kind of support someone wants?'],
-    ['cancel','📅','A change of plans','取消 約定 期待 時間',
-      'A friend cancels your plans at the last minute. What matters most to you?',
-      'Is the hardest part the lost time, the reason, or feeling less important?',
-      'How might the same cancellation look from your friend\'s side?',
-      'How much should a promise limit our freedom to change plans?',
-      'What would make it possible to trust the next plan?'],
-    ['care','🍊','Small signs of care','關愛 表達 付出 照顧',
-      'What small thing can someone do that makes you feel they care?',
-      'Why do some small actions matter more than expensive gifts?',
-      'Can someone care deeply but show it in a way you do not enjoy?',
-      'How much should we change the way we show care for another person?',
-      'How could two people talk about care without keeping a score?'],
-    ['contact','💬','Staying close','聯絡 友誼 距離 回訊息',
-      'What helps you stay close to a friend you do not talk to every day?',
-      'What makes a long silence feel safe or uncertain?',
-      'Could frequent messages create pressure instead of closeness?',
-      'What do friends owe each other when their lives become very different?',
-      'What kind of contact could work for people with different needs?'],
-    ['help','🤝','Offering help','幫助 尊重 自主 接受',
-      'If a friend seems to need help but has not asked, what would you do?',
-      'What makes help easy or hard to accept?',
-      'When could doing nothing be a respectful choice?',
-      'When does helping someone become deciding for them?',
-      'How could you offer help while leaving room for a real no?'],
-  ],
-  self: [
-    ['space','🌙','A little space','獨處 空間 寂寞 休息',
-      'When do you want time alone? What would you like others to understand?',
-      'What is the difference between being alone and feeling lonely?',
-      'Why might someone read a need for space as rejection?',
-      'How do you balance your need for space with someone else\'s need for closeness?',
-      'What could you say that protects your time without leaving someone guessing?'],
-    ['change','🌱','Changing your mind','改變 成長 觀點 固執',
-      'What makes it easier for you to say, "I have changed my mind"?',
-      'What kind of evidence or conversation helps you reconsider an idea?',
-      'Why might keeping an old belief feel safer than changing it?',
-      'When is staying firm a strength, and when does it stop us from learning?',
-      'How could a group make changing your mind feel welcome?'],
-    ['time','🪴','A free afternoon','時間 休閒 充實 生產力',
-      'If you suddenly had a free afternoon, how would you want to spend it?',
-      'What makes time feel well spent to you?',
-      'Why can rest feel like wasting time even when we need it?',
-      'Who should decide whether a day was useful?',
-      'What small change would make your week closer to the life you want?'],
-    ['enough','🌤️','Having enough','滿足 慾望 比較 成功',
-      'How would you know that you have enough of something you want?',
-      'Does enough mean comfort, safety, freedom, or something else?',
-      'How might your idea of enough change if your friends had much more?',
-      'Can wanting more and feeling thankful exist together?',
-      'What would help you choose a goal that feels like your own?'],
-    ['approval','🪞','Being liked','認同 討好 自我 期待',
-      'How much should other people\'s opinions shape our choices?',
-      'Whose opinion do you find useful, and why?',
-      'Could ignoring every opinion make us less aware of others?',
-      'When does caring about others become giving up your own needs?',
-      'How could someone test a choice without asking everyone to approve it?'],
-    ['uncertainty','🧭','Not having an answer','不確定 決定 風險 方向',
-      'When is it better to make a choice before you feel sure?',
-      'What kind of uncertainty is hardest to live with?',
-      'What could be lost by waiting for more information?',
-      'How should a choice change when other people share the risk?',
-      'What would a small, reversible first step look like?'],
-  ],
-  belonging: [
-    ['different','🧩','Being different','差異 包容 價值觀 相處',
-      'What differences between friends are easy for you to enjoy?',
-      'What makes a difference interesting rather than upsetting?',
-      'Could a shared value still lead two people to opposite choices?',
-      'Which differences can a friendship hold, and where might a limit be needed?',
-      'How could you ask about a difficult difference without trying to win?'],
-    ['welcome','🏡','Feeling welcome','歸屬 新人 群體 包容',
-      'When you join a new group, what helps you feel welcome?',
-      'What is the difference between being invited and feeling included?',
-      'Could an activity that welcomes one person make another uncomfortable?',
-      'How much should a group change for a new member?',
-      'What could this group do to include quiet people without putting them on the spot?'],
-    ['travel','🧳','Going somewhere together','旅行 朋友 協調 妥協',
-      'Before a trip with friends, what would you want to agree on?',
-      'Which travel choices reveal what matters to people?',
-      'Could spending part of a trip apart make the friendship stronger?',
-      'When should the group follow the majority, and when should one person\'s need come first?',
-      'What agreement could leave room for both shared time and freedom?'],
-    ['family','🏠','Family expectations','家庭 期待 自主 責任',
-      'How much should family expectations shape an adult\'s life?',
-      'When do expectations feel like support, and when do they feel like pressure?',
-      'What might a family be afraid of when they resist someone\'s choice?',
-      'Does receiving support create a duty to follow someone\'s wishes?',
-      'How could a person show care while choosing a different path?'],
-    ['tradition','🕯️','Keeping a tradition','傳統 文化 改變 世代',
-      'What makes a tradition worth keeping?',
-      'Is its value in the activity, the memory, or the people sharing it?',
-      'How might the same tradition feel to someone new to the group?',
-      'When should belonging matter more than doing things the old way?',
-      'How could a tradition change while keeping what people love about it?'],
-    ['boundaries','🚪','Saying no','拒絕 界線 群體 壓力',
-      'What makes a no feel respectful rather than unfriendly?',
-      'Why is saying no easier in some relationships than others?',
-      'Could always saying yes make a relationship less honest?',
-      'When do we owe someone a reason for saying no?',
-      'How could a group make it easier to decline without losing a sense of belonging?'],
-  ],
-  work: [
-    ['pay','💰','What pay should reflect','薪資 金錢 價值 勞動',
-      'What should decide how much a job pays?',
-      'Should pay reflect effort, skill, risk, or how much people need the work?',
-      'Why might work that helps many people still be paid less?',
-      'Should equal effort mean equal pay when results are different?',
-      'What would a fair pay decision need to take into account?'],
-    ['ambition','⛰️','A good career','職涯 野心 成功 升遷',
-      'What makes a career good beyond its title or salary?',
-      'Which parts of work affect life outside work the most?',
-      'Why might turning down a promotion be a good choice?',
-      'How much present comfort is worth giving up for future opportunities?',
-      'What would you ask before accepting a job that looks successful to others?'],
-    ['rest','🛋️','The right to rest','休息 工作 加班 責任',
-      'Should people need to earn their rest?',
-      'What makes rest feel acceptable in a workplace?',
-      'How does one person\'s rest affect coworkers who cover for them?',
-      'Who should carry the cost when a team has more work than time?',
-      'What rule could protect rest without leaving urgent needs ignored?'],
-    ['teamwork','🧱','Sharing the credit','合作 功勞 團隊 公平',
-      'How should a team share credit when people contribute in different ways?',
-      'Which kinds of useful work are easy to overlook?',
-      'Could the person who speaks least be doing the most important work?',
-      'Should rewards be equal, or should they match each person\'s contribution?',
-      'How could a team notice effort without turning everything into a competition?'],
-    ['failure','🔧','Room to fail','失敗 錯誤 學習 工作',
-      'What makes a mistake a useful part of learning?',
-      'What support helps someone learn instead of hide a mistake?',
-      'Why might a good decision still lead to a bad result?',
-      'How much failure should be accepted when other people bear the cost?',
-      'What should a team do after a mistake besides asking who caused it?'],
-    ['meaning','🛠️','Meaningful work','意義 工作 生活 熱情',
-      'Does a job need to give your life meaning?',
-      'What kinds of work feel valuable even when they are not enjoyable?',
-      'Could a simple job leave more room for a meaningful life?',
-      'Is it fair to expect people to accept less pay for work they care about?',
-      'Where else could someone find meaning if their job is mainly a way to earn money?'],
-  ],
-  fairness: [
-    ['rules','⚖️','The same rule for everyone','公平 規則 例外 平等',
-      'Is treating everyone the same always fair?',
-      'What is the difference between the same treatment and the same chance?',
-      'When could making an exception help a rule serve its purpose?',
-      'Who should decide which needs deserve an exception?',
-      'How could a group explain exceptions without making rules feel meaningless?'],
-    ['chances','🌉','A fair starting point','機會 起點 資源 平等',
-      'What would it mean for everyone to have a fair chance?',
-      'Which advantages are easy to see, and which are easy to miss?',
-      'How might the same opportunity help two people very differently?',
-      'Should more help go to those who need it most or those likely to benefit most?',
-      'What could a school or workplace change to make access more fair?'],
-    ['freedom','🕊️','Freedom in shared spaces','自由 限制 共享 空間',
-      'Where should personal freedom end in a shared space?',
-      'What makes one person\'s choice become everyone\'s problem?',
-      'Could a rule that feels annoying to you give someone else more freedom?',
-      'When should we accept discomfort to protect another person\'s choice?',
-      'How could people agree on a rule when their needs conflict?'],
-    ['voice','🎙️','Having a say','發言 民主 多數 決策',
-      'Who should have a say in a decision that affects a group?',
-      'Does having a vote mean someone has been heard?',
-      'What can a small minority notice that the majority misses?',
-      'When should experience matter more than an equal vote?',
-      'What process could help a group decide without silencing people?'],
-    ['secondchance','🔄','A second chance','第二次 機會 原諒 責任',
-      'What should someone do before being given a second chance?',
-      'What would count as a real sign of change?',
-      'Why might someone who was hurt still not want to reconnect?',
-      'Can we support change while keeping firm limits?',
-      'What would a second chance with clear responsibilities look like?'],
-    ['merit','🎲','Effort and luck','努力 運氣 成就 責任',
-      'How much of success comes from effort, and how much from luck?',
-      'What parts of a result can a person actually control?',
-      'Why might two people who work equally hard get very different results?',
-      'Does benefiting from luck create a responsibility to help others?',
-      'How could we praise effort without blaming people for every setback?'],
-  ],
-  digital: [
-    ['privacy','🔒','Privacy or convenience','隱私 便利 資料 科技',
-      'When would you share personal information to make life easier?',
-      'What makes some information feel more private than other information?',
-      'Could a convenient service be hard to refuse even when you dislike its rules?',
-      'What should happen when one person shares information about someone else?',
-      'What would a clear and fair choice about data look like?'],
-    ['ai','🤖','Thinking with AI','人工智慧 AI 思考 學習 工作',
-      'Which tasks would you want AI to help with, and which would you keep for yourself?',
-      'What is the difference between getting help and giving up your own judgment?',
-      'Could an imperfect AI tool still make an activity easier to join?',
-      'Who should be responsible when someone follows bad AI advice?',
-      'What habit could help people use AI while still learning to think for themselves?'],
-    ['onlinefriend','📱','Friendship online','網路 友誼 關係 社群',
-      'What makes an online friendship feel real?',
-      'What can people learn about each other through words alone?',
-      'Could it be easier to be honest with someone you have never met?',
-      'What do online friends owe each other when they can leave with one click?',
-      'What would help an online group build trust over time?'],
-    ['news','📰','What we choose to believe','新聞 資訊 相信 謠言',
-      'What makes you trust information you find online?',
-      'How do confidence, detail, and popularity affect what seems true?',
-      'Why might a story feel believable because we want it to be true?',
-      'How much checking should we do before passing information to others?',
-      'How could you question a shared story without making a friend feel attacked?'],
-    ['attention','⏳','Who gets our attention','注意力 手機 時間 演算法',
-      'How freely do we choose what gets our attention online?',
-      'What is the difference between enjoying an app and finding it hard to leave?',
-      'Could the same feature help one person connect and distract another?',
-      'How should responsibility be shared between users and the people designing apps?',
-      'What would an app that respects your time do differently?'],
-    ['publicmistakes','💭','A mistake that stays online','網路 錯誤 公審 遺忘',
-      'Should an old online mistake follow someone for years?',
-      'What matters about the harm, the time passed, and the person\'s response?',
-      'Why might removing a post feel fair to one person and unfair to another?',
-      'How do we balance remembering harm with allowing people to change?',
-      'What would a useful public response look like beyond punishment?'],
-  ],
-  ethics: [
-    ['honesty','🪟','A kind truth','誠實 善意 謊言 真相',
-      'Is it always kinder to tell the truth?',
-      'How do timing and choice of words change the effect of an honest message?',
-      'Could keeping quiet protect yourself more than the other person?',
-      'When does someone\'s right to know matter more than their comfort?',
-      'How could you tell a difficult truth without using honesty as an excuse to hurt?'],
-    ['loyalty','🧵','Standing by a friend','忠誠 朋友 對錯 支持',
-      'What does loyalty to a friend mean when you think they are wrong?',
-      'What is the difference between supporting a person and supporting their action?',
-      'How might the person hurt by your friend see your silence?',
-      'When should fairness matter more than taking your friend\'s side?',
-      'What could you say that protects the friendship while challenging the action?'],
-    ['giving','🎁','Choosing whom to help','幫助 捐助 距離 資源',
-      'If you can only help a little, how do you choose whom to help?',
-      'Does feeling close to someone change what you think you owe them?',
-      'What needs are easy to miss because the people affected are far away?',
-      'Should help go where it does the most good or where we feel the most responsibility?',
-      'How could someone make a thoughtful choice without needing a perfect answer?'],
-    ['promise','🪢','Keeping a promise','承諾 改變 責任 信任',
-      'When is it reasonable to break a promise?',
-      'What makes a promise different from a plan or a hope?',
-      'How might keeping one promise cause harm somewhere else?',
-      'Should a promise still hold when the situation changes in a way no one expected?',
-      'What should someone do when they can no longer keep their word?'],
-    ['goodintentions','🌼','Good intentions, real effects','善意 結果 責任 道歉',
-      'When an action hurts someone, how much should good intentions matter?',
-      'What can intentions tell us that the result alone cannot?',
-      'Why might an explanation sound like an excuse to the person hurt?',
-      'How should responsibility change when the harm was hard to predict?',
-      'What would a helpful apology include besides saying you meant well?'],
-    ['smallchoices','🛒','The cost of a small choice','消費 道德 選擇 便利',
-      'How much should we think about the effects of everyday purchases?',
-      'What information would help you decide whether a choice matches your values?',
-      'How does having less money or time change what choices are realistic?',
-      'How much responsibility belongs to shoppers, businesses, and governments?',
-      'What is one manageable change that would matter without requiring perfection?'],
-  ],
-  future: [
-    ['climate','🌍','Sharing environmental costs','環境 氣候 責任 成本',
-      'How should people share the effort of protecting the environment?',
-      'What makes an environmental change feel possible in daily life?',
-      'How might the same change cost much more for some people than others?',
-      'Should those who caused more harm, or those who can afford more, do more?',
-      'What would make a shared environmental plan feel fair enough to support?'],
-    ['city','🏙️','A place for everyone','城市 住宅 公共 空間',
-      'What should a good place to live offer everyone?',
-      'Which needs are easy to overlook when a city is designed?',
-      'How might a child, an older person, and a night worker use the same street?',
-      'How should a city choose when quiet, housing, jobs, and green space compete?',
-      'What small change could make a shared place work for more people?'],
-    ['generations','🌳','People we will never meet','世代 未來 資源 責任',
-      'What do we owe people who will live after us?',
-      'Which choices today could limit their options?',
-      'How might future people have needs we cannot predict?',
-      'How much should people today give up for benefits they will never see?',
-      'What principle could help us make long-term choices under uncertainty?'],
-    ['education','📚','What learning is for','教育 學習 學校 未來',
-      'What should education prepare people for?',
-      'Which useful abilities are hard to measure with a test?',
-      'Could a lesson be valuable even if it never helps someone get a job?',
-      'How should schools balance shared knowledge with each person\'s interests?',
-      'What would you add to a learning space for people with different starting points?'],
-    ['animals','🐾','Care beyond people','動物 照顧 倫理 自然',
-      'What responsibilities do people have toward animals?',
-      'Why do we feel differently about pets, farm animals, and wild animals?',
-      'How might tradition or livelihood shape a person\'s view of animal care?',
-      'When human needs and animal well-being conflict, what should guide the choice?',
-      'What improvement could people with different views still agree to support?'],
-    ['communitychange','🌻','Making a difference together','社區 改變 行動 希望',
-      'What makes people believe a small shared action can matter?',
-      'What is the difference between a meaningful action and a symbolic one?',
-      'Could an action help even if it does not solve the whole problem?',
-      'How do we balance a practical first step with the need for bigger change?',
-      'What could a small group try, learn from, and adjust together?'],
-  ],
-}).flatMap(([category, rows]) => rows.map(([id, emoji, title, keywords, question, ...questions]) => ({
-  id, category, emoji, title, keywords, question, starter: TALK_EXPLANATIONS[id], followUp: questions[0],
-  followUps: questions.map((question, i) => ({stage:['understand','perspective','tradeoff','practice'][i],question})),
-})));
-// Public conversation prompts adapted from the current Chat Wolf topic pool.
-// Static copies are intentional: Let's Talk must not load wolf roles or secret tasks.
-// Original discussion topics and their IDs remain unchanged. sourceTopicId is
-// editorial provenance only; no secret mission, clue, or role data is copied.
+const TALK_ORIGINAL_TOPICS = [
+  {
+    "id": "comfortable",
+    "category": "connection",
+    "emoji": "🌿",
+    "title": "The First Hour Together",
+    "keywords": "自在 真實 信任 朋友",
+    "question": "Our new chat group has one hour together. Do we start with a game, a shared story, or casual chat?",
+    "starter": "Half the group knows each other. The others are new. We want everyone to join without forcing anyone to perform.",
+    "followUp": "Which opening gives new people an easy way to join?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which opening gives new people an easy way to join?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would a quiet newcomer prefer talking in pairs or joining everyone?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Can we offer a game without making it compulsory?"
+      },
+      {
+        "stage": "practice",
+        "question": "How should the first ten minutes work so nobody is ignored?"
+      }
+    ]
+  },
+  {
+    "id": "support",
+    "category": "connection",
+    "emoji": "☕",
+    "title": "Rescuing the Party",
+    "keywords": "支持 傾聽 建議 關心",
+    "question": "Our party cake burns and the music stops. Should we fix things, take a snack break, or turn the mess into a joke?",
+    "starter": "We are hosting a small party. Everyone is tired, but guests arrive in thirty minutes. We want to recover together.",
+    "followUp": "Which problem needs fixing before our guests arrive?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which problem needs fixing before our guests arrive?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would joking help tired helpers or make them feel ignored?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "What could we remove from the party to make recovery easier?"
+      },
+      {
+        "stage": "practice",
+        "question": "Can we agree on one fix and one break before opening?"
+      }
+    ]
+  },
+  {
+    "id": "cancel",
+    "category": "connection",
+    "emoji": "📅",
+    "title": "Dinner Without Everyone",
+    "keywords": "取消 約定 期待 時間",
+    "question": "One friend cancels our group dinner ten minutes before it starts. Do we go without them, order takeaway, or move the dinner?",
+    "starter": "The table is booked, and some people are already travelling there. The friend can meet another evening.",
+    "followUp": "What do we lose by moving the dinner?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What do we lose by moving the dinner?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How does postponing affect people already on their way?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we keep tonight's meal and plan something smaller later?"
+      },
+      {
+        "stage": "practice",
+        "question": "What message should we send so the new plan is clear?"
+      }
+    ]
+  },
+  {
+    "id": "care",
+    "category": "connection",
+    "emoji": "🍊",
+    "title": "A Goodbye From All of Us",
+    "keywords": "關愛 表達 付出 照顧",
+    "question": "Our friend is moving away. Should we arrange a shared meal, make a funny video, or send a care box?",
+    "starter": "We have a small budget and one week before the move. The goodbye should feel warm without creating more work for our friend.",
+    "followUp": "What would make this goodbye feel shared rather than expensive?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What would make this goodbye feel shared rather than expensive?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would a quiet friend enjoy a big surprise or a small meal?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Can we combine a simple meal with a short video?"
+      },
+      {
+        "stage": "practice",
+        "question": "What could we prepare together before their last evening?"
+      }
+    ]
+  },
+  {
+    "id": "contact",
+    "category": "connection",
+    "emoji": "💬",
+    "title": "Friends Across Time Zones",
+    "keywords": "聯絡 友誼 距離 回訊息",
+    "question": "Our friends live in different time zones. Should our group stay connected with a weekly call, a shared photo chat, or an online game night?",
+    "starter": "There is no easy time when everyone is free. We want to stay connected without expecting people to answer every day.",
+    "followUp": "What needs a live call, and what works as a message?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What needs a live call, and what works as a message?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How can someone with a busy week still be part of it?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we alternate call times instead of choosing one fixed time?"
+      },
+      {
+        "stage": "practice",
+        "question": "Which plan could our group keep without daily replies?"
+      }
+    ]
+  },
+  {
+    "id": "help",
+    "category": "connection",
+    "emoji": "🤝",
+    "title": "One Person Does Everything",
+    "keywords": "幫助 尊重 自主 接受",
+    "question": "At our picnic, one person keeps doing all the work. Should we divide the jobs, help without asking, or simplify the plan?",
+    "starter": "One friend is arranging food, carrying bags, and cleaning. Everyone came to enjoy the afternoon, including that friend.",
+    "followUp": "Which picnic jobs can be shared without getting in each other's way?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which picnic jobs can be shared without getting in each other's way?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Could sudden help feel like taking over someone's plan?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "What could we stop doing so the workload stays small?"
+      },
+      {
+        "stage": "practice",
+        "question": "What simple division of jobs should we offer before lunch?"
+      }
+    ]
+  },
+  {
+    "id": "space",
+    "category": "self",
+    "emoji": "🌙",
+    "title": "Quiet Morning or Group Breakfast",
+    "keywords": "獨處 空間 寂寞 休息",
+    "question": "Our group shares a cabin for the weekend. Should mornings be quiet, start with a group breakfast, or follow everyone's own schedule?",
+    "starter": "Some guests wake early; others need extra sleep. The kitchen is beside the beds, and everyone wants a relaxing weekend.",
+    "followUp": "Which morning activities would disturb people who are still asleep?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which morning activities would disturb people who are still asleep?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How could early risers enjoy their morning without waiting for everyone?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we keep quiet hours and still have one shared meal?"
+      },
+      {
+        "stage": "practice",
+        "question": "What morning agreement should go on the cabin door?"
+      }
+    ]
+  },
+  {
+    "id": "change",
+    "category": "self",
+    "emoji": "🌱",
+    "title": "The Movie Nobody Wants",
+    "keywords": "改變 成長 觀點 固執",
+    "question": "Our group planned a movie night, but nobody likes the chosen film. Do we vote again, try it for ten minutes, or switch to games?",
+    "starter": "The snacks are ready, and the film has not started. We want a fun evening without spending it choosing another film.",
+    "followUp": "What is wrong with the choice: the film or the way we chose it?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What is wrong with the choice: the film or the way we chose it?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Could one person be curious about the film even if the others are unsure?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would a short trial save time or make changing plans harder?"
+      },
+      {
+        "stage": "practice",
+        "question": "How should we make a new choice in five minutes?"
+      }
+    ]
+  },
+  {
+    "id": "time",
+    "category": "self",
+    "emoji": "🪴",
+    "title": "Twenty Dollars and an Afternoon",
+    "keywords": "時間 休閒 充實 生產力",
+    "question": "We have a free afternoon and only $20 for the whole group. Should we visit a market, hold a picnic, or invent a game at home?",
+    "starter": "We have four hours together. Any food, travel, or entry costs must fit the same small budget.",
+    "followUp": "Which option gives us the most time together for the money?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which option gives us the most time together for the money?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would rain or a tired group member change the choice?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Should we spend everything on one treat or keep some money spare?"
+      },
+      {
+        "stage": "practice",
+        "question": "What could our afternoon include without going over $20?"
+      }
+    ]
+  },
+  {
+    "id": "enough",
+    "category": "self",
+    "emoji": "🌤️",
+    "title": "The Snack Table Is Full",
+    "keywords": "滿足 慾望 比較 成功",
+    "question": "Our snack table is already full, but someone wants more. Do we buy another snack, replace one, or stop shopping?",
+    "starter": "There is space for six bowls, and all six are filled. We want variety without wasting food or crowding the table.",
+    "followUp": "Does the new snack add something missing from the table?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Does the new snack add something missing from the table?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Which guests might still find nothing they can eat?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would replacing a popular snack be better than squeezing in another bowl?"
+      },
+      {
+        "stage": "practice",
+        "question": "What rule should help us stop shopping before the party?"
+      }
+    ]
+  },
+  {
+    "id": "approval",
+    "category": "self",
+    "emoji": "🪞",
+    "title": "Our Embarrassing Chicken Song",
+    "keywords": "認同 討好 自我 期待",
+    "question": "Our group wants to enter a talent show. Friends call our silly chicken song embarrassing. Do we keep it, change it, or choose something safer?",
+    "starter": "The song is meant to make people laugh. We have one rehearsal left, and everyone in the group will be on stage.",
+    "followUp": "Is the problem the song itself or how we present it?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Is the problem the song itself or how we present it?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What would make a nervous group member comfortable taking part?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Can we keep the funny idea while changing the most awkward part?"
+      },
+      {
+        "stage": "practice",
+        "question": "Which version could the whole group support for the show?"
+      }
+    ]
+  },
+  {
+    "id": "uncertainty",
+    "category": "self",
+    "emoji": "🧭",
+    "title": "The Mystery Day Trip",
+    "keywords": "不確定 決定 風險 方向",
+    "question": "Our group can book a cheap mystery day trip without knowing the destination. Do we buy it, wait for details, or plan our own outing?",
+    "starter": "The trip stays nearby and costs less than a normal booking. We know the return time but not the place or activities.",
+    "followUp": "Which missing detail would make the biggest difference to our decision?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which missing detail would make the biggest difference to our decision?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would the surprise feel to someone who needs a clear plan?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Is the lower price worth giving up control of the day?"
+      },
+      {
+        "stage": "practice",
+        "question": "What information must we have before the group agrees to book?"
+      }
+    ]
+  },
+  {
+    "id": "different",
+    "category": "belonging",
+    "emoji": "🧩",
+    "title": "One Dinner for Different Eaters",
+    "keywords": "差異 包容 價值觀 相處",
+    "question": "Our group must share one dinner: mild noodles, spicy curry, or build-your-own wraps. Which plan works for different eaters?",
+    "starter": "One friend avoids meat, another loves spicy food, and someone dislikes sauces. We want to eat together without ordering three separate meals.",
+    "followUp": "Which parts of each dinner can be served separately?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which parts of each dinner can be served separately?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would an eater with fewer options still get a full meal?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we choose a simple base and put extras on the side?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should the final shopping list include for everyone?"
+      }
+    ]
+  },
+  {
+    "id": "welcome",
+    "category": "belonging",
+    "emoji": "🏡",
+    "title": "A New Player at Game Night",
+    "keywords": "歸屬 新人 群體 包容",
+    "question": "A new person joins our weekly game night. Do we teach the usual game, choose an easier one, or let them pick?",
+    "starter": "The regular players know a difficult game well. The newcomer has never played it, and we have two hours together.",
+    "followUp": "How long would learning the usual game leave for actually playing?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "How long would learning the usual game leave for actually playing?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What might make the newcomer feel part of the group quickly?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we play a short easy game before the usual one?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should the first round look like for regulars and newcomers?"
+      }
+    ]
+  },
+  {
+    "id": "travel",
+    "category": "belonging",
+    "emoji": "🧳",
+    "title": "One Day in a New Town",
+    "keywords": "旅行 朋友 協調 妥協",
+    "question": "Our group has one day in a new town. Should we follow a fixed route, split up, or keep the day unplanned?",
+    "starter": "Some people want to see many places; others want a slow day. We must meet at the same station that evening.",
+    "followUp": "Which stops need booking, and which can stay flexible?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which stops need booking, and which can stay flexible?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would the plan work for the slowest walker in the group?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we share the morning and leave the afternoon open?"
+      },
+      {
+        "stage": "practice",
+        "question": "What meeting place and backup plan would keep everyone connected?"
+      }
+    ]
+  },
+  {
+    "id": "family",
+    "category": "belonging",
+    "emoji": "🏠",
+    "title": "A Picnic for Three Generations",
+    "keywords": "家庭 期待 自主 責任",
+    "question": "Our group is planning a family picnic with children, adults, and grandparents. Should we choose a park, a beach, or a home lunch?",
+    "starter": "The group needs food, somewhere to sit, and something fun to do. Not everyone can walk far or stay in the sun.",
+    "followUp": "Which place makes eating and resting easiest?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which place makes eating and resting easiest?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What would children enjoy while older guests stay comfortable?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we keep the outing short and continue the meal at home?"
+      },
+      {
+        "stage": "practice",
+        "question": "Which place and simple activity should go in our invitation?"
+      }
+    ]
+  },
+  {
+    "id": "tradition",
+    "category": "belonging",
+    "emoji": "🕯️",
+    "title": "The Photo That Takes Forever",
+    "keywords": "傳統 文化 改變 世代",
+    "question": "Our yearly group photo always takes an hour. Should we keep the big photo, make a quick funny video, or start a new tradition?",
+    "starter": "The photo is a shared memory, but getting everyone into place takes most of the gathering. We want a memory and time to enjoy the day.",
+    "followUp": "What part of the old photo makes it worth keeping?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What part of the old photo makes it worth keeping?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would a new member understand the tradition or feel trapped in it?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Can we keep one quick photo and change the rest?"
+      },
+      {
+        "stage": "practice",
+        "question": "What shorter tradition could our group repeat next year?"
+      }
+    ]
+  },
+  {
+    "id": "boundaries",
+    "category": "belonging",
+    "emoji": "🚪",
+    "title": "Too Many Holiday Activities",
+    "keywords": "拒絕 界線 群體 壓力",
+    "question": "Our group holiday is becoming packed with activities. Should joining every plan be expected, optional, or limited to one shared activity a day?",
+    "starter": "We are away together for three days. Some plans need bookings, while others cost nothing. People also need time to rest.",
+    "followUp": "Which activities really need the whole group?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which activities really need the whole group?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How can someone skip a plan without feeling left out afterward?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would one fixed shared activity leave enough freedom for everyone?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should our invitation say about joining and skipping plans?"
+      }
+    ]
+  },
+  {
+    "id": "pay",
+    "category": "work",
+    "emoji": "💰",
+    "title": "Pay at Our Pizza Stall",
+    "keywords": "薪資 金錢 價值 勞動",
+    "question": "Our group runs a one-day pizza stall. Should the cook, cashier, and cleaner get equal pay, or should some jobs earn more?",
+    "starter": "Three helpers work four hours each. After costs, we have a fixed amount left for pay. Every job is needed to keep the stall running.",
+    "followUp": "What makes these jobs equally valuable or different?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What makes these jobs equally valuable or different?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would the cleaner's work be easier to miss than the cook's work?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could a shared base amount plus a small extra payment work?"
+      },
+      {
+        "stage": "practice",
+        "question": "How should we agree on pay before anyone starts working?"
+      }
+    ]
+  },
+  {
+    "id": "ambition",
+    "category": "work",
+    "emoji": "⛰️",
+    "title": "Which Group Job Do We Take?",
+    "keywords": "職涯 野心 成功 升遷 salary SALARY 薪資",
+    "question": "We can take one group job: higher pay with longer hours, lower pay with free evenings, or a short risky project. Which offer should we accept?",
+    "starter": "We will work together for three months. The salary, hours, and chances to learn differ. We cannot take more than one offer.",
+    "followUp": "Which offer leaves enough time and money for the group to keep going?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which offer leaves enough time and money for the group to keep going?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How could long hours affect someone with other duties?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would we accept lower salary in exchange for free evenings?"
+      },
+      {
+        "stage": "practice",
+        "question": "What conditions should we ask for before accepting an offer?"
+      }
+    ]
+  },
+  {
+    "id": "rest",
+    "category": "work",
+    "emoji": "🛋️",
+    "title": "A Break Before the Event",
+    "keywords": "休息 工作 加班 責任",
+    "question": "Our team must finish a small event tonight. Do we skip the break, cut one activity, or ask for more time?",
+    "starter": "There are two hours left. The team is tired, and one unfinished activity is less important than the rest of the event.",
+    "followUp": "Which unfinished work does the event actually need?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which unfinished work does the event actually need?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Could pushing tired helpers make the final work slower or worse?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "What would we lose by dropping the least important activity?"
+      },
+      {
+        "stage": "practice",
+        "question": "Where should a short break fit in the remaining two hours?"
+      }
+    ]
+  },
+  {
+    "id": "teamwork",
+    "category": "work",
+    "emoji": "🧱",
+    "title": "Our Video Wins a Prize",
+    "keywords": "合作 功勞 團隊 公平",
+    "question": "Our group video wins a prize. Do we share the reward equally, give more to the main creator, or spend it on a group celebration?",
+    "starter": "Some people appear in the video; others write, film, or edit. The prize belongs to the group, but the amount is small.",
+    "followUp": "Which contributions made the video possible?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which contributions made the video possible?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would equal shares recognize the people working behind the camera?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could part of the prize cover costs and the rest fund a meal?"
+      },
+      {
+        "stage": "practice",
+        "question": "What reward agreement should we use before making another video?"
+      }
+    ]
+  },
+  {
+    "id": "failure",
+    "category": "work",
+    "emoji": "🔧",
+    "title": "The Burned Cupcakes",
+    "keywords": "失敗 錯誤 學習 工作",
+    "question": "Our group burns the first batch of cupcakes before a sale. Should we remake them, sell fewer cakes, or switch to something easier?",
+    "starter": "The sale starts in ninety minutes. We have some ingredients left and one oven. We need a simple plan that the team can finish.",
+    "followUp": "Do we have enough time and ingredients for another batch?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Do we have enough time and ingredients for another batch?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would new helpers manage a quick recipe better than the original one?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Is a smaller number of good cakes better than a rushed full table?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should the team change before putting anything back in the oven?"
+      }
+    ]
+  },
+  {
+    "id": "meaning",
+    "category": "work",
+    "emoji": "🛠️",
+    "title": "One Weekend, One Project",
+    "keywords": "意義 工作 生活 熱情",
+    "question": "Our group has one weekend for a project. Should we make money, help a neighbor, or build something silly together?",
+    "starter": "We can use a shared room and basic tools. The project should give the group a reason to finish it, not just fill the weekend.",
+    "followUp": "What would count as a worthwhile result for each option?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What would count as a worthwhile result for each option?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Could a silly project help people join who dislike serious work?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Can one project be enjoyable and useful without trying to do everything?"
+      },
+      {
+        "stage": "practice",
+        "question": "Which small project could we actually finish by Sunday evening?"
+      }
+    ]
+  },
+  {
+    "id": "rules",
+    "category": "fairness",
+    "emoji": "⚖️",
+    "title": "Extra Help for Beginners",
+    "keywords": "公平 規則 例外 平等",
+    "question": "We are running a game night. Should beginners get extra time, a helpful teammate, or the same rules as everyone else?",
+    "starter": "Experienced players want a challenge. New players want a real chance to take part. Everyone should understand the rules before playing.",
+    "followUp": "Which part of the game gives experienced players the biggest advantage?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which part of the game gives experienced players the biggest advantage?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Could too much help make beginners feel that their wins do not count?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would help only in the first round be enough?"
+      },
+      {
+        "stage": "practice",
+        "question": "What beginner rule could we explain in one sentence?"
+      }
+    ]
+  },
+  {
+    "id": "chances",
+    "category": "fairness",
+    "emoji": "🌉",
+    "title": "Three Bikes for Six People",
+    "keywords": "機會 起點 資源 平等",
+    "question": "Our group has three bikes but six people. Should we take turns, walk together, or rent more bikes?",
+    "starter": "We want an afternoon outing together. Renting costs extra, and some people are less confident riding. The route can be changed.",
+    "followUp": "Does the outing need bikes, or just a way to travel together?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Does the outing need bikes, or just a way to travel together?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What would make the least confident rider comfortable joining?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could a shorter route with turns work without extra rentals?"
+      },
+      {
+        "stage": "practice",
+        "question": "Which route and transport plan keeps all six people included?"
+      }
+    ]
+  },
+  {
+    "id": "freedom",
+    "category": "fairness",
+    "emoji": "🕊️",
+    "title": "Music in Our Shared Room",
+    "keywords": "自由 限制 共享 空間",
+    "question": "Our group shares a small room for a weekend. Should music be allowed anytime, only at set times, or through headphones?",
+    "starter": "Some people enjoy music while getting ready. Others need quiet to rest or read. There is no separate room for noisy activities.",
+    "followUp": "When does background music become a problem for the room?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "When does background music become a problem for the room?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How could someone enjoy music without asking everyone else to listen?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could shared music times and quiet hours both fit the weekend?"
+      },
+      {
+        "stage": "practice",
+        "question": "What room rule should apply when somebody needs an unexpected rest?"
+      }
+    ]
+  },
+  {
+    "id": "voice",
+    "category": "fairness",
+    "emoji": "🎙️",
+    "title": "The Logo Vote Is Tied",
+    "keywords": "發言 民主 多數 決策",
+    "question": "Our group needs a new logo, but the vote is tied. Should we flip a coin, combine the designs, or let the artist decide?",
+    "starter": "Both designs can be printed. We need one logo today, and a new full design would take too long.",
+    "followUp": "What does each design communicate about our group?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What does each design communicate about our group?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would combining them answer the objections or create a worse logo?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Is a random choice acceptable if both designs meet our needs?"
+      },
+      {
+        "stage": "practice",
+        "question": "What final decision method could everyone accept before printing?"
+      }
+    ]
+  },
+  {
+    "id": "secondchance",
+    "category": "fairness",
+    "emoji": "🔄",
+    "title": "Another Turn in the Kitchen",
+    "keywords": "第二次 機會 原諒 責任",
+    "question": "Our group cook ruined dinner once and wants another try. Do we let them lead again, pair them with a helper, or choose someone else?",
+    "starter": "Nobody was hurt, but the last meal was not edible. We have ingredients for one dinner and want everyone to enjoy eating together.",
+    "followUp": "What went wrong last time that we could change?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What went wrong last time that we could change?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would a helper support the cook or make them feel watched?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could an easier dish reduce the risk without removing their chance?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should we agree to do if the next meal starts going wrong?"
+      }
+    ]
+  },
+  {
+    "id": "merit",
+    "category": "fairness",
+    "emoji": "🎲",
+    "title": "Which Cake Wins?",
+    "keywords": "努力 運氣 成就 責任",
+    "question": "Our group is giving a prize for a cake contest. Should the best cake win, the biggest improvement win, or should we draw a name?",
+    "starter": "The bakers have different skill levels. There is only one prize, and the contest is meant to be friendly and fun.",
+    "followUp": "Are we rewarding the cake, the learning, or simply taking part?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Are we rewarding the cake, the learning, or simply taking part?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would a beginner and an experienced baker see each prize rule?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we choose one winner while still noticing other good work?"
+      },
+      {
+        "stage": "practice",
+        "question": "What rule should go on the contest invitation before baking starts?"
+      }
+    ]
+  },
+  {
+    "id": "privacy",
+    "category": "digital",
+    "emoji": "🔒",
+    "title": "Posting Our Party Photos",
+    "keywords": "隱私 便利 資料 科技",
+    "question": "Our group wants to post party photos. Should we ask everyone first, hide faces, or keep the album private?",
+    "starter": "The photos are funny, but one guest does not want their face online. We want to share the memory without sharing more than people agreed to.",
+    "followUp": "Which photos could be shared without identifying anyone?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which photos could be shared without identifying anyone?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Does hiding a face work if a name is still in the caption?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we share a few approved photos and keep the full album private?"
+      },
+      {
+        "stage": "practice",
+        "question": "What simple check should happen before the group posts a photo?"
+      }
+    ]
+  },
+  {
+    "id": "ai",
+    "category": "digital",
+    "emoji": "🤖",
+    "title": "Our Funny Travel Guide",
+    "keywords": "人工智慧 AI 思考 學習 工作",
+    "question": "Our group is making a funny travel guide. Should AI write it, suggest ideas only, or stay out of the project?",
+    "starter": "The guide will include real places and silly comments. We want to finish quickly while keeping the facts clear and the group's own voice.",
+    "followUp": "Which parts need accurate facts, and which can be playful?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which parts need accurate facts, and which can be playful?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Could AI suggestions help a shy writer contribute more ideas?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would checking a full AI draft take longer than writing a short guide ourselves?"
+      },
+      {
+        "stage": "practice",
+        "question": "What job could AI do while our group keeps the final decisions?"
+      }
+    ]
+  },
+  {
+    "id": "onlinefriend",
+    "category": "digital",
+    "emoji": "📱",
+    "title": "Our First Offline Meetup",
+    "keywords": "網路 友誼 關係 社群",
+    "question": "Our online group wants its first meetup. Should we start with a small cafe visit, a group day out, or another video call?",
+    "starter": "We know each other through chat but have never met in person. Some members live nearby; others would need a longer journey.",
+    "followUp": "What can a short meetup offer that another call cannot?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "What can a short meetup offer that another call cannot?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How could distant members stay included if the first meetup is small?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could a cafe visit with a short shared call avoid a full day of travel?"
+      },
+      {
+        "stage": "practice",
+        "question": "What place, length, and invitation would make the first meeting easy to join?"
+      }
+    ]
+  },
+  {
+    "id": "news",
+    "category": "digital",
+    "emoji": "📰",
+    "title": "Free Ice Cream: Real or Fake?",
+    "keywords": "新聞 資訊 相信 謠言",
+    "question": "Our group sees a post offering free ice cream today. Do we share it, check the shop first, or ignore it?",
+    "starter": "The post has no clear date and uses an old photo. We want a fun outing without sending friends across town for nothing.",
+    "followUp": "Which detail would show whether the offer is still active?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which detail would show whether the offer is still active?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would sharing too early affect someone already travelling to the shop?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Is one quick check worth the risk of missing the offer?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should our group message say while the offer is unconfirmed?"
+      }
+    ]
+  },
+  {
+    "id": "attention",
+    "category": "digital",
+    "emoji": "⏳",
+    "title": "Dinner Keeps Stopping",
+    "keywords": "注意力 手機 時間 演算法",
+    "question": "Our group dinner keeps stopping for phone checks. Do we put phones away, allow short phone breaks, or leave things as they are?",
+    "starter": "People are missing parts of the conversation. One guest needs to stay reachable, so a complete phone ban would be difficult.",
+    "followUp": "Which phone use helps the evening, and which interrupts it?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which phone use helps the evening, and which interrupts it?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How could the reachable guest manage messages without feeling singled out?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would one shared phone break be better than many separate interruptions?"
+      },
+      {
+        "stage": "practice",
+        "question": "What agreement could we try for the rest of this dinner?"
+      }
+    ]
+  },
+  {
+    "id": "publicmistakes",
+    "category": "digital",
+    "emoji": "💭",
+    "title": "An Old Video, a Bad Joke",
+    "keywords": "網路 錯誤 公審 遺忘",
+    "question": "Our old group video includes a joke that now feels mean. Should we delete it, edit the joke, or add an apology?",
+    "starter": "The video also contains good memories. It is still public, and the person in the joke no longer finds it funny.",
+    "followUp": "Can the hurtful part be removed without losing the whole video?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Can the hurtful part be removed without losing the whole video?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would keeping it feel to the person being joked about?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would editing quietly solve the problem, or should we explain the change?"
+      },
+      {
+        "stage": "practice",
+        "question": "What could our group say and change before sharing the video again?"
+      }
+    ]
+  },
+  {
+    "id": "honesty",
+    "category": "ethics",
+    "emoji": "🪟",
+    "title": "The Very Salty Party Cake",
+    "keywords": "誠實 善意 謊言 真相",
+    "question": "A friend made our party cake, but it tastes terribly salty. Should our group tell them now, offer gentle tips later, or say nothing?",
+    "starter": "The friend is proud of the cake, and guests have started eating. We want to be kind without pretending that the recipe worked.",
+    "followUp": "Does the friend need to know now so they can fix anything?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Does the friend need to know now so they can fix anything?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would silence feel kind if they repeat the recipe at another party?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Can we praise the effort while being clear about the taste?"
+      },
+      {
+        "stage": "practice",
+        "question": "What short message should one of us give on the group's behalf?"
+      }
+    ]
+  },
+  {
+    "id": "loyalty",
+    "category": "ethics",
+    "emoji": "🧵",
+    "title": "A Friend Checks the Answer",
+    "keywords": "忠誠 朋友 對錯 支持",
+    "question": "At our game night, a friend secretly checks an answer. Do we warn them quietly, restart the round, or let it go?",
+    "starter": "It is a friendly quiz with no money prize. The other team is close to winning, and nobody else has noticed the answer check.",
+    "followUp": "Did the checked answer change the result of the round?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Did the checked answer change the result of the round?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would the other team feel if they discovered it later?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could replaying one question protect the friendship and the game?"
+      },
+      {
+        "stage": "practice",
+        "question": "What rule should our group use if it happens again?"
+      }
+    ]
+  },
+  {
+    "id": "giving",
+    "category": "ethics",
+    "emoji": "🎁",
+    "title": "Six Extra Meals",
+    "keywords": "幫助 捐助 距離 資源",
+    "question": "Our group has six extra meals after a party. Should we give them to neighbors, save them for tomorrow, or share them with the helpers?",
+    "starter": "The meals are fresh and ready to eat. We have room to keep only two overnight, and we do not want the rest wasted.",
+    "followUp": "Who could use the meals while they are still ready to eat?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Who could use the meals while they are still ready to eat?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would the helpers expect food after spending the evening working?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we save two meals and offer the others in more than one place?"
+      },
+      {
+        "stage": "practice",
+        "question": "How should we offer the food without promising more than we have?"
+      }
+    ]
+  },
+  {
+    "id": "promise",
+    "category": "ethics",
+    "emoji": "🪢",
+    "title": "Rain at Our Movie Night",
+    "keywords": "承諾 改變 責任 信任",
+    "question": "We promised an outdoor movie night, but rain is coming. Should we move indoors, postpone it, or try a covered spot?",
+    "starter": "Friends have already saved the evening. An indoor room is available, but it fits fewer people than the original outdoor space.",
+    "followUp": "Which part of the promise matters most: tonight, the film, or being outdoors?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which part of the promise matters most: tonight, the film, or being outdoors?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would a smaller room affect the last people to arrive?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could two short indoor showings keep the evening open to everyone?"
+      },
+      {
+        "stage": "practice",
+        "question": "What change should we announce before guests start travelling?"
+      }
+    ]
+  },
+  {
+    "id": "goodintentions",
+    "category": "ethics",
+    "emoji": "🌼",
+    "title": "Nobody Can Find the Cups",
+    "keywords": "善意 結果 責任 道歉",
+    "question": "Someone rearranged our shared kitchen to help. Nobody can find anything. Do we keep the changes, put things back, or redesign it together?",
+    "starter": "The kitchen is cleaner, but cups, pans, and snacks have moved. Everyone uses the room, and nobody agreed on the new layout.",
+    "followUp": "Which changes are useful, and which make everyday tasks harder?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which changes are useful, and which make everyday tasks harder?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What might the helper have been trying to fix?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we keep the clear surfaces while moving key items back?"
+      },
+      {
+        "stage": "practice",
+        "question": "Where should shared items go so a new guest can find them too?"
+      }
+    ]
+  },
+  {
+    "id": "smallchoices",
+    "category": "ethics",
+    "emoji": "🛒",
+    "title": "Cups for the Party",
+    "keywords": "消費 道德 選擇 便利",
+    "question": "Our group is buying cups for a party. Should we choose cheap throwaway cups, reusable cups, or ask everyone to bring one?",
+    "starter": "We expect twenty guests and have a small budget. There is a sink, but cleanup will be done by the same group hosting the party.",
+    "followUp": "Which option has a cost beyond buying the cups?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which option has a cost beyond buying the cups?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What happens if several guests forget to bring a cup?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Would borrowed cups plus a few spare ones reduce cost and cleanup?"
+      },
+      {
+        "stage": "practice",
+        "question": "What cup plan should we include in the invitation?"
+      }
+    ]
+  },
+  {
+    "id": "climate",
+    "category": "future",
+    "emoji": "🌍",
+    "title": "A Party With Less Waste",
+    "keywords": "環境 氣候 責任 成本",
+    "question": "Our group wants a fun party with less waste. Should we use borrowed decorations, edible decorations, or no decorations at all?",
+    "starter": "The room looks plain, and we have little storage afterward. We want the party to feel special without throwing away bags of decorations.",
+    "followUp": "Which decorations would make the biggest difference to the room?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which decorations would make the biggest difference to the room?"
+      },
+      {
+        "stage": "perspective",
+        "question": "Would edible decorations still work for guests with different diets?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could we borrow a few large items instead of buying many small ones?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should our decoration plan include from arrival through cleanup?"
+      }
+    ]
+  },
+  {
+    "id": "city",
+    "category": "future",
+    "emoji": "🏙️",
+    "title": "One Empty Shop",
+    "keywords": "城市 住宅 公共 空間",
+    "question": "Our street has one empty shop for a shared space. Should we turn it into a reading room, a game room, or a small indoor garden?",
+    "starter": "The space is small and available for one year. Neighbors of different ages should be able to use it without paying to enter.",
+    "followUp": "Which option could make good use of a small room?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which option could make good use of a small room?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would children and older visitors share the same space?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could one room serve two uses at different times?"
+      },
+      {
+        "stage": "practice",
+        "question": "What layout and opening hours would make our chosen use work?"
+      }
+    ]
+  },
+  {
+    "id": "generations",
+    "category": "future",
+    "emoji": "🌳",
+    "title": "A Box for Future Us",
+    "keywords": "世代 未來 資源 責任",
+    "question": "Our group can put three things in a box to open in ten years. Should we choose photos, messages, toys, favorite songs, or something else?",
+    "starter": "The box must fit on a small shelf. We want future us to enjoy it even if the group has changed or forgotten today's jokes.",
+    "followUp": "Which items would still make sense without a long explanation?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which items would still make sense without a long explanation?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How could the box represent people who joined the group recently?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Should we leave out a large object to include more people's messages?"
+      },
+      {
+        "stage": "practice",
+        "question": "Which three things should we seal, and how should we label them?"
+      }
+    ]
+  },
+  {
+    "id": "education",
+    "category": "future",
+    "emoji": "📚",
+    "title": "Our One Free Class",
+    "keywords": "教育 學習 學校 未來",
+    "question": "Our group can offer one free class: easy cooking, fixing small things, or making funny videos. Which class should we run?",
+    "starter": "We have one room, basic equipment, and two hours. The class should welcome beginners and leave them with something they can use.",
+    "followUp": "Which class could beginners finish successfully in two hours?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which class could beginners finish successfully in two hours?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What would help a learner who has never used the equipment?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could a simple lesson be more useful than showing many skills?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should everyone be able to do by the end of our class?"
+      }
+    ]
+  },
+  {
+    "id": "animals",
+    "category": "future",
+    "emoji": "🐾",
+    "title": "Pets at Our Cafe",
+    "keywords": "動物 照顧 倫理 自然",
+    "question": "Our group is opening a cafe where pets can visit. Should animals sit inside, stay in a garden, or visit only on special days?",
+    "starter": "Some guests love pets; others want a quiet meal without animals nearby. We have one indoor room and a small garden.",
+    "followUp": "Which spaces could pets and other guests use comfortably?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which spaces could pets and other guests use comfortably?"
+      },
+      {
+        "stage": "perspective",
+        "question": "How would the plan work for someone afraid of dogs?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could separate hours or areas welcome pets without taking over the cafe?"
+      },
+      {
+        "stage": "practice",
+        "question": "What pet rule should guests see before they arrive?"
+      }
+    ]
+  },
+  {
+    "id": "communitychange",
+    "category": "future",
+    "emoji": "🌻",
+    "title": "An Empty Corner in Our Building",
+    "keywords": "社區 改變 行動 希望",
+    "question": "Our building has one empty corner. Should our group add a book shelf, a plant swap, or a board for free items?",
+    "starter": "Neighbors pass the corner every day. It must stay tidy and easy to walk past, and nobody can look after it all the time.",
+    "followUp": "Which option could people use without needing a helper?",
+    "followUps": [
+      {
+        "stage": "understand",
+        "question": "Which option could people use without needing a helper?"
+      },
+      {
+        "stage": "perspective",
+        "question": "What would make someone new to the building comfortable taking part?"
+      },
+      {
+        "stage": "tradeoff",
+        "question": "Could a smaller setup be easier to maintain than a popular messy one?"
+      },
+      {
+        "stage": "practice",
+        "question": "What should our group put there first, and who checks it each week?"
+      }
+    ]
+  }
+];
 const TALK_SCENARIO_TOPICS = [
-  {"id":"chat-scene-01","category":"shared-living","emoji":"🏠","title":"One Trip, Different Holidays","keywords":"同團不同步 旅行 度假 旅伴 分開 行程 飯店 拍照","question":"We are taking a three-day trip together. What would make it a good holiday for everyone?","starter":"Imagine the whole group on a three-day holiday. Start with the pace or activity you would enjoy, then explain how the others could join in.","followUp":"What is most worth doing separately during a group trip?","followUps":[{"stage":"scenario","question":"What is most worth doing separately during a group trip?"},{"stage":"scenario","question":"How would you continue the day if someone kept arriving late?"},{"stage":"scenario","question":"Which plan would you give up for a travel companion?"},{"stage":"scenario","question":"What would you least want to save money on during a trip?"},{"stage":"scenario","question":"Have you had a travel companion who was surprisingly easy to get along with?"},{"stage":"scenario","question":"What are your habits around taking travel photos?"},{"stage":"scenario","question":"What would make you want to return to the hotel early?"},{"stage":"scenario","question":"Which moments do you usually most want to remember after getting home?"}],"sourceTopicId":"topic_v2_01","source":"chatwolf"},
-  {"id":"chat-scene-02","category":"shared-living","emoji":"🏠","title":"A Month Under One Roof","keywords":"同住一個月 合租 住家 室友 房子 冰箱 習慣 作息","question":"We are sharing a home for a month. How would our everyday habits fit together?","starter":"Imagine sharing one home with this group. Start with a habit you would bring, such as sleeping late or cooking, and how you would share the space.","followUp":"What are your limits around sharing food in the fridge?","followUps":[{"stage":"scenario","question":"What are your limits around sharing food in the fridge?"},{"stage":"scenario","question":"Which household sounds distract you most?"},{"stage":"scenario","question":"What small habit would you most want a housemate to know about?"},{"stage":"scenario","question":"How many personal things in a shared space feel comfortable to you?"},{"stage":"scenario","question":"Have you had a surprisingly thoughtful experience sharing a home?"},{"stage":"scenario","question":"How would you live together with different sleeping and waking times?"},{"stage":"scenario","question":"What would matter to you if a friend stayed without much notice?"},{"stage":"scenario","question":"After a month, what might make you not want to move out?"}],"sourceTopicId":"topic_v2_02","source":"chatwolf"},
-  {"id":"chat-scene-03","category":"shared-living","emoji":"🏠","title":"Four Hours in One Car","keywords":"同車的音樂 搭車 車子 音樂 唱歌 安靜 旅途","question":"We have four hours together in one car. How would you like to spend the ride?","starter":"Imagine being together in one car for four hours. Start with music, conversation, quiet time, or a stop you would enjoy.","followUp":"What kind of song makes you want to join in?","followUps":[{"stage":"scenario","question":"What kind of song makes you want to join in?"},{"stage":"scenario","question":"When would you want the whole car to be quiet for a while?"},{"stage":"scenario","question":"What do you least want a travel companion to do in the car?"},{"stage":"scenario","question":"Do you like making unplanned stops on a journey?"},{"stage":"scenario","question":"What do you do in a car that other people do not understand?"},{"stage":"scenario","question":"What helps the mood when everyone is tired?"},{"stage":"scenario","question":"What unexpected conversation have you had on a journey?"},{"stage":"scenario","question":"How would you introduce a song the others might not know?"}],"sourceTopicId":"topic_v2_03","source":"chatwolf"},
-  {"id":"chat-scene-04","category":"shared-living","emoji":"🏠","title":"A Weekend With No Plans","keywords":"朋友的週末小屋 小屋 週末 休息 放鬆 假期 計畫","question":"We have a cabin for the weekend and no plans. How would you really relax?","starter":"Imagine a quiet weekend in a cabin with no schedule. Start with what helps you rest, and whether you want company or time alone.","followUp":"What can easily turn resting into another kind of work?","followUps":[{"stage":"scenario","question":"What can easily turn resting into another kind of work?"},{"stage":"scenario","question":"How much time alone do you need to feel comfortable?"},{"stage":"scenario","question":"What unnecessary but enjoyable thing would you most want to bring?"},{"stage":"scenario","question":"What do you usually do when nobody makes a plan?"},{"stage":"scenario","question":"Does quietly doing nothing together count as spending time together?"},{"stage":"scenario","question":"How can people relax together when they have different energy levels?"},{"stage":"scenario","question":"Have you had a good holiday because there was no plan?"},{"stage":"scenario","question":"What pressure would you most want to leave out of this weekend?"}],"sourceTopicId":"topic_v2_04","source":"chatwolf"},
-  {"id":"chat-scene-05","category":"shared-living","emoji":"🏠","title":"A Shared Work Table","keywords":"大家的共享工作桌 工作桌 共享 專心 工作 聲音 界線","question":"We all work at one shared table. What would help you feel comfortable and get things done?","starter":"Imagine everyone working at the same table. Start with a sound, habit, or small rule that would help you concentrate without making the room unfriendly.","followUp":"Which small sounds interrupt your concentration?","followUps":[{"stage":"scenario","question":"Which small sounds interrupt your concentration?"},{"stage":"scenario","question":"When do you actually welcome a chat?"},{"stage":"scenario","question":"How does it feel different when someone watches you work?"},{"stage":"scenario","question":"What would you most want on your desk?"},{"stage":"scenario","question":"What can you keep doing only when someone is there with you?"},{"stage":"scenario","question":"How would you let someone know you cannot talk right now?"},{"stage":"scenario","question":"Where is the line between working and resting for you?"},{"stage":"scenario","question":"What comfortable way of working alongside others have you experienced?"}],"sourceTopicId":"topic_v2_05","source":"chatwolf"},
-  {"id":"chat-scene-06","category":"shared-living","emoji":"🏠","title":"A Gathering Without Signal","keywords":"沒有訊號的聚會 聚會 斷網 網路 手機 訊號 通知","question":"Our gathering has no internet signal. How would we spend the time together?","starter":"Imagine the internet stops working at our gathering. Start with something we could enjoy together without looking anything up.","followUp":"What would you first want to look up but be unable to find?","followUps":[{"stage":"scenario","question":"What would you first want to look up but be unable to find?"},{"stage":"scenario","question":"What old things on your phone would be worth sharing?"},{"stage":"scenario","question":"Would you feel comfortable if everyone became quiet?"},{"stage":"scenario","question":"What activities do you remember enjoying without the internet?"},{"stage":"scenario","question":"Does looking up an answer make a conversation more interesting or interrupt it?"},{"stage":"scenario","question":"Which notifications would you most willingly leave behind for a while?"},{"stage":"scenario","question":"When do you least need your phone?"},{"stage":"scenario","question":"What would you do first when the signal returned?"}],"sourceTopicId":"topic_v2_06","source":"chatwolf"},
-  {"id":"chat-scene-07","category":"shared-living","emoji":"🏠","title":"A New Friend Joins Us","keywords":"第一次跟新朋友出門 新朋友 歡迎 初次 陌生人 團體","question":"A new friend is joining our close group. What would help them feel at home?","starter":"Imagine a new friend joining this group. Start with one small thing that would help them join a conversation or feel welcome.","followUp":"What would you most want people to do when you joined a close group?","followUps":[{"stage":"scenario","question":"What would you most want people to do when you joined a close group?"},{"stage":"scenario","question":"Which jokes are difficult for someone outside the group to follow?"},{"stage":"scenario","question":"What small things help you get to know someone?"},{"stage":"scenario","question":"Can too much attention make you uncomfortable?"},{"stage":"scenario","question":"What easy way of starting a conversation have you experienced?"},{"stage":"scenario","question":"When a group splits into smaller conversations, which one do you approach?"},{"stage":"scenario","question":"How would you explain an old shared memory to a newcomer?"},{"stage":"scenario","question":"When do you usually start feeling part of a group?"}],"sourceTopicId":"topic_v2_07","source":"chatwolf"},
-  {"id":"chat-scene-08","category":"shared-living","emoji":"🏠","title":"Dinner in One Kitchen","keywords":"同一個廚房的晚餐 廚房 做飯 晚餐 煮菜 食物","question":"We are cooking dinner in one kitchen. What would it be like with you helping?","starter":"Imagine this group cooking one dinner together. Start with a job you would enjoy, a dish you would suggest, or a habit others would notice.","followUp":"Which small kitchen job would you be happiest to do?","followUps":[{"stage":"scenario","question":"Which small kitchen job would you be happiest to do?"},{"stage":"scenario","question":"What cooking habit makes you want to step in?"},{"stage":"scenario","question":"How do you usually react when food turns out differently than expected?"},{"stage":"scenario","question":"What food combination do you like that other people doubt?"},{"stage":"scenario","question":"Do you care more about eating on time or making the meal look good?"},{"stage":"scenario","question":"Would you try food from someone who treats cooking as an experiment?"},{"stage":"scenario","question":"What small confusion have you experienced while cooking together?"},{"stage":"scenario","question":"Which job is easiest to overlook after eating?"}],"sourceTopicId":"topic_v2_08","source":"chatwolf"},
-  {"id":"chat-scene-09","category":"shared-planning","emoji":"🎪","title":"A Shop That Lets Us Rest","keywords":"老闆也想休息的小店 商店 小店 生意 店員 客人 開店","question":"We are opening a small, relaxed shop together. What would make it enjoyable to run?","starter":"Imagine opening a small shop with this group. Start with what it sells or how it feels, then say what would make working there enjoyable.","followUp":"How would you most want customers to feel when they entered?","followUps":[{"stage":"scenario","question":"How would you most want customers to feel when they entered?"},{"stage":"scenario","question":"Which job would you least want to handle?"},{"stage":"scenario","question":"What would make you want to stay for a long time?"},{"stage":"scenario","question":"How would you feel about customers who sit without buying anything?"},{"stage":"scenario","question":"What slightly selfish shop rule would you keep?"},{"stage":"scenario","question":"What trouble might come from the shop being too popular?"},{"stage":"scenario","question":"What shop have you visited that makes you think of this one?"},{"stage":"scenario","question":"What small detail might suddenly make this shop popular?"}],"sourceTopicId":"topic_v2_09","source":"chatwolf"},
-  {"id":"chat-scene-10","category":"shared-planning","emoji":"🎪","title":"A Birthday on a Small Budget","keywords":"小預算的生日 生日 預算 慶祝 禮物 驚喜","question":"We have very little money for a friend’s birthday. How would you make it memorable?","starter":"Imagine planning a friend's birthday with very little money. Start with a small idea that feels personal rather than expensive.","followUp":"What inexpensive but thoughtful celebration have you received?","followUps":[{"stage":"scenario","question":"What inexpensive but thoughtful celebration have you received?"},{"stage":"scenario","question":"What kind of surprise might make someone uncomfortable?"},{"stage":"scenario","question":"Which part would you be willing to make yourself?"},{"stage":"scenario","question":"How would you celebrate someone who does not want to be the center of attention?"},{"stage":"scenario","question":"What is easiest to waste money on at a birthday celebration?"},{"stage":"scenario","question":"What shared memory could become part of the celebration?"},{"stage":"scenario","question":"How would you handle everyone having a different budget?"},{"stage":"scenario","question":"Which small mistake might become the most memorable part?"}],"sourceTopicId":"topic_v2_10","source":"chatwolf"},
-  {"id":"chat-scene-11","category":"shared-planning","emoji":"🎪","title":"Our Unusual Little Show","keywords":"我們的荒謬節目 節目 綜藝 才藝 表演 影片 搞笑","question":"We are making a simple show with our everyday talents. What would we make?","starter":"Imagine making a simple show together. Start with an everyday skill or funny activity, and the part you would enjoy doing.","followUp":"What modest talent would be fun to use in the show?","followUps":[{"stage":"scenario","question":"What modest talent would be fun to use in the show?"},{"stage":"scenario","question":"Would you rather be in front of or behind the camera?"},{"stage":"scenario","question":"What everyday activity deserves its own episode?"},{"stage":"scenario","question":"What accident could stay in the finished show?"},{"stage":"scenario","question":"Which embarrassing kind of scene would you least want to make?"},{"stage":"scenario","question":"How could the show work if nobody wanted to host?"},{"stage":"scenario","question":"What simple video or show have you remembered for a long time?"},{"stage":"scenario","question":"Who would you want to show the finished episode to first?"}],"sourceTopicId":"topic_v2_11","source":"chatwolf"},
-  {"id":"chat-scene-12","category":"shared-planning","emoji":"🎪","title":"Ordinary Objects on Display","keywords":"普通東西博物館 博物館 展覽 物品 普通 故事 回憶","question":"We are displaying ordinary objects with personal stories. What would you bring?","starter":"Imagine a small exhibition of ordinary objects. Start with one object and the story that would make visitors care about it.","followUp":"Can other people always see why an object matters to you?","followUps":[{"stage":"scenario","question":"Can other people always see why an object matters to you?"},{"stage":"scenario","question":"Which ordinary objects from a stranger would you like to see?"},{"stage":"scenario","question":"Could we show something if only a photo of it remained?"},{"stage":"scenario","question":"What object best represents one period of your life?"},{"stage":"scenario","question":"Does wear make an object more or less valuable?"},{"stage":"scenario","question":"Have you thrown away something you later wanted back?"},{"stage":"scenario","question":"Which stories would not belong in a public exhibition?"},{"stage":"scenario","question":"What would you want visitors to notice more about ordinary life?"}],"sourceTopicId":"topic_v2_12","source":"chatwolf"},
-  {"id":"chat-scene-13","category":"shared-planning","emoji":"🎪","title":"A Gathering Without Pressure","keywords":"給不愛社交的人一場聚會 聚會 派對 社交 安靜 壓力","question":"We want a gathering for people who dislike parties. What would make it comfortable?","starter":"Imagine planning a gathering for people who dislike parties. Start with something that removes pressure, such as a quiet corner or an easy way to leave.","followUp":"Which plans at a gathering put the most pressure on you?","followUps":[{"stage":"scenario","question":"Which plans at a gathering put the most pressure on you?"},{"stage":"scenario","question":"What can people do together without talking all the time?"},{"stage":"scenario","question":"Do you prefer a few close friends or a large group with more freedom?"},{"stage":"scenario","question":"How can an invitation make saying no feel less awkward?"},{"stage":"scenario","question":"When do you most need a quiet corner to rest?"},{"stage":"scenario","question":"How do you usually feel when someone gives you special attention?"},{"stage":"scenario","question":"Is an event without a big exciting moment necessarily bad?"},{"stage":"scenario","question":"What would make you want to come again?"}],"sourceTopicId":"topic_v2_13","source":"chatwolf"},
-  {"id":"chat-scene-14","category":"shared-planning","emoji":"🎪","title":"An Interesting Ordinary Street","keywords":"普通街區的特別一天 街區 鄰居 社區 導覽 朋友 景點","question":"A friend is visiting our ordinary neighborhood. How would you make the day interesting?","starter":"Imagine showing a friend around your ordinary neighborhood. Start with a small place, food, or everyday activity you would want them to notice.","followUp":"What small pleasure in a familiar place is known mostly to regular visitors?","followUps":[{"stage":"scenario","question":"What small pleasure in a familiar place is known mostly to regular visitors?"},{"stage":"scenario","question":"Would you take a friend to eat first or walk around?"},{"stage":"scenario","question":"Which ordinary place deserves a slow visit?"},{"stage":"scenario","question":"How would you plan the day if your friend had different interests?"},{"stage":"scenario","question":"What do you easily overlook when you live somewhere?"},{"stage":"scenario","question":"Have you been pleasantly surprised by an ordinary place?"},{"stage":"scenario","question":"Is a day worthwhile even without any beautiful photos?"},{"stage":"scenario","question":"What feeling would you want your friend to take home?"}],"sourceTopicId":"topic_v2_14","source":"chatwolf"},
-  {"id":"chat-scene-15","category":"shared-planning","emoji":"🎪","title":"A One-Day Swap Shop","keywords":"只營業一天的交換店 交換 商店 二手 物品","question":"We are holding a one-day swap shop. What would you bring or hope to find?","starter":"Imagine a shop where we exchange things for one day. Start with something you could bring or an item you would hope to take home.","followUp":"What useful thing at home do you never use?","followUps":[{"stage":"scenario","question":"What useful thing at home do you never use?"},{"stage":"scenario","question":"Which second-hand objects would you be happy to take home?"},{"stage":"scenario","question":"Would a big difference in value bother you during a swap?"},{"stage":"scenario","question":"How would you describe something that looks ordinary but works well?"},{"stage":"scenario","question":"Does an object with a story interest you more?"},{"stage":"scenario","question":"What would you rather give away than exchange?"},{"stage":"scenario","question":"What could we do with things nobody wanted?"},{"stage":"scenario","question":"What exchange would feel like a great result for you?"}],"sourceTopicId":"topic_v2_15","source":"chatwolf"},
-  {"id":"chat-scene-16","category":"shared-planning","emoji":"🎪","title":"A Room to Rest In","keywords":"給大家一個休息角落 休息 房間 空間 燈光 聲音 椅子","question":"We have a small room for relaxing after work. What would make you want to stay?","starter":"Imagine a small shared room for resting after work. Start with the light, sound, seating, or simple comfort that would make you stay.","followUp":"Do you care most about light, sound, or seating when you relax?","followUps":[{"stage":"scenario","question":"Do you care most about light, sound, or seating when you relax?"},{"stage":"scenario","question":"What looks comfortable but is difficult to care for?"},{"stage":"scenario","question":"Would you want conversation or quiet?"},{"stage":"scenario","question":"How could one inexpensive object change the atmosphere?"},{"stage":"scenario","question":"Where have you sat down and not wanted to leave?"},{"stage":"scenario","question":"How could people share the room when some want to sleep and others want to play?"},{"stage":"scenario","question":"What would you least want this room to become?"},{"stage":"scenario","question":"What small imperfection would make it feel lived in?"}],"sourceTopicId":"topic_v2_16","source":"chatwolf"},
-  {"id":"chat-scene-17","category":"light-fantasy","emoji":"✨","title":"Powers That Only Help Neighbors","keywords":"互助超能力公寓 超能力 鄰居 公寓 幫助 幻想","question":"Everyone in our building has a small power that only helps others. What would yours be?","starter":"Imagine having a small power that can only help other people. Start with an ordinary problem you could solve for a neighbor.","followUp":"What trouble would you most want a neighbor to save you?","followUps":[{"stage":"scenario","question":"What trouble would you most want a neighbor to save you?"},{"stage":"scenario","question":"Which useful power might lead to constant requests for help?"},{"stage":"scenario","question":"Should someone with a power feel free to say no?"},{"stage":"scenario","question":"What small power seems useless but still appeals to you?"},{"stage":"scenario","question":"What funny misunderstanding might happen in this apartment building?"},{"stage":"scenario","question":"How would you thank a neighbor who often helped?"},{"stage":"scenario","question":"Which things would you still want to do yourself, even with a power available?"},{"stage":"scenario","question":"What problem would you notice first if all the powers took a day off?"}],"sourceTopicId":"topic_v2_17","source":"chatwolf"},
-  {"id":"chat-scene-18","category":"light-fantasy","emoji":"✨","title":"Borrowing a Friend’s Routine","keywords":"人生借住一天 借住 人生 朋友 一天 日常 作息","question":"You can try a friend’s daily routine for one day. Whose life would you choose?","starter":"Imagine living a friend's usual day for one day. Start with a routine you are curious about and what you think would be easy or difficult.","followUp":"Which kind of life looks easy but might be tiring?","followUps":[{"stage":"scenario","question":"Which kind of life looks easy but might be tiring?"},{"stage":"scenario","question":"What would someone else find hardest about your routine?"},{"stage":"scenario","question":"Which habit of your friend would you most want to learn?"},{"stage":"scenario","question":"Which part of their day would you want to change first?"},{"stage":"scenario","question":"What is difficult to understand just by hearing someone describe it?"},{"stage":"scenario","question":"Would you prefer a completely unfamiliar routine or a partly familiar one?"},{"stage":"scenario","question":"Which job or hobby makes you curious about the everyday life behind it?"},{"stage":"scenario","question":"What might you appreciate more when you returned to your own life?"}],"sourceTopicId":"topic_v2_18","source":"chatwolf"},
-  {"id":"chat-scene-19","category":"light-fantasy","emoji":"✨","title":"One Hour Just for You","keywords":"每天多出的一小時 時間 一小時 每天 休息 興趣","question":"You get one extra hour every day, with no interruptions. How would you spend it?","starter":"Imagine one extra hour that nobody can interrupt. Start with rest, a hobby, or something you keep delaying; it does not have to be useful.","followUp":"What do you keep putting off even though you want to do it?","followUps":[{"stage":"scenario","question":"What do you keep putting off even though you want to do it?"},{"stage":"scenario","question":"Would you want this hour to produce a result?"},{"stage":"scenario","question":"Would it feel different if nobody knew how you used it?"},{"stage":"scenario","question":"How long can you rest before you want to do something?"},{"stage":"scenario","question":"Where in the day would you put this hour?"},{"stage":"scenario","question":"Which small hobby needs only a little regular time?"},{"stage":"scenario","question":"Would you want to do the same thing every day?"},{"stage":"scenario","question":"What should never be allowed into this hour?"}],"sourceTopicId":"topic_v2_19","source":"chatwolf"},
-  {"id":"chat-scene-20","category":"light-fantasy","emoji":"✨","title":"The Objects Have Complaints","keywords":"物品終於會抱怨 物品 抱怨 會說話 家電 習慣","question":"Your household objects can complain today. What would they say about you?","starter":"Imagine your household objects can speak for a day. Choose one object and say what it might complain about in your daily habits.","followUp":"Which object would most likely feel overworked?","followUps":[{"stage":"scenario","question":"Which object would most likely feel overworked?"},{"stage":"scenario","question":"Which object would ask you to stop buying more of its kind?"},{"stage":"scenario","question":"What object do you actually treat very carefully?"},{"stage":"scenario","question":"Which forgotten object might have the most to say?"},{"stage":"scenario","question":"Which object would speak well of you?"},{"stage":"scenario","question":"Which object would you most want to explain yourself to?"},{"stage":"scenario","question":"What habit might you change after this conversation?"},{"stage":"scenario","question":"Which object would you want to keep talking afterward?"}],"sourceTopicId":"topic_v2_20","source":"chatwolf"},
-  {"id":"chat-scene-21","category":"light-fantasy","emoji":"✨","title":"A Ten-Second Redo","keywords":"生活的小小重來鍵 重來 按鈕 十秒 後悔 尷尬","question":"A button lets you redo the last ten seconds. Which everyday moments need it?","starter":"Imagine a button that repeats the last ten seconds. Start with a small mistake or awkward moment, and explain whether you would change it.","followUp":"Which small awkward moment would be most worth redoing?","followUps":[{"stage":"scenario","question":"Which small awkward moment would be most worth redoing?"},{"stage":"scenario","question":"What mistake would you rather leave as it was?"},{"stage":"scenario","question":"Would being able to try again make you more willing to speak?"},{"stage":"scenario","question":"What might turn out the same even on a second try?"},{"stage":"scenario","question":"What would you most want friends not to use this button for?"},{"stage":"scenario","question":"How could it help while cooking or exercising?"},{"stage":"scenario","question":"Would you become more critical of yourself?"},{"stage":"scenario","question":"What small moment would you want to experience again rather than fix?"}],"sourceTopicId":"topic_v2_21","source":"chatwolf"},
-  {"id":"chat-scene-22","category":"light-fantasy","emoji":"✨","title":"A Small Package From the Future","keywords":"未來寄來的小包裹 未來 包裹 十年 物件 線索","question":"You receive ordinary objects from yourself ten years ahead. What would reveal your future life?","starter":"Imagine receiving a small package from your future self. Start with an ordinary object and the clue it gives about your life ten years from now.","followUp":"Which ordinary object best shows a change in someone’s life?","followUps":[{"stage":"scenario","question":"Which ordinary object best shows a change in someone’s life?"},{"stage":"scenario","question":"What interest do you hope to keep in the future?"},{"stage":"scenario","question":"What would surprise you most to receive?"},{"stage":"scenario","question":"Would you rather learn about future work or life outside work?"},{"stage":"scenario","question":"What do you hope you will no longer need?"},{"stage":"scenario","question":"What could you send to your future self today?"},{"stage":"scenario","question":"How would you interpret an object you did not understand at all?"},{"stage":"scenario","question":"Would not knowing the whole answer make you more excited or more uneasy?"}],"sourceTopicId":"topic_v2_22","source":"chatwolf"},
-  {"id":"chat-scene-23","category":"light-fantasy","emoji":"✨","title":"Watching an Ordinary Moment Again","keywords":"回看日常片段 回憶 日常 過去 記憶 照片","question":"You can watch one ordinary moment from your past again. Which would you choose?","starter":"Imagine watching one ordinary past moment again. Start with a place, person, or small detail you would like to notice this time.","followUp":"Which place did you remember clearly only after leaving it?","followUps":[{"stage":"scenario","question":"Which place did you remember clearly only after leaving it?"},{"stage":"scenario","question":"What everyday sound would you most like to hear again?"},{"stage":"scenario","question":"Who might you notice that you did not notice before?"},{"stage":"scenario","question":"What do memories most easily make seem better than it was?"},{"stage":"scenario","question":"Which ordinary moment today might you miss in the future?"},{"stage":"scenario","question":"What is the difference between a photo and a memory for you?"},{"stage":"scenario","question":"What small detail quickly brings back a period of your life?"},{"stage":"scenario","question":"Would you want to keep your memory as it is or see what really happened?"}],"sourceTopicId":"topic_v2_23","source":"chatwolf"},
-  {"id":"chat-scene-24","category":"light-fantasy","emoji":"✨","title":"Impossible Everyday Services","keywords":"離譜但方便的服務 服務 商店 幻想 離譜 方便","question":"A shop sells impossible solutions to everyday problems. What service would you pay for?","starter":"Imagine a shop that solves tiny daily problems in impossible ways. Start with a problem and the service you would happily use.","followUp":"What tiny problem comes back every day?","followUps":[{"stage":"scenario","question":"What tiny problem comes back every day?"},{"stage":"scenario","question":"Which convenience might be hard to give up after trying it once?"},{"stage":"scenario","question":"What service might be needed by more people than you expect?"},{"stage":"scenario","question":"What would you never hand over to any service?"},{"stage":"scenario","question":"Which service would you buy for a friend?"},{"stage":"scenario","question":"What funny mistake might happen if the service went wrong?"},{"stage":"scenario","question":"What would you exchange instead of paying money?"},{"stage":"scenario","question":"What would this shop least need to sell?"}],"sourceTopicId":"topic_v2_24","source":"chatwolf"},
-  {"id":"chat-scene-25","category":"everyday-choices","emoji":"🤔","title":"A Thoughtful Gift You Do Not Want","keywords":"用心但不想要的禮物 禮物 朋友 用心 實用","question":"A friend gives you a thoughtful gift you do not want. What would you do?","starter":"Imagine a friend choosing a gift carefully, but it does not suit you. Start with what you would say or do, and how you would show that you appreciate the thought.","followUp":"Which gifts are hardest for you to deal with?","followUps":[{"stage":"scenario","question":"Which gifts are hardest for you to deal with?"},{"stage":"scenario","question":"What gift suited you better than you expected?"},{"stage":"scenario","question":"Should the giver care where the gift ends up?"},{"stage":"scenario","question":"What feels missing when you tell someone exactly what you want?"},{"stage":"scenario","question":"When would you choose not to accept a gift?"},{"stage":"scenario","question":"How do you balance a gift’s thoughtfulness and usefulness?"},{"stage":"scenario","question":"How would you feel if someone was very honest about your gift?"},{"stage":"scenario","question":"What gift does not have to be an object?"}],"sourceTopicId":"topic_v2_25","source":"chatwolf"},
-  {"id":"chat-scene-26","category":"everyday-choices","emoji":"🤔","title":"One Dinner, Different Bills","keywords":"大家吃得不一樣的帳單 晚餐 帳單 公平 付錢 預算","question":"Friends share dinner but order very different amounts. How should you split the bill?","starter":"Imagine eating together when everyone orders different amounts. Start with a way to pay that feels fair, then explain what might change your choice.","followUp":"Do you usually think about splitting the bill before ordering or when paying?","followUps":[{"stage":"scenario","question":"Do you usually think about splitting the bill before ordering or when paying?"},{"stage":"scenario","question":"What small difference in cost does not bother you at all?"},{"stage":"scenario","question":"What does treating someone to a meal mean to you?"},{"stage":"scenario","question":"How can a group include a friend with less money without making it awkward?"},{"stage":"scenario","question":"Does knowing people well change how you split a bill?"},{"stage":"scenario","question":"What thoughtful way of paying have you experienced?"},{"stage":"scenario","question":"What would make you not want to eat together next time?"},{"stage":"scenario","question":"Would you volunteer to work out the bill?"}],"sourceTopicId":"topic_v2_26","source":"chatwolf"},
-  {"id":"chat-scene-27","category":"everyday-choices","emoji":"🤔","title":"A Group Chat That Never Stops","keywords":"群組不斷亮起 群組 聊天 訊息 通知 回覆","question":"Your group chat never stops. What would make it fun instead of exhausting?","starter":"Imagine being in a group chat that sends messages all day. Start with a habit or boundary that keeps it enjoyable for you.","followUp":"What do you think when someone has read a message but not replied?","followUps":[{"stage":"scenario","question":"What do you think when someone has read a message but not replied?"},{"stage":"scenario","question":"Which messages need a quick reply?"},{"stage":"scenario","question":"When would you mute a group chat?"},{"stage":"scenario","question":"Does an emoji reaction count as taking part for you?"},{"stage":"scenario","question":"Do you prefer a group chat about daily life or just plans?"},{"stage":"scenario","question":"How does a larger group affect how much you say?"},{"stage":"scenario","question":"Has something in a group chat made you feel cared for?"},{"stage":"scenario","question":"What would make you more willing to share something first?"}],"sourceTopicId":"topic_v2_27","source":"chatwolf"},
-  {"id":"chat-scene-28","category":"everyday-choices","emoji":"🤔","title":"A Photo You Do Not Want Shared","keywords":"想留下但不想公開的照片 照片 隱私 分享 合照","question":"Everyone loves a group photo except you. How would you ask them not to share it?","starter":"Imagine a group photo everyone likes except you. Start with what you would tell your friends and what you would want them to do before sharing it.","followUp":"Do you care more about looking good or looking real in a photo?","followUps":[{"stage":"scenario","question":"Do you care more about looking good or looking real in a photo?"},{"stage":"scenario","question":"Does taking photos change how an event feels to you?"},{"stage":"scenario","question":"What would you like friends to do before sharing photos?"},{"stage":"scenario","question":"Would you keep an unflattering photo that had a good story?"},{"stage":"scenario","question":"How can the group make someone comfortable when they do not want a photo?"},{"stage":"scenario","question":"Do you prefer taking photos or being in them?"},{"stage":"scenario","question":"Which moments would you rather not record with your phone?"},{"stage":"scenario","question":"How have your photo preferences differed from a friend’s?"}],"sourceTopicId":"topic_v2_28","source":"chatwolf"},
-  {"id":"chat-scene-29","category":"everyday-choices","emoji":"🤔","title":"Help You Did Not Ask For","keywords":"善意先幫忙 幫忙 幫助 善意 界線","question":"A friend helps without asking, but you wanted to handle it yourself. How would you respond?","starter":"Imagine a friend doing a task for you without asking. Start with how you would respond if you had wanted to do it yourself.","followUp":"What would you most welcome someone helping with without being asked?","followUps":[{"stage":"scenario","question":"What would you most welcome someone helping with without being asked?"},{"stage":"scenario","question":"When can receiving help feel like pressure?"},{"stage":"scenario","question":"How do you tell someone you want to do it yourself?"},{"stage":"scenario","question":"Have you helped someone and then found they did not need it?"},{"stage":"scenario","question":"Do you prefer company while doing a task or someone doing it for you?"},{"stage":"scenario","question":"Does accepting help make you feel you need to repay it?"},{"stage":"scenario","question":"How can someone ask in a way that helps you say what you really need?"},{"stage":"scenario","question":"What help have you received that was exactly right?"}],"sourceTopicId":"topic_v2_29","source":"chatwolf"},
-  {"id":"chat-scene-30","category":"everyday-choices","emoji":"🤔","title":"An Invitation Accepted Too Quickly","keywords":"答應太快的邀約 邀約 邀請 拒絕 休息 取消","question":"You accepted an invitation, but now you want to rest. What would you tell your friend?","starter":"Imagine accepting an invitation quickly and later needing rest. Start with what you would tell your friend and how you would handle the change.","followUp":"Which invitations are easiest to accept quickly and regret later?","followUps":[{"stage":"scenario","question":"Which invitations are easiest to accept quickly and regret later?"},{"stage":"scenario","question":"How much notice makes a cancellation acceptable to you?"},{"stage":"scenario","question":"What reason would make you go out even when you did not feel like it?"},{"stage":"scenario","question":"Which gathering turned out better than you expected?"},{"stage":"scenario","question":"What kind of refusal feels less like a personal rejection?"},{"stage":"scenario","question":"Do you feel guilty when you set aside time to rest?"},{"stage":"scenario","question":"How do you change your expectations if a friend often changes their mind?"},{"stage":"scenario","question":"What would your ideal last-minute invitation be like?"}],"sourceTopicId":"topic_v2_30","source":"chatwolf"},
-  {"id":"chat-scene-31","category":"everyday-choices","emoji":"🤔","title":"An Honest Response to a Friend’s Work","keywords":"說實話還是留面子 回饋 作品 誠實 朋友 批評","question":"A friend proudly shows you their work, but you dislike it. What would you say?","starter":"Imagine a friend showing you something they made with pride. Start with a kind but honest response if it is not to your taste.","followUp":"Do you usually want encouragement or specific feedback?","followUps":[{"stage":"scenario","question":"Do you usually want encouragement or specific feedback?"},{"stage":"scenario","question":"How can you tell which kind of response someone wants right now?"},{"stage":"scenario","question":"What kind of criticism is easiest for you to listen to?"},{"stage":"scenario","question":"How is disliking something different from thinking it is badly made?"},{"stage":"scenario","question":"Has someone’s response made you more willing to keep making things?"},{"stage":"scenario","question":"When would you choose not to give an opinion yet?"},{"stage":"scenario","question":"How do you feel about praise that is too general?"},{"stage":"scenario","question":"How do you respond to a friend whose taste is very different from yours?"}],"sourceTopicId":"topic_v2_31","source":"chatwolf"},
-  {"id":"chat-scene-32","category":"everyday-choices","emoji":"🤔","title":"A Favorite Item Comes Back Worn","keywords":"借出去之後 借東西 磨損 損壞 朋友 歸還","question":"Your favorite item comes back worn after a friend borrows it. How would you handle it?","starter":"Imagine a favorite item looking worn after a friend returns it. Start with what you would ask or say, and why that item matters.","followUp":"What would you least want to lend?","followUps":[{"stage":"scenario","question":"What would you least want to lend?"},{"stage":"scenario","question":"Does an item’s price change how much the damage matters?"},{"stage":"scenario","question":"What could your friend say that would help you feel better?"},{"stage":"scenario","question":"What do you pay special attention to when borrowing something?"},{"stage":"scenario","question":"Which signs of use do not bother you?"},{"stage":"scenario","question":"Would you rather buy something yourself or borrow it?"},{"stage":"scenario","question":"Which items need clear expectations before being lent?"},{"stage":"scenario","question":"Would this change how you spend time with your friend?"}],"sourceTopicId":"topic_v2_32","source":"chatwolf"},
-  {"id":"chat-scene-33","category":"everyday-choices","emoji":"🤔","title":"An Assistant That Knows Your Taste","keywords":"太多方便替你決定 助理 推薦 方便 選擇 科技","question":"A personal assistant knows your tastes. Which everyday choices would you trust it with?","starter":"Imagine an assistant that knows your tastes. Start with an everyday choice you would let it make, or a choice you would keep for yourself.","followUp":"Which choices make you tired every day?","followUps":[{"stage":"scenario","question":"Which choices make you tired every day?"},{"stage":"scenario","question":"What pleasure in exploring for yourself would you keep?"},{"stage":"scenario","question":"What would you do when a recommendation did not suit you?"},{"stage":"scenario","question":"How much of your daily routine would you share for the sake of convenience?"},{"stage":"scenario","question":"Would always getting things you liked become boring?"},{"stage":"scenario","question":"What would you most want it not to decide for you?"},{"stage":"scenario","question":"How is a friend’s recommendation different from a system’s recommendation?"},{"stage":"scenario","question":"Do you prefer more surprises or more reliable choices?"}],"sourceTopicId":"topic_v2_33","source":"chatwolf"},
-  {"id":"chat-scene-34","category":"everyday-choices","emoji":"🤔","title":"Everyone Leaves the Planning to You","keywords":"大家都習慣你負責 安排 規劃 活動 責任 分工","question":"After one great gathering, everyone expects you to organize everything. How would you handle that?","starter":"Imagine everyone asking you to organize events after one successful gathering. Start with what you would keep doing and what you would share with others.","followUp":"What ability led people to ask you for help once they noticed it?","followUps":[{"stage":"scenario","question":"What ability led people to ask you for help once they noticed it?"},{"stage":"scenario","question":"What is the difference between being needed and being taken for granted?"},{"stage":"scenario","question":"What would you be happy to keep handling?"},{"stage":"scenario","question":"How could others take part in a way that gives you more energy?"},{"stage":"scenario","question":"How would you give someone else a chance to plan?"},{"stage":"scenario","question":"Is it difficult for you to say no to a familiar role?"},{"stage":"scenario","question":"Have you become tired of something you are good at?"},{"stage":"scenario","question":"What response makes you feel your effort was noticed?"}],"sourceTopicId":"topic_v2_34","source":"chatwolf"},
-  {"id":"chat-scene-35","category":"everyday-choices","emoji":"🤔","title":"A Hobby or a Job?","keywords":"一直待著的興趣 興趣 工作 賺錢 壓力","question":"Friends say you could earn money from your hobby. Would that make it better or ruin the fun?","starter":"Imagine friends suggesting you earn money from a hobby. Start with whether that sounds exciting or changes what you enjoy about it.","followUp":"How does pressure to produce something change a hobby?","followUps":[{"stage":"scenario","question":"How does pressure to produce something change a hobby?"},{"stage":"scenario","question":"Do you prefer making things for yourself or for others?"},{"stage":"scenario","question":"What would you rather do just for enjoyment, even without being very good?"},{"stage":"scenario","question":"Does praise affect how much time you put into something?"},{"stage":"scenario","question":"How much time would you spend on a hobby with no practical use?"},{"stage":"scenario","question":"Have you brought work into your rest time?"},{"stage":"scenario","question":"What limit could protect the original fun?"},{"stage":"scenario","question":"How would you most like friends to support your hobby?"}],"sourceTopicId":"topic_v2_35","source":"chatwolf"},
-  {"id":"chat-scene-36","category":"everyday-choices","emoji":"🤔","title":"Changing Your Mind in Front of Friends","keywords":"改變主意也有面子 改變 主意 朋友 看法 意見","question":"You are changing your mind about something you strongly defended. How would you tell friends who remember?","starter":"Imagine changing a view that you once defended strongly. Start with how you would tell friends who remember your old opinion.","followUp":"What did you strongly dislike before you learned to enjoy it?","followUps":[{"stage":"scenario","question":"What did you strongly dislike before you learned to enjoy it?"},{"stage":"scenario","question":"Would you tell friends that you had changed your mind?"},{"stage":"scenario","question":"How do you feel when someone says they told you so?"},{"stage":"scenario","question":"How do you tell a real change of mind from a passing feeling?"},{"stage":"scenario","question":"Which small choices are you most willing to learn through mistakes?"},{"stage":"scenario","question":"What opinion do you no longer need to prove to anyone?"},{"stage":"scenario","question":"Do you like friends remembering how you used to be?"},{"stage":"scenario","question":"What experience would make you reconsider?"}],"sourceTopicId":"topic_v2_36","source":"chatwolf"},
-  {"id":"chat-scene-37","category":"personal-experiences","emoji":"🌻","title":"Speaking Up for an Old Object","keywords":"替舊物說話 舊物 回憶 丟掉 收藏","question":"What old thing would you refuse to throw away, even if nobody else understands?","starter":"Start with an old object you would keep and why it matters to you. It can be real or made up; you do not need to show the object.","followUp":"Are you keeping the object itself or the period of life it represents?","followUps":[{"stage":"scenario","question":"Are you keeping the object itself or the period of life it represents?"},{"stage":"scenario","question":"What do other people think you should throw away that you clearly want to keep?"},{"stage":"scenario","question":"Have you tried to sort things out and ended up keeping them?"},{"stage":"scenario","question":"Would just taking a photo be enough for you?"},{"stage":"scenario","question":"Are you more likely to keep gifts or things you bought?"},{"stage":"scenario","question":"Which objects are easy for you to let go of?"},{"stage":"scenario","question":"Has something become useful again after sitting unused for years?"},{"stage":"scenario","question":"How would you find space for something important but bulky?"}],"sourceTopicId":"topic_v2_37","source":"chatwolf"},
-  {"id":"chat-scene-38","category":"personal-experiences","emoji":"🌻","title":"A Small Mistake Friends Keep Retelling","keywords":"被朋友講了好多次的小包 錯誤 糗事 玩笑 朋友","question":"What small mistake of yours would your friends never let you forget?","starter":"Start with a harmless mistake friends might keep joking about. It can be real or made up; choose a story you feel comfortable sharing.","followUp":"Do your small mistakes happen more often when you hurry or when you are too relaxed?","followUps":[{"stage":"scenario","question":"Do your small mistakes happen more often when you hurry or when you are too relaxed?"},{"stage":"scenario","question":"What could a friend do to help that you would really appreciate?"},{"stage":"scenario","question":"How much teasing still feels fun to you?"},{"stage":"scenario","question":"Has a mistake ever helped you?"},{"stage":"scenario","question":"What do you remember a whole group getting wrong together?"},{"stage":"scenario","question":"Have friends made the story of your mistake bigger each time they tell it?"},{"stage":"scenario","question":"Are you quicker to admit a mistake or try to fix it first?"},{"stage":"scenario","question":"What small mistake taught you a method you still use?"}],"sourceTopicId":"topic_v2_38","source":"chatwolf"},
-  {"id":"chat-scene-39","category":"personal-experiences","emoji":"🌻","title":"A First Impression Changes","keywords":"看錯一個人 印象 初次 朋友 誤會","question":"What small moment completely changed your first impression of someone?","starter":"Start with a small action or conversation that could change a first impression. You may describe someone real or imagine the whole situation.","followUp":"What wrong impression do people often have of you?","followUps":[{"stage":"scenario","question":"What wrong impression do people often have of you?"},{"stage":"scenario","question":"Which small actions do you notice first in someone?"},{"stage":"scenario","question":"Has someone seemed very different after you got to know them?"},{"stage":"scenario","question":"Do you trust your first feeling or your feeling after spending time together?"},{"stage":"scenario","question":"Which situations make people act unlike their usual selves?"},{"stage":"scenario","question":"Has a shared interest helped you see someone differently?"},{"stage":"scenario","question":"Do you like people telling you their impression of you directly?"},{"stage":"scenario","question":"Has your own view of yourself ever changed?"}],"sourceTopicId":"topic_v2_39","source":"chatwolf"},
-  {"id":"chat-scene-40","category":"personal-experiences","emoji":"🌻","title":"A Habit Others Do Not Understand","keywords":"自己的奇怪小堅持 習慣 奇怪 小堅持 朋友","question":"What small habit feels normal to you but strange to your friends?","starter":"Start with a small habit that makes sense to you but might surprise a friend. A real or made-up example is fine.","followUp":"When did this habit begin?","followUps":[{"stage":"scenario","question":"When did this habit begin?"},{"stage":"scenario","question":"What would make you put it aside for a while?"},{"stage":"scenario","question":"Have you found someone who cares about the same small thing?"},{"stage":"scenario","question":"Which friend’s habit did you understand only later?"},{"stage":"scenario","question":"Would having company make you stick to the habit more?"},{"stage":"scenario","question":"What small habit makes life more comfortable?"},{"stage":"scenario","question":"Which of your habits are you happy to joke about?"},{"stage":"scenario","question":"What do you least like people saying about your habits?"}],"sourceTopicId":"topic_v2_40","source":"chatwolf"},
-  {"id":"chat-scene-41","category":"personal-experiences","emoji":"🌻","title":"A Purchase With a Different Ending","keywords":"買下來才知道 購物 預期 花錢 實用","question":"What purchase turned out very differently from what you expected?","starter":"Start with something that was different after you bought it: more useful, less useful, or simply unexpected. You may make up the purchase.","followUp":"What kind of description is most likely to persuade you to buy?","followUps":[{"stage":"scenario","question":"What kind of description is most likely to persuade you to buy?"},{"stage":"scenario","question":"What failed to meet expectations but found another use?"},{"stage":"scenario","question":"Do you regret buying something too expensive or too cheap more often?"},{"stage":"scenario","question":"How do you deal with things you leave unused?"},{"stage":"scenario","question":"What purchase was really for the person you imagined you would become?"},{"stage":"scenario","question":"Have you been glad a friend talked you out of a purchase?"},{"stage":"scenario","question":"Which inexpensive thing has lasted a long time?"},{"stage":"scenario","question":"What reminder would you give yourself before that purchase now?"}],"sourceTopicId":"topic_v2_41","source":"chatwolf"},
-  {"id":"chat-scene-42","category":"personal-experiences","emoji":"🌻","title":"A Small Act of Care","keywords":"小小的體貼 體貼 關心 照顧 善意","question":"What small act of care meant more to you than the other person realized?","starter":"Start with a small kind action and why it could mean so much. You may use a real memory or imagine what would matter to you.","followUp":"What kind of care did you understand only later?","followUps":[{"stage":"scenario","question":"What kind of care did you understand only later?"},{"stage":"scenario","question":"How does it feel when someone remembers a small preference?"},{"stage":"scenario","question":"Do you prefer someone to ask directly or quietly notice?"},{"stage":"scenario","question":"What kind of care can feel uncomfortable when there is too much?"},{"stage":"scenario","question":"Which needs do you tend to notice in friends?"},{"stage":"scenario","question":"What kindness has made you want to help someone else?"},{"stage":"scenario","question":"Has a stranger helped at just the right moment?"},{"stage":"scenario","question":"What small detail would you like people to know matters to you?"}],"sourceTopicId":"topic_v2_42","source":"chatwolf"},
-  {"id":"chat-scene-43","category":"personal-experiences","emoji":"🌻","title":"A Good Day After Plans Failed","keywords":"計畫失敗後的好事 計畫 失敗 驚喜 回憶","question":"Tell us about a day that went wrong but became a great memory.","starter":"Start with a day when a plan failed but something good happened. You can tell a real story or make up a simple one.","followUp":"How long does it usually take you to let go of an original plan?","followUps":[{"stage":"scenario","question":"How long does it usually take you to let go of an original plan?"},{"stage":"scenario","question":"Who around you is good at turning a surprise into something good?"},{"stage":"scenario","question":"Which backup plan would you never have chosen first?"},{"stage":"scenario","question":"How much can a day go off track and still feel fun?"},{"stage":"scenario","question":"Have you missed something by sticking to a plan?"},{"stage":"scenario","question":"Which surprises most need someone to stay calm?"},{"stage":"scenario","question":"Did that experience change the way you plan later?"},{"stage":"scenario","question":"How much unplanned time would you deliberately leave now?"}],"sourceTopicId":"topic_v2_43","source":"chatwolf"},
-  {"id":"chat-scene-44","category":"personal-experiences","emoji":"🌻","title":"A Small Skill That Comes in Handy","keywords":"小本事也有用 技能 小本事 學習 日常","question":"What small skill are you proud of, even if it would never go on your resume?","starter":"Start with a small everyday skill you enjoy having. You may choose a skill you have or one you would like to learn.","followUp":"How did you learn this skill?","followUps":[{"stage":"scenario","question":"How did you learn this skill?"},{"stage":"scenario","question":"When did someone first notice you could do it?"},{"stage":"scenario","question":"Which small trick have you wanted to learn but still find difficult?"},{"stage":"scenario","question":"Which friend has an everyday skill you admire?"},{"stage":"scenario","question":"How would you teach someone who asked?"},{"stage":"scenario","question":"Has this ability helped you out of an awkward moment?"},{"stage":"scenario","question":"What looks simple but is difficult to do?"},{"stage":"scenario","question":"Which skill with no practical use would you spend time learning?"}],"sourceTopicId":"topic_v2_44","source":"chatwolf"},
-  {"id":"chat-scene-45","category":"personal-experiences","emoji":"🌻","title":"What Makes an Ordinary Day Good","keywords":"普通日子的快樂配方 快樂 生活 日常 美好","question":"What little moment turns an ordinary day into a good one for you?","starter":"Start with a small moment that makes an ordinary day feel good. It can cost nothing and does not need to impress anyone.","followUp":"Which small pleasure needs you to make time for it?","followUps":[{"stage":"scenario","question":"Which small pleasure needs you to make time for it?"},{"stage":"scenario","question":"Do you enjoy it alone or invite someone to join?"},{"stage":"scenario","question":"What looks ordinary but is worth waiting for?"},{"stage":"scenario","question":"Which enjoyment is first to disappear when you get busy?"},{"stage":"scenario","question":"How did you discover you really liked it?"},{"stage":"scenario","question":"Would the habit change if a friend joined you?"},{"stage":"scenario","question":"What free pleasure would you recommend?"},{"stage":"scenario","question":"How could you keep some of that feeling in a busy week?"}],"sourceTopicId":"topic_v2_45","source":"chatwolf"},
-  {"id":"chat-scene-46","category":"personal-experiences","emoji":"🌻","title":"An Interest You Found by Accident","keywords":"意外走進一個新世界 興趣 意外 新世界 嘗試","question":"What did you try once and unexpectedly get really interested in?","starter":"Start with something a person could try once and unexpectedly enjoy. You may use your own experience or imagine trying a new interest.","followUp":"What first made you want to try it again?","followUps":[{"stage":"scenario","question":"What first made you want to try it again?"},{"stage":"scenario","question":"What did you misunderstand about it at first?"},{"stage":"scenario","question":"Would starting with someone else make a big difference?"},{"stage":"scenario","question":"What did you learn that surprised you most?"},{"stage":"scenario","question":"When did you notice you had become very involved?"},{"stage":"scenario","question":"How would you introduce it to someone who knew nothing about it?"},{"stage":"scenario","question":"Has this interest changed your friendships or daily routine?"},{"stage":"scenario","question":"What else would you like to try casually now?"}],"sourceTopicId":"topic_v2_46","source":"chatwolf"},
-  {"id":"chat-scene-47","category":"personal-experiences","emoji":"🌻","title":"Effort People Do Not See","keywords":"沒被看見的努力 努力 隱形 工作 日常","question":"What do people think is easy that actually takes you a lot of effort?","starter":"Start with an ordinary task that looks easy from the outside. Explain the effort people might miss; you may use a real or made-up example.","followUp":"Which part is easiest for others to overlook?","followUps":[{"stage":"scenario","question":"Which part is easiest for others to overlook?"},{"stage":"scenario","question":"How do you usually react when someone notices?"},{"stage":"scenario","question":"What effort by someone else did you underestimate before?"},{"stage":"scenario","question":"How do you decide when something is good enough?"},{"stage":"scenario","question":"What kind of help actually makes the work easier?"},{"stage":"scenario","question":"Are you comfortable letting people see the unfinished process?"},{"stage":"scenario","question":"What have you learned not to expect yourself to do perfectly?"},{"stage":"scenario","question":"What response is more useful than simply thanking you for your hard work?"}],"sourceTopicId":"topic_v2_47","source":"chatwolf"},
-  {"id":"chat-scene-48","category":"personal-experiences","emoji":"🌻","title":"Enjoyment You Do Not Want to Outgrow","keywords":"長大也不想放掉的喜歡 喜好 興趣 長大 童年","question":"What do you still enjoy that other people think you should have outgrown?","starter":"Start with an interest you would want to keep enjoying as you get older. You may choose a real interest or imagine one for yourself.","followUp":"When did you first start enjoying it?","followUps":[{"stage":"scenario","question":"When did you first start enjoying it?"},{"stage":"scenario","question":"Would you admit it openly with both friends and strangers?"},{"stage":"scenario","question":"Who shares this enjoyment with you?"},{"stage":"scenario","question":"How much does looking mature matter to you?"},{"stage":"scenario","question":"Have you given up something you enjoyed and later returned to it?"},{"stage":"scenario","question":"What feeling does this interest give you that other things do not?"},{"stage":"scenario","question":"How would you answer a friendly joke about it?"},{"stage":"scenario","question":"What pleasure do you hope to keep enjoying later in life?"}],"sourceTopicId":"topic_v2_48","source":"chatwolf"}
+  {
+    "id": "chat-scene-01",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "One Trip, Two Big Plans",
+    "keywords": "同團不同步 旅行 度假 旅伴 分開 行程 飯店 拍照",
+    "question": "Our three-day trip can include two activities: beach, mountain walk or museum. Which two should we choose for everyone?",
+    "starter": "The group shares one travel budget. There is enough money for two activities, so one option must be left out.",
+    "followUp": "The beach is cheap, but rain is likely. Does that change our first choice?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "The beach is cheap, but rain is likely. Does that change our first choice?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone dislikes long walks. How could we adapt the mountain plan?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the museum idea connect with another activity in one day?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which part of the trip should stay free of plans?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would make the person whose favorite option loses feel included?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could splitting up for one afternoon solve the disagreement?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Our bus leaves earlier than expected. What should we cut first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What two activities and one backup can we finally agree on?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_01",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-02",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "One Home, One Fridge Shelf",
+    "keywords": "同住一個月 合租 住家 室友 房子 冰箱 習慣 作息",
+    "question": "Our shared home has one free fridge shelf and no quiet hours. What food and noise rules should we agree on?",
+    "starter": "Everyone uses the same small fridge and shared rooms. Food needs space, and some people sleep earlier than others.",
+    "followUp": "Should each person get equal fridge space, or should we keep only shared food?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Should each person get equal fridge space, or should we keep only shared food?"
+      },
+      {
+        "stage": "scenario",
+        "question": "A large birthday cake fills the whole shelf. What exception would be fair?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One roommate cooks after midnight. Can that fit our quiet rule?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could we improve the fridge plan someone just suggested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What noise can we accept, even during quiet hours?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would labels solve the food problem or make the home feel strict?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If two roommates break different rules, should the response be the same?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which two rules would we actually put on the kitchen wall?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_02",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-03",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "Four Hours, One Car Speaker",
+    "keywords": "同車的音樂 搭車 車子 音樂 唱歌 安靜 旅途",
+    "question": "We share one car for four hours. Some want songs, games or sleep. How should we divide the ride?",
+    "starter": "All passengers share the same sound. The driver needs to stay focused, and quiet time is one of the options.",
+    "followUp": "Would short music blocks work better than one long playlist?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would short music blocks work better than one long playlist?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What kind of car game could include people without distracting the driver?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can we build a plan around the quiet time someone requested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One passenger hates our first song. Should there be a skip rule?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can a sleeping passenger keep their quiet time without stopping all conversation?"
+      },
+      {
+        "stage": "scenario",
+        "question": "A traffic jam adds an hour. Which part of our plan should grow?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could headphones help, or would they separate the group too much?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What schedule should we use for the first hour?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_03",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-04",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "A Rainy Weekend Cabin",
+    "keywords": "朋友的週末小屋 小屋 週末 休息 放鬆 假期 計畫",
+    "question": "Rain and a power cut ruin our cabin plans. With cards, paper and a small stove, how can we save the weekend together?",
+    "starter": "Outdoor plans and electric devices are unavailable. The group can use simple games, paper, and food cooked on the stove.",
+    "followUp": "Should we cook first or start a game while it is still light?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Should we cook first or start a game while it is still light?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could turn the paper idea into something the whole cabin can enjoy?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Two people want silence while others want a loud game. How can the cabin plan give both groups space?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can we invent a game that uses both cards and paper?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which activity would still work if nobody knew the rules?"
+      },
+      {
+        "stage": "scenario",
+        "question": "We have food for one special meal. When should we make it?"
+      },
+      {
+        "stage": "scenario",
+        "question": "The rain stops for twenty minutes. Do we interrupt our indoor plan?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should the cabin group do tonight and tomorrow morning?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_04",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-05",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "One Table, Different Work",
+    "keywords": "大家的共享工作桌 工作桌 共享 專心 工作 聲音 界線",
+    "question": "Our group has one table, one lamp, one speaker and two power plugs. How should we arrange the space and work?",
+    "starter": "Space and equipment are limited. Some tasks need quiet, while others require people to discuss ideas.",
+    "followUp": "Which task should get the lamp first, and what is the reason?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which task should get the lamp first, and what is the reason?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the table have quiet periods instead of permanent quiet?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can we combine the seating ideas already on the table?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone needs a phone call. Where should it happen?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Does equal time with the plugs make sense if one battery lasts longer?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What signal could show that a person needs help without interrupting everyone?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If our rules slow the project down, which rule could we relax?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What arrangement will we try for the next thirty minutes?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_05",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-06",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "The Offline Gathering",
+    "keywords": "沒有訊號的聚會 聚會 斷網 網路 手機 訊號 通知",
+    "question": "Our internet fails before a quiz. With paper, pens and two hours, should we invent a quiz, group story or treasure hunt?",
+    "starter": "The planned online activity cannot run. The replacement must use the people and simple materials already in the room.",
+    "followUp": "What would make an invented quiz fair without looking up answers?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "What would make an invented quiz fair without looking up answers?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the story idea borrow a funny detail from the treasure hunt?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which plan lets a late arrival join without stopping everyone?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Some people dislike acting. How could the story still include them?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What objects could become clues without hiding anything valuable?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If we mix two ideas, what should the first ten minutes look like?"
+      },
+      {
+        "stage": "scenario",
+        "question": "The signal returns halfway through. Should we finish our new game?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which offline plan would we choose again even with working internet?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_06",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-07",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "A New Friend in Our Group",
+    "keywords": "第一次跟新朋友出門 新朋友 歡迎 初次 陌生人 團體",
+    "question": "Our new friend does not know our old jokes. Should we teach our usual game, invent one together or share a meal?",
+    "starter": "The new friend does not share the group history. The activity should include them without making them the center of attention.",
+    "followUp": "Which old joke could become confusing instead of funny for the new friend?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which old joke could become confusing instead of funny for the new friend?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could teaching the game avoid turning into a long lesson?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the meal idea include a small activity for everyone?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to keep our usual game unchanged. What compromise could work?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we do if the new friend prefers to watch first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the new friend help choose one new rule without extra pressure?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How would we notice that our welcome plan is not working?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we do together during the first fifteen minutes?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_07",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-08",
+    "category": "shared-living",
+    "emoji": "🏠",
+    "title": "Dinner With One Pan",
+    "keywords": "同一個廚房的晚餐 廚房 做飯 晚餐 煮菜 食物",
+    "question": "We have rice, eggs, carrots, tomatoes and one pan. What quick but special dinner can our group make together?",
+    "starter": "The ingredients and cooking equipment are fixed. Preparation, cooking, and cleaning all need to fit one shared dinner plan.",
+    "followUp": "Which ingredient should be the center of the meal?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which ingredient should be the center of the meal?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can a quick dish use the special detail someone suggested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What can people prepare while the pan is busy?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Two cooks disagree about adding salt. How could both tastes fit?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If the rice burns, what backup can these ingredients still make?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Who should clean while others cook, and how can that feel fair?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a simple starter make the main dish feel more special?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What menu and kitchen jobs can we settle on now?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_08",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-09",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "A Shop That Lets Us Rest",
+    "keywords": "老闆也想休息的小店 商店 小店 生意 店員 客人 開店",
+    "question": "We want a shop without working every weekend. Should we sell tea, plants or repairs, and what opening hours work?",
+    "starter": "The business needs customers, but the group also wants regular time off. Each shop idea needs different supplies and daily work.",
+    "followUp": "Which shop could close for a day without causing the biggest problem?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which shop could close for a day without causing the biggest problem?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What extra service could improve the plant shop idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a short weekend shift solve the work disagreement?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which tea shop task might be more tiring than it looks?"
+      },
+      {
+        "stage": "scenario",
+        "question": "A customer asks us to open late every evening. Should we change our promise?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could two shop ideas share the same small space?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would we stop offering if the shop became too busy?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should our sign say about opening hours and the main service?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_09",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-10",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "A Birthday on a Small Budget",
+    "keywords": "小預算的生日 生日 預算 慶祝 禮物 驚喜",
+    "question": "Our friend dislikes public surprises. With money for a cake or gift, what special birthday can we plan without embarrassing them?",
+    "starter": "The budget covers only one bought item. The birthday friend enjoys care and celebration, but does not want a public performance.",
+    "followUp": "Would the cake bring more people together than the gift?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would the cake bring more people together than the gift?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could make the small gift more personal without extra money?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could we build on the quiet celebration idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should we tell our friend the whole plan or keep one small surprise?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone suggests singing in a restaurant. How can we change that idea kindly?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What can the group make using things we already own?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If our friend arrives tired, which part should be easy to cancel?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What will we buy, make, and say on the day?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_10",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-11",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "Our Three-Object Show",
+    "keywords": "我們的荒謬節目 節目 綜藝 才藝 表演 影片 搞笑",
+    "question": "We have five minutes and three objects: an umbrella, a spoon and a sock. What funny show can we make together?",
+    "starter": "There are three objects and five minutes of stage time. The group must agree on one show idea and use the objects creatively.",
+    "followUp": "What news could the sock report with a completely serious face?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "What news could the sock report with a completely serious face?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the spoon idea become the main event instead of a small joke?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How would the umbrella help a cooking show without real food?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which show idea gives everyone a useful part?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Two people want to be the host. Could the show use both?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What mistake could we turn into a planned funny moment?"
+      },
+      {
+        "stage": "scenario",
+        "question": "The audience does not laugh at our first joke. What happens next?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What opening and ending should our five-minute show have?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_11",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-12",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "The Museum of Ordinary Things",
+    "keywords": "普通東西博物館 博物館 展覽 物品 普通 故事 回憶",
+    "question": "Our tiny museum can display one object: a spoon, receipt or lonely sock. Which object and story should we choose together?",
+    "starter": "The objects have no special history yet. The group invents one shared story for the single display.",
+    "followUp": "What could make the receipt look important without changing the object?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "What could make the receipt look important without changing the object?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the sock story borrow the mystery from the spoon idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a funny label or a serious label attract more visitors?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What detail would make our invented story believable?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone thinks the display is too ordinary. How could we answer that?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should visitors touch the object or only look at it?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What question could the display leave for visitors to discuss?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which object, story, and short label are we choosing for the museum?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_12",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-13",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "A Party With Room to Be Quiet",
+    "keywords": "給不愛社交的人一場聚會 聚會 派對 社交 安靜 壓力",
+    "question": "Our guests dislike loud parties and forced introductions. How can we combine games and quiet conversation so everyone can join comfortably?",
+    "starter": "Guests need choices without being pushed to perform. The room must fit both quiet time and some shared activity.",
+    "followUp": "Could one gentle game work for people who mostly want to watch?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could one gentle game work for people who mostly want to watch?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should the invitation say about arriving late or leaving early?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can we build a quiet corner into the room plan?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would separate areas help, or would the group feel divided?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone suggests a round of personal introductions. What could replace it?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which shared activity could begin without everyone joining at once?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we change if the game becomes louder than expected?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What will guests see and hear when they first enter?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_13",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-14",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "A Visitor on an Ordinary Street",
+    "keywords": "普通街區的特別一天 街區 鄰居 社區 導覽 朋友 景點",
+    "question": "Our friend has two hours here: the bakery closes soon, the park is free and the market is crowded. What route works?",
+    "starter": "The visit has a time limit. The group must compare food, quiet space, and a lively market while choosing a practical route.",
+    "followUp": "Should we visit the bakery first even if it means a longer walk?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Should we visit the bakery first even if it means a longer walk?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What small detail could make the park stop more interesting?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the route include the food idea someone just offered?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Our visitor dislikes crowds. Is the market still worth a short stop?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If we spend half our time talking in one place, is the plan failing?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could we show that a normal travel guide would miss?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Rain begins before the park. How should our route change?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which two stops and one small surprise will our visit include?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_14",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-15",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "The One-Day Swap Shop",
+    "keywords": "只營業一天的交換店 交換 商店 二手 物品",
+    "question": "We are running a swap shop. Should we exchange items one-for-one, group small items or allow free choosing to keep it friendly?",
+    "starter": "No money changes hands. The group needs a clear exchange rule and a plan for items left at closing time.",
+    "followUp": "Could a large toy fairly exchange for one small book?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could a large toy fairly exchange for one small book?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How would item groups avoid long arguments over value?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can we combine free choosing with the limit someone suggested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should happen if one person takes nearly everything?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would telling an object’s story help people value it differently?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which kitchen items should be checked before someone takes them home?"
+      },
+      {
+        "stage": "scenario",
+        "question": "At closing time, should leftover things return home or stay for another event?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What swap rule and closing plan should we explain at the door?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_15",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-16",
+    "category": "shared-planning",
+    "emoji": "🎪",
+    "title": "One Small Room for Rest",
+    "keywords": "給大家一個休息角落 休息 房間 空間 燈光 聲音 椅子",
+    "question": "Our shared room must support naps and conversation. Should we buy a lamp, soft chair or curtain, and how should we share it?",
+    "starter": "There is money for one improvement. The same room must support different kinds of rest without becoming difficult to manage.",
+    "followUp": "Would the curtain solve more problems than the comfortable chair?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would the curtain solve more problems than the comfortable chair?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the lamp idea support both reading and quiet rest?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How should we divide the room if two activities happen at once?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants music all evening. What limit could others accept?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should nap time be booked, or should people decide as they arrive?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What cleaning rule would keep the room comfortable without much work?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If the room becomes a storage space, what must leave first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which item and two room rules are we ready to try?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_16",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-17",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "Our Neighbor Powers Team",
+    "keywords": "互助超能力公寓 超能力 鄰居 公寓 幫助 幻想",
+    "question": "Our powers dry clothes, find keys and grow plants only for others. How can we share help without working all day?",
+    "starter": "The powers solve small daily problems, but their owners still need rest. Requests for help must fit a shared plan.",
+    "followUp": "Which power would receive the most requests on a rainy day?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which power would receive the most requests on a rainy day?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could a shared request board improve the plan already suggested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should happen when someone asks for help every morning?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should urgent lost keys come before a dying plant?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can neighbors thank helpers without paying for every favor?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One power owner says no today. How should the building respond?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What funny mistake might happen if the powers get mixed up?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What help schedule and request rule will our building use?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_17",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-18",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "One Borrowed Routine for Everyone",
+    "keywords": "人生借住一天 借住 人生 朋友 一天 日常 作息",
+    "question": "Our group must borrow one routine for a day: early baker, night worker or busy musician. Which could we manage together?",
+    "starter": "The group shares one borrowed schedule, including its work, meals, and rest. The routine lasts for one day only.",
+    "followUp": "Would the baker’s early start leave us too tired for the fun part?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would the baker’s early start leave us too tired for the fun part?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could make the night worker’s meals easier for the whole group?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could we add the practice idea to the musician’s day?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone refuses to wake before sunrise. Can our choice still work?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which shared job would need the most help from everyone?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What part of the borrowed schedule should we be allowed to change?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If half the group gets tired early, how should we finish the day?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which routine and one agreed change will we try together?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_18",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-19",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "An Extra Hour for Our Neighborhood",
+    "keywords": "每天多出的一小時 時間 一小時 每天 休息 興趣",
+    "question": "Our neighborhood shares an extra hour daily. Should we grow food, make music or rest in a park so everyone enjoys it?",
+    "starter": "The extra hour belongs to the whole neighborhood. One activity must work for different ages, energy levels, and interests.",
+    "followUp": "Would growing food still feel useful to people who cannot dig?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would growing food still feel useful to people who cannot dig?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the music idea leave room for neighbors who need quiet?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the park plan include something active without disturbing rest?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What time of day would make the extra hour easiest to share?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone calls resting a waste of the gift. How could we respond?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should everyone do one task, or could one shared project have different jobs?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would we change if people stopped joining after a week?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which activity and first small step will our neighborhood choose?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_19",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-20",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "Our Kitchen Objects Refuse to Work",
+    "keywords": "物品終於會抱怨 物品 抱怨 會說話 家電 習慣 objects complaints objects complaints",
+    "question": "Our talking fridge, kettle and pan refuse to work. The fridge is crowded, the kettle dirty, the pan tired. What promise should we make first?",
+    "starter": "The kitchen objects have stopped working. The group must agree on one real change before an object will help with dinner.",
+    "followUp": "Can we make dinner if only the pan agrees to work again?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Can we make dinner if only the pan agrees to work again?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would the fridge accept a smaller promise than clearing every shelf?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the cleaning idea also help the kettle rest?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which object sounds reasonable, and which sounds a little dramatic?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to buy new objects instead. Would that solve the complaints?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What might the forgotten toaster add to this argument?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How should we show the objects that our promise will last?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which complaint and shared kitchen job will we settle tonight?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_20",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-21",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "Three Ten-Second Redos",
+    "keywords": "生活的小小重來鍵 重來 按鈕 十秒 後悔 尷尬",
+    "question": "Our dinner show's button can redo ten seconds three times. Should we save it for cooking mistakes, failed jokes or the ending?",
+    "starter": "The button repeats ten seconds and has only three uses. Everyone shares those uses, so small fixes may leave none for later.",
+    "followUp": "A joke fails but nobody is upset. Is that worth one redo?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "A joke fails but nobody is upset. Is that worth one redo?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the cooking plan avoid using the button too early?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What signal should people give before someone presses it?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Two people want different parts of the same moment changed. Which change comes first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would we reserve the last use for the ending or for emergencies?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could repeating a mistake twice become funnier than fixing it?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should happen if someone uses a redo without group agreement?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which three kinds of moments will our button rule allow?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_21",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-22",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "Our Package From Ten Years Ahead",
+    "keywords": "未來寄來的小包裹 未來 包裹 十年 物件 線索",
+    "question": "Our package from ten years ahead disappears tonight: a broken umbrella, tiny chair and key marked \"Do not open.\" Which one should we investigate together?",
+    "starter": "The objects come from the group’s future, but there is no explanation. One clue can be explored before the package disappears tonight.",
+    "followUp": "What kind of shared future could explain the tiny chair?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "What kind of shared future could explain the tiny chair?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the umbrella clue connect with the key idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Does the warning on the key make it more interesting or less sensible to investigate?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What harmless test could tell us more without breaking an object?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone thinks the package is a joke. What detail might change their mind?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which discovery could help our group make a choice today?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If our first guess is wrong, what other explanation still fits?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which clue and first test should the whole group support?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_22",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-23",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "One Replay of Our Lost Picnic",
+    "keywords": "回看日常片段 回憶 日常 過去 記憶 照片",
+    "question": "Our picnic cake vanished. We can replay thirty seconds of packing, boarding the bus or feeding ducks. Which moment should we watch together?",
+    "starter": "The group gets one short view of the past. Three possible moments may contain a clue, but only one can be replayed.",
+    "followUp": "Would the packing scene prove the cake ever left the kitchen?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would the packing scene prove the cake ever left the kitchen?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the bus idea explain both the basket and the missing food?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What exactly should we watch for near the ducks?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone remembers a different order of events. How should that affect our choice?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could an ordinary detail matter more than a clear view of the cake?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would count as enough evidence to solve the mystery?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If the replay shows nothing useful, which shared explanation still makes sense?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which thirty seconds will we watch, and what are we looking for?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_23",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-24",
+    "category": "light-fantasy",
+    "emoji": "✨",
+    "title": "One Impossible Service for Our Group",
+    "keywords": "離譜但方便的服務 服務 商店 幻想 離譜 方便",
+    "question": "Our group can buy one magical service: doors to anywhere, clothes that clean themselves or weather matching our plans. Which should we choose and control?",
+    "starter": "There is money for one magical service. Its benefit is shared, but careless use could create a problem for other people.",
+    "followUp": "Could the door service cause arguments about where the group should go?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could the door service cause arguments about where the group should go?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would self-cleaning clothes be enough of a shared benefit?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could a weather rule improve the outdoor plan someone suggested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One person wants sunny days while another wants rain. Who gets to decide?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should a magic door ever open inside a neighbor’s home without asking?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the service save enough work to create a new group activity?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would make us stop using our chosen service before the month ends?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which service and one clear safety rule should we buy?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_24",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-25",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "A Huge Gift for Our Tiny Room",
+    "keywords": "用心但不想要的禮物 禮物 朋友 用心 實用",
+    "question": "Our friend's giant soft chair blocks our shared room's door. Should we move it, exchange it or turn it into another gift?",
+    "starter": "The gift is thoughtful but does not fit the space. The group needs a usable room and a respectful response to the friend.",
+    "followUp": "Could moving other furniture solve the problem without creating a new one?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could moving other furniture solve the problem without creating a new one?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What useful idea could grow from changing the chair into a different gift?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should we explain the blocked door before suggesting an exchange?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone loves the chair. What part of their idea can we keep?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a photo of us trying the chair help the friend understand?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Is keeping a gift we cannot use kinder than speaking honestly?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we do if the friend asks where the chair went?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which room plan and message could everyone in our group accept?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_25",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-26",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "One Dinner, Unequal Orders",
+    "keywords": "大家吃得不一樣的帳單 晚餐 帳單 公平 付錢 預算",
+    "question": "Our dinner costs 600: small meals, large meals and one shared dessert. Should we split equally, pay separately or combine both rules?",
+    "starter": "Meal sizes differ, but the dessert was shared. The group must agree on a simple way to divide this one dinner bill.",
+    "followUp": "Would equal splitting still feel fair to the two small-meal eaters?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would equal splitting still feel fair to the two small-meal eaters?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could a mixed rule handle the shared dessert clearly?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the separate-payment idea work without checking every small bite?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One person offered everyone extra food. Should that change who pays?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we do if someone cannot afford the rule most people choose?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would rounding small differences make the meal feel easier?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which bill rule should we agree on before our next dinner?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How will we divide tonight’s meals and dessert without a long argument?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_26",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-27",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "Our Group Chat Needs a Plan",
+    "keywords": "群組不斷亮起 群組 聊天 訊息 通知 回覆",
+    "question": "Our chat's jokes bury important plans. Should we add another chat, set quiet hours or mark planning messages to keep fun and plans?",
+    "starter": "The same chat carries jokes and plans. The group needs a simple system that people will remember to use.",
+    "followUp": "Would two chats help, or would people forget to check one?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would two chats help, or would people forget to check one?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What clear sign could make a planning message easy to find?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could quiet hours fit the idea of friends in different time zones?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone sends many photos every night. What request would feel reasonable?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should an urgent plan be allowed to break quiet hours?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we do when someone misses a message under the new system?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could one daily planning summary improve the proposal we already have?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which chat rule will we try first, and when will we review it?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_27",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-28",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "One Group Photo, Different Limits",
+    "keywords": "想留下但不想公開的照片 照片 隱私 分享 合照",
+    "question": "Two people want our only holiday photo kept offline. Should we keep it private, crop it or take another photo together?",
+    "starter": "The photo belongs to a shared memory. Two people have said they do not want this image posted publicly.",
+    "followUp": "Would cropping solve the problem if people still felt left out?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would cropping solve the problem if people still felt left out?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could a new photo keep the funny detail everyone likes in this one?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would private sharing mean for our group in practice?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone says the holiday photo is harmless. How could the group answer?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should people explain their reason before the group respects the limit?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What can we change in the photo idea someone just offered?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If the picture was already posted, what should happen first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What photo-sharing agreement can we use on future trips?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_28",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-29",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "The Helpful Booking We Never Asked For",
+    "keywords": "善意先幫忙 幫忙 幫助 善意 界線",
+    "question": "Our quiet gathering has a loud restaurant booked. Half want a picnic. What plan should we agree on before the booking becomes final?",
+    "starter": "The friend meant to help, but made a choice before asking. The group still has time to change the place.",
+    "followUp": "Is the restaurant problem mainly the noise or making a choice without checking?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Is the restaurant problem mainly the noise or making a choice without checking?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could a quieter table preserve something from the restaurant idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could make the picnic plan easier for the friend who booked?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How should we thank the friend without pretending the plan already fits?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would splitting into two meals solve the issue or weaken the gathering?"
+      },
+      {
+        "stage": "scenario",
+        "question": "The restaurant offers free dessert. Should that change our decision?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What small planning rule could prevent another surprise booking?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which place and explanation should our group choose now?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_29",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-30",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "We Said Yes Too Quickly",
+    "keywords": "答應太快的邀約 邀約 邀請 拒絕 休息 取消",
+    "question": "The event needs three helpers; our group needs rest. Should we shorten shifts, find replacements or send a smaller team?",
+    "starter": "The promise affects both the group and the friend’s event. At least three helpers are still needed, but full-day work may be too much.",
+    "followUp": "Could shorter shifts keep our promise without exhausting the helpers?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could shorter shifts keep our promise without exhausting the helpers?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would the smaller-team plan need from people staying home?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can we improve the replacement idea without giving strangers unclear jobs?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should tired people need to explain why they cannot work all day?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What message would give the event friend enough time to adjust?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One helper wants everyone to keep the original promise. What compromise can we offer?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which event job could we make simpler instead of finding more people?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What help can we honestly promise by the end of this discussion?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_30",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-31",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "Our Friend Made the Event Poster",
+    "keywords": "說實話還是留面子 回饋 作品 誠實 朋友 批評",
+    "question": "Our friend's poster has a date that is hard to read and a picture we disagree on. Printing starts tomorrow. What changes should we request together?",
+    "starter": "The poster needs to work before tomorrow’s printing deadline. The friend’s effort matters, but guests must clearly understand the event.",
+    "followUp": "Should we fix the date before discussing the picture?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Should we fix the date before discussing the picture?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which part of the current poster could support the new design idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can we explain the reading problem without calling the work bad?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone dislikes everything about the poster. Which change is actually necessary?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a quick test with another friend help us settle the disagreement?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should the artist choose the picture after we agree on its purpose?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What can we finish ourselves if the friend has no more time?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which two changes and one positive comment should our group share?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_31",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-32",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "Our Borrowed Tent Comes Back Torn",
+    "keywords": "借出去之後 借東西 磨損 損壞 朋友 歸還",
+    "question": "Our friends return our tent torn before our camping trip. Should we repair it, ask for a replacement or borrow another?",
+    "starter": "The group needs a working tent soon. The damage and the borrowing agreement also need a calm conversation with the friends.",
+    "followUp": "Can a quick repair keep the trip possible without hiding the damage issue?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Can a quick repair keep the trip possible without hiding the damage issue?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What information do we need before asking for a full replacement?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could borrowing another tent improve the plan someone proposed?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One friend says the tear was already there. How should we handle that disagreement?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would sharing the repair work feel fair if the damage was accidental?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we say first when returning to the money question?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which lending rule could protect the tent without making friendship feel strict?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What are our immediate camping plan and later repair agreement?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_32",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-33",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "An Assistant Plans for All of Us",
+    "keywords": "太多方便替你決定 助理 推薦 方便 選擇 科技",
+    "question": "Our assistant can choose dinner, music and a trip. With one rejection each, which choices should we give it or keep together?",
+    "starter": "The assistant knows some preferences, but the group shares its choices. Each person has one rejection, so trust and limits matter.",
+    "followUp": "Is choosing background music safer than choosing the whole day trip?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Is choosing background music safer than choosing the whole day trip?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the dinner proposal include people whose tastes are less common?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would showing three options make the assistant more useful than making one decision?"
+      },
+      {
+        "stage": "scenario",
+        "question": "When should one person’s rejection stop a plan for everybody?"
+      },
+      {
+        "stage": "scenario",
+        "question": "The assistant repeats our usual choices. Is that helpful or too dull?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What information should remain private even if it could improve the suggestions?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could we keep the assistant’s easy work but change its final choice?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which task and one decision limit will we give the assistant?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_33",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-34",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "Planning Cannot Belong to One Friend",
+    "keywords": "大家都習慣你負責 安排 規劃 活動 責任 分工",
+    "question": "Our usual organizer is tired. Should we rotate organizers, split jobs or plan a simpler gathering so nobody does everything?",
+    "starter": "The group wants another gathering, but one person cannot keep doing all the planning. The next event needs a fairer workload.",
+    "followUp": "Would rotating organizers also share the small jobs people often forget?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would rotating organizers also share the small jobs people often forget?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which planning job could be separated without causing confusion?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the simpler-event idea keep the part people enjoyed most?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone offers help but wants no deadlines. What job could still fit?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How should the experienced organizer share advice without taking control again?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What can we drop if nobody volunteers for an important task?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a shared checklist improve the plan we are building?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Who will do each job for the next event, and which job can we remove?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_34",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-35",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "Should Our Hobby Club Sell Cakes?",
+    "keywords": "一直待著的興趣 興趣 工作 賺錢 壓力",
+    "question": "Our cake club can sell fifty cakes, but we meet for fun. Should we accept, offer fewer cakes or keep our hobby private?",
+    "starter": "The club can earn money, but the order is much larger than its usual hobby activity. The group must decide what effort it wants.",
+    "followUp": "Would a smaller cake order keep more of the fun?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would a smaller cake order keep more of the fun?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What extra work would selling cakes add beyond baking?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the club use the money without creating another argument?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to grow the business. Which part of that idea could the club test safely?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should members who skip the order still join the next fun meeting?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What cake choices would keep the event order simple?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If baking becomes stressful, what promise would let us stop?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What answer and maximum order size should we send to the event?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_35",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-36",
+    "category": "everyday-choices",
+    "emoji": "🤔",
+    "title": "Our Best Plan No Longer Fits",
+    "keywords": "改變主意也有面子 改變 主意 朋友 看法 意見",
+    "question": "Our mountain path closes, and switching to the beach costs extra. Should we pay, stay indoors near the mountain or postpone together?",
+    "starter": "New information has changed the original plan. The group must compare the fee, the remaining options, and the value of going now.",
+    "followUp": "Is keeping the mountain booking useful, or are we only protecting our earlier choice?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Is keeping the mountain booking useful, or are we only protecting our earlier choice?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could an indoor mountain plan include the activity someone suggested?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What beach detail would make the change fee feel worthwhile?"
+      },
+      {
+        "stage": "scenario",
+        "question": "One person says postponing wastes everyone’s free day. How could we address that?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we say to a friend whose original beach idea was rejected?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would changing our minds together make future planning easier?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which part of the first plan is still worth keeping?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What new plan and explanation can we agree on before the booking closes?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_36",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-37",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "One Old Object Gets a Second Life",
+    "keywords": "替舊物說話 舊物 回憶 丟掉 收藏",
+    "question": "Our crowded room can keep one object: a toy robot, broken lamp or box of travel maps. Which deserves space, and how could we reuse it?",
+    "starter": "Space is limited, so keeping an object needs a clear reason. The group can repair it, display it, or turn it into something useful.",
+    "followUp": "Could the broken lamp be worth keeping without working as a lamp?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could the broken lamp be worth keeping without working as a lamp?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What group project could grow from the old travel maps?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can the robot idea use less room than the original object?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone thinks all three are rubbish. What shared value could change their view?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should a memory matter as much as a useful new purpose?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What material could we borrow to improve the proposed repair?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If our new use fails after a week, should the object stay?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which old object and exact new job will get the one free shelf?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_37",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-38",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "The Party Chairs Are Tiny",
+    "keywords": "被朋友講了好多次的小包 錯誤 糗事 玩笑 朋友",
+    "question": "We bought twenty tiny party chairs by mistake, with no refunds. Should we borrow chairs, hold a picnic or create a funny theme together?",
+    "starter": "The wrong chairs cannot be returned. The group still wants a comfortable party and must make a practical change before guests arrive.",
+    "followUp": "Could the tiny chairs become decorations instead of seats?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could the tiny chairs become decorations instead of seats?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would the picnic idea need if the weather changes?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could we combine borrowed chairs with the funny theme?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to hide the mistake. Would sharing it make the party better?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What is the easiest way to ask neighbors for enough normal chairs?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could children use the tiny chairs while adults use another setup?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which joke about the chairs would remain friendly to the person who ordered them?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What seating plan and party message will we use?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_38",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-39",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "The Serious Neighbor in a Carrot Suit",
+    "keywords": "看錯一個人 印象 初次 朋友 誤會",
+    "question": "Our new neighbor wears a carrot suit. We need a host, costume judge and quiet helper. How should we welcome them and share jobs?",
+    "starter": "The neighbor’s costume surprises the group. Event jobs need to match what people agree to do, rather than the group’s first impression.",
+    "followUp": "What could we ask about the carrot suit without making the neighbor feel examined?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "What could we ask about the carrot suit without making the neighbor feel examined?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Does being funny in a costume mean someone wants to host?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the quiet-helper suggestion include a playful detail?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone already offered the neighbor the judge’s job. Should we check the choice again?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What job could two people share if the neighbor feels unsure?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the costume become part of the welcome rather than a whole role?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would make us rethink a quick judgment during this meeting?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How will we offer all three jobs while letting the neighbor choose freely?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_39",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-40",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "Our House Has Three Strange Habits",
+    "keywords": "自己的奇怪小堅持 習慣 奇怪 小堅持 朋友",
+    "question": "Our holiday home requires greeting the clock, backward slippers and whispering near the fridge. Which rule should we remove and which two keep?",
+    "starter": "The house has three unusual habits. One may be removed, but the group must keep the other two during the stay.",
+    "followUp": "Which house rule causes the biggest practical problem rather than just feeling strange?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which house rule causes the biggest practical problem rather than just feeling strange?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could greeting the clock become a short group joke?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How might the slipper idea change if someone finds it hard to walk?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would whispering near the fridge make midnight cooking easier or harder?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to break every rule. What agreement could keep the group out of trouble?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can we add a clear exception without secretly removing a second rule?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What sign could help visitors follow the rules without a long explanation?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which habit are we removing, and what are our two remaining house rules?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_40",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-41",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "Our Machine Makes Only Heart Noodles",
+    "keywords": "買下來才知道 購物 預期 花錢 實用",
+    "question": "We cannot return our machine that makes only heart-shaped noodles. Should we hold noodle nights, sell it or find another use together?",
+    "starter": "The machine has one surprising use. The group cannot return it, but can decide how to use it or whether to pass it on.",
+    "followUp": "Would a regular noodle night stay fun after the first week?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would a regular noodle night stay fun after the first week?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could make the selling idea honest and appealing?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the new-use suggestion still work with only heart-shaped noodles?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone dislikes noodles. How could a kitchen plan include them?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should saving space matter more than recovering the cost?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could we try once before making our final choice?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If the machine becomes popular, who should handle its cleaning?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What experiment and final decision date will we agree on?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_41",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-42",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "Our Host Fell Asleep Before the Party",
+    "keywords": "小小的體貼 體貼 關心 照顧 善意",
+    "question": "Our party host falls asleep before it starts. Should we clean, save dinner or move games outside so they wake to something kind?",
+    "starter": "The host has already done a lot of work. The group can enjoy the gathering while reducing noise and leaving less work for later.",
+    "followUp": "Would moving outside help more than finishing the cleaning first?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would moving outside help more than finishing the cleaning first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could we save dinner without turning the kitchen into another mess?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the quiet-game idea keep guests together indoors?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to wake the host for a photo. Should we ask them to wait?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What small sign could explain where everyone went without disturbing sleep?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which helpful action might accidentally create more work for the host?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could we divide the clean-up plan into jobs that finish quickly?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What will our friend find when they wake up?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_42",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-43",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "The Trip Went to the Wrong Beach",
+    "keywords": "計畫失敗後的好事 計畫 失敗 驚喜 回憶",
+    "question": "Our wrong bus reaches a beach. With food, a ball and two hours, should we stay, find the festival or create our own event?",
+    "starter": "The original festival plan has gone wrong. The group has a safe place, simple supplies, and a fixed return time.",
+    "followUp": "Could staying at the beach save more time than searching for the festival?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could staying at the beach save more time than searching for the festival?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What small event could grow from the ball-game idea?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can the food plan include something people could do together?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone really wanted the festival. What part of it could we recreate here?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would a quiet hour be a good result even without a big activity?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What must we check before walking away from the bus stop?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If new visitors join our beach game, should we change the plan?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which two-hour beach plan will keep the whole group willing to stay?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_43",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-44",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "Our Small-Skills Team Challenge",
+    "keywords": "小本事也有用 技能 小本事 學習 日常",
+    "question": "Our team can use two skills: folding shirts, opening packages or making animal sounds. What single act could connect them?",
+    "starter": "The team has three ordinary skills and room for two in the final act. The performance needs one idea that connects the chosen skills.",
+    "followUp": "Could animal sounds turn shirt-folding into a funny story?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could animal sounds turn shirt-folding into a funny story?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would opening packages add beyond showing that the task is possible?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can the folding suggestion include someone with a different skill?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Two people want the same part. Could we divide that part into two jobs?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would make the act clear to an audience seeing it once?"
+      },
+      {
+        "stage": "scenario",
+        "question": "A package refuses to open. How could the team use that failure?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which skill should we leave out even if it is the strongest by itself?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What two skills, simple story, and ending will our team use?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_44",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-45",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "A Better Ordinary Day for Our Street",
+    "keywords": "普通日子的快樂配方 快樂 生活 日常 美好",
+    "question": "Our street needs cheering up. Should we organize free lunchtime music, kind notes or a sunset walk that different neighbors can enjoy?",
+    "starter": "The activity costs no money and lasts only today. It should improve an ordinary day without requiring every neighbor to join.",
+    "followUp": "Would lunch music cheer people up or disturb people who need rest?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Would lunch music cheer people up or disturb people who need rest?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How could the kind-note table avoid messages nobody understands?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can the sunset-walk idea include neighbors who cannot walk far?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What detail could make the suggested activity feel welcoming rather than organized?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone calls the plan childish. How would we explain its value?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should the activity be brief, or can people stay as long as they want?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What can we change if only a few neighbors join?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which activity, place, and simple invitation are we choosing for today?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_45",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-46",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "We Accidentally Booked a Bird Day",
+    "keywords": "意外走進一個新世界 興趣 意外 新世界 嘗試",
+    "question": "Our picnic tickets are actually for bird-watching and cannot change. Only half the group is interested. How can we enjoy it together?",
+    "starter": "The tickets are fixed, but the group’s interests differ. Bird-watching can be part of the day without becoming everyone’s only activity.",
+    "followUp": "Could a short bird search work better than watching quietly all day?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could a short bird search work better than watching quietly all day?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What could the picnic idea add without interrupting the bird activity?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Can we build a group challenge around colors or sounds instead of bird names?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to leave immediately. What short trial could we agree on?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which part of the day could people enjoy even without seeing a bird?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Would splitting up briefly make the shared day easier?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What should we do if one person becomes very excited about the new hobby?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What bird activity and non-bird activity will our day include?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_46",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-47",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "Our Great Party Has Hidden Work",
+    "keywords": "沒被看見的努力 努力 隱形 工作 日常",
+    "question": "Our party leaves dirty plates, full bins and tired helpers. Which jobs should we share next week, and which extra task can go?",
+    "starter": "Some party work is easy to notice; some is not. The next event needs fewer tiring extras and a clear division of necessary jobs.",
+    "followUp": "Which hidden job would cause the biggest problem if nobody did it?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Which hidden job would cause the biggest problem if nobody did it?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could the decoration idea be simpler without losing the party’s best feature?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can we add clean-up time to the plan someone proposed?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Should the loudest volunteer also choose everybody else’s jobs?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What would show helpers that their effort has been noticed?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone says guests should never help. What small guest task might still be reasonable?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If one helper drops out, which extra should we cancel first?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What shorter job list and shared clean-up plan will next week’s party use?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_47",
+    "source": "chatwolf-adapted"
+  },
+  {
+    "id": "chat-scene-48",
+    "category": "personal-experiences",
+    "emoji": "🌻",
+    "title": "A Playful Day for Our Adult Club",
+    "keywords": "長大也不想放掉的喜歡 喜好 興趣 長大 童年",
+    "question": "Which two should our adult club choose: cartoons, toy boats or kite-making? How can we welcome all ages despite neighbors calling these childish?",
+    "starter": "The club wants simple fun rather than a serious event. Two activities must fit the space and include people of different ages.",
+    "followUp": "Could kite-making include both careful builders and people who mainly want to play?",
+    "followUps": [
+      {
+        "stage": "scenario",
+        "question": "Could kite-making include both careful builders and people who mainly want to play?"
+      },
+      {
+        "stage": "scenario",
+        "question": "What place would make toy boats easy for everyone to watch?"
+      },
+      {
+        "stage": "scenario",
+        "question": "How can the cartoon idea connect with another group activity?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Someone wants to rename everything to sound more adult. Would that help?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which activity needs the least skill before joining?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Could a neighbor who dislikes toys still have a useful, enjoyable part?"
+      },
+      {
+        "stage": "scenario",
+        "question": "If the weather stops the kites, what indoor version could we build?"
+      },
+      {
+        "stage": "scenario",
+        "question": "Which two activities and invitation line will our club finally choose?"
+      }
+    ],
+    "sourceTopicId": "topic_v2_48",
+    "source": "chatwolf-adapted"
+  }
 ];
 const TALK_TOPICS = [...TALK_ORIGINAL_TOPICS, ...TALK_SCENARIO_TOPICS];
 const TALK_LIBRARY = (() => {

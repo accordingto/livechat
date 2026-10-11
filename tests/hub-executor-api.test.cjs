@@ -12,7 +12,7 @@ const normalize = value => value == null ? value : JSON.parse(JSON.stringify(val
 function harness(options = {}) {
   const made = [], calls = [];
   const methods = {};
-  for (const operation of ['register', 'execute', 'release']) methods[operation] = async body => {
+  for (const operation of ['register', 'execute', 'release', 'updateRoster', 'setParticipant']) methods[operation] = async body => {
     calls.push({ operation, body: normalize(body) });
     if (options.fail) throw options.fail;
     return options.result || { ok: true, operation };
@@ -165,7 +165,7 @@ test('unknown operations dispatch no executor method', async () => {
 });
 
 test('POST dispatches each supported operation exactly once from object and JSON bodies', async () => {
-  for (const operation of ['register', 'execute', 'release']) {
+  for (const operation of ['register', 'execute', 'release', 'updateRoster', 'setParticipant']) {
     for (const stringify of [false, true]) {
       const body = { operation, game: 'cut', code: 'TEST', token: 'synthetic-player-token', capsule: 'synthetic-capsule' };
       const h = harness({ result: { ok: true, receipt: operation, revision: 8 } });

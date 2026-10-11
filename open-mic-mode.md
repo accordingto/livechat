@@ -2,6 +2,46 @@
 
 # Open Mic Rescue / 開麥救場
 
+## Game modes: Life Song (default) and Mission Rescue — 2026-10-10
+
+New games start in **Life Song / 人生之歌**. Each turn shows a life prompt (a
+scene or feeling such as rain on a window, a night drive or an old photo), a
+question about a real moment or stage of life, and then "which song does this
+remind you of?". The host marks **Story shared +2** (engine `success`) or
+**Pass** (`failed`); the Spotlight then chooses a song from the library or
+search and sings a little for +1, exactly like the existing choice/singing
+flow. From round 2 the prompt also offers a chain option: pick one thing from
+the last story and start from there. The 36 prompts live in
+`OPEN_MIC_CONTENT.lifePrompts` (ids `life-*`), simple English with zh copies.
+
+**Mission Rescue / 任務救場** is the original social-challenge game, unchanged.
+
+State has `mode: 'life' | 'mission'`; `view()` projects it. States saved before
+modes existed have no field and stay `mission`. `create({ mode })` defaults to
+`life`. Managers send `setMode {mode}`: during the challenge it redraws the
+prompt from the new deck, later in a turn it applies from the next player.
+`restart` keeps the mode unless `restart {mode}` names one. The host start
+screen has a mode picker; player cards and the host show a mode switch for
+managers. Assets: content/engine/sync/UI/host `life-1`, CSS `om-12`.
+
+This changes the engine, so the independent service must be redeployed with
+this checkout before registered (service-mode) rooms can run Life Song.
+
+## Third mode: Now & Next — 2026-10-10 (branch claude/open-mic-now-next)
+
+**Now & Next / 現在與未來** uses the Life Song flow (prompt → story → Story
+shared +2 / Pass → choose a song and sing +1) with its own 24-prompt deck
+`OPEN_MIC_CONTENT.nextPrompts` (ids `next-*`): 12 tagged `now` (life these
+days) and 12 tagged `future` (hopes and plans). Each prompt has a concrete
+scene, a question with an easy handle (a percentage, one word, walk through a
+day), a `followUp` the listeners can ask (shown as "Others can ask: …"), and a
+song question tied to that prompt. The original 36 memory prompts stay in
+Life Song unchanged. Engine MODES are `life`/`next`/`mission`; unknown saved
+modes fall back to `mission`. Managers see three stacked mode buttons; the host
+start screen has three mode cards. Assets: content/engine/UI/host `next-1`,
+CSS `om-13`. Engine/content change: deploy the independent service together
+with merging this branch.
+
 ## Current mode: text prompts and original activities
 
 Open Mic Rescue remains the last game in the Hub menu. It uses the room set up

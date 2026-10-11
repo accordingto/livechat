@@ -117,6 +117,7 @@ const ROOM = (() => {
       localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
         Object.assign({}, prev, { tokens, playerCount: count, names: merged })));
       localStorage.setItem(LAST_SESSION_KEY, sessionCode);
+      if (typeof window !== 'undefined' && typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('hub-room-setup', { detail: { code: sessionCode } }));
     } catch (e) { /* private browsing — links still work for this session */ }
   }
 
@@ -208,10 +209,13 @@ const ROOM = (() => {
      simple word (pulled from the shared everyday-word list — 200 words, plenty
      to cover up to 8 players with none repeated) so the host can go around asking
      "what does your card say?" and catch anyone who opened the wrong link before
-     the real game starts. This overwrites whatever the current game had published,
-     same as any other publish() — dealing the real game afterward replaces it. */
+     the real game starts. Active membership games retain their cards when
+     the Hub setup is reopened to add players. */
   function sendCardCheck() {
     if (!on()) return;
+    // A membership update may be publishing a brand-new, still-empty seat.
+    // Do not race that publication with a card-check write to any seat.
+    if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
     const pool = (typeof GAME_DATA !== 'undefined' && GAME_DATA.forbidden) || [];
     if (pool.length < count) return; // not enough words to guarantee everyone different
     const shuffled = pool.slice().sort(() => Math.random() - 0.5);
@@ -221,7 +225,14 @@ const ROOM = (() => {
     // own screen until each player has said theirs out loud and
     // revealCardCheck() is pressed on purpose
     checkRevealed = false;
-    publish(i => ({ game: 'cardcheck', word: checkWords[i].word, emoji: checkWords[i].emoji }));
+    // Updating Hub names/links must not replace an ongoing registered game.
+    for (let i = 0; i < count; i++) {
+      const word = checkWords[i];
+      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).transaction(current => {
+        if (['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(current?.game)) return;
+        return { game: 'cardcheck', word: word.word, emoji: word.emoji, playerNum: i + 1, name: names[i] || null };
+      }, undefined, false);
+    }
     render();
   }
 
@@ -247,6 +258,8 @@ const ROOM = (() => {
      numbers and calls them out, so seeing a press land live is the whole point. */
   function sendButtonCheck() {
     if (!on()) return;
+    // A retained homepage must not replace an ongoing table or its new seat.
+    if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
     // two-digit (10-99), not single digits — a lone digit is easy to guess/copy
     // without actually reading the card, which defeats a check that's meant to
     // confirm the player is looking at their own screen. The domain (90 values)
@@ -259,7 +272,13 @@ const ROOM = (() => {
     const id = checkButtonId;
     // each card gets its own independent shuffle of the same three numbers, so
     // "press 7" can't be answered by copying whichever position a neighbor pressed
-    publish(() => ({ game: 'buttoncheck', id, numbers: checkNumbers.slice().sort(() => Math.random() - 0.5) }));
+    for (let i = 0; i < count; i++) {
+      const numbers = checkNumbers.slice().sort(() => Math.random() - 0.5);
+      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).transaction(current => {
+        if (['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(current?.game)) return;
+        return { game: 'buttoncheck', id, numbers, playerNum: i + 1, name: names[i] || null };
+      }, undefined, false);
+    }
     render();
   }
 
@@ -856,7 +875,7 @@ const ROOM = (() => {
 
   function setCount(n) {
     count = n;
-    checkWords = null; // stale answer key for the old headcount
+    checkWords = null; checkRevealed = false; // stale answer key for the old headcount
     checkNumbers = null; checkButtonId = '';
     document.querySelectorAll('.room-count-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
     if (on()) ensureTokens(count);
@@ -870,7 +889,7 @@ const ROOM = (() => {
     const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!typed) return;
     sessionCode = typed;
-    checkWords = null; // stale answer key for the room we just left
+    checkWords = null; checkRevealed = false; // stale answer key for the room we just left
     checkNumbers = null; checkButtonId = '';
     const saved = loadSessionData(typed);
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
@@ -887,7 +906,7 @@ const ROOM = (() => {
 
   function newRoom() {
     sessionCode = generateSessionCode();
-    checkWords = null;
+    checkWords = null; checkRevealed = false;
     checkNumbers = null; checkButtonId = '';
     tokens = [];
     names = []; // a brand new room starts with blank names, not whoever was in the old one

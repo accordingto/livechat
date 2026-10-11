@@ -5,7 +5,9 @@ var CUT_UI = (() => {
     intro: ['講到一半突然 CUT！下一位直接把你的半句話接下去。', 'A sudden CUT! Someone else has to finish your unfinished sentence.'],
     speed: ['遊戲速度', 'Pace'], normal: ['Normal · 正常（15–25 秒）', 'Normal · 15–25 seconds'], chill: ['Chill · 輕鬆（25–40 秒）', 'Chill · 25–40 seconds'], chaos: ['Chaos · 瘋狂（8–16 秒）', 'Chaos · 8–16 seconds'], custom: ['Custom · 自訂秒數', 'Custom · Choose your seconds'],
     customMin: ['最短秒數', 'Minimum seconds'], customMax: ['最長秒數', 'Maximum seconds'], customHint: ['各填 5–120 的整秒；填相同秒數就是固定時間。', 'Use whole seconds from 5 to 120. Use the same number for a fixed time.'], customRangeError: ['請填入 5–120 的整秒，最短秒數不能大於最長秒數。', 'Use whole seconds from 5 to 120. The minimum must not exceed the maximum.'],
-    category: ['題目類型', 'Topics'], mixed: ['生活＋荒謬', 'Life + absurd situations'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'],
+    topicTime: ['話題時間', 'Topic time'], topicMinutesHint: ['1–60 整分鐘。時間到只提醒，大家同意後再結束話題。', '1–60 whole minutes. A reminder only; end the topic when everyone agrees.'], topicMinutesError: ['請填入 1–60 的整分鐘。', 'Use whole minutes from 1 to 60.'], topicTimeUp: ['時間到了，大家同意後再結束。', 'Time is up. Finish when everyone agrees.'],
+    category: ['題目類型', 'Topics'], mixed: ['全部混合', 'All topics'], real: ['生活情境', 'Everyday situations'], absurd: ['荒謬想像', 'Absurd imagination'], personal: ['個人經驗', 'Personal stories'], ideas: ['想法與喜好', 'Thoughts & choices'],
+    browseTopics: ['查看題庫', 'Browse topics'], libraryFilter: ['分類', 'Category'], librarySearch: ['搜尋題目或開場句', 'Search questions or opening lines'], libraryCount: ['顯示 {shown}／共 {total} 題', '{shown} of {total} topics'], libraryEmpty: ['沒有符合的題目。', 'No matching topics.'], libraryStarter: ['開場句', 'Opening line'],
     start: ['顯示話題', 'Show topic'], begin: ['開始說話', 'Start talking'], beginHandoff: ['開始接話', 'Start'], saveSettings: ['儲存設定', 'Save settings'], settings: ['返回設定', 'Back to settings'], closeSettings: ['返回話題', 'Back to the topic'],
     waitingBegin: ['先看話題，準備好後由主持人或任一玩家按「開始說話」。', 'Read the topic first. When everyone is ready, the host or any player can tap “Start talking”.'], settingsHint: ['調整好節奏後儲存，再按「開始說話」繼續這個話題。', 'Save your pace, then tap “Start talking” to continue this topic.'], configuring: ['主持人正在調整設定，先看看話題。', 'The host is adjusting the settings. Read the topic while you wait.'], sending: ['已送出，等待同步…', 'Sent. Waiting for confirmation…'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], next: ['下一題', 'Next topic'],
@@ -33,6 +35,34 @@ var CUT_UI = (() => {
     rule2: ['CUT 會停在下一位的名字，準備好後主持人或玩家按「開始接話」。下一位假裝自己就是上一個人，直接接那半句，不要重新回答題目。', 'CUT holds on the next player’s name until the host or a player taps “Start”. Pretend you are the previous speaker and continue the half-sentence without restarting the answer.'],
     rule3: ['同一話題可以一直接下去。大家口頭同意後，主持人或玩家按「結束話題」，再換下一題。', 'Keep going with the same topic as long as you like. When everyone agrees, end the topic before choosing the next one.'],
     ruleExample: ['例如：「他把——」CUT！「——護照丟進了垃圾桶。」', 'For example: “He threw his—” CUT! “—passport into the bin.”'],
+    mode: ['遊戲模式', 'Game mode'], classic: ['模式 1 · 接話', 'Mode 1 · Take Over'], jump: ['模式 2 · 插話', 'Mode 2 · Jump In'],
+    introJump: ['一位主講人慢慢聊。偶爾 CUT！被點到的人隨意插一句，再交回主講人。', 'One main speaker talks for a few minutes. Now and then, CUT! Someone jumps in, then it goes back to the main speaker.'],
+    modeSwitchHint: ['換模式會開始一個新話題。', 'Changing the mode starts a new topic.'],
+    mainTime: ['主講時間', 'Main speaker time'], mainQuick: ['Quick · 短（{n} 分鐘）', 'Quick · {n} minutes'], mainNormal: ['Normal · 正常（{n} 分鐘）', 'Normal · {n} minutes'], mainLong: ['Long · 長（{n} 分鐘）', 'Long · {n} minutes'], mainOther: ['{n} 分鐘', '{n} minutes'],
+    firstCutAfter: ['第一次插話前', 'First interruption after'],
+    cutInterval: ['後續插話間隔', 'Time between interruptions'],
+    jumpTimingHint: ['5–300 秒。填一樣就是固定秒數；間隔只算主講時間。', '5–300 seconds. Matching values give fixed timing. Only main speaker time counts.'],
+    jumpTimingError: ['請填 5–300 的整數，最長不能小於最短。', 'Enter whole seconds from 5 to 300. Maximum must be at least minimum.'],
+    mainTimeHint: ['只算主講人說話的時間。有人插話時，時間會暫停。', 'Only the main speaker’s talking time counts. The clock stops while someone jumps in.'],
+    mainSpeaker: ['主講人', 'MAIN SPEAKER'],
+    jumpWaitingBegin: ['先看話題。主講人準備好後，由主持人或任一玩家按「開始說話」。', 'Read the topic first. When the main speaker is ready, the host or any player can tap “Start talking”.'],
+    jumpSpeakHint: ['照自己的步調聊。偶爾會有人插話。', 'Talk at your own pace. Someone may jump in now and then.'],
+    jumpListen: ['放鬆聽就好。也許會請你插一句。', 'Relax and listen. You may be asked to jump in.'],
+    jumpCutHint: ['先停一下！', 'Hold that thought!'], jumpIn: ['請插話！', 'JUMP IN!'],
+    jumpInHint: ['說什麼都可以：接完那句話、加一點、吐槽、問問題。不計時，慢慢來。', 'Say anything: finish the sentence, add a detail, tease, or ask a question. No timer. Take your time.'],
+    jumpInWait: ['聽聽 {name} 想說什麼，說完就交回主講人。', 'Listen to {name}. Then it goes back to the main speaker.'],
+    jumpHold: ['先聽 {name} 說，等一下換你繼續。', 'Listen to {name}. You will go on in a moment.'],
+    done: ['說完了', 'DONE'], skip: ['跳過', 'SKIP'], backToMain: ['交回主講人', 'Back to the main speaker'],
+    backTo: ['交回', 'BACK TO'], keepGoing: ['繼續說！', 'KEEP GOING!'],
+    jumpTimeUp: ['時間到！', 'TIME’S UP!'], extend: ['＋{n} 分鐘', '+{n} min'],
+    jumpTimeUpHint: ['還想聊就加時間。要結束話題，請先確認大家都同意。', 'Add time to keep going. End the topic only when everyone agrees.'], jumpThanks: ['謝謝 {name}！', 'Thank you, {name}!'],
+    jumpBreakHint: ['主持人按下一題，換下一位主講人和新話題。', 'The host reveals the next topic and a new main speaker.'],
+    sharedJumpBreak: ['準備好後，任一玩家可以按下一題，換下一位主講人。', 'Any player can reveal the next topic and a new main speaker.'],
+    libraryMode: ['模式', 'Mode'], stories: ['真實故事', 'True stories'], self: ['關於你', 'About you'], opinions: ['你的看法', 'Your opinions'], whatif: ['如果…', 'What if…'], group: ['這群人', 'This group'],
+    jumpRule1: ['一位主講人照著話題自然地聊幾分鐘。只計算主講人自己說話的時間。', 'One main speaker talks about the topic for a few minutes. Only their own talking time counts.'],
+    jumpRule2: ['偶爾會 CUT！畫面點到的人可以隨意插話：接完那句話、加細節、吐槽、提問都可以。不計時，也不用很厲害。', 'Now and then, CUT! The player on the screen jumps in: finish the sentence, add a detail, tease, or ask a question. There is no timer, and it does not have to be clever.'],
+    jumpRule3: ['說完按「說完了」；不想說就按「跳過」，沒有任何懲罰。接著交回主講人，他可以接受、反駁或不理會，繼續說下去。', 'Tap DONE when you finish, or SKIP to pass. There is no penalty. Then it goes back to the main speaker, who can accept it, reject it, or just go on.'],
+    jumpRuleExample: ['例如：「我第一次自己旅行其實很順利，直到我發現——」CUT！「——他忘了帶護照。」「我才沒有忘記護照！不過我真的忘了…」', 'For example: “My first trip alone was fine until I realized—” CUT! “—he forgot his passport.” “I did NOT forget my passport! But I did forget…”'],
     rosterHint: ['暫時離開的人可以先休息，回來再加入抽選。', 'Let someone sit out if they leave, and add them back when they return.'],
     exclude: ['先休息', 'Sit out'], reinclude: ['加入抽選', 'Join the draw'], inactive: ['休息中', 'Sitting out'], active: ['參與中', 'In the draw'],
     room: ['房間 {code}', 'Room {code}'], player: ['玩家 {n}', 'Player {n}'],
@@ -47,7 +77,7 @@ var CUT_UI = (() => {
     roomChanged: ['房間已變更。重新載入此頁以使用新房間。', 'The room changed. Reload this page to use the new room.'],
     not_enough_players: ['至少要有兩位參與抽選的玩家。', 'At least two players must be in the draw.'],
     invalid_roster: ['至少要有兩位玩家，請到主選單設定。', 'Set up at least two players in the hub.'],
-    invalid_options: ['請選擇有效的速度與題目類型。', 'Choose a valid pace and topic type.'],
+    invalid_options: ['請選擇有效的速度、題目類型與話題時間。', 'Choose a valid pace, topic type and topic time.'],
     stale_turn: ['畫面已更新，請再操作一次。', 'The turn has changed. Try again.'],
     not_available: ['這個動作目前無法使用，請依最新畫面操作。', 'This action isn’t available right now. Follow the current screen.'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check your connection and try again.'],
@@ -64,8 +94,110 @@ var CUT_UI = (() => {
   const countdown = (cut, now) => ['countdown', 'handoff'].includes(cut.phase)
     ? Math.max(0, Math.ceil((Number(cut.phaseUntil) - now) / 1000)) : null;
 
+  const validTopicMinutes = value => Number.isInteger(value) && value >= 1 && value <= 60;
+  function topicTime(cut, now = Date.now()) {
+    const clock = cut?.topicClock;
+    const validClock = clock && Number.isFinite(clock.durationMs) && clock.durationMs > 0 && Number.isFinite(clock.elapsedMs) && clock.elapsedMs >= 0;
+    const durationMs = validClock ? clock.durationMs : (validTopicMinutes(cut?.topicMinutes) ? cut.topicMinutes : 10) * 60000;
+    const elapsedMs = validClock ? clock.elapsedMs + (clock.runningSince != null && Number.isFinite(clock.runningSince) ? Math.max(0, now - clock.runningSince) : 0) : 0;
+    const remainingMs = Math.max(0, durationMs - elapsedMs), seconds = Math.ceil(remainingMs / 1000);
+    const text = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    return { remainingMs, text, expired: !!validClock && remainingMs === 0 };
+  }
+  function renderTopicClock(cut, now = Date.now()) {
+    const time = topicTime(cut, now);
+    return '<div class="cut-topic-clock" data-cut-topic-clock><p><span>' + esc(t('topicTime')) + '</span> <span class="cut-topic-time" data-cut-topic-time aria-live="off">' + time.text + '</span></p><p class="cut-topic-reminder" data-cut-topic-reminder role="status"' + (time.expired ? '' : ' hidden') + '>' + (time.expired ? esc(t('topicTimeUp')) : '') + '</p></div>';
+  }
+  function updateTopicClock(element, cut, now = Date.now()) {
+    const time = topicTime(cut, now), value = element.querySelector('[data-cut-topic-time]'), reminder = element.querySelector('[data-cut-topic-reminder]');
+    if (value && value.textContent !== time.text) value.textContent = time.text;
+    if (reminder) {
+      const message = time.expired ? t('topicTimeUp') : '';
+      if (reminder.textContent !== message) reminder.textContent = message;
+      if (reminder.hidden !== !time.expired) reminder.hidden = !time.expired;
+    }
+  }
+
+  /* Mode 2 · Jump In. The Main Speaker's clock is drawn locally from the public
+     anchor, like the topic clock. It only runs while the Main Speaker talks. */
+  function mainTime(cut, now = Date.now()) {
+    const clock = cut?.mainClock;
+    const validClock = clock && Number.isFinite(clock.durationMs) && clock.durationMs > 0 && Number.isFinite(clock.elapsedMs) && clock.elapsedMs >= 0;
+    const running = !!validClock && clock.runningSince != null && Number.isFinite(clock.runningSince);
+    const durationMs = validClock ? clock.durationMs : (Number(cut?.mainMinutes) || 4) * 60000;
+    const elapsedMs = validClock ? clock.elapsedMs + (running ? Math.max(0, now - clock.runningSince) : 0) : 0;
+    const remainingMs = Math.max(0, durationMs - elapsedMs), seconds = Math.ceil(remainingMs / 1000);
+    const text = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    return { remainingMs, text, running };
+  }
+  // Stays in the same place for the whole round, whoever is talking right now.
+  function renderMainClock(cut, now = Date.now()) {
+    if (cut.speaker == null) return '';
+    const time = mainTime(cut, now);
+    return '<div class="cut-main" data-cut-main data-cut-running="' + time.running + '"><span class="cut-main-label">' + esc(t('mainSpeaker')) + '</span> <strong class="cut-main-name">' + esc(name(cut, cut.speaker)) + '</strong> <span class="cut-main-time" data-cut-main-time aria-live="off">' + time.text + '</span></div>';
+  }
+  function updateMainClock(element, cut, now = Date.now()) {
+    const value = cut?.mode === 'jump' ? element.querySelector('[data-cut-main-time]') : null;
+    if (!value) return;
+    const text = mainTime(cut, now).text;
+    if (value.textContent !== text) value.textContent = text;
+  }
+  function mainOptions(values, selected) {
+    const options = list(values).length ? list(values) : [3, 4, 5], named = options.length === 3;
+    return options.map((minutes, index) => '<option value="' + Number(minutes) + '"' + (Number(selected) === Number(minutes) ? ' selected' : '') + '>' +
+      esc(t(named ? ['mainQuick', 'mainNormal', 'mainLong'][index] : 'mainOther', { n: Number(minutes) })) + '</option>').join('');
+  }
+
+  function topicLibrary(items, category = 'mixed', search = '') {
+    const rows = list(items), term = String(search || '').trim().toLocaleLowerCase();
+    const counts = { mixed: rows.length };
+    for (const row of rows) counts[row.category] = (counts[row.category] || 0) + 1;
+    const filtered = rows.filter(row => (category === 'mixed' || row.category === category) && (!term || (String(row.question || '') + ' ' + String(row.starter || '')).toLocaleLowerCase().includes(term)));
+    // Mode 2 topics have no opening line to take over.
+    const html = filtered.length ? filtered.map(row => '<article class="cut-library-item"><p class="cut-library-category">' + esc(t(row.category)) + '</p><h3>' + esc(row.question) + '</h3>' + (row.starter ? '<p class="cut-library-starter"><span>' + esc(t('libraryStarter')) + '</span> ' + esc(row.starter) + '</p>' : '') + '</article>').join('') : '<p class="cut-soft cut-library-empty">' + esc(t('libraryEmpty')) + '</p>';
+    return { html, count: filtered.length, total: rows.length, counts };
+  }
+  function jumpScene(cut, actor, now, animate) {
+    const phase = cut.phase, me = Number(actor), main = cut.speaker;
+    const isMain = me > 0 && me === Number(main), isIn = phase === 'interrupt';
+    const guest = isIn ? cut.interrupter : null, isGuest = me > 0 && guest != null && me === Number(guest);
+    let floor;
+    if (phase === 'ready' || phase === 'setup') {
+      floor = speaker(cut, main, t('mainSpeaker'), isMain) + `<p class="cut-cue cut-waiting">${esc(t(phase === 'setup' ? cut.sharedControls ? 'sharedConfiguring' : 'configuring' : 'jumpWaitingBegin'))}</p>`;
+      if (phase === 'ready' && me > 0 && cut.canBegin) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="begin">${esc(t('begin'))}</button>`;
+    } else if (phase === 'countdown') {
+      floor = speaker(cut, main, t('mainSpeaker'), isMain) + `<p class="cut-cue">${esc(t('getReady'))}</p><div class="cut-countdown" data-cut-countdown aria-live="off">${countdown(cut, now) || 'GO!'}</div>`;
+    } else if (phase === 'speaking') {
+      floor = speaker(cut, main, t('mainSpeaker'), isMain) + `<p class="cut-cue cut-go">${esc(t('go'))}</p><p class="cut-soft">${esc(t(isMain || !me ? 'jumpSpeakHint' : 'jumpListen'))}</p>`;
+    } else if (isIn) {
+      // No countdown, clock or progress bar: the interruption is free.
+      floor = `<div class="cut-burst" aria-label="CUT!"><strong>CUT!</strong><p>${esc(t('jumpCutHint'))}</p></div>` + speaker(cut, guest, t('jumpIn'), isGuest, 'cut-reveal') +
+        `<p class="cut-cue cut-waiting">${esc(isGuest || !me ? t('jumpInHint') : t(isMain ? 'jumpHold' : 'jumpInWait', { name: name(cut, guest) }))}</p>`;
+      if (isGuest && cut.canFinish) floor += `<div class="cut-jump-actions"><button type="button" class="cut-button cut-primary" data-cut-action="done">${esc(t('done'))}</button><button type="button" class="cut-button" data-cut-action="skip">${esc(t('skip'))}</button></div>`;
+    } else if (phase === 'timeup') {
+      // Time alone never ends the round: someone adds time, or the table agrees to end it.
+      floor = `<div class="cut-rest"><span aria-hidden="true">⏰</span><h3>${esc(t('jumpTimeUp'))}</h3><p class="cut-soft">${esc(t('jumpTimeUpHint'))}</p></div>`;
+      if (me > 0 && cut.canExtend) floor += `<button type="button" class="cut-button cut-primary cut-begin" data-cut-action="extend">${esc(t('extend', { n: cut.extendMinutes || 1 }))}</button>`;
+    } else if (phase === 'back') {
+      floor = speaker(cut, main, t('backTo'), isMain, 'cut-reveal') + `<p class="cut-cue cut-go">${esc(t('keepGoing'))}</p>`;
+    } else {
+      const finished = ['finished', 'stopped'].includes(phase), ended = phase === 'break';
+      const thanks = ended && ['time', 'ended'].includes(cut.roundEnd) && cut.previousSpeaker != null ? t('jumpThanks', { name: name(cut, cut.previousSpeaker) }) + ' ' : '';
+      const title = phase === 'paused' ? 'paused' : finished ? 'finished' : cut.roundEnd === 'time' ? 'jumpTimeUp' : 'breakTitle';
+      const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : cut.sharedControls ? 'sharedPaused' : 'pausedHint' : finished ? cut.sharedControls ? 'sharedFinished' : 'finishedHint' : cut.sharedControls ? 'sharedJumpBreak' : 'jumpBreakHint';
+      floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? '✂️' : cut.roundEnd === 'time' ? '⏰' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(thanks + t(hint))}</p></div>`;
+    }
+    const yours = isMain && ['countdown', 'speaking', 'back'].includes(phase);
+    const excluded = me > 0 && list(cut.roster).find(p => Number(p.playerNum) === me)?.active === false;
+    return `<div class="cut-stage cut-jump${isIn ? ' cut-is-cut' : ''}${isIn && !animate ? ' cut-static' : ''}${yours ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
+      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderMainClock(cut, now)}${me > 0 && cut.canExtend && phase !== 'timeup' ? `<button type="button" class="cut-button cut-extend" data-cut-action="extend">${esc(t('extend', { n: cut.extendMinutes || 1 }))}</button>` : ''}</div>
+      <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
+      ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
+    </div>`;
+  }
   function scene(cut, actor = 0, now = Date.now(), { animate = true } = {}) {
     if (!cut) return '';
+    if (cut.mode === 'jump') return jumpScene(cut, actor, now, animate);
     const phase = cut.phase;
     const handoff = phase === 'handoff';
     const isCut = phase === 'cut';
@@ -98,7 +230,7 @@ var CUT_UI = (() => {
     }
     const excluded = actor && list(cut.roster).find(p => Number(p.playerNum) === Number(actor))?.active === false;
     return `<div class="cut-stage${isCut ? ' cut-is-cut' : ''}${isCut && !animate ? ' cut-static' : ''}${personal && inPlay ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
-      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2></div>
+      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderTopicClock(cut, now)}</div>
       <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
       ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
     </div>`;
@@ -119,8 +251,11 @@ var CUT_UI = (() => {
     else if (cut.phase === 'break') actions += button('next', 'next');
     if (cut.canEndTopic) actions += button('endTopic', 'endTopic');
     if (!stopped && cut.phase !== 'setup') actions += button(cut.phase === 'paused' ? 'resume' : 'pause', cut.phase === 'paused' ? 'resume' : 'pause');
+    // Mode 2: DONE and SKIP sit on the interrupter's own card. Anyone else can still hand the floor back.
+    if (cut.phase === 'interrupt' && cut.canFinish && Number(cut.interrupter) !== Number(actor)) actions += button('done', 'backToMain');
     const options = (values, selected) => values.map(value => `<option value="${value}"${selected === value ? ' selected' : ''}>${esc(t(value))}</option>`).join('');
-    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd'], cut.category)}</select></label></div><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
+    const jumpMode = cut.mode === 'jump';
+    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings novalidate><label class="cut-field"><span>${esc(t('mode'))}</span><select name="mode" data-cut-setting>${options(['classic', 'jump'], jumpMode ? 'jump' : 'classic')}</select></label><p class="cut-soft" data-cut-mode-switch hidden>${esc(t('modeSwitchHint'))}</p><div class="cut-mode-fields" data-cut-jump-fields${jumpMode ? '' : ' hidden'}><label class="cut-field"><span>${esc(t('mainTime'))}</span><select name="mainMinutes" data-cut-setting>${mainOptions(cut.mainOptions, cut.mainMinutes)}</select></label><p class="cut-soft">${esc(t('mainTimeHint'))}</p><p class="cut-kicker" >${esc(t('firstCutAfter'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="firstCutMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMinSeconds ?? 25)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="firstCutMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMaxSeconds ?? 45)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-kicker" >${esc(t('cutInterval'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="cutIntervalMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMinSeconds ?? 30)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="cutIntervalMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMaxSeconds ?? 55)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-soft" id="cut-card-jump-hint">${esc(t('jumpTimingHint'))}</p><p class="cut-feedback" id="cut-card-jump-error" data-cut-jump-error role="alert"></p></div><div class="cut-mode-fields" data-cut-classic-fields${jumpMode ? ' hidden' : ''}><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><label class="cut-field"><span>${esc(t('topicTime'))}</span><input type="number" name="topicMinutes" data-cut-setting required min="1" max="60" step="1" inputmode="numeric" value="${esc(cut.topicMinutes ?? 10)}" aria-describedby="cut-card-topic-hint cut-card-topic-error"></label><p class="cut-soft" id="cut-card-topic-hint">${esc(t('topicMinutesHint'))}</p><p class="cut-feedback" id="cut-card-topic-error" data-cut-topic-error role="alert"></p><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
     const management = (cut.phase === 'setup' ? '' : button('settings', 'settings')) + (stopped ? '' : button('restart', 'restart') + button('stop', 'stop', '', 'cut-stop'));
     return `${settings}<div class="cut-controls">${actions}</div><details class="cut-player-management" data-cut-management><summary>${esc(t('sharedManage'))}</summary><div class="cut-controls cut-management-actions">${management}</div><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
@@ -171,12 +306,13 @@ var CUT_UI = (() => {
         this.pending = null;
       } else if (this.pending && (this.pending.sessionId !== cut.sessionId || this.pending.turnId !== cut.turnId)) this.pending = null;
       const request = data.cutAction;
-      if (!this.pending && (request?.type === 'begin' || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
-      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster]);
+      if (!this.pending && (['begin', 'done', 'skip', 'extend'].includes(request?.type) || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
+      const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topicMinutes, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster,
+        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const managementOpen = this.element.querySelector('[data-cut-management]')?.open;
-        const cutKey = cut.phase === 'cut' ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
+        const cutKey = ['cut', 'interrupt'].includes(cut.phase) ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
         const animate = !cutKey || cutKey !== this.animatedCut;
         if (cutKey) this.animatedCut = cutKey;
         this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}${this.sound ? `<div class="cut-controls"><button type="button" class="cut-button cut-sound" data-cut-sound title="${esc(t('cardSoundHint'))}" aria-pressed="false">${esc(t('soundOff'))}</button></div><p class="cut-feedback" data-cut-sound-status role="status"></p>` : ''}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
@@ -189,6 +325,8 @@ var CUT_UI = (() => {
       const now = this.now(), cut = this.data.cut;
       const clock = this.element.querySelector('[data-cut-countdown]');
       if (clock) clock.textContent = countdown(cut, now) || 'GO!';
+      updateTopicClock(this.element, cut, now);
+      updateMainClock(this.element, cut, now);
       const connection = this.element.querySelector('[data-cut-connection]');
       if (connection) connection.textContent = !this.connected() ? t('offline') : !cut.sharedControls && cut.hostLiveUntil && now > cut.hostLiveUntil ? t('hostAway') : '';
       const button = this.element.querySelector('[data-cut-action="begin"]');
@@ -203,6 +341,18 @@ var CUT_UI = (() => {
         const save = form.querySelector('[data-cut-settings-save]');
         if (save) save.disabled = !this.canAction('configure', settings);
         for (const field of form.querySelectorAll('[data-cut-setting]')) field.disabled = !enabled;
+        const jumpForm = (settings.mode ?? cut.mode) === 'jump';
+        const jumpValid = validJumpTiming(settings);
+        for (const name of jumpTimingKeys) {
+          const field = form.querySelector('[name="' + name + '"]');
+          if (field) { field.disabled = !enabled || !jumpForm; field.required = jumpForm; field.setAttribute?.('aria-invalid', String(jumpForm && !jumpValid)); }
+        }
+        const jumpError = form.querySelector('[data-cut-jump-error]');
+        if (jumpError) jumpError.textContent = jumpForm && !jumpValid ? t('jumpTimingError') : '';
+        const jumpFields = form.querySelector('[data-cut-jump-fields]'), classicFields = form.querySelector('[data-cut-classic-fields]'), switching = form.querySelector('[data-cut-mode-switch]');
+        if (jumpFields) jumpFields.hidden = !jumpForm;
+        if (classicFields) classicFields.hidden = jumpForm;
+        if (switching) switching.hidden = jumpForm === (cut.mode === 'jump');
         const customFields = form.querySelector('[data-cut-custom-fields]');
         if (customFields) customFields.hidden = !custom;
         for (const name of ['customMinSeconds', 'customMaxSeconds']) {
@@ -212,6 +362,10 @@ var CUT_UI = (() => {
         }
         const message = form.querySelector('[data-cut-custom-error]');
         if (message) message.textContent = custom && !valid ? t('customRangeError') : '';
+        const topicField = form.querySelector('[name="topicMinutes"]'), topicValid = validTopicMinutes(settings.topicMinutes);
+        topicField?.setAttribute?.('aria-invalid', String(!topicValid));
+        const topicError = form.querySelector('[data-cut-topic-error]');
+        if (topicError) topicError.textContent = topicValid ? '' : t('topicMinutesError');
       }
       const feedback = this.element.querySelector('[data-cut-action-status]');
       if (feedback) feedback.textContent = this.error || (this.pending ? t('sending') : '');
@@ -239,9 +393,16 @@ var CUT_UI = (() => {
         const value = form.querySelector(`[name="${name}"]`)?.value;
         return typeof value === 'string' && value.trim() ? Number(value) : NaN;
       };
-      return { speed, category: form.querySelector('[name="category"]')?.value,
-        customMinSeconds: speed === 'custom' ? seconds('customMinSeconds') : this.data.cut.customMinSeconds ?? 15,
-        customMaxSeconds: speed === 'custom' ? seconds('customMaxSeconds') : this.data.cut.customMaxSeconds ?? 25 };
+      const cut = this.data.cut, mode = form.querySelector('[name="mode"]')?.value;
+      // Mode 2 hides the Mode 1 fields, so a half-typed pace cannot block its save.
+      const input = mode === 'jump' ? { speed: cut.speed, category: cut.category, topicMinutes: cut.topicMinutes ?? 10,
+        customMinSeconds: cut.customMinSeconds ?? 15, customMaxSeconds: cut.customMaxSeconds ?? 25 }
+        : { speed, category: form.querySelector('[name="category"]')?.value, topicMinutes: seconds('topicMinutes'),
+          customMinSeconds: speed === 'custom' ? seconds('customMinSeconds') : cut.customMinSeconds ?? 15,
+          customMaxSeconds: speed === 'custom' ? seconds('customMaxSeconds') : cut.customMaxSeconds ?? 25 };
+      if (mode !== undefined) { input.mode = mode; input.mainMinutes = seconds('mainMinutes'); }
+      for (const key of jumpTimingKeys) input[key] = mode === 'jump' ? seconds(key) : cut[key] ?? jumpTimingDefaults[key];
+      return input;
     }
     validTiming({ customMinSeconds: min, customMaxSeconds: max }) {
       return Number.isInteger(min) && Number.isInteger(max) && min >= 5 && max <= 120 && min <= max;
@@ -250,8 +411,18 @@ var CUT_UI = (() => {
       const cut = this.data?.cut;
       return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && ['ready', 'cut'].includes(cut?.phase) && cut.canBegin === true && (cut.sharedControls === true || !cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
     }
+    canFinish() {
+      const cut = this.data?.cut;
+      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && cut?.phase === 'interrupt' && cut.canFinish === true && (cut.sharedControls === true || !cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
+    }
+    canExtend() {
+      const cut = this.data?.cut;
+      return !this.destroyed && !this.pending && typeof this.send === 'function' && this.connected() && cut?.canExtend === true && (cut.sharedControls === true || !cut.hostLiveUntil || this.now() <= cut.hostLiveUntil);
+    }
     canAction(type, extra = {}) {
       if (type === 'begin') return this.canBegin();
+      if (type === 'done' || type === 'skip') return this.canFinish();
+      if (type === 'extend') return this.canExtend();
       const cut = this.data?.cut, actor = Number(this.data?.playerNum);
       if (this.destroyed || this.pending || typeof this.send !== 'function' || !this.connected() || cut?.sharedControls !== true) return false;
       const mine = list(cut.roster).find(p => Number(p.playerNum) === actor);
@@ -263,7 +434,8 @@ var CUT_UI = (() => {
       if (type === 'restart') return list(cut.roster).filter(p => p.active !== false).length >= 2;
       if (type === 'settings') return cut.phase !== 'setup';
       if (type === 'cancelSettings') return cut.phase === 'setup';
-      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd'].includes(extra.category) && this.validTiming(extra);
+      if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd', 'personal', 'ideas'].includes(extra.category) && this.validTiming(extra) && validTopicMinutes(extra.topicMinutes ?? cut.topicMinutes ?? 10) &&
+        (extra.mode === undefined || ['classic', 'jump'].includes(extra.mode)) && (extra.mainMinutes === undefined || list(cut.mainOptions).includes(extra.mainMinutes)) && ((extra.mode ?? cut.mode) !== 'jump' || validJumpTiming({ ...cut, ...extra }));
       if (type === 'stop') return cut.phase !== 'stopped';
       if (type === 'next') return cut.phase === 'break';
       if (type === 'pause') return !['paused', 'stopped', 'setup'].includes(cut.phase);
@@ -330,6 +502,7 @@ var CUT_UI = (() => {
       else if (key === 'reveal') { this.tone(620, .1, .16); this.tone(830, .15, .25); }
       else if (key === 'go') { this.tone(720, .13); this.tone(980, .18, .11); }
       else if (key === 'round') { this.tone(460, .1); this.tone(610, .12, .11); }
+      else if (key === 'time') { this.tone(610, .14); this.tone(460, .22, .14); }
       else this.tone(520, .065, 0, 'sine', .05);
     }
     update(cut, now, fresh = false, audible = true) {
@@ -342,12 +515,17 @@ var CUT_UI = (() => {
       if (!this.seen.has(phaseKey)) {
         this.seen.add(phaseKey);
         const eventKey = 'cut:' + (cut.cutEvent?.id || phaseKey);
-        const newCut = cut.phase === 'cut' && !this.seen.has(eventKey);
-        if (cut.phase === 'cut') this.seen.add(eventKey);
+        // Mode 2's interruption is the same CUT moment, with the same cue.
+        const cutPhase = cut.phase === 'cut' || cut.phase === 'interrupt';
+        const newCut = cutPhase && !this.seen.has(eventKey);
+        if (cutPhase) this.seen.add(eventKey);
         if (transitioned) {
-          if (cut.phase === 'cut') {
-            if (newCut) { this.cue('cut'); if (cut.nextSpeaker) this.cue('reveal'); }
+          if (cutPhase) {
+            if (newCut) { this.cue('cut'); if (cut.nextSpeaker || cut.interrupter) this.cue('reveal'); }
           }
+          // "BACK TO …" chimes once; the clock then resumes without a second cue.
+          else if (cut.phase === 'back') this.cue('go');
+          else if (cut.phase === 'timeup') this.cue('time');
           else if (cut.phase === 'speaking' && ['countdown', 'handoff', 'cut'].includes(previous?.phase)) this.cue('go');
           else if (cut.phase === 'countdown' && (fresh || previous?.phase !== 'countdown' || previous?.sessionId !== cut.sessionId)) this.cue('round');
           else if (['setup', 'ready', 'paused', 'finished', 'stopped'].includes(cut.phase)) this.silence();
@@ -364,6 +542,12 @@ var CUT_UI = (() => {
     }
     close() { this.silence(); this.previous = null; this.context?.close().catch(() => {}); this.context = null; }
   }
-  return { t, esc, list, name, countdown, scene, Card, Sound };
+  const jumpTimingDefaults = { firstCutMinSeconds: 25, firstCutMaxSeconds: 45, cutIntervalMinSeconds: 30, cutIntervalMaxSeconds: 55 };
+  const jumpTimingKeys = Object.keys(jumpTimingDefaults);
+  function validJumpTiming(options) {
+    return [[jumpTimingKeys[0], jumpTimingKeys[1]], [jumpTimingKeys[2], jumpTimingKeys[3]]].every(([low, high]) =>
+      Number.isInteger(options[low]) && Number.isInteger(options[high]) && options[low] >= 5 && options[high] <= 300 && options[low] <= options[high]);
+  }
+  return { jumpTimingDefaults, jumpTimingKeys, validJumpTiming, t, esc, list, name, countdown, validTopicMinutes, topicTime, renderTopicClock, updateTopicClock, mainTime, updateMainClock, mainOptions, topicLibrary, scene, Card, Sound };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_UI;

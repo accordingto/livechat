@@ -9,8 +9,11 @@ English controls by default, with the existing Traditional Chinese switch.
 ## Starting a game
 
 1. Use the existing Hub room setup and open **BLUFF PARTY**.
-2. The existing 3–9 participants and seat order are imported automatically.
-   Keep the host table open and the device awake throughout the game.
+2. The current Hub's 3–9 participants and seat order are imported automatically.
+   Changed names, seat count or original links open a fresh lobby, as does
+   returning after the original cards switched to another game. An unchanged
+   active table reconnects to its existing round. In registered service mode,
+   the management page may close after opening completes.
 3. Existing `play.html` links switch automatically to each original player's
    own card. There is no second name form, login, or join button.
 4. The host table is an unseated moderator and adds no extra playing seat.
@@ -30,10 +33,33 @@ available to that browser in future rooms. Only distribute a person's own link.
 
 Opening the game outside an existing Hub room retains the separate invitation
 flow: open a host table and invite friends. Late invitees watch an ongoing game
-and can join the formal roster next game. Existing active games created before
-original-card integration retain their fixed roster until completion; the host
-can then click **Play another game** to import the original Hub seats. Restoring
-an integrated active table never resets its roles, scores or Spotlight.
+and can join the formal roster next game. Standalone imports keep their fixed
+active-roster guard. The trusted Hub manager can replace an outdated group with
+its current roster without finishing the previous group's game. Restoring an
+unchanged integrated active table keeps its service epoch, roles, scores,
+Spotlight and knowledge history.
+
+Hub opening and restart pause legacy polling until original-card publication and
+service registration finish, including any private refresh already in progress.
+If an earlier interrupted registration left a partial service epoch, the current
+Hub manager can rebuild that epoch after confirming all original seat bindings
+still belong to this table. This keeps its active round, roles, scores and personal
+knowledge history. A valid existing epoch reconnects normally; a newer game's
+original cards are not overwritten during this repair.
+
+A completed registration returns its public host view. Reopening and observing
+an already published table reads the canonical state and verifies every exact
+original/private seat binding in parallel, then displays a cloned public view
+without running a full service synchronization or saving knowledge history.
+Private roles remain hidden. A private projection may briefly lag a same-epoch
+action; an absent, legacy or wrong-epoch card still triggers guarded service
+repair. Every actual command and each player pulse continues through the service.
+Deferred opening seeds only missing formal private cards with conditional writes,
+preserving existing mailboxes and history until complete registration. The Hub
+function runs beside the Singapore database to reduce guarded read/write latency.
+Independent original cards are checked afresh on write conflicts. The browser
+waits for the service's supported execution window when a command needs it.
+An interrupted Hub connection shows Retry connection and retains the same roster.
 
 ## The conversation
 
@@ -328,3 +354,27 @@ frame URL and restores fragment credentials. New files:
 `bluff-king-engine.js`, `bluff-king-sync.js`, `bluff-king-topics.js`, question
 source/validator files, tests, and preview/content/live-verification scripts.
 Other games retain their existing architecture and rules.
+
+## Current Hub roster verification — 2026-10-09
+
+Full regression: 1209/1209 passed. Current-room import, changed names/count/tokens,
+returning after another game, persisted cross-tab changes, delayed old-game
+publication, complete registration and unchanged active reconnection are covered.
+Real Client/service integration verifies old epochs cannot modify the new table
+and a current player can start it after the management page closes.
+
+
+## Authoritative original-card publication — 2026-10-09
+
+Opening uses exact-token server reads and ETag conditional writes, rather than
+SDK transaction callbacks that may initially contain uncached null. Normal
+presence updates causing 412 are reread/retried. Newer game/round bindings remain
+protected, matching cards keep their mailbox and metadata, and all cards are
+rechecked before service registration. UI version 9 includes this correction.
+
+Primary behavior references: [SDK transaction initial values](https://firebase.google.com/docs/database/web/read-and-write#save_data_as_transactions)
+and [REST conditional requests](https://firebase.google.com/docs/database/rest/save-data#section-conditional-requests).
+
+Validation: full regression 1213/1213; UI 43/43. The prior UI reproduces the
+reported game-switch error with a provisional-null SDK callback; authoritative
+publication passes the same controlled scenario.

@@ -31,7 +31,62 @@
     async _cas(path, change) { const canonical = this.hostToken && path === this._roomPath('players/' + this.hostToken); for (let i = 0; i < 10; i++) { const read = await this._request(path, { getETag: true }); if (!read.etag) throw new Error('The storage does not support safe room updates.'); if (canonical && read.data?.executor?.v === 1) throw Object.assign(new Error('The server is processing this room.'), { code: 'server_owned' }); const old = JSON.stringify(read.data); const working = read.data == null ? null : structuredClone(canonical ? decodeState(read.data) : read.data); const result = await change(working); const next = canonical ? { data: JSON.stringify(result.state) } : result.state; if (JSON.stringify(next) === old) return result.value; const write = await this._request(path, { method: 'PUT', body: next, etag: read.etag }); if (!write.conflict) return result.value; await new Promise(r => setTimeout(r, 30 + Math.random() * 100)); } throw new Error('The room is busy. Please try again.'); }
     async _loadHistory() { const remote = (await this._request(this._historyPath())).data; this.identity.history = mergeHistory(this.identity.history, remote); this._saveIdentity(); }
     _emit(view) { if (this.lastView?.room === view.room && this.lastView.version > view.version) return this.lastView; this.lastView = view; this.onView(view); this.onStatus(this.isHost ? 'hosting' : 'connected'); return view; }
-    _schedule() { clearTimeout(this.timer); if (!this.closed) this.timer = setTimeout(() => this.refresh().catch(e => { this.onStatus({ state: 'disconnected', error: safeError(e) }); }).finally(() => this._schedule()), 1500); }
+    _schedule() {
+      clearTimeout(this.timer);
+      // Hub import/publication owns the private projections until registration
+      // finishes. A legacy poll here can invalidate the service's baselines.
+      if (!this.closed && !this.executorDeferred) this.timer = setTimeout(() => {
+        if (this.closed || this.executorDeferred) return;
+        return this.refresh().catch(e => { this.onStatus({ state: 'disconnected', error: safeError(e) }); }).finally(() => this._schedule());
+      }, 1500);
+    }
+    async _readHostSnapshot(raw) {
+      if (!this.hostPresentation || !this.isHost || !this.hostToken || !root.BLUFF_ENGINE || !root.BLUFF_QUESTIONS) return null;
+      const executor = raw?.executor;
+      if (raw?.owner !== 'server' || executor?.v !== 1 || executor.game !== 'bluffking' || typeof executor.capsule !== 'string' || !executor.capsule || !/^[\w-]{1,24000}$/.test(executor.capsule) || typeof executor.epoch !== 'string' || !executor.epoch || typeof executor.sessionId !== 'string' || !executor.sessionId || !Number.isFinite(executor.createdAt) || executor.createdAt <= 0) return null;
+      let state;
+      try { state = decodeState(structuredClone(raw)); } catch (_) { return null; }
+      const room = state?.rooms?.[this.code], transport = state?.transport, roster = transport?.cardRoster;
+      if (!room || !Array.isArray(room.members) || !Array.isArray(room.roster) || room.hostIdentityId !== this.identity.id || transport?.executorSessionId !== executor.sessionId || room.sharedControls !== true || !Array.isArray(roster) || roster.length < 3 || roster.length > 9) return null;
+      const privateTokens = new Set(), originalTokens = new Set();
+      const members = [];
+      for (const entry of roster) {
+        if (!/^[A-Za-z0-9_-]{12,128}$/.test(entry.originalToken || '') || !/^[a-f0-9]{64}$/.test(entry.token || '') || !/^[a-f0-9]{40}$/.test(entry.identityId || '') || !/^[a-f0-9]{64}$/.test(entry.historyToken || '') || privateTokens.has(entry.token) || originalTokens.has(entry.originalToken)) return null;
+        const binding = transport.members?.[entry.identityId], member = room.members?.find(player => player.identityId === entry.identityId);
+        if (!member || binding?.token !== entry.token || binding.historyToken !== entry.historyToken) return null;
+        privateTokens.add(entry.token); originalTokens.add(entry.originalToken); members.push(member);
+      }
+      // Initial readiness verifies the existing epoch in one parallel read wave.
+      // A committed same-epoch action may be newer than the private projections;
+      // their phase/revision may lag while the service publishes that action.
+      const cards = await Promise.all(roster.map(async entry => {
+        const [source, projection] = await Promise.all([
+          this._request('/rooms/' + this.code + '/players/' + entry.originalToken),
+          this._request(this._roomPath('players/' + entry.token))
+        ]);
+        return { source: source.data, projection: projection.data };
+      }));
+      let ready = true;
+      for (let i = 0; i < roster.length; i++) {
+        const entry = roster[i], source = cards[i].source, binding = source?.bluff;
+        if (members[i].active === false) continue;
+        if (source?.game !== 'bluffking' || binding?.version !== 2 || binding.room !== this.code || binding.token !== entry.token || binding.identityId !== entry.identityId || binding.historyToken !== entry.historyToken) {
+          const error = new Error('The original player cards have moved to another game.'); error.code = 'game_switched'; throw error;
+        }
+        const node = cards[i].projection, ticket = node?.hubExecutor, seat = node?.sessionBinding;
+        let privateView; try { privateView = decodeView(node); } catch (_) {}
+        if (ticket?.v !== 1 || ticket.game !== 'bluffking' || ticket.capsule !== executor.capsule || ticket.sessionId !== executor.sessionId || seat?.room !== this.code || seat.identityId !== entry.identityId || seat.historyToken !== entry.historyToken || privateView?.sharedControls !== true || privateView.room !== this.code || privateView.self?.playerId !== members[i].id) ready = false;
+      }
+      if (!ready) return null;
+      // projectView records exposure even for public views. Its clone stays
+      // local: viewing the manager never writes history or private projections.
+      const now = Date.now(), view = root.BLUFF_ENGINE.projectView(state, room.hostIdentityId, this.code, root.BLUFF_QUESTIONS, { private: false, now });
+      for (const entry of roster) { const member = room.members.find(player => player.identityId === entry.identityId); const row = view.players.find(player => player.id === member?.id); if (row) row.playerNum = roster.indexOf(entry) + 1; if (view.self?.playerId === member?.id) view.self.playerNum = roster.indexOf(entry) + 1; }
+      const onlinePlayers = new Set(roster.filter((_, i) => now - (executor.presence?.[i + 1] || executor.createdAt) < 60000).map(entry => room.members.find(player => player.identityId === entry.identityId).id));
+      for (const player of view.players) if (room.roster.includes(player.id) || player.seated) player.connected = onlinePlayers.has(player.id);
+      view.recovery.available = ['topic_check', 'prepare', 'discussion'].includes(room.phase) && room.roster.some(id => !onlinePlayers.has(id));
+      return view;
+    }
     async connect(code) {
       this.code = cleanCode(code); this.closed = false; const savedHost = this.storage.getItem('icebreak.bluff.host.' + this.code); this.isHost = this.hostPresentation && !!savedHost; this.hostToken = this.isHost ? savedHost : null; this.roomToken = this.identity.rooms[this.code]?.token;
       if (this.isHost) { let meta, profile; try { meta = JSON.parse(this.storage.getItem('icebreak.bluff.host-identity.' + this.code)); profile = meta?.identityStorageKey && JSON.parse(this.storage.getItem(meta.identityStorageKey)); } catch {} if (profile?.id === meta?.identityId && profile.rooms?.[this.code]?.token) { this.identityStorageKey = meta.identityStorageKey; this.identity = profile; this.roomToken = profile.rooms[this.code].token; } }
@@ -57,17 +112,32 @@
       this._saveHostIdentity();
       const view = await this.refresh(); this._schedule(); return view;
     }
-    async createFromCards(code, setup) {
+    async createFromCards(code, setup, { replaceActive = false } = {}) {
       const names = setup?.names, tokens = setup?.tokens; const count = Number(setup?.playerCount ?? names?.length);
       if (!Array.isArray(names) || !Array.isArray(tokens) || !Number.isInteger(count) || count < 3 || count > 9 || names.length !== count || tokens.length !== count || names.some(n => typeof n !== 'string' || !n.trim() || n.length > 40) || tokens.some(t => typeof t !== 'string' || !/^[A-Za-z0-9_-]{12,128}$/.test(t)) || new Set(tokens).size !== count) { const e = new Error('The existing Hub roster needs three to nine names and distinct original player links.'); e.code = 'invalid_card_roster'; throw e; }
       this.code = cleanCode(code); this.closed = false;
+      const originals = replaceActive ? await Promise.all(tokens.map(token => this._request('/rooms/' + this.code + '/players/' + token).then(read => read.data))) : null;
       if (this.storage.getItem('icebreak.bluff.host.' + this.code)) await this.connect(this.code); else await this.create(this.code, { name: 'Host', participate: false });
       if (!this.isHost) { const e = new Error('Only the current host can use this original Hub roster.'); e.code = 'host_only'; throw e; }
       await this._cas(this._roomPath('players/' + this.hostToken), state => {
         const room = state.rooms[this.code];
         if (room.hostIdentityId !== this.identity.id) { const e = new Error('The host has changed. Only the current host can import the original player cards.'); e.code = 'host_only'; throw e; }
         const prior = state.transport.cardRoster || [];
-        if (room.phase !== 'lobby') { if (prior.length !== count || prior.some((p, i) => p.originalToken !== tokens[i])) { const e = new Error('The current game has a fixed roster. Finish it before importing the original player cards.'); e.code = 'roster_locked'; throw e; } return { state }; }
+        const changed = prior.length !== count || prior.some((p, i) => p.originalToken !== tokens[i] || p.name !== names[i] || room.members.find(m => m.identityId === p.identityId)?.name !== names[i]);
+        const moved = originals?.some((card, i) => {
+          const entry = prior[i], binding = card?.bluff;
+          return card?.game !== 'bluffking' || binding?.version !== 2 || binding.room !== this.code ||
+            binding.token !== entry?.token || binding.identityId !== entry?.identityId || binding.historyToken !== entry?.historyToken;
+        });
+        if (room.phase !== 'lobby') {
+          if (!changed && !moved) return { state };
+          if (!replaceActive) { const e = new Error('The current game has a fixed roster. Finish it before importing the original player cards.'); e.code = 'roster_locked'; throw e; }
+          // An explicit current-Hub import abandons an obsolete table without
+          // scoring. Persistent truth/seen histories stay in state.identities.
+          room.phase = 'lobby'; room.round = null; room.roster = []; room.thinkerOrder = [];
+          room.scores = {}; room.roundIndex = 0; room.history = []; room.usedKnowledgeIds = [];
+          room.version++;
+        }
         const priorMap = new Map(prior.map(p => [p.originalToken, p])); const newMembers = []; const newSessions = {};
         const hostMember = room.members.find(p => p.identityId === this.identity.id); const hostHasOriginalSeat = prior.some(p => p.identityId === this.identity.id && tokens.includes(p.originalToken)); if (!hostHasOriginalSeat) { hostMember.seated = false; hostMember.wantsSeat = false; newMembers.push(hostMember); } newSessions[this.identity.id] = state.transport.members[this.identity.id];
         const cardRoster = tokens.map((originalToken, i) => {
@@ -113,7 +183,32 @@
       await this.refresh(); this._schedule(); return this.lastView;
     }
     async _decode(packet) { if (!packet || JSON.stringify(packet).length > 160000) throw new Error('Invalid join packet.'); const raw = await root.crypto.subtle.decrypt({ name: 'RSA-OAEP' }, this.privateKey, unbase64(packet.key)); const key = await root.crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']); return JSON.parse(dec.decode(await root.crypto.subtle.decrypt({ name: 'AES-GCM', iv: unbase64(packet.iv) }, key, unbase64(packet.cipher)))); }
-    async _hostRefresh() {
+    async _hostRefresh(rawSnapshot) {
+      if (this.executorDeferred) {
+        const raw = rawSnapshot ?? (await this._request(this._roomPath('players/' + this.hostToken))).data;
+        if (raw?.executor?.v !== 1) {
+          const state = decodeState(raw), room = state?.rooms?.[this.code];
+          if (!state?.transport || !room) throw new Error('The host room could not be restored.');
+          if (room.hostIdentityId !== this.identity.id) { const error = new Error('The host has changed.'); error.code = 'host_only'; throw error; }
+          const roster = state.transport.cardRoster || [];
+          await Promise.all(roster.map(async entry => {
+            const binding = state.transport.members?.[entry.identityId];
+            if (!/^[a-f0-9]{64}$/.test(entry.token || '') || entry.token === this.hostToken || !/^[a-f0-9]{40}$/.test(entry.identityId || '') || !/^[a-f0-9]{64}$/.test(entry.historyToken || '') || binding?.token !== entry.token || binding.historyToken !== entry.historyToken || !room.members.some(member => member.identityId === entry.identityId)) { const error = new Error('An original card is not bound to this game seat.'); error.code = 'invalid_card_session'; throw error; }
+            // Bootstrap only an absent seat so the original card can connect.
+            // Existing mailboxes, projections and global histories stay intact.
+            // Registration merges histories and publishes every complete seat.
+            const local = structuredClone(state);
+            const view = root.BLUFF_ENGINE.projectView(local, entry.identityId, this.code, root.BLUFF_QUESTIONS, { private: true, now: Date.now() });
+            await this._cas(this._roomPath('players/' + entry.token), current => current != null ? { state: current } : {
+              state: { view: null, viewJson: JSON.stringify(view), ack: state.transport.acknowledgements?.[entry.identityId] || null,
+                history: mergeHistory(local.identities[entry.identityId]), sessionBinding: { room: this.code, identityId: entry.identityId, historyToken: entry.historyToken },
+                hostGrant: null, publicationRevision: Number(state.transport.publicationRevision) || 0 }
+            });
+          }));
+          const view = root.BLUFF_ENGINE.projectView(structuredClone(state), this.identity.id, this.code, root.BLUFF_QUESTIONS, { private: false, now: Date.now() });
+          return this._emit(view);
+        }
+      }
       const joins = (await this._request(this._roomPath('roster/requests'))).data || {}; const decoded = [];
       for (const [requestId, packet] of Object.entries(joins).slice(0, 100)) { try { const p = await this._decode(packet); if (!/^[a-f0-9]{40}$/.test(p.identityId || '') || !/^[a-f0-9]{64}$/.test(p.token || '') || !/^[a-f0-9]{64}$/.test(p.historyToken || '')) throw new Error('Invalid join credentials.'); decoded.push({ requestId, p }); } catch { await this._request(this._roomPath('roster/requests/' + requestId), { method: 'DELETE' }); } }
       const snapshot = decodeState((await this._request(this._roomPath('players/' + this.hostToken))).data); if (!snapshot?.transport) throw new Error('The host room could not be restored.');

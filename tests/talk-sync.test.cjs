@@ -194,3 +194,94 @@ test('starter preference reaches every card and survives replacing the host', as
   assert.equal(f.card(1).talk.starter, '');
   second.close();
 });
+
+test('authoritative clock starts a prepared normal round and ends every card at the shared deadline', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  let clock = Date.now(); h.now = () => clock;
+  await h.start({ topic, mode: 'think', seconds: 15, gameSeconds: 60, crazyTaskSeconds: 150 }); await settle(h);
+  assert.equal(h.latest.gameDeadline, 0); assert.equal(f.card(2).talk.gameSeconds, 60);
+  clock = h.latest.deadline; await h.renew(); await settle(h);
+  assert.equal(await h.tickClock(), true); await settle(h);
+  assert.equal(h.latest.phase, 'talking'); assert.equal(h.latest.gameDeadline, clock + 60000);
+  clock = h.latest.gameDeadline; await h.renew(); await settle(h);
+  assert.equal(await h.tickClock(), true); await settle(h);
+  for (const num of [1,2,3,4]) assert.equal(f.card(num).talk.phase, 'ended');
+  const oldSession = h.latest.sessionId;
+  await h.start({ topic: { ...topic, id: 'next-round' }, mode: 'think', seconds: 15, gameMode: 'normal', showStarters: true, gameSeconds: 120, crazyTaskSeconds: 239 });
+  await settle(h);
+  assert.notEqual(h.latest.sessionId, oldSession); assert.equal(h.latest.phase, 'thinking'); assert.equal(h.latest.gameDeadline, 0);
+  assert.equal(f.card(3).talk.gameSeconds, 120); assert.ok(f.card(3).talk.scores.every(entry => entry.score === 0));
+  h.close();
+});
+test('host clock expires a private mission, projects public score and preserves new round timing', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  let clock = Date.now(); h.now = () => clock;
+  await h.start({ topic, seconds: 15, gameMode: 'crazy', gameSeconds: 120, crazyTaskSeconds: 30,
+    crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await h.command('start'); await settle(h);
+  assert.equal(f.card(1).talk.crazy.taskSeconds, 30);
+  clock = h.latest.crazy.nextAssignAt; await h.tickClock(); await settle(h);
+  const recipient = h.latest.crazy.pendingPlayerNums?.[0] || Number(Object.keys(h.latest.crazy.prompts).find(num => h.latest.crazy.prompts[num].status === 'pending'));
+  const prompt = f.card(recipient).talk.crazy.prompt;
+  assert.equal(prompt.status, 'pending'); assert.equal(prompt.expiresAt, clock + 30000);
+  for (const num of [1,2,3,4].filter(num => num !== recipient)) assert.ok(!JSON.stringify(f.card(num)).includes(prompt.text));
+  clock = prompt.expiresAt; await h.renew(); await settle(h); await h.tickCrazy(); await settle(h);
+  assert.equal(f.card(recipient).talk.crazy.prompt.status, 'expired');
+  assert.ok(Object.values(h.latest.crazy.prompts).some(item => item.status === 'pending'), 'expiry hands a new mission to another player');
+  assert.ok(f.card(1).talk.scores.every(entry => entry.score === 0));
+  await h.command('finish'); await settle(h);
+  for (const num of [1,2,3,4]) assert.equal(f.card(num).talk.phase, 'ended');
+  h.close();
+});
+
+
+test('Host.start carries the journal from transaction-current state while its cached snapshot is stale', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  let clock = Date.now(); h.now = () => clock;
+  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
+    gameSeconds: 120, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5 });
+  await settle(h);
+  const cachedSession = h.doc.state.sessionId;
+  assert.deepEqual(h.doc.state.challengeArchive.records, []);
+  let current = clone(h.doc.state), serial = 0;
+  const commit = (type, actor, extra = {}) => {
+    current = E.apply(current, { id: 'remote-' + ++serial, type, actor, sessionId: current.sessionId,
+      turnId: current.turnId, now: clock, seed: 41, ...extra });
+  };
+  clock++; commit('crazyAssign', 1, { target: 2, text: 'A finished chicken song.' });
+  clock++; commit('start', 0);
+  clock = current.crazy.nextAssignAt; commit('clockTick', 0);
+  clock++; commit('crazyDone', 2, { promptId: current.crazy.prompts[2].id });
+  clock++; commit('crazyAssign', 3, { target: 4, text: 'A still active duck song.' });
+  clock = current.crazy.nextAssignAt; commit('clockTick', 0);
+  clock++; commit('crazyAssign', 1, { target: 3, text: 'A waiting goat song.' });
+  const [done, pending, queued] = current.challengeArchive.records;
+  assert.deepEqual([done.status, pending.status, queued.status], ['done', 'pending', 'queued']);
+  // Earlier snapshots were persisted; the terminal outcome and future
+  // cancellations still need writing. An already-persisted queued card must
+  // also remain available to archive its cancellation during replacement.
+  current = E.ackArchive(current, [{ id: done.id, version: 2 }, { id: pending.id, version: 1 }, { id: queued.id, version: 1 }]);
+  const before = clone(current.challengeArchive.records);
+  const controlPath = 'rooms/TEST/players/' + f.room.getExtra('letsTalkControlToken');
+  const canonical = f.db.values.get(controlPath);
+  // Model a remote commit before its value-listener notification arrives.
+  // Do not call put(): the host must still see its cached empty journal.
+  f.db.values.set(controlPath, { ...clone(canonical), state: current, revision: canonical.revision + 1, leaseUntil: clock + 14000 });
+  assert.equal(h.doc.state.sessionId, cachedSession); assert.deepEqual(h.doc.state.challengeArchive.records, []);
+  clock++;
+  await h.start({ topic: { ...topic, id: 'replacement-with-history' }, gameMode: 'normal' }); await settle(h);
+  assert.notEqual(h.latest.sessionId, cachedSession);
+  const retained = h.latest.challengeArchive.records;
+  assert.deepEqual(retained.map(record => record.id), before.map(record => record.id));
+  assert.deepEqual(retained[0], before[0], 'terminal record awaiting its latest ACK is retained exactly');
+  assert.deepEqual(retained.map(record => [record.status, record.version, record.persistedVersion]),
+    [['done', 3, 2], ['cancelled', 3, 1], ['cancelled', 2, 1]]);
+  assert.equal(retained[1].closedAt, clock); assert.equal(retained[2].closedAt, clock);
+  assert.equal(E.archiveEntries(h.latest).length, 3);
+  for (const num of [1, 2, 3, 4]) {
+    const serialized = JSON.stringify(f.card(num));
+    for (const marker of ['challengeArchive', 'archiveId', 'persistedVersion', ...retained.flatMap(record => [record.id, record.text])]) {
+      assert.equal(serialized.includes(marker), false, 'history cannot enter a private gameplay projection');
+    }
+  }
+  h.close();
+});

@@ -7,11 +7,13 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=cards-2">
+  <link rel="stylesheet" href="talk.css?v=talk-calm-1">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-varied-deal-executor-1">
-  <link rel="stylesheet" href="dixit.css?v=dixit-10">
-  <link rel="stylesheet" href="cut.css?v=cards-2">
-  <link rel="stylesheet" href="open-mic.css?v=om-11">
+  <link rel="stylesheet" href="dixit.css?v=dixit-16">
+  <link rel="stylesheet" href="cut.css?v=cut-12">
+  <link rel="stylesheet" href="open-mic.css?v=om-13">
+  <link rel="stylesheet" href="bomb-relay.css?v=br-1">
+  <link rel="stylesheet" href="sketch-relay.css?v=relay-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -394,7 +396,7 @@
     .pick-btn.verdict-wrong { background: #ef4444; border-color: #ef4444; color: #2b0505; }
     .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
 
-    /* 🔢 room.js's button check: three big equal buttons in a row rather than the
+    /* 🔢 room.js?v=membership-1's button check: three big equal buttons in a row rather than the
        stacked .pick-row list at first (three single digits read fine side by
        side) — then the numbers became two digits (see sendButtonCheck()'s own
        comment: a single digit is too easy to guess or copy off a neighbor
@@ -873,6 +875,7 @@
     .crack-team-total .ctt-score { font-size: 1.3rem; font-weight: 900; color: #fff; }
     .crack-team-total .ctt-sep { font-size: 1rem; font-weight: 700; color: #60a5fa; opacity: .6; }
   </style>
+<link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body>
 
@@ -883,22 +886,26 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="talk-topics.js?v=1"></script>
-  <script src="talk-ui.js?v=cards-2"></script>
+  <script src="talk-topics.js?v=talk-group-1"></script>
+  <script src="talk-ui.js?v=talk-calm-1"></script>
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
-  <script src="cut-ui.js?v=cards-2"></script>
-  <script src="open-mic-content.js?v=om-2"></script>
+  <script src="cut-ui.js?v=cut-12"></script>
+  <script src="bomb-relay-deck.js?v=br-1"></script>
+  <script src="bomb-relay-ui.js?v=br-1"></script>
+  <script src="sketch-relay-art.js?v=relay-1"></script>
+  <script src="sketch-relay-ui.js?v=relay-1"></script>
+  <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
-  <script src="open-mic-ui.js?v=cards-2"></script>
+  <script src="open-mic-ui.js?v=next-1"></script>
   <script src="once-upon-a-time-deck.js?v=once-varied-deal-executor-1"></script>
   <script src="once-upon-a-time-ui.js?v=once-varied-deal-executor-1"></script>
   <script src="dixit-deck.js?v=dixit-10"></script>
-  <script src="dixit-ui.js?v=dixit-10"></script>
-  <script src="dixit-engine.js?v=dixit-10"></script>
-  <script src="talk-sync.js?v=executor-1"></script>
-  <script src="dixit-sync.js?v=dixit-10"></script>
-  <script src="hub-executor.js?v=2"></script><script>HUB_EXECUTOR.install();</script>
+  <script src="dixit-ui.js?v=dixit-16"></script>
+  <script src="dixit-engine.js?v=membership-1"></script>
+  <script src="talk-sync.js?v=talk-archive-1"></script>
+  <script src="dixit-sync.js?v=membership-1"></script>
+  <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
   <script src="dixit-card-host.js?v=dixit-10"></script>
   <script>
     I18N.registerDict('play', {
@@ -1086,7 +1093,7 @@
       waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
       cardCheckEyebrow: { zh: '🔍 核對卡片', en: '🔍 Card Check' },
       tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
-      // room.js's second check — three numbers, shuffled into a different order
+      // room.js?v=membership-1's second check — three numbers, shuffled into a different order
       // on every card, so the host can call one out loud and confirm every
       // phone is actually receiving taps, not just displaying a card.
       buttonCheckEyebrow: { zh: '🔢 按鈕測試', en: '🔢 Button Check' },
@@ -1504,7 +1511,7 @@
       return data.vote && data.voteId && data.vote.id === data.voteId ? data.vote.choice : null;
     }
 
-    /* 🔢 room.js's button check: writes to its own field (checkPress), not `vote` —
+    /* 🔢 room.js?v=membership-1's button check: writes to its own field (checkPress), not `vote` —
        this card isn't part of any real game round, so there's no vote/voteId to
        collide with, and keeping it separate means a future game on this same
        token can't accidentally see a stale press. Quotes data.id the same way a
@@ -2457,6 +2464,8 @@
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
     let cutCard = null;
+    let bombCard = null;
+    let relayCard = null;
     let openMicCard = null;
     let openMicTimer = null;
     let onceCard = null;
@@ -2486,6 +2495,63 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      // Sketch Relay keeps its drawing pad alive across updates, so it must be
+      // torn down here before any other game takes over this element.
+      const isRelay = data.game === 'sketchrelay' && data.relay?.version === 1;
+      document.body.classList.toggle('sketch-relay-card-page', isRelay);
+      if (relayCard && !isRelay) { relayCard.destroy(); relayCard = null; }
+      if (isRelay) {
+        document.title = `${data.name || urlName || 'Player'} · Sketch Relay`;
+        document.body.classList.remove('open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page', 'bomb-card-page');
+        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+        if (cutCard) { cutCard.destroy(); cutCard = null; }
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (bombCard) { bombCard.destroy(); bombCard = null; }
+        if (!relayCard) relayCard = new SKETCH_RELAY_UI.Card(el, {
+          nameBanner,
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'sketchrelay' || current.relay?.sessionId !== command.sessionId) return;
+            if (['submit', 'ready', 'swapWord'].includes(command.type) && current.relay.turnId !== command.turnId) return;
+            return Object.assign({}, current, { relayAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        relayCard.update(data);
+        return;
+      }
+      const isBomb = data.game === 'bombrelay' && data.bomb?.version === 1;
+      document.body.classList.toggle('bomb-card-page', isBomb);
+      if (bombCard && !isBomb) { bombCard.destroy(); bombCard = null; }
+      if (isBomb) {
+        document.title = `${data.name || urlName || 'Player'} · BOMB RELAY`;
+        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page', 'open-mic-card-page');
+        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+        if (cutCard) { cutCard.destroy(); cutCard = null; }
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (!bombCard) bombCard = new BOMB_RELAY_UI.Card(el, {
+          nameBanner,
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          // One pending action per card, fenced to the turn it was drawn for.
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'bombrelay' || current.bomb?.sessionId !== command.sessionId || current.bomb?.turnId !== command.turnId) return;
+            return Object.assign({}, current, { bombAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        bombCard.update(data);
+        return;
+      }
       const isOpenMic = data.game === 'openmic' && data.openmic?.version === 1;
       document.body.classList.toggle('open-mic-card-page', isOpenMic);
       if (openMicCard && !isOpenMic) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
@@ -2850,10 +2916,14 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
+      if (relayCard) { relayCard.destroy(); relayCard = null; }
+      document.body.classList.remove('sketch-relay-card-page');
       if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
       document.body.classList.remove('open-mic-card-page');
       if (cutCard) { cutCard.destroy(); cutCard = null; }
       document.body.classList.remove('cut-card-page');
+      if (bombCard) { bombCard.destroy(); bombCard = null; }
+      document.body.classList.remove('bomb-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -2875,8 +2945,8 @@
     let db = null;
     let latestData = null;
     document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
-    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic'].includes(latestData?.game)) tryRenderCard(); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
+    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -2895,7 +2965,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

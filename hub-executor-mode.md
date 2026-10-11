@@ -21,15 +21,24 @@ performance results. Each game retains its existing player-count rules; with few
 waits or continues individual interaction according to those rules. With no connected player, no page is required to stay open;
 the next connected card catches up the stored deadlines.
 
-The homepage lets the setup owner select their own existing seat and initialize
-a game directly. A temporary initializer sends the existing canonical and seat
-credentials to the service over HTTPS. It waits for registration and every
-private card publication, closes its connection, and opens the selected original
-player link. No manager page needs to be opened or kept online. Legacy manager
-links remain available as a recovery option. The service encrypts them in an
-AES-256-GCM ticket. Each card receives an opaque ticket and authenticates using
-only its own existing token. Neither the host control token nor another player's
-private cards or credentials are added to player links or public views.
+The homepage opens each original host/settings page directly, with no own-name
+or player-seat selection required to choose a game. Hosts can start and manage
+registered games there; their commands go to the same independent service as
+player-card controls. Closing that page leaves player controls and clock
+progression available. Opening a management page alone does not deal a fresh
+game or select somebody's private hand. Each game retains its explicit start
+and setup controls. A normal manager start waits for available service
+registration before completing; legacy fallback remains usable when the service
+is unavailable. Any game-specific host-seat setting only identifies a
+participating host's player card; it does not gate the homepage menu.
+
+`hub-launcher.js` remains an optional programmatic player-card initializer and
+is no longer installed on the homepage. It waits for registration and every
+private card before opening the explicitly selected original player link.
+The service encrypts canonical and seat credentials in an AES-256-GCM ticket.
+Each card receives an opaque ticket and authenticates using only its own
+existing token. Neither the host control token nor another player's private
+cards or credentials are added to player links or public views.
 
 Canonical updates and every projection use Firebase REST ETag conditional writes.
 A persisted transport epoch prevents stale tickets and new browser executors
@@ -79,8 +88,8 @@ secret, deploy, then verify readiness and blocked runtime paths. Runtime changes
 must reach this independent deployment as well as the original frontend.
 
 Missing service configuration still leaves legacy manager execution usable.
-Homepage independent launch reports an error and offers the existing game table
-if registration or publication fails. It never redirects early or claims a room
+The optional independent launcher reports an error and offers the existing game
+table if registration or publication fails. It never redirects early or claims a room
 is independent before its cards and sealed session match. Refresh participating
 pages after release. The original player links and room/player names are retained.
 
@@ -119,3 +128,10 @@ All 28 checks passed and all eight created nodes were safely removed. It never
 reads or changes an existing user room, lists room contents or logs credentials.
 The independent source project retains the deployed runtime so later search
 releases cannot accidentally remove the game route.
+
+The restored homepage manager path was regression-tested on 2026-10-09:
+1180 tests pass, including real Talk/CUT manager commands with no browser lease,
+manager closure followed by player operations and manager reconnection, plus
+held startup registration. Chat Wolf's enforcing CSP now permits the exact
+approved independent origin; every game management/player page was checked for
+connection-policy compatibility. Browser helper cache version is 3.

@@ -196,12 +196,19 @@ test('Talk recovery removes an absent question and advances an absent speaker wi
 });
 test('Crazy Talk server timer sends only each seat own prompt and shared managers remain normal players', () => {
   let s = act('letstalk', talk(3, true, { gameMode: 'crazy' }), 'start', 2);
-  const due = Math.min(...Object.values(s.crazy.nextAt).filter(n => n > 0));
+  const due = s.crazy.nextAssignAt;
   s = A.letstalk.pulse(s, ctx(2, { now: due + 1 }));
   const num = s.roster.find(p => s.crazy.prompts[p.playerNum]?.status === 'pending').playerNum;
-  const p = A.letstalk.project(s, num, ctx(num)), pub = A.letstalk.project(s, 0, ctx(0));
+  const p = A.letstalk.project(s, num, ctx(num, { now: due + 1 })), pub = A.letstalk.project(s, 0, ctx(0, { now: due + 1 }));
   assert.equal(pub.talk.crazy.prompt, null); assert.ok(p.talk.crazy.prompt);
   assert.equal(p.talk.hostControls, true);
-  s = act('letstalk', s, 'crazyDone', num, { promptId: p.talk.crazy.prompt.id }); assert.equal(s.replies[num].error, '');
-  const paused = act('letstalk', s, 'crazyPause', 2, { paused: true }); assert.equal(A.letstalk.pulse(paused, ctx(2, { now: due + 999999 })), paused);
+  assert.equal(p.talk.crazy.prompt.expiresAt - p.talk.crazy.prompt.at, 150000);
+  s = A.letstalk.apply(s, { id: 'finish-private-prompt', type: 'crazyDone', sessionId: s.sessionId, turnId: s.turnId, promptId: p.talk.crazy.prompt.id }, ctx(num, { now: due + 2 }));
+  assert.equal(s.replies[num].error, ''); assert.equal(s.scores[num], 1);
+  assert.equal(A.letstalk.project(s, num, ctx(num, { now: due + 2 })).talk.scores.find(row => row.playerNum === num).score, 1);
+  const paused = A.letstalk.apply(s, { id: 'pause-new-scheduler', type: 'crazyPause', sessionId: s.sessionId, turnId: s.turnId, paused: true }, ctx(2, { now: due + 3 }));
+  assert.equal(A.letstalk.pulse(paused, ctx(2, { now: due + 1000 })), paused);
+  const ended = A.letstalk.pulse(paused, ctx(2, { now: paused.gameDeadline }));
+  assert.equal(ended.phase, 'ended'); assert.equal(ended.scores[num], 1);
+  assert.equal(A.letstalk.project(ended, num, ctx(num, { now: ended.gameDeadline })).talk.actions.addTime, false);
 });

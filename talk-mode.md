@@ -1,3 +1,204 @@
+# Current: composer priority and optional round time — 2026-10-10
+
+The handwritten composer sits immediately below the topic and is expanded by
+default, with the textarea before recipient/type controls. An active private
+mission remains above the topic so its recipient can act on it first. Existing
+stable composer nodes, native-picker handling, IME drafts and frozen retries are
+preserved.
+
+Round remaining time is hidden by default. Each player can use a small local
+View time / Hide time toggle below the participants; the host has an optional
+toggle beside the round controls. A new session resets visibility to hidden.
+Preparation countdown feedback remains visible. Toggling time only changes
+local presentation and never writes a room command or preference.
+
+Playing screens show no mission-expiry timer, dispatch interval or next-mission
+countdown. Mission cards, local drafts, queue counts, active indicators, scores,
+add-time and finish controls remain. Authoritative round/mission deadlines,
+scheduling, replacements, scoring, membership and private handwritten archives
+are unchanged. Timing fields remain available to internal projection/command guards without becoming visible
+mission clocks.
+
+This is a frontend-only release: play.html and lets-talk.html load Talk UI/CSS
+with talk-calm-1; lets-talk.html also uses that tag for the host script.
+Engine/sync/runtime versions are unchanged; no backend deployment, runtime
+package or secret update is needed.
+
+Validation: local real Chrome verifies the default 15-minute round and
+2.5-minute internal mission TTL, composer placement/expansion, random recipients,
+queue priority, optional round time, hidden mission timing, scoring, immediate
+skip/expiry replacement, the two-slot cap, add-time and normal/Crazy automatic
+rest. EN/ZH desktop/375px screenshots were visually inspected; 320/375px
+layouts have no horizontal overflow.
+Native-picker regression passes five submissions and ten actual popup checks,
+with connected ancestors, drafts, retries and IME preserved.
+Integrated repository regression: 1548/1548 pass, with zero failures or skips.
+Frontend source ae46248 is published on main. Production verification passes
+18/18 Talk assets and 47/47 shared assets, service health/CORS/invalid-ticket
+checks and blocked private runtime paths. Real Chrome production demo confirms
+composer placement/default expansion, hidden clocks, optional time, random
+recipient and 375px layout. No existing room was accessed for this UI release.
+
+# Current: private handwritten archive and focused timed rounds — 2026-10-10
+
+Crazy Talk now retains accepted handwritten challenges for private system
+review. There is no public library, archive API or player-facing history panel.
+Each record captures text/type, author, explicit/random target, topic, known
+creation/delivery/end times and queued/pending/done/skipped/expired/cancelled status.
+Rejected submissions and system prompts are excluded. Every accepted transition
+is journaled in the canonical state; encrypted sidecar persistence completes
+before a successful player receipt is published. Versioned CAS writes tolerate
+retries, identical IDs from different authors and concurrent updates. Unflushed
+records survive topic changes and fresh host starts; authenticated retries can
+drain them after another game replaces the player cards. Acknowledging an older
+write never removes a newer record. Completed journal entries are pruned only
+after durable storage; ongoing entries retain their monotonic versions.
+
+The sidecar uses a stable keyed room identity under the existing per-token
+Firebase rules. Text and participant details are encrypted with an independent
+`CRAZY_TALK_ARCHIVE_SECRET`, never sent to browsers or saved in the repository.
+Future operator review uses scripts/talk-read-archive.cjs through authenticated
+Vercel env run, reading only an explicitly named room and outputting sanitized
+challenge details. It supports Taiwan dates and bounded result counts and never
+enumerates rooms. See scripts/talk-read-archive.md. This preserves future content;
+old overwritten player cards cannot be reconstructed. Legacy currently queued
+or pending handwriting is imported once with only its known timestamps.
+This also captures unlinked active handwriting accepted by an older writer
+during an upgrade. Sitting out cancels that recipient's pending challenge and
+queued items authored by or explicitly targeting them; other active recipients
+and unrelated random queue items remain. The private journal is updated before
+removal/publication. A membership-version fence prevents a delayed old response
+from restoring cancelled prompts, including partial card-publication retries.
+
+Release verification: 1540/1540 integrated repository tests pass, including
+membership/upgrade/ACK races. Local Chrome round behavior and 320/375px checks
+pass. Production private-archive flow passes 125/125; its four exact disposable
+nodes, including the encrypted archive, were removed through ownership/ETag
+checks with zero failures. Source 1a29d38 matches 18/18 Talk and 47/47 shared
+assets; both hosts block the private archive/reader paths. The active service is
+dpl_9AXaFRDkAFDzipH2Bmhf7kW3dSa8 in sin1. No existing user room was modified.
+
+Both Talk modes have an authoritative round clock, default 15 minutes
+(configurable from 1 to 60 minutes), hidden until the local View time toggle is
+used. Preparation is separate: its countdown remains visible, and the round
+clock begins when conversation starts. The shared screen and authenticated
+shared-control player cards can add one minute while a round is running, or
+finish early. At the deadline the
+round enters `ended`, pending missions are cancelled, queued cards are cleared,
+and a rest screen shows final Crazy Talk scores. Late commands cannot add time,
+earn points or resume that round. Opening a new topic starts a fresh preparation
+period, resets scores and preserves the chosen duration settings.
+
+Crazy Talk uses one shared internal random dispatch timer until the next
+participant gets a mission, rather than separate timers for every player.
+The playing UI does not show that timer or its interval. The default range is
+60–180 seconds; whole-second bounds may be 5–300, with minimum no greater than
+maximum. One card is assigned per operation, and at most two players have pending
+missions. Known absent players are excluded when authoritative presence is available;
+fixed-target cards wait for their recipient to return. The next scheduled slot waits
+while both slots are occupied. Skipping or reaching a mission deadline immediately passes a replacement to a different
+eligible player. A completed mission awards its recipient exactly one point;
+skips, expiry and cancellation award zero. Completion keeps the existing shared
+schedule. Every mission expires after 2.5 minutes by default (configurable from
+30 to 300 seconds). Pause stops new deliveries while mission and round clocks
+continue; replacements wait until delivery resumes.
+
+Sources remain system, players or mixed (default). The system bank has 136 short
+English cards: 70 lines and 66 improv tasks, at most 9 words and 48 characters.
+The latest 40 cards follow the supplied chicken sounds, cup romance, silly songs
+and body-part jokes; the original 96 IDs and text remain unchanged.
+A player can queue a handwritten line/task during preparation or conversation,
+including while delivery is paused. Submissions accept 1–120 trimmed characters,
+with at most 10 per author and 20 per room. The default recipient is a random
+other player; an explicit other player is optional. Cards remain queued until a
+scheduled delivery or skip/expiry replacement. Eligible player cards take
+priority; player-only mode never falls back to the system. Submission itself
+never reveals a card immediately. An occupied player is not overwritten.
+
+Private data projections include only the recipient's mission and its deadline,
+and only the author's queued count. Shared data projections include active
+participant numbers, aggregate counts, scores and the shared next-assignment
+deadline, without another player's mission or queue text. Deadline fields remain
+internal to client guards; playing screens render neither mission expiry nor
+dispatch timing. Scores, deadlines, expiry and replacement selection are
+authoritative and deterministic across transaction
+retries. Repeated completion commands cannot score twice. Old saved rooms
+receive a fresh round clock and safe mission deadlines during migration; their
+private cards remain, with excess old pending cards cancelled to enforce two
+slots. Legacy timing converts to the previous 80–120% range. `crazyTick` remains
+a clock alias; legacy `crazySend` only redraws a future shared timer.
+
+Player cards retain the navy/cream topic layout and private pink mission card,
+with active mission indicators and points. The expanded, textarea-first composer
+follows the topic; an active private mission stays above it. Round time is hidden
+by default behind a local toggle below the participants, and mission countdowns
+are absent.
+Speaking/question request buttons are removed. Chinese IME composition and
+unsent local drafts survive ordinary synchronization. The handwritten challenge
+composer and its ancestors stay connected during same-session updates, so an
+open recipient selector is not interrupted by another player or clock update.
+While a native recipient/type picker is being used, structural updates above
+it wait until selection or focusout; timers and connectivity controls continue.
+While a submitted card waits for confirmation, players can edit the recipient,
+kind and next draft; only sending another request waits. Retry uses the original
+submitted payload. A successful confirmation clears text only if text, recipient and kind still
+match that submission, preserving a newly prepared draft. Acknowledged request
+IDs cannot be recovered as pending by a delayed mailbox projection. Both host and player
+settings use minutes and reject fractional seconds. The homepage saves game,
+conversation and duration preferences in `lets-talk-settings.v2`; explicit home
+edits apply to the next setup while returning to an active round preserves it.
+Assigned, random and free conversation modes are unchanged.
+
+The library remains 96 shared situations and 672 distinct main/follow-up
+questions across 13 categories, with all stable IDs and source traces retained.
+Questions invite group proposals, shared choices and responses to others rather
+than personal interviews. Main questions and explanations are at most 26 words.
+Existing active topics stay saved until an explicit new topic is opened.
+
+Runtime changes require publishing both the independent service and frontend.
+No audio API or automatic speech judgement is used; players mark their own
+mission complete. Only authenticated recipients can acknowledge their prompt.
+
+Latest selector release verification: all 1366 project tests passed, including
+38 player-card tests. Isolated real Chrome passed five consecutive custom
+submissions and ten native recipient/type pickers kept open across live updates,
+plus first completion/skip/management clicks after Escape, pointer and keyboard
+handover, connected ancestors, next-draft preservation, frozen 200-second retries,
+queue errors, roster changes, Chinese IME, offline recovery and ended/new sessions.
+The full local round browser checks also passed at 375px and 320px without
+overflow or page errors. Independent review repeated the picker and first-click
+checks. Production service deployment dpl_EBGeShNd3YGqioRRsHYBUgTHw7m5 is READY
+in sin1 with the current Talk, CUT, Bluff and Once runtimes. Live service smoke
+passed 94 checks; all eight exact owned fixture nodes were cleaned with no
+failures. The service source contains the explicit 50 packaged files and no
+local credentials were copied. Source release: 408cb08. No existing user-room
+data was accessed. Production Talk assets match 17/17 and whole-site assets
+45/45; service health, CORS, invalid-ticket rejection and private-runtime 404
+checks pass. The same isolated Chrome fixture against the published UI passes
+five submissions, ten native pickers and first-click behavior with zero errors.
+The production round/demo flow also passes queue priority, scores, skip/expiry,
+two-slot cap, add-time, automatic rest and 375px/320px layouts without errors.
+Newly added challenges follow the earlier supplied examples,
+since the unavailable desktop connection could not retrieve today's cards.
+
+Previous timed-round release verification: all 1325 project tests passed. Real Chrome verified
+homepage defaults of 15 minutes per round and 2.5 minutes per mission,
+the shared scheduler, queued custom priority and random non-author recipient, completion +1, immediate skip/expiry replacement,
+two-slot cap, add-time, normal/Crazy automatic rest screens and 375px/320px layouts
+without overflow or page errors. Independent review reproduced and verified fixes
+for Firebase-empty waiting state and known-absent recipients.
+
+Production frontend assets matched Talk 17/17 and full-site 45/45; API readiness,
+CORS, invalid-ticket rejection and private-runtime 404 checks passed. Real Chrome
+on production repeated all gameplay and layout checks without page errors.
+The independent service and frontend are published. Live RPC smoke passed
+82 checks, including actual automatic round expiry and mission TTL, shared
+slots, queue priority, skip replacement, duplicate-safe scores and add-time.
+All eight exact owned fixture nodes were cleaned with zero cleanup failures.
+The final content release is dbc027e; no existing user-room data was accessed.
+
+The earlier descriptions below document historical versions.
+
 > Independent execution (2026-10-09): the optional, configured room service lets remaining players continue with the original private-card links after the host closes the page. See [service activation and recovery](hub-executor-mode.md). Without the deployment secret, the legacy browser-host requirements below still apply.
 
 # Let's Talk v0.7 · Normal Talk / Crazy Talk

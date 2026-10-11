@@ -121,7 +121,7 @@ test('duet allows one active non-Spotlight partner without changing score or res
 });
 
 test('challenges avoid every repeat until the whole bank has been used, including deck boundaries', () => {
-  let s = create(); const ids = [s.challenge.id];
+  let s = create({ mode: 'mission' }); const ids = [s.challenge.id];
   for (let i = 1; i < C.challenges.length; i++) { s = act(s, 'newChallenge'); ids.push(s.challenge.id); }
   assert.equal(new Set(ids).size, C.challenges.length);
   const last = s.challenge.id;
@@ -766,4 +766,85 @@ test('new game controls reject legacy players and inactive players and require e
   s = act(s, 'exclude', { actor: 1, playerNum: 2, active: false });
   const before = s.teamScore;
   s = act(s, 'restart', { actor: 1 }); assert.equal(error(s, 1), 'not_enough_players'); assert.equal(s.teamScore, before);
+});
+
+test('new games default to Life Song prompts while Mission Rescue keeps the original challenges', () => {
+  const life = create(), mission = create({ mode: 'mission' });
+  const lifeIds = new Set(C.lifePrompts.map(p => p.id)), missionIds = new Set(C.challenges.map(c => c.id));
+  assert.equal(life.mode, 'life'); assert.ok(lifeIds.has(life.challenge.id));
+  assert.equal(E.view(life, 0, 1000).openmic.mode, 'life');
+  assert.equal(mission.mode, 'mission'); assert.ok(missionIds.has(mission.challenge.id));
+  assert.equal(E.view(mission, 2, 1000).openmic.mode, 'mission');
+  assert.throws(() => create({ mode: 'karaoke' }), /invalid_mode/);
+  let s = life;
+  for (let i = 0; i < C.lifePrompts.length; i++) { s = act(s, 'next'); assert.ok(lifeIds.has(s.challenge.id), 'life turns stay on life prompts'); }
+});
+
+test('saved games from before modes stay on Mission Rescue', () => {
+  const legacy = create({ mode: 'mission' }); delete legacy.mode;
+  assert.equal(E.view(legacy, 1, 1000).openmic.mode, 'mission');
+  const next = act(legacy, 'next');
+  assert.ok(C.challenges.some(c => c.id === next.challenge.id));
+  assert.equal(E.view(next, 0, next.lastChangeAt).openmic.mode, 'mission');
+});
+
+test('managers switch modes: the prompt redraws during the challenge, otherwise from the next turn', () => {
+  let s = create();
+  s = act(s, 'setMode', { mode: 'mission' });
+  assert.equal(error(s), ''); assert.equal(s.mode, 'mission'); assert.ok(C.challenges.some(c => c.id === s.challenge.id));
+  const turn = s.turnId; s = act(s, 'setMode', { mode: 'mission' }); assert.equal(s.turnId, turn, 'same mode is a no-op');
+  s = act(s, 'success'); const kept = s.challenge.id;
+  s = act(s, 'setMode', { mode: 'life' });
+  assert.equal(s.mode, 'life'); assert.equal(s.challenge.id, kept, 'mid-turn switch keeps the current card'); assert.equal(s.phase, 'choice');
+  s = act(s, 'next'); assert.ok(C.lifePrompts.some(p => p.id === s.challenge.id));
+  assert.equal(error(act(s, 'setMode', { mode: 'disco' })), 'invalid_mode');
+  assert.equal(error(act(s, 'setMode', { actor: 2, mode: 'mission' }), 2), 'not_available', 'players without shared controls cannot switch');
+  const shared = { ...s, sharedControls: true };
+  assert.equal(act(shared, 'setMode', { actor: 2, mode: 'mission' }).mode, 'mission', 'shared-control players can switch');
+});
+
+test('restart keeps the current mode unless a new one is chosen', () => {
+  let s = act(create(), 'setMode', { mode: 'mission' });
+  s = act(s, 'restart'); assert.equal(s.mode, 'mission'); assert.ok(C.challenges.some(c => c.id === s.challenge.id));
+  s = act(s, 'restart', { mode: 'life' }); assert.equal(s.mode, 'life'); assert.ok(C.lifePrompts.some(p => p.id === s.challenge.id));
+  assert.equal(error(act(s, 'restart', { mode: 'x' })), 'invalid_mode');
+});
+
+test('life prompts are bilingual, unique, short and simple', () => {
+  assert.ok(C.lifePrompts.length >= 30);
+  assert.equal(new Set(C.lifePrompts.map(p => p.id)).size, C.lifePrompts.length);
+  assert.ok(C.lifePrompts.every(p => p.id.startsWith('life-') && !C.challenges.some(c => c.id === p.id)));
+  for (const p of C.lifePrompts) {
+    for (const key of ['title', 'situation', 'challenge', 'successRule']) {
+      assert.ok(p[key].en && p[key].zh, p.id + ' ' + key);
+      assert.doesNotMatch(p[key].en + p[key].zh, /[<>]/);
+    }
+    assert.ok(p.challenge.en.split(/\s+/).length <= 20, p.id + ' question is short');
+  }
+});
+
+test('Now & Next is its own mode with its own deck; Life Song keeps the original memory prompts', () => {
+  const nextIds = new Set(C.nextPrompts.map(p => p.id)), lifeIds = new Set(C.lifePrompts.map(p => p.id));
+  let s = create({ mode: 'next' });
+  assert.equal(s.mode, 'next'); assert.equal(E.view(s, 1, 1000).openmic.mode, 'next');
+  for (let i = 0; i < C.nextPrompts.length; i++) { assert.ok(nextIds.has(s.challenge.id)); s = act(s, 'next'); }
+  assert.ok(C.lifePrompts.length === 36 && [...lifeIds].every(id => !nextIds.has(id)), 'memory deck is unchanged and separate');
+  let life = create(); life = act(life, 'setMode', { mode: 'next' });
+  assert.ok(nextIds.has(life.challenge.id), 'switching during the prompt redraws from Now & Next');
+  life = act(life, 'restart'); assert.equal(life.mode, 'next');
+  assert.equal(E.view({ ...life, mode: 'karaoke' }, 0, life.lastChangeAt).openmic.mode, 'mission', 'unknown saved modes fall back to missions');
+});
+
+test('Now & Next prompts are bilingual, short, balanced between now and future, with a follow-up and a song hook', () => {
+  const N = C.nextPrompts;
+  assert.ok(N.length >= 20); assert.equal(new Set(N.map(p => p.id)).size, N.length);
+  assert.ok(N.filter(p => p.tags.includes('now')).length >= 10 && N.filter(p => p.tags.includes('future')).length >= 10);
+  for (const p of N) {
+    assert.ok(p.id.startsWith('next-'), p.id);
+    for (const key of ['title', 'situation', 'challenge', 'followUp', 'successRule']) {
+      assert.ok(p[key].en && p[key].zh, p.id + ' ' + key); assert.doesNotMatch(p[key].en + p[key].zh, /[<>]/);
+    }
+    assert.ok(p.challenge.en.split(/\s+/).length <= 20 && p.followUp.en.split(/\s+/).length <= 12, p.id + ' stays short');
+    assert.match(p.successRule.en, /song/i, p.id + ' ends with a song question');
+  }
 });

@@ -1,3 +1,537 @@
+## CURRENT: CUT Mode 2 manual interruption timing - 2026-10-11
+
+Mode 2 now accepts firstCutMinSeconds / firstCutMaxSeconds (default 25-45)
+and cutIntervalMinSeconds / cutIntervalMaxSeconds (default 30-55), each a
+whole second from 5 to 300 with min <= max. Equal bounds mean fixed timing.
+The first range controls main speaking time before the first interruption;
+the second controls main speaking time after DONE/SKIP and the return beat.
+The interrupter still has unlimited time. Default weighted pacing remains.
+Host and shared player settings expose both ranges. Same-mode edits retain
+topic/speaker/used mainClock; restart, next and mode switches retain settings.
+Legacy Mode 2 settings are filled without redrawing pending deadlines.
+CUT assets cut-12. Publish frontend plus the independent hub-executor service.
+Targeted tests cover timing, validation, clocks, settings, migration and privacy.
+Real-service QA script: scripts/cut-jump-production-smoke.cjs (fresh marked
+four-node fixture only, conditional writes and ownership-checked cleanup).
+Production service deployed; live QA passed 22 checks and cleaned all 4 nodes.
+Integrated regression: 1646/1646; discovery/retired lyrics service: 39/39.
+Host demo browser verified invalid ranges, saved values and return to settings.
+
+## CURRENT: Sketch Relay (Telestrations-style drawing telephone) — 2026-10-11
+
+New game `sketch-relay.html` (🖍️ Sketch Relay), last homepage card, 4–9 players
+on the existing room and `play.html` links. Same concept/rules as Telestrations
+with original words/UI: private six-word card + one shared die roll (owner may
+move to the next word up to 5 times); even groups draw their own word first,
+odd groups pass it first; books move one seat after every page; drawing pages
+timed 45/60(default)/90/120 s or untimed, guesses untimed; cards hand in their
+page at the deadline; owner (or host) reveals page by page; scoring friendly
+(favourite drawing/guess + matching last guess, default), competitive
+(guesser+artist per match, owner for matching last guess) or none; next round
+keeps totals. Absent/sit-out pages are skipped (never invented) and the next
+player answers the last real page; host auto-skips a missing drawing 20 s after
+the deadline. Players draw on their phones (canvas pad, 7 colours, 4 sizes,
+eraser, undo, clear; drafts saved locally). Files: sketch-relay-words/art/
+engine/sync/ui/host .js, sketch-relay.html/.css (asset `relay-1`), play.html
+branch (`relayAction` mailbox, `relayLive` heartbeat child). Trusted-host
+legacy transport only: canonical split into lease/core/opening so lease renewal
+never rewrites drawings; NOT registered with the independent hub-executor
+service (that needs a service deployment), so the host page must stay open.
+Frontend-only release; no secret or database-rule change. Full regression
+1635/1635 (after merging Bomb Relay/CUT Mode 2); real-page Chromium e2e (4 EN / 5 ZH players, reload, timer, grace
+skip) passed on an in-memory Firebase stand-in. See sketch-relay-mode.md.
+
+## CURRENT: Bomb Relay (妙傳爆趣 rules) — 2026-10-10
+
+New game `bomb-relay.html` (h1 💣 Bomb Relay), same mechanics as the board game
+《妙傳爆趣》/ Pass the Bomb Junior with 60 original scene cards: the holder lights
+the fuse on their own play.html card, says one thing that belongs in the picture
+and taps PASS (seat order, sitting-out players skipped). Anyone but the
+challenged player may tap “Didn’t count” once per answer: the bomb goes back.
+The random fuse (Classic 10–60s / Quick 8–25s / Relaxed 20–80s) exists only in
+the host control node; view() never projects explodeAt/remainingMs. Whoever
+holds it at the explosion takes the card and starts the next; after 5/10/15/20
+cards the fewest bomb cards wins. Trusted-host browser sync modeled on CUT
+(lease, opening baselines, game-switch suspend, parallel card writes); NOT on
+hub-executor, so frontend push only — no service deployment or secret change.
+Hub card sits right before BLUFF PARTY because tests lock BLUFF → CUT → Open Mic
+as the last three. First-pass art is assets/bomb-relay/<id>.svg (4:3) from
+scripts/bomb-relay-build-art.cjs; refined art replaces files by the same name
+and bumps ART_VERSION in bomb-relay-deck.js — never rerun the script over
+refined art. Assets br-1 (play.html loads bomb-relay-deck/ui + CSS). Tests
+1608/1608 after rebasing on CUT Mode 2. See bomb-relay-mode.md.
+
+## CURRENT: CUT Mode 2 · Jump In — 2026-10-11
+
+CUT has two modes. Mode 1 · Take Over is the original game: its rules, topics,
+copy and defaults are unchanged and it stays the default. Mode 2 · Jump In keeps
+ONE Main Speaker per round (state.speaker); hidden randomised CUTs bring in one
+other player with no timer, and DONE/SKIP returns the floor after a ~2.5s beat.
+State carries mode (missing = classic for old saves); Mode 2 phases are
+ready/countdown/speaking/interrupt/back/break and never use cut/handoff.
+mainClock runs only in speaking; private deadline = next CUT or end of round.
+The clock NEVER ends a round by itself (user requirement): at zero the round
+waits in phase timeup until someone taps +1 minute (extend; any active player
+or host, any time in the round, max 10 extra minutes) or the table agrees and
+confirms End topic. Keep that verbal-consent confirmation; no automated vote.
+First CUT 25–45s, then 30–55s of talking time, none in the last 12s (about 4–6
+per 4-minute round). Main Speakers rotate once each per random cycle;
+interrupters use Mode 1's weighted draw on their own ledger. Mode 2 has its own
+80-topic pool in cut-jump-topics.js, never mixed with cut-topics.js; switching
+mode in settings always opens a new topic. All tuning lives in
+CUT_CONFIG.jump. Do not redesign Mode 1 or merge the two pools.
+CUT assets cut-12; hub-launcher loads cut-jump-topics.js before the engine.
+Tests: 19 new in tests/cut-jump.test.cjs; browser-checked in cut.html?demo=1.
+ENGINE + CONTENT CHANGE: push the frontend and deploy the independent service
+together; pushing to main alone would make service rooms run Mode 2 as Mode 1.
+Verified against the real service with a fresh disposable room; real voice-session feedback remains pending. See cut-mode.md.
+
+## CURRENT: Open Mic Now & Next mode — 2026-10-10 (branch claude/open-mic-now-next)
+
+Third Open Mic mode beside Life Song (memories, original 36 prompts, unchanged
+on main) and Mission Rescue. Now & Next has 24 prompts (12 now / 12 future) in
+OPEN_MIC_CONTENT.nextPrompts, each with a follow-up for listeners and a
+prompt-specific song question. Engine MODES life/next/mission. Tests 1560/1560.
+ENGINE + CONTENT CHANGE: merge this branch and deploy the independent service
+together; pushing to main alone would let service rooms fall back to missions
+after the first Now & Next turn. See open-mic-mode.md.
+
+## CURRENT: Open Mic Life Song mode — 2026-10-10 (branch claude/open-mic-life-song)
+
+Open Mic Rescue now has two modes. Life Song (default): a life prompt → share a
+real moment (host marks Story shared +2 / Pass) → choose the song it brings
+back and sing a little (+1). Mission Rescue is the original challenge game.
+Engine state carries mode (missing = mission for old saves), view() projects
+it, managers use setMode, restart keeps mode. 36 lifePrompts in
+open-mic-content.js. Assets life-1 / CSS om-12. Tests 1557/1557.
+ENGINE CHANGE: deploy the independent service from this checkout (package
+script) together with merging this branch to main. Until then, service rooms
+would show mission wording with a life first prompt, which is why this work
+was pushed to a branch instead of main. See open-mic-mode.md.
+
+## CURRENT: Dixit reveal voter lists and picture size — 2026-10-10
+
+On REVEAL/FINISHED, every positive vote count (Storyteller card, voted pictures,
+round gallery) is an inline pill button; tapping shows "by: names" / 「來自：names」
+to its right on the same line (no extra row), from public result.rows
+voteCardId, so nothing appears before the full reveal. Zero counts stay plain
+text. Open lists live in Card.openVoters, survive re-renders, reset each turn.
+Desktop reveal pictures keep the original screen-fit size (whole picture visible
+when the reveal opens) but now via pure CSS: width = min(column, max(200px,
+(100svh - --dx-phase-height - 130px) * 3/4)). The old JS measured the live
+viewport position every 200ms, so pictures grew/shrank while scrolling; a later
+measure-once attempt could draw them tiny. Both JS approaches are removed.
+Verified equal to the original within 1px at 1920x950/1080, 1536x730, 1366x650,
+1280x800 and constant while scrolling. Mobile stays full width.
+dixit.html/play.html load Dixit CSS and UI as dixit-16. Browser-only release.
+
+## CURRENT: Dixit card-submission statuses — 2026-10-10
+
+After the Storyteller's clue (SUBMIT), the phase bar now lists every player like
+VOTE does: Card submitted / Choosing a card / Storyteller · card chosen /
+Sitting out this round, from public roster.submitted and roundPlayerNums. It
+uses data-dx-submit-* attributes (VOTE keeps data-dx-vote-*) and never shows
+which card anyone chose. dixit-ui.js loads as dixit-12 in dixit.html/play.html;
+CSS stays dixit-11. Browser-only; no engine/service change. Tests 1549/1549.
+
+## CURRENT: Homepage cleanup — 2026-10-10
+
+Kangaroo Court (Beta版) was removed: the `kangaroo-court-beta/` folder and its
+homepage card are gone; root Kangaroo Court is unchanged. The homepage no longer
+shows the Let's Talk / Crazy Talk settings panel (mode, conversation, durations,
+Crazy source/interval); those settings live only on lets-talk.html's own setup.
+talk-settings.js stays for the host page; without homepage edits no one-visit
+setup intent is created, so the host uses its saved preferences. Frontend-only.
+
+## CURRENT: Talk composer priority and optional round time — 2026-10-10
+
+The handwritten composer sits immediately below the topic and is expanded by
+default, with the textarea before recipient/type controls. An active private
+mission remains above the topic so its recipient can act on it first. Existing
+stable composer nodes, native-picker handling, IME drafts and frozen retries are
+preserved.
+
+Round remaining time is hidden by default. Each player can use a small local
+View time / Hide time toggle below the participants; the host has an optional
+toggle beside the round controls. A new session resets visibility to hidden.
+Preparation countdown feedback remains visible. Toggling time only changes
+local presentation and never writes a room command or preference.
+
+Playing screens show no mission-expiry timer, dispatch interval or next-mission
+countdown. Mission cards, local drafts, queue counts, active indicators, scores,
+add-time and finish controls remain. Authoritative round/mission deadlines,
+scheduling, replacements, scoring, membership and private handwritten archives
+are unchanged. Timing fields remain available to internal projection/command guards without becoming visible
+mission clocks.
+
+This is a frontend-only release: play.html and lets-talk.html load Talk UI/CSS
+with talk-calm-1; lets-talk.html also uses that tag for the host script.
+Engine/sync/runtime versions are unchanged; no backend deployment, runtime
+package or secret update is needed.
+
+Validation: local real Chrome verifies the default 15-minute round and
+2.5-minute internal mission TTL, composer placement/expansion, random recipients,
+queue priority, optional round time, hidden mission timing, scoring, immediate
+skip/expiry replacement, the two-slot cap, add-time and normal/Crazy automatic
+rest. EN/ZH desktop/375px screenshots were visually inspected; 320/375px
+layouts have no horizontal overflow.
+Native-picker regression passes five submissions and ten actual popup checks,
+with connected ancestors, drafts, retries and IME preserved.
+Integrated repository regression: 1548/1548 pass, with zero failures or skips.
+Frontend source ae46248 is published on main. Production verification passes
+18/18 Talk assets and 47/47 shared assets, service health/CORS/invalid-ticket
+checks and blocked private runtime paths. Real Chrome production demo confirms
+composer placement/default expansion, hidden clocks, optional time, random
+recipient and 375px layout. No existing room was accessed for this UI release.
+
+## CURRENT: Mid-game membership in six games — 2026-10-10
+
+Dixit, Once Upon a Time, Bluff Party, CUT, Open Mic and Talk now retain the live
+session when Hub count/names change. Chat Wolf is explicitly excluded. Original
+seat numbers/tokens stay fixed; additions append, scores start at zero and old
+hands/scores/topics/clocks/history remain. Dixit waits for next round, Once for a
+safe narrative turn, Bluff for fresh topic/roles; party games add future turns.
+Home managers keep control without an own-name prompt or remaining open. Player
+cards can mark participants away and return via their original links; explicit
+away differs from transient absence. Game minimums and existing seat caps remain.
+
+The service exposes authenticated updateRoster/setParticipant with exact command
+receipts, source/private ETags and same-session membership capsule lineage. New
+capsules cannot inherit old-seat authority; restarts retire all membership
+lineage. A moved inactive source is ignored for continuation and never rewritten;
+every reactivation (including legacy exclude/recover) proves fresh ownership
+before committing. Exact lost requests are retried; terminal validation/switch
+errors retire pending requests. Hub checks cannot overwrite active games or race
+a new empty seat. Registered Dixit/Once/CUT/Mic managers defer cached count/source
+classification to the authoritative service. Bluff reconnect/publication respects
+away originals and retained suffix seats. Story participation controls stay below
+the cards; Talk/CUT/Mic keep their own controls. Intentional away/new status never
+pretends to be an offline blocker. See membership-mode.md.
+
+Verification: 1526/1526 integrated repository tests passed, including the private
+Talk archive, exact membership retries, original Hub button-check guards and
+Firebase-empty projection compatibility. The final remote test-only Firebase
+normalization addition also passed all 5 archive smoke harness cases.
+Real local Edge checks pass 136/136 EN/ZH scenes at 320/375/1000/1440px, including
+home managers, private/away/pending actors and actual scoped button operations.
+The integrated production service dpl_Du3s5dBrJyEMyEMP2j7fZhBa4eUM is READY,
+and inspect confirms the approved stable domain points to that deployment. Fresh real
+service membership checks pass 120/120 across all six games; 39 exact disposable
+nodes were tracked, 38 deleted, 1 already empty, zero cleanup failures. An initial
+QA-only empty-hand assertion was adapted to Firebase omission; its 15 disposable
+nodes were also cleaned. No existing user room was used. Deployment preserves the
+stable Production secret, Hub-only sin1 placement and other service functions.
+The concurrent private Talk archive is integrated. Membership cancels relevant
+handwritten missions and drains committed journal updates before publication or
+receipts, including exact failed-write retries. Original Hub word/button checks
+are guarded, and room/count changes clear stale Reveal controls. Runtime graph
+was copied back to the owned service source (44 exact game/runtime dependencies)
+for future deployments. Integrated frontend source ce99d8e is pushed to main.
+Public verification passed 47/47 executor assets and 103/103 Dixit assets; owned
+service health/CORS/synthetic ticket rejection pass, and runtime source returns
+404 on both domains. Fresh post-integration membership smoke again passes
+120/120 across all six games, with all 39 disposable nodes cleaned (38 deleted,
+1 empty, zero failures). Existing user rooms were not accessed.
+
+## CURRENT: Private Crazy Talk handwritten archive - 2026-10-10
+
+Accepted handwritten Crazy Talk challenges and their outcomes are retained for
+private operator inspiration. The user explicitly requested system-only storage;
+never add a public archive view, player export or archive-read API. Only a named
+room may be read through scripts/talk-read-archive.cjs; see its adjacent .md for
+the private env-run workflow. Never enumerate rooms or print/save environment
+keys. CRAZY_TALK_ARCHIVE_SECRET is an independent 64-hex Production backend
+configuration, installed before deployment; retain it and HUB_EXECUTOR_SECRET.
+
+Talk journals accepted queue items in the canonical state, carries them across
+new topics/fresh sessions, and versions assigned/completed/skipped/expired/
+cancelled outcomes. Private AES-GCM records live separately from replaceable
+cards under a room identity derived from HMAC. The service drains the journal
+outside canonical CAS before public receipts; ACKs never discard newer updates.
+Exact authenticated retry drains pending writes even after a player game switch.
+Projection whitelists never include archive history/IDs. Keep runtime/story-
+executor archiveEntries/ackArchive, core flushArchive, api archiveSecret binding,
+and runtime/talk-archive-store.cjs in future service packages. Archive/runtime
+rule changes require an integrated service deployment retaining current membership,
+CUT/Dixit/Bluff/Once behavior, search functions and Hub-only sin1 placement.
+Talk sync uses talk-archive-1; Talk engine and dynamic helpers use talk-archive-2. Historical overwritten cards cannot be
+recovered; legacy surviving queued/pending handwriting retains only known times.
+Integrated full regression passes 1540/1540; local Chrome round/timer/queue/privacy
+and mobile 320/375 checks pass. Membership changes cancel relevant archived work;
+publication checks membershipRevision so delayed writes cannot restore a cancelled
+prompt. Upgrade normalization captures only unlinked queued/pending handwriting
+from older writers, even with an initialized envelope, without reviving persisted
+terminal history. Production service dpl_9AXaFRDkAFDzipH2Bmhf7kW3dSa8 is READY;
+the public alias resolves to that integrated sin1 deployment. A fresh owned room
+passes 125/125 live private-archive checks: queued/assigned/done/cancelled states,
+score, topic/end/game-switch retention and the exact-room operator reader. All
+four exact fixture nodes, including its encrypted sidecar, were conditionally
+cleaned; zero failures. Three initial probes caught a simultaneous pre-archive
+membership deployment; all nine nonempty fixture nodes were cleaned. No existing
+user room was modified or used for these tests. Frontend source 1a29d38 matches
+18/18 Talk and 47/47 shared assets; health/CORS/invalid-ticket checks pass. Archive
+writer/reader paths are blocked on both public hosts (4/4). The 51 approved
+service package files are retained in the owned service source for future deploys.
+
+## CURRENT: CUT topic clock — 2026-10-10
+
+Each CUT topic has a shared visible 10-minute clock, adjustable to integer
+1–60 minutes in host and shared-player settings. First GO starts it; CUT
+waiting counts, while Pause/settings/break/stopped freeze it. Return from
+settings waits for manual GO; paused CUT resumes its clock on Resume.
+Next topic and Restart reset the full current duration. Changing minutes keeps
+actual elapsed time. Zero only reminds everyone to agree before End topic;
+it never triggers CUT, ends the story or replaces the topic. Keep all original
+manual starts and private individual speaking deadlines/fairness data.
+Public topicMinutes/topicClock project only durationMs/elapsedMs/runningSince.
+Legacy active speaking/CUT starts a fresh 10-minute clock on upgrade without
+guessing old elapsed time. Reconnect must not reset it. Browser countdowns use
+existing local pulses, not per-second room writes. CUT assets use cut-10.
+Runtime rule changes require the owned service plus frontend publication,
+retaining the latest Talk/Bluff/Once runtime and sin1 deployment settings.
+Full regression 1359/1359 passed after integrating current Dixit UI; timer expiry preserves the story and shared
+controls, with legacy/reconnect/privacy coverage. UI used DOM automation because
+the desktop browser connection could not start. See cut-mode.md.
+
+## CURRENT: Dixit all voted pictures and individual vote status — 2026-10-10
+
+The previous reveal renderer intentionally selected only the second distinct vote
+count, so a higher-voted decoy could disappear. The right column now includes
+EVERY non-Storyteller picture with at least one ballot, sorted by descending
+individual card votes; equal counts keep shuffled table order. The answer stays
+once in the center with its vote count, and the compact round scores remain on
+the left with shared header/content rows. First right owner/count sit above its
+image; further large pictures and their owner/count metadata extend downward.
+Zero-vote pictures remain available in the complete round gallery rather than
+filling the focused result. Three-player double submissions count each physical
+card independently; old object-shaped result rows remain supported.
+During VOTE, the main phase bar shows every player's name and Voted / Waiting
+for vote / Storyteller (no vote required) / Sitting out this round. Public
+roster.voted and shared roundPlayerNums already provide these flags; no engine,
+runtime, private ballot or ownership publication changes are needed. An offline
+real voter retains their vote, while an excluded unvoted player is marked out.
+The status list disappears outside VOTE and refreshes bilingually. Full private
+choices remain hidden until the complete result is public. Host/private players
+use the same renderer. Both entries load CSS/UI with dixit-11; other assets keep
+their existing versions. Browser-only release; no independent service deployment
+or secret changes. Preserve concurrent Talk and Bluff work.
+Full repository regression: 1333/1333 passed, including the updated 45 UI
+cases and 38 engine cases for actual vote completion/privacy/recovery.
+Real local Edge QA passed 200 synthetic shared/private EN/ZH scenes at
+1440/1000/736/375/320px, with no page overflow, aligned first score/image
+tops, all positive-vote cards, secret ballots and accurate recovery statuses.
+Screenshots were inspected; no real room or Firebase data was used.
+Frontend release ca994b5 is published; production assets match 103/103,
+including both entry pages, renderer, styles and existing artwork versions.
+
+## CURRENT: Bluff fast host opening — 2026-10-09
+
+Bluff was slower than the other game managers because opening/polling waited for
+full guarded service execution, private publications and histories. A fresh
+455faa1 synthetic baseline measured first opening 7.7s, reconnect 4.8s and host
+poll 3.8s; its Firebase canonical read alone took about 58ms. Host display now
+reads the sealed canonical plus every exact original/formal private seat in one
+parallel wave, verifies the same published epoch/bindings, and projects only a
+cloned public view. No private role, source credential or history write is
+emitted. Same-epoch private phase/revision lag is allowed; missing, legacy or
+wrong-epoch projections still fall back to guarded service repair. Changed
+original cards still fail game_switched. Commands and all player pulses remain
+owned by the independent service; closing the manager is supported.
+Deferred initial import seeds only absent formal private nodes with per-node
+ETag CAS. Existing cards/mailboxes and global histories are untouched; final
+registration merges histories and publishes every complete seat. Ordinary legacy
+standalone refresh behavior remains unchanged. Engine/topics/sync preload in
+parallel. Bluff uses helper v8, UI v12 and sync host-snapshot-3.
+Package only api/hub-executor.js in sin1 beside the existing Singapore RTDB,
+retaining unrelated service functions, settings and the stable Production secret.
+Preserve the latest Talk timed mission release when deploying the whole runtime.
+Both independent service deployment and frontend publication are required.
+Full regression after integrating the latest Talk release: 1297/1297 passed.
+Production service deployment dpl_A3tfDEDkEDuhtu6CWZ88Cpr77MXR is READY;
+actual response confirms sin1. Frontend release 91c58d3 matches all 45/45 assets;
+health/CORS, invalid-ticket rejection and blocked runtime URLs pass. One fresh
+three-player real-service profile passes 44/44: first opening 7.7s -> 2.2s,
+reconnect 4.8s -> 0.7s, host poll 3.8s -> 0.12s. Registration RPC 4.26s -> 0.23s,
+actual start command 3.50s -> 0.20s. Reconnect/poll perform zero execute RPCs;
+commands still execute once. Exact cleanup tracked 13 disposable nodes, deleted
+11 nonempty owned nodes, found 2 empty, and had zero failures. These are single
+synthetic-room flow measurements, not a promise for every network/browser load.
+The approved service source retains its Hub-only Singapore region for later
+search deployments; its stable Production secret was unchanged.
+
+## CURRENT: Bluff host synchronization timeout — 2026-10-09
+
+The repaired live room already had matching service projections/sharedControls,
+but a host reconnect could still time out: the browser aborted RPCs at 12 seconds
+while the deployed service has a 60-second execution budget. Bluff guard read
+original sources sequentially, and native reconnect repeated a full guarded
+publication up to three times. Concurrent player pulses/CAS retries compounded it.
+Source guard now reads independent exact cards in parallel, with fresh checks at
+every canonical retry and private publication. Register returns its completed
+public Bluff host projection; ensureBluff emits it and reuses an already verified
+matching ticket/view. Native UI refreshes again only for legacy service responses
+without that valid view. Keep all source/epoch, seat, history and private guards.
+RPC timeout is 65 seconds to cover service completion and network reply; health
+checks remain short. Host timeout feedback offers in-page Retry connection with
+its same Hub roster. Bluff loads helper v6/UI v11/sync host-publication-2.
+Runtime changes require independent-service deployment AND frontend publication;
+keep the existing Production secret and all current Talk/CUT/Once dependencies.
+Full regression: 1261/1261 passed, including 14 new timeout, duplicate-RPC,
+retry, parallel verification, CAS conflict and private-projection checks.
+
+## CURRENT: Bluff host registration recovery — 2026-10-09
+
+The remaining native-host error was a publication race: executorDeferred stopped
+automatic registration but left the legacy 1500ms polling writer running. During
+slow registration it could alter private-card fingerprints after the service
+captured its opening snapshots, leaving a sealed partial epoch. Players could
+still display a legacy lobby with sharedControls=false and an old hubExecutor,
+but their ticket returned stale_session; the manager then returned game_switched.
+Bluff scheduling now suppresses deferred timers and already-queued callbacks.
+Native opening/restart clears polling and drains an in-flight private projection
+before source capture/import; only successful publication/registration resumes
+polling. A matching active table normally keeps its epoch. An explicit current-Hub
+replaceActive reopen may repair game_switched only after rereading every original
+binding; release uses its existing manager credential and sealed epoch. Other
+connection errors or changed source bindings never authorize that repair. Keep
+round, roles, scores, original credentials and persistent knowledge histories.
+Bluff loads helper v5, UI v10 and sync host-publication-2. Browser-only change;
+no independent runtime deployment or secret change. CUT is maintained separately.
+The real Client/helper/core reproduces the reported stale-ticket/host-blocked
+state and verifies repair, slow registration and queued-callback protection.
+Final full regression after integrating current Talk updates: 1247/1247 passed.
+
+## CURRENT: Talk shared discussion topics and timed missions — 2026-10-09
+
+The topic library uses shared situations that the whole
+table can discuss and shape together: concrete plans, rules, trade-offs,
+imagined games and playful decisions. Main questions, explanations and
+follow-ups should invite people to respond to one another, negotiate or build
+on a proposal, rather than interview each person about private experiences.
+Keep all 96 stable topic IDs and 13 category IDs. Both original 48 topics and
+48 Chat Wolf-derived topics receive new wording. Adapted topics keep their
+sourceTopicId trace and use source='chatwolf-adapted'; Talk remains independent
+of Chat Wolf roles, secret missions and runtime. All main questions and
+explanations are at most 26 words.
+The 672 main/follow-up questions are distinct and invite shared decisions,
+reactions and building on proposals. Content changes do not alter conversation
+modes, their defaults or Crazy Talk scheduling.
+
+Topic revision verification: all 1298 project tests passed after integrating
+current Bluff changes. Real Chrome on localhost and production verified six
+preview samples, scenario-first random draws, eighth follow-up selection,
+shared player topics/participants in both Talk modes, free conversation,
+375px/320px layouts without overflow and zero page errors. Production assets
+matched Talk 17/17 and full-site 45/45, with API readiness and runtime privacy
+checks passing. Content and browser changes published; backend unchanged.
+Existing active topics remain saved until explicit newTopic.
+
+Let's Talk / Crazy Talk use a cream topic card, compact state and participant
+roster, with speaking/question requests removed. Homepage preferences persist
+via talk-settings.js; explicit homepage edits seed host setup without replacing
+an active topic until the user opens it. Preparation times remain intact.
+conversationMode is assigned/random/free (random default): assigned follows
+roster order; free keeps speaker null with no handover. Keep old-room recovery,
+original private links, shared controls and projection privacy.
+
+Crazy source is system/players/mixed (mixed default); 96 system prompts contain
+60 lines and 36 improv tasks, all at most 9 words and 48 characters. Each participant has independent random future
+deadlines from crazyMinSeconds/crazyMaxSeconds: default 60–180 seconds, integer
+bounds 5–300, minimum <= maximum. Equal bounds are valid. Legacy crazySeconds
+migrates to 80–120% without clearing pending missions or saved deadlines.
+
+Authenticated crazyAssign {target,text,kind,turnId} queues 1–120 trimmed
+characters during thinking/talking, including while delivery is paused.
+Omitted/null target means a random other recipient at delivery; numeric target
+chooses another seat. Room queue limit is 20 and each author's limit is 10.
+Eligible player submissions take priority at a recipient's independent due time.
+Mixed falls back to system prompts; players-only uses the same timers without
+system fallback. The author sees myQueuedCount; only recipients see delivered
+private text. Never overwrite pending missions. Pause affects delivery only;
+done/skip remain prompt-bound, and resume creates future deadlines without
+bulk catch-up. Each tick delivers at most one mission, at least four seconds apart.
+Remove immediate-send UI; legacy crazySend reschedules only and
+actions.crazySend stays false. See talk-mode.md.
+
+Server-owned manager reconnect reports ready after a successful service pulse
+even if the canonical snapshot is unchanged; failed, closed or switched managers
+are not revived. Runtime changes require deploying the independent service and
+frontend; retain the stable existing service secret.
+
+Previous timer/queue release verification (before this topic revision): all 1282 project tests passed after integrating
+concurrent Bluff updates. Real Chrome checks on localhost and production verified
+queued-not-immediate delivery, random non-author and explicit recipients, pause-time
+queueing, Chinese IME, 375px/320px layouts without overflow, custom 7–233-second
+range restoration, and zero page errors. Production RPC smoke passed 66 checks;
+eight exact owned nodes were cleaned, with no cleanup failures. Talk assets 17/17
+and full-site assets 45/45 matched; API readiness, CORS, synthetic-ticket rejection
+and private-runtime 404 checks passed. Frontend and independent service published.
+
+Previous board release verification (before
+this timer/queue follow-up): 1239/1239 tests, desktop/375px/320px Chrome checks,
+production RPC smoke 59/59 with eight owned nodes cleaned, and matching Talk
+17/17 and full-site 45/45 assets.
+
+## CURRENT: Bluff authoritative card publication — 2026-10-09
+
+Native Hub opening captures and publishes each exact original player node with
+Client._request REST reads, X-Firebase-ETag and conditional If-Match PUTs. Never
+use SDK transaction cache values to decide a game switch: an initial callback
+may be null while the remote card exists. Reread and retry ordinary ETag 412
+conflicts, preserving semantic game/round guards and complete Hub setup checks.
+Already-matching cards remain untouched. Verify all authoritative source
+bindings once more before explicit service registration and showing the lobby.
+That publication release used UI v9, helper v4 and sync hub-roster-1;
+the host-registration recovery above supersedes those browser cache versions.
+No runtime, independent-service deployment or secret changes are required.
+Full regression: 1213/1213 passed. The prior UI reproduces the exact reported
+game-switched message for a provisional-null SDK callback; this UI passes the
+same scenario and all 43 UI checks.
+
+## CURRENT: Bluff current Hub roster — 2026-10-09
+
+Opening Bluff from the homepage uses ROOM after initialization and validates the
+complete persisted Hub setup throughout import/publication. A changed name,
+count or original token, or returning after original cards moved to another
+game, explicitly replaces the obsolete active group with a fresh lobby without
+scoring. Keep persistent known/seen histories and credentials for retained seats.
+An unchanged active table reconnects without releasing its sealed service epoch,
+round, roles, scores or mailbox. Standalone fixed-roster imports remain guarded.
+Exact original-card transactions preserve newer game/round markers and existing
+matching cards; await publication and service registration before revealing the
+manager UI. Invalid Hub counts fail before ROOM can clamp/save them. Bluff loads
+helper v4, UI v8 and sync hub-roster-1. Browser-only changes need no independent
+runtime deployment or secret change. CUT is being maintained separately.
+Full regression: 1209/1209 passed, including held publication/registration,
+real HTTP roster replacement, sealed-epoch reconnection and late old tickets.
+
+## CURRENT: CUT expanded topics — 2026-10-09
+
+CUT now has 100 simple-English topics: all original 36 everyday / 24 absurd
+prompts remain identical, plus 20 personal stories and 20 thoughts/choices.
+All topics mixes the four groups at 36/24/20/20 weights with existing recent-ID
+avoidance. Preserve original first-60 order, IDs, categories, questions and
+starters; tests/fixtures/cut-original-topics.json locks this user requirement.
+New categories are selectable in host and shared player settings; changing
+category applies to the next topic. cut.html has a collapsed bottom library
+with category and question/starter search. Browse never mutates game state.
+All CUT imports and launcher assets use cut-9. This content/engine update needs
+both independent runtime deployment and frontend publication. Full regression
+1185/1185 passed after integrating the latest homepage manager access. See cut-mode.md.
+
+## Homepage manager access restored — 2026-10-09
+
+Game cards open original host/settings pages with no own-name selector.
+Managers and player cards both control registered games through the existing
+independent service. A normal manager start waits for available registration
+before completing; the optional deferred launcher still explicitly registers.
+Unavailable service keeps the prior legacy fallback. Browser helper version 3
+is loaded by every game/player page. Chat Wolf's exact connect-src allowlist now
+includes the approved independent service so hosted and embedded cards can reach
+it. No independent runtime/secret changes are required for this frontend update.
+Full regression: 1180/1180; real Talk/CUT manager close, player continuation and
+manager reconnection, held startup registration and all page CSP checks pass.
+
 ## CURRENT: Once opening variety — 2026-10-09
 
 Once has 129 original Story Cards plus 51 unchanged Endings. Fifteen new ordinary
@@ -19,10 +553,12 @@ installed as a server secret. Never print, export, commit or rotate it for a cod
 deployment; never reuse the unrelated YouTube key. The original site's backend
 needs no setting. Preserve original room/player/card links.
 
-Homepage `hub-launcher.js` initializes via existing constructors, waits for
-service registration and every private card, closes its temporary connection,
-then opens the selected player's original link. Regular play, settings and
-recovery belong in private cards; do not restore a persistent manager-page lease.
+Homepage game cards open the original game host/settings pages without an
+own-player name or seat selection. Hosts may operate those pages; player cards
+also retain shared settings, regular play and recovery in registered games.
+Host controls use the independent service rather than a persistent browser lease,
+so closing a management page does not stop play. `hub-launcher.js` remains an
+optional player-card initializer; it is not installed on the homepage.
 
 **Runtime rule/engine/content changes need an independent-service deployment as
 well as the frontend push.** Use `scripts/hub-executor-package-service.cjs` with
@@ -457,6 +993,3 @@ Let's Talk 後續介面精簡：主持畫面移除 Round 數字與 Host controls
 - 所有變更直接 commit 並 push 到 `main` branch
 - 不使用 feature branch
 
-## Kangaroo Court (Beta版)
-
-`kangaroo-court-beta/` 是 Kangaroo Court 的獨立實驗副本，入口為 `kangaroo-court-beta/index.html`。Beta 的主持人、玩家卡片、题庫、說明、房間模組、樣式與設定均使用資料夾內自己的檔案；後續 Beta 修改請限定在此資料夾，不修改根目錄原版遊戲及共用模組。初始建立時根目錄 `index.html` 只新增 Beta 入口，原本七款遊戲入口保持不變。Beta 使用獨立的 localStorage 前綴 `kangaroo-beta-` 和 Firebase 房間路徑 `rooms/kangaroo-beta-{CODE}`；原版仍用 `rooms/{CODE}`。需另外設定 Beta 人數與傳送 Beta 玩家連結，不能沿用原版卡片。詳細維護說明見 `kangaroo-court-beta/README.md`。

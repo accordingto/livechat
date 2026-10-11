@@ -41,7 +41,9 @@ function boundCommand(state, command, ctx) {
   const seed = Number.isFinite(Number(ctx?.seed)) ? Number(ctx.seed) : Number.parseInt(crypto.createHash('sha256').update(String(state.sessionId) + ':' + String(command.id)).digest('hex').slice(0, 8), 16);
   return { ...command, actor, seed, now: now(ctx), onlineNums: online(state, ctx),
     sessionId: command.sessionId == null ? state.sessionId : command.sessionId,
-    turnId: command.turnId == null ? state.turnId : command.turnId };
+    // Player-written prompts belong to the turn visible when the sender typed
+    // them; do not bind an omitted turn to a newer speaker after delivery.
+    turnId: command.type === 'crazyAssign' ? command.turnId : command.turnId == null ? state.turnId : command.turnId };
 }
 function tick(state, type, ctx, marker) {
   const digest = crypto.createHash('sha256').update(JSON.stringify([state.sessionId, state.turnId, type, marker])).digest('hex');
@@ -52,6 +54,7 @@ function adapter(engine, key, actionKey, pulse) {
   return {
     decode, encode,
     session: state => state?.sessionId || null,
+    membership: (state, change, ctx) => engine.membership(state, change, ctx),
     apply: (state, command, ctx) => engine.apply(state, boundCommand(state, command, ctx)),
     pulse,
     project(state, seat, ctx) {
@@ -73,10 +76,12 @@ const adapters = {
   }),
   onceupon: adapter(ONCE, 'once', 'onceAction', state => state),
   letstalk: adapter(TALK, 'talk', 'talkAction', (state, ctx) => {
-    if (state?.phase === 'thinking' && now(ctx) >= Number(state.deadline) && online(state, ctx).length >= 2) return TALK.apply(state, tick(state, 'start', ctx, state.deadline));
-    if (!TALK.crazyDue(state, now(ctx))) return state;
-    return TALK.apply(state, tick(state, 'crazyTick', ctx,
-      [state.crazy.nextAt, state.crazy.sequence]));
+    if (!TALK.timerDue(state, now(ctx))) return state;
+    return TALK.apply(state, tick(state, 'clockTick', ctx,
+      [state.phase, state.deadline, state.gameDeadline, state.gameSeconds, state.crazy?.schedulerVersion,
+        state.crazy?.nextAssignAt, state.crazy?.scheduleSequence, state.crazy?.replacementFor,
+        list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt])]));
   }),
 };
+Object.assign(adapters.letstalk, { archiveEntries: TALK.archiveEntries, ackArchive: TALK.ackArchive });
 module.exports = { adapters };

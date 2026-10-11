@@ -35,25 +35,27 @@ test('library has complete, distinct discussion paths with searchable categories
   assert.deepEqual(library.search('shared-planning', '綜藝').map(t => t.id), ['chat-scene-11']);
 });
 
-test('the existing 48 topics, IDs, explanations and follow-ups remain unchanged', () => {
-  const {createHash} = require('node:crypto');
-  assert.equal(originals.length, 48);
-  assert.equal(createHash('sha256').update(JSON.stringify(originals)).digest('hex'),
-    '999794880568cf1a89cc290f95380591ecec4bf550d04690cdeb6465e162a1ae');
+test('rewritten original topics retain every saved ID and offer concrete shared situations', () => {
+  const ids='comfortable,support,cancel,care,contact,help,space,change,time,enough,approval,uncertainty,different,welcome,travel,family,tradition,boundaries,pay,ambition,rest,teamwork,failure,meaning,rules,chances,freedom,voice,secondchance,merit,privacy,ai,onlinefriend,news,attention,publicmistakes,honesty,loyalty,giving,promise,goodintentions,smallchoices,climate,city,generations,education,animals,communitychange'.split(',');
+  assert.deepEqual(originals.map(topic=>topic.id),ids);
+  for(const topic of originals) {
+    assert.match(topic.question,/\b(?:we|our|group|team|together|us)\b/i,topic.id);
+    assert.doesNotMatch(topic.question,/^(?:Tell us about|What (?:small )?(?:habit|skill|purchase|moment).*you|When (?:did|do) you|How (?:do|would) you feel)/i,topic.id);
+  }
 });
 
-test('all current public Chat Wolf topics are copied without roles, tasks or runtime imports', () => {
+test('adapted public scenarios keep trace IDs and categories while replacing personal interviews with shared choices', () => {
   const publicTopics = require('../chat-wolf-v4-content.js').topics.filter(topic => topic.active);
   assert.equal(scenarios.length, publicTopics.length);
   assert.equal(new Set(scenarios.map(topic => topic.sourceTopicId)).size, publicTopics.length);
-  for (const source of publicTopics) {
+  for (const [index, source] of publicTopics.entries()) {
     const topic = scenarios.find(topic => topic.sourceTopicId === source.id);
-    assert.ok(topic, `Missing public scenario ${source.id}`);
-    assert.equal(topic.title, source.title);
+    assert.ok(topic, `Missing adapted scenario ${source.id}`);
+    assert.equal(topic.id,'chat-scene-'+String(index+1).padStart(2,'0'));
     assert.equal(topic.category, source.category);
-    assert.equal(topic.source, 'chatwolf');
-    assert.equal(topic.question, source.mainQuestion);
-    assert.deepEqual(topic.followUps.map(q => q.question), source.followUps.map(q => q.text));
+    assert.equal(topic.source, 'chatwolf-adapted');
+    assert.notEqual(topic.question, source.mainQuestion);
+    assert.match(topic.question,/\b(?:we|our|group|team|together|us)\b/i,topic.id);
     assert.deepEqual(Object.keys(topic).sort(),
       ['id','category','emoji','title','keywords','question','starter','followUp','followUps','sourceTopicId','source'].sort());
   }
@@ -62,9 +64,20 @@ test('all current public Chat Wolf topics are copied without roles, tasks or run
   const browser = require('node:vm').createContext({});
   require('node:vm').runInContext(script, browser);
   assert.equal(require('node:vm').runInContext('TALK_TOPICS.length', browser), 96);
-  assert.equal(require('node:vm').runInContext('TALK_TOPICS.filter(topic => topic.source === "chatwolf").length', browser), 48);
-  const {TALK_LIBRARY: browserLibrary} = require('../talk-topics.js');
-  assert.ok(browserLibrary.draw('light-fantasy', '', [], () => 0).sourceTopicId);
+  assert.equal(require('node:vm').runInContext('TALK_TOPICS.filter(topic => topic.source === "chatwolf-adapted").length', browser), 48);
+  assert.ok(library.draw('light-fantasy', '', [], () => 0).sourceTopicId);
+});
+
+test('shared prompts and explanations are short enough to understand before joining in', () => {
+  const words=text=>text.trim().split(/\s+/).length;
+  for(const topic of topics) {
+    assert.ok(words(topic.question)<=30,topic.id+' main');
+    assert.ok(words(topic.starter)<=40,topic.id+' explanation');
+    for(const followup of topic.followUps) {
+      assert.ok(words(followup.question)<=25,topic.id+' followup');
+      assert.doesNotMatch(followup.question,/^(?:Tell us about|Have you (?:ever|had)|When did you|What (?:is|was) your favorite|How do you usually)/i,topic.id+' interview');
+    }
+  }
 });
 
 test('added scenarios work with the existing topic editor and all eight follow-up choices', () => {

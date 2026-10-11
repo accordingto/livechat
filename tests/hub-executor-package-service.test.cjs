@@ -27,6 +27,7 @@ test('independent package preserves search and retirement endpoints and bundles 
   const config=JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8'));
   assert.equal(config.functions['api/open-mic-discovery.js'].maxDuration,15);
   assert.equal(config.functions['api/hub-executor.js'].maxDuration,60);
+  assert.deepEqual(config.functions['api/hub-executor.js'].regions,['sin1']);
   assert.deepEqual(config.routes.at(-1),{src:'^/.*$',status:404});
   assert.deepEqual(config.routes[0],{src:'^/api/hub-executor/?$',dest:'/api/hub-executor.js'});
   for (const file of files) assert.doesNotMatch(fs.readFileSync(path.join(f.output,file),'utf8'),/DO_NOT_PACKAGE_PRIVATE_MARKER/);
@@ -52,4 +53,18 @@ test('refreshing an already extended service retains exactly one game route', t 
   const updated=JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8'));
   assert.equal(updated.routes.filter(route=>route.src==='^/api/hub-executor/?$').length,1);
   assert.equal(updated.routes.at(-1).status,404);
+});
+
+
+test('game execution colocates with RTDB while existing unrelated function and project regions stay intact', t => {
+  const f=fixture(t), configFile=path.join(f.serviceRoot,'vercel.json');
+  const config=JSON.parse(fs.readFileSync(configFile,'utf8'));
+  config.regions=['iad1'];
+  config.functions['api/hub-executor.js']={maxDuration:15,memory:1024,regions:['iad1']};
+  config.functions['api/open-mic-discovery.js']={maxDuration:15,regions:['iad1']};
+  fs.writeFileSync(configFile,JSON.stringify(config)); packageService(f);
+  const updated=JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8'));
+  assert.deepEqual(updated.regions,['iad1']);
+  assert.deepEqual(updated.functions['api/hub-executor.js'],{maxDuration:60,memory:1024,regions:['sin1']});
+  assert.deepEqual(updated.functions['api/open-mic-discovery.js'],config.functions['api/open-mic-discovery.js']);
 });

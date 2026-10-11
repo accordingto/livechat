@@ -42,7 +42,7 @@ function fixture(t,{count=4,ready=true,failRegister=false,afterService=null,over
  const context=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,Uint32Array,AbortSignal,URL,btoa,atob,structuredClone,Date,Promise,
   localStorage,ROOM:room,location:{href:'https://hub.invalid/index.html',assign:url=>navigation.push(url)},
   FIREBASE_CONFIG:{databaseURL:'https://test.firebaseio.com'},firebase:{database:()=>db},
-  GAME_DATA:{},document:{hidden:false,documentElement:{lang:'en'},addEventListener(){},getElementById(){return null;}},
+  GAME_DATA:{},document:{querySelectorAll:()=>[],hidden:false,documentElement:{lang:'en'},addEventListener(){},getElementById(){return null;}},
   setInterval(fn,ms){intervals.push({fn,ms});return intervals.length;},clearInterval(id){if(intervals[id-1])intervals[id-1].cleared=true;},
   setTimeout(fn,ms){const id=setTimeout(()=>{timeouts.delete(id);fn();},ms);timeouts.add(id);return id;},clearTimeout(id){clearTimeout(id);timeouts.delete(id);},
   async fetch(url,input={}){
@@ -79,7 +79,11 @@ for(const game of ['letstalk','onceupon','dixit','cut','openmic','bluffking','ch
    assert.ok(!json.includes(register.body.controlToken));
    for(const other of f.tokens.filter(token=>token!==f.tokens[i]))assert.ok(!json.includes(other));
   }
-  const capsule=f.calls.find(c=>c.body?.capsule)?.body.capsule||((await f.refs[2].once()).val().hubExecutor?.capsule);
+  const originalCard=(await f.refs[2].once()).val();
+  const serviceCard=game==='bluffking'
+   ? f.db.get('rooms/bluffking-'+originalCard.bluff.room+'/players/'+originalCard.bluff.token)
+   : originalCard;
+  const capsule=f.calls.find(c=>c.body?.capsule)?.body.capsule||serviceCard.hubExecutor?.capsule;
   const ticket=unseal(capsule,keyFrom(f.secret)),raw=f.db.get(ticket.canonicalPath);
   assert.equal(raw.executor.v,1);assert.equal(raw.executor.game,game);
   for(const seat of ticket.seats){
@@ -95,7 +99,14 @@ for(const game of ['letstalk','onceupon','dixit','cut','openmic','bluffking','ch
    assert.equal(first.private.canManage,true);
    assert.deepEqual(Object.values(raw.executor.originalCardsSeen),[true,true,true,true]);
   }
-  if(game==='bluffking')assert.equal(Object.keys(raw.executor.originalCardBindingsSeen).length,4);
+  if(game==='bluffking'){
+   const pulse=await f.service.execute({capsule,token:ticket.seats[2].token});assert.equal(pulse.ok,true);
+   const current=f.db.get(ticket.canonicalPath);
+   assert.equal(Object.keys(current.executor.originalCardBindingsSeen).length,4,'the first player pulse verifies every published original binding');
+   await f.refs[0].set({game:'cut',playerNum:1,name:f.names[0],cut:{sessionId:'newer-table'}});
+   await assert.rejects(f.service.execute({capsule,token:ticket.seats[2].token}),{code:'game_switched'});
+   assert.deepEqual(f.db.get(ticket.canonicalPath),current,'a newer original game still fences the sealed service');
+  }
   if(game==='dixit'){const state=raw.stateJson?JSON.parse(raw.stateJson):raw.state;assert.equal(state.hostPlayerNum,3);assert.equal(state.targetScore,30);}
   assert.ok(!f.loaded.some(file=>/-ui\.js$|\.html$/.test(file)),'no manager UI is loaded');
  });
@@ -166,4 +177,144 @@ test('reopening an existing Talk canonical defers background registration until 
  release();await launched;
  const registered=f.calls.filter(call=>call.body?.operation==='register');assert.equal(registered.length,1);
  assert.notEqual(registered[0].body.sessionId,old.sessionId);assert.equal(f.navigation.length,1);
+});
+
+
+test('Bluff manager reload of the same active original cards keeps the sealed epoch, current round and private history',async t=>{
+ const f=fixture(t);await f.launcher.launch('bluffking',2);
+ const Client=f.context.BLUFF_SYNC.Client;
+ const manager=new Client({databaseURL:'https://test.firebaseio.com',storage:f.context.localStorage,hostPresentation:true});
+ t.after(()=>manager.close());
+ await manager.connect(f.code);
+ await manager.command({action:'start',commandId:'first-active-round',expectedVersion:manager.lastView.version});
+ const sessions=await manager.getCardSessions();
+ for(const seat of sessions)await f.service.execute({capsule:manager.executorTicket.capsule,token:seat.credential.token});
+ await manager.command({action:'confirmTopic',commandId:'first-roles-confirmation',expectedVersion:manager.lastView.version,roundId:manager.lastView.round.id});
+ const before=(await manager._request(manager._roomPath('players/'+manager.hostToken))).data;
+ const beforeState=JSON.parse(before.data),roundId=beforeState.rooms[f.code].round.id;
+ const releases=f.calls.filter(call=>call.body?.operation==='release').length;
+ const registrations=f.calls.filter(call=>call.body?.operation==='register').length;
+ const executions=f.calls.filter(call=>call.body?.operation==='execute').length;
+ const originalCards=await Promise.all(f.refs.map(async ref=>(await ref.once()).val()));
+ manager.close();
+ const reopened=new Client({databaseURL:'https://test.firebaseio.com',storage:f.context.localStorage,hostPresentation:true});
+ t.after(()=>reopened.close());
+ await reopened.createFromCards(f.code,{playerCount:4,tokens:f.tokens,names:f.names},{replaceActive:true});
+ const after=(await reopened._request(reopened._roomPath('players/'+reopened.hostToken))).data;
+ const afterState=JSON.parse(after.data);
+ assert.equal(after.executor.capsule,before.executor.capsule,'reloading must keep the active service epoch');
+ assert.equal(afterState.rooms[f.code].round.id,roundId);
+ assert.equal(afterState.rooms[f.code].phase,'prepare');
+ assert.ok(Object.values(beforeState.identities).some(history=>Object.keys(history.known||{}).length),'the active truth-delivery history is retained');
+ assert.deepEqual(afterState.rooms[f.code].scores,beforeState.rooms[f.code].scores);
+ assert.deepEqual(afterState.identities,beforeState.identities);
+ assert.equal(f.calls.filter(call=>call.body?.operation==='release').length,releases);
+ assert.equal(f.calls.filter(call=>call.body?.operation==='register').length,registrations);
+ assert.equal(f.calls.filter(call=>call.body?.operation==='execute').length,executions,'a ready host reconnect reads the published epoch without executing it');
+ const writesBeforeRefresh=f.db.writes.length;
+ await reopened.refresh();
+ assert.equal(f.calls.filter(call=>call.body?.operation==='execute').length,executions,'ready host polling does not execute the game');
+ assert.equal(f.db.writes.length,writesBeforeRefresh,'ready host polling is read-only');
+ assert.equal(reopened.executorTicket.capsule,before.executor.capsule);
+ for(let i=0;i<originalCards.length;i++){
+  const card=(await f.refs[i].once()).val();
+  assert.deepEqual(card.bluff,originalCards[i].bluff,'a reload does not replace an original private card');
+ }
+});
+
+
+for(const change of ['token','other-game']){
+ test('Bluff current-Hub '+change+' replacement starts a fresh group, preserves truth history and fences the old epoch',async t=>{
+  const f=fixture(t);await f.launcher.launch('bluffking',2);
+  const Client=f.context.BLUFF_SYNC.Client;
+  const manager=new Client({databaseURL:'https://test.firebaseio.com',storage:f.context.localStorage,hostPresentation:true});
+  t.after(()=>manager.close());await manager.connect(f.code);
+  await manager.command({action:'start',commandId:'replacement-first-start',expectedVersion:manager.lastView.version});
+  const oldSessions=await manager.getCardSessions(),oldTicket=clone(manager.executorTicket);
+  for(const seat of oldSessions)await f.service.execute({capsule:oldTicket.capsule,token:seat.credential.token});
+  await manager.command({action:'confirmTopic',commandId:'replacement-first-role-deal',expectedVersion:manager.lastView.version,roundId:manager.lastView.round.id});
+  const canonicalPath=manager._roomPath('players/'+manager.hostToken);
+  const before=JSON.parse((await manager._request(canonicalPath)).data.data);
+  assert.ok(Object.values(before.identities).some(history=>Object.keys(history.known||{}).length));
+  const setup={playerCount:4,tokens:[...f.tokens],names:[...f.names]};
+  if(change==='name')setup.names[1]='Current new name';
+  if(change==='count'){setup.playerCount=3;setup.tokens.pop();setup.names.pop();}
+  if(change==='token'){setup.tokens[1]='9'.repeat(20);setup.names[1]='Replacement person';}
+  if(change==='other-game')for(let i=0;i<f.refs.length;i++)await f.refs[i].set({game:'cut',playerNum:i+1,name:f.names[i],cut:{sessionId:'newer-table'}});
+  manager.close();
+  const reopened=new Client({databaseURL:'https://test.firebaseio.com',storage:f.context.localStorage,hostPresentation:true});
+  t.after(()=>reopened.close());
+  await reopened.createFromCards(f.code,setup,{replaceActive:true});
+  assert.equal(reopened.lastView.phase,'lobby');assert.equal(reopened.lastView.round,null);
+  const sessions=await reopened.getCardSessions();
+  assert.deepEqual(Array.from(sessions,seat=>seat.originalToken),setup.tokens);
+  assert.deepEqual(Array.from(sessions,seat=>seat.name),setup.names);
+  const fresh=JSON.parse((await reopened._request(canonicalPath)).data.data);
+  assert.deepEqual(fresh.rooms[f.code].scores,{});assert.deepEqual(fresh.rooms[f.code].history,[]);
+  for(const [id,history] of Object.entries(before.identities))for(const type of ['known','seen'])for(const [key,value] of Object.entries(history[type]||{}))assert.deepEqual(fresh.identities[id][type][key],value,'truth histories survive abandoned games');
+  for(let i=0;i<sessions.length;i++)await f.db.ref('rooms/'+f.code+'/players/'+setup.tokens[i]).set({game:'bluffking',playerNum:i+1,name:setup.names[i],bluff:sessions[i].credential});
+  await f.context.HUB_EXECUTOR.ensureBluff(reopened);await reopened.refresh();
+  const newTicket=clone(reopened.executorTicket);
+  assert.notEqual(newTicket.capsule,oldTicket.capsule);
+  const rawBeforeStale=f.db.get(canonicalPath.slice(1));
+  await assert.rejects(f.service.execute({capsule:oldTicket.capsule,token:oldSessions[0].credential.token,
+   command:{action:'ready',commandId:'old-table-delayed-operation',expectedVersion:before.rooms[f.code].version,roundId:before.rooms[f.code].round.id}}),{code:'stale_session'});
+  assert.deepEqual(f.db.get(canonicalPath.slice(1)),rawBeforeStale,'the old player ticket cannot change the new group');
+  reopened.close();
+  const result=await f.service.execute({capsule:newTicket.capsule,token:sessions[0].credential.token,
+   command:{action:'start',commandId:'new-group-start-without-manager',expectedVersion:reopened.lastView.version}});
+  assert.equal(result.ok,true);
+  const started=JSON.parse(f.db.get(canonicalPath.slice(1)).data).rooms[f.code];
+  assert.equal(started.phase,'topic_check');assert.equal(started.roster.length,setup.playerCount);
+  assert.notEqual(started.round.id,before.rooms[f.code].round.id);
+  assert.ok(Object.values(started.scores).every(score=>score===0));
+ });
+}
+
+
+test('optional Talk launcher applies saved homepage free conversation and player missions to canonical state',async t=>{
+ const f=fixture(t);f.context.localStorage.setItem('lets-talk-settings.v2',JSON.stringify({gameMode:'crazy',conversationMode:'free',crazySource:'players',crazySeconds:60,mode:'think',seconds:30}));
+ await f.launcher.launch('letstalk',2);const raw=f.db.get('rooms/ABC234/players/'+f.extras.letsTalkControlToken),state=raw.state;
+ assert.equal(state.gameMode,'crazy');assert.equal(state.conversationMode,'free');assert.equal(state.crazy.source,'players');assert.equal(state.crazy.minSeconds,48);assert.equal(state.crazy.maxSeconds,72);
+ const card=await f.refs[1].once();assert.equal(card.val().talk.conversationMode,'free');
+});
+
+test('optional Talk launcher propagates custom random intervals to the sealed service and every original card', async t => {
+ const f=fixture(t); f.context.localStorage.setItem('lets-talk-settings.v2', JSON.stringify({
+  gameMode:'crazy', conversationMode:'random', crazySource:'mixed', crazyMinSeconds:7, crazyMaxSeconds:233, mode:'write', seconds:23
+ }));
+ await f.launcher.launch('letstalk',2);
+ const state=f.db.get('rooms/ABC234/players/'+f.extras.letsTalkControlToken).state;
+ assert.equal(state.crazy.minSeconds,7); assert.equal(state.crazy.maxSeconds,233); assert.equal(state.seconds,23);
+ for (const ref of f.refs) {
+  const card=(await ref.once()).val();
+  assert.equal(card.talk.crazy.minSeconds,7); assert.equal(card.talk.crazy.maxSeconds,233);
+  assert.equal(card.talk.crazy.prompt,null); assert.equal(card.talk.crazy.myQueuedCount,0);
+  assert.equal(card.talk.actions.crazySend,false);
+ }
+});
+
+for (const change of ['name', 'append', 'shrink']) test('Bluff Hub ' + change + ' preserves the same game and retained private links', async t => {
+  const f = fixture(t); await f.launcher.launch('bluffking', 2);
+  const Client = f.context.BLUFF_SYNC.Client, manager = new Client({ databaseURL: 'https://test.firebaseio.com', storage: f.context.localStorage, hostPresentation: true });
+  t.after(() => manager.close()); await manager.connect(f.code);
+  await manager.command({ action: 'start', commandId: 'membership-first-start', expectedVersion: manager.lastView.version });
+  const oldSessions = await manager.getCardSessions(), oldTicket = clone(manager.executorTicket), path = manager._roomPath('players/' + manager.hostToken);
+  const before = JSON.parse((await manager._request(path)).data.data);
+  const setup = { playerCount: 4, tokens: [...f.tokens], names: [...f.names] };
+  if (change === 'name') setup.names[1] = 'New display name';
+  if (change === 'append') { setup.playerCount = 5; setup.tokens.push('9'.repeat(20)); setup.names.push('Newcomer'); }
+  if (change === 'shrink') { setup.playerCount = 3; setup.tokens.pop(); setup.names.pop(); }
+  await manager.createFromCards(f.code, setup, { replaceActive: true });
+  const after = JSON.parse((await manager._request(path)).data.data);
+  assert.equal(after.transport.executorSessionId, before.transport.executorSessionId);
+  assert.deepEqual(after.rooms[f.code].history, before.rooms[f.code].history);
+  const retained = await manager.getCardSessions();
+  for (let i = 0; i < oldSessions.length; i++) assert.deepEqual(retained[i].credential, oldSessions[i].credential);
+  assert.equal(retained.length, change === 'append' ? 5 : 4);
+  if (change === 'name') assert.equal(retained[1].name, setup.names[1]);
+  if (change === 'shrink') assert.equal(after.rooms[f.code].members.find(m => m.identityId === oldSessions[3].credential.identityId).active, false);
+  await f.service.execute({ capsule: oldTicket.capsule, token: oldSessions[0].credential.token });
+  assert.equal(JSON.parse((await manager._request(path)).data.data).transport.executorSessionId, before.transport.executorSessionId);
+  if (change === 'append') assert.equal(after.rooms[f.code].scores[retained[4].playerId], 0);
 });

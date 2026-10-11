@@ -56,7 +56,7 @@
     now() { return Date.now() + this.offset; }
     status(value) { if (this.lastStatus !== value) { this.lastStatus = value; this.onStatus(value); } }
     sameRoom() {
-      if (this.room.code === this.code && this.room.count === this.count) return true;
+      if (this.room.code === this.code && (this.doc?.executor?.v === 1 || this.room.count === this.count)) return true;
       this.suspended = true; this.own = false; this.status('switched'); return false;
     }
     connect() {
@@ -113,7 +113,7 @@
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
     }
-    start({ speed = 'normal', category = 'mixed', customMinSeconds, customMaxSeconds } = {}) {
+    start({ speed = 'normal', category = 'mixed', customMinSeconds, customMaxSeconds, topicMinutes, mode, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds } = {}) {
       return this.enqueue(async () => {
         await this.cardsReady; await this.outgoing;
         if (!this.sameRoom() || this.stopped) throw new Error('not_available');
@@ -121,7 +121,7 @@
         const opening = { sessionId: id, baselines: Object.fromEntries(this.playerRefs.map((_, i) => [i + 1, stamp(this.cardValues.get(i + 1))])) };
         const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
         const priorSuspended = this.suspended; this.suspended = false; this.seenCards.clear();
-        try { return await this.change(() => root.CUT_ENGINE.create({ id, roster, speed, category, customMinSeconds, customMaxSeconds, now, seed: randomSeed }), { opening, allowSwitched: true }); }
+        try { return await this.change(() => root.CUT_ENGINE.create({ id, roster, speed, category, customMinSeconds, customMaxSeconds, topicMinutes, mode, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds, now, seed: randomSeed }), { opening, allowSwitched: true }); }
         catch (error) { this.suspended = priorSuspended; throw error; }
       });
     }
@@ -139,7 +139,8 @@
     pulse() {
       if (this.stopped || this.suspended || !this.own || !this.connected || this.ticking || !this.sameRoom()) return;
       const state = this.doc?.state;
-      const timedPrep = state?.phase === 'countdown' ||
+      // 'back' is Mode 2's return to the Main Speaker; its interruption has no deadline at all.
+      const timedPrep = state?.phase === 'countdown' || state?.phase === 'back' ||
         (state?.phase === 'handoff' && (state.countOnGo === false || Number.isFinite(state.pendingDurationMs)));
       const due = state?.phase === 'speaking' ? state.deadline : timedPrep ? state.phaseUntil : null;
       if (!(due > 0) || this.now() < due) return;

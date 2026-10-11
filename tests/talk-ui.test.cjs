@@ -15,7 +15,7 @@ const prompt = (extra = {}) => ({ id: 'ui-topic:crazy:2:1', text: 'My soup has a
 const crazy = (extra = {}) => sample({ gameMode: 'crazy', crazy: { enabled: true, paused: false, intervalSeconds: 120,
   prompt: prompt(), pendingCount: 1, ...extra } });
 function fixture(send = async () => {}, options = {}) {
-  let html = '', buttons = [], scrolls = 0, clock = 1000, online = true, language = 'en';
+  let html = '', buttons = [], fields = [], scrolls = 0, clock = 1000, online = true, language = 'en';
   const dictionaries = {}; let focusedAction = null;
   const handlers = new Map(), nodes = new Map(), timers = new Set();
   const node = selector => {
@@ -26,6 +26,14 @@ function fixture(send = async () => {}, options = {}) {
     get innerHTML() { return html; },
     set innerHTML(value) {
       html = value;
+      const assignmentTag = html.match(/<details\b[^>]*class="talk-assignment"[^>]*>/)?.[0];
+      if (assignmentTag) node('.talk-assignment').open = /(?:^|\s)open(?:\s|>)/.test(assignmentTag);
+      const roundClockTag = html.match(/<span\b[^>]*data-talk-round-clock[^>]*>/)?.[0];
+      if (roundClockTag) node('[data-talk-round-clock]').hidden = /(?:^|\s)hidden(?:\s|>)/.test(roundClockTag);
+      fields = [...html.matchAll(/<(?:select|textarea|input)\b([^>]*)>/g)].map(match => {
+        const attributes = Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/g)].map(entry => [entry[1], entry[2]]));
+        return { disabled: false, dataset: Object.fromEntries(Object.entries(attributes).filter(([key]) => key.startsWith('data-')).map(([key, value]) => [key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase()), value])) };
+      });
       buttons = [...html.matchAll(/<button\b([^>]*)>/g)].map(match => {
         const attributes = Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/g)].map(entry => [entry[1], entry[2]]));
         return { focus() { focusedAction = this.dataset.talkAction; }, disabled: /(?:^|\s)disabled(?:\s|$)/.test(match[1]), hidden: false,
@@ -37,10 +45,12 @@ function fixture(send = async () => {}, options = {}) {
       const action = selector.match(/^\[data-talk-action="([^"]+)"\]$/); if (action) return buttons.find(b => b.dataset.talkAction === action[1]) || null;
       if (selector === '.talk-crazy-prompt') return /class="talk-crazy-prompt"/.test(html) ? node(selector) : null;
       if (selector === '.talk-management') return html.includes('class="talk-management"') ? node(selector) : null;
+      if (selector === '.talk-assignment') return html.includes('class="talk-assignment"') ? node(selector) : null;
+      if (selector === '[data-talk-round-clock]' || selector === '[data-talk-task-clock]') return html.includes(selector.slice(1, -1)) ? node(selector) : null;
       if (selector === '[data-talk-note]' || selector === '.talk-shared') return null;
       return node(selector);
     },
-    querySelectorAll(selector) { return selector === '[data-talk-action]' ? buttons : []; },
+    querySelectorAll(selector) { return selector === '[data-talk-action]' ? buttons : selector.includes('[data-talk-assignment-field]') ? fields : []; },
     addEventListener(type, callback) { handlers.set(type, callback); },
     removeEventListener(type, callback) { assert.equal(handlers.get(type), callback); handlers.delete(type); },
   };
@@ -60,15 +70,16 @@ function fixture(send = async () => {}, options = {}) {
     if (button) handlers.get('click')?.({ target: { closest: () => button } });
   };
   const field = (kind, key, value, eventType = 'input') => {
-    const target = { dataset: { [kind === 'editor' ? 'talkEditorField' : 'talkSharedInput']: key }, value, checked: value === true, matches: () => false };
+    const target = { dataset: { [kind === 'editor' ? 'talkEditorField' : kind === 'assignment' ? 'talkAssignmentField' : 'talkSharedInput']: key }, value, checked: value === true, matches: () => false };
     handlers.get(eventType)?.({ target });
   };
   return { card, element, context, update, click, node, timers, handlers, buttons: () => buttons,
+    assignmentField: (key,value,eventType = 'input') => field('assignment',key,value,eventType),
     editorField: (key, value, eventType) => field('editor', key, value, eventType), sharedField: (key, value, eventType = 'change') => field('shared', key, value, eventType), setLanguage: value => { language = value; },
-    scrolls: () => scrolls, focusedAction: () => focusedAction, setClock: value => { clock = value; }, setOnline: value => { online = value; } };
+    fields: () => fields, scrolls: () => scrolls, focusedAction: () => focusedAction, setClock: value => { clock = value; }, setOnline: value => { online = value; } };
 }
 
-test('Normal Talk keeps thinking, main-turn, question and listener controls without any Crazy notice', () => {
+test('Normal Talk shows topic, state and participants without speaking requests', () => {
   const f = fixture();
   try {
     for (const talk of [sample({ phase: 'thinking' }), sample({ speaker: 2 }), sample({ activeQuestion: { id: 'q', playerNum: 2 } }), sample()]) {
@@ -76,9 +87,9 @@ test('Normal Talk keeps thinking, main-turn, question and listener controls with
       assert.doesNotMatch(f.element.innerHTML, /talk-crazy-|data-prompt-id|crazyDone|crazySkip/);
     }
     f.update(sample({ phase: 'thinking', mode: 'write' }));
-    assert.match(f.element.innerHTML, /data-talk-note/); assert.match(f.element.innerHTML, /data-talk-action="ready"/);
+    assert.match(f.element.innerHTML, /data-talk-note/); assert.doesNotMatch(f.element.innerHTML, /data-talk-action="(?:ready|wait|ask|share|more)"/);
     f.update(sample({ speaker: 2 })); assert.match(f.element.innerHTML, /data-talk-action="end"/);
-    f.update(sample()); assert.match(f.element.innerHTML, /data-talk-action="ask"/); assert.match(f.element.innerHTML, /data-talk-action="share"/);
+    f.update(sample()); assert.match(f.element.innerHTML, /At the table/); assert.match(f.element.innerHTML, /Alex/); assert.match(f.element.innerHTML, /Listening/); assert.doesNotMatch(f.element.innerHTML, /data-talk-action="(?:ask|share|more)"/);
     f.update(sample({ crazy: { enabled: true, prompt: prompt() } }));
     assert.doesNotMatch(f.element.innerHTML, /talk-crazy-prompt|My soup/);
   } finally { f.card.destroy(); }
@@ -95,7 +106,7 @@ test('Own private silly line appears prominently above normal topic and is escap
     assert.doesNotMatch(html, /<img|<script/);
     assert.match(html, /data-talk-action="crazyDone"[^>]*data-prompt-id="ui-topic:crazy:2:1"/);
     assert.match(html, /data-talk-action="crazySkip"[^>]*data-prompt-id="ui-topic:crazy:2:1"/);
-    assert.match(html, /data-talk-action="ask"/);
+    assert.doesNotMatch(html, /data-talk-action="(?:ask|share|more)"/);
     assert.equal(f.scrolls(), 1);
   } finally { f.card.destroy(); }
 });
@@ -120,7 +131,7 @@ test('Done sends only the current prompt identity once, independent of the shari
     assert.ok(f.card.pending);
     f.update({ ...crazy(), turnId: 3, speaker: 2 });
     assert.equal(f.card.pending.id, sent[0].id);
-    assert.ok(f.buttons().filter(button => button.dataset.talkAction !== 'retry').every(button => button.disabled));
+    assert.ok(f.buttons().filter(button => !['retry', 'viewTime'].includes(button.dataset.talkAction)).every(button => button.disabled));
     f.update({ ...crazy({ prompt: prompt({ status: 'done' }) }), turnId: 3, reply: { id: sent[0].id, error: '' } });
     assert.equal(f.card.pending, null);
     assert.doesNotMatch(f.element.innerHTML, /My soup|data-talk-action="crazyDone"|data-talk-action="crazySkip"/);
@@ -175,7 +186,7 @@ test('Updates and heartbeat never acknowledge a line and scroll a newly received
     f.update({ ...crazy(), turnId: 3, speaker: 2 }); f.update({ ...crazy(), turnId: 4 });
     await Promise.resolve(); assert.equal(sent.length, 0); assert.equal(f.scrolls(), 1);
     f.update(crazy({ prompt: prompt({ id: 'new-prompt' }) })); assert.equal(f.scrolls(), 2);
-    f.update(crazy({ prompt: null })); assert.doesNotMatch(f.element.innerHTML, /blockquote|data-talk-action="crazy/);
+    f.update(crazy({ prompt: null })); assert.doesNotMatch(f.element.innerHTML, /blockquote|data-talk-action="crazy(?:Done|Skip)/);
     assert.equal(sent.length, 0);
     f.card.destroy(); assert.equal(f.timers.size, 0); assert.equal(f.handlers.size, 0);
   } finally { if (f.timers.size) f.card.destroy(); }
@@ -204,9 +215,9 @@ test('Normal turn requests keep their stale-turn reset while Crazy requests reta
 
 test('Real engine projections render no other player line and host receives only safe counts', () => {
   let state = E.create({ id: 'private-ui', topic: { question: 'What should our cafe sell?' },
-    gameMode: 'crazy', roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
-  const command = (type, extra = {}) => { state = E.apply(state, { type, id: 'ui-' + type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: 782, ...extra }); };
-  command('start'); command('crazySend');
+    gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5, roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
+  const command = (type, extra = {}) => { state = E.apply(state, { type, id: 'ui-' + type + '-' + (extra.now || 0), actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: 782, ...extra }); };
+  command('start'); command('crazyTick', { now: 7000 }); command('crazyTick', { now: 12000 });
   const own = E.view(state, 2, 2000), other = E.view(state, 1, 2000), host = E.view(state, 0, 2000), f = fixture();
   try {
     f.card.update(own);
@@ -224,9 +235,9 @@ test('Host and original player page load current Talk UI; private action gate di
   const controller = fs.readFileSync(require.resolve('../talk-host.js'), 'utf8');
   assert.ok(host.indexOf('talk-crazy.js') < host.indexOf('talk-engine.js'));
   assert.match(host, /id="talk-game-mode"/); assert.match(host, /value="normal"/); assert.match(host, /value="crazy"/);
-  assert.match(host, /id="talk-crazy-seconds"/); assert.match(host, /value="120" selected/);
-  assert.match(controller, /gameMode: byId\('game-mode'\)\.value/);
-  assert.match(controller, /crazySeconds: Number\(byId\('crazy-seconds'\)\.value\)/);
+  assert.match(host, /id="talk-crazy-min-seconds"/); assert.match(host, /id="talk-crazy-max-seconds"/); assert.doesNotMatch(host, /id="talk-crazy-send"/);
+  assert.match(controller, /gameMode: 'game-mode'/); assert.match(controller, /setupPreferences\(\)/);
+  assert.match(controller, /crazyMinSeconds: 'crazy-min-seconds'/); assert.match(controller, /crazyMaxSeconds: 'crazy-max-seconds'/);
   assert.match(controller, /TALK_ENGINE\.view\(state, 0/);
   assert.doesNotMatch(controller, /state\.crazy\.prompts|state\.crazy\?\.prompts|JSON\.stringify\(state\)/);
   const start = player.indexOf("if (data.game === 'letstalk'");
@@ -267,19 +278,19 @@ test('Original player transport accepts prompt acknowledgements across turns but
   }
 });
 
-test('server-mode private card retains readiness and shared start while an old host heartbeat expires', async () => {
+test('server-mode private card retains shared start while an old host heartbeat expires', async () => {
   const sent = [], f = fixture(async command => { sent.push(clone(command)); });
   try {
     f.setClock(20000);
     f.update(sample({ phase: 'thinking', sharedControls: true, hostControls: true, hostLiveUntil: 10000, actions: { start: true } }));
-    assert.match(f.element.innerHTML, /data-talk-action="ready"/);
+    assert.doesNotMatch(f.element.innerHTML, /data-talk-action="(?:ready|wait|ask|share|more)"/);
     const start = f.buttons().find(b => b.dataset.talkAction === 'start');
     assert.ok(start); assert.equal(start.disabled, false);
     assert.equal(f.node('.talk-connection').textContent, '');
     f.click('start'); await Promise.resolve(); await Promise.resolve();
     assert.equal(sent.length, 1); assert.equal(sent[0].type, 'start'); assert.equal(sent[0].actor, undefined);
     f.setOnline(false); f.card.paint();
-    assert.ok(f.buttons().filter(b => b.dataset.talkAction !== 'retry').every(b => b.disabled));
+    assert.ok(f.buttons().filter(b => !['retry', 'viewTime'].includes(b.dataset.talkAction)).every(b => b.disabled));
   } finally { f.card.destroy(); }
 });
 
@@ -320,15 +331,15 @@ test('new topic preview and custom settings stay local through updates until exp
     f.editorField('question', '<img src=x onerror="boom"> What can we imagine?');
     f.editorField('title', 'Our next idea'); f.editorField('starter', 'Imagine freely.'); f.editorField('followUps', 'Who would join?\nWhat next?');
     f.editorField('mode', 'write', 'change'); f.editorField('seconds', '30', 'change'); f.editorField('gameMode', 'crazy', 'change');
-    f.editorField('crazySeconds', '60', 'change'); f.editorField('showStarters', true, 'change');
+    f.editorField('crazyMinSeconds', '60', 'change'); f.editorField('crazyMaxSeconds', '180', 'change'); f.editorField('showStarters', true, 'change');
     f.update(shared({ interests: [{ playerNum: 1, until: 8000 }] }));
     assert.match(f.element.innerHTML, /&lt;img src=x onerror=&quot;boom&quot;&gt;/); assert.doesNotMatch(f.element.innerHTML, /<img/);
     assert.equal(f.card.editor.question, '<img src=x onerror="boom"> What can we imagine?'); assert.equal(sent.length, 0);
-    f.click('openTopic'); assert.equal(sent.length, 0); assert.equal(f.focusedAction(), 'confirmTopic'); assert.equal(f.scrolls(), 1); assert.match(f.element.innerHTML, /Current turns, questions/);
+    f.click('openTopic'); assert.equal(sent.length, 0); assert.equal(f.focusedAction(), 'confirmTopic'); assert.equal(f.scrolls(), 1); assert.match(f.element.innerHTML, /Current turns, missions/);
     f.click('confirmTopic'); await flush();
     assert.equal(sent.length, 1); const command = sent[0];
     assert.equal(command.type, 'newTopic'); assert.equal(command.confirm, true); assert.equal(command.seconds, 30); assert.equal(command.mode, 'write');
-    assert.equal(command.gameMode, 'crazy'); assert.equal(command.crazySeconds, 60); assert.equal(command.showStarters, true);
+    assert.equal(command.gameMode, 'crazy'); assert.equal(command.crazyMinSeconds, 60); assert.equal(command.crazyMaxSeconds, 180); assert.equal(command.crazySeconds, undefined); assert.equal(command.showStarters, true);
     assert.equal(command.topic.followUps.length, 2); assert.equal(command.actor, undefined); assert.equal(command.sessionId, 'ui-topic');
     f.update(shared({ sessionId: 'new-topic', phase: 'thinking', turnId: 0 }));
     assert.equal(f.card.pending, null); assert.equal(f.card.settingsOpen, false); assert.equal(f.card.editor, null);
@@ -361,5 +372,397 @@ test('invalid settings never publish, changing turns clears opening confirmation
     assert.equal(f.card.editor.question, 'A useful question?');
     f.update(sample({ hostControls: true, actions: { newTopic: true, starters: true, extend: true } }));
     assert.doesNotMatch(f.element.innerHTML, /data-talk-editor|data-talk-shared-input|class="talk-management"/);
+  } finally { f.card.destroy(); }
+});
+
+
+test('free conversation has no nominated speaker, turn action or request buttons', () => {
+  const f=fixture();
+  try { f.update(shared({conversationMode:'free',speaker:null,actions:{end:false,newTopic:true}}));
+    assert.match(f.element.innerHTML,/The floor is open/);
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="(?:end|ask|share|more|ready|wait)"|Participant 0/);
+    assert.equal((f.element.innerHTML.match(/Join in/g)||[]).length,2);
+  } finally { f.card.destroy(); }
+});
+
+test('typed player mission stays local through redraws, queues once and clears only after acknowledgement', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk={...crazy({source:'players',prompt:null}),conversationMode:'free',speaker:null};
+    f.update(talk); f.assignmentField('target','1'); f.assignmentField('kind','task','change');
+    f.assignmentField('text','<b>Report the conversation like a weather presenter.</b>');
+    f.update({...talk,revision:3}); assert.equal(sent.length,0);
+    assert.match(f.element.innerHTML,/&lt;b&gt;Report/); assert.doesNotMatch(f.element.innerHTML,/<b>Report/);
+    f.click('crazyAssign');f.click('crazyAssign');await flush();assert.equal(sent.length,1);
+    assert.deepEqual({...sent[0],id:'request'},{id:'request',type:'crazyAssign',target:1,kind:'task',text:'<b>Report the conversation like a weather presenter.</b>',sessionId:'ui-topic',turnId:2});
+    assert.ok(f.card.crazyDraft.text);
+    f.update({...talk,reply:{id:sent[0].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');assert.match(f.element.innerHTML,/Queued/);
+  } finally { f.card.destroy(); }
+});
+
+test('full queue keeps draft, displays actionable feedback and system-only mode hides composer', async () => {
+  const f=fixture(async()=>{throw Error('queue_full')});
+  try {
+    f.update(crazy({source:'mixed'}));f.assignmentField('text','Announce a silly new holiday.');f.click('crazyAssign');await flush();
+    assert.equal(f.card.error,'queue_full');assert.equal(f.card.crazyDraft.text,'Announce a silly new holiday.');assert.match(f.element.innerHTML,/The queue is full/);
+    f.update(crazy({source:'system'}));assert.doesNotMatch(f.element.innerHTML,/data-talk-assignment-field|data-talk-action="crazyAssign"/);
+  } finally {f.card.destroy();}
+});
+
+
+test('paused dispatch allows queueing and preserves mission draft, and Chinese composition defers redraw', () => {
+ const f=fixture();try {
+  f.update(crazy({source:'mixed',paused:true,canAssign:true}));
+  assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyAssign').disabled,false);
+  f.assignmentField('text','用主播的口吻聊剛才的話');const html=f.element.innerHTML;
+  f.handlers.get('compositionstart')();f.update({...crazy({source:'mixed',paused:true,canAssign:true}),revision:2});
+  assert.equal(f.element.innerHTML,html);assert.equal(f.card.crazyDraft.text,'用主播的口吻聊剛才的話');
+  f.handlers.get('compositionend')();assert.match(f.element.innerHTML,/用主播的口吻聊剛才的話/);
+ } finally {f.card.destroy();}
+});
+
+
+test('handwritten missions default to a random recipient, remain invisible as prompts on acknowledgement and show only own queued count', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk=crazy({source:'mixed',prompt:null,myQueuedCount:0,canAssign:true});
+  f.update(talk);
+  assert.match(f.element.innerHTML, /value="random" selected/);assert.equal(f.card.crazyDraft.kind,'task');
+  f.assignmentField('text','Cluck like a chicken.');f.click('crazyAssign');await flush();
+  assert.equal(sent[0].target,undefined);assert.equal(sent[0].kind,'task');
+  f.update({...talk,crazy:{...talk.crazy,myQueuedCount:1},reply:{id:sent[0].id,error:''}});
+  assert.match(f.element.innerHTML,/Your cards waiting: 1/);assert.doesNotMatch(f.element.innerHTML,/blockquote/);
+  assert.equal(f.card.crazyDraft.target,'random');
+ }finally{f.card.destroy();}
+});
+
+test('thinking and paused cards can enqueue; a departed chosen recipient returns to random and overlong text is never sent', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk={...crazy({source:'players',paused:true,canAssign:true,prompt:null}),phase:'thinking',turnId:0};
+  f.update(talk);f.assignmentField('target','1');
+  f.update({...talk,roster:[{playerNum:2,name:'Sam'},{playerNum:3,name:'Jo'}]});
+  assert.equal(f.card.crazyDraft.target,'random');
+  f.assignmentField('text','x'.repeat(121));f.click('crazyAssign');await flush();
+  assert.equal(sent.length,0);assert.equal(f.card.error,'invalid_crazy_assignment');
+  f.assignmentField('text','Sing your next sentence.');f.click('crazyAssign');await flush();
+  assert.equal(sent.length,1);assert.equal(sent[0].turnId,0);assert.equal(sent[0].target,undefined);
+ }finally{f.card.destroy();}
+});
+
+test('shared range fields stay visible for player-only missions and invalid ranges cannot open a topic', () => {
+ const f=fixture();try {
+  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');f.editorField('crazySource','players','change');
+  assert.match(f.element.innerHTML,/data-talk-editor-field="crazyMinSeconds"/);assert.match(f.element.innerHTML,/data-talk-editor-field="crazyMaxSeconds"/);
+  for(const [min,max] of [[4,10],[30,20],[5,301],[5.5,10]]) {
+   f.editorField('crazyMinSeconds',String(min),'change');f.editorField('crazyMaxSeconds',String(max),'change');f.click('openTopic');
+   assert.equal(f.card.error,'invalid_crazy_interval');assert.equal(f.card.confirmation,null);
+  }
+  f.editorField('crazyMinSeconds','5','change');f.editorField('crazyMaxSeconds','5','change');f.click('openTopic');
+  assert.equal(f.card.confirmation,'topic');assert.equal(f.card.topicToOpen.crazyMinSeconds,5);
+ }finally{f.card.destroy();}
+});
+
+
+test('switching back to Normal Talk cannot publish an invalid hidden Crazy range', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');
+  f.editorField('crazyMinSeconds','30','change');f.editorField('crazyMaxSeconds','20','change');
+  f.editorField('gameMode','normal','change');f.click('openTopic');assert.equal(f.card.confirmation,'topic');
+  f.click('confirmTopic');await flush();
+  assert.equal(sent[0].gameMode,'normal');assert.equal(sent[0].crazyMinSeconds,60);assert.equal(sent[0].crazyMaxSeconds,180);
+ }finally{f.card.destroy();}
+});
+
+
+test('hidden mission and round deadlines still disable stale acknowledgements without giving local points', async () => {
+  for (const limits of [{ expiresAt: 4000, gameDeadline: 8000 }, { expiresAt: 12000, gameDeadline: 4000 }]) {
+    const sent = [], f = fixture(async command => sent.push(clone(command)));
+    try {
+      const talk = { ...crazy({ prompt: prompt({ expiresAt: limits.expiresAt }), nextAssignAt: 6000 }),
+        gameDeadline: limits.gameDeadline, scores: [{ playerNum: 1, score: 0 }, { playerNum: 2, score: 2 }] };
+      f.update(talk);
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-task-clock|talk-task-clock|data-talk-(?:next|assignment)-clock|Mission remaining|Next (?:mission|assignment)/);
+      for (const action of ['crazyDone', 'crazySkip']) assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, false);
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      f.setClock(3999); f.card.paint();
+      for (const action of ['crazyDone', 'crazySkip']) assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, false);
+      f.setClock(4000); f.card.paint();
+      for (const action of ['crazyDone', 'crazySkip']) {
+        assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, true); f.click(action);
+      }
+      await flush(); assert.equal(sent.length, 0); assert.equal(f.card.data.talk.scores[1].score, 2);
+      f.update({ ...talk, revision: 99 });
+      for (const action of ['crazyDone', 'crazySkip']) assert.equal(f.buttons().find(b => b.dataset.talkAction === action).disabled, true);
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-task-clock|talk-task-clock|00:00/);
+    } finally { f.card.destroy(); }
+  }
+});
+
+test('rest view freezes results, escapes names and offers a new round without old task or turn controls', () => {
+ const f=fixture();try {
+  f.update({...shared({phase:'ended',speaker:2,gameMode:'crazy',scores:[{playerNum:1,score:3},{playerNum:2,score:1}],roster:[{playerNum:1,name:'<b>Alex</b>'},{playerNum:2,name:'Sam'}],actions:{newTopic:true,addTime:false,finish:false}}),crazy:{enabled:true,prompt:prompt(),canAssign:false}});
+  assert.match(f.element.innerHTML,/Take a break|Round complete/);assert.match(f.element.innerHTML,/3 pts|1 pts/);assert.match(f.element.innerHTML,/&lt;b&gt;Alex&lt;\/b&gt;/);
+  assert.doesNotMatch(f.element.innerHTML,/<b>Alex|My soup|data-talk-action="(?:crazyDone|crazySkip|end|addTime|crazyAssign)"/);
+  f.click('settings');assert.equal(f.card.settingsOpen,true);assert.equal(f.card.editor.gameMinutes,15);assert.equal(f.card.editor.crazyTaskMinutes,2.5);
+ }finally{f.card.destroy();}
+});
+
+test('shared player can add one minute with a server command and duration settings survive topic confirmation', async () => {
+ const sent=[],f=fixture(async command=>sent.push(clone(command)));
+ try {
+  const talk=shared({gameSeconds:900,gameDeadline:901000,actions:{newTopic:true,addTime:true,finish:true}});
+  f.update(talk);f.click('addTime');await flush();assert.equal(sent[0].type,'addTime');assert.equal(sent[0].seconds,60);assert.equal(sent[0].actor,undefined);
+  f.update({...talk,reply:{id:sent[0].id,error:''}});f.click('settings');f.editorField('source','custom','change');f.editorField('question','Which sandwich should we invent?');
+  f.editorField('gameMode','crazy','change');f.editorField('gameMinutes','15','change');f.editorField('crazyTaskMinutes','2.5','change');f.click('openTopic');f.click('confirmTopic');await flush();
+  assert.equal(sent[1].gameSeconds,900);assert.equal(sent[1].crazyTaskSeconds,150);
+ }finally{f.card.destroy();}
+});
+
+test('invalid round or task lengths keep a new topic local and give clear feedback', () => {
+ const f=fixture();try {
+  f.update(shared());f.click('settings');f.editorField('source','custom','change');f.editorField('question','What should we build?');
+  for(const value of ['0','61','abc']) {f.editorField('gameMinutes',value,'change');f.click('openTopic');assert.equal(f.card.confirmation,null);assert.equal(f.card.error,'invalid_game_seconds');}
+  f.editorField('gameMinutes','15','change');f.editorField('gameMode','crazy','change');
+  for(const value of ['0','5.1','abc']) {f.editorField('crazyTaskMinutes',value,'change');f.click('openTopic');assert.equal(f.card.confirmation,null);assert.equal(f.card.error,'invalid_crazy_task_seconds');}
+ }finally{f.card.destroy();}
+});
+
+test('pending queue request leaves the next card editable and ACK preserves a newer draft', async () => {
+  const sent=[], f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk={...crazy({source:'mixed',prompt:null,canAssign:true}),sharedControls:true}; f.update(talk);
+    f.assignmentField('text','First mission'); f.click('crazyAssign'); await flush();
+    assert.ok(f.card.pending); assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyAssign').disabled,true);
+    assert.ok(f.fields().filter(n=>n.dataset.talkAssignmentField).every(n=>n.disabled===false));
+    f.assignmentField('target','1','change'); f.assignmentField('kind','line','change'); f.assignmentField('text','Next mission');
+    f.setClock(201000); f.card.paint(); f.click('retry'); await flush();
+    assert.deepEqual(sent[1],sent[0]); assert.equal(sent[1].text,'First mission'); assert.equal(sent[1].target,undefined);
+    f.update({...talk,reply:{id:sent[0].id,error:''}});
+    assert.equal(f.card.pending,null); assert.equal(f.card.crazyDraft.text,'Next mission'); assert.equal(f.card.crazyDraft.target,'1');
+    f.click('crazyAssign'); await flush(); assert.equal(sent[2].text,'Next mission'); assert.equal(sent[2].target,1); assert.equal(sent[2].kind,'line');
+    f.update({...talk,reply:{id:sent[2].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');
+  } finally {f.card.destroy();}
+});
+
+test('previously acknowledged mailbox IDs cannot recover a false pending lock after delayed projections', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk=crazy({source:'mixed',prompt:null,canAssign:true}); f.update(talk);
+    for(let i=0;i<5;i++) {
+      f.assignmentField('text','Mission '+i); f.click('crazyAssign'); await flush();
+      const command=sent.at(-1); f.update({...talk,reply:{id:command.id,error:''}}, {talkAction:command});
+      assert.equal(f.card.pending,null);
+    }
+    f.update({...talk,reply:{id:sent.at(-1).id,error:''}}, {talkAction:sent[0]});
+    assert.equal(f.card.pending,null); assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyAssign').disabled,false);
+    f.update({...talk,sessionId:'next-session'}, {talkAction:sent.at(-1)});
+    assert.equal(f.card.pending,null); assert.equal(f.card.settledActions.size,0);
+  } finally {f.card.destroy();}
+});
+
+test('unacknowledged recovery keeps a frozen request while composer follows offline, blocked and ended states', () => {
+  const f=fixture(),talk={...crazy({source:'players',prompt:null,canAssign:true}),sharedControls:true};
+  const action={id:'unknown',type:'crazyAssign',text:'Original mission',kind:'task',sessionId:talk.sessionId,turnId:talk.turnId};
+  try {
+    f.update(talk,{talkAction:action}); f.setClock(201000); f.card.paint();
+    assert.equal(f.card.pending,action); assert.ok(f.fields().filter(n=>n.dataset.talkAssignmentField).every(n=>!n.disabled));
+    f.setOnline(false); f.card.paint(); assert.ok(f.fields().filter(n=>n.dataset.talkAssignmentField).every(n=>n.disabled));
+    f.setOnline(true); f.update(crazy({source:'players',prompt:null,canAssign:false}),{talkAction:action});
+    assert.ok(f.fields().filter(n=>n.dataset.talkAssignmentField).every(n=>n.disabled));
+    f.handlers.get('compositionstart')(); f.update({...talk,phase:'ended'});
+    assert.equal(f.card.pending,null); assert.doesNotMatch(f.element.innerHTML,/data-talk-assignment-field|data-talk-action="crazyAssign"/);
+  } finally {f.card.destroy();}
+});
+
+test('Chinese composition of the next card survives ACK for the previously sent mission', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk=crazy({source:'mixed',prompt:null,canAssign:true}); f.update(talk);
+    f.assignmentField('text','First'); f.click('crazyAssign'); await flush();
+    f.handlers.get('compositionstart')(); f.assignmentField('text','雞叫');
+    f.update({...talk,reply:{id:sent[0].id,error:''}}); f.handlers.get('compositionend')();
+    assert.equal(f.card.pending,null); assert.equal(f.card.crazyDraft.text,'雞叫');
+  } finally {f.card.destroy();}
+});
+
+test('ACK keeps reused mission text when recipient or type was changed for the next card', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk=crazy({source:'mixed',prompt:null,canAssign:true}); f.update(talk);
+    f.assignmentField('text','Cluck like a chicken.'); f.click('crazyAssign'); await flush();
+    f.assignmentField('target','1','change'); f.update({...talk,reply:{id:sent.at(-1).id,error:''}});
+    assert.equal(f.card.crazyDraft.text,'Cluck like a chicken.');
+    f.click('crazyAssign'); await flush(); f.assignmentField('kind','line','change');
+    f.update({...talk,reply:{id:sent.at(-1).id,error:''}}); assert.equal(f.card.crazyDraft.text,'Cluck like a chicken.');
+  } finally {f.card.destroy();}
+});
+
+test('select focusout keeps a clicked control connected until its first click is handled', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    f.update(crazy()); const button=f.buttons().find(b=>b.dataset.talkAction==='crazyDone');
+    const select={tagName:'SELECT',dataset:{talkAssignmentField:'target'}}; f.card.assignmentSelection=select;
+    const region=button; f.handlers.get('focusout')({target:select,relatedTarget:{closest:()=>region}});
+    assert.equal(f.card.assignmentSelection,null); assert.ok(f.buttons().includes(button));
+    f.click('crazyDone'); await flush(); assert.equal(sent.length,1); assert.equal(sent[0].type,'crazyDone');
+  } finally {f.card.destroy();}
+});
+
+test('pointer selection handover also keeps a control when browser blur has no related target', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    f.update(crazy()); const button=f.buttons().find(b=>b.dataset.talkAction==='crazySkip');
+    const select={tagName:'SELECT',dataset:{talkAssignmentField:'target'}}; f.card.assignmentSelection=select;
+    button.tagName='BUTTON'; button.closest=()=>button;
+    f.handlers.get('pointerdown')({type:'pointerdown',target:button});
+    f.handlers.get('focusout')({target:select,relatedTarget:null});
+    assert.ok(f.buttons().includes(button)); f.click('crazySkip'); await flush();
+    assert.equal(sent.length,1); assert.equal(sent[0].type,'crazySkip');
+  } finally {f.card.destroy();}
+});
+
+
+test('shared participant controls explain away seats and send a fenced explicit sit-out without identity fields', async () => {
+  const sent = [], f = fixture(async command => { sent.push(clone(command)); });
+  try {
+    f.update(sample({ sharedControls: true, hostControls: true }));
+    assert.match(f.element.innerHTML, /data-talk-action="exclude"[^>]*data-player="1"[^>]*data-active="false"/);
+    f.click('exclude'); await Promise.resolve();
+    assert.equal(sent.length, 1); assert.equal(sent[0].type, 'exclude'); assert.equal(sent[0].playerNum, 1); assert.equal(sent[0].active, false);
+    assert.equal(sent[0].sessionId, 'ui-topic'); assert.equal(sent[0].turnId, 2); assert.equal(sent[0].actor, undefined);
+    assert.equal(sent[0].token, undefined);
+  } finally { f.card.destroy(); }
+});
+
+test('an away Talk card offers only its own rejoin control and blocks local attempts to manage or score', async () => {
+  const sent = [], f = fixture(async command => { sent.push(clone(command)); });
+  try {
+    f.update(sample({ sharedControls: true, hostControls: false, roster: [{ playerNum: 1, name: 'Alex', active: true }, { playerNum: 2, name: 'Sam', active: false }],
+      actions: { rejoin: true }, gameMode: 'crazy', crazy: { enabled: true, prompt: null, pendingPlayerNums: [] } }));
+    assert.match(f.element.innerHTML, /Away/); assert.match(f.element.innerHTML, /data-talk-action="exclude"[^>]*data-player="2"[^>]*data-active="true"/);
+    assert.doesNotMatch(f.element.innerHTML, /data-talk-action="exclude"[^>]*data-player="1"/);
+    f.card.act('addTime', { seconds: 60 }); f.card.act('crazyDone', { promptId: 'obsolete' }); await Promise.resolve(); assert.equal(sent.length, 0);
+    f.click('exclude'); await Promise.resolve(); assert.equal(sent.length, 1); assert.equal(sent[0].active, true); assert.equal(sent[0].playerNum, 2);
+  } finally { f.card.destroy(); }
+});
+
+test('explicitly away Crazy recipients are omitted from selectors while a newcomer is available by name', () => {
+  const f = fixture();
+  try {
+    f.update(sample({ sharedControls: true, hostControls: true, gameMode: 'crazy', roster: [{ playerNum: 1, name: 'Away friend', active: false }, { playerNum: 2, name: 'Sam' }, { playerNum: 3, name: 'New friend', active: true }],
+      crazy: { enabled: true, source: 'players', canAssign: true, paused: false, prompt: null } }));
+    assert.match(f.element.innerHTML, /<option value="3"/); assert.doesNotMatch(f.element.innerHTML, /<option value="1"/);
+  } finally { f.card.destroy(); }
+});
+test('handwritten composer is open and follows the current mission and topic before secondary room controls', () => {
+  const f = fixture();
+  try {
+    for (const currentPrompt of [prompt(), null, prompt({ status: 'done' })]) {
+      const talk = { ...crazy({ source: 'mixed', canAssign: true, prompt: currentPrompt, myQueuedCount: 1 }),
+        sharedControls: true, hostControls: true, gameDeadline: 91000,
+        actions: { newTopic: true, finish: true, addTime: true } };
+      f.update(talk);
+      const html = f.element.innerHTML;
+      const markers = ['data-talk-card-main', 'talk-player-topic', 'data-talk-card-assignment',
+        'data-talk-assignment-field="text"', 'data-talk-assignment-field="target"',
+        'data-talk-assignment-field="kind"', 'data-talk-card-footer', 'talk-current-state',
+        'talk-card-roster', 'talk-round-strip', 'talk-management'];
+      for (let i = 1; i < markers.length; i++) {
+        assert.ok(html.indexOf(markers[i - 1]) >= 0, markers[i - 1] + ' must exist');
+        assert.ok(html.indexOf(markers[i - 1]) < html.indexOf(markers[i]), markers[i - 1] + ' should precede ' + markers[i]);
+      }
+      assert.equal(f.element.querySelector('.talk-assignment').open, true);
+      if (currentPrompt?.status === 'pending') assert.ok(html.indexOf('talk-crazy-prompt') < html.indexOf('talk-player-topic'));
+      else assert.ok(html.indexOf('talk-crazy-wait') > html.indexOf('data-talk-card-footer'));
+      assert.ok(html.indexOf('talk-queue-count') > html.indexOf('data-talk-card-footer'));
+    }
+    f.node('.talk-assignment').open = false;
+    f.update({ ...crazy({ source: 'mixed', canAssign: true }), revision: 2 });
+    assert.equal(f.element.querySelector('.talk-assignment').open, false);
+    f.update({ ...crazy({ source: 'mixed', canAssign: true }), sessionId: 'fresh-composer' });
+    assert.equal(f.element.querySelector('.talk-assignment').open, true);
+  } finally { f.card.destroy(); }
+});
+
+test('round time is hidden by default, toggles locally and survives updates until the next session', async () => {
+  for (const gameMode of ['normal', 'crazy']) {
+    const sent = [], f = fixture(async command => sent.push(clone(command)));
+    try {
+      const talk = { ...(gameMode === 'crazy' ? crazy() : sample()), gameDeadline: 11000 };
+      f.update(talk);
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      assert.match(f.element.innerHTML, /data-talk-action="viewTime"[^>]*aria-expanded="false"[^>]*aria-controls="talk-round-time-2"/);
+      assert.match(f.element.innerHTML, /id="talk-round-time-2"[^>]*role="timer"[^>]*data-talk-round-clock hidden/);
+      assert.match(f.element.innerHTML, />View time<\/button>/);
+      f.click('viewTime');
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+      assert.match(f.element.innerHTML, /data-talk-action="viewTime"[^>]*aria-expanded="true"/);
+      assert.match(f.element.innerHTML, />Hide time<\/button>/);
+      assert.equal(f.card.pending, null);
+      f.setClock(2000); f.card.paint();
+      assert.match(f.node('[data-talk-round-clock]').textContent, /00:09/);
+      f.update({ ...talk, turnId: 3, revision: 9, gameDeadline: 71000 });
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+      assert.match(f.node('[data-talk-round-clock]').textContent, /01:09/);
+      f.click('viewTime'); f.update({ ...talk, turnId: 4 });
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      f.click('viewTime'); f.setLanguage('zh'); f.update({ ...talk, turnId: 5 });
+      assert.match(f.element.innerHTML, />收起時間<\/button>/);
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+      f.update({ ...talk, sessionId: 'next-round', phase: 'thinking', turnId: 0, gameDeadline: 0 });
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-action="viewTime"|data-talk-round-clock/);
+      f.update({ ...talk, sessionId: 'next-round', turnId: 1 });
+      assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+      assert.match(f.element.innerHTML, />查看時間<\/button>/);
+      f.update({ ...talk, sessionId: 'next-round', phase: 'ended' });
+      assert.doesNotMatch(f.element.innerHTML, /data-talk-action="viewTime"|data-talk-round-clock/);
+      await flush(); assert.equal(sent.length, 0); assert.equal(f.card.pending, null);
+    } finally { f.card.destroy(); }
+  }
+});
+
+test('optional round time remains usable offline and during a queued request without changing that request or the next draft', async () => {
+  const sent = [], f = fixture(async command => sent.push(clone(command)));
+  try {
+    const talk = { ...crazy({ source: 'mixed', prompt: null, canAssign: true }), gameDeadline: 21000 };
+    f.update(talk); f.assignmentField('text', 'Submitted mission'); f.click('crazyAssign'); await flush();
+    const pending = f.card.pending;
+    assert.ok(pending); assert.equal(sent.length, 1);
+    f.assignmentField('text', 'My next mission'); f.assignmentField('target', '1', 'change');
+    f.setOnline(false); f.card.paint();
+    assert.equal(f.buttons().find(b => b.dataset.talkAction === 'viewTime').disabled, false);
+    assert.equal(f.buttons().find(b => b.dataset.talkAction === 'crazyAssign').disabled, true);
+    f.click('viewTime');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+    assert.equal(f.card.pending, pending); assert.equal(f.card.crazyDraft.text, 'My next mission');
+    assert.equal(f.card.crazyDraft.target, '1'); assert.equal(f.buttons().find(b => b.dataset.talkAction === 'viewTime').disabled, false);
+    f.click('viewTime');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+    f.setOnline(true); f.update({ ...talk, reply: { id: pending.id, error: '' } });
+    assert.equal(f.card.pending, null); assert.equal(f.card.crazyDraft.text, 'My next mission');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, true);
+    f.setClock(21000); f.card.paint(); f.click('viewTime');
+    assert.equal(f.element.querySelector('[data-talk-round-clock]').hidden, false);
+    assert.match(f.node('[data-talk-round-clock]').textContent, /00:00/);
+    await flush(); assert.equal(sent.length, 1); assert.deepEqual(sent[0], clone(pending));
+  } finally { f.card.destroy(); }
+});
+
+test('player missions never show task or next-assignment countdowns in English or Chinese', () => {
+  const f = fixture();
+  try {
+    for (const language of ['en', 'zh']) {
+      f.setLanguage(language);
+      for (const currentPrompt of [prompt({ expiresAt: 49000 }), null, prompt({ status: 'done', expiresAt: 49000 }),
+        prompt({ status: 'skipped' }), prompt({ status: 'expired' }), prompt({ status: 'cancelled' })]) {
+        const talk = { ...crazy({ source: 'mixed', paused: true, prompt: currentPrompt, nextAssignAt: 83000 }), gameDeadline: 91000 };
+        f.update(talk);
+        assert.doesNotMatch(f.element.innerHTML, /data-talk-task-clock|talk-task-clock|data-talk-(?:next|assignment)-clock|Mission remaining|任務剩餘|Next (?:assignment|mission)|下次派發倒數/);
+        assert.doesNotMatch(f.context.TALK_UI.crazyHTML(talk), /role="timer"|data-talk-.*clock|49(?:000)?|83(?:000)?/);
+        if (currentPrompt?.status === 'pending') assert.match(f.element.innerHTML, /My soup has a secret plan/);
+      }
+    }
   } finally { f.card.destroy(); }
 });

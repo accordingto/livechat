@@ -55,6 +55,31 @@ var CUT_RANDOM = (() => {
     const range = config.cutsByPlayers.find(item => playerCount <= item.upTo) || config.cutsByPlayers.at(-1);
     return range.min + Math.floor(random() * (range.max - range.min + 1));
   }
-  return { create, weighted, duration, speaker, targetCuts };
+  // Mode 2: how long the Main Speaker talks before the next CUT.
+  function interval(first, previousMs, random, timing = {}) {
+    const jump = config.jump, range = jump.cutInterval, anti = jump.antiRepeat;
+    const min = timing[first ? 'firstCutMinSeconds' : 'cutIntervalMinSeconds'] ?? (first ? jump.firstCut.minSeconds : range.minSeconds);
+    const max = timing[first ? 'firstCutMaxSeconds' : 'cutIntervalMaxSeconds'] ?? (first ? jump.firstCut.maxSeconds : range.maxSeconds);
+    if (first || min !== range.minSeconds || max !== range.maxSeconds) return Math.round((min + random() * (max - min)) * 1000);
+    const previous = Number(previousMs) / 1000;
+    const bin = weighted(range.bins, candidate => {
+      let weight = candidate.weight;
+      if (previous > 0 && previous < anti.shortBelowSeconds && candidate.from < anti.shortBelowSeconds) weight *= anti.repeatedExtremeWeight;
+      if (previous >= anti.longFromSeconds && candidate.to > anti.longFromSeconds) weight *= anti.repeatedExtremeWeight;
+      return weight;
+    }, random);
+    return Math.max(range.minSeconds * 1000, Math.min(range.maxSeconds * 1000, Math.round((bin.from + random() * (bin.to - bin.from)) * 1000)));
+  }
+  // Mode 2: everyone has a round as Main Speaker before anyone has another.
+  // The order inside each cycle is random, and nobody goes twice in a row.
+  function mainSpeaker(roster, previous, stats, random) {
+    const active = roster.filter(p => p.active !== false);
+    const pool = active.length > 1 ? active.filter(p => p.playerNum !== previous) : active;
+    const count = player => Number((stats || {})[player.playerNum]?.count) || 0;
+    const fewest = Math.min(...pool.map(count));
+    const candidates = pool.filter(player => count(player) === fewest);
+    return candidates.length ? candidates[Math.floor(random() * candidates.length)].playerNum : null;
+  }
+  return { create, weighted, duration, speaker, targetCuts, interval, mainSpeaker };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_RANDOM;

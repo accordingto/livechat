@@ -19,10 +19,12 @@ module.exports = async function handler(req, res) {
     try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
     catch { return res.status(400).json({ error: 'invalid_request' }); }
     if (!body || typeof body !== 'object' || Array.isArray(body) || JSON.stringify(body).length > 36000) return res.status(400).json({ error: 'invalid_request' });
-    const service = createExecutor({ secret: process.env.HUB_EXECUTOR_SECRET });
+    const service = createExecutor({ secret: process.env.HUB_EXECUTOR_SECRET, archiveSecret: process.env.CRAZY_TALK_ARCHIVE_SECRET });
     const result = body.operation === 'register' ? await service.register(body)
       : body.operation === 'release' ? await service.release(body)
-      : body.operation === 'execute' ? await service.execute(body) : null;
+      : body.operation === 'execute' ? await service.execute(body)
+      : body.operation === 'updateRoster' ? await service.updateRoster(body)
+      : body.operation === 'setParticipant' ? await service.setParticipant(body) : null;
     if (!result) return res.status(400).json({ error: 'invalid_operation' });
     return res.status(200).json(result);
   } catch (e) {

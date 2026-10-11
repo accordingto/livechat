@@ -59,13 +59,35 @@ test('Chill 25–40 seconds and Chaos 8–16 seconds keep their own bounds', () 
   }
 });
 
-test('extensible topic bank contains 60 easy English openings at a 60/40 split', () => {
-  assert.equal(T.items.length, 60);
-  assert.equal(T.items.filter(t => t.category === 'real').length, 36);
-  assert.equal(T.items.filter(t => t.category === 'absurd').length, 24);
-  assert.equal(new Set(T.items.map(t => t.id)).size, T.items.length);
-  assert.ok(T.items.every(t => t.question && t.starter && !t.question.includes('favorite food')));
-  for (const category of ['real', 'absurd']) assert.equal(create(4, { category }).topic.category, category);
+test('expanded topic bank preserves all 60 original prompts and adds 40 personal and thought openings', () => {
+  const original = require('./fixtures/cut-original-topics.json');
+  assert.deepEqual(T.items.slice(0,60), original);
+  assert.equal(T.items.length,100);
+  for (const [category,count] of [['real',36],['absurd',24],['personal',20],['ideas',20]]) {
+    assert.equal(T.items.filter(topic=>topic.category===category).length,count);
+    assert.equal(create(4,{category}).topic.category,category);
+  }
+  assert.equal(new Set(T.items.map(topic=>topic.id)).size,100);
+  assert.equal(new Set(T.items.map(topic=>topic.question)).size,100);
+  assert.ok(T.items.every(topic=>topic.question && topic.starter));
+});
+
+test('mixed draws include all four topic groups and avoid recent IDs without altering ongoing stories', () => {
+  const counts={real:0,absurd:0,personal:0,ideas:0};
+  for(let seed=0;seed<3000;seed++)counts[create(4,{seed}).topic.category]++;
+  for(const [category,weight] of Object.entries(C.mixedTopicWeights))assert.ok(Math.abs(counts[category]/3000-weight)<0.04,category+' appears in mixed');
+  let state=create(4,{category:'personal'});
+  state=act(state,'endTopic');
+  for(let i=0;i<16;i++) {
+    const previousIds=state.topicHistory.slice();
+    state=act(state,'next');
+    assert.equal(state.topic.category,'personal'); assert.ok(!previousIds.includes(state.topic.id));
+    state=act(state,'endTopic');
+  }
+  state=create(4,{category:'real'}); const topic=structuredClone(state.topic);
+  state=act(state,'settings'); state=act(state,'configure',{category:'ideas'});
+  assert.deepEqual(state.topic,topic,'changing category keeps the current topic');
+  state=act(state,'endTopic'); state=act(state,'next'); assert.equal(state.topic.category,'ideas');
 });
 
 test('new topics show their question and first speaker until the host or any active player starts', () => {

@@ -109,19 +109,19 @@ function cardFixture() {
       html = value; writes++;
       details = html.includes('data-cut-management') ? { open: false } : null;
       form = null;
-      if (html.includes('data-cut-settings>')) {
+      if (/<form\b[^>]*\bdata-cut-settings(?:\s|>)/.test(html)) {
         const fields = {};
         for (const name of ['speed', 'category']) {
           const select = html.match(new RegExp('<select name="' + name + '"[^>]*>(.*?)</select>', 's'))[1];
           fields[name] = { value: select.match(/<option value="([^"]+)" selected/)[1], disabled: false };
         }
-        for (const name of ['customMinSeconds', 'customMaxSeconds']) {
+        for (const name of ['customMinSeconds', 'customMaxSeconds', 'topicMinutes']) {
           const input = html.match(new RegExp('<input type="number" name="' + name + '"[^>]*value="([^"]+)"'));
           fields[name] = { value: input[1], disabled: false, required: false, attributes: {}, setAttribute(k, v) { this.attributes[k] = v; } };
         }
-        const save = { disabled: false }, customFields = { hidden: true }, customError = { textContent: '' };
-        form = { fields, save, customFields, customError, closest: selector => selector === '[data-cut-settings]' ? form : null,
-          querySelector: selector => selector === '[data-cut-settings-save]' ? save : selector === '[data-cut-custom-fields]' ? customFields : selector === '[data-cut-custom-error]' ? customError : fields[selector.match(/name="(\w+)"/)?.[1]] || null,
+        const save = { disabled: false }, customFields = { hidden: true }, customError = { textContent: '' }, topicError = { textContent: '' };
+        form = { fields, save, customFields, customError, topicError, closest: selector => selector === '[data-cut-settings]' ? form : null,
+          querySelector: selector => selector === '[data-cut-settings-save]' ? save : selector === '[data-cut-custom-fields]' ? customFields : selector === '[data-cut-custom-error]' ? customError : selector === '[data-cut-topic-error]' ? topicError : fields[selector.match(/name="(\w+)"/)?.[1]] || null,
           querySelectorAll: () => Object.values(fields) };
       }
     },

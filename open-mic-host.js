@@ -57,8 +57,10 @@
     if (busy || closed || !(demo || (sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)))) return;
     busy = true; error = '';
     try {
-      if (demo) state = OPEN_MIC_ENGINE.create({ id: OPEN_MIC_SYNC.uid(), roster, now: now(), seed: seed(), singingDuration: 35 });
-      else await sync.start({ singingDuration: 35 });
+      const picked = document.querySelector('input[name="om-mode"]:checked')?.value;
+      const mode = OPEN_MIC_ENGINE.MODES.includes(picked) ? picked : 'life';
+      if (demo) state = OPEN_MIC_ENGINE.create({ id: OPEN_MIC_SYNC.uid(), roster, now: now(), seed: seed(), singingDuration: 35, mode });
+      else await sync.start({ singingDuration: 35, mode });
     } catch (e) { error = text(e.message) || text('error'); }
     finally { busy = false; render(); }
   }

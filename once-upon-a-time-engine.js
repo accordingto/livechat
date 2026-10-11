@@ -19,7 +19,7 @@ var ONCE_ENGINE = (() => {
   const worldPool = id => typeof deck.getWorld === 'function' ? deck.getWorld(id) :
     id === 'classic' ? { id: 'classic', storyCards, endingCards } : null;
   const validHandSize = value => value === null || Number.isInteger(value) && value >= 3 && value <= 9;
-  const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - s.roster.length) : s.handSize;
+  const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - activeRoster(s).length) : s.handSize;
   const HOST_TYPES = ['configure', 'deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
   const TURN_FREE = ['ready', 'vote', 'finishVote', 'resolveSocial'];
   function seedValue(value) {
@@ -66,7 +66,7 @@ var ONCE_ENGINE = (() => {
     for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log']) s[key] = list(s[key]);
     for (const key of ['readiness', 'hands', 'endings', 'replies', 'seen']) s[key] = s[key] || {};
     for (const player of s.roster) s.hands[player.playerNum] = list(s.hands[player.playerNum]);
-    if (s.resolvedHandSize == null) s.resolvedHandSize = resolvedHandSize(s);
+    if (s.resolvedHandSize == null || s.phase === 'LOBBY') s.resolvedHandSize = resolvedHandSize(s);
     if (s.interrupt?.rollback) {
       const rollback = s.interrupt.rollback;
       for (const key of ['storyDeck', 'storyDiscard', 'storyHeld']) rollback[key] = list(rollback[key]);
@@ -84,10 +84,25 @@ var ONCE_ENGINE = (() => {
     return s;
   }
   const name = (s, actor) => s.roster.find(p => p.playerNum === actor)?.name || 'Host';
-  const onlinePlayers = (s, cmd) => cmd.onlineNums == null ? s.roster.map(p => p.playerNum) :
-    s.roster.filter(p => list(cmd.onlineNums).includes(p.playerNum)).map(p => p.playerNum);
+  const activeRoster = s => s.roster.filter(p => p.active !== false && p.pending !== true);
+  const onlinePlayers = (s, cmd) => cmd.onlineNums == null ? activeRoster(s).map(p => p.playerNum) :
+    activeRoster(s).filter(p => list(cmd.onlineNums).includes(p.playerNum)).map(p => p.playerNum);
+  function activatePending(s, cmd, immediate = false) {
+    if (!['CHOOSING_FIRST', 'STORYTELLING'].includes(s.phase) || s.interrupt || s.vote || s.categoryOpportunity || s.passPlayer) return;
+    const pending = s.roster.filter(p => p.active !== false && p.pending === true && (immediate || Number(s.turnId) > Number(p.pendingTurnId)));
+    const count = s.handSize == null ? Math.max(5, 11 - s.roster.filter(p => p.active !== false).length) : s.handSize;
+    for (const p of pending) {
+      // An exhausted physical deck postpones entry rather than inventing a card
+      // or allowing a zero-card newcomer to claim an immediate Ending.
+      if (!s.hands[p.playerNum].length && (!s.storyDeck.length && !s.storyDiscard.length || !s.endings[p.playerNum] && !s.endingDeck.length && !s.endingDiscard.length)) continue;
+      if (!s.hands[p.playerNum].length) drawStory(s, p.playerNum, count, cmd);
+      if (!s.endings[p.playerNum]) s.endings[p.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
+      p.pending = false; delete p.pendingTurnId;
+      if (s.availablePlayerNums != null && !list(s.availablePlayerNums).includes(p.playerNum)) s.availablePlayerNums = [...list(s.availablePlayerNums), p.playerNum];
+    }
+  }
   const left = (s, actor) => {
-    const i = s.roster.findIndex(p => p.playerNum === actor), online = s.sharedControls === true && s.availablePlayerNums != null ? list(s.availablePlayerNums) : s.roster.map(p => p.playerNum);
+    const i = s.roster.findIndex(p => p.playerNum === actor), active = activeRoster(s).map(p => p.playerNum), online = s.sharedControls === true && s.availablePlayerNums != null ? list(s.availablePlayerNums).filter(n => active.includes(n)) : active;
     for (let step = 1; step <= s.roster.length; step++) {
       const n = s.roster[(i + step) % s.roster.length].playerNum;
       if (online.includes(n)) return n;
@@ -125,7 +140,7 @@ var ONCE_ENGINE = (() => {
     // the untouched remainder keeps its random order for all later draws.
     const minimumKinds = Math.min(count, count >= 7 ? 4 : 3);
     const categoryCap = Math.ceil(count * 0.4);
-    const seats = randomize(s, s.roster.map(player => player.playerNum), cmd, 'opening-seats');
+    const seats = randomize(s, activeRoster(s).map(player => player.playerNum), cmd, 'opening-seats');
     const counts = Object.fromEntries(seats.map(seat => [seat, {}]));
     for (const seat of seats) s.hands[seat] = [];
     for (let round = 0; round < count; round++) for (const seat of seats) {
@@ -161,7 +176,7 @@ var ONCE_ENGINE = (() => {
     s.history.push(item); return item;
   }
   function beginVote(s, cmd, kind, subjectPlayer, excluded, extra = {}) {
-    s.vote = { id: s.sessionId + ':' + cmd.actor + ':' + s.turnId + ':' + cmd.id + ':vote', kind, subjectPlayer, eligible: s.roster.map(p => p.playerNum).filter(n => !excluded.includes(n)), votes: {}, ...extra };
+    s.vote = { id: s.sessionId + ':' + cmd.actor + ':' + s.turnId + ':' + cmd.id + ':vote', kind, subjectPlayer, eligible: activeRoster(s).map(p => p.playerNum).filter(n => !excluded.includes(n)), votes: {}, ...extra };
     s.phase = kind === 'interrupt' ? 'INTERRUPT_DISPUTE' : kind === 'challenge' ? 'CHALLENGE' : 'ENDING_REVIEW';
     advance(s);
   }
@@ -237,7 +252,9 @@ var ONCE_ENGINE = (() => {
     let error = '';
     const reject = code => { error = code; };
     const story = s.phase === 'STORYTELLING', speaking = actor === s.storyteller;
-    if (HOST_TYPES.includes(cmd.type) && !manager) reject('not_available');
+    if (actor !== 0 && !activeRoster(s).some(p => p.playerNum === actor)) reject('not_available');
+    else if (s.sharedControls === true && activeRoster(s).length < 2 && !['restart', 'cancel', 'ready'].includes(cmd.type)) reject('waiting_players');
+    else if (HOST_TYPES.includes(cmd.type) && !manager) reject('not_available');
     else if (!TURN_FREE.includes(cmd.type) && cmd.turnId !== s.turnId) reject('stale_turn');
     else switch (cmd.type) {
       case 'configure': {
@@ -267,12 +284,12 @@ var ONCE_ENGINE = (() => {
         const pool = worldPool(s.world), count = resolvedHandSize(s);
         if (!pool) { reject('invalid_world'); break; }
         if (!validHandSize(s.handSize)) { reject('invalid_hand_size'); break; }
-        if (list(pool.storyCards).length < s.roster.length * count + 1 || list(pool.endingCards).length < s.roster.length) { reject('insufficient_cards'); break; }
+        if (list(pool.storyCards).length < activeRoster(s).length * count + 1 || list(pool.endingCards).length < activeRoster(s).length) { reject('insufficient_cards'); break; }
         s.storyDeck = randomize(s, list(pool.storyCards).map(card => card.id), cmd, 'story-deal');
         s.endingDeck = randomize(s, list(pool.endingCards).map(card => card.id), cmd, 'ending-deal');
         s.resolvedHandSize = count;
         dealOpeningHands(s, count, cmd);
-        for (const player of s.roster) {
+        for (const player of activeRoster(s)) {
           s.endings[player.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
         }
         s.starterCard = draw(s, 'story', 1, cmd)[0]; s.storyDiscard.push(s.starterCard);
@@ -283,9 +300,9 @@ var ONCE_ENGINE = (() => {
       case 'chooseFirst':
       case 'randomFirst': {
         if (s.phase !== 'CHOOSING_FIRST') { reject('not_available'); break; }
-        const chosen = cmd.type === 'randomFirst' ? randomize(s, s.sharedControls === true ? online : s.roster.map(p => p.playerNum), cmd, 'first')[0] : Number(cmd.playerNum);
+        const chosen = cmd.type === 'randomFirst' ? randomize(s, s.sharedControls === true ? online : activeRoster(s).map(p => p.playerNum), cmd, 'first')[0] : Number(cmd.playerNum);
         if (s.sharedControls === true && (online.length < 2 || !online.includes(chosen))) { reject('waiting_players'); break; }
-        if (!s.roster.some(p => p.playerNum === chosen)) { reject('invalid_player'); break; }
+        if (!activeRoster(s).some(p => p.playerNum === chosen)) { reject('invalid_player'); break; }
         s.storyteller = chosen; s.phase = 'STORYTELLING'; advance(s);
         log(s, cmd, 'first', name(s, chosen) + ' begins the story.');
         break;
@@ -417,6 +434,8 @@ var ONCE_ENGINE = (() => {
       }
       case 'restart': {
         const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, sharedControls: s.sharedControls, world: s.world, handSize: s.handSize });
+        fresh.roster = fresh.roster.map(p => ({ ...p, ...(s.roster.find(old => old.playerNum === p.playerNum)?.active === false ? { active: false } : {}) }));
+        fresh.resolvedHandSize = resolvedHandSize(fresh);
         Object.assign(s, fresh); advance(s);
         log(s, cmd, 'restart', 'A new game is ready for the host to deal.');
         break;
@@ -428,6 +447,7 @@ var ONCE_ENGINE = (() => {
         break;
       default: reject('not_available');
     }
+    if (!error) activatePending(s, cmd);
     s.revision = (Number(current.revision) || 0) + 1;
     s.seen[actor] = [...list(s.seen[actor]), cmd.id].slice(-64);
     s.replies[actor] = { id: cmd.id, error };
@@ -435,22 +455,22 @@ var ONCE_ENGINE = (() => {
   }
   function view(current, playerNum, now) {
     const s = normalize(current), actor = Number(playerNum), mine = s.roster.find(p => p.playerNum === actor), host = actor === 0;
-    const player = !!mine, manager = host || player && s.sharedControls === true, speaking = player && actor === s.storyteller, story = s.phase === 'STORYTELLING';
+    const player = !!mine, eligible = player && mine.active !== false && mine.pending !== true, manager = host || eligible && s.sharedControls === true, enough = s.sharedControls !== true || activeRoster(s).length >= 2, speaking = eligible && actor === s.storyteller, story = enough && s.phase === 'STORYTELLING';
     const hand = player ? s.hands[actor].filter(id => storyById[id]).map(id => copy(storyById[id])) : [];
     const vote = s.vote, pending = s.interrupt;
     const mayReturn = !!(s.latestPlay && s.latestPlay.playerNum === s.storyteller && s.storyHeld.includes(s.latestPlay.cardId));
     const actions = {
-      ready: player && s.phase === 'LOBBY', configure: manager && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
+      ready: eligible && s.phase === 'LOBBY', configure: enough && manager && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
       chooseFirst: manager && s.phase === 'CHOOSING_FIRST', randomFirst: manager && s.phase === 'CHOOSING_FIRST',
-      play: story && speaking && hand.length > 0, interrupt: story && player && !speaking && hand.length > 0,
-      categoryInterrupt: story && player && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
-      dispute: story && player && !!pending && actor !== pending.interrupter,
+      play: story && speaking && hand.length > 0, interrupt: story && eligible && !speaking && hand.length > 0,
+      categoryInterrupt: story && eligible && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
+      dispute: story && eligible && !!pending && actor !== pending.interrupter,
       continueStory: story && speaking && !!(pending || s.categoryOpportunity), pass: story && speaking,
-      challenge: story && player && !speaking, ending: story && speaking && !hand.length && !!s.endings[actor],
-      discard: s.phase === 'PASS_DISCARD' && actor === s.passPlayer && hand.length > 0,
-      keepAll: s.phase === 'PASS_DISCARD' && actor === s.passPlayer,
-      vote: player && !!vote && vote.eligible.includes(actor) && !Object.prototype.hasOwnProperty.call(vote.votes, actor),
-      finishVote: manager && !!vote && vote.eligible.length > 0, resolveSocial: manager && !!vote && !vote.eligible.length,
+      challenge: story && eligible && !speaking, ending: story && speaking && !hand.length && !!s.endings[actor],
+      discard: enough && eligible && s.phase === 'PASS_DISCARD' && actor === s.passPlayer && hand.length > 0,
+      keepAll: enough && eligible && s.phase === 'PASS_DISCARD' && actor === s.passPlayer,
+      vote: eligible && !!vote && vote.eligible.includes(actor) && !Object.prototype.hasOwnProperty.call(vote.votes, actor),
+      finishVote: enough && manager && !!vote && vote.eligible.length > 0, resolveSocial: enough && manager && !!vote && !vote.eligible.length,
       restart: manager, cancel: manager && !['FINISHED', 'CANCELLED'].includes(s.phase),
       recover: manager && s.sharedControls === true && !['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase),
     };
@@ -458,7 +478,8 @@ var ONCE_ENGINE = (() => {
       version: 1, playerNum: player ? actor : 0, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
       phase: s.phase, storyteller: s.storyteller || null, winner: s.winner || null,
       world: s.world, handSize: s.handSize, resolvedHandSize: s.resolvedHandSize,
-      roster: s.roster.map(p => ({ ...p, handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
+      roster: s.roster.map(p => ({ playerNum: p.playerNum, name: p.name, active: p.active !== false, pending: p.pending === true, memberStatus: p.active === false ? 'away' : p.pending === true ? 'next_turn' : 'active', handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
+      membership: { enabled: s.sharedControls === true, minPlayers: 2, maxPlayers: 6, activeCount: activeRoster(s).length, pendingCount: s.roster.filter(p => p.active !== false && p.pending === true).length },
       starterCard: s.starterCard ? copy(storyById[s.starterCard]) : null,
       history: s.history.map(event => ({ ...event, card: copy(storyById[event.cardId]) })),
       categoryOpportunity: s.categoryOpportunity ? copy(s.categoryOpportunity) : null,
@@ -483,6 +504,38 @@ var ONCE_ENGINE = (() => {
     }
     return { game: 'onceupon', playerNum: player ? actor : 0, name: mine?.name || null, once };
   }
-  return { create, apply, view, list, shuffle };
+  function membership(current, changes = {}, ctx = {}) {
+    let s = normalize(current); const rows = list(changes.roster), added = list(changes.added), inactive = new Set(list(changes.inactiveNums).map(Number));
+    if (s.roster.length + added.length > 6 || added.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1 || s.roster.some(old => old.playerNum === p.playerNum)) || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
+    const cmd = { id: String(ctx.id || 'membership'), actor: 0, seed: ctx.seed, now: Number(ctx.now) || 0 };
+    for (const p of added) {
+      const pending = !['LOBBY', 'CANCELLED', 'FINISHED'].includes(s.phase) && !inactive.has(p.playerNum);
+      s.roster.push({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80), active: !inactive.has(p.playerNum), pending, ...(pending ? { pendingTurnId: s.turnId } : {}) });
+      s.hands[p.playerNum] = [];
+    }
+    for (const p of s.roster) {
+      const row = rows.find(r => r.playerNum === p.playerNum); if (row) p.name = String(row.name || '').trim().slice(0, 80);
+      const wasAway = p.active === false; p.active = !inactive.has(p.playerNum);
+      if (!p.active) { p.pending = false; delete p.pendingTurnId; }
+      else if (wasAway && !['LOBBY', 'CANCELLED', 'FINISHED'].includes(s.phase)) { p.pending = true; p.pendingTurnId = s.turnId; }
+    }
+    activatePending(s, cmd, s.phase === 'CHOOSING_FIRST' || s.phase === 'STORYTELLING' && (inactive.has(s.storyteller) || activeRoster(s).length < 2));
+    const available = activeRoster(s).map(p => p.playerNum); s.availablePlayerNums = available;
+    if (s.roster.filter(p => p.active !== false).length >= 2 && !['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase)) {
+      if (s.vote && (inactive.has(s.vote.subjectPlayer) && s.vote.kind === 'ending' || !s.vote.eligible.some(n => available.includes(n) && !Object.prototype.hasOwnProperty.call(s.vote.votes, n)))) {
+        if (s.vote.eligible.length || s.vote.kind === 'ending' && inactive.has(s.vote.subjectPlayer)) resolveVote(s, cmd, s.vote.kind === 'ending' && inactive.has(s.vote.subjectPlayer) ? 'reject' : null);
+      }
+      if (s.phase === 'PASS_DISCARD' && inactive.has(s.passPlayer) || s.phase === 'STORYTELLING' && inactive.has(s.storyteller)) {
+        const absent = s.phase === 'PASS_DISCARD' ? s.passPlayer : s.storyteller;
+        s.passPlayer = null; closeOpportunities(s); s.storyteller = left(s, absent); s.phase = 'STORYTELLING'; advance(s);
+        log(s, cmd, 'awayPass', name(s, absent) + ' left; their cards were kept and the story passes left.');
+      }
+    }
+    activatePending(s, cmd);
+    if (s.phase === 'LOBBY') s.resolvedHandSize = resolvedHandSize(s);
+    s.revision = (Number(current.revision) || 0) + 1;
+    return s;
+  }
+  return { create, apply, view, membership, list, shuffle };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = ONCE_ENGINE;

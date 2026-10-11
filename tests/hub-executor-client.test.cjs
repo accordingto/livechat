@@ -14,7 +14,7 @@ function sandbox(options = {}) {
     getElementById: id => elements.get(id), addEventListener: (name, fn) => { events[name] = fn; },
     createElement() { return { style: {}, append(button) { this.firstChild = button; }, remove() { elements.delete(this.id); } }; },
     body: { append(element) { elements.set(element.id, element); } } };
-  const context = vm.createContext({ AbortSignal, Promise, console, document, TextEncoder, TextDecoder, btoa, atob, structuredClone,
+  const context = vm.createContext({ AbortSignal: options.AbortSignal || AbortSignal, Promise, console, document, TextEncoder, TextDecoder, btoa, atob, structuredClone,
     Date: class extends Date { static now() { return time; } },
     crypto: { subtle: crypto.subtle, getRandomValues: value => crypto.getRandomValues(value), randomUUID: () => 'test-request-' + ++uid },
     setInterval(fn, ms) { timers.push({ fn, ms }); return timers.length; }, clearInterval() {},
@@ -116,6 +116,26 @@ test('restarting a server room releases it before dynamic local bootstrap and se
   assert.equal(result.sessionId, 'cut-new-session'); assert.equal(host.own, true);
   const operations = f.post().map(call => call.body.operation);
   assert.deepEqual(operations, ['release', 'register']); assert.ok(host.local.includes('change:cut'));
+});
+
+test('manager start waits for available service registration before completing and deferred player-card launch remains explicit', async () => {
+  let finishRegistration;
+  const f = sandbox({ respond: call => call.method === 'GET'
+    ? { ok: true, json: async () => ({ ready: true }) }
+    : new Promise(resolve => { finishRegistration = resolve; }) });
+  const Host = hosts(f).cut, host = new Host();
+  let completed = false;
+  const starting = host.start().then(state => { completed = true; return state; });
+  await flush();
+  assert.equal(completed, false, 'manager must not report a finished start while service registration is pending');
+  assert.equal(host.executorRegistering, true);
+  assert.equal(f.post().length, 1); assert.equal(f.post()[0].body.operation, 'register');
+  finishRegistration({ ok: true, json: async () => ({ capsule: 'ready-ticket' }) });
+  assert.equal((await starting).sessionId, 'cut-new-session'); assert.equal(completed, true);
+  assert.equal(host.executorRegistering, false);
+  const deferred = new Host(); deferred.executorDeferred = true;
+  await deferred.start(); await flush();
+  assert.equal(f.post().length, 1, 'optional card launcher owns its own explicit registration step');
 });
 
 test('failed registration backs off without blocking subsequent legacy host operations', async () => {
@@ -335,4 +355,84 @@ test('independent execution uses the approved owned HTTPS service and never brow
     assert.equal(call.url,'https://icebreaker-youtube-search.vercel.app/api/hub-executor');
     assert.equal(call.input.credentials,'omit');
   }
+});
+
+
+test('Bluff periodic refresh cannot register while original-card publication is deferred; explicit completed publication registers once',async()=>{
+ const f=sandbox(),Client=bluff(f),raw={data:JSON.stringify({transport:{cardRoster:[{token:'1'.repeat(32)},{token:'2'.repeat(32)}]}})};
+ const client=new Client(raw);client.executorDeferred=true;
+ for(let i=0;i<3;i++)await client.refresh();
+ assert.equal(f.post().length,0,'periodic refresh must not seal partially published original cards');
+ assert.equal(client.executorTicket??null,null);
+ await f.H.ensureBluff(client);
+ assert.equal(f.post().length,1);assert.equal(f.post()[0].body.operation,'register');
+ assert.equal(client.executorTicket.capsule,'sealed-capsule');
+ client.executorDeferred=false;
+ await client.command({action:'start',commandId:'after-original-publication'});
+ assert.equal(f.post().at(-1).body.operation,'execute');
+});
+
+
+test('a valid Bluff execute taking longer than the old browser deadline still returns its host view', async () => {
+  let networkTime = 0;
+  const f = sandbox({ AbortSignal: { timeout(ms) { return { expiresAt: networkTime + ms }; } },
+    respond(call) {
+      if (call.method === 'GET') return { ok: true, json: async () => ({ ready: true }) };
+      // Guarded reads, publication and a CAS retry complete after 14 seconds.
+      networkTime += 14000;
+      if (call.input.signal.expiresAt <= networkTime) throw Object.assign(new Error('Signal timed out'), { name: 'TimeoutError' });
+      return { ok: true, json: async () => ({ ok: true, payload: { viewJson: JSON.stringify({ room: 'ROOM', version: 18, sharedControls: true, self: { isHost: true }, privateCard: null }) } }) };
+    }
+  });
+  const Client = bluff(f), client = new Client({ executor: { v: 1, capsule: 'slow-valid-epoch' } });
+  const view = await client.refresh();
+  assert.equal(view.sharedControls, true); assert.equal(view.self.isHost, true); assert.equal(view.version, 18);
+  assert.equal(f.post().length, 1); assert.ok(!client.local.includes('legacy-refresh'));
+});
+
+test('Bluff native reconnect reuses the successfully verified current epoch and registration view', async () => {
+  const f = sandbox(), Client = bluff(f), raw = { executor: { v: 1, capsule: 'verified-current', sessionId: 'same-round' } }, client = new Client(raw);
+  client.executorTicket = { capsule: raw.executor.capsule, token: client.hostToken };
+  client.lastView = { room: client.code, sharedControls: true, self: { isHost: true }, version: 18 };
+  await f.H.ensureBluff(client);
+  assert.equal(f.post().length, 0, 'a successful same-epoch reconnect must not repeat guarded publication');
+  assert.equal(client.lastView.version, 18);
+  for (const boundary of ['capsule','token','room','sharedControls','host']) {
+    client.executorTicket = { capsule: raw.executor.capsule, token: client.hostToken };
+    client.lastView = { room: client.code, sharedControls: true, self: { isHost: true } };
+    if (boundary === 'capsule') client.executorTicket.capsule = 'obsolete';
+    if (boundary === 'token') client.executorTicket.token = 'other-control';
+    if (boundary === 'room') client.lastView.room = 'OTHER';
+    if (boundary === 'sharedControls') client.lastView.sharedControls = false;
+    if (boundary === 'host') client.lastView.self.isHost = false;
+    const before = f.post().length; await f.H.ensureBluff(client); assert.equal(f.post().length, before + 1, boundary);
+  }
+});
+
+test('Bluff completed registration emits its returned public host projection without another execute', async () => {
+  const view = { room: 'ROOM', version: 18, sharedControls: true, self: { isHost: true }, privateCard: null };
+  const f = sandbox({ respond(call) { return { ok: true, json: async () => call.method === 'GET' ? { ready: true } : { capsule: 'registered-epoch', payload: { viewJson: JSON.stringify(view) } } }; } });
+  const Client = bluff(f), client = new Client({ data: JSON.stringify({ transport: { cardRoster: [{ token: '1'.repeat(32) }, { token: '2'.repeat(32) }] } }) });
+  await f.H.ensureBluff(client);
+  assert.deepEqual(structuredClone(client.lastView), view); assert.equal(client.executorTicket.capsule, 'registered-epoch');
+  assert.equal(f.post().length, 1); assert.equal(f.post()[0].body.operation, 'register');
+});
+
+
+test('verified public Bluff snapshots open and poll without executing a full service publication, while commands still use the service',async()=>{
+ const f=sandbox(),Client=bluff(f),client=new Client({executor:{v:1,capsule:'published-epoch'}});
+ const view={room:'ROOM',version:18,sharedControls:true,self:{isHost:true},privateCard:null};let reads=0;
+ client._readHostSnapshot=async()=>{reads++;return structuredClone(view);};
+ assert.deepEqual(structuredClone(await client.refresh()),view);await client.refresh();
+ assert.equal(reads,2);assert.equal(f.post().length,0);assert.equal(client.executorTicket.capsule,'published-epoch');
+ await client.command({action:'start',commandId:'snapshot-service-command'});
+ assert.equal(f.post().length,1);assert.equal(f.post()[0].body.operation,'execute');assert.equal(f.post()[0].body.command.commandId,'snapshot-service-command');
+});
+
+test('incomplete Bluff snapshot publication falls back to guarded service repair and moved cards never display a snapshot',async()=>{
+ const f=sandbox(),Client=bluff(f),client=new Client({executor:{v:1,capsule:'incomplete-epoch'}});
+ client._readHostSnapshot=async()=>null;
+ await client.refresh();assert.equal(f.post().length,1,'incomplete private epoch must still finish guarded publication');
+ client._readHostSnapshot=async()=>{throw Object.assign(new Error('game changed'),{code:'game_switched'});};
+ await assert.rejects(client.refresh(),{code:'game_switched'});assert.equal(f.post().length,1);
 });

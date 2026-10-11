@@ -15,10 +15,10 @@
     html { -webkit-text-size-adjust: 100%; }
 
     /* the same tokens shared.css defines for the game pages — this is the one host
-       page that doesn't load it, and room.js (which both use) reads them. Keep the
+       page that doesn't load it, and room.js?v=membership-1 (which both use) reads them. Keep the
        two lists in step, or this page drifts away from the other ten. */
     :root {
-      /* the hub has no single game colour of its own, but room.js reads --accent,
+      /* the hub has no single game colour of its own, but room.js?v=membership-1 reads --accent,
          so it names the site red here */
       --accent: #e94560;
       --bg: #0d0d1a;
@@ -172,6 +172,7 @@
     .card-pink    { --accent:#ec4899; --accent-rgb:236,72,153;  background: linear-gradient(110deg, rgba(236,72,153,.2)  0%, var(--surface) 50%); }
     .card-indigo  { --accent:#6366f1; --accent-rgb:99,102,241; background: linear-gradient(110deg, rgba(99,102,241,.2)  0%, var(--surface) 50%); }
     .card-blue    { --accent:#3b82f6; --accent-rgb:59,130,246;  background: linear-gradient(110deg, rgba(59,130,246,.2)  0%, var(--surface) 50%); }
+    .card-lime    { --accent:#a3e635; --accent-rgb:163,230,53;  background: linear-gradient(110deg, rgba(163,230,53,.18) 0%, var(--surface) 50%); }
 
     /* ── Icon column ── */
     .card-icon-col {
@@ -333,25 +334,6 @@
     }
     .edit-setup-btn:hover { border-color: #e94560; color: var(--accent-text); }
 
-    .hub-player-launch {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-      padding: 14px 18px; margin: 0 0 20px;
-    }
-    .hub-player-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .hub-player-row label { font-size: .86rem; font-weight: 800; }
-    .hub-player-row select {
-      flex: 1; min-width: 170px; max-width: 380px; padding: 11px 14px;
-      border: 1px solid var(--border-3); border-radius: 10px; background: var(--btn-face);
-      color: var(--text); font: inherit; font-size: .9rem;
-    }
-    .hub-player-row select:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
-    .hub-player-launch p { font-size: .82rem; line-height: 1.65; margin-top: 9px; color: var(--text-dim); }
-    #hub-launch-status { color: var(--info-text); }
-    #hub-launch-error { color: var(--bad-text-soft); }
-    #hub-launch-legacy { display: inline-block; font-size: .8rem; margin-top: 9px; color: var(--text-dim); }
-    #hub-launch-legacy[hidden] { display: none; }
-    .game-card[aria-disabled="true"] { opacity: .65; cursor: wait; }
-
     .guide-opt {
       display: flex; align-items: flex-start; gap: 11px; cursor: pointer;
       background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
@@ -436,7 +418,7 @@
 
     /* ── Step 1's own inner wizard: room count / names / copy links / card
        check / continue are shown one at a time instead of all at once, each
-       reusing the exact same room.js-rendered elements — see initSetupWizard() */
+       reusing the exact same room.js?v=membership-1-rendered elements — see initSetupWizard() */
     .substep-dots { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 20px; }
     .substep-dot {
       width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
@@ -544,7 +526,11 @@
     }
 
 
+
+    .talk-home-crazy { color: #d3b9fb; font-size: .7em; font-weight: 500; }
+    @media (max-width: 520px) { .talk-home-crazy { display: block; margin-top: 3px; } }
   </style>
+<link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body>
 
@@ -558,8 +544,9 @@
 
   <!-- Step 1: every game shares the same room code and player links, so
        setup happens once here, before picking a game — not re-explained on
-       separate game pages. Independent games initialize only after an explicit
-       game choice; everyone keeps the same private player link. -->
+       separate game pages. Game cards open the existing host/settings page
+       without asking which player the host is. Registered games continue
+       through the independent service after that page closes. -->
   <div class="step-wrap" id="step-setup">
     <div class="step-hdr"><span class="step-num" data-i18n="index.step1Badge">Step 1</span><h2 data-i18n="index.step1Title">Set up your room</h2></div>
     <p class="step-sub" data-i18n="index.step1Sub">Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again.</p>
@@ -603,16 +590,7 @@
       <span id="setup-summary-text"></span>
       <button class="edit-setup-btn" id="edit-setup-btn" type="button" data-i18n="index.editSetupBtn">✏️ Edit room setup</button>
     </div>
-    <div class="hub-player-launch">
-      <div class="hub-player-row">
-        <label id="hub-player-label" for="hub-player-seat">Your player card</label>
-        <select id="hub-player-seat" aria-describedby="hub-launch-help"><option value="">Choose your name</option></select>
-      </div>
-      <p id="hub-launch-help">Choose your card, then a game. Everyone continues on their original link. Change game settings on your own card.</p>
-      <p id="hub-launch-status" role="status" aria-live="polite" hidden></p>
-      <p id="hub-launch-error" role="alert" hidden></p>
-      <a id="hub-launch-legacy" hidden>Open this game's setup page</a>
-    </div>
+  <div class="hub-membership-update"><p id="hub-membership-status" role="status" hidden></p><button id="hub-membership-retry" type="button" hidden data-i18n="index.updateRoster">Update game players</button></div>
     <!-- Off by default: the briefing is a wall of text in front of a game the
          regulars already know. A host running this weekly was reading past it
          every time, so it is now something you ask for. -->
@@ -632,18 +610,17 @@
       <div class="card-icon-col"><span class="icon">💬</span></div>
       <div class="card-body">
         <div class="card-meta"><span class="tag" data-i18n="index.tagConversation">談話</span><span class="tag">👥 2–9</span></div>
-        <h2>Let's Talk</h2>
-        <p data-i18n="index.descLetsTalk">先想一想，再聊彼此的想法。每人都有分享機會，也能口頭追問與接話。</p>
+        <h2>Let's Talk <span class="talk-home-crazy">/ Crazy Talk</span></h2>
+        <p data-i18n="index.descLetsTalk">一起做選擇、解決小難題、接著彼此的點子聊；也能加入搞笑任務。</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
-
     <a class="game-card card-red" href="chat-wolf.html">
       <div class="card-icon-col"><span class="icon">🐺</span></div>
       <div class="card-body">
         <div class="card-meta"><span class="tag">Deduction</span><span class="tag">👥 3–12 · Best with 6–8</span></div>
         <h2>Chat Wolf</h2>
-        <p>Talk, respond, and find the wolves. No one is removed. Start and manage the game from your own player card.</p>
+        <p>Talk, respond, and find the wolves. No one is removed. Manage the game on the host page or your player card.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -752,18 +729,6 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a class="game-card card-red" href="kangaroo-court-beta/index.html">
-      <div class="card-icon-col"><span class="icon">⚖️</span></div>
-      <div class="card-body">
-        <div class="card-meta">
-          <span class="tag">Beta</span>
-          <span class="tag">👥 4-9</span>
-        </div>
-        <h2>Kangaroo Court (Beta版)</h2>
-        <p data-i18n="index.descKangarooBeta">An independent test version with its own room and player links.</p>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
 
     <a class="game-card card-cyan" href="once-upon-a-time.html">
       <div class="card-icon-col"><span class="icon">📖</span></div>
@@ -781,6 +746,16 @@
         <div class="card-meta"><span class="tag" data-i18n="index.tagStorytelling">Storytelling</span><span class="tag">👥 3–8</span></div>
         <h2>Dixit</h2>
         <p data-i18n="index.descDixit">Say your clue aloud, explore 84 dreamlike picture cards, and guess the Storyteller’s card. Large clear illustrations, secret votes, and automatic scoring.</p>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="game-card card-orange" href="bomb-relay.html">
+      <div class="card-icon-col"><span class="icon">💣</span></div>
+      <div class="card-body">
+        <div class="card-meta"><span class="tag" data-i18n="index.tagBombRelay">Picture relay</span><span class="tag">👥 2–9</span></div>
+        <h2>BOMB RELAY</h2>
+        <p data-i18n="index.descBombRelay">Look at the scene card, name one thing in it, and pass the bomb before it explodes. A secret random fuse, 60 original picture cards, and the fewest bomb cards wins.</p>
       </div>
       <div class="card-arrow">→</div>
     </a>
@@ -813,6 +788,15 @@
       </div>
       <div class="card-arrow">→</div>
     </a>
+    <a class="game-card card-lime" href="sketch-relay.html">
+      <div class="card-icon-col"><span class="icon">🖍️</span></div>
+      <div class="card-body">
+        <div class="card-meta"><span class="tag" data-i18n="index.tagSketchRelay">Draw &amp; guess</span><span class="tag">👥 4–9</span></div>
+        <h2>Sketch Relay</h2>
+        <p data-i18n="index.descSketchRelay">Draw your secret word, guess the drawing you get, draw that guess… Every sketchbook travels around the group, then reveal page by page how “cat” became “a sad pizza”.</p>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
   </div>
 
   <footer>IceBreak Hub · <span data-i18n="index.footerTagline">All games are free &amp; no sign-up required</span></footer>
@@ -823,19 +807,24 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="room.js"></script>
+  <script src="room.js?v=membership-1"></script>
+  <script src="hub-executor.js?v=membership-1"></script>
   <script>
     I18N.registerDict('index', {
+      updateRoster: { zh: '同步遊戲名單', en: 'Update game players' },
       tagOpenMic: { en: 'Talk & create', zh: '聊天＋即興' },
+      tagBombRelay: { en: 'Picture relay', zh: '看圖接力' },
+      descBombRelay: { en: 'Look at the scene card, name one thing in it, and pass the bomb before it explodes. A secret random fuse, 60 original picture cards, and the fewest bomb cards wins.', zh: '玩法同《妙傳爆趣》：看場景卡說出一樣圖裡會有的東西，趕快把炸彈傳給下一位！引信長度保密、60 張原創圖卡，炸彈卡最少的人獲勝。' },
+      tagSketchRelay: { en: 'Draw & guess', zh: '畫畫＋猜' },
+      descSketchRelay: { en: 'Draw your secret word, guess the drawing you get, draw that guess… Every sketchbook travels around the group, then reveal page by page how “cat” became “a sad pizza”.', zh: '畫出秘密單字、猜別人的畫、再把猜測畫出來……每本畫本繞一圈回來，一頁一頁揭曉「貓」怎麼變成「難過的披薩」。用手機畫，大家一起笑。' },
       descOpenMic: { en: 'Complete a silly challenge, then share a song memory, make an original tune, or clap an original rhythm. Pair up or skip. One team, no performance judges.', zh: '完成小挑戰，再聊歌曲回憶、即興自創旋律或節奏接龍。找人搭檔，或直接跳過，一起累積團隊分數。' },
       descCut: { zh: '話別說完！聊到一半突然 CUT，隨機點名另一位接下那半句話。可以亂編、互虧、自由吐槽。', en: 'Keep talking… until CUT! A surprise player picks up your unfinished sentence. Make it up, laugh, and keep it going.' },
       descBluffKing: { zh: '一個陌生題目，一位真正知道答案的人。大家當場掰出可信的解釋、互相追問，讓想想找出老實人。持續聊天、秘密角色與自動計分。', en: 'One strange topic, one real expert. Make up believable explanations, question each other, and let the Thinker find the truth. Live conversation, private roles, and automatic scoring.' },
       tagBluff: { zh: '瞎掰與推理', en: 'Bluff & discover' },
       descDixit: { zh: '口頭說出提示，從 84 張夢境圖卡中猜出說書人的牌。大幅清楚插畫、秘密投票與自動計分。', en: 'Say your clue aloud, explore 84 dreamlike picture cards, and guess the Storyteller’s card. Large clear illustrations, secret votes, and automatic scoring.' },
       tagConversation: { zh: '談話', en: 'Conversation' },
-      descLetsTalk: { zh: '先想一想，再聊彼此的想法。每人都有分享機會，也能口頭追問與接話。', en: 'Take a moment to think, then share what matters to you. Everyone has a turn, with room for spoken questions and new thoughts.' },
+      descLetsTalk: { zh: '一起做選擇、解決小難題、接著彼此的點子聊；也能加入搞笑任務。', en: 'Make choices, solve little problems and build on each other\'s ideas. Add silly missions if you like.' },
       descChatWolf: { zh: '輪流聊同一個生活情境，找出刻意引導話題的狼隊；沒有淘汰。這款會在下一頁建立專屬安全房間。', en: 'Discuss one shared scenario and spot the team steering the conversation. Nobody is eliminated; this game creates its own secure room.' },
-      descKangarooBeta: { zh: '獨立的測試版本，可調整題目、玩法與玩家卡片。請使用 Beta 專用房間和玩家連結。', en: 'An independent test version with its own room and player links.' },
       step1Badge: { zh: '步驟 1', en: 'Step 1' },
       step1Title: { zh: '設定房間', en: 'Set up your room' },
       step1Sub: { zh: '選擇玩家人數，並把連結傳給每個人。同一組連結可以用在下面所有遊戲，不用重複發送。', en: "Choose how many people are playing and send everyone their link. The same links work for every game below — you won't need to send them again." },
@@ -919,7 +908,7 @@
     });
 
     /* Every game on this site shares one room code and one set of player
-       links (see room.js) — so instead of re-explaining "set your player
+       links (see room.js?v=membership-1) — so instead of re-explaining "set your player
        count, then send links" on eight separate host pages, it happens once
        here. The independent launcher initializes supported games only when
        selected, then opens the chosen private card after all cards are ready. */
@@ -933,20 +922,21 @@
       onNameChange: renderSetupSummary,
     });
 
+    HUB_EXECUTOR.watchHub(ROOM);
+
     function renderSetupSummary() {
       const el = document.getElementById('setup-summary-text');
       el.innerHTML = (ROOM.enabled
         ? I18N.t('index', 'summaryWithRoom').replace('{code}', ROOM.code)
         : I18N.t('index', 'summaryNoRoom')
       ).replace('{count}', ROOM.count);
-      window.HUB_LAUNCHER?.refresh();
     }
     renderSetupSummary();
     I18N.onChange(renderSetupSummary);
 
     /* Step 1 used to show room count, names, Copy All Links and Send Card
        Check all at once. It now walks the host through them one at a time —
-       the same room.js-rendered elements just get moved into their own
+       the same room.js?v=membership-1-rendered elements just get moved into their own
        panel each, so nothing about how they work (state, saves, live
        re-renders on name/count change) is touched. */
     /* The sub-steps are named rather than numbered. They used to be numbered, and
@@ -1118,7 +1108,7 @@
         panel.appendChild(nav);
         mount.appendChild(panel);
       });
-      // room.js's own "🔗 Player Links (optional)" header/note are redundant
+      // room.js?v=membership-1's own "🔗 Player Links (optional)" header/note are redundant
       // here — the method intro line and each method's own description
       // already say what this step is for — but render() still reaches for
       // both by id on every call, so they have to keep existing in the
@@ -1310,8 +1300,5 @@
     })();
   </script>
 
-  <script src="hub-executor.js?v=2"></script>
-  <script src="hub-launcher.js?v=1"></script>
-  <script>HUB_LAUNCHER.install({room:ROOM,executor:HUB_EXECUTOR});</script>
 </body>
 </html>

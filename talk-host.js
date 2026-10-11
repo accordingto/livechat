@@ -6,12 +6,33 @@
   const demoRoster = ['小安', '阿哲', '小羽', '阿凱'].map((name, i) => ({ playerNum: i + 1, name }));
   let state = null, sync = null, demoCard = null, status = demo ? 'ready' : 'offline', busy = false, autoStart = false;
   let error = '';
-  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '';
+  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '', roundClockVisible = false;
   let firstDraw = true;
   const draftKey = 'lets-talk-topic-draft.v1';
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
   let explanationSession = null;
+  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazyMinSeconds: 'crazy-min-seconds', crazyMaxSeconds: 'crazy-max-seconds', mode: 'mode', seconds: 'seconds', gameSeconds: 'game-seconds', crazyTaskSeconds: 'crazy-task-seconds' };
+  const savedPreferences = TALK_SETTINGS.read();
+  let applyHomePreferences = TALK_SETTINGS.consumePending();
+  function setSetupPreference(key, value) {
+    const field = byId(preferenceFields[key]);
+    if (key === 'seconds' && Number.isInteger(Number(value)) && Number(value) >= 15 && Number(value) <= 120
+        && !Array.from(field.options).some(option => option.value === String(value))) {
+      const option = document.createElement('option'); option.value = String(value); option.textContent = t('seconds', { n: value }); field.append(option);
+    }
+    field.value = String(['gameSeconds', 'crazyTaskSeconds'].includes(key) ? value / 60 : value);
+  }
+  Object.entries(savedPreferences).forEach(([key, value]) => setSetupPreference(key, value));
+  const setupPreferences = () => {
+    const values = Object.fromEntries(Object.entries(preferenceFields).map(([key, id]) => [key, byId(id).value]));
+    for (const key of ['gameSeconds', 'crazyTaskSeconds']) values[key] = TALK_SETTINGS.minutesToSeconds(values[key]);
+    if (!TALK_SETTINGS.validDuration(values.gameSeconds, 'gameSeconds')) throw new Error('invalid_game_seconds');
+    if (values.gameMode === 'crazy' && !TALK_SETTINGS.validDuration(values.crazyTaskSeconds, 'crazyTaskSeconds')) throw new Error('invalid_crazy_task_seconds');
+    if (values.gameMode === 'crazy' && !TALK_SETTINGS.validInterval(values.crazyMinSeconds, values.crazyMaxSeconds)) throw new Error('invalid_crazy_interval');
+    return TALK_SETTINGS.normalize(values);
+  };
+  const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
   try { starterPreference = localStorage.getItem(startersKey) !== 'false'; } catch (e) {}
   const activeSession = () => !!state && status !== 'switched';
   const startersOn = () => activeSession() ? !!state.showStarters : starterPreference;
@@ -22,8 +43,32 @@
   }
   function renderModeSettings() {
     const crazy = byId('game-mode').value === 'crazy';
+    byId('crazy-source-field').hidden = !crazy;
+    byId('crazy-task-field').hidden = !crazy;
+    byId('crazy-task-seconds').disabled = !crazy;
     byId('crazy-frequency').hidden = !crazy;
+    const intervalValid = !crazy || TALK_SETTINGS.validInterval(byId('crazy-min-seconds').value, byId('crazy-max-seconds').value);
+    for (const id of ['crazy-min-seconds', 'crazy-max-seconds']) {
+      byId(id).disabled = !crazy;
+      byId(id).setCustomValidity?.(intervalValid ? '' : t('invalid_crazy_interval'));
+      byId(id).setAttribute('aria-invalid', String(!intervalValid));
+    }
+    byId('crazy-interval-error').textContent = intervalValid ? '' : t('invalid_crazy_interval');
+    let durationError = '';
+    for (const [key, id, errorKey] of [['gameSeconds', 'game-seconds', 'invalid_game_seconds'], ['crazyTaskSeconds', 'crazy-task-seconds', 'invalid_crazy_task_seconds']]) {
+      const valid = (key === 'crazyTaskSeconds' && !crazy) || TALK_SETTINGS.validDuration(TALK_SETTINGS.minutesToSeconds(byId(id).value), key);
+      byId(id).setCustomValidity?.(valid ? '' : t(errorKey));
+      byId(id).setAttribute('aria-invalid', String(!valid));
+      if (!valid && !durationError) durationError = errorKey;
+    }
+    byId('duration-error').textContent = durationError ? t(durationError) : '';
     byId('mode-hint').textContent = t(crazy ? 'crazyHint' : 'normalHint');
+    const style = byId('conversation-mode').value;
+    byId('conversation-hint').textContent = t(style === 'assigned' ? 'conversationHintAssigned' : style === 'free' ? 'conversationHintFree' : 'conversationHintRandom');
+    const visibleCrazy = activeSession() && byId('setup').hidden ? state.gameMode === 'crazy' : crazy;
+    document.body.classList.toggle('talk-is-crazy', visibleCrazy);
+    byId('brand').textContent = visibleCrazy ? 'CRAZY TALK' : 'LET’S TALK';
+    document.title = (visibleCrazy ? 'Crazy Talk' : "Let's Talk") + ' · IceBreak Hub';
   }
   const now = () => sync ? sync.now() : Date.now();
   const canControl = () => demo || (!!(sync?.own || sync?.doc?.executor?.v === 1) && sync.connected);
@@ -38,7 +83,7 @@
   }
   function drawTopic() {
     const random = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-    const scenarios = firstDraw && !byId('category').value && !byId('search').value ? TALK_TOPICS.filter(topic => topic.source === 'chatwolf') : [];
+    const scenarios = firstDraw && !byId('category').value && !byId('search').value ? TALK_TOPICS.filter(topic => topic.sourceTopicId) : [];
     const topic = scenarios.length ? scenarios[Math.floor(random() * scenarios.length)] : TALK_LIBRARY.draw(byId('category').value, byId('search').value,
       [byId('topic-select').value, state?.topic.id], random);
     firstDraw = false;
@@ -124,7 +169,7 @@
     if (byId('draft-status').dataset.message) byId('draft-status').textContent = t(byId('draft-status').dataset.message);
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('seconds').querySelectorAll('option').forEach(o => { o.textContent = t('seconds', { n: o.value }); });
-    byId('crazy-seconds').querySelectorAll('option').forEach(o => { o.textContent = t('minutes', { n: Number(o.value) / 60 }); });
+
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
   function render() {
@@ -141,13 +186,19 @@
     byId('host-view').hidden = !!state && !!me;
     if (!state) return;
     if (renderedSession !== state.sessionId) {
-      exploreOpen = false; exploreKey = ''; byId('live-followup').value = ''; renderedSession = state.sessionId;
+      exploreOpen = false; exploreKey = ''; roundClockVisible = false; byId('live-followup').value = ''; renderedSession = state.sessionId;
     }
     const s = TALK_ENGINE.view(state, 0, now()).talk;
-    byId('crazy-host').hidden = s.gameMode !== 'crazy';
-    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyHostStatus', { minutes: s.crazy.intervalSeconds / 60, n: s.crazy.pendingCount }) : '';
+    const ended = s.phase === 'ended';
+    byId('active-board').hidden = ended;
+    byId('round-rest').hidden = !ended;
+    byId('round-scores').innerHTML = ended && TALK_UI.scoreboardHTML ? TALK_UI.scoreboardHTML(s, 0) : '';
+    byId('round-controls').hidden = s.phase !== 'talking';
+    for (const id of ['add-time', 'finish']) byId(id).disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
+    byId('crazy-host').hidden = s.gameMode !== 'crazy' || ended;
+    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyActiveHostStatus', { n: s.crazy.pendingCount }) : '';
     byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
-    byId('crazy-send').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking' || !!s.crazy?.paused || s.crazy?.pendingCount >= list(s.roster).length;
+
     byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
     byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
     byId('question').textContent = state.topic.question;
@@ -155,18 +206,18 @@
     byId('follow-up').hidden = !state.extended;
     byId('follow-up').textContent = s.topic.followUp;
     byId('floor').textContent = TALK_UI.status(s, 0);
-    byId('question-return').textContent = s.activeQuestion ? t('returnTo', { name: name(s, s.speaker) }) : '';
-    byId('question-requests').textContent = list(s.questions).filter(q => q.id !== s.activeQuestion?.id).map(q => t('wantsAsk', { name: name(s, q.playerNum) }) + (q.deferred ? ' · ' + t('held') : '')).join(' · ');
-    byId('interest').innerHTML = TALK_UI.interests(s, now());
-    byId('notes').hidden = !list(s.notes).length;
+    byId('session-style').textContent = t(s.conversationMode === 'assigned' ? 'assignedMode' : s.conversationMode === 'free' ? 'freeMode' : 'randomMode');
+    byId('participants-panel').hidden = ended && s.gameMode === 'crazy';
+    byId('participants-content').innerHTML = TALK_UI.participantsHTML(s, 0);
+    byId('notes').hidden = ended || !list(s.notes).length;
     byId('notes-content').innerHTML = TALK_UI.notes(s);
     byId('start').hidden = s.phase !== 'thinking';
     byId('extend').hidden = s.phase !== 'talking';
     byId('extend').textContent = t(exploreOpen ? 'closeExplore' : 'extend');
     byId('extend').setAttribute('aria-expanded', String(exploreOpen));
     renderExplore();
-    byId('help').hidden = s.phase !== 'talking';
-    byId('help-end').hidden = !!s.activeQuestion;
+    byId('help').hidden = s.phase !== 'talking' || s.conversationMode === 'free';
+    byId('help-end').hidden = !!s.activeQuestion || s.conversationMode === 'free';
     byId('help-resume').hidden = !s.activeQuestion;
     for (const id of ['start', 'extend', 'new', 'help-end', 'help-resume', 'force-end', 'show-followup', 'show-custom-followup', 'hide-followup']) byId(id).disabled = busy || !canControl() || status === 'switched';
     if (demo && me) {
@@ -196,23 +247,35 @@
     } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1, invalid_topic: 1 } ? e.message : 'error'; }
     finally { busy = false; render(); if (error === 'pending_questions') byId('force-end').focus(); }
   }
+  byId('participants-content').addEventListener('click', event => {
+    const control = event.target.closest('[data-talk-action="exclude"]');
+    if (!control || control.disabled) return;
+    command('exclude', { playerNum: Number(control.dataset.player), active: control.dataset.active === 'true' });
+  });
   byId('setup').addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !canControl()) return;
     busy = true; error = ''; render();
     try {
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
-      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value), showStarters: startersOn(),
-        gameMode: byId('game-mode').value, crazySeconds: Number(byId('crazy-seconds').value) };
+      const options = { topic, ...rememberSettings(), showStarters: startersOn() };
       if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
-    } catch (e) { error = ['offline', 'invalid_topic'].includes(e.message) ? e.message : 'error'; }
+    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval', 'invalid_game_seconds', 'invalid_crazy_task_seconds'].includes(e.message) ? e.message : 'error'; }
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
-  byId('game-mode').addEventListener('change', renderModeSettings);
-  byId('crazy-send').addEventListener('click', () => command('crazySend'));
+  byId('clock-toggle').addEventListener('click', () => {
+    if (state?.phase !== 'talking' || !state.gameDeadline) return;
+    roundClockVisible = !roundClockVisible; renderClock();
+  });
+  byId('add-time').addEventListener('click', () => command('addTime', { seconds: 60 }));
+  byId('finish').addEventListener('click', () => command('finish'));
+  Object.values(preferenceFields).forEach(id => byId(id).addEventListener('change', () => {
+    error = ''; try { rememberSettings(); } catch (e) { error = e.message; } render();
+  }));
+  byId('browse-library').addEventListener('click', () => { byId('question-bank').open = true; });
   byId('crazy-pause').addEventListener('click', () => command('crazyPause', { paused: !state?.crazy?.paused }));
   byId('starter-toggle').addEventListener('change', async event => {
     const show = event.target.checked;
@@ -260,15 +323,31 @@
   byId('new').addEventListener('click', showSetup);
   byId('cancel-setup').addEventListener('click', () => { byId('setup').hidden = true; render(); });
   byId('demo-view').addEventListener('change', render);
+  // Showing the round clock is local display state, independent of timer commands.
+  function renderClock() {
+    if (!state) return;
+    const preparation = state.phase === 'thinking';
+    const running = state.phase === 'talking' && !!state.gameDeadline;
+    const visible = preparation || (running && roundClockVisible);
+    const toggle = byId('clock-toggle');
+    toggle.hidden = !running;
+    toggle.textContent = t(roundClockVisible && running ? 'hideTime' : 'viewTime');
+    toggle.setAttribute('aria-expanded', String(running && roundClockVisible));
+    byId('clock').hidden = !visible;
+    const secondsLeft = Math.max(0, Math.ceil(((preparation ? state.deadline : state.gameDeadline) - now()) / 1000));
+    const duration = TALK_UI.duration || (seconds => Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0'));
+    byId('clock').textContent = preparation ? t('preparationClock', { n: secondsLeft })
+      : visible ? t('roundClock', { time: duration(secondsLeft) }) : '';
+  }
   function paintClock() {
     if (!state) return;
-    if (demo && !busy && TALK_ENGINE.crazyDue(state, now())) {
-      state = TALK_ENGINE.apply(state, { id: TALK_SYNC.uid(), type: 'crazyTick', actor: 0, sessionId: state.sessionId,
+    if (demo && !busy && TALK_ENGINE.timerDue(state, now())) {
+      state = TALK_ENGINE.apply(state, { id: TALK_SYNC.uid(), type: 'clockTick', actor: 0, sessionId: state.sessionId,
         now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] });
       render();
     }
-    byId('clock').textContent = state.phase === 'thinking' ? t('secondsLeft', { n: Math.max(0, Math.ceil((state.deadline - now()) / 1000)) }) : '';
-    byId('interest').querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now()) e.remove(); });
+    renderClock();
+
     if (state.phase === 'thinking' && now() >= state.deadline && canControl() && status !== 'switched' && !busy && !autoStart) {
       autoStart = true; command('start').finally(() => { autoStart = false; });
     }
@@ -297,9 +376,20 @@
           if (state?.turnId !== next.turnId) error = '';
           state = next;
           if (newSession) {
-            byId('setup').hidden = true;
+            const fromHome = applyHomePreferences; applyHomePreferences = false;
+            byId('setup').hidden = !fromHome;
+            if (!fromHome) {
             byId('game-mode').value = next.gameMode === 'crazy' ? 'crazy' : 'normal';
-            byId('crazy-seconds').value = String(next.crazy?.intervalSeconds || 120);
+            const interval = TALK_SETTINGS.normalize(next.crazy?.minSeconds != null ? { crazyMinSeconds: next.crazy.minSeconds, crazyMaxSeconds: next.crazy.maxSeconds } : { crazySeconds: next.crazy?.intervalSeconds });
+            setSetupPreference('crazyMinSeconds', interval.crazyMinSeconds);
+            setSetupPreference('crazyMaxSeconds', interval.crazyMaxSeconds);
+            byId('crazy-source').value = next.crazy?.source || 'mixed';
+            byId('conversation-mode').value = next.conversationMode || 'random';
+            byId('mode').value = next.mode || 'think';
+            setSetupPreference('seconds', next.seconds || 45);
+            setSetupPreference('gameSeconds', next.gameSeconds || 900);
+            setSetupPreference('crazyTaskSeconds', next.crazy?.taskSeconds || next.crazyTaskSeconds || 150);
+            }
           }
           render();
         },
