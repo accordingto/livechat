@@ -713,6 +713,137 @@
     "zh": "大家可以問：{q}"
   }
 };
+  Object.assign(dict, {
+  "revealPrompt": { "en": "View prompt", "zh": "查看題卡" },
+  "entryLead": {
+    "en": "Choose a mood. Share a moment. Find its song.",
+    "zh": "選一種心情，分享一段故事，找到代表它的歌。"
+  },
+  "entryPick": {
+    "en": "Choose your card",
+    "zh": "選擇玩法卡"
+  },
+  "entryFooter": {
+    "en": "2–9 players · Your usual voice call",
+    "zh": "2–9 人・透過原本的語音通話"
+  },
+  "startTitle": {
+    "en": "Every story has a soundtrack.",
+    "zh": "每段故事，都有一首歌。"
+  },
+  "roleHost": {
+    "en": "Hosting this round",
+    "zh": "你是主持人"
+  },
+  "roleSpotlight": {
+    "en": "Your turn to share",
+    "zh": "輪到你分享"
+  },
+  "rolePartner": {
+    "en": "Joining this turn",
+    "zh": "你是合作夥伴"
+  },
+  "roleListener": {
+    "en": "Listen & ask",
+    "zh": "聆聽與提問"
+  },
+  "roleRest": {
+    "en": "Taking a break",
+    "zh": "你正在休息"
+  },
+  "phaseChallengeHost": {
+    "en": "Give {name} a moment, then choose the result.",
+    "zh": "給 {name} 一點時間，再判定結果。"
+  },
+  "phaseChallengeYou": {
+    "en": "The card is yours. Take your time.",
+    "zh": "這張卡屬於你，慢慢分享就好。"
+  },
+  "phaseChallengeListen": {
+    "en": "Listen to {name}. A question can help the story unfold.",
+    "zh": "聽聽 {name}，用一個提問接住故事。"
+  },
+  "phaseChoiceYou": {
+    "en": "Choose a title or activity for your turn.",
+    "zh": "選一個歌名或互動，接著開始。"
+  },
+  "phaseChoiceReady": {
+    "en": "Your choice is ready. Begin when you like.",
+    "zh": "已經選好了，準備好就開始。"
+  },
+  "phaseChoiceListen": {
+    "en": "{name} is making their choice.",
+    "zh": "{name} 正在選擇這一段互動。"
+  },
+  "phaseSingingYou": {
+    "en": "You have the floor. A short moment is enough.",
+    "zh": "這段時間屬於你，分享一小段就好。"
+  },
+  "phaseSingingListen": {
+    "en": "Stay with {name} for this moment.",
+    "zh": "陪 {name} 一起度過這一小段。"
+  },
+  "phaseFinished": {
+    "en": "A moment shared. The next player can take over.",
+    "zh": "這一段完成了，準備交給下一位。"
+  },
+  "phaseStopped": {
+    "en": "The game is paused.",
+    "zh": "遊戲已暫停。"
+  },
+  "chooserTitle": {
+    "en": "Choose a song or activity",
+    "zh": "選歌名或互動"
+  },
+  "chooserIdle": {
+    "en": "Browse, search, or open My Songs",
+    "zh": "瀏覽、搜尋，或打開我的歌單"
+  },
+  "chooserSelected": {
+    "en": "Selected: {title}",
+    "zh": "目前選擇：{title}"
+  },
+  "chooserOther": {
+    "en": "Find another way",
+    "zh": "換一種分享方式"
+  },
+  "anotherWay": {
+    "en": "Other ways to share",
+    "zh": "還有其他分享方式"
+  },
+  "stageLater": {
+    "en": "Your next moment comes after this challenge.",
+    "zh": "完成這張卡，再開始下一段互動。"
+  },
+  "life_stageLater": {
+    "en": "Start with the story. Its song comes next.",
+    "zh": "先聊故事，代表它的歌就在下一步。"
+  },
+  "selectedChoice": {
+    "en": "YOUR CHOICE",
+    "zh": "你的選擇"
+  },
+  "suggestedActivity": {
+    "en": "A way to share",
+    "zh": "這樣分享就好"
+  },
+  "roomTools": {
+    "en": "Room & mode settings",
+    "zh": "房間與玩法設定"
+  },
+  "scoreDetails": {
+    "en": "Score & turn order",
+    "zh": "計分與輪流順序"
+  },
+  "storyMore": {
+    "en": "Keep the conversation going",
+    "zh": "接著聊一聊"
+  },
+  "modeDetails": {
+    "en": "About this mode",
+    "zh": "這個玩法怎麼玩"
+  }
+});
   if (global.I18N) global.I18N.registerDict('openmic', dict);
   var fallbackCategories = [
     ['for-you', 'For You', '為你精選'], ['original', 'Original prompts', '原創互動'], ['my-songs', 'My Songs', '我的歌單'],
@@ -745,6 +876,8 @@
       this.discoveryGeneration = 0; this.discoveryAbort = null; this.discoveryBusy = false;
       this.discoveryStatus = { key: 'discoveryIdle' }; this.discoveryFetchedAt = null;
       this.discoveryResultQuery = ''; this.discoveryResultRegion = 'TW'; this.discoveryStarted = false;
+      this.chooserContext = null; this.chooserPhase = null; this.chooserSelection = null;
+      this.activityContext = null; this.activityMode = null;
       this.build();
       this.onClick = this.handleClick.bind(this); this.onInput = this.handleInput.bind(this); this.onSubmit = this.handleSubmit.bind(this);
       element.addEventListener('click', this.onClick); element.addEventListener('input', this.onInput); element.addEventListener('submit', this.onSubmit);
@@ -753,7 +886,7 @@
     }
     build() {
       this.element.classList.add('om-app');
-      this.element.innerHTML = '<div class="om-grid"><div class="om-left"><section class="om-panel om-challenge" data-om-challenge></section><section class="om-panel om-score-panel" data-om-score></section></div><div class="om-right"><section class="om-panel om-stage"><div class="om-stage-top"><h2 data-om-stage-title></h2><span class="om-duration" data-om-duration></span></div><div class="om-text-stage" data-om-stage-info></div><div class="om-stage-bottom om-stage-session"><div data-om-stage-timer></div><div data-om-stage-controls></div></div></section><section class="om-panel om-browser"><div class="om-panel-head"><h2 data-om-library-title></h2><button type="button" class="om-button" data-om-action="addOpen"></button></div><section class="om-discovery"><h3 data-om-discovery-title></h3><p class="om-soft" data-om-starter-hint></p><form class="om-discovery-form" data-om-discovery-form><label class="om-field om-discovery-query"><span data-om-discovery-query-label></span><input type="search" name="discoveryQuery" class="om-search" data-om-discovery-query maxlength="100" autocomplete="off"></label><label class="om-field om-discovery-region"><span data-om-discovery-region-label></span><select name="discoveryRegion" data-om-discovery-region><option value="TW" data-om-region-tw></option><option value="US" data-om-region-us></option><option value="KR" data-om-region-kr></option></select></label><button type="submit" class="om-button om-primary" data-om-discovery-search></button><button type="button" class="om-button" data-om-action="discoveryPopular"></button></form><p class="om-feedback" data-om-discovery-status role="status"></p><p class="om-soft" data-om-discovery-meta></p><div class="om-song-list om-discovery-results" data-om-discovery-results></div></section><div class="om-tabs" data-om-tabs role="tablist" aria-label="Title categories"></div><input type="search" class="om-search" data-om-search autocomplete="off"><p class="om-owner" data-om-owner></p><div class="om-song-list" data-om-songs></div></section></div></div><p class="om-feedback" data-om-feedback role="status"></p><dialog class="om-modal" data-om-modal="add"><header><h2 data-om-add-title></h2><button type="button" class="om-button" data-om-action="closeAdd"></button></header><form class="om-form" data-om-add-form><label class="om-field"><span data-om-title-label></span><input name="title" maxlength="140" required autocomplete="off"></label><label class="om-field"><span data-om-artist-label></span><input name="artist" maxlength="140" autocomplete="off"></label><p class="om-soft" data-om-add-hint></p><p class="om-form-error" data-om-form-error role="alert"></p><button type="submit" class="om-button om-primary" data-om-add-submit></button></form></dialog><dialog class="om-modal" data-om-modal="duet"><header><h2 data-om-duet-title></h2><button type="button" class="om-button" data-om-action="closeDuet"></button></header><p class="om-soft" data-om-duet-hint></p><div class="om-duet-list" data-om-duets></div></dialog>';
+      this.element.innerHTML = '<div class="om-grid"><div class="om-left"><section class="om-panel om-challenge om-challenge-card" data-om-challenge></section><section class="om-panel om-score-panel" data-om-score></section></div><div class="om-right"><section class="om-panel om-stage"><div class="om-stage-top"><h2 data-om-stage-title></h2><span class="om-duration" data-om-duration></span></div><div class="om-text-stage" data-om-stage-info></div><div class="om-stage-bottom om-stage-session"><div data-om-stage-timer></div><div data-om-stage-controls></div></div></section><details class="om-panel om-browser om-song-chooser" data-om-chooser data-om-library-details><summary class="om-chooser-summary" data-om-chooser-summary><span class="om-chooser-symbol" aria-hidden="true">＋</span><span><span class="om-chooser-heading" data-om-library-title></span><span class="om-chooser-status" data-om-chooser-status></span></span><span class="om-chooser-chevron" aria-hidden="true">⌄</span></summary><div class="om-chooser-content"><div class="om-panel-head"><h3 data-om-library-subtitle></h3><button type="button" class="om-button" data-om-action="addOpen"></button></div><div class="om-tabs" data-om-tabs role="tablist" aria-label="Title categories"></div><input type="search" class="om-search" data-om-search autocomplete="off"><p class="om-owner" data-om-owner></p><div class="om-song-list" data-om-songs></div><details class="om-discovery" data-om-discovery-details><summary><h3 data-om-discovery-title></h3></summary><p class="om-soft" data-om-starter-hint></p><form class="om-discovery-form" data-om-discovery-form><label class="om-field om-discovery-query"><span data-om-discovery-query-label></span><input type="search" name="discoveryQuery" class="om-search" data-om-discovery-query maxlength="100" autocomplete="off"></label><label class="om-field om-discovery-region"><span data-om-discovery-region-label></span><select name="discoveryRegion" data-om-discovery-region><option value="TW" data-om-region-tw></option><option value="US" data-om-region-us></option><option value="KR" data-om-region-kr></option></select></label><button type="submit" class="om-button om-primary" data-om-discovery-search></button><button type="button" class="om-button" data-om-action="discoveryPopular"></button></form><p class="om-feedback" data-om-discovery-status role="status"></p><p class="om-soft" data-om-discovery-meta></p><div class="om-song-list om-discovery-results" data-om-discovery-results></div></details></div></details></div></div><p class="om-feedback" data-om-feedback role="status"></p><dialog class="om-modal" data-om-modal="add"><header><h2 data-om-add-title></h2><button type="button" class="om-button" data-om-action="closeAdd"></button></header><form class="om-form" data-om-add-form><label class="om-field"><span data-om-title-label></span><input name="title" maxlength="140" required autocomplete="off"></label><label class="om-field"><span data-om-artist-label></span><input name="artist" maxlength="140" autocomplete="off"></label><p class="om-soft" data-om-add-hint></p><p class="om-form-error" data-om-form-error role="alert"></p><button type="submit" class="om-button om-primary" data-om-add-submit></button></form></dialog><dialog class="om-modal" data-om-modal="duet"><header><h2 data-om-duet-title></h2><button type="button" class="om-button" data-om-action="closeDuet"></button></header><p class="om-soft" data-om-duet-hint></p><div class="om-duet-list" data-om-duets></div></dialog>';
       this.addDialog = this.find('[data-om-modal="add"]'); this.duetDialog = this.find('[data-om-modal="duet"]');
       this.renderLabels();
     }
@@ -770,7 +903,7 @@
       this.render();
     }
     renderLabels() {
-      var labels = { '[data-om-stage-title]': 'stage', '[data-om-library-title]': 'library', '[data-om-action="addOpen"]': 'addOwn', '[data-om-action="closeAdd"]': 'close', '[data-om-action="closeDuet"]': 'close', '[data-om-add-title]': 'addTitle', '[data-om-title-label]': 'songTitle', '[data-om-artist-label]': 'artistName', '[data-om-add-hint]': 'addHint', '[data-om-add-submit]': 'add', '[data-om-duet-title]': 'duetTitle', '[data-om-duet-hint]': 'duetHint', '[data-om-starter-hint]': 'starterHint', '[data-om-discovery-title]': 'discoveryTitle', '[data-om-discovery-query-label]': 'discoveryQuery', '[data-om-discovery-region-label]': 'discoveryRegion', '[data-om-discovery-search]': 'discoverySearch', '[data-om-action="discoveryPopular"]': 'discoveryPopular', '[data-om-region-tw]': 'discoveryTW', '[data-om-region-us]': 'discoveryUS', '[data-om-region-kr]': 'discoveryKR' };
+      var labels = { '[data-om-stage-title]': 'stage', '[data-om-library-title]': 'chooserTitle', '[data-om-library-subtitle]': 'library', '[data-om-action="addOpen"]': 'addOwn', '[data-om-action="closeAdd"]': 'close', '[data-om-action="closeDuet"]': 'close', '[data-om-add-title]': 'addTitle', '[data-om-title-label]': 'songTitle', '[data-om-artist-label]': 'artistName', '[data-om-add-hint]': 'addHint', '[data-om-add-submit]': 'add', '[data-om-duet-title]': 'duetTitle', '[data-om-duet-hint]': 'duetHint', '[data-om-starter-hint]': 'starterHint', '[data-om-discovery-title]': 'discoveryTitle', '[data-om-discovery-query-label]': 'discoveryQuery', '[data-om-discovery-region-label]': 'discoveryRegion', '[data-om-discovery-search]': 'discoverySearch', '[data-om-action="discoveryPopular"]': 'discoveryPopular', '[data-om-region-tw]': 'discoveryTW', '[data-om-region-us]': 'discoveryUS', '[data-om-region-kr]': 'discoveryKR' };
       Object.keys(labels).forEach(selector => this.setText(selector, t(labels[selector])));
       this.find('[data-om-search]').placeholder = t('search'); this.find('[data-om-search]').setAttribute('aria-label', t('search'));
       this.find('[data-om-add-form] input[name="title"]').placeholder = t('titlePlaceholder');
@@ -783,17 +916,29 @@
     // Mode-specific copy: Life Song uses its own wording where one exists.
     lt(key, vars) { return t(this.life() && dict['life_' + key] ? 'life_' + key : key, vars); }
     renderStage() {
-      var data = this.data, song = data.selectedSong, host = this.host(), manager = this.manager();
-      var controller = host || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
+      var data = this.data, song = data.selectedSong, manager = this.manager();
+      var controller = this.host() || (this.actor === Number(data.spotlight) && this.roster().some(player => Number(player.playerNum) === this.actor && player.active !== false));
       var after = data.phase !== 'stopped' && !!data.challengeResult, finished = data.phase === 'finished';
       this.setText('[data-om-duration]', t('duration', { n: Number(data.duration) || 35 }));
       this.setText('[data-om-stage-title]', this.lt('stage'));
-      var info = song ? '<div class="om-stage-track"><h3>' + esc(song.title) + '</h3><p>' + esc(song.artist || '') + '</p></div>' : '<div class="om-empty-stage"><span aria-hidden="true">♪</span><h3>' + esc(this.lt('chooseSong')) + '</h3><p class="om-soft">' + esc(this.lt('stageEmptyHint')) + '</p></div>';
-      var suggested = this.life() ? (data.duet ? 'lifeTogether' : 'lifeSing') : song && song.videoId === 'omtxt000001' ? 'original' : song && song.videoId === 'omtxt000002' ? 'rhythm' : 'story';
-      var cards = this.life() ? ['lifeSing', 'lifeWhy', 'lifeTogether'] : ['story', 'original', 'rhythm'];
-      info += '<div class="om-activity-cards">' + cards.map(mode => '<article class="om-activity-card' + (mode === suggested ? ' om-activity-selected' : '') + '"><h3>' + esc(t(mode + 'Title')) + '</h3><p>' + esc(t(mode + 'Hint')) + '</p></article>').join('') + '</div>';
-      if (data.duet) info += '<p class="om-stage-hint om-soft">👥 ' + esc(t('duetWith', { name: this.name(data.duet) })) + '</p>';
+      var activityKey = [data.sessionId, data.round, data.spotlight, this.mode(), song && song.videoId || ''].join(':');
+      var previousAlternatives = this.find('[data-om-alternatives]');
+      var alternativesOpen = this.activityContext === activityKey && previousAlternatives && previousAlternatives.open;
+      if (this.activityContext !== activityKey) { this.activityContext = activityKey; this.activityMode = null; }
+      var info = '';
+      if (!after) {
+        info = '<p class="om-stage-standby">' + esc(data.phase === 'stopped' ? t('phaseStopped') : this.lt('stageLater')) + '</p>';
+      } else if (!song) {
+        info = '<div class="om-empty-stage"><h3>' + esc(this.lt('chooseSong')) + '</h3></div>';
+      } else {
+        var cards = this.activityCards(), suggested = this.activityMode || this.suggestedActivity();
+        info = '<div class="om-stage-track"><p class="om-kicker">' + esc(t('selectedChoice')) + '</p><h3>' + esc(song.title) + '</h3>' + (song.artist ? '<p class="om-selected-artist">' + esc(song.artist) + '</p>' : '') + '</div>';
+        info += '<article class="om-suggested-activity om-activity-card om-activity-selected" data-om-activity-cue><p class="om-kicker">' + esc(t('suggestedActivity')) + '</p><h3>' + esc(t(suggested + 'Title')) + '</h3><p>' + esc(t(suggested + 'Hint')) + '</p></article>';
+        info += '<details class="om-alternate-activities" data-om-alternatives' + (alternativesOpen ? ' open' : '') + '><summary>' + esc(t('anotherWay')) + '</summary><div class="om-activity-options">' + cards.map(mode => '<button type="button" class="om-button om-activity-option' + (mode === suggested ? ' om-option-current' : '') + '" data-om-action="activityMode" data-mode="' + mode + '" aria-pressed="' + (mode === suggested) + '"><strong>' + esc(t(mode + 'Title')) + '</strong><span>' + esc(t(mode + 'Hint')) + '</span></button>').join('') + '</div></details>';
+        if (data.duet) info += '<p class="om-stage-hint om-soft"><span aria-hidden="true">👥</span> ' + esc(t('duetWith', { name: this.name(data.duet) })) + '</p>';
+      }
       this.set('[data-om-stage-info]', info);
+      var alternatives = this.find('[data-om-alternatives]'); if (alternatives) alternatives.open = !!alternativesOpen;
       var canChange = !!song && this.canSelectDiscovery();
       this.set('[data-om-stage-timer]', data.singingState === 'singing' ? '<div class="om-timer-line"><strong class="om-timer" data-om-timer aria-live="off"></strong><p class="om-timer-label" data-om-timer-label></p></div><div class="om-progress" aria-hidden="true"><span data-om-progress></span></div>' : '');
       var buttons = '', showActions = after && (controller || manager) && (!finished || !!song || manager);
@@ -803,12 +948,39 @@
       if (after && !finished && controller) buttons += this.button('duetOpen', t('inviteDuet')) + this.button('skip', t('skip'), 'om-skip');
       if (manager && after) buttons += this.button('next', t('next'), finished ? 'om-primary' : '');
       if (showActions) buttons += '</div>';
-      if (data.phase === 'stopped') buttons += '<p class="om-waiting">' + esc(t('gameStopped')) + '</p>';
-      else if (!after) buttons += '<p class="om-waiting">' + esc(this.lt('challengeFirst')) + '</p>';
-      else if (finished) buttons += '<p class="om-waiting">' + esc(data.singingAwarded ? this.lt('singingDone') : t('singingSkipped')) + ' ' + esc(t('finishedPlaybackHint')) + '</p>';
-      else if (!controller) buttons += '<p class="om-waiting">' + esc(this.lt('selectionWait', { name: this.name(data.spotlight) })) + '</p>';
-      else if (song) buttons += '<p class="om-waiting">' + esc(t(data.phase === 'singing' ? 'changeSongHint' : 'songControlsHint')) + '</p>';
+      if (after && !finished && controller && song && data.phase === 'singing') buttons += '<p class="om-waiting">' + esc(t('changeSongHint')) + '</p>';
       this.set('[data-om-stage-controls]', buttons);
+    }
+    activityCards() { return this.life() ? ['lifeSing', 'lifeWhy', 'lifeTogether'] : ['story', 'original', 'rhythm']; }
+    suggestedActivity() {
+      var data = this.data || {}, song = data.selectedSong;
+      return this.life() ? (data.duet ? 'lifeTogether' : 'lifeSing') : song && song.videoId === 'omtxt000001' ? 'original' : song && song.videoId === 'omtxt000002' ? 'rhythm' : 'story';
+    }
+    ownRole() {
+      if (this.host()) return 'roleHost';
+      var person = this.roster().find(player => Number(player.playerNum) === this.actor);
+      if (!person || person.active === false) return 'roleRest';
+      if (this.data && this.actor === Number(this.data.spotlight)) return 'roleSpotlight';
+      return this.data && this.actor === Number(this.data.duet) ? 'rolePartner' : 'roleListener';
+    }
+    phaseCue() {
+      var data = this.data || {}, own = this.ownRole() === 'roleSpotlight';
+      var controller = this.host() || own;
+      var key = data.phase === 'stopped' ? 'phaseStopped' : data.phase === 'finished' ? 'phaseFinished' : data.phase === 'singing' ? (controller ? 'phaseSingingYou' : 'phaseSingingListen') : data.phase === 'choice' ? (controller ? data.selectedSong ? 'phaseChoiceReady' : 'phaseChoiceYou' : 'phaseChoiceListen') : own ? 'phaseChallengeYou' : this.manager() ? 'phaseChallengeHost' : 'phaseChallengeListen';
+      return t(key, { name: this.name(data.spotlight) });
+    }
+    syncChooser() {
+      if (!this.data || this.destroyed) return;
+      var chooser = this.find('[data-om-chooser]'); if (!chooser) return;
+      var data = this.data, selected = data.selectedSong && data.selectedSong.videoId || '';
+      var context = [data.sessionId, data.round, data.spotlight, this.mode()].join(':');
+      var controller = this.host() || this.ownRole() === 'roleSpotlight';
+      var contextChanged = this.chooserContext !== context, selectionChanged = this.chooserSelection !== selected;
+      var enteredChoice = data.phase === 'choice' && (this.chooserPhase !== 'choice' || contextChanged);
+      if (selectionChanged && selected) chooser.open = false;
+      else if (controller && !selected && (enteredChoice || selectionChanged && this.chooserSelection && ['choice', 'finished'].indexOf(data.phase) >= 0)) chooser.open = true;
+      this.chooserContext = context; this.chooserPhase = data.phase; this.chooserSelection = selected;
+      this.setText('[data-om-chooser-status]', data.selectedSong ? t('chooserSelected', { title: data.selectedSong.title }) : t('chooserIdle'));
     }
     sourceLink(song) {
       var url = song && youtube(song.videoId);
@@ -858,11 +1030,16 @@
       return this.action('selectSong', { videoId: song.videoId, title: title });
     }
     showSongBrowser() {
-      var browser = this.find('.om-browser'); if (browser && typeof browser.scrollIntoView === 'function') browser.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var browser = this.find('.om-browser');
+      if (browser) { browser.open = true; if (typeof browser.scrollIntoView === 'function') browser.scrollIntoView({ behavior: global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }
     }
     changeStageSong() {
       if (!this.canSelectDiscovery() || !this.data.selectedSong) return;
-      this.showSongBrowser(); var query = this.find('[data-om-search]'); if (query && typeof query.focus === 'function') query.focus({ preventScroll: true });
+      this.query = ''; var query = this.find('[data-om-search]'); if (query) query.value = '';
+      this.discoveryQuery = ''; var discovery = this.find('[data-om-discovery-query]'); if (discovery) discovery.value = '';
+      this.cancelDiscovery(); this.discoverySongs = []; this.discoveryFetchedAt = null; this.discoveryStatus = { key: 'discoveryIdle' };
+      this.renderSongs(); this.renderDiscovery(); this.showSongBrowser();
+      if (query && typeof query.focus === 'function') query.focus({ preventScroll: true });
     }
     clearStageSong() {
       if (!this.canSelectDiscovery() || !this.data.selectedSong) return;
@@ -888,6 +1065,7 @@
       var target = event.target.closest('[data-om-action]');
       if (!target || !this.element.contains(target) || target.disabled) return;
       var action = target.dataset.omAction;
+      if (action === 'activityMode') { if (!this.destroyed && this.data && this.data.selectedSong && this.activityCards().indexOf(target.dataset.mode) >= 0) { this.activityMode = target.dataset.mode; this.renderStage(); } return; }
       if (action === 'discoveryPopular') { this.discoveryStarted = true; this.requestDiscovery('popular'); return; }
       if (action === 'discoveryAdd') { this.addDiscoverySong(target.dataset.video); return; }
       if (action === 'discoverySelect') { this.selectDiscoverySong(target.dataset.video); return; }
@@ -946,42 +1124,46 @@
     }
     render() {
       if (this.destroyed) return;
-      this.renderLabels();
-      if (!this.data) return;
-      var data = this.data, challenge = data.challenge || {}, controller = this.controller(), host = this.host(), manager = this.manager();
-      var result = data.challengeResult, after = data.phase !== 'stopped' && !!result, finished = data.phase === 'finished';
+      this.renderLabels(); if (!this.data) return;
+      var data = this.data, challenge = data.challenge || {}, manager = this.manager();
+      var result = data.challengeResult, after = data.phase !== 'stopped' && !!result;
       var personName = this.name(data.spotlight), avatar = Array.from(personName.trim())[0] || '♪';
-      var controls = '';
-      if (manager && data.phase === 'challenge') controls = '<div class="om-challenge-controls om-actions">' + this.button('success', this.lt('success'), 'om-success') + this.button('failed', this.lt('failed'), 'om-fail') + this.button('newChallenge', this.lt('newChallenge')) + '</div>';
-      var chain = this.life() && Number(data.round) > 1 && data.phase === 'challenge' ? '<p class="om-chain-hint">🔗 ' + esc(t('lifeChainHint')) + '</p>' : '';
-      var disclosure = this.find('[data-om-challenge-details]');
-      var disclosureKey = [data.sessionId, data.round, challenge.id, data.phase === 'challenge' ? 'challenge' : 'result'].join(':');
-      var disclosureOpen = this.challengeDisclosureKey === disclosureKey && disclosure ? disclosure.open : data.phase === 'challenge';
-      this.challengeDisclosureKey = disclosureKey;
-      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + (this.actor === Number(data.spotlight) ? '<span class="om-you">' + esc(t('you')) + '</span>' : '') + '</h2></div></div><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span></div><details class="om-challenge-details" data-om-challenge-details' + (disclosureOpen ? ' open' : '') + '><summary><span>' + esc(this.lt('viewChallenge')) + '</span><strong>' + esc(challengeText(challenge.title)) + '</strong></summary><div class="om-challenge-body"><p class="om-situation">' + esc(challengeText(challenge.situation)) + '</p><div class="om-task">' + esc(challengeText(challenge.challenge)) + '</div>' + (challenge.followUp ? '<p class="om-followup">💬 ' + esc(t('followUpLabel', { q: challengeText(challenge.followUp) })) + '</p>' : '') + '<p class="om-success-rule">' + esc(this.lt('successRule', { rule: challengeText(challenge.successRule) })) + '</p>' + chain + '</div></details>' + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '" role="status"><strong>' + esc(this.lt(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong><p>' + esc(this.lt(result === 'success' ? 'successHint' : 'failedHint')) + '</p></div>' : ''));
+      this.element.setAttribute('data-om-phase', data.phase || 'challenge'); this.element.setAttribute('data-om-mode', this.mode());
+      this.element.classList.toggle('om-player-view', !this.host());
+      var controls = manager && data.phase === 'challenge' ? '<div class="om-challenge-controls om-actions">' + this.button('success', this.lt('success'), 'om-success') + this.button('failed', this.lt('failed'), 'om-fail') + this.button('newChallenge', this.lt('newChallenge')) + '</div>' : '';
+      var chain = this.life() && Number(data.round) > 1 && data.phase === 'challenge' ? '<p class="om-chain-hint"><span aria-hidden="true">↳</span> ' + esc(t('lifeChainHint')) + '</p>' : '';
+      var followUp = challenge.followUp ? '<p class="om-followup"><span aria-hidden="true">＋</span> ' + esc(t('followUpLabel', { q: challengeText(challenge.followUp) })) + '</p>' : '';
+      var art = '<svg class="om-card-art" viewBox="0 0 128 110" aria-hidden="true" focusable="false"><circle cx="78" cy="49" r="31" fill="#B5DCCF"/><path d="M18 59C8 38 20 15 43 17c21 1 31 24 22 43-10 23-37 21-47-1Z" fill="#C9B8E8"/><path d="m75 15 8 12 14-2-7 13 8 12-14-2-9 12-2-14-14-5 13-6Z" fill="#F27B68"/><path d="M32 77c14-9 24 17 38 8s22-1 30 9" fill="none" stroke="#45344F" stroke-width="5" stroke-linecap="round"/></svg>';
+      var modeKey = { life: 'modeLife', next: 'modeNext', mission: 'modeMission' }, modeNow = this.mode();
+      var cardBody = '<div class="om-card-body">' + (data.phase === 'challenge' ? art : '') + '<p class="om-mode-tag">' + esc(t(modeKey[modeNow])) + '</p>' + (data.phase === 'challenge' ? '<h3 class="om-card-heading">' + esc(challengeText(challenge.title)) + '</h3>' : '') + '<p class="om-situation om-card-context">' + esc(challengeText(challenge.scene || challenge.situation)) + '</p><div class="om-task om-task-visible om-card-prompt" data-om-task>' + esc(challengeText(challenge.question || challenge.challenge)) + '</div><p class="om-success-rule">' + esc(this.lt('successRule', { rule: challengeText(challenge.songQuestion || challenge.successRule) })) + '</p>' + followUp + chain + '</div>';
+      var recapKey = [data.sessionId, data.round, challenge.id, this.mode()].join(':');
+      var previousRecap = this.find('[data-om-completed-prompt]');
+      var recapOpen = this.completedPromptKey === recapKey && previousRecap && previousRecap.open;
+      this.completedPromptKey = recapKey;
+      var prompt = data.phase === 'challenge' ? cardBody : '<details class="om-challenge-recap om-completed-prompt" data-om-completed-prompt' + (recapOpen ? ' open' : '') + '><summary><h3 class="om-card-heading">' + esc(challengeText(challenge.title)) + '</h3><span>' + esc(t('revealPrompt')) + '</span></summary>' + cardBody + '</details>';
+      this.set('[data-om-challenge]', '<div class="om-challenge-meta"><div class="om-spotlight"><span class="om-avatar" aria-hidden="true">' + esc(avatar) + '</span><div><p class="om-kicker">' + esc(t('spotlight')) + '</p><h2>' + esc(personName) + '</h2></div></div><div class="om-turn-meta"><span class="om-round">' + esc(t('round', { n: data.round || 1 })) + '</span><span class="om-role-badge" data-om-role-badge>' + esc(t(this.ownRole())) + '</span></div></div><p class="om-phase-cue" data-om-phase-cue role="status">' + esc(this.phaseCue()) + '</p>' + prompt + controls + (after ? '<div class="om-result ' + (result === 'failed' ? 'om-result-failed' : '') + '"><strong>' + esc(this.lt(result === 'success' ? 'challengeSuccess' : 'challengeFailed')) + '</strong></div>' : ''));
+      var currentRecap = this.find('[data-om-completed-prompt]'); if (currentRecap) currentRecap.open = !!recapOpen;
       var roster = this.roster(), active = roster.filter(p => p.active !== false), current = active.findIndex(p => Number(p.playerNum) === Number(data.spotlight));
       var ordered = current >= 0 ? active.slice(current).concat(active.slice(0, current)) : active;
       var queue = ordered.concat(roster.filter(p => p.active === false)).map(p => '<li class="' + (Number(p.playerNum) === Number(data.spotlight) ? 'om-current' : p.active === false ? 'om-inactive' : '') + '">' + (Number(p.playerNum) === Number(data.spotlight) ? '<span class="om-dot" aria-hidden="true"></span>' : '') + esc(p.name || t('player', { n: p.playerNum })) + (p.active === false ? ' · ' + esc(t('sittingOut')) : '') + '</li>').join('');
-      var manage = manager ? '<details class="om-manage"><summary>' + esc(t('manage')) + '</summary><div class="om-roster">' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div></details>' : '';
-      if (data.sharedControls === true && manager) manage += '<details class="om-manage"><summary>' + esc(t('restartGame')) + '</summary><div class="om-actions">' + this.button('restart', t('restartGame')) + (data.phase !== 'stopped' ? this.button('stop', t('stopGame')) : '') + '</div></details>';
-      var modeNow = this.mode(), modeKey = { life: 'modeLife', next: 'modeNext', mission: 'modeMission' };
-      var modeRow = '<div class="om-mode"><p class="om-kicker">' + esc(t('modeLabel')) + '</p>' + (manager && data.phase !== 'stopped'
-        ? '<div class="om-mode-switch" role="group" aria-label="' + esc(t('modeLabel')) + '">' + ['life', 'next', 'mission'].map(mode => this.button('setMode', t(modeKey[mode]), mode === modeNow ? 'om-mode-on' : '', ' data-mode="' + mode + '" aria-pressed="' + (mode === modeNow) + '"')).join('') + '</div>'
-        : '<p class="om-mode-current">' + esc(t(modeKey[modeNow])) + '</p>') + '<p class="om-soft om-mode-hint">' + esc(t(modeKey[modeNow] + 'Hint')) + (manager && data.phase !== 'challenge' && data.phase !== 'stopped' ? ' ' + esc(t('modeNextTurn')) : '') + '</p></div>';
-      manage = modeRow + manage;
-      var manageEl = this.find('.om-manage'), manageOpen = manageEl && manageEl.open;
-      this.set('[data-om-score]', '<div class="om-score-row"><div><p class="om-kicker">' + esc(t('teamScore')) + '</p><p class="om-score-rules">' + esc(this.lt('scoreHint')) + '</p></div><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div><div class="om-queue"><p class="om-kicker">' + esc(t('queue')) + '</p><ol class="om-queue-list">' + queue + '</ol></div>' + manage);
-      if (data.sharedControls === true) {
-        this.set('[data-om-score]', this.find('[data-om-score]').innerHTML + '<div class="om-actions">' + this.button('recover', t('recover')) + (!manager ? this.button('exclude', t('rejoin'), '', ' data-player="' + this.actor + '" data-active="true"') : '') + '</div>');
-      }
-      if (manageOpen && this.find('.om-manage')) this.find('.om-manage').open = true;
-      this.renderStage();
-      this.renderSongs();
+      var queueEl = this.find('[data-om-queue-details]'), queueOpen = queueEl && queueEl.open;
+      var manageEl = this.find('[data-om-management]'), manageOpen = manageEl && manageEl.open;
+      var modeEl = this.find('[data-om-mode-details]'), modeOpen = modeEl && modeEl.open;
+      var modeRow = '<div class="om-mode"><p class="om-kicker">' + esc(t('modeLabel')) + '</p>' + (manager && data.phase !== 'stopped' ? '<div class="om-mode-switch" role="group" aria-label="' + esc(t('modeLabel')) + '">' + ['life', 'next', 'mission'].map(mode => this.button('setMode', t(modeKey[mode]), mode === modeNow ? 'om-mode-on' : '', ' data-mode="' + mode + '" aria-pressed="' + (mode === modeNow) + '"')).join('') + '</div>' : '<p class="om-mode-current">' + esc(t(modeKey[modeNow])) + '</p>') + '<p class="om-soft om-mode-hint">' + esc(t(modeKey[modeNow] + 'Hint')) + (manager && data.phase !== 'challenge' && data.phase !== 'stopped' ? ' ' + esc(t('modeNextTurn')) : '') + '</p></div>';
+      var admin = manager ? '<div class="om-roster"><p class="om-kicker">' + esc(t('manage')) + '</p>' + roster.map(p => '<div class="om-roster-row"><span>' + esc(p.name || t('player', { n: p.playerNum })) + '</span>' + this.button('exclude', t(p.active === false ? 'rejoin' : 'sitOut'), '', ' data-player="' + Number(p.playerNum) + '" data-active="' + (p.active === false ? 'true' : 'false') + '"') + '</div>').join('') + '</div>' : '';
+      if (data.sharedControls === true && manager) admin += '<div class="om-actions om-session-tools">' + this.button('restart', t('restartGame')) + (data.phase !== 'stopped' ? this.button('stop', t('stopGame')) : '') + '</div>';
+      if (data.sharedControls === true) admin += '<div class="om-actions om-session-tools">' + this.button('recover', t('recover')) + (!manager ? this.button('exclude', t('rejoin'), '', ' data-player="' + this.actor + '" data-active="true"') : '') + '</div>';
+      var extras = '<details class="om-queue-disclosure" data-om-queue-details' + (queueOpen ? ' open' : '') + '><summary>' + esc(t('scoreDetails')) + '</summary><p class="om-score-rules">' + esc(this.lt('scoreHint')) + '</p><ol class="om-queue-list">' + queue + '</ol></details>';
+      if (manager || data.sharedControls === true) extras += '<details class="om-manage om-admin-details" data-om-management' + (manageOpen ? ' open' : '') + '><summary>' + esc(t('roomTools')) + '</summary>' + modeRow + admin + '</details>';
+      else extras += '<details class="om-mode-explanation" data-om-mode-details' + (modeOpen ? ' open' : '') + '><summary>' + esc(t('modeDetails')) + '</summary>' + modeRow + '</details>';
+      this.set('[data-om-score]', '<div class="om-score-row om-score-mini"><p class="om-kicker">' + esc(t('teamScore')) + '</p><strong class="om-score-number" aria-label="' + esc(t('teamScore')) + '">' + Number(data.teamScore || 0) + '</strong></div>' + extras);
+      var queueAfter = this.find('[data-om-queue-details]'); if (queueAfter) queueAfter.open = !!queueOpen;
+      var manageAfter = this.find('[data-om-management]'); if (manageAfter) manageAfter.open = !!manageOpen;
+      var modeAfter = this.find('[data-om-mode-details]'); if (modeAfter) modeAfter.open = !!modeOpen;
+      this.renderStage(); this.renderSongs(); this.syncChooser();
       if (this.duetDialog.open) this.renderDuets();
-      this.setText('[data-om-feedback]', this.error || this.notice);
-      this.find('[data-om-feedback]').classList.toggle('om-error', !!this.error);
-      this.paint();
-      if (!this.discoveryStarted) { this.discoveryStarted = true; this.requestDiscovery('popular'); }
+      this.setText('[data-om-feedback]', this.error || this.notice); this.find('[data-om-feedback]').classList.toggle('om-error', !!this.error);
+      this.paint(); if (!this.discoveryStarted) { this.discoveryStarted = true; this.requestDiscovery('popular'); }
     }
     renderDuets() {
       if (!this.data) return;

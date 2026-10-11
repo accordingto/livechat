@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="open-mic.css?v=om-13">
+  <link rel="stylesheet" href="open-mic.css?v=om-cards-1">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="om-page">
@@ -16,7 +16,7 @@
     <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
     <span class="om-soft" id="om-room-label"></span>
   </div>
-  <header class="header om-header"><p class="om-kicker" data-i18n="openmic.brandLine">ONE CHALLENGE. YOUR STORY. YOUR CREATION.</p><h1>🎤 Open Mic Rescue</h1><p class="om-subtitle" data-i18n="openmic.subtitle">A small challenge. A story, an original tune, or a rhythm.</p></header>
+  <header class="header om-header"><h1>Open Mic Rescue<span class="om-title-star" aria-hidden="true">✦</span></h1></header>
   <main class="om-shell">
     <div class="om-panel om-demo" id="om-demo-bar" hidden>
       <span class="om-kicker" data-i18n="openmic.demo">Interactive demo · one-device simulation</span>
@@ -29,17 +29,15 @@
       <a class="om-button om-primary" href="index.html?step=1" data-i18n="openmic.setUpRoom">Set up room & players</a>
     </div>
     <section class="om-panel om-start-panel" id="om-start-panel">
-      <div class="om-start-mark" aria-hidden="true">🎤</div>
-      <h2 data-i18n="openmic.startTitle">Give your creativity a little excuse.</h2>
-      <p data-i18n="openmic.intro">One player takes a short social challenge. Pass for +2, then share a song memory, create an original tune, or clap an original rhythm for +1. Skipping is always okay.</p>
+      <div class="om-start-heading"><p class="om-kicker" data-i18n="openmic.entryPick">Choose your card</p><h2 data-i18n="openmic.startTitle">Every story has a soundtrack.</h2><p class="om-start-lead" data-i18n="openmic.entryLead">Choose a mood. Share a moment. Find its song.</p></div>
       <div class="om-start-modes" role="radiogroup" aria-labelledby="om-mode-title">
         <span class="om-kicker" id="om-mode-title" data-i18n="openmic.modeLabel" hidden>GAME MODE</span>
-        <label class="om-start-mode"><input type="radio" name="om-mode" value="life" checked><span><strong data-i18n="openmic.modeLife">🎵 Life Song</strong><span data-i18n="openmic.modeLifeHint">Memories: a scene, a real moment from your past, then the song it brings back.</span></span></label>
-        <label class="om-start-mode"><input type="radio" name="om-mode" value="next"><span><strong data-i18n="openmic.modeNext">🌱 Now &amp; Next</strong><span data-i18n="openmic.modeNextHint">Life now and hopes for the future, then the song that fits.</span></span></label>
-        <label class="om-start-mode"><input type="radio" name="om-mode" value="mission"><span><strong data-i18n="openmic.modeMission">🎯 Mission Rescue</strong><span data-i18n="openmic.modeMissionHint">A short social challenge, then a story or original activity.</span></span></label>
+        <label class="om-start-mode om-mode-life"><input type="radio" name="om-mode" value="life" checked><span class="om-mode-art" aria-hidden="true"><svg viewBox="0 0 240 145"><circle cx="184" cy="39" r="31" fill="#f4af8a"/><path d="M28 109q37-38 69 0t74 0" fill="none" stroke="#cb6d68" stroke-width="3" stroke-dasharray="3 7"/><g transform="rotate(-7 117 74)"><rect x="53" y="34" width="132" height="84" rx="13" fill="#fff4de" stroke="#49283f" stroke-width="4"/><rect x="68" y="48" width="102" height="42" rx="7" fill="#e8ad98" stroke="#49283f" stroke-width="3"/><circle cx="90" cy="69" r="12" fill="#fff4de" stroke="#49283f" stroke-width="3"/><circle cx="147" cy="69" r="12" fill="#fff4de" stroke="#49283f" stroke-width="3"/><path d="M107 69h22M83 117l8-18h52l9 18" fill="none" stroke="#49283f" stroke-width="3"/></g><path d="M28 31v19m-9-9h18M210 109v17m-8-9h16" stroke="#49283f" stroke-width="3" stroke-linecap="round"/></svg></span><span class="om-mode-copy"><span class="om-mode-number" aria-hidden="true">01</span><strong data-i18n="openmic.modeLife">🎵 Life Song</strong><span data-i18n="openmic.modeLifeHint">Memories: a scene, a real moment from your past, then the song it brings back.</span></span><span class="om-mode-check" aria-hidden="true">✓</span></label>
+        <label class="om-start-mode om-mode-next"><input type="radio" name="om-mode" value="next"><span class="om-mode-art" aria-hidden="true"><svg viewBox="0 0 240 145"><path d="M61 119V66a58 58 0 0 1 116 0v53" fill="#79b8a1"/><circle cx="146" cy="43" r="21" fill="#f8cf79"/><path d="M41 121h156" stroke="#284b45" stroke-width="4" stroke-linecap="round"/><path d="M121 121V78" fill="none" stroke="#284b45" stroke-width="4"/><path d="M120 95q-40 3-35-34 39 4 35 34M122 79q1-31 32-30-2 29-32 30" fill="#ecf3d2" stroke="#284b45" stroke-width="3"/><path d="M193 45v18m-9-9h18M37 70v13m-6-7h12" stroke="#284b45" stroke-width="3" stroke-linecap="round"/><path d="M182 95q19-9 28 2" fill="none" stroke="#284b45" stroke-width="3" stroke-dasharray="3 6"/></svg></span><span class="om-mode-copy"><span class="om-mode-number" aria-hidden="true">02</span><strong data-i18n="openmic.modeNext">🌱 Now &amp; Next</strong><span data-i18n="openmic.modeNextHint">Life now and hopes for the future, then the song that fits.</span></span><span class="om-mode-check" aria-hidden="true">✓</span></label>
+        <label class="om-start-mode om-mode-mission"><input type="radio" name="om-mode" value="mission"><span class="om-mode-art" aria-hidden="true"><svg viewBox="0 0 240 145"><circle cx="104" cy="72" r="53" fill="#ac97da"/><path d="M143 25h49a11 11 0 0 1 11 11v27a11 11 0 0 1-11 11h-22l-20 14 1-14h-8a11 11 0 0 1-11-11V36a11 11 0 0 1 11-11Z" fill="#fff4de" stroke="#473254" stroke-width="3"/><path d="M148 49h38" stroke="#473254" stroke-width="3" stroke-linecap="round"/><g transform="rotate(13 102 75)"><rect x="84" y="24" width="34" height="72" rx="17" fill="#f1978b" stroke="#473254" stroke-width="4"/><path d="M91 44h20M91 54h20M91 64h20M71 69v17a30 30 0 0 0 60 0V69M102 117v15M84 132h36" fill="none" stroke="#473254" stroke-width="4" stroke-linecap="round"/></g><path d="M33 34v19m-9-10h18M193 107v19m-9-10h18" stroke="#473254" stroke-width="3" stroke-linecap="round"/></svg></span><span class="om-mode-copy"><span class="om-mode-number" aria-hidden="true">03</span><strong data-i18n="openmic.modeMission">🎯 Mission Rescue</strong><span data-i18n="openmic.modeMissionHint">A short social challenge, then a story or original activity.</span></span><span class="om-mode-check" aria-hidden="true">✓</span></label>
       </div>
       <button type="button" class="om-button om-primary" id="om-start" data-i18n="openmic.start">Start Open Mic Rescue</button>
-      <p class="om-soft" data-i18n="openmic.noPressure">No voice judging. No mandatory performances. Just a shared team score.</p>
+      <p class="om-start-footer" data-i18n="openmic.entryFooter">2–9 players · Your usual voice call</p>
     </section>
     <section id="om-game" hidden aria-label="Open Mic Rescue"></section>
     <p class="om-feedback om-error" id="om-error" role="alert"></p>
@@ -61,7 +59,7 @@
   <script src="open-mic-engine.js?v=next-1"></script>
   <script src="open-mic-sync.js?v=life-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
-  <script src="open-mic-ui.js?v=next-1"></script>
+  <script src="open-mic-ui.js?v=om-cards-1"></script>
   <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
 <script src="open-mic-host.js?v=next-1"></script>
 </body>
