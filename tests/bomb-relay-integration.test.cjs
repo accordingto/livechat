@@ -34,8 +34,8 @@ test('the host page loads its modules in dependency order and every file parses'
   const files = [...html.matchAll(/<script src="(bomb-relay-[^"]+\.js)(?:\?[^"]*)?"/g)].map(match => match[1]);
   assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
   for (const file of files) new vm.Script(read(file));
-  assert.match(html, /<h1>💣 Bomb Relay<\/h1>/);
-  assert.match(html, /href="bomb-relay\.css\?v=br-prompts-2"/);
+  assert.match(html, /<h1>Bomb Relay<\/h1>/);
+  assert.match(html, /href="bomb-relay\.css\?v=br-studio-3"/);
   assert.doesNotMatch(html, /assets\/bomb-relay\//);
   assert.match(html, /id="br-reroll" hidden/);
   const host = read('bomb-relay-host.js');
@@ -46,7 +46,7 @@ test('the host page loads its modules in dependency order and every file parses'
 
 test('original player links render the Bomb Relay card and fence actions to the shown turn', () => {
   const play = read('play.html');
-  assert.match(play, /bomb-relay-deck\.js\?v=br-prompts-2/); assert.match(play, /bomb-relay-ui\.js\?v=br-prompts-2/); assert.match(play, /bomb-relay\.css\?v=br-prompts-2/);
+  assert.match(play, /bomb-relay-deck\.js\?v=br-studio-3/); assert.match(play, /bomb-relay-ui\.js\?v=br-studio-3/); assert.match(play, /bomb-relay\.css\?v=br-studio-3/);
   assert.match(play, /new BOMB_RELAY_UI\.Card/); assert.match(play, /bombCard\.destroy\(\)/);
   assert.match(play, /current\.bomb\?\.sessionId !== command\.sessionId \|\| current\.bomb\?\.turnId !== command\.turnId/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
@@ -97,7 +97,7 @@ test('each card shows only the buttons that player may use', () => {
   assert.match(html(1), /data-br-action="light"/);
   assert.doesNotMatch(html(2), /data-br-action=/);
   g.act(1, 'light'); g.act(1, 'pass');
-  assert.match(html(2), /data-br-action="pass"/); assert.match(html(2), /PASS to Jason/);
+  assert.match(html(2), /data-br-action="pass"/); assert.match(html(2), /Pass to Jason/);
   assert.ok(html(2).indexOf('data-br-prompt-id=') < html(2).indexOf('data-br-action="pass"'));
   assert.doesNotMatch(html(1), /data-br-action="pass"/);
   assert.doesNotMatch(html(1), /data-br-action="bounce"/, 'the challenged player cannot challenge');

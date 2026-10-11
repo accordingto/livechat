@@ -1,3 +1,26 @@
+## CURRENT: Bomb Relay visual refinement — 2026-10-12
+
+Presentation uses a coherent charcoal/olive palette, warm paper prompts and
+restrained brass actions. English prompts use Georgia for a print-card feel;
+controls and Chinese helpers retain system sans serif. Seat/name/rank colours
+are neutral; the holder uses one brass outline. Bombs are monochrome inline SVG,
+with a steady subtle live motion and a one-off ring/BOOM reveal. Remove rainbow
+identity chips, neon glows, button pulses, comic bursts and decorative emoji.
+Settings, library, host controls, player cards and results share this language.
+Scoped Bomb CSS overrides shared inline nameBanner colours; other games retain
+their existing styles. Finished host controls use normal flow to avoid covering
+rankings; short host viewports also scroll normally. Cache br-studio-3 in both
+host and original player pages. No content, authority, deadline, history, action,
+score, audio or haptic changes. Bomb67/67 and full repository1777/1777 pass.
+Final browser QA passed12 functional checks and78 EN/ZH captures spanning
+setup, library, ready, ticking, paused, boom, results and host controls. Inline
+rainbow badges are suppressed; longest prompt/Pass fit player320x568. Prompt
+and rank-row occlusion checks plus visual inspection passed. Results controls
+no longer overlay losing players' cards. Report remains outside Git in the
+calling task's bomb-studio-qa directory.
+Browser verification uses the existing isolated real-page fixture; physical
+devices, real network delay and audible hardware output remain unverified.
+
 ## CURRENT: Bomb Relay shared prompts — 2026-10-12
 
 Real entry remains index.html -> bomb-relay.html and original play.html cards.

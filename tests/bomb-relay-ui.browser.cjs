@@ -167,8 +167,8 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     const projections = await cards();
     for (const projection of projections) assert.equal(promptId(projection.bomb), promptId(canonical));
     for (const page of [host, ...players]) {
-      await page.locator('[data-br-prompt-id]').waitFor({ state: 'visible' });
-      assert.equal(await page.locator('[data-br-prompt-id]').getAttribute('data-br-prompt-id'), promptId(canonical));
+      await page.locator('.br-scene-title[data-br-prompt-id]').waitFor({ state: 'visible' });
+      assert.equal(await page.locator('.br-scene-title[data-br-prompt-id]').getAttribute('data-br-prompt-id'), promptId(canonical));
     }
     return canonical;
   };
@@ -178,7 +178,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     await item.evaluate(language => I18N.setLang(language), lang);
     await item.evaluate(() => window.scrollTo(0, 0));
     const metrics = await item.evaluate(selector => {
-      const prompt = document.querySelector('[data-br-prompt-id]') || document.querySelector('.br-prompt-card') || document.querySelector('.br-scene-title');
+      const prompt = document.querySelector('.br-scene-title[data-br-prompt-id]') || document.querySelector('.br-prompt-card') || document.querySelector('.br-scene-title');
       const button = document.querySelector(selector);
       const box = element => { const rect = element?.getBoundingClientRect(); return rect && { x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }; };
       const rect = prompt?.getBoundingClientRect();
@@ -203,11 +203,49 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     }
     return metrics;
   };
+  const surface = async (item, label, width, height, lang, focus = null) => {
+    if (process.env.BOMB_QA_LAYOUT === '0') return;
+    await item.setViewportSize({ width, height });
+    await item.evaluate(language => I18N.setLang(language), lang);
+    await item.evaluate(() => window.scrollTo(0, 0));
+    if (focus) await item.locator(focus).evaluate(element => element.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    const metrics = await item.evaluate(label => {
+      const selectors = ['body', '.br-panel', '.br-stage', '.br-scene-title', '.br-scene-title h2', '.br-zh', '.br-button.br-primary', '.br-pass', '.br-who', '.br-seat-name', '.br-seat.is-holder', '.br-rank-name', '.br-library-card', '.br-dialog', '.name-banner', '.br-zone-hot'];
+      const resultsOccluded = /results/.test(label) && [...document.querySelectorAll('.br-rank')].some(rank => {
+        const rect = rank.getBoundingClientRect();
+        return [0.25, 0.5, 0.9].some(portion => {
+          const x = rect.x + rect.width / 2, y = rect.y + rect.height * portion;
+          return y >= 0 && y < innerHeight && !rank.contains(document.elementFromPoint(x, y));
+        });
+      });
+      return { overflow: document.documentElement.scrollWidth - innerWidth, resultsOccluded,
+        seatNameColors: [...document.querySelectorAll('.br-seat-name')].map(element => getComputedStyle(element).color),
+        rankNameColors: [...document.querySelectorAll('.br-rank-name')].map(element => getComputedStyle(element).color),
+        bannerInline: document.querySelector('.br-card .name-banner')?.getAttribute('style') || null,
+        styles: Object.fromEntries(selectors.flatMap(selector => {
+        const element = document.querySelector(selector);
+        if (!element || !element.getClientRects().length) return [];
+        const style = getComputedStyle(element);
+        return [[selector, { color: style.color, background: style.backgroundColor, border: style.borderColor, shadow: style.boxShadow, font: style.fontFamily, fontWeight: style.fontWeight }]];
+      })) };
+    }, label);
+    const file = `${label}-${width}x${height}-${lang}.png`;
+    await item.screenshot({ path: path.join(output, file), fullPage: !focus });
+    report.views.push({ label, width, height, lang, ...metrics, screenshot: file });
+    assert.ok(metrics.overflow <= 1, label + ' has no horizontal overflow');
+    assert.equal(metrics.resultsOccluded, false, label + ' standings are not covered by controls');
+    return metrics;
+  };
   let players = [];
   try {
     host = await page('bomb-relay.html');
     players = await Promise.all(tokens.map(token => page('play.html?s=' + code + '&p=' + token)));
     await host.waitForFunction(() => !document.querySelector('#br-start').disabled);
+    for (const [width, height] of [[1280, 800], [375, 740], [320, 568]]) for (const lang of ['en', 'zh']) await surface(host, 'host-setup', width, height, lang);
+    await host.locator('#br-library > summary').click();
+    await host.waitForFunction(() => document.querySelectorAll('.br-library-card').length === 120);
+    for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) await surface(host, 'host-library', width, height, lang, '#br-library');
+    await host.locator('#br-library > summary').click();
     assert.deepEqual(await host.locator('#br-category option').evaluateAll(options => options.map(option => option.value)), ['mixed', 'everyday', 'playful']);
     assert.equal(await host.inputValue('#br-category'), 'mixed');
     await host.selectOption('#br-fuse', 'long'); await host.selectOption('#br-cards', '5');
@@ -252,6 +290,15 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
       check('existing optional player challenge returns bomb with unchanged prompt/fuse');
       await players[holder - 1].locator('[data-br-action="pass"]').click({ force: true }); await wait(async () => (await state()).holder === nextHolder);
     }
+    await host.evaluate(() => BOMB_RELAY_HOST.command('pause'));
+    await wait(async () => (await state()).phase === 'paused' && (await cards()).every(card => card.bomb.phase === 'paused'));
+    for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) {
+      await surface(host, 'host-paused', width, height, lang);
+      await surface(players[nextHolder - 1], 'player-paused', Math.min(width, 375), height, lang);
+    }
+    await host.evaluate(() => BOMB_RELAY_HOST.command('resume'));
+    await wait(async () => (await state()).phase === 'ticking');
+    assert.equal((await state()).explodeAt, fuse);
     const beforeReload = await state();
     report.soundEvents = await host.evaluate(() => __qaSoundEvents);
     await host.reload();
@@ -283,10 +330,18 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
       for (const card of await cards()) assert.equal(card.bomb.boom.loser, loser);
       assert.equal(await host.locator('.br-burst').count(), 1);
       assert.ok(await players[loser - 1].locator('.is-boom').count());
+      if (round === 0) for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) {
+        await surface(host, 'host-boom', width, height, lang);
+        await surface(players[loser - 1], 'player-boom', Math.min(width, 375), height, lang);
+      }
       await host.click('#br-next');
       await wait(async () => ['ready', 'finished'].includes((await state()).phase));
     }
     current = await state(); assert.equal(current.phase, 'finished');
+    for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) {
+      await surface(host, 'host-results', width, height, lang);
+      await surface(players[loser - 1], 'player-results', Math.min(width, 375), height, lang);
+    }
     assert.equal(Object.values(current.penalties).flat().length, 5);
     check('five speech-only rounds complete with synchronized explosion loser, animation classes and exactly five penalty cards');
     report.soundEvents.push(...await host.evaluate(() => __qaSoundEvents));
@@ -298,6 +353,9 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     current = await samePrompt();
     if (history?.seenIds) for (const seen of history.seenIds) assert.ok(current.promptHistory.seenIds.includes(seen));
     check('ordinary Play again starts new scores while preserving the activity prompt history');
+    await host.click('#br-manage-open');
+    for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) await surface(host, 'host-controls', width, height, lang);
+    await host.locator('#br-manage .br-dialog-header button').click();
     for (const pack of ['everyday', 'playful']) {
       await host.click('#br-manage-open'); await host.click('#br-stop'); await wait(async () => (await state()).phase === 'finished');
       await host.click('#br-settings'); await host.selectOption('#br-category', pack); await host.click('#br-start');

@@ -64,8 +64,16 @@ three-second timer is needed because this existing explicit preview is retained.
 One prompt remains visible to everyone from preview through explosion. English
 is always shown; Chinese UI adds a static understanding aid. Language changes
 do not issue commands or draw prompts. Text cards replace specific scene art
-so visuals do not suggest an answer list. Neutral bomb marks, existing palette,
-explosion animation, vibration and Web Audio cues remain.
+so visuals do not suggest an answer list. Neutral bomb marks, a recognizable
+explosion reveal, vibration and Web Audio cues remain.
+
+The current presentation cache is `br-studio-3`: charcoal/olive surfaces, warm
+paper, a restrained brass accent, neutral player identities and simple outline
+SVG bombs. Print-style English prompt typography and consistent controls cover
+setup, play, the library and results. The explosion uses a brief ring/BOOM
+reveal. The visual refinement does not change its timing, sound or settlement.
+Phone player cards keep the prompt before Pass; host results and short host
+viewports use normal scrolling so controls cannot cover content.
 
 Fuse ranges are unchanged: Classic 10–60 s (default), Quick 8–25 s, Relaxed
 20–80 s. The original formula is `round((min + seededRandom * (max-min))*1000)`.

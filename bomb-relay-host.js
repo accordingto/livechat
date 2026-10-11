@@ -185,7 +185,7 @@
     if (!saved?.tokens?.length || Number(saved.playerCount || saved.tokens.length) < 2) status = 'setupNeeded';
     else if (!ROOM.enabled) status = 'noFirebase';
     else {
-      ROOM.init({ mount: 'room-mount', hideSetup: true, accent: '#ff6b35', counts: [2, 3, 4, 5, 6, 7, 8, 9], defaultCount: 4 });
+      ROOM.init({ mount: 'room-mount', hideSetup: true, accent: '#b7a580', counts: [2, 3, 4, 5, 6, 7, 8, 9], defaultCount: 4 });
       sync = new BOMB_RELAY_SYNC.Host({ room: ROOM, db: firebase.database(),
         onChange: next => {
           if (state?.turnId !== next?.turnId) error = '';

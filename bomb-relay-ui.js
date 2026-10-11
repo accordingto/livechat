@@ -4,8 +4,9 @@
 var BOMB_RELAY_UI = (() => {
   'use strict';
   const dict = {
-    brand: ['💣 BOMB RELAY', '💣 BOMB RELAY'], subtitle: ['說出來．傳出去．別在你手上爆炸', 'NAME IT. PASS IT. DON’T GET CAUGHT.'],
-    intro: ['看題目，說一個符合題目的答案，再把炸彈傳出去。普通答案就可以，沒人知道炸彈何時爆炸！', 'Read the prompt. Say one fitting answer, then pass the bomb. Ordinary answers count. Nobody knows when it will explode!'],
+    brand: ['BOMB RELAY', 'BOMB RELAY'], subtitle: ['一個答案，傳給下一位。', 'One answer. Pass it on.'],
+    setupLead: ['共用一題，輪流傳炸彈。', 'One shared prompt. One moving bomb.'],
+    intro: ['看題目，說一個合理的答案，然後傳炸彈。爆炸時間是秘密。', 'Read the prompt. Say one fitting answer, then pass. The fuse stays secret.'],
     fuse: ['引信長度', 'Fuse length'], quick: ['快速 · 8–25 秒', 'Quick · 8–25 seconds'], classic: ['經典 · 10–60 秒', 'Classic · 10–60 seconds'], long: ['悠閒 · 20–80 秒', 'Relaxed · 20–80 seconds'],
     cards: ['這局幾張卡', 'Cards in this game'], cardsN: ['{n} 張', '{n} cards'],
     category: ['題包', 'Prompt pack'], mixed: ['混合', 'Mixed'], everyday: ['日常聯想', 'Everyday'], playful: ['趣味聯想', 'Playful'],
@@ -16,27 +17,27 @@ var BOMB_RELAY_UI = (() => {
     promptUnavailable: ['題目無法載入，請重新整理。', 'The prompt is unavailable. Please reload.'],
     starter: ['先開始', 'STARTS THIS CARD'], readyHint: ['大家先看清楚題目。{name} 點燃引信後說出第一個答案。', 'Read the prompt together. {name} lights the fuse and says the first answer.'],
     reroll: ['換一題', 'Change prompt'],
-    holdsTitle: ['炸彈在', 'THE BOMB IS WITH'], holdsHint: ['說一個符合的答案，馬上傳！', 'Say one fitting answer, then pass!'], next: ['下一位：{name}', 'Next: {name}'],
-    bounced: ['↩️ {by} 說不算！炸彈退回 {to}，請換一個說。', '↩️ {by} said that didn’t count — back to {to}! Say a different one.'],
-    bouncedHost: ['↩️ 不算！退回 {to}', '↩️ Didn’t count — back to {to}'],
-    boom: ['BOOM!', 'BOOM!'], takes: ['拿走這張卡', 'takes this card'], boomPasses: ['這張卡大家說了 {n} 個答案。', 'The table gave {n} answers.'],
-    boomLast: ['這是最後一張！', 'That was the last card!'], nextCard: ['下一張', 'Next card'], showResults: ['看結果', 'See the results'],
+    holdsTitle: ['目前持有者', 'CURRENT HOLDER'], holdsHint: ['說一個符合的答案，再傳出去。', 'Say one fitting answer, then pass.'], next: ['下一位：{name}', 'Next: {name}'],
+    bounced: ['{by} 說不算，炸彈退回 {to}。請換一個答案。', '{by} said that didn’t count. Back to {to}; say a different answer.'],
+    bouncedHost: ['不算，退回 {to}', 'Didn’t count; back to {to}'],
+    boom: ['BOOM', 'BOOM'], takes: ['拿走這張卡', 'takes this card'], boomPasses: ['本輪答案：{n}', 'Answers this round: {n}'],
+    boomLast: ['這是最後一張。', 'That was the last card.'], nextCard: ['下一張', 'Next card'], showResults: ['看結果', 'See the results'],
     paused: ['已暫停', 'PAUSED'], pausedHint: ['引信暫停中，主持人準備好就會繼續。', 'The fuse is frozen. The host will resume when everyone is ready.'],
-    finished: ['遊戲結束！', 'GAME OVER!'], stoppedEarly: ['主持人提早結束了這局。', 'The host ended this game early.'],
-    winnerHint: ['炸彈卡最少的人獲勝', 'Fewest bomb cards wins'], winner: ['贏家', 'WINNER'], winners: ['並列贏家', 'WINNERS'],
-    count: ['💥 {n}', '💥 {n}'], none: ['一張都沒有！', 'No bomb cards!'],
+    finished: ['本局結束', 'Game complete'], stoppedEarly: ['主持人提早結束了這局。', 'The host ended this game early.'],
+    winnerHint: ['炸彈卡最少的人獲勝', 'Fewest bomb cards wins'], winner: ['優勝者', 'Winner'], winners: ['並列優勝', 'Joint winners'],
+    count: ['卡片 {n}', 'Cards: {n}'], none: ['沒有炸彈卡', 'No bomb cards'],
     you: ['你', 'YOU'], out: ['休息中', 'Sitting out'],
-    light: ['🔥 點燃引信', '🔥 Light the fuse'], lightFor: ['🔥 代 {name} 點燃', '🔥 Light it for {name}'], passFor: ['💣 代 {name} 傳出', '💣 Pass for {name}'],
-    pass: ['傳給 {name} 💣', 'PASS to {name} 💣'], passing: ['傳送中…', 'Passing…'],
-    youHave: ['炸彈在你手上！', 'YOU HAVE THE BOMB!'], youHaveHint: ['說一個符合的答案，然後傳！', 'Say one fitting answer, then PASS!'],
-    youNext: ['下一個就是你，先想好！', 'You’re next — think of one now!'], otherHolds: ['💣 炸彈在 {name} 手上', '💣 {name} has the bomb'],
-    youStart: ['你先開始！', 'YOU START!'], youStartHint: ['等大家看清楚題目，點燃引信並說出第一個答案。', 'Once everyone has read the prompt, light the fuse and say the first answer.'],
+    light: ['點燃引信', 'Light the fuse'], lightFor: ['代 {name} 點燃', 'Light it for {name}'], passFor: ['代 {name} 傳出', 'Pass for {name}'],
+    pass: ['傳給 {name}', 'Pass to {name}'], passing: ['傳送中…', 'Passing…'],
+    youHave: ['炸彈由你持有', 'You have the bomb'], youHaveHint: ['說一個符合的答案，然後傳。', 'Say one fitting answer, then pass.'],
+    youNext: ['下一位是你，先想好答案。', 'You’re next. Think of an answer.'], otherHolds: ['炸彈在 {name} 手上', '{name} has the bomb'],
+    youStart: ['由你開始', 'You start'], youStartHint: ['等大家看清楚題目，點燃引信並說出第一個答案。', 'Once everyone has read the prompt, light the fuse and say the first answer.'],
     waitStart: ['等 {name} 點燃引信…', 'Waiting for {name} to light the fuse…'],
-    bounce: ['↩️ 不算！退回給 {name}', '↩️ Didn’t count — back to {name}'], bounceHint: ['只針對明顯重複或離題；具體延伸不一定算重複。', 'For clear repeats or off-topic answers; a specific elaboration can still count.'],
+    bounce: ['不算，退回 {name}', 'Didn’t count; back to {name}'], bounceHint: ['只針對明顯重複或離題；具體延伸不一定算重複。', 'For clear repeats or off-topic answers; a specific elaboration can still count.'],
     youBoom: ['你拿到這張卡', 'You take this card'], otherBoom: ['{name} 拿到這張卡', '{name} takes this card'],
     yourCards: ['你的炸彈卡', 'Your bomb cards'], yourRank: ['你是第 {n} 名', 'You placed #{n}'],
-    soundOn: ['🔊 音效開啟', '🔊 Sound on'], soundOff: ['🔇 音效關閉', '🔇 Sound off'], enableSound: ['🔊 啟用音效', '🔊 Enable sound'],
-    cardSound: ['🔊 手機滴答聲', '🔊 Tick on my phone'], cardSoundOff: ['🔇 手機靜音', '🔇 Phone silent'], cardSoundHint: ['只在你的裝置播放；通話中可能被麥克風收到。', 'Plays only on this device; your call mic may pick it up.'],
+    soundOn: ['音效開啟', 'Sound on'], soundOff: ['音效關閉', 'Sound off'], enableSound: ['啟用音效', 'Enable sound'],
+    cardSound: ['手機滴答聲', 'Tick on my phone'], cardSoundOff: ['手機靜音', 'Phone silent'], cardSoundHint: ['只在你的裝置播放；通話中可能被麥克風收到。', 'Plays only on this device; your call mic may pick it up.'],
     soundBlocked: ['按「啟用音效」讓瀏覽器播放提示音。', 'Tap “Enable sound” to allow the browser to play cues.'], soundUnsupported: ['這個瀏覽器無法播放音效，請看畫面。', 'This browser can’t play sound. Follow the screen.'],
     pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'],
     restart: ['重新開始（新的一局）', 'Restart with a new game'], stop: ['結束遊戲', 'End game'], playAgain: ['再玩一局', 'Play again'], settings: ['更改設定', 'Change settings'],
@@ -77,11 +78,17 @@ var BOMB_RELAY_UI = (() => {
   };
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const deck = () => BOMB_RELAY_DECK;
-  const COLORS = ['#ef4444', '#4f9eff', '#22c55e', '#f59e0b', '#a78bfa', '#06b6d4', '#84cc16', '#ec4899', '#f97316'];
-  const colorOf = n => COLORS[((Number(n) || 1) - 1) % COLORS.length];
+  const colorOf = () => '#c2b9aa';
   const seatsOf = bomb => list(bomb?.roster).slice().sort((a, b) => a.playerNum - b.playerNum);
   const nameOf = (bomb, n) => seatsOf(bomb).find(p => p.playerNum === n)?.name || t('player', { n });
   const errorKey = code => ['stale_turn', 'too_late', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster'].includes(code) ? code : 'error';
+
+  function bombIcon() {
+    return '<svg class="br-bomb-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="21" cy="29" r="14"></circle><path d="m29 17 4-4 4 4-4 4M35 13c-1-5 3-9 7-8M16 21a9 9 0 0 0-4 8"></path></svg>';
+  }
+  function burstMark() {
+    return `<div class="br-burst" aria-hidden="true"><span class="br-burst-ring"></span><strong>${esc(t('boom'))}</strong></div>`;
+  }
 
   function sceneTitle(cardId, size = '') {
     const card = deck().get(cardId);
@@ -91,12 +98,12 @@ var BOMB_RELAY_UI = (() => {
   }
   function thumbs(cardIds, max = 6) {
     const ids = list(cardIds);
-    const shown = ids.slice(-max).map(id => { const card = deck().get(id); return card ? `<span class="br-taken-card" title="${esc(card.en)}" aria-label="${esc(card.en)}"><span aria-hidden="true">💣</span></span>` : ''; }).join('');
+    const shown = ids.slice(-max).map(id => { const card = deck().get(id); return card ? `<span class="br-taken-card" title="${esc(card.en)}" aria-label="${esc(card.en)}">${bombIcon()}</span>` : ''; }).join('');
     return ids.length ? `<span class="br-thumbs">${shown}${ids.length > max ? `<span class="br-thumbs-more">+${ids.length - max}</span>` : ''}</span>` : '';
   }
   function strip(bomb) {
     const parts = [`<span class="br-pill">${esc(t('cardOf', { n: bomb.cardNo, total: bomb.cardsTotal }))}</span>`];
-    if (['ticking', 'paused'].includes(bomb.phase) || bomb.passes) parts.push(`<span class="br-pill">🔁 ${esc(t(bomb.passes === 1 ? 'answer' : 'answers', { n: bomb.passes || 0 }))}</span>`);
+    if (['ticking', 'paused'].includes(bomb.phase) || bomb.passes) parts.push(`<span class="br-pill">${esc(t(bomb.passes === 1 ? 'answer' : 'answers', { n: bomb.passes || 0 }))}</span>`);
     return `<div class="br-strip">${parts.join('')}</div>`;
   }
   // Seat order is the pass direction, so the row itself shows where it goes.
@@ -105,7 +112,7 @@ var BOMB_RELAY_UI = (() => {
     return `<ol class="br-seats" aria-label="Players">${seatsOf(bomb).map(player => {
       const cls = ['br-seat', player.playerNum === bomb.holder ? 'is-holder' : '', player.playerNum === bomb.next ? 'is-next' : '',
         player.active ? '' : 'is-out', player.playerNum === me ? 'is-me' : '', bomb.boom?.loser === player.playerNum ? 'is-boom' : ''].filter(Boolean).join(' ');
-      const marker = player.playerNum === bomb.holder ? `<span class="br-seat-bomb" aria-hidden="true">💣</span>` : '';
+      const marker = player.playerNum === bomb.holder ? `<span class="br-seat-bomb" aria-hidden="true">${bombIcon()}</span>` : '';
       return `<li class="${cls}" style="--seat:${colorOf(player.playerNum)}">${marker}<span class="br-seat-name">${esc(player.name || t('player', { n: player.playerNum }))}${player.playerNum === me ? ` <em>${esc(t('you'))}</em>` : ''}</span><span class="br-seat-count">${player.active ? esc(t('count', { n: player.count })) : esc(t('out'))}</span>${thumbs(penalties[player.playerNum], 4)}</li>`;
     }).join('')}</ol>`;
   }
@@ -115,9 +122,9 @@ var BOMB_RELAY_UI = (() => {
     let rank = 0, last = -1;
     const items = rows.map((row, index) => {
       if (row.count !== last) { rank = index + 1; last = row.count; }
-      return `<li class="br-rank${row.leading ? ' is-winner' : ''}${row.playerNum === me ? ' is-me' : ''}" style="--seat:${colorOf(row.playerNum)}"><span class="br-rank-n">${row.leading ? '👑' : '#' + rank}</span><span class="br-rank-name">${esc(row.name || t('player', { n: row.playerNum }))}${row.playerNum === me ? ` <em>${esc(t('you'))}</em>` : ''}</span><span class="br-rank-count">${esc(t('count', { n: row.count }))}</span>${row.count ? thumbs(row.cards, 5) : `<span class="br-rank-none">${esc(t('none'))}</span>`}</li>`;
+      return `<li class="br-rank${row.leading ? ' is-winner' : ''}${row.playerNum === me ? ' is-me' : ''}" style="--seat:${colorOf(row.playerNum)}"><span class="br-rank-n">${rank}</span><span class="br-rank-name">${esc(row.name || t('player', { n: row.playerNum }))}${row.playerNum === me ? ` <em>${esc(t('you'))}</em>` : ''}</span><span class="br-rank-count">${esc(t('count', { n: row.count }))}</span>${row.count ? thumbs(row.cards, 5) : `<span class="br-rank-none">${esc(t('none'))}</span>`}</li>`;
     }).join('');
-    return `<div class="br-final"><p class="br-kicker">${esc(t(lead.length > 1 ? 'winners' : 'winner'))} · ${esc(t('winnerHint'))}</p><h2 class="br-final-title">🏆 ${esc(t('finished'))}</h2>${bomb.stopped ? `<p class="br-soft">${esc(t('stoppedEarly'))}</p>` : ''}<ol class="br-ranks">${items}</ol></div>`;
+    return `<div class="br-final"><p class="br-kicker">${esc(t(lead.length > 1 ? 'winners' : 'winner'))} · ${esc(t('winnerHint'))}</p><h2 class="br-final-title">${esc(t('finished'))}</h2>${bomb.stopped ? `<p class="br-soft">${esc(t('stoppedEarly'))}</p>` : ''}<ol class="br-ranks">${items}</ol></div>`;
   }
   function bounceNote(bomb) {
     if (bomb.phase !== 'ticking' || !bomb.bounce) return '';
@@ -125,7 +132,7 @@ var BOMB_RELAY_UI = (() => {
   }
   function bombMark(phase) {
     const live = phase === 'ticking';
-    return `<div class="br-bomb${live ? ' is-live' : ''}${phase === 'paused' ? ' is-paused' : ''}" aria-hidden="true"><span class="br-bomb-body">💣</span>${live ? '<span class="br-spark"></span>' : ''}</div>`;
+    return `<div class="br-bomb${live ? ' is-live' : ''}${phase === 'paused' ? ' is-paused' : ''}" aria-hidden="true"><span class="br-bomb-body">${bombIcon()}</span>${live ? '<span class="br-spark"></span>' : ''}</div>`;
   }
 
   // The shared host screen: the prompt, who holds the bomb, everyone's pile.
@@ -139,7 +146,7 @@ var BOMB_RELAY_UI = (() => {
     else if (bomb.phase === 'paused') focus = `${bombMark('paused')}<p class="br-kicker">${esc(t('paused'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('pausedHint'))}</p>`;
     else if (bomb.phase === 'boom') {
       const loser = nameOf(bomb, bomb.boom?.loser);
-      focus = `<div class="br-burst" aria-hidden="true"><span>💥</span><strong>${esc(t('boom'))}</strong></div><h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>`;
+      focus = `${burstMark()}<h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>`;
     }
     const cls = ['br-stage', `br-phase-${bomb.phase}`, bomb.phase === 'boom' && animate ? 'br-exploding' : '', animate ? '' : 'br-static'].filter(Boolean).join(' ');
     return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
@@ -284,14 +291,14 @@ var BOMB_RELAY_UI = (() => {
         const bounce = bomb.canBounce && bomb.lastPass ? `<div class="br-challenge"><button type="button" class="br-button br-bounce-btn" data-br-action="bounce"${busy ? ' disabled' : ''}>${esc(t('bounce', { name: nameOf(bomb, bomb.lastPass.from) }))}</button><p class="br-soft">${esc(t('bounceHint'))}</p></div>` : '';
         const note = bounceNote(bomb);
         if (holder === me) return { cls: 'is-holder', zone: `<div class="br-zone br-zone-hot"><div class="br-hot-head">${bombMark('ticking')}<h3>${esc(t('youHave'))}</h3></div><p>${esc(t('youHaveHint'))}</p>${note}<button type="button" class="br-button br-pass br-huge" data-br-action="pass"${bomb.canPass && !busy ? '' : ' disabled'}>${esc(busy && this.pending.type === 'pass' ? t('passing') : t('pass', { name: nameOf(bomb, bomb.next) }))}</button></div>${bounce}` };
-        if (bomb.next === me) return { cls: 'is-next', zone: `<div class="br-zone br-zone-next"><p class="br-zone-line">${esc(t('otherHolds', { name: holderName }))}</p><h3>⚡ ${esc(t('youNext'))}</h3>${note}</div>${bounce}` };
+        if (bomb.next === me) return { cls: 'is-next', zone: `<div class="br-zone br-zone-next"><p class="br-zone-line">${esc(t('otherHolds', { name: holderName }))}</p><h3>${esc(t('youNext'))}</h3>${note}</div>${bounce}` };
         return { cls: '', zone: `<div class="br-zone"><p class="br-zone-line">${esc(t('otherHolds', { name: holderName }))}</p>${bomb.next ? `<p class="br-soft">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${note}${out ? `<p class="br-soft">${esc(t('out'))}</p>` : ''}</div>${bounce}` };
       }
-      if (bomb.phase === 'paused') return { cls: '', zone: `<div class="br-zone">${bombMark('paused')}<h3>⏸ ${esc(t('paused'))}</h3><p>${esc(t('pausedHint'))}</p></div>` };
+      if (bomb.phase === 'paused') return { cls: '', zone: `<div class="br-zone">${bombMark('paused')}<h3>${esc(t('paused'))}</h3><p>${esc(t('pausedHint'))}</p></div>` };
       if (bomb.phase === 'boom') {
         const lost = bomb.boom?.loser === me;
         const nextLabel = bomb.boom?.last ? t('showResults') : t('nextCard');
-        return { cls: lost ? 'is-boom' : '', zone: `<div class="br-zone br-zone-boom${lost ? ' is-you' : ''}"><div class="br-burst" aria-hidden="true"><span>💥</span><strong>${esc(t('boom'))}</strong></div><h3>${esc(lost ? t('youBoom') : t('otherBoom', { name: nameOf(bomb, bomb.boom?.loser) }))}</h3><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.canNext ? `<button type="button" class="br-button" data-br-action="next"${busy ? ' disabled' : ''}>${esc(nextLabel)}</button>` : ''}</div>` };
+        return { cls: lost ? 'is-boom' : '', zone: `<div class="br-zone br-zone-boom${lost ? ' is-you' : ''}">${burstMark()}<h3>${esc(lost ? t('youBoom') : t('otherBoom', { name: nameOf(bomb, bomb.boom?.loser) }))}</h3><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.canNext ? `<button type="button" class="br-button" data-br-action="next"${busy ? ' disabled' : ''}>${esc(nextLabel)}</button>` : ''}</div>` };
       }
       return { cls: '', zone: '' };
     }
