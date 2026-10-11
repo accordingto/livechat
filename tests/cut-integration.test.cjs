@@ -73,8 +73,8 @@ test('host topic browser stays collapsed at the bottom and CUT caches are consis
   assert.match(css, /\.cut-library-list[^}]*max-height: 420px[^}]*overflow-y: auto/);
   const assets = [...html.matchAll(/(?:src|href)="(cut(?:-[a-z]+)*\.(?:js|css))\?v=([^"]+)"/g), ...cards.matchAll(/(?:src|href)="(cut(?:-[a-z]+)*\.(?:js|css))\?v=([^"]+)"/g)];
   assert.equal(assets.length, 11);
-  for (const asset of assets) assert.equal(asset[2], 'cut-11', asset[1]);
-  assert.match(fs.readFileSync(path.join(root, 'hub-launcher.js'), 'utf8'), /file\.startsWith\('cut-'\) \? 'cut-11'/);
+  for (const asset of assets) assert.equal(asset[2], 'cut-12', asset[1]);
+  assert.match(fs.readFileSync(path.join(root, 'hub-launcher.js'), 'utf8'), /file\.startsWith\('cut-'\) \? 'cut-12'/);
   for (const category of ['personal', 'ideas']) assert.match(html, new RegExp('<option value="' + category + '"'));
 });
 

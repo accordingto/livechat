@@ -39,6 +39,10 @@ var CUT_UI = (() => {
     introJump: ['一位主講人慢慢聊。偶爾 CUT！被點到的人隨意插一句，再交回主講人。', 'One main speaker talks for a few minutes. Now and then, CUT! Someone jumps in, then it goes back to the main speaker.'],
     modeSwitchHint: ['換模式會開始一個新話題。', 'Changing the mode starts a new topic.'],
     mainTime: ['主講時間', 'Main speaker time'], mainQuick: ['Quick · 短（{n} 分鐘）', 'Quick · {n} minutes'], mainNormal: ['Normal · 正常（{n} 分鐘）', 'Normal · {n} minutes'], mainLong: ['Long · 長（{n} 分鐘）', 'Long · {n} minutes'], mainOther: ['{n} 分鐘', '{n} minutes'],
+    firstCutAfter: ['第一次插話前', 'First interruption after'],
+    cutInterval: ['後續插話間隔', 'Time between interruptions'],
+    jumpTimingHint: ['5–300 秒。填一樣就是固定秒數；間隔只算主講時間。', '5–300 seconds. Matching values give fixed timing. Only main speaker time counts.'],
+    jumpTimingError: ['請填 5–300 的整數，最長不能小於最短。', 'Enter whole seconds from 5 to 300. Maximum must be at least minimum.'],
     mainTimeHint: ['只算主講人說話的時間。有人插話時，時間會暫停。', 'Only the main speaker’s talking time counts. The clock stops while someone jumps in.'],
     mainSpeaker: ['主講人', 'MAIN SPEAKER'],
     jumpWaitingBegin: ['先看話題。主講人準備好後，由主持人或任一玩家按「開始說話」。', 'Read the topic first. When the main speaker is ready, the host or any player can tap “Start talking”.'],
@@ -251,7 +255,7 @@ var CUT_UI = (() => {
     if (cut.phase === 'interrupt' && cut.canFinish && Number(cut.interrupter) !== Number(actor)) actions += button('done', 'backToMain');
     const options = (values, selected) => values.map(value => `<option value="${value}"${selected === value ? ' selected' : ''}>${esc(t(value))}</option>`).join('');
     const jumpMode = cut.mode === 'jump';
-    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings novalidate><label class="cut-field"><span>${esc(t('mode'))}</span><select name="mode" data-cut-setting>${options(['classic', 'jump'], jumpMode ? 'jump' : 'classic')}</select></label><p class="cut-soft" data-cut-mode-switch hidden>${esc(t('modeSwitchHint'))}</p><div class="cut-mode-fields" data-cut-jump-fields${jumpMode ? '' : ' hidden'}><label class="cut-field"><span>${esc(t('mainTime'))}</span><select name="mainMinutes" data-cut-setting>${mainOptions(cut.mainOptions, cut.mainMinutes)}</select></label><p class="cut-soft">${esc(t('mainTimeHint'))}</p></div><div class="cut-mode-fields" data-cut-classic-fields${jumpMode ? ' hidden' : ''}><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><label class="cut-field"><span>${esc(t('topicTime'))}</span><input type="number" name="topicMinutes" data-cut-setting required min="1" max="60" step="1" inputmode="numeric" value="${esc(cut.topicMinutes ?? 10)}" aria-describedby="cut-card-topic-hint cut-card-topic-error"></label><p class="cut-soft" id="cut-card-topic-hint">${esc(t('topicMinutesHint'))}</p><p class="cut-feedback" id="cut-card-topic-error" data-cut-topic-error role="alert"></p><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
+    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings novalidate><label class="cut-field"><span>${esc(t('mode'))}</span><select name="mode" data-cut-setting>${options(['classic', 'jump'], jumpMode ? 'jump' : 'classic')}</select></label><p class="cut-soft" data-cut-mode-switch hidden>${esc(t('modeSwitchHint'))}</p><div class="cut-mode-fields" data-cut-jump-fields${jumpMode ? '' : ' hidden'}><label class="cut-field"><span>${esc(t('mainTime'))}</span><select name="mainMinutes" data-cut-setting>${mainOptions(cut.mainOptions, cut.mainMinutes)}</select></label><p class="cut-soft">${esc(t('mainTimeHint'))}</p><p class="cut-kicker" >${esc(t('firstCutAfter'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="firstCutMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMinSeconds ?? 25)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="firstCutMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMaxSeconds ?? 45)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-kicker" >${esc(t('cutInterval'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="cutIntervalMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMinSeconds ?? 30)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="cutIntervalMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMaxSeconds ?? 55)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-soft" id="cut-card-jump-hint">${esc(t('jumpTimingHint'))}</p><p class="cut-feedback" id="cut-card-jump-error" data-cut-jump-error role="alert"></p></div><div class="cut-mode-fields" data-cut-classic-fields${jumpMode ? ' hidden' : ''}><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><label class="cut-field"><span>${esc(t('topicTime'))}</span><input type="number" name="topicMinutes" data-cut-setting required min="1" max="60" step="1" inputmode="numeric" value="${esc(cut.topicMinutes ?? 10)}" aria-describedby="cut-card-topic-hint cut-card-topic-error"></label><p class="cut-soft" id="cut-card-topic-hint">${esc(t('topicMinutesHint'))}</p><p class="cut-feedback" id="cut-card-topic-error" data-cut-topic-error role="alert"></p><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
     const management = (cut.phase === 'setup' ? '' : button('settings', 'settings')) + (stopped ? '' : button('restart', 'restart') + button('stop', 'stop', '', 'cut-stop'));
     return `${settings}<div class="cut-controls">${actions}</div><details class="cut-player-management" data-cut-management><summary>${esc(t('sharedManage'))}</summary><div class="cut-controls cut-management-actions">${management}</div><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
@@ -338,6 +342,13 @@ var CUT_UI = (() => {
         if (save) save.disabled = !this.canAction('configure', settings);
         for (const field of form.querySelectorAll('[data-cut-setting]')) field.disabled = !enabled;
         const jumpForm = (settings.mode ?? cut.mode) === 'jump';
+        const jumpValid = validJumpTiming(settings);
+        for (const name of jumpTimingKeys) {
+          const field = form.querySelector('[name="' + name + '"]');
+          if (field) { field.disabled = !enabled || !jumpForm; field.required = jumpForm; field.setAttribute?.('aria-invalid', String(jumpForm && !jumpValid)); }
+        }
+        const jumpError = form.querySelector('[data-cut-jump-error]');
+        if (jumpError) jumpError.textContent = jumpForm && !jumpValid ? t('jumpTimingError') : '';
         const jumpFields = form.querySelector('[data-cut-jump-fields]'), classicFields = form.querySelector('[data-cut-classic-fields]'), switching = form.querySelector('[data-cut-mode-switch]');
         if (jumpFields) jumpFields.hidden = !jumpForm;
         if (classicFields) classicFields.hidden = jumpForm;
@@ -390,6 +401,7 @@ var CUT_UI = (() => {
           customMinSeconds: speed === 'custom' ? seconds('customMinSeconds') : cut.customMinSeconds ?? 15,
           customMaxSeconds: speed === 'custom' ? seconds('customMaxSeconds') : cut.customMaxSeconds ?? 25 };
       if (mode !== undefined) { input.mode = mode; input.mainMinutes = seconds('mainMinutes'); }
+      for (const key of jumpTimingKeys) input[key] = mode === 'jump' ? seconds(key) : cut[key] ?? jumpTimingDefaults[key];
       return input;
     }
     validTiming({ customMinSeconds: min, customMaxSeconds: max }) {
@@ -423,7 +435,7 @@ var CUT_UI = (() => {
       if (type === 'settings') return cut.phase !== 'setup';
       if (type === 'cancelSettings') return cut.phase === 'setup';
       if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd', 'personal', 'ideas'].includes(extra.category) && this.validTiming(extra) && validTopicMinutes(extra.topicMinutes ?? cut.topicMinutes ?? 10) &&
-        (extra.mode === undefined || ['classic', 'jump'].includes(extra.mode)) && (extra.mainMinutes === undefined || list(cut.mainOptions).includes(extra.mainMinutes));
+        (extra.mode === undefined || ['classic', 'jump'].includes(extra.mode)) && (extra.mainMinutes === undefined || list(cut.mainOptions).includes(extra.mainMinutes)) && ((extra.mode ?? cut.mode) !== 'jump' || validJumpTiming({ ...cut, ...extra }));
       if (type === 'stop') return cut.phase !== 'stopped';
       if (type === 'next') return cut.phase === 'break';
       if (type === 'pause') return !['paused', 'stopped', 'setup'].includes(cut.phase);
@@ -530,6 +542,12 @@ var CUT_UI = (() => {
     }
     close() { this.silence(); this.previous = null; this.context?.close().catch(() => {}); this.context = null; }
   }
-  return { t, esc, list, name, countdown, validTopicMinutes, topicTime, renderTopicClock, updateTopicClock, mainTime, updateMainClock, mainOptions, topicLibrary, scene, Card, Sound };
+  const jumpTimingDefaults = { firstCutMinSeconds: 25, firstCutMaxSeconds: 45, cutIntervalMinSeconds: 30, cutIntervalMaxSeconds: 55 };
+  const jumpTimingKeys = Object.keys(jumpTimingDefaults);
+  function validJumpTiming(options) {
+    return [[jumpTimingKeys[0], jumpTimingKeys[1]], [jumpTimingKeys[2], jumpTimingKeys[3]]].every(([low, high]) =>
+      Number.isInteger(options[low]) && Number.isInteger(options[high]) && options[low] >= 5 && options[high] <= 300 && options[low] <= options[high]);
+  }
+  return { jumpTimingDefaults, jumpTimingKeys, validJumpTiming, t, esc, list, name, countdown, validTopicMinutes, topicTime, renderTopicClock, updateTopicClock, mainTime, updateMainClock, mainOptions, topicLibrary, scene, Card, Sound };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_UI;

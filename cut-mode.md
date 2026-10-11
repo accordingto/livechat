@@ -154,3 +154,24 @@ Custom 最短不得大於最長；兩個數字相同就使用固定時間，例�
 ## 話題計時器驗證（2026-10-10）
 
 整合最新 Dixit 畫面後，完整專案測試 1359／1359 通過。包含計時到零後繼續同題、手動接話、暫停／設定保留累計、延長分鐘數、下一題與重開重設、原玩家卡與主持頁控制、舊房間升級及私有發言時間保護。話題計時引擎 16 項專門測試、共用 UI／表單與舊操作回歸均通過。桌面瀏覽器連線工具此次無法啟動，UI 驗證使用 DOM 自動測試，未聲稱新增截圖或真人語音驗收。
+
+
+## Mode 2 manual interruption timing (2026-10-11)
+
+The host setup and shared player settings include two min/max pairs:
+- First interruption after: default 25-45 seconds.
+- Time between interruptions: default 30-55 seconds.
+
+Each accepts 5-300 whole seconds; equal values give fixed timing. The first
+pair counts main speaking time before the first CUT. Subsequent intervals
+start when the main speaker resumes after DONE/SKIP and the return beat.
+No interruption speaking timer is added. Default weighted pacing and quiet
+ending behavior stay intact. Same-mode saves keep topic, main speaker and
+used mainClock. Restart/new topic/mode changes preserve manual settings.
+Existing Mode 2 rooms receive default settings without resetting their clock
+or changing an already scheduled CUT. Actual sampled delays remain private.
+CUT assets use cut-12; deploy the matching independent service too.
+
+Production service smoke passed 22 checks (first/repeat intervals, validation,
+shared settings, same topic and clock retention, restart) and cleaned all four
+fresh marked nodes. Unrelated discovery API tests: 39/39.

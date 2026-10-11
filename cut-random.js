@@ -56,9 +56,11 @@ var CUT_RANDOM = (() => {
     return range.min + Math.floor(random() * (range.max - range.min + 1));
   }
   // Mode 2: how long the Main Speaker talks before the next CUT.
-  function interval(first, previousMs, random) {
+  function interval(first, previousMs, random, timing = {}) {
     const jump = config.jump, range = jump.cutInterval, anti = jump.antiRepeat;
-    if (first) return Math.round((jump.firstCut.minSeconds + random() * (jump.firstCut.maxSeconds - jump.firstCut.minSeconds)) * 1000);
+    const min = timing[first ? 'firstCutMinSeconds' : 'cutIntervalMinSeconds'] ?? (first ? jump.firstCut.minSeconds : range.minSeconds);
+    const max = timing[first ? 'firstCutMaxSeconds' : 'cutIntervalMaxSeconds'] ?? (first ? jump.firstCut.maxSeconds : range.maxSeconds);
+    if (first || min !== range.minSeconds || max !== range.maxSeconds) return Math.round((min + random() * (max - min)) * 1000);
     const previous = Number(previousMs) / 1000;
     const bin = weighted(range.bins, candidate => {
       let weight = candidate.weight;

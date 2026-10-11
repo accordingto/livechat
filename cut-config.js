@@ -36,6 +36,7 @@ var CUT_CONFIG = (() => {
     // Every time below is the Main Speaker's own talking time; interruptions stop the clock.
     jump: {
       mainMinutes: { options: [3, 4, 5], default: 4 }, // Quick / Normal / Long
+      customTiming: { minSeconds: 5, maxSeconds: 300 },
       firstCut: { minSeconds: 25, maxSeconds: 45 }, // Nothing interrupts the opening.
       cutInterval: { minSeconds: 30, maxSeconds: 55, bins: [
         { from: 30, to: 38, weight: 0.30 }, { from: 38, to: 47, weight: 0.40 },

@@ -360,7 +360,7 @@ test('a shared card can hand the floor back and saves the mode with its own leng
     assert.match(html, /<select name="mode"[^>]*>.*<option value="jump" selected/s);
     assert.match(html, /<select name="mainMinutes"[^>]*>.*<option value="4" selected/s);
     assert.match(html, /data-cut-classic-fields hidden/); assert.doesNotMatch(html, /data-cut-jump-fields hidden/);
-    const fields = { mode: { value: 'jump' }, mainMinutes: { value: '5' }, speed: { value: 'custom' }, category: { value: 'mixed' },
+    const fields = { mode: { value: 'jump' }, mainMinutes: { value: '5' }, firstCutMinSeconds: { value: '25' }, firstCutMaxSeconds: { value: '45' }, cutIntervalMinSeconds: { value: '30' }, cutIntervalMaxSeconds: { value: '55' }, speed: { value: 'custom' }, category: { value: 'mixed' },
       topicMinutes: { value: '' }, customMinSeconds: { value: '90' }, customMaxSeconds: { value: '10' } };
     const form = { querySelector: selector => fields[selector.match(/name="(\w+)"/)?.[1]] || null, querySelectorAll: () => [] };
     const input = editor.card.settingsInput(form);
@@ -395,7 +395,7 @@ function hostDemo() {
   const fs = require('node:fs'), vm = require('node:vm');
   let time = 1000, serial = 0, interval;
   const elements = new Map(), creations = [], commands = [];
-  const defaults = { 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25', 'cut-topic-minutes': '10', 'cut-library-category': 'mixed', 'cut-library-search': '', 'cut-library-mode': 'classic' };
+  const defaults = { 'cut-first-min': '25', 'cut-first-max': '45', 'cut-interval-min': '30', 'cut-interval-max': '55', 'cut-speed': 'normal', 'cut-category': 'mixed', 'cut-custom-min': '15', 'cut-custom-max': '25', 'cut-topic-minutes': '10', 'cut-library-category': 'mixed', 'cut-library-search': '', 'cut-library-mode': 'classic' };
   const element = id => {
     if (!elements.has(id)) elements.set(id, { innerHTML: '', textContent: '', value: defaults[id] ?? '0', hidden: false, disabled: false, open: false, attributes: {}, events: {},
       addEventListener(type, callback) { this.events[type] = callback; }, setAttribute(name, value) { this.attributes[name] = value; }, querySelector: () => null,
@@ -470,4 +470,17 @@ test('every Mode 2 screen keeps the Main Speaker visible and gives DONE and SKIP
   assert.doesNotMatch(host + speaker, /data-cut-action="(?:done|skip)"/);
   s = act(s, 'done'); assert.match(show(s, 0), new RegExp(UI.t('backTo') + '.*' + name + '.*' + UI.t('keepGoing'), 's'));
   s = act(s, 'endTopic'); assert.equal(s.roundEnd, 'ended'); assert.match(show(s, 0), new RegExp(UI.t('jumpThanks', { name })));
+});
+
+
+test('host accepts independent manual delays, rejects bad ranges and restores saved values', async () => {
+ const f=hostDemo();await f.click('mode-jump');
+ f.element('cut-first-min').value='45';f.element('cut-first-max').value='20';await f.submit();
+ assert.equal(f.creations.length,0);assert.match(f.element('cut-jump-error').textContent,/5.*300/);
+ f.element('cut-first-max').value='45';f.element('cut-interval-min').value='11';f.element('cut-interval-max').value='11';await f.submit();
+ assert.equal(f.creations.length,1);assert.equal(f.creations[0].firstCutMinSeconds,45);assert.equal(f.creations[0].cutIntervalMaxSeconds,11);
+ await f.click('begin');f.advance(3100);f.advance(44000);assert.match(f.scene(),/data-cut-phase="speaking"/);
+ f.advance(1000);assert.match(f.scene(),/data-cut-phase="interrupt"/);await f.click('done');f.advance(2600);
+ f.advance(10000);assert.match(f.scene(),/data-cut-phase="speaking"/);f.advance(1000);assert.match(f.scene(),/data-cut-phase="interrupt"/);
+ await f.click('settings-open');assert.equal(f.element('cut-first-min').value,'45');assert.equal(f.element('cut-interval-max').value,'11');
 });

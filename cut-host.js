@@ -6,9 +6,13 @@
   const demoRoster = ['Amy', 'Kevin', 'Jason', 'Willy'].map((name, i) => ({ playerNum: i + 1, name, active: true }));
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null;
-  let startingSession = null, editing = false, animatedCut = '', customError = false, topicError = false, endTarget = null;
+  let startingSession = null, editing = false, animatedCut = '', customError = false, topicError = false, jumpError = false, endTarget = null;
   // Mode 1 (classic) is the original takeover game; Mode 2 (jump) keeps one Main Speaker.
   let mode = 'classic';
+  const jumpTimingIds = ["first-min","first-max","interval-min","interval-max"];
+  const jumpTimingKeys = CUT_UI.jumpTimingKeys;
+  const jumpTimingOf = current => Object.fromEntries(jumpTimingKeys.map(key => [key, current?.[key] ?? CUT_UI.jumpTimingDefaults[key]]));
+  const readJumpTiming = () => Object.fromEntries(jumpTimingKeys.map((key, index) => [key, byId(jumpTimingIds[index]).value.trim() ? Number(byId(jumpTimingIds[index]).value) : NaN]));
   const mainSetting = CUT_CONFIG.jump.mainMinutes;
   const modeOf = current => current?.mode === 'jump' ? 'jump' : 'classic';
   const mainMinutesOf = value => mainSetting.options.includes(Number(value)) ? Number(value) : mainSetting.default;
@@ -60,6 +64,11 @@
     byId('mode-classic').setAttribute('aria-pressed', String(!jumpMode));
     byId('mode-jump').setAttribute('aria-pressed', String(jumpMode));
     for (const id of ['mode-classic', 'mode-jump', 'main-minutes']) byId(id).disabled = busy;
+    for (const id of jumpTimingIds) {
+      byId(id).disabled = busy || !jumpMode; byId(id).required = jumpMode;
+      byId(id).setAttribute('aria-invalid', String(jumpMode && jumpError));
+    }
+    byId('jump-error').textContent = jumpMode && jumpError ? t('jumpTimingError') : '';
     byId('classic-options').hidden = jumpMode; byId('jump-options').hidden = !jumpMode;
     byId('rules-classic').hidden = jumpMode; byId('rules-jump').hidden = !jumpMode;
     byId('mode-switch-hint').hidden = !(editing && state && mode !== modeOf(state));
@@ -85,7 +94,9 @@
     byId('topic-minutes').value = String(current.topicMinutes ?? 10);
     mode = modeOf(current);
     byId('main-minutes').value = String(mainMinutesOf(current.mainMinutes));
-    customError = false; topicError = false;
+    const timing = jumpTimingOf(current);
+    jumpTimingKeys.forEach((key, index) => { byId(jumpTimingIds[index]).value = String(timing[key]); });
+    customError = false; topicError = false; jumpError = false;
   }
   function setupOptions() {
     const speed = byId('speed').value, min = Number(byId('custom-min').value), max = Number(byId('custom-max').value);
@@ -94,10 +105,13 @@
     const minValid = Number.isInteger(min) && min >= 5 && min <= 120;
     const maxValid = Number.isInteger(max) && max >= 5 && max <= 120;
     const valid = minValid && maxValid && min <= max;
+    const timing = readJumpTiming(), jumpValid = CUT_UI.validJumpTiming(timing);
     if (mode === 'jump') {
+      if (!jumpValid) { jumpError = true; render(); byId('first-min').focus(); return null; }
+      jumpError = false;
       // Mode 1's fields are hidden here: keep their last good values rather than block on them.
       topicError = false; customError = false;
-      return { mode, mainMinutes, speed, category: byId('category').value,
+      return { ...(jumpValid ? timing : jumpTimingOf(state)), mode, mainMinutes, speed, category: byId('category').value,
         topicMinutes: CUT_UI.validTopicMinutes(topicMinutes) ? topicMinutes : state?.topicMinutes ?? 10,
         customMinSeconds: valid ? min : state?.customMinSeconds ?? 15,
         customMaxSeconds: valid ? max : state?.customMaxSeconds ?? 25 };
@@ -110,7 +124,7 @@
       customError = true; render(); byId(!minValid || min > max ? 'custom-min' : 'custom-max').focus(); return null;
     }
     customError = false;
-    return { mode, mainMinutes, speed, category: byId('category').value, topicMinutes,
+    return { ...(jumpValid ? timing : jumpTimingOf(state)), mode, mainMinutes, speed, category: byId('category').value, topicMinutes,
       customMinSeconds: valid ? min : state?.customMinSeconds ?? 15,
       customMaxSeconds: valid ? max : state?.customMaxSeconds ?? 25 };
   }
@@ -212,7 +226,7 @@
   }
   async function start(restart = false) {
     if (busy || !canControl()) return;
-    const options = restart && state ? { mode: modeOf(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
+    const options = restart && state ? { ...jumpTimingOf(state), mode: modeOf(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
     if (!options) return;
     // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
     const audioReady = sound.enabled ? sound.unlock() : Promise.resolve(false);
@@ -311,6 +325,7 @@
       sync.connect();
     }
   }
+  for (const id of jumpTimingIds) byId(id).addEventListener('input', () => { jumpError = false; renderMode(); });
   labels(); render();
   I18N.onChange(() => { labels(); render(); });
   timer = setInterval(() => {

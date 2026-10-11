@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-11">
+  <link rel="stylesheet" href="cut.css?v=cut-12">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="cut-page">
@@ -40,6 +40,13 @@
       <div class="cut-mode-options" id="cut-jump-options" hidden>
         <label class="cut-field"><span data-i18n="cut.mainTime">主講時間</span><select id="cut-main-minutes"></select></label>
         <p class="cut-soft" data-i18n="cut.mainTimeHint">只算主講人說話的時間。有人插話時，時間會暫停。</p>
+        <p class="cut-kicker" data-i18n="cut.firstCutAfter">第一次插話前</p>
+        <div class="cut-settings"><label class="cut-field"><span data-i18n="cut.customMin">最短秒數</span><input type="number" id="cut-first-min" min="5" max="300" step="1" inputmode="numeric" required value="25" aria-describedby="cut-jump-hint cut-jump-error"></label>
+          <label class="cut-field"><span data-i18n="cut.customMax">最長秒數</span><input type="number" id="cut-first-max" min="5" max="300" step="1" inputmode="numeric" required value="45" aria-describedby="cut-jump-hint cut-jump-error"></label></div>
+        <p class="cut-kicker" data-i18n="cut.cutInterval">後續插話間隔</p>
+        <div class="cut-settings"><label class="cut-field"><span data-i18n="cut.customMin">最短秒數</span><input type="number" id="cut-interval-min" min="5" max="300" step="1" inputmode="numeric" required value="30" aria-describedby="cut-jump-hint cut-jump-error"></label>
+          <label class="cut-field"><span data-i18n="cut.customMax">最長秒數</span><input type="number" id="cut-interval-max" min="5" max="300" step="1" inputmode="numeric" required value="55" aria-describedby="cut-jump-hint cut-jump-error"></label></div>
+        <p class="cut-soft" id="cut-jump-hint" data-i18n="cut.jumpTimingHint">5–300 秒。填一樣就是固定秒數；間隔只算主講時間。</p><p class="cut-feedback" id="cut-jump-error" role="alert"></p>
       </div>
       <div class="cut-mode-options" id="cut-classic-options">
       <div class="cut-settings">
@@ -150,14 +157,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=membership-1"></script>
-  <script src="cut-config.js?v=cut-11"></script>
-  <script src="cut-random.js?v=cut-11"></script>
-  <script src="cut-topics.js?v=cut-11"></script>
-  <script src="cut-jump-topics.js?v=cut-11"></script>
-  <script src="cut-engine.js?v=cut-11"></script>
-  <script src="cut-ui.js?v=cut-11"></script>
-  <script src="cut-sync.js?v=cut-11"></script>
+  <script src="cut-config.js?v=cut-12"></script>
+  <script src="cut-random.js?v=cut-12"></script>
+  <script src="cut-topics.js?v=cut-12"></script>
+  <script src="cut-jump-topics.js?v=cut-12"></script>
+  <script src="cut-engine.js?v=cut-12"></script>
+  <script src="cut-ui.js?v=cut-12"></script>
+  <script src="cut-sync.js?v=cut-12"></script>
   <script src="hub-executor.js?v=membership-1"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-11"></script>
+<script src="cut-host.js?v=cut-12"></script>
 </body>
 </html>

@@ -1,3 +1,22 @@
+## CURRENT: CUT Mode 2 manual interruption timing - 2026-10-11
+
+Mode 2 now accepts firstCutMinSeconds / firstCutMaxSeconds (default 25-45)
+and cutIntervalMinSeconds / cutIntervalMaxSeconds (default 30-55), each a
+whole second from 5 to 300 with min <= max. Equal bounds mean fixed timing.
+The first range controls main speaking time before the first interruption;
+the second controls main speaking time after DONE/SKIP and the return beat.
+The interrupter still has unlimited time. Default weighted pacing remains.
+Host and shared player settings expose both ranges. Same-mode edits retain
+topic/speaker/used mainClock; restart, next and mode switches retain settings.
+Legacy Mode 2 settings are filled without redrawing pending deadlines.
+CUT assets cut-12. Publish frontend plus the independent hub-executor service.
+Targeted tests cover timing, validation, clocks, settings, migration and privacy.
+Real-service QA script: scripts/cut-jump-production-smoke.cjs (fresh marked
+four-node fixture only, conditional writes and ownership-checked cleanup).
+Production service deployed; live QA passed 22 checks and cleaned all 4 nodes.
+Integrated regression: 1646/1646; discovery/retired lyrics service: 39/39.
+Host demo browser verified invalid ranges, saved values and return to settings.
+
 ## CURRENT: Sketch Relay (Telestrations-style drawing telephone) — 2026-10-11
 
 New game `sketch-relay.html` (🖍️ Sketch Relay), last homepage card, 4–9 players
@@ -61,11 +80,11 @@ interrupters use Mode 1's weighted draw on their own ledger. Mode 2 has its own
 80-topic pool in cut-jump-topics.js, never mixed with cut-topics.js; switching
 mode in settings always opens a new topic. All tuning lives in
 CUT_CONFIG.jump. Do not redesign Mode 1 or merge the two pools.
-CUT assets cut-11; hub-launcher loads cut-jump-topics.js before the engine.
+CUT assets cut-12; hub-launcher loads cut-jump-topics.js before the engine.
 Tests: 19 new in tests/cut-jump.test.cjs; browser-checked in cut.html?demo=1.
 ENGINE + CONTENT CHANGE: push the frontend and deploy the independent service
 together; pushing to main alone would make service rooms run Mode 2 as Mode 1.
-Not yet verified against the real service or with real voices. See cut-mode.md.
+Verified against the real service with a fresh disposable room; real voice-session feedback remains pending. See cut-mode.md.
 
 ## CURRENT: Open Mic Now & Next mode — 2026-10-10 (branch claude/open-mic-now-next)
 

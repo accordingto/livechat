@@ -20,6 +20,12 @@ var CUT_ENGINE = (() => {
   const jump = state => state?.mode === 'jump';
   const validMode = mode => mode === 'classic' || mode === 'jump';
   const validMainMinutes = minutes => config.jump.mainMinutes.options.includes(minutes);
+  const jumpTimingDefaults = { firstCutMinSeconds: config.jump.firstCut.minSeconds, firstCutMaxSeconds: config.jump.firstCut.maxSeconds,
+    cutIntervalMinSeconds: config.jump.cutInterval.minSeconds, cutIntervalMaxSeconds: config.jump.cutInterval.maxSeconds };
+  const jumpTimingOf = state => Object.fromEntries(Object.entries(jumpTimingDefaults).map(([key, fallback]) => [key, state[key] ?? fallback]));
+  const validJumpTiming = options => [['firstCutMinSeconds', 'firstCutMaxSeconds'], ['cutIntervalMinSeconds', 'cutIntervalMaxSeconds']].every(([low, high]) =>
+    Number.isInteger(options[low]) && Number.isInteger(options[high]) && options[low] >= config.jump.customTiming.minSeconds &&
+    options[high] <= config.jump.customTiming.maxSeconds && options[low] <= options[high]);
   const validSpeed = speed => speed === 'custom' || Object.hasOwn(config.speeds, speed);
   const validTiming = (min, max) => Number.isInteger(min) && Number.isInteger(max) &&
     min >= config.customTiming.minSeconds && max <= config.customTiming.maxSeconds && min <= max;
@@ -247,7 +253,7 @@ var CUT_ENGINE = (() => {
     if (first) state.mainStats[state.speaker] = { count: (Number(state.mainStats[state.speaker]?.count) || 0) + 1, lastRound: state.round };
     // A paused turn keeps the CUT it was already heading for, instead of drawing again.
     const kept = Number.isFinite(state.pendingDurationMs) ? Math.max(config.jump.resumeQuietSeconds * 1000, state.pendingDurationMs) : null;
-    const gap = kept ?? random.interval(first, state.previousDurationMs, rng);
+    const gap = kept ?? random.interval(first, state.previousDurationMs, rng, jumpTimingOf(state));
     if (kept == null) state.speakingDurationMs = gap;
     state.pendingDurationMs = null;
     state.countOnGo = false;
@@ -271,7 +277,7 @@ var CUT_ENGINE = (() => {
     if (state.phase === 'timeup') return backToMain(state, now), '';
     if (state.phase === 'speaking' && state.lastStretch) {
       // The round was running out: with more time there is room for a CUT again.
-      const remaining = mainRemaining(state, now), gap = random.interval(false, state.previousDurationMs, rng);
+      const remaining = mainRemaining(state, now), gap = random.interval(false, state.previousDurationMs, rng, jumpTimingOf(state));
       state.speakingDurationMs = gap;
       state.lastStretch = remaining - gap < config.jump.quietEndSeconds * 1000;
       state.deadline = now + (state.lastStretch ? remaining : gap);
@@ -341,16 +347,17 @@ var CUT_ENGINE = (() => {
     if (own(state.mainStats) < least(state.mainStats)) state.mainStats[playerNum] = { count: least(state.mainStats), lastRound: state.round };
     if (own(state.interruptStats) < least(state.interruptStats)) state.interruptStats[playerNum] = { count: least(state.interruptStats), lastTurn: state.interruptSequence };
   }
-  const settingsOf = state => ({ mode: jump(state) ? 'jump' : 'classic', speed: state.speed, category: state.category,
+  const settingsOf = state => ({ ...jumpTimingOf(state), mode: jump(state) ? 'jump' : 'classic', speed: state.speed, category: state.category,
     customMinSeconds: state.customMinSeconds, customMaxSeconds: state.customMaxSeconds, topicMinutes: state.topicMinutes,
     mainMinutes: validMainMinutes(state.mainMinutes) ? state.mainMinutes : config.jump.mainMinutes.default });
   function settingsFrom(state, input) {
     const saved = settingsOf(state), pick = key => input[key] === undefined ? saved[key] : input[key];
     const next = { speed: input.speed ?? saved.speed, category: input.category ?? saved.category,
       customMinSeconds: pick('customMinSeconds'), customMaxSeconds: pick('customMaxSeconds'),
-      topicMinutes: pick('topicMinutes'), mainMinutes: pick('mainMinutes') };
+      topicMinutes: pick('topicMinutes'), mainMinutes: pick('mainMinutes'),
+      firstCutMinSeconds: pick('firstCutMinSeconds'), firstCutMaxSeconds: pick('firstCutMaxSeconds'), cutIntervalMinSeconds: pick('cutIntervalMinSeconds'), cutIntervalMaxSeconds: pick('cutIntervalMaxSeconds') };
     return validSpeed(next.speed) && topics.categories.includes(next.category) && validTiming(next.customMinSeconds, next.customMaxSeconds) &&
-      validTopicMinutes(next.topicMinutes) && validMainMinutes(next.mainMinutes) ? next : null;
+      validTopicMinutes(next.topicMinutes) && validMainMinutes(next.mainMinutes) && validJumpTiming(next) ? next : null;
   }
   // The two pools suit different play, so a new mode always opens its own topic.
   // Nothing of the old mode keeps running: no deadline, interruption or paused turn.
@@ -455,7 +462,11 @@ var CUT_ENGINE = (() => {
   }
   function upgrade(current, now) {
     if (!current || current.version !== 1 || !Number.isFinite(now)) return current;
-    if (jump(current)) return current; // Legacy repairs below are for Mode 1 states only.
+    if (jump(current)) {
+      if (Object.keys(jumpTimingDefaults).every(key => current[key] !== undefined)) return current;
+      // Add public settings without redrawing a pending CUT or resetting the main clock.
+      return { ...current, ...jumpTimingOf(current), turnId: current.turnId + 1, lastChangeAt: now };
+    } // Legacy repairs below are for Mode 1 states only.
     const standardHandoff = saved => saved?.phase === 'handoff' && saved.countOnGo !== false && !Number.isFinite(saved.pendingDurationMs);
     const oldRules = current.rulesVersion !== 2 || current.targetCuts !== null;
     const legacyCut = waitingCut(current) && Number.isFinite(current.phaseUntil);
@@ -506,14 +517,15 @@ var CUT_ENGINE = (() => {
   }
   function create({ id, roster, speed = 'normal', category = 'mixed',
     customMinSeconds = config.customTiming.defaultMinSeconds, customMaxSeconds = config.customTiming.defaultMaxSeconds,
-    topicMinutes = config.topicTiming.defaultMinutes, mode = 'classic', mainMinutes = config.jump.mainMinutes.default, now, seed } = {}) {
+    topicMinutes = config.topicTiming.defaultMinutes, mode = 'classic', mainMinutes = config.jump.mainMinutes.default,
+    firstCutMinSeconds = jumpTimingDefaults.firstCutMinSeconds, firstCutMaxSeconds = jumpTimingDefaults.firstCutMaxSeconds, cutIntervalMinSeconds = jumpTimingDefaults.cutIntervalMinSeconds, cutIntervalMaxSeconds = jumpTimingDefaults.cutIntervalMaxSeconds, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < config.minPlayers || roster.length > config.maxPlayers) throw new Error('invalid_setup');
     if (roster.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1) || new Set(roster.map(player => player.playerNum)).size !== roster.length) throw new Error('invalid_roster');
     if (!validSpeed(speed) || !topics.categories.includes(category) || !validTiming(customMinSeconds, customMaxSeconds) || !validTopicMinutes(topicMinutes)) throw new Error('invalid_options');
-    if (!validMode(mode) || !validMainMinutes(mainMinutes)) throw new Error('invalid_options');
+    if (!validMode(mode) || !validMainMinutes(mainMinutes) || !validJumpTiming({ firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds })) throw new Error('invalid_options');
     const state = {
       version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0, mode,
-      speed, category, customMinSeconds, customMaxSeconds, topicMinutes, mainMinutes,
+      speed, category, customMinSeconds, customMaxSeconds, topicMinutes, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds,
       // Mode 2 keeps its own clock, topic history and fairness ledgers.
       mainClock: null, mainExtraMs: 0, interrupter: null, roundEnd: null, lastStretch: false, jumpTopicHistory: [],
       mainStats: {}, interruptStats: {}, interruptRecent: [], interruptSequence: 0,
@@ -665,7 +677,7 @@ var CUT_ENGINE = (() => {
           const restarted = create({ id: state.sessionId, roster: state.roster,
             speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds,
             customMaxSeconds: state.customMaxSeconds, topicMinutes: state.topicMinutes,
-            mainMinutes: settingsOf(state).mainMinutes, now, seed: input.seed });
+            ...jumpTimingOf(state), mainMinutes: settingsOf(state).mainMinutes, now, seed: input.seed });
           Object.assign(state, restarted, { turnId: current.turnId + 1,
             seen: state.seen, replies: state.replies });
         }
@@ -775,6 +787,7 @@ var CUT_ENGINE = (() => {
     // Everyone may know the mode and its length. The next CUT, the drawn gaps and
     // both fairness ledgers stay private, exactly like Mode 1's speaking deadline.
     cut.mode = jump(state) ? 'jump' : 'classic';
+    Object.assign(cut, jumpTimingOf(state));
     cut.mainMinutes = settingsOf(state).mainMinutes;
     cut.mainOptions = [...config.jump.mainMinutes.options];
     if (jump(state)) {
