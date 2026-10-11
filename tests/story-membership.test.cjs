@@ -16,7 +16,7 @@ const dxStart = (n = 3) => act(DX, DX.create({ id: 'membership-dixit', roster: r
 const onStart = (n = 3) => act(ON, act(ON, ON.create({ id: 'membership-once', roster: roster(n), sharedControls: true, seed: 98 }), 'deal'), 'chooseFirst', 0, { playerNum: 1 });
 function conserveDX(s) {
   const cards = [...DX.list(s.deck), ...DX.list(s.discard), ...Object.values(s.hands).flatMap(DX.list), ...Object.values(s.submissions).flatMap(DX.list)];
-  assert.equal(cards.length, 84); assert.equal(new Set(cards).size, 84);
+  assert.equal(cards.length, s.cardCount || 84); assert.equal(new Set(cards).size, s.cardCount || 84);
 }
 function conserveON(s) {
   const pool = OD.getWorld(s.world || 'classic');

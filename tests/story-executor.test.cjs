@@ -29,7 +29,7 @@ function finish(s) {
 }
 function conserveDX(s) {
   const cards = [...DX.list(s.deck), ...DX.list(s.discard), ...s.roster.flatMap(p => DX.list(s.hands[p.playerNum])), ...s.roster.flatMap(p => DX.list(s.submissions[p.playerNum]))];
-  assert.equal(cards.length, 84); assert.equal(new Set(cards).size, 84);
+  assert.equal(cards.length, s.cardCount || 84); assert.equal(new Set(cards).size, s.cardCount || 84);
 }
 function conserveOnce(s) {
   const cards = [...ON.list(s.storyDeck), ...ON.list(s.storyDiscard), ...ON.list(s.storyHeld), ...s.roster.flatMap(p => ON.list(s.hands[p.playerNum]))];

@@ -1,3 +1,29 @@
+## CURRENT: Dixit original 42-card expansion — 2026-10-12
+
+New sessions use 126 original pictures: unchanged base d001–d084 plus expansion
+assets/dixit-expansion-1/d085–d126.webp. All 8 approved previews are included.
+The 42 independent 768×1024 WebP images mix symbolic forms, dream settings,
+animals and original fable scenes. Public manifest/hashes and generation prompts
+are in that folder; original PNGs and production logs remain outside Git.
+Accidental generated signatures in d097/d104/d123 were removed with imagegen
+edits and visually rechecked. See dixit-expansion-mode.md.
+
+Session deckVersion 3 selects 126 cards; unmarked old sessions/lobbies retain
+84, their current hands/scores/discards/artwork and membership behavior. Explicit
+restart upgrades the deck. Base v2 images and v1 atlas IDs remain unchanged.
+Private cards, voting, reveal and scoring keep the original rules. UI rules show
+the actual session count; expansion lookup tolerates a cached 84-item manifest.
+Keep the current reveal/voter UI. Cache dixit-expansion-1 covers deck/engine/UI/CSS;
+the optional launcher uses hub-launch-4 and the Dixit-specific cache version.
+Long host names no longer overflow the lobby selector at 320px.
+
+Verification: 1739/1739 repository tests passed. Local Edge QA passed 168/168
+scenes at 320/375/1280px EN/ZH, host/private, 7 phases and current/cached manifests;
+42/42 new pictures decoded. Integrated service/frontend publication and read-only
+production asset checks are required before completion. Deploy the current graph,
+preserving newer Once worlds, CUT modes, Talk archive, membership, Open Mic modes,
+search functions, Singapore placement and existing secrets.
+
 ## CURRENT: Sketch Relay flow, drawing and shared reveal — 2026-10-11
 
 Sketch Relay retains its simultaneous independent books and correct even/odd

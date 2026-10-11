@@ -7,7 +7,7 @@
   else root.HUB_LAUNCHER = api;
 })(typeof globalThis === 'object' ? globalThis : this, function (root) {
   'use strict';
-  const VERSION = 'hub-launch-3';
+  const VERSION = 'hub-launch-4';
   const specs = Object.freeze({
     letstalk: { href:'lets-talk.html', min:2, max:9, sync:'TALK_SYNC', scripts:['talk-settings.js','talk-crazy.js','talk-engine.js','talk-topics.js','talk-sync.js'] },
     onceupon: { href:'once-upon-a-time.html', min:2, max:6, sync:'ONCE_SYNC', scripts:['once-upon-a-time-modern-future-deck.js','once-upon-a-time-deck.js','once-upon-a-time-engine.js','talk-sync.js','once-upon-a-time-sync.js'] },
@@ -53,7 +53,7 @@
     const promise = new Promise((resolve,reject) => {
       const script = root.document.createElement('script');
       const timer = root.setTimeout(() => { script.remove(); reject(Object.assign(new Error('script_failed'),{code:'script_failed'})); },15000);
-      script.src = file + '?v=' + (file.startsWith('cut-') ? 'cut-12' : file.startsWith('talk-') ? 'talk-archive-2' : VERSION);
+      script.src = file + '?v=' + (file.startsWith('cut-') ? 'cut-12' : file.startsWith('talk-') ? 'talk-archive-2' : file.startsWith('dixit-') ? 'dixit-expansion-1' : VERSION);
       script.onload = () => { root.clearTimeout(timer); resolve(); };
       script.onerror = () => { root.clearTimeout(timer); script.remove(); reject(Object.assign(new Error('script_failed'),{code:'script_failed'})); };
       root.document.head.append(script);

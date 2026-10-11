@@ -2,7 +2,7 @@
 
 # Dixit / 妙語說書人
 
-The last game on the Hub list. Uses existing Hub room/player links and the current standard Dixit base-game rules (3–8 players), with 84 independently generated original picture cards. This is an unofficial adaptation. No original commercial card art, logo, or branded board is included.
+Uses existing Hub room/player links and the current standard Dixit base-game rules (3–8 players), with 126 independently generated original picture cards: 84 original cards plus the 42-card expansion. Existing sessions retain their own 84-card pool until an explicit restart. This is an unofficial adaptation. No original commercial card art, logo, or branded board is included.
 
 ## Rules
 

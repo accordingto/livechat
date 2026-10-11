@@ -151,7 +151,7 @@ function assertCredentialsPrivate(f) {
 }
 function assertDixitConserved(s) {
   const cards = [...DX.list(s.deck), ...DX.list(s.discard), ...s.roster.flatMap(p => DX.list(s.hands[p.playerNum])), ...s.roster.flatMap(p => DX.list(s.submissions?.[p.playerNum]))];
-  assert.equal(cards.length, 84); assert.equal(new Set(cards).size, 84);
+  assert.equal(cards.length, s.cardCount || 84); assert.equal(new Set(cards).size, s.cardCount || 84);
 }
 test('Dixit API registration and ordinary private cards complete a spoken three-player round and both timed reveals', async () => {
   const f = fixture('dixit'); await f.register();

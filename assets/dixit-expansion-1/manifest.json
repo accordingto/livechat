@@ -1,0 +1,434 @@
+{
+  "version": 1,
+  "collection": "ICEBREAKING HUB original Dixit expansion",
+  "generatedDate": "2026-10-12",
+  "generator": "Built-in imagegen",
+  "provenance": "42 original illustrations including 8 approved previews. Published samples informed broad visual principles; no published card or Disney character is included.",
+  "cardCount": 42,
+  "baseCardCount": 84,
+  "totalCardCount": 126,
+  "cardAspectRatio": "3/4",
+  "format": "Individual WebP cards",
+  "cards": [
+    {
+      "id": "d085",
+      "titleZh": "透明迷宮",
+      "description": "A broken glass cube holds a golden hall between day and night; a key rests below.",
+      "image": "assets/dixit-expansion-1/d085.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 208928,
+      "sha256": "889528f3fd18da658fc5bf505357914ecad91257917529aed82889792cc19f7a"
+    },
+    {
+      "id": "d086",
+      "titleZh": "牽連",
+      "description": "Red ribbons pass through a broken ring, with gold threads tied to a stone and a bubble.",
+      "image": "assets/dixit-expansion-1/d086.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 197900,
+      "sha256": "b718bc853ea33492069f4eafe4b6d5ecff5363978febc2f27258d79a6bca2c40"
+    },
+    {
+      "id": "d087",
+      "titleZh": "沉默的回聲",
+      "description": "A gold drop hangs above blue rings that turn into floating windows.",
+      "image": "assets/dixit-expansion-1/d087.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 206464,
+      "sha256": "d1b8b6b44593f9a8a4a14367bb75e5bc7032c059870b53613b3292815c81e3b7"
+    },
+    {
+      "id": "d088",
+      "titleZh": "循環",
+      "description": "A floating loop changes from rock to moss, ice and water, casting a straight shadow.",
+      "image": "assets/dixit-expansion-1/d088.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 287258,
+      "sha256": "c9daf5f277b3c10814a4cc1508a04d5fdbd66ca0c26d2e077883d3b3a06341f3"
+    },
+    {
+      "id": "d089",
+      "titleZh": "吞影的燈塔",
+      "description": "A lighthouse sends out a black beam full of fish above a sea of stars.",
+      "image": "assets/dixit-expansion-1/d089.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 182200,
+      "sha256": "9b0a31a23d0e599296162f3ee867441be87ca769ec9c089366752048f9bc95b0"
+    },
+    {
+      "id": "d090",
+      "titleZh": "森林的打字機",
+      "description": "A typewriter grows leaves; its pink paper becomes a forest path and a cloud rises from an ink bottle.",
+      "image": "assets/dixit-expansion-1/d090.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 273284,
+      "sha256": "da6d7c8aefb988be45a99ed970a070eaa0f30bd19a01dbf4291253631519209c"
+    },
+    {
+      "id": "d091",
+      "titleZh": "背著春天的蝸牛",
+      "description": "A snail carries a frozen garden, leaves a trail of flowers and casts a rabbit's shadow.",
+      "image": "assets/dixit-expansion-1/d091.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 239108,
+      "sha256": "72afe153a22990669b3a390f1bd92f84af1e7cfc6c737ed943bff245cea00858"
+    },
+    {
+      "id": "d092",
+      "titleZh": "還沒畫完的遠方",
+      "description": "A giant paintbrush bridges a canyon as water and fish escape from a painted river.",
+      "image": "assets/dixit-expansion-1/d092.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 219796,
+      "sha256": "67a8b5e388336324fbc9e9aa001205a3a706c444736725762f8640a318228562"
+    },
+    {
+      "id": "d093",
+      "titleZh": "漂浮的溫室",
+      "description": "A glass garden floats under a patchwork balloon while its roots hang down and a ladder grows flowers.",
+      "image": "assets/dixit-expansion-1/d093.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 220428,
+      "sha256": "c74d108fc16045f554811ee0d4b408b30bc274157ac3912083c48d0c6dc83c19"
+    },
+    {
+      "id": "d094",
+      "titleZh": "尚未燒成的旅程",
+      "description": "A clay train carries cups through a blue garden; its steam becomes birds and its rails turn into wet clay.",
+      "image": "assets/dixit-expansion-1/d094.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 250956,
+      "sha256": "80378aec42d557fa1ff4c071a84338c7b1b680027bb052d8e37b633827b321db"
+    },
+    {
+      "id": "d095",
+      "titleZh": "把冬天烤暖",
+      "description": "A warm red oven holds a snowy forest while snow outside melts into flowers beside a cold loaf of bread.",
+      "image": "assets/dixit-expansion-1/d095.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 294716,
+      "sha256": "0cd8b047cf8d36f2f0971741d75d3b70b3a27a437b3920faa7f2fb84527bc587"
+    },
+    {
+      "id": "d096",
+      "titleZh": "潮汐馬戲團",
+      "description": "An open shell holds a small empty circus; fish leap through a pearl ring and the tide pulls its curtain.",
+      "image": "assets/dixit-expansion-1/d096.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 218714,
+      "sha256": "430c5ab34ced180ceb1cf7f2b7d1f80f0b3d47d7ffae3b2d3e9bb4f65c3bfd5d"
+    },
+    {
+      "id": "d097",
+      "titleZh": "口袋裡的港口",
+      "description": "An old backpack opens into a small harbor, with boats leaving its pockets and a ladder made of shoelaces.",
+      "image": "assets/dixit-expansion-1/d097.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 235374,
+      "sha256": "d59993f2eb586d1262a6925ca2eac54bf903397ecba247f882907061820707ed"
+    },
+    {
+      "id": "d098",
+      "titleZh": "雲朵圖書館",
+      "description": "A floating library keeps clouds on its shelves; an open book rains over a dry little garden.",
+      "image": "assets/dixit-expansion-1/d098.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 183182,
+      "sha256": "a01090c2c658d195f5619509ddb05ed37e41068441f982eca7c648c9785be892"
+    },
+    {
+      "id": "d099",
+      "titleZh": "掌心的河",
+      "description": "A white glove becomes a river valley, with trees on its fingers and a small bridge crossing the cuff.",
+      "image": "assets/dixit-expansion-1/d099.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 314340,
+      "sha256": "f0c43ba8f3e6c439b33d8e2915e2afca7e261cf44945a0a656ac19da729145a0"
+    },
+    {
+      "id": "d100",
+      "titleZh": "睡著的世界",
+      "description": "A squirrel sleeps on a glass globe holding an empty city; tree roots grow around the globe's stand.",
+      "image": "assets/dixit-expansion-1/d100.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 235758,
+      "sha256": "8d480fd3b6068e0e8cfb14dc992e01f8ce6e4a5294f0f658c6e9db3c6bacf5bb"
+    },
+    {
+      "id": "d101",
+      "titleZh": "播送春天",
+      "description": "An old radio grows flowers from its speaker while colored roots reach into a dry pond.",
+      "image": "assets/dixit-expansion-1/d101.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 301804,
+      "sha256": "67d0cc2db85becdc745f296d2218b9b4e1ed000e45559c5eea8e8b2151e0309b"
+    },
+    {
+      "id": "d102",
+      "titleZh": "自己的小雨",
+      "description": "A patchwork kite carries a small raincloud while its tail casts dry leaf shapes on the ground.",
+      "image": "assets/dixit-expansion-1/d102.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 259046,
+      "sha256": "e797103edc80824872f665a81d8609590661c838493ba4154a9a1220d56445b6"
+    },
+    {
+      "id": "d103",
+      "titleZh": "不肯熄燈的翅膀",
+      "description": "A brass moth opens flower-like wings under a blue lamp while small gears become seeds on the floor.",
+      "image": "assets/dixit-expansion-1/d103.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 204848,
+      "sha256": "b2faf9d0120c2c95e3f0b401f5490c231786869d04dc0874b1ab32935a6871c6"
+    },
+    {
+      "id": "d104",
+      "titleZh": "傘的休息時間",
+      "description": "Empty umbrellas rest in a tiny shop, holding small gardens while rain waits outside the window.",
+      "image": "assets/dixit-expansion-1/d104.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 227080,
+      "sha256": "0a827e22a3ab56ce99e1d56297e9758dd8684c4d106b3949f103a4fc6e291023"
+    },
+    {
+      "id": "d105",
+      "titleZh": "摺起的天氣",
+      "description": "A giant paper fan unfolds into contrasting weather, while one closed fold hides a small warm light.",
+      "image": "assets/dixit-expansion-1/d105.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 211848,
+      "sha256": "4e9b73d770da14dcb6fcd7cb8c2f092d6563f7f48347b86c4612bdc35255ace4"
+    },
+    {
+      "id": "d106",
+      "titleZh": "編織的日落",
+      "description": "Two wooden knitting needles weave sunset-colored strands into a floating hollow cube above a dark shoreline.",
+      "image": "assets/dixit-expansion-1/d106.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 215196,
+      "sha256": "7c469d5d2e043f48adf7954f5e89e66213885cb035122e2bfd9eec6e30a63885"
+    },
+    {
+      "id": "d107",
+      "titleZh": "另一種重量",
+      "description": "Dark stones enter a red funnel and emerge as light leaves above a spiral pool, with one stone suspended between.",
+      "image": "assets/dixit-expansion-1/d107.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 205770,
+      "sha256": "581cca2dc2615f654331dcd0c30058345b73f8c590bc4ef1028b5c7c62455860"
+    },
+    {
+      "id": "d108",
+      "titleZh": "看得見的沉默",
+      "description": "A giant tuning fork sends out suspended paper rings over a red plain, while a tiny bell rests inside one ring.",
+      "image": "assets/dixit-expansion-1/d108.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 148312,
+      "sha256": "69e17b711e2ceef61918fc2b8c0007ba28e9c9cab6d45b6fd48e893b495a4b81"
+    },
+    {
+      "id": "d109",
+      "titleZh": "停在兩邊之間",
+      "description": "A golden pendulum hangs above a boundary between water and sand, casting ripples across the dry side.",
+      "image": "assets/dixit-expansion-1/d109.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 170532,
+      "sha256": "2bf3ef6c101590024c50cff611987a32cebe7d71587d3e3f57590f009b3b392c"
+    },
+    {
+      "id": "d110",
+      "titleZh": "果實裡的潮汐",
+      "description": "A sliced orange contains a tiny blue tide, while its long peel spirals upward and dry seeds float above.",
+      "image": "assets/dixit-expansion-1/d110.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 203024,
+      "sha256": "bd448adee57d21cf4d7ecd171082bfdecaa428eeafabc530e586e57588495011"
+    },
+    {
+      "id": "d111",
+      "titleZh": "層層遠方",
+      "description": "Floating translucent sheets hold separate horizons, connected by a copper spiral that misses one displaced layer.",
+      "image": "assets/dixit-expansion-1/d111.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 127824,
+      "sha256": "0cc94b8549997b1b09fbbf07d85570dce069b3493c30416dc453db4f0452cb62"
+    },
+    {
+      "id": "d112",
+      "titleZh": "面具後的碎片",
+      "description": "Separate porcelain mask fragments hover around an empty face-shaped space, each carrying a different natural texture.",
+      "image": "assets/dixit-expansion-1/d112.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 170150,
+      "sha256": "c73a7046e15b53057b48257fc1f1cdd758209b0eb1bc5934c89c6a45c314a216"
+    },
+    {
+      "id": "d113",
+      "titleZh": "沒有穿上的風",
+      "description": "An empty coat hangs in open air, its sleeve becoming a flat paper strip as buttons float upward through the hollow center.",
+      "image": "assets/dixit-expansion-1/d113.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 139834,
+      "sha256": "3768acf282806806b1be048a8cf43f3c054c4ae7b32f26e9842947410ba1d247"
+    },
+    {
+      "id": "d114",
+      "titleZh": "夾住的流動",
+      "description": "A giant wooden clothespin holds a suspended ribbon of waterfall, with separated drops hanging above a dry riverbed.",
+      "image": "assets/dixit-expansion-1/d114.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 258500,
+      "sha256": "cd71e3be6758e008353779ef9a7d3f2d16080c0f15d32fe7a5b9b43af64fdabe"
+    },
+    {
+      "id": "d115",
+      "titleZh": "平衡的缺口",
+      "description": "A delicate hanging mobile balances a stone, a blue glass ring and a torn red square, with one connection made only by shadow.",
+      "image": "assets/dixit-expansion-1/d115.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 124046,
+      "sha256": "dd5a32aa64143198ecd77487d299ab37581f37978b7a886135dfe30b4ea2c0fe"
+    },
+    {
+      "id": "d116",
+      "titleZh": "潮汐洗衣房",
+      "description": "An underwater laundry holds a whirlpool in one machine while tiny clouds hang on a drying line.",
+      "image": "assets/dixit-expansion-1/d116.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 282388,
+      "sha256": "cff5e36ec9c56f7de45438abe82b85a8bf84258ddf3120bfb1c90fab93172a89"
+    },
+    {
+      "id": "d117",
+      "titleZh": "迷路的火山",
+      "description": "A volcano on wooden wheels crosses a snowy field while its smoke becomes red petals.",
+      "image": "assets/dixit-expansion-1/d117.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 248068,
+      "sha256": "e4fd299531e669948be3f8b613ee1ca8c7ceb463d11c179117c6ed641f089c83"
+    },
+    {
+      "id": "d118",
+      "titleZh": "誰住在樓上",
+      "description": "A small giraffe stands on a giant dollhouse roof above floating blue fish and an unreachable ladder.",
+      "image": "assets/dixit-expansion-1/d118.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 182492,
+      "sha256": "0580b9092e9eeb2d386b48942a2cd4dfc1fee3cf52d427ffc8f5a36a188c3365"
+    },
+    {
+      "id": "d119",
+      "titleZh": "聽見春天",
+      "description": "A red accordion releases flowers into a snowy valley while a white hare listens.",
+      "image": "assets/dixit-expansion-1/d119.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 245486,
+      "sha256": "5aa6ed5fb39921d41274bf5b26b7da3df75865784e40441ae4e33fb34e5f18ac"
+    },
+    {
+      "id": "d120",
+      "titleZh": "停在水裡的夏天",
+      "description": "A rusty red car rests in a green pond with lotus wheels while fish carry a string through its windows.",
+      "image": "assets/dixit-expansion-1/d120.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 219246,
+      "sha256": "b75057b56d8c48572dada02e8db0e1d054a5d966fcfe9c9bee67a9364cfa090b"
+    },
+    {
+      "id": "d121",
+      "titleZh": "未完成的城鎮",
+      "description": "A porcupine with colored-pencil quills walks past blank paper houses in a violet meadow.",
+      "image": "assets/dixit-expansion-1/d121.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 270584,
+      "sha256": "9fd861172fea0fb675fb21b44267a0dfe7dc87265ad3b644a047ec15476dccd0"
+    },
+    {
+      "id": "d122",
+      "titleZh": "織出明天",
+      "description": "An empty loom weaves a sunrise landscape from rain while one bird waits beside a dropped shuttle.",
+      "image": "assets/dixit-expansion-1/d122.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 267890,
+      "sha256": "5a49f7e844dfb05e0db1cc2463e102acd2cc69b7e644e072192fe06323509b3e"
+    },
+    {
+      "id": "d123",
+      "titleZh": "翻面的晚餐",
+      "description": "An upside-down dining table grows roots from its plates into a grassy ballroom floor.",
+      "image": "assets/dixit-expansion-1/d123.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 163496,
+      "sha256": "608da469fdb012afb6b902fb496162c376ec723c4a046d4aa1ecb697837c02a3"
+    },
+    {
+      "id": "d124",
+      "titleZh": "彎曲的捷徑",
+      "description": "Empty cups travel along a giant banana peel above a violet forest, with a small flame in one cup.",
+      "image": "assets/dixit-expansion-1/d124.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 203130,
+      "sha256": "cf587014c15ea331bf0fa74e3bdfb1c393dddd96cd2083f1e8f8752b7f39329f"
+    },
+    {
+      "id": "d125",
+      "titleZh": "替海排隊",
+      "description": "A giant crab arranges cracked dominoes beside folded-paper waves and a fish-shaped rain cloud.",
+      "image": "assets/dixit-expansion-1/d125.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 245380,
+      "sha256": "841a3ae0e9af5fe12d996b9575e9da83a6887b9b09745adb84164485d5e688fa"
+    },
+    {
+      "id": "d126",
+      "titleZh": "遊戲還在等",
+      "description": "An empty desert playground holds giant marbles on swings while a slide pours sand into flowers.",
+      "image": "assets/dixit-expansion-1/d126.webp",
+      "width": 768,
+      "height": 1024,
+      "bytes": 171820,
+      "sha256": "45745ccac0265c720aada7045341b2c01d81ead66e2b5b363581aae33f35ecb2"
+    }
+  ]
+}

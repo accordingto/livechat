@@ -12,7 +12,10 @@ var DIXIT_ENGINE = (() => {
   const copy = value => JSON.parse(JSON.stringify(value));
   const has = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
   const seatNumber = value => (typeof value === 'number' || typeof value === 'string' && /^\d+$/.test(value)) ? Number(value) : NaN;
-  const cards = Array.from({ length: 84 }, (_, i) => 'd' + String(i + 1).padStart(3, '0'));
+  const cards = Array.from({ length: 126 }, (_, i) => 'd' + String(i + 1).padStart(3, '0'));
+  // A deck belongs to its session. Existing games/lobbies without this explicit
+  // expansion marker keep the original 84 cards, even after an engine upgrade.
+  const sessionCards = s => Number(s.deckVersion) === 3 ? cards : cards.slice(0, 84);
   const HOST_TYPES = ['deal', 'setTargetScore', 'reveal', 'advanceReveal', 'nextRound', 'cancel', 'restart', 'pause', 'resume', 'recover'];
   const targetValue = value => (typeof value === 'number' || typeof value === 'string' && /^\d+$/.test(value.trim())) &&
     Number.isInteger(Number(value)) && Number(value) >= 5 && Number(value) <= 100 ? Number(value) : null;
@@ -42,7 +45,7 @@ var DIXIT_ENGINE = (() => {
         new Set(players.map(p => p.playerNum)).size !== players.length) throw new Error('invalid_roster');
     if (targetValue(targetScore) == null) throw new Error('invalid_target_score');
     return {
-      version: 1, artworkVersion: 2, hostPlayerNum: boundHost({ roster: players, hostPlayerNum }), targetScore: targetValue(targetScore), sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
+      version: 1, artworkVersion: 2, deckVersion: 3, cardCount: cards.length, hostPlayerNum: boundHost({ roster: players, hostPlayerNum }), targetScore: targetValue(targetScore), sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       paused: false, readiness: {}, hands: {}, submissions: {}, votes: {}, table: [],
       deck: [], discard: [], storyteller: null, round: 0, clue: '', clueMode: '', scores: {},
@@ -53,6 +56,7 @@ var DIXIT_ENGINE = (() => {
   }
   function normalize(current) {
     const s = copy(current);
+    s.cardCount = sessionCards(s).length;
     for (const key of ['roster', 'table', 'deck', 'discard', 'winners']) s[key] = list(s[key]);
     if (s.roundPlayerNums != null) s.roundPlayerNums = list(s.roundPlayerNums);
     s.hostPlayerNum = boundHost(s);
@@ -197,7 +201,7 @@ var DIXIT_ENGINE = (() => {
         }
         if (cmd.targetScore != null && targetValue(cmd.targetScore) == null) { reject('invalid_target_score'); break; }
         if (cmd.targetScore != null) s.targetScore = targetValue(cmd.targetScore);
-        s.deck = randomize(s, cards, cmd, 'deal');
+        s.deck = randomize(s, sessionCards(s), cmd, 'deal');
         for (const player of activeRoster(s)) {
           s.hands[player.playerNum] = s.deck.splice(0, handSize(s)); s.scores[player.playerNum] = 0;
         }
@@ -352,7 +356,7 @@ var DIXIT_ENGINE = (() => {
       recover: live && host && s.sharedControls === true && !ended && s.phase !== 'LOBBY',
     };
     const dixit = {
-      version: 1, artworkVersion: Number(s.artworkVersion)||1, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
+      version: 1, artworkVersion: Number(s.artworkVersion)||1, deckVersion: Number(s.deckVersion) === 3 ? 3 : 2, cardCount: s.cardCount, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
       phase: s.phase, paused: s.paused === true, round: s.round, storyteller: s.storyteller, hostPlayerNum: s.hostPlayerNum, targetScore: s.targetScore, hostControls: !!host,
       revealStage: s.revealStage || '', revealStartedAt: s.revealStartedAt || 0, revealAnswerAt: s.revealAnswerAt || 0, revealPopularAt: s.revealPopularAt || 0, revealPausedAt: s.revealPausedAt || 0,
       clue: s.clue, clueMode: s.clueMode, playerNum: player ? actor : 0,

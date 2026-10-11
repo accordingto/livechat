@@ -158,7 +158,7 @@ test('names, legacy clues and image descriptions are escaped without visible pic
   const hostile = '<img src=x onerror="alert(1)"> & \'\"';
   s.roster[0].name = hostile; s.clue = hostile; s.clueMode = 'text';
   const html = htmlFor(s, 2);
-  assert.ok(html.includes(UI.esc(hostile))); assert.doesNotMatch(html, /<img|onerror="alert/);
+  assert.ok(html.includes(UI.esc(hostile))); assert.doesNotMatch(html, /<img src=x|onerror="alert/);
   const context = { DIXIT_DECK: { version: 2, cards: [{ description: hostile, image: 'assets/dixit-v2/d001.webp' }] } };
   vm.runInNewContext(source, context);
   const picture = context.DIXIT_UI.cardHTML('d001', 1);
@@ -168,7 +168,7 @@ test('names, legacy clues and image descriptions are escaped without visible pic
   assert.equal(UI.errorText('stale_turn'), UI.t('stale')); assert.equal(UI.errorText('stale_session'), UI.t('stale'));
   assert.equal(UI.errorText('paused'), UI.t('paused')); assert.equal(UI.errorText('offline'), UI.t('failed'));
   assert.equal(UI.errorText('invalid_card'), UI.t('invalid')); assert.doesNotMatch(UI.errorText('invalid_card'), /invalid_card/);
-  assert.match(UI.rulesHTML(), /84 original illustrations|unofficial adaptation/i);
+  assert.match(UI.rulesHTML(), /126 original illustrations|unofficial adaptation/i);
   const owned = context.DIXIT_UI.cardHTML('d001', 1, { owner: hostile, answer: true });
   assert.ok(owned.includes('<div class="dx-owner">' + UI.esc(hostile) + '</div><div class="dx-picture is-answer">'));
   assert.doesNotMatch(owned, /onerror="alert|class="dx-answer"/);
@@ -324,12 +324,12 @@ test('an expired executor lease permits queued player actions; pause and transpo
 
 test('legacy games retain the atlas card faces while newly created games use standalone artwork', () => {
   const oldCards = Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit/atlas-' + (Math.floor(i / 12) + 1) + '.webp', description: 'Old art ' + i }));
-  const newCards = Array.from({ length: 84 }, (_, i) => ({ image: 'assets/dixit-v2/d' + String(i + 1).padStart(3, '0') + '.webp', description: 'Independent picture ' + i }));
+  const newCards = Array.from({ length: 126 }, (_, i) => ({ image: (i<84?'assets/dixit-v2/':'assets/dixit-expansion-1/') + 'd' + String(i + 1).padStart(3, '0') + '.webp', description: 'Independent picture ' + i }));
   const context = { DIXIT_DECK: { version: 2, cards: newCards, legacyCards: oldCards } }; vm.runInNewContext(source, context);
-  const fresh = dealt(), legacy = copy(fresh); delete legacy.artworkVersion;
+  const fresh = dealt(), oldLobby = create(); delete oldLobby.deckVersion; delete oldLobby.cardCount; delete oldLobby.artworkVersion; const legacy = act(oldLobby, 'deal', 0, { firstPlayerNum: 1 });
   assert.equal(E.view(fresh, 1).dixit.artworkVersion, 2); assert.equal(E.view(legacy, 1).dixit.artworkVersion, 1);
   const freshHTML = context.DIXIT_UI.tableHTML(E.view(fresh, 1)), legacyHTML = context.DIXIT_UI.tableHTML(E.view(legacy, 1));
-  assert.match(freshHTML, /<img class="dx-art" src="assets\/dixit-v2\/d\d{3}\.webp"/); assert.doesNotMatch(freshHTML, /atlas-\d/);
+  assert.match(freshHTML, /<img class="dx-art" src="assets\/(dixit-v2|dixit-expansion-1)\/d\d{3}\.webp"/); assert.doesNotMatch(freshHTML, /atlas-\d/);
   assert.match(legacyHTML, /dx-art-atlas/); assert.doesNotMatch(legacyHTML, /assets\/dixit-v2/);
   context.DIXIT_DECK = { version: 1, cards: oldCards };
   assert.match(context.DIXIT_UI.tableHTML(E.view(fresh, 1)), /dx-art-atlas/, 'old deck script remains usable during staggered deployment');

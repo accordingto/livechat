@@ -1,6 +1,6 @@
-/* Original picture cards. Versioned artwork preserves in-progress games. */
+/* Original picture cards. Stable base IDs/artwork preserve in-progress games. */
 var DIXIT_DECK = {
-  "version": 2,
+  "version": 3,
   "cards": [
     {
       "id": "d001",
@@ -421,6 +421,216 @@ var DIXIT_DECK = {
       "id": "d084",
       "image": "assets/dixit-v2/d084.webp",
       "description": "A cloud-shaped pillow casts a coral garden shadow."
+    },
+    {
+      "id": "d085",
+      "image": "assets/dixit-expansion-1/d085.webp",
+      "description": "A broken glass cube holds a golden hall between day and night; a key rests below."
+    },
+    {
+      "id": "d086",
+      "image": "assets/dixit-expansion-1/d086.webp",
+      "description": "Red ribbons pass through a broken ring, with gold threads tied to a stone and a bubble."
+    },
+    {
+      "id": "d087",
+      "image": "assets/dixit-expansion-1/d087.webp",
+      "description": "A gold drop hangs above blue rings that turn into floating windows."
+    },
+    {
+      "id": "d088",
+      "image": "assets/dixit-expansion-1/d088.webp",
+      "description": "A floating loop changes from rock to moss, ice and water, casting a straight shadow."
+    },
+    {
+      "id": "d089",
+      "image": "assets/dixit-expansion-1/d089.webp",
+      "description": "A lighthouse sends out a black beam full of fish above a sea of stars."
+    },
+    {
+      "id": "d090",
+      "image": "assets/dixit-expansion-1/d090.webp",
+      "description": "A typewriter grows leaves; its pink paper becomes a forest path and a cloud rises from an ink bottle."
+    },
+    {
+      "id": "d091",
+      "image": "assets/dixit-expansion-1/d091.webp",
+      "description": "A snail carries a frozen garden, leaves a trail of flowers and casts a rabbit's shadow."
+    },
+    {
+      "id": "d092",
+      "image": "assets/dixit-expansion-1/d092.webp",
+      "description": "A giant paintbrush bridges a canyon as water and fish escape from a painted river."
+    },
+    {
+      "id": "d093",
+      "image": "assets/dixit-expansion-1/d093.webp",
+      "description": "A glass garden floats under a patchwork balloon while its roots hang down and a ladder grows flowers."
+    },
+    {
+      "id": "d094",
+      "image": "assets/dixit-expansion-1/d094.webp",
+      "description": "A clay train carries cups through a blue garden; its steam becomes birds and its rails turn into wet clay."
+    },
+    {
+      "id": "d095",
+      "image": "assets/dixit-expansion-1/d095.webp",
+      "description": "A warm red oven holds a snowy forest while snow outside melts into flowers beside a cold loaf of bread."
+    },
+    {
+      "id": "d096",
+      "image": "assets/dixit-expansion-1/d096.webp",
+      "description": "An open shell holds a small empty circus; fish leap through a pearl ring and the tide pulls its curtain."
+    },
+    {
+      "id": "d097",
+      "image": "assets/dixit-expansion-1/d097.webp",
+      "description": "An old backpack opens into a small harbor, with boats leaving its pockets and a ladder made of shoelaces."
+    },
+    {
+      "id": "d098",
+      "image": "assets/dixit-expansion-1/d098.webp",
+      "description": "A floating library keeps clouds on its shelves; an open book rains over a dry little garden."
+    },
+    {
+      "id": "d099",
+      "image": "assets/dixit-expansion-1/d099.webp",
+      "description": "A white glove becomes a river valley, with trees on its fingers and a small bridge crossing the cuff."
+    },
+    {
+      "id": "d100",
+      "image": "assets/dixit-expansion-1/d100.webp",
+      "description": "A squirrel sleeps on a glass globe holding an empty city; tree roots grow around the globe's stand."
+    },
+    {
+      "id": "d101",
+      "image": "assets/dixit-expansion-1/d101.webp",
+      "description": "An old radio grows flowers from its speaker while colored roots reach into a dry pond."
+    },
+    {
+      "id": "d102",
+      "image": "assets/dixit-expansion-1/d102.webp",
+      "description": "A patchwork kite carries a small raincloud while its tail casts dry leaf shapes on the ground."
+    },
+    {
+      "id": "d103",
+      "image": "assets/dixit-expansion-1/d103.webp",
+      "description": "A brass moth opens flower-like wings under a blue lamp while small gears become seeds on the floor."
+    },
+    {
+      "id": "d104",
+      "image": "assets/dixit-expansion-1/d104.webp",
+      "description": "Empty umbrellas rest in a tiny shop, holding small gardens while rain waits outside the window."
+    },
+    {
+      "id": "d105",
+      "image": "assets/dixit-expansion-1/d105.webp",
+      "description": "A giant paper fan unfolds into contrasting weather, while one closed fold hides a small warm light."
+    },
+    {
+      "id": "d106",
+      "image": "assets/dixit-expansion-1/d106.webp",
+      "description": "Two wooden knitting needles weave sunset-colored strands into a floating hollow cube above a dark shoreline."
+    },
+    {
+      "id": "d107",
+      "image": "assets/dixit-expansion-1/d107.webp",
+      "description": "Dark stones enter a red funnel and emerge as light leaves above a spiral pool, with one stone suspended between."
+    },
+    {
+      "id": "d108",
+      "image": "assets/dixit-expansion-1/d108.webp",
+      "description": "A giant tuning fork sends out suspended paper rings over a red plain, while a tiny bell rests inside one ring."
+    },
+    {
+      "id": "d109",
+      "image": "assets/dixit-expansion-1/d109.webp",
+      "description": "A golden pendulum hangs above a boundary between water and sand, casting ripples across the dry side."
+    },
+    {
+      "id": "d110",
+      "image": "assets/dixit-expansion-1/d110.webp",
+      "description": "A sliced orange contains a tiny blue tide, while its long peel spirals upward and dry seeds float above."
+    },
+    {
+      "id": "d111",
+      "image": "assets/dixit-expansion-1/d111.webp",
+      "description": "Floating translucent sheets hold separate horizons, connected by a copper spiral that misses one displaced layer."
+    },
+    {
+      "id": "d112",
+      "image": "assets/dixit-expansion-1/d112.webp",
+      "description": "Separate porcelain mask fragments hover around an empty face-shaped space, each carrying a different natural texture."
+    },
+    {
+      "id": "d113",
+      "image": "assets/dixit-expansion-1/d113.webp",
+      "description": "An empty coat hangs in open air, its sleeve becoming a flat paper strip as buttons float upward through the hollow center."
+    },
+    {
+      "id": "d114",
+      "image": "assets/dixit-expansion-1/d114.webp",
+      "description": "A giant wooden clothespin holds a suspended ribbon of waterfall, with separated drops hanging above a dry riverbed."
+    },
+    {
+      "id": "d115",
+      "image": "assets/dixit-expansion-1/d115.webp",
+      "description": "A delicate hanging mobile balances a stone, a blue glass ring and a torn red square, with one connection made only by shadow."
+    },
+    {
+      "id": "d116",
+      "image": "assets/dixit-expansion-1/d116.webp",
+      "description": "An underwater laundry holds a whirlpool in one machine while tiny clouds hang on a drying line."
+    },
+    {
+      "id": "d117",
+      "image": "assets/dixit-expansion-1/d117.webp",
+      "description": "A volcano on wooden wheels crosses a snowy field while its smoke becomes red petals."
+    },
+    {
+      "id": "d118",
+      "image": "assets/dixit-expansion-1/d118.webp",
+      "description": "A small giraffe stands on a giant dollhouse roof above floating blue fish and an unreachable ladder."
+    },
+    {
+      "id": "d119",
+      "image": "assets/dixit-expansion-1/d119.webp",
+      "description": "A red accordion releases flowers into a snowy valley while a white hare listens."
+    },
+    {
+      "id": "d120",
+      "image": "assets/dixit-expansion-1/d120.webp",
+      "description": "A rusty red car rests in a green pond with lotus wheels while fish carry a string through its windows."
+    },
+    {
+      "id": "d121",
+      "image": "assets/dixit-expansion-1/d121.webp",
+      "description": "A porcupine with colored-pencil quills walks past blank paper houses in a violet meadow."
+    },
+    {
+      "id": "d122",
+      "image": "assets/dixit-expansion-1/d122.webp",
+      "description": "An empty loom weaves a sunrise landscape from rain while one bird waits beside a dropped shuttle."
+    },
+    {
+      "id": "d123",
+      "image": "assets/dixit-expansion-1/d123.webp",
+      "description": "An upside-down dining table grows roots from its plates into a grassy ballroom floor."
+    },
+    {
+      "id": "d124",
+      "image": "assets/dixit-expansion-1/d124.webp",
+      "description": "Empty cups travel along a giant banana peel above a violet forest, with a small flame in one cup."
+    },
+    {
+      "id": "d125",
+      "image": "assets/dixit-expansion-1/d125.webp",
+      "description": "A giant crab arranges cracked dominoes beside folded-paper waves and a fish-shaped rain cloud."
+    },
+    {
+      "id": "d126",
+      "image": "assets/dixit-expansion-1/d126.webp",
+      "description": "An empty desert playground holds giant marbles on swings while a slide pours sand into flowers."
     }
   ],
   "legacyCards": [
@@ -844,6 +1054,8 @@ var DIXIT_DECK = {
       "image": "assets/dixit/atlas-7.webp",
       "description": "A child opens a wooden box on a rooftop, revealing a staircase of peach clouds toward the sun."
     }
-  ]
+  ],
+  "baseCardCount": 84,
+  "expansionCardCount": 42
 };
 if(typeof module!=='undefined'&&module.exports)module.exports=DIXIT_DECK;

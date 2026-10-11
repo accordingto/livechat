@@ -27,9 +27,10 @@ function conservation(s) {
   const physical = [...E.list(s.deck), ...E.list(s.discard),
     ...s.roster.flatMap(p => E.list(s.hands[p.playerNum])),
     ...s.roster.flatMap(p => E.list(s.submissions[p.playerNum]))];
-  assert.equal(physical.length, 84);
-  assert.equal(new Set(physical).size, 84);
-  assert.deepEqual(physical.slice().sort(), Array.from({ length: 84 }, (_, i) => 'd' + String(i + 1).padStart(3, '0')));
+  const total = s.cardCount || 84;
+  assert.equal(physical.length, total);
+  assert.equal(new Set(physical).size, total);
+  assert.deepEqual(physical.slice().sort(), Array.from({ length: total }, (_, i) => 'd' + String(i + 1).padStart(3, '0')));
 }
 function tableReady(s, story = { clue: 'A distant memory' }) {
   s = act(s, 'story', s.storyteller, { cardId: s.hands[s.storyteller][0], ...story });
@@ -53,7 +54,8 @@ function finishReveal(s) {
 
 test('artwork version stays legacy throughout an existing game and changes only on a fresh session or restart', () => {
   const fresh = create(); assert.equal(fresh.artworkVersion, 2); assert.equal(E.view(fresh, 0).dixit.artworkVersion, 2);
-  let legacy = started(); delete legacy.artworkVersion;
+  let legacy = create(); delete legacy.deckVersion; delete legacy.cardCount; delete legacy.artworkVersion;
+  legacy = act(legacy, 'deal', 0, { firstPlayerNum: 1 });
   assert.equal(E.view(legacy, 1).dixit.artworkVersion, 1);
   legacy = act(legacy, 'story', 1, { cardId: legacy.hands[1][0], clueMode: 'spoken' });
   assert.equal(E.view(legacy, 2).dixit.artworkVersion, 1, 'a new action never changes existing card faces');
@@ -93,7 +95,7 @@ test('optional readiness and host-controlled deals create correct private hand s
       assert.equal(s.hands[p.playerNum].length, count === 3 ? 7 : 6);
       assert.deepEqual(E.view(s, p.playerNum).dixit.hand, s.hands[p.playerNum]);
     }
-    assert.equal(s.deck.length, 84 - count * (count === 3 ? 7 : 6)); conservation(s);
+    assert.equal(s.deck.length, 126 - count * (count === 3 ? 7 : 6)); conservation(s);
   }
   let s = create(); s = act(s, 'deal', 0, { firstPlayerNum: 99 });
   assert.equal(s.phase, 'LOBBY'); assert.equal(s.replies[0].error, 'invalid_player');
@@ -338,10 +340,10 @@ test('nextRound discards played cards, refills private hands, clears secrets, an
   for (const p of s.roster) assert.equal(s.hands[p.playerNum].length, 6); conservation(s);
 });
 
-test('draw-pile shortage reshuffles the remaining cards with discards, conserving all 84 cards', () => {
+test('draw-pile shortage reshuffles the remaining cards with discards, conserving all 126 cards', () => {
   for (const count of [3, 4, 8]) {
     let s = started(count), reshuffled = false;
-    for (let i = 0; i < 25 && !reshuffled; i++) {
+    for (let i = 0; i < 45 && !reshuffled; i++) {
       s = tableReady(s);
       // No correct answers keeps the storyteller at zero; reset tallies to
       // exercise draw exhaustion independently of the 30-point finish rule.
