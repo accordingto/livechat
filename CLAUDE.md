@@ -1,3 +1,25 @@
+## CURRENT: Chat Wolf role cards + Once Modern & Future — 2026-10-11
+
+Chat Wolf private cards now use small Wolf/Jester/Village portraits (red/yellow/green),
+keeping Main Topic and tasks visible, completion left and cooperation right. Host
+presentation never shows private role art. Same match/player/role reuses the loaded
+img on sync; switching private identity removes it. No rule/history/sync change.
+Assets wolf-role-cards-1; role paintings/provenance in assets/chat-wolf/roles/.
+
+Once has LOBBY-only world/hand setup: Classic (129+51 unchanged) or original
+Modern & Future (60 Story+18 Ending; isolated IDs/art/piles), Original automatic
+9/8/7/6/5 for 2–6 players or manual 3–9 (Hub custom). One Ending each. Manual
+settings do not change Interrupt/pass/challenge/Ending rules. Restart retains
+options; old saves keep their exact cards and default Classic/auto. Preserve
+upstream active/away/pending membership handling. New module loads BEFORE base
+in host/player/launcher; global ID maps include both worlds while classic exports
+stay unchanged. Hand configuration is authenticated, fenced and atomic with deal.
+New world art has 78 independent meaning-matched paintings, optimized WebPs and
+separate manifests/prompts; original PNGs ignored locally. No AI while playing.
+Assets once-worlds-1; launcher hub-launch-3. Deploy the independent hub-executor
+service AND frontend together; never rotate/read signing credentials. See
+chatwolf-once-worlds-release.md and world-aware isolated service/browser scripts.
+
 ## CURRENT: CUT Mode 2 manual interruption timing - 2026-10-11
 
 Mode 2 now accepts firstCutMinSeconds / firstCutMaxSeconds (default 25-45)

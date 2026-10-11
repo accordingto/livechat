@@ -14,7 +14,7 @@ function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry
 (async()=>{
   const html=fs.readFileSync(path.join(root,'once-upon-a-time.html'),'utf8');
   const runtime=Array.from(html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css)(?:\?[^"#]*)?)"/g),m=>m[1]).filter(file=>!/^https?:/.test(file));
-  const art=walk(path.join(root,'assets','once-upon-a-time')).filter(file=>/\.(?:webp|svg|json|png)$/.test(file)&&!file.endsWith('-v2.png')).map(file=>path.relative(root,file).replace(/\\/g,'/'));
+  const art=walk(path.join(root,'assets','once-upon-a-time')).filter(file=>/\.(?:webp|svg|json|png)$/.test(file)&&!/-v\d+\.png$/.test(file)).map(file=>path.relative(root,file).replace(/\\/g,'/'));
   const assets=[...new Set(['index.html','play.html','once-upon-a-time.html',...runtime,...art])];
   const results=[];let next=0;
   async function worker(){while(next<assets.length){const asset=assets[next++];

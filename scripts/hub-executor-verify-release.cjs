@@ -4,20 +4,21 @@ const fs = require('node:fs'), path = require('node:path'), crypto = require('no
 const root = path.resolve(__dirname, '..'), base = 'https://livechat-two-alpha.vercel.app/';
 const release = process.argv[2] || 'executor-1';
 const files = ['index.html', 'room.js', 'hub-membership.css', 'hub-launcher.js', 'talk-topics.js', 'talk.css', 'play.html', 'hub-executor.js', 'dixit.html', 'dixit-engine.js', 'dixit-sync.js', 'dixit-ui.js', 'dixit-host.js',
-  'once-upon-a-time.html', 'once-upon-a-time.css', 'once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'once-upon-a-time-sync.js', 'once-upon-a-time-ui.js', 'once-upon-a-time-host.js',
+  'once-upon-a-time.html', 'once-upon-a-time.css', 'once-upon-a-time-modern-future-deck.js', 'once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'once-upon-a-time-sync.js', 'once-upon-a-time-ui.js', 'once-upon-a-time-host.js',
   'lets-talk.html', 'talk-engine.js', 'talk-sync.js', 'talk-ui.js', 'talk-host.js', 'cut.html', 'cut-engine.js', 'cut-sync.js', 'cut-ui.js', 'cut-host.js', 'cut.css',
   'open-mic-rescue.html', 'open-mic-engine.js', 'open-mic-sync.js', 'open-mic-ui.js', 'open-mic-host.js',
   'bluff-king-live-chat.html', 'bluff-king-engine.js', 'bluff-king-sync.js', 'bluff-king-ui.js',
-  'chat-wolf.html', 'chat-wolf-copy.js', 'chat-wolf-engine.js', 'chat-wolf-sync.js', 'chat-wolf-v3-engine.js', 'chat-wolf-v3-ui.js', 'chat-wolf.js',
+  'chat-wolf.html', 'chat-wolf.css', 'chat-wolf-copy.js', 'chat-wolf-engine.js', 'chat-wolf-sync.js', 'chat-wolf-v3-engine.js', 'chat-wolf-v3-ui.js', 'chat-wolf.js',
+  'assets/chat-wolf/roles/wolf-v1.webp', 'assets/chat-wolf/roles/jester-v1.webp', 'assets/chat-wolf/roles/villager-v1.webp', 'assets/chat-wolf/roles/art-prompts-v1.json',
   'bomb-relay.html', 'bomb-relay.css', 'bomb-relay-deck.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js', 'assets/bomb-relay/beach.svg'];
-const hash = bytes => crypto.createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g, '\n')).digest('hex');
+const hash = (bytes, file) => crypto.createHash('sha256').update(/\.(?:html|js|css|svg|json)$/.test(file) ? bytes.toString('utf8').replace(/\r\n/g, '\n') : bytes).digest('hex');
 (async () => {
   let next = 0;
   const results = [];
   await Promise.all(Array.from({ length: 4 }, async () => {
     while (next < files.length) {
       const file = files[next++], response = await fetch(base + file + '?release=' + encodeURIComponent(release), { signal: AbortSignal.timeout(30000) });
-      results.push({ file, status: response.status, match: response.ok && hash(Buffer.from(await response.arrayBuffer())) === hash(fs.readFileSync(path.join(root, file))) });
+      results.push({ file, status: response.status, match: response.ok && hash(Buffer.from(await response.arrayBuffer()),file) === hash(fs.readFileSync(path.join(root, file)),file) });
     }
   }));
   const current = results.filter(result => result.match).length;

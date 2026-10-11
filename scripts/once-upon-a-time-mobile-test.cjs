@@ -7,6 +7,25 @@ const engine=require('../once-upon-a-time-engine.js');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const base=(process.env.ONCE_UI_BASE||'http://127.0.0.1:8095/').replace(/\/?$/,'/');
 const proof=process.env.ONCE_UI_PROOF_DIR;
+const world=process.env.ONCE_UI_WORLD||'classic';
+assert.ok(['classic','modern-future'].includes(world),'ONCE_UI_WORLD must be classic or modern-future');
+const selectedPool=deck.getWorld(world),textPools=process.env.ONCE_UI_TEXT_WORLDS==='all'?deck.worlds:[selectedPool];
+assert.ok(selectedPool,'the selected authored world must exist');
+const storyIds=new Set(selectedPool.storyCards.map(card=>card.id)),endingIds=new Set(selectedPool.endingCards.map(card=>card.id));
+async function prepareWorld(page){
+  if(world==='classic')return; // Preserve the original automatic demo route.
+  // The demo initially has a Classic deal. Use the same legal controls as a
+  // player: cancel, replay into Lobby, save the separate world, then deal.
+  await page.getByRole('button',{name:'Cancel game',exact:true}).click();
+  await page.getByRole('button',{name:'Confirm',exact:true}).click();
+  await page.getByRole('button',{name:'Another game in this room',exact:true}).click();
+  await page.getByRole('button',{name:'Confirm',exact:true}).click();
+  await page.locator('[data-once-setting="world"]').selectOption(world);
+  await page.getByRole('button',{name:'Save settings',exact:true}).click();
+  assert.equal(await page.locator('[data-once-setting="world"]').inputValue(),world);
+  assert.equal(await page.locator('[data-once-setting="handSize"]').inputValue(),'original','the new world keeps automatic 4-player hands');
+  await page.getByRole('button',{name:'Deal cards',exact:true}).click();
+}
 (async()=>{
   const browser=await chromium.launch({headless:true,channel:process.env.ONCE_UI_BROWSER||'chrome'});
   const reports=[];
@@ -19,8 +38,13 @@ const proof=process.env.ONCE_UI_PROOF_DIR;
       page.on('request',request=>{if(roomEndpoint.test(request.url()))roomTraffic.push(request.url());});
       await page.route(roomEndpoint,route=>route.abort());
       await page.goto(base+'once-upon-a-time.html?demo=1',{waitUntil:'domcontentloaded'});
+      await prepareWorld(page);
       await page.getByRole('button',{name:'Choose first Storyteller',exact:true}).click();
       await page.locator('#once-demo-view').selectOption('1');
+      assert.equal(await page.locator('.once-hand [data-once-card]').count(),7,'original automatic hands remain unchanged');
+      assert.equal(await page.locator('.once-world-tag').innerText(),selectedPool.title);
+      const privateIds=await page.locator('.once-hand [data-once-card],.once-ending-dock [data-once-card]').evaluateAll(cards=>cards.map(card=>card.dataset.onceCard));
+      assert.ok(privateIds.every(id=>storyIds.has(id)||endingIds.has(id)),'a synthetic player receives only cards from the selected world');
       for(let i=0;i<5;i++){
         await page.locator('.once-hand [data-once-card]').first().click();
         await page.getByRole('button',{name:'Play card',exact:true}).click();
@@ -50,8 +74,8 @@ const proof=process.env.ONCE_UI_PROOF_DIR;
       }
       if(width<=1000)assert.ok(geometry.ending.top>=geometry.hand.bottom,'Ending does not separate Story and hand');
       else assert.ok(geometry.ending.left>geometry.story.left,'desktop Ending remains beside Story');
-      reports.push({width,height,...geometry});
-      if(proof&&(width===375||width===1280))await page.screenshot({path:path.join(proof,'once-mobile-'+width+'.png'),fullPage:true});
+      reports.push({world,width,height,...geometry});
+      if(proof&&(width===375||width===1280))await page.screenshot({path:path.join(proof,'once-mobile-'+(world==='classic'?'':world+'-')+width+'.png'),fullPage:true});
       const selected=await page.locator('.once-hand [aria-pressed="true"]').count();
       await page.getByRole('button',{name:'Your ending',exact:true}).click();
       assert.equal(await page.locator('.once-ending-dock').getAttribute('open'),'');
@@ -86,12 +110,12 @@ const proof=process.env.ONCE_UI_PROOF_DIR;
       const page=await stabilityContext.newPage();
       await page.route(/https:\/\/[^/]+\.(?:firebaseio\.com|firebasedatabase\.app)\//,route=>route.abort());
       await page.goto(base+'once-upon-a-time.html?demo=1',{waitUntil:'domcontentloaded'});
-      let state=engine.create({id:'once-browser-stability-fixture',roster:[1,2,3,4].map(playerNum=>({playerNum,name:'Synthetic '+playerNum})),seed:713,now:1000});
+      let state=engine.create({id:'once-browser-stability-fixture',roster:[1,2,3,4].map(playerNum=>({playerNum,name:'Synthetic '+playerNum})),world,seed:713,now:1000});
       state=engine.apply(state,{id:'synthetic-deal',sessionId:state.sessionId,turnId:state.turnId,type:'deal',actor:0,seed:891,now:2000});
       state=engine.apply(state,{id:'synthetic-first',sessionId:state.sessionId,turnId:state.turnId,type:'chooseFirst',actor:0,playerNum:1,now:3000});
       for(let index=0;index<2;index++)state=engine.apply(state,{id:'synthetic-history-'+index,sessionId:state.sessionId,turnId:state.turnId,type:'play',actor:1,cardId:state.hands[1][0],now:4000+index});
       const played=engine.apply(state,{id:'synthetic-next-play',sessionId:state.sessionId,turnId:state.turnId,type:'play',actor:1,cardId:state.hands[1][0],now:5000});
-      let fresh=engine.create({id:'once-browser-fresh-session',roster:[1,2,3,4].map(playerNum=>({playerNum,name:'Synthetic '+playerNum})),seed:976,now:6000});
+      let fresh=engine.create({id:'once-browser-fresh-session',roster:[1,2,3,4].map(playerNum=>({playerNum,name:'Synthetic '+playerNum})),world,seed:976,now:6000});
       fresh=engine.apply(fresh,{id:'synthetic-fresh-deal',sessionId:fresh.sessionId,turnId:fresh.turnId,type:'deal',actor:0,seed:491,now:7000});
       const stability=await page.evaluate(async projections=>{
         const data=projections.initial;
@@ -152,20 +176,22 @@ const proof=process.env.ONCE_UI_PROOF_DIR;
       assert.equal(stability.newPlayVisible,true,'the genuine next play still appears on the table');
       assert.equal(stability.oldSeatPrivateCardsCleared,true,'changing synthetic seat removes the old private card DOM');
       assert.equal(stability.oldSessionPrivateCardsCleared,true,'a new session removes old private card DOM');
-      console.log('ONCE IMAGE STABILITY: '+JSON.stringify(stability));
+      console.log('ONCE IMAGE STABILITY ('+world+'): '+JSON.stringify(stability));
     }finally{await stabilityContext.close();}
     // All public vocabulary/art is tested for text fit, not just the dealt sample.
     // A standalone rendered fixture contains no private or authoritative state.
-    for(const width of [320,375]){
+    // Optional ONCE_UI_TEXT_WORLDS=all checks both authored decks in distinct
+    // disposable fixtures. It does not mix the worlds in an actual game.
+    for(const pool of textPools)for(const width of [320,375]){
       const context=await browser.newContext({viewport:{width,height:812}}),page=await context.newPage();
-      const cards=deck.storyCards.map(c=>'<div class="once-history-item">'+ui.cardHTML(c,'history')+'</div>').join('');
-      const endings=deck.endingCards.map(c=>'<details class="once-panel once-ending-dock" open><summary>Your ending</summary><div class="once-ending-content">'+ui.cardHTML(c,'ending')+'</div></details>').join('');
+      const cards=pool.storyCards.map(c=>'<div class="once-history-item">'+ui.cardHTML(c,'history')+'</div>').join('');
+      const endings=pool.endingCards.map(c=>'<details class="once-panel once-ending-dock" open><summary>Your ending</summary><div class="once-ending-content">'+ui.cardHTML(c,'ending')+'</div></details>').join('');
       await page.setContent('<!doctype html><html><head><base href="'+base+'"><link rel="stylesheet" href="shared.css"><link rel="stylesheet" href="once-upon-a-time.css"></head><body class="once-card-page"><div id="content"><div class="once-game once-game--reference"><div class="once-panel"><div class="once-history once-history-latest">'+cards+'</div></div>'+endings+'</div></div></body></html>',{waitUntil:'load'});
       const clipped=await page.locator('.once-card-title').evaluateAll(elements=>elements.filter(el=>el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1).map(el=>el.textContent));
-      assert.deepEqual(clipped,[],width+'px: all '+deck.storyCards.length+' Story titles and '+deck.endingCards.length+' Ending sentences fit');
+      assert.deepEqual(clipped,[],pool.id+' '+width+'px: all '+pool.storyCards.length+' Story titles and '+pool.endingCards.length+' Ending sentences fit');
       await context.close();
     }
-    console.log(JSON.stringify(reports.map(r=>({width:r.width,height:r.height,storyHeight:r.story.height,storyToHandGap:r.hand.top-r.story.bottom,handCard:[r.handCard.width,r.handCard.height],overflow:r.overflow})),null,2));
-    console.log('ONCE BROWSER UI: 5 viewport layouts, portrait chronological phone tables, default-visible Endings, 5 complete synthetic games, all'+(deck.storyCards.length+deck.endingCards.length)+' card texts at320/375px passed');
+    console.log(JSON.stringify(reports.map(r=>({world:r.world,width:r.width,height:r.height,storyHeight:r.story.height,storyToHandGap:r.hand.top-r.story.bottom,handCard:[r.handCard.width,r.handCard.height],overflow:r.overflow})),null,2));
+    console.log('ONCE BROWSER UI ('+world+'): 5 viewport layouts, portrait chronological phone tables, default-visible Endings, 5 complete synthetic games, all '+textPools.reduce((count,pool)=>count+pool.storyCards.length+pool.endingCards.length,0)+' card texts at320/375px passed');
   }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

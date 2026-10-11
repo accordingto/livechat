@@ -168,6 +168,54 @@ test('host can deal immediately with nobody ready and retries cannot redeal', as
   for(let seat=1;seat<=6;seat++) assert.equal(f.card(seat).once.hand.length,5);
 });
 
+test('lobby configuration synchronizes world and manual size on every original card without publishing secret decks', async t => {
+  const f = setup(t, 6), h = f.host(); await f.lobby(h);
+  const current = { sessionId: h.doc.state.sessionId, turnId: h.doc.state.turnId };
+  await h.command('configure', { id: 'world-settings', ...current, world: 'modern-future', handSize: 4 }); await settle(h);
+  for (let seat = 1; seat <= 6; seat++) {
+    assert.equal(f.card(seat).once.world, 'modern-future'); assert.equal(f.card(seat).once.handSize, 4);
+    assert.equal(f.card(seat).once.resolvedHandSize, 4); assert.equal(f.card(seat).once.actions.configure, false);
+    assert.deepEqual(f.card(seat).once.hand, []);
+  }
+  const revision = h.doc.state.revision;
+  await h.command('configure', { id: 'world-settings', ...current, world: 'modern-future', handSize: 4 }); await settle(h);
+  assert.equal(h.doc.state.revision, revision, 'retry must reuse the one receipt and not configure again');
+  await h.command('deal'); await settle(h);
+  const pool = D.getWorld('modern-future'), ids = new Set(pool.storyCards.map(card => card.id));
+  for (let seat = 1; seat <= 6; seat++) {
+    const card = f.card(seat);
+    assert.equal(card.once.hand.length, 4); assert.ok(card.once.hand.every(story => ids.has(story.id)));
+    assert.ok(pool.endingCards.some(ending => ending.id === card.once.ending.id));
+    const text = JSON.stringify(card);
+    for (const id of h.doc.state.storyDeck) assert.equal(text.includes(JSON.stringify(id)), false);
+    for (let other = 1; other <= 6; other++) if (other !== seat) {
+      for (const id of h.doc.state.hands[other]) assert.equal(text.includes(JSON.stringify(id)), false);
+      assert.equal(text.includes(JSON.stringify(h.doc.state.endings[other])), false);
+    }
+  }
+  assert.equal(h.latest.once.hand, undefined); assert.equal(h.latest.once.ending, undefined);
+});
+
+test('forged configuration actor is denied; invalid/stale/midgame host settings never change acknowledged pair', async t => {
+  const f = setup(t, 4), h = f.host(); await f.lobby(h);
+  const forged = await f.send(h, 2, 'configure', { actor: 0, world: 'modern-future', handSize: 3 });
+  assert.equal(f.card(2).once.reply.id, forged.id); assert.equal(f.card(2).once.reply.error, 'not_available');
+  assert.equal(h.doc.state.world, 'classic'); assert.equal(h.doc.state.handSize, null);
+  await assert.rejects(h.command('configure', { world: 'modern-future', handSize: 10 }), /invalid_hand_size/);
+  assert.equal(h.doc.state.world, 'classic'); assert.equal(h.doc.state.handSize, null);
+  const turnId = h.doc.state.turnId;
+  await h.command('configure', { handSize: 3 });
+  await assert.rejects(h.command('configure', { turnId, handSize: 8 }), /stale_turn/);
+  await h.command('deal'); await settle(h); const held = clone(h.doc.state.hands);
+  await assert.rejects(h.command('configure', { world: 'modern-future', handSize: 9 }), /not_available/);
+  assert.equal(h.doc.state.world, 'classic'); assert.equal(h.doc.state.handSize, 3); assert.deepEqual(h.doc.state.hands, held);
+  await h.command('restart'); await settle(h);
+  for (let seat = 1; seat <= 4; seat++) {
+    assert.equal(f.card(seat).once.handSize, 3); assert.deepEqual(f.card(seat).once.hand, []);
+    assert.equal(f.card(seat).once.ending, null);
+  }
+});
+
 test('duplicate play and pass requests never remove a second card or draw twice', async t => {
   const f = setup(t), h = f.host(); await f.story(h);
   const handBefore = h.doc.state.hands[1].length;

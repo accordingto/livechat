@@ -139,6 +139,30 @@ test('Once shared managers still play their private cards and see only their own
   assert.ok(!JSON.stringify(p).includes(JSON.stringify(s.endings[2])));
   assert.equal(act('onceupon', once(4, false), 'deal', 2).replies[2].error, 'not_available');
 });
+
+test('Once configuration binds the authenticated shared manager and publishes only the acknowledged public settings', () => {
+  const base = once(6), c = ctx(3, { seed: 555 });
+  const input = { id: 'once-settings-auth', type: 'configure', sessionId: base.sessionId, turnId: base.turnId,
+    actor: 0, world: 'modern-future', handSize: 3 };
+  const s = A.onceupon.apply(base, input, c);
+  assert.equal(s.replies[3].error, ''); assert.equal(s.replies[0], undefined);
+  assert.equal(s.world, 'modern-future'); assert.equal(s.handSize, 3);
+  assert.deepEqual(A.onceupon.apply(base, { ...input, actor: 99 }, c), s);
+  assert.throws(() => A.onceupon.apply(base, input, ctx(99)), /not_eligible/);
+  const legacy = A.onceupon.apply(once(6, false), input, c);
+  assert.equal(legacy.replies[3].error, 'not_available'); assert.equal(legacy.world, 'classic');
+  for (const seat of [0, 1, 3]) {
+    const projected = A.onceupon.project(s, seat, c).once;
+    assert.equal(projected.world, 'modern-future'); assert.equal(projected.handSize, 3); assert.equal(projected.resolvedHandSize, 3);
+    assert.equal(projected.actions.configure, true); assert.equal(projected.actions.deal, true);
+    assert.equal(JSON.stringify(projected).includes(c.seat.token), false);
+    assert.equal(Object.hasOwn(projected, 'storyDeck'), false);
+  }
+  const dealt = act('onceupon', s, 'deal', 2);
+  assert.equal(dealt.phase, 'CHOOSING_FIRST'); assert.ok(dealt.roster.every(p => dealt.hands[p.playerNum].length === 3));
+  const denied = act('onceupon', dealt, 'configure', 3, { handSize: 9 });
+  assert.equal(denied.replies[3].error, 'not_available'); assert.deepEqual(denied.hands, dealt.hands);
+});
 test('Once absent storyteller safely passes once with no invented discard, and duplicate recovery cannot draw again', () => {
   const start = onceStarted(), hand = start.hands[1].slice(), c = ctx(2, { onlineNums: [2, 3, 4] });
   const command = { id: 'recover-once', type: 'recover', sessionId: start.sessionId, turnId: start.turnId };

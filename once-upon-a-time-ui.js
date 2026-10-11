@@ -103,7 +103,8 @@
   const worldId=s=>s.world==='modern-future'?'modern-future':'classic';
   const worldTitle=id=>t(id==='modern-future'?'modernWorld':'classicWorld');
   const configuredHand=s=>Number.isInteger(s.handSize)?s.handSize:null;
-  const openingCount=(s,handSize=configuredHand(s))=>handSize??Math.max(5,11-list(s.roster).length);
+  const openingSeats=s=>Number.isInteger(s.membership?.activeCount)?s.membership.activeCount:list(s.roster).filter(p=>p.active!==false&&p.pending!==true).length;
+  const openingCount=(s,handSize=configuredHand(s))=>handSize??(configuredHand(s)===null&&Number.isInteger(s.resolvedHandSize)?s.resolvedHandSize:Math.max(5,11-openingSeats(s)));
   function settingsHTML(s,options={}){
     const editable=s.actions?.configure===true,settings=editable&&options.settingsDraft||{world:worldId(s),handSize:configuredHand(s)};
     const selectedHand=Number.isInteger(settings.handSize)?settings.handSize:null;

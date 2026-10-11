@@ -1,0 +1,556 @@
+{
+  "version": 1,
+  "world": "modern-future",
+  "uniqueIllustrationCount": 78,
+  "mainWidth": 768,
+  "thumbnailWidth": 384,
+  "note": "78 individual built-in image_gen paintings, visually reviewed for meaning-matched modern and future scenes. Print-sized original PNGs preserved locally; deployed assets are optimized WebPs.",
+  "cards": {
+    "once-mf-character-doctor": {
+      "artKey": "modern-future.character.doctor",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/doctor-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/doctor-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult doctor in scrubs with a stethoscope checking a patient in a bright modern clinic."
+    },
+    "once-mf-character-scientist": {
+      "artKey": "modern-future.character.scientist",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/scientist-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/scientist-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult scientist in a lab coat examining a small glowing sample in a modern laboratory."
+    },
+    "once-mf-character-robot": {
+      "artKey": "modern-future.character.robot",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/robot-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/robot-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A friendly clearly mechanical humanoid robot waving in a near-future city street."
+    },
+    "once-mf-character-pilot": {
+      "artKey": "modern-future.character.pilot",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/pilot-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/pilot-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult space pilot seated at the controls of a small spacecraft; stars beyond the cockpit."
+    },
+    "once-mf-character-driver": {
+      "artKey": "modern-future.character.driver",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/driver-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/driver-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult driver at the wheel of a city bus, wearing everyday clothing, with a road visible ahead."
+    },
+    "once-mf-character-student": {
+      "artKey": "modern-future.character.student",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/student-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/student-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult university student carrying books and a backpack outside a modern campus."
+    },
+    "once-mf-character-detective": {
+      "artKey": "modern-future.character.detective",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/detective-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/detective-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult detective examining a clue on a city sidewalk with a small magnifying glass."
+    },
+    "once-mf-character-neighbor": {
+      "artKey": "modern-future.character.neighbor",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/neighbor-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/neighbor-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A friendly adult neighbor standing at an apartment doorway, offering a small bowl of food."
+    },
+    "once-mf-character-astronaut": {
+      "artKey": "modern-future.character.astronaut",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/astronaut-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/astronaut-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single astronaut in a white spacesuit on the moon, Earth visible in the black sky."
+    },
+    "once-mf-character-friend": {
+      "artKey": "modern-future.character.friend",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/friend-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/friend-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adult friends laughing together while sitting on a contemporary park bench."
+    },
+    "once-mf-character-stranger": {
+      "artKey": "modern-future.character.stranger",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/stranger-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/stranger-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A mysterious but harmless adult stranger waiting at a modern railway platform with a suitcase."
+    },
+    "once-mf-character-hacker": {
+      "artKey": "modern-future.character.hacker",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/hacker-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/hacker-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult computer hacker focused on a laptop in a dim contemporary room, abstract screens with no legible text."
+    },
+    "once-mf-thing-phone": {
+      "artKey": "modern-future.thing.phone",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/phone-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/phone-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One ordinary modern smartphone glowing on a café table, clear phone shape, abstract screen with no text."
+    },
+    "once-mf-thing-key": {
+      "artKey": "modern-future.thing.key",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/key-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/key-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single silver apartment door key with a small blue keyring on a contemporary wooden desk."
+    },
+    "once-mf-thing-book": {
+      "artKey": "modern-future.thing.book",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/book-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/book-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "One open paperback book on a modern desk beside a simple lamp, pages without readable words."
+    },
+    "once-mf-thing-drone": {
+      "artKey": "modern-future.thing.drone",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/drone-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/drone-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A compact four-propeller camera drone hovering over a near-future city rooftop."
+    },
+    "once-mf-thing-battery": {
+      "artKey": "modern-future.thing.battery",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/battery-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/battery-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A compact rechargeable battery pack with a glowing charge indicator, futuristic workshop backdrop."
+    },
+    "once-mf-thing-ticket": {
+      "artKey": "modern-future.thing.ticket",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/ticket-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/ticket-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single train ticket beside a modern platform barrier, no legible numbers or text."
+    },
+    "once-mf-thing-bike": {
+      "artKey": "modern-future.thing.bike",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/bike-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/bike-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A familiar city bicycle parked beside an apartment building in soft morning light."
+    },
+    "once-mf-thing-map": {
+      "artKey": "modern-future.thing.map",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/map-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/map-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A folded paper street map lying on a modern café table, abstract roads with no text."
+    },
+    "once-mf-thing-camera": {
+      "artKey": "modern-future.thing.camera",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/camera-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/camera-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A clearly recognizable digital camera with a lens and strap on a modern table."
+    },
+    "once-mf-thing-spaceship": {
+      "artKey": "modern-future.thing.spaceship",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/spaceship-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/spaceship-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A small elegant science-fiction spaceship floating above a blue planet, full ship visible."
+    },
+    "once-mf-thing-headphones": {
+      "artKey": "modern-future.thing.headphones",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/headphones-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/headphones-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A pair of everyday over-ear headphones resting on a modern desk."
+    },
+    "once-mf-thing-package": {
+      "artKey": "modern-future.thing.package",
+      "imagePath": "assets/once-upon-a-time/modern-future/thing/package-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/thing/package-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A sealed cardboard delivery parcel with blank shipping label outside a modern apartment door."
+    },
+    "once-mf-place-city": {
+      "artKey": "modern-future.place.city",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/city-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/city-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A lively modern city skyline at blue hour with trains and ordinary illuminated buildings."
+    },
+    "once-mf-place-apartment": {
+      "artKey": "modern-future.place.apartment",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/apartment-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/apartment-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A cozy contemporary apartment living room with sofa, house plants and city windows."
+    },
+    "once-mf-place-station": {
+      "artKey": "modern-future.place.station",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/station-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/station-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A contemporary railway station with a clearly visible train and platform, no sign text."
+    },
+    "once-mf-place-hospital": {
+      "artKey": "modern-future.place.hospital",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/hospital-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/hospital-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A clean modern hospital entrance and reception area, subtle medical cross, no words."
+    },
+    "once-mf-place-school": {
+      "artKey": "modern-future.place.school",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/school-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/school-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A contemporary school campus courtyard with classroom buildings and backpacks, no text."
+    },
+    "once-mf-place-cafe": {
+      "artKey": "modern-future.place.cafe",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/cafe-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/cafe-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A welcoming modern neighborhood café interior with coffee cups and warm lamps."
+    },
+    "once-mf-place-laboratory": {
+      "artKey": "modern-future.place.laboratory",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/laboratory-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/laboratory-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A spacious near-future research laboratory with microscopes and glowing sample chambers."
+    },
+    "once-mf-place-spaceport": {
+      "artKey": "modern-future.place.spaceport",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/spaceport-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/spaceport-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A futuristic spaceport with parked spacecraft and an observation terminal under a starry sky."
+    },
+    "once-mf-place-moon": {
+      "artKey": "modern-future.place.moon",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/moon-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/moon-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "The rocky surface of the moon with a small distant lunar base and Earth in the black sky."
+    },
+    "once-mf-place-park": {
+      "artKey": "modern-future.place.park",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/park-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/park-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A contemporary city park with a walking path, leafy trees and benches."
+    },
+    "once-mf-place-tunnel": {
+      "artKey": "modern-future.place.tunnel",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/tunnel-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/tunnel-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A long modern pedestrian tunnel with clear perspective and soft blue overhead lights."
+    },
+    "once-mf-place-rooftop": {
+      "artKey": "modern-future.place.rooftop",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/rooftop-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/rooftop-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A contemporary apartment rooftop garden overlooking a city at sunset."
+    },
+    "once-mf-aspect-happy": {
+      "artKey": "modern-future.aspect.happy",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/happy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/happy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult person visibly joyful, smiling and laughing in a contemporary park."
+    },
+    "once-mf-aspect-lost": {
+      "artKey": "modern-future.aspect.lost",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/lost-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/lost-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult traveler at a modern city crossroads looking confused at a folded map."
+    },
+    "once-mf-aspect-hidden": {
+      "artKey": "modern-future.aspect.hidden",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/hidden-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/hidden-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A small glowing device visibly half-hidden behind a bookshelf in a modern apartment."
+    },
+    "once-mf-aspect-broken": {
+      "artKey": "modern-future.aspect.broken",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/broken-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/broken-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A clearly broken household robot with one detached arm and harmless scattered pieces in a modern workshop."
+    },
+    "once-mf-aspect-brave": {
+      "artKey": "modern-future.aspect.brave",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/brave-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/brave-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A calm adult stepping forward to help a frightened traveler on a dark but safe city platform."
+    },
+    "once-mf-aspect-lonely": {
+      "artKey": "modern-future.aspect.lonely",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/lonely-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/lonely-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A single adult sitting alone on a contemporary park bench at dusk, wistful mood."
+    },
+    "once-mf-aspect-famous": {
+      "artKey": "modern-future.aspect.famous",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/famous-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/famous-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult arriving at a modern event while photographers gather and friendly fans wave."
+    },
+    "once-mf-aspect-invisible": {
+      "artKey": "modern-future.aspect.invisible",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/invisible-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/invisible-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An invisible person suggested by an empty transparent human-shaped outline holding a floating coffee cup in a modern café."
+    },
+    "once-mf-aspect-friendly": {
+      "artKey": "modern-future.aspect.friendly",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/friendly-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/friendly-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A smiling adult warmly welcoming a new neighbor at a modern apartment entrance."
+    },
+    "once-mf-aspect-electric": {
+      "artKey": "modern-future.aspect.electric",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/electric-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/electric-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A futuristic device surrounded by bright harmless blue electrical arcs in a workshop."
+    },
+    "once-mf-aspect-tiny": {
+      "artKey": "modern-future.aspect.tiny",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/tiny-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/tiny-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A tiny friendly robot, smaller than a coffee cup, standing beside that cup on a modern desk."
+    },
+    "once-mf-aspect-suspicious": {
+      "artKey": "modern-future.aspect.suspicious",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/suspicious-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/suspicious-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult in everyday clothes giving a doubtful sideways glance at an unopened parcel in a modern lobby."
+    },
+    "once-mf-event-rescue": {
+      "artKey": "modern-future.event.rescue",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/rescue-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/rescue-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A rescue worker helping an adult traveler out of a stranded modern bus, reassuring daylight scene."
+    },
+    "once-mf-event-chase": {
+      "artKey": "modern-future.event.chase",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/chase-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/chase-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adults in everyday clothes in a playful running chase along a modern city street, no weapons."
+    },
+    "once-mf-event-discovery": {
+      "artKey": "modern-future.event.discovery",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/discovery-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/discovery-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A scientist opening a small capsule to discover a living glowing plant in a futuristic lab."
+    },
+    "once-mf-event-repair": {
+      "artKey": "modern-future.event.repair",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/repair-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/repair-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult fixing a friendly household robot with a screwdriver at a contemporary workbench."
+    },
+    "once-mf-event-reunion": {
+      "artKey": "modern-future.event.reunion",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/reunion-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/reunion-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adult friends warmly hugging after meeting on a modern railway platform."
+    },
+    "once-mf-event-blackout": {
+      "artKey": "modern-future.event.blackout",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/blackout-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/blackout-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A modern city street suddenly dark with unlit buildings, residents illuminating it with flashlights."
+    },
+    "once-mf-event-launch": {
+      "artKey": "modern-future.event.launch",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/launch-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/launch-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A futuristic rocket lifting off from a launchpad, bright plume, safe distant view."
+    },
+    "once-mf-event-landing": {
+      "artKey": "modern-future.event.landing",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/landing-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/landing-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A small spacecraft settling gently onto a lunar landing pad, dust below it."
+    },
+    "once-mf-event-escape": {
+      "artKey": "modern-future.event.escape",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/escape-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/escape-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult rushing through an open modern building exit into sunlight, no violence."
+    },
+    "once-mf-event-surprise": {
+      "artKey": "modern-future.event.surprise",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/surprise-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/surprise-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Friends surprising an adult with a small birthday cake in a modern apartment, joyful expressions."
+    },
+    "once-mf-event-argument": {
+      "artKey": "modern-future.event.argument",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/argument-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/argument-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adults disagreeing animatedly but nonviolently over a street map in a modern café."
+    },
+    "once-mf-event-signal": {
+      "artKey": "modern-future.event.signal",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/signal-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/signal-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A futuristic communications dish receiving a visible glowing pulse from a small spacecraft in the starry sky."
+    },
+    "once-mf-ending-home": {
+      "artKey": "modern-future.ending.home",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/home-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/home-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Friends resting together in a welcoming modern apartment, sunset city outside the window."
+    },
+    "once-mf-ending-last-train": {
+      "artKey": "modern-future.ending.last-train",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/last-train-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/last-train-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two relieved adult travelers stepping onto the final train at a modern station at night."
+    },
+    "once-mf-ending-new-friend": {
+      "artKey": "modern-future.ending.new-friend",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/new-friend-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/new-friend-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adult strangers now warmly shaking hands with smiles on a modern park bench."
+    },
+    "once-mf-ending-robot-friend": {
+      "artKey": "modern-future.ending.robot-friend",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/robot-friend-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/robot-friend-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A friendly household robot and an adult sharing tea in a cozy modern apartment."
+    },
+    "once-mf-ending-city-lights": {
+      "artKey": "modern-future.ending.city-lights",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/city-lights-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/city-lights-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A modern city recovering from a blackout, windows and streetlights glowing again at dusk."
+    },
+    "once-mf-ending-small-beginning": {
+      "artKey": "modern-future.ending.small-beginning",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/small-beginning-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/small-beginning-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A scientist and friends marveling at a small prototype projecting a hopeful future city model."
+    },
+    "once-mf-ending-message": {
+      "artKey": "modern-future.ending.message",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/message-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/message-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A relieved adult reading a glowing smartphone notification, no text, on a quiet modern train."
+    },
+    "once-mf-ending-earth": {
+      "artKey": "modern-future.ending.earth",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/earth-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/earth-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A spacecraft landed on a grassy Earth field while astronauts greet friends with an embrace."
+    },
+    "once-mf-ending-moon-garden": {
+      "artKey": "modern-future.ending.moon-garden",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/moon-garden-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/moon-garden-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Green seedlings growing in a transparent lunar greenhouse with Earth visible overhead."
+    },
+    "once-mf-ending-repaired": {
+      "artKey": "modern-future.ending.repaired",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/repaired-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/repaired-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult and a happily reassembled household robot sharing a celebratory high-five at a workbench."
+    },
+    "once-mf-ending-shared-secret": {
+      "artKey": "modern-future.ending.shared-secret",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/shared-secret-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/shared-secret-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adult friends quietly smiling over a small closed futuristic capsule in a modern apartment."
+    },
+    "once-mf-ending-saved-place": {
+      "artKey": "modern-future.ending.saved-place",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/saved-place-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/saved-place-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "A welcoming renovated contemporary community center with a diverse group of adults gathering."
+    },
+    "once-mf-ending-open-door": {
+      "artKey": "modern-future.ending.open-door",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/open-door-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/open-door-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult opening an ordinary apartment door onto a surprising glowing futuristic city beyond."
+    },
+    "once-mf-ending-lessons": {
+      "artKey": "modern-future.ending.lessons",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/lessons-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/lessons-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adult inventors smiling at an imperfect homemade robot, workbench with abandoned diagrams."
+    },
+    "once-mf-ending-sunrise": {
+      "artKey": "modern-future.ending.sunrise",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/sunrise-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/sunrise-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Two adult friends reunited on a contemporary rooftop at sunrise."
+    },
+    "once-mf-ending-sky": {
+      "artKey": "modern-future.ending.sky",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/sky-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/sky-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Friends gazing upward as a small passenger spacecraft rises above a modern city."
+    },
+    "once-mf-ending-ordinary-day": {
+      "artKey": "modern-future.ending.ordinary-day",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/ordinary-day-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/ordinary-day-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "An adult enjoying a quiet morning coffee by an apartment window while a friendly small robot watches."
+    },
+    "once-mf-ending-next-stop": {
+      "artKey": "modern-future.ending.next-stop",
+      "imagePath": "assets/once-upon-a-time/modern-future/ending/next-stop-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/ending/next-stop-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticDescription": "Friends pointing together at an abstract map while looking through a spacecraft window at stars."
+    }
+  }
+}

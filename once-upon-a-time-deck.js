@@ -1,9 +1,9 @@
 (function (root, factory) {
   'use strict';
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else if (typeof define === 'function' && define.amd) define([], factory);
-  else root.ONCE_DECK = factory();
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./once-upon-a-time-modern-future-deck.js'));
+  else if (typeof define === 'function' && define.amd) define(['./once-upon-a-time-modern-future-deck'], factory);
+  else root.ONCE_DECK = factory(root.ONCE_MODERN_FUTURE_DECK);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (modernFuture) {
   'use strict';
 
   // Original, hand-authored core deck. A title, its language and its art can change
@@ -240,12 +240,15 @@
     thumbnailPath: assetRoot + 'ending/' + slug + '-v2-thumb.webp'
   })));
 
-  const storyById = Object.freeze(Object.fromEntries(storyCards.map(card => [card.id, card])));
-  const endingById = Object.freeze(Object.fromEntries(endingCards.map(card => [card.id, card])));
+  const classic = Object.freeze({ id: 'classic', title: 'Classic fairy tales', storyCards, endingCards });
+  const worlds = Object.freeze([classic, ...(modernFuture?.id === 'modern-future' ? [modernFuture] : [])]);
+  const getWorld = id => worlds.find(world => world.id === id) || null;
+  const storyById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.storyCards.map(card => [card.id, card]))));
+  const endingById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.endingCards.map(card => [card.id, card]))));
   const cardBacks = Object.freeze({
     story: assetRoot + 'card-backs/story-back.svg',
     ending: assetRoot + 'card-backs/ending-back.svg'
   });
 
-  return Object.freeze({ storyCards, endingCards, categories, storyById, endingById, cardBacks });
+  return Object.freeze({ storyCards, endingCards, categories, storyById, endingById, cardBacks, worlds, getWorld });
 });

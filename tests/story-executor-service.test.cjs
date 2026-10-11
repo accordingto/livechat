@@ -7,6 +7,7 @@ const { createExecutor, GRACE_MS, seal, unseal, keyFrom } = require('../runtime/
 const { adapters } = require('../runtime/story-executor.cjs');
 const DX = require('../dixit-engine.js');
 const ON = require('../once-upon-a-time-engine.js');
+const OD = require('../once-upon-a-time-deck.js');
 const TK = require('../talk-engine.js');
 const clone = value => value == null ? null : structuredClone(value);
 const secret = '63'.repeat(32);
@@ -92,6 +93,55 @@ function assertPlayerOnly(f) {
   assert.ok(f.playerRequests.length);
   assert.ok(f.playerRequests.every(body => body.token !== f.controlToken && !Object.hasOwn(body, 'controlToken')));
 }
+
+test('Once service configuration and modern private dealing work from real seat capsules with no browser Host', async () => {
+  const f = fixture('onceupon', { count: 6 }); await f.register();
+  await f.perform(3, 'configure', { actor: 0, world: 'modern-future', handSize: 4 });
+  for (const seat of f.seats) {
+    assert.equal(f.view(seat.playerNum).world, 'modern-future'); assert.equal(f.view(seat.playerNum).handSize, 4);
+    assert.equal(f.view(seat.playerNum).resolvedHandSize, 4); assert.equal(f.view(seat.playerNum).actions.configure, true);
+  }
+  await f.perform(2, 'deal');
+  const pool = OD.getWorld('modern-future'), allowed = new Set(pool.storyCards.map(card => card.id));
+  for (const seat of f.seats) {
+    const v = f.view(seat.playerNum), text = JSON.stringify(v);
+    assert.equal(v.hand.length, 4); assert.ok(v.hand.every(card => allowed.has(card.id)));
+    assert.ok(pool.endingCards.some(card => card.id === v.ending.id));
+    for (const other of f.seats.filter(candidate => candidate.playerNum !== seat.playerNum)) {
+      for (const id of ON.list(f.state().hands[other.playerNum])) assert.equal(text.includes(JSON.stringify(id)), false);
+      assert.equal(text.includes(JSON.stringify(f.state().endings[other.playerNum])), false);
+    }
+    assert.equal(v.actions.configure, false);
+  }
+  assert.equal(f.publicView().once.hand, undefined); assert.equal(f.publicView().once.ending, undefined);
+  const physical = [...ON.list(f.state().storyDeck), ...ON.list(f.state().storyDiscard), ...Object.values(f.state().hands).flatMap(ON.list)];
+  assert.equal(physical.length, pool.storyCards.length); assert.equal(new Set(physical).size, pool.storyCards.length);
+  assertPlayerOnly(f); assertCredentialsPrivate(f);
+});
+
+test('Once service rejects invalid pair and racing old-turn settings while retry cannot reshuffle committed hands', async () => {
+  const f = fixture('onceupon', { count: 4 }); await f.register();
+  let c = f.mailbox(2, 'configure', { world: 'modern-future', handSize: 10 }); await f.pulse(2);
+  assert.equal(f.view(2).reply.id, c.id); assert.equal(f.view(2).reply.error, 'invalid_hand_size');
+  assert.equal(f.state().world, 'classic'); assert.equal(f.state().handSize == null, true);
+  const base = f.state(), capsule = f.card(2).hubExecutor.capsule;
+  const commands = [2, 3].map(number => ({ id: 'racing-world-size-' + number, sessionId: base.sessionId, turnId: base.turnId,
+    type: 'configure', world: 'modern-future', handSize: number + 1 }));
+  await Promise.all(commands.map((command, i) => f.service.execute({ capsule, token: f.seats[i + 1].token, command })));
+  assert.equal(f.db.conflicts > 0, true); assert.equal(f.state().world, 'modern-future');
+  const errors = [f.view(2).reply.error, f.view(3).reply.error];
+  assert.equal(errors.filter(error => error === '').length, 1); assert.equal(errors.filter(error => error === 'stale_turn').length, 1);
+  assert.equal(f.state().turnId, base.turnId + 1);
+  const acceptedSize = f.state().handSize; await f.perform(4, 'deal');
+  const held = clone(f.state().hands), endings = clone(f.state().endings);
+  c = f.mailbox(2, 'configure', { world: 'classic', handSize: null }); await f.pulse(2);
+  assert.equal(f.view(2).reply.error, 'not_available'); assert.equal(f.state().handSize, acceptedSize);
+  assert.deepEqual(f.state().hands, held); assert.deepEqual(f.state().endings, endings);
+  const stale = { id: 'old-settings-after-deal', type: 'configure', sessionId: base.sessionId, turnId: base.turnId, handSize: 9 };
+  await f.service.execute({ capsule, token: f.seats[1].token, command: stale });
+  assert.equal(f.view(2).reply.error, 'stale_turn'); assert.deepEqual(f.state().hands, held);
+  assertPlayerOnly(f); assertCredentialsPrivate(f);
+});
 function assertCredentialsPrivate(f) {
   for (const seat of f.seats) {
     const data = JSON.stringify(f.card(seat.playerNum));

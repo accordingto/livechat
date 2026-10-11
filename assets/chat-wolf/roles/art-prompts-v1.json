@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "mode": "built-in image_gen",
+  "records": [
+    {
+      "slug": "wolf",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: illustration-story. Asset type: Chat Wolf English conversation party game role portrait. Primary request: An intelligent friendly grey wolf, close portrait, wearing a simple dark coat, alert amber eyes and one subtle playful grin, night-time apartment balcony in soft focus. Deep crimson accents, dark midnight blue. A real wolf face, no violence, no human face. Style: polished painterly storybook illustration, clear readable central silhouette, expressive but not cartoon baby art. Portrait 2:3 composition, tightly framed head and upper torso, subject fills image, subtle background. No lettering, no logos, no text, no card border or UI, no watermark. Audience: friendly adult English-learning party game.",
+      "generatedPath": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-e8a94568-d22c-411c-a7de-f5f995b2f182.png",
+      "originalPath": "assets/chat-wolf/roles/wolf-v1.png",
+      "imagePath": "assets/chat-wolf/roles/wolf-v1.webp"
+    },
+    {
+      "slug": "jester",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: illustration-story. Asset type: Chat Wolf English conversation party game role portrait. Primary request: A cheerful adult theatrical jester, expressive warm face, small yellow and golden jester cap, navy jacket, friendly mischievous smile, warmly lit café-stage background. Golden yellow accents. No wolf, no weapons. Style: polished painterly storybook illustration, clear readable central silhouette, expressive but not cartoon baby art. Portrait 2:3 composition, tightly framed head and upper torso, subject fills image, subtle background. No lettering, no logos, no text, no card border or UI, no watermark. Audience: friendly adult English-learning party game.",
+      "generatedPath": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-6bf45f6d-1ea6-42f2-b4ac-c8ba5934e803.png",
+      "originalPath": "assets/chat-wolf/roles/jester-v1.png",
+      "imagePath": "assets/chat-wolf/roles/jester-v1.webp"
+    },
+    {
+      "slug": "villager",
+      "mode": "built-in image_gen",
+      "prompt": "Use case: illustration-story. Asset type: Chat Wolf English conversation party game role portrait. Primary request: An approachable young adult neighbor, casual green jacket, warm friendly expression, holding a coffee mug at a modern shared apartment doorway with soft house plants. Emerald green accents. No wolf, no medieval clothing. Style: polished painterly storybook illustration, clear readable central silhouette, expressive but not cartoon baby art. Portrait 2:3 composition, tightly framed head and upper torso, subject fills image, subtle background. No lettering, no logos, no text, no card border or UI, no watermark. Audience: friendly adult English-learning party game.",
+      "generatedPath": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-e30e81ac-b8b1-4647-bc75-f5631552644d.png",
+      "originalPath": "assets/chat-wolf/roles/villager-v1.png",
+      "imagePath": "assets/chat-wolf/roles/villager-v1.webp"
+    }
+  ]
+}

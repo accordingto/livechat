@@ -506,7 +506,7 @@ test('host presentation, lobby and results never acquire a private role portrait
     current.public.phase='FINISHED';current.public.result={outcome:'DRAW'};
     current.public.reveal={roles:{a:role},tasks:[]};
     assert.doesNotMatch(api.render(),/data-wolf-role-art/);
-    assert.match(api.render(),/Players and roles/,'the existing public reveal is still available');
+    assert.match(api.render(),/Roles revealed/,'the existing public reveal is still available');
   }
 });
 

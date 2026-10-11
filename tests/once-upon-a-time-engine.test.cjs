@@ -24,14 +24,15 @@ function freeze(value) {
 }
 function conservation(s) {
   if (s.phase === 'LOBBY') return;
+  const pool = typeof D.getWorld === 'function' ? D.getWorld(s.world || 'classic') : D;
   const story = [...E.list(s.storyDeck), ...E.list(s.storyDiscard), ...E.list(s.storyHeld), ...Object.values(s.hands || {}).flatMap(E.list)];
-  assert.equal(story.length, D.storyCards.length, 'every physical Story Card stays in exactly one zone');
+  assert.equal(story.length, pool.storyCards.length, 'every physical Story Card stays in exactly one zone');
   assert.equal(new Set(story).size, story.length, 'no duplicate physical Story Card');
-  assert.deepEqual(story.slice().sort(), D.storyCards.map(c => c.id).sort());
+  assert.deepEqual(story.slice().sort(), pool.storyCards.map(c => c.id).sort());
   const endings = [...E.list(s.endingDeck), ...E.list(s.endingDiscard), ...Object.values(s.endings || {}).filter(Boolean), ...(s.endingPlayed ? [s.endingPlayed.cardId] : [])];
-  assert.equal(endings.length, D.endingCards.length);
+  assert.equal(endings.length, pool.endingCards.length);
   assert.equal(new Set(endings).size, endings.length, 'no duplicate physical Ending Card');
-  assert.deepEqual(endings.slice().sort(), D.endingCards.map(c => c.id).sort());
+  assert.deepEqual(endings.slice().sort(), pool.endingCards.map(c => c.id).sort());
 }
 // Fixture helpers move a real physical card rather than inventing duplicates.
 function give(s, playerNum, cardId) {
@@ -629,11 +630,16 @@ test('finished winner can restart but cannot be cancelled or altered by late gam
 test('browser global builds use the same deck and engine without CommonJS or external dependencies', () => {
   const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path');
   const context = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-modern-future-deck.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-deck.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-engine.js'), 'utf8'), context);
   assert.equal(typeof context.ONCE_ENGINE.create, 'function'); assert.equal(context.ONCE_DECK.storyCards.length, D.storyCards.length);
   const s = context.ONCE_ENGINE.create({ id: 'browser', roster: roster(2), seed: 1 });
   assert.equal(context.ONCE_ENGINE.view(s, 1, 0).game, 'onceupon'); assert.equal(s.phase, 'LOBBY');
+  const modern = context.ONCE_ENGINE.create({ id: 'browser-modern', roster: roster(6), seed: 3, world: 'modern-future', handSize: 3 });
+  const dealtModern = context.ONCE_ENGINE.apply(modern, { id: 'd', type: 'deal', actor: 0, sessionId: modern.sessionId, turnId: modern.turnId, seed: 500 });
+  assert.equal(dealtModern.phase, 'CHOOSING_FIRST'); assert.equal(dealtModern.hands[1].length, 3);
+  assert.ok(D.getWorld('modern-future').endingCards.some(card => card.id === context.ONCE_ENGINE.view(dealtModern, 1).once.ending.id));
 });
 
 test('disputing the newest of successive normal interrupts preserves the older accepted event and exact draws', () => {
@@ -733,4 +739,158 @@ test('null object slots and invalid/noneligible ballots do not count as votes or
   const voteId = s.vote.id;
   for (const actor of [3, 5, 6]) s = act(firebaseBallots(s), 'vote', actor, { voteId, choice: 'continue' });
   assert.equal(s.phase, 'STORYTELLING'); assert.equal(s.storyteller, 1); conservation(s);
+});
+
+test('lobby starts classic with Original automatic hand counts and exposes only public settings', () => {
+  for (const count of [2, 3, 4, 5, 6]) {
+    const s = create(count);
+    assert.equal(s.world, 'classic'); assert.equal(s.handSize, null);
+    assert.equal(s.resolvedHandSize, Math.max(5, 11 - count));
+    for (const seat of [0, 1, 99]) {
+      const v = E.view(s, seat).once;
+      assert.equal(v.world, 'classic'); assert.equal(v.handSize, null);
+      assert.equal(v.resolvedHandSize, Math.max(5, 11 - count));
+      assert.equal(v.actions.configure, seat === 0);
+      assert.equal(Object.hasOwn(v, 'storyDeck'), false);
+    }
+  }
+});
+
+test('configure validates the whole settings pair before mutation, rejects bad values and preserves classic defaults', () => {
+  for (const handSize of [3, 4, 5, 6, 7, 8, 9, null]) {
+    let s = act(create(), 'configure', 0, { handSize });
+    assert.equal(s.replies[0].error, ''); assert.equal(s.handSize, handSize);
+    assert.equal(s.resolvedHandSize, handSize == null ? 7 : handSize);
+    s = act(s, 'deal'); assert.equal(s.phase, 'CHOOSING_FIRST');
+    for (const hand of Object.values(s.hands)) assert.equal(hand.length, handSize == null ? 7 : handSize);
+    conservation(s);
+  }
+  for (const bad of [0, 2, 10, 4.5, '5', false, {}, [], undefined]) {
+    const before = act(create(), 'ready', 1, { value: false }), after = act(before, 'configure', 0, { handSize: bad });
+    assert.equal(after.replies[0].error, 'invalid_hand_size');
+    assert.deepEqual(gameplay(after), gameplay(before));
+  }
+  for (const bad of ['unknown', '', 1, {}, null, undefined]) {
+    const before = act(create(), 'ready', 1, { value: false }), after = act(before, 'configure', 0, { world: bad, handSize: 3 });
+    assert.equal(after.replies[0].error, 'invalid_world'); assert.deepEqual(gameplay(after), gameplay(before));
+  }
+  assert.equal(act(create(), 'configure').replies[0].error, 'invalid_settings');
+  assert.throws(() => E.create({ id: 'bad', roster: roster(2), handSize: 10 }), /invalid_hand_size/);
+  assert.throws(() => E.create({ id: 'bad', roster: roster(2), world: 'mixed' }), /invalid_world/);
+});
+
+test('configuration respects authenticated manager, session, turn and LOBBY boundaries with retry-safe receipt', () => {
+  const before = create();
+  assert.equal(act(before, 'configure', 1, { handSize: 3, actor: 1 }).replies[1].error, 'not_available');
+  const invalidActor = command(before, 'configure', 99, { handSize: 3 });
+  assert.equal(E.apply(before, invalidActor), before);
+  assert.equal(E.apply(before, command(before, 'configure', 0, { sessionId: 'old', handSize: 3 })), before);
+  const configure = command(before, 'configure', 0, { handSize: 3 });
+  const after = E.apply(freeze(clone(before)), configure);
+  assert.equal(after.handSize, 3); assert.equal(after.turnId, before.turnId + 1);
+  assert.deepEqual(E.apply(before, configure), after); assert.equal(E.apply(after, configure), after);
+  const stale = act(after, 'configure', 0, { turnId: before.turnId, handSize: 8 });
+  assert.equal(stale.replies[0].error, 'stale_turn'); assert.equal(stale.handSize, 3);
+  const oldDeal = E.apply(after, command(before, 'deal'));
+  assert.equal(oldDeal.replies[0].error, 'stale_turn'); assert.equal(oldDeal.phase, 'LOBBY');
+  let active = act(after, 'deal'); const held = clone(active.hands);
+  active = act(active, 'configure', 0, { handSize: 9 });
+  assert.equal(active.replies[0].error, 'not_available'); assert.deepEqual(active.hands, held);
+  assert.equal(E.view(active, 0).once.actions.configure, false);
+  const shared = E.create({ id: 'shared', roster: roster(3), sharedControls: true });
+  assert.equal(E.view(shared, 2).once.actions.configure, true);
+  assert.equal(E.view(shared, 99).once.actions.configure, false);
+  assert.equal(act(shared, 'configure', 2, { handSize: 4 }).handSize, 4);
+});
+
+test('either world and every manual hand size deal one private Ending and only their independent physical pool', () => {
+  for (const world of ['classic', 'modern-future']) for (const count of [2, 3, 4, 5, 6]) for (const handSize of [3, 4, 5, 6, 7, 8, 9]) {
+    const pool = D.getWorld(world); assert.ok(pool);
+    let s = E.create({ id: world + count + handSize, roster: roster(count), world, handSize, seed: 9871 });
+    s = act(s, 'deal'); assert.equal(s.replies[0].error, '');
+    for (const player of s.roster) {
+      const v = E.view(s, player.playerNum).once;
+      assert.equal(v.hand.length, handSize); assert.equal(v.resolvedHandSize, handSize);
+      assert.ok(pool.endingCards.some(card => card.id === v.ending.id));
+      assert.ok(v.hand.every(card => pool.storyCards.some(candidate => candidate.id === card.id)));
+      const encoded = JSON.stringify(v);
+      for (const other of s.roster.filter(candidate => candidate.playerNum !== player.playerNum)) {
+        for (const id of s.hands[other.playerNum]) assert.equal(encoded.includes(JSON.stringify(id)), false);
+        assert.equal(encoded.includes(JSON.stringify(s.endings[other.playerNum])), false);
+      }
+    }
+    const publicView = E.view(s, 0).once;
+    assert.equal(publicView.hand, undefined); assert.equal(publicView.ending, undefined);
+    conservation(s);
+  }
+});
+
+test('3–9-card opening safeguards allow variable compositions across both worlds without category quotas', () => {
+  for (const world of ['classic', 'modern-future']) for (const handSize of [3, 4, 5, 6, 7, 8, 9]) {
+    const signatures = new Set(), pool = D.getWorld(world), byId = Object.fromEntries(pool.storyCards.map(card => [card.id, card]));
+    for (let seed = 1; seed <= 200; seed++) {
+      const base = E.create({ id: 'variety-' + seed, roster: roster(6), world, handSize, seed });
+      const s = E.apply(base, command(base, 'deal', 0, { seed: seed + 500 }));
+      for (const hand of Object.values(s.hands)) {
+        const counts = {};
+        for (const id of hand) { const category = byId[id].category; counts[category] = (counts[category] || 0) + 1; }
+        assert.equal(hand.length, handSize);
+        assert.ok(Object.keys(counts).length >= Math.min(handSize, handSize >= 7 ? 4 : 3));
+        assert.ok(Math.max(...Object.values(counts)) <= Math.ceil(handSize * 0.4));
+        signatures.add(D.categories.map(category => counts[category.id] || 0).join(','));
+      }
+      conservation(s);
+    }
+    assert.ok(signatures.size > 5, 'soft safeguard must not force one identical category quota');
+  }
+});
+
+test('restart keeps chosen world/hand size but clears all cards, story and votes before a fresh random deal', () => {
+  let s = act(create(6), 'configure', 0, { world: 'modern-future', handSize: 4 });
+  s = act(s, 'deal'); s = act(s, 'chooseFirst', 0, { playerNum: 1 });
+  s = act(s, 'play', 1, { cardId: s.hands[1][0] }); s = act(s, 'challenge', 2);
+  const previous = clone(s), restarted = act(s, 'restart');
+  assert.notEqual(restarted.sessionId, previous.sessionId);
+  assert.equal(restarted.world, 'modern-future'); assert.equal(restarted.handSize, 4);
+  assert.equal(restarted.resolvedHandSize, 4); assert.equal(restarted.phase, 'LOBBY');
+  for (const key of ['storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history']) assert.deepEqual(restarted[key], []);
+  for (const key of ['hands', 'endings', 'readiness']) assert.deepEqual(restarted[key], {});
+  assert.equal(restarted.vote, null); assert.equal(restarted.endingPlayed, null);
+  assert.equal(E.apply(restarted, command(previous, 'play', 1, { cardId: previous.hands[1][0] })), restarted);
+  const redealt = act(restarted, 'deal'); conservation(redealt);
+  assert.notDeepEqual(redealt.hands, previous.hands);
+  const classic = act(act(redealt, 'restart'), 'configure', 0, { world: 'classic', handSize: null });
+  assert.equal(classic.resolvedHandSize, 5); conservation(act(classic, 'deal'));
+});
+
+test('modern world normal play, interrupts, pass, rejection and Ending verdict retain classic social rules', () => {
+  let s = E.create({ id: 'modern-game', roster: roster(4), world: 'modern-future', handSize: 3, seed: 717 });
+  s = act(s, 'deal'); s = act(s, 'chooseFirst', 0, { playerNum: 1 });
+  const first = s.hands[1][0]; s = act(s, 'play', 1, { cardId: first });
+  assert.equal(E.view(s, 0).once.history[0].card.id, first);
+  const interrupt = s.hands[2][0], oldHand = clone(s.hands[1]);
+  s = act(s, 'interrupt', 2, { cardId: interrupt, mode: 'normal' });
+  assert.equal(s.hands[1].length, oldHand.length + 1);
+  s = act(s, 'dispute', 1, { interruptId: s.interrupt.id }); s = finish(s, 'invalid');
+  assert.equal(s.storyteller, 1); assert.deepEqual(s.hands[1], oldHand); conservation(s);
+  const expectedDraw = s.storyDeck[0]; s = act(s, 'pass', 1);
+  assert.equal(s.hands[1].at(-1), expectedDraw, 'later draw takes unchanged shuffled top card');
+  s = act(s, 'keepAll', 1); assert.equal(s.storyteller, 2); conservation(s);
+  emptyHand(s, 2); const oldEnding = s.endings[2];
+  s = act(s, 'ending', 2); s = finish(s, 'reject');
+  assert.ok(s.endingDiscard.includes(oldEnding)); assert.notEqual(s.endings[2], oldEnding);
+  assert.equal(s.hands[2].length, 1); assert.equal(s.storyteller, 3); conservation(s);
+  emptyHand(s, 3); s = act(s, 'ending', 3); s = finish(s, 'accept');
+  assert.equal(s.phase, 'FINISHED'); assert.equal(s.winner, 3); conservation(s);
+});
+
+test('saved classic sessions with missing setting metadata neither re-deal nor rebalance on view/ordinary operation', () => {
+  const saved = started(6); delete saved.world; delete saved.handSize; delete saved.resolvedHandSize;
+  const hands = clone(saved.hands), endingIds = clone(saved.endings), order = saved.storyDeck.slice();
+  const view = E.view(freeze(clone(saved)), 1).once;
+  assert.equal(view.world, 'classic'); assert.equal(view.handSize, null); assert.equal(view.resolvedHandSize, 5);
+  assert.deepEqual(view.hand.map(card => card.id), hands[1]);
+  const continued = act(saved, 'continueStory', 1);
+  assert.deepEqual(continued.hands, hands); assert.deepEqual(continued.endings, endingIds); assert.deepEqual(continued.storyDeck, order);
+  assert.equal(saved.world, undefined); conservation(continued);
 });

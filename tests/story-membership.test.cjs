@@ -19,10 +19,13 @@ function conserveDX(s) {
   assert.equal(cards.length, 84); assert.equal(new Set(cards).size, 84);
 }
 function conserveON(s) {
+  const pool = OD.getWorld(s.world || 'classic');
   const cards = [...ON.list(s.storyDeck), ...ON.list(s.storyDiscard), ...ON.list(s.storyHeld), ...Object.values(s.hands).flatMap(ON.list)];
-  assert.equal(cards.length, OD.storyCards.length); assert.equal(new Set(cards).size, cards.length);
+  assert.equal(cards.length, pool.storyCards.length); assert.equal(new Set(cards).size, cards.length);
+  assert.deepEqual(cards.slice().sort(), pool.storyCards.map(card => card.id).sort());
   const ends = [...ON.list(s.endingDeck), ...ON.list(s.endingDiscard), ...Object.values(s.endings).filter(Boolean), ...(s.endingPlayed ? [s.endingPlayed.cardId] : [])];
-  assert.equal(ends.length, OD.endingCards.length); assert.equal(new Set(ends).size, ends.length);
+  assert.equal(ends.length, pool.endingCards.length); assert.equal(new Set(ends).size, ends.length);
+  assert.deepEqual(ends.slice().sort(), pool.endingCards.map(card => card.id).sort());
 }
 function dxVote(s) {
   s = act(DX, s, 'story', 1, { cardId: s.hands[1][0], clueMode: 'spoken' });
@@ -82,6 +85,49 @@ test('Once newcomer receives real Story and Ending cards only after safe narrati
   s=act(ON,s,'pass',1);assert.equal(s.phase,'PASS_DISCARD');assert.equal(s.roster[3].pending,true);
   s=act(ON,s,'keepAll',1);assert.equal(s.phase,'STORYTELLING');assert.equal(s.roster[3].pending,false);assert.equal(s.hands[4].length,7);assert.ok(s.endings[4]);conserveON(s);
   assert.equal('hand' in ON.view(s,0).once,false);assert.equal('ending' in ON.view(s,0).once,false);assert.equal(ON.view(s,4).once.hand.length,7);
+});
+
+test('Once manual setup is retained for newcomers and their private cards come only from the selected world', () => {
+  for (const world of ['classic', 'modern-future']) for (const handSize of [3, 6, 9]) {
+    let s = ON.create({ id: 'world-membership-' + world + handSize, roster: roster(3), sharedControls: true, world, handSize, seed: 717 });
+    s = act(ON, s, 'deal'); s = act(ON, s, 'chooseFirst', 0, { playerNum: 1 });
+    const original = clone(s.hands), pool = OD.getWorld(world);
+    s = update(ON, s, 4);
+    assert.equal(s.roster[3].pending, true); assert.deepEqual(s.hands[4], []);
+    assert.equal(ON.view(s, 4).once.actions.configure, false);
+    const denied = act(ON, s, 'configure', 4, { handSize: 5 });
+    assert.equal(denied.replies[4].error, 'not_available'); assert.equal(denied.handSize, handSize);
+    s = act(ON, s, 'pass', 1); s = act(ON, s, 'keepAll', 1);
+    assert.equal(s.roster[3].pending, false); assert.equal(s.hands[4].length, handSize);
+    assert.equal(s.resolvedHandSize, handSize); assert.equal(s.world, world);
+    assert.deepEqual(s.hands[2], original[2]); assert.deepEqual(s.hands[3], original[3]);
+    const view = ON.view(s, 4).once;
+    assert.ok(view.hand.every(card => pool.storyCards.some(candidate => candidate.id === card.id)));
+    assert.ok(pool.endingCards.some(card => card.id === view.ending.id));
+    const text = JSON.stringify(view);
+    for (const seat of [1, 2, 3]) {
+      for (const id of s.hands[seat]) assert.equal(text.includes(JSON.stringify(id)), false);
+      assert.equal(text.includes(JSON.stringify(s.endings[seat])), false);
+    }
+    conserveON(s);
+  }
+});
+
+test('Once Automatic counts current active lobby seats, while departures/restart preserve custom setting and away status', () => {
+  let s = ON.create({ id: 'active-lobby', roster: roster(6), sharedControls: true, world: 'modern-future', seed: 81 });
+  s = update(ON, s, 6, [4, 5, 6]);
+  assert.equal(s.resolvedHandSize, 8); assert.equal(ON.view(s, 2).once.resolvedHandSize, 8);
+  s = act(ON, s, 'deal');
+  for (const seat of [1, 2, 3]) assert.equal(s.hands[seat].length, 8);
+  for (const seat of [4, 5, 6]) assert.deepEqual(s.hands[seat], []);
+  conserveON(s);
+  s = act(ON, s, 'restart'); assert.equal(s.world, 'modern-future'); assert.equal(s.handSize, null);
+  assert.equal(s.resolvedHandSize, 8); assert.equal(s.roster[3].active, false);
+  s = act(ON, s, 'configure', 2, { handSize: 3 }); s = act(ON, s, 'deal'); conserveON(s);
+  for (const seat of [1, 2, 3]) assert.equal(s.hands[seat].length, 3);
+  s = act(ON, s, 'restart'); assert.equal(s.handSize, 3); assert.equal(s.resolvedHandSize, 3);
+  assert.equal(s.roster[4].active, false); assert.equal(ON.view(s, 5).once.actions.configure, false);
+  const renamed = update(ON, s, 6, [4, 5, 6]); assert.equal(renamed.handSize, 3); assert.equal(renamed.resolvedHandSize, 3);
 });
 
 test('Once joining during disputed interrupt cannot lose or duplicate dealt cards through rollback',()=>{

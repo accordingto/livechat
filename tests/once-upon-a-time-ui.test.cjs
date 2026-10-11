@@ -585,6 +585,7 @@ class ElementDouble {
     this.endingDock = { scrollIntoView: options => this.endingScrolls.push(copy(options)) };
     Object.defineProperty(this.endingDock, 'open', { get: () => /^<details\b[^>]*\sopen(?:\s|>)/.test(elementHTML(this.innerHTML, 'once-ending-dock')) });
     this.endingSummary = { focus() {} };
+    this.settings = ['world', 'handSize'].map(field => ({ dataset: { onceSetting: field }, value: '', disabled: false }));
   }
   get innerHTML() { return this._html; }
   set innerHTML(value) { this._html = value; this.htmlAssignments++; }
@@ -592,6 +593,7 @@ class ElementDouble {
   removeEventListener(type, fn) { if (this.listeners.get(type) === fn) this.listeners.delete(type); }
   querySelectorAll(selector) {
     if (selector === '.once-carousel') return this.carousels;
+    if (selector === '[data-once-setting]') return this.innerHTML.includes('data-once-setting=') ? this.settings : [];
     const controls = ['[data-once-action]:not(button),[data-once-card]:not(button)', '[data-once-card],[data-once-action]:not([data-once-action="closeConfirm"])', '[data-once-action],[data-once-card]'];
     return controls.includes(selector) && this.innerHTML.includes('once-ending-dock') ? [this.endingSummary] : [];
   }
@@ -607,10 +609,14 @@ class ElementDouble {
 }
 function target(dataset = {}) {
   return { dataset, disabled: false, classList: { contains: () => false }, closest(selector) {
-    return selector === '[data-once-card]' && this.dataset.onceCard || selector === '[data-once-action]' && this.dataset.onceAction ? this : null;
+    return selector === '[data-once-card]' && this.dataset.onceCard || selector === '[data-once-action]' && this.dataset.onceAction || selector === '[data-once-setting]' && this.dataset.onceSetting ? this : null;
   } };
 }
 const click = (card, type, extra = {}) => card.click({ target: target({ onceAction: type, ...extra }) });
+function changeSetting(card, field, value, extra = {}) {
+  const select = { ...target({ onceSetting: field }), value: String(value), ...extra };
+  card.change({ target: select });
+}
 function harness(data, options = {}) {
   const timers = new Set(), sent = [], context = { ONCE_DECK: D, crypto: { randomUUID: () => 'mailbox-' + (++serial) },
     matchMedia: query => ({ matches: query.includes('max-width') ? !!options.mobile : query.includes('min-width') ? !options.mobile : false }),
@@ -622,6 +628,159 @@ function harness(data, options = {}) {
   card.update(data);
   return { card, element, sent, timers, clock: value => { now = value; } };
 }
+
+test('lobby previews original hand counts, separate worlds and clearly labelled custom hands', () => {
+  for (const count of [2, 3, 4, 5, 6]) {
+    const data = E.view(create(count), 0);
+    const html = UI.tableHTML(data, { host: true });
+    assert.match(html, new RegExp((11 - count) + ' Story Cards \\+ 1 Ending per player'));
+    assert.match(html, /data-once-setting="world"/);
+    assert.match(html, /Classic fairy tales/);
+    assert.match(html, /Modern &amp; Future/);
+    assert.match(html, /Original \(automatic\)/);
+    assert.match(html, /<option value="original" selected>/);
+    assert.equal((html.match(/Hub custom<\/option>/g) || []).length, 0);
+    assert.equal((html.match(/cards \(Hub custom\)<\/option>/g) || []).length, 7);
+    assert.match(html, /One world per game\. The two decks stay separate\./);
+    assert.equal(action(html, 'configure').disabled, true, 'unchanged settings do not make a request');
+    for (const handSize of [3, 9]) {
+      const draft = UI.tableHTML(data, { host: true, settingsDraft: { world: 'modern-future', handSize } });
+      assert.match(draft, new RegExp('<option value="' + handSize + '" selected>'));
+      assert.match(draft, new RegExp(handSize + ' Story Cards \\+ 1 Ending per player'));
+      assert.equal(action(draft, 'configure').disabled, false);
+      assert.equal(action(draft, 'deal').disabled, true, 'deal waits for the acknowledged setting, not an unsaved form');
+    }
+  }
+  assert.match(UI.rulesHTML(), /2 players get 9 cards; 3 get 8; 4 get 7; 5 get 6; 6 get 5/);
+  assert.match(UI.rulesHTML(), /Manual 3–9-card hands are a Hub custom setting/);
+});
+
+test('only configure capability renders editable settings; old or inactive projections stay read-only', () => {
+  const legacy = E.view(create(), 1);
+  for (const host of [false, true]) {
+    const html = UI.tableHTML(legacy, { host, settingsDraft: { world: 'modern-future', handSize: 3 } });
+    assert.doesNotMatch(html, /data-once-setting=|data-once-action="configure"/);
+    assert.match(html, /Classic fairy tales/);
+    assert.match(html, /7 Story Cards \+ 1 Ending per player/);
+  }
+  const shared = E.create({ id: 'ui-shared-settings', roster: roster(4), seed: 113, now: 1000, sharedControls: true });
+  for (const seat of [1, 2, 3, 4]) {
+    const data = E.view(shared, seat);
+    assert.equal(data.once.actions.configure, true);
+    assert.match(UI.tableHTML(data), /data-once-setting="world"/);
+  }
+  for (const membership of [{ active: false }, { pending: true }]) {
+    const next = copy(shared); Object.assign(next.roster[0], membership);
+    const data = E.view(next, 1);
+    assert.equal(data.once.actions.configure, false);
+    assert.doesNotMatch(UI.tableHTML(data), /data-once-setting=|data-once-action="configure"/);
+  }
+  const old = copy(legacy); delete old.once.world; delete old.once.handSize; delete old.once.resolvedHandSize;
+  assert.match(UI.tableHTML(old), /Classic fairy tales/);
+});
+
+test('automatic hand previews use eligible participants rather than inactive or pending history seats', () => {
+  const state = E.create({ id: 'ui-settings-membership', roster: roster(6), seed: 183, now: 1000, sharedControls: true });
+  state.roster[4].active = false; state.roster[5].pending = true;
+  let data = E.view(state, 1);
+  assert.equal(data.once.membership.activeCount, 4);
+  assert.equal(data.once.resolvedHandSize, 7);
+  assert.match(UI.tableHTML(data), /7 Story Cards \+ 1 Ending per player/);
+  data = copy(data); data.once.handSize = 3; data.once.resolvedHandSize = 3;
+  assert.match(UI.tableHTML(data), /3 Story Cards \+ 1 Ending per player/);
+  assert.match(UI.tableHTML(data, { settingsDraft: { world: 'classic', handSize: null } }), /7 Story Cards \+ 1 Ending per player/);
+});
+
+test('modern custom deals render only each seat’s separate-world cards and replay preserves settings', () => {
+  let s = act(create(6), 'configure', 0, { world: 'modern-future', handSize: 3 });
+  s = act(s, 'deal');
+  const pool = D.getWorld('modern-future'), publicHTML = htmlFor(s);
+  assert.match(publicHTML, /Modern &amp; Future/);
+  assert.doesNotMatch(publicHTML, /data-once-setting=|data-once-action="configure"|data-once-card=/);
+  for (const seat of [1, 2, 3, 4, 5, 6]) {
+    const mine = htmlFor(s, seat);
+    assert.equal((mine.match(/data-once-card=/g) || []).length, 4, '3 Story Cards plus only that seat’s Ending');
+    assert.match(elementHTML(mine, 'once-ending-dock'), /^<details\b[^>]*\sopen(?:\s|>)/);
+    for (const id of s.hands[seat]) {
+      assert.ok(pool.storyCards.some(card => card.id === id));
+      assert.ok(mine.includes('data-once-card="' + id + '"'));
+      assert.ok(mine.includes(UI.esc(D.storyById[id].thumbnailPath)));
+    }
+    for (const other of s.roster.filter(p => p.playerNum !== seat)) {
+      for (const id of s.hands[other.playerNum]) assert.ok(!mine.includes('data-once-card="' + id + '"'));
+      assert.ok(!mine.includes(UI.esc(D.endingById[s.endings[other.playerNum]].text)));
+    }
+  }
+  s = act(act(s, 'cancel'), 'restart');
+  const lobby = htmlFor(s);
+  assert.match(lobby, /<option value="modern-future" selected>/);
+  assert.match(lobby, /<option value="3" selected>/);
+  assert.match(lobby, /3 Story Cards \+ 1 Ending per player/);
+  assert.doesNotMatch(lobby, /data-once-card=/);
+});
+
+test('settings drafts survive unrelated synchronization and send one fenced request with locked selectors', () => {
+  const data = E.view(create(), 0), h = harness(data, { host: true });
+  try {
+    changeSetting(h.card, 'world', 'modern-future');
+    changeSetting(h.card, 'handSize', '3');
+    assert.deepEqual(copy(h.card.settingsDraft), { world: 'modern-future', handSize: 3 });
+    assert.match(h.element.innerHTML, /3 Story Cards \+ 1 Ending per player/);
+    const unchanged = copy(data); unchanged.once.revision++; unchanged.once.hostLiveUntil = 19000;
+    unchanged.once.roster[0].ready = true;
+    h.card.update(unchanged);
+    assert.deepEqual(copy(h.card.settingsDraft), { world: 'modern-future', handSize: 3 });
+    assert.deepEqual(h.element.settings.map(n => n.value), ['modern-future', '3']);
+    click(h.card, 'configure');
+    assert.equal(h.sent.length, 1);
+    const command = h.sent[0];
+    assert.deepEqual({ type: command.type, world: command.world, handSize: command.handSize, sessionId: command.sessionId, turnId: command.turnId },
+      { type: 'configure', world: 'modern-future', handSize: 3, sessionId: data.once.sessionId, turnId: unchanged.once.turnId });
+    assert.ok(h.element.settings.every(n => n.disabled));
+    changeSetting(h.card, 'handSize', '9'); click(h.card, 'configure');
+    assert.equal(h.sent.length, 1, 'pending configure cannot be submitted twice');
+    assert.equal(h.card.settingsDraft.handSize, 3);
+    const acknowledged = copy(unchanged);
+    acknowledged.once.world = 'modern-future'; acknowledged.once.handSize = 3; acknowledged.once.resolvedHandSize = 3;
+    acknowledged.once.turnId = 'configured-turn'; acknowledged.once.reply = { id: command.id, error: '' };
+    h.card.update(acknowledged);
+    assert.equal(h.card.pending, null); assert.equal(h.card.settingsDraft, null);
+    assert.ok(h.element.settings.every(n => !n.disabled));
+    assert.deepEqual(h.element.settings.map(n => n.value), ['modern-future', '3']);
+    assert.equal(action(h.element.innerHTML, 'configure').disabled, true);
+    assert.equal(action(h.element.innerHTML, 'deal').disabled, false);
+  } finally { h.card.destroy(); }
+  assert.equal(h.element.listeners.size, 0);
+});
+
+test('settings capability, draft ownership, valid bounds and transport fences are enforced before sending', () => {
+  const data = E.view(create(), 0), h = harness(data, { host: true });
+  try {
+    for (const [field, value] of [['world', 'missing-world'], ['handSize', '2'], ['handSize', '10'], ['handSize', '3.5'], ['bad-field', '3']]) changeSetting(h.card, field, value);
+    assert.equal(h.card.settingsDraft, null);
+    changeSetting(h.card, 'handSize', '9', { disabled: true });
+    assert.equal(h.card.settingsDraft, null);
+    changeSetting(h.card, 'world', 'modern-future');
+    let received = copy(data); received.once.handSize = 5; received.once.resolvedHandSize = 5;
+    h.card.update(received);
+    assert.equal(h.card.settingsDraft, null, 'another manager’s confirmed change replaces the local draft');
+    assert.deepEqual(h.element.settings.map(n => n.value), ['classic', '5']);
+    changeSetting(h.card, 'handSize', 'original');
+    assert.deepEqual(copy(h.card.settingsDraft), { world: 'classic', handSize: null });
+    received.once.actions.configure = false;
+    h.card.update(copy(received));
+    assert.equal(h.card.settingsDraft, null);
+    changeSetting(h.card, 'world', 'modern-future'); click(h.card, 'configure');
+    assert.equal(h.sent.length, 0);
+    h.card.update(data); changeSetting(h.card, 'handSize', '3');
+    received = copy(data); received.once.playerNum = 2;
+    h.card.update(received);
+    assert.equal(h.card.settingsDraft, null, 'private owner changes cannot retain another owner’s setting draft');
+    h.card.options.disabled = () => true;
+    changeSetting(h.card, 'handSize', '3'); click(h.card, 'configure');
+    assert.equal(h.sent.length, 0);
+  } finally { h.card.destroy(); }
+});
 
 test('lease, revision and unrelated mailbox updates paint status without recreating card markup', () => {
   const data = E.view(started(), 1), h = harness(data, { mobile: true });
