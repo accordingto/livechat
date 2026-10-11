@@ -43,6 +43,8 @@ repeatable readonly publication check scripts/bomb-relay-verify-release.cjs.
 Physical devices, real Firebase/network lag and human voice-session playtests
 remain unverified. Frontend-only release; no service/secrets change. See
 bomb-relay-mode.md. Preserve other Hub games and both CUT modes.
+Frontend source release21ab337 is published: all10/10 changed production
+entry/module/style assets match the checkout. No live room was used for QA.
 
 ## CURRENT: Dixit original 42-card expansion — 2026-10-12
 
