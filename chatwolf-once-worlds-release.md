@@ -74,3 +74,13 @@ and null properties; test checks normalize those rather than inventing state.
 
 Physical phones, Safari/Firefox, cross-device hardware sessions and human
 balance/English-learning results have not been verified in this release.
+
+Independent production service deployment is READY:
+https://icebreaker-youtube-search.vercel.app (deployment dpl_EiHZJHMv7sShbZNoUX1zag1N7G5A).
+Real isolated service checks passed Classic/auto 471 checks and Modern & Future/9
+711 checks, including configuration propagation, unique hand/Ending dealing,
+private projections, play and reconnect. Each check removed its seven owned
+temporary nodes, with zero cleanup failures. The first checker attempt exposed
+RTDB omission of empty lobby hands; only the checker was normalized, then rerun.
+Both legacy service engine/deck source files matched the current upstream before
+the patch; the updated sources and new deck are retained for future deployments.

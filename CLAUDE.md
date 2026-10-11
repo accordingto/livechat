@@ -19,6 +19,9 @@ separate manifests/prompts; original PNGs ignored locally. No AI while playing.
 Assets once-worlds-1; launcher hub-launch-3. Deploy the independent hub-executor
 service AND frontend together; never rotate/read signing credentials. See
 chatwolf-once-worlds-release.md and world-aware isolated service/browser scripts.
+Independent service READY dpl_EiHZJHMv7sShbZNoUX1zag1N7G5A; fresh production
+Once checks Classic/auto 471 and Modern & Future/9 711 passed, each clean7/7.
+RTDB empty-array omission is normalized by QA only, not by changing game rules.
 
 ## CURRENT: Open Mic card presentation (2026-10-11)
 
