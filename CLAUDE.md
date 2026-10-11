@@ -19,10 +19,16 @@ Long host names no longer overflow the lobby selector at 320px.
 
 Verification: 1739/1739 repository tests passed. Local Edge QA passed 168/168
 scenes at 320/375/1280px EN/ZH, host/private, 7 phases and current/cached manifests;
-42/42 new pictures decoded. Integrated service/frontend publication and read-only
-production asset checks are required before completion. Deploy the current graph,
-preserving newer Once worlds, CUT modes, Talk archive, membership, Open Mic modes,
-search functions, Singapore placement and existing secrets.
+42/42 new pictures decoded. Frontend d016e86 is published: all 147/147 Dixit
+assets and 61/61 executor/role assets match production. Service deployment
+dpl_EvwRQU7KhinrzVNQBRwP31Bzpupk is READY and the stable approved domain points
+to it. Fresh production Dixit checks passed 43/43: new 126-card/private/new-card
+actions plus old 84-card continuation and explicit restart to 126; 8/8 exact
+disposable nodes were cleaned, no user room used. Health/CORS/synthetic rejection
+and private runtime 404 checks pass. All 46 deployed game/runtime dependencies
+were copied back to the owned service source. Newer Once worlds, CUT modes, Talk
+archive, membership, Open Mic modes, search, Singapore placement and secrets
+remain in the integrated service.
 
 ## CURRENT: Sketch Relay flow, drawing and shared reveal — 2026-10-11
 
