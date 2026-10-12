@@ -1,4 +1,26 @@
-## CURRENT: Bomb Relay visual refinement — 2026-10-12
+## CURRENT: Bomb Relay approved sound and red spark — 2026-10-13
+
+User approved the lighter recorded clock tick and bass-reduced explosion from
+the reviewed demo. `bomb-relay-audio.js` is the single shipped cue source:
+52.5 ms of the supplied recording, once per second, peak .16; deterministic
+.52 s noise explosion, peak .36, no low sine/rumble. Both use the approved
+demo's .6 playback gain. Only the trimmed tick is embedded; no full recording,
+ending alarm, external media request, speech API or AI judging is shipped.
+Host and original player links load audio before the shared UI; phone audio
+remains opt-in. Existing pass/bounce cues remain. Buffers are cached, mute
+stops active cues, pause stops ticking and card disposal closes audio.
+
+The charcoal/brass CSS bomb has a red spark and short red flame/wave burst.
+Setup, host, phone and collected-card icons share it. Spark/rocking cadence
+is constant and shows no fuse deadline; reduced-motion keeps a static spark.
+Cache `br-sound-4` covers CSS/audio/UI/host in both actual entry pages.
+No engine, sync, prompt bank, history, fuse, seat rule, score or haptic changes.
+Validation: Bomb71/71; full repository1781/1781. Actual-page browser regression
+passed14 checks/78 EN/ZH captures with an isolated shared authority, including
+exact playing PCM/gain and a static red spark under reduced-motion. Hardware
+speaker output, physical phones and a real voice-call session remain unverified.
+
+## Previous: Bomb Relay visual refinement — 2026-10-12
 
 Presentation uses a coherent charcoal/olive palette, warm paper prompts and
 restrained brass actions. English prompts use Georgia for a print-card feel;
@@ -30,7 +52,8 @@ The single formal source bomb-relay-deck.js now contains the supplied 120
 bilingual prompts (Everyday60/Playful60), plus lookup-only retained legacy60.
 Browser/CJS bomb-relay-selector.js retains the attachment's pure algorithm.
 Host page must load deck -> selector -> engine -> sync -> UI -> host.
-Player page loads deck/UI only; clients never draw. Cache br-prompts-2.
+Player page loads deck/audio/UI only; clients never draw. Prompt source retains
+its cache key; the current presentation cache is documented above.
 
 Leased host stateJson.promptHistory in the existing bombRelayControlToken node
 retains returned seen/recent IDs/families across passes, language changes,

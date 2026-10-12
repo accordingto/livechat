@@ -67,11 +67,16 @@ do not issue commands or draw prompts. Text cards replace specific scene art
 so visuals do not suggest an answer list. Neutral bomb marks, a recognizable
 explosion reveal, vibration and Web Audio cues remain.
 
-The current presentation cache is `br-studio-3`: charcoal/olive surfaces, warm
-paper, a restrained brass accent, neutral player identities and simple outline
-SVG bombs. Print-style English prompt typography and consistent controls cover
-setup, play, the library and results. The explosion uses a brief ring/BOOM
-reveal. The visual refinement does not change its timing, sound or settlement.
+The current presentation cache is `br-sound-4`: charcoal/olive surfaces, warm
+paper, a restrained brass accent, neutral player identities and a charcoal CSS
+bomb with red sparks and a brief red flame/wave burst. Print-style English
+prompt typography and consistent controls cover setup, play, library and results.
+`bomb-relay-audio.js` embeds the approved lighter 52.5 ms recorded tick, played
+once per second, plus the approved .52 s bass-reduced explosion. Cue buffers
+match the reviewed demo at .6 playback gain. Pass/bounce sounds remain, phone
+audio stays opt-in, mute stops active cues and disposal closes the context.
+The tick cadence never speeds up or reflects remaining time. Visual motion is
+also fixed and honours reduced-motion. No fuse or settlement timing is changed.
 Phone player cards keep the prompt before Pass; host results and short host
 viewports use normal scrolling so controls cannot cover content.
 

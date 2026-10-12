@@ -84,10 +84,10 @@ var BOMB_RELAY_UI = (() => {
   const errorKey = code => ['stale_turn', 'too_late', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster'].includes(code) ? code : 'error';
 
   function bombIcon() {
-    return '<svg class="br-bomb-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="21" cy="29" r="14"></circle><path d="m29 17 4-4 4 4-4 4M35 13c-1-5 3-9 7-8M16 21a9 9 0 0 0-4 8"></path></svg>';
+    return '<span class="br-object" aria-hidden="true"><span class="br-object-shadow"></span><span class="br-object-fuse"></span><span class="br-object-lid"></span><span class="br-object-shell"></span><span class="br-object-spark"></span></span>';
   }
   function burstMark() {
-    return `<div class="br-burst" aria-hidden="true"><span class="br-burst-ring"></span><strong>${esc(t('boom'))}</strong></div>`;
+    return `<div class="br-burst" aria-hidden="true"><span class="br-fire">${'<span class="br-flame"></span>'.repeat(6)}</span><strong>${esc(t('boom'))}</strong></div>`;
   }
 
   function sceneTitle(cardId, size = '') {
@@ -132,7 +132,7 @@ var BOMB_RELAY_UI = (() => {
   }
   function bombMark(phase) {
     const live = phase === 'ticking';
-    return `<div class="br-bomb${live ? ' is-live' : ''}${phase === 'paused' ? ' is-paused' : ''}" aria-hidden="true"><span class="br-bomb-body">${bombIcon()}</span>${live ? '<span class="br-spark"></span>' : ''}</div>`;
+    return `<div class="br-bomb${live ? ' is-live' : ''}${phase === 'paused' ? ' is-paused' : ''}" aria-hidden="true">${bombIcon()}</div>`;
   }
 
   // The shared host screen: the prompt, who holds the bomb, everyone's pile.
@@ -152,13 +152,14 @@ var BOMB_RELAY_UI = (() => {
     return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
   }
 
-  // Web Audio cues, synthesized: steady tick-tock (never speeds up, so the
-  // sound cannot leak the secret fuse), a pass blip and the explosion.
+  // Approved recorded tick and bass-reduced explosion. Cadence is fixed and
+  // independent of the secret fuse. Original pass/bounce cues are retained.
   class Sound {
     constructor(onChange = () => {}) {
       this.onChange = onChange; this.enabled = true; this.context = null; this.blocked = false;
       this.unsupported = typeof window === 'undefined' || !(window.AudioContext || window.webkitAudioContext);
-      this.loop = null; this.beat = 0; this.lastBoom = ''; this.lastTurn = null; this.session = '';
+      this.loop = null; this.lastBoom = ''; this.lastTurn = null; this.session = '';
+      this.buffers = new Map(); this.sources = new Map();
     }
     ensure() {
       if (this.unsupported || !this.enabled) return null;
@@ -169,7 +170,7 @@ var BOMB_RELAY_UI = (() => {
     async toggle() {
       if (this.enabled && this.context && this.context.state !== 'running') { this.ensure(); return; }
       this.enabled = !this.enabled;
-      if (this.enabled) this.ensure(); else this.stopLoop();
+      if (this.enabled) this.ensure(); else { this.stopLoop(); this.stopCues(); }
       this.onChange();
     }
     tone(freq, duration, { type = 'square', gain = .08, slide = 0, delay = 0 } = {}) {
@@ -179,21 +180,38 @@ var BOMB_RELAY_UI = (() => {
       if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), start + duration);
       amp.gain.setValueAtTime(gain, start); amp.gain.exponentialRampToValueAtTime(.0001, start + duration);
       osc.connect(amp).connect(ctx.destination); osc.start(start); osc.stop(start + duration + .02);
+      this.track(osc, amp, 'tone');
     }
-    noise(duration, gain = .5) {
+    track(source, amp, kind) {
+      this.sources.set(source, { amp, kind });
+      source.onended = () => { this.sources.delete(source); source.disconnect(); amp.disconnect(); };
+    }
+    cue(kind) {
       const ctx = this.ensure(); if (!ctx || ctx.state !== 'running') return;
-      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate), data = buffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2.2);
-      const src = ctx.createBufferSource(), amp = ctx.createGain(), filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass'; filter.frequency.value = 900;
-      src.buffer = buffer; amp.gain.value = gain; src.connect(filter).connect(amp).connect(ctx.destination); src.start();
+      if (!this.buffers.has(kind)) {
+        const samples = BOMB_RELAY_AUDIO.getSamples(kind, ctx.sampleRate);
+        const buffer = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+        buffer.copyToChannel(samples, 0); this.buffers.set(kind, buffer);
+      }
+      const src = ctx.createBufferSource(), amp = ctx.createGain();
+      src.buffer = this.buffers.get(kind); amp.gain.value = BOMB_RELAY_AUDIO.gain;
+      src.connect(amp).connect(ctx.destination); this.track(src, amp, kind); src.start();
     }
-    tick() { this.beat = (this.beat + 1) % 2; this.tone(this.beat ? 1250 : 940, .045, { gain: .07 }); }
+    stopCues(kind = null) {
+      for (const [source, cue] of this.sources) if (!kind || cue.kind === kind) {
+        try {
+          const at = this.context.currentTime;
+          cue.amp.gain.cancelScheduledValues(at); cue.amp.gain.setTargetAtTime(0, at, .008);
+          source.stop(at + .03);
+        } catch (_) {}
+      }
+    }
+    tick() { this.cue('tick'); }
     pass() { this.tone(520, .09, { type: 'triangle', gain: .09, slide: 380 }); }
     bounce() { this.tone(660, .12, { type: 'sawtooth', gain: .06, slide: -320 }); }
-    boom() { this.noise(1.3, .9); this.tone(110, .9, { type: 'sine', gain: .5, slide: -70 }); }
-    startLoop() { if (!this.loop && this.enabled) this.loop = setInterval(() => this.tick(), 480); }
-    stopLoop() { clearInterval(this.loop); this.loop = null; }
+    boom() { this.cue('boom'); }
+    startLoop() { if (!this.loop && this.enabled) this.loop = setInterval(() => this.tick(), BOMB_RELAY_AUDIO.cadenceMs); }
+    stopLoop() { clearInterval(this.loop); this.loop = null; this.stopCues('tick'); }
     // Called with every projection; only real changes make a sound.
     follow(bomb) {
       if (!bomb) { this.stopLoop(); return; }
@@ -203,7 +221,7 @@ var BOMB_RELAY_UI = (() => {
       if (bomb.phase === 'ticking' && this.lastTurn != null && bomb.turnId !== this.lastTurn) bomb.bounce ? this.bounce() : this.pass();
       this.lastTurn = bomb.phase === 'ticking' ? bomb.turnId : null;
     }
-    close() { this.stopLoop(); try { this.context?.close(); } catch (_) {} this.context = null; }
+    close() { this.stopLoop(); this.stopCues(); try { this.context?.close(); } catch (_) {} this.context = null; this.buffers.clear(); }
   }
 
   // ── player card ─────────────────────────────────────────────────────────

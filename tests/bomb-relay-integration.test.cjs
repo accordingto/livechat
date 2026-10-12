@@ -32,10 +32,10 @@ test('the live packs contain 120 bilingual prompts and legacy scenes remain look
 test('the host page loads its modules in dependency order and every file parses', () => {
   const html = read('bomb-relay.html');
   const files = [...html.matchAll(/<script src="(bomb-relay-[^"]+\.js)(?:\?[^"]*)?"/g)].map(match => match[1]);
-  assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
+  assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
   for (const file of files) new vm.Script(read(file));
   assert.match(html, /<h1>Bomb Relay<\/h1>/);
-  assert.match(html, /href="bomb-relay\.css\?v=br-studio-3"/);
+  assert.match(html, /href="bomb-relay\.css\?v=br-sound-4"/);
   assert.doesNotMatch(html, /assets\/bomb-relay\//);
   assert.match(html, /id="br-reroll" hidden/);
   const host = read('bomb-relay-host.js');
@@ -46,7 +46,8 @@ test('the host page loads its modules in dependency order and every file parses'
 
 test('original player links render the Bomb Relay card and fence actions to the shown turn', () => {
   const play = read('play.html');
-  assert.match(play, /bomb-relay-deck\.js\?v=br-studio-3/); assert.match(play, /bomb-relay-ui\.js\?v=br-studio-3/); assert.match(play, /bomb-relay\.css\?v=br-studio-3/);
+  assert.match(play, /bomb-relay-deck\.js\?v=br-studio-3/); assert.match(play, /bomb-relay-ui\.js\?v=br-sound-4/); assert.match(play, /bomb-relay\.css\?v=br-sound-4/);
+  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-sound-4'));
   assert.match(play, /new BOMB_RELAY_UI\.Card/); assert.match(play, /bombCard\.destroy\(\)/);
   assert.match(play, /current\.bomb\?\.sessionId !== command\.sessionId \|\| current\.bomb\?\.turnId !== command\.turnId/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
@@ -60,7 +61,7 @@ function ui(language = 'en') {
   const dictionaries = {}, intervals = new Set();
   let nextTimer = 0;
   const i18n = { lang: language, registerDict: (namespace, dictionary) => { dictionaries[namespace] = dictionary; }, t: (namespace, key) => dictionaries[namespace]?.[key]?.[i18n.lang] || key };
-  const context = vm.createContext({ I18N: i18n, BOMB_RELAY_DECK: DECK, crypto: require('node:crypto').webcrypto, window: { innerHeight: 568 },
+  const context = vm.createContext({ I18N: i18n, BOMB_RELAY_DECK: DECK, BOMB_RELAY_AUDIO: require('../bomb-relay-audio.js'), crypto: require('node:crypto').webcrypto, window: { innerHeight: 568 },
     setInterval: () => { const id = ++nextTimer; intervals.add(id); return id; }, clearInterval: id => intervals.delete(id) });
   vm.runInContext(read('bomb-relay-ui.js') + ';this.BOMB_RELAY_UI = BOMB_RELAY_UI;', context);
   const result = context.BOMB_RELAY_UI;

@@ -100,6 +100,25 @@ function installFirebase({ code, tokens, names, epoch }) {
   localStorage.setItem('site-lang', 'en');
 }
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+function observeAudio() {
+  window.__qaBufferCues = [];
+  const Audio = window.AudioContext || window.webkitAudioContext;
+  if (!Audio) return;
+  const original = Audio.prototype.createBufferSource;
+  Audio.prototype.createBufferSource = function () {
+    const source = original.call(this), start = source.start.bind(source), connect = source.connect.bind(source);
+    let output;
+    source.connect = target => { output = target; return connect(target); };
+    source.start = (...args) => {
+      const actual = source.buffer.getChannelData(0), kind = actual.length < this.sampleRate * .1 ? 'tick' : 'boom';
+      const expected = BOMB_RELAY_AUDIO.getSamples(kind, this.sampleRate);
+      window.__qaBufferCues.push({ kind, duration: source.buffer.duration, gain: output.gain.value,
+        state: this.state, exactPCM: actual.length === expected.length && actual.every((value, index) => value === expected[index]) });
+      return start(...args);
+    };
+    return source;
+  };
+}
 (async () => {
   fs.mkdirSync(output, { recursive: true });
   const db = makeDatabase(), pages = new Set(), errors = [], blockedRequests = new Set(), epoch = Date.now();
@@ -125,6 +144,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     return result;
   });
   await context.addInitScript(installFirebase, { code, tokens, names, epoch });
+  await context.addInitScript(observeAudio);
   await context.route('**/*', route => {
     const url = route.request().url();
     if (url.startsWith(base)) return route.continue();
@@ -301,6 +321,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     assert.equal((await state()).explodeAt, fuse);
     const beforeReload = await state();
     report.soundEvents = await host.evaluate(() => __qaSoundEvents);
+    report.bufferCues = await host.evaluate(() => __qaBufferCues);
     await host.reload();
     await host.evaluate(() => {
       window.__qaSoundEvents = [];
@@ -346,7 +367,11 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     check('five speech-only rounds complete with synchronized explosion loser, animation classes and exactly five penalty cards');
     report.soundEvents.push(...await host.evaluate(() => __qaSoundEvents));
     for (const event of ['tick', 'pass', 'bounce', 'boom']) assert.ok(report.soundEvents.includes(event), 'existing ' + event + ' sound cue invoked');
-    check('existing synthesized tick/pass/bounce/boom sound paths invoked (audible speaker output requires human testing)');
+    check('approved tick/boom and original pass/bounce sound paths invoked (audible speaker output requires human testing)');
+    report.bufferCues.push(...await host.evaluate(() => __qaBufferCues));
+    for (const kind of ['tick', 'boom']) assert.ok(report.bufferCues.some(cue => cue.kind === kind), kind + ' audio played through the real host');
+    assert.ok(report.bufferCues.every(cue => cue.exactPCM && cue.state === 'running' && cue.gain === Math.fround(.6)));
+    check('real host AudioContext plays the approved recorded tick and bass-reduced boom at the demo gain with exact PCM');
     assert.equal(await host.locator('#br-again').isVisible(), true);
     const history = clone(current.promptHistory);
     await host.click('#br-again'); await wait(async () => (await state()).phase === 'ready');
@@ -384,6 +409,13 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
       }
       report.longestPrompt = longest;
       check('longest supplied prompt rendered through isolated authority on desktop800px and phones740/667/568px, EN/ZH; shorter host can scroll');
+    }
+    if (process.env.BOMB_QA_LAYOUT !== '0') {
+      await host.emulateMedia({ reducedMotion: 'reduce' });
+      const spark = await host.locator('.br-bomb.is-live .br-object-spark').evaluate(element => ({ animation: getComputedStyle(element).animationName, opacity: getComputedStyle(element).opacity }));
+      assert.equal(spark.animation, 'none'); assert.equal(spark.opacity, '1');
+      await host.emulateMedia({ reducedMotion: 'no-preference' });
+      check('reduced-motion keeps a visible static red spark without animated movement');
     }
     assert.deepEqual(errors, [], 'no uncaught browser errors');
     report.blockedExternalRequests = [...blockedRequests]; report.errors = errors; report.finalPrompt = promptId(current);

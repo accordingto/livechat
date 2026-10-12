@@ -6,7 +6,7 @@ const base = 'https://livechat-two-alpha.vercel.app/';
 const release = process.argv[2] || 'br-prompts-2';
 const files = ['index.html', 'play.html', 'bomb-relay.html', 'bomb-relay.css',
   'bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js',
-  'bomb-relay-sync.js', 'bomb-relay-ui.js', 'bomb-relay-host.js'];
+  'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js'];
 const hash = bytes => crypto.createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g, '\n')).digest('hex');
 (async () => {
   let cursor = 0;
