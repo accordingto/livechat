@@ -46,4 +46,4 @@ Hub → 說書人 (`dixit.html`) → 說書人模式：人生故事版 → 選�
 
 使用 `scripts/hub-executor-package-service.cjs <既有serviceRoot> <隔離output>` 打包。打包器遞迴包含人生故事 engine、題庫模組與三個指定資產，保留原歌曲搜尋／退休 endpoint；不包含環境檔、本機登入資料或 public server source。保持服務秘密穩定，變更它會使既有密封房間不可讀。
 
-前端兩個真實入口已更新 cache query，部署後重新整理參與頁面。正式發布與真實 Firebase／實體手機／真人語音試玩仍需在部署後驗證；本次驗證使用隔離 fixture，不碰既有房間。
+前端入口與共用模組已更新 cache query，部署後重新整理參與頁面。2026-10-13 已發布至原 Hub 及原服務；正式資產 200／200 一致，私有網址回傳安全錯誤本文，真實服務／Firebase 的四人獨立測試房 2346 項檢查通過並清除 5／5 所有權確認的節點，不碰既有房間。實體手機、真人語音分享與真實慢網路仍未驗證；詳見 life-story-acceptance.md。

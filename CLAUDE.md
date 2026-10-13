@@ -13,7 +13,7 @@ All Life actions require the existing trusted service, authenticated actor,
 session/turn/cycle/lifeRevision fences; no browser-host fallback. Full96 supplied
 bilingual questions are the local authority; no actual AI API/provider was added.
 
-Validated1851/1851 native Hub tests; actual manager plus four independent original
+Validated1853/1853 native Hub tests; actual manager plus four independent original
 player links completed fourturns and cross-cycle continuation with mobile touch
 and reconnect. Manager audit received no dealt private hands. Service package
 58files matches52Hub runtime/assets and loads96questions. No production room
@@ -21,8 +21,16 @@ or Firebase used. Physicalphones and real human voice/playtests are unverified.
 Publish BOTH frontend and existing independent service; preserve secrets, all
 other games and search routes. Independent service READY deployment
 dpl_6XLRptXCHkVe4pd7UBkBxXgFB6WG is aliased to the existing production domain;
-its readiness response exposes X-Icebreak-Life-Story:1. Frontend publication
-and disposable production play verification are recorded in life-story-acceptance.md.
+its readiness response exposes X-Icebreak-Life-Story:1. Frontend cc558ea is
+published; routing follow-up1790158 uses a safe404.html response destination.
+All200/200 frontend/preserved assets match stable production,14/14 private
+paths return404 with blocked source bodies (Hub bodies match safe404 exactly).
+Real production capability/Firebase playtests passed
+2346 checks across four players,normal/follow-up races/seat order/cross-cycle,
+private projections,replays and encrypted persistent question history. All5/5
+fresh owned fixture nodes were conditionally cleaned; no user room was touched.
+The52 deployed runtime/assets and both manifests are synchronized back into
+the owned independent service source. See life-story-acceptance.md.
 
 ## Previous: Bomb Relay approved sound and red spark — 2026-10-13
 

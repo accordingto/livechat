@@ -5,7 +5,10 @@ let checked = 0;
 function scan(folder) {
   for (const name of fs.readdirSync(folder)) {
     const file = path.join(folder, name);
-    if (fs.statSync(file).isDirectory()) { scan(file); continue; }
+    if (fs.statSync(file).isDirectory()) {
+      if (!['.vercel', 'node_modules', 'public'].includes(name)) scan(file);
+      continue;
+    }
     const relative = path.relative(directory, file).split(path.sep).join('/');
     if (['package.json','vercel.json','.vercelignore'].includes(relative) || relative.startsWith('lib/') || relative.startsWith('api/open-mic-')) continue;
     const source = path.join(root, relative);
