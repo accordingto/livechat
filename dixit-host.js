@@ -41,6 +41,7 @@
   }
   function labels(){
     const life=selectedMode()==='life_story',lobby=payload?.dixit?.phase==='LOBBY'&&status!=='switched';
+    byId('dx-art-note').textContent=t('artNote',{n:Number(payload?.dixit?.cardCount)||(typeof DIXIT_DECK!=='undefined'&&DIXIT_DECK.cards?.length)||126});
     byId('dx-mode-label').textContent=lt('modeLabel');byId('dx-mode').options[0].textContent=lt('classic');byId('dx-mode').options[1].textContent=lt('mode');
     byId('dx-life-locale-label').textContent=lt('language');byId('dx-life-pack-label').textContent=lt('pack');byId('dx-life-pack').options[0].textContent=lt('fullPack');byId('dx-life-pack').options[1].textContent=lt('basePack');
     byId('dx-life-help').textContent=lt('intro')+' '+lt('lowPressure');byId('dx-life-settings').hidden=!life||lobby&&payload?.dixit?.mode==='life_story';

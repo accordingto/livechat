@@ -14,7 +14,7 @@ owners, voters and score changes; follow-up waits for full reveal and discussion
 Original mode and Life Story keep separate scoring. Timing defaults are central
 mode config revealCountdownMs=3000 and revealAnswerMs=1200.
 
-Life engine/UI/CSS, dixit-ui.js and dixit-sync.js entry caches use life-story-2;
+Life engine/UI/CSS, dixit-ui.js, dixit-sync.js and manager dixit-host.js use life-story-2;
 unchanged Room, host bridges and executor retain life-story-1. Dixit sync stops
 the inherited Talk clock callback, which referenced an unloaded TALK_ENGINE.
 Keep the server
@@ -31,8 +31,12 @@ backend QA passed3783 checks, including shared prompts, no-card start, early
 submissions, card-later locking, observed3s/1.2s stages, scoring and cross-cycle
 history. Exactly5/5 newly owned nodes were conditionally cleaned. The verifier
 normalizes Firebase object-key ordering and retries observed early reveal pulses;
-it does not change real timings or accept a skipped answer stage. Frontend
-publication and complete production asset verification still need recording.
+it does not change real timings or accept a skipped answer stage. Frontend646a19f
+is published (Vercel5LvGwi3Mjxo5MMbNkZF6sSfAaqQS). All200/200 browser/preserved
+assets match,14/14 private response bodies stay blocked. Production Edge EN/ZH
+manager has zero errors, expected assets/shared helpers and service readiness;
+its checks made no room requests/writes. Follow-up corrects the existing lobby
+art-note count placeholder;12/12 host entry tests passed, original rules unchanged.
 Historical
 2026-10-13 results below are not proof of this correction's release.
 
