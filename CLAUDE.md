@@ -1,4 +1,30 @@
-## CURRENT: Bomb Relay approved sound and red spark — 2026-10-13
+## CURRENT: Dixit Life Story mode — 2026-10-13
+
+User authorized direct production publication for this and future tested Hub
+changes on 2026-10-13; see AGENTS.md. Do not ask for deployment confirmation again.
+
+Original Dixit remains the default with unchanged rules/scoring. The existing
+`dixit.html` mode selector and original `play.html` private links now support
+`life_story`, using existing126/base84 original pictures. See life-story-mode.md
+and life-story-acceptance.md. Shared-room and private-host browser readers stop
+for Life Story; original mode retains its normal infrastructure. Life canonical
+state/history is service-encrypted with the existing HUB_EXECUTOR_SECRET.
+All Life actions require the existing trusted service, authenticated actor,
+session/turn/cycle/lifeRevision fences; no browser-host fallback. Full96 supplied
+bilingual questions are the local authority; no actual AI API/provider was added.
+
+Validated1851/1851 native Hub tests; actual manager plus four independent original
+player links completed fourturns and cross-cycle continuation with mobile touch
+and reconnect. Manager audit received no dealt private hands. Service package
+58files matches52Hub runtime/assets and loads96questions. No production room
+or Firebase used. Physicalphones and real human voice/playtests are unverified.
+Publish BOTH frontend and existing independent service; preserve secrets, all
+other games and search routes. Independent service READY deployment
+dpl_6XLRptXCHkVe4pd7UBkBxXgFB6WG is aliased to the existing production domain;
+its readiness response exposes X-Icebreak-Life-Story:1. Frontend publication
+and disposable production play verification are recorded in life-story-acceptance.md.
+
+## Previous: Bomb Relay approved sound and red spark — 2026-10-13
 
 User approved the lighter recorded clock tick and bass-reduced explosion from
 the reviewed demo. `bomb-relay-audio.js` is the single shipped cue source:

@@ -190,6 +190,15 @@ var DIXIT_SYNC = (() => {
     }
     async readPlayerCards(count = this.room.count) {
       if (!this.connected || this.stopped) throw new Error('offline');
+      // Inspect only the control header first when reconnecting. Life Story's
+      // shared manager must never fetch everybody's private projection.
+      const state = this.doc?.state || (typeof this.ref?.once === 'function' ? (await this.ref.once('value')).val()?.state : null);
+      if (state?.mode === 'life_story') {
+        this.room.setPrivateReads?.(false);
+        this.observedCards.clear();
+        return Object.fromEntries(DIXIT_ENGINE.list(state.roster).map(p => [p.playerNum,
+          { game: 'dixit', playerNum: p.playerNum, dixit: { version: 1, mode: 'life_story', sessionId: state.sessionId } }]));
+      }
       const cards = {};
       await Promise.all(Array.from({ length: count }, async (_, i) => {
         const ref = this.room.playerRef(i); if (!ref) throw new Error('not_available');
@@ -314,7 +323,7 @@ var DIXIT_SYNC = (() => {
     }
     close() { clearInterval(this.revealTimer); this.pendingProjections.clear(); if (this.connectedCardsHandler) this.connectedRef.off('value', this.connectedCardsHandler); super.close(); }
     async captureOpeningCards() { this.openingCards = await this.readPlayerCards(); }
-    start({ hostPlayerNum = 1, targetScore = 30 } = {}) {
+    start({ hostPlayerNum = 1, targetScore = 30, mode = 'original', locale = 'en', cardPackId } = {}) {
       return this.enqueue(async () => {
         if (!Number.isInteger(this.room.count) || this.room.count < 3 || this.room.count > 8) throw new Error('player_count');
         const id = uid(), randomSeed = seed(), now = this.now();
@@ -323,7 +332,7 @@ var DIXIT_SYNC = (() => {
         await this.captureOpeningCards();
         this.initialSession = id; this.openingIntent = id; this.suspended = false; this.seenCards.clear();
         try {
-          return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now, hostPlayerNum: hostSeat, targetScore }));
+          return await this.change(() => DIXIT_ENGINE.create({ id, roster, seed: randomSeed, now, hostPlayerNum: hostSeat, targetScore, mode, locale, cardPackId }));
         } catch (error) {
           this.initialSession = null; this.openingIntent = null; this.openingCards = null; throw error;
         }

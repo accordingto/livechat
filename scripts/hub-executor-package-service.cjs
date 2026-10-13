@@ -22,9 +22,16 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
   const visited = new Set();
   function dependency(file) {
     file = path.resolve(file);
-    if (!inside(gameRoot, file) || !/\.(?:js|cjs)$/.test(file)) throw new Error('Invalid runtime dependency');
+    if (!inside(gameRoot, file) || !/\.(?:js|cjs|json)$/.test(file)) throw new Error('Invalid runtime dependency');
     if (visited.has(file)) return;
     visited.add(file); write(path.relative(gameRoot, file), file);
+    if (/\.json$/.test(file)) return;
+    if (path.basename(file) === 'life-story-questions.cjs') {
+      for (const asset of ['life_story_questions.zh-TW.en.json','question_batch.schema.json','QUESTION_GENERATOR_PROMPT.md']) {
+        const relative = 'assets/life-story/' + asset;
+        write(relative, path.join(gameRoot, relative));
+      }
+    }
     const source = fs.readFileSync(file, 'utf8');
     for (const match of source.matchAll(/require\(['"]([^'"]+)['"]\)/g)) {
       if (match[1].startsWith('node:')) continue;

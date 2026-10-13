@@ -1,0 +1,2317 @@
+{
+  "schemaVersion": "1.0",
+  "packId": "life_story_starter_96",
+  "version": "2026-10-13",
+  "languages": [
+    "zh-TW",
+    "en"
+  ],
+  "totalQuestions": 96,
+  "editorialStatus": "Authored starter bank; structurally validated, not yet playtested with a group.",
+  "usageNote": {
+    "zh-TW": "每次三選一；小事即可，延伸提示可跳過。tone 是題目入口標籤，不是對玩家故事的判斷。",
+    "en": "Offer three different questions. Small moments are enough; optional prompts can be skipped. Tone describes the prompt, not the player."
+  },
+  "themes": [
+    {
+      "id": "everyday",
+      "name": {
+        "zh-TW": "日常小片段",
+        "en": "Everyday moments"
+      }
+    },
+    {
+      "id": "growing_up",
+      "name": {
+        "zh-TW": "成長與以前的生活",
+        "en": "Growing up"
+      }
+    },
+    {
+      "id": "new_experiences",
+      "name": {
+        "zh-TW": "初次嘗試與不熟悉的場合",
+        "en": "New experiences"
+      }
+    },
+    {
+      "id": "mishaps",
+      "name": {
+        "zh-TW": "小失誤與意外插曲",
+        "en": "Little mishaps"
+      }
+    },
+    {
+      "id": "connection",
+      "name": {
+        "zh-TW": "人際互動與相處",
+        "en": "Connection"
+      }
+    },
+    {
+      "id": "social_self",
+      "name": {
+        "zh-TW": "融入與自己的樣子",
+        "en": "Being yourself with others"
+      }
+    },
+    {
+      "id": "choices",
+      "name": {
+        "zh-TW": "選擇與不同做法",
+        "en": "Everyday choices"
+      }
+    },
+    {
+      "id": "objects_places",
+      "name": {
+        "zh-TW": "物品、地方與記憶",
+        "en": "Objects, places, and memories"
+      }
+    },
+    {
+      "id": "interests",
+      "name": {
+        "zh-TW": "喜好與興趣",
+        "en": "Interests"
+      }
+    },
+    {
+      "id": "expectation",
+      "name": {
+        "zh-TW": "期待與實際經驗",
+        "en": "Expectations and reality"
+      }
+    },
+    {
+      "id": "effort",
+      "name": {
+        "zh-TW": "投入、練習與嘗試",
+        "en": "Effort and practice"
+      }
+    },
+    {
+      "id": "perspective",
+      "name": {
+        "zh-TW": "看法與理解",
+        "en": "Ways of seeing"
+      }
+    }
+  ],
+  "selectionDefaults": {
+    "candidatesPerSelection": 3,
+    "intimacyMix": {
+      "light": 2,
+      "personal": 1
+    },
+    "preferDistinctThemes": true,
+    "preferDistinctStoryShapes": true,
+    "avoidSameRelatedIntentGroupWithinSelection": true,
+    "shownCooldownSelections": 6,
+    "selectedIntentReuse": "avoid_until_pool_exhaustion",
+    "historyScope": "room",
+    "clearHistoryOnPageReload": false,
+    "clearHistoryOnGameRestart": false
+  },
+  "relatedIntentGroups": [
+    {
+      "id": "plans_and_adjustments",
+      "intentKeys": [
+        "last_minute_plan_change",
+        "plan_disrupted_by_weather",
+        "forgotten_item_changed_plan",
+        "unplanned_day_with_someone"
+      ]
+    },
+    {
+      "id": "returning_to_an_activity",
+      "intentKeys": [
+        "returning_to_old_interest",
+        "trying_again_after_pause"
+      ]
+    },
+    {
+      "id": "learning_by_observing",
+      "intentKeys": [
+        "copying_someone_learning",
+        "understanding_different_method",
+        "looked_easy_was_different"
+      ]
+    },
+    {
+      "id": "progress_and_achievement",
+      "intentKeys": [
+        "noticing_small_progress",
+        "small_personal_achievement"
+      ]
+    },
+    {
+      "id": "small_practical_fixes",
+      "intentKeys": [
+        "minor_mistake_improvisation",
+        "small_practical_solution"
+      ]
+    },
+    {
+      "id": "alone_or_independent",
+      "intentKeys": [
+        "first_small_independence",
+        "first_try_without_companion",
+        "choosing_quiet_time"
+      ]
+    },
+    {
+      "id": "unexpected_new_activity",
+      "intentKeys": [
+        "trying_unexpected_activity",
+        "unexpected_interest_beginning",
+        "small_yes_changed_day"
+      ]
+    },
+    {
+      "id": "mood_across_an_event",
+      "intentKeys": [
+        "small_event_changed_day",
+        "event_end_different_feeling"
+      ]
+    },
+    {
+      "id": "small_care_from_others",
+      "intentKeys": [
+        "small_unexpected_help",
+        "remembered_personal_preference"
+      ]
+    },
+    {
+      "id": "self_seen_differently",
+      "intentKeys": [
+        "accidental_funny_impression",
+        "appearance_different_from_inside",
+        "showing_a_different_side"
+      ]
+    },
+    {
+      "id": "how_familiar_things_change",
+      "intentKeys": [
+        "revisited_familiar_place",
+        "old_memory_new_interpretation",
+        "changing_small_preference"
+      ]
+    }
+  ],
+  "relatedIntentNote": "These groups help diversify the three choices. They are not proof of semantic equivalence and should not ban every related topic for the entire game.",
+  "questions": [
+    {
+      "id": "LS001",
+      "theme": "everyday",
+      "intentKey": "ordinary_day_still_remembered",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "挑一個其實沒發生什麼大事，你卻還記得的日子。",
+        "en": "Tell us about an ordinary day you still remember, even though nothing big happened."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那天有什麼小細節留在你腦中？",
+          "你覺得自己為什麼會記得它？"
+        ],
+        "en": [
+          "What small detail do you remember from that day?",
+          "Why do you think that day stayed with you?"
+        ]
+      }
+    },
+    {
+      "id": "LS002",
+      "theme": "everyday",
+      "intentKey": "recent_unhurried_moment",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想最近一個不用趕時間的片刻，那時你在做什麼？",
+        "en": "Think of a recent moment when you did not have to rush. What were you doing?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那時你在哪裡，周圍是什麼樣子？",
+          "對你來說，那樣的片刻常見嗎？"
+        ],
+        "en": [
+          "Where were you, and what was around you?",
+          "Do you often have moments like that?"
+        ]
+      }
+    },
+    {
+      "id": "LS003",
+      "theme": "everyday",
+      "intentKey": "small_event_changed_day",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "有沒有一件很小的事，讓你那天的心情換了一個方向？",
+        "en": "Tell us about a small thing that changed your mood for the rest of a day."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "事情發生前，你本來在做什麼？",
+          "那個變化持續到什麼時候？"
+        ],
+        "en": [
+          "What were you doing before it happened?",
+          "How long did that change in mood last?"
+        ]
+      }
+    },
+    {
+      "id": "LS004",
+      "theme": "everyday",
+      "intentKey": "unnoticed_daily_ritual",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "你有什麼不太起眼的小習慣？聊聊最近一次做它的情景。",
+        "en": "What small habit do you have? Tell us about the last time you did it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "通常什麼時候你會這樣做？",
+          "少了這個習慣，你會有什麼感覺？"
+        ],
+        "en": [
+          "When do you usually do it?",
+          "How would you feel without that habit?"
+        ]
+      }
+    },
+    {
+      "id": "LS005",
+      "theme": "everyday",
+      "intentKey": "waiting_time_story",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想一次讓你留下印象的等待，那段時間你怎麼度過？",
+        "en": "Tell us about a time you had to wait and still remember. How did you spend the time?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "等待時，你注意到了什麼？",
+          "現在記得的是等待，還是等到之後的事？"
+        ],
+        "en": [
+          "What did you notice while you were waiting?",
+          "Do you remember the wait more, or what happened afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS006",
+      "theme": "everyday",
+      "intentKey": "small_reason_to_celebrate",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "分享一次你因為一件小事，決定稍微慶祝一下的經驗。",
+        "en": "Tell us about a time you decided to celebrate something small in your own way."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你用什麼方式慶祝？",
+          "那件事對你來說有什麼特別？"
+        ],
+        "en": [
+          "How did you celebrate?",
+          "What made it worth celebrating for you?"
+        ]
+      }
+    },
+    {
+      "id": "LS007",
+      "theme": "everyday",
+      "intentKey": "unexpected_free_time",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "突然多出一段空閒時，你曾經拿來做過什麼？",
+        "en": "Tell us about a time you suddenly had some free time. What did you do with it?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你當時先想到哪些選擇？",
+          "最後那樣安排，符合你當時需要的嗎？"
+        ],
+        "en": [
+          "What options first came to mind?",
+          "Did your choice give you what you needed that day?"
+        ]
+      }
+    },
+    {
+      "id": "LS008",
+      "theme": "everyday",
+      "intentKey": "reluctant_to_end_moment",
+      "intimacy": "personal",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "分享一個你當時有點捨不得讓它結束的片刻。",
+        "en": "Tell us about a moment you did not quite want to end."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時正在發生什麼？",
+          "你最想留住的是哪一部分？"
+        ],
+        "en": [
+          "What was happening at that moment?",
+          "Which part did you want to hold on to?"
+        ]
+      }
+    },
+    {
+      "id": "LS009",
+      "theme": "growing_up",
+      "intentKey": "childhood_small_rule",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "小時候，你替自己訂過什麼有趣的小規則？",
+        "en": "Did you make up any little rules for yourself as a child? Tell us about one."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你還記得一次照著規則做的情景嗎？",
+          "現在看來，你還理解那個規則嗎？"
+        ],
+        "en": [
+          "Do you remember a time you followed that rule?",
+          "Does that rule still make sense to you now?"
+        ]
+      }
+    },
+    {
+      "id": "LS010",
+      "theme": "growing_up",
+      "intentKey": "childhood_anticipated_moment",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "小時候，有哪種平常的時刻會讓你特別期待？",
+        "en": "What ordinary moment did you look forward to as a child? Tell us about one you remember."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個時刻通常是怎麼開始的？",
+          "現在有什麼會帶給你類似的期待？"
+        ],
+        "en": [
+          "How did that moment usually begin?",
+          "Does anything give you a similar feeling now?"
+        ]
+      }
+    },
+    {
+      "id": "LS011",
+      "theme": "growing_up",
+      "intentKey": "childhood_game_scene",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "聊聊小時候一次玩遊戲的情景，不一定是什麼正式的遊戲。",
+        "en": "Tell us about a time you played a game as a child, including one you made up."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你們當時怎麼玩？",
+          "你現在還記得的是玩法，還是一起玩的人？"
+        ],
+        "en": [
+          "How did the game work?",
+          "Do you remember the game more, or the people you played with?"
+        ]
+      }
+    },
+    {
+      "id": "LS012",
+      "theme": "growing_up",
+      "intentKey": "childhood_misunderstanding",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "小時候，你曾把什麼事情理解得和現在完全不一樣？",
+        "en": "What did you understand very differently as a child? Tell us about a time that showed it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時你是怎麼想的？",
+          "你後來是怎麼知道另一種解釋的？"
+        ],
+        "en": [
+          "What did you believe at the time?",
+          "How did you later learn a different explanation?"
+        ]
+      }
+    },
+    {
+      "id": "LS013",
+      "theme": "growing_up",
+      "intentKey": "old_daily_route",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "回想一條你以前常走的路，有哪個片段你還記得？",
+        "en": "Think of a route you used to take often. What moment on that route do you remember?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "沿路有什麼你常會注意的東西？",
+          "現在再走一次，你會想留意什麼？"
+        ],
+        "en": [
+          "What did you often notice along the way?",
+          "What would you look for if you took that route now?"
+        ]
+      }
+    },
+    {
+      "id": "LS014",
+      "theme": "growing_up",
+      "intentKey": "first_small_independence",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "分享一次以前的你，開始自己處理一件事的經驗。",
+        "en": "Tell us about a time when you started handling something on your own."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那次你需要自己決定什麼？",
+          "你當時喜歡那種感覺嗎？"
+        ],
+        "en": [
+          "What did you have to decide for yourself?",
+          "Did you like how that felt at the time?"
+        ]
+      }
+    },
+    {
+      "id": "LS015",
+      "theme": "growing_up",
+      "intentKey": "childhood_personal_treasure",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "小時候，你曾把什麼普通東西當成寶貝？",
+        "en": "What ordinary thing felt like a treasure to you as a child? Tell us about it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你通常把它放在哪裡？",
+          "對當時的你來說，它珍貴在哪裡？"
+        ],
+        "en": [
+          "Where did you usually keep it?",
+          "What made it valuable to you then?"
+        ]
+      }
+    },
+    {
+      "id": "LS016",
+      "theme": "growing_up",
+      "intentKey": "younger_self_same_trait",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "以前的哪件小事，讓你覺得自己有一部分其實一直沒變？",
+        "en": "What small memory makes you feel that part of you has not changed much?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那時你做了什麼？",
+          "最近有出現類似的自己嗎？"
+        ],
+        "en": [
+          "What did you do in that situation?",
+          "Have you noticed the same part of yourself recently?"
+        ]
+      }
+    },
+    {
+      "id": "LS017",
+      "theme": "new_experiences",
+      "intentKey": "unfamiliar_group_arrival",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想一次剛加入不熟悉的場合，你一開始都在做什麼？",
+        "en": "Think of a time you joined an unfamiliar group. What did you do at first?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你最先注意到誰或什麼？",
+          "什麼讓你慢慢知道該怎麼參與？"
+        ],
+        "en": [
+          "Who or what did you notice first?",
+          "What helped you work out how to join in?"
+        ]
+      }
+    },
+    {
+      "id": "LS018",
+      "theme": "new_experiences",
+      "intentKey": "learning_from_zero",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "分享一次你從完全不會開始，嘗試學某件事的經驗。",
+        "en": "Tell us about a time you tried to learn something from the very beginning."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "第一次動手時，哪個部分讓你印象深刻？",
+          "那次之後，你還想繼續嗎？"
+        ],
+        "en": [
+          "What stood out when you first tried it?",
+          "Did you want to keep going after that?"
+        ]
+      }
+    },
+    {
+      "id": "LS019",
+      "theme": "new_experiences",
+      "intentKey": "first_try_without_companion",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "有沒有一次，你自己去做了平常會找人陪的事？",
+        "en": "Tell us about a time you did something alone that you would usually do with someone."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那次為什麼變成你自己去？",
+          "獨自做那件事，和有人陪有什麼不同？"
+        ],
+        "en": [
+          "How did you end up doing it alone?",
+          "How was it different from having company?"
+        ]
+      }
+    },
+    {
+      "id": "LS020",
+      "theme": "new_experiences",
+      "intentKey": "asking_for_instructions",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "聊聊一次你不太懂怎麼做，只好開口問人的經驗。",
+        "en": "Tell us about a time you did not know what to do and asked someone for help."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你當時怎麼開口？",
+          "對方的回應讓事情變得怎麼樣？"
+        ],
+        "en": [
+          "How did you ask?",
+          "How did their response affect what happened next?"
+        ]
+      }
+    },
+    {
+      "id": "LS021",
+      "theme": "new_experiences",
+      "intentKey": "copying_someone_learning",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "你曾經看著別人怎麼做，再自己照著試一次嗎？聊聊那次。",
+        "en": "Tell us about a time you watched someone do something and then tried it yourself."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你最想模仿的是哪個部分？",
+          "自己做起來，和看別人做有什麼不同？"
+        ],
+        "en": [
+          "Which part were you trying to copy?",
+          "How was doing it different from watching?"
+        ]
+      }
+    },
+    {
+      "id": "LS022",
+      "theme": "new_experiences",
+      "intentKey": "trying_unexpected_activity",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "有什麼活動是你以前沒想過自己會參加，後來卻試了？",
+        "en": "What activity did you try even though you had never imagined yourself doing it?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你是怎麼走進那個場合的？",
+          "實際參加時，哪一刻你還記得？"
+        ],
+        "en": [
+          "How did you end up there?",
+          "What moment do you remember from taking part?"
+        ]
+      }
+    },
+    {
+      "id": "LS023",
+      "theme": "new_experiences",
+      "intentKey": "noticing_small_progress",
+      "intimacy": "personal",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "分享一個你突然發現「好像比以前會一點了」的時刻。",
+        "en": "Tell us about a moment when you noticed you were a little better at something."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那次你做到了什麼？",
+          "你有讓別人知道這個小進步嗎？"
+        ],
+        "en": [
+          "What could you do that time?",
+          "Did you tell anyone about that small improvement?"
+        ]
+      }
+    },
+    {
+      "id": "LS024",
+      "theme": "new_experiences",
+      "intentKey": "learning_local_way",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "到不熟悉的地方時，你曾經發現什麼「原來這裡是這樣做」的事？",
+        "en": "Tell us about a time you visited an unfamiliar place and noticed a different way of doing something."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你是看到別人做，還是自己碰上才知道？",
+          "你後來有照著那個方式做嗎？"
+        ],
+        "en": [
+          "Did you learn by watching others or by trying it yourself?",
+          "Did you start doing it that way too?"
+        ]
+      }
+    },
+    {
+      "id": "LS025",
+      "theme": "mishaps",
+      "intentKey": "misheard_small_conversation",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "你有沒有聽錯一句話，讓對話往奇怪的方向走？",
+        "en": "Have you ever misheard something and sent a conversation in an unexpected direction?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你當時以為對方說了什麼？",
+          "你們後來怎麼發現誤會？"
+        ],
+        "en": [
+          "What did you think the other person said?",
+          "How did you work out the misunderstanding?"
+        ]
+      }
+    },
+    {
+      "id": "LS026",
+      "theme": "mishaps",
+      "intentKey": "prepared_wrong_thing",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "回想一次你準備了某樣東西，到現場才發現用不上。",
+        "en": "Tell us about a time you prepared something and then discovered you did not need it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你原本以為會遇到什麼情況？",
+          "那份準備後來有派上別的用場嗎？"
+        ],
+        "en": [
+          "What situation were you expecting?",
+          "Did that preparation turn out to be useful in another way?"
+        ]
+      }
+    },
+    {
+      "id": "LS027",
+      "theme": "mishaps",
+      "intentKey": "minor_mistake_improvisation",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "有沒有一次出了小差錯，你得當場想辦法補救？",
+        "en": "Tell us about a small mistake that made you think of a solution on the spot."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你第一個想到的辦法是什麼？",
+          "現在再遇到，你會用同一個辦法嗎？"
+        ],
+        "en": [
+          "What was the first solution you thought of?",
+          "Would you try the same solution now?"
+        ]
+      }
+    },
+    {
+      "id": "LS028",
+      "theme": "mishaps",
+      "intentKey": "wrong_place_small_detour",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "分享一次走錯地方、找錯入口，或認錯方向的小插曲。",
+        "en": "Tell us about a time you went to the wrong place, used the wrong entrance, or lost your way."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你什麼時候發現不太對？",
+          "多出來的那段路，留給你什麼印象？"
+        ],
+        "en": [
+          "When did you realize something was wrong?",
+          "What do you remember about the unexpected detour?"
+        ]
+      }
+    },
+    {
+      "id": "LS029",
+      "theme": "mishaps",
+      "intentKey": "laughter_at_bad_timing",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想一次明明不太適合笑，你卻差點忍不住的時刻。",
+        "en": "Tell us about a moment when you nearly laughed even though the timing was not right."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時是哪個細節讓你想笑？",
+          "你最後怎麼處理那個反應？"
+        ],
+        "en": [
+          "What detail nearly made you laugh?",
+          "What did you do with that reaction?"
+        ]
+      }
+    },
+    {
+      "id": "LS030",
+      "theme": "mishaps",
+      "intentKey": "small_thing_overcomplicated",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "有沒有一件本來很簡單的事，被你弄得有點複雜？",
+        "en": "Tell us about a simple task that became more complicated than you expected."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "事情是從哪一步開始變複雜的？",
+          "你回頭看，會想少做哪一步嗎？"
+        ],
+        "en": [
+          "At what point did it become complicated?",
+          "Looking back, is there a step you would leave out?"
+        ]
+      }
+    },
+    {
+      "id": "LS031",
+      "theme": "mishaps",
+      "intentKey": "accidental_funny_impression",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "有沒有一次，你不是故意的，卻讓別人對你留下了有趣的印象？",
+        "en": "Tell us about a time you accidentally gave someone an unexpected impression of you."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "對方後來怎麼提起那件事？",
+          "你覺得那個印象像你嗎？"
+        ],
+        "en": [
+          "How did the other person bring it up afterward?",
+          "Did that impression feel like you?"
+        ]
+      }
+    },
+    {
+      "id": "LS032",
+      "theme": "mishaps",
+      "intentKey": "forgotten_item_changed_plan",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "聊聊一次忘了帶某樣東西，讓你改用另一種方式過那一天。",
+        "en": "Tell us about a time you forgot something and had to do things differently that day."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你後來拿什麼替代，或怎麼調整？",
+          "那天有哪個部分反而和你想的不一樣？"
+        ],
+        "en": [
+          "What did you use instead, or how did you adjust?",
+          "What part of that day surprised you?"
+        ]
+      }
+    },
+    {
+      "id": "LS033",
+      "theme": "connection",
+      "intentKey": "small_unexpected_help",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "分享一次有人在一件小事上幫了你，而你到現在還記得。",
+        "en": "Tell us about a small thing someone did to help you that you still remember."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "對方當時實際做了什麼？",
+          "那個幫忙對當時的你有什麼影響？"
+        ],
+        "en": [
+          "What exactly did the person do?",
+          "What difference did that help make to you then?"
+        ]
+      }
+    },
+    {
+      "id": "LS034",
+      "theme": "connection",
+      "intentKey": "remembered_personal_preference",
+      "intimacy": "personal",
+      "tone": "positive",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "有沒有一次，別人記住了你自己都沒特別強調的小習慣或喜好？",
+        "en": "Tell us about a time someone remembered a small habit or preference you had not made much of."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你是怎麼發現對方記得的？",
+          "你當下有讓對方知道你的反應嗎？"
+        ],
+        "en": [
+          "How did you find out they remembered?",
+          "Did you show them how you felt about it?"
+        ]
+      }
+    },
+    {
+      "id": "LS035",
+      "theme": "connection",
+      "intentKey": "unexpected_stranger_chat",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "聊聊一次和不熟的人偶然聊起來的經驗。",
+        "en": "Tell us about a conversation you happened to have with someone you did not know well."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你們是從什麼開始聊的？",
+          "哪個部分讓你現在還記得？"
+        ],
+        "en": [
+          "How did the conversation start?",
+          "What part of it do you still remember?"
+        ]
+      }
+    },
+    {
+      "id": "LS036",
+      "theme": "connection",
+      "intentKey": "quiet_company",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想一次和別人待在一起，沒說很多話卻讓你留下印象的時刻。",
+        "en": "Tell us about a memorable time you spent with someone without saying very much."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時你們各自在做什麼？",
+          "那段安靜對你來說是什麼感覺？"
+        ],
+        "en": [
+          "What were each of you doing?",
+          "What did that quiet feel like to you?"
+        ]
+      }
+    },
+    {
+      "id": "LS037",
+      "theme": "connection",
+      "intentKey": "help_attempt_not_as_planned",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "你曾經想幫別人一個忙，結果過程和你預想的不一樣嗎？",
+        "en": "Tell us about a time you tried to help someone and it did not go as you expected."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你本來打算怎麼幫？",
+          "後來對方需要的，和你想的一樣嗎？"
+        ],
+        "en": [
+          "How were you planning to help?",
+          "Did they need the kind of help you expected?"
+        ]
+      }
+    },
+    {
+      "id": "LS038",
+      "theme": "connection",
+      "intentKey": "shared_small_task",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "分享一次和別人一起完成一件小事的經驗。",
+        "en": "Tell us about a time you and someone else finished a small task together."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你們當時怎麼分工？",
+          "你最記得的是完成事情，還是一起做的過程？"
+        ],
+        "en": [
+          "How did you share the work?",
+          "Do you remember finishing the task more, or doing it together?"
+        ]
+      }
+    },
+    {
+      "id": "LS039",
+      "theme": "connection",
+      "intentKey": "meeting_after_time_apart",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "聊聊一次隔了一段時間，再見到某個人的經驗。",
+        "en": "Tell us about a time you saw someone again after a while apart."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "重新碰面時，你們先聊了什麼？",
+          "哪個地方讓你覺得熟悉，或有點不同？"
+        ],
+        "en": [
+          "What did you talk about first?",
+          "What felt familiar, or a little different?"
+        ]
+      }
+    },
+    {
+      "id": "LS040",
+      "theme": "connection",
+      "intentKey": "sentence_stayed_with_you",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有沒有別人隨口說的一句話，你後來卻記了很久？",
+        "en": "Tell us about something someone said casually that stayed with you for a long time."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那句話是在什麼場合說的？",
+          "你當時就覺得重要，還是後來才在意？"
+        ],
+        "en": [
+          "What was happening when they said it?",
+          "Did it matter right away, or only later?"
+        ]
+      }
+    },
+    {
+      "id": "LS041",
+      "theme": "social_self",
+      "intentKey": "small_sign_of_belonging",
+      "intimacy": "personal",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "有沒有一個小時刻，讓你覺得自己開始融入某個地方或群體？",
+        "en": "Tell us about a small moment when you felt you were starting to belong somewhere."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個時刻發生了什麼？",
+          "是別人做了什麼，還是你的感覺慢慢變了？"
+        ],
+        "en": [
+          "What happened in that moment?",
+          "Did someone do something, or did your feeling gradually change?"
+        ]
+      }
+    },
+    {
+      "id": "LS042",
+      "theme": "social_self",
+      "intentKey": "sharing_unpopular_preference",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "你有沒有在聊天時，發現自己喜歡的東西和大家不太一樣？",
+        "en": "Tell us about a conversation when you found out your taste was different from everyone else's."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時你們在聊什麼？",
+          "你有繼續介紹自己的喜好嗎？"
+        ],
+        "en": [
+          "What were you talking about?",
+          "Did you keep explaining what you liked about it?"
+        ]
+      }
+    },
+    {
+      "id": "LS043",
+      "theme": "social_self",
+      "intentKey": "appearance_different_from_inside",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "有沒有一次，別人看到的你，和你當時真正的狀態不太一樣？",
+        "en": "Tell us about a time when how you seemed to others was different from how you felt."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你當時表面上在做什麼？",
+          "後來有人知道你的實際狀態嗎？"
+        ],
+        "en": [
+          "What were you doing on the outside?",
+          "Did anyone later find out how you really felt?"
+        ]
+      }
+    },
+    {
+      "id": "LS044",
+      "theme": "social_self",
+      "intentKey": "comfortable_in_own_way",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "回想一次大家有大家的做法，而你選擇用自己舒服的方式參與。",
+        "en": "Tell us about a time you joined in with others but did it in your own way."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你做了什麼小調整？",
+          "那樣參與，有符合你想要的感覺嗎？"
+        ],
+        "en": [
+          "What did you do differently?",
+          "Did taking part that way feel right for you?"
+        ]
+      }
+    },
+    {
+      "id": "LS045",
+      "theme": "social_self",
+      "intentKey": "unexpected_personal_role",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "在某次活動裡，你有沒有意外變成帶頭、幫忙或收尾的那個人？",
+        "en": "Tell us about an activity where you unexpectedly became the person who led, helped, or finished things up."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個角色怎麼落到你身上？",
+          "你覺得那個角色適合你嗎？"
+        ],
+        "en": [
+          "How did you end up in that role?",
+          "Did that role suit you?"
+        ]
+      }
+    },
+    {
+      "id": "LS046",
+      "theme": "social_self",
+      "intentKey": "choosing_quiet_time",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "聊聊一次你主動留一點時間給自己，而不是繼續和大家待在一起。",
+        "en": "Tell us about a time you chose to spend a little time alone instead of staying with everyone."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那段時間你做了什麼？",
+          "那是你當時需要的安排嗎？"
+        ],
+        "en": [
+          "What did you do with that time?",
+          "Was that what you needed at the time?"
+        ]
+      }
+    },
+    {
+      "id": "LS047",
+      "theme": "social_self",
+      "intentKey": "showing_a_different_side",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "有沒有一次，你做了某件事，讓熟人說「原來你也會這樣」？",
+        "en": "Tell us about a time you did something that showed people a side of you they had not seen."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你那次做了什麼不常做的事？",
+          "對你自己來說，那一面陌生嗎？"
+        ],
+        "en": [
+          "What did you do that you do not usually do?",
+          "Was that side of you surprising to you too?"
+        ]
+      }
+    },
+    {
+      "id": "LS048",
+      "theme": "social_self",
+      "intentKey": "comfortable_conversation_moment",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想一次聊天中，你突然覺得「這樣聊很舒服」的片刻。",
+        "en": "Tell us about a moment in a conversation when you realized you felt comfortable."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時在聊什麼，或對方做了什麼？",
+          "你平常容易遇到這種聊天嗎？"
+        ],
+        "en": [
+          "What were you discussing, or what did the other person do?",
+          "Do you often have conversations like that?"
+        ]
+      }
+    },
+    {
+      "id": "LS049",
+      "theme": "choices",
+      "intentKey": "small_yes_changed_day",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "分享一次你隨口答應了什麼，後來真的跟著做了的經驗。",
+        "en": "Tell us about a time you casually said yes to something and then went along with it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "對方當時是怎麼邀你的？",
+          "後來的經驗和你答應時想的一樣嗎？"
+        ],
+        "en": [
+          "How were you invited?",
+          "Was it what you expected when you said yes?"
+        ]
+      }
+    },
+    {
+      "id": "LS050",
+      "theme": "choices",
+      "intentKey": "deciding_not_to_join",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "回想一次你考慮過參加某件事，最後決定不去。",
+        "en": "Tell us about a time you considered joining something but decided not to go."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "當時讓你猶豫的是什麼？",
+          "後來你對那個決定有什麼感覺？"
+        ],
+        "en": [
+          "What made you hesitate?",
+          "How did you feel about the decision afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS051",
+      "theme": "choices",
+      "intentKey": "choosing_between_small_options",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "聊聊一次只是小事，你卻在兩個選項之間想了很久。",
+        "en": "Tell us about a small decision that left you choosing between two options for quite a while."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那兩個選項各有什麼吸引你的地方？",
+          "最後是什麼讓你選定的？"
+        ],
+        "en": [
+          "What appealed to you about each option?",
+          "What finally helped you choose?"
+        ]
+      }
+    },
+    {
+      "id": "LS052",
+      "theme": "choices",
+      "intentKey": "following_own_preference",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "有沒有一次，大家都建議一種做法，你最後卻選了另一種？",
+        "en": "Tell us about a time you chose a different way after everyone suggested the same thing."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你當時比較在意哪一點？",
+          "結果有影響你對那個決定的看法嗎？"
+        ],
+        "en": [
+          "What mattered most to you then?",
+          "Did the result change how you felt about your choice?"
+        ]
+      }
+    },
+    {
+      "id": "LS053",
+      "theme": "choices",
+      "intentKey": "last_minute_plan_change",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "回想一次你臨時改了原本的計畫，後來那天怎麼過？",
+        "en": "Think of a time you changed your plans at the last minute. How did the day turn out?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "是什麼讓你改主意？",
+          "那天有什麼原本不會遇到的片段？"
+        ],
+        "en": [
+          "What made you change your mind?",
+          "What happened that would not have happened otherwise?"
+        ]
+      }
+    },
+    {
+      "id": "LS054",
+      "theme": "choices",
+      "intentKey": "letting_small_thing_go",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "有沒有一件小事，你後來決定「就先這樣吧」，不再繼續折騰？",
+        "en": "Tell us about a small thing you decided to leave as it was instead of working on it more."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你停下來之前，已經試了什麼？",
+          "停在那裡，對你來說容易嗎？"
+        ],
+        "en": [
+          "What had you tried before you stopped?",
+          "Was it easy for you to leave it there?"
+        ]
+      }
+    },
+    {
+      "id": "LS055",
+      "theme": "choices",
+      "intentKey": "choosing_experience_over_routine",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "有沒有一次，你沒照平常的習慣做，而是換個方式試試？",
+        "en": "Tell us about a time you changed your usual routine and tried doing something differently."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你那次換了哪個部分？",
+          "你後來有留下那個新做法嗎？"
+        ],
+        "en": [
+          "What did you change that time?",
+          "Did you keep doing it the new way?"
+        ]
+      }
+    },
+    {
+      "id": "LS056",
+      "theme": "choices",
+      "intentKey": "small_gesture_deliberate",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "分享一次你特地多做了一件小事，想讓某個人或某個場合好一點。",
+        "en": "Tell us about a time you made a small extra effort for someone or for an occasion."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你實際多做了什麼？",
+          "有人注意到，或沒注意到，對你重要嗎？"
+        ],
+        "en": [
+          "What extra thing did you do?",
+          "Did it matter whether anyone noticed?"
+        ]
+      }
+    },
+    {
+      "id": "LS057",
+      "theme": "objects_places",
+      "intentKey": "ordinary_object_personal_memory",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有沒有一件普通物品，會讓你想到一段自己的經歷？",
+        "en": "What ordinary object reminds you of a personal experience? Tell us about the memory, not just the object."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那件物品是怎麼出現在那段經歷裡的？",
+          "你現在看到它時，先想到什麼？"
+        ],
+        "en": [
+          "How was the object part of that experience?",
+          "What comes to mind first when you see it now?"
+        ]
+      }
+    },
+    {
+      "id": "LS058",
+      "theme": "objects_places",
+      "intentKey": "food_connected_to_person_or_period",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有沒有一道食物，會讓你想到某個人或某段日子？",
+        "en": "Is there a food that reminds you of a person or a period of your life?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你記得哪一次吃到它的情景？",
+          "現在再吃，感覺和那時一樣嗎？"
+        ],
+        "en": [
+          "What particular time eating it do you remember?",
+          "Does eating it now feel the same as it did then?"
+        ]
+      }
+    },
+    {
+      "id": "LS059",
+      "theme": "objects_places",
+      "intentKey": "sound_brings_back_scene",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有什麼聲音，會讓你一下想到某個生活場景？",
+        "en": "What sound takes you back to a scene from your life? Tell us about that scene."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個聲音通常什麼時候會出現？",
+          "你懷念那個場景，還是只是記得很清楚？"
+        ],
+        "en": [
+          "When would you usually hear that sound?",
+          "Do you miss that scene, or simply remember it clearly?"
+        ]
+      }
+    },
+    {
+      "id": "LS060",
+      "theme": "objects_places",
+      "intentKey": "ordinary_place_pause",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "聊聊一個你曾經待過、可以讓你暫時停一下的普通地方。",
+        "en": "Tell us about an ordinary place where you could pause for a while."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你有哪一次待在那裡的畫面特別清楚？",
+          "那個地方有什麼讓你願意停留？"
+        ],
+        "en": [
+          "What particular visit do you remember clearly?",
+          "What made you want to stay there?"
+        ]
+      }
+    },
+    {
+      "id": "LS061",
+      "theme": "objects_places",
+      "intentKey": "kept_item_without_use",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有沒有一樣東西已經不太用得到，你卻一直留著？",
+        "en": "Tell us about something you keep even though you do not really use it anymore."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你還記得它剛來到你身邊的時候嗎？",
+          "留下它，對你來說是習慣還是有別的原因？"
+        ],
+        "en": [
+          "Do you remember when you first got it?",
+          "Do you keep it out of habit, or for another reason?"
+        ]
+      }
+    },
+    {
+      "id": "LS062",
+      "theme": "objects_places",
+      "intentKey": "rediscovered_old_item",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "分享一次整理東西時，意外翻到某樣舊物的經驗。",
+        "en": "Tell us about a time you found an old item while sorting through your things."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你看到它時，想起了什麼具體片段？",
+          "你後來怎麼處理它？"
+        ],
+        "en": [
+          "What particular moment came back when you saw it?",
+          "What did you do with it afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS063",
+      "theme": "objects_places",
+      "intentKey": "revisited_familiar_place",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "回到以前熟悉的地方時，你有沒有注意到某個變了或沒變的細節？",
+        "en": "Tell us about a time you returned to a familiar place and noticed what had changed or stayed the same."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你第一個注意到的是什麼？",
+          "那個細節讓你想到以前的什麼？"
+        ],
+        "en": [
+          "What did you notice first?",
+          "What did that detail remind you of?"
+        ]
+      }
+    },
+    {
+      "id": "LS064",
+      "theme": "objects_places",
+      "intentKey": "clothes_specific_day",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有沒有某件衣服或配件，讓你記得一次特別的穿著經驗？",
+        "en": "Tell us about a piece of clothing or an accessory that reminds you of a particular day."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那天為什麼選它？",
+          "你記得的是它的樣子，還是穿著時的感覺？"
+        ],
+        "en": [
+          "Why did you choose it that day?",
+          "Do you remember how it looked, or how you felt wearing it?"
+        ]
+      }
+    },
+    {
+      "id": "LS065",
+      "theme": "interests",
+      "intentKey": "unexpected_interest_beginning",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "你曾經意外對什麼東西感興趣？聊聊剛被吸引的那次。",
+        "en": "Tell us about an interest you discovered unexpectedly. What first caught your attention?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "最先吸引你的是哪個細節？",
+          "後來你有繼續接觸它嗎？"
+        ],
+        "en": [
+          "What detail first caught your interest?",
+          "Did you keep exploring it afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS066",
+      "theme": "interests",
+      "intentKey": "sharing_interest_with_someone",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "分享一次你把喜歡的東西介紹給別人的經驗。",
+        "en": "Tell us about a time you introduced someone to something you liked."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你先介紹了哪個部分？",
+          "對方的反應有影響你的興致嗎？"
+        ],
+        "en": [
+          "What part did you show or explain first?",
+          "Did their reaction affect your enthusiasm?"
+        ]
+      }
+    },
+    {
+      "id": "LS067",
+      "theme": "interests",
+      "intentKey": "losing_track_of_time",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "回想一次你做某件事做到忘了看時間，那時在忙什麼？",
+        "en": "Tell us about a time you got so involved in something that you lost track of time."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你在哪個時刻才發現時間過了？",
+          "吸引你一直做下去的是什麼？"
+        ],
+        "en": [
+          "When did you realize how much time had passed?",
+          "What kept you involved for so long?"
+        ]
+      }
+    },
+    {
+      "id": "LS068",
+      "theme": "interests",
+      "intentKey": "personal_way_to_enjoy",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "你有沒有一種享受喜歡的東西的方式，和別人不太一樣？聊聊一次。",
+        "en": "Tell us about a time you enjoyed something in a way that was a little different from other people."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你那次具體怎麼做？",
+          "那樣做，對你多了什麼樂趣？"
+        ],
+        "en": [
+          "What did you do that time?",
+          "What did your way add to the experience?"
+        ]
+      }
+    },
+    {
+      "id": "LS069",
+      "theme": "interests",
+      "intentKey": "returning_to_old_interest",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "分享一次你隔了很久，又重新做以前喜歡的事情。",
+        "en": "Tell us about a time you returned to something you used to enjoy after a long break."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "什麼讓你又開始做？",
+          "重新做時，有什麼感覺和以前不同？"
+        ],
+        "en": [
+          "What brought you back to it?",
+          "What felt different when you returned to it?"
+        ]
+      }
+    },
+    {
+      "id": "LS070",
+      "theme": "interests",
+      "intentKey": "small_creation_story",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "聊聊一樣你自己做出來的小東西，不必很厲害或很完整。",
+        "en": "Tell us about something small you made yourself. It does not have to be impressive or finished."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你是從哪一步開始做的？",
+          "你對哪個部分特別有感覺？"
+        ],
+        "en": [
+          "What did you start with?",
+          "Which part means something to you?"
+        ]
+      }
+    },
+    {
+      "id": "LS071",
+      "theme": "interests",
+      "intentKey": "recommendation_actual_experience",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "分享一次照著別人的推薦去試某個東西的經驗。",
+        "en": "Tell us about a time you tried something because someone recommended it. How did it go?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "對方是怎麼把它介紹給你的？",
+          "你和對方喜歡的部分一樣嗎？"
+        ],
+        "en": [
+          "How did the person describe it to you?",
+          "Did you enjoy the same parts they did?"
+        ]
+      }
+    },
+    {
+      "id": "LS072",
+      "theme": "interests",
+      "intentKey": "interest_not_needing_excellence",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "有沒有一件事，你不一定很擅長，卻仍然願意花時間做？",
+        "en": "Tell us about something you keep doing even though you are not especially good at it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "最近一次做的時候發生了什麼？",
+          "除了做得好不好，你還喜歡它什麼？"
+        ],
+        "en": [
+          "What happened the last time you did it?",
+          "What do you enjoy besides how well you do it?"
+        ]
+      }
+    },
+    {
+      "id": "LS073",
+      "theme": "expectation",
+      "intentKey": "simple_outing_unexpectedly_good",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "分享一次你沒抱太多期待，結果卻覺得不錯的活動或出門經驗。",
+        "en": "Tell us about an activity or outing you did not expect much from but ended up enjoying."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "哪個片段讓你開始覺得不錯？",
+          "你後來有想再來一次嗎？"
+        ],
+        "en": [
+          "At what point did you start enjoying it?",
+          "Did you want to do it again afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS074",
+      "theme": "expectation",
+      "intentKey": "looked_easy_was_different",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "有沒有一件看別人做很簡單的事，自己動手才發現不是那樣？",
+        "en": "Tell us about something that looked easy until you tried doing it yourself."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "最先讓你意外的是哪一步？",
+          "那次之後，你看別人做會注意什麼？"
+        ],
+        "en": [
+          "Which step first surprised you?",
+          "What do you notice when you watch others do it now?"
+        ]
+      }
+    },
+    {
+      "id": "LS075",
+      "theme": "expectation",
+      "intentKey": "long_awaited_ordinary_arrival",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "聊聊一次你期待了好一陣子，真正到來時卻有不同感覺的事情。",
+        "en": "Tell us about something you looked forward to for a while that felt different when it finally happened."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "事情開始前，你想像的是什麼？",
+          "實際經歷時，你最注意哪個部分？"
+        ],
+        "en": [
+          "What had you imagined before it happened?",
+          "What did you notice most when it happened?"
+        ]
+      }
+    },
+    {
+      "id": "LS076",
+      "theme": "expectation",
+      "intentKey": "best_part_not_main_event",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "有沒有一次活動裡，你最記得的反而不是原本的重點？",
+        "en": "Tell us about an activity where the part you remember most was not the main event."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個意外留下印象的片段是什麼？",
+          "它為什麼比原本的重點更鮮明？"
+        ],
+        "en": [
+          "What unexpected part stayed with you?",
+          "Why did it stand out more than the main event?"
+        ]
+      }
+    },
+    {
+      "id": "LS077",
+      "theme": "expectation",
+      "intentKey": "plan_disrupted_by_weather",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "unexpected_turn",
+      "question": {
+        "zh-TW": "回想一次天氣讓你改變安排，那天後來發生了什麼？",
+        "en": "Tell us about a day when the weather changed your plans. What happened instead?"
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你們當時怎麼調整？",
+          "現在想到那天，你記得哪個畫面？"
+        ],
+        "en": [
+          "How did you adjust your plans?",
+          "What scene comes to mind when you remember that day?"
+        ]
+      }
+    },
+    {
+      "id": "LS078",
+      "theme": "expectation",
+      "intentKey": "minor_worry_actual_result",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "有沒有一件你事前有點擔心的小事，實際碰到後才知道會怎樣？",
+        "en": "Tell us about something small you worried about before finding out how it would actually go."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你本來擔心會出現什麼情況？",
+          "實際發生的部分，有哪些是你沒想到的？"
+        ],
+        "en": [
+          "What were you worried might happen?",
+          "What happened that you had not expected?"
+        ]
+      }
+    },
+    {
+      "id": "LS079",
+      "theme": "expectation",
+      "intentKey": "unplanned_day_with_someone",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "聊聊一次和別人沒安排太多，邊走邊決定怎麼過的經驗。",
+        "en": "Tell us about a time you spent with someone without much of a plan and decided things as you went."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你們第一個臨時決定是什麼？",
+          "你喜歡那種安排方式嗎？"
+        ],
+        "en": [
+          "What was your first decision along the way?",
+          "Did you enjoy doing things that way?"
+        ]
+      }
+    },
+    {
+      "id": "LS080",
+      "theme": "expectation",
+      "intentKey": "event_end_different_feeling",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "有沒有一個場合，你離開時的感覺和剛到時很不一樣？",
+        "en": "Tell us about an occasion when you felt very different leaving from how you felt when you arrived."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "中間哪個片段讓感覺開始變化？",
+          "那個感覺有跟著你回到日常嗎？"
+        ],
+        "en": [
+          "When did your feeling start to change?",
+          "Did that feeling stay with you afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS081",
+      "theme": "effort",
+      "intentKey": "small_personal_achievement",
+      "intimacy": "personal",
+      "tone": "positive",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "分享一件在別人眼裡可能很小，卻讓你有成就感的事。",
+        "en": "Tell us about something that may seem small to others but gave you a sense of achievement."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "哪個時刻讓你覺得自己做到了？",
+          "為什麼這件事對你不只是小事？"
+        ],
+        "en": [
+          "At what moment did you feel you had done it?",
+          "Why was it more than a small thing to you?"
+        ]
+      }
+    },
+    {
+      "id": "LS082",
+      "theme": "effort",
+      "intentKey": "trying_again_after_pause",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "聊聊一次你停了一陣子，後來決定再試某件事的經驗。",
+        "en": "Tell us about something you stopped doing for a while and then decided to try again."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "這次重新開始，你先做了什麼？",
+          "你有換一種對待它的方式嗎？"
+        ],
+        "en": [
+          "What did you do first when you started again?",
+          "Did you approach it differently this time?"
+        ]
+      }
+    },
+    {
+      "id": "LS083",
+      "theme": "effort",
+      "intentKey": "boring_part_of_liked_activity",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "做一件你喜歡的事時，你曾經怎麼度過其中比較無聊的部分？",
+        "en": "Tell us about a time you worked through the less interesting part of something you enjoyed."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個部分實際需要做什麼？",
+          "什麼讓你願意繼續做下去？"
+        ],
+        "en": [
+          "What did that part involve?",
+          "What made you willing to continue?"
+        ]
+      }
+    },
+    {
+      "id": "LS084",
+      "theme": "effort",
+      "intentKey": "preparation_nobody_saw",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "有沒有一件事在別人看來很順利，背後其實有一段準備過程？",
+        "en": "Tell us about something that looked straightforward to others but took preparation they did not see."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "準備時，有哪個片段你還記得？",
+          "別人知不知道那段準備，對你重要嗎？"
+        ],
+        "en": [
+          "What moment from preparing do you remember?",
+          "Did it matter whether others knew about the preparation?"
+        ]
+      }
+    },
+    {
+      "id": "LS085",
+      "theme": "effort",
+      "intentKey": "small_practical_solution",
+      "intimacy": "light",
+      "tone": "positive",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "分享一次你替生活裡的小麻煩，找到一個自己的解法。",
+        "en": "Tell us about a time you found your own solution to a small everyday problem."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你怎麼想到那個方法的？",
+          "你現在還在用那個方法嗎？"
+        ],
+        "en": [
+          "How did you think of the solution?",
+          "Do you still use that solution?"
+        ]
+      }
+    },
+    {
+      "id": "LS086",
+      "theme": "effort",
+      "intentKey": "effort_without_hoped_result",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "有沒有一件你花了不少心力，結果卻沒有照你希望發展的事？",
+        "en": "Tell us about something you put effort into that did not turn out as you had hoped."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "哪個部分你投入最多？",
+          "現在想到它，你比較在意過程還是結果？"
+        ],
+        "en": [
+          "Which part did you put the most into?",
+          "When you think of it now, does the effort or the result matter more?"
+        ]
+      }
+    },
+    {
+      "id": "LS087",
+      "theme": "effort",
+      "intentKey": "learning_personal_pace",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "small_choice",
+      "question": {
+        "zh-TW": "聊聊一次你調整做事的速度，改成比較適合自己的節奏。",
+        "en": "Tell us about a time you changed your pace while doing something to make it suit you better."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你實際放慢或調整了什麼？",
+          "調整之後，哪個地方最有差別？"
+        ],
+        "en": [
+          "What did you slow down or change?",
+          "What difference did the change make?"
+        ]
+      }
+    },
+    {
+      "id": "LS088",
+      "theme": "effort",
+      "intentKey": "finishing_long_delayed_task",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "分享一次你終於處理了擱著一陣子的小事。",
+        "en": "Tell us about a time you finally dealt with a small thing you had been putting off."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那天是什麼讓你開始動手？",
+          "做完後的感覺，和你原先想的一樣嗎？"
+        ],
+        "en": [
+          "What made you start that day?",
+          "Did finishing it feel the way you expected?"
+        ]
+      }
+    },
+    {
+      "id": "LS089",
+      "theme": "perspective",
+      "intentKey": "seeing_person_in_new_context",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "有沒有一次，在不同場合見到熟人，讓你看到他不一樣的一面？",
+        "en": "Tell us about a time you saw someone you knew in a different setting and noticed another side of them."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那個場合和平常有什麼不同？",
+          "你之後和他相處，有什麼變化嗎？"
+        ],
+        "en": [
+          "How was the setting different from usual?",
+          "Did it change how you spent time with them afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS090",
+      "theme": "perspective",
+      "intentKey": "changing_small_preference",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "contrast",
+      "question": {
+        "zh-TW": "以前不太喜歡的某樣東西，你有沒有後來慢慢改變看法？聊聊一次。",
+        "en": "Tell us about a time you noticed you were starting to like something you had not liked before."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那次接觸和平常有什麼不同？",
+          "你覺得是它變了，還是你變了？"
+        ],
+        "en": [
+          "What was different about trying it that time?",
+          "Do you think it changed, or did you?"
+        ]
+      }
+    },
+    {
+      "id": "LS091",
+      "theme": "perspective",
+      "intentKey": "one_event_two_views",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "聊聊一次你和別人經歷同一件事，事後卻記得很不一樣的部分。",
+        "en": "Tell us about a time you and someone else remembered different parts of the same experience."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你記得什麼，對方又提到了什麼？",
+          "聽完對方的版本，你有重新想到什麼嗎？"
+        ],
+        "en": [
+          "What did you remember, and what did they mention?",
+          "Did their version bring anything else back to you?"
+        ]
+      }
+    },
+    {
+      "id": "LS092",
+      "theme": "perspective",
+      "intentKey": "unnoticed_work_became_visible",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "有沒有一次你才注意到，某件日常小事其實有人一直在處理？",
+        "en": "Tell us about a time you noticed the work someone was doing behind an everyday part of life."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你是從哪個細節發現的？",
+          "發現之後，你看那件事有什麼不同？"
+        ],
+        "en": [
+          "What detail made you notice it?",
+          "Did you see that everyday thing differently afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS093",
+      "theme": "perspective",
+      "intentKey": "explaining_familiar_thing",
+      "intimacy": "light",
+      "tone": "neutral",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "分享一次你向別人解釋一件熟悉的事，才發現不太容易講清楚。",
+        "en": "Tell us about a time you tried to explain something familiar and found it harder than expected."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "對方哪個問題讓你停下來想？",
+          "你最後用什麼方式說明？"
+        ],
+        "en": [
+          "What question made you stop and think?",
+          "How did you explain it in the end?"
+        ]
+      }
+    },
+    {
+      "id": "LS094",
+      "theme": "perspective",
+      "intentKey": "understanding_different_method",
+      "intimacy": "light",
+      "tone": "mixed",
+      "storyShape": "encounter",
+      "question": {
+        "zh-TW": "有沒有一次，你看到別人用不同方式做事，才知道也能那樣做？",
+        "en": "Tell us about a time you saw someone do something differently and realized there was another way."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "對方的做法和你習慣的差在哪裡？",
+          "你後來有試著用那個方式嗎？"
+        ],
+        "en": [
+          "How was their way different from yours?",
+          "Did you try their way afterward?"
+        ]
+      }
+    },
+    {
+      "id": "LS095",
+      "theme": "perspective",
+      "intentKey": "old_memory_new_interpretation",
+      "intimacy": "personal",
+      "tone": "mixed",
+      "storyShape": "memory_trace",
+      "question": {
+        "zh-TW": "回想一件以前的小事，現在的你會不會用不同方式理解它？",
+        "en": "Think of a small event from your past that you understand differently now. Tell us about it."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "你以前是怎麼看那件事的？",
+          "什麼讓現在的看法有點不同？"
+        ],
+        "en": [
+          "How did you see it at the time?",
+          "What makes you see it differently now?"
+        ]
+      }
+    },
+    {
+      "id": "LS096",
+      "theme": "perspective",
+      "intentKey": "realizing_what_matters_in_day",
+      "intimacy": "personal",
+      "tone": "neutral",
+      "storyShape": "snapshot",
+      "question": {
+        "zh-TW": "有沒有一天，讓你發現自己其實很在意某個平常的小部分？",
+        "en": "Tell us about a day that made you realize how much one small part of daily life mattered to you."
+      },
+      "optionalPrompts": {
+        "zh-TW": [
+          "那天和平常差在哪裡？",
+          "你之後有特別留意那個部分嗎？"
+        ],
+        "en": [
+          "What was different about that day?",
+          "Did you pay more attention to that part afterward?"
+        ]
+      }
+    }
+  ]
+}

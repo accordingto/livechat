@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Life Story Question Candidate Batch",
+  "description": "Generated batches only. Validate each seed-bank question with $defs.Question; the seed envelope contains extra pack metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "questions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/Question"
+      }
+    }
+  },
+  "$defs": {
+    "Question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "theme",
+        "intentKey",
+        "intimacy",
+        "tone",
+        "storyShape",
+        "question",
+        "optionalPrompts"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "theme": {
+          "type": "string",
+          "enum": [
+            "everyday",
+            "growing_up",
+            "new_experiences",
+            "mishaps",
+            "connection",
+            "social_self",
+            "choices",
+            "objects_places",
+            "interests",
+            "expectation",
+            "effort",
+            "perspective"
+          ]
+        },
+        "intentKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "intimacy": {
+          "type": "string",
+          "enum": [
+            "light",
+            "personal"
+          ]
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "positive",
+            "neutral",
+            "mixed"
+          ]
+        },
+        "storyShape": {
+          "type": "string",
+          "enum": [
+            "snapshot",
+            "encounter",
+            "small_choice",
+            "unexpected_turn",
+            "contrast",
+            "memory_trace"
+          ]
+        },
+        "question": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "zh-TW",
+            "en"
+          ],
+          "properties": {
+            "zh-TW": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 90
+            },
+            "en": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 280
+            }
+          }
+        },
+        "optionalPrompts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "zh-TW",
+            "en"
+          ],
+          "properties": {
+            "zh-TW": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 70
+              }
+            },
+            "en": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 220
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

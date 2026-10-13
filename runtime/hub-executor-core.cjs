@@ -64,7 +64,8 @@ function currentCard(node, ticket, capsule, baseline, predecessor, target) {
     node.game === predecessor.ticket.game && node[field]?.sessionId === predecessor.ticket.sessionId;
 }
 function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetchImpl = globalThis.fetch, now = Date.now, games } = {}) {
-  const key = keyFrom(secret); const registry = games || adapters();
+  const key = keyFrom(secret); const registry = { ...(games || adapters()) };
+  if (registry.dixit) registry.dixit = require('./life-story-state.cjs').protectAdapter(registry.dixit, key);
   const archiveStore = archiveSecret == null ? null : require('./talk-archive-store.cjs').createStore({ secret: archiveSecret, fetchImpl, databaseURL });
   if (databaseURL !== DEFAULT_DB && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(databaseURL)) fail('invalid_database');
   function predecessor(executor, ticket) {

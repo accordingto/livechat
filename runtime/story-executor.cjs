@@ -39,11 +39,17 @@ function boundCommand(state, command, ctx) {
   const actor = Number(ctx?.seat?.playerNum ?? ctx?.actor);
   if (!Number.isInteger(actor) || actor !== 0 && !list(state.roster).some(p => p.playerNum === actor)) throw new Error('not_eligible');
   const seed = Number.isFinite(Number(ctx?.seed)) ? Number(ctx.seed) : Number.parseInt(crypto.createHash('sha256').update(String(state.sessionId) + ':' + String(command.id)).digest('hex').slice(0, 8), 16);
-  return { ...command, actor, seed, now: now(ctx), onlineNums: online(state, ctx),
+  const bound = { ...command, actor, seed, now: now(ctx), onlineNums: online(state, ctx),
     sessionId: command.sessionId == null ? state.sessionId : command.sessionId,
     // Player-written prompts belong to the turn visible when the sender typed
     // them; do not bind an omitted turn to a newer speaker after delivery.
     turnId: command.type === 'crazyAssign' ? command.turnId : command.turnId == null ? state.turnId : command.turnId };
+  if (state.mode === 'life_story') {
+    // An omitted old-turn fence must never become authority for the current turn.
+    bound.sessionId = command.sessionId; bound.turnId = command.turnId;
+    bound.serverAuthority = true;
+  }
+  return bound;
 }
 function tick(state, type, ctx, marker) {
   const digest = crypto.createHash('sha256').update(JSON.stringify([state.sessionId, state.turnId, type, marker])).digest('hex');
@@ -54,7 +60,7 @@ function adapter(engine, key, actionKey, pulse) {
   return {
     decode, encode,
     session: state => state?.sessionId || null,
-    membership: (state, change, ctx) => engine.membership(state, change, ctx),
+    membership: (state, change, ctx) => engine.membership(state, change, state?.mode === 'life_story' ? { ...ctx, serverAuthority: true } : ctx),
     apply: (state, command, ctx) => engine.apply(state, boundCommand(state, command, ctx)),
     pulse,
     project(state, seat, ctx) {
@@ -69,6 +75,7 @@ function adapter(engine, key, actionKey, pulse) {
 }
 const adapters = {
   dixit: adapter(DIXIT, 'dixit', 'dixitAction', (state, ctx) => {
+    if (state?.mode === 'life_story') return require('../life-story-engine.js').pulse(state, { ...ctx, serverAuthority: true });
     if (state?.phase !== 'REVEALING' || state.paused) return state;
     const deadline = state.revealStage === 'answer' ? state.revealPopularAt : state.revealAnswerAt;
     if (!(Number(deadline) > 0) || now(ctx) < Number(deadline)) return state;

@@ -3,6 +3,8 @@ const { createExecutor, keyFrom } = require('../runtime/hub-executor-core.cjs');
 const ALLOWED = new Set(['https://livechat-two-alpha.vercel.app', 'https://icebreaker-youtube-search.vercel.app']);
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Icebreak-Life-Story', '1');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Icebreak-Life-Story');
   const origin = req.headers.origin;
   if (origin && !ALLOWED.has(origin) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return res.status(403).json({ error: 'origin_denied' });
   if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); }

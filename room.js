@@ -66,6 +66,8 @@ const ROOM = (() => {
   let count = 4;
   let db = null;
   let listeners = [];
+  let privateReads = true;
+  let listenerEpoch = 0;
   const data = {}; // playerNum -> the node's latest value, for tallying votes
 
   /* ── Firebase (optional) ── */
@@ -212,7 +214,7 @@ const ROOM = (() => {
      the real game starts. Active membership games retain their cards when
      the Hub setup is reopened to add players. */
   function sendCardCheck() {
-    if (!on()) return;
+    if (!on() || !privateReads || cfg.privateProjectionOnly) return;
     // A membership update may be publishing a brand-new, still-empty seat.
     // Do not race that publication with a card-check write to any seat.
     if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
@@ -257,7 +259,7 @@ const ROOM = (() => {
      check) because there's no answer to accidentally peek at — the host picked the
      numbers and calls them out, so seeing a press land live is the whole point. */
   function sendButtonCheck() {
-    if (!on()) return;
+    if (!on() || !privateReads || cfg.privateProjectionOnly) return;
     // A retained homepage must not replace an ongoing table or its new seat.
     if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
     // two-digit (10-99), not single digits — a lone digit is easy to guess/copy
@@ -892,6 +894,8 @@ const ROOM = (() => {
     checkWords = null; checkRevealed = false; // stale answer key for the room we just left
     checkNumbers = null; checkButtonId = '';
     const saved = loadSessionData(typed);
+    privateReads = saved?.dixitMode !== 'life_story';
+    cfg.privateProjectionOnly = !privateReads;
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
     // a code with no saved data of its own (brand new, never used) starts
     // blank, same as newRoom() below — it should never inherit whatever
@@ -910,6 +914,8 @@ const ROOM = (() => {
     checkNumbers = null; checkButtonId = '';
     tokens = [];
     names = []; // a brand new room starts with blank names, not whoever was in the old one
+    privateReads = true;
+    cfg.privateProjectionOnly = false;
     ensureTokens(count);
     save();
     attach();
@@ -918,23 +924,47 @@ const ROOM = (() => {
 
   /* ── Firebase traffic ── */
   function detach() {
+    listenerEpoch++;
     listeners.forEach(l => l.ref.off('value', l.handler));
     listeners = [];
+  }
+
+  /* A shared manager must never subscribe to Life Story player projections.
+     Re-enabling is explicit and any surviving Life node immediately closes it
+     again. Epoch fencing also discards callbacks already queued by Firebase. */
+  function setPrivateReads(enabled) {
+    const next = enabled === true;
+    const changed = privateReads !== next || cfg.privateProjectionOnly === next;
+    privateReads = next;
+    cfg.privateProjectionOnly = !next;
+    if (!next) {
+      detach();
+      Object.keys(data).forEach(key => delete data[key]);
+    } else if (changed) attach();
   }
 
   /* one listener per known token — the rules allow reading a token you know, never a list */
   function attach() {
     detach();
-    if (!on()) return;
+    if (!on() || !privateReads || cfg.privateProjectionOnly) return;
+    const epoch = listenerEpoch;
     for (let i = 0; i < count; i++) {
+      if (!privateReads || cfg.privateProjectionOnly || epoch !== listenerEpoch) break;
       const ref = db.ref(`rooms/${sessionCode}/players/${tokens[i]}`);
       const num = i + 1;
       const handler = snap => {
-        data[num] = snap.val();
+        if (!privateReads || cfg.privateProjectionOnly || epoch !== listenerEpoch) return;
+        const value = snap.val();
+        if (value?.game === 'dixit' && value.dixit?.mode === 'life_story') {
+          setExtra('dixitMode', 'life_story');
+          setPrivateReads(false);
+          return;
+        }
+        data[num] = value;
         // never let one game's render error kill this listener: the card messages
         // that drive a round (a buzz, a vote, a request for the next prompt) all
         // arrive through here, and a page that throws once would go deaf
-        try { if (cfg.onPlayerData) cfg.onPlayerData(num, snap.val()); }
+        try { if (cfg.onPlayerData) cfg.onPlayerData(num, value); }
         catch (e) { console.error('onPlayerData', e); }
         // a button-check press has to reach the host's screen the moment it
         // lands (that's the entire point of it), and render() is the only thing
@@ -944,8 +974,8 @@ const ROOM = (() => {
         // are read-only there, so a rebuild mid-check never costs a focused input.
         if (checkNumbers) render();
       };
-      ref.on('value', handler);
       listeners.push({ ref, handler });
+      ref.on('value', handler);
     }
   }
 
@@ -988,6 +1018,9 @@ const ROOM = (() => {
     let lastCode = null;
     try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
     const saved = lastCode ? loadSessionData(lastCode) : null;
+    privateReads = cfg.privateProjectionOnly !== true && saved?.dixitMode !== 'life_story';
+    cfg.privateProjectionOnly = !privateReads;
+    if (!privateReads) Object.keys(data).forEach(key => delete data[key]);
     if (lastCode && saved && saved.tokens && saved.tokens.length) {
       sessionCode = lastCode;
       tokens = saved.tokens.slice();
@@ -1019,7 +1052,8 @@ const ROOM = (() => {
   }
 
   const api = {
-    init, render, publish, update, clearAnswer, setCount, setExtra, getExtra,
+    init, render, publish, update, clearAnswer, setCount, setExtra, getExtra, setPrivateReads,
+    get privateReads() { return privateReads && !cfg.privateProjectionOnly; },
     get enabled() { return on(); },
     get count() { return count; },
     get names() { return names; },

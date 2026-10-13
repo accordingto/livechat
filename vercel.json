@@ -5,6 +5,14 @@
       "status": 404
     },
     {
+      "src": "^/life-story-questions\\.cjs$",
+      "status": 404
+    },
+    {
+      "src": "^/assets/life-story(?:/.*)?$",
+      "status": 404
+    },
+    {
       "src": "^/open-mic-(?:genius|lyrics|youtube)\\.js$",
       "status": 404
     },

@@ -8,7 +8,7 @@ const setupHandlers=source.slice(source.indexOf('  function setCount(n) {'),sour
 const games=['dixit','onceupon','bluffking','cut','openmic','letstalk'];
 function fixture(data={},remote={}){
  const writes=[],nodes=new Map(Object.entries(remote).map(([number,value])=>['rooms/TEST/players/'+['a','b','c','d'][Number(number)-1],structuredClone(value)]));
- const context=vm.createContext({on:()=>true,count:4,data,names:['A','B','C','New'],tokens:['a','b','c','d'],sessionCode:'TEST',
+ const context=vm.createContext({on:()=>true,privateReads:true,cfg:{},count:4,data,names:['A','B','C','New'],tokens:['a','b','c','d'],sessionCode:'TEST',
   checkWords:[{word:'stale'}],checkRevealed:true,checkNumbers:null,checkButtonId:'',GAME_DATA:{forbidden:Array.from({length:8},(_,i)=>({word:'word'+i,emoji:'x'}))},render(){},
   publish(){assert.fail('card checks must not use unconditional publication');},
   db:{ref:path=>({transaction(fn,onComplete,applyLocally){assert.equal(applyLocally,false);const next=fn(nodes.get(path)||null);if(next!==undefined){nodes.set(path,next);writes.push(next);}},set(){assert.fail('card checks must not replace a node without checking current game');}})}});

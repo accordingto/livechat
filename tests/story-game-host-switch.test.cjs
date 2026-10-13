@@ -11,27 +11,41 @@ const games = [
 
 // Execute the actual page entry point. These doubles supply its browser and
 // transport boundaries; status changes and clicks use the registered callbacks.
-function hostPage(game, { deferredStart = false } = {}) {
+function hostPage(game, { deferredStart = false, startError = '', savedMode } = {}) {
   const elements = new Map(), cards = [], dictionaries = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
       id, hidden: false, disabled: false, value: id === 'dx-target-score' ? '30' : '0',
       innerHTML: '', textContent: '', href: '', listeners: new Map(),
+      options: [],
       addEventListener(type, listener) { this.listeners.set(type, listener); },
-      insertAdjacentHTML(_position, value) { this.innerHTML += value; },
+      before(node) { this.precedingNode = node; },
+      insertAdjacentHTML(_position, value) {
+        this.innerHTML += value;
+        // New mode settings are inserted by the actual Dixit entry script.
+        // Mirror select option/default-value creation rather than inventing
+        // fields whose values differ from the real browser's defaults.
+        for (const match of value.matchAll(/<select\b[^>]*\sid="([^"]+)"[^>]*>([\s\S]*?)<\/select>/g)) {
+          const select = element(match[1]);
+          select.options = [...match[2].matchAll(/<option\b[^>]*value="([^"]*)"[^>]*>([\s\S]*?)<\/option>/g)].map(option => ({ value: option[1], textContent: option[2] }));
+          select.value = select.options[0]?.value ?? '';
+        }
+      },
     });
     return elements.get(id);
   };
   const saved = {
     playerCount: 3, tokens: ['a'.repeat(20), 'b'.repeat(20), 'c'.repeat(20)],
     names: ['Alex', 'Jamie', 'Sam'], dixitHostPlayerNum: 1, dixitTargetScore: 30,
+    ...(savedMode ? { dixitMode: savedMode } : {}),
   };
   const storage = new Map([
     ['room-last-session', 'HOSTSWITCH'],
     ['room-session-HOSTSWITCH', JSON.stringify(saved)],
   ]);
   const room = {
-    enabled: true, code: 'HOSTSWITCH', count: 3, answers: {},
+    enabled: true, code: 'HOSTSWITCH', count: 3, answers: {}, privateReads: true, privateReadsChanges: [],
+    setPrivateReads(enabled) { this.privateReads = enabled; this.privateReadsChanges.push(enabled); },
     init(options) { this.options = options; },
     name(index) { return saved.names[index]; },
     getExtra(key) { return saved[key]; },
@@ -43,7 +57,7 @@ function hostPage(game, { deferredStart = false } = {}) {
       this.options = options; this.connected = false; this.own = false;
       this.starts = []; this.commands = []; host = this;
     }
-    connect() { this.connectCalled = true; }
+    connect() { this.connectCalled = true; this.privateReadsAtConnect = room.privateReads; }
     now() { return 12345; }
     receive() {}
     command(...args) { this.commands.push(args); return Promise.resolve(); }
@@ -51,6 +65,7 @@ function hostPage(game, { deferredStart = false } = {}) {
     close() {}
     start(options) {
       this.starts.push(options);
+      if (startError) return Promise.reject(new Error(startError));
       const finish = () => {
         this.connected = true; this.own = true;
         this.options.onStatus('ready');
@@ -74,6 +89,7 @@ function hostPage(game, { deferredStart = false } = {}) {
         sessionId, turnId: 0, phase: 'LOBBY',
         hostPlayerNum: options?.hostPlayerNum || 1,
         targetScore: options?.targetScore || 30,
+        ...(options.mode === 'life_story' ? { mode: 'life_story', locale: options.locale, config: { cardPackId: options.cardPackId } } : {}),
       },
     };
   }
@@ -86,6 +102,7 @@ function hostPage(game, { deferredStart = false } = {}) {
     localStorage: { getItem: key => storage.get(key) ?? null },
     ROOM: room, firebase: { database: () => ({}) },
     I18N: {
+      lang: 'en',
       registerDict(namespace, dict) { dictionaries.set(namespace, dict); },
       t(namespace, key) { return dictionaries.get(namespace)?.[key]?.en || key; },
       onChange() {},
@@ -93,13 +110,14 @@ function hostPage(game, { deferredStart = false } = {}) {
     [game.uiKey]: { t: key => key, esc: String, errorText: String, Card },
     [game.syncKey]: { Host },
   };
+  if (game.stateKey === 'dixit') vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'life-story-ui.js'), 'utf8'), context, { filename: 'life-story-ui.js' });
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', game.script), 'utf8'), context, { filename: game.script });
   assert.ok(host?.connectCalled, `${game.name}: the page connects to the restored Hub room`);
   const setStatus = (status, { connected = true, own = true } = {}) => {
     host.connected = connected; host.own = own; host.options.onStatus(status);
   };
   return {
-    host, cards, element, payload, setStatus,
+    host, room, cards, element, payload, setStatus,
     open: element(`${game.prefix}-open`),
     setup: element(`${game.prefix}-setup`),
     table: element(`${game.prefix}-table`),
@@ -107,6 +125,70 @@ function hostPage(game, { deferredStart = false } = {}) {
     click: () => element(`${game.prefix}-open`).listeners.get('click')(),
   };
 }
+
+test('Dixit mode selection defaults to original and passes Life locale and existing card pack only on explicit open', async () => {
+  const page = hostPage(games[0]);
+  assert.equal(page.element('dx-mode').value, 'classic');
+  assert.equal(page.element('dx-target-score-field').hidden, false);
+  page.setStatus('ready');
+  page.element('dx-mode').value = 'life_story';
+  page.element('dx-mode').listeners.get('change')();
+  assert.equal(page.host.starts.length, 0);
+  assert.equal(page.element('dx-target-score-field').hidden, true);
+  assert.equal(page.element('dx-life-settings').hidden, false);
+  page.element('dx-life-locale').value = 'zh-TW';
+  page.element('dx-life-pack').value = 'dixit_base84';
+  await page.click();
+  assert.equal(page.host.starts.length, 1);
+  assert.equal(page.host.starts[0].mode, 'life_story');
+  assert.equal(page.host.starts[0].locale, 'zh-TW');
+  assert.equal(page.host.starts[0].cardPackId, 'dixit_base84');
+  assert.equal(page.cards[0].payload.dixit.mode, 'life_story');
+  assert.equal(page.element('dx-life-settings').hidden, true, 'after opening, server-backed lobby settings replace prelaunch settings');
+});
+
+test('Dixit restored original lobby offers a manual mode switch without rewriting it during selection', async () => {
+  const page = hostPage(games[0]);
+  page.setStatus('ready');
+  page.show(page.payload('original-session'));
+  page.element('dx-mode').value = 'life_story';
+  page.element('dx-mode').listeners.get('change')();
+  assert.equal(page.element('dx-switch-mode').hidden, false);
+  assert.equal(page.host.starts.length, 0);
+  assert.equal(page.cards[0].payload.dixit.sessionId, 'original-session');
+  await page.element('dx-switch-mode').listeners.get('click')();
+  assert.equal(page.host.starts.length, 1);
+  assert.equal(page.cards[0].payload.dixit.mode, 'life_story');
+});
+
+test('Dixit service capability failure shows the update requirement and preserves the original table', async () => {
+  const page = hostPage(games[0], { startError: 'life_story_server_required' });
+  page.setStatus('ready');
+  page.show(page.payload('original-session'));
+  page.element('dx-mode').value = 'life_story';
+  page.element('dx-mode').listeners.get('change')();
+  await page.element('dx-switch-mode').listeners.get('click')();
+  assert.match(page.element('dx-host-status').textContent, /Update the game service/);
+  assert.equal(page.cards[0].payload.dixit.sessionId, 'original-session');
+  assert.equal(page.cards[0].payload.dixit.mode, undefined);
+  assert.equal(page.cards[0].options.disabled(), false);
+  assert.equal(page.element('dx-mode').value, 'life_story', 'failed activation does not pretend to start or silently select another mode');
+});
+
+test('Dixit restored Life manager disables private room reads before connecting, and stale original active state cannot resume them', () => {
+  const page = hostPage(games[0], { savedMode: 'life_story' });
+  assert.equal(page.room.options.privateProjectionOnly, true);
+  assert.equal(page.host.privateReadsAtConnect, false);
+  const stale = page.payload('old-original'); stale.dixit.phase = 'CLUE';
+  page.show(stale);
+  assert.equal(page.room.privateReads, false);
+  assert.equal(page.room.getExtra('dixitMode'), 'life_story');
+  page.show(page.payload('life-current', { mode: 'life_story', locale: 'en', cardPackId: 'dixit_original' }));
+  assert.equal(page.room.privateReads, false);
+  page.show(page.payload('new-original-lobby'));
+  assert.equal(page.room.privateReads, true, 'a known empty original lobby can safely restore normal original reads');
+  assert.equal(page.room.getExtra('dixitMode'), 'classic');
+});
 
 for (const game of games) {
   test(`${game.name}: foreign player cards expose an explicit switch and replace the restored table`, async () => {

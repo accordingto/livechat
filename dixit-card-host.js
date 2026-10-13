@@ -10,6 +10,7 @@ var DIXIT_CARD_HOST = (() => {
       this.code = roomCode; this.token = playerToken; this.db = db; this.storage = storage;
       this.tabStorage = tabStorage;
       this.isActive = isActive; this.onStatus = onStatus; this.host = null; this.listeners = []; this.binding = ''; this.payload = null;
+      this.retiredClassicSessions = new Set();
     }
     saved() {
       try { return JSON.parse(this.storage.getItem('room-session-' + this.code) || 'null'); }
@@ -33,7 +34,11 @@ var DIXIT_CARD_HOST = (() => {
       } catch (error) { return undefined; }
     }
     trusted(data) {
-      const s = data?.dixit, saved = this.saved(), roster = DIXIT_ENGINE.list(s?.roster);
+      const s = data?.dixit;
+      // Life Story runs only in the trusted service. Even the HOST's private
+      // card must never subscribe to the other players' private projections.
+      if (s?.mode === 'life_story' || this.retiredClassicSessions.has(s?.sessionId)) return null;
+      const saved = this.saved(), roster = DIXIT_ENGINE.list(s?.roster);
       if (data?.game !== 'dixit' || s?.version !== 1 || s.hostControls !== true ||
           !Number.isInteger(s.playerNum) || s.playerNum !== s.hostPlayerNum || data.playerNum !== s.playerNum ||
           roster.length < 3 || roster.length > 8 || !roster.some(p => p.playerNum === s.playerNum) ||
@@ -43,6 +48,7 @@ var DIXIT_CARD_HOST = (() => {
       return { saved, roster, seat: s.playerNum };
     }
     update(data) {
+      if (data?.dixit?.mode === 'life_story') { this.stopForLife(); this.payload = data; return false; }
       this.payload = data;
       const trusted = this.trusted(data);
       if (!trusted) { this.stop(); return false; }
@@ -63,7 +69,11 @@ var DIXIT_CARD_HOST = (() => {
       };
       const host = this.host = new DIXIT_SYNC.Host({ room, db: this.db, mode: 'private', resumeGroup: this.executionGroup(seat),
         browserGroup: this.browserExecutionGroup(seat), isActive: this.isActive,
-        onStatus: status => this.onStatus(status), onChange: () => {} });
+        onStatus: status => this.onStatus(status), onChange: payload => {
+          // Stop an existing classic bridge as soon as the canonical mode
+          // switches, before the service publishes dealt Life Story hands.
+          if (payload?.dixit?.mode === 'life_story') this.stopForLife();
+        } });
       for (const [playerNum, ref] of refs) {
         const listener = snapshot => {
           answers[playerNum] = snapshot.val(); host.receive(playerNum, answers[playerNum]);
@@ -76,6 +86,11 @@ var DIXIT_CARD_HOST = (() => {
     // Visibility affects executor preference, not whether the HOST keeps
     // processing background requests. Only stop/close tears it down.
     setActive(active) { return this.host?.setActive(active); }
+    stopForLife() {
+      const prior = this.payload?.dixit;
+      if (prior?.mode !== 'life_story' && typeof prior?.sessionId === 'string') this.retiredClassicSessions.add(prior.sessionId);
+      this.stop();
+    }
     stop() {
       this.host?.close(); this.host = null; this.binding = '';
       for (const [ref, listener] of this.listeners) ref.off('value', listener);

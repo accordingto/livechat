@@ -4,6 +4,9 @@
  */
 var DIXIT_ENGINE = (() => {
   'use strict';
+  // Life Story is isolated; legacy sessions keep the original rules and scoring.
+  const lifeEngine = () => typeof module !== 'undefined' && module.exports
+    ? require('./life-story-engine.js') : globalThis.LIFE_STORY_ENGINE;
 
   // Firebase can omit empty containers and return numeric-key objects.
   const list = value => Array.isArray(value) ? value.filter(x => x != null) :
@@ -38,7 +41,9 @@ var DIXIT_ENGINE = (() => {
     }
     return result;
   }
-  function create({ id, roster, seed, now, hostPlayerNum = 1, targetScore = 30, sharedControls = false } = {}) {
+  function create(options = {}) {
+    if (options.mode === 'life_story') return lifeEngine().create(options);
+    const { id, roster, seed, now, hostPlayerNum = 1, targetScore = 30, sharedControls = false } = options;
     const players = list(roster);
     if (!id || players.length < 3 || players.length > 8) throw new Error('invalid_setup');
     if (players.some(p => !p || !Number.isInteger(p.playerNum) || p.playerNum < 1) ||
@@ -169,6 +174,7 @@ var DIXIT_ENGINE = (() => {
     s.revealStage = 'complete'; transition(s, high >= s.targetScore ? 'FINISHED' : 'REVEAL');
   }
   function apply(current, input) {
+    if (current?.mode === 'life_story') return lifeEngine().apply(current, input);
     if (!current || !input || typeof input.id !== 'string' || !input.id || input.id.length > 100) return current;
     const actor = seatNumber(input.actor);
     if (!Number.isInteger(actor) || (actor !== 0 && !list(current.roster).some(p => p.playerNum === actor))) return current;
@@ -339,6 +345,7 @@ var DIXIT_ENGINE = (() => {
     return s;
   }
   function view(current, playerNum, now) {
+    if (current?.mode === 'life_story') return lifeEngine().view(current, playerNum, now);
     const s = normalize(current), actor = seatNumber(playerNum), mine = s.roster.find(p => p.playerNum === actor);
     const player = !!mine, eligible = player && mine.active !== false && mine.pending !== true, host = actor === 0 || eligible && (actor === s.hostPlayerNum || s.sharedControls === true), telling = eligible && actor === s.storyteller;
     const live = !s.paused, ended = ['FINISHED', 'CANCELLED'].includes(s.phase);
@@ -381,6 +388,7 @@ var DIXIT_ENGINE = (() => {
     return { game: 'dixit', playerNum: player ? actor : 0, name: mine ? mine.name : null, dixit };
   }
   function membership(current, changes = {}, ctx = {}) {
+    if (current?.mode === 'life_story') return lifeEngine().membership(current, changes, ctx);
     const s = normalize(current), rows = list(changes.roster), added = list(changes.added), inactive = new Set(list(changes.inactiveNums).map(Number));
     if (s.roster.length + added.length > 8 || added.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1 || s.roster.some(old => old.playerNum === p.playerNum)) || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
     const cmd = { id: String(ctx.id || 'membership'), actor: 0, seed: ctx.seed, now: Number(ctx.now) || 0 };

@@ -13,6 +13,12 @@ var HUB_EXECUTOR = (() => {
     try { const r = await fetch(endpoint, { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(5000) }); readyValue = r.ok && (await r.json()).ready === true; } catch { readyValue = false; }
     return readyValue;
   }
+  async function lifeStoryReady() {
+    try {
+      const response = await fetch(endpoint, { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(5000) });
+      return response.ok && response.headers.get('X-Icebreak-Life-Story') === '1' && (await response.json()).ready === true;
+    } catch { return false; }
+  }
   async function request(input) {
     // The service can spend up to 60 seconds finishing guarded publication.
     // Aborting at 12 seconds stranded an otherwise successful registration.
@@ -34,7 +40,8 @@ var HUB_EXECUTOR = (() => {
     const actionId = action?.id || action?.commandId;
     const phaseKey = JSON.stringify([ticket.capsule, nested.turnId, nested.phaseId, nested.phase, nested.revealStage]);
     if (phaseKey !== current?.phaseKey || actionId && actionId !== current?.actionId) { lastPulse = 0; pendingWake = !!inflight; }
-    current = { actionId, phaseKey, capsule: ticket.capsule, token, game: ticket.game, sessionId: ticket.sessionId, turnId: nested.turnId, phaseId: nested.phaseId };
+    current = { actionId, phaseKey, capsule: ticket.capsule, token, game: ticket.game, sessionId: ticket.sessionId, turnId: nested.turnId, phaseId: nested.phaseId,
+      ...(nested.mode === 'life_story' ? { mode: 'life_story', cycleId: nested.cycleId, lifeRevision: nested.lifeRevision } : {}) };
     recoveryControl(['bluffking','chatwolf'].includes(ticket.game) ? [] : ticket.absentNums || []);
     membershipControl(data, current);
     active = true; backgroundPulse();
@@ -56,7 +63,8 @@ var HUB_EXECUTOR = (() => {
     return task;
   }
   function backgroundPulse() { void pulse().catch(() => {}); }
-  function recover() { return pulse({ id: uid(), commandId: uid(), type: 'recover', action: 'recover', sessionId: current?.sessionId, turnId: current?.turnId, phaseId: current?.phaseId }); }
+  function recover() { return pulse({ id: uid(), commandId: uid(), type: 'recover', action: 'recover', sessionId: current?.sessionId, turnId: current?.turnId, phaseId: current?.phaseId,
+    ...(current?.mode === 'life_story' ? { cycleId: current.cycleId, expectedRevision: current.lifeRevision } : {}) }); }
   function recoveryControl(absent) {
     if (typeof document === 'undefined') return;
     let row = document.getElementById('hub-absence-controls');
@@ -88,6 +96,18 @@ var HUB_EXECUTOR = (() => {
   let rosterWork = Promise.resolve();
   async function discoverTable(room) {
     let prior = readLocal(tableKey(room.code));
+    const lifeSetup = readLocal('room-session-' + room.code);
+    if (lifeSetup?.dixitMode === 'life_story' || room.privateReads === false) {
+      // Membership discovery must use the encrypted control document's public
+      // header, never a once() read of another player's dealt private card.
+      const token = lifeSetup?.dixitControlToken;
+      if (!token || typeof firebase === 'undefined') return prior;
+      const raw = (await firebase.database().ref('rooms/' + room.code + '/players/' + token).once('value')).val();
+      const state = raw?.state || (raw?.stateJson ? JSON.parse(raw.stateJson) : null);
+      if (raw?.executor?.v !== 1 || state?.mode !== 'life_story') return null;
+      rememberTable(room.code, 'dixit', raw.executor.capsule, token, state.roster);
+      return readLocal(tableKey(room.code));
+    }
     const first = room.playerRef?.(0);
     if (!first || typeof first.once !== 'function') return prior;
     let card = (await first.once('value')).val();
@@ -327,6 +347,17 @@ var HUB_EXECUTOR = (() => {
     };
     p.command = function (type, extra = {}) {
       if (!isServer(this)) return originals.command.call(this, type, extra);
+      if (this.doc.state?.mode === 'life_story') {
+        return request({ operation: 'execute', ...metadata(this), command: { ...extra, id: extra.id || uid(), type } }).then(result => {
+          const projected = result.payload?.dixit;
+          if (projected?.reply?.error) throw new Error(projected.reply.error);
+          if (projected) {
+            const safe = { ...this.doc.state, sessionId: projected.sessionId, turnId: projected.turnId, phase: projected.phase, roster: projected.roster, publicLifeView: projected };
+            this.doc = { ...this.doc, state: safe }; this.onChange(safe);
+          }
+          return this.doc.state;
+        });
+      }
       return request({ operation: 'execute', ...metadata(this), command: { ...extra, id: uid(), type,
         sessionId: this.doc.state.sessionId, turnId: this.doc.state.turnId, phaseId: this.doc.state.phaseId } }).then(async () => {
           if (typeof this.ref.once === 'function') {
@@ -339,6 +370,9 @@ var HUB_EXECUTOR = (() => {
         });
     };
     p.start = async function (...args) {
+      const lifeStory = game === 'dixit' && args[0]?.mode === 'life_story';
+      if (lifeStory && !await lifeStoryReady()) throw new Error('life_story_server_required');
+      let opened = false;
       this.executorStarting = true;
       try {
         if (this.executorPromise) { try { await this.executorPromise; } catch (_) {} }
@@ -347,12 +381,13 @@ var HUB_EXECUTOR = (() => {
           this.doc = { ...this.doc }; delete this.doc.executor;
           await originals.renew.call(this);
         }
-        return await originals.start.apply(this, args);
+        const started = await originals.start.apply(this, args); opened = true; return started;
       } finally {
         this.executorStarting = false;
         // Finish available service migration before the manager's start action
         // completes, so immediately closing that page still leaves cards ready.
-        await register(this);
+        const registration = await register(this);
+        if (lifeStory && opened && !registration?.capsule) throw new Error('life_story_server_required');
       }
     };
     p.status = function (status) {
@@ -486,6 +521,6 @@ var HUB_EXECUTOR = (() => {
     window.addEventListener('online', () => { lastPulse = 0; backgroundPulse(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPulse = 0; backgroundPulse(); } });
   }
-  return { request, ready, ensureHost, ensureBluff, registerWolf, observe, pulse, recover, isIndependent, install, syncRoster, watchHub, setParticipant, membershipControl, rememberTable };
+  return { request, ready, lifeStoryReady, ensureHost, ensureBluff, registerWolf, observe, pulse, recover, isIndependent, install, syncRoster, watchHub, setParticipant, membershipControl, rememberTable };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = HUB_EXECUTOR;

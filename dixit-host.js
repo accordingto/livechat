@@ -13,7 +13,11 @@
     switchHint:{zh:'玩家目前在其他遊戲。按「開啟這桌遊戲」即可把原玩家卡片切換過來。',en:'Players are in another game. Open this table to switch their existing cards to Dixit.'},
   });
   const ht=(key,params={})=>I18N.t('dixitHost',key).replace(/\{(\w+)\}/g,(_,name)=>params[name]??'');
-  let sync=null,card=null,payload=null,state=null,status='loading',busy=false,problem='',demoTimer=null;
+  const lt=(key)=>LIFE_STORY_UI.t(key);
+  byId('dx-host-seat-field').insertAdjacentHTML('beforebegin','<div id="dx-mode-field" class="dx-host-seat-field"><label><span id="dx-mode-label"></span><select id="dx-mode" data-testid="dixit-mode"><option value="classic"></option><option value="life_story"></option></select></label><div id="dx-life-settings" hidden><label><span id="dx-life-locale-label"></span><select id="dx-life-locale"><option value="en">English</option><option value="zh-TW">繁體中文</option></select></label><label><span id="dx-life-pack-label"></span><select id="dx-life-pack"><option value="dixit_original"></option><option value="dixit_base84"></option></select></label><p class="dx-muted" id="dx-life-help"></p></div><button type="button" class="dx-button dx-secondary" id="dx-switch-mode" hidden></button></div>');
+  const selectedMode=()=>byId('dx-mode').value==='life_story'?'life_story':'classic';
+  byId('dx-life-locale').value=I18N.lang==='zh'?'zh-TW':'en';
+  let sync=null,card=null,payload=null,state=null,status='loading',busy=false,problem='',demoTimer=null,openingMode=null;
   const requested=Number(new URLSearchParams(location.search).get('players')),count=[3,4,5,6,7,8].includes(requested)?requested:4;
   const roster=['Alex','Jamie','Sam','Riley','Taylor','Robin','Morgan','Casey'].slice(0,count).map((name,i)=>({playerNum:i+1,name}));
   const seed=()=>crypto.getRandomValues(new Uint32Array(1))[0],demoView=()=>Number(byId('dx-demo-view').value);
@@ -36,6 +40,13 @@
     }catch(e){}
   }
   function labels(){
+    const life=selectedMode()==='life_story',lobby=payload?.dixit?.phase==='LOBBY'&&status!=='switched';
+    byId('dx-mode-label').textContent=lt('modeLabel');byId('dx-mode').options[0].textContent=lt('classic');byId('dx-mode').options[1].textContent=lt('mode');
+    byId('dx-life-locale-label').textContent=lt('language');byId('dx-life-pack-label').textContent=lt('pack');byId('dx-life-pack').options[0].textContent=lt('fullPack');byId('dx-life-pack').options[1].textContent=lt('basePack');
+    byId('dx-life-help').textContent=lt('intro')+' '+lt('lowPressure');byId('dx-life-settings').hidden=!life||lobby&&payload?.dixit?.mode==='life_story';
+    byId('dx-switch-mode').textContent=life?lt('mode'):lt('classic');byId('dx-switch-mode').hidden=!lobby||selectedMode()===(payload?.dixit?.mode==='life_story'?'life_story':'classic');byId('dx-switch-mode').disabled=busy||!canOpen();
+    const modeField=byId('dx-mode-field');if(lobby)byId('dx-table').before(modeField);else byId('dx-host-seat-field').before(modeField);
+    modeField.hidden=demo||!!payload&&!lobby&&status!=='switched'||status==='setupNeeded'||status==='noFirebase';
     byId('dx-host-seat-label').textContent=ht('seat');byId('dx-host-seat-hint').textContent=ht('seatHint');byId('dx-own-card').textContent=ht('ownCard');
     byId('dx-target-score-label').textContent=ht('targetScore');byId('dx-target-score-hint').textContent=ht('targetHint');
     byId('dx-setup-help').textContent=status==='switched'?ht('switchHint'):t(status==='setupNeeded'?'setupHint':'lobbyHint');
@@ -43,24 +54,38 @@
     byId('dx-open').disabled=busy||!canOpen();byId('dx-setup-link').hidden=demo;byId('dx-setup').hidden=!!payload&&status!=='switched';
     byId('dx-table').hidden=status==='switched';
     byId('dx-host-seat-field').hidden=status==='setupNeeded'||status==='noFirebase';
-    byId('dx-target-score-field').hidden=status==='setupNeeded'||status==='noFirebase';
+    byId('dx-target-score-field').hidden=life||status==='setupNeeded'||status==='noFirebase';
     if(!demo&&ROOM.code)byId('dx-room-label').textContent=ht('room',{code:ROOM.code,n:ROOM.count});
     hostLink();
     if(card){card.options.disabled=()=>!demo&&status!=='ready';card.paint();}
   }
-  function show(next){payload=next;const target=validTarget(next.dixit.targetScore)?Number(next.dixit.targetScore):30;
-    byId('dx-target-score').value=String(target);if(!demo&&ROOM.code&&Number(ROOM.getExtra('dixitTargetScore'))!==target)ROOM.setExtra('dixitTargetScore',target);
+  function show(next){payload=next;const life=next.dixit.mode==='life_story';byId('dx-mode').value=openingMode|| (life?'life_story':'classic');
+    if(!demo&&ROOM.code){
+      if(life||openingMode==='life_story'){ROOM.setExtra('dixitMode','life_story');ROOM.setPrivateReads?.(false);}
+      else if(ROOM.getExtra('dixitMode')!=='life_story'||next.dixit.phase==='LOBBY'){ROOM.setExtra('dixitMode','classic');ROOM.setPrivateReads?.(true);}
+    }
+    if(next.dixit.mode==='life_story'){byId('dx-life-locale').value=next.dixit.locale==='zh-TW'?'zh-TW':'en';byId('dx-life-pack').value=next.dixit.config?.cardPackId||'dixit_original';}
+    const target=validTarget(next.dixit.targetScore)?Number(next.dixit.targetScore):30;
+    if(next.dixit.mode!=='life_story'){byId('dx-target-score').value=String(target);if(!demo&&ROOM.code&&Number(ROOM.getExtra('dixitTargetScore'))!==target)ROOM.setExtra('dixitTargetScore',target);}
     if(!card)card=new DIXIT_UI.Card(byId('dx-table'),{
     host:demo?demoView()===0:true,now:()=>sync?.now()||Date.now(),connected:()=>demo||!!sync?.connected,
     send:async command=>{if(demo){state=DIXIT_ENGINE.apply(state,{...command,actor:demoView(),seed:seed(),now:Date.now()});show(DIXIT_ENGINE.view(state,demoView(),Date.now()));}else await sync.command(command.type,command);}
   });card.update(next);labels();}
   byId('dx-host-seat').addEventListener('change',()=>{if(!demo&&ROOM.code)ROOM.setExtra('dixitHostPlayerNum',Number(byId('dx-host-seat').value));});
   byId('dx-target-score').addEventListener('change',()=>{try{const target=targetScore();problem='';if(!demo&&ROOM.code)ROOM.setExtra('dixitTargetScore',target);}catch(error){problem=ht('invalidTarget');}labels();});
-  byId('dx-open').addEventListener('click',async()=>{if(busy||!canOpen())return;busy=true;problem='';labels();try{
-    const hostPlayerNum=Number(byId('dx-host-seat').value),target=targetScore();
+  byId('dx-mode').addEventListener('change',()=>{problem='';labels();});
+  async function openSelected(){if(busy||!canOpen())return;busy=true;problem='';labels();try{
+    const hostPlayerNum=Number(byId('dx-host-seat').value),mode=selectedMode(),target=mode==='life_story'?30:targetScore();
+    openingMode=mode;
+    if(mode==='life_story'&&demo)throw new Error('life_story_server_required');
+    if(mode==='life_story'&&!demo&&typeof HUB_EXECUTOR!=='undefined'&&typeof HUB_EXECUTOR.lifeStoryReady==='function'){
+      if(!await HUB_EXECUTOR.lifeStoryReady())throw new Error('life_story_server_required');
+      ROOM.setExtra('dixitMode','life_story');ROOM.setPrivateReads?.(false);
+    }
     if(demo){state=DIXIT_ENGINE.create({id:crypto.randomUUID(),roster,seed:seed(),now:Date.now(),hostPlayerNum,targetScore:target});show(DIXIT_ENGINE.view(state,demoView(),Date.now()));}
-    else await sync.start({hostPlayerNum,targetScore:target});
-  }catch(e){problem=e.message==='invalid_target_score'?ht('invalidTarget'):DIXIT_UI.errorText(e.message);}finally{busy=false;labels();}});
+    else await sync.start({hostPlayerNum,targetScore:target,...(mode==='life_story'?{mode,locale:byId('dx-life-locale').value,cardPackId:byId('dx-life-pack').value}:{})});
+  }catch(e){problem=e.message==='invalid_target_score'?ht('invalidTarget'):/life_story|unsupported_mode|executor_unavailable/.test(e.message)?lt('service'):DIXIT_UI.errorText(e.message);}finally{openingMode=null;busy=false;labels();}}
+  byId('dx-open').addEventListener('click',openSelected);byId('dx-switch-mode').addEventListener('click',openSelected);
   byId('dx-demo-view').addEventListener('change',()=>{card?.destroy();card=null;show(DIXIT_ENGINE.view(state,demoView(),Date.now()));});
   if(demo){
     status='ready';byId('dx-demo-bar').hidden=false;byId('dx-demo-link').hidden=true;
@@ -77,7 +102,8 @@
     if(!saved?.tokens?.length||!Number.isInteger(saved.playerCount)||saved.playerCount<3||saved.playerCount>8)status='setupNeeded';
     else if(!ROOM.enabled)status='noFirebase';
     else{
-      ROOM.init({mount:'dx-room-mount',hideSetup:true,accent:'#e8b96b',counts:[3,4,5,6,7,8],defaultCount:4,onPlayerData:(n,data)=>sync?.receive(n,data)});
+      ROOM.init({mount:'dx-room-mount',hideSetup:true,privateProjectionOnly:saved.dixitMode==='life_story',accent:'#e8b96b',counts:[3,4,5,6,7,8],defaultCount:4,onPlayerData:(n,data)=>sync?.receive(n,data)});
+      if(saved.dixitMode==='life_story')ROOM.setPrivateReads?.(false);
       setSeats(Array.from({length:ROOM.count},(_,i)=>({playerNum:i+1,name:ROOM.name(i)})),ROOM.getExtra('dixitHostPlayerNum'));
       const savedTarget=ROOM.getExtra('dixitTargetScore');byId('dx-target-score').value=String(validTarget(savedTarget)?Number(savedTarget):30);
       sync=new DIXIT_SYNC.Host({room:ROOM,db:firebase.database(),isActive:()=>!document.hidden,onChange:show,onStatus:next=>{status=next;labels();}});sync.connect();

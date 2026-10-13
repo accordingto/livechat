@@ -13,6 +13,8 @@
     "test:once-upon-a-time": "node --test tests/once-upon-a-time-*.test.cjs",
     "dev:once-upon-a-time": "node scripts/once-upon-a-time-dev-server.cjs",
     "test:dixit": "node --test tests/dixit-*.test.cjs",
+    "test:life-story": "node --test tests/life-story-*.test.cjs",
+    "test:life-story:browser": "node tests/life-story-ui.browser.cjs",
     "dev:dixit": "node scripts/dixit-dev-server.cjs",
     "test:bluff": "node --test tests/bluff-*.test.cjs",
     "dev:bluff": "node scripts/bluff-dev-server.cjs",

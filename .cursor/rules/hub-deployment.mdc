@@ -1,0 +1,13 @@
+---
+description: User-authorized direct deployment for this existing Hub
+alwaysApply: true
+---
+
+For this Hub, the user authorized production deployment of completed feature
+changes and fixes after applicable tests pass, on 2026-10-13. Do not ask for
+deployment confirmation again unless the user revokes or changes this instruction.
+
+Follow `AGENTS.md` and current `CLAUDE.md` release notes. Publish to the existing
+frontend and independent executor; deploy both when runtime changes require it.
+Preserve secrets and unrelated games. Verify stable production URLs and report
+real results. Test only disposable production fixtures with guarded cleanup.

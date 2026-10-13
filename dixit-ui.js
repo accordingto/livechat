@@ -138,6 +138,7 @@
     }).join('')+'</div></aside>';
   }
   function tableHTML(payload,options={}){
+    if((payload.dixit||payload).mode==='life_story'&&root.LIFE_STORY_UI)return root.LIFE_STORY_UI.tableHTML(payload,options);
     const s=payload.dixit||payload,host=!!options.host,controls=host||s.hostControls===true,a={...s.actions},selected=options.selected||new Set(),now=clockNow(options);
     if(host)for(const type of ['ready','story','submit','vote'])a[type]=false;
     if(!controls)for(const type of hostTypes)a[type]=false;
@@ -180,6 +181,11 @@
       this.click=e=>this.onClick(e);el.addEventListener('click',this.click);
     }
     update(payload){
+      if(payload?.dixit?.mode==='life_story'&&root.LIFE_STORY_UI){
+        if(!this.lifeCard){clearInterval(this.timer);this.el.removeEventListener('click',this.click);this.lifeCard=new root.LIFE_STORY_UI.Card(this.el,this.options);}
+        this.payload=payload;this.lifeCard.update(payload);return;
+      }
+      if(this.lifeCard){this.lifeCard.destroy();this.lifeCard=null;this.el.addEventListener('click',this.click);this.timer=setInterval(()=>this.paint(),200);this.signature='';this.payload=null;}
       const previous=this.payload?.dixit,next=payload?.dixit;this.payload=payload;if(!next)return;
       const enteringReveal=next.phase==='REVEALING'&&previous?.phase!=='REVEALING';
       if(!previous||previous.sessionId!==next.sessionId||previous.turnId!==next.turnId){this.openVoters.clear();this.selected.clear();this.error='';this.errorCode='';this.confirmation='';}
@@ -197,6 +203,7 @@
     }
     blocked(){return !!this.pending||this.options.disabled?.()||this.options.connected?.()===false;}
     paint(){
+      if(this.lifeCard){this.lifeCard.paint();return;}
       if(!this.payload)return;const s=this.payload.dixit,blocked=this.blocked(),now=clockNow(this.options),visual=revealVisual(s,now);
       if(visual!==this.revealVisualSignature){this.render();return;}
       const connection=this.el.querySelector('[data-dx-connection]');
@@ -207,6 +214,7 @@
       this.el.querySelectorAll('[data-dx-action],[data-dx-card],[data-dx-target-score]').forEach(b=>{if(blocked){if(!b.disabled)b.dataset.dxBlocked='1';b.disabled=true;}else if(b.dataset.dxBlocked){b.disabled=false;delete b.dataset.dxBlocked;}});
     }
     render(){
+      if(this.lifeCard){this.lifeCard.render();return;}
       if(!this.payload)return;
       const disclosures=['rules','details','result-details','round-gallery'].map(key=>[key,this.el.querySelector('[data-dx-'+key+']')?.open]);
       const s=this.payload.dixit,targetDraft=this.el.querySelector('[data-dx-target-score]')?.value;
@@ -255,7 +263,7 @@
       this.pendingTimer=setTimeout(()=>{if(this.pending?.id===command.id){this.pendingWaiting=true;this.paint();}},15000);
       try{await this.options.send(command);}catch(err){clearTimeout(this.pendingTimer);this.pending=null;this.pendingWaiting=false;this.errorCode=err.message;this.error=errorText(err.message);this.render();}
     }
-    destroy(){clearInterval(this.timer);clearTimeout(this.pendingTimer);this.el.removeEventListener('click',this.click);}
+    destroy(){this.lifeCard?.destroy();clearInterval(this.timer);clearTimeout(this.pendingTimer);this.el.removeEventListener('click',this.click);}
   }
   function errorText(error){return error==='waiting_players'?t('awayPlayers'): ['stale_turn','stale_session'].includes(error)?t('stale'):error==='paused'?t('paused'):error==='invalid_clue'?t('refreshHost'):error==='invalid_target_score'?t('invalidTarget'):['offline','not_available'].includes(error)?t('failed'):t('invalid');}
   root.DIXIT_UI={Card,t,esc,tableHTML,cardHTML,rulesHTML,errorText,picture,phaseInfo,revealVisual};

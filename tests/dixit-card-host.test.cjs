@@ -106,3 +106,56 @@ test('a new private tab keeps the browser executor identity while receiving a se
   assert.equal(JSON.stringify(payload).includes(first.browserGroup), false);
   assert.equal(JSON.stringify(payload).includes(first.resumeGroup), false);
 });
+
+test('Life Story host card never starts a browser executor or reads other private seats with valid saved credentials', () => {
+  const f = fixture();
+  let state = E.create({ id: 'life-bridge-test', mode: 'life_story', seed: 7, now: 1000,
+    hostPlayerNum: 1, sharedControls: true,
+    roster: [1, 2, 3].map(playerNum => ({ playerNum, name: 'Seat ' + playerNum })) });
+  state = E.apply(state, { id: 'life-deal', type: 'deal', actor: 1, sessionId: state.sessionId,
+    turnId: state.turnId, cycleId: state.cycleId, expectedRevision: state.lifeRevision,
+    seed: 99, now: 2000, onlineNums: [1, 2, 3], serverAuthority: true });
+  const payload = E.view(state, 1);
+  assert.equal(payload.dixit.hostControls, true);
+  assert.equal(payload.dixit.hand.length, 8, 'this is a real dealt private HOST projection');
+  assert.equal(f.bridge.trusted(payload), null);
+  assert.equal(f.bridge.update(payload), false);
+  assert.equal(f.bridge.update({ ...payload, dixit: { ...payload.dixit, revision: 99 } }), false);
+  assert.equal(f.hosts.length, 0);
+  assert.deepEqual(f.readPaths, []);
+  assert.equal(f.callbacks.size, 0);
+  assert.equal(f.bridge.host, null);
+  assert.equal(f.bridge.listeners.length, 0);
+});
+
+test('switching a classic private HOST to Life Story closes all old private listeners and does not reopen them', () => {
+  const f = fixture();
+  assert.equal(f.bridge.update(E.view(f.state, 1)), true);
+  assert.equal(f.callbacks.size, 3);
+  const pathsBefore = f.readPaths.slice();
+  const lifePayload = E.view(E.create({ id: 'life-switch', mode: 'life_story', seed: 3, now: 3000,
+    hostPlayerNum: 1, sharedControls: true,
+    roster: [1, 2, 3].map(playerNum => ({ playerNum, name: 'Seat ' + playerNum })) }), 1);
+  assert.equal(f.bridge.update(lifePayload), false);
+  assert.equal(f.hosts[0].closed, true);
+  assert.equal(f.callbacks.size, 0);
+  assert.equal(f.bridge.host, null);
+  assert.equal(f.bridge.listeners.length, 0);
+  assert.equal(f.bridge.update(lifePayload), false);
+  assert.equal(f.hosts.length, 1, 'the classic executor is the only one ever created');
+  assert.deepEqual(f.readPaths, pathsBefore, 'the life mode starts no new private reads');
+});
+
+test('canonical Life Story mode closes an old classic bridge before its private seat projection changes', () => {
+  const f = fixture();
+  assert.equal(f.bridge.update(E.view(f.state, 1)), true);
+  const host = f.hosts[0];
+  host.options.onChange({ game: 'dixit', playerNum: 0, dixit: { mode: 'life_story', phase: 'LOBBY' } });
+  assert.equal(host.closed, true);
+  assert.equal(f.callbacks.size, 0);
+  assert.equal(f.bridge.host, null);
+  assert.equal(f.bridge.listeners.length, 0);
+  assert.equal(f.bridge.update(E.view(f.state, 1)), false, 'a delayed old classic projection cannot reopen retired private refs');
+  assert.equal(f.hosts.length, 1);
+  assert.equal(f.callbacks.size, 0);
+});
