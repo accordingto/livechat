@@ -44,7 +44,7 @@ function protectAdapter(adapter, key) {
         delete next.lifeStateCipher; delete next.lifeStateSession;
         return next;
       }
-      const projected = adapter.project(state, { playerNum: 0 }, { now: Number(state.createdAt) || 0 });
+      const projected = adapter.project(state, { playerNum: 0 }, { now: Number(state.lifeRoom?.clock) || Number(state.createdAt) || 0 });
       const header = {
         mode: 'life_story', version: 1, sessionId: state.sessionId, turnId: state.turnId,
         revision: state.revision, phase: state.phase, roster: copy(state.roster), sharedControls: true,

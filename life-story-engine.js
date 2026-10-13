@@ -6,9 +6,9 @@ let randomState=1;
 function seedValue(value){let hash=2166136261;for(const ch of String(value))hash=Math.imul(hash^ch.charCodeAt(0),16777619);return(hash>>>0)||1;}
 function randomInt(max){randomState^=randomState<<13;randomState^=randomState>>>17;randomState^=randomState<<5;return Math.floor((randomState>>>0)/4294967296*max);}
 function randomUUID(){return Array.from({length:4},()=>randomInt(0x100000000).toString(16).padStart(8,'0')).join('');}
-const DEFAULT_MODE_CONFIG={mode:'life_story',minPlayers:3,maxPlayers:8,handSize:8,mulliganMaxCards:2,mulliganTimesPerTurn:1,sharingPoints:2,correctGuessPoints:2,attractedVotePoints:1,questionCooldown:6,cardPackId:'dixit_original'};
+const DEFAULT_MODE_CONFIG={mode:'life_story',minPlayers:3,maxPlayers:8,handSize:8,mulliganMaxCards:2,mulliganTimesPerTurn:1,sharingPoints:2,correctGuessPoints:2,attractedVotePoints:1,questionCooldown:6,cardPackId:'dixit_original',revealCountdownMs:3000,revealAnswerMs:1200};
 const CARD_PACKS=[{id:'dixit_original',name:{'zh-TW':'說書人原創圖卡（126張）',en:'Original Dixit picture pack (126)'},cardIds:Array.from({length:126},(_,i)=>'d'+String(i+1).padStart(3,'0')),artNote:{'zh-TW':'沿用 Hub 原創圖片',en:'Existing original Hub artwork'}},{id:'dixit_base84',name:{'zh-TW':'原創基本圖卡（84張）',en:'Original base pack (84)'},cardIds:Array.from({length:84},(_,i)=>'d'+String(i+1).padStart(3,'0')),artNote:{'zh-TW':'沿用 Hub 原創圖片',en:'Existing original Hub artwork'}}];
-function validateConfig(config){for(const key of ['minPlayers','maxPlayers','handSize','mulliganMaxCards','mulliganTimesPerTurn','sharingPoints','correctGuessPoints','attractedVotePoints','questionCooldown'])if(!Number.isSafeInteger(config[key])||config[key]<0)throw new Error('invalid_config');if(config.mode!=='life_story'||config.minPlayers<3||config.maxPlayers<config.minPlayers||config.maxPlayers>8||config.handSize<2||config.handSize>24||config.mulliganMaxCards>config.handSize)throw new Error('invalid_config');}
+function validateConfig(config){for(const key of ['minPlayers','maxPlayers','handSize','mulliganMaxCards','mulliganTimesPerTurn','sharingPoints','correctGuessPoints','attractedVotePoints','questionCooldown','revealCountdownMs','revealAnswerMs'])if(!Number.isSafeInteger(config[key])||config[key]<0)throw new Error('invalid_config');if(config.mode!=='life_story'||config.minPlayers<3||config.maxPlayers<config.minPlayers||config.maxPlayers>8||config.handSize<2||config.handSize>24||config.mulliganMaxCards>config.handSize)throw new Error('invalid_config');}
 function questionModule(){if(typeof require!=='function')throw new Error('server_required');return require('./life-story-questions.cjs');}
 const emptyHistory=()=>({selections:0,displayed:[],selected:[],replaced:[]});
 const selectQuestions=(...args)=>questionModule().selectQuestions(...args),markSelected=(...args)=>questionModule().markSelected(...args),markReplaced=(...args)=>questionModule().markReplaced(...args);
@@ -127,6 +127,7 @@ function beginTurn(room, storytellerId, source) {
         question: null, questionChosen: source === 'follow_up', candidates: selected.questions,
         questionReuse: selected.reused, storyComplete: false, table: [], votes: {}, abstained: [],
         mulligans: {}, settled: false, cancelled: false, deltas: {},
+        revealStage: '', revealStartedAt: 0, revealAnswerAt: 0, revealPopularAt: 0, revealPausedAt: 0,
     };
     room.cycle.opportunities[storytellerId] = 'in_progress';
     room.cycleComplete = false;
@@ -154,9 +155,13 @@ function lockIfReady(room) {
     room.phase = 'VOTING';
     record(room, 'cards_locked');
 }
+function votesComplete(turn) {
+    return !!turn && turn.table.length > 0 && activeParticipants(turn).filter(id => id !== turn.storytellerId)
+        .every(id => turn.votes[id] || turn.abstained.includes(id));
+}
 function settleIfReady(room) {
     const turn = currentTurn(room);
-    if (room.phase !== 'VOTING' || turn.settled)
+    if (room.phase !== 'REVEALING' || turn.revealStage !== 'answer' || turn.settled)
         return;
     const voters = activeParticipants(turn).filter(id => id !== turn.storytellerId);
     if (!voters.every(id => turn.votes[id] || turn.abstained.includes(id)))
@@ -179,6 +184,8 @@ function settleIfReady(room) {
     for (const member of room.players)
         member.hand.push(...draw(room, room.config.handSize - member.hand.length));
     turn.deltas = deltas;
+    turn.revealStage = 'full';
+    turn.revealPopularAt = turn.revealPopularAt || Number(room.clock) || 0;
     room.cycle.opportunities[turn.storytellerId] = 'shared';
     room.cycleComplete = isCycleComplete(room);
     room.previousQuestion = turn.question;
@@ -333,19 +340,23 @@ function applyCommand(room, actorId, command) {
             break;
         }
         case 'choose_story_card': {
-            requirePhase(room, ['PREPARE']);
+            requirePhase(room, ['PREPARE', 'STORYTELLING', 'COLLECTING']);
             const turn = requireStoryteller(room, actorId);
             const cardId = stringValue('cardId');
             requireThat(actor.hand.includes(cardId), 'CARD_NOT_OWNED', '只能選擇自己的手牌。');
             turn.storyCard = cardId;
+            if (room.phase !== 'PREPARE') turn.submissions[actorId] = cardId;
+            if (room.phase === 'COLLECTING') lockIfReady(room);
             break;
         }
         case 'start_story': {
             requirePhase(room, ['PREPARE']);
             const turn = requireStoryteller(room, actorId);
             requireThat(turn.questionChosen, 'QUESTION_REQUIRED', '請選一題或選擇自由分享。');
-            requireThat(turn.storyCard && actor.hand.includes(turn.storyCard), 'CARD_REQUIRED', '請先秘密選擇一張自己的牌。');
-            turn.submissions[actorId] = turn.storyCard;
+            if (turn.storyCard) {
+                requireThat(actor.hand.includes(turn.storyCard), 'CARD_NOT_OWNED', '只能選擇自己的手牌。');
+                turn.submissions[actorId] = turn.storyCard;
+            }
             room.phase = 'STORYTELLING';
             break;
         }
@@ -424,6 +435,30 @@ function applyCommand(room, actorId, command) {
             settleIfReady(room);
             break;
         }
+        case 'reveal': {
+            requireHost(room, actorId);
+            requirePhase(room, ['VOTING']);
+            const turn = currentTurn(room);
+            requireThat(votesComplete(turn), 'VOTES_INCOMPLETE', '請等所有有效玩家投票或明確棄權後，再開始揭曉。');
+            requireThat(activeParticipants(turn).length >= room.config.minPlayers, 'MIN_PLAYERS', '參與人數不足，請取消回合。');
+            turn.revealStage = 'countdown';
+            turn.revealStartedAt = Number(room.clock) || 0;
+            turn.revealAnswerAt = turn.revealStartedAt + room.config.revealCountdownMs;
+            turn.revealPopularAt = turn.revealAnswerAt + room.config.revealAnswerMs;
+            turn.revealPausedAt = 0;
+            room.phase = 'REVEALING';
+            record(room, 'reveal_started', actorId);
+            break;
+        }
+        case 'advance_reveal': {
+            requireHost(room, actorId);
+            requirePhase(room, ['REVEALING']);
+            const turn = currentTurn(room);
+            requireThat(Number(room.clock) >= turn.revealPopularAt, 'REVEAL_NOT_READY', '倒數結束、說書人原牌顯示完成後，才會揭曉所有圖卡與分數。');
+            turn.revealStage = 'answer';
+            settleIfReady(room);
+            break;
+        }
         case 'finish_discussion': {
             requireHost(room, actorId);
             requirePhase(room, ['REVEAL_DISCUSS']);
@@ -467,7 +502,7 @@ function applyCommand(room, actorId, command) {
         }
         case 'cancel_turn': {
             requireHost(room, actorId);
-            requirePhase(room, ['PREPARE', 'STORYTELLING', 'COLLECTING', 'VOTING']);
+            requirePhase(room, ['PREPARE', 'STORYTELLING', 'COLLECTING', 'VOTING', 'REVEALING']);
             cancelTurn(room);
             break;
         }
@@ -491,7 +526,7 @@ function applyCommand(room, actorId, command) {
                     delete turn.submissions[id];
                     lockIfReady(room);
                 }
-                else
+                else if (!turn.table.length)
                     delete turn.submissions[id];
             }
             room.cycleComplete = isCycleComplete(room);
@@ -602,7 +637,7 @@ function assertCardInvariant(room) {
 /* Hub adapter below. */
 const list=value=>Array.isArray(value)?value.filter(x=>x!=null):Object.keys(value||{}).sort((a,b)=>Number(a)-Number(b)).map(k=>value[k]).filter(x=>x!=null);
 const copy=value=>JSON.parse(JSON.stringify(value));
-const HOST_COMMANDS=new Set(['configure','deal','start_game','end_game','finish_discussion','next_in_order','cancel','cancel_turn','excuse_player','abstain_vote','transfer_host','clear_question_history','restart','pause','resume','recover','finish_story']);
+const HOST_COMMANDS=new Set(['configure','deal','start_game','end_game','finish_discussion','next_in_order','cancel','cancel_turn','excuse_player','abstain_vote','transfer_host','clear_question_history','restart','pause','resume','recover','finish_story','reveal','advance_reveal']);
 function restore(current){
   const state=copy(current),room=state.lifeRoom;
   if(!room)throw new Error('server_required');
@@ -612,7 +647,7 @@ function restore(current){
   for(const key of ['displayed','selected','replaced'])room.questionHistory[key]=list(room.questionHistory[key]);
   for(const p of room.players)p.hand=list(p.hand);
   if(room.cycle){room.cycle.seats=list(room.cycle.seats);room.cycle.opportunities=room.cycle.opportunities||{};}
-  if(room.turn){for(const key of ['participants','excused','candidates','table','abstained'])room.turn[key]=list(room.turn[key]);for(const key of ['submissions','votes','mulligans','deltas'])room.turn[key]=room.turn[key]||{};}
+  if(room.turn){for(const key of ['participants','excused','candidates','table','abstained'])room.turn[key]=list(room.turn[key]);for(const key of ['submissions','votes','mulligans','deltas'])room.turn[key]=room.turn[key]||{};room.turn.revealStage=room.turn.revealStage||(room.turn.settled?'full':'');for(const key of ['revealStartedAt','revealAnswerAt','revealPopularAt','revealPausedAt'])room.turn[key]=Number(room.turn[key])||0;}
   state.seen=state.seen||{};state.replies=state.replies||{};
   return state;
 }
@@ -669,6 +704,11 @@ function apply(current,input){
   }
   if(['pause','resume'].includes(input.type)){
     if(!isHost)return receipt(state,actor,input.id,'host_only');
+    if(input.type==='pause'&&state.paused||input.type==='resume'&&!state.paused)return receipt(state,actor,input.id,'not_available');
+    if(room.phase==='REVEALING'){
+      if(input.type==='pause')room.turn.revealPausedAt=room.clock;
+      else{const delay=Math.max(0,room.clock-room.turn.revealPausedAt);room.turn.revealStartedAt+=delay;room.turn.revealAnswerAt+=delay;room.turn.revealPopularAt+=delay;room.turn.revealPausedAt=0;}
+    }
     state.paused=input.type==='pause';room.version++;room.rngState=randomState>>>0;return receipt(state,actor,input.id,'');
   }
   if(state.paused&&!['cancel','cancel_turn','end_game'].includes(input.type))return receipt(state,actor,input.id,'paused');
@@ -705,20 +745,34 @@ function view(current,playerNum,now){
     source:room.turn?.source||null,locale:room.locale,config:room.config,packs:CARD_PACKS,roster:projected.players.map(p=>({...p,playerNum:Number(p.id),id:undefined,pending:p.opportunity==='next_cycle',memberStatus:p.active?'active':'away',ready:state.readiness?.[p.id]===true})),
     participants:projected.participants.map(Number),roundPlayerNums:projected.participants.map(Number),question:projected.question,questionChosen:projected.questionChosen,previousQuestion:projected.previousQuestion,
     storyComplete:projected.storyComplete,turnCancelled:projected.turnCancelled,table:projected.table.map(card=>({token:card.token,cardId:card.cardId,...(card.ownerId?{ownerPlayerNum:Number(card.ownerId),isAnswer:card.isAnswer,voterNums:list(card.voterIds).map(Number)}:{})})),
+    votesComplete:votesComplete(room.turn),revealStage:room.turn?.revealStage||'',revealStartedAt:room.turn?.revealStartedAt||0,revealAnswerAt:room.turn?.revealAnswerAt||0,revealPopularAt:room.turn?.revealPopularAt||0,revealPausedAt:room.turn?.revealPausedAt||0,
     deltas:projected.deltas,cycleComplete:projected.cycleComplete,questionReuse:projected.questionReuse,historyCount:projected.historyCount,
-    hand:own.hand,submission:own.submission,storyCard:own.storyCard,vote:own.vote,ownTableToken:own.ownTableToken,candidates:own.candidates,mulligansUsed:own.mulligansUsed,eligibleFollowUp:own.eligibleFollowUp,
+    hand:own.hand,submission:own.submission,storyCard:own.storyCard,vote:own.vote,ownTableToken:own.ownTableToken,candidates:room.phase==='PREPARE'?room.turn.candidates:[],mulligansUsed:own.mulligansUsed,eligibleFollowUp:own.eligibleFollowUp,
+    storyCardRequired:room.phase==='COLLECTING'&&!room.turn?.storyCard,
     ownSubmitted:own.submission?[own.submission]:[],ownVote:own.vote,sharedControls:true,membership:{enabled:true,minPlayers:3,maxPlayers:8,activeCount:room.players.filter(p=>p.memberActive!==false).length,pendingCount:projected.players.filter(p=>p.opportunity==='next_cycle').length},
     actions:{},reply:state.replies?.[actor]||null};
+  if(room.turn?.revealStage==='answer'||room.turn?.settled)dixit.answerCardId=room.turn.table.find(c=>c.ownerId===room.turn.storytellerId)?.cardId;
+  if(room.turn?.settled){
+    const turn=room.turn,answer=turn.table.find(c=>c.ownerId===turn.storytellerId),answerToken=answer?.token;
+    dixit.result={round:room.turnNumber,storyteller:Number(turn.storytellerId),answerCardId:answer?.cardId,table:turn.table.map(c=>c.cardId),
+      correctCount:Object.values(turn.votes).filter(token=>token===answerToken).length,
+      rows:turn.participants.map(id=>{const telling=id===turn.storytellerId,token=turn.votes[id],correct=!telling&&!!token&&token===answerToken;
+        const cardIds=turn.table.filter(c=>c.ownerId===id).map(c=>c.cardId),voteCardId=turn.table.find(c=>c.token===token)?.cardId||null;
+        const base=telling?room.config.sharingPoints:correct?room.config.correctGuessPoints:0;
+        const bonus=telling?0:Object.values(turn.votes).filter(vote=>turn.table.find(c=>c.token===vote)?.ownerId===id).length*room.config.attractedVotePoints;
+        return{playerNum:Number(id),cardIds,voteCardId,correct,base,bonus,delta:turn.deltas[id]||0,score:player(room,id).score};})};
+  }else dixit.result=null;
   const telling=!!mine&&String(actor)===room.turn?.storytellerId,participant=!!mine&&projected.participants.includes(String(actor)),live=!state.paused,
     collecting=['STORYTELLING','COLLECTING'].includes(room.phase),preparing=room.phase==='PREPARE',pending=room.cycle?.opportunities[String(actor)]==='pending';
   dixit.actions={
     start_game:live&&host&&room.phase==='LOBBY',deal:live&&host&&room.phase==='LOBBY',configure:live&&host&&room.phase==='LOBBY',
     choose_question:live&&telling&&preparing&&room.turn.source==='normal',refresh_questions:live&&telling&&preparing&&room.turn.source==='normal',free_share:live&&telling&&preparing,
-    choose_story_card:live&&telling&&preparing,start_story:live&&telling&&preparing,submit_card:live&&participant&&!telling&&collecting&&!own.submission,
+    choose_story_card:live&&telling&&(preparing||collecting),start_story:live&&telling&&preparing&&room.turn.questionChosen,submit_card:live&&participant&&!telling&&collecting&&!own.submission,
     withdraw_submission:live&&participant&&!telling&&collecting&&!!own.submission,mulligan:live&&participant&&(preparing||collecting)&&!own.submission&&own.mulligansUsed<room.config.mulliganTimesPerTurn,
     finish_story:live&&(telling||host)&&room.phase==='STORYTELLING',cast_vote:live&&participant&&!telling&&room.phase==='VOTING'&&!own.vote&&!room.turn.abstained.includes(String(actor)),
+    reveal:live&&host&&room.phase==='VOTING'&&votesComplete(room.turn),advance_reveal:live&&host&&room.phase==='REVEALING'&&Number(now)>=room.turn.revealPopularAt,
     finish_discussion:live&&host&&room.phase==='REVEAL_DISCUSS',claim_follow_up:live&&own.eligibleFollowUp,next_in_order:live&&host&&room.phase==='FOLLOW_UP',
-    pass_opportunity:live&&!!mine&&((preparing&&telling)||(room.phase==='FOLLOW_UP'&&pending)),cancel_turn:host&&['PREPARE','STORYTELLING','COLLECTING','VOTING'].includes(room.phase),
+    pass_opportunity:live&&!!mine&&((preparing&&telling)||(room.phase==='FOLLOW_UP'&&pending)),cancel_turn:host&&['PREPARE','STORYTELLING','COLLECTING','VOTING','REVEALING'].includes(room.phase),
     end_game:host&&room.phase!=='LOBBY',cancel:host&&room.phase!=='LOBBY',restart:host,pause:host&&!state.paused,resume:host&&state.paused,recover:live&&host&&room.phase!=='LOBBY',
     excuse_player:host&&room.phase!=='LOBBY',abstain_vote:host&&room.phase==='VOTING',transfer_host:host,clear_question_history:host&&room.phase==='LOBBY',ready:live&&!!mine&&room.phase==='LOBBY'
   };
@@ -726,9 +780,13 @@ function view(current,playerNum,now){
 }
 function pulse(current,ctx={}){
   if(ctx.serverAuthority!==true)throw new Error('server_required');
-  const state=restore(current),before=JSON.stringify([state.lifeRoom.hostId,state.lifeRoom.players.map(p=>[p.id,p.connected])]);
+  const upgrading=!!current.lifeRoom?.turn&&['revealStage','revealStartedAt','revealAnswerAt','revealPopularAt','revealPausedAt'].some(key=>current.lifeRoom.turn[key]===undefined);
+  const state=restore(current),before=JSON.stringify([state.lifeRoom.hostId,state.lifeRoom.players.map(p=>[p.id,p.connected]),state.lifeRoom.turn?.revealStage,state.lifeRoom.phase]);
   refreshPresence(state,ctx.onlineNums,ctx.now);
-  return before===JSON.stringify([state.lifeRoom.hostId,state.lifeRoom.players.map(p=>[p.id,p.connected])])?current:exportState(state,state.lifeRoom);
+  const room=state.lifeRoom;
+  if(!state.paused&&room.phase==='REVEALING'&&room.turn.revealStage==='countdown'&&Number(ctx.now)>=room.turn.revealAnswerAt){room.turn.revealStage='answer';room.version++;record(room,'reveal_answer');}
+  if(!state.paused&&room.phase==='REVEALING'&&room.turn.revealStage==='answer'&&Number(ctx.now)>=room.turn.revealPopularAt){randomState=seedValue(String(room.rngState)+':reveal:'+room.turn.id);settleIfReady(room);room.rngState=randomState>>>0;room.version++;}
+  return !upgrading&&before===JSON.stringify([room.hostId,room.players.map(p=>[p.id,p.connected]),room.turn?.revealStage,room.phase])?current:exportState(state,room);
 }
 function membership(current,changes={},ctx={}){
   if(ctx.serverAuthority!==true)throw new Error('server_required');

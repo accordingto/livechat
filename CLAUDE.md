@@ -1,4 +1,42 @@
-## CURRENT: Dixit Life Story mode — 2026-10-13
+## CURRENT: Life Story shared prompts and original Dixit presentation — 2026-10-14
+
+Follow the user's revised flow: all three PREPARE candidates are public to every
+seat and the shared manager, with read-only controls for non-storytellers. The
+chosen question stays visible through storytelling, collecting, voting and reveal.
+Selecting a prompt/free share allows start_story without choosing a card first.
+Others can submit while the storyteller chooses or changes their own reserved
+card. Lock only after storyComplete, a legal storyCard, and every valid submission.
+
+Reuse original Dixit panels, card and reveal helpers. After all votes, the host
+starts reveal: three-second countdown, answer-only for 1.2 seconds, then automatic
+server full reveal/settlement. Reveal countdown and answer-only views hide other
+owners, voters and score changes; follow-up waits for full reveal and discussion.
+Original mode and Life Story keep separate scoring. Timing defaults are central
+mode config revealCountdownMs=3000 and revealAnswerMs=1200.
+
+Life engine/UI/CSS, dixit-ui.js and dixit-sync.js entry caches use life-story-2;
+unchanged Room, host bridges and executor retain life-story-1. Dixit sync stops
+the inherited Talk clock callback, which referenced an unloaded TALK_ENGINE.
+Keep the server
+question module/assets private; public candidates are intentional safe projections.
+The updated production-smoke local fixture passed2/2 with real executor/ETags and
+an injected clock; syntax and the200-asset local release manifest passed. The full
+Hub suite finally passed1865/1865 with test-concurrency4 after the clock fix;
+targeted Dixit sync83 tests also passed. EN and ZH actual manager/four private
+links each completed four turns, follow-up and cross-cycle with zero page errors.
+Fonts, card/grid dimensions and reveal layout match original Dixit at1280/390.
+The52-file service package loads96questions and backend deployment
+dpl_WCQ9NJiSXqJVpFNpjGCdHtS34dBZ is READY at the existing service. Live disposable
+backend QA passed3783 checks, including shared prompts, no-card start, early
+submissions, card-later locking, observed3s/1.2s stages, scoring and cross-cycle
+history. Exactly5/5 newly owned nodes were conditionally cleaned. The verifier
+normalizes Firebase object-key ordering and retries observed early reveal pulses;
+it does not change real timings or accept a skipped answer stage. Frontend
+publication and complete production asset verification still need recording.
+Historical
+2026-10-13 results below are not proof of this correction's release.
+
+## Previous: Dixit Life Story mode — 2026-10-13
 
 User authorized direct production publication for this and future tested Hub
 changes on 2026-10-13; see AGENTS.md. Do not ask for deployment confirmation again.
@@ -16,8 +54,10 @@ bilingual questions are the local authority; no actual AI API/provider was added
 Validated1853/1853 native Hub tests; actual manager plus four independent original
 player links completed fourturns and cross-cycle continuation with mobile touch
 and reconnect. Manager audit received no dealt private hands. Service package
-58files matches52Hub runtime/assets and loads96questions. No production room
-or Firebase used. Physicalphones and real human voice/playtests are unverified.
+58files matches52Hub runtime/assets and loads96questions. These first browser
+tests used an isolated Firebase-compatible fixture. A later disposable production
+QA below used real Firebase; no existing player room was read or changed.
+Physicalphones and real human voice/playtests are unverified.
 Publish BOTH frontend and existing independent service; preserve secrets, all
 other games and search routes. Independent service READY deployment
 dpl_6XLRptXCHkVe4pd7UBkBxXgFB6WG is aliased to the existing production domain;

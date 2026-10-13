@@ -10,8 +10,9 @@ const root = path.resolve(__dirname, '..');
 const hub = 'https://livechat-two-alpha.vercel.app/';
 const service = 'https://icebreaker-youtube-search.vercel.app/';
 const args = process.argv.slice(2);
-const release = args.find(arg => !arg.startsWith('--')) || 'life-story-1';
-const cacheVersion = 'life-story-1';
+const release = args.find(arg => !arg.startsWith('--')) || 'life-story-2';
+const cacheVersion = 'life-story-2';
+const privacyCacheVersion = 'life-story-1';
 const entries = ['index.html', 'play.html', 'dixit.html', 'bluff-king-live-chat.html', 'bomb-relay.html',
   'crack-the-word.html', 'cut.html', 'kangaroo-court.html', 'lets-talk.html', 'once-upon-a-time.html',
   'open-mic-rescue.html', 'persuade-together.html', 'pick-a-side.html', 'say-it-without-saying-it.html',
@@ -46,13 +47,14 @@ function localManifest() {
     const roomScripts = sources.filter(src => new URL(src, hub).pathname === '/room.js');
     if (roomScripts.length) {
       roomEntries++;
-      if (roomScripts.some(src => new URL(src, hub).searchParams.get('v') !== cacheVersion)) throw new Error('Stale Room cache URL: ' + entry);
+      if (roomScripts.some(src => new URL(src, hub).searchParams.get('v') !== privacyCacheVersion)) throw new Error('Stale Room cache URL: ' + entry);
     }
     if (sources.some(src => src.includes('life-story-questions.cjs'))) throw new Error('Server question source loaded by browser: ' + entry);
     if (['dixit.html', 'play.html'].includes(entry)) {
       for (const file of ['life-story-engine.js', 'life-story-ui.js', 'dixit-engine.js', 'dixit-sync.js', 'dixit-ui.js', 'hub-executor.js']) {
         const matches = sources.filter(src => new URL(src, hub).pathname === '/' + file);
-        if (matches.length !== 1 || new URL(matches[0], hub).searchParams.get('v') !== cacheVersion) throw new Error('Missing/current script cache URL: ' + entry + ' / ' + file);
+        const expected = ['life-story-engine.js', 'life-story-ui.js', 'dixit-ui.js', 'dixit-sync.js'].includes(file) ? cacheVersion : privacyCacheVersion;
+        if (matches.length !== 1 || new URL(matches[0], hub).searchParams.get('v') !== expected) throw new Error('Missing/current script cache URL: ' + entry + ' / ' + file);
       }
       if (!html.includes('life-story.css?v=' + cacheVersion)) throw new Error('Stale Life Story stylesheet cache: ' + entry);
     }

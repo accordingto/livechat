@@ -1,8 +1,28 @@
 # 人生故事模式：實際驗收紀錄
 
-日期：2026-10-13。正式修改是本目錄的 `accordingto/livechat` Hub 副本，基底 `cba8fd3`。在找到 Hub 前製作的獨立程式已停止並隔離，其測試不計入以下結果。
+最新修正日期：2026-10-14。正式修改是本目錄的 `accordingto/livechat` Hub 副本，基底 `cba8fd3`。在找到 Hub 前製作的獨立程式已停止並隔離，其測試不計入以下結果。
 
-## 正式發布補充
+## 2026-10-14 題目共享與原版介面流程修正
+
+本次依使用者後續指示，更新附件原本的先選牌限制與候選題私有設定：準備階段三個候選題對全員及共同主持畫面公開，選題／換題權仍只有說書人；選定題目持續顯示於說故事、收牌、投票及揭曉。選題後可以先開始說故事，說書人邊講邊選牌，其他人已可提交。說完但未選故事牌時保持收牌，必須同時滿足故事講完、說書人合法故事牌、有效玩家全部交牌才鎖牌。
+
+介面沿用原版 Dixit 圖卡與揭曉元件。全員投票完成後等待主持人「揭曉」，再依原版倒數 3 秒 → 原牌單獨顯示 1.2 秒 → 自動完整揭曉。倒數及原牌階段不公開其他牌主、票或分數，也不計分／補牌或開接棒。完整揭曉後仍保留自由討論。原版分數規則與人生故事分數各自保留。
+
+目前已執行：
+
+- `node --test tests/life-story-production-smoke.test.cjs`：**2／2 通過**。使用真正 executor 的本地 Firebase HTTP／ETag 邊界，驗證四人題目共同可見但不可代選、先開始後選牌、他人提前提交、缺牌保持收牌、接棒與跨輪、3 秒／1.2 秒分段揭曉及冪等結算。以注入時鐘加速等待，沒有呼叫正式服務或 Firebase；條件清理正好 5 個自建節點，並保留被其他資料替換的節點。
+- 修改的 production smoke／安全測試／release verifier 以 `node --check` 檢查語法：通過。
+- `node scripts/life-story-verify-release.cjs --check-local --preserve-games`：本地 **200 項資產**、完整 96 題及 **16 個 Room 入口快取網址**檢查通過；Life Story／Dixit UI 新版本與舊 transport 快取分開檢查，私有回應本文封鎖驗證仍保留。
+- 本次 full Hub native 回歸：最終 `node --test --test-concurrency=4 tests/*.test.cjs` **1865／1865 通過，0 失敗、0 skipped**，約 53.7 秒，輸出在 `../hub-life-story-ui2-release-tests.log`。此前 1863 項全套通過；實際頁面發現 Dixit 繼承的 Talk clock 引用了未載入的 `TALK_ENGINE`，已停用並加入 2 項對應測試；相關 Dixit sync **83 項通過**。
+- 後一次預設並行全套曾有 1 個未修改的 Once numeric-key fixture 在 server-deal 失敗，該檔孤立重跑 **9／9 通過**；最後上述全套全部通過。沒有更改 Once 遊戲或測試來略過失敗。
+- `node tests/life-story-ui.browser.cjs` 分別以 EN 與繁中執行：兩者都通過實際原主持頁與 4 個獨立原玩家連結，完成 4 回合、正常順序、接棒及跨輪，含題目共享、先開始後選／改牌、投票時重連、分段自動揭曉及投票人展開，**零 page errors**。原版與 Life 在 1280／390 下字體、卡牌尺寸、3:4 比例、grid、階段列及揭曉排列一致；手牌寬 380／366 px，揭曉原牌寬 438.47／366 px。報告及截圖在 `../test-results/hub-life-story-en/` 與 `../test-results/hub-life-story-zh-TW/`。
+- 修改檔案語法檢查及服務包驗證：**52 個 runtime／題庫資產一致，完整 96 題可載入**。本次修正版後端已部署為 READY：`dpl_WCQ9NJiSXqJVpFNpjGCdHtS34dBZ`，沿用原獨立服務正式網址。52 個已部署 runtime／題庫資產與 2 個 manifests 已同步回既有服務來源，5 個既有公開搜尋／套件檔保持一致；前端即將發布。
+- `node scripts/life-story-production-smoke.cjs --live`：修正版正式後端與真實 Firebase **3783 項檢查通過**，指令退出碼 `0`。四人完成公开候選／選定題目、未選牌先開始、提前提交與缺牌收牌等待、匿名投票、實際觀測倒數／原牌／完整自動揭曉、冪等計分補牌、接棒競爭、原座位順序、跨輪與同房題目歷史。只操作新建且帶唯一標記的 5 個節點，**5／5 所有權與 ETag 條件清理成功，0 失敗**。實際去識別化結果：`../test-results/hub-life-story-ui2-production.json`。
+- 前三次 smoke 檢查未通過，皆清理 **5／5** 自建節點。原因為驗證器以物件欄位排序比較 Firebase 回傳，以及請求開始時刻／時鐘差令初次揭曉 pulse 太早。已改為排序後的語意比較、保留絕對伺服器期限並有限重試實際仍在倒數的階段；若跳過原牌階段仍會失敗，沒有調整遊戲的 3 秒／1.2 秒時間。修正後本地 smoke 安全測試 **2／2 通過**，上述正式檢查完整通過。
+
+前端發布及發布後完整資產／私有本文驗證尚待補錄。以下 2026-10-13 的數字、部署 ID 與線上結果皆屬前一版，不作為本次修正前端已發布的證據。
+
+## 2026-10-13 前一版正式發布紀錄
 
 已直接部署到既有 Hub 與既有獨立服務，沒有建立替代網站。前端功能 commit `cc558ea` 的 Vercel deployment `GdYR4BZbedMisDXtBHhcYhddFfnJ` 成功，路由修正 `1790158` 的 deployment `A6cmeT9nSKFwTsZXdn85Q1Xcc6Xh` 亦成功；正式入口 https://livechat-two-alpha.vercel.app/dixit.html ，在原說書人設定選「人生故事版」。獨立服務 deployment `dpl_6XLRptXCHkVe4pd7UBkBxXgFB6WG` 為 READY 且正式別名已更新。
 

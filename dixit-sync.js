@@ -309,6 +309,9 @@ var DIXIT_SYNC = (() => {
       };
       this.connectedRef.on('value', this.connectedCardsHandler);
     }
+    // This transport inherits Talk's timer registration, but Dixit only uses
+    // tickReveal (or the trusted service pulse). Never run Talk rules here.
+    async tickClock() { return false; }
     tickReveal() {
       const state = this.doc?.state;
       if (!state || state.phase !== 'REVEALING' || state.paused || !this.liveOwner() || this.suspended) return Promise.resolve(null);

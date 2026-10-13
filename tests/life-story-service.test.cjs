@@ -73,9 +73,9 @@ function fixture() {
     assert.equal(typeof raw.lifeStateCipher, 'string'); assert.equal(typeof raw.lifeHistoryCipher, 'string');
     for (const key of ['lifeRoom', 'hands', 'deck', 'submissions', 'votes', 'answer']) assert.equal(Object.hasOwn(header, key), false, key);
     assert.equal(header.mode, 'life_story'); assert.equal(header.publicLifeView.playerNum, 0);
-    assert.deepEqual(header.publicLifeView.hand || [], []); assert.deepEqual(header.publicLifeView.candidates || [], []);
+    assert.deepEqual(header.publicLifeView.hand || [], []); assert.deepEqual(header.publicLifeView.candidates || [], state().phase === 'PREPARE' ? state().lifeRoom.turn.candidates : []);
     assert.equal(header.publicLifeView.storyCard ?? null, null);
-    if (state().phase === 'VOTING') for (const card of header.publicLifeView.table) {
+    if (['VOTING', 'REVEALING'].includes(state().phase)) for (const card of header.publicLifeView.table) {
       assert.equal(Object.hasOwn(card, 'ownerPlayerNum'), false); assert.equal(Object.hasOwn(card, 'isAnswer'), false); assert.equal(Object.hasOwn(card, 'voterNums'), false);
     }
     LIFE.assertCardInvariant(state());
@@ -83,9 +83,14 @@ function fixture() {
   async function finishTurn(storyteller, { normal = true, beforeDiscussion = false } = {}) {
     const prep = view(storyteller); assert.equal(prep.phase, 'PREPARE');
     assert.equal((prep.candidates || []).length, normal ? 3 : 0);
+    for (const n of [1, 2, 3, 4]) {
+      assert.deepEqual(view(n).candidates || [], prep.candidates || [], 'system choices are shared read-only');
+      if (n !== storyteller) assert.equal(view(n).actions.choose_question, false);
+    }
     if (normal) await act(storyteller, 'choose_question', { questionId: prep.candidates[0].id });
     const answer = view(storyteller).hand[0];
-    await act(storyteller, 'choose_story_card', { cardId: answer }); await act(storyteller, 'start_story');
+    await act(storyteller, 'start_story');
+    assert.equal(view(storyteller).storyCard ?? null, null, 'story may start before card selection');
     const others = seats.map(s => s.playerNum).filter(n => n !== storyteller);
     for (const n of others) {
       const mine = view(n); assert.equal(mine.storyCard ?? null, null); assert.deepEqual(mine.candidates || [], []);
@@ -95,15 +100,33 @@ function fixture() {
     assert.equal(state().phase, 'STORYTELLING', 'early submissions cannot advance the story');
     await act(others[0], 'withdraw_submission');
     await act(others[0], 'submit_card', { cardId: view(others[0]).hand[1] });
-    await act(storyteller, 'finish_story'); assert.equal(state().phase, 'VOTING');
+    await act(storyteller, 'finish_story'); assert.equal(state().phase, 'COLLECTING');
+    assert.equal(view(storyteller).storyCardRequired, true);
+    assert.deepEqual(view(storyteller).table || [], [], 'a missing storyteller card blocks formal locking');
+    await act(storyteller, 'choose_story_card', { cardId: answer }); assert.equal(state().phase, 'VOTING');
     const table = copy(view(others[0]).table), tableJson = JSON.stringify(table);
     assert.ok(table.every(c => !Object.hasOwn(c, 'ownerPlayerNum') && !Object.hasOwn(c, 'isAnswer') && !Object.hasOwn(c, 'voterNums')));
     assertCanonicalPrivate();
     service = buildService(); await pulse(others[0]);
     assert.equal(JSON.stringify(view(others[0]).table), tableJson, 'service restart/reconnect does not shuffle again');
     const correct = table.find(c => c.cardId === answer); assert.ok(correct);
+    const beforeScores = copy(state().scores);
     let finalVote;
     for (const n of others) finalVote = await act(n, 'cast_vote', { token: correct.token });
+    assert.equal(state().phase, 'VOTING'); assert.equal(view(1).votesComplete, true);
+    assert.deepEqual(state().scores, beforeScores, 'completed votes alone cannot reveal or score');
+    assert.ok([1, 2, 3, 4].every(n => view(n).hand.length === 7));
+    await act(1, 'reveal'); assert.equal(state().phase, 'REVEALING');
+    const answerAt = state().lifeRoom.turn.revealAnswerAt, popularAt = state().lifeRoom.turn.revealPopularAt;
+    assert.equal(answerAt - state().lifeRoom.turn.revealStartedAt, 3000); assert.equal(popularAt - answerAt, 1200);
+    clock = answerAt - 1; await pulse(others[0]);
+    assert.equal(view(1).answerCardId, undefined); assert.equal(view(1).result, undefined);
+    clock = answerAt; await pulse(others[0]);
+    assert.equal(view(1).revealStage, 'answer'); assert.equal(view(1).answerCardId, answer);
+    assert.deepEqual(state().scores, beforeScores); assert.equal(view(1).result, undefined); assert.deepEqual(view(1).deltas || {}, {});
+    assertCanonicalPrivate();
+    clock = popularAt - 1; await pulse(others[0]); assert.equal(state().phase, 'REVEALING');
+    clock = popularAt; await pulse(others[0]);
     assert.equal(state().phase, 'REVEAL_DISCUSS');
     for (const n of [1, 2, 3, 4]) assert.equal(view(n).deltas[n], 2, 'all-correct storyteller and guessers receive two');
     assert.ok(view(others[0]).table.some(c => c.isAnswer));

@@ -118,13 +118,13 @@
       return '<div class="dx-vote-status is-'+(state===done?'voted':state)+'" data-dx-'+kind+'-player="'+esc(p.playerNum)+'" data-dx-'+kind+'-state="'+state+'" role="listitem"><span class="dx-vote-name" title="'+esc(p.name)+'">'+esc(p.name)+'</span><span class="dx-vote-state">'+esc(t(labels[state]))+'</span></div>';
     }).join('')+'</div>';
   }
-  function revealHTML(s,now){
+  function revealHTML(s,now,options={}){
     const visual=revealVisual(s,now),finished=['REVEAL','FINISHED'].includes(s.phase),answer=finished?s.result?.answerCardId:s.answerCardId,table=list(s.table).length?list(s.table):list(s.result?.table);
     if(visual.startsWith('countdown:'))return '<section class="dx-reveal-focus is-counting" data-dx-reveal-stage="countdown" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-countdown" role="status" aria-live="polite"><span data-dx-countdown>'+visual.split(':')[1]+'</span><p>'+esc(t('phaseCountdown'))+'</p></div></section>';
     if(!answer)return '';
     const rows=list(s.result?.rows),voted=votedCards(s,answer),ownerFor=id=>{const owner=rows.find(p=>list(p.cardIds).includes(id));return owner?name(s,owner.playerNum):'';};
     const firstOwner=voted.ranked.length?'<div class="dx-owner">'+esc(ownerFor(voted.ranked[0].id))+'</div>':'';
-    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('answer'))+(finished?' '+votersHTML(s,answer,'answer'):'')+'</h2></div>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('votedPictures'))+(voted.ranked.length?' '+votersHTML(s,voted.ranked[0].id,'popular'):'')+'</h2>'+firstOwner+'</div><div class="dx-popular-gallery">'+(voted.ranked.length?voted.ranked.map(({id,count},i)=>cardHTML(id,table.indexOf(id)+1,{owner:i?ownerFor(id):'',votes:i?count:null,votesHTML:i?votersHTML(s,id,'popular'):'',artworkVersion:s.artworkVersion||1,eager:i===0})).join(''):'<p class="dx-secondary-note">'+esc(t('noOtherVotes'))+'</p>')+'</div></div>'+roundScoresHTML(s):'')+'</div></section>';
+    return '<section class="dx-reveal-focus" data-dx-reveal-stage="'+(finished?'popular':'answer')+'" aria-label="'+esc(t('revealFocus'))+'"><div class="dx-reveal-layout"><div class="dx-story-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('answer'))+(finished?' '+votersHTML(s,answer,'answer'):'')+'</h2></div>'+cardHTML(answer,table.indexOf(answer)+1,{answer:true,artworkVersion:s.artworkVersion||1,eager:true})+'</div>'+(finished?'<div class="dx-popular-reveal"><div class="dx-reveal-heading"><h2>'+esc(t('votedPictures'))+(voted.ranked.length?' '+votersHTML(s,voted.ranked[0].id,'popular'):'')+'</h2>'+firstOwner+'</div><div class="dx-popular-gallery">'+(voted.ranked.length?voted.ranked.map(({id,count},i)=>cardHTML(id,table.indexOf(id)+1,{owner:i?ownerFor(id):'',votes:i?count:null,votesHTML:i?votersHTML(s,id,'popular'):'',artworkVersion:s.artworkVersion||1,eager:i===0})).join(''):'<p class="dx-secondary-note">'+esc(t('noOtherVotes'))+'</p>')+'</div></div>'+(options.roundScoresHTML?options.roundScoresHTML(s):roundScoresHTML(s)):'')+'</div></section>';
   }
   const gain=n=>'+'+Math.max(0,Number(n)||0);
   function roundScoresHTML(s){
@@ -266,6 +266,6 @@
     destroy(){this.lifeCard?.destroy();clearInterval(this.timer);clearTimeout(this.pendingTimer);this.el.removeEventListener('click',this.click);}
   }
   function errorText(error){return error==='waiting_players'?t('awayPlayers'): ['stale_turn','stale_session'].includes(error)?t('stale'):error==='paused'?t('paused'):error==='invalid_clue'?t('refreshHost'):error==='invalid_target_score'?t('invalidTarget'):['offline','not_available'].includes(error)?t('failed'):t('invalid');}
-  root.DIXIT_UI={Card,t,esc,tableHTML,cardHTML,rulesHTML,errorText,picture,phaseInfo,revealVisual};
+  root.DIXIT_UI={Card,t,esc,tableHTML,cardHTML,rulesHTML,errorText,picture,phaseInfo,revealVisual,revealHTML,votersHTML};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.DIXIT_UI;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -60,6 +60,18 @@ function database() {
   return db;
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
+
+for (const mode of ['classic', 'life_story']) test(`Dixit ${mode} inherited timer never executes Talk rules`, async t => {
+  const f = setup(t), h = f.host();
+  await f.dealt(h);
+  assert.equal(h.own, true);
+  if (mode === 'life_story') h.doc.state = { mode, sessionId: 'sealed-life', phase: 'REVEALING', publicLifeView: {} };
+  const before = clone(h.doc), clockCallbacks = f.intervals.filter(timer => timer.ms === 1000);
+  assert.equal(clockCallbacks.length, 1);
+  assert.deepEqual(await Promise.all(clockCallbacks.map(timer => timer.fn())), [false]);
+  assert.deepEqual(h.doc, before);
+});
+
 async function settle(...hosts) {
   for (let i = 0; i < 10; i++) {
     await tick();
@@ -67,12 +79,13 @@ async function settle(...hosts) {
   }
 }
 function setup(t, count = 4) {
-  const db = database(), extras = {}, hosts = [];
+  const db = database(), extras = {}, hosts = [], intervals = [];
   let clock = 10000;
   const paths = Array.from({ length: count }, (_, i) => `rooms/DX-TEST/players/player-${i + 1}`);
   const room = { code: 'DX-TEST', count, answers: {}, name: i => 'Person ' + (i + 1),
     getExtra: key => extras[key], setExtra: (key, value) => { extras[key] = value; }, playerRef: i => db.ref(paths[i]) };
-  const context = vm.createContext({ crypto, Date: { now: () => clock }, DIXIT_ENGINE: E, setInterval: () => 1, clearInterval() {} });
+  const context = vm.createContext({ crypto, Date: { now: () => clock }, DIXIT_ENGINE: E,
+    setInterval: (fn, ms) => { intervals.push({ fn, ms }); return intervals.length; }, clearInterval() {} });
   vm.runInContext(fs.readFileSync(require.resolve('../talk-sync.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(require.resolve('../dixit-sync.js'), 'utf8'), context);
   function host(options = {}) {
@@ -84,7 +97,7 @@ function setup(t, count = 4) {
     room.answers[i + 1] = s.val(); hosts.forEach(h => h.receive(i + 1, s.val()));
   }));
   t.after(async () => { hosts.forEach(h => h.close()); await settle(...hosts); });
-  return { db, room, host, paths, hosts, clock: value => { clock = value; },
+  return { db, room, host, paths, hosts, intervals, clock: value => { clock = value; },
     card: n => clone(db.values.get(paths[n - 1])),
     async action(n, type, extra = {}) {
       const card = this.card(n);

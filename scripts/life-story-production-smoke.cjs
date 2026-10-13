@@ -8,8 +8,11 @@ const SERVICE = 'https://icebreaker-youtube-search.vercel.app/api/hub-executor';
 const list = value => Array.isArray(value) ? value.filter(v => v != null) : Object.values(value || {});
 const uid = bytes => randomBytes(bytes || 16).toString('hex');
 const copy = value => structuredClone(value);
+const sorted = value => Array.isArray(value) ? value.map(sorted) : value && typeof value === 'object'
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, sorted(value[key])])) : value;
+const same = (left, right) => JSON.stringify(sorted(left)) === JSON.stringify(sorted(right));
 
-async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
+async function run({ fetchImpl = globalThis.fetch, now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   const code = 'LS' + uid(4).toUpperCase(), marker = uid(), controlToken = uid();
   const initialSession = code + ':life-story-smoke', sessions = new Set([initialSession]);
   const seats = [1, 2, 3, 4].map(playerNum => ({ playerNum, token: uid(10) }));
@@ -19,7 +22,7 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
   const stamp = { marker, game: 'dixit', mode: 'life_story' };
   const report = { ok: false, passed: 0, step: 'health', phase: 'initial', cleanup: { tracked: 0, deleted: 0, empty: 0, failed: 0 } };
   const must = value => { if (!value) throw new Error('life_story_smoke_failed'); };
-  const check = value => { must(value); report.passed++; };
+  const check = (value, label = '') => { if (!value) report.failureCheck = label || report.step; must(value); report.passed++; };
   const http = (url, options = {}) => fetchImpl(url, { credentials: 'omit', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(25000), ...options });
   async function api(body) {
     const response = await http(SERVICE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -62,8 +65,10 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     const h = header(raw), s = h.publicLifeView;
     check(typeof raw.lifeStateCipher === 'string' && typeof raw.lifeHistoryCipher === 'string');
     for (const key of ['lifeRoom', 'hands', 'deck', 'submissions', 'votes', 'answer']) check(!Object.hasOwn(h, key));
-    check(s?.mode === 'life_story' && s.playerNum === 0 && list(s.hand).length === 0 && list(s.candidates).length === 0 && s.storyCard == null);
-    if (s.phase === 'VOTING') check(list(s.table).every(c => !Object.hasOwn(c, 'ownerPlayerNum') && !Object.hasOwn(c, 'isAnswer') && !Object.hasOwn(c, 'voterNums')));
+    check(s?.mode === 'life_story' && s.playerNum === 0 && list(s.hand).length === 0 && s.storyCard == null);
+    check(list(s.candidates).length === (s.phase === 'PREPARE' && s.source === 'normal' ? 3 : 0));
+    if (s.phase === 'VOTING' || s.phase === 'REVEALING') check(list(s.table).every(c => !Object.hasOwn(c, 'ownerPlayerNum') && !Object.hasOwn(c, 'isAnswer') && !Object.hasOwn(c, 'voterNums')));
+    if (s.phase === 'REVEALING') check(Object.keys(s.deltas || {}).length === 0 && !s.eligibleFollowUp);
     return raw;
   }
   async function pulse(num, action) {
@@ -82,33 +87,106 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     const node = await pulse(num); check(node.dixit.reply?.id === action.id && (node.dixit.reply.error || '') === expectedError);
     return { node, action };
   }
+  async function duePulse(deadline, ready) {
+    must(Number.isFinite(Number(deadline)));
+    // Wait against the server's absolute deadline, rather than adding another
+    // three seconds after network/publication time has already elapsed.
+    await sleep(Math.max(0, Number(deadline) - now() + 30));
+    let node;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      node = await pulse(1);
+      if (ready(node.dixit) || node.dixit.phase !== 'REVEALING') return node.dixit;
+      // HTTP Date has only one-second precision and the service captures its
+      // clock at request start. Retry an observed early stage, without treating
+      // a skipped answer stage as success or changing real reveal timings.
+      await sleep(100);
+    }
+    return node.dixit;
+  }
   async function finishTurn(storyteller, normal) {
+    report.step = normal ? 'normal-turn:shared-candidates' : 'follow-up:shared-candidates';
     const prep = (await card(storyteller)).dixit; check(prep.phase === 'PREPARE' && prep.storyteller === storyteller);
     check(list(prep.candidates).length === (normal ? 3 : 0));
+    const managerPrep = header(await canonicalPrivate()).publicLifeView;
+    check(same(list(managerPrep.candidates), list(prep.candidates)));
+    for (const seat of seats.filter(s => s.playerNum !== storyteller)) {
+      const view = (await card(seat.playerNum)).dixit;
+      check(same(list(view.candidates), list(prep.candidates)));
+      check(view.actions?.choose_question === false && view.actions?.refresh_questions === false && view.actions?.free_share === false);
+    }
     if (normal) await command(storyteller, 'choose_question', { questionId: prep.candidates[0].id });
-    const answer = prep.hand[0];
-    await command(storyteller, 'choose_story_card', { cardId: answer }); await command(storyteller, 'start_story');
+    const question = normal ? prep.candidates[0] : null;
+    async function sharedQuestion() {
+      for (const seat of seats) check(same((await card(seat.playerNum)).dixit.question ?? null, question));
+      check(same(header(await canonicalPrivate()).publicLifeView.question ?? null, question));
+    }
+    await sharedQuestion();
+    const answer = prep.hand[normal ? 0 : 1];
+    report.step = normal ? 'normal-turn:start-without-card' : 'follow-up:start-without-card';
+    await command(storyteller, 'start_story');
+    const started = (await card(storyteller)).dixit;
+    check(started.phase === 'STORYTELLING' && started.storyCard == null && list(started.table).length === 0);
     const others = seats.map(s => s.playerNum).filter(n => n !== storyteller);
+    report.step = normal ? 'normal-turn:early-submissions' : 'follow-up:early-submissions';
     for (const num of others) {
       const mine = (await card(num)).dixit; check(mine.storyCard == null && list(mine.candidates).length === 0);
       await command(num, 'submit_card', { cardId: mine.hand[0] });
+      if (!normal && num === others[0]) {
+        await command(storyteller, 'choose_story_card', { cardId: prep.hand[0] });
+        await command(storyteller, 'choose_story_card', { cardId: answer });
+        check((await card(storyteller)).dixit.storyCard === answer);
+      }
     }
     check((await card(1)).dixit.phase === 'STORYTELLING');
     await command(others[0], 'withdraw_submission');
     await command(others[0], 'submit_card', { cardId: (await card(others[0])).dixit.hand[1] });
     await command(others[0], 'claim_follow_up', {}, 'wrong_phase');
     await command(storyteller, 'finish_story');
+    if (normal) {
+      report.step = 'normal-turn:collect-without-story-card';
+      const collecting = (await card(storyteller)).dixit;
+      check(collecting.phase === 'COLLECTING' && collecting.storyComplete === true && collecting.storyCardRequired === true && list(collecting.table).length === 0);
+      check(seats.every(seat => seat.playerNum === storyteller || list(collecting.roster).find(p => p.playerNum === seat.playerNum)?.submitted));
+      await command(storyteller, 'choose_story_card', { cardId: answer });
+    }
     const voting = (await card(others[0])).dixit, table = copy(voting.table);
+    report.step = 'turn:voting-private';
     check(voting.phase === 'VOTING' && table.length === 4 && new Set(table.map(c => c.cardId)).size === 4);
     check(table.every(c => !Object.hasOwn(c, 'ownerPlayerNum') && !Object.hasOwn(c, 'isAnswer') && !Object.hasOwn(c, 'voterNums')));
     await canonicalPrivate(); await pulse(others[0]);
     check(JSON.stringify((await card(others[0])).dixit.table) === JSON.stringify(table));
+    await sharedQuestion();
     await command(others[0], 'cast_vote', { token: voting.ownTableToken }, 'self_vote');
     const correct = table.find(c => c.cardId === answer); check(!!correct);
     await command(storyteller, 'cast_vote', { token: correct.token }, 'storyteller_cannot_vote');
     let last;
     for (const num of others) last = await command(num, 'cast_vote', { token: correct.token });
+    report.step = 'turn:vote-complete';
+    const completedVotes = (await card(1)).dixit;
+    check(completedVotes.phase === 'VOTING' && completedVotes.votesComplete === true && completedVotes.answerCardId == null && Object.keys(completedVotes.deltas || {}).length === 0);
+    check(list(completedVotes.table).every(c => !Object.hasOwn(c, 'ownerPlayerNum') && !Object.hasOwn(c, 'isAnswer') && !Object.hasOwn(c, 'voterNums')));
+    const beforeScores = list(completedVotes.roster).map(p => p.score);
+    const beforeHands = await Promise.all(seats.map(async seat => (await card(seat.playerNum)).dixit.hand));
+    await command(1, 'reveal');
+    report.step = 'turn:countdown';
+    const countdown = (await card(1)).dixit;
+    check(countdown.phase === 'REVEALING' && countdown.revealStage === 'countdown' && countdown.revealAnswerAt - countdown.revealStartedAt === 3000 && countdown.revealPopularAt - countdown.revealAnswerAt === 1200 && countdown.answerCardId == null);
+    check(Object.keys(countdown.deltas || {}).length === 0 && !countdown.eligibleFollowUp);
+    check(same(countdown.question ?? null, question));
+    const answerStage = await duePulse(countdown.revealAnswerAt, s => s.revealStage === 'answer');
+    report.step = 'turn:answer-only';
+    report.revealProbe = { phase: answerStage.phase, stage: answerStage.revealStage,
+      expectedAnswerMatches: answerStage.answerCardId === answer, elapsedFromServerRevealMs: now() - Number(countdown.revealStartedAt) };
+    check(answerStage.phase === 'REVEALING' && answerStage.revealStage === 'answer' && answerStage.answerCardId === answer, 'answer-only-stage');
+    check(list(answerStage.table).every(c => !Object.hasOwn(c, 'ownerPlayerNum') && !Object.hasOwn(c, 'isAnswer') && !Object.hasOwn(c, 'voterNums')), 'answer-only-table');
+    check(Object.keys(answerStage.deltas || {}).length === 0 && !answerStage.eligibleFollowUp, 'answer-only-deltas');
+    check(JSON.stringify(list(answerStage.roster).map(p => p.score)) === JSON.stringify(beforeScores), 'answer-only-scores');
+    check(JSON.stringify(await Promise.all(seats.map(async seat => (await card(seat.playerNum)).dixit.hand))) === JSON.stringify(beforeHands), 'answer-only-hands');
+    await sharedQuestion(); await canonicalPrivate();
+    await duePulse(answerStage.revealPopularAt, s => s.phase === 'REVEAL_DISCUSS');
+    report.step = 'turn:full-reveal';
     const revealed = (await card(1)).dixit; check(revealed.phase === 'REVEAL_DISCUSS');
+    await sharedQuestion();
     for (const num of [1, 2, 3, 4]) {
       const s = (await card(num)).dixit;
       check(s.deltas[num] === 2 && s.hand.length === 8 && !s.eligibleFollowUp);
@@ -161,7 +239,7 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     for (const seat of seats) await write(seat.playerNum, () => ({ ...DIXIT.view(fresh, seat.playerNum), qaLifeSmoke: stamp }));
     await api({ operation: 'register', game: 'dixit', code, controlToken, seats, sessionId: nextSession });
     check((await card(1)).dixit.historyCount === history); await command(1, 'deal'); check((await card(1)).dixit.historyCount === history + 3);
-    await canonicalPrivate(); report.step = 'complete'; report.ok = true;
+    await canonicalPrivate(); report.step = 'complete'; report.ok = true; delete report.revealProbe;
   } catch { report.ok = false; report.error = 'production_smoke_failed'; }
   finally {
     // Exactly five known capability nodes. Foreign values, sessions or changed
