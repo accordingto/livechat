@@ -3,6 +3,8 @@
 // enumeration, real-room reads, secrets, transcripts, credential output or parent deletes.
 const { randomBytes } = require('node:crypto');
 const DIXIT = require('../dixit-engine.js');
+const { SEED_QUESTIONS } = require('../life-story-questions.cjs');
+const currentQuestions = new Map(SEED_QUESTIONS.map(question => [question.id, question]));
 const DATABASE = 'https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app';
 const SERVICE = 'https://icebreaker-youtube-search.vercel.app/api/hub-executor';
 const list = value => Array.isArray(value) ? value.filter(v => v != null) : Object.values(value || {});
@@ -106,6 +108,12 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now, sleep = ms =>
   async function finishTurn(storyteller, normal) {
     report.step = normal ? 'normal-turn:shared-candidates' : 'follow-up:shared-candidates';
     const prep = (await card(storyteller)).dixit; check(prep.phase === 'PREPARE' && prep.storyteller === storyteller);
+    // A deployment can preserve IDs while changing text. Verify the actual
+    // shared candidates against this release's private local source in memory.
+    // Never emit question contents or inspect any existing user room.
+    if (normal) for (const candidate of list(prep.candidates)) {
+      check(same(candidate, currentQuestions.get(candidate.id)), 'current_question_bank');
+    }
     check(list(prep.candidates).length === (normal ? 3 : 0));
     const managerPrep = header(await canonicalPrivate()).publicLifeView;
     check(same(list(managerPrep.candidates), list(prep.candidates)));

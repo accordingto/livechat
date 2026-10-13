@@ -209,16 +209,16 @@
       "tone": "neutral",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "挑一個其實沒發生什麼大事，你卻還記得的日子。",
-        "en": "Tell us about an ordinary day you still remember, even though nothing big happened."
+        "zh-TW": "挑一個沒有大事的日子，從桌上一件東西、窗外景色或當時的聲音聊起。",
+        "en": "Recall an ordinary day with no big event, starting with an object on the table, the view outside, or a sound."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "那天有什麼小細節留在你腦中？",
+          "那個細節出現時，你正在做什麼？",
           "你覺得自己為什麼會記得它？"
         ],
         "en": [
-          "What small detail do you remember from that day?",
+          "What were you doing when you noticed that detail?",
           "Why do you think that day stayed with you?"
         ]
       }
@@ -253,16 +253,16 @@
       "tone": "mixed",
       "storyShape": "unexpected_turn",
       "question": {
-        "zh-TW": "有沒有一件很小的事，讓你那天的心情換了一個方向？",
-        "en": "Tell us about a small thing that changed your mood for the rest of a day."
+        "zh-TW": "回想一次看到一件東西、聽到一句話或碰到一個人，讓你那天心情變了的片刻。",
+        "en": "Recall a moment when seeing something, hearing a remark, or meeting someone changed your mood that day."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "事情發生前，你本來在做什麼？",
+          "最先讓你注意到的是什麼？",
           "那個變化持續到什麼時候？"
         ],
         "en": [
-          "What were you doing before it happened?",
+          "What first caught your attention?",
           "How long did that change in mood last?"
         ]
       }
@@ -363,16 +363,16 @@
       "tone": "positive",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "分享一個你當時有點捨不得讓它結束的片刻。",
-        "en": "Tell us about a moment you did not quite want to end."
+        "zh-TW": "回想一次你走到門口、收起東西或準備告別時，還想多待一會兒的片刻。",
+        "en": "Recall a time you reached the door, packed up, or prepared to say goodbye and wanted to stay a little longer."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "當時正在發生什麼？",
+          "你當時停在哪裡，身邊還有什麼？",
           "你最想留住的是哪一部分？"
         ],
         "en": [
-          "What was happening at that moment?",
+          "Where did you pause, and what was around you?",
           "Which part did you want to hold on to?"
         ]
       }
@@ -451,16 +451,16 @@
       "tone": "mixed",
       "storyShape": "memory_trace",
       "question": {
-        "zh-TW": "小時候，你曾把什麼事情理解得和現在完全不一樣？",
-        "en": "What did you understand very differently as a child? Tell us about a time that showed it."
+        "zh-TW": "想起小時候看到的一樣東西或聽到的一句話，你當時的理解和現在有什麼不同？",
+        "en": "Think of something you saw or heard as a child. How did you understand it differently from how you do now?"
       },
       "optionalPrompts": {
         "zh-TW": [
-          "當時你是怎麼想的？",
+          "你還記得當時看到或聽到的細節嗎？",
           "你後來是怎麼知道另一種解釋的？"
         ],
         "en": [
-          "What did you believe at the time?",
+          "What details do you remember seeing or hearing?",
           "How did you later learn a different explanation?"
         ]
       }
@@ -539,16 +539,16 @@
       "tone": "neutral",
       "storyShape": "contrast",
       "question": {
-        "zh-TW": "以前的哪件小事，讓你覺得自己有一部分其實一直沒變？",
-        "en": "What small memory makes you feel that part of you has not changed much?"
+        "zh-TW": "想起以前一次挑東西、玩遊戲或和人相處的畫面，哪個小動作讓你覺得自己有一部分一直沒變？",
+        "en": "Recall a scene of choosing something, playing, or spending time with someone. What small action makes you feel part of you has not changed?"
       },
       "optionalPrompts": {
         "zh-TW": [
-          "那時你做了什麼？",
+          "那個動作是在什麼情景下出現的？",
           "最近有出現類似的自己嗎？"
         ],
         "en": [
-          "What did you do in that situation?",
+          "What was happening when you made that small move?",
           "Have you noticed the same part of yourself recently?"
         ]
       }
@@ -693,16 +693,16 @@
       "tone": "positive",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "分享一個你突然發現「好像比以前會一點了」的時刻。",
-        "en": "Tell us about a moment when you noticed you were a little better at something."
+        "zh-TW": "聊聊一次手上的動作、做出的小東西或說出口的話，讓你發現自己比以前會一點了。",
+        "en": "Recall an action, something you made, or words you said that made you notice you were getting a little better."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "那次你做到了什麼？",
+          "那次和以前相比，哪個細節不同？",
           "你有讓別人知道這個小進步嗎？"
         ],
         "en": [
-          "What could you do that time?",
+          "What detail was different from earlier attempts?",
           "Did you tell anyone about that small improvement?"
         ]
       }
@@ -781,16 +781,16 @@
       "tone": "mixed",
       "storyShape": "small_choice",
       "question": {
-        "zh-TW": "有沒有一次出了小差錯，你得當場想辦法補救？",
-        "en": "Tell us about a small mistake that made you think of a solution on the spot."
+        "zh-TW": "回想一次東西灑了、卡住了或某一步做錯了，你當場怎麼試著補救？",
+        "en": "Recall a time something spilled, got stuck, or went wrong in a task. How did you try to fix it?"
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你第一個想到的辦法是什麼？",
+          "你手邊有什麼能用的東西？",
           "現在再遇到，你會用同一個辦法嗎？"
         ],
         "en": [
-          "What was the first solution you thought of?",
+          "What did you have nearby that you could use?",
           "Would you try the same solution now?"
         ]
       }
@@ -869,16 +869,16 @@
       "tone": "mixed",
       "storyShape": "encounter",
       "question": {
-        "zh-TW": "有沒有一次，你不是故意的，卻讓別人對你留下了有趣的印象？",
-        "en": "Tell us about a time you accidentally gave someone an unexpected impression of you."
+        "zh-TW": "有沒有一次拿東西、說話或做個小動作，讓別人對你留下意料之外的印象？",
+        "en": "Recall a time you picked something up, spoke, or made a small gesture and gave someone an unexpected impression of you."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "對方後來怎麼提起那件事？",
+          "對方當時看到你做了什麼？",
           "你覺得那個印象像你嗎？"
         ],
         "en": [
-          "How did the other person bring it up afterward?",
+          "What did the other person see you doing?",
           "Did that impression feel like you?"
         ]
       }
@@ -935,16 +935,16 @@
       "tone": "positive",
       "storyShape": "encounter",
       "question": {
-        "zh-TW": "有沒有一次，別人記住了你自己都沒特別強調的小習慣或喜好？",
-        "en": "Tell us about a time someone remembered a small habit or preference you had not made much of."
+        "zh-TW": "有沒有一次別人替你留了東西、調整做法或提起一個細節，讓你發現他記得你的小習慣或喜好？",
+        "en": "Recall a time someone saved something for you, adjusted what they did, or mentioned a detail that showed they remembered a small habit or preference."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你是怎麼發現對方記得的？",
+          "對方留了什麼，或做了哪個小調整？",
           "你當下有讓對方知道你的反應嗎？"
         ],
         "en": [
-          "How did you find out they remembered?",
+          "What did they save for you, or what small adjustment did they make?",
           "Did you show them how you felt about it?"
         ]
       }
@@ -1089,16 +1089,16 @@
       "tone": "positive",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "有沒有一個小時刻，讓你覺得自己開始融入某個地方或群體？",
-        "en": "Tell us about a small moment when you felt you were starting to belong somewhere."
+        "zh-TW": "回想一次有人挪出位子、叫了你的名字或拉你一起做事，讓你覺得開始融入其中。",
+        "en": "Recall a time someone made room, called your name, or included you in a task and you felt you were starting to belong."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "那個時刻發生了什麼？",
+          "那時你站在哪裡，或正在做什麼？",
           "是別人做了什麼，還是你的感覺慢慢變了？"
         ],
         "en": [
-          "What happened in that moment?",
+          "Where were you standing, or what were you doing then?",
           "Did someone do something, or did your feeling gradually change?"
         ]
       }
@@ -1133,16 +1133,16 @@
       "tone": "mixed",
       "storyShape": "contrast",
       "question": {
-        "zh-TW": "有沒有一次，別人看到的你，和你當時真正的狀態不太一樣？",
-        "en": "Tell us about a time when how you seemed to others was different from how you felt."
+        "zh-TW": "聊聊一次你在點頭、微笑或忙著做事時，心裡其實是另一種狀態。",
+        "en": "Recall a time you were nodding, smiling, or busy doing something while feeling quite different inside."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你當時表面上在做什麼？",
+          "當時別人可能看到了你哪個表情或動作？",
           "後來有人知道你的實際狀態嗎？"
         ],
         "en": [
-          "What were you doing on the outside?",
+          "What expression or action might others have noticed?",
           "Did anyone later find out how you really felt?"
         ]
       }
@@ -1243,16 +1243,16 @@
       "tone": "positive",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "回想一次聊天中，你突然覺得「這樣聊很舒服」的片刻。",
-        "en": "Tell us about a moment in a conversation when you realized you felt comfortable."
+        "zh-TW": "回想一次聊天時，坐的位置、對方的小動作或一句話，讓你覺得可以自在地聊。",
+        "en": "Tell us about a conversation made comfortable by where you sat, a small gesture, or something someone said."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "當時在聊什麼，或對方做了什麼？",
+          "你還記得當時周圍的樣子或聲音嗎？",
           "你平常容易遇到這種聊天嗎？"
         ],
         "en": [
-          "What were you discussing, or what did the other person do?",
+          "What do you remember about the surroundings or sounds?",
           "Do you often have conversations like that?"
         ]
       }
@@ -1309,16 +1309,16 @@
       "tone": "neutral",
       "storyShape": "small_choice",
       "question": {
-        "zh-TW": "聊聊一次只是小事，你卻在兩個選項之間想了很久。",
-        "en": "Tell us about a small decision that left you choosing between two options for quite a while."
+        "zh-TW": "回想一次點餐、挑東西或選路這類小事，你卻在兩個選項之間想了很久。",
+        "en": "Recall a small choice, such as ordering food, picking an item, or choosing a route, that left you deciding between two options for quite a while."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "那兩個選項各有什麼吸引你的地方？",
+          "當時兩個選項是怎麼擺在你眼前的？",
           "最後是什麼讓你選定的？"
         ],
         "en": [
-          "What appealed to you about each option?",
+          "How did the two options appear in front of you?",
           "What finally helped you choose?"
         ]
       }
@@ -1375,16 +1375,16 @@
       "tone": "mixed",
       "storyShape": "small_choice",
       "question": {
-        "zh-TW": "有沒有一件小事，你後來決定「就先這樣吧」，不再繼續折騰？",
-        "en": "Tell us about a small thing you decided to leave as it was instead of working on it more."
+        "zh-TW": "有沒有一次整理、修補或改東西，做到一半決定「就先這樣吧」？",
+        "en": "Recall a time you were sorting, fixing, or changing something and decided to leave it as it was for now."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你停下來之前，已經試了什麼？",
+          "停下來時，眼前的東西是什麼樣子？",
           "停在那裡，對你來說容易嗎？"
         ],
         "en": [
-          "What had you tried before you stopped?",
+          "What did it look like when you stopped?",
           "Was it easy for you to leave it there?"
         ]
       }
@@ -1397,16 +1397,16 @@
       "tone": "neutral",
       "storyShape": "small_choice",
       "question": {
-        "zh-TW": "有沒有一次，你沒照平常的習慣做，而是換個方式試試？",
-        "en": "Tell us about a time you changed your usual routine and tried doing something differently."
+        "zh-TW": "回想一次你換條路走、換個位置坐或換個順序做事，那次和平常有什麼不同？",
+        "en": "Recall a time you took a different route, sat somewhere else, or changed the order of a task. What was different?"
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你那次換了哪個部分？",
+          "你先注意到哪個和平常不一樣的細節？",
           "你後來有留下那個新做法嗎？"
         ],
         "en": [
-          "What did you change that time?",
+          "What difference did you notice first?",
           "Did you keep doing it the new way?"
         ]
       }
@@ -1419,16 +1419,16 @@
       "tone": "positive",
       "storyShape": "small_choice",
       "question": {
-        "zh-TW": "分享一次你特地多做了一件小事，想讓某個人或某個場合好一點。",
-        "en": "Tell us about a time you made a small extra effort for someone or for an occasion."
+        "zh-TW": "聊聊一次你多留個位子、多帶樣東西或多做個動作，想讓某個人或場合好一點。",
+        "en": "Recall a time you saved a seat, brought something extra, or made a small gesture to help someone or an occasion."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你實際多做了什麼？",
+          "你當時把東西放在哪裡，或做了什麼？",
           "有人注意到，或沒注意到，對你重要嗎？"
         ],
         "en": [
-          "What extra thing did you do?",
+          "Where did you put the extra thing, or what did you do?",
           "Did it matter whether anyone noticed?"
         ]
       }
@@ -1683,16 +1683,16 @@
       "tone": "neutral",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "你有沒有一種享受喜歡的東西的方式，和別人不太一樣？聊聊一次。",
-        "en": "Tell us about a time you enjoyed something in a way that was a little different from other people."
+        "zh-TW": "你有沒有用自己的步調、位置或做法，享受某樣喜歡的東西，和別人不太一樣？聊聊一次。",
+        "en": "Recall a time you enjoyed something at your own pace, in your own spot, or in a way different from others."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你那次具體怎麼做？",
+          "你那次坐在哪裡，或怎麼開始？",
           "那樣做，對你多了什麼樂趣？"
         ],
         "en": [
-          "What did you do that time?",
+          "Where did you sit, or how did you begin?",
           "What did your way add to the experience?"
         ]
       }
@@ -1771,16 +1771,16 @@
       "tone": "neutral",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "有沒有一件事，你不一定很擅長，卻仍然願意花時間做？",
-        "en": "Tell us about something you keep doing even though you are not especially good at it."
+        "zh-TW": "回想一次你不太擅長，還是拿起工具、開始玩或動手做喜歡的事。",
+        "en": "Recall a time you picked up a tool, started playing, or made something you enjoyed even though you were not very good at it."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "最近一次做的時候發生了什麼？",
+          "你當時手上或眼前有什麼？",
           "除了做得好不好，你還喜歡它什麼？"
         ],
         "en": [
-          "What happened the last time you did it?",
+          "What was in your hands or in front of you?",
           "What do you enjoy besides how well you do it?"
         ]
       }
@@ -1837,16 +1837,16 @@
       "tone": "mixed",
       "storyShape": "contrast",
       "question": {
-        "zh-TW": "聊聊一次你期待了好一陣子，真正到來時卻有不同感覺的事情。",
-        "en": "Tell us about something you looked forward to for a while that felt different when it finally happened."
+        "zh-TW": "聊聊一次你等了好一陣子，終於拆開、走進去或坐下來時，感覺和想像不同。",
+        "en": "Recall something you waited for, then felt differently about when you finally opened it, walked in, or sat down."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "事情開始前，你想像的是什麼？",
+          "事情開始時，周圍有什麼聲音或動作？",
           "實際經歷時，你最注意哪個部分？"
         ],
         "en": [
-          "What had you imagined before it happened?",
+          "What sounds or movements were around you when it began?",
           "What did you notice most when it happened?"
         ]
       }
@@ -1903,16 +1903,16 @@
       "tone": "mixed",
       "storyShape": "contrast",
       "question": {
-        "zh-TW": "有沒有一件你事前有點擔心的小事，實際碰到後才知道會怎樣？",
-        "en": "Tell us about something small you worried about before finding out how it would actually go."
+        "zh-TW": "回想一次出門、開口或動手做事前，你擔心一件小事，那次實際發生了什麼？",
+        "en": "Recall a small thing you worried about before going out, speaking up, or starting a task. What actually happened?"
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你本來擔心會出現什麼情況？",
+          "開始前，你正在看什麼或做什麼？",
           "實際發生的部分，有哪些是你沒想到的？"
         ],
         "en": [
-          "What were you worried might happen?",
+          "What were you looking at or doing just before you began?",
           "What happened that you had not expected?"
         ]
       }
@@ -1947,16 +1947,16 @@
       "tone": "mixed",
       "storyShape": "contrast",
       "question": {
-        "zh-TW": "有沒有一個場合，你離開時的感覺和剛到時很不一樣？",
-        "en": "Tell us about an occasion when you felt very different leaving from how you felt when you arrived."
+        "zh-TW": "有沒有一次你走進某個地方，和後來收東西、走出去時的感覺很不一樣？",
+        "en": "Recall an occasion when you felt very different walking in from how you felt packing up or walking out."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "中間哪個片段讓感覺開始變化？",
+          "走進去時，你最先注意到什麼？",
           "那個感覺有跟著你回到日常嗎？"
         ],
         "en": [
-          "When did your feeling start to change?",
+          "What did you notice first when you walked in?",
           "Did that feeling stay with you afterward?"
         ]
       }
@@ -1969,16 +1969,16 @@
       "tone": "positive",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "分享一件在別人眼裡可能很小，卻讓你有成就感的事。",
-        "en": "Tell us about something that may seem small to others but gave you a sense of achievement."
+        "zh-TW": "聊聊一次你做好一件小東西、做成一個動作或完成日常小事，覺得「做到了」。",
+        "en": "Recall a time you made something small, got a move right, or finished an everyday task and felt you had done it."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "哪個時刻讓你覺得自己做到了？",
+          "那一刻，你手上或眼前是什麼樣子？",
           "為什麼這件事對你不只是小事？"
         ],
         "en": [
-          "At what moment did you feel you had done it?",
+          "What was in your hands or in front of you at that moment?",
           "Why was it more than a small thing to you?"
         ]
       }
@@ -2035,16 +2035,16 @@
       "tone": "neutral",
       "storyShape": "memory_trace",
       "question": {
-        "zh-TW": "有沒有一件事在別人看來很順利，背後其實有一段準備過程？",
-        "en": "Tell us about something that looked straightforward to others but took preparation they did not see."
+        "zh-TW": "有沒有一次別人看到你順利完成一件事，卻沒看到你事前擺東西、練動作或反覆確認的過程？",
+        "en": "Recall something others saw you do smoothly without seeing you set things out, practice, or check things beforehand."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "準備時，有哪個片段你還記得？",
+          "準備時，哪樣東西或哪個動作最讓你記得？",
           "別人知不知道那段準備，對你重要嗎？"
         ],
         "en": [
-          "What moment from preparing do you remember?",
+          "What object or action do you remember most from preparing?",
           "Did it matter whether others knew about the preparation?"
         ]
       }
@@ -2079,16 +2079,16 @@
       "tone": "mixed",
       "storyShape": "contrast",
       "question": {
-        "zh-TW": "有沒有一件你花了不少心力，結果卻沒有照你希望發展的事？",
-        "en": "Tell us about something you put effort into that did not turn out as you had hoped."
+        "zh-TW": "聊聊一次你反覆練、仔細整理或花心力做一件事，結果卻和希望的不一樣。",
+        "en": "Recall a time you practiced, carefully arranged things, or put effort into a task and the result differed from what you hoped."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "哪個部分你投入最多？",
+          "你記得自己反覆做的哪個動作？",
           "現在想到它，你比較在意過程還是結果？"
         ],
         "en": [
-          "Which part did you put the most into?",
+          "What action do you remember repeating?",
           "When you think of it now, does the effort or the result matter more?"
         ]
       }
@@ -2101,16 +2101,16 @@
       "tone": "neutral",
       "storyShape": "small_choice",
       "question": {
-        "zh-TW": "聊聊一次你調整做事的速度，改成比較適合自己的節奏。",
-        "en": "Tell us about a time you changed your pace while doing something to make it suit you better."
+        "zh-TW": "回想一次走路、動手做事或練習時，你改變速度，找到比較適合自己的節奏。",
+        "en": "Recall a time you changed your speed while walking, doing a task, or practicing to find a pace that suited you better."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你實際放慢或調整了什麼？",
+          "你是從哪個動作開始調整速度的？",
           "調整之後，哪個地方最有差別？"
         ],
         "en": [
-          "What did you slow down or change?",
+          "Which action did you start doing at a different speed?",
           "What difference did the change make?"
         ]
       }
@@ -2189,16 +2189,16 @@
       "tone": "mixed",
       "storyShape": "encounter",
       "question": {
-        "zh-TW": "聊聊一次你和別人經歷同一件事，事後卻記得很不一樣的部分。",
-        "en": "Tell us about a time you and someone else remembered different parts of the same experience."
+        "zh-TW": "有沒有一次和人同桌、同行或一起做事，事後你們提起的畫面卻很不一樣？",
+        "en": "Recall a time you shared a table, went somewhere, or did something together, but later remembered very different scenes."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你記得什麼，對方又提到了什麼？",
+          "你記得哪個畫面，對方提起了什麼？",
           "聽完對方的版本，你有重新想到什麼嗎？"
         ],
         "en": [
-          "What did you remember, and what did they mention?",
+          "What scene did you remember, and what did they mention?",
           "Did their version bring anything else back to you?"
         ]
       }
@@ -2277,16 +2277,16 @@
       "tone": "mixed",
       "storyShape": "memory_trace",
       "question": {
-        "zh-TW": "回想一件以前的小事，現在的你會不會用不同方式理解它？",
-        "en": "Think of a small event from your past that you understand differently now. Tell us about it."
+        "zh-TW": "回想以前一次等人、分東西或聽到一句話的片刻，現在的你會怎麼理解那件小事？",
+        "en": "Recall a small moment of waiting for someone, sharing things, or hearing a remark. How do you understand it now?"
       },
       "optionalPrompts": {
         "zh-TW": [
-          "你以前是怎麼看那件事的？",
+          "你還記得當時誰做了哪個動作嗎？",
           "什麼讓現在的看法有點不同？"
         ],
         "en": [
-          "How did you see it at the time?",
+          "What do you remember someone doing at the time?",
           "What makes you see it differently now?"
         ]
       }
@@ -2299,16 +2299,16 @@
       "tone": "neutral",
       "storyShape": "snapshot",
       "question": {
-        "zh-TW": "有沒有一天，讓你發現自己其實很在意某個平常的小部分？",
-        "en": "Tell us about a day that made you realize how much one small part of daily life mattered to you."
+        "zh-TW": "聊聊一天裡少了一種聲音、一樣東西或一個小步驟，讓你發現原來自己很在意它。",
+        "en": "Recall a day when a familiar sound, object, or small step was missing and you realized how much it mattered to you."
       },
       "optionalPrompts": {
         "zh-TW": [
-          "那天和平常差在哪裡？",
+          "你在哪個片刻注意到它不在？",
           "你之後有特別留意那個部分嗎？"
         ],
         "en": [
-          "What was different about that day?",
+          "At what moment did you notice it was missing?",
           "Did you pay more attention to that part afterward?"
         ]
       }

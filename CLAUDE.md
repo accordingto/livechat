@@ -1,4 +1,24 @@
-## CURRENT: Life Story shared prompts and original Dixit presentation — 2026-10-14
+## CURRENT: Life Story paper prompts and compact storyteller hand — 2026-10-14
+
+The user prefers the first release's warm paper question cards. Keep the three
+public candidates and selected question shared, with storyteller-only selection.
+During hand selection, the storyteller needs the selected topic and essential
+card/story controls in one sticky region. Keep secondary information folded and
+scope smaller hand grids to Life Story. Preserve original Dixit and reveal sizes.
+
+Use concrete everyday scenes, objects, actions and sensory memories for prompts,
+without requiring a literal picture match. Keep all96 bilingual questions and
+their stable IDs, intents, metadata and related groups; retain room history and
+saved question snapshots. Never send private hands to a question provider.
+
+Only life-story-ui.js and life-story.css advance to life-story-3. Life engine,
+shared Dixit UI/sync and manager host remain life-story-2; privacy transport stays
+life-story-1. Question-bank changes require deploying the existing independent
+service as well as the frontend. Actual validation/publication for this revision
+is recorded in life-story-acceptance.md; previous release counts below do not
+establish this revision's result.
+
+## Previous: Life Story shared prompts and original Dixit presentation — 2026-10-14
 
 Follow the user's revised flow: all three PREPARE candidates are public to every
 seat and the shared manager, with read-only controls for non-storytellers. The

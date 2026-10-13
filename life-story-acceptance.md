@@ -2,7 +2,27 @@
 
 最新修正日期：2026-10-14。正式修改是本目錄的 `accordingto/livechat` Hub 副本，基底 `cba8fd3`。在找到 Hub 前製作的獨立程式已停止並隔離，其測試不計入以下結果。
 
-## 2026-10-14 題目共享與原版介面流程修正
+## 2026-10-14 紙卡題目、固定主題與精簡手牌（life-story-3）
+
+依最新指示恢復第一版的暖色紙卡題目區，仍對全員共享三題與選定題目。說書人已選題的準備階段、說故事與收牌階段，將主題、確認秘密故事牌、開始／講完整合於同一固定區，捲動手牌仍保留主題。自由分享與接棒也有固定方向提示；接棒只顯示實際上一題，沒有編造故事摘要。次要回合資訊、提示與選牌時的分數預設折疊。Life 手牌為桌面四欄、平板三欄、手機兩欄；圖像來源、3:4 比例、原版模式與揭曉大小保持。
+
+完整 96 題中有 28 題雙語主問題與第一延伸提示改為具體生活入口，例如物件、路線、位置、動作、聲音與氣味。第二提示、所有原 ID、intentKey、分類、themes、related groups 及其他非文字 metadata 保留。原附件 metadata digest 回歸與舊題 snapshot／Firebase numeric-key history 回歸確認舊房不清歷史、不改正在玩的題目。出題 prompt 增加相同編輯規範；沒有新增 provider、根據秘密手牌出題或限制字面圖片匹配。
+
+已執行：
+
+- `node --test --test-concurrency=4 tests/*.test.cjs`：最終 **1871／1871 通過，0 失敗、0 skipped**，52.0 秒，記錄 `../hub-life-story-ui3-release-tests.log`。包含原版 Dixit 與其他 Hub 遊戲。先前 UI 改好時全套 1869／1869 通過；加入兩項新題庫回歸後再跑上述最終全套。
+- 題庫／engine／service 最終 targeted **47／47 通過**，題庫 **20／20**；獨立多人與安全稽核確認管理頁沒有私牌、dock 只讀本人 projection、命令保留回合與版本限制。
+- 原版 UI／Life UI／主持切換 **78／78 通過**。`node tests/life-story-ui.browser.cjs` 分別以 EN 與 zh-TW 最終通過實際原主持頁＋四個獨立原玩家連結的 4 回合、正常順序、接棒、跨輪、先講後選／改牌、匿名投票、重連與原版揭曉幾何比較，**零 page errors、零 stale retries**。這些流程使用隔離 Firebase 相容邊界與真正 executor／ETag，正式 Firebase 流程另由下述 smoke 驗證。
+- 每語 **9 個**版面案例（320／390／1280 × 已選題 PREPARE／STORYTELLING／COLLECTING），合計 **18 個**；真實 90 字繁中及 220 字元英文主問題完整可讀、無內部捲動，至少一張完整圖卡可見且中心 hit-test 可點，操作不互蓋、無橫向溢位。截圖前確認可見圖片 complete 與 naturalWidth>0，未把載入中的空底當成完成。測試頁曾缺 UTF-8 宣告，已修正後重跑兩語；正式玩家頁本來有 UTF-8 宣告。結果與截圖 `../test-results/hub-life-story-en/`、`../test-results/hub-life-story-zh-TW/`。
+- `scripts/hub-executor-package-service.cjs` 建立 58 檔隔離部署包；`scripts/life-story-verify-package.cjs` 驗證 **52 個 runtime／資產一致、完整 96 題可載入**。服務 build 成功，`dpl_FmbgGp7LHkFrcMk5VLfkk6RcQtpT` 為 READY，沿用 `icebreaker-youtube-search.vercel.app`。52 個 runtime／資產與兩個 manifests 已同步回原服務來源，5 個既有公開搜尋／套件檔逐 byte 保留。
+- 新部署服務的初次真實 Firebase 四人 smoke **3783 項通過**，所有 **5／5** 自建節點經所有權與 ETag 條件清理。另補上正式候選逐項比對本次題庫內容的驗證；該驗證本地真實 executor／ETag fixture **2／2 通過**。
+- 加入候選比對後，正式服務 smoke 再次 **3792 項通過**，四人完成分享、匿名投票、分段揭曉、計分、接棒、跨輪與歷史重開；**5／5** 自建節點條件清理成功，0 失敗。結果 `../test-results/hub-life-story-ui3-production.json`；初次 smoke 結果另存 `hub-life-story-ui3-production-initial.json`。本次沒有讀取或修改任何既有玩家房間。
+
+介面 UI／CSS 與兩個實際入口 cache 使用 life-story-3；未修改的 Life engine、共用 Dixit UI／sync 與 manager host 保留 life-story-2，privacy transport 保留 life-story-1。原專案沒有 lint、TypeScript typecheck 或通用前端 build script；只記錄實際 Node 語法、原生測試、瀏覽器與 Vercel service build，不宣稱其他檢查通過。
+
+本次主要修改：`life-story-ui.js`、`life-story.css`、`assets/life-story/life_story_questions.zh-TW.en.json`、`assets/life-story/QUESTION_GENERATOR_PROMPT.md`、`dixit.html`、`play.html`。驗證工具／測試／文件同步更新；engine 與原版規則本次沒有生產程式修改。實體手機、真人語音與實際團體的題目效果仍未驗證。
+
+## 2026-10-14 題目共享與原版介面流程修正（上一版）
 
 本次依使用者後續指示，更新附件原本的先選牌限制與候選題私有設定：準備階段三個候選題對全員及共同主持畫面公開，選題／換題權仍只有說書人；選定題目持續顯示於說故事、收牌、投票及揭曉。選題後可以先開始說故事，說書人邊講邊選牌，其他人已可提交。說完但未選故事牌時保持收牌，必須同時滿足故事講完、說書人合法故事牌、有效玩家全部交牌才鎖牌。
 

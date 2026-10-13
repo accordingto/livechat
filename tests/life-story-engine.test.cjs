@@ -87,6 +87,33 @@ test('mid-cycle membership adds next-turn cards/votes and next-cycle storytellin
 test('question history survives end/restart and mode config language/pack stay independent',()=>{
   const h=setup();complete(h);const history=JSON.stringify(h.state.lifeRoom.questionHistory);ok(h,1,'end_game');assert.equal(JSON.stringify(h.state.lifeRoom.questionHistory),history);ok(h,1,'configure',{locale:'en',cardPackId:'dixit_base84'});ok(h,1,'restart');assert.equal(JSON.stringify(h.state.lifeRoom.questionHistory),history);assert.equal(v(h,1).config.cardPackId,'dixit_base84');assert.equal(v(h,1).locale,'en');ok(h,1,'deal');assert(v(h,1).candidates.every(q=>q.question.en));
 });
+test('persisted prompt snapshots retain their original wording and stable history when the live bank changes',()=>{
+  const h=setup(),saved=JSON.parse(JSON.stringify(h.state)),oldCandidates=saved.lifeRoom.turn.candidates;
+  // A previous release can have different wording under the same stable ID.
+  // Restoring a room must use its saved choices rather than today's bank copy.
+  oldCandidates[0].question={'zh-TW':'這是上一版已顯示的題目。',en:'This question was already displayed by the previous release.'};
+  oldCandidates[0].optionalPrompts={'zh-TW':['上一版提示一。','上一版提示二。'],en:['Previous hint one.','Previous hint two.']};
+  const expected=JSON.parse(JSON.stringify(oldCandidates)),historyBefore=JSON.parse(JSON.stringify(saved.lifeRoom.questionHistory));
+  saved.lifeRoom.turn.candidates=Object.fromEntries(oldCandidates.map((q,i)=>[i,q]));
+  saved.lifeRoom.questionHistory.displayed=Object.fromEntries(historyBefore.displayed.map((q,i)=>[i,q]));
+  h.state=LIFE.pulse(saved,{serverAuthority:true,now:5000,onlineNums:h.online});
+  for(const actor of [0,1,2,3,4])assert.deepEqual(v(h,actor).candidates,expected);
+  assert.deepEqual(v(h,0).question,null);assert.deepEqual(h.state.lifeRoom.questionHistory.selected,historyBefore.selected);
+  ok(h,1,'choose_question',{questionId:expected[0].id});
+  assert.deepEqual(h.state.lifeRoom.questionHistory.selected,[{id:expected[0].id,intentKey:expected[0].intentKey}]);
+  assert.deepEqual(h.state.lifeRoom.questionHistory.displayed,historyBefore.displayed);
+  assert.equal(h.state.lifeRoom.questionHistory.selections,historyBefore.selections);
+  ok(h,1,'start_story');submit(h);ok(h,1,'finish_story');assert.equal(h.state.phase,'COLLECTING');
+  h.state=LIFE.pulse(JSON.parse(JSON.stringify(h.state)),{serverAuthority:true,now:6000,onlineNums:h.online});
+  for(const actor of [0,1,2,3,4]){assert.deepEqual(v(h,actor).question,expected[0]);assert.deepEqual(v(h,actor).candidates,[]);}
+  ok(h,1,'choose_story_card',{cardId:v(h,1).hand[0]});assert.equal(h.state.phase,'VOTING');
+  for(const actor of [2,3,4])ok(h,actor,'cast_vote',{token:answer(h)});reveal(h);follow(h);ok(h,1,'next_in_order');
+  const historyAfter=h.state.lifeRoom.questionHistory;
+  assert.equal(historyAfter.selections,historyBefore.selections+1);
+  assert.deepEqual(historyAfter.selected,[{id:expected[0].id,intentKey:expected[0].intentKey}]);
+  assert.deepEqual(historyAfter.displayed.slice(0,historyBefore.displayed.length),historyBefore.displayed);
+  assert(v(h,2).candidates.every(q=>q.id!==expected[0].id&&q.intentKey!==expected[0].intentKey));
+});
 test('manager control cannot fake an offline seat or perform player-only card actions',()=>{
   const h=setup();assert.equal(act(h,0,'choose_story_card',{cardId:v(h,1).hand[0]}),'not_eligible');ok(h,0,'end_game');h.online=[2,3];h.state=LIFE.pulse(h.state,{onlineNums:h.online,now:30000,serverAuthority:true});assert.equal(act(h,0,'deal'),'min_players');assert.equal(h.state.lifeRoom.players.find(p=>p.id==='1').connected,false);
 });

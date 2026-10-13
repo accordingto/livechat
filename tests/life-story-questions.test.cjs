@@ -8,6 +8,8 @@ const node_test_1 = __importDefault(require("node:test"));
 const life_story_questions_cjs_1 = require("../life-story-questions.cjs");
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
+const seedBank = require('../assets/life-story/life_story_questions.zh-TW.en.json');
 const questions = life_story_questions_cjs_1;
 const batch = (questions) => ({ schemaVersion: '1.0', questions });
 function candidate(index = 0) {
@@ -83,6 +85,60 @@ test('dependency-free validator enforces every supplied schema field, enum, patt
         strict_1.default.equal(q.optionalPrompts['zh-TW'].length, 2);
         strict_1.default.ok(q.tone && q.storyShape && q.intentKey);
     }
+});
+test('D01/D04: editing image and everyday entrances preserves every original identity and non-text bank field', () => {
+    const metadata = { ...seedBank, questions: seedBank.questions.map(({ question, optionalPrompts, ...fields }) => fields) };
+    // Captured from the user's original 96-question reference, excluding only
+    // editable main text and optional hints. This also covers ordered themes,
+    // related groups, depth, tone and story shape; no external fixture is needed.
+    const originalMetadataDigest = '29f1b6469216371d2b253abd3d2551908b80d4014b4d36a4aff00106e3533c46';
+    assert.equal(createHash('sha256').update(JSON.stringify(metadata)).digest('hex'), originalMetadataDigest);
+    assert.deepEqual(questions.SEED_QUESTIONS, seedBank.questions);
+    assert.deepEqual(questions.RELATED_INTENT_GROUPS, seedBank.relatedIntentGroups);
+});
+test('D03/D04: history from before the wording revision still excludes selected intents and cools down displayed IDs', () => {
+    const savedRoom = JSON.parse(JSON.stringify({
+        selectedQuestion: {
+            id: 'LS016', theme: 'growing_up', intimacy: 'personal',
+            tone: 'neutral', storyShape: 'contrast', intentKey: 'younger_self_same_trait',
+            question: {
+                'zh-TW': '以前的哪件小事，讓你覺得自己有一部分其實一直沒變？',
+                en: 'What small memory makes you feel that part of you has not changed much?',
+            },
+            optionalPrompts: {
+                'zh-TW': ['那時你做了什麼？', '最近有出現類似的自己嗎？'],
+                en: ['What did you do in that situation?', 'Have you noticed the same part of yourself recently?'],
+            },
+        },
+        questionHistory: {
+            selections: 7,
+            selected: { 0: { id: 'LS016', intentKey: 'younger_self_same_trait' } },
+            displayed: {
+                0: { id: 'LS016', intentKey: 'younger_self_same_trait', selection: 7 },
+                1: { id: 'LS043', intentKey: 'appearance_different_from_inside', selection: 7 },
+                2: { id: 'LS086', intentKey: 'effort_without_hoped_result', selection: 7 },
+            },
+            replaced: { 0: 'LS043', 1: 'LS086' },
+        },
+    }));
+    const snapshot = structuredClone(savedRoom.selectedQuestion);
+    const revised = id => questions.SEED_QUESTIONS.find(q => q.id === id);
+    assert.equal(questions.validateBatch(batch([snapshot])).accepted.length, 1, 'the original saved snapshot remains schema-valid');
+    assert.notDeepEqual(revised('LS016').question, snapshot.question, 'fixture contains the pre-revision text');
+    assert.equal(questions.areSimilar(snapshot, revised('LS016')), true, 'the wording edit retains the original intent');
+    for (const id of ['LS016', 'LS043', 'LS086']) {
+        const rejected = questions.validateBatch(batch([revised(id)]), savedRoom.questionHistory);
+        assert.equal(rejected.accepted.length, 0);
+        assert.ok(rejected.diagnostics.some(code => code.includes('historical_intent')));
+    }
+    const next = questions.selectQuestions(savedRoom.questionHistory, 6, 'reconnect-after-wording-edit');
+    assert.equal(next.reused, false);
+    assert.ok(next.questions.every(q => !['LS016', 'LS043', 'LS086'].includes(q.id)));
+    assert.equal(savedRoom.questionHistory.selections, 8);
+    assert.deepEqual(savedRoom.questionHistory.selected, [{ id: 'LS016', intentKey: 'younger_self_same_trait' }]);
+    assert.deepEqual(savedRoom.questionHistory.replaced, ['LS043', 'LS086']);
+    assert.deepEqual(savedRoom.selectedQuestion, snapshot, 'saved question text remains a historical snapshot');
+    assert.ok(next.questions.every(q => q.intentKey !== snapshot.intentKey));
 });
 (0, node_test_1.default)('D02/D03: repeated selections diversify theme, story entrance, tone and related groups; six displays cool down', () => {
     const history = (0, life_story_questions_cjs_1.emptyHistory)();
