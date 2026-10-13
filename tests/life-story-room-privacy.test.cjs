@@ -55,4 +55,8 @@ test('frontend HTTP denies server question module and bank/prompt files while ke
   assert.equal(fs.existsSync(require.resolve('../life-story-questions.cjs')),true);
   assert.equal(fs.existsSync(require.resolve('../assets/life-story/QUESTION_GENERATOR_PROMPT.md')),true);
   assert.doesNotMatch(fs.readFileSync(require.resolve('../.vercelignore'),'utf8'),/^life-story-questions\.cjs$|^assets\/life-story\/$/m,'deny HTTP routes rather than stripping runtime dependencies');
+  const safe404=fs.readFileSync(require.resolve('../404.html'),'utf8');
+  for(const route of config.routes.filter(route=>route.status===404))assert.equal(route.dest,'/404.html','status alone can return protected file bytes; denied routes must rewrite to a safe body');
+  assert.match(safe404,/Page not found/);
+  assert.doesNotMatch(safe404,/require\(|process\.env|exports\.|lifeRoom|QUESTION_GENERATOR_PROMPT|protectAdapter/);
 });

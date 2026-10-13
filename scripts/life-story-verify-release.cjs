@@ -16,7 +16,7 @@ const entries = ['index.html', 'play.html', 'dixit.html', 'bluff-king-live-chat.
   'crack-the-word.html', 'cut.html', 'kangaroo-court.html', 'lets-talk.html', 'once-upon-a-time.html',
   'open-mic-rescue.html', 'persuade-together.html', 'pick-a-side.html', 'say-it-without-saying-it.html',
   'sketch-relay.html', 'sophies-choice.html', 'youre-in-the-scene.html'];
-const browserAssets = ['room.js', 'hub-executor.js', 'life-story-engine.js', 'life-story-ui.js', 'life-story.css',
+const browserAssets = ['404.html', 'room.js', 'hub-executor.js', 'life-story-engine.js', 'life-story-ui.js', 'life-story.css',
   'dixit-engine.js', 'dixit-sync.js', 'dixit-ui.js', 'dixit-host.js', 'dixit-card-host.js', 'dixit-deck.js',
   'dixit.css', 'talk-sync.js', 'i18n.js', 'shared.css', 'hub-membership.css', 'firebase-config.js',
   'assets/dixit/manifest.json', 'assets/dixit-v2/manifest.json', 'assets/dixit-expansion-1/manifest.json'];
@@ -32,6 +32,7 @@ const privatePaths = ['runtime/hub-executor-core.cjs', 'runtime/story-executor.c
   'assets/life-story/question_batch.schema.json', 'assets/life-story/QUESTION_GENERATOR_PROMPT.md'];
 const sha256 = (bytes, file) => crypto.createHash('sha256').update(/\.(?:html|js|css|json|svg)$/.test(file)
   ? bytes.toString('utf8').replace(/\r\n/g, '\n') : bytes).digest('hex');
+const sourceMarkers = /\bmodule\.exports\b|\brequire\s*\(\s*["'](?:node:|\.\/|\.\.\/)|\bfunction\s+(?:createExecutor|protectAdapter|matchesSchema|selectQuestions|referenceFile)\b|icebreak-life-state-v1|life_story_starter_96|["']intentKey["']\s*:|["']questions["']\s*:\s*\[|Life Story Question Candidate Batch|你是「說書人・人生故事版」的題目編輯/u;
 
 function localManifest() {
   const deck = require('../dixit-deck.js');
@@ -116,14 +117,22 @@ async function main() {
   console.log('SERVICE CORS / SYNTHETIC REJECTION', { cors: corsValid, badTicket: rejected, foreignOrigin: denied });
 
   const paths = [hub, service].flatMap(base => privatePaths.map(file => ({ base, file })));
+  const safe404 = fs.readFileSync(path.join(root, '404.html'));
   const blocked = await parallel(paths, async ({ base, file }) => {
     const response = await get(base, file);
-    // Do not consume an accidentally public server-source body.
-    await response.body?.cancel();
-    return { origin: new URL(base).origin, file, status: response.status, valid: response.status === 404 };
+    // A status-only rewrite can still return the original source bytes. Inspect
+    // the body in memory and emit only booleans, never source text or contents.
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const content = bytes.toString('utf8').replace(/\r\n/g, '\n');
+    const matchesSource = content === fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
+    const containsSource = sourceMarkers.test(content);
+    const safe404Match = sha256(bytes, '404.html') === sha256(safe404, '404.html');
+    const bodyBlocked = !matchesSource && !containsSource && (base !== hub || safe404Match);
+    return { origin: new URL(base).origin, file, status: response.status, bodyBlocked,
+      ...(base === hub ? { safe404Match } : {}), valid: response.status === 404 && bodyBlocked };
   });
   for (const failure of blocked.filter(result => !result.valid)) console.log('PRIVATE PATH NOT BLOCKED', failure);
-  console.log(`PRIVATE RUNTIME / QUESTION ASSETS BLOCKED ${blocked.filter(result => result.valid).length}/${paths.length}`);
+  console.log(`PRIVATE RUNTIME / QUESTION RESPONSE BODIES BLOCKED ${blocked.filter(result => result.valid).length}/${paths.length}`);
   if (assets.some(result => !result.valid) || blocked.some(result => !result.valid) || !healthy || !corsValid || !rejected || !denied) process.exitCode = 1;
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

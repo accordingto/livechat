@@ -2,18 +2,22 @@
   "routes": [
     {
       "src": "^/(?:runtime|server|tests|scripts|private|work)(?:/.*)?$",
+      "dest": "/404.html",
       "status": 404
     },
     {
       "src": "^/life-story-questions\\.cjs$",
+      "dest": "/404.html",
       "status": 404
     },
     {
       "src": "^/assets/life-story(?:/.*)?$",
+      "dest": "/404.html",
       "status": 404
     },
     {
       "src": "^/open-mic-(?:genius|lyrics|youtube)\\.js$",
+      "dest": "/404.html",
       "status": 404
     },
     {
