@@ -18,6 +18,19 @@ service as well as the frontend. Actual validation/publication for this revision
 is recorded in life-story-acceptance.md; previous release counts below do not
 establish this revision's result.
 
+This release passed1871/1871 native Hub tests,47/47 question/engine/service,
+78/78 original/Life UI and host switching, EN/ZH real manager plus four original
+player links across four turns/cross-cycle, and18 compact layout cases at
+320/390/1280. Both languages show the complete long topic, tappable loaded cards
+and no overlapping controls; zero page errors. Independent service
+dpl_FmbgGp7LHkFrcMk5VLfkk6RcQtpT is READY. Production candidate-source plus
+multiplayer smoke passed3792 checks and conditionally cleaned5/5 owned nodes.
+Frontend c783e78 is published (Vercel FJFPjKyEm3B6BG4uc3HyTJiBa94W).
+All200/200 production assets match,14/14 private source bodies remain blocked,
+and fresh EN/ZH entry checks pass with zero room requests/writes/page errors.
+The52 runtime/assets and two manifests are synchronized back to the owned
+independent service source; five unrelated public files remain byte-identical.
+
 ## Previous: Life Story shared prompts and original Dixit presentation — 2026-10-14
 
 Follow the user's revised flow: all three PREPARE candidates are public to every

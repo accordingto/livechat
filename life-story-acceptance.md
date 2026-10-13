@@ -17,6 +17,8 @@
 - `scripts/hub-executor-package-service.cjs` 建立 58 檔隔離部署包；`scripts/life-story-verify-package.cjs` 驗證 **52 個 runtime／資產一致、完整 96 題可載入**。服務 build 成功，`dpl_FmbgGp7LHkFrcMk5VLfkk6RcQtpT` 為 READY，沿用 `icebreaker-youtube-search.vercel.app`。52 個 runtime／資產與兩個 manifests 已同步回原服務來源，5 個既有公開搜尋／套件檔逐 byte 保留。
 - 新部署服務的初次真實 Firebase 四人 smoke **3783 項通過**，所有 **5／5** 自建節點經所有權與 ETag 條件清理。另補上正式候選逐項比對本次題庫內容的驗證；該驗證本地真實 executor／ETag fixture **2／2 通過**。
 - 加入候選比對後，正式服務 smoke 再次 **3792 項通過**，四人完成分享、匿名投票、分段揭曉、計分、接棒、跨輪與歷史重開；**5／5** 自建節點條件清理成功，0 失敗。結果 `../test-results/hub-life-story-ui3-production.json`；初次 smoke 結果另存 `hub-life-story-ui3-production-initial.json`。本次沒有讀取或修改任何既有玩家房間。
+- 前端 `c783e78497d43de0d3f49c3151dd92dc475eb16e` 已由原 Git 自動發布，Vercel `FJFPjKyEm3B6BG4uc3HyTJiBa94W` 為 success，正式入口 https://livechat-two-alpha.vercel.app/dixit.html?v=life-story-3 。`node scripts/life-story-verify-release.cjs c783e78 --preserve-games` **200／200 正式資產一致**，126 張既有圖卡、96 題本地 server bank、16 個 Room 入口與 UI/CSS 新快取正確。服務 readiness／CORS／偽造票券與外部來源拒絕正常，**14／14 私有回應本文封鎖**。
+- `node scripts/life-story-verify-browser.cjs c783e78`：正式 EN／ZH 空白主持頁的模式、語言、牌包、圖卡數、UI helpers、快取與服務 readiness 通過，**零 page errors、零房間請求、零寫入**。空白頁按既有流程等候 Hub 設定房間，沒有為驗證製造現有房間狀態。第一次 checker 嘗試操作刻意隱藏的無房間設定欄位，已修成讀取選項後重跑通過。結果 `../test-results/hub-life-story-production-ui3/report.json`。8 個修改 JS/CJS 檔的 Node 語法檢查與 `git diff --check` 通過。
 
 介面 UI／CSS 與兩個實際入口 cache 使用 life-story-3；未修改的 Life engine、共用 Dixit UI／sync 與 manager host 保留 life-story-2，privacy transport 保留 life-story-1。原專案沒有 lint、TypeScript typecheck 或通用前端 build script；只記錄實際 Node 語法、原生測試、瀏覽器與 Vercel service build，不宣稱其他檢查通過。
 

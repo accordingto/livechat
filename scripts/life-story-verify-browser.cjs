@@ -34,7 +34,8 @@ async function main() {
       const page = await context.newPage(), errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto('https://livechat-two-alpha.vercel.app/dixit.html?v=' + encodeURIComponent(release), { waitUntil: 'networkidle', timeout: 60000 });
-      await page.locator('#dx-mode').selectOption('life_story');
+      // With no saved Hub room, setup is intentionally hidden and launch is
+      // disabled. Inspect available modes without manufacturing a room/session.
       const result = await page.evaluate(async () => ({
         mode: [...document.querySelector('#dx-mode').options].map(item => item.value),
         packs: [...document.querySelector('#dx-life-pack').options].map(item => item.value),
