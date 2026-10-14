@@ -2,8 +2,14 @@
 
 Read talk-mode.md and docs/talk-vnext-acceptance.md for the current lifecycle,
 settings, privacy boundaries and validation. Implementation/local browser checks
-are complete; vNext production publication and online verification are pending.
+are complete; final full suite1971/1971 passes. Native queue service is READY;
+final online lifecycle verification is pending.
 Earlier release IDs/counts below are not evidence for this revision.
+The final scheduler uses native Vercel Queues0.8.0 (private api/talk-wake.js,
+queue/v2beta topic crazy-talk-wake, sin1). Never restore self-HTTP wake chains: real
+production testing proved508 recursion blocking after several successful hops.
+Publisher acceptance precedes enqueuedAt; retry the same job key after failure.
+Only sealed tickets enter the native queue; no card plaintext or new manual secret.
 
 Keep the pure talk-vnext.js module before engine/UI. Default Crazy style is free;
 Director needs five active players, normally two directors/three actors, rotating
@@ -18,7 +24,7 @@ Automatic crazyRendered is a separate idempotent technical RPC after foreground
 valid DOM rendering, never a manual mailbox command or proof a person saw/read
 the card. Missing render confirmation 30 s withdraws/requeues handwriting and
 pauses receiving; rendered reminder 30 s is quiet. Internal TTL 150 s, Done+1 and
-Skip 0, then 30 s receiver cooldown. Expiry pauses receiving. Keep all task/system/
+Skip 0, then 30 s receiver cooldown. Expiry pauses receiving only without related manual interaction in that task lifecycle. Keep all task/system/
 rotation timers hidden; round time remains a local optional toggle, prep visible.
 Native selectors/ancestors, drafts, receipt retries, nested vault editors and
 Chinese IME must remain stable across updates.

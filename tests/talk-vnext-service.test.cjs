@@ -36,7 +36,7 @@ test('vNext automatic render acknowledgement cannot overwrite a pending manual r
 });
 test('vNext signed background wake advances without any client and rejects replay/forged wake',async()=>{
  const f=fixture();const registered=await f.register();assert.ok(registered._wake?.ticket);const originalHostSeen=f.nodes.get(f.canonical).executor.hostSeenAt;
- f.advance(20000);const result=await f.service.wake({ticket:registered._wake.ticket});assert.ok(result._wake);assert.equal(f.nodes.get(f.canonical).executor.hostSeenAt,originalHostSeen);
+ f.advance(20000);const result=await f.service.wake({ticket:registered._wake.ticket});assert.ok(result._wake);await f.service.noteWake({ticket:result._wake.ticket,stage:'scheduled'});assert.equal(f.nodes.get(f.canonical).executor.hostSeenAt,originalHostSeen);
  assert.deepEqual(await f.service.wake({ticket:registered._wake.ticket}),{ok:true,obsolete:true});
  await assert.rejects(f.service.wake({ticket:'invalid'}),{code:'invalid_ticket'});
  f.advance(20000);const second=await f.service.wake({ticket:result._wake.ticket});assert.ok(second._wake);
@@ -92,7 +92,7 @@ test('vNext signed wake retries a transient archive outage without a foreground 
  const hostSeen=f.nodes.get(f.canonical).executor.hostSeenAt;f.advance(20000);f.failArchive(true);
  await assert.rejects(f.service.wake({ticket:registered._wake.ticket}));
  assert.ok(f.nodes.get(f.canonical).executor.crazyWake);assert.equal(f.nodes.get(f.canonical).executor.crazyWake.claimId,undefined);
- f.failArchive(false);const result=await f.service.wake({ticket:registered._wake.ticket});assert.ok(result._wake);
+ f.failArchive(false);const result=await f.service.wake({ticket:registered._wake.ticket});assert.ok(result._wake);await f.service.noteWake({ticket:result._wake.ticket,stage:'scheduled'});
  assert.equal(f.nodes.get(f.canonical).executor.hostSeenAt,hostSeen);
  assert.ok(Object.values(f.state().crazy.prompts).some(p=>p?.status==='pending'));
  assert.deepEqual(await f.service.wake({ticket:registered._wake.ticket}),{ok:true,obsolete:true});
@@ -135,4 +135,20 @@ test('vNext explicit host takeover survives confirmed offline delegate without g
  assert.equal(f.state().crazy.roundStage,'decision');f.advance(30000);await f.service.execute({capsule:f.capsule(),token:f.seats[1].token,clock:true});
  assert.equal(f.card(2).talk.crazy.hostActions.claim,true);await f.act(2,'crazyClaimHost');assert.equal(f.state().crazy.hostDelegate,2);
  await f.act(2,'crazyExtend',{seconds:180});assert.equal(f.state().crazy.roundStage,'extension');
+});
+
+test('vNext private scheduler trace is bounded, ticket-authenticated and absent from player projections',async()=>{
+ const f=fixture(),r=await f.register();for(let i=0;i<15;i++)await f.service.noteWake({ticket:r._wake.ticket,stage:'response',status:200});
+ const raw=f.nodes.get(f.canonical);assert.equal(raw.executor.crazyWakeLog.length,12);
+ assert.deepEqual(Object.keys(raw.executor.crazyWakeLog[0]).sort(),['at','job','stage','status']);
+ assert.ok(!JSON.stringify(f.card(1)).includes('crazyWakeLog'));
+ await assert.rejects(f.service.noteWake({ticket:'invalid',stage:'started'}),{code:'invalid_ticket'});
+});
+
+test('an early native delivery retries without consuming its authoritative wake or inventing presence',async()=>{
+ const f=fixture(),r=await f.register(),before=f.nodes.get(f.canonical).executor;
+ await assert.rejects(f.service.wake({ticket:r._wake.ticket}),{code:'wake_early'});
+ const after=f.nodes.get(f.canonical).executor;assert.equal(after.crazyWake.id,before.crazyWake.id);
+ assert.equal(after.crazyWake.claimId,undefined);assert.equal(after.hostSeenAt,before.hostSeenAt);assert.deepEqual(after.presence,before.presence);
+ f.advance(20000);assert.ok((await f.service.wake({ticket:r._wake.ticket}))._wake);
 });

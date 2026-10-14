@@ -10,7 +10,7 @@ const source = fs.readFileSync(require.resolve('../api/hub-executor.js'), 'utf8'
 const SECRET = 'a1'.repeat(32);
 const normalize = value => value == null ? value : JSON.parse(JSON.stringify(value));
 function harness(options = {}) {
-  const made = [], calls = [], scheduledFetches = [];
+  const made = [], calls = [], scheduledFetches = [], queueCalls = [];
   const methods = {};
   for (const operation of ['register', 'execute', 'release', 'wake', 'updateRoster', 'setParticipant']) methods[operation] = async body => {
     calls.push({ operation, body: normalize(body) });
@@ -22,6 +22,7 @@ function harness(options = {}) {
     fetch:async(url,options)=>{ scheduledFetches.push({url,body:JSON.parse(options.body)});return {status:200,ok:true}; },
     process: { env: options.env === undefined ? { HUB_EXECUTOR_SECRET: SECRET } : options.env },
     require(name) {
+      if(name === '../runtime/talk-wake-queue.cjs')return{queueWake:async(wake,service)=>{queueCalls.push(normalize(wake));if(options.queueFail)throw options.queueFail;assert.equal(service,methods)}};
       if(name === '@vercel/functions' && options.importedWaitUntil) return {waitUntil:options.importedWaitUntil};
       assert.equal(name, '../runtime/hub-executor-core.cjs');
       return { keyFrom, createExecutor(config) { made.push(normalize(config)); keyFrom(config.secret); return methods; } };
@@ -39,7 +40,7 @@ function harness(options = {}) {
     assert.equal(res.ended, true);
     return res;
   }
-  return { request, made, calls, scheduledFetches };
+  return { request, made, calls, scheduledFetches, queueCalls };
 }
 function assertNoPrivateDetails(res, markers) {
   const wire = JSON.stringify({ statusCode: res.statusCode, headers: res.headers, body: res.body });
@@ -220,20 +221,15 @@ test('unexpected errors return a stable generic code without raw messages or sta
   assertNoPrivateDetails(res, [...markers, 'private-bearer', 'stack']);
 });
 
-test('real context waitUntil schedules a private signed wake without exposing its ticket',async()=>{
- const privateTicket='synthetic-private-wake-ticket',pending=[];let importedCalls=0;
- const h=harness({result:{ok:true,_wake:{delayMs:5,ticket:privateTicket}},importedWaitUntil:()=>{importedCalls++}});
- const res=await h.request({body:{operation:'execute'},context:{waitUntil(p){pending.push(p)}}});
- assert.equal(res.statusCode,200);assert.equal(res.headers['X-Icebreak-Crazy-Scheduler'],'attached');
- assert.deepEqual(res.body,{ok:true});assert.equal(importedCalls,0);assert.equal(pending.length,1);await Promise.all(pending);
- assert.deepEqual(h.scheduledFetches,[{url:'https://icebreaker-youtube-search.vercel.app/api/hub-executor',body:{operation:'wake',ticket:privateTicket}}]);
- assertNoPrivateDetails(res,[privateTicket]);
+test('native queue publishing is awaited and its private wake ticket never reaches the browser',async()=>{
+ const privateTicket='synthetic-private-queue-ticket',wake={delayMs:5,key:'stable-job-id',ticket:privateTicket};
+ const h=harness({result:{ok:true,_wake:wake}}),res=await h.request({body:{operation:'execute'}});
+ assert.equal(res.statusCode,200);assert.equal(res.headers['X-Icebreak-Crazy-Scheduler'],'queue');
+ assert.equal(res.headers['X-Icebreak-Crazy-Wake'],'scheduled');assert.deepEqual(res.body,{ok:true});
+ assert.deepEqual(h.queueCalls,[wake]);assert.equal(h.scheduledFetches.length,0);assertNoPrivateDetails(res,[privateTicket]);
 });
-
-test('captured Vercel context schedules exactly one successor even when the imported helper is a no-op',async()=>{
- const pending=[],requestContext={waitUntil(p){pending.push(p)}};let helperCalls=0;
- const h=harness({requestContext,importedWaitUntil:()=>{helperCalls++},result:{ok:true,_wake:{delayMs:5,ticket:'private-symbol-only'}}});
- const res=await h.request({body:{operation:'wake'}});assert.equal(res.headers['X-Icebreak-Crazy-Scheduler'],'attached');
- assert.equal(helperCalls,0);assert.equal(pending.length,1);await Promise.all(pending);assert.equal(h.scheduledFetches.length,1);
- assertNoPrivateDetails(res,['private-symbol-only']);
+test('a native enqueue failure withholds a success response and sanitizes its private diagnostics',async()=>{
+ const h=harness({result:{ok:true,_wake:{delayMs:5,key:'stable-key',ticket:'private-ticket'}},queueFail:new Error('private-ticket hidden provider diagnostics')});
+ const res=await h.request({body:{operation:'wake'}});assert.equal(res.statusCode,503);assert.equal(h.queueCalls.length,1);
+ assert.deepEqual(res.body,{error:'executor_unavailable'});assertNoPrivateDetails(res,['private-ticket','provider diagnostics','stable-key']);
 });

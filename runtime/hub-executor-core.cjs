@@ -373,36 +373,54 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       ...Object.values(c.prompts || {}).filter(p=>p?.status === 'pending').flatMap(p=>[p.expiresAt, !p.renderAckAt ? p.displayDeadline : 0]),
       ...Object.values(c.receivers || {}).map(p=>p?.cooldownUntil)].filter(t=>Number.isFinite(t) && t > timestamp);
     const delayMs = Math.max(800, Math.min(20000, deadlines.length ? Math.min(...deadlines)-timestamp : 20000));
-    const job = { id: crypto.randomUUID(), binding:hash(raw.executor.capsule), dueAt: timestamp + delayMs, leaseUntil: timestamp + delayMs + 65000 };
-    let won = false;
-    await cas(ticket.canonicalPath, current => {
-      won = false;
+    const job = { id: crypto.randomUUID(), binding:hash(raw.executor.capsule), dueAt: timestamp + delayMs, leaseUntil: timestamp + delayMs + 180000, ...(consumedWakeId ? {predecessor:consumedWakeId} : {}) };
+    let won = false, selected = job;
+    try { await cas(ticket.canonicalPath, current => {
+      won = false; selected = job;
       if (current?.executor?.capsule !== raw.executor.capsule) return;
       const prior = current.executor.crazyWake;
-      if (prior && prior.id !== consumedWakeId && prior.binding === hash(raw.executor.capsule) && prior.leaseUntil > timestamp) return;
+      if (prior && prior.id !== consumedWakeId && prior.binding === hash(raw.executor.capsule) && prior.leaseUntil > timestamp) {
+        if (!prior.enqueuedAt && !(prior.claimUntil > timestamp)) { won = true; selected = copy(prior); }
+        return;
+      }
       won = true; return { ...current, executor: { ...current.executor, crazyWake: job } };
-    });
-    return won ? { delayMs, ticket: seal({ purpose:'crazy-wake-v1', capsule: raw.executor.capsule,
-      id:job.id, expiresAt:job.leaseUntil }, key) } : null;
+    }); } catch (error) {
+      // RTDB may commit a conditional write before its response is lost. Only
+      // recover this invocation's exact newly minted job, never another job.
+      let saved; try { saved = (await read(ticket.canonicalPath)).data; } catch { throw error; }
+      const pending = saved?.executor?.crazyWake;
+      if (saved?.executor?.capsule !== raw.executor.capsule || pending?.id !== job.id
+          || pending.leaseUntil <= now() || pending.claimUntil > now()) throw error;
+      won = true;
+    }
+    return won ? { key:selected.id, delayMs:Math.max(0,selected.dueAt-now()), ticket: seal({ purpose:'crazy-wake-v1', capsule: raw.executor.capsule,
+      id:selected.id, expiresAt:selected.leaseUntil }, key) } : null;
   }
   async function wake(body) {
     const job = unseal(body?.ticket, key), timestamp = now();
     if (job.purpose !== 'crazy-wake-v1' || job.expiresAt < timestamp) fail('invalid_wake',403);
     const ticket = unseal(job.capsule, key);
     if (ticket.game !== 'letstalk') fail('invalid_wake',403);
-    let claimed = false, busy = false;
+    let claimed = false, busy = false, early = false;
     const claimId = crypto.randomUUID();
     await cas(ticket.canonicalPath, current => {
-      claimed = false; busy = false;
+      claimed = false; busy = false; early = false;
       if (current?.executor?.capsule !== job.capsule || current.executor.crazyWake?.id !== job.id) return;
       const queued = current.executor.crazyWake;
-      if (queued.dueAt > timestamp + 500) return;
+      if (queued.dueAt > timestamp + 500) { early = true; return; }
       if (queued.claimUntil > timestamp) { busy = true; return; }
       claimed = true;
       return { ...current, executor: { ...current.executor, crazyWake: { ...queued, claimId, claimUntil: timestamp + 60000 } } };
     });
+    if (early) fail('wake_early',503);
     if (busy) fail('wake_busy',503);
-    if (!claimed) return { ok:true, obsolete:true };
+    if (!claimed) {
+      const latest = (await read(ticket.canonicalPath)).data, pending = latest?.executor?.crazyWake;
+      const recover = latest?.executor?.capsule === job.capsule && pending?.predecessor === job.id
+        && !pending.enqueuedAt && !(pending.claimUntil > timestamp) && pending.leaseUntil > timestamp
+        ? await planWake(ticket,latest) : null;
+      return { ok:true, obsolete:true, ...(recover ? {_wake:recover} : {}) };
+    }
     try {
       const result = await execute({ capsule:job.capsule, token:ticket.controlToken, clock:true },0,true,job.id);
       if (result._wake) return result;
@@ -424,6 +442,21 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       }); } catch {}
       throw error;
     }
+  }
+  // Private, bounded operational metadata; never expose a wake ticket or card.
+  async function noteWake({ticket: sealed, stage, status} = {}) {
+    if (!['scheduled','started','response','transport'].includes(stage)) return;
+    const job = unseal(sealed, key), timestamp = now();
+    if (job.purpose !== 'crazy-wake-v1' || job.expiresAt < timestamp) return;
+    const ticket = unseal(job.capsule, key);
+    await cas(ticket.canonicalPath, current => {
+      if (current?.executor?.capsule !== job.capsule) return;
+      const entry = { job:hash(job.id).slice(0,12),stage,at:timestamp,
+        ...(Number.isInteger(status)&&status>=100&&status<=599?{status}:{}) };
+      const queued = current.executor.crazyWake;
+      return { ...current, executor:{...current.executor,
+        ...(stage === 'scheduled' && queued?.id === job.id ? {crazyWake:{...queued,enqueuedAt:timestamp}} : {}),crazyWakeLog:[...(current.executor.crazyWakeLog||[]),entry].slice(-12)} };
+    });
   }
   async function membershipResult(raw, body) {
     const ticket = unseal(raw.executor.capsule, key), adapter = registry[ticket.game];
@@ -595,6 +628,6 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     });
     return { ok: true };
   }
-  return { register, execute, release, updateRoster, setParticipant, wake };
+  return { register, execute, release, updateRoster, setParticipant, wake, noteWake };
 }
 module.exports = { createExecutor, seal, unseal, keyFrom, GRACE_MS };

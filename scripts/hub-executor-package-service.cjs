@@ -35,15 +35,17 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
     const source = fs.readFileSync(file, 'utf8');
     for (const match of source.matchAll(/require\(['"]([^'"]+)['"]\)/g)) {
       if (match[1].startsWith('node:')) continue;
-      if (match[1] === '@vercel/functions') continue;
+      if (match[1] === '@vercel/queue') continue;
       if (!match[1].startsWith('.')) throw new Error('Unbundled runtime dependency');
       dependency(path.resolve(path.dirname(file), match[1]));
     }
   }
   dependency(path.join(gameRoot, 'api/hub-executor.js'));
+  dependency(path.join(gameRoot, 'api/talk-wake.js'));
   const packageFile = path.join(output, 'package.json');
   const manifest = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
-  manifest.dependencies = { ...manifest.dependencies, '@vercel/functions': '3.10.1' };
+  manifest.dependencies = { ...manifest.dependencies, '@vercel/queue': '0.8.0' };
+  delete manifest.dependencies['@vercel/functions'];
   fs.writeFileSync(packageFile, JSON.stringify(manifest, null, 2) + '\n');
   const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'vercel.json'), 'utf8'));
   config.fluid = true;
@@ -51,6 +53,8 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
   // RTDB is in asia-southeast1: avoid a US-to-Singapore round trip for every
   // guarded read/write. Preserve the unrelated search function configuration.
   config.functions['api/hub-executor.js'] = { ...config.functions['api/hub-executor.js'], maxDuration: 60, regions: ['sin1'] };
+  config.functions['api/talk-wake.js'] = { ...config.functions['api/talk-wake.js'], maxDuration:60, regions:['sin1'],
+    experimentalTriggers:[{type:'queue/v2beta',topic:'crazy-talk-wake'}] };
   config.routes = [
     { src: '^/api/hub-executor/?$', dest: '/api/hub-executor.js' },
     ...config.routes.filter(route => route.src !== "^/api/hub-executor/?$")

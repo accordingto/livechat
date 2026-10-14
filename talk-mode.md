@@ -1,5 +1,10 @@
 # Current: Crazy Talk vNext — 2026-10-15
 
+Current scheduling uses a private native Vercel Queue consumer in the existing
+executor project. It carries only sealed wake tickets; Firebase/CAS remains the
+authority. The deprecated self-HTTP prototype hit508 in production and must not
+be restored. See docs/talk-vnext-acceptance.md for final release evidence.
+
 This section describes the implemented vNext behavior. It supersedes the older
 Crazy Talk scheduling, two-slot cap, expanded composer and system-only archive
 instructions below. Local checks are recorded in

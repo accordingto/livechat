@@ -23,5 +23,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@vercel/queue": "0.8.0"
   }
 }

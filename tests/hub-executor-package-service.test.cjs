@@ -14,6 +14,7 @@ function fixture(t) {
   put(serviceRoot,'package.json','{"private":true}');
   put(serviceRoot,'vercel.json',JSON.stringify({functions:{'api/open-mic-discovery.js':{maxDuration:15}},routes:[{src:'^/api/open-mic-discovery/?$',dest:'/api/open-mic-discovery.js'},{src:'^/.*$',status:404}]}));
   for (const file of ['.env.local','.vercel/project.json','auth.json','tests/private.json']) put(serviceRoot,file,'DO_NOT_PACKAGE_PRIVATE_MARKER');
+  put(gameRoot,'api/talk-wake.js',"module.exports=require('../runtime/core.cjs');");
   put(gameRoot,'api/hub-executor.js',"module.exports=require('../runtime/core.cjs');");
   put(gameRoot,'runtime/core.cjs',"const crypto=require('node:crypto');module.exports=require('../engine.js');");
   put(gameRoot,'engine.js',"module.exports={loaded:true};");
@@ -24,10 +25,12 @@ test('independent package preserves search and retirement endpoints and bundles 
   const f=fixture(t), files=packageService(f);
   assert.equal(JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8')).fluid,true);
   assert.equal(require(path.join(f.output,'api/hub-executor.js')).loaded,true);
-  assert.deepEqual(files.sort(), ['api/hub-executor.js','api/open-mic-discovery.js','api/open-mic-lyrics.js','engine.js','lib/genius-metadata.js','lib/youtube-discovery.js','package.json','runtime/core.cjs','vercel.json'].sort());
+  assert.deepEqual(files.sort(), ['api/talk-wake.js','api/hub-executor.js','api/open-mic-discovery.js','api/open-mic-lyrics.js','engine.js','lib/genius-metadata.js','lib/youtube-discovery.js','package.json','runtime/core.cjs','vercel.json'].sort());
   const config=JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8'));
   assert.equal(config.functions['api/open-mic-discovery.js'].maxDuration,15);
   assert.equal(config.functions['api/hub-executor.js'].maxDuration,60);
+  assert.deepEqual(config.functions['api/talk-wake.js'].experimentalTriggers,[{type:'queue/v2beta',topic:'crazy-talk-wake'}]);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(f.output,'package.json'),'utf8')).dependencies['@vercel/queue'],'0.8.0');
   assert.deepEqual(config.functions['api/hub-executor.js'].regions,['sin1']);
   assert.deepEqual(config.routes.at(-1),{src:'^/.*$',status:404});
   assert.deepEqual(config.routes[0],{src:'^/api/hub-executor/?$',dest:'/api/hub-executor.js'});

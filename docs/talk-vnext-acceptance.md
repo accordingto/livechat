@@ -1,8 +1,8 @@
 # Crazy Talk vNext acceptance record — 2026-10-15
 
-Status: implemented; final integrated regression passes 1945/1945 with no skips.
-Production packaging matches 53 Hub source/assets and all 96 Life Story questions;
-publication and production verification are pending.
+Status: implemented; final integrated regression passes 1971/1971 with no skips.
+Production packaging matches 55 Hub source/assets and all 96 Life Story questions;
+native queue service is READY; final production lifecycle verification is pending.
 This document does not establish that vNext is deployed or online verified.
 Earlier Talk production checks refer to earlier versions only.
 
@@ -38,7 +38,9 @@ Earlier Talk production checks refer to earlier versions only.
    recipient. A rendered mission gets one quiet reminder after 30 seconds.
 6. Internal task expiry defaults 150 seconds from assignment, adjustable 30–300.
    Matching Done adds exactly 1; Skip adds 0. Both give a 30-second receiver
-   cooldown. Expiry adds 0 and pauses receiving; Resume receiving is shown only
+   cooldown. Expiry adds 0 and pauses receiving only without related manual interaction
+   in that exact task lifecycle. Keeping the original card counts as a response;
+   accepting a replacement creates a fresh lifecycle. Resume is shown only
    when paused. Duplicate/stale/expired acknowledgements cannot score twice.
    Global pause stops delivery while authoritative task/round deadlines continue.
 7. The round timer is hidden by default behind a local View time toggle; new
@@ -82,7 +84,8 @@ one room; no all-room enumeration or public archive-read endpoint is added.
 
 - Lifecycle/authority: new `talk-vnext.js`, `talk-engine.js`,
   `runtime/story-executor.cjs`, `runtime/hub-executor-core.cjs` and
-  `api/hub-executor.js`. Existing transaction/actor/session/membership/privacy
+  `api/hub-executor.js`, native private `api/talk-wake.js` and
+  `runtime/talk-wake-queue.cjs`. Existing transaction/actor/session/membership/privacy
   checks remain in the executor; rendering acknowledgements use an independent
   response without replacing manual receipts.
 - Persistence/operator tooling: `runtime/talk-archive-store.cjs`,
@@ -93,18 +96,41 @@ one room; no all-room enumeration or public archive-read endpoint is added.
   loads the lifecycle module before engine and forwards trusted hostPlayerNum.
 - Packaging/release checks: `scripts/hub-executor-package-service.cjs`, new
   `scripts/talk-vnext-production-smoke.cjs`, adjusted archive/production smoke
-  checks and their test fixtures. Production smoke is prepared, not yet claimed run.
+  checks and their test fixtures. Native55-second probe passes; final150-second
+  production lifecycle smoke is currently running.
 - Validation: `tests/talk-vnext.test.cjs`, `tests/talk-vnext-service.test.cjs`,
   `tests/talk-vnext-store.test.cjs`, `tests/talk-vnext-production-smoke.test.cjs`,
   `tests/talk-vnext-ui.browser.cjs`, `tests/talk-vnext-host.browser.cjs`,
-  `tests/helpers/talk-vnext-fixture.cjs`, existing Talk UI/host/settings/sync/
+  `tests/helpers/talk-vnext-fixture.cjs`, `tests/talk-wake-queue.test.cjs`,
+  `tests/talk-vnext-queue-handoff.test.cjs`, `tests/talk-vnext-wake-recovery.test.cjs`, existing Talk UI/host/settings/sync/
   clock/engine/archive/membership tests, and executor integration regressions.
 - Documentation: `talk-mode.md`, `CLAUDE.md` and this record. Unrelated topic
   banks, other games and existing search routes are preserved.
 
-Changed host Talk cache tags are `vnext-1`; player/dynamic Talk tags are
-`talk-vnext-1`. Unchanged browser executor retains `life-story-1`. Runtime changes
+Changed host Talk cache tags are `vnext-2`; player/dynamic Talk tags are
+`talk-vnext-2`. Unchanged browser executor retains `life-story-1`. Runtime changes
 require both the existing independent service and frontend deployments.
+
+## Native background delivery
+
+The final implementation uses Vercel Queues in the existing executor project;
+no self-HTTP recursion or per-client scheduling ownership is required. The private
+`api/talk-wake.js` consumer has a `queue/v2beta` trigger for `crazy-talk-wake`,
+region sin1, 60-second visibility and two-second retries. Only the encrypted signed
+wake ticket enters the queue, with a stable job key, 120-second message retention
+and a 180-second post-due signed delivery lease. No new user-managed secret is needed.
+
+Foreground commands await durable publication before their HTTP success. An
+unpublished job is offered again on exact retries; enqueue markers follow provider
+acceptance. A retried predecessor can recover only its own unpublished successor.
+Lost RTDB write responses recover only the exact newly committed job. Early
+callbacks retry; duplicate/old callbacks cannot replay scores or cross sessions.
+The bounded private wake log contains job hashes, stages, timestamps and outcomes.
+
+Deployment `dpl_AJngrTvVWkENgUrHYca2gDgXD4Qi` is READY on the existing stable
+service URL. Public GETs to the private consumer return404 on both hosts.
+The original self-request prototype was rejected after real production tests
+showed508; final verification must use the native transport.
 
 ## Verified locally
 
@@ -122,7 +148,7 @@ through `NODE_PATH` and its real Chrome channel; they do not install a new packa
   open state, caret/focus, Chinese IME and Save. Zero browser page errors.
 - `node tests/talk-vnext-ui.browser.cjs`: 5 real `play.html` pages in independent
   browser contexts against the actual authenticated service/ETag fixture pass
-  all 15 reported flags: 2 directors/3 actors, authority, automatic render ACK,
+  all15 reported flags: 2 directors/3 actors, authority, automatic render ACK,
   system-offer Keep, cooldown redispatch, round decision, locked extension,
   no-response receiving pause, default private sorting, recap isolation,
   vault edit/cross-session resend, reload draft and 375 px layout. Zero page errors.
@@ -131,7 +157,7 @@ through `NODE_PATH` and its real Chrome channel; they do not install a new packa
   Keep/Replace full texts, private sorting, real host Reveal, recap attribution,
   2 directors/3 actors, rotation and host extension. EN/ZH 320/375 layouts fit
   without horizontal overflow; screenshots inspected. Zero page errors.
-- Final integrated `node --test tests/*.test.cjs`: **1945/1945 passed**, zero
+- Final integrated `node --test tests/*.test.cjs`: **1971/1971 passed**, zero
   failures, cancellations or skips. This includes Normal Talk and other Hub games,
   real ETag/CAS races, authority/privacy, exact retries, role-safe assigned/random
   main sharing, inactive-owner vault management and host-absence takeover.
@@ -142,7 +168,7 @@ through `NODE_PATH` and its real Chrome channel; they do not install a new packa
   vault edits/tombstones survive reset. Native/browser checks were rerun after
   the final UI consent change and all passed.
 
-The browsers use synthetic local authority/demo data and an injected test clock.
+The local browsers use synthetic local authority/demo data and an injected test clock.
 They do not read or modify existing user rooms. Protocol visibility, delayed
 updates, background/hidden document checks and render retry behavior have local
 test coverage; this does not establish successful real background-network delivery.
