@@ -312,6 +312,57 @@ test('shown task expiry still runs while delivery is paused and prevents late co
   assert.equal(s.scores[3], 0);
 });
 
+test('keeping the current task counts as manual interaction without refreshing its expiry', () => {
+  const s = room({ crazy: { source: 'mixed' } }); s.phase = 'talking';
+  assert.equal(V.assign(s, { id: 'kept-system', text: 'I speak for the soup.', kind: 'line', source: 'system' }, 3, input(s)), true);
+  const p = shown(s, 3);
+  submit(s, item('declined-new-card', 1, 3), { now: 3000 });
+  const offer = s.crazy.offers[3];
+  const keep = input(s, 3, { type: 'crazyKeep', offerId: offer.id, promptId: p.id, now: 4000 });
+  assert.equal(V.action(s, { ...keep, promptId: 'unrelated-prompt' }), 'stale_offer');
+  assert.equal(p.interactedAt, undefined);
+  keep.id += '-valid';
+  assert.equal(V.action(s, keep), null); assert.equal(p.interactedAt, 4000);
+  assert.equal(V.action(s, { ...keep, now: 5000 }), null);
+  assert.equal(p.interactedAt, 4000, 'a replay does not invent a newer interaction');
+  assert.equal(p.expiresAt, 152000); assert.equal(p.renderAckAt, 2100);
+  s.crazy.paused = true;
+  V.advance(s, input(s, 0, { now: p.expiresAt }));
+  assert.equal(p.status, 'expired'); assert.equal(s.scores[3], 0);
+  assert.equal(s.crazy.receivers[3].paused, false);
+  assert.ok(s.crazy.queue.some(card => card.id === 'declined-new-card'));
+  assert.ok(V.eligibleReceivers(s, input(s, 0, { now: p.expiresAt })).includes(3));
+});
+
+test('replacement starts an independent interaction lifecycle and technical rendering alone still pauses on expiry', () => {
+  for (const acknowledgeReplacement of [false, true]) {
+    const s = room({ crazy: { source: 'mixed' } }); s.phase = 'talking';
+    assert.equal(V.assign(s, { id: 'old-interacted-system', text: 'Keep the old soup.', kind: 'line', source: 'system' }, 3, input(s)), true);
+    const old = shown(s, 3);
+    submit(s, item('first-declined', 1, 3), { now: 3000 });
+    const first = s.crazy.offers[3];
+    assert.equal(act(s, 'crazyKeep', 3, { offerId: first.id, promptId: old.id, now: 4000 }), null);
+    assert.equal(old.interactedAt, 4000);
+    submit(s, item('next-accepted', 2, 3), { now: 5000 });
+    const next = s.crazy.offers[3];
+    assert.equal(act(s, 'crazyReplace', 3, { offerId: next.id, promptId: old.id, now: 6000 }), null);
+    const replacement = own(s, 3);
+    assert.notEqual(replacement.id, old.id); assert.equal(old.status, 'replaced');
+    assert.equal(replacement.interactedAt, undefined);
+    if (acknowledgeReplacement) {
+      shown(s, 3, 6100);
+      assert.equal(replacement.interactedAt, undefined, 'a technical ACK is not a manual operation');
+    }
+    s.crazy.paused = true;
+    const deadline = acknowledgeReplacement ? replacement.expiresAt : replacement.displayDeadline;
+    V.advance(s, input(s, 0, { now: deadline }));
+    assert.equal(replacement.status, acknowledgeReplacement ? 'expired' : 'withdrawn');
+    assert.equal(s.crazy.receivers[3].paused, true);
+    assert.equal(s.crazy.receivers[3].reason, acknowledgeReplacement ? 'expired' : 'display_unconfirmed');
+    assert.equal(s.scores[3], 0);
+  }
+});
+
 test('completion scores once and imposes a 30 second receive cooldown', () => {
   const s = room();
   s.phase = 'talking';

@@ -384,7 +384,7 @@ var TALK_VNEXT = (() => {
       for (const num of activeNums(s)) {
         const p = c.prompts[num];
         if (p.renderedVersion !== 1 && now >= p.displayDeadline) closePrompt(s, num, 'withdrawn', input, { pause: true, reason: 'display_unconfirmed' });
-        else if (now >= p.expiresAt) closePrompt(s, num, 'expired', input, { pause: true, reason: 'expired' });
+        else if (now >= p.expiresAt) closePrompt(s, num, 'expired', input, { pause: p.interactedAt == null, reason: 'expired' });
       }
       if (liveStages.has(c.roundStage) && Number(s.gameDeadline) > 0 && now >= s.gameDeadline) {
         c.roundStage = 'decision'; c.queueLocked = true; c.decisionAt = now; c.nextAssignAt = 0;
@@ -459,6 +459,7 @@ var TALK_VNEXT = (() => {
         const item = c.queue.find(q => q.archiveId === offer.cardId);
         if (!item) return 'stale_offer';
         if (type === 'crazyKeep') {
+          p.interactedAt = now;
           c.declinedOffers[`${p.id}:${item.archiveId}`] = true; delete c.offers[actor];
           event(s, 'replacement_declined', input, { recipient: actor, promptId: p.id, cardId: item.archiveId }); return null;
         }

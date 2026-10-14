@@ -4,7 +4,7 @@ const crypto=require('node:crypto');
 const E=require('../talk-engine.js'),{createStore,DEFAULT_DB}=require('../runtime/talk-archive-store.cjs');
 const API='https://icebreaker-youtube-search.vercel.app/api/hub-executor';
 const uid=()=>crypto.randomBytes(16).toString('hex'),list=E.list;
-async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,delay=ms=>new Promise(r=>setTimeout(r,ms)),progress=()=>{},onFailure=()=>{}}={}){
+async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,delay=ms=>new Promise(r=>setTimeout(r,ms)),progress=()=>{},onFailure=()=>{},diagnosticOnly=false}={}){
  const report={ok:false,checks:0,cleaned:0,cleanupFailed:0,step:'initial',flags:{}},key=env.CRAZY_TALK_ARCHIVE_SECRET;
  if(!/^[a-f0-9]{64}$/i.test(key||''))return{...report,error:'archive_key_unavailable'};
  const code='QVN'+crypto.randomBytes(4).toString('hex').toUpperCase(),marker=uid(),control=uid(),initial=code+':vnext';
@@ -16,7 +16,7 @@ async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,dela
  const http=(url,opts={})=>fetchImpl(url,{credentials:'omit',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(30000),...opts});
  const snapshot=async path=>{const r=await http(DEFAULT_DB+'/'+path+'.json',{headers:{'X-Firebase-ETag':'true'}});check(r.ok);check(!!r.headers.get('etag'));return{value:await r.json(),etag:r.headers.get('etag')}};
  const put=async(path,value,etag)=>{const r=await http(DEFAULT_DB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json','If-Match':etag},body:JSON.stringify(value)});check(r.ok)};
- const api=async body=>{const r=await http(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const v=await r.json();check(r.ok&&!v.error);return v};
+ const api=async body=>{const r=await http(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(r.headers.get('x-icebreak-crazy-wake')==='scheduled')report.scheduled=(report.scheduled||0)+1;const v=await r.json();check(r.ok&&!v.error);return v};
  const raw=async()=> (await snapshot(node(0))).value,state=async()=> (await raw()).state,card=async n=>(await snapshot(node(n))).value;
  let seq=0;
  const act=async(n,type,extra={},expected='')=>{const source=await raw(),s=source.state;const id='vnext-qa-'+ ++seq;
@@ -32,12 +32,13 @@ async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,dela
   for(const n of [0,1,2,3,4,5]){const path=node(n),before=await snapshot(path);check(before.value==null);created.add(path);await put(path,{...(n===0?{state:s,revision:1}:E.view(s,n,now())),qaVNext:{marker}},before.etag)}
   await api({operation:'register',game:'letstalk',code,controlToken:control,seats,sessionId:initial});await act(0,'start');await act(0,'crazyDelegate',{playerNum:1});
   let current=await state();check(list(current.crazy.directors).join(',')==='1,2');check((await card(3)).talk.crazy.canAssign===false);check(current.crazy.maxActive===3);report.flags.fiveSeatsTwoDirectorsThreeActors=true;
+  if(diagnosticOnly){mark('waiting-for-first-autonomous-background-job');const before=(await raw()).executor.crazyWake?.id;await delay(25000);const after=await raw();check(after.executor.crazyWake?.id!==before);check(list(after.state.crazy.prompts).some(p=>p.status==='pending'));report.flags.autonomousFirstWake=true;report.ok=true;mark('background-probe-complete');return report}
   await act(3,'crazyAssign',{target:4,text:'Unauthorized actor card.'},'not_director');
-  await delay(5500);await pulse(1);current=await state();const actor=[3,4,5].find(n=>current.crazy.prompts[n]?.source==='system');check(!!actor);await shown(actor);
-  const original=current.crazy.prompts[actor].id,writing='Insist your cup is royalty.';
-  await act(1,'crazyAssign',{target:actor,text:writing});current=await state();check(current.crazy.offers[actor]?.promptId===original);check(current.crazy.prompts[actor].id===original);
+  mark('waiting-for-system-card');await delay(5500);await pulse(1);current=await state();const actor=[3,4,5].find(n=>current.crazy.prompts[n]?.source==='system');check(!!actor);await shown(actor);
+  mark('system-card-replacement-and-rest');const original=current.crazy.prompts[actor].id,writing='Insist your cup is royalty.';
+  await act(1,'crazyAssign',{target:actor,text:writing});current=await state();check(current.crazy.offers?.[actor]?.promptId===original);check(current.crazy.prompts[actor].id===original);
   for(const n of [1,2,3,4,5])if(n!==actor)check(!JSON.stringify((await card(n)).talk).includes(writing));
-  const offer=current.crazy.offers[actor];await act(actor,'crazyKeep',{offerId:offer.id,promptId:original});await pulse(2);check(!(await state()).crazy.offers[actor]);report.flags.privateReplacementChoice=true;
+  const offer=current.crazy.offers?.[actor];await act(actor,'crazyKeep',{offerId:offer.id,promptId:original});await pulse(2);check(!(await state()).crazy.offers?.[actor]);report.flags.privateReplacementChoice=true;
   // Another fresh system prompt is allowed to present this previously declined handwriting once.
   await act(actor,'crazyDone',{promptId:original});check((await state()).scores[actor]===1);
   const cooling=(await state()).crazy.receivers[actor].cooldownUntil;check(cooling>=now()+29000);report.flags.cooldownFromCompletion=true;
@@ -55,14 +56,14 @@ async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,dela
   check(shared.some(v=>v.text==='Private unused spoon two.'&&v.unused===true));check(!JSON.stringify(shared).includes('Private unused spoon one.'));check(shared.some(v=>v.text===writing&&v.status==='expired'));report.flags.privateVaultAndConsentedReveal=true;
   await act(1,'crazyLibraryUpdate',{cardId:saved.id,text:'Ask your spoon for a raise.'});
   await act(0,'newTopic',{confirm:true,topic:{question:'Invent a silly school.'},mode:'think',seconds:45,showStarters:false,gameMode:'crazy',crazySource:'players',conversationMode:'free',gameSeconds:900,crazyTaskSeconds:150});
-  check((await card(1)).talk.crazy.library.some(v=>v.id===saved.id&&v.text==='Ask your spoon for a raise.'));check(!(await card(2)).talk.crazy.library.length);await pulse(2);await pulse(4);await act(0,'start');await act(1,'crazyLibrarySend',{cardId:saved.id,target:4});
+  check(list((await card(1)).talk.crazy.library).some(v=>v.id===saved.id&&v.text==='Ask your spoon for a raise.'));check(!list((await card(2)).talk.crazy.library).length);await pulse(2);await pulse(4);await act(0,'start');await act(1,'crazyLibrarySend',{cardId:saved.id,target:4});
   current=await state();check(current.crazy.prompts[4]?.text==='Ask your spoon for a raise.');check(!JSON.stringify((await card(3)).talk).includes('Ask your spoon for a raise.'));await shown(4);await act(4,'crazySkip',{promptId:current.crazy.prompts[4].id});
-  await act(1,'crazyLibraryDelete',{cardId:saved.id});check(!(await card(1)).talk.crazy.library.some(v=>v.id===saved.id));report.flags.crossSessionEditResendDelete=true;
+  await act(1,'crazyLibraryDelete',{cardId:saved.id});check(!list((await card(1)).talk.crazy.library).some(v=>v.id===saved.id));report.flags.crossSessionEditResendDelete=true;
   await act(0,'crazyDrain');current=await state();for(const identity of Object.values(current.crazyIdentities||{}))ownerIds.add(identity);
   const records=await store.readRoom(code);check(records.some(r=>r.category==='event'&&r.source==='system'));check(records.some(r=>r.category==='event'&&r.eventType==='rendered'));check(records.some(r=>r.category==='vault'&&r.status==='deleted'));check(records.some(r=>!r.category&&r.status==='expired'));
   check(!JSON.stringify((await snapshot(archive)).value).includes('Private unused spoon'));report.flags.encryptedSystemAndPlayerDiagnostics=true;
   report.ok=true;mark('complete');
- }catch(error){onFailure(error);report.error='smoke_failed'}finally{
+ }catch(error){onFailure(error);report.error='smoke_failed';try{const diagnostic=await raw(),w=diagnostic?.executor?.crazyWake;report.diagnostic={phase:diagnostic?.state?.phase,stage:diagnostic?.state?.crazy?.roundStage,now:now(),deadline:diagnostic?.state?.gameDeadline,wake:w?{dueAt:w.dueAt,leaseUntil:w.leaseUntil,claimUntil:w.claimUntil}:null}}catch{}}finally{
   // Recover owned vault identifiers for safe cleanup even after an earlier failed check.
   try { const owned=await raw();if(owned?.qaVNext?.marker===marker&&ownSession(owned.state?.sessionId)) {for(const identity of Object.values(owned.state.crazyIdentities||{}))ownerIds.add(identity);for(const vault of Object.values(owned.state.crazyVault||{}))for(const entry of Object.values(vault||{}))if(entry?.id)vaultIds.add(entry.id)} }catch{}
   // Delete only the exact known nodes, using current ETags and ownership proof.

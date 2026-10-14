@@ -46,6 +46,7 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
   manifest.dependencies = { ...manifest.dependencies, '@vercel/functions': '3.10.1' };
   fs.writeFileSync(packageFile, JSON.stringify(manifest, null, 2) + '\n');
   const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'vercel.json'), 'utf8'));
+  config.fluid = true;
   config.functions ||= {};
   // RTDB is in asia-southeast1: avoid a US-to-Singapore round trip for every
   // guarded read/write. Preserve the unrelated search function configuration.

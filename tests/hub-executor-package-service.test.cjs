@@ -22,6 +22,7 @@ function fixture(t) {
 }
 test('independent package preserves search and retirement endpoints and bundles transitive runtime only', t => {
   const f=fixture(t), files=packageService(f);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8')).fluid,true);
   assert.equal(require(path.join(f.output,'api/hub-executor.js')).loaded,true);
   assert.deepEqual(files.sort(), ['api/hub-executor.js','api/open-mic-discovery.js','api/open-mic-lyrics.js','engine.js','lib/genius-metadata.js','lib/youtube-discovery.js','package.json','runtime/core.cjs','vercel.json'].sort());
   const config=JSON.parse(fs.readFileSync(path.join(f.output,'vercel.json'),'utf8'));
