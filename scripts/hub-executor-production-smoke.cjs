@@ -64,7 +64,8 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     await write(f, 0, () => ({ game: f.game, stateJson: JSON.stringify(f.state), revision: 1,
       qaSmoke: { marker: f.marker, game: f.game } }), true);
     for (const seat of f.seats) await write(f, seat.playerNum, () => ({ ...f.engine.view(f.state, seat.playerNum, now()), qaSmoke: { marker: f.marker, game: f.game } }), true);
-    // The sole management-credential request for this fixture.
+    // Registration initializes this exact fixture. Talk later grants a scoped
+    // player delegate with this capability; ordinary game actions use seats.
     await api({ operation: 'register', game: f.game, code: f.code, controlToken: f.controlToken, sessionId: f.initialSession, seats: f.seats });
   }
   async function card(f, num) {
@@ -138,6 +139,24 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     const score = (card, num) => list(card.talk.scores).find(item => item.playerNum === num)?.score;
     const pending = cards => cards.filter(item => item.talk.crazy?.prompt?.status === 'pending');
     async function talkCards() { return Promise.all([1, 2, 3].map(num => card(talk, num))); }
+    async function delegateTalk() {
+      const current = await card(talk, 2), id = uid();
+      const result = await api({ operation: 'execute', capsule: current.hubExecutor.capsule, token: talk.controlToken,
+        command: { id, type: 'crazyDelegate', sessionId: current.talk.sessionId, turnId: current.talk.turnId, playerNum: 2 } });
+      check(result.payload?.talk.reply?.id === id && !result.payload.talk.reply.error);
+      check((await card(talk, 2)).talk.crazy.hostDelegate === 2);
+    }
+    async function renderTalk(num) {
+      const current = await card(talk, num), prompt = current.talk.crazy.prompt, reply = JSON.stringify(current.talk.reply);
+      check(prompt?.status === 'pending' && prompt.renderVersion === 1);
+      const result = await api({ operation: 'execute', capsule: current.hubExecutor.capsule, token: talk.seats[num - 1].token,
+        command: { id: uid(), type: 'crazyRendered', sessionId: current.talk.sessionId,
+          promptId: prompt.id, renderVersion: prompt.renderVersion } });
+      check(result.technical?.rendered === true);
+      const next = await card(talk, num);
+      check(next.talk.crazy.prompt.rendered === true && JSON.stringify(next.talk.reply) === reply);
+      return next;
+    }
     let pollingSeat = 0;
     async function waitTalk(predicate, timeout = 20000) {
       const started = now();
@@ -169,8 +188,10 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     report.step = 'free-player-mode';
     value = await command(talk, 2, 'newTopic', { confirm: true, topic: { id: 'smoke-crazy', question: 'Invent a very silly shop.' },
       mode: 'think', seconds: 120, gameMode: 'crazy', gameSeconds: 60, crazyTaskSeconds: 30,
-      crazyMinSeconds: 5, crazyMaxSeconds: 5, showStarters: false, conversationMode: 'free', crazySource: 'players' });
+      crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive: 2, crazyPlayStyle: 'free', crazyRotationSeconds: 240,
+      showStarters: false, conversationMode: 'free', crazySource: 'players' });
     check(value.talk.conversationMode === 'free' && value.talk.crazy.source === 'players' && value.talk.crazy.minSeconds === 5 && value.talk.crazy.maxSeconds === 5 && value.talk.crazy.taskSeconds === 30);
+    await delegateTalk();
     report.step = 'queued-private-assignment';
     const privateMission = 'Say "I am in love with my cup."', randomMission = 'Cluck like a chicken.', replacementMission = 'Moo like a cow.';
     value = await command(talk, 2, 'crazyAssign', { target: 3, text: privateMission, kind: 'task' });
@@ -180,33 +201,35 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     check(value.talk.crazy.myQueuedCount === 2 && !value.talk.crazy.prompt);
     report.step = 'free-start';
     value = await command(talk, 3, 'start');
-    check(value.talk.speaker == null && !value.talk.actions.end && !value.talk.crazy.prompt && value.talk.crazy.nextAssignAt > 0);
-    report.step = 'scheduled-custom-delivery';
+    check(value.talk.speaker == null && !value.talk.actions.end && value.talk.crazy.prompt?.text === privateMission && value.talk.crazy.nextAssignAt > 0);
+    report.step = 'immediate-custom-delivery';
     const recipient = await waitTalk(cards => cards[2].talk.crazy.prompt?.text === privateMission && cards[2]);
     const firstPrompt = recipient.talk.crazy.prompt;
     check(firstPrompt.kind === 'task' && firstPrompt.source === 'player' && firstPrompt.expiresAt - firstPrompt.at === 30000);
     check((await talkCards()).every(item => item.playerNum === 3 || !JSON.stringify(item.talk).includes(privateMission)));
     const randomRecipient = await waitTalk(cards => cards.find(item => item.talk.crazy.prompt?.text === randomMission));
-    // Seat 3 already holds the targeted card and the author (seat 2) cannot
-    // receive their own random card. The second global slot therefore is 1.
-    check(randomRecipient.playerNum === 1 && randomRecipient.talk.crazy.prompt.at - firstPrompt.at >= 5000);
+    // Handwriting fills eligible slots immediately; its author cannot receive
+    // either card, and the targeted seat is already occupied.
+    check(randomRecipient.playerNum === 1 && randomRecipient.talk.crazy.prompt.at === firstPrompt.at);
+    await renderTalk(3); await renderTalk(1);
     report.step = 'two-active-slots';
     value = await command(talk, 3, 'crazyAssign', { target: 2, text: replacementMission, kind: 'task' });
     check(value.talk.crazy.myQueuedCount === 1);
     let cards = await talkCards();
     check(pending(cards).length === 2 && cards[2].talk.crazy.prompt.id === firstPrompt.id && !cards[1].talk.crazy.prompt && cards[2].talk.crazy.myQueuedCount === 1);
     check(cards.every(item => list(item.talk.crazy.pendingPlayerNums).length === 2));
-    report.step = 'extend-round';
-    const beforeExtension = cards[1].talk.gameDeadline;
-    value = await command(talk, 2, 'addTime', { seconds: 60 });
-    check(value.talk.gameDeadline === beforeExtension + 60000);
+    report.step = 'host-authority';
+    await command(talk, 3, 'crazyDrain', {}, 'not_available');
+    check((await card(talk, 2)).talk.crazy.roundStage === 'open');
     report.step = 'skip-immediate-replacement';
     const skippedPrompt = randomRecipient.talk.crazy.prompt;
     value = await command(talk, 1, 'crazySkip', { promptId: skippedPrompt.id });
     cards = await talkCards();
     const replacement = cards[1].talk.crazy.prompt;
     check(value.talk.crazy.prompt.status === 'skipped' && score(value, 1) === 0 && replacement?.text === replacementMission && replacement.status === 'pending' && replacement.at >= skippedPrompt.at && replacement.expiresAt - replacement.at === 30000 && pending(cards).length === 2);
+    check(value.talk.crazy.receiverStatus.cooldownUntil > now());
     check(cards[2].talk.crazy.myQueuedCount === 0 && cards.every(item => item.playerNum === 2 || !JSON.stringify(item.talk).includes(replacementMission)));
+    await renderTalk(2);
     report.step = 'completion-score-once';
     const doneId = uid(), nextAssignAt = cards[2].talk.crazy.nextAssignAt;
     value = await command(talk, 3, 'crazyDone', { id: doneId, promptId: firstPrompt.id });
@@ -216,18 +239,30 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     check(cards.every(item => score(item, 3) === 1 && score(item, 1) === 0 && score(item, 2) === 0));
     report.step = 'task-ttl-player-only';
     const expired = await waitTalk(items => items[1].talk.crazy.prompt?.id === replacement.id && items[1].talk.crazy.prompt.status === 'expired' && items[1], 40000);
-    check(expired.talk.phase === 'talking' && score(expired, 2) === 0);
+    check(expired.talk.phase === 'talking' && score(expired, 2) === 0 && expired.talk.crazy.receiverStatus.paused);
     await delay(6000); await pulse(talk, 2); cards = await talkCards();
     check(pending(cards).length === 0 && cards.every(item => !item.talk.crazy.prompt || item.talk.crazy.prompt.source === 'player'));
+    report.step = 'host-decision';
+    const decision = await waitTalk(items => items[1].talk.crazy.roundStage === 'decision' && items[1], 45000);
+    check(decision.talk.phase === 'talking' && decision.talk.crazy.queueLocked);
+    await command(talk, 3, 'crazyAssign', { text: 'A forbidden late card.', kind: 'task' }, 'queue_locked');
+    await command(talk, 3, 'crazyExtend', { seconds: 180 }, 'not_available');
+    value = await command(talk, 2, 'crazyExtend', { seconds: 180 });
+    check(value.talk.crazy.roundStage === 'extension' && value.talk.crazy.queueLocked
+      && value.talk.gameDeadline - value.hubExecutor.publishedAt === 180000);
     report.step = 'finish-round';
     value = await command(talk, 2, 'finish');
-    check(value.talk.phase === 'ended' && (await talkCards()).every(item => item.talk.phase === 'ended' && score(item, 3) === 1));
+    check(value.talk.phase === 'ended' && value.talk.crazy.roundStage === 'sorting' && (await talkCards()).every(item => item.talk.phase === 'ended' && score(item, 3) === 1));
+    value = await command(talk, 2, 'crazyReveal');
+    check(value.talk.crazy.roundStage === 'reveal' && list(value.talk.crazy.revealCards).length === 3);
 
     report.step = 'assigned-system-mode';
     value = await command(talk, 2, 'newTopic', { confirm: true, topic: { id: 'smoke-assigned', question: 'What would we imagine next?' },
       mode: 'think', seconds: 120, gameMode: 'crazy', gameSeconds: 60, crazyTaskSeconds: 30,
-      crazyMinSeconds: 5, crazyMaxSeconds: 5, showStarters: false, conversationMode: 'assigned', crazySource: 'system' });
+      crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive: 2, crazyPlayStyle: 'free', crazyRotationSeconds: 240,
+      showStarters: false, conversationMode: 'assigned', crazySource: 'system' });
     check(!value.talk.crazy.myQueuedCount && list(value.talk.scores).every(item => item.score === 0));
+    await delegateTalk();
     await pulse(talk, 1);
     report.step = 'assigned-start';
     value = await command(talk, 3, 'start'); check(value.talk.speaker === 1 && !value.talk.crazy.canAssign);
@@ -238,12 +273,17 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     report.step = 'scheduled-system-missions';
     cards = await waitTalk(items => pending(items).length === 2 && items);
     check(pending(cards).every(item => item.talk.crazy.prompt.source === 'system' && require('../talk-crazy.js').pool.some(prompt => prompt.text === item.talk.crazy.prompt.text)));
+    for (const current of pending(cards)) await renderTalk(current.playerNum);
     const systemIds = pending(cards).map(item => item.talk.crazy.prompt.id).sort();
     await delay(6000); await pulse(talk, 2); cards = await talkCards();
     check(pending(cards).length === 2 && JSON.stringify(pending(cards).map(item => item.talk.crazy.prompt.id).sort()) === JSON.stringify(systemIds));
-    report.step = 'finish-cancels-pending';
-    value = await command(talk, 3, 'finish'); cards = await talkCards();
-    check(value.talk.phase === 'ended' && pending(cards).length === 0 && cards.every(item => item.talk.phase === 'ended' && (!item.talk.crazy.prompt || item.talk.crazy.prompt.status === 'cancelled')));
+    report.step = 'finish-drains-pending';
+    value = await command(talk, 2, 'finish'); cards = await talkCards();
+    check(value.talk.phase === 'talking' && value.talk.crazy.roundStage === 'draining' && pending(cards).length === 2);
+    for (const current of pending(cards)) await command(talk, current.playerNum, 'crazySkip', { promptId: current.talk.crazy.prompt.id });
+    cards = await talkCards();
+    check(pending(cards).length === 0 && cards.every(item => item.talk.phase === 'ended' && item.talk.crazy.roundStage === 'sorting'
+      && (!item.talk.crazy.prompt || item.talk.crazy.prompt.status === 'skipped')));
     report.ok = true;
   } catch (_) { report.ok = false; }
   finally {

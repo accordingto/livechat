@@ -8,7 +8,8 @@
   const key = 'lets-talk-settings.v2';
   const pendingKey = 'lets-talk-home-settings.pending.v1';
   const defaults = Object.freeze({ gameMode: 'normal', conversationMode: 'random', crazySource: 'mixed',
-    crazyMinSeconds: 60, crazyMaxSeconds: 180, gameSeconds: 900, crazyTaskSeconds: 150, mode: 'think', seconds: 45 });
+    crazyMinSeconds: 60, crazyMaxSeconds: 180, gameSeconds: 900, crazyTaskSeconds: 150,
+    crazyMaxActive: 3, crazyPlayStyle: 'free', crazyRotationSeconds: 240, mode: 'think', seconds: 45 });
   const intervalBounds = Object.freeze({ min: 5, max: 300 });
   function validInterval(min, max) {
     min = Number(min); max = Number(max);
@@ -33,6 +34,9 @@
       gameMode: value.gameMode === 'crazy' ? 'crazy' : 'normal',
       conversationMode: ['assigned', 'random', 'free'].includes(value.conversationMode) ? value.conversationMode : defaults.conversationMode,
       crazySource: ['system', 'players', 'mixed'].includes(value.crazySource) ? value.crazySource : defaults.crazySource,
+      crazyMaxActive: Number.isInteger(Number(value.crazyMaxActive)) && Number(value.crazyMaxActive) >= 1 && Number(value.crazyMaxActive) <= 9 ? Number(value.crazyMaxActive) : defaults.crazyMaxActive,
+      crazyPlayStyle: value.crazyPlayStyle === 'director' ? 'director' : 'free',
+      crazyRotationSeconds: Number.isInteger(Number(value.crazyRotationSeconds)) && Number(value.crazyRotationSeconds) >= 60 && Number(value.crazyRotationSeconds) <= 900 ? Number(value.crazyRotationSeconds) : defaults.crazyRotationSeconds,
       crazyMinSeconds: validInterval(min, max) ? min : defaults.crazyMinSeconds,
       crazyMaxSeconds: validInterval(min, max) ? max : defaults.crazyMaxSeconds,
       gameSeconds: validDuration(value.gameSeconds, 'gameSeconds') ? Number(value.gameSeconds) : defaults.gameSeconds,

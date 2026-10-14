@@ -54,7 +54,7 @@ async function run(args, { env = process.env, storeFactory = defaultStoreFactory
     }) });
     const records = await store.readRoom(options.room);
     if (!Array.isArray(records)) throw new Error(READ_ERROR);
-    const matching = records.map(safeRecord).filter(record => !options.dateBounds ||
+    const matching = records.filter(record => !record.category || record.category === 'challenge').map(safeRecord).filter(record => !options.dateBounds ||
       (record.createdAt != null && record.createdAt >= options.dateBounds[0] && record.createdAt < options.dateBounds[1]));
     matching.sort((a, b) => a.createdAt == null ? (b.createdAt == null ? 0 : -1) : b.createdAt == null ? 1 : a.createdAt - b.createdAt);
     const recent = matching.slice(-options.limit);

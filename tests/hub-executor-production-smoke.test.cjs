@@ -78,21 +78,33 @@ function harness({ stopAtTalk = false, foreignMarker = false, deleteConflict = f
     nodes, pathsRead, created, deleted, deleteAttempts, registrations, executions, states, alteredPath: () => alteredPath, elapsed: () => clock - initialClock };
 }
 
-test('production smoke verifies global Talk scheduling, TTL, scores and clocks then deletes exactly eight owned nodes', async () => {
+test('production smoke verifies immediate handwriting, rendered TTL, host decisions and draining then deletes exactly eight owned nodes', async () => {
   const f = harness(), report = await run(f);
   assert.equal(report.ok, true, JSON.stringify(report));
-  assert.equal(report.step, 'finish-cancels-pending');
+  assert.equal(report.step, 'finish-drains-pending');
   assert.equal(report.cleaned, 8); assert.equal(report.cleanupFailed, 0);
   assert.equal(f.created.size, 8); assert.equal(f.nodes.size, 0);
   assert.deepEqual(new Set(f.deleted), f.created); assert.equal(f.deleted.length, 8);
   assert.deepEqual(f.pathsRead, f.created);
   assert.equal(f.registrations.length, 2);
   const controlTokens = f.registrations.map(registration => registration.controlToken);
-  assert.ok(f.executions.every(body => !controlTokens.includes(body.token)), 'after registration only ordinary player credentials are sent');
+  const management = f.executions.filter(body => controlTokens.includes(body.token));
+  const talkControl = f.registrations.find(r => r.game === 'letstalk').controlToken;
+  assert.equal(management.length, 2);
+  assert.ok(management.every(body => body.token === talkControl && body.command?.type === 'crazyDelegate' && body.command.playerNum === 2),
+    'only authenticated Talk host delegations use the fresh fixture management capability');
+  assert.ok(f.executions.filter(body => !management.includes(body)).every(body => !controlTokens.includes(body.token)),
+    'all game interactions and render reports use ordinary player credentials');
   const talk = f.states.filter(item => item.game === 'letstalk').map(item => item.state);
   assert.ok(talk.some(state => state.gameMode === 'normal' && state.phase === 'ended'));
   assert.ok(talk.some(state => state.gameMode === 'crazy' && state.phase === 'ended' && state.scores[3] === 1));
   assert.ok(talk.some(state => Object.values(state.crazy?.prompts || {}).some(prompt => prompt.status === 'expired')));
+  assert.ok(talk.some(state => state.crazy?.roundStage === 'decision' && state.crazy.queueLocked));
+  assert.ok(talk.some(state => state.crazy?.roundStage === 'extension' && state.crazy.queueLocked));
+  assert.ok(talk.some(state => state.crazy?.roundStage === 'draining' && Object.values(state.crazy.prompts || {}).some(p => p.status === 'pending')));
+  assert.ok(talk.some(state => state.crazy?.roundStage === 'reveal'));
+  assert.ok(f.executions.some(body => body.command?.type === 'crazyRendered'));
+  assert.ok(talk.filter(state => state.gameMode === 'crazy').every(state => state.crazy.maxActive === 2), 'this fixture explicitly verifies the configurable two-task cap');
   assert.ok(talk.every(state => Object.values(state.crazy?.prompts || {}).filter(prompt => prompt.status === 'pending').length <= 2));
   assert.ok(talk.every(state => !state.availablePlayerNums || state.availablePlayerNums.length === 3), 'rotating pulses preserve the synthetic roster');
   assert.ok(f.elapsed() < 180000, 'planned wait budget stays below three minutes');

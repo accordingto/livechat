@@ -35,11 +35,16 @@ function packageService({ serviceRoot, output, gameRoot = ROOT }) {
     const source = fs.readFileSync(file, 'utf8');
     for (const match of source.matchAll(/require\(['"]([^'"]+)['"]\)/g)) {
       if (match[1].startsWith('node:')) continue;
+      if (match[1] === '@vercel/functions') continue;
       if (!match[1].startsWith('.')) throw new Error('Unbundled runtime dependency');
       dependency(path.resolve(path.dirname(file), match[1]));
     }
   }
   dependency(path.join(gameRoot, 'api/hub-executor.js'));
+  const packageFile = path.join(output, 'package.json');
+  const manifest = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
+  manifest.dependencies = { ...manifest.dependencies, '@vercel/functions': '3.10.1' };
+  fs.writeFileSync(packageFile, JSON.stringify(manifest, null, 2) + '\n');
   const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'vercel.json'), 'utf8'));
   config.functions ||= {};
   // RTDB is in asia-southeast1: avoid a US-to-Singapore round trip for every

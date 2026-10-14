@@ -8,14 +8,21 @@ const C = require('../talk-crazy.js');
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 const topic = { id: 'apartment', question: 'What kind of home would we share?', followUp: 'Who should wash the dishes?' };
 let serial = 0;
-const create = (options = {}) => E.create({ id: 'crazy-session', topic, now: 1000, gameMode: 'crazy',
+const create = (options = {}) => E.create({ id: 'crazy-session', topic, now: 1000, gameMode: 'crazy', crazyMaxActive: 2,
   roster: [1, 2, 3, 4].map(playerNum => ({ playerNum, name: 'Person ' + playerNum })), ...options });
 const act = (s, type, actor = 0, extra = {}) => E.apply(s, { id: 'crazy-event-' + (++serial),
   type, actor, sessionId: s.sessionId, turnId: s.turnId, now: 2000, seed: serial * 511, ...extra });
 const begin = options => act(create({ crazyMinSeconds: 5, crazyMaxSeconds: 5, ...options }), 'start');
 const pendingCount = s => Object.values(s.crazy.prompts || {}).filter(p => p.status === 'pending').length;
 const due = s => act(s, 'clockTick', 0, { now: s.crazy.nextAssignAt });
-function twoPending(s) { return due(due(s)); }
+function rendered(s, num, now) {
+  return act(s, 'crazyRendered', num, { promptId: s.crazy.prompts[num].id, renderVersion: 1, now });
+}
+function twoPending(s) {
+  s = due(due(s));
+  for (const num of E.view(s, 0, 12001).talk.crazy.pendingPlayerNums) s = rendered(s, num, 12001);
+  return s;
+}
 
 test('pool has unique short simple English lines and tasks', () => {
   assert.ok(C.pool.length >= 96); assert.equal(new Set(C.pool.map(p => p.id)).size, C.pool.length);
@@ -71,14 +78,15 @@ test('legacy crazySend only redraws the shared deadline and never immediately se
   assert.equal(E.view({ ...s, sharedControls: true }, 1, 0).talk.actions.crazySend, false);
 });
 
-test('player queue has priority and stays private until a future timed slot', () => {
-  let s = begin(); const text = 'My soup needs a hat.';
-  s = act(s, 'crazyAssign', 1, { target: 2, text, kind: 'line', now: 3000 });
-  assert.deepEqual(s.crazy.prompts, {}); assert.equal(s.crazy.nextAssignAt, 7000);
-  for (let num = 0; num <= 4; num++) assert.equal(JSON.stringify(E.view(s, num, 3000)).includes(text), false);
-  s = due(s); assert.equal(s.crazy.prompts[2].text, text); assert.equal(s.crazy.prompts[2].assignedBy, 1);
+test('prepared handwriting stays private and arrives before the first system slot when discussion starts', () => {
+  let s = create({ crazyMinSeconds: 5, crazyMaxSeconds: 5 }); const text = 'My soup needs a hat.';
+  s = act(s, 'crazyAssign', 1, { target: 2, text, kind: 'line', now: 1500 });
+  assert.deepEqual(s.crazy.prompts, {}); assert.equal(s.crazy.nextAssignAt, 0);
+  for (let num = 0; num <= 4; num++) assert.equal(JSON.stringify(E.view(s, num, 1500)).includes(text), false);
+  s = act(s, 'start'); assert.equal(s.crazy.prompts[2].text, text); assert.equal(s.crazy.prompts[2].assignedBy, 1);
+  assert.equal(s.crazy.prompts[2].at, 2000); assert.equal(s.crazy.nextAssignAt, 7000);
   assert.equal(s.crazy.prompts[2].source, 'player'); assert.equal(s.crazy.queue.length, 0);
-  for (let num = 0; num <= 4; num++) assert.equal(JSON.stringify(E.view(s, num, 7000)).includes(text), num === 2);
+  for (let num = 0; num <= 4; num++) assert.equal(JSON.stringify(E.view(s, num, 2000)).includes(text), num === 2);
 });
 
 test('random recipient is resolved at delivery, excludes author, and varies across seeds', () => {
@@ -100,25 +108,36 @@ test('queued fixed targets wait for their recipient and FIFO delivery never over
   const first = clone(s.crazy.prompts[2]); s = due(s);
   assert.deepEqual(s.crazy.prompts[2], first); assert.equal(s.crazy.queue.length, 1);
   s = act(s, 'crazyDone', 2, { promptId: first.id, now: 12001 });
-  assert.equal(s.crazy.nextAssignAt, 17000); s = due(s); assert.equal(s.crazy.prompts[2].text, 'Second.');
+  const deadline = s.crazy.nextAssignAt;
+  assert.equal(s.crazy.receivers[2].cooldownUntil, 42001);
+  assert.equal(act(s, 'clockTick', 0, { now: 42000 }), s);
+  s = act(s, 'clockTick', 0, { now: 42001 });
+  assert.equal(s.crazy.prompts[2].text, 'Second.'); assert.equal(s.crazy.queue.length, 0);
+  assert.ok(s.crazy.nextAssignAt >= deadline);
 });
 
-test('fresh submissions after an overdue slot do not arrive immediately or lose priority to fallback', () => {
-  let s = begin({ crazySource: 'players' });
-  s = act(s, 'crazyAssign', 1, { target: 2, text: 'Arrive later.', now: 10000 });
-  s = act(s, 'clockTick', 0, { now: 10000 }); assert.deepEqual(s.crazy.prompts, {}); assert.equal(s.crazy.nextAssignAt, 15000);
-  s = due(s); assert.equal(s.crazy.prompts[2].text, 'Arrive later.');
-  s = begin(); s = act(s, 'crazyAssign', 1, { target: 2, text: 'Reserved slot.', now: 10000 });
-  s = act(s, 'clockTick', 0, { now: 10000 }); assert.equal(s.crazy.prompts[2], undefined);
-  s = due(s); assert.equal(s.crazy.prompts[2].text, 'Reserved slot.');
+test('fresh handwriting arrives immediately after an overdue system slot without being overwritten', () => {
+  for (const crazySource of ['players', 'mixed']) {
+    let s = begin({ crazySource });
+    s = act(s, 'crazyAssign', 1, { target: 2, text: 'Reserved handwritten task.', now: 10000 });
+    const prompt = clone(s.crazy.prompts[2]);
+    assert.equal(prompt.at, 10000); assert.equal(prompt.text, 'Reserved handwritten task.');
+    s = act(s, 'clockTick', 0, { now: 10000 });
+    assert.deepEqual(s.crazy.prompts[2], prompt); assert.equal(s.crazy.queue.length, 0);
+    assert.ok(pendingCount(s) <= 2);
+    if (crazySource === 'players') assert.equal(pendingCount(s), 1);
+  }
 });
 
-test('a fresh submission cannot delay an older queued mission already due', () => {
+test('a fresh submission cannot overwrite an older handwritten mission and waits for recipient cooldown', () => {
   let s = begin({ crazySource: 'players' });
   s = act(s, 'crazyAssign', 1, { target: 2, text: 'Older.', now: 3000 });
   s = act(s, 'crazyAssign', 3, { target: 2, text: 'Fresh.', now: 10000 });
-  assert.equal(s.crazy.nextAssignAt, 7000); s = act(s, 'clockTick', 0, { now: 10000 });
+  s = act(s, 'clockTick', 0, { now: 10000 });
   assert.equal(s.crazy.prompts[2].text, 'Older.'); assert.equal(s.crazy.queue.length, 1);
+  s = act(s, 'crazyDone', 2, { promptId: s.crazy.prompts[2].id, now: 10001 });
+  s = act(s, 'clockTick', 0, { now: 40001 });
+  assert.equal(s.crazy.prompts[2].text, 'Fresh.'); assert.equal(s.crazy.queue.length, 0);
 });
 
 test('completion adds exactly one point, is prompt-bound across turns, and preserves the shared timer', () => {
@@ -131,15 +150,17 @@ test('completion adds exactly one point, is prompt-bound across turns, and prese
   s = act(next, 'crazyDone', num, { promptId: prompt.id, now: 7001 }); assert.equal(s.replies[num].error, 'stale_prompt'); assert.equal(s.scores[num], 1);
 });
 
-test('skip immediately replaces for another player at the exact same timestamp and awards no points', () => {
+test('skip awards no points and waits for the shared system slot while the recipient rests', () => {
   let s = due(begin()); const num = Number(Object.keys(s.crazy.prompts)[0]), prompt = s.crazy.prompts[num], deadline = s.crazy.nextAssignAt;
   s = act(s, 'crazySkip', num, { promptId: prompt.id, now: 7000 });
-  assert.equal(s.crazy.prompts[num].status, 'skipped'); assert.equal(s.scores[num], 0); assert.equal(pendingCount(s), 1);
-  const replacement = E.view(s, 0, 7000).talk.crazy.pendingPlayerNums[0]; assert.notEqual(replacement, num);
-  assert.equal(s.crazy.prompts[replacement].at, 7000); assert.equal(s.crazy.nextAssignAt, deadline);
+  assert.equal(s.crazy.prompts[num].status, 'skipped'); assert.equal(s.scores[num], 0); assert.equal(pendingCount(s), 0);
+  assert.equal(s.crazy.receivers[num].cooldownUntil, 37000); assert.equal(s.crazy.nextAssignAt, deadline);
+  s = act(s, 'clockTick', 0, { now: deadline });
+  const replacement = E.view(s, 0, deadline).talk.crazy.pendingPlayerNums[0]; assert.notEqual(replacement, num);
+  assert.equal(s.crazy.prompts[replacement].at, deadline);
 });
 
-test('skip consumes a queued custom replacement before system fallback and excludes the skipped recipient', () => {
+test('skipping one task preserves another delivered custom task and leaves a blocked recipient queued', () => {
   let s = begin({ crazySource: 'players' });
   s = act(s, 'crazyAssign', 1, { target: 2, text: 'Original.', now: 3000 });
   s = act(s, 'crazyAssign', 3, { target: 4, text: 'Replacement.', now: 4000 });
@@ -149,10 +170,13 @@ test('skip consumes a queued custom replacement before system fallback and exclu
   assert.equal(s.crazy.queue.length, 1); assert.equal(s.scores[2], 0);
 });
 
-test('task expiry happens before late completion and immediately replaces without awarding a point', () => {
+test('shown task expiry wins over late completion, pauses its receiver and never awards a point', () => {
   let s = due(begin({ crazyTaskSeconds: 30 })); const num = Number(Object.keys(s.crazy.prompts)[0]), prompt = s.crazy.prompts[num];
+  s = rendered(s, num, 7001);
   assert.equal(prompt.expiresAt, 37000); s = act(s, 'crazyDone', num, { promptId: prompt.id, now: 37000 });
   assert.equal(s.crazy.prompts[num].status, 'expired'); assert.equal(s.replies[num].error, 'stale_prompt'); assert.equal(s.scores[num], 0);
+  assert.equal(pendingCount(s), 0); assert.equal(s.crazy.receivers[num].paused, true);
+  s = act(s, 'clockTick', 0, { now: 37000 });
   assert.equal(pendingCount(s), 1); assert.ok(E.view(s, 0, 37000).talk.crazy.pendingPlayerNums.every(n => n !== num));
 });
 
@@ -166,8 +190,9 @@ test('two tasks expiring together cause only one replacement and never reassign 
   assert.equal(s.crazy.nextAssignAt, 45000); assert.equal(act(s, 'clockTick', 0, { now: 40000 }), s);
 });
 
-test('pause stops delivery while expiry and whole-game countdown continue; resume delivers deferred replacement', () => {
+test('pause stops delivery while shown expiry and the round clock continue; resume delivers queued handwriting', () => {
   let s = due(begin({ crazyTaskSeconds: 30 })); const num = Number(Object.keys(s.crazy.prompts)[0]);
+  s = rendered(s, num, 7000);
   s = act(s, 'crazyPause', 0, { paused: true, now: 7001 }); const gameDeadline = s.gameDeadline;
   s = act(s, 'clockTick', 0, { now: 37000 }); assert.equal(s.crazy.prompts[num].status, 'expired'); assert.equal(pendingCount(s), 0);
   assert.equal(s.gameDeadline, gameDeadline); assert.equal(E.timerDue(s, 37000), false);
@@ -176,15 +201,20 @@ test('pause stops delivery while expiry and whole-game countdown continue; resum
   s = act(s, 'crazyPause', 0, { paused: false, now: 39000 }); assert.equal(pendingCount(s), 1);
   assert.ok(E.view(s, 0, 39000).talk.crazy.pendingPlayerNums.every(n => n !== num));
   s = act(s, 'crazyPause', 0, { paused: true, now: 39001 }); s = act(s, 'clockTick', 0, { now: gameDeadline });
-  assert.equal(s.phase, 'ended'); assert.equal(pendingCount(s), 0);
+  assert.equal(s.phase, 'talking'); assert.equal(s.crazy.roundStage, 'decision'); assert.equal(pendingCount(s), 0);
+  s = act(s, 'crazyDrain', 0, { now: gameDeadline + 1 });
+  assert.equal(s.phase, 'ended'); assert.equal(s.crazy.roundStage, 'sorting');
 });
 
 test('players-only skips and expiry never fall back to system or immediately return a task to the same recipient', () => {
   let s = begin({ crazySource: 'players', crazyTaskSeconds: 30 });
   s = act(s, 'crazyAssign', 1, { target: 2, text: 'First.', now: 3000 });
+  s = rendered(s, 2, 3001);
   s = act(s, 'crazyAssign', 3, { target: 2, text: 'Next later.', now: 4000 }); s = due(s);
   s = act(s, 'crazySkip', 2, { promptId: s.crazy.prompts[2].id, now: 7000 }); assert.equal(pendingCount(s), 0);
-  assert.equal(s.crazy.prompts[2].status, 'skipped'); s = due(s); assert.equal(s.crazy.prompts[2].text, 'Next later.');
+  assert.equal(s.crazy.prompts[2].status, 'skipped');
+  s = act(s, 'clockTick', 0, { now: 37000 }); assert.equal(s.crazy.prompts[2].text, 'Next later.');
+  s = rendered(s, 2, 37001);
   s = act(s, 'clockTick', 0, { now: s.crazy.prompts[2].expiresAt }); assert.equal(pendingCount(s), 0);
   assert.equal(s.crazy.prompts[2].status, 'expired'); assert.equal(s.scores[2], 0);
 });
@@ -192,7 +222,8 @@ test('players-only skips and expiry never fall back to system or immediately ret
 test('completed recipients are not selected again when a different eligible player exists', () => {
   let s = begin(); let previous = null;
   for (let i = 0; i < 35; i++) {
-    const now = s.crazy.nextAssignAt; s = act(s, 'clockTick', 0, { now });
+    const nextReady = Math.min(...Object.values(s.crazy.receivers).filter(receiver => !receiver.paused).map(receiver => receiver.cooldownUntil));
+    const now = Math.max(s.crazy.nextAssignAt, nextReady); s = act(s, 'clockTick', 0, { now });
     const num = E.view(s, 0, now).talk.crazy.pendingPlayerNums[0]; assert.notEqual(num, previous);
     s = act(s, 'crazyDone', num, { promptId: s.crazy.prompts[num].id, now }); previous = num;
   }
@@ -204,12 +235,13 @@ test('only the authenticated recipient can score; unknown actor, stale session a
   assert.equal(act(s, 'crazyDone', 9, { promptId: prompt.id }), s);
   assert.equal(act(s, 'crazyDone', num, { promptId: prompt.id, sessionId: 'old' }), s);
   s = act(s, 'crazyDone', other, { promptId: prompt.id, now: 7000 }); assert.equal(s.replies[other].error, 'stale_prompt');
-  s = act(s, 'crazyDone', 0, { promptId: prompt.id, now: 7000 }); assert.equal(s.replies[0].error, 'not_available');
+  s = act(s, 'crazyDone', 0, { promptId: prompt.id, now: 7000 }); assert.notEqual(s.replies[0].error, '');
   assert.ok(Object.values(s.scores).every(score => score === 0)); assert.equal(s.crazy.prompts[num].status, 'pending');
 });
 
 test('public views show statuses and scores but reveal only the recipient text and sender queue count', () => {
-  let s = twoPending(begin()); s = act(s, 'crazyAssign', 1, { text: 'Secret queue text.', now: 12001 });
+  let s = twoPending(begin()); s = act(s, 'crazyPause', 0, { paused: true, now: 12001 });
+  s = act(s, 'crazyAssign', 1, { text: 'Secret queue text.', now: 12002 });
   for (let num = 0; num <= 4; num++) {
     const view = E.view(s, num, 12001), encoded = JSON.stringify(view), crazy = view.talk.crazy;
     assert.deepEqual(crazy.pendingPlayerNums, E.view(s, 0, 12001).talk.crazy.pendingPlayerNums);
@@ -221,11 +253,15 @@ test('public views show statuses and scores but reveal only the recipient text a
   }
 });
 
-test('custom submissions keep text bounds, authentication, source, turn fences, queue bounds and idempotency', () => {
+test('custom submissions keep bounds, authentication and session fences while surviving speaker turn changes', () => {
   const initial = create({ crazySource: 'players' }), base = { target: 2, text: 'Give a spoon a job.', kind: 'task' };
   for (const target of [0, 1, 9, '2', 2.5]) assert.equal(act(initial, 'crazyAssign', 1, { ...base, target }).replies[1].error, 'invalid_target');
   for (const extra of [{ text: '' }, { text: 'x'.repeat(121) }, { kind: 'other' }]) assert.equal(act(initial, 'crazyAssign', 1, { ...base, ...extra }).replies[1].error, 'invalid_prompt');
-  for (const turnId of [-1, undefined]) assert.equal(act(initial, 'crazyAssign', 1, { ...base, turnId }).replies[1].error, 'stale_turn');
+  for (const turnId of [-1, undefined]) {
+    const next = act(initial, 'crazyAssign', 1, { ...base, turnId });
+    assert.equal(next.replies[1].error, ''); assert.equal(next.crazy.queue.length, 1);
+  }
+  assert.equal(act(initial, 'crazyAssign', 1, { ...base, sessionId: 'old-session' }), initial);
   assert.equal(act(initial, 'crazyAssign', 0, base).replies[0].error, 'not_available'); assert.equal(act(initial, 'crazyAssign', 9, base), initial);
   assert.equal(act(create({ crazySource: 'system' }), 'crazyAssign', 1, base).replies[1].error, 'not_available');
   const input = { id: 'once', type: 'crazyAssign', actor: 1, sessionId: initial.sessionId, turnId: 0, now: 1500, ...base };
@@ -297,8 +333,10 @@ function setup() {
   const paths = [1, 2, 3, 4].map(n => 'rooms/CRAZY/players/player-' + n);
   const room = { code: 'CRAZY', count: 4, answers: {}, name: i => 'Person ' + (i + 1),
     getExtra: k => extras[k], setExtra: (k, v) => { extras[k] = v; }, playerRef: i => db.ref(paths[i]) };
-  const context = vm.createContext({ crypto, Date: { now: () => clock }, TALK_ENGINE: E,
+  const context = vm.createContext({ crypto, Date: { now: () => clock }, TALK_CRAZY: C,
     setInterval: (cb, ms) => { timers.push({ cb, ms }); return timers.length; }, clearInterval() {} });
+  vm.runInContext(fs.readFileSync(require.resolve('../talk-vnext.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(require.resolve('../talk-engine.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(require.resolve('../talk-sync.js'), 'utf8'), context);
   const host = () => {
     const h = new context.TALK_SYNC.Host({ db, room, onChange: s => { h.latest = s; }, onStatus: status => { h.lastStatus = status; } });
@@ -322,11 +360,11 @@ async function hostDeliverTwo(f, h) {
   }
 }
 
-test('browser scheduler uses atomic shared slots, two-task cap and recipient-only publication', async () => {
+test('browser scheduler uses atomic shared slots, configured two-task cap and recipient-only publication', async () => {
   const f = setup(), h = f.host(); await settle(h);
   await h.start({ topic }); await settle(h); await h.command('start'); await settle(h);
   let writes = f.db.count(); assert.equal(await h.tickClock(), false); assert.equal(f.db.count(), writes);
-  await h.start({ topic, gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
   await h.command('start'); await settle(h); f.time(105000); await h.renew(); await settle(h);
   const results = await Promise.all([h.tickClock(), h.tickClock(), h.tickClock()]); await settle(h);
   assert.equal(results.filter(Boolean).length, 1); assert.equal(pendingCount(h.latest), 1);
@@ -345,7 +383,7 @@ test('browser scheduler uses atomic shared slots, two-task cap and recipient-onl
 
 test('browser custom queues bind authenticated authors and recipient completion scores once across turns', async () => {
   const f = setup(), h = f.host(); await settle(h);
-  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
   await f.action(1, 'crazyAssign', { target: 2, text: 'Be the mayor of this chair.', actor: 3 }); await settle(h);
   assert.equal(h.latest.crazy.queue[0].assignedBy, 1); assert.equal(f.card(1).talk.crazy.myQueuedCount, 1); assert.equal(f.card(2).talk.crazy.prompt, null);
   await h.command('start'); await settle(h); f.time(h.latest.crazy.nextAssignAt); await h.renew(); await settle(h);
@@ -361,7 +399,7 @@ test('browser custom queues bind authenticated authors and recipient completion 
 
 test('browser replacement and reconnect retain pending tasks, private queue and scheduler lease', async () => {
   const f = setup(), first = f.host(); await settle(first);
-  await first.start({ topic, gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(first);
+  await first.start({ topic, gameMode: 'crazy', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(first);
   await first.command('start'); await settle(first); await hostDeliverTwo(f, first);
   await f.action(1, 'crazyAssign', { text: 'Stay queued.' }); await settle(first);
   const original = clone(first.latest.crazy), second = f.host(); await settle(first, second);
@@ -374,7 +412,7 @@ test('browser replacement and reconnect retain pending tasks, private queue and 
 
 test('switching activities suspends scheduling and a fresh normal topic rejects old private task acknowledgements', async () => {
   const f = setup(), h = f.host(); await settle(h);
-  await h.start({ topic, gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
   await h.command('start'); await settle(h); await hostDeliverTwo(f, h);
   const num = Object.keys(h.latest.crazy.prompts)[0], old = f.card(Number(num)).talk;
   await f.action(1, 'crazyAssign', { text: 'A queued mission.' }); await settle(h);
@@ -394,19 +432,20 @@ test('shared task slots exclude known absent recipients but unknown presence ret
       now: 7000, seed: Math.imul(seed, 2654435761) >>> 0 };
     const known = E.apply(initial, { ...input, onlineNums: [1, 2] });
     assert.equal(pendingCount(known), 1); assert.ok(E.view(known, 0, 7000).talk.crazy.pendingPlayerNums.every(num => [1, 2].includes(num)));
-    const absent = E.apply(initial, { ...input, onlineNums: [] }); assert.equal(pendingCount(absent), 0); assert.equal(absent.crazy.nextAssignAt, 12000);
+    const absent = E.apply(initial, { ...input, onlineNums: [] }); assert.equal(pendingCount(absent), 0);
+    assert.equal(absent.crazy.nextAssignAt, initial.crazy.nextAssignAt);
     const unknown = E.apply(initial, input); for (const num of E.view(unknown, 0, 7000).talk.crazy.pendingPlayerNums) unknownRecipients.add(num);
   }
   assert.ok([...unknownRecipients].some(num => num === 3 || num === 4), 'unknown presence keeps existing roster eligibility');
 });
 
-test('fixed custom target waits offline and gets queue priority when that player returns', () => {
+test('fixed custom target waits offline while ready later targets receive immediately, then dispatches on return', () => {
   let s = begin({ sharedControls: true, crazySource: 'players' });
   s = act(s, 'crazyAssign', 1, { target: 3, text: 'Wait for the returning player.', now: 3000, onlineNums: [1, 2] });
   s = act(s, 'clockTick', 0, { now: 7000, onlineNums: [1, 2] }); assert.equal(pendingCount(s), 0); assert.equal(s.crazy.queue.length, 1);
   s = act(s, 'clockTick', 0, { now: 12000, onlineNums: [] }); assert.equal(pendingCount(s), 0); assert.equal(s.crazy.queue.length, 1);
   s = act(s, 'crazyAssign', 2, { target: 1, text: 'Newer queued mission.', now: 13000, onlineNums: [1, 2] });
   s = act(s, 'clockTick', 0, { now: 17000, onlineNums: [1, 2, 3] });
-  assert.equal(s.crazy.prompts[3].text, 'Wait for the returning player.'); assert.equal(s.crazy.queue.length, 1);
-  assert.equal(s.crazy.prompts[1], undefined); assert.equal(s.crazy.queue[0].text, 'Newer queued mission.');
+  assert.equal(s.crazy.prompts[3].text, 'Wait for the returning player.'); assert.equal(s.crazy.queue.length, 0);
+  assert.equal(s.crazy.prompts[1].text, 'Newer queued mission.');
 });

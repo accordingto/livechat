@@ -2,9 +2,10 @@
 // Only the service and a room-scoped operator reader hold this encryption key.
 'use strict';
 const crypto = require('node:crypto');
+const { isDeepStrictEqual } = require('node:util');
 const DEFAULT_DB = 'https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app';
 const CODE = /^[A-Z0-9]{4,12}$/;
-const STATUSES = new Set(['queued', 'pending', 'done', 'skipped', 'expired', 'cancelled']);
+const STATUSES = new Set(['queued', 'pending', 'done', 'skipped', 'expired', 'cancelled', 'replaced', 'withdrawn', 'saved', 'deleted', 'revealed']);
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const hashId = id => crypto.createHash('sha256').update(id).digest('hex');
 function cleanRecord(input) {
@@ -13,6 +14,27 @@ function cleanRecord(input) {
       || !input.text.trim() || input.text.length > 120 || !['line', 'task'].includes(input.kind)
       || !STATUSES.has(input.status)) fail('archive_invalid_record');
   const record = { id: input.id, version: input.version, text: input.text, kind: input.kind, status: input.status };
+  if (input.category != null) {
+    if (!['challenge', 'event', 'vault'].includes(input.category)) fail('archive_invalid_record');
+    record.category = input.category;
+  }
+  for (const [field, limit] of [['ownerIdentity',64],['cardId',65536],['promptId',65536],['eventType',80],['reason',160],['source',20],['outcome',40]]) {
+    if (!record.category || input[field] == null) continue;
+    if (typeof input[field] !== 'string' || input[field].length > limit) fail('archive_invalid_record');
+    record[field] = input[field];
+  }
+  if (record.category === 'vault' && (!/^[a-f0-9]{64}$/.test(record.ownerIdentity || '') || !record.cardId)) fail('archive_invalid_record');
+  for (const field of ['actor', 'recipientNum', 'authorNum', 'targetNum']) {
+    if (input[field] == null) { if (field === 'targetNum' && input[field] === null) record[field] = null; continue; }
+    if (!Number.isInteger(input[field]) || input[field] < 0 || input[field] > 9) fail('archive_invalid_record');
+    record[field] = input[field];
+  }
+  if (input.deleted === true) record.deleted = true;
+  if (input.target === 'random' || typeof input.target === 'number') {
+    if (input.target !== 'random' && (!Number.isInteger(input.target) || input.target < 1 || input.target > 9)) fail('archive_invalid_record');
+    record.targetNum = input.target === 'random' ? null : input.target;
+    record.target = null;
+  }
   if (input.sessionId != null) {
     if (typeof input.sessionId !== 'string' || input.sessionId.length > 32768) fail('archive_invalid_record');
     record.sessionId = input.sessionId;
@@ -24,6 +46,7 @@ function cleanRecord(input) {
   }
   for (const field of ['author', 'target', 'recipient']) {
     const person = input[field];
+    if (field === 'target' && (person === 'random' || typeof person === 'number')) continue;
     if (person == null) { if (field === 'target' || field === 'recipient') record[field] = null; continue; }
     if (typeof person !== 'object' || person.playerNum != null && (!Number.isInteger(person.playerNum) || person.playerNum < 1 || person.playerNum > 9)
         || person.name != null && (typeof person.name !== 'string' || person.name.length > 100)) fail('archive_invalid_record');
@@ -108,12 +131,16 @@ function createStore({ secret, fetchImpl = globalThis.fetch, databaseURL = DEFAU
         const id = hashId(record.id), prior = next.entries[id] ? open(code, id, next.entries[id]) : null;
         if (prior?.version > record.version) continue;
         if (prior?.version === record.version) {
-          if (JSON.stringify(prior) !== JSON.stringify(record)) fail('archive_conflict');
+          if (!isDeepStrictEqual(prior, record)) fail('archive_conflict');
           continue;
         }
         next.entries[id] = seal(code, id, record); changed = true;
       }
       if (!changed) return versions;
+      const eventIds = Object.entries(next.entries).map(([id, entry]) => [id, open(code, id, entry)])
+        .filter(([, record]) => record.category === 'event')
+        .sort((a,b) => (b[1].createdAt || b[1].updatedAt || 0) - (a[1].createdAt || a[1].updatedAt || 0));
+      for (const [id] of eventIds.slice(1000)) delete next.entries[id];
       const response = await request(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'If-Match': old.etag }, body: JSON.stringify(next) });
       if (response.status === 412) continue;
       if (!response.ok) fail('archive_unavailable');

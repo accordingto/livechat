@@ -10,7 +10,7 @@ function storage() {
 test('home preferences persist the chosen range and conversation style for host setup', () => {
   const saved = storage();
   settings.save({ gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 20, crazyMaxSeconds: 90, seconds: 30 }, saved);
-  assert.deepEqual(settings.read(saved), { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 20, crazyMaxSeconds: 90, gameSeconds: 900, crazyTaskSeconds: 150, mode: 'think', seconds: 30 });
+  assert.deepEqual(settings.read(saved), { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 20, crazyMaxSeconds: 90, crazyMaxActive:3, crazyPlayStyle:'free', crazyRotationSeconds:240, gameSeconds: 900, crazyTaskSeconds: 150, mode: 'think', seconds: 30 });
   settings.save({ conversationMode: 'assigned' }, saved);
   assert.equal(settings.read(saved).conversationMode, 'assigned');
   assert.equal(settings.read(saved).crazySource, 'players');
@@ -118,4 +118,14 @@ test('homepage minute inputs persist seconds, reject invalid durations and prese
   fields[2].value = '2.5'; handlers.crazyTaskSeconds();
   assert.equal(errors.duration.hidden, true); assert.equal(fields[2].validity, '');
   assert.equal(settings.read(saved).crazyTaskSeconds, 150);
+});
+
+test('vNext preferences preserve configured director style, cap and rotation while invalid values migrate safely', () => {
+  const saved=storage();settings.save({gameMode:'crazy',crazyPlayStyle:'director',crazyMaxActive:9,crazyRotationSeconds:300},saved);
+  const current=settings.read(saved);assert.equal(current.crazyMaxActive,9);assert.equal(current.crazyPlayStyle,'director');assert.equal(current.crazyRotationSeconds,300);
+  settings.save({conversationMode:'assigned'},saved);assert.equal(settings.read(saved).crazyRotationSeconds,300);
+  const migrated=settings.normalize({crazyMaxActive:0,crazyPlayStyle:'invalid',crazyRotationSeconds:901});
+  assert.equal(migrated.crazyMaxActive,3);assert.equal(migrated.crazyPlayStyle,'free');assert.equal(migrated.crazyRotationSeconds,240);
+  assert.equal(settings.normalize({crazyRotationSeconds:60}).crazyRotationSeconds,60);
+  assert.equal(settings.normalize({crazyRotationSeconds:900}).crazyRotationSeconds,900);
 });

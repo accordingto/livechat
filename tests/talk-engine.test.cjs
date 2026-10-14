@@ -195,7 +195,7 @@ test('shared players can confirm a fresh topic with settings while legacy and st
   const saved = JSON.stringify(s);
   assert.equal(E.apply(s, { id: 'old-turn', type: 'end', actor: 2, sessionId: oldSession, turnId: oldTurn }), s);
   assert.equal(JSON.stringify(E.apply(s, { id: s.replies[2].id, type: 'newTopic', actor: 2, sessionId: s.sessionId, turnId: s.turnId, ...options })), saved);
-  assert.equal(E.view(s, 2, 0).talk.actions.newTopic, true); assert.equal(E.view(s, 0, 0).talk.hostControls, false);
+  assert.equal(E.view(s, 2, 0).talk.actions.newTopic, false); assert.equal(E.view(s, 0, 0).talk.hostControls, false);
   assert.doesNotMatch(JSON.stringify(E.view(s, 2, 0)), /never-project-this|controlToken|nextAt|recent/);
 });
 

@@ -3,7 +3,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const E = require('../talk-engine.js');
+const rawEngine = require('../talk-engine.js');
+const E = { ...rawEngine, archiveEntries: s => rawEngine.archiveEntries(s).filter(r => !r.category || r.category === 'challenge') };
 const { adapters } = require('../runtime/story-executor.cjs');
 const { createExecutor } = require('../runtime/hub-executor-core.cjs');
 const { createStore } = require('../runtime/talk-archive-store.cjs');
@@ -54,9 +55,10 @@ function fixture() {
   for (const seat of seats) db.set(path(seat.playerNum), E.view(original, seat.playerNum, clock));
   const service = createExecutor({ secret: SERVICE_SECRET, archiveSecret: ARCHIVE_SECRET, databaseURL: 'http://localhost',
     fetchImpl: db.fetch.bind(db), now: () => clock, games: adapters });
-  const store = createStore({ secret: ARCHIVE_SECRET, databaseURL: 'http://localhost', fetchImpl: db.fetch.bind(db) });
+  const allRecordStore = createStore({ secret: ARCHIVE_SECRET, databaseURL: 'http://localhost', fetchImpl: db.fetch.bind(db) });
+  const store = { ...allRecordStore, readRoom: async code => (await allRecordStore.readRoom(code)).filter(r => !r.category || r.category === 'challenge') };
   const state = () => adapters.letstalk.decode(db.get(canonical)), card = num => db.get(path(num));
-  const body = (num, type, extra = {}) => ({ capsule: card(num).hubExecutor.capsule, token: seats[num - 1].token,
+  const body = (num, type, extra = {}) => ({ capsule: num === 0 ? db.get(canonical).executor.capsule : card(num).hubExecutor.capsule, token: num === 0 ? controlToken : seats[num - 1].token,
     command: { id: 'archive-command-' + ++sequence, sessionId: state().sessionId, turnId: state().turnId, type, ...extra } });
   const act = async (num, type, extra = {}) => {
     const request = body(num, type, extra), result = await service.execute(request); return { request, result };
@@ -129,19 +131,19 @@ test('a late journal ACK preserves a newer unresolved version and never publishe
   f.db.afterPut = async path => {
     if (!path.startsWith(ARCHIVE_PREFIX)) return;
     f.db.afterPut = null; f.db.failArchivePut = true;
-    finishRequest = f.body(2, 'finish');
+    finishRequest = f.body(3, 'exclude', {playerNum:2,active:false});
     await assert.rejects(f.service.execute(finishRequest), { code: 'archive_unavailable' });
     f.db.failArchivePut = false;
   };
   await f.service.execute(request);
-  assert.equal(f.state().phase, 'ended');
+  assert.equal(f.state().phase, 'talking');
   const pending = unpersisted(f); assert.equal(pending.length, 1);
-  assert.equal(pending[0].status, 'cancelled'); assert.equal(pending[0].version, 2); assert.equal(pending[0].persistedVersion, 1);
-  assert.notEqual(f.card(2).talk.reply?.id, finishRequest.command.id, 'outer writer must not publish another request whose newer record is not saved');
-  assert.equal((await f.store.readRoom(f.code))[0].status, 'queued');
+  assert.equal(pending[0].status, 'cancelled'); assert.equal(pending[0].version, 3); assert.equal(pending[0].persistedVersion, 2);
+  assert.notEqual(f.card(3).talk.reply?.id, finishRequest.command.id, 'outer writer must not publish another request whose newer record is not saved');
+  assert.equal((await f.store.readRoom(f.code))[0].status, 'pending');
   await f.pulse(3);
   assert.equal((await f.store.readRoom(f.code))[0].status, 'cancelled'); assert.deepEqual(unpersisted(f), []);
-  assert.equal(f.card(2).talk.reply.id, finishRequest.command.id); assert.equal(f.card(1).talk.phase, 'ended');
+  assert.equal(f.card(3).talk.reply.id, finishRequest.command.id); assert.equal(f.card(1).talk.phase, 'talking');
 });
 
 test('concurrent newTopic persists cancellation and fences an old snapshot from overwriting the new session', async () => {
@@ -151,14 +153,14 @@ test('concurrent newTopic persists cancellation and fences an old snapshot from 
   f.db.afterPut = async path => {
     if (!path.startsWith(ARCHIVE_PREFIX)) return;
     f.db.afterPut = null;
-    nestedRequest = (await f.act(2, 'newTopic', newTopic)).request;
+    nestedRequest = (await f.act(0, 'newTopic', newTopic)).request;
     newerRequest = (await f.act(3, 'crazyAssign', { text: 'Promote the fork to hotel manager.', target: 1 })).request;
   };
   await f.service.execute(request);
   const currentSession = f.state().sessionId; assert.notEqual(currentSession, oldSession);
   for (const seat of f.seats) assert.equal(f.card(seat.playerNum).talk.sessionId, currentSession);
   assert.equal(f.card(3).talk.reply.id, newerRequest.command.id);
-  assert.equal(f.card(2).talk.reply.id, nestedRequest.command.id);
+  assert.equal(f.state().replies[0].id, nestedRequest.command.id);
   const records = await f.store.readRoom(f.code); assert.equal(records.length, 2);
   assert.equal(records.find(record => record.text === request.command.text).status, 'cancelled');
   assert.equal(records.find(record => record.text === newerRequest.command.text).status, 'queued');

@@ -50,8 +50,8 @@ test('free conversation starts with all participants and never assigns or advanc
   assert.equal(active.expiresAt - active.at, 30000);
   assert.deepEqual(E.view(state, 2, active.at).talk.scores, [7, 2, 5].map(playerNum => ({ playerNum, score: 0 })));
   state = act(state, 'clockTick', 0, { now: state.gameDeadline });
-  assert.equal(state.phase, 'ended'); assert.equal(state.speaker, null);
-  assert.equal(Object.values(state.crazy.prompts)[0].status, 'cancelled');
+  assert.equal(state.phase, 'talking'); assert.equal(state.crazy.roundStage,'decision'); assert.equal(state.speaker, null);
+  assert.ok(['withdrawn','expired'].includes(Object.values(state.crazy.prompts)[0].status));
 });
 
 test('legacy states retain random conversation and mixed prompts without losing saved assignments', () => {
@@ -70,12 +70,12 @@ test('new topic accepts, preserves and validates both conversation and Crazy pro
   let state = act(create({ sharedControls: true }), 'newTopic', 2, options);
   assert.equal(state.conversationMode, 'free'); assert.equal(state.crazy.source, 'players');
   const { conversationMode, crazySource, crazySeconds, crazyMinSeconds, crazyMaxSeconds, ...legacyOptions } = options;
-  state = act(state, 'newTopic', 5, legacyOptions);
+  state = act(state, 'newTopic', 0, legacyOptions);
   assert.equal(state.conversationMode, 'free'); assert.equal(state.crazy.source, 'players');
   assert.equal(state.crazy.minSeconds, 5); assert.equal(state.crazy.maxSeconds, 300);
   for (const extra of [{ conversationMode: 'unknown' }, { crazySource: 'unknown' }, { crazySource: true },
     { crazyMinSeconds: 4 }, { crazyMaxSeconds: 301 }, { crazyMinSeconds: 10, crazyMaxSeconds: 5 }, { crazyMinSeconds: 5.5 }]) {
-    const next = act(state, 'newTopic', 2, { ...options, ...extra });
-    assert.equal(next.sessionId, state.sessionId); assert.equal(next.replies[2].error, 'invalid_settings');
+    const next = act(state, 'newTopic', 0, { ...options, ...extra });
+    assert.equal(next.sessionId, state.sessionId); assert.equal(next.replies[0].error, 'invalid_settings');
   }
 });

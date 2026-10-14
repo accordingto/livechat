@@ -26,7 +26,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
       __update();
       const composer=document.querySelector('.talk-assignment');composer.open=true;
       window.__refs={composer,target:composer.querySelector('[data-talk-assignment-field="target"]'),
-        kind:composer.querySelector('[data-talk-assignment-field="kind"]'),text:composer.querySelector('textarea'),
+        text:composer.querySelector('textarea'),
         ancestors:[]};
       for(let n=__refs.target;n;n=n.parentNode)__refs.ancestors.push(n);
       window.__removed=0;
@@ -35,9 +35,9 @@ const assert=require('node:assert/strict'),path=require('node:path');
       }))).observe(document.getElementById('card'),{subtree:true,childList:true});
       window.__nativeOpen=CSS.supports('selector(select:open)');
     });
-    const target='[data-talk-assignment-field="target"]',kind='[data-talk-assignment-field="kind"]',text='[data-talk-assignment-field="text"]',send='[data-talk-action="crazyAssign"]';
+    const target='[data-talk-assignment-field="target"]',text='[data-talk-assignment-field="text"]',send='[data-talk-action="crazyAssign"]';
     const stable=async()=>assert.equal(await page.evaluate(()=>__refs.target===document.querySelector('[data-talk-assignment-field="target"]')&&
-      __refs.kind===document.querySelector('[data-talk-assignment-field="kind"]')&&__refs.text===document.querySelector('[data-talk-assignment-field="text"]')&&
+      __refs.text===document.querySelector('[data-talk-assignment-field="text"]')&&
       __refs.ancestors.every(n=>n.isConnected)&&__refs.composer.open&&__removed===0),true);
     let nativePickerChecks=0;
     for(let i=0;i<5;i++) {
@@ -50,14 +50,14 @@ const assert=require('node:assert/strict'),path=require('node:path');
       if(opened){assert.equal(await page.locator(target).evaluate(el=>el.matches(':open')),true);nativePickerChecks++;}
       await page.keyboard.press('Home');for(let n=0;n<1+i%3;n++)await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
       assert.equal(await page.inputValue(target),['1','3','4'][i%3]);
-      await page.locator(kind).click();
-      const kindOpened=await page.locator(kind).evaluate(el=>CSS.supports('selector(select:open)')&&el.matches(':open'));
+      await page.locator(target).click();
+      const secondOpened=await page.locator(target).evaluate(el=>CSS.supports('selector(select:open)')&&el.matches(':open'));
       await page.evaluate(()=>{for(let n=0;n<3;n++)__update();});await stable();
-      if(kindOpened){assert.equal(await page.locator(kind).evaluate(el=>el.matches(':open')),true);nativePickerChecks++;}
-      await page.keyboard.press('Home');if(i%2)await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+      if(secondOpened){assert.equal(await page.locator(target).evaluate(el=>el.matches(':open')),true);nativePickerChecks++;}
+      await page.keyboard.press('Escape');
       await page.fill(text,'Mission '+i);await page.click(send);await page.waitForFunction(()=>__sent.length>0&&__card.pending);
       assert.equal(await page.locator(send).isDisabled(),true);assert.equal(await page.locator(target).isDisabled(),false);
-      assert.equal(await page.locator(kind).isDisabled(),false);assert.equal(await page.locator(text).isDisabled(),false);
+      assert.equal(await page.locator('[data-talk-assignment-field="kind"]').count(),0);assert.equal(await page.locator(text).isDisabled(),false);
       if(i===0) {
         await page.fill(text,'My next draft');await page.selectOption(target,'4');
         await page.evaluate(()=>{__now=201000;__card.paint();});
@@ -114,9 +114,31 @@ const assert=require('node:assert/strict'),path=require('node:path');
     await page.evaluate(()=>{__talk.sessionId='new-round';__talk.phase='thinking';__talk.turnId=0;__talk.reply=null;__talk.crazy.prompt=null;__update();});
     assert.equal(await page.inputValue(text),'');assert.equal(await page.inputValue(target),'random');
     assert.equal(await page.evaluate(()=>__refs.target===document.querySelector('[data-talk-assignment-field="target"]')),false);
+    // Vault editors must stay open with the same focused textarea and caret
+    // while other players publish, including an unfinished Chinese IME draft.
+    await page.evaluate(()=>{__talk.phase='talking';__talk.crazy={...__talk.crazy,roundStage:'open',queueLocked:false,role:'player',playStyle:'free',effectivePlayStyle:'free',receiverStatus:{paused:false},library:[{id:'saved-1',text:'Original saved challenge',target:null}]};__update();});
+    await page.locator('.talk-private-library>summary').click();
+    await page.locator('[data-talk-library-editor="saved-1"]>summary').click();
+    const savedText='[data-talk-library-field="saved-1"]';
+    await page.fill(savedText,'An edited private challenge');
+    await page.locator(savedText).evaluate(el=>{window.__savedEditor=el;el.focus();el.setSelectionRange(3,9);});
+    await page.evaluate(()=>{for(let n=0;n<12;n++){__talk.revision++;__update();}});
+    assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
+    assert.equal(await page.locator(savedText).evaluate(el=>el===__savedEditor&&document.activeElement===el&&el.selectionStart===3&&el.selectionEnd===9),true);
+    assert.equal(await page.locator('[data-talk-action="crazyLibraryUpdate"]').isVisible(),true);
+    await page.locator(savedText).dispatchEvent('compositionstart');await page.fill(savedText,'雞叫任務');
+    await page.evaluate(()=>{for(let n=0;n<6;n++)__update();});
+    assert.equal(await page.inputValue(savedText),'雞叫任務');
+    assert.equal(await page.locator(savedText).evaluate(el=>el===__savedEditor&&document.activeElement===el),true);
+    await page.locator(savedText).dispatchEvent('compositionend');
+    await page.click('[data-talk-action="crazyLibraryUpdate"]');
+    assert.equal(await page.evaluate(()=>__sent.at(-1).type),'crazyLibraryUpdate');
+    assert.equal(await page.evaluate(()=>__sent.at(-1).text),'雞叫任務');
+    await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.library[0].text='雞叫任務';__update();});
+    assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
     assert.equal(errors.length,0);
     assert.ok(nativePickerChecks>=5,'Native picker must open and stay open across state updates.');
-    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,errors}));
+    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,errors}));
   } finally {await browser.close();}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
 

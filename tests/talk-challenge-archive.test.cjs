@@ -1,20 +1,23 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const E = require('../talk-engine.js');
+const rawEngine = require('../talk-engine.js');
+// This suite targets challenge records; vNext event/vault records have their own suites.
+const E = { ...rawEngine, archiveEntries: s => rawEngine.archiveEntries(s).filter(r => !r.category || r.category === 'challenge') };
 const copy = value => JSON.parse(JSON.stringify(value));
 const topic = { title: 'Our silly cafe', question: 'What should we serve together?' };
 const roster = [1, 2, 3].map(playerNum => ({ playerNum, name: ['Alice', 'Bo', 'Chloe'][playerNum - 1] }));
 const create = (extra = {}) => E.create({ id: 'journal-session', now: 1000, topic, roster,
   sharedControls: true, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
-  gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, ...extra });
+  gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive: 2, ...extra });
 let sequence = 0;
 const action = (s, type, actor = 0, extra = {}) => ({ id: 'archive-action-' + ++sequence, type, actor,
   sessionId: s.sessionId, turnId: s.turnId, now: 2000, seed: 73, ...extra });
 const act = (s, type, actor = 0, extra = {}) => E.apply(s, action(s, type, actor, extra));
 const submit = (s, extra = {}) => act(s, 'crazyAssign', 1, { target: 2, text: '  Sing like a chicken.  ', now: 1500, ...extra });
-const records = s => s.challengeArchive.records;
+const records = s => Object.values(s.challengeArchive.records || {}).filter(r => !r.category || r.category === 'challenge');
 const deliver = s => { s = act(s, 'start'); return act(s, 'clockTick', 0, { now: s.crazy.nextAssignAt }); };
+const shown = (s, num, now = 2001) => act(s, 'crazyRendered', num, { promptId: s.crazy.prompts[num].id, renderVersion: 1, now });
 const newTopic = { confirm: true, topic: { title: 'Next cafe', question: 'What silly name can we choose?' },
   mode: 'think', seconds: 45, gameMode: 'normal', showStarters: false };
 
@@ -33,12 +36,14 @@ test('accepted handwriting creates a private versioned record with exact author,
 });
 
 test('invalid, unauthorized, replayed and queue-full submissions never create journal entries', () => {
-  for (const extra of [{ target: 1 }, { target: 9 }, { text: '' }, { text: 'x'.repeat(121) }, { kind: 'bad' }, { turnId: -1 }]) {
+  for (const extra of [{ target: 1 }, { target: 9 }, { text: '' }, { text: 'x'.repeat(121) }, { kind: 'bad' }]) {
     const s = submit(create(), extra); assert.equal(records(s).length, 0); assert.ok(s.replies[1].error);
   }
   const host = act(create(), 'crazyAssign', 0, { text: 'Host writing.' }); assert.equal(records(host).length, 0);
   const system = submit(create({ crazySource: 'system' })); assert.equal(records(system).length, 0);
   const original = create(), command = action(original, 'crazyAssign', 1, { target: 2, text: 'Once.', now: 1500 });
+  assert.equal(E.apply(original, { ...command, sessionId: 'another-session' }), original);
+  assert.equal(records(original).length, 0);
   const accepted = E.apply(original, command); assert.equal(E.apply(accepted, command), accepted); assert.equal(records(accepted).length, 1);
   let full = create(); for (let i = 0; i < 10; i++) full = submit(full, { text: 'Queued ' + i });
   const rejected = submit(full, { text: 'Rejected extra.' }); assert.equal(rejected.replies[1].error, 'queue_full');
@@ -56,9 +61,9 @@ test('the same command ID from different authenticated authors keeps separate ha
   assert.equal(secondId, s.sessionId + ':author:3:shared-command');
   s = deliver(s); assert.equal(s.crazy.prompts[2].archiveId, firstId);
   s = act(s, 'crazyDone', 2, { promptId: s.crazy.prompts[2].id, now: 8000 });
-  s = act(s, 'clockTick', 0, { now: s.crazy.nextAssignAt });
+  s = act(s, 'clockTick', 0, { now: 38000 });
   assert.equal(s.crazy.prompts[2].archiveId, secondId); assert.equal(s.crazy.prompts[2].text, 'Second author chicken.');
-  s = act(s, 'crazySkip', 2, { promptId: s.crazy.prompts[2].id, now: 13000 });
+  s = act(s, 'crazySkip', 2, { promptId: s.crazy.prompts[2].id, now: 38001 });
   assert.deepEqual(records(s).map(record => [record.text, record.status, record.version]),
     [['First author song.', 'done', 3], ['Second author chicken.', 'skipped', 3]]);
   assert.equal(s.scores[2], 1);
@@ -72,7 +77,7 @@ test('delivery and completion update the same record and private link while norm
   assert.equal(prompt.archiveId, archiveId); assert.equal(records(s).length, 1);
   assert.equal(records(s)[0].version, 2); assert.equal(records(s)[0].status, 'pending');
   assert.deepEqual(records(s)[0].recipient, { playerNum: 2, name: 'Bo' });
-  assert.equal(records(s)[0].assignedAt, 7000); assert.equal(records(s)[0].createdAt, 1500); assert.equal(records(s)[0].updatedAt, 7000);
+  assert.equal(records(s)[0].assignedAt, 2000); assert.equal(records(s)[0].createdAt, 1500); assert.equal(records(s)[0].updatedAt, 2000);
   const command = action(s, 'crazyDone', 2, { promptId: prompt.id, now: 8000 });
   const nextAssignAt = s.crazy.nextAssignAt; s = E.apply(s, command);
   assert.equal(records(s)[0].version, 3); assert.equal(records(s)[0].status, 'done'); assert.equal(records(s)[0].closedAt, 8000);
@@ -82,7 +87,7 @@ test('delivery and completion update the same record and private link while norm
 });
 
 test('skip closes handwriting without scoring and links a queued immediate replacement to its own record', () => {
-  let s = submit(create());
+  let s = submit(create({ crazyMaxActive: 1 }));
   s = act(s, 'crazyAssign', 3, { target: 1, text: 'Say meow.', now: 1600 });
   s = deliver(s); const first = s.crazy.prompts[2];
   s = act(s, 'crazySkip', 2, { promptId: first.id, now: 8000 });
@@ -93,20 +98,34 @@ test('skip closes handwriting without scoring and links a queued immediate repla
 });
 
 test('task expiry is archived before a late completion and retains the original writing time', () => {
-  let s = deliver(submit(create())); const promptId = s.crazy.prompts[2].id;
+  let s = shown(deliver(submit(create())), 2); const promptId = s.crazy.prompts[2].id;
   s = act(s, 'crazyDone', 2, { promptId, now: 37000 });
   const record = records(s)[0]; assert.equal(record.status, 'expired'); assert.equal(record.version, 3);
   assert.equal(record.createdAt, 1500); assert.equal(record.closedAt, 37000); assert.equal(record.updatedAt, 37000);
   assert.equal(s.replies[2].error, 'stale_prompt'); assert.equal(s.scores[2], 0);
 });
 
-for (const closure of ['finish', 'deadline', 'newTopic']) test(closure + ' retains queued and delivered handwriting as cancelled records', () => {
-  let s = submit(create()); s = submit(s, { text: 'A waiting song.', now: 1600 }); s = deliver(s);
+for (const closure of ['finish', 'deadline', 'newTopic']) test(closure + ' retains the current task through draining and cancels unused writing only at sorting', () => {
+  let s = submit(create({ crazyTaskSeconds: 150 })); s = submit(s, { text: 'A waiting song.', now: 1600 }); s = shown(deliver(s), 2);
   const oldSession = s.sessionId, submitted = records(s).map(record => record.id);
-  s = closure === 'finish' ? act(s, 'finish', 2, { now: 8000 }) : closure === 'deadline'
-    ? act(s, 'clockTick', 0, { now: s.gameDeadline }) : act(s, 'newTopic', 2, { ...newTopic, now: 8000 });
+  if (closure === 'deadline') {
+    s = act(s, 'clockTick', 0, { now: s.gameDeadline });
+    assert.equal(s.crazy.roundStage, 'decision'); assert.equal(s.phase, 'talking');
+    assert.deepEqual(records(s).map(record => record.status), ['pending', 'queued']);
+  } else if (closure === 'newTopic') {
+    s = act(s, 'newTopic', 0, { ...newTopic, now: 8000 });
+    assert.equal(s.replies[0].error, 'missions_active'); assert.equal(s.sessionId, oldSession);
+  }
+  const drainAt = closure === 'deadline' ? 62001 : 8001, completeAt = drainAt + 1000;
+  s = act(s, 'finish', 0, { now: drainAt });
+  assert.equal(s.replies[0].error, ''); assert.equal(s.crazy.roundStage, 'draining');
+  assert.deepEqual(records(s).map(record => record.status), ['pending', 'queued']);
+  s = act(s, 'crazyDone', 2, { promptId: s.crazy.prompts[2].id, now: completeAt });
+  assert.equal(s.crazy.roundStage, 'sorting'); assert.equal(s.scores[2], 1);
+  if (closure === 'newTopic') s = act(s, 'newTopic', 0, { ...newTopic, now: completeAt + 1 });
   assert.deepEqual(records(s).map(record => record.id), submitted);
-  assert.ok(records(s).every(record => record.status === 'cancelled' && record.closedAt === (closure === 'deadline' ? 62000 : 8000)));
+  assert.deepEqual(records(s).map(record => record.status), ['done', 'cancelled']);
+  assert.ok(records(s).every(record => record.closedAt === completeAt));
   assert.deepEqual(records(s).map(record => record.version), [3, 2]);
   assert.ok(records(s).every(record => record.sessionId === oldSession));
   if (closure === 'newTopic') { assert.notEqual(s.sessionId, oldSession); assert.equal(s.crazy, undefined); }
@@ -114,13 +133,13 @@ for (const closure of ['finish', 'deadline', 'newTopic']) test(closure + ' retai
   assert.equal(E.archiveEntries(s).length, 2);
 });
 
-test('speaker handover preserves live handwriting and invalid topic replacement cannot cancel it', () => {
+test('speaker handover preserves live handwriting and blocked topic replacement cannot cancel it', () => {
   let s = deliver(submit(create({ conversationMode: 'assigned' })));
   const pending = copy(records(s)), promptId = s.crazy.prompts[2].id;
   s = act(s, 'end', 1, { now: 8000 });
   assert.equal(s.speaker, 2); assert.equal(s.crazy.prompts[2].id, promptId); assert.deepEqual(records(s), pending);
-  s = act(s, 'newTopic', 1, { ...newTopic, topic: { question: '' }, now: 8001 });
-  assert.equal(s.replies[1].error, 'invalid_topic'); assert.deepEqual(records(s), pending);
+  s = act(s, 'newTopic', 0, { ...newTopic, topic: { question: '' }, now: 8001 });
+  assert.equal(s.replies[0].error, 'missions_active'); assert.deepEqual(records(s), pending);
   assert.equal(s.crazy.prompts[2].status, 'pending');
 });
 
@@ -150,6 +169,7 @@ test('stale ACKs retain newer updates, ongoing records stay linked and exact ter
 
 test('legacy active writing backfills once with known timestamps, and never invents writing time for delivered prompts', () => {
   const s = act(create(), 'start'); delete s.challengeArchive;
+  s.crazy.paused = true;
   s.crazy.queue = [{ id: 'old-write', assignedBy: 1, target: 3, text: 'Known old queue.', kind: 'line', at: 1500 },
     { id: 'no-clock', assignedBy: 1, target: 3, text: 'Unknown queue time.', kind: 'task' }];
   s.crazy.prompts[2] = { id: 'old-prompt', source: 'player', assignedBy: 1, text: 'Known delivery time.', kind: 'task', at: 2500, expiresAt: 50000, status: 'pending' };
@@ -163,10 +183,11 @@ test('legacy active writing backfills once with known timestamps, and never inve
   assert.equal(pending.id, s.sessionId + ':legacy:old-prompt'); assert.equal(pending.assignedAt, 2500);
   assert.equal(Object.hasOwn(pending, 'createdAt'), false); assert.equal(Object.hasOwn(pending, 'target'), false);
   assert.equal(next.crazy.prompts[2].archiveId, pending.id);
-  next = act(next, 'finish', 2, { now: 4000 });
+  next = act(next, 'finish', 0, { now: 4000 });
+  next = act(next, 'crazySkip', 2, { promptId: next.crazy.prompts[2].id, now: 4001 });
   next = E.ackArchive(next, records(next).map(record => ({ id: record.id, version: record.version })));
   assert.equal(records(next).length, 0);
-  assert.equal(E.apply(next, action(next, 'clockTick', 0, { now: 4001 })), next);
+  assert.equal(E.apply(next, action(next, 'clockTick', 0, { now: 4002 })), next);
 });
 
 test('legacy pending prompts without a timestamp omit historical times; system prompts are never captured', () => {
@@ -191,7 +212,9 @@ test('archive metadata/history are absent from every view while the recipient st
     assert.equal(serialized.includes('Sing like a chicken.'), num === 2);
     for (const marker of ['challengeArchive', 'archiveId', 'persistedVersion', id]) assert.equal(serialized.includes(marker), false);
   }
-  s = act(s, 'newTopic', 1, { ...newTopic, now: 8000 });
+  s = act(s, 'finish', 0, { now: 8000 });
+  s = act(s, 'crazyDone', 2, { promptId: s.crazy.prompts[2].id, now: 8001 });
+  s = act(s, 'newTopic', 0, { ...newTopic, now: 8002 });
   for (const num of [0, 1, 2, 3, 99]) assert.equal(JSON.stringify(E.view(s, num, 8000)).includes('Sing like a chicken.'), false);
 });
 
@@ -203,8 +226,8 @@ test('more than ten new topics retain history and accept long session/submission
   for (let index = 0; index < 12; index++) {
     const id = 'topic-' + String(index).padStart(2, '0') + '-' + 'x'.repeat(91);
     assert.equal(id.length, 100);
-    s = act(s, 'newTopic', 1, { ...newTopic, id, gameMode: 'crazy', crazySource: 'players', now: 3000 + index });
-    assert.equal(s.replies[1].error, '');
+    s = act(s, 'newTopic', 0, { ...newTopic, id, gameMode: 'crazy', crazySource: 'players', now: 3000 + index });
+    assert.equal(s.replies[0].error, '');
     assert.equal(records(s).length, 1); assert.equal(records(s)[0].id, firstId);
     if (index === 0) firstClosed = copy(records(s)[0]);
     else assert.deepEqual(records(s)[0], firstClosed, 'later topics do not rewrite an earlier terminal outcome');

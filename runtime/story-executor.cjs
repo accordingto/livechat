@@ -44,6 +44,13 @@ function boundCommand(state, command, ctx) {
     // Player-written prompts belong to the turn visible when the sender typed
     // them; do not bind an omitted turn to a newer speaker after delivery.
     turnId: command.type === 'crazyAssign' ? command.turnId : command.turnId == null ? state.turnId : command.turnId };
+  if (state.gameMode === 'crazy') {
+    bound.hostAuthorized = actor === 0 || state.crazy?.hostDelegate === actor;
+    bound.hostOnline = ctx.hostOnline;
+    bound.actorIdentity = ctx.identityByNum?.[actor];
+    bound.connectionByNum = ctx.connectionByNum;
+    bound.identityByNum = ctx.identityByNum;
+  }
   if (state.mode === 'life_story') {
     // An omitted old-turn fence must never become authority for the current turn.
     bound.sessionId = command.sessionId; bound.turnId = command.turnId;
@@ -54,7 +61,7 @@ function boundCommand(state, command, ctx) {
 function tick(state, type, ctx, marker) {
   const digest = crypto.createHash('sha256').update(JSON.stringify([state.sessionId, state.turnId, type, marker])).digest('hex');
   return { id: 'server:' + digest.slice(0, 40), sessionId: state.sessionId, turnId: state.turnId,
-    type, actor: 0, now: now(ctx), seed: Number.isFinite(Number(ctx?.seed)) ? Number(ctx.seed) : Number.parseInt(digest.slice(0, 8), 16), onlineNums: online(state, ctx) };
+    type, actor: 0, hostAuthorized: true, hostOnline: ctx?.hostOnline, connectionByNum: ctx?.connectionByNum, identityByNum: ctx?.identityByNum, now: now(ctx), seed: Number.isFinite(Number(ctx?.seed)) ? Number(ctx.seed) : Number.parseInt(digest.slice(0, 8), 16), onlineNums: online(state, ctx) };
 }
 function adapter(engine, key, actionKey, pulse) {
   return {
@@ -65,7 +72,7 @@ function adapter(engine, key, actionKey, pulse) {
     pulse,
     project(state, seat, ctx) {
       const num = Number(typeof seat === 'object' ? seat.playerNum : seat);
-      const payload = engine.view(state, num, now(ctx));
+      const payload = engine.view(state, num, now(ctx), { actorIdentity: ctx?.identityByNum?.[num], hostAuthorized: num === 0 || state.crazy?.hostDelegate === num, hostOnline: ctx?.hostOnline, connectionByNum: ctx?.connectionByNum });
       if (Number.isFinite(Number(ctx?.revision))) payload[key].revision = Number(ctx.revision);
       payload[key].hostLiveUntil = state.sharedControls === true ? 0 : Number(ctx?.hostLiveUntil) || 0;
       return payload;
@@ -83,12 +90,30 @@ const adapters = {
   }),
   onceupon: adapter(ONCE, 'once', 'onceAction', state => state),
   letstalk: adapter(TALK, 'talk', 'talkAction', (state, ctx) => {
-    if (!TALK.timerDue(state, now(ctx))) return state;
+    if (!TALK.timerDue(state, now(ctx), ctx)) return state;
     return TALK.apply(state, tick(state, 'clockTick', ctx,
       [state.phase, state.deadline, state.gameDeadline, state.gameSeconds, state.crazy?.schedulerVersion,
         state.crazy?.nextAssignAt, state.crazy?.scheduleSequence, state.crazy?.replacementFor,
-        list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt])]));
+        list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt, p.renderAckAt, p.displayDeadline]),
+        state.crazy?.roundStage, state.crazy?.nextRotateAt || state.crazy?.nextRotationAt, state.crazy?.receivers, state.crazy?.queue?.map?.(p=>p.id), ctx.onlineNums]));
   }),
 };
-Object.assign(adapters.letstalk, { archiveEntries: TALK.archiveEntries, ackArchive: TALK.ackArchive });
+Object.assign(adapters.letstalk, {
+  archiveEntries: TALK.archiveEntries, ackArchive: TALK.ackArchive,
+  hydrateVault(state, records, ctx) {
+    if (state?.gameMode !== 'crazy') return state;
+    const next = copy(state); next.crazyVault ||= {}; next.crazyIdentities ||= {};
+    for (const [num, identity] of Object.entries(ctx.identityByNum || {})) next.crazyIdentities[num] = identity;
+    for (const record of records || []) {
+      if (record.category !== 'vault' || !Object.values(ctx.identityByNum || {}).includes(record.ownerIdentity)) continue;
+      const vault = next.crazyVault[record.ownerIdentity] ||= {};
+      const prior = vault[record.cardId];
+      if (prior && prior.version >= record.version) continue;
+      vault[record.cardId] = { id: record.cardId, text: record.text, target: record.targetNum ?? 'random',
+        version: record.version, persistedVersion: record.version, deleted: record.deleted === true || record.status === 'deleted',
+        createdAt: record.createdAt, updatedAt: record.updatedAt };
+    }
+    return next;
+  }
+});
 module.exports = { adapters };

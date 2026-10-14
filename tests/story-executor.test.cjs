@@ -233,6 +233,6 @@ test('Crazy Talk server timer sends only each seat own prompt and shared manager
   const paused = A.letstalk.apply(s, { id: 'pause-new-scheduler', type: 'crazyPause', sessionId: s.sessionId, turnId: s.turnId, paused: true }, ctx(2, { now: due + 3 }));
   assert.equal(A.letstalk.pulse(paused, ctx(2, { now: due + 1000 })), paused);
   const ended = A.letstalk.pulse(paused, ctx(2, { now: paused.gameDeadline }));
-  assert.equal(ended.phase, 'ended'); assert.equal(ended.scores[num], 1);
+  assert.equal(ended.phase, 'talking'); assert.equal(ended.crazy.roundStage,'decision'); assert.equal(ended.scores[num], 1);
   assert.equal(A.letstalk.project(ended, num, ctx(num, { now: ended.gameDeadline })).talk.actions.addTime, false);
 });

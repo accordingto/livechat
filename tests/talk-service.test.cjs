@@ -54,7 +54,7 @@ test('ordinary Talk cards manage pending questions, settings and new-topic ticke
   assert.equal(state().deadline, 32000); assert.equal(state().mode, 'write'); assert.equal(state().crazy.intervalSeconds, 60);
   assert.equal(state().gameSeconds, 120); assert.equal(state().crazy.taskSeconds, 30);
   const capsule = card(2).hubExecutor.capsule; assert.notEqual(capsule, oldCapsule);
-  for (const seat of seats) { assert.equal(card(seat.playerNum).hubExecutor.capsule, capsule); assert.equal(card(seat.playerNum).talk.sessionId, state().sessionId); assert.equal(card(seat.playerNum).talk.actions.newTopic, true); }
+  for (const seat of seats) { assert.equal(card(seat.playerNum).hubExecutor.capsule, capsule); assert.equal(card(seat.playerNum).talk.sessionId, state().sessionId); assert.equal(card(seat.playerNum).talk.actions.newTopic, false); }
   await assert.rejects(service.execute({ capsule: oldCapsule, token: seats[1].token, command: { id: 'obsolete', type: 'start', sessionId: originalSession, turnId: turn } }), /stale_session/);
   await perform(1, 'start'); await perform(3, 'crazySend');
   assert.deepEqual(state().crazy.prompts, {});
@@ -62,7 +62,7 @@ test('ordinary Talk cards manage pending questions, settings and new-topic ticke
     clock = state().crazy.nextAssignAt;
     await service.execute({ capsule: card(3).hubExecutor.capsule, token: seats[2].token, clock: true });
   }
-  assert.equal(Object.values(state().crazy.prompts).filter(prompt => prompt.status === 'pending').length, 2);
+  assert.equal(Object.values(state().crazy.prompts).filter(prompt => prompt.status === 'pending').length, 3);
   assert.equal(state().crazy.nextAt, undefined); assert.equal(state().gameDeadline, 122000);
   const publicView = adapters.letstalk.project(state(), { playerNum: 0 }, { now: clock });
   assert.equal(publicView.talk.crazy.prompt, null); assert.equal(publicView.talk.hostControls, false);
@@ -82,7 +82,7 @@ test('ordinary Talk cards manage pending questions, settings and new-topic ticke
   assert.ok(requests.every(body => body.token !== controlToken && !Object.hasOwn(body, 'controlToken')));
 });
 
-test('queued missions execute through authenticated seats with scheduled private delivery and no overwrite', async () => {
+test('handwriting uses authenticated seats, immediate dispatch, session-only writing and FIFO cooldown without overwrite', async () => {
   const db = new MemoryFirebase(), code = 'TALKWRITE', controlToken = 'b'.repeat(32);
   const seats = [1, 2, 3].map(playerNum => ({ playerNum, token: String(playerNum + 3).repeat(20) }));
   const path = num => 'rooms/' + code + '/players/' + seats[num - 1].token;
@@ -115,7 +115,7 @@ test('queued missions execute through authenticated seats with scheduled private
     for (const other of seats.filter(p => p !== seat)) assert.equal(serialized.includes(other.token), false);
   }
   const revision = db.get(canonical).revision; await service.execute(assignment); assert.equal(db.get(canonical).revision, revision);
-  await perform(2, 'start'); assert.equal(state().speaker, 1); assert.deepEqual(state().crazy.prompts, {});
+  await perform(2, 'start'); assert.equal(state().speaker, 1); assert.equal(state().crazy.prompts[2].text,text); assert.equal(state().crazy.prompts[2].at,1000);
   clock = 6000; await pulse(3); assert.equal(state().crazy.prompts[2].text, text);
   assert.equal(state().crazy.prompts[2].assignedBy, 1); assert.equal(Object.keys(state().crazy.prompts).length, 1);
   for (const seat of seats) assert.equal(JSON.stringify(card(seat.playerNum)).includes(text), seat.playerNum === 2);
@@ -126,28 +126,22 @@ test('queued missions execute through authenticated seats with scheduled private
   assert.equal(state().crazy.queue.length, 2); assert.equal(state().replies[1].error, ''); assert.equal(state().replies[3].error, '');
   assert.equal(state().crazy.prompts[2].text, text); assert.equal(state().crazy.sequence[2], 1);
   const oldTurn = state().turnId; await perform(3, 'end'); assert.equal(state().speaker, 2);
-  await perform(1, 'crazyAssign', { turnId: oldTurn, target: 3, text: 'Old turn.', kind: 'line' }, 'stale_turn');
-  const missingTurn = request(1, 'crazyAssign', { target: 3, text: 'Missing turn.', kind: 'line' });
-  delete missingTurn.command.turnId; await service.execute(missingTurn); assert.equal(card(1).talk.reply.error, 'stale_turn');
-  await perform(2, 'crazyDone', { turnId: oldTurn, promptId });
-  assert.equal(state().crazy.prompts[2].status, 'done'); assert.equal(state().crazy.nextAssignAt, 11000);
-  assert.equal(state().scores[2], 1);
-  for (const seat of seats) assert.equal(card(seat.playerNum).talk.scores.find(row => row.playerNum === 2).score, 1);
-  clock = 11000; await pulse(1); assert.equal(state().crazy.prompts[2].source, 'player'); assert.equal(state().crazy.queue.length, 1);
-  const firstQueued = state().crazy.prompts[2];
-  const scheduledAt = state().crazy.nextAssignAt;
-  clock = 12000; await perform(2, 'crazyDone', { promptId: firstQueued.id });
-  assert.equal(state().crazy.nextAssignAt, scheduledAt); assert.equal(state().scores[2], 2);
-  clock = scheduledAt; await pulse(3); assert.equal(state().crazy.queue.length, 0); assert.equal(state().crazy.sequence[2], 3);
-  assert.notEqual(state().crazy.prompts[2].id, firstQueued.id);
-  assert.ok([one.command.text, three.command.text].includes(card(2).talk.crazy.prompt.text));
+  await perform(1,'crazyAssign',{turnId:oldTurn,target:2,text:'Old turn still belongs to this round.'});
+  const missingTurn=request(1,'crazyAssign',{target:2,text:'No speaker fence for this card.'});delete missingTurn.command.turnId;
+  await service.execute(missingTurn);assert.equal(card(1).talk.reply.error,'');assert.equal(state().crazy.queue.length,4);
+  await perform(2,'crazyDone',{turnId:oldTurn,promptId});assert.equal(state().scores[2],1);
+  const cooling=state().crazy.receivers[2].cooldownUntil;
+  clock=cooling-1;await pulse(1);assert.equal(state().crazy.prompts[2].status,'done');
+  clock=cooling;await pulse(1);assert.equal(state().crazy.queue.length,3);const firstQueued=state().crazy.prompts[2];
+  assert.ok([one.command.text,three.command.text].includes(firstQueued.text));
+  const done=request(2,'crazyDone',{promptId:firstQueued.id});await service.execute(done);await service.execute(done);assert.equal(state().scores[2],2);
+  clock=state().crazy.receivers[2].cooldownUntil;await pulse(3);assert.equal(state().crazy.queue.length,2);
+  assert.equal(state().crazy.sequence[2],3);assert.notEqual(state().crazy.prompts[2].id,firstQueued.id);
   const publicView = adapters.letstalk.project(state(), { playerNum: 0 }, { now: clock });
   assert.equal(publicView.talk.crazy.prompt, null); assert.equal(publicView.talk.crazy.myQueuedCount, 0);
   assert.equal(publicView.talk.crazy.minSeconds, 5); assert.equal(publicView.talk.crazy.maxSeconds, 5);
   assert.equal(publicView.talk.conversationMode, 'assigned'); assert.equal(publicView.talk.crazy.source, 'players');
-  const capsule = card(1).hubExecutor.capsule;
-  await perform(3, 'newTopic', { confirm: true, topic: { question: 'What do funny socks dream about?' }, mode: 'think',
-    seconds: 45, showStarters: false, gameMode: 'crazy', conversationMode: 'free', crazySource: 'mixed', crazyMinSeconds: 10, crazyMaxSeconds: 30 });
-  assert.notEqual(card(1).hubExecutor.capsule, capsule); await assert.rejects(service.execute({ ...one, capsule }), /stale_session/);
-  assert.deepEqual(state().crazy.prompts, {}); assert.deepEqual(state().crazy.queue, []); assert.equal(state().conversationMode, 'free');
+  const oldSession=state().sessionId;
+  await perform(3,'newTopic',{confirm:true,topic:{question:'Another silly cafe?'},mode:'think',seconds:45,showStarters:false,gameMode:'crazy'},'not_available');
+  assert.equal(state().sessionId,oldSession);
 });

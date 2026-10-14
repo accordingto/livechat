@@ -1,4 +1,158 @@
-# Current: composer priority and optional round time — 2026-10-10
+# Current: Crazy Talk vNext — 2026-10-15
+
+This section describes the implemented vNext behavior. It supersedes the older
+Crazy Talk scheduling, two-slot cap, expanded composer and system-only archive
+instructions below. Local checks are recorded in
+[the vNext acceptance record](docs/talk-vnext-acceptance.md); production
+publication and production verification for this revision are still pending.
+
+## Setup and conversation
+
+Use the existing Hub room and original `play.html` player links. The homepage
+does not contain a separate Talk settings panel; `lets-talk.html` owns setup.
+Normal Talk remains the default game. Assigned order, random turns (default)
+and free conversation are separate from the Crazy challenge style and retain
+their existing behavior. The shared topic bank remains 96 group situations,
+13 categories and 672 main/follow-up questions; vNext does not rewrite it.
+
+Preparation defaults to 45 seconds of thinking, with think/write modes and
+15–120 whole seconds available. A round defaults to 15 minutes, configurable
+from 1 to 60 minutes in whole seconds. Preparation feedback remains visible.
+The round starts only when conversation starts; round remaining time is hidden
+until a local View time toggle is used. New sessions reset that visibility.
+Playing screens show no mission deadline, dispatch interval, director-rotation
+countdown or next-assignment timer.
+
+Crazy style defaults to free play: eligible players can write for one another
+and receive challenges. Director mode requires at least five active players.
+It normally has two directors who write challenges and three or more actors
+who receive them; actors do not get a composer or the directors' receiving-status
+list. Directors rotate every four minutes by default. The setup offers 2/4/6
+minute choices and preserves valid custom whole-second values from 60 to 900.
+Rotation waits while the selected incoming player has a pending mission; it
+does not cut that mission short. If active membership drops below five, effective
+play returns to free play while the configured Director preference is retained.
+
+The configured simultaneous mission cap defaults to three, accepts 1–9, and
+is limited by the number of eligible receiving roles. Advanced source, cap,
+rotation, system interval and mission-duration settings stay folded. Sources
+are system, players or mixed (default). The unchanged system bank contains
+136 short English cards. The internal system dispatch range defaults to 60–180
+seconds and accepts whole-second bounds 5–300 with min <= max. Player-only mode
+does not invent system fallback cards.
+
+## Writing, delivery and execution
+
+An active private mission stays above the shared topic. Immediately below the
+topic, the collapsed entrance says Write a silly challenge / 寫個搞笑任務.
+Opening it shows the recipient selector first (random other player by default)
+and the textarea second. There is no line/task selector: new handwriting is
+submitted as a task, and the text can contain either a spoken line or an action.
+Accept 1–120 trimmed characters, at most ten queued cards per author and twenty
+per room. Self-targets and inactive recipients are rejected.
+
+Handwriting has priority. During preparation it waits; during open conversation
+it can reach an eligible free slot as soon as the authoritative service processes
+it, without waiting for the system's random timer. Busy, cooling-down, paused,
+offline, director or otherwise blocked fixed targets wait safely. Known offline
+players are excluded; unknown presence remains a separate status, not proof that
+someone is absent. The service never silently overwrites a player's pending card.
+When handwriting targets someone holding a system card, it can offer a choice:
+the recipient sees both full texts and explicitly keeps the current card or
+replaces it. A player-authored active card is not silently replaced.
+
+There is no player Accept button. Foreground, connected pages automatically send
+`crazyRendered` for a valid rendered mission node and version through a separate
+technical RPC path. Hidden documents wait. This confirms rendering only: it does
+not prove the person read or heard the card. The exact technical request ID is
+retried and does not replace a pending manual command or its receipt.
+The service withdraws an unconfirmed display after 30 seconds, pauses that
+recipient, and returns player handwriting to the queue. Once technically rendered,
+a quiet single-line reminder appears after 30 seconds; there is no alert overlay.
+
+The internal mission TTL is 150 seconds by default, configurable from 30 to
+300 seconds, measured from assignment. Done gives the recipient exactly +1;
+Skip gives zero. Both close only the matching prompt and give that player a
+30-second breather before another assignment. Duplicate, stale or late commands
+cannot score twice. An expired mission gives zero and pauses receiving, so the
+page offers Resume receiving. Mission controls remain usable during the round's
+decision and draining stages while their own prompt is still valid. Global
+dispatch pause stops new cards; existing mission and round deadlines continue.
+
+The persistent composer, native recipient selector and their ancestors remain
+connected during ordinary updates. Native popup selection, textarea focus/caret,
+Chinese IME and the next draft survive synchronization. Pending submissions lock
+only further sending; their exact frozen payload is retried while the next text
+and recipient remain editable. Successful receipts clear only the unchanged
+submitted draft, and delayed acknowledged IDs cannot recreate a pending lock.
+Unsent drafts can restore after reload only with the same room, verified original
+player bearer token and session. Storage failures fall back to memory; player
+names are never used as ownership credentials.
+
+## Round decision, sorting and recap
+
+At the round deadline Crazy Talk enters `decision` and locks new submissions;
+it does not cancel every active mission. Only the actual authorized host or its
+verified participant delegate can choose another 3/5/10 minutes, or drain the
+round. Extension keeps submissions locked and plays the already submitted queue;
+system fallback stays stopped. Draining stops further dispatch, lets current
+missions finish/skip/expire, then enters sorting when no mission remains.
+Normal Talk keeps its shared +1 minute/Finish controls and automatic rest flow.
+These normal controls do not grant Crazy round authority.
+
+The trusted Hub launcher can designate its chosen participating seat as the
+host delegate through `hostPlayerNum`; Director role and host authority are
+independent. The host may explicitly delegate to another active seat. If the
+host is absent at the decision stage, the projected claim action becomes available
+after 30 seconds only when no other active delegate retains control. The UI
+shows only the service-projected host actions, not caller-supplied authority.
+
+Unexecuted leftover handwriting is privately saved for its verified author.
+The author's sorting checklist starts with every card checked: checked means
+keep in the private vault; unchecked means include in the room's shared recap
+after explicit confirmation. Unconfirmed choices remain private. The host can
+open the recap without waiting for everyone to confirm. An unconfirmed author
+can still make that choice during reveal; confirmed selections are not reopened
+by the UI, because previously exposed text cannot be made unseen.
+
+My private challenges is folded and contains only the current owner's saved
+cards. Text edits, explicit deletion confirmation and Send again are available;
+resending uses the normal priority queue and current recipient choice, subject
+to role/source/queue locks. Nested edit state, unsaved text, caret and IME survive
+other players' updates. The vault persists across same-room sessions, renames
+and game switches for the same verified original token. It is not an account
+library and does not follow a player to another room or replacement token.
+
+Only the reveal stage publishes the room recap. Executed handwritten cards can
+show their author, actual recipient and completion/skip/expiry/cancellation/
+replacement outcome. An explicitly published unused card says Not sent this
+round, without inventing a recipient or a skipped performance. Other players'
+vaults, unconfirmed leftovers, ownership hashes, tokens and operator archive
+records never enter ordinary shared projections. A new topic resets the round's
+scores/stages while retaining the verified same-room vault.
+
+## Persistence, compatibility and release
+
+The user's explicit vNext private-vault and consent-based recap requirements
+supersede the earlier system-only/no-player-history UI plan. The separate operator
+archive remains private and encrypted with the existing independent
+`CRAZY_TALK_ARCHIVE_SECRET`; retain it and `HUB_EXECUTOR_SECRET`. It now also
+persists lifecycle events and owner-scoped vault records before successful
+publication/receipts, with versioned retries, tombstones and acknowledgement
+fences. Browser projections must never expose its encrypted journal paths,
+raw archive IDs, ownership hashes or service secrets. Operator review still uses
+the explicit room-only reader, without room enumeration or a public archive API.
+
+`talk-vnext.js` is the pure lifecycle module loaded before the engine/UI. The
+existing engine, sync, executor, membership fences and archive store provide
+authority and durable persistence. Runtime changes require publishing both
+the existing independent service and frontend, preserving unrelated games and
+search routes; there is no new API provider, speech judgement or secret rotation.
+The host's changed Talk assets use `vnext-1`; player/dynamic Talk assets use
+`talk-vnext-1`. The unchanged executor browser asset keeps `life-story-1`.
+Historical tags and production counts below describe earlier releases only.
+
+# Previous: composer priority and optional round time — 2026-10-10
 
 The handwritten composer sits immediately below the topic and is expanded by
 default, with the textarea before recipient/type controls. An active private
@@ -39,10 +193,12 @@ checks and blocked private runtime paths. Real Chrome production demo confirms
 composer placement/default expansion, hidden clocks, optional time, random
 recipient and 375px layout. No existing room was accessed for this UI release.
 
-# Current: private handwritten archive and focused timed rounds — 2026-10-10
+# Previous: private handwritten archive and focused timed rounds — 2026-10-10
 
-Crazy Talk now retains accepted handwritten challenges for private system
-review. There is no public library, archive API or player-facing history panel.
+This earlier release retained accepted handwritten challenges for private system
+review without a player-facing history panel. The vNext requirements above now
+add an author-only vault and explicitly consented room recap; the separate
+operator archive still has no public read API or public library.
 Each record captures text/type, author, explicit/random target, topic, known
 creation/delivery/end times and queued/pending/done/skipped/expired/cancelled status.
 Rejected submissions and system prompts are excluded. Every accepted transition

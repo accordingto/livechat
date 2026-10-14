@@ -259,7 +259,7 @@ test('Original player transport accepts prompt acknowledgements across turns but
     if (change === 'session') command.sessionId = 'old-topic';
     if (change === 'normal-mode') stored.talk.gameMode = 'normal';
     if (change === 'game') stored.game = 'cardcheck';
-    const context = vm.createContext({ data: { game: 'letstalk', playerNum: 2, talk: crazy() }, talkCard: null, el: {}, nameBanner() {},
+    const context = vm.createContext({ data: { game: 'letstalk', playerNum: 2, talk: crazy() }, talkCard: null, el: {}, nameBanner() {}, localStorage:{},
       talkClockOffset: 0, talkConnected: true, session: 'ONLY-OWN-ROOM', token: 'ONLY-OWN-CARD',
       TALK_UI: { crazyAction: type => type === 'crazyDone' || type === 'crazySkip' },
       TALK_PLAYER: { Card: class { constructor(element, options) { send = options.send; } update() {} } },
@@ -394,9 +394,9 @@ test('typed player mission stays local through redraws, queues once and clears o
     f.update({...talk,revision:3}); assert.equal(sent.length,0);
     assert.match(f.element.innerHTML,/&lt;b&gt;Report/); assert.doesNotMatch(f.element.innerHTML,/<b>Report/);
     f.click('crazyAssign');f.click('crazyAssign');await flush();assert.equal(sent.length,1);
-    assert.deepEqual({...sent[0],id:'request'},{id:'request',type:'crazyAssign',target:1,kind:'task',text:'<b>Report the conversation like a weather presenter.</b>',sessionId:'ui-topic',turnId:2});
+    assert.deepEqual({...sent[0],id:'request'},{id:'request',type:'crazyAssign',target:1,text:'<b>Report the conversation like a weather presenter.</b>',sessionId:'ui-topic',turnId:2});
     assert.ok(f.card.crazyDraft.text);
-    f.update({...talk,reply:{id:sent[0].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');assert.match(f.element.innerHTML,/Queued/);
+    f.update({...talk,reply:{id:sent[0].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');assert.match(f.element.innerHTML,/Sent/);
   } finally { f.card.destroy(); }
 });
 
@@ -429,7 +429,7 @@ test('handwritten missions default to a random recipient, remain invisible as pr
   f.update(talk);
   assert.match(f.element.innerHTML, /value="random" selected/);assert.equal(f.card.crazyDraft.kind,'task');
   f.assignmentField('text','Cluck like a chicken.');f.click('crazyAssign');await flush();
-  assert.equal(sent[0].target,undefined);assert.equal(sent[0].kind,'task');
+  assert.equal(sent[0].target,undefined);assert.equal(sent[0].kind,undefined);
   f.update({...talk,crazy:{...talk.crazy,myQueuedCount:1},reply:{id:sent[0].id,error:''}});
   assert.match(f.element.innerHTML,/Your cards waiting: 1/);assert.doesNotMatch(f.element.innerHTML,/blockquote/);
   assert.equal(f.card.crazyDraft.target,'random');
@@ -541,7 +541,7 @@ test('pending queue request leaves the next card editable and ACK preserves a ne
     assert.deepEqual(sent[1],sent[0]); assert.equal(sent[1].text,'First mission'); assert.equal(sent[1].target,undefined);
     f.update({...talk,reply:{id:sent[0].id,error:''}});
     assert.equal(f.card.pending,null); assert.equal(f.card.crazyDraft.text,'Next mission'); assert.equal(f.card.crazyDraft.target,'1');
-    f.click('crazyAssign'); await flush(); assert.equal(sent[2].text,'Next mission'); assert.equal(sent[2].target,1); assert.equal(sent[2].kind,'line');
+    f.click('crazyAssign'); await flush(); assert.equal(sent[2].text,'Next mission'); assert.equal(sent[2].target,1); assert.equal(sent[2].kind,undefined);
     f.update({...talk,reply:{id:sent[2].id,error:''}}); assert.equal(f.card.crazyDraft.text,'');
   } finally {f.card.destroy();}
 });
@@ -587,15 +587,15 @@ test('Chinese composition of the next card survives ACK for the previously sent 
   } finally {f.card.destroy();}
 });
 
-test('ACK keeps reused mission text when recipient or type was changed for the next card', async () => {
+test('ACK keeps reused mission text when recipient was changed for the next card', async () => {
   const sent=[],f=fixture(async command=>sent.push(clone(command)));
   try {
     const talk=crazy({source:'mixed',prompt:null,canAssign:true}); f.update(talk);
     f.assignmentField('text','Cluck like a chicken.'); f.click('crazyAssign'); await flush();
     f.assignmentField('target','1','change'); f.update({...talk,reply:{id:sent.at(-1).id,error:''}});
     assert.equal(f.card.crazyDraft.text,'Cluck like a chicken.');
-    f.click('crazyAssign'); await flush(); f.assignmentField('kind','line','change');
-    f.update({...talk,reply:{id:sent.at(-1).id,error:''}}); assert.equal(f.card.crazyDraft.text,'Cluck like a chicken.');
+    f.click('crazyAssign'); await flush();
+    f.update({...talk,reply:{id:sent.at(-1).id,error:''}}); assert.equal(f.card.crazyDraft.text,'');
   } finally {f.card.destroy();}
 });
 
@@ -656,7 +656,7 @@ test('explicitly away Crazy recipients are omitted from selectors while a newcom
     assert.match(f.element.innerHTML, /<option value="3"/); assert.doesNotMatch(f.element.innerHTML, /<option value="1"/);
   } finally { f.card.destroy(); }
 });
-test('handwritten composer is open and follows the current mission and topic before secondary room controls', () => {
+test('handwritten composer is folded and follows the current mission and topic before secondary room controls', () => {
   const f = fixture();
   try {
     for (const currentPrompt of [prompt(), null, prompt({ status: 'done' })]) {
@@ -666,14 +666,13 @@ test('handwritten composer is open and follows the current mission and topic bef
       f.update(talk);
       const html = f.element.innerHTML;
       const markers = ['data-talk-card-main', 'talk-player-topic', 'data-talk-card-assignment',
-        'data-talk-assignment-field="text"', 'data-talk-assignment-field="target"',
-        'data-talk-assignment-field="kind"', 'data-talk-card-footer', 'talk-current-state',
+        'data-talk-assignment-field="target"', 'data-talk-assignment-field="text"', 'data-talk-card-footer', 'talk-current-state',
         'talk-card-roster', 'talk-round-strip', 'talk-management'];
       for (let i = 1; i < markers.length; i++) {
         assert.ok(html.indexOf(markers[i - 1]) >= 0, markers[i - 1] + ' must exist');
         assert.ok(html.indexOf(markers[i - 1]) < html.indexOf(markers[i]), markers[i - 1] + ' should precede ' + markers[i]);
       }
-      assert.equal(f.element.querySelector('.talk-assignment').open, true);
+      assert.equal(f.element.querySelector('.talk-assignment').open, false);
       if (currentPrompt?.status === 'pending') assert.ok(html.indexOf('talk-crazy-prompt') < html.indexOf('talk-player-topic'));
       else assert.ok(html.indexOf('talk-crazy-wait') > html.indexOf('data-talk-card-footer'));
       assert.ok(html.indexOf('talk-queue-count') > html.indexOf('data-talk-card-footer'));
@@ -682,7 +681,7 @@ test('handwritten composer is open and follows the current mission and topic bef
     f.update({ ...crazy({ source: 'mixed', canAssign: true }), revision: 2 });
     assert.equal(f.element.querySelector('.talk-assignment').open, false);
     f.update({ ...crazy({ source: 'mixed', canAssign: true }), sessionId: 'fresh-composer' });
-    assert.equal(f.element.querySelector('.talk-assignment').open, true);
+    assert.equal(f.element.querySelector('.talk-assignment').open, false);
   } finally { f.card.destroy(); }
 });
 
@@ -765,4 +764,139 @@ test('player missions never show task or next-assignment countdowns in English o
       }
     }
   } finally { f.card.destroy(); }
+});
+
+const vnextTalk = (extra = {}) => ({...crazy({source:'mixed',prompt:null,canAssign:true,roundStage:'open',queueLocked:false,playStyle:'free',effectivePlayStyle:'free',role:'player',receiverStatus:{paused:false,cooldownUntil:0},hostActions:{},library:[],unusedCards:[],...extra}),sharedControls:true});
+const localStore = () => { const values = new Map(); return {values,getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,String(value))}; };
+
+test('verified bearer/session scope restores only its own unsent task text and target', () => {
+  const storage=localStore(), identity={room:'DRAFT123',token:'1'.repeat(32),verified:true};
+  const first=fixture(undefined,{identity,storage});
+  first.update(vnextTalk()); first.assignmentField('target','1','change'); first.assignmentField('text','Give the spoon a silly job.'); first.card.destroy();
+  const restored=fixture(undefined,{identity,storage});
+  try { restored.update(vnextTalk(),{name:'A renamed person'}); assert.equal(restored.card.crazyDraft.text,'Give the spoon a silly job.'); assert.equal(restored.card.crazyDraft.target,'1'); assert.equal(restored.node('.talk-assignment').open,false); } finally {restored.card.destroy();}
+  for(const next of [{...identity,token:'2'.repeat(32)},{...identity,room:'OTHER123'},{...identity,verified:false}]) {
+    const other=fixture(undefined,{identity:next,storage});
+    try {other.update(vnextTalk());assert.equal(other.card.crazyDraft.text,'');} finally {other.card.destroy();}
+  }
+  const fresh=fixture(undefined,{identity,storage});
+  try {fresh.update({...vnextTalk(),sessionId:'another-session'});assert.equal(fresh.card.crazyDraft.text,'');fresh.update(vnextTalk());assert.equal(fresh.card.crazyDraft.text,'Give the spoon a silly job.');} finally {fresh.card.destroy();}
+});
+
+test('visible render ACK uses a separate exact-id retry and never replaces the manual pending request', async () => {
+  const technical=[],manual=[];let failures=1;
+  const f=fixture(async command=>manual.push(clone(command)),{sendTechnical:async command=>{technical.push(clone(command));if(failures-->0)throw Error('temporary');}});
+  try {
+    const talk=vnextTalk({prompt:prompt({renderVersion:1,renderedVersion:0,expiresAt:90000}),roundStage:'decision'});
+    talk.gameDeadline=500;
+    const dom=f.node('.talk-crazy-prompt');dom.dataset={talkPrompt:prompt().id};let rects=[{}];dom.getClientRects=()=>rects;
+    f.context.document.hidden=true;f.update(talk);await flush();assert.equal(technical.length,0);
+    f.context.document.hidden=false;rects=[];f.card.paint();await flush();assert.equal(technical.length,0);
+    rects=[{}];dom.dataset.talkPrompt='old-prompt';f.card.paint();await flush();assert.equal(technical.length,0);
+    dom.dataset.talkPrompt=prompt().id;f.card.paint();await flush();assert.equal(technical.length,1);
+    assert.equal(technical[0].type,'crazyRendered');assert.equal(technical[0].renderVersion,1);assert.equal(technical[0].promptId,prompt().id);
+    f.assignmentField('text','A different synthetic challenge.');f.click('crazyAssign');await flush();
+    const waiting=f.card.pending;assert.equal(manual.length,1);
+    f.setClock(6000);f.card.paint();await flush();assert.equal(technical.length,2);assert.deepEqual(technical[1],technical[0]);
+    assert.equal(f.card.pending,waiting);assert.equal(f.card.crazyDraft.text,'A different synthetic challenge.');
+    f.setClock(11000);f.card.paint();await flush();assert.equal(technical.length,2);
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="(?:crazyRendered|acceptTask)"/);
+    assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyDone').disabled,true,'manual request retains its normal pending lock');
+    f.update({...talk,reply:{id:waiting.id,error:''}});assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyDone').disabled,false,'whole-round decision does not disable a live task');
+  } finally {f.card.destroy();}
+});
+
+test('director actors have no composer or director status list and replacement offers keep both identities', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const offer={offerId:'offer-1',promptId:prompt().id,oldPrompt:{text:'old'},newCard:{text:'<b>Walk like a tiny duck.</b>'}};
+    const talk=vnextTalk({playStyle:'director',effectivePlayStyle:'director',role:'player',prompt:prompt({reminder:true}),offer,
+      receiverStatuses:[{playerNum:1,status:'ready',connection:'offline'}]});
+    f.update(talk);
+    assert.doesNotMatch(f.element.innerHTML,/talk-assignment|talk-receivers|data-talk-action="crazyAssign"/);
+    assert.match(f.element.innerHTML,/talk-crazy-reminder/);assert.match(f.element.innerHTML,/&lt;b&gt;Walk/);
+    f.click('crazyReplace');await flush();assert.equal(sent[0].offerId,'offer-1');assert.equal(sent[0].promptId,prompt().id);
+    f.update({...talk,reply:{id:sent[0].id,error:''}});
+    f.update(vnextTalk({playStyle:'director',effectivePlayStyle:'director',role:'director',receiverStatuses:[{playerNum:1,status:'paused',connection:'offline'}]}));
+    assert.match(f.element.innerHTML,/talk-assignment/);assert.match(f.element.innerHTML,/talk-receivers/);assert.match(f.element.innerHTML,/Offline/);
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-task-clock|nextRotateAt/);
+  } finally {f.card.destroy();}
+});
+
+test('sorting defaults to private retention, holds local choices until confirmation and hides unrevealed public cards', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk={...vnextTalk({roundStage:'sorting',queueLocked:true,canAssign:false,
+      unusedCards:[{id:'card-a',text:'Private A'},{id:'card-b',text:'Private B'}],revealCards:[{id:'other',text:'Other participant secret'}]}),phase:'ended'};
+    f.update(talk);assert.doesNotMatch(f.element.innerHTML,/Other participant secret/);
+    assert.equal((f.element.innerHTML.match(/data-talk-sort-card="[^"]+" checked/g)||[]).length,2);
+    f.handlers.get('change')({target:{dataset:{talkSortCard:'card-b'},checked:false}});
+    f.update({...talk,revision:2});assert.equal(sent.length,0);assert.match(f.element.innerHTML,/Unchecked cards go into the shared recap/);
+    f.click('crazySort');await flush();assert.deepEqual(Array.from(sent[0].saveIds),['card-a']);assert.equal(sent[0].type,'crazySort');
+    f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,sortConfirmed:true}});
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazySort"/);
+    f.update({...talk,crazy:{...talk.crazy,roundStage:'reveal',sortConfirmed:true}});
+    assert.match(f.element.innerHTML,/Other participant secret/);
+  } finally {f.card.destroy();}
+});
+
+test('early reveal keeps unconfirmed private sorting available without reopening a confirmed selection', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk={...vnextTalk({roundStage:'sorting',queueLocked:true,canAssign:false,
+      unusedCards:[{id:'card-a',text:'Keep this private'},{id:'card-b',text:'May share after consent'}]}),phase:'ended'};
+    f.update(talk);
+    f.handlers.get('change')({target:{dataset:{talkSortCard:'card-b'},checked:false}});
+    const revealed={...talk,crazy:{...talk.crazy,roundStage:'reveal',sortConfirmed:false,revealCards:[]}};
+    f.update(revealed);
+    assert.match(f.element.innerHTML,/data-talk-action="crazySort"/);
+    assert.match(f.element.innerHTML,/data-talk-sort-card="card-a" checked/);
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-sort-card="card-b" checked/);
+    assert.equal(sent.length,0,'host reveal never publishes an unconfirmed author selection');
+    f.click('crazySort');await flush();
+    assert.equal(sent[0].type,'crazySort');assert.deepEqual(Array.from(sent[0].saveIds),['card-a']);
+    f.update({...revealed,reply:{id:sent[0].id,error:''},crazy:{...revealed.crazy,sortConfirmed:true,
+      revealCards:[{id:'card-b',text:'May share after consent',author:2,unused:true}]}});
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazySort"|data-talk-sort-card/);
+    f.click('crazySort');await flush();assert.equal(sent.length,1,'confirmed exposure cannot be reopened locally');
+  } finally {f.card.destroy();}
+});
+
+test('private library editing, confirmed deletion and resend use only an authorized projected card id', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const talk=vnextTalk({library:[{id:'saved-a',text:'Original saved challenge',target:1}]});
+    f.update(talk);assert.match(f.element.innerHTML,/My private challenges/);assert.equal(f.card.libraryOpen,false);
+    f.handlers.get('input')({target:{dataset:{talkLibraryField:'saved-a'},value:'  Updated challenge  ',matches:()=>false}});
+    f.click('crazyLibraryUpdate');await flush();assert.equal(sent[0].cardId,'saved-a');assert.equal(sent[0].text,'Updated challenge');
+    f.update({...talk,reply:{id:sent[0].id,error:''}});
+    f.click('crazyLibrarySend');await flush();assert.equal(sent[1].type,'crazyLibrarySend');assert.equal(sent[1].target,undefined);
+    f.update({...talk,reply:{id:sent[1].id,error:''}});
+    f.click('crazyLibraryDelete');await flush();assert.equal(sent.length,2,'delete requires the visible confirmation button');
+    f.click('crazyLibraryDelete');await flush();assert.equal(sent[2].cardId,'saved-a');assert.equal(sent[2].type,'crazyLibraryDelete');
+    for(const command of sent)for(const key of ['ownerIdentity','actorIdentity','authorName','controlToken'])assert.equal(command[key],undefined);
+  } finally {f.card.destroy();}
+});
+
+test('round decisions expose only projected host/delegate actions and receiving pause is an explicit session command', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    let talk=vnextTalk({roundStage:'decision',queueLocked:true,hostActions:{extend:false,drain:false,delegate:false,reveal:false,claim:false}});
+    f.update(talk);assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazy(?:Extend|Drain|Reveal|Delegate)"/);
+    talk={...talk,crazy:{...talk.crazy,hostActions:{extend:true,drain:true}}};f.update(talk);
+    f.click('crazyExtend');await flush();assert.equal(sent[0].seconds,180);assert.equal(sent[0].sessionId,'ui-topic');
+    f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,receiverStatus:{paused:true}}});f.click('crazyReceive');await flush();assert.equal(sent[1].paused,false);
+  } finally {f.card.destroy();}
+});
+
+test('public recap attributes executed cards and labels unused cards without inventing a skipped outcome', () => {
+  const f=fixture();
+  try {
+    const talk={...vnextTalk({roundStage:'reveal',queueLocked:true,canAssign:false,revealCards:[
+      {id:'played',text:'Played card',author:1,recipient:2,status:'done',unused:false},
+      {id:'not-played',text:'Unused card',author:2,recipient:null,status:'cancelled',unused:true}]}),phase:'ended'};
+    f.update(talk);assert.match(f.element.innerHTML,/From: Alex/);assert.match(f.element.innerHTML,/Received by: Sam/);assert.match(f.element.innerHTML,/Done/);
+    const unused=f.element.innerHTML.slice(f.element.innerHTML.indexOf('<p>Unused card</p>'));
+    assert.match(unused,/Not sent this round/);assert.doesNotMatch(unused.slice(0,unused.indexOf('</article>')),/Received by:|Cancelled|Skipped/);
+  } finally {f.card.destroy();}
 });

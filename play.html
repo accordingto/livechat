@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-calm-1">
+  <link rel="stylesheet" href="talk.css?v=talk-vnext-1">
   <link rel="stylesheet" href="once-upon-a-time.css?v=once-worlds-1">
   <link rel="stylesheet" href="dixit.css?v=dixit-expansion-1"><link rel="stylesheet" href="life-story.css?v=life-story-3">
   <link rel="stylesheet" href="cut.css?v=cut-12">
@@ -887,7 +887,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-ui.js?v=talk-calm-1"></script>
+  <script src="talk-vnext.js?v=talk-vnext-1"></script>
+  <script src="talk-ui.js?v=talk-vnext-1"></script>
   <script src="chat-wolf-cards.js"></script>
   <script src="bluff-king-cards.js?v=2"></script>
   <script src="cut-ui.js?v=cut-12"></script>
@@ -905,7 +906,7 @@
   <script src="dixit-deck.js?v=dixit-expansion-1"></script>
   <script src="life-story-ui.js?v=life-story-3"></script><script src="dixit-ui.js?v=life-story-2"></script>
   <script src="life-story-engine.js?v=life-story-2"></script><script src="dixit-engine.js?v=life-story-1"></script>
-  <script src="talk-sync.js?v=talk-archive-1"></script>
+  <script src="talk-sync.js?v=talk-vnext-1"></script>
   <script src="dixit-sync.js?v=life-story-2"></script>
   <script src="hub-executor.js?v=life-story-1"></script><script>HUB_EXECUTOR.install();</script>
   <script src="dixit-card-host.js?v=life-story-1"></script>
@@ -2719,14 +2720,20 @@
       if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
       if (data.game === 'letstalk' && data.talk && data.talk.version === 1) {
         if (!talkCard) talkCard = new TALK_PLAYER.Card(el, {
-          nameBanner,
+          nameBanner, identity: { room: session, token, verified: true },
+          sendTechnical: async command => {
+            const current = (await db.ref(`rooms/${session}/players/${token}`).once('value')).val();
+            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId || !current.hubExecutor?.capsule) throw new Error('not_available');
+            const result = await HUB_EXECUTOR.request({ operation: 'execute', capsule: current.hubExecutor.capsule, token, command });
+            if (!result.technical?.rendered) throw new Error('stale_prompt');
+          },
           now: () => Date.now() + talkClockOffset,
           connected: () => talkConnected,
           send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
             if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId) return;
             if (TALK_UI.crazyAction(command.type)) {
               if (current.talk.gameMode !== 'crazy' || current.talk.crazy?.prompt?.id !== command.promptId || current.talk.crazy.prompt.status !== 'pending') return;
-            } else if (current.talk.turnId !== command.turnId) return;
+            } else if (!command.type.startsWith('crazy') && current.talk.turnId !== command.turnId) return;
             return Object.assign({}, current, { talkAction: command });
           }, undefined, false).then(result => { if (!result.committed) throw new Error(TALK_UI.crazyAction(command.type) ? 'stale_prompt' : 'stale_turn'); }),
         });

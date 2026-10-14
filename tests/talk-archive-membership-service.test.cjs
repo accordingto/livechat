@@ -3,7 +3,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const E = require('../talk-engine.js');
+const rawEngine = require('../talk-engine.js');
+const E = { ...rawEngine, archiveEntries: s => rawEngine.archiveEntries(s).filter(r => !r.category || r.category === 'challenge') };
 const { adapters } = require('../runtime/story-executor.cjs');
 const { createExecutor } = require('../runtime/hub-executor-core.cjs');
 const { createStore } = require('../runtime/talk-archive-store.cjs');
@@ -40,7 +41,7 @@ class MemoryFirebase {
     return new Response(JSON.stringify(value));
   }
 }
-async function fixture() {
+async function fixture(options = {}) {
   const db = new MemoryFirebase(), code = 'ARCHMEMB', controlToken = 'a'.repeat(32);
   const tokens = [1, 2, 3, 4].map(n => String(n).repeat(32));
   const seats = tokens.slice(0, 3).map((token, i) => ({ playerNum: i + 1, token }));
@@ -51,13 +52,14 @@ async function fixture() {
     id: 'archive-membership-session', roster: seats.map(s => ({ playerNum: s.playerNum, name: 'Synthetic ' + s.playerNum })),
     topic: { title: 'Synthetic cafe', question: 'What should our imaginary cafe sell?' }, now: clock,
     gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
-    crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyTaskSeconds: 30, gameSeconds: 300
+    crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyTaskSeconds: 30, gameSeconds: 300, ...options
   });
   db.set(canonical, { state: original, revision: 1 });
   for (const seat of seats) db.set(path(seat.playerNum), E.view(original, seat.playerNum, clock));
   const service = createExecutor({ secret: SECRET, archiveSecret: ARCHIVE_SECRET, databaseURL: 'http://localhost',
     fetchImpl: db.fetch.bind(db), now: () => clock, games: adapters });
-  const store = createStore({ secret: ARCHIVE_SECRET, databaseURL: 'http://localhost', fetchImpl: db.fetch.bind(db) });
+  const allRecordStore = createStore({ secret: ARCHIVE_SECRET, databaseURL: 'http://localhost', fetchImpl: db.fetch.bind(db) });
+  const store = { ...allRecordStore, readRoom: async code => (await allRecordStore.readRoom(code)).filter(r => !r.category || r.category === 'challenge') };
   const state = () => adapters.letstalk.decode(db.get(canonical));
   const capsule = () => db.get(canonical).executor.capsule;
   const card = n => db.get(path(n));
@@ -95,7 +97,7 @@ async function waitFor(promise) {
 }
 
 test('participant removal durably closes delivered and authored queued handwriting before public success', async () => {
-  const f = await fixture(); await f.act(1, 'start');
+  const f = await fixture({crazyMaxActive:1}); await f.act(1, 'start');
   const delivered = 'Pretend the synthetic spoon is our captain.';
   const queued = 'Introduce an imaginary upside-down sandwich.';
   await f.act(1, 'crazyAssign', { text: delivered, target: 2, kind: 'task' });

@@ -223,13 +223,14 @@ test('host clock expires a private mission, projects public score and preserves 
   const recipient = h.latest.crazy.pendingPlayerNums?.[0] || Number(Object.keys(h.latest.crazy.prompts).find(num => h.latest.crazy.prompts[num].status === 'pending'));
   const prompt = f.card(recipient).talk.crazy.prompt;
   assert.equal(prompt.status, 'pending'); assert.equal(prompt.expiresAt, clock + 30000);
+  await h.change(current=>E.apply(current,{type:'crazyRendered',id:'synthetic-render-ack',actor:recipient,sessionId:current.sessionId,promptId:prompt.id,renderVersion:1,now:clock})); await settle(h);
   for (const num of [1,2,3,4].filter(num => num !== recipient)) assert.ok(!JSON.stringify(f.card(num)).includes(prompt.text));
   clock = prompt.expiresAt; await h.renew(); await settle(h); await h.tickCrazy(); await settle(h);
   assert.equal(f.card(recipient).talk.crazy.prompt.status, 'expired');
   assert.ok(Object.values(h.latest.crazy.prompts).some(item => item.status === 'pending'), 'expiry hands a new mission to another player');
   assert.ok(f.card(1).talk.scores.every(entry => entry.score === 0));
   await h.command('finish'); await settle(h);
-  for (const num of [1,2,3,4]) assert.equal(f.card(num).talk.phase, 'ended');
+  for (const num of [1,2,3,4]) assert.equal(f.card(num).talk.crazy.roundStage, 'draining');
   h.close();
 });
 
@@ -238,7 +239,7 @@ test('Host.start carries the journal from transaction-current state while its ca
   const f = setup(), h = f.host(); await settle(h);
   let clock = Date.now(); h.now = () => clock;
   await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
-    gameSeconds: 120, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5 });
+    gameSeconds: 120, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive:1 });
   await settle(h);
   const cachedSession = h.doc.state.sessionId;
   assert.deepEqual(h.doc.state.challengeArchive.records, []);
@@ -283,5 +284,33 @@ test('Host.start carries the journal from transaction-current state while its ca
       assert.equal(serialized.includes(marker), false, 'history cannot enter a private gameplay projection');
     }
   }
+  h.close();
+});
+
+test('Host.start forwards vNext choices and retains the transaction-current private vault and identity bindings', async () => {
+  const f=setup(),h=f.host();await settle(h);await h.start({topic,gameMode:'normal'});await settle(h);
+  const controlPath='rooms/TEST/players/'+f.room.getExtra('letsTalkControlToken'),canonical=clone(f.db.values.get(controlPath));
+  const owner='a'.repeat(64),entry={id:'private-saved-a',text:'A synthetic secret challenge.',target:null,version:2,persistedVersion:1,deleted:false};
+  canonical.state.crazyVault={[owner]:{'private-saved-a':entry}};canonical.state.crazyIdentities={1:owner};
+  f.db.values.set(controlPath,canonical);
+  assert.deepEqual(h.doc.state.crazyVault,{});
+  await h.start({topic,gameMode:'crazy',crazyMaxActive:5,crazyPlayStyle:'free',crazyRotationSeconds:300});await settle(h);
+  assert.equal(h.latest.crazy.maxActive,5);assert.equal(h.latest.crazy.playStyle,'free');assert.equal(h.latest.crazy.rotationSeconds,300);
+  assert.equal(h.latest.crazyVault[owner]['private-saved-a'].text,entry.text);assert.equal(h.latest.crazyIdentities[1],owner);
+  assert.ok(!JSON.stringify(f.card(2)).includes(entry.text));assert.ok(!JSON.stringify(f.card(2)).includes(owner));
+  assert.equal(f.card(1).talk.crazy.library[0].text,entry.text);
+  h.close();
+});
+
+test('trusted host startup forwards its chosen participating seat without changing director roles or normal controls', async () => {
+  const f=setup(),h=f.host();await settle(h);
+  await h.start({topic,gameMode:'crazy',crazyPlayStyle:'free',hostPlayerNum:2});await settle(h);
+  assert.equal(h.latest.crazy.hostDelegate,2);
+  assert.equal(f.card(2).talk.crazy.hostActions.delegate,true);
+  assert.equal(f.card(1).talk.crazy.hostActions.delegate,false);
+  assert.equal(f.card(2).talk.crazy.role,'player');
+  await h.start({topic,gameMode:'normal',hostPlayerNum:2});await settle(h);
+  assert.equal(f.card(1).talk.gameMode,'normal');
+  assert.equal(E.view({...h.latest,sharedControls:true},1,h.now()).talk.actions.start,true);
   h.close();
 });

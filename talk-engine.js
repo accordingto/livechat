@@ -9,6 +9,7 @@ var TALK_ENGINE = (() => {
   const copy = value => JSON.parse(JSON.stringify(value));
   const participants = s => list(s.roster).filter(p => p.active !== false && p.pending !== true);
   const eligible = (s, num) => participants(s).some(p => p.playerNum === num);
+  const vnext = () => typeof TALK_VNEXT !== 'undefined' ? TALK_VNEXT : require('./talk-vnext.js');
   const crazyPool = () => typeof TALK_CRAZY !== 'undefined' ? TALK_CRAZY.pool
     : typeof require === 'function' ? require('./talk-crazy.js').pool : [];
   const crazyEnabled = s => s?.gameMode === 'crazy' && !!s.crazy;
@@ -36,7 +37,7 @@ var TALK_ENGINE = (() => {
   const pendingNums = s => crazyEnabled(s) ? participants(s).map(p => p.playerNum)
     .filter(num => s.crazy.prompts?.[num]?.status === 'pending') : [];
   const unresolvedArchive = record => ['queued', 'pending'].includes(record?.status);
-  const terminalArchive = record => ['done', 'skipped', 'expired', 'cancelled'].includes(record?.status);
+  const terminalArchive = record => ['done', 'skipped', 'expired', 'cancelled', 'replaced', 'withdrawn', 'saved', 'deleted', 'revealed'].includes(record?.status);
   const knownArchiveTime = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
   function archivePerson(s, num) {
     const person = list(s.roster).find(p => p.playerNum === num);
@@ -45,8 +46,8 @@ var TALK_ENGINE = (() => {
   const archiveTopic = s => ({ title: String(s.topic?.title || ''), question: String(s.topic?.question || '') });
   function archiveEnvelope(value) { return { version: 1, records: copy(list(value?.records)) }; }
   function archiveEntries(s) {
-    return copy(list(s?.challengeArchive?.records).filter(record => Number.isInteger(record?.version)
-      && record.version > (Number(record.persistedVersion) || 0)));
+    return copy([...list(s?.challengeArchive?.records).filter(record => Number.isInteger(record?.version)
+      && record.version > (Number(record.persistedVersion) || 0)), ...vnext().archiveRecords(s)]);
   }
   function ackArchive(current, acknowledgements) {
     const s = copy(current), acks = list(acknowledgements);
@@ -58,6 +59,7 @@ var TALK_ENGINE = (() => {
       record.persistedVersion = Math.max(Number(record.persistedVersion) || 0, ...versions);
       return !(terminalArchive(record) && record.persistedVersion === record.version);
     });
+    if (vnext().ackRecords) vnext().ackRecords(s, acks);
     return s;
   }
   function addArchiveRecord(s, id, details, version = 1) {
@@ -67,7 +69,7 @@ var TALK_ENGINE = (() => {
     s.challengeArchive.records.push(record); return record;
   }
   function archiveQueued(s, item, legacy = false, fallbackId = '') {
-    const id = item.archiveId || (typeof item.id === 'string' && item.id ? s.sessionId + ':author:' + item.assignedBy + ':' + item.id : fallbackId);
+    const id = item.archiveId || item.roundCardId || (typeof item.id === 'string' && item.id ? s.sessionId + ':author:' + item.assignedBy + ':' + item.id : fallbackId);
     if (!id) return;
     const at = knownArchiveTime(item.at);
     addArchiveRecord(s, id, { sessionId: s.sessionId, kind: item.kind === 'line' ? 'line' : 'task', text: item.text,
@@ -101,7 +103,7 @@ var TALK_ENGINE = (() => {
     });
     for (const [num, prompt] of Object.entries(s.crazy.prompts || {})) {
       if (prompt?.source !== 'player' || prompt.status !== 'pending' || (!initialize && prompt.archiveId)) continue;
-      const id = prompt.archiveId || s.sessionId + ':legacy:' + prompt.id, at = knownArchiveTime(prompt.at);
+      const id = prompt.archiveId || prompt.roundCardId || prompt.queueItem?.archiveId || s.sessionId + ':legacy:' + prompt.id, at = knownArchiveTime(prompt.at);
       addArchiveRecord(s, id, { sessionId: s.sessionId, kind: prompt.kind === 'line' ? 'line' : 'task', text: prompt.text,
         author: archivePerson(s, prompt.assignedBy), recipient: archivePerson(s, Number(num)), topic: archiveTopic(s),
         legacy: true, status: 'pending', ...(at == null ? {} : { assignedAt: at, updatedAt: at }) }, 2);
@@ -113,23 +115,23 @@ var TALK_ENGINE = (() => {
     if (!validGameSeconds(s?.gameSeconds) || !validTaskSeconds(s?.crazyTaskSeconds)
         || !s.scores || list(s.roster).some(p => !Number.isInteger(s.scores[p.playerNum]) || s.scores[p.playerNum] < 0)
         || !Number.isFinite(s.gameDeadline) || (s.phase === 'talking' && !(s.gameDeadline > 0))) return true;
-    return crazyEnabled(s) && (s.crazy.schedulerVersion !== 2 || !validTaskSeconds(s.crazy.taskSeconds)
+    return crazyEnabled(s) && (s.crazy.vnextVersion !== 1 || s.crazy.schedulerVersion !== 2 || !validTaskSeconds(s.crazy.taskSeconds)
       || list(s.crazy.queue).some(item => !item.archiveId)
       || list(s.crazy.prompts).some(prompt => prompt?.source === 'player' && prompt.status === 'pending' && !prompt.archiveId)
       || !Number.isFinite(s.crazy.nextAssignAt) || (s.phase === 'talking' && !(s.crazy.nextAssignAt > 0))
       || pendingNums(s).some(num => !Number.isFinite(s.crazy.prompts[num].expiresAt)));
   }
-  function timerDue(s, now) {
+  function timerDue(s, now, context = {}) {
     if (!s || !Number.isFinite(Number(now))) return false;
     if (needsMigration(s)) return true;
     if (s.phase === 'thinking') return Number(now) >= Number(s.deadline);
-    if (s.phase !== 'talking') return false;
-    if (Number(now) >= s.gameDeadline) return true;
-    if (!crazyEnabled(s)) return false;
-    const c = s.crazy, pending = pendingNums(s);
-    if (pending.some(num => c.prompts[num].expiresAt <= Number(now))) return true;
-    return !c.paused && pending.length < 2
-      && (list(c.replacementFor).length > 0 || c.nextAssignAt > 0 && Number(now) >= c.nextAssignAt);
+    if (crazyEnabled(s)) {
+      if (context.onlineNums != null && JSON.stringify(list(context.onlineNums).slice().sort((a,b)=>a-b)) !== JSON.stringify(list(s.availablePlayerNums).slice().sort((a,b)=>a-b))) return true;
+      if (vnext().due(s, Number(now))) return true;
+      return s.phase === 'talking' && vnext().maySystem(s, { now: Number(now) })
+        && s.crazy.nextAssignAt > 0 && Number(now) >= s.crazy.nextAssignAt;
+    }
+    return s.phase === 'talking' && Number(now) >= s.gameDeadline;
   }
   // Kept for older pages; this predicate now includes the whole game clock.
   const crazyDue = timerDue;
@@ -174,6 +176,7 @@ var TALK_ENGINE = (() => {
     }
     if (!Number.isFinite(c.nextAssignAt) || s.phase === 'talking' && !(c.nextAssignAt > 0)) scheduleCrazy(s, input);
     for (const prompt of list(c.prompts)) if (!Number.isFinite(prompt.expiresAt)) prompt.expiresAt = now + c.taskSeconds * 1000;
+    vnext().init(s, input);
   }
   function finishGame(s, now) {
     closeUnresolvedArchive(s, now);
@@ -184,84 +187,60 @@ var TALK_ENGINE = (() => {
       s.crazy.nextAssignAt = 0; s.crazy.replacementFor = []; s.crazy.queue = [];
     }
   }
-  function assignCrazy(s, input, excluded = [], replacement = false) {
-    const c = s.crazy, now = Number(input.now) || 0, pool = crazyPool();
-    if (c.paused || pendingNums(s).length >= 2) return false;
-    // Authenticated runtime presence already includes the disconnect grace
-    // period. Unknown presence retains the roster; known absent players must
-    // not occupy one of the two shared task slots.
-    const online = s.sharedControls === true && input.onlineNums != null ? list(input.onlineNums) : null;
-    const eligible = participants(s).map(p => p.playerNum).filter(num => (online == null || online.includes(num))
-      && !excluded.includes(num) && c.prompts[num]?.status !== 'pending');
-    const avoidRepeat = nums => nums.length > 1 && nums.includes(c.lastPlayerNum) ? nums.filter(num => num !== c.lastPlayerNum) : nums;
-    let queued, candidates;
-    for (const item of c.queue) {
-      // A just-submitted mission cannot be revealed by the service pulse in
-      // the same request, or steal a slot whose deadline predated submission.
-      if (Number(item.at) >= now || !replacement && Number(item.at) >= c.nextAssignAt) continue;
-      const matches = eligible.filter(num => num !== item.assignedBy && (item.target == null || item.target === num));
-      if (matches.length) { queued = item; candidates = avoidRepeat(matches); break; }
+  function syncVnextArchive(s, input) {
+    if (!crazyEnabled(s)) return;
+    for (const card of list(s.crazy.roundCards)) {
+      let record = list(s.challengeArchive?.records).find(r => r.id === card.archiveId);
+      if (!record && !card.archiveLinked && card.source !== 'system' && card.archiveId) {
+        const item = { ...card, id:card.id, archiveId:card.archiveId, at:card.createdAt ?? card.at, assignedBy:card.assignedBy ?? card.author };
+        archiveQueued(s,item); record = list(s.challengeArchive.records).find(r=>r.id === card.archiveId);
+      }
+      if (!record) continue;
+      card.archiveLinked = true;
+      const recipient = card.recipient ?? card.recipientNum;
+      const extra = { ...(recipient ? { recipient:record.recipient?.playerNum === recipient ? record.recipient : archivePerson(s,recipient) } : {}),
+        ...(Number.isFinite(card.assignedAt) ? { assignedAt:card.assignedAt } : {}) };
+      if (record.status === card.status && Object.entries(extra).every(([key,val])=>JSON.stringify(record[key]) === JSON.stringify(val))) continue;
+      record.version++; record.status = card.status; Object.assign(record,extra); record.updatedAt = Number(input.now) || 0;
+      if (terminalArchive(record)) record.closedAt = record.updatedAt;
     }
-    if (!queued) {
-      // Fresh queued work reserves matching recipients over system fallback.
-      candidates = avoidRepeat(eligible.filter(num => !c.queue.some(item => num !== item.assignedBy
-        && (item.target == null || item.target === num))));
-      if (!systemCrazy(s) || !pool.length) return false;
-    }
-    if (!candidates.length) return false;
+  }
+  function assignCrazy(s, input) {
+    if (!systemCrazy(s) || !vnext().maySystem(s, input)) return false;
+    const c = s.crazy, pool = crazyPool(), candidates = vnext().eligibleReceivers(s, input);
+    if (!pool.length || !candidates.length) return false;
     const recipient = candidates[Math.floor(crazyRandom(input.seed, (Number(c.scheduleSequence) || 0) + 701) * candidates.length)];
-    const sequence = (c.sequence[recipient] || 0) + 1; c.sequence[recipient] = sequence;
-    const prompt = { id: `${s.sessionId}:crazy:${recipient}:${sequence}`, at: now,
-      expiresAt: now + c.taskSeconds * 1000, status: 'pending' };
-    if (queued) {
-      Object.assign(prompt, { text: queued.text, kind: queued.kind, source: 'player', assignedBy: queued.assignedBy, archiveId: queued.archiveId });
-      updateArchive(s, queued.archiveId, 'pending', now, { recipient: archivePerson(s, recipient), assignedAt: now });
-      c.queue = c.queue.filter(item => item !== queued);
-    } else {
-      const recent = list(c.recent[recipient]);
-      const pending = list(c.prompts).filter(p => p.status === 'pending').map(p => p.lineId);
-      let choices = pool.filter(line => !recent.includes(line.id) && !pending.includes(line.id));
-      if (!choices.length) choices = pool.filter(line => !recent.includes(line.id));
-      if (!choices.length) choices = pool;
-      const line = choices[Math.floor(crazyRandom(input.seed, recipient + sequence * 101) * choices.length)];
-      Object.assign(prompt, { lineId: line.id, text: line.text, kind: line.kind, source: 'system' });
-      c.recent[recipient] = [...recent, line.id].slice(-12);
-    }
-    c.prompts[recipient] = prompt; c.lastPlayerNum = recipient; c.lastAssignAt = now;
-    return true;
+    const recent = list(c.recent[recipient]);
+    const pending = list(c.prompts).filter(p => p.status === 'pending').map(p => p.lineId);
+    let choices = pool.filter(line => !recent.includes(line.id) && !pending.includes(line.id));
+    if (!choices.length) choices = pool.filter(line => !recent.includes(line.id));
+    if (!choices.length) choices = pool;
+    const line = choices[Math.floor(crazyRandom(input.seed, recipient + ((c.sequence[recipient] || 0) + 1) * 101) * choices.length)];
+    const assigned = vnext().assign(s, { ...line, lineId: line.id, source: 'system' }, recipient, input);
+    if (assigned) c.recent[recipient] = [...recent, line.id].slice(-12);
+    return assigned;
   }
   function deliverCrazy(s, input, allowScheduled = true) {
-    if (!crazyEnabled(s) || s.phase !== 'talking' || s.crazy.paused) return false;
+    if (!crazyEnabled(s)) return false;
+    const before = JSON.stringify(s.crazy), priorDirectors = JSON.stringify(list(s.crazy.directors));
+    vnext().advance(s, input);
+    if (s.phase === 'talking' && conversationMode(s) !== 'free' && priorDirectors !== JSON.stringify(list(s.crazy.directors))) {
+      const actors = availableSeats(s);
+      s.remaining = list(s.remaining).filter(n=>actors.includes(n));
+      for (const num of actors) if (num !== s.speaker && !list(s.spoken).includes(num) && !s.remaining.includes(num)) s.remaining.push(num);
+      if (!actors.includes(s.speaker)) nextSpeaker(s, input.seed);
+    }
     const c = s.crazy, now = Number(input.now) || 0;
-    if (pendingNums(s).length >= 2) return false;
-    if (list(c.replacementFor).length) {
-      const excluded = c.replacementFor.slice(); c.replacementFor = [];
-      if (assignCrazy(s, input, excluded, true)) {
-        if (c.nextAssignAt <= now) { c.scheduleSequence = (Number(c.scheduleSequence) || 0) + 1; scheduleCrazy(s, input); }
-        return true;
-      }
-      if (c.nextAssignAt <= now) { c.scheduleSequence = (Number(c.scheduleSequence) || 0) + 1; scheduleCrazy(s, input); }
-      return false;
+    if (allowScheduled && c.nextAssignAt > 0 && now >= c.nextAssignAt && vnext().maySystem(s, input)) {
+      if (!assignCrazy(s, input)) { c.scheduleSequence = (Number(c.scheduleSequence) || 0) + 1; scheduleCrazy(s, input); }
     }
-    if (allowScheduled && c.nextAssignAt > 0 && now >= c.nextAssignAt) {
-      const assigned = assignCrazy(s, input);
-      // Empty queues and unavailable recipients still consume this timed slot.
-      c.scheduleSequence = (Number(c.scheduleSequence) || 0) + 1; scheduleCrazy(s, input);
-      return assigned;
-    }
-    return false;
+    syncVnextArchive(s, input);
+    return before !== JSON.stringify(c);
   }
   function applyClocks(s, input, allowScheduled = true, allowDelivery = true) {
-    if (s.phase !== 'talking') return false;
-    const now = Number(input.now) || 0;
-    if (now >= s.gameDeadline) { finishGame(s, now); return false; }
-    if (!crazyEnabled(s)) return false;
-    for (const num of pendingNums(s)) if (s.crazy.prompts[num].expiresAt <= now) {
-      s.crazy.prompts[num].status = 'expired';
-      updateArchive(s, s.crazy.prompts[num].archiveId, 'expired', now);
-      if (!s.crazy.replacementFor.includes(num)) s.crazy.replacementFor.push(num);
-    }
-    return allowDelivery && deliverCrazy(s, input, allowScheduled);
+    if (crazyEnabled(s)) return deliverCrazy(s, input, allowScheduled && allowDelivery);
+    if (s.phase === 'talking' && (Number(input.now) || 0) >= s.gameDeadline) finishGame(s, Number(input.now) || 0);
+    return false;
   }
   const followUps = topic => {
     const items = list(topic?.followUps).map(q => typeof q === 'string' ? { stage: 'custom', question: q } : q)
@@ -307,6 +286,7 @@ var TALK_ENGINE = (() => {
     const state = {
       version: 1, sessionId: String(id), topic: copy(topic), showStarters: showStarters === true,
       challengeArchive: archiveEnvelope(options.challengeArchive),
+      crazyVault: copy(options.crazyVault || {}), crazyIdentities: copy(options.crazyIdentities || {}),
       gameSeconds: duration, crazyTaskSeconds: taskDuration, gameDeadline: 0, scores: Object.fromEntries(roster.map(p => [p.playerNum, 0])),
       ...(sharedControls === true ? { sharedControls: true } : {}),
       gameMode: gameMode === 'crazy' ? 'crazy' : 'normal',
@@ -325,8 +305,18 @@ var TALK_ENGINE = (() => {
       intervalSeconds: [60, 120, 180].includes(Number(crazySeconds)) ? Number(crazySeconds) : 120,
       minSeconds: Number(crazyMinSeconds), maxSeconds: Number(crazyMaxSeconds),
       schedulerVersion: 2, taskSeconds: taskDuration, nextAssignAt: 0, lastAssignAt: 0, lastPlayerNum: null, scheduleSequence: 0,
+      hostDelegate: roster.some(p=>p.playerNum === Number(options.hostPlayerNum)) ? Number(options.hostPlayerNum) : null,
+      maxActive: options.crazyMaxActive == null ? 3 : Number(options.crazyMaxActive),
+      playStyle: options.crazyPlayStyle || 'free', rotationSeconds: options.crazyRotationSeconds == null ? 240 : Number(options.crazyRotationSeconds),
       paused: false, prompts: {}, sequence: {}, recent: {}, queue: [], replacementFor: [],
     };
+    if (crazyEnabled(state)) {
+      if (!Number.isInteger(state.crazy.maxActive) || state.crazy.maxActive < 1 || state.crazy.maxActive > 9
+          || !['free', 'director'].includes(state.crazy.playStyle) || !Number.isInteger(state.crazy.rotationSeconds)
+          || state.crazy.rotationSeconds < 60 || state.crazy.rotationSeconds > 900
+          || state.crazy.playStyle === 'director' && participants(state).length < 5) throw new Error('invalid_settings');
+      vnext().init(state, { now, seed: options.seed || 1 });
+    }
     return state;
   }
   function order(state) {
@@ -341,10 +331,10 @@ var TALK_ENGINE = (() => {
     };
     return remaining.slice().sort((a, b) => rank(a) - rank(b));
   }
-  const availableSeats = state => participants(state).map(p => p.playerNum).filter(n => state.sharedControls !== true
+  const availableSeats = state => participants(state).map(p => p.playerNum).filter(n => !crazyEnabled(state) || !list(state.crazy.directors).includes(n)).filter(n => state.sharedControls !== true
     || state.availablePlayerNums == null || list(state.availablePlayerNums).includes(n));
   function nextSpeaker(state, seed) {
-    if (state.sharedControls === true) state.remaining = list(state.remaining).filter(n => availableSeats(state).includes(n));
+    if (state.sharedControls === true || crazyEnabled(state)) state.remaining = list(state.remaining).filter(n => availableSeats(state).includes(n));
     if (!list(state.remaining).length) {
       state.round++;
       state.remaining = conversationMode(state) === 'assigned' ? availableSeats(state).slice() : shuffle(availableSeats(state), seed);
@@ -373,6 +363,7 @@ var TALK_ENGINE = (() => {
       nextSpeaker(s, input.seed);
     }
     scheduleCrazy(s, input);
+    if (crazyEnabled(s)) deliverCrazy(s, input, false);
   }
   function apply(current, input) {
     if (!current || !input || input.sessionId !== current.sessionId || typeof input.id !== 'string' || input.id.length > 100) return current;
@@ -380,7 +371,7 @@ var TALK_ENGINE = (() => {
     if (actor !== 0 && !list(current.roster).some(p => p.playerNum === actor)) return current;
     const clockCommand = ['clockTick', 'crazyTick'].includes(input.type);
     const duplicate = list((current.seen || {})[actor]).includes(input.id);
-    if ((clockCommand || duplicate) && !timerDue(current, Number(input.now) || 0)) return current;
+    if ((clockCommand || duplicate) && !timerDue(current, Number(input.now) || 0, input)) return current;
     // Firebase omits empty containers after every save. An overdue
     // preparation with fewer than two players is still idle; normalizing
     // those containers must not create an endless series of revisions.
@@ -392,7 +383,7 @@ var TALK_ENGINE = (() => {
     s.roster = list(s.roster); s.remaining = list(s.remaining); s.spoken = list(s.spoken); s.questions = list(s.questions);
     migrate(s, input);
     // Expiry and the game deadline win over a late completion or extension.
-    // Newly submitted custom work waits for a later scheduler slot.
+    // Handwritten work is reevaluated independently of the system schedule.
     const deliveredByClock = applyClocks(s, input, !['crazyAssign', 'crazySend', 'crazyDone', 'crazySkip', 'finish', 'exclude'].includes(input.type),
       !['crazySend', 'exclude'].includes(input.type) && !(input.type === 'crazyPause' && input.paused === true));
     if (duplicate) return JSON.stringify(s) === JSON.stringify(current) ? current : s;
@@ -402,15 +393,19 @@ var TALK_ENGINE = (() => {
     const speaking = actor === s.speaker;
     let error = '';
     const reject = code => { error = code; };
-    const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover', 'newTopic', 'crazyAssign', 'addTime', 'finish', 'exclude'];
+    const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover', 'newTopic', 'addTime', 'finish', 'exclude'];
     const selfReturn = s.sharedControls === true && input.type === 'exclude' && Number(input.playerNum) === actor && input.active === true;
-    if (!host && !eligible(s, actor) && !selfReturn) reject('not_available');
-    else if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick', 'exclude'].includes(input.type)) reject('not_available');
+    if (!host && !eligible(s, actor) && !selfReturn && !['crazySort','crazyLibraryUpdate','crazyLibraryDelete'].includes(input.type)) reject('not_available');
+    else if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick', 'exclude'].includes(input.type) && !input.type.startsWith('crazy')) reject('not_available');
     else if (turnTypes.includes(input.type) && ((!['newTopic', 'crazyAssign', 'exclude'].includes(input.type) && s.phase !== 'talking')
         || (input.type === 'crazyAssign' && !['thinking', 'talking'].includes(s.phase)) || input.turnId !== s.turnId)) reject('stale_turn');
-    else switch (input.type) {
+    else if (crazyEnabled(s) && ['crazyRendered', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyDone', 'crazySkip'].includes(input.type)) {
+      error = vnext().action(s, { ...input, hostAuthorized: host || input.hostAuthorized === true }) || '';
+      if (!error) deliverCrazy(s, input, false);
+    } else switch (input.type) {
       case 'newTopic': {
-        if (!manager) { reject('not_available'); break; }
+        if (!manager || crazyEnabled(s) && !host && input.hostAuthorized !== true) { reject('not_available'); break; }
+        if (crazyEnabled(s) && (pendingNums(s).length || s.phase === 'talking' && !['sorting','reveal'].includes(s.crazy.roundStage))) { reject('missions_active'); break; }
         if (input.confirm !== true) { reject('confirmation_required'); break; }
         let topic;
         try { topic = cleanTopic(input.topic); } catch (_) { reject('invalid_topic'); break; }
@@ -423,14 +418,23 @@ var TALK_ENGINE = (() => {
         const taskDuration = input.crazyTaskSeconds === undefined ? taskSeconds(s) : Number(input.crazyTaskSeconds);
         const discussionMode = input.conversationMode == null ? conversationMode(s) : input.conversationMode;
         const promptSource = input.crazySource == null ? crazySource(s) : input.crazySource;
+        const maxActive = input.crazyMaxActive ?? s.crazy?.maxActive ?? 3, playStyle = input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'free';
+        const rotationSeconds = input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240;
+        if (input.gameMode === 'crazy' && (!Number.isInteger(maxActive) || maxActive < 1 || maxActive > 9
+            || !['free','director'].includes(playStyle) || !Number.isInteger(rotationSeconds) || rotationSeconds < 60 || rotationSeconds > 900
+            || playStyle === 'director' && participants(s).length < 5)) { reject('invalid_settings'); break; }
         if (!['think', 'write'].includes(input.mode) || !['normal', 'crazy'].includes(input.gameMode)
             || !Number.isInteger(seconds) || seconds < 15 || seconds > 120 || ![60, 120, 180].includes(crazySeconds)
             || typeof input.showStarters !== 'boolean' || !['assigned', 'random', 'free'].includes(discussionMode)
             || !['system', 'players', 'mixed'].includes(promptSource) || !validCrazyRange(minSeconds, maxSeconds)
             || !validGameSeconds(duration) || !validTaskSeconds(taskDuration)) { reject('invalid_settings'); break; }
+        if (crazyEnabled(s)) { vnext().preserveUnusedForReset(s, input); syncVnextArchive(s, input); }
         closeUnresolvedArchive(s, Number(input.now) || 0);
+        for (const record of vnext().archiveRecords(s)) if (!s.challengeArchive.records.some(r=>r.id === record.id)) s.challengeArchive.records.push(copy(record));
         const fresh = create({ id: s.sessionId + ':topic:' + input.id, topic, roster: s.roster, mode: input.mode, seconds,
-          challengeArchive: s.challengeArchive,
+          challengeArchive: s.challengeArchive, hostPlayerNum:s.crazy?.hostDelegate, crazyVault: s.crazyVault, crazyIdentities: s.crazyIdentities,
+          crazyMaxActive: input.crazyMaxActive ?? s.crazy?.maxActive ?? 3,
+          crazyPlayStyle: input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'free', crazyRotationSeconds: input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240,
           gameMode: input.gameMode, crazySeconds, crazyMinSeconds: minSeconds, crazyMaxSeconds: maxSeconds,
           conversationMode: discussionMode, crazySource: promptSource, gameSeconds: duration, crazyTaskSeconds: taskDuration,
           showStarters: input.showStarters, now: Number(input.now) || 0,
@@ -543,7 +547,10 @@ var TALK_ENGINE = (() => {
         if (!text || text.length > 120 || !['line', 'task'].includes(kind)) { reject('invalid_prompt'); break; }
         if (s.crazy.queue.length >= 20 || s.crazy.queue.filter(item => item.assignedBy === actor).length >= 10) { reject('queue_full'); break; }
         const item = { id: input.id, target, text, kind, assignedBy: actor, at: Number(input.now) || 0 };
-        archiveQueued(s, item); s.crazy.queue.push(item);
+        const submissionError = vnext().submit(s, item, input);
+        if (submissionError) { reject(submissionError); break; }
+        archiveQueued(s, item);
+        deliverCrazy(s, input, false);
         break;
       }
       case 'crazyPause':
@@ -566,10 +573,12 @@ var TALK_ENGINE = (() => {
         break;
       }
       case 'addTime':
+        if (crazyEnabled(s) && (s.crazy.queueLocked || !host && input.hostAuthorized !== true)) { reject('host_only'); break; }
         if (!manager || s.phase !== 'talking' || ![60, 300].includes(input.seconds)) { reject('not_available'); break; }
         s.gameDeadline += input.seconds * 1000;
         break;
       case 'finish':
+        if (crazyEnabled(s)) { error = vnext().action(s, { ...input, type: 'crazyDrain', hostAuthorized: host || input.hostAuthorized === true }) || ''; break; }
         if (!manager || s.phase !== 'talking') { reject('not_available'); break; }
         finishGame(s, Number(input.now) || 0);
         break;
@@ -596,6 +605,8 @@ var TALK_ENGINE = (() => {
       }
       default: reject('not_available');
     }
+    syncVnextArchive(s, input);
+    if (input.type === 'crazyRendered') return s;
     s.seen[actor] = [...list(s.seen[actor]), input.id].slice(-32);
     s.replies[actor] = { id: input.id, error };
     return s;
@@ -615,6 +626,7 @@ var TALK_ENGINE = (() => {
     if (s.activeQuestion?.playerNum === num) s.activeQuestion = null;
     for (const key of ['readiness', 'notes', 'intents', 'interests']) if (s[key]) delete s[key][num];
     if (crazyEnabled(s)) {
+      vnext().cancelMember(s, num, input);
       const prompt = s.crazy.prompts?.[num];
       if (prompt?.status === 'pending') {
         prompt.status = 'cancelled'; updateArchive(s, prompt.archiveId, 'cancelled', Number(input.now) || 0);
@@ -637,7 +649,7 @@ var TALK_ENGINE = (() => {
     if (existing.size + added.length > 9 || added.some(p => !Number.isInteger(p?.playerNum) || p.playerNum < 1 || p.playerNum > 9 || existing.has(p.playerNum))
         || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
     const s = copy(current);
-    migrateArchive(s);
+    migrate(s, ctx);
     s.roster = list(s.roster); s.remaining = list(s.remaining); s.spoken = list(s.spoken); s.scores ||= {};
     for (const seat of added) {
       s.roster.push({ playerNum: seat.playerNum, name: String(seat.name || '').trim().slice(0, 80), active: true });
@@ -652,12 +664,14 @@ var TALK_ENGINE = (() => {
     }
     for (const seat of s.roster) if ((seat.active !== false) !== !inactive.includes(seat.playerNum)) setParticipant(s, seat.playerNum, !inactive.includes(seat.playerNum), ctx);
     if (s.phase === 'talking' && conversationMode(s) !== 'free' && s.speaker == null && availableSeats(s).length) nextSpeaker(s, ctx.seed);
+    if (crazyEnabled(s)) deliverCrazy(s, ctx, false);
     return s;
   }
-  function view(s, playerNum, now) {
+  function view(s, playerNum, now, context = {}) {
     const roster = list(s.roster);
+    const v = crazyEnabled(s) ? vnext().view(s, playerNum, now, { ...context, hostAuthorized: playerNum === 0 || context.hostAuthorized === true }) : {};
     const mine = roster.find(p => p.playerNum === playerNum), canPlay = !!mine && eligible(s, playerNum);
-    return {
+    const payload = {
       game: 'letstalk', playerNum, name: mine?.name || null,
       talk: {
         version: 1, sessionId: s.sessionId, membership: { enabled: s.sharedControls === true, minPlayers: 2, maxPlayers: 9, activeCount: participants(s).length, pendingCount: roster.filter(p => p.active !== false && p.pending === true).length }, gameSeconds: gameSeconds(s), crazyTaskSeconds: taskSeconds(s), gameDeadline: Number(s.gameDeadline) || 0,
@@ -685,6 +699,7 @@ var TALK_ENGINE = (() => {
               ...(p.source === 'player' ? { assignedBy: p.assignedBy } : {}), at: p.at, expiresAt: Number(p.expiresAt) || 0, status: p.status };
           })() : null,
           pendingCount: crazyEnabled(s) ? list(s.crazy.prompts).filter(p => p.status === 'pending').length : 0,
+          ...v,
         },
         turnId: s.turnId, seconds: Number(s.seconds) || 45, deadline: s.deadline, showStarters: !!s.showStarters, starter: starter(s.topic),
         // Keep the original followUp field in cards so already-open v0.1
@@ -701,6 +716,16 @@ var TALK_ENGINE = (() => {
         reply: (s.replies || {})[playerNum] || null,
       },
     };
+    if (crazyEnabled(s)) {
+      payload.talk.crazy.canAssign = canPlay && crazySource(s) !== 'system' && !s.crazy.queueLocked
+        && ['thinking', 'talking'].includes(s.phase) && (s.crazy.effectivePlayStyle !== 'director' || list(s.crazy.directors).includes(playerNum));
+      if (payload.talk.actions) {
+        const actualHost = playerNum === 0 || context.hostAuthorized === true || s.crazy.hostDelegate === playerNum;
+        for (const action of ['addTime', 'finish', 'newTopic']) payload.talk.actions[action] = actualHost && (action === 'newTopic' || !s.crazy.queueLocked);
+        payload.talk.actions.crazyAssign = payload.talk.crazy.canAssign;
+      }
+    }
+    return payload;
   }
   return { create, apply, membership, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange, archiveEntries, ackArchive };
 })();

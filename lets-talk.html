@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-calm-1">
+  <link rel="stylesheet" href="talk.css?v=vnext-1">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="talk-page">
@@ -31,10 +31,15 @@
           <label class="talk-field"><span data-i18n="talk.gameMode">玩法</span><select id="talk-game-mode"><option value="normal" data-i18n="talk.normalMode">Let's Talk</option><option value="crazy" data-i18n="talk.crazyMode">Crazy Talk</option></select></label>
           <label class="talk-field"><span data-i18n="talk.conversationMode">談話方式</span><select id="talk-conversation-mode"><option value="assigned" data-i18n="talk.assignedMode">依序輪流</option><option value="random" selected data-i18n="talk.randomMode">隨機點名</option><option value="free" data-i18n="talk.freeMode">自由談話</option></select></label>
           <label class="talk-field"><span data-i18n="talk.gameDuration">遊戲時間（分鐘）</span><input id="talk-game-seconds" type="number" inputmode="decimal" min="1" max="60" step="any" value="15" required aria-describedby="talk-duration-error"></label>
-          <label id="talk-crazy-task-field" class="talk-field" hidden><span data-i18n="talk.crazyTaskDuration">任務時間（分鐘）</span><input id="talk-crazy-task-seconds" type="number" inputmode="decimal" min="0.5" max="5" step="any" value="2.5" required aria-describedby="talk-duration-error"></label>
+          <label id="talk-crazy-play-style-field" class="talk-field" hidden><span data-i18n="talk.crazyPlayStyle">任務玩法</span><select id="talk-crazy-play-style"><option value="free" data-i18n="talk.crazyStyleFree">自由互派</option><option value="director" data-i18n="talk.crazyStyleDirector">導演模式（至少 5 人）</option></select></label>
+          <p id="talk-crazy-style-hint" class="talk-soft" hidden></p>
           <p id="talk-duration-error" class="talk-feedback" role="status"></p>
           <p id="talk-mode-hint" class="talk-soft"></p>
           <p id="talk-conversation-hint" class="talk-soft"></p>
+          <details id="talk-crazy-advanced" class="talk-details talk-interval-settings" hidden><summary data-i18n="talk.crazyAdvanced">更多任務設定</summary><div class="talk-editor">
+          <label class="talk-field"><span data-i18n="talk.crazyMaxActive">同時任務人數</span><input id="talk-crazy-max-active" type="number" min="1" max="9" step="1" value="3"></label>
+          <label class="talk-field"><span data-i18n="talk.crazyRotation">導演輪替</span><select id="talk-crazy-rotation-seconds"><option value="120">2 分鐘 / 2 minutes</option><option value="240" selected>4 分鐘 / 4 minutes</option><option value="360">6 分鐘 / 6 minutes</option></select></label>
+          <label id="talk-crazy-task-field" class="talk-field" hidden><span data-i18n="talk.crazyTaskDuration">任務時間（分鐘）</span><input id="talk-crazy-task-seconds" type="number" inputmode="decimal" min="0.5" max="5" step="any" value="2.5" required aria-describedby="talk-duration-error"></label>
           <label id="talk-crazy-source-field" class="talk-field" hidden><span data-i18n="talk.crazySource">挑戰來源</span><select id="talk-crazy-source"><option value="mixed" selected data-i18n="talk.crazySourceMixed">系統＋玩家</option><option value="system" data-i18n="talk.crazySourceSystem">系統出題</option><option value="players" data-i18n="talk.crazySourcePlayers">玩家互相出題</option></select></label>
           <div id="talk-crazy-frequency" class="talk-interval-settings" hidden>
             <p class="talk-kicker" data-i18n="talk.crazyInterval">隨機間隔（秒）</p>
@@ -45,6 +50,7 @@
             <p id="talk-crazy-schedule-hint" class="talk-soft" data-i18n="talk.crazyScheduleHint">通常一人、最多兩人同時有任務；略過或到期就交給下一人。手寫卡優先。</p>
             <p id="talk-crazy-interval-error" class="talk-feedback" role="status"></p>
           </div>
+          </div></details>
         </div>
         <div class="talk-actions" role="group" aria-label="Topic source">
           <button type="button" class="talk-button" id="talk-source-library" aria-pressed="true" data-i18n="talk.fromLibrary">從題庫選</button>
@@ -114,6 +120,7 @@
             </div>
           </div>
         </div>
+        <div id="talk-vnext-panel" class="talk-vnext-host" hidden></div>
         <section id="talk-round-rest" class="talk-panel talk-round-rest" hidden>
           <h2 data-i18n="talk.roundRest">休息時間</h2><p data-i18n="talk.restHint">這一局結束了，休息一下，也可以開啟下一局。</p>
           <div id="talk-round-scores"></div>
@@ -164,13 +171,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="talk-settings.js?v=talk-round-1"></script>
+  <script src="talk-settings.js?v=vnext-1"></script>
   <script src="talk-crazy.js?v=talk-selector-1"></script>
-  <script src="talk-engine.js?v=talk-archive-2"></script>
+  <script src="talk-vnext.js?v=vnext-1"></script>
+  <script src="talk-engine.js?v=vnext-1"></script>
   <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-ui.js?v=talk-calm-1"></script>
-  <script src="talk-sync.js?v=talk-archive-1"></script>
+  <script src="talk-ui.js?v=vnext-1"></script>
+  <script src="talk-sync.js?v=vnext-1"></script>
   <script src="hub-executor.js?v=life-story-1"></script><script>HUB_EXECUTOR.install();</script>
-  <script src="talk-host.js?v=talk-calm-1"></script>
+  <script src="talk-host.js?v=vnext-1"></script>
 </body>
 </html>

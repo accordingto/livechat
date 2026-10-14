@@ -97,7 +97,9 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     return row ? row.active !== false && row.pending !== true : ctx.game === 'bluffking' && ctx.seats?.some(s => s.playerNum === number);
   }
   function permittedCommand(state, command, number, ctx) {
-    return eligible(state, number, ctx) || command?.type === 'exclude' && Number(command.playerNum) === number && command.active === true || command?.type === 'recover' && (state.runtimeOfflineNums || []).includes(number);
+    const privateCrazy = ctx.game === 'letstalk' && state?.gameMode === 'crazy' && ctx.seats?.some(s=>s.playerNum === number)
+      && ['crazySort','crazyLibraryUpdate','crazyLibraryDelete'].includes(command?.type);
+    return eligible(state, number, ctx) || privateCrazy || command?.type === 'exclude' && Number(command.playerNum) === number && command.active === true || command?.type === 'recover' && (state.runtimeOfflineNums || []).includes(number);
   }
   function membershipAuthorized(executor, incoming, current, capsule) {
     return incoming.sessionId === current.sessionId && sameAuthority(incoming, current) && extendsSeats(current, incoming) &&
@@ -195,10 +197,10 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     });
     // Registration finishes projecting before a browser releases its authority.
     const initialized = await execute({ capsule, token: ticket.controlToken });
-    return { capsule, game: ticket.game, sessionId: raw.executor.sessionId,
+    return { capsule, game: ticket.game, sessionId: raw.executor.sessionId, ...(initialized._wake ? { _wake: initialized._wake } : {}),
       ...(ticket.game === 'bluffking' ? { payload: initialized.payload } : {}) };
   }
-  async function execute(body, membershipAttempt = 0) {
+  async function execute(body, membershipAttempt = 0, background = false, consumedWakeId = null) {
     const timestamp = now(), incomingTicket = unseal(body.capsule, key), adapter = registry[incomingTicket.game];
     let ticket = incomingTicket, capsuleUsed = body.capsule;
     if (!adapter || ticket.expiresAt < timestamp || !TOKEN.test(body.token || '')) fail('invalid_ticket', 403);
@@ -216,6 +218,8 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       if (authority?.executor?.v === 1 && sameBinding(unseal(authority.executor.capsule, key), ticket)) await flushArchive(ticket, adapter, authority);
     }
     const cards = await Promise.all(ticket.seats.map(async s => ({ seat: s, node: (await read(s.path)).data })));
+    const vaultRecords = archiveStore && adapter.hydrateVault && adapter.decode(authority)?.gameMode === 'crazy'
+      ? await archiveStore.readRoom(ticket.code) : [];
     let historySnapshots = [];
     if (adapter.historyWrites) {
       const initial = adapter.decode(authority);
@@ -246,7 +250,13 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       if (adapter.mergeHistories) state = adapter.mergeHistories(state, historySnapshots, ctx);
       ctx.seats = cards.map(({ seat: s, node }) => ({ ...s, card: node }));
       let executor = current.executor; executor.presence ||= {};
-      if (seat) executor.presence[seat.playerNum] = timestamp;
+      if (host && !background) executor.hostSeenAt = timestamp;
+      ctx.hostOnline = timestamp - (executor.hostSeenAt || executor.createdAt) < 45000;
+      ctx.identityByNum = Object.fromEntries(ticket.seats.map(s => [s.playerNum,
+        crypto.createHmac('sha256', key).update('crazy-vault-owner-v1:' + ticket.code + ':' + s.token).digest('hex')]));
+      ctx.connectionByNum = Object.fromEntries(ticket.seats.map(s => [s.playerNum, executor.presence[s.playerNum] == null ? 'unknown'
+        : timestamp - executor.presence[s.playerNum] < GRACE_MS ? 'online' : 'offline']));
+      if (seat) { executor.presence[seat.playerNum] = timestamp; ctx.connectionByNum[seat.playerNum] = 'online'; }
       ctx.onlineNums = ticket.seats.filter(s => (!ctx.membershipInactiveNums.includes(s.playerNum) || (state.runtimeOfflineNums || []).includes(s.playerNum)) && timestamp - (executor.presence[s.playerNum] || executor.createdAt) < GRACE_MS).map(s => s.playerNum);
       const prior = predecessor(executor, currentTicket);
       for (const item of cards) {
@@ -255,6 +265,7 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
         item.owned = owned;
         if (!owned) ctx.seats.find(s => s.playerNum === item.seat.playerNum).card = null;
       }
+      if (adapter.hydrateVault) state = adapter.hydrateVault(state, vaultRecords, ctx);
       if (!retryProjection) for (const item of cards) {
         if (!item.owned) continue;
         const command = await adapter.command(item.node, { ...ctx, actor: item.seat.playerNum, seat: item.seat, state });
@@ -298,7 +309,7 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
       if (publishNeeded) { executor.lastPublicationRevision = next.revision || 0; executor.lastPublicationAt = timestamp; executor.lastAbsentNums = absent; }
       return next;
     }); } catch (error) {
-      if (error.code === 'membership_changed' && membershipAttempt < 7) return execute(body, membershipAttempt + 1);
+      if (error.code === 'membership_changed' && membershipAttempt < 7) return execute(body, membershipAttempt + 1, background, consumedWakeId);
       throw error;
     }
     raw = await flushArchive(ticket, adapter, raw);
@@ -343,8 +354,76 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     const driver = ticket.seats.filter(s => raw.executor.presence?.[s.playerNum] && timestamp - raw.executor.presence[s.playerNum] < 10000).map(s => s.playerNum).sort((a,b) => a-b)[0];
     const fast = ticket.game === 'cut' && ['countdown','speaking','handoff','back'].includes(state.phase) || ticket.game === 'dixit' && state.phase === 'REVEALING' && !state.paused;
     const pollAfterMs = fast && seat?.playerNum === driver ? 500 : 5000;
-    if (host) return { ok: true, pollAfterMs, payload: await adapter.project(state, { playerNum: 0 }, ctx) };
-    return { ok: true, pollAfterMs };
+    const wakePlan = await planWake(publicationTicket, raw, consumedWakeId);
+    const technical = body.command?.type === 'crazyRendered' ? { promptId: body.command.promptId, rendered: state.crazy?.prompts?.[seat?.playerNum]?.id === body.command.promptId && Number(state.crazy.prompts[seat.playerNum].renderAckAt) > 0 } : undefined;
+    if (technical) return { ok: true, pollAfterMs, technical, ...(wakePlan ? { _wake: wakePlan } : {}) };
+    if (host) return { ok: true, pollAfterMs, payload: await adapter.project(state, { playerNum: 0 }, ctx), ...(wakePlan ? { _wake: wakePlan } : {}) };
+    return { ok: true, pollAfterMs, ...(wakePlan ? { _wake: wakePlan } : {}) };
+  }
+  // One leased, authenticated wake per active Crazy room. No room enumeration,
+  // player heartbeat or host authority is manufactured by this background job.
+  async function planWake(ticket, raw, consumedWakeId = null) {
+    if (ticket.game !== 'letstalk') return null;
+    const state = registry.letstalk.decode(raw), c = state?.crazy, timestamp = now();
+    if (state?.gameMode !== 'crazy' || !['thinking','talking'].includes(state.phase)
+        || ['sorting','reveal'].includes(c?.roundStage)) return null;
+    if (c?.roundStage === 'decision' && !Object.values(c.prompts || {}).some(p=>p?.status === 'pending')) return null;
+    const deadlines = [state.phase === 'thinking' ? state.deadline : state.gameDeadline,
+      c.nextAssignAt, c.nextRotateAt || c.nextRotationAt,
+      ...Object.values(c.prompts || {}).filter(p=>p?.status === 'pending').flatMap(p=>[p.expiresAt, !p.renderAckAt ? p.displayDeadline : 0]),
+      ...Object.values(c.receivers || {}).map(p=>p?.cooldownUntil)].filter(t=>Number.isFinite(t) && t > timestamp);
+    const delayMs = Math.max(800, Math.min(20000, deadlines.length ? Math.min(...deadlines)-timestamp : 20000));
+    const job = { id: crypto.randomUUID(), binding:hash(raw.executor.capsule), dueAt: timestamp + delayMs, leaseUntil: timestamp + delayMs + 65000 };
+    let won = false;
+    await cas(ticket.canonicalPath, current => {
+      won = false;
+      if (current?.executor?.capsule !== raw.executor.capsule) return;
+      const prior = current.executor.crazyWake;
+      if (prior && prior.id !== consumedWakeId && prior.binding === hash(raw.executor.capsule) && prior.leaseUntil > timestamp) return;
+      won = true; return { ...current, executor: { ...current.executor, crazyWake: job } };
+    });
+    return won ? { delayMs, ticket: seal({ purpose:'crazy-wake-v1', capsule: raw.executor.capsule,
+      id:job.id, expiresAt:job.leaseUntil }, key) } : null;
+  }
+  async function wake(body) {
+    const job = unseal(body?.ticket, key), timestamp = now();
+    if (job.purpose !== 'crazy-wake-v1' || job.expiresAt < timestamp) fail('invalid_wake',403);
+    const ticket = unseal(job.capsule, key);
+    if (ticket.game !== 'letstalk') fail('invalid_wake',403);
+    let claimed = false, busy = false;
+    const claimId = crypto.randomUUID();
+    await cas(ticket.canonicalPath, current => {
+      claimed = false; busy = false;
+      if (current?.executor?.capsule !== job.capsule || current.executor.crazyWake?.id !== job.id) return;
+      const queued = current.executor.crazyWake;
+      if (queued.dueAt > timestamp + 500) return;
+      if (queued.claimUntil > timestamp) { busy = true; return; }
+      claimed = true;
+      return { ...current, executor: { ...current.executor, crazyWake: { ...queued, claimId, claimUntil: timestamp + 60000 } } };
+    });
+    if (busy) fail('wake_busy',503);
+    if (!claimed) return { ok:true, obsolete:true };
+    try {
+      const result = await execute({ capsule:job.capsule, token:ticket.controlToken, clock:true },0,true,job.id);
+      if (result._wake) return result;
+      // A successful successor replaces the leased job. Finished rounds have
+      // no successor, so retire only this exact claim rather than a newer job.
+      await cas(ticket.canonicalPath, current => {
+        if (current?.executor?.capsule !== job.capsule || current.executor.crazyWake?.id !== job.id || current.executor.crazyWake.claimId !== claimId) return;
+        const executor = { ...current.executor }; delete executor.crazyWake;
+        return { ...current, executor };
+      });
+      return result;
+    } catch (error) {
+      // Preserve the signed job after transient storage/publication errors so
+      // the bounded API retry can claim it again without a foreground browser.
+      try { await cas(ticket.canonicalPath, current => {
+        if (current?.executor?.capsule !== job.capsule || current.executor.crazyWake?.id !== job.id || current.executor.crazyWake.claimId !== claimId) return;
+        const queued = { ...current.executor.crazyWake }; delete queued.claimId; delete queued.claimUntil;
+        return { ...current, executor: { ...current.executor, crazyWake: queued } };
+      }); } catch {}
+      throw error;
+    }
   }
   async function membershipResult(raw, body) {
     const ticket = unseal(raw.executor.capsule, key), adapter = registry[ticket.game];
@@ -370,14 +449,14 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
         });
       }
     }
-    const result = await execute({ capsule: raw.executor.capsule, token: ticket.controlToken });
+    const result = await execute({ capsule: raw.executor.capsule, token: ticket.controlToken },0,body.token !== ticket.controlToken);
     const latest = (await read(ticket.canonicalPath)).data;
     if (latest?.executor?.capsule !== raw.executor.capsule) fail('stale_session', 409);
     const inactiveNums = inactive(adapter.decode(latest), { ...ticket, seats: ticket.seats });
     const projections = await Promise.all(ticket.seats.filter(s => !inactiveNums.includes(s.playerNum)).map(s => read(s.path)));
     if (projections.some(s => s.data?.hubExecutor?.capsule !== raw.executor.capsule || s.data.hubExecutor.sessionId !== ticket.sessionId)) fail('registration_incomplete', 503);
     return { ok: true, capsule: raw.executor.capsule, game: ticket.game, sessionId: ticket.sessionId,
-      membershipRevision: latest.executor.membershipRevision || 0, inactiveNums, payload: result.payload };
+      membershipRevision: latest.executor.membershipRevision || 0, inactiveNums, payload: result.payload, ...(result._wake ? { _wake:result._wake } : {}) };
   }
   async function changeMembership(body, operation) {
     const timestamp = now(), incoming = unseal(body.capsule, key), adapter = registry[incoming.game];
@@ -516,6 +595,6 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     });
     return { ok: true };
   }
-  return { register, execute, release, updateRoster, setParticipant };
+  return { register, execute, release, updateRoster, setParticipant, wake };
 }
 module.exports = { createExecutor, seal, unseal, keyFrom, GRACE_MS };

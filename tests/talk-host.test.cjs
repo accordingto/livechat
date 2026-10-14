@@ -175,9 +175,9 @@ test('host minute settings propagate custom round length and mission expiry with
   f.elements['talk-crazy-task-seconds'].value = '2.5'; await f.submit();
   assert.equal(f.created[1].gameSeconds, 120); assert.equal(f.created[1].crazyTaskSeconds, 150);
 });
-test('host extends and finishes a round, shows rest and resets a new topic', async () => {
+test('normal host extends and finishes a round, shows rest and resets a new topic', async () => {
   let initial = E.create({ id: 'round-controls', now: 1000, topic: { question: 'Choose a mascot.' }, gameSeconds: 60,
-    gameMode: 'crazy', roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
+    gameMode: 'normal', roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
   initial = E.apply(initial, { id: 'round-start', type: 'start', actor: 0, sessionId: initial.sessionId, now: 1000 });
   const f = fixture({ initial });
   assert.equal(f.elements['talk-round-controls'].hidden, false);
@@ -187,7 +187,7 @@ test('host extends and finishes a round, shows rest and resets a new topic', asy
   await f.click('finish');
   assert.equal(f.host.doc.state.phase, 'ended'); assert.equal(f.elements['talk-round-rest'].hidden, false);
   assert.equal(f.elements['talk-active-board'].hidden, true);
-  assert.equal(f.elements['talk-participants-panel'].hidden, true);
+  assert.equal(f.elements['talk-participants-panel'].hidden, false);
   await f.click('new'); await f.submit();
   assert.equal(f.host.doc.state.phase, 'thinking'); assert.equal(f.host.doc.state.gameDeadline, 0);
   assert.ok(E.view(f.host.doc.state,0,1000).talk.scores.every(entry => entry.score === 0));
@@ -237,7 +237,7 @@ test('normal and Crazy host clocks are hidden by default and the optional toggle
     assert.equal(clock.hidden, true); assert.equal(clock.textContent, '');
     assert.equal(toggle.hidden, false); assert.equal(toggle.textContent, 'View time');
     assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-    assert.equal(f.elements['talk-add-time'].disabled, false); assert.equal(f.elements['talk-finish'].disabled, false);
+    assert.equal(f.elements['talk-add-time'].disabled, gameMode === 'crazy'); assert.equal(f.elements['talk-finish'].disabled, gameMode === 'crazy');
     await f.click('clock-toggle');
     assert.equal(clock.hidden, false); assert.equal(clock.textContent, 'Round remaining 01:00');
     assert.equal(toggle.textContent, 'Hide time'); assert.equal(toggle.getAttribute('aria-expanded'), 'true');
@@ -297,4 +297,36 @@ test('the shared Crazy host status exposes mission count while leaving its assig
   assert.equal(f.host.doc.state.crazy.prompts[2].expiresAt, 240000);
   assert.equal(f.host.doc.state.crazy.minSeconds, 7); assert.equal(f.host.doc.state.crazy.maxSeconds, 233);
   assert.equal(f.commands.length, 0);
+});
+
+test('host preserves vNext mode, configured cap and custom rotation when opening the next round', async () => {
+  const roster=Array.from({length:6},(_,i)=>({playerNum:i+1,name:'Person '+(i+1)}));
+  const initial=E.create({id:'vnext-settings',now:1000,gameMode:'crazy',crazyPlayStyle:'director',crazyMaxActive:4,crazyRotationSeconds:300,topic:{question:'Plan an imaginary cafe.'},roster});
+  const f=fixture({initial});
+  assert.equal(f.elements['talk-crazy-play-style'].value,'director');assert.equal(f.elements['talk-crazy-max-active'].value,'4');
+  assert.equal(f.elements['talk-crazy-rotation-seconds'].value,'300');
+  await f.click('new');await f.submit();
+  assert.equal(f.created[0].crazyPlayStyle,'director');assert.equal(f.created[0].crazyMaxActive,4);assert.equal(f.created[0].crazyRotationSeconds,300);
+});
+
+test('too-small director setup remains local and requires five participants', async () => {
+  const initial=E.create({id:'small-cast',now:1000,gameMode:'crazy',topic:{question:'Design an imaginary shop.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
+  const f=fixture({initial});await f.click('new');f.elements['talk-crazy-play-style'].value='director';await f.submit();
+  assert.equal(f.created.length,0);assert.match(f.elements['talk-host-error'].textContent,/at least 5/);
+  f.elements['talk-crazy-play-style'].value='free';f.elements['talk-crazy-max-active'].value='0';await f.submit();assert.equal(f.created.length,0);
+  f.elements['talk-crazy-max-active'].value='3';await f.submit();assert.equal(f.created[0].crazyPlayStyle,'free');assert.equal(f.created[0].crazyMaxActive,3);
+});
+
+test('Crazy host round decision and drain use authorized projected vNext controls while generic add-time is hidden', async () => {
+  let initial=E.create({id:'vnext-host-controls',now:1000,gameMode:'crazy',gameSeconds:60,topic:{question:'Choose a strange mascot.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
+  initial=E.apply(initial,{id:'start-host-vnext',type:'start',actor:0,sessionId:initial.sessionId,now:1000});
+  const f=fixture({initial});assert.equal(f.elements['talk-round-controls'].hidden,true);assert.match(f.elements['talk-vnext-panel'].innerHTML,/data-talk-action="crazyDrain"/);
+  const timed=E.apply(f.host.doc.state,{id:'expire-host-vnext',type:'clockTick',actor:0,sessionId:initial.sessionId,now:61000});
+  f.hydrate(timed);assert.equal(f.host.doc.state.crazy.roundStage,'decision');
+  const panel=f.elements['talk-vnext-panel'];assert.match(panel.innerHTML,/data-talk-action="crazyExtend"/);
+  await panel.listeners.click({target:{closest:()=>({disabled:false,dataset:{talkAction:'crazyExtend',seconds:'180'}})}});await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(f.commands.at(-1),{type:'crazyExtend',seconds:180});assert.equal(f.host.doc.state.crazy.roundStage,'extension');
+  await panel.listeners.click({target:{closest:()=>({disabled:false,dataset:{talkAction:'crazyDrain'}})}});await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(f.commands.at(-1),{type:'crazyDrain'});assert.ok(['draining','sorting'].includes(f.host.doc.state.crazy.roundStage));
+  assert.equal(f.elements['talk-vnext-panel'].hidden,false);
 });

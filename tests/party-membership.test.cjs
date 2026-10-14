@@ -77,10 +77,11 @@ test('Open Mic skips a departed Spotlight without awarding their unfinished sing
 test('Talk joins the future queue with zero points and keeps the live topic, clocks, score and private missions', () => {
   let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy' }), 'start');
   state.scores[2] = 3; state.crazy.prompts[3] = { id: 'private-prompt', text: 'Own secret task', status: 'pending', expiresAt: 100000 };
+  require('../talk-vnext.js').init(state,{now:2000});
   const before = structuredClone(state), next = join(TALK, state, { added: [seat4] });
   assert.deepEqual(state, before); assert.equal(next.sessionId, state.sessionId); assert.equal(next.speaker, 1); assert.equal(next.scores[2], 3); assert.equal(next.scores[4], 0);
   for (const key of ['gameDeadline', 'deadline', 'phase', 'round', 'turnId']) assert.equal(next[key], state[key]);
-  assert.deepEqual(next.topic, state.topic); assert.deepEqual(next.crazy, state.crazy); assert.deepEqual(TALK.order(next), [2, 3, 4]);
+  assert.deepEqual(next.topic, state.topic); assert.deepEqual(next.crazy, {...state.crazy,receivers:{...state.crazy.receivers,4:{paused:false,cooldownUntil:0}}}); assert.deepEqual(TALK.order(next), [2, 3, 4]);
   assert.equal(story.letstalk.project(next, { playerNum: 4 }, { now: 2000 }).talk.crazy.prompt, null);
   assert.doesNotMatch(JSON.stringify(TALK.view(next, 4, 2000)), /secret-card|secret-original|private-prompt|Own secret task/);
 });
@@ -91,6 +92,7 @@ test('Talk departure removes the absent speaker and questions, cancels only thei
   state.crazy.prompts[3] = { id: 'other-task', text: 'Kept task', status: 'pending', expiresAt: 100000 };
   state.questions = [{ id: 'absent-question', playerNum: 1 }, { id: 'other-question', playerNum: 3 }];
   state.activeQuestion = { id: 'absent-question', playerNum: 1 };
+  require('../talk-vnext.js').init(state,{now:2000});
   const next = join(TALK, state, { inactiveNums: [1] });
   assert.equal(next.speaker, 2); assert.equal(next.scores[1], 5); assert.equal(next.crazy.prompts[1].status, 'cancelled');
   assert.deepEqual(next.crazy.prompts[3], state.crazy.prompts[3]); assert.equal(next.activeQuestion, null);
@@ -118,6 +120,8 @@ test('Talk preserves explicit away flags when choosing a fresh topic and never a
   assert.equal(state.crazy.prompts[3], undefined);
   const queued = act(TALK, state, 'crazyAssign', { actor: 1, target: 3, text: 'Do not deliver', now: due + 1 });
   assert.equal(queued.replies[1].error, 'invalid_target');
+  state=act(TALK,state,'crazyDrain');
+  for(const [num,prompt] of Object.entries(state.crazy.prompts)) if(prompt.status==='pending') state=act(TALK,state,'crazySkip',{actor:Number(num),promptId:prompt.id,now:due+2});
   const fresh = act(TALK, state, 'newTopic', { confirm: true, topic: { question: 'Choose our next plan.' }, mode: 'think', seconds: 45,
     gameMode: 'crazy', crazySeconds: 120, showStarters: true });
   assert.equal(fresh.roster[2].active, false); assert.equal(fresh.phase, 'thinking');

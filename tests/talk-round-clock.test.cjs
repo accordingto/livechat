@@ -9,6 +9,9 @@ const create = (options = {}) => E.create({ id: 'round-session', topic, now: 100
   roster: [1, 2, 3].map(playerNum => ({ playerNum, name: 'Player ' + playerNum })), ...options });
 const act = (s, type, actor = 0, extra = {}) => E.apply(s, { id: 'round-' + ++sequence,
   actor, type, sessionId: s.sessionId, turnId: s.turnId, now: 2000, seed: 57, ...extra });
+const rendered = (s, num, now) => act(s, 'crazyRendered', num, {
+  promptId: s.crazy.prompts[num].id, renderVersion: 1, now
+});
 
 test('whole game clock starts at discussion start and normal mode ends precisely at its deadline', () => {
   let s = create(); assert.equal(s.gameDeadline, 0); assert.equal(E.timerDue(s, 2000), false);
@@ -52,13 +55,18 @@ test('only manager or shared authenticated players can add allowed time and fini
   s = act(s, 'finish', 2); assert.equal(s.phase, 'ended'); assert.equal(E.view(s, 2, 2000).talk.actions.finish, false);
 });
 
-test('round expiry cancels pending tasks, freezes points, and blocks late done, addTime, start and unpause', () => {
+test('Crazy round deadline opens a locked host decision, allows active completion and freezes scores after draining', () => {
   let s = act(create({ gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyTaskSeconds: 300, sharedControls: true }), 'start');
   s = act(s, 'clockTick', 0, { now: 7000 }); const firstNum = E.view(s, 0, 7000).talk.crazy.pendingPlayerNums[0];
   s = act(s, 'crazyDone', firstNum, { promptId: s.crazy.prompts[firstNum].id, now: 7000 });
   s = act(s, 'clockTick', 0, { now: 12000 }); const num = E.view(s, 0, 12000).talk.crazy.pendingPlayerNums[0], promptId = s.crazy.prompts[num].id;
-  s = act(s, 'crazyDone', num, { promptId, now: 62000 }); assert.equal(s.phase, 'ended'); assert.equal(s.replies[num].error, 'not_available');
-  assert.equal(s.crazy.prompts[num].status, 'cancelled'); assert.equal(s.crazy.nextAssignAt, 0); assert.equal(s.scores[firstNum], 1);
+  s = rendered(s, num, 12001);
+  s = act(s, 'crazyDone', num, { promptId, now: 62000 });
+  assert.equal(s.phase, 'talking'); assert.equal(s.crazy.roundStage, 'decision'); assert.equal(s.replies[num].error, '');
+  assert.equal(s.crazy.prompts[num].status, 'done'); assert.equal(s.crazy.nextAssignAt, 0);
+  assert.equal(Object.values(s.scores).reduce((total, score) => total + score, 0), 2);
+  s = act(s, 'crazyDrain', 0, { now: 62001 });
+  assert.equal(s.phase, 'ended'); assert.equal(s.crazy.roundStage, 'sorting');
   const frozen = structuredClone(s.scores);
   for (const [type, extra] of [['addTime', { seconds: 300 }], ['start', {}], ['crazyPause', { paused: false }], ['crazyAssign', { text: 'Late mission.' }]]) {
     s = act(s, type, 2, { now: 63000, ...extra }); assert.equal(s.phase, 'ended'); assert.equal(s.replies[2].error, 'not_available'); assert.deepEqual(s.scores, frozen);
@@ -70,6 +78,7 @@ test('expiry wins over same-millisecond addTime and completion, including a repl
   s = act(s, 'addTime', 1, { seconds: 60, now: 62000 }); assert.equal(s.phase, 'ended'); assert.equal(s.gameDeadline, 62000);
   let c = act(create({ gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyTaskSeconds: 30 }), 'start');
   c = act(c, 'clockTick', 0, { now: 7000 }); const num = E.view(c, 0, 7000).talk.crazy.pendingPlayerNums[0];
+  c = rendered(c, num, 7000);
   const early = { id: 'wrong-prompt', type: 'crazyDone', actor: num, sessionId: c.sessionId, now: 7001, promptId: 'wrong' };
   c = E.apply(c, early); c = E.apply(c, { ...early, now: 37000 });
   assert.equal(c.crazy.prompts[num].status, 'expired'); assert.equal(c.scores[num], 0);
@@ -82,9 +91,9 @@ test('new topic after rest resets points and inherits game/task durations unless
   s = act(s, 'newTopic', 3, options); assert.equal(s.phase, 'thinking'); assert.equal(s.gameDeadline, 0);
   assert.equal(s.gameSeconds, 601); assert.equal(s.crazy.taskSeconds, 239); assert.deepEqual(s.scores, { 1: 0, 2: 0, 3: 0 });
   for (const extra of [{ gameSeconds: 59 }, { crazyTaskSeconds: 301 }, { gameSeconds: 60.5 }]) {
-    const next = act(s, 'newTopic', 2, { ...options, ...extra }); assert.equal(next.replies[2].error, 'invalid_settings'); assert.equal(next.sessionId, s.sessionId);
+    const next = act(s, 'newTopic', 0, { ...options, ...extra }); assert.equal(next.replies[0].error, 'invalid_settings'); assert.equal(next.sessionId, s.sessionId);
   }
-  s = act(s, 'newTopic', 1, { ...options, gameSeconds: 120, crazyTaskSeconds: 30 }); assert.equal(s.gameSeconds, 120); assert.equal(s.crazy.taskSeconds, 30);
+  s = act(s, 'newTopic', 0, { ...options, gameSeconds: 120, crazyTaskSeconds: 30 }); assert.equal(s.gameSeconds, 120); assert.equal(s.crazy.taskSeconds, 30);
 });
 
 test('normal projections retain configured task duration for switching modes later', () => {

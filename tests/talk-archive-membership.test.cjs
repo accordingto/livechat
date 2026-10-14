@@ -1,13 +1,15 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const E = require('../talk-engine.js');
+const rawEngine = require('../talk-engine.js');
+// This suite targets challenge records; vNext event/vault records have their own suites.
+const E = { ...rawEngine, archiveEntries: s => rawEngine.archiveEntries(s).filter(r => !r.category || r.category === 'challenge') };
 const copy = value => JSON.parse(JSON.stringify(value));
 const topic = { title: 'Our silly cafe', question: 'What should we serve together?' };
 const roster = [1, 2, 3].map(playerNum => ({ playerNum, name: ['Alice', 'Bo', 'Chloe'][playerNum - 1] }));
 const create = (extra = {}) => E.create({ id: 'archive-membership-session', now: 1000, topic, roster,
   sharedControls: true, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
-  gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, ...extra });
+  gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive: 2, ...extra });
 let sequence = 0;
 const command = (s, type, actor = 0, extra = {}) => ({ id: 'archive-membership-action-' + ++sequence, type, actor,
   sessionId: s.sessionId, turnId: s.turnId, now: 2000, seed: 73, ...extra });
@@ -18,7 +20,7 @@ const submit = (s, actor, target, text, now = 1500) => {
 };
 const membership = (s, inactiveNums, extra = {}, now = 3000) => E.membership(s,
   { inactiveNums, ...extra }, { id: 'membership-change-' + ++sequence, now, seed: 81 });
-const records = s => s.challengeArchive.records;
+const records = s => Object.values(s.challengeArchive.records || {}).filter(r => !r.category || r.category === 'challenge');
 const byText = (s, text) => records(s).find(record => record.text === text);
 const start = s => act(s, 'start', 0, { now: 2000 });
 const deliver = s => act(s, 'clockTick', 0, { now: s.crazy.nextAssignAt });
@@ -30,7 +32,12 @@ function assertPrivate(s, now) {
       assert.equal(serialized.includes(record.id), false);
       const prompt = s.crazy?.prompts?.[num];
       const visible = prompt?.archiveId === record.id && s.roster.some(p => p.playerNum === num && p.active !== false && p.pending !== true);
-      assert.equal(serialized.includes(record.text), !!visible, 'only the recipient sees their current canonical prompt: ' + record.text);
+      const card = s.crazy?.roundCards?.[record.id];
+      const ownedUnused = ['sorting', 'reveal'].includes(s.crazy?.roundStage) && record.author?.playerNum === num
+        && card && !card.executed && ['done', 'skipped', 'expired', 'cancelled', 'replaced'].includes(card.status)
+        && (!card.ownerIdentity || card.ownerIdentity === s.crazyIdentities?.[num]);
+      assert.equal(serialized.includes(record.text), !!(visible || ownedUnused),
+        'only the recipient or author sorting their own unused card sees its text: ' + record.text);
     }
   }
 }
@@ -89,7 +96,8 @@ test('departure closes only the away recipient mission while a mission from that
 });
 
 test('exclude commands archive recipient and author cancellations once and self-rejoin keeps their outcomes', () => {
-  let s = deliver(start(submit(create(), 1, 2, 'Bo sings a short song.')));
+  let s = deliver(start(submit(create({ crazyMaxActive: 1 }), 1, 2, 'Bo sings a short song.')));
+  s.crazy.receivers[3].paused = true;
   s = submit(s, 2, 3, 'An away author queue.', 7001);
   s = submit(s, 1, 3, 'Another author queue.', 7002);
   const before = copy(s), leave = command(s, 'exclude', 3, { playerNum: 2, active: false, now: 8000 });
@@ -149,21 +157,23 @@ test('fresh creation and topic changes preserve away and pending roster flags al
   assert.deepEqual(fresh.roster, flaggedRoster); assert.equal(records(fresh).length, 1);
   assert.equal(records(fresh)[0].id, records(s)[0].id); assert.equal(records(fresh)[0].status, 'cancelled');
   assert.equal(records(fresh)[0].version, 2); assert.equal(records(fresh)[0].closedAt, 3000);
-  let next = act(s, 'newTopic', 2, { confirm: true, topic: { title: 'Next shared cafe', question: 'What name should we choose together?' },
+  let next = act(s, 'newTopic', 0, { confirm: true, topic: { title: 'Next shared cafe', question: 'What name should we choose together?' },
     gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', mode: 'think', seconds: 45, showStarters: true, now: 3000 });
-  assert.equal(next.replies[2].error, ''); assert.deepEqual(next.roster, flaggedRoster);
+  assert.equal(next.replies[0].error, ''); assert.deepEqual(next.roster, flaggedRoster);
   assert.deepEqual(records(next), records(fresh)); assert.notEqual(next.sessionId, s.sessionId); assert.deepEqual(s, before);
   const closed = copy(records(next));
-  next = act(next, 'newTopic', 2, { confirm: true, topic: { question: 'Choose our next silly menu.' }, gameMode: 'normal',
+  next = act(next, 'newTopic', 0, { confirm: true, topic: { question: 'Choose our next silly menu.' }, gameMode: 'normal',
     conversationMode: 'assigned', mode: 'think', seconds: 45, showStarters: false, now: 4000 });
-  assert.equal(next.replies[2].error, ''); assert.deepEqual(next.roster, flaggedRoster);
+  assert.equal(next.replies[0].error, ''); assert.deepEqual(next.roster, flaggedRoster);
   assert.deepEqual(records(next), closed, 'a waiting terminal record keeps its original cancellation timestamp');
   assertPrivate(fresh, 3000); assertPrivate(next, 4000);
 });
 
 
 test('initialized journals capture old-writer unlinked active items once, normalize idle clocks and never revive persisted terminal history', () => {
-  let s = start(submit(create(), 3, null, 'Already journaled queue.'));
+  let prepared = submit(create(), 3, null, 'Already journaled queue.');
+  prepared.crazy.paused = true;
+  let s = start(prepared);
   const originalRecord = copy(records(s)[0]);
   s.crazy.queue.push({ id: 'old-writer-queue', assignedBy: 1, target: 3, kind: 'line', text: 'An old writer cup song.', at: 1500 });
   s.crazy.prompts[2] = { id: 'old-writer-prompt', assignedBy: 3, source: 'player', kind: 'task', text: 'An old writer chicken.', at: 2500, expiresAt: 50000, status: 'pending' };
@@ -188,12 +198,26 @@ test('initialized journals capture old-writer unlinked active items once, normal
   assert.equal(records(next).length, 3); assert.deepEqual(E.archiveEntries(next), []);
   const persisted = copy(records(next)); next = membership(next, [], {}, 3003);
   assert.deepEqual(records(next), persisted); assertPrivate(next, 3003);
-  next = act(next, 'finish', 1, { now: 4000 });
-  assert.ok(records(next).every(record => record.status === 'cancelled')); assertPrivate(next, 4000);
+  next = act(next, 'finish', 0, { now: 4000 });
+  assert.equal(next.replies[0].error, ''); assert.equal(next.crazy.roundStage, 'draining');
+  assert.equal(next.crazy.prompts[2].status, 'pending'); assert.equal(next.crazy.prompts[3].status, 'pending');
+  assert.equal(byText(next, 'Already journaled queue.').status, 'queued');
+  next = act(next, 'crazyRendered', 2, { promptId: next.crazy.prompts[2].id, renderVersion: 1, now: 4001 });
+  assert.equal(next.crazy.prompts[2].renderAckAt, 4001);
+  assert.equal(next.crazy.prompts[2].renderedVersion, 1);
+  next = act(next, 'crazySkip', 2, { promptId: next.crazy.prompts[2].id, now: 4100 });
+  assert.equal(next.replies[2].error, ''); assert.equal(byText(next, 'An old writer chicken.').status, 'skipped');
+  assert.equal(byText(next, 'An old writer chicken.').closedAt, 4100);
+  next = act(next, 'crazySkip', 3, { promptId: next.crazy.prompts[3].id, now: 4101 });
+  assert.equal(next.replies[3].error, ''); assert.equal(next.crazy.roundStage, 'sorting'); assert.equal(next.phase, 'ended');
+  for (const text of ['Already journaled queue.', 'An old writer cup song.']) {
+    assert.equal(byText(next, text).status, 'cancelled'); assert.equal(byText(next, text).closedAt, 4101);
+  }
+  assertPrivate(next, 4101);
   next = E.ackArchive(next, records(next).map(record => ({ id: record.id, version: record.version })));
   assert.equal(records(next).length, 0); assert.equal(next.challengeArchive.version, 1);
   const wire = copy(next); delete wire.challengeArchive.records;
-  assert.equal(E.timerDue(wire, 4100), false); assert.equal(act(wire, 'clockTick', 0, { now: 4100 }), wire);
+  assert.equal(E.timerDue(wire, 4150), false); assert.equal(act(wire, 'clockTick', 0, { now: 4150 }), wire);
   const later = membership(wire, [1], {}, 4200);
   assert.equal(records(later).length, 0, 'terminal prompts and persisted empty journals do not re-create archive history');
   assert.deepEqual(E.archiveEntries(later), []); assertPrivate(later, 4200);

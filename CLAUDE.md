@@ -1,3 +1,63 @@
+## CURRENT: Crazy Talk vNext implementation — 2026-10-15
+
+Read talk-mode.md and docs/talk-vnext-acceptance.md for the current lifecycle,
+settings, privacy boundaries and validation. Implementation/local browser checks
+are complete; vNext production publication and online verification are pending.
+Earlier release IDs/counts below are not evidence for this revision.
+
+Keep the pure talk-vnext.js module before engine/UI. Default Crazy style is free;
+Director needs five active players, normally two directors/three actors, rotating
+every 240 seconds without cutting a busy actor's mission. Default configured cap 3
+accepts 1–9, limited by receiving roles. Handwriting 1–120 characters, queue 10 per
+author/20 per room, has immediate eligible-slot priority over system cards.
+Random other recipient is the default; collapsed recipient-first composer has
+no kind selector. Actors cannot compose; directors see safe receiving/connection
+statuses. A system-card replacement is offered explicitly with both texts.
+
+Automatic crazyRendered is a separate idempotent technical RPC after foreground
+valid DOM rendering, never a manual mailbox command or proof a person saw/read
+the card. Missing render confirmation 30 s withdraws/requeues handwriting and
+pauses receiving; rendered reminder 30 s is quiet. Internal TTL 150 s, Done+1 and
+Skip 0, then 30 s receiver cooldown. Expiry pauses receiving. Keep all task/system/
+rotation timers hidden; round time remains a local optional toggle, prep visible.
+Native selectors/ancestors, drafts, receipt retries, nested vault editors and
+Chinese IME must remain stable across updates.
+
+At the round deadline decision locks submissions; authorized host/delegate alone
+extends 3/5/10 minutes or drains active cards. Extension plays existing queue with
+system fallback off. Sorting/reveal use phase ended; valid active tasks remain
+usable through decision/draining. Normal shared add-time/finish remains separate.
+Hub trusted hostPlayerNum establishes its participant delegate independently of
+Director roles; projected hostActions gate controls and host-absent claim timing.
+
+Unused cards default to the author's private vault. Explicit checked-save/
+unchecked-publish confirmation controls their room recap exposure. Host reveal
+may precede confirmation; unconfirmed authors can still sort during reveal,
+while confirmed public selections stay closed. Recap attributes executed
+handwriting to author/actual recipient/outcome and labels unused cards honestly.
+The vault/draft is bound to the same room and verified original token, not names
+or a cross-room account. Never expose another owner's vault or raw archive IDs.
+
+The user's explicit vNext vault/reveal request supersedes the former system-only
+archive UI restriction. The operator archive remains encrypted/private and uses
+the existing CRAZY_TALK_ARCHIVE_SECRET plus strict room-only reader; retain both
+that secret and HUB_EXECUTOR_SECRET. Persist lifecycle/vault transitions before
+success receipts/publication, preserve version/ACK and membership fences, and
+package the new lifecycle module with the existing service/runtime graph.
+This revision requires BOTH existing service and frontend deployments while
+preserving other games/search; no new secret/provider or rotation is required.
+Host changed Talk tags are vnext-1; player/dynamic Talk tags talk-vnext-1;
+unchanged browser executor stays life-story-1.
+
+Local focused UI/host/settings/sync passed 91/91 before the final early-reveal
+consent regression; current player UI passes 53/53 including that regression.
+Native Chrome passes five sends/ten native popups plus 18 vault updates/IME/caret,
+actual host demo covers five seats EN/ZH 320/375, and five actual play.html pages
+with authenticated ETag authority pass all 15 gameplay/privacy flags. Latest
+full-run report is 1934/1935, with one cache-tag assertion under correction; final
+full regression and production results remain pending in the acceptance record.
+No physical phone, human voice playtest or real background-network claim is made.
+
 ## CURRENT: Life Story paper prompts and compact storyteller hand — 2026-10-14
 
 The user prefers the first release's warm paper question cards. Keep the three
@@ -462,7 +522,7 @@ Crazy source/interval); those settings live only on lets-talk.html's own setup.
 talk-settings.js stays for the host page; without homepage edits no one-visit
 setup intent is created, so the host uses its saved preferences. Frontend-only.
 
-## CURRENT: Talk composer priority and optional round time — 2026-10-10
+## Previous: Talk composer priority and optional round time — 2026-10-10
 
 The handwritten composer sits immediately below the topic and is expanded by
 default, with the textarea before recipient/type controls. An active private
@@ -552,11 +612,12 @@ service health/CORS/synthetic ticket rejection pass, and runtime source returns
 120/120 across all six games, with all 39 disposable nodes cleaned (38 deleted,
 1 empty, zero failures). Existing user rooms were not accessed.
 
-## CURRENT: Private Crazy Talk handwritten archive - 2026-10-10
+## Previous: Private Crazy Talk handwritten archive - 2026-10-10
 
 Accepted handwritten Crazy Talk challenges and their outcomes are retained for
-private operator inspiration. The user explicitly requested system-only storage;
-never add a public archive view, player export or archive-read API. Only a named
+private operator inspiration. The earlier system-only/player-history restriction
+is superseded by the explicit vNext author vault and consent-based room recap;
+the operator archive remains private, without a public archive-read API. Only a named
 room may be read through scripts/talk-read-archive.cjs; see its adjacent .md for
 the private env-run workflow. Never enumerate rooms or print/save environment
 keys. CRAZY_TALK_ARCHIVE_SECRET is an independent 64-hex Production backend

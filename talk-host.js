@@ -3,7 +3,7 @@
   const { t, esc, list, name } = TALK_UI;
   const byId = id => document.getElementById('talk-' + id);
   const demo = new URLSearchParams(location.search).get('demo') === '1';
-  const demoRoster = ['小安', '阿哲', '小羽', '阿凱'].map((name, i) => ({ playerNum: i + 1, name }));
+  const demoRoster = ['小安', '阿哲', '小羽', '阿凱', '阿樂'].map((name, i) => ({ playerNum: i + 1, name }));
   let state = null, sync = null, demoCard = null, status = demo ? 'ready' : 'offline', busy = false, autoStart = false;
   let error = '';
   let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '', roundClockVisible = false;
@@ -12,14 +12,14 @@
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
   let explanationSession = null;
-  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazyMinSeconds: 'crazy-min-seconds', crazyMaxSeconds: 'crazy-max-seconds', mode: 'mode', seconds: 'seconds', gameSeconds: 'game-seconds', crazyTaskSeconds: 'crazy-task-seconds' };
+  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazyMinSeconds: 'crazy-min-seconds', crazyMaxSeconds: 'crazy-max-seconds', mode: 'mode', seconds: 'seconds', gameSeconds: 'game-seconds', crazyTaskSeconds: 'crazy-task-seconds', crazyMaxActive:'crazy-max-active', crazyPlayStyle:'crazy-play-style', crazyRotationSeconds:'crazy-rotation-seconds' };
   const savedPreferences = TALK_SETTINGS.read();
   let applyHomePreferences = TALK_SETTINGS.consumePending();
   function setSetupPreference(key, value) {
     const field = byId(preferenceFields[key]);
-    if (key === 'seconds' && Number.isInteger(Number(value)) && Number(value) >= 15 && Number(value) <= 120
+    if (['seconds','crazyRotationSeconds'].includes(key) && Number.isInteger(Number(value))
         && !Array.from(field.options).some(option => option.value === String(value))) {
-      const option = document.createElement('option'); option.value = String(value); option.textContent = t('seconds', { n: value }); field.append(option);
+      const option = document.createElement('option'); option.value = String(value); option.textContent = t(key === 'seconds' ? 'seconds' : 'rotationChoice', { n: key === 'seconds' ? value : value / 60 }); field.append(option);
     }
     field.value = String(['gameSeconds', 'crazyTaskSeconds'].includes(key) ? value / 60 : value);
   }
@@ -30,6 +30,10 @@
     if (!TALK_SETTINGS.validDuration(values.gameSeconds, 'gameSeconds')) throw new Error('invalid_game_seconds');
     if (values.gameMode === 'crazy' && !TALK_SETTINGS.validDuration(values.crazyTaskSeconds, 'crazyTaskSeconds')) throw new Error('invalid_crazy_task_seconds');
     if (values.gameMode === 'crazy' && !TALK_SETTINGS.validInterval(values.crazyMinSeconds, values.crazyMaxSeconds)) throw new Error('invalid_crazy_interval');
+    if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyMaxActive)) || Number(values.crazyMaxActive) < 1 || Number(values.crazyMaxActive) > 9)) throw new Error('invalid_crazy_max_active');
+    if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyRotationSeconds)) || Number(values.crazyRotationSeconds) < 60 || Number(values.crazyRotationSeconds) > 900)) throw new Error('invalid_crazy_rotation');
+    const playerCount = demo ? demoRoster.length : state?.roster?.filter(p=>p.active !== false).length || ROOM.count || 0;
+    if (values.gameMode === 'crazy' && values.crazyPlayStyle === 'director' && playerCount < 5) throw new Error('directorNeedsPlayers');
     return TALK_SETTINGS.normalize(values);
   };
   const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
@@ -43,6 +47,10 @@
   }
   function renderModeSettings() {
     const crazy = byId('game-mode').value === 'crazy';
+    byId('crazy-play-style-field').hidden = !crazy; byId('crazy-advanced').hidden = !crazy; byId('crazy-style-hint').hidden = !crazy;
+    byId('crazy-style-hint').textContent = byId('crazy-play-style').value === 'director' ? t('crazyDirectorHint') : '';
+    byId('crazy-rotation-seconds').disabled = !crazy || byId('crazy-play-style').value !== 'director';
+    byId('crazy-max-active').disabled = !crazy;
     byId('crazy-source-field').hidden = !crazy;
     byId('crazy-task-field').hidden = !crazy;
     byId('crazy-task-seconds').disabled = !crazy;
@@ -169,6 +177,7 @@
     if (byId('draft-status').dataset.message) byId('draft-status').textContent = t(byId('draft-status').dataset.message);
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('seconds').querySelectorAll('option').forEach(o => { o.textContent = t('seconds', { n: o.value }); });
+    byId('crazy-rotation-seconds').querySelectorAll('option').forEach(o => { o.textContent = t('rotationChoice', {n:Number(o.value) / 60}); });
 
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
@@ -187,16 +196,21 @@
     if (!state) return;
     if (renderedSession !== state.sessionId) {
       exploreOpen = false; exploreKey = ''; roundClockVisible = false; byId('live-followup').value = ''; renderedSession = state.sessionId;
+      byId('vnext-panel').innerHTML = '';
     }
-    const s = TALK_ENGINE.view(state, 0, now()).talk;
-    const ended = s.phase === 'ended';
+    const s = TALK_ENGINE.view(state, 0, now(), {hostAuthorized:true}).talk;
+    const vnext = TALK_UI.vnext(s), ended = s.phase === 'ended' && !vnext;
     byId('active-board').hidden = ended;
     byId('round-rest').hidden = !ended;
     byId('round-scores').innerHTML = ended && TALK_UI.scoreboardHTML ? TALK_UI.scoreboardHTML(s, 0) : '';
-    byId('round-controls').hidden = s.phase !== 'talking';
-    for (const id of ['add-time', 'finish']) byId(id).disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
+    byId('round-controls').hidden = s.phase !== 'talking' || vnext;
+    for (const id of ['add-time', 'finish']) byId(id).disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking' || vnext;
+    const vnextPanel = byId('vnext-panel');
+    vnextPanel.hidden = !vnext;
+    if (document.activeElement?.tagName !== 'SELECT' || !vnextPanel.contains?.(document.activeElement)) vnextPanel.innerHTML = TALK_UI.vnextHTML(s,0);
+    vnextPanel.querySelectorAll('[data-talk-action]').forEach(control => { control.disabled = busy || !canControl() || status === 'switched'; });
     byId('crazy-host').hidden = s.gameMode !== 'crazy' || ended;
-    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyActiveHostStatus', { n: s.crazy.pendingCount }) : '';
+    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyActiveHostStatus', { n: s.crazy.pendingCount, max:s.crazy.effectiveMaxActive || s.crazy.maxActive || 2 }) : '';
     byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
 
     byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
@@ -224,9 +238,11 @@
       if (!demoCard || demoCard.data?.playerNum !== me) {
         if (demoCard) demoCard.destroy();
         demoCard = new TALK_PLAYER.Card(byId('demo-player'), {
+          identity: {room:'DEMOTLK',token:'0'.repeat(63) + me,verified:true},
+          sendTechnical: command => { state = TALK_ENGINE.apply(state, {...command,actor:me,actorIdentity:'0'.repeat(63)+me,now:now(),seed:35}); render(); return Promise.resolve(); },
           nameBanner: data => `<span class="name-banner">${esc(data.name)}</span>`,
           send: command => {
-            state = TALK_ENGINE.apply(state, Object.assign({}, command, { actor: me, now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] }));
+            state = TALK_ENGINE.apply(state, Object.assign({}, command, { actor: me, actorIdentity:'0'.repeat(63)+me, now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] }));
             render(); return Promise.resolve();
           },
         });
@@ -259,13 +275,21 @@
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
       const options = { topic, ...rememberSettings(), showStarters: startersOn() };
-      if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
+      if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, crazyIdentities:Object.fromEntries(demoRoster.map(p=>[p.playerNum,'0'.repeat(63)+p.playerNum])), crazyVault:state?.crazyVault, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
-    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval', 'invalid_game_seconds', 'invalid_crazy_task_seconds'].includes(e.message) ? e.message : 'error'; }
+    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval', 'invalid_game_seconds', 'invalid_crazy_task_seconds','invalid_crazy_max_active','invalid_crazy_rotation','directorNeedsPlayers'].includes(e.message) ? e.message : 'error'; }
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
+  byId('vnext-panel').addEventListener('click', event => {
+    const control = event.target.closest('[data-talk-action]');
+    if (!control || control.disabled || !state) return;
+    const type = control.dataset.talkAction, projected = TALK_ENGINE.view(state,0,now(),{hostAuthorized:true}).talk.crazy;
+    const permission = {crazyExtend:'extend',crazyDrain:'drain',crazyDelegate:'delegate',crazyClaimHost:'claim',crazyReveal:'reveal'}[type];
+    if (!permission || !projected?.hostActions?.[permission]) return;
+    command(type, { ...(type === 'crazyExtend' ? {seconds:Number(control.dataset.seconds)} : {}), ...(type === 'crazyDelegate' ? {playerNum:Number(byId('vnext-panel').querySelector?.('[data-talk-delegate]')?.value)} : {}) });
+  });
   byId('clock-toggle').addEventListener('click', () => {
     if (state?.phase !== 'talking' || !state.gameDeadline) return;
     roundClockVisible = !roundClockVisible; renderClock();
@@ -389,6 +413,9 @@
             setSetupPreference('seconds', next.seconds || 45);
             setSetupPreference('gameSeconds', next.gameSeconds || 900);
             setSetupPreference('crazyTaskSeconds', next.crazy?.taskSeconds || next.crazyTaskSeconds || 150);
+            setSetupPreference('crazyMaxActive', next.crazy?.maxActive || 3);
+            setSetupPreference('crazyPlayStyle', next.crazy?.playStyle || 'free');
+            setSetupPreference('crazyRotationSeconds', next.crazy?.rotationSeconds || 240);
             }
           }
           render();
