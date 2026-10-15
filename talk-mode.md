@@ -8,8 +8,11 @@ be restored. See docs/talk-vnext-acceptance.md for final release evidence.
 This section describes the implemented vNext behavior. It supersedes the older
 Crazy Talk scheduling, two-slot cap, expanded composer and system-only archive
 instructions below. Local checks are recorded in
-[the vNext acceptance record](docs/talk-vnext-acceptance.md); production
-publication and production verification for this revision are still pending.
+[the vNext acceptance record](docs/talk-vnext-acceptance.md). Sourcea680d60 is
+published on the existing frontend and independent service:1985/1985 local tests,
+339 production five-player checks and7/7 ownership-checked cleanup pass. The
+independent55-second background-only queue probe passes96 checks. These synthetic
+checks do not establish a physical-phone or human voice playtest.
 
 ## Setup and conversation
 

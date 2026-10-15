@@ -1,10 +1,20 @@
 # Crazy Talk vNext acceptance record — 2026-10-15
 
-Status: implemented; final integrated regression passes 1971/1971 with no skips.
-Production packaging matches 55 Hub source/assets and all 96 Life Story questions;
-native queue service is READY; final production lifecycle verification is pending.
-This document does not establish that vNext is deployed or online verified.
-Earlier Talk production checks refer to earlier versions only.
+Status: implemented, deployed and verified within the scopes below. Final integrated
+local regression passes **1985/1985**, with zero failures, cancellations or skips.
+Frontend gameplay source **a680d60** is published at
+https://livechat-two-alpha.vercel.app/ . The existing independent executor is READY
+as **dpl_Cx21Xhnn1RyTBpejyQtR8Jiy5bGP** at
+https://icebreaker-youtube-search.vercel.app/api/hub-executor .
+
+The production native-queue five-player lifecycle passes **339 checks**, including
+real150-second expiry, and safely removes all7 owned fixture nodes. A separate
+55-second no-foreground queue probe passes96 checks and cleans7/7. This probe
+verifies the unchanged native queue transport from source9fa1559; the full
+lifecycle and asset checks identify the final revision. These use
+synthetic authorized identities in disposable rooms, not human group play or
+physical mobile clients. Final documentation commits leave these runtime/assets
+unchanged; the runtime source/version and exact asset checks are recorded here.
 
 ## Gameplay and defaults
 
@@ -69,7 +79,12 @@ Earlier Talk production checks refer to earlier versions only.
     and resend under current role/source/queue gates. Nested editor draft/caret/IME
     survives live updates. The same verified original token retains its vault
     across same-room topic/session/rename/game switches; it is not an account or
-    cross-room library. New rounds reset current scores/stages, not that vault.
+    cross-room library. New rounds reset current scores/stages, not that vault. Preparation setup
+    resubmission privately preserves accepted unused cards from transaction-current
+    state, including unpersisted event/vault versions. Active missions block an
+    ordinary restart in both browser and authoritative release. Confirmed activity
+    switches can reopen Talk without keeping a fenced old room stuck; old closures
+    are journaled without points, and unused handwriting stays private.
 
 The previous system-only archive UI restriction is explicitly superseded by
 vNext's author-only vault and consent-based room recap. The operator archive
@@ -96,8 +111,8 @@ one room; no all-room enumeration or public archive-read endpoint is added.
   loads the lifecycle module before engine and forwards trusted hostPlayerNum.
 - Packaging/release checks: `scripts/hub-executor-package-service.cjs`, new
   `scripts/talk-vnext-production-smoke.cjs`, adjusted archive/production smoke
-  checks and their test fixtures. Native55-second probe passes; final150-second
-  production lifecycle smoke is currently running.
+  checks and their test fixtures. Native55-second probe and final150-second
+  production lifecycle smoke both pass.
 - Validation: `tests/talk-vnext.test.cjs`, `tests/talk-vnext-service.test.cjs`,
   `tests/talk-vnext-store.test.cjs`, `tests/talk-vnext-production-smoke.test.cjs`,
   `tests/talk-vnext-ui.browser.cjs`, `tests/talk-vnext-host.browser.cjs`,
@@ -107,8 +122,8 @@ one room; no all-room enumeration or public archive-read endpoint is added.
 - Documentation: `talk-mode.md`, `CLAUDE.md` and this record. Unrelated topic
   banks, other games and existing search routes are preserved.
 
-Changed host Talk cache tags are `vnext-2`; player/dynamic Talk tags are
-`talk-vnext-2`. Unchanged browser executor retains `life-story-1`. Runtime changes
+Changed host Talk cache tags are `vnext-3`; player/dynamic Talk tags are
+`talk-vnext-3`. Unchanged browser executor retains `life-story-1`. Runtime changes
 require both the existing independent service and frontend deployments.
 
 ## Native background delivery
@@ -127,10 +142,12 @@ Lost RTDB write responses recover only the exact newly committed job. Early
 callbacks retry; duplicate/old callbacks cannot replay scores or cross sessions.
 The bounded private wake log contains job hashes, stages, timestamps and outcomes.
 
-Deployment `dpl_AJngrTvVWkENgUrHYca2gDgXD4Qi` is READY on the existing stable
-service URL. Public GETs to the private consumer return404 on both hosts.
-The original self-request prototype was rejected after real production tests
-showed508; final verification must use the native transport.
+Deployment `dpl_Cx21Xhnn1RyTBpejyQtR8Jiy5bGP` is READY on the existing stable
+service URL. Public GETs and POSTs to the private consumer return404 on both
+hosts. The original self-request prototype was discarded after real production
+tests showed508. Final production verification uses the native transport. The
+[official queue SDK](https://vercel.com/docs/queues/sdk) handles native delivery
+and ACK; there is no public callback-route exception or self-request loop.
 
 ## Verified locally
 
@@ -148,7 +165,7 @@ through `NODE_PATH` and its real Chrome channel; they do not install a new packa
   open state, caret/focus, Chinese IME and Save. Zero browser page errors.
 - `node tests/talk-vnext-ui.browser.cjs`: 5 real `play.html` pages in independent
   browser contexts against the actual authenticated service/ETag fixture pass
-  all15 reported flags: 2 directors/3 actors, authority, automatic render ACK,
+  all14 reported flags: 2 directors/3 actors, authority, automatic render ACK,
   system-offer Keep, cooldown redispatch, round decision, locked extension,
   no-response receiving pause, default private sorting, recap isolation,
   vault edit/cross-session resend, reload draft and 375 px layout. Zero page errors.
@@ -157,7 +174,7 @@ through `NODE_PATH` and its real Chrome channel; they do not install a new packa
   Keep/Replace full texts, private sorting, real host Reveal, recap attribution,
   2 directors/3 actors, rotation and host extension. EN/ZH 320/375 layouts fit
   without horizontal overflow; screenshots inspected. Zero page errors.
-- Final integrated `node --test tests/*.test.cjs`: **1971/1971 passed**, zero
+- Final integrated `node --test tests/*.test.cjs`: **1985/1985 passed**, zero
   failures, cancellations or skips. This includes Normal Talk and other Hub games,
   real ETag/CAS races, authority/privacy, exact retries, role-safe assigned/random
   main sharing, inactive-owner vault management and host-absence takeover.
@@ -171,27 +188,148 @@ through `NODE_PATH` and its real Chrome channel; they do not install a new packa
 The local browsers use synthetic local authority/demo data and an injected test clock.
 They do not read or modify existing user rooms. Protocol visibility, delayed
 updates, background/hidden document checks and render retry behavior have local
-test coverage; this does not establish successful real background-network delivery.
+test coverage. Actual native background delivery is verified separately below;
+local browser tests alone are not evidence of that delivery.
 
-## Known limits and pending release evidence
+## Verified on production
+
+All checks below target the existing stable hosts. Final gameplay and asset checks
+identify sourcea680d60; the separately labeled earlier transport probe verifies
+the same native queue implementation.
+No existing player room was opened or changed. Fixture writes are limited to
+uniquely marked disposable rooms with exact ownership/session/card guards and
+ETag-conditional cleanup; no room-list enumeration is used.
+
+- `node scripts/talk-verify-release.cjs a680d60`: **19/19** Talk assets match.
+- `node scripts/hub-executor-verify-release.cjs a680d60`: **62/62** assets match;
+  API status200/ready, trusted CORS, synthetic rejection and runtime404 pass.
+- `node scripts/life-story-verify-release.cjs`: **164/164** assets match, all96
+  private questions retained, service ready, trusted/foreign-origin checks pass,
+  **14/14** private runtime/question response bodies blocked.
+- Final read-only production `lets-talk.html?demo=1` browser harness:
+  **17/17** actually loaded assets matcha680d60, all11 gameplay flags pass,
+  **16** EN/ZH x320/375 x4-state screenshots have no horizontal overflow. Actor
+  and recap screenshots were visually inspected. Zero page errors and zero
+  room/API requests; external SDK requests are stubbed for the demo.
+- Independent actual production no-foreground probe (source9fa1559, unchanged
+  queue transport): no client command for55
+  seconds; the native job advances, successor dueAt remains current, and a
+  system card exists. **96 checks**, cleanup **7/7**, zero cleanup failures.
+  This exceeds the prototype's four-hop failure point; it is not merely an ID
+  change on the first wake.
+- Actual production five-player HTTP/Firebase/native-queue lifecycle via
+  `scripts/talk-vnext-production-smoke.cjs`, invoked inside the existing service's
+  production `vercel env run`: **339 checks**, all11 reported flags, cleanup
+  **7/7**, zero cleanup failures. The fixtures configure2 directors/3 actors and
+  exercise actor permission denial; private system-card Keep with full offer;
+  completion score;30-second rest; immediate queued handwriting after rest;
+  autonomous natural round decision; host-only locked extension; autonomous
+  real150-second no-response expiry/pause; rejection of an active-mission restart
+  with original authority/prompt retained; private saved and explicitly consented
+  unused-card recap; cross-session vault edit/resend/delete; encrypted system and
+  player diagnostics. This uses real authoritative state and private projections,
+  not mocked HTTP state or an injected production clock. Keep/Replace alternatives,
+  simultaneous CAS races and rotation-busy behavior additionally pass local core
+  and real-browser integration tests.
+- Package verification: **61** packaged files, **55** Hub source/assets byte-match
+  current source. These61 plus `.vercelignore` (**62**) byte-match the original
+  independent service source after synchronization. All96 Life Story questions
+  and unrelated search handlers are retained. **50** changed JS/CJS files pass
+  `node --check`; `git diff --check` passes.
+
+Evidence in the task's `outputs` directory:
+
+- `talk-vnext-final-release-suite.log`:1985-test final local run.
+- `talk-vnext-production-final.log`:339-check long production progress/report.
+- `talk-vnext-production-host-independent/report.json`: final production demo,
+  exact asset results,11 flags and16 captures, with harness/PNGs alongside.
+- `talk-vnext-life-story-final.log`: preserved-game production release check.
+
+Final reset-specific regressions additionally cover transaction-current stale
+cache recovery, private original-author retention, edited/deleted vault versions,
+active-reset authority preservation and confirmed activity-switch return. These
+pass through the actual browser manager transport and authenticated service locally.
+
+The frontend Vercel deployment ID is unavailable to the independent-service CLI
+account; no ID is inferred. Sourcea680d60 and exact stable-host asset comparisons
+identify the deployed gameplay. Backend deployment-specific URL is
+https://icebreaker-youtube-search-8jtrq5b3n-willintaiwan.vercel.app .
+
+## Known limits
 
 No account sign-in or cross-room ownership system is introduced. Restoring with
 a different original token, room or session does not restore another local
-draft; a replacement token does not inherit the original author's vault.
+draft; a replacement token does not inherit the original author's vault. The
+private vault persists across sessions in the same room with the original
+verified identity. Browser-local drafts require the same device/storage scope.
 Technical render ACK is not proof of attention or performance; Done remains
 an authenticated recipient's self-report, with no speech recognition/AI judgement.
 Physical phones, real human group play, actual voice/audio, device suspension
 and real background/mobile network behavior have not been verified by these checks.
-Historical overwritten handwriting cannot be reconstructed.
+Native queue/provider outages or delayed delivery can defer scheduled processing;
+authoritative expiry, session and idempotency checks remain in force. No hard
+real-time/subsecond timing guarantee is made. Historical overwritten handwriting
+cannot be reconstructed. No new provider secret or paid-plan upgrade was introduced.
 
-Pending for the release owner to fill with actual results:
+## Complete changed-file manifest
 
-- Final full-regression count and zero-failure/skip status.
-- Syntax/diff checks and exact service package graph/asset match.
-- Existing independent service deployment ID, READY state and stable alias.
-- Frontend source/deployment IDs and stable asset/version verification.
-- Owned disposable production vNext/ETag/privacy/durable-vault smoke results
-  and exact ownership-checked cleanup counts; no existing room access.
-- Production host/player entry, private-source blocking and preserved-game checks.
+Compared with baseline `db7a664`, the release changes57 files (including this
+record). Unchanged136-card bank and unrelated game topic banks are not included.
 
-Until those entries are completed, production publication/verification remains pending.
+- `CLAUDE.md`
+- `api/hub-executor.js`
+- `api/talk-wake.js`
+- `docs/talk-vnext-acceptance.md`
+- `hub-launcher.js`
+- `lets-talk.html`
+- `package.json`
+- `play.html`
+- `runtime/hub-executor-core.cjs`
+- `runtime/story-executor.cjs`
+- `runtime/talk-archive-store.cjs`
+- `runtime/talk-wake-queue.cjs`
+- `scripts/hub-executor-package-service.cjs`
+- `scripts/hub-executor-production-smoke.cjs`
+- `scripts/talk-archive-production-smoke.cjs`
+- `scripts/talk-read-archive.cjs`
+- `scripts/talk-vnext-production-smoke.cjs`
+- `talk-engine.js`
+- `talk-host.js`
+- `talk-mode.md`
+- `talk-settings.js`
+- `talk-sync.js`
+- `talk-ui.js`
+- `talk-vnext.js`
+- `talk.css`
+- `tests/helpers/talk-vnext-fixture.cjs`
+- `tests/hub-executor-api.test.cjs`
+- `tests/hub-executor-manager.test.cjs`
+- `tests/hub-executor-package-service.test.cjs`
+- `tests/hub-executor-production-smoke.test.cjs`
+- `tests/party-membership.test.cjs`
+- `tests/story-executor.test.cjs`
+- `tests/talk-archive-membership-service.test.cjs`
+- `tests/talk-archive-membership.test.cjs`
+- `tests/talk-archive-production-smoke.test.cjs`
+- `tests/talk-archive-service.test.cjs`
+- `tests/talk-challenge-archive.test.cjs`
+- `tests/talk-crazy.test.cjs`
+- `tests/talk-engine-modes.test.cjs`
+- `tests/talk-engine.test.cjs`
+- `tests/talk-host.test.cjs`
+- `tests/talk-reset-carry.test.cjs`
+- `tests/talk-round-clock.test.cjs`
+- `tests/talk-service.test.cjs`
+- `tests/talk-settings.test.cjs`
+- `tests/talk-sync.test.cjs`
+- `tests/talk-ui.browser.cjs`
+- `tests/talk-ui.test.cjs`
+- `tests/talk-vnext-host.browser.cjs`
+- `tests/talk-vnext-production-smoke.test.cjs`
+- `tests/talk-vnext-queue-handoff.test.cjs`
+- `tests/talk-vnext-service.test.cjs`
+- `tests/talk-vnext-store.test.cjs`
+- `tests/talk-vnext-ui.browser.cjs`
+- `tests/talk-vnext-wake-recovery.test.cjs`
+- `tests/talk-vnext.test.cjs`
+- `tests/talk-wake-queue.test.cjs`

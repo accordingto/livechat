@@ -2,8 +2,11 @@
 
 Read talk-mode.md and docs/talk-vnext-acceptance.md for the current lifecycle,
 settings, privacy boundaries and validation. Implementation/local browser checks
-are complete; final full suite1971/1971 passes. Native queue service is READY;
-final online lifecycle verification is pending.
+are complete; final full suite1985/1985 passes with zero failures/skips.
+Production sourcea680d60 is published; native queue service deployment
+dpl_Cx21Xhnn1RyTBpejyQtR8Jiy5bGP is READY. Owned five-player production
+lifecycle passes339 checks and ownership-checked cleanup7/7; the independent
+55-second no-foreground native-queue probe passes96 checks and cleanup7/7.
 Earlier release IDs/counts below are not evidence for this revision.
 The final scheduler uses native Vercel Queues0.8.0 (private api/talk-wake.js,
 queue/v2beta topic crazy-talk-wake, sin1). Never restore self-HTTP wake chains: real
@@ -52,17 +55,21 @@ success receipts/publication, preserve version/ACK and membership fences, and
 package the new lifecycle module with the existing service/runtime graph.
 This revision requires BOTH existing service and frontend deployments while
 preserving other games/search; no new secret/provider or rotation is required.
-Host changed Talk tags are vnext-1; player/dynamic Talk tags talk-vnext-1;
+Host changed Talk tags are vnext-3; player/dynamic Talk tags talk-vnext-3;
 unchanged browser executor stays life-story-1.
 
 Local focused UI/host/settings/sync passed 91/91 before the final early-reveal
 consent regression; current player UI passes 53/53 including that regression.
 Native Chrome passes five sends/ten native popups plus 18 vault updates/IME/caret,
 actual host demo covers five seats EN/ZH 320/375, and five actual play.html pages
-with authenticated ETag authority pass all 15 gameplay/privacy flags. Latest
-full-run report is 1934/1935, with one cache-tag assertion under correction; final
-full regression and production results remain pending in the acceptance record.
-No physical phone, human voice playtest or real background-network claim is made.
+with authenticated ETag authority pass all 14 gameplay/privacy flags. Latest
+full integrated run passes1985/1985. Final production Talk19/19, shared executor
+62/62 and Life Story164/164 assets match,14/14 private bodies are blocked, and
+the production host demo passes17 exact loaded assets/11 flags/16 mobile layouts.
+The production lifecycle uses actual HTTP/Firebase/private queue and real150-second
+expiry, with synthetic identities and no existing-room access. Physical phones,
+human voice playtests and mobile device suspension remain unverified. See the
+acceptance record for the source manifest, commands, evidence and limitations.
 
 ## CURRENT: Life Story paper prompts and compact storyteller hand — 2026-10-14
 
@@ -701,7 +708,7 @@ choices remain hidden until the complete result is public. Host/private players
 use the same renderer. Both entries load CSS/UI with dixit-11; other assets keep
 their existing versions. Browser-only release; no independent service deployment
 or secret changes. Preserve concurrent Talk and Bluff work.
-Full repository regression: 1333/1333 passed, including the updated 45 UI
+Full repository regression: 1339/1339 passed, including the updated 45 UI
 cases and 38 engine cases for actual vote completion/privacy/recovery.
 Real local Edge QA passed 200 synthetic shared/private EN/ZH scenes at
 1440/1000/736/375/320px, with no page overflow, aligned first score/image
@@ -1299,7 +1306,7 @@ Let's Talk 後續介面精簡：主持畫面移除 Round 數字與 Host controls
 
 **第三條全站規則：顏色一律走 token，不要再寫死 hex。**改配色時只動 `:root` 那份清單，不用在十一個檔案裡逐處搜尋替換，而且每一處顏色都會保持一致（曾經有過同一種「面板灰」在不同頁面漂成三種相近但不同的值）。token 分成三組，**依「這個顏色在做什麼」而不是「它長什麼樣」來挑**：①**面與線**：`--bg`（頁面）／`--surface`（卡片面板）／`--surface-2`（面板裡的面板）／`--surface-b`（漸層的暗側）／`--border`（一般細線）／`--border-2`（要被看見的線）／`--border-3`（按鈕自己的外框）／`--btn-face`／`--btn-face-hi`／`--btn-off`（disabled）；②**文字**：`--text`／`--text-dim`／`--text-muted`（見上一條規則）；③**狀態色**：這裡有一個關鍵區分——**同一個顏色當「形狀」和當「文字」是兩件事**。亮到足以當實心底色的綠，疊在自己身上當字就讀不到了。所以凡是畫**形狀**（底色、框線、光暈）的地方，那些鮮豔的 hex **照樣寫死**（沒有人要讀它們）；凡是畫**文字**的地方一律走 `--ok-text`／`--ok-text-lit`／`--bad-text`／`--bad-text-soft`／`--warn-text`／`--warn-text-soft`／`--gold-text`／`--info-text`／`--violet-text`／`--accent-text`／`--accent-alt-text`。要整體調整全站文字的亮度，改這一排就夠了。**per-card 的 accent 要自己派生**：首頁八張遊戲卡各自用 `--accent` 蓋掉自己的主題色，`--accent-text` 若只定義在 `:root` 就會拿到全站紅，所以 `.game-card` 自己算一份 `color-mix(in srgb, var(--accent) 55%, #fff)`。**實心強調色填滿的按鈕一律配 `--btn-ink` 深字，不要配白字**。全站目前有 155 處「面與線」與 207 處「文字」走 token；改配色之後要跑一次對比稽核。
 
-**第二條全站規則：任何人要讀的字，對比一律 ≥ 4.5:1（大字 ≥ 3:1）。**這頁不是給人安靜閱讀的網頁，是主持人**分享桌面**投影出去的畫面，先被縮放、再被視訊壓縮一次才到觀眾眼前——在開發機上只是「比較低調」的灰，到那一端就整個不見了。實際掃描全站（11 頁 × 中英 × 每一種遊戲狀態 ＋ 110 份真實玩家卡片 payload）曾經一次抓到 56 種不合格的樣式，最糟的是三款抽劇本遊戲抽卡前那句「按下抽取揭曉情境」（`#333`，**1.44:1**）與 Kangaroo 的「按下 ⚖️ 抽一條罪名」（`#444`，1.87:1）——這兩句正是「現在該按哪一顆」的唯一說明。所以 `:root` 的灰階不再是隨手挑的 `#333`～`#888`，而是三個量過的 token：`--text`（`#eee`，16.6:1）／`--text-dim`（`#9999bb`，7.0:1，內文，以及**任何長在按鈕面上的字**）／`--text-muted`（`#82829f`，5.2:1，頁面或卡片上的小標籤）；`--text-faint`（`#2a2a50`）只畫線與浮水印，**永遠不拿來寫字**。為什麼按鈕面上的字要用比較亮的那一個：`--text-muted` 在頁面底色上是 5.2:1，但在 `--btn-face`（`#22224a`）上只剩 4.0:1。
+**第二條全站規則：任何人要讀的字，對比一律 ≥ 4.5:1（大字 ≥ 3:1）。**這頁不是給人安靜閱讀的網頁，是主持人**分享桌面**投影出去的畫面，先被縮放、再被視訊壓縮一次才到觀眾眼前——在開發機上只是「比較低調」的灰，到那一端就整個不見了。實際掃描全站（11 頁 × 中英 × 每一種遊戲狀態 ＋ 110 份真實玩家卡片 payload）曾經一次抓到 56 種不合格的樣式，最糟的是三款抽劇本遊戲抽卡前那句「按下抽取揭曉情境」（`#339`，**1.44:1**）與 Kangaroo 的「按下 ⚖️ 抽一條罪名」（`#444`，1.87:1）——這兩句正是「現在該按哪一顆」的唯一說明。所以 `:root` 的灰階不再是隨手挑的 `#339`～`#888`，而是三個量過的 token：`--text`（`#eee`，16.6:1）／`--text-dim`（`#9999bb`，7.0:1，內文，以及**任何長在按鈕面上的字**）／`--text-muted`（`#82829f`，5.2:1，頁面或卡片上的小標籤）；`--text-faint`（`#2a2a50`）只畫線與浮水印，**永遠不拿來寫字**。為什麼按鈕面上的字要用比較亮的那一個：`--text-muted` 在頁面底色上是 5.2:1，但在 `--btn-face`（`#22224a`）上只剩 4.0:1。
 
 強調色同理：**能當實心底色，不代表能當字**。`:root` 因此多一個 `--accent-text`（shared.css 預設 `var(--accent)`），凡是**用強調色寫字**的地方都走它，邊框、填色、光暈則維持原本的品牌色不動（那些是形狀，沒有人要讀）。目前四頁需要覆寫：say-it 靛 `#6366f1 → #8183f4`（最亮的強調色，當字只有 3.4:1）、index／kangaroo 紅 `#e94560 → #ec5f76`、scene 粉 `#ec4899 → #ee57a1`；橘／琥珀／青／綠本來就夠亮，不用覆寫。`room.js` 跟著多一個 `--room-accent-text: var(--accent-text, ${accent})`，所以 Copy All Links／Link／QR 這些鈕的字自動跟著各頁走。說明頁裡引用玩家卡片按鈕的那組 class 另外多了 `.guide-btn.is-accent`／`.gp-btn.is-accent`（填滿 `var(--accent)` 配 `--btn-ink`），給 Say It 卡片上那顆發題鈕用；一樣是照著 `play.html` 的實際樣式抄過來的，不是另外發明一套。`play.html` 的角色晶片（`.pick-chip`）顏色是 JS 內嵌的，改用 `chipInk(hex)`＝`color-mix(in srgb, ${hex} 78%, #fff)`：晶片的框線與 10% 淡底維持角色原色，只有字被調亮。填滿強調色的按鈕一律配 `--btn-ink` 深字，不要配白字（首頁與 say-it 的精靈圓點、「下一步 →」原本是白字，只有 3.8／4.5:1，改成深字之後同時也符合上面那條「實心強調色＋深色字」的規則）。
 
