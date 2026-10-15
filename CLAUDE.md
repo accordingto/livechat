@@ -1,4 +1,35 @@
-## CURRENT: Crazy Talk vNext implementation — 2026-10-15
+## CURRENT: Crazy Talk three-player roles and late check-in — 2026-10-16
+
+Read docs/talk-2026-10-16-acceptance.md for this follow-up's actual verification
+and deployment. The older evidence below belongs to its labeled release.
+
+Final frontend source0764c2d and backend2f2f205 are published; service deployment
+dpl_33zZiGdg9DhkJ19T1KoM9iR8iG18 is READY. Final2006/2006 tests pass, plus
+real3-player Chrome and192 actual production checks with5/5 safe cleanup.
+Production17 exact loaded assets/13 flags/16 mobile captures and preserved
+Life Story164/164/private-source14/14 checks pass. No physical-phone/human voice
+playtest is claimed. Focused mission controls stay connected through technical ACK,
+30-second reminder and140-second check-in; tested pointerdown/update/up works.
+
+New Crazy setup defaults to Director:3 players1director/2actors;4 uses2/2;
+5 uses2/3. At least3 are required for new Director setup; explicit free remains.
+Saved legacy/no-style free rooms are not silently converted during a live task.
+Settings v3 migrates v2 defaults once, preserves other preferences and later
+explicit free choices. The composer is open initially/new-session, retaining a
+player's manual collapse, draft, native selector, caret and Chinese IME on updates.
+
+Keep the quiet30-second reminder. At140 seconds(default150-second task), show
+one small private, nonmodal Are you still here? check-in; shorter tasks use10
+seconds before expiry. `crazyHere` is exact-session/recipient/prompt, idempotent,
+and records manual participation without score, cooldown or deadline extension.
+Expiry still closes the task, but a confirmed participant remains receiving.
+No response still pauses; technical render ACK never counts as participation.
+The backend schedules/publishes checkInReadyAt once; UI paint has a local clock
+fallback and must not steal focus or interrupt a native select popup. Replacement
+starts a fresh response lifecycle. Metadata events contain no shared card content.
+Talk cache tags are now vnext-5/talk-vnext-5; shared executor remains life-story-1.
+
+## Previous: Crazy Talk vNext implementation — 2026-10-15
 
 Read talk-mode.md and docs/talk-vnext-acceptance.md for the current lifecycle,
 settings, privacy boundaries and validation. Implementation/local browser checks

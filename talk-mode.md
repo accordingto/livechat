@@ -1,18 +1,15 @@
-# Current: Crazy Talk vNext — 2026-10-15
+# Current: Crazy Talk vNext — 2026-10-16
 
 Current scheduling uses a private native Vercel Queue consumer in the existing
 executor project. It carries only sealed wake tickets; Firebase/CAS remains the
 authority. The deprecated self-HTTP prototype hit508 in production and must not
 be restored. See docs/talk-vnext-acceptance.md for final release evidence.
 
-This section describes the implemented vNext behavior. It supersedes the older
-Crazy Talk scheduling, two-slot cap, expanded composer and system-only archive
-instructions below. Local checks are recorded in
-[the vNext acceptance record](docs/talk-vnext-acceptance.md). Sourcea680d60 is
-published on the existing frontend and independent service:1985/1985 local tests,
-339 production five-player checks and7/7 ownership-checked cleanup pass. The
-independent55-second background-only queue probe passes96 checks. These synthetic
-checks do not establish a physical-phone or human voice playtest.
+This section describes the implemented vNext behavior. The2026-10-16 follow-up
+supersedes the former free-default/five-player minimum and collapsed composer.
+See [the current acceptance record](docs/talk-2026-10-16-acceptance.md). The
+[2026-10-15 record](docs/talk-vnext-acceptance.md) preserves the previous release's
+1985-test/339-check production evidence; those counts are not current validation.
 
 ## Setup and conversation
 
@@ -31,15 +28,20 @@ until a local View time toggle is used. New sessions reset that visibility.
 Playing screens show no mission deadline, dispatch interval, director-rotation
 countdown or next-assignment timer.
 
-Crazy style defaults to free play: eligible players can write for one another
-and receive challenges. Director mode requires at least five active players.
-It normally has two directors who write challenges and three or more actors
-who receive them; actors do not get a composer or the directors' receiving-status
-list. Directors rotate every four minutes by default. The setup offers 2/4/6
-minute choices and preserves valid custom whole-second values from 60 to 900.
-Rotation waits while the selected incoming player has a pending mission; it
-does not cut that mission short. If active membership drops below five, effective
-play returns to free play while the configured Director preference is retained.
+New Crazy sessions default to Director mode. Three active players use one
+director/two actors; four use two/two; five use two/three. Directors write while
+actors receive and do not get a composer. Free play remains an explicit option.
+Director setup requires at least three active players; two players can choose
+free play. If an existing Director session drops below three, its effective style
+falls back to free without losing the preference. Existing saved free sessions
+are not silently converted during play.
+
+Directors rotate every four minutes by default. The setup offers2/4/6 minute
+choices and preserves valid whole-second values60–900. A selected busy actor
+keeps the mission; the exchange waits. Role changes also reconcile the current
+speaker and remaining sharing order so directors are not accidentally nominated.
+The v3 setup preference migrates old v2 automatic free defaults to director once,
+retaining other settings; an explicit free choice subsequently saved in v3 stays.
 
 The configured simultaneous mission cap defaults to three, accepts 1–9, and
 is limited by the number of eligible receiving roles. Advanced source, cap,
@@ -52,9 +54,10 @@ does not invent system fallback cards.
 ## Writing, delivery and execution
 
 An active private mission stays above the shared topic. Immediately below the
-topic, the collapsed entrance says Write a silly challenge / 寫個搞笑任務.
-Opening it shows the recipient selector first (random other player by default)
-and the textarea second. There is no line/task selector: new handwriting is
+topic, Write a silly challenge / 寫個搞笑任務 is open by default, with the
+recipient selector first (random other player by default) and textarea second.
+A player can close it; ordinary updates preserve that choice. New sessions
+start open again. There is no line/task selector: new handwriting is
 submitted as a task, and the text can contain either a spoken line or an action.
 Accept 1–120 trimmed characters, at most ten queued cards per author and twenty
 per room. Self-targets and inactive recipients are rejected.
@@ -82,8 +85,18 @@ The internal mission TTL is 150 seconds by default, configurable from 30 to
 300 seconds, measured from assignment. Done gives the recipient exactly +1;
 Skip gives zero. Both close only the matching prompt and give that player a
 30-second breather before another assignment. Duplicate, stale or late commands
-cannot score twice. An expired mission gives zero and pauses receiving, so the
-page offers Resume receiving. Mission controls remain usable during the round's
+cannot score twice. A rendered pending task with no related manual response also
+gets one small nonmodal Are you still here? prompt after140 seconds by default
+(or10 seconds before expiry for a shorter task). It is private and does not move
+focus, interrupt native selectors, show a countdown, or require initial acceptance.
+The existing quiet30-second reminder remains. Clicking I'm here / 我在，繼續接任務
+sends exact-session/recipient/prompt `crazyHere`, records response metadata once,
+and leaves score, expiry and cooldown unchanged. The task still expires normally;
+that recipient remains eligible instead of being paused. A later replacement or
+new task has its own response lifecycle. Without a related response, expiry gives
+zero and pauses receiving, so the page offers Resume receiving. Backend wake
+planning explicitly includes the check-in boundary and publishes a once-only ready
+marker; the UI's local authoritative-clock fallback avoids waiting for another update. Mission controls remain usable during the round's
 decision and draining stages while their own prompt is still valid. Global
 dispatch pause stops new cards; existing mission and round deadlines continue.
 
