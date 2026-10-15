@@ -7,7 +7,8 @@ be restored. See docs/talk-vnext-acceptance.md for final release evidence.
 
 This section describes the implemented vNext behavior. The2026-10-16 follow-up
 supersedes the former free-default/five-player minimum and collapsed composer.
-See [the current acceptance record](docs/talk-2026-10-16-acceptance.md). The
+See [the current role-balance acceptance record](docs/talk-director-balance-acceptance.md).
+The [earlier check-in record](docs/talk-2026-10-16-acceptance.md) describes that follow-up. The
 [2026-10-15 record](docs/talk-vnext-acceptance.md) preserves the previous release's
 1985-test/339-check production evidence; those counts are not current validation.
 
@@ -28,12 +29,16 @@ until a local View time toggle is used. New sessions reset that visibility.
 Playing screens show no mission deadline, dispatch interval, director-rotation
 countdown or next-assignment timer.
 
-New Crazy sessions default to Director mode. Three active players use one
-director/two actors; four use two/two; five use two/three. Directors write while
+New Crazy sessions default to Director mode. For every supported room size2–9,
+the director target is floor(active participants/2), with the rest as actors.
+Directors never outnumber actors; odd groups have one extra actor. Directors write while
 actors receive and do not get a composer. Free play remains an explicit option.
-Director setup requires at least three active players; two players can choose
-free play. If an existing Director session drops below three, its effective style
-falls back to free without losing the preference. Existing saved free sessions
+Director setup supports two active players (one director/one actor).
+If an existing Director session drops below two, its effective style
+falls back to free without losing the preference. Old automatic directorCount2
+is derived again on authority pulses, including6–9-person rooms. Increasing the
+target never promotes an actor with a pending mission; it fills a temporarily
+short director list as actors become idle. Existing saved free sessions
 are not silently converted during play.
 
 Directors rotate every four minutes by default. The setup offers2/4/6 minute

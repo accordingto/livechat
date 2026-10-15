@@ -1,4 +1,21 @@
-## CURRENT: Crazy Talk three-player roles and late check-in — 2026-10-16
+## CURRENT: Crazy Talk role balance for every room size — 2026-10-16
+
+See docs/talk-director-balance-acceptance.md for the final release evidence.
+Source7ec1925 is published on both existing hosts; service
+dpl_7ECbSUcAJvdqoiPmZPDaTbC2fAei is READY. Final2017/2017 tests pass;
+production2/6/7/8/9-room role smoke902 checks passes with42/42 exact safe cleanup.
+Final frontend17 loaded assets/13 flags/16 bilingual mobile captures pass.
+Director count is derived from active participants: floor(N/2) directors and
+ceil(N/2) actors for every Hub size2–9. Two players use1/1; no hardcoded two-
+director cap or configured legacy directorCount survives. Explicit free stays free.
+At fewer than2 active participants, Director falls back to free and keeps preference.
+An actor with a pending task cannot become a director; keep the task intact and
+fill the safe temporary shortfall after closure. Rotation and main sharing must
+remain role-safe. Old6–9 rooms migrate their automatic2 count on authority pulses.
+Generic EN/ZH setup text describes this formula. Scoped Talk tags arevnext-6 /
+talk-vnext-6; preserve the open composer, quiet check-in and connected controls.
+
+## Previous: Crazy Talk three-player roles and late check-in — 2026-10-16
 
 Read docs/talk-2026-10-16-acceptance.md for this follow-up's actual verification
 and deployment. The older evidence below belongs to its labeled release.
