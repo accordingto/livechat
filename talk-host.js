@@ -275,10 +275,11 @@
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
       const options = { topic, ...rememberSettings(), showStarters: startersOn() };
-      if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, crazyIdentities:Object.fromEntries(demoRoster.map(p=>[p.playerNum,'0'.repeat(63)+p.playerNum])), crazyVault:state?.crazyVault, now: now() });
+      if (demo) state = TALK_ENGINE.create({ ...options, ...TALK_ENGINE.resetCarry(state, now()), id: TALK_SYNC.uid(), roster: demoRoster,
+        crazyIdentities:{ ...Object.fromEntries(demoRoster.map(p=>[p.playerNum,'0'.repeat(63)+p.playerNum])), ...state?.crazyIdentities }, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
-    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval', 'invalid_game_seconds', 'invalid_crazy_task_seconds','invalid_crazy_max_active','invalid_crazy_rotation','directorNeedsPlayers'].includes(e.message) ? e.message : 'error'; }
+    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval', 'invalid_game_seconds', 'invalid_crazy_task_seconds','invalid_crazy_max_active','invalid_crazy_rotation','directorNeedsPlayers','missions_active'].includes(e.message) ? e.message : 'error'; }
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));

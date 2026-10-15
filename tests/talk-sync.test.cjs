@@ -261,7 +261,6 @@ test('Host.start carries the journal from transaction-current state while its ca
   // cancellations still need writing. An already-persisted queued card must
   // also remain available to archive its cancellation during replacement.
   current = E.ackArchive(current, [{ id: done.id, version: 2 }, { id: pending.id, version: 1 }, { id: queued.id, version: 1 }]);
-  const before = clone(current.challengeArchive.records);
   const controlPath = 'rooms/TEST/players/' + f.room.getExtra('letsTalkControlToken');
   const canonical = f.db.values.get(controlPath);
   // Model a remote commit before its value-listener notification arrives.
@@ -269,21 +268,69 @@ test('Host.start carries the journal from transaction-current state while its ca
   f.db.values.set(controlPath, { ...clone(canonical), state: current, revision: canonical.revision + 1, leaseUntil: clock + 14000 });
   assert.equal(h.doc.state.sessionId, cachedSession); assert.deepEqual(h.doc.state.challengeArchive.records, []);
   clock++;
+  const activeSnapshot = clone(f.db.values.get(controlPath));
+  await assert.rejects(h.start({ topic: { ...topic, id: 'blocked-active-reset' }, gameMode: 'normal' }), { message: 'missions_active' });
+  assert.deepEqual(f.db.values.get(controlPath), activeSnapshot, 'a stale cached view cannot bypass the active mission guard');
+  commit('crazyDrain', 0); commit('crazySkip', 4, { promptId: current.crazy.prompts[4].id });
+  const before = clone(current.challengeArchive.records);
+  f.db.values.set(controlPath, { ...clone(canonical), state: current, revision: canonical.revision + 2, leaseUntil: clock + 14000 });
+  clock++;
   await h.start({ topic: { ...topic, id: 'replacement-with-history' }, gameMode: 'normal' }); await settle(h);
   assert.notEqual(h.latest.sessionId, cachedSession);
-  const retained = h.latest.challengeArchive.records;
+  const retained = h.latest.challengeArchive.records.filter(record => !record.category || record.category === 'challenge');
   assert.deepEqual(retained.map(record => record.id), before.map(record => record.id));
-  assert.deepEqual(retained[0], before[0], 'terminal record awaiting its latest ACK is retained exactly');
-  assert.deepEqual(retained.map(record => [record.status, record.version, record.persistedVersion]),
-    [['done', 3, 2], ['cancelled', 3, 1], ['cancelled', 2, 1]]);
-  assert.equal(retained[1].closedAt, clock); assert.equal(retained[2].closedAt, clock);
-  assert.equal(E.archiveEntries(h.latest).length, 3);
+  assert.deepEqual(retained, before, 'terminal records awaiting their latest ACKs are retained exactly');
+  assert.deepEqual(retained.map(record => record.status), ['done', 'skipped', 'cancelled']);
+  assert.equal(E.archiveEntries(h.latest).filter(record => !record.category || record.category === 'challenge').length, 3);
+  assert.ok(E.archiveEntries(h.latest).some(record => record.category === 'event'));
   for (const num of [1, 2, 3, 4]) {
     const serialized = JSON.stringify(f.card(num));
     for (const marker of ['challengeArchive', 'archiveId', 'persistedVersion', ...retained.flatMap(record => [record.id, record.text])]) {
       assert.equal(serialized.includes(marker), false, 'history cannot enter a private gameplay projection');
     }
   }
+  h.close();
+});
+
+test('Host.start preserves transaction-current prepared handwriting and its verified author despite a stale cache', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free' }); await settle(h);
+  const controlPath = 'rooms/TEST/players/' + f.room.getExtra('letsTalkControlToken');
+  const cached = clone(h.doc.state), raw = clone(f.db.values.get(controlPath)), owner = 'b'.repeat(64);
+  raw.state = E.apply(raw.state, { type: 'crazyAssign', id: 'remote-prepared-card', actor: 1, actorIdentity: owner,
+    sessionId: raw.state.sessionId, target: 2, text: 'A private card from the transaction, not the cache.', now: h.now(), seed: 15 });
+  const publicId = Object.values(raw.state.crazy.roundCards)[0].id;
+  f.db.values.set(controlPath, raw);
+  assert.deepEqual(h.doc.state, cached); assert.deepEqual(h.doc.state.crazyVault, {});
+  await h.start({ topic: { ...topic, id: 'private-prepared-reset' }, gameMode: 'crazy', crazySource: 'players' }); await settle(h);
+  assert.equal(h.latest.crazyVault[owner][publicId].text, 'A private card from the transaction, not the cache.');
+  assert.equal(f.card(1).talk.crazy.library[0].id, publicId);
+  assert.ok(!JSON.stringify(f.card(2)).includes('A private card from the transaction, not the cache.'));
+  assert.ok(E.archiveEntries(h.latest).some(record => record.category === 'vault' && record.cardId === publicId));
+  h.close();
+});
+
+test('a confirmed activity switch permits returning to Talk and privately retains old unshown and queued cards', async () => {
+  const f = setup(), h = f.host(); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', crazyMaxActive: 1 }); await settle(h);
+  const owner = 'c'.repeat(64), oldSession = h.latest.sessionId;
+  await h.change(current => E.apply(current, { type: 'crazyAssign', id: 'former-unshown-card', actor: 1, actorIdentity: owner,
+    sessionId: current.sessionId, target: 2, text: 'Former unshown private challenge.', now: h.now() }));
+  await h.command('start'); await settle(h);
+  await h.change(current => E.apply(current, { type: 'crazyAssign', id: 'former-waiting-card', actor: 1, actorIdentity: owner,
+    sessionId: current.sessionId, target: 2, text: 'Former waiting private challenge.', now: h.now() })); await settle(h);
+  await assert.rejects(h.start({ topic, gameMode: 'crazy', crazySource: 'players' }), { message: 'missions_active' });
+  assert.equal(h.latest.sessionId, oldSession); assert.equal(h.latest.crazy.prompts[2].status, 'pending');
+  f.db.put(f.paths[0], { game: 'different-activity', question: 'The current other activity.' }); await settle(h);
+  assert.equal(h.suspended, true);
+  await h.start({ topic: { ...topic, id: 'return-after-confirmed-switch' }, gameMode: 'crazy', crazySource: 'players' }); await settle(h);
+  assert.equal(h.suspended, false); assert.notEqual(h.latest.sessionId, oldSession);
+  assert.equal(f.card(1).talk.crazy.library.length, 2);
+  assert.ok(f.card(1).talk.crazy.library.some(card => card.text === 'Former unshown private challenge.'));
+  assert.ok(f.card(1).talk.crazy.library.some(card => card.text === 'Former waiting private challenge.'));
+  for (const num of [2, 3, 4]) assert.ok(!JSON.stringify(f.card(num)).includes('Former '));
+  assert.equal(h.latest.crazy.queue.length, 0); assert.equal(h.latest.crazy.activitySuperseded, undefined);
+  assert.ok(E.archiveEntries(h.latest).filter(record => !record.category).every(record => record.status === 'cancelled'));
   h.close();
 });
 

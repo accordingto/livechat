@@ -45,6 +45,11 @@ async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,dela
   await act(1,'crazyAssign',{target:actor,text:'Private unused spoon one.'});await act(1,'crazyAssign',{target:actor,text:'Private unused spoon two.'});
   await delay(Math.max(0,cooling-now()+500));await pulse(actor);current=await state();check(current.crazy.prompts[actor]?.text===writing);await shown(actor);const ttl=current.crazy.prompts[actor].expiresAt-current.crazy.prompts[actor].at;check(ttl===150000);report.flags.immediateAfterCooldown=true;
   const prompt=current.crazy.prompts[actor],deadline=current.gameDeadline;
+  const beforeRelease=await raw();
+  const restart=await http(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'release',capsule:beforeRelease.executor.capsule,token:control})});
+  check(restart.status===409);check((await restart.json()).error==='missions_active');
+  const retained=await raw();check(retained.executor.capsule===beforeRelease.executor.capsule);check(retained.state.crazy.prompts[actor].id===prompt.id);
+  report.flags.activeMissionRestartGuard=true;
   mark('waiting-for-natural-round-decision');await delay(Math.max(0,deadline-now()+1200));current=await waitState(s=>s.crazy.roundStage==='decision',25000);check(current.crazy.prompts[actor].status==='pending');check((await card(2)).talk.crazy.hostActions.extend===false);report.flags.autonomousRoundDecision=true;
   await act(2,'crazyExtend',{seconds:180,hostAuthorized:true,actor:0},'not_available');await act(0,'crazyExtend',{seconds:180});
   await act(1,'crazyAssign',{text:'This must remain rejected.'},'queue_locked');current=await state();check(current.crazy.queueLocked===true);check(current.crazy.roundStage==='extension');report.flags.hostOnlyLockedExtension=true;

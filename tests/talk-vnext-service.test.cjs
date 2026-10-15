@@ -152,3 +152,31 @@ test('an early native delivery retries without consuming its authoritative wake 
  assert.equal(after.crazyWake.claimId,undefined);assert.equal(after.hostSeenAt,before.hostSeenAt);assert.deepEqual(after.presence,before.presence);
  f.advance(20000);assert.ok((await f.service.wake({ticket:r._wake.ticket}))._wake);
 });
+
+
+test('Talk release checks transaction-current missions and retains the background lease on a late assignment',async()=>{
+ const f=fixture();await f.register();await f.act(0,'start');
+ const release={capsule:f.capsule(),token:f.controlToken};
+ assert.ok(!Object.values(f.state().crazy.prompts).some(p=>p.status==='pending'));
+ await f.act(1,'crazyAssign',{target:2,text:'A mission created after setup was opened.'});
+ const before=f.nodes.get(f.canonical).executor,prompt=f.state().crazy.prompts[2];
+ await assert.rejects(f.service.release(release),{code:'missions_active',status:409});
+ assert.equal(f.nodes.get(f.canonical).executor.capsule,before.capsule);
+ assert.deepEqual(f.nodes.get(f.canonical).executor.crazyWake,before.crazyWake);
+ assert.equal(f.state().crazy.prompts[2].id,prompt.id);assert.equal(f.state().crazy.prompts[2].status,'pending');
+ await f.shown(2);await f.act(2,'crazySkip',{promptId:prompt.id});
+ assert.deepEqual(await f.service.release(release),{ok:true});assert.ok(!f.nodes.get(f.canonical).executor);
+});
+
+
+test('a confirmed activity switch permits the true host to release fenced Talk without treating mere silence as a switch',async()=>{
+ const f=fixture();await f.register();await f.act(0,'start');await f.act(1,'crazyAssign',{target:2,text:'An older game mission.'});
+ const release={capsule:f.capsule(),token:f.controlToken};
+ await assert.rejects(f.service.release(release),{code:'missions_active'});
+ const other={game:'dixit',playerNum:3,dixit:{sessionId:'explicit-other-activity'}};
+ f.set(f.path(3),other);
+ assert.deepEqual(await f.service.release(release),{ok:true});
+ assert.equal(f.state().crazy.activitySuperseded,true);assert.ok(!f.nodes.get(f.canonical).executor);
+ assert.deepEqual(f.nodes.get(f.path(3)),other,'release does not overwrite a card that switched activity');
+ const retained=E.resetCarry(f.state(),f.now());assert.equal(retained.crazyIdentities[1],f.state().crazyIdentities[1]);
+});

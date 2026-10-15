@@ -49,6 +49,7 @@ var TALK_UI = (() => {
     hostAway: ['等待主持頁重新連線，語音仍可以繼續聊。', 'Waiting for the host page to reconnect. Voice chat can continue.'],
     retry: ['重試傳送', 'Retry sending'],
     stale_turn: ['已經換到下一段分享，請依現在畫面操作。', 'The conversation has moved on. Please use the current controls.'],
+    missions_active: ['還有任務正在進行，請等任務結案後再開新局。', 'Some challenges are still active. Wait for them to finish before starting a new round.'],
     not_available: ['這個動作目前無法使用，請看最新畫面。', 'That action is no longer available. Check the current view.'],
     pending_questions: ['還有人想追問。可以先請對方問，或確認略過這些追問後交棒。', 'Someone is waiting to ask. Invite them, or confirm skipping the requests before handing over.'],
     question_open: ['目前有人在提問，請先回到原發言者。', 'A question is open. Return to the original speaker first.'],

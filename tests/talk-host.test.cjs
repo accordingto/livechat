@@ -7,7 +7,7 @@ const { webcrypto } = require('node:crypto');
 const E = require('../talk-engine.js');
 const preferences = require('../talk-settings.js');
 const topics = require('../talk-topics.js');
-function fixture({ saved = {}, initial = null, pending = false, time = 1000 } = {}) {
+function fixture({ saved = {}, initial = null, pending = false, time = 1000, demoSeed = null } = {}) {
   let clock = time; const clockTasks = [];
   class FixtureDate extends Date { static now() { return clock; } }
   const html = fs.readFileSync(require.resolve('../lets-talk.html'), 'utf8');
@@ -68,7 +68,7 @@ function fixture({ saved = {}, initial = null, pending = false, time = 1000 } = 
     document: { getElementById: id => elements[id], createElement: tag => new Element(tag.toUpperCase()), body: new Element('BODY') },
     I18N: { lang: 'en', registerDict: (ns, dict) => { dictionaries[ns] = dict; }, onChange() {}, t: (ns, key) => dictionaries[ns]?.[key]?.en || key },
     ROOM: { enabled: true, code: 'FIXTURE', init() {} }, firebase: { database: () => ({}) },
-    TALK_ENGINE: { ...E, create(options) { created.push(structuredClone(options)); return E.create(options); } },
+    TALK_ENGINE: { ...E, create(options) { created.push(structuredClone(options)); const next = E.create(options); return demoSeed && created.length === 1 ? demoSeed(next) : next; } },
     TALK_SETTINGS: { ...preferences, read: () => preferences.read(storage), save: value => preferences.save(value, storage), consumePending: () => preferences.consumePending(storage) },
     TALK_SYNC: { Host, uid: () => 'fixture-' + Math.random() }, ...topics,
   });
@@ -84,6 +84,29 @@ test('saved custom seconds and homepage modes survive host hydration and opening
   assert.equal(f.created[0].seconds, 20); assert.equal(f.created[0].conversationMode, 'free');
   assert.equal(f.created[0].crazySource, 'players'); assert.equal(f.created[0].gameMode, 'crazy');
   assert.equal(f.created[0].crazyMinSeconds, 10); assert.equal(f.created[0].crazyMaxSeconds, 45);
+});
+
+test('demo setup replacement privately retains prepared cards with the same reset rules as live startup', async () => {
+  const f = fixture({ saved: { gameMode: 'crazy', crazySource: 'players' }, demoSeed: state => E.apply(state, {
+    type: 'crazyAssign', id: 'demo-prepared-card', actor: 1, sessionId: state.sessionId, now: 1100,
+    target: 2, text: 'A private demo preparation card.' }) });
+  await f.submit(); await f.click('new'); await f.submit();
+  assert.equal(f.created.length, 2);
+  const next = f.created[1], owner = '0'.repeat(63) + '1';
+  assert.equal(Object.values(next.crazyVault[owner])[0].text, 'A private demo preparation card.');
+  assert.ok(next.challengeArchive.records.some(record => record.category === 'vault'));
+  assert.ok(next.challengeArchive.records.some(record => record.text === 'A private demo preparation card.' && record.status === 'cancelled'));
+});
+
+test('demo setup cannot replace an active Crazy mission or silently reset its score', async () => {
+  const f = fixture({ saved: { gameMode: 'crazy', crazySource: 'players' }, demoSeed: state => {
+    state = E.apply(state, { type: 'start', id: 'demo-start', actor: 0, sessionId: state.sessionId, now: 1000 });
+    return E.apply(state, { type: 'crazyAssign', id: 'demo-live-card', actor: 1, sessionId: state.sessionId,
+      now: 1100, target: 2, text: 'A live demo challenge.' });
+  } });
+  await f.submit(); await f.click('new'); await f.submit();
+  assert.equal(f.created.length, 1);
+  assert.match(f.elements['talk-host-error'].textContent, /challenge|任務/i);
 });
 test('restored player settings remain selected when the host opens the next topic', async () => {
   const initial = E.create({ id: 'old', now: 1000, topic: { question: 'Choose a cafe.' }, seconds: 23,

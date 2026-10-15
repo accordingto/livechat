@@ -251,3 +251,30 @@ for(const game of ['dixit','onceupon'])test(game+' registered manager delegates 
  f.put('rooms/MGR234/players/'+f.tokens[1],{game:'scene',playerNum:2,round:99});await flush();await host.renew();await flush();
  assert.equal(host.suspended,true);assert.equal(f.statuses.at(-1),'switched');await host.renew();assert.equal(f.statuses.at(-1),'switched');
 });
+
+
+test('Talk setup resubmission privately retains accepted preparation cards through real release and registration', async t => {
+  const f=fixture(t,'letstalk'),host=f.manager();await flush();
+  const options={topic:{question:'Invent a silly cafe.'},gameMode:'crazy',crazySource:'players',conversationMode:'free',seconds:120};
+  await host.start(options);await flush();f.assertIndependent(host);
+  const session=f.state(host).sessionId;
+  await f.playerCommand(1,'crazyAssign',{target:2,text:'This unused setup spoon remains private.'});await flush();
+  assert.equal(f.state(host).crazy.queue.length,1);
+  await host.start({...options,topic:{question:'Invent a silly school.'}});await flush();f.assertIndependent(host);
+  assert.notEqual(f.state(host).sessionId,session);
+  assert.ok(f.card(1).talk.crazy.library.some(card=>card.text==='This unused setup spoon remains private.'));
+  for(const num of [2,3])assert.ok(!JSON.stringify(f.card(num)).includes('This unused setup spoon remains private.'));
+  assert.ok(f.calls.some(call=>call.operation==='release'));
+});
+
+test('Talk setup cannot release autonomous authority or cut a pending mission', async t => {
+  const f=fixture(t,'letstalk'),host=f.manager();await flush();
+  const options={topic:{question:'Invent a silly cafe.'},gameMode:'crazy',crazySource:'players',conversationMode:'free',seconds:120};
+  await host.start(options);await flush();await host.command('start');
+  await f.playerCommand(1,'crazyAssign',{target:2,text:'Keep this active spoon mission.'});await flush();
+  const prompt=f.state(host).crazy.prompts[2],capsule=host.doc.executor.capsule,session=f.state(host).sessionId;
+  await assert.rejects(host.start(options),error=>error.message==='missions_active');await flush();
+  f.assertIndependent(host);assert.equal(host.doc.executor.capsule,capsule);assert.equal(f.state(host).sessionId,session);
+  assert.equal(f.state(host).crazy.prompts[2].id,prompt.id);assert.equal(f.card(2).talk.crazy.prompt.status,'pending');
+  await f.playerCommand(2,'crazyDone',{promptId:prompt.id});assert.equal(f.state(host).scores[2],1);
+});

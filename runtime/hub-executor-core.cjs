@@ -620,9 +620,24 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     if (body.token !== ticket.controlToken) fail('wrong_player', 403);
     const archiveInitial = (await read(ticket.canonicalPath)).data;
     if (archiveInitial?.executor?.capsule === body.capsule) await flushArchive(ticket, registry[ticket.game], archiveInitial);
-    await cas(ticket.canonicalPath, raw => {
+    await cas(ticket.canonicalPath, async raw => {
       if (raw?.executor?.capsule !== body.capsule) fail('stale_session', 409);
-      let state = registry[ticket.game].decode(raw); if (registry[ticket.game].release) state = registry[ticket.game].release(state); delete state.sharedControls; if (state.rooms?.[ticket.code]) delete state.rooms[ticket.code].sharedControls;
+      let state = registry[ticket.game].decode(raw);
+      // Restarting Talk must not release its autonomous authority while a valid
+      // private mission is still pending, including one assigned after the host's
+      // cached setup snapshot. The transaction-current state closes that race.
+      if (ticket.game === 'letstalk' && state.gameMode === 'crazy'
+          && Object.values(state.crazy?.prompts || {}).some(prompt => prompt?.status === 'pending')) {
+        // A confirmed activity switch already fences the old executor. Let the
+        // real host reopen Talk, while a simple local restart cannot cut tasks.
+        const prior = predecessor(raw.executor, ticket), ctx = { ...ticket, now: now() };
+        const seats = ticket.seats.filter(seat => eligible(state, seat.playerNum, ctx));
+        const cards = await Promise.all(seats.map(async seat => ({ seat, node: (await read(seat.path)).data })));
+        const superseded = cards.some(({ seat, node }) => !ownedCard(node, ticket, body.capsule, raw.executor.baselines[seat.playerNum], prior, seat, raw.executor));
+        if (!superseded) fail('missions_active', 409);
+        state.crazy.activitySuperseded = true;
+      }
+      if (registry[ticket.game].release) state = registry[ticket.game].release(state); delete state.sharedControls; if (state.rooms?.[ticket.code]) delete state.rooms[ticket.code].sharedControls;
       const next = registry[ticket.game].encode(raw, state); delete next.executor;
       next.owner = ''; next.leaseUntil = 0; return next;
     });

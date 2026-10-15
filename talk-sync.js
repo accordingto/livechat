@@ -80,14 +80,15 @@ var TALK_SYNC = (() => {
     start({ topic, mode, seconds, showStarters, gameMode, crazySeconds, crazyMinSeconds, crazyMaxSeconds, conversationMode, crazySource, gameSeconds, crazyTaskSeconds, crazyMaxActive, crazyPlayStyle, crazyRotationSeconds, hostPlayerNum }) {
       return this.enqueue(async () => {
         await this.outgoing;
+        const superseded = this.suspended === true;
+        const previouslySeen = new Set(this.seenCards);
         const id = uid(); this.initialSession = id; this.suspended = false; this.seenCards.clear();
         const now = this.now();
         try {
           return await this.change(current => TALK_ENGINE.create({ id, topic, mode, seconds, showStarters, gameMode, crazySeconds, crazyMinSeconds, crazyMaxSeconds, conversationMode, crazySource, gameSeconds, crazyTaskSeconds, crazyMaxActive, crazyPlayStyle, crazyRotationSeconds, hostPlayerNum, now,
-            challengeArchive: current?.challengeArchive,
-            crazyVault: current?.crazyVault, crazyIdentities: current?.crazyIdentities,
+            ...TALK_ENGINE.resetCarry(current, now, { superseded }),
             roster: Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) })) }));
-        } catch (e) { this.initialSession = null; throw e; }
+        } catch (e) { this.initialSession = null; this.suspended = superseded; this.seenCards = previouslySeen; throw e; }
       });
     }
     tickCrazy() { return this.tickClock(); }

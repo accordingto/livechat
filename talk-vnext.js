@@ -313,6 +313,12 @@ var TALK_VNEXT = (() => {
       if (owner && !s.crazy.sortConfirmed[owner]) { card.ownerIdentity = owner; saveLibrary(s, owner, card.text, card.target, { ...input, actor: card.assignedBy }, card.id); card.vaultSavedIdentity = owner; }
     }
   }
+  function cancelSuperseded(s, input = {}) {
+    if (!enabled(s)) return false;
+    const before = JSON.stringify(s); init(s, input);
+    for (const num of activeNums(s)) closePrompt(s, num, 'cancelled', input, { reason: 'activity_switched' });
+    return JSON.stringify(s) !== before;
+  }
   // A validated round reset can discard preparation without visiting sorting.
   // Preserve those accepted cards privately before the caller replaces the state.
   function preserveUnusedForReset(s, input = {}) {
@@ -619,6 +625,6 @@ var TALK_VNEXT = (() => {
     }
     return s;
   }
-  return { init, due, advance, assign, submit, action, view, activeNums, eligibleReceivers, capacity, maySystem, roles, closeRound, preserveUnusedForReset, cancelMember, archiveRecords, ackRecords };
+  return { init, due, advance, assign, submit, action, view, activeNums, eligibleReceivers, capacity, maySystem, roles, closeRound, preserveUnusedForReset, cancelSuperseded, cancelMember, archiveRecords, ackRecords };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_VNEXT;

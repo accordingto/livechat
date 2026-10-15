@@ -205,6 +205,25 @@ var TALK_ENGINE = (() => {
       if (terminalArchive(record)) record.closedAt = record.updatedAt;
     }
   }
+  function resetCarry(current, now = 0, { superseded = false } = {}) {
+    const s = copy(current || {}), input = { actor: 0, now: Number(now) || 0 };
+    if (crazyEnabled(s) && list(s.crazy.prompts).some(prompt => prompt?.status === 'pending')) {
+      if (superseded !== true && s.crazy.activitySuperseded !== true) throw new Error('missions_active');
+    }
+    migrateArchive(s);
+    if (crazyEnabled(s)) {
+      if (superseded === true || s.crazy.activitySuperseded === true) vnext().cancelSuperseded(s, input);
+      vnext().preserveUnusedForReset(s, input); syncVnextArchive(s, input);
+    }
+    closeUnresolvedArchive(s, input.now);
+    const records = new Map(list(s.challengeArchive.records).map(record => [record.id, record]));
+    for (const record of vnext().archiveRecords(s)) {
+      const previous = records.get(record.id);
+      if (!previous || record.version >= previous.version) records.set(record.id, copy(record));
+    }
+    return { challengeArchive: { version: 1, records: [...records.values()] },
+      crazyVault: copy(s.crazyVault || {}), crazyIdentities: copy(s.crazyIdentities || {}) };
+  }
   function assignCrazy(s, input) {
     if (!systemCrazy(s) || !vnext().maySystem(s, input)) return false;
     const c = s.crazy, pool = crazyPool(), candidates = vnext().eligibleReceivers(s, input);
@@ -727,6 +746,6 @@ var TALK_ENGINE = (() => {
     }
     return payload;
   }
-  return { create, apply, membership, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange, archiveEntries, ackArchive };
+  return { create, apply, membership, view, order, shuffle, list, followUps, starter, timerDue, crazyDue, conversationMode, crazySource, crazyRange, archiveEntries, ackArchive, resetCarry };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_ENGINE;
