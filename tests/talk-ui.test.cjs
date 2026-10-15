@@ -906,6 +906,7 @@ test('authoritative check-in time paints a quiet prompt without auto-sending or 
     const own=prompt({renderVersion:1,rendered:true,reminder:true,checkIn:false,checkInAt:141000,expiresAt:151000});
     const talk=vnextTalk({prompt:own});f.update(talk);f.assignmentField('text','Keep my next challenge');
     assert.equal(f.node('[data-talk-check-in]').hidden,true);assert.equal(f.node('[data-talk-mission-reminder]').hidden,false);
+    assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyHere').disabled,true);
     f.setClock(141000);f.card.paint();
     assert.equal(f.node('[data-talk-check-in]').hidden,false);assert.equal(sent.length,0);
     assert.equal(f.node('[data-talk-mission-reminder]').hidden,true);
@@ -917,7 +918,8 @@ test('authoritative check-in time paints a quiet prompt without auto-sending or 
     f.update({...talk,turnId:3});assert.equal(f.card.pending.id,sent[0].id,'the exact prompt keeps its request across sharing turns');
     f.card.deliver();await flush();assert.deepEqual(sent[1],sent[0],'retry retains the frozen check-in receipt');
     f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,prompt:{...own,checkIn:false,checkInAt:0}}});
-    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazyHere"/);assert.equal(f.card.crazyDraft.text,'Keep my next challenge');
+    assert.equal(f.node('[data-talk-check-in]').hidden,true);assert.equal(f.card.crazyDraft.text,'Keep my next challenge');
+    assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyHere').disabled,true);
     assert.equal(f.focusedAction(),null);assert.equal(f.card.data.talk.crazy.prompt.expiresAt,151000);
     f.update(talk);f.setClock(151000);f.card.paint();assert.equal(f.node('[data-talk-check-in]').hidden,true);
     assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyHere').disabled,true);
@@ -935,7 +937,7 @@ test('check-in sends to the real engine without extending TTL or awarding points
     f.setClock(141000);f.card.update(E.view(state,2,141000));assert.equal(f.node('[data-talk-check-in]').hidden,false);
     f.click('crazyHere');await flush();f.card.update(E.view(state,2,141000));
     assert.equal(sent.length,1);assert.equal(state.crazy.prompts[2].expiresAt,151000);assert.equal(state.scores[2],0);
-    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazyHere"/);
+    assert.equal(f.node('[data-talk-check-in]').hidden,true);
     state=E.apply(state,{type:'clockTick',actor:0,id:'expire-after-here',sessionId:state.sessionId,now:151000});
     assert.equal(state.crazy.prompts[2].status,'expired');assert.equal(state.crazy.receivers[2].paused,false);
     const pending={...sent[0],id:'obsolete-here'};

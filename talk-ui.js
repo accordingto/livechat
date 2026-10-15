@@ -257,8 +257,8 @@ var TALK_UI = (() => {
       <div class="talk-crazy-heading"><strong>${esc(t(prompt.kind === 'task' ? 'taskKind' : 'lineKind'))}</strong><span>${esc(t('crazyPrivate'))}</span></div>
       <blockquote aria-live="polite">${esc(prompt.text)}</blockquote><p>${esc(t(prompt.kind === 'task' ? 'crazyTaskHint' : 'crazySayHint'))}</p>
       <div class="talk-actions">${button('crazyDone','crazyDone',`data-prompt-id="${esc(prompt.id)}"`,true)}${button('crazySkip','crazySkip',`data-prompt-id="${esc(prompt.id)}"`)}</div>
-      ${Number(prompt.checkInAt) > 0 || prompt.checkIn === true ? `<div class="talk-crazy-check-in" data-talk-check-in role="status" aria-live="polite"${prompt.checkIn ? '' : ' hidden'}><p>${esc(t('crazyCheckIn'))}</p>${button('crazyHere','crazyHere',`data-prompt-id="${esc(prompt.id)}" data-render-version="${esc(prompt.renderVersion || 1)}"`)}</div>` : ''}
-      ${prompt.reminder ? `<small class="talk-crazy-reminder" data-talk-mission-reminder role="status"${prompt.checkIn ? ' hidden' : ''}>${esc(t('crazyReminder'))}</small>` : ''}
+      ${vnext(s) || Number(prompt.checkInAt) > 0 || prompt.checkIn === true ? `<div class="talk-crazy-check-in" data-talk-check-in role="status" aria-live="polite"${prompt.checkIn ? '' : ' hidden'}><p>${esc(t('crazyCheckIn'))}</p>${button('crazyHere','crazyHere',`data-prompt-id="${esc(prompt.id)}" data-render-version="${esc(prompt.renderVersion || 1)}"`)}</div>` : ''}
+      ${vnext(s) || prompt.reminder ? `<small class="talk-crazy-reminder" data-talk-mission-reminder role="status"${!prompt.reminder || prompt.checkIn ? ' hidden' : ''}>${esc(t('crazyReminder'))}</small>` : ''}
       ${s.crazy.offer ? `<section class="talk-crazy-offer"><strong>${esc(t('crazyOffer'))}</strong><p>${esc(s.crazy.offer.newCard?.text || s.crazy.offer.text || '')}</p><small>${esc(t('crazyOfferHint'))}</small><div class="talk-actions">${button('crazyReplace','crazyReplace',`data-prompt-id="${esc(s.crazy.offer.promptId || prompt.id)}" data-offer-id="${esc(s.crazy.offer.offerId || s.crazy.offer.id)}"`,true)}${button('crazyKeep','crazyKeep',`data-prompt-id="${esc(s.crazy.offer.promptId || prompt.id)}" data-offer-id="${esc(s.crazy.offer.offerId || s.crazy.offer.id)}"`)}</div></section>` : ''}
       ${s.crazy.paused ? `<small>${esc(t('crazyPaused'))}</small>` : ''}
     </section>`;
@@ -361,6 +361,7 @@ var TALK_PLAYER = (() => {
       this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = true; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
       this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
       this.roundClockVisible = false; this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
+      this.renderedMission = null; this.missionRenderDeferred = false;
       this.clickHandler = event => {
         const b = event.target.closest('[data-talk-action]');
         if (!b || !this.element.contains(b) || b.disabled) return;
@@ -479,6 +480,14 @@ var TALK_PLAYER = (() => {
         else if (event.type === 'pointerdown' && this.element.contains(event.target) && event.target.closest('[data-talk-card-main], [data-talk-card-footer]')) this.assignmentSelection = null;
       };
       this.selectionEnd = event => {
+        if (this.missionRenderDeferred && event.target.closest?.('.talk-crazy-prompt')) {
+          const destination = event.relatedTarget?.closest?.('[data-talk-card-main], [data-talk-card-footer]');
+          // Blur precedes click. Do not replace its destination or guess the
+          // target when a touch/browser blur has no relatedTarget.
+          if ((destination && this.element.contains(destination)) || !event.relatedTarget) return;
+          if (!this.destroyed) this.render(true);
+          return;
+        }
         if (this.assignmentSelection !== event.target) return;
         this.assignmentSelection = null;
         // A blur caused by a click happens before that click. Leave controls
@@ -647,6 +656,12 @@ var TALK_PLAYER = (() => {
       `;
       const main = this.element.querySelector('[data-talk-card-main]'), footer = this.element.querySelector('[data-talk-card-footer]');
       const assignmentSlot = this.element.querySelector('[data-talk-card-assignment]');
+      const mission = prompt?.status === 'pending' ? JSON.stringify([s.sessionId, me, s.gameMode,
+        prompt.id, prompt.text, prompt.kind, prompt.renderVersion || 1, s.crazy?.offer || null, t('crazyDone'), t('crazyHere')]) : null;
+      const activeAction = document.activeElement;
+      const retainFocusedMission = preserveInput && mission && mission === this.renderedMission
+        && TALK_UI.crazyAction(activeAction?.dataset?.talkAction) && main?.contains?.(activeAction)
+        && activeAction.closest?.('.talk-crazy-prompt') && (s.phase !== 'ended' || ['draining','decision','extension'].includes(s.crazy?.roundStage));
       // Keep the composer and every ancestor connected. Detaching and restoring
       // a select also closes its native popup during a live state update.
       const retainCard = preserveInput && main && typeof main.innerHTML === 'string' && footer && assignmentSlot;
@@ -656,12 +671,17 @@ var TALK_PLAYER = (() => {
         // position. Flush these regions on select change or focusout instead.
         if (!this.assignmentSelection || !allowAssignment) {
           this.element.querySelector('.talk-player').className = cardClass;
-          main.innerHTML = mainHTML; footer.innerHTML = footerHTML;
+          // Reminder/check-in publication must keep a focused or pressed task
+          // control connected. Its pre-rendered status rows update in paint().
+          if (retainFocusedMission) this.missionRenderDeferred = true;
+          else { main.innerHTML = mainHTML; this.renderedMission = mission; this.missionRenderDeferred = false; }
+          footer.innerHTML = footerHTML;
         }
         if (retainedAssignment) this.refreshAssignment(retainedAssignment, recipients, s);
         else assignmentSlot.innerHTML = assignment;
       } else {
         this.element.innerHTML = `<div class="${cardClass}"><div data-talk-card-main style="display:contents">${mainHTML}</div><div data-talk-card-assignment style="display:contents">${assignment}</div><div data-talk-card-footer style="display:contents">${footerHTML}</div></div>`;
+        this.renderedMission = mission; this.missionRenderDeferred = false;
       }
       if (keep) {
         this.element.querySelector('[data-talk-note]')?.replaceWith(keep);
@@ -717,8 +737,11 @@ var TALK_PLAYER = (() => {
       if (status) status.textContent = message ? t(message) : '';
       const roundExpired = !TALK_UI.vnext(s) && s.phase === 'talking' && Number(s.gameDeadline) > 0 && now >= s.gameDeadline;
       const promptExpired = s.crazy?.prompt?.status === 'pending' && Number(s.crazy.prompt.expiresAt) > 0 && now >= s.crazy.prompt.expiresAt;
+      const prompt = s.crazy?.prompt, checkInDue = Number(prompt?.checkInAt);
+      const checkInAllowed = s.gameMode === 'crazy' && prompt?.status === 'pending' && !promptExpired
+        && (checkInDue > 0 ? now >= checkInDue : prompt?.checkIn === true);
       this.element.querySelectorAll('[data-talk-action]').forEach(b => {
-        b.disabled = b.dataset.talkAction !== 'viewTime' && (b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction)));
+        b.disabled = b.dataset.talkAction !== 'viewTime' && (b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (b.dataset.talkAction === 'crazyHere' && !checkInAllowed) || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction)));
         if (b.dataset.talkAction === 'retry') b.hidden = now - this.sentAt < 6000;
       });
       this.element.querySelectorAll('[data-talk-editor-field], [data-talk-shared-input], [data-talk-assignment-field]').forEach(input => {
@@ -729,12 +752,10 @@ var TALK_PLAYER = (() => {
       this.element.querySelectorAll('[data-talk-sort-card]').forEach(input => { input.disabled = offline || hostAway || !!this.pending; });
       const checkIn = this.element.querySelector('[data-talk-check-in]');
       if (checkIn && !this.assignmentSelection) {
-        const prompt = s.crazy?.prompt, due = Number(prompt?.checkInAt);
-        checkIn.hidden = s.gameMode !== 'crazy' || prompt?.status !== 'pending' || promptExpired
-          || !(due > 0 ? now >= due : prompt?.checkIn === true);
+        checkIn.hidden = !checkInAllowed;
       }
       const reminder = this.element.querySelector('[data-talk-mission-reminder]');
-      if (reminder && !this.assignmentSelection) reminder.hidden = !!checkIn && !checkIn.hidden;
+      if (reminder && !this.assignmentSelection) reminder.hidden = !s.crazy?.prompt?.reminder || !!checkIn && !checkIn.hidden;
       const clock = this.element.querySelector('[data-talk-clock]');
       if (clock) clock.textContent = t('secondsLeft', { n: Math.max(0, Math.ceil((s.deadline - now) / 1000)) });
       const roundClock = this.element.querySelector('[data-talk-round-clock]');

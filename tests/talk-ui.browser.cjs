@@ -92,8 +92,33 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.evaluate(()=>__sent.at(-1).promptId),'clock-check-in');assert.equal(await page.evaluate(()=>__sent.at(-1).renderVersion),1);
     const checkInExpiry=await page.evaluate(()=>__talk.crazy.prompt.expiresAt);
     await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.prompt.checkInAt=0;__talk.crazy.prompt.checkIn=false;__update();});
-    assert.equal(await page.locator(here).count(),0);assert.equal(await page.inputValue(text),'Preserve the next draft');
+    assert.equal(await page.locator('[data-talk-check-in]').isVisible(),false);assert.equal(await page.inputValue(text),'Preserve the next draft');
     assert.equal(await page.evaluate(()=>__talk.crazy.prompt.expiresAt),checkInExpiry);await stable();
+    // Keep the actual pressed/focused mission control through render ACK,
+    // reminder and check-in publications, including a press spanning update.
+    await page.evaluate(()=>{__talk.crazy.roundStage='open';__talk.crazy.prompt={id:'focused-check-in',text:'Keep this mission button connected',kind:'task',status:'pending',
+      renderVersion:1,rendered:false,reminder:false,checkIn:false,checkInAt:0,expiresAt:__now+150000};__update();});
+    const skip='[data-talk-action="crazySkip"]';
+    await page.locator(skip).focus();
+    await page.evaluate(()=>{window.__focusedSkip=document.activeElement;});
+    assert.equal(await page.locator('[data-talk-check-in]').count(),1,'check-in row exists before technical render ACK');
+    for(const update of [{rendered:true,checkInAt:342000},{reminder:true},{checkIn:true}]) {
+      await page.evaluate(update=>{Object.assign(__talk.crazy.prompt,update);if(update.checkIn)__now=342000;__update();},update);
+      assert.equal(await page.evaluate(()=>__focusedSkip.isConnected&&document.activeElement===__focusedSkip&&__focusedSkip===document.querySelector('[data-talk-action="crazySkip"]')),true);
+    }
+    assert.equal(await page.locator('[data-talk-check-in]').isVisible(),true);
+    assert.equal(await page.locator('[data-talk-mission-reminder]').isVisible(),false);
+    // Blur to the retained composer flushes safely without stealing its caret.
+    await page.locator(text).click();await page.locator(text).evaluate(el=>el.setSelectionRange(2,7));
+    assert.equal(await page.locator(text).evaluate(el=>document.activeElement===el&&el.selectionStart===2&&el.selectionEnd===7),true);
+    await page.locator(skip).scrollIntoViewIfNeeded();const skipBox=await page.locator(skip).boundingBox();
+    await page.mouse.move(skipBox.x+skipBox.width/2,skipBox.y+skipBox.height/2);await page.mouse.down();
+    await page.evaluate(()=>{window.__pressedSkip=document.activeElement;__talk.revision++;__update();});
+    assert.equal(await page.evaluate(()=>__pressedSkip.isConnected&&document.activeElement===__pressedSkip&&__pressedSkip===document.querySelector('[data-talk-action="crazySkip"]')),true);
+    const pressedCount=await page.evaluate(()=>__sent.length);await page.mouse.up();
+    await page.waitForFunction(count=>__sent.length===count+1,pressedCount);
+    assert.equal(await page.evaluate(()=>__sent.at(-1).type),'crazySkip');
+    await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.prompt.status='skipped';__update();delete __talk.crazy.roundStage;});
     // The first control click after dismissing a picker must survive blur.
     for(const action of ['crazyDone','crazySkip','crazyHere']) {
       await page.evaluate(action=>{__talk.crazy.prompt={id:'direct-'+action,text:'First click mission',kind:'task',status:'pending',expiresAt:800000,checkIn:action==='crazyHere',renderVersion:1};__update();},action);
@@ -164,7 +189,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
     assert.equal(errors.length,0);
     assert.ok(nativePickerChecks>=5,'Native picker must open and stay open across state updates.');
-    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,errors}));
+    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,focusedMissionNode:true,pressedMissionFirstClick:true,preAckCheckInRow:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,errors}));
   } finally {await browser.close();}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
 
