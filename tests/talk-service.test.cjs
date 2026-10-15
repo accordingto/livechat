@@ -49,7 +49,7 @@ test('ordinary Talk cards manage pending questions, settings and new-topic ticke
   await perform(1, 'starters', { show: false }); assert.equal(card(3).talk.showStarters, false);
   const oldCapsule = card(2).hubExecutor.capsule; db.conflict = canonical; clock = 2000;
   await perform(2, 'newTopic', { actor: 0, confirm: true, topic: { question: 'Imagine a friendly shop.', followUps: ['Who visits?'] },
-    mode: 'write', seconds: 30, gameMode: 'crazy', crazySeconds: 60, crazyMinSeconds: 5, crazyMaxSeconds: 5, gameSeconds: 120, crazyTaskSeconds: 30, showStarters: true });
+    mode: 'write', seconds: 30, gameMode: 'crazy', crazyPlayStyle: 'free', crazySeconds: 60, crazyMinSeconds: 5, crazyMaxSeconds: 5, gameSeconds: 120, crazyTaskSeconds: 30, showStarters: true });
   assert.equal(db.conflicts, 1); assert.notEqual(state().sessionId, originalSession); assert.equal(state().sharedControls, true);
   assert.equal(state().deadline, 32000); assert.equal(state().mode, 'write'); assert.equal(state().crazy.intervalSeconds, 60);
   assert.equal(state().gameSeconds, 120); assert.equal(state().crazy.taskSeconds, 30);
@@ -90,7 +90,7 @@ test('handwriting uses authenticated seats, immediate dispatch, session-only wri
   let clock = 1000, sequence = 0;
   const original = E.create({ id: 'service-written-talk', topic: { question: 'What would a funny pet do?' },
     roster: seats.map(p => ({ playerNum: p.playerNum, name: 'Player ' + p.playerNum })), now: clock,
-    gameMode: 'crazy', conversationMode: 'assigned', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 5 });
+    gameMode: 'crazy', crazyPlayStyle: 'free', conversationMode: 'assigned', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 5 });
   db.set(canonical, { state: original, owner: 'former-browser', revision: 1 });
   for (const seat of seats) db.set(path(seat.playerNum), E.view(original, seat.playerNum, clock));
   const service = createExecutor({ secret: '58'.repeat(32), databaseURL: 'http://localhost', fetchImpl: db.fetch.bind(db),

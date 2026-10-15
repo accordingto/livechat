@@ -26,3 +26,10 @@ test('vNext production harness rejects a missing key before touching any room',a
 test('short owned production diagnostic verifies a background successor without any foreground pulse',async()=>{
  const h=harness(),r=await run({...h,diagnosticOnly:true});assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.flags.autonomousFirstWake,true);assert.equal(r.cleaned,7);assert.equal(h.nodes.size,0);
 });
+
+
+test('three-seat production harness proves default roles, real check-in window, unchanged expiry and five-node cleanup',async()=>{
+ const h=harness();let failure;const r=await run({...h,threePlayerCheckIn:true,onFailure:e=>failure=e.stack});if(!r.ok)console.error(failure);
+ assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.cleaned,5);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);assert.equal(h.deleted.length,5);
+ for(const flag of ['threeSeatsOneDirectorTwoActors','autonomousCheckInProjection','exactOnceHereWithoutExtraTime','hereKeepsReceivingSilentPlayerPauses','nextTaskAndStaleHereFence'])assert.equal(r.flags[flag],true,flag);
+});

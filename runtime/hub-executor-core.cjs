@@ -370,7 +370,9 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
     if (c?.roundStage === 'decision' && !Object.values(c.prompts || {}).some(p=>p?.status === 'pending')) return null;
     const deadlines = [state.phase === 'thinking' ? state.deadline : state.gameDeadline,
       c.nextAssignAt, c.nextRotateAt || c.nextRotationAt,
-      ...Object.values(c.prompts || {}).filter(p=>p?.status === 'pending').flatMap(p=>[p.expiresAt, !p.renderAckAt ? p.displayDeadline : 0]),
+      ...Object.values(c.prompts || {}).filter(p=>p?.status === 'pending').flatMap(p=>[p.expiresAt, !p.renderAckAt ? p.displayDeadline : 0,
+        p.renderedVersion === 1 && p.interactedAt == null && !p.checkInReadyAt
+          ? Number(p.at) + Math.max(0, Math.min(140000, Number(p.expiresAt) - Number(p.at) - 10000)) : 0]),
       ...Object.values(c.receivers || {}).map(p=>p?.cooldownUntil)].filter(t=>Number.isFinite(t) && t > timestamp);
     const delayMs = Math.max(800, Math.min(20000, deadlines.length ? Math.min(...deadlines)-timestamp : 20000));
     const job = { id: crypto.randomUUID(), binding:hash(raw.executor.capsule), dueAt: timestamp + delayMs, leaseUntil: timestamp + delayMs + 180000, ...(consumedWakeId ? {predecessor:consumedWakeId} : {}) };

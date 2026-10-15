@@ -216,7 +216,7 @@ test('authoritative clock starts a prepared normal round and ends every card at 
 test('host clock expires a private mission, projects public score and preserves new round timing', async () => {
   const f = setup(), h = f.host(); await settle(h);
   let clock = Date.now(); h.now = () => clock;
-  await h.start({ topic, seconds: 15, gameMode: 'crazy', gameSeconds: 120, crazyTaskSeconds: 30,
+  await h.start({ topic, seconds: 15, gameMode: 'crazy', crazyPlayStyle: 'free', gameSeconds: 120, crazyTaskSeconds: 30,
     crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await h.command('start'); await settle(h);
   assert.equal(f.card(1).talk.crazy.taskSeconds, 30);
   clock = h.latest.crazy.nextAssignAt; await h.tickClock(); await settle(h);
@@ -238,7 +238,7 @@ test('host clock expires a private mission, projects public score and preserves 
 test('Host.start carries the journal from transaction-current state while its cached snapshot is stale', async () => {
   const f = setup(), h = f.host(); await settle(h);
   let clock = Date.now(); h.now = () => clock;
-  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
+  await h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free',
     gameSeconds: 120, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive:1 });
   await settle(h);
   const cachedSession = h.doc.state.sessionId;
@@ -294,7 +294,7 @@ test('Host.start carries the journal from transaction-current state while its ca
 
 test('Host.start preserves transaction-current prepared handwriting and its verified author despite a stale cache', async () => {
   const f = setup(), h = f.host(); await settle(h);
-  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free' }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free' }); await settle(h);
   const controlPath = 'rooms/TEST/players/' + f.room.getExtra('letsTalkControlToken');
   const cached = clone(h.doc.state), raw = clone(f.db.values.get(controlPath)), owner = 'b'.repeat(64);
   raw.state = E.apply(raw.state, { type: 'crazyAssign', id: 'remote-prepared-card', actor: 1, actorIdentity: owner,
@@ -302,7 +302,7 @@ test('Host.start preserves transaction-current prepared handwriting and its veri
   const publicId = Object.values(raw.state.crazy.roundCards)[0].id;
   f.db.values.set(controlPath, raw);
   assert.deepEqual(h.doc.state, cached); assert.deepEqual(h.doc.state.crazyVault, {});
-  await h.start({ topic: { ...topic, id: 'private-prepared-reset' }, gameMode: 'crazy', crazySource: 'players' }); await settle(h);
+  await h.start({ topic: { ...topic, id: 'private-prepared-reset' }, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players' }); await settle(h);
   assert.equal(h.latest.crazyVault[owner][publicId].text, 'A private card from the transaction, not the cache.');
   assert.equal(f.card(1).talk.crazy.library[0].id, publicId);
   assert.ok(!JSON.stringify(f.card(2)).includes('A private card from the transaction, not the cache.'));
@@ -312,18 +312,18 @@ test('Host.start preserves transaction-current prepared handwriting and its veri
 
 test('a confirmed activity switch permits returning to Talk and privately retains old unshown and queued cards', async () => {
   const f = setup(), h = f.host(); await settle(h);
-  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', crazyMaxActive: 1 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free', crazyMaxActive: 1 }); await settle(h);
   const owner = 'c'.repeat(64), oldSession = h.latest.sessionId;
   await h.change(current => E.apply(current, { type: 'crazyAssign', id: 'former-unshown-card', actor: 1, actorIdentity: owner,
     sessionId: current.sessionId, target: 2, text: 'Former unshown private challenge.', now: h.now() }));
   await h.command('start'); await settle(h);
   await h.change(current => E.apply(current, { type: 'crazyAssign', id: 'former-waiting-card', actor: 1, actorIdentity: owner,
     sessionId: current.sessionId, target: 2, text: 'Former waiting private challenge.', now: h.now() })); await settle(h);
-  await assert.rejects(h.start({ topic, gameMode: 'crazy', crazySource: 'players' }), { message: 'missions_active' });
+  await assert.rejects(h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players' }), { message: 'missions_active' });
   assert.equal(h.latest.sessionId, oldSession); assert.equal(h.latest.crazy.prompts[2].status, 'pending');
   f.db.put(f.paths[0], { game: 'different-activity', question: 'The current other activity.' }); await settle(h);
   assert.equal(h.suspended, true);
-  await h.start({ topic: { ...topic, id: 'return-after-confirmed-switch' }, gameMode: 'crazy', crazySource: 'players' }); await settle(h);
+  await h.start({ topic: { ...topic, id: 'return-after-confirmed-switch' }, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players' }); await settle(h);
   assert.equal(h.suspended, false); assert.notEqual(h.latest.sessionId, oldSession);
   assert.equal(f.card(1).talk.crazy.library.length, 2);
   assert.ok(f.card(1).talk.crazy.library.some(card => card.text === 'Former unshown private challenge.'));

@@ -8,7 +8,8 @@ const C = require('../talk-crazy.js');
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 const topic = { id: 'apartment', question: 'What kind of home would we share?', followUp: 'Who should wash the dishes?' };
 let serial = 0;
-const create = (options = {}) => E.create({ id: 'crazy-session', topic, now: 1000, gameMode: 'crazy', crazyMaxActive: 2,
+// These scheduler and lifecycle regressions exercise explicit free play.
+const create = (options = {}) => E.create({ id: 'crazy-session', topic, now: 1000, gameMode: 'crazy', crazyPlayStyle: 'free', crazyMaxActive: 2,
   roster: [1, 2, 3, 4].map(playerNum => ({ playerNum, name: 'Person ' + playerNum })), ...options });
 const act = (s, type, actor = 0, extra = {}) => E.apply(s, { id: 'crazy-event-' + (++serial),
   type, actor, sessionId: s.sessionId, turnId: s.turnId, now: 2000, seed: serial * 511, ...extra });
@@ -364,7 +365,7 @@ test('browser scheduler uses atomic shared slots, configured two-task cap and re
   const f = setup(), h = f.host(); await settle(h);
   await h.start({ topic }); await settle(h); await h.command('start'); await settle(h);
   let writes = f.db.count(); assert.equal(await h.tickClock(), false); assert.equal(f.db.count(), writes);
-  await h.start({ topic, gameMode: 'crazy', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
   await h.command('start'); await settle(h); f.time(105000); await h.renew(); await settle(h);
   const results = await Promise.all([h.tickClock(), h.tickClock(), h.tickClock()]); await settle(h);
   assert.equal(results.filter(Boolean).length, 1); assert.equal(pendingCount(h.latest), 1);
@@ -383,7 +384,7 @@ test('browser scheduler uses atomic shared slots, configured two-task cap and re
 
 test('browser custom queues bind authenticated authors and recipient completion scores once across turns', async () => {
   const f = setup(), h = f.host(); await settle(h);
-  await h.start({ topic, gameMode: 'crazy', crazySource: 'players', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
   await f.action(1, 'crazyAssign', { target: 2, text: 'Be the mayor of this chair.', actor: 3 }); await settle(h);
   assert.equal(h.latest.crazy.queue[0].assignedBy, 1); assert.equal(f.card(1).talk.crazy.myQueuedCount, 1); assert.equal(f.card(2).talk.crazy.prompt, null);
   await h.command('start'); await settle(h); f.time(h.latest.crazy.nextAssignAt); await h.renew(); await settle(h);
@@ -399,7 +400,7 @@ test('browser custom queues bind authenticated authors and recipient completion 
 
 test('browser replacement and reconnect retain pending tasks, private queue and scheduler lease', async () => {
   const f = setup(), first = f.host(); await settle(first);
-  await first.start({ topic, gameMode: 'crazy', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(first);
+  await first.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(first);
   await first.command('start'); await settle(first); await hostDeliverTwo(f, first);
   await f.action(1, 'crazyAssign', { text: 'Stay queued.' }); await settle(first);
   const original = clone(first.latest.crazy), second = f.host(); await settle(first, second);
@@ -412,7 +413,7 @@ test('browser replacement and reconnect retain pending tasks, private queue and 
 
 test('switching activities suspends scheduling and a fresh normal topic rejects old private task acknowledgements', async () => {
   const f = setup(), h = f.host(); await settle(h);
-  await h.start({ topic, gameMode: 'crazy', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
+  await h.start({ topic, gameMode: 'crazy', crazyPlayStyle: 'free', crazyMaxActive: 2, crazyMinSeconds: 5, crazyMaxSeconds: 5 }); await settle(h);
   await h.command('start'); await settle(h); await hostDeliverTwo(f, h);
   const num = Object.keys(h.latest.crazy.prompts)[0], old = f.card(Number(num)).talk;
   await f.action(1, 'crazyAssign', { text: 'A queued mission.' }); await settle(h);

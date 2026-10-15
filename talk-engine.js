@@ -239,11 +239,13 @@ var TALK_ENGINE = (() => {
     if (assigned) c.recent[recipient] = [...recent, line.id].slice(-12);
     return assigned;
   }
-  function deliverCrazy(s, input, allowScheduled = true) {
+  function deliverCrazy(s, input, allowScheduled = true, formerDirectors) {
     if (!crazyEnabled(s)) return false;
-    const before = JSON.stringify(s.crazy), priorDirectors = JSON.stringify(list(s.crazy.directors));
+    const before = JSON.stringify(s.crazy), priorDirectors = formerDirectors ?? JSON.stringify(list(s.crazy.directors));
     vnext().advance(s, input);
-    if (s.phase === 'talking' && conversationMode(s) !== 'free' && priorDirectors !== JSON.stringify(list(s.crazy.directors))) {
+    if (s.phase === 'talking' && conversationMode(s) !== 'free'
+        && (priorDirectors !== JSON.stringify(list(s.crazy.directors)) || list(s.crazy.directors).includes(s.speaker)
+          || list(s.remaining).some(num => list(s.crazy.directors).includes(num)))) {
       const actors = availableSeats(s);
       s.remaining = list(s.remaining).filter(n=>actors.includes(n));
       for (const num of actors) if (num !== s.speaker && !list(s.spoken).includes(num) && !s.remaining.includes(num)) s.remaining.push(num);
@@ -326,14 +328,14 @@ var TALK_ENGINE = (() => {
       schedulerVersion: 2, taskSeconds: taskDuration, nextAssignAt: 0, lastAssignAt: 0, lastPlayerNum: null, scheduleSequence: 0,
       hostDelegate: roster.some(p=>p.playerNum === Number(options.hostPlayerNum)) ? Number(options.hostPlayerNum) : null,
       maxActive: options.crazyMaxActive == null ? 3 : Number(options.crazyMaxActive),
-      playStyle: options.crazyPlayStyle || 'free', rotationSeconds: options.crazyRotationSeconds == null ? 240 : Number(options.crazyRotationSeconds),
+      playStyle: options.crazyPlayStyle || 'director', rotationSeconds: options.crazyRotationSeconds == null ? 240 : Number(options.crazyRotationSeconds),
       paused: false, prompts: {}, sequence: {}, recent: {}, queue: [], replacementFor: [],
     };
     if (crazyEnabled(state)) {
       if (!Number.isInteger(state.crazy.maxActive) || state.crazy.maxActive < 1 || state.crazy.maxActive > 9
           || !['free', 'director'].includes(state.crazy.playStyle) || !Number.isInteger(state.crazy.rotationSeconds)
           || state.crazy.rotationSeconds < 60 || state.crazy.rotationSeconds > 900
-          || state.crazy.playStyle === 'director' && participants(state).length < 5) throw new Error('invalid_settings');
+          || state.crazy.playStyle === 'director' && participants(state).length < 3) throw new Error('invalid_settings');
       vnext().init(state, { now, seed: options.seed || 1 });
     }
     return state;
@@ -418,7 +420,7 @@ var TALK_ENGINE = (() => {
     else if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick', 'exclude'].includes(input.type) && !input.type.startsWith('crazy')) reject('not_available');
     else if (turnTypes.includes(input.type) && ((!['newTopic', 'crazyAssign', 'exclude'].includes(input.type) && s.phase !== 'talking')
         || (input.type === 'crazyAssign' && !['thinking', 'talking'].includes(s.phase)) || input.turnId !== s.turnId)) reject('stale_turn');
-    else if (crazyEnabled(s) && ['crazyRendered', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyDone', 'crazySkip'].includes(input.type)) {
+    else if (crazyEnabled(s) && ['crazyRendered', 'crazyHere', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyDone', 'crazySkip'].includes(input.type)) {
       error = vnext().action(s, { ...input, hostAuthorized: host || input.hostAuthorized === true }) || '';
       if (!error) deliverCrazy(s, input, false);
     } else switch (input.type) {
@@ -437,11 +439,11 @@ var TALK_ENGINE = (() => {
         const taskDuration = input.crazyTaskSeconds === undefined ? taskSeconds(s) : Number(input.crazyTaskSeconds);
         const discussionMode = input.conversationMode == null ? conversationMode(s) : input.conversationMode;
         const promptSource = input.crazySource == null ? crazySource(s) : input.crazySource;
-        const maxActive = input.crazyMaxActive ?? s.crazy?.maxActive ?? 3, playStyle = input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'free';
+        const maxActive = input.crazyMaxActive ?? s.crazy?.maxActive ?? 3, playStyle = input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'director';
         const rotationSeconds = input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240;
         if (input.gameMode === 'crazy' && (!Number.isInteger(maxActive) || maxActive < 1 || maxActive > 9
             || !['free','director'].includes(playStyle) || !Number.isInteger(rotationSeconds) || rotationSeconds < 60 || rotationSeconds > 900
-            || playStyle === 'director' && participants(s).length < 5)) { reject('invalid_settings'); break; }
+            || playStyle === 'director' && participants(s).length < 3)) { reject('invalid_settings'); break; }
         if (!['think', 'write'].includes(input.mode) || !['normal', 'crazy'].includes(input.gameMode)
             || !Number.isInteger(seconds) || seconds < 15 || seconds > 120 || ![60, 120, 180].includes(crazySeconds)
             || typeof input.showStarters !== 'boolean' || !['assigned', 'random', 'free'].includes(discussionMode)
@@ -453,7 +455,7 @@ var TALK_ENGINE = (() => {
         const fresh = create({ id: s.sessionId + ':topic:' + input.id, topic, roster: s.roster, mode: input.mode, seconds,
           challengeArchive: s.challengeArchive, hostPlayerNum:s.crazy?.hostDelegate, crazyVault: s.crazyVault, crazyIdentities: s.crazyIdentities,
           crazyMaxActive: input.crazyMaxActive ?? s.crazy?.maxActive ?? 3,
-          crazyPlayStyle: input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'free', crazyRotationSeconds: input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240,
+          crazyPlayStyle: input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'director', crazyRotationSeconds: input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240,
           gameMode: input.gameMode, crazySeconds, crazyMinSeconds: minSeconds, crazyMaxSeconds: maxSeconds,
           conversationMode: discussionMode, crazySource: promptSource, gameSeconds: duration, crazyTaskSeconds: taskDuration,
           showStarters: input.showStarters, now: Number(input.now) || 0,
@@ -535,7 +537,9 @@ var TALK_ENGINE = (() => {
         const candidate = s.roster.find(p => p.playerNum === Number(input.playerNum));
         if ((!manager && !selfReturn) || !candidate || typeof input.active !== 'boolean') { reject('not_available'); break; }
         if ((candidate.active !== false) === input.active) break;
+        const formerDirectors = JSON.stringify(list(s.crazy?.directors));
         setParticipant(s, candidate.playerNum, input.active, input);
+        if (crazyEnabled(s)) deliverCrazy(s, input, false, formerDirectors);
         break;
       }
       case 'explain': {
@@ -667,7 +671,7 @@ var TALK_ENGINE = (() => {
     const existing = new Set(list(current.roster).map(p => p.playerNum));
     if (existing.size + added.length > 9 || added.some(p => !Number.isInteger(p?.playerNum) || p.playerNum < 1 || p.playerNum > 9 || existing.has(p.playerNum))
         || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
-    const s = copy(current);
+    const s = copy(current), formerDirectors = JSON.stringify(list(current.crazy?.directors));
     migrate(s, ctx);
     s.roster = list(s.roster); s.remaining = list(s.remaining); s.spoken = list(s.spoken); s.scores ||= {};
     for (const seat of added) {
@@ -683,7 +687,7 @@ var TALK_ENGINE = (() => {
     }
     for (const seat of s.roster) if ((seat.active !== false) !== !inactive.includes(seat.playerNum)) setParticipant(s, seat.playerNum, !inactive.includes(seat.playerNum), ctx);
     if (s.phase === 'talking' && conversationMode(s) !== 'free' && s.speaker == null && availableSeats(s).length) nextSpeaker(s, ctx.seed);
-    if (crazyEnabled(s)) deliverCrazy(s, ctx, false);
+    if (crazyEnabled(s)) deliverCrazy(s, ctx, false, formerDirectors);
     return s;
   }
   function view(s, playerNum, now, context = {}) {

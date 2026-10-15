@@ -8,7 +8,7 @@ const copy = value => JSON.parse(JSON.stringify(value));
 const topic = { title: 'Our silly cafe', question: 'What should we serve together?' };
 const roster = [1, 2, 3].map(playerNum => ({ playerNum, name: ['Alice', 'Bo', 'Chloe'][playerNum - 1] }));
 const create = (extra = {}) => E.create({ id: 'journal-session', now: 1000, topic, roster,
-  sharedControls: true, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
+  sharedControls: true, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free',
   gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive: 2, ...extra });
 let sequence = 0;
 const action = (s, type, actor = 0, extra = {}) => ({ id: 'archive-action-' + ++sequence, type, actor,
@@ -226,7 +226,7 @@ test('more than ten new topics retain history and accept long session/submission
   for (let index = 0; index < 12; index++) {
     const id = 'topic-' + String(index).padStart(2, '0') + '-' + 'x'.repeat(91);
     assert.equal(id.length, 100);
-    s = act(s, 'newTopic', 0, { ...newTopic, id, gameMode: 'crazy', crazySource: 'players', now: 3000 + index });
+    s = act(s, 'newTopic', 0, { ...newTopic, id, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', now: 3000 + index });
     assert.equal(s.replies[0].error, '');
     assert.equal(records(s).length, 1); assert.equal(records(s)[0].id, firstId);
     if (index === 0) firstClosed = copy(records(s)[0]);

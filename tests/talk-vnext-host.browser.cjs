@@ -18,7 +18,7 @@ const {chromium}=require(process.argv[2]||'playwright'),root=path.resolve(__dirn
    return route.fulfill({body,contentType:file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':'application/octet-stream'});
   });
   await page.goto('http://talk-host.local/lets-talk.html?demo=1');await page.evaluate(()=>I18N.setLang('en'));
-  await page.selectOption('#talk-game-mode','crazy');await page.locator('#talk-crazy-advanced>summary').click();
+  await page.selectOption('#talk-game-mode','crazy');assert.equal(await page.inputValue('#talk-crazy-play-style'),'director');await page.selectOption('#talk-crazy-play-style','free');await page.locator('#talk-crazy-advanced>summary').click();
   await page.selectOption('#talk-crazy-source','mixed');await page.fill('#talk-game-seconds','1');
   await page.fill('#talk-crazy-min-seconds','5');await page.fill('#talk-crazy-max-seconds','5');await page.click('#talk-open');
   assert.equal(await page.locator('#talk-clock').isVisible(),true);assert.equal(await page.locator('#talk-clock-toggle').isVisible(),false);
@@ -30,8 +30,8 @@ const {chromium}=require(process.argv[2]||'playwright'),root=path.resolve(__dirn
   const shown=async n=>{await view(n);await page.waitForFunction(num=>__state.crazy.prompts[num]?.renderedVersion===1,n);};
   await shown(receiver);const original=await page.locator('.talk-crazy-prompt>blockquote').textContent();
   const send=async text=>{
-   await view(author);assert.equal(await page.locator('.talk-assignment').evaluate(el=>el.open),false);
-   await page.locator('.talk-assignment>summary').click();await page.selectOption('[data-talk-assignment-field="target"]',String(receiver));
+   await view(author);assert.equal(await page.locator('.talk-assignment').evaluate(el=>el.open),true);
+   await page.selectOption('[data-talk-assignment-field="target"]',String(receiver));
    await page.fill('[data-talk-assignment-field="text"]',text);await page.click('[data-talk-action="crazyAssign"]');
    await page.waitForFunction(()=>!document.querySelector('[data-talk-action="crazyAssign"]')?.disabled);
   };
@@ -51,7 +51,7 @@ const {chromium}=require(process.argv[2]||'playwright'),root=path.resolve(__dirn
   await page.click('#talk-open');assert.equal(await page.evaluate(()=>__state.roster.length),5);assert.equal(await page.evaluate(()=>__state.crazy.maxActive),3);await page.click('#talk-start');
   const directors=await page.evaluate(()=>__state.crazy.directors.slice()),actor=await page.evaluate(()=>__state.roster.find(p=>!__state.crazy.directors.includes(p.playerNum)).playerNum);
   assert.equal(directors.length,2);await view(actor);assert.equal(await page.locator('.talk-assignment').count(),0);assert.equal(await page.locator('#talk-demo-player .talk-receivers').count(),0);
-  await view(directors[0]);assert.equal(await page.locator('.talk-assignment').evaluate(el=>el.open),false);assert.equal(await page.locator('#talk-demo-player .talk-receivers').count(),1);
+  await view(directors[0]);assert.equal(await page.locator('.talk-assignment').evaluate(el=>el.open),true);assert.equal(await page.locator('#talk-demo-player .talk-receivers').count(),1);
   await page.evaluate(()=>{__time=__state.crazy.nextRotateAt;});await page.waitForFunction(old=>JSON.stringify(__state.crazy.directors)!==JSON.stringify(old),directors);
   await view(0);await page.evaluate(()=>{__time=__state.gameDeadline;});await page.waitForFunction(()=>__state.crazy.roundStage==='decision');
   assert.match(await page.locator('#talk-vnext-panel').textContent(),/Queued/);await page.click('#talk-vnext-panel [data-talk-action="crazyExtend"][data-seconds="180"]');assert.equal(await page.evaluate(()=>__state.crazy.roundStage),'extension');

@@ -29,6 +29,7 @@ var TALK_VNEXT = (() => {
     return (n >>> 0) / 4294967296;
   };
   const activeNums = s => enabled(s) ? Object.entries(s.crazy.prompts || {}).filter(([, p]) => p?.status === 'pending').map(([n]) => Number(n)).sort((a, b) => a - b) : [];
+  const checkInTime = p => Number(p.at) + Math.max(0, Math.min(140000, Number(p.expiresAt) - Number(p.at) - 10000));
   function bindIdentity(s, input) {
     for (const [num, value] of Object.entries(input.identityByNum || {})) if (member(s, Number(num)) && identity(value)) s.crazyIdentities[num] = identity(value);
     const hash = identity(input.actorIdentity);
@@ -74,7 +75,7 @@ var TALK_VNEXT = (() => {
     if (terminal.has(status)) card.closedAt = nowOf(input);
   }
   function syncRoles(s, input) {
-    const c = s.crazy, players = active(s), desired = c.playStyle === 'director' && players.length >= 5 ? 'director' : 'free';
+    const c = s.crazy, players = active(s), desired = c.playStyle === 'director' && players.length >= 3 ? 'director' : 'free';
     const old = list(c.directors), oldStyle = c.effectivePlayStyle;
     c.effectivePlayStyle = desired;
     if (desired === 'free') { c.directors = []; c.nextRotateAt = 0; }
@@ -391,6 +392,10 @@ var TALK_VNEXT = (() => {
         const p = c.prompts[num];
         if (p.renderedVersion !== 1 && now >= p.displayDeadline) closePrompt(s, num, 'withdrawn', input, { pause: true, reason: 'display_unconfirmed' });
         else if (now >= p.expiresAt) closePrompt(s, num, 'expired', input, { pause: p.interactedAt == null, reason: 'expired' });
+        else if (p.renderedVersion === 1 && p.interactedAt == null && !p.checkInReadyAt && now >= checkInTime(p)) {
+          p.checkInReadyAt = now;
+          event(s, 'check_in_available', input, { recipient: num, promptId: p.id, cardId: p.roundCardId, source: p.source });
+        }
       }
       if (liveStages.has(c.roundStage) && Number(s.gameDeadline) > 0 && now >= s.gameDeadline) {
         c.roundStage = 'decision'; c.queueLocked = true; c.decisionAt = now; c.nextAssignAt = 0;
@@ -409,7 +414,8 @@ var TALK_VNEXT = (() => {
     const c = s.crazy;
     if (c.vnextVersion !== 1) return true;
     if (s.phase !== 'talking') return false;
-    if (activeNums(s).some(num => { const p = c.prompts[num]; return Number(now) >= (p.renderedVersion === 1 ? p.expiresAt : Math.min(p.displayDeadline, p.expiresAt)); })) return true;
+    if (activeNums(s).some(num => { const p = c.prompts[num]; return Number(now) >= (p.renderedVersion === 1 ? p.expiresAt : Math.min(p.displayDeadline, p.expiresAt))
+      || p.renderedVersion === 1 && p.interactedAt == null && !p.checkInReadyAt && Number(now) >= checkInTime(p); })) return true;
     if (liveStages.has(c.roundStage) && s.gameDeadline > 0 && Number(now) >= s.gameDeadline) return true;
     if (c.roundStage === 'draining' && !activeNums(s).length) return true;
     if (!liveStages.has(c.roundStage) || c.paused) return false;
@@ -443,6 +449,16 @@ var TALK_VNEXT = (() => {
         p.renderedVersion = p.version; p.renderAckAt = now;
         updateCard(s, p, 'pending', input, { executed: true, renderedAt: now });
         event(s, 'rendered', input, { recipient: actor, promptId: p.id, cardId: p.roundCardId, source: p.source });
+        return null;
+      }
+      if (type === 'crazyHere') {
+        if (input.sessionId !== s.sessionId) return 'stale_session';
+        if (!active(s).includes(actor) || p?.status !== 'pending' || p.id !== input.promptId
+            || p.renderedVersion !== p.version || input.renderVersion != null && input.renderVersion !== p.version
+            || !['open', 'extension', 'decision', 'draining'].includes(c.roundStage)) return 'stale_prompt';
+        if (p.interactedAt != null) return null;
+        p.hereAt = now; p.interactedAt = now;
+        event(s, 'checked_in', input, { actor, recipient: actor, promptId: p.id, cardId: p.roundCardId, source: p.source });
         return null;
       }
       if (type === 'crazyReceive') {
@@ -550,6 +566,8 @@ var TALK_VNEXT = (() => {
     for (const key of ['id', 'version', 'renderVersion', 'renderedVersion', 'renderAckAt', 'displayDeadline', 'expiresAt', 'at', 'kind', 'text', 'status', 'source']) if (p[key] != null) result[key] = p[key];
     result.rendered = p.renderedVersion === p.version;
     result.reminder = p.status === 'pending' && result.rendered && Number(now) >= Number(p.renderAckAt) + 30000 && Number(now) < p.expiresAt;
+    result.checkInAt = p.status === 'pending' && result.rendered && p.interactedAt == null && Number(now) < p.expiresAt ? checkInTime(p) : 0;
+    result.checkIn = result.checkInAt > 0 && Number(now) >= result.checkInAt;
     return result;
   }
   function view(s, num, now = 0, input = {}) {

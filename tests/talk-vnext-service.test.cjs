@@ -180,3 +180,45 @@ test('a confirmed activity switch permits the true host to release fenced Talk w
  assert.deepEqual(f.nodes.get(f.path(3)),other,'release does not overwrite a card that switched activity');
  const retained=E.resetCarry(f.state(),f.now());assert.equal(retained.crazyIdentities[1],f.state().crazyIdentities[1]);
 });
+
+
+test('new three-seat Crazy authority defaults to one director and two actors, with actor handwriting rejected',async()=>{
+ const f=fixture({count:3,crazyPlayStyle:undefined});await f.register();
+ assert.equal(f.seats.length,3);assert.equal(f.state().crazy.playStyle,'director');assert.deepEqual(f.state().crazy.directors,[1]);
+ assert.equal(f.card(1).talk.crazy.canAssign,true);assert.equal(f.card(2).talk.crazy.canAssign,false);assert.equal(f.card(3).talk.crazy.canAssign,false);
+ assert.equal(f.card(2).talk.crazy.effectiveMaxActive,2);
+ const unauthorized=f.command(2,'crazyAssign',{target:3,text:'An actor must not assign this.'});await f.run(unauthorized);assert.equal(f.state().replies[2].error,'not_director');
+ await f.act(0,'start');await f.act(1,'crazyAssign',{target:2,text:'A tiny chicken runs this cafe.'});
+ assert.equal(f.card(2).talk.crazy.prompt.text,'A tiny chicken runs this cafe.');assert.ok(!JSON.stringify(f.card(3)).includes('A tiny chicken runs this cafe.'));
+});
+
+test('authenticated 140-second check-in keeps receiving enabled without extending or scoring the current task',async()=>{
+ const f=fixture({count:3,crazyPlayStyle:undefined,gameSeconds:900});await f.register();await f.act(0,'start');
+ await f.act(1,'crazyAssign',{target:2,text:'Introduce your cup as royalty.'});await f.shown(2);
+ const prompt=f.state().crazy.prompts[2];
+ f.advance(140000);await f.service.execute({capsule:f.capsule(),token:f.controlToken,clock:true});
+ assert.equal(f.card(2).talk.crazy.prompt.checkIn,true);assert.ok(f.state().crazy.prompts[2].checkInReadyAt);
+ const forged=f.command(3,'crazyHere',{promptId:prompt.id,renderVersion:1});await f.run(forged);assert.equal(f.state().replies[3].error,'stale_prompt');
+ const missing=f.command(2,'crazyHere',{promptId:prompt.id,renderVersion:1});delete missing.command.sessionId;await f.run(missing);assert.notEqual(f.state().replies[2]?.id,missing.command.id);assert.equal(f.state().crazy.prompts[2].interactedAt,undefined);
+ const here=await f.act(2,'crazyHere',{promptId:prompt.id,renderVersion:1});await f.run(here.body);
+ assert.equal(f.state().crazy.prompts[2].expiresAt,prompt.expiresAt);assert.equal(f.card(2).talk.crazy.prompt.checkIn,false);assert.equal(f.state().scores[2],0);
+ assert.equal(f.state().crazy.receivers[2].cooldownUntil,0);
+ f.advance(10000);await f.service.execute({capsule:f.capsule(),token:f.controlToken,clock:true});
+ assert.equal(f.state().crazy.prompts[2].status,'expired');assert.equal(f.state().crazy.receivers[2].paused,false);
+ await f.act(1,'crazyAssign',{target:2,text:'An active person receives another task.'});
+ assert.equal(f.card(2).talk.crazy.prompt.text,'An active person receives another task.');
+ const late=f.command(2,'crazyHere',{promptId:prompt.id,renderVersion:1});await f.run(late);assert.equal(f.state().replies[2].error,'stale_prompt');
+ const events=await f.store.readRoom(f.code);assert.equal(events.filter(e=>e.eventType==='checked_in'&&e.promptId===prompt.id).length,1);
+});
+
+test('native wake plans the check-in window and publishes it even when the previous projection was recent',async()=>{
+ const f=fixture({count:3,crazyPlayStyle:undefined,gameSeconds:900,crazyMinSeconds:300,crazyMaxSeconds:300});const registered=await f.register();await f.act(0,'start');
+ await f.act(1,'crazyAssign',{target:2,text:'Wave hello to your imaginary chicken.'});await f.shown(2);
+ // Consume a retained old lease near the window; its successor must wake at140s,
+ // not at the150s expiry or the ordinary20s backup interval.
+ f.advance(132000);const before=f.nodes.get(f.canonical).executor;
+ const jobTicket=require('../runtime/hub-executor-core.cjs').seal({purpose:'crazy-wake-v1',capsule:f.capsule(),id:before.crazyWake.id,expiresAt:before.crazyWake.leaseUntil},Buffer.from('51'.repeat(32),'hex'));
+ const wake=await f.service.wake({ticket:jobTicket});assert.ok(wake._wake);assert.equal(wake._wake.delayMs,8000);
+ f.advance(8000);await f.service.wake({ticket:wake._wake.ticket});
+ assert.equal(f.card(2).talk.crazy.prompt.checkIn,true);assert.equal(f.state().crazy.prompts[2].checkInReadyAt,f.now());
+});

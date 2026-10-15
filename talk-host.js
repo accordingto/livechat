@@ -32,8 +32,8 @@
     if (values.gameMode === 'crazy' && !TALK_SETTINGS.validInterval(values.crazyMinSeconds, values.crazyMaxSeconds)) throw new Error('invalid_crazy_interval');
     if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyMaxActive)) || Number(values.crazyMaxActive) < 1 || Number(values.crazyMaxActive) > 9)) throw new Error('invalid_crazy_max_active');
     if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyRotationSeconds)) || Number(values.crazyRotationSeconds) < 60 || Number(values.crazyRotationSeconds) > 900)) throw new Error('invalid_crazy_rotation');
-    const playerCount = demo ? demoRoster.length : state?.roster?.filter(p=>p.active !== false).length || ROOM.count || 0;
-    if (values.gameMode === 'crazy' && values.crazyPlayStyle === 'director' && playerCount < 5) throw new Error('directorNeedsPlayers');
+    const playerCount = demo ? demoRoster.length : state?.roster?.filter(p=>p.active !== false && p.pending !== true).length || ROOM.count || 0;
+    if (values.gameMode === 'crazy' && values.crazyPlayStyle === 'director' && playerCount < 3) throw new Error('directorNeedsPlayers');
     return TALK_SETTINGS.normalize(values);
   };
   const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
@@ -415,7 +415,7 @@
             setSetupPreference('gameSeconds', next.gameSeconds || 900);
             setSetupPreference('crazyTaskSeconds', next.crazy?.taskSeconds || next.crazyTaskSeconds || 150);
             setSetupPreference('crazyMaxActive', next.crazy?.maxActive || 3);
-            setSetupPreference('crazyPlayStyle', next.crazy?.playStyle || 'free');
+            setSetupPreference('crazyPlayStyle', next.crazy?.playStyle || 'director');
             setSetupPreference('crazyRotationSeconds', next.crazy?.rotationSeconds || 240);
             }
           }

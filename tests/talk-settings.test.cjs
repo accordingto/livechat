@@ -10,7 +10,7 @@ function storage() {
 test('home preferences persist the chosen range and conversation style for host setup', () => {
   const saved = storage();
   settings.save({ gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 20, crazyMaxSeconds: 90, seconds: 30 }, saved);
-  assert.deepEqual(settings.read(saved), { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 20, crazyMaxSeconds: 90, crazyMaxActive:3, crazyPlayStyle:'free', crazyRotationSeconds:240, gameSeconds: 900, crazyTaskSeconds: 150, mode: 'think', seconds: 30 });
+  assert.deepEqual(settings.read(saved), { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 20, crazyMaxSeconds: 90, crazyMaxActive:3, crazyPlayStyle:'director', crazyRotationSeconds:240, gameSeconds: 900, crazyTaskSeconds: 150, mode: 'think', seconds: 30 });
   settings.save({ conversationMode: 'assigned' }, saved);
   assert.equal(settings.read(saved).conversationMode, 'assigned');
   assert.equal(settings.read(saved).crazySource, 'players');
@@ -125,7 +125,22 @@ test('vNext preferences preserve configured director style, cap and rotation whi
   const current=settings.read(saved);assert.equal(current.crazyMaxActive,9);assert.equal(current.crazyPlayStyle,'director');assert.equal(current.crazyRotationSeconds,300);
   settings.save({conversationMode:'assigned'},saved);assert.equal(settings.read(saved).crazyRotationSeconds,300);
   const migrated=settings.normalize({crazyMaxActive:0,crazyPlayStyle:'invalid',crazyRotationSeconds:901});
-  assert.equal(migrated.crazyMaxActive,3);assert.equal(migrated.crazyPlayStyle,'free');assert.equal(migrated.crazyRotationSeconds,240);
+  assert.equal(migrated.crazyMaxActive,3);assert.equal(migrated.crazyPlayStyle,'director');assert.equal(migrated.crazyRotationSeconds,240);
   assert.equal(settings.normalize({crazyRotationSeconds:60}).crazyRotationSeconds,60);
   assert.equal(settings.normalize({crazyRotationSeconds:900}).crazyRotationSeconds,900);
+});
+
+test('v3 defaults to director and migrates the old automatic free preference once without losing other settings', () => {
+  const saved=storage();assert.equal(settings.key,'lets-talk-settings.v3');assert.equal(settings.read(saved).crazyPlayStyle,'director');
+  const legacy={gameMode:'crazy',crazyPlayStyle:'free',crazySource:'players',conversationMode:'assigned',
+    crazyMinSeconds:7,crazyMaxSeconds:233,crazyMaxActive:4,crazyRotationSeconds:300,
+    gameSeconds:601,crazyTaskSeconds:239,mode:'write',seconds:19};
+  saved.setItem('lets-talk-settings.v2',JSON.stringify(legacy));
+  const migrated=settings.read(saved);assert.equal(migrated.crazyPlayStyle,'director');
+  for(const [key,value] of Object.entries(legacy))if(key!=='crazyPlayStyle')assert.equal(migrated[key],value,key);
+  assert.equal(JSON.parse(saved.getItem(settings.key)).crazyPlayStyle,'director');
+  settings.save({crazyPlayStyle:'free'},saved);
+  saved.setItem('lets-talk-settings.v2',JSON.stringify({...legacy,crazySource:'system'}));
+  assert.equal(settings.read(saved).crazyPlayStyle,'free','an explicit v3 free choice is retained');
+  assert.equal(settings.read(saved).crazySource,'players','later old-key writes cannot replace migrated preferences');
 });

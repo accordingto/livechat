@@ -24,7 +24,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
         nameBanner:()=>'<span>Sam</span>',now:()=>window.__now,connected:()=>window.__online});
       window.__update=()=>__card.update({game:'letstalk',playerNum:2,name:'Sam',talk:structuredClone(__talk),talkAction:window.__mailbox});
       __update();
-      const composer=document.querySelector('.talk-assignment');composer.open=true;
+      const composer=document.querySelector('.talk-assignment');if(!composer.open)throw Error('Composer must start expanded');
       window.__refs={composer,target:composer.querySelector('[data-talk-assignment-field="target"]'),
         text:composer.querySelector('textarea'),
         ancestors:[]};
@@ -40,6 +40,9 @@ const assert=require('node:assert/strict'),path=require('node:path');
       __refs.text===document.querySelector('[data-talk-assignment-field="text"]')&&
       __refs.ancestors.every(n=>n.isConnected)&&__refs.composer.open&&__removed===0),true);
     let nativePickerChecks=0;
+    await page.evaluate(()=>{__refs.composer.open=false;for(let n=0;n<3;n++)__update();});
+    assert.equal(await page.locator('.talk-assignment').evaluate(el=>el.open),false);
+    await page.locator('.talk-assignment>summary').click();await stable();
     for(let i=0;i<5;i++) {
       await page.locator(target).click();
       const opened=await page.locator(target).evaluate(el=>CSS.supports('selector(select:open)')&&el.matches(':open'));
@@ -68,15 +71,38 @@ const assert=require('node:assert/strict'),path=require('node:path');
       assert.equal(await page.inputValue(text),i===0?'My next draft':'');assert.equal(await page.locator(send).isDisabled(),false);await stable();
     }
     assert.equal(await page.evaluate(()=>__scrollCalls),0);
+    // A locally timed, authoritative check-in must not disturb the native
+    // popup or a focused next draft when the projection has not arrived yet.
+    await page.evaluate(()=>{__talk.crazy.prompt={id:'clock-check-in',text:'A quiet check-in card',kind:'task',status:'pending',
+      renderVersion:1,rendered:true,reminder:true,checkIn:false,checkInAt:__now+1000,expiresAt:__now+11000};__update();});
+    const here='[data-talk-action="crazyHere"]';
+    assert.equal(await page.locator('[data-talk-check-in]').isVisible(),false);
+    assert.equal(await page.locator('[data-talk-mission-reminder]').isVisible(),true);
+    await page.locator(target).click();const checkInPicker=await page.locator(target).evaluate(el=>el.matches(':open'));
+    await page.evaluate(()=>{__now+=1000;__card.paint();});await stable();
+    assert.equal(await page.locator('[data-talk-check-in]').isVisible(),false);
+    if(checkInPicker)assert.equal(await page.locator(target).evaluate(el=>el.matches(':open')),true);
+    await page.keyboard.press('Escape');await page.locator(text).click();
+    await page.fill(text,'Preserve the next draft');await page.locator(text).evaluate(el=>el.setSelectionRange(3,8));
+    await page.evaluate(()=>__card.paint());
+    assert.equal(await page.locator('[data-talk-check-in]').isVisible(),true);
+    assert.equal(await page.locator('[data-talk-mission-reminder]').isVisible(),false);
+    assert.equal(await page.locator(text).evaluate(el=>document.activeElement===el&&el.selectionStart===3&&el.selectionEnd===8),true);
+    await page.click(here);assert.equal(await page.evaluate(()=>__sent.at(-1).type),'crazyHere');
+    assert.equal(await page.evaluate(()=>__sent.at(-1).promptId),'clock-check-in');assert.equal(await page.evaluate(()=>__sent.at(-1).renderVersion),1);
+    const checkInExpiry=await page.evaluate(()=>__talk.crazy.prompt.expiresAt);
+    await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.prompt.checkInAt=0;__talk.crazy.prompt.checkIn=false;__update();});
+    assert.equal(await page.locator(here).count(),0);assert.equal(await page.inputValue(text),'Preserve the next draft');
+    assert.equal(await page.evaluate(()=>__talk.crazy.prompt.expiresAt),checkInExpiry);await stable();
     // The first control click after dismissing a picker must survive blur.
-    for(const action of ['crazyDone','crazySkip']) {
-      await page.evaluate(action=>{__talk.crazy.prompt={id:'direct-'+action,text:'First click mission',kind:'task',status:'pending',expiresAt:800000};__update();},action);
+    for(const action of ['crazyDone','crazySkip','crazyHere']) {
+      await page.evaluate(action=>{__talk.crazy.prompt={id:'direct-'+action,text:'First click mission',kind:'task',status:'pending',expiresAt:800000,checkIn:action==='crazyHere',renderVersion:1};__update();},action);
       const before=await page.evaluate(()=>__sent.length);
       await page.locator(target).click();await page.keyboard.press('Escape');
       await page.click('[data-talk-action="'+action+'"]');
       assert.equal(await page.evaluate(()=>__sent.length),before+1);
       assert.equal(await page.evaluate(()=>__sent.at(-1).type),action);
-      await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.prompt.status='done';__update();});
+      await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.prompt.status='done';__talk.crazy.prompt.checkIn=false;__update();});
     }
     await page.evaluate(()=>{__talk.sharedControls=true;__talk.hostControls=true;__talk.actions={newTopic:true,extend:true};__talk.topic.followUps=[{question:'Which dish should we serve?'}];__update();});
     await page.locator(target).click();await page.keyboard.press('Escape');
@@ -138,7 +164,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
     assert.equal(errors.length,0);
     assert.ok(nativePickerChecks>=5,'Native picker must open and stay open across state updates.');
-    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,errors}));
+    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,errors}));
   } finally {await browser.close();}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
 

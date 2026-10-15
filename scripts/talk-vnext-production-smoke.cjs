@@ -4,11 +4,11 @@ const crypto=require('node:crypto');
 const E=require('../talk-engine.js'),{createStore,DEFAULT_DB}=require('../runtime/talk-archive-store.cjs');
 const API='https://icebreaker-youtube-search.vercel.app/api/hub-executor';
 const uid=()=>crypto.randomBytes(16).toString('hex'),list=E.list;
-async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,delay=ms=>new Promise(r=>setTimeout(r,ms)),progress=()=>{},onFailure=()=>{},diagnosticOnly=false}={}){
+async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,delay=ms=>new Promise(r=>setTimeout(r,ms)),progress=()=>{},onFailure=()=>{},diagnosticOnly=false,threePlayerCheckIn=false}={}){
  const report={ok:false,checks:0,cleaned:0,cleanupFailed:0,step:'initial',flags:{}},key=env.CRAZY_TALK_ARCHIVE_SECRET;
  if(!/^[a-f0-9]{64}$/i.test(key||''))return{...report,error:'archive_key_unavailable'};
  const code='QVN'+crypto.randomBytes(4).toString('hex').toUpperCase(),marker=uid(),control=uid(),initial=code+':vnext';
- const seats=[1,2,3,4,5].map(playerNum=>({playerNum,token:crypto.randomBytes(10).toString('hex')}));
+ const seats=(threePlayerCheckIn?[1,2,3]:[1,2,3,4,5]).map(playerNum=>({playerNum,token:crypto.randomBytes(10).toString('hex')}));
  const node=n=>'rooms/'+code+'/players/'+(n===0?control:seats[n-1].token),created=new Set(),vaultIds=new Set(),ownerIds=new Set();
  const archive='rooms/talk-archive/players/'+crypto.createHmac('sha256',Buffer.from(key,'hex')).update('crazy-talk-archive-room-v1:'+code).digest('hex');
  const store=createStore({secret:key,fetchImpl}),ownSession=s=>typeof s==='string'&&(s===initial||s.startsWith(initial+':topic:'));
@@ -28,10 +28,37 @@ async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,dela
  const mark=(step,flag)=>{report.step=step;if(flag)report.flags[flag]=true;progress({step,checks:report.checks})};
  try{
   mark('create-five-owned-seats');const prior=await snapshot(archive);check(prior.value==null);created.add(archive);
-  const s=E.create({id:initial,now:now(),topic:{question:'Invent a ridiculous cafe together.'},roster:seats.map(p=>({playerNum:p.playerNum,name:'vNext QA '+p.playerNum})),gameMode:'crazy',crazySource:'mixed',conversationMode:'free',crazyPlayStyle:'director',crazyRotationSeconds:60,crazyMinSeconds:5,crazyMaxSeconds:5,gameSeconds:60});
-  for(const n of [0,1,2,3,4,5]){const path=node(n),before=await snapshot(path);check(before.value==null);created.add(path);await put(path,{...(n===0?{state:s,revision:1}:E.view(s,n,now())),qaVNext:{marker}},before.etag)}
+  const s=E.create({id:initial,now:now(),topic:{question:'Invent a ridiculous cafe together.'},roster:seats.map(p=>({playerNum:p.playerNum,name:'vNext QA '+p.playerNum})),gameMode:'crazy',crazySource:threePlayerCheckIn?'players':'mixed',conversationMode:'free',...(threePlayerCheckIn?{}:{crazyPlayStyle:'director'}),crazyRotationSeconds:threePlayerCheckIn?240:60,crazyMinSeconds:5,crazyMaxSeconds:5,gameSeconds:threePlayerCheckIn?900:60});
+  for(const n of [0,...seats.map(p=>p.playerNum)]){const path=node(n),before=await snapshot(path);check(before.value==null);created.add(path);await put(path,{...(n===0?{state:s,revision:1}:E.view(s,n,now())),qaVNext:{marker}},before.etag)}
   await api({operation:'register',game:'letstalk',code,controlToken:control,seats,sessionId:initial});await act(0,'start');await act(0,'crazyDelegate',{playerNum:1});
-  let current=await state();check(list(current.crazy.directors).join(',')==='1,2');check((await card(3)).talk.crazy.canAssign===false);check(current.crazy.maxActive===3);report.flags.fiveSeatsTwoDirectorsThreeActors=true;
+  let current=await state();
+  if(threePlayerCheckIn){
+   check(current.crazy.playStyle==='director');check(list(current.crazy.directors).join(',')==='1');
+   check((await card(1)).talk.crazy.canAssign===true);for(const n of [2,3])check((await card(n)).talk.crazy.canAssign===false);
+   check((await card(2)).talk.crazy.effectiveMaxActive===2);report.flags.threeSeatsOneDirectorTwoActors=true;
+   await act(2,'crazyAssign',{target:3,text:'Actors must not be allowed to write.'},'not_director');
+   await act(1,'crazyAssign',{target:2,text:'Introduce your cup as royalty.'});await shown(2);
+   await act(1,'crazyAssign',{target:3,text:'Make one tiny chicken noise.'});await shown(3);
+   const p2=(await state()).crazy.prompts[2],p3=(await state()).crazy.prompts[3];
+   for(const n of [1,3])check(!JSON.stringify((await card(n)).talk).includes(p2.text));
+   mark('waiting-for-real-140-second-check-in');await delay(Math.max(0,p2.at+140000-now()+300));
+   await waitState(s=>s.crazy.prompts[2]?.checkInReadyAt>0,7000);
+   check((await card(2)).talk.crazy.prompt.checkIn===true);report.flags.autonomousCheckInProjection=true;
+   const hereSource=await raw(),hereId='vnext-qa-'+ ++seq;
+   const here={operation:'execute',capsule:hereSource.executor.capsule,token:seats[1].token,command:{id:hereId,type:'crazyHere',sessionId:hereSource.state.sessionId,promptId:p2.id,renderVersion:1}};
+   await api(here);await api(here);current=await state();check(current.replies[2]?.error==='');check(current.crazy.prompts[2].expiresAt===p2.expiresAt);check(current.scores[2]===0);
+   check((await card(2)).talk.crazy.prompt.checkIn===false);report.flags.exactOnceHereWithoutExtraTime=true;
+   mark('waiting-for-real-150-second-expiry-after-check-in');await delay(Math.max(0,Math.max(p2.expiresAt,p3.expiresAt)-now()+1000));
+   current=await waitState(s=>[2,3].every(n=>s.crazy.prompts[n]?.status==='expired'),12000);
+   check(current.crazy.receivers[2].paused===false);check(current.crazy.receivers[3].paused===true);check(current.scores[2]===0&&current.scores[3]===0);report.flags.hereKeepsReceivingSilentPlayerPauses=true;
+   await act(1,'crazyAssign',{target:2,text:'Ask your spoon for a raise.'});check((await card(2)).talk.crazy.prompt.text==='Ask your spoon for a raise.');
+   await shown(2);await act(2,'crazySkip',{promptId:(await state()).crazy.prompts[2].id});
+   const lateSource=await raw();await api({operation:'execute',capsule:lateSource.executor.capsule,token:seats[1].token,command:{id:'vnext-qa-'+ ++seq,type:'crazyHere',sessionId:lateSource.state.sessionId,promptId:p2.id,renderVersion:1}});
+   check((await state()).replies[2]?.error==='stale_prompt');report.flags.nextTaskAndStaleHereFence=true;
+   await act(0,'crazyDrain');const records=await store.readRoom(code);check(records.filter(r=>r.eventType==='checked_in'&&r.promptId===p2.id).length===1);
+   check(records.some(r=>r.eventType==='check_in_available'&&r.promptId===p2.id));report.ok=true;mark('three-player-check-in-complete');return report;
+  }
+  check(list(current.crazy.directors).join(',')==='1,2');check((await card(3)).talk.crazy.canAssign===false);check(current.crazy.maxActive===3);report.flags.fiveSeatsTwoDirectorsThreeActors=true;
   if(diagnosticOnly){mark('waiting-for-first-autonomous-background-job');const before=(await raw()).executor.crazyWake?.id;await delay(55000);const after=await raw();check(after.executor.crazyWake?.id!==before);check(after.executor.crazyWake?.dueAt>=now()-5000);check(list(after.state.crazy.prompts).some(p=>p.status==='pending'));report.flags.autonomousFirstWake=true;report.ok=true;mark('background-probe-complete');return report}
   await act(3,'crazyAssign',{target:4,text:'Unauthorized actor card.'},'not_director');
   mark('waiting-for-system-card');await delay(5500);await pulse(1);current=await state();const actor=[3,4,5].find(n=>current.crazy.prompts[n]?.source==='system');check(!!actor);await shown(actor);

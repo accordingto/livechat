@@ -79,7 +79,7 @@ function fixture(t, game, { readiness = null } = {}) {
 test('Talk manager sends handwriting immediately and host-only natural closing survives reconnect', async t => {
   const f=fixture(t,'letstalk'),host=f.manager();await flush();
   await host.start({topic:{question:'Make a ridiculous cafe together.',followUps:['Who visits?']},mode:'think',seconds:120,
-    gameMode:'crazy',crazySource:'players',crazyMinSeconds:5,crazyMaxSeconds:9,gameSeconds:60,crazyTaskSeconds:30});
+    gameMode:'crazy',crazyPlayStyle:'free',crazySource:'players',crazyMinSeconds:5,crazyMaxSeconds:9,gameSeconds:60,crazyTaskSeconds:30});
   await f.context.HUB_EXECUTOR.ensureHost(host,'letstalk');await flush();f.assertIndependent(host);
   const first='Tell everyone your spoon is royalty.',second='Cluck like a chicken.';
   await f.playerCommand(2,'crazyAssign',{target:3,text:first});assert.equal(f.card(3).talk.crazy.prompt,null);
@@ -255,7 +255,7 @@ for(const game of ['dixit','onceupon'])test(game+' registered manager delegates 
 
 test('Talk setup resubmission privately retains accepted preparation cards through real release and registration', async t => {
   const f=fixture(t,'letstalk'),host=f.manager();await flush();
-  const options={topic:{question:'Invent a silly cafe.'},gameMode:'crazy',crazySource:'players',conversationMode:'free',seconds:120};
+  const options={topic:{question:'Invent a silly cafe.'},gameMode:'crazy',crazyPlayStyle:'free',crazySource:'players',conversationMode:'free',seconds:120};
   await host.start(options);await flush();f.assertIndependent(host);
   const session=f.state(host).sessionId;
   await f.playerCommand(1,'crazyAssign',{target:2,text:'This unused setup spoon remains private.'});await flush();
@@ -269,7 +269,7 @@ test('Talk setup resubmission privately retains accepted preparation cards throu
 
 test('Talk setup cannot release autonomous authority or cut a pending mission', async t => {
   const f=fixture(t,'letstalk'),host=f.manager();await flush();
-  const options={topic:{question:'Invent a silly cafe.'},gameMode:'crazy',crazySource:'players',conversationMode:'free',seconds:120};
+  const options={topic:{question:'Invent a silly cafe.'},gameMode:'crazy',crazyPlayStyle:'free',crazySource:'players',conversationMode:'free',seconds:120};
   await host.start(options);await flush();await host.command('start');
   await f.playerCommand(1,'crazyAssign',{target:2,text:'Keep this active spoon mission.'});await flush();
   const prompt=f.state(host).crazy.prompts[2],capsule=host.doc.executor.capsule,session=f.state(host).sessionId;

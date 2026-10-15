@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const E = require('../talk-engine.js');
 const topic = { id: 'modes', question: 'What would a talking chair say?' };
 let sequence = 0;
-const create = (options = {}) => E.create({ id: 'mode-session', topic, now: 1000,
+const create = (options = {}) => E.create({ id: 'mode-session', topic, now: 1000, crazyPlayStyle: 'free',
   roster: [7, 2, 5].map(playerNum => ({ playerNum, name: 'Player ' + playerNum })), ...options });
 const act = (state, type, actor = 0, extra = {}) => E.apply(state, { id: 'mode-action-' + ++sequence,
   sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: sequence * 991, type, actor, ...extra });
@@ -65,7 +65,7 @@ test('legacy states retain random conversation and mixed prompts without losing 
 });
 
 test('new topic accepts, preserves and validates both conversation and Crazy prompt-source settings', () => {
-  const options = { confirm: true, topic, mode: 'think', seconds: 45, gameMode: 'crazy', crazySeconds: 60,
+  const options = { confirm: true, topic, mode: 'think', seconds: 45, gameMode: 'crazy', crazyPlayStyle: 'free', crazySeconds: 60,
     showStarters: true, conversationMode: 'free', crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 300 };
   let state = act(create({ sharedControls: true }), 'newTopic', 2, options);
   assert.equal(state.conversationMode, 'free'); assert.equal(state.crazy.source, 'players');

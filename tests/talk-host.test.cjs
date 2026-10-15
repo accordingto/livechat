@@ -77,7 +77,7 @@ function fixture({ saved = {}, initial = null, pending = false, time = 1000, dem
   return { elements, created, commands, storage, host, hydrate: next => { host.doc.state = structuredClone(next); host.options.onChange(host.doc.state); }, advance: async value => { clock = value; for (const task of clockTasks) task(); await new Promise(resolve => setImmediate(resolve)); }, click: id => elements['talk-' + id].fire('click'), submit: () => elements['talk-setup'].fire('submit') };
 }
 test('saved custom seconds and homepage modes survive host hydration and opening the topic', async () => {
-  const f = fixture({ saved: { gameMode: 'crazy', conversationMode: 'free', crazySource: 'players', seconds: 20, crazyMinSeconds: 10, crazyMaxSeconds: 45 } });
+  const f = fixture({ saved: { gameMode: 'crazy', crazyPlayStyle: 'free', conversationMode: 'free', crazySource: 'players', seconds: 20, crazyMinSeconds: 10, crazyMaxSeconds: 45 } });
   assert.equal(f.elements['talk-seconds'].value, '20');
   assert.ok(f.elements['talk-seconds'].options.some(option => option.value === '20'));
   await f.submit();
@@ -87,7 +87,7 @@ test('saved custom seconds and homepage modes survive host hydration and opening
 });
 
 test('demo setup replacement privately retains prepared cards with the same reset rules as live startup', async () => {
-  const f = fixture({ saved: { gameMode: 'crazy', crazySource: 'players' }, demoSeed: state => E.apply(state, {
+  const f = fixture({ saved: { gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players' }, demoSeed: state => E.apply(state, {
     type: 'crazyAssign', id: 'demo-prepared-card', actor: 1, sessionId: state.sessionId, now: 1100,
     target: 2, text: 'A private demo preparation card.' }) });
   await f.submit(); await f.click('new'); await f.submit();
@@ -99,7 +99,7 @@ test('demo setup replacement privately retains prepared cards with the same rese
 });
 
 test('demo setup cannot replace an active Crazy mission or silently reset its score', async () => {
-  const f = fixture({ saved: { gameMode: 'crazy', crazySource: 'players' }, demoSeed: state => {
+  const f = fixture({ saved: { gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players' }, demoSeed: state => {
     state = E.apply(state, { type: 'start', id: 'demo-start', actor: 0, sessionId: state.sessionId, now: 1000 });
     return E.apply(state, { type: 'crazyAssign', id: 'demo-live-card', actor: 1, sessionId: state.sessionId,
       now: 1100, target: 2, text: 'A live demo challenge.' });
@@ -110,7 +110,7 @@ test('demo setup cannot replace an active Crazy mission or silently reset its sc
 });
 test('restored player settings remain selected when the host opens the next topic', async () => {
   const initial = E.create({ id: 'old', now: 1000, topic: { question: 'Choose a cafe.' }, seconds: 23,
-    conversationMode: 'assigned', gameMode: 'crazy', crazySource: 'players', roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
+    conversationMode: 'assigned', gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
   const f = fixture({ initial });
   assert.equal(f.elements['talk-seconds'].value, '23');
   assert.equal(f.elements['talk-conversation-mode'].value, 'assigned');
@@ -141,7 +141,7 @@ test('old pending and active oral questions remain recoverable after removing re
 test('explicit homepage changes open setup over an active topic until the organizer starts it', async () => {
   const initial = E.create({ id: 'active-topic', now: 1000, topic: { question: 'Keep the current conversation.' },
     conversationMode: 'assigned', gameMode: 'normal', roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
-  const f = fixture({ initial, pending: true, saved: { conversationMode: 'free', gameMode: 'crazy', crazySource: 'players' } });
+  const f = fixture({ initial, pending: true, saved: { conversationMode: 'free', gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players' } });
   assert.equal(f.elements['talk-setup'].hidden, false);
   assert.equal(f.elements['talk-game-mode'].value, 'crazy');
   assert.equal(f.elements['talk-conversation-mode'].value, 'free');
@@ -159,7 +159,7 @@ test('explicit homepage changes open setup over an active topic until the organi
 });
 
 test('host rejects invalid intervals without creating a topic and starts after the range is corrected', async () => {
-  const f = fixture({ saved: { gameMode: 'crazy', crazyMinSeconds: 20, crazyMaxSeconds: 90 } });
+  const f = fixture({ saved: { gameMode: 'crazy', crazyPlayStyle: 'free', crazyMinSeconds: 20, crazyMaxSeconds: 90 } });
   f.elements['talk-crazy-min-seconds'].value = '150';
   await f.elements['talk-crazy-min-seconds'].fire('change'); await f.submit();
   assert.equal(f.created.length, 0);
@@ -171,7 +171,7 @@ test('host rejects invalid intervals without creating a topic and starts after t
   assert.equal(f.created[0].crazyMaxSeconds, 180);
 });
 test('host restores a custom range from player settings into the next topic', async () => {
-  const initial = E.create({ id: 'custom-range', now: 1000, topic: { question: 'A silly cafe.' }, gameMode: 'crazy',
+  const initial = E.create({ id: 'custom-range', now: 1000, topic: { question: 'A silly cafe.' }, gameMode: 'crazy', crazyPlayStyle: 'free',
     crazySource: 'players', crazyMinSeconds: 7, crazyMaxSeconds: 233, roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
   const f = fixture({ initial });
   assert.equal(f.elements['talk-crazy-min-seconds'].value, '7');
@@ -184,7 +184,7 @@ test('host restores a custom range from player settings into the next topic', as
 
 test('host minute settings propagate custom round length and mission expiry without losing precision', async () => {
   const initial = E.create({ id: 'timed-old', now: 1000, topic: { question: 'Build a silly park.' },
-    gameSeconds: 601, crazyTaskSeconds: 239, gameMode: 'crazy',
+    gameSeconds: 601, crazyTaskSeconds: 239, gameMode: 'crazy', crazyPlayStyle: 'free',
     roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
   const f = fixture({ initial });
   assert.equal(Number(f.elements['talk-game-seconds'].value), 601 / 60);
@@ -231,7 +231,7 @@ test('normal-room hydration preserves a saved mission duration when the next top
     roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
   const f = fixture({ initial });
   assert.equal(Number(f.elements['talk-crazy-task-seconds'].value), 239 / 60);
-  await f.click('new'); f.elements['talk-game-mode'].value = 'crazy';
+  await f.click('new'); f.elements['talk-game-mode'].value = 'crazy'; f.elements['talk-crazy-play-style'].value = 'free';
   await f.elements['talk-game-mode'].fire('change'); await f.submit();
   assert.equal(f.created[0].gameMode, 'crazy'); assert.equal(f.created[0].crazyTaskSeconds, 239);
 });
@@ -252,7 +252,7 @@ test('the home host can mark a Talk participant away from the participant board 
 
 test('normal and Crazy host clocks are hidden by default and the optional toggle only changes local presentation', async () => {
   for (const gameMode of ['normal', 'crazy']) {
-    let initial = E.create({ id: 'optional-time-' + gameMode, now: 1000, gameMode, gameSeconds: 60,
+    let initial = E.create({ id: 'optional-time-' + gameMode, now: 1000, gameMode, crazyPlayStyle:'free', gameSeconds: 60,
       topic: { question: 'Invent a silly shop.' }, roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
     initial = E.apply(initial, { id: 'begin-clock', type: 'start', actor: 0, sessionId: initial.sessionId, now: 1000 });
     const f = fixture({ initial }), clock = f.elements['talk-clock'], toggle = f.elements['talk-clock-toggle'];
@@ -309,7 +309,7 @@ test('visible host time survives same-session updates but resets when a new roun
 });
 
 test('the shared Crazy host status exposes mission count while leaving its assignment and expiry clocks private', () => {
-  let initial = E.create({ id: 'private-mission-timing', now: 1000, gameMode: 'crazy',
+  let initial = E.create({ id: 'private-mission-timing', now: 1000, gameMode: 'crazy', crazyPlayStyle: 'free',
     crazyMinSeconds: 7, crazyMaxSeconds: 233, crazyTaskSeconds: 239, gameSeconds: 900,
     topic: { question: 'Build an imaginary cafe.' }, roster: [{ playerNum: 1, name: 'A' }, { playerNum: 2, name: 'B' }] });
   initial = E.apply(initial, { id: 'start-private-timing', type: 'start', actor: 0, sessionId: initial.sessionId, now: 1000 });
@@ -332,16 +332,33 @@ test('host preserves vNext mode, configured cap and custom rotation when opening
   assert.equal(f.created[0].crazyPlayStyle,'director');assert.equal(f.created[0].crazyMaxActive,4);assert.equal(f.created[0].crazyRotationSeconds,300);
 });
 
-test('too-small director setup remains local and requires five participants', async () => {
-  const initial=E.create({id:'small-cast',now:1000,gameMode:'crazy',topic:{question:'Design an imaginary shop.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
+test('too-small director setup remains local and requires three participants', async () => {
+  const initial=E.create({id:'small-cast',now:1000,gameMode:'crazy',crazyPlayStyle:'free',topic:{question:'Design an imaginary shop.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
   const f=fixture({initial});await f.click('new');f.elements['talk-crazy-play-style'].value='director';await f.submit();
-  assert.equal(f.created.length,0);assert.match(f.elements['talk-host-error'].textContent,/at least 5/);
+  assert.equal(f.created.length,0);assert.match(f.elements['talk-host-error'].textContent,/at least 3/);
   f.elements['talk-crazy-play-style'].value='free';f.elements['talk-crazy-max-active'].value='0';await f.submit();assert.equal(f.created.length,0);
   f.elements['talk-crazy-max-active'].value='3';await f.submit();assert.equal(f.created[0].crazyPlayStyle,'free');assert.equal(f.created[0].crazyMaxActive,3);
 });
 
+test('fresh Crazy setup defaults to director and supports three, four and five players without changing live free rooms', async () => {
+  for(const [count,directors] of [[3,1],[4,2],[5,2]]) {
+    const roster=Array.from({length:count},(_,i)=>({playerNum:i+1,name:'Player '+(i+1)}));
+    const initial=E.create({id:'normal-'+count,now:1000,topic:{question:'Build a silly shop.'},roster});
+    const f=fixture({initial});await f.click('new');f.elements['talk-game-mode'].value='crazy';
+    await f.elements['talk-game-mode'].fire('change');assert.equal(f.elements['talk-crazy-play-style'].value,'director');
+    await f.submit();assert.equal(f.created[0].crazyPlayStyle,'director');
+    assert.equal(f.host.doc.state.crazy.directors.length,directors);
+    assert.match(f.elements['talk-crazy-style-hint'].textContent,/3 players: 1 director and 2 actors/);
+  }
+  const initial=E.create({id:'explicit-live-free',now:1000,gameMode:'crazy',crazyPlayStyle:'free',
+    topic:{question:'Preserve our chosen style.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'},{playerNum:3,name:'C'}]});
+  const f=fixture({initial});assert.equal(f.host.doc.state.crazy.playStyle,'free');
+  assert.equal(f.elements['talk-crazy-play-style'].value,'free');await f.click('new');await f.submit();
+  assert.equal(f.created[0].crazyPlayStyle,'free');
+});
+
 test('Crazy host round decision and drain use authorized projected vNext controls while generic add-time is hidden', async () => {
-  let initial=E.create({id:'vnext-host-controls',now:1000,gameMode:'crazy',gameSeconds:60,topic:{question:'Choose a strange mascot.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
+  let initial=E.create({id:'vnext-host-controls',now:1000,gameMode:'crazy',crazyPlayStyle:'free',gameSeconds:60,topic:{question:'Choose a strange mascot.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
   initial=E.apply(initial,{id:'start-host-vnext',type:'start',actor:0,sessionId:initial.sessionId,now:1000});
   const f=fixture({initial});assert.equal(f.elements['talk-round-controls'].hidden,true);assert.match(f.elements['talk-vnext-panel'].innerHTML,/data-talk-action="crazyDrain"/);
   const timed=E.apply(f.host.doc.state,{id:'expire-host-vnext',type:'clockTick',actor:0,sessionId:initial.sessionId,now:61000});

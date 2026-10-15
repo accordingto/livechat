@@ -219,7 +219,7 @@ test('Talk recovery removes an absent question and advances an absent speaker wi
   assert.equal(act('letstalk', talk(3, false), 'start', 2).replies[2].error, 'not_available');
 });
 test('Crazy Talk server timer sends only each seat own prompt and shared managers remain normal players', () => {
-  let s = act('letstalk', talk(3, true, { gameMode: 'crazy' }), 'start', 2);
+  let s = act('letstalk', talk(3, true, { gameMode: 'crazy', crazyPlayStyle: 'free' }), 'start', 2);
   const due = s.crazy.nextAssignAt;
   s = A.letstalk.pulse(s, ctx(2, { now: due + 1 }));
   const num = s.roster.find(p => s.crazy.prompts[p.playerNum]?.status === 'pending').playerNum;

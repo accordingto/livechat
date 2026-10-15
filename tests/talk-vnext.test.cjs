@@ -19,7 +19,7 @@ function room(options = {}) {
     topic: { id: 'soup', title: 'Soup committee', question: 'Who hid the spoons?' },
     roster: roster(count), scores: Object.fromEntries(roster(count).map(p => [p.playerNum, 0])),
     gameDeadline: 0, crazyTaskSeconds: 150,
-    crazy: { enabled: true, source: 'players', minSeconds: 5, maxSeconds: 5,
+    crazy: { enabled: true, source: 'players', playStyle: 'free', minSeconds: 5, maxSeconds: 5,
       intervalSeconds: 120, taskSeconds: 150, queue: [], prompts: {}, nextAssignAt: 0,
       ...options.crazy },
     ...options.state
@@ -326,6 +326,8 @@ test('keeping the current task counts as manual interaction without refreshing i
   assert.equal(V.action(s, { ...keep, now: 5000 }), null);
   assert.equal(p.interactedAt, 4000, 'a replay does not invent a newer interaction');
   assert.equal(p.expiresAt, 152000); assert.equal(p.renderAckAt, 2100);
+  assert.equal(V.view(s, 3, 151000).prompt.checkInAt, 0);
+  assert.equal(V.view(s, 3, 151000).prompt.checkIn, false);
   s.crazy.paused = true;
   V.advance(s, input(s, 0, { now: p.expiresAt }));
   assert.equal(p.status, 'expired'); assert.equal(s.scores[3], 0);
@@ -446,16 +448,16 @@ test('director rotation waits for the next ring seat to become idle and exchange
   assert.equal(V.submit(s, item('new-director', 3, 5), input(s, 3, { now: retryAt })), null);
 });
 
-test('director style falls back to free below five active participants and restores safely', () => {
-  const s = room({ count: 4, crazy: { playStyle: 'director' } });
+test('director style falls back to free below three active participants and restores safely', () => {
+  const s = room({ count: 2, crazy: { playStyle: 'director' } });
   assert.equal(s.crazy.playStyle, 'director');
   assert.equal(s.crazy.effectivePlayStyle, 'free');
-  assert.deepEqual(V.eligibleReceivers(s, input(s)), [1, 2, 3, 4]);
-  assert.equal(V.submit(s, item('free-fallback', 3, 4), input(s, 3)), null);
-  s.roster.push({ playerNum: 5, name: 'Person 5', active: true });
+  assert.deepEqual(V.eligibleReceivers(s, input(s)), [1, 2]);
+  assert.equal(V.submit(s, item('free-fallback', 1, 2), input(s, 1)), null);
+  s.roster.push({ playerNum: 3, name: 'Person 3', active: true });
   V.init(s, input(s));
   assert.equal(s.crazy.effectivePlayStyle, 'director');
-  assert.equal(s.crazy.directors.length, 2);
+  assert.equal(s.crazy.directors.length, 1);
   assert.ok(s.crazy.directors.every(num => s.roster.some(player => player.playerNum === num && player.active !== false)));
 });
 

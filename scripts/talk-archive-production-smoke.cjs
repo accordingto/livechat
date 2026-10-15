@@ -65,7 +65,7 @@ async function run({ env = process.env, fetchImpl = globalThis.fetch, now = Date
     report.step = 'fresh-fixture';
     const emptyArchive = await snapshot(archivePath); check(emptyArchive.value == null); initialized.add(archivePath);
     const state = E.create({ id: initialSession, topic: { question: 'Invent a silly restaurant together.' }, now: now(),
-      roster: seats.map(s => ({ playerNum: s.playerNum, name: 'Archive QA ' + s.playerNum })), gameMode: 'crazy',
+      roster: seats.map(s => ({ playerNum: s.playerNum, name: 'Archive QA ' + s.playerNum })), gameMode: 'crazy', crazyPlayStyle: 'free',
       crazySource: 'players', crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyTaskSeconds: 30, gameSeconds: 900, conversationMode: 'free' });
     for (const num of [0, 1, 2]) {
       const path = node(num), before = await snapshot(path); check(before.value == null);
@@ -128,7 +128,7 @@ async function run({ env = process.env, fetchImpl = globalThis.fetch, now = Date
       check(E.list(card.talk.crazy.library).some(entry => entry.id === unusedCard.id && entry.text === 'Say meow in a sad voice.') === (num === 1));
     }
     report.step = 'cross-session-vault';
-    await command(0, 'newTopic', { confirm: true, topic: { question: 'Invent a funny pet together.' }, gameMode: 'crazy', mode: 'think', seconds: 45, showStarters: true, conversationMode: 'free', crazySeconds: 120, gameSeconds: 900, crazyTaskSeconds: 30, crazySource: 'players', crazyMinSeconds: 300, crazyMaxSeconds: 300 });
+    await command(0, 'newTopic', { confirm: true, topic: { question: 'Invent a funny pet together.' }, gameMode: 'crazy', crazyPlayStyle: 'free', mode: 'think', seconds: 45, showStarters: true, conversationMode: 'free', crazySeconds: 120, gameSeconds: 900, crazyTaskSeconds: 30, crazySource: 'players', crazyMinSeconds: 300, crazyMaxSeconds: 300 });
     const fresh = await current(); check(fresh.sessionId !== initialSession && fresh.phase === 'thinking' && fresh.scores[2] === 0);
     const freshAuthor = (await snapshot(node(1))).value, freshRecipient = (await snapshot(node(2))).value;
     check(E.list(freshAuthor.talk.crazy.library).some(entry => entry.id === unusedCard.id && entry.text === 'Say meow in a sad voice.'));

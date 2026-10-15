@@ -8,7 +8,7 @@ const copy = value => JSON.parse(JSON.stringify(value));
 const topic = { title: 'Our silly cafe', question: 'What should we serve together?' };
 const roster = [1, 2, 3].map(playerNum => ({ playerNum, name: ['Alice', 'Bo', 'Chloe'][playerNum - 1] }));
 const create = (extra = {}) => E.create({ id: 'archive-membership-session', now: 1000, topic, roster,
-  sharedControls: true, gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
+  sharedControls: true, gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free',
   gameSeconds: 60, crazyTaskSeconds: 30, crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyMaxActive: 2, ...extra });
 let sequence = 0;
 const command = (s, type, actor = 0, extra = {}) => ({ id: 'archive-membership-action-' + ++sequence, type, actor,
@@ -158,7 +158,7 @@ test('fresh creation and topic changes preserve away and pending roster flags al
   assert.equal(records(fresh)[0].id, records(s)[0].id); assert.equal(records(fresh)[0].status, 'cancelled');
   assert.equal(records(fresh)[0].version, 2); assert.equal(records(fresh)[0].closedAt, 3000);
   let next = act(s, 'newTopic', 0, { confirm: true, topic: { title: 'Next shared cafe', question: 'What name should we choose together?' },
-    gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', mode: 'think', seconds: 45, showStarters: true, now: 3000 });
+    gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free', mode: 'think', seconds: 45, showStarters: true, now: 3000 });
   assert.equal(next.replies[0].error, ''); assert.deepEqual(next.roster, flaggedRoster);
   assert.deepEqual(records(next), records(fresh)); assert.notEqual(next.sessionId, s.sessionId); assert.deepEqual(s, before);
   const closed = copy(records(next));

@@ -167,16 +167,17 @@ var TALK_UI = (() => {
     missionPlaceholder: ['例如：學雞叫。／說「我愛上我的杯子了」。', 'Try: Cluck like a chicken. / Say “I’m in love with my cup.”'],
     missionSend: ['送出任務', 'Send challenge'], missionSent: ['已送出，系統會優先安排。', 'Sent. Your challenge takes priority.'],
     missionQueuedCount: ['你有 {n} 張卡等待派發', 'Your cards waiting: {n}'],
-    crazyPlayStyle: ['任務玩法', 'Challenge style'], crazyStyleFree: ['自由互派', 'Free play'], crazyStyleDirector: ['導演模式（至少 5 人）', 'Director mode (5+ players)'],
+    crazyPlayStyle: ['任務玩法', 'Challenge style'], crazyStyleFree: ['自由互派', 'Free play'], crazyStyleDirector: ['導演模式（至少 3 人）', 'Director mode (3+ players)'],
     crazyAdvanced: ['更多任務設定', 'More challenge settings'], crazyMaxActive: ['同時任務人數', 'Active challenges'], crazyRotation: ['導演輪替', 'Director rotation'], rotationChoice: ['{n} 分鐘', '{n} minutes'],
-    crazyDirectorHint: ['導演寫任務，其他人接招；導演會輪流換人。', 'Directors write challenges; the others act them out. Directors rotate.'],
-    directorNeedsPlayers: ['導演模式至少需要 5 位參與者。', 'Director mode needs at least 5 participants.'],
+    crazyDirectorHint: ['3 人：1 位導演、2 位演員；4 人起：2 位導演，其餘接招。導演會輪替。', 'With 3 players: 1 director and 2 actors. With 4+: 2 directors; the rest act. Directors rotate.'],
+    directorNeedsPlayers: ['導演模式至少需要 3 位參與者。', 'Director mode needs at least 3 participants.'],
     invalid_crazy_max_active: ['同時任務人數請填 1–9。', 'Choose 1–9 active challenges.'], invalid_crazy_rotation: ['請選擇導演輪替時間。', 'Choose a director rotation interval.'],
     crazyDirector: ['你是導演', 'You are a director'], crazyActor: ['你是演員，先一起聊', 'You are an actor. Keep chatting'],
     receiverReady: ['可以接任務', 'Ready'], receiverBusy: ['正在做任務', 'On a challenge'], receiverResting: ['休息中', 'Taking a breather'], receiverPaused: ['暫停接任務', 'Receiving paused'],
     connectionOffline: ['離線', 'Offline'], connectionUnknown: ['連線未知', 'Connection unknown'], connectionOnline: ['在線', 'Online'],
     receivePause: ['先暫停接任務', 'Pause receiving'], receiveResume: ['繼續接任務', 'Resume receiving'], receivingTitle: ['接任務狀態', 'Receiving status'],
     crazyReminder: ['這張任務還在，找到時機就試試看。', 'Your challenge is still here. Try it when you find your moment.'],
+    crazyCheckIn: ['你還在嗎？', 'Still here?'], crazyHere: ['我在，繼續接任務', 'I’m here. Keep them coming'],
     crazyOffer: ['另一張任務', 'Another challenge'], crazyOfferHint: ['可以換成這張，或保留原任務。', 'Switch to this challenge, or keep the current one.'], crazyReplace: ['換這張', 'Replace mine'], crazyKeep: ['保留原任務', 'Keep mine'],
     stageDecision: ['這一局到時間了', 'Time to choose'], stageExtension: ['繼續玩一會兒', 'Keep playing'], stageDraining: ['把手上的任務玩完', 'Finish the remaining challenges'], stageSorting: ['整理這一局的卡片', 'Sort your challenges'], stageReveal: ['一起回顧', 'Shared recap'],
     stageSummary: ['待派 {queued} · 進行中 {pending} · 暫時無法派發 {blocked}', 'Queued {queued} · Active {pending} · Waiting {blocked}'],
@@ -238,7 +239,7 @@ var TALK_UI = (() => {
     const ranked = list(s.roster).map(p => ({ ...p, score: Number(list(s.scores).find(v => v.playerNum === p.playerNum)?.score) || 0 })).sort((a,b) => b.score - a.score || a.playerNum - b.playerNum);
     return `<section class="talk-scoreboard"><h3>${esc(t('roundScores'))}</h3><ol>${ranked.map(p => `<li${p.playerNum === me ? ' class="is-you"' : ''}><span>${esc(p.name || name(s,p.playerNum))}${p.playerNum === me ? ` <small>${esc(t('participantYou'))}</small>` : ''}</span><strong>${esc(t('scorePoints',{n:p.score}))}</strong></li>`).join('')}</ol></section>`;
   }
-  const crazyAction = type => ['crazyDone', 'crazySkip', 'crazyReplace', 'crazyKeep'].includes(type);
+  const crazyAction = type => ['crazyDone', 'crazySkip', 'crazyReplace', 'crazyKeep', 'crazyHere'].includes(type);
   const vnext = s => s.gameMode === 'crazy' && !!s.crazy?.roundStage;
   const isDirector = s => s.crazy?.role === 'director';
   const isActor = s => (s.crazy?.effectivePlayStyle || s.crazy?.playStyle) === 'director' && !isDirector(s);
@@ -256,7 +257,8 @@ var TALK_UI = (() => {
       <div class="talk-crazy-heading"><strong>${esc(t(prompt.kind === 'task' ? 'taskKind' : 'lineKind'))}</strong><span>${esc(t('crazyPrivate'))}</span></div>
       <blockquote aria-live="polite">${esc(prompt.text)}</blockquote><p>${esc(t(prompt.kind === 'task' ? 'crazyTaskHint' : 'crazySayHint'))}</p>
       <div class="talk-actions">${button('crazyDone','crazyDone',`data-prompt-id="${esc(prompt.id)}"`,true)}${button('crazySkip','crazySkip',`data-prompt-id="${esc(prompt.id)}"`)}</div>
-      ${prompt.reminder ? `<small class="talk-crazy-reminder" role="status">${esc(t('crazyReminder'))}</small>` : ''}
+      ${Number(prompt.checkInAt) > 0 || prompt.checkIn === true ? `<div class="talk-crazy-check-in" data-talk-check-in role="status" aria-live="polite"${prompt.checkIn ? '' : ' hidden'}><p>${esc(t('crazyCheckIn'))}</p>${button('crazyHere','crazyHere',`data-prompt-id="${esc(prompt.id)}" data-render-version="${esc(prompt.renderVersion || 1)}"`)}</div>` : ''}
+      ${prompt.reminder ? `<small class="talk-crazy-reminder" data-talk-mission-reminder role="status"${prompt.checkIn ? ' hidden' : ''}>${esc(t('crazyReminder'))}</small>` : ''}
       ${s.crazy.offer ? `<section class="talk-crazy-offer"><strong>${esc(t('crazyOffer'))}</strong><p>${esc(s.crazy.offer.newCard?.text || s.crazy.offer.text || '')}</p><small>${esc(t('crazyOfferHint'))}</small><div class="talk-actions">${button('crazyReplace','crazyReplace',`data-prompt-id="${esc(s.crazy.offer.promptId || prompt.id)}" data-offer-id="${esc(s.crazy.offer.offerId || s.crazy.offer.id)}"`,true)}${button('crazyKeep','crazyKeep',`data-prompt-id="${esc(s.crazy.offer.promptId || prompt.id)}" data-offer-id="${esc(s.crazy.offer.offerId || s.crazy.offer.id)}"`)}</div></section>` : ''}
       ${s.crazy.paused ? `<small>${esc(t('crazyPaused'))}</small>` : ''}
     </section>`;
@@ -304,7 +306,7 @@ var TALK_PLAYER = (() => {
   const editorState = s => ({ ...editTopic(s.topic), source: topicById(s.topic.id) ? 'library' : 'custom', topicId: s.topic.id || '', category: '', search: '',
     mode: s.mode === 'write' ? 'write' : 'think', seconds: Number(s.seconds) || 45, gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
     conversationMode: s.conversationMode || 'random', crazySource: s.crazy?.source || 'mixed',
-    crazyMaxActive: Number(s.crazy?.maxActive) || 3, crazyPlayStyle: s.crazy?.playStyle || 'free', crazyRotationSeconds: Number(s.crazy?.rotationSeconds) || 240,
+    crazyMaxActive: Number(s.crazy?.maxActive) || 3, crazyPlayStyle: s.crazy?.playStyle || 'director', crazyRotationSeconds: Number(s.crazy?.rotationSeconds) || 240,
     playerCount: list(s.roster).filter(p => p.active !== false && p.pending !== true).length,
     gameMinutes: (Number(s.gameSeconds) || 900) / 60, crazyTaskMinutes: (Number(s.crazy?.taskSeconds) || Number(s.crazyTaskSeconds) || 150) / 60,
     crazyMinSeconds: Number(s.crazy?.minSeconds) || (s.crazy?.intervalSeconds ? Math.round(s.crazy.intervalSeconds * .8) : 60),
@@ -331,7 +333,7 @@ var TALK_PLAYER = (() => {
       '<label class="talk-field">' + esc(t('gameDuration')) + '<input type="number" data-talk-editor-field="gameMinutes" min="1" max="60" step="any" inputmode="decimal" value="' + esc(editor.gameMinutes) + '"></label>' +
       select('gameMode', 'gameMode', option('normal', t('normalMode'), editor.gameMode) + option('crazy', t('crazyMode'), editor.gameMode)) +
       select('conversationMode', 'conversationMode', ['assigned', 'random', 'free'].map(mode => option(mode, t(mode + 'Mode'), editor.conversationMode)).join('')) +
-      (editor.gameMode === 'crazy' ? select('crazyPlayStyle','crazyPlayStyle',option('free',t('crazyStyleFree'),editor.crazyPlayStyle) + option('director',t('crazyStyleDirector'),editor.crazyPlayStyle)) + '<details class="talk-details"><summary>' + esc(t('crazyAdvanced')) + '</summary><div class="talk-card-editor"><label class="talk-field">' + esc(t('crazyMaxActive')) + '<input type="number" data-talk-editor-field="crazyMaxActive" min="1" max="9" step="1" value="' + esc(editor.crazyMaxActive) + '"></label>' + select('crazyRotation','crazyRotationSeconds',Array.from(new Set([120,240,360,Number(editor.crazyRotationSeconds)])).sort((a,b)=>a-b).map(n => option(n,t('rotationChoice',{n:n / 60}),editor.crazyRotationSeconds)).join('')) : '') +
+      (editor.gameMode === 'crazy' ? select('crazyPlayStyle','crazyPlayStyle',option('director',t('crazyStyleDirector'),editor.crazyPlayStyle) + option('free',t('crazyStyleFree'),editor.crazyPlayStyle)) + '<p class="talk-soft">' + esc(t('crazyDirectorHint')) + '</p><details class="talk-details"><summary>' + esc(t('crazyAdvanced')) + '</summary><div class="talk-card-editor"><label class="talk-field">' + esc(t('crazyMaxActive')) + '<input type="number" data-talk-editor-field="crazyMaxActive" min="1" max="9" step="1" value="' + esc(editor.crazyMaxActive) + '"></label>' + select('crazyRotation','crazyRotationSeconds',Array.from(new Set([120,240,360,Number(editor.crazyRotationSeconds)])).sort((a,b)=>a-b).map(n => option(n,t('rotationChoice',{n:n / 60}),editor.crazyRotationSeconds)).join('')) : '') +
       (editor.gameMode === 'crazy' ? select('crazySource', 'crazySource', ['system', 'players', 'mixed'].map(source => option(source, t('crazySource' + source[0].toUpperCase() + source.slice(1)), editor.crazySource)).join('')) : '') +
       (editor.gameMode === 'crazy' ? '<div class="talk-interval-settings"><span>' + esc(t('crazyInterval')) + '</span><div class="talk-settings-row">' + ['Min','Max'].map(bound => '<label class="talk-field">' + esc(t('crazy' + bound + 'Seconds')) + '<input type="number" data-talk-editor-field="crazy' + bound + 'Seconds" min="5" max="300" step="1" inputmode="numeric" value="' + esc(editor['crazy' + bound + 'Seconds']) + '"></label>').join('') + '</div><p class="talk-soft">' + esc(t('crazyScheduleHint')) + '</p></div>' : '') +
       (editor.gameMode === 'crazy' ? '<label class="talk-field">' + esc(t('crazyTaskDuration')) + '<input type="number" data-talk-editor-field="crazyTaskMinutes" min="0.5" max="5" step="any" inputmode="decimal" value="' + esc(editor.crazyTaskMinutes) + '"></label>' : '') +
@@ -356,7 +358,7 @@ var TALK_PLAYER = (() => {
       this.element = element; this.send = send; this.nameBanner = nameBanner; this.now = now; this.connected = connected;
       this.sendTechnical = sendTechnical; this.identity = identity; this.storage = storage; this.draftKey = null; this.technicalAck = null; this.technicalFrame = null;
       this.pending = null; this.error = ''; this.draft = ''; this.data = null; this.composing = false; this.settledActions = new Set();
-      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = false; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
+      this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = true; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
       this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
       this.roundClockVisible = false; this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.clickHandler = event => {
@@ -421,9 +423,9 @@ var TALK_PLAYER = (() => {
               const crazyMaxActive = Number(this.editor.crazyMaxActive), crazyRotationSeconds = Number(this.editor.crazyRotationSeconds);
               if (this.editor.gameMode === 'crazy' && (!Number.isInteger(crazyMaxActive) || crazyMaxActive < 1 || crazyMaxActive > 9)) throw new Error('invalid_crazy_max_active');
               if (this.editor.gameMode === 'crazy' && (!Number.isInteger(crazyRotationSeconds) || crazyRotationSeconds < 60 || crazyRotationSeconds > 900)) throw new Error('invalid_crazy_rotation');
-              if (this.editor.gameMode === 'crazy' && this.editor.crazyPlayStyle === 'director' && this.editor.playerCount < 5) throw new Error('directorNeedsPlayers');
+              if (this.editor.gameMode === 'crazy' && this.editor.crazyPlayStyle === 'director' && this.editor.playerCount < 3) throw new Error('directorNeedsPlayers');
               if (!validInterval) { crazyMinSeconds = 60; crazyMaxSeconds = 180; }
-              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameSeconds, crazyTaskSeconds: crazyTaskSeconds >= 30 && crazyTaskSeconds <= 300 ? crazyTaskSeconds : 150, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, crazyMaxActive:crazyMaxActive || 3, crazyRotationSeconds:crazyRotationSeconds || 240, crazyPlayStyle:this.editor.crazyPlayStyle || 'free', conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
+              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameSeconds, crazyTaskSeconds: crazyTaskSeconds >= 30 && crazyTaskSeconds <= 300 ? crazyTaskSeconds : 150, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, crazyMaxActive:crazyMaxActive || 3, crazyRotationSeconds:crazyRotationSeconds || 240, crazyPlayStyle:this.editor.crazyPlayStyle || 'director', conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
               this.confirmation = 'topic'; this.error = '';
             } catch (error) { this.error = error.message; }
           }
@@ -435,6 +437,7 @@ var TALK_PLAYER = (() => {
         this.act(type === 'forceEnd' ? 'end' : type, {
           ...(b.dataset.target ? { target: b.dataset.target } : {}),
           ...(b.dataset.promptId ? { promptId: b.dataset.promptId } : {}),
+          ...(type === 'crazyHere' ? { renderVersion: Number(b.dataset.renderVersion) || 1 } : {}),
           ...(b.dataset.offerId ? { offerId: b.dataset.offerId } : {}),
           ...(type === 'addTime' ? { seconds: 60 } : {}),
           ...(type === 'exclude' ? { playerNum: Number(b.dataset.player), active: b.dataset.active === 'true' } : {}),
@@ -494,7 +497,7 @@ var TALK_PLAYER = (() => {
     update(data) {
       const draftKey = this.storageKey(data);
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId || this.draftKey !== draftKey;
-      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = false; this.assignmentSelection = null; this.pending = null; this.technicalAck = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
+      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = true; this.assignmentSelection = null; this.pending = null; this.technicalAck = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
         this.draftKey = draftKey;
         try { const saved = draftKey && JSON.parse(this.storage?.getItem(draftKey) || 'null'); if (saved && typeof saved.text === 'string') this.crazyDraft = { target: String(saved.target || 'random'), text: saved.text.slice(0,120), kind: 'task' }; } catch (_) {}
       }
@@ -724,6 +727,14 @@ var TALK_PLAYER = (() => {
         if (input.disabled !== disabled) input.disabled = disabled;
       });
       this.element.querySelectorAll('[data-talk-sort-card]').forEach(input => { input.disabled = offline || hostAway || !!this.pending; });
+      const checkIn = this.element.querySelector('[data-talk-check-in]');
+      if (checkIn && !this.assignmentSelection) {
+        const prompt = s.crazy?.prompt, due = Number(prompt?.checkInAt);
+        checkIn.hidden = s.gameMode !== 'crazy' || prompt?.status !== 'pending' || promptExpired
+          || !(due > 0 ? now >= due : prompt?.checkIn === true);
+      }
+      const reminder = this.element.querySelector('[data-talk-mission-reminder]');
+      if (reminder && !this.assignmentSelection) reminder.hidden = !!checkIn && !checkIn.hidden;
       const clock = this.element.querySelector('[data-talk-clock]');
       if (clock) clock.textContent = t('secondsLeft', { n: Math.max(0, Math.ceil((s.deadline - now) / 1000)) });
       const roundClock = this.element.querySelector('[data-talk-round-clock]');

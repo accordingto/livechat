@@ -49,7 +49,7 @@ function fixture() {
   let clock = 1000, sequence = 0;
   const original = E.create({ id: 'archive-service-session', roster: seats.map(({ playerNum }) => ({ playerNum, name: 'Synthetic ' + playerNum })),
     topic: { title: 'Space cafe', question: 'What should our space cafe sell?' }, now: clock,
-    gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', crazyMinSeconds: 5, crazyMaxSeconds: 5,
+    gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free', crazyMinSeconds: 5, crazyMaxSeconds: 5,
     crazyTaskSeconds: 30, gameSeconds: 300 });
   db.set(canonical, { state: original, revision: 1, owner: 'old-browser' });
   for (const seat of seats) db.set(path(seat.playerNum), E.view(original, seat.playerNum, clock));
@@ -70,7 +70,7 @@ function fixture() {
 }
 const newTopic = {
   confirm: true, topic: { title: 'Tiny hotel', question: 'What does our tiny hotel need?' }, mode: 'think', seconds: 45,
-  gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', crazyMinSeconds: 5, crazyMaxSeconds: 5,
+  gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free', crazyMinSeconds: 5, crazyMaxSeconds: 5,
   gameSeconds: 300, crazyTaskSeconds: 30, showStarters: true
 };
 const unpersisted = f => E.archiveEntries(f.state());
@@ -180,7 +180,7 @@ test('release, fresh create and changed-roster registration preserve history and
     await f.service.release({ capsule: raw.executor.capsule, token: f.controlToken });
     const released = f.db.get(f.canonical);
     const fresh = E.create({ id: 'new-roster-session', topic: newTopic.topic, roster: newerSeats.map(({ playerNum }) => ({ playerNum, name: 'New synthetic ' + playerNum })),
-      now: f.now(), gameMode: 'crazy', crazySource: 'players', challengeArchive: released.state.challengeArchive });
+      now: f.now(), gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', challengeArchive: released.state.challengeArchive });
     newSession = fresh.sessionId;
     f.db.set(f.canonical, { ...released, state: fresh, revision: released.revision + 1 });
     for (const seat of newerSeats) f.db.set(newerPath(seat.playerNum), E.view(fresh, seat.playerNum, f.now()));

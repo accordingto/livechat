@@ -51,7 +51,7 @@ async function fixture(options = {}) {
   const original = E.create({
     id: 'archive-membership-session', roster: seats.map(s => ({ playerNum: s.playerNum, name: 'Synthetic ' + s.playerNum })),
     topic: { title: 'Synthetic cafe', question: 'What should our imaginary cafe sell?' }, now: clock,
-    gameMode: 'crazy', crazySource: 'players', conversationMode: 'free',
+    gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free',
     crazyMinSeconds: 5, crazyMaxSeconds: 5, crazyTaskSeconds: 30, gameSeconds: 300, ...options
   });
   db.set(canonical, { state: original, revision: 1 });

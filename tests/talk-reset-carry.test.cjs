@@ -7,7 +7,7 @@ const owner = 'a'.repeat(64);
 const roster = [1, 2, 3].map(playerNum => ({ playerNum, name: 'Person ' + playerNum }));
 function create(id = 'reset-old', extra = {}) {
   return E.create({ id, now: 1000, topic: { question: 'Invent a silly cafe.' }, roster,
-    gameMode: 'crazy', crazySource: 'players', conversationMode: 'free', crazyIdentities: { 1: owner }, ...extra });
+    gameMode: 'crazy', crazyPlayStyle: 'free', crazySource: 'players', conversationMode: 'free', crazyIdentities: { 1: owner }, ...extra });
 }
 let serial = 0;
 const act = (s, type, actor, extra = {}) => E.apply(s, { id: 'reset-' + ++serial, type, actor,

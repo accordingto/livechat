@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=vnext-3">
+  <link rel="stylesheet" href="talk.css?v=vnext-4">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="talk-page">
@@ -31,7 +31,7 @@
           <label class="talk-field"><span data-i18n="talk.gameMode">玩法</span><select id="talk-game-mode"><option value="normal" data-i18n="talk.normalMode">Let's Talk</option><option value="crazy" data-i18n="talk.crazyMode">Crazy Talk</option></select></label>
           <label class="talk-field"><span data-i18n="talk.conversationMode">談話方式</span><select id="talk-conversation-mode"><option value="assigned" data-i18n="talk.assignedMode">依序輪流</option><option value="random" selected data-i18n="talk.randomMode">隨機點名</option><option value="free" data-i18n="talk.freeMode">自由談話</option></select></label>
           <label class="talk-field"><span data-i18n="talk.gameDuration">遊戲時間（分鐘）</span><input id="talk-game-seconds" type="number" inputmode="decimal" min="1" max="60" step="any" value="15" required aria-describedby="talk-duration-error"></label>
-          <label id="talk-crazy-play-style-field" class="talk-field" hidden><span data-i18n="talk.crazyPlayStyle">任務玩法</span><select id="talk-crazy-play-style"><option value="free" data-i18n="talk.crazyStyleFree">自由互派</option><option value="director" data-i18n="talk.crazyStyleDirector">導演模式（至少 5 人）</option></select></label>
+          <label id="talk-crazy-play-style-field" class="talk-field" hidden><span data-i18n="talk.crazyPlayStyle">任務玩法</span><select id="talk-crazy-play-style"><option value="director" data-i18n="talk.crazyStyleDirector">導演模式（至少 3 人）</option><option value="free" data-i18n="talk.crazyStyleFree">自由互派</option></select></label>
           <p id="talk-crazy-style-hint" class="talk-soft" hidden></p>
           <p id="talk-duration-error" class="talk-feedback" role="status"></p>
           <p id="talk-mode-hint" class="talk-soft"></p>
@@ -171,14 +171,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="talk-settings.js?v=vnext-3"></script>
+  <script src="talk-settings.js?v=vnext-4"></script>
   <script src="talk-crazy.js?v=talk-selector-1"></script>
-  <script src="talk-vnext.js?v=vnext-3"></script>
-  <script src="talk-engine.js?v=vnext-3"></script>
+  <script src="talk-vnext.js?v=vnext-4"></script>
+  <script src="talk-engine.js?v=vnext-4"></script>
   <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-ui.js?v=vnext-3"></script>
-  <script src="talk-sync.js?v=vnext-3"></script>
+  <script src="talk-ui.js?v=vnext-4"></script>
+  <script src="talk-sync.js?v=vnext-4"></script>
   <script src="hub-executor.js?v=life-story-1"></script><script>HUB_EXECUTOR.install();</script>
-  <script src="talk-host.js?v=vnext-3"></script>
+  <script src="talk-host.js?v=vnext-4"></script>
 </body>
 </html>

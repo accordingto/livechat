@@ -215,7 +215,7 @@ test('Normal turn requests keep their stale-turn reset while Crazy requests reta
 
 test('Real engine projections render no other player line and host receives only safe counts', () => {
   let state = E.create({ id: 'private-ui', topic: { question: 'What should our cafe sell?' },
-    gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5, roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
+    gameMode: 'crazy', crazyPlayStyle:'free', crazyMinSeconds: 5, crazyMaxSeconds: 5, roster: [{ playerNum: 1, name: 'Alex' }, { playerNum: 2, name: 'Sam' }], now: 1000 });
   const command = (type, extra = {}) => { state = E.apply(state, { type, id: 'ui-' + type + '-' + (extra.now || 0), actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: 2000, seed: 782, ...extra }); };
   command('start'); command('crazyTick', { now: 7000 }); command('crazyTick', { now: 12000 });
   const own = E.view(state, 2, 2000), other = E.view(state, 1, 2000), host = E.view(state, 0, 2000), f = fixture();
@@ -330,7 +330,7 @@ test('new topic preview and custom settings stay local through updates until exp
     f.editorField('source', 'custom', 'change');
     f.editorField('question', '<img src=x onerror="boom"> What can we imagine?');
     f.editorField('title', 'Our next idea'); f.editorField('starter', 'Imagine freely.'); f.editorField('followUps', 'Who would join?\nWhat next?');
-    f.editorField('mode', 'write', 'change'); f.editorField('seconds', '30', 'change'); f.editorField('gameMode', 'crazy', 'change');
+    f.editorField('mode', 'write', 'change'); f.editorField('seconds', '30', 'change'); f.editorField('gameMode', 'crazy', 'change'); f.editorField('crazyPlayStyle', 'free', 'change');
     f.editorField('crazyMinSeconds', '60', 'change'); f.editorField('crazyMaxSeconds', '180', 'change'); f.editorField('showStarters', true, 'change');
     f.update(shared({ interests: [{ playerNum: 1, until: 8000 }] }));
     assert.match(f.element.innerHTML, /&lt;img src=x onerror=&quot;boom&quot;&gt;/); assert.doesNotMatch(f.element.innerHTML, /<img/);
@@ -452,7 +452,7 @@ test('thinking and paused cards can enqueue; a departed chosen recipient returns
 
 test('shared range fields stay visible for player-only missions and invalid ranges cannot open a topic', () => {
  const f=fixture();try {
-  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');f.editorField('crazySource','players','change');
+  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');f.editorField('crazyPlayStyle','free','change');f.editorField('crazySource','players','change');
   assert.match(f.element.innerHTML,/data-talk-editor-field="crazyMinSeconds"/);assert.match(f.element.innerHTML,/data-talk-editor-field="crazyMaxSeconds"/);
   for(const [min,max] of [[4,10],[30,20],[5,301],[5.5,10]]) {
    f.editorField('crazyMinSeconds',String(min),'change');f.editorField('crazyMaxSeconds',String(max),'change');f.click('openTopic');
@@ -467,7 +467,7 @@ test('shared range fields stay visible for player-only missions and invalid rang
 test('switching back to Normal Talk cannot publish an invalid hidden Crazy range', async () => {
  const sent=[],f=fixture(async command=>sent.push(clone(command)));
  try {
-  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');
+  f.update(shared());f.click('settings');f.editorField('gameMode','crazy','change');f.editorField('crazyPlayStyle','free','change');
   f.editorField('crazyMinSeconds','30','change');f.editorField('crazyMaxSeconds','20','change');
   f.editorField('gameMode','normal','change');f.click('openTopic');assert.equal(f.card.confirmation,'topic');
   f.click('confirmTopic');await flush();
@@ -515,7 +515,7 @@ test('shared player can add one minute with a server command and duration settin
   const talk=shared({gameSeconds:900,gameDeadline:901000,actions:{newTopic:true,addTime:true,finish:true}});
   f.update(talk);f.click('addTime');await flush();assert.equal(sent[0].type,'addTime');assert.equal(sent[0].seconds,60);assert.equal(sent[0].actor,undefined);
   f.update({...talk,reply:{id:sent[0].id,error:''}});f.click('settings');f.editorField('source','custom','change');f.editorField('question','Which sandwich should we invent?');
-  f.editorField('gameMode','crazy','change');f.editorField('gameMinutes','15','change');f.editorField('crazyTaskMinutes','2.5','change');f.click('openTopic');f.click('confirmTopic');await flush();
+  f.editorField('gameMode','crazy','change');f.editorField('crazyPlayStyle','free','change');f.editorField('gameMinutes','15','change');f.editorField('crazyTaskMinutes','2.5','change');f.click('openTopic');f.click('confirmTopic');await flush();
   assert.equal(sent[1].gameSeconds,900);assert.equal(sent[1].crazyTaskSeconds,150);
  }finally{f.card.destroy();}
 });
@@ -524,7 +524,7 @@ test('invalid round or task lengths keep a new topic local and give clear feedba
  const f=fixture();try {
   f.update(shared());f.click('settings');f.editorField('source','custom','change');f.editorField('question','What should we build?');
   for(const value of ['0','61','abc']) {f.editorField('gameMinutes',value,'change');f.click('openTopic');assert.equal(f.card.confirmation,null);assert.equal(f.card.error,'invalid_game_seconds');}
-  f.editorField('gameMinutes','15','change');f.editorField('gameMode','crazy','change');
+  f.editorField('gameMinutes','15','change');f.editorField('gameMode','crazy','change');f.editorField('crazyPlayStyle','free','change');
   for(const value of ['0','5.1','abc']) {f.editorField('crazyTaskMinutes',value,'change');f.click('openTopic');assert.equal(f.card.confirmation,null);assert.equal(f.card.error,'invalid_crazy_task_seconds');}
  }finally{f.card.destroy();}
 });
@@ -656,7 +656,7 @@ test('explicitly away Crazy recipients are omitted from selectors while a newcom
     assert.match(f.element.innerHTML, /<option value="3"/); assert.doesNotMatch(f.element.innerHTML, /<option value="1"/);
   } finally { f.card.destroy(); }
 });
-test('handwritten composer is folded and follows the current mission and topic before secondary room controls', () => {
+test('handwritten composer starts expanded and follows the current mission and topic before secondary room controls', () => {
   const f = fixture();
   try {
     for (const currentPrompt of [prompt(), null, prompt({ status: 'done' })]) {
@@ -672,7 +672,7 @@ test('handwritten composer is folded and follows the current mission and topic b
         assert.ok(html.indexOf(markers[i - 1]) >= 0, markers[i - 1] + ' must exist');
         assert.ok(html.indexOf(markers[i - 1]) < html.indexOf(markers[i]), markers[i - 1] + ' should precede ' + markers[i]);
       }
-      assert.equal(f.element.querySelector('.talk-assignment').open, false);
+      assert.equal(f.element.querySelector('.talk-assignment').open, true);
       if (currentPrompt?.status === 'pending') assert.ok(html.indexOf('talk-crazy-prompt') < html.indexOf('talk-player-topic'));
       else assert.ok(html.indexOf('talk-crazy-wait') > html.indexOf('data-talk-card-footer'));
       assert.ok(html.indexOf('talk-queue-count') > html.indexOf('data-talk-card-footer'));
@@ -681,7 +681,7 @@ test('handwritten composer is folded and follows the current mission and topic b
     f.update({ ...crazy({ source: 'mixed', canAssign: true }), revision: 2 });
     assert.equal(f.element.querySelector('.talk-assignment').open, false);
     f.update({ ...crazy({ source: 'mixed', canAssign: true }), sessionId: 'fresh-composer' });
-    assert.equal(f.element.querySelector('.talk-assignment').open, false);
+    assert.equal(f.element.querySelector('.talk-assignment').open, true);
   } finally { f.card.destroy(); }
 });
 
@@ -774,7 +774,7 @@ test('verified bearer/session scope restores only its own unsent task text and t
   const first=fixture(undefined,{identity,storage});
   first.update(vnextTalk()); first.assignmentField('target','1','change'); first.assignmentField('text','Give the spoon a silly job.'); first.card.destroy();
   const restored=fixture(undefined,{identity,storage});
-  try { restored.update(vnextTalk(),{name:'A renamed person'}); assert.equal(restored.card.crazyDraft.text,'Give the spoon a silly job.'); assert.equal(restored.card.crazyDraft.target,'1'); assert.equal(restored.node('.talk-assignment').open,false); } finally {restored.card.destroy();}
+  try { restored.update(vnextTalk(),{name:'A renamed person'}); assert.equal(restored.card.crazyDraft.text,'Give the spoon a silly job.'); assert.equal(restored.card.crazyDraft.target,'1'); assert.equal(restored.node('.talk-assignment').open,true); } finally {restored.card.destroy();}
   for(const next of [{...identity,token:'2'.repeat(32)},{...identity,room:'OTHER123'},{...identity,verified:false}]) {
     const other=fixture(undefined,{identity:next,storage});
     try {other.update(vnextTalk());assert.equal(other.card.crazyDraft.text,'');} finally {other.card.destroy();}
@@ -887,6 +887,61 @@ test('round decisions expose only projected host/delegate actions and receiving 
     f.click('crazyExtend');await flush();assert.equal(sent[0].seconds,180);assert.equal(sent[0].sessionId,'ui-topic');
     f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,receiverStatus:{paused:true}}});f.click('crazyReceive');await flush();assert.equal(sent[1].paused,false);
   } finally {f.card.destroy();}
+});
+
+test('new Crazy editor defaults to director for three players and preserves an explicit free room', () => {
+  const f=fixture();try {
+    f.update(shared({roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'},{playerNum:3,name:'C'}]}));
+    f.click('settings');f.editorField('gameMode','crazy','change');
+    assert.equal(f.card.editor.crazyPlayStyle,'director');assert.match(f.element.innerHTML,/Director mode \(3\+ players\)/);
+    f.click('openTopic');assert.equal(f.card.confirmation,'topic');assert.equal(f.card.topicToOpen.crazyPlayStyle,'director');
+    f.update({...vnextTalk({playStyle:'free'}),sessionId:'explicit-free',hostControls:true,actions:{newTopic:true}});
+    f.click('settings');assert.equal(f.card.editor.crazyPlayStyle,'free');
+  }finally{f.card.destroy();}
+});
+
+test('authoritative check-in time paints a quiet prompt without auto-sending or changing draft, focus or deadline', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const own=prompt({renderVersion:1,rendered:true,reminder:true,checkIn:false,checkInAt:141000,expiresAt:151000});
+    const talk=vnextTalk({prompt:own});f.update(talk);f.assignmentField('text','Keep my next challenge');
+    assert.equal(f.node('[data-talk-check-in]').hidden,true);assert.equal(f.node('[data-talk-mission-reminder]').hidden,false);
+    f.setClock(141000);f.card.paint();
+    assert.equal(f.node('[data-talk-check-in]').hidden,false);assert.equal(sent.length,0);
+    assert.equal(f.node('[data-talk-mission-reminder]').hidden,true);
+    assert.doesNotMatch(f.element.innerHTML,/role="(?:dialog|alertdialog)"|autofocus|data-talk-task-clock/);
+    for(const action of ['crazyDone','crazySkip','crazyHere'])assert.equal(f.buttons().find(b=>b.dataset.talkAction===action).disabled,false);
+    f.click('crazyHere');await flush();assert.equal(sent.length,1);
+    assert.equal(sent[0].type,'crazyHere');assert.equal(sent[0].promptId,own.id);assert.equal(sent[0].renderVersion,1);
+    assert.equal(sent[0].sessionId,talk.sessionId);assert.equal(f.card.data.talk.crazy.prompt.expiresAt,151000);
+    f.update({...talk,turnId:3});assert.equal(f.card.pending.id,sent[0].id,'the exact prompt keeps its request across sharing turns');
+    f.card.deliver();await flush();assert.deepEqual(sent[1],sent[0],'retry retains the frozen check-in receipt');
+    f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,prompt:{...own,checkIn:false,checkInAt:0}}});
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazyHere"/);assert.equal(f.card.crazyDraft.text,'Keep my next challenge');
+    assert.equal(f.focusedAction(),null);assert.equal(f.card.data.talk.crazy.prompt.expiresAt,151000);
+    f.update(talk);f.setClock(151000);f.card.paint();assert.equal(f.node('[data-talk-check-in]').hidden,true);
+    assert.equal(f.buttons().find(b=>b.dataset.talkAction==='crazyHere').disabled,true);
+  }finally{f.card.destroy();}
+});
+
+test('check-in sends to the real engine without extending TTL or awarding points and clears obsolete prompt recovery', async () => {
+  let state=E.create({id:'real-check-in',now:1000,gameMode:'crazy',gameSeconds:300,crazySource:'players',
+    topic:{question:'Build an absurd cafe.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'},{playerNum:3,name:'C'}]});
+  const apply=(type,actor,extra={})=>state=E.apply(state,{type,actor,id:'check-'+type,sessionId:state.sessionId,now:1000,...extra});
+  apply('start',0);apply('crazyAssign',1,{target:2,text:'Ask the spoon to sing.'});
+  const id=state.crazy.prompts[2].id;apply('crazyRendered',2,{promptId:id,renderVersion:1});
+  const sent=[],f=fixture(async command=>{sent.push(clone(command));state=E.apply(state,{...command,actor:2,now:141000});});
+  try {
+    f.setClock(141000);f.card.update(E.view(state,2,141000));assert.equal(f.node('[data-talk-check-in]').hidden,false);
+    f.click('crazyHere');await flush();f.card.update(E.view(state,2,141000));
+    assert.equal(sent.length,1);assert.equal(state.crazy.prompts[2].expiresAt,151000);assert.equal(state.scores[2],0);
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazyHere"/);
+    state=E.apply(state,{type:'clockTick',actor:0,id:'expire-after-here',sessionId:state.sessionId,now:151000});
+    assert.equal(state.crazy.prompts[2].status,'expired');assert.equal(state.crazy.receivers[2].paused,false);
+    const pending={...sent[0],id:'obsolete-here'};
+    f.update(vnextTalk({prompt:prompt({id:'replacement',expiresAt:300000})}),{talkAction:pending});
+    assert.equal(f.card.pending,null);
+  }finally{f.card.destroy();}
 });
 
 test('public recap attributes executed cards and labels unused cards without inventing a skipped outcome', () => {

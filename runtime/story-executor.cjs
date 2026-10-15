@@ -40,7 +40,7 @@ function boundCommand(state, command, ctx) {
   if (!Number.isInteger(actor) || actor !== 0 && !list(state.roster).some(p => p.playerNum === actor)) throw new Error('not_eligible');
   const seed = Number.isFinite(Number(ctx?.seed)) ? Number(ctx.seed) : Number.parseInt(crypto.createHash('sha256').update(String(state.sessionId) + ':' + String(command.id)).digest('hex').slice(0, 8), 16);
   const bound = { ...command, actor, seed, now: now(ctx), onlineNums: online(state, ctx),
-    sessionId: command.sessionId == null ? state.sessionId : command.sessionId,
+    sessionId: command.type === 'crazyHere' ? command.sessionId : command.sessionId == null ? state.sessionId : command.sessionId,
     // Player-written prompts belong to the turn visible when the sender typed
     // them; do not bind an omitted turn to a newer speaker after delivery.
     turnId: command.type === 'crazyAssign' ? command.turnId : command.turnId == null ? state.turnId : command.turnId };
@@ -94,7 +94,7 @@ const adapters = {
     return TALK.apply(state, tick(state, 'clockTick', ctx,
       [state.phase, state.deadline, state.gameDeadline, state.gameSeconds, state.crazy?.schedulerVersion,
         state.crazy?.nextAssignAt, state.crazy?.scheduleSequence, state.crazy?.replacementFor,
-        list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt, p.renderAckAt, p.displayDeadline]),
+        list(state.crazy?.prompts).map(p => [p.id, p.status, p.expiresAt, p.renderAckAt, p.displayDeadline, p.interactedAt, p.hereAt, p.checkInReadyAt]),
         state.crazy?.roundStage, state.crazy?.nextRotateAt || state.crazy?.nextRotationAt, state.crazy?.receivers, state.crazy?.queue?.map?.(p=>p.id), ctx.onlineNums]));
   }),
 };

@@ -5,11 +5,12 @@
   else root.TALK_SETTINGS = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const key = 'lets-talk-settings.v2';
+  const key = 'lets-talk-settings.v3';
+  const legacyKey = 'lets-talk-settings.v2';
   const pendingKey = 'lets-talk-home-settings.pending.v1';
   const defaults = Object.freeze({ gameMode: 'normal', conversationMode: 'random', crazySource: 'mixed',
     crazyMinSeconds: 60, crazyMaxSeconds: 180, gameSeconds: 900, crazyTaskSeconds: 150,
-    crazyMaxActive: 3, crazyPlayStyle: 'free', crazyRotationSeconds: 240, mode: 'think', seconds: 45 });
+    crazyMaxActive: 3, crazyPlayStyle: 'director', crazyRotationSeconds: 240, mode: 'think', seconds: 45 });
   const intervalBounds = Object.freeze({ min: 5, max: 300 });
   function validInterval(min, max) {
     min = Number(min); max = Number(max);
@@ -35,7 +36,7 @@
       conversationMode: ['assigned', 'random', 'free'].includes(value.conversationMode) ? value.conversationMode : defaults.conversationMode,
       crazySource: ['system', 'players', 'mixed'].includes(value.crazySource) ? value.crazySource : defaults.crazySource,
       crazyMaxActive: Number.isInteger(Number(value.crazyMaxActive)) && Number(value.crazyMaxActive) >= 1 && Number(value.crazyMaxActive) <= 9 ? Number(value.crazyMaxActive) : defaults.crazyMaxActive,
-      crazyPlayStyle: value.crazyPlayStyle === 'director' ? 'director' : 'free',
+      crazyPlayStyle: value.crazyPlayStyle === 'free' ? 'free' : defaults.crazyPlayStyle,
       crazyRotationSeconds: Number.isInteger(Number(value.crazyRotationSeconds)) && Number(value.crazyRotationSeconds) >= 60 && Number(value.crazyRotationSeconds) <= 900 ? Number(value.crazyRotationSeconds) : defaults.crazyRotationSeconds,
       crazyMinSeconds: validInterval(min, max) ? min : defaults.crazyMinSeconds,
       crazyMaxSeconds: validInterval(min, max) ? max : defaults.crazyMaxSeconds,
@@ -46,7 +47,17 @@
     };
   }
   function read(storage = typeof localStorage === 'undefined' ? null : localStorage) {
-    try { return normalize(JSON.parse(storage?.getItem(key) || '{}')); } catch (_) { return { ...defaults }; }
+    try {
+      const saved = storage?.getItem(key);
+      if (saved != null) return normalize(JSON.parse(saved));
+      const legacy = JSON.parse(storage?.getItem(legacyKey) || 'null');
+      if (!legacy || typeof legacy !== 'object' || Array.isArray(legacy)) return { ...defaults };
+      // v2 automatically persisted its former free default. Migrate that once;
+      // a deliberate free selection saved in v3 remains authoritative.
+      const migrated = normalize({ ...legacy, crazyPlayStyle: defaults.crazyPlayStyle });
+      try { storage?.setItem(key, JSON.stringify(migrated)); } catch (_) {}
+      return migrated;
+    } catch (_) { return { ...defaults }; }
   }
   function save(value, storage = typeof localStorage === 'undefined' ? null : localStorage) {
     const merged = { ...read(storage), ...value };

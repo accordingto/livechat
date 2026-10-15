@@ -5,7 +5,7 @@ const E = require('../talk-engine.js');
 const { adapters } = require('../runtime/story-executor.cjs');
 const topic = { id: 'round', question: 'How should we build our island?' };
 let sequence = 0;
-const create = (options = {}) => E.create({ id: 'round-session', topic, now: 1000, gameSeconds: 60,
+const create = (options = {}) => E.create({ id: 'round-session', topic, now: 1000, gameSeconds: 60, crazyPlayStyle: 'free',
   roster: [1, 2, 3].map(playerNum => ({ playerNum, name: 'Player ' + playerNum })), ...options });
 const act = (s, type, actor = 0, extra = {}) => E.apply(s, { id: 'round-' + ++sequence,
   actor, type, sessionId: s.sessionId, turnId: s.turnId, now: 2000, seed: 57, ...extra });
@@ -87,7 +87,7 @@ test('expiry wins over same-millisecond addTime and completion, including a repl
 test('new topic after rest resets points and inherits game/task durations unless explicitly changed', () => {
   let s = act(create({ gameSeconds: 601, crazyTaskSeconds: 239, sharedControls: true }), 'start');
   s.scores[2] = 3; s = act(s, 'finish', 1);
-  const options = { confirm: true, topic, mode: 'write', seconds: 30, gameMode: 'crazy', showStarters: false };
+  const options = { confirm: true, topic, mode: 'write', seconds: 30, gameMode: 'crazy', crazyPlayStyle: 'free', showStarters: false };
   s = act(s, 'newTopic', 3, options); assert.equal(s.phase, 'thinking'); assert.equal(s.gameDeadline, 0);
   assert.equal(s.gameSeconds, 601); assert.equal(s.crazy.taskSeconds, 239); assert.deepEqual(s.scores, { 1: 0, 2: 0, 3: 0 });
   for (const extra of [{ gameSeconds: 59 }, { crazyTaskSeconds: 301 }, { gameSeconds: 60.5 }]) {

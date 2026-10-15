@@ -75,7 +75,7 @@ test('Open Mic skips a departed Spotlight without awarding their unfinished sing
 });
 
 test('Talk joins the future queue with zero points and keeps the live topic, clocks, score and private missions', () => {
-  let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy' }), 'start');
+  let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy', crazyPlayStyle: 'free' }), 'start');
   state.scores[2] = 3; state.crazy.prompts[3] = { id: 'private-prompt', text: 'Own secret task', status: 'pending', expiresAt: 100000 };
   require('../talk-vnext.js').init(state,{now:2000});
   const before = structuredClone(state), next = join(TALK, state, { added: [seat4] });
@@ -87,7 +87,7 @@ test('Talk joins the future queue with zero points and keeps the live topic, clo
 });
 
 test('Talk departure removes the absent speaker and questions, cancels only their unfinished task and preserves earned points', () => {
-  let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy' }), 'start');
+  let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy', crazyPlayStyle: 'free' }), 'start');
   state.scores[1] = 5; state.crazy.prompts[1] = { id: 'departing-task', text: 'Old task', status: 'pending', expiresAt: 100000 };
   state.crazy.prompts[3] = { id: 'other-task', text: 'Kept task', status: 'pending', expiresAt: 100000 };
   state.questions = [{ id: 'absent-question', playerNum: 1 }, { id: 'other-question', playerNum: 3 }];
@@ -113,7 +113,7 @@ test('Talk free mode accepts new players without assigning a speaker or resettin
 });
 
 test('Talk preserves explicit away flags when choosing a fresh topic and never assigns Crazy work to away seats', () => {
-  let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy', crazyMinSeconds: 5, crazyMaxSeconds: 5 }), 'start');
+  let state = act(TALK, create(TALK, { conversationMode: 'assigned', gameMode: 'crazy', crazyPlayStyle: 'free', crazyMinSeconds: 5, crazyMaxSeconds: 5 }), 'start');
   state = join(TALK, state, { inactiveNums: [3] });
   const due = state.crazy.nextAssignAt;
   state = act(TALK, state, 'clockTick', { now: due, onlineNums: [1, 2, 3] });
@@ -123,7 +123,7 @@ test('Talk preserves explicit away flags when choosing a fresh topic and never a
   state=act(TALK,state,'crazyDrain');
   for(const [num,prompt] of Object.entries(state.crazy.prompts)) if(prompt.status==='pending') state=act(TALK,state,'crazySkip',{actor:Number(num),promptId:prompt.id,now:due+2});
   const fresh = act(TALK, state, 'newTopic', { confirm: true, topic: { question: 'Choose our next plan.' }, mode: 'think', seconds: 45,
-    gameMode: 'crazy', crazySeconds: 120, showStarters: true });
+    gameMode: 'crazy', crazyPlayStyle: 'free', crazySeconds: 120, showStarters: true });
   assert.equal(fresh.roster[2].active, false); assert.equal(fresh.phase, 'thinking');
   assert.equal(act(TALK, fresh, 'start', { onlineNums: [1, 3] }).replies[0].error, 'waiting_players');
 });
