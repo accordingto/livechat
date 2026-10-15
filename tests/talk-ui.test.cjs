@@ -889,14 +889,28 @@ test('round decisions expose only projected host/delegate actions and receiving 
   } finally {f.card.destroy();}
 });
 
-test('new Crazy editor defaults to director for three players and preserves an explicit free room', () => {
+test('new Crazy editor accepts two, six and nine participants with balanced director guidance and preserves explicit free', () => {
   const f=fixture();try {
-    f.update(shared({roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'},{playerNum:3,name:'C'}]}));
-    f.click('settings');f.editorField('gameMode','crazy','change');
-    assert.equal(f.card.editor.crazyPlayStyle,'director');assert.match(f.element.innerHTML,/Director mode \(3\+ players\)/);
-    f.click('openTopic');assert.equal(f.card.confirmation,'topic');assert.equal(f.card.topicToOpen.crazyPlayStyle,'director');
+    for(const count of [2,6,9]) {
+      const roster=Array.from({length:count},(_,i)=>({playerNum:i+1,name:'Player '+(i+1)}));
+      f.update(shared({sessionId:'editor-cast-'+count,roster}));
+      f.click('settings');f.editorField('gameMode','crazy','change');
+      assert.equal(f.card.editor.crazyPlayStyle,'director');assert.match(f.element.innerHTML,/Director mode \(2\+ players\)/);
+      assert.match(f.element.innerHTML,/Directors and actors split evenly/);assert.match(f.element.innerHTML,/one extra player acts/);
+      f.click('openTopic');assert.equal(f.card.confirmation,'topic');assert.equal(f.card.topicToOpen.crazyPlayStyle,'director');
+      f.setLanguage('zh');f.card.render(true);assert.match(f.element.innerHTML,/奇數時演員多 1 人/);f.setLanguage('en');
+    }
     f.update({...vnextTalk({playStyle:'free'}),sessionId:'explicit-free',hostControls:true,actions:{newTopic:true}});
     f.click('settings');assert.equal(f.card.editor.crazyPlayStyle,'free');
+  }finally{f.card.destroy();}
+});
+
+test('director editor rejects fewer than two active participants without submitting settings', () => {
+  const sent=[],f=fixture(async command=>sent.push(command));try {
+    f.update(shared({roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B',active:false},{playerNum:3,name:'C',pending:true}]}));
+    f.click('settings');f.editorField('gameMode','crazy','change');f.click('openTopic');
+    assert.equal(f.card.confirmation,null);assert.equal(f.card.topicToOpen,null);assert.equal(sent.length,0);
+    assert.match(f.element.innerHTML,/Director mode needs at least 2 participants/);
   }finally{f.card.destroy();}
 });
 

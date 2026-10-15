@@ -75,12 +75,13 @@ var TALK_VNEXT = (() => {
     if (terminal.has(status)) card.closedAt = nowOf(input);
   }
   function syncRoles(s, input) {
-    const c = s.crazy, players = active(s), desired = c.playStyle === 'director' && players.length >= 3 ? 'director' : 'free';
+    const c = s.crazy, players = active(s), desired = c.playStyle === 'director' && players.length >= 2 ? 'director' : 'free';
     const old = list(c.directors), oldStyle = c.effectivePlayStyle;
+    c.directorCount = Math.floor(players.length / 2);
     c.effectivePlayStyle = desired;
     if (desired === 'free') { c.directors = []; c.nextRotateAt = 0; }
     else {
-      const count = Math.min(c.directorCount, players.length - 2);
+      const count = c.directorCount;
       c.directors = old.filter(n => players.includes(n)).slice(0, count);
       for (const num of players) if (c.directors.length < count && !c.directors.includes(num) && c.prompts[num]?.status !== 'pending') c.directors.push(num);
       if (!(c.nextRotateAt > 0)) c.nextRotateAt = nowOf(input) + c.rotationSeconds * 1000;
@@ -93,7 +94,6 @@ var TALK_VNEXT = (() => {
     c.maxActive = integer(input.crazyMaxActive ?? c.maxActive, 1, 9, 3);
     c.playStyle = (input.crazyPlayStyle ?? c.playStyle) === 'director' ? 'director' : 'free';
     c.rotationSeconds = integer(input.crazyRotationSeconds ?? c.rotationSeconds, 60, 900, 240);
-    c.directorCount = integer(c.directorCount, 1, 3, 2);
     c.queue = list(c.queue);
     for (const key of ['prompts', 'sequence', 'receivers', 'offers']) c[key] = Object.fromEntries(Object.entries(c[key] || {}).filter(([, value]) => value != null));
     c.roundCards = Array.isArray(c.roundCards) ? Object.fromEntries(list(c.roundCards).filter(v => v.id).map(v => [v.archiveId || v.id, v])) : c.roundCards || {};
@@ -413,6 +413,11 @@ var TALK_VNEXT = (() => {
     if (!enabled(s) || !Number.isFinite(Number(now))) return false;
     const c = s.crazy;
     if (c.vnextVersion !== 1) return true;
+    const players = active(s), target = Math.floor(players.length / 2), directors = list(c.directors);
+    const style = c.playStyle === 'director' && players.length >= 2 ? 'director' : 'free';
+    if (c.directorCount !== target || c.effectivePlayStyle !== style || directors.length > target
+        || directors.some(num => !players.includes(num))
+        || style === 'director' && directors.length < target && players.some(num => !directors.includes(num) && c.prompts?.[num]?.status !== 'pending')) return true;
     if (s.phase !== 'talking') return false;
     if (activeNums(s).some(num => { const p = c.prompts[num]; return Number(now) >= (p.renderedVersion === 1 ? p.expiresAt : Math.min(p.displayDeadline, p.expiresAt))
       || p.renderedVersion === 1 && p.interactedAt == null && !p.checkInReadyAt && Number(now) >= checkInTime(p); })) return true;

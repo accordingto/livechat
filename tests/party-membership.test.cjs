@@ -81,7 +81,7 @@ test('Talk joins the future queue with zero points and keeps the live topic, clo
   const before = structuredClone(state), next = join(TALK, state, { added: [seat4] });
   assert.deepEqual(state, before); assert.equal(next.sessionId, state.sessionId); assert.equal(next.speaker, 1); assert.equal(next.scores[2], 3); assert.equal(next.scores[4], 0);
   for (const key of ['gameDeadline', 'deadline', 'phase', 'round', 'turnId']) assert.equal(next[key], state[key]);
-  assert.deepEqual(next.topic, state.topic); assert.deepEqual(next.crazy, {...state.crazy,receivers:{...state.crazy.receivers,4:{paused:false,cooldownUntil:0}}}); assert.deepEqual(TALK.order(next), [2, 3, 4]);
+  assert.deepEqual(next.topic, state.topic); assert.deepEqual(next.crazy, {...state.crazy,directorCount:Math.floor(next.roster.filter(p=>p.active!==false&&p.pending!==true).length/2),receivers:{...state.crazy.receivers,4:{paused:false,cooldownUntil:0}}}); assert.deepEqual(TALK.order(next), [2, 3, 4]);
   assert.equal(story.letstalk.project(next, { playerNum: 4 }, { now: 2000 }).talk.crazy.prompt, null);
   assert.doesNotMatch(JSON.stringify(TALK.view(next, 4, 2000)), /secret-card|secret-original|private-prompt|Own secret task/);
 });

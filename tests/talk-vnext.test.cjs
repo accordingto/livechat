@@ -415,11 +415,11 @@ test('receiver pause preserves queued handwriting and explicit resume delivers i
 });
 
 test('director style uses two ring seats and can send only to the other active receivers', () => {
-  const s = room({ crazy: { playStyle: 'director' } });
+  const s = room({ count: 5, crazy: { playStyle: 'director' } });
   assert.equal(s.crazy.effectivePlayStyle, 'director');
   assert.deepEqual(s.crazy.directors, [1, 2]);
   assert.equal(V.capacity(s), 3);
-  assert.deepEqual(V.eligibleReceivers(s, input(s)), [3, 4, 5, 6]);
+  assert.deepEqual(V.eligibleReceivers(s, input(s)), [3, 4, 5]);
   assert.notEqual(V.submit(s, item('not-director', 3, 4), input(s, 3)), null);
   assert.equal(V.submit(s, item('director-recipient', 1, 2), input(s, 1)), null);
   assert.ok(s.crazy.queue.some(card => card.id === 'director-recipient'));
@@ -427,7 +427,7 @@ test('director style uses two ring seats and can send only to the other active r
 });
 
 test('director rotation waits for the next ring seat to become idle and exchanges one seat atomically', () => {
-  const s = room({ crazy: { playStyle: 'director', rotationSeconds: 60 } });
+  const s = room({ count: 5, crazy: { playStyle: 'director', rotationSeconds: 60 } });
   s.phase = 'talking';
   submit(s, item('hold-rotation', 1, 3));
   const p = shown(s, 3);
@@ -448,13 +448,12 @@ test('director rotation waits for the next ring seat to become idle and exchange
   assert.equal(V.submit(s, item('new-director', 3, 5), input(s, 3, { now: retryAt })), null);
 });
 
-test('director style falls back to free below three active participants and restores safely', () => {
-  const s = room({ count: 2, crazy: { playStyle: 'director' } });
+test('director style falls back to free below two active participants and restores safely', () => {
+  const s = room({ count: 1, crazy: { playStyle: 'director' } });
   assert.equal(s.crazy.playStyle, 'director');
   assert.equal(s.crazy.effectivePlayStyle, 'free');
-  assert.deepEqual(V.eligibleReceivers(s, input(s)), [1, 2]);
-  assert.equal(V.submit(s, item('free-fallback', 1, 2), input(s, 1)), null);
-  s.roster.push({ playerNum: 3, name: 'Person 3', active: true });
+  assert.deepEqual(V.eligibleReceivers(s, input(s)), [1]);
+  s.roster.push({ playerNum: 2, name: 'Person 2', active: true });
   V.init(s, input(s));
   assert.equal(s.crazy.effectivePlayStyle, 'director');
   assert.equal(s.crazy.directors.length, 1);

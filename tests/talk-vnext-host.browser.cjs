@@ -18,7 +18,11 @@ const {chromium}=require(process.argv[2]||'playwright'),root=path.resolve(__dirn
    return route.fulfill({body,contentType:file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':'application/octet-stream'});
   });
   await page.goto('http://talk-host.local/lets-talk.html?demo=1');await page.evaluate(()=>I18N.setLang('en'));
-  await page.selectOption('#talk-game-mode','crazy');assert.equal(await page.inputValue('#talk-crazy-play-style'),'director');await page.selectOption('#talk-crazy-play-style','free');await page.locator('#talk-crazy-advanced>summary').click();
+  await page.selectOption('#talk-game-mode','crazy');assert.equal(await page.inputValue('#talk-crazy-play-style'),'director');
+  assert.match(await page.locator('#talk-crazy-play-style option:checked').textContent(),/2\+ players/);
+  assert.match(await page.locator('#talk-crazy-style-hint').textContent(),/Directors and actors split evenly/);
+  await page.evaluate(()=>I18N.setLang('zh'));assert.match(await page.locator('#talk-crazy-style-hint').textContent(),/奇數時演員多 1 人/);
+  await page.evaluate(()=>I18N.setLang('en'));await page.selectOption('#talk-crazy-play-style','free');await page.locator('#talk-crazy-advanced>summary').click();
   await page.selectOption('#talk-crazy-source','mixed');await page.fill('#talk-game-seconds','1');
   await page.fill('#talk-crazy-min-seconds','5');await page.fill('#talk-crazy-max-seconds','5');await page.click('#talk-open');
   assert.equal(await page.locator('#talk-clock').isVisible(),true);assert.equal(await page.locator('#talk-clock-toggle').isVisible(),false);

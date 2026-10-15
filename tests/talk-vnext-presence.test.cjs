@@ -25,15 +25,16 @@ function shown(s, now = 2100) {
   return act(s, 'crazyRendered', 2, { promptId: s.crazy.prompts[2].id, renderVersion: 1, now });
 }
 
-test('new Crazy rooms default to director roles for three, four and five active participants', () => {
-  for (const [count, directors] of [[3, 1], [4, 2], [5, 2]]) {
+test('new Crazy rooms default to half-rounded-down directors for every supported Hub size', () => {
+  for (let count = 2; count <= 9; count++) {
+    const directors = Math.floor(count / 2);
     const s = create(count);
     assert.equal(s.crazy.playStyle, 'director'); assert.equal(s.crazy.effectivePlayStyle, 'director');
     assert.equal(s.crazy.directors.length, directors);
     assert.equal(V.roles(s).receivers.length, count - directors);
     assert.equal(V.capacity(s), Math.min(3, count - directors));
   }
-  assert.throws(() => create(2), { message: 'invalid_settings' });
+  assert.deepEqual(create(2).crazy.directors, [1]);
   assert.equal(create(2, { crazyPlayStyle: 'free' }).crazy.effectivePlayStyle, 'free');
 });
 
@@ -67,12 +68,12 @@ test('three-person rotation waits for the next actor mission and safely exchange
   assert.equal(s.replies[2].error, '');
 });
 
-test('director preference safely falls back at two active members and explicit legacy free stays free', () => {
-  const s = create(); s.roster[2].active = false;
+test('director preference safely falls back below two active members and explicit legacy free stays free', () => {
+  const s = create(); s.roster[1].active = false; s.roster[2].active = false;
   V.init(s, { now: 2000 });
   assert.equal(s.crazy.playStyle, 'director'); assert.equal(s.crazy.effectivePlayStyle, 'free');
   assert.deepEqual(s.crazy.directors, []); assert.equal(s.crazy.nextRotateAt, 0);
-  s.roster[2].active = true; V.init(s, { now: 3000 });
+  s.roster[1].active = true; V.init(s, { now: 3000 });
   assert.equal(s.crazy.directors.length, 1); assert.equal(s.crazy.effectivePlayStyle, 'director');
   const explicit = create(3, { crazyPlayStyle: 'free' }); V.init(explicit, { now: 4000 });
   assert.equal(explicit.crazy.playStyle, 'free'); assert.deepEqual(explicit.crazy.directors, []);
@@ -99,7 +100,7 @@ test('membership role fill cannot turn the current main speaker into a director'
   }
 });
 
-test('newTopic inherits explicit free but entering Crazy from Normal uses the new director default and min three', () => {
+test('newTopic inherits explicit free and entering Crazy from Normal supports director mode with two participants', () => {
   const replacement = { confirm: true, topic: { question: 'Choose our next shared cafe.' },
     mode: 'think', seconds: 45, showStarters: true, gameMode: 'crazy' };
   let s = create(3, { crazyPlayStyle: 'free' }); s = act(s, 'newTopic', 0, replacement);
@@ -108,8 +109,8 @@ test('newTopic inherits explicit free but entering Crazy from Normal uses the ne
   const crazy = act(normal, 'newTopic', 0, replacement);
   assert.equal(crazy.replies[0].error, ''); assert.equal(crazy.crazy.playStyle, 'director');
   assert.equal(crazy.crazy.directors.length, 1);
-  const tooSmall = act(create(2, { gameMode: 'normal' }), 'newTopic', 0, replacement);
-  assert.equal(tooSmall.replies[0].error, 'invalid_settings'); assert.equal(tooSmall.gameMode, 'normal');
+  const smallest = act(create(2, { gameMode: 'normal' }), 'newTopic', 0, replacement);
+  assert.equal(smallest.replies[0].error, ''); assert.deepEqual(smallest.crazy.directors, [1]);
 });
 
 test('own check-in appears ten seconds before 150s expiry and scales to configured mission durations', () => {

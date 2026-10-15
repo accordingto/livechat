@@ -167,10 +167,10 @@ var TALK_UI = (() => {
     missionPlaceholder: ['例如：學雞叫。／說「我愛上我的杯子了」。', 'Try: Cluck like a chicken. / Say “I’m in love with my cup.”'],
     missionSend: ['送出任務', 'Send challenge'], missionSent: ['已送出，系統會優先安排。', 'Sent. Your challenge takes priority.'],
     missionQueuedCount: ['你有 {n} 張卡等待派發', 'Your cards waiting: {n}'],
-    crazyPlayStyle: ['任務玩法', 'Challenge style'], crazyStyleFree: ['自由互派', 'Free play'], crazyStyleDirector: ['導演模式（至少 3 人）', 'Director mode (3+ players)'],
+    crazyPlayStyle: ['任務玩法', 'Challenge style'], crazyStyleFree: ['自由互派', 'Free play'], crazyStyleDirector: ['導演模式（至少 2 人）', 'Director mode (2+ players)'],
     crazyAdvanced: ['更多任務設定', 'More challenge settings'], crazyMaxActive: ['同時任務人數', 'Active challenges'], crazyRotation: ['導演輪替', 'Director rotation'], rotationChoice: ['{n} 分鐘', '{n} minutes'],
-    crazyDirectorHint: ['3 人：1 位導演、2 位演員；4 人起：2 位導演，其餘接招。導演會輪替。', 'With 3 players: 1 director and 2 actors. With 4+: 2 directors; the rest act. Directors rotate.'],
-    directorNeedsPlayers: ['導演模式至少需要 3 位參與者。', 'Director mode needs at least 3 participants.'],
+    crazyDirectorHint: ['導演與演員平均分配；奇數時演員多 1 人。角色會輪替。', 'Directors and actors split evenly; with an odd count, one extra player acts. Roles rotate.'],
+    directorNeedsPlayers: ['導演模式至少需要 2 位參與者。', 'Director mode needs at least 2 participants.'],
     invalid_crazy_max_active: ['同時任務人數請填 1–9。', 'Choose 1–9 active challenges.'], invalid_crazy_rotation: ['請選擇導演輪替時間。', 'Choose a director rotation interval.'],
     crazyDirector: ['你是導演', 'You are a director'], crazyActor: ['你是演員，先一起聊', 'You are an actor. Keep chatting'],
     receiverReady: ['可以接任務', 'Ready'], receiverBusy: ['正在做任務', 'On a challenge'], receiverResting: ['休息中', 'Taking a breather'], receiverPaused: ['暫停接任務', 'Receiving paused'],
@@ -424,7 +424,7 @@ var TALK_PLAYER = (() => {
               const crazyMaxActive = Number(this.editor.crazyMaxActive), crazyRotationSeconds = Number(this.editor.crazyRotationSeconds);
               if (this.editor.gameMode === 'crazy' && (!Number.isInteger(crazyMaxActive) || crazyMaxActive < 1 || crazyMaxActive > 9)) throw new Error('invalid_crazy_max_active');
               if (this.editor.gameMode === 'crazy' && (!Number.isInteger(crazyRotationSeconds) || crazyRotationSeconds < 60 || crazyRotationSeconds > 900)) throw new Error('invalid_crazy_rotation');
-              if (this.editor.gameMode === 'crazy' && this.editor.crazyPlayStyle === 'director' && this.editor.playerCount < 3) throw new Error('directorNeedsPlayers');
+              if (this.editor.gameMode === 'crazy' && this.editor.crazyPlayStyle === 'director' && this.editor.playerCount < 2) throw new Error('directorNeedsPlayers');
               if (!validInterval) { crazyMinSeconds = 60; crazyMaxSeconds = 180; }
               this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameSeconds, crazyTaskSeconds: crazyTaskSeconds >= 30 && crazyTaskSeconds <= 300 ? crazyTaskSeconds : 150, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, crazyMaxActive:crazyMaxActive || 3, crazyRotationSeconds:crazyRotationSeconds || 240, crazyPlayStyle:this.editor.crazyPlayStyle || 'director', conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
               this.confirmation = 'topic'; this.error = '';

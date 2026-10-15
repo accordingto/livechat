@@ -332,23 +332,24 @@ test('host preserves vNext mode, configured cap and custom rotation when opening
   assert.equal(f.created[0].crazyPlayStyle,'director');assert.equal(f.created[0].crazyMaxActive,4);assert.equal(f.created[0].crazyRotationSeconds,300);
 });
 
-test('too-small director setup remains local and requires three participants', async () => {
-  const initial=E.create({id:'small-cast',now:1000,gameMode:'crazy',crazyPlayStyle:'free',topic:{question:'Design an imaginary shop.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'}]});
+test('too-small director setup remains local and requires two active participants', async () => {
+  const initial=E.create({id:'small-cast',now:1000,gameMode:'crazy',crazyPlayStyle:'free',topic:{question:'Design an imaginary shop.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B',active:false}]});
   const f=fixture({initial});await f.click('new');f.elements['talk-crazy-play-style'].value='director';await f.submit();
-  assert.equal(f.created.length,0);assert.match(f.elements['talk-host-error'].textContent,/at least 3/);
+  assert.equal(f.created.length,0);assert.match(f.elements['talk-host-error'].textContent,/at least 2/);
   f.elements['talk-crazy-play-style'].value='free';f.elements['talk-crazy-max-active'].value='0';await f.submit();assert.equal(f.created.length,0);
   f.elements['talk-crazy-max-active'].value='3';await f.submit();assert.equal(f.created[0].crazyPlayStyle,'free');assert.equal(f.created[0].crazyMaxActive,3);
 });
 
-test('fresh Crazy setup defaults to director and supports three, four and five players without changing live free rooms', async () => {
-  for(const [count,directors] of [[3,1],[4,2],[5,2]]) {
+test('fresh Crazy setup accepts every supported balanced director cast without changing live free rooms', async () => {
+  for(const count of [2,3,4,5,6,7,8,9]) {
     const roster=Array.from({length:count},(_,i)=>({playerNum:i+1,name:'Player '+(i+1)}));
     const initial=E.create({id:'normal-'+count,now:1000,topic:{question:'Build a silly shop.'},roster});
     const f=fixture({initial});await f.click('new');f.elements['talk-game-mode'].value='crazy';
     await f.elements['talk-game-mode'].fire('change');assert.equal(f.elements['talk-crazy-play-style'].value,'director');
     await f.submit();assert.equal(f.created[0].crazyPlayStyle,'director');
-    assert.equal(f.host.doc.state.crazy.directors.length,directors);
-    assert.match(f.elements['talk-crazy-style-hint'].textContent,/3 players: 1 director and 2 actors/);
+    assert.equal(f.host.doc.state.crazy.directors.length,Math.floor(count/2));
+    assert.match(f.elements['talk-crazy-style-hint'].textContent,/Directors and actors split evenly/);
+    assert.match(f.elements['talk-crazy-style-hint'].textContent,/one extra player acts/);
   }
   const initial=E.create({id:'explicit-live-free',now:1000,gameMode:'crazy',crazyPlayStyle:'free',
     topic:{question:'Preserve our chosen style.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B'},{playerNum:3,name:'C'}]});

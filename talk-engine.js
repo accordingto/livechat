@@ -115,7 +115,8 @@ var TALK_ENGINE = (() => {
     if (!validGameSeconds(s?.gameSeconds) || !validTaskSeconds(s?.crazyTaskSeconds)
         || !s.scores || list(s.roster).some(p => !Number.isInteger(s.scores[p.playerNum]) || s.scores[p.playerNum] < 0)
         || !Number.isFinite(s.gameDeadline) || (s.phase === 'talking' && !(s.gameDeadline > 0))) return true;
-    return crazyEnabled(s) && (s.crazy.vnextVersion !== 1 || s.crazy.schedulerVersion !== 2 || !validTaskSeconds(s.crazy.taskSeconds)
+    return crazyEnabled(s) && (s.crazy.vnextVersion !== 1 || s.crazy.directorCount !== Math.floor(participants(s).length / 2)
+      || s.crazy.schedulerVersion !== 2 || !validTaskSeconds(s.crazy.taskSeconds)
       || list(s.crazy.queue).some(item => !item.archiveId)
       || list(s.crazy.prompts).some(prompt => prompt?.source === 'player' && prompt.status === 'pending' && !prompt.archiveId)
       || !Number.isFinite(s.crazy.nextAssignAt) || (s.phase === 'talking' && !(s.crazy.nextAssignAt > 0))
@@ -335,7 +336,7 @@ var TALK_ENGINE = (() => {
       if (!Number.isInteger(state.crazy.maxActive) || state.crazy.maxActive < 1 || state.crazy.maxActive > 9
           || !['free', 'director'].includes(state.crazy.playStyle) || !Number.isInteger(state.crazy.rotationSeconds)
           || state.crazy.rotationSeconds < 60 || state.crazy.rotationSeconds > 900
-          || state.crazy.playStyle === 'director' && participants(state).length < 3) throw new Error('invalid_settings');
+          || state.crazy.playStyle === 'director' && participants(state).length < 2) throw new Error('invalid_settings');
       vnext().init(state, { now, seed: options.seed || 1 });
     }
     return state;
@@ -443,7 +444,7 @@ var TALK_ENGINE = (() => {
         const rotationSeconds = input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240;
         if (input.gameMode === 'crazy' && (!Number.isInteger(maxActive) || maxActive < 1 || maxActive > 9
             || !['free','director'].includes(playStyle) || !Number.isInteger(rotationSeconds) || rotationSeconds < 60 || rotationSeconds > 900
-            || playStyle === 'director' && participants(s).length < 3)) { reject('invalid_settings'); break; }
+            || playStyle === 'director' && participants(s).length < 2)) { reject('invalid_settings'); break; }
         if (!['think', 'write'].includes(input.mode) || !['normal', 'crazy'].includes(input.gameMode)
             || !Number.isInteger(seconds) || seconds < 15 || seconds > 120 || ![60, 120, 180].includes(crazySeconds)
             || typeof input.showStarters !== 'boolean' || !['assigned', 'random', 'free'].includes(discussionMode)

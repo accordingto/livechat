@@ -222,3 +222,28 @@ test('native wake plans the check-in window and publishes it even when the previ
  f.advance(8000);await f.service.wake({ticket:wake._wake.ticket});
  assert.equal(f.card(2).talk.crazy.prompt.checkIn,true);assert.equal(f.state().crazy.prompts[2].checkInReadyAt,f.now());
 });
+
+
+test('authority derives balanced director and actor counts for every supported room size',async()=>{
+ for(let count=2;count<=9;count++){
+  const f=fixture({count,crazyPlayStyle:undefined});await f.register();
+  const directors=f.state().crazy.directors,actors=f.seats.map(s=>s.playerNum).filter(n=>!directors.includes(n));
+  assert.equal(directors.length,Math.floor(count/2));assert.equal(actors.length,Math.ceil(count/2));assert.ok(directors.length<=actors.length);
+  for(const seat of f.seats)assert.equal(f.card(seat.playerNum).talk.crazy.canAssign,directors.includes(seat.playerNum));
+  await f.act(0,'start');await f.act(directors[0],'crazyAssign',{target:actors[0],text:'A secret balanced-role challenge.'});await f.shown(actors[0]);
+  const p=f.card(actors[0]).talk.crazy.prompt;assert.equal(p.text,'A secret balanced-role challenge.');
+  for(const num of directors)assert.equal(f.card(num).talk.crazy.prompt,null);
+  const forged=f.command(actors[0],'crazyAssign',{target:directors[0],text:'Actors cannot assign this.'});await f.run(forged);assert.equal(f.state().replies[actors[0]].error,'not_director');
+  await f.act(actors[0],'crazyDone',{promptId:p.id});assert.equal(f.state().scores[actors[0]],1);
+ }
+});
+
+test('saved excessive director metadata is corrected by authority without cutting an actor mission',async()=>{
+ const f=fixture({count:9,crazyPlayStyle:undefined});await f.register();await f.act(0,'start');
+ await f.act(1,'crazyAssign',{target:9,text:'Keep this actor mission during role repair.'});await f.shown(9);
+ const prompt=f.state().crazy.prompts[9],raw=structuredClone(f.nodes.get(f.canonical));raw.state.crazy.directorCount=9;raw.state.crazy.directors=[1,2,3,4,5,6,7,8];f.set(f.canonical,raw);
+ await f.service.execute({capsule:f.capsule(),token:f.controlToken,clock:true});
+ assert.equal(f.state().crazy.directors.length,4);assert.equal(f.state().crazy.directorCount,4);
+ assert.equal(f.state().crazy.prompts[9].id,prompt.id);assert.equal(f.state().crazy.prompts[9].expiresAt,prompt.expiresAt);assert.equal(f.state().crazy.prompts[9].status,'pending');
+ assert.equal(f.card(5).talk.crazy.canAssign,false);assert.ok(!JSON.stringify(f.card(5)).includes(prompt.text));
+});

@@ -33,7 +33,7 @@
     if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyMaxActive)) || Number(values.crazyMaxActive) < 1 || Number(values.crazyMaxActive) > 9)) throw new Error('invalid_crazy_max_active');
     if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyRotationSeconds)) || Number(values.crazyRotationSeconds) < 60 || Number(values.crazyRotationSeconds) > 900)) throw new Error('invalid_crazy_rotation');
     const playerCount = demo ? demoRoster.length : state?.roster?.filter(p=>p.active !== false && p.pending !== true).length || ROOM.count || 0;
-    if (values.gameMode === 'crazy' && values.crazyPlayStyle === 'director' && playerCount < 3) throw new Error('directorNeedsPlayers');
+    if (values.gameMode === 'crazy' && values.crazyPlayStyle === 'director' && playerCount < 2) throw new Error('directorNeedsPlayers');
     return TALK_SETTINGS.normalize(values);
   };
   const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
