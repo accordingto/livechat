@@ -166,6 +166,8 @@ var TALK_UI = (() => {
     randomRecipient: ['隨機玩家', 'Random player'], missionType: ['卡片類型', 'Card type'], missionText: ['一句台詞或任務（最多 120 字）', 'One line or mission (up to 120 characters)'],
     missionPlaceholder: ['例如：學雞叫。／說「我愛上我的杯子了」。', 'Try: Cluck like a chicken. / Say “I’m in love with my cup.”'],
     missionSend: ['送出任務', 'Send challenge'], missionSent: ['已送出，系統會優先安排。', 'Sent. Your challenge takes priority.'],
+    inspiration: ['找點靈感', 'Need ideas?'], inspirationHint: ['點一句加入草稿，再改成你的版本。', 'Tap an idea to add it to your draft, then make it yours.'],
+    inspirationRefresh: ['換 3 個靈感', 'Show 3 more'], inspirationFull: ['草稿快滿了，先刪減一些文字再加入靈感。', 'Your draft is nearly full. Shorten it before adding an idea.'],
     missionQueuedCount: ['你有 {n} 張卡等待派發', 'Your cards waiting: {n}'],
     crazyPlayStyle: ['任務玩法', 'Challenge style'], crazyStyleFree: ['自由互派', 'Free play'], crazyStyleDirector: ['導演模式（至少 2 人）', 'Director mode (2+ players)'],
     crazyAdvanced: ['更多任務設定', 'More challenge settings'], crazyMaxActive: ['同時任務人數', 'Active challenges'], crazyRotation: ['導演輪替', 'Director rotation'], rotationChoice: ['{n} 分鐘', '{n} minutes'],
@@ -303,10 +305,13 @@ var TALK_PLAYER = (() => {
   };
   const editTopic = topic => ({ title: topic.title || '', question: topic.question || '', starter: topic.starter || '', followUps: followUps(topic).map(q => q.question).join('\n') });
   const minutesToSeconds = value => { const n = Number(value) * 60, rounded = Math.round(n); return Number.isFinite(n) && Math.abs(n - rounded) < 1e-7 ? rounded : NaN; };
+  const rotationSeconds = value => Number.isInteger(Number(value)) && Number(value) >= 60 && Number(value) <= 900 ? Number(value) : 120;
+  const canInspire = s => s.gameMode === 'crazy' && TALK_UI.isDirector(s) && ['thinking', 'talking'].includes(s.phase) && !s.crazy?.queueLocked && s.crazy?.canAssign !== false;
+  const ideaText = idea => typeof I18N !== 'undefined' && I18N.lang === 'zh' ? idea.zh || idea.text : idea.text;
   const editorState = s => ({ ...editTopic(s.topic), source: topicById(s.topic.id) ? 'library' : 'custom', topicId: s.topic.id || '', category: '', search: '',
     mode: s.mode === 'write' ? 'write' : 'think', seconds: Number(s.seconds) || 45, gameMode: s.gameMode === 'crazy' ? 'crazy' : 'normal',
     conversationMode: s.conversationMode || 'random', crazySource: s.crazy?.source || 'mixed',
-    crazyMaxActive: Number(s.crazy?.maxActive) || 3, crazyPlayStyle: s.crazy?.playStyle || 'director', crazyRotationSeconds: Number(s.crazy?.rotationSeconds) || 240,
+    crazyMaxActive: Number(s.crazy?.maxActive) || 3, crazyPlayStyle: s.crazy?.playStyle || 'director', crazyRotationSeconds: rotationSeconds(s.crazy?.rotationSeconds),
     playerCount: list(s.roster).filter(p => p.active !== false && p.pending !== true).length,
     gameMinutes: (Number(s.gameSeconds) || 900) / 60, crazyTaskMinutes: (Number(s.crazy?.taskSeconds) || Number(s.crazyTaskSeconds) || 150) / 60,
     crazyMinSeconds: Number(s.crazy?.minSeconds) || (s.crazy?.intervalSeconds ? Math.round(s.crazy.intervalSeconds * .8) : 60),
@@ -359,6 +364,7 @@ var TALK_PLAYER = (() => {
       this.sendTechnical = sendTechnical; this.identity = identity; this.storage = storage; this.draftKey = null; this.technicalAck = null; this.technicalFrame = null;
       this.pending = null; this.error = ''; this.draft = ''; this.data = null; this.composing = false; this.settledActions = new Set();
       this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentOpen = true; this.assignmentNotice = ''; this.assignmentSelection = null; this.destroyed = false;
+      this.inspirationCards = []; this.inspirationOpen = false; this.inspirationNotice = '';
       this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
       this.roundClockVisible = false; this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.renderedMission = null; this.missionRenderDeferred = false;
@@ -367,6 +373,19 @@ var TALK_PLAYER = (() => {
         if (!b || !this.element.contains(b) || b.disabled) return;
         const type = b.dataset.talkAction;
         if (type === 'viewTime') { this.roundClockVisible = !this.roundClockVisible; this.render(true); return; }
+        if (['inspirationUse', 'inspirationRefresh'].includes(type)) {
+          if (!canInspire(this.data.talk) || this.composing) return;
+          this.inspirationNotice = '';
+          if (type === 'inspirationRefresh') { this.pickInspiration(true); this.render(true); return; }
+          const idea = this.inspirationCards.find(item => item.id === b.dataset.talkIdeaId);
+          if (!idea) return;
+          const previous = this.crazyDraft.text, next = previous + (previous && !previous.endsWith('\n') ? '\n' : '') + ideaText(idea);
+          if (next.length > 120) { this.inspirationNotice = 'inspirationFull'; this.render(true); return; }
+          this.crazyDraft.text = next; this.assignmentNotice = ''; this.persistDraft(); this.render(true);
+          const textarea = this.element.querySelector('[data-talk-assignment-field="text"]');
+          textarea?.focus?.({ preventScroll: true }); textarea?.setSelectionRange?.(next.length, next.length);
+          return;
+        }
         if (type === 'crazyAssign') {
           if (this.data.talk.crazy?.canAssign === false || this.data.talk.crazy?.queueLocked || TALK_UI.isActor(this.data.talk)) return;
           const draft = this.crazyDraft, text = draft.text.trim(), random = draft.target === 'random', target = Number(draft.target);
@@ -426,7 +445,7 @@ var TALK_PLAYER = (() => {
               if (this.editor.gameMode === 'crazy' && (!Number.isInteger(crazyRotationSeconds) || crazyRotationSeconds < 60 || crazyRotationSeconds > 900)) throw new Error('invalid_crazy_rotation');
               if (this.editor.gameMode === 'crazy' && this.editor.crazyPlayStyle === 'director' && this.editor.playerCount < 2) throw new Error('directorNeedsPlayers');
               if (!validInterval) { crazyMinSeconds = 60; crazyMaxSeconds = 180; }
-              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameSeconds, crazyTaskSeconds: crazyTaskSeconds >= 30 && crazyTaskSeconds <= 300 ? crazyTaskSeconds : 150, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, crazyMaxActive:crazyMaxActive || 3, crazyRotationSeconds:crazyRotationSeconds || 240, crazyPlayStyle:this.editor.crazyPlayStyle || 'director', conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
+              this.topicToOpen = { topic, mode: this.editor.mode, seconds, gameSeconds, crazyTaskSeconds: crazyTaskSeconds >= 30 && crazyTaskSeconds <= 300 ? crazyTaskSeconds : 150, gameMode: this.editor.gameMode, crazyMinSeconds, crazyMaxSeconds, crazyMaxActive:crazyMaxActive || 3, crazyRotationSeconds:crazyRotationSeconds || 120, crazyPlayStyle:this.editor.crazyPlayStyle || 'director', conversationMode: this.editor.conversationMode, crazySource: this.editor.crazySource, showStarters: !!this.editor.showStarters };
               this.confirmation = 'topic'; this.error = '';
             } catch (error) { this.error = error.message; }
           }
@@ -452,7 +471,7 @@ var TALK_PLAYER = (() => {
         const target = event.target;
         if (target.matches('[data-talk-note]')) this.draft = target.value;
         const assignment = target.dataset?.talkAssignmentField;
-        if (assignment && ['target','text'].includes(assignment)) { this.crazyDraft[assignment] = target.value; this.assignmentNotice = ''; this.persistDraft(); }
+        if (assignment && ['target','text'].includes(assignment)) { this.crazyDraft[assignment] = target.value; this.assignmentNotice = ''; this.inspirationNotice = ''; this.persistDraft(); }
         if (target.dataset?.talkLibraryField) this.libraryDrafts[target.dataset.talkLibraryField] = target.value;
         const field = target.dataset?.talkEditorField;
         if (field && this.editor) { this.editor[field] = field === 'showStarters' ? target.checked : target.value; if (field === 'search') this.render(true); }
@@ -506,7 +525,7 @@ var TALK_PLAYER = (() => {
     update(data) {
       const draftKey = this.storageKey(data);
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId || this.draftKey !== draftKey;
-      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = true; this.assignmentSelection = null; this.pending = null; this.technicalAck = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
+      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = true; this.assignmentSelection = null; this.inspirationCards = []; this.inspirationOpen = false; this.inspirationNotice = ''; this.pending = null; this.technicalAck = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
         this.draftKey = draftKey;
         try { const saved = draftKey && JSON.parse(this.storage?.getItem(draftKey) || 'null'); if (saved && typeof saved.text === 'string') this.crazyDraft = { target: String(saved.target || 'random'), text: saved.text.slice(0,120), kind: 'task' }; } catch (_) {}
       }
@@ -542,6 +561,12 @@ var TALK_PLAYER = (() => {
     persistDraft() {
       if (!this.draftKey) return;
       try { this.storage?.setItem(this.draftKey, JSON.stringify({ target: this.crazyDraft.target, text: this.crazyDraft.text.slice(0,120) })); } catch (_) {}
+    }
+    pickInspiration(refresh = false) {
+      if (typeof TALK_CRAZY === 'undefined' || typeof TALK_CRAZY.inspirationChoices !== 'function') return;
+      const exclude = refresh ? this.inspirationCards.map(item => item.id) : [];
+      const cards = TALK_CRAZY.inspirationChoices({ count: 3, exclude });
+      this.inspirationCards = list(cards).slice(0,3);
     }
     scheduleRenderedAck() {
       if (!this.sendTechnical || this.destroyed || this.technicalFrame != null) return;
@@ -609,9 +634,13 @@ var TALK_PLAYER = (() => {
       if (this.crazyDraft.target !== 'random' && !recipients.some(p => String(p.playerNum) === String(this.crazyDraft.target))) this.crazyDraft.target = 'random';
       this.persistDraft();
       if (preserveInput && this.element.querySelector('.talk-assignment')) this.assignmentOpen = !!this.element.querySelector('.talk-assignment').open;
+      if (preserveInput && this.element.querySelector('[data-talk-inspiration]')) this.inspirationOpen = !!this.element.querySelector('[data-talk-inspiration]').open;
+      if (canInspire(s) && !this.inspirationCards.length) this.pickInspiration();
+      const inspiration = `<details class="talk-inspiration" data-talk-inspiration${canInspire(s) && this.inspirationCards.length ? '' : ' hidden'}${this.inspirationOpen ? ' open' : ''}><summary data-talk-assignment-label="inspiration">${esc(t('inspiration'))}</summary><div class="talk-inspiration-body"><p class="talk-soft" data-talk-assignment-label="inspirationHint">${esc(t('inspirationHint'))}</p>${[0,1,2].map(i => { const idea = this.inspirationCards[i]; return `<button type="button" class="talk-idea" data-talk-action="inspirationUse" data-talk-idea-slot="${i}" data-talk-idea-id="${esc(idea?.id || '')}"${idea ? '' : ' hidden'}>${idea ? esc(ideaText(idea)) : ''}</button>`; }).join('')}${button('inspirationRefresh','inspirationRefresh')}<p class="talk-soft" data-talk-inspiration-notice role="status"${this.inspirationNotice ? '' : ' hidden'}>${this.inspirationNotice ? esc(t(this.inspirationNotice)) : ''}</p></div></details>`;
       const assignment = allowAssignment ? `<details class="talk-assignment"${this.assignmentOpen ? ' open' : ''}><summary data-talk-assignment-label="composeMission">${esc(t('composeMission'))}</summary><div class="talk-assignment-body">
         <label class="talk-field"><span data-talk-assignment-label="missionRecipient">${esc(t('missionRecipient'))}</span><select data-talk-assignment-field="target">${option('random', t('randomRecipient'), this.crazyDraft.target)}${recipients.map(p => option(p.playerNum, p.name || name(s,p.playerNum), this.crazyDraft.target)).join('')}</select></label>
         <label class="talk-field"><span data-talk-assignment-label="missionText">${esc(t('missionText'))}</span><textarea data-talk-assignment-field="text" maxlength="120" rows="3" placeholder="${esc(t('missionPlaceholder'))}">${esc(this.crazyDraft.text)}</textarea></label>
+        ${inspiration}
         <p class="talk-soft" data-talk-assignment-label="missionHint">${esc(t('missionHint'))}</p>${button('missionSend','crazyAssign',s.crazy?.canAssign === false ? 'data-talk-blocked="true" disabled' : '',true)}
         <p class="talk-soft" role="status" data-talk-assignment-notice${this.assignmentNotice ? '' : ' hidden'}>${this.assignmentNotice ? esc(t(this.assignmentNotice)) : ''}</p></div></details>` : '';
       const active = this.element.querySelector('[data-talk-note]');
@@ -726,6 +755,20 @@ var TALK_PLAYER = (() => {
       const message = this.assignmentNotice ? t(this.assignmentNotice) : '';
       if (notice.textContent !== message) notice.textContent = message;
       notice.hidden = !message;
+      const ideas = composer.querySelector('[data-talk-inspiration]');
+      ideas.hidden = !canInspire(s) || !this.inspirationCards.length;
+      ideas.querySelectorAll('[data-talk-idea-slot]').forEach(node => {
+        const idea = this.inspirationCards[Number(node.dataset.talkIdeaSlot)];
+        node.hidden = !idea;
+        if (!idea) return;
+        node.dataset.talkIdeaId = idea.id;
+        if (node.textContent !== ideaText(idea)) node.textContent = ideaText(idea);
+      });
+      const refresh = ideas.querySelector('[data-talk-action="inspirationRefresh"]');
+      if (refresh.textContent !== t('inspirationRefresh')) refresh.textContent = t('inspirationRefresh');
+      const ideaNotice = ideas.querySelector('[data-talk-inspiration-notice]'), ideaMessage = this.inspirationNotice ? t(this.inspirationNotice) : '';
+      if (ideaNotice.textContent !== ideaMessage) ideaNotice.textContent = ideaMessage;
+      ideaNotice.hidden = !ideaMessage;
     }
     paint() {
       if (!this.data) return;
@@ -741,6 +784,7 @@ var TALK_PLAYER = (() => {
       const checkInAllowed = s.gameMode === 'crazy' && prompt?.status === 'pending' && !promptExpired
         && (checkInDue > 0 ? now >= checkInDue : prompt?.checkIn === true);
       this.element.querySelectorAll('[data-talk-action]').forEach(b => {
+        if (['inspirationUse','inspirationRefresh'].includes(b.dataset.talkAction)) { b.disabled = !canInspire(s) || offline || hostAway || this.composing; return; }
         b.disabled = b.dataset.talkAction !== 'viewTime' && (b.dataset.talkBlocked === 'true' || offline || hostAway || (!!this.pending && b.dataset.talkAction !== 'retry') || (b.dataset.talkAction === 'crazyHere' && !checkInAllowed) || (TALK_UI.crazyAction(b.dataset.talkAction) && (promptExpired || roundExpired)) || (roundExpired && ['end','addTime','finish','crazyAssign','extend'].includes(b.dataset.talkAction)));
         if (b.dataset.talkAction === 'retry') b.hidden = now - this.sentAt < 6000;
       });

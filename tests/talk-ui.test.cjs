@@ -62,6 +62,7 @@ function fixture(send = async () => {}, options = {}) {
     end: "I'm done", offline: 'Connection lost', hostAway: 'Waiting for the host page', stale_turn: 'The conversation has moved on',
     error: 'Could not sync', ready: 'I have an idea', wait: 'I need more time', noteLabel: 'A short thought', sendNote: 'Share this thought' };
   vm.runInContext(fs.readFileSync(require.resolve('../talk-topics.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(require.resolve('../talk-crazy.js'), 'utf8'), context);
   vm.runInContext(source, context, { filename: 'talk-ui.js' });
   const card = new context.TALK_PLAYER.Card(element, { send, nameBanner: () => '<span>Sam</span>', now: () => clock, connected: () => online, ...options });
   const update = (talk = sample(), extra = {}) => card.update({ game: 'letstalk', playerNum: 2, name: 'Sam', talk: clone(talk), ...extra });
@@ -768,6 +769,50 @@ test('player missions never show task or next-assignment countdowns in English o
 
 const vnextTalk = (extra = {}) => ({...crazy({source:'mixed',prompt:null,canAssign:true,roundStage:'open',queueLocked:false,playStyle:'free',effectivePlayStyle:'free',role:'player',receiverStatus:{paused:false,cooldownUntil:0},hostActions:{},library:[],unusedCards:[],...extra}),sharedControls:true});
 const localStore = () => { const values = new Map(); return {values,getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,String(value))}; };
+
+test('director inspiration appends an editable public task locally and preserves a newer draft while a prior send waits', async () => {
+  const sent=[],storage=localStore(),identity={room:'IDEAS123',token:'1'.repeat(32),verified:true};
+  const f=fixture(async command=>sent.push(clone(command)),{identity,storage});
+  try {
+    const talk=vnextTalk({playStyle:'director',effectivePlayStyle:'director',role:'director'});f.update(talk);
+    assert.equal(f.card.inspirationCards.length,3);assert.match(f.element.innerHTML,/data-talk-inspiration><summary[^>]*>Need ideas/);
+    const idea=f.card.inspirationCards[0];
+    assert.ok(f.context.TALK_CRAZY.pool.some(card=>card.id===idea.id&&card.text===idea.text));
+    f.assignmentField('target','1','change');f.assignmentField('text','My own opening.');f.click('inspirationUse');
+    assert.equal(f.card.crazyDraft.text,'My own opening.\n'+idea.text);assert.equal(f.card.crazyDraft.target,'1');assert.equal(sent.length,0);
+    assert.equal(JSON.parse(storage.getItem(f.card.draftKey)).text,f.card.crazyDraft.text);
+    f.click('crazyAssign');await flush();assert.equal(sent.length,1);const frozen=clone(f.card.pending);
+    f.assignmentField('text','Next draft.');assert.equal(f.buttons().find(b=>b.dataset.talkAction==='inspirationUse').disabled,false);
+    f.click('inspirationUse');assert.equal(f.card.crazyDraft.text,'Next draft.\n'+idea.text);assert.deepEqual(clone(f.card.pending),frozen);assert.equal(sent.length,1);
+    f.update({...talk,reply:{id:frozen.id,error:''}});assert.equal(f.card.crazyDraft.text,'Next draft.\n'+idea.text);
+    f.assignmentField('text','x'.repeat(119));f.click('inspirationUse');assert.equal(f.card.crazyDraft.text,'x'.repeat(119));
+    assert.match(f.element.innerHTML,/Shorten it before adding an idea/);assert.equal(sent.length,1);
+  }finally{f.card.destroy();}
+});
+
+test('inspiration keeps public choices through language and state updates, refreshes explicitly and stays unavailable to actors', () => {
+  const sent=[],f=fixture(async command=>sent.push(command));try {
+    const talk=vnextTalk({playStyle:'director',effectivePlayStyle:'director',role:'director'});f.update(talk);
+    const first=f.card.inspirationCards.map(card=>card.id);f.setLanguage('zh');f.update(talk);
+    assert.deepEqual(f.card.inspirationCards.map(card=>card.id),first);assert.match(f.element.innerHTML,/找點靈感/);
+    const idea=f.card.inspirationCards[0];assert.ok(idea.zh);f.click('inspirationUse');assert.equal(f.card.crazyDraft.text,idea.zh);assert.equal(sent.length,0);
+    f.click('inspirationRefresh');assert.ok(f.card.inspirationCards.every(card=>!first.includes(card.id)));
+    const oldDraft=f.card.crazyDraft.text;f.handlers.get('compositionstart')();f.click('inspirationUse');assert.equal(f.card.crazyDraft.text,oldDraft);f.handlers.get('compositionend')();
+    f.update({...talk,crazy:{...talk.crazy,role:'player',canAssign:false}});assert.doesNotMatch(f.element.innerHTML,/data-talk-inspiration/);
+    f.click('inspirationUse');assert.equal(f.card.crazyDraft.text,oldDraft);assert.equal(sent.length,0);
+    f.update({...talk,phase:'ended'});assert.doesNotMatch(f.element.innerHTML,/data-talk-inspiration/);
+  }finally{f.card.destroy();}
+});
+
+test('player settings use a two-minute rotation fallback and preserve explicit live intervals', () => {
+  const f=fixture();try {
+    for(const [value,expected] of [[undefined,120],[0,120],[-1,120],['invalid',120],[901,120],[60.5,120],[60,60],[120,120],[240,240],[305,305],[900,900]]) {
+      const talk=vnextTalk({rotationSeconds:value});f.update({...talk,sessionId:'rotation-'+String(value),hostControls:true,actions:{newTopic:true}});
+      f.click('settings');assert.equal(f.card.editor.crazyRotationSeconds,expected);
+      f.click('openTopic');assert.equal(f.card.topicToOpen.crazyRotationSeconds,expected);
+    }
+  }finally{f.card.destroy();}
+});
 
 test('verified bearer/session scope restores only its own unsent task text and target', () => {
   const storage=localStore(), identity={room:'DRAFT123',token:'1'.repeat(32),verified:true};

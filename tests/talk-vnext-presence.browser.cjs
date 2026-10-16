@@ -11,7 +11,8 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // Actual play.html pages use isolated browser storage and authenticated synthetic
 // seats. Every SDK/API operation stays inside this disposable in-memory room.
 async function main() {
-  const f = fixture({ count: 3, crazyPlayStyle: undefined, gameSeconds: 900, now: Date.now() });
+  // Keep roles fixed while this fixture exercises the 140-second check-in window.
+  const f = fixture({ count: 3, crazyPlayStyle: undefined, crazyRotationSeconds: 240, gameSeconds: 900, now: Date.now() });
   await f.register(); await f.act(0, 'start');
   const root = path.resolve(__dirname, '..');
   const pages = [], errors = [], dialogs = [], requests = [], mailboxWrites = [];

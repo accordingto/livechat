@@ -329,7 +329,7 @@ var TALK_ENGINE = (() => {
       schedulerVersion: 2, taskSeconds: taskDuration, nextAssignAt: 0, lastAssignAt: 0, lastPlayerNum: null, scheduleSequence: 0,
       hostDelegate: roster.some(p=>p.playerNum === Number(options.hostPlayerNum)) ? Number(options.hostPlayerNum) : null,
       maxActive: options.crazyMaxActive == null ? 3 : Number(options.crazyMaxActive),
-      playStyle: options.crazyPlayStyle || 'director', rotationSeconds: options.crazyRotationSeconds == null ? 240 : Number(options.crazyRotationSeconds),
+      playStyle: options.crazyPlayStyle || 'director', rotationSeconds: options.crazyRotationSeconds == null ? 120 : Number(options.crazyRotationSeconds),
       paused: false, prompts: {}, sequence: {}, recent: {}, queue: [], replacementFor: [],
     };
     if (crazyEnabled(state)) {
@@ -441,7 +441,7 @@ var TALK_ENGINE = (() => {
         const discussionMode = input.conversationMode == null ? conversationMode(s) : input.conversationMode;
         const promptSource = input.crazySource == null ? crazySource(s) : input.crazySource;
         const maxActive = input.crazyMaxActive ?? s.crazy?.maxActive ?? 3, playStyle = input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'director';
-        const rotationSeconds = input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240;
+        const rotationSeconds = input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 120;
         if (input.gameMode === 'crazy' && (!Number.isInteger(maxActive) || maxActive < 1 || maxActive > 9
             || !['free','director'].includes(playStyle) || !Number.isInteger(rotationSeconds) || rotationSeconds < 60 || rotationSeconds > 900
             || playStyle === 'director' && participants(s).length < 2)) { reject('invalid_settings'); break; }
@@ -456,7 +456,7 @@ var TALK_ENGINE = (() => {
         const fresh = create({ id: s.sessionId + ':topic:' + input.id, topic, roster: s.roster, mode: input.mode, seconds,
           challengeArchive: s.challengeArchive, hostPlayerNum:s.crazy?.hostDelegate, crazyVault: s.crazyVault, crazyIdentities: s.crazyIdentities,
           crazyMaxActive: input.crazyMaxActive ?? s.crazy?.maxActive ?? 3,
-          crazyPlayStyle: input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'director', crazyRotationSeconds: input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 240,
+          crazyPlayStyle: input.crazyPlayStyle ?? s.crazy?.playStyle ?? 'director', crazyRotationSeconds: input.crazyRotationSeconds ?? s.crazy?.rotationSeconds ?? 120,
           gameMode: input.gameMode, crazySeconds, crazyMinSeconds: minSeconds, crazyMaxSeconds: maxSeconds,
           conversationMode: discussionMode, crazySource: promptSource, gameSeconds: duration, crazyTaskSeconds: taskDuration,
           showStarters: input.showStarters, now: Number(input.now) || 0,

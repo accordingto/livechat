@@ -93,7 +93,7 @@ var TALK_VNEXT = (() => {
     const before = JSON.stringify([s.crazy, s.crazyVault, s.crazyIdentities]), c = s.crazy;
     c.maxActive = integer(input.crazyMaxActive ?? c.maxActive, 1, 9, 3);
     c.playStyle = (input.crazyPlayStyle ?? c.playStyle) === 'director' ? 'director' : 'free';
-    c.rotationSeconds = integer(input.crazyRotationSeconds ?? c.rotationSeconds, 60, 900, 240);
+    c.rotationSeconds = integer(input.crazyRotationSeconds ?? c.rotationSeconds, 60, 900, 120);
     c.queue = list(c.queue);
     for (const key of ['prompts', 'sequence', 'receivers', 'offers']) c[key] = Object.fromEntries(Object.entries(c[key] || {}).filter(([, value]) => value != null));
     c.roundCards = Array.isArray(c.roundCards) ? Object.fromEntries(list(c.roundCards).filter(v => v.id).map(v => [v.archiveId || v.id, v])) : c.roundCards || {};

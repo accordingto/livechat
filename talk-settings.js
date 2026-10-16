@@ -5,12 +5,13 @@
   else root.TALK_SETTINGS = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const key = 'lets-talk-settings.v3';
+  const key = 'lets-talk-settings.v4';
+  const previousKey = 'lets-talk-settings.v3';
   const legacyKey = 'lets-talk-settings.v2';
   const pendingKey = 'lets-talk-home-settings.pending.v1';
   const defaults = Object.freeze({ gameMode: 'normal', conversationMode: 'random', crazySource: 'mixed',
     crazyMinSeconds: 60, crazyMaxSeconds: 180, gameSeconds: 900, crazyTaskSeconds: 150,
-    crazyMaxActive: 3, crazyPlayStyle: 'director', crazyRotationSeconds: 240, mode: 'think', seconds: 45 });
+    crazyMaxActive: 3, crazyPlayStyle: 'director', crazyRotationSeconds: 120, mode: 'think', seconds: 45 });
   const intervalBounds = Object.freeze({ min: 5, max: 300 });
   function validInterval(min, max) {
     min = Number(min); max = Number(max);
@@ -50,11 +51,24 @@
     try {
       const saved = storage?.getItem(key);
       if (saved != null) return normalize(JSON.parse(saved));
+      const previous = JSON.parse(storage?.getItem(previousKey) || 'null');
+      if (previous && typeof previous === 'object' && !Array.isArray(previous)) {
+        // v3 recorded no distinction between its automatic four-minute value
+        // and a manual choice. Treat that former default as two minutes once;
+        // a four-minute choice saved in v4 remains explicit and authoritative.
+        const migrated = normalize({ ...previous,
+          ...(previous.crazyRotationSeconds == null || Number(previous.crazyRotationSeconds) === 240
+            ? { crazyRotationSeconds: defaults.crazyRotationSeconds } : {}) });
+        try { storage?.setItem(key, JSON.stringify(migrated)); } catch (_) {}
+        return migrated;
+      }
       const legacy = JSON.parse(storage?.getItem(legacyKey) || 'null');
       if (!legacy || typeof legacy !== 'object' || Array.isArray(legacy)) return { ...defaults };
       // v2 automatically persisted its former free default. Migrate that once;
       // a deliberate free selection saved in v3 remains authoritative.
-      const migrated = normalize({ ...legacy, crazyPlayStyle: defaults.crazyPlayStyle });
+      const migrated = normalize({ ...legacy, crazyPlayStyle: defaults.crazyPlayStyle,
+        ...(legacy.crazyRotationSeconds == null || Number(legacy.crazyRotationSeconds) === 240
+          ? { crazyRotationSeconds: defaults.crazyRotationSeconds } : {}) });
       try { storage?.setItem(key, JSON.stringify(migrated)); } catch (_) {}
       return migrated;
     } catch (_) { return { ...defaults }; }

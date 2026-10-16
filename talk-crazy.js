@@ -158,6 +158,41 @@ var TALK_CRAZY = (() => {
   ].map((prompt, i) => Object.freeze({
     id: 'crazy-' + String(i + 1).padStart(3, '0'), ...prompt,
   })));
-  return Object.freeze({ pool });
+  // Public examples for a director who needs an idea. Translations explain
+  // existing tasks; neither sampling nor the UI needs private room history.
+  const inspirations = Object.freeze([
+    ['crazy-061', '學雞叫。'],
+    ['crazy-062', '像機器人一樣說話。'],
+    ['crazy-063', '說「我愛上我的杯子了。」'],
+    ['crazy-064', '問「你喜歡自己腳的味道嗎？」'],
+    ['crazy-065', '把下一句話唱出來。'],
+    ['crazy-066', '換個口音說「我愛你」。'],
+    ['crazy-070', '對一個人說「陛下」。'],
+    ['crazy-075', '用三種聲音說「哇！」'],
+    ['crazy-078', '汪一聲，再說「對不起」。'],
+    ['crazy-080', '像鸚鵡，重複別人最後一個字。'],
+    ['crazy-089', '唱一首搞笑的歌。'],
+    ['crazy-095', '問「你會跟雞約會嗎？」'],
+    ['crazy-102', '請大家一起說「香蕉」。'],
+    ['crazy-105', '問「你的腳會唱歌嗎？」'],
+    ['crazy-113', '唱出一個人的名字。'],
+    ['crazy-121', '對一個人說「我相信你的膝蓋」。'],
+  ].map(([id, zh]) => Object.freeze({ ...pool.find(prompt => prompt.id === id), zh })));
+  function inspirationChoices(options = {}) {
+    const { count = 3, random = Math.random, exclude = [] } = options || {};
+    const limit = Number.isInteger(count) ? Math.max(0, Math.min(count, inspirations.length)) : 3;
+    const blocked = new Set(Array.isArray(exclude) ? exclude : []);
+    const remaining = inspirations.filter(prompt => !blocked.has(prompt.id));
+    const rng = typeof random === 'function' ? random : Math.random;
+    const chosen = [];
+    while (chosen.length < limit && remaining.length) {
+      const value = Number(rng());
+      const fraction = Number.isFinite(value) ? Math.max(0, Math.min(value, 1 - Number.EPSILON)) : 0;
+      const index = Math.floor(fraction * remaining.length);
+      chosen.push({ ...remaining.splice(index, 1)[0] });
+    }
+    return chosen;
+  }
+  return Object.freeze({ pool, inspirationChoices });
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = TALK_CRAZY;

@@ -332,6 +332,20 @@ test('host preserves vNext mode, configured cap and custom rotation when opening
   assert.equal(f.created[0].crazyPlayStyle,'director');assert.equal(f.created[0].crazyMaxActive,4);assert.equal(f.created[0].crazyRotationSeconds,300);
 });
 
+test('fresh host setup uses two-minute rotation and an existing four-minute live preference remains unchanged', async () => {
+  const fresh=fixture({saved:{gameMode:'crazy'}});
+  assert.equal(fresh.elements['talk-crazy-rotation-seconds'].value,'120');
+  await fresh.submit();assert.equal(fresh.created[0].crazyRotationSeconds,120);
+  let initial=E.create({id:'existing-four-minute',now:1000,gameMode:'crazy',crazyRotationSeconds:240,
+    topic:{question:'Keep our current cafe.'},roster:Array.from({length:5},(_,i)=>({playerNum:i+1,name:'Person '+i}))});
+  initial=E.apply(initial,{id:'existing-start',type:'start',actor:0,sessionId:initial.sessionId,now:1000});
+  const original=structuredClone(initial),live=fixture({initial});
+  assert.equal(live.elements['talk-crazy-rotation-seconds'].value,'240');
+  assert.deepEqual(live.host.doc.state,original);
+  await live.click('new');await live.submit();
+  assert.equal(live.created[0].crazyRotationSeconds,240);
+});
+
 test('too-small director setup remains local and requires two active participants', async () => {
   const initial=E.create({id:'small-cast',now:1000,gameMode:'crazy',crazyPlayStyle:'free',topic:{question:'Design an imaginary shop.'},roster:[{playerNum:1,name:'A'},{playerNum:2,name:'B',active:false}]});
   const f=fixture({initial});await f.click('new');f.elements['talk-crazy-play-style'].value='director';await f.submit();

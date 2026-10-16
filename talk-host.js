@@ -416,7 +416,7 @@
             setSetupPreference('crazyTaskSeconds', next.crazy?.taskSeconds || next.crazyTaskSeconds || 150);
             setSetupPreference('crazyMaxActive', next.crazy?.maxActive || 3);
             setSetupPreference('crazyPlayStyle', next.crazy?.playStyle || 'director');
-            setSetupPreference('crazyRotationSeconds', next.crazy?.rotationSeconds || 240);
+            setSetupPreference('crazyRotationSeconds', next.crazy?.rotationSeconds || TALK_SETTINGS.defaults.crazyRotationSeconds);
             }
           }
           render();

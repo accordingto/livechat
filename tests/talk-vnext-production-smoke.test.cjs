@@ -40,10 +40,16 @@ test('production role-balance harness covers all supported room sizes and exact 
   const h=harness();let failure;const r=await run({...h,roleBalanceOnly:true,rolePlayerCount:count,onFailure:e=>failure=e.stack});if(!r.ok)console.error(failure);
   assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.directors,Math.floor(count/2));assert.equal(r.actors,Math.ceil(count/2));
   assert.equal(r.cleaned,count+2);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);
-  for(const flag of ['generalDirectorActorRatio','directorOnlyAssignment','privateActorTask','completionAndClosing'])assert.equal(r.flags[flag],true,flag);
+  for(const flag of ['generalDirectorActorRatio','twoMinuteDefaultRotation','directorOnlyAssignment','privateActorTask','completionAndClosing'])assert.equal(r.flags[flag],true,flag);
  }
 });
 
 test('production role-balance rejects invalid sizes before any room access',async()=>{
  for(const count of [1,10,2.5,'6']){let calls=0;const r=await run({env:{CRAZY_TALK_ARCHIVE_SECRET:'64'.repeat(32)},roleBalanceOnly:true,rolePlayerCount:count,fetchImpl:async()=>{calls++}});assert.equal(r.ok,false);assert.equal(r.error,'invalid_fixture_count');assert.equal(calls,0)}
+});
+
+test('owned production rotation harness uses two-minute default and one autonomous role swap',async()=>{
+ const h=harness();let failure;const r=await run({...h,roleRotationOnly:true,rolePlayerCount:5,onFailure:e=>failure=e.stack});if(!r.ok)console.error(failure);
+ assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.flags.twoMinuteDefaultRotation,true);assert.equal(r.flags.autonomousTwoMinuteRotation,true);
+ assert.equal(r.cleaned,7);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);
 });

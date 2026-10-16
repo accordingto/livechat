@@ -11,6 +11,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.setContent('<style>.secret-card{display:flex;flex-direction:column;gap:14px}.talk-card-top{height:160px}.talk-topic-card{height:240px}.talk-card-roster{height:100px}select,textarea{display:block;min-width:220px;min-height:44px}.talk-assignment-body{display:grid;gap:12px}[hidden]{display:none}</style><main id="card"></main>');
     const base=String(process.env.TALK_QA_BASE||'').replace(/\/$/,'');
+    await page.addScriptTag(base ? {url:base+'/talk-crazy.js?native-picker-regression=1'} : {path:path.resolve(__dirname,'../talk-crazy.js')});
     await page.addScriptTag(base ? {url:base+'/talk-ui.js?native-picker-regression=1'} : {path:path.resolve(__dirname,'../talk-ui.js')});
     await page.evaluate(()=>{
       window.__now=1000;window.__online=true;window.__sent=[];window.__scrollCalls=0;

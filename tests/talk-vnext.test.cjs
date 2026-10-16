@@ -73,7 +73,7 @@ test('initialization migrates old mailboxes once while preserving the task and r
   assert.equal(s.crazy.maxActive, 3);
   assert.equal(s.crazy.playStyle, 'free');
   assert.equal(s.crazy.effectivePlayStyle, 'free');
-  assert.equal(s.crazy.rotationSeconds, 240);
+  assert.equal(s.crazy.rotationSeconds, 120);
   assert.equal(s.crazy.roundStage, 'open');
   assert.equal(own(s, 3).id, old.id);
   assert.equal(own(s, 3).text, old.text);

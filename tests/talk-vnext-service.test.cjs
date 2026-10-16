@@ -193,7 +193,8 @@ test('new three-seat Crazy authority defaults to one director and two actors, wi
 });
 
 test('authenticated 140-second check-in keeps receiving enabled without extending or scoring the current task',async()=>{
- const f=fixture({count:3,crazyPlayStyle:undefined,gameSeconds:900});await f.register();await f.act(0,'start');
+ // Isolate the check-in lifecycle from the independent two-minute role rotation.
+ const f=fixture({count:3,crazyPlayStyle:undefined,crazyRotationSeconds:240,gameSeconds:900});await f.register();await f.act(0,'start');
  await f.act(1,'crazyAssign',{target:2,text:'Introduce your cup as royalty.'});await f.shown(2);
  const prompt=f.state().crazy.prompts[2];
  f.advance(140000);await f.service.execute({capsule:f.capsule(),token:f.controlToken,clock:true});
@@ -212,7 +213,7 @@ test('authenticated 140-second check-in keeps receiving enabled without extendin
 });
 
 test('native wake plans the check-in window and publishes it even when the previous projection was recent',async()=>{
- const f=fixture({count:3,crazyPlayStyle:undefined,gameSeconds:900,crazyMinSeconds:300,crazyMaxSeconds:300});const registered=await f.register();await f.act(0,'start');
+ const f=fixture({count:3,crazyPlayStyle:undefined,crazyRotationSeconds:240,gameSeconds:900,crazyMinSeconds:300,crazyMaxSeconds:300});const registered=await f.register();await f.act(0,'start');
  await f.act(1,'crazyAssign',{target:2,text:'Wave hello to your imaginary chicken.'});await f.shown(2);
  // Consume a retained old lease near the window; its successor must wake at140s,
  // not at the150s expiry or the ordinary20s backup interval.

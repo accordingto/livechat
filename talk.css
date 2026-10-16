@@ -205,6 +205,15 @@
 .talk-private-library>summary { cursor:pointer; min-height:32px; display:list-item; }
 .talk-assignment:not([open]) { padding:9px 14px; }
 .talk-assignment .talk-assignment-body { display:grid; gap:12px; }
+.talk-inspiration { min-width:0; border-top:1px solid #5d4b66; }
+.talk-inspiration[hidden] { display:none; }
+.talk-assignment .talk-inspiration>summary { font-size:.8rem; font-weight:500; min-height:36px; }
+.talk-inspiration-body { display:grid; gap:8px; padding:0 0 6px; }
+.talk-inspiration-body>p { margin:0; font-size:.78rem; }
+.talk-idea { min-height:44px; padding:9px 11px; border:1px solid #72556d; border-radius:9px; background:#342b43; color:#f1e1ec; font:inherit; font-size:.85rem; text-align:left; line-height:1.45; white-space:normal; overflow-wrap:anywhere; cursor:pointer; }
+.talk-idea:hover:not(:disabled),.talk-idea:focus-visible { background:#48354e; border-color:#c79bb9; }
+.talk-idea:disabled { opacity:.5; cursor:default; }
+.talk-inspiration-body>.talk-button { justify-self:start; font-size:.75rem; padding:7px 10px; background:transparent; color:#c9b7d0; }
 .talk-crazy-check-in{display:grid;gap:8px;margin-top:14px;padding:12px;border:1px solid rgba(91,54,77,.22);border-radius:12px;background:rgba(255,255,255,.24)}
 .talk-crazy-check-in[hidden]{display:none}
 .talk-crazy-reminder[hidden]{display:none}

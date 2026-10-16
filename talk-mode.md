@@ -1,4 +1,4 @@
-# Current: Crazy Talk vNext — 2026-10-16
+# Current: Crazy Talk vNext — 2026-10-17
 
 Current scheduling uses a private native Vercel Queue consumer in the existing
 executor project. It carries only sealed wake tickets; Firebase/CAS remains the
@@ -41,12 +41,19 @@ target never promotes an actor with a pending mission; it fills a temporarily
 short director list as actors become idle. Existing saved free sessions
 are not silently converted during play.
 
-Directors rotate every four minutes by default. The setup offers2/4/6 minute
-choices and preserves valid whole-second values60–900. A selected busy actor
+Every two minutes by default, one director exchanges roles with one actor.
+This is the interval between pair exchanges, not a guarantee that every director
+finishes their tenure after two minutes. The setup offers 2/4/6 minute
+choices and preserves valid whole-second values 60–900. A selected busy actor
 keeps the mission; the exchange waits. Role changes also reconcile the current
 speaker and remaining sharing order so directors are not accidentally nominated.
-The v3 setup preference migrates old v2 automatic free defaults to director once,
-retaining other settings; an explicit free choice subsequently saved in v3 stays.
+The v4 setup preference migrates the old v3 automatic four-minute value to two
+minutes once, retaining other fields, explicit free style and other valid rotation
+values. The old v3 value did not record whether four minutes was automatic or a
+deliberate choice; either becomes two minutes during that one-time migration.
+A four-minute choice saved again in v4 remains four minutes. Existing live rooms
+keep their authoritative rotation interval and next exchange; they are not reset.
+The older v2 automatic free-to-director migration is retained.
 
 The configured simultaneous mission cap defaults to three, accepts 1–9, and
 is limited by the number of eligible receiving roles. Advanced source, cap,
@@ -66,6 +73,15 @@ start open again. There is no line/task selector: new handwriting is
 submitted as a task, and the text can contain either a spoken line or an action.
 Accept 1–120 trimmed characters, at most ten queued cards per author and twenty
 per room. Self-targets and inactive recipients are rejected.
+
+Directors have a folded Need ideas? / 找點靈感 helper inside the composer. It
+samples three short public-bank examples, with English and Traditional Chinese
+wording matching the current UI language. Refresh gives another set. An explicit
+choice appends its text to the current draft for editing, without sending it or
+removing existing text; over-length combinations keep the draft intact. The
+helper reads no private cards, archive or room history. It does not appear for
+actors or add any network/AI request. Draft, focus, IME, selector and pending-send
+receipt protections still apply.
 
 Handwriting has priority. During preparation it waits; during open conversation
 it can reach an eligible free slot as soon as the authoritative service processes
