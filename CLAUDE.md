@@ -29,7 +29,23 @@ captures for each of3/6/8 players:57 executions,258 captures, zero JS errors.
 These include natural discussion expiry, player/host early Next, untimed Ready,
 long prompts, fixed PCM and reduced motion. The artificial-clock harness waits
 for lease renewal after large jumps; that fixture adjustment changed no gameplay.
-Real production evidence follows publication below.
+Gameplay source4d6044e is published on the existing frontend; Vercel deployment
+DR8KLFqCEy1Ywe5MRvSD7UPKCkoN succeeded. Bomb production assets15/15 and shared
+assets62/62 match. Existing executor health/CORS/invalid-ticket rejection and
+private-runtime404 checks pass; its separate service needs no redeployment.
+Real production host plus three independent original play pages pass311 checks
+with genuine Firebase and clocks. First Normal fuse74508ms kept one deadline
+through six passes and a real13712ms lease-expiry takeover. Its original4.5s
+explosion display was followed by exactly45000ms of discussion: same prompt,
+result, one penalty and saved deadline, including a player's reload. Automatic
+expiry revealed only Ready and waited for manual Start. The next Fast/off fuse
+exploded naturally; a player used the original Next during discussion before
+45s, revealing exactly one untimed next prompt with total two penalties and
+cleared discussion deadlines. Stop added no penalty. No JS errors, fake clock,
+RNG replacement, deadline edit or existing user-room access. All4/4 marked nodes
+were conditionally cleaned. Reports/screenshots are outside Hub in
+bomb-production-qa/BQ86FCDE1A and bomb-discussion-qa-3/6/8.
+Physical phones, human conversation and hardware speaker output remain untested.
 
 ## Previous: Talk Bomb 720 prompts and selectable fuse pacing — 2026-10-17
 
