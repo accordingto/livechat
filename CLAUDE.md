@@ -1,4 +1,36 @@
-## CURRENT: Crazy Talk role balance for every room size — 2026-10-16
+## CURRENT: Crazy Talk shorter rotation and director ideas — 2026-10-17
+
+Read docs/talk-director-help-acceptance.md for this release's scoped evidence.
+Gameplay source554e2d5 is published on both existing hosts; existing service
+dpl_J2tHRv2CRDyaeCL1rhRWSHFvzGdw is READY. Final full suite2033/2033 passes.
+Production inspiration demo17/17 loaded assets,12 flags and4 EN/ZH mobile
+captures pass; stable Talk19/19, shared executor62/62, Life Story164/164 and
+private response blocking14/14 pass. No human/physical-phone playtest is claimed.
+Real owned five-player production probe passes183 checks, including the native
+Queue's autonomous actual120second pair exchange with no foreground execute,
+consistent authority/private roles, private delivery and completion. All7/7
+owned nodes are conditionally cleaned; no existing room is accessed.
+
+New Crazy default is120seconds between single director/actor exchanges, retaining
+the2/4/6minute choices and valid60–900second custom values. It is not a two-minute
+tenure for every director. Busy selected actors keep their missions and defer the
+exchange. Existing live duration/nextRotateAt and inherited choices stay intact.
+Settings.v4 migrates former v3/v2 240-or-missing values to120 once, preserving
+other fields/custom values/free choices. Old storage did not distinguish manual
+240 from automatic240; choosing240 again in v4 is retained. First implementation
+48cc21e and the written specification already used240; no later increase found.
+
+Directors get a folded Need ideas?/找點靈感 helper inside the still-open composer.
+It samples3 of16 bilingual existing public tasks; refresh excludes the current3.
+Explicit selection appends to the draft, stays under120 or leaves it intact,
+focuses the same textarea and never auto-sends. Keep draft/IME/native-picker and
+frozen-pending receipt protections. Actors have no helper/composer. The136-card
+pool/IDs/English text are unchanged; no archive/private data or AI/network calls.
+play.html now loads the public task helper before UI. Talk tags:vnext-7 /
+talk-vnext-7; shared executor stays life-story-1. Native queue architecture and
+all task/round/privacy/host rules remain as documented below.
+
+## Previous: Crazy Talk role balance for every room size — 2026-10-16
 
 See docs/talk-director-balance-acceptance.md for the final release evidence.
 Source7ec1925 is published on both existing hosts; service

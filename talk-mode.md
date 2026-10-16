@@ -7,7 +7,8 @@ be restored. See docs/talk-vnext-acceptance.md for final release evidence.
 
 This section describes the implemented vNext behavior. The2026-10-16 follow-up
 supersedes the former free-default/five-player minimum and collapsed composer.
-See [the current role-balance acceptance record](docs/talk-director-balance-acceptance.md).
+See [the current rotation/inspiration acceptance record](docs/talk-director-help-acceptance.md)
+and [the earlier role-balance record](docs/talk-director-balance-acceptance.md).
 The [earlier check-in record](docs/talk-2026-10-16-acceptance.md) describes that follow-up. The
 [2026-10-15 record](docs/talk-vnext-acceptance.md) preserves the previous release's
 1985-test/339-check production evidence; those counts are not current validation.
