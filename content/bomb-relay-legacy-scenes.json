@@ -1,0 +1,482 @@
+[
+  {
+    "id": "kitchen",
+    "category": "everyday",
+    "emoji": "🍳",
+    "en": "In the Kitchen",
+    "zh": "廚房",
+    "art": "assets/bomb-relay/kitchen.svg?v=art-1"
+  },
+  {
+    "id": "bathroom",
+    "category": "everyday",
+    "emoji": "🛁",
+    "en": "In the Bathroom",
+    "zh": "浴室",
+    "art": "assets/bomb-relay/bathroom.svg?v=art-1"
+  },
+  {
+    "id": "bedroom",
+    "category": "everyday",
+    "emoji": "🛏️",
+    "en": "In the Bedroom",
+    "zh": "臥室",
+    "art": "assets/bomb-relay/bedroom.svg?v=art-1"
+  },
+  {
+    "id": "living-room",
+    "category": "everyday",
+    "emoji": "🛋️",
+    "en": "In the Living Room",
+    "zh": "客廳",
+    "art": "assets/bomb-relay/living-room.svg?v=art-1"
+  },
+  {
+    "id": "classroom",
+    "category": "everyday",
+    "emoji": "🏫",
+    "en": "In a Classroom",
+    "zh": "教室",
+    "art": "assets/bomb-relay/classroom.svg?v=art-1"
+  },
+  {
+    "id": "supermarket",
+    "category": "everyday",
+    "emoji": "🛒",
+    "en": "At the Supermarket",
+    "zh": "超市",
+    "art": "assets/bomb-relay/supermarket.svg?v=art-1"
+  },
+  {
+    "id": "restaurant",
+    "category": "everyday",
+    "emoji": "🍽️",
+    "en": "At a Restaurant",
+    "zh": "餐廳",
+    "art": "assets/bomb-relay/restaurant.svg?v=art-1"
+  },
+  {
+    "id": "cafe",
+    "category": "everyday",
+    "emoji": "☕",
+    "en": "At a Café",
+    "zh": "咖啡廳",
+    "art": "assets/bomb-relay/cafe.svg?v=art-1"
+  },
+  {
+    "id": "hospital",
+    "category": "everyday",
+    "emoji": "🏥",
+    "en": "At the Hospital",
+    "zh": "醫院",
+    "art": "assets/bomb-relay/hospital.svg?v=art-1"
+  },
+  {
+    "id": "office",
+    "category": "everyday",
+    "emoji": "💼",
+    "en": "In the Office",
+    "zh": "辦公室",
+    "art": "assets/bomb-relay/office.svg?v=art-1"
+  },
+  {
+    "id": "airport",
+    "category": "everyday",
+    "emoji": "✈️",
+    "en": "At the Airport",
+    "zh": "機場",
+    "art": "assets/bomb-relay/airport.svg?v=art-1"
+  },
+  {
+    "id": "train-station",
+    "category": "everyday",
+    "emoji": "🚆",
+    "en": "At the Train Station",
+    "zh": "火車站",
+    "art": "assets/bomb-relay/train-station.svg?v=art-1"
+  },
+  {
+    "id": "library",
+    "category": "everyday",
+    "emoji": "📚",
+    "en": "In the Library",
+    "zh": "圖書館",
+    "art": "assets/bomb-relay/library.svg?v=art-1"
+  },
+  {
+    "id": "gym",
+    "category": "everyday",
+    "emoji": "🏋️",
+    "en": "At the Gym",
+    "zh": "健身房",
+    "art": "assets/bomb-relay/gym.svg?v=art-1"
+  },
+  {
+    "id": "hair-salon",
+    "category": "everyday",
+    "emoji": "💇",
+    "en": "At the Hair Salon",
+    "zh": "美髮店",
+    "art": "assets/bomb-relay/hair-salon.svg?v=art-1"
+  },
+  {
+    "id": "convenience-store",
+    "category": "everyday",
+    "emoji": "🏪",
+    "en": "At a Convenience Store",
+    "zh": "便利商店",
+    "art": "assets/bomb-relay/convenience-store.svg?v=art-1"
+  },
+  {
+    "id": "night-market",
+    "category": "everyday",
+    "emoji": "🏮",
+    "en": "At a Night Market",
+    "zh": "夜市",
+    "art": "assets/bomb-relay/night-market.svg?v=art-1"
+  },
+  {
+    "id": "bakery",
+    "category": "everyday",
+    "emoji": "🥐",
+    "en": "At the Bakery",
+    "zh": "麵包店",
+    "art": "assets/bomb-relay/bakery.svg?v=art-1"
+  },
+  {
+    "id": "pet-shop",
+    "category": "everyday",
+    "emoji": "🐶",
+    "en": "At the Pet Shop",
+    "zh": "寵物店",
+    "art": "assets/bomb-relay/pet-shop.svg?v=art-1"
+  },
+  {
+    "id": "city-street",
+    "category": "everyday",
+    "emoji": "🏙️",
+    "en": "On a City Street",
+    "zh": "城市街道",
+    "art": "assets/bomb-relay/city-street.svg?v=art-1"
+  },
+  {
+    "id": "toy-store",
+    "category": "everyday",
+    "emoji": "🧸",
+    "en": "In a Toy Store",
+    "zh": "玩具店",
+    "art": "assets/bomb-relay/toy-store.svg?v=art-1"
+  },
+  {
+    "id": "dentist",
+    "category": "everyday",
+    "emoji": "🦷",
+    "en": "At the Dentist",
+    "zh": "牙醫診所",
+    "art": "assets/bomb-relay/dentist.svg?v=art-1"
+  },
+  {
+    "id": "beach",
+    "category": "nature",
+    "emoji": "🏖️",
+    "en": "At the Beach",
+    "zh": "海灘",
+    "art": "assets/bomb-relay/beach.svg?v=art-1"
+  },
+  {
+    "id": "forest",
+    "category": "nature",
+    "emoji": "🌲",
+    "en": "In the Forest",
+    "zh": "森林",
+    "art": "assets/bomb-relay/forest.svg?v=art-1"
+  },
+  {
+    "id": "farm",
+    "category": "nature",
+    "emoji": "🐄",
+    "en": "On a Farm",
+    "zh": "農場",
+    "art": "assets/bomb-relay/farm.svg?v=art-1"
+  },
+  {
+    "id": "zoo",
+    "category": "nature",
+    "emoji": "🦁",
+    "en": "At the Zoo",
+    "zh": "動物園",
+    "art": "assets/bomb-relay/zoo.svg?v=art-1"
+  },
+  {
+    "id": "park",
+    "category": "nature",
+    "emoji": "🌳",
+    "en": "In the Park",
+    "zh": "公園",
+    "art": "assets/bomb-relay/park.svg?v=art-1"
+  },
+  {
+    "id": "mountain",
+    "category": "nature",
+    "emoji": "🏔️",
+    "en": "On a Mountain",
+    "zh": "山上",
+    "art": "assets/bomb-relay/mountain.svg?v=art-1"
+  },
+  {
+    "id": "campsite",
+    "category": "nature",
+    "emoji": "🏕️",
+    "en": "At a Campsite",
+    "zh": "露營地",
+    "art": "assets/bomb-relay/campsite.svg?v=art-1"
+  },
+  {
+    "id": "under-the-sea",
+    "category": "nature",
+    "emoji": "🐠",
+    "en": "Under the Sea",
+    "zh": "海底",
+    "art": "assets/bomb-relay/under-the-sea.svg?v=art-1"
+  },
+  {
+    "id": "snowy-day",
+    "category": "nature",
+    "emoji": "⛄",
+    "en": "On a Snowy Day",
+    "zh": "下雪天",
+    "art": "assets/bomb-relay/snowy-day.svg?v=art-1"
+  },
+  {
+    "id": "rainy-day",
+    "category": "nature",
+    "emoji": "☔",
+    "en": "On a Rainy Day",
+    "zh": "下雨天",
+    "art": "assets/bomb-relay/rainy-day.svg?v=art-1"
+  },
+  {
+    "id": "desert",
+    "category": "nature",
+    "emoji": "🌵",
+    "en": "In the Desert",
+    "zh": "沙漠",
+    "art": "assets/bomb-relay/desert.svg?v=art-1"
+  },
+  {
+    "id": "jungle",
+    "category": "nature",
+    "emoji": "🐒",
+    "en": "In the Jungle",
+    "zh": "叢林",
+    "art": "assets/bomb-relay/jungle.svg?v=art-1"
+  },
+  {
+    "id": "picnic",
+    "category": "nature",
+    "emoji": "🧺",
+    "en": "At a Picnic",
+    "zh": "野餐",
+    "art": "assets/bomb-relay/picnic.svg?v=art-1"
+  },
+  {
+    "id": "lake",
+    "category": "nature",
+    "emoji": "🎣",
+    "en": "At the Lake",
+    "zh": "湖邊",
+    "art": "assets/bomb-relay/lake.svg?v=art-1"
+  },
+  {
+    "id": "birthday-party",
+    "category": "fun",
+    "emoji": "🎂",
+    "en": "At a Birthday Party",
+    "zh": "生日派對",
+    "art": "assets/bomb-relay/birthday-party.svg?v=art-1"
+  },
+  {
+    "id": "wedding",
+    "category": "fun",
+    "emoji": "💒",
+    "en": "At a Wedding",
+    "zh": "婚禮",
+    "art": "assets/bomb-relay/wedding.svg?v=art-1"
+  },
+  {
+    "id": "movie-theater",
+    "category": "fun",
+    "emoji": "🍿",
+    "en": "At the Movies",
+    "zh": "電影院",
+    "art": "assets/bomb-relay/movie-theater.svg?v=art-1"
+  },
+  {
+    "id": "concert",
+    "category": "fun",
+    "emoji": "🎸",
+    "en": "At a Concert",
+    "zh": "演唱會",
+    "art": "assets/bomb-relay/concert.svg?v=art-1"
+  },
+  {
+    "id": "amusement-park",
+    "category": "fun",
+    "emoji": "🎢",
+    "en": "At an Amusement Park",
+    "zh": "遊樂園",
+    "art": "assets/bomb-relay/amusement-park.svg?v=art-1"
+  },
+  {
+    "id": "stadium",
+    "category": "fun",
+    "emoji": "🏟️",
+    "en": "At a Sports Stadium",
+    "zh": "體育場",
+    "art": "assets/bomb-relay/stadium.svg?v=art-1"
+  },
+  {
+    "id": "swimming-pool",
+    "category": "fun",
+    "emoji": "🏊",
+    "en": "At the Swimming Pool",
+    "zh": "游泳池",
+    "art": "assets/bomb-relay/swimming-pool.svg?v=art-1"
+  },
+  {
+    "id": "karaoke",
+    "category": "fun",
+    "emoji": "🎤",
+    "en": "At Karaoke",
+    "zh": "KTV 唱歌",
+    "art": "assets/bomb-relay/karaoke.svg?v=art-1"
+  },
+  {
+    "id": "christmas",
+    "category": "fun",
+    "emoji": "🎄",
+    "en": "At Christmas",
+    "zh": "聖誕節",
+    "art": "assets/bomb-relay/christmas.svg?v=art-1"
+  },
+  {
+    "id": "halloween",
+    "category": "fun",
+    "emoji": "🎃",
+    "en": "On Halloween",
+    "zh": "萬聖節",
+    "art": "assets/bomb-relay/halloween.svg?v=art-1"
+  },
+  {
+    "id": "lunar-new-year",
+    "category": "fun",
+    "emoji": "🧧",
+    "en": "At Lunar New Year",
+    "zh": "農曆新年",
+    "art": "assets/bomb-relay/lunar-new-year.svg?v=art-1"
+  },
+  {
+    "id": "museum",
+    "category": "fun",
+    "emoji": "🖼️",
+    "en": "At a Museum",
+    "zh": "博物館",
+    "art": "assets/bomb-relay/museum.svg?v=art-1"
+  },
+  {
+    "id": "road-trip",
+    "category": "fun",
+    "emoji": "🚗",
+    "en": "On a Road Trip",
+    "zh": "公路旅行",
+    "art": "assets/bomb-relay/road-trip.svg?v=art-1"
+  },
+  {
+    "id": "video-call",
+    "category": "fun",
+    "emoji": "💻",
+    "en": "On a Video Call",
+    "zh": "視訊通話",
+    "art": "assets/bomb-relay/video-call.svg?v=art-1"
+  },
+  {
+    "id": "outer-space",
+    "category": "fantasy",
+    "emoji": "🚀",
+    "en": "In Outer Space",
+    "zh": "外太空",
+    "art": "assets/bomb-relay/outer-space.svg?v=art-1"
+  },
+  {
+    "id": "pirate-ship",
+    "category": "fantasy",
+    "emoji": "🏴‍☠️",
+    "en": "On a Pirate Ship",
+    "zh": "海盜船",
+    "art": "assets/bomb-relay/pirate-ship.svg?v=art-1"
+  },
+  {
+    "id": "castle",
+    "category": "fantasy",
+    "emoji": "🏰",
+    "en": "In a Castle",
+    "zh": "城堡",
+    "art": "assets/bomb-relay/castle.svg?v=art-1"
+  },
+  {
+    "id": "haunted-house",
+    "category": "fantasy",
+    "emoji": "👻",
+    "en": "In a Haunted House",
+    "zh": "鬼屋",
+    "art": "assets/bomb-relay/haunted-house.svg?v=art-1"
+  },
+  {
+    "id": "dinosaur-world",
+    "category": "fantasy",
+    "emoji": "🦖",
+    "en": "In Dinosaur Times",
+    "zh": "恐龍時代",
+    "art": "assets/bomb-relay/dinosaur-world.svg?v=art-1"
+  },
+  {
+    "id": "magic-school",
+    "category": "fantasy",
+    "emoji": "🪄",
+    "en": "At a Magic School",
+    "zh": "魔法學校",
+    "art": "assets/bomb-relay/magic-school.svg?v=art-1"
+  },
+  {
+    "id": "circus",
+    "category": "fantasy",
+    "emoji": "🎪",
+    "en": "At the Circus",
+    "zh": "馬戲團",
+    "art": "assets/bomb-relay/circus.svg?v=art-1"
+  },
+  {
+    "id": "north-pole",
+    "category": "fantasy",
+    "emoji": "🐧",
+    "en": "At the North Pole",
+    "zh": "北極",
+    "art": "assets/bomb-relay/north-pole.svg?v=art-1"
+  },
+  {
+    "id": "desert-island",
+    "category": "fantasy",
+    "emoji": "🏝️",
+    "en": "On a Desert Island",
+    "zh": "無人島",
+    "art": "assets/bomb-relay/desert-island.svg?v=art-1"
+  },
+  {
+    "id": "robot-factory",
+    "category": "fantasy",
+    "emoji": "🤖",
+    "en": "In a Robot Factory",
+    "zh": "機器人工廠",
+    "art": "assets/bomb-relay/robot-factory.svg?v=art-1"
+  }
+]

@@ -3,10 +3,11 @@
 const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const base = 'https://livechat-two-alpha.vercel.app/';
-const release = process.argv[2] || 'br-prompts-2';
+const release = process.argv[2] || 'br-expansion-2';
 const files = ['index.html', 'play.html', 'bomb-relay.html', 'bomb-relay.css',
-  'bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js',
-  'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js'];
+  'bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-timing.js', 'bomb-relay-engine.js',
+  'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js',
+  'content/bomb-relay-prompts.json', 'content/bomb-relay-legacy-scenes.json', 'content/bomb-relay-catalog-manifest.json'];
 const hash = bytes => crypto.createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g, '\n')).digest('hex');
 (async () => {
   let cursor = 0;

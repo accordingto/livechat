@@ -50,14 +50,14 @@ test('invalid setups are rejected', () => {
   assert.throws(() => E.create({ id: 'x', roster: [{ playerNum: 1 }, { playerNum: 1 }], now: 1, seed: 1 }), /invalid_roster/);
 });
 
-test('only the holder (or the host) can light the fuse; the fuse stays inside the classic range', () => {
+test('only the holder (or the host) can light the fuse; new games use scaled Normal', () => {
   const g = game();
   const holder = g.state.holder, other = E.nextActive(g.state, holder);
   assert.equal(g.act(other, 'light'), 'not_available');
   assert.equal(g.act(holder, 'light', { now: 5000 }), '');
   assert.equal(g.state.phase, 'ticking');
   const fuse = g.state.explodeAt - 5000;
-  assert.ok(fuse >= 10000 && fuse <= 60000, `fuse ${fuse}`);
+  assert.ok(fuse >= 70000 && fuse <= 110000, `fuse ${fuse}`);
 });
 
 test('passing moves the bomb clockwise and skips players who are sitting out', () => {
@@ -305,10 +305,10 @@ test('history survives mode switches and a newly created session in the same roo
   assert.ok(!savedHistory.seenIds.includes(next.state.order[0]));
 });
 
-test('120 bombs across ordinary restarts exhaust the formal pool before repeating', () => {
+test('720 bombs across ordinary restarts exhaust the formal pool before repeating', () => {
   const g = game({ cards: 20 });
   const ids = [];
-  for (let session = 0; session < 6; session++) {
+  for (let session = 0; session < 36; session++) {
     if (session) g.act(0, 'restart');
     for (let round = 0; round < 20; round++) {
       ids.push(g.state.order[g.state.cardIndex]);
@@ -320,7 +320,7 @@ test('120 bombs across ordinary restarts exhaust the formal pool before repeatin
     assert.equal(g.state.phase, 'finished');
     assert.equal(g.state.history.length, 20);
   }
-  assert.equal(new Set(ids).size, 120);
+  assert.equal(new Set(ids).size, 720);
   g.act(0, 'restart');
   assert.notEqual(g.state.order[0], ids.at(-1));
   assert.equal(g.state.promptHistory.seenIds.length, 1);
@@ -411,4 +411,122 @@ test('the engine restores Firebase omitted history arrays and honors configurabl
   assert.equal(g.act(0, 'restart', { category: 'everyday' }), '');
   assert.equal(D.get(g.state.order[0]).pack, 'everyday', 'explicit pack overrides zero Mixed weight');
   assert.ok(g.state.promptHistory.seenIds.length >= 3);
+});
+
+test('GO samples two uniforms once using the current distinct eligible participant count', () => {
+  for (const count of [2, 3, 6, 8, 9]) {
+    for (const speedMode of E.CONFIG.speedModes) {
+      for (const scaleWithPlayers of [false, true]) {
+        const g = game({ roster: seats(count), timing: { speedMode, scaleWithPlayers } });
+        assert.equal(g.state.roundFuse, null, 'reading does not start or sample a fuse');
+        const range = E.getTimingRange({ activePlayerCount: count, settings: g.state.settingsTiming });
+        g.act(g.state.holder, 'light', { now: 200000, seed: 1234 });
+        const random = E.rng(1234);
+        const expected = Math.round(range.minMs + (range.maxMs - range.minMs) * (random() + random()) / 2);
+        assert.equal(g.state.roundFuse.durationMs, expected);
+        assert.equal(g.state.roundFuse.activePlayerCountAtStart, count);
+        assert.equal(g.state.roundFuse.minMsAtStart, range.minMs);
+        assert.equal(g.state.roundFuse.maxMsAtStart, range.maxMs);
+        assert.equal(g.state.explodeAt, 200000 + expected);
+        assert.equal(g.state.roundId, g.state.roundFuse.roundId);
+        const before = JSON.stringify(g.state.roundFuse);
+        g.act(g.state.holder, 'pass', { now: 200001, seed: 999 });
+        g.act(g.state.holder, 'light', { now: 200002 });
+        assert.equal(JSON.stringify(g.state.roundFuse), before);
+      }
+    }
+  }
+});
+
+test('timing and roster edits affect only the next GO; preferences survive ordinary restart', () => {
+  const g = game({ roster: seats(6) });
+  g.act(g.state.holder, 'light', { now: 2000 });
+  const first = JSON.stringify(g.state.roundFuse), deadline = g.state.explodeAt, turn = g.state.turnId;
+  const history = JSON.stringify(g.state.promptHistory), prompt = g.state.order[0];
+  assert.equal(g.act(0, 'settings', { timing: { speedMode: 'fast', scaleWithPlayers: false }, now: 2001 }), '');
+  assert.equal(g.state.turnId, turn, 'pending settings do not invalidate a valid in-flight pass');
+  assert.equal(g.act(0, 'exclude', { playerNum: 6, active: false, now: 2002 }), '');
+  assert.equal(g.state.explodeAt, deadline);
+  assert.equal(JSON.stringify(g.state.roundFuse), first);
+  assert.equal(JSON.stringify(g.state.promptHistory), history);
+  assert.equal(g.state.order[0], prompt);
+  g.act(0, 'tick', { now: deadline });
+  g.act(0, 'next', { now: deadline + 1 });
+  assert.equal(g.state.roundFuse, null);
+  g.act(g.state.holder, 'light', { now: deadline + 1000000 });
+  assert.equal(g.state.roundFuse.speedModeAtStart, 'fast');
+  assert.equal(g.state.roundFuse.activePlayerCountAtStart, 5);
+  assert.equal(g.state.roundFuse.scaleWithPlayersAtStart, false);
+  assert.deepEqual([g.state.roundFuse.minMsAtStart, g.state.roundFuse.maxMsAtStart], [30000, 60000]);
+  assert.notEqual(JSON.stringify(g.state.roundFuse), first);
+  const pending = g.state.settingsTiming;
+  g.act(0, 'restart', { now: g.state.lastChangeAt + 1 });
+  assert.deepEqual(g.state.settingsTiming, pending);
+  assert.ok(g.state.promptHistory.seenIds.includes(prompt));
+});
+
+test('timing settings require host authority and validated modes; exact-deadline settings settle once', () => {
+  const g = game();
+  const original = g.state.settingsTiming;
+  assert.equal(g.act(1, 'settings', { timing: { speedMode: 'fast' } }), 'not_available');
+  for (const timing of [{ speedMode: 'oops' }, { scaleWithPlayers: 'true' }, null]) {
+    assert.equal(g.act(0, 'settings', { timing }), 'invalid_options');
+    assert.deepEqual(g.state.settingsTiming, original);
+  }
+  g.act(g.state.holder, 'light');
+  const loser = g.state.holder, at = g.state.explodeAt;
+  g.act(0, 'settings', { timing: { speedMode: 'chill', scaleWithPlayers: true }, now: at });
+  assert.equal(g.state.phase, 'boom');
+  assert.equal(g.state.penalties[loser].length, 1);
+  g.act(loser, 'pass', { now: at });
+  assert.equal(g.state.penalties[loser].length, 1);
+});
+
+test('pre-v2 live and paused rooms retain exact deadlines and their explicit uniform preference', () => {
+  for (const fuse of ['quick', 'classic', 'long']) {
+    const g = game({ fuse });
+    g.act(g.state.holder, 'light', { now: 2000, seed: 99 });
+    const [min, max] = E.CONFIG.fuses[fuse];
+    assert.equal(g.state.explodeAt, 2000 + Math.round((min + E.rng(99)() * (max - min)) * 1000));
+    const deadline = g.state.explodeAt;
+    delete g.state.settingsTiming; delete g.state.roundFuse; delete g.state.roundId;
+    g.act(g.state.holder, 'pass', { now: 2001 });
+    assert.equal(g.state.explodeAt, deadline, 'upgrade does not reroll an old live bomb');
+    assert.equal(g.state.settingsTiming.legacyFuse, fuse);
+    assert.equal(g.state.settingsTiming.scaleWithPlayers, false);
+    g.act(0, 'pause', { now: deadline - 1 });
+    const remaining = g.state.remainingMs;
+    delete g.state.settingsTiming;
+    g.act(0, 'resume', { now: deadline + 100000 });
+    assert.equal(g.state.explodeAt, deadline + 100000 + remaining);
+    g.act(0, 'restart');
+    assert.equal(g.state.settingsTiming.legacyFuse, fuse);
+    g.act(0, 'settings', { timing: { speedMode: 'normal', scaleWithPlayers: true } });
+    assert.equal(g.state.settingsTiming.legacyFuse, undefined, 'explicit change adopts new policy');
+  }
+});
+
+test('emergency pause moves only the effective deadline, keeping the original GO snapshot', () => {
+  const g = game();
+  g.act(g.state.holder, 'light', { now: 2000 });
+  const snapshot = JSON.stringify(g.state.roundFuse), initial = g.state.explodeAt;
+  g.act(0, 'pause', { now: initial - 1 });
+  g.act(0, 'settings', { timing: { speedMode: 'fast', scaleWithPlayers: false }, now: initial + 1 });
+  g.act(0, 'resume', { now: initial + 10000 });
+  assert.equal(JSON.stringify(g.state.roundFuse), snapshot);
+  assert.equal(g.state.explodeAt, initial + 10000 + E.CONFIG.resumeFloorMs);
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const json = JSON.stringify(E.view(g.state, actor));
+    for (const privateKey of ['roundFuse', 'roundId', 'startedAtMs', 'durationMs', 'explodeAtMs', 'activePlayerCountAtStart']) {
+      assert.equal(json.includes(privateKey), false, privateKey);
+    }
+  }
+});
+
+test('fractional authority clock offsets are normalized once at GO', () => {
+  const g = game();
+  assert.equal(g.act(g.state.holder, 'light', { now: 1500.5 }), '');
+  assert.equal(g.state.litAt, 1501);
+  assert.equal(g.state.roundFuse.startedAtMs, 1501);
+  assert.equal(g.state.explodeAt - g.state.litAt, g.state.roundFuse.durationMs);
 });

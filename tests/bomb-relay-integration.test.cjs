@@ -4,14 +4,20 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const DECK = require('../bomb-relay-deck.js');
 const E = require('../bomb-relay-engine.js');
+const TIMING = require('../bomb-relay-timing.js');
+const catalog = JSON.parse(read('content/bomb-relay-prompts.json'));
+const prompts = Array.isArray(catalog) ? catalog : catalog.prompts;
 
-test('the live packs contain 120 bilingual prompts and legacy scenes remain lookup-only', () => {
+test('the actual live deck includes the authoritative 720 bilingual prompts and legacy scenes remain lookup-only', () => {
   assert.deepEqual(DECK.categories, ['mixed', 'everyday', 'playful']);
-  assert.equal(DECK.items.length, 120);
-  assert.equal(new Set(DECK.items.map(card => card.id)).size, 120);
-  assert.equal(DECK.pool('mixed').length, 120);
-  assert.equal(DECK.pool('everyday').length, 60);
-  assert.equal(DECK.pool('playful').length, 60);
+  assert.ok(DECK.items.length >= 720);
+  assert.equal(new Set(DECK.items.map(card => card.id)).size, DECK.items.length);
+  assert.deepEqual(DECK.items.map(card => card.id), prompts.map(card => card.id));
+  assert.equal(DECK.pool('mixed').length, prompts.length);
+  for (const pack of ['everyday', 'playful']) {
+    assert.ok(DECK.pool(pack).length >= 360);
+    assert.equal(DECK.pool(pack).length, prompts.filter(card => card.pack === pack).length);
+  }
   for (const card of DECK.items) {
     assert.ok(['everyday', 'playful'].includes(card.pack), card.id);
     assert.equal(card.category, card.pack);
@@ -32,10 +38,10 @@ test('the live packs contain 120 bilingual prompts and legacy scenes remain look
 test('the host page loads its modules in dependency order and every file parses', () => {
   const html = read('bomb-relay.html');
   const files = [...html.matchAll(/<script src="(bomb-relay-[^"]+\.js)(?:\?[^"]*)?"/g)].map(match => match[1]);
-  assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
+  assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-timing.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
   for (const file of files) new vm.Script(read(file));
   assert.match(html, /<h1>Bomb Relay<\/h1>/);
-  assert.match(html, /href="bomb-relay\.css\?v=br-sound-4"/);
+  assert.match(html, /href="bomb-relay\.css\?v=br-expansion-2"/);
   assert.doesNotMatch(html, /assets\/bomb-relay\//);
   assert.match(html, /id="br-reroll" hidden/);
   const host = read('bomb-relay-host.js');
@@ -46,8 +52,11 @@ test('the host page loads its modules in dependency order and every file parses'
 
 test('original player links render the Bomb Relay card and fence actions to the shown turn', () => {
   const play = read('play.html');
-  assert.match(play, /bomb-relay-deck\.js\?v=br-studio-3/); assert.match(play, /bomb-relay-ui\.js\?v=br-sound-4/); assert.match(play, /bomb-relay\.css\?v=br-sound-4/);
-  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-sound-4'));
+  for (const file of ['deck', 'timing', 'ui']) assert.match(play, new RegExp('bomb-relay-' + file + '\\.js\\?v=br-expansion-2'));
+  assert.doesNotMatch(play, /<script src="bomb-relay-(?:selector|engine|sync)\.js/, 'players consume the authority projection rather than drawing or simulating independently');
+  assert.match(play, /bomb-relay\.css\?v=br-expansion-2/);
+  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-expansion-2'));
+  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-expansion-2') < play.indexOf('bomb-relay-ui.js?v=br-expansion-2'));
   assert.match(play, /new BOMB_RELAY_UI\.Card/); assert.match(play, /bombCard\.destroy\(\)/);
   assert.match(play, /current\.bomb\?\.sessionId !== command\.sessionId \|\| current\.bomb\?\.turnId !== command\.turnId/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
@@ -61,7 +70,7 @@ function ui(language = 'en') {
   const dictionaries = {}, intervals = new Set();
   let nextTimer = 0;
   const i18n = { lang: language, registerDict: (namespace, dictionary) => { dictionaries[namespace] = dictionary; }, t: (namespace, key) => dictionaries[namespace]?.[key]?.[i18n.lang] || key };
-  const context = vm.createContext({ I18N: i18n, BOMB_RELAY_DECK: DECK, BOMB_RELAY_AUDIO: require('../bomb-relay-audio.js'), crypto: require('node:crypto').webcrypto, window: { innerHeight: 568 },
+  const context = vm.createContext({ I18N: i18n, BOMB_RELAY_DECK: DECK, BOMB_RELAY_TIMING: TIMING, BOMB_RELAY_AUDIO: require('../bomb-relay-audio.js'), crypto: require('node:crypto').webcrypto, window: { innerHeight: 568 },
     setInterval: () => { const id = ++nextTimer; intervals.add(id); return id; }, clearInterval: id => intervals.delete(id) });
   vm.runInContext(read('bomb-relay-ui.js') + ';this.BOMB_RELAY_UI = BOMB_RELAY_UI;', context);
   const result = context.BOMB_RELAY_UI;
@@ -170,9 +179,9 @@ test('an arriving bomb scrolls the prompt into view together with the nearby PAS
 
 test('the library shows all three live packs with no artwork and missing prompts report a reload', () => {
   const UI = ui();
-  for (const [pack, count] of [['mixed', 120], ['everyday', 60], ['playful', 60]]) {
+  for (const pack of ['mixed', 'everyday', 'playful']) {
     const html = UI.libraryHTML(pack);
-    assert.equal((html.match(/data-br-prompt-id=/g) || []).length, count);
+    assert.equal((html.match(/data-br-prompt-id=/g) || []).length, DECK.pool(pack).length);
     assert.doesNotMatch(html, /<img|undefined/);
     for (const prompt of DECK.pool(pack)) assert.ok(html.includes(UI.esc(prompt.en)));
   }

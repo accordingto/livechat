@@ -19,10 +19,13 @@ var BOMB_RELAY_ENGINE = (() => {
   'use strict';
   const deck = typeof BOMB_RELAY_DECK !== 'undefined' ? BOMB_RELAY_DECK : require('./bomb-relay-deck.js');
   const selector = typeof BOMB_RELAY_SELECTOR !== 'undefined' ? BOMB_RELAY_SELECTOR : require('./bomb-relay-selector.js');
+  const timing = typeof BOMB_RELAY_TIMING !== 'undefined' ? BOMB_RELAY_TIMING : require('./bomb-relay-timing.js');
   const CONFIG = Object.freeze({
     minPlayers: 2, maxPlayers: 9,
-    // Seconds, like the electronic bomb: nobody knows when it goes off.
+    // Preserve explicit pre-v2 preferences. New games use the timing policy.
     fuses: Object.freeze({ quick: [8, 25], classic: [10, 60], long: [20, 80] }),
+    speedModes: timing.SPEED_MODES, timing: timing.TIMING_CONFIG,
+    defaultTiming: timing.DEFAULT_TIMING_SETTINGS,
     cardOptions: Object.freeze([5, 10, 15, 20]), defaultCards: 10,
     promptWeights: selector.DEFAULT_WEIGHTS, familyWindow: 3,
     boomHoldMs: 4500,
@@ -99,9 +102,43 @@ var BOMB_RELAY_ENGINE = (() => {
     state.promptWeights = Object.assign({}, CONFIG.promptWeights, state.promptWeights || {});
     state.familyWindow = Number.isInteger(state.familyWindow) ? state.familyWindow : CONFIG.familyWindow;
   }
-  function fuseMs(state, random) {
-    const [min, max] = CONFIG.fuses[state.fuse] || CONFIG.fuses.classic;
-    return Math.round((min + random() * (max - min)) * 1000);
+  function legacyTiming(fuse) {
+    return { speedMode: { quick: 'fast', classic: 'normal', long: 'chill' }[fuse], scaleWithPlayers: false, legacyFuse: fuse };
+  }
+  function normalizeTimingSettings(value = {}) {
+    const normalized = timing.normalizeTimingSettings(value);
+    if (value.legacyFuse !== undefined) {
+      if (!validFuse(value.legacyFuse)) throw new Error('invalid_options');
+      // Legacy named settings were uniform and had no player adjustment.
+      return Object.freeze(legacyTiming(value.legacyFuse));
+    }
+    return normalized;
+  }
+  function timingSettings(state) {
+    return normalizeTimingSettings(state?.settingsTiming ?? (validFuse(state?.fuse) ? legacyTiming(state.fuse) : {}));
+  }
+  function getTimingRange({ activePlayerCount, settings = {} } = {}) {
+    const normalized = normalizeTimingSettings(settings);
+    const standard = timing.getTimingRange({ activePlayerCount, settings: normalized });
+    if (!normalized.legacyFuse) return standard;
+    const [min, max] = CONFIG.fuses[normalized.legacyFuse];
+    return Object.freeze({ ...standard, ...normalized, minMs: min * 1000, maxMs: max * 1000,
+      meanMs: (min + max) * 500, addedMs: 0, capped: false });
+  }
+  function lightFuse(state, now, random) {
+    // Immutable GO audit snapshot. Expiry ALWAYS reads state.explodeAt below:
+    // emergency pause/resume can shift that effective deadline without a draw.
+    const settings = timingSettings(state);
+    const activePlayerCount = new Set(active(state).map(player => player.playerNum)).size;
+    const roundId = `${state.sessionId}:${state.cardIndex}:${state.turnId}`;
+    if (settings.legacyFuse) {
+      const range = getTimingRange({ activePlayerCount, settings });
+      const durationMs = Math.round(range.minMs + random() * (range.maxMs - range.minMs));
+      return { policyVersion: 'talk-bomb-legacy-uniform', roundId, startedAtMs: now, durationMs, explodeAtMs: now + durationMs,
+        activePlayerCountAtStart: activePlayerCount, speedModeAtStart: settings.speedMode,
+        scaleWithPlayersAtStart: false, minMsAtStart: range.minMs, maxMsAtStart: range.maxMs, legacyFuse: settings.legacyFuse };
+    }
+    return timing.startFuse({ roundId, nowMs: now, activePlayerCount, settings, random });
   }
   function bump(state, now) { state.turnId++; state.lastChangeAt = now; }
 
@@ -122,6 +159,7 @@ var BOMB_RELAY_ENGINE = (() => {
     state.phase = 'ready'; state.holder = holder; state.starter = holder;
     state.passes = 0; state.lastPass = null; state.bounce = null;
     state.explodeAt = null; state.remainingMs = null; state.litAt = null;
+    state.roundId = null; state.roundFuse = null;
     state.phaseUntil = null; state.pausedFrom = null;
     bump(state, now);
   }
@@ -156,16 +194,19 @@ var BOMB_RELAY_ENGINE = (() => {
   // host after the explosion moment cannot rescue its sender.
   const due = (state, now) => state.phase === 'ticking' && Number.isFinite(state.explodeAt) && now >= state.explodeAt;
 
-  function create({ id, roster: seats, fuse = 'classic', cards = CONFIG.defaultCards, category = 'mixed',
+  function create({ id, roster: seats, fuse, timing: timingOptions, cards = CONFIG.defaultCards, category = 'mixed',
     promptHistory: priorPromptHistory, weights = CONFIG.promptWeights, familyWindow = CONFIG.familyWindow, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(seats) || seats.length < CONFIG.minPlayers || seats.length > CONFIG.maxPlayers) throw new Error('invalid_roster');
     if (seats.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1 || player.playerNum > CONFIG.maxPlayers)
       || new Set(seats.map(player => player.playerNum)).size !== seats.length) throw new Error('invalid_roster');
-    if (!validFuse(fuse) || !validCards(cards) || !validCategory(category)
+    if ((fuse !== undefined && !validFuse(fuse)) || !validCards(cards) || !validCategory(category)
       || !validPromptOptions(weights, familyWindow, category)) throw new Error('invalid_options');
+    let settingsTiming;
+    try { settingsTiming = normalizeTimingSettings(timingOptions !== undefined ? timingOptions : (fuse !== undefined ? legacyTiming(fuse) : {})); }
+    catch (_) { throw new Error('invalid_options'); }
     const state = {
       version: 1, sessionId: String(id), turnId: 0, lastChangeAt: now,
-      fuse, cards, category, promptRotationVersion: 1,
+      fuse: fuse || 'classic', settingsTiming, cards, category, promptRotationVersion: 1,
       promptHistory: promptHistory(priorPromptHistory),
       promptWeights: Object.assign({}, CONFIG.promptWeights, weights), familyWindow,
       roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
@@ -196,6 +237,9 @@ var BOMB_RELAY_ENGINE = (() => {
     const state = copy(current);
     state.roster = roster(state); state.order = list(state.order); state.history = list(state.history);
     normalizePromptState(state);
+    // Lazily migrate settings only. An old running/paused deadline is never
+    // reconstructed, sampled again or extended by opening the upgraded page.
+    state.settingsTiming = timingSettings(state);
     state.penalties = state.penalties || {}; state.seen = state.seen || {}; state.replies = state.replies || {};
     for (const key of Object.keys(state.penalties)) state.penalties[key] = list(state.penalties[key]);
     const random = rng(input.seed);
@@ -214,8 +258,10 @@ var BOMB_RELAY_ENGINE = (() => {
         break;
       case 'light':
         if (state.phase !== 'ready' || !fresh || !mayAct || (!host && actor !== state.holder) || !isActive(state, state.holder)) { error = 'not_available'; break; }
-        state.phase = 'ticking'; state.litAt = now;
-        state.explodeAt = now + fuseMs(state, random);
+        state.phase = 'ticking'; state.litAt = Math.round(now);
+        state.roundFuse = lightFuse(state, state.litAt, random);
+        state.roundId = state.roundFuse.roundId;
+        state.explodeAt = state.roundFuse.explodeAtMs;
         bump(state, now);
         break;
       case 'pass': {
@@ -291,6 +337,10 @@ var BOMB_RELAY_ENGINE = (() => {
         const weights = input.weights ?? state.promptWeights;
         const familyWindow = input.familyWindow ?? state.familyWindow;
         if (!validPromptOptions(weights, familyWindow, category)) { error = 'invalid_options'; break; }
+        try {
+          if (input.timing !== undefined) state.settingsTiming = normalizeTimingSettings(input.timing);
+          else if (input.fuse !== undefined) state.settingsTiming = normalizeTimingSettings(legacyTiming(input.fuse));
+        } catch (_) { error = 'invalid_options'; break; }
         if (input.fuse !== undefined) state.fuse = input.fuse;
         if (input.cards !== undefined) state.cards = input.cards;
         if (input.category !== undefined) state.category = input.category;
@@ -298,6 +348,15 @@ var BOMB_RELAY_ENGINE = (() => {
         state.familyWindow = familyWindow;
         state.stopped = false;
         dealGame(state, now, random);
+        break;
+      case 'settings':
+        if (!host || input.timing === undefined) { error = 'not_available'; break; }
+        try { state.settingsTiming = normalizeTimingSettings(input.timing); }
+        catch (_) { error = 'invalid_options'; break; }
+        // Preferences are for the next GO. They do not invalidate a pending
+        // pass, redraw a prompt, or change any running/paused fuse snapshot.
+        if (due(state, now)) explode(state, now);
+        state.lastChangeAt = now;
         break;
       case 'stop':
         if (!host || state.phase === 'finished') { error = 'not_available'; break; }
@@ -332,7 +391,7 @@ var BOMB_RELAY_ENGINE = (() => {
     const challengeable = ticking && last && !last.bounced && state.holder === last.to && isActive(state, last.from);
     const bomb = {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, phase: state.phase,
-      fuse: state.fuse, cards: state.cards, category: state.category,
+      fuse: state.fuse, settingsTiming: timingSettings(state), cards: state.cards, category: state.category,
       cardId: state.phase === 'finished' ? null : state.order[state.cardIndex] ?? null,
       cardNo: Math.min(state.cardIndex + 1, totalCards(state)), cardsTotal: totalCards(state),
       holder: ['ready', 'ticking', 'paused'].includes(state.phase) ? state.holder : null,
@@ -356,6 +415,7 @@ var BOMB_RELAY_ENGINE = (() => {
     return { game: 'bombrelay', playerNum, name: mine?.name || null, bomb };
   }
 
-  return { CONFIG, create, apply, view, standings, nextActive, list, rng, nameOf };
+  return { CONFIG, create, apply, view, standings, nextActive, list, rng, nameOf,
+    normalizeTimingSettings, timingSettings, getTimingRange };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = BOMB_RELAY_ENGINE;

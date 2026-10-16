@@ -7,6 +7,7 @@
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null, editing = false;
   let demoCard = null, demoCardActor = 0;
+  let setupTiming = null, timingPending = null;
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => BOMB_RELAY_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -22,12 +23,49 @@
     byId('sound-status').textContent = sound.unsupported ? t('soundUnsupported') : waiting ? t('soundBlocked') : '';
   }
   function options() {
-    return { fuse: byId('fuse').value, cards: Number(byId('cards').value), category: byId('category').value };
+    return { timing: setupTiming || readTiming('fuse', 'scale'), cards: Number(byId('cards').value), category: byId('category').value };
   }
   function restoreOptions(current) {
     if (!current) return;
-    byId('fuse').value = current.fuse; byId('cards').value = String(current.cards);
+    setupTiming = BOMB_RELAY_ENGINE.timingSettings(current);
+    byId('fuse').value = setupTiming.speedMode; byId('scale').checked = setupTiming.scaleWithPlayers;
+    byId('cards').value = String(current.cards);
     byId('category').value = BOMB_RELAY_DECK.categories.includes(current.category) ? current.category : 'mixed';
+  }
+  function readTiming(speedId, scaleId) {
+    return BOMB_RELAY_ENGINE.normalizeTimingSettings({ speedMode: byId(speedId).value, scaleWithPlayers: byId(scaleId).checked });
+  }
+  function participantCount(inGame) {
+    if (inGame && state) return new Set(list(state.roster).filter(player => player.active !== false).map(player => player.playerNum)).size;
+    return demo ? demoRoster.length : Number(sync?.count || 0);
+  }
+  function timingSummary(prefix, settings, count) {
+    const range = BOMB_RELAY_ENGINE.getTimingRange({ activePlayerCount: count >= 2 ? count : 3, settings });
+    const vars = { n: count, mode: t(settings.speedMode), min: range.minMs / 1000, max: range.maxMs / 1000 };
+    byId(prefix + 'timing-range').textContent = t(count >= 2 ? 'timingRange' : 'timingBaseline', vars);
+    byId(prefix + 'timing-note').textContent = [settings.legacyFuse ? t('timingLegacy', vars) : '', range.capped ? t('timingCapped') : ''].filter(Boolean).join(' ');
+  }
+  function renderTiming() {
+    if (!setupTiming) setupTiming = BOMB_RELAY_ENGINE.normalizeTimingSettings({});
+    timingSummary('', setupTiming, participantCount(false));
+    byId('fuse').disabled = busy;
+    byId('scale').disabled = busy;
+    const pending = timingPending || (state ? BOMB_RELAY_ENGINE.timingSettings(state) : BOMB_RELAY_ENGINE.normalizeTimingSettings({}));
+    if (byId('manage-speed').value !== pending.speedMode) byId('manage-speed').value = pending.speedMode;
+    if (byId('manage-scale').checked !== pending.scaleWithPlayers) byId('manage-scale').checked = pending.scaleWithPlayers;
+    byId('manage-speed').disabled = byId('manage-scale').disabled = busy || !state || !canControl();
+    timingSummary('manage-', pending, participantCount(true));
+  }
+  function changeSetupTiming() {
+    // Only an explicit pace/scaling edit replaces a retained legacy range.
+    setupTiming = readTiming('fuse', 'scale');
+    renderTiming();
+  }
+  async function changeRoomTiming() {
+    if (busy || !state || !canControl()) return;
+    timingPending = readTiming('manage-speed', 'manage-scale');
+    try { await command('settings', { timing: timingPending }); }
+    finally { timingPending = null; renderTiming(); }
   }
   function labels() {
     I18N.applyStatic(document);
@@ -36,10 +74,17 @@
       byId(id).innerHTML = values.map(v => `<option value="${esc(v)}">${esc(label(v))}</option>`).join('');
       if (values.map(String).includes(value)) byId(id).value = value;
     };
-    pick('fuse', Object.keys(BOMB_RELAY_ENGINE.CONFIG.fuses), v => t(v));
+    pick('fuse', BOMB_RELAY_ENGINE.CONFIG.speedModes, v => t(v));
+    pick('manage-speed', BOMB_RELAY_ENGINE.CONFIG.speedModes, v => t(v));
     pick('cards', BOMB_RELAY_ENGINE.CONFIG.cardOptions, v => t('cardsN', { n: v }));
     pick('category', BOMB_RELAY_DECK.categories, v => `${t(v)} (${BOMB_RELAY_DECK.pool(v).length})`);
-    if (!byId('fuse').dataset.ready) { byId('fuse').value = 'classic'; byId('cards').value = '10'; byId('category').value = 'mixed'; byId('fuse').dataset.ready = '1'; }
+    if (!byId('fuse').dataset.ready) {
+      setupTiming = setupTiming || BOMB_RELAY_ENGINE.normalizeTimingSettings({});
+      byId('fuse').value = setupTiming.speedMode; byId('scale').checked = setupTiming.scaleWithPlayers;
+      byId('cards').value = state ? String(state.cards) : '10';
+      byId('category').value = state && BOMB_RELAY_DECK.categories.includes(state.category) ? state.category : 'mixed';
+      byId('fuse').dataset.ready = '1';
+    }
     pick('library-category', BOMB_RELAY_DECK.categories, v => `${t(v)} (${BOMB_RELAY_DECK.pool(v).length})`);
     const actor = byId('demo-view').value || '0';
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
@@ -93,7 +138,7 @@
       byId('stop').disabled ||= bomb.phase === 'finished';
       renderRoster(bomb);
     } else if (demoCard) { demoCard.destroy(); demoCard = null; demoCardActor = 0; }
-    paintSound(); follow();
+    renderTiming(); paintSound(); follow();
   }
   // In the one-device demo, the scene area becomes the chosen player's card.
   function renderDemoCard(actor) {
@@ -139,7 +184,7 @@
   }
   async function start({ restart = false } = {}) {
     if (busy || !canControl()) return;
-    const chosen = restart && state ? { fuse: state.fuse, cards: state.cards,
+    const chosen = restart && state ? { timing: BOMB_RELAY_ENGINE.timingSettings(state), cards: state.cards,
       category: BOMB_RELAY_DECK.categories.includes(state.category) ? state.category : 'mixed',
       weights: state.promptWeights, familyWindow: state.familyWindow } : options();
     if (sound.enabled) sound.ensure(); // inside the click: unlocks Web Audio
@@ -155,6 +200,10 @@
   const turn = () => state?.turnId;
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
   byId('setup-cancel').addEventListener('click', () => { editing = false; render(); });
+  byId('fuse').addEventListener('change', changeSetupTiming);
+  byId('scale').addEventListener('change', changeSetupTiming);
+  byId('manage-speed').addEventListener('change', changeRoomTiming);
+  byId('manage-scale').addEventListener('change', changeRoomTiming);
   byId('light').addEventListener('click', () => { if (sound.enabled) sound.ensure(); command('light', { turnId: turn() }); });
   byId('reroll').addEventListener('click', () => command('reroll', { turnId: turn() }));
   byId('pass').addEventListener('click', () => command('pass', { turnId: turn() }));

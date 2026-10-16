@@ -37,6 +37,14 @@
 .br-settings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .br-field { display: grid; gap: 9px; min-width: 0; color: #d3d7cb; font-size: .83rem; text-align: left; }
 .br-field select { width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; background: #181d19; color: var(--text); border: 1px solid #535c50; border-radius: 8px; padding: 11px 12px; color-scheme: dark; }
+.br-timing-options, .br-manage-timing { display: grid; gap: 9px; min-width: 0; }
+.br-check { display: flex; align-items: center; gap: 11px; min-height: 44px; color: var(--text); font-size: .9rem; line-height: 1.5; }
+.br-check input { width: 19px; height: 19px; flex: 0 0 auto; accent-color: var(--br-brass); }
+.br-check input:focus-visible { outline: 2px solid #e4c59a; outline-offset: 4px; }
+.br-timing-range { color: var(--text); font-size: .88rem; line-height: 1.6; overflow-wrap: anywhere; }
+#br-timing-note:empty, #br-manage-timing-note:empty { display: none; }
+.br-manage-timing { padding: 20px 0; margin-bottom: 16px; border-top: 1px solid var(--br-line); border-bottom: 1px solid var(--br-line); }
+.br-manage-timing h3 { color: var(--text); font-size: .98rem; font-weight: 500; margin-bottom: 5px; }
 .br-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; font: inherit; font-size: .92rem; font-weight: 600; line-height: 1.4; border: 1px solid #59624f; border-radius: 9px; padding: 11px 18px; color: var(--text); background: var(--btn-face); cursor: pointer; text-decoration: none; text-align: center; transition: background .15s, border-color .15s; }
 .br-button:hover:not(:disabled) { background: var(--btn-face-hi); border-color: #8f9a83; }
 .br-button.br-primary, .br-button.br-pass { background: var(--br-brass); border-color: var(--br-brass); color: #20251f; box-shadow: 0 3px 8px #0002; }
@@ -102,7 +110,7 @@
 .br-exploding .br-fire::after, .br-zone-boom .br-fire::after { animation: br-wave .8s ease-out both; }
 .br-static .br-fire, .br-static .br-fire::after { animation: none; }
 
-.br-seats { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 8px; margin: 20px 0 0; padding: 0; }
+.br-seats { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 20px 0 0; padding: 0; }
 .br-seat { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5px 8px; min-width: 0; padding: 13px 14px; border-radius: 9px; background: #262c25; border: 1px solid #47503e; }
 .br-seat-name { color: #e6e7dd; font-weight: 500; font-size: .94rem; overflow-wrap: anywhere; line-height: 1.4; }
 .br-seat-name em, .br-rank-name em { font-style: normal; font-size: .65rem; margin-left: 5px; color: #c3c8b7; font-weight: 400; vertical-align: middle; }

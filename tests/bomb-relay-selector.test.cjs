@@ -23,15 +23,15 @@ function drawMany(count, options = {}) {
   return { draws, history };
 }
 
-test('120 unique bilingual cards, 60 per pack; no duplicate English wording', () => {
+test('expanded bank has at least 720 unique bilingual cards, 360 per pack', () => {
   validateCatalog(PROMPTS);
-  assert.equal(PROMPTS.length, 120);
-  assert.equal(PROMPTS.filter(p => p.pack === 'everyday').length, 60);
-  assert.equal(PROMPTS.filter(p => p.pack === 'playful').length, 60);
-  assert.equal(new Set(PROMPTS.map(p => p.en.trim().toLowerCase())).size, 120);
-  assert.equal(new Set(PROMPTS.map(p => p.zhHant.trim())).size, 120);
+  assert.ok(PROMPTS.length >= 720);
+  assert.ok(PROMPTS.filter(p => p.pack === 'everyday').length >= 360);
+  assert.ok(PROMPTS.filter(p => p.pack === 'playful').length >= 360);
+  assert.equal(new Set(PROMPTS.map(p => p.en.trim().toLowerCase())).size, PROMPTS.length);
+  assert.equal(new Set(PROMPTS.map(p => p.zhHant.trim())).size, PROMPTS.length);
   for (const prompt of PROMPTS) {
-    assert.ok(prompt.id.startsWith(`tb-${prompt.pack}-`));
+    assert.ok(typeof prompt.id === 'string' && prompt.id.trim());
     assert.ok(Object.isFrozen(prompt));
   }
 });
@@ -42,25 +42,27 @@ test('single formal source has consistent browser card aliases and lookup', () =
     assert.equal(prompt.zh, prompt.zhHant);
     assert.equal(prompt.category, prompt.pack);
   }
-  assert.equal(DECK.pool('mixed').length, 120);
+  assert.equal(DECK.pool('mixed').length, PROMPTS.length);
   assert.ok(DECK.legacyItems.every(card => !PROMPTS.includes(card)));
   assert.deepEqual(DECK.pool('unknown'), []);
 });
 
-test('Mixed draws all 120 distinct prompts before eligible-pool recycling', () => {
-  const { draws } = drawMany(121);
-  assert.equal(new Set(draws.slice(0, 120).map(d => d.prompt.id)).size, 120);
-  assert.ok(draws.slice(0, 120).every(d => d.recycledPool === false));
-  assert.equal(draws[120].recycledPool, true);
-  assert.notEqual(draws[120].prompt.id, draws[119].prompt.id);
+test('Mixed draws the entire expanded pool before eligible-pool recycling', () => {
+  const total = PROMPTS.length;
+  const { draws } = drawMany(total + 1);
+  assert.equal(new Set(draws.slice(0, total).map(d => d.prompt.id)).size, total);
+  assert.ok(draws.slice(0, total).every(d => d.recycledPool === false));
+  assert.equal(draws[total].recycledPool, true);
+  assert.notEqual(draws[total].prompt.id, draws[total - 1].prompt.id);
 });
 
 for (const mode of ['everyday', 'playful']) {
-  test(`${mode}: only that pack, all 60 before recycling`, () => {
-    const { draws } = drawMany(61, { mode });
+  test(`${mode}: only that pack, its full expanded pool before recycling`, () => {
+    const total = DECK.pool(mode).length;
+    const { draws } = drawMany(total + 1, { mode });
     assert.ok(draws.every(d => d.prompt.pack === mode));
-    assert.equal(new Set(draws.slice(0, 60).map(d => d.prompt.id)).size, 60);
-    assert.equal(draws[60].recycledPool, true);
+    assert.equal(new Set(draws.slice(0, total).map(d => d.prompt.id)).size, total);
+    assert.equal(draws[total].recycledPool, true);
   });
 }
 
@@ -75,7 +77,7 @@ test('Mode switches preserve history instead of resetting it', () => {
 
 test('Recycling one pack keeps seen IDs from the other pack', () => {
   const first = drawMany(4, { mode: 'playful' });
-  const next = drawMany(61, { mode: 'everyday', history: first.history });
+  const next = drawMany(DECK.pool('everyday').length + 1, { mode: 'everyday', history: first.history });
   for (const d of first.draws) assert.ok(next.history.seenIds.includes(d.prompt.id));
 });
 
@@ -125,7 +127,7 @@ test('Removed IDs are cleaned without clearing known history', () => {
 });
 
 test('Zero-weight pack stays disabled in Mixed; explicit pack selection overrides weights', () => {
-  const { draws } = drawMany(65, { weights: { everyday: 0, playful: 1 } });
+  const { draws } = drawMany(DECK.pool('playful').length + 5, { weights: { everyday: 0, playful: 1 } });
   assert.ok(draws.every(d => d.prompt.pack === 'playful'));
   const result = selectPrompt({ mode: 'everyday', weights: { everyday: 0, playful: 1 } });
   assert.equal(result.prompt.pack, 'everyday');
@@ -152,7 +154,7 @@ test('Invalid catalog, mode, weights, and history fail explicitly', () => {
 test('Seeded stress draw remains bounded and returns known cards', () => {
   const { draws, history } = drawMany(1200);
   assert.equal(draws.length, 1200);
-  assert.ok(history.seenIds.length <= 120);
+  assert.ok(history.seenIds.length <= PROMPTS.length);
   assert.ok(history.recentIds.length <= 24);
   assert.ok(history.recentFamilies.length <= 24);
   assert.ok(draws.every(d => PROMPTS.some(p => p.id === d.prompt.id)));

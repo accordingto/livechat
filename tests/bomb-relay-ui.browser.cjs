@@ -1,5 +1,7 @@
 'use strict';
 // Run: node tests/bomb-relay-ui.browser.cjs [path-to-playwright-package]
+// Set BOMB_QA_PLAYERS=3, 6 or 8 and distinct BOMB_QA_OUTPUT directories for
+// participant-scaling regression runs. BOMB_QA_LAYOUT=0 skips captures only.
 // Serves the REAL host/player pages against one isolated Firebase-compatible
 // in-memory authority. All external requests are intercepted; no live room is touched.
 const { chromium } = require(process.argv[2] || 'playwright');
@@ -9,9 +11,12 @@ const path = require('node:path');
 const http = require('node:http');
 const root = path.resolve(__dirname, '..');
 const output = path.resolve(process.env.BOMB_QA_OUTPUT || path.join(root, '..', 'bomb-browser-qa'));
-const code = 'BOMB_BROWSER_QA';
-const tokens = ['qa-player-1', 'qa-player-2', 'qa-player-3', 'qa-player-4'];
-const names = ['Amy', 'Kevin', 'Jason', 'Willy'];
+const playerCount = Number(process.env.BOMB_QA_PLAYERS || 4);
+assert.ok(Number.isInteger(playerCount) && playerCount >= 3 && playerCount <= 9, 'BOMB_QA_PLAYERS must be 3–9');
+const code = 'BOMB_BROWSER_QA_' + playerCount;
+const tokens = Array.from({ length: playerCount }, (_, index) => 'qa-player-' + (index + 1));
+const names = ['Amy', 'Kevin', 'Jason', 'Willy', 'Riley', 'Morgan', 'Alex', 'Sam', 'Robin'].slice(0, playerCount);
+const DECK = require('../bomb-relay-deck.js');
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 const normalize = value => {
   if (value == null) return null;
@@ -168,7 +173,8 @@ function observeAudio() {
     return item;
   };
   let host;
-  const report = { entry: 'bomb-relay.html + four original play.html links', fixture: 'isolated Firebase-compatible memory database; controlled clock via serverTimeOffset; external network intercepted', checks: [], views: [] };
+  const report = { entry: `bomb-relay.html + ${playerCount} original play.html links`, playerCount, catalogSize: DECK.items.length,
+    fixture: 'isolated Firebase-compatible memory database; controlled clock via serverTimeOffset; external network intercepted; desktop Chromium emulates viewport sizes, not physical phones', checks: [], views: [], roundFuses: [] };
   const check = label => { report.checks.push(label); if (process.env.BOMB_QA_VERBOSE) console.log('PASS ' + label); };
   const wait = async predicate => {
     for (let i = 0; i < 240; i++) { await delivery; if (await predicate()) return; await pause(25); }
@@ -182,15 +188,37 @@ function observeAudio() {
   };
   const samePrompt = async () => {
     const canonical = await state();
-    assert.ok(/^tb-(everyday|playful)-\d{3}$/.test(promptId(canonical)), 'live entry must use supplied 120-prompt catalog');
+    assert.ok(DECK.get(promptId(canonical)) && /^tb-(everyday|playful)-\d{3}$/.test(promptId(canonical)), 'live entry must use the authoritative expanded catalog');
     await wait(async () => (await cards()).every(projection => promptId(projection?.bomb || {}) === promptId(canonical)));
     const projections = await cards();
-    for (const projection of projections) assert.equal(promptId(projection.bomb), promptId(canonical));
+    for (const projection of projections) {
+      assert.equal(promptId(projection.bomb), promptId(canonical));
+      for (const hidden of ['roundFuse', 'roundId', 'explodeAt', 'remainingMs', 'litAt', 'durationMs', 'startedAtMs', 'explodeAtMs']) assert.equal(Object.hasOwn(projection.bomb, hidden), false, hidden + ' stays private');
+    }
     for (const page of [host, ...players]) {
       await page.locator('.br-scene-title[data-br-prompt-id]').waitFor({ state: 'visible' });
       assert.equal(await page.locator('.br-scene-title[data-br-prompt-id]').getAttribute('data-br-prompt-id'), promptId(canonical));
     }
     return canonical;
+  };
+  const verifyFuse = (canonical, count, speedMode, scaleWithPlayers) => {
+    const snapshot = canonical.roundFuse, base = { fast: [30000, 60000], normal: [60000, 100000], chill: [90000, 150000] }[speedMode];
+    const added = scaleWithPlayers ? Math.max(0, Math.min(count, 8) - 3) * 10000 : 0;
+    assert.equal(snapshot.activePlayerCountAtStart, count);
+    assert.equal(snapshot.speedModeAtStart, speedMode); assert.equal(snapshot.scaleWithPlayersAtStart, scaleWithPlayers);
+    assert.equal(snapshot.minMsAtStart, base[0] + added); assert.equal(snapshot.maxMsAtStart, base[1] + added);
+    assert.ok(snapshot.durationMs >= snapshot.minMsAtStart && snapshot.durationMs <= snapshot.maxMsAtStart);
+    assert.equal(snapshot.durationMs, snapshot.explodeAtMs - snapshot.startedAtMs);
+    assert.equal(canonical.roundId, snapshot.roundId); assert.equal(canonical.explodeAt, snapshot.explodeAtMs);
+    report.roundFuses.push(clone(snapshot));
+  };
+  const manageTiming = async (speedMode, scaleWithPlayers) => {
+    await host.click('#br-manage-open');
+    await host.selectOption('#br-manage-speed', speedMode);
+    await wait(async () => (await state()).settingsTiming.speedMode === speedMode);
+    await host.locator('#br-manage-scale').setChecked(scaleWithPlayers);
+    await wait(async () => (await state()).settingsTiming.scaleWithPlayers === scaleWithPlayers);
+    await host.locator('#br-manage .br-dialog-header button').click();
   };
   const layout = async (item, label, selector, width, lang, height = 900, requireTogether = true) => {
     if (process.env.BOMB_QA_LAYOUT === '0') return;
@@ -203,14 +231,15 @@ function observeAudio() {
       const box = element => { const rect = element?.getBoundingClientRect(); return rect && { x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }; };
       const rect = prompt?.getBoundingClientRect();
       const promptOccluded = rect && [0.25, 0.5, 0.9].some(portion => {
-        const x = rect.x + rect.width / 2, y = rect.y + rect.height * portion;
+        const x = Math.floor(rect.x + rect.width / 2), y = Math.floor(rect.y + rect.height * portion);
         return y >= 0 && y < innerHeight && !prompt.contains(document.elementFromPoint(x, y));
       });
       return { width: innerWidth, overflow: document.documentElement.scrollWidth - innerWidth, prompt: box(prompt), button: box(button), promptText: prompt?.innerText || '', promptOccluded };
     }, selector);
     const file = label + '-' + width + (height === 900 ? '' : 'x' + height) + '-' + lang + '.png';
     await item.screenshot({ path: path.join(output, file), fullPage: true });
-    report.views.push({ label, width, height, lang, ...metrics, togetherInViewport: !!metrics.button && metrics.button.y >= 0 && metrics.button.bottom <= height && metrics.prompt.y >= 0 && metrics.prompt.bottom <= height, screenshot: file });
+    const capture = { label, width, height, lang, ...metrics, togetherInViewport: !!metrics.button && metrics.button.y >= 0 && metrics.button.bottom <= height && metrics.prompt.y >= 0 && metrics.prompt.bottom <= height, screenshot: file };
+    report.views.push(capture);
     assert.ok(metrics.prompt && metrics.prompt.width > 0, label + ' prompt visible');
     assert.ok(metrics.overflow <= 1, label + ' has no horizontal overflow: ' + metrics.overflow);
     assert.equal(metrics.promptOccluded, false, label + ' prompt is not covered by controls');
@@ -219,6 +248,28 @@ function observeAudio() {
       if (requireTogether) {
         assert.ok(metrics.button.y >= 0 && metrics.button.bottom <= height, label + ' action in first viewport');
         assert.ok(metrics.prompt.y >= 0 && metrics.prompt.bottom <= height, label + ' prompt in first viewport');
+      } else {
+        // The shared host can have a longer roster than a phone card. Verify
+        // ordinary scrolling exposes the full prompt and a usable action,
+        // rather than treating all below-fold content as an overlap failure.
+        await item.locator('.br-scene-title[data-br-prompt-id]').evaluate(element => element.scrollIntoView({ block: 'start', behavior: 'instant' }));
+        capture.scrolledPrompt = await item.locator('.br-scene-title[data-br-prompt-id]').evaluate(element => {
+          const rect = element.getBoundingClientRect();
+          return { top: rect.top, bottom: rect.bottom, occluded: [.25, .5, .9].some(part => {
+            const hit = document.elementFromPoint(Math.floor(rect.x + rect.width / 2), Math.floor(rect.y + rect.height * part));
+            return !element.contains(hit);
+          }) };
+        });
+        assert.ok(capture.scrolledPrompt.top >= -1 && capture.scrolledPrompt.bottom <= height + 1, label + ' complete prompt reachable by ordinary scroll');
+        assert.equal(capture.scrolledPrompt.occluded, false, label + ' scrolled prompt not covered');
+        await item.locator(selector).evaluate(element => element.scrollIntoView({ block: 'nearest', behavior: 'instant' }));
+        capture.scrolledAction = await item.locator(selector).evaluate(element => {
+          const rect = element.getBoundingClientRect();
+          return { top: rect.top, bottom: rect.bottom, clickable: element.contains(document.elementFromPoint(Math.floor(rect.x + rect.width / 2), Math.floor(rect.y + rect.height / 2))) };
+        });
+        assert.ok(capture.scrolledAction.top >= 0 && capture.scrolledAction.bottom <= height + 1, label + ' action reachable by ordinary scroll');
+        assert.equal(capture.scrolledAction.clickable, true, label + ' scrolled action not covered');
+        await item.locator(selector).click({ trial: true });
       }
     }
     return metrics;
@@ -234,7 +285,9 @@ function observeAudio() {
       const resultsOccluded = /results/.test(label) && [...document.querySelectorAll('.br-rank')].some(rank => {
         const rect = rank.getBoundingClientRect();
         return [0.25, 0.5, 0.9].some(portion => {
-          const x = rect.x + rect.width / 2, y = rect.y + rect.height * portion;
+          // Chromium rounds fractional hit-test coordinates at the viewport
+          // edge (799.94 can become 800 and return null). Probe real pixels.
+          const x = Math.floor(rect.x + rect.width / 2), y = Math.floor(rect.y + rect.height * portion);
           return y >= 0 && y < innerHeight && !rank.contains(document.elementFromPoint(x, y));
         });
       });
@@ -263,17 +316,22 @@ function observeAudio() {
     await host.waitForFunction(() => !document.querySelector('#br-start').disabled);
     for (const [width, height] of [[1280, 800], [375, 740], [320, 568]]) for (const lang of ['en', 'zh']) await surface(host, 'host-setup', width, height, lang);
     await host.locator('#br-library > summary').click();
-    await host.waitForFunction(() => document.querySelectorAll('.br-library-card').length === 120);
+    await host.waitForFunction(count => document.querySelectorAll('.br-library-card').length === count, DECK.items.length);
     for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) await surface(host, 'host-library', width, height, lang, '#br-library');
     await host.locator('#br-library > summary').click();
     assert.deepEqual(await host.locator('#br-category option').evaluateAll(options => options.map(option => option.value)), ['mixed', 'everyday', 'playful']);
     assert.equal(await host.inputValue('#br-category'), 'mixed');
-    await host.selectOption('#br-fuse', 'long'); await host.selectOption('#br-cards', '5');
+    assert.deepEqual(await host.locator('#br-fuse option').evaluateAll(options => options.map(option => option.value)), ['fast', 'normal', 'chill']);
+    assert.equal(await host.inputValue('#br-fuse'), 'normal'); assert.equal(await host.isChecked('#br-scale'), true);
+    const added = Math.max(0, Math.min(playerCount, 8) - 3) * 10;
+    assert.match(await host.locator('#br-timing-range').innerText(), new RegExp(`${60 + added}–${100 + added}`));
+    await host.selectOption('#br-cards', '5');
     await host.click('#br-start');
     await wait(async () => (await state())?.phase === 'ready' && (await cards()).every(card => card?.bomb?.phase === 'ready'));
     let current = await samePrompt();
-    assert.equal(current.explodeAt, null);
-    check('real entry loads new catalog, Mixed default and all three packs; ready phase has no running fuse');
+    assert.equal(current.explodeAt, null); assert.equal(current.roundFuse, null);
+    assert.deepEqual(current.settingsTiming, { speedMode: 'normal', scaleWithPlayers: true });
+    check('real entry loads expanded catalog, Mixed default, Normal + participant scaling, and all three packs; Ready consumes no fuse');
     for (const width of [1280, 375, 320]) for (const lang of ['en', 'zh']) await layout(host, 'host-ready', '#br-light', width, lang);
     const starter = players[current.holder - 1];
     for (const width of [375, 320]) for (const lang of ['en', 'zh']) await layout(starter, 'player-ready', '[data-br-action="light"]', width, lang);
@@ -289,6 +347,16 @@ function observeAudio() {
     await wait(async () => (await state()).phase === 'ticking' && (await cards()).every(card => card.bomb.phase === 'ticking'));
     current = await samePrompt();
     const id = promptId(current), fuse = current.explodeAt, holder = current.holder;
+    verifyFuse(current, playerCount, 'normal', true);
+    const firstSnapshot = clone(current.roundFuse), firstTurn = current.turnId;
+    await manageTiming('fast', false);
+    current = await samePrompt(); assert.equal(current.turnId, firstTurn);
+    assert.equal(current.explodeAt, fuse); assert.deepEqual(current.roundFuse, firstSnapshot);
+    const excluded = Array.from({ length: playerCount }, (_, index) => index + 1).find(number => number !== holder);
+    await host.evaluate(playerNum => BOMB_RELAY_HOST.command('exclude', { playerNum, active: false }), excluded);
+    await wait(async () => (await state()).roster.find(seat => seat.playerNum === excluded)?.active === false);
+    current = await samePrompt(); assert.equal(current.explodeAt, fuse); assert.deepEqual(current.roundFuse, firstSnapshot);
+    check('real in-round pace/scaling controls and participation exclusion update next-GO preferences without resampling the current snapshot or deadline');
     for (const width of [1280, 375, 320]) for (const lang of ['en', 'zh']) await layout(host, 'host-ticking', '#br-pass', width, lang);
     for (const width of [375, 320]) for (const lang of ['en', 'zh']) await layout(players[holder - 1], 'player-ticking', '[data-br-action="pass"]', width, lang);
     assert.equal((await state()).explodeAt, fuse); assert.equal(promptId(await state()), id);
@@ -302,7 +370,7 @@ function observeAudio() {
     const nextHolder = current.holder;
     assert.equal(await players[holder - 1].locator('[data-br-action="pass"]').count(), 0);
     check('player pass works without typed/recognized answer, unchanged prompt/fuse, original clockwise holder rules');
-    const challenger = [1, 2, 3, 4].find(number => number !== holder && number !== nextHolder);
+    const challenger = current.roster.find(seat => seat.active !== false && seat.playerNum !== holder && seat.playerNum !== nextHolder)?.playerNum || nextHolder;
     const bounce = players[challenger - 1].locator('[data-br-action="bounce"]');
     if (await bounce.count()) {
       await bounce.click({ force: true }); await wait(async () => (await state()).holder === holder);
@@ -336,16 +404,28 @@ function observeAudio() {
     await wait(async () => (await state())?.sessionId === beforeReload.sessionId && !await host.locator('#br-pass').isDisabled());
     current = await samePrompt(); assert.equal(current.explodeAt, fuse); assert.equal(promptId(current), id);
     assert.deepEqual(current.promptHistory, beforeReload.promptHistory);
-    check('host reload reclaims the existing authoritative session, same prompt/deadline/history');
+    assert.deepEqual(current.roundFuse, beforeReload.roundFuse); assert.deepEqual(current.settingsTiming, beforeReload.settingsTiming);
+    check('host reload and expired authority lease reclaim the same session, prompt/deadline/history, frozen fuse and pending settings');
     await players[nextHolder - 1].reload();
     await wait(async () => (await cards())[nextHolder - 1]?.bomb?.phase === 'ticking');
     await samePrompt(); check('player reload resumes the same prompt and holder');
     let loser;
     for (let round = 0; round < 5; round++) {
       current = await state();
-      if (current.phase === 'ready') { await host.click('#br-light'); await wait(async () => (await state()).phase === 'ticking'); current = await state(); }
+      if (current.phase === 'ready') {
+        assert.equal(current.roundFuse, null); assert.equal(current.explodeAt, null);
+        await host.click('#br-light'); await wait(async () => (await state()).phase === 'ticking'); current = await state();
+        if (round === 1) {
+          verifyFuse(current, playerCount - 1, 'fast', false);
+          const saved = clone(current.roundFuse), deadline = current.explodeAt;
+          await host.evaluate(playerNum => BOMB_RELAY_HOST.command('exclude', { playerNum, active: true }), excluded);
+          await wait(async () => (await state()).roster.find(seat => seat.playerNum === excluded)?.active === true);
+          await manageTiming('chill', true);
+          current = await samePrompt(); assert.deepEqual(current.roundFuse, saved); assert.equal(current.explodeAt, deadline);
+        } else if (round >= 2) verifyFuse(current, playerCount, 'chill', true);
+      }
       loser = current.holder; const deadline = current.explodeAt;
-      await setTime(deadline + 20);
+      await setTime(deadline);
       await wait(async () => (await state()).phase === 'boom' && (await cards()).every(card => card.bomb.phase === 'boom'));
       current = await samePrompt(); assert.equal(current.boom.loser, loser);
       for (const card of await cards()) assert.equal(card.bomb.boom.loser, loser);
@@ -365,6 +445,7 @@ function observeAudio() {
     }
     assert.equal(Object.values(current.penalties).flat().length, 5);
     check('five speech-only rounds complete with synchronized explosion loser, animation classes and exactly five penalty cards');
+    check('subsequent GO uses eligible player count, Fast scaling-off and Chill scaling-on; exact deadline expires once and rejoining never changes the active fuse');
     report.soundEvents.push(...await host.evaluate(() => __qaSoundEvents));
     for (const event of ['tick', 'pass', 'bounce', 'boom']) assert.ok(report.soundEvents.includes(event), 'existing ' + event + ' sound cue invoked');
     check('approved tick/boom and original pass/bounce sound paths invoked (audible speaker output requires human testing)');
@@ -408,7 +489,7 @@ function observeAudio() {
         await layout(phone, 'player-longest', '[data-br-action="pass"]', width, lang, height, height >= 568);
       }
       report.longestPrompt = longest;
-      check('longest supplied prompt rendered through isolated authority on desktop800px and phones740/667/568px, EN/ZH; shorter host can scroll');
+      check('longest supplied prompt rendered through isolated authority on desktop800px and phones740/667/568px, EN/ZH; host full prompt and action remain reachable by ordinary scroll');
     }
     if (process.env.BOMB_QA_LAYOUT !== '0') {
       await host.emulateMedia({ reducedMotion: 'reduce' });

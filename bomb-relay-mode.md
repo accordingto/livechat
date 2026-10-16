@@ -26,11 +26,21 @@ caused the narrow impression, rather than an identified sampling bug.
 
 ## Source and drawing
 
-- `bomb-relay-deck.js` is the one authoritative 120-prompt source, mechanically
-  adapted from the supplied attachment: stable ID, pack, family, English and
-  Traditional Chinese. No second editable JSON/MJS copy is shipped.
-- Everyday / 日常聯想: 60 prompts, 15 families. Playful / 趣味聯想: 60 prompts,
-  15 families. Mixed / 混合 is the initial default with relative weights 1:1.
+- `content/bomb-relay-prompts.json` is the single editable active source.
+  `node scripts/bomb-relay-build-catalog.cjs` generates the existing classic/CJS
+  `bomb-relay-deck.js` and `content/bomb-relay-catalog-manifest.json`.
+  `--check` rejects stale outputs. The real host and original player links load
+  that generated deck, rather than a second standalone MJS or catalog page.
+- The v2 audit found the existing 120 prompts exactly matched all five supplied
+  fields (ID, pack, family, English, Traditional Chinese), with no additional
+  custom prompts or local edits. All 120 are retained once, plus the supplied
+  600 additions, with no wording edits. Final active count: 720 bilingual prompts,
+  not 1440. Original-data SHA-256 is recorded in the generated manifest.
+  Future valid custom additions/edits belong in the JSON and are retained by
+  the builder; it validates duplicates without imposing a 720-item limit.
+- Everyday / 日常聯想: 360 prompts. Playful / 趣味聯想: 360 prompts.
+  There are 34 distinct families across the bank. Mixed / 混合 is the initial
+  default with relative weights 1:1.
   This is a playtest starting point, not a validated optimum or alternation.
 - `bomb-relay-selector.js` adapts the supplied pure selector to the existing
   classic browser/CJS architecture. It owns no storage, timer or network.
@@ -47,7 +57,8 @@ caused the narrow impression, rather than an identified sampling bug.
 - Unknown filters have an empty pool and invalid settings are rejected. Missing
   prompts show a reload message, with no silent fallback to old scenes.
 
-The old 60 cards remain as `legacyItems` and their SVGs remain on disk for
+The old 60 scene cards are in `content/bomb-relay-legacy-scenes.json`, generated
+as `legacyItems`, and their SVGs remain on disk for
 comparison and saved-card lookup. They are excluded from every new pool.
 Legacy in-progress saves keep their displayed card, fuse, score and actual old
 game length; future bombs use the new bank. Old category names map to Mixed
@@ -67,7 +78,8 @@ do not issue commands or draw prompts. Text cards replace specific scene art
 so visuals do not suggest an answer list. Neutral bomb marks, a recognizable
 explosion reveal, vibration and Web Audio cues remain.
 
-The current presentation cache is `br-sound-4`: charcoal/olive surfaces, warm
+The current Bomb module/cache tag is `br-expansion-2`; audio remains
+`br-sound-4`. Presentation retains charcoal/olive surfaces, warm
 paper, a restrained brass accent, neutral player identities and a charcoal CSS
 bomb with red sparks and a brief red flame/wave burst. Print-style English
 prompt typography and consistent controls cover setup, play, library and results.
@@ -76,12 +88,49 @@ once per second, plus the approved .52 s bass-reduced explosion. Cue buffers
 match the reviewed demo at .6 playback gain. Pass/bounce sounds remain, phone
 audio stays opt-in, mute stops active cues and disposal closes the context.
 The tick cadence never speeds up or reflects remaining time. Visual motion is
-also fixed and honours reduced-motion. No fuse or settlement timing is changed.
+also fixed and honours reduced-motion. Audio and explosion animation are
+unchanged by the v2 timing/content expansion.
 Phone player cards keep the prompt before Pass; host results and short host
 viewports use normal scrolling so controls cannot cover content.
 
-Fuse ranges are unchanged: Classic 10–60 s (default), Quick 8–25 s, Relaxed
-20–80 s. The original formula is `round((min + seededRandom * (max-min))*1000)`.
+Before v2, the actual engine used Classic 10–60 s (default), Quick 8–25 s,
+Relaxed 20–80 s, with one uniform seeded random draw:
+`round((min + seededRandom * (max-min))*1000)`.
+There was no participant adjustment, Easy/Hard or custom-seconds UI, automatic
+answer-speed extension, or client-side fuse resampling. Untimed Ready and
+pass-without-reset were already correct. These are measured source facts,
+not an inference from the reported number of laps.
+
+`bomb-relay-timing.js` adapts the supplied pure policy to classic/CJS. For a
+new room without an explicit prior preference, Normal and participant scaling
+are selected. At 2–3 eligible players: Fast 30–60 s (mean 45), Normal 60–100 s
+(mean 80), Chill 90–150 s (mean 120). Each GO uses two independent uniforms:
+`round(minMs + (maxMs-minMs)*(u1+u2)/2)`, a symmetric triangular distribution.
+The user-selectable adjustment adds
+`10 * (min(8, max(3, activePlayerCount)) - 3)` seconds to both ends once.
+Six players add 30 s; eight add 50 s; nine show the capped adjustment.
+Off uses base ranges. Counts come from distinct active roster seats, not
+connections or the separate host display. Sit-out/rejoin changes only the next
+GO count. The existing Hub room-count switch still fences the old coordinator;
+it does not rewrite a running session's roster in place.
+
+Old explicit Quick/Classic/Relaxed preferences remain their original uniform
+ranges, with no scaling, via `settingsTiming.legacyFuse`. The three-option UI
+shows a retention note, with no extra legacy button. Ordinary Restart, reopening
+and unrelated edits retain this preference. An explicit speed/scaling change
+opts into the new policy. An already running or paused legacy bomb always keeps
+its saved deadline/remaining time. New pending settings live in canonical
+`settingsTiming`; host-only `settings` commands never redraw or restart a fuse.
+
+Only a validated Light/GO calls the sampler. Canonical `roundFuse` records
+`roundId`, `startedAtMs`, `durationMs`, `explodeAtMs`, policy, mode, count and
+range at GO. It is an immutable audit snapshot. The existing `state.explodeAt`
+remains the effective deadline: emergency pause/resume shifts it using the
+saved remaining time and original 2.5 s floor, without drawing again. Expiry
+must read that effective deadline, not the snapshot's initial deadline after
+a pause. Firebase's possibly fractional clock offset is rounded to milliseconds.
+Session/turn IDs fence callbacks and duplicate command IDs remain ignored.
+
 `explodeAt`, remaining time and RNG seed never reach player projections; no
 remaining-time counter or progress bar is rendered. Host ticks check every
 100 ms, but the absolute deadline determines late actions.
@@ -125,12 +174,25 @@ This remains a frontend-only release; no service deployment or secret change.
 
 ## Verification
 
-Run attachment tests first: `node --test talk-bomb-selector.test.mjs` (17 cases).
+Run the v2 attachment tests first, in its own directory:
+`node scripts/build.mjs` and `node --test tests/*.test.mjs` (41 cases).
+Do not replace Hub's package.json. Then check generated content:
+`node scripts/bomb-relay-build-catalog.cjs --check`.
 In the repository: `node --test tests/bomb-relay-*.test.cjs` and
 `node --test tests/*.test.cjs`. Browser regression:
 `node tests/bomb-relay-ui.browser.cjs <path-to-playwright>` uses disposable local
-fixtures and a Firebase stand-in, never user rooms. Read-only production assets:
+fixtures and a Firebase stand-in, never user rooms; run with
+`BOMB_QA_PLAYERS=3`, `6`, `8` and a separate `BOMB_QA_OUTPUT` for each.
+Read-only production assets:
 `node scripts/bomb-relay-verify-release.cjs <commit>`.
+
+After deployment, `node scripts/bomb-relay-production.browser.cjs --live
+<path-to-playwright>` opens the real production host and three original player
+pages with the real Firebase SDK. It creates only four fresh, random, marked
+QA nodes; WebSocket and REST paths are allowlisted exactly. Cleanup requires
+matching marker/session/browser owner plus ETag, and never deletes a parent.
+The probe waits for a real Normal deadline without changing clocks or fuse
+state. `--self-test` exercises ownership guards offline without creating data.
 
 Record actual release test counts and browser limits in `CLAUDE.md`. Unit tests
 alone do not prove physical mobile or real multi-device voice-session behavior.

@@ -1,4 +1,46 @@
-## CURRENT: Crazy Talk shorter rotation and director ideas — 2026-10-17
+## CURRENT: Talk Bomb 720 prompts and selectable fuse pacing — 2026-10-17
+
+Read bomb-relay-mode.md for the real entry, previous timing audit, migration,
+authority and history rules. This scoped frontend change preserves the approved
+tick, bass-reduced explosion and red-spark animation, all passing/scoring rules,
+and every unrelated game's source/runtime. Bomb has zero dependencies in the
+independent executor's 52-file runtime graph; no service or secret update is needed.
+
+The existing bomb-relay.html host and play.html bombrelay cards now load the
+generated 720-prompt deck: original120 unchanged plus supplied600, Everyday360,
+Playful360,34 families, Mixed1:1. Audit found no extra custom prompts or modified
+old entries to reconcile. content/bomb-relay-prompts.json is the one editable
+active source; scripts/bomb-relay-build-catalog.cjs produces deck and manifest.
+The60 historical scene cards remain lookup-only in a separate source. Stable IDs,
+family window3 and canonical promptHistory survive Restart/settings/reconnect.
+
+Previously Quick8–25/Classic10–60(default)/Relaxed20–80 seconds were uniformly
+sampled and had no player adjustment. New-room defaults are Normal/on, with
+Fast30–60, Normal60–100, Chill90–150 seconds at2–3 players. Two independent
+uniform draws form a triangular distribution; scaling adds10 seconds per eligible
+player above3, capped at8 (+50). Explicit saved legacy choices keep their original
+uniform ranges until speed/scaling is changed, with a UI note and no fourth option.
+
+Only GO captures mode/count and samples once into immutable roundFuse; existing
+explodeAt stays the effective deadline, including the retained emergency-pause
+floor2.5 seconds. Passes and mid-round settings/roster edits never resample.
+Ready is untimed; settings only affect next GO. Expiry at equality settles before
+late passes in the same authority transaction. Fractional Firebase clock offsets
+are normalized; no chosen duration/deadline is rendered or projected to cards.
+
+Validation: attachment build and41/41 tests passed before integration;
+generated-content check and final full Hub suite2068/2068 pass. Actual-page local
+host plus original player links pass all16 browser checks for each of3/6/8 players:
+48 executions,234 EN/ZH desktop/320/375 captures, no uncaught errors. The longest
+new prompt is tb-playful-208; phone320x568 keeps prompt/PASS together. Eight-seat
+desktop1280x800 ZH fits after a minimal seat width125-to120px adjustment, retaining
+phone two-column layout. Short host pages scroll naturally with hit-tested controls.
+Browser results include exact approved audio PCM, settings/count snapshots,
+expiry/duplicate scoring, host takeover, reconnect and retained history.
+Disposable real-Firebase production verification follows publication.
+No human group, physical-phone, or all720-prompts entertainment validation is claimed.
+
+## Previous: Crazy Talk shorter rotation and director ideas — 2026-10-17
 
 Read docs/talk-director-help-acceptance.md for this release's scoped evidence.
 Gameplay source554e2d5 is published on both existing hosts; existing service

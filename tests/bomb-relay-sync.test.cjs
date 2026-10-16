@@ -47,11 +47,11 @@ function database() {
 const turn = () => new Promise(resolve => setImmediate(resolve));
 async function settle(...hosts) { for (let n = 0; n < 12; n++) { await turn(); await Promise.all(hosts.flatMap(h => [h.serial, h.outgoing])); } }
 
-function setup() {
+function setup(count = 4) {
   let clock = 500000; const db = database(), extras = {};
   class ClockDate extends Date { static now() { return clock; } }
-  const paths = [1, 2, 3, 4].map(n => `rooms/BOMBTEST/players/card-${n}`);
-  const room = { code: 'BOMBTEST', count: 4, name: i => ['Amy', 'Kevin', 'Jason', 'Willy'][i],
+  const paths = Array.from({ length: count }, (_, i) => `rooms/BOMBTEST/players/card-${i + 1}`);
+  const room = { code: 'BOMBTEST', count, name: i => ['Amy', 'Kevin', 'Jason', 'Willy'][i] || `P${i + 1}`,
     getExtra: key => extras[key], setExtra: (key, value) => { extras[key] = value; }, playerRef: i => db.ref(paths[i]) };
   const context = vm.createContext({ crypto, Date: ClockDate, BOMB_RELAY_DECK: DECK, BOMB_RELAY_ENGINE: E,
     setInterval: () => 0, clearInterval: () => {} });
@@ -292,5 +292,57 @@ test('switching back to Bomb Relay retains the activity history and configured M
   assert.equal(next.familyWindow, 2);
   assert.deepEqual(next.promptHistory.seenIds, [old.order[0], next.order[0]]);
   for (const i of [1, 2, 3, 4]) assert.equal(s.card(i).bomb.cardId, next.order[0]);
+  h.close();
+});
+
+test('retried transactions persist one GO snapshot for 3, 6 and 8 actual players, including host takeover', async () => {
+  for (const count of [3, 6, 8]) {
+    const s = setup(count); let h = s.host(); await settle(h);
+    await h.start(); await settle(h);
+    assert.deepEqual(s.state().settingsTiming, { speedMode: 'normal', scaleWithPlayers: true });
+    assert.equal(s.state().roundFuse, null);
+    await s.action(s.state().holder, 'light'); await settle(h);
+    const before = s.state(), snapshot = before.roundFuse;
+    assert.equal(snapshot.activePlayerCountAtStart, count);
+    assert.deepEqual([snapshot.minMsAtStart, snapshot.maxMsAtStart], count === 3 ? [60000, 100000] : count === 6 ? [90000, 130000] : [110000, 150000]);
+    await h.command('settings', { timing: { speedMode: 'chill', scaleWithPlayers: false } }); await settle(h);
+    await s.action(s.state().holder, 'pass'); await settle(h);
+    assert.deepEqual(s.state().roundFuse, snapshot);
+    assert.equal(s.state().explodeAt, before.explodeAt);
+    for (let i = 1; i <= count; i++) {
+      assert.equal(s.card(i).bomb.cardId, before.order[0]);
+      assert.ok(!JSON.stringify(s.card(i)).includes('roundFuse'));
+    }
+    h.close(); await settle(h); h = s.host(); await settle(h);
+    assert.deepEqual(s.state().roundFuse, snapshot);
+    assert.equal(s.state().explodeAt, before.explodeAt);
+    await h.start(); await settle(h);
+    assert.deepEqual(s.state().settingsTiming, { speedMode: 'chill', scaleWithPlayers: false });
+    assert.ok(s.state().promptHistory.seenIds.includes(before.order[0]));
+    await s.action(s.state().holder, 'light'); await settle(h);
+    assert.deepEqual([s.state().roundFuse.minMsAtStart, s.state().roundFuse.maxMsAtStart], [90000, 150000]);
+    h.close();
+  }
+});
+
+test('saved legacy preference remains on start until an explicit timing choice replaces it', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ fuse: 'long' }); await settle(h);
+  await h.start(); await settle(h);
+  assert.equal(s.state().settingsTiming.legacyFuse, 'long');
+  await h.command('settings', { timing: { speedMode: 'normal', scaleWithPlayers: true } }); await settle(h);
+  await h.start(); await settle(h);
+  assert.deepEqual(s.state().settingsTiming, { speedMode: 'normal', scaleWithPlayers: true });
+  h.close();
+});
+
+test('fractional Firebase server offset cannot break a GO transaction', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  s.db.put('.info/serverTimeOffset', 0.75); await settle(h);
+  assert.equal(h.now(), s.now + 1);
+  await h.start(); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  assert.equal(s.state().phase, 'ticking');
+  assert.equal(s.state().roundFuse.startedAtMs, s.now + 1);
   h.close();
 });

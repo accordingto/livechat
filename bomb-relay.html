@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#202422">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="bomb-relay.css?v=br-sound-4">
+  <link rel="stylesheet" href="bomb-relay.css?v=br-expansion-2">
 </head>
 <body class="br-page">
   <div class="topbar">
@@ -34,9 +34,15 @@
       </div>
       <p class="br-intro" data-i18n="bomb.intro">Read the prompt. Say one fitting answer, then pass. The fuse stays secret.</p>
       <div class="br-settings">
-        <label class="br-field"><span data-i18n="bomb.fuse">Fuse length</span><select id="br-fuse"></select></label>
+        <label class="br-field"><span data-i18n="bomb.fuse">Bomb pace</span><select id="br-fuse" aria-describedby="br-timing-range br-timing-note"></select></label>
         <label class="br-field"><span data-i18n="bomb.cards">Cards in this game</span><select id="br-cards"></select></label>
         <label class="br-field"><span data-i18n="bomb.category">Prompt pack</span><select id="br-category"></select></label>
+      </div>
+      <div class="br-timing-options">
+        <label class="br-check"><input type="checkbox" id="br-scale" checked aria-describedby="br-scale-hint"><span data-i18n="bomb.scaleWithPlayers">Scale with participants</span></label>
+        <p class="br-soft" id="br-scale-hint" data-i18n="bomb.scaleHint">Only players eligible to pass count. Above 3 players, add 10 seconds each, up to 8.</p>
+        <p class="br-timing-range" id="br-timing-range" role="status"></p>
+        <p class="br-soft" id="br-timing-note"></p>
       </div>
       <div class="br-actions br-setup-actions">
         <button type="submit" class="br-button br-primary" id="br-start" data-i18n="bomb.start">Start Bomb Relay</button>
@@ -88,6 +94,15 @@
     <form method="dialog" class="br-dialog-header"><h2 id="br-manage-title" data-i18n="bomb.manage">Host controls</h2><button class="br-button" data-i18n="bomb.close">Close</button></form>
     <p class="br-soft" data-i18n="bomb.rosterHint">Let someone sit out if they leave the call; the bomb skips them.</p>
     <div class="br-roster" id="br-roster"></div>
+    <section class="br-manage-timing" aria-labelledby="br-manage-timing-title">
+      <h3 id="br-manage-timing-title" data-i18n="bomb.timingManage">Pace for the next bomb</h3>
+      <label class="br-field"><span data-i18n="bomb.fuse">Bomb pace</span><select id="br-manage-speed" aria-describedby="br-manage-timing-range br-manage-timing-note"></select></label>
+      <label class="br-check"><input type="checkbox" id="br-manage-scale" aria-describedby="br-manage-scale-hint"><span data-i18n="bomb.scaleWithPlayers">Scale with participants</span></label>
+      <p class="br-soft" id="br-manage-scale-hint" data-i18n="bomb.scaleHint">Only players eligible to pass count. Above 3 players, add 10 seconds each, up to 8.</p>
+      <p class="br-timing-range" id="br-manage-timing-range" role="status"></p>
+      <p class="br-soft" id="br-manage-timing-note"></p>
+      <p class="br-soft" data-i18n="bomb.timingNext">Applies at the next ignition. A lit bomb keeps its time.</p>
+    </section>
     <div class="br-actions">
       <button type="button" class="br-button" id="br-restart" data-i18n="bomb.restart">Restart with a new game</button>
       <button type="button" class="br-button br-stop" id="br-stop" data-i18n="bomb.stop">End game</button>
@@ -99,12 +114,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="bomb-relay-deck.js?v=br-studio-3"></script>
-  <script src="bomb-relay-selector.js?v=br-studio-3"></script>
-  <script src="bomb-relay-engine.js?v=br-studio-3"></script>
-  <script src="bomb-relay-sync.js?v=br-studio-3"></script>
+  <script src="bomb-relay-deck.js?v=br-expansion-2"></script>
+  <script src="bomb-relay-selector.js?v=br-expansion-2"></script>
+  <script src="bomb-relay-timing.js?v=br-expansion-2"></script>
+  <script src="bomb-relay-engine.js?v=br-expansion-2"></script>
+  <script src="bomb-relay-sync.js?v=br-expansion-2"></script>
   <script src="bomb-relay-audio.js?v=br-sound-4"></script>
-  <script src="bomb-relay-ui.js?v=br-sound-4"></script>
-  <script src="bomb-relay-host.js?v=br-sound-4"></script>
+  <script src="bomb-relay-ui.js?v=br-expansion-2"></script>
+  <script src="bomb-relay-host.js?v=br-expansion-2"></script>
 </body>
 </html>
