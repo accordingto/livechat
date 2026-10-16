@@ -143,12 +143,13 @@
         return next;
       });
     }
-    // The fuse and the explosion pause are the only timed events. Idle ticks
-    // never write; one live tick is enough even after a long throttled sleep.
+    // One existing authority pulse watches the fuse, explosion presentation and
+    // discussion deadlines. No per-client/per-round timeout survives Next or
+    // Restart; idle ticks never write, and a throttled host catches up once.
     pulse() {
       if (this.stopped || this.suspended || !this.own || !this.connected || this.ticking || !this.sameRoom()) return;
       const state = this.doc?.state;
-      const due = state?.phase === 'ticking' ? state.explodeAt : state?.phase === 'boom' ? state.phaseUntil : null;
+      const due = state?.phase === 'ticking' ? state.explodeAt : ['boom', 'discussion'].includes(state?.phase) ? state.phaseUntil : null;
       if (!(due > 0) || this.now() < due) return;
       this.ticking = true;
       this.command('tick').catch(error => { if (error.message !== 'not_available' && !this.stopped) this.status('error'); }).finally(() => { this.ticking = false; });

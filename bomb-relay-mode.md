@@ -78,7 +78,8 @@ do not issue commands or draw prompts. Text cards replace specific scene art
 so visuals do not suggest an answer list. Neutral bomb marks, a recognizable
 explosion reveal, vibration and Web Audio cues remain.
 
-The current Bomb module/cache tag is `br-expansion-2`; audio remains
+The current Bomb rules/presentation cache tag is `br-discussion-1`; unchanged
+deck/selector/timing helpers remain `br-expansion-2`, and audio remains
 `br-sound-4`. Presentation retains charcoal/olive surfaces, warm
 paper, a restrained brass accent, neutral player identities and a charcoal CSS
 bomb with red sparks and a brief red flame/wave burst. Print-style English
@@ -146,8 +147,15 @@ Old tick requests are scoped to their turn, so restart invalidates them.
 
 The existing host emergency pause is retained (resume floor 2.5 s); it is not
 a thinking aid or an automatic answer-dispute pause. Stop invalidates the fuse.
-Explosion settles once: holder takes one card, then starts the next bomb.
-The 4.5 s explosion display and existing Next shortcut remain. After 5/10/15/20
+Explosion settles once: the holder takes one card. The existing 4.5 s explosion
+presentation is followed by a fixed 45 s discussion, keeping the same prompt,
+loser and result. Discussion uses the static explosion illustration and a short
+chat hint; there is no countdown, alarm, duration setting or new control panel.
+The existing Next button works for the host and every active player during both
+boom and discussion, so nobody must wait all 45 s. Automatic expiry or Next
+reveals only the next untimed Ready card; its holder or host still lights it.
+The last card also gets the discussion before final standings; its existing
+See the results button can finish early. After 5/10/15/20
 cards (default 10), lowest card count wins, including ties. Ordinary Restart
 clears that game's penalties and results, but preserves activity draw history.
 
@@ -160,6 +168,19 @@ lists cap at 24. Only that host draws and runs the existing deadline pulse.
 Player nodes receive the same current `cardId` via `engine.view`, never a
 selector instance or a secret fuse. Firebase transaction retries use the same
 captured time/seed and cannot consume another prompt.
+
+The same canonical state schedules the conversation at explosion settlement:
+`phaseUntil = now + 4500` in `boom`, then `discussionUntil = phaseUntil + 45000`.
+At the first boundary, the authority changes `phase` to `discussion` and uses
+that saved discussion deadline as `phaseUntil`, without drawing or scoring.
+Old saved booms derive the missing deadline from their saved presentation end.
+A late tick does not start a new 45 s period; a host sleeping past both deadlines
+advances only once to Ready/results. Reconnecting preserves those boundaries.
+Only the original leased-host pulse watches them; clients add no round timer.
+Next/Restart/Stop discard the old deadline and advance session/turn fences;
+stale ticks and duplicate Next cannot draw again or score twice. Host pagehide
+or leaving the room stops its existing intervals, while saved deadlines remain
+available for a valid reconnect/takeover.
 
 History survives pass, language changes, pause/resume, reconnect, host lease
 takeover, game switch back, settings edits, ordinary Restart and Play again.

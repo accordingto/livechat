@@ -29,6 +29,7 @@ var BOMB_RELAY_ENGINE = (() => {
     cardOptions: Object.freeze([5, 10, 15, 20]), defaultCards: 10,
     promptWeights: selector.DEFAULT_WEIGHTS, familyWindow: 3,
     boomHoldMs: 4500,
+    discussionMs: 45000,
     // A resumed bomb never explodes in the same instant it starts ticking.
     resumeFloorMs: 2500,
   });
@@ -161,6 +162,7 @@ var BOMB_RELAY_ENGINE = (() => {
     state.explodeAt = null; state.remainingMs = null; state.litAt = null;
     state.roundId = null; state.roundFuse = null;
     state.phaseUntil = null; state.pausedFrom = null;
+    state.discussionUntil = null;
     bump(state, now);
   }
   function explode(state, now) {
@@ -171,7 +173,18 @@ var BOMB_RELAY_ENGINE = (() => {
     state.boom = { id: `${state.sessionId}:${state.cardIndex}`, loser, cardId, passes: state.passes,
       last: state.cardIndex + 1 >= totalCards(state) };
     state.phase = 'boom'; state.phaseUntil = now + CONFIG.boomHoldMs;
+    // One fixed schedule is saved with the once-only score settlement. The
+    // original explosion presentation completes before the 45 s conversation.
+    state.discussionUntil = state.phaseUntil + CONFIG.discussionMs;
     state.explodeAt = null; state.remainingMs = null; state.lastPass = null; state.bounce = null;
+    bump(state, now);
+  }
+  function discuss(state, now, random) {
+    // Old saved booms lack discussionUntil. Derive from their saved boundary,
+    // never from reconnect/tick time; a sleeping host cannot restart 45 seconds.
+    const until = Number.isFinite(state.discussionUntil) ? state.discussionUntil : state.phaseUntil + CONFIG.discussionMs;
+    if (now >= until) { afterBoom(state, now, random); return; }
+    state.phase = 'discussion'; state.phaseUntil = until; state.discussionUntil = until;
     bump(state, now);
   }
   function afterBoom(state, now, random) {
@@ -188,6 +201,7 @@ var BOMB_RELAY_ENGINE = (() => {
     state.phase = 'finished'; state.stopped = !!stopped;
     state.holder = null; state.explodeAt = null; state.remainingMs = null; state.lastPass = null; state.bounce = null;
     state.phaseUntil = null; state.pausedFrom = null; state.boom = null;
+    state.discussionUntil = null;
     bump(state, now);
   }
   // The secret fuse is checked before every move, so a pass that reaches the
@@ -212,7 +226,7 @@ var BOMB_RELAY_ENGINE = (() => {
       roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
       order: [], cardIndex: 0, phase: 'ready', holder: null, starter: null,
       passes: 0, lastPass: null, bounce: null, boom: null, lastBoom: null,
-      explodeAt: null, remainingMs: null, litAt: null, phaseUntil: null, pausedFrom: null, stopped: false,
+      explodeAt: null, remainingMs: null, litAt: null, phaseUntil: null, discussionUntil: null, pausedFrom: null, stopped: false,
       penalties: {}, history: [], seen: {}, replies: {},
     };
     if (active(state).length < CONFIG.minPlayers) throw new Error('not_enough_players');
@@ -231,8 +245,8 @@ var BOMB_RELAY_ENGINE = (() => {
     // Idle host ticks perform no write at all.
     if (input.type === 'tick') {
       if (!host || input.turnId !== current.turnId) return current;
-      const boomDone = current.phase === 'boom' && Number.isFinite(current.phaseUntil) && now >= current.phaseUntil;
-      if (!due(current, now) && !boomDone) return current;
+      const phaseDone = ['boom', 'discussion'].includes(current.phase) && Number.isFinite(current.phaseUntil) && now >= current.phaseUntil;
+      if (!due(current, now) && !phaseDone) return current;
     }
     const state = copy(current);
     state.roster = roster(state); state.order = list(state.order); state.history = list(state.history);
@@ -249,6 +263,7 @@ var BOMB_RELAY_ENGINE = (() => {
     switch (input.type) {
       case 'tick':
         if (due(state, now)) explode(state, now);
+        else if (state.phase === 'boom') discuss(state, now, random);
         else afterBoom(state, now, random);
         break;
       case 'reroll':
@@ -286,7 +301,7 @@ var BOMB_RELAY_ENGINE = (() => {
         break;
       }
       case 'next':
-        if (state.phase !== 'boom' || !fresh || !mayAct) { error = 'not_available'; break; }
+        if (!['boom', 'discussion'].includes(state.phase) || !fresh || !mayAct) { error = 'not_available'; break; }
         afterBoom(state, now, random);
         break;
       case 'pause':
@@ -401,7 +416,7 @@ var BOMB_RELAY_ENGINE = (() => {
       bounce: state.bounce ? copy(state.bounce) : null,
       boom: state.boom ? copy(state.boom) : null,
       lastBoom: state.lastBoom ? copy(state.lastBoom) : null,
-      phaseUntil: state.phase === 'boom' ? state.phaseUntil : null,
+      phaseUntil: ['boom', 'discussion'].includes(state.phase) ? state.phaseUntil : null,
       stopped: state.phase === 'finished' && state.stopped === true,
       roster: seats, standings: standings(state),
       history: list(state.history).map(entry => ({ cardId: entry.cardId, loser: entry.loser, passes: entry.passes })),
@@ -409,7 +424,7 @@ var BOMB_RELAY_ENGINE = (() => {
       canReroll: state.phase === 'ready' && playerNum === 0,
       canPass: ticking && me && (playerNum === 0 || playerNum === state.holder),
       canBounce: !!challengeable && me && playerNum !== last.from,
-      canNext: state.phase === 'boom' && me,
+      canNext: ['boom', 'discussion'].includes(state.phase) && me,
       reply: (state.replies || {})[playerNum] || null,
     };
     return { game: 'bombrelay', playerNum, name: mine?.name || null, bomb };

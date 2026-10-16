@@ -80,3 +80,22 @@ test('mute and card disposal stop active audio; disabled phones do not play cues
   await sound.toggle(); sound.tick(); const tick = context.nodes.at(-1);
   sound.close(); assert.ok(tick.stops.length); assert.equal(context.state, 'closed'); assert.equal(sound.buffers.size, 0);
 });
+
+test('discussion and the following preview stay silent, including a reconnect', () => {
+  const { sound, intervals } = fixture();
+  const ticking = { sessionId: 'chat', turnId: 1, phase: 'ticking' };
+  sound.follow(ticking);
+  const boom = { ...ticking, turnId: 2, phase: 'boom', boom: { id: 'chat:0' } };
+  sound.follow(boom);
+  const count = sound.context.nodes.length;
+  sound.follow({ ...boom, turnId: 3, phase: 'discussion' });
+  sound.follow({ ...boom, turnId: 4, phase: 'discussion' });
+  sound.follow({ sessionId: 'chat', turnId: 5, phase: 'ready' });
+  assert.equal(intervals.size, 0, 'neither discussion nor preview starts ticking');
+  assert.equal(sound.context.nodes.length, count, 'no repeated explosion, alarm or transition cue');
+  const reconnected = fixture();
+  reconnected.sound.follow({ ...boom, phase: 'discussion' });
+  assert.equal(reconnected.sound.context, null, 'reconnecting during discussion does not replay audio');
+  assert.equal(reconnected.intervals.size, 0);
+  sound.close(); reconnected.sound.close();
+});

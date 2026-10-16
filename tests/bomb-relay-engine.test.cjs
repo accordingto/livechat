@@ -35,6 +35,7 @@ test('category limits each prepared prompt to the selected pack', () => {
       g.act(g.state.holder, 'light');
       g.act(0, 'tick', { now: g.state.explodeAt });
       g.act(0, 'tick', { now: g.state.phaseUntil });
+      g.act(0, 'tick', { now: g.state.phaseUntil });
     }
     assert.equal(g.state.phase, 'finished');
     assert.equal(new Set(g.state.order).size, 5);
@@ -116,7 +117,7 @@ test('the bomb explodes on the holder at the secret time; a late pass cannot esc
   assert.deepEqual(g.state.penalties[2], [g.state.order[0]]);
 });
 
-test('host ticks explode the bomb, then reveal the next card for the loser to start', () => {
+test('host ticks retain the old prompt through 45 seconds of discussion, then prepare an unlit next card', () => {
   const g = game({ cards: 5 });
   g.state.holder = 3; g.state.starter = 3;
   g.act(3, 'light', { now: 2000 });
@@ -128,11 +129,45 @@ test('host ticks explode the bomb, then reveal the next card for the loser to st
   g.act(0, 'tick', { now: at });
   assert.equal(g.state.phase, 'boom');
   assert.equal(g.state.boom.loser, 3);
+  const promptId = g.state.order[0], history = JSON.stringify(g.state.promptHistory);
+  const boom = JSON.stringify(g.state.boom), score = JSON.stringify(g.state.penalties);
+  assert.equal(g.state.phaseUntil, at + E.CONFIG.boomHoldMs);
+  assert.equal(g.state.discussionUntil, at + E.CONFIG.boomHoldMs + 45000);
   g.act(0, 'tick', { now: at + E.CONFIG.boomHoldMs });
+  assert.equal(g.state.phase, 'discussion');
+  assert.equal(g.state.phaseUntil, at + E.CONFIG.boomHoldMs + 45000);
+  assert.equal(g.state.order.length, 1);
+  assert.equal(JSON.stringify(g.state.promptHistory), history);
+  assert.equal(JSON.stringify(g.state.boom), boom);
+  assert.equal(JSON.stringify(g.state.penalties), score);
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const card = E.view(g.state, actor).bomb;
+    assert.equal(card.phase, 'discussion');
+    assert.equal(card.cardId, promptId);
+    assert.equal(card.boom.loser, 3);
+    assert.equal(card.canNext, true);
+    assert.equal(card.canLight, false);
+    assert.equal(card.canPass, false);
+  }
+  const waiting = g.state;
+  g.act(0, 'tick', { now: g.state.phaseUntil - 1 });
+  assert.equal(g.state, waiting, 'discussion does not end a millisecond early');
+  g.act(0, 'tick', { now: g.state.phaseUntil });
   assert.equal(g.state.phase, 'ready');
   assert.equal(g.state.cardIndex, 1);
   assert.equal(g.state.holder, 3);
   assert.equal(g.state.lastBoom.loser, 3);
+  assert.equal(g.state.phaseUntil, null);
+  assert.equal(g.state.discussionUntil, null);
+  assert.equal(g.state.explodeAt, null);
+  assert.equal(g.state.roundFuse, null);
+  const nextPrompt = g.state.order[1];
+  assert.notEqual(nextPrompt, promptId);
+  g.act(0, 'tick', { now: at + 1000000 });
+  assert.equal(g.state.phase, 'ready', 'time passing cannot start the next fuse');
+  assert.equal(g.state.order[1], nextPrompt);
+  assert.equal(g.act(3, 'light', { now: at + 1000010 }), '');
+  assert.equal(g.state.phase, 'ticking');
 });
 
 test('any active player can skip the explosion pause with next', () => {
@@ -142,6 +177,186 @@ test('any active player can skip the explosion pause with next', () => {
   g.act(0, 'tick', { now: g.state.explodeAt });
   assert.equal(g.act(2, 'next', { now: g.state.lastChangeAt + 100 }), '');
   assert.equal(g.state.phase, 'ready');
+  assert.equal(g.state.phaseUntil, null);
+  assert.equal(g.state.discussionUntil, null);
+  assert.equal(g.state.explodeAt, null);
+});
+
+test('the discussion deadline starts after the unchanged animation and survives a late animation tick', () => {
+  const g = game();
+  assert.equal(E.CONFIG.boomHoldMs, 4500);
+  assert.equal(E.CONFIG.discussionMs, 45000);
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  const animationEnd = g.state.phaseUntil, discussionEnd = g.state.discussionUntil;
+  g.act(0, 'tick', { now: animationEnd + 12345 });
+  assert.equal(g.state.phase, 'discussion');
+  assert.equal(g.state.phaseUntil, discussionEnd, 'late polling must not add a new 45-second wait');
+  assert.equal(g.state.discussionUntil, discussionEnd);
+  assert.equal(g.state.history.length, 1);
+  assert.equal(g.state.order.length, 1);
+  g.act(0, 'tick', { now: discussionEnd });
+  assert.equal(g.state.phase, 'ready');
+  assert.equal(g.state.order.length, 2);
+  assert.equal(g.state.history.length, 1);
+});
+
+test('one throttled tick after both post-explosion deadlines prepares exactly one unlit prompt', () => {
+  const g = game();
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  const boom = g.state.boom, deadline = g.state.discussionUntil;
+  g.act(0, 'tick', { now: deadline + 100000 });
+  assert.equal(g.state.phase, 'ready');
+  assert.equal(g.state.cardIndex, 1);
+  assert.equal(g.state.order.length, 2);
+  assert.equal(g.state.history.length, 1);
+  assert.deepEqual(g.state.penalties[boom.loser], [boom.cardId]);
+  assert.equal(g.state.explodeAt, null);
+  assert.equal(g.state.roundFuse, null);
+  assert.equal(g.state.phaseUntil, null);
+  assert.equal(g.state.discussionUntil, null);
+});
+
+test('host and active players can advance during discussion; sitting-out players cannot', () => {
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const g = game();
+    g.act(g.state.holder, 'light');
+    g.act(0, 'tick', { now: g.state.explodeAt });
+    g.act(0, 'tick', { now: g.state.phaseUntil });
+    assert.equal(g.state.phase, 'discussion');
+    if (actor === 4) {
+      g.act(0, 'exclude', { playerNum: 4, active: false });
+      assert.equal(E.view(g.state, 4).bomb.canNext, false);
+      assert.equal(g.act(4, 'next'), 'not_available');
+      assert.equal(g.state.phase, 'discussion');
+      continue;
+    }
+    assert.equal(g.act(actor, 'next'), '');
+    assert.equal(g.state.phase, 'ready');
+    assert.equal(g.state.cardIndex, 1);
+    assert.equal(g.state.discussionUntil, null);
+    assert.equal(g.state.explodeAt, null);
+  }
+});
+
+test('manual next and an already queued discussion tick cannot skip or redraw the prepared prompt', () => {
+  for (const tickFirst of [false, true]) {
+    const g = game();
+    g.act(g.state.holder, 'light');
+    g.act(0, 'tick', { now: g.state.explodeAt });
+    g.act(0, 'tick', { now: g.state.phaseUntil });
+    const pendingTurn = g.state.turnId, deadline = g.state.phaseUntil;
+    if (tickFirst) g.act(0, 'tick', { now: deadline, turnId: pendingTurn });
+    else g.act(2, 'next', { now: deadline - 1, turnId: pendingTurn });
+    const prompt = g.state.order[1], savedHistory = JSON.stringify(g.state.promptHistory);
+    if (tickFirst) assert.equal(g.act(2, 'next', { now: deadline, turnId: pendingTurn }), 'not_available');
+    else assert.equal(g.act(0, 'tick', { now: deadline, turnId: pendingTurn }), 'ignored');
+    assert.equal(g.state.phase, 'ready');
+    assert.equal(g.state.cardIndex, 1);
+    assert.equal(g.state.order.length, 2);
+    assert.equal(g.state.order[1], prompt);
+    assert.equal(JSON.stringify(g.state.promptHistory), savedHistory);
+    assert.equal(g.state.history.length, 1);
+    assert.equal(g.state.explodeAt, null);
+  }
+});
+
+test('duplicate next IDs remain idempotent after the prepared prompt is manually started', () => {
+  const g = game();
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  const input = { id: 'duplicate-discussion-next', type: 'next', actor: 2, sessionId: g.state.sessionId,
+    turnId: g.state.turnId, now: g.state.phaseUntil - 1, seed: 4 };
+  g.state = E.apply(g.state, input);
+  const prompt = g.state.order[1];
+  g.act(g.state.holder, 'light', { now: input.now + 10 });
+  const before = g.state;
+  g.state = E.apply(g.state, { ...input, turnId: g.state.turnId, now: input.now + 20 });
+  assert.equal(g.state, before);
+  assert.equal(g.state.phase, 'ticking');
+  assert.equal(g.state.order[1], prompt);
+  assert.equal(g.state.cardIndex, 1);
+});
+
+test('stop and restart cancel post-explosion deadlines and fence a pending old tick', () => {
+  for (const phase of ['boom', 'discussion']) {
+    for (const command of ['stop', 'restart']) {
+      const g = game();
+      g.act(g.state.holder, 'light');
+      g.act(0, 'tick', { now: g.state.explodeAt });
+      if (phase === 'discussion') g.act(0, 'tick', { now: g.state.phaseUntil });
+      assert.equal(g.state.phase, phase);
+      const oldTurn = g.state.turnId, deadline = g.state.discussionUntil, oldPrompt = g.state.order[0];
+      g.act(0, command);
+      assert.equal(g.state.phase, command === 'stop' ? 'finished' : 'ready');
+      assert.equal(g.state.phaseUntil, null);
+      assert.equal(g.state.discussionUntil, null);
+      assert.ok(g.state.promptHistory.seenIds.includes(oldPrompt));
+      const before = g.state;
+      assert.equal(g.act(0, 'tick', { now: deadline + 1, turnId: oldTurn }), 'ignored');
+      assert.equal(g.state, before);
+    }
+  }
+});
+
+test('a saved old boom derives its discussion end from the original animation end', () => {
+  const g = game();
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  const animationEnd = g.state.phaseUntil, prompt = g.state.order[0];
+  delete g.state.discussionUntil;
+  g.state = JSON.parse(JSON.stringify(g.state));
+  g.act(0, 'tick', { now: animationEnd + 12000 });
+  assert.equal(g.state.phase, 'discussion');
+  assert.equal(g.state.discussionUntil, animationEnd + 45000);
+  assert.equal(g.state.phaseUntil, animationEnd + 45000);
+  assert.equal(g.state.order[0], prompt);
+  assert.equal(g.state.history.length, 1);
+  g.act(0, 'tick', { now: animationEnd + 45000 });
+  assert.equal(g.state.phase, 'ready');
+  assert.equal(g.state.order.length, 2);
+});
+
+test('a serialized discussion keeps its deadline, original result and prompt without restarting the wait', () => {
+  const g = game();
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  const saved = JSON.stringify(g.state);
+  const deadline = g.state.phaseUntil, prompt = g.state.order[0], result = g.state.boom;
+  g.state = JSON.parse(saved);
+  g.act(0, 'tick', { now: deadline - 1 });
+  assert.equal(JSON.stringify(g.state), saved);
+  assert.equal(E.view(g.state, 1).bomb.cardId, prompt);
+  assert.deepEqual(E.view(g.state, 1).bomb.boom, result);
+  g.act(0, 'tick', { now: deadline });
+  assert.equal(g.state.phase, 'ready');
+  assert.equal(g.state.order.length, 2);
+  assert.equal(g.state.promptHistory.seenIds.length, 2);
+});
+
+test('next-round settings and participant edits do not extend a discussion or change its result', () => {
+  const g = game();
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  const deadline = g.state.phaseUntil, prompt = g.state.order[0], boom = JSON.stringify(g.state.boom);
+  g.act(0, 'settings', { timing: { speedMode: 'chill', scaleWithPlayers: false }, now: deadline - 20000 });
+  g.act(0, 'exclude', { playerNum: 4, active: false, now: deadline - 10000 });
+  assert.equal(g.state.phaseUntil, deadline);
+  assert.equal(g.state.discussionUntil, deadline);
+  assert.equal(g.state.order[0], prompt);
+  assert.equal(JSON.stringify(g.state.boom), boom);
+  g.act(0, 'tick', { now: deadline });
+  assert.equal(g.state.phase, 'ready');
+  assert.equal(g.state.order.length, 2);
+  assert.equal(g.state.explodeAt, null);
+  g.act(g.state.holder, 'light', { now: deadline + 10000 });
+  assert.equal(g.state.roundFuse.speedModeAtStart, 'chill');
+  assert.equal(g.state.roundFuse.scaleWithPlayersAtStart, false);
+  assert.equal(g.state.roundFuse.activePlayerCountAtStart, 3);
 });
 
 test('after the last card the game finishes and the fewest bomb cards lead', () => {
@@ -151,6 +366,8 @@ test('after the last card the game finishes and the fewest bomb cards lead', () 
     g.state.holder = loser; g.state.starter = loser;
     g.act(loser, 'light', { now: g.state.lastChangeAt + 10 });
     g.act(0, 'tick', { now: g.state.explodeAt });
+    g.act(0, 'tick', { now: g.state.phaseUntil });
+    assert.equal(g.state.phase, 'discussion', 'the final card also gets its full discussion');
     g.act(0, 'tick', { now: g.state.phaseUntil });
   }
   assert.equal(g.state.phase, 'finished');
@@ -316,6 +533,7 @@ test('720 bombs across ordinary restarts exhaust the formal pool before repeatin
       assert.equal(g.act(g.state.holder, 'light'), '');
       assert.equal(g.act(0, 'tick', { now: g.state.explodeAt }), '');
       assert.equal(g.act(0, 'tick', { now: g.state.phaseUntil }), '');
+      assert.equal(g.act(0, 'tick', { now: g.state.phaseUntil }), '');
     }
     assert.equal(g.state.phase, 'finished');
     assert.equal(g.state.history.length, 20);
@@ -371,6 +589,9 @@ test('legacy live sessions retain their current card, secret fuse and actual rou
   assert.equal(g.state.explodeAt, deadline);
   g.act(0, 'tick', { now: deadline });
   assert.equal(g.state.boom.cardId, legacy[0]);
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  assert.equal(g.state.phase, 'discussion');
+  assert.equal(g.state.order.length, 10, 'legacy deal is retained during discussion');
   g.act(0, 'tick', { now: g.state.phaseUntil });
   assert.equal(g.state.order.length, 2);
   assert.equal(g.state.order[0], legacy[0]);

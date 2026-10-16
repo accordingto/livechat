@@ -30,6 +30,7 @@ var BOMB_RELAY_UI = (() => {
     bouncedHost: ['不算，退回 {to}', 'Didn’t count; back to {to}'],
     boom: ['BOOM', 'BOOM'], takes: ['拿走這張卡', 'takes this card'], boomPasses: ['本輪答案：{n}', 'Answers this round: {n}'],
     boomLast: ['這是最後一張。', 'That was the last card.'], nextCard: ['下一張', 'Next card'], showResults: ['看結果', 'See the results'],
+    discussionHint: ['聊聊剛才的答案，準備好也可以繼續。', 'Chat about those answers. Move on whenever you’re ready.'],
     paused: ['已暫停', 'PAUSED'], pausedHint: ['引信暫停中，主持人準備好就會繼續。', 'The fuse is frozen. The host will resume when everyone is ready.'],
     finished: ['本局結束', 'Game complete'], stoppedEarly: ['主持人提早結束了這局。', 'The host ended this game early.'],
     winnerHint: ['炸彈卡最少的人獲勝', 'Fewest bomb cards wins'], winner: ['優勝者', 'Winner'], winners: ['並列優勝', 'Joint winners'],
@@ -55,7 +56,7 @@ var BOMB_RELAY_UI = (() => {
     rule1: ['全場先看清楚同一題，主持人可以在點燃前換題。持有者（或主持人）點燃引信後，這顆炸彈全程用同一題。', 'Read the same prompt together. The host can change it before the holder (or host) lights the fuse. One prompt stays for the whole bomb.'],
     rule2: ['說一個符合題目的普通答案就能按「傳」。單字、人物、動作、短語、台詞、簡單英文描述都可以，不要求完整文法。搞笑隨意，不加分。', 'Say one fitting answer and tap PASS. A word, person, action, phrase, line or simple English description counts. Full grammar is optional. Funny earns no extra points.'],
     rule3: ['同一輪避免明顯重複；具體延伸不自動算重複，下一輪可以再用。若明顯重複或離題，其他玩家可沿用「不算」退回，炸彈仍繼續跑。', 'Avoid clear repeats this round; specific elaborations can count, and the next round starts fresh. For clear repeats or off-topic answers, another player can send it back while the fuse keeps running.'],
-    rule4: ['引信長度是秘密，隨機爆炸。爆炸時炸彈在誰手上，誰就拿走這張卡，並開始下一張。', 'The fuse is secret and random. Whoever holds the bomb when it explodes takes the card and starts the next one.'],
+    rule4: ['引信長度是秘密，隨機爆炸。爆炸時持有者拿走這張卡。接著留 45 秒聊聊剛才的答案，也可以提前按「下一張」。下一張出現後，再手動點燃。', 'The fuse is secret and random. Whoever holds the bomb when it explodes takes the card. Chat for 45 seconds, or move on early. The next card waits for someone to light the fuse.'],
     rule5: ['全部卡片玩完，炸彈卡最少的人獲勝。', 'After the last card, the fewest bomb cards wins.'],
     rule6: ['想不到可以繼續想，炸彈照常跑。傳遞不換題、不重新計時。可以用生活常識或想像，不需要說自己的經驗。', 'Keep thinking if you get stuck; the bomb keeps running. Passing keeps the same prompt and fuse. Everyday knowledge or imagination is enough; personal stories are optional.'],
     library: ['查看題庫', 'Browse the prompts'], libraryCount: ['共 {n} 題', '{n} prompts'],
@@ -152,11 +153,11 @@ var BOMB_RELAY_UI = (() => {
     if (bomb.phase === 'ready') focus = `${bombMark('ready')}<p class="br-kicker">${esc(t('starter'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('readyHint', { name: holder }))}</p>`;
     else if (bomb.phase === 'ticking') focus = `${bombMark('ticking')}<p class="br-kicker">${esc(t('holdsTitle'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('holdsHint'))}</p>${bomb.next ? `<p class="br-next" style="--seat:${colorOf(bomb.next)}">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${bounceNote(bomb)}`;
     else if (bomb.phase === 'paused') focus = `${bombMark('paused')}<p class="br-kicker">${esc(t('paused'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('pausedHint'))}</p>`;
-    else if (bomb.phase === 'boom') {
+    else if (['boom', 'discussion'].includes(bomb.phase)) {
       const loser = nameOf(bomb, bomb.boom?.loser);
-      focus = `${burstMark()}<h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>`;
+      focus = `${burstMark()}<h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}`;
     }
-    const cls = ['br-stage', `br-phase-${bomb.phase}`, bomb.phase === 'boom' && animate ? 'br-exploding' : '', animate ? '' : 'br-static'].filter(Boolean).join(' ');
+    const cls = ['br-stage', `br-phase-${bomb.phase}`, bomb.phase === 'boom' && animate ? 'br-exploding' : '', !animate || bomb.phase === 'discussion' ? 'br-static' : ''].filter(Boolean).join(' ');
     return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
   }
 
@@ -321,10 +322,10 @@ var BOMB_RELAY_UI = (() => {
         return { cls: '', zone: `<div class="br-zone"><p class="br-zone-line">${esc(t('otherHolds', { name: holderName }))}</p>${bomb.next ? `<p class="br-soft">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${note}${out ? `<p class="br-soft">${esc(t('out'))}</p>` : ''}</div>${bounce}` };
       }
       if (bomb.phase === 'paused') return { cls: '', zone: `<div class="br-zone">${bombMark('paused')}<h3>${esc(t('paused'))}</h3><p>${esc(t('pausedHint'))}</p></div>` };
-      if (bomb.phase === 'boom') {
+      if (['boom', 'discussion'].includes(bomb.phase)) {
         const lost = bomb.boom?.loser === me;
         const nextLabel = bomb.boom?.last ? t('showResults') : t('nextCard');
-        return { cls: lost ? 'is-boom' : '', zone: `<div class="br-zone br-zone-boom${lost ? ' is-you' : ''}">${burstMark()}<h3>${esc(lost ? t('youBoom') : t('otherBoom', { name: nameOf(bomb, bomb.boom?.loser) }))}</h3><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.canNext ? `<button type="button" class="br-button" data-br-action="next"${busy ? ' disabled' : ''}>${esc(nextLabel)}</button>` : ''}</div>` };
+        return { cls: lost ? 'is-boom' : '', zone: `<div class="br-zone br-zone-boom${lost ? ' is-you' : ''}${bomb.phase === 'discussion' ? ' br-static' : ''}">${burstMark()}<h3>${esc(lost ? t('youBoom') : t('otherBoom', { name: nameOf(bomb, bomb.boom?.loser) }))}</h3><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}${bomb.canNext ? `<button type="button" class="br-button" data-br-action="next"${busy ? ' disabled' : ''}>${esc(nextLabel)}</button>` : ''}</div>` };
       }
       return { cls: '', zone: '' };
     }

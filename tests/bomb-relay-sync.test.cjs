@@ -49,17 +49,18 @@ async function settle(...hosts) { for (let n = 0; n < 12; n++) { await turn(); a
 
 function setup(count = 4) {
   let clock = 500000; const db = database(), extras = {};
+  let timerId = 0; const timers = new Set();
   class ClockDate extends Date { static now() { return clock; } }
   const paths = Array.from({ length: count }, (_, i) => `rooms/BOMBTEST/players/card-${i + 1}`);
   const room = { code: 'BOMBTEST', count, name: i => ['Amy', 'Kevin', 'Jason', 'Willy'][i] || `P${i + 1}`,
     getExtra: key => extras[key], setExtra: (key, value) => { extras[key] = value; }, playerRef: i => db.ref(paths[i]) };
   const context = vm.createContext({ crypto, Date: ClockDate, BOMB_RELAY_DECK: DECK, BOMB_RELAY_ENGINE: E,
-    setInterval: () => 0, clearInterval: () => {} });
+    setInterval: () => { const id = ++timerId; timers.add(id); return id; }, clearInterval: id => timers.delete(id) });
   vm.runInContext(fs.readFileSync(require.resolve('../bomb-relay-sync.js'), 'utf8'), context);
   const host = () => { const h = new context.BOMB_RELAY_SYNC.Host({ db, room, onChange: s => { h.latest = s; }, onStatus: s => { h.lastStatus = s; } }); h.connect(); return h; };
   let n = 0;
   return {
-    db, room, paths, host, extras,
+    db, room, paths, host, extras, timers,
     card: i => clone(db.values.get(paths[i - 1])),
     state: () => JSON.parse(db.values.get(`rooms/BOMBTEST/players/${extras.bombRelayControlToken}`).stateJson),
     get now() { return clock; }, set now(value) { clock = value; },
@@ -116,9 +117,155 @@ test('the secret fuse never reaches a player card, and the host tick explodes it
   assert.equal(s.state().phase, 'boom');
   assert.equal(s.card(holder).bomb.boom.loser, holder);
   s.now = s.state().phaseUntil; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'discussion');
+  assert.equal(s.state().history.length, 1);
+  s.now = s.state().phaseUntil; await h.renew(); await settle(h); h.pulse(); await settle(h);
   assert.equal(s.state().phase, 'ready');
   assert.equal(s.state().holder, holder);
   h.close();
+});
+
+test('all original links retain the BOOM result for 45 seconds and the automatic next card waits for Start', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  assert.equal(s.timers.size, 2, 'the existing lease and clock intervals are sufficient');
+  await h.start({ cards: 5 }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  await s.action(s.state().holder, 'pass'); await settle(h);
+  const ticking = s.state(), loser = ticking.holder, prompt = ticking.order[0];
+  s.now = ticking.explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  const animationEnd = s.state().phaseUntil, end = s.state().discussionUntil;
+  assert.equal(s.timers.size, 2, 'explosion does not create a second round timer');
+  assert.equal(end, animationEnd + 45000);
+  s.now = animationEnd; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'discussion');
+  assert.equal(s.timers.size, 2, 'discussion uses the same authority pulse');
+  for (const i of [1, 2, 3, 4]) {
+    const card = s.card(i).bomb;
+    assert.equal(card.phase, 'discussion');
+    assert.equal(card.cardId, prompt);
+    assert.equal(card.phaseUntil, end);
+    assert.equal(card.boom.loser, loser);
+    assert.equal(card.canNext, true);
+    assert.equal(card.canLight, false);
+  }
+  s.now = end - 1; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'discussion');
+  assert.equal(s.state().order.length, 1);
+  s.now = end; h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  assert.equal(s.state().order.length, 2);
+  assert.equal(s.state().history.length, 1);
+  assert.deepEqual(s.state().penalties[loser], [prompt]);
+  assert.equal(s.state().explodeAt, null);
+  assert.equal(s.state().discussionUntil, null);
+  const nextPrompt = s.state().order[1];
+  for (const i of [1, 2, 3, 4]) {
+    const card = s.card(i).bomb;
+    assert.equal(card.phase, 'ready');
+    assert.equal(card.cardId, nextPrompt);
+    assert.equal(card.canLight, i === loser);
+  }
+  s.now += 100000; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  assert.equal(s.state().order.length, 2);
+  await s.action(loser, 'light'); await settle(h);
+  assert.equal(s.state().phase, 'ticking');
+  assert.ok(s.state().explodeAt > s.now);
+  assert.equal(s.state().history.length, 1);
+  h.close();
+});
+
+test('discussion reconnect and a second host preserve one shared deadline and draw only once at expiry', async () => {
+  const s = setup(); let h = s.host(); await settle(h);
+  await h.start({ cards: 5 }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  s.now = s.state().phaseUntil; h.pulse(); await settle(h);
+  const before = s.state(), deadline = before.phaseUntil;
+  h.close(); await settle(h);
+  assert.equal(s.timers.size, 0);
+  s.now += 12000;
+  h = s.host(); await settle(h);
+  const other = s.host(); await settle(h, other);
+  assert.equal(other.own, false);
+  assert.deepEqual(s.state(), before, 'reconnecting does not rebuild discussion state');
+  assert.equal(s.card(1).bomb.phaseUntil, deadline);
+  s.now = deadline; await h.renew(); await settle(h, other);
+  h.pulse(); other.pulse(); await settle(h, other);
+  assert.equal(s.state().phase, 'ready');
+  assert.equal(s.state().order.length, 2);
+  assert.equal(s.state().promptHistory.seenIds.length, 2);
+  assert.equal(s.state().history.length, 1);
+  for (const i of [1, 2, 3, 4]) assert.equal(s.card(i).bomb.cardId, s.state().order[1]);
+  h.close(); other.close();
+  assert.equal(s.timers.size, 0);
+});
+
+test('a player can advance discussion early without its old action or deadline advancing another prompt', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5 }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  s.now = s.state().phaseUntil; h.pulse(); await settle(h);
+  const deadline = s.state().phaseUntil;
+  s.now += 100;
+  const { command } = await s.action(2, 'next'); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  const next = s.state();
+  s.db.put(s.paths[1], { ...s.card(2), bombAction: command }); await settle(h);
+  s.db.put(s.paths[1], { ...s.card(2), bombAction: { ...command, id: 'stale-next-new-id-xxxxxxxx' } }); await settle(h);
+  s.now = deadline; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  assert.deepEqual(s.state().order, next.order);
+  assert.deepEqual(s.state().promptHistory, next.promptHistory);
+  assert.equal(s.state().history.length, 1);
+  assert.equal(s.state().phaseUntil, null);
+  assert.equal(s.state().discussionUntil, null);
+  h.close();
+});
+
+test('late host polling consumes both old deadlines without creating another wait or starting a fuse', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5 }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  const deadline = s.state().discussionUntil;
+  s.now = deadline + 60000; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  assert.equal(s.state().order.length, 2);
+  assert.equal(s.state().history.length, 1);
+  assert.equal(s.state().explodeAt, null);
+  assert.equal(s.state().discussionUntil, null);
+  h.close();
+});
+
+test('stop, restart and closing the authority cancel post-explosion work without touching another game', async () => {
+  for (const command of ['stop', 'restart', 'close', 'switch']) {
+    const s = setup(), h = s.host(); await settle(h);
+    await h.start({ cards: 5 }); await settle(h);
+    await s.action(s.state().holder, 'light'); await settle(h);
+    s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+    s.now = s.state().phaseUntil; h.pulse(); await settle(h);
+    const before = s.state(), deadline = before.phaseUntil;
+    if (command === 'close') { h.close(); await settle(h); }
+    else if (command === 'switch') {
+      s.db.put(s.paths[0], { game: 'cut', name: 'Amy', playerNum: 1, cut: { version: 1, sessionId: 'other' } });
+      await settle(h);
+      assert.equal(h.suspended, true);
+    } else { await h.command(command); await settle(h); }
+    s.now = deadline + 1; await h.renew(); await settle(h); h.pulse(); await settle(h);
+    if (command === 'close' || command === 'switch') {
+      assert.deepEqual(s.state(), before, `${command} prevents obsolete authority pulses`);
+      if (command === 'switch') assert.equal(s.card(1).game, 'cut');
+    } else {
+      assert.equal(s.state().phase, command === 'stop' ? 'finished' : 'ready');
+      assert.equal(s.state().phaseUntil, null);
+      assert.equal(s.state().discussionUntil, null);
+      assert.equal(s.state().order.length, 1, 'the old discussion does not draw a further card');
+    }
+    h.close();
+    assert.equal(s.timers.size, 0);
+  }
 });
 
 test('a stale card action is refused at the card and never reaches the host', async () => {

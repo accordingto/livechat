@@ -1,4 +1,37 @@
-## CURRENT: Talk Bomb 720 prompts and selectable fuse pacing — 2026-10-17
+## CURRENT: Talk Bomb post-explosion conversation — 2026-10-17
+
+Read bomb-relay-mode.md for the state/authority contract. Talk Bomb now keeps
+its original4.5second explosion presentation, then a fixed45second discussion
+with the same prompt, loser and result. Existing Next works for host and every
+active player during boom/discussion; nobody must wait the full period. Expiry
+or early Next only reveals Ready, requiring the existing manual Light/Start.
+The final card also gets discussion before standings, with See results retained.
+
+Explosion settlement saves discussionUntil once as presentation phaseUntil+45000.
+The original authority pulse changes phases using that absolute boundary; no
+client or per-round timeout is added. Late ticks/reconnect do not restart45s;
+sleeping past both boundaries advances once. Early Next/Restart/Stop clear the
+deadline, and session/turn/command-ID fences prevent double draws or scoring.
+Legacy saved booms derive the deadline from their saved presentation end.
+Discussion is silent/static: no repeated blast, countdown, alarm or new setting.
+Fuse modes/scaling, catalog/weights/history, sound samples and other games stay
+unchanged. Only Bomb rules/presentation cache tags move to br-discussion-1;
+bank/selector/timing helpers remain expansion-2 and audio sound-4. This remains
+frontend-only; the separate executor runtime and secrets are unchanged.
+
+Validation: all122 Bomb unit/integration cases and the full2084-case Hub suite
+pass. Coverage includes exact discussion boundaries, delayed callbacks, both
+orders of Next/tick races, duplicate commands, participant/settings edits,
+host takeover/reconnect, legacy saves, last-card discussion and timer cleanup.
+Discussion/reconnect/Ready stay silent, and the approved audio samples match.
+Actual host plus original player pages pass19 checks and86 EN/ZH desktop/mobile
+captures for each of3/6/8 players:57 executions,258 captures, zero JS errors.
+These include natural discussion expiry, player/host early Next, untimed Ready,
+long prompts, fixed PCM and reduced motion. The artificial-clock harness waits
+for lease renewal after large jumps; that fixture adjustment changed no gameplay.
+Real production evidence follows publication below.
+
+## Previous: Talk Bomb 720 prompts and selectable fuse pacing — 2026-10-17
 
 Read bomb-relay-mode.md for the real entry, previous timing audit, migration,
 authority and history rules. This scoped frontend change preserves the approved

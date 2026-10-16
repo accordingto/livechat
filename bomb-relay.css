@@ -79,7 +79,7 @@
 .br-next { margin-top: 8px; padding: 9px 0 0; border-top: 1px solid #68705d; color: #dfc9a6; font-weight: 500; font-size: .91rem; }
 .br-bounce { margin-top: 7px; padding: 10px 12px; border-radius: 8px; background: #33372c; border-left: 2px solid var(--br-brass); color: #ead7bc; font-weight: 400; font-size: .88rem; line-height: 1.6; }
 .br-phase-ticking .br-focus { border-color: #887b5e; }
-.br-phase-boom .br-focus { border-color: #854941; background: #2e2322; }
+.br-phase-boom .br-focus, .br-phase-discussion .br-focus { border-color: #854941; background: #2e2322; }
 .br-bomb { width: 128px; height: 128px; margin-bottom: 2px; flex-shrink: 0; }
 .br-object { position: relative; display: inline-block; width: 100%; height: 100%; vertical-align: middle; isolation: isolate; }
 .br-object span, .br-fire span { position: absolute; display: block; box-sizing: border-box; }

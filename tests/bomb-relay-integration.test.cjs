@@ -41,7 +41,7 @@ test('the host page loads its modules in dependency order and every file parses'
   assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-timing.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
   for (const file of files) new vm.Script(read(file));
   assert.match(html, /<h1>Bomb Relay<\/h1>/);
-  assert.match(html, /href="bomb-relay\.css\?v=br-expansion-2"/);
+  assert.match(html, /href="bomb-relay\.css\?v=br-discussion-1"/);
   assert.doesNotMatch(html, /assets\/bomb-relay\//);
   assert.match(html, /id="br-reroll" hidden/);
   const host = read('bomb-relay-host.js');
@@ -52,11 +52,12 @@ test('the host page loads its modules in dependency order and every file parses'
 
 test('original player links render the Bomb Relay card and fence actions to the shown turn', () => {
   const play = read('play.html');
-  for (const file of ['deck', 'timing', 'ui']) assert.match(play, new RegExp('bomb-relay-' + file + '\\.js\\?v=br-expansion-2'));
+  for (const file of ['deck', 'timing']) assert.match(play, new RegExp('bomb-relay-' + file + '\\.js\\?v=br-expansion-2'));
+  assert.match(play, /bomb-relay-ui\.js\?v=br-discussion-1/);
   assert.doesNotMatch(play, /<script src="bomb-relay-(?:selector|engine|sync)\.js/, 'players consume the authority projection rather than drawing or simulating independently');
-  assert.match(play, /bomb-relay\.css\?v=br-expansion-2/);
-  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-expansion-2'));
-  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-expansion-2') < play.indexOf('bomb-relay-ui.js?v=br-expansion-2'));
+  assert.match(play, /bomb-relay\.css\?v=br-discussion-1/);
+  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-discussion-1'));
+  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-expansion-2') < play.indexOf('bomb-relay-ui.js?v=br-discussion-1'));
   assert.match(play, /new BOMB_RELAY_UI\.Card/); assert.match(play, /bombCard\.destroy\(\)/);
   assert.match(play, /current\.bomb\?\.sessionId !== command\.sessionId \|\| current\.bomb\?\.turnId !== command\.turnId/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
@@ -208,6 +209,53 @@ test('ordinary short answers need no typed input or approval to pass and score',
   assert.match(UI.t('bounceHint'), /specific elaboration can still count/);
 });
 
+test('the settled prompt and result remain on all cards through discussion, with one optional Next action and no countdown', () => {
+  const UI = ui(), g = playing();
+  const element = { addEventListener() {}, removeEventListener() {}, querySelector: () => null, innerHTML: '' };
+  const card = new UI.Card(element);
+  g.act(1, 'light'); g.act(1, 'pass');
+  g.state.explodeAt = g.state.lastChangeAt; g.act(0, 'tick');
+  const boom = structuredClone(g.state), prompt = DECK.get(boom.boom.cardId);
+  const discussion = E.apply(boom, { id: 'discussion-boundary', type: 'tick', actor: 0, sessionId: boom.sessionId,
+    turnId: boom.turnId, now: boom.phaseUntil, seed: 7 });
+  assert.equal(discussion.phase, 'discussion');
+  assert.equal(discussion.phaseUntil, boom.phaseUntil + 45000);
+  assert.deepEqual(discussion.boom, boom.boom);
+  assert.deepEqual(discussion.promptHistory, boom.promptHistory);
+  assert.equal(discussion.history.length, 1);
+  for (const language of ['en', 'zh']) {
+    UI.i18n.lang = language;
+    const stage = UI.stage(E.view(discussion, 0).bomb);
+    assert.ok(stage.includes(UI.esc(prompt.en)));
+    assert.match(stage, /br-phase-discussion br-static/);
+    assert.doesNotMatch(stage, /br-exploding|<progress|role="timer"|role="progressbar"/);
+    assert.ok(!stage.includes(String(discussion.phaseUntil)), 'the internal discussion deadline is not printed');
+    for (const actor of [1, 2, 3]) {
+      const html = card.html(E.view(discussion, actor));
+      assert.ok(html.includes(`data-br-prompt-id="${prompt.id}"`));
+      assert.equal((html.match(/data-br-action="next"/g) || []).length, 1);
+      assert.doesNotMatch(html, /data-br-action="(?:light|pass|bounce|extend|skip)"|<progress|role="timer"/);
+      assert.ok(!html.includes(String(discussion.phaseUntil)));
+    }
+  }
+  const inactive = structuredClone(discussion); inactive.roster[2].active = false;
+  assert.equal(E.view(inactive, 3).bomb.canNext, false);
+  assert.doesNotMatch(card.html(E.view(inactive, 3)), /data-br-action="next"/);
+  for (const actor of [0, 1, 2]) assert.equal(E.view(inactive, actor).bomb.canNext, true);
+  const advanced = E.apply(discussion, { id: 'player-next', type: 'next', actor: 2, sessionId: discussion.sessionId,
+    turnId: discussion.turnId, now: discussion.lastChangeAt + 1, seed: 8 });
+  assert.equal(advanced.phase, 'ready');
+  assert.notEqual(E.view(advanced, 1).bomb.cardId, prompt.id);
+  assert.equal(advanced.explodeAt, null); assert.equal(advanced.roundFuse, null);
+  assert.deepEqual(advanced.history, discussion.history);
+  assert.match(card.html(E.view(advanced, advanced.holder)), /data-br-action="light"/);
+  assert.doesNotMatch(card.html(E.view(advanced, advanced.holder)), /data-br-action="next"/);
+  const stale = E.apply(advanced, { id: 'old-discussion-timer', type: 'tick', actor: 0, sessionId: discussion.sessionId,
+    turnId: discussion.turnId, now: discussion.phaseUntil, seed: 9 });
+  assert.equal(stale, advanced, 'the old timer cannot skip the next ready prompt');
+  card.destroy();
+});
+
 test('sound retains a steady tick loop, immediate passes and one cue per explosion', () => {
   const UI = ui(), g = playing(), sound = new UI.Sound(), heard = [];
   for (const cue of ['tick', 'pass', 'bounce', 'boom']) sound[cue] = () => heard.push(cue);
@@ -224,6 +272,14 @@ test('sound retains a steady tick loop, immediate passes and one cue per explosi
   g.state.explodeAt = g.state.lastChangeAt; g.act(0, 'tick');
   sound.follow(E.view(g.state, 0).bomb); sound.follow(E.view(g.state, 0).bomb);
   assert.deepEqual(heard, ['pass', 'bounce', 'boom']);
+  assert.equal(UI.intervals.size, 0);
+  const discussion = E.apply(g.state, { id: 'silent-discussion', type: 'tick', actor: 0, sessionId: g.state.sessionId,
+    turnId: g.state.turnId, now: g.state.phaseUntil, seed: 2 });
+  sound.follow(E.view(discussion, 0).bomb); sound.follow(E.view(discussion, 0).bomb);
+  const ready = E.apply(discussion, { id: 'silent-next-preview', type: 'tick', actor: 0, sessionId: discussion.sessionId,
+    turnId: discussion.turnId, now: discussion.phaseUntil, seed: 3 });
+  sound.follow(E.view(ready, 0).bomb);
+  assert.deepEqual(heard, ['pass', 'bounce', 'boom'], 'discussion and automatic preview add no warning or repeated explosion cue');
   assert.equal(UI.intervals.size, 0);
   sound.close();
 });

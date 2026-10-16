@@ -193,7 +193,7 @@ function observeAudio() {
     const projections = await cards();
     for (const projection of projections) {
       assert.equal(promptId(projection.bomb), promptId(canonical));
-      for (const hidden of ['roundFuse', 'roundId', 'explodeAt', 'remainingMs', 'litAt', 'durationMs', 'startedAtMs', 'explodeAtMs']) assert.equal(Object.hasOwn(projection.bomb, hidden), false, hidden + ' stays private');
+      for (const hidden of ['roundFuse', 'roundId', 'explodeAt', 'remainingMs', 'litAt', 'durationMs', 'startedAtMs', 'explodeAtMs', 'discussionUntil']) assert.equal(Object.hasOwn(projection.bomb, hidden), false, hidden + ' stays private');
     }
     for (const page of [host, ...players]) {
       await page.locator('.br-scene-title[data-br-prompt-id]').waitFor({ state: 'visible' });
@@ -414,6 +414,11 @@ function observeAudio() {
       current = await state();
       if (current.phase === 'ready') {
         assert.equal(current.roundFuse, null); assert.equal(current.explodeAt, null);
+        // Large deliberate server-clock jumps also expire the normal 14 s
+        // host lease. Let its existing renew loop reacquire before a human
+        // button click; a rejected click is not automatically replayed.
+        const controlPath = await host.evaluate(() => 'rooms/' + ROOM.code + '/players/' + ROOM.getExtra('bombRelayControlToken'));
+        await wait(() => db.get(controlPath)?.leaseUntil > epoch + (db.get('.info/serverTimeOffset') || 0));
         await host.click('#br-light'); await wait(async () => (await state()).phase === 'ticking'); current = await state();
         if (round === 1) {
           verifyFuse(current, playerCount - 1, 'fast', false);
@@ -435,7 +440,76 @@ function observeAudio() {
         await surface(host, 'host-boom', width, height, lang);
         await surface(players[loser - 1], 'player-boom', Math.min(width, 375), height, lang);
       }
-      await host.click('#br-next');
+      const settled = clone(current), originalPrompt = promptId(current), score = JSON.stringify(current.penalties);
+      assert.equal(settled.discussionUntil, settled.phaseUntil + 45000);
+      if (round === 0) {
+        await setTime(settled.phaseUntil - 1); await pause(150); await delivery;
+        assert.equal((await state()).phase, 'boom', 'the original explosion hold remains 4.5 seconds');
+        await setTime(settled.phaseUntil);
+        await wait(async () => (await state()).phase === 'discussion' && (await cards()).every(card => card.bomb.phase === 'discussion'));
+        current = await samePrompt();
+        assert.equal(promptId(current), originalPrompt); assert.equal(current.phaseUntil, settled.discussionUntil);
+        assert.deepEqual(current.boom, settled.boom); assert.deepEqual(current.promptHistory, settled.promptHistory);
+        assert.deepEqual(current.history, settled.history); assert.equal(JSON.stringify(current.penalties), score);
+        assert.equal(await host.locator('.br-phase-discussion.br-static').count(), 1);
+        assert.equal(await host.locator('.br-exploding,[role="timer"],progress,[role="progressbar"]').count(), 0);
+        assert.equal(await host.locator('#br-next').isVisible(), true);
+        for (const [index, player] of players.entries()) {
+          const eligible = current.roster.find(seat => seat.playerNum === index + 1)?.active !== false;
+          assert.equal(await player.locator('[data-br-action="next"]').count(), eligible ? 1 : 0);
+          assert.equal(await player.locator('[data-br-action="light"],[data-br-action="pass"],[role="timer"],progress').count(), 0);
+        }
+        for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) await layout(host, 'host-discussion', '#br-next', width, lang, height, false);
+        for (const [width, height] of [[375, 740], [320, 568]]) for (const lang of ['en', 'zh']) await layout(players[loser - 1], 'player-discussion', '[data-br-action="next"]', width, lang, height, false);
+        await players[loser - 1].reload();
+        await wait(async () => (await cards())[loser - 1]?.bomb?.phase === 'discussion');
+        await samePrompt();
+        assert.equal((await state()).phaseUntil, settled.discussionUntil, 'reconnecting a player cannot restart discussion');
+        await setTime(settled.discussionUntil - 1); await pause(150); await delivery;
+        assert.equal((await state()).phase, 'discussion'); assert.equal(promptId(await state()), originalPrompt);
+        assert.equal(JSON.stringify((await state()).penalties), score);
+        await setTime(settled.discussionUntil);
+        await wait(async () => (await state()).phase === 'ready' && (await cards()).every(card => card.bomb.phase === 'ready'));
+        current = await samePrompt();
+        assert.notEqual(promptId(current), originalPrompt); assert.equal(current.cardIndex, settled.cardIndex + 1);
+        assert.equal(current.explodeAt, null); assert.equal(current.roundFuse, null); assert.equal(current.phaseUntil, null);
+        const preview = clone(current);
+        await setTime(settled.discussionUntil + 60000); await pause(150); await delivery;
+        current = await samePrompt();
+        assert.equal(current.phase, 'ready'); assert.equal(current.turnId, preview.turnId);
+        assert.equal(promptId(current), promptId(preview)); assert.equal(current.explodeAt, null);
+        assert.equal(JSON.stringify(current.penalties), score);
+        check('4.5-second explosion is followed by one full 45-second synchronized discussion with the original prompt/result, quiet mobile UI and reconnect-safe deadline; expiry reveals exactly one untimed preview and never auto-starts');
+      } else if (round === 1) {
+        await players[loser - 1].locator('[data-br-action="next"]').click();
+        await wait(async () => (await state()).phase === 'ready');
+        const advanced = await samePrompt();
+        await setTime(settled.discussionUntil + 1); await pause(150); await delivery;
+        current = await samePrompt();
+        assert.equal(current.turnId, advanced.turnId); assert.equal(current.cardIndex, settled.cardIndex + 1);
+        assert.equal(current.phase, 'ready'); assert.equal(current.explodeAt, null);
+        assert.equal(JSON.stringify(current.penalties), score);
+        check('an active player can use the existing Next action during BOOM; the cancelled old discussion deadline cannot skip the new preview');
+      } else if (round === 2) {
+        await setTime(settled.phaseUntil);
+        await wait(async () => (await state()).phase === 'discussion' && (await cards()).every(card => card.bomb.phase === 'discussion'));
+        await host.click('#br-next');
+        await wait(async () => (await state()).phase === 'ready');
+        const advanced = await samePrompt();
+        await setTime(settled.discussionUntil + 1); await pause(150); await delivery;
+        current = await samePrompt();
+        assert.equal(current.turnId, advanced.turnId); assert.equal(current.cardIndex, settled.cardIndex + 1);
+        assert.equal(current.phase, 'ready'); assert.equal(current.explodeAt, null);
+        assert.equal(JSON.stringify(current.penalties), score);
+        check('the host can use the same Next action during discussion without waiting 45 seconds; the invalidated deadline cannot advance again');
+      } else if (round === 4) {
+        await setTime(settled.phaseUntil);
+        await wait(async () => (await state()).phase === 'discussion');
+        assert.equal(promptId(await samePrompt()), originalPrompt);
+        await setTime(settled.discussionUntil - 1); await pause(150); await delivery;
+        assert.equal((await state()).phase, 'discussion', 'the final prompt also gets the full discussion');
+        await setTime(settled.discussionUntil);
+      } else await host.click('#br-next');
       await wait(async () => ['ready', 'finished'].includes((await state()).phase));
     }
     current = await state(); assert.equal(current.phase, 'finished');

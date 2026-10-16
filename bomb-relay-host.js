@@ -126,7 +126,7 @@
       byId('reroll').hidden = !hostView || bomb.phase !== 'ready';
       byId('pass').hidden = !hostView || bomb.phase !== 'ticking';
       byId('pass').textContent = t('passFor', { name: holder });
-      byId('next').hidden = !hostView || bomb.phase !== 'boom';
+      byId('next').hidden = !hostView || !['boom', 'discussion'].includes(bomb.phase);
       byId('next').textContent = t(bomb.boom?.last ? 'showResults' : 'nextCard');
       byId('pause').hidden = !hostView || !['ready', 'ticking', 'paused'].includes(bomb.phase);
       byId('pause').textContent = t(bomb.phase === 'paused' ? 'resume' : 'pause');
@@ -251,7 +251,7 @@
   // Only the simulation advances locally; live rooms tick inside the sync host.
   timer = setInterval(() => {
     if (closed || !demo || !state || busy) return;
-    const due = state.phase === 'ticking' ? state.explodeAt : state.phase === 'boom' ? state.phaseUntil : null;
+    const due = state.phase === 'ticking' ? state.explodeAt : ['boom', 'discussion'].includes(state.phase) ? state.phaseUntil : null;
     if (due && now() >= due) {
       state = BOMB_RELAY_ENGINE.apply(state, { id: uid(), type: 'tick', actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: now(), seed: seed() });
       render();

@@ -46,7 +46,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
   const output = path.resolve(process.env.BOMB_PROD_QA_OUTPUT || path.join(__dirname, '..', '..', 'bomb-production-qa', f.code));
   fs.mkdirSync(output, { recursive: true });
   const report = { ok: false, checks: [], step: 'prepare', screenshots: [], pageErrors: [],
-    realFirebase: true, realProductionPages: true, realTimeDeadline: true,
+    realFirebase: true, realProductionPages: true, realTimeDeadline: true, realTimeDiscussion: true,
     humanVoicePlaytest: false, physicalPhoneTest: false, hardwareAudioVerified: false,
     cleanup: { tracked: 0, deleted: 0, empty: 0, failed: 0 }, output };
   const check = (condition, label) => { if (!condition) { report.failureCheck = label; throw new Error(label); } report.checks.push(label); };
@@ -108,6 +108,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     try {
       const current = await state();
       result.host = { phase: current?.phase || null, turnId: current?.turnId, cardIndex: current?.cardIndex,
+        phaseUntil: current?.phaseUntil, discussionUntil: current?.discussionUntil,
         passes: current?.passes, explodeAt: current?.explodeAt, initialGoDeadline: current?.roundFuse?.explodeAtMs };
       result.hostStatus = await host.locator('#br-status').textContent();
     } catch (_) { result.host = { unavailable: true }; }
@@ -116,7 +117,8 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       result.control = { markerMatches: hasStamp(node, f, 0), ownerKnown: owners.has(node?.owner),
         sessionKnown: sessions.has(current?.sessionId), leaseUntil: node?.leaseUntil,
         leaseRemainingMs: Number.isFinite(node?.leaseUntil) ? Math.max(0, node.leaseUntil - Math.round(now() + serverTimeOffsetMs)) : null,
-        phase: current?.phase || null, explodeAt: current?.explodeAt, turnId: current?.turnId };
+        phase: current?.phase || null, explodeAt: current?.explodeAt, phaseUntil: current?.phaseUntil,
+        discussionUntil: current?.discussionUntil, turnId: current?.turnId };
     } catch (_) { result.control = { unavailable: true }; }
     return result;
   }
@@ -141,7 +143,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       check(node.bomb.cardId === id, `player-${number}-same-prompt-${expectedPhase}`);
       // Realtime Database omits null-valued children in the boom projection.
       check((node.bomb.holder ?? null) === (['ready', 'ticking', 'paused'].includes(expectedPhase) ? current.holder : null), `player-${number}-same-holder-${expectedPhase}`);
-      check(!/"(?:roundFuse|roundId|explodeAt|remainingMs|litAt|durationMs|startedAtMs|explodeAtMs)"\s*:/.test(JSON.stringify(node.bomb)), `player-${number}-private-timing-${expectedPhase}`);
+      check(!/"(?:roundFuse|roundId|explodeAt|remainingMs|litAt|durationMs|startedAtMs|explodeAtMs|discussionUntil)"\s*:/.test(JSON.stringify(node.bomb)), `player-${number}-private-timing-${expectedPhase}`);
       const shown = await players[number - 1].locator('.br-scene-title[data-br-prompt-id]').getAttribute('data-br-prompt-id');
       check(shown === id, `player-${number}-actual-dom-prompt-${expectedPhase}`);
     }
@@ -305,15 +307,108 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     }
     await screenshot(host, 'host-boom');
     report.observedAutomaticExplosion = true;
-    await poll(async () => (await state()).phase === 'ready' && (await state()).cardIndex === 1);
-    progress('next-go-uses-fast-off-then-stop');
+    progress('wait-real-animation-settlement-then-discussion');
+    check(boom.discussionUntil === boom.phaseUntil + 45000, 'one-discussion-deadline-is-established-after-the-existing-explosion-hold');
+    await poll(async () => (await state()).phase === 'discussion', Math.max(15000, boom.phaseUntil - now() + 15000));
+    const discussion = await state(), discussionViews = await samePlayers('discussion');
+    report.realDiscussion = { observedAtMs: now(), boomSettledAtMs: boom.phaseUntil,
+      discussionUntil: discussion.phaseUntil, durationMs: discussion.phaseUntil - boom.phaseUntil };
+    check(discussion.phaseUntil === boom.discussionUntil && report.realDiscussion.durationMs === 45000, 'real-discussion-is-exactly-45-seconds-after-settlement');
+    check(discussion.order[0] === promptId && discussion.cardIndex === boom.cardIndex &&
+      JSON.stringify(discussion.boom) === JSON.stringify(boom.boom) && JSON.stringify(discussion.history) === JSON.stringify(boom.history) &&
+      JSON.stringify(discussion.penalties) === JSON.stringify(boom.penalties) && JSON.stringify(discussion.promptHistory) === JSON.stringify(boom.promptHistory), 'discussion-keeps-the-original-prompt-result-score-and-draw-history');
+    check(await host.locator('#br-next').isVisible() && await host.locator('.br-phase-discussion.br-static').count() === 1,
+      'host-shows-the-existing-next-action-and-a-static-discussion-result');
+    check(await host.locator('[role="timer"],progress,[role="progressbar"],.br-exploding').count() === 0, 'discussion-adds-no-large-countdown-or-repeated-explosion-animation');
+    for (let index = 0; index < players.length; index++) {
+      check(discussionViews[index].bomb.boom.loser === boom.boom.loser && discussionViews[index].bomb.standings.reduce((sum, row) => sum + row.count, 0) === 1,
+        `player-${index + 1}-same-discussion-result-and-single-score`);
+      check(await players[index].locator('[data-br-action="next"]').isVisible(), `player-${index + 1}-can-advance-discussion-with-existing-next-action`);
+      check(await players[index].locator('[data-br-action="light"],[data-br-action="pass"],[role="timer"],progress').count() === 0,
+        `player-${index + 1}-discussion-has-no-active-fuse-or-countdown-ui`);
+      await screenshot(players[index], `player-${index + 1}-discussion`);
+    }
+    await screenshot(host, 'host-discussion');
+    progress('reload-one-real-player-during-discussion');
+    await players[1].reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
+    await players[1].locator('.br-zone-boom.br-static').waitFor({ timeout: 15000 });
+    await samePlayers('discussion');
+    check((await state()).phaseUntil === discussion.phaseUntil && (await state()).discussionUntil === discussion.discussionUntil,
+      'real-player-reconnect-resumes-the-same-discussion-deadline');
+    progress('wait-full-real-discussion-without-pressing-next');
+    let lastDiscussionProgress = 0, discussionWaitSamples = 0;
+    await poll(async () => {
+      const current = await state();
+      if (now() - lastDiscussionProgress >= 10000) {
+        lastDiscussionProgress = now(); process.stdout.write('BOMB_QA_PROGRESS ' + JSON.stringify({ step: report.step,
+          discussionElapsedMs: Math.max(0, now() - boom.phaseUntil), approximateRemainingMs: Math.max(0, discussion.phaseUntil - now()) }) + '\n');
+      }
+      if (current.phase === 'discussion') {
+        if (current.phaseUntil !== discussion.phaseUntil || current.order[0] !== promptId || current.history.length !== 1) {
+          check(false, 'waiting-discussion-retains-one-deadline-prompt-and-score');
+        }
+        discussionWaitSamples++;
+      }
+      return current.phase === 'ready' && current.cardIndex === 1;
+    }, Math.max(15000, discussion.phaseUntil - now() + 15000));
+    report.realDiscussion.waitSamples = discussionWaitSamples;
+    check(discussionWaitSamples > 0, 'waiting-discussion-retains-one-deadline-prompt-and-score');
+    const afterDiscussion = await state();
+    await samePlayers('ready');
+    check(afterDiscussion.explodeAt === null && afterDiscussion.roundFuse === null && afterDiscussion.phaseUntil === null &&
+      afterDiscussion.discussionUntil === null && afterDiscussion.history.length === 1 && afterDiscussion.order[1] !== promptId,
+      'discussion-expiry-reveals-exactly-one-new-prompt-and-never-auto-starts-the-fuse');
+    await sleep(1200);
+    check((await state()).phase === 'ready' && (await state()).turnId === afterDiscussion.turnId && (await state()).explodeAt === null,
+      'new-prompt-continues-waiting-for-manual-start');
+    report.observedAutomaticDiscussionCompletion = true;
+    progress('next-manual-go-uses-fast-off');
     const second = await tapHolder('light');
     check(second.roundFuse.speedModeAtStart === 'fast' && second.roundFuse.scaleWithPlayersAtStart === false && second.roundFuse.minMsAtStart === 30000 && second.roundFuse.maxMsAtStart === 60000, 'next-go-applies-pending-fast-off');
     check(second.promptHistory.seenIds.includes(promptId) && second.order[1] !== promptId, 'next-prompt-preserves-activity-history');
     await samePlayers('ticking');
+    progress('wait-second-real-fast-fuse-for-player-early-next');
+    let lastSecondFuseProgress = 0;
+    await poll(async () => {
+      const current = await state();
+      if (now() - lastSecondFuseProgress >= 10000) {
+        lastSecondFuseProgress = now(); process.stdout.write('BOMB_QA_PROGRESS ' + JSON.stringify({ step: report.step,
+          elapsedMs: Math.max(0, now() - second.litAt), approximateRemainingMs: Math.max(0, second.explodeAt - now()) }) + '\n');
+      }
+      return current.phase === 'boom';
+    }, Math.max(15000, second.explodeAt - now() + 15000));
+    const secondBoom = await state();
+    await samePlayers('boom');
+    check(secondBoom.cardIndex === 1 && secondBoom.history.length === 2 &&
+      Object.values(secondBoom.penalties).reduce((sum, cards) => sum + list(cards).length, 0) === 2,
+      'second-natural-explosion-adds-exactly-one-new-penalty');
+    await poll(async () => (await state()).phase === 'discussion', Math.max(15000, secondBoom.phaseUntil - now() + 15000));
+    const earlyDiscussion = await state(), earlyViews = await samePlayers('discussion');
+    for (let index = 0; index < earlyViews.length; index++) check(earlyViews[index].bomb.boom.loser === secondBoom.boom.loser &&
+      earlyViews[index].bomb.standings.reduce((sum, row) => sum + row.count, 0) === 2, `player-${index + 1}-same-second-discussion-and-score`);
+    progress('real-player-presses-existing-next-before-45-seconds');
+    const advancingNumber = secondBoom.boom.loser;
+    await players[advancingNumber - 1].locator('[data-br-action="next"]').click();
+    await poll(async () => (await state()).phase === 'ready' && (await state()).cardIndex === 2);
+    const playerAdvanced = await state();
+    report.playerEarlyNext = { playerNum: advancingNumber, clickedAtMs: now(), oldDiscussionUntil: earlyDiscussion.phaseUntil };
+    check(now() + serverTimeOffsetMs < earlyDiscussion.phaseUntil, 'player-advances-before-the-discussion-deadline');
+    check(playerAdvanced.phaseUntil === null && playerAdvanced.discussionUntil === null && playerAdvanced.explodeAt === null && playerAdvanced.roundFuse === null,
+      'player-next-cancels-the-old-discussion-and-waits-for-manual-start');
+    check(playerAdvanced.history.length === 2 && JSON.stringify(playerAdvanced.penalties) === JSON.stringify(earlyDiscussion.penalties) &&
+      playerAdvanced.order[2] !== earlyDiscussion.order[1] && playerAdvanced.promptHistory.seenIds.length === earlyDiscussion.promptHistory.seenIds.length + 1 &&
+      earlyDiscussion.promptHistory.seenIds.every(id => playerAdvanced.promptHistory.seenIds.includes(id)), 'player-next-draws-exactly-one-new-prompt-with-no-repeat-score');
+    await samePlayers('ready');
+    await screenshot(host, 'host-player-advanced-ready');
+    await screenshot(players[advancingNumber - 1], 'player-advanced-ready');
+    await sleep(1200);
+    check((await state()).phase === 'ready' && (await state()).turnId === playerAdvanced.turnId && (await state()).explodeAt === null,
+      'player-advanced-next-prompt-does-not-auto-start');
+    progress('stop-from-next-untimed-preview');
     await host.locator('#br-manage-open').click(); await host.locator('#br-stop').click();
     await poll(async () => (await state()).phase === 'finished');
-    check((await state()).history.length === 1 && (await state()).explodeAt === null, 'stop-cancels-second-fuse-without-extra-penalty');
+    check((await state()).history.length === 2 && (await state()).explodeAt === null && (await state()).phaseUntil === null &&
+      (await state()).discussionUntil === null, 'stop-clears-all-deadlines-without-extra-penalty');
     for (const item of contexts) for (const page of item.pages()) {
       const violations = await page.evaluate(() => (window.__bombQaViolations || []).slice());
       check(violations.length === 0, 'browser-sdk-used-only-allowlisted-exact-nodes');
