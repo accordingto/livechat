@@ -37,7 +37,22 @@ desktop1280x800 ZH fits after a minimal seat width125-to120px adjustment, retain
 phone two-column layout. Short host pages scroll naturally with hit-tested controls.
 Browser results include exact approved audio PCM, settings/count snapshots,
 expiry/duplicate scoring, host takeover, reconnect and retained history.
-Disposable real-Firebase production verification follows publication.
+Gameplay source4f314db is published on the existing frontend, Vercel success
+96GAetwVi86b5zs8fNY7ts7yqEdi. Production Bomb sources15/15 and shared frontend
+assets62/62 match; executor health200/ready, CORS, invalid-ticket rejection and
+private-runtime404 checks pass. Its separate service/runtime is unchanged.
+Real production host plus three independent original player pages pass195 checks
+with the actual Firebase SDK and no substituted clock, RNG or deadline. The
+Normal fuse lasted90116ms, survived six passes and a host lease takeover after
+13842ms of normal lease expiry, then automatically exploded with the same
+loser/result and exactly one penalty on all three cards. Next GO used Fast/off;
+Stop cancelled that fuse without another penalty. All4/4 final QA nodes cleaned.
+The first two probe attempts stopped at136/155 checks due to test assumptions:
+best-effort close need not set leaseUntil=0 immediately, and Firebase omits null
+holder fields in boom views. Only the runner was corrected, not gameplay.
+All12/12 precisely owned nodes across the three attempts were conditionally
+cleaned. Full reports/captures remain outside Hub in bomb-production-qa and
+bomb-expansion-v2-qa-3/6/8; no existing room was accessed.
 No human group, physical-phone, or all720-prompts entertainment validation is claimed.
 
 ## Previous: Crazy Talk shorter rotation and director ideas — 2026-10-17

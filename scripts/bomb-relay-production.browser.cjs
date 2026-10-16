@@ -26,6 +26,10 @@ function hasStamp(value, f, number) {
   return stamp?.marker === f.marker && stamp.code === f.code && stamp.kind === 'bomb-v2-production-qa' && stamp.number === number;
 }
 function allowedPath(f, target) { return f.paths.includes(target); }
+function leaseReleasedOrExpired(value, localNowMs, serverTimeOffsetMs) {
+  const lease = value?.leaseUntil;
+  return lease === 0 || (Number.isFinite(lease) && lease > 0 && lease <= Math.round(localNowMs + serverTimeOffsetMs));
+}
 function owned(value, f, number, sessions, owners) {
   if (!hasStamp(value, f, number)) return false;
   if (number === 0) {
@@ -89,7 +93,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     }
     throw new Error('projection_marker_conflict');
   }
-  let browser, hostContext, host, players = [], contexts = [];
+  let browser, hostContext, host, players = [], contexts = [], serverTimeOffsetMs = 0;
   async function captureOwners() {
     if (!host || host.isClosed()) return;
     // Read-only transport observation: these owners were actually sent by this
@@ -99,6 +103,23 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     saveRecovery();
   }
   async function state() { return host.evaluate(() => structuredClone(BOMB_RELAY_HOST.state)); }
+  async function failureDiagnostic() {
+    const result = { stage: report.step, capturedAtMs: now(), serverTimeOffsetMs, knownOwnerCount: owners.size, knownSessionCount: sessions.size };
+    try {
+      const current = await state();
+      result.host = { phase: current?.phase || null, turnId: current?.turnId, cardIndex: current?.cardIndex,
+        passes: current?.passes, explodeAt: current?.explodeAt, initialGoDeadline: current?.roundFuse?.explodeAtMs };
+      result.hostStatus = await host.locator('#br-status').textContent();
+    } catch (_) { result.host = { unavailable: true }; }
+    try {
+      const node = (await read(0)).value, current = canonical(node);
+      result.control = { markerMatches: hasStamp(node, f, 0), ownerKnown: owners.has(node?.owner),
+        sessionKnown: sessions.has(current?.sessionId), leaseUntil: node?.leaseUntil,
+        leaseRemainingMs: Number.isFinite(node?.leaseUntil) ? Math.max(0, node.leaseUntil - Math.round(now() + serverTimeOffsetMs)) : null,
+        phase: current?.phase || null, explodeAt: current?.explodeAt, turnId: current?.turnId };
+    } catch (_) { result.control = { unavailable: true }; }
+    return result;
+  }
   async function poll(predicate, timeout = 30000) {
     const end = now() + timeout;
     do { if (await predicate()) return; await sleep(150); } while (now() < end);
@@ -118,7 +139,8 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       const node = cards[number - 1];
       check(owned(node, f, number, sessions, owners), `player-${number}-owned-${expectedPhase}`);
       check(node.bomb.cardId === id, `player-${number}-same-prompt-${expectedPhase}`);
-      check(node.bomb.holder === (['ready', 'ticking', 'paused'].includes(expectedPhase) ? current.holder : null), `player-${number}-same-holder-${expectedPhase}`);
+      // Realtime Database omits null-valued children in the boom projection.
+      check((node.bomb.holder ?? null) === (['ready', 'ticking', 'paused'].includes(expectedPhase) ? current.holder : null), `player-${number}-same-holder-${expectedPhase}`);
       check(!/"(?:roundFuse|roundId|explodeAt|remainingMs|litAt|durationMs|startedAtMs|explodeAtMs)"\s*:/.test(JSON.stringify(node.bomb)), `player-${number}-private-timing-${expectedPhase}`);
       const shown = await players[number - 1].locator('.br-scene-title[data-br-prompt-id]').getAttribute('data-br-prompt-id');
       check(shown === id, `player-${number}-actual-dom-prompt-${expectedPhase}`);
@@ -232,14 +254,37 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     await host.locator('#br-manage .br-dialog-header button').click();
     check((await state()).explodeAt === deadline && JSON.stringify((await state()).roundFuse) === snapshot, 'pending-preferences-do-not-change-live-fuse');
     await captureOwners();
-    // Keep the old document alive until its normal pagehide close writes the
-    // lease release, then truly reload. No fixture mutation of the deadline.
+    serverTimeOffsetMs = await host.evaluate(async () => Number((await firebase.database().ref('.info/serverTimeOffset').once('value')).val()) || 0);
+    const beforeClose = (await read(0)).value, pagehideAtMs = now();
+    report.hostReconnection = { pagehideAtMs, initialLeaseUntil: beforeClose?.leaseUntil, serverTimeOffsetMs };
+    progress('host-pagehide-close');
+    // close() releases the lease best-effort. A disconnected transaction may
+    // leave the normal 14 s lease to expire; neither path permits a new fuse.
     await host.evaluate(() => window.dispatchEvent(new Event('pagehide')));
-    await poll(async () => (await read(0)).value?.leaseUntil === 0);
+    progress('host-wait-released-or-expired-lease');
+    let lastLeaseProgress = 0;
+    await poll(async () => {
+      const node = (await read(0)).value, current = canonical(node);
+      if (!hasStamp(node, f, 0) || !owners.has(node?.owner) || !sessions.has(current?.sessionId)) throw new Error('lease_wait_ownership_changed');
+      const ready = leaseReleasedOrExpired(node, now(), serverTimeOffsetMs);
+      if (now() - lastLeaseProgress >= 4000) {
+        lastLeaseProgress = now();
+        process.stdout.write('BOMB_QA_PROGRESS ' + JSON.stringify({ step: report.step,
+          waitElapsedMs: now() - pagehideAtMs, leaseRemainingMs: Math.max(0, node.leaseUntil - Math.round(now() + serverTimeOffsetMs)),
+          ownerKnown: owners.has(node.owner), phase: current.phase }) + '\n');
+      }
+      if (ready) {
+        report.hostReconnection.leaseWaitMs = now() - pagehideAtMs;
+        report.hostReconnection.leaseEnd = node.leaseUntil === 0 ? 'released' : 'normally-expired';
+      }
+      return ready;
+    }, 20000);
+    progress('host-real-reload-and-lease-reacquire');
     await host.reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
     await poll(async () => (await state())?.phase === 'ticking');
     await host.locator('#br-manage-open:not([disabled])').waitFor({ timeout: 30000 });
     await captureOwners();
+    progress('host-reload-deadline-and-pending-settings-check');
     check((await state()).explodeAt === deadline && JSON.stringify((await state()).roundFuse) === snapshot, 'host-reload-resumes-original-deadline-and-go-snapshot');
     check((await state()).settingsTiming.speedMode === 'fast' && (await state()).settingsTiming.scaleWithPlayers === false, 'pending-preferences-survive-host-reload');
     await samePlayers('ticking');
@@ -277,6 +322,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     report.ok = true; progress('verified-before-owned-cleanup');
   } catch (error) {
     report.ok = false; report.error = error.message.slice(0, 200);
+    report.failureDiagnostic = await failureDiagnostic();
   } finally {
     try { await captureOwners(); } catch (_) {}
     // A failed assertion can occur between the first fresh projection and its
@@ -330,9 +376,15 @@ function selfTest() {
   assert.equal(owned({ ...node, bomb: { sessionId: 'foreign' } }, f, 1, sessions, owners), false);
   assert.equal(owned({ qaBombV2: nodeStamp(f, 0), owner: 'b'.repeat(32), stateJson: JSON.stringify({ sessionId: 'test-session' }) }, f, 0, sessions, owners), false);
   assert.equal(owned({ qaBombV2: nodeStamp(f, 0), owner: 'a'.repeat(32), stateJson: JSON.stringify({ sessionId: 'foreign' }) }, f, 0, sessions, owners), false);
-  return { ok: true, offlineOnly: true, exactNodes: 4, noNetworkRequests: true };
+  assert.equal(leaseReleasedOrExpired({ leaseUntil: 0 }, 10000, 0), true);
+  assert.equal(leaseReleasedOrExpired({ leaseUntil: 11000 }, 10000, 1000), true);
+  assert.equal(leaseReleasedOrExpired({ leaseUntil: 11001 }, 10000, 1000), false);
+  assert.equal(leaseReleasedOrExpired({ leaseUntil: 9000 }, 10000, -1000), true);
+  assert.equal(leaseReleasedOrExpired({ leaseUntil: 9001 }, 10000, -1000), false);
+  assert.equal(leaseReleasedOrExpired({}, 10000, 0), false);
+  return { ok: true, offlineOnly: true, exactNodes: 4, leaseBoundaryCases: 6, noNetworkRequests: true };
 }
-module.exports = { run, fixture, allowedPath, owned, selfTest };
+module.exports = { run, fixture, allowedPath, owned, leaseReleasedOrExpired, selfTest };
 if (require.main === module) {
   if (process.argv.includes('--self-test')) console.log(JSON.stringify(selfTest()));
   else if (!process.argv.includes('--live')) { console.log('{"ok":false,"reason":"live_flag_required"}'); process.exitCode = 1; }

@@ -192,7 +192,10 @@ pages with the real Firebase SDK. It creates only four fresh, random, marked
 QA nodes; WebSocket and REST paths are allowlisted exactly. Cleanup requires
 matching marker/session/browser owner plus ETag, and never deletes a parent.
 The probe waits for a real Normal deadline without changing clocks or fuse
-state. `--self-test` exercises ownership guards offline without creating data.
+state. Host close releases its lease best-effort; the probe also accepts normal
+lease expiry using the real server offset, then reloads and checks the saved
+deadline. Firebase-omitted null holder fields are compared as null in boom views.
+`--self-test` exercises ownership/lease guards offline without creating data.
 
 Record actual release test counts and browser limits in `CLAUDE.md`. Unit tests
 alone do not prove physical mobile or real multi-device voice-session behavior.
