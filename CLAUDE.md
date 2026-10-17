@@ -72,7 +72,7 @@ Changed files in this release:
   tests/bomb-relay-ui.browser.cjs and scripts/bomb-relay-production.browser.cjs.
 - Maintenance: this CLAUDE.md release record and bomb-relay-mode.md.
 
-Validation so far: both attachment builds ran before integration; v3 passes31/31
+Validation: both attachment builds ran before integration; v3 passes31/31
 and v3.1 passes34/34. Content/selector checks pass33/33, covering safe/idempotent
 merge, local edits/metadata/custom preservation, disabled-card recycling/history,
 and generated previous-wording guards. Migration and generated-catalog --check
@@ -98,9 +98,31 @@ prompts and preserved history, fixed45second chat, early Next/manual Start, and
 exact approved PCM. Manual screenshot review confirms the375px settings dialog
 and the320px longest-prompt/PASS first screen. Reports remain outside Hub in
 ../bomb-pacing-v31-final-qa-{3,6,8}/report.json with matching logs.
-Publication and live production verification remain pending for this revision.
-Earlier release evidence below does not establish those new results.
-No physical-phone/human-group validation claimed.
+Gameplay source89536e64cd529926ed3151c3004eb1389662f353 is pushed to main and
+published on https://livechat-two-alpha.vercel.app/bomb-relay.html. Existing
+Vercel deployment Dy9DpsRiPs9H6MDELHZLLAKgbMd5 succeeded:
+https://vercel.com/accordingtos-projects/livechat/Dy9DpsRiPs9H6MDELHZLLAKgbMd5.
+Production Bomb source assets15/15 and shared frontend assets62/62 match.
+The existing independent executor is ready; its CORS, synthetic-invalid-ticket
+rejection and private-runtime404 checks pass. Its runtime is unchanged and needs
+no redeployment or secret update for this frontend-only revision.
+
+Real production host plus three independent original mobile-viewport player
+pages pass325checks with genuine Firebase and clocks, zero JS errors. The first
+Normal/on three-player fuse lasted60878ms; six passes and a real13805ms normal
+lease-expiry host takeover preserved its deadline, GO snapshot and prompt.
+Pending Fast/off baseMin20/baseMax45 survived the host reload. The original4.5s
+BOOM presentation led to exactly45000ms canonical discussion, retaining the
+same boundary through a player reload. Natural expiry revealed just one new
+Ready prompt, with all four pages showing20–45seconds and waiting for manual
+Start. The second manual GO used that custom range and exploded naturally;
+active player3 used existing Next before45seconds, drawing one new untimed
+prompt with exactly two total penalties. Stop added no penalty. No substituted
+clock, RNG or deadline, or existing user-room access was used. All4/4 precisely
+marked test nodes were conditionally deleted; cleanup failures0. The report and
+14screens remain outside Hub at ../bomb-production-qa/BQA13B21A5/report.json;
+live log: ../bomb-pacing-v31-production.log. Physical phones, human-group voice
+play and hardware speaker hearing remain unverified.
 
 ## Previous: Talk Bomb post-explosion conversation — 2026-10-17
 

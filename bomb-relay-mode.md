@@ -306,6 +306,30 @@ for each of 3/6/8 participants (60 checks, 258 captures, five GO snapshots per
 room, zero JS errors). They use isolated authority fixtures, controlled clocks
 and desktop Chromium phone viewports. Manual review includes the 375 px host
 settings dialog and 320 px longest-prompt/PASS first screen. Reports are at
-`../bomb-pacing-v31-final-qa-{3,6,8}/report.json` with matching logs. Publication
-and live production verification remain pending. No physical-phone or
-human-group validation is claimed.
+`../bomb-pacing-v31-final-qa-{3,6,8}/report.json` with matching logs.
+
+Gameplay source `89536e64cd529926ed3151c3004eb1389662f353` is published on the
+existing [production host](https://livechat-two-alpha.vercel.app/bomb-relay.html).
+[Vercel deployment Dy9DpsRiPs9H6MDELHZLLAKgbMd5](https://vercel.com/accordingtos-projects/livechat/Dy9DpsRiPs9H6MDELHZLLAKgbMd5)
+succeeded. Production Bomb sources 15/15 and shared assets 62/62 match; the
+unchanged executor's readiness, CORS, synthetic-invalid-ticket rejection and
+private-runtime 404 checks pass. No backend redeployment or secret update is
+required for this scoped frontend revision.
+
+The real production host and three independent original mobile-viewport player
+pages pass 325 checks using genuine Firebase and clocks, with zero JS errors.
+The first Normal/on three-player fuse lasted 60878 ms. Six passes and a real
+13805 ms normal lease-expiry host takeover kept its deadline, snapshot and prompt;
+pending Fast/off custom bounds 20–45 s survived reload. After the original 4.5 s
+explosion presentation, the single canonical discussion lasted 45000 ms with the
+same boundary after a player reload. Natural expiry revealed one untimed Ready
+prompt; all four pages displayed 20–45 s and waited for manual Start. The second
+manual GO used those bounds and exploded naturally. Active player 3 then used
+the existing Next before the 45 s discussion ended, revealing one new untimed
+prompt with exactly two total penalties. Stop added no penalty. No clock, RNG or
+deadline substitution was used, and no existing room was read or written. All
+four precisely owned test nodes were conditionally cleaned, with zero failures.
+The report and 14 screenshots are outside Hub at
+`../bomb-production-qa/BQA13B21A5/report.json`; log:
+`../bomb-pacing-v31-production.log`. Physical phones, human-group conversation
+and hardware speaker hearing remain unverified.
