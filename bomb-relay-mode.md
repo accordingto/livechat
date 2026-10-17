@@ -26,7 +26,8 @@ caused the narrow impression, rather than an identified sampling bug.
 
 ## Source and drawing
 
-- `content/bomb-relay-prompts.json` is the single editable active source.
+- `content/bomb-relay-prompts.json` is the single editable source, including
+  retained disabled records for saved-card lookup and activity history.
   `node scripts/bomb-relay-build-catalog.cjs` generates the existing classic/CJS
   `bomb-relay-deck.js` and `content/bomb-relay-catalog-manifest.json`.
   `--check` rejects stale outputs. The real host and original player links load
@@ -34,14 +35,29 @@ caused the narrow impression, rather than an identified sampling bug.
 - The v2 audit found the existing 120 prompts exactly matched all five supplied
   fields (ID, pack, family, English, Traditional Chinese), with no additional
   custom prompts or local edits. All 120 are retained once, plus the supplied
-  600 additions, with no wording edits. Final active count: 720 bilingual prompts,
-  not 1440. Original-data SHA-256 is recorded in the generated manifest.
+  600 additions, then the approved v3 editorial migration revises 166 records
+  and defers 20 without deleting their original text. There are 720 retained
+  bilingual records, 700 eligible prompts and 534 unchanged wordings. The v3
+  audit again found all supplied before fields matched: no missing IDs, local
+  edits or custom records were present; no conflicts were overwritten.
   Future valid custom additions/edits belong in the JSON and are retained by
   the builder; it validates duplicates without imposing a 720-item limit.
-- Everyday / 日常聯想: 360 prompts. Playful / 趣味聯想: 360 prompts.
+- Everyday / 日常聯想: 351 eligible / 360 retained prompts.
+  Playful / 趣味聯想: 349 eligible / 360 retained prompts.
   There are 34 distinct families across the bank. Mixed / 混合 is the initial
   default with relative weights 1:1.
   This is a playtest starting point, not a validated optimum or alternation.
+- `content/bomb-relay-editorial-v3-patch.json` is the supplied read-only migration
+  data, not a second maintained live catalog. The v3 and v3.1 attachment content
+  is byte-identical. `node scripts/bomb-relay-apply-editorial-patch.cjs` merges by
+  stable ID and all four before fields, skips already-applied after text, retains
+  extra metadata/custom records/prior disabled choices, and reports conflicts or
+  missing IDs without overwriting or inserting. `--check` verifies idempotence.
+  A deferred record has `disabled:true`; the source preserves its wording/reason.
+- Generated `DECK.items` keeps all 720 source records. `DECK.isEligible` excludes
+  `disabled:true` or `enabled:false`; `DECK.pool` and the selector apply it to
+  every mode and recycle/fallback path. The selector's known-ID set still uses
+  the complete catalog, so deferring a card never erases its seen history.
 - `bomb-relay-selector.js` adapts the supplied pure selector to the existing
   classic browser/CJS architecture. It owns no storage, timer or network.
 - `bomb-relay-engine.js` calls it once when preparing each new bomb, or for a
@@ -64,6 +80,15 @@ Legacy in-progress saves keep their displayed card, fuse, score and actual old
 game length; future bombs use the new bank. Old category names map to Mixed
 for future prompts. The legacy art builder uses `legacyItems` only.
 
+Canonical `promptSnapshot` freezes the current card's bilingual text through
+Ready, ticking, pause, explosion and discussion; `view()` projects it as
+`bomb.prompt` for host and players. Existing saves without a snapshot use the
+generated `getPrevious(id)` only for revised records whose current content and
+editorial provenance still match this exact patch. That previous text comes
+from the read-only patch.before, not another hand-maintained bank. Subsequent
+local edits/custom prompts fall back to their current text. New draws and
+preview rerolls snapshot the reviewed current wording.
+
 ## Reading, timer, passing and scores
 
 The existing `ready` phase is an untimed full-table reading preview. Once
@@ -78,8 +103,8 @@ do not issue commands or draw prompts. Text cards replace specific scene art
 so visuals do not suggest an answer list. Neutral bomb marks, a recognizable
 explosion reveal, vibration and Web Audio cues remain.
 
-The current Bomb rules/presentation cache tag is `br-discussion-1`; unchanged
-deck/selector/timing helpers remain `br-expansion-2`, and audio remains
+The current Bomb rules/presentation/deck/timing cache tag is `br-pacing-3-1`;
+audio remains
 `br-sound-4`. Presentation retains charcoal/olive surfaces, warm
 paper, a restrained brass accent, neutral player identities and a charcoal CSS
 bomb with red sparks and a brief red flame/wave burst. Print-style English
@@ -90,7 +115,7 @@ match the reviewed demo at .6 playback gain. Pass/bounce sounds remain, phone
 audio stays opt-in, mute stops active cues and disposal closes the context.
 The tick cadence never speeds up or reflects remaining time. Visual motion is
 also fixed and honours reduced-motion. Audio and explosion animation are
-unchanged by the v2 timing/content expansion.
+unchanged by the v3.1 timing/content revision.
 Phone player cards keep the prompt before Pass; host results and short host
 viewports use normal scrolling so controls cannot cover content.
 
@@ -102,26 +127,69 @@ answer-speed extension, or client-side fuse resampling. Untimed Ready and
 pass-without-reset were already correct. These are measured source facts,
 not an inference from the reported number of laps.
 
-`bomb-relay-timing.js` adapts the supplied pure policy to classic/CJS. For a
-new room without an explicit prior preference, Normal and participant scaling
-are selected. At 2–3 eligible players: Fast 30–60 s (mean 45), Normal 60–100 s
-(mean 80), Chill 90–150 s (mean 120). Each GO uses two independent uniforms:
+Before this v3.1 revision, the actual v2 policy used two-uniform triangular
+sampling and added 10 s per active player above three to both ends, capped at
+50 s. With scaling on, its Fast / Normal / Chill ranges were:
+
+- 3 players: 30–60 / 60–100 / 90–150 s.
+- 6 players: 60–90 / 90–130 / 120–180 s.
+- 8 players: 80–110 / 110–150 / 140–200 s.
+
+`bomb-relay-timing.js` adapts the v3.1 pure policy to classic/CJS. New rooms
+still select Normal and participant scaling unless a prior preference exists.
+At 2–3 eligible players: Fast 30–60 s (mean 45), Normal 30–90 s (mean 60),
+Chill 30–120 s (mean 75). Each GO uses two independent uniforms:
 `round(minMs + (maxMs-minMs)*(u1+u2)/2)`, a symmetric triangular distribution.
-The user-selectable adjustment adds
-`10 * (min(8, max(3, activePlayerCount)) - 3)` seconds to both ends once.
-Six players add 30 s; eight add 50 s; nine show the capped adjustment.
-Off uses base ranges. Counts come from distinct active roster seats, not
+The existing participant toggle now applies
+`7 * min(5, max(0, activePlayerCount - 3))` seconds to the upper bound only.
+Without a host override, the lower bound remains 30 s. This replaces v2's entire adjustment, without
+adding its +10 or the superseded v3.0 proposal's +4. The actual new Fast /
+Normal / Chill ranges with scaling on and no host override are:
+
+- 3 players: 30–60 / 30–90 / 30–120 s.
+- 6 players: 30–81 / 30–111 / 30–141 s.
+- 8 players: 30–95 / 30–125 / 30–155 s.
+
+Each extra participant increases the ceiling by 7 s and the mean by 3.5 s,
+up to +35 / +17.5 s; it does not add seven fixed seconds to every sampled fuse.
+Off uses base ranges at every count; nine players show the capped adjustment.
+The existing host setup/settings area optionally accepts both `baseMinSeconds`
+and `baseMaxSeconds`. A blank field means its automatic value: minimum 30 s and
+the selected mode's default maximum. The custom minimum must be an integer
+from 1 to the chosen base maximum minus one. The custom maximum must be an
+integer from 2 to the selected mode's default ceiling and exceed the selected
+minimum. For example, min 20 / max 25 is valid; leaving minimum blank selects
+30 and consequently requires max at least 31. The base minimum must be
+strictly lower than the base maximum before population scaling; extra
+participants cannot make an invalid base range valid. Changing mode clears
+BOTH overrides. Toggling scaling, changing language and ordinary Restart retain
+both. The effective minimum is `baseMinSeconds ?? 30`, and the effective ceiling
+is `(baseMaxSeconds ?? modeMax) + 7*extraPlayers`, applied once. The same triangle
+is rescaled to both endpoints, so its mean and probabilities follow those
+choices. The standard ranges above retain the 30 s floor; only a host's explicit
+minimum override can allow a fuse below 30 s. Pending changes affect the next GO
+only. Preparation text includes
+the current mode, eligible count and effective range on host/player screens;
+the sampled current duration never appears. Defaults have no 10–20 s early tail;
+shorter durations require an explicit host minimum override. There is no
+forced full lap, pass-count extension, per-player safe period or extra mode.
+Counts come from distinct active roster seats, not
 connections or the separate host display. Sit-out/rejoin changes only the next
 GO count. The existing Hub room-count switch still fences the old coordinator;
 it does not rewrite a running session's roster in place.
 
-Old explicit Quick/Classic/Relaxed preferences remain their original uniform
-ranges, with no scaling, via `settingsTiming.legacyFuse`. The three-option UI
-shows a retention note, with no extra legacy button. Ordinary Restart, reopening
-and unrelated edits retain this preference. An explicit speed/scaling change
-opts into the new policy. An already running or paused legacy bomb always keeps
-its saved deadline/remaining time. New pending settings live in canonical
+Old pending Quick/Classic/Relaxed settings map to their corresponding
+Fast/Normal/Chill preference and preserve their existing scaling choice under
+v3.1. The new policy does not force a selected Fast room back to Normal.
+An already running or paused bomb from any policy keeps its original GO audit
+snapshot and saved effective deadline/remaining time. Pending settings live in canonical
 `settingsTiming`; host-only `settings` commands never redraw or restart a fuse.
+The host keeps its latest requested settings preview until the canonical value
+event confirms it. A successful transaction can resolve before that event;
+clearing the preview immediately used to briefly restore old controls and lose
+new bounds on an immediate Restart. Older acknowledgements cannot clear a newer
+preview, failures/session replacement discard it, and Restart includes the
+committed pending bounds when its value event is still delayed.
 
 Only a validated Light/GO calls the sampler. Canonical `roundFuse` records
 `roundId`, `startedAtMs`, `durationMs`, `explodeAtMs`, policy, mode, count and
@@ -165,7 +233,8 @@ The leased host writes the existing canonical Firebase document at
 `rooms/{roomCode}/players/{bombRelayControlToken}`, JSON in `stateJson`.
 `stateJson.promptHistory` has `seenIds`, `recentIds`, `recentFamilies`; recent
 lists cap at 24. Only that host draws and runs the existing deadline pulse.
-Player nodes receive the same current `cardId` via `engine.view`, never a
+Player nodes receive the same current `cardId` and public bilingual `prompt`
+snapshot via `engine.view`, never a
 selector instance or a secret fuse. Firebase transaction retries use the same
 captured time/seed and cannot consume another prompt.
 
@@ -192,12 +261,18 @@ No cross-room or cross-user tracking is added.
 The host page must stay open. Closing it does not reset or rerandomize the fuse;
 on reconnect an overdue bomb settles under the existing host-authority model.
 This remains a frontend-only release; no service deployment or secret change.
+After publication, refresh the host and every original player page once together
+at a natural break. Already-open older UI ignores the new `bomb.prompt` snapshot
+and continues using its previously loaded catalog. Do not force a reload during
+an active bomb; the canonical room, deadlines and history remain retained.
 
 ## Verification
 
-Run the v2 attachment tests first, in its own directory:
-`node scripts/build.mjs` and `node --test tests/*.test.mjs` (41 cases).
+Run each review attachment's tests first, in its own directory:
+`python scripts/build_content.py` and `node --test tests/*.test.mjs`
+(v3: 31 cases; v3.1: 34 cases). v3.1 supersedes only v3's timing proposal.
 Do not replace Hub's package.json. Then check generated content:
+`node scripts/bomb-relay-apply-editorial-patch.cjs --check` and
 `node scripts/bomb-relay-build-catalog.cjs --check`.
 In the repository: `node --test tests/bomb-relay-*.test.cjs` and
 `node --test tests/*.test.cjs`. Browser regression:
@@ -220,3 +295,17 @@ deadline. Firebase-omitted null holder fields are compared as null in boom views
 
 Record actual release test counts and browser limits in `CLAUDE.md`. Unit tests
 alone do not prove physical mobile or real multi-device voice-session behavior.
+The final v3.1 two-endpoint implementation passes 2109/2109 full-Hub tests,
+with zero failures/skips. Its production runner's offline `--self-test` also
+passes four exact-owned-node and six lease-boundary guards without network
+access. Four actual-host-controller regressions cover delayed settings value
+delivery, older acknowledgement races, failed/replaced-session cleanup and an
+immediate pending-aware Restart; they fail with the preceding implementation.
+Actual host/original-player-page local runs pass 20 checks and 86 EN/ZH captures
+for each of 3/6/8 participants (60 checks, 258 captures, five GO snapshots per
+room, zero JS errors). They use isolated authority fixtures, controlled clocks
+and desktop Chromium phone viewports. Manual review includes the 375 px host
+settings dialog and 320 px longest-prompt/PASS first screen. Reports are at
+`../bomb-pacing-v31-final-qa-{3,6,8}/report.json` with matching logs. Publication
+and live production verification remain pending. No physical-phone or
+human-group validation is claimed.

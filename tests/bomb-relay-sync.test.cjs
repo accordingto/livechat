@@ -451,7 +451,7 @@ test('retried transactions persist one GO snapshot for 3, 6 and 8 actual players
     await s.action(s.state().holder, 'light'); await settle(h);
     const before = s.state(), snapshot = before.roundFuse;
     assert.equal(snapshot.activePlayerCountAtStart, count);
-    assert.deepEqual([snapshot.minMsAtStart, snapshot.maxMsAtStart], count === 3 ? [60000, 100000] : count === 6 ? [90000, 130000] : [110000, 150000]);
+    assert.deepEqual([snapshot.minMsAtStart, snapshot.maxMsAtStart], count === 3 ? [30000, 90000] : count === 6 ? [30000, 111000] : [30000, 125000]);
     await h.command('settings', { timing: { speedMode: 'chill', scaleWithPlayers: false } }); await settle(h);
     await s.action(s.state().holder, 'pass'); await settle(h);
     assert.deepEqual(s.state().roundFuse, snapshot);
@@ -467,19 +467,43 @@ test('retried transactions persist one GO snapshot for 3, 6 and 8 actual players
     assert.deepEqual(s.state().settingsTiming, { speedMode: 'chill', scaleWithPlayers: false });
     assert.ok(s.state().promptHistory.seenIds.includes(before.order[0]));
     await s.action(s.state().holder, 'light'); await settle(h);
-    assert.deepEqual([s.state().roundFuse.minMsAtStart, s.state().roundFuse.maxMsAtStart], [90000, 150000]);
+    assert.deepEqual([s.state().roundFuse.minMsAtStart, s.state().roundFuse.maxMsAtStart], [30000, 120000]);
     h.close();
   }
 });
 
-test('saved legacy preference remains on start until an explicit timing choice replaces it', async () => {
+test('saved legacy preference maps to the same speed without retaining pre-30-second future fuses', async () => {
   const s = setup(), h = s.host(); await settle(h);
   await h.start({ fuse: 'long' }); await settle(h);
   await h.start(); await settle(h);
-  assert.equal(s.state().settingsTiming.legacyFuse, 'long');
+  assert.equal(s.state().settingsTiming.speedMode, 'chill');
+  assert.equal(s.state().settingsTiming.scaleWithPlayers, false);
+  assert.equal(s.state().settingsTiming.legacyFuse, undefined);
   await h.command('settings', { timing: { speedMode: 'normal', scaleWithPlayers: true } }); await settle(h);
   await h.start(); await settle(h);
   assert.deepEqual(s.state().settingsTiming, { speedMode: 'normal', scaleWithPlayers: true });
+  h.close();
+});
+
+test('retried pending upper-bound changes survive takeover and only a new GO samples their rescaled triangle', async () => {
+  const s = setup(6); let h = s.host(); await settle(h);
+  await h.start({ timing: { speedMode: 'fast', scaleWithPlayers: true } }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  const first = s.state(), snapshot = clone(first.roundFuse);
+  await h.command('settings', { timing: { speedMode: 'fast', scaleWithPlayers: true, baseMinSeconds: 20, baseMaxSeconds: 45 } }); await settle(h);
+  assert.equal(s.state().explodeAt, first.explodeAt); assert.deepEqual(s.state().roundFuse, snapshot);
+  await s.action(s.state().holder, 'pass'); await settle(h);
+  assert.equal(s.state().explodeAt, first.explodeAt);
+  h.close(); await settle(h); h = s.host(); await settle(h);
+  assert.equal(s.state().explodeAt, first.explodeAt); assert.deepEqual(s.state().roundFuse, snapshot);
+  assert.deepEqual(s.state().settingsTiming, { speedMode: 'fast', scaleWithPlayers: true, baseMinSeconds: 20, baseMaxSeconds: 45 });
+  s.now = first.explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.equal(s.state().phase, 'boom'); assert.equal(s.state().history.length, 1);
+  await s.action(2, 'next'); await settle(h);
+  assert.equal(s.state().phase, 'ready'); assert.equal(s.state().explodeAt, null);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  assert.deepEqual([s.state().roundFuse.minMsAtStart, s.state().roundFuse.maxMsAtStart], [20000, 66000]);
+  assert.equal(s.state().history.length, 1); assert.ok(s.state().promptHistory.seenIds.includes(first.order[0]));
   h.close();
 });
 

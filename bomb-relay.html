@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#202422">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="bomb-relay.css?v=br-discussion-1">
+  <link rel="stylesheet" href="bomb-relay.css?v=br-pacing-3-1">
 </head>
 <body class="br-page">
   <div class="topbar">
@@ -39,8 +39,12 @@
         <label class="br-field"><span data-i18n="bomb.category">Prompt pack</span><select id="br-category"></select></label>
       </div>
       <div class="br-timing-options">
+        <label class="br-field br-max-field"><span data-i18n="bomb.timingMin">Base lower bound (seconds, optional)</span><input type="number" id="br-min" min="1" max="89" step="1" inputmode="numeric" aria-describedby="br-min-hint"></label>
+        <p class="br-soft" id="br-min-hint"></p>
+        <label class="br-field br-max-field"><span data-i18n="bomb.timingMax">Base upper bound (seconds, adjustable)</span><input type="number" id="br-max" min="31" max="90" step="1" inputmode="numeric" aria-describedby="br-max-hint"></label>
+        <p class="br-soft" id="br-max-hint"></p>
         <label class="br-check"><input type="checkbox" id="br-scale" checked aria-describedby="br-scale-hint"><span data-i18n="bomb.scaleWithPlayers">Scale with participants</span></label>
-        <p class="br-soft" id="br-scale-hint" data-i18n="bomb.scaleHint">Only players eligible to pass count. Above 3 players, add 10 seconds each, up to 8.</p>
+        <p class="br-soft" id="br-scale-hint" data-i18n="bomb.scaleHint">Above 3 participants, add 7 seconds each to the upper bound, up to 35. The lower bound defaults to 30 seconds and can be adjusted.</p>
         <p class="br-timing-range" id="br-timing-range" role="status"></p>
         <p class="br-soft" id="br-timing-note"></p>
       </div>
@@ -97,8 +101,12 @@
     <section class="br-manage-timing" aria-labelledby="br-manage-timing-title">
       <h3 id="br-manage-timing-title" data-i18n="bomb.timingManage">Pace for the next bomb</h3>
       <label class="br-field"><span data-i18n="bomb.fuse">Bomb pace</span><select id="br-manage-speed" aria-describedby="br-manage-timing-range br-manage-timing-note"></select></label>
+      <label class="br-field br-max-field"><span data-i18n="bomb.timingMin">Base lower bound (seconds, optional)</span><input type="number" id="br-manage-min" min="1" max="89" step="1" inputmode="numeric" aria-describedby="br-manage-min-hint"></label>
+      <p class="br-soft" id="br-manage-min-hint"></p>
+      <label class="br-field br-max-field"><span data-i18n="bomb.timingMax">Base upper bound (seconds, adjustable)</span><input type="number" id="br-manage-max" min="31" max="90" step="1" inputmode="numeric" aria-describedby="br-manage-max-hint"></label>
+      <p class="br-soft" id="br-manage-max-hint"></p>
       <label class="br-check"><input type="checkbox" id="br-manage-scale" aria-describedby="br-manage-scale-hint"><span data-i18n="bomb.scaleWithPlayers">Scale with participants</span></label>
-      <p class="br-soft" id="br-manage-scale-hint" data-i18n="bomb.scaleHint">Only players eligible to pass count. Above 3 players, add 10 seconds each, up to 8.</p>
+      <p class="br-soft" id="br-manage-scale-hint" data-i18n="bomb.scaleHint">Above 3 participants, add 7 seconds each to the upper bound, up to 35. The lower bound defaults to 30 seconds and can be adjusted.</p>
       <p class="br-timing-range" id="br-manage-timing-range" role="status"></p>
       <p class="br-soft" id="br-manage-timing-note"></p>
       <p class="br-soft" data-i18n="bomb.timingNext">Applies at the next ignition. A lit bomb keeps its time.</p>
@@ -114,13 +122,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="bomb-relay-deck.js?v=br-expansion-2"></script>
-  <script src="bomb-relay-selector.js?v=br-expansion-2"></script>
-  <script src="bomb-relay-timing.js?v=br-expansion-2"></script>
-  <script src="bomb-relay-engine.js?v=br-discussion-1"></script>
-  <script src="bomb-relay-sync.js?v=br-discussion-1"></script>
+  <script src="bomb-relay-deck.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-selector.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-timing.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-engine.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-sync.js?v=br-pacing-3-1"></script>
   <script src="bomb-relay-audio.js?v=br-sound-4"></script>
-  <script src="bomb-relay-ui.js?v=br-discussion-1"></script>
-  <script src="bomb-relay-host.js?v=br-discussion-1"></script>
+  <script src="bomb-relay-ui.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-host.js?v=br-pacing-3-1"></script>
 </body>
 </html>

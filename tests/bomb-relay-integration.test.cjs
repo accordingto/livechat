@@ -8,15 +8,17 @@ const TIMING = require('../bomb-relay-timing.js');
 const catalog = JSON.parse(read('content/bomb-relay-prompts.json'));
 const prompts = Array.isArray(catalog) ? catalog : catalog.prompts;
 
-test('the actual live deck includes the authoritative 720 bilingual prompts and legacy scenes remain lookup-only', () => {
+test('the actual live deck retains 720 bilingual lookups but only 700 eligible prompts enter default draws', () => {
   assert.deepEqual(DECK.categories, ['mixed', 'everyday', 'playful']);
   assert.ok(DECK.items.length >= 720);
   assert.equal(new Set(DECK.items.map(card => card.id)).size, DECK.items.length);
   assert.deepEqual(DECK.items.map(card => card.id), prompts.map(card => card.id));
-  assert.equal(DECK.pool('mixed').length, prompts.length);
+  const eligible = prompts.filter(DECK.isEligible);
+  assert.equal(DECK.pool('mixed').length, eligible.length);
+  assert.equal(eligible.length, 700);
   for (const pack of ['everyday', 'playful']) {
-    assert.ok(DECK.pool(pack).length >= 360);
-    assert.equal(DECK.pool(pack).length, prompts.filter(card => card.pack === pack).length);
+    assert.equal(DECK.pool(pack).length, pack === 'everyday' ? 351 : 349);
+    assert.equal(DECK.pool(pack).length, eligible.filter(card => card.pack === pack).length);
   }
   for (const card of DECK.items) {
     assert.ok(['everyday', 'playful'].includes(card.pack), card.id);
@@ -41,7 +43,7 @@ test('the host page loads its modules in dependency order and every file parses'
   assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-timing.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
   for (const file of files) new vm.Script(read(file));
   assert.match(html, /<h1>Bomb Relay<\/h1>/);
-  assert.match(html, /href="bomb-relay\.css\?v=br-discussion-1"/);
+  assert.match(html, /href="bomb-relay\.css\?v=br-pacing-3-1"/);
   assert.doesNotMatch(html, /assets\/bomb-relay\//);
   assert.match(html, /id="br-reroll" hidden/);
   const host = read('bomb-relay-host.js');
@@ -52,12 +54,12 @@ test('the host page loads its modules in dependency order and every file parses'
 
 test('original player links render the Bomb Relay card and fence actions to the shown turn', () => {
   const play = read('play.html');
-  for (const file of ['deck', 'timing']) assert.match(play, new RegExp('bomb-relay-' + file + '\\.js\\?v=br-expansion-2'));
-  assert.match(play, /bomb-relay-ui\.js\?v=br-discussion-1/);
+  for (const file of ['deck', 'timing']) assert.match(play, new RegExp('bomb-relay-' + file + '\\.js\\?v=br-pacing-3-1'));
+  assert.match(play, /bomb-relay-ui\.js\?v=br-pacing-3-1/);
   assert.doesNotMatch(play, /<script src="bomb-relay-(?:selector|engine|sync)\.js/, 'players consume the authority projection rather than drawing or simulating independently');
-  assert.match(play, /bomb-relay\.css\?v=br-discussion-1/);
-  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-discussion-1'));
-  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-expansion-2') < play.indexOf('bomb-relay-ui.js?v=br-discussion-1'));
+  assert.match(play, /bomb-relay\.css\?v=br-pacing-3-1/);
+  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-pacing-3-1'));
+  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-pacing-3-1') < play.indexOf('bomb-relay-ui.js?v=br-pacing-3-1'));
   assert.match(play, /new BOMB_RELAY_UI\.Card/); assert.match(play, /bombCard\.destroy\(\)/);
   assert.match(play, /current\.bomb\?\.sessionId !== command\.sessionId \|\| current\.bomb\?\.turnId !== command\.turnId/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
@@ -99,6 +101,31 @@ test('the shared stage names the holder and never prints the fuse', () => {
   assert.doesNotMatch(html, /<img|<input|<textarea|<progress/);
   g.state.explodeAt = g.state.lastChangeAt; g.act(0, 'tick');
   assert.match(UI.stage(E.view(g.state, 0).bomb), /br-burst/);
+});
+
+test('Ready shows the current eligible-participant range on the host and every player without chosen duration', () => {
+  for (const count of [3, 6, 8]) for (const speedMode of TIMING.SPEED_MODES) {
+    let state = E.create({ id: `ready-range-${count}-${speedMode}`, roster: Array.from({ length: count }, (_, i) => ({ playerNum: i + 1, name: `P${i + 1}` })),
+      timing: { speedMode, scaleWithPlayers: true }, now: 1000, seed: 3 });
+    const max = { fast: 60, normal: 90, chill: 120 }[speedMode] + Math.min(5, count - 3) * 7;
+    for (const language of ['en', 'zh']) {
+      const UI = ui(language), element = { addEventListener() {}, removeEventListener() {}, querySelector: () => null, innerHTML: '' }, card = new UI.Card(element);
+      const host = UI.stage(E.view(state, 0).bomb);
+      assert.match(host, new RegExp(`30–${max}`));
+      for (let actor = 1; actor <= count; actor++) {
+        const view = E.view(state, actor);
+        assert.deepEqual([view.bomb.timingRange.minMs, view.bomb.timingRange.maxMs], [30000, max * 1000]);
+        assert.match(card.html(view), new RegExp(`30–${max}`));
+        assert.equal(state.roundFuse, null); assert.equal(state.explodeAt, null);
+      }
+      card.destroy();
+    }
+    state = E.apply(state, { id: 'light', type: 'light', actor: state.holder, sessionId: state.sessionId,
+      turnId: state.turnId, now: 2000, seed: 3 });
+    const UI = ui(), html = UI.stage(E.view(state, 0).bomb);
+    assert.ok(!html.includes(String(state.roundFuse.durationMs)));
+    assert.ok(!html.includes(String(state.explodeAt)));
+  }
 });
 
 test('each card shows only the buttons that player may use', () => {
@@ -188,7 +215,8 @@ test('the library shows all three live packs with no artwork and missing prompts
   }
   UI.i18n.lang = 'zh';
   const chinese = UI.libraryHTML();
-  for (const prompt of DECK.items) assert.ok(chinese.includes(UI.esc(prompt.zhHant)));
+  for (const prompt of DECK.pool('mixed')) assert.ok(chinese.includes(UI.esc(prompt.zhHant)));
+  for (const prompt of DECK.items.filter(item => !DECK.isEligible(item))) assert.ok(!chinese.includes(`data-br-prompt-id="${prompt.id}"`));
   assert.match(UI.sceneTitle('missing-prompt'), /題目無法載入/);
 });
 

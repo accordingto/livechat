@@ -117,12 +117,14 @@ function selectPrompt({
   const enabledPacks = mode === 'mixed'
     ? PACKS.filter(pack => effectiveWeights[pack] > 0)
     : [mode];
-  const eligible = catalog.filter(item => enabledPacks.includes(item.pack));
+  // Keep the full catalog for history/old-card lookup. Every mode and recycle
+  // operates only on eligible records; a disabled card is never a fallback.
+  const eligible = catalog.filter(item => deck.isEligible(item) && enabledPacks.includes(item.pack));
   if (eligible.length === 0) {
     throw new RangeError('No prompts in the enabled packs; check the loaded catalog and filters.');
   }
 
-  // Drop stale IDs from removed cards, but keep known IDs from disabled packs.
+  // Drop removed IDs only; retain known IDs from disabled cards and packs.
   const knownIds = new Set(catalog.map(item => item.id));
   const seen = new Set(history.seenIds.filter(id => knownIds.has(id)));
   let candidates = eligible.filter(item => !seen.has(item.id));

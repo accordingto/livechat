@@ -189,6 +189,7 @@ function observeAudio() {
   const samePrompt = async () => {
     const canonical = await state();
     assert.ok(DECK.get(promptId(canonical)) && /^tb-(everyday|playful)-\d{3}$/.test(promptId(canonical)), 'live entry must use the authoritative expanded catalog');
+    assert.equal(DECK.isEligible(DECK.get(promptId(canonical))), true, 'deferred cards never re-enter actual draws');
     await wait(async () => (await cards()).every(projection => promptId(projection?.bomb || {}) === promptId(canonical)));
     const projections = await cards();
     for (const projection of projections) {
@@ -202,22 +203,35 @@ function observeAudio() {
     return canonical;
   };
   const verifyFuse = (canonical, count, speedMode, scaleWithPlayers) => {
-    const snapshot = canonical.roundFuse, base = { fast: [30000, 60000], normal: [60000, 100000], chill: [90000, 150000] }[speedMode];
-    const added = scaleWithPlayers ? Math.max(0, Math.min(count, 8) - 3) * 10000 : 0;
+    const snapshot = canonical.roundFuse, base = { fast: [30000, 60000], normal: [30000, 90000], chill: [30000, 120000] }[speedMode];
+    const added = scaleWithPlayers ? Math.max(0, Math.min(count, 8) - 3) * 7000 : 0;
     assert.equal(snapshot.activePlayerCountAtStart, count);
     assert.equal(snapshot.speedModeAtStart, speedMode); assert.equal(snapshot.scaleWithPlayersAtStart, scaleWithPlayers);
-    assert.equal(snapshot.minMsAtStart, base[0] + added); assert.equal(snapshot.maxMsAtStart, base[1] + added);
+    assert.equal(snapshot.minMsAtStart, (canonical.settingsTiming.baseMinSeconds ?? base[0] / 1000) * 1000); assert.equal(snapshot.maxMsAtStart, (canonical.settingsTiming.baseMaxSeconds ? canonical.settingsTiming.baseMaxSeconds * 1000 : base[1]) + added);
     assert.ok(snapshot.durationMs >= snapshot.minMsAtStart && snapshot.durationMs <= snapshot.maxMsAtStart);
     assert.equal(snapshot.durationMs, snapshot.explodeAtMs - snapshot.startedAtMs);
     assert.equal(canonical.roundId, snapshot.roundId); assert.equal(canonical.explodeAt, snapshot.explodeAtMs);
     report.roundFuses.push(clone(snapshot));
   };
-  const manageTiming = async (speedMode, scaleWithPlayers) => {
+  const manageTiming = async (speedMode, scaleWithPlayers, baseMaxSeconds, baseMinSeconds) => {
     await host.click('#br-manage-open');
     await host.selectOption('#br-manage-speed', speedMode);
     await wait(async () => (await state()).settingsTiming.speedMode === speedMode);
+    await host.locator('#br-manage-scale:not([disabled])').waitFor();
     await host.locator('#br-manage-scale').setChecked(scaleWithPlayers);
     await wait(async () => (await state()).settingsTiming.scaleWithPlayers === scaleWithPlayers);
+    if (baseMinSeconds !== undefined) {
+      await host.locator('#br-manage-min:not([disabled])').waitFor();
+      await host.fill('#br-manage-min', baseMinSeconds === null ? '' : String(baseMinSeconds));
+      await host.locator('#br-manage-min').blur();
+      await wait(async () => (await state()).settingsTiming.baseMinSeconds === (baseMinSeconds ?? undefined));
+    }
+    if (baseMaxSeconds !== undefined) {
+      await host.locator('#br-manage-max:not([disabled])').waitFor();
+      await host.fill('#br-manage-max', baseMaxSeconds === null ? '' : String(baseMaxSeconds));
+      await host.locator('#br-manage-max').blur();
+      await wait(async () => (await state()).settingsTiming.baseMaxSeconds === (baseMaxSeconds ?? undefined));
+    }
     await host.locator('#br-manage .br-dialog-header button').click();
   };
   const layout = async (item, label, selector, width, lang, height = 900, requireTogether = true) => {
@@ -312,26 +326,65 @@ function observeAudio() {
   let players = [];
   try {
     host = await page('bomb-relay.html');
+    if (process.env.BOMB_QA_TRACE) await host.evaluate(() => {
+      window.__qaTimingTrace = [];
+      const note = (kind, value, stack = '') => {
+        window.__qaTimingTrace.push({ at: performance.now(), kind, value, stack,
+          disabled: document.querySelector('#br-manage-scale').disabled,
+          canonical: BOMB_RELAY_HOST.state?.settingsTiming });
+        if (window.__qaTimingTrace.length > 100) window.__qaTimingTrace.shift();
+      };
+      const element = document.querySelector('#br-manage-scale');
+      const checked = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked');
+      Object.defineProperty(element, 'checked', { get() { return checked.get.call(this); },
+        set(value) { note('checked-setter', value, new Error().stack); return checked.set.call(this, value); } });
+      for (const kind of ['pointerdown', 'mousedown', 'click', 'input', 'change']) document.addEventListener(kind, event => {
+        if (event.target === element) note('native-' + kind, element.checked);
+      }, true);
+    });
     players = await Promise.all(tokens.map(token => page('play.html?s=' + code + '&p=' + token)));
     await host.waitForFunction(() => !document.querySelector('#br-start').disabled);
     for (const [width, height] of [[1280, 800], [375, 740], [320, 568]]) for (const lang of ['en', 'zh']) await surface(host, 'host-setup', width, height, lang);
     await host.locator('#br-library > summary').click();
-    await host.waitForFunction(count => document.querySelectorAll('.br-library-card').length === count, DECK.items.length);
+    await host.waitForFunction(count => document.querySelectorAll('.br-library-card').length === count, DECK.pool('mixed').length);
     for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) await surface(host, 'host-library', width, height, lang, '#br-library');
     await host.locator('#br-library > summary').click();
     assert.deepEqual(await host.locator('#br-category option').evaluateAll(options => options.map(option => option.value)), ['mixed', 'everyday', 'playful']);
     assert.equal(await host.inputValue('#br-category'), 'mixed');
     assert.deepEqual(await host.locator('#br-fuse option').evaluateAll(options => options.map(option => option.value)), ['fast', 'normal', 'chill']);
     assert.equal(await host.inputValue('#br-fuse'), 'normal'); assert.equal(await host.isChecked('#br-scale'), true);
-    const added = Math.max(0, Math.min(playerCount, 8) - 3) * 10;
-    assert.match(await host.locator('#br-timing-range').innerText(), new RegExp(`${60 + added}–${100 + added}`));
+    const added = Math.max(0, Math.min(playerCount, 8) - 3) * 7;
+    assert.match(await host.locator('#br-timing-range').innerText(), new RegExp(`30–${90 + added}`));
+    assert.equal(DECK.items.length, 720); assert.equal(DECK.pool('mixed').length, 700);
+    assert.equal(await host.locator('#br-max').inputValue(), '');
+    assert.equal(await host.locator('#br-min').inputValue(), '');
+    await host.selectOption('#br-fuse', 'fast'); await host.fill('#br-min', '20'); await host.locator('#br-min').blur();
+    await host.fill('#br-max', '45'); await host.locator('#br-max').blur();
+    assert.match(await host.locator('#br-timing-range').innerText(), new RegExp(`20–${45 + added}`));
+    await host.locator('#br-scale').setChecked(false);
+    assert.equal(await host.locator('#br-max').inputValue(), '45');
+    assert.equal(await host.locator('#br-min').inputValue(), '20');
+    assert.match(await host.locator('#br-timing-range').innerText(), /20–45/);
+    await host.selectOption('#br-fuse', 'normal');
+    assert.equal(await host.locator('#br-max').inputValue(), '', 'changing mode returns to its automatic upper bound');
+    assert.equal(await host.locator('#br-min').inputValue(), '', 'changing mode returns to its automatic lower bound');
+    await host.locator('#br-scale').setChecked(true);
     await host.selectOption('#br-cards', '5');
     await host.click('#br-start');
     await wait(async () => (await state())?.phase === 'ready' && (await cards()).every(card => card?.bomb?.phase === 'ready'));
     let current = await samePrompt();
     assert.equal(current.explodeAt, null); assert.equal(current.roundFuse, null);
     assert.deepEqual(current.settingsTiming, { speedMode: 'normal', scaleWithPlayers: true });
-    check('real entry loads expanded catalog, Mixed default, Normal + participant scaling, and all three packs; Ready consumes no fuse');
+    for (const item of [host, ...players]) assert.match(await item.locator('[data-br-ready-range]').innerText(), new RegExp(`30–${90 + added}`));
+    check('real entry retains 720 lookups and 700 eligible prompts, shows actual participant-adjusted ranges, rescales custom host bounds, and keeps Ready untimed');
+    const readyTurn = current.turnId, readyPrompt = promptId(current);
+    await manageTiming('normal', true, 75, 35);
+    for (const item of [host, ...players]) await wait(async () => (await item.locator('[data-br-ready-range]').innerText()).includes(`35–${75 + added}`));
+    assert.equal((await state()).turnId, readyTurn); assert.equal(promptId(await state()), readyPrompt);
+    assert.equal((await state()).explodeAt, null);
+    await manageTiming('normal', true, null, null);
+    for (const item of [host, ...players]) await wait(async () => (await item.locator('[data-br-ready-range]').innerText()).includes(`30–${90 + added}`));
+    check('pending custom-bound changes immediately update every Ready page without drawing a prompt, starting a fuse or requiring a new turn');
     for (const width of [1280, 375, 320]) for (const lang of ['en', 'zh']) await layout(host, 'host-ready', '#br-light', width, lang);
     const starter = players[current.holder - 1];
     for (const width of [375, 320]) for (const lang of ['en', 'zh']) await layout(starter, 'player-ready', '[data-br-action="light"]', width, lang);
@@ -349,14 +402,16 @@ function observeAudio() {
     const id = promptId(current), fuse = current.explodeAt, holder = current.holder;
     verifyFuse(current, playerCount, 'normal', true);
     const firstSnapshot = clone(current.roundFuse), firstTurn = current.turnId;
-    await manageTiming('fast', false);
+    await manageTiming('fast', false, 45, 20);
     current = await samePrompt(); assert.equal(current.turnId, firstTurn);
     assert.equal(current.explodeAt, fuse); assert.deepEqual(current.roundFuse, firstSnapshot);
     const excluded = Array.from({ length: playerCount }, (_, index) => index + 1).find(number => number !== holder);
     await host.evaluate(playerNum => BOMB_RELAY_HOST.command('exclude', { playerNum, active: false }), excluded);
     await wait(async () => (await state()).roster.find(seat => seat.playerNum === excluded)?.active === false);
     current = await samePrompt(); assert.equal(current.explodeAt, fuse); assert.deepEqual(current.roundFuse, firstSnapshot);
-    check('real in-round pace/scaling controls and participation exclusion update next-GO preferences without resampling the current snapshot or deadline');
+    assert.equal(await host.locator('[data-br-ready-range]').count(), 0);
+    for (const item of players) assert.equal(await item.locator('[data-br-ready-range]').count(), 0);
+    check('real in-round pace/scaling/custom-bound controls and participation exclusion update next-GO preferences without resampling the current snapshot or deadline');
     for (const width of [1280, 375, 320]) for (const lang of ['en', 'zh']) await layout(host, 'host-ticking', '#br-pass', width, lang);
     for (const width of [375, 320]) for (const lang of ['en', 'zh']) await layout(players[holder - 1], 'player-ticking', '[data-br-action="pass"]', width, lang);
     assert.equal((await state()).explodeAt, fuse); assert.equal(promptId(await state()), id);
@@ -405,6 +460,8 @@ function observeAudio() {
     current = await samePrompt(); assert.equal(current.explodeAt, fuse); assert.equal(promptId(current), id);
     assert.deepEqual(current.promptHistory, beforeReload.promptHistory);
     assert.deepEqual(current.roundFuse, beforeReload.roundFuse); assert.deepEqual(current.settingsTiming, beforeReload.settingsTiming);
+    assert.equal(current.settingsTiming.baseMaxSeconds, 45);
+    assert.equal(current.settingsTiming.baseMinSeconds, 20);
     check('host reload and expired authority lease reclaim the same session, prompt/deadline/history, frozen fuse and pending settings');
     await players[nextHolder - 1].reload();
     await wait(async () => (await cards())[nextHolder - 1]?.bomb?.phase === 'ticking');
@@ -473,6 +530,7 @@ function observeAudio() {
         current = await samePrompt();
         assert.notEqual(promptId(current), originalPrompt); assert.equal(current.cardIndex, settled.cardIndex + 1);
         assert.equal(current.explodeAt, null); assert.equal(current.roundFuse, null); assert.equal(current.phaseUntil, null);
+        for (const item of [host, ...players]) assert.match(await item.locator('[data-br-ready-range]').innerText(), /20–45/);
         const preview = clone(current);
         await setTime(settled.discussionUntil + 60000); await pause(150); await delivery;
         current = await samePrompt();
@@ -548,10 +606,12 @@ function observeAudio() {
       // Deterministic visual stress fixture: edit ONLY the isolated authority's
       // ready prompt to the real catalog's longest English prompt, then let the
       // unchanged sync project it to the real player pages and light normally.
-      const longest = await host.evaluate(() => BOMB_RELAY_DECK.items.slice().sort((a, b) => b.en.length - a.en.length)[0].id);
+      const longest = await host.evaluate(() => BOMB_RELAY_DECK.pool('mixed').slice().sort((a, b) => b.en.length - a.en.length)[0].id);
       const control = await host.evaluate(() => 'rooms/' + ROOM.code + '/players/' + ROOM.getExtra('bombRelayControlToken'));
       const document_ = db.get(control), canonical = JSON.parse(document_.stateJson);
       canonical.order[canonical.cardIndex] = longest;
+      const longestPrompt = DECK.get(longest);
+      canonical.promptSnapshot = { id: longestPrompt.id, pack: longestPrompt.pack, family: longestPrompt.family, en: longestPrompt.en, zhHant: longestPrompt.zhHant };
       canonical.turnId++; // same rendering fence used by a real ready-phase reroll
       if (!canonical.promptHistory.seenIds.includes(longest)) canonical.promptHistory.seenIds.push(longest);
       db.put(control, { ...document_, stateJson: JSON.stringify(canonical), revision: document_.revision + 1 }); deliver(); await delivery;
@@ -580,6 +640,7 @@ function observeAudio() {
     report.error = error.stack; report.errors = errors; report.blockedExternalRequests = [...blockedRequests];
     if (host && !host.isClosed()) {
       report.hostState = await state().catch(() => null);
+      report.timingControlTrace = await host.evaluate(() => window.__qaTimingTrace || []).catch(() => []);
       await host.screenshot({ path: path.join(output, 'failure-host.png'), fullPage: true }).catch(() => {});
       fs.writeFileSync(path.join(output, 'failure-host.html'), await host.content().catch(() => ''));
     }

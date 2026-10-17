@@ -1,6 +1,6 @@
 {
   "generatedBy": "scripts/bomb-relay-build-catalog.cjs",
-  "release": "talk-bomb-content-2.0",
+  "release": "talk-bomb-content-3.0",
   "source": "content/bomb-relay-prompts.json",
   "total": 720,
   "packs": {
@@ -43,9 +43,39 @@
     "travel": 38,
     "work-study": 38
   },
+  "activeTotal": 700,
+  "activePacks": {
+    "everyday": 351,
+    "playful": 349
+  },
+  "disabledTotal": 20,
+  "disabledIds": [
+    "tb-everyday-160",
+    "tb-everyday-163",
+    "tb-everyday-165",
+    "tb-everyday-251",
+    "tb-everyday-266",
+    "tb-everyday-321",
+    "tb-everyday-339",
+    "tb-everyday-343",
+    "tb-everyday-358",
+    "tb-playful-103",
+    "tb-playful-132",
+    "tb-playful-169",
+    "tb-playful-195",
+    "tb-playful-225",
+    "tb-playful-229",
+    "tb-playful-235",
+    "tb-playful-254",
+    "tb-playful-312",
+    "tb-playful-356",
+    "tb-playful-359"
+  ],
+  "editorialPatch": "content/bomb-relay-editorial-v3-patch.json",
+  "previousWordingCount": 166,
   "retainedFromV1": 120,
-  "originalDataSha256": "99bd0adb68a017db9db47af028175a8ac69149c804711538d69b40e2adcd5bd4",
-  "catalogDataSha256": "56b20be9e0fcc8b064acd6d70d67fd2459b98f966d2a31a557183d7e71072955",
+  "originalDataSha256": "ee6ab75d575c2880d57917d2fe14a77682e585782afb6719664e5f38c642b6f8",
+  "catalogDataSha256": "e32d1ca2232884d116f7b3592e54559817449ace6dc1adc7dfd37a49ba851dbc",
   "legacyLookupOnly": 60,
   "legacyDataSha256": "109e6147ee21f647a6572ec3037ce23a29e3f9b9e3d8a395c476abaac13cea54"
 }

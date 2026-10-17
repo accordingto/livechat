@@ -58,7 +58,7 @@ test('only the holder (or the host) can light the fuse; new games use scaled Nor
   assert.equal(g.act(holder, 'light', { now: 5000 }), '');
   assert.equal(g.state.phase, 'ticking');
   const fuse = g.state.explodeAt - 5000;
-  assert.ok(fuse >= 70000 && fuse <= 110000, `fuse ${fuse}`);
+  assert.ok(fuse >= 30000 && fuse <= 97000, `fuse ${fuse}`);
 });
 
 test('passing moves the bomb clockwise and skips players who are sitting out', () => {
@@ -522,13 +522,14 @@ test('history survives mode switches and a newly created session in the same roo
   assert.ok(!savedHistory.seenIds.includes(next.state.order[0]));
 });
 
-test('720 bombs across ordinary restarts exhaust the formal pool before repeating', () => {
+test('700 eligible bombs across ordinary restarts exhaust the formal pool before repeating', () => {
   const g = game({ cards: 20 });
   const ids = [];
-  for (let session = 0; session < 36; session++) {
+  for (let session = 0; session < 35; session++) {
     if (session) g.act(0, 'restart');
     for (let round = 0; round < 20; round++) {
       ids.push(g.state.order[g.state.cardIndex]);
+      assert.equal(D.isEligible(D.get(ids.at(-1))), true);
       assert.equal(g.state.promptHistory.seenIds.length, ids.length);
       assert.equal(g.act(g.state.holder, 'light'), '');
       assert.equal(g.act(0, 'tick', { now: g.state.explodeAt }), '');
@@ -538,7 +539,7 @@ test('720 bombs across ordinary restarts exhaust the formal pool before repeatin
     assert.equal(g.state.phase, 'finished');
     assert.equal(g.state.history.length, 20);
   }
-  assert.equal(new Set(ids).size, 720);
+  assert.equal(new Set(ids).size, 700);
   g.act(0, 'restart');
   assert.notEqual(g.state.order[0], ids.at(-1));
   assert.equal(g.state.promptHistory.seenIds.length, 1);
@@ -703,17 +704,20 @@ test('timing settings require host authority and validated modes; exact-deadline
   assert.equal(g.state.penalties[loser].length, 1);
 });
 
-test('pre-v2 live and paused rooms retain exact deadlines and their explicit uniform preference', () => {
+test('pre-v2 live and paused rooms retain exact deadlines; future GO maps the same speed to v3.1', () => {
   for (const fuse of ['quick', 'classic', 'long']) {
     const g = game({ fuse });
     g.act(g.state.holder, 'light', { now: 2000, seed: 99 });
     const [min, max] = E.CONFIG.fuses[fuse];
-    assert.equal(g.state.explodeAt, 2000 + Math.round((min + E.rng(99)() * (max - min)) * 1000));
+    // A serialized bomb from the actual previous implementation; upgrading may
+    // migrate pending options, but may not resample this already lit deadline.
+    g.state.explodeAt = 2000 + Math.round((min + E.rng(99)() * (max - min)) * 1000);
     const deadline = g.state.explodeAt;
     delete g.state.settingsTiming; delete g.state.roundFuse; delete g.state.roundId;
     g.act(g.state.holder, 'pass', { now: 2001 });
     assert.equal(g.state.explodeAt, deadline, 'upgrade does not reroll an old live bomb');
-    assert.equal(g.state.settingsTiming.legacyFuse, fuse);
+    assert.equal(g.state.settingsTiming.speedMode, { quick: 'fast', classic: 'normal', long: 'chill' }[fuse]);
+    assert.equal(g.state.settingsTiming.legacyFuse, undefined);
     assert.equal(g.state.settingsTiming.scaleWithPlayers, false);
     g.act(0, 'pause', { now: deadline - 1 });
     const remaining = g.state.remainingMs;
@@ -721,10 +725,112 @@ test('pre-v2 live and paused rooms retain exact deadlines and their explicit uni
     g.act(0, 'resume', { now: deadline + 100000 });
     assert.equal(g.state.explodeAt, deadline + 100000 + remaining);
     g.act(0, 'restart');
-    assert.equal(g.state.settingsTiming.legacyFuse, fuse);
+    assert.equal(g.state.settingsTiming.speedMode, { quick: 'fast', classic: 'normal', long: 'chill' }[fuse]);
+    g.act(g.state.holder, 'light');
+    assert.deepEqual([g.state.roundFuse.minMsAtStart, g.state.roundFuse.maxMsAtStart],
+      [30000, { quick: 60000, classic: 90000, long: 120000 }[fuse]]);
     g.act(0, 'settings', { timing: { speedMode: 'normal', scaleWithPlayers: true } });
-    assert.equal(g.state.settingsTiming.legacyFuse, undefined, 'explicit change adopts new policy');
+    assert.equal(g.state.settingsTiming.legacyFuse, undefined);
   }
+});
+
+test('an existing v2 six-player fuse keeps its original snapshot while the next GO adopts v3.1 once', () => {
+  for (const speedMode of E.CONFIG.speedModes) {
+    const g = game({ roster: seats(6), timing: { speedMode, scaleWithPlayers: true } });
+    g.act(g.state.holder, 'light', { now: 2000 });
+    const oldRanges = { fast: [60000, 90000], normal: [90000, 130000], chill: [120000, 180000] };
+    const [minMsAtStart, maxMsAtStart] = oldRanges[speedMode];
+    const durationMs = (minMsAtStart + maxMsAtStart) / 2;
+    g.state.roundFuse = { ...g.state.roundFuse, policyVersion: 'talk-bomb-timing-2.0', durationMs,
+      explodeAtMs: 2000 + durationMs, minMsAtStart, maxMsAtStart };
+    g.state.explodeAt = 2000 + durationMs;
+    const old = JSON.stringify(g.state.roundFuse), deadline = g.state.explodeAt;
+    g.act(g.state.holder, 'pass', { now: 2001 });
+    assert.equal(g.state.explodeAt, deadline); assert.equal(JSON.stringify(g.state.roundFuse), old);
+    const restored = JSON.parse(JSON.stringify(g.state)); g.state = restored;
+    g.act(g.state.holder, 'pass', { now: 2002 });
+    assert.equal(g.state.explodeAt, deadline); assert.equal(JSON.stringify(g.state.roundFuse), old);
+    g.act(0, 'tick', { now: deadline }); g.act(0, 'next', { now: deadline + 1 });
+    assert.equal(g.state.settingsTiming.speedMode, speedMode, 'upgrade preserves the selected pace');
+    g.act(g.state.holder, 'light', { now: deadline + 2 });
+    assert.deepEqual([g.state.roundFuse.minMsAtStart, g.state.roundFuse.maxMsAtStart],
+      [30000, { fast: 81000, normal: 111000, chill: 141000 }[speedMode]]);
+  }
+});
+
+test('custom host bounds persist through reload and Restart but change only a future GO', () => {
+  const g = game({ roster: seats(6), timing: { speedMode: 'fast', scaleWithPlayers: true } });
+  g.act(g.state.holder, 'light', { now: 2000 });
+  const before = JSON.stringify(g.state.roundFuse), deadline = g.state.explodeAt, turn = g.state.turnId;
+  assert.equal(g.act(0, 'settings', { timing: { speedMode: 'fast', scaleWithPlayers: true, baseMinSeconds: 20, baseMaxSeconds: 45 }, now: 2001 }), '');
+  assert.equal(JSON.stringify(g.state.roundFuse), before); assert.equal(g.state.explodeAt, deadline);
+  assert.equal(g.state.turnId, turn);
+  g.state = JSON.parse(JSON.stringify(g.state));
+  g.act(0, 'tick', { now: deadline }); g.act(0, 'next', { now: deadline + 1 });
+  g.act(g.state.holder, 'light', { now: deadline + 2 });
+  assert.deepEqual([g.state.roundFuse.minMsAtStart, g.state.roundFuse.maxMsAtStart], [20000, 66000]);
+  g.act(0, 'restart');
+  assert.deepEqual(g.state.settingsTiming, { speedMode: 'fast', scaleWithPlayers: true, baseMinSeconds: 20, baseMaxSeconds: 45 });
+  assert.equal(g.state.phase, 'ready'); assert.equal(g.state.explodeAt, null);
+  for (const baseMaxSeconds of [30, 46.5, 61]) assert.equal(g.act(0, 'settings', {
+    timing: { speedMode: 'fast', scaleWithPlayers: true, baseMaxSeconds } }), 'invalid_options');
+});
+
+test('a pre-review live bomb keeps the original wording through pass, boom and discussion; a new draw uses reviewed wording', () => {
+  const rewrites = require('../content/bomb-relay-editorial-v3-patch.json').changes.filter(item => item.action === 'rewrite');
+  const current = rewrites.find(item => item.id === 'tb-playful-208');
+  const next = rewrites.find(item => item.id !== current.id && item.after.pack === current.after.pack && D.isEligible(D.get(item.id)));
+  assert.ok(current && next);
+  const g = game({ category: current.after.pack, cards: 5 });
+  g.state.order[0] = current.id;
+  delete g.state.promptSnapshot;
+  g.state.promptHistory = { seenIds: D.pool('mixed').filter(item => item.id !== next.id).map(item => item.id), recentIds: [], recentFamilies: [] };
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const prompt = E.view(g.state, actor).bomb.prompt;
+    assert.equal(prompt.en, current.before.en); assert.equal(prompt.zhHant, current.before.zhHant);
+    assert.notEqual(prompt.en, D.get(current.id).en);
+  }
+  g.act(g.state.holder, 'light', { now: 2000 });
+  const snapshot = JSON.stringify(g.state.promptSnapshot), deadline = g.state.explodeAt;
+  g.act(g.state.holder, 'pass', { now: 2001 });
+  assert.equal(JSON.stringify(g.state.promptSnapshot), snapshot);
+  g.act(0, 'tick', { now: deadline });
+  assert.equal(JSON.stringify(g.state.promptSnapshot), snapshot);
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  assert.equal(g.state.phase, 'discussion'); assert.equal(JSON.stringify(g.state.promptSnapshot), snapshot);
+  for (const actor of [0, 1, 2, 3, 4]) assert.equal(E.view(g.state, actor).bomb.prompt.en, current.before.en);
+  g.act(2, 'next', { now: g.state.phaseUntil - 1 });
+  assert.equal(g.state.phase, 'ready'); assert.equal(g.state.order[1], next.id);
+  assert.equal(g.state.promptSnapshot.en, next.after.en);
+  assert.equal(E.view(g.state, 1).bomb.prompt.zhHant, next.after.zhHant);
+  assert.equal(g.state.explodeAt, null);
+});
+
+test('an existing current prompt snapshot retains local wording while projection exposes no editorial metadata', () => {
+  const g = game(), id = g.state.order[0];
+  g.state.promptSnapshot = { ...D.get(id), en: 'A locally improved current prompt.', zhHant: '這輪已經選好的本地題目。',
+    localNote: 'private edit', disabled: true, editorialReview: 'private review data' };
+  g.act(g.state.holder, 'light');
+  g.act(g.state.holder, 'pass');
+  assert.equal(g.state.promptSnapshot.en, 'A locally improved current prompt.');
+  for (const actor of [0, 1, 2, 3, 4]) {
+    const prompt = E.view(g.state, actor).bomb.prompt;
+    assert.equal(prompt.en, 'A locally improved current prompt.');
+    assert.equal(prompt.zhHant, '這輪已經選好的本地題目。');
+    for (const key of ['localNote', 'disabled', 'editorialReview', 'review', 'before', 'after']) assert.equal(Object.hasOwn(prompt, key), false, key);
+  }
+});
+
+test('deferred seen history survives eligible-pool recycling and Restart without selecting a deferred card', () => {
+  const deferred = D.items.find(item => !D.isEligible(item));
+  const g = game({ promptHistory: { seenIds: D.items.map(item => item.id), recentIds: [deferred.id], recentFamilies: [] } });
+  assert.ok(g.state.promptHistory.seenIds.includes(deferred.id));
+  assert.equal(D.isEligible(D.get(g.state.order[0])), true);
+  const first = g.state.order[0];
+  g.act(0, 'restart');
+  assert.ok(g.state.promptHistory.seenIds.includes(deferred.id));
+  assert.ok(g.state.promptHistory.seenIds.includes(first));
+  assert.equal(D.isEligible(D.get(g.state.order[0])), true);
 });
 
 test('emergency pause moves only the effective deadline, keeping the original GO snapshot', () => {

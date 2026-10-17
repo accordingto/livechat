@@ -36,12 +36,15 @@
 .br-intro { font-size: 1.13rem; line-height: 1.75; color: var(--text); text-align: center; text-wrap: balance; max-width: 54ch; margin: 0 auto; }
 .br-settings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .br-field { display: grid; gap: 9px; min-width: 0; color: #d3d7cb; font-size: .83rem; text-align: left; }
-.br-field select { width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; background: #181d19; color: var(--text); border: 1px solid #535c50; border-radius: 8px; padding: 11px 12px; color-scheme: dark; }
+.br-field select, .br-field input[type="number"] { width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; background: #181d19; color: var(--text); border: 1px solid #535c50; border-radius: 8px; padding: 11px 12px; color-scheme: dark; }
+.br-max-field { max-width: 360px; }
 .br-timing-options, .br-manage-timing { display: grid; gap: 9px; min-width: 0; }
 .br-check { display: flex; align-items: center; gap: 11px; min-height: 44px; color: var(--text); font-size: .9rem; line-height: 1.5; }
 .br-check input { width: 19px; height: 19px; flex: 0 0 auto; accent-color: var(--br-brass); }
 .br-check input:focus-visible { outline: 2px solid #e4c59a; outline-offset: 4px; }
 .br-timing-range { color: var(--text); font-size: .88rem; line-height: 1.6; overflow-wrap: anywhere; }
+.br-ready-range { max-width: 38ch; text-wrap: balance; }
+.br-zone .br-ready-range { font-size: .8rem; }
 #br-timing-note:empty, #br-manage-timing-note:empty { display: none; }
 .br-manage-timing { padding: 20px 0; margin-bottom: 16px; border-top: 1px solid var(--br-line); border-bottom: 1px solid var(--br-line); }
 .br-manage-timing h3 { color: var(--text); font-size: .98rem; font-weight: 500; margin-bottom: 5px; }
@@ -50,7 +53,7 @@
 .br-button.br-primary, .br-button.br-pass { background: var(--br-brass); border-color: var(--br-brass); color: #20251f; box-shadow: 0 3px 8px #0002; }
 .br-button.br-primary:hover:not(:disabled), .br-button.br-pass:hover:not(:disabled) { background: #d5b88f; border-color: #d5b88f; }
 .br-button:disabled { opacity: .45; cursor: default; }
-.br-button:focus-visible, .br-field select:focus-visible, .br-rules summary:focus-visible, .br-library summary:focus-visible { outline: 2px solid #e4c59a; outline-offset: 4px; }
+.br-button:focus-visible, .br-field select:focus-visible, .br-field input:focus-visible, .br-rules summary:focus-visible, .br-library summary:focus-visible { outline: 2px solid #e4c59a; outline-offset: 4px; }
 .br-small { min-height: 40px; font-size: .8rem; padding: 8px 13px; }
 .br-stop { border-color: #806554; color: #e5b6a3; }
 .br-actions { display: flex; flex-wrap: wrap; gap: 10px; }

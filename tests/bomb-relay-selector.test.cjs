@@ -23,11 +23,14 @@ function drawMany(count, options = {}) {
   return { draws, history };
 }
 
-test('expanded bank has at least 720 unique bilingual cards, 360 per pack', () => {
+test('reviewed bank retains 720 unique bilingual records and 700 eligible prompts', () => {
   validateCatalog(PROMPTS);
   assert.ok(PROMPTS.length >= 720);
   assert.ok(PROMPTS.filter(p => p.pack === 'everyday').length >= 360);
   assert.ok(PROMPTS.filter(p => p.pack === 'playful').length >= 360);
+  assert.equal(DECK.pool('mixed').length, 700);
+  assert.equal(DECK.pool('everyday').length, 351);
+  assert.equal(DECK.pool('playful').length, 349);
   assert.equal(new Set(PROMPTS.map(p => p.en.trim().toLowerCase())).size, PROMPTS.length);
   assert.equal(new Set(PROMPTS.map(p => p.zhHant.trim())).size, PROMPTS.length);
   for (const prompt of PROMPTS) {
@@ -42,13 +45,13 @@ test('single formal source has consistent browser card aliases and lookup', () =
     assert.equal(prompt.zh, prompt.zhHant);
     assert.equal(prompt.category, prompt.pack);
   }
-  assert.equal(DECK.pool('mixed').length, PROMPTS.length);
+  assert.equal(DECK.pool('mixed').length, PROMPTS.filter(DECK.isEligible).length);
   assert.ok(DECK.legacyItems.every(card => !PROMPTS.includes(card)));
   assert.deepEqual(DECK.pool('unknown'), []);
 });
 
 test('Mixed draws the entire expanded pool before eligible-pool recycling', () => {
-  const total = PROMPTS.length;
+  const total = DECK.pool('mixed').length;
   const { draws } = drawMany(total + 1);
   assert.equal(new Set(draws.slice(0, total).map(d => d.prompt.id)).size, total);
   assert.ok(draws.slice(0, total).every(d => d.recycledPool === false));
@@ -124,6 +127,32 @@ test('Removed IDs are cleaned without clearing known history', () => {
   assert.ok(!next.history.seenIds.includes('removed-card'));
   assert.ok(next.history.seenIds.includes(PROMPTS[0].id));
   assert.notEqual(next.prompt.id, PROMPTS[0].id);
+});
+
+test('deferred IDs retain seen history through modes and recycling but can never become fallback draws', () => {
+  const disabled = PROMPTS.filter(prompt => !DECK.isEligible(prompt));
+  const history = { seenIds: PROMPTS.map(prompt => prompt.id), recentIds: disabled.slice(-3).map(prompt => prompt.id), recentFamilies: disabled.slice(-3).map(prompt => prompt.family) };
+  const before = JSON.stringify(history);
+  for (const mode of ['mixed', 'everyday', 'playful']) {
+    const result = selectPrompt({ mode, history, random: seeded(20) });
+    assert.equal(result.recycledPool, true);
+    assert.ok(DECK.isEligible(result.prompt));
+    for (const prompt of disabled) assert.ok(result.history.seenIds.includes(prompt.id));
+  }
+  const { draws, history: after } = drawMany(1405, { history });
+  assert.ok(draws.every(draw => DECK.isEligible(draw.prompt)));
+  for (const prompt of disabled) assert.ok(after.seenIds.includes(prompt.id));
+  assert.equal(JSON.stringify(history), before);
+});
+
+test('a disabled-only eligible pack fails explicitly instead of selecting disabled cards or legacy scenes', () => {
+  const disabled = PROMPTS.filter(prompt => !DECK.isEligible(prompt));
+  for (const mode of ['mixed', 'everyday', 'playful']) assert.throws(() => selectPrompt({ catalog: disabled, mode }), /No prompts/);
+  const custom = { ...PROMPTS[0], id: 'custom-disabled', enabled: false };
+  assert.throws(() => selectPrompt({ catalog: [custom] }), /No prompts/);
+  const available = { ...PROMPTS[0], id: 'custom-active', en: 'Custom active.', zhHant: '自訂啟用。' };
+  const { draws } = drawMany(3, { catalog: [custom, available], mode: 'everyday' });
+  assert.deepEqual(draws.map(draw => draw.prompt.id), [available.id, available.id, available.id]);
 });
 
 test('Zero-weight pack stays disabled in Mixed; explicit pack selection overrides weights', () => {

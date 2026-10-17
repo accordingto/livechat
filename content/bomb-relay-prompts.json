@@ -17,8 +17,13 @@
     "id": "tb-everyday-003",
     "pack": "everyday",
     "family": "home",
-    "en": "Something you use to make your home more comfortable.",
-    "zhHant": "讓家裡更舒服的東西。"
+    "en": "Things that make a home comfortable.",
+    "zhHant": "讓家裡更舒服的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-004",
@@ -248,8 +253,13 @@
     "id": "tb-everyday-036",
     "pack": "everyday",
     "family": "possessions",
-    "en": "Something people keep even when it is old.",
-    "zhHant": "即使舊了，人們仍會留著的東西。"
+    "en": "Old things people still keep.",
+    "zhHant": "人們仍然留著的舊東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-037",
@@ -451,8 +461,13 @@
     "id": "tb-playful-005",
     "pack": "playful",
     "family": "dating",
-    "en": "Something you probably should not say on a first date.",
-    "zhHant": "第一次約會大概不該說的話，也可以只說話題。"
+    "en": "Things not to say on a first date.",
+    "zhHant": "第一次約會不該說的話或話題。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-006",
@@ -549,8 +564,13 @@
     "id": "tb-playful-019",
     "pack": "playful",
     "family": "parties",
-    "en": "Something you would not expect someone to bring to a party.",
-    "zhHant": "你沒想到有人會帶去派對的東西。"
+    "en": "Strange things to bring to a party.",
+    "zhHant": "帶去派對會很奇怪的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-020",
@@ -570,15 +590,25 @@
     "id": "tb-playful-022",
     "pack": "playful",
     "family": "travel",
-    "en": "Something you would not want to hear on a plane.",
-    "zhHant": "你不想在飛機上聽到的話，也可以只說事情。"
+    "en": "Bad things to hear on a plane.",
+    "zhHant": "在飛機上不想聽到的話或消息。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-023",
     "pack": "playful",
     "family": "travel",
-    "en": "Something you would not want to find in your hotel room.",
-    "zhHant": "你不想在飯店房間發現的東西。"
+    "en": "Bad surprises in a hotel room.",
+    "zhHant": "飯店房間裡不想發現的驚喜。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-024",
@@ -605,8 +635,13 @@
     "id": "tb-playful-027",
     "pack": "playful",
     "family": "restaurants",
-    "en": "Something you would not want a waiter to say.",
-    "zhHant": "你不想聽到服務生說的話，也可以只說事情。"
+    "en": "Things a waiter should never say.",
+    "zhHant": "服務生不該說的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-028",
@@ -682,8 +717,13 @@
     "id": "tb-playful-038",
     "pack": "playful",
     "family": "neighbors",
-    "en": "Something you would not expect to see in an elevator.",
-    "zhHant": "你沒想到會在電梯裡看到的東西或人物。"
+    "en": "Strange things to see in an elevator.",
+    "zhHant": "在電梯裡看到會很奇怪的東西或人物。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-039",
@@ -724,15 +764,25 @@
     "id": "tb-playful-044",
     "pack": "playful",
     "family": "friendship",
-    "en": "Something that would make you say, \"That's a good friend.\"",
-    "zhHant": "會讓你說「這才是好朋友」的事。"
+    "en": "Things a good friend does.",
+    "zhHant": "好朋友會做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-045",
     "pack": "playful",
     "family": "pets",
-    "en": "Something a pet might complain about if it could talk.",
-    "zhHant": "寵物如果會說話，可能會抱怨的事。"
+    "en": "Things a pet would complain about.",
+    "zhHant": "寵物可能會抱怨的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-046",
@@ -759,8 +809,13 @@
     "id": "tb-playful-049",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "Something that could go wrong right before an important event.",
-    "zhHant": "重要活動開始前，可能突然出錯的事情。"
+    "en": "Things that go wrong before a big event.",
+    "zhHant": "重要活動開始前可能出錯的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-050",
@@ -808,8 +863,13 @@
     "id": "tb-playful-056",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "Something that would make you feel rich for a day.",
-    "zhHant": "能讓你覺得自己當了一天有錢人的東西或事情。"
+    "en": "Things that make you feel rich.",
+    "zhHant": "讓你覺得自己很有錢的東西或事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-057",
@@ -836,8 +896,13 @@
     "id": "tb-playful-060",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "Something you would not want to appear behind you on a video call.",
-    "zhHant": "視訊時，你不想在身後出現的東西或人物。"
+    "en": "Embarrassing things behind you on a video call.",
+    "zhHant": "視訊時出現在身後會很尷尬的東西或人物。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-061",
@@ -962,8 +1027,13 @@
     "id": "tb-everyday-078",
     "pack": "everyday",
     "family": "food",
-    "en": "A food that smells stronger than it tastes.",
-    "zhHant": "聞起來比吃起來味道更重的食物。"
+    "en": "Foods with a strong smell.",
+    "zhHant": "味道很重的食物。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-079",
@@ -1004,8 +1074,13 @@
     "id": "tb-everyday-084",
     "pack": "everyday",
     "family": "food",
-    "en": "Something you can sprinkle on top of a meal.",
-    "zhHant": "可以撒在餐點上的東西。"
+    "en": "Things to put on top of food.",
+    "zhHant": "可以放在食物上面的配料或東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-085",
@@ -1039,8 +1114,13 @@
     "id": "tb-everyday-089",
     "pack": "everyday",
     "family": "food",
-    "en": "Something that makes a meal look more attractive.",
-    "zhHant": "讓一道餐點看起來更誘人的東西或做法。"
+    "en": "Things that make food look good.",
+    "zhHant": "讓食物看起來更好吃的東西或做法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-090",
@@ -1256,8 +1336,13 @@
     "id": "tb-everyday-120",
     "pack": "everyday",
     "family": "travel",
-    "en": "Something you might learn about a place by visiting its markets.",
-    "zhHant": "逛市場時可能了解的當地事情。"
+    "en": "Things to look for at a local market.",
+    "zhHant": "在當地市場可以找的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-121",
@@ -1438,8 +1523,13 @@
     "id": "tb-everyday-146",
     "pack": "everyday",
     "family": "free-time",
-    "en": "A hobby that creates something you can keep.",
-    "zhHant": "能做出可保存成品的嗜好。"
+    "en": "Hobbies where you make things.",
+    "zhHant": "可以動手做出東西的興趣。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-147",
@@ -1452,8 +1542,13 @@
     "id": "tb-everyday-148",
     "pack": "everyday",
     "family": "free-time",
-    "en": "Something you could teach a friend in an afternoon.",
-    "zhHant": "一個下午可以教朋友的東西。"
+    "en": "Skills you could teach a friend.",
+    "zhHant": "你可以教朋友的技能。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-149",
@@ -1537,7 +1632,13 @@
     "pack": "everyday",
     "family": "technology",
     "en": "A reason to use airplane mode even on the ground.",
-    "zhHant": "不在飛機上也會開飛航模式的理由。"
+    "zhHant": "不在飛機上也會開飛航模式的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "限定「在地面卻開飛航模式」，常見理由容易集中在省電、免打擾等少數類型。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-161",
@@ -1558,7 +1659,13 @@
     "pack": "everyday",
     "family": "technology",
     "en": "Something you would like a device to remind you about.",
-    "zhHant": "希望裝置提醒你的事情。"
+    "zhHant": "希望裝置提醒你的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "與 everyday-153 的「設定提醒」答案空間高度重疊，先保留較直觀的一題。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-164",
@@ -1572,7 +1679,13 @@
     "pack": "everyday",
     "family": "technology",
     "en": "Something people name on a computer or phone.",
-    "zhHant": "人們會在電腦或手機裡取名字的東西。"
+    "zhHant": "人們會在電腦或手機裡取名字的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "「在電腦或手機上命名什麼」容易先卡在題意，而且常見答案偏少。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-166",
@@ -1704,22 +1817,37 @@
     "id": "tb-everyday-184",
     "pack": "everyday",
     "family": "possessions",
-    "en": "Something that is easy to lend but hard to get back.",
-    "zhHant": "容易借出去、卻很難拿回來的東西。"
+    "en": "Things friends borrow and forget to return.",
+    "zhHant": "朋友借了卻忘記還的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-185",
     "pack": "everyday",
     "family": "possessions",
-    "en": "Something people keep because it reminds them of someone.",
-    "zhHant": "人們因為能想起某個人而保留的東西。"
+    "en": "Things you keep for the memories.",
+    "zhHant": "因為有回憶而留著的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-186",
     "pack": "everyday",
     "family": "possessions",
-    "en": "Something you might carry even if you rarely use it.",
-    "zhHant": "就算很少用，仍可能隨身帶著的東西。"
+    "en": "Things you carry but rarely use.",
+    "zhHant": "會帶在身上卻很少用的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-187",
@@ -1739,8 +1867,13 @@
     "id": "tb-everyday-189",
     "pack": "everyday",
     "family": "possessions",
-    "en": "Something you might keep in a small tin.",
-    "zhHant": "可能放在小鐵盒裡的東西。"
+    "en": "Things in a small box.",
+    "zhHant": "小盒子裡可以放的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-190",
@@ -1781,8 +1914,13 @@
     "id": "tb-everyday-195",
     "pack": "everyday",
     "family": "possessions",
-    "en": "Something you would be happy to find in an old coat pocket.",
-    "zhHant": "在舊外套口袋找到會很開心的東西。"
+    "en": "Nice surprises in an old coat pocket.",
+    "zhHant": "在舊外套口袋裡發現的驚喜。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-196",
@@ -1823,8 +1961,13 @@
     "id": "tb-everyday-201",
     "pack": "everyday",
     "family": "people",
-    "en": "Something that helps a new person feel included.",
-    "zhHant": "讓新來的人有參與感的東西或做法。"
+    "en": "Ways to welcome someone new.",
+    "zhHant": "歡迎新朋友的方式。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-202",
@@ -1851,8 +1994,13 @@
     "id": "tb-everyday-205",
     "pack": "everyday",
     "family": "people",
-    "en": "Something that makes a good teammate.",
-    "zhHant": "好隊友具備的特質或做法。"
+    "en": "Things a good teammate does.",
+    "zhHant": "好隊友會做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-206",
@@ -1949,8 +2097,13 @@
     "id": "tb-everyday-219",
     "pack": "everyday",
     "family": "feelings",
-    "en": "Something that helps you feel ready for a busy day.",
-    "zhHant": "讓你覺得準備好面對忙碌一天的東西或做法。"
+    "en": "Ways to get ready for a busy day.",
+    "zhHant": "為忙碌的一天做準備的方法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-220",
@@ -1984,15 +2137,25 @@
     "id": "tb-everyday-224",
     "pack": "everyday",
     "family": "feelings",
-    "en": "Something you do when you need a little space.",
-    "zhHant": "需要一點個人空間時會做的事。"
+    "en": "Things you do when you want to be alone.",
+    "zhHant": "想一個人待著時會做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-225",
     "pack": "everyday",
     "family": "feelings",
-    "en": "Something that makes people smile without speaking.",
-    "zhHant": "不用說話就能讓人微笑的東西或事情。"
+    "en": "Things that make people smile.",
+    "zhHant": "讓人微笑的東西或事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-226",
@@ -2047,8 +2210,13 @@
     "id": "tb-everyday-233",
     "pack": "everyday",
     "family": "celebrations",
-    "en": "Something that makes an outdoor party comfortable.",
-    "zhHant": "讓戶外派對更舒適的東西或安排。"
+    "en": "Things you need for an outdoor party.",
+    "zhHant": "戶外派對需要的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-234",
@@ -2075,8 +2243,13 @@
     "id": "tb-everyday-237",
     "pack": "everyday",
     "family": "celebrations",
-    "en": "Something you could use instead of candles on a cake.",
-    "zhHant": "可以代替蠟燭放在蛋糕上的東西。"
+    "en": "Things to put on a birthday cake.",
+    "zhHant": "可以放在生日蛋糕上的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-238",
@@ -2159,8 +2332,13 @@
     "id": "tb-everyday-249",
     "pack": "everyday",
     "family": "communication",
-    "en": "A question you might ask before visiting someone's home.",
-    "zhHant": "去別人家之前可能會問的問題。"
+    "en": "Questions to ask before visiting a friend.",
+    "zhHant": "拜訪朋友之前可以問的問題。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-250",
@@ -2174,7 +2352,13 @@
     "pack": "everyday",
     "family": "communication",
     "en": "A reason to send a photo instead of a long explanation.",
-    "zhHant": "傳照片而不用一大段文字解釋的理由。"
+    "zhHant": "傳照片而不用一大段文字解釋的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "照片代替長解釋的理由偏抽象，容易只是在重述「比較清楚／方便」。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-252",
@@ -2201,8 +2385,13 @@
     "id": "tb-everyday-255",
     "pack": "everyday",
     "family": "communication",
-    "en": "Something you might tell a friend who is visiting your city.",
-    "zhHant": "朋友來你的城市玩時，你可能告訴他的事情。"
+    "en": "Travel tips for visitors to your city.",
+    "zhHant": "可以給來你城市玩的人的建議。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-256",
@@ -2279,21 +2468,37 @@
     "pack": "everyday",
     "family": "work-study",
     "en": "Something that makes studying with a friend useful.",
-    "zhHant": "讓和朋友一起讀書有幫助的事情。"
+    "zhHant": "讓和朋友一起讀書有幫助的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "偏向說明結伴讀書的好處，容易像討論題而非快速舉例。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-267",
     "pack": "everyday",
     "family": "work-study",
-    "en": "A reason to change where you work or study.",
-    "zhHant": "更換工作或讀書地點的理由。"
+    "en": "Reasons to work or study somewhere else.",
+    "zhHant": "換個地方工作或讀書的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-268",
     "pack": "everyday",
     "family": "work-study",
-    "en": "Something that is easier to explain with a picture.",
-    "zhHant": "用圖片比較容易說明的東西。"
+    "en": "Things you can explain with a picture.",
+    "zhHant": "可以用圖片說明的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-269",
@@ -2411,8 +2616,13 @@
     "id": "tb-everyday-285",
     "pack": "everyday",
     "family": "getting-around",
-    "en": "Something that helps you remember where you parked.",
-    "zhHant": "幫助你記得停車位置的東西或做法。"
+    "en": "Ways to remember where you parked.",
+    "zhHant": "記住停車位置的方法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-286",
@@ -2537,15 +2747,25 @@
     "id": "tb-everyday-303",
     "pack": "everyday",
     "family": "movement-rest",
-    "en": "A reason to choose a gentle activity over a hard workout.",
-    "zhHant": "選輕鬆活動而不是激烈運動的理由。"
+    "en": "Reasons to take a break from exercise.",
+    "zhHant": "暫停運動、休息一下的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-304",
     "pack": "everyday",
     "family": "movement-rest",
-    "en": "Something you might do while stretching.",
-    "zhHant": "伸展時可能同時會做的事。"
+    "en": "Things to do during a workout.",
+    "zhHant": "運動時可以做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-305",
@@ -2586,8 +2806,13 @@
     "id": "tb-everyday-310",
     "pack": "everyday",
     "family": "movement-rest",
-    "en": "A reason to spend a day taking it easy.",
-    "zhHant": "輕鬆過一天、不安排太多事的理由。"
+    "en": "Reasons to have a lazy day.",
+    "zhHant": "今天想偷懶休息的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-311",
@@ -2664,7 +2889,13 @@
     "pack": "everyday",
     "family": "entertainment",
     "en": "A reason to choose a comedy.",
-    "zhHant": "選喜劇來看的理由。"
+    "zhHant": "選喜劇來看的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "選喜劇的理由容易集中在想笑、放鬆等同義回答。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-322",
@@ -2726,8 +2957,13 @@
     "id": "tb-everyday-330",
     "pack": "everyday",
     "family": "entertainment",
-    "en": "Something that could make you become a fan of a performer.",
-    "zhHant": "讓你成為某位表演者粉絲的原因。"
+    "en": "Things you like about a singer or actor.",
+    "zhHant": "你喜歡歌手或演員的哪些地方。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-331",
@@ -2768,8 +3004,13 @@
     "id": "tb-everyday-336",
     "pack": "everyday",
     "family": "childhood-learning",
-    "en": "Something adults sometimes learn from children.",
-    "zhHant": "大人有時候會從小孩子身上學到的東西。"
+    "en": "Things adults can learn from kids.",
+    "zhHant": "大人可以向小孩學的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-337",
@@ -2790,7 +3031,13 @@
     "pack": "everyday",
     "family": "childhood-learning",
     "en": "A reason to use a dictionary.",
-    "zhHant": "查字典的理由。"
+    "zhHant": "查字典的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "查字典的理由容易集中在查意思、拼字、發音等少數項目。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-340",
@@ -2818,7 +3065,13 @@
     "pack": "everyday",
     "family": "childhood-learning",
     "en": "Something a beginner might ask in a class.",
-    "zhHant": "初學者在課堂上可能會問的事情。"
+    "zhHant": "初學者在課堂上可能會問的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "與 everyday-259 的上課第一天提問題高度重疊，先保留原有那題。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-344",
@@ -2866,8 +3119,13 @@
     "id": "tb-everyday-350",
     "pack": "everyday",
     "family": "senses-properties",
-    "en": "Something that becomes sticky when wet.",
-    "zhHant": "弄濕後會變黏的東西。"
+    "en": "Sticky things.",
+    "zhHant": "黏黏的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-351",
@@ -2894,8 +3152,13 @@
     "id": "tb-everyday-354",
     "pack": "everyday",
     "family": "senses-properties",
-    "en": "Something that feels heavy after carrying it for a while.",
-    "zhHant": "拿久了會覺得很重的東西。"
+    "en": "Things that are tiring to carry.",
+    "zhHant": "拿久了會很累的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-everyday-355",
@@ -2923,7 +3186,13 @@
     "pack": "everyday",
     "family": "senses-properties",
     "en": "Something people like the smell of after rain.",
-    "zhHant": "下雨後人們喜歡聞到的東西。"
+    "zhHant": "下雨後人們喜歡聞到的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "「雨後喜歡的氣味」生活答案範圍窄，還可能需要土壤氣味等較難詞彙。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-everyday-359",
@@ -2936,15 +3205,25 @@
     "id": "tb-everyday-360",
     "pack": "everyday",
     "family": "senses-properties",
-    "en": "Something you recognize by touch without looking.",
-    "zhHant": "不用看、光摸就認得出來的東西。"
+    "en": "Things you can recognize with your eyes closed.",
+    "zhHant": "閉著眼睛也能認出來的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-061",
     "pack": "playful",
     "family": "work-study",
-    "en": "A sign that a meeting should have been an email.",
-    "zhHant": "這場會議其實用一封郵件就能解決的跡象。"
+    "en": "Things that waste time in meetings.",
+    "zhHant": "開會時浪費時間的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-062",
@@ -2971,15 +3250,25 @@
     "id": "tb-playful-065",
     "pack": "playful",
     "family": "work-study",
-    "en": "Something that would make a job advertisement suspicious.",
-    "zhHant": "讓徵才廣告看起來不太對勁的內容。"
+    "en": "Signs a job offer is fake.",
+    "zhHant": "讓人懷疑工作邀約是假的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-066",
     "pack": "playful",
     "family": "work-study",
-    "en": "An unusual skill someone might put on a résumé.",
-    "zhHant": "可能被寫進履歷的奇怪技能。"
+    "en": "Unusual skills to put on a job application.",
+    "zhHant": "求職時可以寫上的奇特技能。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-067",
@@ -3027,8 +3316,13 @@
     "id": "tb-playful-073",
     "pack": "playful",
     "family": "work-study",
-    "en": "A sign that someone is already mentally on vacation.",
-    "zhHant": "某人的心已經去度假的跡象。"
+    "en": "Things people do at work before a vacation.",
+    "zhHant": "即將放假時，人們在公司可能會做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-074",
@@ -3041,15 +3335,25 @@
     "id": "tb-playful-075",
     "pack": "playful",
     "family": "work-study",
-    "en": "A strange thing to be named Employee of the Month for.",
-    "zhHant": "因為哪件怪事而當選本月最佳員工。"
+    "en": "Bad reasons to win an award.",
+    "zhHant": "不太應該拿來頒獎的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-076",
     "pack": "playful",
     "family": "dating",
-    "en": "A detail someone might leave out of a dating profile.",
-    "zhHant": "有人可能不會寫進交友資料的細節。"
+    "en": "Things people hide on dating apps.",
+    "zhHant": "人們在交友軟體上會隱藏的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-077",
@@ -3062,15 +3366,25 @@
     "id": "tb-playful-078",
     "pack": "playful",
     "family": "dating",
-    "en": "Something that could make you swipe left immediately.",
-    "zhHant": "會讓你在交友軟體上立刻滑掉的東西或特徵。"
+    "en": "Reasons to reject someone on a dating app.",
+    "zhHant": "在交友軟體上不想選一個人的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-079",
     "pack": "playful",
     "family": "dating",
-    "en": "A place where a romantic proposal would be inconvenient.",
-    "zhHant": "在那裡浪漫求婚會很不方便的地方。"
+    "en": "Bad places for a marriage proposal.",
+    "zhHant": "不適合求婚的地方。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-080",
@@ -3083,8 +3397,13 @@
     "id": "tb-playful-081",
     "pack": "playful",
     "family": "dating",
-    "en": "A reason someone might rehearse a message before sending it.",
-    "zhHant": "傳訊息前先練習好幾次的理由。"
+    "en": "Reasons to worry about sending a message.",
+    "zhHant": "發訊息前會擔心的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-082",
@@ -3097,8 +3416,13 @@
     "id": "tb-playful-083",
     "pack": "playful",
     "family": "dating",
-    "en": "A gift that could send the wrong message on a date.",
-    "zhHant": "約會時可能讓對方誤會意思的禮物。"
+    "en": "Gifts that could ruin a date.",
+    "zhHant": "可能搞砸約會的禮物。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-084",
@@ -3118,8 +3442,13 @@
     "id": "tb-playful-086",
     "pack": "playful",
     "family": "dating",
-    "en": "Something a terrible dating coach might advise.",
-    "zhHant": "糟糕的約會教練可能給的建議。"
+    "en": "Terrible dating advice.",
+    "zhHant": "糟糕的約會建議。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-087",
@@ -3139,15 +3468,25 @@
     "id": "tb-playful-089",
     "pack": "playful",
     "family": "dating",
-    "en": "Something you would not want written on an anniversary cake.",
-    "zhHant": "不希望被寫在週年紀念蛋糕上的東西。"
+    "en": "Things not to write on an anniversary cake.",
+    "zhHant": "不適合寫在週年紀念蛋糕上的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-090",
     "pack": "playful",
     "family": "dating",
-    "en": "A sign that two people have become a very comfortable couple.",
-    "zhHant": "兩人相處已經非常自在的跡象。"
+    "en": "Signs a couple feels totally comfortable together.",
+    "zhHant": "情侶相處已經完全放得開的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-091",
@@ -3167,8 +3506,13 @@
     "id": "tb-playful-093",
     "pack": "playful",
     "family": "home",
-    "en": "A reason your home might look clean in photos but not in person.",
-    "zhHant": "家裡照片看起來乾淨、本人到場卻不是的理由。"
+    "en": "Ways to hide a mess.",
+    "zhHant": "把凌亂藏起來的方法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-094",
@@ -3188,8 +3532,13 @@
     "id": "tb-playful-096",
     "pack": "playful",
     "family": "home",
-    "en": "Something people call a collection instead of a mess.",
-    "zhHant": "人們說是收藏、其實像一堆雜物的東西。"
+    "en": "Things people collect too much of.",
+    "zhHant": "人們容易收集過量的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-097",
@@ -3216,8 +3565,13 @@
     "id": "tb-playful-100",
     "pack": "playful",
     "family": "home",
-    "en": "A ridiculous luxury to add to a tiny apartment.",
-    "zhHant": "小公寓裡可以加的誇張奢侈設施。"
+    "en": "Luxury items for a tiny apartment.",
+    "zhHant": "可以塞進小公寓的奢侈品。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-101",
@@ -3238,21 +3592,37 @@
     "pack": "playful",
     "family": "home",
     "en": "A sign that your houseplant has had enough of you.",
-    "zhHant": "你的盆栽已經受夠你的跡象。"
+    "zhHant": "你的盆栽已經受夠你的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "需先理解盆栽「受夠你」的擬人比喻，再構思可辨識的跡象。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-104",
     "pack": "playful",
     "family": "home",
-    "en": "Something that makes moving house feel like finding treasure.",
-    "zhHant": "搬家時讓人像挖到寶的東西或事情。"
+    "en": "Nice things you might find when moving.",
+    "zhHant": "搬家時可能意外找到的好東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-105",
     "pack": "playful",
     "family": "home",
-    "en": "A reason guests might think you have a secret hobby.",
-    "zhHant": "客人以為你有祕密嗜好的理由。"
+    "en": "Things that would make guests curious.",
+    "zhHant": "會讓客人好奇的東西或事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-106",
@@ -3265,8 +3635,13 @@
     "id": "tb-playful-107",
     "pack": "playful",
     "family": "mornings",
-    "en": "An excuse your alarm clock would make for not waking you.",
-    "zhHant": "鬧鐘沒把你叫醒，可能給的藉口。"
+    "en": "Excuses an alarm clock might make.",
+    "zhHant": "鬧鐘可能會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-108",
@@ -3279,8 +3654,13 @@
     "id": "tb-playful-109",
     "pack": "playful",
     "family": "mornings",
-    "en": "Something you wish could get ready for you while you sleep.",
-    "zhHant": "希望在你睡覺時能自動替你準備好的東西或事情。"
+    "en": "Things you'd like done while you sleep.",
+    "zhHant": "你睡覺時，希望有人幫忙完成的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-110",
@@ -3300,8 +3680,13 @@
     "id": "tb-playful-112",
     "pack": "playful",
     "family": "mornings",
-    "en": "A bad thing to discover after leaving home in a hurry.",
-    "zhHant": "匆忙出門後才發現的糟糕事情。"
+    "en": "Bad surprises after leaving home.",
+    "zhHant": "出門後才發現的壞消息或麻煩。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-113",
@@ -3314,8 +3699,13 @@
     "id": "tb-playful-114",
     "pack": "playful",
     "family": "mornings",
-    "en": "A strange morning routine a celebrity might have.",
-    "zhHant": "名人可能有的奇怪晨間習慣。"
+    "en": "Weird things celebrities do in the morning.",
+    "zhHant": "名人早上可能會做的怪事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-115",
@@ -3342,22 +3732,37 @@
     "id": "tb-playful-118",
     "pack": "playful",
     "family": "mornings",
-    "en": "Something a morning person might say that annoys a sleepy person.",
-    "zhHant": "早起的人可能說出、讓愛睡的人煩躁的話。"
+    "en": "Annoying things to say to a sleepy person.",
+    "zhHant": "對想睡覺的人說了會很煩的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-119",
     "pack": "playful",
     "family": "mornings",
-    "en": "Something you might forget after spending ages getting ready.",
-    "zhHant": "準備超久才出門，卻還是忘記的東西或事情。"
+    "en": "Things you forget when rushing out.",
+    "zhHant": "趕著出門時會忘記的東西或事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-120",
     "pack": "playful",
     "family": "mornings",
-    "en": "A sign that you should have stayed in your pajamas.",
-    "zhHant": "你今天本來就該繼續穿睡衣待著的跡象。"
+    "en": "Signs you're too tired to go out.",
+    "zhHant": "你已經累到不適合出門的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-121",
@@ -3384,8 +3789,13 @@
     "id": "tb-playful-124",
     "pack": "playful",
     "family": "parties",
-    "en": "A party theme that would be hard to dress for.",
-    "zhHant": "很難配衣服的派對主題。"
+    "en": "Weird party themes.",
+    "zhHant": "奇怪的派對主題。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-125",
@@ -3398,8 +3808,13 @@
     "id": "tb-playful-126",
     "pack": "playful",
     "family": "parties",
-    "en": "A sign that the host has gone overboard with preparations.",
-    "zhHant": "主人準備派對準備得太誇張的跡象。"
+    "en": "Signs the host has prepared too much.",
+    "zhHant": "主人準備過頭的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-127",
@@ -3441,14 +3856,25 @@
     "pack": "playful",
     "family": "parties",
     "en": "A reason a birthday wish might take a very long time.",
-    "zhHant": "生日願望許很久的理由。"
+    "zhHant": "生日願望許很久的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "生日許願很久的理由偏窄，不容易自然連續舉例。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-133",
     "pack": "playful",
     "family": "parties",
-    "en": "Something that could go wrong with a surprise entrance.",
-    "zhHant": "驚喜登場時可能出錯的事情。"
+    "en": "Things that could ruin a surprise party.",
+    "zhHant": "可能搞砸驚喜派對的東西或事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-134",
@@ -3489,8 +3915,13 @@
     "id": "tb-playful-139",
     "pack": "playful",
     "family": "travel",
-    "en": "A souvenir that would be awkward to carry home.",
-    "zhHant": "很難帶回家的紀念品。"
+    "en": "Gifts from a trip that are hard to carry.",
+    "zhHant": "旅行帶回來、很難攜帶的禮物。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-140",
@@ -3503,22 +3934,37 @@
     "id": "tb-playful-141",
     "pack": "playful",
     "family": "travel",
-    "en": "A suspiciously cheap extra offered by a hotel.",
-    "zhHant": "飯店提供、便宜到讓人懷疑的加購服務。"
+    "en": "Ridiculous extras a hotel could charge for.",
+    "zhHant": "飯店可能額外收費的荒謬項目。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-142",
     "pack": "playful",
     "family": "travel",
-    "en": "A sign that your rental car has had an interesting past.",
-    "zhHant": "租來的車好像有精彩過往的跡象。"
+    "en": "Problems with a rental car.",
+    "zhHant": "租來的車可能有的問題。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-143",
     "pack": "playful",
     "family": "travel",
-    "en": "Something that could make the wrong bus worth taking.",
-    "zhHant": "搭錯公車卻覺得值得的理由或收穫。"
+    "en": "Good surprises on the wrong bus.",
+    "zhHant": "搭錯公車卻遇到的好事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-144",
@@ -3538,8 +3984,13 @@
     "id": "tb-playful-146",
     "pack": "playful",
     "family": "travel",
-    "en": "A sign that the vacation photos are hiding the truth.",
-    "zhHant": "旅遊照片沒有呈現真相的跡象。"
+    "en": "Things people hide in their vacation photos.",
+    "zhHant": "人們在旅遊照片中會隱藏的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-147",
@@ -3566,22 +4017,37 @@
     "id": "tb-playful-150",
     "pack": "playful",
     "family": "travel",
-    "en": "A strange item someone might insist on packing.",
-    "zhHant": "有人堅持要放進行李的奇怪東西。"
+    "en": "Strange things to pack for a trip.",
+    "zhHant": "旅行時帶了會很奇怪的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-151",
     "pack": "playful",
     "family": "restaurants",
-    "en": "A sign that a menu was translated badly.",
-    "zhHant": "菜單翻譯不太對勁的跡象。"
+    "en": "Funny mistakes on a menu.",
+    "zhHant": "菜單上可能出現的好笑錯誤。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-152",
     "pack": "playful",
     "family": "restaurants",
-    "en": "Something a customer might ask for that makes the waiter pause.",
-    "zhHant": "讓服務生聽了愣一下的客人要求。"
+    "en": "Strange things to ask a waiter for.",
+    "zhHant": "向服務生索取會很奇怪的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-153",
@@ -3608,15 +4074,25 @@
     "id": "tb-playful-156",
     "pack": "playful",
     "family": "restaurants",
-    "en": "A sign that the chef is experimenting on your dinner.",
-    "zhHant": "主廚正在拿你的晚餐做實驗的跡象。"
+    "en": "Signs your dinner has gone wrong.",
+    "zhHant": "晚餐出狀況的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-157",
     "pack": "playful",
     "family": "restaurants",
-    "en": "Something someone might pretend to know about wine.",
-    "zhHant": "有人可能假裝很懂的葡萄酒相關資訊。"
+    "en": "Things people pretend to know about food.",
+    "zhHant": "人們對食物可能會裝懂的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-158",
@@ -3657,8 +4133,13 @@
     "id": "tb-playful-163",
     "pack": "playful",
     "family": "restaurants",
-    "en": "A strange feature for a café to advertise.",
-    "zhHant": "咖啡店拿來宣傳的奇怪特色。"
+    "en": "Strange things a café could offer.",
+    "zhHant": "咖啡廳可能提供的奇怪東西或服務。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-164",
@@ -3671,15 +4152,25 @@
     "id": "tb-playful-165",
     "pack": "playful",
     "family": "restaurants",
-    "en": "A food that could be difficult to eat elegantly.",
-    "zhHant": "很難優雅地吃的食物。"
+    "en": "Foods that are messy to eat.",
+    "zhHant": "吃起來容易弄髒的食物。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-166",
     "pack": "playful",
     "family": "technology",
-    "en": "Something your search history could explain about you.",
-    "zhHant": "搜尋紀錄可能說明的個人特質或事情。"
+    "en": "Things people secretly search for online.",
+    "zhHant": "人們會偷偷上網搜尋的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-167",
@@ -3692,22 +4183,38 @@
     "id": "tb-playful-168",
     "pack": "playful",
     "family": "technology",
-    "en": "Something an overly honest smart speaker might announce.",
-    "zhHant": "太誠實的智慧音箱可能宣布的事。"
+    "en": "Embarrassing things a smart speaker might say.",
+    "zhHant": "智慧音箱可能說出的尷尬話語。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-169",
     "pack": "playful",
     "family": "technology",
     "en": "A sign that someone has too many browser tabs open.",
-    "zhHant": "某人開了太多瀏覽器分頁的跡象。"
+    "zhHant": "某人開了太多瀏覽器分頁的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "瀏覽器分頁太多的跡象容易集中在變慢、找不到分頁等。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-170",
     "pack": "playful",
     "family": "technology",
-    "en": "Something a phone might demand before allowing more scrolling.",
-    "zhHant": "手機准你繼續滑之前，可能要求你做的事。"
+    "en": "Things your phone might ask you to stop doing.",
+    "zhHant": "你的手機可能希望你別再做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-171",
@@ -3727,8 +4234,13 @@
     "id": "tb-playful-173",
     "pack": "playful",
     "family": "technology",
-    "en": "An app feature that sounds helpful but would be annoying.",
-    "zhHant": "聽起來有用、實際上很煩的應用程式功能。"
+    "en": "Annoying things apps do.",
+    "zhHant": "App 讓人覺得很煩的功能或行為。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-174",
@@ -3748,8 +4260,13 @@
     "id": "tb-playful-176",
     "pack": "playful",
     "family": "technology",
-    "en": "Something you would not want as your automatic status message.",
-    "zhHant": "不希望被設成自動狀態訊息的內容。"
+    "en": "Status messages you'd hide from your boss.",
+    "zhHant": "不想讓老闆看到的狀態訊息。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-177",
@@ -3783,8 +4300,13 @@
     "id": "tb-playful-181",
     "pack": "playful",
     "family": "shopping",
-    "en": "A ridiculous reason to call something a limited edition.",
-    "zhHant": "把商品稱作限量版的荒謬理由。"
+    "en": "Silly things to sell as a limited edition.",
+    "zhHant": "拿來賣限量版會很荒謬的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-182",
@@ -3797,8 +4319,13 @@
     "id": "tb-playful-183",
     "pack": "playful",
     "family": "shopping",
-    "en": "A sign that an online product photo is misleading.",
-    "zhHant": "網購商品照片有誤導的跡象。"
+    "en": "Things online shops hide in product photos.",
+    "zhHant": "網路商店在商品照片裡會隱藏的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-184",
@@ -3811,8 +4338,13 @@
     "id": "tb-playful-185",
     "pack": "playful",
     "family": "shopping",
-    "en": "An excuse for buying a second one when the first still works.",
-    "zhHant": "第一個還能用，卻再買一個的藉口。"
+    "en": "Excuses to buy something you already own.",
+    "zhHant": "已經有了，卻又買一次的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-186",
@@ -3825,22 +4357,37 @@
     "id": "tb-playful-187",
     "pack": "playful",
     "family": "shopping",
-    "en": "Something that might make you distrust a five-star review.",
-    "zhHant": "讓你懷疑五星評價的內容或跡象。"
+    "en": "Signs a product review is fake.",
+    "zhHant": "讓人覺得商品評價是假的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-188",
     "pack": "playful",
     "family": "shopping",
-    "en": "A product that would be awkward to demonstrate in a shop.",
-    "zhHant": "在店裡示範起來會很尷尬的商品。"
+    "en": "Products you wouldn't want to test in public.",
+    "zhHant": "不想當眾試用的商品。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-189",
     "pack": "playful",
     "family": "shopping",
-    "en": "A reason a shopping cart might judge its owner.",
-    "zhHant": "購物車想批評主人的理由。"
+    "en": "Things your shopping cart would complain about.",
+    "zhHant": "購物車可能會抱怨的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-190",
@@ -3853,8 +4400,13 @@
     "id": "tb-playful-191",
     "pack": "playful",
     "family": "shopping",
-    "en": "A ridiculous extra to offer with a simple purchase.",
-    "zhHant": "買簡單商品時被推銷的誇張加購項目。"
+    "en": "Strange gifts to include with a purchase.",
+    "zhHant": "買東西時附送會很奇怪的贈品。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-192",
@@ -3867,8 +4419,13 @@
     "id": "tb-playful-193",
     "pack": "playful",
     "family": "shopping",
-    "en": "A sign that a discount is not really a bargain.",
-    "zhHant": "折扣其實不划算的跡象。"
+    "en": "Signs a sale is a trick.",
+    "zhHant": "讓人覺得特價是在騙人的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-194",
@@ -3882,7 +4439,13 @@
     "pack": "playful",
     "family": "shopping",
     "en": "A reason someone might keep an empty shopping bag for years.",
-    "zhHant": "把空購物袋留好多年的理由。"
+    "zhHant": "把空購物袋留好多年的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "多年保留空購物袋的理由偏窄，需另補故事背景才能擴展。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-196",
@@ -3902,8 +4465,13 @@
     "id": "tb-playful-198",
     "pack": "playful",
     "family": "neighbors",
-    "en": "Something a neighbor might borrow that is hard to explain.",
-    "zhHant": "鄰居借了會很難解釋用途的東西。"
+    "en": "Strange things a neighbor might borrow.",
+    "zhHant": "鄰居可能借的奇怪東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-199",
@@ -3923,8 +4491,13 @@
     "id": "tb-playful-201",
     "pack": "playful",
     "family": "neighbors",
-    "en": "A sign that your neighbor is preparing something unusual.",
-    "zhHant": "鄰居正在準備奇怪事情的跡象。"
+    "en": "Things that make you curious about your neighbor.",
+    "zhHant": "讓你好奇鄰居在做什麼的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-202",
@@ -3958,8 +4531,13 @@
     "id": "tb-playful-206",
     "pack": "playful",
     "family": "neighbors",
-    "en": "Something you would not want on the package label your neighbor sees.",
-    "zhHant": "不想讓鄰居在包裹標籤看到的內容。"
+    "en": "Embarrassing words on a package.",
+    "zhHant": "寫在包裹上會很尷尬的字句。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-207",
@@ -3972,15 +4550,25 @@
     "id": "tb-playful-208",
     "pack": "playful",
     "family": "neighbors",
-    "en": "Something that would make the building's cat more popular than the residents.",
-    "zhHant": "讓大樓的貓比住戶還受歡迎的事情。"
+    "en": "Ways a cat could become everyone's favorite neighbor.",
+    "zhHant": "讓貓成為大家最愛鄰居的方法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-209",
     "pack": "playful",
     "family": "neighbors",
-    "en": "A reason your neighbor might mistake you for someone famous.",
-    "zhHant": "鄰居誤以為你是名人的理由。"
+    "en": "Reasons people might think you're famous.",
+    "zhHant": "讓別人誤以為你很有名的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-210",
@@ -3993,8 +4581,13 @@
     "id": "tb-playful-211",
     "pack": "playful",
     "family": "friendship",
-    "en": "Something that makes a friend the unofficial group leader.",
-    "zhHant": "讓某人成為朋友群裡非正式領隊的事情或特質。"
+    "en": "Things that make someone the group's leader.",
+    "zhHant": "讓一個人成為團體帶頭者的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-212",
@@ -4014,15 +4607,25 @@
     "id": "tb-playful-214",
     "pack": "playful",
     "family": "friendship",
-    "en": "Something that could reveal who the most organized friend is.",
-    "zhHant": "能看出誰是最有條理的朋友的事情。"
+    "en": "Signs a friend loves planning.",
+    "zhHant": "朋友很愛做計畫的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-215",
     "pack": "playful",
     "family": "friendship",
-    "en": "An excuse a friend might use to cancel plans and stay home.",
-    "zhHant": "朋友取消約定、想待在家的藉口。"
+    "en": "Excuses to cancel plans and stay home.",
+    "zhHant": "取消約定、待在家的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-216",
@@ -4035,8 +4638,13 @@
     "id": "tb-playful-217",
     "pack": "playful",
     "family": "friendship",
-    "en": "A reason everyone might look at the same friend when a problem happens.",
-    "zhHant": "一出事大家就看向同一位朋友的理由。"
+    "en": "Things you blame your friends for.",
+    "zhHant": "可以怪在朋友頭上的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-218",
@@ -4049,8 +4657,13 @@
     "id": "tb-playful-219",
     "pack": "playful",
     "family": "friendship",
-    "en": "A sign that a friend knows you a little too well.",
-    "zhHant": "朋友有點太了解你的跡象。"
+    "en": "Signs a friend knows all your secrets.",
+    "zhHant": "朋友知道你所有秘密的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-220",
@@ -4063,36 +4676,62 @@
     "id": "tb-playful-221",
     "pack": "playful",
     "family": "friendship",
-    "en": "A reason you might not trust a friend's \"five minutes away.\"",
-    "zhHant": "不相信朋友說「再五分鐘就到」的理由。"
+    "en": "Reasons not to believe \"I'm five minutes away.\"",
+    "zhHant": "不相信對方說「我五分鐘就到」的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-222",
     "pack": "playful",
     "family": "friendship",
-    "en": "Something that might be written in an honest friendship contract.",
-    "zhHant": "一份誠實的友情合約可能寫的內容。"
+    "en": "Rules for your friends.",
+    "zhHant": "你會替朋友訂的規矩。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-223",
     "pack": "playful",
     "family": "friendship",
-    "en": "A tiny achievement your friends might celebrate too much.",
-    "zhHant": "朋友可能過度慶祝的小成就。"
+    "en": "Small wins worth celebrating.",
+    "zhHant": "值得慶祝的小成就。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-224",
     "pack": "playful",
     "family": "friendship",
-    "en": "Something a friend could do to turn a quick visit into an all-day event.",
-    "zhHant": "讓短暫拜訪變成一整天活動的朋友舉動。"
+    "en": "Things that make a visit last longer.",
+    "zhHant": "讓拜訪時間變長的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-225",
     "pack": "playful",
     "family": "friendship",
     "en": "A reason a friend might become the group's photographer forever.",
-    "zhHant": "某人永遠成為朋友群攝影師的理由。"
+    "zhHant": "某人永遠成為朋友群攝影師的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "朋友永遠當攝影師的理由容易集中在會拍、相機好等少數答案。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-226",
@@ -4105,8 +4744,13 @@
     "id": "tb-playful-227",
     "pack": "playful",
     "family": "pets",
-    "en": "A rule a dog would make if it owned the house.",
-    "zhHant": "狗當一家之主的話會訂的規定。"
+    "en": "House rules a dog would make.",
+    "zhHant": "狗狗會訂的家規。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-228",
@@ -4120,7 +4764,13 @@
     "pack": "playful",
     "family": "pets",
     "en": "A reason a pet would cancel an appointment.",
-    "zhHant": "寵物取消約會或預約的理由。"
+    "zhHant": "寵物取消約會或預約的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "需先接受寵物有約診再替牠找取消理由，與其他取消約定題重疊。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-230",
@@ -4140,8 +4790,13 @@
     "id": "tb-playful-232",
     "pack": "playful",
     "family": "pets",
-    "en": "Something a dog might put on a dating profile.",
-    "zhHant": "狗在交友資料可能寫的東西。"
+    "en": "Things a dog would say on a dating app.",
+    "zhHant": "狗狗在交友軟體上會說的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-233",
@@ -4162,7 +4817,13 @@
     "pack": "playful",
     "family": "pets",
     "en": "A reason a goldfish might ask for a bigger home.",
-    "zhHant": "金魚想換大房子的理由。"
+    "zhHant": "金魚想換大房子的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "金魚要更大住處的理由，普通答案容易只有空間不足等；搞笑答案則需額外創作。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-236",
@@ -4175,15 +4836,25 @@
     "id": "tb-playful-237",
     "pack": "playful",
     "family": "pets",
-    "en": "A complaint an animal might make about visiting humans.",
-    "zhHant": "動物可能對來參觀的人類提出的抱怨。"
+    "en": "Things zoo animals might complain about.",
+    "zhHant": "動物園裡的動物可能會抱怨的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-238",
     "pack": "playful",
     "family": "pets",
-    "en": "Something that would make a pet refuse to pose for a photo.",
-    "zhHant": "讓寵物拒絕拍照的事情。"
+    "en": "Things that ruin a pet photo.",
+    "zhHant": "會搞砸寵物照片的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-239",
@@ -4203,8 +4874,13 @@
     "id": "tb-playful-241",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "A terrible moment to hear your clothes rip.",
-    "zhHant": "最不想聽到衣服裂開聲音的時刻。"
+    "en": "Bad times for your clothes to rip.",
+    "zhHant": "衣服破掉最尷尬的時機。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-242",
@@ -4217,8 +4893,13 @@
     "id": "tb-playful-243",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "A reason your carefully planned shortcut might take longer.",
-    "zhHant": "精心安排的捷徑反而更花時間的理由。"
+    "en": "Reasons a shortcut takes longer.",
+    "zhHant": "走捷徑反而更慢的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-244",
@@ -4231,8 +4912,13 @@
     "id": "tb-playful-245",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "A sign that a simple repair is becoming a bigger problem.",
-    "zhHant": "小修理越弄問題越大的跡象。"
+    "en": "Things people break while trying to fix them.",
+    "zhHant": "人們想修好卻弄壞的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-246",
@@ -4245,8 +4931,13 @@
     "id": "tb-playful-247",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "A reason you might suddenly need to change your profile picture.",
-    "zhHant": "突然需要換大頭照的理由。"
+    "en": "Reasons to change your profile picture.",
+    "zhHant": "換大頭貼的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-248",
@@ -4266,8 +4957,13 @@
     "id": "tb-playful-250",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "A reason a five-minute errand might take two hours.",
-    "zhHant": "五分鐘的小事卻花了兩小時的理由。"
+    "en": "Things that make a quick shopping trip take hours.",
+    "zhHant": "讓簡單買個東西變成逛好幾小時的事情。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-251",
@@ -4280,8 +4976,13 @@
     "id": "tb-playful-252",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "A strange explanation for a mysterious stain.",
-    "zhHant": "對神祕污漬的奇怪解釋。"
+    "en": "Excuses for a stain on your clothes.",
+    "zhHant": "衣服上有污漬時會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-253",
@@ -4295,14 +4996,25 @@
     "pack": "playful",
     "family": "small-disasters",
     "en": "A reason your surprise gift might arrive too early.",
-    "zhHant": "驚喜禮物太早送到的理由。"
+    "zhHant": "驚喜禮物太早送到的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "驚喜禮物提早抵達的原因偏物流情境，常見回答範圍小。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-255",
     "pack": "playful",
     "family": "small-disasters",
-    "en": "Something you might say after accidentally breaking a decoration.",
-    "zhHant": "不小心打破裝飾品後可能會說的話。"
+    "en": "Excuses for breaking someone's stuff.",
+    "zhHant": "弄壞別人東西時會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-256",
@@ -4336,15 +5048,25 @@
     "id": "tb-playful-260",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "A small inconvenience you would spend a fortune to avoid.",
-    "zhHant": "願意花大錢避開的小麻煩。"
+    "en": "Small problems you'd pay to avoid.",
+    "zhHant": "你願意花錢避開的小麻煩。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-261",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "Something you would add to public transport if comfort were the only goal.",
-    "zhHant": "只考慮舒適的話，你會在大眾運輸增加的東西。"
+    "en": "Things to add to a bus for comfort.",
+    "zhHant": "讓公車更舒服，可以增加的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-262",
@@ -4364,29 +5086,49 @@
     "id": "tb-playful-264",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "Something you would do with a spare room and no budget limit.",
-    "zhHant": "有空房間、預算無上限時你會做的事。"
+    "en": "Ways to use an extra room.",
+    "zhHant": "多一個房間可以怎麼用。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-265",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "Something you would like someone to choose for you every day.",
-    "zhHant": "希望有人每天替你選好的東西。"
+    "en": "Decisions you'd rather let someone else make.",
+    "zhHant": "你寧願交給別人做的決定。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-266",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "A very small reason to feel like royalty.",
-    "zhHant": "讓人覺得自己像皇室的小事。"
+    "en": "Little things that make you feel important.",
+    "zhHant": "讓你覺得自己很重要的小事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-267",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "Something you would put on a menu for the perfect day off.",
-    "zhHant": "完美休假日的菜單或行程上會放的東西。"
+    "en": "Things to do on a perfect day off.",
+    "zhHant": "完美休假日可以做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-268",
@@ -4406,8 +5148,13 @@
     "id": "tb-playful-270",
     "pack": "playful",
     "family": "little-luxuries",
-    "en": "Something you would add to your workplace if you were there only for fun.",
-    "zhHant": "純粹來玩而不是工作時，你會在工作場所增加的東西。"
+    "en": "Fun things to add to an office.",
+    "zhHant": "可以放進辦公室的好玩東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-271",
@@ -4462,36 +5209,61 @@
     "id": "tb-playful-278",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "A reason someone might pretend they meant to do that.",
-    "zhHant": "有人假裝自己本來就是故意那樣做的理由。"
+    "en": "Excuses after doing something embarrassing.",
+    "zhHant": "做了尷尬的事之後會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-279",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "Something you might say after accidentally liking a very old photo.",
-    "zhHant": "不小心按讚很久以前的照片後可能會說的話。"
+    "en": "Excuses for liking someone's really old photo.",
+    "zhHant": "按讚別人很久以前照片時會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-280",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "Something you would not want to discover while giving someone a hug.",
-    "zhHant": "抱別人時不希望發現的事情。"
+    "en": "Awkward surprises during a hug.",
+    "zhHant": "抱別人時遇到的尷尬驚喜。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-281",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "A reason someone might use the wrong name in a speech.",
-    "zhHant": "致詞時叫錯名字的理由。"
+    "en": "Excuses for calling someone the wrong name.",
+    "zhHant": "叫錯別人名字時會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-282",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "Something you might do while deciding whether a wave is meant for you.",
-    "zhHant": "不確定對方是不是在跟你揮手時，你可能會做的事。"
+    "en": "Things to do when a stranger waves at you.",
+    "zhHant": "陌生人向你揮手時可以做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-283",
@@ -4504,15 +5276,25 @@
     "id": "tb-playful-284",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "Something you might say after hearing only the end of a conversation.",
-    "zhHant": "只聽到談話最後一段時可能會說的話。"
+    "en": "Things to say when you weren't listening.",
+    "zhHant": "剛剛沒在聽時可以說的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-285",
     "pack": "playful",
     "family": "awkward-moments",
-    "en": "A sign that a joke did not land as expected.",
-    "zhHant": "笑話沒有得到預期反應的跡象。"
+    "en": "Signs nobody liked your joke.",
+    "zhHant": "沒人喜歡你剛剛那個笑話的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-286",
@@ -4532,22 +5314,37 @@
     "id": "tb-playful-288",
     "pack": "playful",
     "family": "family",
-    "en": "Something a child might use as a reason to stay up late.",
-    "zhHant": "小孩子不想睡覺時會提出的理由。"
+    "en": "Excuses kids give to stay up late.",
+    "zhHant": "小孩不想睡覺時會找的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-289",
     "pack": "playful",
     "family": "family",
-    "en": "A rule children would introduce if they ran the family.",
-    "zhHant": "小孩子掌管家庭時會訂的規定。"
+    "en": "House rules kids would make.",
+    "zhHant": "小孩會訂的家規。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-290",
     "pack": "playful",
     "family": "family",
-    "en": "Something a very honest child might announce in public.",
-    "zhHant": "太誠實的小孩可能當眾宣布的事。"
+    "en": "Embarrassing things kids say in public.",
+    "zhHant": "小孩在公共場合可能說出的尷尬話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-291",
@@ -4581,8 +5378,13 @@
     "id": "tb-playful-295",
     "pack": "playful",
     "family": "family",
-    "en": "A household job nobody remembers agreeing to do.",
-    "zhHant": "沒人記得自己有答應做的家事。"
+    "en": "Chores everyone tries to avoid.",
+    "zhHant": "大家都想逃避的家事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-296",
@@ -4609,8 +5411,13 @@
     "id": "tb-playful-299",
     "pack": "playful",
     "family": "family",
-    "en": "Something a parent might say that sounds exactly like their own parent.",
-    "zhHant": "爸媽說出來、跟他們自己爸媽一模一樣的話。"
+    "en": "Things parents always say.",
+    "zhHant": "爸媽常常說的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-300",
@@ -4637,8 +5444,13 @@
     "id": "tb-playful-303",
     "pack": "playful",
     "family": "entertainment",
-    "en": "Something a background actor could do to steal the scene.",
-    "zhHant": "臨演可以做來搶走全場目光的事。"
+    "en": "Ways to get noticed in the background of a movie.",
+    "zhHant": "當電影背景人物時，可以搶鏡的方法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-304",
@@ -4672,36 +5484,62 @@
     "id": "tb-playful-308",
     "pack": "playful",
     "family": "entertainment",
-    "en": "Something a villain might complain about after work.",
-    "zhHant": "反派下班後可能抱怨的事。"
+    "en": "Things movie villains complain about.",
+    "zhHant": "電影反派會抱怨的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-309",
     "pack": "playful",
     "family": "entertainment",
-    "en": "A sign that a reality show is running out of ideas.",
-    "zhHant": "實境節目快沒點子的跡象。"
+    "en": "Bad ideas for a reality show.",
+    "zhHant": "糟糕的實境節目點子。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-310",
     "pack": "playful",
     "family": "entertainment",
-    "en": "Something that would make a magic trick less impressive.",
-    "zhHant": "讓魔術變得不那麼厲害的事情。"
+    "en": "Ways to ruin a magic trick.",
+    "zhHant": "搞砸魔術表演的方法。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-311",
     "pack": "playful",
     "family": "entertainment",
-    "en": "An everyday activity that deserves dramatic sports commentary.",
-    "zhHant": "值得配上熱血運動播報的日常活動。"
+    "en": "Everyday things that could be a sport.",
+    "zhHant": "可以拿來當運動比賽的日常小事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-312",
     "pack": "playful",
     "family": "entertainment",
     "en": "Something you might put in a trailer for a movie about doing nothing.",
-    "zhHant": "一部什麼都沒做的電影，預告裡可能放的東西。"
+    "zhHant": "一部什麼都沒做的電影，預告裡可能放的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "需先想像「什麼都没做的電影」，再創作預告素材，較像即興創作題。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-313",
@@ -4721,22 +5559,37 @@
     "id": "tb-playful-315",
     "pack": "playful",
     "family": "entertainment",
-    "en": "A terrible thing to say as a live television presenter.",
-    "zhHant": "電視直播主持人不該說的話。"
+    "en": "Things not to say on live TV.",
+    "zhHant": "電視直播時不該說的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-316",
     "pack": "playful",
     "family": "make-believe",
-    "en": "Something a ghost might find annoying about modern homes.",
-    "zhHant": "鬼可能覺得現代住宅很煩的地方。"
+    "en": "Things a ghost would complain about.",
+    "zhHant": "鬼可能會抱怨的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-317",
     "pack": "playful",
     "family": "make-believe",
-    "en": "An everyday problem a time traveler might have.",
-    "zhHant": "時空旅人可能遇到的日常問題。"
+    "en": "Problems a time traveler might have.",
+    "zhHant": "時空旅人可能遇到的問題。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-318",
@@ -4770,8 +5623,13 @@
     "id": "tb-playful-322",
     "pack": "playful",
     "family": "make-believe",
-    "en": "Something that would be difficult if everyone could read minds.",
-    "zhHant": "如果人人都能讀心，會變得很難做的事情。"
+    "en": "Problems with being able to read minds.",
+    "zhHant": "會讀心術可能帶來的麻煩。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-323",
@@ -4784,15 +5642,25 @@
     "id": "tb-playful-324",
     "pack": "playful",
     "family": "make-believe",
-    "en": "A rule for living in a house where everything talks.",
-    "zhHant": "住在所有東西都會說話的房子裡需要的規定。"
+    "en": "House rules for talking furniture.",
+    "zhHant": "替會說話的家具訂的家規。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-325",
     "pack": "playful",
     "family": "make-believe",
-    "en": "Something a wizard might use magic for out of laziness.",
-    "zhHant": "巫師偷懶時會用魔法完成的事情。"
+    "en": "Things a lazy wizard would use magic for.",
+    "zhHant": "懶惰巫師會用魔法來做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-326",
@@ -4819,8 +5687,13 @@
     "id": "tb-playful-329",
     "pack": "playful",
     "family": "make-believe",
-    "en": "Something that would be awkward if you suddenly became invisible.",
-    "zhHant": "突然隱形後會變尷尬的事情。"
+    "en": "Problems with being invisible.",
+    "zhHant": "隱形可能帶來的麻煩。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-330",
@@ -4840,8 +5713,13 @@
     "id": "tb-playful-332",
     "pack": "playful",
     "family": "habits",
-    "en": "A sign that someone takes a hobby a little too seriously.",
-    "zhHant": "某人對嗜好有點太認真的跡象。"
+    "en": "Signs someone spends too much time on a hobby.",
+    "zhHant": "有人花太多時間在興趣上的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-333",
@@ -4854,8 +5732,13 @@
     "id": "tb-playful-334",
     "pack": "playful",
     "family": "habits",
-    "en": "An excuse for starting a new notebook instead of finishing the old one.",
-    "zhHant": "舊筆記本沒用完就換新的藉口。"
+    "en": "Excuses to buy another notebook.",
+    "zhHant": "又買一本筆記本的藉口。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-335",
@@ -4882,8 +5765,13 @@
     "id": "tb-playful-338",
     "pack": "playful",
     "family": "habits",
-    "en": "A sign that someone is pretending not to care about winning.",
-    "zhHant": "有人假裝不在意輸贏的跡象。"
+    "en": "Things bad losers say or do.",
+    "zhHant": "輸不起的人會說的話或做的事。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-339",
@@ -4903,15 +5791,25 @@
     "id": "tb-playful-341",
     "pack": "playful",
     "family": "habits",
-    "en": "Something that could become a very silly personal record.",
-    "zhHant": "可能成為荒謬個人紀錄的事情。"
+    "en": "Silly world records you could try.",
+    "zhHant": "你可以挑戰的搞笑世界紀錄。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-342",
     "pack": "playful",
     "family": "habits",
-    "en": "A habit you might deny even while doing it.",
-    "zhHant": "你可能一邊做、一邊否認的習慣。"
+    "en": "Bad habits people deny having.",
+    "zhHant": "人們不肯承認的壞習慣。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-343",
@@ -4924,15 +5822,25 @@
     "id": "tb-playful-344",
     "pack": "playful",
     "family": "habits",
-    "en": "A sign that you own enough of something already.",
-    "zhHant": "你已經擁有夠多某種東西的跡象。"
+    "en": "Signs you've bought too much stuff.",
+    "zhHant": "買太多東西的跡象。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-345",
     "pack": "playful",
     "family": "habits",
-    "en": "Something people treat as a reward for doing almost nothing.",
-    "zhHant": "幾乎沒做什麼也拿來獎勵自己的東西。"
+    "en": "Rewards for finishing a tiny task.",
+    "zhHant": "做完一件小事就想給自己的獎勵。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-346",
@@ -4959,22 +5867,37 @@
     "id": "tb-playful-349",
     "pack": "playful",
     "family": "public-life",
-    "en": "Something a very honest tourist sign might say.",
-    "zhHant": "太誠實的觀光指示牌可能寫的內容。"
+    "en": "Warnings tourists should see.",
+    "zhHant": "你覺得應該讓遊客看到的警告。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-350",
     "pack": "playful",
     "family": "public-life",
-    "en": "A sign that a queue is not moving anytime soon.",
-    "zhHant": "隊伍短時間內不會前進的跡象。"
+    "en": "Reasons a line isn't moving.",
+    "zhHant": "排隊一直沒前進的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-351",
     "pack": "playful",
     "family": "public-life",
-    "en": "Something you would ban from a cinema if you were in charge.",
-    "zhHant": "你負責管理電影院的話會禁止的東西或行為。"
+    "en": "Things to ban from movie theaters.",
+    "zhHant": "電影院應該禁止的東西或行為。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-352",
@@ -4987,15 +5910,25 @@
     "id": "tb-playful-353",
     "pack": "playful",
     "family": "public-life",
-    "en": "Something that would make a public bench unexpectedly popular.",
-    "zhHant": "讓公共長椅意外變熱門的東西或原因。"
+    "en": "Things to add to a park bench.",
+    "zhHant": "可以加在公園長椅上的東西。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-354",
     "pack": "playful",
     "family": "public-life",
-    "en": "A ridiculous rule for using a public fountain.",
-    "zhHant": "使用公共噴水池的荒謬規定。"
+    "en": "Weird rules for a public park.",
+    "zhHant": "替公園訂的奇怪規定。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   },
   {
     "id": "tb-playful-355",
@@ -5009,7 +5942,13 @@
     "pack": "playful",
     "family": "public-life",
     "en": "A reason people might cheer when a shop finally opens.",
-    "zhHant": "商店終於開門時，大家歡呼的理由。"
+    "zhHant": "商店終於開門時，大家歡呼的理由。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "商店終於開門而歡呼的原因相對窄，常見回答容易重複。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-357",
@@ -5030,13 +5969,24 @@
     "pack": "playful",
     "family": "public-life",
     "en": "Something a parking meter might say if it could talk.",
-    "zhHant": "停車收費機會說話時可能說的話。"
+    "zhHant": "停車收費機會說話時可能說的話。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "defer",
+      "reason": "先要知道停車收費表的用途，再替它發言；不如日常物品擬人題直覺。"
+    },
+    "disabled": true
   },
   {
     "id": "tb-playful-360",
     "pack": "playful",
     "family": "public-life",
-    "en": "A sign that a small local event has become much bigger than expected.",
-    "zhHant": "地方小活動變得比預期盛大很多的跡象。"
+    "en": "Problems at a crowded event.",
+    "zhHant": "人很多的活動可能出現的問題。",
+    "talkBombEditorialV3": {
+      "patchId": "talk-bomb-editorial-v3-candidate",
+      "action": "rewrite",
+      "reason": "減少修飾／條件、改用直接的回答方向；部分題目適度放寬情境。普通答案即可，不要求搞笑。"
+    }
   }
 ]

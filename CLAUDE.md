@@ -1,4 +1,108 @@
-## CURRENT: Talk Bomb post-explosion conversation — 2026-10-17
+## CURRENT: Talk Bomb reviewed prompts and pacing v3.1 — 2026-10-18
+
+Read bomb-relay-mode.md for the current source, authority and migration contract.
+This scoped revision combines the approved v3 editorial patch with v3.1 timing;
+the superseded v3.0 early-explosion proposal is not a live timing policy.
+The two attachments' five content files are byte-identical. Audit of the actual
+720-record Hub bank found no local/custom wording or disabled choices to reconcile.
+The safe ID/before/after migration applied166 rewrites and20 deferrals, with zero
+conflicts or missing IDs;534 records retain their wording. The single editable
+content/bomb-relay-prompts.json keeps all720 records and stable IDs;700 are eligible
+(Everyday351,Playful349;34 families), with existing Mixed1:1 weights unchanged.
+The read-only editorial patch is migration/provenance data, not another editable
+live bank. scripts/bomb-relay-apply-editorial-patch.cjs is idempotent, preserves
+metadata/custom records/prior disabled choices, reports conflicting local edits,
+and never silently inserts missing IDs. The generator emits the existing deck.
+DECK.items retains720 for lookup/history; pool and selector exclude disabled
+records in every mode and recycle path. Deferred text and seen IDs remain stored.
+
+The actual preceding v2 timer added10seconds per participant above3 to BOTH
+ends, up to50seconds:3players Fast30–60/Normal60–100/Chill90–150;6players
+60–90/90–130/120–180;8players80–110/110–150/140–200seconds. v3.1 replaces that
+single adjustment with max-only +7seconds per extra player, capped at+35;
+default minima stay30. New effective3player ranges are30–60/30–90/30–120;
+6player30–81/30–111/30–141;8player30–95/30–125/30–155. Off uses the baseline.
+Both independent random draws are retained, so the distribution is triangular,
+not uniform or periodic. No pass-count extension or first-lap guarantee exists.
+Host setup and the existing settings dialog optionally accept baseMinSeconds
+and baseMaxSeconds; blank restores each automatic value. baseMinSeconds defaults
+to30 and accepts an explicit integer1..chosenBaseMax-1; baseMaxSeconds accepts
+2..the selected mode's default ceiling and must exceed the chosen minimum.
+Thus min20/max25 is valid, while an omitted minimum of30 requires max>=31.
+The base minimum must be strictly below
+the base maximum before any participant adjustment, so scaling cannot rescue an
+invalid base range. A deliberate mode change clears BOTH overrides; scaling,
+language changes and ordinary Restart preserve both. Effective minimum is the
+chosenBaseMin or30; effective ceiling is chosenBaseMax+7*min(5,max(0,N-3)),
+exactly once. The triangle and mean follow both resulting endpoints. Standard
+settings keep the30second floor; only an explicit host override permits shorter
+fuses. Generic preparation
+text shows mode, actual eligible count and effective range, never the sampled fuse.
+
+Pending legacy choices migrate to the corresponding mode with their scaling
+choice retained. Active/paused saved deadlines and GO snapshots are never redrawn.
+The canonical promptSnapshot plus public bomb.prompt freezes this bomb's English
+and Traditional Chinese through reading, passes, BOOM and discussion. Old saves
+without it use generated getPrevious wording only when the current record matches
+the exact applied patch/provenance; custom/subsequent edits remain intact. Future
+draws use reviewed current text. The45second discussion, existing early Next,
+manual Start, all scoring, pass rules, sound PCM and explosion animation remain.
+Changed Bomb cache tags are br-pacing-3-1; audio remains br-sound-4. Other games,
+the independent executor runtime and secrets are outside this frontend-only change.
+After release, refresh the host and every original player page once together
+at a natural break so all clients read the revised wording and prompt snapshot.
+Already-open old UI ignores the new prompt field; do not forcibly reload players
+in the middle of a bomb. Existing room state/history remains the authority.
+
+Changed files in this release:
+
+- Catalog/merge/build/selection: content/bomb-relay-prompts.json,
+  content/bomb-relay-catalog-manifest.json,
+  content/bomb-relay-editorial-v3-patch.json, bomb-relay-deck.js,
+  bomb-relay-selector.js, scripts/bomb-relay-apply-editorial-patch.cjs,
+  scripts/bomb-relay-build-catalog.cjs.
+- Timing/authority: bomb-relay-timing.js and bomb-relay-engine.js. The existing
+  bomb-relay-sync.js transport is unchanged; its tests cover retained settings.
+- Host/player presentation and cache tags: bomb-relay-host.js, bomb-relay-ui.js,
+  bomb-relay.html, bomb-relay.css and the Bomb tags in play.html.
+- Validation: tests/bomb-relay-content.test.cjs, tests/bomb-relay-selector.test.cjs,
+  tests/bomb-relay-timing.test.cjs, tests/bomb-relay-engine.test.cjs,
+  tests/bomb-relay-sync.test.cjs, tests/bomb-relay-integration.test.cjs,
+  tests/bomb-relay-host-settings.test.cjs,
+  tests/bomb-relay-ui.browser.cjs and scripts/bomb-relay-production.browser.cjs.
+- Maintenance: this CLAUDE.md release record and bomb-relay-mode.md.
+
+Validation so far: both attachment builds ran before integration; v3 passes31/31
+and v3.1 passes34/34. Content/selector checks pass33/33, covering safe/idempotent
+merge, local edits/metadata/custom preservation, disabled-card recycling/history,
+and generated previous-wording guards. Migration and generated-catalog --check
+pass. The final two-endpoint implementation passes the complete2109/2109-case
+Hub suite, with zero failures/skips; output is outside Hub in
+../bomb-pacing-v31-release-tests.log. The final production probe --self-test
+passes its4exact-owned-node and6lease-boundary cases without network access.
+Four actual-host-controller regressions reproduce a committed settings command
+resolving before Firebase delivers its value event. Previously the completion
+render cleared its pending preview too soon, restored old controls, and could
+lose just-saved custom bounds when Restart was clicked before that event.
+The host now retains its latest requested preview until matching canonical
+confirmation, ignores older acknowledgements for that preview, clears failed/
+replaced-session previews, and carries confirmed pending bounds into Restart.
+Restoring the previous implementation makes these regression cases fail.
+The final actual host plus original player pages pass20checks and86EN/ZH
+desktop/mobile captures for each of3/6/8players:60checks,258captures, five GO
+snapshots per room and zero JS errors. These are isolated Firebase-compatible
+local fixtures with controlled time and intercepted external network, not live
+Firebase or physical phones. Coverage includes both custom bounds, Ready range
+updates, unchanged live deadlines, takeover/reconnect, pass/score once,700active
+prompts and preserved history, fixed45second chat, early Next/manual Start, and
+exact approved PCM. Manual screenshot review confirms the375px settings dialog
+and the320px longest-prompt/PASS first screen. Reports remain outside Hub in
+../bomb-pacing-v31-final-qa-{3,6,8}/report.json with matching logs.
+Publication and live production verification remain pending for this revision.
+Earlier release evidence below does not establish those new results.
+No physical-phone/human-group validation claimed.
+
+## Previous: Talk Bomb post-explosion conversation — 2026-10-17
 
 Read bomb-relay-mode.md for the state/authority contract. Talk Bomb now keeps
 its original4.5second explosion presentation, then a fixed45second discussion

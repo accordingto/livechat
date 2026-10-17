@@ -9,11 +9,14 @@ var BOMB_RELAY_UI = (() => {
     intro: ['看題目，說一個合理的答案，然後傳炸彈。爆炸時間是秘密。', 'Read the prompt. Say one fitting answer, then pass. The fuse stays secret.'],
     fuse: ['炸彈節奏', 'Bomb pace'], fast: ['Fast · 快速', 'Fast'], normal: ['Normal · 標準', 'Normal'], chill: ['Chill · 悠閒', 'Chill'],
     scaleWithPlayers: ['依參與人數調整', 'Scale with participants'],
-    scaleHint: ['只計算有傳遞資格的玩家。超過 3 人，每人加 10 秒，最多算到 8 人。', 'Only players eligible to pass count. Above 3 players, add 10 seconds each, up to 8.'],
-    timingRange: ['{n} 位參與者 · {mode} 一般範圍 {min}–{max} 秒', '{n} participants · {mode} range: {min}–{max} seconds'],
+    scaleHint: ['超過 3 位參與者，每人只將上限加 7 秒，最多加 35 秒。下限預設 30 秒，可自行調整。', 'Above 3 participants, add 7 seconds each to the upper bound, up to 35. The lower bound defaults to 30 seconds and can be adjusted.'],
+    timingRange: ['{mode} · {n} 位參與者 · 隨機 {min}–{max} 秒', '{mode} · {n} participants · Random {min}–{max} seconds'],
     timingBaseline: ['2–3 人基準預覽 · {mode} {min}–{max} 秒', '2–3 player baseline preview · {mode} {min}–{max} seconds'],
     timingCapped: ['已達 8 人的加時上限。', 'Participant scaling is capped at 8.'],
-    timingLegacy: ['保留舊版 {min}–{max} 秒；變更節奏或人數調整後套用新範圍。', 'Keeping the previous {min}–{max} second range. Changing pace or scaling applies the new ranges.'],
+    timingMin: ['基準下限（秒，可自訂）', 'Base lower bound (seconds, optional)'],
+    timingMinHint: ['留空使用 30 秒；可設 1–{max} 秒，必須低於上限。', 'Leave blank for 30 seconds, or choose 1–{max}. It must be below the upper bound.'],
+    timingMax: ['基準上限（秒，可調短）', 'Base upper bound (seconds, adjustable)'],
+    timingMaxHint: ['留空使用 {max} 秒；可設 {min}–{max} 秒，人數加時另計。', 'Leave blank for {max} seconds, or choose {min}–{max}. Participant scaling is added separately.'],
     timingNext: ['下次點燃時生效；已點燃的炸彈時間不變。', 'Applies at the next ignition. A lit bomb keeps its time.'],
     timingManage: ['下一顆炸彈的節奏', 'Pace for the next bomb'],
     cards: ['這局幾張卡', 'Cards in this game'], cardsN: ['{n} 張', '{n} cards'],
@@ -99,11 +102,21 @@ var BOMB_RELAY_UI = (() => {
     return `<div class="br-burst" aria-hidden="true"><span class="br-fire">${'<span class="br-flame"></span>'.repeat(6)}</span><strong>${esc(t('boom'))}</strong></div>`;
   }
 
-  function sceneTitle(cardId, size = '') {
-    const card = deck().get(cardId);
+  function sceneTitle(cardId, size = '', snapshot = null) {
+    // An in-progress room keeps the exact prompt it already revealed, even
+    // when a later catalog release edits that same stable ID.
+    const card = snapshot?.id === cardId ? snapshot : deck().get(cardId);
     if (!card) return `<div class="br-scene-title ${size}"><p role="status">${esc(t('promptUnavailable'))}</p></div>`;
     const english = card.pack ? card.en : `${dict.legacyPrompt[1]} ${card.en}`;
     return `<div class="br-scene-title ${size}" data-br-prompt-id="${esc(card.id)}"><span class="br-kicker">${esc(t('prompt'))}</span><h2 lang="en">${esc(english)}</h2>${lang() === 'zh' ? `<p class="br-zh" lang="zh-Hant">${esc(card.zhHant || card.zh)}</p>` : ''}</div>`;
+  }
+  function preparationRange(bomb) {
+    const count = new Set(list(bomb.roster).filter(player => player.active !== false).map(player => player.playerNum)).size;
+    const settings = bomb.settingsTiming || {};
+    const range = bomb.timingRange || BOMB_RELAY_TIMING.getTimingRange({ activePlayerCount: Math.max(2, count), settings });
+    return `<p class="br-soft br-ready-range" data-br-ready-range>${esc(t('timingRange', {
+      n: count, mode: t(settings.speedMode || 'normal'), min: range.minMs / 1000, max: range.maxMs / 1000,
+    }))}</p>`;
   }
   function thumbs(cardIds, max = 6) {
     const ids = list(cardIds);
@@ -150,7 +163,7 @@ var BOMB_RELAY_UI = (() => {
     if (bomb.phase === 'finished') return `<div class="br-stage br-phase-finished">${standings(bomb, 0)}</div>`;
     const holder = bomb.holder != null ? nameOf(bomb, bomb.holder) : '';
     let focus = '';
-    if (bomb.phase === 'ready') focus = `${bombMark('ready')}<p class="br-kicker">${esc(t('starter'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('readyHint', { name: holder }))}</p>`;
+    if (bomb.phase === 'ready') focus = `${bombMark('ready')}<p class="br-kicker">${esc(t('starter'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('readyHint', { name: holder }))}</p>${preparationRange(bomb)}`;
     else if (bomb.phase === 'ticking') focus = `${bombMark('ticking')}<p class="br-kicker">${esc(t('holdsTitle'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('holdsHint'))}</p>${bomb.next ? `<p class="br-next" style="--seat:${colorOf(bomb.next)}">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${bounceNote(bomb)}`;
     else if (bomb.phase === 'paused') focus = `${bombMark('paused')}<p class="br-kicker">${esc(t('paused'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('pausedHint'))}</p>`;
     else if (['boom', 'discussion'].includes(bomb.phase)) {
@@ -158,7 +171,7 @@ var BOMB_RELAY_UI = (() => {
       focus = `${burstMark()}<h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}`;
     }
     const cls = ['br-stage', `br-phase-${bomb.phase}`, bomb.phase === 'boom' && animate ? 'br-exploding' : '', !animate || bomb.phase === 'discussion' ? 'br-static' : ''].filter(Boolean).join(' ');
-    return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
+    return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId, '', bomb.prompt)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
   }
 
   // Approved recorded tick and bass-reduced explosion. Cadence is fixed and
@@ -278,7 +291,9 @@ var BOMB_RELAY_UI = (() => {
       if (arrived) { try { navigator.vibrate?.([90, 40, 90]); } catch (_) {} }
       this.wasHolder = holding;
       this.sound.follow(bomb);
-      const key = JSON.stringify([lang(), data.name, data.playerNum, bomb.sessionId, bomb.turnId, bomb.phase, this.pending?.id, this.error]);
+      const key = JSON.stringify([lang(), data.name, data.playerNum, bomb.sessionId, bomb.turnId, bomb.phase, this.pending?.id, this.error,
+        bomb.phase === 'ready' ? [bomb.settingsTiming, bomb.timingRange,
+          list(bomb.roster).filter(player => player.active !== false).map(player => player.playerNum)] : null]);
       if (key !== this.renderKey) { this.renderKey = key; this.element.innerHTML = this.html(data); this.paintSound(); }
       if (arrived) {
         const button = this.element.querySelector('[data-br-action="pass"]'), box = button?.getBoundingClientRect?.();
@@ -297,7 +312,7 @@ var BOMB_RELAY_UI = (() => {
       if (bomb.phase === 'finished') body = standings(bomb, me);
       else {
         const sceneId = bomb.boom?.cardId || bomb.cardId;
-        const scene = `<div class="br-card-scene">${sceneTitle(sceneId, 'is-compact')}</div>`;
+        const scene = `<div class="br-card-scene">${sceneTitle(sceneId, 'is-compact', bomb.prompt)}</div>`;
         const { zone, cls } = this.zone(bomb, me);
         theme = cls;
         // A compact text card keeps the prompt and the pass action together.
@@ -311,8 +326,8 @@ var BOMB_RELAY_UI = (() => {
       const holder = bomb.holder, holderName = holder != null ? nameOf(bomb, holder) : '';
       const busy = !!this.pending, out = !list(bomb.roster).find(p => p.playerNum === me)?.active;
       if (bomb.phase === 'ready') {
-        if (holder === me) return { cls: 'is-start', zone: `<div class="br-zone br-zone-start">${bombMark('ready')}<h3>${esc(t('youStart'))}</h3><p>${esc(t('youStartHint'))}</p><button type="button" class="br-button br-primary br-huge" data-br-action="light"${bomb.canLight && !busy ? '' : ' disabled'}>${esc(t('light'))}</button></div>` };
-        return { cls: '', zone: `<div class="br-zone"><p class="br-zone-line">${esc(t('waitStart', { name: holderName }))}</p></div>` };
+        if (holder === me) return { cls: 'is-start', zone: `<div class="br-zone br-zone-start">${bombMark('ready')}<h3>${esc(t('youStart'))}</h3><p>${esc(t('youStartHint'))}</p>${preparationRange(bomb)}<button type="button" class="br-button br-primary br-huge" data-br-action="light"${bomb.canLight && !busy ? '' : ' disabled'}>${esc(t('light'))}</button></div>` };
+        return { cls: '', zone: `<div class="br-zone"><p class="br-zone-line">${esc(t('waitStart', { name: holderName }))}</p>${preparationRange(bomb)}</div>` };
       }
       if (bomb.phase === 'ticking') {
         const bounce = bomb.canBounce && bomb.lastPass ? `<div class="br-challenge"><button type="button" class="br-button br-bounce-btn" data-br-action="bounce"${busy ? ' disabled' : ''}>${esc(t('bounce', { name: nameOf(bomb, bomb.lastPass.from) }))}</button><p class="br-soft">${esc(t('bounceHint'))}</p></div>` : '';

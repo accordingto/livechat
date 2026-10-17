@@ -154,7 +154,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
   }
   async function tapHolder(type) {
     const before = await state();
-    await players[before.holder - 1].locator(`[data-br-action="${type}"]`).click({ force: true });
+    await players[before.holder - 1].locator(`[data-br-action="${type}"]`).click({ force: true, timeout: type === 'pass' ? 2500 : 15000 });
     await poll(async () => (await state()).turnId !== before.turnId);
     return state();
   }
@@ -208,6 +208,8 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     check(await host.locator('#br-fuse').inputValue() === 'normal', 'new-room-default-normal');
     check(await host.locator('#br-scale').isChecked(), 'new-room-default-scaling-on');
     check(await host.evaluate(() => BOMB_RELAY_DECK.items.length) === 720, 'real-host-loaded-720-prompts');
+    check(await host.evaluate(() => BOMB_RELAY_DECK.pool('mixed').length === 700 && BOMB_RELAY_DECK.pool('everyday').length === 351 && BOMB_RELAY_DECK.pool('playful').length === 349), 'real-host-uses-700-eligible-reviewed-prompts');
+    check(/30–90/.test(await host.locator('#br-timing-range').innerText()), 'real-three-player-setup-shows-effective-v31-normal-range');
     check(await host.evaluate(() => !!BOMB_RELAY_DECK.get('tb-everyday-360') && !!BOMB_RELAY_DECK.get('tb-playful-360')), 'real-host-loaded-both-expanded-pack-tails');
     await host.locator('#br-start').click();
     await poll(async () => (await state())?.phase === 'ready');
@@ -236,25 +238,36 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     check(Number(selected.order[0].split('-').at(-1)) > 60, 'authority-actually-revealed-new-expansion-prompt');
     await samePlayers('ready'); await screenshot(host, 'host-ready');
     for (let index = 0; index < players.length; index++) await screenshot(players[index], `player-${index + 1}-ready`);
-    progress('real-go-and-six-player-link-passes');
+    progress('real-v31-go-and-first-player-link-pass');
     const first = await tapHolder('light'), deadline = first.explodeAt, promptId = first.order[0], snapshot = JSON.stringify(first.roundFuse);
     check(first.roundFuse.speedModeAtStart === 'normal' && first.roundFuse.scaleWithPlayersAtStart === true && first.roundFuse.activePlayerCountAtStart === 3, 'normal-go-snapshot-three-eligible-players');
-    check(first.roundFuse.minMsAtStart === 60000 && first.roundFuse.maxMsAtStart === 100000 && first.roundFuse.durationMs >= 60000 && first.roundFuse.durationMs <= 100000, 'normal-go-real-60-to-100-seconds');
+    check(first.roundFuse.policyVersion === 'talk-bomb-timing-3.1' && first.roundFuse.minMsAtStart === 30000 && first.roundFuse.maxMsAtStart === 90000 && first.roundFuse.durationMs >= 30000 && first.roundFuse.durationMs <= 90000, 'normal-go-real-v31-30-to-90-seconds');
     report.realFuseDurationMs = first.roundFuse.durationMs;
-    for (let pass = 0; pass < 6; pass++) {
+    // Begin the natural lease takeover early: v3.1 legitimately permits a
+    // 30-second bomb, so do not spend its first half taking optional captures.
+    for (let pass = 0; pass < 1; pass++) {
       const next = await tapHolder('pass');
       check(next.explodeAt === deadline && JSON.stringify(next.roundFuse) === snapshot && next.order[0] === promptId, `pass-${pass + 1}-keeps-prompt-and-deadline`);
       await samePlayers('ticking');
     }
-    for (let index = 0; index < players.length; index++) await screenshot(players[index], `player-${index + 1}-ticking`);
     progress('pending-fast-off-and-real-host-reload');
     await host.locator('#br-manage-open').click();
     await host.locator('#br-manage-speed').selectOption('fast');
     await poll(async () => (await state()).settingsTiming.speedMode === 'fast');
+    await host.locator('#br-manage-scale:not([disabled])').waitFor();
     await host.locator('#br-manage-scale').setChecked(false);
     await poll(async () => (await state()).settingsTiming.scaleWithPlayers === false);
+    await host.locator('#br-manage-min:not([disabled])').waitFor();
+    await host.locator('#br-manage-min').fill('20'); await host.locator('#br-manage-min').blur();
+    await poll(async () => (await state()).settingsTiming.baseMinSeconds === 20);
+    await host.locator('#br-manage-max:not([disabled])').waitFor();
+    await host.locator('#br-manage-max').fill('45'); await host.locator('#br-manage-max').blur();
+    await poll(async () => (await state()).settingsTiming.baseMaxSeconds === 45);
     await host.locator('#br-manage .br-dialog-header button').click();
-    check((await state()).explodeAt === deadline && JSON.stringify((await state()).roundFuse) === snapshot, 'pending-preferences-do-not-change-live-fuse');
+    const afterPending = await state();
+    check(JSON.stringify(afterPending.roundFuse) === snapshot && (afterPending.phase === 'ticking' ? afterPending.explodeAt === deadline :
+      ['boom', 'discussion'].includes(afterPending.phase) && afterPending.history.length === 1),
+      'pending-preferences-do-not-resample-the-original-fuse-or-delay-its-natural-settlement');
     await captureOwners();
     serverTimeOffsetMs = await host.evaluate(async () => Number((await firebase.database().ref('.info/serverTimeOffset').once('value')).val()) || 0);
     const beforeClose = (await read(0)).value, pagehideAtMs = now();
@@ -283,13 +296,44 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     }, 20000);
     progress('host-real-reload-and-lease-reacquire');
     await host.reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
-    await poll(async () => (await state())?.phase === 'ticking');
+    await poll(async () => ['ticking', 'boom', 'discussion'].includes((await state())?.phase));
     await host.locator('#br-manage-open:not([disabled])').waitFor({ timeout: 30000 });
     await captureOwners();
     progress('host-reload-deadline-and-pending-settings-check');
-    check((await state()).explodeAt === deadline && JSON.stringify((await state()).roundFuse) === snapshot, 'host-reload-resumes-original-deadline-and-go-snapshot');
+    const reloaded = await state();
+    check(JSON.stringify(reloaded.roundFuse) === snapshot, 'host-reload-preserves-original-go-snapshot-even-if-its-real-deadline-already-passed');
+    if (reloaded.phase === 'ticking') check(reloaded.explodeAt === deadline, 'host-reload-resumes-original-active-deadline');
+    else check(reloaded.explodeAt === null && reloaded.history.length === 1 &&
+      Object.values(reloaded.penalties).reduce((sum, cards) => sum + list(cards).length, 0) === 1,
+      'a-legally-short-bomb-may-settle-once-during-natural-host-lease-takeover');
+    report.phaseAfterRealTakeover = reloaded.phase;
     check((await state()).settingsTiming.speedMode === 'fast' && (await state()).settingsTiming.scaleWithPlayers === false, 'pending-preferences-survive-host-reload');
-    await samePlayers('ticking');
+    check((await state()).settingsTiming.baseMaxSeconds === 45, 'lowered-upper-bound-survives-real-host-reload');
+    check((await state()).settingsTiming.baseMinSeconds === 20, 'custom-lower-bound-survives-real-host-reload');
+    if (reloaded.phase !== 'ticking' || now() + serverTimeOffsetMs + 3000 < deadline) await samePlayers(reloaded.phase);
+    report.successfulPassesBeforeFirstExplosion = 1;
+    for (let pass = 1; pass < 6; pass++) {
+      const beforePass = await state();
+      if (beforePass.phase !== 'ticking' || now() + serverTimeOffsetMs >= deadline) break;
+      let next;
+      try { next = await tapHolder('pass'); }
+      catch (error) {
+        const afterClick = await state();
+        if (!['boom', 'discussion'].includes(afterClick.phase)) throw error;
+        next = afterClick;
+      }
+      check(JSON.stringify(next.roundFuse) === snapshot && next.order[0] === promptId, `pass-${pass + 1}-keeps-prompt-and-go-snapshot`);
+      if (next.phase !== 'ticking') {
+        check(['boom', 'discussion'].includes(next.phase) && next.history.length === 1 &&
+          Object.values(next.penalties).reduce((sum, cards) => sum + list(cards).length, 0) === 1,
+          'a-pass-reaching-the-real-deadline-settles-only-once');
+        break;
+      }
+      check(next.explodeAt === deadline, `pass-${pass + 1}-keeps-the-original-active-deadline`);
+      report.successfulPassesBeforeFirstExplosion++;
+      if (now() + serverTimeOffsetMs + 3000 >= deadline) break;
+      await samePlayers('ticking');
+    }
     progress('wait-actual-saved-deadline-no-fake-clock');
     let lastProgress = 0;
     await poll(async () => {
@@ -297,9 +341,11 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       if (now() - lastProgress >= 10000) {
         lastProgress = now(); process.stdout.write('BOMB_QA_PROGRESS ' + JSON.stringify({ step: report.step, elapsedMs: Math.max(0, now() - first.litAt), approximateRemainingMs: Math.max(0, deadline - now()) }) + '\n');
       }
-      return current.phase === 'boom';
+      return ['boom', 'discussion'].includes(current.phase);
     }, Math.max(15000, deadline - now() + 15000));
-    const boom = await state(), views = await samePlayers('boom');
+    const boom = await state(), views = await samePlayers(boom.phase);
+    const animationEnd = boom.discussionUntil - 45000;
+    report.explosionPresentationObserved = boom.phase === 'boom';
     check(boom.order[0] === promptId && boom.history.length === 1 && Object.values(boom.penalties).reduce((sum, cards) => sum + list(cards).length, 0) === 1, 'real-auto-explosion-settles-exactly-one-penalty');
     for (let index = 0; index < views.length; index++) {
       check(views[index].bomb.boom.loser === boom.boom.loser && views[index].bomb.standings.reduce((sum, row) => sum + row.count, 0) === 1, `player-${index + 1}-same-auto-explosion-and-score`);
@@ -308,11 +354,12 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     await screenshot(host, 'host-boom');
     report.observedAutomaticExplosion = true;
     progress('wait-real-animation-settlement-then-discussion');
-    check(boom.discussionUntil === boom.phaseUntil + 45000, 'one-discussion-deadline-is-established-after-the-existing-explosion-hold');
-    await poll(async () => (await state()).phase === 'discussion', Math.max(15000, boom.phaseUntil - now() + 15000));
+    check(boom.phase === 'boom' ? boom.discussionUntil === boom.phaseUntil + 45000 : boom.phaseUntil === boom.discussionUntil,
+      'one-discussion-deadline-is-established-after-the-existing-explosion-hold');
+    await poll(async () => (await state()).phase === 'discussion', Math.max(15000, animationEnd - now() + 15000));
     const discussion = await state(), discussionViews = await samePlayers('discussion');
-    report.realDiscussion = { observedAtMs: now(), boomSettledAtMs: boom.phaseUntil,
-      discussionUntil: discussion.phaseUntil, durationMs: discussion.phaseUntil - boom.phaseUntil };
+    report.realDiscussion = { observedAtMs: now(), boomSettledAtMs: animationEnd,
+      discussionUntil: discussion.phaseUntil, durationMs: discussion.phaseUntil - animationEnd };
     check(discussion.phaseUntil === boom.discussionUntil && report.realDiscussion.durationMs === 45000, 'real-discussion-is-exactly-45-seconds-after-settlement');
     check(discussion.order[0] === promptId && discussion.cardIndex === boom.cardIndex &&
       JSON.stringify(discussion.boom) === JSON.stringify(boom.boom) && JSON.stringify(discussion.history) === JSON.stringify(boom.history) &&
@@ -341,7 +388,7 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       const current = await state();
       if (now() - lastDiscussionProgress >= 10000) {
         lastDiscussionProgress = now(); process.stdout.write('BOMB_QA_PROGRESS ' + JSON.stringify({ step: report.step,
-          discussionElapsedMs: Math.max(0, now() - boom.phaseUntil), approximateRemainingMs: Math.max(0, discussion.phaseUntil - now()) }) + '\n');
+          discussionElapsedMs: Math.max(0, now() - animationEnd), approximateRemainingMs: Math.max(0, discussion.phaseUntil - now()) }) + '\n');
       }
       if (current.phase === 'discussion') {
         if (current.phaseUntil !== discussion.phaseUntil || current.order[0] !== promptId || current.history.length !== 1) {
@@ -358,13 +405,16 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     check(afterDiscussion.explodeAt === null && afterDiscussion.roundFuse === null && afterDiscussion.phaseUntil === null &&
       afterDiscussion.discussionUntil === null && afterDiscussion.history.length === 1 && afterDiscussion.order[1] !== promptId,
       'discussion-expiry-reveals-exactly-one-new-prompt-and-never-auto-starts-the-fuse');
+    for (const [index, item] of [host, ...players].entries()) {
+      check(/20–45/.test(await item.locator('[data-br-ready-range]').innerText()), `ready-${index}-shows-pending-effective-custom-range`);
+    }
     await sleep(1200);
     check((await state()).phase === 'ready' && (await state()).turnId === afterDiscussion.turnId && (await state()).explodeAt === null,
       'new-prompt-continues-waiting-for-manual-start');
     report.observedAutomaticDiscussionCompletion = true;
     progress('next-manual-go-uses-fast-off');
     const second = await tapHolder('light');
-    check(second.roundFuse.speedModeAtStart === 'fast' && second.roundFuse.scaleWithPlayersAtStart === false && second.roundFuse.minMsAtStart === 30000 && second.roundFuse.maxMsAtStart === 60000, 'next-go-applies-pending-fast-off');
+    check(second.roundFuse.speedModeAtStart === 'fast' && second.roundFuse.scaleWithPlayersAtStart === false && second.roundFuse.minMsAtStart === 20000 && second.roundFuse.maxMsAtStart === 45000, 'next-go-applies-pending-fast-off-and-custom-bounds');
     check(second.promptHistory.seenIds.includes(promptId) && second.order[1] !== promptId, 'next-prompt-preserves-activity-history');
     await samePlayers('ticking');
     progress('wait-second-real-fast-fuse-for-player-early-next');

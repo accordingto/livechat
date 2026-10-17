@@ -22,7 +22,8 @@ var BOMB_RELAY_ENGINE = (() => {
   const timing = typeof BOMB_RELAY_TIMING !== 'undefined' ? BOMB_RELAY_TIMING : require('./bomb-relay-timing.js');
   const CONFIG = Object.freeze({
     minPlayers: 2, maxPlayers: 9,
-    // Preserve explicit pre-v2 preferences. New games use the timing policy.
+    // Historical names map to a v3.1 preference for the NEXT GO only.
+    // A saved running/paused fuse is never recalculated from these ranges.
     fuses: Object.freeze({ quick: [8, 25], classic: [10, 60], long: [20, 80] }),
     speedModes: timing.SPEED_MODES, timing: timing.TIMING_CONFIG,
     defaultTiming: timing.DEFAULT_TIMING_SETTINGS,
@@ -91,6 +92,26 @@ var BOMB_RELAY_ENGINE = (() => {
       familyWindow: state.familyWindow, random });
     state.promptHistory = result.history;
     state.order[state.cardIndex] = result.prompt.id;
+    state.promptSnapshot = promptSnapshot(result.prompt);
+  }
+  // One canonical wording per bomb, including an old room opened after a bank
+  // revision. The migration lookup is derived from the immutable editorial
+  // patch; it does not become a second editable catalog or a selection source.
+  function promptSnapshot(card) {
+    if (!card) return null;
+    return { id: card.id, pack: card.pack || '', family: card.family || '',
+      en: card.en || '', zhHant: card.zhHant || card.zh || '',
+      zh: card.zhHant || card.zh || '', category: card.category || card.pack || '' };
+  }
+  function currentPrompt(state) {
+    if (state.phase === 'finished') return null;
+    const id = state.order?.[state.cardIndex];
+    if (!id) return null;
+    const saved = state.promptSnapshot;
+    if (saved?.id === id && typeof saved.en === 'string' && (typeof saved.zhHant === 'string' || typeof saved.zh === 'string')) {
+      return promptSnapshot(saved);
+    }
+    return promptSnapshot(deck.getPrevious ? deck.getPrevious(id) : deck.get(id));
   }
   function normalizePromptState(state) {
     state.promptHistory = promptHistory(state.promptHistory);
@@ -102,29 +123,25 @@ var BOMB_RELAY_ENGINE = (() => {
     }
     state.promptWeights = Object.assign({}, CONFIG.promptWeights, state.promptWeights || {});
     state.familyWindow = Number.isInteger(state.familyWindow) ? state.familyWindow : CONFIG.familyWindow;
+    state.promptSnapshot = currentPrompt(state);
   }
   function legacyTiming(fuse) {
-    return { speedMode: { quick: 'fast', classic: 'normal', long: 'chill' }[fuse], scaleWithPlayers: false, legacyFuse: fuse };
+    return { speedMode: { quick: 'fast', classic: 'normal', long: 'chill' }[fuse], scaleWithPlayers: false };
   }
   function normalizeTimingSettings(value = {}) {
-    const normalized = timing.normalizeTimingSettings(value);
-    if (value.legacyFuse !== undefined) {
+    if (value && value.legacyFuse !== undefined) {
       if (!validFuse(value.legacyFuse)) throw new Error('invalid_options');
-      // Legacy named settings were uniform and had no player adjustment.
-      return Object.freeze(legacyTiming(value.legacyFuse));
+      // Preserve explicit speed/scaling choices; only retire the old uniform
+      // policy flag. Existing roundFuse / explodeAt / remainingMs stay intact.
+      return timing.normalizeTimingSettings({ ...legacyTiming(value.legacyFuse), ...value });
     }
-    return normalized;
+    return timing.normalizeTimingSettings(value);
   }
   function timingSettings(state) {
     return normalizeTimingSettings(state?.settingsTiming ?? (validFuse(state?.fuse) ? legacyTiming(state.fuse) : {}));
   }
   function getTimingRange({ activePlayerCount, settings = {} } = {}) {
-    const normalized = normalizeTimingSettings(settings);
-    const standard = timing.getTimingRange({ activePlayerCount, settings: normalized });
-    if (!normalized.legacyFuse) return standard;
-    const [min, max] = CONFIG.fuses[normalized.legacyFuse];
-    return Object.freeze({ ...standard, ...normalized, minMs: min * 1000, maxMs: max * 1000,
-      meanMs: (min + max) * 500, addedMs: 0, capped: false });
+    return timing.getTimingRange({ activePlayerCount, settings: normalizeTimingSettings(settings) });
   }
   function lightFuse(state, now, random) {
     // Immutable GO audit snapshot. Expiry ALWAYS reads state.explodeAt below:
@@ -132,13 +149,6 @@ var BOMB_RELAY_ENGINE = (() => {
     const settings = timingSettings(state);
     const activePlayerCount = new Set(active(state).map(player => player.playerNum)).size;
     const roundId = `${state.sessionId}:${state.cardIndex}:${state.turnId}`;
-    if (settings.legacyFuse) {
-      const range = getTimingRange({ activePlayerCount, settings });
-      const durationMs = Math.round(range.minMs + random() * (range.maxMs - range.minMs));
-      return { policyVersion: 'talk-bomb-legacy-uniform', roundId, startedAtMs: now, durationMs, explodeAtMs: now + durationMs,
-        activePlayerCountAtStart: activePlayerCount, speedModeAtStart: settings.speedMode,
-        scaleWithPlayersAtStart: false, minMsAtStart: range.minMs, maxMsAtStart: range.maxMs, legacyFuse: settings.legacyFuse };
-    }
     return timing.startFuse({ roundId, nowMs: now, activePlayerCount, settings, random });
   }
   function bump(state, now) { state.turnId++; state.lastChangeAt = now; }
@@ -408,6 +418,9 @@ var BOMB_RELAY_ENGINE = (() => {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, phase: state.phase,
       fuse: state.fuse, settingsTiming: timingSettings(state), cards: state.cards, category: state.category,
       cardId: state.phase === 'finished' ? null : state.order[state.cardIndex] ?? null,
+      prompt: currentPrompt(state),
+      // Policy bounds only, never the random choice or active deadline.
+      timingRange: getTimingRange({ activePlayerCount: new Set(active(state).map(player => player.playerNum)).size, settings: timingSettings(state) }),
       cardNo: Math.min(state.cardIndex + 1, totalCards(state)), cardsTotal: totalCards(state),
       holder: ['ready', 'ticking', 'paused'].includes(state.phase) ? state.holder : null,
       next: ticking ? nextActive(state, state.holder) : null,
