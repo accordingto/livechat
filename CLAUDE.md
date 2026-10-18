@@ -1,3 +1,39 @@
+## CURRENT: Crazy Talk skip penalties and private returns — 2026-10-18
+
+Read docs/talk-skip-return-acceptance.md for actual release evidence. Gameplay
+source1992fe4 is published on both existing hosts, based on516715f so the
+concurrent Talk Bomb v3.1 release below remains intact. Final merged2131/2131
+tests pass; actual production API396 checks and exact safe cleanup7/7 pass.
+Read-only production17 loaded assets/11 flags/12 bilingual mobile captures pass;
+Talk19/19, executor62/62, Life Story164/164, Bomb15/15 and private bodies14/14 pass.
+Existing service dpl_FLkWvRXnGHnoHXDk8rHZyoSbqFpV is READY. No physical-phone/
+human voice playtest is claimed. Talk cache tags are vnext-8/talk-vnext-8.
+
+Player-authored Skip deducts1 (negative allowed), rests30seconds, and creates
+one separate private returned copy for its ORIGINAL verified author. Crazy
+negative integers survive migration/pulses; Normal still repairs negative scores.
+System Skip costs0, starts no rest and tries one different system card for the
+same eligible recipient, full TTL. Eligible queued handwriting retains priority.
+Source/role/pause/cap/round restrictions remain: no system refill during decision,
+extension or draining. Replays/stale prompts cannot duplicate penalty/return/refill.
+
+Pending copies live in existing identity-keyed encrypted vault status returned,
+project only in own crazy.returnedCards, and are excluded from saved library.
+crazyReturnSave accepts original or edited text; crazyReturnDelete tombstones
+the copy. Neither resends; generic library actions cannot bypass the choice.
+Original executed snapshot/reveal stays unchanged; revised private text never
+enters that recap. Owner may handle returns after role change/inactivity/ending
+or in a later same-room session. Player number/name/replacement tokens never
+inherit another owner's copies. Persist before successful receipts/publication,
+retain versions/ACKs and metadata-only skip_penalty reason points:-1.
+
+Keep source-aware Skip labels, quiet private lastResult feedback, keyed return
+editors below composer/topic, drafts/focus/IME/native selectors and frozen pending
+requests. During ended-phase Save ACK, a still-authorized private editor stays
+connected while composing; new sessions/lost ownership still enforce cleanup.
+Main writer defaults open and director inspiration/120second rotation stay intact.
+No new room system, dependency, AI provider or secret was introduced.
+
 ## CURRENT: Talk Bomb reviewed prompts and pacing v3.1 — 2026-10-18
 
 Read bomb-relay-mode.md for the current source, authority and migration contract.
