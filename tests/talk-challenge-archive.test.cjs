@@ -66,7 +66,7 @@ test('the same command ID from different authenticated authors keeps separate ha
   s = act(s, 'crazySkip', 2, { promptId: s.crazy.prompts[2].id, now: 38001 });
   assert.deepEqual(records(s).map(record => [record.text, record.status, record.version]),
     [['First author song.', 'done', 3], ['Second author chicken.', 'skipped', 3]]);
-  assert.equal(s.scores[2], 1);
+  assert.equal(s.scores[2], 0);
   s = E.ackArchive(s, [{ id: firstId, version: 3 }]);
   assert.equal(records(s).length, 1); assert.equal(records(s)[0].id, secondId);
 });
@@ -86,7 +86,7 @@ test('delivery and completion update the same record and private link while norm
   assert.equal(records(queued)[0].status, 'queued', 'past immutable state does not acquire later outcomes');
 });
 
-test('skip closes handwriting without scoring and links a queued immediate replacement to its own record', () => {
+test('skip deducts a point for handwriting and links a queued immediate replacement to its own record', () => {
   let s = submit(create({ crazyMaxActive: 1 }));
   s = act(s, 'crazyAssign', 3, { target: 1, text: 'Say meow.', now: 1600 });
   s = deliver(s); const first = s.crazy.prompts[2];
@@ -94,7 +94,7 @@ test('skip closes handwriting without scoring and links a queued immediate repla
   assert.equal(records(s)[0].status, 'skipped'); assert.equal(records(s)[0].version, 3); assert.equal(records(s)[0].closedAt, 8000);
   assert.equal(records(s)[1].status, 'pending'); assert.equal(records(s)[1].version, 2);
   assert.equal(s.crazy.prompts[1].archiveId, records(s)[1].id); assert.equal(records(s)[1].assignedAt, 8000);
-  assert.deepEqual(s.scores, { 1: 0, 2: 0, 3: 0 });
+  assert.deepEqual(s.scores, { 1: 0, 2: -1, 3: 0 });
 });
 
 test('task expiry is archived before a late completion and retains the original writing time', () => {

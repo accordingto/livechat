@@ -923,6 +923,82 @@ test('private library editing, confirmed deletion and resend use only an authori
   } finally {f.card.destroy();}
 });
 
+test('Skip copy distinguishes a player penalty from a free system swap without a confirmation or client-side score', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    for(const language of ['en','zh']) {
+      f.setLanguage(language);
+      for(const source of ['player','system']) {
+        const talk=vnextTalk({prompt:prompt({id:language+'-'+source,source,expiresAt:90000})});
+        f.update({...talk,sessionId:language+'-'+source,scores:[{playerNum:2,score:-2}]});
+        assert.match(f.element.innerHTML,source==='player' ? (language==='en'?/Skip −1 point/:/跳過 −1分/) : (language==='en'?/Swap for free/:/換一張（不扣分）/));
+        assert.match(f.element.innerHTML,source==='player' ? (language==='en'?/returns the task to its author/:/任務會退回出題者/) : (language==='en'?/without losing points/:/換一張不扣分/));
+        const before=sent.length;f.click('crazySkip');await flush();assert.equal(sent.length,before+1);
+        assert.equal(sent.at(-1).type,'crazySkip');assert.equal(sent.at(-1).promptId,language+'-'+source);
+        assert.doesNotMatch(f.element.innerHTML,/role="alertdialog"/);assert.equal(f.card.data.talk.scores[0].score,-2);
+      }
+    }
+  }finally{f.card.destroy();}
+});
+
+test('only a recent authoritative own result explains a skip while its replacement card remains visible', () => {
+  const f=fixture();try {
+    const talk=vnextTalk({prompt:prompt({id:'new-system',source:'system'}),lastResult:{id:'skip-receipt',promptId:'old-player',source:'player',status:'skipped',scoreDelta:-1,at:1000}});
+    f.update({...talk,scores:[{playerNum:2,score:-1}]});assert.match(f.element.innerHTML,/Skipped: −1 point/);assert.match(f.element.innerHTML,/data-talk-prompt="new-system"/);
+    assert.match(f.element.innerHTML,/talk-participant-score[^>]*>-1</);assert.doesNotMatch(f.element.innerHTML,/authorIdentity|assignedBy|controlToken/);
+    assert.equal(f.context.TALK_UI.skipResultHTML(talk,9000),'');
+    f.update({...talk,crazy:{...talk.crazy,lastResult:{...talk.crazy.lastResult,source:'system',scoreDelta:0}}});assert.match(f.element.innerHTML,/Swapped without losing points/);
+    assert.equal(f.context.TALK_UI.skipResultHTML({...talk,gameMode:'normal'},1000),'');
+  }finally{f.card.destroy();}
+});
+
+test('returned cards stay private and editable for their projected owner after actor and inactive changes without resending', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));
+  try {
+    const item={id:'return-a',text:'A private returned spoon challenge.',target:1,version:1};
+    const talk={...vnextTalk({playStyle:'director',effectivePlayStyle:'director',role:'player',canAssign:false,returnedCards:[item]}),
+      roster:[{playerNum:1,name:'A'},{playerNum:2,name:'Sam',active:false}]};
+    f.update(talk);assert.doesNotMatch(f.element.innerHTML,/talk-assignment-body|data-talk-action="crazyLibrarySend"/);
+    assert.match(f.element.innerHTML,/Your returned tasks · 1/);assert.match(f.element.innerHTML,/Only you can see these/);
+    assert.ok(f.element.innerHTML.indexOf('data-talk-card-returns')<f.element.innerHTML.indexOf('data-talk-card-footer'));
+    assert.equal(sent.length,0);f.handlers.get('input')({target:{dataset:{talkLibraryField:item.id},value:'  An edited private spoon challenge.  ',matches:()=>false}});
+    f.click('crazyReturnSave');await flush();assert.equal(sent.length,1);assert.equal(sent[0].type,'crazyReturnSave');assert.equal(sent[0].cardId,item.id);assert.equal(sent[0].text,'An edited private spoon challenge.');
+    f.card.deliver();await flush();assert.deepEqual(sent[1],sent[0],'retry preserves its exact receipt and edited payload');
+    f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,returnedCards:[],library:[{...item,text:sent[0].text}]}});
+    assert.doesNotMatch(f.element.innerHTML,/Your returned tasks|data-talk-action="crazyLibrarySend"/);assert.match(f.element.innerHTML,/An edited private spoon challenge/);
+    const second={...item,id:'return-b'};f.update({...talk,crazy:{...talk.crazy,returnedCards:[second]}});
+    f.click('crazyReturnDelete');await flush();assert.equal(sent.at(-1).type,'crazyReturnDelete');assert.equal(sent.at(-1).cardId,second.id);assert.equal(sent.at(-1).text,undefined);
+    for(const command of sent)for(const key of ['ownerIdentity','actorIdentity','authorName','controlToken','target'])assert.equal(command[key],undefined);
+    f.update({...talk,reply:{id:sent.at(-1).id,error:''},crazy:{...talk.crazy,returnedCards:[]}});const count=sent.length;
+    f.card.act('crazyReturnSave',{cardId:'not-projected',text:'Foreign edit'});await flush();assert.equal(sent.length,count);
+    assert.equal(f.context.TALK_UI.returnedHTML(talk,0,f.card),'','shared host does not display a private inbox');
+  }finally{f.card.destroy();}
+});
+
+test('a return-save ACK retains newer local edits in an open normal private-library editor', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));try {
+    const item={id:'return-next-draft',text:'Original return.',version:1},talk=vnextTalk({returnedCards:[item]});
+    f.update(talk);f.click('crazyReturnSave');await flush();assert.equal(sent.length,1);
+    f.handlers.get('input')({target:{dataset:{talkLibraryField:item.id},value:'Newer edit while save waits.',matches:()=>false}});
+    f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,returnedCards:[],library:[item]}});
+    assert.equal(f.card.libraryDrafts[item.id],'Newer edit while save waits.');assert.equal(f.card.libraryOpen,true);assert.equal(f.card.libraryEditsOpen[item.id],true);
+    assert.match(f.element.innerHTML,/Newer edit while save waits/);assert.equal(sent.length,1);
+  }finally{f.card.destroy();}
+});
+
+test('sorting keeps an authorized private returned editor connected through an ACK until Chinese composition ends', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));try {
+    const item={id:'sorting-return-ime',text:'Returned during sorting.',version:1},talk={...vnextTalk({returnedCards:[item],roundStage:'sorting',queueLocked:true}),phase:'ended'};
+    f.update(talk);f.click('crazyReturnSave');await flush();
+    f.context.document.activeElement={dataset:{talkLibraryField:item.id}};f.handlers.get('compositionstart')();
+    f.handlers.get('input')({target:{dataset:{talkLibraryField:item.id},value:'中文尚未選字',matches:()=>false}});const before=f.element.innerHTML;
+    f.update({...talk,reply:{id:sent[0].id,error:''},crazy:{...talk.crazy,returnedCards:[],library:[item]}});
+    assert.equal(f.card.pending,null);assert.equal(f.element.innerHTML,before,'authorized private editor remains mounted while composition is active');
+    f.context.document.activeElement=null;f.handlers.get('compositionend')();
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-return-card=/);assert.match(f.element.innerHTML,/中文尚未選字/);
+  }finally{f.card.destroy();}
+});
+
 test('round decisions expose only projected host/delegate actions and receiving pause is an explicit session command', async () => {
   const sent=[],f=fixture(async command=>sent.push(clone(command)));
   try {

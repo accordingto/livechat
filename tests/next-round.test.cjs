@@ -125,13 +125,19 @@ test('a shut gate hides the id and refuses taps', () => {
 });
 
 test('sync fires a countdown that ran out while the tab was frozen', () => {
-  const { gate, log } = setup({ delay: 1 });
-  const id = gate.open();
-  gate.handle(1, go(id));
-  const start = Date.now();
-  while (Date.now() - start < 5) { /* the tab was asleep; no timer ran */ }
-  assert.equal(gate.sync(), true);
-  assert.equal(log.draws, 1);
+  const realNow = Date.now;
+  let clock = 1000, gate;
+  try {
+    // Hold time still while arming: under CPU load a real 1ms countdown could
+    // already fire inside handle(), before this test simulated a frozen tab.
+    Date.now = () => clock;
+    const ready = setup({ delay: 1000 }); gate = ready.gate;
+    gate.handle(1, go(gate.open()));
+    assert.equal(ready.log.draws, 0); assert.equal(gate.isArmed(), true);
+    clock += 1001; // Time advanced, but no timer callback/event loop ran.
+    assert.equal(gate.sync(), true); assert.equal(ready.log.draws, 1);
+    assert.equal(gate.sync(), false); assert.equal(ready.log.draws, 1);
+  } finally { gate?.close(); Date.now = realNow; }
 });
 
 test('sync stays quiet when nothing changed', () => {

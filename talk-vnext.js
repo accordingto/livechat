@@ -98,7 +98,7 @@ var TALK_VNEXT = (() => {
     for (const key of ['prompts', 'sequence', 'receivers', 'offers']) c[key] = Object.fromEntries(Object.entries(c[key] || {}).filter(([, value]) => value != null));
     c.roundCards = Array.isArray(c.roundCards) ? Object.fromEntries(list(c.roundCards).filter(v => v.id).map(v => [v.archiveId || v.id, v])) : c.roundCards || {};
     for (const [key, card] of Object.entries(c.roundCards)) if (!card.id || card.id === card.archiveId || card.id === key) card.id = 'card:' + compact(card.archiveId || key);
-    c.events = list(c.events); pruneEvents(c); c.declinedOffers ||= {}; c.sortConfirmed ||= {}; c.actionReceipts ||= {};
+    c.events = list(c.events); pruneEvents(c); c.declinedOffers ||= {}; c.sortConfirmed ||= {}; c.actionReceipts ||= {}; c.lastResults ||= {};
     c.librarySequence = Number(c.librarySequence) || 0;
     c.roundStage ||= s.phase === 'ended' ? 'reveal' : 'open'; c.queueLocked = c.queueLocked === true || !['open'].includes(c.roundStage);
     c.hostDelegate = member(s, Number(c.hostDelegate)) ? Number(c.hostDelegate) : null;
@@ -299,10 +299,23 @@ var TALK_VNEXT = (() => {
     const c = s.crazy, vault = s.crazyVault[owner] ||= {};
     const cardId = id || 'library:' + compact(`${s.sessionId}:${input.actor}:${input.id || ++c.librarySequence}`);
     const existing = vault[cardId];
-    if (existing && existing.text === text && existing.target === target && !existing.deleted) return existing;
+    if (existing && existing.text === text && existing.target === target && !existing.deleted && !existing.returned) return existing;
     const entry = { id: cardId, text, target: target ?? null, version: (Number(existing?.version) || 0) + 1,
       persistedVersion: Number(existing?.persistedVersion) || 0, deleted: false, createdAt: existing?.createdAt ?? nowOf(input), updatedAt: nowOf(input) };
     vault[cardId] = entry; return entry;
+  }
+  function returnSkipped(s, prompt, input) {
+    const card = s.crazy.roundCards[prompt.roundCardId || prompt.archiveId];
+    // The owner was bound when the card was accepted. A reused player number
+    // must never transfer an old author's text to a different bearer identity.
+    const owner = identity(card?.ownerIdentity);
+    if (!card || !owner) return;
+    const id = 'returned:' + compact(card.archiveId || card.id), vault = s.crazyVault[owner] ||= {};
+    if (!Object.hasOwn(vault, id)) vault[id] = { id, text: card.text, target: card.target ?? null,
+      returned: true, deleted: false, version: 1, persistedVersion: 0,
+      createdAt: nowOf(input), updatedAt: nowOf(input) };
+    card.vaultSavedIdentity = owner;
+    event(s, 'card_returned', input, { author: card.assignedBy, recipient: input.actor, cardId: card.id, promptId: prompt.id, source: 'player' });
   }
   function unusedCards(s, num, owner = ownerFor(s, num)) {
     return list(s.crazy.roundCards).filter(card => card.assignedBy === num
@@ -475,8 +488,16 @@ var TALK_VNEXT = (() => {
         if (!active(s).includes(actor) || p?.status !== 'pending' || p.id !== input.promptId || input.renderVersion != null && input.renderVersion !== p.version) return 'stale_prompt';
         if (!['open', 'extension', 'decision', 'draining'].includes(c.roundStage)) return 'not_available';
         const done = type === 'crazyDone';
-        closePrompt(s, actor, done ? 'done' : 'skipped', input, { cooldown: true, executed: true });
-        if (done) { s.scores ||= {}; s.scores[actor] = (Number(s.scores[actor]) || 0) + 1; }
+        const playerSkip = !done && p.source === 'player', scoreDelta = done ? 1 : playerSkip ? -1 : 0;
+        closePrompt(s, actor, done ? 'done' : 'skipped', input, { cooldown: done || playerSkip, executed: true });
+        s.scores ||= {}; s.scores[actor] = (Number(s.scores[actor]) || 0) + scoreDelta;
+        c.lastResults[actor] = { id: input.id || p.id, promptId: p.id, source: p.source,
+          status: done ? 'done' : 'skipped', scoreDelta, at: now };
+        if (playerSkip) {
+          event(s, 'skip_penalty', input, { actor, recipient: actor, promptId: p.id, cardId: p.roundCardId, source: 'player', reason: 'points:-1' });
+          returnSkipped(s, p, input);
+        }
+        else if (!done) c.systemReplacement = { playerNum: actor, promptId: p.id, lineId: p.lineId, text: p.text };
         return null;
       }
       if (type === 'crazyReplace' || type === 'crazyKeep') {
@@ -536,12 +557,24 @@ var TALK_VNEXT = (() => {
         }
         c.sortConfirmed[owner] = true; event(s, 'sorted', input, { actor }); return null;
       }
-      if (['crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend'].includes(type)) {
+      if (['crazyReturnSave', 'crazyReturnDelete', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend'].includes(type)) {
         if (!member(s, actor) || !owner) return 'identity_unavailable';
         if (input.cardId != null && (typeof input.cardId !== 'string' || !input.cardId || input.cardId.length > 1024
           || ['__proto__', 'constructor', 'prototype'].includes(input.cardId))) return 'invalid_card';
         const vault = s.crazyVault[owner] ||= {}, card = vault[input.cardId];
+        if (type === 'crazyReturnSave' || type === 'crazyReturnDelete') {
+          if (!card || card.deleted || !card.returned) return 'invalid_card';
+          if (type === 'crazyReturnDelete') { card.deleted = true; card.version++; card.updatedAt = now; }
+          else {
+            const text = input.text == null ? card.text : input.text;
+            if (!validText(text)) return 'invalid_prompt';
+            saveLibrary(s, owner, text.trim(), card.target, input, card.id);
+          }
+          event(s, type === 'crazyReturnSave' ? 'returned_saved' : 'returned_deleted', input, { actor, cardId: card.id });
+          return null;
+        }
         if (type !== 'crazyLibrarySave' && (!card || card.deleted)) return 'invalid_card';
+        if (card?.returned) return 'invalid_card';
         if (type === 'crazyLibraryDelete') { card.deleted = true; card.version++; card.updatedAt = now; event(s, 'library_deleted', input, { actor, cardId: card.id }); return null; }
         if (type === 'crazyLibrarySend') {
           const error = submit(s, { id: input.id || `${card.id}:send:${now}`, text: card.text, target: input.target ?? null,
@@ -607,7 +640,9 @@ var TALK_VNEXT = (() => {
         oldPrompt: { id: p.id, text: p.text, kind: p.kind }, newCard: { id: offer.id + ':card', text: card.text, kind: card.kind } } : null,
       canAssign: active(s).includes(num) && (c.effectivePlayStyle !== 'director' || c.directors.includes(num)) && !c.queueLocked && ['thinking', 'talking'].includes(s.phase) && c.source !== 'system',
       myQueuedCount: list(c.queue).filter(item => item.assignedBy === num).length,
-      library: owner && ownMember ? Object.values(s.crazyVault?.[owner] || {}).filter(v => !v.deleted).map(v => ({ id: v.id, text: v.text, target: v.target, version: v.version })) : [],
+      library: owner && ownMember ? Object.values(s.crazyVault?.[owner] || {}).filter(v => !v.deleted && !v.returned).map(v => ({ id: v.id, text: v.text, target: v.target, version: v.version })) : [],
+      returnedCards: owner && ownMember ? Object.values(s.crazyVault?.[owner] || {}).filter(v => !v.deleted && v.returned).map(v => ({ id: v.id, text: v.text, target: v.target, version: v.version })) : [],
+      lastResult: num > 0 && ownMember && c.lastResults?.[num] ? clone(c.lastResults[num]) : null,
       unusedCards: ['sorting', 'reveal'].includes(c.roundStage) ? unusedCards(s, num, owner).map(v => ({ id: v.id, text: v.text, kind: v.kind, status: v.status, target: v.target })) : [],
       sortConfirmed: !!(owner && c.sortConfirmed?.[owner]), revealCards: visible,
       scoreOrder: active(s).map(playerNum => ({ playerNum, score: Number(s.scores?.[playerNum]) || 0 })).sort((a, b) => b.score - a.score || a.playerNum - b.playerNum),
@@ -631,7 +666,7 @@ var TALK_VNEXT = (() => {
     for (const [ownerIdentity, vault] of Object.entries(s.crazyVault || {})) for (const card of Object.values(vault)) if (card.version > (Number(card.persistedVersion) || 0)) records.push({
       id: `vault:${ownerIdentity}:${card.id}`, version: card.version, persistedVersion: Number(card.persistedVersion) || 0,
       category: 'vault', ownerIdentity, cardId: card.id, kind: 'task', text: card.text, target: card.target,
-      status: card.deleted ? 'deleted' : 'saved', createdAt: card.createdAt, updatedAt: card.updatedAt
+      status: card.deleted ? 'deleted' : card.returned ? 'returned' : 'saved', createdAt: card.createdAt, updatedAt: card.updatedAt
     });
     return clone(records);
   }

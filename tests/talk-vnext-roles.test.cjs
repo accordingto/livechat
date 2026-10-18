@@ -60,7 +60,7 @@ test('increased director target waits for busy actors and fills each newly idle 
   assert.deepEqual(s.crazy.directors, [1, 2, 3]); assert.equal(s.scores[3], 1);
   for (const num of [4, 5, 6, 7, 8]) assert.deepEqual(s.crazy.prompts[num], pending[num]);
   s = act(s, 'crazySkip', 4, { promptId: pending[4].id, now: 5000 });
-  assert.deepEqual(s.crazy.directors, [1, 2, 3, 4]); assert.equal(s.scores[4], 0);
+  assert.deepEqual(s.crazy.directors, [1, 2, 3, 4]); assert.equal(s.scores[4], -1);
   for (const num of [5, 6, 7, 8]) assert.deepEqual(s.crazy.prompts[num], pending[num]);
   assertBalanced(s, 8);
 });
@@ -95,7 +95,7 @@ test('two-player rotation exchanges the one director and actor only after the li
   s = act(s, 'clockTick', 0, { now: 66000 });
   assert.deepEqual(s.crazy.directors, [2]); assert.equal(s.speaker, 1);
   assert.deepEqual(V.roles(s).receivers, [1]); assert.equal(V.capacity(s), 1);
-  assert.equal(s.crazy.prompts[2].status, 'skipped'); assert.equal(s.scores[2], 0);
+  assert.equal(s.crazy.prompts[2].status, 'skipped'); assert.equal(s.scores[2], -1);
   s = act(s, 'crazyAssign', 2, { target: 1, text: 'A new actor receives a fresh challenge.', now: 67000 });
   assert.equal(s.replies[2].error, ''); assert.equal(s.crazy.prompts[1].status, 'pending');
   assert.notEqual(s.crazy.prompts[1].id, original);

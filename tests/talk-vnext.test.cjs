@@ -382,14 +382,14 @@ test('completion scores once and imposes a 30 second receive cooldown', () => {
   assert.ok(V.eligibleReceivers(s, input(s, 0, { now: 32200 })).includes(3));
 });
 
-test('skip awards no score and cannot be used to receive a new task before cooldown', () => {
+test('skipping handwriting deducts a point and cannot receive a new task before cooldown', () => {
   const s = room();
   s.phase = 'talking';
   submit(s, item('skip', 1, 3));
   const p = shown(s, 3);
   assert.equal(act(s, 'crazySkip', 3, { promptId: p.id, now: 2200 }), null);
   assert.equal(p.status, 'skipped');
-  assert.equal(s.scores[3], 0);
+  assert.equal(s.scores[3], -1);
   assert.equal(s.crazy.receivers[3].cooldownUntil, 32200);
   submit(s, item('later', 2, 3), { now: 2300 });
   assert.equal(s.crazy.queue.length, 1);

@@ -98,7 +98,7 @@ function createExecutor({ secret, archiveSecret, databaseURL = DEFAULT_DB, fetch
   }
   function permittedCommand(state, command, number, ctx) {
     const privateCrazy = ctx.game === 'letstalk' && state?.gameMode === 'crazy' && ctx.seats?.some(s=>s.playerNum === number)
-      && ['crazySort','crazyLibraryUpdate','crazyLibraryDelete'].includes(command?.type);
+      && ['crazySort','crazyLibraryUpdate','crazyLibraryDelete','crazyReturnSave','crazyReturnDelete'].includes(command?.type);
     return eligible(state, number, ctx) || privateCrazy || command?.type === 'exclude' && Number(command.playerNum) === number && command.active === true || command?.type === 'recover' && (state.runtimeOfflineNums || []).includes(number);
   }
   function membershipAuthorized(executor, incoming, current, capsule) {

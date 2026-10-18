@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const { isDeepStrictEqual } = require('node:util');
 const DEFAULT_DB = 'https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app';
 const CODE = /^[A-Z0-9]{4,12}$/;
-const STATUSES = new Set(['queued', 'pending', 'done', 'skipped', 'expired', 'cancelled', 'replaced', 'withdrawn', 'saved', 'deleted', 'revealed']);
+const STATUSES = new Set(['queued', 'pending', 'done', 'skipped', 'expired', 'cancelled', 'replaced', 'withdrawn', 'saved', 'deleted', 'revealed', 'returned']);
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const hashId = id => crypto.createHash('sha256').update(id).digest('hex');
 function cleanRecord(input) {

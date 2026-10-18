@@ -1,4 +1,4 @@
-# Current: Crazy Talk vNext — 2026-10-17
+# Current: Crazy Talk vNext — 2026-10-18
 
 Current scheduling uses a private native Vercel Queue consumer in the existing
 executor project. It carries only sealed wake tickets; Firebase/CAS remains the
@@ -7,7 +7,8 @@ be restored. See docs/talk-vnext-acceptance.md for final release evidence.
 
 This section describes the implemented vNext behavior. The2026-10-16 follow-up
 supersedes the former free-default/five-player minimum and collapsed composer.
-See [the current rotation/inspiration acceptance record](docs/talk-director-help-acceptance.md)
+See [the current skip/return acceptance record](docs/talk-skip-return-acceptance.md),
+[the earlier rotation/inspiration record](docs/talk-director-help-acceptance.md)
 and [the earlier role-balance record](docs/talk-director-balance-acceptance.md).
 The [earlier check-in record](docs/talk-2026-10-16-acceptance.md) describes that follow-up. The
 [2026-10-15 record](docs/talk-vnext-acceptance.md) preserves the previous release's
@@ -104,10 +105,16 @@ recipient, and returns player handwriting to the queue. Once technically rendere
 a quiet single-line reminder appears after 30 seconds; there is no alert overlay.
 
 The internal mission TTL is 150 seconds by default, configurable from 30 to
-300 seconds, measured from assignment. Done gives the recipient exactly +1;
-Skip gives zero. Both close only the matching prompt and give that player a
-30-second breather before another assignment. Duplicate, stale or late commands
-cannot score twice. A rendered pending task with no related manual response also
+300 seconds, measured from assignment. Done gives the recipient exactly +1 and
+a 30-second breather. Skipping a player-authored task deducts exactly 1 point,
+allows negative scores and gives the same breather. It returns a separate private
+copy to the original verified author, without requeueing the card. Skipping a
+system task costs zero, starts no breather and immediately tries another different
+system card for the same eligible recipient with a fresh task lifetime. Eligible
+queued handwriting retains priority. Paused/role/source/capacity and round-closing
+rules still gate new cards; there is no system refill during decision, extension
+or draining. Duplicate, stale or late commands cannot deduct twice, add multiple
+returns, score twice or replace an already changed prompt. A rendered pending task with no related manual response also
 gets one small nonmodal Are you still here? prompt after140 seconds by default
 (or10 seconds before expiry for a shorter task). It is private and does not move
 focus, interrupt native selectors, show a countdown, or require initial acceptance.
@@ -131,6 +138,19 @@ submitted draft, and delayed acknowledged IDs cannot recreate a pending lock.
 Unsent drafts can restore after reload only with the same room, verified original
 player bearer token and session. Storage failures fall back to memory; player
 names are never used as ownership credentials.
+
+Returned tasks appear privately below the author's composer (or below the topic
+when the author is now an actor). The original text is immediately editable;
+Save privately accepts the original or edited text into the ordinary vault, and
+Delete removes the returned copy. Neither action sends another task. Unresolved
+returns stay private and survive same-room sessions, reloading and reconnecting
+with the same verified original bearer identity. They do not transfer with a
+player number/name to a replacement token. Authors may resolve returns after a
+role change or while inactive. Their keyed textareas, selection, Chinese IME and
+frozen requests survive updates; edits made while a Save receipt is pending remain
+available in the vault editor. Saving/deleting a returned copy does not rewrite
+the executed original card or its recap. Skip feedback is source-aware and quiet;
+no task countdown or new confirmation dialog is introduced.
 
 ## Round decision, sorting and recap
 

@@ -106,6 +106,8 @@
 .talk-crazy-prompt p,.talk-crazy-prompt small { color:#684a5d; font-size:.78rem; line-height:1.55; }
 .talk-crazy-prompt .talk-button { background:#ead0dc; color:#492b3d; border-color:#bda0ae; }
 .talk-crazy-prompt .talk-primary { background:#5d3a51; border-color:#5d3a51; color:#fff3f7; }
+.talk-crazy-prompt .talk-button:hover:not(:disabled) { background:#f2dce6; border-color:#9b758b; color:#492b3d; }
+.talk-crazy-prompt .talk-button.talk-primary:hover:not(:disabled) { background:#744b66; border-color:#744b66; color:#fff3f7; }
 .talk-crazy-wait { display:flex; align-items:center; flex-wrap:wrap; gap:7px 14px; width:100%; font-size:.75rem; color:#d9bfd5; }
 .talk-crazy-wait strong { color:#eed0e2; font-size:.8rem; }
 .talk-is-crazy .talk-assignment summary { color:#efd0e3; }
@@ -214,6 +216,15 @@
 .talk-idea:hover:not(:disabled),.talk-idea:focus-visible { background:#48354e; border-color:#c79bb9; }
 .talk-idea:disabled { opacity:.5; cursor:default; }
 .talk-inspiration-body>.talk-button { justify-self:start; font-size:.75rem; padding:7px 10px; background:transparent; color:#c9b7d0; }
+.talk-skip-hint { display:block; font-size:.76rem; line-height:1.5; color:#6e4b63; }
+.talk-skip-feedback { margin:0; color:#d7c4dc; font-size:.85rem; line-height:1.5; }
+.talk-returned { display:grid; gap:10px; padding:14px; border:1px solid #88677b; border-radius:13px; background:#252238; }
+.talk-returned h3 { margin:0; color:#efd4e6; font-size:.95rem; }
+.talk-returned>p { margin:0; font-size:.8rem; }
+.talk-returned-card { display:grid; gap:9px; padding-top:12px; margin-top:10px; border-top:1px solid #5d4b66; }
+.talk-returned-card .talk-field { margin:0; }
+.talk-returned-card textarea { min-height:74px; }
+.talk-returned-card .talk-button { padding:9px 12px; font-size:.8rem; }
 .talk-crazy-check-in{display:grid;gap:8px;margin-top:14px;padding:12px;border:1px solid rgba(91,54,77,.22);border-radius:12px;background:rgba(255,255,255,.24)}
 .talk-crazy-check-in[hidden]{display:none}
 .talk-crazy-reminder[hidden]{display:none}

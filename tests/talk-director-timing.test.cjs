@@ -46,7 +46,7 @@ test('two-minute rotation waits for the selected busy actor and then exchanges e
   s = act(s, 'crazySkip', 3, { promptId: id, now: 122000 });
   s = act(s, 'clockTick', 0, { now: 126000 });
   assert.deepEqual(s.crazy.directors, [2, 3]); assert.equal(s.crazy.nextRotateAt, 246000);
-  assert.equal(s.crazy.prompts[3].status, 'skipped'); assert.equal(s.scores[3], 0);
+  assert.equal(s.crazy.prompts[3].status, 'skipped'); assert.equal(s.scores[3], -1);
   assert.ok(!s.crazy.directors.includes(s.speaker));
 });
 

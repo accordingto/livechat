@@ -226,7 +226,7 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     value = await command(talk, 1, 'crazySkip', { promptId: skippedPrompt.id });
     cards = await talkCards();
     const replacement = cards[1].talk.crazy.prompt;
-    check(value.talk.crazy.prompt.status === 'skipped' && score(value, 1) === 0 && replacement?.text === replacementMission && replacement.status === 'pending' && replacement.at >= skippedPrompt.at && replacement.expiresAt - replacement.at === 30000 && pending(cards).length === 2);
+    check(value.talk.crazy.prompt.status === 'skipped' && score(value, 1) === -1 && replacement?.text === replacementMission && replacement.status === 'pending' && replacement.at >= skippedPrompt.at && replacement.expiresAt - replacement.at === 30000 && pending(cards).length === 2);
     check(value.talk.crazy.receiverStatus.cooldownUntil > now());
     check(cards[2].talk.crazy.myQueuedCount === 0 && cards.every(item => item.playerNum === 2 || !JSON.stringify(item.talk).includes(replacementMission)));
     await renderTalk(2);
@@ -236,7 +236,7 @@ async function run({ fetchImpl = globalThis.fetch, delay = ms => new Promise(r =
     check(value.talk.crazy.prompt.status === 'done' && score(value, 3) === 1 && value.talk.crazy.nextAssignAt >= nextAssignAt);
     await command(talk, 3, 'crazyDone', { id: doneId, promptId: firstPrompt.id });
     cards = await talkCards();
-    check(cards.every(item => score(item, 3) === 1 && score(item, 1) === 0 && score(item, 2) === 0));
+    check(cards.every(item => score(item, 3) === 1 && score(item, 1) === -1 && score(item, 2) === 0));
     report.step = 'task-ttl-player-only';
     const expired = await waitTalk(items => items[1].talk.crazy.prompt?.id === replacement.id && items[1].talk.crazy.prompt.status === 'expired' && items[1], 40000);
     check(expired.talk.phase === 'talking' && score(expired, 2) === 0 && expired.talk.crazy.receiverStatus.paused);

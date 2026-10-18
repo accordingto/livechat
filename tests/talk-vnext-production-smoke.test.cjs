@@ -53,3 +53,9 @@ test('owned production rotation harness uses two-minute default and one autonomo
  assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.flags.twoMinuteDefaultRotation,true);assert.equal(r.flags.autonomousTwoMinuteRotation,true);
  assert.equal(r.cleaned,7);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);
 });
+
+test('owned skip/return harness verifies free system replacement, private one-point return, author choices and exact cleanup',async()=>{
+ const h=harness();let failure;const r=await run({...h,skipRulesOnly:true,onFailure:e=>failure=e.stack});if(!r.ok)console.error(failure);
+ assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.cleaned,7);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);
+ for(const flag of ['freeImmediateDifferentSystemCard','queuedHandwritingPriority','exactOncePenaltyAndPrivateReturn','returnSaveEditDelete','immutableOriginalRecap','encryptedCrossSessionVault','encryptedSkipPenalty'])assert.equal(r.flags[flag],true,flag);
+});

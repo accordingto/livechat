@@ -188,9 +188,19 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.evaluate(()=>__sent.at(-1).text),'雞叫任務');
     await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.library[0].text='雞叫任務';__update();});
     assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
+    // Sorting may move an acknowledged return into the normal vault, but an
+    // in-progress private IME editor must not detach until composition ends.
+    await page.evaluate(()=>{__talk.phase='ended';__talk.crazy.roundStage='sorting';__talk.crazy.queueLocked=true;__talk.crazy.library=[];__talk.crazy.returnedCards=[{id:'ended-ime-return',text:'A private returned task.',version:1}];__update();});
+    const returnField='[data-talk-return-card="ended-ime-return"] textarea';await page.fill(returnField,'儲存前的任務');
+    await page.click('[data-talk-action="crazyReturnSave"]');await page.locator(returnField).dispatchEvent('compositionstart');await page.fill(returnField,'尚未選字的新草稿');
+    await page.locator(returnField).evaluate(el=>{window.__returnIME=el;window.__returnRemoved=0;new MutationObserver(records=>records.forEach(record=>record.removedNodes.forEach(node=>{if(node===__returnIME||node.contains?.(__returnIME))__returnRemoved++;}))).observe(document.getElementById('card'),{subtree:true,childList:true});});
+    await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.returnedCards=[];__talk.crazy.library=[{id:'ended-ime-return',text:'儲存前的任務',version:2}];__update();});
+    assert.equal(await page.evaluate(()=>__returnIME.isConnected&&document.activeElement===__returnIME&&__card.composing&&__returnRemoved===0),true);
+    await page.locator(returnField).dispatchEvent('compositionend');
+    assert.equal(await page.locator('[data-talk-library-field="ended-ime-return"]').evaluate(el=>el===__returnIME&&document.activeElement===el&&el.value==='尚未選字的新草稿'),true);
     assert.equal(errors.length,0);
     assert.ok(nativePickerChecks>=5,'Native picker must open and stay open across state updates.');
-    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,focusedMissionNode:true,pressedMissionFirstClick:true,preAckCheckInRow:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,errors}));
+    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,focusedMissionNode:true,pressedMissionFirstClick:true,preAckCheckInRow:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,returnedSortingIME:true,errors}));
   } finally {await browser.close();}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
 

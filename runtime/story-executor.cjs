@@ -110,7 +110,7 @@ Object.assign(adapters.letstalk, {
       const prior = vault[record.cardId];
       if (prior && prior.version >= record.version) continue;
       vault[record.cardId] = { id: record.cardId, text: record.text, target: record.targetNum ?? 'random',
-        version: record.version, persistedVersion: record.version, deleted: record.deleted === true || record.status === 'deleted',
+        version: record.version, persistedVersion: record.version, deleted: record.deleted === true || record.status === 'deleted', returned: record.status === 'returned',
         createdAt: record.createdAt, updatedAt: record.updatedAt };
     }
     return next;

@@ -113,7 +113,7 @@ var TALK_ENGINE = (() => {
   function needsMigration(s) {
     if (s?.challengeArchive?.version !== 1) return true;
     if (!validGameSeconds(s?.gameSeconds) || !validTaskSeconds(s?.crazyTaskSeconds)
-        || !s.scores || list(s.roster).some(p => !Number.isInteger(s.scores[p.playerNum]) || s.scores[p.playerNum] < 0)
+        || !s.scores || list(s.roster).some(p => !Number.isInteger(s.scores[p.playerNum]) || s.gameMode !== 'crazy' && s.scores[p.playerNum] < 0)
         || !Number.isFinite(s.gameDeadline) || (s.phase === 'talking' && !(s.gameDeadline > 0))) return true;
     return crazyEnabled(s) && (s.crazy.vnextVersion !== 1 || s.crazy.directorCount !== Math.floor(participants(s).length / 2)
       || s.crazy.schedulerVersion !== 2 || !validTaskSeconds(s.crazy.taskSeconds)
@@ -159,7 +159,7 @@ var TALK_ENGINE = (() => {
       s.gameDeadline = s.phase === 'talking' ? now + s.gameSeconds * 1000 : 0;
     }
     s.scores = s.scores || {};
-    for (const p of s.roster) if (!Number.isInteger(s.scores[p.playerNum]) || s.scores[p.playerNum] < 0) s.scores[p.playerNum] = 0;
+    for (const p of s.roster) if (!Number.isInteger(s.scores[p.playerNum]) || s.gameMode !== 'crazy' && s.scores[p.playerNum] < 0) s.scores[p.playerNum] = 0;
     if (!crazyEnabled(s)) return;
     const c = s.crazy;
     for (const key of ['prompts', 'sequence', 'recent']) c[key] = c[key] || {};
@@ -225,9 +225,11 @@ var TALK_ENGINE = (() => {
     return { challengeArchive: { version: 1, records: [...records.values()] },
       crazyVault: copy(s.crazyVault || {}), crazyIdentities: copy(s.crazyIdentities || {}) };
   }
-  function assignCrazy(s, input) {
+  function assignCrazy(s, input, replacement) {
     if (!systemCrazy(s) || !vnext().maySystem(s, input)) return false;
-    const c = s.crazy, pool = crazyPool(), candidates = vnext().eligibleReceivers(s, input);
+    const c = s.crazy, pool = crazyPool().filter(line => !replacement || line.id !== replacement.lineId && line.text !== replacement.text);
+    const candidates = vnext().eligibleReceivers(s, input).filter(num => (!replacement || num === replacement.playerNum)
+      && !list(c.queue).some(item => item.assignedBy !== num && (item.target == null || item.target === num)));
     if (!pool.length || !candidates.length) return false;
     const recipient = candidates[Math.floor(crazyRandom(input.seed, (Number(c.scheduleSequence) || 0) + 701) * candidates.length)];
     const recent = list(c.recent[recipient]);
@@ -253,7 +255,12 @@ var TALK_ENGINE = (() => {
       if (!actors.includes(s.speaker)) nextSpeaker(s, input.seed);
     }
     const c = s.crazy, now = Number(input.now) || 0;
-    if (allowScheduled && c.nextAssignAt > 0 && now >= c.nextAssignAt && vnext().maySystem(s, input)) {
+    // The action requests only one immediate same-recipient replacement. Queue
+    // dispatch above has first use of the released slot, and a blocked request
+    // does not become a deferred replacement that could overwrite later work.
+    const replacement = c.systemReplacement; delete c.systemReplacement;
+    const replaced = replacement ? assignCrazy(s, input, replacement) : false;
+    if (!replaced && allowScheduled && c.nextAssignAt > 0 && now >= c.nextAssignAt && vnext().maySystem(s, input)) {
       if (!assignCrazy(s, input)) { c.scheduleSequence = (Number(c.scheduleSequence) || 0) + 1; scheduleCrazy(s, input); }
     }
     syncVnextArchive(s, input);
@@ -417,11 +424,11 @@ var TALK_ENGINE = (() => {
     const reject = code => { error = code; };
     const turnTypes = ['ask', 'cancelAsk', 'invite', 'later', 'resume', 'share', 'cancelShare', 'more', 'end', 'recover', 'newTopic', 'addTime', 'finish', 'exclude'];
     const selfReturn = s.sharedControls === true && input.type === 'exclude' && Number(input.playerNum) === actor && input.active === true;
-    if (!host && !eligible(s, actor) && !selfReturn && !['crazySort','crazyLibraryUpdate','crazyLibraryDelete'].includes(input.type)) reject('not_available');
+    if (!host && !eligible(s, actor) && !selfReturn && !['crazySort','crazyLibraryUpdate','crazyLibraryDelete','crazyReturnSave','crazyReturnDelete'].includes(input.type)) reject('not_available');
     else if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick', 'exclude'].includes(input.type) && !input.type.startsWith('crazy')) reject('not_available');
     else if (turnTypes.includes(input.type) && ((!['newTopic', 'crazyAssign', 'exclude'].includes(input.type) && s.phase !== 'talking')
         || (input.type === 'crazyAssign' && !['thinking', 'talking'].includes(s.phase)) || input.turnId !== s.turnId)) reject('stale_turn');
-    else if (crazyEnabled(s) && ['crazyRendered', 'crazyHere', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyDone', 'crazySkip'].includes(input.type)) {
+    else if (crazyEnabled(s) && ['crazyRendered', 'crazyHere', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyReturnSave', 'crazyReturnDelete', 'crazyDone', 'crazySkip'].includes(input.type)) {
       error = vnext().action(s, { ...input, hostAuthorized: host || input.hostAuthorized === true }) || '';
       if (!error) deliverCrazy(s, input, false);
     } else switch (input.type) {

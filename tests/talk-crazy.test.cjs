@@ -151,14 +151,17 @@ test('completion adds exactly one point, is prompt-bound across turns, and prese
   s = act(next, 'crazyDone', num, { promptId: prompt.id, now: 7001 }); assert.equal(s.replies[num].error, 'stale_prompt'); assert.equal(s.scores[num], 1);
 });
 
-test('skip awards no points and waits for the shared system slot while the recipient rests', () => {
-  let s = due(begin()); const num = Number(Object.keys(s.crazy.prompts)[0]), prompt = s.crazy.prompts[num], deadline = s.crazy.nextAssignAt;
+test('system skip is free and immediately replaces the same recipient without a rest or stale-skip replay', () => {
+  let s = due(begin()); const num = Number(Object.keys(s.crazy.prompts)[0]), prompt = s.crazy.prompts[num];
   s = act(s, 'crazySkip', num, { promptId: prompt.id, now: 7000 });
-  assert.equal(s.crazy.prompts[num].status, 'skipped'); assert.equal(s.scores[num], 0); assert.equal(pendingCount(s), 0);
-  assert.equal(s.crazy.receivers[num].cooldownUntil, 37000); assert.equal(s.crazy.nextAssignAt, deadline);
-  s = act(s, 'clockTick', 0, { now: deadline });
-  const replacement = E.view(s, 0, deadline).talk.crazy.pendingPlayerNums[0]; assert.notEqual(replacement, num);
-  assert.equal(s.crazy.prompts[replacement].at, deadline);
+  const next = s.crazy.prompts[num];
+  assert.equal(next.status, 'pending'); assert.equal(next.source, 'system'); assert.equal(next.at, 7000);
+  assert.notEqual(next.id, prompt.id); assert.notEqual(next.lineId, prompt.lineId); assert.notEqual(next.text, prompt.text);
+  assert.equal(s.scores[num], 0); assert.equal(pendingCount(s), 1); assert.ok(s.crazy.receivers[num].cooldownUntil <= 7000);
+  assert.equal(E.view(s, num, 7000).talk.crazy.lastResult.scoreDelta, 0);
+  s = act(s, 'crazySkip', num, { promptId: prompt.id, now: 7001 });
+  assert.equal(s.replies[num].error, 'stale_prompt'); assert.equal(s.crazy.prompts[num].id, next.id);
+  assert.equal(s.scores[num], 0); assert.equal(pendingCount(s), 1);
 });
 
 test('skipping one task preserves another delivered custom task and leaves a blocked recipient queued', () => {
@@ -168,7 +171,7 @@ test('skipping one task preserves another delivered custom task and leaves a blo
   s = act(s, 'crazyAssign', 1, { target: 2, text: 'Wait for next timed slot.', now: 5000 }); s = due(s);
   s = act(s, 'crazySkip', 2, { promptId: s.crazy.prompts[2].id, now: 7000 });
   assert.equal(s.crazy.prompts[4].text, 'Replacement.'); assert.equal(s.crazy.prompts[2].status, 'skipped');
-  assert.equal(s.crazy.queue.length, 1); assert.equal(s.scores[2], 0);
+  assert.equal(s.crazy.queue.length, 1); assert.equal(s.scores[2], -1);
 });
 
 test('shown task expiry wins over late completion, pauses its receiver and never awards a point', () => {
@@ -217,7 +220,7 @@ test('players-only skips and expiry never fall back to system or immediately ret
   s = act(s, 'clockTick', 0, { now: 37000 }); assert.equal(s.crazy.prompts[2].text, 'Next later.');
   s = rendered(s, 2, 37001);
   s = act(s, 'clockTick', 0, { now: s.crazy.prompts[2].expiresAt }); assert.equal(pendingCount(s), 0);
-  assert.equal(s.crazy.prompts[2].status, 'expired'); assert.equal(s.scores[2], 0);
+  assert.equal(s.crazy.prompts[2].status, 'expired'); assert.equal(s.scores[2], -1);
 });
 
 test('completed recipients are not selected again when a different eligible player exists', () => {
