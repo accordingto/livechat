@@ -1,4 +1,34 @@
-## CURRENT: Crazy Talk skip penalties and private returns — 2026-10-18
+## CURRENT: Crazy Talk one-field private editing and direct resend — 2026-10-18
+
+Read docs/talk-return-resend-acceptance.md for scope and actual release evidence.
+Gameplay source5ba9f25 is published on both existing hosts. Final frozen-source
+2151/2151 tests pass, as do actual five-player browser19flags/20 bilingual mobile
+captures and native select/IME checks. Production API270checks pass with exact
+safe cleanup7/7; read-only production17assets/14behaviorflags/12captures pass.
+Talk19/19, executor62/62, Life Story164/164, Bomb15/15 and private bodies14/14
+pass. Existing backend dpl_9FRqpH5u8Ja1z2UDep2p5noJSYu8 is READY. Talk cache
+tags are vnext-9/talk-vnext-9. No physical-phone/human voice playtest is claimed.
+
+Returned and saved private cards each have ONE primary editable textarea; remove
+the old saved preview plus separate lower folded editor. Eligible authors choose
+Random/specific player and send the CURRENT edited text without first saving.
+crazyReturnSend submits one new independent task before resolving the return into
+a saved card; crazyLibrarySend likewise saves current edits only after successful
+submission. Rejection leaves original text/version/status intact. Omitted text
+keeps stored text; omitted target means random, never a stale saved recipient.
+Retain authority role/source/round/session/queue checks, encryption-before-receipt,
+idempotency, immutable original executed snapshots and private ownership. Inactive
+owners/actors may manage their own cards but cannot send. No new settings/schema.
+
+Keep keyed private-card mounts, textareas and native selectors connected; defer
+only new private-card arrivals while an authorized owned picker is open, then
+flush on change/blur. Role/session/ownership removals still apply immediately.
+Freeze sent text/target and preserve newer unsent Chinese composition across ACKs.
+Successful resend quietly confirms the card remains in the private library.
+Unsaved private-editor edits remain memory-only on full reload; stored content
+and accepted requests retain existing original-token/same-room recovery.
+
+## PREVIOUS: Crazy Talk skip penalties and private returns — 2026-10-18
 
 Read docs/talk-skip-return-acceptance.md for actual release evidence. Gameplay
 source1992fe4 is published on both existing hosts, based on516715f so the
