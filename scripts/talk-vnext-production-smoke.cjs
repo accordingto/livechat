@@ -4,7 +4,7 @@ const crypto=require('node:crypto');
 const E=require('../talk-engine.js'),{createStore,DEFAULT_DB}=require('../runtime/talk-archive-store.cjs');
 const API='https://icebreaker-youtube-search.vercel.app/api/hub-executor';
 const uid=()=>crypto.randomBytes(16).toString('hex'),list=E.list;
-async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,delay=ms=>new Promise(r=>setTimeout(r,ms)),progress=()=>{},onFailure=()=>{},diagnosticOnly=false,threePlayerCheckIn=false,roleBalanceOnly=false,roleRotationOnly=false,skipRulesOnly=false,rolePlayerCount=9}={}){
+async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,delay=ms=>new Promise(r=>setTimeout(r,ms)),progress=()=>{},onFailure=()=>{},diagnosticOnly=false,threePlayerCheckIn=false,roleBalanceOnly=false,roleRotationOnly=false,skipRulesOnly=false,returnResendOnly=false,rolePlayerCount=9}={}){
  roleBalanceOnly=roleBalanceOnly||roleRotationOnly;
  const report={ok:false,checks:0,cleaned:0,cleanupFailed:0,step:'initial',flags:{}},key=env.CRAZY_TALK_ARCHIVE_SECRET;
  if(!/^[a-f0-9]{64}$/i.test(key||''))return{...report,error:'archive_key_unavailable'};
@@ -31,10 +31,44 @@ async function run({env=process.env,fetchImpl=globalThis.fetch,now=Date.now,dela
  const mark=(step,flag)=>{report.step=step;if(flag)report.flags[flag]=true;progress({step,checks:report.checks})};
  try{
   mark(roleBalanceOnly?'create-owned-seats-for-role-balance':threePlayerCheckIn?'create-three-owned-seats':'create-five-owned-seats');const prior=await snapshot(archive);check(prior.value==null);created.add(archive);
-  const s=E.create({id:initial,now:now(),topic:{question:'Invent a ridiculous cafe together.'},roster:seats.map(p=>({playerNum:p.playerNum,name:'vNext QA '+p.playerNum})),gameMode:'crazy',crazySource:threePlayerCheckIn||roleBalanceOnly?'players':'mixed',conversationMode:'free',...(threePlayerCheckIn||roleBalanceOnly?{}:{crazyPlayStyle:'director'}),...(roleBalanceOnly?{}:{crazyRotationSeconds:skipRulesOnly?900:threePlayerCheckIn?240:60}),crazyMinSeconds:5,crazyMaxSeconds:5,gameSeconds:skipRulesOnly||threePlayerCheckIn||roleBalanceOnly?900:60});
+  const s=E.create({id:initial,now:now(),topic:{question:'Invent a ridiculous cafe together.'},roster:seats.map(p=>({playerNum:p.playerNum,name:'vNext QA '+p.playerNum})),gameMode:'crazy',crazySource:returnResendOnly||threePlayerCheckIn||roleBalanceOnly?'players':'mixed',conversationMode:'free',...(threePlayerCheckIn||roleBalanceOnly?{}:{crazyPlayStyle:'director'}),...(roleBalanceOnly?{}:{crazyRotationSeconds:returnResendOnly||skipRulesOnly?900:threePlayerCheckIn?240:60}),crazyMinSeconds:5,crazyMaxSeconds:5,gameSeconds:returnResendOnly||skipRulesOnly||threePlayerCheckIn||roleBalanceOnly?900:60});
   for(const n of [0,...seats.map(p=>p.playerNum)]){const path=node(n),before=await snapshot(path);check(before.value==null);created.add(path);await put(path,{...(n===0?{state:s,revision:1}:E.view(s,n,now())),qaVNext:{marker}},before.etag)}
   await api({operation:'register',game:'letstalk',code,controlToken:control,seats,sessionId:initial});await act(0,'start');await act(0,'crazyDelegate',{playerNum:1});
   let current=await state();
+  if(returnResendOnly){
+   mark('direct-return-and-library-resend');check(list(current.crazy.directors).join(',')==='1,2');
+   const originalText='Announce your cup is royalty.';await act(1,'crazyAssign',{target:3,text:originalText});await shown(3);
+   const original=(await state()).crazy.prompts[3];await act(3,'crazySkip',{promptId:original.id});
+   const returned=list((await card(1)).talk.crazy.returnedCards).find(v=>v.text===originalText);check(!!returned);check((await state()).scores[3]===-1);
+   await act(2,'crazyReturnSend',{cardId:returned.id,text:'A foreign edit.',target:4},'invalid_card');
+   const resend=async(type,cardId,text,target)=>{
+    const source=await raw(),id='vnext-qa-'+ ++seq;
+    const body={operation:'execute',capsule:source.executor.capsule,token:seats[0].token,command:{id,type,cardId,text,sessionId:source.state.sessionId,...(target==null?{}:{target})}};
+    await api(body);await api(body);const next=await state();check(next.replies[1]?.id===id&&!next.replies[1]?.error);check(list(next.crazy.roundCards).filter(v=>v.commandId===id).length===1);return next;
+   };
+   const firstEdit='Ask your spoon to sing.';current=await resend('crazyReturnSend',returned.id,firstEdit,4);
+   check(current.crazy.prompts[4]?.text===firstEdit&&current.crazy.prompts[4]?.source==='player');check(current.crazy.sequence[4]===1);check(!list((await card(1)).talk.crazy.returnedCards).some(v=>v.id===returned.id));
+   check(list((await card(1)).talk.crazy.library).some(v=>v.id===returned.id&&v.text===firstEdit&&v.target===4&&v.version===2));
+   for(const num of [2,3,5])check(!JSON.stringify((await card(num)).talk).includes(firstEdit));
+   check(!JSON.stringify(E.view(current,0,now()).talk).includes(firstEdit));
+   report.flags.directEditedReturnedSend=true;report.flags.privateResendDelivery=true;report.flags.oneCopyOnRetry=true;
+   await shown(4);await act(4,'crazyDone',{promptId:current.crazy.prompts[4].id});
+   const secondEdit='Introduce your socks as celebrities.';current=await resend('crazyLibrarySend',returned.id,secondEdit,5);
+   check(current.crazy.prompts[5]?.text===secondEdit&&current.crazy.sequence[5]===1);check(list((await card(1)).talk.crazy.library).some(v=>v.id===returned.id&&v.text===secondEdit&&v.target===5&&v.version===3));
+   check(current.crazy.roundCards[original.roundCardId||original.archiveId].text===originalText);report.flags.directEditedLibrarySend=true;report.flags.immutableOriginalSnapshot=true;
+   await shown(5);await act(5,'crazySkip',{promptId:current.crazy.prompts[5].id});
+   const nextReturn=list((await card(1)).talk.crazy.returnedCards).find(v=>v.text===secondEdit);check(!!nextReturn);await act(0,'crazyDrain');
+   await act(1,'crazyReturnSend',{cardId:nextReturn.id,text:'This failed edit stays unsent.',target:4},'queue_locked');
+   check(list((await card(1)).talk.crazy.returnedCards).some(v=>v.id===nextReturn.id&&v.text===secondEdit&&v.version===1));report.flags.failedSendKeepsReturn=true;
+   await act(0,'crazyReveal');check(list((await card(2)).talk.crazy.revealCards).some(v=>v.text===originalText&&v.status==='skipped'));
+   await act(0,'newTopic',{confirm:true,topic:{question:'Invent a silly school.'},mode:'think',seconds:45,showStarters:false,gameMode:'crazy',crazySource:'players',conversationMode:'free',gameSeconds:900,crazyTaskSeconds:150});
+   check(list((await card(1)).talk.crazy.returnedCards).some(v=>v.id===nextReturn.id));
+   const randomEdit='Cluck like an opera singer.';current=await resend('crazyReturnSend',nextReturn.id,randomEdit);
+   check(list(current.crazy.queue).some(v=>v.text===randomEdit&&v.target==null));await act(0,'start');current=await state();
+   const recipient=[3,4,5].find(n=>current.crazy.prompts[n]?.text===randomEdit);check(!!recipient);check(list((await card(1)).talk.crazy.library).some(v=>v.id===nextReturn.id&&v.text===randomEdit&&v.target==null));
+   check(!JSON.stringify((await snapshot(archive)).value).includes(randomEdit));report.flags.crossSessionRandomResend=true;
+   await shown(recipient);await act(recipient,'crazyDone',{promptId:current.crazy.prompts[recipient].id});await act(0,'crazyDrain');report.ok=true;mark('direct-resend-complete');return report;
+  }
   if(skipRulesOnly){
    const penaltyIds=new Set();
    mark('source-aware-skip-and-private-return');

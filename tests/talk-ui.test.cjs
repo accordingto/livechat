@@ -915,12 +915,48 @@ test('private library editing, confirmed deletion and resend use only an authori
     f.handlers.get('input')({target:{dataset:{talkLibraryField:'saved-a'},value:'  Updated challenge  ',matches:()=>false}});
     f.click('crazyLibraryUpdate');await flush();assert.equal(sent[0].cardId,'saved-a');assert.equal(sent[0].text,'Updated challenge');
     f.update({...talk,reply:{id:sent[0].id,error:''}});
-    f.click('crazyLibrarySend');await flush();assert.equal(sent[1].type,'crazyLibrarySend');assert.equal(sent[1].target,undefined);
+    f.click('crazyLibrarySend');await flush();assert.equal(sent[1].type,'crazyLibrarySend');assert.equal(sent[1].target,undefined);assert.equal(sent[1].text,'Updated challenge');
     f.update({...talk,reply:{id:sent[1].id,error:''}});
     f.click('crazyLibraryDelete');await flush();assert.equal(sent.length,2,'delete requires the visible confirmation button');
     f.click('crazyLibraryDelete');await flush();assert.equal(sent[2].cardId,'saved-a');assert.equal(sent[2].type,'crazyLibraryDelete');
     for(const command of sent)for(const key of ['ownerIdentity','actorIdentity','authorName','controlToken'])assert.equal(command[key],undefined);
   } finally {f.card.destroy();}
+});
+
+test('returned and saved private cards each have one primary editable field with random-by-default explicit send', async () => {
+  const sent=[],f=fixture(async command=>sent.push(clone(command)));try {
+    const returned={id:'return-direct',text:'Original returned phrase.',target:1,version:1},saved={id:'saved-direct',text:'Original saved phrase.',target:1,version:1};
+    const talk=vnextTalk({role:'director',playStyle:'director',effectivePlayStyle:'director',returnedCards:[returned],library:[saved]});f.update(talk);
+    for(const item of [returned,saved]) {
+      assert.equal([...f.element.innerHTML.matchAll(new RegExp('data-talk-library-field="'+item.id+'"','g'))].length,1);
+      assert.equal(f.element.innerHTML.split(item.text).length-1,1,'the textarea is the only copy of the card text');
+      assert.match(f.element.innerHTML,new RegExp('data-talk-library-target="'+item.id+'"><option value="random" selected'));
+    }
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-library-editor|Edit text|修改文字|修改任務/);
+    f.handlers.get('input')({target:{dataset:{talkLibraryField:returned.id},value:'  Edited in the first field.  ',matches:()=>false}});
+    f.click('crazyReturnSend');await flush();assert.equal(sent[0].type,'crazyReturnSend');assert.equal(sent[0].cardId,returned.id);assert.equal(sent[0].text,'Edited in the first field.');assert.equal(sent[0].target,undefined);
+    f.handlers.get('input')({target:{dataset:{talkLibraryField:returned.id},value:'A newer unsent first-field edit.',matches:()=>false}});f.card.libraryTargets[returned.id]='1';f.card.deliver();await flush();assert.deepEqual(sent[1],sent[0]);
+    f.update({...talk,reply:{id:sent[0].id,error:'queue_full'}});assert.equal(f.card.libraryDrafts[returned.id],'A newer unsent first-field edit.');assert.match(f.element.innerHTML,/data-talk-return-card="return-direct"/);
+    f.click('crazyReturnSend');await flush();assert.equal(sent[2].text,'A newer unsent first-field edit.');assert.equal(sent[2].target,1);
+    f.update({...talk,reply:{id:sent[2].id,error:''},crazy:{...talk.crazy,returnedCards:[],library:[saved,{...returned,text:sent[2].text}]}});
+    assert.match(f.element.innerHTML,/Sent and kept in your private library/);assert.equal(f.card.libraryOpen,false,'successful Send does not force the folded library open');
+  }finally{f.card.destroy();}
+});
+
+test('private resend follows role and queue authority while actors retain one-field Save and Delete', async () => {
+  const sent=[],f=fixture(async command=>sent.push(command));try {
+    const returned={id:'return-gates',text:'An own returned task.'},saved={id:'saved-gates',text:'An own saved task.'};
+    for(const extra of [{role:'player',playStyle:'director',effectivePlayStyle:'director'},{queueLocked:true},{canAssign:false}]) {
+      f.update(vnextTalk({returnedCards:[returned],library:[saved],...extra}));
+      assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazy(?:ReturnSend|LibrarySend)"|data-talk-library-target/);
+      assert.match(f.element.innerHTML,/data-talk-action="crazyReturnSave"/);assert.match(f.element.innerHTML,/data-talk-action="crazyLibraryUpdate"/);
+      f.click('crazyReturnSend');f.click('crazyLibrarySend');await flush();assert.equal(sent.length,0);
+    }
+    f.update({...vnextTalk({returnedCards:[returned],library:[saved]}),sessionId:'inactive-private-send',roster:[{playerNum:1,name:'A'},{playerNum:2,name:'Sam',active:false}]});
+    assert.doesNotMatch(f.element.innerHTML,/data-talk-action="crazy(?:ReturnSend|LibrarySend)"/);f.click('crazyReturnSave');await flush();assert.equal(sent[0].type,'crazyReturnSave');
+    const inactive=f.card.data.talk;f.update({...inactive,reply:{id:sent[0].id,error:''}});f.click('crazyLibraryUpdate');await flush();assert.equal(sent[1].type,'crazyLibraryUpdate');assert.equal(sent[1].cardId,saved.id);
+    f.update({...inactive,reply:{id:sent[1].id,error:''}});f.click('crazyLibraryDelete');f.click('crazyLibraryDelete');await flush();assert.equal(sent[2].type,'crazyLibraryDelete');assert.equal(sent[2].cardId,saved.id);
+  }finally{f.card.destroy();}
 });
 
 test('Skip copy distinguishes a player penalty from a free system swap without a confirmation or client-side score', async () => {

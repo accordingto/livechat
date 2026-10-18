@@ -59,3 +59,9 @@ test('owned skip/return harness verifies free system replacement, private one-po
  assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.cleaned,7);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);
  for(const flag of ['freeImmediateDifferentSystemCard','queuedHandwritingPriority','exactOncePenaltyAndPrivateReturn','returnSaveEditDelete','immutableOriginalRecap','encryptedCrossSessionVault','encryptedSkipPenalty'])assert.equal(r.flags[flag],true,flag);
 });
+
+test('owned direct resend harness sends first-field edits once, preserves failed returns and retains private target choices',async()=>{
+ const h=harness();let failure;const r=await run({...h,returnResendOnly:true,onFailure:e=>failure=e.stack});if(!r.ok)console.error(failure);
+ assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.cleaned,7);assert.equal(r.cleanupFailed,0);assert.equal(h.nodes.size,0);
+ for(const flag of ['directEditedReturnedSend','privateResendDelivery','oneCopyOnRetry','directEditedLibrarySend','immutableOriginalSnapshot','failedSendKeepsReturn','crossSessionRandomResend'])assert.equal(r.flags[flag],true,flag);
+});

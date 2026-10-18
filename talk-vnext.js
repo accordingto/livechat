@@ -557,29 +557,39 @@ var TALK_VNEXT = (() => {
         }
         c.sortConfirmed[owner] = true; event(s, 'sorted', input, { actor }); return null;
       }
-      if (['crazyReturnSave', 'crazyReturnDelete', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend'].includes(type)) {
+      if (['crazyReturnSave', 'crazyReturnDelete', 'crazyReturnSend', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend'].includes(type)) {
         if (!member(s, actor) || !owner) return 'identity_unavailable';
         if (input.cardId != null && (typeof input.cardId !== 'string' || !input.cardId || input.cardId.length > 1024
           || ['__proto__', 'constructor', 'prototype'].includes(input.cardId))) return 'invalid_card';
         const vault = s.crazyVault[owner] ||= {}, card = vault[input.cardId];
-        if (type === 'crazyReturnSave' || type === 'crazyReturnDelete') {
+        if (type === 'crazyReturnSave' || type === 'crazyReturnDelete' || type === 'crazyReturnSend') {
           if (!card || card.deleted || !card.returned) return 'invalid_card';
           if (type === 'crazyReturnDelete') { card.deleted = true; card.version++; card.updatedAt = now; }
           else {
             const text = input.text == null ? card.text : input.text;
             if (!validText(text)) return 'invalid_prompt';
-            saveLibrary(s, owner, text.trim(), card.target, input, card.id);
+            let target = card.target;
+            if (type === 'crazyReturnSend') {
+              const item = { id: input.id || `${card.id}:send:${now}`, text, target: input.target ?? null,
+                kind: 'task', assignedBy: actor, at: now };
+              const error = submit(s, item, input);
+              if (error) return error;
+              target = item.target;
+            }
+            saveLibrary(s, owner, text.trim(), target, input, card.id);
           }
-          event(s, type === 'crazyReturnSave' ? 'returned_saved' : 'returned_deleted', input, { actor, cardId: card.id });
+          event(s, type === 'crazyReturnDelete' ? 'returned_deleted' : type === 'crazyReturnSend' ? 'returned_sent' : 'returned_saved', input, { actor, cardId: card.id });
           return null;
         }
         if (type !== 'crazyLibrarySave' && (!card || card.deleted)) return 'invalid_card';
         if (card?.returned) return 'invalid_card';
         if (type === 'crazyLibraryDelete') { card.deleted = true; card.version++; card.updatedAt = now; event(s, 'library_deleted', input, { actor, cardId: card.id }); return null; }
         if (type === 'crazyLibrarySend') {
-          const error = submit(s, { id: input.id || `${card.id}:send:${now}`, text: card.text, target: input.target ?? null,
-            kind: 'task', assignedBy: actor, at: now }, input);
+          const item = { id: input.id || `${card.id}:send:${now}`, text: input.text == null ? card.text : input.text, target: input.target ?? null,
+            kind: 'task', assignedBy: actor, at: now };
+          const error = submit(s, item, input);
           if (error) return error;
+          saveLibrary(s, owner, item.text, item.target, input, card.id);
           event(s, 'library_sent', input, { actor, cardId: card.id }); return null;
         }
         if (!validText(input.text)) return 'invalid_prompt';

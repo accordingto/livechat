@@ -170,12 +170,25 @@ const assert=require('node:assert/strict'),path=require('node:path');
     // while other players publish, including an unfinished Chinese IME draft.
     await page.evaluate(()=>{__talk.phase='talking';__talk.crazy={...__talk.crazy,roundStage:'open',queueLocked:false,role:'player',playStyle:'free',effectivePlayStyle:'free',receiverStatus:{paused:false},library:[{id:'saved-1',text:'Original saved challenge',target:null}]};__update();});
     await page.locator('.talk-private-library>summary').click();
-    await page.locator('[data-talk-library-editor="saved-1"]>summary').click();
+    assert.equal(await page.locator('[data-talk-saved-card="saved-1"] textarea').count(),1);
     const savedText='[data-talk-library-field="saved-1"]';
+    const savedTarget='[data-talk-library-target="saved-1"]';
+    await page.locator(savedTarget).scrollIntoViewIfNeeded();await page.locator(savedTarget).click();
+    const privatePickerOpen=await page.locator(savedTarget).evaluate(el=>el.matches(':open'));
+    await page.locator(savedTarget).evaluate(el=>{window.__privatePicker=el;window.__privateOptions=Array.from(el.options);window.__privateY=el.getBoundingClientRect().y;});
+    await page.evaluate(()=>{__talk.crazy.returnedCards=[{id:'arrival-above-library',text:'A return arriving above the picker.'}];for(let n=0;n<5;n++)__update();});
+    assert.equal(await page.locator(savedTarget).evaluate(el=>el===__privatePicker&&el.isConnected&&document.activeElement===el&&el.getBoundingClientRect().y===__privateY&&__privateOptions.every((node,i)=>el.options[i]===node)),true);
+    if(privatePickerOpen)assert.equal(await page.locator(savedTarget).evaluate(el=>el.matches(':open')),true);
+    await page.keyboard.press('Home');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');assert.equal(await page.inputValue(savedTarget),'1');
+    assert.equal(await page.locator('[data-talk-return-card="arrival-above-library"]').count(),1);
     await page.fill(savedText,'An edited private challenge');
+    await page.locator(savedTarget).click();await page.evaluate(()=>{__talk.crazy.returnedCards.push({id:'another-arrival',text:'Another return before the first Send click.'});__update();});await page.keyboard.press('Escape');
+    const beforePrivateSend=await page.evaluate(()=>__sent.length);await page.click('[data-talk-action="crazyLibrarySend"]');
+    assert.equal(await page.evaluate(()=>__sent.length),beforePrivateSend+1);assert.equal(await page.evaluate(()=>__sent.at(-1).target),1);assert.equal(await page.evaluate(()=>__sent.at(-1).text),'An edited private challenge');
+    await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.library[0].text=__sent.at(-1).text;__update();});
     await page.locator(savedText).evaluate(el=>{window.__savedEditor=el;el.focus();el.setSelectionRange(3,9);});
     await page.evaluate(()=>{for(let n=0;n<12;n++){__talk.revision++;__update();}});
-    assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
+    assert.equal(await page.locator('.talk-private-library').evaluate(el=>el.open),true);
     assert.equal(await page.locator(savedText).evaluate(el=>el===__savedEditor&&document.activeElement===el&&el.selectionStart===3&&el.selectionEnd===9),true);
     assert.equal(await page.locator('[data-talk-action="crazyLibraryUpdate"]').isVisible(),true);
     await page.locator(savedText).dispatchEvent('compositionstart');await page.fill(savedText,'雞叫任務');
@@ -187,7 +200,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.evaluate(()=>__sent.at(-1).type),'crazyLibraryUpdate');
     assert.equal(await page.evaluate(()=>__sent.at(-1).text),'雞叫任務');
     await page.evaluate(()=>{__talk.reply={id:__sent.at(-1).id,error:''};__talk.crazy.library[0].text='雞叫任務';__update();});
-    assert.equal(await page.locator('[data-talk-library-editor="saved-1"]').evaluate(el=>el.open),true);
+    assert.equal(await page.locator('.talk-private-library').evaluate(el=>el.open),true);
     // Sorting may move an acknowledged return into the normal vault, but an
     // in-progress private IME editor must not detach until composition ends.
     await page.evaluate(()=>{__talk.phase='ended';__talk.crazy.roundStage='sorting';__talk.crazy.queueLocked=true;__talk.crazy.library=[];__talk.crazy.returnedCards=[{id:'ended-ime-return',text:'A private returned task.',version:1}];__update();});
@@ -200,7 +213,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
     assert.equal(await page.locator('[data-talk-library-field="ended-ime-return"]').evaluate(el=>el===__returnIME&&document.activeElement===el&&el.value==='尚未選字的新草稿'),true);
     assert.equal(errors.length,0);
     assert.ok(nativePickerChecks>=5,'Native picker must open and stay open across state updates.');
-    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,focusedMissionNode:true,pressedMissionFirstClick:true,preAckCheckInRow:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,returnedSortingIME:true,errors}));
+    console.log(JSON.stringify({consecutiveSubmissions:5,nativePickerChecks,connectedSelectors:true,defaultOpen:true,manualCollapse:true,checkInLocalPaint:true,checkInNoFocusTheft:true,checkInFirstClick:true,focusedMissionNode:true,pressedMissionFirstClick:true,preAckCheckInRow:true,nextDraft:true,frozenRetry:true,queueErrorRetry:true,rosterChange:true,composition:true,offlineRecovery:true,endedRemoval:true,newSession:true,firstControlClick:true,firstSummaryClick:true,vaultEditorUpdates:18,vaultCaret:true,vaultIME:true,vaultSave:true,privatePickerArrival:true,privatePickerFirstSend:true,returnedSortingIME:true,errors}));
   } finally {await browser.close();}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
 

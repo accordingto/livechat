@@ -7,7 +7,8 @@ be restored. See docs/talk-vnext-acceptance.md for final release evidence.
 
 This section describes the implemented vNext behavior. The2026-10-16 follow-up
 supersedes the former free-default/five-player minimum and collapsed composer.
-See [the current skip/return acceptance record](docs/talk-skip-return-acceptance.md),
+See [the current direct-edit/resend record](docs/talk-return-resend-acceptance.md),
+[the earlier skip/return record](docs/talk-skip-return-acceptance.md),
 [the earlier rotation/inspiration record](docs/talk-director-help-acceptance.md)
 and [the earlier role-balance record](docs/talk-director-balance-acceptance.md).
 The [earlier check-in record](docs/talk-2026-10-16-acceptance.md) describes that follow-up. The
@@ -140,9 +141,15 @@ player bearer token and session. Storage failures fall back to memory; player
 names are never used as ownership credentials.
 
 Returned tasks appear privately below the author's composer (or below the topic
-when the author is now an actor). The original text is immediately editable;
+when the author is now an actor). Each returned or saved card has one directly
+editable primary task field; there is no duplicate static text plus lower editor.
 Save privately accepts the original or edited text into the ordinary vault, and
-Delete removes the returned copy. Neither action sends another task. Unresolved
+Delete removes the returned copy. Authors currently allowed to write also get
+the ordinary random/specific recipient selector and an explicit Send button.
+Send uses the current edited field without a separate Save step; a successfully
+sent return becomes a saved library card. Failed sends preserve the original
+return/library text and version while keeping the local draft. Only explicit
+Send queues a new task; Save/Delete never do. Unresolved
 returns stay private and survive same-room sessions, reloading and reconnecting
 with the same verified original bearer identity. They do not transfer with a
 player number/name to a replacement token. Authors may resolve returns after a
@@ -179,10 +186,12 @@ can still make that choice during reveal; confirmed selections are not reopened
 by the UI, because previously exposed text cannot be made unseen.
 
 My private challenges is folded and contains only the current owner's saved
-cards. Text edits, explicit deletion confirmation and Send again are available;
-resending uses the normal priority queue and current recipient choice, subject
-to role/source/queue locks. Nested edit state, unsaved text, caret and IME survive
-other players' updates. The vault persists across same-room sessions, renames
+cards. The same primary field supports editing, Save changes and direct Send;
+explicit deletion confirmation remains. Resending uses the normal priority queue
+and current recipient choice, subject to role/source/queue locks. Random is the
+default independent of a card's old target. Textareas, native recipient selectors
+and ancestors stay connected across ordinary updates. Unsaved text, caret and IME
+survive other players' updates. The vault persists across same-room sessions, renames
 and game switches for the same verified original token. It is not an account
 library and does not follow a player to another room or replacement token.
 

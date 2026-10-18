@@ -428,7 +428,7 @@ var TALK_ENGINE = (() => {
     else if (s.phase === 'ended' && !['newTopic', 'clockTick', 'crazyTick', 'exclude'].includes(input.type) && !input.type.startsWith('crazy')) reject('not_available');
     else if (turnTypes.includes(input.type) && ((!['newTopic', 'crazyAssign', 'exclude'].includes(input.type) && s.phase !== 'talking')
         || (input.type === 'crazyAssign' && !['thinking', 'talking'].includes(s.phase)) || input.turnId !== s.turnId)) reject('stale_turn');
-    else if (crazyEnabled(s) && ['crazyRendered', 'crazyHere', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyReturnSave', 'crazyReturnDelete', 'crazyDone', 'crazySkip'].includes(input.type)) {
+    else if (crazyEnabled(s) && ['crazyRendered', 'crazyHere', 'crazyReplace', 'crazyKeep', 'crazyReceive', 'crazyExtend', 'crazyDrain', 'crazyDelegate', 'crazyClaimHost', 'crazySort', 'crazyReveal', 'crazyLibrarySave', 'crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend', 'crazyReturnSave', 'crazyReturnDelete', 'crazyReturnSend', 'crazyDone', 'crazySkip'].includes(input.type)) {
       error = vnext().action(s, { ...input, hostAuthorized: host || input.hostAuthorized === true }) || '';
       if (!error) deliverCrazy(s, input, false);
     } else switch (input.type) {

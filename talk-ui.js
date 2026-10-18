@@ -183,7 +183,7 @@ var TALK_UI = (() => {
     crazySkipPlayer: ['跳過 −1分', 'Skip −1 point'], crazySkipSystem: ['換一張（不扣分）', 'Swap for free'],
     playerSkipHint: ['跳過會扣 1 分，任務會退回出題者。', 'Skipping costs 1 point and returns the task to its author.'], systemSkipHint: ['這是系統任務，換一張不扣分。', 'This is a system task. Swap it without losing points.'],
     playerSkipResult: ['已跳過，−1 分；任務已退回出題者。', 'Skipped: −1 point. The task is back with its author.'], systemSkipResult: ['已免費換卡。', 'Swapped without losing points.'],
-    returnedTitle: ['退回給你的任務 · {n}', 'Your returned tasks · {n}'], returnedHint: ['只有你看得到。可修改後收藏，或刪除；不會自動重送。', 'Only you can see these. Edit and save, or delete. They will not be resent automatically.'], returnText: ['修改任務（最多 120 字）', 'Edit the task (up to 120 characters)'], returnSave: ['留到收藏', 'Save privately'], returnDelete: ['刪除這張', 'Delete this card'],
+    returnedTitle: ['退回給你的任務 · {n}', 'Your returned tasks · {n}'], returnedHint: ['只有你看得到。可直接修改、選人送出，也可收藏或刪除；不會自動重送。', 'Only you can see these. Edit and choose who gets it, or save or delete. Nothing is resent automatically.'], returnText: ['任務內容（最多 120 字）', 'Challenge text (up to 120 characters)'], returnSave: ['留到收藏', 'Save privately'], returnDelete: ['刪除這張', 'Delete this card'], privateSent: ['已送出任務，收藏也已更新。', 'Challenge sent. Your private copy is updated.'], privateReturnedSent: ['已送出並留在收藏。', 'Sent and kept in your private library.'],
     crazyOffer: ['另一張任務', 'Another challenge'], crazyOfferHint: ['可以換成這張，或保留原任務。', 'Switch to this challenge, or keep the current one.'], crazyReplace: ['換這張', 'Replace mine'], crazyKeep: ['保留原任務', 'Keep mine'],
     stageDecision: ['這一局到時間了', 'Time to choose'], stageExtension: ['繼續玩一會兒', 'Keep playing'], stageDraining: ['把手上的任務玩完', 'Finish the remaining challenges'], stageSorting: ['整理這一局的卡片', 'Sort your challenges'], stageReveal: ['一起回顧', 'Shared recap'],
     stageSummary: ['待派 {queued} · 進行中 {pending} · 暫時無法派發 {blocked}', 'Queued {queued} · Active {pending} · Waiting {blocked}'],
@@ -255,13 +255,32 @@ var TALK_UI = (() => {
     if (result?.status !== 'skipped' || !['player','system'].includes(result.source) || !Number.isFinite(until) || until <= now) return '';
     return `<p class="talk-skip-feedback" role="status" data-talk-until="${until}">${esc(t(result.source === 'player' ? 'playerSkipResult' : 'systemSkipResult'))}</p>`;
   }
-  function returnedCardHTML(item, card) {
-    return `<article class="talk-returned-card" data-talk-return-card="${esc(item.id)}"><label class="talk-field"><span data-talk-return-label="returnText">${esc(t('returnText'))}</span><textarea data-talk-library-field="${esc(item.id)}" maxlength="120" rows="2">${esc(card.libraryDrafts?.[item.id] ?? item.text)}</textarea></label><div class="talk-actions">${button('returnSave','crazyReturnSave',`data-card-id="${esc(item.id)}"`,true)}${button('returnDelete','crazyReturnDelete',`data-card-id="${esc(item.id)}"`)}</div></article>`;
+  const canSendPrivate = (s,me) => vnext(s) && ['thinking','talking'].includes(s.phase) && !s.crazy.queueLocked && s.crazy.canAssign !== false && !isActor(s)
+    && list(s.roster).some(p=>p.playerNum === me && p.active !== false && p.pending !== true);
+  const privateActionsKey = (item,card,returned) => JSON.stringify([returned,t(returned?'returnSave':'librarySave'),t(returned?'returnDelete':'libraryDelete'),t('libraryDeleteConfirm'),t('cancel'),card.libraryDeleteConfirm===item.id]);
+  function privateActionsHTML(item,card,returned) {
+    return button(returned?'returnSave':'librarySave',returned?'crazyReturnSave':'crazyLibraryUpdate',`data-card-id="${esc(item.id)}"`,true)
+      + button(returned?'returnDelete':card.libraryDeleteConfirm===item.id?'libraryDeleteConfirm':'libraryDelete',returned?'crazyReturnDelete':'crazyLibraryDelete',`data-card-id="${esc(item.id)}"`)
+      + (!returned&&card.libraryDeleteConfirm===item.id ? button('cancel','cancelLibraryDelete') : '');
   }
+  function privateSendHTML(item,card,s,me,returned) {
+    if (!canSendPrivate(s,me)) return '';
+    const current=card.libraryTargets?.[item.id] ?? 'random',targets=list(s.roster).filter(p=>p.playerNum!==me&&p.active!==false&&p.pending!==true);
+    return `<div class="talk-private-send" data-talk-private-send><label class="talk-field"><span data-talk-private-label="missionRecipient">${esc(t('missionRecipient'))}</span><select data-talk-library-target="${esc(item.id)}"><option value="random"${current==='random'?' selected':''}>${esc(t('randomRecipient'))}</option>${targets.map(p=>`<option value="${p.playerNum}"${String(current)===String(p.playerNum)?' selected':''}>${esc(p.name||name(s,p.playerNum))}</option>`).join('')}</select></label>${button('librarySend',returned?'crazyReturnSend':'crazyLibrarySend',`data-card-id="${esc(item.id)}"`)}</div>`;
+  }
+  function privateCardHTML(item,card,s,me,returned) {
+    return `<article class="${returned?'talk-returned-card':'talk-library-card'}" data-talk-private-card="${esc(item.id)}" data-talk-${returned?'return':'saved'}-card="${esc(item.id)}"><label class="talk-field"><span data-talk-private-label="returnText">${esc(t('returnText'))}</span><textarea data-talk-library-field="${esc(item.id)}" maxlength="120" rows="3">${esc(card.libraryDrafts?.[item.id]??item.text)}</textarea></label><div class="talk-actions" data-talk-private-actions="${esc(privateActionsKey(item,card,returned))}">${privateActionsHTML(item,card,returned)}</div>${privateSendHTML(item,card,s,me,returned)}</article>`;
+  }
+  const returnedCardHTML = (item,card,s,me) => privateCardHTML(item,card,s,me,true);
   function returnedHTML(s, me, card) {
     const cards = list(s.crazy?.returnedCards);
     if (!vnext(s) || me <= 0 || !cards.length) return '';
-    return `<section class="talk-returned" data-talk-returned><h3>${esc(t('returnedTitle',{n:cards.length}))}</h3><p class="talk-soft" data-talk-return-label="returnedHint">${esc(t('returnedHint'))}</p><div data-talk-return-list>${cards.map(item=>returnedCardHTML(item,card)).join('')}</div></section>`;
+    return `<section class="talk-returned" data-talk-returned><h3>${esc(t('returnedTitle',{n:cards.length}))}</h3><p class="talk-soft" data-talk-private-label="returnedHint">${esc(t('returnedHint'))}</p><div data-talk-private-list>${cards.map(item=>returnedCardHTML(item,card,s,me)).join('')}</div></section>`;
+  }
+  function libraryHTML(s,me,card) {
+    if (!vnext(s)||me<=0) return '';
+    const cards=list(s.crazy.library);
+    return `<details class="talk-details talk-private-library"${card.libraryOpen?' open':''}><summary>${esc(t('privateLibrary'))} · ${cards.length}</summary><p class="talk-soft" data-talk-private-label="crazyPrivate">${esc(t('crazyPrivate'))}</p><div data-talk-private-list>${cards.map(item=>privateCardHTML(item,card,s,me,false)).join('')}</div><p class="talk-soft" data-talk-library-empty${cards.length?' hidden':''}>${esc(t('libraryEmpty'))}</p></details>`;
   }
   function receiverLabel(s, value) {
     const receiver = value ?? s.crazy?.receiverStatus;
@@ -289,7 +308,6 @@ var TALK_UI = (() => {
     if (!vnext(s)) return '';
     const c = s.crazy, stage = c.roundStage, host = c.hostActions || {};
     const targets = list(s.roster).filter(p => p.playerNum !== me && p.active !== false && p.pending !== true);
-    const targetOptions = current => `<option value="random"${current === 'random' || current == null ? ' selected' : ''}>${esc(t('randomRecipient'))}</option>` + targets.map(p => `<option value="${p.playerNum}"${String(current) === String(p.playerNum) ? ' selected' : ''}>${esc(p.name || name(s,p.playerNum))}</option>`).join('');
     let html = '';
     if (['open', 'decision', 'extension', 'draining'].includes(stage) && me > 0) html += `<section class="talk-receiving"><p class="talk-soft">${esc(t(isDirector(s) ? 'crazyDirector' : isActor(s) ? 'crazyActor' : receiverLabel(s)))}</p>${!isDirector(s) && (c.receiverStatus?.paused || c.receiverStatus === 'paused') ? button('receiveResume','crazyReceive') : ''}</section>`;
     const statuses = list(c.receivingStatuses || c.receiverStatuses);
@@ -299,11 +317,10 @@ var TALK_UI = (() => {
     if (host.delegate) html += `<div class="talk-delegate"><label class="talk-field">${esc(t('hostDelegate'))}<select data-talk-delegate>${targets.map(p => `<option value="${p.playerNum}"${Number(card.delegateTarget) === p.playerNum ? ' selected' : ''}>${esc(p.name || name(s,p.playerNum))}</option>`).join('')}</select></label>${button('delegateControl','crazyDelegate')}</div>`;
     if (host.claim) html += button('claimControl','crazyClaimHost');
     if (['sorting', 'reveal'].includes(stage) && me > 0) html += c.sortConfirmed ? (stage === 'sorting' ? `<p class="talk-soft" role="status">${esc(t('sortComplete'))}</p>` : '') : `<section class="talk-sort-cards"><h3>${esc(t('stageSorting'))}</h3><p class="talk-soft">${esc(t('sortingHint'))}</p>${list(c.unusedCards).map(item => `<label class="talk-sort-card"><input type="checkbox" data-talk-sort-card="${esc(item.id)}"${card.sortSelections?.[item.id] !== false ? ' checked' : ''}><span>${esc(item.text)}</span><small>${esc(t('savePrivate'))}</small></label>`).join('')}${button('confirmSort','crazySort','',true)}</section>`;
-    if (me > 0) html += `<details class="talk-details talk-private-library"${card.libraryOpen ? ' open' : ''}><summary>${esc(t('privateLibrary'))} · ${list(c.library).length}</summary><p class="talk-soft">${esc(t('crazyPrivate'))}</p>${list(c.library).length ? list(c.library).map(item => `<article class="talk-library-card"><p>${esc(item.text)}</p><details class="talk-details" data-talk-library-editor="${esc(item.id)}"${card.libraryEditsOpen?.[item.id] ? ' open' : ''}><summary>${esc(t('libraryEdit'))}</summary><label class="talk-field"><textarea data-talk-library-field="${esc(item.id)}" maxlength="120" rows="3">${esc(card.libraryDrafts?.[item.id] ?? item.text)}</textarea></label>${button('librarySave','crazyLibraryUpdate',`data-card-id="${esc(item.id)}"`)}</details><div class="talk-actions">${button(card.libraryDeleteConfirm === item.id ? 'libraryDeleteConfirm' : 'libraryDelete','crazyLibraryDelete',`data-card-id="${esc(item.id)}"`)}${card.libraryDeleteConfirm === item.id ? button('cancel','cancelLibraryDelete') : ''}</div>${!c.queueLocked && c.canAssign !== false && !isActor(s) ? `<label class="talk-field">${esc(t('missionRecipient'))}<select data-talk-library-target="${esc(item.id)}">${targetOptions(card.libraryTargets?.[item.id] ?? 'random')}</select></label>${button('librarySend','crazyLibrarySend',`data-card-id="${esc(item.id)}"`)}` : ''}</article>`).join('') : `<p class="talk-soft">${esc(t('libraryEmpty'))}</p>`}</details>`;
     if (stage === 'reveal') html += `<section class="talk-reveal-cards"><h3>${esc(t('stageReveal'))}</h3>${list(c.revealCards).length ? list(c.revealCards).map(item => `<article class="talk-library-card"><p>${esc(item.text)}</p><p class="talk-recap-meta"><span>${esc(t('revealAuthor',{name:Number.isInteger(item.author) && item.author > 0 ? name(s,item.author) : t('crazySourceSystem')}))}</span>${item.unused ? `<span>${esc(t('notSentThisRound'))}</span>` : `<span>${esc(t('revealRecipient',{name:name(s,item.recipient)}))}</span><span>${esc(t('outcome' + (['done','skipped','expired','cancelled','replaced','withdrawn'].includes(item.status) ? item.status : 'cancelled').replace(/^./,c=>c.toUpperCase())))}</span>`}</p></article>`).join('') : `<p class="talk-soft">${esc(t('noRevealCards'))}</p>`}</section>${scoreboardHTML(s,me)}`;
     return `<div class="talk-vnext">${html}</div>`;
   }
-  return { t, esc, list, name, button, notes, interests, status, crazyAction, crazyHTML, skipResultHTML, returnedCardHTML, returnedHTML, participantsHTML, duration, scoreboardHTML, vnext, isDirector, isActor, receiverLabel, vnextHTML };
+  return { t, esc, list, name, button, notes, interests, status, crazyAction, crazyHTML, skipResultHTML, returnedCardHTML, returnedHTML, libraryHTML, privateCardHTML, privateActionsHTML, privateActionsKey, privateSendHTML, canSendPrivate, participantsHTML, duration, scoreboardHTML, vnext, isDirector, isActor, receiverLabel, vnextHTML };
 })();
 
 var TALK_PLAYER = (() => {
@@ -387,6 +404,7 @@ var TALK_PLAYER = (() => {
       this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
       this.roundClockVisible = false; this.editor = null; this.settingsOpen = false; this.managementOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0;
       this.renderedMission = null; this.missionRenderDeferred = false;
+      this.privateFeedback = null;
       this.clickHandler = event => {
         const b = event.target.closest('[data-talk-action]');
         if (!b || !this.element.contains(b) || b.disabled) return;
@@ -413,12 +431,14 @@ var TALK_PLAYER = (() => {
         }
         if (type === 'retry') { this.deliver(); return; }
         const s = this.data.talk, manager = s.sharedControls === true && s.hostControls;
-        if (['crazyReturnSave','crazyReturnDelete'].includes(type)) {
+        if (['crazyReturnSave','crazyReturnDelete','crazyReturnSend'].includes(type)) {
           const cardId = b.dataset.cardId, item = list(s.crazy?.returnedCards).find(item=>item.id === cardId);
           if (!item) return;
           const text = String(this.libraryDrafts[cardId] ?? item.text).trim();
-          if (type === 'crazyReturnSave' && (!text || text.length > 120)) { this.error = 'invalid_prompt'; this.render(true); return; }
-          this.act(type,{cardId,...(type === 'crazyReturnSave' ? {text} : {})}); return;
+          const target=this.libraryTargets[cardId]??'random';
+          if (type !== 'crazyReturnDelete' && (!text || text.length > 120)) { this.error = 'invalid_prompt'; this.render(true); return; }
+          if (type === 'crazyReturnSend' && !TALK_UI.canSendPrivate(s,this.data.playerNum)) return;
+          this.act(type,{cardId,...(type !== 'crazyReturnDelete' ? {text} : {}),...(type === 'crazyReturnSend'&&target!=='random'?{target:Number(target)}:{})}); return;
         }
         if (type === 'cancelLibraryDelete') { this.libraryDeleteConfirm = null; this.render(true); return; }
         if (['crazyLibraryUpdate', 'crazyLibraryDelete', 'crazyLibrarySend'].includes(type)) {
@@ -426,10 +446,10 @@ var TALK_PLAYER = (() => {
           if (!item) return;
           if (type === 'crazyLibraryDelete' && this.libraryDeleteConfirm !== cardId) { this.libraryDeleteConfirm = cardId; this.render(true); return; }
           const text = String(this.libraryDrafts[cardId] ?? item.text).trim(), target = this.libraryTargets[cardId] ?? 'random';
-          if (type === 'crazyLibraryUpdate' && (!text || text.length > 120)) { this.error = 'invalid_prompt'; this.render(true); return; }
-          if (type === 'crazyLibrarySend' && (s.crazy.queueLocked || s.crazy.canAssign === false || TALK_UI.isActor(s))) return;
+          if (type !== 'crazyLibraryDelete' && (!text || text.length > 120)) { this.error = 'invalid_prompt'; this.render(true); return; }
+          if (type === 'crazyLibrarySend' && !TALK_UI.canSendPrivate(s,this.data.playerNum)) return;
           this.libraryDeleteConfirm = null;
-          this.act(type, { cardId, ...(type === 'crazyLibraryUpdate' ? { text } : {}), ...(type === 'crazyLibrarySend' && target !== 'random' ? { target: Number(target) } : {}) }); return;
+          this.act(type, { cardId, ...(type !== 'crazyLibraryDelete' ? { text } : {}), ...(type === 'crazyLibrarySend' && target !== 'random' ? { target: Number(target) } : {}) }); return;
         }
         if (type === 'crazySort') { if (['sorting', 'reveal'].includes(s.crazy?.roundStage) && !s.crazy.sortConfirmed) this.act(type, { saveIds: list(s.crazy.unusedCards).filter(item => this.sortSelections[item.id] !== false).map(item => item.id) }); return; }
         if (type === 'crazyReceive') { this.act(type, { paused: !(s.crazy?.receiverStatus?.paused || s.crazy?.receiverStatus === 'paused') }); return; }
@@ -522,11 +542,11 @@ var TALK_PLAYER = (() => {
       };
       this.selectionStart = event => {
         if (event.target.tagName === 'SELECT' && (event.target.dataset?.talkAssignmentField || event.target.dataset?.talkLibraryTarget || event.target.matches?.('[data-talk-delegate]'))) this.assignmentSelection = event.target;
-        else if (event.type === 'pointerdown' && this.element.contains(event.target) && event.target.closest('[data-talk-card-main], [data-talk-card-footer]')) this.assignmentSelection = null;
+        else if (event.type === 'pointerdown' && this.element.contains(event.target) && event.target.closest('[data-talk-card-main], [data-talk-card-footer], [data-talk-card-returns], [data-talk-card-library]')) this.assignmentSelection = null;
       };
       this.selectionEnd = event => {
         if (this.missionRenderDeferred && event.target.closest?.('.talk-crazy-prompt')) {
-          const destination = event.relatedTarget?.closest?.('[data-talk-card-main], [data-talk-card-footer]');
+          const destination = event.relatedTarget?.closest?.('[data-talk-card-main], [data-talk-card-footer], [data-talk-card-returns], [data-talk-card-library]');
           // Blur precedes click. Do not replace its destination or guess the
           // target when a touch/browser blur has no relatedTarget.
           if ((destination && this.element.contains(destination)) || !event.relatedTarget) return;
@@ -537,7 +557,7 @@ var TALK_PLAYER = (() => {
         this.assignmentSelection = null;
         // A blur caused by a click happens before that click. Leave controls
         // in replaceable regions connected so their first click can run.
-        const destination = event.relatedTarget?.closest?.('[data-talk-card-main], [data-talk-card-footer]');
+        const destination = event.relatedTarget?.closest?.('[data-talk-card-main], [data-talk-card-footer], [data-talk-card-returns], [data-talk-card-library]');
         if (destination && this.element.contains(destination)) return;
         if (!this.destroyed && this.data?.talk.phase !== 'ended') this.render(true);
       };
@@ -551,7 +571,7 @@ var TALK_PLAYER = (() => {
     update(data) {
       const draftKey = this.storageKey(data);
       const changedSession = this.data?.talk?.sessionId !== data.talk.sessionId || this.draftKey !== draftKey;
-      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = true; this.assignmentSelection = null; this.inspirationCards = []; this.inspirationOpen = false; this.inspirationNotice = ''; this.pending = null; this.technicalAck = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
+      if (changedSession) { this.roundClockVisible = false; this.crazyDraft = { target: 'random', text: '', kind: 'task' }; this.assignmentNotice = ''; this.assignmentOpen = true; this.assignmentSelection = null; this.inspirationCards = []; this.inspirationOpen = false; this.inspirationNotice = ''; this.privateFeedback = null; this.pending = null; this.technicalAck = null; this.settledActions.clear(); this.composing = false; this.error = ''; this.draft = data.talk.myNote || ''; this.editor = null; this.settingsOpen = false; this.confirmation = null; this.topicToOpen = null; this.extensionDraft = ''; this.followupIndex = 0; this.libraryOpen = false; this.libraryDrafts = {}; this.libraryTargets = {}; this.libraryEditsOpen = {}; this.libraryDeleteConfirm = null; this.sortSelections = {}; this.delegateTarget = null;
         this.draftKey = draftKey;
         try { const saved = draftKey && JSON.parse(this.storage?.getItem(draftKey) || 'null'); if (saved && typeof saved.text === 'string') this.crazyDraft = { target: String(saved.target || 'random'), text: saved.text.slice(0,120), kind: 'task' }; } catch (_) {}
       }
@@ -575,11 +595,12 @@ var TALK_PLAYER = (() => {
           if (!this.composing && sameTarget && (!this.pending.kind || this.pending.kind === 'task') && this.crazyDraft.text.trim() === this.pending.text) { this.crazyDraft.text = ''; this.persistDraft(); }
           this.assignmentNotice = 'missionSent';
         }
-        if (this.pending.type === 'crazyReturnSave' && !data.talk.reply.error && typeof this.libraryDrafts[this.pending.cardId] === 'string'
+        if (['crazyReturnSave','crazyReturnSend'].includes(this.pending.type) && !data.talk.reply.error && typeof this.libraryDrafts[this.pending.cardId] === 'string'
             && this.libraryDrafts[this.pending.cardId].trim() !== this.pending.text) {
           this.libraryOpen = true; this.libraryEditsOpen[this.pending.cardId] = true;
           const panel = this.element.querySelector('.talk-private-library'); if (panel) panel.open = true;
         }
+        if (['crazyReturnSend','crazyLibrarySend'].includes(this.pending.type) && !data.talk.reply.error) this.privateFeedback={until:this.now()+8000,key:this.pending.type==='crazyReturnSend'?'privateReturnedSent':'privateSent'};
         this.error = data.talk.reply.error || ''; this.pending = null; }
       if (this.pending && !actionCurrent(this.pending)) { this.pending = null; }
       this.render(!changedSession);
@@ -627,7 +648,8 @@ var TALK_PLAYER = (() => {
     act(type, extra = {}) {
       if (this.pending || !this.data) return;
       const s = this.data.talk, mine = list(s.roster).find(p => p.playerNum === this.data.playerNum);
-      const ownReturn = ['crazyReturnSave','crazyReturnDelete'].includes(type) && list(s.crazy?.returnedCards).some(item=>item.id === extra.cardId);
+      const ownReturn = (['crazyReturnSave','crazyReturnDelete'].includes(type) && list(s.crazy?.returnedCards).some(item=>item.id === extra.cardId))
+        || (['crazyLibraryUpdate','crazyLibraryDelete'].includes(type) && list(s.crazy?.library).some(item=>item.id === extra.cardId));
       if (s.sharedControls === true && (!mine || mine.active === false || mine.pending === true)
           && !ownReturn && !(type === 'exclude' && Number(extra.playerNum) === this.data.playerNum && extra.active === true)) return;
       this.error = '';
@@ -683,7 +705,6 @@ var TALK_PLAYER = (() => {
       const notesOpen = preserveInput && this.element.querySelector('.talk-shared')?.open;
       if (preserveInput && this.element.querySelector('.talk-management')) this.managementOpen = !!this.element.querySelector('.talk-management').open;
       if (preserveInput && this.element.querySelector('.talk-private-library')) this.libraryOpen = !!this.element.querySelector('.talk-private-library').open;
-      if (preserveInput) this.element.querySelectorAll('[data-talk-library-editor]').forEach(panel=>{this.libraryEditsOpen[panel.dataset.talkLibraryEditor]=!!panel.open;});
       const activeField = document.activeElement?.dataset?.talkEditorField || document.activeElement?.dataset?.talkSharedInput || document.activeElement?.dataset?.talkAssignmentField || document.activeElement?.dataset?.talkLibraryField;
       const fieldKind = document.activeElement?.dataset?.talkEditorField ? 'editor-field' : document.activeElement?.dataset?.talkAssignmentField ? 'assignment-field' : document.activeElement?.dataset?.talkLibraryField ? 'library-field' : 'shared-input';
       const activeEditorNode = preserveInput && activeField && ['text', 'search', 'textarea'].includes(document.activeElement?.type) ? document.activeElement : null;
@@ -703,6 +724,7 @@ var TALK_PLAYER = (() => {
         ${s.extended ? `<p class="talk-extension">${esc(s.topic.followUp)}</p>` : ''}</section>`}`;
       const footerHTML = `${allowAssignment && s.crazy?.myQueuedCount > 0 ? `<p class="talk-queue-count" role="status">${esc(t('missionQueuedCount', { n: s.crazy.myQueuedCount }))}</p>` : ''}
         ${TALK_UI.skipResultHTML(s,this.now())}
+        ${this.privateFeedback?.until>this.now()?`<p class="talk-soft" role="status" data-talk-until="${this.privateFeedback.until}">${esc(t(this.privateFeedback.key))}</p>`:''}
         ${prompt?.status !== 'pending' ? TALK_UI.crazyHTML(s) : ''}
         ${TALK_UI.vnextHTML(s,me,this)}
         ${s.phase !== 'ended' ? `<section class="talk-current-state${myTurn ? ' is-your-turn' : ''}"><span class="talk-kicker">${esc(t('stateTitle'))}</span><div class="talk-floor" aria-live="polite">${esc(TALK_UI.status(s, me))}</div>
@@ -721,6 +743,7 @@ var TALK_PLAYER = (() => {
       const main = this.element.querySelector('[data-talk-card-main]'), footer = this.element.querySelector('[data-talk-card-footer]');
       const assignmentSlot = this.element.querySelector('[data-talk-card-assignment]');
       const returnsSlot = this.element.querySelector('[data-talk-card-returns]'), returnsHTML = TALK_UI.returnedHTML(s,me,this);
+      const librarySlot = this.element.querySelector('[data-talk-card-library]'), libraryHTML = TALK_UI.libraryHTML(s,me,this);
       const mission = prompt?.status === 'pending' ? JSON.stringify([s.sessionId, me, s.gameMode,
         prompt.id, prompt.text, prompt.kind, prompt.source, prompt.renderVersion || 1, s.crazy?.offer || null, t('crazyDone'), t('crazyHere')]) : null;
       const activeAction = document.activeElement;
@@ -729,7 +752,7 @@ var TALK_PLAYER = (() => {
         && activeAction.closest?.('.talk-crazy-prompt') && (s.phase !== 'ended' || ['draining','decision','extension'].includes(s.crazy?.roundStage));
       // Keep the composer and every ancestor connected. Detaching and restoring
       // a select also closes its native popup during a live state update.
-      const retainCard = preserveInput && main && typeof main.innerHTML === 'string' && footer && assignmentSlot && returnsSlot;
+      const retainCard = preserveInput && main && typeof main.innerHTML === 'string' && footer && assignmentSlot && returnsSlot && librarySlot;
       const retainedAssignment = retainCard && allowAssignment && assignmentSlot.querySelector('.talk-assignment');
       if (retainCard) {
         // Native pickers also close when content above them changes their
@@ -744,9 +767,16 @@ var TALK_PLAYER = (() => {
         }
         if (retainedAssignment) this.refreshAssignment(retainedAssignment, recipients, s);
         else assignmentSlot.innerHTML = assignment;
-        this.refreshReturns(returnsSlot,s,me,returnsHTML);
+        const heldPrivateId=this.assignmentSelection?.dataset?.talkLibraryTarget;
+        const returnedIds=new Set(list(s.crazy.returnedCards).map(item=>item.id)),savedIds=new Set(list(s.crazy.library).map(item=>item.id));
+        const unchangedPrivateOwnership=Array.from(returnsSlot.querySelectorAll('[data-talk-private-card]')).every(node=>returnedIds.has(node.dataset.talkPrivateCard))
+          && Array.from(librarySlot.querySelectorAll('[data-talk-private-card]')).every(node=>savedIds.has(node.dataset.talkPrivateCard));
+        const heldPrivatePicker=heldPrivateId && TALK_UI.canSendPrivate(s,me) && unchangedPrivateOwnership && (returnedIds.has(heldPrivateId)||savedIds.has(heldPrivateId));
+        // New return cards can sit above a saved-card native picker. Keep its
+        // position as well as its ancestors until selection/blur completes.
+        if(!heldPrivatePicker){this.refreshPrivateCards(returnsSlot,s,me,returnsHTML,true);this.refreshPrivateCards(librarySlot,s,me,libraryHTML,false);}
       } else {
-        this.element.innerHTML = `<div class="${cardClass}"><div data-talk-card-main style="display:contents">${mainHTML}</div><div data-talk-card-assignment style="display:contents">${assignment}</div><div data-talk-card-returns style="display:contents">${returnsHTML}</div><div data-talk-card-footer style="display:contents">${footerHTML}</div></div>`;
+        this.element.innerHTML = `<div class="${cardClass}"><div data-talk-card-main style="display:contents">${mainHTML}</div><div data-talk-card-assignment style="display:contents">${assignment}</div><div data-talk-card-returns style="display:contents">${returnsHTML}</div><div data-talk-card-library style="display:contents">${libraryHTML}</div><div data-talk-card-footer style="display:contents">${footerHTML}</div></div>`;
         this.renderedMission = mission; this.missionRenderDeferred = false;
       }
       if (keep) {
@@ -754,7 +784,7 @@ var TALK_PLAYER = (() => {
         if (focused) keep.focus({ preventScroll: true });
       }
       if (activeField && !(fieldKind === 'assignment-field' && retainedAssignment)
-          && !(fieldKind === 'library-field' && activeEditorNode?.isConnected && returnsSlot?.contains?.(activeEditorNode))) {
+          && !(fieldKind === 'library-field' && activeEditorNode?.isConnected && (returnsSlot?.contains?.(activeEditorNode)||librarySlot?.contains?.(activeEditorNode)))) {
         const next = this.element.querySelector('[data-talk-' + fieldKind + '="' + activeField + '"]');
         if (activeEditorNode && next) next.replaceWith(activeEditorNode);
         const restored = activeEditorNode && next ? activeEditorNode : next;
@@ -767,21 +797,33 @@ var TALK_PLAYER = (() => {
       document.title = (myTurn ? t('turnAlert') + ' · ' : '') + t('title', { name: data.name || t('player', { n: me }) });
       this.paint();
     }
-    refreshReturns(slot,s,me,html) {
+    refreshPrivateCards(slot,s,me,html,returned) {
       if (!html) { if (slot.innerHTML) slot.innerHTML = ''; return; }
-      if (!slot.querySelector('[data-talk-returned]')) { slot.innerHTML = html; return; }
-      const cards = list(s.crazy?.returnedCards), ids = new Set(cards.map(item=>item.id));
-      const section = slot.querySelector('[data-talk-returned]'), title = section.querySelector('h3');
-      const heading = t('returnedTitle',{n:cards.length}); if (title.textContent !== heading) title.textContent = heading;
-      section.querySelectorAll('[data-talk-return-label]').forEach(node=>{ const label=t(node.dataset.talkReturnLabel);if(node.textContent!==label)node.textContent=label; });
-      section.querySelectorAll('[data-talk-return-card]').forEach(node=>{if(!ids.has(node.dataset.talkReturnCard))node.remove();});
-      const container = section.querySelector('[data-talk-return-list]');
+      const selector=returned?'[data-talk-returned]':'.talk-private-library';
+      if (!slot.querySelector(selector)) { slot.innerHTML = html; return; }
+      const cards = list(returned?s.crazy?.returnedCards:s.crazy?.library), ids = new Set(cards.map(item=>item.id));
+      const section = slot.querySelector(selector),title=section.querySelector(returned?'h3':'summary');
+      const heading=returned?t('returnedTitle',{n:cards.length}):t('privateLibrary')+' · '+cards.length;if(title.textContent!==heading)title.textContent=heading;
+      if(!returned){const empty=section.querySelector('[data-talk-library-empty]');empty.hidden=!!cards.length;if(empty.textContent!==t('libraryEmpty'))empty.textContent=t('libraryEmpty');}
+      section.querySelectorAll('[data-talk-private-label]').forEach(node=>{const label=t(node.dataset.talkPrivateLabel);if(node.textContent!==label)node.textContent=label;});
+      section.querySelectorAll('[data-talk-private-card]').forEach(node=>{if(!ids.has(node.dataset.talkPrivateCard))node.remove();});
+      const container=section.querySelector('[data-talk-private-list]');
       for (const item of cards) {
-        let article = Array.from(container.children).find(node=>node.dataset.talkReturnCard===item.id);
-        if (!article) { const wrapper=slot.ownerDocument.createElement('div');wrapper.innerHTML=TALK_UI.returnedCardHTML(item,this);article=wrapper.firstElementChild;container.append(article); }
+        let article=Array.from(container.children).find(node=>node.dataset.talkPrivateCard===item.id);
+        if(!article){const wrapper=slot.ownerDocument.createElement('div');wrapper.innerHTML=TALK_UI.privateCardHTML(item,this,s,me,returned);article=wrapper.firstElementChild;container.append(article);}
         const textarea = article.querySelector('[data-talk-library-field]'), value = this.libraryDrafts[item.id] ?? item.text;
         if (!this.composing && textarea.value !== value) textarea.value=value;
-        for (const [action,label] of [['crazyReturnSave','returnSave'],['crazyReturnDelete','returnDelete']]) {const node=article.querySelector('[data-talk-action="'+action+'"]');if(node.textContent!==t(label))node.textContent=t(label);}
+        const actions=article.querySelector('[data-talk-private-actions]'),key=TALK_UI.privateActionsKey(item,this,returned);
+        if(actions.dataset.talkPrivateActions!==key){actions.innerHTML=TALK_UI.privateActionsHTML(item,this,returned);actions.dataset.talkPrivateActions=key;}
+        let send=article.querySelector('[data-talk-private-send]');
+        if(!TALK_UI.canSendPrivate(s,me)){send?.remove();continue;}
+        if(!send){const wrapper=slot.ownerDocument.createElement('div');wrapper.innerHTML=TALK_UI.privateSendHTML(item,this,s,me,returned);send=wrapper.firstElementChild;article.append(send);}
+        const target=send.querySelector('[data-talk-library-target]'),choices=[['random',t('randomRecipient')],...list(s.roster).filter(p=>p.playerNum!==me&&p.active!==false&&p.pending!==true).map(p=>[String(p.playerNum),p.name||name(s,p.playerNum)])];
+        if(!choices.some(([value])=>value===String(this.libraryTargets[item.id]??'random')))this.libraryTargets[item.id]='random';
+        const values=new Set(choices.map(([value])=>value));Array.from(target.options).forEach(node=>{if(!values.has(node.value))node.remove();});
+        choices.forEach(([value,label],index)=>{let node=Array.from(target.options).find(node=>node.value===value);if(!node){node=target.ownerDocument.createElement('option');node.value=value;}if(node.textContent!==label)node.textContent=label;if(target.options[index]!==node)target.insertBefore(node,target.options[index]||null);});
+        if(this.assignmentSelection!==target&&target.value!==String(this.libraryTargets[item.id]??'random'))target.value=this.libraryTargets[item.id]??'random';
+        const button=send.querySelector('[data-talk-action]');if(button.textContent!==t('librarySend'))button.textContent=t('librarySend');
       }
     }
     refreshAssignment(composer, recipients, s) {

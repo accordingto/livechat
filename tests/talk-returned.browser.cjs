@@ -53,6 +53,21 @@ const root=path.resolve(__dirname,'..'),qaDir=path.resolve(root,'../../outputs/t
     await wait(()=>f.state().scores[3]===-1&&f.state().scores[4]===-1);await page(1).waitForSelector('[data-talk-return-card]');
     await wait(()=>page(1).locator('[data-talk-return-card]').count().then(count=>count===2));
     for(const num of [2,3,4,5])assert.equal(f.card(num).talk.crazy.returnedCards.length,0);
+    await write(5,'A third private card to return and resend.');await wait(()=>f.state().crazy.prompts[5]?.renderedVersion===1);await page(5).click('[data-talk-action="crazySkip"]');await wait(()=>f.card(1).talk.crazy.returnedCards.length===3);
+    const resend=f.card(1).talk.crazy.returnedCards.find(card=>card.text==='A third private card to return and resend.'),resendArticle='[data-talk-return-card="'+resend.id+'"]';
+    await page(1).waitForSelector(resendArticle);assert.equal(await page(1).locator(resendArticle+' textarea').count(),1);assert.equal(await page(1).locator(resendArticle+' details').count(),0);
+    assert.equal(await page(1).inputValue(resendArticle+' select'),'random');await page(1).fill(resendArticle+' textarea','Edited directly in the first returned field.');await page(1).selectOption(resendArticle+' select','4');await screenshots(page(1),'returned-direct-send');
+    await page(1).locator(resendArticle+' [data-talk-action="crazyReturnSend"]').click();await wait(()=>f.card(1).talk.crazy.library.some(card=>card.id===resend.id));
+    assert.equal(f.card(1).talk.crazy.returnedCards.some(card=>card.id===resend.id),false);assert.equal(f.card(1).talk.crazy.library.find(card=>card.id===resend.id).text,'Edited directly in the first returned field.');
+    await advance(31000);await wait(()=>f.state().crazy.prompts[4]?.text==='Edited directly in the first returned field.');await wait(()=>f.state().crazy.prompts[4]?.renderedVersion===1);await page(4).click('[data-talk-action="crazyDone"]');await wait(()=>f.state().scores[4]===0);
+    await page(1).locator('.talk-private-library>summary').click();const resendSaved='[data-talk-saved-card="'+resend.id+'"]';assert.equal(await page(1).locator(resendSaved+' textarea').count(),1);assert.equal(await page(1).locator(resendSaved+'>p').count(),0);
+    await page(1).fill(resendSaved+' textarea','Edited directly in the first saved field.');await page(1).selectOption(resendSaved+' select','random');await screenshots(page(1),'saved-direct-send');
+    await page(1).locator(resendSaved+' [data-talk-action="crazyLibrarySend"]').click();await wait(()=>f.card(1).talk.crazy.library.find(card=>card.id===resend.id)?.text==='Edited directly in the first saved field.');
+    await wait(()=>Object.values(f.state().crazy.prompts).some(prompt=>prompt.status==='pending'&&prompt.text==='Edited directly in the first saved field.'));
+    const randomReceiver=Number(Object.keys(f.state().crazy.prompts).find(num=>f.state().crazy.prompts[num].status==='pending'&&f.state().crazy.prompts[num].text==='Edited directly in the first saved field.'));assert.notEqual(randomReceiver,1);await wait(()=>f.state().crazy.prompts[randomReceiver]?.renderedVersion===1);await page(randomReceiver).click('[data-talk-action="crazyDone"]');
+    await wait(()=>f.state().crazy.prompts[randomReceiver]?.status==='done');
+    const directSendCommands=mailboxWrites.filter(command=>command.type==='crazyReturnSend');assert.ok(directSendCommands.some(command=>command.cardId===resend.id&&command.target===4&&command.text==='Edited directly in the first returned field.'));
+    assert.ok(mailboxWrites.some(command=>command.type==='crazyLibrarySend'&&command.cardId===resend.id&&command.target==null&&command.text==='Edited directly in the first saved field.'));
     await advance(120000);await wait(()=>!f.state().crazy.directors.includes(1));await wait(()=>page(1).locator('.talk-assignment').count().then(count=>count===0));
     assert.equal(await page(1).locator('[data-talk-return-card]').count(),2);await page(1).reload();await page(1).waitForSelector('[data-talk-return-card]');await page(1).evaluate(()=>I18N.setLang('en'));
     assert.equal(await page(1).locator('.talk-assignment').count(),0);assert.equal(await page(1).locator('[data-talk-return-card]').count(),2);
@@ -69,11 +84,11 @@ const root=path.resolve(__dirname,'..'),qaDir=path.resolve(root,'../../outputs/t
     assert.equal(frozen.text,edited);assert.equal(frozen.cardId,cardA.id);await page(1).locator(field).dispatchEvent('compositionstart');await page(1).fill(field,'Newer unsent private edit 中文');
     releaseSave();holdSave=null;await wait(()=>f.card(1).talk.crazy.library.some(card=>card.id===cardA.id));await wait(()=>page(1).evaluate(()=>!__card.pending));
     assert.equal(await page(1).inputValue(field),'Newer unsent private edit 中文');assert.equal(f.card(1).talk.crazy.library.find(card=>card.id===cardA.id).text,edited);
-    await page(1).locator(field).dispatchEvent('compositionend');await wait(()=>page(1).locator('[data-talk-library-editor="'+cardA.id+'"]').evaluate(el=>el.open));
+    await page(1).locator(field).dispatchEvent('compositionend');await wait(()=>page(1).locator('.talk-private-library').evaluate(el=>el.open));
     const savedField='[data-talk-library-field="'+cardA.id+'"]';assert.equal(await page(1).inputValue(savedField),'Newer unsent private edit 中文');assert.equal(await page(1).locator(savedField).evaluate(el=>el===__returnRefs.text&&document.activeElement===el),true);
     assert.equal(await page(1).locator('.talk-private-library').evaluate(el=>el.open),true);
     await page(1).locator('[data-talk-return-card="'+cardB.id+'"] [data-talk-action="crazyReturnDelete"]').click();await wait(()=>f.card(1).talk.crazy.returnedCards.length===0);
-    assert.equal(f.card(1).talk.crazy.library.some(card=>card.id===cardB.id),false);assert.equal(mailboxWrites.filter(command=>command.type==='crazyLibrarySend').length,0);
+    assert.equal(f.card(1).talk.crazy.library.some(card=>card.id===cardB.id),false);assert.ok(mailboxWrites.filter(command=>command.type==='crazyLibrarySend').every(command=>command.cardId===resend.id),'Save/Delete never auto-resend another card');
     for(const num of [2,3,4,5])assert.equal(JSON.stringify(f.card(num)).includes(edited),false);
     await f.act(0,'crazyDrain');await f.act(0,'newTopic',{topic:{question:'Make a silly system-only show.'},mode:'think',seconds:45,showStarters:true,gameMode:'crazy',crazyPlayStyle:'free',crazySource:'system',crazyMinSeconds:5,crazyMaxSeconds:5,gameSeconds:900,confirm:true});await f.act(0,'start');await advance(5000);
     const receiver=Object.keys(f.state().crazy.prompts).map(Number).find(num=>f.state().crazy.prompts[num].status==='pending');assert.ok(receiver);await wait(()=>f.state().crazy.prompts[receiver]?.renderedVersion===1);
@@ -85,7 +100,7 @@ const root=path.resolve(__dirname,'..'),qaDir=path.resolve(root,'../../outputs/t
     assert.notEqual(f.state().crazy.prompts[receiver].text,old.text);assert.equal(f.state().scores[receiver],0);assert.equal(f.card(receiver).talk.crazy.lastResult.scoreDelta,0);
     await wait(()=>page(receiver).locator('.talk-skip-feedback').textContent().then(text=>text.includes('without losing points')));
     assert.deepEqual(errors,[]);assert.deepEqual(dialogs,[]);
-    const result={fiveActualPlayerPages:true,authoritativeETags:true,playerSkipMinusOne:true,systemSwapFreeImmediate:true,returnAuthorOnly:true,actorAfterRotation:true,reloadRecovery:true,editableReturnSave:true,returnDelete:true,noAutoResend:true,pendingNewDraft:true,sameReturnDOM:true,returnIME:true,negativeScores:true,taskHoverContrast:true,languages:['en','zh'],widths:[320,375],screenshots:12,errors,dialogs};
+    const result={fiveActualPlayerPages:true,authoritativeETags:true,playerSkipMinusOne:true,systemSwapFreeImmediate:true,returnAuthorOnly:true,actorAfterRotation:true,reloadRecovery:true,editableReturnSave:true,returnDelete:true,noAutoResend:true,pendingNewDraft:true,sameReturnDOM:true,returnIME:true,negativeScores:true,taskHoverContrast:true,onePrimaryField:true,returnedDirectSend:true,savedDirectEditSend:true,selectedAndRandomTargets:true,languages:['en','zh'],widths:[320,375],screenshots:20,errors,dialogs};
     fs.writeFileSync(path.join(qaDir,'report.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
   }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
