@@ -1,3 +1,40 @@
+## CURRENT: WHO KNOWS? — Insider and Werewolf modes in one game — 2026-10-22
+
+Read who-knows-mode.md for rules, authority and privacy. New Hub game
+`who-knows.html` (4–9 players) right after Bomb Relay; BLUFF PARTY and the
+locked last four stay in order. One game, two modes on the original play.html
+links: Insider (default; public Master answers Yes/No/I don't know, one secret
+Insider) and Werewolf (public Mayor answers with tokens; secret Seer and 1–2
+Werewolves). Mechanics are adapted from Insider/Werewords; names, words, art and
+wording are original and neither title is used as the game name.
+
+Players raise a hand on their own card (🙋) to join one shared line, with an
+optional typed question (≤80 chars, cleaned) shown on the shared screen. The
+answerer answers on their card; Correct takes two taps; "Someone else said it?"
+hands the turn to whoever actually spoke. The answerer rotates fairly, words
+are not repeated in a room, and Mixed offers one easy/medium/hard (300 words).
+Werewolf hunt: each Werewolf may pick (Deluxe rule), 30 s. Mayor is an honest
+Villager unless the advanced option deals the Mayor a secret role too.
+
+Trusted-host transport like Bomb Relay/CUT: canonical word/roles only in the
+leased control node (whoKnowsControlToken); the shared screen never renders the
+word before the guess, the options or any seat→role pair; each card gets only
+its own secrets. Cards write one `wkAction` fenced by sessionId+stage; host
+close/extend/next are stage-fenced; closing questions/votes, cancel, restart and
+end need two taps. Game-switch suspension, `rosterChanged` (different seat count
+never projected) and Hub-name `rename` keep links safe. Frontend-only release:
+no independent service, database rule, dependency or secret change. Cache tag
+`wk-1` for every WHO KNOWS asset in who-knows.html and play.html.
+
+Validation: who-knows engine/sync/integration 35/35; full Hub suite 2186/2186.
+Real host page + original play.html links on the isolated Firebase-compatible
+fixture (controlled clock, external network intercepted): insider 4/5 and
+werewolf 6/9 players pass 18–19 checks each with 62–66 EN/ZH captures at
+1280/390/320 (overflow, clipped text, ≥44px targets, occlusion), zero page
+errors. Demo contrast audit (both modes, EN/ZH, every phase): no text below
+4.5:1. This sandbox cannot reach Firebase or production, so no live-Firebase
+probe ran here; physical phones and a human voice playtest remain unverified.
+
 ## CURRENT: Crazy Talk one-field private editing and direct resend — 2026-10-18
 
 Read docs/talk-return-resend-acceptance.md for scope and actual release evidence.

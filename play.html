@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="open-mic.css?v=om-cards-1">
   <link rel="stylesheet" href="bomb-relay.css?v=br-pacing-3-1">
   <link rel="stylesheet" href="sketch-relay.css?v=relay-2">
+  <link rel="stylesheet" href="who-knows.css?v=wk-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -899,6 +900,7 @@
   <script src="bomb-relay-ui.js?v=br-pacing-3-1"></script>
   <script src="sketch-relay-art.js?v=relay-2"></script>
   <script src="sketch-relay-ui.js?v=relay-2"></script>
+  <script src="who-knows-ui.js?v=wk-1"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=om-cards-1"></script>
@@ -2471,6 +2473,7 @@
     let cutCard = null;
     let bombCard = null;
     let relayCard = null;
+    let wkCard = null;
     let openMicCard = null;
     let openMicTimer = null;
     let onceCard = null;
@@ -2500,6 +2503,36 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      // WHO KNOWS? keeps one stable card (and its typed question) across updates.
+      const isWk = data.game === 'whoknows' && data.wk?.version === 1;
+      document.body.classList.toggle('wk-card-page', isWk);
+      if (wkCard && !isWk) { wkCard.destroy(); wkCard = null; }
+      if (isWk) {
+        document.title = `${data.name || urlName || 'Player'} · WHO KNOWS?`;
+        document.body.classList.remove('sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
+        if (relayCard) { relayCard.destroy(); relayCard = null; }
+        if (bombCard) { bombCard.destroy(); bombCard = null; }
+        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+        if (cutCard) { cutCard.destroy(); cutCard = null; }
+        if (talkCard) { talkCard.destroy(); talkCard = null; }
+        if (onceCard) { onceCard.destroy(); onceCard = null; }
+        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (!wkCard) wkCard = new WHO_KNOWS_UI.Card(el, {
+          nameBanner,
+          now: () => Date.now() + talkClockOffset,
+          connected: () => talkConnected,
+          // One request per card, fenced to the stage it was drawn for.
+          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
+            if (current?.game !== 'whoknows' || current.wk?.sessionId !== command.sessionId || current.wk?.stage !== command.stage) return;
+            return Object.assign({}, current, { wkAction: command });
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
+        });
+        wkCard.update(data);
+        return;
+      }
       // Sketch Relay keeps its drawing pad alive across updates, so it must be
       // torn down here before any other game takes over this element.
       const isRelay = data.game === 'sketchrelay' && data.relay?.version === 1;
@@ -2945,6 +2978,8 @@
       document.body.classList.remove('cut-card-page');
       if (bombCard) { bombCard.destroy(); bombCard = null; }
       document.body.classList.remove('bomb-card-page');
+      if (wkCard) { wkCard.destroy(); wkCard = null; }
+      document.body.classList.remove('wk-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -2966,8 +3001,8 @@
     let db = null;
     let latestData = null;
     document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
-    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay'].includes(latestData?.game)) tryRenderCard(); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
+    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -2986,7 +3021,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); if (wkCard) wkCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

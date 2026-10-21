@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WHO KNOWS? · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#0f1421">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="who-knows.css?v=wk-1">
+</head>
+<body class="wk-page">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
+    <span class="wk-soft" id="wk-room-label"></span>
+  </div>
+  <header class="header wk-header">
+    <span class="wk-mark"><img src="assets/who-knows/mark.svg" alt="" width="64" height="64"></span>
+    <p class="wk-kicker">ICE BREAKING HUB</p>
+    <h1>WHO KNOWS?</h1>
+    <p class="wk-subtitle" data-i18n="whoknows.subtitle">One secret word. Yes-or-no questions. Someone already knows.</p>
+  </header>
+  <main class="wk-shell">
+    <div class="wk-panel wk-demo-bar" id="wk-demo-bar" hidden>
+      <span class="wk-kicker" data-i18n="whoknows.demo">Interactive demo · one-device simulation</span>
+      <label class="wk-field"><span data-i18n="whoknows.demoView">Switch the demo view</span><select id="wk-demo-view"></select></label>
+      <a class="back" href="who-knows.html" data-i18n="whoknows.liveLink">Use your room</a>
+    </div>
+    <p class="wk-feedback wk-center" id="wk-status" role="status"></p>
+    <div class="wk-panel wk-center" id="wk-setup-needed" hidden>
+      <p class="wk-soft" data-i18n="whoknows.setupNeeded">Set up the room and player links in the Hub first.</p>
+      <p><a class="wk-button wk-primary" href="index.html?step=1" data-i18n="whoknows.setUpRoom">Set up room &amp; players</a></p>
+    </div>
+
+    <form class="wk-panel wk-setup" id="wk-setup" novalidate>
+      <p class="wk-kicker" data-i18n="whoknows.setupTitle">Choose a mode</p>
+      <div class="wk-modes" role="radiogroup" aria-labelledby="wk-mode-legend">
+        <span id="wk-mode-legend" hidden data-i18n="whoknows.setupTitle">Choose a mode</span>
+        <label class="wk-mode-card is-selected" data-wk-mode-card="insider">
+          <input type="radio" name="wk-mode" value="insider" checked>
+          <span class="wk-mode-art" data-wk-art="insider"></span>
+          <h3 data-i18n="whoknows.mode_insider">Insider mode</h3>
+          <p data-i18n="whoknows.pitch_insider">The Master knows the word. One secret Insider knows it too and quietly guides you.</p>
+          <p class="wk-mode-tags" data-i18n="whoknows.tags_insider">Easier · cooperative · one hidden guide</p>
+          <span class="wk-mode-check" aria-hidden="true">✓</span>
+        </label>
+        <label class="wk-mode-card" data-wk-mode-card="werewolf">
+          <input type="radio" name="wk-mode" value="werewolf">
+          <span class="wk-mode-art" data-wk-art="werewolf"></span>
+          <h3 data-i18n="whoknows.mode_werewolf">Werewolf mode</h3>
+          <p data-i18n="whoknows.pitch_werewolf">The Mayor answers with tokens only. A hidden Seer helps; hidden Werewolves mislead.</p>
+          <p class="wk-mode-tags" data-i18n="whoknows.tags_werewolf">Two teams · bluffing · two endings</p>
+          <span class="wk-mode-check" aria-hidden="true">✓</span>
+        </label>
+      </div>
+      <div class="wk-settings">
+        <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-minutes"></select></label>
+        <label class="wk-field"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-difficulty"></select></label>
+        <div class="wk-mode-only" data-wk-only="werewolf" hidden>
+          <label class="wk-field"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-tokens"></select></label>
+          <label class="wk-field"><span data-i18n="whoknows.wolves">Werewolves</span><select id="wk-wolves"></select></label>
+        </div>
+      </div>
+      <div class="wk-mode-only" data-wk-only="werewolf" hidden>
+        <label class="wk-check"><input type="checkbox" id="wk-mayor-secret"><span><span data-i18n="whoknows.mayorSecret">Advanced: the Mayor also gets a secret role</span><small data-i18n="whoknows.mayorSecretHint">A Werewolf Mayor may give misleading answers; a Seer Mayor may help.</small></span></label>
+      </div>
+      <div class="wk-mode-only" data-wk-only="insider">
+        <label class="wk-check"><input type="checkbox" id="wk-master-guess" checked><span><span data-i18n="whoknows.masterGuess">If time runs out, the Master gets one guess at the Insider</span><small data-i18n="whoknows.masterGuessOptHint">Off is the classic rule: if time runs out, everyone loses.</small></span></label>
+      </div>
+      <p class="wk-note"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 14s4.2-7 11-7 11 7 11 7-4.2 7-11 7S3 14 3 14z" fill="none" stroke="#e7c47c" stroke-width="2"/><circle cx="14" cy="14" r="3.6" fill="#e7c47c"/><path d="M5 23L23 5" stroke="#e7c47c" stroke-width="2.2" stroke-linecap="round"/></svg><span data-i18n="whoknows.hostNote">Everyone plays on their own player card. This shared screen never shows the word or anyone’s role.</span></p>
+      <div class="wk-start-row">
+        <button type="submit" class="wk-button wk-primary" id="wk-start" data-i18n="whoknows.start">Start the first round</button>
+        <button type="button" class="wk-button" id="wk-setup-cancel" hidden data-i18n="whoknows.close">Close</button>
+        <p class="wk-feedback wk-center" id="wk-count-note" role="status"></p>
+      </div>
+    </form>
+
+    <section id="wk-game" hidden aria-label="WHO KNOWS?">
+      <div id="wk-scene"></div>
+      <div class="wk-actions wk-session-actions">
+        <button type="button" class="wk-button wk-primary" id="wk-close" hidden></button>
+        <button type="button" class="wk-button wk-primary" id="wk-next" hidden data-i18n="whoknows.nextRound">Next round</button>
+        <button type="button" class="wk-button wk-primary" id="wk-again" hidden data-i18n="whoknows.playAgain">Play again</button>
+        <button type="button" class="wk-button" id="wk-settings" hidden data-i18n="whoknows.changeSettings">Change settings</button>
+        <button type="button" class="wk-button" id="wk-extend" hidden></button>
+        <button type="button" class="wk-button" id="wk-pause" hidden></button>
+        <button type="button" class="wk-button" id="wk-manage-open" data-i18n="whoknows.manage">Host controls</button>
+      </div>
+    </section>
+    <p class="wk-feedback wk-center" id="wk-error" role="status"></p>
+
+    <div class="wk-bottom">
+      <details class="wk-rules" id="wk-rules">
+        <summary data-i18n="whoknows.rules">How to play</summary>
+        <div class="wk-rules-grid">
+          <section>
+            <h3 data-i18n="whoknows.mode_insider">Insider mode</h3>
+            <ol>
+              <li data-i18n="whoknows.rules_insider_1"></li>
+              <li data-i18n="whoknows.rules_insider_2"></li>
+              <li data-i18n="whoknows.rules_insider_3"></li>
+              <li data-i18n="whoknows.rules_insider_4"></li>
+              <li data-i18n="whoknows.rules_insider_5"></li>
+            </ol>
+            <p class="wk-kicker" data-i18n="whoknows.tokensLegend">ANSWER TOKENS</p>
+            <div class="wk-tokens-legend" data-wk-legend="insider"></div>
+            <p class="wk-soft"><strong data-i18n="whoknows.scoringLabel">Scoring</strong> · <span data-i18n="whoknows.scoring_insider"></span></p>
+          </section>
+          <section>
+            <h3 data-i18n="whoknows.mode_werewolf">Werewolf mode</h3>
+            <ol>
+              <li data-i18n="whoknows.rules_werewolf_1"></li>
+              <li data-i18n="whoknows.rules_werewolf_2"></li>
+              <li data-i18n="whoknows.rules_werewolf_3"></li>
+              <li data-i18n="whoknows.rules_werewolf_4"></li>
+              <li data-i18n="whoknows.rules_werewolf_5"></li>
+            </ol>
+            <p class="wk-kicker" data-i18n="whoknows.tokensLegend">ANSWER TOKENS</p>
+            <div class="wk-tokens-legend" data-wk-legend="werewolf"></div>
+            <p class="wk-soft"><strong data-i18n="whoknows.scoringLabel">Scoring</strong> · <span data-i18n="whoknows.scoring_werewolf"></span></p>
+          </section>
+        </div>
+      </details>
+      <a class="back wk-center" id="wk-demo-link" href="who-knows.html?demo=1" data-i18n="whoknows.demoLink">Try the interactive demo</a>
+    </div>
+  </main>
+
+  <dialog class="wk-dialog" id="wk-manage" aria-labelledby="wk-manage-title">
+    <form method="dialog" class="wk-dialog-header"><h2 id="wk-manage-title" data-i18n="whoknows.manage">Host controls</h2><button class="wk-button wk-small" data-i18n="whoknows.close">Close</button></form>
+    <p class="wk-soft" data-i18n="whoknows.rosterHint">Sit someone out if they leave the call.</p>
+    <p class="wk-progress-line" id="wk-next-answerer"></p>
+    <div class="wk-roster" id="wk-roster"></div>
+    <h3 data-i18n="whoknows.nextSettings">Settings for the next round</h3>
+    <div class="wk-settings">
+      <label class="wk-field"><span data-i18n="whoknows.modeLabel">Mode</span><select id="wk-m-mode"></select></label>
+      <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-m-minutes"></select></label>
+      <label class="wk-field"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-m-difficulty"></select></label>
+      <div class="wk-mode-only" data-wk-m-only="werewolf" hidden>
+        <label class="wk-field"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-m-tokens"></select></label>
+        <label class="wk-field"><span data-i18n="whoknows.wolves">Werewolves</span><select id="wk-m-wolves"></select></label>
+      </div>
+    </div>
+    <div class="wk-mode-only" data-wk-m-only="werewolf" hidden>
+      <label class="wk-check"><input type="checkbox" id="wk-m-mayor-secret"><span><span data-i18n="whoknows.mayorSecret">Advanced: the Mayor also gets a secret role</span><small data-i18n="whoknows.mayorSecretHint"></small></span></label>
+    </div>
+    <div class="wk-mode-only" data-wk-m-only="insider">
+      <label class="wk-check"><input type="checkbox" id="wk-m-master-guess"><span><span data-i18n="whoknows.masterGuess">If time runs out, the Master gets one guess at the Insider</span><small data-i18n="whoknows.masterGuessOptHint"></small></span></label>
+    </div>
+    <div class="wk-actions" style="margin-top:14px">
+      <button type="button" class="wk-button wk-primary" id="wk-save-settings" data-i18n="whoknows.saveSettings">Save for the next round</button>
+    </div>
+    <p class="wk-soft" id="wk-saved" role="status"></p>
+    <div class="wk-dialog-actions">
+      <button type="button" class="wk-button" id="wk-void"></button>
+      <button type="button" class="wk-button" id="wk-restart"></button>
+      <button type="button" class="wk-button wk-danger" id="wk-stop"></button>
+    </div>
+  </dialog>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js?v=life-story-1"></script>
+  <script src="who-knows-words.js?v=wk-1"></script>
+  <script src="who-knows-engine.js?v=wk-1"></script>
+  <script src="who-knows-sync.js?v=wk-1"></script>
+  <script src="who-knows-ui.js?v=wk-1"></script>
+  <script src="who-knows-host.js?v=wk-1"></script>
+</body>
+</html>
