@@ -34,6 +34,13 @@ werewolf 6/9 players pass 18–19 checks each with 62–66 EN/ZH captures at
 errors. Demo contrast audit (both modes, EN/ZH, every phase): no text below
 4.5:1. This sandbox cannot reach Firebase or production, so no live-Firebase
 probe ran here; physical phones and a human voice playtest remain unverified.
+Gameplay source c1dee76 is pushed to main and published on
+https://livechat-two-alpha.vercel.app/who-knows.html. Read back from production:
+who-knows.html (title/h1), who-knows-ui/engine/sync.js and who-knows.css carry
+this release's code (rename, rosterChanged, other-asker picker, 44px targets),
+and the Hub lists …BOMB RELAY → WHO KNOWS? (👥 4–9) → BLUFF PARTY…. The fetcher
+strips play.html scripts, so its wiring was not read back separately; it ships
+in the same deployment. No byte-hash asset comparison was possible from here.
 
 ## CURRENT: Crazy Talk one-field private editing and direct resend — 2026-10-18
 
