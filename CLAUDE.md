@@ -70,6 +70,13 @@ repeated after the rebase. Demo
 contrast audit including card Table controls, armed buttons, settings and the
 sitting-out card: no text below 4.5:1. No live-Firebase probe from this sandbox;
 physical phones and a human voice playtest remain unverified.
+Gameplay source 425873b is pushed to main and published on
+https://livechat-two-alpha.vercel.app/who-knows.html. Read back from production:
+who-knows-sync.js (Table/HostTable, tick ranking), who-knows-engine.js (shared
+table commands), who-knows-ui.js (Table controls, I'm back, new game),
+who-knows-host.js (HostTable, continue, presence) and who-knows.css carry this
+release; who-knows.html shows the optional-page note. The fetcher strips
+play.html scripts, so its wiring was not read back separately.
 
 ## Previous: WHO KNOWS? — Insider and Werewolf modes in one game — 2026-10-22
 
