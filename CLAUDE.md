@@ -22,7 +22,59 @@ syntheticHalloween5layouts/5completegames/all428texts/image-stabilitypass.
 No physical-device or human balance verification claimed. WHO KNOWS test-onlyCRLF normalization
 retains its exact integration assertion; no unrelated game behavior changed.
 
-## CURRENT: WHO KNOWS? — Insider and Werewolf modes in one game — 2026-10-22
+## CURRENT: WHO KNOWS? runs on the players' cards — 2026-10-23
+
+Read who-knows-mode.md ("Authority and privacy — no page has to stay open").
+User request: the host page must not need to stay open; the host also plays on
+their own card, so most operations belong on player cards. Supersedes the
+trusted-host lease/projection transport of the 2026-10-22 release below.
+
+The host page only starts (or restarts) the game: it writes the canonical state
+to the table node rooms/{code}/players/{whoKnowsControlToken}/stateJson and a
+pointer {game:'whoknows', playerNum, name, wk:{version:2, table}} to every
+original link. play.html loads who-knows-words/engine/sync/ui, follows the
+table with WHO_KNOWS_SYNC.Table, renders view(state, own seat) and applies its
+own commands with one stage/session-fenced CAS transaction on stateJson. No
+lease and no relay. Deadlines are absolute server-corrected times; every client
+checks every 250 ms and presence (table/presence/{client}, removed on
+disconnect) ranks who ticks first: host page if open, then the lowest visible
+card, others 0.9 s apart, background cards last. Extra ticks are no-ops.
+
+Any active player has the host powers on their card in a folded "Table
+controls" panel: pause/resume, +1 min/+30 s, close the phase (two taps for
+questions/votes), sit out (two taps)/back in, next answerer, next-round settings
+(mode etc.), cancel round, restart, end (two taps each). Paused cards show
+Resume, sitting-out cards "I'm back" (self only), final standings "Start a new
+game". Only the Hub rename stays host-page-only. The reopened host page adopts
+the table its links point at (even without the saved token), offers "Bring
+every card back to this game" when another game borrowed a link, keeps
+rosterChanged/rename, and migrates links still showing an older v1 view of the
+same session; an old v1 host page suspends itself when it sees pointers.
+play.html still renders v1 views for an unrefreshed old host page.
+
+Privacy trade-off (disclosed to the user): without a server every participating
+card can read the table node, so a player using developer tools could find the
+word/roles; screens never show them. Player tokens are never shared, so other
+games keep their privacy. Full secrecy would require the independent service,
+which this sandbox cannot deploy. Frontend-only release: no service, database
+rule, dependency or secret change. Cache tag wk-2 for every WHO KNOWS asset in
+who-knows.html and play.html (play.html now also loads words/engine/sync).
+
+Validation: WHO KNOWS engine/sync/integration 38/38 (23/9/6); full Hub suite
+2223/2223 after rebasing onto the Halloween release (bluff-bank stub gains wkTable). Real host page + original play.html links on the isolated
+Firebase-compatible fixture (controlled clock, external network intercepted),
+host page CLOSED right after Start: insider 4/5 pass 24 checks and werewolf 6/9
+pass 23 checks, 68–70 EN/ZH captures each at 1280/390/320 (overflow, clipped
+text, ≥44px targets, occlusion), zero page errors; insider 4 and werewolf 6
+repeated after the rebase. Demo
+contrast audit including card Table controls, armed buttons, settings and the
+sitting-out card: no text below 4.5:1. No live-Firebase probe from this sandbox;
+physical phones and a human voice playtest remain unverified.
+
+## Previous: WHO KNOWS? — Insider and Werewolf modes in one game — 2026-10-22
+
+(Its trusted-host lease/projection transport is superseded by the 2026-10-23
+card-run table above; rules, content and design below still apply.)
 
 Read who-knows-mode.md for rules, authority and privacy. New Hub game
 `who-knows.html` (4–9 players) right after Bomb Relay; BLUFF PARTY and the

@@ -93,7 +93,7 @@ test('existing player links open legacy and original-seat private frames without
     document: { body: { classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), remove: (...names) => names.forEach(name => classes.delete(name)) } },
       createElement: kind => { assert.equal(kind, 'iframe'); return { remove() { this.removed = true; } }; } },
     setCardTitle() {}, urlName: 'Existing player', el: { replaceChildren: frame => frames.push(frame) },
-    bluffCardFrame: null, wolfCardFrame: null, talkCard: null, cutCard: null, bombCard: null, relayCard: null, wkCard: null, openMicCard: null, openMicTimer: null, onceCard: null, dixitCard: null, dixitHostBridge: null,
+    bluffCardFrame: null, wolfCardFrame: null, talkCard: null, cutCard: null, bombCard: null, relayCard: null, wkCard: null, wkTable: null, openMicCard: null, openMicTimer: null, onceCard: null, dixitCard: null, dixitHostBridge: null,
   });
   vm.runInContext(source.slice(start, finish) + 'return false;\n}', context);
   const marker = { game: 'bluffking', name: 'A&B <player>', bluff: { version: 1, room: 'BKROOM', hostToken: 'do-not-forward', privateKey: 'do-not-forward' }, session: 'do-not-forward' };
